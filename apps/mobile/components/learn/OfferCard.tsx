@@ -88,7 +88,11 @@ export function OfferCard({
       <View style={{ gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Icon name={KIND_ICON[offer.kind]} size={20} color={palette.primaryDk} />
+            <Icon
+              name={offer.minutes !== null ? 'clock' : KIND_ICON[offer.kind]}
+              size={20}
+              color={palette.primaryDk}
+            />
           </View>
           <Text style={[TYPE.label, { color: palette.primaryDk }]}>{label.toUpperCase()}</Text>
         </View>

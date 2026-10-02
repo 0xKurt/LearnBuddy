@@ -208,7 +208,7 @@
     "time_up_title": "Se acabó el tiempo",
     "time_up_line_one": "En ese tiempo has respondido {{answered}} de {{count}} pregunta.",
     "time_up_line_other": "En ese tiempo has respondido {{answered}} de {{count}} preguntas.",
-    "time_up_rest": "Lo que quedó abierto cuenta como sin responder, no como incorrecto.",
+    "time_up_rest": "Lo que quedó abierto no cuenta como incorrecto.",
     "unanswered": "Sin responder"
   },
   "test_note": "Examen de prueba: una respuesta por pregunta, sin pistas. Verás el resultado al final.",
@@ -232,10 +232,12 @@
     "scroll": "Tabla, se desplaza hacia los lados"
   },
   "timer": {
-    "left_one": "Queda {{count}} minuto · una respuesta por pregunta, sin pistas.",
-    "left_other": "Quedan {{count}} minutos · una respuesta por pregunta, sin pistas.",
-    "soon_one": "Queda {{count}} minuto: mira con calma qué más puedes hacer.",
-    "soon_other": "Quedan {{count}} minutos: mira con calma qué más puedes hacer.",
+    "chip_one": "queda {{count}} min",
+    "chip_other": "quedan {{count}} min",
+    "left_one": "Queda {{count}} minuto",
+    "left_other": "Quedan {{count}} minutos",
+    "note": "Una respuesta por pregunta, sin pistas.",
+    "soon": "Mira con calma qué más puedes hacer.",
     "up": "Se acabó el tiempo: enseguida llega tu resultado."
   }
 }

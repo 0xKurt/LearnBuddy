@@ -4,16 +4,16 @@ import { clockLine, leftNow, SOON_MS, timeUpLines } from '../practice/testClock.
 
 describe('the clock of a test with time (issue #241)', () => {
   it('says whole minutes, rounded up, and nothing once the time is up', () => {
-    expect(clockLine(45 * 60_000)).toEqual({ key: 'timer.left', count: 45 });
-    expect(clockLine(44 * 60_000 + 1)).toEqual({ key: 'timer.left', count: 45 });
-    expect(clockLine(1_000)).toEqual({ key: 'timer.soon', count: 1 });
+    expect(clockLine(45 * 60_000)).toEqual({ count: 45, soon: false });
+    expect(clockLine(44 * 60_000 + 1)).toEqual({ count: 45, soon: false });
+    expect(clockLine(1_000)).toEqual({ count: 1, soon: true });
     expect(clockLine(0)).toBeNull();
     expect(clockLine(-5)).toBeNull();
   });
 
   it('turns to the quiet hint at five minutes, not before', () => {
-    expect(clockLine(SOON_MS + 30_000)).toEqual({ key: 'timer.left', count: 6 });
-    expect(clockLine(SOON_MS)).toEqual({ key: 'timer.soon', count: 5 });
+    expect(clockLine(SOON_MS + 30_000)).toEqual({ count: 6, soon: false });
+    expect(clockLine(SOON_MS)).toEqual({ count: 5, soon: true });
   });
 
   it('counts down from when the view arrived, never from the phone clock against a deadline', () => {

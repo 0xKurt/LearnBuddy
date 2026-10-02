@@ -71,18 +71,23 @@ export function SessionSummary({
   }, [celebrate]);
   const { t } = useTranslation('practice');
   const homework = mode === 'help';
+  // The time ran out (issue #241): how far she got is the strong sentence; that what stayed open
+  // is not wrong follows as a plain one — one bold paragraph of three lines read like a verdict.
+  const timeUp = ranOut && review ? timeUpLines(summary, review.length) : [];
   const lines = (
-    ranOut && review
-      ? timeUpLines(summary, review.length)
+    timeUp.length > 0
+      ? timeUp.filter((l) => l.count !== undefined)
       : summaryLines(summary, mode).map((l) => ({ ...l, answered: undefined }))
   ).map((l) =>
     l.count === undefined ? t(l.key) : t(l.key, { count: l.count, answered: l.answered }),
   );
+  const rest = timeUp.filter((l) => l.count === undefined).map((l) => t(l.key));
   // Homework is about solving it herself, not about topics that "sit".
   const secure = homework ? [] : summary.secure_topics;
   const shaky = homework ? [] : summary.shaky_topics;
   const sentences = [
     ...(lines.length > 0 ? [{ key: 'lines', text: lines.join(' '), strong: true }] : []),
+    ...rest.map((text, i) => ({ key: `rest-${i}`, text, strong: false })),
     ...(secure.length > 0
       ? [{ key: 'secure', text: t('summary.secure', { topics: secure.join(', ') }), strong: false }]
       : []),

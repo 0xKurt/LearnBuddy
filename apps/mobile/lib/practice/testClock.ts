@@ -1,8 +1,8 @@
 // The clock of a practice test she asked to sit with time (issue #241), in words.
 //
 // Calm on purpose: Prüfungsangst is the reason a clock is never the default. So the line says
-// whole minutes, never seconds ticking; it never turns red; and the one change it makes is a
-// quiet sentence at five minutes ("schau in Ruhe, was du noch schaffst"). The server keeps the
+// whole minutes in a small chip, never seconds ticking; it never turns red; and the one change it
+// makes is a quiet sentence at five minutes ("Schau in Ruhe, was du noch schaffst."). The server keeps the
 // deadline (`SessionView.timer`); this only counts down from what it was told.
 
 import type { PracticeSummary } from '@learnbuddy/shared-types/contracts';
@@ -10,17 +10,13 @@ import type { PracticeSummary } from '@learnbuddy/shared-types/contracts';
 /** From here on the line says it gently: the time is getting short. */
 export const SOON_MS = 5 * 60_000;
 
-/** One line in the practice namespace, with its count for the plural. */
-export type ClockLine = { key: 'timer.left' | 'timer.soon'; count: number };
-
 /**
- * What the header says with `leftMs` to go, or null once the time is up. Whole minutes,
- * rounded up: "noch 1 Minute" until the very end, never "noch 0 Minuten".
+ * What the header shows with `leftMs` to go, or null once the time is up: whole minutes, rounded
+ * up — "noch 1 Min." until the very end, never "noch 0" — and whether the quiet hint is due.
  */
-export function clockLine(leftMs: number): ClockLine | null {
+export function clockLine(leftMs: number): { count: number; soon: boolean } | null {
   if (leftMs <= 0) return null;
-  const count = Math.max(1, Math.ceil(leftMs / 60_000));
-  return { key: leftMs <= SOON_MS ? 'timer.soon' : 'timer.left', count };
+  return { count: Math.max(1, Math.ceil(leftMs / 60_000)), soon: leftMs <= SOON_MS };
 }
 
 /**

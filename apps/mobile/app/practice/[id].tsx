@@ -78,7 +78,7 @@ import { ProgressRow, QuestionCard } from '../../components/practice/Question.js
 import { Reexplain } from '../../components/practice/Reexplain.js';
 import { AgainButton } from '../../components/practice/AgainButton.js';
 import { SessionSummary } from '../../components/practice/SessionSummary.js';
-import { TestClock } from '../../components/practice/TestClock.js';
+import { TestClockHeader } from '../../components/practice/TestClock.js';
 import { SelfSolvedCard, SolutionCard } from '../../components/practice/SolutionCard.js';
 import {
   latestPronunciation,
@@ -1065,28 +1065,38 @@ export default function PracticeScreen() {
             contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, gap: 10 }}
             onContentSizeChange={(_, h) => setQuestionContentHeight(Math.round(h))}
           >
-            <ProgressRow
-              position={session.items.indexOf(shown) + 1}
-              total={session.items.length}
-              closed={session.items.filter((i) => i.status !== 'open').length}
-              // The server's word, never the app's guess: while it says more questions are coming,
-              // the total is not the number it will be (issue #220).
-              preparing={session.preparing}
-              right={flagButton ?? disputeButton}
-            />
             {testing && session.timer ? (
-              // A test she asked to sit with time (issue #241): the time left, in the place
-              // of the note and in its quiet voice — the header does not grow for it.
-              <TestClock
+              // A test she asked to sit with time (issue #241): the time left in a small chip at
+              // the end of the same row, and the one line under it — the header does not grow.
+              <TestClockHeader
                 timer={session.timer}
                 receivedAt={query.dataUpdatedAt}
                 onTimeUp={() => setTimeUp(true)}
+                progress={{
+                  position: session.items.indexOf(shown) + 1,
+                  total: session.items.length,
+                  closed: session.items.filter((i) => i.status !== 'open').length,
+                  preparing: session.preparing,
+                }}
               />
-            ) : session.mode === 'help' || testing ? (
-              <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
-                {t(testing ? 'practice:test_note' : 'practice:help_note')}
-              </Text>
-            ) : null}
+            ) : (
+              <>
+                <ProgressRow
+                  position={session.items.indexOf(shown) + 1}
+                  total={session.items.length}
+                  closed={session.items.filter((i) => i.status !== 'open').length}
+                  // The server's word, never the app's guess: while it says more questions are coming,
+                  // the total is not the number it will be (issue #220).
+                  preparing={session.preparing}
+                  right={flagButton ?? disputeButton}
+                />
+                {session.mode === 'help' || testing ? (
+                  <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
+                    {t(testing ? 'practice:test_note' : 'practice:help_note')}
+                  </Text>
+                ) : null}
+              </>
+            )}
             {/* The next question comes in softly from the side (keyed by the question). */}
             <SlideIn
               key={item.id}

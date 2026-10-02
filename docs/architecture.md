@@ -2343,12 +2343,15 @@ word list, so it stays a prompt rule.
   test ends in the same transaction; the scheduler's session sweep ends one she never came back
   to (`lifecycle.ts`). `SessionView.timer` = `{ minutes, remaining_ms, ran_out }`; the app counts
   down from the moment the view arrived (never its wall clock against a deadline), shows whole
-  minutes in the place of the test note — no red, no seconds — and at five minutes one quiet
-  sentence ("schau in Ruhe, was du noch schaffst"), announced once (`TestClock.tsx`,
-  `lib/practice/testClock.ts`). At zero it hands the test in once no answer is on its way.
+  minutes in a small chip at the end of the progress row ("noch 10 Min." — no red, no seconds),
+  the test's one rule on the line under it, and at five minutes that line turns into one quiet
+  sentence ("Schau in Ruhe, was du noch schaffst."), announced once (`TestClock.tsx`,
+  `lib/practice/testClock.ts`). The offer card carries a clock and the minutes. At zero the app
+  hands the test in once no answer is on its way.
   `ran_out` (finished at or after the deadline) makes the result say how far she got ("In der
-  Zeit hast du 2 von 3 Fragen beantwortet") and that what stayed open counts as **nicht
-  beantwortet, not wrong**: open questions are not closed, so `summarize` never counts them.
+  Zeit hast du 2 von 3 Fragen beantwortet", then plainly "Was offen blieb, zählt nicht als
+  falsch.") and the review marks it **"Nicht beantwortet", never wrong**: open questions are
+  not closed, so `summarize` never counts them.
 - **vocab** — pairs (`prompt_lang` → `lang`) from a photographed list or typed (kind `vocab`);
   each pair becomes two questions (both directions, own FSRS state). Rule check: exact after
   normalisation = right; only accents differ = `close` → partially right, the tutor names the

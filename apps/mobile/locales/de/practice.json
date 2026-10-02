@@ -208,7 +208,7 @@
     "time_up_title": "Die Zeit ist um",
     "time_up_line_one": "In der Zeit hast du {{answered}} von {{count}} Frage beantwortet.",
     "time_up_line_other": "In der Zeit hast du {{answered}} von {{count}} Fragen beantwortet.",
-    "time_up_rest": "Was offen blieb, zählt als nicht beantwortet – nicht als falsch.",
+    "time_up_rest": "Was offen blieb, zählt nicht als falsch.",
     "unanswered": "Nicht beantwortet"
   },
   "test_note": "Probetest – eine Antwort pro Frage, keine Tipps. Das Ergebnis siehst du am Ende.",
@@ -232,10 +232,12 @@
     "scroll": "Tabelle, seitlich verschiebbar"
   },
   "timer": {
-    "left_one": "Noch {{count}} Minute · eine Antwort pro Frage, keine Tipps.",
-    "left_other": "Noch {{count}} Minuten · eine Antwort pro Frage, keine Tipps.",
-    "soon_one": "Noch {{count}} Minute – schau in Ruhe, was du noch schaffst.",
-    "soon_other": "Noch {{count}} Minuten – schau in Ruhe, was du noch schaffst.",
+    "chip_one": "noch {{count}} Min.",
+    "chip_other": "noch {{count}} Min.",
+    "left_one": "Noch {{count}} Minute",
+    "left_other": "Noch {{count}} Minuten",
+    "note": "Eine Antwort pro Frage, keine Tipps.",
+    "soon": "Schau in Ruhe, was du noch schaffst.",
     "up": "Die Zeit ist um – dein Ergebnis kommt gleich."
   }
 }
