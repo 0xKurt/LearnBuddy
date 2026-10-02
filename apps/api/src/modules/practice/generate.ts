@@ -61,6 +61,7 @@ import {
 } from './service.js';
 import { MARK_RULES } from './mark.js';
 import { READING_RULES, ReadingDraft, ReadingDraftParse, readingItems } from './reading.js';
+import { COMPLEX_RULES, ComplexDraft, complexItems, MAX_COMPLEX_TASKS } from './complex.js';
 import { MAX_STAFF_ITEMS, STAFF_RULES, staffItems } from './staff.js';
 import {
   MAX_STRUCTURED_ITEMS,
@@ -144,10 +145,19 @@ export const GeneratedSet = z.object({
    * (`practice/reading.ts`), and it is in the schema the model sees ONLY for a reading run.
    */
   reading: ReadingDraft.nullable().default(null),
+  /**
+   * Tasks with several parts (issue #297): shared material and parts a) b) c). Their own list for
+   * the reason `reading` is one — every part's calculation is recomputed from the material before
+   * any of it is a question (`practice/complex.ts`) — and in the schema the model sees ONLY for
+   * such a run (#281: what is not asked for costs no tokens).
+   */
+  complex: z.array(ComplexDraft).max(MAX_COMPLEX_TASKS).default([]),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
-const GENERATED_SCHEMA = toJsonSchema(GeneratedSet.omit({ listen: true, reading: true }));
+const GENERATED_SCHEMA = toJsonSchema(
+  GeneratedSet.omit({ listen: true, reading: true, complex: true }),
+);
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;
@@ -277,6 +287,7 @@ const TASK: Record<StartTopicRequest['kind'], string> = {
   vocab: `The learner TYPED A VOCABULARY LIST. Turn every pair into one "vocab" item exactly as typed (prompt = the foreign word/phrase incl. article, answer = the translation, prompt_lang / lang = their ISO languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). Do not add words. Up to 25 pairs. If there are no pairs, usable = false.`,
   listen: LISTEN_RULES,
   read: `The learner wants to PRACTISE READING COMPREHENSION on what they named. Write ONE reading text in "reading" at their level and in the language they are learning it in (for a text in their own language, that language), and the questions about it. Nothing in items, bars or structured. ${READING_RULES}`,
+  complex: `The learner wants TASKS LIKE A CLASS TEST at their grade on what they named: write 1–${MAX_COMPLEX_TASKS} tasks in "complex", each with its material and its parts, the way the subject asks in a class test (calculate from the material, then interpret or justify; or describe, place and judge a source; or summarise, analyse and take a position on a text). Nothing in items, bars or structured. ${COMPLEX_RULES}`,
   speak: `The learner wants to PRACTISE SPEAKING. If they typed words or sentences in a foreign language, make one "speak" item per sentence or word as typed; if they named a topic or unit, write 5–8 short, useful sentences for their level. lang = the language to speak. prompt = what to say (answer = the same). topic = 2–4 words.`,
   test: `Write a PRACTICE TEST of 8–12 questions on the topic the learner named, like a real class test at their grade: the important points, easy to harder, mixing kinds; answerable in one try (no multi-step long answers).`,
   help: `The learner TYPED A HOMEWORK TASK and wants help to solve it THEMSELVES. One item per task/sub-task, prompt = the task in the learner's own words (copy it), answer = the correct final answer, which the learner never sees — it guides hints. Never add tasks or intermediate questions of your own.`,
@@ -319,6 +330,8 @@ const MODE: Record<StartTopicRequest['kind'], 'practice' | 'help' | 'test'> = {
   listen: 'practice',
   // Reading is practice too: the same card, hints (where in the text to look), repetition.
   read: 'practice',
+  // Tasks with several parts are practice too: hints, repetition, the same card (issue #297).
+  complex: 'practice',
   help: 'help',
 };
 
@@ -330,6 +343,7 @@ const ORIGIN: Record<StartTopicRequest['kind'], 'buddy' | 'typed' | 'homework'> 
   // Buddy wrote the text and the questions, so the card says so ("Frage von Buddy").
   listen: 'buddy',
   read: 'buddy',
+  complex: 'buddy',
   help: 'homework',
 };
 
@@ -345,6 +359,8 @@ const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> =
   listen: new Set([]),
   // The same for a reading run: its questions come out of `reading`, checked against the text.
   read: new Set([]),
+  // The same for a run of tasks with several parts: its questions come out of `complex`.
+  complex: new Set([]),
   help: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
 };
 
@@ -361,6 +377,7 @@ const STRUCTURED: Record<StartTopicRequest['kind'], ReadonlySet<string>> = {
   speak: new Set(),
   listen: new Set(),
   read: new Set(),
+  complex: new Set(),
   help: new Set(),
 };
 
@@ -464,6 +481,8 @@ async function generateSet(
       .catch(null),
     // A reading text that does not fit at all is no reading text; its questions one by one.
     reading: ReadingDraftParse.nullable().default(null).catch(null),
+    // One task that does not fit its schema costs itself; inside a task it is all or nothing.
+    complex: itemsOneByOne(ComplexDraft, MAX_COMPLEX_TASKS),
   });
   // What the model is shown. A listening run gets the listening task and nothing else: no
   // fraction bars (a bar is a maths surface, and this run is about hearing) and no ordinary
@@ -472,10 +491,28 @@ async function generateSet(
   // A reading run, likewise, gets its reading text and nothing else (issue #233).
   const forModel =
     input.kind === 'listen'
-      ? setSchema.omit({ bars: true, items: true, structured: true, reading: true })
+      ? setSchema.omit({ bars: true, items: true, structured: true, reading: true, complex: true })
       : input.kind === 'read'
-        ? setSchema.omit({ bars: true, items: true, structured: true, listen: true, staffs: true })
-        : setSchema.omit({ listen: true, reading: true });
+        ? setSchema.omit({
+            bars: true,
+            items: true,
+            structured: true,
+            listen: true,
+            staffs: true,
+            complex: true,
+          })
+        : input.kind === 'complex'
+          ? // Tasks with several parts and nothing else (issue #297): the one place their schema
+            // is sent, so no other run pays for it.
+            setSchema.omit({
+              bars: true,
+              items: true,
+              structured: true,
+              listen: true,
+              staffs: true,
+              reading: true,
+            })
+          : setSchema.omit({ listen: true, reading: true, complex: true });
   let handedOver = false;
   const onPartial = opts.onFirstItems
     ? (rawSoFar: string) => {
@@ -526,7 +563,7 @@ async function generateSet(
         },
       ],
       schema:
-        sheets || input.kind === 'listen' || input.kind === 'read'
+        sheets || input.kind === 'listen' || input.kind === 'read' || input.kind === 'complex'
           ? toJsonSchema(forModel)
           : GENERATED_SCHEMA,
       maxOutputTokens: 10_000,
@@ -564,6 +601,8 @@ type Prepared = {
   structured: StructuredItem[];
   /** The questions of a reading run, each checked against its text (issue #233). */
   reading: StoredItem[];
+  /** The parts of tasks with several parts, each task recomputed from its material (issue #297). */
+  complex: StoredItem[];
 };
 
 /**
@@ -659,6 +698,7 @@ function preparedFrom(
     staffs,
     structured,
     reading: input.kind === 'read' ? readingItems(set.reading, learner.locale) : [],
+    complex: input.kind === 'complex' ? set.complex.flatMap((c) => complexItems(c)) : [],
   };
 }
 
@@ -765,6 +805,7 @@ async function prepareTopic(
       staffs: [],
       structured: [],
       reading: [],
+      complex: [],
     },
     { now, goalId: sheets?.goalId ?? null, pendingUntil: new Date(now.getTime() + REST_WINDOW_MS) },
   );
@@ -812,7 +853,8 @@ async function store(
       prepared.listening.length +
       prepared.staffs.length +
       prepared.structured.length +
-      prepared.reading.length ===
+      prepared.reading.length +
+      prepared.complex.length ===
       0
   ) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
@@ -833,6 +875,7 @@ async function store(
           ...prepared.listening,
           ...prepared.staffs,
           ...prepared.reading,
+          ...prepared.complex,
         ],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
@@ -921,6 +964,7 @@ async function addTheRest(
     ...prepared.listening,
     ...prepared.staffs,
     ...prepared.reading,
+    ...prepared.complex,
   );
   if (rest.length === 0) {
     await givenUpOnPreparing(deps.db, learner.id, sessionId);

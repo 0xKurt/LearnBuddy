@@ -6,7 +6,8 @@
     "vocab": "Test my vocab",
     "speak": "Practise speaking",
     "listen": "Practise listening",
-    "read": "Practise reading"
+    "read": "Practise reading",
+    "complex": "Exam-style tasks"
   },
   "homework": {
     "title": "Homework help",

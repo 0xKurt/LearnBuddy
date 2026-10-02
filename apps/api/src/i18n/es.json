@@ -260,6 +260,10 @@
       "false": "Falso",
       "look": "Vuelve a leer las líneas {{from}} a {{to}}.",
       "look_line": "Vuelve a leer la línea {{from}}."
+    },
+    "complex": {
+      "carried": "Bien continuado – con tu resultado de {{parts}}. Vale la pena revisarlo otra vez.",
+      "and": "y"
     }
   },
   "contact": {

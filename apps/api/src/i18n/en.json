@@ -260,6 +260,10 @@
       "false": "False",
       "look": "Read lines {{from}}–{{to}} again.",
       "look_line": "Read line {{from}} again."
+    },
+    "complex": {
+      "carried": "Carried on correctly – with your result from {{parts}}. That one is worth another look.",
+      "and": "and"
     }
   },
   "contact": {

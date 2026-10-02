@@ -254,5 +254,11 @@
     "evidence": "Dans le texte : l. {{from}}–{{to}}",
     "evidence_one": "Dans le texte : l. {{from}}",
     "scroll_hint": "Le texte défile tout seul."
+  },
+  "complex": {
+    "label": "Documents",
+    "show": "Voir les documents",
+    "steps_a11y": "Question {{current}}",
+    "steps_a11y_done": "Question {{current}}, faites : {{done}}"
   }
 }

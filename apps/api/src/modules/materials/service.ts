@@ -36,6 +36,7 @@ import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.
 import { StorageError } from '../../storage/gateway.js';
 import { insertItems, samePrompt, usableItems } from '../practice/items.js';
 import { readingItems } from '../practice/reading.js';
+import { complexItems } from '../practice/complex.js';
 import { structuredItems } from '../practice/structured.js';
 import { createSession } from '../practice/service.js';
 import {
@@ -986,6 +987,8 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     ...structuredItems(x.structured, SHEET_STRUCTURED, x.structured.length),
     // And the questions of each reading text, every one checked against its lines (#233).
     ...x.reading.flatMap((r) => readingItems(r, learner.locale)),
+    // And the parts of each task with several parts, the task recomputed from its material (#297).
+    ...x.complex.flatMap((c) => complexItems(c)),
   ];
   const pageProblems = pageProblemsOf(x.pages, m.photo_count);
   // "Not readable" with questions and a page that was read: one bad page must not
@@ -1976,6 +1979,8 @@ export async function materialItems(
       listen: null,
       // The list names the questions; the text they are about is read in the session (#233).
       passage: null,
+      // The same for the material of a task with several parts (#297): worked in the session.
+      complex: null,
       result: resultOf(r),
     })),
   };

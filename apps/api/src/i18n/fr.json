@@ -260,6 +260,10 @@
       "false": "Faux",
       "look": "Relis les lignes {{from}} à {{to}}.",
       "look_line": "Relis la ligne {{from}}."
+    },
+    "complex": {
+      "carried": "Bien poursuivi – avec ton résultat de {{parts}}. Ça vaut la peine d’y rejeter un œil.",
+      "and": "et"
     }
   },
   "contact": {

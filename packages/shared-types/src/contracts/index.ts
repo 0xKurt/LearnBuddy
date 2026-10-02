@@ -10,4 +10,5 @@ export * from './structured.js';
 export * from './rubric.js';
 export * from './listen.js';
 export * from './reading.js';
+export * from './complex.js';
 export * from './learning.js';

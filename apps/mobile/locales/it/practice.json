@@ -254,5 +254,11 @@
     "evidence": "Nel testo: r. {{from}}–{{to}}",
     "evidence_one": "Nel testo: r. {{from}}",
     "scroll_hint": "Il testo scorre da solo."
+  },
+  "complex": {
+    "label": "Materiale",
+    "show": "Mostra il materiale",
+    "steps_a11y": "Punto {{current}}",
+    "steps_a11y_done": "Punto {{current}}, fatti: {{done}}"
   }
 }

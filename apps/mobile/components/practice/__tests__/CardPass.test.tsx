@@ -44,6 +44,7 @@ const card = (over: Partial<SessionItemView['item']> = {}): SessionItemView => (
     task_view: null,
     listen: null,
     passage: null,
+    complex: null,
     ...over,
   },
   status: 'open',

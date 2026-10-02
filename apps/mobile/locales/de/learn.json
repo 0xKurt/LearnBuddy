@@ -6,7 +6,8 @@
     "vocab": "Vokabeln abfragen",
     "speak": "Aussprache üben",
     "listen": "Hörverstehen üben",
-    "read": "Leseverständnis üben"
+    "read": "Leseverständnis üben",
+    "complex": "Aufgaben wie in der Arbeit"
   },
   "homework": {
     "title": "Hilfe bei Hausaufgaben",

@@ -11,6 +11,7 @@ import {
   isStructuredKind,
   type AnswerRequest,
   type CurriculumRegion,
+  type ComplexTask,
   type Figure,
   type ItemKind,
   type ItemView,
@@ -36,6 +37,15 @@ import { bumpContext } from '../buddy/plan.js';
 import { pickAnswers, surfaceOf, taskOf, untriedPicks } from './bars.js';
 import { listenRefs, listenTaskOf } from './listen.js';
 import { evidenceOf, passageOf, passageRefs } from './reading.js';
+import {
+  carriedKey,
+  complexRefs,
+  complexTaskOf,
+  complexViewOf,
+  labelsOf,
+  tutorMaterial,
+  type EarlierPart,
+} from './complex.js';
 import {
   differentNumber,
   equationDetail,
@@ -174,6 +184,11 @@ export type ItemRow = {
    * is open: it is what she reads to answer, not the answer.
    */
   read_passage: unknown;
+  /**
+   * A part of a task with several parts (issue #297, migration 0107), or null. Read through
+   * `complexTaskOf`, never trusted as it stands. Its material is shown; its calculation is not.
+   */
+  complex_task: unknown;
   /** Where in the sheet (or, for a reading question, in its text) the answer stands. */
   source_excerpt: string | null;
   /**
@@ -755,6 +770,16 @@ function passageViewOf(
   return p && ref ? { ref, title: p.title, lines: p.lines, lang: p.lang } : null;
 }
 
+/** A part's material and place in its task, with the task's alias (issue #297). */
+function complexViewFor(
+  row: Pick<ItemRow, 'id' | 'complex_task'>,
+  refs: ReadonlyMap<string, string>,
+): ItemView['complex'] {
+  const task = complexTaskOf(row.complex_task);
+  const ref = refs.get(row.id);
+  return task && ref ? complexViewOf(task, ref) : null;
+}
+
 /** The crop that goes with the question, or null (contract: ItemImage). */
 function imageOf(row: ItemImageRow, urls: Map<string, string>): ItemView['image'] {
   const url = row.image_path ? urls.get(row.image_path) : undefined;
@@ -778,8 +803,8 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.task, i.listen_task, i.staff_task, i.read_passage, i.source_excerpt,
-            i.archived_at,
+            i.bar_task, i.task, i.listen_task, i.staff_task, i.read_passage, i.complex_task,
+            i.source_excerpt, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -828,6 +853,9 @@ export async function sessionView(
   // Which text each reading question is about ('t1', 't2' …): the app keeps one text open, where
   // she left it, across the questions that share it (issue #233).
   const reading = passageRefs(items);
+  // Which task with several parts each part belongs to ('k1', 'k2' …): the app keeps its material
+  // pinned, folded or open, across the parts (issue #297).
+  const tasks = complexRefs(items);
   // Homework never shows the solution; a test shows the answers once it is finished.
   const revealAllowed = s.mode !== 'help' && !(s.mode === 'test' && active);
   // A finished test shows every solution, also of the questions she never got to (audit M-36).
@@ -881,6 +909,9 @@ export async function sessionView(
         // The text a reading question is about, with its lines (issue #233). Open or closed: it
         // is what she reads to answer, and what she reviews the answer in.
         passage: passageViewOf(i, reading),
+        // The material of a task with several parts and where this part stands in it (issue
+        // #297). Open or closed, like a reading text: she works from it and reviews in it.
+        complex: complexViewFor(i, tasks),
       },
       status: i.status,
       attempts: i.attempts,
@@ -1097,6 +1128,32 @@ const TYPO_REPLY: Record<TypoShape, MessageKey> = {
   wrong: 'practice.typo_wrong',
 };
 
+/**
+ * The parts of the same task before this one in this run (issue #297): their keys and her latest
+ * answer to each — an answer, not a request for help. A part the run does not hold is simply not
+ * there, and its result is then the key's.
+ */
+async function earlierParts(db: Db, sessionId: string, task: ComplexTask): Promise<EarlierPart[]> {
+  const rows = await db.query<{
+    part: number;
+    prompt: string;
+    answer: string;
+    hers: string | null;
+  }>(
+    `select (i.complex_task->>'part')::int as part, i.prompt, i.answer,
+            (select pt.text from practice_turns pt
+              where pt.session_id = si.session_id and pt.item_id = i.id and pt.role = 'learner'
+                and coalesce(pt.verdict, '') <> 'not_an_attempt'
+              order by pt.seq desc limit 1) as hers
+       from session_items si join items i on i.id = si.item_id
+      where si.session_id = $1 and i.complex_task->>'group' = $2
+        and (i.complex_task->>'part')::int < $3
+      order by part`,
+    [sessionId, task.group, task.part],
+  );
+  return rows.map((r) => ({ part: r.part, prompt: r.prompt, key: r.answer, hers: r.hers }));
+}
+
 export async function answerItem(
   deps: Deps,
   learner: PracticeLearner,
@@ -1232,6 +1289,13 @@ export async function answerItem(
   // The text a reading question is about, if any (issue #233): only the content is judged, as
   // for a listening task, and the tutor judges against this text.
   const passage = passageOf(item.read_passage);
+  // A part of a task with several parts, if it is one (issue #297): what it builds on, and her own
+  // answers there — for the Folgefehler below and for the tutor, who judges with her results.
+  const complexTask = complexTaskOf(item.complex_task);
+  const earlier =
+    complexTask !== null && complexTask.uses.length > 0
+      ? await earlierParts(deps.db, sessionId, complexTask)
+      : [];
   // A request for help is not an answer: nothing for the rules to check.
   // Two checks that code does ENTIRELY on its own and that therefore come before the key
   // comparison: every part of a structured answer (issues #228–#230), right or not yet right,
@@ -1262,10 +1326,34 @@ export async function answerItem(
           );
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
-  const rule: RuleVerdict =
+  const keyRule: RuleVerdict =
     byRules === 'unknown' && !hintRequest && session.mode !== 'help' && differentNumber(item, text)
       ? 'incorrect'
       : byRules;
+  // Folgefehler (issue #297), as German schools mark it: not right against the key, but right
+  // with HER result of the part it builds on — then it is right. Code recomputes this part's
+  // calculation with her earlier values and asks the SAME `ruleCheck` again; no second checker,
+  // no model. Only for a part code can calculate; an open part is the tutor's, who is told her
+  // earlier answers (`tutorMaterial`).
+  let carriedFrom: number[] | null = null;
+  if (!hintRequest && keyRule !== 'correct' && complexTask?.calc && input.text) {
+    const carried = carriedKey(
+      complexTask,
+      item.answer,
+      new Map(earlier.map((e) => [e.part, e.key])),
+      new Map(earlier.flatMap((e) => (e.hers === null ? [] : [[e.part, e.hers] as const]))),
+    );
+    if (
+      carried &&
+      ruleCheck(
+        { ...item, answer: carried.key, accepted_answers: [] },
+        { text: input.text, choice: null },
+      ) === 'correct'
+    ) {
+      carriedFrom = carried.from;
+    }
+  }
+  const rule: RuleVerdict = carriedFrom !== null ? 'correct' : keyRule;
   const nextHint = givesHints(session.mode) ? (item.hints[item.prepared_hints_used] ?? null) : null;
   // Two options and one was wrong: tapping the other one is no knowledge. A wrong choice that
   // leaves a single untried option closes the question with the solution explained — shown,
@@ -1317,10 +1405,16 @@ export async function answerItem(
     judged = {
       verdict: 'correct',
       evaluatedBy: 'rule',
-      reply: t(
-        learner.locale,
-        session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
-      ),
+      reply:
+        carriedFrom !== null
+          ? // Right with her own earlier result: said, so she knows where to look again.
+            t(learner.locale, 'practice.complex.carried', {
+              parts: labelsOf(carriedFrom, t(learner.locale, 'practice.complex.and')),
+            })
+          : t(
+              learner.locale,
+              session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
+            ),
       gaveHint: false,
       revealed: false,
     };
@@ -1487,12 +1581,16 @@ export async function answerItem(
                 // without it the tutor would judge an answer about a text it cannot read.
                 material: listenTask
                   ? listenTask.text
-                  : passage
-                    ? // Numbered, so a reply can point to a line the way the card shows it.
-                      passage.lines.map((l, n) => `${n + 1}  ${l}`).join('\n')
-                    : item.extracted_text
-                      ? item.extracted_text.slice(0, MATERIAL_CHARS)
-                      : null,
+                  : complexTask
+                    ? // The task's material and her answers to the parts this one builds on, so
+                      // an open part is judged with HER results (Folgefehler, issue #297).
+                      tutorMaterial(complexTask, earlier)
+                    : passage
+                      ? // Numbered, so a reply can point to a line the way the card shows it.
+                        passage.lines.map((l, n) => `${n + 1}  ${l}`).join('\n')
+                      : item.extracted_text
+                        ? item.extracted_text.slice(0, MATERIAL_CHARS)
+                        : null,
                 preferences: preferences.map((p) => p.statement),
                 // What her Bundesland expects at this question's curriculum place — or, when
                 // no state rule applies, that none does and the judgement stays cautious

@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
+import { ComplexView } from './complex.js';
 import { Figure } from './figure.js';
 import { ListenRef } from './listen.js';
 import { PassageLines, PassageView } from './reading.js';
@@ -398,6 +399,13 @@ export const ItemView = z.object({
    * Questions about one text share the `ref`. Null for every other question.
    */
   passage: PassageView.nullable().default(null).catch(null),
+  /**
+   * A part of a task with several parts (issue #297, `contracts/complex.ts`): the shared material
+   * shown above it — a text with its line numbers, a figure — and where this part stands in the
+   * task (a · b · c). Parts of one task share the `ref`. Never a key and never a calculation.
+   * Null for every other question.
+   */
+  complex: ComplexView.nullable().default(null).catch(null),
 });
 export type ItemView = z.infer<typeof ItemView>;
 
@@ -716,11 +724,13 @@ export const StartTopicRequest = z.object({
    * speak: sentences/words to say aloud · listen: a spoken text with questions about it
    * (Hörverstehen, issue #210 — refused before any model call when there is no voice to
    * read it) · read: a text she reads with questions about it (Leseverständnis, issue #233) ·
+   * complex: tasks like a class test from grade 8 on — shared material and parts a) b) c) that
+   * build on each other (issue #297) ·
    * help: a homework task the learner typed ·
    * test: a practice test on a topic (one try per question, no hints, results at the
    * end). Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
    */
-  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'read', 'help', 'test']),
+  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'read', 'complex', 'help', 'test']),
   text: z.string().trim().min(2).max(3000),
   subject: z.string().trim().max(60).nullable().optional(),
   /**

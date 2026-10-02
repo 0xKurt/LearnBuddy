@@ -24,6 +24,7 @@ import {
 } from '../practice/structured.js';
 import { MARK_RULES } from '../practice/mark.js';
 import { READING_RULES, ReadingDraft, ReadingDraftParse } from '../practice/reading.js';
+import { COMPLEX_RULES, ComplexSheetDraft, MAX_COMPLEX_TASKS } from '../practice/complex.js';
 import { TABLE_RULES } from '../practice/table.js';
 
 export const EXTRACT_PROMPT_VERSION = 'extract.v7.2';
@@ -198,6 +199,13 @@ export const ExtractionResult = z.object({
    */
   reading: z.array(ReadingDraft).max(READINGS_PER_READING).default([]),
   /**
+   * Tasks with material and lettered parts a) b) c) that build on each other (issue #297): one
+   * entry per task instead of loose questions. Checked by code before anything is stored
+   * (`practice/complex.ts`): every calculation is recomputed from the material, every dependency
+   * points at an earlier part — or none of the task's parts is stored.
+   */
+  complex: z.array(ComplexSheetDraft).max(MAX_COMPLEX_TASKS).default([]),
+  /**
    * The sheet holds more questions or word pairs than this answer lists (issue #150).
    * Saying so is what lets the rest be read; guessing from a full list would mistake a
    * sheet that happens to have exactly as many for one that was cut off.
@@ -251,6 +259,7 @@ export const ExtractionParse = ExtractionResult.extend({
   items: itemsOneByOne(ItemDraft, ITEMS_PER_READING),
   structured: itemsOneByOne(StructuredDraft, STRUCTURED_PER_READING),
   reading: itemsOneByOne(ReadingDraftParse, READINGS_PER_READING),
+  complex: itemsOneByOne(ComplexSheetDraft, MAX_COMPLEX_TASKS),
 });
 
 /**
@@ -260,6 +269,11 @@ export const ExtractionParse = ExtractionResult.extend({
 export const HomeworkExtraction = ExtractionResult.extend({
   items: z.array(ItemDraft.omit({ worked_solution: true })).max(12),
   structured: z.array(StructuredDraftHomework).max(STRUCTURED_PER_READING).default([]),
+}).omit({
+  // Homework is helped with sub-task by sub-task, as printed (issue #297 keeps it that way: help
+  // never shows a solution, so there is no result of a) to carry into b) on screen) — and what
+  // the reading is not asked for costs it no tokens (#281).
+  complex: true,
 });
 
 /**
@@ -350,6 +364,7 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${MATCH_RULES} A task on the sheet that asks to link given things to each other or sort them into given groups becomes one such task in "structured", never questions in items.
    - ${MARK_RULES} A task on the sheet that asks to mark, underline, circle or find words, errors, commas or syllables in a given text becomes one such task in "structured", never questions in items.
    - ${READING_RULES} A text on the sheet with questions about it (a reading text, a source, a text to translate with questions) becomes one entry in "reading": its lines exactly as printed and its questions — the printed questions, or when none are printed, ones you write; never the same questions again in items.
+   - ${COMPLEX_RULES} A task on the sheet with material (a text, a source, a table, measured values, a function) and lettered sub-tasks a), b), c) that belong to it becomes ONE entry in "complex": its material and its sub-tasks as its parts, as printed — never single questions in items. A sheet's figure is transcribed into its lines (a table row by row, a function as its equation).
    - Otherwise 8–15 questions — and none at all for a sheet whose every task went into not_practicable. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}

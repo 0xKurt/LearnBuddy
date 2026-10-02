@@ -254,5 +254,11 @@
     "evidence": "Im Text: Z. {{from}}–{{to}}",
     "evidence_one": "Im Text: Z. {{from}}",
     "scroll_hint": "Der Text scrollt für sich."
+  },
+  "complex": {
+    "label": "Material",
+    "show": "Material zeigen",
+    "steps_a11y": "Teilaufgabe {{current}}",
+    "steps_a11y_done": "Teilaufgabe {{current}}, erledigt: {{done}}"
   }
 }

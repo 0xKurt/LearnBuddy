@@ -66,6 +66,7 @@ import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
 import { EvidenceNote, PassagePanel } from '../../components/practice/PassagePanel.js';
+import { TaskSteps } from '../../components/practice/TaskSteps.js';
 import {
   emptyStaffAnswer,
   StaffAnswer,
@@ -261,6 +262,16 @@ export default function PracticeScreen() {
    */
   const { text: foldedKept, setText: keepFolded } = useDraft(`session.${id}.folded`);
   const foldedTexts = new Set(foldedKept.split(' ').filter((r) => r !== ''));
+  /** Folds or opens a text or a task's material (by its alias), remembered for this run. */
+  function toggleFolded(ref: string | undefined): void {
+    if (ref === undefined) return;
+    keepFolded((was) => {
+      const next = new Set(was.split(' ').filter((r) => r !== ''));
+      if (next.has(ref)) next.delete(ref);
+      else next.add(ref);
+      return [...next].join(' ');
+    });
+  }
   /**
    * Die Notenzeile, die sie geschrieben hat, und zu welcher Frage (issue #226). Aus demselben
    * Grund an der Frage festgemacht wie die Anordnung darüber: die nächste Frage beginnt mit einer
@@ -1009,6 +1020,14 @@ export default function PracticeScreen() {
   const aroundCard = Math.max(0, questionContentHeight - cardHeight);
   const cardMin = middleHeight > 0 && cardHeight > 0 ? Math.max(0, spare - aroundCard) : 0;
 
+  /** The parts of a task she has closed (issue #297): read off the run, never counted out loud. */
+  const partsDone = (ref: string): Set<string> =>
+    new Set(
+      session.items.flatMap((i) =>
+        i.item.complex?.ref === ref && i.status !== 'open' ? [i.item.complex.label] : [],
+      ),
+    );
+
   // No scrolling to find what matters (CLAUDE.md rule 16): the question stays on top,
   // the way to answer stays at the bottom, and only the conversation between them
   // grows — like a chat, newest at the bottom.
@@ -1069,20 +1088,35 @@ export default function PracticeScreen() {
                 key={item.passage.ref}
                 passage={item.passage}
                 open={!foldedTexts.has(item.passage.ref)}
-                onToggle={() => {
-                  const ref = item.passage?.ref;
-                  if (ref === undefined) return;
-                  keepFolded((was) => {
-                    const next = new Set(was.split(' ').filter((r) => r !== ''));
-                    if (next.has(ref)) next.delete(ref);
-                    else next.add(ref);
-                    return [...next].join(' ');
-                  });
-                }}
+                onToggle={() => toggleFolded(item.passage?.ref)}
                 maxHeight={Math.round(
                   windowHeight * (item.task_view ? PASSAGE_SHARE_BOARD : PASSAGE_SHARE),
                 )}
                 highlight={shown.status !== 'open' ? shown.evidence : null}
+                screenTitle={title}
+              />
+            ) : null}
+            {/* The material of a task with several parts (issue #297): the same panel, keyed by
+                the task, so it stays put — folded or open, scrolled — from a) to b) to c). Its
+                heading says where she is (a · b · c), without a count. */}
+            {item.complex ? (
+              <PassagePanel
+                key={item.complex.ref}
+                passage={item.complex}
+                figure={item.complex.figure}
+                label={t('practice:complex.label')}
+                showLabel={t('practice:complex.show')}
+                steps={
+                  <TaskSteps
+                    labels={item.complex.labels}
+                    current={item.complex.label}
+                    done={partsDone(item.complex.ref)}
+                  />
+                }
+                open={!foldedTexts.has(item.complex.ref)}
+                onToggle={() => toggleFolded(item.complex?.ref)}
+                maxHeight={Math.round(windowHeight * PASSAGE_SHARE)}
+                highlight={null}
                 screenTitle={title}
               />
             ) : null}
@@ -1095,10 +1129,12 @@ export default function PracticeScreen() {
                 <SpeakCard item={item} turns={turns} live={speakLive} sessionId={session.id} />
               ) : (
                 <QuestionCard
-                  prompt={item.prompt}
+                  // A part of a task carries its letter, as on the sheet (issue #297).
+                  prompt={item.complex ? `${item.complex.label}) ${item.prompt}` : item.prompt}
                   // A reading question's topic is its text's, and the text stands right above
-                  // with its heading (issue #233): the same words a third time are noise.
-                  topic={item.passage ? null : item.topic}
+                  // with its heading (issue #233): the same words a third time are noise. The
+                  // same for the material of a task (#297).
+                  topic={item.passage || item.complex ? null : item.topic}
                   figure={item.figure}
                   figureMaxHeight={Math.round(windowHeight * 0.14)}
                   image={item.image}

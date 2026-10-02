@@ -254,5 +254,11 @@
     "evidence": "En el texto: l. {{from}}–{{to}}",
     "evidence_one": "En el texto: l. {{from}}",
     "scroll_hint": "El texto se desplaza por sí solo."
+  },
+  "complex": {
+    "label": "Material",
+    "show": "Ver el material",
+    "steps_a11y": "Apartado {{current}}",
+    "steps_a11y_done": "Apartado {{current}}, hechos: {{done}}"
   }
 }

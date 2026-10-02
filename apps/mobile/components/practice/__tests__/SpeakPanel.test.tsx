@@ -102,6 +102,7 @@ const ITEM: ItemView = {
   task_view: null,
   listen: null,
   passage: null,
+  complex: null,
 };
 
 const RECORDING: Recorded = {

@@ -127,7 +127,7 @@ export const ActionSummary = z.discriminatedUnion('tool', [
   /** Buddy offers to start learning; the app shows a button that starts it (POST /practice/topic). */
   z.object({
     tool: z.literal('offer_learning'),
-    kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'read', 'help', 'test']),
+    kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'read', 'complex', 'help', 'test']),
     text: z.string(),
     /** A planned test it is for: its questions stay within that test's sheets. */
     goal_id: Uuid.nullable().default(null),

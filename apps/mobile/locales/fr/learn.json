@@ -6,7 +6,8 @@
     "vocab": "Réviser le vocabulaire",
     "speak": "Travailler la prononciation",
     "listen": "Compréhension orale",
-    "read": "Compréhension écrite"
+    "read": "Compréhension écrite",
+    "complex": "Exercices type contrôle"
   },
   "homework": {
     "title": "Aide aux devoirs",

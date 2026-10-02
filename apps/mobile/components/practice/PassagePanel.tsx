@@ -15,9 +15,14 @@
 //
 // Der Panel bleibt stehen, solange die Fragen denselben Text haben (`ref`): eingeklappt bleibt
 // eingeklappt, und wo sie hingescrollt hat, bleibt sie.
+//
+// Derselbe Panel trägt das MATERIAL einer Aufgabe mit Teilaufgaben (issue #297): ihren Text mit
+// Zeilennummern und, darunter, ihre Figur (ein Graph, eine Tabelle) — in derselben scrollenden
+// Fläche, damit es weiterhin genau EINE gibt. Im Kopf steht dann, wo sie in der Aufgabe ist
+// (`steps`, a · b · c). Ein zweiter Panel für Material wäre derselbe Mechanismus noch einmal (#296).
 
-import type { PassageLines, PassageView } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useRef } from 'react';
+import type { Figure, PassageLines } from '@learnbuddy/shared-types/contracts';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
@@ -26,6 +31,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
+import { ZoomableFigure } from '../math/ZoomableFigure.js';
 
 /** One line of the text, as it is set: the height the scroll offset is computed from. */
 export const LINE_HEIGHT = 22;
@@ -35,7 +41,16 @@ export function numbered(n: number): boolean {
 }
 
 type Props = {
-  passage: PassageView;
+  /** The text, line by line as printed (a reading text, or the material of a task, #297). */
+  passage: { title: string | null; lines: readonly string[] };
+  /** The material's figure, drawn under its lines and scrolling with them (issue #297). */
+  figure?: Figure | null;
+  /** What the panel is called when the text has no own heading ("Lesetext", "Material"). */
+  label?: string;
+  /** Show / fold, in the panel's own words (default: the reading text's). */
+  showLabel?: string;
+  /** Where she is in the task (a · b · c), at the end of the heading row (issue #297). */
+  steps?: ReactNode;
   /** Shown in full (her choice, kept per text by the screen). */
   open: boolean;
   onToggle: () => void;
@@ -52,6 +67,10 @@ type Props = {
 
 export function PassagePanel({
   passage,
+  figure = null,
+  label,
+  showLabel,
+  steps,
   open,
   onToggle,
   maxHeight,
@@ -64,7 +83,7 @@ export function PassagePanel({
   const title =
     passage.title !== null && passage.title.trim() !== screenTitle?.trim()
       ? passage.title
-      : t('reading.label');
+      : (label ?? t('reading.label'));
 
   // A closed question shows where its answer stands: the text scrolls there by itself.
   useEffect(() => {
@@ -101,6 +120,7 @@ export function PassagePanel({
         >
           {title}
         </Text>
+        {steps}
         <Btn
           size="sm"
           variant="ghost"
@@ -109,7 +129,7 @@ export function PassagePanel({
           onPress={onToggle}
           accessibilityHint={t(open ? 'reading.hide_hint' : 'reading.show_hint')}
         >
-          {t(open ? 'reading.hide' : 'reading.show')}
+          {open ? t('reading.hide') : (showLabel ?? t('reading.show'))}
         </Btn>
       </View>
       {open ? (
@@ -173,6 +193,16 @@ export function PassagePanel({
               </View>
             );
           })}
+          {figure ? (
+            <View
+              style={{
+                paddingHorizontal: SPACE.md,
+                paddingTop: passage.lines.length > 0 ? SPACE.sm : 0,
+              }}
+            >
+              <ZoomableFigure figure={figure} maxHeight={Math.round(maxHeight * 0.9)} />
+            </View>
+          ) : null}
         </ScrollView>
       ) : null}
     </View>

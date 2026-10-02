@@ -14,6 +14,8 @@ export const KIND_ICON: Record<TopicKind, IconName> = {
   listen: 'speak',
   // Leseverständnis: a page of text (issue #233) — the book above is her vocabulary list.
   read: 'file',
+  // Aufgaben wie in der Arbeit: material and its parts together, like a folder (issue #297).
+  complex: 'folder',
   help: 'pencil',
 };
 
@@ -25,6 +27,7 @@ export const KIND_LABEL: Record<TopicKind, string> = {
   speak: 'start.speak',
   listen: 'start.listen',
   read: 'start.read',
+  complex: 'start.complex',
   help: 'start.homework',
 };
 
@@ -39,5 +42,7 @@ export const KIND_EXAMPLES: Record<TopicKind, number> = {
   listen: 0,
   // Reading is asked for in the chat too (issue #233), so there is no sheet to offer them in.
   read: 0,
+  // And tasks with several parts (issue #297): Buddy offers them when she asks in the chat.
+  complex: 0,
   help: 0,
 };

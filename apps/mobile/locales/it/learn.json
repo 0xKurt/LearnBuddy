@@ -6,7 +6,8 @@
     "vocab": "Ripassare i vocaboli",
     "speak": "Esercitare la pronuncia",
     "listen": "Comprensione orale",
-    "read": "Comprensione del testo"
+    "read": "Comprensione del testo",
+    "complex": "Esercizi tipo verifica"
   },
   "homework": {
     "title": "Aiuto con i compiti",

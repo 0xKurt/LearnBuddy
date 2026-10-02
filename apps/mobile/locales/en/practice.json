@@ -254,5 +254,11 @@
     "evidence": "In the text: l. {{from}}–{{to}}",
     "evidence_one": "In the text: l. {{from}}",
     "scroll_hint": "The text scrolls on its own."
+  },
+  "complex": {
+    "label": "Material",
+    "show": "Show material",
+    "steps_a11y": "Part {{current}}",
+    "steps_a11y_done": "Part {{current}}, done: {{done}}"
   }
 }

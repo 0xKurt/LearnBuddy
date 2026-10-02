@@ -142,6 +142,9 @@ export async function selectPracticeItems(
           and i.listen_task is null
           -- A free text is not a test question (issue #197).
           and ($12::text <> 'test' or i.kind <> 'long')
+          -- Nor is a part of a task with several parts (issue #297): its parts come together or
+          -- not at all, and an open part (begründe, beurteile) would be a free text in the test.
+          and ($12::text <> 'test' or i.complex_task is null)
           and ($2::uuid is null or m.goal_id = $2)
           and ($3::uuid is null or i.subject_id = $3)
           and ($4::uuid is null or i.material_id = $4)
@@ -212,5 +215,41 @@ export async function selectPracticeItems(
       pool = [...focused, ...rest];
     }
   }
-  return (count === 'all' ? pool : pool.slice(0, count)).map((c) => c.id);
+  const chosen = (count === 'all' ? pool : pool.slice(0, count)).map((c) => c.id);
+  return withWholeTasks(db, learnerId, chosen);
+}
+
+/**
+ * A part of a task with several parts never comes alone (issue #297): b) builds on a), and the
+ * material belongs to the whole. Where the selection holds any part of a task, the whole task
+ * stands at the place of its first part, a) b) c) in order — the selection decides WHICH tasks,
+ * never which half of one. One query, and none at all when nothing chosen is a part.
+ */
+async function withWholeTasks(db: Db, learnerId: string, chosen: string[]): Promise<string[]> {
+  if (chosen.length === 0) return chosen;
+  const parts = await db.query<{ id: string; grp: string; part: number }>(
+    `select s.id, s.complex_task->>'group' as grp, (s.complex_task->>'part')::int as part
+       from items s
+      where s.learner_id = $1 and s.archived_at is null and s.complex_task is not null
+        and s.complex_task->>'group' in (
+          select c.complex_task->>'group' from items c
+           where c.id = any($2::uuid[]) and c.learner_id = $1 and c.complex_task is not null)
+      order by grp, part`,
+    [learnerId, chosen],
+  );
+  if (parts.length === 0) return chosen;
+  const groupOf = new Map(parts.map((p) => [p.id, p.grp]));
+  const out: string[] = [];
+  const placed = new Set<string>();
+  for (const id of chosen) {
+    const grp = groupOf.get(id);
+    if (grp === undefined) {
+      out.push(id);
+      continue;
+    }
+    if (placed.has(grp)) continue;
+    placed.add(grp);
+    out.push(...parts.filter((p) => p.grp === grp).map((p) => p.id));
+  }
+  return out;
 }
