@@ -9,6 +9,7 @@
 
 import {
   ChartRead,
+  Figure as FigureSchema,
   hasSeveralParts,
   ModelFigure,
   PartsTask,
@@ -31,6 +32,7 @@ import { z } from 'zod';
 import type { Db } from '../../lib/db.js';
 import { CurriculumPointId } from '../curriculum/state.js';
 import { dollarMathField, dollarMathRuns } from './dollarMath.js';
+import { figureHolds } from './figureCheck.js';
 import { kindOfForm, solutionOfParts, usablePartsTask } from './parts.js';
 import { usableRubric } from './rubric.js';
 import { mentionsSolution } from './tutor.js';
@@ -56,7 +58,7 @@ export const ANSWER_FORM_RULES = `A question asks for exactly the whole answer, 
 /** When case, ß and punctuation decide (decision D-2). */
 export const SPELLING_RULES = `spelling: "strict" when the task practises spelling, capitalisation or punctuation; "gentle" when they don't matter for the answer; null otherwise (the subject decides).`;
 
-export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table, a chart) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). Otherwise figure is null.
+export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table, a structural formula, a chart) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). A geometry figure is drawn to scale and checked: its coordinates must give every stated angle (deg) and every side length (value, one unit for all), a force arrow's length is proportional to its value, and a resultant arrow is the vector sum of the others; label the one measure the question asks for "?" — the key must be that measure. A molecule is atoms (aliases a1, a2 …, hydrogens counted in h, charge) and bonds; the app computes the lone pairs and checks every shell, so an atom whose octet does not hold costs the question; set "ask" when the key is its formula, its number of lone pairs or its molar mass. Otherwise figure is null.
 Charts are data only; the app draws axes, scale and colours. line_chart: x = up to 12 labels in order (numbers for a measured x such as time, else categories so short that count × (longest + 1) ≤ 30 characters, so "J"…"D" for 12 months, e.g. "Jan"…"Jun"); s = 1–3 series {n name, u unit, v one value per x label, bar true for columns (one series at most), r true for a right axis — only for a second unit}. climate_chart: place, alt in m, t = 12 monthly means in °C and p = 12 monthly sums in mm, January first. pie_chart: l labels and v shares in % that add up to exactly 100; half for a half circle. box_plot: b = 1–3 boxes {l, v = [min, Q1, median, Q3, max]}, raw = the data list when the task gives one (then one box), else []. histogram: x0 start of the first class, w class width, v heights. scatter_plot: x and y of each point; fit draws the least-squares line. pyramid: a0 first age, w years per group, m men and f women per group from young to old, u unit. A chart that breaks one of these rules is dropped together with its question.
 "read" — for every question whose answer is read off or computed from its chart, so the app can check the key: q = value (s, i) · max, min, sum, mean, range (largest − smallest) of series s · argmax, argmin (answer = the label: month, category or slice) · diff (value at j minus value at i) · angle (centre angle of slice i in degrees) · iqr (box s) · humid, arid (number of humid or arid months) · humid_at (month i; multiple_choice, correct_choice 0 = humid, 1 = arid) · slope, intercept (the fitted line) · type (pyramid; multiple_choice, correct_choice 0 = pyramid, 1 = bell, 2 = urn). s = series (climate 0 = °C, 1 = mm; pyramid 0 = men, 1 = women; box plot: which box), i and j = positions from 0 (box plot value: i 0 = min … 4 = max); unused numbers 0. The app writes the options for humid_at and type. A numeric question about a chart always has "read"; any other question read null.`;
 
@@ -311,6 +313,18 @@ function solutionText(it: ItemDraft): string {
     : it.answer;
 }
 
+/**
+ * A figure as it is READ back from a stored question. Rows written before a figure grew a field
+ * (the angles, sides, arrows, rays and lines of issue #257) get it filled in by the contract's
+ * defaults, so the app never sees half a figure; a row that no longer reads at all shows the
+ * question without its figure rather than failing the session.
+ */
+export function storedFigure(raw: unknown): Figure | null {
+  if (raw === null || raw === undefined) return null;
+  const parsed = FigureSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
+
 /** A figure the app can really draw, or null (a broken figure never costs the question). */
 function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
   if (!f) return null;
@@ -487,6 +501,11 @@ export function usableItems(
     // argue with a tutor that is sure of itself. Dropped, like every other item whose
     // shape does not hold together.
     if (!keyAgreesWithPrompt(it)) continue;
+    // A figure that states numbers must agree with them and with the key read off it (issues
+    // #253, #257): a structural formula whose shells do not hold, an arc labelled 50° that is
+    // 70° wide, a resultant that is not the sum of its forces. The question is built on the
+    // drawing, so it goes with it — dropped, not repaired (`figureCheck.ts`).
+    if (!figureHolds(it.figure, solutionText(it), it.kind === 'numeric')) continue;
     if (it.kind === 'multiple_choice') {
       if (!it.choices || it.choices.length < 2 || it.correct_choice === null) continue;
       if (it.correct_choice >= it.choices.length) continue;

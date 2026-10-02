@@ -40,7 +40,7 @@ import {
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { formatNumber, HaloText } from './figureInk.js';
+import { formatNumber, HaloText } from './figureText.js';
 
 type LineFig = Extract<ChartFigure, { type: 'line_chart' }>;
 type ClimateFig = Extract<ChartFigure, { type: 'climate_chart' }>;

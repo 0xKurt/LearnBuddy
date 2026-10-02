@@ -1,6 +1,6 @@
-// The ink every figure shares (components/math/FigureView.tsx, ChartFigures.tsx): the app's
-// sans-serif inside SVG, numbers with the learner's decimal comma, and a label with a paper
-// halo so it stays readable over grid lines and graphs.
+// The text inside a figure's SVG (FigureView.tsx, MoleculeView.tsx, ChartFigures.tsx): one font,
+// one size scale, numbers with the learner's decimal comma, and a label that stays readable over
+// lines, grid and graphs.
 
 import { Platform } from 'react-native';
 import { G, Text as SvgText } from 'react-native-svg';

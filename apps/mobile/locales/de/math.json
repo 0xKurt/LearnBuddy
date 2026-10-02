@@ -330,7 +330,22 @@
     "pyramid": "Bevölkerungspyramide: {{list}}",
     "age_group": "{{group}} Jahre: Männer {{m}}, Frauen {{f}}",
     "men": "Männer",
-    "women": "Frauen"
+    "women": "Frauen",
+    "angle": "Winkel {{name}}",
+    "angle_value": "Winkel {{name}}: {{value}}",
+    "length": "Seite {{name}}: {{value}}",
+    "arrow": "Pfeil von {{from}} nach {{to}} {{value}}",
+    "resultant": "Resultierende von {{from}} nach {{to}} {{value}}",
+    "ray": "Strahl von {{from}} durch {{through}}",
+    "light_ray": "Lichtstrahl von {{from}} durch {{through}}",
+    "line": "Gerade durch {{a}} und {{b}}",
+    "molecule": "{{style}}: {{list}}",
+    "molecule_lewis": "Lewis-Formel",
+    "molecule_structural": "Valenzstrichformel",
+    "molecule_skeletal": "Skelettformel",
+    "lone_pairs_one": "{{atom}} hat {{count}} freies Elektronenpaar",
+    "lone_pairs_other": "{{atom}} hat {{count}} freie Elektronenpaare",
+    "molecule_marked": "Markiert: {{list}}"
   },
   "keys": {
     "row": "Mathe-Zeichen",

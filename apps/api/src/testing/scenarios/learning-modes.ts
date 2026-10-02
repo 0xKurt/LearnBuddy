@@ -168,6 +168,33 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // The form of a right value and a decay that does not add up (issues #235, #263): both are
+  // decided by code — the task typed back is a near miss with its own reply, and the mass numbers
+  // are counted — so no tutor is scripted for either.
+  scriptGenerations({
+    when: /Faktorisieren/i,
+    answer: () => ({
+      usable: true,
+      title: 'Faktorisieren',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: [
+        {
+          ...base,
+          kind: 'formula',
+          prompt: 'Faktorisiere $x^{2}+2x+1$.',
+          answer: '(x+1)^2',
+          topic: 'Faktorisieren',
+        },
+        {
+          ...base,
+          kind: 'formula',
+          prompt: 'Stelle die Zerfallsgleichung für den Alpha-Zerfall von Uran-238 auf.',
+          answer: '²³⁸₉₂U → ²³⁴₉₀Th + ⁴₂He',
+          topic: 'Radioaktivität',
+        },
+      ],
+    }),
+  });
   // "Erklär mir den Dativ" — since buddy.22 the explanation is the chat answer itself
   // (owner decision 28.09.); what can be started afterwards is practice on it.
   scriptGenerations({
@@ -477,6 +504,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /diagramme üben/i,
       answer: says('Gern – ich hab dir Diagramme zum Ablesen vorbereitet.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Diagramme lesen' } },
+      ]),
+    },
+    {
+      when: /faktorisieren üben/i,
+      answer: says('Gern – ich hab dir Faktorisieren und einen Zerfall vorbereitet.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Faktorisieren' } },
       ]),
     },
     {

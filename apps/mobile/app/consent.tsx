@@ -20,7 +20,7 @@ import { AdultCancelled, asAdultIfNeeded } from '../components/settings/adultGat
 import { ApiError } from '../lib/api/client.js';
 import { createAccount, getMe, selfConsent } from '../lib/api/endpoints.js';
 import { keys, queryClient, useMe } from '../lib/api/queries.js';
-import { ENV } from '../lib/env.js';
+import { ENV, legalGap } from '../lib/env.js';
 import { messageFor } from '../lib/errors.js';
 import { currentLocale } from '../lib/i18n/index.js';
 import { signOutHere } from '../lib/leave.js';
@@ -146,6 +146,22 @@ export default function Consent() {
           <Btn variant="ghost" pill onPress={() => void Linking.openURL(ENV.PRIVACY_URL)}>
             {t('consent.full_policy')}
           </Btn>
+        ) : null}
+        {/* An internal test build may start without the legal pages (issue #130, `lib/env.ts`),
+            but it may not look complete while doing so — a missing link is INVISIBLE, and that
+            invisibility was the bug the rule was written against. So the gap says itself, on
+            the very screen where the link would have been. Never in a store build: `legalGap`
+            is false there, because such a build does not start at all without the URLs. */}
+        {legalGap ? (
+          <Text
+            accessibilityRole="alert"
+            style={[
+              TYPE.small,
+              { color: palette.ink2, textAlign: 'center', paddingHorizontal: 24 },
+            ]}
+          >
+            {t('consent.internal_build')}
+          </Text>
         ) : null}
       </ScrollView>
       {/* The agreement sits with its button: both always on screen. */}
