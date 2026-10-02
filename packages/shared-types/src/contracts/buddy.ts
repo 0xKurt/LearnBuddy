@@ -11,6 +11,24 @@ import {
   VoiceSpeed,
 } from './learning.js';
 
+// ─────────────── a roleplay in a foreign language (issue #244) ───────────────
+
+/** The languages a roleplay can be played in — the app's five. */
+export const RoleplayLanguage = z.enum(['de', 'en', 'fr', 'es', 'it']);
+export type RoleplayLanguage = z.infer<typeof RoleplayLanguage>;
+
+/** Her turns in one roleplay before code ends it and gives the feedback (issue #244). */
+export const ROLEPLAY_MAX_TURNS = 12;
+
+/** A roleplay running right now, for the conversation mode: it listens and reads in this language. */
+export const RoleplayNow = z.object({
+  id: Uuid,
+  language: RoleplayLanguage,
+  /** Where it plays, in her words — the strip above the conversation names it. */
+  scene: z.string().default(''),
+});
+export type RoleplayNow = z.infer<typeof RoleplayNow>;
+
 // ─────────────── what Buddy did (rendered as cards, not prose) ───────────────
 
 export const ActionSummary = z.discriminatedUnion('tool', [
@@ -145,6 +163,21 @@ export const ActionSummary = z.discriminatedUnion('tool', [
      * record written before this existed.
      */
     startable: z.boolean().default(true),
+  }),
+  /**
+   * A roleplay started in the conversation (issue #244): the role card she plays to. Scene,
+   * role and the key points are in her app language; the roleplay itself is in `language`.
+   * `status` is where it stands NOW (decorated when the thread is served), so the card offers
+   * "end" only while it runs.
+   */
+  z.object({
+    tool: z.literal('start_roleplay'),
+    roleplay_id: Uuid,
+    language: RoleplayLanguage,
+    scene: z.string(),
+    role: z.string(),
+    points: z.array(z.string()),
+    status: z.enum(['active', 'ended']).default('active'),
   }),
   /** Buddy points to a part of the app (said, not searched for); the app shows a button to open it. */
   z.object({
@@ -429,10 +462,19 @@ export const BuddyHome = z.object({
     })
     .nullable()
     .catch(null),
+  /**
+   * The roleplay running right now (issue #244), or null. Conversation mode listens and reads
+   * aloud in its language while it runs.
+   */
+  roleplay: RoleplayNow.nullable().catch(null),
   /** Context version the home was built from (debugging and stale checks). */
   context_version: z.number().int(),
 });
 export type BuddyHome = z.infer<typeof BuddyHome>;
+
+/** POST /buddy/roleplays/:id/end — her tap on "end"; the feedback stands in the thread of `home`. */
+export const EndRoleplayResponse = z.object({ home: BuddyHome });
+export type EndRoleplayResponse = z.infer<typeof EndRoleplayResponse>;
 
 export const SendMessageRequest = z.object({
   client_message_id: Uuid,

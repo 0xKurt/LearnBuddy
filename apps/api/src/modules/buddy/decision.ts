@@ -14,6 +14,7 @@
 
 import {
   DifficultyWish as DifficultyWishSchema,
+  RoleplayLanguage,
   VocabDirection as VocabDirectionSchema,
   VOICE_NAMES,
 } from '@learnbuddy/shared-types/contracts';
@@ -695,6 +696,41 @@ const openArea = z.object({
   }),
 });
 
+/**
+ * A roleplay in a foreign language (issue #244). The model sets the frame once — the language,
+ * where it plays, who Buddy is, and the 3–5 things she has to manage (the role card) — and code
+ * keeps it: every in-role turn after this one is written against the stored row, never against
+ * what the model remembers of it (modules/buddy/roleplay.ts).
+ */
+const startRoleplay = z.object({
+  tool: z.literal('start_roleplay'),
+  args: z.object({
+    language: RoleplayLanguage.describe(
+      'the language the roleplay is spoken in: the foreign language she wants to practise, never her own app language',
+    ),
+    scene: z
+      .string()
+      .trim()
+      .min(3)
+      .max(80)
+      .describe("where it plays, a few words in the learner's own language"),
+    role: z
+      .string()
+      .trim()
+      .min(2)
+      .max(40)
+      .describe("who you play in it, one to three words in the learner's own language"),
+    points: z
+      .array(z.string().trim().min(2).max(60))
+      .min(3)
+      .max(5)
+      .describe(
+        "the role card: 3 to 5 things she has to manage in the conversation (to greet, to ask for the price…), each a short phrase in the learner's own language. From her photographed role card when she has one. The feedback afterwards is given on exactly these.",
+      ),
+    quote: Quote.describe('her words asking for the roleplay'),
+  }),
+});
+
 /** Every act tool's call schema, by name (surfaces and handlers: registry.ts). */
 export const ACT_SCHEMAS = {
   remember,
@@ -717,6 +753,7 @@ export const ACT_SCHEMAS = {
   schedule_check: scheduleCheck,
   offer_learning: offerLearning,
   open_area: openArea,
+  start_roleplay: startRoleplay,
 } as const;
 
 export type ToolName = keyof typeof ACT_SCHEMAS;

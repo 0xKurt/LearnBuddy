@@ -14,6 +14,7 @@
 // shifted, never turned on or increased.
 
 import {
+  ROLEPLAY_MAX_TURNS,
   VOICE_NAMES,
   VOICE_SPEED_MAX,
   VOICE_SPEED_MIN,
@@ -62,6 +63,7 @@ import {
   type StepRow,
 } from './state.js';
 import { loosens } from './policy.js';
+import { closeLapsed } from './roleplay.js';
 import { holdsWordPairs, normalizeForMatch, quoteOccursIn, unsupportedSpecifics } from './text.js';
 
 export class ToolRejection extends Error {
@@ -1729,6 +1731,74 @@ async function runScheduleCheck(
   };
 }
 
+/**
+ * A roleplay in a foreign language (issue #244). Starts only on her words (the quote), never in
+ * a concern, never in her own app language, and only when none is running — a second scene
+ * would turn the next message into a guess about which one she answers. The frame is stored
+ * here and nowhere else: every in-role turn reads it back from this row (roleplay.ts).
+ */
+async function runStartRoleplay(
+  action: ActionOf<'start_roleplay'>,
+  ctx: ToolContext,
+): Promise<ToolOutcome> {
+  const a = action.args;
+  requireQuote(ctx, a.quote);
+  if (ctx.concern)
+    throw new ToolRejection('no roleplay in an answer to distress (concern is true)');
+  if (a.language === ctx.locale.slice(0, 2).toLowerCase()) {
+    throw new ToolRejection(
+      `"${a.language}" is the learner's own app language — a roleplay practises the foreign language she is learning. Ask which one if it is unclear.`,
+    );
+  }
+  const names = new Set(a.points.map(normalizeForMatch));
+  if (names.size !== a.points.length)
+    throw new ToolRejection('points: each task on the role card must be a different one');
+  if (ctx.created.preparedStepId) {
+    throw new ToolRejection(
+      'you already prepared practice in this same answer — one thing at a time: leave the roleplay for a later answer',
+    );
+  }
+  if (!ctx.triggerMessageId) throw new ToolRejection('a roleplay starts only from her message');
+  await closeLapsed(ctx.db, ctx.learnerId, ctx.now);
+  const running = await ctx.db.maybeOne(
+    `select 1 from buddy_roleplays where learner_id = $1 and status = 'active'`,
+    [ctx.learnerId],
+  );
+  if (running) throw new ToolRejection('a roleplay is already running — it has to end first');
+  const start = await ctx.db.one<{ seq: string }>(
+    `select seq::text as seq from buddy_messages where id = $1 and learner_id = $2`,
+    [ctx.triggerMessageId, ctx.learnerId],
+  );
+  const row = await ctx.db.one<{ id: string }>(
+    `insert into buddy_roleplays (learner_id, language, scene, role, points, start_seq, max_turns,
+                                  last_at, created_at)
+     values ($1, $2, $3, $4, $5, $6::bigint, $7, $8, $8) returning id`,
+    [
+      ctx.learnerId,
+      a.language,
+      a.scene,
+      a.role,
+      JSON.stringify(a.points),
+      start.seq,
+      ROLEPLAY_MAX_TURNS,
+      ctx.now,
+    ],
+  );
+  return {
+    summary: {
+      tool: 'start_roleplay',
+      roleplay_id: row.id,
+      language: a.language,
+      scene: a.scene,
+      role: a.role,
+      points: a.points,
+      status: 'active',
+    },
+    // Not undone: she ends it with the card's button, or by saying so, and gets her feedback.
+    undo: null,
+  };
+}
+
 async function runOpenArea(action: ActionOf<'open_area'>, _ctx: ToolContext): Promise<ToolOutcome> {
   // Changes nothing: the app shows a button that opens that part of the app.
   return { summary: { tool: 'open_area', area: action.args.area }, undo: null };
@@ -1758,6 +1828,7 @@ export const ACT_HANDLERS: {
   offer_learning: runOfferLearning,
   open_area: runOpenArea,
   schedule_check: runScheduleCheck,
+  start_roleplay: runStartRoleplay,
 };
 
 /** Reverse an applied action. Returns false when the thing changed since (no blind overwrite). */

@@ -229,5 +229,14 @@
   },
   "voice": {
     "sample": "Hola, soy Buddy. Así sueno cuando te leo algo."
+  },
+  "roleplay": {
+    "feedback_head": "El juego de rol ha terminado – así ha ido:",
+    "point_met": "✓ {{name}}: conseguido – «{{quote}}»",
+    "point_open": "○ {{name}}: todavía no",
+    "better_head": "Así suena aún mejor:",
+    "better_line": "«{{said}}» → «{{better}}»",
+    "ended": "Vale, paramos el juego de rol. Dime cuando quieras otra vez.",
+    "try_in": "Inténtalo en {{language}} – sigo en mi papel. Si quieres parar, dilo sin más."
   }
 }

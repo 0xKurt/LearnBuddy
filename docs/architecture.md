@@ -2516,6 +2516,82 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   its own line rather than shrink, and toasts sit above the iOS keyboard. Not yet checked on a
   device at AX3/AX5.
 
+## Roleplay
+
+Issue #244, migration `0088_roleplays.sql`, `modules/buddy/roleplay.ts`. A roleplay in a foreign
+language: Buddy plays a role (a waiter in London, a shopkeeper in Paris), she talks or types, and
+afterwards she gets feedback per key point — no grade. **Defined narrowly on purpose** (owner
+02.10.: "kommt drauf an wie man es definiert, weil buddy das schon gut kann"): the model plays
+the role; code holds the frame (CLAUDE.md rule 1).
+
+- **Starts in the chat, no new screen** (rule 16). `start_roleplay` is an act tool (turn only,
+  quote-bound): the model names the language, the scene, its role and 3–5 key points — the role
+  card, from her photographed one when she has one. Code refuses it in her own app language (a
+  roleplay practises a foreign one), in a concern, beside a practice prepared in the same answer,
+  with two equal points, or while one is running (one per learner, a partial unique index). The
+  card (`components/buddy/RoleplayCard.tsx`) shows the scene, the role and her tasks; once over
+  it shrinks to a quiet line. The way out is **not** on the card: after a few lines the card has
+  scrolled away with the scene (the first walkthrough found its button behind "Ältere
+  Nachrichten"), so while it runs one strip above the conversation (`RoleplayStrip`, in the slot
+  of the focus line, from `BuddyHome.roleplay`) names it and carries the one "Beenden" button.
+  No count of turns, no progress bar (rule 6).
+- **While it runs, her message is a line in the scene, not a Buddy turn.** `decideTurn` sees the
+  running roleplay and answers through `roleplayRound` (`turn.ts`) — same claim, fence, takeover,
+  failure codes and audit (`buddy_decisions`, prompt version `roleplay.N`) as every turn, but a
+  different request: `ROLEPLAY_SYSTEM`, the frame **rendered from the row** (`roleplayFrame`: the
+  language, scene, role, `k1…k5`, her level, the turns left) and the scene's own messages since
+  the one that started it. No STATE, no memories, not her name: nothing personal can reach a scene
+  because nothing personal is in the request. The answer (`RoleplayTurnForModel`) has **no
+  actions** — a scene changes nothing — and its bits come before the line: `concern`,
+  `her_language`, `leave`.
+- **What code makes of it**: `concern` → the fixed caring reply (§Turns), the roleplay ends
+  without feedback (a provider block ends it the same way); `leave` → it ends, with the feedback
+  when a line was played; a line in another language than the roleplay's → the app's own hint
+  (`roleplay.try_in`, the language named via `Intl.DisplayNames` in her locale), the model's words
+  are not shown and the turn is not counted; otherwise the role's line (≤ 300 characters) and the
+  turn counts. The twelfth counted turn (`ROLEPLAY_MAX_TURNS`) ends it **in the same
+  transaction** that stores it, the role's last line followed by the feedback. Applied inside
+  `applyDecision` behind the context fence: the row must still be running with the turn count the
+  model saw (`RoleplayMoved` counts as stale), so a takeover or a stale retry counts a turn once.
+- **The feedback is checked, not believed** (rule 0 from #224, the same rule as #211's `judged`).
+  One model call (`ROLEPLAY_FEEDBACK_SYSTEM`, `RoleplayFeedbackForModel`, zod): per key point
+  `met` and a quote, plus 2–3 lines of hers with a better version. `checkFeedback` counts a point
+  as managed **only** when the quote stands in her own lines (`quoteOccursIn`, whole words); an
+  invented quote, a fragment or a point the model left out is "noch nicht dabei". A better line
+  whose `said` is not hers is dropped, never rewritten. The text she reads and hears is the
+  app's (`i18n roleplay.*`): each point in words, a managed one with her own words as the proof —
+  no score, no grade, no count. Stored as checked in `buddy_roleplays.feedback` (her export).
+- **Her tap on "end"** in the strip (`POST /buddy/roleplays/:id/end`): with lines played, one feedback call,
+  then under the settings lock the row must still be running with the same count (else 409 — a
+  turn landed meanwhile; the tap can be repeated); with none, it simply ends. Another learner's
+  id is 404, an ended one 409; a model outage leaves it running. It bumps the context, so a
+  message decided inside the scene meanwhile is decided again outside it.
+- **A scene she left** stops taking over her messages after 30 minutes without a line
+  (`ROLEPLAY_IDLE_MS`, read against the app clock): her next message is a normal turn, the card
+  says it is over, and the row is closed as `lapsed` (no feedback) the next time one starts.
+- **Voice** is the conversation mode as it is: while a roleplay runs `BuddyHome.roleplay` names
+  its language, `app/talk.tsx` listens in it (`useVoiceInput` `lang`, so the transcript request
+  carries it as EXPECTED LANGUAGE) and reads the role's line in it; the feedback (the newest
+  message once it ended) is read in hers. In-role turns are **not streamed**: whether the model's
+  line is shown at all is decided after the whole answer (the language hint replaces it).
+- **What is prompt, not code**: that the role stays in its language and in character, keeps it
+  age-appropriate and invents names instead of asking for hers, and that `her_language` and
+  `leave` are read right. Code bounds what a wrong judgement can do — no tools, a short line, a
+  fixed frame, nothing personal in the request, a hint instead of a counted turn — but cannot
+  tell a language or a wish to stop without the model (rule 3). The hint the app gives in her
+  language is read aloud in the roleplay's voice while it runs (the app cannot tell the two
+  kinds of message apart; known, small).
+- **Not done** (the issue's acceptance): the eval set of 10 roleplays per language with a
+  teacher's agreement on the key-point verdicts needs live model runs and a teacher; it is not
+  written. The language check rests on the model's `her_language`, not on the recogniser: the
+  device recogniser is set to a language rather than detecting one.
+- Tests: `roleplay.int.test.ts` (start on her words and never in her own language; the frame and
+  nothing personal in the request; the hint; twelve turns, then the feedback with an invented
+  quote discarded; leaving; a concern; the tap, a second tap, another learner's id; a stale
+  context; an interrupted turn taken over once; a scene left for half an hour),
+  `buddy/__tests__/roleplay.test.ts`, walkthrough `tests/web/roleplay.spec.ts` (scripted in
+  `src/testing/scenarios/roleplay.ts`).
+
 ## Home
 
 `modules/buddy/home.ts`. Everything is derived from stored state: **now** (practice used in the

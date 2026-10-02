@@ -22,6 +22,7 @@ import type { Deps } from '../../deps.js';
 import { daysBetween, localParts, startOfLocalDay } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
 import { undoApplies, undoLoosensContact, type UndoSpec } from './tools.js';
+import { activeRoleplay, roleplayStatuses } from './roleplay.js';
 import { loadBuddyState, loadSettings } from './state.js';
 import { resumable } from '../practice/lifecycle.js';
 
@@ -82,6 +83,7 @@ async function homeFrom(
   const system = await systemOf(deps, learner.id, state);
   const working = await workingOf(deps, learner.id, now);
   const practicedToday = await practicedSince(deps, learner.id, startOfLocalDay(now, tz));
+  const play = await activeRoleplay(deps.db, learner.id, now);
 
   return {
     learner: { id: learner.id, name: learner.display_name, is_minor: learner.isMinor },
@@ -96,6 +98,7 @@ async function homeFrom(
     working,
     practiced_today: practicedToday,
     focus: focusLine(state),
+    roleplay: play ? { id: play.id, language: play.language, scene: play.scene } : null,
     context_version: state.settings.context_version,
   };
 }
@@ -541,7 +544,10 @@ function servedSummary(
   /** Offers whose preparation was refused: their button cannot start anything (issue #196). */
   cannotStart: ReadonlySet<string> = new Set(),
   actionId = '',
+  roleplays: ReadonlyMap<string, 'active' | 'ended'> = new Map(),
 ): ActionSummary {
+  // Where the roleplay stands now (issue #244): the card offers "end" only while it runs.
+  if (s.tool === 'start_roleplay') return { ...s, status: roleplays.get(s.roleplay_id) ?? 'ended' };
   if (s.tool === 'offer_learning' && (s.kind as string) === 'explain')
     return { ...s, kind: 'practice' };
   // Not a button any more. The refusal is the generator's own, learnt while she was still
@@ -596,7 +602,7 @@ async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<Acti
     created_at: Date;
   }>(
     `select id, status, result, undo, created_at from buddy_actions
-      where learner_id = $1 and created_at > $2 and tool not in ('offer_learning', 'open_area')
+      where learner_id = $1 and created_at > $2 and tool not in ('offer_learning', 'open_area', 'start_roleplay')
       order by seq desc limit 12`,
     [learnerId, new Date(now.getTime() - DONE_WINDOW_MS)],
   );
@@ -777,6 +783,12 @@ async function threadOf(
     now,
   );
   const cannotStart = new Set(actions.filter((a) => a.cannot_start_at !== null).map((a) => a.id));
+  const roleplays = await roleplayStatuses(
+    deps.db,
+    learnerId,
+    actions.flatMap((a) => (a.result.tool === 'start_roleplay' ? [a.result.roleplay_id] : [])),
+    now,
+  );
   const messages: MessageView[] = page.map((m) => {
     const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
     return {
@@ -810,7 +822,7 @@ async function threadOf(
           id: a.id,
           status: a.status,
           undoable: undoWorks.has(a.id) && !adultOnly.has(a.id),
-          summary: servedSummary(a.result, pending, cannotStart, a.id),
+          summary: servedSummary(a.result, pending, cannotStart, a.id, roleplays),
           created_at: a.created_at.toISOString(),
         })),
       created_at: m.created_at.toISOString(),

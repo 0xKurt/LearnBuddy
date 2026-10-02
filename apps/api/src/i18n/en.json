@@ -229,5 +229,14 @@
   },
   "voice": {
     "sample": "Hi, I'm Buddy. This is how I sound when I read something to you."
+  },
+  "roleplay": {
+    "feedback_head": "The roleplay is over – here's how it went:",
+    "point_met": "✓ {{name}}: done – “{{quote}}”",
+    "point_open": "○ {{name}}: not yet",
+    "better_head": "This sounds even better:",
+    "better_line": "“{{said}}” → “{{better}}”",
+    "ended": "Okay, we'll stop the roleplay. Just say when you want another go.",
+    "try_in": "Try it in {{language}} – I'm staying in my role. If you want to stop, just say so."
   }
 }

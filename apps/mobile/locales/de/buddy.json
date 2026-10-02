@@ -45,7 +45,8 @@
     "set_contact_days": "nie an diesen Tagen: {{days}}",
     "request_material_undone": "Kein Foto nötig: {{title}}",
     "set_voice": "Meine Stimme: {{voice}}, {{speed}}",
-    "forget_all": "Alles vergessen, was ich über dich wusste ({{count}})"
+    "forget_all": "Alles vergessen, was ich über dich wusste ({{count}})",
+    "start_roleplay": "Rollenspiel: {{scene}}"
   },
   "area": {
     "library": "Dein Material",
@@ -371,5 +372,21 @@
   "working": {
     "material": "Ich mache aus deinem Blatt gerade Übungen …",
     "session": "Ich schaue mir an, wie deine Übung lief …"
+  },
+  "roleplay": {
+    "label": "Rollenspiel",
+    "plays": "Buddy spielt: {{role}}",
+    "tasks": "Deine Aufgaben",
+    "end": "Beenden – wie lief's?",
+    "end_hint": "Buddy hört auf und sagt dir zu jeder Aufgabe, wie es lief.",
+    "ended": "Vorbei. Die Rückmeldung steht im Gespräch.",
+    "lang": {
+      "de": "Deutsch",
+      "en": "Englisch",
+      "fr": "Französisch",
+      "es": "Spanisch",
+      "it": "Italienisch"
+    },
+    "end_short": "Beenden"
   }
 }

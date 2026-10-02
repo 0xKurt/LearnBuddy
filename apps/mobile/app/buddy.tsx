@@ -32,6 +32,7 @@ import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard, optInRules, type OptInDecision } from '../components/buddy/DecisionCard.js';
 import { whenText } from '../components/buddy/describe.js';
 import { CaptureBar, ReadingBar, ReadyBar, ResumeBar } from '../components/buddy/SlimBar.js';
+import { RoleplayStrip } from '../components/buddy/RoleplayCard.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMask } from '../components/lb/EdgeFade.js';
 import { NoticeBubble } from '../components/buddy/NoticeBubble.js';
 import { CLOSE_INSET, TopOverlay } from '../components/buddy/TopOverlay.js';
@@ -1208,11 +1209,17 @@ export default function BuddyScreen() {
                   when there is something — an empty slot waiting to be filled would be a
                   dashboard (rule 16). Tapping opens the sheet it is about. */}
               <View
-                style={{ paddingHorizontal: SPACE.lg, paddingBottom: h.focus ? SPACE.xs : 0 }}
+                style={{
+                  paddingHorizontal: SPACE.lg,
+                  paddingBottom: h.focus || h.roleplay ? SPACE.xs : 0,
+                }}
                 // Where the conversation starts (for its fade-out under the head).
                 onLayout={(e) => setThreadTop(e.nativeEvent.layout.height)}
               >
-                {h.focus ? (
+                {/* A running roleplay takes the line: its way out stays in reach (#244). */}
+                {h.roleplay ? (
+                  <RoleplayStrip roleplay={h.roleplay} />
+                ) : h.focus ? (
                   <Pressable
                     disabled={!h.focus.material_id}
                     accessibilityRole={h.focus.material_id ? 'button' : 'text'}

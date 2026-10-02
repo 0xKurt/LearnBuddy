@@ -4,6 +4,7 @@
 // goes through the model (POST /buddy/messages).
 
 import {
+  type EndRoleplayResponse,
   AnswerConfirmationRequest,
   type BuddySettingsView,
   MemoryList,
@@ -42,6 +43,7 @@ import { archiveMaterial, archiveMaterialItem } from '../materials/service.js';
 import { sessionView, startFromStep } from '../practice/service.js';
 import { registerPushToken } from '../devices/service.js';
 import { buildHome } from './home.js';
+import { endRoleplayByTap } from './roleplay.js';
 import { addDays, localParts, zonedToInstant } from '../../lib/time.js';
 import { bumpContext, cancelGoalWakeups, lockContext, scheduleStepReminder } from './plan.js';
 import { loosens } from './policy.js';
@@ -139,6 +141,16 @@ buddyRoutes.post('/messages/:clientMessageId/stop', async (c) => {
 });
 
 // ─────────────── explicit taps ───────────────
+
+// She ends the roleplay with the card's button (issue #244): with turns played, the checked
+// feedback lands in the thread; another learner's id is 404, an ended one 409.
+buddyRoutes.post('/roleplays/:id/end', async (c) => {
+  const id = check(Uuid, c.req.param('id'));
+  const l = c.get('learner');
+  await endRoleplayByTap(depsOf(c), l, id);
+  const body: EndRoleplayResponse = { home: await home(c) };
+  return c.json(body);
+});
 
 buddyRoutes.post('/steps/:id/start', async (c) => {
   const stepId = check(Uuid, c.req.param('id'));

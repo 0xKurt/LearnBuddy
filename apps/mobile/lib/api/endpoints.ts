@@ -8,6 +8,7 @@ import {
   BuddySettingsView,
   CreateMaterialResponse,
   DeletionResponse,
+  EndRoleplayResponse,
   LearnerView,
   LibraryView,
   ListenAudioResponse,
@@ -161,6 +162,13 @@ export const answerConfirmation = (pendingId: string, confirm: boolean) =>
   request('POST', `/buddy/confirmations/${pendingId}`, {
     body: { confirm },
     schema: BuddyHome,
+  });
+
+/** Her tap on "end" under a running roleplay: the feedback lands in the thread (issue #244). */
+export const endRoleplay = (roleplayId: string) =>
+  request('POST', `/buddy/roleplays/${roleplayId}/end`, {
+    body: {},
+    schema: EndRoleplayResponse,
   });
 
 export const reportOutcome = (goalId: string, outcome: 'good' | 'ok' | 'hard') =>

@@ -10,7 +10,7 @@ import { PHOTO_RETENTION_DAYS } from '../materials/purge.js';
 import { lookupsPrompt } from './lookups.js';
 import { actToolsPrompt } from './registry.js';
 
-export const BUDDY_PROMPT_VERSION = 'buddy.53';
+export const BUDDY_PROMPT_VERSION = 'buddy.54';
 
 // No example in here is a phrase in one language that the model is meant to WRITE. An English
 // learner was told "I've planned your maths test for am Freitag" in 2 of 3 live runs (issue

@@ -26,6 +26,8 @@ export type Touches =
   | 'material'
   | 'settings'
   | 'checks'
+  /** A roleplay in a foreign language (issue #244). */
+  | 'roleplay'
   | 'nothing';
 
 type ActSpec<K extends ToolName> = {
@@ -207,6 +209,14 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     undoable: false,
     does: 'show a button that opens a part of the app she asks for (her sheets, what you know, settings, earlier messages, the camera)',
     run: ACT_HANDLERS.open_area,
+  },
+  start_roleplay: {
+    surfaces: TURN,
+    touches: ['roleplay'],
+    needsQuote: true,
+    undoable: false,
+    does: 'start a roleplay in the foreign language she wants to practise speaking (she asks for one, or sends a role card): you set the scene, your role and 3 to 5 tasks for her; the app then runs it turn by turn with you in the role and gives her feedback on each task afterwards. Your reply says in her language that it starts, then opens the scene in the roleplay language',
+    run: ACT_HANDLERS.start_roleplay,
   },
 };
 

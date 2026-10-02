@@ -229,5 +229,14 @@
   },
   "voice": {
     "sample": "Hallo, ich bin Buddy. So klinge ich, wenn ich dir etwas vorlese."
+  },
+  "roleplay": {
+    "feedback_head": "Das Rollenspiel ist vorbei – so lief es:",
+    "point_met": "✓ {{name}}: geschafft – „{{quote}}“",
+    "point_open": "○ {{name}}: noch nicht dabei",
+    "better_head": "So klingt es noch besser:",
+    "better_line": "„{{said}}“ → „{{better}}“",
+    "ended": "Okay, wir hören mit dem Rollenspiel auf. Sag Bescheid, wenn du nochmal willst.",
+    "try_in": "Versuch's auf {{language}} – ich bleibe in meiner Rolle. Wenn du aufhören willst, sag es einfach."
   }
 }
