@@ -61,7 +61,7 @@ import {
 } from './service.js';
 import { MAX_STAFF_ITEMS, STAFF_RULES, staffItems } from './staff.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.13';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.14';
 
 const SUBJECT_KINDS = [
   'math',
