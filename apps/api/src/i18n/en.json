@@ -79,6 +79,14 @@
       "example": "With an example, please",
       "why": "Why is that?"
     },
+    "rubric": {
+      "element_met": "{{name}}: there",
+      "element_open": "{{name}}: not yet",
+      "next_counted": "Almost – only {{name}} is missing: {{missing}}",
+      "next_judged": "That part holds. Have another look at whether {{name}} is in there: {{missing}}",
+      "next_verb": "That part holds. Only at “{{verb}}” the tense isn’t right yet: {{missing}}",
+      "start": "Let’s start with {{name}}: {{missing}}"
+    },
     "solution_is": "The answer is: {{answer}}",
     "speak_almost": "Almost! Look at the marked words.",
     "speak_good": "Sounds great!",

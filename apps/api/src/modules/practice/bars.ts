@@ -159,6 +159,9 @@ export function barItem(task: BarTask, locale: string): BarItem | null {
     tolerance: null,
     spelling: null,
     source_excerpt: null,
+    // A fraction-bar question asks for one amount; there are no required elements to tick off
+    // (issue #211 — a rubric belongs to a written text, and this question is a number).
+    rubric: null,
     bar_task: task,
   };
 

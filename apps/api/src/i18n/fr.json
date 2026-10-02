@@ -79,6 +79,14 @@
       "example": "Avec un exemple, s'il te plaît",
       "why": "Pourquoi c'est comme ça ?"
     },
+    "rubric": {
+      "element_met": "{{name}} : c'est là",
+      "element_open": "{{name}} : pas encore",
+      "next_counted": "Presque – il ne manque plus que {{name}} : {{missing}}",
+      "next_judged": "Ça tient déjà. Regarde encore si {{name}} y est : {{missing}}",
+      "next_verb": "Ça tient déjà. Seulement à « {{verb}} », le temps ne colle pas encore : {{missing}}",
+      "start": "Commençons par {{name}} : {{missing}}"
+    },
     "solution_is": "La réponse est : {{answer}}",
     "speak_almost": "Presque ! Regarde les mots marqués.",
     "speak_good": "C'est super !",

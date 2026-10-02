@@ -7,12 +7,18 @@
 // questions (both directions), each with its own FSRS state — the session may
 // ask just one of them when the learner asked for that direction (issue #113).
 
-import { Figure, type BarTask, type VocabDirection } from '@learnbuddy/shared-types/contracts';
+import {
+  Figure,
+  Rubric,
+  type BarTask,
+  type VocabDirection,
+} from '@learnbuddy/shared-types/contracts';
 import { canonicalText, compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import type { Db } from '../../lib/db.js';
 import { dollarMathField, dollarMathRuns } from './dollarMath.js';
+import { usableRubric } from './rubric.js';
 import { mentionsSolution } from './tutor.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
 
@@ -122,6 +128,9 @@ export const ItemDraft = z.object({
     .describe(
       'The solution explained step by step in 2–5 short sentences, shown after the third wrong try. null for vocab and speak.',
     ),
+  // Die Pflichtelemente einer Schreibaufgabe (issue #211). Eine Rubrik, deren Form nicht hält,
+  // wird verworfen, nicht die Frage (`usableItems`) — dann verhält sie sich wie seit #197.
+  rubric: Rubric.nullable().default(null).catch(null),
 });
 export type ItemDraft = z.infer<typeof ItemDraft>;
 
@@ -306,6 +315,9 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
       tolerance: usableTolerance(raw),
       spelling:
         raw.kind === 'short' || raw.kind === 'long' || raw.kind === 'vocab' ? raw.spelling : null,
+      // Only a free text has required elements, and only a rubric that can be checked is kept
+      // (issue #211). A rubric that does not hold costs itself, never the question.
+      rubric: usableRubric(raw.rubric, raw.kind),
     };
     // A number asked for behind a placeholder is no clear question: dropped, not guessed at.
     if (placeholderQuestion(it)) continue;
@@ -339,6 +351,10 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
     const leaks = (h: string) =>
       [solutionText(it), ...it.accepted_answers].some((sol) => mentionsSolution(h, sol, it.prompt));
     it.hints = it.hints.filter((h) => !leaks(h));
+    // A rubric's "what to look for" sentences are shown to her like a hint, so they are held to
+    // the hint rule (issue #211). Here the whole rubric goes rather than the one sentence: an
+    // element with nothing to say when it is missing would be a tick box without a next step.
+    if (it.rubric && it.rubric.elements.some((e) => leaks(e.missing))) it.rubric = null;
     const plain = { ...it, choices: null, correct_choice: null };
     if (it.kind === 'vocab') {
       if (!it.lang || !it.prompt_lang || it.lang === it.prompt_lang) continue;
@@ -389,8 +405,8 @@ export async function insertItems(
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
-                          hints, worked_solution, tolerance, spelling, bar_task)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) returning id`,
+                          hints, worked_solution, tolerance, spelling, bar_task, rubric)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -414,6 +430,7 @@ export async function insertItems(
         it.tolerance,
         it.spelling,
         it.bar_task ? JSON.stringify(it.bar_task) : null,
+        it.rubric ? JSON.stringify(it.rubric) : null,
       ],
     );
     if (asked) ids.push(row.id);

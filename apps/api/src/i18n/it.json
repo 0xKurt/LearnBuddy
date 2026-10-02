@@ -79,6 +79,14 @@
       "example": "Con un esempio, per favore",
       "why": "Perché è così?"
     },
+    "rubric": {
+      "element_met": "{{name}}: c'è",
+      "element_open": "{{name}}: non ancora",
+      "next_counted": "Quasi – manca solo {{name}}: {{missing}}",
+      "next_judged": "Questo regge già. Guarda di nuovo se {{name}} c'è: {{missing}}",
+      "next_verb": "Questo regge già. Solo in «{{verb}}» il tempo verbale non torna ancora: {{missing}}",
+      "start": "Iniziamo da {{name}}: {{missing}}"
+    },
     "solution_is": "La risposta è: {{answer}}",
     "speak_almost": "Quasi! Guarda le parole segnate.",
     "speak_good": "Suona benissimo!",

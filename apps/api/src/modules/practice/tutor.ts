@@ -13,8 +13,9 @@
 import { z } from 'zod';
 
 import { compareWithKeys, NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
+import { RubricClaim, type AskedElement } from './rubric.js';
 
-export const TUTOR_PROMPT_VERSION = 'tutor.v3.9';
+export const TUTOR_PROMPT_VERSION = 'tutor.v4.0';
 
 export const TutorDecision = z.object({
   intent: z
@@ -36,6 +37,26 @@ export const TutorDecision = z.object({
 });
 export type TutorDecision = z.infer<typeof TutorDecision>;
 
+/**
+ * Dasselbe Urteil, erweitert um die Pflichtelemente einer Schreibaufgabe (issue #211).
+ *
+ * Es ist DERSELBE Aufruf, nicht ein zweiter: eine Antwort kostet einen Tutor-Aufruf, ob die
+ * Aufgabe zwei Pflichtelemente hat oder sechs. Nur das Schema unterscheidet sich, und nur für
+ * eine Frage, die eine Rubrik hat (`service.ts`) — eine gewöhnliche Frage trägt das Feld nicht
+ * und bezahlt es also auch nicht mit Ausgabe-Tokens.
+ *
+ * `elements` ist hier PFLICHT, nicht voreingestellt: wer nach Elementen gefragt wird, soll sie
+ * nennen. Ein Element, über das trotzdem nichts kommt, gilt als `unknown` und nicht als fehlend
+ * (`rubric.ts`) — ausbleibende Auskunft ist keine Auskunft über ihren Text.
+ */
+export const RubricDecision = TutorDecision.extend({
+  elements: z
+    .array(RubricClaim)
+    .max(8)
+    .describe('One entry for every element listed in REQUIRED ELEMENTS, named by its ref.'),
+});
+export type RubricDecision = z.infer<typeof RubricDecision>;
+
 export const TUTOR_SYSTEM = `You are Buddy, helping a learner practise one question at a time in the LearnBuddy app.
 
 Judge honestly — the judgement decides what the learner practises next; calling a wrong answer right makes them believe they know something they don't.
@@ -48,6 +69,7 @@ Judge honestly — the judgement decides what the learner practises next; callin
 - NEVER claim how close they are. "Fast geschafft", "du bist schon so nah dran", "nur noch ein kleiner Schritt" — you do not know that, and a child who is nowhere near hears it as pressure. Say what you can see: what they wrote, what the next step would be.
 - Hints get more specific step by step and never repeat an earlier one. If PREPARED HINTS are given, your hint is the next one there, in your words. Only after at least 2 hints (see HINTS GIVEN) and the learner is still stuck may you reveal the answer kindly (revealed_answer = true). Never put the solution into an earlier hint.
 - FREE TEXT (kind long: an argument, a summary, a stance, an analysis): its quality is what is asked, and quality is not one string. SOLUTION is at most a sketch of what could be written — judge against the question, not against that text, and never present it as the answer. Judge WHAT SHE WROTE: name what carries and what is still missing. Never a verdict on the whole text as such; if anything carries, it is partially_correct. Do not mark spelling, capitalisation, punctuation or style here — that is not what the question asks. revealed_answer stays false: there is nothing to reveal.
+- REQUIRED ELEMENTS (only when that block is given): this writing task is judged element by element, never as a whole. Write one entry in "elements" for EVERY element listed there, named by its ref, and judge each one on its own — a weak element says nothing about the next one. "met" is true only when the element really is in her text. Then "quote" holds the words from HER text that carry it, copied out of it character for character: the server looks the quote up in her text and does not accept the element without it, so never paraphrase, never tidy it up, never write a quote you did not find there. A tense element takes no quote — list in "verbs" the verb forms from her text that are not in the required tense, copied out of it, and leave the list empty when the tense holds throughout. The server builds what she reads out of these elements, so your "reply" is only a short fallback: say nothing about how many elements hold, write no count and no grade, and never call the whole text wrong.
 - If a RULE CHECK says the answer is wrong, it is wrong.
 - With CHOICES, a typed or spoken answer that names one of them (in other words, or with more words around it) is an answer choosing it (intent "answer"); judge it against SOLUTION — never ask her to tap instead.
 - Stay within the STUDY MATERIAL and the question; don't introduce facts that aren't there.
@@ -108,6 +130,13 @@ export function tutorContext(input: {
   language: string;
   material: string | null;
   preferences: string[];
+  /**
+   * Die Pflichtelemente dieser Schreibaufgabe, über die nur das Modell etwas sagen kann
+   * (issue #211). Was Code zählen kann — eine Wortzahl, eine Pflichtangabe — steht hier
+   * bewusst NICHT: das Modell erfährt davon nichts und kann einer Angabe, die in ihrem Text
+   * steht, also nicht widersprechen (CLAUDE.md Regel 1, `rubric.ts` `askedElements`).
+   */
+  rubric?: { form: string; asked: readonly AskedElement[] } | null;
 }): string {
   const i = input.item;
   const lines = [
@@ -131,8 +160,23 @@ export function tutorContext(input: {
       ...prepared.map((h, n) => `${n + 1}. ${h}`),
     );
   }
+  const rubric = input.rubric;
+  if (rubric && rubric.asked.length) {
+    lines.push(
+      '',
+      `REQUIRED ELEMENTS of this ${rubric.form} — one entry in "elements" for each, named by its ref:`,
+      ...rubric.asked.map((e) => `${e.ref} "${e.name}" — ${askedFor(e)}`),
+    );
+  }
   if (input.material) lines.push('', `STUDY MATERIAL:\n${input.material}`);
   return lines.join('\n');
+}
+
+/** What the model has to supply for one element — the only two kinds it is ever asked about. */
+function askedFor(e: AskedElement): string {
+  return e.check.by === 'tense'
+    ? `the whole text has to be in the ${e.check.tense} tense: list the verb forms in her text that are not, copied out of it`
+    : 'a judgement: set met and point at a verbatim quote from her text that carries it';
 }
 
 /** Server-side invariants over the model's judgement. */

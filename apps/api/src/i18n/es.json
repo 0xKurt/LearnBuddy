@@ -79,6 +79,14 @@
       "example": "Con un ejemplo, por favor",
       "why": "¿Por qué es así?"
     },
+    "rubric": {
+      "element_met": "{{name}}: está",
+      "element_open": "{{name}}: todavía no",
+      "next_counted": "Casi – solo falta {{name}}: {{missing}}",
+      "next_judged": "Eso ya se sostiene. Mira otra vez si {{name}} está ahí: {{missing}}",
+      "next_verb": "Eso ya se sostiene. Solo en «{{verb}}» el tiempo verbal aún no encaja: {{missing}}",
+      "start": "Empecemos por {{name}}: {{missing}}"
+    },
     "solution_is": "La respuesta es: {{answer}}",
     "speak_almost": "¡Casi! Mira las palabras marcadas.",
     "speak_good": "¡Suena genial!",
