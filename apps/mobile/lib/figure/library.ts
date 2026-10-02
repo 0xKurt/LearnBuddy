@@ -150,7 +150,8 @@ export type CircuitLayout = {
 const C_TOP = 40;
 /** From one branch's wire to the next. */
 const C_ROW = 66;
-const C_LEFT = 58;
+/** Room left of the first block: the battery, and its voltage written left of it. */
+const C_LEFT = 78;
 const C_RIGHT = 14;
 const C_UNIT_MAX = 128;
 
@@ -160,7 +161,7 @@ export function circuitLayout(c: Circuit, width: number): CircuitLayout {
   const rows = Math.max(...c.blocks.map((b) => b.branches.length));
   const unit = Math.min(C_UNIT_MAX, (width - C_LEFT - C_RIGHT) / units);
   const used = unit * units;
-  const left = C_LEFT - 30;
+  const left = C_LEFT - 24;
   const x0 = C_LEFT + (width - C_LEFT - C_RIGHT - used) / 2;
   const top = C_TOP;
   // The return wire runs under the lowest branch; a single row still leaves room for names.

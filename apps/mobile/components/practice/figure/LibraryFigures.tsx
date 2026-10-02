@@ -382,11 +382,12 @@ export function CircuitSvg({
       {circuit.voltage !== null ? (
         <SvgText
           fontFamily={FAMILY}
-          x={l.left + 10}
-          y={(l.top + l.bottom) / 2 + 22}
+          x={l.left - 18}
+          y={(l.top + l.bottom) / 2 + 4}
           fontSize={12}
           fontWeight="700"
           fill={palette.ink}
+          textAnchor="end"
         >
           {`${formatNumber(circuit.voltage)} V`}
         </SvgText>
