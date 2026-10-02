@@ -176,13 +176,20 @@ test('learning modes: explain, homework help without the solution, practice with
 
   // ── Practice without a photo: fractions drawn, math rendered ──
   // Said to Buddy instead of picking a tile: Buddy answers with a start button.
+  const starts = page.getByRole('button', { name: "Los geht's" });
+  const startsBefore = await starts.count();
   await page.getByLabel('Schreib Buddy …').fill('Ich will Brüche vergleichen üben');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(
     page.getByText('ein paar Fragen zu Brüchen vorbereitet', { exact: false }),
   ).toBeVisible();
-  // The offer card in the thread, not a sheet: its button is the newest one.
-  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  // The offer card in the thread, not a sheet: its button is the newest one — but it renders a
+  // frame AFTER Buddy's text, and `.last()` does not wait for a match it already has. Waiting
+  // for the text alone and then taking `.last()` clicked the PREVIOUS offer about one run in
+  // two, and the app opened that older session instead (seen 02.10.2026, issue #267). Waiting
+  // for the count makes the newest button the one that exists.
+  await expect(starts).toHaveCount(startsBefore + 1);
+  await starts.last().click();
   await expect(page.getByText('Frage von Buddy')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
   // "Tipp": the next prepared hint at once — no model involved. The hints are written
