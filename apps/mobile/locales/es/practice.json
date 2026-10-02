@@ -10,6 +10,7 @@
     "placeholder": "Tu respuesta…",
     "unit_hint": "Respuesta en {{unit}}"
   },
+  "back_to_buddy": "Volver con Buddy",
   "bar": {
     "shade_how": "Toca las partes de la barra.",
     "shaded": "{{filled}} de {{total}} partes coloreadas",
@@ -17,7 +18,23 @@
     "pick_how": "Toca la barra que es mayor.",
     "pick_option": "Elegir {{fraction}}"
   },
-  "back_to_buddy": "Volver con Buddy",
+  "cards": {
+    "progress": "Tarjeta {{current}} de {{total}}",
+    "note": "Tarjetas: tú misma dices si lo sabías.",
+    "turn": "Dar la vuelta",
+    "turn_hint": "Muestra la solución. Después dices tú misma si la sabías.",
+    "back_label": "Solución",
+    "knew": "Lo sabía",
+    "knew_hint": "Anota que lo sabías. La palabra volverá más adelante.",
+    "not_yet": "Todavía no",
+    "not_yet_hint": "Anota que necesitas la palabra otra vez. Volverá pronto.",
+    "end_label": "Terminar las tarjetas",
+    "end_hint": "Volver con Buddy. Las tarjetas que ya hiciste siguen hechas.",
+    "done_title": "¡Listo!",
+    "done_body": "Has repasado tus palabras. Las que todavía no estaban volverán.",
+    "offer": "Repasar las palabras con tarjetas",
+    "offer_hint": "Te muestra una a una las palabras que todavía no estaban; dale la vuelta para ver la solución."
+  },
   "check": "Comprobar",
   "choice_tried": "Ya la has probado",
   "dispute": {

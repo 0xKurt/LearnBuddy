@@ -28,6 +28,7 @@ import {
   TranscribeStreamEvent,
   type AnswerRequest,
   type AppLocale,
+  type CardRecall,
   type CreateLearnerRequest,
   type CreateMaterialRequest,
   type ReexplainWay,
@@ -212,6 +213,13 @@ export const retryMaterial = (id: string) =>
 /** "Passt so": the pages Buddy could not read are fine as they are. */
 export const acceptMissingPages = (id: string) =>
   request('POST', `/materials/${id}/pages-ok`, { schema: MaterialView });
+/**
+ * Her answer to one spot Buddy could not read (issue #164): the reading she picks by the alias
+ * the server issued, or null for "weiß ich nicht". The question for that task is then written
+ * from her reading; nothing is guessed from the picture.
+ */
+export const clarifyUnclear = (id: string, spot: string, reading: string | null) =>
+  request('POST', `/materials/${id}/unclear`, { body: { spot, reading }, schema: MaterialView });
 export const deleteMaterial = (id: string) => request('DELETE', `/materials/${id}`);
 export const renameMaterial = (id: string, title: string) =>
   request('PATCH', `/materials/${id}`, { body: { title }, schema: MaterialView });
@@ -344,6 +352,35 @@ export const flagItem = (id: string, itemId: string) =>
 /** Homework help "Später": the task stays open and comes back after the others. */
 export const deferItem = (id: string, itemId: string) =>
   request('POST', `/practice/sessions/${id}/items/${itemId}/defer`, { schema: SessionView });
+/**
+ * "Die Wörter als Karten durchgehen" (issue #147, Stufe 2): a flashcard pass over the
+ * vocabulary of a finished run that did not sit. The server picks the words, so the app only
+ * says which run they come from. Retrying the same tap reuses its id (lib/api/turnIds.ts), so
+ * a lost reply never starts a second pass.
+ */
+const cardPassRequests = turnIds(newId, noConnection);
+export const startCardPass = (sessionId: string) =>
+  cardPassRequests.run(sessionId, (clientRequestId) =>
+    request('POST', `/practice/sessions/${sessionId}/cards`, {
+      body: { client_request_id: clientRequestId },
+      schema: SessionView,
+    }),
+  );
+
+/**
+ * One card, as SHE judged it. Nothing grades it; what it is worth to the repetition plan is
+ * decided on the server (`practice/fsrs.ts` RATING). Retrying the same tap keeps its
+ * client_turn_id, so the API records it once.
+ */
+const cardTurns = turnIds(newId, noConnection);
+export const recordCard = (sessionId: string, itemId: string, recall: CardRecall) =>
+  cardTurns.run(`${sessionId}:${itemId}:${recall}`, (clientTurnId) =>
+    request('POST', `/practice/sessions/${sessionId}/card`, {
+      body: { client_turn_id: clientTurnId, item_id: itemId, recall },
+      schema: SessionView,
+    }),
+  );
+
 /**
  * "Beenden" of a test (handed in) or of a session with nothing open; homework help with open
  * tasks is only paused by the server (decision D-5).

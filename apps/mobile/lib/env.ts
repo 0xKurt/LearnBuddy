@@ -37,6 +37,29 @@ const missing = (
 if (release && missing.length > 0) {
   throw new Error(`Release build without ${missing.join(', ')} (see apps/mobile/.env.example)`);
 }
+// An app that children use may not reach a store without its privacy notice and its imprint:
+// `lib/about.ts` deliberately renders NOTHING rather than a placeholder, so a missing URL is
+// invisible — the consent screen simply has no link to read, and settings › Über has no row.
+// Invisible is exactly how it would ship. So a release build refuses to start without them,
+// the same way it refuses without its API URL (issue #130). In Germany the imprint is required
+// by law; the privacy notice is required by the consent the parents are giving on that very
+// screen. The support address and the Sentry DSN stay optional: a missing support row is a
+// worse app, not an unlawful one, and no crash reporting is a deliberate, documented state.
+const missingLegal = (
+  [
+    ['EXPO_PUBLIC_PRIVACY_URL', ENV.PRIVACY_URL],
+    ['EXPO_PUBLIC_IMPRINT_URL', ENV.IMPRINT_URL],
+  ] as const
+)
+  .filter(([, value]) => !value)
+  .map(([name]) => name);
+if (release && missingLegal.length > 0) {
+  throw new Error(
+    `Release build without ${missingLegal.join(', ')} — the consent screen would have no ` +
+      `privacy link and settings no imprint (issue #130; set them in apps/mobile/eas.json ` +
+      `under build.production.env, or as EAS environment variables)`,
+  );
+}
 // A production build must never send tokens over plain HTTP across a network
 // (http://localhost is only this machine: local walkthroughs).
 const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(ENV.API_URL);

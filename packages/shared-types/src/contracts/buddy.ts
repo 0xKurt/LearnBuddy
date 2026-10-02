@@ -5,6 +5,7 @@ import {
   DifficultyWish,
   PageProblem,
   SessionView,
+  UnclearSpot,
   VocabDirection,
   VoiceName,
   VoiceSpeed,
@@ -329,6 +330,28 @@ export const HomeNotice = z.discriminatedUnion('type', [
     title: z.string().nullable(),
     photo_count: z.number().int(),
     pages: z.array(PageProblem).min(1),
+  }),
+  /**
+   * One spot the reading could not settle, asked in words — the smallest clarification a sheet
+   * needs instead of "photograph the whole page again" (issue #164 point 1). Stands before
+   * `pages_missing`: it is the small question, and answering it writes the one question that was
+   * missing. Only ever one at a time, and it expires unanswered — nothing nags.
+   */
+  z.object({
+    type: z.literal('unclear_spot'),
+    /** The sheet her answer belongs to (the id the API takes the answer for). */
+    material_id: Uuid,
+    title: z.string().nullable(),
+    /** Which of her photos the spot is on, and how many she sent for that reading. */
+    page: z.number().int().min(1),
+    photo_count: z.number().int(),
+    /**
+     * The material her photos were sent for — the same as `material_id` unless these pages were
+     * added to an earlier sheet. The app shows that page from its own copy on the phone; no
+     * crop and no coordinates are involved (a box from the model could point at another task).
+     */
+    photo_material_id: Uuid,
+    spot: UnclearSpot,
   }),
 ]);
 export type HomeNotice = z.infer<typeof HomeNotice>;

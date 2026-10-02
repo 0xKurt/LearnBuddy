@@ -60,6 +60,8 @@
       "worked_add": "Le due frazioni sono divise in {{parts}} parti uguali. In tutto sono colorate {{answer}}."
     },
     "cannot_check": "Ora non riesco a controllarlo. Puoi guardare la soluzione e confrontarla tu.",
+    "card_knew": "Lo sapevo",
+    "card_not_yet": "Non ancora",
     "correct": "Esatto – ottimo lavoro!",
     "had_enough": "Va bene, per oggi può bastare. Puoi chiudere l’esercizio, oppure facciamo insieme un esempio piccolo. Dimmi tu.",
     "heard_retry": "Non ti ho sentito bene. Riprova un po' più forte e più vicino al telefono.",

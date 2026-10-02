@@ -383,6 +383,29 @@ export function buildContext(
       `- "${m.title ?? 'sheet'}": no exercises were made for ${named}${more} — that exercise form is not one Buddy can practise. Name it if it comes up, offer to explain it or go through the steps instead, and never let it pass for practised`,
     );
   }
+  // A spot the reading could not settle, where the smallest clarification is to ask her
+  // (issue #164 point 1). He names the task as printed and both readings, so she recognises
+  // which one is meant and can simply say which it is; he never picks one himself, because the
+  // question for that task is written from HER reading and from nothing else.
+  for (const m of state.materials.filter((x) => x.unclear.length > 0)) {
+    const sheet = `"${m.title ?? 'sheet'}"`;
+    for (const u of m.unclear) {
+      const readings = u.readings.map((r) => `"${r}"`).join(' or ');
+      if (u.status === 'open') {
+        materialBlock.push(
+          `- ${sheet}, page ${u.page}: in the task "${u.task}" the ${u.about} could not be read — it is ${readings}. Ask her which it is if it comes up (she also sees it with both to tap); NEVER pick one yourself, and say that there is no question for that task until she does. Everything else on the sheet is ready`,
+        );
+      } else if (u.status === 'answered') {
+        materialBlock.push(
+          `- ${sheet}: she said the ${u.about} in "${u.task}" is "${u.answer}" — the question for that task is being written from her reading right now, so it is not there yet`,
+        );
+      } else {
+        materialBlock.push(
+          `- ${sheet}: she said the ${u.about} in "${u.task}" is "${u.answer}", and the question for that task still could not be written. Say that plainly if it comes up, thank her for the answer and offer a new photo of page ${u.page}; never let it look as if the task were practised`,
+        );
+      }
+    }
+  }
   for (const m of state.materials.filter((x) => x.status === 'ready' && x.page_problems.length))
     materialBlock.push(
       `- "${m.title ?? 'sheet'}": page(s) ${m.page_problems.map((p) => p.page).join(', ')} of ${m.photo_count} not read completely; no questions from what was missing (the learner sees a card to photograph them again)`,

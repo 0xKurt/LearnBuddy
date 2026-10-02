@@ -121,6 +121,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one                                                                   |
 | `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                                                                              |
 | `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived                                                                           |
+| `POST /practice/sessions/:id/cards`, `POST …/card`                                                   | Lernkarten: a pass over the words that did not sit, each card judged by her (#147)                                    |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
 ## Buddy decisions
@@ -1127,6 +1128,38 @@ do is worse than the hole. Both directions are eval cases
 (`de_spoken_exam_without_a_sheet_is_not_offered`, `de_reading_aloud_is_not_refused`), the second
 being the one that matters more.
 
+**One unreadable digit costs one tap, not a new photo** (issue #164 point 1, migration 0070,
+`material_unclear_spots`). Unclarity had exactly one step before this: a spot the reading could not
+settle made the whole PAGE "partly read" (`page_problems`), the learner got the coarse notice and
+was asked to photograph that page again, and the question for that task was never written. She
+never learned WHERE it stuck, so she could not help — although she is the one holding the sheet.
+A reading may now name the spot instead (`unclear`: the page, the task as printed, what exactly is
+unsettled, and the two to four readings it could be, `UNCLEAR_RULES`), and only when it can name
+the readings — a spot it cannot say anything about stays a page report, because a made-up
+alternative would have her confirm something that is not on her sheet. The sheet stays `ready` and
+everything else on it is practicable throughout, exactly as one task Buddy cannot practise costs
+only itself. **The ask is in words, not in a cut-out:** a box would have to come from the same
+model that just said it could not read this spot, and a wrong box shows her another task of her own
+sheet — she would answer about the wrong one and the app would write a question nobody asked for.
+The crop machinery exists (`images.ts`) and is deliberately outside the reading, as a bonus that
+may fail; an ask may not be a bonus. The home notice shows the page she sent beside the words, from
+the app's own copy on the phone (`drafts.sentPage`, no coordinates), and stands before
+`pages_missing` — the small question first, one at a time. She taps one of the readings, or "weiß
+ich nicht"; nothing nags, and an unanswered ask expires after a day (`UNCLEAR_TTL_MS`, the window
+the page notice already uses). Her tap names the aliases the server issued (`u1`, `r2`) and the
+server resolves them (rule 2), so the question can only ever be built on a reading the app itself
+offered her — never on free text a model would have to interpret, and never on a value Buddy
+suspected. The answer then starts **one more reading of the same photos**: the continued-reading
+machinery of #150 (`moreRules` with every prompt the sheet already has, dedupe by normalised
+prompt) with `clarifiedRules` added, which states her reading as hers and asks for that task and
+nothing else. It runs under the same `extract_material` job kind, keyed `clarify:<spot>`, and is
+excluded from the three readings `retryMaterial` counts — her own answer may never be the reason
+"Nochmal lesen" is refused. What came of it is recorded (`items_added`): 0 means the question still
+could not be written, and STATE tells Buddy to say that plainly and thank her, rather than letting
+her answer disappear (rule 5). STATE carries all three states (asked / answered / written nothing)
+with the task as printed, so Buddy can ask it in his own words — and is told never to pick a
+reading himself.
+
 **Photo check on the phone** (`apps/mobile/lib/photo/quality.ts`, `check.ts`; the old app's most
 common failure was an unreadable photo): right after a photo is taken or picked, a small copy is
 decoded on the device (jpeg-js, the same on phone and web) and measured — too dark (mean
@@ -1394,7 +1427,9 @@ still at hand, for 24 hours, with the photo of that page while it is on the phon
 "Nochmal fotografieren" (capture opens with `completes` and the page numbers; the new material keeps
 the old one's goal and purpose and ends the notice in the same transaction) and "Passt so"
 (`POST /materials/:id/pages-ok`, idempotent). A photo of something else among the pages only offers
-"Passt so". Buddy's context names the missing pages. Measured live (Lena eval `seite-kaputt`,
+"Passt so". A spot that could be SEEN but not settled is no longer this notice's business at all:
+it gets the small ask above (`material_unclear_spots`, issue #164), which stands before this one —
+this notice is for what could not be read at all. Buddy's context names the missing pages. Measured live (Lena eval `seite-kaputt`,
 `seite-abgeschnitten`, `mehrere-seiten`): a blurred middle page and a page cut off at the bottom
 are reported in 6 of 6 runs with the final prompt (the one before missed a cut once and completed
 the cut-off sentence, hence the last rule), no false report on three good pages, no question about
@@ -1834,6 +1869,33 @@ word list, so it stays a prompt rule.
   `produce` = write it — what a class test asks for), `direction` on `prepare_practice` for the
   pairs she already has. Both directions are always stored either way, so the other one is
   there to practise later; null asks both, as before.
+- **Lernkarten: a pass, not a mode** (issue #147 Stufe 2, migration `0069_flashcards.sql`) —
+  a run where the card turns over and SHE says whether she knew it. Typing twenty words on a
+  phone was the complaint it answers ("ggfs sollten bei vokabeln halt auch lernkarten gemacht
+  werden", owner 30.09.; Stufe 1, tapping one of four of her own words, is `tapChoices.ts`).
+  The answer is therefore **not checked**, and everything about the design follows from that.
+  `practice_sessions.pass = 'cards'` marks the run — deliberately not a fourth `mode`, which is
+  read as far out as `NowCard.mode` in the app's contracts; the mode stays `practice`, because a
+  card pass IS practice. The server enforces one path per session: a card pass takes no answer,
+  no hint, no reveal and no re-explanation (409 `use_cards`), an answered run takes no card
+  (409 `not_a_card_pass`), and a pass sends every open card's answer, because showing it is the
+  pass. **What a self-assessment is worth** (`practice/fsrs.ts` RATING, argued there): "Noch
+  nicht" → `Again`, the full weight a revealed solution gets, because a report of failure is the
+  one self-report that can be taken at face value and believing it only costs more practice;
+  "Wusste ich" → `Hard`, **not** the `Good` a checked first try earns — still a recall, so the
+  card keeps moving forward, but the next look comes sooner, because nobody measured it.
+  `item_states.last_outcome` records `self_known` / `self_unknown` so an interval stays legible
+  later, `session_items.answered_by = 'self_rated'` keeps the summary from naming a topic from it
+  in either direction (`summary.ts`; the mirror of issue #197), and `status` says only `revealed`
+  with `first_try_correct` false, so every reader of "this sits" keeps the word in rotation.
+  **How she gets there**: one offer at the end of a finished run — no menu, no setting (rule 16)
+  — and only when the whole repetition that run leaves is vocabulary, in which case it takes the
+  place of "Die wackligen nochmal üben" rather than standing beside it (`cards.ts`
+  `offersCardPass`). That order is also what makes the self-assessment honest: every word on a
+  card was already measured as one that did not sit, so the pass adds a repetition instead of a
+  verdict out of nowhere. Cards never lead to cards. Screen: `components/practice/CardPass.tsx`
+  on the same route, where both answers are the same soft pill — a primary "Wusste ich" would
+  nudge her towards the claim the rating already has to discount.
 - **speak** — say a sentence aloud (kind `speak`; `POST /practice/sessions/:id/speak` with a
   ≤ 15 s recording, bodies up to 2 MB only on this route). The model listens to the audio itself:
   it writes the expected pronunciation and the sounds actually produced (IPA), then judges word
