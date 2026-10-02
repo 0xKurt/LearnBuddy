@@ -12,6 +12,7 @@ const material = (over: Partial<MaterialView> = {}): MaterialView => ({
   failure_reason: null,
   photos_deleted: false,
   item_count: 0,
+  speak_count: 0,
   subject_name: null,
   goal_id: null,
   purpose: 'study',

@@ -44,7 +44,7 @@ import {
 import { checkPath } from './steps.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
-import { questionCountFor, selectPracticeItems } from './selection.js';
+import { questionCountFor, selectPracticeItems, type PracticeRun } from './selection.js';
 import { tapChoicesFor } from './tapChoices.js';
 import { CARD_PASS, offersCardPass } from './cards.js';
 import { MAX_ACCEPTED } from './items.js';
@@ -258,14 +258,26 @@ export async function startFromStep(
   });
 }
 
-/** Practice started by the learner from their material (library). */
+/**
+ * Practice started by the learner from their material (library).
+ *
+ * `run` is what she asked for, not what the session is stored as (`StartPracticeRequest.mode`).
+ * 'speak' is the way into the sentences on her own sheet, read aloud (issue #223 point 2): the
+ * session is an ordinary practice — same spaced repetition, same screen, the existing recording
+ * and pronunciation judgement (`practice/speak.ts`) untouched — and the only thing that differs
+ * is which questions are in it. It takes the whole sheet, not a sample of it: the offer names
+ * the sheet, and a number invented here would be the silent cut of issue #49 again (#145).
+ */
 export async function startManual(
   deps: Deps,
   learnerId: string,
   scope: { subjectId: string | null; materialId: string | null; goalId: string | null },
-  mode: 'practice' | 'test',
+  run: PracticeRun,
 ): Promise<string> {
   const now = deps.now();
+  // A speaking run is a run through ONE sheet (the contract refuses it without one); the
+  // session it writes is practice, like a flashcard pass is practice (migration 0069).
+  const mode: SessionMode = run === 'speak' ? 'practice' : run;
   // Everything in the scope must be the learner's own.
   const owned = await deps.db.one<{ goal: boolean; subject: boolean; material: boolean }>(
     `select ($2::uuid is null or exists (select 1 from buddy_goals where id = $2 and learner_id = $1)) as goal,
@@ -276,7 +288,9 @@ export async function startManual(
   if (!owned.goal || !owned.subject || !owned.material)
     throw new AppError('not_found', 'Not found');
   if (scope.materialId) {
-    // A homework sheet is helped with, not drilled: it leads to its help session (audit H-7).
+    // A homework sheet is helped with, not drilled: it leads to its help session (audit H-7),
+    // whichever run was asked for — every way back to that sheet ends there, never at
+    // "no questions" (its tasks are `origin = 'homework'`, which no run below selects).
     const help = await helpSessionFor(deps, learnerId, scope.materialId);
     if (help) return help;
   }
@@ -285,10 +299,10 @@ export async function startManual(
     learnerId,
     scope,
     [],
-    questionCountFor(12),
+    run === 'speak' ? 'all' : questionCountFor(12),
     now,
     {},
-    mode === 'test',
+    run,
   );
   if (itemIds.length === 0)
     throw new AppError('not_found', 'No questions available yet', { reason: 'no_questions' });

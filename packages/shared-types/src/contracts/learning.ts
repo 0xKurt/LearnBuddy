@@ -178,6 +178,16 @@ export const MaterialView = z.object({
   /** The photos are gone (retention or deletion): reading it again is not possible. */
   photos_deleted: z.boolean(),
   item_count: z.number().int(),
+  /**
+   * How many of those questions are SENTENCES TO READ ALOUD (issue #223 point 2). They are
+   * part of `item_count` but never part of an ordinary practice — `practice/selection.ts`
+   * keeps a spoken item out of a written run on purpose — so without this number the sheet
+   * could count them and offer no way to practise them. Non-zero, the sheet offers a
+   * speaking run (`StartPracticeRequest.mode = 'speak'`); zero, it says nothing about them.
+   * It counts exactly what such a run would hold, so the offer can never lead to "nothing to
+   * practise": homework (which is helped with, not drilled) and deleted questions are out.
+   */
+  speak_count: z.number().int().default(0),
   subject_name: z.string().nullable(),
   goal_id: Uuid.nullable(),
   purpose: z.enum(['study', 'homework']),
@@ -489,12 +499,31 @@ export const SessionView = z.object({
 });
 export type SessionView = z.infer<typeof SessionView>;
 
-export const StartPracticeRequest = z.object({
-  subject_id: Uuid.nullable().optional(),
-  material_id: Uuid.nullable().optional(),
-  goal_id: Uuid.nullable().optional(),
-  mode: z.enum(['practice', 'test']).default('practice'),
-});
+/**
+ * What the learner asked a run started from her own material to BE — not what the session will
+ * be stored as. `practice` and `test` are also the session's `mode`; `speak` is a practice run
+ * (`SessionMode` 'practice', it feeds the same spaced repetition) whose questions are the
+ * sentences on that sheet to read aloud — issue #223 point 2, and the same split
+ * `StartTopicRequest.kind` already makes for what Buddy prepares.
+ *
+ * Why `speak` has to be asked for instead of coming along in an ordinary practice: a spoken
+ * item inside a written run would put the microphone in front of her in the middle of typing,
+ * and `practice/selection.ts` has excluded it for that reason since it was written. That
+ * exclusion stays; this is the door it was missing.
+ *
+ * A speaking run is a run through ONE sheet, so `material_id` is required for it: the label
+ * that offers it names the sheet, and everything it holds must come from that sheet.
+ */
+export const StartPracticeRequest = z
+  .object({
+    subject_id: Uuid.nullable().optional(),
+    material_id: Uuid.nullable().optional(),
+    goal_id: Uuid.nullable().optional(),
+    mode: z.enum(['practice', 'test', 'speak']).default('practice'),
+  })
+  .refine((v) => v.mode !== 'speak' || (v.material_id ?? null) !== null, {
+    message: 'speak needs material_id',
+  });
 export type StartPracticeRequest = z.infer<typeof StartPracticeRequest>;
 
 export const AnswerRequest = z

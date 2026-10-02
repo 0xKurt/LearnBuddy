@@ -109,6 +109,16 @@ type MaterialRow = {
   created_at: Date;
 };
 
+/**
+ * The sentences on this sheet to read aloud (issue #223 point 2). Exactly what a speaking run
+ * started from the sheet would hold — the same two conditions `practice/selection.ts` applies
+ * for `run = 'speak'` — so the offer the card makes and what the run then holds can never
+ * disagree (the same reason `offersCardPass` lives in one place).
+ */
+const SPEAK_COUNT = `(select count(*) from items i
+   where i.material_id = m.id and i.archived_at is null
+     and i.kind = 'speak' and i.origin <> 'homework')::int`;
+
 export async function materialView(
   db: Db,
   learnerId: string,
@@ -118,12 +128,14 @@ export async function materialView(
     MaterialRow & {
       subject_name: string | null;
       item_count: number;
+      speak_count: number;
       session_id: string | null;
       session_status: MaterialView['session_status'];
     }
   >(
     `select m.*, s.name as subject_name,
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count,
+            ${SPEAK_COUNT} as speak_count,
             (select ps.id from practice_sessions ps where ps.material_id = m.id
               order by ps.started_at desc, ps.seq desc limit 1) as session_id,
             (select ps.status from practice_sessions ps where ps.material_id = m.id
@@ -140,6 +152,7 @@ function toView(
   m: MaterialRow & {
     subject_name: string | null;
     item_count: number;
+    speak_count: number;
     session_id: string | null;
     session_status: MaterialView['session_status'];
   },
@@ -151,6 +164,7 @@ function toView(
     failure_reason: m.failure_reason,
     photos_deleted: m.photos_deleted_at !== null,
     item_count: m.item_count,
+    speak_count: m.speak_count,
     purpose: m.purpose,
     session_id: m.session_id,
     session_status: m.session_status,
@@ -1771,12 +1785,14 @@ export async function libraryView(db: Db, learnerId: string): Promise<LibraryVie
     MaterialRow & {
       subject_name: string | null;
       item_count: number;
+      speak_count: number;
       session_id: string | null;
       session_status: MaterialView['session_status'];
     }
   >(
     `select m.*, s.name as subject_name,
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count,
+            ${SPEAK_COUNT} as speak_count,
             (select ps.id from practice_sessions ps where ps.material_id = m.id
               order by ps.started_at desc, ps.seq desc limit 1) as session_id,
             (select ps.status from practice_sessions ps where ps.material_id = m.id

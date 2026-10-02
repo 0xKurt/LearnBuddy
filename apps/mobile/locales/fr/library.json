@@ -45,6 +45,8 @@
   "photos_deleted": "Les photos ne sont plus enregistrées. Supprime la feuille et reprends-la en photo.",
   "practice": "S'entraîner",
   "practice_label": "S'entraîner sur « {{title}} »",
+  "speak": "Lire les phrases à voix haute",
+  "speak_label": "Lire à voix haute les phrases de « {{title}} »",
   "homework_continue": "Continuer les devoirs",
   "homework_continue_label": "Continuer les devoirs « {{title}} »",
   "homework_view": "Voir",

@@ -45,6 +45,8 @@
   "photos_deleted": "Las fotos ya no están guardadas. Borra la hoja y vuelve a hacerle fotos.",
   "practice": "Practicar",
   "practice_label": "Practicar “{{title}}”",
+  "speak": "Leer las frases en voz alta",
+  "speak_label": "Leer en voz alta las frases de «{{title}}»",
   "homework_continue": "Seguir con los deberes",
   "homework_continue_label": "Seguir con los deberes «{{title}}»",
   "homework_view": "Ver",

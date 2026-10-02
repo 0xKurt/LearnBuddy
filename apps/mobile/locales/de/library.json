@@ -45,6 +45,8 @@
   "photos_deleted": "Die Fotos sind nicht mehr gespeichert. Lösch das Blatt und fotografier es neu.",
   "practice": "Üben",
   "practice_label": "„{{title}}“ üben",
+  "speak": "Sätze laut lesen",
+  "speak_label": "Die Sätze aus „{{title}}“ laut lesen",
   "homework_continue": "Weiter mit der Hausaufgabe",
   "homework_continue_label": "„{{title}}“: weiter mit der Hausaufgabe",
   "homework_view": "Ansehen",

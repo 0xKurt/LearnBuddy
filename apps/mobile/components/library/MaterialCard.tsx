@@ -27,6 +27,8 @@ type Props = {
   disabled: boolean;
   /** Practise it; a homework sheet opens its help session (the server finds it). */
   onPractice: () => void;
+  /** Read the sentences on this sheet aloud (only shown when it has some, issue #223). */
+  onSpeak: () => void;
   /** Its questions (app/material/[id].tsx). */
   onOpen: () => void;
   onRetry: () => void;
@@ -65,6 +67,7 @@ export function MaterialCard({
   busy,
   disabled,
   onPractice,
+  onSpeak,
   onOpen,
   onRetry,
   onDelete,
@@ -97,10 +100,20 @@ export function MaterialCard({
           tasks: m.not_practicable.map((n) => n.task).join(' · '),
         })
       : null;
+  // Sentences on this sheet to read aloud (issue #223 point 2). They are never part of an
+  // ordinary practice — the microphone has no place in the middle of typing — so the sheet
+  // offers them separately, and only when it has them.
+  const speakable = m.purpose !== 'homework' && m.speak_count > 0;
+  // A sheet whose questions are ALL sentences to read aloud has nothing to practise in
+  // writing: there "Üben" would lead to "hier gibt es gerade nichts zu üben", so reading
+  // aloud IS its main action.
+  const spokenOnly = speakable && m.speak_count >= m.item_count;
   // A homework sheet leads back to its help session, never to drill practice (audit H-7).
   const action =
     m.purpose !== 'homework'
-      ? 'practice'
+      ? spokenOnly
+        ? 'speak'
+        : 'practice'
       : m.session_status === 'finished'
         ? 'homework_view'
         : 'homework_continue';
@@ -150,10 +163,24 @@ export function MaterialCard({
               size="sm"
               pill
               disabled={disabled}
-              onPress={onPractice}
+              icon={action === 'speak' ? 'mic' : undefined}
+              onPress={action === 'speak' ? onSpeak : onPractice}
               accessibilityLabel={t(`${action}_label`, { title })}
             >
               {t(action)}
+            </Btn>
+          ) : null}
+          {m.status === 'ready' && speakable && !spokenOnly ? (
+            <Btn
+              size="sm"
+              variant="soft"
+              pill
+              icon="mic"
+              disabled={disabled}
+              onPress={onSpeak}
+              accessibilityLabel={t('speak_label', { title })}
+            >
+              {t('speak')}
             </Btn>
           ) : null}
           {m.status === 'ready' ? (

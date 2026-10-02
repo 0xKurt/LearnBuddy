@@ -119,9 +119,12 @@ export default function SubjectScreen() {
     }
   }
 
-  const practice = (m: MaterialView) =>
+  // Practise the sheet, or read its sentences aloud (issue #223 point 2) — the same way in,
+  // one server call that decides what the run holds. Which of the two a sheet offers is the
+  // card's business: it knows whether the sheet has sentences to read aloud at all.
+  const start = (m: MaterialView, mode: 'practice' | 'speak') =>
     void act(m, async () => {
-      const session = await startPractice({ material_id: m.id, mode: 'practice' });
+      const session = await startPractice({ material_id: m.id, mode });
       seedSession(session);
       router.push(`/practice/${session.id}`);
     });
@@ -251,7 +254,8 @@ export default function SubjectScreen() {
                     tone={shown.tone}
                     busy={busyId === m.id}
                     disabled={busyId !== null}
-                    onPractice={() => practice(m)}
+                    onPractice={() => start(m, 'practice')}
+                    onSpeak={() => start(m, 'speak')}
                     onOpen={() => router.push(`/material/${m.id}`)}
                     onRetry={() => readAgain(m)}
                     onDelete={() => askDelete(m)}

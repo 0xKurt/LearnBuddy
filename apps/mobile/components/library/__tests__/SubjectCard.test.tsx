@@ -29,6 +29,7 @@ const sheet = (title: string | null, created_at: string): MaterialView => ({
   failure_reason: null,
   photos_deleted: false,
   item_count: 12,
+  speak_count: 0,
   subject_name: 'Französisch',
   goal_id: null,
   purpose: 'study',

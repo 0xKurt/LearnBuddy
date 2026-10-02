@@ -45,6 +45,8 @@
   "photos_deleted": "Le foto non sono più salvate. Elimina il foglio e fotografalo di nuovo.",
   "practice": "Esercitati",
   "practice_label": "Esercitati su “{{title}}”",
+  "speak": "Leggi le frasi ad alta voce",
+  "speak_label": "Leggi ad alta voce le frasi di «{{title}}»",
   "homework_continue": "Continua i compiti",
   "homework_continue_label": "Continua i compiti «{{title}}»",
   "homework_view": "Vedi",

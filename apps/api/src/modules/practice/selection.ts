@@ -4,6 +4,9 @@
 // Order: questions due for review (FSRS) → never practised → the rest by due
 // date. Focus topics narrow the pool when they match enough questions.
 //
+// What KINDS may be in the set is the run's own question (`PracticeRun`), not a wish: a mock
+// test leaves out the free text, a speaking run holds the spoken sentences and nothing else.
+//
 // Three things the learner can ask for narrow it further (issue #113). The model sets them
 // as tool arguments, the code decides what they mean — never a word list:
 //   only wrong  — only questions whose last try needed help or was not known, never one that
@@ -61,6 +64,20 @@ export const QUESTIONS_PER_MINUTE = 1.2;
  */
 export type HowMany = number | 'all';
 
+/**
+ * What kind of run the questions are for — the one knob that says "this run wants other kinds"
+ * (issue #197 for the test, issue #223 point 2 for the speaking run). Everything else about a
+ * run (its FSRS effect, its hints, its screen) is decided elsewhere; this decides nothing but
+ * which kinds of question may be in the set:
+ *   practice — the ordinary written run: everything except a spoken sentence;
+ *   test     — the same, minus a free text: it would get one try, be judged against a key and
+ *              close as "missed" without anything having been measured (issue #197);
+ *   speak    — nothing BUT spoken sentences. The sentences on her own sheet, read aloud: a
+ *              speaking run is asked for, never mixed into a written one (the microphone in the
+ *              middle of typing is what the exclusion below has always guarded against).
+ */
+export type PracticeRun = 'practice' | 'test' | 'speak';
+
 export function questionCountFor(minutes: number): number {
   return Math.min(15, Math.max(3, Math.round(minutes * QUESTIONS_PER_MINUTE)));
 }
@@ -76,12 +93,12 @@ export async function selectPracticeItems(
   now: Date,
   wish: PracticeWish = {},
   /**
-   * A mock test. A free text is not a test question: it would get one try, be judged against
-   * a key, and close as "missed" without anything having been measured (issue #197). The
-   * generated test already excludes it by its kind allow-list (`generate.ts`); this closes the
-   * same hole for a test started from her own material.
+   * Which kinds of question this run may hold (`PracticeRun`). A mock test leaves out the free
+   * text the generated test already leaves out by its kind allow-list (`generate.ts`, issue
+   * #197); a speaking run holds the spoken sentences and nothing else, and every other run
+   * holds everything else (issue #223 point 2).
    */
-  forTest = false,
+  run: PracticeRun = 'practice',
 ): Promise<string[]> {
   // For a goal: its own material first; if it has none yet, its subject.
   let goalMaterialsOnly = false;
@@ -103,7 +120,7 @@ export async function selectPracticeItems(
     // The wishes narrow the pool before the limit, so nothing she asked for is cut off by
     // 200 rows of something else; the difficulty is measured on what is left (its median).
     `with pool as (
-       select i.id, i.topic, i.difficulty, i.created_at, st.due, st.item_id as reviewed
+       select i.id, i.topic, i.difficulty, i.created_at, i.seq, st.due, st.item_id as reviewed
          from items i
          left join materials m on m.id = i.material_id
          left join item_states st on st.item_id = i.id
@@ -112,10 +129,14 @@ export async function selectPracticeItems(
             where $6::boolean and si.item_id = i.id and si.status <> 'open' and si.flagged_at is null
             order by si.closed_at desc nulls last limit 1) last on true
         where i.learner_id = $1 and i.archived_at is null and (m.id is null or m.archived_at is null)
-          -- Homework is helped with, not drilled; speaking needs a quiet moment the learner chooses.
-          and i.origin <> 'homework' and i.kind <> 'speak'
+          -- Homework is helped with, not drilled.
+          and i.origin <> 'homework'
+          -- Speaking needs a quiet moment the learner chooses: a spoken sentence never turns up
+          -- inside a written run, and a run she asked to speak holds nothing else (issue #223
+          -- point 2). One predicate, so the two can never both be true or both be false.
+          and (i.kind = 'speak') = ($12::text = 'speak')
           -- A free text is not a test question (issue #197).
-          and (not $12::boolean or i.kind <> 'long')
+          and ($12::text <> 'test' or i.kind <> 'long')
           and ($2::uuid is null or m.goal_id = $2)
           and ($3::uuid is null or i.subject_id = $3)
           and ($4::uuid is null or i.material_id = $4)
@@ -146,7 +167,11 @@ export async function selectPracticeItems(
              when p.reviewed is null then 1
              else 2 end,
         p.due nulls last,
-        p.created_at, p.id
+        -- The questions of one reading share a created_at (one transaction, one now()), so the
+        -- last word used to be a random uuid. seq is the order they were written in, which is
+        -- the order they stand on the sheet: a text read aloud is read from the top, and any
+        -- set is the same set twice (issue #223 point 2).
+        p.created_at, p.seq
       -- No fixed ceiling: a word list with fifty words is fifty questions (#145). The
       -- limit follows what was asked for, with room above it so a focus topic still has
       -- something to sort; "all" takes the lot.
@@ -164,7 +189,7 @@ export async function selectPracticeItems(
       wish.difficulty ?? null,
       wish.vocabularyOnly === true,
       count === 'all' ? null : Math.max(200, count),
-      forTest,
+      run,
     ],
   );
   if (candidates.length === 0) return [];

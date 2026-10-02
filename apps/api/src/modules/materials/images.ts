@@ -5,10 +5,17 @@
 // page photos and the questions that were read from them, and returns one tight
 // box per WHOLE teaching figure (a labelled diagram, a reference chart kept
 // whole) — omitting comics, scenes and pure text. sharp crops those real pixels
-// and lightly cleans them (greyscale + contrast, no hard binarize), the crop is
-// stored next to the photos and attached to the questions it helps answer.
+// and lightly cleans them (contrast, no hard binarize), the crop is stored next
+// to the photos and attached to the questions it helps answer.
 // A real crop can never be "wrong" or "invented"; the only failure mode is a
 // slightly loose frame, never a fabricated shape.
+//
+// The clean-up has two paths (issue #223 point 1). A line drawing is greyscaled
+// so it reads like a scan; a figure whose COLOURS are part of what it shows — a
+// map, an indicator, a colour wheel, a stained specimen, a chart with a colour
+// key — keeps them, because greyscale made "welche Farbe zeigt der Indikator?"
+// unanswerable. The reading reports one validated fact per figure; `enhance`
+// is the only thing that decides what happens to the pixels (see there).
 //
 // Images are a bonus: the sheet is `ready` before this runs, and nothing here —
 // a vision pass that finds nothing, a Storage outage, an exhausted budget —
@@ -31,7 +38,8 @@ import type { LlmPart } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { itemsOneByOne } from '../practice/items.js';
 
-export const FIGURES_PROMPT_VERSION = 'figures-v1';
+// v2 (issue #223 point 1): one field more per figure — whether its colours carry meaning.
+export const FIGURES_PROMPT_VERSION = 'figures-v2';
 /** At most this many crops per sheet (pages added later fill up to it, never past it). */
 export const MAX_IMAGES_PER_MATERIAL = 6;
 /** Generous symmetric padding so a tight model box never clips the figure. */
@@ -57,6 +65,7 @@ For each figure return:
 - box: [x0,y0,x1,y1] normalised 0..1. Hug the figure TIGHTLY: include the figure and the labels that belong to it, but EXCLUDE the page title, instruction paragraphs, answer-key boxes, page margins, hole-punch strips, and any neighbouring drawing that is not part of this figure.
 - label: a short name of what it shows, in the learner's language
 - item_indices: indices (from the QUESTIONS list) this figure helps answer
+- colour_carries_meaning: whether this figure would LOSE information in black and white. true when the colours are part of what it shows: areas or categories told apart by colour (a map, a chart or diagram with a colour key, a wiring or circuit colour code), a colour that is the thing itself (an indicator, a litmus or pH strip, a flame colour, a colour wheel or colour mixing chart, a stained specimen, a mineral or leaf identified by colour), a painting, an artwork or a photograph whose colours are the subject. false when colour is only decoration or print colour and the figure reads exactly the same in black and white: line drawings, labelled diagrams, tables, number lines, geometric figures, plotted graphs whose curves are labelled rather than colour-coded, handwriting on paper. Decide it for THIS figure, not for the page. If any question beside it could turn on a colour, answer true.
 
 Be conservative: only clean teaching figures genuinely worth showing. Return ONLY the JSON object.`;
 
@@ -65,10 +74,42 @@ const FigureBox = z.object({
   box: z.array(z.number().min(0).max(1)).min(4).max(4),
   label: z.string().trim().min(1).max(120),
   item_indices: z.array(z.number().int().min(0).max(499)).min(1).max(60),
+  /**
+   * Whether this figure would lose information in black and white (issue #223 point 1). A
+   * FACT about the picture, nothing more: the reading is the only thing that can see whether
+   * the colours mean anything, and `enhance` is the only thing that decides what happens to
+   * the pixels because of it (CLAUDE.md rule 1 — the model names a box, code does the
+   * cropping; the model names this, code picks the clean-up).
+   *
+   * The two mistakes are not worth the same, so the prompt is told to lean one way: a
+   * coloured figure greyed by mistake is the bug this exists to end (the question about the
+   * colour has no answer left), while a plain drawing kept in colour is a slightly less
+   * crisp scan. Hence "if any question beside it could turn on a colour, answer true".
+   *
+   * A MISSING field is not that lean — it is no fact at all, and it is a broken answer
+   * rather than a judgement about the picture. It falls back to the greyscale clean-up this
+   * file had before: the figure is still worth showing, and it gets exactly the treatment it
+   * would have got anyway. Defaulting the other way would silently stop cleaning up EVERY
+   * sheet the moment the model dropped one field.
+   */
+  colour_carries_meaning: z.boolean().default(false).catch(false),
 });
-/** The schema the model is asked for (real bounds as hints, json-schema.ts). */
+/**
+ * The schema the model is asked for (real bounds as hints, json-schema.ts). The colour fact
+ * is REQUIRED here and lenient in `FigureBox`: every figure must answer it, and a figure whose
+ * answer is missing anyway is still worth showing (a `.default()` would make it optional in
+ * the asked-for schema, json-schema.ts, which is the one thing it must not be).
+ */
 const FiguresResult = z.object({
-  assets: z.array(FigureBox).max(MAX_IMAGES_PER_MATERIAL * 2),
+  assets: z
+    .array(
+      FigureBox.extend({
+        colour_carries_meaning: z
+          .boolean()
+          .describe('Would this figure lose information in black and white?'),
+      }),
+    )
+    .max(MAX_IMAGES_PER_MATERIAL * 2),
 });
 const FIGURES_SCHEMA = toJsonSchema(FiguresResult);
 /** Read tolerantly: a broken figure entry is dropped, never the whole list. */
@@ -174,14 +215,23 @@ Look at the attached page images and return the JSON object defined in your inst
   );
 
   let kept = 0;
+  let inColour = 0;
   for (const asset of found) {
     if (kept >= cap) break;
-    const png = await cropAndEnhance(pages[asset.page_index]!.bytes, asset.box);
+    const png = await cropAndEnhance(
+      pages[asset.page_index]!.bytes,
+      asset.box,
+      asset.colour_carries_meaning,
+    );
     if (!png) continue;
     const attached = await storeAndAttach(deps, input, sheet.account_id, asset, png, items);
-    if (attached) kept++;
+    if (!attached) continue;
+    kept++;
+    if (asset.colour_carries_meaning) inColour++;
   }
-  console.log(`[figures] material=${input.materialId} found=${found.length} kept=${kept}`);
+  console.log(
+    `[figures] material=${input.materialId} found=${found.length} kept=${kept} colour=${inColour}`,
+  );
 }
 
 /**
@@ -247,11 +297,15 @@ async function storeAndAttach(
 
 type Box = [number, number, number, number];
 
-async function cropAndEnhance(pageBytes: Buffer, box: number[]): Promise<Buffer | null> {
+async function cropAndEnhance(
+  pageBytes: Buffer,
+  box: number[],
+  keepColour: boolean,
+): Promise<Buffer | null> {
   const b: Box = [box[0] ?? 0, box[1] ?? 0, box[2] ?? 0, box[3] ?? 0];
   const crop = await cropToPng(pageBytes, b, FIGURE_PAD);
   if (!crop) return null;
-  return enhance(await trimBackground(crop));
+  return enhance(await trimBackground(crop), keepColour);
 }
 
 async function cropToPng(pageBytes: Buffer, box: Box, pad: number): Promise<Buffer | null> {
@@ -303,15 +357,35 @@ async function trimBackground(buf: Buffer): Promise<Buffer> {
 }
 
 /**
- * Non-destructive clean-up: greyscale, stretch contrast, lift the paper toward
- * white WITHOUT a hard binarize (which would shred faint or dashed strokes).
- * Keeps the real drawing; just makes it read like a clean scan.
+ * Non-destructive clean-up, in two paths. Which one a crop gets is decided HERE, from the one
+ * validated fact the reading reported about that figure (`colour_carries_meaning`): the model
+ * never names a filter, a parameter or an order — exactly as it names a box and this file does
+ * the cropping (CLAUDE.md rule 1).
+ *
+ * Greyscale (the default, every line drawing): greyscale, stretch contrast, lift the paper
+ * toward white WITHOUT a hard binarize (which would shred faint or dashed strokes). Keeps the
+ * real drawing; just makes it read like a clean scan.
+ *
+ * Colour (issue #223 point 1): where the colour IS the content — a map, an indicator, a colour
+ * wheel, a stained specimen, a chart with a colour key — the same clean-up minus the two steps
+ * that destroy it. Which two was measured on real crops before this was written:
+ *   · `.greyscale()` is the loss the issue names: five pastel fields of one sheet all came back
+ *     as 255,255,255, and a blue, a green and a red area of a map came back as 128, 155 and 137
+ *     — "welche Farbe zeigt der Indikator?" has no answer left in either.
+ *   · `.linear(1.22, -26)` lifts the paper toward white, and on a colour crop it does the same
+ *     damage one layer up: it pushed those five pastels to 255,254,255 / 255,255,255 … while
+ *     still writing three channels. Pale indicator colours are exactly what it wipes out.
+ * What is left is the contrast a colour crop can take. `median` and `sharpen` leave a flat colour
+ * patch byte for byte as it was; `normalise` stretches each band's range, which moves a pastel by
+ * a few points and takes the paper's warm cast with it — measured, the five pastels stayed clearly
+ * apart and a map's blue, green and red came back unchanged on a page that has real black ink on
+ * it (and such a page is what a photographed worksheet is).
  */
-async function enhance(buf: Buffer): Promise<Buffer> {
-  return sharp(buf)
-    .greyscale()
-    .normalise()
-    .linear(1.22, -26)
+async function enhance(buf: Buffer, keepColour: boolean): Promise<Buffer> {
+  const toned = keepColour
+    ? sharp(buf).normalise()
+    : sharp(buf).greyscale().normalise().linear(1.22, -26);
+  return toned
     .median(1)
     .sharpen({ sigma: 1 })
     .png()

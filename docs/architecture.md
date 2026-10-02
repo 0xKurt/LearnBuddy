@@ -1305,8 +1305,20 @@ sheet became ready, one budgeted vision pass (`purpose 'figures'`, its own `DAIL
 migration 0050) looks at the page photos and the questions read from them and returns one tight
 box per WHOLE figure (a labelled diagram; a reference chart kept whole, never split into cells) —
 omitting comics, scenes and pure text. sharp crops exactly those pixels and lightly cleans them
-(greyscale + contrast stretch, no hard binarize that would shred faint strokes). Crops live in the
-same private bucket next to the photos (`material_images` rows, at most 6 per sheet; pages added
+(greyscale + contrast stretch, no hard binarize that would shred faint strokes). **A crop whose
+colour is the content keeps it** (issue #223 point 1): the pass reports one validated fact per
+figure — `colour_carries_meaning`, whether the figure would LOSE information in black and white
+(a map, a chart with a colour key, an indicator or litmus strip, a colour wheel, a stained
+specimen, a painting) — and `enhance` decides from it which of two clean-ups the pixels get: the
+greyscale one as before, or the same one without `.greyscale()` and without the paper-whitening
+`.linear()`, the two steps measured to destroy exactly what the question asks about (five pastel
+fields all came back as pure white, a blue, a green and a red map area as three near-equal greys).
+The model names the fact, never a filter, a parameter or an order (rule 1) — as it names a box and
+code does the cropping. The two mistakes are not worth the same, so the prompt is told to lean one
+way: a coloured figure greyed by mistake is a question with no answer left, a plain drawing kept in
+colour is a slightly less crisp scan. A MISSING fact is not that lean but a broken answer, and
+falls back to the greyscale clean-up this file always had (`figure-colour.int.test.ts`).
+Crops live in the same private bucket next to the photos (`material_images` rows, at most 6 per sheet; pages added
 later fill up to the cap) and hang on the questions they help answer (`items.image_id`, the first
 figure a question got stays). The session view carries a short-lived signed URL with size and
 label; the question card shows the crop at a fixed ratio (≤ 180 pt, no layout jump, tap to zoom;
@@ -1890,6 +1902,23 @@ word list, so it stays a prompt rule.
   and the spoken `reply` are not something a scoring API returns. Weighed against today's numbers
   in [decisions/azure-pronunciation.md](decisions/azure-pronunciation.md) (issue #27, the owner
   decides; nothing is connected).
+  **The sentences on her own sheet** (issue #223 point 2): a reading may write `speak` items from a
+  photographed sheet ("Lies den Text laut vor"), and `selectPracticeItems` leaves every spoken item
+  out of a written run on purpose — the microphone has no place in the middle of typing. That
+  exclusion stays; what was missing was a door, so until now those sentences were stored and never
+  asked while the speak mode Buddy prepares wrote NEW ones. The door is one more thing the sheet
+  can be asked for: `StartPracticeRequest.mode = 'speak'` (`material_id` required — the contract
+  refuses a speaking run that is not about one sheet), which selects that sheet's spoken items and
+  nothing else (`PracticeRun`, the same knob the mock test uses for the free text). It is an
+  ordinary practice session — `mode = 'practice'`, same spaced repetition, same screen, the
+  recording and judgement above untouched — and it takes the WHOLE sheet, never a sample of it
+  (#145/#49). **How she gets there**: where the sheet already offers "Üben", and only when it has
+  sentences to read aloud (`MaterialView.speak_count`, counted with exactly the conditions the run
+  selects by, so the offer can never lead to "nothing to practise"); a sheet whose questions are
+  ALL spoken makes reading aloud its main action, because "Üben" there would lead nowhere. No new
+  screen and no setting (rule 16). Homework keeps its own way: its tasks are `origin = 'homework'`,
+  which no run selects, so such a sheet counts no sentence and every way back to it still ends in
+  its help session (audit H-7). `speak-from-sheet.int.test.ts`.
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
   renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
   symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in
