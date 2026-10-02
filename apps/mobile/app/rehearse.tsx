@@ -199,8 +199,11 @@ function Rehearse({ brief }: { brief: RehearsalBrief }) {
       <View style={{ flex: 1, paddingHorizontal: SPACE.lg, paddingTop: SPACE.lg }}>
         {brief.text ? (
           <Card padding={0} radius={20}>
+            {/* She reads FROM this text, like a list she browses: the one area that may
+                scroll here (tests/web/fit.ts allows scroll-list). */}
             <ScrollView
-              contentContainerStyle={{ padding: SPACE.lg + 2 }}
+              testID="scroll-list"
+              contentContainerStyle={{ padding: SPACE.lg }}
               style={{ maxHeight: '100%' }}
               accessibilityLabel={t('learn:rehearse.text_label')}
             >

@@ -22,7 +22,7 @@ export function RehearseCard({ actionId, offer }: { actionId: string; offer: Off
   const label = t(offer.kind === 'talk' ? 'rehearse.offer.talk' : 'rehearse.offer.read_aloud');
   return (
     <Card tone="primaryLt" padding={16} radius={18}>
-      <View style={{ gap: SPACE.sm + 2 }}>
+      <View style={{ gap: SPACE.md }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             <Icon

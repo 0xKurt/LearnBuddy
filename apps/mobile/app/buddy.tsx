@@ -949,7 +949,8 @@ export default function BuddyScreen() {
     ) : null,
   ].filter((node) => node !== null);
   // The next test in one line; everything else Buddy says in the conversation.
-  const nextExam = h.next.find((i) => i.kind === 'exam') ?? null;
+  // A talk's day stands there the same way (issue #264): it is a date she works towards.
+  const nextExam = h.next.find((i) => i.kind === 'exam' || i.kind === 'talk') ?? null;
   // "Schick mir ein Foto" is said once (issue #94, lib/homeLayout.ts photoAsk): while the
   // bar on top asks for this photo, its word-for-word "Ich warte auf dein Foto" receipt
   // leaves the conversation and "Kein Foto nötig" is the bar's quiet way out. Bar closed

@@ -8,6 +8,7 @@
 import type { LlmRequest } from '../../llm/gateway.js';
 import { ScriptedGateway } from '../fakes.js';
 import { scriptGenerations } from './generations.js';
+import { rehearsalAnswer } from './talks.js';
 import { says, scriptTurns } from './turns.js';
 
 const base = {
@@ -394,9 +395,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       answer: says('Diese Woche steht noch nichts an – magst du etwas üben?'),
     },
   );
-  llm.byDefault('transcribe', {
-    json: { heard_speech: true, text: 'Was steht diese Woche an?' },
-  });
+  // The same budget serves a rehearsal (issue #264): its answer has its own shape.
+  llm.byDefault('transcribe', (req) =>
+    req.promptVersion.startsWith('rehearse')
+      ? rehearsalAnswer(req)
+      : { heard_speech: true, text: 'Was steht diese Woche an?' },
+  );
   // Tutor: hints for homework (never the solution).
   const hint = (req: LlmRequest) => {
     const text = lastText(req).toLowerCase();

@@ -626,7 +626,7 @@ function nextOf(state: BuddyState, today: string, now: Date): UpcomingItem[] {
   for (const g of state.goals) {
     if (g.status !== 'active' || !g.due_date || daysBetween(today, g.due_date) < 0) continue;
     items.push({
-      kind: 'exam',
+      kind: g.kind === 'talk' ? 'talk' : 'exam',
       id: g.id,
       title: g.title,
       date: g.due_date,
