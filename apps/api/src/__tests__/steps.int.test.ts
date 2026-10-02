@@ -36,14 +36,19 @@ const item = (over: Record<string, unknown>) => ({
   ...over,
 });
 
-async function start(env: TestEnv, l: Learner, items: Record<string, unknown>[]) {
+async function start(
+  env: TestEnv,
+  l: Learner,
+  items: Record<string, unknown>[],
+  kind: 'practice' | 'help' = 'practice',
+) {
   env.llm.script('explain', {
     json: { usable: true, title: 'Gleichungen', subject: null, items },
   });
   const res = await l.api.post<SessionView>('/practice/topic', {
     client_request_id: randomUUID(),
-    kind: 'practice',
-    text: 'Gleichungen',
+    kind,
+    text: kind === 'help' ? items[0]!.prompt : 'Gleichungen',
   });
   expect(res.status).toBe(201);
   await env.flushBackground();
@@ -146,6 +151,59 @@ describe.skipIf(!dbReady)('a written path is judged by code, step by step', () =
     // A line in words: code must not guess, and must not claim a broken step either.
     const r = await answer(l, s, id, '2x + 3 = 7\ndann ziehe ich 3 ab\nx = 2');
     expect(r.body.verdict).toBe('partially_correct');
+    expect(env.llm.callsFor('tutor')).toHaveLength(1);
+  });
+
+  // Homework help used to shut EVERY fixed near-miss reply out, and so threw away the one thing
+  // code knew precisely: which step broke (issue #274). The reason for the exclusion was that a
+  // fixed reply shows the solution — true of a spelling, untrue of a line number.
+  it('names the broken line in homework help too, where a tip is the whole point', async () => {
+    const s = await start(
+      env,
+      l,
+      [item({ kind: 'formula', prompt: 'Multipliziere aus: $2(x+3)$', answer: '2x + 6' })],
+      'help',
+    );
+    const id = s.items[0]!.item.id;
+    const r = await answer(l, s, id, '2(x + 3)\n2x + 3\n2x + 3');
+    expect(r.body.verdict).toBe('partially_correct');
+    expect(r.body.reply.text).toBe(
+      'Bis Zeile 1 stimmt alles. Von dort zur nächsten Zeile geht etwas verloren – schau dir diesen Schritt nochmal an.',
+    );
+    // The question stays open, and nothing was asked of a model.
+    expect(r.body.session.items[0]!.status).toBe('open');
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
+  });
+
+  // The other half of #274: what still may NOT happen in homework help.
+  it('still shows no spelling in homework help — there the tutor judges', async () => {
+    const s = await start(
+      env,
+      l,
+      [
+        item({
+          kind: 'short',
+          prompt: 'Wie heißt die Hauptstadt von Frankreich?',
+          answer: 'Paris',
+          topic: 'Europa',
+        }),
+      ],
+      'help',
+    );
+    const id = s.items[0]!.item.id;
+    env.llm.script('tutor', {
+      json: {
+        intent: 'answer',
+        verdict: 'partially_correct',
+        reply: 'Fast – schau dir das Wort nochmal genau an.',
+        gave_hint: false,
+        revealed_answer: false,
+      },
+    });
+    // A slip: the near miss whose fixed reply would spell the answer out. Homework help never
+    // shows the solution, so the tutor judges — and that is unchanged by #274.
+    const r = await answer(l, s, id, 'Pariis');
+    expect(r.body.reply.text).not.toContain('Paris');
     expect(env.llm.callsFor('tutor')).toHaveLength(1);
   });
 

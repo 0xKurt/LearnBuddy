@@ -59,6 +59,10 @@ async function onboardChild(page: Page, email: string): Promise<void> {
   });
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
+  // Read a moment AFTER the home is there, not the instant it appears: the way out is short now
+  // (the first run of this measurement had seven frames to look at, because the change below made
+  // it short), and a blank that lands right behind the first paint would be missed otherwise.
+  await page.waitForTimeout(500);
   const empty = await page.evaluate(() => {
     const seen = (window as unknown as { __blank?: number[] }).__blank ?? [];
     let run = 0;
@@ -70,7 +74,7 @@ async function onboardChild(page: Page, email: string): Promise<void> {
     return { worst, frames: seen.length };
   });
   // Two frames is a repaint; more is the blank screen she saw. The sampler must have run at all.
-  expect(empty.frames, 'frames sampled').toBeGreaterThan(30);
+  expect(empty.frames, 'frames sampled').toBeGreaterThan(20);
   expect(
     empty.worst,
     `empty frames in a row on the way out of the cards (of ${empty.frames})`,

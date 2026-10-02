@@ -969,6 +969,30 @@ function articleMissing(rule: RuleVerdict, item: { kind: string }): boolean {
 }
 
 /** The fixed, kind reply to a near miss the rules found (a slip shows the spelling instead). */
+/**
+ * Near misses whose fixed reply names a PLACE and nothing else: which line of her path stopped
+ * following (issue #209), which atom does not add up or which factor is still in every coefficient
+ * (issue #212). They carry no solution — a line number is not a calculation, and "count the H
+ * again: 4 on the left, 2 on the right" is not the balanced equation.
+ */
+const LOCATED = new Set<RuleVerdict>(['step_broke', 'unbalanced', 'not_lowest']);
+
+/**
+ * Whether the fixed near-miss reply may be used here (issue #274).
+ *
+ * Homework help never shows the solution, so the fixed replies that DO show it — the spelling of a
+ * slip above all — stay out of that mode and the tutor judges instead. That was written as "no
+ * fixed reply in homework at all", and it threw away the most precise hint there is: the server
+ * knew which step broke and answered with a general question from the hint ladder instead, at the
+ * cost of a model call it did not need.
+ *
+ * So the line is drawn where it belongs: a reply that names a PLACE is a hint and holds in every
+ * mode; a reply that names the ANSWER still never reaches homework help.
+ */
+function locatedOrNotHelp(rule: RuleVerdict, session: { mode: string }): boolean {
+  return LOCATED.has(rule) || session.mode !== 'help';
+}
+
 const NEAR_MISS_REPLY: Partial<Record<RuleVerdict, MessageKey>> = {
   spelling: 'practice.spelling',
   close: 'practice.accents',
@@ -1293,7 +1317,11 @@ export async function answerItem(
       gaveHint: false,
       revealed: false,
     };
-  } else if (NEAR_MISS.has(rule) && !articleMissing(rule, item) && session.mode !== 'help') {
+  } else if (
+    NEAR_MISS.has(rule) &&
+    !articleMissing(rule, item) &&
+    locatedOrNotHelp(rule, session)
+  ) {
     // A near miss needs no model: a fixed, kind answer at once. A slip shows the
     // spelling and stays open, so she types it right herself (never in homework,
     // which never shows the solution — there the tutor judges).

@@ -215,7 +215,10 @@ test('learning modes: explain, homework help without the solution, practice with
   await shot(page, '23b-worked-path');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   // Code names the first line that no longer follows — 7·4 holds, 28+1 does not follow from it —
-  // and it says so without asking a model at all (`steps.ts`, `pathReply`).
+  // and it says so without asking a model at all (`steps.ts`, `pathReply`). In HOMEWORK HELP, which
+  // is where this stands: the first run of this step got the hint ladder's general question
+  // instead, because every fixed near-miss reply was shut out of that mode. A reply that names a
+  // line is a hint, not a solution, so it holds here too (issue #274).
   await expect(page.getByText('Bis Zeile 1 stimmt alles', { exact: false })).toBeVisible();
   // A near miss, not a wrong answer: her way is mostly right, so the question stays open.
   await expect(page.getByRole('button', { name: 'Prüfen' })).toBeVisible();
