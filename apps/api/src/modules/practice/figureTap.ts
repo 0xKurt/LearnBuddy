@@ -85,7 +85,10 @@ export const FigureTapDraftBase = z.object({
       y_min: Num,
       y_max: Num,
       step: Num,
-      marks: z.array(z.object({ x: Num, y: Num, label: Label.nullable() })).max(TAP_MARKS_MAX * 2),
+      marks: z
+        .array(z.object({ x: Num, y: Num, label: Label.nullable() }))
+        .max(TAP_MARKS_MAX * 2)
+        .default([]),
       key: z.object({ x: Num, y: Num }),
     })
     .nullable()
@@ -97,7 +100,10 @@ export const FigureTapDraftBase = z.object({
       max: Num,
       step: Num,
       snap: Num,
-      marks: z.array(z.object({ value: Num, label: Label.nullable() })).max(TAP_MARKS_MAX * 2),
+      marks: z
+        .array(z.object({ value: Num, label: Label.nullable() }))
+        .max(TAP_MARKS_MAX * 2)
+        .default([]),
       key: Num,
     })
     .nullable()
@@ -106,9 +112,9 @@ export const FigureTapDraftBase = z.object({
   bars: z
     .object({
       bars: z.array(z.object({ label: Label, value: Num })).max(TAP_BARS_MAX * 2),
-      unit: z.string().trim().max(12).nullable(),
+      unit: z.string().trim().max(12).nullable().default(null),
       key: Label,
-      extreme: z.enum(['max', 'min']).nullable(),
+      extreme: z.enum(['max', 'min']).nullable().default(null),
     })
     .nullable()
     .default(null)
