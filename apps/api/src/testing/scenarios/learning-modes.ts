@@ -124,6 +124,110 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // Answers with SEVERAL PARTS (issues #228, #229, #230): the model writes the task — the
+  // elements in the right order, the pairs, the groups, the table with its gaps — and nothing
+  // about how it is judged. Every board on screen, every shuffle and every verdict below comes
+  // from the server (`modules/practice/parts.ts`). All four forms in one run, so the walkthrough
+  // sees the tallest of them on 360×740.
+  // Registered before the /Brüche|Bruch/ rule: nothing here mentions fractions, but the order of
+  // these rules is what decides, so new ones go above the broader patterns.
+  scriptGenerations({
+    when: /Reihenfolge|Zuordnen|Tabelle/i,
+    answer: () => ({
+      usable: true,
+      title: 'Ordnen und Zuordnen',
+      subject: { name: 'Biologie', kind: 'biology' },
+      bars: [],
+      items: [
+        {
+          ...base,
+          kind: 'order',
+          prompt: 'Bring die Schritte der Keimung in die richtige Reihenfolge.',
+          // Never used: the solution is computed from the task (`solutionOfParts`).
+          answer: 'wird berechnet',
+          topic: 'Keimung',
+          parts_task: {
+            form: 'order',
+            // Five, the middle of what the contract allows (3–8). The upper bound is where the
+            // 360×740 phone decides, and the walkthrough is where that is measured.
+            elements: [
+              'Samen quillt auf',
+              'Wurzel wächst',
+              'Keimblätter öffnen sich',
+              'Erstes Blatt wächst',
+              'Pflanze blüht',
+            ],
+          },
+        },
+        {
+          ...base,
+          kind: 'match',
+          prompt: 'Welches Organ hat welche Aufgabe?',
+          answer: 'wird berechnet',
+          topic: 'Organe',
+          parts_task: {
+            form: 'match_pairs',
+            // Five pairs — the number issue #229's acceptance criterion names for 360×740.
+            pairs: [
+              { left: 'Lunge', right: 'Gasaustausch' },
+              { left: 'Herz', right: 'Blut pumpen' },
+              { left: 'Niere', right: 'Blut filtern' },
+              { left: 'Magen', right: 'Nahrung zersetzen' },
+              { left: 'Leber', right: 'Gift abbauen' },
+            ],
+          },
+        },
+        {
+          ...base,
+          kind: 'match',
+          prompt: 'Sortiere die Tiere in ihre Klassen.',
+          answer: 'wird berechnet',
+          topic: 'Wirbeltierklassen',
+          parts_task: {
+            form: 'match_groups',
+            groups: [
+              { name: 'Säugetier', members: ['Hund', 'Fledermaus'] },
+              { name: 'Vogel', members: ['Amsel', 'Pinguin'] },
+              { name: 'Lurch', members: ['Frosch', 'Molch'] },
+            ],
+          },
+        },
+        {
+          ...base,
+          kind: 'table_fill',
+          prompt: 'Fülle die Tabelle aus.',
+          answer: 'wird berechnet',
+          topic: 'Zellen',
+          // A 4×4 table — the size issue #230's acceptance criterion names for 360×740: four
+          // columns (the row label and three cells) and four rows with the heading.
+          parts_task: {
+            form: 'table_fill',
+            header: ['Merkmal', 'Pflanzenzelle', 'Tierzelle', 'Bakterium'],
+            rows: [
+              [
+                { cell: 'given', text: 'Zellwand' },
+                { cell: 'gap', expect: 'word', answer: 'ja', accepted: ['vorhanden'] },
+                { cell: 'gap', expect: 'word', answer: 'nein', accepted: ['fehlt'] },
+                { cell: 'given', text: 'ja' },
+              ],
+              [
+                { cell: 'given', text: 'Zellkern' },
+                { cell: 'given', text: 'ja' },
+                { cell: 'gap', expect: 'word', answer: 'ja', accepted: ['vorhanden'] },
+                { cell: 'gap', expect: 'word', answer: 'nein', accepted: ['fehlt'] },
+              ],
+              [
+                { cell: 'given', text: 'Chloroplasten' },
+                { cell: 'gap', expect: 'word', answer: 'ja', accepted: ['vorhanden'] },
+                { cell: 'given', text: 'nein' },
+                { cell: 'gap', expect: 'word', answer: 'nein', accepted: ['fehlt'] },
+              ],
+            ],
+          },
+        },
+      ],
+    }),
+  });
   // Practice without a photo: fractions, with a figure.
   scriptGenerations({
     when: /Brüche|Bruch/i,
@@ -222,6 +326,14 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /balken/i,
       answer: says('Gern – ich hab dir Bruchbalken zum Ausprobieren vorbereitet.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Bruchbalken' } },
+      ]),
+    },
+    {
+      // Answers with several parts (issues #228–#230). The topic text reaches the generator,
+      // whose /Reihenfolge|Zuordnen|Tabelle/ rule above answers with the four boards.
+      when: /ordnen/i,
+      answer: says('Gern – ordnen und zuordnen, mit einer Tabelle am Ende.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Reihenfolge und Zuordnen' } },
       ]),
     },
     {

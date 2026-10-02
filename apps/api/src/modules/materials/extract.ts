@@ -13,10 +13,12 @@ import {
   MATH_RULES,
   MAX_ACCEPTED,
   NUMERIC_KEY_RULES,
+  PARTS_FROM_SHEET,
+  PARTS_RULES,
   SPELLING_RULES,
 } from '../practice/items.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v5';
+export const EXTRACT_PROMPT_VERSION = 'extract.v6';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -312,6 +314,8 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${SPELLING_RULES}
    - ${MATH_RULES}
    - ${FIGURE_RULES}
+   - ${PARTS_RULES}
+   - ${PARTS_FROM_SHEET}
    - accepted_answers: other correct formulations (synonyms, spelling variants).
    - topic: a short topic name (2–4 words) shared by questions about the same thing.
    - Questions and answers in the language of the material (for language exercises, instructions in the learner's language).
@@ -333,7 +337,7 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
 5. One item per task (or per numbered sub-task) you did NOT name in not_practicable, in the order printed, up to 12:
    - prompt: the task exactly as printed (you may add the needed context from the sheet in one sentence).
    - answer: the correct final answer, as short as possible. It is used only to check the learner's answer and to plan hints; the learner never sees it.
-   - kind: numeric for a single number (unit in "unit"), multiple_choice if the task offers choices, long for explanations or texts, short otherwise.
+   - kind: numeric for a single number (unit in "unit"), multiple_choice if the task offers choices, long for explanations or texts, short otherwise. Never one of the kinds with an answer in several parts here: help is given task by task, and parts_task stays null.
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}

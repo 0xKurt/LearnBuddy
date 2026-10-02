@@ -959,7 +959,8 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   if (!result.success) return fail(deps, job, materialId, 'model_error');
   const x = result.data;
   if (!x.is_learning_material) return fail(deps, job, materialId, 'not_learning_material');
-  const items = usableItems(x.items);
+  // Homework help is given task by task; a board is not one of its forms (issues #228–#230).
+  const items = usableItems(x.items, { severalParts: !homework });
   const pageProblems = pageProblemsOf(x.pages, m.photo_count);
   // "Not readable" with questions and a page that was read: one bad page must not
   // cost the whole sheet (the model says so for a cut-off page at times); the
@@ -1537,7 +1538,9 @@ async function runClarifiedReading(deps: Deps, job: JobRow, spotId: string): Pro
     throw err;
   }
   const fresh = parsed.success
-    ? usableItems(parsed.data.items).filter((it) => !known.has(samePrompt(it.prompt)))
+    ? usableItems(parsed.data.items, { severalParts: !homework }).filter(
+        (it) => !known.has(samePrompt(it.prompt)),
+      )
     : [];
 
   await deps.db.tx(async (tx) => {
@@ -1935,6 +1938,9 @@ export async function materialItems(
       // Same for the fraction bar (issue #162): a surface is something she works WITH on
       // an open question, not a control in a list of what the sheet holds.
       surface: null,
+      // And the same for a board (issues #228–#230): the list says what the sheet asks, and
+      // arranging it belongs to the session where the answer counts.
+      board: null,
       result: resultOf(r),
     })),
   };

@@ -41,6 +41,7 @@ const card = (over: Partial<SessionItemView['item']> = {}): SessionItemView => (
     image: null,
     tap_choices: null,
     surface: null,
+    board: null,
     ...over,
   },
   status: 'open',

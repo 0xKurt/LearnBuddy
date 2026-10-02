@@ -1635,6 +1635,124 @@ Still open for a later step: the number line and the vocabulary card (#162's sec
 representation), and bar tasks from a photographed sheet — the extraction prompt does not offer
 them yet, so today they come from a topic she named.
 
+**Antworten mit mehreren Teilen — ordnen, zuordnen, eine Tabelle füllen** (`contracts/parts.ts`,
+`practice/parts.ts`, `practice/shuffle.ts`, Migration `0072_answers_with_several_parts.sql`;
+Issues #228, #229, #230 aus der Analyse #224). Bis hierher war jede Antwort **ein** Wert gegen
+**einen** Schlüssel. Die Analyse hat gezählt, was das kostet: von 347 Aufgabentypen gehen 240 nur
+„teilweise", und das heißt fast immer **Wissen ja, Form nein** — die Fakten lassen sich als
+Kurzantwort abfragen, die Aufgabenform der Klassenarbeit nicht. Die drei häufigsten dieser Formen
+tragen zusammen 95 Aufgabentypen aus 14 Fächern (`docs/lehrplan-und-uebungsformen.md`), und alle
+drei sind von Code **vollständig** entscheidbar. Also entscheidet Code sie — jedes Teil, ohne
+Modellaufruf (Regel 1; Issue #227 ist die Liste der Stellen, an denen das einmal nicht galt).
+
+_Das Modell schreibt die Aufgabe und urteilt über sie nichts._ Ein `PartsTask` ist alles, was es
+sagen darf, und die Lösung steht **in der Struktur**, nicht als Feld daneben: die Elemente stehen
+in der richtigen Reihenfolge, ein Paar ist ein Objekt mit links und rechts, eine Gruppe trägt ihre
+Mitglieder, eine Lücke ihren Inhalt. Ein Schlüssel, der den Elementen widerspricht, ist damit nicht
+sagbar — dasselbe Mittel wie bei den Bruchbalken. Und das Modell schreibt **keine Kürzel** (Regel
+2): `e1`, `l2`, `g3`, `c4` vergibt der Server aus der Position.
+
+| Form           | das Modell schreibt                 | sie tut                                                |
+| -------------- | ----------------------------------- | ------------------------------------------------------ |
+| `order`        | 3–8 Elemente in der richtigen Folge | tippt sie nacheinander an: 1, 2, 3 …                   |
+| `match_pairs`  | 3–6 Paare                           | tippt links, dann rechts; das Paar bekommt eine Nummer |
+| `match_groups` | 2–4 Gruppen, 4–12 Mitglieder        | tippt ein Element, dann die Gruppe                     |
+| `table_fill`   | Tabelle bis 6×10, 1–12 Lücken       | füllt jede Lücke wie ein kurzes Feld, der Reihe nach   |
+
+Daraus leitet der Server **das Brett** ab (`ItemView.board`) — ohne Lösung, nur während die Frage
+offen ist, in einer Anzeige-Reihenfolge, die **stabil pro Frage** ist (ein Hash der Item-Id, keine
+Uhr und keine Zufallsquelle, `practice/shuffle.ts`): ein Neuladen darf die Elemente nicht unter
+ihrem Finger neu mischen. Bei `order` ist die Mischung garantiert **nicht** die Ausgangsfolge, und
+bei `match_pairs` stehen die beiden Spalten nie Zeile für Zeile beieinander — sonst läge die Lösung
+da. _Eine Figur ist, was sie LIEST; eine Fläche ist, was sie BERÜHRT, um einen Wert zu schreiben;
+ein Brett ist, was sie ANORDNET._
+
+Ihre Antwort ist **eine Form für alle drei**: `AnswerRequest.parts`, je ein `{ slot, value }` —
+Position → Element, linke Seite → rechte Seite, Element → Gruppe, Lücke → ihr Text. Der Server nimmt
+genau die Fächer dieser Frage an, jedes einmal, mit Werten aus genau dem Vorrat, den diese Frage
+ausgegeben hat (`readParts`); alles andere ist eine abgewiesene Anfrage und nichts zu deuten. Ein
+Brett nimmt keinen getippten Text, eine Frage mit einer Antwort nimmt keine Teile. Ein halb
+gefülltes Brett ist **keine schwächere Antwort**, sondern eine, die noch nicht gegeben wurde.
+
+**Was eine teilweise richtige Antwort heißt.** Sechs von acht Zellen richtig ist
+`partially_correct`, und die Frage **bleibt offen** — die Form, die das Haus für Beinahe-Treffer
+schon hat (`NEAR_MISS`). Nicht `correct`, weil zwei Zellen nicht stimmen; nicht `incorrect`, weil
+das sechs richtige Zellen wegwirft, und genau das tut eine Klassenarbeit nicht (dieselbe Begründung
+wie `step_broke`, Issue #209). Erst wenn **kein** Teil hält, ist es falsch.
+
+Daraus folgt der Rest, und zwar ohne eine einzige neue Zahl:
+
+- **FSRS bekommt keinen Bruchteil.** Es gibt kein „0,75 von Good"; eine erfundene Zwischennote wäre
+  die Behauptung, sie beherrsche das Thema zu 75 %. Eine teilweise richtige Antwort schließt die
+  Frage nicht, schreibt also keine Wiederholung — sie kostet aber den ersten Versuch, und die
+  richtige Antwort danach ist `with_help` → `Hard` statt `Good`. Nach dem dritten Versuch kommt die
+  Lösung und es wird `revealed` → `Again`, wie überall. Schwächere Evidenz zählt **weniger**, nicht
+  anders (dasselbe Muster wie `answered_by = 'tapped'`, #163, und `self_rated`, #147).
+- **Sie sieht, wie viel hält, und genau EINE Stelle.** Nicht die Liste aller falschen Teile:
+  `chemistry.ts` nennt bei mehreren unausgeglichenen Elementen eines, „weil alle auf einmal zu
+  nennen eine Liste zum Abarbeiten ist statt eines nächsten Schritts". Die Menge, die hält, steht
+  immer da; die **Stelle** folgt der Hinweisleiter, also ab dem zweiten Versuch (Issue #229 verlangt
+  genau das). `order` ist die Ausnahme und keine Inkonsistenz: dort IST die Menge eine Stelle („bis
+  Schritt 3 stimmt alles"), wie `steps.ts` die erste gebrochene Zeile sofort nennt. Eine Lücke mit
+  einem Verschreiber bekommt den Satz, den ein Verschreiber im Antwortfeld bekommt (#207).
+- **Sie korrigiert nur die falschen Teile.** Der Server setzt nichts zurück und sperrt nichts fest:
+  ihre Anordnung bleibt stehen, ein Tipp auf ein gesetztes Teil nimmt es zurück („rückgängig statt
+  bestätigen"). Richtige Teile festzusperren wäre bequem und würde die Lösung verraten — bei fünf
+  Paaren stünde das fünfte damit da. (Dass bei einer Paarung nie genau n−1 Paare stimmen können,
+  ist derselbe Grund, aus dem die Zahl „4 von 5" dort nicht vorkommt.)
+- **Für `summary.ts` zählt sie wie jede andere Frage.** Eine mehrteilige Antwort, die beim ersten
+  Mal ganz stimmt, ist mehr Evidenz als ein angetippter Vierer-Multiple-Choice, nicht weniger. Was
+  dort eine Ausnahme braucht, ist nur `answered_by = 'tapped'`: bei einer Vokabel ersetzt Antippen
+  das Produzieren, hier **ist** Antippen die Form der Aufgabe — die Klassenarbeit verlangt sie, nur
+  mit einem Stift statt einem Finger.
+
+**Was gar nicht angelegt wird.** Eine Aufgabe, deren Lösung nicht die einzige ist, gibt keine Frage
+(`usablePartsTask`, wie `barItem` bei unmöglichen Parametern): doppelte Elemente, eine linke Seite
+mit zwei passenden rechten, ein Element in zwei Gruppen, eine Zeile schmaler als der Kopf, eine
+Tabelle ohne Lücke, eine Zahlenlücke mit einem Wort als Schlüssel. Und die eine Prüfung, die Issue
+#228 namentlich verlangt: sind **alle** Elemente Zahlen, muss die Folge streng monoton sein
+(auf- oder absteigend) — sonst wird nichts angelegt. Der Preis ist, dass eine Zahlenfolge nach einem
+anderen Kriterium nicht schreibbar ist; der Gegenwert ist, dass ein falscher Schlüssel auffällt,
+bevor sie die Frage sieht.
+
+Dasselbe eine Ebene weiter für die **Wertetabelle** (Issue #230, „Jeder Wert wird aus der Funktion
+nachgerechnet"): setzt das Modell `computed` — Ausdruck, Eingabespalte, Ergebnisspalte — rechnet der
+Server **jeden** Wert mit `compileExpression` nach und legt bei einer einzigen Abweichung keine Frage
+an. Das ist `keyCheck.ts` (Issue #157) über eine ganze Tabelle: ein Rechenfehler des Modells kostet
+eine Frage, nie ihr Vertrauen in eine Antwort, die richtig war. Ohne das Feld ist die Tabelle eine
+gewöhnliche Tabelle, deren Schlüssel niemand nachrechnen kann, und dann wird darüber auch nichts
+behauptet. **Noch nicht gebaut** sind die drei anderen gerechneten Tabellen aus #230 — Zahlenmauer,
+Vierfeldertafel, Wahrheitstabelle: jede braucht ihre eigene geprüfte Form (eine Zahlenmauer ist keine
+Tabelle, eine Wahrheitstabelle braucht Logik statt Arithmetik), und halb gebaut wären sie genau die
+„drei zusammenhanglosen Halbsysteme", die dieses Feature vermeiden sollte.
+
+**Wie viel auf ein 360×740-Handy geht** (`components/practice/PartsBoardAnswer.tsx`, nachgerechnet,
+nicht geschätzt). Vom Bildschirm bleiben nach Kopfzeile, Fragekarte und der Leiste mit „Prüfen"
+**459 pt** für das Brett (bei dreizeiliger Frage 404). Ein Tippziel ist 44 pt (`TOUCH`), und bei
+15 pt Schrift passen über die ganze Breite 27 Zeichen in eine Zeile. Daraus: acht kurze Elemente
+254 · vier Paare 330 · eine sechszeilige Konjugationstabelle 367 — alles mit Luft. Auch der
+schlimmste Fall, den `order` zulässt, passt: acht Elemente mit 48 Zeichen sind 446.
+
+Drei Formen haben aber **erlaubte** Eingaben, die auf dieses Handy nicht passen: sechs Paare mit je
+40 Zeichen (590), zwölf Elemente mit 32 Zeichen in vier Gruppen (866), zehn Tabellenzeilen mit
+Lücken (543). Die Zahlen stehen so in den Issues (#229: 3–6 Paare, 4–12 Elemente; #230: bis 6×10),
+und sie sind keine Übertreibung — „Begriff ↔ Erklärung" ist eine der häufigsten Zuordnungen
+überhaupt. Die Fragekarte darf dafür nicht schrumpfen, und 44 pt pro Tippziel ist der Boden. Also
+gibt **der Brettbereich** nach, in dieser Reihenfolge: das Gespräch darüber gibt seinen Platz als
+Erstes her (`flexBasis: 0`), dann schiebt sich das Brett in sich selbst — als `scroll-list`, die
+eine Kategorie, die `tests/web/fit.ts` erlaubt und die hier auch stimmt: was dort scrollt, ist eine
+Liste, die sie durchgeht. Die Frage bleibt stehen, und die Seite läuft nicht über.
+
+**Woher sie kommen.** Aus einem Thema im Chat und aus dem Probetest (`generate.ts` `KINDS`), und aus
+dem Foto (`extract.ts`): dort entscheidet **die gedruckte Aufgabenstellung**, nicht ihr Inhalt — eine
+Aufgabe, die ordnen, verbinden, zuordnen oder eine Tabelle vervollständigen lässt, behält diese Form
+und wird **nicht** zu Wissensfragen über ihren eigenen Inhalt (`PARTS_FROM_SHEET`; das ist die
+Spiegelung von Issue #198). Nicht in der Hausaufgabenhilfe: dort ist die Aufgabe die, die sie
+mitgebracht hat, und ein Brett wäre eine Form, die das Blatt nicht hat. Die Lösung steht gerendert
+in `items.answer`, damit „Lösung zeigen", die Fragenliste eines Blattes, der Leak-Check für Tipps
+und das Zurücknehmen eines Urteils unverändert weiterlaufen; die Textgrenzen in `contracts/parts.ts`
+sind so gerechnet, dass die größte erlaubte Aufgabe jeder Form in diese Spalte passt.
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:

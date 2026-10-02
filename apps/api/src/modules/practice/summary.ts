@@ -2,7 +2,7 @@
 // show (user feedback #3: one computation, so "Sitzt" and "Nochmal" never contradict).
 // docs/architecture.md §Practice.
 
-import type { PracticeSummary } from '@learnbuddy/shared-types/contracts';
+import { hasSeveralParts, type PracticeSummary } from '@learnbuddy/shared-types/contracts';
 
 import { noSingleSolution } from './evaluate.js';
 
@@ -66,7 +66,17 @@ export function summarize(items: readonly SummaryRow[]): PracticeSummary {
     // produce it (issue #163). It counts as answered and as right; it does not count
     // towards naming the topic as one that went well, or recognising four words would
     // read the same as writing them.
-    if (i.answered_by !== 'tapped') t.shown += 1;
+    //
+    // An answer with SEVERAL PARTS is the one place where tapping is not that (issues
+    // #228–#230). There the taps ARE the answer — a time line she puts in order, pairs she
+    // connects, elements she sorts — and the class test asks for exactly that form, with a
+    // pencil instead of a finger. Nothing was offered to her that replaced producing something,
+    // so there is nothing to weigh down: an eight-cell table right at the first try is more
+    // evidence than a four-option choice, not less. The rule stays "weaker evidence counts for
+    // less"; what changes is that this is not weaker evidence.
+    const recognisedRatherThanProduced =
+      i.answered_by === 'tapped' && !hasSeveralParts(i.kind ?? '');
+    if (!recognisedRatherThanProduced) t.shown += 1;
     byTopic.set(key, t);
   }
   const topics = [...byTopic.values()];

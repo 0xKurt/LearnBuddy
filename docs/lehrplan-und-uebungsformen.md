@@ -1424,6 +1424,15 @@ Symbol und ist mit `grep` auffindbar.
 **Sieben Item-Arten** (`packages/shared-types/src/contracts/learning.ts:131`, `ItemKind`):
 `short` · `long` · `numeric` · `multiple_choice` · `formula` · `vocab` · `speak`.
 
+> **Nachtrag 02.10.2026 (Welle 1, Issues #228, #229, #230).** Dazu kommen **drei Arten mit einer
+> mehrteiligen Antwort**: `order` (ordnen), `match` (Paare verbinden oder in Gruppen sortieren) und
+> `table_fill` (Tabelle ausfüllen) — zusammen die 95 Aufgabentypen aus 14 Fächern, die in §12.2
+> unter „Wissen ja, Form nein" stehen. Alle drei werden **vollständig von Code** geprüft, Teil für
+> Teil, ohne Modellaufruf (`modules/practice/parts.ts`, `contracts/parts.ts`, Migration 0072).
+> Damit gibt es eine vierte Eingabefläche, das **Brett** (`ItemView.board`), und einen vierten
+> Antwortweg in der Anfrage (`AnswerRequest.parts`). Die Zählung in §12 ist davor entstanden und
+> hier nicht nachgerechnet.
+
 **Fünf Sitzungsarten**, die Buddy anbieten kann (`contracts/buddy.ts`, `offer_learning.kind`;
 `StartTopicRequest.kind`): `practice` · `vocab` · `speak` · `help` · `test`.
 
