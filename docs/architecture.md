@@ -1656,6 +1656,61 @@ Verhältnis (Kreuzungsschema) wird gekürzt verglichen, aber **erst ab drei Teil
 „3:4" und „14:30" sind dieselben Zeichen, und welche Bedeutung gilt, steht nicht darin
 (Regel 3, Issue #175).
 
+**Eine Schreibaufgabe: Rückmeldung je Element statt eines Urteils** (Issue #211, Schritt 2 aus
+#197; `modules/practice/rubric.ts`, `contracts/rubric.ts`, Migration `0075_writing_rubric.sql`).
+In Deutsch bestehen die Klassenarbeiten fast nur aus Schreibaufgaben, in den Fremdsprachen
+kommen E-Mail, Blog und Sprachmittlung dazu, in Geschichte die Quellen- und Karikaturanalyse, in
+den Naturwissenschaften das Versuchsprotokoll. Bewertet wird dort, ob die geforderten **Elemente**
+da sind. Seit #197 behauptet die App keine Musterlösung mehr; jetzt gibt es das, was stattdessen
+gesagt wird. Beim Einlesen des Blattes schreibt das Modell für eine solche Aufgabe eine **Rubrik**
+(`items.rubric`): Textsorte und zwei bis sechs Pflichtelemente, jedes mit einem Namen, einem Satz
+für den Fall, dass es fehlt — und der Angabe, **wie** es entschieden wird. Eine Rubrik, deren Form
+nicht hält, wird verworfen, nicht die Frage.
+
+Drei der vier Prüfungen gehören dem Code: **Wortzahl** (`word_count`), **Pflichtangabe**
+(`mentions` — ein Titel, ein Name, eine Jahreszahl, im ganzen Text oder im ersten Satz; gefaltet
+verglichen, Wortgrenzen beachtet, und das Fenster „erster Satz" ist absichtlich mindestens 200
+Zeichen breit, damit ein Satzpunkt in einer Abkürzung keine Angabe verschwinden lässt) und
+**Zeitform** (`tense` — das Modell nennt die Verben, die sie bricht, Code prüft jedes gegen ihren
+Text). Nur `judged` ist eine echte Beurteilung, und dort gilt **Regel 0 aus #224**: das Modell muss
+ein wörtliches Zitat aus ihrem Text mitliefern, Code sucht es dort, und ohne Treffer zählt das
+Element nicht als erfüllt. Das Modell erfährt von den gezählten Elementen überhaupt nichts
+(`askedElements`) — es kann einer Angabe, die in ihrem Text steht, also nicht widersprechen
+(Regel 1 in ihrer stärksten Form: nicht überstimmt, sondern nicht gefragt).
+
+**Ein Modellaufruf pro Antwort**, auch bei sechs Elementen: `RubricDecision` erweitert
+`TutorDecision` um ein Feld, und es ist derselbe Tutor-Aufruf, den eine Antwort immer gekostet
+hat. Gemessen, nicht behauptet — `writing-rubric.int.test.ts` skriptet genau einen Aufruf, ein
+zweiter wäre `unexpected`, ein ausbleibender `pending`. Eine Frage ohne Rubrik bekommt das Feld
+gar nicht zu sehen.
+
+**Das Urteil kommt aus den Elementen**, nicht aus dem Eindruck des Modells. Hält alles, ist die
+Aufgabe erfüllt; hält etwas, ist es `partially_correct` und die **Frage bleibt offen** — nicht
+`incorrect`, weil das wegwerfen würde, was schon trägt, und genau das tut eine Klassenarbeit
+nicht; hält nichts, ist sie noch nicht beantwortet. **FSRS bekommt daraus keinen Bruchteil**: es
+gibt kein „0,75 von Good" (`fsrs.ts` kennt drei Noten), und hier muss dafür nichts gebaut werden
+— eine offene Frage schreibt keine Wiederholung, und ein freier Text bekommt seit #197 ohnehin
+nur dann eine Bewertung, wenn er richtig war. Blieb eine Beurteilung ganz aus, steht das Element
+auf `unknown`: dann hat niemand etwas gemessen, es wird nie der nächste Schritt und steht in
+keiner Zeile, die sie liest (Regel 5).
+
+**Was sie liest**: die Elemente mit ihrem Stand in Worten („Einleitungssatz: noch nicht · Länge:
+steht"), darunter **EIN** nächster Schritt — dieselbe Entscheidung, die `chemistry.ts` bei
+mehreren unausgeglichenen Elementen trifft („alle auf einmal zu nennen ist eine Liste statt eines
+nächsten Schritts"). Keine Zahl, kein Punktestand, keine Note (Regel 6). Die Worte sind die der
+App (`i18n/*.json`, `practice.rubric.*`), nicht die Prosa des Modells; bei einem gezählten Element
+sagt Buddy, dass es fehlt, bei einem beurteilten fragt er nach — der Unterschied zwischen gezählt
+und beurteilt bleibt hörbar. Nichts aufzudecken gibt es weiter: `revealed` bleibt false, und nach
+dem dritten Versuch steht die ehrliche Schlusszeile aus #197.
+
+**Offen und ausdrücklich nicht erfüllt**: das Abnahmekriterium von #211 verlangt einen Eval-Satz
+mit mindestens 20 Texten je Textsorte und die dokumentierte Übereinstimmung mit einer Lehrkraft,
+bevor die beurteilten Elemente live gehen. Dafür gibt es keinen Korpus echter Schülertexte, und
+20 erfundene wären keine Messung — der Satz ist nicht geschrieben. Was die Lücke erträglich macht,
+ist die Bauweise: ein falsches Modellurteil kann hier kein Element bestätigen, das nicht belegt
+ist, keine gezählte Angabe überstimmen, keine Note und keine FSRS-Bewertung erzeugen und keinen
+Text für falsch erklären, solange irgendetwas trägt.
+
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
 focus topics; one sheet or vocabulary only when she asked for that, issue #144). Answers are checked by rules where exactness is decidable (multiple choice,
 written numbers, exact matches, and near misses on written answers — missing

@@ -162,6 +162,9 @@ export function barItem(task: BarTask, locale: string): BarItem | null {
     // A fraction bar is at none of the state-dependent curriculum places (issue #214):
     // no Bundesland names a fraction differently.
     curriculum_point: null,
+    // A fraction-bar question asks for one amount; there are no required elements to tick off
+    // (issue #211 — a rubric belongs to a written text, and this question is a number).
+    rubric: null,
     bar_task: task,
     // A fraction bar is one value against one key; its answer has no parts (issues #228–#230).
     parts_task: null,

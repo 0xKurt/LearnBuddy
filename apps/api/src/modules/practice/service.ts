@@ -61,6 +61,15 @@ import { tapChoicesFor } from './tapChoices.js';
 import { CARD_PASS, offersCardPass } from './cards.js';
 import { MAX_ACCEPTED } from './items.js';
 import {
+  askedElements,
+  checkRubric,
+  rubricOf,
+  rubricReply,
+  rubricVerdict,
+  type RubricClaim,
+} from './rubric.js';
+import {
+  RubricDecision,
   TUTOR_PROMPT_VERSION,
   TUTOR_SYSTEM,
   TutorDecision,
@@ -74,6 +83,12 @@ import {
 import type { LlmMessage } from '../../llm/gateway.js';
 
 const TUTOR_SCHEMA = toJsonSchema(TutorDecision);
+/**
+ * Dasselbe Schema, erweitert um die Pflichtelemente einer Schreibaufgabe (issue #211). Es steht
+ * neben dem gewöhnlichen, statt es zu ersetzen: eine Frage ohne Rubrik soll das Feld nicht
+ * sehen und nicht mit Ausgabe-Tokens bezahlen. Der AUFRUF ist derselbe eine, in beiden Fällen.
+ */
+const RUBRIC_SCHEMA = toJsonSchema(RubricDecision);
 const MATERIAL_CHARS = 4000;
 
 export type PracticeLearner = {
@@ -138,6 +153,11 @@ export type ItemRow = {
    * (migration 0072 makes that an either/or). Read as a task through `partsTaskOf`.
    */
   parts_task: unknown;
+  /**
+   * The required elements of this writing task (issue #211), or null for every other question.
+   * Read as a rubric through `rubricOf`, never trusted as it stands.
+   */
+  rubric: unknown;
 };
 
 export type SessionRow = {
@@ -1135,6 +1155,15 @@ export async function answerItem(
   // The curriculum place this question is at, if any (migration 0074, issue #214). Read
   // forgivingly: an unknown key means "no place", never a wrong rule.
   const curriculumPoint = pointOf(item.curriculum_point);
+  // The required elements of a writing task, if any (issue #211). A free text with a rubric is
+  // judged element by element instead of getting one of four verdicts about the whole text; a
+  // free text without one behaves exactly as it has since #197.
+  const rubric = hintRequest ? null : rubricOf(item.rubric);
+  const asked = rubric ? askedElements(rubric) : [];
+  // What the model said about the elements it was asked about. It stays empty when no model was
+  // called at all (the rules alone answered, or the model was unavailable) — and then every
+  // judged element is `unknown` rather than missing: nobody measured it.
+  let claims: readonly RubricClaim[] = [];
   // A request for help is not an answer: nothing for the rules to check.
   const byRules: RuleVerdict = hintRequest
     ? 'unknown'
@@ -1342,6 +1371,7 @@ export async function answerItem(
                   region: learner.curriculum_region,
                   grade: learner.grade,
                 }),
+                rubric: rubric ? { form: rubric.form, asked } : null,
               }),
             },
           ],
@@ -1352,6 +1382,10 @@ export async function answerItem(
         })),
         { role: 'user', parts: [{ text }] },
       ];
+      // The elements are asked for in THIS request, not in a second one (issue #211): the
+      // claims are captured into `claims` above rather than returned, so the one call a
+      // question has always cost stays one call. The repair round below (homework only)
+      // overwrites what the first round said — right, it is the same answer judged again.
       const askTutor = async (messages: LlmMessage[]) => {
         const r = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
           purpose: 'tutor',
@@ -1359,16 +1393,27 @@ export async function answerItem(
           promptVersion: TUTOR_PROMPT_VERSION,
           system: TUTOR_SYSTEM,
           contents: messages,
-          schema: TUTOR_SCHEMA,
+          schema: asked.length ? RUBRIC_SCHEMA : TUTOR_SCHEMA,
           maxOutputTokens: 1024,
           temperature: 0.3,
           timeoutMs: 20_000,
           thinkingBudget: 0,
         });
-        const parsed = TutorDecision.safeParse(r.json);
-        if (!parsed.success) throw new Error('tutor output invalid');
+        // A writing task with required elements answers in a wider schema — the same decision
+        // plus one line per element (issue #211); everything else answers as before.
+        let d: TutorDecisionT;
+        if (asked.length) {
+          const parsed = RubricDecision.safeParse(r.json);
+          if (!parsed.success) throw new Error('tutor output invalid');
+          claims = parsed.data.elements;
+          d = parsed.data;
+        } else {
+          const parsed = TutorDecision.safeParse(r.json);
+          if (!parsed.success) throw new Error('tutor output invalid');
+          d = parsed.data;
+        }
         return enforceTutorInvariants(
-          parsed.data,
+          d,
           rule,
           articleMissing(rule, item),
           // At a place where the states disagree and no rule applies to her, a confident
@@ -1490,6 +1535,33 @@ export async function answerItem(
                 revealed: false,
               };
     }
+  }
+
+  // ─────────────── Schreibaufgabe: Rückmeldung je Element statt eines Urteils (issue #211) ──
+  //
+  // Hier wird das Gesamturteil ersetzt, nicht ergänzt. Der Grund steht im Issue: für eine
+  // Inhaltsangabe, einen Bericht, eine Erörterung gibt es keine Musterlösung, gegen die ein
+  // Gesamturteil zu rechtfertigen wäre — bewertet wird, ob die geforderten Elemente da sind.
+  // Also entscheidet die Rubrik:
+  //
+  //   * das URTEIL kommt aus den Elementen (`rubricVerdict`), nicht aus dem Eindruck des
+  //     Modells. Hält etwas und nicht alles, bleibt die Frage offen — und bekommt damit, wie
+  //     bisher, keine FSRS-Note (`rateable` weiter unten); ein Bruchteil wird nirgends erfunden.
+  //   * der SATZ kommt aus der Rubrik und den Texten der App, nicht aus der Prosa des Modells:
+  //     die Elemente mit ihrem Stand, darunter EIN nächster Schritt. Ohne Zahl, ohne Note.
+  //   * `revealed` bleibt false. Eine Schreibaufgabe hat nichts aufzudecken — das ist der Befund
+  //     von #197, und ein Modell, das es anders sieht, ändert daran nichts.
+  //
+  // Nur für eine echte Antwort: eine Tipp-Bitte und alles, was keine Antwort war, bleiben
+  // unberührt (dort hat sie nichts geschrieben, das gegen die Elemente zu halten wäre).
+  if (rubric && judged.verdict !== null && judged.verdict !== 'not_an_attempt') {
+    const outcome = checkRubric(rubric, text, claims);
+    judged = {
+      ...judged,
+      verdict: rubricVerdict(outcome),
+      reply: rubricReply(learner.locale, outcome, judged.reply),
+      revealed: false,
+    };
   }
 
   if (givesHints(session.mode)) {

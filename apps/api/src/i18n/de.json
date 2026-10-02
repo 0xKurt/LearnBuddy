@@ -91,6 +91,14 @@
       "example": "Mit Beispiel, bitte",
       "why": "Warum ist das so?"
     },
+    "rubric": {
+      "element_met": "{{name}}: steht",
+      "element_open": "{{name}}: noch nicht",
+      "next_counted": "Fast – fehlt nur noch {{name}}: {{missing}}",
+      "next_judged": "Das trägt schon. Schau nochmal, ob {{name}} schon drinsteht: {{missing}}",
+      "next_verb": "Das trägt schon. Nur bei „{{verb}}“ stimmt die Zeitform noch nicht: {{missing}}",
+      "start": "Lass uns bei {{name}} anfangen: {{missing}}"
+    },
     "solution_is": "Die Lösung ist: {{answer}}",
     "speak_almost": "Fast! Schau dir die markierten Wörter an.",
     "speak_good": "Klingt super!",

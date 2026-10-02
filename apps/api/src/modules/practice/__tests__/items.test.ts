@@ -243,3 +243,70 @@ describe('how a printed task keeps its form (issues #228–#230)', () => {
     }
   });
 });
+
+describe('the rubric of a writing task (#211)', () => {
+  const RUBRIC = {
+    form: 'Inhaltsangabe',
+    elements: [
+      {
+        name: 'Einleitungssatz',
+        missing: 'Nenne im ersten Satz Titel und Autor.',
+        check: { by: 'mentions', terms: ['Die Verwandlung'], where: 'opening' },
+      },
+      {
+        name: 'Länge',
+        missing: 'Etwas mehr darf es schon sein.',
+        check: { by: 'word_count', min: 20, max: null },
+      },
+    ],
+  };
+  const essay = (over: Record<string, unknown> = {}) =>
+    draft({ kind: 'long', prompt: 'Schreibe eine Inhaltsangabe.', rubric: RUBRIC, ...over });
+
+  it('keeps a rubric on a free text', () => {
+    expect(usableItems([essay()])[0]?.rubric).toEqual(RUBRIC);
+  });
+
+  it('drops a rubric that is not about a written text, never the question', () => {
+    const [item] = usableItems([draft({ rubric: RUBRIC })]);
+    expect(item).toMatchObject({ kind: 'short', rubric: null });
+  });
+
+  it('drops a rubric over a bound without dropping the question (audit H-15)', () => {
+    // Seven elements is over RUBRIC_MAX. `figure` has behaved this way since H-15, and a
+    // rubric follows it: the question is the valuable part.
+    const many = essay({
+      rubric: {
+        form: 'Bericht',
+        elements: Array.from({ length: 7 }, (_, n) => ({
+          name: `Teil ${n + 1}`,
+          missing: 'Schau nochmal hin.',
+          check: { by: 'word_count', min: 20, max: null },
+        })),
+      },
+    });
+    const [item] = usableItems([many]);
+    expect(item).toMatchObject({ kind: 'long', rubric: null });
+  });
+
+  it('drops a rubric whose sentence would give the answer away', () => {
+    // Shown to her like a hint, so held to the hint rule: a homework task must not have its
+    // answer handed over by a tick box.
+    const leaky = essay({
+      answer: 'Gregor Samsa',
+      rubric: {
+        form: 'Inhaltsangabe',
+        elements: [
+          {
+            name: 'Hauptfigur',
+            missing: 'Die Hauptfigur ist Gregor Samsa – nenne sie.',
+            check: { by: 'judged' },
+          },
+          RUBRIC.elements[1],
+        ],
+      },
+    });
+    const [item] = usableItems([leaky]);
+    expect(item).toMatchObject({ kind: 'long', rubric: null });
+  });
+});
