@@ -2054,7 +2054,10 @@ _Das Layout macht Code_ (`graphLayout.ts`), **eine** Rechnung für beide Seiten:
 bevor er eine Frage anlegt, und verwirft jede Figur, die in der logischen Breite `LAYOUT_W` = 280
 (etwa die Breite einer Fragekarte auf 360 pt) nicht ohne Überlappung passt; die App zeichnet genau,
 was dieselbe Rechnung liefert, und skaliert per `viewBox`. Kette und Kreislauf liegen auf einem
-Raster (Kette als Schlange, Kreislauf am Rand entlang im Uhrzeigersinn, 2 oder 3 Spalten), ein Netz
+Raster — und zwar dem **flachsten**, in dem jedes Wort ungeteilt passt (Kette als Schlange mit 4, 3
+oder 2 Spalten, Kreislauf auf zwei Reihen vor dem Rand eines höheren Rasters). Flach mit Absicht: auf dem
+Handy begrenzt die HÖHE eine Figur (die Antwort steht darunter), und ein hohes Schema wurde in der
+ersten Fassung auf ~60 % verkleinert, bis die Wörter nicht mehr lesbar waren. Ein Netz liegt
 in Schichten nach längstem Pfad (höchstens 3 nebeneinander, 4 übereinander), ein Baumdiagramm von
 links nach rechts mit der Wahrscheinlichkeit bei 60 % des Asts, ein Stammbaum als aufgeräumter Baum
 aus Familien (Nummern in Leserichtung), ein Automat als Reihe mit Bögen. Text wird geschätzt, nicht
@@ -2062,6 +2065,15 @@ gemessen — großzügig, damit eine echte Schrift nie breiter ist —, determin
 zu langes Wort bekommt einen Trennstrich. Alle Kästchen einer Figur sind gleich hoch. Geprüft wird:
 nichts überlappt, kein Pfeil läuft durch ein fremdes Kästchen, keine Nummer sitzt auf einem Kästchen,
 kein Text läuft aus seinem Kästchen (`__tests__/graph.test.ts` für 3–8 Kästchen mit 40-Zeichen-Texten).
+
+Die Pfeil-Beschriftungen stehen als fließende Legende unter dem Schema (Nummer im Kreis auf dem Pfeil,
+dieselbe Nummer vor dem Wort). Der Titel steht als Thema über der Frage und nicht noch einmal im
+Fragetext. Eine Kette zum Ordnen bekommt **keine** Zeichnung — sie wäre nur eine Reihe nummerierter
+leerer Kästchen, also dasselbe wie das Brett darunter; ein Kreislauf behält sie, weil seine Form und
+sein vorgegebenes erstes Kästchen etwas sagen, das das Brett nicht sagt. Weil bei diesen Figuren die
+Antwort aus der Zeichnung abgelesen wird, ist ihre Höhen-Untergrenze im Übungsbildschirm 17 % statt
+14 % der Bildschirmhöhe (`app/practice/[id].tsx`); 20 % schob auf 360×740 die „Tipp"-Zeile unter
+die Kante. Walkthrough: `tests/web/graphs.spec.ts` (jede Station hell und dunkel, beide Handys).
 
 Eine falsche Antwort bekommt eine feste Zeile von Code (`graphAgain`) — der Tutor sieht die Zeichnung
 nicht, genau wie bei der Notenzeile. Mit dem Screenreader ist jede Figur ein Satz mit demselben
