@@ -73,6 +73,7 @@
     "no_single_solution": "Qui non c'è un'unica risposta giusta che possa mostrarti: in un testo così conta come lo argomenti. Dimmi dove ti blocchi e guardiamo insieme il tuo testo.",
     "not_lowest": "Bilanciata bene! Ora semplificala – tutti i numeri davanti si dividono per {{factor}}.",
     "not_quite": "Non ancora del tutto. Riguarda la domanda – oppure mostra la soluzione.",
+    "not_transformed": "È equivalente – ma è scritto esattamente come nel testo. Trasformalo ancora.",
     "one_way_intro": "Un modo per affrontarlo – uno, non il solo:",
     "parts": {
       "order_prefix": "Fino al passo {{step}} va tutto bene. Guarda di nuovo il passo {{next}}.",
@@ -209,6 +210,7 @@
       "fault_rest_here": "Al posto numero {{index}} della battuta {{bar}} va una pausa.",
       "fault_note_here": "Al posto numero {{index}} della battuta {{bar}} va una nota."
     },
+    "same_value": "Il valore è giusto – l’hai solo scritto in un altro modo. Guarda in quale forma l’esercizio vuole il risultato.",
     "step_broke": "Fino alla riga {{line}} va tutto bene. Qualcosa si perde passando alla riga successiva: guarda ancora quel passaggio.",
     "step_broke_last": "Il tuo procedimento regge fino alla fine – solo l’ultimo passaggio no. Guarda ancora l’ultima riga.",
     "test_no_hints": "Nel test non ci sono suggerimenti: scrivi quello che pensi o salta la domanda.",
@@ -221,6 +223,8 @@
     "typo_wrong": "Quasi – una lettera non è ancora giusta. La trovi?",
     "unbalanced_charge": "Quasi – le cariche non corrispondono ancora: {{left}} a sinistra, {{right}} a destra.",
     "unbalanced_element": "Quasi – riconta il {{element}}: {{left}} a sinistra, {{right}} a destra.",
+    "unbalanced_mass": "Quasi – i numeri di massa non corrispondono ancora: {{left}} a sinistra, {{right}} a destra.",
+    "unbalanced_atomic": "Quasi – i numeri atomici non corrispondono ancora: {{left}} a sinistra, {{right}} a destra.",
     "untitled": "Esercizio",
     "worked_intro": "Guarda, si fa così:"
   },
