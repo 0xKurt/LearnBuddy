@@ -27,7 +27,7 @@ import { READING_RULES, ReadingDraft, ReadingDraftParse } from '../practice/read
 import { COMPLEX_RULES, ComplexSheetDraft, MAX_COMPLEX_TASKS } from '../practice/complex.js';
 import { TABLE_RULES } from '../practice/table.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v7.2';
+export const EXTRACT_PROMPT_VERSION = 'extract.v7.3';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

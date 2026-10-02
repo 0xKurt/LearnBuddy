@@ -310,7 +310,22 @@
     "polygons": "Poligoni: {{list}}",
     "circle": "Circonferenza di centro {{center}} e raggio {{radius}}",
     "table": "Tabella con {{rows}} righe. Colonne: {{header}}",
-    "row": "Riga {{n}}: {{cells}}"
+    "row": "Riga {{n}}: {{cells}}",
+    "angle": "Angolo {{name}}",
+    "angle_value": "Angolo {{name}}: {{value}}",
+    "length": "Lato {{name}}: {{value}}",
+    "arrow": "Freccia da {{from}} a {{to}} {{value}}",
+    "resultant": "Risultante da {{from}} a {{to}} {{value}}",
+    "ray": "Semiretta da {{from}} per {{through}}",
+    "light_ray": "Raggio di luce da {{from}} per {{through}}",
+    "line": "Retta per {{a}} e {{b}}",
+    "molecule": "{{style}}: {{list}}",
+    "molecule_lewis": "Formula di Lewis",
+    "molecule_structural": "Formula di struttura",
+    "molecule_skeletal": "Formula scheletrica",
+    "lone_pairs_one": "{{atom}} ha {{count}} doppietto libero",
+    "lone_pairs_other": "{{atom}} ha {{count}} doppietti liberi",
+    "molecule_marked": "Evidenziato: {{list}}"
   },
   "keys": {
     "row": "Simboli matematici",
