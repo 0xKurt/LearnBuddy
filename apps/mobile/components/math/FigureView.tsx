@@ -8,7 +8,7 @@
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import Svg, {
   Circle,
   ClipPath,
@@ -39,6 +39,8 @@ import { TYPE } from '../../lib/theme/type.js';
 import { describeStaff } from '../../lib/music/words.js';
 import { MathText } from './MathText.js';
 import { StaffLine } from './StaffLine.js';
+import { FAMILY } from './svgFont.js';
+import { describeVisual, VisualBody } from './VisualFigures.js';
 import { useSpokenWords } from './useSpokenMath.js';
 
 type FractionFig = Extract<Figure, { type: 'fraction' }>;
@@ -53,11 +55,6 @@ type T = (key: string, values?: Record<string, string | number>) => string;
 type Speak = (text: string) => string;
 
 const FONT = 13;
-/** The app's sans-serif inside SVG too (the web would fall back to a serif). */
-const FAMILY = Platform.select({
-  web: 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  default: undefined,
-});
 const SMALL = 12;
 
 /** 0.30000000000000004 → "0,3" (decimal comma where usual). */
@@ -128,6 +125,7 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
 }
 
 function FigureBody({ figure, width }: { figure: Figure; width: number }) {
+  const { t } = useTranslation('math');
   switch (figure.type) {
     case 'fraction':
       return <FractionPicture fig={figure} width={width} />;
@@ -145,6 +143,15 @@ function FigureBody({ figure, width }: { figure: Figure; width: number }) {
     // Zeichnung die Fläche ist, auf die sie schreibt — eine Figur ist, was sie LIEST.
     case 'staff':
       return <StaffLine fig={figure} width={width} />;
+    // Die Bilder, von denen die Antwort abgelesen wird (issues #254, #255).
+    case 'clock':
+    case 'money':
+    case 'dot_field':
+    case 'base_ten':
+    case 'solid':
+    case 'cube_net':
+    case 'axes3d':
+      return <VisualBody figure={figure} width={width} t={t} />;
   }
 }
 
@@ -1090,5 +1097,13 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
     // mit dem Screenreader ist die Aufgabe damit lösbar, nicht nur vorhanden.
     case 'staff':
       return describeStaff(figure, t);
+    case 'clock':
+    case 'money':
+    case 'dot_field':
+    case 'base_ten':
+    case 'solid':
+    case 'cube_net':
+    case 'axes3d':
+      return describeVisual(figure, t);
   }
 }

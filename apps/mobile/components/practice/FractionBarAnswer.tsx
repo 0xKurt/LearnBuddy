@@ -145,7 +145,7 @@ type Props = {
    * `AnswerSurface` eine Vereinigung aus drei, und diese Einschränkung ist der Unterschied
    * zwischen „dieser Zeichner kennt alle seine Fälle" und „er überspringt stumm einen dritten".
    */
-  surface: Exclude<AnswerSurface, { mode: 'notes' }>;
+  surface: Extract<AnswerSurface, { mode: 'shade' | 'pick' }>;
   /** What stands in the answer field now, so the bar and the typed answer agree. */
   value: string;
   disabled: boolean;

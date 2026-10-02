@@ -225,5 +225,19 @@
     "brick": "row {{row}}, brick {{n}}",
     "check_waits": "Only once every cell is filled in.",
     "scroll": "Table, scrolls sideways"
+  },
+  "clock": {
+    "how": "Choose a hand and tap a number.",
+    "to_hour": "Hour hand to {{n}}",
+    "to_minute": "Minute hand to {{n}}",
+    "hour": "Hours",
+    "minute": "Minutes"
+  },
+  "coins": {
+    "table": "Money laid out",
+    "empty": "Your money goes here.",
+    "how": "Tap coins and notes to lay them out.",
+    "lay": "Lay {{piece}}",
+    "take_back": "Take back {{piece}}"
   }
 }

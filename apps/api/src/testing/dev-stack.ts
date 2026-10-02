@@ -24,6 +24,7 @@ import { createDevApp, DevAuth, DevStorage } from './dev-app.js';
 import { FakeEmbeddings, FakeSpeech, ScriptedGateway } from './fakes.js';
 import { scriptCoreLoop } from './scenarios/core-loop.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
+import { scriptPictures } from './scenarios/pictures.js';
 import { scriptTour } from './scenarios/tour.js';
 import { installGenerations } from './scenarios/generations.js';
 import { installTurns } from './scenarios/turns.js';
@@ -53,6 +54,7 @@ async function main(): Promise<void> {
   if (model === scripted) {
     scriptCoreLoop(scripted);
     scriptLearningModes(scripted);
+    scriptPictures();
     scriptTour(scripted);
     // Chat answers are matched by what the learner wrote and prepared practice by what was
     // asked for, so one spec cannot shift the answers of the next (issue #81). Installed

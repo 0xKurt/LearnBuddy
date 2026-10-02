@@ -6,6 +6,15 @@
 import { z } from 'zod';
 
 import { StaffFigure } from './staff.js';
+import {
+  Axes3dFigure,
+  BaseTenFigure,
+  ClockFigure,
+  CubeNetFigure,
+  DotFieldFigure,
+  MoneyFigure,
+  SolidFigure,
+} from './visual.js';
 
 const Label = z.string().trim().min(1).max(40);
 const Num = z.number().finite();
@@ -94,7 +103,12 @@ export const ModelFigure = z.discriminatedUnion('type', [
 ]);
 export type ModelFigure = z.infer<typeof ModelFigure>;
 
-/** Every figure a question can SHOW (`ItemView.figure`) — the model's six and the note line. */
+/**
+ * Every figure a question can SHOW (`ItemView.figure`): the model's six, the note line, and the
+ * pictures whose key is read off them — clock, money, dot field, base-ten blocks, solid, cube net,
+ * 3D axes (issues #254, #255). Like the note line, those come only from code
+ * (`practice/visual.ts`), never from the model (`contracts/visual.ts` says why).
+ */
 export const Figure = z.discriminatedUnion('type', [
   FractionFigure,
   NumberLineFigure,
@@ -103,5 +117,12 @@ export const Figure = z.discriminatedUnion('type', [
   GeometryFigure,
   TableFigure,
   StaffFigure,
+  ClockFigure,
+  MoneyFigure,
+  DotFieldFigure,
+  BaseTenFigure,
+  SolidFigure,
+  CubeNetFigure,
+  Axes3dFigure,
 ]);
 export type Figure = z.infer<typeof Figure>;

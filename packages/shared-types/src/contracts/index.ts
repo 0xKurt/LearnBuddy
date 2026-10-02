@@ -4,6 +4,7 @@ export * from './common.js';
 export * from './identity.js';
 export * from './buddy.js';
 export * from './staff.js';
+export * from './visual.js';
 export * from './figure.js';
 export * from './bars.js';
 export * from './structured.js';

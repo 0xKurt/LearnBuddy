@@ -2090,6 +2090,53 @@ Bauweise verhindern soll). Höchstens `MAX_STAFF_ITEMS` (8) je vorbereitetem Sat
 Bruchbalken, weil eine Notenzeile keine Beigabe ist, sondern die Frage selbst — in `practice` und im
 Probetest, nicht in der Hausaufgabenhilfe.
 
+**Figures code draws from a task — Uhr, Geld, Zwanzigerfeld, Stellenwerte, Körper, Würfelnetz,
+Raum** (`contracts/visual.ts`, `practice/visual.ts` + `visualMath.ts`, migration
+`0102_visual_tasks.sql`; issues #254, #255). Dieselbe Bauweise wie die Notenzeile, aus demselben
+Grund: der Schlüssel wird **von der Zeichnung abgelesen**. Das Modell wählt eine `VisualTask` aus
+sieben kompakten Zweigen (kein nullable Feld, Maße als kurze Liste — #281): `clock` (lesen oder
+stellen), `money` (zählen oder legen, Stücke in Cent aus den echten Euro-Stückelungen 1 ct … 50 €),
+`quantity` (Zwanzigerfeld, Hunderterfeld, Mehrsystemblöcke, Stellenwerttafel mit Plättchen),
+`solid` (Ecken/Kanten/Flächen oder Volumen/Oberfläche), `cube_net`, `point3d`, `vector3d`. Frage,
+Figur, Schlüssel, Tipps und Musterlösung rechnet Code; die Figuren (`clock`, `money`, `dot_field`,
+`base_ten`, `solid`, `cube_net`, `axes3d`) stehen in `Figure`, **nicht** in `ModelFigure` — eine Uhr
+neben einer selbst geschriebenen Frage kommt nicht durch den Vertrag.
+
+- _Regel 0 bei der Erzeugung._ Wo das Modell sagt, was es erwartet (`total`, `claim`, `is_net`),
+  rechnet Code nach; eine Abweichung verwirft die Aufgabe (nie reparieren): Betrag = Summe der Stücke
+  und ganze Cent; Ecken/Kanten/Flächen nach Euler und **nur für Polyeder** (Zylinder, Kegel, Kugel
+  zählt jedes Schulbuch anders); Volumen/Oberfläche aus genau den Maßen des Körpers (±0,5 %, damit
+  π = 3,14 trägt); ein Würfelnetz wird **gefaltet** (jedes Quadrat trägt den Rahmen der Würfelseite,
+  auf der es landet — gültig genau bei sechs verschiedenen Seiten; der Unit-Test zählt über alle 35
+  Hexominos genau 11 Netze); eine zu stellende Uhr nur in 5-Minuten-Schritten.
+- _Regel 0 bei der Antwort._ `checkVisual` liest mit einer geschlossenen Grammatik: eine Uhrzeit
+  (Ziffern in jeder Sprache, dazu „halb acht", „viertel vor acht", „dreiviertel acht", „fünf nach
+  halb acht" und „half past seven", „quarter to eight") — 7:30, 19:30 und „halb acht" sind dieselbe
+  Zeigerstellung; ein Betrag in € oder ct; gelegte Münzen (verglichen wird die **Summe**, jeder
+  richtige Weg zählt); drei Koordinaten. Was die Grammatik nicht ganz liest, ist `null` — nie
+  „falsch", sondern der gewöhnliche Weg (Regeln, Tutor). Zählen und Messen sind `numeric` und laufen
+  über die vorhandenen Zahlregeln; ein gerundetes Ergebnis sagt die Frage („Runde auf eine
+  Nachkommastelle") und nimmt das Ergebnis mit π = 3,14 als zweiten Schlüssel.
+- _Eine falsche Antwort_ bekommt bei jedem Versuch eine feste Zeile von Code (`visualAgain`: „Schau
+  zuerst auf den kurzen Zeiger …") — der Tutor sieht das Bild nicht (Regel 5), wie bei der Notenzeile.
+- _Antippen._ Zwei Flächen (`ItemView.surface`): `clock` — zwölf benannte Knöpfe auf dem Zifferblatt
+  und die Wahl Stunden/Minuten; der Minutenzeiger geht auf die getippte Zahl (5-Minuten-Schritte),
+  der Stundenzeiger dorthin, wo er bei diesen Minuten der getippten Zahl am nächsten steht (bei :45
+  heißt die 8 also 7:45). Keine Digitalanzeige daneben. `coins` — der Geldbeutel unten, das Gelegte
+  oben, ein Tipp legt, ein Tipp nimmt zurück, **keine laufende Summe** (das Zusammenzählen ist die
+  Übung). Beide sind wie die Notenzeile der ganze Weg zu antworten, mit einem „Prüfen". Der
+  Mechanismus aus #248 (Antippen in einer Figur) lag bei der Umsetzung nicht auf `origin` vor; die
+  Uhr ist deshalb eine eigene Fläche nach dem Muster von Bruchbalken und Notenzeile.
+- _Zeichnung_ (`components/math/VisualFigures.tsx`, Geometrie in `lib/math/solid.ts`): Geld
+  schematisch (Scheibe/Rechteck mit Wert, Farbtöne als Token `figure.money`, nie ein Abbild echter
+  Münzen oder Scheine); Körper als Schrägbild in Kavalierperspektive (Tiefe 45°, halbiert),
+  verdeckte Kanten gestrichelt (eine Kante ist verdeckt, wenn beide anliegenden Flächen abgewandt
+  sind); Punkte im Raum mit gestricheltem Koordinatenweg (x₁, dann x₂, dann x₃), ohne den ein
+  gezeichneter Punkt im Raum nicht eindeutig wäre. Die Beschreibung für Screenreader beschreibt die
+  Zeichnung (Zeigerstellung, Stücke, Plättchen je Reihe), nicht die Lösung, wo das in Worten geht.
+- _Zahlenmauer und Stellenwerttafel zum Ausfüllen_ bleiben `table_fill` (#230, `family: 'wall'`) —
+  nicht dupliziert. Höchstens `MAX_VISUAL_ITEMS` (6) je Satz, in `practice` und im Probetest.
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:

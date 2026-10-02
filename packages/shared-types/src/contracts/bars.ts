@@ -15,6 +15,7 @@
 import { z } from 'zod';
 
 import { StaffWriteSurface } from './staff.js';
+import { ClockSurface, CoinSurface } from './visual.js';
 
 /**
  * The most equal parts a bar may have. Six, because the bar she taps is one row of
@@ -123,5 +124,8 @@ export const AnswerSurface = z.discriminatedUnion('mode', [
   StaffWriteSurface.describe(
     'An empty staff of `bars` bars; tapping one places a note, and the line she writes is the answer.',
   ),
+  // Die Uhr, die sie stellt, und die Münzen, die sie legt (issue #254, `contracts/visual.ts`).
+  ClockSurface,
+  CoinSurface,
 ]);
 export type AnswerSurface = z.infer<typeof AnswerSurface>;

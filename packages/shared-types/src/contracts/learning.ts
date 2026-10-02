@@ -345,7 +345,9 @@ export const ItemView = z.object({
   lang: z.string().nullable(),
   /** vocab: the language of the prompt. */
   prompt_lang: z.string().nullable(),
-  figure: Figure.nullable(),
+  // A figure this build does not know reads as null: the question shows without it instead of the
+  // whole session failing to load (new figures arrive with issues #254 and #255).
+  figure: Figure.nullable().catch(null),
   /**
    * The sheet's own figure for this question, where the question is shown full size
    * (sessions); null in the material list and when the sheet has none (issue #50).

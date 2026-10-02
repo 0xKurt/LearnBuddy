@@ -225,5 +225,19 @@
     "brick": "fila {{row}}, ladrillo {{n}}",
     "check_waits": "Solo cuando todas las casillas estén rellenas.",
     "scroll": "Tabla, se desplaza hacia los lados"
+  },
+  "clock": {
+    "how": "Elige una aguja y toca un número.",
+    "to_hour": "Aguja de las horas hacia el {{n}}",
+    "to_minute": "Aguja de los minutos al {{n}}",
+    "hour": "Horas",
+    "minute": "Minutos"
+  },
+  "coins": {
+    "table": "Dinero colocado",
+    "empty": "Aquí va tu dinero.",
+    "how": "Toca monedas y billetes para colocarlos.",
+    "lay": "Colocar {{piece}}",
+    "take_back": "Quitar {{piece}}"
   }
 }

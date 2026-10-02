@@ -27,6 +27,7 @@
 import {
   isStructuredKind,
   type AnswerResponse,
+  parseCoins,
   type ItemView,
   type PracticeTurnView,
   type ReexplainWay,
@@ -73,6 +74,8 @@ import {
   type StaffAnswerState,
 } from '../../components/practice/StaffAnswer.js';
 import { StructuredAnswer } from '../../components/practice/StructuredAnswer.js';
+import { ClockAnswer, clockOf } from '../../components/practice/ClockAnswer.js';
+import { CoinAnswer, laidWords, laidOf } from '../../components/practice/CoinAnswer.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMask } from '../../components/lb/EdgeFade.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
 import { Reexplain } from '../../components/practice/Reexplain.js';
@@ -460,9 +463,15 @@ export default function PracticeScreen() {
       await store(res.session);
       // Tap on "Prüfen" → the verdict on screen (issue #66).
       reacted('check');
-      if (answerText !== null) setText((current) => (current.trim() === answerText ? '' : current));
-      if (res.session.items.find((i) => i.item.id === itemId)?.status !== 'open')
-        Keyboard.dismiss();
+      // A clock she set or coins she laid stay where she put them while the question is open
+      // (issue #254): she corrects one hand or one coin, like an order she rearranges.
+      const after = res.session.items.find((i) => i.item.id === itemId);
+      const keeps =
+        after?.status === 'open' &&
+        (after.item.surface?.mode === 'clock' || after.item.surface?.mode === 'coins');
+      if (answerText !== null && !keeps)
+        setText((current) => (current.trim() === answerText ? '' : current));
+      if (after?.status !== 'open') Keyboard.dismiss();
       readFeedback(res, itemId);
     } catch (err) {
       // The typed answer stays in the field, so trying again is one tap.
@@ -884,9 +893,29 @@ export default function PracticeScreen() {
   // zu antworten: ein Antwortfeld gibt es daneben nicht, und das eine „Prüfen“ steht darunter.
   // Der Bruchbalken bleibt der andere Fall derselben Fläche — er schreibt ins Feld, sie nicht.
   const staff = open && item.surface?.mode === 'notes' ? item.surface : null;
-  const barSurface = open && item.surface && item.surface.mode !== 'notes' ? item.surface : null;
+  const barSurface =
+    open && (item.surface?.mode === 'shade' || item.surface?.mode === 'pick') ? item.surface : null;
+  // Die Uhr, die sie stellt, und die Münzen, die sie legt (issue #254): wie die Notenzeile der
+  // GANZE Weg zu antworten, mit einem „Prüfen" darunter. Die Uhrzeit oder die Stücke schreibt sie
+  // nicht, sie stellt und legt sie.
+  const clockSurface = open && item.surface?.mode === 'clock' ? item.surface : null;
+  const coinSurface = open && item.surface?.mode === 'coins' ? item.surface : null;
+  // What she set or laid travels in the answer draft, like a shaded bar: a theme switch remounts
+  // the screen, and the hands she set must still stand where she put them. Only a value the
+  // surface itself writes counts — a typed leftover is no clock and no coins.
+  const handledText =
+    (clockSurface && clockOf(text) !== null) || (coinSurface && parseCoins(text) !== null)
+      ? text
+      : '';
   const typed =
-    open && choices === null && tapChoices === null && !structured && staff === null && !speaking;
+    open &&
+    choices === null &&
+    tapChoices === null &&
+    !structured &&
+    staff === null &&
+    clockSurface === null &&
+    coinSurface === null &&
+    !speaking;
   /** Ihre Notenzeile zu DIESER Frage; eine andere Frage beginnt mit einer leeren Zeile. */
   const staffAnswer =
     written?.itemId === item.id ? written.answer : emptyStaffAnswer(staff?.bars ?? 1);
@@ -1262,6 +1291,58 @@ export default function PracticeScreen() {
                 // Klassenarbeit verlangt — mit einem Stift statt mit dem Finger. Dasselbe
                 // Argument, das `summary.ts` für die mehrteiligen Antworten führt.
                 void answer(item.id, { text: line }, line);
+              }}
+            >
+              {t('practice:check')}
+            </Btn>
+          </BottomBar>
+        ) : null}
+        {clockSurface || coinSurface ? (
+          <View
+            testID="answer-surface"
+            style={{ flexShrink: 1, minHeight: 0, paddingTop: SPACE.sm }}
+          >
+            <ScrollView
+              testID="scroll-list"
+              style={{ flexGrow: 0, flexShrink: 1 }}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingHorizontal: SPACE.lg }}
+            >
+              {clockSurface ? (
+                <ClockAnswer
+                  key={item.id}
+                  // The dial takes the room a taller phone has, instead of leaving it empty
+                  // between the question and the clock (215 pt on 360×740, 245 on 390×844).
+                  size={Math.max(210, Math.min(270, Math.round(windowHeight * 0.29)))}
+                  value={handledText}
+                  disabled={locked}
+                  onChange={setText}
+                />
+              ) : (
+                <CoinAnswer
+                  key={item.id}
+                  offer={coinSurface?.offer ?? []}
+                  value={handledText}
+                  disabled={locked}
+                  onChange={setText}
+                />
+              )}
+            </ScrollView>
+          </View>
+        ) : null}
+        {clockSurface || coinSurface ? (
+          <BottomBar>
+            <Btn
+              size="lg"
+              pill
+              full
+              // Nothing to check before she has set a hand or laid a piece.
+              disabled={locked || handledText === ''}
+              onPress={() => {
+                tapped('check');
+                // The thread shows her coins in words at once; the server writes the same.
+                const shown = coinSurface ? laidWords(laidOf(handledText)) : handledText;
+                void answer(item.id, { text: handledText }, shown);
               }}
             >
               {t('practice:check')}

@@ -84,7 +84,7 @@ function isMore(a: Frac, b: Frac): boolean {
  * note line joined the union (issue #226) that is the difference between a caller that handles
  * both cases and a caller that silently skips a third it will never see.
  */
-export function surfaceOf(task: BarTask): Exclude<AnswerSurface, { mode: 'notes' }> {
+export function surfaceOf(task: BarTask): Extract<AnswerSurface, { mode: 'shade' | 'pick' }> {
   switch (task.task) {
     case 'shade':
     case 'add':

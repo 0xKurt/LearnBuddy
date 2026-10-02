@@ -75,7 +75,23 @@ export type Palette = {
     fill: string;
     fillSoft: string;
     series: readonly [string, string, string];
+    /**
+     * Euro money drawn schematically (issue #254): copper, brass and silver coins and the four
+     * small notes, each a soft tone of its real colour so a child recognises it. The value is
+     * always written on it too — the colour is never the only signal.
+     */
+    money: MoneyInk;
   };
+};
+
+export type MoneyInk = {
+  copper: string;
+  brass: string;
+  silver: string;
+  note5: string;
+  note10: string;
+  note20: string;
+  note50: string;
 };
 
 /** "Pastell Soft" — the look the owner chose (2026-09-25); the default. */
@@ -136,6 +152,15 @@ const pastellSoft: Palette = {
     fill: '#b9a4f0',
     fillSoft: 'rgba(106,72,215,0.14)',
     series: ['#6a48d7', '#2f7fb8', '#3f8a5c'],
+    money: {
+      copper: '#ecc3a8',
+      brass: '#f1dc9c',
+      silver: '#dfe1e8',
+      note5: '#e3e5eb',
+      note10: '#f4cdcd',
+      note20: '#cddff5',
+      note50: '#f6d9b4',
+    },
   },
 };
 
@@ -201,6 +226,15 @@ const night: Palette = {
     fill: '#6f5bb8',
     fillSoft: 'rgba(157,130,245,0.20)',
     series: ['#b9a4ff', '#7fb6e6', '#87c79c'],
+    money: {
+      copper: '#8a5c45',
+      brass: '#8f7a3c',
+      silver: '#5f6275',
+      note5: '#4c4f5f',
+      note10: '#7a4a52',
+      note20: '#405a80',
+      note50: '#7c5c3a',
+    },
   },
 };
 
@@ -427,6 +461,7 @@ export type Figure = {
    * never the only signal (each graph also has a label and its own dash pattern).
    */
   series: string[];
+  money: MoneyInk;
 };
 
 export function toneBgOf(p: Palette): Record<SubjectTone, string> {
@@ -466,5 +501,6 @@ export function figureOf(p: Palette): Figure {
     empty: p.paper,
     point: p.primaryDk,
     series: [...p.figure.series],
+    money: p.figure.money,
   };
 }

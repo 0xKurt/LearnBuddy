@@ -225,5 +225,19 @@
     "brick": "fila {{row}}, mattone {{n}}",
     "check_waits": "Solo quando tutte le caselle sono compilate.",
     "scroll": "Tabella, scorre di lato"
+  },
+  "clock": {
+    "how": "Scegli una lancetta e tocca un numero.",
+    "to_hour": "Lancetta delle ore verso il {{n}}",
+    "to_minute": "Lancetta dei minuti sul {{n}}",
+    "hour": "Ore",
+    "minute": "Minuti"
+  },
+  "coins": {
+    "table": "Soldi messi giù",
+    "empty": "Qui vanno i tuoi soldi.",
+    "how": "Tocca monete e banconote per metterle giù.",
+    "lay": "Metti {{piece}}",
+    "take_back": "Togli {{piece}}"
   }
 }

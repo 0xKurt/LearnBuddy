@@ -57,6 +57,13 @@ import {
 } from './staff.js';
 import { checkPath } from './steps.js';
 import {
+  checkVisual,
+  visualAgain,
+  visualSurfaceOf,
+  visualTaskOf,
+  writtenVisual,
+} from './visual.js';
+import {
   answerTextOf,
   checkStructured,
   structuredNamesPart,
@@ -171,6 +178,8 @@ export type ItemRow = {
    * question has at most one computed source (migration 0078). Read through `staffTaskOf`.
    */
   staff_task: unknown;
+  /** A picture whose key is read off it (migration 0102, issues #254/#255). Read via `visualTaskOf`. */
+  visual_task: unknown;
 };
 
 export type SessionRow = {
@@ -714,9 +723,12 @@ async function signImageUrls(
  * A column that no longer parses as a task yields no surface: the question is still
  * answerable by typing, and nothing is guessed at.
  */
-function surfaceFor(bar: unknown, staff: unknown): ItemView['surface'] {
+function surfaceFor(bar: unknown, staff: unknown, visual: unknown): ItemView['surface'] {
   const barTask = taskOf(bar);
   if (barTask) return surfaceOf(barTask);
+  // The clock she sets or the coins she lays (issues #254). Alone by migration 0102.
+  const visualTask = visualTaskOf(visual);
+  if (visualTask) return visualSurfaceOf(visualTask);
   // The empty staff she writes a note line on (issue #226). The two can never both be there
   // (migration 0078 `items_one_computed_source`), so the order here settles nothing.
   const staffTask = staffTaskOf(staff);
@@ -757,7 +769,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.task, i.listen_task, i.staff_task, i.archived_at,
+            i.bar_task, i.task, i.listen_task, i.staff_task, i.visual_task, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -843,7 +855,10 @@ export async function sessionView(
         // The fraction bar she works with, derived from the task the question was computed
         // from (issue #162). Only while the question is open: once it is closed the bars
         // would be a control without a purpose, and the solution stands in the thread.
-        surface: i.status === 'open' && active ? surfaceFor(i.bar_task, i.staff_task) : null,
+        surface:
+          i.status === 'open' && active
+            ? surfaceFor(i.bar_task, i.staff_task, i.visual_task)
+            : null,
         // The parts of a structured question (issues #228–#230), without the key, for as long as
         // the question is open — like the fraction bar above, and for the same reason: once it
         // is closed the parts would be a control with nothing left to do, and her answer and the
@@ -1159,12 +1174,29 @@ export async function answerItem(
   /** Ihre Zeile in Worten, damit der Gesprächsfaden lesbar bleibt (wie `answerTextOf`). */
   const staffWritten =
     staffCheck !== null ? writtenStaffLine(learner.locale, input.text ?? '') : null;
+  // ── ein BILD, von dem die Antwort abgelesen wird (issues #254, #255) ──
+  //
+  // Eine Uhrzeit, ein Betrag, gelegte Münzen, drei Koordinaten: Code liest sie mit einer
+  // geschlossenen Grammatik und vergleicht den WERT mit dem, was `visual.ts` aus der Aufgabe
+  // gerechnet hat (7:30 = 19:30 = „halb acht", 3,45 € = 345 ct). Null heißt „das ist gar keine
+  // Uhrzeit / kein Betrag" — dann läuft alles wie immer, nie „falsch".
+  const visualTask = visualTaskOf(item.visual_task);
+  const visualVerdict =
+    hintRequest || visualTask === null || !input.text
+      ? null
+      : checkVisual(visualTask, input.text, learner.locale);
+  /** Ihre gelegten Münzen in Worten, damit der Gesprächsfaden lesbar bleibt. */
+  const visualWritten =
+    visualTask !== null && input.text
+      ? writtenVisual(visualTask, input.text, learner.locale)
+      : null;
   const text =
     structured && input.parts && partsCheck
       ? // Her arrangement in one line, so the thread, the tutor history and a disputed judgement
         // all see what she actually did.
         answerTextOf(structured, input.parts)
       : (staffWritten ??
+        visualWritten ??
         input.text ??
         (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null));
   if (!text) throw new AppError('invalid_input', 'Empty answer');
@@ -1203,12 +1235,18 @@ export async function answerItem(
           : staffCheck.verdict === 'partly'
             ? 'parts_left'
             : 'incorrect'
-        : ruleCheck(
-            // A question code computed asks for an amount, so any form of it is right (#162);
-            // a question she HEARD is judged on what she understood, not how she wrote it (#210).
-            { ...item, form_free: barTask !== null, listening: listenTask !== null },
-            { text: input.text ?? null, choice: input.choice ?? null },
-          );
+        : visualVerdict !== null
+          ? visualVerdict
+          : ruleCheck(
+              // A question code computed asks for an amount, so any form of it is right (#162);
+              // a question she HEARD is judged on what she understood, not how she wrote it (#210).
+              {
+                ...item,
+                form_free: barTask !== null || visualTask !== null,
+                listening: listenTask !== null,
+              },
+              { text: input.text ?? null, choice: input.choice ?? null },
+            );
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
   const rule: RuleVerdict =
@@ -1363,6 +1401,17 @@ export async function answerItem(
         staffCheck !== null
           ? staffLineReply(learner.locale, staffCheck, item.attempts)
           : staffAgain(learner.locale, staffTask),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (givesHints(session.mode) && rule === 'incorrect' && visualTask !== null) {
+    // Ein Bild, von dem die Antwort abgelesen wird (issues #254, #255): dieselbe Begründung wie
+    // bei der Notenzeile darüber — der Tutor sieht die Uhr, die Münzen, den Körper nicht. Code
+    // sagt, wo sie hinschauen kann (`visualAgain`), bei jedem Versuch und ohne Modellaufruf.
+    judged = {
+      verdict: 'incorrect',
+      evaluatedBy: 'rule',
+      reply: visualAgain(learner.locale, visualTask),
       gaveHint: false,
       revealed: false,
     };
