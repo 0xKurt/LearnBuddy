@@ -184,16 +184,81 @@ export const TableFillAnswer = z.object({
 });
 export type TableFillAnswer = z.infer<typeof TableFillAnswer>;
 
+// ─────────────── match (#229) ───────────────
+//
+// Two forms, one shape: she takes an element on the LEFT and puts it to one on the RIGHT.
+//   pairs  — left 3–6, right as many: every left has exactly one right, every right one left.
+//   groups — left 4–12 elements, right 2–4 groups: every element belongs to exactly one
+//            group, every group gets at least one element.
+
+export const MATCH_PAIRS_MIN = 3;
+export const MATCH_PAIRS_MAX = 6;
+export const MATCH_GROUPS_MIN = 2;
+export const MATCH_GROUPS_MAX = 4;
+export const MATCH_GROUPED_MIN = 4;
+export const MATCH_GROUPED_MAX = 12;
+/** An element, a pair's side or a group's name: a word or a short line. */
+export const MATCH_ELEMENT_MAX = 80;
+
+export const MatchForm = z.enum(['pairs', 'groups']);
+export type MatchForm = z.infer<typeof MatchForm>;
+
+export const MatchElement = z.object({
+  id: PartId,
+  /** Plain text, math between dollar signs like everywhere else. */
+  text: z.string().trim().min(1).max(MATCH_ELEMENT_MAX),
+});
+export type MatchElement = z.infer<typeof MatchElement>;
+
+/** One link: a left element and the right one (pair partner or group) it belongs to. */
+export const MatchLink = z.object({ left: PartId, right: PartId });
+export type MatchLink = z.infer<typeof MatchLink>;
+
+export const MatchTask = z.object({
+  type: z.literal('match'),
+  form: MatchForm,
+  /** What she takes first, in the order she sees it (shuffled once by the server). */
+  left: z.array(MatchElement).min(MATCH_PAIRS_MIN).max(MATCH_GROUPED_MAX),
+  /** Where it goes: the pair partners (shuffled) or the groups (in the model's order). */
+  right: z.array(MatchElement).min(MATCH_GROUPS_MIN).max(MATCH_PAIRS_MAX),
+  /** One link per left element. */
+  key: z.array(MatchLink).min(MATCH_PAIRS_MIN).max(MATCH_GROUPED_MAX),
+});
+export type MatchTask = z.infer<typeof MatchTask>;
+
+export const MatchTaskView = z.object({
+  type: z.literal('match'),
+  form: MatchForm,
+  left: z.array(MatchElement).min(MATCH_PAIRS_MIN).max(MATCH_GROUPED_MAX),
+  right: z.array(MatchElement).min(MATCH_GROUPS_MIN).max(MATCH_PAIRS_MAX),
+});
+export type MatchTaskView = z.infer<typeof MatchTaskView>;
+
+export const MatchAnswer = z.object({
+  type: z.literal('match'),
+  /** Every left element once, each with the right one she put it to. */
+  links: z.array(MatchLink).min(MATCH_PAIRS_MIN).max(MATCH_GROUPED_MAX),
+});
+export type MatchAnswer = z.infer<typeof MatchAnswer>;
+
 // ─────────────── the unions (one member per kind that exists) ───────────────
 
 /** The stored definition including the key (`items.task`). Server only. */
-export const StructuredTask = z.discriminatedUnion('type', [OrderTask, TableFillTask]);
+export const StructuredTask = z.discriminatedUnion('type', [OrderTask, TableFillTask, MatchTask]);
 export type StructuredTask = z.infer<typeof StructuredTask>;
 
 /** What the app shows (`ItemView.task_view`): the task without its key. */
-export const StructuredTaskView = z.discriminatedUnion('type', [OrderTaskView, TableFillTaskView]);
+export const StructuredTaskView = z.discriminatedUnion('type', [
+  OrderTaskView,
+  TableFillTaskView,
+  MatchTaskView,
+]);
 export type StructuredTaskView = z.infer<typeof StructuredTaskView>;
 
 /** What she sends (`AnswerRequest.parts`). */
-export const StructuredAnswer = z.discriminatedUnion('type', [OrderAnswer, TableFillAnswer]);
+export const StructuredAnswer = z.discriminatedUnion('type', [
+  OrderAnswer,
+  TableFillAnswer,
+  MatchAnswer,
+]);
 export type StructuredAnswer = z.infer<typeof StructuredAnswer>;

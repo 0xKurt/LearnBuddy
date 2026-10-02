@@ -115,6 +115,15 @@
       "cell_at": "row {{row}}, column {{column}}",
       "brick": "row {{row}}, brick {{n}}",
       "and": "and"
+    },
+    "match": {
+      "pairs_some": "{{count}} of {{total}} pairs are already right.",
+      "pairs_some_one": "1 of {{total}} pairs is already right.",
+      "pairs_none": "None of the pairs fits yet – take another calm look.",
+      "groups_some": "{{count}} of {{total}} are already in the right group.",
+      "groups_some_one": "1 of {{total}} is already in the right group.",
+      "groups_none": "None is in the right group yet – take another calm look.",
+      "look_at": "Have another look at “{{text}}”."
     }
   },
   "contact": {

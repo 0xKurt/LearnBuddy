@@ -69,6 +69,23 @@
   "later_done": "Vale, ese vuelve más tarde.",
   "later_hint": "El ejercicio sigue abierto y vuelve después de los demás.",
   "loading": "Estoy cargando tus preguntas…",
+  "match": {
+    "how_pairs": "Toca uno a la izquierda y luego su pareja a la derecha.",
+    "how_groups": "Toca uno arriba y luego su grupo.",
+    "held": "{{text}}, seleccionado",
+    "paired": "{{text}}, pareja {{n}} con {{other}}",
+    "no_partner": "{{text}}, todavía sin pareja",
+    "in_group": "{{text}}, en {{group}}",
+    "no_group": "{{text}}, todavía en ningún grupo",
+    "group": "Grupo {{n}}: {{group}}, {{count}} dentro",
+    "hint_take": "Lo selecciona.",
+    "hint_held": "Lo deselecciona.",
+    "hint_link": "Lo une con {{other}}.",
+    "hint_linked": "Deshace la unión.",
+    "hint_put": "Pone {{text}} aquí.",
+    "hint_group_waits": "Primero toca algo arriba.",
+    "check_waits": "Solo cuando todo esté emparejado."
+  },
   "next": "Siguiente",
   "order": {
     "how": "Tócalos en orden.",

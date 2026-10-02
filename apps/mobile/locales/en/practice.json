@@ -69,6 +69,23 @@
   "later_done": "All right – that one comes back later.",
   "later_hint": "The task stays open and comes back after the others.",
   "loading": "Getting your questions …",
+  "match": {
+    "how_pairs": "Tap one on the left, then its partner on the right.",
+    "how_groups": "Tap one at the top, then its group.",
+    "held": "{{text}}, selected",
+    "paired": "{{text}}, pair {{n}} with {{other}}",
+    "no_partner": "{{text}}, no partner yet",
+    "in_group": "{{text}}, in {{group}}",
+    "no_group": "{{text}}, in no group yet",
+    "group": "Group {{n}}: {{group}}, {{count}} in it",
+    "hint_take": "Selects it.",
+    "hint_held": "Deselects it.",
+    "hint_link": "Links it with {{other}}.",
+    "hint_linked": "Undoes the link.",
+    "hint_put": "Puts {{text}} here.",
+    "hint_group_waits": "Tap something at the top first.",
+    "check_waits": "Once everything is matched."
+  },
   "next": "Next",
   "order": {
     "how": "Tap them in order.",

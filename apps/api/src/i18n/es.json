@@ -115,6 +115,15 @@
       "cell_at": "fila {{row}}, columna {{column}}",
       "brick": "fila {{row}}, ladrillo {{n}}",
       "and": "y"
+    },
+    "match": {
+      "pairs_some": "{{count}} de {{total}} parejas ya están bien.",
+      "pairs_some_one": "1 de {{total}} parejas ya está bien.",
+      "pairs_none": "Todavía no encaja ninguna pareja: míralas otra vez con calma.",
+      "groups_some": "{{count}} de {{total}} ya están en el grupo correcto.",
+      "groups_some_one": "1 de {{total}} ya está en el grupo correcto.",
+      "groups_none": "Todavía ninguno está en el grupo correcto: míralo otra vez con calma.",
+      "look_at": "Mira otra vez «{{text}}»."
     }
   },
   "contact": {

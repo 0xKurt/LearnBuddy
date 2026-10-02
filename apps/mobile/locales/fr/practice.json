@@ -69,6 +69,23 @@
   "later_done": "D'accord – celui-là revient plus tard.",
   "later_hint": "L'exercice reste ouvert et revient après les autres.",
   "loading": "Je récupère tes questions…",
+  "match": {
+    "how_pairs": "Touche un élément à gauche, puis son partenaire à droite.",
+    "how_groups": "Touche un élément en haut, puis son groupe.",
+    "held": "{{text}}, sélectionné",
+    "paired": "{{text}}, paire {{n}} avec {{other}}",
+    "no_partner": "{{text}}, pas encore de partenaire",
+    "in_group": "{{text}}, dans {{group}}",
+    "no_group": "{{text}}, dans aucun groupe pour l'instant",
+    "group": "Groupe {{n}} : {{group}}, {{count}} dedans",
+    "hint_take": "Le sélectionne.",
+    "hint_held": "Le désélectionne.",
+    "hint_link": "Le relie à {{other}}.",
+    "hint_linked": "Défait le lien.",
+    "hint_put": "Met {{text}} ici.",
+    "hint_group_waits": "Touche d'abord un élément en haut.",
+    "check_waits": "Seulement quand tout est relié."
+  },
   "next": "Suivant",
   "order": {
     "how": "Touche-les dans l'ordre.",

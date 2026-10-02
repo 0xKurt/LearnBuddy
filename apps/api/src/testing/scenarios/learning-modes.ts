@@ -29,6 +29,51 @@ function lastText(req: LlmRequest): string {
 }
 
 export function scriptLearningModes(llm: ScriptedGateway): void {
+  // Match items (issue #229): the model writes only the correct links — pairs, and things
+  // sorted into groups. The server checks them (Regel 0), gives the ids, shuffles and keeps
+  // the key. Five long-worded pairs and twelve things in four groups: the tallest a match
+  // should get, measured on 360×740 (rule 16). Registered first, like the Rechenweg below:
+  // the first rule that matches wins.
+  scriptGenerations({
+    when: /Verfassungsorgan/i,
+    answer: () => ({
+      usable: true,
+      title: 'Wer macht was?',
+      subject: { name: 'Politik', kind: 'social_studies' },
+      items: [],
+      structured: [
+        {
+          type: 'match',
+          prompt: 'Welches Verfassungsorgan hat welche Aufgabe?',
+          pairs: [
+            { left: 'Bundestag', right: 'beschließt die Gesetze' },
+            { left: 'Bundesrat', right: 'vertritt die Länder' },
+            { left: 'Bundesregierung', right: 'führt die Gesetze aus' },
+            { left: 'Bundespräsident', right: 'unterschreibt die Gesetze' },
+            { left: 'Bundesverfassungsgericht', right: 'prüft die Gesetze am Grundgesetz' },
+          ],
+          groups: null,
+          topic: 'Verfassungsorgane',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'match',
+          prompt: 'Wer ist dafür zuständig?',
+          pairs: null,
+          groups: [
+            { name: 'Gemeinde', elements: ['Müllabfuhr', 'Friedhöfe', 'Straßenbeleuchtung'] },
+            { name: 'Land', elements: ['Schulen', 'Hochschulen', 'Landespolizei'] },
+            { name: 'Bund', elements: ['Bundeswehr', 'Außenpolitik', 'Autobahnen'] },
+            { name: 'EU', elements: ['Euro', 'Binnenmarkt', 'Roaming-Gebühren'] },
+          ],
+          topic: 'Zuständigkeiten',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+      ],
+    }),
+  });
   // A written calculation path (issues #209, #221): an equation she solves line by line, then
   // a one-liner the return key sends. Registered first: a later learner's request may carry
   // older topics, and the first rule that matches wins. The model only supplies the items —
@@ -395,6 +440,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /parabel/i,
       answer: says('Gern – schau dir die vier Graphen an: welcher passt?', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Parabeln erkennen' } },
+      ]),
+    },
+    {
+      when: /verfassungsorgane zuordnen/i,
+      answer: says('Gern – ordne mal zu, wer was macht.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Verfassungsorgane zuordnen' } },
       ]),
     },
     {

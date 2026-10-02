@@ -13,6 +13,7 @@ import type {
   StructuredTaskView,
 } from '@learnbuddy/shared-types/contracts';
 
+import { MatchAnswer } from './MatchAnswer.js';
 import { OrderAnswer } from './OrderAnswer.js';
 import { TableAnswer } from './TableAnswer.js';
 
@@ -33,6 +34,10 @@ export function StructuredAnswer({ view, draftKey, disabled, onSubmit }: Props) 
     case 'table_fill':
       return (
         <TableAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
+      );
+    case 'match':
+      return (
+        <MatchAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
       );
   }
 }

@@ -63,8 +63,8 @@ import { attachConceptImages } from './images.js';
 import { indexMaterialPassages } from './passages.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
 
-/** The structured kinds a sheet may give (issue #228: an order to find). */
-const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order', 'table_fill']);
+/** The structured kinds a sheet may give (#228 an order, #230 a table, #229 links to make). */
+const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order', 'table_fill', 'match']);
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
 const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);

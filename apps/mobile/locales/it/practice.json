@@ -69,6 +69,23 @@
   "later_done": "Va bene – quello torna più tardi.",
   "later_hint": "L'esercizio resta aperto e torna dopo gli altri.",
   "loading": "Sto caricando le tue domande…",
+  "match": {
+    "how_pairs": "Tocca un elemento a sinistra, poi il suo compagno a destra.",
+    "how_groups": "Tocca un elemento in alto, poi il suo gruppo.",
+    "held": "{{text}}, selezionato",
+    "paired": "{{text}}, coppia {{n}} con {{other}}",
+    "no_partner": "{{text}}, ancora senza compagno",
+    "in_group": "{{text}}, in {{group}}",
+    "no_group": "{{text}}, ancora in nessun gruppo",
+    "group": "Gruppo {{n}}: {{group}}, {{count}} dentro",
+    "hint_take": "Lo seleziona.",
+    "hint_held": "Lo deseleziona.",
+    "hint_link": "Lo collega a {{other}}.",
+    "hint_linked": "Scioglie il collegamento.",
+    "hint_put": "Mette {{text}} qui.",
+    "hint_group_waits": "Prima tocca qualcosa in alto.",
+    "check_waits": "Solo quando tutto è abbinato."
+  },
   "next": "Avanti",
   "order": {
     "how": "Toccali in ordine.",

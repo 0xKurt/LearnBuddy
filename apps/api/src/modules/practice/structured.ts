@@ -19,6 +19,18 @@
 // the switches below. The answer flow in `service.ts` only ever calls the exported functions.
 
 import {
+  MATCH_ELEMENT_MAX,
+  MATCH_GROUPED_MAX,
+  MATCH_GROUPED_MIN,
+  MATCH_GROUPS_MAX,
+  MATCH_GROUPS_MIN,
+  MATCH_PAIRS_MAX,
+  MATCH_PAIRS_MIN,
+  type MatchAnswer,
+  type MatchElement,
+  type MatchForm,
+  type MatchLink,
+  type MatchTask,
   OrderNumeric,
   ORDER_ELEMENT_MAX,
   ORDER_MAX,
@@ -94,6 +106,57 @@ const OrderDraftWithHelp = OrderDraftBase.extend({
   worked_solution: ItemDraft.shape.worked_solution,
 });
 
+// ─── match (#229): the model's draft ───
+
+/**
+ * What the generator and the photo reading are told about match items — exact, minimal and
+ * without an example sentence, like ORDER_RULES.
+ */
+export const MATCH_RULES = `Match tasks ("structured", type "match"): only when the learner has to link given things — each thing to its one partner (pairs) or each thing to its one category (groups). Fill exactly one of pairs and groups, the other null. pairs: ${MATCH_PAIRS_MIN}–${MATCH_PAIRS_MAX} correct pairs {left, right}; every left has exactly one right and every right exactly one left. groups: ${MATCH_GROUPS_MIN}–${MATCH_GROUPS_MAX} groups {name, elements}, ${MATCH_GROUPED_MIN}–${MATCH_GROUPED_MAX} elements in all, every element in exactly one group, no group empty. Every element and name is a word or a short line, and no two of them are alike. Write only the correct links; the app shuffles them. prompt: the instruction, saying what goes with what; it never lists the elements. If anything could belong to two places, write no match task.`;
+
+const MatchText = z.string().trim().min(1).max(MATCH_ELEMENT_MAX);
+
+/** The model's match task: the correct links, nothing else — code builds key and display. */
+const MatchDraftBase = z.object({
+  type: z.literal('match'),
+  prompt: z
+    .string()
+    .trim()
+    .min(1)
+    .max(600)
+    .describe('The instruction: what to link with what; never the elements themselves'),
+  pairs: z
+    .array(z.object({ left: MatchText, right: MatchText }))
+    .max(MATCH_PAIRS_MAX * 2)
+    .nullable()
+    .default(null)
+    .describe(
+      `${MATCH_PAIRS_MIN}–${MATCH_PAIRS_MAX} correct pairs; null when the task sorts into groups`,
+    ),
+  groups: z
+    .array(
+      z.object({
+        name: MatchText,
+        elements: z.array(MatchText).max(MATCH_GROUPED_MAX * 2),
+      }),
+    )
+    .max(MATCH_GROUPS_MAX * 2)
+    .nullable()
+    .default(null)
+    .describe(
+      `${MATCH_GROUPS_MIN}–${MATCH_GROUPS_MAX} groups with their elements (${MATCH_GROUPED_MIN}–${MATCH_GROUPED_MAX} in all); null when the task pairs`,
+    ),
+  topic: ItemDraft.shape.topic,
+  difficulty: ItemDraft.shape.difficulty,
+  prompt_lang: ItemDraft.shape.prompt_lang,
+});
+export type MatchDraft = Pick<z.infer<typeof MatchDraftBase>, 'pairs' | 'groups'>;
+
+const MatchDraftWithHelp = MatchDraftBase.extend({
+  hints: ItemDraft.shape.hints,
+  worked_solution: ItemDraft.shape.worked_solution,
+});
+
 /** A structured task as the model writes it, with prepared help (photo reading). */
 export const StructuredDraft = z.discriminatedUnion('type', [
   OrderDraftWithHelp,
@@ -101,6 +164,7 @@ export const StructuredDraft = z.discriminatedUnion('type', [
     hints: ItemDraft.shape.hints,
     worked_solution: ItemDraft.shape.worked_solution,
   }),
+  MatchDraftWithHelp,
 ]);
 export type StructuredDraft = z.infer<typeof StructuredDraft>;
 
@@ -108,11 +172,16 @@ export type StructuredDraft = z.infer<typeof StructuredDraft>;
 export const StructuredDraftHomework = z.discriminatedUnion('type', [
   OrderDraftBase.extend({ hints: ItemDraft.shape.hints }),
   TableDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  MatchDraftBase.extend({ hints: ItemDraft.shape.hints }),
 ]);
 export type StructuredDraftHomework = z.infer<typeof StructuredDraftHomework>;
 
 /** The same without hints and worked solution (a topic: help is written in the background). */
-export const StructuredDraftNoHelp = z.discriminatedUnion('type', [OrderDraftBase, TableDraftBase]);
+export const StructuredDraftNoHelp = z.discriminatedUnion('type', [
+  OrderDraftBase,
+  TableDraftBase,
+  MatchDraftBase,
+]);
 export type StructuredDraftNoHelp = z.infer<typeof StructuredDraftNoHelp>;
 
 /**
@@ -141,7 +210,16 @@ export type TaskProblem =
   /** A numeric sequence whose key is not sorted the way `numeric` says. */
   | 'numeric_unsorted'
   /** table_fill (#230): see `table.ts`. */
-  | TableProblem;
+  | TableProblem
+  // match (#229):
+  /** Neither pairs nor groups, or both: which task is meant is a guess. */
+  | 'form'
+  /** One element linked to two places (a left with two rights, a thing in two groups). */
+  | 'ambiguous'
+  /** A group nothing belongs to. */
+  | 'empty_group'
+  /** The key misses a left element, names one twice or names an id that is not there. */
+  | 'not_mapping';
 
 /** An element as it is compared for sameness: markup, case and surrounding marks set aside. */
 function sameness(text: string): string {
@@ -207,6 +285,8 @@ export function taskProblem(task: StructuredTask): TaskProblem | null {
       return orderProblem(task);
     case 'table_fill':
       return tableProblem(task);
+    case 'match':
+      return matchProblem(task);
   }
 }
 
@@ -289,6 +369,8 @@ export function solutionOf(task: StructuredTask): string {
     }
     case 'table_fill':
       return tableSolution(task);
+    case 'match':
+      return matchText(task, task.key);
   }
 }
 
@@ -359,6 +441,36 @@ export function structuredItem(
         worked_solution: 'worked_solution' in draft ? draft.worked_solution : null,
       };
     }
+    case 'match': {
+      const task = matchTaskFrom(draft);
+      if (!task) return null;
+      const prompt = dollarMathRuns(draft.prompt);
+      const answer = solutionOf(task);
+      // Help never gives a whole link away, nor the whole solution.
+      const hints = ('hints' in draft ? draft.hints : []).filter(
+        (h) => !mentionsSolution(h, answer, prompt) && !namesALink(h, task),
+      );
+      return {
+        kind: 'match',
+        task,
+        prompt,
+        answer,
+        accepted_answers: [],
+        unit: null,
+        choices: null,
+        correct_choice: null,
+        topic: draft.topic,
+        difficulty: draft.difficulty,
+        prompt_lang: draft.prompt_lang,
+        lang: null,
+        figure: null,
+        tolerance: null,
+        spelling: null,
+        source_excerpt: null,
+        hints,
+        worked_solution: 'worked_solution' in draft ? draft.worked_solution : null,
+      };
+    }
   }
 }
 
@@ -375,6 +487,213 @@ export function structuredItems(
       return item ? [item] : [];
     })
     .slice(0, max);
+}
+
+// ─────────────── match (#229): Regel 0 and the stored task ───────────────
+
+/** How a pair reads as text ("Hund – dog"), and how links and groups stand in a row. */
+export const MATCH_PAIR_JOIN = ' – ';
+export const MATCH_LIST_JOIN = '; ';
+
+/** What is wrong with a match task (stored or built), or null when it holds together. */
+export function matchProblem(task: MatchTask): TaskProblem | null {
+  const { left, right, key } = task;
+  if (task.form === 'pairs') {
+    if (left.length < MATCH_PAIRS_MIN || left.length > MATCH_PAIRS_MAX) return 'count';
+    if (right.length !== left.length) return 'count';
+  } else {
+    if (right.length < MATCH_GROUPS_MIN || right.length > MATCH_GROUPS_MAX) return 'count';
+    if (left.length < MATCH_GROUPED_MIN || left.length > MATCH_GROUPED_MAX) return 'count';
+  }
+  // Every text once — across both sides: a thing named like its group or its partner is
+  // no task to solve.
+  const seen = new Set<string>();
+  for (const e of [...left, ...right]) {
+    const s = sameness(e.text);
+    if (s === '' || seen.has(s)) return 'duplicate';
+    seen.add(s);
+  }
+  const leftIds = new Set(left.map((e) => e.id));
+  const rightIds = new Set(right.map((e) => e.id));
+  if (leftIds.size !== left.length || rightIds.size !== right.length) return 'not_mapping';
+  if ([...leftIds].some((id) => rightIds.has(id))) return 'not_mapping';
+  if (key.length !== left.length || new Set(key.map((k) => k.left)).size !== key.length) {
+    return 'not_mapping';
+  }
+  if (!key.every((k) => leftIds.has(k.left) && rightIds.has(k.right))) return 'not_mapping';
+  const used = new Map<string, number>();
+  for (const k of key) used.set(k.right, (used.get(k.right) ?? 0) + 1);
+  if (task.form === 'pairs') {
+    // One partner each way: a right with two lefts leaves another right without one.
+    if (right.some((r) => used.get(r.id) !== 1)) return 'ambiguous';
+  } else if (right.some((g) => !used.has(g.id))) {
+    return 'empty_group';
+  }
+  return null;
+}
+
+/**
+ * What is wrong with the model's draft before anything is built, or null. The draft is
+ * where an ambiguity can still be SEEN (the same thing written to two places); once ids are
+ * given it would read as a mere duplicate.
+ */
+export function matchDraftProblem(draft: MatchDraft): TaskProblem | null {
+  const { pairs, groups } = draft;
+  if ((pairs === null) === (groups === null)) return 'form';
+  if (pairs !== null) {
+    if (pairs.length < MATCH_PAIRS_MIN || pairs.length > MATCH_PAIRS_MAX) return 'count';
+    const partnerOf = new Map<string, string>();
+    const partnerOfRight = new Map<string, string>();
+    for (const p of pairs) {
+      const l = sameness(p.left);
+      const r = sameness(p.right);
+      const lr = partnerOf.get(l);
+      const rl = partnerOfRight.get(r);
+      if ((lr !== undefined && lr !== r) || (rl !== undefined && rl !== l)) return 'ambiguous';
+      if (lr !== undefined) return 'duplicate';
+      partnerOf.set(l, r);
+      partnerOfRight.set(r, l);
+    }
+    return null;
+  }
+  const gs = groups ?? [];
+  if (gs.length < MATCH_GROUPS_MIN || gs.length > MATCH_GROUPS_MAX) return 'count';
+  if (gs.some((g) => g.elements.length === 0)) return 'empty_group';
+  const total = gs.reduce((n, g) => n + g.elements.length, 0);
+  if (total < MATCH_GROUPED_MIN || total > MATCH_GROUPED_MAX) return 'count';
+  const groupOf = new Map<string, number>();
+  for (const [gi, g] of gs.entries()) {
+    for (const e of g.elements) {
+      const s = sameness(e);
+      const before = groupOf.get(s);
+      if (before !== undefined) return before === gi ? 'duplicate' : 'ambiguous';
+      groupOf.set(s, gi);
+    }
+  }
+  return null;
+}
+
+/**
+ * A deterministic shuffle of `n` positions (per content, like an order's), the first that
+ * `fits` — or null when none of the tries does.
+ */
+function shuffleWhere(
+  n: number,
+  seedText: string,
+  fits: (idx: readonly number[]) => boolean,
+): number[] | null {
+  const base = hash(seedText);
+  for (let attempt = 0; attempt < 64; attempt++) {
+    const random = seeded(base + attempt);
+    const idx = Array.from({ length: n }, (_, i) => i);
+    for (let i = n - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [idx[i], idx[j]] = [idx[j]!, idx[i]!];
+    }
+    if (fits(idx)) return idx;
+  }
+  return null;
+}
+
+/** Ids of the right side by position: r1, r2 … (the left side is a, b, c … like an order). */
+function rightIdAt(position: number): PartId {
+  return `r${position + 1}`;
+}
+
+/**
+ * The stored task for the model's correct links, or null when Regel 0 rejects it. The
+ * display is never already solved: pairs never line up in more than a few rows, and the
+ * elements of a grouping never stand sorted by their groups.
+ */
+export function matchTaskFrom(draft: MatchDraft): MatchTask | null {
+  if (matchDraftProblem(draft) !== null) return null;
+  const clean = (x: string) => dollarMathRuns(x.trim());
+  let form: MatchForm;
+  /** In the model's order: each left text and the index of its right. */
+  let links: Array<{ text: string; to: number }>;
+  let rights: string[];
+  if (draft.pairs !== null) {
+    form = 'pairs';
+    links = draft.pairs.map((p, i) => ({ text: clean(p.left), to: i }));
+    rights = draft.pairs.map((p) => clean(p.right));
+  } else {
+    form = 'groups';
+    const groups = draft.groups ?? [];
+    rights = groups.map((g) => clean(g.name));
+    links = groups.flatMap((g, gi) => g.elements.map((e) => ({ text: clean(e), to: gi })));
+  }
+  const n = links.length;
+  const seed = [form, ...links.map((l) => `${l.text}\u0001${rights[l.to]}`)].join('\u0000');
+  // shownLeft[p] = the index (in `links`) of the left element at display position p.
+  const shownLeft =
+    form === 'pairs'
+      ? shuffleWhere(n, seed, () => true)
+      : shuffleWhere(n, seed, (idx) => {
+          // Sorted by group (every group's elements together, in the groups' order) would be
+          // the solution laid out — never that.
+          const groupsInRow = idx.map((i) => links[i]!.to);
+          return groupsInRow.some((g, i) => i > 0 && g < groupsInRow[i - 1]!);
+        });
+  if (!shownLeft) return null;
+  // Pairs: the right column shuffled too, so that fewer than half of the rows line up.
+  const shownRight =
+    form === 'pairs'
+      ? shuffleWhere(n, `${seed}\u0002`, (idx) => {
+          const aligned = shownLeft.filter((li, p) => idx[p] === links[li]!.to).length;
+          return aligned * 2 < n;
+        })
+      : rights.map((_, i) => i);
+  if (!shownRight) return null;
+  const left: MatchElement[] = shownLeft.map((li, p) => ({ id: idAt(p), text: links[li]!.text }));
+  const right: MatchElement[] = shownRight.map((ri, p) => ({
+    id: rightIdAt(p),
+    text: rights[ri]!,
+  }));
+  const key: MatchLink[] = shownLeft.map((li, p) => ({
+    left: idAt(p),
+    right: rightIdAt(shownRight.indexOf(links[li]!.to)),
+  }));
+  const task: MatchTask = { type: 'match', form, left, right, key };
+  const parsed = StructuredTask.safeParse(task);
+  if (!parsed.success || parsed.data.type !== 'match') return null;
+  return matchProblem(parsed.data) === null ? parsed.data : null;
+}
+
+/** The solution in words: "a – 1; b – 2" for pairs, "Nomen: Haus, Baum; Verben: …" for groups. */
+function matchText(task: MatchTask, links: readonly MatchLink[]): string {
+  const leftText = new Map(task.left.map((e) => [e.id, e.text]));
+  const rightText = new Map(task.right.map((e) => [e.id, e.text]));
+  // In the order she sees the left side, whatever order the links came in.
+  const at = new Map(task.left.map((e, i) => [e.id, i]));
+  const sorted = [...links].sort((a, b) => (at.get(a.left) ?? 0) - (at.get(b.left) ?? 0));
+  if (task.form === 'pairs') {
+    return sorted
+      .map((k) => `${leftText.get(k.left) ?? ''}${MATCH_PAIR_JOIN}${rightText.get(k.right) ?? ''}`)
+      .join(MATCH_LIST_JOIN);
+  }
+  return task.right
+    .map((g) => {
+      const members = sorted.filter((k) => k.right === g.id).map((k) => leftText.get(k.left));
+      return members.length === 0 ? null : `${g.text}: ${members.join(', ')}`;
+    })
+    .filter((x): x is string => x !== null)
+    .join(MATCH_LIST_JOIN);
+}
+
+/** A hint that states a whole correct link (both of its sides) gives that link away. */
+function namesALink(hint: string, task: MatchTask): boolean {
+  // Whole words only: "ich" is not named by "sich".
+  const words = (x: string) =>
+    ` ${sameness(x)
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .trim()} `;
+  const h = words(hint);
+  const textOf = new Map([...task.left, ...task.right].map((e) => [e.id, words(e.text)]));
+  return task.key.some((k) => {
+    const l = textOf.get(k.left);
+    const r = textOf.get(k.right);
+    return l !== undefined && r !== undefined && h.includes(l) && h.includes(r);
+  });
 }
 
 // ─────────────── the stored task, read back ───────────────
@@ -397,6 +716,8 @@ export function viewOf(task: StructuredTask): StructuredTaskView {
       return { type: 'order', elements: task.elements };
     case 'table_fill':
       return tableView(task);
+    case 'match':
+      return { type: 'match', form: task.form, left: task.left, right: task.right };
   }
 }
 
@@ -409,18 +730,57 @@ export type PartResult = { id: PartId; ok: boolean };
  * The verdict on a structured answer, with what is right part by part. Kinds add their own
  * detail beside `parts` (order: the first place that is wrong, 1-based).
  */
-export type StructuredCheck =
-  | {
-      type: 'order';
-      correct: boolean;
-      /** In her order: each element she placed, and whether it is at its right place. */
-      parts: PartResult[];
-      first_wrong: number | null;
-    }
-  /** table_fill (#230): every gap, how many are right, and which are not yet. */
-  | TableCheck;
+export type StructuredCheck = OrderCheck | TableCheck | MatchCheck;
 
-function checkOrder(task: OrderTask, answer: OrderAnswer): StructuredCheck | null {
+export type OrderCheck = {
+  type: 'order';
+  correct: boolean;
+  /** In her order: each element she placed, and whether it is at its right place. */
+  parts: PartResult[];
+  first_wrong: number | null;
+};
+
+/** match (#229): how many links are right, and the first wrong one in her reading order. */
+export type MatchCheck = {
+  type: 'match';
+  form: MatchForm;
+  correct: boolean;
+  /** Per left element, in the order she sees them: is it linked to its right place? */
+  parts: PartResult[];
+  right: number;
+  total: number;
+  /** The first left element (as shown) that is linked wrongly, or null. */
+  first_wrong_text: string | null;
+};
+
+function checkMatch(task: MatchTask, answer: MatchAnswer): MatchCheck | null {
+  const leftIds = new Set(task.left.map((e) => e.id));
+  const rightIds = new Set(task.right.map((e) => e.id));
+  const given = new Map<string, string>();
+  for (const k of answer.links) {
+    // Every left element exactly once, to a right one that is there (else: 400, not graded).
+    if (!leftIds.has(k.left) || !rightIds.has(k.right) || given.has(k.left)) return null;
+    given.set(k.left, k.right);
+  }
+  if (given.size !== leftIds.size) return null;
+  // Pairs are pairs: one right element cannot be the partner of two.
+  if (task.form === 'pairs' && new Set(given.values()).size !== given.size) return null;
+  const want = new Map(task.key.map((k) => [k.left, k.right]));
+  const parts = task.left.map((e) => ({ id: e.id, ok: want.get(e.id) === given.get(e.id) }));
+  const right = parts.filter((p) => p.ok).length;
+  const wrong = parts.find((p) => !p.ok);
+  return {
+    type: 'match',
+    form: task.form,
+    correct: right === parts.length,
+    parts,
+    right,
+    total: parts.length,
+    first_wrong_text: wrong ? (task.left.find((e) => e.id === wrong.id)?.text ?? null) : null,
+  };
+}
+
+function checkOrder(task: OrderTask, answer: OrderAnswer): OrderCheck | null {
   const ids = new Set(task.elements.map((e) => e.id));
   const given = answer.order;
   // Every element exactly once: anything else is not an answer to this task (400).
@@ -452,6 +812,8 @@ export function checkStructured(
       return answer.type === 'order' ? checkOrder(task, answer) : null;
     case 'table_fill':
       return answer.type === 'table_fill' ? checkTable(task, answer, ctx) : null;
+    case 'match':
+      return answer.type === 'match' ? checkMatch(task, answer) : null;
   }
 }
 
@@ -465,6 +827,8 @@ export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): st
     }
     case 'table_fill':
       return answer.type === 'table_fill' ? tableAnswerText(task, answer) : '';
+    case 'match':
+      return answer.type === 'match' ? matchText(task, answer.links) : '';
   }
 }
 
@@ -472,7 +836,12 @@ export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): st
  * The reply to a wrong structured answer: where it stops being right, kindly. The right
  * one is answered like every right answer (`practice.correct`).
  */
-export function structuredReply(locale: string, check: StructuredCheck): string {
+export function structuredReply(
+  locale: string,
+  check: StructuredCheck,
+  /** Her wrong tries on this question before this one (`session_items.attempts`). */
+  priorMisses: number = 0,
+): string {
   switch (check.type) {
     case 'order': {
       const at = check.first_wrong ?? 1;
@@ -482,5 +851,36 @@ export function structuredReply(locale: string, check: StructuredCheck): string 
     }
     case 'table_fill':
       return tableReply(locale, check);
+    case 'match': {
+      // First the count ("4 von 5 Paaren stimmen"); WHICH one is wrong only on the second
+      // miss — the next rung of the hint ladder, so it counts as help (`structuredNamesPart`).
+      const pairs = check.form === 'pairs';
+      const base =
+        check.right === 0
+          ? t(locale, pairs ? 'practice.match.pairs_none' : 'practice.match.groups_none')
+          : t(locale, pairs ? 'practice.match.pairs_some' : 'practice.match.groups_some', {
+              count: check.right,
+              total: check.total,
+            });
+      return structuredNamesPart(check, priorMisses) && check.first_wrong_text !== null
+        ? `${base} ${t(locale, 'practice.match.look_at', { text: check.first_wrong_text })}`
+        : base;
+    }
+  }
+}
+
+/**
+ * Does the reply to this wrong answer point at the part that is wrong? Then it is help given
+ * (a hint), like a spelled-out typo (#207). An order always names its place (#228) and that
+ * is its feedback, not a hint; a table names its cells on every try (#230), the same;
+ * a match names its wrong link from the second miss on (#229).
+ */
+export function structuredNamesPart(check: StructuredCheck, priorMisses: number): boolean {
+  switch (check.type) {
+    case 'order':
+    case 'table_fill':
+      return false;
+    case 'match':
+      return !check.correct && priorMisses >= 1;
   }
 }

@@ -15,10 +15,15 @@ import {
   NUMERIC_KEY_RULES,
   SPELLING_RULES,
 } from '../practice/items.js';
-import { ORDER_RULES, StructuredDraft, StructuredDraftHomework } from '../practice/structured.js';
+import {
+  MATCH_RULES,
+  ORDER_RULES,
+  StructuredDraft,
+  StructuredDraftHomework,
+} from '../practice/structured.js';
 import { TABLE_RULES } from '../practice/table.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v5.3';
+export const EXTRACT_PROMPT_VERSION = 'extract.v5.5';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -171,7 +176,7 @@ export const ExtractionResult = z.object({
     .describe('Faithful transcription (Markdown), used to ground explanations'),
   items: z.array(ItemDraft).max(ITEMS_PER_READING),
   /**
-   * Tasks whose answer is a shape, not a text (issue #228): an order to find. Checked by code
+   * Tasks whose answer is a shape, not a text: an order to find (#228), links to make (#229). Checked by code
    * before anything is stored (`practice/structured.ts`, Regel 0 of #224).
    */
   structured: z.array(StructuredDraft).max(STRUCTURED_PER_READING).default([]),
@@ -324,6 +329,7 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - Write questions for EVERY pair or task the sheet has except the ones you named in not_practicable, not a selection of them: the learner asked for her sheet, not for a sample of it. If they do not all fit in one answer, write as many as fit, in the order they stand on the sheet, and set more_items true — you will be asked for the rest. Set more_items false only when nothing is left.
    - ${ORDER_RULES} A task on the sheet that asks to put given things in order becomes one such task in "structured", never a question in items.
    - ${TABLE_RULES} A table on the sheet whose cells are to be filled in becomes one such task in "structured" (its cells as printed, the empty ones as gaps), never one question per cell in items.
+   - ${MATCH_RULES} A task on the sheet that asks to link given things to each other or sort them into given groups becomes one such task in "structured", never questions in items.
    - Otherwise 8–15 questions — and none at all for a sheet whose every task went into not_practicable. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
@@ -353,6 +359,7 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
    - kind: numeric for a single number (unit in "unit"), multiple_choice if the task offers choices, long for explanations or texts, short otherwise.
    - ${ORDER_RULES} A task that asks to put given things in order goes into "structured" instead of items (its prompt as printed).
    - ${TABLE_RULES} A table whose cells are to be filled in goes into "structured" instead of items (its prompt as printed).
+   - ${MATCH_RULES} A task that asks to link given things or sort them into groups goes into "structured" instead of items (its prompt as printed).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}

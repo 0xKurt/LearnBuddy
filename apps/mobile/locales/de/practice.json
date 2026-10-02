@@ -69,6 +69,23 @@
   "later_done": "Alles klar – die kommt später nochmal dran.",
   "later_hint": "Die Aufgabe bleibt offen und kommt nach den anderen nochmal dran.",
   "loading": "Ich hole deine Fragen …",
+  "match": {
+    "how_pairs": "Tippe links eins an, dann sein Gegenstück rechts.",
+    "how_groups": "Tippe oben eins an, dann seine Gruppe.",
+    "held": "{{text}}, ausgewählt",
+    "paired": "{{text}}, Paar {{n}} mit {{other}}",
+    "no_partner": "{{text}}, noch ohne Partner",
+    "in_group": "{{text}}, in {{group}}",
+    "no_group": "{{text}}, noch in keiner Gruppe",
+    "group": "Gruppe {{n}}: {{group}}, {{count}} darin",
+    "hint_take": "Wählt es aus.",
+    "hint_held": "Wählt es wieder ab.",
+    "hint_link": "Verbindet es mit {{other}}.",
+    "hint_linked": "Löst die Zuordnung wieder.",
+    "hint_put": "Legt {{text}} hierhin.",
+    "hint_group_waits": "Erst oben etwas antippen.",
+    "check_waits": "Erst wenn alles zugeordnet ist."
+  },
   "next": "Weiter",
   "order": {
     "how": "Tippe sie der Reihe nach an.",

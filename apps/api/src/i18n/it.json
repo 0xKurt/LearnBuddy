@@ -115,6 +115,15 @@
       "cell_at": "riga {{row}}, colonna {{column}}",
       "brick": "fila {{row}}, mattone {{n}}",
       "and": "e"
+    },
+    "match": {
+      "pairs_some": "{{count}} coppie su {{total}} sono già giuste.",
+      "pairs_some_one": "1 coppia su {{total}} è già giusta.",
+      "pairs_none": "Nessuna coppia va ancora bene – guardale di nuovo con calma.",
+      "groups_some": "{{count}} su {{total}} sono già nel gruppo giusto.",
+      "groups_some_one": "1 su {{total}} è già nel gruppo giusto.",
+      "groups_none": "Nessuno è ancora nel gruppo giusto – guarda di nuovo con calma.",
+      "look_at": "Guarda di nuovo «{{text}}»."
     }
   },
   "contact": {

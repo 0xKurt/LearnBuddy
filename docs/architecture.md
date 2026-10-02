@@ -1731,6 +1731,38 @@ and only then does it scroll sideways, inside itself. Generated in a topic's pra
 practice test, and read from a sheet whose table is to be filled in (generate.v1.13,
 extract.v5.2).
 
+**Match — pairs and groups** (`match`, issue #229, on the same foundation; no migration). One
+shape for two forms: she takes an element on the LEFT (`left`, ids `a`, `b`, … by display
+position) and puts it to one on the RIGHT (`right`, ids `r1`, `r2`, …). `pairs`: 3–6 lefts and
+as many partners, every left with exactly one right and every right with exactly one left.
+`groups`: 4–12 elements and 2–4 groups, every element in exactly one group, no group empty. The
+task holds `form`, both sides and the key (one `{left, right}` link per left); the view the same
+without the key; the answer `links`, every left once (a partner twice in a pairing → 422
+`parts_mismatch`). The model writes only the correct links (`pairs: [{left, right}]` or
+`groups: [{name, elements}]`, exactly one of them, `MATCH_RULES` without an example sentence;
+`generate.v1.16`, `extract.v5.5`). Code rejects — and stores nothing, repairs nothing — neither
+or both forms (`form`), counts out of range (`count`), an empty group (`empty_group`), one
+element written to two places (`ambiguous`, seen on the draft by `matchDraftProblem`), and any
+two texts alike after normalising, across both sides (`duplicate`); `matchProblem` re-checks a
+stored task (a key that misses, doubles or invents a link → `not_mapping`). The display is
+shuffled deterministically and never already solved: in a pairing fewer than half of the rows
+line up, a grouping's elements never stand sorted by their groups (the groups keep the model's
+order). A prepared hint that states a whole link (both sides as words) is dropped. Checking is
+exact, link by link: the reply counts ("4 von 5 Paaren stimmen schon." / "5 von 7 sind schon
+richtig einsortiert."); which one is wrong it names only from the second miss on, as the next
+rung of the hint ladder (`structuredNamesPart` → counts as a hint), and the third miss explains
+the solution ("Bundestag – beschließt die Gesetze; …" / "Nomen: Haus, Baum; …"). App:
+`MatchAnswer.tsx` — pairs in two columns (five pairs are five rows; the columns share the width
+by their longest words, `leftShare`), groups as the elements above and the groups below; tap one,
+then its partner or group (pairs also the other way round). A pair shares a number, an element
+wears its group's number — a small disc on the element's corner, so a long word keeps the whole
+width — and one tap on anything linked dissolves it. Groups only take something while she holds
+an element; what she holds is kept in the draft with the links, so a theme change does not drop
+it. One line of instruction until the first tap, nothing else; "Prüfen" waits until every left
+is linked; a screen reader hears "…, Paar 2 mit …" / "…, in Nomen". Generated like `order` (topic practice,
+practice test, both photo readings). The walkthrough measures five long-worded pairs and twelve
+elements in four groups on 390×844 and 360×740.
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:

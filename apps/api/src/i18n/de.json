@@ -115,6 +115,15 @@
       "cell_at": "Zeile {{row}}, Spalte {{column}}",
       "brick": "Reihe {{row}}, Stein {{n}}",
       "and": "und"
+    },
+    "match": {
+      "pairs_some": "{{count}} von {{total}} Paaren stimmen schon.",
+      "pairs_some_one": "1 von {{total}} Paaren stimmt schon.",
+      "pairs_none": "Noch passt keins der Paare – schau sie dir nochmal in Ruhe an.",
+      "groups_some": "{{count}} von {{total}} sind schon richtig einsortiert.",
+      "groups_some_one": "1 von {{total}} ist schon richtig einsortiert.",
+      "groups_none": "Noch ist keins richtig einsortiert – schau nochmal in Ruhe hin.",
+      "look_at": "Schau dir „{{text}}“ nochmal an."
     }
   },
   "contact": {

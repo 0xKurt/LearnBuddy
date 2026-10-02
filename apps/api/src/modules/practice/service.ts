@@ -48,6 +48,7 @@ import { reviewItem, type ItemOutcome } from './fsrs.js';
 import {
   answerTextOf,
   checkStructured,
+  structuredNamesPart,
   structuredReply,
   structuredTaskOf,
   viewOf,
@@ -1055,8 +1056,9 @@ export async function answerItem(
     judged = {
       verdict: 'incorrect',
       evaluatedBy: 'rule',
-      reply: structuredReply(learner.locale, partsCheck),
-      gaveHint: false,
+      reply: structuredReply(learner.locale, partsCheck, item.attempts),
+      // A match names its wrong link from the second miss on: that is a hint (#229).
+      gaveHint: structuredNamesPart(partsCheck, item.attempts),
       revealed: false,
     };
   } else if (givesHints(session.mode) && rule === 'incorrect' && item.attempts === 0) {
