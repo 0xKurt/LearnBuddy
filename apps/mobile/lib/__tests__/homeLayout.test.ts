@@ -60,6 +60,7 @@ describe('home layout (user feedback #6, issue #17)', () => {
       decisionInline: true,
       working: null,
       photoAsk: 'bar',
+      preparedIn: 'thread',
     });
   });
 
@@ -144,6 +145,25 @@ describe('home layout (user feedback #6, issue #17)', () => {
     // No capture bar (nothing, or another bar): the receipt stays the place for ask and undo.
     expect(homeLayout({ now: null, decision: null, working: null }).photoAsk).toBe('thread');
     expect(homeLayout({ now: reading, decision: null, working: null }).photoAsk).toBe('thread');
+  });
+
+  it('tells the prepared practice once: the bar says it, so the receipt steps back (#204)', () => {
+    // 09-buddy-prepared: the bar on top said "Mathearbeit Brüche · 4 Aufgaben · ca. 5 Min."
+    // and the chat said "✓ Vorbereitet: Mathearbeit Brüche – 4 Aufgaben, ca. 5 Min." under
+    // it — the same three facts, twice, with a "Rückgängig" of its own.
+    const ready = { type: 'practice_ready', ...prepared } as const;
+    expect(homeLayout({ now: ready, decision: null, working: null }).preparedIn).toBe('bar');
+    // The practice prepared after a result rides the same bar, and counts the same.
+    expect(
+      homeLayout({ now: { ...result, next: prepared }, decision: null, working: null }).preparedIn,
+    ).toBe('bar');
+    // No such bar — nothing on top, another bar, or the card closed on this phone: then the
+    // receipt in the conversation is the only place that says it, and it says it.
+    expect(homeLayout({ now: null, decision: null, working: null }).preparedIn).toBe('thread');
+    expect(homeLayout({ now: capture, decision: null, working: null }).preparedIn).toBe('thread');
+    expect(
+      homeLayout({ now: ready, decision: null, working: null }, topKey({ now: ready })).preparedIn,
+    ).toBe('thread');
   });
 
   it('says "working" once: inside "Ich lese dein Blatt", else at the end of the chat', () => {

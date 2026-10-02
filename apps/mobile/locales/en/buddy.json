@@ -25,7 +25,6 @@
     "plan_step_repeat_weekdays": "Agreed: {{title}} on school days at {{time}}",
     "plan_step_repeat_weekly": "Agreed: {{title}} every {{weekday}} at {{time}}",
     "plan_step_repeat_until": " – until {{date}}",
-    "plan_step_repeat_in_app": " – it appears here in the app (notifications are off)",
     "update_step_repeat_off": "No longer a regular one: {{title}}",
     "update_step_moved": "Moved: {{title}} {{when}}",
     "update_step_skipped": "Skipped: {{title}}",
@@ -41,7 +40,6 @@
     "rename_material": "The sheet is called “{{title}}” now",
     "delete_item": "The question is gone: “{{question}}”",
     "offer_learning": "Offered: {{what}} – “{{text}}”",
-    "plan_step_agreed_in_app": "Agreed: {{title}} {{when}} – shows up here in the app (notifications are off)",
     "open_area": "Shown: {{what}}",
     "set_contact_quiet": "Notifications only between {{from}} and {{to}}, never after {{quiet}}",
     "set_contact_days": "never on these days: {{days}}",
@@ -50,7 +48,7 @@
     "forget_all": "Forgot everything I knew about you ({{count}})"
   },
   "area": {
-    "library": "Materials",
+    "library": "Your material",
     "memory": "What Buddy knows about you",
     "settings": "Settings",
     "history": "All messages",
@@ -128,7 +126,10 @@
     "undo": "Undo",
     "undo_label": "Undo: {{what}}",
     "undone": "undone",
-    "undo_request_material": "No photo needed"
+    "undo_request_material": "No photo needed",
+    "undo_title": "What you can take back",
+    "undo_hint": "Shows what you can take back",
+    "in_app_only": "What you agreed shows up here in the app – notifications are off."
   },
   "focus": {
     "label": "You are working on: {{what}}"
@@ -143,7 +144,7 @@
     "open": "Open menu",
     "title": "More",
     "memory": "What Buddy knows about you",
-    "library": "Materials",
+    "library": "Your material",
     "settings": "Settings",
     "short": "More",
     "read_aloud_on": "Reading aloud is on",
@@ -174,7 +175,8 @@
     "more": "Tap for more",
     "less": "Tap for less",
     "ready_later": "Not today",
-    "capture_body": "Send me a photo – I'll turn it into practice.",
+    "capture_body": "Send me a photo.",
+    "capture_why": "I'll turn it into practice for you.",
     "capture_cta": "Take photo",
     "sending_title": "Sending your photos …",
     "sending_body": "Keep the app open for a moment until everything has arrived.",

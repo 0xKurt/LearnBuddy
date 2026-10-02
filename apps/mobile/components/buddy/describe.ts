@@ -38,8 +38,18 @@ function isoDate(iso: string): string {
 /** Buddy's speed steps (-2 … +2) as locale keys. */
 const SPEED_KEY = ['slower2', 'slower', 'normal', 'faster', 'faster2'] as const;
 
-/** contactOn = false: agreed reminders only reach her here in the app — the card says so. */
-export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } = {}): string {
+/**
+ * Whether this is something agreed that can only reach her inside the app, because messages
+ * to the phone are off. True for every such arrangement — the sentence itself no longer says
+ * it (issue #204: it stood under every single card); the conversation explains it once, under
+ * the newest receipt that needs it (Conversation.tsx, `done.in_app_only`).
+ */
+export function onlyInApp(a: ActionSummary, opts: { contactOn?: boolean } = {}): boolean {
+  return a.tool === 'plan_step' && a.agreed && opts.contactOn === false;
+}
+
+/** What Buddy did, as one sentence. Nothing is inferred; everything comes from the record. */
+export function describeAction(a: ActionSummary): string {
   const locale = i18n.language;
   switch (a.tool) {
     case 'remember':
@@ -86,23 +96,13 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
         const until = a.repeat_until
           ? t('action.plan_step_repeat_until', { date: formatDayShort(a.repeat_until, locale) })
           : '';
-        const inApp =
-          a.agreed && opts.contactOn === false ? t('action.plan_step_repeat_in_app') : '';
         return (
           t(`action.plan_step_repeat_${a.repeat}`, {
             title: a.title,
             time: a.time,
             weekday: formatWeekday(a.date, locale),
-          }) +
-          until +
-          inApp
+          }) + until
         );
-      }
-      if (a.agreed && opts.contactOn === false) {
-        return t('action.plan_step_agreed_in_app', {
-          title: a.title,
-          when: whenText(a.date, a.time),
-        });
       }
       return t(a.agreed ? 'action.plan_step_agreed' : 'action.plan_step', {
         title: a.title,

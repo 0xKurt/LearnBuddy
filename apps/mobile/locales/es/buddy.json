@@ -25,7 +25,6 @@
     "plan_step_repeat_weekdays": "Acordado: {{title}} los días de clase a las {{time}}",
     "plan_step_repeat_weekly": "Acordado: {{title}} todos los {{weekday}} a las {{time}}",
     "plan_step_repeat_until": " – hasta el {{date}}",
-    "plan_step_repeat_in_app": " – aparece aquí en la app (las notificaciones están desactivadas)",
     "update_step_repeat_off": "Ya no viene con regularidad: {{title}}",
     "update_step_moved": "Reprogramado: {{title}} {{when}}",
     "update_step_skipped": "Saltado: {{title}}",
@@ -41,7 +40,6 @@
     "rename_material": "La hoja ahora se llama «{{title}}»",
     "delete_item": "La pregunta ya no está: «{{question}}»",
     "offer_learning": "Propuesto: {{what}} – «{{text}}»",
-    "plan_step_agreed_in_app": "Acordado: {{title}} {{when}} – aparece aquí en la app (las notificaciones están desactivadas)",
     "open_area": "Mostrado: {{what}}",
     "set_contact_quiet": "Notificaciones solo de {{from}} a {{to}}, nunca después de las {{quiet}}",
     "set_contact_days": "nunca estos días: {{days}}",
@@ -50,7 +48,7 @@
     "forget_all": "He olvidado todo lo que sabía de ti ({{count}})"
   },
   "area": {
-    "library": "Materiales",
+    "library": "Tu material",
     "memory": "Lo que Buddy sabe de ti",
     "settings": "Ajustes",
     "history": "Todos los mensajes",
@@ -128,7 +126,10 @@
     "undo": "Deshacer",
     "undo_label": "Deshacer: {{what}}",
     "undone": "deshecho",
-    "undo_request_material": "No hace falta foto"
+    "undo_request_material": "No hace falta foto",
+    "undo_title": "Lo que puedes deshacer",
+    "undo_hint": "Muestra lo que puedes deshacer",
+    "in_app_only": "Lo acordado aparece aquí en la app: las notificaciones están desactivadas."
   },
   "focus": {
     "label": "Estás trabajando en: {{what}}"
@@ -143,7 +144,7 @@
     "open": "Abrir menú",
     "title": "Más",
     "memory": "Lo que Buddy sabe de ti",
-    "library": "Materiales",
+    "library": "Tu material",
     "settings": "Ajustes",
     "short": "Más",
     "read_aloud_on": "La lectura está activada",
@@ -174,7 +175,8 @@
     "more": "Toca para ver más",
     "less": "Toca para ver menos",
     "ready_later": "Hoy no",
-    "capture_body": "Mándame una foto: yo la convierto en ejercicios.",
+    "capture_body": "Mándame una foto.",
+    "capture_why": "Yo la convierto en ejercicios para ti.",
     "capture_cta": "Hacer una foto",
     "sending_title": "Enviando tus fotos…",
     "sending_body": "Deja la app abierta un momento, hasta que haya llegado todo.",

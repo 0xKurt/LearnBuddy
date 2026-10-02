@@ -894,6 +894,31 @@ export default function BuddyScreen() {
     .map((m) =>
       m.actions.some(asksInBar) ? { ...m, actions: m.actions.filter((a) => !asksInBar(a)) } : m,
     );
+  // The practice on top is told once (issue #204, lib/homeLayout.ts `preparedIn`): the bar
+  // names it with its question count and its minutes, which is word for word what the
+  // "Vorbereitet: …" receipt says — so while that bar stands the receipt's line leaves the
+  // conversation. It stays in what can be taken back, and closing the bar brings it back.
+  const preparedOnBar =
+    layout.preparedIn === 'bar'
+      ? h.now?.type === 'practice_ready'
+        ? h.now.step_id
+        : h.now?.type === 'practice_result'
+          ? (h.now.next?.step_id ?? null)
+          : null
+      : null;
+  const carriedOnTop = new Set(
+    preparedOnBar === null
+      ? []
+      : messages
+          .flatMap((m) => m.actions)
+          .filter(
+            (a) =>
+              a.summary.tool === 'prepare_practice' &&
+              a.summary.step_id === preparedOnBar &&
+              a.status === 'applied',
+          )
+          .map((a) => a.id),
+  );
   // Hide the optimistic bubble once the server has the message.
   const shownPending =
     pending && !h.thread.some((m) => m.client_message_id === pending.id)
@@ -1218,6 +1243,9 @@ export default function BuddyScreen() {
                   }
                   sessionRoom={sessionRoom}
                   showActions
+                  // One "Rückgängig" in view, the rest a tap on a receipt away (issue #204).
+                  undoScope="last"
+                  carriedOnTop={carriedOnTop}
                   onUndo={(id) => void act(() => undoAction(id))}
                   onOption={(messageId, option) => void send(option, newId(), messageId)}
                   onResend={(m: MessageView) =>

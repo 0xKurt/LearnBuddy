@@ -1,7 +1,9 @@
 // The slim bars on top of Buddy's home (owner request: the reading / ready card was "ein
-// Riesenbrett"; issue #17 made the pattern the rule): one line of what is happening, at most
-// ~60 pt tall — a small photo or mark, a short status, the reading's stage dots inline, and
-// the one action as a compact button. A bar with more to say (the stage names, "du kannst die
+// Riesenbrett"; issue #17 made the pattern the rule): one line of what is happening, about
+// 60 pt tall — a small photo or mark, a short status, the reading's stage dots inline, and
+// the one action as a compact button. A NAME may take a second line rather than end in "…"
+// (issue #204: "Arbeitsbla…" and "Vokabelliste E…" on a 360 pt phone hid the one thing she
+// had to recognise); the bar then grows by that one line, and only while it is needed. A bar with more to say (the stage names, "du kannst die
 // App schließen", which test, "Heute nicht", "Kein Foto nötig") opens it on a tap; a bar whose
 // line says it all (resume) has no expanded state. Screen readers hear it all in one label. Closing
 // and swiping it away stay with the layer on top (TopOverlay). docs/architecture.md §Home.
@@ -46,6 +48,18 @@ function lineStyle(p: Palette) {
   return { fontSize: 13, lineHeight: 18, color: p.ink2 };
 }
 
+/**
+ * Everything a bar says, as one sentence for a screen reader. Parts that already end in a
+ * full stop keep it instead of getting a second one ("… 5 Min.. Für …" was what a plain
+ * join produced once the lines became sentences, issue #204).
+ */
+function saidTogether(parts: ReadonlyArray<string | null>): string {
+  return parts
+    .map((p) => p?.trim() ?? '')
+    .filter((p) => p !== '')
+    .reduce((all, p) => (all === '' ? p : `${all}${/[.!?…]$/.test(all) ? '' : '.'} ${p}`), '');
+}
+
 function Bar({
   tone,
   leading,
@@ -72,12 +86,15 @@ function Bar({
   const [open, setOpen] = useState(false);
   const text = (
     <>
-      {/* The bar carries a size contract (≤ ~64 pt collapsed, issue #17): its one-line
-          texts follow the system size to the control cap, not past it (M-84, issue #73). */}
+      {/* The bar carries a size contract (issue #17): ~60 pt while its texts fit one line,
+          and it follows the system size only to the control cap (M-84, issue #73).
+          TWO lines for the name, not one with "…" (issue #204): "Vokabelliste E…" hides the
+          very thing she has to recognise — which sheet this is. A second line costs 20 pt
+          and only when the name needs it; a cut-off name costs her the answer. */}
       <Animated.Text
         key={title}
         entering={fadeIn()}
-        numberOfLines={1}
+        numberOfLines={2}
         maxFontSizeMultiplier={MAX_FONT_SCALE}
         style={titleStyle(palette)}
       >
@@ -181,7 +198,7 @@ export function ReadingBar({
       tone="sky"
       titleInset={titleInset}
       title={title}
-      label={[title, stepText, body].filter(Boolean).join('. ')}
+      label={saidTogether([title, stepText, body])}
       leading={
         thumb ? (
           <ZoomablePhoto
@@ -247,9 +264,7 @@ export function ReadyBar({
       tone="primaryLt"
       titleInset={titleInset}
       title={title}
-      label={[t('now.ready_title', { title: card.title }), line, exam, focus]
-        .filter(Boolean)
-        .join('. ')}
+      label={saidTogether([t('now.ready_title', { title: card.title }), line, exam, focus])}
       line={
         <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle(palette)}>
           {line}
@@ -310,9 +325,11 @@ export function ResumeBar({
       tone="primaryLt"
       titleInset={titleInset}
       title={title}
-      label={[title, line].join('. ')}
+      label={saidTogether([title, line])}
       line={
-        <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle(palette)}>
+        // Two lines, never "…": the sheet's name lives in this line here, and a name cut
+        // off is a bar that cannot say what it is about (issue #204).
+        <Text numberOfLines={2} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle(palette)}>
           {line}
         </Text>
       }
@@ -350,16 +367,26 @@ export function CaptureBar({
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   const title = card.title;
+  // Short, because this line stands beside the mark and the button in about 140 pt on a 360
+  // pt phone — "Schick mir ei…" next to "Arbeitsbla…" was a bar that said nothing (#204).
+  // What Buddy will do with the photo is one tap away, where there is room for it.
   const line = t('now.capture_body');
+  const why = t('now.capture_why');
   return (
     <Bar
       tone="peach"
       titleInset={titleInset}
       title={title}
-      label={[title, line].join('. ')}
-      leading={<Mark icon="camera" />}
+      label={saidTogether([title, line, why])}
+      // No mark here (issue #204): the violet button right beside it says "Foto machen", so
+      // a camera disc would only repeat it — and it took 46 pt of the very column the
+      // sheet's name needs. With it, "Arbeitsblatt Brüche" read "Arbeitsbla…" on a 360 pt
+      // phone and the bar grew to two lines per text on a 390 pt one. The reading bar keeps
+      // its leading, because there it is the photo of her own sheet, not decoration.
       line={
-        <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle(palette)}>
+        // The sheet's name above may take two lines on a small phone, and so may this —
+        // "Schick mir ei…" next to "Arbeitsbla…" was the whole bar saying nothing (#204).
+        <Text numberOfLines={2} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle(palette)}>
           {line}
         </Text>
       }
@@ -371,13 +398,16 @@ export function CaptureBar({
         </View>
       }
       details={
-        onNoPhoto ? (
-          <View style={{ flexDirection: 'row' }}>
-            <Btn variant="ghost" size="sm" onPress={onNoPhoto} disabled={busy}>
-              {t('done.undo_request_material')}
-            </Btn>
-          </View>
-        ) : undefined
+        <>
+          <Text style={[TYPE.small, { fontSize: 14, lineHeight: 20 }]}>{why}</Text>
+          {onNoPhoto ? (
+            <View style={{ flexDirection: 'row' }}>
+              <Btn variant="ghost" size="sm" onPress={onNoPhoto} disabled={busy}>
+                {t('done.undo_request_material')}
+              </Btn>
+            </View>
+          ) : null}
+        </>
       }
     />
   );

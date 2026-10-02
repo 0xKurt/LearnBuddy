@@ -1,4 +1,4 @@
-// One photographed sheet in "Mein Stoff": its title, when it was taken and
+// One photographed sheet in a subject of "Dein Material": its title, when it was taken and
 // how many questions it gave, its reading status in words, and what can be
 // done with it (practise, see its questions, read again, delete). Statuses
 // are the API's; nothing is inferred.

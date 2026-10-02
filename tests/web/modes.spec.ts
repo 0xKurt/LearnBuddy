@@ -344,8 +344,8 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Klar – hier ist dein Stoff.')).toBeVisible();
   await shot(page, '31-open-area');
-  await page.getByRole('button', { name: 'Materialien öffnen' }).click();
-  await expect(page.getByRole('heading', { name: 'Materialien' })).toBeVisible();
+  await page.getByRole('button', { name: 'Dein Material öffnen' }).click();
+  await expect(page.getByRole('heading', { name: 'Dein Material' })).toBeVisible();
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   // ── Conversation mode: she speaks, Buddy answers aloud, in the same conversation ──

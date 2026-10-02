@@ -13,7 +13,10 @@
 //   otherwise as a line at the end of the conversation;
 // - the photo Buddy waits for is asked once (issue #94): the capture bar on top carries
 //   ask and way out, and only with the bar closed or gone does the receipt in the
-//   conversation carry them instead.
+//   conversation carry them instead;
+// - and the practice Buddy prepared is told once (issue #204): the bar on top names it with
+//   its question count and minutes, so the "Vorbereitet: …" receipt saying the same three
+//   facts leaves the conversation while that bar stands.
 // The row of ways to start stays (a paused homework bar can be there for days; starting
 // something else must not depend on it).
 // And where the conversation stands: like any chat, at its newest message (bottom); a new
@@ -51,6 +54,14 @@ export type HomeLayout = {
    * closed or absent, the receipt in the conversation stays the place for ask and undo.
    */
   photoAsk: 'bar' | 'thread';
+  /**
+   * Where the practice Buddy prepared is told (issue #204): the bar on top carries its name,
+   * how many questions and how long — the same three facts the "Vorbereitet: …" receipt in
+   * the conversation carries, so while the bar stands that receipt leaves the thread. The way
+   * back is not lost with it: it stays in what can be taken back (Conversation's undo sheet),
+   * and closing the bar brings the line itself back.
+   */
+  preparedIn: 'bar' | 'thread';
 };
 
 type TopParts = Pick<BuddyHome, 'now'> & {
@@ -121,6 +132,7 @@ export function homeLayout(
     decisionInline: h.decision !== null,
     working: h.working === null ? null : inBar ? 'bar' : 'thread',
     photoAsk: bar === 'capture' ? 'bar' : 'thread',
+    preparedIn: bar === 'ready' || bar === 'next' ? 'bar' : 'thread',
   };
 }
 

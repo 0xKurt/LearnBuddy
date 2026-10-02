@@ -231,12 +231,15 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // "Heute nicht": the practice steps aside without a trace of pressure.
   await page.getByRole('button', { name: 'Heute nicht' }).click();
   await expect(page.getByRole('button', { name: /^Übung bereit: / })).toHaveCount(0);
-  await openMenu(page, 'Materialien');
+  // "Dein Material": the subjects first, then into Deutsch for the sheet itself (issue #189).
+  await openMenu(page, 'Dein Material');
+  await page.getByRole('button', { name: /^Deutsch: / }).click();
   await expect(page.getByText('Nomen und Verben').last()).toBeVisible();
   // A page she forgot can be added to the sheet.
   await page.getByRole('button', { name: /^Fragen .*Nomen und Verben/ }).click();
   await page.getByRole('button', { name: 'Seite hinzufügen' }).click();
   await expect(page.getByText('Die Fragen dazu kommen zu diesem Blatt.')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück' }).click();
   await page.getByRole('button', { name: 'Zurück' }).click();
   await page.getByRole('button', { name: 'Zurück' }).click();
   await page.getByRole('button', { name: 'Zurück' }).click();

@@ -197,3 +197,247 @@ describe('the greeting opens on what just happened (issue #195)', () => {
     expect(screen.getByText('Alles klar, ich habe die Arbeit eingetragen.')).toBeTruthy();
   });
 });
+
+// ── One turn, one receipt — and one way back in view (issue #204) ───────────────────────
+//
+// The owner, on the promo footage of a chat after two things she had done: „das sind drei
+// Rückgängig-Knöpfe und vier Statuszeilen für zwei Dinge, die sie getan hat … auf dem Handy
+// liest man es noch, im Video (und für ein Kind) ist es eine Wand."
+//
+// What is checked here is what is rendered: how many lines a turn becomes, how many
+// "Rückgängig" stand in the chat, that the rest stays reachable, and that a note which is
+// true for every card is said once. How tall any of it is belongs to tests/web.
+
+const REQUEST_PHOTO: ActionView = {
+  id: '44444444-4444-4444-8444-444444444444',
+  status: 'applied',
+  undoable: true,
+  summary: {
+    tool: 'request_material',
+    step_id: '55555555-5555-4555-8555-555555555555',
+    title: 'Arbeitsblatt Brüche',
+    material_id: null,
+  },
+  created_at: '2026-10-01T18:00:01.000Z',
+};
+
+const PREPARED: ActionView = {
+  id: '66666666-6666-4666-8666-666666666666',
+  status: 'applied',
+  undoable: true,
+  summary: {
+    tool: 'prepare_practice',
+    step_id: '77777777-7777-4777-8777-777777777777',
+    title: 'Mathearbeit Brüche',
+    question_count: 4,
+    est_minutes: 5,
+  },
+  created_at: '2026-10-01T18:05:00.000Z',
+};
+
+const PHOTO_SENTENCE = 'Ich warte auf dein Foto: Arbeitsblatt Brüche';
+const PREPARED_SENTENCE = 'Vorbereitet: Mathearbeit Brüche – 4 Aufgaben, ca. 5 Min.';
+
+function laterMessage(actions: ActionView[]): MessageView {
+  return {
+    ...buddySaid(actions),
+    id: '88888888-8888-4888-8888-888888888888',
+    text: 'Aus deinem Arbeitsblatt habe ich eine kurze Übung gemacht.',
+    created_at: '2026-10-01T18:05:00.000Z',
+  };
+}
+
+function chat(props: Partial<Parameters<typeof Conversation>[0]> = {}) {
+  return renderInApp(
+    <Conversation
+      messages={[buddySaid([PLAN_EXAM, REQUEST_PHOTO]), laterMessage([PREPARED])]}
+      pending={null}
+      busy={false}
+      showActions
+      undoScope="last"
+      onUndo={() => undefined}
+      {...props}
+    />,
+  );
+}
+
+describe('one turn is one receipt, with one way back (issue #204)', () => {
+  it('says both things of one answer in a single line, not two with two ticks', () => {
+    chat();
+    // The two sentences are there, as one piece of text — not as two status lines.
+    expect(screen.getByText(`${SENTENCE} · ${PHOTO_SENTENCE}`)).toBeTruthy();
+    expect(screen.queryByText(SENTENCE)).toBeNull();
+  });
+
+  it('shows "Rückgängig" on the newest step only; History keeps every one', () => {
+    const chatView = chat();
+    const inChat = screen.getAllByRole('button', { name: /^Rückgängig machen/ });
+    expect(inChat).toHaveLength(1);
+    // …and it is the newest step's, not the first one's.
+    expect(inChat[0]?.getAttribute('aria-label')).toBe(`Rückgängig machen: ${PREPARED_SENTENCE}`);
+    // History is the record of the single steps: there every one carries its own.
+    chatView.unmount();
+    chat({ undoScope: 'all' });
+    expect(screen.getAllByRole('button', { name: /^Rückgängig machen/ })).toHaveLength(3);
+  });
+
+  it('keeps the older ones reachable: a tap on a receipt opens what can be taken back', () => {
+    const onUndo = vi.fn();
+    chat({ onUndo });
+    // The older receipt is the way in: a line she can press, named by what it says.
+    fireEvent.click(screen.getByRole('button', { name: `${SENTENCE} · ${PHOTO_SENTENCE}` }));
+    // Everything that can still be taken back, newest first, each with its own way back.
+    expect(screen.getByText('Was du zurücknehmen kannst')).toBeTruthy();
+    // The newest step is in both places now — in the chat and in the sheet; the older one
+    // is in the sheet alone, which is the whole point of it.
+    expect(
+      screen.getAllByRole('button', { name: `Rückgängig machen: ${PREPARED_SENTENCE}` }),
+    ).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: `Rückgängig machen: ${SENTENCE}` }));
+    expect(onUndo).toHaveBeenCalledWith(PLAN_EXAM.id);
+  });
+
+  it('never opens an empty sheet: with one way back in view there is nothing more', () => {
+    renderInApp(
+      <Conversation
+        messages={[buddySaid([PLAN_EXAM])]}
+        pending={null}
+        busy={false}
+        showActions
+        undoScope="last"
+        onUndo={() => undefined}
+      />,
+    );
+    // The line is a line, not a button: there is nothing behind it.
+    expect(screen.queryByRole('button', { name: SENTENCE })).toBeNull();
+    expect(screen.getAllByRole('button', { name: /^Rückgängig machen/ })).toHaveLength(1);
+  });
+});
+
+describe('what the bar on top already says is not said twice (issue #204)', () => {
+  it('drops the prepared practice’s line while the bar carries it — and keeps the way back', () => {
+    chat({ carriedOnTop: new Set([PREPARED.id]) });
+    expect(screen.queryByText(PREPARED_SENTENCE)).toBeNull();
+    // The one button in view is now the older step's; the prepared one lives in the sheet.
+    const inChat = screen.getAllByRole('button', { name: /^Rückgängig machen/ });
+    expect(inChat).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: `${SENTENCE} · ${PHOTO_SENTENCE}` }));
+    expect(
+      screen.getByRole('button', { name: `Rückgängig machen: ${PREPARED_SENTENCE}` }),
+    ).toBeTruthy();
+  });
+});
+
+describe('"nur hier in der App" is explained once (issue #204)', () => {
+  const sentInApp = (id: string, created: string): NonNullable<MessageView['outreach']> => ({
+    id,
+    kind: 'reminder',
+    origin: 'agreed',
+    title: 'Übung ist bereit',
+    body: 'Aus deinem Arbeitsblatt habe ich eine kurze Übung gemacht.',
+    why: null,
+    status: 'in_app',
+    send_at: null,
+    sent_at: null,
+    opened_at: null,
+    created_at: created,
+  });
+
+  it('says it under the newest of Buddy’s in-app messages, not under every one', () => {
+    renderInApp(
+      <Conversation
+        messages={[
+          {
+            ...buddySaid([]),
+            outreach: sentInApp('99999999-9999-4999-8999-999999999999', '2026-10-01T18:00:00.000Z'),
+          },
+          {
+            ...laterMessage([]),
+            outreach: sentInApp('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '2026-10-01T18:05:00.000Z'),
+          },
+        ]}
+        pending={null}
+        busy={false}
+      />,
+    );
+    expect(screen.getAllByText('nur hier in der App')).toHaveLength(1);
+  });
+
+  it('keeps a state that is about one message with that message', () => {
+    renderInApp(
+      <Conversation
+        messages={[
+          {
+            ...buddySaid([]),
+            outreach: {
+              ...sentInApp('99999999-9999-4999-8999-999999999999', '2026-10-01T18:00:00.000Z'),
+              status: 'provider_accepted',
+            },
+          },
+          {
+            ...laterMessage([]),
+            outreach: sentInApp('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '2026-10-01T18:05:00.000Z'),
+          },
+        ]}
+        pending={null}
+        busy={false}
+      />,
+    );
+    expect(screen.getByText('an dein Handy geschickt')).toBeTruthy();
+    expect(screen.getAllByText('nur hier in der App')).toHaveLength(1);
+  });
+});
+
+describe('what was agreed says where it will appear — once (issue #204)', () => {
+  const agreed = (id: string, title: string): ActionView => ({
+    id,
+    status: 'applied',
+    undoable: false,
+    summary: {
+      tool: 'plan_step',
+      step_id: id,
+      title,
+      date: '2026-10-05',
+      time: '17:00',
+      agreed: true,
+      repeat: null,
+      repeat_until: null,
+    },
+    created_at: '2026-10-01T18:00:00.000Z',
+  });
+
+  it('puts the note under the newest arrangement, not into every sentence', () => {
+    renderInApp(
+      <Conversation
+        messages={[
+          buddySaid([agreed('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Vokabeln üben')]),
+          laterMessage([agreed('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'Brüche üben')]),
+        ]}
+        pending={null}
+        busy={false}
+        showActions
+        undoScope="last"
+        contactOn={false}
+      />,
+    );
+    // The sentence is the arrangement, nothing else: the explanation used to be glued to it.
+    expect(screen.getByText(/^Verabredet: Vokabeln üben/).textContent).not.toMatch(/App/);
+    expect(
+      screen.getAllByText('Verabredetes erscheint hier in der App – Benachrichtigungen sind aus.'),
+    ).toHaveLength(1);
+  });
+
+  it('says nothing about it when Buddy may message her phone', () => {
+    renderInApp(
+      <Conversation
+        messages={[buddySaid([agreed('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Vokabeln üben')])]}
+        pending={null}
+        busy={false}
+        showActions
+        undoScope="last"
+        contactOn
+      />,
+    );
+    expect(screen.queryByText(/erscheint hier in der App/)).toBeNull();
+  });
+});

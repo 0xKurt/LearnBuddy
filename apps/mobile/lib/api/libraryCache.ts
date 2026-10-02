@@ -1,4 +1,4 @@
-// "Mein Stoff" follows a sheet being read (live finding 3: the list still said
+// "Dein Material" follows a sheet being read (live finding 3: the list still said
 // "Ohne Titel · wird gelesen" after the reading was done, while the sheet itself
 // showed its questions). Pure helpers, unit-tested; the queries use them.
 

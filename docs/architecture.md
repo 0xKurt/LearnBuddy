@@ -467,7 +467,9 @@ summary plus undo data. Enforced here, not in the prompt:
   voice with a tap (setup, settings: `PATCH /buddy/settings {voice, version}`, which bumps the
   context like every setting there), so a tap while Buddy decides makes that decision stale.
 - Thread action cards offer "Rückgängig" only where `undoApplies` holds, like `done` (audit
-  M-56); history offers it too, for the same 7 days.
+  M-56); history offers it too, for the same 7 days. In the chat only the newest such step has
+  its button on screen (issue #204); the rest open from a receipt (`UndoSheet`), so what the
+  server allows and what she can reach stay the same set.
 
 ### Lookups (ADR 0005, stage 1)
 
@@ -1986,10 +1988,19 @@ issue #94: while this bar stands, the word-for-word `request_material` receipt i
 the conversation and "Kein Foto nötig", the request's undo, opens from the bar; bar closed or
 gone, the receipt with its undo is the place for both — `lib/homeLayout.ts` `photoAsk`), the
 sheet being read
-(ReadingBar, the real stages inline) — under a hard size contract: one line, the one action as
-a compact button, **≤ ~64 pt collapsed**; a bar with more to say (the stage names, which test,
-"Heute nicht") opens on a tap, and the walkthrough measures the bound
-(`tests/web/core-loop.spec.ts`, `partHeight`). Everything told rather than acted on stands at
+(ReadingBar, the real stages inline) — under a size contract: one line, the one action as
+a compact button, **~60 pt collapsed**; a bar with more to say (the stage names, which test,
+"Heute nicht", what Buddy will do with the photo) opens on a tap, and the walkthrough measures
+the bound (`tests/web/core-loop.spec.ts`, `partHeight`). **A name may take a second line rather
+than end in "…"** (issue #204): "Vokabelliste E…" and "Arbeitsbla…" hid the one thing she has to
+recognise — which sheet this is about — so the bar grows by that one line, and only on a phone
+narrow enough to need it. The capture bar carries no mark for the same reason: the violet "Foto
+machen" beside it already says camera, and the disc took 46 pt of exactly that column.
+**What the bar says is not said again in the conversation**: the ask for a photo (`photoAsk`,
+issue #94) and, since issue #204, the prepared practice — the bar names it with its question
+count and its minutes, which is word for word what the `prepare_practice` receipt says, so that
+receipt's line leaves the thread while the bar stands (`preparedIn`). It stays in what can be
+taken back, and closing the bar brings the line back. Everything told rather than acted on stands at
 the end of the conversation as a notice with its buttons (`components/buddy/NoticeBubble.tsx`):
 a sheet that could not be read ("Nochmal lesen" right there), a finished practice (the same
 kind words as the summary — never a hit rate; the full summary one tap away), the open
@@ -2020,7 +2031,17 @@ is not pulled down until she is back at the end or sends something; `lib/homeLay
 `followsEnd`; a jump of the offset because the content or the view changed size is not her
 scrolling up) — the bar on top never covers the conversation (only its opened details float
 over the conversation's top, and only while she reads them); a
-quiet line names the day where a new one starts (never how many days passed) — what Buddy did stands under its message with "Rückgängig"; no tiles, no
+quiet line names the day where a new one starts (never how many days passed) — what Buddy did
+stands under its message as **one receipt for the turn**, not one line per action, and only the
+newest step she can still take back carries "Rückgängig" (issue #204: two things done in one
+answer were two ticks, two sentences and two buttons — "vier Statuszeilen für zwei Dinge, die
+sie getan hat"). Nothing is lost with the buttons that went: a tap or a long press on a receipt
+opens everything that can still be taken back, newest first, each with its own way back
+(`components/buddy/UndoSheet.tsx`) — undo over confirmation stays whole
+(`docs/UX-PRINCIPLES.md`). History is the record of the single steps and keeps a line and a
+button per step (`undoScope`). A note that is true under every card is said once, under the
+newest it applies to: "nur hier in der App" (a message that only ever existed here) and that
+what was agreed can only reach her here while messages to the phone are off. No tiles, no
 lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says
 (Buddy answers with an `offer_learning` button). The composer is one floating bar: camera,
 field, mic ("Senden" once there is text); in voice mode it is voice-first — keyboard · big mic ·

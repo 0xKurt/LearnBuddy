@@ -8,7 +8,7 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { partHeight, SHOTS, shot } from './fit';
+import { overflows, partHeight, settle, SHOTS, shot } from './fit';
 import { recordPerf } from './perf';
 
 mkdirSync(SHOTS, { recursive: true });
@@ -148,6 +148,15 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   expect(head + bar, `head ${head}pt + composer ${bar}pt`).toBeLessThanOrEqual(160);
   await page.setViewportSize({ width: 390, height: 844 });
 
+  // ── Nothing photographed yet: "Dein Material" says where her sheets will land (#189) ──
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+  await page.getByRole('button', { name: 'Dein Material' }).click();
+  await expect(page.getByRole('heading', { name: 'Dein Material' })).toBeVisible();
+  await expect(page.getByText('Hier landen deine Blätter')).toBeVisible();
+  await shot(page, '04b-material-empty');
+  await page.getByRole('button', { name: 'Zurück' }).click();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
+
   // ── Get to know: the test, and what Buddy needs for it ──
   await page
     .getByLabel('Schreib Buddy …')
@@ -181,8 +190,10 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // The card lies over the greeting and the ways to start: they stand where they stand
   // without a card (owner: "Die Meldung sollte einfach über dem Menü liegen").
   const homeAt = await homePositions(page);
-  // The layer on top keeps its hard size contract (issue #17): one slim bar,
-  // ≤ ~64 pt collapsed, plus the layer's 8 pt of air above it.
+  // The layer on top keeps its size contract (issue #17): one slim bar, ~60 pt collapsed,
+  // plus the layer's 8 pt of air above it. Since issue #204 a NAME may take a second line
+  // rather than end in "…" — that costs 20 pt, and only on a phone narrow enough to need it
+  // ("Arbeitsbla…" was what a 360 pt phone showed). This stop is measured at 390.
   const captureBar = await partHeight(page, 'home-card', 'home-top');
   expect(captureBar, `top layer ${captureBar}pt`).toBeLessThanOrEqual(72);
   await shot(page, '05-buddy-planned');
@@ -253,8 +264,49 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   expect(readyBar, `top layer ${readyBar}pt`).toBeLessThanOrEqual(72);
   await expect(page.getByRole('button', { name: 'Karte ausblenden' })).toBeVisible();
   // The chat still stands at its newest message under the card.
-  await expect(page.getByText(/Vorbereitet: Mathearbeit Brüche/)).toBeInViewport();
+  await expect(
+    page.getByText('Aus deinem Arbeitsblatt habe ich eine kurze Übung gemacht.'),
+  ).toBeInViewport();
   await shot(page, '09-buddy-prepared');
+
+  // ── The state issue #204 is measured on: a test entered, a photo sent, practice ready ──
+  // The owner on the promo footage: "schau dass die screens nicht ueberladen sind und alles
+  // gut zu lesen und erkennen ist". What stood here was three status lines, two
+  // "Rückgängig", a "nur hier in der App" under the card, and the bar on top repeating the
+  // practice the chat had just listed with the same count and the same minutes.
+  await page.setViewportSize({ width: 360, height: 740 });
+  await settle(page);
+  // One turn, one receipt: the two things of Buddy's first answer are ONE line now.
+  await expect(
+    page.getByText(
+      /^Eingetragen: Mathearbeit Brüche am .* · Ich warte auf dein Foto: Arbeitsblatt Brüche$/,
+    ),
+  ).toBeVisible();
+  // The bar on top says what is ready; the chat does not say it a second time.
+  await expect(page.getByText(/Vorbereitet: Mathearbeit Brüche/)).toHaveCount(0);
+  // "nur hier in der App" stands once, under Buddy's newest message — not under every card.
+  expect(await page.getByText('nur hier in der App').count()).toBeLessThanOrEqual(1);
+  // Buddy's last reply AND the start button are on screen together, with ONE way back.
+  await expect(
+    page.getByText('Aus deinem Arbeitsblatt habe ich eine kurze Übung gemacht.'),
+  ).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Jetzt üben' })).toBeInViewport();
+  const waysBack = await page.getByRole('button', { name: /^Rückgängig/ }).count();
+  expect(waysBack, 'at most one "Rückgängig" in view (issue #204)').toBeLessThanOrEqual(1);
+  // …and none of it has to be scrolled to: the conversation fits this phone as it stands.
+  const thread = (await overflows(page)).find((o) => o.label === 'scroll-thread');
+  expect(thread?.overflow ?? 0, 'the thread must not need scrolling here').toBe(0);
+  // Nothing is lost with the buttons that went (UX-PRINCIPLES: undo over confirmation):
+  // the receipt opens everything that can still be taken back, the prepared practice too.
+  await page.getByRole('button', { name: /^Eingetragen: Mathearbeit Brüche/ }).click();
+  await expect(page.getByText('Was du zurücknehmen kannst')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /^Rückgängig machen: Vorbereitet: Mathearbeit Brüche/ }),
+  ).toBeVisible();
+  await shot(page, '09b-what-can-be-taken-back');
+  await page.getByRole('button', { name: 'Schließen' }).click();
+  await expect(page.getByText('Was du zurücknehmen kannst')).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
 
   // ── The useful result: short practice, checked, with calm feedback ──
   await page.getByRole('button', { name: 'Jetzt üben' }).click();
@@ -349,10 +401,22 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '13-memory');
   await page.getByRole('button', { name: 'Zurück' }).click();
 
-  await openMenu('Materialien');
-  await expect(page.getByText('Brüche kürzen und vergleichen')).toBeVisible();
-  await expect(page.getByText(/· 4 Aufgaben$/)).toBeVisible();
+  // "Dein Material" in two levels (issue #189): her subjects first — what there is, named,
+  // never counted (rule 6) — and one tap into Mathe for the sheets themselves.
+  await openMenu('Dein Material');
+  await expect(page.getByRole('heading', { name: 'Dein Material' })).toBeVisible();
+  const mathe = page.getByRole('button', { name: /^Mathe: / });
+  await expect(mathe).toBeVisible();
+  // The glimpse NAMES what is in there instead of saying how many there are.
+  await expect(mathe).toHaveAccessibleName(/Brüche/);
   await shot(page, '14-library');
+  await mathe.click();
+  await expect(page.getByRole('heading', { name: 'Mathe' })).toBeVisible();
+  await expect(page.getByText('Brüche kürzen und vergleichen').last()).toBeVisible();
+  await expect(page.getByText(/· 4 Aufgaben$/)).toBeVisible();
+  // What came up in this subject, to look up — no result and no progress next to it.
+  await expect(page.getByText('Darum ging es')).toBeVisible();
+  await shot(page, '14b-subject');
 
   // The questions made from the sheet, renaming it, taking out one question.
   await page
@@ -372,6 +436,9 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '16-material-questions');
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText(/· 3 Aufgaben$/)).toBeVisible();
+  // Out of the subject, out of "Dein Material", back to Buddy.
+  await page.getByRole('button', { name: 'Zurück' }).click();
+  await expect(page.getByRole('heading', { name: 'Dein Material' })).toBeVisible();
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   await openMenu('Einstellungen');
@@ -431,6 +498,19 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('switch', { name: 'Hell oder dunkel?' }).click();
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
+
+  // ── A subject with nothing in it says so, and one that is gone offers the way back ──
+  // (issue #189, rule 12: never an empty screen and never "kommt später". Both are reached
+  // by their own address, because that is how they happen — she is inside a subject when the
+  // last sheet in it goes.)
+  await page.goto('/subject/unsorted');
+  await expect(page.getByText('Hier ist gerade nichts')).toBeVisible();
+  await shot(page, '17-subject-empty');
+  await page.goto('/subject/00000000-0000-4000-8000-000000000000');
+  await expect(page.getByText('Das Fach ist nicht mehr da')).toBeVisible();
+  await shot(page, '17b-subject-gone');
+  await page.getByRole('button', { name: 'Zu deinem Material' }).click();
+  await expect(page.getByRole('heading', { name: 'Dein Material' })).toBeVisible();
 
   test.info().annotations.push({ type: 'email', description: email });
 });

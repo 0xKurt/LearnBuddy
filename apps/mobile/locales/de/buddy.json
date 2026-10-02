@@ -25,7 +25,6 @@
     "plan_step_repeat_weekdays": "Verabredet: {{title}} an Schultagen um {{time}}",
     "plan_step_repeat_weekly": "Verabredet: {{title}} jeden {{weekday}} um {{time}}",
     "plan_step_repeat_until": " – bis {{date}}",
-    "plan_step_repeat_in_app": " – erscheint hier in der App (Benachrichtigungen sind aus)",
     "update_step_repeat_off": "Kommt nicht mehr regelmäßig: {{title}}",
     "update_step_moved": "Verschoben: {{title}} {{when}}",
     "update_step_skipped": "Übersprungen: {{title}}",
@@ -41,7 +40,6 @@
     "rename_material": "Das Blatt heißt jetzt „{{title}}“",
     "delete_item": "Die Frage ist weg: „{{question}}“",
     "offer_learning": "Angeboten: {{what}} – „{{text}}“",
-    "plan_step_agreed_in_app": "Verabredet: {{title}} {{when}} – erscheint hier in der App (Benachrichtigungen sind aus)",
     "open_area": "Gezeigt: {{what}}",
     "set_contact_quiet": "Benachrichtigungen nur zwischen {{from}} und {{to}} Uhr, nie nach {{quiet}} Uhr",
     "set_contact_days": "nie an diesen Tagen: {{days}}",
@@ -50,7 +48,7 @@
     "forget_all": "Alles vergessen, was ich über dich wusste ({{count}})"
   },
   "area": {
-    "library": "Materialien",
+    "library": "Dein Material",
     "memory": "Was Buddy über dich weiß",
     "settings": "Einstellungen",
     "history": "Alle Nachrichten",
@@ -128,7 +126,10 @@
     "undo": "Rückgängig",
     "undo_label": "Rückgängig machen: {{what}}",
     "undone": "rückgängig gemacht",
-    "undo_request_material": "Kein Foto nötig"
+    "undo_request_material": "Kein Foto nötig",
+    "undo_title": "Was du zurücknehmen kannst",
+    "undo_hint": "Zeigt, was du zurücknehmen kannst",
+    "in_app_only": "Verabredetes erscheint hier in der App – Benachrichtigungen sind aus."
   },
   "focus": {
     "label": "Du arbeitest gerade an: {{what}}"
@@ -143,7 +144,7 @@
     "open": "Menü öffnen",
     "title": "Mehr",
     "memory": "Was Buddy über dich weiß",
-    "library": "Materialien",
+    "library": "Dein Material",
     "settings": "Einstellungen",
     "short": "Mehr",
     "read_aloud_on": "Vorlesen ist an",
@@ -174,7 +175,8 @@
     "more": "Tippen für mehr",
     "less": "Tippen für weniger",
     "ready_later": "Heute nicht",
-    "capture_body": "Schick mir ein Foto – ich mache daraus Übungen.",
+    "capture_body": "Schick mir ein Foto.",
+    "capture_why": "Daraus mache ich dir Übungen.",
     "capture_cta": "Foto machen",
     "sending_title": "Deine Fotos werden gesendet …",
     "sending_body": "Lass die App kurz offen, bis alles angekommen ist.",

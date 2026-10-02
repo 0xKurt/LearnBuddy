@@ -25,7 +25,6 @@
     "plan_step_repeat_weekdays": "Convenu : {{title}} les jours d’école à {{time}}",
     "plan_step_repeat_weekly": "Convenu : {{title}} tous les {{weekday}} à {{time}}",
     "plan_step_repeat_until": " – jusqu’au {{date}}",
-    "plan_step_repeat_in_app": " – cela apparaît ici dans l’appli (les notifications sont désactivées)",
     "update_step_repeat_off": "Ne revient plus régulièrement : {{title}}",
     "update_step_moved": "Déplacé : {{title}} {{when}}",
     "update_step_skipped": "Sauté : {{title}}",
@@ -41,7 +40,6 @@
     "rename_material": "La feuille s’appelle maintenant « {{title}} »",
     "delete_item": "La question est retirée : « {{question}} »",
     "offer_learning": "Proposé : {{what}} – « {{text}} »",
-    "plan_step_agreed_in_app": "Convenu : {{title}} {{when}} – ça s'affiche ici dans l'appli (les notifications sont désactivées)",
     "open_area": "Affiché : {{what}}",
     "set_contact_quiet": "Notifications seulement entre {{from}} et {{to}}, jamais après {{quiet}}",
     "set_contact_days": "jamais ces jours-là : {{days}}",
@@ -50,7 +48,7 @@
     "forget_all": "Tout ce que je savais sur toi est oublié ({{count}})"
   },
   "area": {
-    "library": "Matériel",
+    "library": "Tes documents",
     "memory": "Ce que Buddy sait de toi",
     "settings": "Réglages",
     "history": "Tous les messages",
@@ -128,7 +126,10 @@
     "undo": "Annuler",
     "undo_label": "Annuler : {{what}}",
     "undone": "annulé",
-    "undo_request_material": "Pas besoin de photo"
+    "undo_request_material": "Pas besoin de photo",
+    "undo_title": "Ce que tu peux annuler",
+    "undo_hint": "Montre ce que tu peux annuler",
+    "in_app_only": "Ce qui est convenu apparaît ici dans l'appli – les notifications sont désactivées."
   },
   "focus": {
     "label": "Tu travailles sur : {{what}}"
@@ -143,7 +144,7 @@
     "open": "Ouvrir le menu",
     "title": "Plus",
     "memory": "Ce que Buddy sait de toi",
-    "library": "Matériel",
+    "library": "Tes documents",
     "settings": "Réglages",
     "short": "Plus",
     "read_aloud_on": "La lecture est activée",
@@ -174,7 +175,8 @@
     "more": "Toucher pour plus",
     "less": "Toucher pour moins",
     "ready_later": "Pas aujourd'hui",
-    "capture_body": "Envoie-moi une photo – j'en ferai des exercices.",
+    "capture_body": "Envoie-moi une photo.",
+    "capture_why": "J'en ferai des exercices pour toi.",
     "capture_cta": "Prendre une photo",
     "sending_title": "Envoi de tes photos…",
     "sending_body": "Garde l'appli ouverte encore un instant, jusqu'à ce que tout soit arrivé.",

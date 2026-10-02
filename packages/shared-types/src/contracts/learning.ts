@@ -179,15 +179,41 @@ export const CreateMaterialResponse = z.object({
 });
 export type CreateMaterialResponse = z.infer<typeof CreateMaterialResponse>;
 
+/**
+ * An exercise of a subject that came from no sheet (issue #189): a vocabulary list she
+ * typed, a topic she named, the practice Buddy prepared for a test. A sheet's own practice
+ * is reached from the sheet ("Üben"); these have no sheet, so without this they stand
+ * nowhere she can open them again. It carries no result and no score — what happened is on
+ * the exercise's own screen.
+ */
+export const SubjectExercise = z.object({
+  id: Uuid,
+  title: z.string().nullable(),
+  /** active — still open, tapping goes on with it; finished — its review. */
+  status: z.enum(['active', 'finished']),
+  started_at: IsoDateTime,
+});
+export type SubjectExercise = z.infer<typeof SubjectExercise>;
+
+/**
+ * One subject in "Dein Material" (issue #189): everything there is for it — her sheets,
+ * the exercises that came from no sheet, and the topics her questions carried. A place to
+ * look things up; nothing here says what is due or how much is left (rule 6).
+ */
+export const LibrarySubject = z.object({
+  id: Uuid,
+  name: z.string(),
+  kind: SubjectKind,
+  materials: z.array(MaterialView),
+  /** Newest first, at most ten: a way back in, not a history. */
+  exercises: z.array(SubjectExercise).max(10).default([]),
+  /** What came up in this subject, most recent first, at most twelve. */
+  topics: z.array(z.string()).max(12).default([]),
+});
+export type LibrarySubject = z.infer<typeof LibrarySubject>;
+
 export const LibraryView = z.object({
-  subjects: z.array(
-    z.object({
-      id: Uuid,
-      name: z.string(),
-      kind: SubjectKind,
-      materials: z.array(MaterialView),
-    }),
-  ),
+  subjects: z.array(LibrarySubject),
   unsorted: z.array(MaterialView),
 });
 export type LibraryView = z.infer<typeof LibraryView>;

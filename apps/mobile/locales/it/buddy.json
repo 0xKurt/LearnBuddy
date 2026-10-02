@@ -25,7 +25,6 @@
     "plan_step_repeat_weekdays": "D’accordo: {{title}} nei giorni di scuola alle {{time}}",
     "plan_step_repeat_weekly": "D’accordo: {{title}} ogni {{weekday}} alle {{time}}",
     "plan_step_repeat_until": " – fino al {{date}}",
-    "plan_step_repeat_in_app": " – appare qui nell’app (le notifiche sono disattivate)",
     "update_step_repeat_off": "Non arriva più regolarmente: {{title}}",
     "update_step_moved": "Spostato: {{title}} {{when}}",
     "update_step_skipped": "Saltato: {{title}}",
@@ -41,7 +40,6 @@
     "rename_material": "Il foglio ora si chiama «{{title}}»",
     "delete_item": "La domanda non c’è più: «{{question}}»",
     "offer_learning": "Proposto: {{what}} – «{{text}}»",
-    "plan_step_agreed_in_app": "Concordato: {{title}} {{when}} – compare qui nell'app (le notifiche sono disattivate)",
     "open_area": "Mostrato: {{what}}",
     "set_contact_quiet": "Notifiche solo dalle {{from}} alle {{to}}, mai dopo le {{quiet}}",
     "set_contact_days": "mai in questi giorni: {{days}}",
@@ -50,7 +48,7 @@
     "forget_all": "Ho dimenticato tutto quello che sapevo di te ({{count}})"
   },
   "area": {
-    "library": "Materiali",
+    "library": "Il tuo materiale",
     "memory": "Cosa sa Buddy di te",
     "settings": "Impostazioni",
     "history": "Tutti i messaggi",
@@ -128,7 +126,10 @@
     "undo": "Annulla",
     "undo_label": "Annulla: {{what}}",
     "undone": "annullato",
-    "undo_request_material": "Nessuna foto necessaria"
+    "undo_request_material": "Nessuna foto necessaria",
+    "undo_title": "Cosa puoi annullare",
+    "undo_hint": "Mostra cosa puoi annullare",
+    "in_app_only": "Quello che avete concordato compare qui nell'app: le notifiche sono disattivate."
   },
   "focus": {
     "label": "Stai lavorando su: {{what}}"
@@ -143,7 +144,7 @@
     "open": "Apri il menu",
     "title": "Altro",
     "memory": "Cosa sa Buddy di te",
-    "library": "Materiali",
+    "library": "Il tuo materiale",
     "settings": "Impostazioni",
     "short": "Altro",
     "read_aloud_on": "La lettura è attiva",
@@ -174,7 +175,8 @@
     "more": "Tocca per altro",
     "less": "Tocca per meno",
     "ready_later": "Oggi no",
-    "capture_body": "Mandami una foto – la trasformo io in esercizi.",
+    "capture_body": "Mandami una foto.",
+    "capture_why": "La trasformo io in esercizi per te.",
     "capture_cta": "Scatta una foto",
     "sending_title": "Invio delle tue foto…",
     "sending_body": "Tieni l'app aperta ancora un attimo, finché non è arrivato tutto.",
