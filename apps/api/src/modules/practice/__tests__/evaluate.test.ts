@@ -217,11 +217,14 @@ const TABLE: Row[] = [
   },
   // C-6: operators, signs and relations count.
   {
+    // Was 'unknown' until issue #227 (finding 5): a sign that differs is a different value at
+    // every probe point, and `steps.ts` had already computed exactly that for written paths.
+    // Handing it to the tutor as "not decidable" was giving away a decision code had made.
     id: 'C-6',
     item: { kind: 'formula', answer: '$x^{2}+2x$' },
     text: 'x^2-2x',
     locale: 'de',
-    expect: 'unknown',
+    expect: 'incorrect',
   },
   {
     id: 'C-6',
@@ -230,7 +233,11 @@ const TABLE: Row[] = [
     locale: 'de',
     expect: 'correct',
   },
-  { id: 'C-6', item: { answer: 'x=-5' }, text: 'x=5', locale: 'de', expect: 'unknown' },
+  // Also 'unknown' until #227 finding 5, and the same reason: x = 5 and x = -5 have no solution
+  // in common, so nothing is left for the tutor to decide about the value.
+  { id: 'C-6', item: { answer: 'x=-5' }, text: 'x=5', locale: 'de', expect: 'incorrect' },
+  // An inequality stays undecided: `steps.ts` refuses them by design (first cut, issue #209),
+  // and a module that cannot read "<" must not pretend it read it.
   { id: 'C-6', item: { answer: 'x<3' }, text: 'x>3', locale: 'de', expect: 'unknown' },
   { id: 'C-6', item: { answer: '$\\frac{3}{4}$' }, text: '3,4', locale: 'de', expect: 'unknown' },
   { id: 'C-6', item: { answer: '$\\frac{3}{4}$' }, text: '3-4', locale: 'de', expect: 'unknown' },
@@ -332,9 +339,12 @@ const TABLE: Row[] = [
     locale: 'de',
     expect: 'correct',
   },
-  // H-3: missing_word never on math keys.
-  { id: 'H-3', item: { answer: 'x = 5' }, text: '5', locale: 'de', expect: 'unknown' },
-  { id: 'H-3', item: { answer: 'x = 5' }, text: '-5', locale: 'de', expect: 'unknown' },
+  // H-3: missing_word never on math keys. Both rows were 'unknown' until issue #227 (finding 5)
+  // and neither is a near miss now: the key states the value of its variable, so "5" is that
+  // value without the "x =" in front (same value, other notation — decision D-3 leaves the form
+  // to the tutor and forbids "wrong" for the value) and "-5" is a different value.
+  { id: 'H-3', item: { answer: 'x = 5' }, text: '5', locale: 'de', expect: 'other_form' },
+  { id: 'H-3', item: { answer: 'x = 5' }, text: '-5', locale: 'de', expect: 'incorrect' },
   {
     id: 'H-3',
     item: { kind: 'vocab', answer: 'der Schüler' },
@@ -344,7 +354,11 @@ const TABLE: Row[] = [
   },
   // H-4: a different number is no typo.
   { id: 'H-4', item: { answer: '14:35 Uhr' }, text: '15:35 Uhr', locale: 'de', expect: 'unknown' },
+  // Still undecided, and deliberately so: the same characters are a ratio, a division the way
+  // German schools write it and a clock time, and the meaning is not in the characters
+  // (issue #175). Only the NOTATION of the same time is decided (#227 finding 8, the row below).
   { id: 'H-4', item: { answer: '14:30' }, text: '14:50', locale: 'de', expect: 'unknown' },
+  { id: 'H-4', item: { answer: '14:30' }, text: '14.30', locale: 'de', expect: 'other_form' },
   { id: 'H-4', item: { answer: '1250 m' }, text: '1350 m', locale: 'de', expect: 'unknown' },
   { id: 'H-4', item: { answer: '24 cm²' }, text: '42 cm²', locale: 'de', expect: 'unknown' },
   { id: 'H-4', item: { answer: 'a = 12 cm' }, text: 'a = 13 cm', locale: 'de', expect: 'unknown' },
@@ -555,6 +569,106 @@ describe('a typed calculation whose value is already wrong (#227 finding 7)', ()
   it('says nothing when a unit is involved on either side', () => {
     const withUnit = item({ kind: 'numeric', answer: '391', unit: 'cm' });
     expect(differentNumber(withUnit, '17·22')).toBe(false);
+  });
+});
+
+// `ruleCheck` is a pure function: it takes an item and a text and has no model seam to call, so
+// every verdict below is reached without a model — which is the point of issue #227. In practice
+// mode a rule 'incorrect' also decides the tutor's verdict (`enforceTutorInvariants`), and in a
+// test it skips the model call altogether (`service.ts`).
+describe('algebra, decided by its value (#227 finding 5)', () => {
+  it('says wrong to a sign that differs — the example from the issue', () => {
+    expect(check(item({ answer: 'x = 5' }), 'x = -5')).toBe('incorrect');
+    expect(check(item({ answer: 'x = 5' }), '-5')).toBe('incorrect');
+    expect(check(item({ kind: 'formula', answer: '2x+6' }), '2x+5')).toBe('incorrect');
+  });
+
+  it('never says wrong to the same value in another shape', () => {
+    // "2(x+3)" is 2x+6 everywhere, and "2x = 10" has the one solution x = 5. Whether the FORM
+    // was the question ("Faktorisiere …", "Gib x an") is the tutor's call — decision D-3 — but
+    // it may not call the value wrong (#227 finding 1).
+    expect(check(item({ kind: 'formula', answer: '2x+6' }), '2(x+3)')).toBe('other_form');
+    expect(check(item({ kind: 'formula', answer: '2x+6' }), '6+2x')).toBe('other_form');
+    expect(check(item({ answer: 'x = 5' }), '2x = 10')).toBe('other_form');
+    expect(check(item({ answer: 'x = 5' }), '5')).toBe('other_form');
+  });
+
+  it('keeps out of everything that is not algebra', () => {
+    // A measured number whose unit is a single letter is not 2 · m (truth table H-4).
+    expect(check(item({ answer: '1250 m' }), '1350 m')).toBe('unknown');
+    expect(check(item({ answer: '2 m + 3 m' }), '6 m')).toBe('unknown');
+    // Another letter is another variable, in either case.
+    expect(check(item({ kind: 'formula', answer: 'X^2' }), 'x^2')).toBe('unknown');
+    expect(check(item({ kind: 'formula', answer: '2a+6' }), '2b+6')).toBe('unknown');
+    // No structure, no algebra: a lone number or word is for the numeric and written rules.
+    expect(check(item({ answer: '-5' }), '5')).toBe('unknown');
+    expect(check(item({ answer: 'Nenner' }), 'Zähler')).toBe('unknown');
+    // Inequalities are outside what `steps.ts` reads at all.
+    expect(check(item({ answer: 'x<3' }), 'x>3')).toBe('unknown');
+    // A key that is not solved for its variable states no value: "10" is not the answer to it.
+    expect(check(item({ answer: '2x = 10' }), '10')).toBe('unknown');
+  });
+
+  it('respects the key’s tolerance when the key states a value (D-1)', () => {
+    const rounded = item({ answer: 'x = 4.5', tolerance: 0.2 });
+    expect(check(rounded, '4,6')).toBe('other_form');
+    expect(check(rounded, '4,8')).toBe('incorrect');
+  });
+
+  it('leaves a free text alone, where code may claim nothing (#197)', () => {
+    expect(check(item({ kind: 'long', answer: '2x+6' }), '2x+5')).toBe('unknown');
+  });
+});
+
+describe('a year, a date and a clock time (#227 finding 8)', () => {
+  it('says wrong to the wrong year inside a sentence — the example from the issue', () => {
+    const year = item({ answer: '1789' });
+    expect(check(year, 'Die Französische Revolution begann 1788.')).toBe('incorrect');
+    expect(check(year, 'Im Jahr 1788 wurde die Bastille gestürmt')).toBe('incorrect');
+  });
+
+  it('says nothing when it cannot know which number answers the question', () => {
+    const year = item({ answer: '1789' });
+    // Two four-digit numbers: which one is the answer is not in the characters. This is the
+    // line finding 4 of the same issue crossed and had to be reverted for.
+    expect(check(year, 'Zwischen 1788 und 1799.')).toBe('unknown');
+    // A century is no four-digit number, and the sentence may well be right.
+    expect(check(year, 'Ende des 18. Jahrhunderts')).toBe('unknown');
+    // The right year in a sentence: code cannot read whether the rest answers the question.
+    expect(check(year, 'Die Revolution begann 1789.')).toBe('unknown');
+    // A bare number stays with the numeric rules, which know the mode: in homework "1788" may
+    // be a step (`differentNumber` is what decides it outside homework).
+    expect(check(year, '1788')).toBe('unknown');
+    expect(differentNumber(year, '1788')).toBe(true);
+    // One key it cannot read keeps the question open.
+    expect(
+      check(item({ answer: '1789', accepted_answers: ['18. Jahrhundert'] }), 'Es begann 1788.'),
+    ).toBe('unknown');
+    // A free text is never decided here (#197).
+    expect(check(item({ kind: 'long', answer: '1789' }), 'Es begann 1788.')).toBe('unknown');
+  });
+
+  it('reads a date, and tells a different day from a shorter spelling', () => {
+    const date = item({ answer: '14.07.1789' });
+    expect(check(date, '15.07.1789')).toBe('incorrect');
+    expect(check(date, '14.08.1789')).toBe('incorrect');
+    expect(check(date, '14.07.1788')).toBe('incorrect');
+    // Same date, written shorter: the value is right and the form is the tutor's call.
+    expect(check(date, '14.7.1789')).toBe('other_form');
+    // Not this notation: reading a month name needs a word list (CLAUDE.md rule 3).
+    expect(check(date, '14. Juli 1789')).toBe('unknown');
+    expect(check(date, 'Am 15.07.1789')).toBe('unknown');
+  });
+
+  it('accepts the dot German writes a time with, and still judges no other time', () => {
+    const time = item({ answer: '14:30' });
+    expect(check(time, '14.30')).toBe('other_form');
+    expect(check(item({ answer: '9:05' }), '9.05')).toBe('other_form');
+    // A different time is NOT decided: "14:30" is also a ratio and a division, and the meaning
+    // is not in the characters (issue #175, truth table H-4).
+    expect(check(time, '14:50')).toBe('unknown');
+    expect(check(time, '2.30')).toBe('unknown');
+    expect(check(item({ answer: '14:35 Uhr' }), '15:35 Uhr')).toBe('unknown');
   });
 });
 

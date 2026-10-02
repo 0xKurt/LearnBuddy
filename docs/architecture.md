@@ -1739,6 +1739,22 @@ so the rules only say it when it is certain; everything else goes to the tutor (
   with every operator, sign, relation and decimal separator kept (`canonicalMath`): x=5 is not
   x=-5, 3,4 is not 3/4, x^2-2x is not x^2+2x. No near miss (no "typo" for 15:35 against 14:35,
   no "missing word" for 5 against x = 5).
+- _What the characters cannot decide, the value can_ (issue #227, findings 5 and 8), and only
+  where the comparison above decided nothing. **Algebra** with the same single variable on both
+  sides and algebraic structure on both (`steps.ts` `sameAlgebra`, the same equivalence that
+  checks a written path): "x = -5" for x = 5 and "2x+5" for 2x+6 are certainly wrong, "2(x+3)"
+  and "2x = 10" are the same value in another shape (`other_form`, D-3 — the form stays the
+  tutor's, the value may never be called wrong). A key solved for its variable states that value,
+  so "-5" for "x = 5" is wrong and "5" is `other_form`. **A date** as day.month.year
+  (`dates.ts`): another day is wrong, "14.7.1789" for "14.07.1789" is the same date written
+  shorter. **A clock time** only where it IS the same time ("14.30" for "14:30"), never a
+  different one — the same characters are also a ratio and a division, and that meaning is not in
+  the characters (#175, truth table H-4). **A year inside a sentence** only when the key is a
+  four-digit number and the sentence states exactly one: "1788" for 1789 is wrong; two numbers in
+  the sentence, or the right year in it, stay the tutor's (a number guessed out of a sentence is
+  what finding 4 of the same issue was reverted for). A unit that happens to be a single letter
+  is no variable ("1250 m" against "1350 m" stays undecided), and a free text is decided here
+  never (#197).
 - _Words._ Correct only when equal after NFC and collapsing spaces — case, ß and punctuation
   count. A difference only there is, per item (`items.spelling`) or by default for vocabulary and
   language subjects (German, English, French, Spanish, Latin, other language), a near miss "Fast

@@ -21,7 +21,7 @@
 //   - any line it cannot parse completely.
 // All of those come back `unknown` and go to the model, which is where they belonged anyway.
 
-import { compileExpression, type CompiledFunction } from '@learnbuddy/shared-math';
+import { compileExpression, type CompiledFunction, plainMath } from '@learnbuddy/shared-math';
 
 /** Known names the parser already owns; anything else alphabetic is the variable. */
 const RESERVED = new Set(['sqrt', 'abs', 'sin', 'cos', 'tan', 'ln', 'log', 'exp', 'pi', 'e', 'x']);
@@ -185,4 +185,75 @@ export function lastValue(text: string): string | null {
   if (line === null) return null;
   const parts = line.split('=');
   return (parts.length === 2 ? parts[1]! : line).trim() || null;
+}
+
+// ── One answer against one key, with the same machinery (issue #227, finding 5).
+//
+// The same equivalence that decides whether a STEP follows also decides whether an ANSWER is the
+// key's term or equation. Until now "x = -5" for a key of x = 5 and "2x+5" for 2x+6 went to the
+// tutor as "not decidable by rules", although a sign and a summand that differ make a different
+// value at every probe point — and code had already computed that. It is only ever asked once
+// comparing the characters decided nothing (`evaluate.ts`).
+
+/**
+ * The names the expression parser owns. `x` is in RESERVED because `oneVariable` leaves it where
+ * it is; here it IS the variable, so it is taken back out.
+ */
+const NOT_A_VARIABLE: ReadonlySet<string> = new Set([...RESERVED].filter((n) => n !== 'x'));
+
+/**
+ * The one variable a text uses, AS WRITTEN: `X` and `x` are not the same variable, so a key of
+ * `X^2` is not answered by `x^2` (grading truth table C-6). Null when the text uses no variable
+ * or more than one — two variable-free numbers are for the numeric rules, which own the decimal
+ * separators and the tolerances this module knows nothing about ("1.000" is not 1000 here).
+ */
+function variableOf(src: string): string | null {
+  const names = new Set(
+    (src.match(/[A-Za-z]+/g) ?? []).filter((n) => !NOT_A_VARIABLE.has(n.toLowerCase())),
+  );
+  if (names.size !== 1) return null;
+  const name = [...names][0] ?? '';
+  return name.length === 1 ? name : null;
+}
+
+/**
+ * Algebra has structure: an operator, a relation, brackets. "1250 m" has none — it is a measured
+ * number whose unit happens to be a single letter, and the numeric rules own it with its unit
+ * (grading truth table H-4). The same gate keeps a single chemical formula out ("O2" is not 2·x;
+ * `chemistry.ts` counts those).
+ */
+const STRUCTURE = /[-+*/^=():·]/;
+
+/**
+ * A key and an answer read as algebra: the same term or an equivalent equation, certainly a
+ * different one, or null when this module cannot tell (a line that does not parse, an
+ * inequality, two different letters, anything without algebraic structure — all of which stay
+ * the tutor's). Both sides must carry the SAME single variable and both must show structure:
+ * that is what makes this algebra rather than two numbers or two measurements.
+ */
+export function sameAlgebra(key: string, answer: string): 'same' | 'different' | null {
+  const k = plainMath(key).trim();
+  const a = plainMath(answer).trim();
+  if (!STRUCTURE.test(k) || !STRUCTURE.test(a)) return null;
+  const variable = variableOf(k);
+  if (variable === null || variable !== variableOf(a)) return null;
+  const kl = parseLine(k);
+  const al = parseLine(a);
+  if (kl === null || al === null) return null;
+  const verdict = sameStep(kl, al);
+  return verdict === 'unsure' ? null : verdict;
+}
+
+/**
+ * `x = 5` → `5`: the value a key states for its variable, but only when its left side is
+ * nothing but that variable. `2x = 10` is deliberately not read — its right side is not the
+ * answer to the question, and a learner's "10" for it would be wrong, not right. A right side
+ * with a letter in it (`x = 2y`, `a = 12 cm`) states no bare value and gives null: the unit
+ * belongs to the numeric rules, not here.
+ */
+export function solvedValue(key: string): string | null {
+  const m = /^\s*([A-Za-z])\s*=\s*(\S.*)$/.exec(plainMath(key));
+  if (m === null) return null;
+  const value = (m[2] ?? '').trim();
+  return /[A-Za-z]/.test(value) ? null : value;
 }

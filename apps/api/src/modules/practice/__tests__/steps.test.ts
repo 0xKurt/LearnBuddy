@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { checkPath, lastLine, pathLines } from '../steps.js';
+import { checkPath, lastLine, pathLines, sameAlgebra, solvedValue } from '../steps.js';
 
 const path = (...lines: string[]) => lines.join('\n');
 
@@ -113,5 +113,69 @@ describe('what it refuses to judge', () => {
     const p = path('2x + 3 = 7', '2x = 4', 'x = 2');
     const first = checkPath(p);
     for (let i = 0; i < 20; i++) expect(checkPath(p)).toEqual(first);
+  });
+});
+
+// ── One answer against one key, with the same machinery (issue #227, finding 5). The
+// equivalence that decides whether a step follows also decides whether an answer is the key's
+// term or equation. The second half matters most: where it says nothing, because a unit that
+// happens to be one letter must not become a variable (grading truth table H-4).
+
+describe('an answer against a key, read as algebra', () => {
+  it('knows a sign, a summand or a factor that differs', () => {
+    expect(sameAlgebra('x = 5', 'x = -5')).toBe('different');
+    expect(sameAlgebra('2x+6', '2x+5')).toBe('different');
+    expect(sameAlgebra('$x^{2}+2x$', 'x^2-2x')).toBe('different');
+    expect(sameAlgebra('2x+0', '3x+0')).toBe('different');
+  });
+
+  it('knows the same term and the same equation written differently', () => {
+    expect(sameAlgebra('2x+6', '2(x+3)')).toBe('same');
+    expect(sameAlgebra('2x+6', '6+2x')).toBe('same');
+    expect(sameAlgebra('$x^{2}+2x$', 'x² + 2x')).toBe('same');
+    // Dividing the whole equation keeps its solution, so it is the same equation.
+    expect(sameAlgebra('x = 5', '2x = 10')).toBe('same');
+  });
+
+  it('says nothing where it would have to guess', () => {
+    // A measured number: "1250 m" is not 1250 · m, and its unit is the numeric rules' business.
+    expect(sameAlgebra('1250 m', '1350 m')).toBeNull();
+    expect(sameAlgebra('12 m', '13 m')).toBeNull();
+    expect(sameAlgebra('a = 12 cm', 'a = 13 cm')).toBeNull();
+    // A single chemical formula is counted, not evaluated (`chemistry.ts`).
+    expect(sameAlgebra('O2', 'O3')).toBeNull();
+    expect(sameAlgebra('N2', '2N')).toBeNull();
+    // X and x are not the same variable, and a and b are not either.
+    expect(sameAlgebra('X^2', 'x^2')).toBeNull();
+    expect(sameAlgebra('2a+6', '2b+6')).toBeNull();
+    // Two numbers without a variable belong to the numeric rules, which own the separators
+    // ("1.000" may be one thousand or one) and the tolerances.
+    expect(sameAlgebra('-5', '5')).toBeNull();
+    expect(sameAlgebra('1000-0', '1.000-0')).toBeNull();
+    // Outside the first cut of this module: inequalities, words, a line that does not parse.
+    expect(sameAlgebra('x<3', 'x>3')).toBeNull();
+    expect(sameAlgebra('2x = 4', 'dann teile ich durch zwei')).toBeNull();
+  });
+
+  it('is the same answer twice in a row here too', () => {
+    for (let i = 0; i < 20; i++) expect(sameAlgebra('2x+6', '2x+5')).toBe('different');
+  });
+});
+
+describe('the value a key states for its variable', () => {
+  it('is the right side when the left side is nothing but the variable', () => {
+    expect(solvedValue('x = 5')).toBe('5');
+    expect(solvedValue('a = -3,5')).toBe('-3,5');
+    expect(solvedValue('$x = \\frac{1}{2}$')).toBe('1/2');
+  });
+
+  it('is nothing where the right side is not a bare value', () => {
+    // 10 is not the answer to "2x = 10", so its right side must not be read as one.
+    expect(solvedValue('2x = 10')).toBeNull();
+    expect(solvedValue('x = 2y')).toBeNull();
+    // A unit belongs to the numeric rules together with its number.
+    expect(solvedValue('a = 12 cm')).toBeNull();
+    expect(solvedValue('5')).toBeNull();
+    expect(solvedValue('x < 5')).toBeNull();
   });
 });
