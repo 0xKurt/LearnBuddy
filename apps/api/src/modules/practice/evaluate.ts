@@ -11,6 +11,10 @@
 // - words: the same text with case, ß and punctuation kept (canonicalText). A difference only
 //   there is a near miss where spelling is the point (decision D-2: language subjects and
 //   vocabulary, or an item marked strict) and otherwise for the tutor to judge gently.
+//
+// Where comparing the CHARACTERS decides nothing, the VALUE still can (issue #227, findings 5
+// and 8): algebra against algebra (`steps.ts`), a date, a clock time and a year inside a
+// sentence (`dates.ts`) — see `byValue` at the bottom.
 
 import {
   checkEquation,
@@ -19,7 +23,8 @@ import {
   sameRatio,
   sameSubstance,
 } from './chemistry.js';
-import { checkPath, lastValue } from './steps.js';
+import { isYear, sameClockTime, sameDate, yearIn } from './dates.js';
+import { checkPath, lastValue, sameAlgebra, solvedValue } from './steps.js';
 import {
   canonicalMath,
   canonicalText,
@@ -459,6 +464,73 @@ export function partVerdict(
   return best === 'folded' ? 'correct' : best;
 }
 
+/**
+ * One key against the answer, by VALUE where comparing the characters said nothing: algebra
+ * (issue #227, finding 5), a date, a clock time, a year inside a sentence (finding 8). 'same'
+ * means the value is the key's and only the notation differs; 'different' means certainly
+ * another value; null means undecidable, which is most of the world.
+ */
+function byValueAgainst(
+  item: ItemForCheck,
+  key: string,
+  text: string,
+): 'same' | 'different' | null {
+  const algebra = sameAlgebra(key, text);
+  if (algebra !== null) return algebra;
+  // The value a solved key states, written without naming the variable: "-5" for "x = 5" is a
+  // different value, "5" is the same one in another notation. Compared with the numeric rules,
+  // so the key's tolerance and unit keep deciding what they already decide (D-1).
+  const solved = solvedValue(key);
+  if (solved !== null) {
+    const c = compareNumbers(parseNumericInput(text), parseCanonicalKey(solved), {
+      unit: item.unit,
+      tolerance: item.tolerance,
+    });
+    if (c !== 'unknown') return c === 'equal' ? 'same' : 'different';
+  }
+  const date = sameDate(key, text);
+  if (date !== null) return date;
+  if (sameClockTime(key, text)) return 'same';
+  // A year inside a sentence: only a DIFFERENT one is decided. A sentence that names the right
+  // year can still be missing everything else the question asked for, and code cannot read that.
+  if (isYear(key)) {
+    const stated = yearIn(text);
+    if (
+      stated !== null &&
+      compareNumbers(parseNumericInput(stated), parseCanonicalKey(key), {
+        unit: item.unit,
+        tolerance: item.tolerance,
+      }) === 'different'
+    ) {
+      return 'different';
+    }
+  }
+  return null;
+}
+
+/**
+ * What the characters could not decide, the value still can (issue #227, findings 5 and 8).
+ * The verdicts are the ones decision D-3 already set: a different value is 'incorrect', the same
+ * value in another notation is 'other_form' — right in value, with the form left to the tutor,
+ * who may never call it wrong for the value (issue #227, finding 1).
+ *
+ * 'incorrect' needs EVERY key to be certainly different, the way the numeric rules do it: one
+ * key this cannot read leaves the question open.
+ */
+function byValue(item: ItemForCheck, text: string): RuleVerdict | null {
+  // A free text has no single right answer to compare against: here code claims nothing
+  // (issue #197, `noSingleSolution`).
+  if (noSingleSolution(item)) return null;
+  const keys = [item.answer, ...item.accepted_answers];
+  let allDifferent = keys.length > 0;
+  for (const key of keys) {
+    const c = byValueAgainst(item, key, text);
+    if (c === 'same') return 'other_form';
+    if (c !== 'different') allDifferent = false;
+  }
+  return allDifferent ? 'incorrect' : null;
+}
+
 export function ruleCheck(
   item: ItemForCheck,
   answer: { text: string | null; choice: number | null },
@@ -522,7 +594,9 @@ export function ruleCheck(
   const verdicts = [item.answer, ...item.accepted_answers].map((k) =>
     writtenAgainst(item, k, text),
   );
-  return STRENGTH.find((v) => verdicts.includes(v)) ?? 'unknown';
+  const strongest = STRENGTH.find((v) => verdicts.includes(v)) ?? 'unknown';
+  // Only where the characters decided nothing: what they could not say, the value still can.
+  return strongest === 'unknown' ? (byValue(item, text) ?? 'unknown') : strongest;
 }
 
 /**
