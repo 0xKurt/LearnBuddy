@@ -221,5 +221,19 @@
     "partially_correct": "Fast",
     "incorrect": "Noch nicht ganz",
     "unchecked": "Nicht geprüft"
+  },
+  "code": {
+    "block_label": "Programm mit {{count}} Zeilen",
+    "line_label": "Zeile {{line}}: {{code}}",
+    "line_empty": "leere Zeile",
+    "pick_hint": "Antwortet mit dieser Zeile.",
+    "tried": "schon versucht",
+    "output_label": "Was das Programm ausgibt",
+    "output_placeholder": "Die Ausgabe, Zeile für Zeile",
+    "program_label": "Dein Programm",
+    "indent": "Einrücken",
+    "indent_label": "Vier Leerzeichen einrücken",
+    "scroll_hint": "Breite Zeilen lassen sich zur Seite schieben.",
+    "line_named": "Zeile {{line}}"
   }
 }

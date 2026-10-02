@@ -310,7 +310,9 @@
     "polygons": "Vielecke: {{list}}",
     "circle": "Kreis um {{center}} mit Radius {{radius}}",
     "table": "Tabelle mit {{rows}} Zeilen. Spalten: {{header}}",
-    "row": "Zeile {{n}}: {{cells}}"
+    "row": "Zeile {{n}}: {{cells}}",
+    "code": "Programm mit {{count}} Zeilen: {{lines}}",
+    "code_line": "Zeile {{line}}: {{code}}"
   },
   "keys": {
     "row": "Mathe-Zeichen",

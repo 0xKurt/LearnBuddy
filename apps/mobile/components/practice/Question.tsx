@@ -23,6 +23,7 @@ import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
 import { ZoomableFigure } from '../math/ZoomableFigure.js';
 import { MathText } from '../math/MathText.js';
+import { CodeBlock, type LinePick } from './CodeBlock.js';
 import { StaffPlayButton } from './StaffPlayButton.js';
 import { StimulusImage } from './StimulusImage.js';
 
@@ -124,6 +125,11 @@ type QuestionProps = {
    * height, or without a visual, it does nothing.
    */
   minHeight?: number;
+  /**
+   * The program's lines are the answer (issue #262, „In welcher Zeile ist der Fehler?"): each
+   * line of a `code` figure becomes a 44 pt target. Only while the question is open.
+   */
+  pickLine?: LinePick;
 };
 
 export function QuestionCard({
@@ -137,6 +143,7 @@ export function QuestionCard({
   figureMaxHeight,
   imageMaxHeight = 180,
   minHeight,
+  pickLine,
 }: QuestionProps) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
@@ -199,7 +206,14 @@ export function QuestionCard({
           >
             {/* The tight box around the drawing itself: the walkthrough records its height. */}
             <View testID="question-figure">
-              <ZoomableFigure figure={figure} maxHeight={figureMax} />
+              {/* Ein Programm wird nie verkleinert und nicht zum Zoomen angeboten (issue #262):
+                  Code, der auf die Höhe gerechnet wird, ist nicht mehr lesbar. Seine Höhe ist
+                  stattdessen im Vertrag begrenzt (`CODE_LINES_MAX`, `CODE_PICK_LINES_MAX`). */}
+              {figure.type === 'code' ? (
+                <CodeBlock figure={figure} pick={pickLine} />
+              ) : (
+                <ZoomableFigure figure={figure} maxHeight={figureMax} />
+              )}
             </View>
             {/* Eine Notenzeile kann man hören (issue #226). Der Knopf steht unter der Zeichnung,
                 weil er zu ihr gehört und nicht zur Frage — und er ist die kleine Pille, mit der

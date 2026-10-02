@@ -221,5 +221,19 @@
     "partially_correct": "Almost",
     "incorrect": "Not quite yet",
     "unchecked": "Not checked"
+  },
+  "code": {
+    "block_label": "Program with {{count}} lines",
+    "line_label": "Line {{line}}: {{code}}",
+    "line_empty": "empty line",
+    "pick_hint": "Answers with this line.",
+    "tried": "already tried",
+    "output_label": "What the program prints",
+    "output_placeholder": "The output, line by line",
+    "program_label": "Your program",
+    "indent": "Indent",
+    "indent_label": "Indent by four spaces",
+    "scroll_hint": "Wide lines can be pushed sideways.",
+    "line_named": "Line {{line}}"
   }
 }

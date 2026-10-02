@@ -68,6 +68,23 @@ export type Palette = {
   shadowColor: string;
   /** How strong the two elevations are (soft, float) in this palette. */
   shadowOpacity: readonly [number, number];
+  /**
+   * A program on screen (issue #262, components/practice/CodeBlock.tsx): the block's ground, the
+   * line numbers and one colour per kind of word. Every one of them is TEXT on `bg` and is held
+   * to 4.5:1 in lib/theme/__tests__/contrast.test.ts — a keyword nobody can read is not a colour
+   * scheme. Not part of an accent family: the colours tell words apart, the accent tells the
+   * family, and a green "forest" keyword next to a green string would erase the difference.
+   */
+  code: {
+    bg: string;
+    lineNo: string;
+    keyword: string;
+    builtin: string;
+    fn: string;
+    string: string;
+    number: string;
+    comment: string;
+  };
   /** Figure ink for questions (components/math/FigureView.tsx). */
   figure: {
     grid: string;
@@ -130,6 +147,16 @@ const pastellSoft: Palette = {
   },
   shadowColor: '#4b3a8f',
   shadowOpacity: [0.08, 0.14],
+  code: {
+    bg: '#ffffff',
+    lineNo: '#6f6a85',
+    keyword: '#5b2fc4',
+    builtin: '#0a6a94',
+    fn: '#a1326f',
+    string: '#2b7339',
+    number: '#a24a12',
+    comment: '#6f6a85',
+  },
   figure: {
     grid: 'rgba(20,15,30,0.09)',
     gridStrong: 'rgba(20,15,30,0.18)',
@@ -195,6 +222,16 @@ const night: Palette = {
   },
   shadowColor: '#000000',
   shadowOpacity: [0.3, 0.45],
+  code: {
+    bg: '#1b1829',
+    lineNo: '#a39dbb',
+    keyword: '#c3aeff',
+    builtin: '#7fc4e8',
+    fn: '#f0a6cf',
+    string: '#9ad59a',
+    number: '#f2b880',
+    comment: '#a39dbb',
+  },
   figure: {
     grid: 'rgba(220,210,255,0.12)',
     gridStrong: 'rgba(220,210,255,0.22)',

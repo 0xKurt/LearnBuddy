@@ -310,7 +310,9 @@
     "polygons": "Polígonos: {{list}}",
     "circle": "Circunferencia de centro {{center}} y radio {{radius}}",
     "table": "Tabla con {{rows}} filas. Columnas: {{header}}",
-    "row": "Fila {{n}}: {{cells}}"
+    "row": "Fila {{n}}: {{cells}}",
+    "code": "Programa de {{count}} líneas: {{lines}}",
+    "code_line": "Línea {{line}}: {{code}}"
   },
   "keys": {
     "row": "Símbolos matemáticos",

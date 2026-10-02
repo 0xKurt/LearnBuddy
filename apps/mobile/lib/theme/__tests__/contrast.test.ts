@@ -75,3 +75,18 @@ for (const [name, palette] of Object.entries(PALETTES)) {
     }
   });
 }
+
+// A program on screen (issue #262): every word colour is text on the block's own ground.
+for (const [name, palette] of Object.entries(PALETTES)) {
+  describe(`palette ${name}: code`, () => {
+    const { bg, ...inks } = palette.code;
+    for (const [kind, ink] of Object.entries(inks)) {
+      it(`reads: ${kind} on the code ground`, () => {
+        expect(contrast(ink, bg)).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+    it('sets the block off from the card it stands in', () => {
+      expect(bg).not.toBe(palette.lavender);
+    });
+  });
+}

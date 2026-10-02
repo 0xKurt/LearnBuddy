@@ -11,6 +11,7 @@
 
 import {
   BarTask,
+  CodeTask,
   MAX_LISTEN_QUESTIONS,
   StaffTask,
   type DifficultyWish,
@@ -60,8 +61,9 @@ import {
   type PracticeLearner,
 } from './service.js';
 import { MAX_STAFF_ITEMS, STAFF_RULES, staffItems } from './staff.js';
+import { CODE_RULES, MAX_CODE_ITEMS, codeItems } from './code.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.13';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.14';
 
 const SUBJECT_KINDS = [
   'math',
@@ -121,6 +123,13 @@ export const GeneratedSet = z.object({
    * disagrees with the staff that is drawn (`practice/staff.ts`).
    */
   staffs: z.array(StaffTask).max(MAX_STAFF_ITEMS).default([]),
+  /**
+   * Programs (issue #262). A separate list for the same reason again, one step stronger: the key
+   * is not computed from parameters but taken from RUNNING the program (`practice/code.ts`). The
+   * model's own expectation travels along only as a probe — when it disagrees with the run, no
+   * question is written.
+   */
+  codes: z.array(CodeTask).max(MAX_CODE_ITEMS).default([]),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
@@ -273,6 +282,7 @@ Rules:
 - ${FIGURE_RULES}
 - ${BAR_RULES}
 - ${STAFF_RULES}
+- ${CODE_RULES}
 - ${PARTS_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${CURRICULUM_RULES}
@@ -427,6 +437,7 @@ async function generateSet(
     // One unusable task costs its own question, never the whole set (audit H-14/H-15).
     bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
     staffs: itemsOneByOne(StaffTask, MAX_STAFF_ITEMS),
+    codes: itemsOneByOne(CodeTask, MAX_CODE_ITEMS),
     // The same for the listening questions: one that does not fit its schema costs itself, not
     // the text. A listening task that does not fit at all is no listening task, and the run then
     // has nothing — which the caller says plainly (`not_usable`, issue #210).
@@ -526,6 +537,8 @@ type Prepared = {
   listening: ItemDraft[];
   /** Note lines, as questions code wrote from the tasks the model chose (issue #226). */
   staffs: StoredItem[];
+  /** Programs, as questions whose key code took from running them (issue #262). */
+  codes: StoredItem[];
 };
 
 /**
@@ -603,11 +616,16 @@ function preparedFrom(
     input.kind === 'practice' || input.kind === 'test'
       ? staffItems(set.staffs, learner.locale)
       : [];
+  // The programs (issue #262), in practice and in a test like the note lines: reading a program,
+  // finding the line that breaks and writing a small function are what an Informatik test asks.
+  const codes =
+    input.kind === 'practice' || input.kind === 'test' ? codeItems(set.codes, learner.locale) : [];
   return {
     items,
     bars,
     listening: input.kind === 'listen' ? listenItems(set.listen, speech) : [],
     staffs,
+    codes,
   };
 }
 
@@ -707,7 +725,7 @@ async function prepareTopic(
     head,
     // Only the first questions start the run — never the bars, which belong last. A listening run
     // never starts early (it has no `items` at all), so there is nothing of its own to hold back.
-    { items: first.items.slice(0, FIRST_BATCH), bars: [], listening: [], staffs: [] },
+    { items: first.items.slice(0, FIRST_BATCH), bars: [], listening: [], staffs: [], codes: [] },
     { now, goalId: sheets?.goalId ?? null, pendingUntil: new Date(now.getTime() + REST_WINDOW_MS) },
   );
   deps.background(async () => {
@@ -745,7 +763,8 @@ async function store(
     prepared.items.length +
       prepared.bars.length +
       prepared.listening.length +
-      prepared.staffs.length ===
+      prepared.staffs.length +
+      prepared.codes.length ===
       0
   ) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
@@ -759,7 +778,13 @@ async function store(
       const itemIds = await insertItems(
         tx,
         { learnerId: learner.id, materialId: null, subjectId, origin: ORIGIN[input.kind] },
-        [...prepared.items, ...prepared.bars, ...prepared.listening, ...prepared.staffs],
+        [
+          ...prepared.items,
+          ...prepared.bars,
+          ...prepared.listening,
+          ...prepared.staffs,
+          ...prepared.codes,
+        ],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
       );
@@ -825,8 +850,10 @@ async function addTheRest(
   }
   const prepared = preparedFrom(set, learner, input, ownSheets, deps.speech);
   const known = new Set(head.slice(0, FIRST_BATCH).map((i) => samePrompt(i.prompt)));
-  const rest: ItemDraft[] = [];
-  for (const it of [...prepared.items, ...prepared.bars]) {
+  const rest: StoredItem[] = [];
+  // The computed questions belong to the rest too: a run that started early on three ordinary
+  // questions would otherwise lose every note line and program of the same answer (#226, #262).
+  for (const it of [...prepared.items, ...prepared.bars, ...prepared.staffs, ...prepared.codes]) {
     const key = samePrompt(it.prompt);
     if (known.has(key)) continue;
     known.add(key);

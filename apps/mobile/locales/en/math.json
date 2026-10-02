@@ -310,7 +310,9 @@
     "polygons": "Polygons: {{list}}",
     "circle": "Circle around {{center}} with radius {{radius}}",
     "table": "Table with {{rows}} rows. Columns: {{header}}",
-    "row": "Row {{n}}: {{cells}}"
+    "row": "Row {{n}}: {{cells}}",
+    "code": "Program with {{count}} lines: {{lines}}",
+    "code_line": "Line {{line}}: {{code}}"
   },
   "keys": {
     "row": "Math symbols",

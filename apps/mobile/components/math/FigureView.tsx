@@ -39,6 +39,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { describeStaff } from '../../lib/music/words.js';
 import { MathText } from './MathText.js';
 import { StaffLine } from './StaffLine.js';
+import { CodeBlock, lineText } from '../practice/CodeBlock.js';
 import { useSpokenWords } from './useSpokenMath.js';
 
 type FractionFig = Extract<Figure, { type: 'fraction' }>;
@@ -145,6 +146,10 @@ function FigureBody({ figure, width }: { figure: Figure; width: number }) {
     // Zeichnung die Fläche ist, auf die sie schreibt — eine Figur ist, was sie LIEST.
     case 'staff':
       return <StaffLine fig={figure} width={width} />;
+    // Ein Programm (issue #262). Im Fragekärtchen steht es ohne diesen Rahmen und ohne
+    // Verkleinerung (`QuestionCard`): Code, der kleiner gerechnet wird, ist nicht mehr lesbar.
+    case 'code':
+      return <CodeBlock figure={figure} />;
   }
 }
 
@@ -1090,5 +1095,14 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
     // mit dem Screenreader ist die Aufgabe damit lösbar, nicht nur vorhanden.
     case 'staff':
       return describeStaff(figure, t);
+    // Zeile für Zeile, mit Nummer: „Zeile 3: print(x)". So ist auch „In welcher Zeile ist der
+    // Fehler?" mit dem Screenreader lösbar, nicht nur vorhanden.
+    case 'code':
+      return t('figure.code', {
+        count: figure.lines.length,
+        lines: figure.lines
+          .map((spans, i) => t('figure.code_line', { line: i + 1, code: lineText(spans).trim() }))
+          .join('; '),
+      });
   }
 }

@@ -310,7 +310,9 @@
     "polygons": "Poligoni: {{list}}",
     "circle": "Circonferenza di centro {{center}} e raggio {{radius}}",
     "table": "Tabella con {{rows}} righe. Colonne: {{header}}",
-    "row": "Riga {{n}}: {{cells}}"
+    "row": "Riga {{n}}: {{cells}}",
+    "code": "Programma di {{count}} righe: {{lines}}",
+    "code_line": "Riga {{line}}: {{code}}"
   },
   "keys": {
     "row": "Simboli matematici",

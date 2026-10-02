@@ -5,6 +5,7 @@
 
 import { z } from 'zod';
 
+import { CodeFigure } from './code.js';
 import { StaffFigure } from './staff.js';
 
 const Label = z.string().trim().min(1).max(40);
@@ -94,7 +95,7 @@ export const ModelFigure = z.discriminatedUnion('type', [
 ]);
 export type ModelFigure = z.infer<typeof ModelFigure>;
 
-/** Every figure a question can SHOW (`ItemView.figure`) — the model's six and the note line. */
+/** Every figure a question can SHOW (`ItemView.figure`) — the model's six, the note line, a program. */
 export const Figure = z.discriminatedUnion('type', [
   FractionFigure,
   NumberLineFigure,
@@ -103,5 +104,8 @@ export const Figure = z.discriminatedUnion('type', [
   GeometryFigure,
   TableFigure,
   StaffFigure,
+  // A program whose output or failing line is asked: code writes it, from the program it ran
+  // (issue #262) — for the same reason as the note line, it is not in `ModelFigure`.
+  CodeFigure,
 ]);
 export type Figure = z.infer<typeof Figure>;

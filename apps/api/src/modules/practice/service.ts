@@ -63,6 +63,16 @@ import {
   writtenStaffLine,
   type StaffCheck,
 } from './staff.js';
+import {
+  checkCode,
+  codePassed,
+  codeReply,
+  codeSurfaceOf,
+  codeTaskOf,
+  pickedLine,
+  writtenCode,
+  type CodeCheck,
+} from './code.js';
 import { checkPath } from './steps.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
@@ -180,6 +190,12 @@ export type ItemRow = {
    * question has at most one computed source (migration 0078). Read through `staffTaskOf`.
    */
   staff_task: unknown;
+  /**
+   * The program task this question's text, code and key were COMPUTED from — the key by running
+   * it (issue #262), or null for everything else. At most one computed source per question
+   * (migration 0098). Read through `codeTaskOf`.
+   */
+  code_task: unknown;
 };
 
 export type SessionRow = {
@@ -723,13 +739,16 @@ async function signImageUrls(
  * A column that no longer parses as a task yields no surface: the question is still
  * answerable by typing, and nothing is guessed at.
  */
-function surfaceFor(bar: unknown, staff: unknown): ItemView['surface'] {
+function surfaceFor(bar: unknown, staff: unknown, code: unknown): ItemView['surface'] {
   const barTask = taskOf(bar);
   if (barTask) return surfaceOf(barTask);
-  // The empty staff she writes a note line on (issue #226). The two can never both be there
-  // (migration 0078 `items_one_computed_source`), so the order here settles nothing.
+  // The empty staff she writes a note line on (issue #226). The computed sources can never be
+  // there together (migration 0098 `items_one_computed_source`), so the order settles nothing.
   const staffTask = staffTaskOf(staff);
-  return staffTask ? staffSurfaceOf(staffTask) : null;
+  if (staffTask) return staffSurfaceOf(staffTask);
+  // The program's lines to tap, or the field she types code or output into (issue #262).
+  const codeTask = codeTaskOf(code);
+  return codeTask ? codeSurfaceOf(codeTask) : null;
 }
 
 /**
@@ -766,7 +785,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.parts_task, i.listen_task, i.staff_task, i.archived_at,
+            i.bar_task, i.parts_task, i.listen_task, i.staff_task, i.code_task, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -852,7 +871,8 @@ export async function sessionView(
         // The fraction bar she works with, derived from the task the question was computed
         // from (issue #162). Only while the question is open: once it is closed the bars
         // would be a control without a purpose, and the solution stands in the thread.
-        surface: i.status === 'open' && active ? surfaceFor(i.bar_task, i.staff_task) : null,
+        surface:
+          i.status === 'open' && active ? surfaceFor(i.bar_task, i.staff_task, i.code_task) : null,
         // The board she arranges, for as long as the question is open — like the fraction bar
         // above, and for the same reason: once the question is closed the pieces would be a
         // control with nothing left to do, and her answer and the solution both stand in the
@@ -1224,6 +1244,33 @@ export async function answerItem(
   const staffTask = staffTaskOf(item.staff_task);
   const staffCheck: StaffCheck | null =
     hintRequest || staffTask === null ? null : checkStaffLine(staffTask, input.text ?? '');
+
+  // ── ein PROGRAMM (issue #262) ──
+  //
+  // Die Ausgabe, die angetippte Zeile oder ihre eigene Funktion — geprüft, indem Code das
+  // Programm AUSFÜHRT (`code.ts`, Interpreter der Lehr-Teilmenge), nie von einem Modell. Bei der
+  // Fehlerzeile kommt nur eine Zeilennummer des gezeigten Programms als Antwort in Frage; alles
+  // andere ist eine Form, die die Frage nie angeboten hat.
+  const codeTask = codeTaskOf(item.code_task);
+  if (
+    codeTask !== null &&
+    codeTask.task === 'find_error' &&
+    !hintRequest &&
+    (input.text === undefined || input.text === null || pickedLine(input.text) === null)
+  ) {
+    throw new AppError('invalid_input', 'This question is answered by tapping a line', {
+      reason: 'use_line',
+    });
+  }
+  const codeCheck: CodeCheck | null =
+    hintRequest || codeTask === null ? null : checkCode(codeTask, input.text ?? '');
+  if (codeTask !== null && codeTask.task === 'find_error' && !hintRequest && codeCheck === null) {
+    throw new AppError('invalid_input', 'No such line in this program', { reason: 'use_line' });
+  }
+  const codeWritten =
+    codeTask !== null && !hintRequest
+      ? writtenCode(learner.locale, codeTask, input.text ?? '')
+      : null;
   /** Ihre Zeile in Worten, damit der Gesprächsfaden lesbar bleibt (wie `writtenParts`). */
   const staffWritten =
     staffCheck !== null ? writtenStaffLine(learner.locale, input.text ?? '') : null;
@@ -1233,6 +1280,7 @@ export async function answerItem(
         // all see what she actually did.
         writtenParts(partsTask, filled)
       : (staffWritten ??
+        codeWritten ??
         input.text ??
         (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null));
   if (!text) throw new AppError('invalid_input', 'Empty answer');
@@ -1276,12 +1324,18 @@ export async function answerItem(
           : staffCheck.verdict === 'partly'
             ? 'parts_left'
             : 'incorrect'
-        : ruleCheck(
-            // A question code computed asks for an amount, so any form of it is right (#162);
-            // a question she HEARD is judged on what she understood, not how she wrote it (#210).
-            { ...item, form_free: barTask !== null, listening: listenTask !== null },
-            { text: input.text ?? null, choice: input.choice ?? null },
-          );
+        : codeCheck !== null
+          ? codeCheck.verdict === 'correct'
+            ? 'correct'
+            : codeCheck.verdict === 'partly'
+              ? 'parts_left'
+              : 'incorrect'
+          : ruleCheck(
+              // A question code computed asks for an amount, so any form of it is right (#162);
+              // a question she HEARD is judged on what she understood, not how she wrote it (#210).
+              { ...item, form_free: barTask !== null, listening: listenTask !== null },
+              { text: input.text ?? null, choice: input.choice ?? null },
+            );
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
   const rule: RuleVerdict =
@@ -1336,13 +1390,19 @@ export async function answerItem(
       revealed: true,
     };
   } else if (rule === 'correct') {
+    const praise = t(
+      learner.locale,
+      session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
+    );
+    // Her own function passed every test: the count says what "right" consisted of (#262).
+    const passed =
+      codeCheck !== null && codeTask !== null
+        ? codePassed(learner.locale, codeCheck, codeTask)
+        : null;
     judged = {
       verdict: 'correct',
       evaluatedBy: 'rule',
-      reply: t(
-        learner.locale,
-        session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
-      ),
+      reply: passed !== null ? `${passed} ${praise}` : praise,
       gaveHint: false,
       revealed: false,
     };
@@ -1372,6 +1432,17 @@ export async function answerItem(
       verdict: 'partially_correct',
       evaluatedBy: 'rule',
       reply: staffLineReply(learner.locale, staffCheck, item.attempts),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (rule === 'parts_left' && codeCheck !== null) {
+    // Ein Programm, von dem ein Teil hält (issue #262): die ersten Zeilen ihrer Ausgabe, oder
+    // einige Tests ihrer Funktion. Die Frage bleibt offen, wie bei Notenzeile und Teilen, und die
+    // Rückmeldung kommt aus dem echten Lauf („2 von 4 Tests bestanden. summe(2, 3) soll 5 …").
+    judged = {
+      verdict: 'partially_correct',
+      evaluatedBy: 'rule',
+      reply: codeReply(learner.locale, codeCheck, item.attempts),
       gaveHint: false,
       revealed: false,
     };
@@ -1453,6 +1524,20 @@ export async function answerItem(
         staffCheck !== null
           ? staffLineReply(learner.locale, staffCheck, item.attempts)
           : staffAgain(learner.locale, staffTask),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (givesHints(session.mode) && rule === 'incorrect' && codeCheck !== null) {
+    // Eine falsche Antwort auf eine Programmfrage bekommt ihre Zeile von Code, bei jedem Versuch
+    // (issue #262). Nicht aus Sparsamkeit, sondern wegen Regel 5: der Tutor kann das Programm
+    // nicht ausführen, und ein Modell, das über die Ausgabe eines Programms schreibt, das es
+    // nicht hat laufen lassen, klingt sicher und kann falsch sein. Code hat den Lauf und nennt,
+    // was er ergeben hat — den ersten Test, der scheitert, oder die Zeile, ab der die Ausgabe
+    // abweicht. Die dritte Fehlprobe erklärt die Lösung, wie überall (der Zweig oben greift vorher).
+    judged = {
+      verdict: 'incorrect',
+      evaluatedBy: 'rule',
+      reply: codeReply(learner.locale, codeCheck, item.attempts),
       gaveHint: false,
       revealed: false,
     };

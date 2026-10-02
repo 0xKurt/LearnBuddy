@@ -82,6 +82,7 @@ import {
 } from '../../components/practice/StaffAnswer.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMask } from '../../components/lb/EdgeFade.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
+import { CodeComposer } from '../../components/practice/CodeComposer.js';
 import { Reexplain } from '../../components/practice/Reexplain.js';
 import { AgainButton } from '../../components/practice/AgainButton.js';
 import { SessionSummary } from '../../components/practice/SessionSummary.js';
@@ -259,6 +260,9 @@ export default function PracticeScreen() {
    * leeren Zeile, und nichts Geschriebenes rutscht hinein.
    */
   const [written, setWritten] = useState<{ itemId: string; answer: StaffAnswerState } | null>(null);
+  // Was sie in das Code-Feld geschrieben hat, zu GENAU einer Frage (issue #262): eine andere
+  // Frage beginnt wieder mit ihrem eigenen Anfang (`starter`).
+  const [coded, setCoded] = useState<{ itemId: string; value: string } | null>(null);
   /** The pronunciation judgement while the model is still listening (issue #8). */
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -898,14 +902,26 @@ export default function PracticeScreen() {
   // zu antworten: ein Antwortfeld gibt es daneben nicht, und das eine „Prüfen“ steht darunter.
   // Der Bruchbalken bleibt der andere Fall derselben Fläche — er schreibt ins Feld, sie nicht.
   const staff = open && item.surface?.mode === 'notes' ? item.surface : null;
-  const barSurface = open && item.surface && item.surface.mode !== 'notes' ? item.surface : null;
+  const barSurface =
+    open && item.surface && (item.surface.mode === 'shade' || item.surface.mode === 'pick')
+      ? item.surface
+      : null;
+  // Ein Programm (issue #262): entweder tippt sie die Zeile an, in der es abbricht — dann sind
+  // die Zeilen in der Karte die Antwort und es gibt kein Feld —, oder sie schreibt Code bzw. die
+  // Ausgabe in ein Feld mit fester Zeichenbreite. Beides ist der GANZE Weg zu antworten.
+  const codeLine = open && item.surface?.mode === 'code_line' ? item.surface : null;
+  const codeType = open && item.surface?.mode === 'code_type' ? item.surface : null;
   const typed =
     open &&
     choices === null &&
     tapChoices === null &&
     board === null &&
     staff === null &&
+    codeLine === null &&
+    codeType === null &&
     !speaking;
+  /** Ihr Code zu DIESER Frage, sonst der Anfang, den die Frage mitbringt. */
+  const codeValue = coded?.itemId === item.id ? coded.value : (codeType?.starter ?? '');
   /** Her arrangement of THIS question; a different question starts with an empty board. */
   const boardAnswer = arranged?.itemId === item.id ? arranged.answer : EMPTY_BOARD_ANSWER;
   /** Ihre Notenzeile zu DIESER Frage; eine andere Frage beginnt mit einer leeren Zeile. */
@@ -1062,6 +1078,27 @@ export default function PracticeScreen() {
                   imageMaxHeight={Math.min(180, Math.round(windowHeight * 0.2))}
                   fromBuddy={item.origin === 'buddy'}
                   minHeight={cardMin}
+                  pickLine={
+                    codeLine
+                      ? {
+                          disabled: locked,
+                          // Eine schon falsch angetippte Zeile steht im Gespräch als „Zeile 3".
+                          tried: new Set(
+                            Array.from({ length: codeLine.lines }, (_, i) => i + 1).filter((n) =>
+                              tried.has(t('practice:code.line_named', { line: n })),
+                            ),
+                          ),
+                          onPick: (n) => {
+                            tapped('check');
+                            void answer(
+                              item.id,
+                              { text: String(n), via: 'tapped' },
+                              t('practice:code.line_named', { line: n }),
+                            );
+                          },
+                        }
+                      : undefined
+                  }
                   // Her short answer appears in the gap of a fill-in sentence while she types.
                   answer={
                     typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined
@@ -1319,6 +1356,18 @@ export default function PracticeScreen() {
               {t('practice:check')}
             </Btn>
           </BottomBar>
+        ) : null}
+        {codeType ? (
+          <CodeComposer
+            key={item.id}
+            purpose={codeType.purpose}
+            starter={codeType.starter}
+            value={codeValue}
+            disabled={locked}
+            onChange={(next) => setCoded({ itemId: item.id, value: next })}
+            // Getippt, nicht angetippt: Code und Ausgabe sind PRODUZIERT (issue #163).
+            onCheck={(value) => void answer(item.id, { text: value }, value)}
+          />
         ) : null}
         {typed ? (
           <AnswerComposer

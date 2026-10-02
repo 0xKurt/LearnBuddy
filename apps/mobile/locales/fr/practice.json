@@ -221,5 +221,19 @@
     "partially_correct": "Presque",
     "incorrect": "Pas tout à fait",
     "unchecked": "Non vérifié"
+  },
+  "code": {
+    "block_label": "Programme de {{count}} lignes",
+    "line_label": "Ligne {{line}} : {{code}}",
+    "line_empty": "ligne vide",
+    "pick_hint": "Répond avec cette ligne.",
+    "tried": "déjà essayé",
+    "output_label": "Ce que le programme affiche",
+    "output_placeholder": "L’affichage, ligne par ligne",
+    "program_label": "Ton programme",
+    "indent": "Indenter",
+    "indent_label": "Indenter de quatre espaces",
+    "scroll_hint": "Les lignes larges se font défiler sur le côté.",
+    "line_named": "Ligne {{line}}"
   }
 }

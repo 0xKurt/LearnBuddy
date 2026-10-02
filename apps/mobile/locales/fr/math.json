@@ -310,7 +310,9 @@
     "polygons": "Polygones : {{list}}",
     "circle": "Cercle de centre {{center}} et de rayon {{radius}}",
     "table": "Tableau de {{rows}} lignes. Colonnes : {{header}}",
-    "row": "Ligne {{n}} : {{cells}}"
+    "row": "Ligne {{n}} : {{cells}}",
+    "code": "Programme de {{count}} lignes : {{lines}}",
+    "code_line": "Ligne {{line}} : {{code}}"
   },
   "keys": {
     "row": "Symboles mathématiques",

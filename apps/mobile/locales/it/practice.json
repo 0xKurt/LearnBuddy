@@ -221,5 +221,19 @@
     "partially_correct": "Quasi",
     "incorrect": "Non ancora",
     "unchecked": "Non controllato"
+  },
+  "code": {
+    "block_label": "Programma di {{count}} righe",
+    "line_label": "Riga {{line}}: {{code}}",
+    "line_empty": "riga vuota",
+    "pick_hint": "Risponde con questa riga.",
+    "tried": "già provato",
+    "output_label": "Che cosa stampa il programma",
+    "output_placeholder": "L’output, riga per riga",
+    "program_label": "Il tuo programma",
+    "indent": "Rientra",
+    "indent_label": "Rientra di quattro spazi",
+    "scroll_hint": "Le righe larghe si possono spostare di lato.",
+    "line_named": "Riga {{line}}"
   }
 }

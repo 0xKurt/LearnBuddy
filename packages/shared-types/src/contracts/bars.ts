@@ -14,6 +14,7 @@
 
 import { z } from 'zod';
 
+import { CodeLineSurface, CodeTypeSurface } from './code.js';
 import { StaffWriteSurface } from './staff.js';
 
 /**
@@ -108,7 +109,8 @@ export type BarShape = z.infer<typeof BarShape>;
  * can be on the same question: the sum of two bars is read above and shaded below.
  *
  * Every member belongs to a question whose text, drawing and key CODE computed — the fraction
- * bar from a `BarTask` (issue #162), the staff from a `StaffTask` (`staff.ts`, issue #226).
+ * bar from a `BarTask` (issue #162), the staff from a `StaffTask` (`staff.ts`, issue #226), the
+ * program from a `CodeTask` (`code.ts`, issue #262).
  * That is not a coincidence: a surface is only honest where the key cannot disagree with the
  * picture, which is why the union lives next to the first of them and takes the second in from
  * its own file rather than growing a second concept.
@@ -122,6 +124,14 @@ export const AnswerSurface = z.discriminatedUnion('mode', [
     .describe('Two drawn bars; tapping one answers with its fraction.'),
   StaffWriteSurface.describe(
     'An empty staff of `bars` bars; tapping one places a note, and the line she writes is the answer.',
+  ),
+  // A program's lines to tap, or a field for code or output (issue #262): the third computed
+  // source, `contracts/code.ts`. The program itself is the figure; the key came from running it.
+  CodeLineSurface.describe(
+    'The lines of the program shown above; tapping one answers with its number.',
+  ),
+  CodeTypeSurface.describe(
+    'A monospace field for a program or its output, already holding `starter`.',
   ),
 ]);
 export type AnswerSurface = z.infer<typeof AnswerSurface>;

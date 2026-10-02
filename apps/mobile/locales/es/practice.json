@@ -221,5 +221,19 @@
     "partially_correct": "Casi",
     "incorrect": "Todavía no del todo",
     "unchecked": "Sin comprobar"
+  },
+  "code": {
+    "block_label": "Programa de {{count}} líneas",
+    "line_label": "Línea {{line}}: {{code}}",
+    "line_empty": "línea vacía",
+    "pick_hint": "Responde con esta línea.",
+    "tried": "ya probado",
+    "output_label": "Lo que muestra el programa",
+    "output_placeholder": "La salida, línea por línea",
+    "program_label": "Tu programa",
+    "indent": "Sangría",
+    "indent_label": "Sangrar cuatro espacios",
+    "scroll_hint": "Las líneas anchas se pueden desplazar hacia un lado.",
+    "line_named": "Línea {{line}}"
   }
 }
