@@ -70,10 +70,18 @@ export async function exportAccount(db: Db, accountId: string): Promise<Record<s
        from learners where account_id = $1`,
     [accountId],
   );
+  // Wrong-PIN and request counters (counts and times only): stored about the account, so in
+  // its export (docs/privacy.md §What is stored).
+  const attemptCounters = await db.query(
+    `select scope, window_start, count, locked_until, refused, updated_at
+       from attempt_counters where account_id = $1 order by scope`,
+    [accountId],
+  );
   const out: Record<string, unknown> = {
     exported_format: 'learnbuddy.export.v1',
     account,
     learner,
+    attempt_counters: attemptCounters,
   };
   if (!learner) return out;
   for (const table of LEARNER_TABLES) {
@@ -100,6 +108,21 @@ export async function exportAccount(db: Db, accountId: string): Promise<Record<s
   out.material_passages = await db.query(
     `select material_id, position, length(text) as chars, created_at
        from material_passages where learner_id = $1`,
+    [learner.id],
+  );
+  // Spots of a page the reading could not decide, and the reading she picked (issue #164):
+  // what she was asked about her own sheet and what she answered — hers.
+  out.material_unclear_spots = await db.query(
+    `select material_id, sheet_id, ref, page, task, about, readings, status, answer, items_added,
+            asked_at, expires_at, answered_at, read_at
+       from material_unclear_spots where learner_id = $1 order by seq`,
+    [learner.id],
+  );
+  // Buddy's spoken audio, kept 24 hours (ADR 0008): what exists, not the audio — the sentence
+  // itself is not stored, only a hash of it (docs/privacy.md §What is stored).
+  out.speech_cache = await db.query(
+    `select key, mime, octet_length(audio) as bytes, created_at, expires_at
+       from speech_cache where learner_id = $1 order by created_at`,
     [learner.id],
   );
   out.push_tokens = await db.query(
