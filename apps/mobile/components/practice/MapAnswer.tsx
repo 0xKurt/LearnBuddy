@@ -18,7 +18,7 @@ import type {
   StructuredAnswer,
   TapValue,
 } from '@learnbuddy/shared-types/contracts';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, TextInput, View } from 'react-native';
 
@@ -26,8 +26,11 @@ import { mapFeature, mapName } from '../../../../packages/shared-maps/src/index.
 import { useDraft } from '../../lib/drafts.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import {
+  gutterOf,
+  lookWindow,
   mapSize,
   tapOnMap,
+  unitsAt,
   wholeMap,
   type MapFig,
   type MapWindow,
@@ -76,6 +79,9 @@ function degrees(text: string | undefined, max: number): number | null {
 
 type Dir = 'N' | 'S' | 'E' | 'W';
 
+/** The map's corners, the radius of every card around it. */
+const RADIUS = 12;
+
 export function MapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const { t } = useTranslation('practice');
   const { palette } = useTheme();
@@ -84,6 +90,7 @@ export function MapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const kept = read(keptText);
   const save = (next: Kept) => keep(JSON.stringify({ ...kept, ...next }));
   const [zoom, setZoom] = useState<MapWindow | null>(null);
+  const lastSize = useRef({ width: 1, height: 1 });
   const locale = currentLocale();
   const dir = (d: Dir) => t(`map.dir_${d}`);
 
@@ -136,8 +143,9 @@ export function MapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
     if (value) onSubmit({ type: 'figure_tap', value }, shown(value));
   };
 
+  const reading = fig.ask !== 'tap';
   const readout =
-    zoom !== null
+    zoom !== null && !reading
       ? t('figure.zoomed')
       : fig.ask === 'tap'
         ? chosen
@@ -160,24 +168,34 @@ export function MapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
       >
         {t('map.whole')}
       </Btn>
+    ) : reading ? (
+      // A map she only reads can be magnified round what is marked: a magnifier, not an answer.
+      <Btn
+        size="sm"
+        variant="ghost"
+        pill
+        disabled={disabled}
+        onPress={() => setZoom(lookWindow(fig, lastSize.current, null))}
+        accessibilityHint={t('map.look_hint')}
+      >
+        {t('map.look')}
+      </Btn>
     ) : null;
 
   const canvas = (box: { width: number; height: number }) => {
-    const size = mapSize(fig.area, box);
+    const gutter = gutterOf(fig);
+    const size = mapSize(fig.area, {
+      width: box.width - gutter.left,
+      height: box.height - gutter.bottom,
+    });
+    lastSize.current = size;
     const win = zoom ?? wholeMap(fig.area);
     return (
       <View
         accessible
         accessibilityRole="image"
         accessibilityLabel={`${t(`map.canvas_${fig.area}`)}. ${readout}`}
-        style={{
-          width: size.width,
-          height: size.height,
-          borderRadius: 12,
-          overflow: 'hidden',
-          borderWidth: 1,
-          borderColor: palette.hairline,
-        }}
+        style={{ width: size.width + gutter.left, height: size.height + gutter.bottom }}
       >
         <MapSvg
           area={fig.area}
@@ -185,18 +203,40 @@ export function MapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
           win={win}
           width={size.width}
           height={size.height}
+          gutter={gutter}
           graticule={fig.graticule}
           mark={fig.mark}
           chosen={chosen}
           dir={dir}
         />
-        {fig.ask === 'tap' ? (
+        {/* The map's frame, over the map only (the degrees stand outside it). */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: gutter.left,
+            top: 0,
+            width: size.width,
+            height: size.height,
+            borderRadius: RADIUS,
+            borderWidth: 1,
+            borderColor: palette.hairline,
+          }}
+        />
+        <View style={{ position: 'absolute', left: gutter.left, top: 0 }}>
           <TouchLayer
             testID="figure-touch"
             width={size.width}
             height={size.height}
             disabled={disabled}
             onTap={(x, y) => {
+              if (reading) {
+                // A look: magnify round the tap; a tap on the magnified map goes back.
+                setZoom(
+                  zoom ? null : lookWindow(fig, size, unitsAt(wholeMap(fig.area), size, x, y)),
+                );
+                return;
+              }
               const res = tapOnMap(fig, size, zoom, x, y);
               if (res.kind === 'zoom' && res.window) setZoom(res.window);
               else if (res.kind === 'feature') {
@@ -205,7 +245,7 @@ export function MapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
               }
             }}
           />
-        ) : null}
+        </View>
       </View>
     );
   };

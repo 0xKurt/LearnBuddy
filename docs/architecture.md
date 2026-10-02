@@ -2062,6 +2062,85 @@ all the height the question and Buddy's reply leave (`FIGURE_REPLY_ROOM` = 200 i
 for that box (`FigureSurface.tsx`), top-aligned under the question. Walkthrough:
 `tests/web/figures.spec.ts`, shots 50–68 at 390×844 and 360×740, light and dark.
 
+**Maps — a stumme Karte from Natural Earth** (`packages/shared-maps`, `practice/mapTask.ts`,
+`components/practice/MapAnswer.tsx`, `figure/MapSvg.tsx`, `lib/maps/mapFrame.ts`; issue #251 from
+the analysis #224). A map is a MEMBER of the tap figures above (`TapFigure` kind `map`, three
+`TapValue` kinds), drawn under the same `TouchLayer`, with the same magnifying first tap and the
+same `FigureSurface` — not a second mechanism. No migration: it is a `figure_tap` item.
+
+_Data._ Natural Earth v5.1.2 (public domain; `docs/privacy.md` §Map data), turned into TypeScript by
+`packages/shared-maps/scripts/build-maps.mjs` (pinned tag, files fetched with curl into a cache
+outside the repo, output committed in `src/data/`). Three areas in an equirectangular projection
+(x scaled by cos φ of the area's middle, so parallels and meridians stay straight and a graticule
+reads exactly), 2000 units wide, quantized to whole units:
+
+| area      | areas layer                                          | rivers                            | cities           | zones |
+| --------- | ---------------------------------------------------- | --------------------------------- | ---------------- | ----- |
+| `world`   | 175 countries (1:110m)                               | 12 (1:110m, names in 5 languages) | 162 capitals     | 5     |
+| `europe`  | 65 countries (1:50m, clipped)                        | 10 (1:10m, joined segments)       | 51 capitals      | —     |
+| `germany` | the 16 Länder (1:10m admin-1), neighbours as context | 9 (1:10m)                         | 16 Land capitals | —     |
+
+Borders are simplified per shared ARC (Douglas–Peucker between junctions), so two neighbours use
+the same points and never gap or overlap; neighbours (`neighbours`) come from the shared vertices
+of the source. Ids are the data's: ISO 3166-1 alpha-3 (`ITA`), ISO 3166-2 (`DE-BY`), `r-…`, `c-…`,
+`z-…`. Names are Natural Earth's (`NAME_DE/EN/FR/ES/IT`, the long and formal name). Its large
+rivers carry only a local and an English name and are split into differently named segments; the
+build lists which segment names form one river and which of them is the German one, and fails when
+a name is not in the data — it selects, it never invents. The **zones** are the illumination zones
+(tropics ±23.44°, polar circles ±66.56°), computed in `features.ts`, because they have exact
+borders; the four "Klimazonen" of an atlas have none and are not offered. Not built: mountains,
+lakes, historical maps, UK/US states (#251 lists them as later uses).
+
+_Regel 0, the model._ It writes five short fields on the `figure_tap` draft — `map: {area, layer,
+ask, feature, graticule}`, one nullable branch (#281) — and names the feature by NAME. Code resolves
+it (`resolveMapName`: case, accents, ß, hyphens and written-out umlauts set aside); for `cities` a
+country or Land resolves to ITS capital from the data. Dropped: a name of no feature or of two
+(`map_feature`), zones off the world map or `coords` off the capitals (`map_form`), a tap key a
+finger cannot tell apart on the smallest phone (`too_small`, see below), a `name` question whose
+feature has no name in her language (`no_name` — her answer could not be judged), a prompt that
+names the marked feature or prints the position (`map_given_away`). The model never writes an id,
+a coordinate or a capital.
+
+_Regel 0, her answer_ (0 model calls):
+
+| ask      | she gives                   | key (server only)     | checked by code                                                                                                                                                                              |
+| -------- | --------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tap`    | a feature id (her tap)      | the feature id        | same id; a neighbour is "knapp daneben", what she tapped is named; from the 2nd miss the compass direction (help)                                                                            |
+| `name`   | a typed name                | the marked feature id | any of its names → right; a slip of one (the typo rule of typed words) that is no other feature's name → right, with the spelling; another feature's name → named as neighbour or "woanders" |
+| `coords` | latitude/longitude, whole ° | the city's position   | within `COORD_TOLERANCE` (Germany ±1°, Europe ±2.5°, world ±5°); latitude or longitude right, swapped, hemisphere wrong are named                                                            |
+
+The view carries the marked feature's OUTLINE (`mark`), never its id — a view with `ITA` would carry
+the answer to "Wie heißt das markierte Land?". An id of another layer, a name on a tap question, a
+reading that is no whole degree: 422 `parts_mismatch`, not counted. A typed name or reading is
+recorded as `typed`, a tap as `tapped` (#163).
+
+_44 pt, always._ `hit.ts` decides targets for app and server alike: a shape wide enough is its own
+target; a shape too small (Berlin, Bremen), a city or a thin zone gets a 44 pt disc round its
+anchor (the pole of inaccessibility from the build), which wins over the shape around it; a river
+a 44 pt band. A tap within reach of a small target on the whole map MAGNIFIES (×6.5 Germany, ×5
+Europe, ×12 world — never less than on the smallest phone, `MAP_MIN_BOX` 328 × 236), the second tap
+chooses; "Ganze Karte" goes back. A key is tappable only if its disc owns 44 pt at that zoom on the
+smallest phone (`isTappable`): all 16 Länder are (tested), Mainz next to Wiesbaden is not.
+
+_App._ No names on the map, ever. Under it stands THAT something is chosen or marked ("Deine Wahl ist
+markiert.", "Ein Land ist markiert.") — never its name, which would be the solution; the reply
+names it after "Prüfen". A name is typed in one pill with "Prüfen"; a position in two degree
+fields, each with a N/S or O/W button that turns over (typed, not tapped: a tap on the marked point
+would hand her the coordinates instead of letting her read them). Colours: `figure.sea/land/
+landContext/border/river` per palette, light and dark; chosen and marked are outlined, not only
+coloured. Not accessible without sight — a stumme Karte has no non-visual equivalent; the map's
+accessible label names the map and what is marked.
+
+_Bundle (measured 02.10.2026, web export)._ The generated data is 198 KiB of source (world 100,
+Europe 54, Germany 44 — 1:110m for the world keeps it small; 2000 units and a tolerance of
+1–1.6 units keep borders smooth at the largest zoom). The web bundle with the maps is 4 270 972 B
+(gzip −9: 1 119 683 B), without the map modules 4 062 710 B (1 042 842 B): **+208 KB raw, +77 KB
+gzipped (+4.9 % / +7.4 %)**. Measured by exporting the same commit once with `MapAnswer` and
+`onMap` cut out. Not measured: the native Hermes bundle (expected in the same range, unverified).
+
+Walkthrough: `tests/web/maps.spec.ts` (all 16 Länder tapped on 360×740, a country named, Berlin
+read off the graticule, a zone tapped), shots 70–79 at 390×844 and 360×740, light and dark.
+
 **Die Notenzeile — lesen, selbst schreiben, anhören** (`contracts/staff.ts`,
 `practice/staff.ts`, `components/math/StaffLine.tsx`, `lib/music/`, Migration
 `0078_staff_tasks.sql`; Issue #226 aus der Analyse #224). Musik war das schwächste Fach: Notenschrift

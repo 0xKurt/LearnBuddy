@@ -288,7 +288,7 @@
     "marked_zones": "Eine Zone ist markiert.",
     "name_label": "Name des Markierten",
     "name_placeholder": "Wie heißt es?",
-    "coords_hint": "Lies Breite und Länge in ganzen Grad ab.",
+    "coords_hint": "Lies Breite und Länge ab.",
     "your_position": "Deine Angabe: {{position}}",
     "position": "{{lat}}, {{lon}}",
     "lat": "Breite",
@@ -302,6 +302,8 @@
     "dir_long_N": "Nord",
     "dir_long_S": "Süd",
     "dir_long_E": "Ost",
-    "dir_long_W": "West"
+    "dir_long_W": "West",
+    "look": "Vergrößern",
+    "look_hint": "Vergrößert die Karte um das Markierte."
   }
 }

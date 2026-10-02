@@ -288,7 +288,7 @@
     "marked_zones": "Une zone est marquée.",
     "name_label": "Nom de ce qui est marqué",
     "name_placeholder": "Comment ça s'appelle ?",
-    "coords_hint": "Lis la latitude et la longitude en degrés entiers.",
+    "coords_hint": "Lis latitude et longitude.",
     "your_position": "Ta lecture : {{position}}",
     "position": "{{lat}}, {{lon}}",
     "lat": "Lat.",
@@ -302,6 +302,8 @@
     "dir_long_N": "Nord",
     "dir_long_S": "Sud",
     "dir_long_E": "Est",
-    "dir_long_W": "Ouest"
+    "dir_long_W": "Ouest",
+    "look": "Agrandir",
+    "look_hint": "Agrandit la carte autour de ce qui est marqué."
   }
 }

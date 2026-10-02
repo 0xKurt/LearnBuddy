@@ -288,7 +288,7 @@
     "marked_zones": "A zone is marked.",
     "name_label": "Name of the marked one",
     "name_placeholder": "What's it called?",
-    "coords_hint": "Read latitude and longitude in whole degrees.",
+    "coords_hint": "Read latitude and longitude.",
     "your_position": "Your reading: {{position}}",
     "position": "{{lat}}, {{lon}}",
     "lat": "Lat.",
@@ -302,6 +302,8 @@
     "dir_long_N": "North",
     "dir_long_S": "South",
     "dir_long_E": "East",
-    "dir_long_W": "West"
+    "dir_long_W": "West",
+    "look": "Zoom in",
+    "look_hint": "Magnifies the map around what is marked."
   }
 }

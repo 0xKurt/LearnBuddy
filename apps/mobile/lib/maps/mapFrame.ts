@@ -7,9 +7,11 @@ import type { FigureTapTaskView, TapFigure, TapValue } from '@learnbuddy/shared-
 
 import {
   fitScale,
+  MAP_LOOK_ZOOM,
   mapArea,
   mapFeature,
   mapTap,
+  pathRings,
   zoomScale,
   zoomWindow,
   type MapAreaId,
@@ -65,9 +67,45 @@ export function tapOnMap(
   const p = unitsAt(win, size, x, y);
   const scale = size.width / win.width;
   const whole = { width: size.width, height: size.height };
-  const res = mapTap(fig.area, fig.layer, scale, p, zoomed !== null, zoomScale(fig.area, whole));
-  if (res.kind === 'zoom') return { ...res, window: zoomWindow(fig.area, whole, p) };
+  const to = zoomScale(fig.area, whole, fig.layer);
+  const res = mapTap(fig.area, fig.layer, scale, p, zoomed !== null, to);
+  if (res.kind === 'zoom') return { ...res, window: zoomWindow(fig.area, whole, p, to) };
   return res;
+}
+
+/**
+ * The magnified part of a map she only READS (a marked feature, the graticule): round the
+ * point she tapped, or round the mark when she asks for it ("Vergrößern").
+ */
+export function lookWindow(
+  fig: MapFig,
+  size: { width: number; height: number },
+  at: { x: number; y: number } | null,
+): MapWindow {
+  const whole = { width: size.width, height: size.height };
+  const p = at ??
+    markCentre(fig) ?? { x: mapArea(fig.area).width / 2, y: mapArea(fig.area).height / 2 };
+  return zoomWindow(fig.area, whole, p, fitScale(fig.area, whole) * MAP_LOOK_ZOOM);
+}
+
+/** The middle of what the question marks, in units. */
+export function markCentre(fig: MapFig): { x: number; y: number } | null {
+  const m = fig.mark;
+  if (!m) return null;
+  if (m.form === 'point') return { x: m.x, y: m.y };
+  const pts = pathRings(m.d).flat();
+  if (pts.length === 0) return null;
+  const xs = pts.map((p) => p.x);
+  const ys = pts.map((p) => p.y);
+  return {
+    x: (Math.min(...xs) + Math.max(...xs)) / 2,
+    y: (Math.min(...ys) + Math.max(...ys)) / 2,
+  };
+}
+
+/** Room for the graticule's degrees beside and under the map (pt): none without a graticule. */
+export function gutterOf(fig: MapFig): { left: number; bottom: number } {
+  return fig.graticule ? { left: 40, bottom: 18 } : { left: 0, bottom: 0 };
 }
 
 /** Does this kept value answer this map? (The server refuses anything else.) */

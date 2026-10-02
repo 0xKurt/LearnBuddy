@@ -31,8 +31,19 @@ export const MAP_TOUCH = 44;
  */
 export const MAP_MIN_BOX = { width: 328, height: 236 } as const;
 
-/** How much the first tap near a small target magnifies, per area. */
-export const MAP_ZOOM: Record<MapAreaId, number> = { world: 12, europe: 5, germany: 6.5 };
+/**
+ * How much the first tap near a small target magnifies, per area and layer: as little as keeps
+ * every target apart, so the magnified map still shows where she is (the Länder ×3, but two
+ * capitals 26 km apart need ×6.5).
+ */
+export const MAP_ZOOM: Record<MapAreaId, Record<MapLayer, number>> = {
+  world: { areas: 12, rivers: 12, cities: 12, zones: 4 },
+  europe: { areas: 5, rivers: 5, cities: 5, zones: 5 },
+  germany: { areas: 3, rivers: 3, cities: 6.5, zones: 3 },
+};
+
+/** How much a map she only READS (a marked feature, the graticule) magnifies on a tap. */
+export const MAP_LOOK_ZOOM = 2.5;
 
 export type Pt = { x: number; y: number };
 
@@ -155,8 +166,12 @@ export function fitScale(area: MapAreaId, box: { width: number; height: number }
 }
 
 /** The scale after the first tap: the area's zoom of this box, never less than on the smallest phone. */
-export function zoomScale(area: MapAreaId, box: { width: number; height: number }): number {
-  return Math.max(fitScale(area, box), fitScale(area, MAP_MIN_BOX)) * MAP_ZOOM[area];
+export function zoomScale(
+  area: MapAreaId,
+  box: { width: number; height: number },
+  layer: MapLayer,
+): number {
+  return Math.max(fitScale(area, box), fitScale(area, MAP_MIN_BOX)) * MAP_ZOOM[area][layer];
 }
 
 /** Too small to be its own target at this scale: a disc round the anchor stands in. */
@@ -232,7 +247,7 @@ export function isTappable(area: MapAreaId, layer: MapLayer, id: string): boolea
   const a = mapArea(area);
   const [ax, ay] = f.anchor;
   if (ax < 0 || ay < 0 || ax > a.width || ay > a.height) return false;
-  const s = fitScale(area, MAP_MIN_BOX) * MAP_ZOOM[area];
+  const s = fitScale(area, MAP_MIN_BOX) * MAP_ZOOM[area][layer];
   if (!isSmall(f, s)) return true;
   return fs.every(
     (g) =>
@@ -259,9 +274,10 @@ export function zoomWindow(
   area: MapAreaId,
   box: { width: number; height: number },
   p: Pt,
+  /** The scale to show (pt per unit): `zoomScale` for a tap, more modest for a look. */
+  s: number,
 ): { x: number; y: number; width: number; height: number } {
   const a = mapArea(area);
-  const s = zoomScale(area, box);
   const w = Math.min(a.width, box.width / s);
   const h = Math.min(a.height, box.height / s);
   const x = Math.max(0, Math.min(a.width - w, p.x - w / 2));

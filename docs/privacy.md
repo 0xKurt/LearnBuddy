@@ -263,6 +263,17 @@ Familienkreis hinaus.
   personal details, but they are about the learner's tests. **legal review required before
   enabling.** Without push, Buddy shows everything in the app.
 
+## Map data (bundled, no processor)
+
+The maps of the practice figures (issue #251, `packages/shared-maps`) are built from
+**Natural Earth** (v5.1.2, https://www.naturalearthdata.com), which is in the **public domain**:
+"No permission is needed to use Natural Earth. Crediting the authors is unnecessary" (its terms of
+use). We credit it anyway, here and in `docs/architecture.md` §Practice ("Maps"). The data is
+simplified at build time (`scripts/build-maps.mjs`) and shipped inside the app and the API; nothing
+is fetched at run time and no learner data goes anywhere for a map — Natural Earth is a source, not
+a processor. No entry in the Impressum is required; if the Impressum lists sources, "Kartendaten:
+Natural Earth (gemeinfrei)" is the line.
+
 ## Contact outside the app
 
 Off by default (opt-in: the setting and the phone's permission). Under 16 only the account

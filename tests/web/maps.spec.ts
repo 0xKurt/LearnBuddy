@@ -44,8 +44,7 @@ async function onboardChild(page: Page): Promise<void> {
 async function onPage(page: Page, x: number, y: number): Promise<{ x: number; y: number }> {
   return page.evaluate(
     ([ux, uy]) => {
-      const layer = document.querySelector('[data-testid="figure-touch"]');
-      const svg = layer?.parentElement?.querySelector('svg');
+      const svg = document.querySelector('[data-testid="figure-tap"] svg');
       if (!svg) throw new Error('no map');
       const r = svg.getBoundingClientRect();
       const [vx, vy, vw, vh] = (svg.getAttribute('viewBox') ?? '').split(' ').map(Number);
@@ -143,8 +142,12 @@ test('maps: tap every Land, name a country, read a position, tap a zone (issue #
 
   // ── Berlin's position read off the graticule, in whole degrees. ──
   await expect(page.getByText('Welche Koordinaten hat die markierte Hauptstadt?')).toBeVisible();
-  await expect(page.getByText('Lies Breite und Länge in ganzen Grad ab.')).toBeVisible();
+  await expect(page.getByText('Lies Breite und Länge ab.')).toBeVisible();
   await shot(page, '76-map-coords');
+  // A map she only reads can be magnified round the mark — and back.
+  await page.getByRole('button', { name: 'Vergrößern' }).click();
+  await shot(page, '76b-map-coords-look');
+  await page.getByRole('button', { name: 'Ganze Karte' }).click();
   await page.getByLabel('Breite in Grad').fill('52');
   await page.getByLabel('Länge in Grad').fill('13');
   await page.getByRole('button', { name: 'Nord – tippen für Süd' }).click();

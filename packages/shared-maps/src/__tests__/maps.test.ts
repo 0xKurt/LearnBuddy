@@ -171,7 +171,7 @@ describe('targets (a finger, 44 pt, on the smallest phone)', () => {
 
   it('chooses a large Land on the first tap, magnifies near a small one', () => {
     const fit = fitScale('germany', MAP_MIN_BOX);
-    const zoomTo = zoomScale('germany', MAP_MIN_BOX);
+    const zoomTo = zoomScale('germany', MAP_MIN_BOX, 'areas');
     const by = feature('germany', 'areas', 'DE-BY');
     const at = { x: by.anchor[0], y: by.anchor[1] };
     expect(mapTap('germany', 'areas', fit, at, false, zoomTo)).toEqual({
@@ -197,7 +197,7 @@ describe('targets (a finger, 44 pt, on the smallest phone)', () => {
   it('every tappable small target owns a 44 pt disc when magnified', () => {
     for (const area of MAP_AREAS)
       for (const layer of mapLayers(area)) {
-        const s = fitScale(area, MAP_MIN_BOX) * MAP_ZOOM[area];
+        const s = fitScale(area, MAP_MIN_BOX) * MAP_ZOOM[area][layer];
         const fs = mapFeatures(area, layer);
         for (const f of fs) {
           if (!isTappable(area, layer, f.id) || !isSmall(f, s)) continue;
@@ -218,10 +218,20 @@ describe('targets (a finger, 44 pt, on the smallest phone)', () => {
 
   it('keeps a zoom window inside the map', () => {
     const a = mapArea('germany');
-    const w = zoomWindow('germany', MAP_MIN_BOX, { x: 0, y: 0 });
+    const w = zoomWindow(
+      'germany',
+      MAP_MIN_BOX,
+      { x: 0, y: 0 },
+      zoomScale('germany', MAP_MIN_BOX, 'areas'),
+    );
     expect(w.x).toBe(0);
     expect(w.y).toBe(0);
-    const e = zoomWindow('germany', MAP_MIN_BOX, { x: a.width, y: a.height });
+    const e = zoomWindow(
+      'germany',
+      MAP_MIN_BOX,
+      { x: a.width, y: a.height },
+      zoomScale('germany', MAP_MIN_BOX, 'areas'),
+    );
     expect(e.x + e.width).toBeCloseTo(a.width, 6);
     expect(e.y + e.height).toBeCloseTo(a.height, 6);
   });
@@ -229,7 +239,7 @@ describe('targets (a finger, 44 pt, on the smallest phone)', () => {
   it('chooses the zone a tap is in, the tropics between the tropics', () => {
     const a = mapArea('world');
     const [, y] = toUnits(a, 10, 0);
-    const s = zoomScale('world', MAP_MIN_BOX);
+    const s = zoomScale('world', MAP_MIN_BOX, 'zones');
     expect(mapTap('world', 'zones', s, { x: 1000, y }, true, s)).toEqual({
       kind: 'feature',
       id: 'z-tropics',
