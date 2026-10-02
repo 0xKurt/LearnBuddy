@@ -5,10 +5,12 @@
 // - <SlideIn>: the next question comes in softly from the right;
 // - <Appear>: a plain fade (a button that replaces another in place).
 // Each runs once, when it mounts; `index` staggers a group. Reduce motion: no movement,
-// the content is simply there.
+// and the fade stays — the same cross-fade, in place (issue #126). It used to be "the
+// content is simply there", and `withTiming`'s default (`ReduceMotion.System`) would have
+// skipped the fade anyway: every card and row popped in one frame.
 
 import { useEffect, useRef, type ReactNode } from 'react';
-import type { StyleProp, ViewProps, ViewStyle } from 'react-native';
+import { Platform, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -17,7 +19,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { DURATION, EASE, RISE, STAGGER } from '../../lib/theme/motion.js';
+import { DURATION, fadeTiming, RISE, STAGGER } from '../../lib/theme/motion.js';
+import { sharedEntrance } from '../../lib/theme/reduceMotion.js';
 
 type Props = Omit<ViewProps, 'style'> & {
   children: ReactNode;
@@ -32,16 +35,16 @@ type Props = Omit<ViewProps, 'style'> & {
   style?: StyleProp<ViewStyle>;
 };
 
+/** `p` runs 0 → 1 once; `moves` is false when the system asks for less motion. */
 function useEntrance(animate: boolean, delay: number, duration: number) {
-  const reduced = useReducedMotion();
-  const run = animate && !reduced;
-  const p = useSharedValue(run ? 0 : 1);
+  const { moves } = sharedEntrance(useReducedMotion(), Platform.OS);
+  const p = useSharedValue(animate ? 0 : 1);
   useEffect(() => {
-    if (!run) return;
-    p.value = withDelay(delay, withTiming(1, { duration, easing: EASE.standard }));
+    if (!animate) return;
+    p.value = withDelay(delay, withTiming(1, fadeTiming(duration)));
     // Once, on mount (a later change of the props does not replay it).
   }, []);
-  return p;
+  return { p, moves };
 }
 
 export function Rise({
@@ -53,8 +56,12 @@ export function Rise({
   style,
   ...rest
 }: Props) {
-  const p = useEntrance(animate, delay + index * STAGGER, slow ? DURATION.gentle : DURATION.base);
-  const distance = slow ? RISE * 2 : RISE;
+  const { p, moves } = useEntrance(
+    animate,
+    delay + index * STAGGER,
+    slow ? DURATION.gentle : DURATION.base,
+  );
+  const distance = moves ? (slow ? RISE * 2 : RISE) : 0;
   const a = useAnimatedStyle(() => ({
     opacity: p.value,
     transform: [{ translateY: (1 - p.value) * distance }],
@@ -67,10 +74,11 @@ export function Rise({
 }
 
 export function SlideIn({ children, delay = 0, animate = true, style, ...rest }: Props) {
-  const p = useEntrance(animate, delay, DURATION.gentle);
+  const { p, moves } = useEntrance(animate, delay, DURATION.gentle);
+  const distance = moves ? 28 : 0;
   const a = useAnimatedStyle(() => ({
     opacity: p.value,
-    transform: [{ translateX: (1 - p.value) * 28 }],
+    transform: [{ translateX: (1 - p.value) * distance }],
   }));
   return (
     <Animated.View {...rest} style={[style, a]}>
@@ -80,7 +88,7 @@ export function SlideIn({ children, delay = 0, animate = true, style, ...rest }:
 }
 
 export function Appear({ children, delay = 0, animate = true, style, ...rest }: Props) {
-  const p = useEntrance(animate, delay, DURATION.base);
+  const { p } = useEntrance(animate, delay, DURATION.base);
   const a = useAnimatedStyle(() => ({ opacity: p.value }));
   return (
     <Animated.View {...rest} style={[style, a]}>

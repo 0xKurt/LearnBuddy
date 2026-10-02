@@ -18,8 +18,17 @@
 import { Platform } from 'react-native';
 import { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 
-import { DURATION, EASE, motionIsReduced, REDUCE, REDUCE_NEVER, RISE, STAGGER } from './motion.js';
-import { enterPlan, fadePolicy, type FadePolicy } from './reduceMotion.js';
+import {
+  DURATION,
+  EASE,
+  fadeReduce,
+  motionIsReduced,
+  REDUCE,
+  REDUCE_NEVER,
+  RISE,
+  STAGGER,
+} from './motion.js';
+import { enterPlan, type FadePolicy } from './reduceMotion.js';
 
 /** The plan's fade policy as Reanimated's enum. `always` is what keeps a fade a fade. */
 function reduceMotionFor(fade: FadePolicy) {
@@ -51,16 +60,12 @@ export function riseIn(index = 0, rise: number = RISE) {
 
 /** A quiet fade in (no movement): what replaces something in place. */
 export function fadeIn(duration: number = DURATION.base) {
-  return FadeIn.duration(duration)
-    .easing(EASE.standard)
-    .reduceMotion(reduceMotionFor(fadePolicy(Platform.OS)));
+  return FadeIn.duration(duration).easing(EASE.standard).reduceMotion(fadeReduce());
 }
 
 /** A quiet fade out. */
 export function fadeOut(duration: number = DURATION.quick) {
-  return FadeOut.duration(duration)
-    .easing(EASE.standard)
-    .reduceMotion(reduceMotionFor(fadePolicy(Platform.OS)));
+  return FadeOut.duration(duration).easing(EASE.standard).reduceMotion(fadeReduce());
 }
 
 /**

@@ -16,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { DURATION, EASE } from '../../lib/theme/motion.js';
+import { DURATION, EASE, fadeTiming } from '../../lib/theme/motion.js';
 import { BuddyOrb, FILL } from './BuddyOrb.js';
 
 // Must be called at start-up, before the first render (expo-splash-screen).
@@ -36,7 +36,10 @@ export function SplashHandoff({ ready }: { ready: boolean }) {
     if (!ready) return;
     const done = () => setGone(true);
     settle.value = withTiming(1, { duration: DURATION.gentle, easing: EASE.standard });
-    fade.value = withTiming(0, { duration: DURATION.gentle, easing: EASE.standard }, (finished) => {
+    // The veil cross-fades even under reduce motion — a bare `withTiming` would skip and
+    // cut from the splash to the app in one frame (issue #126). The settle is a scale, and
+    // is dropped below.
+    fade.value = withTiming(0, fadeTiming(DURATION.gentle), (finished) => {
       if (finished) runOnJS(done)();
     });
   }, [ready, fade, settle]);

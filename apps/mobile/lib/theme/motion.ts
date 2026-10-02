@@ -9,8 +9,10 @@
 // that moves gets `REDUCE`, a cross-fade gets `REDUCE_NEVER` and the question of what may
 // move is answered by `motionIsReduced()` / lib/theme/reduceMotion.ts. Shared values use
 // `useReducedMotion()` the same way.
-import { AccessibilityInfo } from 'react-native';
-import { Easing, ReduceMotion } from 'react-native-reanimated';
+import { AccessibilityInfo, Platform } from 'react-native';
+import { Easing, ReduceMotion, type WithTimingConfig } from 'react-native-reanimated';
+
+import { fadePolicy } from './reduceMotion.js';
 
 export const DURATION = {
   quick: 150,
@@ -95,6 +97,31 @@ export function watchReducedMotion(): () => void {
     reduced = on;
   });
   return () => sub.remove();
+}
+
+/**
+ * The reduce-motion policy a cross-fade hangs on Reanimated: `REDUCE_NEVER` on a phone,
+ * the system's answer on the web (lib/theme/reduceMotion.ts → `fadePolicy`).
+ */
+export function fadeReduce(): ReduceMotion {
+  return fadePolicy(Platform.OS) === 'always' ? REDUCE_NEVER : REDUCE;
+}
+
+/**
+ * `withTiming` config for an opacity change (issue #126).
+ *
+ * `withTiming`'s own default is `ReduceMotion.System`, which is the same skip as on a layout
+ * animation: with reduce motion on, the value lands in one frame. Every shared-value fade —
+ * a sheet's veil, the splash hand-off, an entrance in components/lb/Motion.tsx — takes its
+ * timing from here, so none of them can quietly fall back to a hard cut. What MOVES alongside
+ * the fade (a rise, a slide, a scale) is dropped by the caller when `useReducedMotion()` says
+ * so; the opacity keeps this timing either way.
+ */
+export function fadeTiming(
+  duration: number,
+  easing: WithTimingConfig['easing'] = EASE.standard,
+): WithTimingConfig {
+  return { duration, easing, reduceMotion: fadeReduce() };
 }
 
 /** Small rise for elements entering (px). */

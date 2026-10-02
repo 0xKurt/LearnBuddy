@@ -7,7 +7,8 @@
 //
 // A warm, calm moment: Buddy's orb, the headline, the sentences on a white card – no
 // confetti, nothing that counts what is left. They arrive one after the other: the orb
-// with a soft halo, then the headline, then each sentence (reduce motion: all at once).
+// with a soft halo, then the headline, then each sentence (reduce motion: the same order,
+// as cross-fades — nothing grows or rises).
 // A session that just ended here also feels like one (a success haptic, once).
 
 import type {
@@ -29,7 +30,7 @@ import Animated, {
 import { haptic } from '../../lib/haptics.js';
 import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { DURATION, EASE } from '../../lib/theme/motion.js';
+import { DURATION, EASE, fadeTiming } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb, type MoonState } from '../lb/BuddyOrb.js';
@@ -133,10 +134,15 @@ function OrbArrival({ celebrate }: { celebrate: boolean }) {
     const go = setTimeout(() => setMoon('happy'), reduced ? 0 : DURATION.gentle);
     return () => clearTimeout(go);
   }, [celebrate, reduced]);
-  const orb = useSharedValue(reduced ? 1 : 0);
+  const orb = useSharedValue(0);
   const halo = useSharedValue(reduced ? 1 : 0);
   useEffect(() => {
-    if (reduced) return;
+    // Reduce motion: the orb fades in where it stands — no growth, no rippling halo, but no
+    // pop either (issue #126).
+    if (reduced) {
+      orb.value = withTiming(1, fadeTiming(DURATION.gentle));
+      return;
+    }
     orb.value = withTiming(1, { duration: DURATION.gentle + 120, easing: EASE.celebrate });
     halo.value = withDelay(
       DURATION.quick,
@@ -144,8 +150,8 @@ function OrbArrival({ celebrate }: { celebrate: boolean }) {
     );
   }, [reduced, orb, halo]);
   const orbStyle = useAnimatedStyle(() => ({
-    opacity: Math.min(1, orb.value * 1.5),
-    transform: [{ scale: 0.7 + orb.value * 0.3 }],
+    opacity: reduced ? orb.value : Math.min(1, orb.value * 1.5),
+    transform: [{ scale: reduced ? 1 : 0.7 + orb.value * 0.3 }],
   }));
   const haloStyle = useAnimatedStyle(() => ({
     opacity: reduced ? 0 : 0.55 * (1 - halo.value),

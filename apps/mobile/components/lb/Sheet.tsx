@@ -23,7 +23,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
+import { DURATION, EASE, fadeTiming, SPRING } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
@@ -72,12 +72,14 @@ export function Sheet({
     if (visible) {
       setMounted(true);
       drag.value = 0;
-      shown.value = reduced ? withTiming(1, { duration: DURATION.quick }) : withSpring(1, SPRING);
+      // Reduce motion: no slide, a short cross-fade — and `fadeTiming`, because a bare
+      // `withTiming` skips itself under the setting and the sheet would pop (issue #126).
+      shown.value = reduced ? withTiming(1, fadeTiming(DURATION.quick)) : withSpring(1, SPRING);
       return;
     }
     shown.value = withTiming(
       0,
-      { duration: reduced ? DURATION.quick : DURATION.base, easing: EASE.standard },
+      reduced ? fadeTiming(DURATION.quick) : { duration: DURATION.base, easing: EASE.standard },
       (finished) => {
         if (finished) runOnJS(setMounted)(false);
       },

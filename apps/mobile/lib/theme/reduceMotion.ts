@@ -46,3 +46,15 @@ export function enterPlan(reduced: boolean, platform: string): EnterPlan {
   // The web never rises either — same Reanimated 4.1 web bug as above.
   return { moves: !reduced && platform !== 'web', fade: fadePolicy(platform) };
 }
+
+/**
+ * The same decision for an entrance driven by a shared value (components/lb/Motion.tsx,
+ * the sheet, the splash hand-off). Those run fine on the web, so the web rule above does not
+ * apply to the movement — only reduce motion takes it away. The opacity always runs through
+ * `fadeTiming` (lib/theme/motion.ts), whose policy is `fadePolicy`: a `withTiming` left on its
+ * default (`ReduceMotion.System`) is skipped exactly like a reduced `FadeIn`, which is how
+ * every `<Rise>` and `<Appear>` still popped after the layout animations were fixed.
+ */
+export function sharedEntrance(reduced: boolean, platform: string): EnterPlan {
+  return { moves: !reduced, fade: fadePolicy(platform) };
+}

@@ -31,7 +31,7 @@ import {
   offsetAroundFocal,
   rubberBand,
 } from '../../lib/gestures.js';
-import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
+import { DURATION, fadeTiming, SPRING } from '../../lib/theme/motion.js';
 import { Btn } from './Btn.js';
 
 type ViewerProps = {
@@ -67,10 +67,11 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
       x.value = 0;
       y.value = 0;
       pull.value = 0;
-      shown.value = withTiming(1, { duration: DURATION.gentle, easing: EASE.standard });
+      // The grow is dropped under reduce motion (below); the fade keeps playing (#126).
+      shown.value = withTiming(1, fadeTiming(DURATION.gentle));
       return;
     }
-    shown.value = withTiming(0, { duration: DURATION.base, easing: EASE.standard }, (done) => {
+    shown.value = withTiming(0, fadeTiming(DURATION.base), (done) => {
       if (done) runOnJS(setMounted)(false);
     });
   }, [visible, shown, scale, x, y, pull]);

@@ -14,7 +14,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { enterPlan, fadePolicy } from '../reduceMotion.js';
+import { enterPlan, fadePolicy, sharedEntrance } from '../reduceMotion.js';
 
 describe('how something enters', () => {
   it('rises and fades on a phone with motion allowed', () => {
@@ -60,5 +60,25 @@ describe('who decides whether a cross-fade plays', () => {
     // chip that only fades must not be treated differently from one that rises.
     for (const os of ['ios', 'android', 'web'])
       for (const reduced of [false, true]) expect(enterPlan(reduced, os).fade).toBe(fadePolicy(os));
+  });
+});
+
+describe('an entrance driven by a shared value (<Rise>, <SlideIn>, <Appear>, the sheet)', () => {
+  it('drops the movement under reduce motion and keeps the fade on a phone', () => {
+    for (const os of ['ios', 'android']) {
+      expect(sharedEntrance(true, os)).toEqual({ moves: false, fade: 'always' });
+      expect(sharedEntrance(false, os)).toEqual({ moves: true, fade: 'always' });
+    }
+  });
+
+  it('may move on the web — the layout-animation bug does not reach shared values', () => {
+    expect(sharedEntrance(false, 'web').moves).toBe(true);
+    expect(sharedEntrance(true, 'web').moves).toBe(false);
+  });
+
+  it('asks the same fade policy as a layout animation, so the two kinds cannot drift apart', () => {
+    for (const os of ['ios', 'android', 'web'])
+      for (const reduced of [false, true])
+        expect(sharedEntrance(reduced, os).fade).toBe(enterPlan(reduced, os).fade);
   });
 });

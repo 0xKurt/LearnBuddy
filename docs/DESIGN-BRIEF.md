@@ -135,7 +135,7 @@ That's it. Anything more impactful is admin-side.
 ### For every learner
 
 - **Self-led, not app-driven.** The learner opens the app because they choose to, not because the app is telling them they have to. The home screen does **not** show "20 questions due" or "you haven't studied in 3 days" or anything that creates obligation. The app is a learning companion that's available when wanted, quiet when not.
-- **Calm.** Not noisy, not flashy, not over-stimulating. Someone who is anxious about a test feels less anxious here, not more.
+- **Calm.** Not noisy, not flashy, not over-stimulating. Someone who is anxious about a test feels less anxious here, not more. With the system's _reduce motion_ on, nothing moves — but nothing pops either: every rise, slide or growth becomes a short cross-fade in place (issue #126; `lib/theme/reduceMotion.ts`, `fadeTiming` in `lib/theme/motion.ts`). Only a list re-ordering itself, which has nothing to fade to, simply stands in its new place.
 - **Patient.** No timers ticking down. No "Hurry!" Nothing punishing a slow response.
 - **Encouraging without being fake.** "Stimmt!" when they're right. Real acknowledgment of what's hard. No constant clapping crowds.
 - **Quick.** From opening the app to answering the first question: a couple of taps. From taking a photo to seeing the first question: under twenty seconds, ideally feeling like ten.

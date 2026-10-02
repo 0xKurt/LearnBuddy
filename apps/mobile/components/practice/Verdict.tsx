@@ -23,7 +23,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { DURATION, EASE } from '../../lib/theme/motion.js';
+import { DURATION, EASE, fadeTiming } from '../../lib/theme/motion.js';
 
 export type VerdictKey = 'correct' | 'partially_correct' | 'incorrect' | 'unchecked';
 
@@ -72,10 +72,13 @@ export function VerdictTag({ verdict, label, fresh }: Props) {
   const reduced = useReducedMotion();
   const animate = fresh && !reduced;
   const right = verdict === 'correct';
-  const shown = useSharedValue(animate ? 0 : 1);
+  // Reduce motion: the chip cross-fades in, the tick stands drawn, nothing scales and
+  // nothing bursts — but it does not pop into place either (issue #126).
+  const shown = useSharedValue(fresh ? 0 : 1);
   const drawn = useSharedValue(animate ? 0 : 1);
 
   useEffect(() => {
+    if (fresh && reduced) shown.value = withTiming(1, fadeTiming(DURATION.base));
     if (!animate) return;
     shown.value = withTiming(1, {
       duration: right ? DURATION.gentle : DURATION.base,
@@ -86,11 +89,13 @@ export function VerdictTag({ verdict, label, fresh }: Props) {
         DURATION.quick,
         withTiming(1, { duration: DURATION.base, easing: EASE.standard }),
       );
-  }, [animate, right, shown, drawn]);
+  }, [animate, fresh, reduced, right, shown, drawn]);
 
   const chip = useAnimatedStyle(() => ({
-    opacity: Math.min(1, shown.value * 1.4),
-    transform: [{ scale: right ? 0.7 + shown.value * 0.3 : 0.94 + shown.value * 0.06 }],
+    opacity: reduced ? shown.value : Math.min(1, shown.value * 1.4),
+    transform: [
+      { scale: reduced ? 1 : right ? 0.7 + shown.value * 0.3 : 0.94 + shown.value * 0.06 },
+    ],
   }));
   const checkProps = useAnimatedProps(() => ({
     strokeDashoffset: CHECK_LENGTH * (1 - drawn.value),
