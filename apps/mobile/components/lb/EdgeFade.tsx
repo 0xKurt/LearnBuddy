@@ -22,13 +22,21 @@ export const EDGE_FADE = 28;
  * The web: the scroll view's own top edge fades out (a CSS mask). Spread into its style.
  * React Native's style types do not know the mask properties; the web renderer passes them on.
  */
-export const topEdgeMask: ViewStyle | null =
-  Platform.OS === 'web'
-    ? ({
-        maskImage: `linear-gradient(to bottom, transparent 0, black ${EDGE_FADE}px)`,
-        WebkitMaskImage: `linear-gradient(to bottom, transparent 0, black ${EDGE_FADE}px)`,
-      } as unknown as ViewStyle)
-    : null;
+export const topEdgeMask: ViewStyle | null = topEdgeMaskFrom(0);
+
+/**
+ * The same mask, with the fade starting `from` points down the scroll view: where something
+ * lies over its top (Buddy's slim bar, components/buddy/TopOverlay.tsx), the visible edge is
+ * that thing's bottom, not the view's top. With the fade at 0 a message scrolled under the bar
+ * came out sliced at its lower edge — half a sentence, or the top of a "Los geht's" button,
+ * peeking out under the card (issue #287). Above `from` the view is hidden anyway.
+ */
+export function topEdgeMaskFrom(from: number): ViewStyle | null {
+  if (Platform.OS !== 'web') return null;
+  const start = Math.max(0, Math.round(from));
+  const gradient = `linear-gradient(to bottom, transparent ${start}px, black ${start + EDGE_FADE}px)`;
+  return { maskImage: gradient, WebkitMaskImage: gradient } as unknown as ViewStyle;
+}
 
 /** Phones: lies over the top edge of the scroll view it is placed after (its parent is the frame). */
 export function TopEdgeFade({ top = 0 }: { top?: number }) {

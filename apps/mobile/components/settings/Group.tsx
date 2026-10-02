@@ -1,5 +1,7 @@
-// A group of settings under a plain heading — a question the learner would
-// ask ("Darf Buddy dir Benachrichtigungen schicken?") or a plain name ("Für Eltern").
+// A group of settings under a plain heading: a short name ("Benachrichtigungen",
+// "Buddys Stimme", "Für Eltern") that fits one line — the contact group used to ask a whole
+// question and broke onto three lines at 360 pt (issue #287); its answer line under the
+// heading ("Ja – nie nach 20:00 Uhr.") still says what is set.
 //
 // On the settings screen every group is closed (CLAUDE.md rule 16: rare
 // settings stay closed until opened): the heading and one line with what is
