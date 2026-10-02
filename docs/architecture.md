@@ -2432,12 +2432,53 @@ word list, so it stays a prompt rule.
   only the math runs (`practice/dollarMath.ts`), a math field as a whole — and rule checks
   compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
   when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
-  may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table) as data
+  may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table,
+  molecule) as data
   (`contracts/figure.ts`); the server drops figures it cannot draw (e.g. an expression that does
   not compile with `@learnbuddy/shared-math` `compileExpression`) without dropping the question.
   A figure is drawn to be READ. What she can work with is a `surface` — today the Bruchbalken
   (§Practice above, issue #162), whose question, picture and key are computed from one reviewed
   task instead of written by the model.
+- **Figures that state numbers (issues #253, #257)** — two figures carry measures, and code
+  checks them in both directions before a question is stored (`practice/figureCheck.ts`, called
+  from `usableItems`); a figure that contradicts its numbers or its key costs the QUESTION, not
+  just the drawing, because the question is built on it (rule 0: rejected, never repaired).
+  - `geometry` is drawn **to scale**. Next to points, segments, polygons and circles it has
+    `angles` (three point names, `deg` = the true size, an optional label), `lengths` (a side and
+    its value), `arrows` (vectors and forces with a value; `resultant` marks the sum),
+    `rays` (`ray`, `light`, or `light_in` — light that ends at a mirror or lens) and `lines`
+    (through two points, to the edge). Checked: every stated angle is that wide in the coordinates
+    (±2°); a polygon whose every angle is given adds up to (n−2)·180° exactly; every stated length
+    and every force fits one common scale (±3 %) — which is what makes Pythagoras and the
+    intercept theorem hold in the drawing; a resultant IS the vector sum of its forces (from one
+    point, or head to tail); a number in a label is the stated value. The one measure labelled
+    `?` is what the key answers, and the key must be what the drawing measures there; two `?`
+    leave the key open and a number question with them is dropped. Rays and lines run to the
+    figure's edge; a point that only marks an arrow's tip or a line's direction has no dot and no
+    name. The new arrays default to empty, and a stored figure is read back through the contract
+    (`storedFigure`), so figures written before #257 still show.
+  - `molecule` is a structural formula as data: atoms with aliases (`a1` …, the hydrogens counted
+    in `h`, a charge) and bonds (order 1–3), drawn as a Lewis formula (lone pairs as dots), a
+    Valenzstrich formula (bars) or a skeletal formula (zigzag, no C and H on carbon).
+    `packages/shared-math/src/molecule.ts` — dependency-free, imported by path in the app so the
+    app draws exactly what the server checked — computes the lone pairs from valence electrons,
+    bonds and charge; refuses an odd electron count, a shell that does not hold (octet, duet,
+    the expanded shells of P, S, Cl, Br, I, the empty shell of a metal ion), unknown elements,
+    dangling or doubled bonds, more than three particles, fused rings and a layout with
+    overlapping atoms; computes the formula (Hill order), the charge, the molar mass and the
+    functional groups by bond pattern (hydroxyl, ether, aldehyde, ketone, carboxyl, ester, amine,
+    amide, alkene, alkyne, halogen — no names). `mark` highlights one group and must be exactly
+    one detected group (its heteroatoms plus the carbons of C=O, C=C, C≡C). `ask` declares that
+    the key IS a computed value — `formula` (counted with `practice/chemistry.ts` `parseFormula`),
+    `lone_pairs` or `molar_mass` (±0.5 %, school tables round) — and a key that disagrees drops
+    the question. Layout: Lewis and Valenzstrich formulas run straight (90°) with every hydrogen,
+    a side branch on a longer bond when its hydrogens would sit on its neighbours'; skeletal
+    formulas zigzag (120°); rings are regular polygons with the second line of a double bond
+    inside. Naming a molecule is answered like any short answer; a "which structure is ethanol"
+    choice between four drawings waits for picture options (#231).
+    Both figures describe themselves in words for a screen reader (angles with sizes, sides,
+    forces, rays; every bond and the lone pairs). `figureCheck.test.ts`, `molecule.test.ts`,
+    `figures-to-scale.int.test.ts`, walkthrough `tests/web/figures.spec.ts`.
 
 ## Voice
 
