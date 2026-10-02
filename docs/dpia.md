@@ -42,7 +42,9 @@ Chat-Nachrichten · Zusammenfassungen beendeter Gespräche (zwei bis vier Sätze
 geschrieben, `buddy_session_summaries`) · Fotos von Arbeitsblättern und der daraus gelesene Text
 · erzeugte Fragen und ihre Antworten · Lernstand je Thema · Notizen, die Buddy sich merkt (nur
 aus ihren eigenen Worten, mit Zitat) · Einstellungen (Kontaktzeiten, Stimme) · Betriebsdaten
-(Modellaufrufe ohne Inhalt, Hintergrundjobs, Fehlzähler). Logs enthalten Routennamen und
+(Modellaufrufe ohne Inhalt, Hintergrundjobs, Fehlzähler, was Buddy vorab vorbereitet hat und ob
+es genutzt wurde). Wartezeiten vom Gerät nur zusammengezählt, ohne Person (`perf_rollups`,
+`docs/privacy.md` §Device timing). Logs enthalten Routennamen und
 Fehlerklassen, nie Inhalte.
 
 **Besondere Kategorien (Art. 9).** Nicht vorgesehen und nicht gewollt, und seit dem 30.09.
@@ -277,7 +279,12 @@ Restrisiko wird als **vertretbar** eingestuft.
     EU-Region in EU-Mitgliedstaaten verarbeitet und speichert (`docs/privacy.md` §Processors).
     Der Restrisiko-Punkt steht dort ebenfalls: eine Ausnahmemeldung wird von unserem Code
     geschrieben, künftiger Code könnte darin etwas zitieren, das die Lernende getippt hat.
-12. **Owner-Review** dieser Fassung; danach Datum und Fassung erhöhen. **Überprüfung** bei jeder
+12. **Messung der Wartezeit am Gerät (Issue #169):** die App sendet zusammengefasste Wartezeiten
+    (feste Aktion, fester Zeit-Eimer, Anzahl je Tag und Plattform) ohne Person und ohne Inhalt
+    (`docs/privacy.md` §Device timing). Bewertet als nicht personenbezogen (ErwG 26), daher ohne
+    eigene Einwilligung und ohne Schalter. Bei der Owner-Review ausdrücklich bestätigen — oder
+    entscheiden, dass Kinderkonten nicht senden.
+13. **Owner-Review** dieser Fassung; danach Datum und Fassung erhöhen. **Überprüfung** bei jeder
     Änderung an Zweck, Modell, Region oder Aufbewahrung, sonst jährlich.
 
 ---

@@ -13,6 +13,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
+import { Chip } from '../lb/Chip.js';
 import { Icon } from '../lb/Icon.js';
 import { KIND_ICON, KIND_LABEL } from './kinds.js';
 import { useStartTopic } from './useStartTopic.js';
@@ -20,7 +21,6 @@ import { startTopic } from '../../lib/api/endpoints.js';
 import { keys } from '../../lib/api/keys.js';
 import { queryClient, useOfferReadiness } from '../../lib/api/queries.js';
 import { counted, dropped, tapped } from '../../lib/perf.js';
-import { SPACE } from '../../lib/theme/space.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 
 type Offer = Extract<ActionSummary, { tool: 'offer_learning' }>;
@@ -124,16 +124,10 @@ export function OfferCard({
           </Text>
           {ready && !preparing ? (
             // Said only once it is true: the questions are stored and her tap opens them.
-            <View
-              accessibilityLiveRegion="polite"
-              style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.xs }}
-            >
-              <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                <Icon name="check" size={14} color={palette.successText} />
-              </View>
-              <Text style={[TYPE.small, { color: palette.successText }]}>
+            <View accessibilityLiveRegion="polite">
+              <Chip tone="mint" icon="check">
                 {t('learn:topic.ready')}
-              </Text>
+              </Chip>
             </View>
           ) : null}
         </View>

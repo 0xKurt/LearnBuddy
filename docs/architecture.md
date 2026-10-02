@@ -125,6 +125,8 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived                                                                           |
 | `POST /practice/sessions/:id/listen`                                                                 | Hörverstehen: the recording of one question's spoken text (issue #210)                                                |
 | `POST /practice/sessions/:id/cards`, `POST …/card`                                                   | Lernkarten: a pass over the words that did not sit, each card judged by her (#147)                                    |
+| `GET /practice/offers/:actionId`                                                                     | is Buddy's offered practice ready yet (issue #59); asking prepares nothing                                            |
+| `POST /perf`                                                                                         | the device's waiting times, summed up — no person, no content (issue #169)                                            |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
 ## Buddy decisions
@@ -575,6 +577,40 @@ carries its decision, so what Buddy did in the background appears in the thread 
 and undo. "Heute nicht" on a prepared practice moves it (and an agreed reminder) to tomorrow; it
 is not skipped for good.
 
+**Ahead of her, measured and capped** (issue #59: "mehr pro-aktiv und nicht immer reaktiv").
+What Buddy needs in a moment anyway is prepared while she reads or speaks — and none of it is ever
+shown as ready before it is (rule 5: "bereite vor" ≠ "liegt bereit"):
+
+- **The practice he offers** (`practice/prepare.ts`, since #48) is written right after the turn is
+  applied. Since #59 every such preparation is a row (`speculative_preparations`, migration 0105,
+  `practice/speculation.ts`): started → `ready | refused | failed` → `used_at` when her tap came.
+  Her tap on another server instance used to see nothing running and asked the model a second time;
+  now it waits for the running row (`awaitPreparedAhead`, ≤ 60 s, a claim without an end after 2 min
+  is dead) and takes its session, or the generator's "nothing to learn from this" as is. The app asks
+  `GET /practice/offers/:actionId` (`ready` with the session view | `preparing` | `none`; asking
+  never prepares and never counts as starting) for the offer under Buddy's newest message only,
+  every 1.5 s while it is prepared (`lib/api/offerReady.ts`), and puts a ready session into the
+  cache: her tap opens it with no request and tells the server on the way. The card says
+  "Liegt bereit" only in state `ready` — "preparing" looks exactly like the card always did.
+- **The cap** (`SPECULATION`): at most 8 preparations ahead per learner in 24 h, and none while 5 of
+  her last 6 offers (older than 30 min, within 14 days) went untapped. Judged over offers, not over
+  preparations, so the brake lifts as soon as she taps again. A capped offer is prepared on her tap,
+  exactly as before #48. Hints for a prepared practice are still written on her tap
+  (`prepareHints`), never ahead: they are a second model call and only pay off once she started.
+  The waste rate (ready, unused after a day) is printed by `apps/api/scripts/perf-report.ts`.
+- **The next thing she hears** (`lib/speech/ahead.ts`, `prepareReading` in `lib/speech/listen.ts`):
+  in voice mode the first audio of the next question is fetched while she answers this one, and the
+  verdict words that open Buddy's feedback ("Richtig.", "Fast.", "Noch nicht ganz.") once per
+  app run. One-time audio is handed over once and dropped after 10 min or when three newer ones
+  wait; what is thrown away unplayed is counted (`speech_ahead_wasted`). No model call, and the
+  server keeps the audio 24 h anyway (§Voice), so a question fetched ahead and read later costs
+  no second synthesis.
+- **The gaps after a photo, after a practice and before a test** are the background check's own
+  triggers (`material_ready`, `session_finished`, `exam_countdown`, above): it prepares a practice
+  from the questions she already has (`prepare_practice`, no model call for the questions), so
+  "Jetzt üben" on that card starts from rows that already exist. Its wait is measured as
+  `start_step` (§Speed).
+
 **Looking back** (`modules/buddy/lookback.ts`, migration `0038_buddy_lookbacks.sql`; gaps #7):
 visible progress without pressure. After a finished practice or before a test
 (`session_finished`, `exam_countdown`) code may offer the check one fact — a topic that was
@@ -958,7 +994,16 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   starting an offered practice and checking an answer. In memory only, never sent anywhere; on
   the web the walkthrough reads it into `test-results/web/perf.jsonl` (first measurement:
   sending a message reacts in 0 ms, so the wait she called "hängt" is not in that render).
-  Budgets come after the numbers, not before.
+  Budgets come after the numbers, not before. **Since issue #169 the device reports them**,
+  summed up: per action a count per fixed time bucket (`PerfReport`, `POST /perf`,
+  `perf_rollups`, migration 0105), sent after 30 measurements and whenever the app goes to the
+  background (`lib/perfReport.ts`); no learner, no account, no content (docs/privacy.md §Device
+  timing). Marks: `send`, `reply` (first word), `start_offer`, `start_step`, `check`,
+  `next_question`, `question_audio`, `first_audio`, `relisten`, `speak_finish`/`_wait`/`_total`;
+  the practice screen is what says a start or "Weiter" has reacted (a question stands there).
+  Budgets of issue #59: first words 1.5 s, starting an offered practice 1 s, first audio 1 s, next
+  question 0.5 s — `apps/api/scripts/perf-report.ts` prints median, p90 and the share within budget
+  per platform.
 - **Buddy's replies stream** (`POST /buddy/messages` with `Accept: text/event-stream`;
   `ReplyStreamEvent`, `modules/buddy/stream.ts`): the model writes its answer in the order
   lookups → actions → reply (`TurnDecisionForModel`), so when the reply starts code already knows

@@ -110,6 +110,10 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Wem gebe ich den Knochen?', { exact: false })).toBeVisible();
   await shot(page, '21-explain-in-chat');
+  // Buddy prepared the offered practice while she read (issues #48/#59): the card says so once
+  // the questions stand there — never before (rule 5) — and her tap opens it without a request.
+  await expect(page.getByText('Liegt bereit', { exact: true })).toBeVisible();
+  await shot(page, '21b-offer-ready');
   await page.getByRole('button', { name: "Los geht's" }).click();
   await page.getByRole('button', { name: 'Wem?', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
@@ -555,8 +559,13 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText('Was steht diese Woche an?')).toBeVisible();
 
   // What the app's own stopwatch measured on the way (issue #66): starting an offered
-  // practice and checking an answer are the two taps the owner called slow.
-  await recordPerf(page, 'modes');
+  // practice and checking an answer are the two taps the owner called slow; "Weiter" to the
+  // next question has a budget of 0.5 s (issue #59).
+  const spans = await recordPerf(page, 'modes');
+  const actions = new Set(spans.map((s) => s.action));
+  for (const action of ['start_offer', 'check', 'next_question']) {
+    expect(actions, `the walkthrough measured ${action}`).toContain(action);
+  }
 });
 
 /**

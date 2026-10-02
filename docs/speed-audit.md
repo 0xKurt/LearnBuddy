@@ -381,3 +381,75 @@ wuchsen von 3 auf 9 bzw. 8 Fragen, jede genau einmal.
 **Grenze der Zahl:** 17 geurteilte Fragen pro Lauf und ein Modell bei Temperatur 0,4 — im
 Baseline-Lauf waren es 14/17, im nächsten Lauf ohne jede Änderung am `explain`-Pfad 17/17.
 Die Stichprobe erkennt einen groben Einbruch, keine feine Verschlechterung.
+
+## Proaktiv statt reaktiv: vorher/nachher (02.10., Issues #59/#169)
+
+**Was gebaut ist** (`docs/architecture.md` §Proactivity): die angebotene Übung meldet, wann sie
+wirklich bereit ist, und die App holt sie vorab, sodass ihr Tipp ohne Anfrage öffnet; im
+Voice-Mode wird das erste Audio der nächsten Frage geholt, während sie die aktuelle beantwortet,
+und die Urteilswörter einmal je App-Lauf. Auf dem Server wartet ihr Tipp auf eine laufende
+Vorbereitung, statt das Modell ein zweites Mal zu fragen, und Vorbereiten auf Verdacht ist
+gedeckelt.
+
+**Wie gemessen.** `tests/web/proactive.spec.ts`: dieselbe Spec gegen `origin/main` (vorher, mit
+`LB_MEASURE_ONLY=1`) und gegen diesen Stand (nachher), echte App im Browser, echte API, Modell
+gescriptet, Stimme als Attrappe (`LB_DEV_SPEECH=fake`). **Jede Anfrage zahlt 300 ms Latenz**
+(Chrome-Netzwerk-Emulation) — sonst antwortet localhost in Millisekunden und nichts, was vorab
+geschieht, könnte sich zeigen. 300 ms ist vorsichtig: am Xiaomi wartete ein Zug rund 1,2 s länger,
+als der Server brauchte (#169). Gemessen mit Playwrights eigener Uhr, nicht mit den Marken der
+App — die gab es vorher nicht an denselben Stellen. Je vier Läufe:
+
+| Moment (Budget #59)                                         | vorher (main)                                    | nachher                                      |
+| ----------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------- |
+| „Los geht's" auf Buddys Angebot → erste Frage steht (< 1 s) | 415 / 482 / 860 / 861 ms — **Median 671 ms**     | 126 / 133 / 145 / 159 ms — **Median 139 ms** |
+| Audio der nächsten Frage bereit, relativ zu „Weiter"        | **358–373 ms danach** (wird erst dann angefragt) | **6,1 s davor** (in allen vier Läufen)       |
+
+Lesart:
+
+- **Übung starten** hängt vorher an mindestens einer Anfrage (`POST /practice/topic`), nachher an
+  keiner: die Zahl wächst vorher mit jeder Millisekunde Funknetz, nachher nicht. Mit den am Gerät
+  gemessenen ~1,2 s Weg wären es vorher 1,2–2,4 s, nachher bleibt es beim Rendern.
+- **Erstes Audio einer Frage**: vorher Anfrage + Synthese nach dem Tipp; nachher liegt es schon da.
+  Was davon am Gerät bleibt, ist das Starten des Players — das misst jetzt `question_audio`.
+- **Nicht gebaut** und ehrlich offen: das erste Audio einer **Antwort** im Gesprächsmodus
+  (`first_audio`) lässt sich nicht vorab holen — ihr Text entsteht erst. Die Urteilswörter
+  („Richtig.") sind der Teil einer Rückmeldung, der vorher feststeht; sie werden einmal geholt
+  und so oft gespielt wie nötig.
+
+App-eigene Marken im vollen Walkthrough (`test-results/web/perf.jsonl`, `modes`, ohne
+Latenz-Emulation): `start_offer` 15–31 ms, `next_question` 14–19 ms, `check` 38–70 ms,
+`question_audio` 61 ms (Gerätestimme, ohne natürliche Stimme). **Die nächste Frage nach einer
+Antwort (< 0,5 s) ist erfüllt** — sie kommt aus dem Speicher der Sitzung, kein Netz dazwischen;
+nur wenn die Fragen noch geschrieben werden (#220) wartet sie, und dann sagt der Schirm das.
+
+### Was Vorbereiten auf Verdacht kostet — und wo es aufhört
+
+Ein Angebot, das sie nie antippt, war ein Modellaufruf für nichts (`explain`, Median ~5 s und
+~$0,008 laut den Produktionszahlen vom 28.09.). Deshalb jetzt:
+
+- jede Vorbereitung ist eine Zeile (`speculative_preparations`): gestartet, fertig/abgelehnt/
+  gescheitert, **genutzt** (ihr Tipp);
+- höchstens **8 je Lernende und 24 h**, und **keine**, solange 5 ihrer letzten 6 Angebote
+  (älter als 30 min) ungetippt blieben — die Bremse löst sich, sobald sie wieder tippt; ein
+  gebremstes Angebot wird bei ihrem Tipp vorbereitet wie vor #48;
+- Tipps zu einer vorbereiteten Übung (`hints`, ein zweiter Aufruf) werden **nie** vorab
+  geschrieben, erst wenn sie startet;
+- ihr Tipp auf einer anderen Vercel-Instanz wartet auf die laufende Vorbereitung statt eine
+  zweite zu starten (vorher nur innerhalb desselben Prozesses; `proactive-offer.int.test.ts`
+  belegt: null zweite Aufrufe).
+
+**Verwurfquote in Produktion: noch keine Zahl** — die Tabelle entsteht mit diesem Stand.
+`DATABASE_URL=… pnpm --filter @learnbuddy/api exec tsx scripts/perf-report.ts 7` druckt sie
+(gestartet / fertig / genutzt / verworfen) zusammen mit den Gerätezahlen. Audio, das vorab geholt
+und nie gespielt wurde, zählt die App (`speech_ahead_wasted` gegen `speech_ahead_used`); der
+Server hält jedes Audio ohnehin 24 h, eine später gelesene Frage kostet also keine zweite Synthese.
+
+### Die Wartezeit vom Gerät (Issue #169)
+
+Bis heute gab es genau eine Messreihe vom Handy (5 Züge, `adb logcat`, 01.10.: `reply` Median
+2 654 ms). Ab diesem Stand schickt jede App ihre Wartezeiten **zusammengefasst** an die API
+(`POST /perf` → `perf_rollups`: je Tag, Plattform, Build, Aktion und Zeit-Eimer eine Anzahl —
+keine Person, kein Inhalt; `docs/privacy.md` §Device timing). `scripts/perf-report.ts` macht
+daraus Median, p90 und den Anteil im Budget je Plattform. **Zahlen vom Gerät stehen hier, sobald
+ein Build mit diesem Stand eine Weile benutzt wurde** — die Messung selbst braucht ab jetzt
+weder Kabel noch Entwickler-Build.
