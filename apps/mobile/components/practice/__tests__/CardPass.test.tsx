@@ -43,6 +43,7 @@ const card = (over: Partial<SessionItemView['item']> = {}): SessionItemView => (
     surface: null,
     task_view: null,
     listen: null,
+    passage: null,
     ...over,
   },
   status: 'open',
@@ -55,6 +56,7 @@ const card = (over: Partial<SessionItemView['item']> = {}): SessionItemView => (
   // The back of the card: a pass sends it while the card is still open.
   answer: 'das Fahrrad',
   listen_transcript: null,
+  evidence: null,
 });
 
 const pass = (over: Partial<SessionView> = {}): SessionView => ({

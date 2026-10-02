@@ -240,6 +240,22 @@
       "groups_some_one": "1 of {{total}} is already in the right group.",
       "groups_none": "None is in the right group yet – take another calm look.",
       "look_at": "Have another look at “{{text}}”."
+    },
+    "mark": {
+      "right": "{{count}} right",
+      "misfiled": "{{count}} in the wrong category",
+      "missing": "{{count}} still missing",
+      "extra": "{{count}} too many",
+      "reply": "Not quite: {{parts}}.",
+      "nothing": "Mark the places that fit – then check again.",
+      "right_one": "1 right",
+      "missing_one": "1 still missing"
+    },
+    "reading": {
+      "true": "True",
+      "false": "False",
+      "look": "Read lines {{from}}–{{to}} again.",
+      "look_line": "Read line {{from}} again."
     }
   },
   "contact": {

@@ -5,6 +5,7 @@
 //   order       — put 3–8 elements into the right order (#228)
 //   match       — pair or group elements (#229)
 //   table_fill  — fill the gaps of a table (#230)
+//   mark        — tap words, the gaps between words or the cuts between syllables (#234)
 // The next one (#232, a text with several gaps) is a fourth member of every union below; the
 // database already allows its kind (migration 0079), so it needs no constraint migration.
 //
@@ -30,7 +31,7 @@
 import { z } from 'zod';
 
 /** The item kinds whose answer is structured. Each has a task, a view and an answer shape. */
-export const STRUCTURED_KINDS = ['order', 'match', 'table_fill'] as const;
+export const STRUCTURED_KINDS = ['order', 'match', 'table_fill', 'mark'] as const;
 export const StructuredKind = z.enum(STRUCTURED_KINDS);
 export type StructuredKind = z.infer<typeof StructuredKind>;
 
@@ -255,10 +256,118 @@ export const MatchAnswer = z.object({
 });
 export type MatchAnswer = z.infer<typeof MatchAnswer>;
 
+// ─────────────── mark (#234) ───────────────
+//
+// A sentence or a short text she marks by tapping. Three modes, one shape:
+//   words     — she taps words (parts of speech, the nouns of an all-lower-case text, the
+//               errors of an error text, sentence parts — then with 2–3 categories she picks
+//               first: Subjekt, Prädikat, Objekt);
+//   gaps      — she taps the gap between two words (where a comma belongs);
+//   syllables — she taps the cut between two letters (where a word is split into syllables).
+//
+// Code splits the text into words (`apps/api/src/modules/practice/mark.ts`), never the model:
+// the model names the words, code finds where they stand, and a word that stands there twice
+// needs its occurrence or the task is not stored (#234, Regel 0). The ids say WHERE a target
+// stands (`w3` the third word, `g3` the gap after it, `w3_2` the cut after its second
+// letter) — never whether it is one of the key's.
+//
+// The maxima are what a 360×740 phone holds with every target at 44 pt and nothing scrolling
+// (CLAUDE.md rule 16), measured in the walkthrough (tests/web/modes.spec.ts, "markieren").
+
+/** Words of one marking text (words and gaps): a sentence or two, never a page. */
+export const MARK_WORDS_MIN = 3;
+export const MARK_WORDS_MAX = 24;
+/** One word as it stands in the text; a longer one would not fit a line as one target. */
+export const MARK_WORD_MAX = 20;
+/** Syllables: a few words, each short enough to stand on one line as letter tiles. */
+export const MARK_SYLLABLE_WORDS_MAX = 4;
+export const MARK_SYLLABLE_LETTERS_MAX = 12;
+export const MARK_CATEGORIES_MIN = 2;
+export const MARK_CATEGORIES_MAX = 3;
+/** A category's name ("Subjekt", "Signalwort"): one chip in a row of three. */
+export const MARK_CATEGORY_MAX = 16;
+/** Punctuation that stands before or after a word ("„Hund,“"): shown, never tapped. */
+export const MARK_AFFIX_MAX = 6;
+/** The instruction above a marking text: two lines of the question card at most. */
+export const MARK_PROMPT_MAX = 90;
+
+export const MarkMode = z.enum(['words', 'gaps', 'syllables']);
+export type MarkMode = z.infer<typeof MarkMode>;
+
+/** A word of the text, as code split it: what she reads, and the marks around it. */
+export const MarkWord = z.object({
+  id: PartId,
+  text: z.string().min(1).max(MARK_WORD_MAX),
+  /** Opening marks before the word ("„", "("), shown with it. */
+  lead: z.string().max(MARK_AFFIX_MAX),
+  /** Punctuation after it (",", ".", "“"): shown, never a target. Commas to set are left out. */
+  tail: z.string().max(MARK_AFFIX_MAX),
+});
+export type MarkWord = z.infer<typeof MarkWord>;
+
+export const MarkCategory = z.object({
+  id: PartId,
+  name: z.string().trim().min(1).max(MARK_CATEGORY_MAX),
+});
+export type MarkCategory = z.infer<typeof MarkCategory>;
+
+/** One mark: a target (word, gap or cut) and, with categories, the one she gave it. */
+export const MarkPick = z.object({ at: PartId, category: PartId.nullable() });
+export type MarkPick = z.infer<typeof MarkPick>;
+
+/** The most marks one answer may carry: every word, or every gap, of the longest text. */
+export const MARK_PICKS_MAX = 60;
+
+export const MarkTask = z.object({
+  type: z.literal('mark'),
+  mode: MarkMode,
+  words: z.array(MarkWord).min(1).max(MARK_WORDS_MAX),
+  /** Empty: plain marking. Two or three: she picks a category, then the words. */
+  categories: z.array(MarkCategory).max(MARK_CATEGORIES_MAX),
+  /** The targets that are to be marked (with their category). At least one. */
+  key: z.array(MarkPick).min(1).max(MARK_PICKS_MAX),
+  /**
+   * An error text's corrected words, by the id of the word they correct (#234: the corrected
+   * version differs from the text exactly at the key). Shown in the solution; empty otherwise.
+   */
+  corrections: z.array(z.object({ at: PartId, text: z.string().min(1).max(MARK_WORD_MAX) })),
+});
+export type MarkTask = z.infer<typeof MarkTask>;
+
+export const MarkTaskView = z.object({
+  type: z.literal('mark'),
+  mode: MarkMode,
+  words: z.array(MarkWord).min(1).max(MARK_WORDS_MAX),
+  categories: z.array(MarkCategory).max(MARK_CATEGORIES_MAX),
+});
+export type MarkTaskView = z.infer<typeof MarkTaskView>;
+
+export const MarkAnswer = z.object({
+  type: z.literal('mark'),
+  /** Every target she marked, once. May be empty: then nothing is marked, and that is checked too. */
+  marks: z.array(MarkPick).max(MARK_PICKS_MAX),
+});
+export type MarkAnswer = z.infer<typeof MarkAnswer>;
+
+/** The id of the gap after word `w{n}` (gaps mode). */
+export function gapId(wordIndex: number): PartId {
+  return `g${wordIndex + 1}`;
+}
+
+/** The id of the cut after letter `letter` (1-based) of word `wordIndex` (syllables mode). */
+export function cutId(wordIndex: number, letter: number): PartId {
+  return `w${wordIndex + 1}_${letter}`;
+}
+
 // ─────────────── the unions (one member per kind that exists) ───────────────
 
 /** The stored definition including the key (`items.task`). Server only. */
-export const StructuredTask = z.discriminatedUnion('type', [OrderTask, TableFillTask, MatchTask]);
+export const StructuredTask = z.discriminatedUnion('type', [
+  OrderTask,
+  TableFillTask,
+  MatchTask,
+  MarkTask,
+]);
 export type StructuredTask = z.infer<typeof StructuredTask>;
 
 /** What the app shows (`ItemView.task_view`): the task without its key. */
@@ -266,6 +375,7 @@ export const StructuredTaskView = z.discriminatedUnion('type', [
   OrderTaskView,
   TableFillTaskView,
   MatchTaskView,
+  MarkTaskView,
 ]);
 export type StructuredTaskView = z.infer<typeof StructuredTaskView>;
 
@@ -274,5 +384,6 @@ export const StructuredAnswer = z.discriminatedUnion('type', [
   OrderAnswer,
   TableFillAnswer,
   MatchAnswer,
+  MarkAnswer,
 ]);
 export type StructuredAnswer = z.infer<typeof StructuredAnswer>;

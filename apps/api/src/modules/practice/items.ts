@@ -14,6 +14,7 @@ import {
   type Figure,
   type ItemKind,
   type ListenTask,
+  type ReadPassage,
   type StaffTask,
   type StructuredTask,
   type VocabDirection,
@@ -432,6 +433,11 @@ export type StoredItem = Omit<ItemDraft, 'figure' | 'kind'> & {
    * which checked that the answer stands in that very text.
    */
   listen_task?: ListenTask | null;
+  /**
+   * The text this question is about (Leseverständnis, issue #233): set only by
+   * `practice/reading.ts`, which checked the question against exactly these lines.
+   */
+  read_passage?: ReadPassage | null;
 };
 
 /**
@@ -456,8 +462,8 @@ export async function insertItems(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
                           hints, worked_solution, tolerance, spelling, bar_task, task,
-                          curriculum_point, rubric, listen_task, staff_task)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) returning id`,
+                          curriculum_point, rubric, listen_task, staff_task, read_passage)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -486,6 +492,7 @@ export async function insertItems(
         it.rubric ? JSON.stringify(it.rubric) : null,
         it.listen_task ? JSON.stringify(it.listen_task) : null,
         it.staff_task ? JSON.stringify(it.staff_task) : null,
+        it.read_passage ? JSON.stringify(it.read_passage) : null,
       ],
     );
     if (asked) ids.push(row.id);

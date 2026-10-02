@@ -35,6 +35,7 @@ import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { StorageError } from '../../storage/gateway.js';
 import { insertItems, samePrompt, usableItems } from '../practice/items.js';
+import { readingItems } from '../practice/reading.js';
 import { structuredItems } from '../practice/structured.js';
 import { createSession } from '../practice/service.js';
 import {
@@ -66,7 +67,7 @@ import { indexMaterialPassages } from './passages.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
 
 /** The structured kinds a sheet may give (#228 an order, #230 a table, #229 links to make). */
-const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order', 'table_fill', 'match']);
+const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order', 'table_fill', 'match', 'mark']);
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
 const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
@@ -928,8 +929,13 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
         const freshStructured = parsed.data.structured.filter(
           (it) => !known.has(samePrompt(it.prompt)),
         );
+        // A reading text is the same text when its lines are (#233): read again, it is not new.
+        const texts = new Set(result.data.reading.map((r) => samePrompt(r.lines.join('\n'))));
+        const freshReading = parsed.data.reading.filter(
+          (r) => !texts.has(samePrompt(r.lines.join('\n'))),
+        );
         // No progress: stop rather than ask a fourth time for the same nothing.
-        if (fresh.length === 0 && freshStructured.length === 0) {
+        if (fresh.length === 0 && freshStructured.length === 0 && freshReading.length === 0) {
           result = { success: true, data: { ...result.data, more_items: false } } as typeof result;
           break;
         }
@@ -943,6 +949,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
             ...result.data,
             items: [...result.data.items, ...fresh],
             structured: [...result.data.structured, ...freshStructured],
+            reading: [...result.data.reading, ...freshReading],
             more_items: parsed.data.more_items,
             not_practicable: [
               ...result.data.not_practicable,
@@ -977,6 +984,8 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   const items = [
     ...usableItems(x.items),
     ...structuredItems(x.structured, SHEET_STRUCTURED, x.structured.length),
+    // And the questions of each reading text, every one checked against its lines (#233).
+    ...x.reading.flatMap((r) => readingItems(r, learner.locale)),
   ];
   const pageProblems = pageProblemsOf(x.pages, m.photo_count);
   // "Not readable" with questions and a page that was read: one bad page must not
@@ -1000,7 +1009,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       deps,
       job,
       materialId,
-      x.items.length + x.structured.length > 0 ? 'model_error' : 'unreadable',
+      x.items.length + x.structured.length + x.reading.length > 0 ? 'model_error' : 'unreadable',
     );
 
   // The sheet this run's questions went onto (the merge target, else this material);
@@ -1965,6 +1974,8 @@ export async function materialItems(
       // from a photo (issue #210, `practice/listen.ts`). Nothing to play here either way — the
       // recording belongs to a session, like the crop and the bar above.
       listen: null,
+      // The list names the questions; the text they are about is read in the session (#233).
+      passage: null,
       result: resultOf(r),
     })),
   };

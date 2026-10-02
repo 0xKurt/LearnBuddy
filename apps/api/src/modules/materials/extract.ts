@@ -22,9 +22,11 @@ import {
   StructuredDraft,
   StructuredDraftHomework,
 } from '../practice/structured.js';
+import { MARK_RULES } from '../practice/mark.js';
+import { READING_RULES, ReadingDraft, ReadingDraftParse } from '../practice/reading.js';
 import { TABLE_RULES } from '../practice/table.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v7.1';
+export const EXTRACT_PROMPT_VERSION = 'extract.v7.2';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -45,6 +47,12 @@ export const ITEMS_PER_READING = 60;
  * the next pass.
  */
 export const STRUCTURED_PER_READING = 12;
+
+/**
+ * The most reading texts (a text with its questions, #233) ONE reading may return: a page holds
+ * one, a double page two.
+ */
+export const READINGS_PER_READING = 2;
 
 /** How often one sheet may be read for more, before it is called incomplete out loud. */
 export const MOST_READINGS = 4;
@@ -184,6 +192,12 @@ export const ExtractionResult = z.object({
    */
   structured: z.array(StructuredDraft).max(STRUCTURED_PER_READING).default([]),
   /**
+   * Reading texts with their questions (Leseverständnis, #233): the text line by line as
+   * printed, and the questions about it. Checked by code before anything is stored
+   * (`practice/reading.ts`): the lines a question names exist, every answer stands in the text.
+   */
+  reading: z.array(ReadingDraft).max(READINGS_PER_READING).default([]),
+  /**
    * The sheet holds more questions or word pairs than this answer lists (issue #150).
    * Saying so is what lets the rest be read; guessing from a full list would mistake a
    * sheet that happens to have exactly as many for one that was cut off.
@@ -236,6 +250,7 @@ export type ExtractionResult = z.infer<typeof ExtractionResult>;
 export const ExtractionParse = ExtractionResult.extend({
   items: itemsOneByOne(ItemDraft, ITEMS_PER_READING),
   structured: itemsOneByOne(StructuredDraft, STRUCTURED_PER_READING),
+  reading: itemsOneByOne(ReadingDraftParse, READINGS_PER_READING),
 });
 
 /**
@@ -333,6 +348,8 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${ORDER_RULES} A task on the sheet that asks to put given things in order becomes one such task in "structured", never a question in items.
    - ${TABLE_RULES} A table on the sheet whose cells are to be filled in becomes one such task in "structured" (its cells as printed, the empty ones as gaps), never one question per cell in items.
    - ${MATCH_RULES} A task on the sheet that asks to link given things to each other or sort them into given groups becomes one such task in "structured", never questions in items.
+   - ${MARK_RULES} A task on the sheet that asks to mark, underline, circle or find words, errors, commas or syllables in a given text becomes one such task in "structured", never questions in items.
+   - ${READING_RULES} A text on the sheet with questions about it (a reading text, a source, a text to translate with questions) becomes one entry in "reading": its lines exactly as printed and its questions — the printed questions, or when none are printed, ones you write; never the same questions again in items.
    - Otherwise 8–15 questions — and none at all for a sheet whose every task went into not_practicable. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
@@ -364,6 +381,8 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
    - ${ORDER_RULES} A task that asks to put given things in order goes into "structured" instead of items (its prompt as printed).
    - ${TABLE_RULES} A table whose cells are to be filled in goes into "structured" instead of items (its prompt as printed).
    - ${MATCH_RULES} A task that asks to link given things or sort them into groups goes into "structured" instead of items (its prompt as printed).
+   - ${MARK_RULES} A task that asks to mark, underline or find words, errors, commas or syllables in a given text goes into "structured" instead of items (its prompt as printed).
+   - ${READING_RULES} A text with questions about it goes into "reading": its lines exactly as printed and the printed questions, instead of items.
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}

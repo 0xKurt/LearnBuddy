@@ -225,5 +225,33 @@
     "brick": "Reihe {{row}}, Stein {{n}}",
     "check_waits": "Erst wenn jedes Feld ausgefüllt ist.",
     "scroll": "Tabelle, seitlich verschiebbar"
+  },
+  "mark": {
+    "how_words": "Tippe die passenden Wörter an.",
+    "how_gaps": "Tippe zwischen die Wörter, wo ein Komma hingehört.",
+    "how_syllables": "Tippe den Buchstaben an, nach dem eine Silbe endet.",
+    "categories": "Markieren als",
+    "category": "Markieren als {{name}}",
+    "word_off": "{{word}}, nicht markiert",
+    "word_on": "{{word}}, markiert",
+    "word_in": "{{word}}, markiert als {{name}}",
+    "gap_off": "Lücke nach „{{word}}“",
+    "gap_on": "Lücke nach „{{word}}“, Komma gesetzt",
+    "cut_off": "Nach „{{before}}“ trennen ({{word}})",
+    "cut_on": "Nach „{{before}}“ getrennt ({{word}})",
+    "marked": "Markiert: {{list}}",
+    "check_waits": "Erst wenn du etwas markiert hast."
+  },
+  "reading": {
+    "label": "Lesetext",
+    "lines": "{{count}} Zeilen",
+    "show": "Text zeigen",
+    "hide": "Einklappen",
+    "show_hint": "Zeigt den Text mit Zeilennummern.",
+    "hide_hint": "Klappt den Text ein, die Frage bleibt.",
+    "line": "Zeile {{n}}",
+    "evidence": "Im Text: Z. {{from}}–{{to}}",
+    "evidence_one": "Im Text: Z. {{from}}",
+    "scroll_hint": "Der Text scrollt für sich."
   }
 }

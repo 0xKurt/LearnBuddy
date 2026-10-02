@@ -65,6 +65,7 @@ import { HearText, HeardTextCard } from '../../components/practice/HearText.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
+import { PassagePanel } from '../../components/practice/PassagePanel.js';
 import {
   emptyStaffAnswer,
   StaffAnswer,
@@ -144,6 +145,14 @@ type SentAnswer = {
  * rounded). The parts below scroll inside themselves before the reply is pushed away.
  */
 const STRUCTURED_REPLY_ROOM = 140;
+
+/**
+ * How much of the screen's height a reading text may take before it scrolls in itself (issue
+ * #233): about eight lines on a 360×740 phone, which leaves the question, its answer and "Prüfen"
+ * standing below it. Measured in the walkthrough (tests/web/reading.spec.ts) — any more and a
+ * multiple-choice question with four options no longer fits beside it.
+ */
+const PASSAGE_SHARE = 0.25;
 
 /** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
 function foreign(lang: string | null): lang is string {
@@ -239,6 +248,11 @@ export default function PracticeScreen() {
    * that is where the run is: a component keyed by the question would forget it every time.
    */
   const [heardTexts, setHeardTexts] = useState<ReadonlySet<string>>(() => new Set());
+  /**
+   * Reading texts she folded away (issue #233), by their alias: a text stays folded for every
+   * question about it, until she opens it again.
+   */
+  const [foldedTexts, setFoldedTexts] = useState<ReadonlySet<string>>(() => new Set());
   /**
    * Die Notenzeile, die sie geschrieben hat, und zu welcher Frage (issue #226). Aus demselben
    * Grund an der Frage festgemacht wie die Anordnung darüber: die nächste Frage beginnt mit einer
@@ -1038,6 +1052,29 @@ export default function PracticeScreen() {
                 {t(testing ? 'practice:test_note' : 'practice:help_note')}
               </Text>
             ) : null}
+            {/* The text a reading question is about (issue #233), above the question. Keyed by
+                the text, not the question: across the questions about one text it stays put —
+                folded or open, scrolled where she left it. It scrolls in itself; nothing else
+                here does (rule 16). */}
+            {item.passage ? (
+              <PassagePanel
+                key={item.passage.ref}
+                passage={item.passage}
+                open={!foldedTexts.has(item.passage.ref)}
+                onToggle={() => {
+                  const ref = item.passage?.ref;
+                  if (ref === undefined) return;
+                  setFoldedTexts((was) => {
+                    const next = new Set(was);
+                    if (next.has(ref)) next.delete(ref);
+                    else next.add(ref);
+                    return next;
+                  });
+                }}
+                maxHeight={Math.round(windowHeight * PASSAGE_SHARE)}
+                highlight={shown.status !== 'open' ? shown.evidence : null}
+              />
+            ) : null}
             {/* The next question comes in softly from the side (keyed by the question). */}
             <SlideIn
               key={item.id}
@@ -1119,6 +1156,20 @@ export default function PracticeScreen() {
                 {shown.status !== 'open' && shown.status !== 'correct' && shown.answer !== null ? (
                   <Rise delay={180}>
                     <SolutionCard answer={shown.answer} numeric={item.kind === 'numeric'} />
+                  </Rise>
+                ) : null}
+                {/* Where the answer stands in the reading text (issue #233), in words — the
+                    tinted lines above say it too, but never colour alone. */}
+                {shown.evidence !== null ? (
+                  <Rise delay={180}>
+                    <Text testID="evidence" style={[TYPE.small, { color: palette.ink2 }]}>
+                      {shown.evidence.from === shown.evidence.to
+                        ? t('practice:reading.evidence_one', { from: shown.evidence.from })
+                        : t('practice:reading.evidence', {
+                            from: shown.evidence.from,
+                            to: shown.evidence.to,
+                          })}
+                    </Text>
                   </Rise>
                 ) : null}
                 {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (

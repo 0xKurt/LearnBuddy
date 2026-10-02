@@ -240,6 +240,22 @@
       "groups_some_one": "1 su {{total}} è già nel gruppo giusto.",
       "groups_none": "Nessuno è ancora nel gruppo giusto – guarda di nuovo con calma.",
       "look_at": "Guarda di nuovo «{{text}}»."
+    },
+    "mark": {
+      "right": "{{count}} giuste",
+      "right_one": "1 giusta",
+      "misfiled": "{{count}} nella categoria sbagliata",
+      "missing": "ne mancano ancora {{count}}",
+      "missing_one": "ne manca ancora 1",
+      "extra": "{{count}} di troppo",
+      "reply": "Non ancora: {{parts}}.",
+      "nothing": "Segna i punti giusti, poi controlla di nuovo."
+    },
+    "reading": {
+      "true": "Vero",
+      "false": "Falso",
+      "look": "Rileggi le righe {{from}}–{{to}}.",
+      "look_line": "Rileggi la riga {{from}}."
     }
   },
   "contact": {

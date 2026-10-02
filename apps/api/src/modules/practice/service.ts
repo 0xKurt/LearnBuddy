@@ -35,6 +35,7 @@ import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { pickAnswers, surfaceOf, taskOf, untriedPicks } from './bars.js';
 import { listenRefs, listenTaskOf } from './listen.js';
+import { evidenceOf, passageOf, passageRefs } from './reading.js';
 import {
   differentNumber,
   equationDetail,
@@ -165,6 +166,14 @@ export type ItemRow = {
    * reaches the app while the question is open — it is where the answer comes from.
    */
   listen_task: unknown;
+  /**
+   * The text this question is about (Leseverständnis, issue #233), or null. Read through
+   * `passageOf`, never trusted as it stands. Unlike `listen_task` it is shown while the question
+   * is open: it is what she reads to answer, not the answer.
+   */
+  read_passage: unknown;
+  /** Where in the sheet (or, for a reading question, in its text) the answer stands. */
+  source_excerpt: string | null;
   /**
    * The reviewed note-line task this question's text, drawing, options and key were COMPUTED
    * from (issue #226), or null for everything else. Never set together with `bar_task` — a
@@ -734,6 +743,16 @@ function taskViewFor(row: Pick<ItemRow, 'kind' | 'task'>): ItemView['task_view']
   return task ? viewOf(task) : null;
 }
 
+/** A reading question's text as the app shows it, with its group's alias (issue #233). */
+function passageViewOf(
+  row: Pick<ItemRow, 'id' | 'read_passage'>,
+  refs: ReadonlyMap<string, string>,
+): ItemView['passage'] {
+  const p = passageOf(row.read_passage);
+  const ref = refs.get(row.id);
+  return p && ref ? { ref, title: p.title, lines: p.lines, lang: p.lang } : null;
+}
+
 /** The crop that goes with the question, or null (contract: ItemImage). */
 function imageOf(row: ItemImageRow, urls: Map<string, string>): ItemView['image'] {
   const url = row.image_path ? urls.get(row.image_path) : undefined;
@@ -757,7 +776,8 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.task, i.listen_task, i.staff_task, i.archived_at,
+            i.bar_task, i.task, i.listen_task, i.staff_task, i.read_passage, i.source_excerpt,
+            i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -803,6 +823,9 @@ export async function sessionView(
   // Which recording each listening question is about ('h1', 'h2' …): questions about one text
   // share the alias, which is all the app can be told about a text it must not see (issue #210).
   const hearing = listenRefs(items);
+  // Which text each reading question is about ('t1', 't2' …): the app keeps one text open, where
+  // she left it, across the questions that share it (issue #233).
+  const reading = passageRefs(items);
   // Homework never shows the solution; a test shows the answers once it is finished.
   const revealAllowed = s.mode !== 'help' && !(s.mode === 'test' && active);
   // A finished test shows every solution, also of the questions she never got to (audit M-36).
@@ -853,6 +876,9 @@ export async function sessionView(
         // It stays while the question is closed: hearing the text again next to the words of
         // it is exactly what a listening task is reviewed with.
         listen: hearing.has(i.id) ? { ref: hearing.get(i.id)! } : null,
+        // The text a reading question is about, with its lines (issue #233). Open or closed: it
+        // is what she reads to answer, and what she reviews the answer in.
+        passage: passageViewOf(i, reading),
       },
       status: i.status,
       attempts: i.attempts,
@@ -887,6 +913,8 @@ export async function sessionView(
       // (issue #210): she hears it, answers, and reads it afterwards. While the question is
       // open the text is the solution, so it stays here.
       listen_transcript: solutionShown(i) ? (listenTaskOf(i.listen_task)?.text ?? null) : null,
+      // Where the answer stands in the text, under the condition the solution is sent under.
+      evidence: solutionShown(i) ? evidenceOf(passageOf(i.read_passage), i.source_excerpt) : null,
     })),
     turns: turns.map((tr) => ({
       id: tr.id,
@@ -1186,6 +1214,9 @@ export async function answerItem(
   // things below: that only the content is judged (never the spelling of a word she HEARD),
   // and that the tutor is given that text as the material it may judge against.
   const listenTask = listenTaskOf(item.listen_task);
+  // The text a reading question is about, if any (issue #233): only the content is judged, as
+  // for a listening task, and the tutor judges against this text.
+  const passage = passageOf(item.read_passage);
   // A request for help is not an answer: nothing for the rules to check.
   // Two checks that code does ENTIRELY on its own and that therefore come before the key
   // comparison: every part of a structured answer (issues #228–#230), right or not yet right,
@@ -1206,7 +1237,12 @@ export async function answerItem(
         : ruleCheck(
             // A question code computed asks for an amount, so any form of it is right (#162);
             // a question she HEARD is judged on what she understood, not how she wrote it (#210).
-            { ...item, form_free: barTask !== null, listening: listenTask !== null },
+            {
+              ...item,
+              form_free: barTask !== null,
+              listening: listenTask !== null,
+              reading: passage !== null,
+            },
             { text: input.text ?? null, choice: input.choice ?? null },
           );
   // A plain number with another value is a wrong answer for sure — except in homework,
@@ -1419,7 +1455,7 @@ export async function answerItem(
           parts: [
             {
               text: tutorContext({
-                item: { ...item, listening: listenTask !== null },
+                item: { ...item, listening: listenTask !== null, reading: passage !== null },
                 hintsGiven: item.hints_used,
                 preparedHints: givesHints(session.mode) ? item.hints : [],
                 preparedShown: item.prepared_hints_used,
@@ -1436,9 +1472,12 @@ export async function answerItem(
                 // without it the tutor would judge an answer about a text it cannot read.
                 material: listenTask
                   ? listenTask.text
-                  : item.extracted_text
-                    ? item.extracted_text.slice(0, MATERIAL_CHARS)
-                    : null,
+                  : passage
+                    ? // Numbered, so a reply can point to a line the way the card shows it.
+                      passage.lines.map((l, n) => `${n + 1}  ${l}`).join('\n')
+                    : item.extracted_text
+                      ? item.extracted_text.slice(0, MATERIAL_CHARS)
+                      : null,
                 preferences: preferences.map((p) => p.statement),
                 // What her Bundesland expects at this question's curriculum place — or, when
                 // no state rule applies, that none does and the judgement stays cautious

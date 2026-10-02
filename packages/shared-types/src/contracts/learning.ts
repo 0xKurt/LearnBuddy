@@ -4,6 +4,7 @@ import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
 import { Figure } from './figure.js';
 import { ListenRef } from './listen.js';
+import { PassageLines, PassageView } from './reading.js';
 import { StructuredAnswer, StructuredTaskView } from './structured.js';
 
 // ─────────────── material (photographed worksheets) ───────────────
@@ -304,6 +305,8 @@ export const ItemKind = z.enum([
   'match',
   /** Fill the gaps of a table (#230). */
   'table_fill',
+  /** Tap words, the gaps between them or the cuts between syllables (#234). */
+  'mark',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
 
@@ -388,6 +391,13 @@ export const ItemView = z.object({
    * (`SessionItemView.listen_transcript`). Questions about one text share the `ref`.
    */
   listen: ListenRef.nullable().default(null),
+  /**
+   * The text this question is about (Leseverständnis, issue #233, `contracts/reading.ts`): its
+   * lines, shown above the question with their numbers while she answers. Unlike a listening
+   * text it is the stimulus, not the solution, so it is sent while the question is open.
+   * Questions about one text share the `ref`. Null for every other question.
+   */
+  passage: PassageView.nullable().default(null).catch(null),
 });
 export type ItemView = z.infer<typeof ItemView>;
 
@@ -467,6 +477,11 @@ export const SessionItemView = z.object({
    * question that is not a listening one.
    */
   listen_transcript: z.string().nullable().default(null),
+  /**
+   * A reading question's evidence (issue #233): the lines of the text its answer stands in,
+   * once the question is closed — under exactly the condition `answer` is sent. Null otherwise.
+   */
+  evidence: PassageLines.nullable().default(null),
 });
 export type SessionItemView = z.infer<typeof SessionItemView>;
 
@@ -700,11 +715,12 @@ export const StartTopicRequest = z.object({
    * practice: questions on a topic · vocab: a typed vocabulary list ·
    * speak: sentences/words to say aloud · listen: a spoken text with questions about it
    * (Hörverstehen, issue #210 — refused before any model call when there is no voice to
-   * read it) · help: a homework task the learner typed ·
+   * read it) · read: a text she reads with questions about it (Leseverständnis, issue #233) ·
+   * help: a homework task the learner typed ·
    * test: a practice test on a topic (one try per question, no hints, results at the
    * end). Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
    */
-  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test']),
+  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'read', 'help', 'test']),
   text: z.string().trim().min(2).max(3000),
   subject: z.string().trim().max(60).nullable().optional(),
   /**

@@ -5,7 +5,8 @@
     "test": "Verifica di prova",
     "vocab": "Ripassare i vocaboli",
     "speak": "Esercitare la pronuncia",
-    "listen": "Comprensione orale"
+    "listen": "Comprensione orale",
+    "read": "Comprensione del testo"
   },
   "homework": {
     "title": "Aiuto con i compiti",
@@ -63,6 +64,11 @@
     "submit": "Andiamo",
     "preparing": "Buddy sta preparando …",
     "preparing_hint": "Ci vuole qualche secondo.",
-    "not_usable": "Con questo non riesco a preparare niente, scusa – prova con un argomento di scuola."
+    "not_usable": "Con questo non riesco a preparare niente, scusa – prova con un argomento di scuola.",
+    "read": {
+      "title": "Su cosa vuoi leggere un testo?",
+      "hint": "Ti scrivo un testo e ti faccio delle domande.",
+      "placeholder": "es. animali in inverno, inglese unità 4"
+    }
   }
 }

@@ -67,6 +67,18 @@ import {
   type TableCheck,
   type TableProblem,
 } from './table.js';
+import {
+  checkMark,
+  markAnswerText,
+  MarkDraftBase,
+  markProblem,
+  markReply,
+  markSolution,
+  markTaskFrom,
+  markView,
+  type MarkCheck,
+  type MarkProblem,
+} from './mark.js';
 import { mentionsSolution } from './tutor.js';
 
 /** At most this many structured questions in one prepared set (a set is not a puzzle book). */
@@ -176,6 +188,10 @@ export const StructuredDraft = z.discriminatedUnion('type', [
     worked_solution: ItemDraft.shape.worked_solution,
   }),
   MatchDraftWithHelp,
+  MarkDraftBase.extend({
+    hints: ItemDraft.shape.hints,
+    worked_solution: ItemDraft.shape.worked_solution,
+  }),
 ]);
 export type StructuredDraft = z.infer<typeof StructuredDraft>;
 
@@ -184,6 +200,7 @@ export const StructuredDraftHomework = z.discriminatedUnion('type', [
   OrderDraftBase.extend({ hints: ItemDraft.shape.hints }),
   TableDraftBase.extend({ hints: ItemDraft.shape.hints }),
   MatchDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  MarkDraftBase.extend({ hints: ItemDraft.shape.hints }),
 ]);
 export type StructuredDraftHomework = z.infer<typeof StructuredDraftHomework>;
 
@@ -192,6 +209,7 @@ export const StructuredDraftNoHelp = z.discriminatedUnion('type', [
   OrderDraftBase,
   TableDraftBase,
   MatchDraftBase,
+  MarkDraftBase,
 ]);
 export type StructuredDraftNoHelp = z.infer<typeof StructuredDraftNoHelp>;
 
@@ -235,7 +253,9 @@ export type TaskProblem =
    * A text, a word or the prompt over its cap (MATCH_ELEMENT_MAX, MATCH_GROUP_TEXT_MAX,
    * MATCH_WORD_MAX, MATCH_PROMPT_MAX): it would not fit a 360×740 phone without scrolling.
    */
-  | 'too_long';
+  | 'too_long'
+  /** mark (#234): see `mark.ts`. */
+  | MarkProblem;
 
 /** An element as it is compared for sameness: markup, case and surrounding marks set aside. */
 function sameness(text: string): string {
@@ -303,6 +323,8 @@ export function taskProblem(task: StructuredTask): TaskProblem | null {
       return tableProblem(task);
     case 'match':
       return matchProblem(task);
+    case 'mark':
+      return markProblem(task);
   }
 }
 
@@ -387,6 +409,8 @@ export function solutionOf(task: StructuredTask): string {
       return tableSolution(task);
     case 'match':
       return matchText(task, task.key);
+    case 'mark':
+      return markSolution(task);
   }
 }
 
@@ -490,6 +514,39 @@ export function structuredItem(
         spelling: null,
         source_excerpt: null,
         // No curriculum place (#214) and no rubric (#211): both belong to single answers.
+        curriculum_point: null,
+        rubric: null,
+        hints,
+        worked_solution: 'worked_solution' in draft ? draft.worked_solution : null,
+      };
+    }
+    case 'mark': {
+      const task = markTaskFrom(draft);
+      if (!task) return null;
+      const prompt = dollarMathRuns(draft.prompt);
+      const answer = solutionOf(task);
+      // Help never gives the whole set of marks away.
+      const hints = ('hints' in draft ? draft.hints : []).filter(
+        (h) => !mentionsSolution(h, answer, prompt),
+      );
+      return {
+        kind: 'mark',
+        task,
+        prompt,
+        answer,
+        accepted_answers: [],
+        unit: null,
+        choices: null,
+        correct_choice: null,
+        topic: draft.topic,
+        difficulty: draft.difficulty,
+        prompt_lang: draft.prompt_lang,
+        lang: null,
+        figure: null,
+        tolerance: null,
+        // Marking a comma or an error IS the spelling exercise; the marks are compared exactly.
+        spelling: null,
+        source_excerpt: null,
         curriculum_point: null,
         rubric: null,
         hints,
@@ -770,6 +827,8 @@ export function viewOf(task: StructuredTask): StructuredTaskView {
       return tableView(task);
     case 'match':
       return { type: 'match', form: task.form, left: task.left, right: task.right };
+    case 'mark':
+      return markView(task);
   }
 }
 
@@ -782,7 +841,7 @@ export type PartResult = { id: PartId; ok: boolean };
  * The verdict on a structured answer, with what is right part by part. Kinds add their own
  * detail beside `parts` (order: the first place that is wrong, 1-based).
  */
-export type StructuredCheck = OrderCheck | TableCheck | MatchCheck;
+export type StructuredCheck = OrderCheck | TableCheck | MatchCheck | MarkCheck;
 
 export type OrderCheck = {
   type: 'order';
@@ -866,6 +925,8 @@ export function checkStructured(
       return answer.type === 'table_fill' ? checkTable(task, answer, ctx) : null;
     case 'match':
       return answer.type === 'match' ? checkMatch(task, answer) : null;
+    case 'mark':
+      return answer.type === 'mark' ? checkMark(task, answer) : null;
   }
 }
 
@@ -881,6 +942,8 @@ export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): st
       return answer.type === 'table_fill' ? tableAnswerText(task, answer) : '';
     case 'match':
       return answer.type === 'match' ? matchText(task, answer.links) : '';
+    case 'mark':
+      return answer.type === 'mark' ? markAnswerText(task, answer) : '';
   }
 }
 
@@ -918,6 +981,8 @@ export function structuredReply(
         ? `${base} ${t(locale, 'practice.match.look_at', { text: check.first_wrong_text })}`
         : base;
     }
+    case 'mark':
+      return markReply(locale, check);
   }
 }
 
@@ -929,8 +994,10 @@ export function structuredReply(
  */
 export function structuredNamesPart(check: StructuredCheck, priorMisses: number): boolean {
   switch (check.type) {
+    // A marking reply counts and never names a place (#234).
     case 'order':
     case 'table_fill':
+    case 'mark':
       return false;
     case 'match':
       return !check.correct && priorMisses >= 1;

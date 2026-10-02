@@ -225,5 +225,33 @@
     "brick": "row {{row}}, brick {{n}}",
     "check_waits": "Only once every cell is filled in.",
     "scroll": "Table, scrolls sideways"
+  },
+  "mark": {
+    "how_words": "Tap the words that fit.",
+    "how_gaps": "Tap between the words where a comma belongs.",
+    "how_syllables": "Tap the letter after which a syllable ends.",
+    "categories": "Mark as",
+    "category": "Mark as {{name}}",
+    "word_off": "{{word}}, not marked",
+    "word_on": "{{word}}, marked",
+    "word_in": "{{word}}, marked as {{name}}",
+    "gap_off": "Gap after “{{word}}”",
+    "gap_on": "Gap after “{{word}}”, comma set",
+    "cut_off": "Split after “{{before}}” ({{word}})",
+    "cut_on": "Split after “{{before}}” ({{word}})",
+    "marked": "Marked: {{list}}",
+    "check_waits": "Once you have marked something."
+  },
+  "reading": {
+    "label": "Reading text",
+    "lines": "{{count}} lines",
+    "show": "Show text",
+    "hide": "Collapse",
+    "show_hint": "Shows the text with line numbers.",
+    "hide_hint": "Collapses the text; the question stays.",
+    "line": "Line {{n}}",
+    "evidence": "In the text: l. {{from}}–{{to}}",
+    "evidence_one": "In the text: l. {{from}}",
+    "scroll_hint": "The text scrolls on its own."
   }
 }

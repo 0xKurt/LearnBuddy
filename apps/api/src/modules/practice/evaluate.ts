@@ -73,6 +73,11 @@ export type ItemForCheck = {
    * with a slip of the pen is right, and `contentOnly` below is where that is said once.
    */
   listening?: boolean;
+  /**
+   * The question is about a text she READ (issue #233): `items.read_passage` is set. Judged
+   * like a listening question — the content, never the language (§7.3, issue #197).
+   */
+  reading?: boolean;
 };
 
 /**
@@ -225,14 +230,14 @@ export function noSingleSolution(item: { kind: string }): boolean {
 
 /** Decision D-2: set per item; by default strict for vocabulary and language subjects. */
 export function spellingOf(
-  item: Pick<ItemForCheck, 'kind' | 'spelling' | 'subject_kind' | 'listening'>,
+  item: Pick<ItemForCheck, 'kind' | 'spelling' | 'subject_kind' | 'listening' | 'reading'>,
 ): 'strict' | 'gentle' {
   if (item.spelling) return item.spelling;
   // Listening: how she spells a word she HEARD is not what the question asks, and marking it
   // is what §7.3 of the curriculum report forbids (issue #210, #197). Before the per-item
   // mark could be trusted here, because the default for a language subject — which every
   // listening task is — goes the other way.
-  if (item.listening === true) return 'gentle';
+  if (item.listening === true || item.reading === true) return 'gentle';
   // A free text is never rebuked for its form: in a text of several sentences a comma is not
   // what is being asked, and in reading or listening comprehension marking language is
   // expressly forbidden (`docs/lehrplan-und-uebungsformen.md` §7, issue #197).
@@ -582,7 +587,8 @@ export function ruleCheck(
   // Listening (issue #210): she heard it, and what she understood is the whole question — so a
   // slip of the pen is not a near miss to fix, it is the right answer. Last, because it softens
   // whatever verdict the comparison arrived at, including one the value decided.
-  return item.listening === true ? contentOnly(verdict) : verdict;
+  // The same for a text she read (issue #233): understanding is the question, not spelling.
+  return item.listening === true || item.reading === true ? contentOnly(verdict) : verdict;
 }
 
 /**

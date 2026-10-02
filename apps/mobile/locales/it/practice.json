@@ -225,5 +225,33 @@
     "brick": "fila {{row}}, mattone {{n}}",
     "check_waits": "Solo quando tutte le caselle sono compilate.",
     "scroll": "Tabella, scorre di lato"
+  },
+  "mark": {
+    "how_words": "Tocca le parole giuste.",
+    "how_gaps": "Tocca tra le parole dove va una virgola.",
+    "how_syllables": "Tocca la lettera dopo cui finisce una sillaba.",
+    "categories": "Segna come",
+    "category": "Segna come {{name}}",
+    "word_off": "{{word}}, non segnata",
+    "word_on": "{{word}}, segnata",
+    "word_in": "{{word}}, segnata come {{name}}",
+    "gap_off": "Spazio dopo «{{word}}»",
+    "gap_on": "Spazio dopo «{{word}}», virgola messa",
+    "cut_off": "Dividi dopo «{{before}}» ({{word}})",
+    "cut_on": "Diviso dopo «{{before}}» ({{word}})",
+    "marked": "Segnato: {{list}}",
+    "check_waits": "Quando hai segnato qualcosa."
+  },
+  "reading": {
+    "label": "Testo",
+    "lines": "{{count}} righe",
+    "show": "Mostra il testo",
+    "hide": "Chiudi",
+    "show_hint": "Mostra il testo con i numeri di riga.",
+    "hide_hint": "Chiude il testo; la domanda resta.",
+    "line": "Riga {{n}}",
+    "evidence": "Nel testo: r. {{from}}–{{to}}",
+    "evidence_one": "Nel testo: r. {{from}}",
+    "scroll_hint": "Il testo scorre da solo."
   }
 }

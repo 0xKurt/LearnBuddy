@@ -240,6 +240,22 @@
       "groups_some_one": "1 von {{total}} ist schon richtig einsortiert.",
       "groups_none": "Noch ist keins richtig einsortiert – schau nochmal in Ruhe hin.",
       "look_at": "Schau dir „{{text}}“ nochmal an."
+    },
+    "mark": {
+      "right": "{{count}} richtig",
+      "misfiled": "{{count}} mit der falschen Kategorie",
+      "missing": "{{count}} fehlen noch",
+      "missing_one": "1 fehlt noch",
+      "extra": "{{count}} zu viel",
+      "reply": "Noch nicht ganz: {{parts}}.",
+      "nothing": "Markier die Stellen, die passen – dann prüf nochmal.",
+      "right_one": "1 richtig"
+    },
+    "reading": {
+      "true": "Richtig",
+      "false": "Falsch",
+      "look": "Lies nochmal Z. {{from}}–{{to}}.",
+      "look_line": "Lies nochmal Z. {{from}}."
     }
   },
   "contact": {

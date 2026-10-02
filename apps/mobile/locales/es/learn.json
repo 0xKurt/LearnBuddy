@@ -5,7 +5,8 @@
     "test": "Examen de prueba",
     "vocab": "Repasar vocabulario",
     "speak": "Practicar pronunciación",
-    "listen": "Comprensión oral"
+    "listen": "Comprensión oral",
+    "read": "Comprensión lectora"
   },
   "homework": {
     "title": "Ayuda con los deberes",
@@ -63,6 +64,11 @@
     "submit": "¡Vamos!",
     "preparing": "Buddy lo está preparando …",
     "preparing_hint": "Tarda unos segundos.",
-    "not_usable": "Con eso no puedo preparar nada, lo siento – prueba con un tema del cole."
+    "not_usable": "Con eso no puedo preparar nada, lo siento – prueba con un tema del cole.",
+    "read": {
+      "title": "¿Sobre qué quieres leer un texto?",
+      "hint": "Te escribo un texto y te hago preguntas.",
+      "placeholder": "p. ej. animales en invierno, inglés unidad 4"
+    }
   }
 }

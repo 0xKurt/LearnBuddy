@@ -5,7 +5,8 @@
     "test": "Probetest",
     "vocab": "Vokabeln abfragen",
     "speak": "Aussprache üben",
-    "listen": "Hörverstehen üben"
+    "listen": "Hörverstehen üben",
+    "read": "Leseverständnis üben"
   },
   "homework": {
     "title": "Hilfe bei Hausaufgaben",
@@ -63,6 +64,11 @@
     "submit": "Los geht's",
     "preparing": "Buddy bereitet vor …",
     "preparing_hint": "Das dauert ein paar Sekunden.",
-    "not_usable": "Damit kann ich leider nichts vorbereiten – probier ein Schulthema."
+    "not_usable": "Damit kann ich leider nichts vorbereiten – probier ein Schulthema.",
+    "read": {
+      "title": "Worüber willst du einen Text lesen?",
+      "hint": "Ich schreibe dir einen Text und frage dich dazu.",
+      "placeholder": "z. B. Tiere im Winter, Englisch Unit 4"
+    }
   }
 }

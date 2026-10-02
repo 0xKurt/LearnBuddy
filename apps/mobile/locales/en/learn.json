@@ -5,7 +5,8 @@
     "test": "Practice test",
     "vocab": "Test my vocab",
     "speak": "Practise speaking",
-    "listen": "Practise listening"
+    "listen": "Practise listening",
+    "read": "Practise reading"
   },
   "homework": {
     "title": "Homework help",
@@ -63,6 +64,11 @@
     "submit": "Let's go",
     "preparing": "Buddy is getting it ready …",
     "preparing_hint": "This takes a few seconds.",
-    "not_usable": "I can't prepare anything from that, sorry – try a school topic."
+    "not_usable": "I can't prepare anything from that, sorry – try a school topic.",
+    "read": {
+      "title": "What should the text be about?",
+      "hint": "I'll write you a text and ask you about it.",
+      "placeholder": "e.g. animals in winter, English unit 4"
+    }
   }
 }

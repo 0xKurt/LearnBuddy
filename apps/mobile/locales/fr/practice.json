@@ -225,5 +225,33 @@
     "brick": "rangée {{row}}, brique {{n}}",
     "check_waits": "Seulement quand toutes les cases sont remplies.",
     "scroll": "Tableau, défile sur le côté"
+  },
+  "mark": {
+    "how_words": "Touche les mots qui conviennent.",
+    "how_gaps": "Touche entre les mots là où il faut une virgule.",
+    "how_syllables": "Touche la lettre après laquelle une syllabe se termine.",
+    "categories": "Marquer comme",
+    "category": "Marquer comme {{name}}",
+    "word_off": "{{word}}, pas marqué",
+    "word_on": "{{word}}, marqué",
+    "word_in": "{{word}}, marqué comme {{name}}",
+    "gap_off": "Espace après « {{word}} »",
+    "gap_on": "Espace après « {{word}} », virgule mise",
+    "cut_off": "Couper après « {{before}} » ({{word}})",
+    "cut_on": "Coupé après « {{before}} » ({{word}})",
+    "marked": "Marqué : {{list}}",
+    "check_waits": "Dès que tu as marqué quelque chose."
+  },
+  "reading": {
+    "label": "Texte à lire",
+    "lines": "{{count}} lignes",
+    "show": "Afficher le texte",
+    "hide": "Replier",
+    "show_hint": "Affiche le texte avec les numéros de ligne.",
+    "hide_hint": "Replie le texte ; la question reste.",
+    "line": "Ligne {{n}}",
+    "evidence": "Dans le texte : l. {{from}}–{{to}}",
+    "evidence_one": "Dans le texte : l. {{from}}",
+    "scroll_hint": "Le texte défile tout seul."
   }
 }

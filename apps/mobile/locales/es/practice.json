@@ -225,5 +225,33 @@
     "brick": "fila {{row}}, ladrillo {{n}}",
     "check_waits": "Solo cuando todas las casillas estén rellenas.",
     "scroll": "Tabla, se desplaza hacia los lados"
+  },
+  "mark": {
+    "how_words": "Toca las palabras que encajan.",
+    "how_gaps": "Toca entre las palabras donde va una coma.",
+    "how_syllables": "Toca la letra después de la cual termina una sílaba.",
+    "categories": "Marcar como",
+    "category": "Marcar como {{name}}",
+    "word_off": "{{word}}, sin marcar",
+    "word_on": "{{word}}, marcada",
+    "word_in": "{{word}}, marcada como {{name}}",
+    "gap_off": "Hueco después de «{{word}}»",
+    "gap_on": "Hueco después de «{{word}}», coma puesta",
+    "cut_off": "Separar después de «{{before}}» ({{word}})",
+    "cut_on": "Separado después de «{{before}}» ({{word}})",
+    "marked": "Marcado: {{list}}",
+    "check_waits": "Cuando hayas marcado algo."
+  },
+  "reading": {
+    "label": "Texto",
+    "lines": "{{count}} líneas",
+    "show": "Mostrar texto",
+    "hide": "Plegar",
+    "show_hint": "Muestra el texto con los números de línea.",
+    "hide_hint": "Pliega el texto; la pregunta se queda.",
+    "line": "Línea {{n}}",
+    "evidence": "En el texto: l. {{from}}–{{to}}",
+    "evidence_one": "En el texto: l. {{from}}",
+    "scroll_hint": "El texto se desplaza por sí solo."
   }
 }
