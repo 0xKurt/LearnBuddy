@@ -103,6 +103,22 @@ export class ScriptedGateway implements LlmGateway {
   /** Answers for purposes a test does not care about (scripted answers still come first). */
   private readonly defaults = new Map<LlmPurpose, ScriptedAnswer>();
 
+  /**
+   * Answers chosen by WHAT the request is about (issue #297): consulted before the queue, so a
+   * walkthrough spec whose photo is read is independent of the order the specs run in — a queued
+   * extraction belongs to whichever spec reads a sheet first. A rule that returns undefined does
+   * not apply, and the queue answers as before.
+   */
+  private readonly keyed: Array<{
+    purpose: LlmPurpose;
+    pick: (req: LlmRequest) => ScriptedAnswer | undefined;
+  }> = [];
+
+  scriptWhen(purpose: LlmPurpose, pick: (req: LlmRequest) => ScriptedAnswer | undefined): this {
+    this.keyed.push({ purpose, pick });
+    return this;
+  }
+
   /** Answer every unscripted call of this purpose with the same answer. */
   byDefault(purpose: LlmPurpose, answer: ScriptedAnswer): this {
     this.defaults.set(purpose, answer);
@@ -142,7 +158,13 @@ export class ScriptedGateway implements LlmGateway {
 
   async generate(req: LlmRequest): Promise<LlmResult> {
     this.calls.push(req);
-    const answer = this.queues.get(req.purpose)?.shift() ?? this.defaults.get(req.purpose);
+    const answer =
+      this.keyed
+        .filter((k) => k.purpose === req.purpose)
+        .map((k) => k.pick(req))
+        .find((a) => a !== undefined) ??
+      this.queues.get(req.purpose)?.shift() ??
+      this.defaults.get(req.purpose);
     if (!answer) {
       this.unexpected.push(req);
       throw new LlmError('unavailable', `unscripted model call (${req.purpose})`);

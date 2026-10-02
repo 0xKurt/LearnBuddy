@@ -18,11 +18,12 @@
 //
 // Derselbe Panel trägt das MATERIAL einer Aufgabe mit Teilaufgaben (issue #297): ihren Text mit
 // Zeilennummern und, darunter, ihre Figur (ein Graph, eine Tabelle) — in derselben scrollenden
-// Fläche, damit es weiterhin genau EINE gibt. Im Kopf steht dann, wo sie in der Aufgabe ist
-// (`steps`, a · b · c). Ein zweiter Panel für Material wäre derselbe Mechanismus noch einmal (#296).
+// Fläche, damit es weiterhin genau EINE gibt. Ein zweiter Panel für Material wäre derselbe
+// Mechanismus noch einmal (#296). Wo sie in der Aufgabe ist (a · b · c), steht an der Frage selbst
+// (`QuestionCard.steps`): der Kopf hier bleibt dem Namen des Materials.
 
 import type { Figure, PassageLines } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
@@ -49,8 +50,8 @@ type Props = {
   label?: string;
   /** Show / fold, in the panel's own words (default: the reading text's). */
   showLabel?: string;
-  /** Where she is in the task (a · b · c), at the end of the heading row (issue #297). */
-  steps?: ReactNode;
+  /** How tall the figure may be: the material's text above it keeps its room. */
+  figureMaxHeight?: number;
   /** Shown in full (her choice, kept per text by the screen). */
   open: boolean;
   onToggle: () => void;
@@ -70,7 +71,7 @@ export function PassagePanel({
   figure = null,
   label,
   showLabel,
-  steps,
+  figureMaxHeight,
   open,
   onToggle,
   maxHeight,
@@ -120,7 +121,6 @@ export function PassagePanel({
         >
           {title}
         </Text>
-        {steps}
         <Btn
           size="sm"
           variant="ghost"
@@ -200,7 +200,10 @@ export function PassagePanel({
                 paddingTop: passage.lines.length > 0 ? SPACE.sm : 0,
               }}
             >
-              <ZoomableFigure figure={figure} maxHeight={Math.round(maxHeight * 0.9)} />
+              <ZoomableFigure
+                figure={figure}
+                maxHeight={figureMaxHeight ?? Math.round(maxHeight * 0.6)}
+              />
             </View>
           ) : null}
         </ScrollView>

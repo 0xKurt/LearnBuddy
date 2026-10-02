@@ -698,7 +698,8 @@ function preparedFrom(
     staffs,
     structured,
     reading: input.kind === 'read' ? readingItems(set.reading, learner.locale) : [],
-    complex: input.kind === 'complex' ? set.complex.flatMap((c) => complexItems(c)) : [],
+    complex:
+      input.kind === 'complex' ? set.complex.flatMap((c) => complexItems(c, learner.locale)) : [],
   };
 }
 

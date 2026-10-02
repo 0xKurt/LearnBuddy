@@ -988,7 +988,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     // And the questions of each reading text, every one checked against its lines (#233).
     ...x.reading.flatMap((r) => readingItems(r, learner.locale)),
     // And the parts of each task with several parts, the task recomputed from its material (#297).
-    ...x.complex.flatMap((c) => complexItems(c)),
+    ...x.complex.flatMap((c) => complexItems(c, learner.locale)),
   ];
   const pageProblems = pageProblemsOf(x.pages, m.photo_count);
   // "Not readable" with questions and a page that was read: one bad page must not

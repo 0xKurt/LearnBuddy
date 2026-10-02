@@ -40,6 +40,9 @@ import {
   type ComplexMaterial,
   type ComplexView,
   type Figure,
+  type Rubric,
+  RUBRIC_MAX,
+  RUBRIC_MIN,
 } from '@learnbuddy/shared-types/contracts';
 import {
   evaluateExpression,
@@ -50,6 +53,7 @@ import {
 } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
+import { t } from '../../i18n/index.js';
 import { ItemDraft, MAX_ACCEPTED, usableFigure, usableItems, type StoredItem } from './items.js';
 import { refsExist } from './reading.js';
 import { lastValue } from './steps.js';
@@ -70,7 +74,7 @@ export const COMPLEX_PART_KINDS = [
  * What the generator and the photo reading are told. Principles and bans, never an example task:
  * models copy examples (standing owner rule).
  */
-export const COMPLEX_RULES = `TASKS WITH SEVERAL PARTS ("complex"): a task as a class test asks it from grade 8 on — shared MATERIAL and ${COMPLEX_PARTS_MIN}–${COMPLEX_PARTS_MAX} PARTS a), b), c) … in order, later parts building on earlier ones. Material: lines = its text line by line (the situation, a source, measured values; from a photo exactly as printed, your own in lines of at most 36 characters), at most ${PASSAGE_LINES_MAX} lines; title = the heading or null; givens = EVERY quantity a part calculates with — name (the symbol, e.g. as in the text: letters, digits, _), value (a plain number), unit — and each value must stand in the material as a number. Parts: prompt = the instruction of that part with its operator (berechne, gib an, stelle auf, erkläre, begründe, beurteile …), never its letter and never the material again; kind = numeric (one number, unit in "unit"), formula (a term, an equation, a reaction equation), short, multiple_choice (choices, correct_choice) or long (an explanation, a reasoning, a judgement — with a rubric of the points the operator demands); uses = the letters of earlier parts it builds on. A numeric part ALWAYS has calc: the calculation that gives its answer, as a term over the givens' names and [a], [b] … for the result of an earlier part (+ - * / ^, sqrt(), parentheses); its answer is the value of calc, rounded only as the part says. Every other part has calc null. A part's answer follows from the material and the earlier parts alone. A part may name a line ("Z. 3") only if that line exists.`;
+export const COMPLEX_RULES = `TASKS WITH SEVERAL PARTS ("complex"): a task as a class test asks it from grade 8 on — shared MATERIAL and ${COMPLEX_PARTS_MIN}–${COMPLEX_PARTS_MAX} PARTS a), b), c) … in order, later parts building on earlier ones. Material: lines = its text line by line (the situation, a source, measured values; from a photo exactly as printed, your own in lines of at most 36 characters), at most ${PASSAGE_LINES_MAX} lines; title = the heading or null; givens = EVERY quantity a part calculates with — name (the symbol, e.g. as in the text: letters, digits, _), value (a plain number), unit — and each value must stand in the material as a number. Parts: prompt = the instruction of that part with its operator (berechne, gib an, stelle auf, erkläre, begründe, beurteile …), never its letter and never the material again; kind = numeric (one number, unit in "unit"), formula (a term, an equation, a reaction equation), short, multiple_choice (choices, correct_choice) or long (an explanation, a reasoning, a judgement — points = the points a complete answer makes, as a teacher names them); uses = the letters of earlier parts it builds on. A numeric part ALWAYS has calc: the calculation that gives its answer, as a term over the givens' names and [a], [b] … for the result of an earlier part (+ - * / ^, sqrt(), parentheses); its answer is the value of calc, rounded only as the part says. Every other part has calc null. A part's answer follows from the material and the earlier parts alone. A part may name a line ("Z. 3") only if that line exists.`;
 
 const Label = z.enum(COMPLEX_LABELS);
 
@@ -97,7 +101,14 @@ export const ComplexPartDraft = z.object({
     .default(null)
     .describe('numeric only: the calculation over the givens and [a], [b] …; else null'),
   hints: ItemDraft.shape.hints,
-  rubric: ItemDraft.shape.rubric,
+  // The key points of an open part (#258), as names only. Code turns them into the rubric every
+  // free text has (#211, judged elements: the tutor must quote her text for each) — the same
+  // checker, at a fifth of the schema the full rubric would cost every reading (#281).
+  points: z
+    .array(z.string().trim().min(1).max(40))
+    .max(RUBRIC_MAX)
+    .default([])
+    .describe('long only: the 2–4 points a complete answer makes, 1–4 words each; else []'),
   difficulty: ItemDraft.shape.difficulty,
 });
 export type ComplexPartDraft = z.infer<typeof ComplexPartDraft>;
@@ -296,6 +307,8 @@ function materialFrom(draft: {
 /** The parts of a task as questions to store — every one of them, or none. */
 export function complexItems(
   draft: Omit<ComplexDraft, 'figure'> & { figure?: ComplexDraft['figure'] },
+  /** The learner's app language: the next step a key point names is said in it. */
+  locale: string,
   opts: { newGroup?: () => string } = {},
 ): StoredItem[] {
   const parts = draft.parts;
@@ -351,7 +364,7 @@ export function complexItems(
         curriculum_point: null,
         hints: p.hints,
         worked_solution: null,
-        rubric: p.rubric,
+        rubric: rubricFrom(p, locale),
       },
     ]);
     // The part fails the check of its own kind (a key against its own arithmetic, a choice that
@@ -374,6 +387,22 @@ export function complexItems(
     out.push({ ...usable, complex_task: task.data });
   }
   return out;
+}
+
+/**
+ * The rubric of an open part, from its key points: one judged element each (#211, #258). Fewer
+ * than two points is no rubric — the part then behaves like every free text without one.
+ */
+function rubricFrom(p: ComplexPartDraft, locale: string): Rubric | null {
+  if (p.kind !== 'long' || p.points.length < RUBRIC_MIN) return null;
+  return {
+    form: t(locale, 'practice.complex.form'),
+    elements: p.points.map((name) => ({
+      name,
+      missing: t(locale, 'practice.complex.point_missing'),
+      check: { by: 'judged' as const },
+    })),
+  };
 }
 
 /** A stored row's task, or null (an unreadable column is no task). */

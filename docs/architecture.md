@@ -2560,6 +2560,60 @@ word list, so it stays a prompt rule.
   (`session.<id>.folded`), so a theme switch — a remount — does not spring a folded text open. `practice/__tests__/reading.test.ts`,
   `reading-marking.int.test.ts`, `PassagePanel.test.tsx`, walkthrough "reading text" in
   `tests/web/modes.spec.ts`.
+- **Tasks with several parts** (issue #297; `contracts/complex.ts`, `practice/complex.ts`,
+  migration `0107_complex_tasks.sql`). A class test from grade 8 on asks shared MATERIAL — a
+  situation with values, a source, a short story, a graph — and parts a) b) c) that build on each
+  other. **No second checker** (#296): every part is an ordinary question of a kind that exists
+  (`numeric`, `formula`, `short`, `multiple_choice`, `long`), stored in `items` and judged by
+  exactly the checker that kind always has — `usableItems` before storing (the key against its
+  own arithmetic, a choice that is one, a rubric that holds), `ruleCheck` when she answers
+  (number, term, written way, reaction equation …), the tutor with key points for an open part.
+  What is new is only what connects the parts, `items.complex_task` (`ComplexTask`): a group id
+  the SERVER issues (rule 2), the part's position, the material (lines as printed, a figure, the
+  quantities a part calculates with — `givens`), the earlier parts it builds on (`uses`, written
+  by the model as letters, stored as positions) and, for a number, its calculation `calc` — a
+  term over the givens' names and `[a]`, `[b]` for earlier results, read with the
+  `shared-math` parser (no eval). Regel 0 in both directions:
+  - **Generation**: code evaluates every `calc` with the material's values and the KEYS of the
+    earlier parts; a key the calculation does not give (a decimal key may be its value rounded
+    to the key's places, D-1), a quantity whose value does not stand in the material (text or
+    figure data), a dependency that points forward or nowhere, a calculation with a name nobody
+    defined or with the result of a part that is no number, a number part without a
+    calculation, a line ref the material does not have, or a part that fails its own kind's
+    check — and **none** of the task's parts is stored. All or nothing: a task without its b)
+    would have a c) pointing at something she never saw.
+  - **Answer (Folgefehler)**: when a number part is not right against its key, code computes its
+    `calc` again with HER latest answers to the parts it reads (the value of her answer or of
+    the last line of her written way — a broken way is exactly how a wrong a) comes about),
+    writes the result as precisely as the key (a whole-number key whose value is not whole gets
+    two places) and asks the SAME `ruleCheck` with that key. Right there: right, by the rules,
+    no model, with the note "Richtig weitergerechnet – mit deinem Ergebnis aus a)". An open
+    part goes to the tutor with the material and her answers to the parts it builds on
+    (`tutorMaterial`); an open part's key points (`points`, 1–4 words each) become the rubric
+    every free text has (#211: judged elements, the tutor must quote her text for each).
+    Together: a part never comes alone — `selectPracticeItems` places the whole task, a) b) c) in
+    order, where any of its parts was chosen — and never into a practice test (an open part is no
+    test question, #197). From Buddy: `offer_learning` kind `complex` (1–2 tasks); its schema is a
+    profile of its own (#281 D2 is not on main yet: like `read`, only this run kind is sent the
+    `complex` list, so no other run pays for it — measured 5 633 characters for the task schema).
+    From a photo: the study reading's `complex` list (at most two tasks; without the figure, which
+    a sheet transcribes into its lines — the full figure union would cost every reading), each
+    part judged as printed. Homework is not shown it: help goes sub-task by sub-task and never
+    shows a solution, so there is no result of a) on screen to carry. The reading schema grows by
+    2 181 characters (23 888 → 26 069); the first version, with the full rubric per part, cost
+    5 332 and was cut to key points for that reason. Native tokens with Vertex are **not**
+    measured (no access in the building session).
+    App: no new route. The material stands in the same `PassagePanel` as a reading text — its
+    lines with their numbers and, under them in the same scroll area, its figure (tap to zoom) —
+    keyed by the task's alias (`ItemView.complex.ref`, `k1`), so it stays put, folded or open,
+    across the parts; the same share of the screen as a reading text (`PASSAGE_SHARE`; a taller
+    panel left Buddy's reply no room on 360×740). Which part this is stands in the question card's
+    first row, `TaskSteps`: a · b · c, the current one in a light pill and bold, the done ones with
+    a check, no count; read as "Teilaufgabe b, erledigt: a". `practice/__tests__/complex.test.ts`,
+    `complex-tasks.int.test.ts` (real Postgres: Folgefehler, rejected drafts, photo, selection,
+    test), `TaskMaterial.test.tsx`, walkthrough `tests/web/complex.spec.ts` (Mathe and Physik
+    from Buddy, Chemie and Geschichte from a photo, Deutsch; scripted model in
+    `testing/scenarios/complex-tasks.ts`, keyed to the learner, never to the order of the specs).
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
   renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
   symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in

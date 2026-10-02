@@ -160,6 +160,12 @@ const PASSAGE_SHARE = 0.25;
  * eight lines — and its sentence is quoted from the text, which still scrolls above it.
  */
 const PASSAGE_SHARE_BOARD = 0.12;
+/**
+ * The drawing in a task's material (issue #297): it scrolls with the material's lines, inside the
+ * same share a reading text has — a taller panel left Buddy's reply no room on 360×740 (measured,
+ * `71-complex-folgefehler`). Tall enough to read a value off a graph; tapping opens it full size.
+ */
+const MATERIAL_FIGURE_SHARE = 0.2;
 
 /** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
 function foreign(lang: string | null): lang is string {
@@ -1106,16 +1112,11 @@ export default function PracticeScreen() {
                 figure={item.complex.figure}
                 label={t('practice:complex.label')}
                 showLabel={t('practice:complex.show')}
-                steps={
-                  <TaskSteps
-                    labels={item.complex.labels}
-                    current={item.complex.label}
-                    done={partsDone(item.complex.ref)}
-                  />
-                }
                 open={!foldedTexts.has(item.complex.ref)}
                 onToggle={() => toggleFolded(item.complex?.ref)}
+                // Like a reading text: the material scrolls in itself, its drawing with it.
                 maxHeight={Math.round(windowHeight * PASSAGE_SHARE)}
+                figureMaxHeight={Math.round(windowHeight * MATERIAL_FIGURE_SHARE)}
                 highlight={null}
                 screenTitle={title}
               />
@@ -1129,8 +1130,17 @@ export default function PracticeScreen() {
                 <SpeakCard item={item} turns={turns} live={speakLive} sessionId={session.id} />
               ) : (
                 <QuestionCard
-                  // A part of a task carries its letter, as on the sheet (issue #297).
-                  prompt={item.complex ? `${item.complex.label}) ${item.prompt}` : item.prompt}
+                  prompt={item.prompt}
+                  // Which part of its task this is (issue #297): a · b · c, without a count.
+                  steps={
+                    item.complex ? (
+                      <TaskSteps
+                        labels={item.complex.labels}
+                        current={item.complex.label}
+                        done={partsDone(item.complex.ref)}
+                      />
+                    ) : undefined
+                  }
                   // A reading question's topic is its text's, and the text stands right above
                   // with its heading (issue #233): the same words a third time are noise. The
                   // same for the material of a task (#297).
@@ -1161,6 +1171,9 @@ export default function PracticeScreen() {
             <ScrollView
               ref={scroll}
               testID="scroll-thread"
+              // Reachable by keyboard once it scrolls (axe `scrollable-region-focusable`): under a
+              // task's material the conversation is the part that yields first (issue #297).
+              focusable
               style={[{ flex: 1 }, topEdgeMask]}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={{

@@ -30,7 +30,7 @@ const part = (p: Partial<ComplexPartDraft> & Pick<ComplexPartDraft, 'kind'>): Co
   uses: [],
   calc: null,
   hints: [],
-  rubric: null,
+  points: [],
   difficulty: 3,
   ...p,
 });
@@ -82,7 +82,9 @@ const withPart = (i: number, p: Partial<ComplexPartDraft>): ComplexDraft => ({
 
 describe('complexItems: what is stored', () => {
   it('stores every part, one group, with its place, what it builds on and its calculation', () => {
-    const items = complexItems(BIKE, { newGroup: () => '00000000-0000-4000-8000-000000000297' });
+    const items = complexItems(BIKE, 'de', {
+      newGroup: () => '00000000-0000-4000-8000-000000000297',
+    });
     expect(items).toHaveLength(3);
     const tasks = items.map((i) => i.complex_task!);
     expect(new Set(tasks.map((t) => t.group)).size).toBe(1);
@@ -119,43 +121,46 @@ describe('complexItems: what is stored', () => {
         }),
       ],
     };
-    expect(complexItems(draft)).toHaveLength(2);
+    expect(complexItems(draft, 'de')).toHaveLength(2);
   });
 });
 
 describe('complexItems: a draft that does not work out is no task (Regel 0)', () => {
   it('rejects a key the calculation does not give', () => {
-    expect(complexItems(withPart(1, { answer: '6000' }))).toEqual([]);
+    expect(complexItems(withPart(1, { answer: '6000' }), 'de')).toEqual([]);
   });
 
   it('rejects a key computed from the wrong earlier result', () => {
     // 0.5 · 80 · 12² — the key of b) with a wrong a) baked in.
-    expect(complexItems(withPart(1, { answer: '5760' }))).toEqual([]);
+    expect(complexItems(withPart(1, { answer: '5760' }), 'de')).toEqual([]);
   });
 
   it('rejects a quantity that is not in the material', () => {
     expect(
-      complexItems({
-        ...BIKE,
-        givens: [...BIKE.givens.slice(0, 2), { name: 'm', value: 75, unit: 'kg' }],
-      }),
+      complexItems(
+        {
+          ...BIKE,
+          givens: [...BIKE.givens.slice(0, 2), { name: 'm', value: 75, unit: 'kg' }],
+        },
+        'de',
+      ),
     ).toEqual([]);
   });
 
   it('rejects a dependency that points nowhere: forward, to itself, or past the end', () => {
-    expect(complexItems(withPart(0, { uses: ['b'] }))).toEqual([]);
-    expect(complexItems(withPart(1, { uses: ['b'] }))).toEqual([]);
-    expect(complexItems(withPart(2, { uses: ['e'] }))).toEqual([]);
-    expect(complexItems(withPart(1, { calc: '0.5 * m * [c]^2' }))).toEqual([]);
+    expect(complexItems(withPart(0, { uses: ['b'] }), 'de')).toEqual([]);
+    expect(complexItems(withPart(1, { uses: ['b'] }), 'de')).toEqual([]);
+    expect(complexItems(withPart(2, { uses: ['e'] }), 'de')).toEqual([]);
+    expect(complexItems(withPart(1, { calc: '0.5 * m * [c]^2' }), 'de')).toEqual([]);
   });
 
   it('rejects a calculation with a name nobody defined, or that does not parse', () => {
-    expect(complexItems(withPart(0, { calc: 'strecke / t' }))).toEqual([]);
-    expect(complexItems(withPart(0, { calc: 's / (t' }))).toEqual([]);
+    expect(complexItems(withPart(0, { calc: 'strecke / t' }), 'de')).toEqual([]);
+    expect(complexItems(withPart(0, { calc: 's / (t' }), 'de')).toEqual([]);
   });
 
   it('rejects a number part without a calculation', () => {
-    expect(complexItems(withPart(0, { calc: null }))).toEqual([]);
+    expect(complexItems(withPart(0, { calc: null }), 'de')).toEqual([]);
   });
 
   it('rejects a calculation with the result of a part that is no number', () => {
@@ -172,22 +177,25 @@ describe('complexItems: a draft that does not work out is no task (Regel 0)', ()
         }),
       ],
     };
-    expect(complexItems(draft)).toEqual([]);
+    expect(complexItems(draft, 'de')).toEqual([]);
   });
 
   it('rejects a part that names a line the material does not have', () => {
-    expect(complexItems(withPart(2, { prompt: 'Erkläre Z. 9.' }))).toEqual([]);
+    expect(complexItems(withPart(2, { prompt: 'Erkläre Z. 9.' }), 'de')).toEqual([]);
   });
 
   it('rejects a task with one part, and a material that is neither text nor figure', () => {
-    expect(complexItems({ ...BIKE, parts: [BIKE.parts[0]!] })).toEqual([]);
+    expect(complexItems({ ...BIKE, parts: [BIKE.parts[0]!] }, 'de')).toEqual([]);
     expect(
-      complexItems({
-        ...BIKE,
-        lines: [],
-        givens: [],
-        parts: BIKE.parts.slice(2).concat(BIKE.parts.slice(2)),
-      }),
+      complexItems(
+        {
+          ...BIKE,
+          lines: [],
+          givens: [],
+          parts: BIKE.parts.slice(2).concat(BIKE.parts.slice(2)),
+        },
+        'de',
+      ),
     ).toEqual([]);
   });
 
@@ -199,7 +207,7 @@ describe('complexItems: a draft that does not work out is no task (Regel 0)', ()
       correct_choice: 3,
       answer: 'größer',
     });
-    expect(complexItems(draft)).toEqual([]);
+    expect(complexItems(draft, 'de')).toEqual([]);
   });
 });
 
@@ -246,7 +254,7 @@ describe('the calculation', () => {
 });
 
 describe('Folgefehler', () => {
-  const [a, b, c] = complexItems(BIKE);
+  const [a, b, c] = complexItems(BIKE, 'de');
   const keys = new Map([[0, a!.answer]]);
 
   it('recomputes b) with her value from a)', () => {
@@ -293,8 +301,12 @@ describe('Folgefehler', () => {
 
 describe('views', () => {
   it('gives the parts of one task one alias, in order', () => {
-    const one = complexItems(BIKE, { newGroup: () => '00000000-0000-4000-8000-000000000001' });
-    const two = complexItems(BIKE, { newGroup: () => '00000000-0000-4000-8000-000000000002' });
+    const one = complexItems(BIKE, 'de', {
+      newGroup: () => '00000000-0000-4000-8000-000000000001',
+    });
+    const two = complexItems(BIKE, 'de', {
+      newGroup: () => '00000000-0000-4000-8000-000000000002',
+    });
     const rows = [...one, ...two].map((it, n) => ({ id: `i${n}`, complex_task: it.complex_task }));
     const refs = complexRefs([...rows, { id: 'plain', complex_task: null }]);
     expect([...refs.values()]).toEqual(['k1', 'k1', 'k1', 'k2', 'k2', 'k2']);
@@ -310,7 +322,7 @@ describe('the five subjects of issue #297', () => {
     const { ComplexDraft } = await import('../complex.js');
     for (const fixture of [MATHE, PHYSIK, CHEMIE, GESCHICHTE, DEUTSCH]) {
       const draft = ComplexDraft.parse(fixture);
-      const items = complexItems(draft);
+      const items = complexItems(draft, 'de');
       expect(
         items.map((i) => i.prompt),
         fixture.title,
@@ -321,10 +333,42 @@ describe('the five subjects of issue #297', () => {
   it('the chain goes on: c) of the tariff uses HER b), which used the key of a)', async () => {
     const { MATHE } = await import('../../../testing/complex-tasks.js');
     const { ComplexDraft } = await import('../complex.js');
-    const [, b, c] = complexItems(ComplexDraft.parse(MATHE));
+    const [, b, c] = complexItems(ComplexDraft.parse(MATHE), 'de');
     // Her b) was 22.59 (she took 0.105 €/min): c) is 9.99 / 22.59 · 100 = 44.2 %.
     expect(
       carriedKey(c!.complex_task!, c!.answer, new Map([[1, b!.answer]]), new Map([[1, '22,59']])),
     ).toEqual({ key: '44.2', from: [1] });
+  });
+});
+
+describe('the key points of an open part', () => {
+  it('become the rubric every free text has: one judged element each', async () => {
+    const { GESCHICHTE } = await import('../../../testing/complex-tasks.js');
+    const { ComplexDraft } = await import('../complex.js');
+    const [, , c] = complexItems(ComplexDraft.parse(GESCHICHTE), 'de');
+    expect(c!.rubric).toEqual({
+      form: 'Antwort',
+      elements: [
+        {
+          name: 'Eigenes Urteil',
+          missing: 'Nimm das noch in deine Antwort auf.',
+          check: { by: 'judged' },
+        },
+        {
+          name: 'Textbeleg',
+          missing: 'Nimm das noch in deine Antwort auf.',
+          check: { by: 'judged' },
+        },
+      ],
+    });
+    // One point is no rubric: the part is then judged like any free text.
+    const one = complexItems(
+      ComplexDraft.parse({
+        ...GESCHICHTE,
+        parts: GESCHICHTE.parts.map((p, n) => (n === 2 ? { ...p, points: ['Urteil'] } : p)),
+      }),
+      'de',
+    );
+    expect(one[2]!.rubric).toBeNull();
   });
 });

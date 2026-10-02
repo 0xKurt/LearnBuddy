@@ -263,7 +263,9 @@
     },
     "complex": {
       "carried": "Richtig weitergerechnet – mit deinem Ergebnis aus {{parts}}. Dort lohnt sich noch ein Blick.",
-      "and": "und"
+      "and": "und",
+      "form": "Antwort",
+      "point_missing": "Nimm das noch in deine Antwort auf."
     }
   },
   "contact": {

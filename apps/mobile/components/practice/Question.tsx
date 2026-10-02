@@ -124,6 +124,11 @@ type QuestionProps = {
    * height, or without a visual, it does nothing.
    */
   minHeight?: number;
+  /**
+   * Where this part stands in its task (a · b · c, issue #297): at the end of the card's first
+   * row, because it says which part THIS question is — the material above is the whole task's.
+   */
+  steps?: ReactNode;
 };
 
 export function QuestionCard({
@@ -137,6 +142,7 @@ export function QuestionCard({
   figureMaxHeight,
   imageMaxHeight = 180,
   minHeight,
+  steps,
 }: QuestionProps) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
@@ -162,7 +168,7 @@ export function QuestionCard({
     <Card tone="lavender" padding={18} radius={24} style={grown ? { minHeight } : null}>
       <View style={grown ? { flexGrow: 1 } : null}>
         <View onLayout={(e) => setHeadHeight(Math.round(e.nativeEvent.layout.height))}>
-          {fromBuddy || topic ? (
+          {fromBuddy || topic || steps ? (
             // Where it comes from and what it is about share one line.
             <View
               style={{
@@ -182,6 +188,7 @@ export function QuestionCard({
                   {topic}
                 </Text>
               ) : null}
+              {steps ? <View style={{ marginLeft: 'auto' }}>{steps}</View> : null}
             </View>
           ) : null}
           <MathText

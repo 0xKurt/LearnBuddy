@@ -263,7 +263,9 @@
     },
     "complex": {
       "carried": "Bien continuado – con tu resultado de {{parts}}. Vale la pena revisarlo otra vez.",
-      "and": "y"
+      "and": "y",
+      "form": "Respuesta",
+      "point_missing": "Inclúyelo también en tu respuesta."
     }
   },
   "contact": {

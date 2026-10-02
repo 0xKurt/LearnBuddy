@@ -1,7 +1,8 @@
 // Wo sie in einer Aufgabe mit Teilaufgaben steht (issue #297): a · b · c, wie auf dem Blatt.
 //
 // Ruhig und ohne Zähler (CLAUDE.md Regel 6 und 16): kein „2 von 3", keine Prozent. Die Teilaufgabe,
-// an der sie gerade ist, steht in einer gefüllten Pille und fett; eine erledigte trägt ein kleines
+// an der sie gerade ist, steht in einer hellen Pille und fett — derselben wie „Frage von Buddy"
+// daneben auf der Karte; eine erledigte trägt ein kleines
 // Häkchen; was noch kommt, steht leise da. Farbe ist nie das einzige Signal — die Pille hat eine
 // Form, das Häkchen ein Zeichen, und ein Screenreader hört „Teilaufgabe b, a erledigt".
 //
@@ -54,7 +55,7 @@ export function TaskSteps({ labels, current, done }: Props) {
               height: 24,
               paddingHorizontal: SPACE.xs,
               borderRadius: 12,
-              backgroundColor: now ? palette.primaryLt : 'transparent',
+              backgroundColor: now ? palette.paper : 'transparent',
             }}
           >
             {finished ? <Icon name="check" size={12} color={palette.ink2} /> : null}

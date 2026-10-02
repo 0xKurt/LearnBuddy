@@ -176,10 +176,11 @@ describe.skipIf(!dbReady)('tasks with several parts', () => {
       expect(text).toContain('HER ANSWER: 6250');
       expect(text).toContain('Lena fährt mit dem Rad');
       return {
+        intent: 'answer',
         verdict: 'correct',
         reply: 'Genau – das Quadrat macht es.',
         gave_hint: false,
-        revealed: false,
+        revealed_answer: false,
       };
     });
     const open = await answer(l, s.id, {
@@ -187,6 +188,7 @@ describe.skipIf(!dbReady)('tasks with several parts', () => {
       text: 'Weil die Geschwindigkeit im Quadrat eingeht, wird es 2² = 4-mal so viel.',
     });
     expect(open.status).toBe(200);
+    expect(open.body.verdict).toBe('correct');
     expect(env.llm.callsFor('tutor')).toHaveLength(1);
 
     const other = await onboard(env, { relation: 'child', name: 'Ben', birthDate: '2010-05-01' });

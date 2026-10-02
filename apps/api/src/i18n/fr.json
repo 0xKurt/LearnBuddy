@@ -263,7 +263,9 @@
     },
     "complex": {
       "carried": "Bien poursuivi – avec ton résultat de {{parts}}. Ça vaut la peine d’y rejeter un œil.",
-      "and": "et"
+      "and": "et",
+      "form": "Réponse",
+      "point_missing": "Intègre-le aussi dans ta réponse."
     }
   },
   "contact": {

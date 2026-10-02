@@ -18,7 +18,7 @@ const base = {
   uses: [],
   calc: null,
   hints: [],
-  rubric: null,
+  points: [],
   difficulty: 3,
 };
 
@@ -80,7 +80,16 @@ export const MATHE = {
     'jede Minute. Im Mai telefoniert',
     'Tim 120 Minuten.',
   ],
-  figure: null,
+  // The material carries a graph the app draws: the tariff as a line, with Tim's month on it.
+  figure: {
+    type: 'function_plot',
+    functions: [{ expr: '0.09*x+9.99', label: 'Kosten in €' }],
+    x_min: 0,
+    x_max: 200,
+    y_min: 0,
+    y_max: 30,
+    points: [{ x: 120, y: 20.79, label: 'Mai' }],
+  },
   givens: [
     { name: 'G', value: 9.99, unit: '€' },
     { name: 'p', value: 0.09, unit: '€' },
@@ -207,21 +216,7 @@ export const GESCHICHTE = {
       prompt: 'Beurteile, ob Heinrich der Zukunft der Revolution vertraut. Belege mit dem Text.',
       answer: 'Er freut sich, misstraut aber den Fürsten (Z. 8–9).',
       uses: ['a', 'b'],
-      rubric: {
-        form: 'Quellenbeurteilung',
-        elements: [
-          {
-            name: 'Eigenes Urteil',
-            missing: 'Sag klar, ob er vertraut oder zweifelt.',
-            check: { by: 'judged' },
-          },
-          {
-            name: 'Textbeleg',
-            missing: 'Stütz dein Urteil auf eine Stelle im Brief.',
-            check: { by: 'judged' },
-          },
-        ],
-      },
+      points: ['Eigenes Urteil', 'Textbeleg'],
     },
   ],
 };
@@ -263,17 +258,7 @@ export const DEUTSCH = {
       kind: 'long',
       prompt: 'Nimm Stellung: Hat Jonas richtig gehandelt, als er nicht abhob?',
       answer: 'Eine begründete eigene Meinung mit Bezug auf den Text.',
-      rubric: {
-        form: 'Stellungnahme',
-        elements: [
-          { name: 'Position', missing: 'Sag, wie du es siehst.', check: { by: 'judged' } },
-          {
-            name: 'Begründung',
-            missing: 'Gib einen Grund aus dem Text an.',
-            check: { by: 'judged' },
-          },
-        ],
-      },
+      points: ['Position', 'Begründung'],
     },
   ],
 };
