@@ -265,7 +265,10 @@
       "empty": "Fast – {{at}}{{row}} fehlt noch eine Ziffer.",
       "carry_missing": "Fast – {{at}} fehlt der Übertrag.",
       "carry_wrong": "Fast – der Übertrag {{at}} stimmt noch nicht.",
-      "look_again": "Fast – schau dir die Rechnung nochmal in Ruhe an."
+      "look_again": "Fast – schau dir die Rechnung nochmal in Ruhe an.",
+      "carry_missing_sub": "Fast – {{at}} ist die Ziffer um eins zu groß. Denk an den Übertrag oder ans Entbündeln.",
+      "rest_missing": "Fast – {{at}} fehlt der Rest von der Stelle davor.",
+      "rest_wrong": "Fast – der Rest {{at}} stimmt noch nicht."
     }
   },
   "contact": {

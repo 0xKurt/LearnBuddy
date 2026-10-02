@@ -249,11 +249,13 @@
       "p6": "millones"
     },
     "row_carry": "llevada",
+    "row_rest": "Resto",
     "row_result": "resultado",
     "row_partial": "producto parcial {{n}}",
     "box": "{{row}}, {{place}}, {{value}}",
     "empty": "vacía",
     "times": "por",
+    "divided": "dividido entre",
     "minus": "menos",
     "plus": "más",
     "pad": "Cifras",

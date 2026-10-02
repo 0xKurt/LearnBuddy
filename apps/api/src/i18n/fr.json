@@ -265,7 +265,10 @@
       "empty": "Presque – {{at}}{{row}}, il manque encore un chiffre.",
       "carry_missing": "Presque – {{at}}, il manque la retenue.",
       "carry_wrong": "Presque – la retenue {{at}} n'est pas encore juste.",
-      "look_again": "Presque – regarde encore une fois le calcul tranquillement."
+      "look_again": "Presque – regarde encore une fois le calcul tranquillement.",
+      "carry_missing_sub": "Presque – le chiffre {{at}} est trop grand d'un. Pense à la retenue ou à l'échange.",
+      "rest_missing": "Presque – il manque le reste du rang d'avant {{at}}.",
+      "rest_wrong": "Presque – le reste {{at}} n'est pas encore juste."
     }
   },
   "contact": {

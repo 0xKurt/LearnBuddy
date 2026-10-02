@@ -16,6 +16,10 @@
 // Taschenrechners, jede Taste mindestens 44 pt. Gelöscht wird ohne Taste: ein zweiter Tipp auf
 // das gewählte Kästchen leert es, eine neue Ziffer ersetzt die alte.
 //
+// Geteilt wird in der Kurzform, von der höchsten Stelle aus: der Quotient steht unter dem
+// Dividenden, und die Auswahl wandert nach rechts; die kleinen Kästchen halten den Rest, der in
+// die nächste Stelle wandert („8 : 3 = 2, Rest 2 — 24 : 3").
+//
 // Ein Screenreader liest jede Zahl der Aufgabe als Zahl und jedes Kästchen mit Zeile und Stelle
 // („Ergebnis, Zehner, leer"); Farbe ist nie das einzige Signal — das gewählte Kästchen hat einen
 // dicken Rand und heißt „ausgewählt".
@@ -65,10 +69,16 @@ export function digitsFrom(kept: string, ids: ReadonlySet<string>): Record<strin
   }
 }
 
+/** The place a row is filled from, and the step to the next: a division goes from the top down. */
+function direction(view: WrittenCalcTaskView): 1 | -1 {
+  return view.op === 'div' ? -1 : 1;
+}
+
 /**
  * Where the selection goes after a digit: a carry hands over to the result of its column; any
- * other box to the next place on its left, and from the end of a row to the start (the Einer)
- * of the next row that is filled in. Null when there is nowhere left to go.
+ * other box to the next place on its left (in a division: on its right), and from the end of a
+ * row to the start (the Einer) of the next row that is filled in. Null when there is nowhere
+ * left to go.
  */
 export function nextBox(view: WrittenCalcTaskView, id: string): string | null {
   const all = boxesIn(view);
@@ -81,35 +91,42 @@ export function nextBox(view: WrittenCalcTaskView, id: string): string | null {
     );
     return below?.id ?? null;
   }
-  const left = all.find((b) => b.row === at.row && b.place === at.place + 1);
+  const step = direction(view);
+  const left = all.find((b) => b.row === at.row && b.place === at.place + step);
   if (left) return left.id;
   const later = all.filter((b) => b.row > at.row && view.rows[b.row]?.role !== 'carry');
   const nextRow = later[0]?.row;
   if (nextRow === undefined) return null;
-  return later.filter((b) => b.row === nextRow).sort((x, y) => x.place - y.place)[0]?.id ?? null;
+  return (
+    later.filter((b) => b.row === nextRow).sort((x, y) => (x.place - y.place) * step)[0]?.id ?? null
+  );
 }
 
 /**
  * The box she goes on in: the first empty one in the order she fills them (rows top to bottom,
- * each from the Einer up; carries are optional and never waited for). A remount — a theme change
+ * each from the Einer up, a division from its highest place down; carries are optional and never waited for). A remount — a theme change
  * rebuilds the tree — must not send her back to the start, where the next digit would overwrite
  * one she has written (found in the walkthrough, #260).
  */
 export function openBox(view: WrittenCalcTaskView, digits: Record<string, string>): string | null {
   const order = boxesIn(view)
     .filter((b) => view.rows[b.row]?.role !== 'carry')
-    .sort((x, y) => x.row - y.row || x.place - y.place);
+    .sort((x, y) => x.row - y.row || (x.place - y.place) * direction(view));
   return order.find((b) => digits[b.id] === undefined)?.id ?? firstBox(view);
 }
 
-/** The box she starts in: the Einer of the first row she fills (a partial product or the result). */
+/**
+ * The box she starts in: the Einer of the first row she fills (a partial product or the result);
+ * in a division the highest place of the quotient.
+ */
 export function firstBox(view: WrittenCalcTaskView): string | null {
   const all = boxesIn(view).filter((b) => view.rows[b.row]?.role !== 'carry');
   const row = all[0]?.row;
-  return all.filter((b) => b.row === row).sort((x, y) => x.place - y.place)[0]?.id ?? null;
+  const step = direction(view);
+  return all.filter((b) => b.row === row).sort((x, y) => (x.place - y.place) * step)[0]?.id ?? null;
 }
 
-/** The calculation as it reads in one line: "476 + 358", "352 · 24". */
+/** The calculation as it reads in one line: "476 + 358", "352 · 24", "846 : 3". */
 export function termOf(view: WrittenCalcTaskView): string {
   return view.rows
     .filter((r) => r.role === 'given')
@@ -117,7 +134,7 @@ export function termOf(view: WrittenCalcTaskView): string {
       r.cells
         .map((c) => (c !== null && !isBox(c) ? c.text : ''))
         .join('')
-        .replace(/([+−·])/g, ' $1 ')
+        .replace(/([+−·:])/g, ' $1 ')
         .trim(),
     )
     .join(' ')
@@ -221,7 +238,7 @@ export function WrittenCalcAnswer({ view, draftKey, disabled, onSubmit }: Props)
   const placeName = (place: number) => t(`written.place.p${Math.min(place, 6)}`);
   const rowName = (row: number): string => {
     const role = view.rows[row]?.role;
-    if (role === 'carry') return t('written.row_carry');
+    if (role === 'carry') return t(view.op === 'div' ? 'written.row_rest' : 'written.row_carry');
     if (role === 'result') return t('written.row_result');
     const partials = view.rows.slice(0, row + 1).filter((r) => r.role === 'partial').length;
     return t('written.row_partial', { n: partials });
@@ -233,6 +250,7 @@ export function WrittenCalcAnswer({ view, draftKey, disabled, onSubmit }: Props)
       .map((c) => (c !== null && !isBox(c) ? c.text : ' '))
       .join('')
       .replace(/·/g, ` ${t('written.times')} `)
+      .replace(/:/g, ` ${t('written.divided')} `)
       .replace(/−/g, `${t('written.minus')} `)
       .replace(/\+/g, `${t('written.plus')} `)
       .replace(/\s+/g, ' ')
@@ -320,7 +338,7 @@ export function WrittenCalcAnswer({ view, draftKey, disabled, onSubmit }: Props)
                   box(c, row, carry)
                 ) : (
                   <View
-                    key={`c${i}`}
+                    key={`cell${i}`}
                     style={{
                       width: col,
                       height: carry ? ROW_CARRY : given ? ROW_GIVEN : ROW_BOX,

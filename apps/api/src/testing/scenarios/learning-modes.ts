@@ -112,7 +112,8 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
   // of a written calculation — code writes the instruction, lays out the columns and computes
   // every digit and carry — and a worked solution with one mistake, which code finds itself.
   // Each set holds the LARGEST of its kind (rule 16): a four-digit number times a two-digit one
-  // (seven columns, five rows), and five lines near their cap under a two-line prompt — so the walkthrough measures the
+  // (seven columns, five rows), a four-digit number divided by one digit (seven columns), and
+  // five lines near their cap under a two-line prompt — so the walkthrough measures the
   // worst case on 360×740. Matched on her own request only.
   scriptGenerations({
     when: /LEARNER'S TEXT:\n[^\n]*Schriftlich rechnen/i,
@@ -135,6 +136,15 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
           op: 'mul',
           operands: [3826, 47],
           topic: 'Schriftlich multiplizieren',
+          difficulty: 3,
+          prompt_lang: 'de',
+        },
+        {
+          // Four digits divided by one: seven columns, a remainder into three of its places.
+          type: 'written_calc',
+          op: 'div',
+          operands: [7854, 6],
+          topic: 'Schriftlich dividieren',
           difficulty: 3,
           prompt_lang: 'de',
         },

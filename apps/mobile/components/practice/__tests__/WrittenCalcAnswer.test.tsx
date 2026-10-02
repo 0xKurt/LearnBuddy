@@ -158,3 +158,63 @@ describe('a written addition she fills', () => {
     );
   });
 });
+
+/** 846 : 3, short form: the quotient under the dividend, the remainders above it. */
+const DIV: WrittenCalcTaskView = {
+  type: 'written_calc',
+  op: 'div',
+  cols: 6,
+  rows: [
+    {
+      role: 'given',
+      cells: [null, tx('8'), tx('4'), tx('6'), tx(':'), tx('3')],
+      rule_above: false,
+    },
+    {
+      role: 'carry',
+      cells: [null, null, box('c1', 1), box('c0', 0), null, null],
+      rule_above: false,
+    },
+    {
+      role: 'result',
+      cells: [tx('='), box('r2', 2), box('r1', 1), box('r0', 0), null, null],
+      rule_above: false,
+    },
+  ],
+};
+
+describe('a written division she fills: from the highest place down', () => {
+  it('starts at the highest place of the quotient and goes right', () => {
+    expect(firstBox(DIV)).toBe('r2');
+    expect(nextBox(DIV, 'r2')).toBe('r1');
+    expect(nextBox(DIV, 'r0')).toBeNull();
+    expect(nextBox(DIV, 'c1')).toBe('r1');
+    expect(openBox(DIV, { r2: '2' })).toBe('r1');
+    expect(termOf(DIV)).toBe('846 : 3');
+  });
+
+  it('names the remainder row and reads the task as a division', () => {
+    const onSubmit = vi.fn();
+    renderInApp(
+      <WrittenCalcAnswer view={DIV} draftKey="w3" disabled={false} onSubmit={onSubmit} />,
+    );
+    expect(screen.getByRole('button', { name: 'Rest, Zehner, leer' })).toBeDefined();
+    expect(screen.getByLabelText('846 geteilt durch 3')).toBeDefined();
+    const key = (d: string) => fireEvent.click(screen.getByRole('button', { name: d }));
+    key('2');
+    key('8');
+    key('2');
+    fireEvent.click(screen.getByRole('button', { name: 'Prüfen' }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      {
+        type: 'written_calc',
+        boxes: [
+          { id: 'r2', digit: '2' },
+          { id: 'r1', digit: '8' },
+          { id: 'r0', digit: '2' },
+        ],
+      },
+      '846 : 3 = 282',
+    );
+  });
+});

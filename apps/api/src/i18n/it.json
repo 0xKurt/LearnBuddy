@@ -265,7 +265,10 @@
       "empty": "Quasi: {{at}}{{row}} manca ancora una cifra.",
       "carry_missing": "Quasi: {{at}} manca il riporto.",
       "carry_wrong": "Quasi: il riporto {{at}} non è ancora giusto.",
-      "look_again": "Quasi: guarda ancora una volta il calcolo con calma."
+      "look_again": "Quasi: guarda ancora una volta il calcolo con calma.",
+      "carry_missing_sub": "Quasi – la cifra {{at}} è più grande di uno. Pensa al riporto o al prestito.",
+      "rest_missing": "Quasi – manca il resto della posizione precedente {{at}}.",
+      "rest_wrong": "Quasi – il resto {{at}} non è ancora giusto."
     }
   },
   "contact": {

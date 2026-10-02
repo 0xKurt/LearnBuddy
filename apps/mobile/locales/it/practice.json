@@ -249,11 +249,13 @@
       "p6": "milioni"
     },
     "row_carry": "riporto",
+    "row_rest": "Resto",
     "row_result": "risultato",
     "row_partial": "prodotto parziale {{n}}",
     "box": "{{row}}, {{place}}, {{value}}",
     "empty": "vuota",
     "times": "per",
+    "divided": "diviso",
     "minus": "meno",
     "plus": "più",
     "pad": "Cifre",

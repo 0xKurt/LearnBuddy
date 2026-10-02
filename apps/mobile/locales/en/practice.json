@@ -249,11 +249,13 @@
       "p6": "millions"
     },
     "row_carry": "carry",
+    "row_rest": "Remainder",
     "row_result": "result",
     "row_partial": "partial product {{n}}",
     "box": "{{row}}, {{place}}, {{value}}",
     "empty": "empty",
     "times": "times",
+    "divided": "divided by",
     "minus": "minus",
     "plus": "plus",
     "pad": "Digits",

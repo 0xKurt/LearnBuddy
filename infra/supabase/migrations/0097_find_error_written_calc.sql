@@ -2,8 +2,8 @@
 --
 --   find_error   — ein vorgerechneter Weg mit genau EINER Zeile, die nicht aus der davor folgt;
 --                  sie tippt sie an und schreibt sie richtig (`FindErrorTask`).
---   written_calc — schriftlich addieren, subtrahieren, multiplizieren: Ziffer für Ziffer in
---                  Kästchen, Überträge freiwillig (`WrittenCalcTask`).
+--   written_calc — schriftlich addieren, subtrahieren, multiplizieren, dividieren: Ziffer für
+--                  Ziffer in Kästchen, Überträge und Reste freiwillig (`WrittenCalcTask`).
 --
 -- Beide speichern ihre Aufgabe in `items.task` wie `order`, `match` und `table_fill` (Migration
 -- 0079), geprüft von Code (apps/api/src/modules/practice/findError.ts, written.ts). Eine neue

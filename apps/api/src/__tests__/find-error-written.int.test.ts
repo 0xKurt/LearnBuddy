@@ -149,6 +149,30 @@ describe.skipIf(!dbReady)('find_error and written_calc items', () => {
     expect(how.answered_by).toBe('typed');
   });
 
+  it('a written division: the quotient from the highest place, a remainder left out named by its column', async () => {
+    const session = await prepare([
+      // Not even: a remainder this grid has no box for, never stored.
+      { ...ADDITION, op: 'div', operands: [847, 3] },
+      { ...ADDITION, op: 'div', operands: [846, 3] },
+    ]);
+    expect(session.items).toHaveLength(1);
+    const si = session.items[0]!;
+    expect(si.item.prompt).toBe('Rechne schriftlich: 846 : 3');
+    expect(si.item.task_view).toMatchObject({ type: 'written_calc', op: 'div', cols: 6 });
+    expect(boxIds(si).sort()).toEqual(['c0', 'c1', 'r0', 'r1', 'r2']);
+    // 4 : 3 = 1 instead of 24 : 3 = 8.
+    const miss = await post(session, si.item.id, digits({ r2: '2', r1: '1', r0: '2' }));
+    expect(miss.body.verdict).toBe('incorrect');
+    expect(miss.body.reply.text).toBe(
+      'Fast – bei den Zehnern fehlt der Rest von der Stelle davor.',
+    );
+    const right = await post(session, si.item.id, digits({ r2: '2', c1: '2', r1: '8', r0: '2' }));
+    expect(right.body.verdict).toBe('correct');
+    expect(right.body.session.turns.filter((t) => t.role === 'learner').at(-1)?.text).toBe(
+      '846 : 3 = 282',
+    );
+  });
+
   it('the Fehlerdetektiv: the wrong line by code, a correction that follows, not the model’s text', async () => {
     const session = await prepare([DETECTIVE]);
     const si = session.items[0]!;

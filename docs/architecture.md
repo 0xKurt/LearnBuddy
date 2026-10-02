@@ -2045,30 +2045,43 @@ which every keyboard has ("\*" and ":" are read as times and divided by), and th
 the room Buddy's reply needs on 360×740. Her choice and her text are kept in the draft.
 
 **Schriftlich rechnen** (`written_calc`, issue #260, `practice/written.ts`). Add (2–3 numbers),
-subtract (minuend > subtrahend) and multiply (by a one- or two-digit number without a 0 digit) in
-columns, one digit per box. The model writes only `op` and `operands`; code writes the instruction
+subtract (minuend > subtrahend), multiply (by a one- or two-digit number without a 0 digit) and
+divide (by one digit 2–9, without remainder) in columns, one digit per box. The model writes only `op` and `operands`; code writes the instruction
 ("Rechne schriftlich: 476 + 358"), lays out the grid and computes every digit and every carry,
 column by column — nothing but the operation and its numbers is stored (`items.task`), so no stored
 key can disagree with the grid. Rejected (`writtenProblem`): the wrong number of numbers, a times
 table (no number with two digits, `too_small`), a subtraction not above zero, a second factor with
-three digits or a 0 (`factor`), and anything wider than 7 columns (`too_wide`: the operator column
+three digits or a 0 (`factor`), a division by anything but one digit (`divisor`) or one that does
+not come out even (`remainder`; a quotient of one digit is a times table, `too_small`), and
+anything wider than 7 columns (`too_wide`: the operator column
 and six digits of 44 pt fill a 360-pt phone). The procedures as primary school teaches them:
-addition right-aligned with the carries in a small row above the line; subtraction in the
-Ergänzungsverfahren with carries (the same carry the Abziehverfahren with Borgen writes; whoever
-learns Entbündeln leaves the carry row empty — the result digits are the same in every method, so
-#223's Bundesland setting changes nothing here); multiplication from the highest digit of the
-second factor, each partial product ending under its digit, then the sum with carries — by a
-one-digit number the small row holds the carries of the times row. Division is not built: its
-layout (a growing chain of subtract-and-bring-down rows) is a surface of its own; the issue lists it
-and it stays open there.
+addition right-aligned with the carries in a small row above the line; subtraction in every method
+a Bundesland teaches, because the methods differ only beside the digits: the Ergänzungsverfahren
+and the Abziehverfahren with Borgen write the same carry in the small row (checked when written),
+the Abziehverfahren with Entbündeln crosses out in the minuend and leaves the small row empty
+(carries are optional) — the result digits are the same, so nothing here reads
+`curriculum_region`, and no entry is invented for it in `curriculum/points.ts` (§Lehrplan und
+Bundesland); a digit one too big is answered with both words ("Denk an den Übertrag oder ans
+Entbündeln"). Multiplication from the highest digit of the second factor, each partial product
+ending under its digit, then the sum with carries — by a one-digit number the small row holds the
+carries of the times row. Division in the short form (Kurzform), from the highest digit down:
+"7854 : 6" in the first row, the quotient in the row under the dividend after an "=", each digit
+under the digit its step ends at, and the remainder each step carries into the next digit in the
+small row between them (7 : 6 = 1 Rest 1, so a 1 under the 8: 18 : 6 = 3) — optional like a carry,
+checked when written. The long form writes a times row and a difference row per step: four steps
+are nine rows, which no phone shows beside the digit pad (rule 16). No remainder at the end: "R 2"
+would need a column the grid does not have. The first step takes as many digits as it needs
+(156 : 3 starts with 15), so the quotient has no box before its first digit.
 
 Checking (`checkWritten`): every box against the computed key — a result or partial-product box
 must hold its digit (a leading zero changes no value and is allowed; an empty box where a digit
 belongs is wrong), a carry box may stay empty (carries are optional, owner, #260) but a carry she
 wrote must be right. The first slip in the order the procedure is done (partial products first,
-then the sum from the Einer up, a column's carry before its digit) is named by its column: "Fast –
+then the sum from the Einer up, a column's carry before its digit; a division from its highest
+place down) is named by its column: "Fast –
 bei den Zehnern fehlt der Übertrag." when the digit is off by exactly the carry that belonged
-there (one short in an addition or a product, one over in a subtraction), else "… stimmt die Ziffer
+there (one short in an addition or a product, one over in a subtraction), "… fehlt der Rest von der
+Stelle davor" when a quotient digit is what the bare digit gives (4 : 3 instead of 24 : 3), else "… stimmt die Ziffer
 noch nicht" / "… fehlt noch eine Ziffer", and "im ersten Teilprodukt" for a partial product. The
 columns keep their names in every row: the first partial product of 352 · 24 is 7040, its 0 stands
 in the hundreds. 0 model calls.
@@ -2082,7 +2095,8 @@ less than a pad plus a pinned "Prüfen" — the row the five-row multiplication 
 Buddy's reply above it (measured: at 48 pt per row and a separate "Prüfen" the addition alone had
 to scroll by 36 pt). There is no erase key: a digit replaces the one in a box, and a second tap
 on the chosen box empties it. The Einer of the
-first row to fill are chosen from the start; a digit moves one place left, from a carry to the
+first row to fill are chosen from the start (in a division the highest place of the quotient, and
+a digit moves right); a digit moves one place left, from a carry to the
 result of its column, and from the end of a row to the next row's Einer. After a remount (a theme
 change) the choice goes on at the first empty box, never back to the start where the next digit
 would overwrite one she wrote (found in the walkthrough). Every box is named in words ("Ergebnis, Zehner, leer"), every number of

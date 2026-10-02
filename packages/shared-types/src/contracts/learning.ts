@@ -306,7 +306,7 @@ export const ItemKind = z.enum([
   'table_fill',
   /** Tap the wrong line of a worked solution and correct it (#260). */
   'find_error',
-  /** Add, subtract or multiply in columns, digit by digit (#260). */
+  /** Add, subtract, multiply or divide in columns, digit by digit (#260). */
   'written_calc',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;

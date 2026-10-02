@@ -47,6 +47,7 @@ import {
   type StructuredTaskView,
   type WrittenCalcTask,
   WRITTEN_ADD_MAX,
+  WRITTEN_DIVISOR_MAX,
   WrittenOp,
 } from '@learnbuddy/shared-types/contracts';
 import { parseNumericInput, plainMath } from '@learnbuddy/shared-math';
@@ -201,7 +202,7 @@ const MatchDraftWithHelp = MatchDraftBase.extend({
  * chooses the numbers; code writes the instruction, lays out the columns and computes every
  * digit and carry (`written.ts`).
  */
-export const WRITTEN_RULES = `Written-calculation tasks ("structured", type "written_calc"): only to practise the written column procedure (schriftliches Rechnen, primary school grades 3–4). op "add": 2–${WRITTEN_ADD_MAX} whole numbers; op "sub": two whole numbers, the first larger; op "mul": a number with 2–5 digits times a number with 1–2 digits that contains no 0. Whole positive numbers, at least one with two or more digits, the result at most 6 digits. Write only op and operands (in the order they are written); the app writes the instruction, lays out the columns and computes every digit and carry. Choose numbers that need carries.`;
+export const WRITTEN_RULES = `Written-calculation tasks ("structured", type "written_calc"): only to practise the written column procedure (schriftliches Rechnen, primary school grades 3–4). op "add": 2–${WRITTEN_ADD_MAX} whole numbers; op "sub": two whole numbers, the first larger; op "mul": a number with 2–5 digits times a number with 1–2 digits that contains no 0; op "div": a number with 2–4 digits divided by one digit 2–${WRITTEN_DIVISOR_MAX} that comes out even (no remainder) and gives at least two digits. Whole positive numbers, at least one with two or more digits, the result at most 6 digits. Write only op and operands (in the order they are written); the app writes the instruction, lays out the columns and computes every digit and carry. Choose numbers that need carries (in a division: steps that leave a remainder).`;
 
 const WrittenDraftBase = z.object({
   type: z.literal('written_calc'),
@@ -211,7 +212,7 @@ const WrittenDraftBase = z.object({
     .min(2)
     .max(WRITTEN_ADD_MAX)
     .describe(
-      'The numbers, in the order they are written: summands, minuend then subtrahend, factors',
+      'The numbers, in the order they are written: summands, minuend then subtrahend, factors, dividend then divisor',
     ),
   topic: ItemDraft.shape.topic,
   difficulty: ItemDraft.shape.difficulty,

@@ -265,7 +265,10 @@
       "empty": "Almost – a digit is still missing {{at}}{{row}}.",
       "carry_missing": "Almost – the carry is missing {{at}}.",
       "carry_wrong": "Almost – the carry {{at}} isn't right yet.",
-      "look_again": "Almost – take another calm look at the calculation."
+      "look_again": "Almost – take another calm look at the calculation.",
+      "carry_missing_sub": "Almost – the digit {{at}} is one too big. Remember the carry, or the regrouping.",
+      "rest_missing": "Almost – the remainder from the place before is missing {{at}}.",
+      "rest_wrong": "Almost – the remainder {{at}} isn't right yet."
     }
   },
   "contact": {

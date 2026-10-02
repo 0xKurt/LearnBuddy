@@ -810,7 +810,8 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
 
 // Its own test, with its own learner (the learning-modes walk is near its time budget). The
 // scripted sets hold the LARGEST of each kind (learning-modes.ts): a four-digit number times a
-// two-digit one — seven columns, five rows — and a worked solution of five lines near their cap.
+// two-digit one — seven columns, five rows —, a four-digit number divided by one digit, and a
+// worked solution of five lines near their cap.
 // Every `shot` fails if anything would have to be scrolled (rule 16, issue #260 acceptance:
 // "Walkthrough auf 360×740").
 test('schriftlich rechnen and the Fehlerdetektiv: digit by digit, the wrong line tapped (issue #260)', async ({
@@ -867,6 +868,24 @@ test('schriftlich rechnen and the Fehlerdetektiv: digit by digit, the wrong line
   await both('65b-written-multiply-feedback');
   await page.getByRole('button', { name: 'Ergebnis, Hunderter, 7' }).click();
   await digit('8').click();
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // Dividing, short form: 7854 : 6 = 1309, from the highest place down. The remainder 1 of
+  // 7 : 6 is left out in the hundreds: 8 : 6 = 1 instead of 18 : 6 = 3.
+  await expect(page.getByText('Rechne schriftlich: 7854 : 6')).toBeVisible();
+  await type('1109');
+  await both('65c-written-divide');
+  await check.click();
+  await expect(
+    page.getByText('Fast – bei den Hundertern fehlt der Rest von der Stelle davor.'),
+  ).toBeVisible();
+  await both('65d-written-divide-feedback');
+  // She writes the remainder (optional) — then the quotient of its column is chosen.
+  await page.getByRole('button', { name: 'Rest, Hunderter, leer' }).click();
+  await digit('1').click();
+  await digit('3').click();
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();

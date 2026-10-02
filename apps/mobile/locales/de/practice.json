@@ -249,11 +249,13 @@
       "p6": "Millionen"
     },
     "row_carry": "Übertrag",
+    "row_rest": "Rest",
     "row_result": "Ergebnis",
     "row_partial": "{{n}}. Teilprodukt",
     "box": "{{row}}, {{place}}, {{value}}",
     "empty": "leer",
     "times": "mal",
+    "divided": "geteilt durch",
     "minus": "minus",
     "plus": "plus",
     "pad": "Ziffern",

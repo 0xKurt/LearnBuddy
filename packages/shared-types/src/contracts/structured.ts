@@ -6,7 +6,7 @@
 //   match       — pair or group elements (#229)
 //   table_fill  — fill the gaps of a table (#230)
 //   find_error  — tap the wrong line of a worked solution and correct it (#260)
-//   written_calc — add, subtract or multiply in columns, digit by digit, with carries (#260)
+//   written_calc — add, subtract, multiply or divide in columns, digit by digit, with carries (#260)
 // The next one (#232, a text with several gaps) is a fourth member of every union below; the
 // database already allows its kind (migration 0079), so it needs no constraint migration.
 //
@@ -334,8 +334,11 @@ export type FindErrorAnswer = z.infer<typeof FindErrorAnswer>;
 // task is the operation and its numbers, and code computes the procedure column by column every
 // time it is shown or checked (`practice/written.ts`).
 
-/** add — 2–3 numbers; sub — minuend minus subtrahend, never below zero; mul — times 1–2 digits. */
-export const WrittenOp = z.enum(['add', 'sub', 'mul']);
+/**
+ * add — 2–3 numbers; sub — minuend minus subtrahend, never below zero; mul — times 1–2 digits;
+ * div — dividend divided by one digit, without remainder.
+ */
+export const WrittenOp = z.enum(['add', 'sub', 'mul', 'div']);
 export type WrittenOp = z.infer<typeof WrittenOp>;
 
 /**
@@ -348,13 +351,22 @@ export const WRITTEN_ADD_MAX = 3;
 /** The second factor has at most two digits (Klasse 4: "mit zweistelligen Zahlen"). */
 export const WRITTEN_MUL_DIGITS_MAX = 2;
 
+/**
+ * Divided by one digit (2–9), as Klasse 4 does it in writing ("durch einstellige Zahlen"): a
+ * two-digit divisor is Klasse 5 and needs a times row per step that the phone has no room for.
+ */
+export const WRITTEN_DIVISOR_MAX = 9;
+
 /** A whole number as its digits, no sign, no leading zero ("0" itself is no task number). */
 export const WrittenNumber = z.string().regex(/^[1-9][0-9]{0,5}$/);
 
 export const WrittenCalcTask = z.object({
   type: z.literal('written_calc'),
   op: WrittenOp,
-  /** In the order they are written: the summands, minuend then subtrahend, the two factors. */
+  /**
+   * In the order they are written: the summands, minuend then subtrahend, the two factors,
+   * dividend then divisor.
+   */
   operands: z.array(WrittenNumber).min(2).max(WRITTEN_ADD_MAX),
 });
 export type WrittenCalcTask = z.infer<typeof WrittenCalcTask>;
@@ -369,8 +381,8 @@ export type WrittenCell = z.infer<typeof WrittenCell>;
 
 /**
  * given — a number of the task (with its operator in the first column); partial — a partial
- * product to fill; carry — the small boxes for the carries (never required); result — the
- * result. A `line` row is the rule drawn above the result.
+ * product to fill; carry — the small boxes for the carries (never required; in a division the
+ * remainder each step carries into the next digit); result — the result.
  */
 export const WrittenRowRole = z.enum(['given', 'partial', 'carry', 'result']);
 export type WrittenRowRole = z.infer<typeof WrittenRowRole>;

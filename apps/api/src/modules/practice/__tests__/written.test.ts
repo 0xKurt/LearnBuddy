@@ -329,3 +329,119 @@ describe('structured: a written calculation as a question', () => {
     expect(structuredReply('fr', check)).toBe('Presque – aux dizaines, il manque la retenue.');
   });
 });
+
+describe('subtraction: every method a Bundesland teaches gives the same digits', () => {
+  // 8042 − 3567 = 4475. The methods differ only in what is written beside the digits.
+  const t = task('sub', '8042', '3567');
+
+  it('Ergänzungsverfahren and Abziehverfahren with Borgen: the same carries, checked', () => {
+    // Ergänzen: 7 + 5 = 12, carry 1; 6 + 1 + 7 = 14, carry 1; 5 + 1 + 4 = 10, carry 1; 3 + 1 + 4 = 8.
+    // Borgen (Erweitern): 12 − 7 = 5, 1 borrowed into the tens of the subtrahend — the same 1.
+    expect(checkWritten(t, perfect(t))?.correct).toBe(true);
+  });
+
+  it('Abziehverfahren with Entbündeln: nothing in the small row, the result is right', () => {
+    // 8042 regrouped to 7 9 13 12 (crossed out in the minuend, no box for it): 12 − 7 = 5,
+    // 13 − 6 = 7, 9 − 5 = 4, 7 − 3 = 4.
+    expect(checkWritten(t, withoutCarries(t))).toMatchObject({ correct: true, first: null });
+  });
+
+  it('a digit one too big names both the carry and the Entbündeln', () => {
+    const her: Record<string, string> = { ...keyOf(t), r1: '8' };
+    delete her.c1;
+    const check = checkWritten(t, answer(her))!;
+    expect(check.first).toMatchObject({ kind: 'carry_missing', place: 1 });
+    expect(writtenReply('de', check)).toBe(
+      'Fast – bei den Zehnern ist die Ziffer um eins zu groß. Denk an den Übertrag oder ans Entbündeln.',
+    );
+  });
+});
+
+describe('division by one digit, short form: from the highest digit down', () => {
+  const div = task('div', '846', '3');
+
+  it('takes school divisions and rejects what is no written division', () => {
+    expect(writtenProblem(div)).toBeNull();
+    expect(writtenProblem(task('div', '7854', '6'))).toBeNull();
+    expect(writtenProblem(task('div', '156', '3'))).toBeNull();
+    // A quotient of one digit is a times table.
+    expect(writtenProblem(task('div', '56', '7'))).toBe('too_small');
+    expect(writtenProblem(task('div', '847', '3'))).toBe('remainder');
+    expect(writtenProblem(task('div', '846', '1'))).toBe('divisor');
+    expect(writtenProblem(task('div', '8460', '12'))).toBe('divisor');
+    expect(writtenProblem(task('div', '84', '2', '3'))).toBe('operands');
+    // Five digits, ":", the divisor and the "=" column: eight columns.
+    expect(writtenProblem(task('div', '12345', '5'))).toBe('too_wide');
+  });
+
+  it('the quotient under the dividend, the remainders in the small row above it', () => {
+    const layout = writtenLayout(div)!;
+    expect(layout.view.cols).toBe(6);
+    expect(layout.view.rows.map((r) => [r.role, rowText(r.cells), r.rule_above])).toEqual([
+      ['given', '.846:3', false],
+      ['carry', '..__..', false],
+      ['result', '=___..', false],
+    ]);
+    // 8 : 3 = 2 Rest 2 → 24 : 3 = 8 Rest 0 → 6 : 3 = 2.
+    expect(keyOf(div)).toEqual({ c1: '2', c0: '', r2: '2', r1: '8', r0: '2' });
+    expect(writtenSolution(div)).toBe('846 : 3 = 282');
+  });
+
+  it('a first step that takes two digits: the quotient is one shorter, no box before it', () => {
+    // 15 : 3 = 5 → 6 : 3 = 2. Writing "1 : 3 = 0" first is no step at school.
+    const t = task('div', '156', '3');
+    expect(writtenLayout(t)!.view.rows.map((r) => rowText(r.cells))).toEqual([
+      '.156:3',
+      '..._..',
+      '=.__..',
+    ]);
+    expect(keyOf(t)).toEqual({ c0: '', r1: '5', r0: '2' });
+  });
+
+  it('remainders on every step: 7854 : 6 = 1309', () => {
+    // 7 : 6 = 1 R 1 → 18 : 6 = 3 R 0 → 5 : 6 = 0 R 5 → 54 : 6 = 9.
+    const t = task('div', '7854', '6');
+    expect(keyOf(t)).toEqual({ c2: '1', c1: '', c0: '5', r3: '1', r2: '3', r1: '0', r0: '9' });
+    expect(checkWritten(t, withoutCarries(t))?.correct).toBe(true);
+    expect(checkWritten(t, perfect(t))?.correct).toBe(true);
+  });
+
+  it('names a remainder left out by its column', () => {
+    // 4 : 3 = 1 instead of 24 : 3 = 8: the 2 from the hundreds was left out.
+    const check = checkWritten(div, answer({ r2: '2', r1: '1', r0: '2' }))!;
+    expect(check.first).toEqual({ kind: 'carry_missing', role: 'result', row: 0, place: 1 });
+    expect(writtenReply('de', check)).toBe(
+      'Fast – bei den Zehnern fehlt der Rest von der Stelle davor.',
+    );
+    expect(writtenReply('en', check)).toBe(
+      'Almost – the remainder from the place before is missing in the tens.',
+    );
+  });
+
+  it('a remainder she wrote must be right; the first slip is the highest place', () => {
+    const wrongRest = checkWritten(div, answer({ ...keyOf(div), c1: '1' }))!;
+    expect(wrongRest.first).toEqual({ kind: 'carry_wrong', place: 1 });
+    expect(writtenReply('de', wrongRest)).toBe(
+      'Fast – der Rest bei den Zehnern stimmt noch nicht.',
+    );
+    // Wrong in the hundreds and in the ones: the hundreds come first in a division.
+    const two = checkWritten(div, answer({ r2: '3', r1: '8', r0: '1' }))!;
+    expect(two.first).toMatchObject({ kind: 'digit', place: 2 });
+  });
+
+  it('as a question: code writes the instruction and the solution', () => {
+    const item = structuredItem({
+      type: 'written_calc',
+      op: 'div',
+      operands: [846, 3],
+      topic: 'Schriftlich dividieren',
+      difficulty: 2,
+      prompt_lang: 'de',
+      hints: [],
+      worked_solution: null,
+    })!;
+    expect(item.prompt).toBe('Rechne schriftlich: 846 : 3');
+    expect(item.answer).toBe('846 : 3 = 282');
+    expect(writtenAnswerText(div, withoutCarries(div))).toBe('846 : 3 = 282');
+  });
+});

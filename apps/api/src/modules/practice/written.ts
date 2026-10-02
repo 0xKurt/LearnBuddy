@@ -1,4 +1,4 @@
-// Schriftlich rechnen (issue #260): add, subtract and multiply in columns, digit by digit.
+// Schriftlich rechnen (issue #260): add, subtract, multiply and divide in columns, digit by digit.
 // docs/architecture.md §Practice ("Structured items").
 //
 // No model decides anything here, in either direction (#224, "Regel 0"):
@@ -12,15 +12,25 @@
 //
 // The procedures, as German primary schools teach them (Klasse 3–4):
 //   add — the numbers right-aligned, the carries in the small row above the line;
-//   sub — the Ergänzungsverfahren with carries ("Übertrag"): the carry sits in the small row
-//         and is added to the next digit of the subtrahend. The same carry is what the
-//         Abziehverfahren with Borgen writes. Whoever learns Entbündeln (crossing out in the
-//         minuend) leaves the small row empty — carries are never required, and the result
-//         digits are the same in every method;
+//   sub — every method a Bundesland teaches is right here, because the methods differ only in
+//         what is written beside the digits, never in the result digits: the Ergänzungsverfahren
+//         and the Abziehverfahren with Borgen (Erweitern) write the same carry in the small row,
+//         added to the next digit of the subtrahend; the Abziehverfahren with Entbündeln crosses
+//         out in the minuend instead and leaves the small row empty — carries are never
+//         required. So nothing here reads the Bundesland, and no table entry is invented for it
+//         (docs/architecture.md §Lehrplan und Bundesland). The reply to a digit one too big
+//         names both ("Übertrag oder Entbündeln");
 //   mul — "schriftlich multiplizieren" starting with the highest digit of the second factor:
 //         each partial product ends under its digit, and the partial products are added with
 //         carries. By a one-digit number there are no partial products; the carries of the
 //         multiplication go into the small row.
+//   div — "schriftlich dividieren" by one digit in the short form (Kurzform): from the highest
+//         digit down, each step's remainder carried into the next digit ("Rest" — 8 : 3 = 2,
+//         Rest 2, 24 : 3 = 8). The quotient stands under the dividend, each digit under the
+//         digit its step ended at, and the remainders go into the small row like carries,
+//         optional too. The long form writes a times row and a difference row per step: four
+//         steps are nine rows, which no phone shows beside a digit pad (rule 16). Only
+//         divisions without remainder: "R 2" at the end is a box the grid has no column for.
 //
 // Carries are optional (owner, #260): an empty carry box is never wrong. A carry she DID write
 // must be right, and a wrong digit next to a missing carry is named as exactly that ("Bei den
@@ -30,6 +40,7 @@ import {
   type PartId,
   WRITTEN_ADD_MAX,
   WRITTEN_COLS_MAX,
+  WRITTEN_DIVISOR_MAX,
   WRITTEN_MUL_DIGITS_MAX,
   type WrittenCalcAnswer,
   type WrittenCalcTask,
@@ -44,16 +55,23 @@ import { type MessageKey, t } from '../../i18n/index.js';
 
 /** Why a written calculation is not stored. Each one is a test (`__tests__/written.test.ts`). */
 export type WrittenProblem =
-  /** The wrong number of numbers for the operation (add 2–3, sub and mul exactly 2). */
+  /** The wrong number of numbers for the operation (add 2–3, sub, mul and div exactly 2). */
   | 'operands'
-  /** No number with two digits: 7 · 8 is a times table, not a written calculation. */
+  /**
+   * No number with two digits: 7 · 8 is a times table, not a written calculation; likewise a
+   * division whose quotient has one digit (56 : 7).
+   */
   | 'too_small'
   /** Wider than WRITTEN_COLS_MAX columns: it would not fit a 360-pt phone with 44-pt boxes. */
   | 'too_wide'
   /** A subtraction whose result is zero or below: no written subtraction at school. */
   | 'not_positive'
   /** A multiplication by a number with more than two digits, or with a 0 digit in it. */
-  | 'factor';
+  | 'factor'
+  /** A division by anything but one digit 2–9. */
+  | 'divisor'
+  /** A division that does not come out even. */
+  | 'remainder';
 
 /** A box she fills: where it is and what belongs in it. */
 type Box = {
@@ -106,6 +124,13 @@ export function writtenProblem(task: WrittenCalcTask): WrittenProblem | null {
     if (a <= b) return 'not_positive';
     return lengthOf(a) + 1 > WRITTEN_COLS_MAX ? 'too_wide' : null;
   }
+  if (task.op === 'div') {
+    if (b < 2n || b > BigInt(WRITTEN_DIVISOR_MAX)) return 'divisor';
+    if (a % b !== 0n) return 'remainder';
+    if (a < 10n * b) return 'too_small';
+    // The dividend, ":", the divisor and the "=" column the quotient row starts with.
+    return lengthOf(a) + 3 > WRITTEN_COLS_MAX ? 'too_wide' : null;
+  }
   const lb = lengthOf(b);
   if (lb > WRITTEN_MUL_DIGITS_MAX || task.operands[1]!.includes('0')) return 'factor';
   return lengthOf(a) + 1 + lb > WRITTEN_COLS_MAX ? 'too_wide' : null;
@@ -121,11 +146,13 @@ export function writtenResult(task: WrittenCalcTask): bigint {
       return n[0]! - n[1]!;
     case 'mul':
       return n[0]! * n[1]!;
+    case 'div':
+      return n[0]! / n[1]!;
   }
 }
 
 /** The sign written in front of a number (a typographic minus and a centred dot, as in the book). */
-const SIGN: Record<WrittenOp, string> = { add: '+', sub: '−', mul: '·' };
+const SIGN: Record<WrittenOp, string> = { add: '+', sub: '−', mul: '·', div: ':' };
 
 /**
  * The carries of adding `rows` column by column: carry[p] goes INTO place p (carry[0] = 0).
@@ -159,6 +186,21 @@ function mulCarries(a: bigint, digit: number, places: number): number[] {
 }
 
 /**
+ * The remainders of dividing `a` by `d` digit by digit, from the highest: rest[p] is carried
+ * INTO place p — the remainder of the step that ended at place p + 1 (846 : 3: 8 : 3 = 2 Rest 2,
+ * so rest[1] = 2 and the next step is 24 : 3).
+ */
+function divRests(a: bigint, d: number): number[] {
+  const rest: number[] = [];
+  let partial = 0;
+  for (let p = lengthOf(a) - 1; p >= 0; p--) {
+    rest[p] = partial;
+    partial = (partial * 10 + digitAt(a, p)) % d;
+  }
+  return rest;
+}
+
+/**
  * The layout of a task, or null when it is no written calculation (`writtenProblem`). Pure and
  * deterministic: the view the app gets and the key the answer is checked against come from the
  * same call, so they cannot drift apart.
@@ -170,6 +212,8 @@ export function writtenLayout(task: WrittenCalcTask): WrittenLayout | null {
   const rows: WrittenRow[] = [];
   const boxes: Box[] = [];
   let cols: number;
+  /** The column the Einer stand in: the last one, except in a division (left of ": 3"). */
+  let ones = 0;
 
   /** A row of boxes for places `from`..`to`, whose wanted digits are `want(place)`. */
   const boxRow = (
@@ -183,7 +227,7 @@ export function writtenLayout(task: WrittenCalcTask): WrittenLayout | null {
     const cells = blank(cols);
     for (let p = from; p <= to; p++) {
       const id = role === 'partial' ? `p${row}_${p}` : `${role === 'carry' ? 'c' : 'r'}${p}`;
-      cells[cols - 1 - p] = { id, place: p };
+      cells[ones - p] = { id, place: p };
       boxes.push({ id, role, row, place: p, want: want(p) });
     }
     rows.push({ role, cells, rule_above: ruleAbove });
@@ -193,9 +237,28 @@ export function writtenLayout(task: WrittenCalcTask): WrittenLayout | null {
   const carryOf = (carry: readonly number[]) => (p: number) =>
     (carry[p] ?? 0) === 0 ? '' : String(carry[p]);
 
-  if (task.op === 'add' || task.op === 'sub') {
+  if (task.op === 'div') {
+    const [a, d] = n as [bigint, bigint];
+    const la = lengthOf(a);
+    const lq = lengthOf(result);
+    cols = la + 3;
+    ones = la;
+    const given = blank(cols);
+    task.operands[0]!.split('').forEach((digit, i) => (given[1 + i] = { text: digit }));
+    given[la + 1] = { text: SIGN.div };
+    given[la + 2] = { text: task.operands[1]! };
+    rows.push({ role: 'given', cells: given, rule_above: false });
+    // A remainder goes into every place of the quotient but its first: the first step takes as
+    // many digits as it needs (15 : 3, not 1 : 3), and what it carries is not a box.
+    if (lq > 1) boxRow('carry', 0, 0, lq - 2, carryOf(divRests(a, Number(d))), false);
+    // No rule: the short form has none, and the "=" in front of the quotient says what it is
+    // (a rule under the whole row ran under ": 6" too, as if the divisor were summed).
+    boxRow('result', 0, 0, lq - 1, digitsOf(result), false);
+    rows[rows.length - 1]!.cells[0] = { text: '=' };
+  } else if (task.op === 'add' || task.op === 'sub') {
     const width = Math.max(lengthOf(result), ...n.map(lengthOf));
     cols = width + 1;
+    ones = cols - 1;
     n.forEach((x, i) => {
       const cells = blank(cols);
       if (i > 0) cells[0] = { text: SIGN[task.op] };
@@ -210,6 +273,7 @@ export function writtenLayout(task: WrittenCalcTask): WrittenLayout | null {
     const la = lengthOf(a);
     const lb = lengthOf(b);
     cols = la + 1 + lb;
+    ones = cols - 1;
     const first = blank(cols);
     task.operands[0]!.split('').forEach((d, i) => (first[i] = { text: d }));
     first[la] = { text: SIGN.mul };
@@ -255,21 +319,45 @@ export function writtenTerm(task: WrittenCalcTask): string {
 export type WrittenSlip =
   /** A digit of the result (or a partial product) that is wrong. */
   | { kind: 'digit'; role: 'result' | 'partial'; row: number; place: number }
-  /** A digit that is wrong by exactly the carry that belonged into its column. */
+  /**
+   * A digit that is wrong by exactly the carry that belonged into its column — in a division,
+   * the digit she gets when the remainder carried into it is left out (4 : 3 instead of 24 : 3).
+   */
   | { kind: 'carry_missing'; role: 'result' | 'partial'; row: number; place: number }
   /** A box of the result or a partial product left empty where a digit belongs. */
   | { kind: 'empty'; role: 'result' | 'partial'; row: number; place: number }
-  /** A carry she wrote that is not the carry of that column. */
+  /** A carry (a division's remainder) she wrote that is not the one of that column. */
   | { kind: 'carry_wrong'; place: number };
 
 export type WrittenCheck = {
   type: 'written_calc';
+  /** The operation: a division names a remainder, a subtraction also Entbündeln. */
+  op: WrittenOp;
   correct: boolean;
   /** Every box, right or not (an empty carry box is always right). */
   parts: Array<{ id: PartId; ok: boolean }>;
   /** The first slip in the order the calculation is done, or null when it is right. */
   first: WrittenSlip | null;
 };
+
+/**
+ * The digit of the result at `place` as it comes out when the carry into it (`carry`) is left
+ * out. Without the carry an addition's (and a product's) digit comes out short by it, a
+ * subtraction's (the carry adds to the subtrahend) over by it; a division without the remainder
+ * divides the bare digit of the dividend.
+ */
+function withoutCarry(task: WrittenCalcTask, place: number, carry: number): number {
+  const right = digitAt(writtenResult(task), place);
+  switch (task.op) {
+    case 'add':
+    case 'mul':
+      return (right - carry + 10) % 10;
+    case 'sub':
+      return (right + carry) % 10;
+    case 'div':
+      return Math.floor(digitAt(BigInt(task.operands[0]!), place) / Number(task.operands[1]!));
+  }
+}
 
 /** One box as she wrote it and as it should be. */
 function boxOk(box: Box, given: string): boolean {
@@ -303,11 +391,13 @@ export function checkWritten(
     layout.boxes.filter((b) => b.role === 'carry').map((b) => [b.place, Number(b.want || '0')]),
   );
   // The order the procedure is done in: the partial products first (first, then second), then
-  // the sum column by column — the carry into a column before that column's digit.
+  // the sum column by column — the carry into a column before that column's digit. A division
+  // goes the other way, from the highest digit down.
+  const step = (place: number) => (task.op === 'div' ? WRITTEN_COLS_MAX - place : place);
   const rank = (b: Box) =>
     b.role === 'partial'
       ? b.row * 100 + b.place
-      : 1000 + b.place * 2 + (b.role === 'carry' ? 0 : 1);
+      : 1000 + step(b.place) * 2 + (b.role === 'carry' ? 0 : 1);
   const wrong = [...layout.boxes].filter((b) => !ok.get(b.id)).sort((x, y) => rank(x) - rank(y));
   const at = wrong[0];
   let first: WrittenSlip | null = null;
@@ -318,10 +408,7 @@ export function checkWritten(
       const role = at.role === 'partial' ? 'partial' : 'result';
       const her = given.get(at.id) ?? '';
       const carry = at.role === 'result' ? (carryInto.get(at.place) ?? 0) : 0;
-      // Without the carry an addition's (and a product's) digit comes out short by it, a
-      // subtraction's (the carry adds to the subtrahend) comes out over by it.
-      const without = task.op === 'sub' ? Number(her) - carry : Number(her) + carry;
-      const forgot = her !== '' && carry > 0 && (without + 10) % 10 === Number(at.want || '0');
+      const forgot = her !== '' && carry > 0 && Number(her) === withoutCarry(task, at.place, carry);
       first = {
         kind: her === '' ? 'empty' : forgot ? 'carry_missing' : 'digit',
         role,
@@ -330,7 +417,7 @@ export function checkWritten(
       };
     }
   }
-  return { type: 'written_calc', correct: wrong.length === 0, parts, first };
+  return { type: 'written_calc', op: task.op, correct: wrong.length === 0, parts, first };
 }
 
 /** Her calculation in one line for the conversation: the result as she wrote it. */
@@ -363,14 +450,23 @@ export function writtenReply(locale: string, check: WrittenCheck): string {
   const slip = check.first;
   if (slip === null) return t(locale, 'practice.written.look_again');
   const at = t(locale, AT_PLACE[slip.place] ?? 'practice.written.at.p0');
-  if (slip.kind === 'carry_wrong') return t(locale, 'practice.written.carry_wrong', { at });
+  if (slip.kind === 'carry_wrong')
+    return t(
+      locale,
+      check.op === 'div' ? 'practice.written.rest_wrong' : 'practice.written.carry_wrong',
+      { at },
+    );
   const row =
     slip.role === 'partial'
       ? t(locale, slip.row === 1 ? 'practice.written.in_first' : 'practice.written.in_second')
       : '';
   const key: MessageKey =
     slip.kind === 'carry_missing'
-      ? 'practice.written.carry_missing'
+      ? check.op === 'div'
+        ? 'practice.written.rest_missing'
+        : check.op === 'sub'
+          ? 'practice.written.carry_missing_sub'
+          : 'practice.written.carry_missing'
       : slip.kind === 'empty'
         ? 'practice.written.empty'
         : 'practice.written.digit';

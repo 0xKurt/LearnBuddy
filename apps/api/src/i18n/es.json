@@ -265,7 +265,10 @@
       "empty": "Casi: {{at}}{{row}} todavía falta una cifra.",
       "carry_missing": "Casi: {{at}} falta la llevada.",
       "carry_wrong": "Casi: la llevada {{at}} todavía no es correcta.",
-      "look_again": "Casi: mira otra vez la cuenta con calma."
+      "look_again": "Casi: mira otra vez la cuenta con calma.",
+      "carry_missing_sub": "Casi – la cifra {{at}} es uno de más. Piensa en la llevada o en el préstamo.",
+      "rest_missing": "Casi – falta el resto de la posición anterior {{at}}.",
+      "rest_wrong": "Casi – el resto {{at}} todavía no está bien."
     }
   },
   "contact": {
