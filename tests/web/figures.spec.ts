@@ -39,6 +39,15 @@ async function onboardChild(page: Page): Promise<void> {
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
+/** The same stop once more in the dark theme (every figure is shot in both), then back. */
+async function nightShot(page: Page, name: string): Promise<void> {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, name);
+  await page.emulateMedia({ colorScheme: 'light' });
+  // The switch remounts the tree: wait until the figure is back before aiming at it.
+  await expect(page.getByTestId('figure-touch')).toBeVisible();
+}
+
 type Label = { text: string; x: number; y: number; anchor: string };
 
 /** The numbers drawn on the figure, in page coordinates. */
@@ -145,6 +154,7 @@ test('tapping in a figure: a point, a place on a line, a bar, a time (issue #248
   }
   await expect(page.getByText('Deine Zahl: 0,75')).toBeVisible();
   await shot(page, '55-tap-line');
+  await nightShot(page, '55b-tap-line-night');
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -155,6 +165,7 @@ test('tapping in a figure: a point, a place on a line, a bar, a time (issue #248
   await page.mouse.click(bars.left + bars.width * (2.5 / 4), bars.top + bars.height * 0.5);
   await expect(page.getByText('Deine Säule: Juli')).toBeVisible();
   await shot(page, '56-tap-bars');
+  await nightShot(page, '56b-tap-bars-night');
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -230,20 +241,29 @@ test('drawing on a grid: a line, a mirror image without aiming, bars (issue #249
   const step = async (name: string, times: number) => {
     for (let i = 0; i < times; i++) await sheet.getByRole('button', { name }).click();
   };
-  // From (0 | 0): to (9 | 1), set; to (6 | 1), set; to (7 | 4), set.
-  await step('x größer', 9);
-  await step('y größer', 1);
+  // Squared paper has no numbers: the steppers count squares from the bottom-left corner.
+  // From the corner: 9 right 1 up, set; 3 back, set; 1 right 3 up, set.
+  await step('Nach rechts größer', 9);
+  await step('Nach oben größer', 1);
   await sheet.getByRole('button', { name: 'Punkt setzen' }).click();
-  await step('x kleiner', 3);
+  await step('Nach rechts kleiner', 3);
   await sheet.getByRole('button', { name: 'Punkt setzen' }).click();
-  await step('x größer', 1);
-  await step('y größer', 3);
+  await step('Nach rechts größer', 1);
+  await step('Nach oben größer', 3);
   await sheet.getByRole('button', { name: 'Punkt setzen' }).click();
-  await expect(sheet.getByText('Punkte: (9 | 1), (6 | 1), (7 | 4)')).toBeVisible();
+  await expect(sheet.getByText('3 Punkte gesetzt')).toBeVisible();
+  // No coordinate she cannot read off the paper; the screen reader hears each point counted.
+  await expect(page.getByText('(9 | 1)', { exact: false })).toHaveCount(0);
+  await expect(
+    page.getByRole('img', {
+      name: 'Raster zum Zeichnen. Punkte: 9 nach rechts, 1 nach oben; 6 nach rechts, 1 nach oben; 7 nach rechts, 4 nach oben',
+    }),
+  ).toHaveCount(1);
   await shot(page, '65-draw-mirror-sheet');
   await sheet.getByRole('button', { name: 'Fertig' }).last().click();
   await expect(sheet).toHaveCount(0);
   await shot(page, '66-draw-mirror-set');
+  await nightShot(page, '66b-draw-mirror-set-night');
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -270,6 +290,7 @@ test('drawing on a grid: a line, a mirror image without aiming, bars (issue #249
   await check.click();
   await expect(page.getByText('Die Säule „Di“ hat noch nicht die richtige Höhe.')).toBeVisible();
   await shot(page, '68-draw-bars-feedback');
+  await nightShot(page, '68b-draw-bars-feedback-night');
   await pull('Di', 7);
   await expect(page.getByText('Mo 4 · Di 7 · Mi 2')).toBeVisible();
   await check.click();
