@@ -23,7 +23,7 @@ import {
   stepsBetween,
   type Pt,
 } from '../../../../../packages/shared-math/src/grid.js';
-import { toggleCell, togglePoint, type Drawing } from '../../../lib/math/gridFrame.js';
+import { squaresFrom, toggleCell, togglePoint, type Drawing } from '../../../lib/math/gridFrame.js';
 import { SPACE } from '../../../lib/theme/space.js';
 import { useTheme } from '../../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../../lib/theme/type.js';
@@ -39,6 +39,7 @@ function Axis({
   min,
   max,
   step,
+  squares = false,
   onChange,
 }: {
   name: string;
@@ -46,6 +47,8 @@ function Axis({
   min: number;
   max: number;
   step: number;
+  /** Squared paper: the value is shown as squares from the edge, not as a coordinate. */
+  squares?: boolean;
   onChange: (v: number) => void;
 }) {
   const { t } = useTranslation('practice');
@@ -54,7 +57,7 @@ function Axis({
   return (
     <Stepper
       label={name}
-      value={formatNumber(value)}
+      value={formatNumber(squares ? squaresFrom(min, value, step) : value)}
       canLess={i > 0}
       canMore={i < n}
       position={{ now: i, count: n + 1 }}
@@ -307,19 +310,21 @@ export function DrawExactSheet({
     body = (
       <>
         <Axis
-          name="x"
+          name={g.axes ? 'x' : t('draw.right')}
           value={cursor.x}
           min={g.x_min}
           max={xMax}
           step={g.step}
+          squares={!g.axes}
           onChange={(x) => setCursor({ ...cursor, x })}
         />
         <Axis
-          name="y"
+          name={g.axes ? 'y' : t('draw.up')}
           value={cursor.y}
           min={g.y_min}
           max={yMax}
           step={g.step}
+          squares={!g.axes}
           onChange={(y) => setCursor({ ...cursor, y })}
         />
         <Btn

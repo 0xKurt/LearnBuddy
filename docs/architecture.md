@@ -2052,6 +2052,10 @@ moves with a swipe) — x and y, the number, the bar, hour and minutes; for draw
 "Punkt setzen / entfernen", "Kästchen färben / leeren", one stepper per bar. It writes into the
 same draft as a tap. What is set always stands in words under the figure ("Dein Punkt: (2 | −1)",
 "Punkte: (0 | −1), (1 | 1)", "Mo 4 · Di 7"), and the figure carries it as its accessible label.
+Squared paper (`axes: false`) has no numbers to read a coordinate from, so it never shows one: the
+line under it counts ("3 Punkte gesetzt" — the paper shows where), the steppers are "Nach rechts" /
+"Nach oben" in squares from the bottom-left corner (`squaresFrom`), and the accessible label says
+each point that way ("9 nach rechts, 1 nach oben").
 
 _Kept._ The tap or the drawing (with its "Rückgängig" history, 30 steps) is the item's draft
 (`lib/drafts.ts`). A theme switch remounts the tree within a frame, faster than storage writes:

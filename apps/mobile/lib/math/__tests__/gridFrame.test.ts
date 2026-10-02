@@ -20,6 +20,7 @@ import {
   planeFrame,
   pushDrawing,
   snapPoint,
+  squaresFrom,
   tapFrom,
   toggleCell,
   togglePoint,
@@ -114,6 +115,14 @@ describe('the number line on screen', () => {
     expect(win.v0).toBeLessThanOrEqual(3.5);
     expect(win.v1).toBeGreaterThanOrEqual(3.5);
     expect(lineFrame(win.v0, win.v1, fig.snap, 328).pitch).toBeGreaterThanOrEqual(44);
+  });
+});
+
+describe('squared paper, counted', () => {
+  it('a place is squares from the bottom-left corner, also on a grid of half squares', () => {
+    expect(squaresFrom(0, 9, 1)).toBe(9);
+    expect(squaresFrom(-2, 1, 1)).toBe(3);
+    expect(squaresFrom(0, 2.5, 0.5)).toBe(5);
   });
 });
 
