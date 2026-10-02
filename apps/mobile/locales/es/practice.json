@@ -278,6 +278,11 @@
     "check_waits_cells": "Solo cuando haya una casilla coloreada.",
     "check_waits_bars": "Solo cuando hayas tirado de una barra.",
     "cells_other": "{{count}} casillas coloreadas",
-    "check_waits_points_other": "Solo cuando estén puestos los {{count}} puntos."
+    "check_waits_points_other": "Solo cuando estén puestos los {{count}} puntos.",
+    "points_set_one": "1 punto puesto",
+    "points_set_other": "{{count}} puntos puestos",
+    "square_point": "{{right}} a la derecha, {{up}} hacia arriba",
+    "right": "A la derecha",
+    "up": "Hacia arriba"
   }
 }

@@ -34,6 +34,25 @@ const FAMILY = Platform.select({
 });
 const SMALL = 11;
 
+/**
+ * Where a point's name goes: up and right of it, and for a closed shape away from its centre,
+ * so "A" never sits on an edge or inside the shape (shot 64, round 2).
+ */
+function labelAt(
+  p: { px: number; py: number },
+  centre: { px: number; py: number } | null,
+): { x: number; y: number; anchor: 'start' | 'middle' | 'end' } {
+  const dx = centre ? p.px - centre.px : 1;
+  const dy = centre ? p.py - centre.py : -1;
+  const n = Math.hypot(dx, dy) || 1;
+  const ux = dx / n;
+  const uy = dy / n;
+  const anchor = ux > 0.3 ? 'start' : ux < -0.3 ? 'end' : 'middle';
+  // `y` is the baseline: a name below the point needs its own height (~10 pt at 13 pt) more.
+  const y = uy > 0.3 ? p.py + uy * 8 + 10 : uy < -0.3 ? p.py + uy * 8 - 1 : p.py + 4;
+  return { x: p.px + ux * 9, y, anchor };
+}
+
 type Props = {
   frame: Frame;
   axes: boolean;
@@ -103,6 +122,14 @@ export function PlaneSvg({
       />
     );
   };
+  const marked = marks.map((m) => toPx(f, m));
+  const centre =
+    marked.length > 0
+      ? {
+          px: marked.reduce((t, p) => t + p.px, 0) / marked.length,
+          py: marked.reduce((t, p) => t + p.py, 0) / marked.length,
+        }
+      : null;
   // The line through her first two points, across the whole window.
   let through: { x1: number; y1: number; x2: number; y2: number } | null = null;
   const [a, b] = points;
@@ -322,14 +349,16 @@ export function PlaneSvg({
         ) : null}
         {marks.map((m, i) => {
           const p = toPx(f, m);
+          const at = labelAt(p, closed ? centre : null);
           return (
             <G key={`m${i}`}>
               <Circle cx={p.px} cy={p.py} r={4.5} fill={ink.stroke} />
               {m.label ? (
                 <SvgText
                   fontFamily={FAMILY}
-                  x={p.px + 7}
-                  y={p.py - 7}
+                  x={at.x}
+                  y={at.y}
+                  textAnchor={at.anchor}
                   fontSize={13}
                   fontWeight="700"
                   fill={ink.stroke}

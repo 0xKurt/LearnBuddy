@@ -278,6 +278,11 @@
     "check_waits_cells": "Only once a square is coloured.",
     "check_waits_bars": "Only once a bar has been pulled.",
     "cells_other": "{{count}} squares coloured",
-    "check_waits_points_other": "Only once all {{count}} points are set."
+    "check_waits_points_other": "Only once all {{count}} points are set.",
+    "points_set_one": "1 point set",
+    "points_set_other": "{{count}} points set",
+    "square_point": "{{right}} to the right, {{up}} up",
+    "right": "To the right",
+    "up": "Up"
   }
 }

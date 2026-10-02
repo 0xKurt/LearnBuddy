@@ -237,8 +237,10 @@ export function ClockSvg({
   });
   const hourTurn = ((h % 12) + m / 60) / 12;
   const minuteTurn = m / 60;
-  const hourEnd = at(hourTurn, R * 0.5);
-  const minuteEnd = at(minuteTurn, R * 0.78);
+  // Both hands end short of the numbers (centred at 0.74 R): a tip that runs over the "3" hides
+  // the number it points at (shot 58, round 2). Long against short stays plain: 0.62 to 0.42.
+  const hourEnd = at(hourTurn, R * 0.42);
+  const minuteEnd = at(minuteTurn, R * 0.62);
   const hour = { key: 'hour', end: hourEnd, width: active === 'hour' ? 8 : 6, color: ink.stroke };
   const minute = {
     key: 'minute',
