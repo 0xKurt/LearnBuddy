@@ -58,9 +58,12 @@ Schema ist dann vollständig, aber der Wächter meldet sie als fehlend.
 0072–0078 von heute). Einer ist schlimmer als die anderen: `0073_items_still_coming.sql` steht dort
 als `items_pending_until` — benannt nach der Spalte, die sie anlegt, nicht nach der Datei.
 
-Die Folge ist nicht ein Ausfall, sondern ein **blinder Wächter**: er meldet jetzt 16 angewendete
-Migrationen als fehlend, und eine echte fehlende wäre darin nicht mehr zu erkennen. Genau das war
-der Fall, für den er gebaut wurde.
+Die Folge ist kein Ausfall — und auch kein blinder Wächter, das wäre zu harmlos gesagt. Er schlägt
+**zu**, nicht auf: `fail()` blockiert den Promote mit sechzehn Meldungen, die alle falsch sind.
+
+Das Gefährliche daran ist nicht der blockierte Promote. Es ist, was ein Mensch nach dem dritten Mal
+mit sechzehn immer gleichen Falschmeldungen tut. Eine siebzehnte, echte Zeile liest dann niemand
+mehr — und genau für die ist er nach #67/#79 gebaut worden.
 
 Das Ledger ist Produktionszustand und wird hier nicht nebenbei repariert — das ist eine
 Owner-Entscheidung.
