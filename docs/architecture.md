@@ -2128,7 +2128,9 @@ a bank only tapped (`tapped`), and in the summary a bank cloze counts like tappe
 recognition, not production.
 
 App: the text flows as words and gaps (`unitsOf`: a gap keeps the punctuation touching it, math
-stays whole). Without a bank each gap is a small field in the line; the return key goes to the
+stays whole). One look for every gap, typed or tapped: empty, a dashed blank; filled, her word
+in the accent on a soft tint without a frame (her words stand apart from the print); where she
+types or what the next bank word fills, the accent frame. Without a bank each gap is a small field in the line; the return key goes to the
 next gap and in the last one sends a complete text. With a bank, a tapped word fills the active
 gap (then the next empty one is active), a tap on a filled gap empties it, and a used word
 stays in place, muted. "Prüfen" waits until every gap has something. The text scrolls only when

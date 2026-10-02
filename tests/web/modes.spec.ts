@@ -848,6 +848,8 @@ test('a cloze: five gaps typed, a word bank, the longest that fits; each gap che
   const check = page.getByRole('button', { name: 'Prüfen' });
   await expect(check).toBeDisabled();
   const gap = (n: number) => page.getByLabel(`Lücke ${n} von 5`, { exact: true });
+  // Untouched: every gap a dashed blank in the line.
+  await shot(page, '40a-cloze-empty');
   await gap(1).click();
   await gap(1).pressSequentially('sind');
   // The return key goes on to the next gap.
@@ -902,6 +904,8 @@ test('a cloze: five gaps typed, a word bank, the longest that fits; each gap che
     });
   const word = (w: string) => page.getByRole('button', { name: w, exact: true });
   await expect(check).toBeDisabled();
+  // Untouched: the first gap framed as the one a word fills, the bank under the text.
+  await shot(page, '42a-cloze-bank-empty');
   await word('isst').click();
   await word('steht').click();
   await word('fährt').click();

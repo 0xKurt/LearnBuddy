@@ -93,6 +93,51 @@ export function nextEmpty(
   return null;
 }
 
+/**
+ * One look for a gap, typed or from the bank (issue #232, design pass #287): an empty gap is a
+ * dashed blank — "something goes here" — and a filled one carries her word in the accent, on a
+ * soft tint without a frame, so her words stand apart from the printed text the way a pencil
+ * stands apart from print. Where she types or what a bank word fills next has the accent frame:
+ * the shape says it, not only the colour.
+ */
+type GapLook = {
+  borderWidth: number;
+  borderColor: string;
+  borderStyle: 'solid' | 'dashed';
+  backgroundColor: string;
+};
+function gapLook(
+  palette: { primary: string; primaryLt: string; paper: string; field: string },
+  value: string,
+  current: boolean,
+): GapLook {
+  if (current) {
+    return {
+      borderWidth: 2,
+      borderColor: palette.primary,
+      borderStyle: 'solid',
+      backgroundColor: palette.paper,
+    };
+  }
+  if (value) {
+    return {
+      borderWidth: 2,
+      borderColor: 'transparent',
+      borderStyle: 'solid',
+      backgroundColor: palette.primaryLt,
+    };
+  }
+  return {
+    borderWidth: 1.5,
+    borderColor: palette.field,
+    borderStyle: 'dashed',
+    backgroundColor: palette.paper,
+  };
+}
+
+/** Her word in a gap: the accent, a step bolder than the text around it. */
+const GAP_TEXT = { fontSize: 16, fontWeight: '600' } as const;
+
 /** About as wide as what is in the gap: small when empty, never wider than a phone line. */
 function gapWidth(text: string): number {
   return Math.max(64, Math.min(220, SPACE.xl + text.length * 9.5));
@@ -213,12 +258,9 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: Props) {
             height: TOUCH,
             paddingHorizontal: SPACE.sm,
             borderRadius: 10,
-            // Thicker when focused: the shape says where she types, not only the colour.
-            borderWidth: isFocused ? 2 : 1.5,
-            borderColor: isFocused ? palette.primary : palette.field,
-            backgroundColor: palette.paper,
-            color: palette.ink,
-            fontSize: 16,
+            ...gapLook(palette, value, isFocused),
+            color: palette.primaryDk,
+            ...GAP_TEXT,
             textAlign: 'center',
             // The app's focus ring (as LbTextInput), never the browser's black one.
             outlineStyle: 'solid',
@@ -253,12 +295,10 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: Props) {
             borderRadius: 10,
             alignItems: 'center',
             justifyContent: 'center',
-            borderWidth: isActive ? 2 : 1.5,
-            borderColor: isActive ? palette.primary : value ? 'transparent' : palette.field,
-            backgroundColor: value ? palette.primaryLt : palette.paper,
+            ...gapLook(palette, value, isActive),
           }}
         >
-          <Text style={{ color: palette.primaryDk, fontSize: 16, fontWeight: '600' }}>{value}</Text>
+          <Text style={{ color: palette.primaryDk, ...GAP_TEXT }}>{value}</Text>
         </View>
       </Pressable>
     );
