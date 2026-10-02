@@ -5,7 +5,7 @@
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import type { ReactNode } from 'react';
-import Svg, { Circle, G, Line } from 'react-native-svg';
+import Svg, { Circle, G, Line, Path } from 'react-native-svg';
 
 // Imported by path, like expression.js in FigureView: dependency-free, no mathjs in the bundle.
 import { layoutMolecule, type LaidAtom } from '../../../../packages/shared-math/src/molecule.js';
@@ -33,12 +33,15 @@ export function MoleculeView({ fig, width }: { fig: MoleculeFig; width: number }
   if (!layout) return null;
   const spanX = layout.maxX - layout.minX;
   const spanY = layout.maxY - layout.minY;
-  const margin = 26;
-  const maxH = Math.min(280, width * 0.8);
-  // A bond is 30–58 px: shorter and the letters touch, longer and a small molecule looks lost.
+  // Room for a lone pair or a charge beyond the outermost letters, and no more: a taller
+  // drawing is scaled down as a whole on a small phone, letters included (lib/math/figureScale.ts).
+  const margin = 20;
+  const maxH = Math.min(240, width * 0.7);
+  // A bond is 30–46 px: shorter and the letters touch, longer and the drawing gets so tall
+  // that the screen shrinks it — the letters would end up smaller than at 46.
   const bond = Math.max(
     30,
-    Math.min(58, (width - 2 * margin) / (spanX || 1), (maxH - 2 * margin) / (spanY || 1)),
+    Math.min(46, (width - 2 * margin) / (spanX || 1), (maxH - 2 * margin) / (spanY || 1)),
   );
   const w = width;
   const h = Math.round(spanY * bond + 2 * margin);
@@ -54,19 +57,23 @@ export function MoleculeView({ fig, width }: { fig: MoleculeFig; width: number }
   const accent = ink.point;
 
   const nodes: ReactNode[] = [];
-  // ── highlight under a marked group ──
-  for (const a of layout.atoms) {
-    if (!isMarked(a)) continue;
+  // ── highlight under a marked group: one soft marker stroke along it, as with a pen ──
+  const markedAtoms = layout.atoms.filter(isMarked);
+  if (markedAtoms.length > 0) {
+    const along = layout.bonds
+      .map((b) => [byKey.get(b.from), byKey.get(b.to)] as const)
+      .filter(([p, q]) => p && q && isMarked(p) && isMarked(q))
+      .map(([p, q]) => `M${X(p?.x ?? 0)},${Y(p?.y ?? 0)} L${X(q?.x ?? 0)},${Y(q?.y ?? 0)}`);
+    const dots = markedAtoms.map((a) => `M${X(a.x)},${Y(a.y)} l0,0`);
     nodes.push(
-      <Circle
-        key={`m${a.key}`}
-        cx={X(a.x)}
-        cy={Y(a.y)}
-        r={15}
-        fill={ink.fillSoft}
-        stroke={accent}
-        strokeWidth={1}
-        strokeDasharray="3 3"
+      <Path
+        key="mark"
+        d={[...along, ...dots].join(' ')}
+        stroke={ink.fillSoft}
+        strokeWidth={30}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
       />,
     );
   }
@@ -94,7 +101,7 @@ export function MoleculeView({ fig, width }: { fig: MoleculeFig; width: number }
     const color = both ? accent : ink.stroke;
     const stroke = {
       stroke: color,
-      strokeWidth: both ? 2.25 : 1.75,
+      strokeWidth: both ? 2.5 : 2,
       strokeLinecap: 'round' as const,
     };
     const lines: [number, number, number, number][] = [];
@@ -182,20 +189,28 @@ export function MoleculeView({ fig, width }: { fig: MoleculeFig; width: number }
     }
     const c = chargeText(a.charge);
     if (c) {
+      // In the first free direction (upper right first): never on a bond or a lone pair.
+      const taken = [
+        ...layout.bonds.flatMap((b) => {
+          const other =
+            b.from === a.key ? byKey.get(b.to) : b.to === a.key ? byKey.get(b.from) : null;
+          return other ? [Math.atan2(other.y - a.y, other.x - a.x)] : [];
+        }),
+        ...a.lonePairs,
+      ];
+      const free = (d: number) =>
+        taken.every((t) => Math.abs(Math.atan2(Math.sin(d - t), Math.cos(d - t))) > 0.6);
+      const deg = [45, 135, 315, 225, 90, 0, 180, 270].find((d) => free((d * Math.PI) / 180)) ?? 45;
+      const dir = (deg * Math.PI) / 180;
+      const reach = a.text && a.text.length > 1 ? 16 + LETTER * (a.text.length - 1) : 19;
       letters.push(
         <HaloText
           key={`c${a.key}`}
-          x={
-            x +
-            (a.text
-              ? LETTER * (a.text.length > 1 && !a.text.endsWith(a.el) ? 2 * a.text.length - 1 : 1) +
-                4
-              : 7)
-          }
-          y={y - 8}
-          size={13}
+          x={x + Math.cos(dir) * reach}
+          y={y - Math.sin(dir) * reach + 4}
+          size={14}
           color={color}
-          anchor="start"
+          anchor="middle"
           text={c}
         />,
       );

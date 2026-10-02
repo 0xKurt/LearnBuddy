@@ -22,7 +22,7 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByRole('radio', { name: 'Niedersachsen' }).click();
   await page.getByLabel('Tag', { exact: true }).fill('10');
   await page.getByLabel('Monat', { exact: true }).fill('02');
-  await page.getByLabel('Jahr', { exact: true }).fill('2010');
+  await page.getByLabel('Jahr', { exact: true }).fill('2014');
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill('4826');
@@ -46,7 +46,13 @@ async function bothRooms(page: Page, name: string): Promise<void> {
 }
 
 async function typed(page: Page, text: string): Promise<void> {
-  await page.getByLabel('Deine Antwort').fill(text);
+  // Right after the switch back from the dark room the field can render once more; fill until
+  // the value holds instead of typing into the copy that is about to go.
+  const field = page.getByLabel('Deine Antwort');
+  await expect(async () => {
+    await field.fill(text);
+    await expect(field).toHaveValue(text, { timeout: 1000 });
+  }).toPass();
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();

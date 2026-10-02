@@ -826,7 +826,8 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
   const spanX = maxX - minX || 1;
   const spanY = maxY - minY || 1;
   // Room around the drawing for point names, measures and arrow labels.
-  const margin = 30;
+  // Measures written beside the sides and arrows need more room than point names do.
+  const margin = lengths.length > 0 || arrows.length > 0 || lines.length > 0 ? 42 : 30;
   const maxH = Math.min(320, width);
   const scale = Math.min((width - 2 * margin) / spanX, (maxH - 2 * margin) / spanY);
   const h = Math.round(spanY * scale + 2 * margin);
@@ -848,21 +849,55 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
     if ((mid.x - middle.x) * n.x + (mid.y - middle.y) * n.y < 0) n = { x: -n.x, y: -n.y };
     return n;
   };
-  // A point that only marks where an arrow ends is no point of the figure: no dot, no name.
+  // A point that only marks where an arrow ends, or only gives a line (and the arm of an angle
+  // on it) its direction, is no point of the figure: no dot, no name — a mirror's two ends or
+  // the top of a normal would otherwise crowd the drawing with letters nobody asked about.
   const named = new Set<string>([
     ...fig.segments.flatMap((sg) => [sg.from, sg.to]),
     ...fig.polygons.flat(),
     ...fig.circles.map((c) => c.center),
-    ...angles.flatMap((a) => a.at),
+    ...angles.map((a) => a.at[1] ?? ''),
     ...lengths.flatMap((l) => [l.from, l.to]),
     ...arrows.map((a) => a.from),
     ...rays.flatMap((r) => [r.from, r.through]),
-    ...lines.flatMap((l) => [l.a, l.b]),
   ]);
-  const tipsOnly = new Set(arrows.map((a) => a.to).filter((n) => !named.has(n)));
-  const label = (key: string, x: number, y: number, text: string, color = palette.ink) => (
-    <HaloText key={key} x={x} y={y + 5} size={FONT + 1} color={color} anchor="middle" text={text} />
+  const helpers = new Set([
+    ...arrows.map((a) => a.to),
+    ...lines.flatMap((l) => [l.a, l.b]),
+    ...angles.flatMap((a) => [a.at[0] ?? '', a.at[2] ?? '']),
+  ]);
+  const tipsOnly = new Set(
+    [...helpers].filter(
+      (n) =>
+        !named.has(n) &&
+        (arrows.some((a) => a.to === n) || lines.some((l) => l.a === n || l.b === n)),
+    ),
   );
+  /** A measure or a name, kept whole inside the drawing (never cut at its edge). */
+  const label = (key: string, x: number, y: number, text: string, color = palette.ink) => {
+    const half = ((FONT + 1) * 0.6 * [...text].length) / 2 + 3;
+    const cx = Math.min(Math.max(x, half), width - half);
+    const cy = Math.min(Math.max(y, FONT), h - 8);
+    return (
+      <HaloText
+        key={key}
+        x={cx}
+        y={cy + 5}
+        size={FONT + 1}
+        color={color}
+        anchor="middle"
+        text={text}
+      />
+    );
+  };
+
+  /**
+   * How far a label's centre stands off a line along the normal `n`, so that the whole text —
+   * not just its middle — clears the line: a wide "F₂ = 40 N" beside an upright arrow needs
+   * half its width, the same text above a level side only half its height.
+   */
+  const clear = (text: string, n: ScreenXY) =>
+    8 + Math.abs(n.x) * (((FONT + 1) * 0.6 * [...text].length) / 2) + Math.abs(n.y) * 8;
 
   const nodes: ReactNode[] = [];
   const labels: ReactNode[] = [];
@@ -915,7 +950,8 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
     );
     if (l.label) {
       const n = outward(end2, end1);
-      const spot = { x: end1.x - d.x * 18 + n.x * 12, y: end1.y - d.y * 18 + n.y * 12 };
+      const off = clear(l.label, n);
+      const spot = { x: end1.x - d.x * 18 + n.x * off, y: end1.y - d.y * 18 + n.y * off };
       labels.push(label(`ll${i}`, spot.x, spot.y, l.label, palette.ink2));
     }
   });
@@ -957,9 +993,12 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
         strokeLinecap="round"
       />,
     );
-    // A light ray carries its direction in the middle of the line, as in a physics book.
+    // A light ray carries its direction on the line, as in a physics book.
     if (light) {
-      const tip = { x: (p.x + end.x) / 2 + d.x * 5, y: (p.y + end.y) / 2 + d.y * 5 };
+      // Between its two points, clear of both: early on incoming light, late on outgoing
+      // light, so neither sits on the angle values where the light meets the mirror.
+      const at = r.kind === 'light_in' ? 0.4 : 0.7;
+      const tip = { x: p.x + (q.x - p.x) * at + d.x * 5, y: p.y + (q.y - p.y) * at + d.y * 5 };
       nodes.push(<Path key={`rh${i}`} d={headPath(tip, d, 11)} fill={color} />);
     }
   });
@@ -1009,7 +1048,7 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
       return;
     }
     // A narrow angle gets a wider arc, so its value still fits between the arms.
-    const r = size < (35 * Math.PI) / 180 ? 34 : 22;
+    const r = size < (35 * Math.PI) / 180 ? 36 : 24;
     const start = { x: pb.x + Math.cos(a1) * r, y: pb.y + Math.sin(a1) * r };
     const end = { x: pb.x + Math.cos(a1 + sweep) * r, y: pb.y + Math.sin(a1 + sweep) * r };
     const large = size > Math.PI ? 1 : 0;
@@ -1030,7 +1069,7 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
       />,
     );
     if (text) {
-      const lr = r + 15;
+      const lr = r + 19;
       labels.push(
         label(`al${i}`, pb.x + Math.cos(mid) * lr, pb.y + Math.sin(mid) * lr, text, ink.point),
       );
@@ -1043,7 +1082,8 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
     const text = l.label ?? (l.value !== null ? formatNumber(l.value) : null);
     if (!text) return;
     const n = outward(p, q);
-    const mid = { x: (p.x + q.x) / 2 + n.x * 14, y: (p.y + q.y) / 2 + n.y * 14 };
+    const off = clear(text, n);
+    const mid = { x: (p.x + q.x) / 2 + n.x * off, y: (p.y + q.y) / 2 + n.y * off };
     labels.push(label(`len${i}`, mid.x, mid.y, text));
   });
   arrows.forEach((a, i) => {
@@ -1069,9 +1109,15 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
     );
     const text = a.label ?? (a.value !== null ? formatNumber(a.value) : null);
     if (!text) return;
-    // The name sits beside the arrow's tip half, on the side away from the middle.
+    // The name sits beside the arrow's tip half, on the side away from the middle — or, on an
+    // arrow that runs (nearly) upright, beyond its tip: a name as wide as "F₂ = 40 N" beside it
+    // would need more room at the edge than the drawing has.
     const n = outward(p, q);
-    const spot = { x: p.x + (q.x - p.x) * 0.62 + n.x * 14, y: p.y + (q.y - p.y) * 0.62 + n.y * 14 };
+    const upright = Math.abs(n.x) > 0.8;
+    const off = clear(text, n);
+    const spot = upright
+      ? { x: q.x + d.x * 16, y: q.y + d.y * 16 }
+      : { x: p.x + (q.x - p.x) * 0.62 + n.x * off, y: p.y + (q.y - p.y) * 0.62 + n.y * off };
     labels.push(label(`vl${i}`, spot.x, spot.y, text, color));
   });
 
