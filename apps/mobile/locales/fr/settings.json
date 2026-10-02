@@ -188,22 +188,23 @@
     "speed_hint": "Touche pour écouter. Plus lent ou plus rapide ? Dis-le simplement à Buddy."
   },
   "look": {
-    "title": "Apparence",
-    "question": "Quelles couleurs préfères-tu ?",
-    "hint": "Seulement sur cet appareil. Tu peux changer quand tu veux.",
-    "sample": "Salut ! Voilà à quoi ressemble un texte.",
     "family": {
       "pastell": "Pastel",
       "forest": "Forêt",
       "ocean": "Océan",
       "sunset": "Soir"
     },
+    "hint": "Seulement sur cet appareil. Tu peux changer quand tu veux.",
     "mode": {
       "system": "Comme le téléphone",
       "light": "Clair",
       "dark": "Sombre"
     },
+    "mode_hint": "Suit ton téléphone jusqu’à ce que tu choisisses ici.",
+    "mode_hint_pinned": "Appuie longuement pour suivre à nouveau le téléphone.",
     "mode_question": "Clair ou sombre ?",
-    "mode_hint": "Suit ton téléphone jusqu’à ce que tu choisisses ici."
+    "question": "Quelles couleurs préfères-tu ?",
+    "sample": "Salut ! Voilà à quoi ressemble un texte.",
+    "title": "Apparence"
   }
 }

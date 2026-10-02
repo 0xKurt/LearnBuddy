@@ -188,22 +188,23 @@
     "speed_hint": "Tap to hear it. Slower or faster? Just tell Buddy."
   },
   "look": {
-    "title": "Look",
-    "question": "Which colours do you like?",
-    "hint": "On this device only. You can change it any time.",
-    "sample": "Hello! This is what text looks like.",
     "family": {
       "pastell": "Pastel",
       "forest": "Forest",
       "ocean": "Ocean",
       "sunset": "Sunset"
     },
+    "hint": "On this device only. You can change it any time.",
     "mode": {
       "system": "Like the phone",
       "light": "Light",
       "dark": "Dark"
     },
+    "mode_hint": "Follows your phone until you set it here once.",
+    "mode_hint_pinned": "Press and hold to follow the phone again.",
     "mode_question": "Light or dark?",
-    "mode_hint": "Follows your phone until you set it here once."
+    "question": "Which colours do you like?",
+    "sample": "Hello! This is what text looks like.",
+    "title": "Look"
   }
 }

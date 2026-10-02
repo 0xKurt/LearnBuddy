@@ -188,22 +188,23 @@
     "speed_hint": "Toca para escucharla. ¿Más lento o más rápido? Díselo a Buddy."
   },
   "look": {
-    "title": "Aspecto",
-    "question": "¿Qué colores te gustan?",
-    "hint": "Solo en este dispositivo. Puedes cambiarlo cuando quieras.",
-    "sample": "¡Hola! Así se ve un texto.",
     "family": {
       "pastell": "Pastel",
       "forest": "Bosque",
       "ocean": "Mar",
       "sunset": "Atardecer"
     },
+    "hint": "Solo en este dispositivo. Puedes cambiarlo cuando quieras.",
     "mode": {
       "system": "Como el móvil",
       "light": "Claro",
       "dark": "Oscuro"
     },
+    "mode_hint": "Sigue a tu móvil hasta que lo elijas aquí.",
+    "mode_hint_pinned": "Mantén pulsado para volver a seguir al teléfono.",
     "mode_question": "¿Claro u oscuro?",
-    "mode_hint": "Sigue a tu móvil hasta que lo elijas aquí."
+    "question": "¿Qué colores te gustan?",
+    "sample": "¡Hola! Así se ve un texto.",
+    "title": "Aspecto"
   }
 }

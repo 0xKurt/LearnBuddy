@@ -24,6 +24,7 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
+import { modeSwitch } from '../../lib/theme/modeSwitch.js';
 import { FAMILIES, paletteOf, themeNameOf, type Family } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -121,16 +122,28 @@ export function FamilyChoice() {
 /** Light or dark: one switch, showing what is actually on screen. */
 export function ModeChoice() {
   const { t } = useTranslation('settings');
-  const { name, palette, choose } = useTheme();
+  const { name, palette, mode, choose } = useTheme();
   const dark = name.endsWith('Dark');
+  // Until she touches the switch the app follows the phone; touching it pins a side. Pinned,
+  // there was no way back short of setting the device up again (issue #222) — the switch sets
+  // only light or dark, and the decision against a THIRD card stands (#172, top of this file).
+  // What the switch then offers is decided in `lib/theme/modeSwitch.ts`, where it can be
+  // tested; this is one line per branch.
+  const { pinned, hint, backAction } = modeSwitch(mode);
+  const followPhone = () => choose({ mode: 'system' });
   return (
     <Pressable
       accessibilityRole="switch"
       accessibilityLabel={t('look.mode_question')}
-      accessibilityHint={t('look.mode_hint')}
+      accessibilityHint={t(hint)}
+      accessibilityActions={backAction ? [{ name: backAction, label: t('look.mode.system') }] : []}
+      onAccessibilityAction={(e) => {
+        if (e.nativeEvent.actionName === backAction) followPhone();
+      }}
       // aria-checked (not accessibilityState) so the web build says it too.
       aria-checked={dark}
       onPress={() => choose({ mode: dark ? 'light' : 'dark' })}
+      onLongPress={pinned ? followPhone : undefined}
       style={{ borderRadius: 999 }}
     >
       {({ pressed }) => (

@@ -48,7 +48,10 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   a mistake in her own class test. **Stand 02.10.2026: der Wert wird erhoben und gespeichert,
   aber von keiner Stelle gelesen** (Issue #214). Der genannte Zweck ist also der beabsichtigte,
   nicht der heute wirksame; bis eine Stelle ihn liest, ist dies ein Datum ohne Wirkung, und das
-  steht hier, statt dass es jemand herausfinden muss. It is not an address and not a location: it is a choice from a
+  steht hier, statt dass es jemand herausfinden muss. **Berichtigung (Art. 16):** der Wert ist
+  in den Einstellungen unter „Bundesland" jederzeit änderbar, über dasselbe Auswahlfeld wie bei
+  der Registrierung und ohne PIN — eine Hürde würde genau die Korrektur verhindern, für die der
+  Weg da ist, und ein falscher Wert hier schadet niemandem (Issue #216). It is not an address and not a location: it is a choice from a
   list of sixteen, it is never derived from the device, the IP address or any position, and it is
   not used for anything but which curriculum rules apply. **Retention:** until deletion, with the
   rest of the profile (`learners`); it is in `GET /account/export` with the other profile fields
@@ -100,6 +103,12 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
 | Photo paths whose deletion Storage still owes after an account deletion (account/material ids only)                       | `storage_deletions`                                                                       | until Storage confirmed the deletion                                                                                                                                                                                                                                                                                                                                                                                           |
 
 Logs contain route names and error classes only — no request bodies, messages or answers.
+
+A concept-image crop is cleaned up in greyscale, or **in colour** where the colour is part of what
+the figure shows — a map, a chart with a colour key, an indicator strip, a stained specimen (issue
+#223 point 1). It is the same data either way: a small real crop of her own page, in the row and
+with the retention above. Nothing else is kept because of it, and no new kind of thing is read out
+of a photo.
 
 These retention rules are not just promised, they are watched (issue #78): every completed
 sweep records when it ran and how many rows it removed — counts only, never content — and
