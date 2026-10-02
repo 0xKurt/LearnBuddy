@@ -427,6 +427,18 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ]),
     },
     {
+      when: /brüche im kopf/i,
+      answer: says('Gern – Brüche addieren, ganz schnell.', [
+        { tool: 'offer_drill', args: { range: 'fractions', rows: null, carry: null } },
+      ]),
+    },
+    {
+      when: /plus bis 100/i,
+      answer: says('Klar – Plus bis 100, ohne Übergang.', [
+        { tool: 'offer_drill', args: { range: 'plus_100', rows: null, carry: 'without' } },
+      ]),
+    },
+    {
       when: /mein stoff|materialien|arbeitsblätter/i,
       answer: says('Klar – hier ist dein Stoff.', [
         { tool: 'open_area', args: { area: 'library' } },

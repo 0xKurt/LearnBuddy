@@ -13,11 +13,12 @@
 
 import type { SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, Text, View } from 'react-native';
 
 import { announce } from '../../lib/announce.js';
+import { useDraft } from '../../lib/drafts.js';
 import { newId } from '../../lib/api/client.js';
 import { answerDrill, startDrill } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
@@ -29,7 +30,6 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
-import { Card } from '../lb/Card.js';
 import { EmptyState } from '../lb/EmptyState.js';
 import { Icon } from '../lb/Icon.js';
 import { Rise } from '../lb/Motion.js';
@@ -68,11 +68,35 @@ function typedWith(typed: string, key: Key): string {
   return `${typed}${key}`;
 }
 
+/**
+ * The round's name on ONE line (issue #287: a title that wraps pushes everything down), and
+ * what stands to its right. Screen's own header allows two lines, which a name like "Plus bis
+ * 100 ohne Übergang" next to "Beenden" needs on a 360 pt phone.
+ */
+function RoundHeader({ title, right }: { title: string; right?: ReactNode }) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACE.md,
+        paddingHorizontal: SPACE.lg,
+        paddingVertical: SPACE.sm,
+        minHeight: 52,
+      }}
+    >
+      <Text accessibilityRole="header" numberOfLines={1} style={[TYPE.title, { flex: 1 }]}>
+        {title}
+      </Text>
+      {right}
+    </View>
+  );
+}
+
 export function DrillRound({ session, title, onChange, onClose }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
   const drill = session.drill!;
-  const [typed, setTyped] = useState('');
   /** Tasks she answered whose answer is still on its way (item id → what she typed). */
   const [pending, setPending] = useState<ReadonlyMap<string, string>>(new Map());
   const queue = useRef<Array<{ itemId: string; text: string }>>([]);
@@ -81,6 +105,10 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
 
   const open = session.items.filter((i) => i.status === 'open' && !pending.has(i.item.id));
   const current: SessionItemView | undefined = open[0];
+  // What she typed for THIS task is a draft: a theme switch rebuilds the screen, and the digits
+  // must still be there afterwards (the review of #228–#230 found exactly that loss).
+  const draft = useDraft(`drill.${session.id}.${current?.item.id ?? 'none'}`);
+  const typed = draft.text;
   const answered = session.items.length - open.length;
   // The task she answered last — the server's word once it is there, her own typing until then.
   const lastSent = [...pending.entries()].at(-1);
@@ -132,7 +160,7 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
 
   function press(key: Key): void {
     haptic.select();
-    setTyped((v) => typedWith(v, key));
+    draft.setText((v) => typedWith(v, key));
   }
 
   function submit(): void {
@@ -140,8 +168,8 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
     haptic.tap();
     const itemId = current.item.id;
     queue.current.push({ itemId, text: typed });
+    draft.clear();
     setPending((p) => new Map(p).set(itemId, typed));
-    setTyped('');
     void drain();
   }
 
@@ -182,7 +210,8 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
   if (session.status !== 'active') {
     const finished = session.status === 'finished';
     return (
-      <Screen title={title}>
+      <Screen>
+        <RoundHeader title={title} />
         <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: SPACE.lg }}>
           {finished ? (
             <View style={{ alignItems: 'center', gap: SPACE.lg }}>
@@ -246,21 +275,30 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
           }
         : null;
 
+  // How big the task stands: as big as fits one line of a 360 pt phone (rule 16).
+  const taskSize = (text: string) => {
+    const len = text.replace(/\$|\\frac\{(\d+)\}\{(\d+)\}/g, '$1$2').length;
+    return len <= 7 ? 56 : len <= 11 ? 44 : 34;
+  };
+  const prompt = current ? current.item.prompt : '…';
+  const size = taskSize(prompt);
+
   return (
-    <Screen
-      title={title}
-      right={
-        <Btn
-          variant="outline"
-          size="sm"
-          pill
-          onPress={onClose}
-          accessibilityHint={t('practice:drill.end_hint')}
-        >
-          {t('practice:end')}
-        </Btn>
-      }
-    >
+    <Screen>
+      <RoundHeader
+        title={title}
+        right={
+          <Btn
+            variant="outline"
+            size="sm"
+            pill
+            onPress={onClose}
+            accessibilityHint={t('practice:drill.end_hint')}
+          >
+            {t('practice:end')}
+          </Btn>
+        }
+      />
       <View style={{ flex: 1, paddingHorizontal: SPACE.lg, gap: SPACE.md }}>
         <ProgressRow
           position={Math.min(answered + 1, session.items.length)}
@@ -271,103 +309,130 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
             total: session.items.length,
           })}
         />
-        <View style={{ flex: 1, justifyContent: 'center', gap: SPACE.md }}>
-          <Card tone="lavender" padding={SPACE.xl} radius={24}>
-            <View style={{ alignItems: 'center', gap: SPACE.md }} testID="drill-task">
-              <MathText
-                text={current ? current.item.prompt : '…'}
-                accessibilityRole="header"
-                style={[TYPE.display, { fontSize: 40, lineHeight: 48, textAlign: 'center' }]}
-              />
-              <View
-                accessible
-                accessibilityLabel={t('practice:drill.typed', { value: typed || '–' })}
-                accessibilityLiveRegion="polite"
+        {/* The one thing in front of her, and it takes the room there is: no dead gap between
+            the task and the pad (issue #286 point 1). */}
+        <View
+          style={{
+            flex: 1,
+            borderRadius: 28,
+            backgroundColor: palette.lavender,
+            paddingHorizontal: SPACE.xl,
+            paddingVertical: SPACE.lg,
+          }}
+        >
+          <View style={{ flex: 1 }} />
+          <View style={{ alignItems: 'center', gap: SPACE.lg }} testID="drill-task">
+            <MathText
+              text={prompt}
+              accessibilityRole="header"
+              style={[
+                TYPE.display,
+                { fontSize: size, lineHeight: Math.round(size * 1.2), textAlign: 'center' },
+              ]}
+            />
+            <View
+              accessible
+              accessibilityLabel={t('practice:drill.typed', { value: typed || '–' })}
+              accessibilityLiveRegion="polite"
+              style={{
+                minWidth: 144,
+                height: 72,
+                paddingHorizontal: SPACE.xl,
+                borderRadius: 20,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: palette.paper,
+                borderWidth: 2,
+                borderColor: typed ? palette.primary : palette.lavenderDeep,
+              }}
+            >
+              <Text
+                maxFontSizeMultiplier={MAX_FONT_SCALE}
                 style={{
-                  minWidth: 120,
-                  minHeight: 56,
-                  paddingHorizontal: SPACE.lg,
-                  borderRadius: 16,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: palette.paper,
-                  borderWidth: 2,
-                  borderColor: typed ? palette.primary : palette.field,
+                  fontSize: 40,
+                  fontWeight: '700',
+                  letterSpacing: 1,
+                  color: typed ? palette.ink : palette.lavenderDeep,
                 }}
               >
-                <Text
-                  maxFontSizeMultiplier={MAX_FONT_SCALE}
+                {typed || '?'}
+              </Text>
+            </View>
+          </View>
+          {/* The task she answered last, as one quiet pill at the card's foot. Always the same
+              height, so nothing jumps when it fills; words and a mark, never colour alone. */}
+          <View style={{ flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
+            <View
+              testID="drill-last"
+              style={{
+                minHeight: 36,
+                justifyContent: 'center',
+              }}
+            >
+              {shownLast ? (
+                <View
                   style={{
-                    fontSize: 32,
-                    fontWeight: '600',
-                    color: typed ? palette.ink : palette.placeholder,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: SPACE.sm,
+                    paddingHorizontal: SPACE.md,
+                    paddingVertical: SPACE.xs + 2, // optical: a pill of 36 pt with 15 pt text
+                    borderRadius: 18,
+                    backgroundColor: shownLast.verdict === true ? palette.mint : palette.paper,
                   }}
                 >
-                  {typed || '?'}
-                </Text>
-              </View>
+                  {shownLast.verdict === true ? (
+                    <View
+                      accessibilityElementsHidden
+                      importantForAccessibility="no-hide-descendants"
+                    >
+                      <Icon name="check" size={16} color={palette.successText} />
+                    </View>
+                  ) : null}
+                  {shownLast.verdict !== null ? (
+                    <Text
+                      style={[
+                        TYPE.small,
+                        {
+                          color:
+                            shownLast.verdict === true ? palette.successText : palette.primaryDk,
+                          fontWeight: '600',
+                        },
+                      ]}
+                    >
+                      {shownLast.verdict === true
+                        ? t('practice:drill.right_short')
+                        : t('practice:drill.was_short')}
+                    </Text>
+                  ) : null}
+                  <MathText
+                    text={shownLast.text}
+                    style={[
+                      TYPE.small,
+                      {
+                        color:
+                          shownLast.verdict === true
+                            ? palette.successText
+                            : shownLast.verdict === null
+                              ? palette.ink2
+                              : palette.ink,
+                        fontWeight: '600',
+                      },
+                    ]}
+                  />
+                </View>
+              ) : null}
             </View>
-          </Card>
-          {/* One line, always the same height, so nothing jumps when it fills. */}
-          <View
-            testID="drill-last"
-            style={{
-              minHeight: 28,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: SPACE.sm,
-            }}
-          >
-            {shownLast ? (
-              <>
-                {shownLast.verdict === true ? (
-                  <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                    <Icon name="check" size={18} color={palette.successText} />
-                  </View>
-                ) : null}
-                <Text
-                  style={[
-                    TYPE.small,
-                    {
-                      color:
-                        shownLast.verdict === true
-                          ? palette.successText
-                          : shownLast.verdict === false
-                            ? palette.primaryDk
-                            : palette.ink2,
-                      fontWeight: '600',
-                    },
-                  ]}
-                >
-                  {shownLast.verdict === true
-                    ? t('practice:drill.right_short')
-                    : shownLast.verdict === false
-                      ? t('practice:drill.was_short')
-                      : ''}
-                </Text>
-                <MathText
-                  text={shownLast.text}
-                  style={[
-                    TYPE.small,
-                    {
-                      color: shownLast.verdict === null ? palette.ink2 : palette.ink,
-                      fontWeight: '600',
-                    },
-                  ]}
-                />
-              </>
-            ) : null}
           </View>
         </View>
         <View style={{ gap: SPACE.sm }} testID="drill-pad">
           {ROWS.map((row, r) => (
             <View key={r} style={{ flexDirection: 'row', gap: SPACE.sm }}>
-              {row.map((key) =>
-                key === 'slash' && drill.input !== 'fraction' ? (
-                  // An empty place, not a button without a name (axe: button-name).
-                  <View key={key} style={{ flex: 1, height: TOUCH + SPACE.sm }} />
-                ) : (
+              {row
+                // Whole numbers have no "/": the 0 takes its place and the row stays whole
+                // (issue #287: no ragged gap in a grid).
+                .filter((key) => key !== 'slash' || drill.input === 'fraction')
+                .map((key) => (
                   <Pressable
                     key={key}
                     onPress={() => press(key)}
@@ -380,7 +445,7 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
                           ? t('practice:drill.slash')
                           : key
                     }
-                    style={{ flex: 1 }}
+                    style={{ flex: key === '0' && drill.input !== 'fraction' ? 2 : 1 }}
                   >
                     {({ pressed }) => (
                       <View
@@ -394,26 +459,20 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
                           ...SHADOW.soft,
                         }}
                       >
-                        {key === 'back' ? (
-                          <Text
-                            maxFontSizeMultiplier={MAX_FONT_SCALE}
-                            style={{ fontSize: 22, color: palette.ink2 }}
-                          >
-                            ⌫
-                          </Text>
-                        ) : (
-                          <Text
-                            maxFontSizeMultiplier={MAX_FONT_SCALE}
-                            style={{ fontSize: 24, fontWeight: '500', color: palette.ink }}
-                          >
-                            {key === 'slash' ? '/' : key}
-                          </Text>
-                        )}
+                        <Text
+                          maxFontSizeMultiplier={MAX_FONT_SCALE}
+                          style={{
+                            fontSize: key === 'back' ? 22 : 26,
+                            fontWeight: '500',
+                            color: key === 'back' ? palette.ink2 : palette.ink,
+                          }}
+                        >
+                          {key === 'back' ? '⌫' : key === 'slash' ? '/' : key}
+                        </Text>
                       </View>
                     )}
                   </Pressable>
-                ),
-              )}
+                ))}
             </View>
           ))}
         </View>

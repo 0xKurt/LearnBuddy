@@ -2406,12 +2406,18 @@ word list, so it stays a prompt rule.
   now — measured on the same question, not a feeling; `solid` when a row (or the whole round)
   was all right; otherwise `again`, said as where to go on ("Bei den 7ern bleiben wir dran").
   The app words it ("Die 7er sitzen jetzt besser."), and offers "Noch eine Runde" and the way
-  back. _Screen_ (`components/practice/DrillRound.tsx`, on the practice route): the task big,
-  the typed answer under it, a 3×4 digit pad (52 pt keys; "/" only for fractions), "Prüfen" in
-  the pinned bar. The next task stands there the moment she presses "Prüfen" — the answers go
-  out in order behind it, and what the server decided arrives in the line under the card
-  ("Richtig: 6 · 7 = 42" / "Das war: 7 · 8 = 56", words and not only colour). A keyboard types
-  on the same pad in the browser. No settings, no timer, no instructions (#224 Minimalismus).
+  back. _Screen_ (`components/practice/DrillRound.tsx`, on the practice route), designed against
+  #286/#287: the round's name on ONE line; one lavender card that takes all the room between the
+  progress and the pad (no dead gap), the task as big as fits a 360 pt line (56/44/34 pt) and
+  the typed answer under it; the task she answered last as one pill at the card's foot
+  ("✓ Richtig: 6 · 7 = 42" on mint / "Das war: 7 · 8 = 56", words and a mark, never colour
+  alone); a 3×4 digit pad (52 pt keys; "/" only for fractions, otherwise the 0 is double width
+  so the grid has no hole); "Prüfen" in the pinned bar. The next task stands there the moment
+  she presses "Prüfen" — the answers go out in order behind it, and the server's verdict
+  arrives in the pill. What she typed is a draft (`useDraft`), so a theme switch keeps it. A
+  keyboard types on the same pad in the browser. No settings, no instructions, and **no
+  clock**: #224 decided "Timer nur auf Wunsch", and a speed drill is exactly where a visible
+  clock turns practice into pressure — the speed comes from no waiting, not from a countdown.
   **Not built**: a timer, mixing ranges in one round, a task asked twice in one round, starting
   a round without Buddy (there is no tile — the chat is the way in), an offer that stands is not
   yet in STATE's "Already waiting for her" (only `offer_learning` is), so a repeated

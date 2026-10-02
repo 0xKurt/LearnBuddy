@@ -858,7 +858,13 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
       await shot(page, '42b-drill-was-night');
       await page.emulateMedia({ colorScheme: 'light' });
     }
-    if (n === 2) await expect(page.getByTestId('drill-last')).toContainText('Richtig:');
+    if (n === 2) {
+      await expect(page.getByTestId('drill-last')).toContainText('Richtig:');
+      await shot(page, '42c-drill-right');
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await shot(page, '42d-drill-right-night');
+      await page.emulateMedia({ colorScheme: 'light' });
+    }
     if (n < 19) {
       // No pause: the next task is on the card (or the same numbers the other way round
       // never directly — the server keeps mirror tasks apart).
@@ -879,6 +885,36 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   // "Noch eine Runde": the same range, new tasks, again without a model.
   await page.getByRole('button', { name: 'Noch eine Runde' }).click();
   await expect(page.getByText('Aufgabe 1 von 20')).toBeVisible();
+  await page.getByRole('button', { name: 'Beenden' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+
+  // Fractions: the pad gets its "/" — once, never first.
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns Brüche im Kopf addieren');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('Brüche addieren, ganz schnell', { exact: false })).toBeVisible();
+  await offerStart(page, 'Brüche addieren').click();
+  await expect(taskCard).toBeVisible();
+  await type('3');
+  await page.getByRole('button', { name: 'Bruchstrich' }).click();
+  await type('4');
+  await expect(page.getByLabel('Deine Antwort: 3/4')).toBeVisible();
+  await shot(page, '44-drill-fraction');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '44b-drill-fraction-night');
+  // The theme switch rebuilt the screen; what she typed is a draft and still there.
+  await expect(page.getByLabel('Deine Antwort: 3/4')).toBeVisible();
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'Beenden' }).click();
+
+  // The longest name a round has stays on one line, and the longest task fits.
+  await page.getByLabel('Schreib Buddy …').fill('Plus bis 100 im Kopf');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await offerStart(page, 'Plus bis 100 ohne Übergang').click();
+  await expect(taskCard).toBeVisible();
+  const header = page.getByRole('heading', { name: 'Plus bis 100 ohne Übergang' });
+  const box = await header.boundingBox();
+  expect(box!.height).toBeLessThan(40);
+  await shot(page, '45-drill-long-title');
   await page.getByRole('button', { name: 'Beenden' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
