@@ -152,7 +152,7 @@ function orb(cx, cy, r, { halo = true, shadow = true, night = false } = {}) {
 const MOON_POSE = { x: 71.13, y: -38.03, scale: 1.394, glow: 1.21 };
 
 /** The moon for an orb centred at (cx, cy) with radius r; `boost` enlarges only the moon. */
-function moon(cx, cy, r, boost, { glow = true, reflection = true } = {}) {
+function moon(cx, cy, r, boost, { glow = true, reflection = true, night = false } = {}) {
   const k = r / 54;
   const mx = cx + MOON_POSE.x * k;
   const my = cy + MOON_POSE.y * k;
@@ -167,11 +167,22 @@ function moon(cx, cy, r, boost, { glow = true, reflection = true } = {}) {
   const rot = (Math.atan2(ny, nx) * 180) / Math.PI + 90;
   return `
     <defs>
-      <radialGradient id="mglow" cx="0.5" cy="0.5" r="0.5">
+      <radialGradient id="mglow" cx="0.5" cy="0.5" r="0.5">${
+        // At night the moon's light is lilac and about half as strong: white at full strength
+        // is a hot white blob on the dark ground that outshines the orb (the same rule as the
+        // halo, palettes.ts → night.buddyLight).
+        night
+          ? `
+        <stop offset="0" stop-color="#f1e8ff" stop-opacity="0.6"/>
+        <stop offset="0.3" stop-color="#d9c6ff" stop-opacity="0.34"/>
+        <stop offset="0.62" stop-color="#c3aeff" stop-opacity="0.12"/>
+        <stop offset="1" stop-color="#c3aeff" stop-opacity="0"/>`
+          : `
         <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
         <stop offset="0.3" stop-color="#fbeaff" stop-opacity="0.75"/>
         <stop offset="0.62" stop-color="#e6c9ff" stop-opacity="0.32"/>
-        <stop offset="1" stop-color="#dcc4ff" stop-opacity="0"/>
+        <stop offset="1" stop-color="#dcc4ff" stop-opacity="0"/>`
+      }
       </radialGradient>
       <radialGradient id="mpearl" cx="0.36" cy="0.32" r="0.75">
         <stop offset="0" stop-color="#ffffff"/>
@@ -275,7 +286,7 @@ const FILES = [
   {
     name: 'splash-icon-dark.png',
     size: 1024,
-    body: orb(...SPLASH, { night: true }) + moon(...SPLASH, BOOST),
+    body: orb(...SPLASH, { night: true }) + moon(...SPLASH, BOOST, { night: true }),
     opaque: true,
     bg: NIGHT_BG,
   },
@@ -284,14 +295,14 @@ const FILES = [
   {
     name: 'icon-dark.png',
     size: 1024,
-    body: orb(...ICON, { night: true }) + moon(...ICON, BOOST),
+    body: orb(...ICON, { night: true }) + moon(...ICON, BOOST, { night: true }),
   },
   // iOS 18 tinted icon: a grayscale picture on black; iOS colours it by brightness. Opaque
   // black, as Apple's template is, so no stray alpha decides the tint.
   {
     name: 'icon-tinted.png',
     size: 1024,
-    body: `<g style="filter: grayscale(1)">${orb(...ICON, { night: true }) + moon(...ICON, BOOST)}</g>`,
+    body: `<g style="filter: grayscale(1)">${orb(...ICON, { night: true }) + moon(...ICON, BOOST, { night: true })}</g>`,
     opaque: true,
     bg: '#000000',
   },
