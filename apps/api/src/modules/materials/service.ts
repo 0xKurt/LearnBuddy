@@ -1965,6 +1965,9 @@ export async function materialItems(
       // from a photo (issue #210, `practice/listen.ts`). Nothing to play here either way — the
       // recording belongs to a session, like the crop and the bar above.
       listen: null,
+      // Reading a question aloud belongs to the session too (issue #238): the list says what
+      // the sheet asks, and the rule that decides it needs the key this list never loads.
+      read_aloud: false,
       result: resultOf(r),
     })),
   };

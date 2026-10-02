@@ -69,6 +69,7 @@ import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems, type PracticeRun } from './selection.js';
 import { tapChoicesFor } from './tapChoices.js';
+import { readAloudAllowed } from './readAloud.js';
 import { CARD_PASS, offersCardPass } from './cards.js';
 import { MAX_ACCEPTED } from './items.js';
 import {
@@ -757,7 +758,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.task, i.listen_task, i.staff_task, i.archived_at,
+            i.bar_task, i.task, i.listen_task, i.staff_task, i.spelling, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -853,6 +854,9 @@ export async function sessionView(
         // It stays while the question is closed: hearing the text again next to the words of
         // it is exactly what a listening task is reviewed with.
         listen: hearing.has(i.id) ? { ref: hearing.get(i.id)! } : null,
+        // The "Vorlesen" button (issue #238): code decides, from what the question is, whether
+        // hearing it would hand over the solution. A card is read by its own "Anhören".
+        read_aloud: !cardPass && readAloudAllowed(i),
       },
       status: i.status,
       attempts: i.attempts,

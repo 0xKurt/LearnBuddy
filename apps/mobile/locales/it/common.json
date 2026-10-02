@@ -6,6 +6,7 @@
     "add": "Aggiungi",
     "mic": "Parla",
     "speak": "Leggi ad alta voce",
+    "stop": "Ferma",
     "pin_delete": "Cancella l'ultima cifra",
     "pin_progress": "{{count}} di 4 cifre inserite",
     "camera": "Scatta una foto",

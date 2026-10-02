@@ -101,6 +101,7 @@ const ITEM: ItemView = {
   surface: null,
   task_view: null,
   listen: null,
+  read_aloud: true,
 };
 
 const RECORDING: Recorded = {

@@ -133,6 +133,8 @@
     "listen_slow_short": "Slowly",
     "listen_stop": "Stop",
     "listen_hint": "Reads it aloud to you.",
+    "read_question_label": "Read the question aloud",
+    "read_question_hint": "Reads the question to you. Tap again to stop.",
     "no_voice": "Reading aloud isn't working on this device right now – the voice for this language may be missing.",
     "record": "Speak",
     "record_again": "Say it again",

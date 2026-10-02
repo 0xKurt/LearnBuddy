@@ -288,6 +288,28 @@ test('learning modes: explain, homework help without the solution, practice with
   const fig = await partHeight(page, 'question-figure', '25-practice-fractions');
   expect(fig, `figure ${fig}pt`).toBeGreaterThan(150);
 
+  // ── "Vorlesen" at the question, without voice mode (issue #238) ──
+  // The round speaker in the card's corner. One tap reads the question in Buddy's voice — what
+  // is sent is the SPOKEN text, math in words, never LaTeX — a second tap stops it.
+  const readQuestion = page.getByRole('button', { name: 'Frage vorlesen' });
+  await expect(readQuestion).toBeVisible();
+  const spokenRequest = page.waitForRequest(
+    (r) => r.url().includes('/voice/speech') && r.method() === 'POST',
+  );
+  await readQuestion.click();
+  const sent = (await spokenRequest).postDataJSON() as { text: string; locale: string };
+  expect(sent.locale).toBe('de-DE');
+  expect(sent.text, 'read in words, never as LaTeX').not.toMatch(/[$\\{}]/);
+  const stopReading = page.getByRole('button', { name: 'Anhalten' });
+  await expect(stopReading).toBeVisible();
+  await shot(page, '25b-practice-reading');
+  await stopReading.click();
+  await expect(readQuestion).toBeVisible();
+  await expect(stopReading).toHaveCount(0);
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '25c-practice-read-dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+
   // ── Voice mode: switched on in the practice header, still on at Buddy ──
   // (Recording can't run in headless Chromium; this checks the controls and the layout.)
   const voiceSwitch = page.getByRole('switch', { name: 'Sprachmodus' }).last();
@@ -299,6 +321,8 @@ test('learning modes: explain, homework help without the solution, practice with
   const explained = page.getByText('Ich lese dir vor. Tipp einmal aufs Mikro', { exact: false });
   await expect(explained).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nochmal vorlesen' })).toBeVisible();
+  // One way to have it read, never two: voice mode's own button replaces "Vorlesen".
+  await expect(page.getByRole('button', { name: 'Frage vorlesen' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(1);
   await expect(explained).toBeHidden({ timeout: 8000 });
   await shot(page, '27-practice-voice-mode');

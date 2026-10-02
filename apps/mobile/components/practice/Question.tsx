@@ -124,7 +124,23 @@ type QuestionProps = {
    * height, or without a visual, it does nothing.
    */
   minHeight?: number;
+  /**
+   * A small round control in the card's top-right corner — the "Vorlesen" speaker (issue #238).
+   * It takes room the card already has instead of a row of its own: the line beside it (where
+   * the question comes from, its topic — or the prompt itself) leaves the corner free.
+   */
+  corner?: ReactNode;
 };
+
+/**
+ * Where the corner control (44 pt) sits: on the card's top-right corner, a little over its edge
+ * (OUTSET past the 18 pt padding on both sides), like a tag pinned to it. Beside the text it then
+ * needs only what is left of it inside the card, plus air (CORNER_ROOM). Sitting further in, it
+ * pushed "Frage von Buddy · Zuständigkeiten" onto two lines and a full match board off a 360×740
+ * phone (rule 16).
+ */
+const CORNER_OUTSET = 24;
+const CORNER_ROOM = 44 - CORNER_OUTSET + 4;
 
 export function QuestionCard({
   prompt,
@@ -137,6 +153,7 @@ export function QuestionCard({
   figureMaxHeight,
   imageMaxHeight = 180,
   minHeight,
+  corner,
 }: QuestionProps) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
@@ -162,6 +179,18 @@ export function QuestionCard({
     <Card tone="lavender" padding={18} radius={24} style={grown ? { minHeight } : null}>
       <View style={grown ? { flexGrow: 1 } : null}>
         <View onLayout={(e) => setHeadHeight(Math.round(e.nativeEvent.layout.height))}>
+          {corner ? (
+            <View
+              style={{
+                position: 'absolute',
+                top: -CORNER_OUTSET,
+                right: -CORNER_OUTSET,
+                zIndex: 1,
+              }}
+            >
+              {corner}
+            </View>
+          ) : null}
           {fromBuddy || topic ? (
             // Where it comes from and what it is about share one line.
             <View
@@ -172,6 +201,7 @@ export function QuestionCard({
                 columnGap: 10,
                 rowGap: 4,
                 marginBottom: 8,
+                ...(corner ? { paddingRight: CORNER_ROOM } : {}),
               }}
             >
               {fromBuddy ? <FromBuddyTag label={t('origin_buddy')} /> : null}
@@ -188,7 +218,12 @@ export function QuestionCard({
             text={prompt}
             blanks={{ filled }}
             accessibilityRole="header"
-            style={[TYPE.title, { fontSize: 21, lineHeight: 29, fontWeight: '500' }]}
+            style={[
+              TYPE.title,
+              { fontSize: 21, lineHeight: 29, fontWeight: '500' },
+              // Without a line above it the prompt itself stands beside the corner control.
+              corner && !(fromBuddy || topic) ? { paddingRight: CORNER_ROOM } : null,
+            ]}
           />
         </View>
         {figure ? (
