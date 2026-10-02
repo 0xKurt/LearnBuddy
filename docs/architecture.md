@@ -2121,7 +2121,7 @@ names, positions and facts are in code and the language files, so a new drawing 
 | `element` | a symbol, `ask`, a second symbol, `full`                                                           | tap by name / by period and group; protons, electrons, neutrons, valence, group, period (numbers); metal–metalloid–nonmetal, higher EN (options)                      | the table: Z, group, period, rounded mass − Z, Pauling EN                                   |
 | `label`   | one of 15 drawings, 2–8 of its part ids, `ask`                                                     | one tap question per part ("Tippe auf den Zellkern."), one naming question per part ("Wie heißt Teil 3?", four names of the same drawing), or one match number ↔ name | the library's name of the part (5 languages, synonyms)                                      |
 | `circuit` | battery V, blocks in series of 1–3 parallel branches of lamps/resistors (Ω)/switches, `asked` part | tap the one dark / the one lit lamp; how many light; series/parallel/mixed; equivalent resistance; what the ammeter / voltmeter (placed by code) shows                | exact rational net analysis (`circuit.ts`)                                                  |
-| `logic`   | a gate on A, B (NOT: A), optionally a second gate with C                                           | a truth table to fill (X after the first gate, then Q), gates drawn as DIN EN 60617 boxes                                                                             | `truthTable`                                                                                |
+| `logic`   | a gate on A and B, or NOT on A followed by a gate on its output and B                              | a truth table to fill, laid across (rows A, B, X, Q; one column per case), gates drawn as DIN EN 60617 boxes                                                          | `truthTable`; at most two inputs (`LOGIC_INPUTS_MAX`)                                       |
 | `color`   | a field of Itten's wheel, `ask`, a second field                                                    | tap a colour, its complement, what two colours mix to                                                                                                                 | opposite field; the field between two primaries or a primary and its neighbouring secondary |
 
 _Regel 0 on the model's side, never repaired:_ an unknown symbol or part, a repeated part, more
@@ -2131,7 +2131,7 @@ no stable isotope, valence or main group for a d-block element, an `unclear` cla
 superheavy), an EN pair closer than 0.2 or without values, a circuit over its caps (3 blocks × 3
 branches × 3 parts, 4 parts wide, 8 in all) or with a short circuit, a numeric result that is no
 decimal of at most three places (1/3 A), "the one dark lamp" when there are two, colours that mix to
-nothing the wheel shows. Each such choice gives no question; the rest of the set stays.
+nothing the wheel shows, a logic net with three inputs (its eight rows do not fit 360×740 under the gates with Buddy's reply — measured in the walkthrough, so the table is also laid across, two rows fewer). Each such choice gives no question; the rest of the set stays. A table whose first column or headings repeat (a truth table's 0 and 1) names a cell by its row and place — „Q“, Spalte 5 — in the reply and for the screen reader, never by a name two cells share.
 
 _Her side:_ a tap is an id (element, pin, field, lamp) compared exactly; a tap on a part without a
 pin, another figure's id or text is 422 `parts_mismatch`. A wrong tap's reply names what she
@@ -2145,7 +2145,7 @@ _Drawing._ The schematics are our own flat drawings in the app's pastels (`palet
 tones at night), 100 units wide, no text in them. A part is pointed at by a leader line from its
 point on the drawing (`at` in `contracts/schematics.ts`) to a pin at the margin (left, right or
 under the drawing); pins keep their parts' order so lines never cross, and the pins — not the
-parts — are what she taps and what carries a number (`lib/figure/pins.ts`, tested for every
+parts — are what she taps and what carries a number — 44 pt where she taps them, compact where a naming question only shows them (`lib/figure/pins.ts`, tested for every
 drawing with all its parts on 360×740 and 390×844). The main-group table (I–VIII, periods 1–6)
 is tapped directly (8 columns of ≥ 39 pt with the whole cell as target); the full table magnifies
 the columns she aims at on the first tap, like a fine grid. The wheel's pigments are the same in
