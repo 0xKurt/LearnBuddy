@@ -128,10 +128,17 @@ export default defineConfig({
     // refuses to start unconfigured rather than quietly talking to localhost with a fake key
     // (p2-uf-prod-build-silent-localhost-fallback). So it is configured — at the local stack,
     // the same values scripts/web-walkthrough.sh exports. The guard stays real.
+    //
+    // The two legal URLs joined that guard with issue #130: an app children use may not reach
+    // a store without its privacy notice and its imprint, and their absence is invisible
+    // (`lib/about.ts` renders nothing rather than a placeholder). They are filled here for the
+    // same reason as the three above — the guard is not weakened, it is answered.
     env: {
       EXPO_PUBLIC_API_URL: 'http://localhost:8787',
       EXPO_PUBLIC_SUPABASE_URL: 'http://localhost:8787',
       EXPO_PUBLIC_SUPABASE_ANON_KEY: 'dev-anon-key',
+      EXPO_PUBLIC_PRIVACY_URL: 'http://localhost:8787/datenschutz',
+      EXPO_PUBLIC_IMPRINT_URL: 'http://localhost:8787/impressum',
     },
     // The React Native and Expo packages must go through Vite's pipeline. Left external,
     // Node requires them directly and dies on the first thing it cannot parse — Flow types
