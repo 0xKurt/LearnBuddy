@@ -160,6 +160,19 @@
     "word_good": "¡Ya lo tienes!",
     "word_again": "Casi: escúchala otra vez y prueba."
   },
+  "staff": {
+    "play": "Escuchar",
+    "play_stop": "Parar",
+    "play_hint": "Hace sonar la línea de notas.",
+    "no_sound": "Aquí ahora no sale ningún sonido.",
+    "dot": "Puntillo",
+    "sharp": "Sostenido ♯",
+    "rest": "Silencio",
+    "undo": "Deshacer",
+    "place": "Poner {{note}} {{where}} en el compás {{bar}}",
+    "toggle_on": "{{label}}, activado",
+    "bar_crowded": "En el compás {{n}} ya no cabe otro signo."
+  },
   "summary": {
     "title": "¡Lo has conseguido!",
     "secure": "Hoy sin pista: {{topics}}",

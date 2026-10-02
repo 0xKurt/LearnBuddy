@@ -242,6 +242,58 @@
       "notin": "no pertenece a"
     }
   },
+  "staff": {
+    "note": {
+      "C": "Do",
+      "Cs": "Do sostenido",
+      "D": "Re",
+      "Ds": "Re sostenido",
+      "E": "Mi",
+      "F": "Fa",
+      "Fs": "Fa sostenido",
+      "G": "Sol",
+      "Gs": "Sol sostenido",
+      "A": "La",
+      "As": "La sostenido",
+      "B": "Si"
+    },
+    "value_note": {
+      "whole": "redonda",
+      "half": "blanca",
+      "quarter": "negra",
+      "eighth": "corchea",
+      "sixteenth": "semicorchea"
+    },
+    "value_rest": {
+      "whole": "silencio de redonda",
+      "half": "silencio de blanca",
+      "quarter": "silencio de negra",
+      "eighth": "silencio de corchea",
+      "sixteenth": "silencio de semicorchea"
+    },
+    "dotted_note": "{{value}} con puntillo",
+    "dotted_rest": "{{value}} con puntillo",
+    "clef": {
+      "treble": "clave de sol",
+      "bass": "clave de fa"
+    },
+    "time": {
+      "t2_4": "compás de 2/4",
+      "t3_4": "compás de 3/4",
+      "t4_4": "compás de 4/4",
+      "t3_8": "compás de 3/8",
+      "t6_8": "compás de 6/8",
+      "t2_2": "compás de 2/2"
+    },
+    "element_note": "{{name}} como {{value}}",
+    "head": "{{clef}}, {{time}}",
+    "bar_list": "Compás {{n}}: {{list}}",
+    "bar_empty": "todavía vacío",
+    "on_line": "en la línea {{n}}",
+    "in_space": "en el espacio {{n}}",
+    "below_staff": "debajo del pentagrama",
+    "above_staff": "encima del pentagrama"
+  },
   "figure": {
     "label": "Figura",
     "fraction_circle": "Círculo dividido en {{parts}} partes iguales, {{filled}} coloreadas",

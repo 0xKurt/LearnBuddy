@@ -140,7 +140,12 @@ function Segments({
 }
 
 type Props = {
-  surface: AnswerSurface;
+  /**
+   * Nur die beiden Balken-Formen. Seit die Notenzeile dieselbe Fläche benutzt (issue #226) ist
+   * `AnswerSurface` eine Vereinigung aus drei, und diese Einschränkung ist der Unterschied
+   * zwischen „dieser Zeichner kennt alle seine Fälle" und „er überspringt stumm einen dritten".
+   */
+  surface: Exclude<AnswerSurface, { mode: 'notes' }>;
   /** What stands in the answer field now, so the bar and the typed answer agree. */
   value: string;
   disabled: boolean;

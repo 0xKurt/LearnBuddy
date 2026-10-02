@@ -160,6 +160,19 @@
     "word_good": "Das sitzt!",
     "word_again": "Fast – hör es dir nochmal an und probier es."
   },
+  "staff": {
+    "play": "Anhören",
+    "play_stop": "Anhalten",
+    "play_hint": "Spielt die Notenzeile ab.",
+    "no_sound": "Hier kommt gerade kein Ton heraus.",
+    "dot": "Punkt",
+    "sharp": "Kreuz ♯",
+    "rest": "Pause",
+    "undo": "Zurück",
+    "place": "{{note}} {{where}} in Takt {{bar}} setzen",
+    "toggle_on": "{{label}}, ist an",
+    "bar_crowded": "In Takt {{n}} ist kein Platz mehr für ein weiteres Zeichen."
+  },
   "summary": {
     "title": "Geschafft!",
     "secure": "Heute ohne Tipp geschafft: {{topics}}",

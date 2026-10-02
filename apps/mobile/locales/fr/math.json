@@ -242,6 +242,58 @@
       "notin": "n'appartient pas à"
     }
   },
+  "staff": {
+    "note": {
+      "C": "Do",
+      "Cs": "Do dièse",
+      "D": "Ré",
+      "Ds": "Ré dièse",
+      "E": "Mi",
+      "F": "Fa",
+      "Fs": "Fa dièse",
+      "G": "Sol",
+      "Gs": "Sol dièse",
+      "A": "La",
+      "As": "La dièse",
+      "B": "Si"
+    },
+    "value_note": {
+      "whole": "ronde",
+      "half": "blanche",
+      "quarter": "noire",
+      "eighth": "croche",
+      "sixteenth": "double croche"
+    },
+    "value_rest": {
+      "whole": "pause",
+      "half": "demi-pause",
+      "quarter": "soupir",
+      "eighth": "demi-soupir",
+      "sixteenth": "quart de soupir"
+    },
+    "dotted_note": "{{value}} pointée",
+    "dotted_rest": "{{value}} pointé",
+    "clef": {
+      "treble": "clé de sol",
+      "bass": "clé de fa"
+    },
+    "time": {
+      "t2_4": "mesure à 2/4",
+      "t3_4": "mesure à 3/4",
+      "t4_4": "mesure à 4/4",
+      "t3_8": "mesure à 3/8",
+      "t6_8": "mesure à 6/8",
+      "t2_2": "mesure à 2/2"
+    },
+    "element_note": "{{name}} en {{value}}",
+    "head": "{{clef}}, {{time}}",
+    "bar_list": "Mesure {{n}} : {{list}}",
+    "bar_empty": "encore vide",
+    "on_line": "sur la ligne {{n}}",
+    "in_space": "dans l'interligne {{n}}",
+    "below_staff": "sous la portée",
+    "above_staff": "au-dessus de la portée"
+  },
   "figure": {
     "label": "Figure",
     "fraction_circle": "Disque partagé en {{parts}} parts égales, dont {{filled}} coloriées",

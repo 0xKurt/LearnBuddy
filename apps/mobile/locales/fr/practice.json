@@ -160,6 +160,19 @@
     "word_good": "C'est ça !",
     "word_again": "Presque – réécoute-le et réessaie."
   },
+  "staff": {
+    "play": "Écouter",
+    "play_stop": "Arrêter",
+    "play_hint": "Joue la ligne de notes.",
+    "no_sound": "Aucun son ne sort ici pour le moment.",
+    "dot": "Point",
+    "sharp": "Dièse ♯",
+    "rest": "Silence",
+    "undo": "Annuler",
+    "place": "Placer {{note}} {{where}} dans la mesure {{bar}}",
+    "toggle_on": "{{label}}, activé",
+    "bar_crowded": "Dans la mesure {{n}}, il n'y a plus de place pour un autre signe."
+  },
   "summary": {
     "title": "C'est fait !",
     "secure": "Réussi aujourd’hui sans indice : {{topics}}",

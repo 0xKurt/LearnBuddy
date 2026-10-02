@@ -50,7 +50,13 @@ export const NotPracticableForm = z.enum([
    * The product is a drawing: a construction with compasses and ruler, a function graph,
    * a circuit diagram, force arrows, a Lewis/structural formula, a titration curve, a
    * labelled schema, a family tree or cladogram, a climate or profile section, a map
-   * sketch, a flow chart, UML/ER/automaton diagram, musical notation.
+   * sketch, a flow chart, UML/ER/automaton diagram.
+   *
+   * **Musical notation left this list** (issue #226): a note line is now a surface she writes
+   * on (`StaffWriteSurface`), and what she writes is checked note by note by code
+   * (`modules/practice/staff.ts`). It is the second drawing to leave it, after the fraction
+   * bar — which is the measure of what each of these costs: one representation, one input
+   * surface, one checker.
    */
   'drawing',
   /**
@@ -70,7 +76,15 @@ export const NotPracticableForm = z.enum([
   'multi_day_project',
   /** A practical subject done away from the device: art, an instrument, composition, sport. */
   'practical',
-  /** Hearing it: intervals, chords, rhythm and melody dictation. */
+  /**
+   * Hearing it, where the SOUND is the task: a chord to identify by ear, a rhythm or melody
+   * to write down from hearing it. Buddy can play a note line (issue #226), so the sound
+   * exists — but there the drawn line is the question and the sound is a help with it. Turning
+   * that round means the answer is a note line written from nothing but hearing, and then a
+   * learner who hears correctly and writes one octave too low would be marked wrong. That is
+   * its own feature with its own decisions, and until it exists a task of this form gets no
+   * questions (issue #224 kept it out on purpose).
+   */
   'ear_training',
 ]);
 export type NotPracticableForm = z.infer<typeof NotPracticableForm>;

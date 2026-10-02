@@ -242,6 +242,58 @@
       "notin": "non appartiene a"
     }
   },
+  "staff": {
+    "note": {
+      "C": "Do",
+      "Cs": "Do diesis",
+      "D": "Re",
+      "Ds": "Re diesis",
+      "E": "Mi",
+      "F": "Fa",
+      "Fs": "Fa diesis",
+      "G": "Sol",
+      "Gs": "Sol diesis",
+      "A": "La",
+      "As": "La diesis",
+      "B": "Si"
+    },
+    "value_note": {
+      "whole": "semibreve",
+      "half": "minima",
+      "quarter": "semiminima",
+      "eighth": "croma",
+      "sixteenth": "semicroma"
+    },
+    "value_rest": {
+      "whole": "pausa di semibreve",
+      "half": "pausa di minima",
+      "quarter": "pausa di semiminima",
+      "eighth": "pausa di croma",
+      "sixteenth": "pausa di semicroma"
+    },
+    "dotted_note": "{{value}} puntata",
+    "dotted_rest": "{{value}} puntata",
+    "clef": {
+      "treble": "chiave di violino",
+      "bass": "chiave di basso"
+    },
+    "time": {
+      "t2_4": "tempo di 2/4",
+      "t3_4": "tempo di 3/4",
+      "t4_4": "tempo di 4/4",
+      "t3_8": "tempo di 3/8",
+      "t6_8": "tempo di 6/8",
+      "t2_2": "tempo di 2/2"
+    },
+    "element_note": "{{name}} come {{value}}",
+    "head": "{{clef}}, {{time}}",
+    "bar_list": "Battuta {{n}}: {{list}}",
+    "bar_empty": "ancora vuota",
+    "on_line": "sulla linea {{n}}",
+    "in_space": "nello spazio {{n}}",
+    "below_staff": "sotto il pentagramma",
+    "above_staff": "sopra il pentagramma"
+  },
   "figure": {
     "label": "Figura",
     "fraction_circle": "Cerchio diviso in {{parts}} parti uguali, {{filled}} colorate",

@@ -36,7 +36,9 @@ import { speakMathText } from '../../lib/math/speak.js';
 import { localDecimal } from '../../lib/numbers.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { describeStaff } from '../../lib/music/words.js';
 import { MathText } from './MathText.js';
+import { StaffLine } from './StaffLine.js';
 import { useSpokenWords } from './useSpokenMath.js';
 
 type FractionFig = Extract<Figure, { type: 'fraction' }>;
@@ -139,6 +141,10 @@ function FigureBody({ figure, width }: { figure: Figure; width: number }) {
       return <Geometry fig={figure} width={width} />;
     case 'table':
       return <Table fig={figure} />;
+    // Die Notenzeile (issue #226). Gezeichnet wird sie in `StaffLine.tsx`, weil dieselbe
+    // Zeichnung die Fläche ist, auf die sie schreibt — eine Figur ist, was sie LIEST.
+    case 'staff':
+      return <StaffLine fig={figure} width={width} />;
   }
 }
 
@@ -1079,5 +1085,10 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
       );
       return parts.join('. ');
     }
+    // In Worten, wie issue #226 es verlangt („Violinschlüssel, Viervierteltakt: C, E, G,
+    // Viertelnoten"). Das ist keine Beschreibung des Bildes, sondern derselbe Inhalt in Sprache:
+    // mit dem Screenreader ist die Aufgabe damit lösbar, nicht nur vorhanden.
+    case 'staff':
+      return describeStaff(figure, t);
   }
 }

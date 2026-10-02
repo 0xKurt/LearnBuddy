@@ -10,6 +10,7 @@
 
 import {
   BarTask,
+  StaffTask,
   type DifficultyWish,
   type StartTopicRequest,
 } from '@learnbuddy/shared-types/contracts';
@@ -39,8 +40,9 @@ import {
   usableItems,
 } from './items.js';
 import { createSession, type PracticeLearner } from './service.js';
+import { MAX_STAFF_ITEMS, STAFF_RULES, staffItems } from './staff.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.12';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.13';
 
 const SUBJECT_KINDS = [
   'math',
@@ -81,6 +83,13 @@ export const GeneratedSet = z.object({
    * computes (`practice/bars.ts`).
    */
   bars: z.array(BarTask).max(MAX_BAR_ITEMS).default([]),
+  /**
+   * Note-line tasks (issue #226). A separate list for exactly the reason the bars are one: here
+   * the model picks a reviewed task and its musical parameters and NOTHING else — there is no
+   * field for a question text, an answer, options or a drawing, so it cannot write one whose key
+   * disagrees with the staff that is drawn (`practice/staff.ts`).
+   */
+  staffs: z.array(StaffTask).max(MAX_STAFF_ITEMS).default([]),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
@@ -215,6 +224,7 @@ Rules:
 - ${MATH_RULES}
 - ${FIGURE_RULES}
 - ${BAR_RULES}
+- ${STAFF_RULES}
 - ${PARTS_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${LANGUAGE_RULES}
@@ -384,6 +394,7 @@ async function prepareTopic(
       items: itemsOneByOne(itemSchema, 25),
       // One unusable task costs its own question, never the whole set (audit H-14/H-15).
       bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
+      staffs: itemsOneByOne(StaffTask, MAX_STAFF_ITEMS),
     }).safeParse(res.json);
     if (!parsed.success)
       throw new AppError('model_unavailable', 'Could not prepare this right now');
@@ -416,7 +427,15 @@ async function prepareTopic(
   // the bar away because she asked for something harder would remove the one thing that
   // makes a harder fraction task approachable.
   const bars = input.kind === 'practice' ? barItems(set.bars, learner.locale) : [];
-  if (!set.usable || items.length + bars.length === 0) {
+  // The note lines, as questions code wrote from the tasks the model chose (issue #226). In
+  // practice AND in a test, unlike the bars: reading a note, naming an interval and reading a
+  // time signature off the values are exactly what a music test asks, and one try is enough for
+  // a tapped answer. Not in homework or a vocabulary list — there the task is what she brought.
+  const staffs =
+    input.kind === 'practice' || input.kind === 'test'
+      ? staffItems(set.staffs, learner.locale)
+      : [];
+  if (!set.usable || items.length + bars.length + staffs.length === 0) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
   }
   try {
@@ -427,7 +446,7 @@ async function prepareTopic(
       const itemIds = await insertItems(
         tx,
         { learnerId: learner.id, materialId: null, subjectId, origin: ORIGIN[input.kind] },
-        [...items, ...bars],
+        [...items, ...bars, ...staffs],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
       );
