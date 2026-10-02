@@ -315,6 +315,115 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 
+  // ── Antworten mit mehreren Teilen: ordnen, zuordnen, Tabelle füllen (#228, #229, #230) ──
+  // The scripted model wrote only the four tasks — the elements in their right order, the pairs,
+  // the groups, the table with its gaps. Every board below is the server's (shuffled from the
+  // item id, never into its own order), every verdict is code's, and no model is asked at all.
+  const startsBeforeBoards = await starts.count();
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns ordnen und zuordnen üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('mit einer Tabelle am Ende', { exact: false })).toBeVisible();
+  await expect(starts).toHaveCount(startsBeforeBoards + 1);
+  await starts.last().click();
+
+  // Reihenfolge: five steps. Their state stands in words on every element, so a screen reader
+  // can order them too — that is why this is tapping and not drag and drop.
+  await expect(page.getByText('Tippe die Elemente in der richtigen Reihenfolge an.')).toBeVisible();
+  await expect(page.getByText('0 von 5 gesetzt')).toBeVisible();
+  // Nothing to check until the board is complete: a half-arranged board is not a wrong answer,
+  // it is an answer that was not given.
+  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
+  // Undo over confirmation, before anything is judged: a tap on a numbered element takes it back.
+  await page.getByRole('button', { name: 'Wurzel wächst, Element' }).click();
+  await expect(page.getByText('1 von 5 gesetzt')).toBeVisible();
+  await page.getByRole('button', { name: 'Wurzel wächst, als 1 gesetzt' }).click();
+  await expect(page.getByText('0 von 5 gesetzt')).toBeVisible();
+  for (const step of [
+    'Samen quillt auf',
+    'Wurzel wächst',
+    'Keimblätter öffnen sich',
+    'Erstes Blatt wächst',
+    'Pflanze blüht',
+  ]) {
+    await page.getByRole('button', { name: `${step}, Element` }).click();
+  }
+  await expect(page.getByText('5 von 5 gesetzt')).toBeVisible();
+  await shot(page, '37-order-board');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // Zuordnen: five pairs — the number issue #229 names for a 360×740 phone. Left, then right;
+  // the pair gets a number that stands on both sides as text.
+  await expect(page.getByText('Tippe links etwas an, dann rechts, was dazu gehört.')).toBeVisible();
+  await expect(page.getByText('0 von 5 Paaren gebildet')).toBeVisible();
+  const pairs: [string, string][] = [
+    ['Lunge', 'Gasaustausch'],
+    ['Herz', 'Blut pumpen'],
+    ['Niere', 'Blut filtern'],
+    ['Magen', 'Nahrung zersetzen'],
+    ['Leber', 'Gift abbauen'],
+  ];
+  for (const [left, right] of pairs) {
+    await page.getByRole('button', { name: `${left}, noch ohne Paar` }).click();
+    await page.getByRole('button', { name: `${right}, noch ohne Paar` }).click();
+  }
+  await expect(page.getByText('5 von 5 Paaren gebildet')).toBeVisible();
+  await shot(page, '38-match-pairs-board');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // Gruppen: an element, then the box it belongs in. The box IS the state, and the name says it
+  // again in words.
+  await expect(
+    page.getByText('Tippe ein Element an, dann die Gruppe, in die es gehört.'),
+  ).toBeVisible();
+  const intoGroup: [string, string][] = [
+    ['Hund', 'Säugetier'],
+    ['Fledermaus', 'Säugetier'],
+    ['Amsel', 'Vogel'],
+    ['Pinguin', 'Vogel'],
+    ['Frosch', 'Lurch'],
+    ['Molch', 'Lurch'],
+  ];
+  for (const [animal, group] of intoGroup) {
+    await page.getByRole('button', { name: `${animal}, noch nicht einsortiert` }).click();
+    await page.getByRole('button', { name: `In ${group} einsortieren` }).click();
+  }
+  await expect(page.getByText('6 von 6 einsortiert')).toBeVisible();
+  await shot(page, '39-match-groups-board');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // Tabelle: a 4×4 table, each gap its own short field, named by the two words the table itself
+  // gives ("Pflanzenzelle bei Zellwand"). One cell wrong on purpose — the one thing this whole
+  // feature turns on: six of six is right, five of six is PARTLY right, the question stays open,
+  // and she corrects only the cell that does not hold.
+  await expect(page.getByText('Schreibe in die leeren Felder.')).toBeVisible();
+  await page.getByLabel('Pflanzenzelle bei Zellwand, noch leer').fill('ja');
+  await page.getByLabel('Tierzelle bei Zellwand, noch leer').fill('nein');
+  await page.getByLabel('Tierzelle bei Zellkern, noch leer').fill('ja');
+  await page.getByLabel('Bakterium bei Zellkern, noch leer').fill('nein');
+  await page.getByLabel('Pflanzenzelle bei Chloroplasten, noch leer').fill('nein');
+  await page.getByLabel('Bakterium bei Chloroplasten, noch leer').fill('nein');
+  await expect(page.getByText('6 von 6 Feldern gefüllt')).toBeVisible();
+  await shot(page, '40-table-fill-board');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  // How much holds is always said; WHICH cell follows the hint ladder, so not yet on the first try.
+  await expect(
+    page.getByText('5 von 6 Feldern stimmen. Probier die anderen nochmal.'),
+  ).toBeVisible();
+  await expect(page.getByText('Schreibe in die leeren Felder.')).toBeVisible();
+  await page.getByLabel('Pflanzenzelle bei Chloroplasten, nein').fill('ja');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+
   // ── Practice test: no verdicts or solutions until the end ──
   await page.getByLabel('Schreib Buddy …').fill('Mach einen Probetest über die Römer');
   await page.getByRole('button', { name: 'Senden' }).click();

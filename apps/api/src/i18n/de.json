@@ -74,6 +74,18 @@
     "not_lowest": "Richtig ausgeglichen! Jetzt noch kürzen – alle Zahlen davor lassen sich durch {{factor}} teilen.",
     "not_quite": "Noch nicht ganz. Schau dir die Frage nochmal an – oder lass dir die Lösung zeigen.",
     "one_way_intro": "So könnte man das angehen – ein Weg, nicht der einzige:",
+    "parts": {
+      "order_prefix": "Bis Schritt {{step}} stimmt alles. Schau dir Schritt {{next}} nochmal an.",
+      "pairs_held": "{{held}} von {{total}} Paaren stimmen schon. Probier die anderen nochmal.",
+      "pairs_place": "{{held}} von {{total}} Paaren stimmen. Schau dir „{{piece}}“ nochmal an.",
+      "groups_held": "{{held}} von {{total}} liegen richtig. Probier die anderen nochmal.",
+      "groups_place": "{{held}} von {{total}} liegen richtig. Schau dir „{{piece}}“ nochmal an.",
+      "cells_held": "{{held}} von {{total}} Feldern stimmen. Probier die anderen nochmal.",
+      "cells_place": "{{held}} von {{total}} Feldern stimmen. Schau dir {{cell}} nochmal an.",
+      "cell_named": "{{column}} bei „{{row}}“",
+      "cell_column": "{{column}} in Zeile {{row}}",
+      "cell_numbered": "Spalte {{column}}, Zeile {{row}}"
+    },
     "reexplain": {
       "simpler": "Einfacher bitte",
       "example": "Mit Beispiel, bitte",

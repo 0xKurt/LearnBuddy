@@ -160,6 +160,8 @@ export function barItem(task: BarTask, locale: string): BarItem | null {
     spelling: null,
     source_excerpt: null,
     bar_task: task,
+    // A fraction bar is one value against one key; its answer has no parts (issues #228–#230).
+    parts_task: null,
   };
 
   switch (task.task) {

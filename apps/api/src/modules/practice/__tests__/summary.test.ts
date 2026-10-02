@@ -74,6 +74,26 @@ describe('what one practice may claim', () => {
     expect(written.secure_topics).toEqual(['Brüche']);
   });
 
+  it('counts a board she arranged, because tapping IS that form (#228–#230)', () => {
+    // The carve-out that keeps #163 honest in both directions. Tapping a vocabulary word from
+    // four of her own replaces producing it, so it is weaker evidence. Putting a time line in
+    // order, connecting pairs, sorting into groups: the class test asks for exactly that, with a
+    // pencil instead of a finger. There is nothing weaker to weigh down.
+    const boards = summarize([
+      row({ kind: 'order', answered_by: 'tapped' }),
+      row({ kind: 'match', answered_by: 'tapped' }),
+    ]);
+    expect(boards.secure_topics).toEqual(['Brüche']);
+    // And a partly right board never reaches here as a fraction: it did not close the question.
+    // What reaches here is the right answer after it — which cost the first try.
+    const withHelp = summarize([
+      row({ kind: 'table_fill', answered_by: 'typed', first_try_correct: false }),
+      row({ kind: 'table_fill', answered_by: 'typed' }),
+    ]);
+    expect(withHelp.secure_topics).toEqual([]);
+    expect(withHelp.shaky_topics).toEqual(['Brüche']);
+  });
+
   it('counts a topic once however it is written', () => {
     const s = summarize([row({ topic: 'Brüche' }), row({ topic: ' brüche ' })]);
     expect(s.secure_topics).toEqual(['Brüche']);

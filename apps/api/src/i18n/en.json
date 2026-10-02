@@ -74,6 +74,18 @@
     "not_lowest": "Balanced correctly! Now reduce it – every number in front divides by {{factor}}.",
     "not_quite": "Not quite yet. Have another look at the question – or show the solution.",
     "one_way_intro": "Here's one way to go about it – one way, not the only one:",
+    "parts": {
+      "order_prefix": "Everything is right up to step {{step}}. Have another look at step {{next}}.",
+      "pairs_held": "{{held}} of {{total}} pairs are right already. Try the others again.",
+      "pairs_place": "{{held}} of {{total}} pairs are right. Have another look at “{{piece}}”.",
+      "groups_held": "{{held}} of {{total}} are in the right place. Try the others again.",
+      "groups_place": "{{held}} of {{total}} are in the right place. Have another look at “{{piece}}”.",
+      "cells_held": "{{held}} of {{total}} cells are right. Try the others again.",
+      "cells_place": "{{held}} of {{total}} cells are right. Have another look at {{cell}}.",
+      "cell_named": "{{column}} at “{{row}}”",
+      "cell_column": "{{column}} in row {{row}}",
+      "cell_numbered": "column {{column}}, row {{row}}"
+    },
     "reexplain": {
       "simpler": "Simpler, please",
       "example": "With an example, please",

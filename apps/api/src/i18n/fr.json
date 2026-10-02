@@ -74,6 +74,18 @@
     "not_lowest": "Bien équilibrée ! Il reste à simplifier – tous les nombres devant se divisent par {{factor}}.",
     "not_quite": "Pas encore tout à fait. Relis la question – ou affiche la solution.",
     "one_way_intro": "Voilà une façon de s'y prendre – une façon, pas la seule :",
+    "parts": {
+      "order_prefix": "Tout est juste jusqu’à l’étape {{step}}. Regarde encore l’étape {{next}}.",
+      "pairs_held": "{{held}} paires sur {{total}} sont déjà justes. Réessaie les autres.",
+      "pairs_place": "{{held}} paires sur {{total}} sont justes. Regarde encore « {{piece}} ».",
+      "groups_held": "{{held}} sur {{total}} sont au bon endroit. Réessaie les autres.",
+      "groups_place": "{{held}} sur {{total}} sont au bon endroit. Regarde encore « {{piece}} ».",
+      "cells_held": "{{held}} cases sur {{total}} sont justes. Réessaie les autres.",
+      "cells_place": "{{held}} cases sur {{total}} sont justes. Regarde encore {{cell}}.",
+      "cell_named": "{{column}} à « {{row}} »",
+      "cell_column": "{{column}} à la ligne {{row}}",
+      "cell_numbered": "colonne {{column}}, ligne {{row}}"
+    },
     "reexplain": {
       "simpler": "Plus simple, s'il te plaît",
       "example": "Avec un exemple, s'il te plaît",

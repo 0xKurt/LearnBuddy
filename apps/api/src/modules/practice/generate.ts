@@ -33,13 +33,14 @@ import {
   MATH_RULES,
   MAX_ACCEPTED,
   NUMERIC_KEY_RULES,
+  PARTS_RULES,
   SPELLING_RULES,
   insertItems,
   usableItems,
 } from './items.js';
 import { createSession, type PracticeLearner } from './service.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.11';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.12';
 
 const SUBJECT_KINDS = [
   'math',
@@ -205,7 +206,7 @@ export const GENERATE_SYSTEM = `You prepare learning in the LearnBuddy app for t
 Rules:
 - Pitch everything at the learner's age and grade. Instructions and explanations in the app language (LEARNER); foreign-language content in that language.
 - Only well-established knowledge at their level (school topics for a school student; study or professional topics for a university or adult learner); if unsure about a fact, leave it out. If the request is not about learning something (for example a request to chat, to write something for them, or nothing to learn), set usable = false and items = [].
-- Everything is answered in the app by typing or choosing (or speaking for speak items): no tasks to draw, build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
+- Everything is answered in the app by typing, choosing, tapping things into an order or into groups, or filling a table (or speaking for speak items): no tasks to draw, build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
 - Start with questions that make them think about the topic, not trivia or definitions of everyday words.
 - Items: prefer short answers and numbers; multiple_choice with 2–6 choices where it makes sense (correct_choice = index).
 - ${NUMERIC_KEY_RULES}
@@ -214,6 +215,7 @@ Rules:
 - ${MATH_RULES}
 - ${FIGURE_RULES}
 - ${BAR_RULES}
+- ${PARTS_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${LANGUAGE_RULES}
 - Title: short, what it is about (e.g. "Dativ", "Unité 3 – Vokabeln", "Brüche addieren").
@@ -239,8 +241,31 @@ const ORIGIN: Record<StartTopicRequest['kind'], 'buddy' | 'typed' | 'homework'> 
 
 /** Items a kind may produce (the model may only use these). */
 const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> = {
-  practice: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula', 'vocab']),
-  test: new Set(['short', 'numeric', 'multiple_choice', 'formula', 'vocab']),
+  // The three forms with an answer in several parts belong in practice and in a test: the class
+  // test asks for them, and one try is enough for a whole board (issues #228–#230). Not in
+  // homework help — there the task is what SHE typed, and turning it into a board would be
+  // inventing a form the sheet does not have.
+  practice: new Set([
+    'short',
+    'long',
+    'numeric',
+    'multiple_choice',
+    'formula',
+    'vocab',
+    'order',
+    'match',
+    'table_fill',
+  ]),
+  test: new Set([
+    'short',
+    'numeric',
+    'multiple_choice',
+    'formula',
+    'vocab',
+    'order',
+    'match',
+    'table_fill',
+  ]),
   vocab: new Set(['vocab']),
   speak: new Set(['speak']),
   help: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula']),

@@ -41,6 +41,16 @@ import {
   type TypoShape,
   typoShapeFor,
 } from './evaluate.js';
+import {
+  boardOf,
+  checkParts,
+  hasSeveralParts,
+  partsTaskOf,
+  readParts,
+  writtenParts,
+  type PartsCheck,
+  type PartsPlace,
+} from './parts.js';
 import { checkPath } from './steps.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
@@ -75,7 +85,17 @@ export type PracticeLearner = {
 
 export type ItemRow = {
   id: string;
-  kind: 'short' | 'long' | 'numeric' | 'multiple_choice' | 'formula' | 'vocab' | 'speak';
+  kind:
+    | 'short'
+    | 'long'
+    | 'numeric'
+    | 'multiple_choice'
+    | 'formula'
+    | 'vocab'
+    | 'speak'
+    | 'order'
+    | 'match'
+    | 'table_fill';
   prompt: string;
   answer: string;
   accepted_answers: string[];
@@ -98,6 +118,12 @@ export type ItemRow = {
    * through `taskOf`, never trusted as it stands.
    */
   bar_task: unknown;
+  /**
+   * The reviewed task of an answer with SEVERAL PARTS (issues #228–#230) — the elements in their
+   * right order, the pairs, the groups, the table with its gaps — or null for every other kind
+   * (migration 0072 makes that an either/or). Read as a task through `partsTaskOf`.
+   */
+  parts_task: unknown;
 };
 
 export type SessionRow = {
@@ -544,6 +570,17 @@ function surfaceFor(stored: unknown): ItemView['surface'] {
   return task ? surfaceOf(task) : null;
 }
 
+/**
+ * The board of a question whose answer has several parts, or null (issues #228–#230). Derived
+ * from the stored task and therefore without the solution; the display order is stable per
+ * question. A column that no longer parses as a task yields no board: the question can still be
+ * revealed or taken out ("Frage passt nicht"), and nothing is guessed at.
+ */
+function boardFor(stored: unknown, itemId: string): ItemView['board'] {
+  const task = partsTaskOf(stored);
+  return task ? boardOf(task, itemId) : null;
+}
+
 /** The crop that goes with the question, or null (contract: ItemImage). */
 function imageOf(row: ItemImageRow, urls: Map<string, string>): ItemView['image'] {
   const url = row.image_path ? urls.get(row.image_path) : undefined;
@@ -565,7 +602,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.archived_at,
+            i.bar_task, i.parts_task, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -639,6 +676,11 @@ export async function sessionView(
         // from (issue #162). Only while the question is open: once it is closed the bars
         // would be a control without a purpose, and the solution stands in the thread.
         surface: i.status === 'open' && active ? surfaceFor(i.bar_task) : null,
+        // The board she arranges, for as long as the question is open — like the fraction bar
+        // above, and for the same reason: once the question is closed the pieces would be a
+        // control with nothing left to do, and her answer and the solution both stand in the
+        // thread (issues #228–#230).
+        board: i.status === 'open' && active ? boardFor(i.parts_task, i.id) : null,
       },
       status: i.status,
       attempts: i.attempts,
@@ -808,6 +850,74 @@ const TYPO_REPLY: Record<TypoShape, MessageKey> = {
   wrong: 'practice.typo_wrong',
 };
 
+/** Where a gap sits, in the words the table itself provides — else by its coordinates. */
+function cellLabel(locale: string, place: Extract<PartsPlace, { at: 'cell' }>): string {
+  if (place.column !== null && place.row !== null) {
+    return t(locale, 'practice.parts.cell_named', { column: place.column, row: place.row });
+  }
+  if (place.column !== null) {
+    return t(locale, 'practice.parts.cell_column', {
+      column: place.column,
+      row: String(place.rowNumber),
+    });
+  }
+  return t(locale, 'practice.parts.cell_numbered', {
+    column: String(place.columnNumber),
+    row: String(place.rowNumber),
+  });
+}
+
+/**
+ * What a partly right answer with several parts says (issues #228–#230). No model, in any branch.
+ *
+ * The amount that holds is ALWAYS said: six of eight cells right is work that was right, and
+ * "noch nicht ganz" would throw it away (the argument of issue #209). The PLACE follows the hint
+ * ladder — from the second try on — so the first reply is "this much holds, try again" and the
+ * second one is more specific, which is exactly what issue #229 asks for and the same shape the
+ * prepared hints have. Only ONE place, never the list of everything that is wrong: `chemistry.ts`
+ * settled that ("naming all of them at once is a list to work through rather than a next step").
+ *
+ * `order` is the exception, and not an inconsistency: there the amount that holds IS a place
+ * ("bis Schritt 3 stimmt alles"), the way `steps.ts` names the first broken line at once.
+ */
+function partsReply(locale: string, check: PartsCheck, attempts: number): string {
+  const place = attempts > 0 ? check.place : null;
+  const counts = { held: String(check.held), total: String(check.total) };
+  switch (check.form) {
+    case 'order': {
+      // `held` is the correct prefix, so the step to look at is the next one. A permutation can
+      // never have a correct prefix of n−1, so this never points at the last step alone.
+      const next = check.place?.at === 'step' ? check.place.step : check.held + 1;
+      return t(locale, 'practice.parts.order_prefix', {
+        step: String(check.held),
+        next: String(next),
+      });
+    }
+    case 'match_pairs':
+      return place?.at === 'piece'
+        ? t(locale, 'practice.parts.pairs_place', { ...counts, piece: place.piece })
+        : t(locale, 'practice.parts.pairs_held', counts);
+    case 'match_groups':
+      return place?.at === 'piece'
+        ? t(locale, 'practice.parts.groups_place', { ...counts, piece: place.piece })
+        : t(locale, 'practice.parts.groups_held', counts);
+    case 'table_fill': {
+      if (place?.at !== 'cell') return t(locale, 'practice.parts.cells_held', counts);
+      const line = t(locale, 'practice.parts.cells_place', {
+        ...counts,
+        cell: cellLabel(locale, place),
+      });
+      // A slip in a cell gets the sentence a slip in the answer field gets (issue #207): a cell
+      // is not a smaller question with vaguer feedback.
+      const near: MessageKey | null =
+        place.rule === 'typo' && place.typo !== null
+          ? TYPO_REPLY[place.typo]
+          : (NEAR_MISS_REPLY[place.rule] ?? null);
+      return near === null ? line : `${line} ${t(locale, near)}`;
+    }
+  }
+}
+
 export async function answerItem(
   deps: Deps,
   learner: PracticeLearner,
@@ -845,25 +955,68 @@ export async function answerItem(
   if (!item) throw new AppError('not_found', 'Question not in this session');
   if (item.status !== 'open') throw new AppError('conflict', 'This question is already closed');
 
-  const text =
-    input.text ??
-    (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null);
-  if (!text) throw new AppError('invalid_input', 'Empty answer');
   if (item.kind === 'speak') {
     throw new AppError('conflict', 'This question is answered by speaking', {
       reason: 'use_speak',
     });
   }
+
+  // ── an answer with SEVERAL PARTS (issues #228–#230) ──
+  //
+  // One shape per question, and the server refuses the other one. She can only answer with the
+  // pieces the question gives her: exactly its slots, each once, with values out of exactly the
+  // vocabulary it issued (`readParts`). A board question takes no typed text, and a question with
+  // one answer takes no parts — a shape the question never offered is a bad request, not
+  // something to interpret.
+  const partsTask = hasSeveralParts(item.kind) ? partsTaskOf(item.parts_task) : null;
+  if (hasSeveralParts(item.kind) && partsTask === null) {
+    // The kind says several parts and the stored task no longer reads as one. Nothing can be
+    // compared, so nothing is claimed; "Lösung zeigen" and "Frage passt nicht" still work.
+    throw new AppError('conflict', 'This question has no board', { reason: 'cannot_answer' });
+  }
+  if (input.parts !== undefined && partsTask === null) {
+    throw new AppError('invalid_input', 'This question is answered with one value');
+  }
+  let filled: ReturnType<typeof readParts> = null;
+  if (partsTask !== null && input.parts !== undefined) {
+    filled = readParts(partsTask, input.parts);
+    if (filled === null) throw new AppError('invalid_input', 'Not an answer this question offers');
+  }
+  // "Tipp" arrives as a text ("Tipp, bitte") and is no answer to grade; anything else typed at a
+  // board question is.
+  if (partsTask !== null && filled === null && !hintRequest) {
+    throw new AppError('invalid_input', 'This question is answered part by part', {
+      reason: 'use_parts',
+    });
+  }
+
+  const text =
+    partsTask !== null && filled !== null
+      ? // Her arrangement in one line, so the thread, the tutor history and a disputed judgement
+        // all see what she actually did.
+        writtenParts(partsTask, filled)
+      : (input.text ??
+        (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null));
+  if (!text) throw new AppError('invalid_input', 'Empty answer');
   // The reviewed task this question was computed from, if any (issue #162).
   const barTask = taskOf(item.bar_task);
+  // Every part compared, by code, with no model in any branch (`parts.ts`).
+  const partsCheck: PartsCheck | null =
+    partsTask !== null && filled !== null ? checkParts(partsTask, filled, item.id, item) : null;
   // A request for help is not an answer: nothing for the rules to check.
   const byRules: RuleVerdict = hintRequest
     ? 'unknown'
-    : ruleCheck(
-        // A question code computed asks for an amount, so any form of it is right (#162).
-        { ...item, form_free: barTask !== null },
-        { text: input.text ?? null, choice: input.choice ?? null },
-      );
+    : partsCheck !== null
+      ? partsCheck.verdict === 'correct'
+        ? 'correct'
+        : partsCheck.verdict === 'partly'
+          ? 'parts_left'
+          : 'incorrect'
+      : ruleCheck(
+          // A question code computed asks for an amount, so any form of it is right (#162).
+          { ...item, form_free: barTask !== null },
+          { text: input.text ?? null, choice: input.choice ?? null },
+        );
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
   const rule: RuleVerdict =
@@ -925,6 +1078,23 @@ export async function answerItem(
         learner.locale,
         session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
       ),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (rule === 'parts_left' && partsCheck !== null) {
+    // Partly right, and the question stays OPEN so she corrects only the parts that do not hold.
+    // Nothing is locked and nothing is cleared: her arrangement stays as she left her it, and a
+    // tap on a part she set takes it back ("undo over confirmation"). This is the house's
+    // near-miss shape one form further, and `parts.ts` argues at length why it is neither a score
+    // nor a grade — FSRS sees nothing here, and the right answer afterwards is `with_help`.
+    //
+    // It gets its own branch rather than falling into the near-miss branch below so that it
+    // holds in every mode: homework help has no multi-part questions today, and if one ever
+    // reached it, the fixed reply here is still right and still costs no model call.
+    judged = {
+      verdict: 'partially_correct',
+      evaluatedBy: 'rule',
+      reply: partsReply(learner.locale, partsCheck, item.attempts),
       gaveHint: false,
       revealed: false,
     };

@@ -25,6 +25,7 @@
 // leaves. The microphone itself only ever starts with her tap.
 
 import type {
+  AnswerPart,
   AnswerResponse,
   ItemView,
   PracticeTurnView,
@@ -59,6 +60,15 @@ import {
   DisputeVerdictSheet,
 } from '../../components/practice/DisputeVerdict.js';
 import { FractionBarAnswer } from '../../components/practice/FractionBarAnswer.js';
+import {
+  boardComplete,
+  EMPTY_BOARD_ANSWER,
+  partsOf,
+  PartsBoardAnswer,
+  renderBoardAnswer,
+  viaFor,
+  type BoardAnswer,
+} from '../../components/practice/PartsBoardAnswer.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
@@ -101,7 +111,7 @@ import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
-import { reacted } from '../../lib/perf.js';
+import { reacted, tapped } from '../../lib/perf.js';
 import { bottomRoom, SPACE } from '../../lib/theme/space.js';
 
 /**
@@ -109,7 +119,7 @@ import { bottomRoom, SPACE } from '../../lib/theme/space.js';
  * travels as ordinary text so grading stays one path — so the text alone no longer shows
  * whether she recognised the word or wrote it, and a class test asks for the second.
  */
-type AnswerInput = ({ text: string } | { choice: number }) & {
+type AnswerInput = ({ text: string } | { choice: number } | { parts: AnswerPart[] }) & {
   via?: 'typed' | 'tapped' | 'spoken';
 };
 
@@ -119,7 +129,20 @@ type SentAnswer = {
   itemId: string;
   text: string | null;
   choice: number | null;
+  /**
+   * An arrangement has no text of its own (issue #228): its parts are what makes it the same
+   * answer or a different one. Without this a re-arranged board would reuse the first id and
+   * the server would file it as the same turn — the retry rule turned into a lost answer.
+   */
+  parts: string | null;
 };
+
+/** The arrangement as one comparable line, for exactly that rule. */
+function partsKey(input: AnswerInput): string | null {
+  return 'parts' in input
+    ? input.parts.map((part) => `${part.slot}=${part.value}`).join('|')
+    : null;
+}
 
 /** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
 function foreign(lang: string | null): lang is string {
@@ -208,6 +231,13 @@ export default function PracticeScreen() {
    * happens to want the same fraction — it is hers again.
    */
   const [shadedAnswer, setShadedAnswer] = useState<{ itemId: string; text: string } | null>(null);
+  /**
+   * How she has arranged the board, and for which question (issue #228). Kept by item id for
+   * the same reason the shaded bar is: the next question gets an empty board, and nothing she
+   * arranged leaks into it. Not a draft on the device — an arrangement only means anything
+   * next to the question it belongs to.
+   */
+  const [arranged, setArranged] = useState<{ itemId: string; answer: BoardAnswer } | null>(null);
   /** The pronunciation judgement while the model is still listening (issue #8). */
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -396,13 +426,18 @@ export default function PracticeScreen() {
     working.current = true;
     const answerText = 'text' in input ? input.text : null;
     const choice = 'choice' in input ? input.choice : null;
+    const parts = partsKey(input);
     const prev = lastSent.current;
     // Retrying the very same answer keeps its id, so the server records it only once.
     const clientTurnId =
-      prev && prev.itemId === itemId && prev.text === answerText && prev.choice === choice
+      prev &&
+      prev.itemId === itemId &&
+      prev.text === answerText &&
+      prev.choice === choice &&
+      prev.parts === parts
         ? prev.clientTurnId
         : newId();
-    lastSent.current = { clientTurnId, itemId, text: answerText, choice };
+    lastSent.current = { clientTurnId, itemId, text: answerText, choice, parts };
     haptic.tap();
     setPinnedId(itemId);
     setPending({ itemId, text: shownText });
@@ -819,7 +854,13 @@ export default function PracticeScreen() {
   const tapChoices =
     choices === null && item.tap_choices && item.tap_choices.length > 0 ? item.tap_choices : null;
   const speaking = item.kind === 'speak';
-  const typed = open && choices === null && tapChoices === null && !speaking;
+  // The board she arranges (issue #228): ordering, matching, filling in a table. It is the
+  // WHOLE way to answer here — a board question has no answer field, not even the table, whose
+  // writing happens in its own cells. The one CTA is "Prüfen" under it.
+  const board = open ? item.board : null;
+  const typed = open && choices === null && tapChoices === null && board === null && !speaking;
+  /** Her arrangement of THIS question; a different question starts with an empty board. */
+  const boardAnswer = arranged?.itemId === item.id ? arranged.answer : EMPTY_BOARD_ANSWER;
   const tried = new Set(
     turns
       .filter((turn) => turn.role === 'learner' && turn.verdict === 'incorrect')
@@ -1091,6 +1132,70 @@ export default function PracticeScreen() {
               onPick={(picked) => void answer(item.id, { text: picked, via: 'tapped' }, picked)}
             />
           </View>
+        ) : null}
+        {/* Das Brett, das sie anordnet (issues #228–#230): ordnen, zuordnen, eine Tabelle
+            füllen. Es steht, wo sonst die Fläche oder das Antwortfeld steht, und darunter
+            steht das eine „Prüfen" — ein Antwortfeld gibt es hier nicht, auch bei der
+            Tabelle nicht: dort wird in den Zellen selbst geschrieben.
+
+            Zur Höhe (CLAUDE.md Regel 16, gerechnet für das 360×740-Handy): von den 688 pt
+            unter dem Kopf nimmt die Frage 155 — 4 Polster + 18 Fortschritt + 10 Abstand +
+            123 Karte (2×18 Polster, 29 Themenzeile, 58 zweizeilige Frage), und sie darf NIE
+            schrumpfen — und die Leiste mit „Prüfen" 74 (8 + 54 + 12). Für den Brett-Bereich
+            bleiben 459; mit dreizeiliger Frage und „Frage passt nicht" sind es 404.
+
+            Die Bretter, die wirklich kommen, liegen darunter: acht kurze Elemente 254, vier
+            Paare 330, eine sechszeilige Konjugationstabelle 367. Die größten, die der Vertrag
+            zulässt, nicht: acht 48-Zeichen-Elemente 446 (passt knapp), sechs 40-Zeichen-Paare
+            590, zwölf 32-Zeichen-Elemente in vier Gruppen 866, zehn Tabellenzeilen mit Lücken
+            543. Darum ist dieser Bereich der einzige, der nachgibt: `flexShrink` lässt ihn nur
+            bis an den Platz wachsen, der übrig ist — das Gespräch darüber gibt seinen Platz
+            als Erstes her (es ist die Spalte, die scrollen darf, und sein `flexBasis: 0`
+            verbraucht nichts von dem Fehlbetrag), und erst wenn auch das nicht reicht,
+            schiebt sich das Brett in sich selbst (`scroll-list`: die Liste, die sie
+            durchgeht). Die Frage bleibt stehen, und die Seite läuft nicht über. */}
+        {board ? (
+          <View testID="answer-board" style={{ flexShrink: 1, minHeight: 0, paddingTop: SPACE.sm }}>
+            <ScrollView
+              testID="scroll-list"
+              style={{ flexGrow: 0, flexShrink: 1 }}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingHorizontal: SPACE.lg }}
+            >
+              <PartsBoardAnswer
+                // Keyed by the question: the open selection ("which left side waits for its
+                // right one") is a glance, not an answer, and it must not survive the question.
+                key={item.id}
+                board={board}
+                answer={boardAnswer}
+                disabled={locked}
+                onChange={(next) => setArranged({ itemId: item.id, answer: next })}
+              />
+            </ScrollView>
+          </View>
+        ) : null}
+        {board ? (
+          <BottomBar>
+            <Btn
+              size="lg"
+              pill
+              full
+              // Nothing to check until every slot is filled: a half-arranged board would be
+              // sent as a wrong answer and counted as one.
+              disabled={locked || !boardComplete(board, boardAnswer)}
+              onPress={() => {
+                // Tap → the verdict on screen (issue #66), the same mark the field sets.
+                tapped('check');
+                void answer(
+                  item.id,
+                  { parts: partsOf(boardAnswer), via: viaFor(board) },
+                  renderBoardAnswer(board, boardAnswer),
+                );
+              }}
+            >
+              {t('practice:check')}
+            </Btn>
+          </BottomBar>
         ) : null}
         {typed ? (
           <AnswerComposer

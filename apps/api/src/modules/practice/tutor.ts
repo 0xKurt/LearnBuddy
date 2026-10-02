@@ -90,6 +90,10 @@ const RULE_TEXT: Record<RuleVerdict, string> = {
     'the right substances, but the atoms or the charge do not add up yet (counted, not judged)',
   not_lowest:
     'balanced correctly, but every coefficient is divisible by the same number (counted, not judged)',
+  // The app answers this one itself, so you are not asked. The line exists because the list is
+  // exhaustive, and it says the truth about what was measured if it ever does reach you.
+  parts_left:
+    'an answer with several parts: some parts are right and some are not, compared one by one (checked, not judged)',
   unknown: 'not decidable by rules — judge it',
 };
 

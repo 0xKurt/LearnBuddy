@@ -74,6 +74,18 @@
     "not_lowest": "Bilanciata bene! Ora semplificala – tutti i numeri davanti si dividono per {{factor}}.",
     "not_quite": "Non ancora del tutto. Riguarda la domanda – oppure mostra la soluzione.",
     "one_way_intro": "Un modo per affrontarlo – uno, non il solo:",
+    "parts": {
+      "order_prefix": "Fino al passo {{step}} va tutto bene. Guarda di nuovo il passo {{next}}.",
+      "pairs_held": "{{held}} coppie su {{total}} sono già giuste. Riprova con le altre.",
+      "pairs_place": "{{held}} coppie su {{total}} sono giuste. Guarda di nuovo «{{piece}}».",
+      "groups_held": "{{held}} su {{total}} sono al posto giusto. Riprova con gli altri.",
+      "groups_place": "{{held}} su {{total}} sono al posto giusto. Guarda di nuovo «{{piece}}».",
+      "cells_held": "{{held}} caselle su {{total}} sono giuste. Riprova con le altre.",
+      "cells_place": "{{held}} caselle su {{total}} sono giuste. Guarda di nuovo {{cell}}.",
+      "cell_named": "{{column}} a «{{row}}»",
+      "cell_column": "{{column}} nella riga {{row}}",
+      "cell_numbered": "colonna {{column}}, riga {{row}}"
+    },
     "reexplain": {
       "simpler": "Più semplice, per favore",
       "example": "Con un esempio, per favore",

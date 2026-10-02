@@ -30,7 +30,18 @@ import {
 export { plainMath };
 
 export type ItemForCheck = {
-  kind: 'short' | 'long' | 'numeric' | 'multiple_choice' | 'formula' | 'vocab' | 'speak';
+  kind:
+    | 'short'
+    | 'long'
+    | 'numeric'
+    | 'multiple_choice'
+    | 'formula'
+    | 'vocab'
+    | 'speak'
+    // Answers with several parts; `ruleCheck` refuses them and `parts.ts` decides them.
+    | 'order'
+    | 'match'
+    | 'table_fill';
   answer: string;
   accepted_answers: string[];
   unit: string | null;
@@ -77,6 +88,12 @@ export type RuleVerdict =
   | 'step_broke'
   /** The same value, written another way: right in value, and the FORM is the question. */
   | 'other_form'
+  /**
+   * An answer with several parts where some hold and some do not (issues #228–#230). It never
+   * comes out of a per-key comparison — `parts.ts` compares every part and sets it — so it is
+   * deliberately absent from `STRENGTH` below, which only aggregates per-key verdicts.
+   */
+  | 'parts_left'
   /** A reaction equation whose atoms or charge do not add up (issue #212). */
   | 'unbalanced'
   /** Balanced, but every coefficient divisible by the same number: right, not yet reduced. */
@@ -97,6 +114,10 @@ export const NEAR_MISS = new Set<RuleVerdict>([
   // The way is hers and most of it holds; one step does not follow. Wrong would throw away
   // everything that was right, which is what the class test does NOT do (issue #209).
   'step_broke',
+  // Six of eight cells, three of five steps: the same argument one form further (issues
+  // #228–#230). Partly right, so the question stays open and she fixes the parts that do not
+  // hold — it is not a score, and it is not a grade (see `parts.ts`).
+  'parts_left',
 ]);
 
 /** Optimal-string-alignment distance: insert, delete, replace, swap two neighbours. */
@@ -384,10 +405,66 @@ export function equationDetail(
   return null;
 }
 
+/**
+ * One PART of a multi-part answer — a gap in a table — checked with exactly the rules a single
+ * short field gets (issue #230): a number through `numericVerdict`, a word through
+ * `writtenAgainst` including its named near misses. Nothing new is invented here; the point is
+ * that a cell is not a smaller kind of question with weaker rules, it is the same rules on a
+ * smaller answer.
+ *
+ * Two decisions a cell has to settle that a single field hands on, because a multi-part answer
+ * has no tutor to hand anything to — the whole answer is decided by code (`parts.ts`):
+ *
+ *   · `folded` — the same except case, ß or punctuation, where spelling is NOT the point. For a
+ *     single field the tutor judges that gently; here it is settled as right, because that IS
+ *     the gentle judgement and a gap holds one form of a word, not a sentence to mark.
+ *   · `other_form` — the right value written another way (0,5 for $\frac{1}{2}$). A number gap
+ *     is read as asking for the VALUE: what the column is about stands in its heading, and a
+ *     table of values — the commonest table in maths — asks what comes out, not how to write
+ *     it. So any form of the right value counts, which is `form_free` (issue #162) for the one
+ *     place where decision D-3 would otherwise reject the right number with no way to say why.
+ */
+export function partVerdict(
+  base: Pick<ItemForCheck, 'subject_kind'>,
+  expect: 'number' | 'word',
+  key: string,
+  accepted: readonly string[],
+  text: string,
+): RuleVerdict {
+  const item: ItemForCheck = {
+    kind: expect === 'number' ? 'numeric' : 'short',
+    answer: key,
+    accepted_answers: [...accepted],
+    unit: null,
+    choices: null,
+    correct_choice: null,
+    tolerance: null,
+    // Whether capitals are the point is the subject's call, exactly as for a short answer.
+    spelling: null,
+    subject_kind: base.subject_kind,
+    form_free: expect === 'number',
+  };
+  if (expect === 'number') {
+    const v = numericVerdict(item, text);
+    return v === 'other_form' ? 'correct' : v;
+  }
+  const verdicts = [key, ...accepted].map((k) => writtenAgainst(item, k, text));
+  const best = STRENGTH.find((v) => verdicts.includes(v)) ?? 'unknown';
+  return best === 'folded' ? 'correct' : best;
+}
+
 export function ruleCheck(
   item: ItemForCheck,
   answer: { text: string | null; choice: number | null },
 ): RuleVerdict {
+  // An answer with several parts is never one value against one key: `parts.ts` compares every
+  // part and this function has nothing to say about it. Saying so here rather than letting it
+  // fall through to `writtenAgainst` keeps a rendered multi-part answer from being compared,
+  // as a string, with the rendered solution — which would occasionally say "correct" for the
+  // wrong reason.
+  if (item.kind === 'order' || item.kind === 'match' || item.kind === 'table_fill') {
+    return 'unknown';
+  }
   if (item.kind === 'multiple_choice') {
     if (answer.choice !== null && item.correct_choice !== null) {
       return answer.choice === item.correct_choice ? 'correct' : 'incorrect';
