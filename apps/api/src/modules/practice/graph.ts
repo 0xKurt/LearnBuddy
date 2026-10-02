@@ -159,9 +159,8 @@ function diagramItem(task: DiagramTask, locale: string): GraphItem | null {
     return {
       ...common,
       kind: 'table_fill',
-      prompt: text(locale, gaps.length === 1 ? 'gap_prompt_one' : 'gap_prompt', {
-        title: task.title,
-      }),
+      // The title is not repeated here: it stands right above as the question's topic.
+      prompt: text(locale, gaps.length === 1 ? 'gap_prompt_one' : 'gap_prompt'),
       answer,
       choices: null,
       correct_choice: null,
@@ -200,6 +199,10 @@ function diagramItem(task: DiagramTask, locale: string): GraphItem | null {
       legend: [],
     };
     if (!diagramLayout(figure).fits) return null;
+    // A chain is drawn as nothing but numbered empty boxes in a row — exactly what the board
+    // below already shows, so it is left out instead of shown twice. A cycle keeps its drawing:
+    // its shape and its one given box are what the board cannot say.
+    const drawn = task.shape === 'cycle' ? figure : null;
     const elements = walk.slice(given).map((v) => graph.nodes[v] as string);
     if (elements.length < 3) return null;
     const first = graph.nodes[walk[0] as number] as string;
@@ -208,13 +211,13 @@ function diagramItem(task: DiagramTask, locale: string): GraphItem | null {
       kind: 'order',
       prompt:
         task.shape === 'cycle'
-          ? text(locale, 'order_cycle_prompt', { title: task.title, first: quoted(locale, first) })
-          : text(locale, 'order_chain_prompt', { title: task.title }),
+          ? text(locale, 'order_cycle_prompt', { first: quoted(locale, first) })
+          : text(locale, 'order_chain_prompt'),
       answer: elements.join(' → '),
       choices: null,
       correct_choice: null,
       difficulty: elements.length > 5 ? 3 : 2,
-      figure,
+      figure: drawn,
       parts_task: { form: 'order', elements },
       hints: [text(locale, 'hint_order_start'), text(locale, 'hint_order_next')],
       worked_solution: text(locale, 'worked_order', {
@@ -243,7 +246,7 @@ function diagramItem(task: DiagramTask, locale: string): GraphItem | null {
   return {
     ...common,
     kind: 'match',
-    prompt: text(locale, 'label_prompt', { title: task.title }),
+    prompt: text(locale, 'label_prompt'),
     answer: pairs.map((p) => `${p.left} – ${p.right}`).join('; '),
     choices: null,
     correct_choice: null,
@@ -318,7 +321,6 @@ function probItem(task: ProbTask, locale: string): GraphItem | null {
       ...common,
       kind: 'numeric',
       prompt: text(locale, ks.length === 1 ? 'path_prompt_one' : 'path_prompt', {
-        title: task.title,
         paths: paths.join(text(locale, 'or')),
       }),
       answer,
@@ -354,7 +356,7 @@ function probItem(task: ProbTask, locale: string): GraphItem | null {
   return {
     ...common,
     kind: 'numeric',
-    prompt: text(locale, 'branch_prompt', { title: task.title }),
+    prompt: text(locale, 'branch_prompt'),
     answer: formatRatio(node.p, node.decimal),
     choices: null,
     correct_choice: null,

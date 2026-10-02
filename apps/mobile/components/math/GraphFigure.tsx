@@ -18,6 +18,7 @@ import {
   diagramLayout,
   FONT,
   LAYOUT_W,
+  LEGEND_FONT,
   LINE_H,
   pedigreeLayout,
   probTreeLayout,
@@ -137,19 +138,16 @@ export function DiagramPicture({ fig, width }: { fig: DiagramFigure; width: numb
       {l.arrows.map((a, k) => (a.tagAt ? <Tag key={`t${k}`} at={a.tagAt} text={a.tag} /> : null))}
       {l.legend.map((row) => (
         <G key={`l${row.tag}`}>
-          <Tag at={{ x: TAG_R, y: row.y + TAG_R - 2 }} text={row.tag} />
-          {row.lines.map((line, i) => (
-            <SvgText
-              key={i}
-              x={2 * TAG_R + 8}
-              y={row.y + TAG_R + 2 + i * LINE_H}
-              fontSize={FONT}
-              fontFamily={FAMILY}
-              fill={palette.ink2}
-            >
-              {line}
-            </SvgText>
-          ))}
+          <Tag at={{ x: row.x + TAG_R, y: row.y + TAG_R }} text={row.tag} />
+          <SvgText
+            x={row.x + 2 * TAG_R + 4}
+            y={row.y + TAG_R + LEGEND_FONT * 0.35}
+            fontSize={LEGEND_FONT}
+            fontFamily={FAMILY}
+            fill={palette.ink2}
+          >
+            {row.text}
+          </SvgText>
         </G>
       ))}
     </Frame>
@@ -164,8 +162,8 @@ function Tag({ at, text }: { at: Point; text: string }) {
       <Circle cx={at.x} cy={at.y} r={TAG_R} fill={palette.primary} />
       <SvgText
         x={at.x}
-        y={at.y + 3.8}
-        fontSize={11}
+        y={at.y + 3.5}
+        fontSize={10}
         fontWeight="700"
         fontFamily={FAMILY}
         fill={palette.paper}

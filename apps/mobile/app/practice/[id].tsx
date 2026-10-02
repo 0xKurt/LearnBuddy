@@ -1002,6 +1002,11 @@ export default function PracticeScreen() {
   // measured room. The cap keeps a third of the middle for the conversation once
   // there is one — past it only the conversation scrolls (CLAUDE.md rule 16).
   const questionCap = Math.round(middleHeight * 0.7);
+  // A diagram, tree, pedigree or automaton IS the question (issues #247, #256): its answer is
+  // read off the drawing, so its floor is higher than that of a picture that illustrates one.
+  const readOffFigure =
+    item.figure !== null &&
+    ['diagram', 'prob_tree', 'pedigree', 'automaton'].includes(item.figure.type);
   // The conversation keeps its content plus the fade at its top edge, so a fully
   // visible first bubble never dissolves into the mask (EdgeFade.tsx).
   const spare = Math.min(Math.max(0, middleHeight - threadNeed - EDGE_FADE), questionCap);
@@ -1056,7 +1061,7 @@ export default function PracticeScreen() {
                   prompt={item.prompt}
                   topic={item.topic}
                   figure={item.figure}
-                  figureMaxHeight={Math.round(windowHeight * 0.14)}
+                  figureMaxHeight={Math.round(windowHeight * (readOffFigure ? 0.17 : 0.14))}
                   image={item.image}
                   imageKey={item.id}
                   imageMaxHeight={Math.min(180, Math.round(windowHeight * 0.2))}

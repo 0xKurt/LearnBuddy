@@ -167,7 +167,8 @@ describe.skipIf(!dbReady)('Schemata und Bäume', () => {
     const item = session.items[0]?.item;
     const want = graphItem(WATER, 'de');
     expect(item?.kind).toBe('table_fill');
-    expect(item?.prompt).toBe('Wasserkreislauf: Was gehört in die leeren Kästchen?');
+    expect(item?.prompt).toBe('Was gehört in die leeren Kästchen?');
+    expect(item?.topic).toBe('Wasserkreislauf');
     expect(item?.figure).toEqual(want?.figure);
     // The two gaps are empty, numbered boxes; their words are nowhere in the figure.
     expect(JSON.stringify(item?.figure)).not.toContain('Wasserdampf');
@@ -304,7 +305,7 @@ describe.skipIf(!dbReady)('Schemata und Bäume', () => {
     const res = await prepare([notOne, ambiguous, wrongClaim, COIN]);
     expect(res.status).toBe(201);
     expect(res.body.items).toHaveLength(1);
-    expect(res.body.items[0]?.item.prompt).toContain('Zweimal Münze werfen');
+    expect(res.body.items[0]?.item.topic).toBe('Zweimal Münze werfen');
     for (const t of [open, notOne, ambiguous, wrongClaim, leak])
       expect(graphItem(t, 'de')).toBeNull();
   });

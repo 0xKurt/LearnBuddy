@@ -18,17 +18,20 @@ export const LAYOUT_W = 280;
 /** Die Schriftgröße in Kästchen und an Ästen. */
 export const FONT = 12;
 /** Zeilenhöhe im Kästchen. */
-export const LINE_H = 15;
+export const LINE_H = 14;
 /** Höchstens so viele Zeilen in einem Kästchen; mehr ist kein Kästchen, sondern ein Absatz. */
 export const BOX_LINES_MAX = 4;
 
 const PAD_X = 6;
-const PAD_Y = 6;
+const PAD_Y = 5;
 /** Mindestabstand zwischen zwei Kästchen, damit ein Pfeil mit Spitze dazwischen passt. */
-const GAP_X = 28;
-const GAP_Y = 30;
+const GAP_X = 26;
+const GAP_Y = 22;
+/** Schrift und Zeilenabstand der Legende. */
+export const LEGEND_FONT = 11;
+const LEGEND_H = 18;
 /** Radius des Nummernkreises auf einem Pfeil. */
-export const TAG_R = 8;
+export const TAG_R = 7;
 
 export type Rect = { x: number; y: number; w: number; h: number };
 export type Point = { x: number; y: number };
@@ -42,10 +45,10 @@ export type Point = { x: number; y: number };
  */
 function charWidth(ch: string): number {
   if (" .,:;'!|il1ijtfr()-".includes(ch)) return 0.34;
-  if ('mwMW'.includes(ch)) return 0.9;
-  if (/[A-ZÄÖÜ]/.test(ch)) return 0.7;
-  if (/[0-9]/.test(ch)) return 0.58;
-  return 0.58;
+  if ('MW'.includes(ch)) return 0.96;
+  if ('mw'.includes(ch)) return 0.86;
+  if (/[A-ZÄÖÜ]/.test(ch)) return 0.74;
+  return 0.57;
 }
 
 export function textWidth(text: string, size = FONT): number {
@@ -151,103 +154,129 @@ export type DiagramLayout = {
   height: number;
   boxes: DiagramBox[];
   arrows: DiagramArrow[];
-  /** Die Legende unter dem Schema: je Zeile Nummer und Beschriftung. */
-  legend: { tag: string; lines: string[]; y: number }[];
+  /** Die Legende unter dem Schema, fließend: Nummer und Beschriftung, links oben angesetzt. */
+  legend: { tag: string; text: string; x: number; y: number }[];
   /** Hält das Layout? Sonst ist `why` der erste Grund, warum nicht. */
   fits: boolean;
   why: string | null;
 };
 
-/** Grid slots (column, row) for each shape and node count, in walking order. */
-function slots(shape: 'chain' | 'cycle', n: number): { cols: number; at: [number, number][] } {
+type Grid = { cols: number; at: [number, number][] };
+
+/**
+ * The grids a chain or cycle may be laid on, most compact first: as few rows as the words allow.
+ * A figure on a phone is limited by its HEIGHT (the answer sits below it), so a wide, low grid
+ * whose words still fit beats a tall one that would be scaled down until it cannot be read.
+ */
+function candidates(shape: 'chain' | 'cycle', n: number): Grid[] {
+  const out: Grid[] = [];
   if (shape === 'chain') {
-    const cols = n <= 3 ? 3 : n <= 6 ? 2 : 3;
-    const at: [number, number][] = [];
-    for (let i = 0; i < n; i++) {
-      const row = Math.floor(i / cols);
-      const k = i % cols;
-      // A snake: left to right, then right to left, so every arrow joins two neighbours.
-      at.push([row % 2 === 0 ? k : cols - 1 - k, row]);
+    // A snake: left to right, then right to left, so every arrow joins two neighbours.
+    for (const cols of [Math.min(n, 4), 3, 2]) {
+      if (cols > n || out.some((g) => g.cols === cols)) continue;
+      const at: [number, number][] = [];
+      for (let i = 0; i < n; i++) {
+        const row = Math.floor(i / cols);
+        const k = i % cols;
+        at.push([row % 2 === 0 ? k : cols - 1 - k, row]);
+      }
+      // A last row that is not full is centred under the one above, so nothing hangs at a side.
+      const lastRow = Math.floor((n - 1) / cols);
+      const inLast = n - lastRow * cols;
+      if (lastRow > 0 && inLast < cols) {
+        for (let i = lastRow * cols; i < n; i++) {
+          const k = i - lastRow * cols;
+          const shift = (cols - inLast) / 2;
+          at[i] = [lastRow % 2 === 0 ? shift + k : cols - 1 - shift - k, lastRow];
+        }
+      }
+      out.push({ cols, at });
     }
-    // Three boxes in a row of three: the row is full; fewer would leave a hole, so centre them.
-    return { cols, at };
+    return out;
   }
-  // A cycle walks round the edge of a grid, clockwise from the top left.
-  switch (n) {
-    case 3:
-      return {
-        cols: 2,
-        at: [
-          [0.5, 0],
-          [1, 1],
-          [0, 1],
-        ],
-      };
-    case 4:
-      return {
-        cols: 2,
-        at: [
-          [0, 0],
-          [1, 0],
-          [1, 1],
-          [0, 1],
-        ],
-      };
-    case 5:
-      return {
-        cols: 2,
-        at: [
-          [0, 0],
-          [1, 0],
-          [1, 1],
-          [1, 2],
-          [0, 2],
-        ],
-      };
-    case 6:
-      return {
-        cols: 2,
-        at: [
-          [0, 0],
-          [1, 0],
-          [1, 1],
-          [1, 2],
-          [0, 2],
-          [0, 1],
-        ],
-      };
-    case 7:
-      return {
-        cols: 3,
-        at: [
-          [0, 0],
-          [1, 0],
-          [2, 0],
-          [2, 1],
-          [2, 2],
-          [1, 2],
-          [0, 2],
-        ],
-      };
-    default:
-      return {
-        cols: 3,
-        at: [
-          [0, 0],
-          [1, 0],
-          [2, 0],
-          [2, 1],
-          [2, 2],
-          [1, 2],
-          [0, 2],
-          [0, 1],
-        ],
-      };
+  // A cycle on two rows: the top one left to right, the bottom one back, centred.
+  const top = Math.ceil(n / 2);
+  const bottom = n - top;
+  if (top <= 4) {
+    const at: [number, number][] = [];
+    for (let i = 0; i < top; i++) at.push([i, 0]);
+    const shift = (top - bottom) / 2;
+    for (let k = 0; k < bottom; k++) at.push([top - 1 - shift - k, 1]);
+    out.push({ cols: top, at });
   }
+  // Round the edge of a taller grid, clockwise from the top left.
+  const edge: Record<number, Grid> = {
+    3: {
+      cols: 2,
+      at: [
+        [0.5, 0],
+        [1, 1],
+        [0, 1],
+      ],
+    },
+    4: {
+      cols: 2,
+      at: [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+      ],
+    },
+    5: {
+      cols: 2,
+      at: [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [1, 2],
+        [0, 2],
+      ],
+    },
+    6: {
+      cols: 2,
+      at: [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [1, 2],
+        [0, 2],
+        [0, 1],
+      ],
+    },
+    7: {
+      cols: 3,
+      at: [
+        [0, 0],
+        [1, 0],
+        [2, 0],
+        [2, 1],
+        [2, 2],
+        [1, 2],
+        [0, 2],
+      ],
+    },
+    8: {
+      cols: 3,
+      at: [
+        [0, 0],
+        [1, 0],
+        [2, 0],
+        [2, 1],
+        [2, 2],
+        [1, 2],
+        [0, 2],
+        [0, 1],
+      ],
+    },
+  };
+  const tall = edge[n];
+  if (tall) out.push(tall);
+  return out;
 }
 
 /** Layers for a web: longest path from the boxes nothing points to, back edges ignored. */
-function webSlots(fig: DiagramFigure): { cols: number; at: [number, number][] } | null {
+function webSlots(fig: DiagramFigure): Grid | null {
   const n = fig.boxes.length;
   // Back edges by a depth-first walk in box order: those are left out of the layering.
   const state = new Array<number>(n).fill(0);
@@ -292,24 +321,40 @@ function webSlots(fig: DiagramFigure): { cols: number; at: [number, number][] } 
 }
 
 export function diagramLayout(fig: DiagramFigure): DiagramLayout {
-  const n = fig.boxes.length;
-  const grid = fig.shape === 'web' ? webSlots(fig) : slots(fig.shape, n);
-  const fail = (why: string): DiagramLayout => ({
-    width: LAYOUT_W,
-    height: 0,
-    boxes: [],
-    arrows: [],
-    legend: [],
-    fits: false,
-    why,
-  });
-  if (grid === null) return fail('web too wide or too deep');
+  const grids =
+    fig.shape === 'web'
+      ? [webSlots(fig)].filter((g): g is Grid => g !== null)
+      : candidates(fig.shape, fig.boxes.length);
+  if (grids.length === 0) return failed('web too wide or too deep');
+  // Compact first, and only with words that sit comfortably (three lines); the last resort may
+  // use the fourth line. The first that holds is the layout — the same one on every device.
+  let last: DiagramLayout = failed('no grid');
+  for (const maxLines of [BOX_LINES_MAX - 1, BOX_LINES_MAX]) {
+    for (const grid of grids) {
+      last = onGrid(fig, grid, maxLines);
+      if (last.fits) return last;
+    }
+  }
+  return last;
+}
+
+function failed(why: string): DiagramLayout {
+  return { width: LAYOUT_W, height: 0, boxes: [], arrows: [], legend: [], fits: false, why };
+}
+
+function onGrid(fig: DiagramFigure, grid: Grid, maxLines: number): DiagramLayout {
   const cols = grid.cols;
   const boxW = (LAYOUT_W - (cols - 1) * GAP_X) / cols;
   const inner = boxW - 2 * PAD_X;
+  // On the comfortable pass no word may be cut: "Wasser-dampf" on a wider grid beats a
+  // "Wasserd-ampf" on a compact one. Only the last resort splits a word.
+  if (maxLines < BOX_LINES_MAX) {
+    const words = fig.boxes.flatMap((b) => b.text.split(/\s+/));
+    if (words.some((w) => textWidth(w) > inner)) return failed('a word too long for the box');
+  }
   const wrapped = fig.boxes.map((b) => wrapText(b.text, inner));
   const lines = Math.max(1, ...wrapped.map((l) => l.length));
-  if (lines > BOX_LINES_MAX) return fail('box text too long');
+  if (lines > maxLines) return failed('box text too long');
   // Every box of one figure is the same height, so rows line up and no tile is ragged.
   const boxH = lines * LINE_H + 2 * PAD_Y;
   const rowsUsed = Math.max(...grid.at.map(([, r]) => r)) + 1;
@@ -350,15 +395,20 @@ export function diagramLayout(fig: DiagramFigure): DiagramLayout {
     };
   });
   const diagramH = rowsUsed * boxH + (rowsUsed - 1) * GAP_Y;
-  // The legend: one row per labelled arrow, under the diagram.
+  // The legend flows under the diagram like words in a line: number, label, next one.
   const legend: DiagramLayout['legend'] = [];
-  let y = diagramH + (fig.legend.length > 0 ? 18 : 0);
+  let x = 0;
+  let y = diagramH + 10;
   fig.legend.forEach((label, i) => {
-    const l = wrapText(label, LAYOUT_W - 2 * TAG_R - 10);
-    legend.push({ tag: String(i + 1), lines: l, y });
-    y += l.length * LINE_H + 6;
+    const w = 2 * TAG_R + 4 + textWidth(label, LEGEND_FONT) + 12;
+    if (x > 0 && x + w - 12 > LAYOUT_W) {
+      x = 0;
+      y += LEGEND_H;
+    }
+    legend.push({ tag: String(i + 1), text: label, x, y });
+    x += w;
   });
-  const height = fig.legend.length > 0 ? y - 6 : diagramH;
+  const height = fig.legend.length > 0 ? y + 2 * TAG_R : diagramH;
   const layout: DiagramLayout = {
     width: LAYOUT_W,
     height,
@@ -414,7 +464,7 @@ export type ProbTreeLayout = {
 };
 
 /** Leaf pitch: two sibling labels at 60 % along their branches must not touch. */
-const LEAF_PITCH = 30;
+const LEAF_PITCH = 26;
 const NODE_H = 18;
 
 export function probTreeLayout(fig: ProbTreeFigure): ProbTreeLayout {
@@ -469,13 +519,13 @@ export function probTreeLayout(fig: ProbTreeFigure): ProbTreeLayout {
             y: y[n.parent] as number,
           };
     const lw = textWidth(n.p) + 8;
-    const t = 0.6;
+    const t = 0.62;
     const lx = parentEnd.x + (x - parentEnd.x) * t;
     const ly = parentEnd.y + (yy - parentEnd.y) * t;
     return {
       at: { x, y: yy },
       text: { x, y: yy - NODE_H / 2, w: tw, h: NODE_H, text: n.text },
-      label: { x: lx - lw / 2, y: ly - 8, w: lw, h: 16, text: n.p },
+      label: { x: lx - lw / 2, y: ly - 7, w: lw, h: 14, text: n.p },
     };
   });
   const branches = nodes.map((n, k) => {
@@ -512,7 +562,7 @@ export function probTreeLayout(fig: ProbTreeFigure): ProbTreeLayout {
 /** Ein Symbol: 22 Einheiten, Quadrat für Männer, Kreis für Frauen. */
 export const SYMBOL = 22;
 const SLOT = 36;
-const ROW_H = 66;
+const ROW_H = 50;
 
 export type PedigreeLayout = {
   width: number;
@@ -579,7 +629,7 @@ export function pedigreeLayout(fig: PedigreeFigure): PedigreeLayout {
     const ch = childrenOf(i, p.spouse);
     if (ch.length === 0) return;
     const mid = { x: (a.x + b.x) / 2, y: a.y };
-    const barY = a.y + ROW_H - SYMBOL / 2 - 12;
+    const barY = a.y + ROW_H - SYMBOL / 2 - 9;
     const xs = ch.map((c) => (at[c] as Point).x);
     families.push({
       drop: [mid, { x: mid.x, y: barY }],

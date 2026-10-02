@@ -6,7 +6,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { shot } from './fit';
+import { settle, shot } from './fit';
 
 const START = "Los geht's";
 
@@ -33,7 +33,7 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByRole('radio', { name: 'Niedersachsen' }).click();
   await page.getByLabel('Tag', { exact: true }).fill('10');
   await page.getByLabel('Monat', { exact: true }).fill('02');
-  await page.getByLabel('Jahr', { exact: true }).fill('2010');
+  await page.getByLabel('Jahr', { exact: true }).fill('2014');
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill('4826');
@@ -57,6 +57,8 @@ async function shots(page: Page, name: string): Promise<void> {
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, `${name}-dark`);
   await page.emulateMedia({ colorScheme: 'light' });
+  // The switch back remounts the screen; let it come to rest before anything is typed.
+  await settle(page);
 }
 
 async function ask(page: Page, text: string, offer: string): Promise<void> {
@@ -74,7 +76,7 @@ test('diagrams and trees: water cycle with two gaps, food chain, tree, pedigree,
   await ask(page, 'Zeig mir Schemata zum Üben', 'Schemata und Bäume zum Lesen');
 
   // ── Wasserkreislauf mit zwei Lücken (Abnahme #247) ──
-  await expect(page.getByText('Wasserkreislauf: Was gehört in die leeren Kästchen?')).toBeVisible();
+  await expect(page.getByText('Was gehört in die leeren Kästchen?')).toBeVisible();
   const figure = page.getByTestId('question-figure');
   await expect(figure).toBeVisible();
   // The screen reader hears the same diagram in words, the empty boxes included.
@@ -84,7 +86,8 @@ test('diagrams and trees: water cycle with two gaps, food chain, tree, pedigree,
   await shots(page, '60-diagram-gaps');
   await page.getByLabel('Begriff bei Kästchen 1, noch leer').fill('Wasserdampf');
   await page.getByLabel('Begriff bei Kästchen 2, noch leer').fill('Schnee');
-  await shots(page, '61-diagram-gaps-filled');
+  // Light only: switching the phone's scheme remounts the screen and clears an unsent board.
+  await shot(page, '61-diagram-gaps-filled');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   // One of two holds: partly right, the question stays open, and she fixes only the other.
   await expect(page.getByText('1 von 2', { exact: false }).last()).toBeVisible();
@@ -93,14 +96,15 @@ test('diagrams and trees: water cycle with two gaps, food chain, tree, pedigree,
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 
-  // ── Nahrungskette ordnen (#228 auf einer gezeichneten Kette) ──
+  // ── Nahrungskette ordnen (#228): no drawing, the chain would only repeat the board ──
   await expect(
-    page.getByText('Nahrungskette: Bring die Kästchen in die richtige Reihenfolge.'),
+    page.getByText('Bring die Glieder der Kette in die richtige Reihenfolge.'),
   ).toBeVisible();
+  await expect(page.getByTestId('question-figure')).toHaveCount(0);
   for (const step of ['Gras', 'Heuschrecke', 'Frosch', 'Storch']) {
     await page.getByRole('button', { name: `${step}, Element` }).click();
   }
-  await shots(page, '62-diagram-order');
+  await shot(page, '62-chain-order');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -114,8 +118,8 @@ test('diagrams and trees: water cycle with two gaps, food chain, tree, pedigree,
   await expect(
     page.getByText('Noch nicht ganz. Multipliziere entlang des Pfades', { exact: false }).last(),
   ).toBeVisible();
-  await page.getByLabel('Deine Antwort').fill('0,25');
   await shots(page, '63-prob-tree');
+  await page.getByLabel('Deine Antwort').fill('0,25');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -123,7 +127,7 @@ test('diagrams and trees: water cycle with two gaps, food chain, tree, pedigree,
   // ── Stammbaum: welcher Erbgang? ──
   await expect(page.getByText('Welcher Erbgang passt zu diesem Stammbaum?')).toBeVisible();
   await expect(
-    page.getByRole('img', { name: /Stammbaum mit 7 Personen.*Person 4: Frau, mit Merkmal/ }),
+    page.getByRole('img', { name: /Stammbaum mit 7 Personen.*Person 5: Frau, mit Merkmal/ }),
   ).toBeVisible();
   await shots(page, '64-pedigree');
   await page.getByRole('button', { name: 'autosomal-rezessiv' }).click();
@@ -143,20 +147,19 @@ test('diagrams and trees: water cycle with two gaps, food chain, tree, pedigree,
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 
-  await expect(
-    page.getByText('Kohlenstoffkreislauf: Welche Beschriftung gehört zu welchem Pfeil?'),
-  ).toBeVisible();
+  await expect(page.getByText('Welche Beschriftung gehört zu welchem Pfeil?')).toBeVisible();
   const pairs: [string, string][] = [
     ['Pfeil 1', 'Fotosynthese'],
     ['Pfeil 2', 'Fressen'],
     ['Pfeil 3', 'Absterben'],
     ['Pfeil 4', 'Zersetzung'],
   ];
+  await shots(page, '66-diagram-label');
   for (const [left, right] of pairs) {
     await page.getByRole('button', { name: `${left}, noch ohne Paar` }).click();
     await page.getByRole('button', { name: `${right}, noch ohne Paar` }).click();
   }
-  await shots(page, '66-diagram-label');
+  await shot(page, '66-diagram-label-set');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
 });
