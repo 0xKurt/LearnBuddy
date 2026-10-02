@@ -76,14 +76,20 @@ export function useBargeMonitor({ active, onLevel }: BargeMonitorOptions): Barge
   const recorder = useAudioRecorder(MONITOR);
   const levelRef = useRef(onLevel);
   levelRef.current = onLevel;
-  const closeRef = useRef<(() => Promise<void> | null) | null>(null);
+  const closeRef = useRef<(() => Promise<void>) | null>(null);
+  /**
+   * A stop still in flight after the ear closed on its own (he finished, the screen
+   * re-rendered): the recogniser waits for it too, or the two captures race after all.
+   */
+  const stoppingRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     if (!active || !bargeSupported) return;
     let closed = false;
     let recording = false;
     let timer: ReturnType<typeof setInterval> | null = null;
-    void (async () => {
+    // Settles once the ear is either recording or has given up (refused, busy, closed early).
+    const opening = (async () => {
       try {
         // Never asks: conversation mode has the permission once she listened the first time.
         // Without it there is no barge-in, the tap still works.
@@ -106,14 +112,25 @@ export function useBargeMonitor({ active, onLevel }: BargeMonitorOptions): Barge
       }
     })();
     let stopped: Promise<void> | null = null;
-    const close = (): Promise<void> | null => {
+    const close = (): Promise<void> => {
       closed = true;
       if (timer) clearInterval(timer);
-      if (!recording) return null;
-      stopped ??= recorder
-        .stop()
-        .catch(() => undefined)
-        .then(() => discard(recorder.uri));
+      if (!stopped) {
+        // Closing while the ear is still opening waits for that too: a recorder being
+        // prepared holds the mic as surely as one that runs.
+        const p = opening
+          .then(async () => {
+            if (!recording) return;
+            if (timer) clearInterval(timer);
+            await recorder.stop().catch(() => undefined);
+            discard(recorder.uri);
+          })
+          .finally(() => {
+            if (stoppingRef.current === p) stoppingRef.current = null;
+          });
+        stopped = p;
+        stoppingRef.current = p;
+      }
       return stopped;
     };
     closeRef.current = close;
@@ -123,5 +140,5 @@ export function useBargeMonitor({ active, onLevel }: BargeMonitorOptions): Barge
     };
   }, [active, recorder]);
 
-  return { release: () => closeRef.current?.() ?? null };
+  return { release: () => closeRef.current?.() ?? stoppingRef.current };
 }

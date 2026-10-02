@@ -2490,13 +2490,20 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   in the browser it stays open until the recorder runs, so the recorder finds the device
   awake. **Not on iOS:** expo-audio cannot put the session into the voice-processing mode
   (`voiceChat`) that cancels echo, and switching to recording while he plays may move his
-  voice to the earpiece — there the tap stays the way in. What only a phone can tell (needs
+  voice to the earpiece — there the tap stays the way in. (The research question of #35, how
+  the realtime voice products do it: they stream the mic continuously through a voice-processing
+  audio path — WebRTC's echo canceller, iOS's voice-processing I/O unit — and a voice-activity
+  detector decides the interruption, the duplex stack this app deliberately does not build. The
+  ear here is the same idea cut down to what expo-audio offers: the platform's echo path plus a
+  level gate, with no audio leaving the phone. That description is general knowledge, not
+  measured here.) What only a phone can tell (needs
   live verification): how much echo Android's canceller leaves with media playback on the
   loudspeaker (the gate's bar adapts, but how loud she must be is a device number), whether
   the level-only recorder and Buddy's player coexist on every Android audio route (the
   recorder requests no audio focus; Bluetooth headsets switch to call mode for
   `voice_communication` on some phones), and how long the recorder takes to let go before the
-  recogniser starts (it adds to `relisten` after an interruption).
+  recogniser starts (it adds to `relisten`: after an interruption, and after his last word
+  while the recorder is still letting go — the recogniser always waits for it, never races it).
   The first syllables she said before the gate decided (≈ 0.3 s) and while the recogniser
   starts are not written down: the ear holds only levels, by design.
   Opening the screen warms the recogniser (issue #41, `warmRecognition` in
