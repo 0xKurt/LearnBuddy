@@ -64,8 +64,9 @@ import { attachConceptImages } from './images.js';
 import { indexMaterialPassages } from './passages.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
 
-const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
-const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
+// Both exported for the schema inventory (`evals/schema`, issue #281); nothing else reads them.
+export const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
+export const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
 const ABANDON_UPLOAD_MS = 24 * 3_600_000;
 const MAX_EXTRACTION_ATTEMPTS = 3;
 /**

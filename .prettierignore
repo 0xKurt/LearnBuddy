@@ -8,3 +8,5 @@ coverage
 pnpm-lock.yaml
 LearnBuddy/
 design-examples/
+# Generated measurements (issue #281): written by a script, compared byte for byte between runs.
+docs/measurements/

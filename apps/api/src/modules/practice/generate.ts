@@ -124,7 +124,40 @@ export const GeneratedSet = z.object({
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
-const GENERATED_SCHEMA = toJsonSchema(GeneratedSet.omit({ listen: true }));
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const GENERATED_SCHEMA = toJsonSchema(GeneratedSet.omit({ listen: true }));
+
+/**
+ * The item a run asks for. Built from her sheets: every question's topic is one of theirs — the
+ * schema offers only those, and a question on anything else is dropped (live finding 6).
+ */
+function itemSchemaFor(topics: [string, ...string[]] | null) {
+  return topics
+    ? DraftItem.extend({
+        topic: z.enum(topics).describe('Exactly one of the SHEETS topics — never another'),
+      })
+    : DraftItem;
+}
+
+/**
+ * What the model is shown. A listening run gets the listening task and nothing else: no
+ * fraction bars (a bar is a maths surface, and this run is about hearing) and no ordinary
+ * `items` either — a question she could answer without listening is not the exercise, and a
+ * field that is there gets filled in.
+ *
+ * Exported so the schema inventory (`evals/schema`, issue #281) measures exactly the profiles
+ * this module sends; a run without sheets that is not a listening run sends `GENERATED_SCHEMA`,
+ * which is this schema's serialization for `(kind, null)`.
+ */
+export function setSchemaForModel(
+  kind: StartTopicRequest['kind'],
+  topics: [string, ...string[]] | null,
+) {
+  const setSchema = GeneratedSet.extend({ items: z.array(itemSchemaFor(topics)).max(25) });
+  return kind === 'listen'
+    ? setSchema.omit({ bars: true, items: true })
+    : setSchema.omit({ listen: true });
+}
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;
@@ -414,14 +447,7 @@ async function generateSet(
   opts: { onFirstItems?: (set: GeneratedSet) => void } = {},
 ): Promise<GeneratedSet> {
   const { level, timezone, sheets, pattern } = ground;
-  // Built from her sheets: every question's topic is one of theirs — the schema offers only
-  // those, and a question on anything else is dropped (live finding 6).
-  const itemSchema = sheets
-    ? DraftItem.extend({
-        topic: z.enum(sheets.topics).describe('Exactly one of the SHEETS topics — never another'),
-      })
-    : DraftItem;
-  const setSchema = GeneratedSet.extend({ items: z.array(itemSchema).max(25) });
+  const itemSchema = itemSchemaFor(sheets?.topics ?? null);
   const parseSet = GeneratedSet.extend({
     items: itemsOneByOne(itemSchema, 25),
     // One unusable task costs its own question, never the whole set (audit H-14/H-15).
@@ -437,14 +463,7 @@ async function generateSet(
       .default(null)
       .catch(null),
   });
-  // What the model is shown. A listening run gets the listening task and nothing else: no
-  // fraction bars (a bar is a maths surface, and this run is about hearing) and no ordinary
-  // `items` either — a question she could answer without listening is not the exercise, and a
-  // field that is there gets filled in.
-  const forModel =
-    input.kind === 'listen'
-      ? setSchema.omit({ bars: true, items: true })
-      : setSchema.omit({ listen: true });
+  const forModel = setSchemaForModel(input.kind, sheets?.topics ?? null);
   let handedOver = false;
   const onPartial = opts.onFirstItems
     ? (rawSoFar: string) => {

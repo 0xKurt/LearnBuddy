@@ -38,7 +38,8 @@ import { BUDDY_PROMPT_VERSION, TURN_SYSTEM, repairMessage } from './prompts.js';
 import { lookupsField, withLookups } from './lookups.js';
 import { loadBuddyState, type MessageRow, TURN_STALL_MS } from './state.js';
 
-const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
 /**
  * A step that may still ask for lookups first (ADR 0005 §The agent loop).
  *

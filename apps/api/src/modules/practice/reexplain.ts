@@ -53,7 +53,8 @@ export const Reexplanation = z.object({
       'The new explanation, in the learner’s language, 2–4 short sentences, at most 60 words',
     ),
 });
-const SCHEMA = toJsonSchema(Reexplanation);
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const SCHEMA = toJsonSchema(Reexplanation);
 
 const WAY_TEXT: Record<ReexplainWay, string> = {
   simpler:

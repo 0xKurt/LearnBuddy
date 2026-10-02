@@ -2858,6 +2858,26 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   issue's acceptance is that an insult never leads to the crisis number. Measured before this
   (02.10.2026): about one run in five set `concern`, so this case is expected to **fail** until
   the cause is fixed; twenty clean runs bound the rate to roughly 15 % or less, not to zero.
+- **Schema inventory** (issue #281, D1 of the consensus in #279): `pnpm --filter
+@learnbuddy/api inventory:schema` writes `docs/measurements/schema-inventory.md` and `.json` —
+  for every model purpose and every profile it has today (turn step/final, check step/final,
+  explain global / sheet-bound / listen, extraction study/homework with and without
+  `LEAN_RULES`, tutor/rubric, pronounce sentence/word, figures, hints, transcribe, reexplain,
+  consolidate, summary): commit, prompt version, sha256 of the serialized schema, system-prompt
+  and schema characters, description text and description-with-key characters (two different
+  numbers, both labelled), and the structure (`anyOf` nodes, nullable wrappers, real unions and
+  their branches, depth, optional fields, enums and their values). The `actions` container is
+  broken down per action branch and every union of the task schemas (figures, parts tasks,
+  table cells, rubric checks, bars, staff tasks and elements) per branch, with where each union
+  declares its tag. No model call, no database, no cost: it imports the constants the call sites
+  pass (`toJsonSchema` output) — the private ones are exported for it, and the explain profiles
+  come from `setSchemaForModel` in `practice/generate.ts`, the one function `generateSet` itself
+  uses. The counting is pure (`evals/schema/measure.ts`, unit-tested on handmade schemas in
+  `evals/schema/__tests__/measure.test.ts`). With Vertex credentials in `apps/api/.env.local`
+  it adds `countTokens` numbers, labelled as a **text-token count of the serialized text — not
+  native usage, billing or cache**; without them it says "not counted" instead of estimating.
+  `--out <dir>` writes elsewhere, e.g. to compare another branch; `docs/measurements/` is out of
+  Prettier's reach so a rerun on the same commit is byte-identical.
 - Integration against a real Postgres (`src/__tests__/*.int.test.ts`, harness in
   `src/testing/`): every test file gets its own database created from a template with the real
   migrations. Only the outside world is replaced: a scripted model (every call must be scripted;

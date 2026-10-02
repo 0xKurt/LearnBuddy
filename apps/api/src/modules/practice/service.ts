@@ -92,13 +92,15 @@ import {
 } from './tutor.js';
 import type { LlmMessage } from '../../llm/gateway.js';
 
-const TUTOR_SCHEMA = toJsonSchema(TutorDecision);
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const TUTOR_SCHEMA = toJsonSchema(TutorDecision);
 /**
  * Dasselbe Schema, erweitert um die Pflichtelemente einer Schreibaufgabe (issue #211). Es steht
  * neben dem gewöhnlichen, statt es zu ersetzen: eine Frage ohne Rubrik soll das Feld nicht
  * sehen und nicht mit Ausgabe-Tokens bezahlen. Der AUFRUF ist derselbe eine, in beiden Fällen.
  */
-const RUBRIC_SCHEMA = toJsonSchema(RubricDecision);
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const RUBRIC_SCHEMA = toJsonSchema(RubricDecision);
 const MATERIAL_CHARS = 4000;
 
 export type PracticeLearner = {
