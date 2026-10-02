@@ -74,18 +74,6 @@
     "not_lowest": "Bien équilibrée ! Il reste à simplifier – tous les nombres devant se divisent par {{factor}}.",
     "not_quite": "Pas encore tout à fait. Relis la question – ou affiche la solution.",
     "one_way_intro": "Voilà une façon de s'y prendre – une façon, pas la seule :",
-    "parts": {
-      "order_prefix": "Tout est juste jusqu’à l’étape {{step}}. Regarde encore l’étape {{next}}.",
-      "pairs_held": "{{held}} paires sur {{total}} sont déjà justes. Réessaie les autres.",
-      "pairs_place": "{{held}} paires sur {{total}} sont justes. Regarde encore « {{piece}} ».",
-      "groups_held": "{{held}} sur {{total}} sont au bon endroit. Réessaie les autres.",
-      "groups_place": "{{held}} sur {{total}} sont au bon endroit. Regarde encore « {{piece}} ».",
-      "cells_held": "{{held}} cases sur {{total}} sont justes. Réessaie les autres.",
-      "cells_place": "{{held}} cases sur {{total}} sont justes. Regarde encore {{cell}}.",
-      "cell_named": "{{column}} à « {{row}} »",
-      "cell_column": "{{column}} à la ligne {{row}}",
-      "cell_numbered": "colonne {{column}}, ligne {{row}}"
-    },
     "reexplain": {
       "simpler": "Plus simple, s'il te plaît",
       "example": "Avec un exemple, s'il te plaît",
@@ -222,7 +210,37 @@
     "unbalanced_charge": "Presque – les charges ne correspondent pas encore : {{left}} à gauche, {{right}} à droite.",
     "unbalanced_element": "Presque – recompte le {{element}} : {{left}} à gauche, {{right}} à droite.",
     "untitled": "Exercice",
-    "worked_intro": "Regarde, voilà comment faire :"
+    "worked_intro": "Regarde, voilà comment faire :",
+    "order": {
+      "first_wrong": "Pas encore tout à fait – regarde encore ce qui vient en premier.",
+      "right_until": "Jusqu'à l'étape {{right}}, c'est juste ! À partir de l'étape {{from}}, l'ordre n'est pas encore tout à fait bon."
+    },
+    "table": {
+      "right": "{{count}} cases sur {{total}} sont justes.",
+      "right_one": "1 case sur {{total}} est juste.",
+      "look_one": "Regarde encore {{cell}}.",
+      "near_one": "Pour {{cell}}, il ne manque qu'un petit détail.",
+      "look_many": "Regarde encore {{cells}}.",
+      "look_more": "Regarde encore {{cells}} et {{more}} autres.",
+      "none_right": "Aucune case n'est encore juste – commence plutôt par {{cell}}.",
+      "cell": "« {{row}} » / « {{column}} »",
+      "cell_in_column": "ligne {{row}}, colonne « {{column}} »",
+      "cell_at": "ligne {{row}}, colonne {{column}}",
+      "brick": "rangée {{row}}, brique {{n}}",
+      "and": "et",
+      "almost": "Presque !",
+      "near_many": "Pour {{cells}}, il ne manque à chaque fois qu’un petit détail.",
+      "near_more": "Pour {{cells}} et {{more}} autres, il ne manque à chaque fois qu’un petit détail."
+    },
+    "match": {
+      "pairs_some": "{{count}} paires sur {{total}} sont déjà justes.",
+      "pairs_some_one": "1 paire sur {{total}} est déjà juste.",
+      "pairs_none": "Aucune paire ne va encore – regarde-les encore une fois tranquillement.",
+      "groups_some": "{{count}} sur {{total}} sont déjà dans le bon groupe.",
+      "groups_some_one": "1 sur {{total}} est déjà dans le bon groupe.",
+      "groups_none": "Aucun n'est encore dans le bon groupe – regarde encore une fois tranquillement.",
+      "look_at": "Regarde encore « {{text}} »."
+    }
   },
   "contact": {
     "less_often": "C'est noté – désormais, je ne t'écris sur ton téléphone que si c'est vraiment important. Le reste t'attend ici. Tu peux changer ça dans les réglages."

@@ -24,15 +24,16 @@
 // The mic is the main control; reading stops when she starts speaking or
 // leaves. The microphone itself only ever starts with her tap.
 
-import type {
-  AnswerPart,
-  AnswerResponse,
-  ItemView,
-  PracticeTurnView,
-  ReexplainWay,
-  SessionItemView,
-  SessionView,
-  SpeakStreamEvent,
+import {
+  isStructuredKind,
+  type AnswerResponse,
+  type ItemView,
+  type PracticeTurnView,
+  type ReexplainWay,
+  type SessionItemView,
+  type SessionView,
+  type SpeakStreamEvent,
+  type StructuredAnswer as StructuredParts,
 } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import type { TFunction } from 'i18next';
@@ -60,15 +61,6 @@ import {
   DisputeVerdictSheet,
 } from '../../components/practice/DisputeVerdict.js';
 import { FractionBarAnswer } from '../../components/practice/FractionBarAnswer.js';
-import {
-  boardComplete,
-  EMPTY_BOARD_ANSWER,
-  partsOf,
-  PartsBoardAnswer,
-  renderBoardAnswer,
-  viaFor,
-  type BoardAnswer,
-} from '../../components/practice/PartsBoardAnswer.js';
 import { HearText, HeardTextCard } from '../../components/practice/HearText.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
@@ -80,6 +72,7 @@ import {
   staffLineOf,
   type StaffAnswerState,
 } from '../../components/practice/StaffAnswer.js';
+import { StructuredAnswer } from '../../components/practice/StructuredAnswer.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMask } from '../../components/lb/EdgeFade.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
 import { Reexplain } from '../../components/practice/Reexplain.js';
@@ -127,7 +120,7 @@ import { bottomRoom, SPACE } from '../../lib/theme/space.js';
  * travels as ordinary text so grading stays one path — so the text alone no longer shows
  * whether she recognised the word or wrote it, and a class test asks for the second.
  */
-type AnswerInput = ({ text: string } | { choice: number } | { parts: AnswerPart[] }) & {
+type AnswerInput = ({ text: string } | { choice: number } | { parts: StructuredParts }) & {
   via?: 'typed' | 'tapped' | 'spoken';
 };
 
@@ -138,19 +131,19 @@ type SentAnswer = {
   text: string | null;
   choice: number | null;
   /**
-   * An arrangement has no text of its own (issue #228): its parts are what makes it the same
-   * answer or a different one. Without this a re-arranged board would reuse the first id and
-   * the server would file it as the same turn — the retry rule turned into a lost answer.
+   * A structured answer (issue #228), as JSON: an arrangement has no text of its own, its parts
+   * are what makes it the same answer or a different one. Without this a re-arranged order
+   * would reuse the first id and the server would file it as the same turn.
    */
   parts: string | null;
 };
 
-/** The arrangement as one comparable line, for exactly that rule. */
-function partsKey(input: AnswerInput): string | null {
-  return 'parts' in input
-    ? input.parts.map((part) => `${part.slot}=${part.value}`).join('|')
-    : null;
-}
+/**
+ * How much of the conversation stays visible above a structured surface after a check: one reply
+ * bubble of up to two lines and the help chips under it (12 + 2 × 22 + 12 + 44 + 2 × 12 padding,
+ * rounded). The parts below scroll inside themselves before the reply is pushed away.
+ */
+const STRUCTURED_REPLY_ROOM = 140;
 
 /** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
 function foreign(lang: string | null): lang is string {
@@ -239,13 +232,6 @@ export default function PracticeScreen() {
    * happens to want the same fraction — it is hers again.
    */
   const [shadedAnswer, setShadedAnswer] = useState<{ itemId: string; text: string } | null>(null);
-  /**
-   * How she has arranged the board, and for which question (issue #228). Kept by item id for
-   * the same reason the shaded bar is: the next question gets an empty board, and nothing she
-   * arranged leaks into it. Not a draft on the device — an arrangement only means anything
-   * next to the question it belongs to.
-   */
-  const [arranged, setArranged] = useState<{ itemId: string; answer: BoardAnswer } | null>(null);
   /**
    * The listening texts she has already heard in this run, by their recording's alias (issue
    * #210). Three questions about one text share it, so the second one offers "nochmal hören"
@@ -452,7 +438,7 @@ export default function PracticeScreen() {
     working.current = true;
     const answerText = 'text' in input ? input.text : null;
     const choice = 'choice' in input ? input.choice : null;
-    const parts = partsKey(input);
+    const parts = 'parts' in input ? JSON.stringify(input.parts) : null;
     const prev = lastSent.current;
     // Retrying the very same answer keeps its id, so the server records it only once.
     const clientTurnId =
@@ -890,24 +876,17 @@ export default function PracticeScreen() {
   const tapChoices =
     choices === null && item.tap_choices && item.tap_choices.length > 0 ? item.tap_choices : null;
   const speaking = item.kind === 'speak';
-  // The board she arranges (issue #228): ordering, matching, filling in a table. It is the
-  // WHOLE way to answer here — a board question has no answer field, not even the table, whose
-  // writing happens in its own cells. The one CTA is "Prüfen" under it.
-  const board = open ? item.board : null;
-  // Die leere Notenzeile, auf die sie schreibt (issue #226). Wie das Brett ist sie der GANZE Weg
+  // A structured item (issues #228–#230): ordering, matching, filling in a table. Its own surface
+  // is the WHOLE way to answer — no answer field, not even for the table, whose writing happens
+  // in its own cells; the server takes only `parts` for it.
+  const structured = isStructuredKind(item.kind);
+  // Die leere Notenzeile, auf die sie schreibt (issue #226). Wie eine Anordnung ist sie der GANZE Weg
   // zu antworten: ein Antwortfeld gibt es daneben nicht, und das eine „Prüfen“ steht darunter.
   // Der Bruchbalken bleibt der andere Fall derselben Fläche — er schreibt ins Feld, sie nicht.
   const staff = open && item.surface?.mode === 'notes' ? item.surface : null;
   const barSurface = open && item.surface && item.surface.mode !== 'notes' ? item.surface : null;
   const typed =
-    open &&
-    choices === null &&
-    tapChoices === null &&
-    board === null &&
-    staff === null &&
-    !speaking;
-  /** Her arrangement of THIS question; a different question starts with an empty board. */
-  const boardAnswer = arranged?.itemId === item.id ? arranged.answer : EMPTY_BOARD_ANSWER;
+    open && choices === null && tapChoices === null && !structured && staff === null && !speaking;
   /** Ihre Notenzeile zu DIESER Frage; eine andere Frage beginnt mit einer leeren Zeile. */
   const staffAnswer =
     written?.itemId === item.id ? written.answer : emptyStaffAnswer(staff?.bars ?? 1);
@@ -1015,7 +994,22 @@ export default function PracticeScreen() {
     <Screen title={title} right={endButton}>
       <KeyboardSafe style={{ flex: 1 }}>
         <View
-          style={{ flex: 1 }}
+          style={{
+            flex: 1,
+            // A structured surface below (issues #228–#230) shrinks before the question does: its
+            // parts scroll inside themselves (`PartsArea`). Without this floor the flex basis of 0
+            // let a tall arrangement — twelve elements above four groups on 360×740 — take the
+            // whole column and draw itself over the question card. Once she has checked, Buddy's
+            // reply ("3 von 5 Paaren stimmen schon") is what matters next, so the conversation
+            // keeps room for it too, up to STRUCTURED_REPLY_ROOM.
+            ...(open && item.task_view
+              ? {
+                  minHeight:
+                    questionContentHeight +
+                    (turns.length > 0 ? Math.min(threadNeed, STRUCTURED_REPLY_ROOM) : 0),
+                }
+              : {}),
+          }}
           onLayout={(e) => setMiddleHeight(Math.round(e.nativeEvent.layout.height))}
         >
           <ScrollView
@@ -1110,6 +1104,10 @@ export default function PracticeScreen() {
                   // A spoken answer: the judgement's words belong here, the marked sentence
                   // stays in the card (issue #14).
                   pronunciation={item.kind === 'speak'}
+                  // While a structured question is open her answer stands on its board, not in a
+                  // bubble (ItemThread). Once it is closed the board is gone, there is room, and
+                  // the bubble with its verdict shows what she did, like any other answer.
+                  echoAnswers={!(structured && open)}
                 />
                 {session.mode === 'help' && shown.status === 'correct' ? (
                   <Rise delay={180}>
@@ -1210,72 +1208,22 @@ export default function PracticeScreen() {
             />
           </View>
         ) : null}
-        {/* Das Brett, das sie anordnet (issues #228–#230): ordnen, zuordnen, eine Tabelle
-            füllen. Es steht, wo sonst die Fläche oder das Antwortfeld steht, und darunter
-            steht das eine „Prüfen" — ein Antwortfeld gibt es hier nicht, auch bei der
-            Tabelle nicht: dort wird in den Zellen selbst geschrieben.
-
-            Zur Höhe (CLAUDE.md Regel 16, gerechnet für das 360×740-Handy): von den 688 pt
-            unter dem Kopf nimmt die Frage 155 — 4 Polster + 18 Fortschritt + 10 Abstand +
-            123 Karte (2×18 Polster, 29 Themenzeile, 58 zweizeilige Frage), und sie darf NIE
-            schrumpfen — und die Leiste mit „Prüfen" 74 (8 + 54 + 12). Für den Brett-Bereich
-            bleiben 459; mit dreizeiliger Frage und „Frage passt nicht" sind es 404.
-
-            Die Bretter, die wirklich kommen, liegen darunter: acht kurze Elemente 254, vier
-            Paare 330, eine sechszeilige Konjugationstabelle 367. Die größten, die der Vertrag
-            zulässt, nicht: acht 48-Zeichen-Elemente 446 (passt knapp), sechs 40-Zeichen-Paare
-            590, zwölf 32-Zeichen-Elemente in vier Gruppen 866, zehn Tabellenzeilen mit Lücken
-            543. Darum ist dieser Bereich der einzige, der nachgibt: `flexShrink` lässt ihn nur
-            bis an den Platz wachsen, der übrig ist — das Gespräch darüber gibt seinen Platz
-            als Erstes her (es ist die Spalte, die scrollen darf, und sein `flexBasis: 0`
-            verbraucht nichts von dem Fehlbetrag), und erst wenn auch das nicht reicht,
-            schiebt sich das Brett in sich selbst (`scroll-list`: die Liste, die sie
-            durchgeht). Die Frage bleibt stehen, und die Seite läuft nicht über. */}
-        {board ? (
-          <View testID="answer-board" style={{ flexShrink: 1, minHeight: 0, paddingTop: SPACE.sm }}>
-            <ScrollView
-              testID="scroll-list"
-              style={{ flexGrow: 0, flexShrink: 1 }}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingHorizontal: SPACE.lg }}
-            >
-              <PartsBoardAnswer
-                // Keyed by the question: the open selection ("which left side waits for its
-                // right one") is a glance, not an answer, and it must not survive the question.
-                key={item.id}
-                board={board}
-                answer={boardAnswer}
-                disabled={locked}
-                onChange={(next) => setArranged({ itemId: item.id, answer: next })}
-              />
-            </ScrollView>
+        {/* A structured item's parts (issues #228–#230): one surface per kind, each with its
+            own "Prüfen" in the pinned bar and its arrangement in a draft, so a theme switch
+            (a remount) keeps it. Keyed by the question, so a new one starts empty. */}
+        {open && item.task_view ? (
+          <View testID="answer-surface" style={{ flexShrink: 1, minHeight: 0 }}>
+            <StructuredAnswer
+              key={item.id}
+              view={item.task_view}
+              draftKey={`session.${id}.${item.id}`}
+              disabled={locked}
+              onSubmit={(parts, shownText) => void answer(item.id, { parts }, shownText)}
+            />
           </View>
         ) : null}
-        {board ? (
-          <BottomBar>
-            <Btn
-              size="lg"
-              pill
-              full
-              // Nothing to check until every slot is filled: a half-arranged board would be
-              // sent as a wrong answer and counted as one.
-              disabled={locked || !boardComplete(board, boardAnswer)}
-              onPress={() => {
-                // Tap → the verdict on screen (issue #66), the same mark the field sets.
-                tapped('check');
-                void answer(
-                  item.id,
-                  { parts: partsOf(boardAnswer), via: viaFor(board) },
-                  renderBoardAnswer(board, boardAnswer),
-                );
-              }}
-            >
-              {t('practice:check')}
-            </Btn>
-          </BottomBar>
-        ) : null}
-        {/* Die Notenzeile, auf die sie schreibt (issue #226). Sie steht, wo sonst das Brett oder
-            das Antwortfeld steht, und gibt wie das Brett als Erstes Platz her: die gemessene Höhe
+        {/* Die Notenzeile, auf die sie schreibt (issue #226). Sie steht, wo sonst eine Anordnung
+            oder das Antwortfeld steht, und gibt als Erstes Platz her: die gemessene Höhe
             und was sie kostet, stehen in `StaffAnswer.tsx`. */}
         {staff ? (
           <View testID="answer-staff" style={{ flexShrink: 1, minHeight: 0, paddingTop: SPACE.sm }}>

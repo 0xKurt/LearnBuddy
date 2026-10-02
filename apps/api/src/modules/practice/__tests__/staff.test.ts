@@ -347,7 +347,6 @@ describe('die Frage, die eine Aufgabe wird', () => {
       expect(item.staff_task).toEqual(task);
       // Nichts von dem, was ein einwertiges Textitem braucht, steht hier doppelt.
       expect(item.accepted_answers).toEqual([]);
-      expect(item.parts_task).toBeNull();
       // Kein Tipp verrät die Lösung — hier geprüft mit derselben Funktion, mit der der Server
       // einen vom Modell geschriebenen Tipp wegwirft.
       for (const hint of item.hints) {

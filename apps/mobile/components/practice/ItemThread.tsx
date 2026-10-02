@@ -45,6 +45,15 @@ type Props = {
   hideVerdicts?: boolean;
   /** What Buddy is doing while `pending` is on its way (default: looking at her answer). */
   thinkingLabel?: string;
+  /**
+   * Whether her own answers stand in the thread (default). Not for a structured answer while its
+   * question is open (issues #228–#230): her arrangement stands on the board itself, which is the
+   * state, and Buddy's reply
+   * says the verdict in words ("2 von 4 Paaren stimmen schon"). Echoed, four pairs became a
+   * four-line bubble that the room above the board (`STRUCTURED_REPLY_ROOM`) could only show as a
+   * cut-off strip under the question card (#229, shot 39e).
+   */
+  echoAnswers?: boolean;
 };
 
 export function ItemThread({
@@ -53,6 +62,7 @@ export function ItemThread({
   hideVerdicts = false,
   thinkingLabel,
   pronunciation = false,
+  echoAnswers = true,
 }: Props) {
   const { t } = useTranslation('practice');
   // What was there when the screen opened stands still; what arrives now moves.
@@ -72,6 +82,8 @@ export function ItemThread({
     <View style={{ gap: 12 }}>
       {turns.map((turn, index) => {
         const mine = turn.role === 'learner';
+        // Not echoed: neither the bubble nor its tag — the reply below says it in words.
+        if (mine && !echoAnswers) return null;
         const fresh = !known.has(turn.id);
         // Buddy's reply to a right answer that arrives now: his moon celebrates (happy).
         const before = index > 0 ? turns[index - 1] : undefined;
@@ -119,11 +131,13 @@ export function ItemThread({
       })}
       {pending !== null ? (
         <>
-          <Rise style={{ alignItems: 'flex-end' }}>
-            <View style={{ maxWidth: '86%' }}>
-              <Bubble mine faded text={pending} speaker={t('thread.you')} />
-            </View>
-          </Rise>
+          {echoAnswers ? (
+            <Rise style={{ alignItems: 'flex-end' }}>
+              <View style={{ maxWidth: '86%' }}>
+                <Bubble mine faded text={pending} speaker={t('thread.you')} />
+              </View>
+            </Rise>
+          ) : null}
           <Thinking label={thinkingLabel ?? t('thread.thinking')} />
         </>
       ) : null}
