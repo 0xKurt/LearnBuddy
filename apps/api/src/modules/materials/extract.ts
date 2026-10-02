@@ -24,7 +24,7 @@ import {
 } from '../practice/structured.js';
 import { TABLE_RULES } from '../practice/table.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v7';
+export const EXTRACT_PROMPT_VERSION = 'extract.v7.1';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
