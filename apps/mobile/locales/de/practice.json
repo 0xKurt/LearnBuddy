@@ -18,34 +18,6 @@
     "pick_how": "Tippe den Balken an, der mehr ist.",
     "pick_option": "{{fraction}} wählen"
   },
-  "board": {
-    "order_how": "Tippe die Elemente in der richtigen Reihenfolge an.",
-    "order_unset": "{{text}}, Element {{n}} von {{total}}, noch nicht gesetzt",
-    "order_set": "{{text}}, als {{position}} gesetzt, nochmal tippen nimmt es zurück",
-    "order_state": "{{placed}} von {{total}} gesetzt",
-    "pairs_how": "Tippe links etwas an, dann rechts, was dazu gehört.",
-    "pairs_left": "{{text}}, noch ohne Paar, tippen wählt es aus",
-    "pairs_left_open": "{{text}}, ausgewählt, tippe jetzt rechts, was dazu gehört",
-    "pairs_left_done": "{{text}}, Paar {{pair}}, nochmal tippen löst das Paar",
-    "pairs_right": "{{text}}, noch ohne Paar",
-    "pairs_right_done": "{{text}}, Paar {{pair}}, nochmal tippen löst das Paar",
-    "pairs_pick_left": "Wähle zuerst links etwas aus.",
-    "pairs_state": "{{done}} von {{total}} Paaren gebildet",
-    "groups_how": "Tippe ein Element an, dann die Gruppe, in die es gehört.",
-    "groups_unset": "{{text}}, noch nicht einsortiert, tippen wählt es aus",
-    "groups_open": "{{text}}, ausgewählt, tippe jetzt die Gruppe an",
-    "groups_set": "{{text}}, in {{group}}, nochmal tippen holt es zurück",
-    "groups_target": "In {{group}} einsortieren",
-    "groups_pick_element": "Wähle zuerst ein Element aus.",
-    "groups_state": "{{done}} von {{total}} einsortiert",
-    "table_how": "Schreibe in die leeren Felder.",
-    "table_empty": "{{where}}, noch leer",
-    "table_filled": "{{where}}, {{value}}",
-    "table_where": "{{column}} bei {{row}}",
-    "table_where_col": "{{column}}, Zeile {{row}}",
-    "table_where_cell": "Spalte {{column}}, Zeile {{row}}",
-    "table_state": "{{done}} von {{total}} Feldern gefüllt"
-  },
   "cards": {
     "progress": "Karte {{current}} von {{total}}",
     "note": "Lernkarten – du sagst selbst, ob du es wusstest.",
@@ -106,7 +78,32 @@
     "transcript_title": "Das war der Hörtext"
   },
   "loading": "Ich hole deine Fragen …",
+  "match": {
+    "how_pairs": "Tippe links eins an, dann sein Gegenstück rechts.",
+    "how_groups": "Tippe oben eins an, dann seine Gruppe.",
+    "held": "{{text}}, ausgewählt",
+    "paired": "{{text}}, Paar {{n}} mit {{other}}",
+    "no_partner": "{{text}}, noch ohne Partner",
+    "in_group": "{{text}}, in {{group}}",
+    "no_group": "{{text}}, noch in keiner Gruppe",
+    "group": "Gruppe {{group}}, {{count}} darin",
+    "hint_take": "Wählt es aus.",
+    "hint_held": "Wählt es wieder ab.",
+    "hint_link": "Verbindet es mit {{other}}.",
+    "hint_linked": "Löst die Zuordnung wieder.",
+    "hint_put": "Legt {{text}} hierhin.",
+    "hint_group_waits": "Erst oben etwas antippen.",
+    "check_waits": "Erst wenn alles zugeordnet ist."
+  },
   "next": "Weiter",
+  "order": {
+    "how": "Tippe sie der Reihe nach an.",
+    "element_open": "{{text}}, noch ohne Platz",
+    "element_placed": "{{text}}, Platz {{n}}",
+    "hint_open": "Bekommt Platz {{n}}.",
+    "hint_placed": "Nimmt es zurück – und alles, was danach kommt.",
+    "check_waits": "Erst wenn alle einen Platz haben."
+  },
   "origin_buddy": "Frage von Buddy",
   "progress": "Frage {{current}} von {{total}}",
   "progress_more_coming": "Frage {{current}} · ich schreibe noch mehr",
@@ -221,5 +218,12 @@
     "partially_correct": "Fast",
     "incorrect": "Noch nicht ganz",
     "unchecked": "Nicht geprüft"
+  },
+  "table": {
+    "cell": "{{row}}, {{column}}",
+    "cell_at": "Zeile {{row}}, Spalte {{column}}",
+    "brick": "Reihe {{row}}, Stein {{n}}",
+    "check_waits": "Erst wenn jedes Feld ausgefüllt ist.",
+    "scroll": "Tabelle, seitlich verschiebbar"
   }
 }

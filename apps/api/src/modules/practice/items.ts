@@ -8,14 +8,14 @@
 // ask just one of them when the learner asked for that direction (issue #113).
 
 import {
-  hasSeveralParts,
   ModelFigure,
-  PartsTask,
   Rubric,
   type BarTask,
   type Figure,
+  type ItemKind,
   type ListenTask,
   type StaffTask,
+  type StructuredTask,
   type VocabDirection,
 } from '@learnbuddy/shared-types/contracts';
 import { canonicalText, compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
@@ -24,7 +24,6 @@ import { z } from 'zod';
 import type { Db } from '../../lib/db.js';
 import { CurriculumPointId } from '../curriculum/state.js';
 import { dollarMathField, dollarMathRuns } from './dollarMath.js';
-import { kindOfForm, solutionOfParts, usablePartsTask } from './parts.js';
 import { usableRubric } from './rubric.js';
 import { mentionsSolution } from './tutor.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
@@ -60,52 +59,11 @@ export const LANGUAGE_RULES = `Language: everything you write yourself (question
 /** The most other accepted answers per item — the number the prompts name (audit H-14). */
 export const MAX_ACCEPTED = 8;
 
-/**
- * How a question whose answer has several parts is written (issues #228–#230). It goes to the
- * model in the item schema itself, so the shapes in `parts_task` carry their own instructions.
- *
- * Categories and bans only — never a filled-in example sentence: a sample in a prompt comes back
- * as a reading of the learner's own sheet (the standing rule, see `UNCLEAR_RULES`).
- */
-export const PARTS_RULES = `Three kinds have an answer with SEVERAL PARTS. For these — and only for these — write the task in "parts_task"; its "form" must match the kind: order → form "order" · match → form "match_pairs" or "match_groups" · table_fill → form "table_fill". For every other kind parts_task is null, and these three kinds are never written without it.
-- order: the task is to put things in the right order (steps of a process, events in time, numbers by size). Write the elements IN THE CORRECT ORDER; the app shuffles them. Only when exactly one order is right, and when every element is clearly different from the others. If every element is a number, the order must be by size.
-- match: the task is to connect what belongs together (form "match_pairs") or to sort things into groups (form "match_groups"). Only when each left side fits exactly one right side, and each element belongs in exactly one group.
-- table_fill: the task is to fill the gaps of a table. Every gap holds ONE number or ONE short word — never a sentence, never a free formulation, and never something the table itself does not decide. Other forms a teacher would accept go in that gap's "accepted". Set "computed" only for a table of values whose one column really is a function of another, and then give the expression and the two columns: the server recomputes every value and writes no question when one of them does not match, so this is a way to have your own arithmetic checked, not a decoration.
-- prompt: what the printed task asks, as a question in words. It must not give the solution away, and it must not repeat the elements: they stand on the board.
-- For these three the task IS the question: the app writes the solution from it. So leave accepted_answers empty and choices, correct_choice, unit, tolerance, spelling, lang, prompt_lang and figure null, and nothing you put in "answer" is used.
-- Do not force a task into one of these forms. A question with one answer stays short, numeric, formula or multiple_choice.`;
-
-/**
- * Extraction only (the other half of `PARTS_RULES`): what decides whether a PRINTED task has one
- * of these forms is the task's own instruction — what the learner is told to DO — not what its
- * content is about.
- *
- * It is the mirror of the lesson in issue #198: a task whose form the app could not practise used
- * to come back as knowledge questions about its own text, which looks like a whole sheet and is
- * not one. Now three of those forms exist, so a printed ordering task must BECOME an ordering
- * question rather than a question about the things being ordered.
- *
- * Categories and bans only — never a sample instruction in any language (the standing rule, see
- * `UNCLEAR_RULES`): a phrasing written into a prompt comes back as a reading of her own sheet.
- */
-export const PARTS_FROM_SHEET = `Whether a printed task has one of the three forms with an answer in several parts is decided by what the task tells the learner to DO, not by what its content is about: a task that has things to be put in an order, to be connected, to be assigned, or to be sorted into given categories, and a task that has a table, a scheme or a grid to be completed, keeps that form. Take the elements, the pairs, the categories or the table from the sheet as printed: never add one of your own and never leave one out. Such a task must not become knowledge questions about its own content instead — that would look like the sheet and would not be it. Every other task keeps the kind it would otherwise have.`;
-
 export const ItemDraft = z.object({
   kind: z
-    .enum([
-      'short',
-      'long',
-      'numeric',
-      'multiple_choice',
-      'formula',
-      'vocab',
-      'speak',
-      'order',
-      'match',
-      'table_fill',
-    ])
+    .enum(['short', 'long', 'numeric', 'multiple_choice', 'formula', 'vocab', 'speak'])
     .describe(
-      'vocab: prompt = word/phrase in prompt_lang, answer = translation in lang · speak: prompt = what to say aloud in lang · order / match / table_fill: an answer with several parts, written in parts_task',
+      'vocab: prompt = word/phrase in prompt_lang, answer = translation in lang · speak: prompt = what to say aloud in lang',
     ),
   prompt: z.string().trim().min(1).max(600),
   answer: z
@@ -144,17 +102,6 @@ export const ItemDraft = z.object({
   // `ModelFigure` and not `Figure`: a note line is the one figure the model may not write,
   // because its key is READ OFF the drawing (issue #226, `contracts/figure.ts` says why).
   figure: ModelFigure.nullable().default(null).catch(null),
-  /**
-   * The reviewed task of an answer with several parts (issues #228–#230). Unlike a figure, a
-   * broken one costs the QUESTION: for these three kinds it is the whole question, and there is
-   * nothing left to ask without it (`usableItems`).
-   */
-  parts_task: PartsTask.nullable()
-    .default(null)
-    .catch(null)
-    .describe(
-      'order / match / table_fill: the task itself (see the kinds that have an answer with several parts). null for every other kind.',
-    ),
   tolerance: z
     .number()
     .positive()
@@ -214,13 +161,6 @@ function clipDraft(raw: unknown): unknown {
       .slice(0, MAX_ACCEPTED);
   }
   if (Array.isArray(o.hints)) o.hints = o.hints.slice(0, 3);
-  // An answer with several parts has no single key to write, and the prompts say so: the solution
-  // is COMPUTED from the task (`solutionOfParts`). The schema still asks for a non-empty `answer`
-  // for every kind, so a reading that correctly left it out would lose its question over a field
-  // nothing reads. It is filled in here and overwritten in `usableItems`.
-  if (typeof o.kind === 'string' && hasSeveralParts(o.kind)) {
-    if (typeof o.answer !== 'string' || o.answer.trim() === '') o.answer = '…';
-  }
   return o;
 }
 
@@ -387,22 +327,10 @@ export function samePrompt(prompt: string): string {
   return prompt.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
 }
 
-/**
- * Keep only items whose shape is consistent; returns them normalised.
- *
- * `severalParts: false` drops the three kinds whose answer has several parts (issues
- * #228–#230). Homework help passes it: there the task is the one SHE photographed or typed and
- * the help is given task by task, so a board would be a form the sheet does not have — and
- * nothing in `help` mode (no hint ladder, no "Lösung zeigen") fits one.
- */
-export function usableItems(
-  items: ItemDraft[],
-  opts: { severalParts?: boolean } = {},
-): ItemDraft[] {
-  const severalParts = opts.severalParts !== false;
+/** Keep only items whose shape is consistent; returns them normalised. */
+export function usableItems(items: ItemDraft[]): ItemDraft[] {
   const out: ItemDraft[] = [];
   for (const raw of items) {
-    if (!severalParts && (hasSeveralParts(raw.kind) || raw.parts_task !== null)) continue;
     const it = {
       ...raw,
       // LaTeX without dollar signs: only the math runs of a sentence, a math field as a whole.
@@ -414,44 +342,10 @@ export function usableItems(
       tolerance: usableTolerance(raw),
       spelling:
         raw.kind === 'short' || raw.kind === 'long' || raw.kind === 'vocab' ? raw.spelling : null,
-      // Only the three multi-part kinds carry a task — exactly as only multiple choice carries
-      // choices. A task on any other kind is a field that nothing would ever read.
-      parts_task: hasSeveralParts(raw.kind) ? raw.parts_task : null,
       // Only a free text has required elements, and only a rubric that can be checked is kept
       // (issue #211). A rubric that does not hold costs itself, never the question.
       rubric: usableRubric(raw.rubric, raw.kind),
     };
-    // ── an answer with several parts (issues #228–#230) ──
-    //
-    // The task is the whole question here, so it is settled before anything else: without a
-    // usable one there is nothing to ask, and a question of one of these kinds that slipped
-    // through without its task would be graded as a string against a rendered solution.
-    //
-    // The kind and the task must agree, and disagreement DROPS the question instead of being
-    // repaired: deriving the kind from the task would turn a question whose text says "ordne"
-    // into a pairing exercise, and repairing the task from the kind is not possible at all.
-    if (hasSeveralParts(it.kind) || it.parts_task !== null) {
-      const task = it.parts_task === null ? null : usablePartsTask(it.parts_task);
-      if (task === null || kindOfForm(task.form) !== it.kind) continue;
-      // Everything a single-value answer needs is empty here, and the solution is COMPUTED from
-      // the task — one source for the question, as for a fraction bar (issue #162).
-      const whole = {
-        ...it,
-        parts_task: task,
-        answer: solutionOfParts(task),
-        accepted_answers: [],
-        choices: null,
-        correct_choice: null,
-        unit: null,
-        tolerance: null,
-        spelling: null,
-        lang: null,
-        prompt_lang: null,
-      };
-      whole.hints = whole.hints.filter((h) => !mentionsSolution(h, whole.answer, whole.prompt));
-      out.push(whole);
-      continue;
-    }
     // A number asked for behind a placeholder is no clear question: dropped, not guessed at.
     if (placeholderQuestion(it)) continue;
     // The key contradicts the arithmetic its own question asks for (issue #157). A rule
@@ -518,8 +412,15 @@ export type ItemSource = {
  * (`StaffFigure`) only ever comes from `practice/staff.ts`, which computed this item's prompt,
  * options, key and drawing together (issue #226).
  */
-export type StoredItem = Omit<ItemDraft, 'figure'> & {
+export type StoredItem = Omit<ItemDraft, 'figure' | 'kind'> & {
+  /** One of the model's kinds, or a structured kind built by `practice/structured.ts`. */
+  kind: ItemKind;
   figure: Figure | null;
+  /**
+   * A structured question's task WITH its key (issues #228–#230): set only by
+   * `practice/structured.ts`, after Regel 0. Migration 0079 makes it an either/or with the kind.
+   */
+  task?: StructuredTask | null;
   /**
    * Never the model's (it has no such field, issues #162/#226): set only by `practice/bars.ts`
    * or `practice/staff.ts`, and never both — migration 0078 makes that an either/or.
@@ -554,7 +455,7 @@ export async function insertItems(
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
-                          hints, worked_solution, tolerance, spelling, bar_task, parts_task,
+                          hints, worked_solution, tolerance, spelling, bar_task, task,
                           curriculum_point, rubric, listen_task, staff_task)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) returning id`,
       [
@@ -580,7 +481,7 @@ export async function insertItems(
         it.tolerance,
         it.spelling,
         it.bar_task ? JSON.stringify(it.bar_task) : null,
-        it.parts_task ? JSON.stringify(it.parts_task) : null,
+        it.task ? JSON.stringify(it.task) : null,
         it.curriculum_point,
         it.rubric ? JSON.stringify(it.rubric) : null,
         it.listen_task ? JSON.stringify(it.listen_task) : null,

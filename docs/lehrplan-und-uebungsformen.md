@@ -1435,10 +1435,11 @@ Symbol und ist mit `grep` auffindbar.
 > mehrteiligen Antwort**: `order` (ordnen), `match` (Paare verbinden oder in Gruppen sortieren) und
 > `table_fill` (Tabelle ausfüllen) — zusammen die 95 Aufgabentypen aus 14 Fächern, die in §12.2
 > unter „Wissen ja, Form nein" stehen. Alle drei werden **vollständig von Code** geprüft, Teil für
-> Teil, ohne Modellaufruf (`modules/practice/parts.ts`, `contracts/parts.ts`, Migration 0072).
-> Damit gibt es eine vierte Eingabefläche, das **Brett** (`ItemView.board`), und einen vierten
-> Antwortweg in der Anfrage (`AnswerRequest.parts`). Die Zählung in §12 ist davor entstanden und
-> hier nicht nachgerechnet.
+> Teil, ohne Modellaufruf (`modules/practice/structured.ts`, `table.ts`, `contracts/structured.ts`,
+> Migration 0079; die erste Umsetzung über `parts` mit Migration 0072 wurde nach einer Prüfung
+> beider Seiten ersetzt, #224). Die App bekommt die Aufgabe ohne Schlüssel (`ItemView.task_view`)
+> und antwortet mit `AnswerRequest.parts`. Die Zählung in §12 ist davor entstanden und hier nicht
+> nachgerechnet.
 
 **Fünf Sitzungsarten**, die Buddy anbieten kann (`contracts/buddy.ts`, `offer_learning.kind`;
 `StartTopicRequest.kind`): `practice` · `vocab` · `speak` · `help` · `test`.

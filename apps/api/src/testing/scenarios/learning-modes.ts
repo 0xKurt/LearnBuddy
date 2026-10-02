@@ -29,6 +29,51 @@ function lastText(req: LlmRequest): string {
 }
 
 export function scriptLearningModes(llm: ScriptedGateway): void {
+  // Match items (issue #229): the model writes only the correct links — pairs, and things
+  // sorted into groups. The server checks them (Regel 0), gives the ids, shuffles and keeps
+  // the key. Five long-worded pairs and twelve things in four groups: the tallest a match
+  // should get, measured on 360×740 (rule 16). Registered first, like the Rechenweg below:
+  // the first rule that matches wins.
+  scriptGenerations({
+    when: /Verfassungsorgan/i,
+    answer: () => ({
+      usable: true,
+      title: 'Wer macht was?',
+      subject: { name: 'Politik', kind: 'social_studies' },
+      items: [],
+      structured: [
+        {
+          type: 'match',
+          prompt: 'Welches Verfassungsorgan hat welche Aufgabe?',
+          pairs: [
+            { left: 'Bundestag', right: 'beschließt die Gesetze' },
+            { left: 'Bundesrat', right: 'vertritt die Länder' },
+            { left: 'Bundesregierung', right: 'führt die Gesetze aus' },
+            { left: 'Bundespräsident', right: 'unterschreibt die Gesetze' },
+            { left: 'Bundesverfassungsgericht', right: 'prüft die Gesetze am Grundgesetz' },
+          ],
+          groups: null,
+          topic: 'Verfassungsorgane',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'match',
+          prompt: 'Wer ist dafür zuständig?',
+          pairs: null,
+          groups: [
+            { name: 'Gemeinde', elements: ['Müllabfuhr', 'Friedhöfe', 'Straßenbeleuchtung'] },
+            { name: 'Land', elements: ['Schulen', 'Hochschulen', 'Landespolizei'] },
+            { name: 'Bund', elements: ['Bundeswehr', 'Außenpolitik', 'Autobahnen'] },
+            { name: 'EU', elements: ['Euro', 'Binnenmarkt', 'Roaming-Gebühren'] },
+          ],
+          topic: 'Zuständigkeiten',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+      ],
+    }),
+  });
   // A written calculation path (issues #209, #221): an equation she solves line by line, then
   // a one-liner the return key sends. Registered first: a later learner's request may carry
   // older topics, and the first rule that matches wins. The model only supplies the items —
@@ -56,6 +101,54 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
         },
       ],
     }),
+  });
+  // Tables to fill in (issue #230): the model writes every value and marks the gaps; the
+  // server recomputes the totals and the wall (Regel 0), names the gaps and keeps the keys.
+  // Matched on her own request only, so an older topic in a later request never picks it.
+  // The first is the 4×4 of the issue's acceptance: a two-way table with its totals.
+  scriptGenerations({
+    when: /LEARNER'S TEXT:\n[^\n]*Vierfeldertafel/i,
+    answer: () => {
+      const v = (text: string) => ({ text, gap: false, also: [] });
+      const g = (text: string) => ({ text, gap: true, also: [] });
+      return {
+        usable: true,
+        title: 'Vierfeldertafel und Zahlenmauer',
+        subject: { name: 'Mathe', kind: 'math' },
+        items: [],
+        structured: [
+          {
+            type: 'table_fill',
+            prompt:
+              '30 Kinder der 6b sagen, ob sie einen Hund oder eine Katze haben. Fülle die Tafel aus.',
+            header: ['', 'Hund', 'kein Hund', 'Summe'],
+            rows: [
+              [v('Katze'), v('4'), g('6'), v('10')],
+              [v('keine Katze'), g('8'), v('12'), g('20')],
+              [v('Summe'), v('12'), g('18'), v('30')],
+            ],
+            family: 'totals',
+            fn: null,
+            x_in: null,
+            topic: 'Vierfeldertafel',
+            difficulty: 2,
+            prompt_lang: 'de',
+          },
+          {
+            type: 'table_fill',
+            prompt: 'Rechne die Zahlenmauer aus: Jeder Stein ist die Summe der zwei darunter.',
+            header: null,
+            rows: [[g('20')], [v('8'), g('12')], [g('3'), v('5'), v('7')]],
+            family: 'wall',
+            fn: null,
+            x_in: null,
+            topic: 'Zahlenmauern',
+            difficulty: 1,
+            prompt_lang: 'de',
+          },
+        ],
+      };
+    },
   });
   // "Erklär mir den Dativ" — since buddy.22 the explanation is the chat answer itself
   // (owner decision 28.09.); what can be started afterwards is practice on it.
@@ -152,106 +245,40 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
-  // Answers with SEVERAL PARTS (issues #228, #229, #230): the model writes the task — the
-  // elements in the right order, the pairs, the groups, the table with its gaps — and nothing
-  // about how it is judged. Every board on screen, every shuffle and every verdict below comes
-  // from the server (`modules/practice/parts.ts`). All four forms in one run, so the walkthrough
-  // sees the tallest of them on 360×740.
-  // Registered before the /Brüche|Bruch/ rule: nothing here mentions fractions, but the order of
-  // these rules is what decides, so new ones go above the broader patterns.
+  // Order items (issue #228): the model writes the elements in the RIGHT order and nothing
+  // about a key — the server checks them (Regel 0), shuffles them and keeps the key. The
+  // second set is the tallest an order may be: eight elements, the bound of rule 16 on
+  // 360×740.
   scriptGenerations({
-    when: /Reihenfolge|Zuordnen|Tabelle/i,
+    when: /Keimung/i,
     answer: () => ({
       usable: true,
-      title: 'Ordnen und Zuordnen',
+      title: 'Keimung',
       subject: { name: 'Biologie', kind: 'biology' },
-      bars: [],
-      items: [
+      items: [],
+      structured: [
         {
-          ...base,
-          kind: 'order',
-          prompt: 'Bring die Schritte der Keimung in die richtige Reihenfolge.',
-          // Never used: the solution is computed from the task (`solutionOfParts`).
-          answer: 'wird berechnet',
+          type: 'order',
+          prompt: 'Bring die Keimung einer Bohne in die richtige Reihenfolge.',
+          elements: [
+            'Der Samen nimmt Wasser auf und quillt',
+            'Die Keimwurzel wächst nach unten',
+            'Der Keimstängel streckt sich zum Licht',
+            'Die ersten Laubblätter entfalten sich',
+          ],
+          numeric: null,
           topic: 'Keimung',
-          parts_task: {
-            form: 'order',
-            // Five, the middle of what the contract allows (3–8). The upper bound is where the
-            // 360×740 phone decides, and the walkthrough is where that is measured.
-            elements: [
-              'Samen quillt auf',
-              'Wurzel wächst',
-              'Keimblätter öffnen sich',
-              'Erstes Blatt wächst',
-              'Pflanze blüht',
-            ],
-          },
+          difficulty: 2,
+          prompt_lang: 'de',
         },
         {
-          ...base,
-          kind: 'match',
-          prompt: 'Welches Organ hat welche Aufgabe?',
-          answer: 'wird berechnet',
-          topic: 'Organe',
-          parts_task: {
-            form: 'match_pairs',
-            // Five pairs — the number issue #229's acceptance criterion names for 360×740.
-            pairs: [
-              { left: 'Lunge', right: 'Gasaustausch' },
-              { left: 'Herz', right: 'Blut pumpen' },
-              { left: 'Niere', right: 'Blut filtern' },
-              { left: 'Magen', right: 'Nahrung zersetzen' },
-              { left: 'Leber', right: 'Gift abbauen' },
-            ],
-          },
-        },
-        {
-          ...base,
-          kind: 'match',
-          prompt: 'Sortiere die Tiere in ihre Klassen.',
-          answer: 'wird berechnet',
-          topic: 'Wirbeltierklassen',
-          parts_task: {
-            form: 'match_groups',
-            groups: [
-              { name: 'Säugetier', members: ['Hund', 'Fledermaus'] },
-              { name: 'Vogel', members: ['Amsel', 'Pinguin'] },
-              { name: 'Lurch', members: ['Frosch', 'Molch'] },
-            ],
-          },
-        },
-        {
-          ...base,
-          kind: 'table_fill',
-          prompt: 'Fülle die Tabelle aus.',
-          answer: 'wird berechnet',
-          topic: 'Zellen',
-          // A 4×4 table — the size issue #230's acceptance criterion names for 360×740: four
-          // columns (the row label and three cells) and four rows with the heading.
-          parts_task: {
-            form: 'table_fill',
-            header: ['Merkmal', 'Pflanzenzelle', 'Tierzelle', 'Bakterium'],
-            rows: [
-              [
-                { cell: 'given', text: 'Zellwand' },
-                { cell: 'gap', expect: 'word', answer: 'ja', accepted: ['vorhanden'] },
-                { cell: 'gap', expect: 'word', answer: 'nein', accepted: ['fehlt'] },
-                { cell: 'given', text: 'ja' },
-              ],
-              [
-                { cell: 'given', text: 'Zellkern' },
-                { cell: 'given', text: 'ja' },
-                { cell: 'gap', expect: 'word', answer: 'ja', accepted: ['vorhanden'] },
-                { cell: 'gap', expect: 'word', answer: 'nein', accepted: ['fehlt'] },
-              ],
-              [
-                { cell: 'given', text: 'Chloroplasten' },
-                { cell: 'gap', expect: 'word', answer: 'ja', accepted: ['vorhanden'] },
-                { cell: 'given', text: 'nein' },
-                { cell: 'gap', expect: 'word', answer: 'nein', accepted: ['fehlt'] },
-              ],
-            ],
-          },
+          type: 'order',
+          prompt: 'Ordne die Zahlen der Größe nach, mit der kleinsten zuerst.',
+          elements: ['-12', '-3', '0,5', '$\\frac{3}{4}$', '2', '17', '105', '1000'],
+          numeric: 'ascending',
+          topic: 'Zahlen ordnen',
+          difficulty: 2,
+          prompt_lang: 'de',
         },
       ],
     }),
@@ -357,17 +384,27 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ]),
     },
     {
-      when: /balken/i,
-      answer: says('Gern – ich hab dir Bruchbalken zum Ausprobieren vorbereitet.', [
-        { tool: 'offer_learning', args: { kind: 'practice', text: 'Bruchbalken' } },
+      when: /keimung/i,
+      answer: says('Klar – ordne mal die Keimung, Schritt für Schritt.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Keimung ordnen' } },
       ]),
     },
     {
-      // Answers with several parts (issues #228–#230). The topic text reaches the generator,
-      // whose /Reihenfolge|Zuordnen|Tabelle/ rule above answers with the four boards.
-      when: /ordnen/i,
-      answer: says('Gern – ordnen und zuordnen, mit einer Tabelle am Ende.', [
-        { tool: 'offer_learning', args: { kind: 'practice', text: 'Reihenfolge und Zuordnen' } },
+      when: /vierfeldertafel/i,
+      answer: says('Gern – eine Vierfeldertafel und danach eine Zahlenmauer.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Vierfeldertafel ausfüllen' } },
+      ]),
+    },
+    {
+      when: /verfassungsorgane zuordnen/i,
+      answer: says('Gern – ordne mal zu, wer was macht.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Verfassungsorgane zuordnen' } },
+      ]),
+    },
+    {
+      when: /balken/i,
+      answer: says('Gern – ich hab dir Bruchbalken zum Ausprobieren vorbereitet.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Bruchbalken' } },
       ]),
     },
     {

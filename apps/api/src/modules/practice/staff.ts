@@ -301,8 +301,8 @@ const LETTERS: readonly NoteName[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
 /**
  * Die Optionen einer Lesefrage: die richtige und ihre nächsten Nachbarn, in einer festen
- * Ordnung. Fest ist hier das Entscheidende — kein `Math.random()` und keine Uhr (Regel 7,
- * `shuffle.ts`): zwei Läufe müssen dieselbe Frage ergeben, sonst ist nichts nachrechenbar.
+ * Ordnung. Fest ist hier das Entscheidende — kein `Math.random()` und keine Uhr (Regel 7):
+ * zwei Läufe müssen dieselbe Frage ergeben, sonst ist nichts nachrechenbar.
  *
  * Null, wenn nicht genug verschiedene Nachbarn zusammenkommen; dann entsteht keine Frage,
  * statt einer mit zwei gleichen Optionen (was `usableItems` einem vom Modell geschriebenen
@@ -361,8 +361,6 @@ const COMMON = {
   tolerance: null,
   spelling: null,
   source_excerpt: null,
-  // A note question is one value against one key; its answer has no parts (issues #228–#230).
-  parts_task: null,
   // None of the twelve state-dependent curriculum places is about music (issue #214), a note
   // question is no writing task with required elements (issue #211), and nothing here is heard
   // from a spoken text — the note itself is what sounds (issue #210).

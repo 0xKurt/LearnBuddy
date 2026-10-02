@@ -74,18 +74,6 @@
     "not_lowest": "Bien ajustada. Ahora simplifícala – todos los números de delante se dividen por {{factor}}.",
     "not_quite": "Todavía no del todo. Vuelve a mirar la pregunta – o muestra la solución.",
     "one_way_intro": "Una forma de abordarlo – una, no la única:",
-    "parts": {
-      "order_prefix": "Hasta el paso {{step}} todo está bien. Mira otra vez el paso {{next}}.",
-      "pairs_held": "{{held}} de {{total}} parejas ya están bien. Vuelve a probar las otras.",
-      "pairs_place": "{{held}} de {{total}} parejas están bien. Mira otra vez «{{piece}}».",
-      "groups_held": "{{held}} de {{total}} están en el sitio correcto. Vuelve a probar los otros.",
-      "groups_place": "{{held}} de {{total}} están en el sitio correcto. Mira otra vez «{{piece}}».",
-      "cells_held": "{{held}} de {{total}} casillas están bien. Vuelve a probar las otras.",
-      "cells_place": "{{held}} de {{total}} casillas están bien. Mira otra vez {{cell}}.",
-      "cell_named": "{{column}} en «{{row}}»",
-      "cell_column": "{{column}} en la fila {{row}}",
-      "cell_numbered": "columna {{column}}, fila {{row}}"
-    },
     "reexplain": {
       "simpler": "Más fácil, por favor",
       "example": "Con un ejemplo, por favor",
@@ -222,7 +210,37 @@
     "unbalanced_charge": "Casi – las cargas todavía no coinciden: {{left}} a la izquierda, {{right}} a la derecha.",
     "unbalanced_element": "Casi – cuenta otra vez el {{element}}: {{left}} a la izquierda, {{right}} a la derecha.",
     "untitled": "Práctica",
-    "worked_intro": "Mira, así se hace:"
+    "worked_intro": "Mira, así se hace:",
+    "order": {
+      "first_wrong": "Todavía no del todo: mira otra vez qué va primero.",
+      "right_until": "¡Hasta el paso {{right}} está bien! A partir del paso {{from}}, el orden aún no es del todo correcto."
+    },
+    "table": {
+      "right": "{{count}} de {{total}} casillas están bien.",
+      "right_one": "1 de {{total}} casillas está bien.",
+      "look_one": "Mira otra vez {{cell}}.",
+      "near_one": "A {{cell}} solo le falta un detalle.",
+      "look_many": "Mira otra vez {{cells}}.",
+      "look_more": "Mira otra vez {{cells}} y {{more}} más.",
+      "none_right": "Todavía ninguna casilla está bien: empieza mejor por {{cell}}.",
+      "cell": "«{{row}}» / «{{column}}»",
+      "cell_in_column": "fila {{row}}, columna «{{column}}»",
+      "cell_at": "fila {{row}}, columna {{column}}",
+      "brick": "fila {{row}}, ladrillo {{n}}",
+      "and": "y",
+      "almost": "¡Casi lo tienes!",
+      "near_many": "A {{cells}} solo les falta un detalle a cada una.",
+      "near_more": "A {{cells}} y {{more}} más solo les falta un detalle a cada una."
+    },
+    "match": {
+      "pairs_some": "{{count}} de {{total}} parejas ya están bien.",
+      "pairs_some_one": "1 de {{total}} parejas ya está bien.",
+      "pairs_none": "Todavía no encaja ninguna pareja: míralas otra vez con calma.",
+      "groups_some": "{{count}} de {{total}} ya están en el grupo correcto.",
+      "groups_some_one": "1 de {{total}} ya está en el grupo correcto.",
+      "groups_none": "Todavía ninguno está en el grupo correcto: míralo otra vez con calma.",
+      "look_at": "Mira otra vez «{{text}}»."
+    }
   },
   "contact": {
     "less_often": "Entendido: a partir de ahora solo te escribiré al móvil cuando sea realmente importante. Todo lo demás te espera aquí. Puedes cambiarlo en los ajustes."

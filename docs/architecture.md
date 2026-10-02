@@ -1629,7 +1629,7 @@ rendert und eine `TextInput`-Eigenschaft dort nicht im DOM steht:
   der Zeichenreihe (`components/math/MathKeys.tsx`) — die eine Taste, die kein Zeichen einfügt,
   sondern etwas tut, und die deshalb ein Wort trägt statt nur des Zeichens. Sie steht vorn, weil
   die Reihe seitlich scrollt: eine Taste, zu der man scrollen muss, kennt niemand. Eine
-  Tabellenzelle ist einzeilig, das Brett (#228–#230) bietet sie deshalb nicht an.
+  Tabellenzelle ist einzeilig, die Tabelle (#230, `TableAnswer.tsx`) bietet sie deshalb nicht an.
 
 Die Vorschau zeichnet bei einem Weg die Zeile mit dem Cursor (ohne bekannten Cursor die, bei der
 sie gerade ankommt — dieselbe, die `lastLine` für das Ergebnis liest); alle Zeilen auf einmal
@@ -1818,123 +1818,162 @@ Still open for a later step: the number line and the vocabulary card (#162's sec
 representation), and bar tasks from a photographed sheet — the extraction prompt does not offer
 them yet, so today they come from a topic she named.
 
-**Antworten mit mehreren Teilen — ordnen, zuordnen, eine Tabelle füllen** (`contracts/parts.ts`,
-`practice/parts.ts`, `practice/shuffle.ts`, Migration `0072_answers_with_several_parts.sql`;
-Issues #228, #229, #230 aus der Analyse #224). Bis hierher war jede Antwort **ein** Wert gegen
-**einen** Schlüssel. Die Analyse hat gezählt, was das kostet: von 347 Aufgabentypen gehen 240 nur
-„teilweise", und das heißt fast immer **Wissen ja, Form nein** — die Fakten lassen sich als
-Kurzantwort abfragen, die Aufgabenform der Klassenarbeit nicht. Die drei häufigsten dieser Formen
-tragen zusammen 95 Aufgabentypen aus 14 Fächern (`docs/lehrplan-und-uebungsformen.md`), und alle
-drei sind von Code **vollständig** entscheidbar. Also entscheidet Code sie — jedes Teil, ohne
-Modellaufruf (Regel 1; Issue #227 ist die Liste der Stellen, an denen das einmal nicht galt).
+**Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`,
+`practice/table.ts`, migrations `0079_structured_items.sql` and `0080_drop_parts_task.sql`;
+issues #228 order, #229 match, #230 table_fill, from the analysis #224). Some answers are not a
+sentence but an arrangement: an order, pairs, groups, table cells. They are their own item kinds
+(`order`, `match`, `table_fill`), and #224's "Regel 0" holds in both directions: code validates
+what the model wrote, and code judges what she answers — never a model.
 
-_Das Modell schreibt die Aufgabe und urteilt über sie nichts._ Ein `PartsTask` ist alles, was es
-sagen darf, und die Lösung steht **in der Struktur**, nicht als Feld daneben: die Elemente stehen
-in der richtigen Reihenfolge, ein Paar ist ein Objekt mit links und rechts, eine Gruppe trägt ihre
-Mitglieder, eine Lücke ihren Inhalt. Ein Schlüssel, der den Elementen widerspricht, ist damit nicht
-sagbar — dasselbe Mittel wie bei den Bruchbalken. Und das Modell schreibt **keine Kürzel** (Regel
-2): `e1`, `l2`, `g3`, `c4` vergibt der Server aus der Position.
+_Two implementations existed for a day_ (#224, „Entscheidung: zwei Umsetzungen …“): `parts`
+(migration 0072, `items.parts_task`, `ItemView.board`) and this one. A neutral review ran and
+attacked both; `parts` handed out ids in solution order (an order and a pairing were solvable
+from the API response alone), asked the tutor on the second wholly wrong board, lost the board
+on a theme switch, shuffled 16 % of orders into their exact reverse and recomputed no number wall
+or two-way table. It was removed: 0080 drops `items.parts_task` and its check (production held no
+row with it). 0072 stays as it was applied — migrations are immutable (CLAUDE.md rule 10).
 
-| Form           | das Modell schreibt                 | sie tut                                                |
-| -------------- | ----------------------------------- | ------------------------------------------------------ |
-| `order`        | 3–8 Elemente in der richtigen Folge | tippt sie nacheinander an: 1, 2, 3 …                   |
-| `match_pairs`  | 3–6 Paare                           | tippt links, dann rechts; das Paar bekommt eine Nummer |
-| `match_groups` | 2–4 Gruppen, 4–12 Mitglieder        | tippt ein Element, dann die Gruppe                     |
-| `table_fill`   | Tabelle bis 6×10, 1–12 Lücken       | füllt jede Lücke wie ein kurzes Feld, der Reihe nach   |
+Three shapes per kind, discriminated by `type` (= the item's kind):
 
-Daraus leitet der Server **das Brett** ab (`ItemView.board`) — ohne Lösung, nur während die Frage
-offen ist, in einer Anzeige-Reihenfolge, die **stabil pro Frage** ist (ein Hash der Item-Id, keine
-Uhr und keine Zufallsquelle, `practice/shuffle.ts`): ein Neuladen darf die Elemente nicht unter
-ihrem Finger neu mischen. Bei `order` ist die Mischung garantiert **nicht** die Ausgangsfolge, und
-bei `match_pairs` stehen die beiden Spalten nie Zeile für Zeile beieinander — sonst läge die Lösung
-da. _Eine Figur ist, was sie LIEST; eine Fläche ist, was sie BERÜHRT, um einen Wert zu schreiben;
-ein Brett ist, was sie ANORDNET._
+| shape                | where                 | what it holds                                                      |
+| -------------------- | --------------------- | ------------------------------------------------------------------ |
+| `StructuredTask`     | `items.task` (server) | the definition WITH the key; `order`: elements, key (ids), numeric |
+| `StructuredTaskView` | `ItemView.task_view`  | the same WITHOUT the key, only while the question is open          |
+| `StructuredAnswer`   | `AnswerRequest.parts` | what she arranged, by part id; `order`: every element id once      |
 
-Ihre Antwort ist **eine Form für alle drei**: `AnswerRequest.parts`, je ein `{ slot, value }` —
-Position → Element, linke Seite → rechte Seite, Element → Gruppe, Lücke → ihr Text. Der Server nimmt
-genau die Fächer dieser Frage an, jedes einmal, mit Werten aus genau dem Vorrat, den diese Frage
-ausgegeben hat (`readParts`); alles andere ist eine abgewiesene Anfrage und nichts zu deuten. Ein
-Brett nimmt keinen getippten Text, eine Frage mit einer Antwort nimmt keine Teile. Ein halb
-gefülltes Brett ist **keine schwächere Antwort**, sondern eine, die noch nicht gegeben wurde.
+The model writes the content in a separate list of its answer (`structured`, next to `items`;
+generation and both photo readings), for `order` the 3–8 elements **in the right order** plus
+`numeric` (`ascending`/`descending` when every element is a number). Code then checks
+(`orderProblem`) and stores nothing that fails — nothing is repaired: fewer than 3 or more than 8
+elements, two elements alike after normalising (case, spacing, math markup), a key that is not a
+permutation (reachable for a stored row; a draft cannot produce one because code writes the key),
+numbers without a stated direction, a direction for elements that are not all numbers of one
+unit, and a numeric key that is not strictly sorted by value. Code gives the ids (`a`, `b`, …
+by display position, so an id says where an element stands, never where it belongs), shuffles
+deterministically per content (never the right order, never its reverse) and writes `answer` as
+the readable solution ("A → B → C"), so "Lösung zeigen", the hint ladder, the tutor for "Tipp",
+the test review and the summary run unchanged. The database holds the two together
+(`items_task_matches_kind`: a structured kind always has a task, every other kind never, and
+`task->>'type' = kind`); a stored task is read through `structuredTaskOf`, which re-checks it.
+The kind check already allows `cloze` (#232, a text with several gaps) — decided in 0079 so the
+next structured kind needs no constraint migration; no code writes it until #232 is built, and
+`STRUCTURED_KINDS` in the contract lists only the three that exist.
 
-**Was eine teilweise richtige Antwort heißt.** Sechs von acht Zellen richtig ist
-`partially_correct`, und die Frage **bleibt offen** — die Form, die das Haus für Beinahe-Treffer
-schon hat (`NEAR_MISS`). Nicht `correct`, weil zwei Zellen nicht stimmen; nicht `incorrect`, weil
-das sechs richtige Zellen wegwirft, und genau das tut eine Klassenarbeit nicht (dieselbe Begründung
-wie `step_broke`, Issue #209). Erst wenn **kein** Teil hält, ist es falsch.
+Answering (`answerItem`): a structured item takes only `parts` (text → 422 `use_parts`; a
+foreign shape, a missing, doubled or unknown id → 422 `parts_mismatch`; `parts` for any other
+item → 422 `no_parts`; a stored task that no longer reads → 409 `task_unreadable`).
+`checkStructured` returns the verdict and a result per part, and the reply names the place
+(`structuredReply`) on every wrong try — 0 model calls per answer. A partly right arrangement is
+`incorrect` with that code-written reply, and the question stays open; nothing is locked and
+nothing cleared, her arrangement stays in the draft. The rest is the ordinary flow: the third
+miss explains the solution, a test only notes the answer (one try, no verdict until the end),
+FSRS rates the closed item, turns are idempotent per `client_turn_id`. Her answer stands in the
+thread in her order; the closing answer of an order or a match is recorded as `tapped`, which
+for a structured kind still counts towards a topic in the summary (tapping is the only way to
+answer it, not recognition); a table's is `typed`.
 
-Daraus folgt der Rest, und zwar ohne eine einzige neue Zahl:
+Where they come from: a topic's practice and practice test (`generate.ts` `STRUCTURED`; not typed
+homework, vocabulary, speaking or listening), and both photo readings — a printed task that asks
+to order, link or sort given things, or to fill a table, keeps that form and goes into
+`structured`, never into knowledge questions about its own content. Homework help from a photo
+takes them too, with hints and without a worked solution (`StructuredDraftHomework`). At most
+`MAX_STRUCTURED_ITEMS` (4) per prepared set. A practice run that starts on its first questions
+before the rest is written (#220) starts on ordinary `items` only: the structured list stands
+after them in the answer and arrives with the rest (`addTheRest`).
 
-- **FSRS bekommt keinen Bruchteil.** Es gibt kein „0,75 von Good"; eine erfundene Zwischennote wäre
-  die Behauptung, sie beherrsche das Thema zu 75 %. Eine teilweise richtige Antwort schließt die
-  Frage nicht, schreibt also keine Wiederholung — sie kostet aber den ersten Versuch, und die
-  richtige Antwort danach ist `with_help` → `Hard` statt `Good`. Nach dem dritten Versuch kommt die
-  Lösung und es wird `revealed` → `Again`, wie überall. Schwächere Evidenz zählt **weniger**, nicht
-  anders (dasselbe Muster wie `answered_by = 'tapped'`, #163, und `self_rated`, #147).
-- **Sie sieht, wie viel hält, und genau EINE Stelle.** Nicht die Liste aller falschen Teile:
-  `chemistry.ts` nennt bei mehreren unausgeglichenen Elementen eines, „weil alle auf einmal zu
-  nennen eine Liste zum Abarbeiten ist statt eines nächsten Schritts". Die Menge, die hält, steht
-  immer da; die **Stelle** folgt der Hinweisleiter, also ab dem zweiten Versuch (Issue #229 verlangt
-  genau das). `order` ist die Ausnahme und keine Inkonsistenz: dort IST die Menge eine Stelle („bis
-  Schritt 3 stimmt alles"), wie `steps.ts` die erste gebrochene Zeile sofort nennt. Eine Lücke mit
-  einem Verschreiber bekommt den Satz, den ein Verschreiber im Antwortfeld bekommt (#207).
-- **Sie korrigiert nur die falschen Teile.** Der Server setzt nichts zurück und sperrt nichts fest:
-  ihre Anordnung bleibt stehen, ein Tipp auf ein gesetztes Teil nimmt es zurück („rückgängig statt
-  bestätigen"). Richtige Teile festzusperren wäre bequem und würde die Lösung verraten — bei fünf
-  Paaren stünde das fünfte damit da. (Dass bei einer Paarung nie genau n−1 Paare stimmen können,
-  ist derselbe Grund, aus dem die Zahl „4 von 5" dort nicht vorkommt.)
-- **Für `summary.ts` zählt sie wie jede andere Frage.** Eine mehrteilige Antwort, die beim ersten
-  Mal ganz stimmt, ist mehr Evidenz als ein angetippter Vierer-Multiple-Choice, nicht weniger. Was
-  dort eine Ausnahme braucht, ist nur `answered_by = 'tapped'`: bei einer Vokabel ersetzt Antippen
-  das Produzieren, hier **ist** Antippen die Form der Aufgabe — die Klassenarbeit verlangt sie, nur
-  mit einem Stift statt einem Finger.
+App: `components/practice/StructuredAnswer.tsx` switches on `task_view.type`; a new kind adds
+its component there and nothing else on the screen. Every surface keeps its arrangement in the
+draft (`lib/drafts.ts`), so a theme switch — a remount — keeps it, brings its own "Prüfen" in the
+pinned bar, and that waits until the arrangement is complete. `OrderAnswer.tsx` is one gesture:
+tap the elements in order, they get numbers; tapping a numbered one takes it back with
+everything after it. The place is said in words to a screen reader ("…, Platz 2").
 
-**Was gar nicht angelegt wird.** Eine Aufgabe, deren Lösung nicht die einzige ist, gibt keine Frage
-(`usablePartsTask`, wie `barItem` bei unmöglichen Parametern): doppelte Elemente, eine linke Seite
-mit zwei passenden rechten, ein Element in zwei Gruppen, eine Zeile schmaler als der Kopf, eine
-Tabelle ohne Lücke, eine Zahlenlücke mit einem Wort als Schlüssel. Und die eine Prüfung, die Issue
-#228 namentlich verlangt: sind **alle** Elemente Zahlen, muss die Folge streng monoton sein
-(auf- oder absteigend) — sonst wird nichts angelegt. Der Preis ist, dass eine Zahlenfolge nach einem
-anderen Kriterium nicht schreibbar ist; der Gegenwert ist, dass ein falscher Schlüssel auffällt,
-bevor sie die Frage sieht.
+**Room on a small phone** (`components/practice/PartsArea.tsx`, rule 16). The question card never
+shrinks and 44 pt per touch target is the floor; an allowed task can still be taller than the room
+left (the contract allows twelve elements in four groups, eight long steps). The parts therefore
+stand in a `scroll-list` above the pinned "Prüfen", and while a structured surface is shown the
+middle column keeps at least the question's measured height, plus room for Buddy's reply once she
+has checked (`STRUCTURED_REPLY_ROOM` in `app/practice/[id].tsx`). Measured in the walkthrough: on
+390×844 every walkthrough task fits whole; on 360×740 the start of the twelve-element grouping
+scrolls inside itself by about one group row, and after a check of five long pairs the reply stays
+visible while the pairs scroll. Before this floor a tall arrangement was drawn over the question
+(found in the shots of #229).
 
-Dasselbe eine Ebene weiter für die **Wertetabelle** (Issue #230, „Jeder Wert wird aus der Funktion
-nachgerechnet"): setzt das Modell `computed` — Ausdruck, Eingabespalte, Ergebnisspalte — rechnet der
-Server **jeden** Wert mit `compileExpression` nach und legt bei einer einzigen Abweichung keine Frage
-an. Das ist `keyCheck.ts` (Issue #157) über eine ganze Tabelle: ein Rechenfehler des Modells kostet
-eine Frage, nie ihr Vertrauen in eine Antwort, die richtig war. Ohne das Feld ist die Tabelle eine
-gewöhnliche Tabelle, deren Schlüssel niemand nachrechnen kann, und dann wird darüber auch nichts
-behauptet. **Noch nicht gebaut** sind die drei anderen gerechneten Tabellen aus #230 — Zahlenmauer,
-Vierfeldertafel, Wahrheitstabelle: jede braucht ihre eigene geprüfte Form (eine Zahlenmauer ist keine
-Tabelle, eine Wahrheitstabelle braucht Logik statt Arithmetik), und halb gebaut wären sie genau die
-„drei zusammenhanglosen Halbsysteme", die dieses Feature vermeiden sollte.
+**Tabelle ausfüllen** (`table_fill`, issue #230, `practice/table.ts`). A table of at most 6
+columns × 10 rows (like `TableFigure`), some cells gaps. The model writes every cell WITH its
+value and marks the gaps (`{text, gap, also}`; `also` = up to 4 accepted spellings), plus an
+optional `family` code can recompute. Code names the gaps by place (`r0c2` = row 0, column 2),
+decides how each is typed (`input`: `math` for a number or term — the math keys come up —,
+`text` for a word) and stores the keys in `items.task`; the view (`task_view`) carries the
+cells she reads and the gaps' ids and inputs, never a key. `answer` is the readable solution row
+by row ("ich: ging · du: gehst, gingst").
 
-**Wie viel auf ein 360×740-Handy geht** (`components/practice/PartsBoardAnswer.tsx`, nachgerechnet,
-nicht geschätzt). Vom Bildschirm bleiben nach Kopfzeile, Fragekarte und der Leiste mit „Prüfen"
-**459 pt** für das Brett (bei dreizeiliger Frage 404). Ein Tippziel ist 44 pt (`TOUCH`), und bei
-15 pt Schrift passen über die ganze Breite 27 Zeichen in eine Zeile. Daraus: acht kurze Elemente
-254 · vier Paare 330 · eine sechszeilige Konjugationstabelle 367 — alles mit Luft. Auch der
-schlimmste Fall, den `order` zulässt, passt: acht Elemente mit 48 Zeichen sind 446.
+Regel 0 on what the model wrote (`tableProblem`; every rejection is a unit test): always the
+structure — one cell per heading in each row (a wall: row k has k bricks and no headings), at
+least one gap and one visible cell, no empty key, no word key standing in its own column heading
+or row label, a solution that fits `items.answer`. And per declared family, recomputed:
+`values` — every value (shown or gap) is `fn` at its x, compiled by `shared-math`'s
+`compileExpression`, to the value's own rounding (x in the headings with one row of values, or
+in the first of two columns); `wall` — every brick is the exact sum of the two under it;
+`totals` (Vierfeldertafel) — the last column and the last row are the exact sums of their row and
+column. A table that does not add up gives no question; nothing is repaired. Truth tables are
+not recomputed yet: they pass with the structural checks only, like a conjugation table. A table
+without a declared family is not recomputed either — whether it is checked is the model's
+declaration, and that is a known weakness (the review found the same for `parts`).
 
-Drei Formen haben aber **erlaubte** Eingaben, die auf dieses Handy nicht passen: sechs Paare mit je
-40 Zeichen (590), zwölf Elemente mit 32 Zeichen in vier Gruppen (866), zehn Tabellenzeilen mit
-Lücken (543). Die Zahlen stehen so in den Issues (#229: 3–6 Paare, 4–12 Elemente; #230: bis 6×10),
-und sie sind keine Übertreibung — „Begriff ↔ Erklärung" ist eine der häufigsten Zuordnungen
-überhaupt. Die Fragekarte darf dafür nicht schrumpfen, und 44 pt pro Tippziel ist der Boden. Also
-gibt **der Brettbereich** nach, in dieser Reihenfolge: das Gespräch darüber gibt seinen Platz als
-Erstes her (`flexBasis: 0`), dann schiebt sich das Brett in sich selbst — als `scroll-list`, die
-eine Kategorie, die `tests/web/fit.ts` erlaubt und die hier auch stimmt: was dort scrollt, ist eine
-Liste, die sie durchgeht. Die Frage bleibt stehen, und die Seite läuft nicht über.
+Her answer (`checkTable`): every gap once and non-empty, else 422 `parts_mismatch`. Each cell
+goes through `ruleCheck` like a single answer — a number by `numericVerdict`, a word by
+`writtenAgainst` with its near misses and the subject's spelling rule (D-2), a term by its text
+and then by value (`checkPath` over "key ↵ answer": the same value at every probe point). A
+table cell is **closed** — it holds its key and the listed spellings and nothing else — so a
+cell no rule calls right or nearly right is not right yet, and no cell goes to the tutor
+(0 model calls per answer). In a recomputed table a cell asks for an amount, so another form of
+the right value is right (as for #162's bars); elsewhere it is nearly right (D-3), like a term
+that has the key's value but is written otherwise. The reply counts and names
+(`tableReply`): "2 von 3 Feldern stimmen. Schau nochmal bei „du“ / „Präteritum“." — a cell by
+its row label and heading, else by row and column numbers, a brick by row and place; three at
+most by name, the rest counted. When no cell is right but some are nearly right, it never says
+"none is right": it says they are almost there and names them (`table_almost`). Her cells stand
+in the thread in reading order ("6 · 8 · 20").
 
-**Woher sie kommen.** Aus einem Thema im Chat und aus dem Probetest (`generate.ts` `KINDS`), und aus
-dem Foto (`extract.ts`): dort entscheidet **die gedruckte Aufgabenstellung**, nicht ihr Inhalt — eine
-Aufgabe, die ordnen, verbinden, zuordnen oder eine Tabelle vervollständigen lässt, behält diese Form
-und wird **nicht** zu Wissensfragen über ihren eigenen Inhalt (`PARTS_FROM_SHEET`; das ist die
-Spiegelung von Issue #198). Nicht in der Hausaufgabenhilfe: dort ist die Aufgabe die, die sie
-mitgebracht hat, und ein Brett wäre eine Form, die das Blatt nicht hat. Die Lösung steht gerendert
-in `items.answer`, damit „Lösung zeigen", die Fragenliste eines Blattes, der Leak-Check für Tipps
-und das Zurücknehmen eines Urteils unverändert weiterlaufen; die Textgrenzen in `contracts/parts.ts`
-sind so gerechnet, dass die größte erlaubte Aufgabe jeder Form in diese Spalte passt.
+App: `TableAnswer.tsx` shows the table as in the exercise book (a wall centred, brick on brick);
+each gap is a small field, Enter goes to the next gap and in the last one checks; the math keys
+stand above "Prüfen" while a number cell has the focus. Her cells are kept in the draft, so after
+a wrong check she changes only the cell named. The table is as wide as the screen; only columns
+with words to type can make it wider, and only then does it scroll sideways, inside itself.
+
+**Match — pairs and groups** (`match`, issue #229, on the same foundation). One shape for two
+forms: she takes an element on the LEFT (`left`, ids `a`, `b`, … by display position) and puts it
+to one on the RIGHT (`right`, ids `r1`, `r2`, …). `pairs`: 3–6 lefts and as many partners, every
+left with exactly one right and every right with exactly one left. `groups`: 4–12 elements and
+2–4 groups, every element in exactly one group, no group empty. The task holds `form`, both sides
+and the key (one `{left, right}` link per left); the view the same without the key; the answer
+`links`, every left once (a partner twice in a pairing → 422 `parts_mismatch`). The model writes
+only the correct links (`pairs: [{left, right}]` or `groups: [{name, elements}]`, exactly one of
+them, `MATCH_RULES` without an example sentence). Code rejects — and stores nothing, repairs
+nothing — neither or both forms (`form`), counts out of range (`count`), an empty group
+(`empty_group`), one element written to two places (`ambiguous`, seen on the draft by
+`matchDraftProblem`), and any two texts alike after normalising, across both sides
+(`duplicate`); `matchProblem` re-checks a stored task (a key that misses, doubles or invents a
+link → `not_mapping`). The display is shuffled deterministically and never already solved: in a
+pairing fewer than half of the rows line up, a grouping's elements never stand sorted by their
+groups (the groups keep the model's order). A prepared hint that states a whole link (both sides
+as words) is dropped. Checking is exact, link by link: the reply counts ("4 von 5 Paaren stimmen
+schon." / "5 von 7 sind schon richtig einsortiert."); which one is wrong it names only from the
+second miss on, as the next rung of the hint ladder (`structuredNamesPart` → counts as a hint),
+and the third miss explains the solution.
+
+App: `MatchAnswer.tsx`. Pairs stand in two columns (five pairs are five rows; the columns share
+the width by their longest words, `leftShare`); tap one, then its partner (either way round), and
+both carry the pair's number **inside** the chip, at body size — not a small badge on the corner.
+Groups follow the display idea of the removed `parts` board, because there the box IS the state:
+the elements she has not sorted yet stand above, every group is a row with its name, and an
+element she puts in a group moves INTO that row, next to the name. Tapping it there takes it back
+out. Tapping a group row puts the element she holds into it; a group only takes something while
+she holds an element. What she holds is kept in the draft with the links, so a theme change does
+not drop it. One line of instruction until the first tap, nothing else; a screen reader hears
+"…, Paar 2 mit …" / "…, in Nomen". The walkthrough measures five long-worded pairs and twelve
+elements in four groups on 390×844 and 360×740, light and dark.
 
 **Die Notenzeile — lesen, selbst schreiben, anhören** (`contracts/staff.ts`,
 `practice/staff.ts`, `components/math/StaffLine.tsx`, `lib/music/`, Migration
@@ -2890,7 +2929,11 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   Migrations are therefore **additive only** — new tables, new columns with defaults, widened
   constraints; never a drop or rename that yesterday's code would trip over. A column that must
   go is stopped being written first and removed in a later release, when no deployed code reads
-  it. After applying migrations, the Supabase advisors are run once (security + performance —
+  it. One deliberate exception: `0080_drop_parts_task.sql` drops `items.parts_task` in the same
+  release that stops reading it (#224); the code before it reads that column in every session
+  view, so between applying 0080 and promoting, the old build's practice screen fails. The file
+  says so, and it can be moved to a later release on its own — nothing else needs it. After
+  applying migrations, the Supabase advisors are run once (security + performance —
   issue #72); RLS-without-policy INFO lines are the deliberate design, anything new is triaged.
 - A dev build on a phone that talks to a real backend names its host on screen
   (`components/lb/DevHostNote.tsx`, dev builds only — issue #79: a test run on real data must
