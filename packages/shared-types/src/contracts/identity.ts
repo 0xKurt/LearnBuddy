@@ -24,14 +24,21 @@ export const Pin = z.string().regex(/^\d{4,8}$/, '4–8 digits');
  *
  * `other` is the escape for a learner who is not at a German school (the app ships in five
  * languages): a required field with sixteen German states would be a dead end for her.
- * `other` is a given answer, not a missing one — and once the curriculum places exist they are
- * to treat it exactly like `null`: no state-specific rule applied.
+ * `other` is a given answer, not a missing one — and it is treated exactly like `null`: no
+ * state-specific rule applied, and a more cautious judgement instead.
  *
- * STORED ONLY, NOT YET READ (issue #214, found by the audit in #223). Nothing in practice,
- * generation, extraction, the tutor or Buddy's prompts looks at this value today; it is
- * collected for a purpose that is not yet built. That is the uncomfortable state for a datum
- * about a child, and it is written here rather than left for someone to discover: do not
- * describe this field as effective until a place reads it and a test proves it.
+ * WHAT READS IT (issue #214, since 02.10.2026 — this list is what is wired and tested, not
+ * what is planned). The knowledge itself is a table in the API, one entry per place and one
+ * ruling per state, each with the curriculum it comes from
+ * (`apps/api/src/modules/curriculum/points.ts`). Three places read this field through it:
+ * question GENERATION from a topic (`practice/generate.ts`) and from a photographed sheet
+ * (`materials/service.ts`) are told the rule of her state; JUDGING an answer
+ * (`practice/tutor.ts` via `service.ts`) is told it before it judges; and a practice TEST drops
+ * a question her state does not teach at her year (`curriculum/state.ts` → `offCurriculum`).
+ * Where no rule applies — `other`, `null`, or one of the ten states nobody has researched yet —
+ * no state rule is used and a model "wrong" becomes "partly right" rather than a claim nobody
+ * can back (`enforceTutorInvariants`). Proof: `apps/api/src/__tests__/curriculum.int.test.ts`
+ * judges one question with one answer differently in Bayern and in NRW.
  *
  * The model never writes this value (CLAUDE.md rule 2): it comes from a tap at registration.
  */

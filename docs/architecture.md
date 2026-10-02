@@ -78,7 +78,9 @@ less is refused at boot, and a database region outside the EU is logged as a boo
   every profile from before this change has no value, nothing blocks or fails on it, and the
   state-specific rules are simply not applied for such a learner. `PATCH /learner` sets or corrects
   it like level and grade (bumping `context_version`, rule 4); it is in the export and goes with the
-  learner row on deletion (docs/privacy.md).
+  learner row on deletion (docs/privacy.md). **What reads it** is §Lehrplan und Bundesland — three
+  places, and the same cautious path for `other`, for no value and for a state nobody has
+  researched yet (issue #214).
 - Under 16: loosening contact to the phone, account data, sign-in details, a birth-date
   correction and agreeing to a new privacy text need a short-lived admin token (PIN,
   `x-admin-token`, 5 minutes, HMAC; the app drops it after the one step). The gate is the age,
@@ -1499,6 +1501,49 @@ never the answer, accepted answers or the correct choice. She can delete a bad q
 (`DELETE /materials/:materialId/items/:itemId`: archives it, idempotent, confirm sheet; practice
 selection already skips archived items) and rename the material (`PATCH /materials/:id`,
 1–120 characters, trimmed). Both bump the context version; another learner's ids are 404.
+
+## Lehrplan und Bundesland
+
+`modules/curriculum/` (Issue #214). Der Lehrplan ist Ländersache: an **zwölf belegten Stellen**
+(`docs/lehrplan-und-uebungsformen.md`) ist dieselbe Antwort in einem Land richtig und im nächsten
+unvollständig — „Subjekt, Objekt, Adverbial" ist in NRW die ganze Antwort und in Bayern noch nicht
+(§6.2), der Signifikanztest ist in Berlin, Brandenburg und BW Pflicht und kommt im Kernlehrplan NRW
+und in Bayern **nicht vor** (§3).
+
+**Das ist Fachwissen, kein Code-Zweig.** Sechzehn `if`-Ketten in zwölf Dateien wären nicht prüfbar;
+die Unterscheidung liegt deshalb als **Tabelle** in `curriculum/points.ts`: ein Eintrag je Stelle,
+darin je Land eine Regel (`expects`), ob das Land die Stelle überhaupt unterrichtet (`taught`), ab
+welchem Jahrgang (`grades`) — und **je Regel die Quelle** (welcher Lehrplan, welches Land, welches
+Jahr). Ohne die Quelle wäre jeder Eintrag eine unbelegte Behauptung darüber, was in der Arbeit eines
+Kindes zählt (Regel 5). Gelesen wird die Tabelle an genau zwei Stellen (`curriculum/state.ts`):
+eine wählt aus, was für eine Lernende gilt, eine schreibt es als Zustand in den Prompt. Das Modell
+darf die Tabelle **benutzen**, nie ergänzen (Regel 1); sein einziger Beitrag ist, **welche** Stelle
+eine Frage betrifft — ein Schlüssel aus geschlossener zod-Enum, gespeichert in
+`items.curriculum_point` (Migration `0074_curriculum_point.sql`).
+
+**Drei Stellen lesen es** — und nur diese drei:
+
+1. **Aufgaben schreiben.** `practice/generate.ts` (ein Thema) und `materials/service.ts` (ein
+   fotografiertes Blatt) bekommen den Block `CURRICULUM` mit den Stellen ihres Jahrgangs und der
+   Regel ihres Landes, damit der Schlüssel in ihrer Terminologie steht.
+2. **Beurteilen.** `practice/service.ts` → `tutorContext` stellt genau die eine Regel vor das
+   Urteil (`curriculumLine`).
+3. **Übungstest.** Code lässt eine Frage weg, die ihr Land in ihrem Jahrgang nicht unterrichtet
+   (`offCurriculum`) — **nur** im `test`-Modus und **nur** ohne eigene Blätter: in freier Übung
+   fragt sie, was sie will, und ein Blatt ihrer Lehrkraft ist ihre Wirklichkeit, was ein Lehrplan
+   auch sagt.
+
+**Der Standardpfad ist der unbekannte.** `other` (Schule außerhalb Deutschlands), **kein Wert**
+(jedes Profil vor #199) und jedes der **zehn Länder, für die noch kein Lehrplan gelesen wurde**
+nehmen denselben Zweig: keine Landesregel, das Land wird nicht genannt, und das Urteil wird
+zurückhaltender statt sicher falsch — ein Modell-„falsch" wird an einer solchen Stelle zu
+`partially_correct` (`enforceTutorInvariants`). Ein unerforschtes Land ist ausdrücklich **nicht**
+„kein Unterschied": ein erfundener Eintrag wäre genau der sichere Fehler, den die Tabelle
+verhindert. Weggelassen wird nie aus Unwissen — ohne gelesene Regel bleibt jede Frage stehen.
+
+Belegt in `src/__tests__/curriculum.int.test.ts` (dieselbe Frage, dieselbe Antwort, zwei Länder,
+zwei Urteile; `null`, `other` und `he` erzeugen denselben Prompt Wort für Wort) und
+`modules/curriculum/__tests__/state.test.ts` (jede Regel nennt Lehrplan, Land und Jahr).
 
 ## Practice
 

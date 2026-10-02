@@ -9,6 +9,7 @@
 
 import type {
   AnswerRequest,
+  CurriculumRegion,
   Figure,
   ItemView,
   SessionMode,
@@ -27,6 +28,7 @@ import { t, type MessageKey } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
+import { cautiousAt, curriculumLine, pointOf } from '../curriculum/state.js';
 import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { pickAnswers, surfaceOf, taskOf, untriedPicks } from './bars.js';
@@ -71,6 +73,12 @@ export type PracticeLearner = {
   level: string;
   grade: number | null;
   birth_date: string;
+  /**
+   * The Bundesland of her school (migration 0068, issue #199) — what decides which curriculum
+   * rules apply when a question is written and when an answer is judged (issue #214,
+   * `modules/curriculum/`). Null and `other` mean no state rule is applied.
+   */
+  curriculum_region: CurriculumRegion | null;
 };
 
 export type ItemRow = {
@@ -92,6 +100,12 @@ export type ItemRow = {
   worked_solution: string | null;
   tolerance: number | null;
   spelling: 'strict' | 'gentle' | null;
+  /**
+   * One of the twelve state-dependent curriculum places (migration 0074, issue #214), or null
+   * for a question at none of them. A plain string, not the enum: the column carries no CHECK,
+   * and `pointOf` reads a key the table no longer knows as "no place".
+   */
+  curriculum_point: string | null;
   /**
    * The reviewed fraction-bar task this question's text, picture and key were COMPUTED
    * from (issue #162), or null for every question the model wrote itself. Read as a task
@@ -870,6 +884,9 @@ export async function answerItem(
   }
   // The reviewed task this question was computed from, if any (issue #162).
   const barTask = taskOf(item.bar_task);
+  // The curriculum place this question is at, if any (migration 0074, issue #214). Read
+  // forgivingly: an unknown key means "no place", never a wrong rule.
+  const curriculumPoint = pointOf(item.curriculum_point);
   // A request for help is not an answer: nothing for the rules to check.
   const byRules: RuleVerdict = hintRequest
     ? 'unknown'
@@ -1046,6 +1063,14 @@ export async function answerItem(
                 language: learner.locale,
                 material: item.extracted_text ? item.extracted_text.slice(0, MATERIAL_CHARS) : null,
                 preferences: preferences.map((p) => p.statement),
+                // What her Bundesland expects at this question's curriculum place — or, when
+                // no state rule applies, that none does and the judgement stays cautious
+                // (issue #214). Null for a question at none of the twelve places.
+                curriculum: curriculumLine({
+                  point: curriculumPoint,
+                  region: learner.curriculum_region,
+                  grade: learner.grade,
+                }),
               }),
             },
           ],
@@ -1071,7 +1096,15 @@ export async function answerItem(
         });
         const parsed = TutorDecision.safeParse(r.json);
         if (!parsed.success) throw new Error('tutor output invalid');
-        return enforceTutorInvariants(parsed.data, rule, articleMissing(rule, item));
+        return enforceTutorInvariants(
+          parsed.data,
+          rule,
+          articleMissing(rule, item),
+          // At a place where the states disagree and no rule applies to her, a confident
+          // "wrong" is a claim nobody can back: it becomes "partly right" (issue #214).
+          curriculumPoint !== null &&
+            cautiousAt(curriculumPoint, learner.curriculum_region, learner.grade),
+        );
       };
       // Homework: a task is solved only when code finds her final answer (by value, or the key
       // or an accepted answer in her words). A "correct" code cannot confirm is a right step:

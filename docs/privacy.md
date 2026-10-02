@@ -45,10 +45,19 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   matter for the states, and at twelve verified places in
   [lehrplan-und-uebungsformen.md](lehrplan-und-uebungsformen.md) the same answer is right in one
   state and wrong in another — so without it Buddy can practise something with her that counts as
-  a mistake in her own class test. **Stand 02.10.2026: der Wert wird erhoben und gespeichert,
-  aber von keiner Stelle gelesen** (Issue #214). Der genannte Zweck ist also der beabsichtigte,
-  nicht der heute wirksame; bis eine Stelle ihn liest, ist dies ein Datum ohne Wirkung, und das
-  steht hier, statt dass es jemand herausfinden muss. **Berichtigung (Art. 16):** der Wert ist
+  a mistake in her own class test. **Was der Wert heute tatsächlich bewirkt** (Issue #214, seit
+  02.10.2026 — und das ist die Liste der Stellen, die ihn lesen, nicht die der geplanten): das
+  Fachwissen dazu liegt als Tabelle im Code (`apps/api/src/modules/curriculum/points.ts`) — zwölf
+  Stellen, je Bundesland eine Regel mit Lehrplanquelle. Gelesen wird der Wert an drei Stellen:
+  (1) beim **Schreiben** von Aufgaben (aus einem Thema und aus einem fotografierten Blatt) steht
+  die Regel ihres Landes im Modell-Auftrag; (2) beim **Beurteilen** einer Antwort steht sie vor dem
+  Urteil; (3) in einem **Übungstest** lässt der Code eine Frage weg, die ihr Land in ihrem Jahrgang
+  nicht unterrichtet (in freier Übung nie — dort fragt sie, was sie will). Mehr wird mit dem Wert
+  nicht getan: er steuert keine Inhalte, keine Werbung, keine Zielgruppe, kein Modell-Training.
+  **Wenn das Land unbekannt ist** — `other`, kein Wert, oder eines der zehn Länder, für die noch
+  kein Lehrplan gelesen wurde — wird **keine** Landesregel angewandt; das Urteil fällt dann
+  zurückhaltender aus (nie „falsch" allein wegen der Wortwahl), statt sicher falsch zu liegen.
+  Diese drei Fälle sind im Code derselbe Pfad und derselbe Text. **Berichtigung (Art. 16):** der Wert ist
   in den Einstellungen unter „Bundesland" jederzeit änderbar, über dasselbe Auswahlfeld wie bei
   der Registrierung und ohne PIN — eine Hürde würde genau die Korrektur verhindern, für die der
   Weg da ist, und ein falscher Wert hier schadet niemandem (Issue #216). It is not an address and not a location: it is a choice from a

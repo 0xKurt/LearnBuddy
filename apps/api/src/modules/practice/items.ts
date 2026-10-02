@@ -12,6 +12,7 @@ import { compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import type { Db } from '../../lib/db.js';
+import { CurriculumPointId } from '../curriculum/state.js';
 import { dollarMathField, dollarMathRuns } from './dollarMath.js';
 import { mentionsSolution } from './tutor.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
@@ -105,6 +106,12 @@ export const ItemDraft = z.object({
       'short/long/vocab: "strict" when the task practises spelling, capitalisation or punctuation (Rechtschreibung, Kommasetzung, Groß-/Kleinschreibung); "gentle" when they do not matter for the answer; null to leave it to the subject',
     ),
   source_excerpt: z.string().trim().max(300).nullable(),
+  curriculum_point: CurriculumPointId.nullable()
+    .default(null)
+    .catch(null)
+    .describe(
+      'The state-dependent curriculum place this question is at — one of the keys listed under CURRICULUM, or null when it is at none of them (almost every question). What the place then means for her Bundesland is decided by the server, never here.',
+    ),
   hints: z
     .array(z.string().trim().min(1).max(300))
     .max(3)
@@ -337,8 +344,8 @@ export async function insertItems(
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
-                          hints, worked_solution, tolerance, spelling, bar_task)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) returning id`,
+                          hints, worked_solution, tolerance, spelling, bar_task, curriculum_point)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -362,6 +369,7 @@ export async function insertItems(
         it.tolerance,
         it.spelling,
         it.bar_task ? JSON.stringify(it.bar_task) : null,
+        it.curriculum_point,
       ],
     );
     if (asked) ids.push(row.id);

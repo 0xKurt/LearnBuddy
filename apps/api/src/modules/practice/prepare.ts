@@ -31,7 +31,8 @@ export function prepareOffered(
     const offer: Offer = action.summary;
     deps.background(async () => {
       const learner = await deps.db.maybeOne<PracticeLearner>(
-        `select id, display_name, locale, level, grade, birth_date from learners where id = $1`,
+        `select id, display_name, locale, level, grade, birth_date, curriculum_region
+           from learners where id = $1`,
         [learnerId],
       );
       if (!learner) return;
