@@ -1869,8 +1869,13 @@ item → 422 `no_parts`; a stored task that no longer reads → 409 `task_unread
 `incorrect` with that code-written reply, and the question stays open; nothing is locked and
 nothing cleared, her arrangement stays in the draft. The rest is the ordinary flow: the third
 miss explains the solution, a test only notes the answer (one try, no verdict until the end),
-FSRS rates the closed item, turns are idempotent per `client_turn_id`. Her answer stands in the
-thread in her order; the closing answer of an order or a match is recorded as `tapped`, which
+FSRS rates the closed item, turns are idempotent per `client_turn_id`. Her answer is stored as a
+turn in words, in her order (for the tutor's history, a dispute and the summary). While the
+question is open the screen does not echo it as a bubble (`ItemThread` `echoAnswers`; once it is
+closed the board is gone and the bubble with its verdict shows): her arrangement stands on the board,
+which is the state, and Buddy's reply says the verdict in words. Echoed, four pairs were a
+four-line bubble that the room above the board could only show as a cut-off strip under the
+question card (shot 39e). The closing answer of an order or a match is recorded as `tapped`, which
 for a structured kind still counts towards a topic in the summary (tapping is the only way to
 answer it, not recognition); a table's is `typed`.
 
@@ -1939,8 +1944,8 @@ that has the key's value but is written otherwise. The reply counts and names
 (`tableReply`): "2 von 3 Feldern stimmen. Schau nochmal bei „du“ / „Präteritum“." — a cell by
 its row label and heading, else by row and column numbers, a brick by row and place; three at
 most by name, the rest counted. When no cell is right but some are nearly right, it never says
-"none is right": it says they are almost there and names them (`table_almost`). Her cells stand
-in the thread in reading order ("6 · 8 · 20").
+"none is right": it says they are almost there and names them (`table_almost`). Her cells are stored as
+the turn in reading order ("6 · 8 · 20").
 
 App: `TableAnswer.tsx` shows the table as in the exercise book (a wall centred, brick on brick);
 each gap is a small field, Enter goes to the next gap and in the last one checks; the math keys
