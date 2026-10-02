@@ -69,6 +69,7 @@
     "hint_request": "Una pista, por favor",
     "missing_word": "Casi – todavía falta una palabra. Míralo otra vez.",
     "no_single_solution": "Aquí no hay una única respuesta correcta que pueda mostrarte: en un texto así, lo que cuenta es cómo lo argumentas. Dime dónde te atascas y miramos tu texto juntos.",
+    "not_lowest": "Bien ajustada. Ahora simplifícala – todos los números de delante se dividen por {{factor}}.",
     "not_quite": "Todavía no del todo. Vuelve a mirar la pregunta – o muestra la solución.",
     "one_way_intro": "Una forma de abordarlo – una, no la única:",
     "reexplain": {
@@ -89,6 +90,8 @@
     "typo_missing": "Casi – falta una letra. Míralo otra vez con calma.",
     "typo_swapped": "Casi – dos letras están cambiadas de orden. ¿Las encuentras?",
     "typo_wrong": "Casi – una letra todavía no está bien. ¿La encuentras?",
+    "unbalanced_charge": "Casi – las cargas todavía no coinciden: {{left}} a la izquierda, {{right}} a la derecha.",
+    "unbalanced_element": "Casi – cuenta otra vez el {{element}}: {{left}} a la izquierda, {{right}} a la derecha.",
     "untitled": "Práctica",
     "worked_intro": "Mira, así se hace:"
   },

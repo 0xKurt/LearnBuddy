@@ -69,6 +69,7 @@
     "hint_request": "Un indice, s'il te plaît",
     "missing_word": "Presque – il manque encore un mot. Regarde encore une fois.",
     "no_single_solution": "Il n'y a pas ici une seule bonne réponse que je pourrais te montrer : dans un texte comme celui-là, ce qui compte, c'est la façon dont tu argumentes. Dis-moi où tu bloques et on regarde ton texte ensemble.",
+    "not_lowest": "Bien équilibrée ! Il reste à simplifier – tous les nombres devant se divisent par {{factor}}.",
     "not_quite": "Pas encore tout à fait. Relis la question – ou affiche la solution.",
     "one_way_intro": "Voilà une façon de s'y prendre – une façon, pas la seule :",
     "reexplain": {
@@ -89,6 +90,8 @@
     "typo_missing": "Presque – il manque une lettre. Regarde encore de près.",
     "typo_swapped": "Presque – deux lettres sont inversées. Tu les trouves ?",
     "typo_wrong": "Presque – une lettre n'est pas encore la bonne. Tu la trouves ?",
+    "unbalanced_charge": "Presque – les charges ne correspondent pas encore : {{left}} à gauche, {{right}} à droite.",
+    "unbalanced_element": "Presque – recompte le {{element}} : {{left}} à gauche, {{right}} à droite.",
     "untitled": "Exercice",
     "worked_intro": "Regarde, voilà comment faire :"
   },

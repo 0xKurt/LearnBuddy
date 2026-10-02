@@ -1,6 +1,7 @@
 // Test environment: the real app and schema, fake outside world, one clock.
 // requires live verification in Claude Code session (needs a running Postgres)
 
+import type { CurriculumRegion } from '@learnbuddy/shared-types/contracts';
 import type { Hono } from 'hono';
 
 import { createApp } from '../app.js';
@@ -175,6 +176,11 @@ export async function onboard(
     name?: string;
     birthDate?: string;
     locale?: 'de' | 'en' | 'fr' | 'es' | 'it';
+    /**
+     * The Bundesland her school is in (issue #199). Required by POST /learner, so the
+     * harness always sends one; a test that cares which state it is passes its own.
+     */
+    region?: CurriculumRegion;
     contactEnabled?: boolean;
     timezone?: string;
     /** Set up the adult PIN during onboarding, as the app does for a child profile. */
@@ -205,6 +211,7 @@ export async function onboard(
     display_name: opts.name ?? (relation === 'child' ? 'Lina' : 'Alex'),
     birth_date: opts.birthDate ?? (relation === 'child' ? '2014-03-10' : '1995-06-01'),
     locale: opts.locale ?? 'de',
+    curriculum_region: opts.region ?? 'ni',
     minor_consent: relation === 'child',
     ...(opts.contactEnabled !== undefined ? { contact_enabled: opts.contactEnabled } : {}),
     // The parents' first PIN goes with the profile, in one request (as the app sends it).

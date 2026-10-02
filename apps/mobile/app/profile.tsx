@@ -8,7 +8,7 @@
 // docs/DESIGN-BRIEF.md §Onboarding "Erwachsene Person ist hier"). No age checks
 // beyond the birth date: the app says what applies and offers the real next step.
 
-import type { AppLocale } from '@learnbuddy/shared-types/contracts';
+import { CurriculumRegion, type AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -30,6 +30,7 @@ import { Checkbox } from '../components/lb/Checkbox.js';
 import { Icon } from '../components/lb/Icon.js';
 import { LanguageFlags } from '../components/lb/LanguageFlags.js';
 import { LbTextInput } from '../components/lb/LbTextInput.js';
+import { PickerField, picked } from '../components/lb/PickerField.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Segmented } from '../components/lb/Segmented.js';
 import { Bone, SkeletonGroup } from '../components/lb/Skeleton.js';
@@ -66,6 +67,14 @@ export default function Profile() {
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
   const [locale, setLocale] = useState<AppLocale>(currentLocale());
+  /**
+   * The Bundesland her school is in — a required field at registration (owner 2026-10-02,
+   * issue #199): "Einfach bei der Registrierung als Pflichtfeld abfragen". It decides what
+   * counts as a right answer at twelve verified places
+   * (docs/lehrplan-und-uebungsformen.md), so it is asked, never guessed: no preselection,
+   * and the CTA waits for it.
+   */
+  const [region, setRegion] = useState<CurriculumRegion | null>(null);
   const [consent, setConsent] = useState(false);
   // Contact opt-in, decided at registration (owner 2026-09-28): for a child by
   // the adult in the parents' step, from 16 by the learner. Off by default.
@@ -92,6 +101,7 @@ export default function Profile() {
     month: '',
     year: '',
     locale: '',
+    region: '',
   });
   const restored = useRef(false);
   useEffect(() => {
@@ -104,12 +114,16 @@ export default function Profile() {
     if (d.month) setMonth(d.month);
     if (d.year) setYear(d.year);
     if (d.locale) setLocale(d.locale as AppLocale);
+    // A kept draft is device data, not a trusted value: anything that is not one of the
+    // sixteen keys (an older draft, a changed list) is dropped and asked again.
+    const kept = CurriculumRegion.safeParse(d.region);
+    if (kept.success) setRegion(kept.data);
   }, [form.ready, form.draft]);
   useEffect(() => {
     if (!form.ready) return;
-    form.keep({ relation: relation ?? '', name, day, month, year, locale });
+    form.keep({ relation: relation ?? '', name, day, month, year, locale, region: region ?? '' });
     // `form` is stable per key; keeping it out of the list avoids a write per render.
-  }, [form.ready, relation, name, day, month, year, locale]);
+  }, [form.ready, relation, name, day, month, year, locale, region]);
   // The number pad has no return key: a filled field hands focus to the next one.
   const monthRef = useRef<TextInput>(null);
   const yearRef = useRef<TextInput>(null);
@@ -132,7 +146,12 @@ export default function Profile() {
   const tooYoungSelf = relation === 'self' && minor;
   const pinOk = /^\d{4}$/.test(pin) && pin === pinRepeat;
   const learnerReady =
-    relation !== null && name.trim().length > 0 && birthDate !== null && !tooYoungSelf;
+    relation !== null &&
+    name.trim().length > 0 &&
+    // The Bundesland is required (issue #199): no preselection, so the CTA waits for a tap.
+    picked(region) &&
+    birthDate !== null &&
+    !tooYoungSelf;
   // Under 16 the parents consent and set the PIN; from 16 she decides herself (ADR 0006).
   const needsParents = relation === 'child' && minor;
   const ready = learnerReady && (!needsParents || (consent && pinOk));
@@ -151,11 +170,13 @@ export default function Profile() {
       ? t('profile.cta_hint_who')
       : name.trim().length === 0
         ? t('profile.cta_hint_name')
-        : birthDate === null
-          ? t('profile.cta_hint_birth')
-          : tooYoungSelf
-            ? t('profile.cta_hint_adult')
-            : null;
+        : !picked(region)
+          ? t('region.cta_hint')
+          : birthDate === null
+            ? t('profile.cta_hint_birth')
+            : tooYoungSelf
+              ? t('profile.cta_hint_adult')
+              : null;
 
   // iOS has no live regions: the two inline problems say themselves (lib/announce.ts).
   useAnnounce(dateComplete && !birthDate ? t('profile.birth_date_invalid') : null);
@@ -163,7 +184,9 @@ export default function Profile() {
   useAnnounce(whyWait > 0 ? waitHint : null, { key: whyWait });
 
   async function submit() {
-    if (!relation || !birthDate || busy) return;
+    // The Bundesland is part of this: the server refuses a profile without one, and the
+    // CTA is only live once it is chosen — nothing is sent half filled (issue #199).
+    if (!relation || !birthDate || !picked(region) || busy) return;
     setBusy(true);
     try {
       // One request: the child's profile, the parents' consent and their PIN
@@ -173,6 +196,7 @@ export default function Profile() {
         display_name: name.trim(),
         birth_date: birthDate,
         locale,
+        curriculum_region: region,
         minor_consent: needsParents ? consent : false,
         contact_enabled: contactOk,
         ...(needsParents ? { pin } : {}),
@@ -308,6 +332,26 @@ export default function Profile() {
               <View style={{ gap: 8 }}>
                 <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>{t('profile.language')}</Text>
                 <LanguageFlags value={locale} onChange={setLocale} compact />
+              </View>
+              {/* The Bundesland, required (owner 2026-10-02, issue #199). It sits above the
+                  date fields for the same reason the language does: those open the keyboard,
+                  and anything below them was never seen. One row, because the sixteen
+                  choices live in the sheet it opens — a form of sixteen would not fit a
+                  360×740 phone (rule 16), and the sheet is also where the reason is said. */}
+              <View style={{ gap: 8 }}>
+                <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>{t('region.label')}</Text>
+                <PickerField
+                  label={t('region.label')}
+                  placeholder={t('region.choose')}
+                  title={relation === 'self' ? t('region.title') : t('region.title_child')}
+                  body={relation === 'self' ? t('region.why') : t('region.why_child')}
+                  options={CurriculumRegion.options.map((value) => ({
+                    value,
+                    label: t(`region.names.${value}`),
+                  }))}
+                  value={region}
+                  onChange={setRegion}
+                />
               </View>
               {relation === 'self' && !minor ? (
                 <Checkbox

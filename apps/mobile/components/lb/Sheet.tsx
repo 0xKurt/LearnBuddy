@@ -39,9 +39,23 @@ type Props = {
   children: ReactNode;
   /** Pinned below the content, above the close button (a form's main action). */
   footer?: ReactNode;
+  /**
+   * Names the sheet's scrolling area for the walkthrough's fit check (tests/web/fit.ts).
+   * A sheet holding a list she browses on purpose — the sixteen Bundesländer, issue #199 —
+   * passes "scroll-list"; a short sheet needs nothing, because it does not scroll.
+   */
+  scrollTestID?: string;
 };
 
-export function Sheet({ visible, title, closeLabel, onClose, children, footer }: Props) {
+export function Sheet({
+  visible,
+  title,
+  closeLabel,
+  onClose,
+  children,
+  footer,
+  scrollTestID,
+}: Props) {
   const { palette } = useTheme();
   const { reduceTransparency } = useA11ySettings();
   const insets = useSafeAreaInsets();
@@ -177,6 +191,7 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
                 </View>
               </GestureDetector>
               <ScrollView
+                testID={scrollTestID}
                 style={{ flexGrow: 0, flexShrink: 1 }}
                 contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 14, gap: 14 }}
                 keyboardShouldPersistTaps="handled"

@@ -12,6 +12,7 @@
 //   there is a near miss where spelling is the point (decision D-2: language subjects and
 //   vocabulary, or an item marked strict) and otherwise for the tutor to judge gently.
 
+import { checkEquation, type EquationFault, looksLikeEquation, sameRatio } from './chemistry.js';
 import {
   canonicalMath,
   canonicalText,
@@ -71,11 +72,24 @@ export type RuleVerdict =
   | 'missing_word'
   | 'typo'
   | 'folded'
+  /** A reaction equation whose atoms or charge do not add up (issue #212). */
+  | 'unbalanced'
+  /** Balanced, but every coefficient divisible by the same number: right, not yet reduced. */
+  | 'not_lowest'
   | 'incorrect'
   | 'unknown';
 
 /** Near misses: partly right, not wrong. */
-export const NEAR_MISS = new Set<RuleVerdict>(['spelling', 'close', 'missing_word', 'typo']);
+export const NEAR_MISS = new Set<RuleVerdict>([
+  'spelling',
+  'close',
+  'missing_word',
+  'typo',
+  // The substances are hers and right; the counting is not finished. Wrong would be unfair
+  // and unhelpful, and the question stays open so she fixes it herself (issue #212).
+  'unbalanced',
+  'not_lowest',
+]);
 
 /** Optimal-string-alignment distance: insert, delete, replace, swap two neighbours. */
 export function editDistance(a: string, b: string): number {
@@ -233,6 +247,9 @@ const STRENGTH: readonly RuleVerdict[] = [
   'close',
   'missing_word',
   'typo',
+  // Counting is certain, so it outranks "I cannot tell" — but never a match against a key.
+  'not_lowest',
+  'unbalanced',
   'folded',
   'unknown',
 ];
@@ -287,6 +304,13 @@ export function typoShape(wanted: string, said: string): TypoShape {
 
 /** A written answer against one key. */
 function writtenAgainst(item: ItemForCheck, key: string, text: string): RuleVerdict {
+  // Counted before compared (issue #212): a reaction equation written in another order is the
+  // same equation, and no string comparison can see that. What is not countable — different
+  // substances, a hydrate, a structural formula — falls through to everything below.
+  if (looksLikeEquation(key)) {
+    const eq = checkEquation(key, text);
+    if (eq.verdict !== 'unknown') return eq.verdict;
+  }
   if (item.kind === 'formula' || isMathText(key) || isMathText(text)) {
     // Math: every operator, sign and relation counts (x=5 is not x=-5, 3,4 is not 3/4).
     if (canonicalMath(text) === canonicalMath(key)) return 'correct';
@@ -329,6 +353,23 @@ function numericVerdict(item: ItemForCheck, text: string): RuleVerdict {
   return allDifferent ? 'incorrect' : 'unknown';
 }
 
+/**
+ * Why a reaction equation is not finished, against whichever key it was counted against
+ * (issue #212). Separate from `ruleCheck` so the verdict stays a plain enum and only the
+ * reply needs the detail.
+ */
+export function equationDetail(
+  item: Pick<ItemForCheck, 'answer' | 'accepted_answers'>,
+  text: string,
+): EquationFault | null {
+  for (const key of [item.answer, ...item.accepted_answers]) {
+    if (!looksLikeEquation(key)) continue;
+    const v = checkEquation(key, text);
+    if (v.verdict === 'unbalanced' || v.verdict === 'not_lowest') return v;
+  }
+  return null;
+}
+
 export function ruleCheck(
   item: ItemForCheck,
   answer: { text: string | null; choice: number | null },
@@ -347,6 +388,17 @@ export function ruleCheck(
   const text = (answer.text ?? '').trim();
   if (!text) return 'unknown';
   if (item.kind === 'numeric') return numericVerdict(item, text);
+
+  // A ratio — a Punnett cross, an inheritance pattern — compared reduced, and ONLY when the
+  // key is a ratio too: the same characters mean division everywhere else, and deciding which
+  // from context would be guessing (rule 3, issue #175). This sits here rather than in
+  // `writtenAgainst` because a wrong ratio is certainly wrong, and STRENGTH deliberately drops
+  // a per-key 'incorrect' — a written answer that matches no key is 'unknown', not wrong.
+  for (const key of [item.answer, ...item.accepted_answers]) {
+    const ratio = sameRatio(key, text);
+    if (ratio === true) return 'correct';
+    if (ratio === false) return 'incorrect';
+  }
 
   // short / long / formula / vocab: the strongest verdict over the key and its accepted answers.
   const verdicts = [item.answer, ...item.accepted_answers].map((k) =>

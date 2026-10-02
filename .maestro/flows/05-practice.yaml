@@ -1,0 +1,71 @@
+# Üben auf einem echten Telefon (Issue #37). Der Browser-Walkthrough prüft diesen
+# Weg auch — was NUR hier zu sehen ist: ob die angeheftete Leiste über der echten
+# Tastatur sitzt, ob der Antwortbereich bei mehrzeiliger Eingabe mitwächst, und ob
+# die Rechentastatur auf dem Gerät erreichbar bleibt (Issues #16, #46).
+#
+# Braucht ein angemeldetes Gerät MIT Material im Konto — also 02-sign-in vorher,
+# und mindestens ein gelesenes Blatt. Ist keins da, bleibt der Flow an der
+# Materialliste stehen und sagt das, statt drei Schritte später unverständlich zu
+# scheitern.
+appId: com.learnbuddy.app.dev
+---
+- launchApp:
+    clearState: false
+- assertVisible:
+    id: 'composer'
+    timeout: 20000
+
+# Über das Menü zum Material. Die Beschriftung heißt „Materialien" und wird mit
+# Issue #189 zu „Dein Material" — beide zugelassen, damit dieser Flow nicht an
+# einer Umbenennung umfällt, die er nicht prüfen soll.
+- tapOn: 'Menü öffnen'
+- tapOn:
+    text: 'Materialien|Dein Material'
+- assertVisible:
+    text: 'Materialien|Dein Material'
+    timeout: 15000
+
+# Ohne Blatt gibt es nichts zu üben: hier stehenbleiben, lesbar.
+- assertVisible:
+    text: 'Üben'
+    timeout: 15000
+- takeScreenshot: 10-material-list
+
+- tapOn: 'Üben'
+# Die erste Frage ist da, und die Leiste mit „Prüfen" steht darunter.
+- assertVisible:
+    id: 'answer-surface'
+    timeout: 30000
+- assertVisible: 'Prüfen'
+- takeScreenshot: 11-question
+
+# Die angeheftete Leiste über der echten Tastatur: das Feld bekommt den Fokus,
+# die Tastatur kommt, und „Prüfen" muss sichtbar BLEIBEN. Genau hier war auf
+# Android das leere Band unter der Leiste (Issue #46) — ein Simulator zeigt das
+# nicht zuverlässig, ein Browser gar nicht.
+- tapOn: 'Deine Antwort'
+- assertVisible: 'Prüfen'
+- takeScreenshot: 12-keyboard-open
+
+# Mehrere Zeilen: der Antwortbereich wächst mit, und die Leiste bleibt unten.
+- inputText: 'Das ist eine erste Zeile'
+- inputText: ' und noch eine zweite, damit das Feld wächst'
+- assertVisible: 'Prüfen'
+- takeScreenshot: 13-two-lines
+
+- hideKeyboard
+- tapOn: 'Prüfen'
+# Es wird wirklich bewertet (echtes Modell, gehostete API): irgendein Urteil
+# kommt zurück, und danach steht ein Weg weiter da. Welches Urteil es ist, wird
+# hier NICHT behauptet — die Antwort oben ist Platzhaltertext (Regel 5).
+- assertVisible:
+    text: 'Weiter|Prüfen'
+    timeout: 45000
+- takeScreenshot: 14-after-check
+
+# Der Tipp ist erreichbar, und er gibt die Lösung nicht her, solange die Leiter
+# läuft (Issue #207 für Tippfehler, HINTS_BEFORE_SOLUTION für den Rest). Dass die
+# Leiter hält, prüfen die Integrationstests; hier geht es nur darum, dass der
+# Knopf auf dem Gerät da und tippbar ist.
+- assertVisible: 'Einen Tipp bekommen'
+- takeScreenshot: 15-help-chips

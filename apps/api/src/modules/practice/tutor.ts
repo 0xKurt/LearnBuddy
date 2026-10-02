@@ -82,6 +82,10 @@ const RULE_TEXT: Record<RuleVerdict, string> = {
   typo: 'close: a small spelling slip',
   folded:
     'differs from the solution only in capitalisation, ß/ss or punctuation — judge gently whether that matters for this question',
+  unbalanced:
+    'the right substances, but the atoms or the charge do not add up yet (counted, not judged)',
+  not_lowest:
+    'balanced correctly, but every coefficient is divisible by the same number (counted, not judged)',
   unknown: 'not decidable by rules — judge it',
 };
 

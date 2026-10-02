@@ -26,6 +26,10 @@ async function onboardChild(page: Page, email: string): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('radio', { name: 'Mein Kind' }).click();
   await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill('Pia');
+  // The Bundesland is a required field at registration (issue #199): one row that opens
+  // a sheet with the sixteen; without a choice the CTA stays muted.
+  await page.getByRole('button', { name: 'Bundesland wählen' }).click();
+  await page.getByRole('radio', { name: 'Niedersachsen' }).click();
   await page.getByLabel('Tag', { exact: true }).fill('03');
   await page.getByLabel('Monat', { exact: true }).fill('07');
   await page.getByLabel('Jahr', { exact: true }).fill('2014');

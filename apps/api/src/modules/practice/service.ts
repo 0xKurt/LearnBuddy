@@ -32,6 +32,7 @@ import { bumpContext } from '../buddy/plan.js';
 import { pickAnswers, surfaceOf, taskOf, untriedPicks } from './bars.js';
 import {
   differentNumber,
+  equationDetail,
   NEAR_MISS,
   noSingleSolution,
   plainMath,
@@ -727,6 +728,26 @@ const NEAR_MISS_REPLY: Partial<Record<RuleVerdict, MessageKey>> = {
 };
 
 /**
+ * What a counted equation says, with the place in it (issue #212). The element symbol is the
+ * same in every language, so it goes in as it stands.
+ */
+function equationReply(locale: string, item: ItemRow, text: string): string | null {
+  const d = equationDetail(item, text);
+  if (!d) return null;
+  if (d.verdict === 'not_lowest') {
+    return t(locale, 'practice.not_lowest', { factor: String(d.factor) });
+  }
+  const i = d.imbalance;
+  return i.kind === 'charge'
+    ? t(locale, 'practice.unbalanced_charge', { left: String(i.left), right: String(i.right) })
+    : t(locale, 'practice.unbalanced_element', {
+        element: i.element,
+        left: String(i.left),
+        right: String(i.right),
+      });
+}
+
+/**
  * The FIRST answer to a typo: what slipped, not the word (issue #207). A missing accent was
  * always answered this way ("schau nochmal auf die Akzente") and a typo was not — it was
  * answered with the correct spelling at once, so what followed was copying and the "Richtig"
@@ -864,11 +885,13 @@ export async function answerItem(
       verdict: 'partially_correct',
       evaluatedBy: 'rule',
       reply:
-        rule !== 'typo'
-          ? t(learner.locale, NEAR_MISS_REPLY[rule] ?? 'practice.accents')
-          : spellOut
+        rule === 'typo'
+          ? spellOut
             ? t(learner.locale, 'practice.typo', { answer: plainMath(item.answer) })
-            : t(learner.locale, TYPO_REPLY[typoShapeFor(item, text)]),
+            : t(learner.locale, TYPO_REPLY[typoShapeFor(item, text)])
+          : // A counted equation says exactly where it does not add up (issue #212).
+            (equationReply(learner.locale, item, text) ??
+            t(learner.locale, NEAR_MISS_REPLY[rule] ?? 'practice.accents')),
       gaveHint: spellOut,
       revealed: false,
     };

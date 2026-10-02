@@ -7,6 +7,7 @@
 
 import type { Db } from '../../lib/db.js';
 import type { JobKind } from './jobs.js';
+import { modelThrottle, type ModelThrottle } from './throttle.js';
 import type { RetentionStats } from './tick.js';
 
 /** A tick runs every minute; ten minutes without one means the scheduler is not running. */
@@ -26,6 +27,15 @@ export type SchedulerHealth = {
    * never content (issue #78). Null fields until the first pass after deployment.
    */
   retention: { last_run_at: string | null; counts: RetentionStats | null };
+  /**
+   * What share of model calls the provider refused with a 429 in the last hour (issue #206).
+   * Always reported, not only when it alarms: the alarm itself travels as `last_error`, and
+   * `last_error` holds one line — so without this the number would be invisible whenever
+   * another error got there first. Deliberately NOT part of `ok`/`state`: a provider
+   * throttle is not the scheduler failing. The tick raises the alarm, which sets
+   * `last_error` and so turns `state` to 'failing' on its own.
+   */
+  model_throttle: ModelThrottle;
 };
 
 export async function schedulerHealth(db: Db, now: Date): Promise<SchedulerHealth> {
@@ -56,6 +66,7 @@ export async function schedulerHealth(db: Db, now: Date): Promise<SchedulerHealt
     last_finished_at: Date | null;
     stats: RetentionStats | null;
   }>(`select last_finished_at, stats from system_heartbeats where name = 'retention'`);
+  const throttle = await modelThrottle(db, now);
   const state: SchedulerHealth['state'] =
     !recent || waiting ? 'stale' : hb?.last_error ? 'failing' : 'ok';
   return {
@@ -68,5 +79,6 @@ export async function schedulerHealth(db: Db, now: Date): Promise<SchedulerHealt
       last_run_at: retention?.last_finished_at ? retention.last_finished_at.toISOString() : null,
       counts: retention?.stats ?? null,
     },
+    model_throttle: throttle,
   };
 }

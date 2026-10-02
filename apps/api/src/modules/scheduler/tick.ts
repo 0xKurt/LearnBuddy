@@ -25,6 +25,7 @@ import { purgeSpeechCache } from '../voice/speech.js';
 import { abandonStaleUploads, markMaterialFailed, runExtraction } from '../materials/service.js';
 import { closeIdleSessions } from '../practice/lifecycle.js';
 import { handleParkedJobs } from './terminal.js';
+import { modelThrottle, throttleAlarm, type ModelThrottle } from './throttle.js';
 import {
   claimJobs,
   finishJob,
@@ -66,6 +67,8 @@ export type TickStats = {
   receipts: { checked: number; rejected: number } | null;
   /** Null when the budget left no room for the retention pass this run. */
   retention: RetentionStats | null;
+  /** The provider's 429 share over the last hour (issue #206); alarms into `errors`. */
+  throttle: ModelThrottle | null;
   errors: string[];
 };
 
@@ -83,6 +86,7 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     delivery: null,
     receipts: null,
     retention: null,
+    throttle: null,
     errors: [],
   };
   await deps.db.query(
@@ -98,6 +102,19 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
       stats.errors.push(`${label}: ${err instanceof Error ? err.message : 'error'}`);
     }
   };
+
+  // First, and one cheap query: is the provider refusing us? When it is, that is the reason
+  // behind most of the other errors this run will report, so it leads the list — and the
+  // owner reads an actionable line (a quota) instead of a dozen consequences (issue #206).
+  await guard('throttle', async () => {
+    stats.throttle = await modelThrottle(deps.db, deps.now());
+    if (!stats.throttle.alarming) return;
+    const alarm = throttleAlarm(stats.throttle);
+    // Becomes the scheduler's last_error below, which GET /health reports with a 503.
+    stats.errors.push(alarm);
+    // And in the function log, where an operator looks first.
+    console.warn('[scheduler] model throttle', { alarm });
+  });
 
   await guard('recover', async () => {
     stats.recovered = await recoverExpiredLeases(deps.db, deps.now());

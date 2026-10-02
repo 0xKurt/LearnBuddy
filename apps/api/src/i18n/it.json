@@ -69,6 +69,7 @@
     "hint_request": "Un suggerimento, per favore",
     "missing_word": "Quasi – manca ancora una parola. Guarda di nuovo.",
     "no_single_solution": "Qui non c'è un'unica risposta giusta che possa mostrarti: in un testo così conta come lo argomenti. Dimmi dove ti blocchi e guardiamo insieme il tuo testo.",
+    "not_lowest": "Bilanciata bene! Ora semplificala – tutti i numeri davanti si dividono per {{factor}}.",
     "not_quite": "Non ancora del tutto. Riguarda la domanda – oppure mostra la soluzione.",
     "one_way_intro": "Un modo per affrontarlo – uno, non il solo:",
     "reexplain": {
@@ -89,6 +90,8 @@
     "typo_missing": "Quasi – manca una lettera. Guarda ancora con attenzione.",
     "typo_swapped": "Quasi – due lettere sono invertite. Le trovi?",
     "typo_wrong": "Quasi – una lettera non è ancora giusta. La trovi?",
+    "unbalanced_charge": "Quasi – le cariche non corrispondono ancora: {{left}} a sinistra, {{right}} a destra.",
+    "unbalanced_element": "Quasi – riconta il {{element}}: {{left}} a sinistra, {{right}} a destra.",
     "untitled": "Esercizio",
     "worked_intro": "Guarda, si fa così:"
   },

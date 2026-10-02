@@ -9,6 +9,7 @@ export { ErrorNote } from './ErrorNote.js';
 export { Icon } from './Icon.js';
 export { LbTextInput } from './LbTextInput.js';
 export { LoadingState } from './LoadingState.js';
+export { PickerField, picked } from './PickerField.js';
 export { PinPad } from './PinPad.js';
 export { Progress } from './Progress.js';
 export { Screen } from './Screen.js';

@@ -38,12 +38,14 @@ kein einziges Kennwort und keine Adresse.
 
 ## Die Flows
 
-| Datei             | Was er prüft                                                                                                             | Konto nötig           |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------- |
-| `01-welcome.yaml` | Startet der Build überhaupt; beide Wege hinein; der Unter-16-Hinweis steht auf der ersten Seite; die CTA sagt, was fehlt | nein                  |
-| `02-sign-in.yaml` | Anmelden auf dem Gerät                                                                                                   | ja (aus der Umgebung) |
-| `03-chat.yaml`    | Sie schreibt, Buddy antwortet wirklich (echtes Modell, gehostete API)                                                    | ja                    |
-| `04-voice.yaml`   | Vorlesen und Gesprächsmodus — der Zustand, in dem die zwei Messmarken fallen                                             | ja + Mikrofon         |
+| Datei                       | Was er prüft                                                                                                             | Konto nötig           |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------- |
+| `01-welcome.yaml`           | Startet der Build überhaupt; beide Wege hinein; der Unter-16-Hinweis steht auf der ersten Seite; die CTA sagt, was fehlt | nein                  |
+| `02-sign-in.yaml`           | Anmelden auf dem Gerät                                                                                                   | ja (aus der Umgebung) |
+| `03-chat.yaml`              | Sie schreibt, Buddy antwortet wirklich (echtes Modell, gehostete API)                                                    | ja                    |
+| `04-voice.yaml`             | Vorlesen und Gesprächsmodus — der Zustand, in dem die zwei Messmarken fallen                                             | ja + Mikrofon         |
+| `05-practice.yaml`          | Üben: die angeheftete Leiste über der **echten** Tastatur, mehrzeilige Eingabe, Bewertung, Tipp-Knopf                    | ja + ein Blatt        |
+| `06-registration-form.yaml` | Registrierung bis **vor** dem Absenden: Formular über der Tastatur, CTA sagt was fehlt                                   | nein                  |
 
 ## Die zwei Zahlen aus `04-voice`
 
@@ -77,6 +79,20 @@ dieser Flows aufgefallen sind:
   wert als eine Datei, die jemand ansehen müsste.
 - **Die Mikrofon-Berechtigung** fragt MIUI beim ersten Mal in einem eigenen Dialog. Einmal
   von Hand erteilen, danach läuft `04-voice` unbeaufsichtigt.
+
+## Warum `06` nicht bis zum Ende geht
+
+Absenden legt ein echtes Profil im gehosteten Supabase an. Ein Gerätetest, der bei jedem Lauf
+ein Kinderprofil erzeugt, müllt das Konto zu und ist nicht zurückzunehmen. Der Flow endet
+deshalb, bevor etwas gespeichert wird, und sagt im Kommentar, wo der Rest belegt ist:
+
+|                                 |                                                                            |
+| ------------------------------- | -------------------------------------------------------------------------- |
+| Profil anlegen inkl. Bundesland | `apps/api/src/__tests__/bundesland.int.test.ts` (echtes Postgres, 7 Fälle) |
+| Passform des Profilbildschirms  | `tests/web/fit.ts`, 390 × 844 und 360 × 740                                |
+| Anmelden auf dem Gerät          | `02-sign-in.yaml`                                                          |
+
+Das ist bewusst eine Lücke mit Begründung, keine vergessene Hälfte.
 
 ## Was diese Flows NICHT sind
 

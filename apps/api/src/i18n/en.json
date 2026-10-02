@@ -69,6 +69,7 @@
     "hint_request": "A hint, please",
     "missing_word": "Almost – a word is still missing. Take another look.",
     "no_single_solution": "There isn't one right answer I could show you here: in a text like this, what counts is how you argue it. Tell me where you're stuck and we'll look at your text together.",
+    "not_lowest": "Balanced correctly! Now reduce it – every number in front divides by {{factor}}.",
     "not_quite": "Not quite yet. Have another look at the question – or show the solution.",
     "one_way_intro": "Here's one way to go about it – one way, not the only one:",
     "reexplain": {
@@ -89,6 +90,8 @@
     "typo_missing": "Almost – there's a letter missing. Take another close look.",
     "typo_swapped": "Almost – two letters are the wrong way round. Can you spot them?",
     "typo_wrong": "Almost – one letter isn't right yet. Can you spot it?",
+    "unbalanced_charge": "Almost – the charges don't match yet: {{left}} on the left, {{right}} on the right.",
+    "unbalanced_element": "Almost – count the {{element}} again: {{left}} on the left, {{right}} on the right.",
     "untitled": "Practice",
     "worked_intro": "Here's how it works:"
   },

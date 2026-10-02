@@ -10,7 +10,17 @@ import { AppError } from '../lib/errors.js';
 import type { EmbeddingGateway, EmbedRequest, EmbedResult } from './embeddings.js';
 import { LlmError, type LlmGateway, type LlmRequest, type LlmResult } from './gateway.js';
 
-export type ModelDeps = { db: Db; llm: LlmGateway };
+export type ModelDeps = {
+  db: Db;
+  llm: LlmGateway;
+  /**
+   * The one clock (rule 7). `llm_calls.created_at` decides behaviour — the retention sweep
+   * deletes by it and the throttle alarm measures its window by it
+   * (`modules/scheduler/throttle.ts`) — so the row carries the app clock's instant, not the
+   * database's `now()`.
+   */
+  now: () => Date;
+};
 
 export async function reserveModelCall(
   db: Db,
@@ -42,17 +52,21 @@ async function releaseReservation(
 }
 
 async function record(
-  db: Db,
+  deps: ModelDeps,
   learnerId: string,
   req: LlmRequest,
   outcome: 'ok' | 'invalid_output' | 'error' | 'timeout',
   usage: LlmResult['usage'] | null,
   errorCode: string | null,
 ): Promise<void> {
-  await db.query(
+  // `error_code` is what makes one failure distinguishable from another after the fact: a
+  // throttle lands here as 'rate_limited' (vertex.ts classify, HTTP 429), which is what the
+  // alarm counts (modules/scheduler/throttle.ts, issue #206).
+  await deps.db.query(
     `insert into llm_calls (learner_id, purpose, model, prompt_version, input_tokens, output_tokens,
-                            thought_tokens, cached_tokens, cost_micros, latency_ms, outcome, error_code)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+                            thought_tokens, cached_tokens, cost_micros, latency_ms, outcome, error_code,
+                            created_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
     [
       learnerId,
       req.purpose,
@@ -68,6 +82,7 @@ async function record(
       usage?.latencyMs ?? 0,
       outcome,
       errorCode,
+      deps.now(),
     ],
   );
 }
@@ -89,7 +104,7 @@ export async function callModel(
   }
   try {
     const result = await deps.llm.generate(req);
-    await record(deps.db, learnerId, req, 'ok', result.usage, null);
+    await record(deps, learnerId, req, 'ok', result.usage, null);
     await deps.db.query(
       `update usage_daily set cost_micros = cost_micros + $4
         where learner_id = $1 and day = $2 and kind = $3`,
@@ -105,7 +120,7 @@ export async function callModel(
             ? 'invalid_output'
             : 'error';
       await record(
-        deps.db,
+        deps,
         learnerId,
         req,
         outcome,
@@ -146,6 +161,10 @@ export async function callEmbedding(
     usage: EmbedResult['usage'] | null,
     errorCode: string | null,
   ) =>
+    // No `created_at` from the app clock here, unlike `record()` above: one caller passes
+    // only `{ db, embeddings }` (modules/buddy/connectors/material.ts), so this seam has no
+    // clock to use yet and the row keeps the database default. The throttle alarm's window
+    // boundary always comes from the app clock either way (issue #206).
     deps.db.query(
       `insert into llm_calls (learner_id, purpose, model, prompt_version, input_tokens,
                               cost_micros, latency_ms, outcome, error_code)

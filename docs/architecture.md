@@ -738,6 +738,37 @@ outage. Auth: `refused` makes a token invalid (401), everything else is 503; a r
 change is `invalid_input`, not "try again later". Storage: an absent object is `null`, never an
 error, and an error is never "absent".
 
+**A throttle is survived inside one call, and a lasting one raises an alarm** (issue #206).
+Measured 01.10.2026, 20:26–20:39 MESZ: every Vertex model in the project answered
+`429 RESOURCE_EXHAUSTED` — 3.6, 3.7 and 3.5 Flash, 3.1 Flash-Lite in `eu`, 2.5 Flash in
+`europe-west4` — even for a single trivial prompt, and one Buddy answer took 110 s because the
+provider's own client backs off inside the call. Two things follow.
+(1) **A 429 gets three attempts, a 5xx two, all inside the caller's own `timeoutMs`**
+(`llm/retry.ts`): the pauses are 350–525 ms then 1 050–1 575 ms (exponential, half of each pause
+random so concurrent callers do not come back in lockstep), every attempt is handed only what is
+left of the budget, and a retry starts only with at least 3 s of it remaining — so three attempts
+can never take longer than the single attempt the caller already allowed, which two attempts
+could before. This reverses part of #167, which deliberately left 429 out: that reasoning holds
+for a fixed project quota and misses dynamic shared quota, where capacity is borrowed per moment
+and the next second can be free. A streamed answer she has already begun to read is never
+restarted.
+(2) **The rate is countable and alarmed on**: a 429 lands in `llm_calls` as `outcome 'error'`
+with `error_code 'rate_limited'` — already apart from every other failure, so no migration was
+needed — and `modules/scheduler/throttle.ts` measures the share over the last 60 minutes on
+every tick, both window boundaries from `deps.now()` and never from SQL's (rule 7; the row's own
+`created_at` now comes from the app clock too). Above **10 % of at least 20 calls** the tick
+writes the measured rate into the run's errors, which becomes the scheduler's `last_error`:
+`GET /health` answers 503 with the line (`model throttled: the provider refused 40 of 100 model
+calls with 429 in the last 60 min (40 %, alarm at 10 %) — check the Vertex quota for this
+project`) and carries the number under `scheduler.model_throttle` whether it alarms or not. The
+next clean tick clears it. The threshold is not "how much is acceptable" — 429 is not a normal
+operating condition here — but "more than one unlucky moment"; 01.10. would have fired at 100 %.
+**What the rate cannot see** (rule 5): a throttle the provider's client swallows into a long
+internal backoff until the app's timeout fires is recorded as `timeout`, because that is all
+that is honestly known about it — so this rate is a floor, never a ceiling. Everything above the
+app stays the owner's: quotas and region in the Cloud Console, and evals and video shoots on
+their own project so they stop taking capacity from the live app (issue #206, points 1 and 2).
+
 Models per task: each call names its purpose; `VERTEX_ROUTES` (JSON, zod-checked) maps a purpose
 to a model, else a measured default (`DEFAULT_ROUTES` in `llm/vertex.ts`: pronunciation on 3.1
 Flash-Lite — as strict as 3.6 Flash in `evals/speak`, half the cost), else the tier's model. A model may carry its location
@@ -1376,6 +1407,23 @@ selection already skips archived items) and rename the material (`PATCH /materia
 1–120 characters, trimmed). Both bump the context version; another learner's ids are 404.
 
 ## Practice
+
+**Was gezählt wird, zählt Code** (Issue #212). Eine Reaktionsgleichung wird nicht mehr als
+Zeichenkette mit dem Schlüssel verglichen, sondern gezählt: `modules/practice/chemistry.ts`
+liest Summenformeln (Indizes, Klammern, Ladungen, tiefgestellte Ziffern, Aggregatzustände) und
+prüft, ob Atome und Ladung links und rechts übereinstimmen und ob die Koeffizienten die
+kleinsten ganzen Zahlen sind. Die Reihenfolge der Stoffe ist damit gleichgültig, und die
+Rückmeldung nennt die Stelle („zähl das H nochmal: links 4, rechts 2"). Kein Modellaufruf —
+ein Blatt mit fünf Gleichungen wird vollständig von Code beurteilt
+(`src/__tests__/chemistry.int.test.ts`).
+
+Zwei Grenzen stehen ausdrücklich im Modul, weil ein Parser, der rät, ein sicheres falsches
+Urteil erzeugt (Regel 5): **andere Stoffe** sind eine Frage über Chemie, nicht über das Zählen,
+und gehen ans Modell; **`=` ist kein Reaktionspfeil**, weil `U = R I` drei echte
+Elementsymbole sind und eine Physikformel sonst als unausgeglichene Gleichung gälte. Ein
+Verhältnis (Kreuzungsschema) wird gekürzt verglichen, aber **erst ab drei Teilen**: „3:1",
+„3:4" und „14:30" sind dieselben Zeichen, und welche Bedeutung gilt, steht nicht darin
+(Regel 3, Issue #175).
 
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
 focus topics; one sheet or vocabulary only when she asked for that, issue #144). Answers are checked by rules where exactness is decidable (multiple choice,

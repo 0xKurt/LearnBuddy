@@ -2,8 +2,9 @@
 //
 // One call = one structured JSON answer (responseMimeType + responseJsonSchema).
 // Bounded by a timeout, an output token cap and an explicit thinking budget
-// (thinking tokens count as output and are billed as such). No hidden
-// retries here: callers decide whether an error is worth retrying later.
+// (thinking tokens count as output and are billed as such). A short outage or a
+// throttle is retried INSIDE that timeout (retry.ts, issues #167 and #206) —
+// never beyond it; anything else is handed to the caller as it came.
 
 import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -31,7 +32,7 @@ import {
 } from './gateway.js';
 import { repairJsonStrings } from './latex.js';
 import { costMicros } from './pricing.js';
-import { retryDelayMs, worthASecondTry } from './retry.js';
+import { generateWithRetries } from './retry.js';
 
 // Children use the app: strict on sexual content, medium elsewhere.
 const SAFETY: SafetySetting[] = [
@@ -138,38 +139,17 @@ export class VertexGateway implements LlmGateway {
   }
 
   /**
-   * One structured answer, with ONE short second chance (issue #167).
-   *
-   * The second attempt happens only for the two errors that mean "not now" — the provider
-   * unreachable or busy — and only when nothing has been handed out yet. A streamed call
-   * that already gave `onPartial` some text cannot start over: she would watch a sentence
-   * be replaced by another one.
+   * One structured answer. Retries for the two errors that mean "not now" — the provider
+   * unreachable (one more try, #167) or throttling us (two more, #206) — all of it inside
+   * the caller's own `timeoutMs`. The schedule, the budget arithmetic and the rule that a
+   * streamed answer is never restarted live in retry.ts, where they are proven.
    */
-  async generate(req: LlmRequest): Promise<LlmResult> {
-    // Per CALL, not per gateway: one instance serves every request at once, so a field
-    // here would let one streamed answer suppress every other call's second chance — and
-    // never reset.
-    let handedOut = false;
-    const watched: LlmRequest = req.onPartial
-      ? {
-          ...req,
-          onPartial: (text) => {
-            // From here on she has seen words: a second attempt would replace them.
-            handedOut = true;
-            req.onPartial?.(text);
-          },
-        }
-      : req;
-    try {
-      return await this.attempt(watched);
-    } catch (err) {
-      if (!worthASecondTry(err) || handedOut) throw err;
-      await new Promise((done) => setTimeout(done, retryDelayMs(Math.random)));
-      return this.attempt(watched);
-    }
+  generate(req: LlmRequest): Promise<LlmResult> {
+    return generateWithRetries(req, (watched, timeoutMs) => this.attempt(watched, timeoutMs));
   }
 
-  private async attempt(req: LlmRequest): Promise<LlmResult> {
+  /** One single call to the provider, bounded by the slice of the budget it was given. */
+  private async attempt(req: LlmRequest, timeoutMs: number): Promise<LlmResult> {
     const { location, model } = splitModelSpec(
       modelFor(this.config, req),
       this.config.GOOGLE_VERTEX_LOCATION,
@@ -189,7 +169,9 @@ export class VertexGateway implements LlmGateway {
         ...(req.thinkingBudget !== undefined
           ? { thinkingConfig: { thinkingBudget: req.thinkingBudget } }
           : {}),
-        abortSignal: AbortSignal.timeout(req.timeoutMs),
+        // Not req.timeoutMs: that is the budget for the whole call including retries, and
+        // this attempt only gets what is left of it (retry.ts).
+        abortSignal: AbortSignal.timeout(timeoutMs),
       },
     };
     let streamedText: string | null = null;

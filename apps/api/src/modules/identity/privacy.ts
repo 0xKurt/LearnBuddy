@@ -62,8 +62,11 @@ export async function exportAccount(db: Db, accountId: string): Promise<Record<s
     [accountId],
   );
   const learner = await db.maybeOne<{ id: string } & Record<string, unknown>>(
-    `select id, relation, display_name, birth_date, level, grade, locale, minor_consent_version,
-            minor_consent_at, self_consent_version, self_consent_at, created_at
+    // curriculum_region: the Bundesland her school is in (issue #199) — stored about her,
+    // so it belongs in her export. Null for a profile created before it.
+    `select id, relation, display_name, birth_date, level, grade, locale, curriculum_region,
+            minor_consent_version, minor_consent_at, self_consent_version, self_consent_at,
+            created_at
        from learners where account_id = $1`,
     [accountId],
   );

@@ -20,6 +20,10 @@ test('answers given offline arrive once: app open, and after it was closed', asy
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('radio', { name: 'Ich selbst' }).click();
   await page.getByLabel('Wie soll Buddy dich nennen?').fill('Sam');
+  // The Bundesland is a required field at registration (issue #199): one row that opens
+  // a sheet with the sixteen; without a choice the CTA stays muted.
+  await page.getByRole('button', { name: 'Bundesland wählen' }).click();
+  await page.getByRole('radio', { name: 'Niedersachsen' }).click();
   await page.getByLabel('Tag', { exact: true }).fill('10');
   await page.getByLabel('Monat', { exact: true }).fill('02');
   await page.getByLabel('Jahr', { exact: true }).fill('2000');

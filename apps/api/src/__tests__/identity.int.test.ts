@@ -78,6 +78,7 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
       display_name: 'Again',
       birth_date: '1990-01-01',
       locale: 'en',
+      curriculum_region: 'ni',
       minor_consent: false,
     });
     expect(second.status).toBe(409);
@@ -96,6 +97,7 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
       display_name: 'Tim',
       birth_date: '2013-01-01',
       locale: 'de',
+      curriculum_region: 'ni',
       minor_consent: true,
     });
     expect(tooYoung.status).toBe(403);
@@ -107,6 +109,7 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
       display_name: 'Tim',
       birth_date: '2013-01-01',
       locale: 'de',
+      curriculum_region: 'ni',
       minor_consent: false,
     });
     expect(noConsent.status).toBe(422);
@@ -118,6 +121,7 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
       display_name: 'Tim',
       birth_date: '2013-01-01',
       locale: 'de',
+      curriculum_region: 'ni',
       minor_consent: true,
     });
     expect(ok.status).toBe(201);
@@ -343,6 +347,7 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
       display_name: 'Mia',
       birth_date: '2010-03-01',
       locale: 'de',
+      curriculum_region: 'ni',
       minor_consent: false,
     });
     expect(sixteen.status).toBe(201);
@@ -383,6 +388,7 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
       display_name: 'Mia',
       birth_date: '2014-05-05',
       locale: 'de',
+      curriculum_region: 'ni',
       minor_consent: true,
       pin: '8642',
     });
@@ -397,6 +403,7 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
       display_name: 'Mia',
       birth_date: '2014-05-05',
       locale: 'de',
+      curriculum_region: 'ni',
       minor_consent: true,
       pin: '0000',
     });

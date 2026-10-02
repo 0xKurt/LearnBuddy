@@ -1,0 +1,46 @@
+# Die Registrierung auf dem Gerät — bis unmittelbar VOR dem Absenden (Issue #37).
+#
+# Warum nicht weiter: Absenden legt ein echtes Profil im gehosteten Supabase an.
+# Ein Gerätetest, der bei jedem Lauf ein Kinderprofil erzeugt, müllt das Konto zu
+# und wäre nicht zurückzunehmen. Was danach kommt, deckt 02-sign-in mit einem
+# bestehenden Konto ab, und die Integrationstests prüfen das Anlegen selbst gegen
+# ein echtes Postgres (apps/api/src/__tests__/bundesland.int.test.ts).
+#
+# Geprüft wird hier genau das, was nur ein Telefon zeigt: dass das Formular über
+# der echten Tastatur bedienbar bleibt, dass die CTA sagt was fehlt statt still zu
+# scheitern, und dass das Bundesland-Sheet (Issue #199) mit sechzehn Einträgen auf
+# einem echten Bildschirm erreichbar und schließbar ist.
+#
+# Braucht KEIN Konto und ändert nichts — der Flow endet, bevor etwas gespeichert
+# wird. Er setzt den Zustand nicht zurück, damit ein angemeldetes Gerät nicht
+# abgemeldet wird; auf einem angemeldeten Gerät ist der erste Schritt deshalb
+# nicht erreichbar und der Flow bleibt dort lesbar stehen.
+appId: com.learnbuddy.app.dev
+---
+- launchApp:
+    clearState: false
+- assertVisible:
+    text: 'Dein Lernbuddy für Arbeiten und Tests.'
+    timeout: 20000
+
+- tapOn: 'Neues Konto'
+# Die CTA sagt, was noch fehlt, statt nichts zu tun (das prüft 01-welcome für die
+# E-Mail; hier geht es um die Tastatur darunter).
+- tapOn: 'E-Mail'
+- assertVisible: 'Konto erstellen'
+- takeScreenshot: 20-signup-keyboard
+
+# Von hier an würde ein Konto entstehen. Der Flow geht NICHT weiter.
+# Was hinter dieser Grenze liegt und wie es belegt ist:
+#
+#   Profil anlegen inkl. Bundesland  → apps/api/src/__tests__/bundesland.int.test.ts
+#                                      (echtes Postgres, 7 Fälle)
+#   Passform des Profilbildschirms   → tests/web/fit.ts, 390×844 und 360×740
+#   Anmelden auf dem Gerät           → .maestro/flows/02-sign-in.yaml
+#
+# Will man den Rest EINMAL von Hand am Gerät sehen, ist die Reihenfolge:
+# Konto erstellen → Einwilligung → Profil (Name, Geburtsdatum, Sprache,
+# Bundesland wählen) → „Los geht's". Das Bundesland-Sheet muss sich mit seinem
+# eigenen „Schließen" schließen lassen (Regel 14) und die CTA muss gesperrt
+# bleiben, bis ein Land gewählt ist.
+- takeScreenshot: 21-signup-stop

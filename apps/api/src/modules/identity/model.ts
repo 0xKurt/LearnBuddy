@@ -4,6 +4,8 @@
 import { randomBytes, scrypt as scryptCb, timingSafeEqual, createHmac } from 'node:crypto';
 import { promisify } from 'node:util';
 
+import type { CurriculumRegion } from '@learnbuddy/shared-types/contracts';
+
 import type { Db } from '../../lib/db.js';
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, keylen: number) => Promise<Buffer>;
@@ -30,6 +32,11 @@ export type LearnerRow = {
   level: 'unknown' | 'school' | 'university' | 'adult';
   grade: number | null;
   locale: 'de' | 'en' | 'fr' | 'es' | 'it';
+  /**
+   * The Bundesland her school is in (issue #199); null for every profile created before it.
+   * Null is a valid state, not a broken one: no state-specific curriculum rule applies.
+   */
+  curriculum_region: CurriculumRegion | null;
   version: number;
   /** When she confirmed the privacy text for herself (from 16, issue #31); null before that. */
   self_consent_at: Date | null;

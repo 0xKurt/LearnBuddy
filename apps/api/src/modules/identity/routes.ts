@@ -59,6 +59,7 @@ function learnerView(l: LearnerRow, now: Date): LearnerView {
     level: l.level,
     grade: l.grade,
     locale: l.locale,
+    curriculum_region: l.curriculum_region,
     version: l.version,
     // 16 and never asked for herself: the app asks once (issue #31).
     own_consent_due: l.relation === 'child' && !isMinor(l, now) && l.self_consent_at === null,
@@ -249,14 +250,16 @@ identityRoutes.post('/learner', requireUser, requireAccount, async (c) => {
     const learner = await deps.db.tx(async (tx) => {
       const l = await tx.one<LearnerRow>(
         `insert into learners (account_id, relation, display_name, birth_date, locale,
-                               minor_consent_version, minor_consent_at)
-         values ($1, $2, $3, $4, $5, $6, $7) returning *`,
+                               curriculum_region, minor_consent_version, minor_consent_at)
+         values ($1, $2, $3, $4, $5, $6, $7, $8) returning *`,
         [
           account.id,
           input.relation,
           input.display_name,
           input.birth_date,
           input.locale,
+          // Required by the contract (issue #199): the tap at registration, never a guess.
+          input.curriculum_region,
           child ? account.consent_version : null,
           child ? now : null,
         ],
@@ -312,7 +315,7 @@ identityRoutes.patch('/learner', requireUser, requireAccount, requireLearner, as
   const updated = await deps.db.tx(async (tx) => {
     const rows = await tx.query<LearnerRow>(
       `update learners set display_name = $3, level = $4, grade = $5, locale = $6,
-                           birth_date = $7, version = version + 1
+                           birth_date = $7, curriculum_region = $8, version = version + 1
         where id = $1 and version = $2 returning *`,
       [
         learner.id,
@@ -322,6 +325,9 @@ identityRoutes.patch('/learner', requireUser, requireAccount, requireLearner, as
         grade,
         input.locale ?? learner.locale,
         birthDate,
+        // A profile that has none (created before issue #199) can set it, and a family that
+        // moved can correct it — but it is never cleared back to "not known".
+        input.curriculum_region ?? learner.curriculum_region,
       ],
     );
     if (rows.length === 0)

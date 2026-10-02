@@ -7,6 +7,49 @@ export type LearnerLevel = z.infer<typeof LearnerLevel>;
 
 export const Pin = z.string().regex(/^\d{4,8}$/, '4–8 digits');
 
+/**
+ * Where the learner goes to school, as far as the curriculum is concerned (issue #199).
+ *
+ * It decides what counts as a right answer. At twelve verified places in
+ * `docs/lehrplan-und-uebungsformen.md` the same task has different expected solutions per
+ * state: the sentence-element analysis of one German sentence has four, the operator
+ * "vergleichen" demands a closing judgement in Bayern and explicitly none in Niedersachsen,
+ * the Hypothesentest is compulsory in Berlin/Brandenburg and BW and absent from the NRW and
+ * Bayern core curriculum. Without this, Buddy can teach a child something that is marked
+ * wrong in her own class test.
+ *
+ * The sixteen keys are the ISO 3166-2:DE codes in lower case — stable machine keys; the
+ * names a learner reads come from the locale files (`auth:region.names.*`), never from here.
+ * The order is the German alphabet, which is the order the picker shows.
+ *
+ * `other` is the escape for a learner who is not at a German school (the app ships in five
+ * languages): a required field with sixteen German states would be a dead end for her.
+ * `other` is a given answer, not a missing one — but the curriculum places treat it exactly
+ * like `null`: no state-specific rule is applied and Buddy judges cautiously.
+ *
+ * The model never writes this value (CLAUDE.md rule 2): it comes from a tap at registration.
+ */
+export const CurriculumRegion = z.enum([
+  'bw', // Baden-Württemberg
+  'by', // Bayern
+  'be', // Berlin
+  'bb', // Brandenburg
+  'hb', // Bremen
+  'hh', // Hamburg
+  'he', // Hessen
+  'mv', // Mecklenburg-Vorpommern
+  'ni', // Niedersachsen
+  'nw', // Nordrhein-Westfalen
+  'rp', // Rheinland-Pfalz
+  'sl', // Saarland
+  'sn', // Sachsen
+  'st', // Sachsen-Anhalt
+  'sh', // Schleswig-Holstein
+  'th', // Thüringen
+  'other', // not at a German school
+]);
+export type CurriculumRegion = z.infer<typeof CurriculumRegion>;
+
 export const LearnerView = z.object({
   id: Uuid,
   relation: z.enum(['self', 'child']),
@@ -17,6 +60,11 @@ export const LearnerView = z.object({
   level: LearnerLevel,
   grade: z.number().int().min(1).max(13).nullable(),
   locale: AppLocale,
+  /**
+   * Null for every profile created before issue #199: the column is nullable and nothing
+   * blocks on it. "Not known" — no state-specific curriculum rule is applied.
+   */
+  curriculum_region: CurriculumRegion.nullable(),
   version: z.number().int(),
   /**
    * She has turned 16 and has not yet confirmed the privacy text for herself (issue #31,
@@ -65,6 +113,12 @@ export const CreateLearnerRequest = z.object({
   birth_date: LocalDate,
   locale: AppLocale,
   /**
+   * Required at registration (owner 2026-10-02, issue #199): "Einfach bei der Registrierung
+   * als Pflichtfeld abfragen". A new profile without it is refused — there is nothing
+   * sensible to guess, and a guessed state is worse than none.
+   */
+  curriculum_region: CurriculumRegion,
+  /**
    * Required (true) for a child profile under 16: the parents' consent
    * (DSGVO Art. 8, German age 16, ADR 0006). From 16 she consents herself.
    */
@@ -91,6 +145,13 @@ export const UpdateLearnerRequest = z.object({
   level: LearnerLevel.optional(),
   grade: z.number().int().min(1).max(13).nullable().optional(),
   locale: AppLocale.optional(),
+  /**
+   * The learner's own field, like level and grade: a profile that still has none (every
+   * profile created before issue #199) can set it, and a family that moved can correct it.
+   * It can never be cleared back to "not known" — that state only exists for rows that
+   * were never asked.
+   */
+  curriculum_region: CurriculumRegion.optional(),
   version: z.number().int(),
 });
 export type UpdateLearnerRequest = z.infer<typeof UpdateLearnerRequest>;
