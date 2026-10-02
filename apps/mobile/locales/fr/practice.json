@@ -87,6 +87,13 @@
     "check_waits": "Seulement quand tout est relié."
   },
   "next": "Suivant",
+  "cloze": {
+    "gap": "Trou {{n}} sur {{total}}",
+    "gap_filled": "Trou {{n}} sur {{total}} : {{word}}",
+    "gap_clear": "Vide de nouveau le trou.",
+    "word_used": "{{word}}, déjà placé",
+    "check_waits": "Seulement quand chaque trou est rempli."
+  },
   "order": {
     "how": "Touche-les dans l'ordre.",
     "element_open": "{{text}}, pas encore de place",

@@ -45,12 +45,17 @@ import {
 } from './evaluate.js';
 import { checkPath } from './steps.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
+import { judgeOpenGaps } from './cloze.js';
 import {
   answerTextOf,
   checkStructured,
   structuredNamesPart,
+  partsVia,
+  secretsOf,
+  structuredDecidedBy,
   structuredReply,
   structuredTaskOf,
+  structuredVerdict,
   viewOf,
   type StructuredCheck,
 } from './structured.js';
@@ -905,6 +910,16 @@ export async function answerItem(
         reason: 'parts_mismatch',
       });
     }
+    // A cloze gap no rule could decide (issue #232): the model judges that gap, and only it.
+    if (partsCheck.type === 'cloze' && structured.type === 'cloze') {
+      partsCheck = await judgeOpenGaps(deps, {
+        task: structured,
+        prompt: item.prompt,
+        check: partsCheck,
+        ctx: item,
+        learnerId: learner.id,
+      });
+    }
   } else if (!hintRequest && structured) {
     throw new AppError('invalid_input', 'This question is answered with parts', {
       reason: 'use_parts',
@@ -992,11 +1007,22 @@ export async function answerItem(
   } else if (rule === 'correct') {
     judged = {
       verdict: 'correct',
-      evaluatedBy: 'rule',
+      // A cloze gap the model judged (issue #232) makes it the model's verdict, honestly.
+      evaluatedBy: partsCheck ? structuredDecidedBy(partsCheck) : 'rule',
       reply: t(
         learner.locale,
         session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
       ),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (partsCheck && structuredVerdict(partsCheck) === null) {
+    // A cloze gap nobody could judge (no model, issue #232) and nothing else wrong: no
+    // verdict is claimed and no try is counted (CLAUDE.md rule 5).
+    judged = {
+      verdict: null,
+      evaluatedBy: null,
+      reply: t(learner.locale, 'practice.cannot_check'),
       gaveHint: false,
       revealed: false,
     };
@@ -1030,7 +1056,7 @@ export async function answerItem(
     // call (it would only write a hint the test replaces with a neutral word).
     judged = {
       verdict: 'incorrect',
-      evaluatedBy: 'rule',
+      evaluatedBy: partsCheck ? structuredDecidedBy(partsCheck) : 'rule',
       reply: '',
       gaveHint: false,
       revealed: false,
@@ -1053,9 +1079,11 @@ export async function answerItem(
     // A structured answer that is not right yet (issue #228): code knows WHERE it stops
     // being right, so it says so — every time, not only on the first try, and never through
     // a model (0 model calls per answer). The third miss above shows the solution.
+    // A cloze whose gaps are only off by spelling is a near miss, not wrong (issue #232);
+    // its reply names her words, gap by gap.
     judged = {
-      verdict: 'incorrect',
-      evaluatedBy: 'rule',
+      verdict: structuredVerdict(partsCheck) ?? 'incorrect',
+      evaluatedBy: structuredDecidedBy(partsCheck),
       reply: structuredReply(learner.locale, partsCheck, item.attempts),
       // A match names its wrong link from the second miss on: that is a hint (#229).
       gaveHint: structuredNamesPart(partsCheck, item.attempts),
@@ -1101,7 +1129,11 @@ export async function answerItem(
           parts: [
             {
               text: tutorContext({
-                item,
+                // A structured item's question is more than its instruction: a cloze's text
+                // with its gaps (issue #232) is what a hint has to talk about.
+                item: structured
+                  ? { ...item, prompt: secretsOf(structured, item.prompt).visible }
+                  : item,
                 hintsGiven: item.hints_used,
                 preparedHints: givesHints(session.mode) ? item.hints : [],
                 preparedShown: item.prepared_hints_used,
@@ -1261,11 +1293,20 @@ export async function answerItem(
   if (givesHints(session.mode)) {
     // Never the solution before the second hint — whatever the model wrote. The prepared
     // hint (or a neutral line) takes its place, without a second model call.
+    // A cloze reply quotes HER words and is code's, even where the model judged a gap
+    // (issue #232); only a reply the tutor wrote can give a key away — any gap's key.
+    const leaks = (reply: string) =>
+      structured
+        ? secretsOf(structured, item.prompt).secrets.some((s) =>
+            mentionsSolution(reply, s, secretsOf(structured, item.prompt).visible),
+          )
+        : mentionsSolution(reply, shownSolution(item), item.prompt);
     if (
       judged.evaluatedBy === 'model' &&
+      !partsCheck &&
       judged.verdict !== 'correct' &&
       item.hints_used < 2 &&
-      (judged.revealed || mentionsSolution(judged.reply, shownSolution(item), item.prompt))
+      (judged.revealed || leaks(judged.reply))
     ) {
       judged = {
         ...judged,
@@ -1394,9 +1435,9 @@ export async function answerItem(
           firstTry,
           now,
           prepared,
-          // Arranging parts is tapping (issue #163), unless the app says otherwise — but the
-          // cells of a table (#230) are typed, every one of them.
-          input.via ?? (partsCheck && partsCheck.type !== 'table_fill' ? 'tapped' : 'typed'),
+          // Arranging parts is tapping (issue #163), unless the app says otherwise — and a
+          // cloze without a word bank can only be typed (issue #232).
+          input.via ?? (partsCheck && structured ? partsVia(structured) : 'typed'),
         ],
       );
       // A free text she did not get right produces NO review: `Again` is a statement about

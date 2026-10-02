@@ -67,8 +67,10 @@ export function summarize(items: readonly SummaryRow[]): PracticeSummary {
     // towards naming the topic as one that went well, or recognising four words would
     // read the same as writing them.
     // A structured item (an order, issue #228) is answered by tapping and by nothing else:
-    // there tapping IS producing the answer, so it counts like typing.
-    if (i.answered_by !== 'tapped' || isStructuredKind(i.kind ?? '')) t.shown += 1;
+    // there tapping IS producing the answer, so it counts like typing. Not so a cloze filled
+    // from its word bank (issue #232): picking the key among the words is recognition again.
+    const tappingIsProducing = isStructuredKind(i.kind ?? '') && i.kind !== 'cloze';
+    if (i.answered_by !== 'tapped' || tappingIsProducing) t.shown += 1;
     byTopic.set(key, t);
   }
   const topics = [...byTopic.values()];

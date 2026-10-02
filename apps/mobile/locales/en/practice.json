@@ -87,6 +87,13 @@
     "check_waits": "Once everything is matched."
   },
   "next": "Next",
+  "cloze": {
+    "gap": "Gap {{n}} of {{total}}",
+    "gap_filled": "Gap {{n}} of {{total}}: {{word}}",
+    "gap_clear": "Empties the gap again.",
+    "word_used": "{{word}}, already used",
+    "check_waits": "Only once every gap has something in it."
+  },
   "order": {
     "how": "Tap them in order.",
     "element_open": "{{text}}, no place yet",

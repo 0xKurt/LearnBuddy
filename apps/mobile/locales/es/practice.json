@@ -87,6 +87,13 @@
     "check_waits": "Solo cuando todo esté emparejado."
   },
   "next": "Siguiente",
+  "cloze": {
+    "gap": "Hueco {{n}} de {{total}}",
+    "gap_filled": "Hueco {{n}} de {{total}}: {{word}}",
+    "gap_clear": "Vacía el hueco otra vez.",
+    "word_used": "{{word}}, ya colocada",
+    "check_waits": "Solo cuando cada hueco tenga algo."
+  },
   "order": {
     "how": "Tócalos en orden.",
     "element_open": "{{text}}, todavía sin lugar",

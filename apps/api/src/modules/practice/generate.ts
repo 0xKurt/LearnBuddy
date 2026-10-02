@@ -37,6 +37,7 @@ import {
   insertItems,
   usableItems,
 } from './items.js';
+import { CLOZE_RULES } from './cloze.js';
 import { createSession, type PracticeLearner } from './service.js';
 import {
   MAX_STRUCTURED_ITEMS,
@@ -47,7 +48,7 @@ import {
 } from './structured.js';
 import { TABLE_RULES } from './table.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.16';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.17';
 
 const SUBJECT_KINDS = [
   'math',
@@ -231,6 +232,7 @@ Rules:
 - ${ORDER_RULES}
 - ${TABLE_RULES}
 - ${MATCH_RULES}
+- ${CLOZE_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${LANGUAGE_RULES}
 - Title: short, what it is about (e.g. "Dativ", "Unité 3 – Vokabeln", "Brüche addieren").
@@ -268,8 +270,8 @@ const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> =
  * test). Not in homework — that is what she typed — nor in a vocabulary or speaking list.
  */
 const STRUCTURED: Record<StartTopicRequest['kind'], ReadonlySet<string>> = {
-  practice: new Set(['order', 'table_fill', 'match']),
-  test: new Set(['order', 'table_fill', 'match']),
+  practice: new Set(['order', 'table_fill', 'match', 'cloze']),
+  test: new Set(['order', 'table_fill', 'match', 'cloze']),
   vocab: new Set(),
   speak: new Set(),
   help: new Set(),

@@ -124,6 +124,14 @@
       "groups_some_one": "1 su {{total}} è già nel gruppo giusto.",
       "groups_none": "Nessuno è ancora nel gruppo giusto – guarda di nuovo con calma.",
       "look_at": "Guarda di nuovo «{{text}}»."
+    },
+    "cloze": {
+      "quote": "«{{word}}»",
+      "none_yet": "Non ancora del tutto – guarda di nuovo gli spazi vuoti.",
+      "right_of": "{{count}} spazi su {{total}} sono già giusti.",
+      "right_of_one": "1 spazio su {{total}} è già giusto.",
+      "wrong": "Non va ancora bene: {{words}}.",
+      "near": "{{words}}: manca solo un piccolo dettaglio di ortografia."
     }
   },
   "contact": {

@@ -1763,6 +1763,52 @@ is linked; a screen reader hears "…, Paar 2 mit …" / "…, in Nomen". Genera
 practice test, both photo readings). The walkthrough measures five long-worded pairs and twelve
 elements in four groups on 390×844 and 360×740.
 
+**Cloze — one text, 2–8 gaps** (`practice/cloze.ts`, `ClozeAnswer.tsx`, issue #232). The model
+writes the text with `___` for each gap, the keys in reading order (`gaps[].answer`, plus a
+gap's own `accepted_answers`) and optionally a `word_bank`; `CLOZE_RULES` says so without an
+example sentence. Code cuts the text into `segments` (always one more than gaps), names the
+gaps `g1 … g8` by position, shuffles the bank deterministically and stores
+`{segments, gaps: [{id, key, accepted}], bank}`; the view drops `key` and `accepted`. Regel 0
+on the way in (`clozeProblem`, rejected — never repaired): fewer than 2 or more than 8 gaps;
+gap marks and keys that differ in number; a gap with an empty key or one over 40 characters;
+more than 260 visible characters or an instruction over 80 (`CLOZE_TEXT_MAX`,
+`CLOZE_PROMPT_MAX`: what fits 360×740 without scrolling, rule 16 — measured with 8 filled gaps:
+the text has 418 pt there, 256–262 characters took 380 pt, 279–301 took 407 pt, 350 took 434;
+the walkthrough shows the longest case, shot 44-cloze-eight); a key that can already be read in the text or the
+instruction (`mentionsSolution`, the leak check of every prepared hint); and with a bank: two
+gaps sharing a key, a key missing or a word twice in the bank, more than 12 words, or a
+distractor some gap accepts. Prepared hints that name any key or accepted form are dropped
+(`secretsOf`, also in `hints.ts`, which shows the hint writer the text with its gaps).
+
+Her answer is every gap once (`parts.gaps: [{id, text}]`, 1–80 characters each). Each gap is
+checked with the rules of every written answer — `ruleCheck` as a `short` answer against its
+key and accepted forms, with the item's spelling rule (strict in language subjects), so a typo,
+missing accents or case where spelling counts is a named near miss, and a plain number with
+another value is wrong. With a bank, a bank word that is not this gap's is wrong for sure.
+Whatever no rule decides (`unknown`, or `folded` case/punctuation where spelling is not the
+point) is `open`; only those gaps go to the model (`judgeOpenGaps`, purpose `tutor`, prompt
+`cloze-gaps.v1`): the model returns a verdict per listed gap and nothing else — the reply stays
+code's. No model call when another gap is already wrong for sure; no model, no budget or an
+unreadable answer leaves the gap open, and then nothing is claimed (verdict null,
+`practice.cannot_check`, no try counted). Verdict: every gap right → correct; one wrong →
+incorrect; only near misses → partially_correct. The reply (`clozeReply`) counts the right gaps
+and names the others by HER words ("4 von 5 Lücken stimmen schon. Bei „gegesen“ fehlt nur noch
+eine Kleinigkeit …") — no numbers on the gaps needed. `evaluated_by` is `model` as soon as the
+model judged one gap. Her words stand in the thread joined by " · "; the solution is the whole
+text with its keys. Recorded `via`: a cloze without a bank can only be typed (`typed`), one with
+a bank only tapped (`tapped`), and in the summary a bank cloze counts like tapped vocabulary —
+recognition, not production.
+
+App: the text flows as words and gaps (`unitsOf`: a gap keeps the punctuation touching it, math
+stays whole). Without a bank each gap is a small field in the line; the return key goes to the
+next gap and in the last one sends a complete text. With a bank, a tapped word fills the active
+gap (then the next empty one is active), a tap on a filled gap empties it, and a used word
+stays in place, muted. "Prüfen" waits until every gap has something. The text scrolls only when
+the keyboard leaves too little room (the screen keeps the question whole and the surface gives
+way); the focused gap is scrolled to, also after the keyboard shrank the window. Generated in a
+topic's practice and practice test, and read from a sheet (its printed word box as the bank;
+generate.v1.17, extract.v5.6, hints.v4).
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:

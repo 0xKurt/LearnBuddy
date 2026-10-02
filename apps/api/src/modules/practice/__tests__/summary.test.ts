@@ -74,6 +74,28 @@ describe('what one practice may claim', () => {
     expect(written.secure_topics).toEqual(['Brüche']);
   });
 
+  it('a cloze filled from its word bank is recognition; typed into its gaps it counts (#232)', () => {
+    const banked = summarize(
+      Array.from({ length: ENOUGH_FOR_A_TOPIC }, () =>
+        row({ kind: 'cloze', answered_by: 'tapped' }),
+      ),
+    );
+    expect(banked.secure_topics).toEqual([]);
+    const typed = summarize(
+      Array.from({ length: ENOUGH_FOR_A_TOPIC }, () =>
+        row({ kind: 'cloze', answered_by: 'typed' }),
+      ),
+    );
+    expect(typed.secure_topics).toEqual(['Brüche']);
+    // An order is answered by tapping and nothing else: there tapping is producing.
+    const ordered = summarize(
+      Array.from({ length: ENOUGH_FOR_A_TOPIC }, () =>
+        row({ kind: 'order', answered_by: 'tapped' }),
+      ),
+    );
+    expect(ordered.secure_topics).toEqual(['Brüche']);
+  });
+
   it('counts a topic once however it is written', () => {
     const s = summarize([row({ topic: 'Brüche' }), row({ topic: ' brüche ' })]);
     expect(s.secure_topics).toEqual(['Brüche']);

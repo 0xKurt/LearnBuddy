@@ -763,3 +763,144 @@ test('zuordnen: pairs in two columns, things into groups (issue #229)', async ({
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
+
+/**
+ * A cloze at both phone sizes, light and dark, without and with the keyboard up (issue #232:
+ * "360×740 mit 5 Lücken und Tastatur offen"). The gap she types in gets the focus back for
+ * each pass; with the keyboard up the question, that gap and "Prüfen" must all still show.
+ */
+async function clozeShots(page: Page, name: string, gap: string): Promise<void> {
+  const field = page.getByLabel(gap, { exact: true });
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await field.focus();
+    await shot(page, `${name}-${scheme}`);
+    for (const phone of PHONES) {
+      const room = { width: phone.width, height: phone.height - KEYBOARD[phone.width] };
+      await page.setViewportSize(room);
+      await field.focus();
+      await settle(page);
+      await page.screenshot({ path: join(SHOTS, `${name}-${scheme}-kb-${phone.width}.png`) });
+      await expect(page.getByTestId('scroll-question').last()).toBeInViewport();
+      await expect(field).toBeInViewport();
+      await expect(page.getByRole('button', { name: 'Prüfen' })).toBeInViewport();
+    }
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize(PHONES[0]);
+}
+
+test('a cloze: five gaps typed, a word bank, the longest that fits; each gap checked by the rules (issue #232)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Ich will einen Lückentext üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('drei Lückentexte vorbereitet', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('Setze die Verben im Perfekt ein.')).toBeVisible();
+
+  // Five gaps in the flowing text; "Prüfen" waits until every one has something.
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  await expect(check).toBeDisabled();
+  const gap = (n: number) => page.getByLabel(`Lücke ${n} von 5`, { exact: true });
+  await gap(1).click();
+  await gap(1).pressSequentially('sind');
+  // The return key goes on to the next gap.
+  await gap(1).press('Enter');
+  await expect(gap(2)).toBeFocused();
+  await gap(2).pressSequentially('haben');
+  await gap(2).press('Enter');
+  await gap(3).pressSequentially('gegesen');
+  await gap(3).press('Enter');
+  await gap(4).pressSequentially('sind');
+  await gap(4).press('Enter');
+  await gap(5).pressSequentially('schöner');
+  await expect(check).toBeEnabled();
+  await clozeShots(page, '40-cloze-typed', 'Lücke 5 von 5');
+
+  // In the last gap the return key sends the whole text: parts, typed.
+  const sent = page.waitForRequest((r) => r.url().endsWith('/answer') && r.method() === 'POST');
+  await gap(5).press('Enter');
+  expect((await sent).postDataJSON()).toMatchObject({
+    via: 'typed',
+    parts: {
+      type: 'cloze',
+      gaps: [
+        { id: 'g1', text: 'sind' },
+        { id: 'g2', text: 'haben' },
+        { id: 'g3', text: 'gegesen' },
+        { id: 'g4', text: 'sind' },
+        { id: 'g5', text: 'schöner' },
+      ],
+    },
+  });
+  // Code named the gap by her word — a near miss, not wrong, and no model asked.
+  await expect(
+    page
+      .getByText('4 von 5 Lücken stimmen schon. Bei „gegesen“ fehlt nur noch', { exact: false })
+      .last(),
+  ).toBeVisible();
+  // Her words stay; she fixes only the one.
+  await expect(gap(1)).toHaveValue('sind');
+  await gap(3).fill('gegessen');
+  await clozeShots(page, '41-cloze-feedback', 'Lücke 3 von 5');
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // ── With a word bank: tap a word, it fills the active gap; tap a filled gap to empty it ──
+  await expect(page.getByText('Setze die passenden Verben ein.')).toBeVisible();
+  const bankGap = (n: number, word?: string) =>
+    page.getByRole('button', {
+      name: word ? `Lücke ${n} von 3: ${word}` : `Lücke ${n} von 3`,
+      exact: true,
+    });
+  const word = (w: string) => page.getByRole('button', { name: w, exact: true });
+  await expect(check).toBeDisabled();
+  await word('isst').click();
+  await word('steht').click();
+  await word('fährt').click();
+  await expect(bankGap(1, 'isst')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'isst, schon eingesetzt' })).toBeDisabled();
+  await shot(page, '42-cloze-bank');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '42b-cloze-bank-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  const banked = page.waitForRequest((r) => r.url().endsWith('/answer') && r.method() === 'POST');
+  await check.click();
+  expect((await banked).postDataJSON()).toMatchObject({ via: 'tapped' });
+  // A word of the bank in the wrong gap is wrong for sure: named, without a model.
+  await expect(
+    page.getByText('1 von 3 Lücken stimmt schon. Bei „isst“, „steht“ passt es noch nicht.').last(),
+  ).toBeVisible();
+  await shot(page, '43-cloze-bank-feedback');
+  // Changed her mind: both back to the bank, then in the right order.
+  await bankGap(2, 'steht').click();
+  await bankGap(1, 'isst').click();
+  await expect(word('steht')).toBeEnabled();
+  await word('steht').click();
+  await word('isst').click();
+  await expect(bankGap(2, 'isst')).toBeVisible();
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // ── The longest a cloze may be: 8 gaps, 256 of 260 characters, an instruction of 78 of 80
+  // (CLOZE_TEXT_MAX / CLOZE_PROMPT_MAX). Filled, it still fits 360×740 — `shot` fails on any
+  // scrolling (rule 16), the text's own scroll view included. ──
+  await expect(page.getByText('Achte dabei auf die Person', { exact: false })).toBeVisible();
+  const eight = ['ging', 'traf', 'saßen', 'rannte', 'rief', 'kam', 'erzählte', 'schliefen'];
+  for (const [i, verb] of eight.entries()) {
+    await page.getByLabel(`Lücke ${i + 1} von 8`, { exact: true }).fill(verb);
+  }
+  await page.getByLabel('Lücke 8 von 8', { exact: true }).blur();
+  await shot(page, '44-cloze-eight');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '44b-cloze-eight-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+});

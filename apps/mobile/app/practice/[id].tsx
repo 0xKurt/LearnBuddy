@@ -923,7 +923,10 @@ export default function PracticeScreen() {
     <Screen title={title} right={endButton}>
       <KeyboardSafe style={{ flex: 1 }}>
         <View
-          style={{ flex: 1 }}
+          // A structured surface may be taller than what the keyboard leaves (a cloze, issue
+          // #232): then the middle keeps the question whole and the surface gives way — its
+          // text scrolls to the gap she types in — instead of sliding over the question.
+          style={{ flex: 1, minHeight: open && item.task_view ? questionContentHeight : 0 }}
           onLayout={(e) => setMiddleHeight(Math.round(e.nativeEvent.layout.height))}
         >
           <ScrollView
@@ -1112,13 +1115,15 @@ export default function PracticeScreen() {
         {/* A structured item's parts (issues #228–#232): one surface per kind, each with its
             own "Prüfen" in the pinned bar. Keyed by the question, so a new one starts empty. */}
         {open && item.task_view ? (
-          <View testID="answer-surface">
+          <View testID="answer-surface" style={{ flexShrink: 1, minHeight: 0 }}>
             <StructuredAnswer
               key={item.id}
               view={item.task_view}
               draftKey={`session.${id}.${item.id}`}
               disabled={locked}
-              onSubmit={(parts, shownText) => void answer(item.id, { parts }, shownText)}
+              onSubmit={(parts, shownText, via) =>
+                void answer(item.id, via ? { parts, via } : { parts }, shownText)
+              }
             />
           </View>
         ) : null}
