@@ -259,7 +259,19 @@ const AlsoAsked = z
 
 export const TurnDecision = z.object({
   // Lenient when parsing (older scripted answers have no such field); the model must write it.
-  concern: z.boolean().default(false),
+  //
+  // It carried no description at all until issue #225, so everything this bit means stood in
+  // the system prompt while the model wrote the bit here — and measured over six runs it set it
+  // on a plain insult about one time in six, which hands a child who was only rude a crisis
+  // helpline and throws the real answer away. The description says both sides, because the one
+  // without the other is what went wrong (the schema reaches the model in the same request and
+  // is the larger of the two static blocks — see #213).
+  concern: z
+    .boolean()
+    .default(false)
+    .describe(
+      'true only when the learner tells of DANGER to herself: being hurt, bullied, abused or threatened, thinking of hurting herself, harming her own body, feeling unsafe or hopeless. The app then replaces your reply with a fixed caring message and a helpline. NOT true for an insult, a provocation, rudeness towards you, ordinary school stress, or a hard turn in her life she is only telling you about while naming no danger — setting it there throws your answer away and hands her a crisis number instead of an answer.',
+    ),
   also_asked: z.boolean().default(false),
   // No minimum length: a safeguarding answer is written by code, so the model rightly
   // leaves the reply empty then (its own text would be thrown away). Everything else

@@ -27,6 +27,7 @@ import { dayLabel } from '../../i18n/index.js';
 import { addDays, daysBetween, localParts, weekdayName, weekdayOf } from '../../lib/time.js';
 import type { LlmMessage } from '../../llm/gateway.js';
 import type { LearnerContext } from '../../http/context.js';
+import { likelyGrade } from './grade.js';
 import { aliasesIn, blockData, occursIn, reportState, type BlockName } from './blocks.js';
 import type {
   BuddyState,
@@ -183,9 +184,20 @@ export function buildContext(
   nowBlock.push(`Next days (in_days offset, weekday, date): ${days}`);
 
   learnerBlock.push('## Learner');
+  // A school learner whose year is unknown: her age gives a likely one, so the question can be
+  // a single tap on a suggestion instead of an open question left standing in the thread
+  // (issue #208). The number is never stored from here — only her answer writes it.
+  const likely =
+    learner.level === 'school' && learner.grade === null
+      ? likelyGrade(learner.birth_date, today)
+      : null;
   const level =
     learner.level === 'school'
-      ? `school, grade ${learner.grade ?? 'unknown'}`
+      ? learner.grade !== null
+        ? `school, grade ${learner.grade}`
+        : likely !== null
+          ? `school, grade unknown — from her age probably ${likely}: ask that as one short yes/no, never as an open question and never in the same turn as an offer`
+          : 'school, grade unknown (ask when it matters for the next step)'
       : learner.level === 'unknown'
         ? 'unknown (ask when it matters for the next step)'
         : learner.level;

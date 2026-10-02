@@ -1450,4 +1450,56 @@ export const CASES: Case[] = [
       ];
     },
   },
+  {
+    // Issue #208: he offered the practice AND asked which class she is in, in the same reply.
+    // The button starts the practice, so the question stays in the thread unanswered — which is
+    // what she sees the next time she scrolls. Her school year is known here, so there is
+    // nothing to ask at all.
+    id: 'de_offer_asks_nothing_beside_itself',
+    setup: async (env, l) => {
+      await env.db.query(`update learners set level = 'school', grade = 7 where id = $1`, [
+        l.learnerId,
+      ]);
+    },
+    message: 'Können wir Brüche üben?',
+    check: (o) => {
+      const taps = o.tools.filter((t) => t === 'offer_learning' || t === 'prepare_practice').length;
+      return [
+        ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
+        ...must(taps >= 1, `no offer (${o.tools.join(', ') || 'none'})`),
+        ...must(
+          !(o.reply ?? '').includes('?'),
+          `asked a question beside the offer: ${JSON.stringify(o.reply)}`,
+        ),
+        ...must(
+          (o.options?.length ?? 0) === 0,
+          `offered answer options beside a start button: ${JSON.stringify(o.options)}`,
+        ),
+      ];
+    },
+  },
+  {
+    // The other direction, and the one that matters more: with the school year missing he may
+    // still ask — just not beside a button, and as one short question he can answer with a tap.
+    id: 'de_missing_school_year_is_asked_before_the_offer',
+    setup: async (env, l) => {
+      await env.db.query(
+        `update learners set level = 'school', grade = null, birth_date = '2013-03-10' where id = $1`,
+        [l.learnerId],
+      );
+    },
+    message: 'Können wir Brüche üben?',
+    check: (o) => {
+      const taps = o.tools.filter((t) => t === 'offer_learning' || t === 'prepare_practice').length;
+      const asked = (o.reply ?? '').includes('?') || (o.options?.length ?? 0) > 0;
+      return [
+        ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
+        // Either he asks (then no button), or he just offers (then no question). Never both.
+        ...must(
+          !(asked && taps >= 1),
+          `asked and offered in the same reply (${o.tools.join(', ') || 'none'}): ${JSON.stringify(o.reply)}`,
+        ),
+      ];
+    },
+  },
 ];
