@@ -3,8 +3,8 @@
 //
 //   · jedes Element ist ein echter Button, und sein Name sagt die Zuordnung in Worten
 //     („…, Paar 1 mit …", „…, in Nomen") — die Farbe ist nie das einzige Signal;
-//   · ein Paar bekommt eine gemeinsame Nummer, die nach dem Lösen wieder frei ist — sie steht
-//     IM Element, in Lesegröße (#224), nicht als Plakette auf der Ecke;
+//   · ein Paar bekommt eine gemeinsame Pastellfarbe und ein gemeinsames Zeichen (#286), die nach
+//     dem Lösen wieder frei sind; Farbe ist nie das einzige Signal;
 //   · Gruppen nehmen nur etwas an, wenn oben etwas gewählt ist, und ein einsortiertes Element
 //     wandert IN die Zeile seiner Gruppe (der Kasten ist der Zustand, keine Nummer); ein Tipp
 //     dort nimmt es wieder heraus;
@@ -16,7 +16,14 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
-import { leftShare, linksText, MatchAnswer, stateFrom, tapMatch } from '../MatchAnswer.js';
+import {
+  leftShare,
+  linksText,
+  MatchAnswer,
+  pairLook,
+  stateFrom,
+  tapMatch,
+} from '../MatchAnswer.js';
 
 const PAIRS = {
   type: 'match' as const,
@@ -155,13 +162,14 @@ describe('pairs she taps', () => {
     fireEvent.click(screen.getByRole('button', { name: 'dog, noch ohne Partner' }));
     expect(screen.getByRole('button', { name: 'Hund, Paar 1 mit dog' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'dog, Paar 1 mit Hund' })).toBeDefined();
-    // The number stands inside both elements, at body size — not 11 pt on a corner.
-    const numbers = screen.getAllByText('1');
-    expect(numbers).toHaveLength(2);
-    for (const n of numbers) expect(getComputedStyle(n).fontSize).toBe('14px');
-    expect(
-      within(screen.getByRole('button', { name: 'Hund, Paar 1 mit dog' })).getByText('1'),
-    ).toBeDefined();
+    // A pair shares a tint AND a symbol (#286), so colour is never the only signal; no number
+    // stands in the text. Both tiles carry the same symbol, and the tile reads as its word.
+    const hund = screen.getByRole('button', { name: 'Hund, Paar 1 mit dog' });
+    const dog = screen.getByRole('button', { name: 'dog, Paar 1 mit Hund' });
+    expect(within(hund).getByText(pairLook(1).symbol)).toBeDefined();
+    expect(within(dog).getByText(pairLook(1).symbol)).toBeDefined();
+    expect(hund.textContent).toBe(`Hund${pairLook(1).symbol}`);
+    expect(screen.queryByText('1')).toBeNull();
     // Changed her mind: one tap on the pair dissolves it.
     fireEvent.click(screen.getByRole('button', { name: 'dog, Paar 1 mit Hund' }));
     expect(screen.getByRole('button', { name: 'Hund, noch ohne Partner' })).toBeDefined();
@@ -230,5 +238,13 @@ describe('groups she sorts into', () => {
       },
       'Nomen: Haus, Baum; Verb: laufen; Adjektiv: schnell',
     );
+  });
+});
+
+describe('how a pair looks', () => {
+  it('gives every pair of a pairing its own tint and symbol', () => {
+    const looks = [1, 2, 3, 4].map(pairLook);
+    expect(new Set(looks.map((x) => x.tone)).size).toBe(4);
+    expect(new Set(looks.map((x) => x.symbol)).size).toBe(4);
   });
 });

@@ -29,12 +29,14 @@ export const topEdgeMask: ViewStyle | null = topEdgeMaskFrom(0);
  * lies over its top (Buddy's slim bar, components/buddy/TopOverlay.tsx), the visible edge is
  * that thing's bottom, not the view's top. With the fade at 0 a message scrolled under the bar
  * came out sliced at its lower edge — half a sentence, or the top of a "Los geht's" button,
- * peeking out under the card (issue #287). Above `from` the view is hidden anyway.
+ * peeking out under the card (issue #287). Above `from` the view is hidden anyway. `size` is
+ * the fade's height; only a view that rests on a whole item at its top asks for less (the
+ * practice conversation at rest, issue #286) — once she scrolls it is EDGE_FADE again.
  */
-export function topEdgeMaskFrom(from: number): ViewStyle | null {
+export function topEdgeMaskFrom(from: number, size: number = EDGE_FADE): ViewStyle | null {
   if (Platform.OS !== 'web') return null;
   const start = Math.max(0, Math.round(from));
-  const gradient = `linear-gradient(to bottom, transparent ${start}px, black ${start + EDGE_FADE}px)`;
+  const gradient = `linear-gradient(to bottom, transparent ${start}px, black ${start + size}px)`;
   return { maskImage: gradient, WebkitMaskImage: gradient } as unknown as ViewStyle;
 }
 

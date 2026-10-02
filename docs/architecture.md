@@ -1898,13 +1898,18 @@ its component there and nothing else on the screen. Every surface keeps its arra
 draft (`lib/drafts.ts`), so a theme switch — a remount — keeps it, brings its own "Prüfen" in the
 pinned bar, and that waits until the arrangement is complete. `OrderAnswer.tsx` is one gesture:
 tap the elements in order, they get numbers; tapping a numbered one takes it back with
-everything after it. The place is said in words to a screen reader ("…, Platz 2").
+everything after it. The place is said in words to a screen reader ("…, Platz 2"). Steps (text)
+keep their place and get the number in a circle before them; short things — numbers — stand as
+places and a pool (#286): numbered places on top, the number ABOVE the place and never beside the
+value ("1" before "−12" read as one number, "4 ¾" as a mixed fraction), the pool below in equal
+tiles, four to a row; a tap puts a tile on the next free place.
 
 **Room on a small phone** (rule 16; `components/practice/PartsArea.tsx`). The question card never
 shrinks and 44 pt per touch target is the floor, so the largest task the contract allows has to fit
 the smallest phone as it is — the maxima of a match are measured, not chosen (below). While a
-structured surface is shown, the middle column keeps at least the question's measured height, plus
-room for Buddy's reply once she has checked (`STRUCTURED_REPLY_ROOM` in `app/practice/[id].tsx`).
+structured surface is shown, the parts stand right under the question and the conversation; the
+newest turn (Buddy's reply after a check) always stays visible, and the free room collects between
+the parts and "Prüfen" (`FreeSpace` inside `PartsArea`; the shell, #286).
 The parts stand in a scroll view only as the floor under a mistake: its testID `scroll-parts` is
 not one `tests/web/fit.ts` allows, so a walkthrough shot fails the moment the parts would have to
 be scrolled. (Before the floor, a tall arrangement was drawn over the question — found in the shots
@@ -1978,10 +1983,10 @@ second miss on, as the next rung of the hint ladder (`structuredNamesPart` → c
 and the third miss explains the solution.
 
 App: `MatchAnswer.tsx`. Pairs stand in two columns (four pairs are four rows; the columns share
-the width by their longest words, `leftShare`); tap one, then its partner (either way round), and
-both carry the pair's number **inside** the chip, a bold 14-pt numeral before the text — not a
-small badge on the corner, and not a disc either: a disc pushed the word below itself in the
-narrow column and made the board too tall.
+the width near-equally, 42–58 %, `leftShare`); a row's two tiles are equally tall, the text stands
+left. Tap one, then its partner (either way round): both tiles then wear the pair's pastel tint
+AND its symbol (● ▲ ■ ◆, `pairLook`), so a pair is seen at a glance and colour is never the only
+signal (#286; before, the pair was a number in the text and the board looked like a form).
 Groups follow the display idea of the removed `parts` board, because there the box IS the state:
 the elements she has not sorted yet stand above, every group is a row with its name, and an
 element she puts in a group moves INTO that row, next to the name. Tapping it there takes it back
@@ -2107,7 +2112,9 @@ nothing stays open forever:
 - _"Beenden"._ In a test it hands the test in (the review shows questions she never got to as
   "nicht bearbeitet", with their solution). Everywhere else it is a pause: the app goes back to
   Buddy without finishing; `POST …/finish` on homework help with open tasks only touches its
-  last activity.
+  last activity. On screen it is a round 44 pt ✕ beside the speaker (a screen reader hears
+  "Übung beenden" and where it leads): the header title is one line (#287), and a worded pill
+  left the topic ~125 pt at 360 wide, cut to "Flächeninhalt Rec…" (#286).
 - _Resuming_ is keyed on `last_activity_at`: a session used in the last 12 h is the first now
   card; an older open one (homework help up to 14 days, any other session up to 3 days) comes
   after Buddy's prepared practice. Every open session is loaded into Buddy's state, however old.
@@ -2691,9 +2698,20 @@ account's e-mail (DESIGN-BRIEF §Onboarding); there is no age check beyond the b
 Once the profile exists, one last short step for everyone (after the hand-over for a child, so
 she picks it herself): "Wie soll Buddy klingen?" — four voices, a tap plays a sample and picks
 it, "Warm" is already chosen so "Weiter" is always possible (ADR 0008 §Amendment).
-The practice screen pins the question (with its drawing scaled to fit) on top and the way to
-answer at the bottom; only the conversation about the question scrolls between them; short
-options sit two by two.
+The practice screen (issue #286) stands the question (with its drawing scaled to fit), the
+conversation about it and the way to answer together at the top, in that order; the free room
+collects BELOW the way to answer (`components/practice/FreeSpace.tsx`), above what is pinned
+(the answer field, "Prüfen", "Weiter"). Before, the conversation took all free room and the way
+to answer sat at the bottom, which left a hole under the card with a lonely "Tipp" in it. The
+conversation shows WHOLE turns only (`threadCap` in `app/practice/[id].tsx`): everything when it
+fits into its box plus the free room, otherwise from the earliest turn whose rest still fits,
+never less than the newest turn — so at rest the top edge lies in the gap above a whole turn and
+nothing is cut under the card. Earlier turns are a scroll up away; the edge is masked exactly when
+the box holds more than it shows, with a short fade over that gap at rest and the full EDGE_FADE
+(#63) once she scrolls up or when the newest turn alone does not fit. Before the first turn the conversation
+is only the hint row; at the largest board it gives way whole rather than half. A card with a
+drawing or photo still grows into what the conversation leaves (#96, `cardGrowTo`, at most half
+the window), and a new reply takes its room back from the card first. Short options sit two by two.
 Level and grade are learned in the conversation (the profile has no grade field: Buddy asks when
 the level is unknown and it matters for the next step — `context.ts`, `set_level`).
 
