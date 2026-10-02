@@ -4,7 +4,8 @@
 // that is what they are: a conversation (testID "scroll-thread", newest at the
 // bottom, always shown at its end) and a list she browses on purpose
 // ("scroll-list": her material, her memories, a test's review) — the actions
-// around them stay pinned. Screenshots are taken at the real size, so they show
+// around them stay pinned. A third: a reading text above its questions ("scroll-text",
+// issue #233) — the text scrolls in itself, the question and its answer stay standing. Screenshots are taken at the real size, so they show
 // what Lena sees, not a stretched page.
 
 import { appendFileSync, mkdirSync } from 'node:fs';
@@ -98,7 +99,11 @@ export async function overflows(page: Page): Promise<Overflow[]> {
       out.push({
         label: id || (el.innerText ?? '').replace(/\s+/g, ' ').slice(0, 40),
         overflow,
-        allowed: id === 'scroll-thread' || id === 'scroll-talk' || id === 'scroll-list',
+        allowed:
+          id === 'scroll-thread' ||
+          id === 'scroll-talk' ||
+          id === 'scroll-list' ||
+          id === 'scroll-text',
       });
     }
     return out;

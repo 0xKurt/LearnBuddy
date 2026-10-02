@@ -807,3 +807,162 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
+
+test('a reading text stays visible while she answers its questions (issue #233)', async ({
+  page,
+}) => {
+  // Buddy writes the text (scripted: apps/api/src/testing/scenarios/reading-marking.ts); the
+  // server counted its lines and dropped the question about line 24, which the text does not
+  // have. The text scrolls in itself (`scroll-text`); every `shot` fails if anything else would
+  // have to be scrolled — the question, its options, "Prüfen".
+  await onboardChild(page);
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize(PHONES[0]);
+  const both = async (name: string) => {
+    await shot(page, name);
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await shot(page, `${name}-night`);
+    await page.emulateMedia({ colorScheme: 'light' });
+  };
+  await page.getByLabel('Schreib Buddy …').fill('Ich will einen Lesetext über den Igel im Winter');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await offerStart(page, 'hier ist ein Text über den Igel').click();
+  await expect(page.getByText('Woraus baut der Igel sein Nest?')).toBeVisible();
+  // Four questions: the one about a line that does not exist was never written.
+  await expect(page.getByText('Frage 1 von 4')).toBeVisible();
+  const text = page.getByTestId('scroll-text');
+  await expect(text).toBeVisible();
+  await expect(page.getByText('Fettpolster an. Er sucht Käfer, Würmer und')).toBeVisible();
+  // The text is longer than its window: it scrolls, alone.
+  const scrolls = await text.evaluate((el) => el.scrollHeight > el.clientHeight + 2);
+  expect(scrolls).toBe(true);
+  for (const phone of PHONES) {
+    await page.setViewportSize(phone);
+    await settle(page);
+    // Text and question at once, and every option in view.
+    await expect(text).toBeInViewport();
+    await expect(page.getByText('Woraus baut der Igel sein Nest?')).toBeInViewport();
+    await expect(page.getByRole('button', { name: /aus Erde und Sand/ })).toBeInViewport();
+  }
+  await page.setViewportSize(PHONES[0]);
+  await both('60-reading-question');
+
+  await page.getByRole('button', { name: /aus Laub, Moos und Gras/ }).click();
+  // Closed: the lines the answer stands in, in words — and tinted in the text above.
+  await expect(page.getByTestId('evidence')).toHaveText('Im Text: Z. 5–6');
+  await both('61-reading-evidence');
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // The second question about the same text: the text stays, folded or open as she left it.
+  await expect(page.getByText('Wovon lebt der Igel im Winterschlaf?')).toBeVisible();
+  await page.getByRole('button', { name: 'Einklappen' }).click();
+  await expect(text).toHaveCount(0);
+  await expect(page.getByText('Der Igel im Winter').first()).toBeVisible();
+  await both('62-reading-folded');
+  await page.getByRole('button', { name: 'Text zeigen' }).click();
+  await expect(text).toBeVisible();
+  // A slip of the pen is no mark in a reading task: what she understood is the question.
+  await page.getByLabel('Deine Antwort').fill('von seinem Fet');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // True or false: two options code wrote.
+  await expect(page.getByText('schneller als sonst', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Falsch' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // A sentence OF the text to set its commas in (#234 with #233): the tallest moment — the text,
+  // a 22-word sentence of targets and "Prüfen" on one screen.
+  await expect(page.getByText('Setze die Kommas in diesem Satz aus dem Text.')).toBeVisible();
+  await both('63-reading-mark-commas');
+  await page.getByRole('button', { name: 'Lücke nach „findet“', exact: true }).click();
+  await page.getByRole('button', { name: 'Lücke nach „Laub“', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Lücke nach „Laub“, Komma gesetzt' }),
+  ).toBeVisible();
+  await both('64-reading-commas-set');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+});
+
+test('marking: words, sentence parts with categories, syllables (issue #234)', async ({ page }) => {
+  // The scripted tasks are the LARGEST the contract allows (MARK_* in contracts/structured.ts):
+  // twelve words (the issue's acceptance case), 24 words with three categories, three syllable
+  // words of up to eleven letters. Every `shot` fails if the targets would have to be scrolled.
+  await onboardChild(page);
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize(PHONES[0]);
+  const both = async (name: string) => {
+    await shot(page, name);
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await shot(page, `${name}-night`);
+    await page.emulateMedia({ colorScheme: 'light' });
+  };
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns Satzglieder markieren');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await offerStart(page, 'markier mal Satzglieder').click();
+  await expect(page.getByText('Tippe alle Nomen an.')).toBeVisible();
+  const word = (w: string) => page.getByRole('button', { name: `${w}, nicht markiert` });
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  await expect(check).toBeDisabled();
+  // Every word a target of at least 44 × 44 pt, on both phones.
+  for (const phone of PHONES) {
+    await page.setViewportSize(phone);
+    await settle(page);
+    const boxes = await page
+      .getByTestId('mark-text')
+      .getByRole('button')
+      .evaluateAll((els) => els.map((el) => el.getBoundingClientRect()));
+    expect(boxes).toHaveLength(12);
+    for (const b of boxes) {
+      expect(b.height).toBeGreaterThanOrEqual(44);
+      expect(b.width).toBeGreaterThanOrEqual(44);
+    }
+  }
+  await page.setViewportSize(PHONES[0]);
+  await both('65-mark-words-start');
+  for (const w of ['samstag', 'oma', 'kuchen', 'großen']) await word(w).click();
+  await expect(page.getByTestId('mark-summary')).toHaveText(
+    'Markiert: samstag, oma, großen kuchen',
+  );
+  await check.click();
+  // Counted, never named.
+  await expect(page.getByText('Noch nicht ganz: 3 richtig, 1 zu viel.')).toBeVisible();
+  await both('66-mark-words-feedback');
+  await page.getByRole('button', { name: 'großen, markiert' }).click();
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // 24 words, three categories: pick the category, then the words.
+  await expect(page.getByText('Markiere Subjekt, Prädikat und Akkusativobjekt.')).toBeVisible();
+  await both('67-mark-categories-start');
+  for (const w of ['meine', 'beste', 'Freundin', 'Johanna']) await word(w).click();
+  await page.getByRole('radio', { name: 'Markieren als Prädikat' }).click();
+  await word('packt').click();
+  await page.getByRole('radio', { name: 'Markieren als Akkusativobjekt' }).click();
+  for (const w of ['ihre', 'schwere', 'Gitarre']) await word(w).click();
+  await expect(
+    page.getByRole('button', { name: 'Gitarre, markiert als Akkusativobjekt' }),
+  ).toBeVisible();
+  await both('68-mark-categories');
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // Syllables: tap the letter after which a syllable ends.
+  await expect(page.getByText('Trenne die Wörter in Silben.')).toBeVisible();
+  await both('69-mark-syllables-start');
+  const cut = (before: string, w: string) =>
+    page.getByRole('button', { name: `Nach „${before}“ trennen (${w})` });
+  for (const b of ['Scho', 'Schoko', 'Schokola']) await cut(b, 'Schokolade').click();
+  for (const b of ['Schmet', 'Schmetter']) await cut(b, 'Schmetterling').click();
+  for (const b of ['Ba', 'Bana']) await cut(b, 'Banane').click();
+  await both('70-mark-syllables');
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+});
