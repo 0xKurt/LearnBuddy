@@ -53,12 +53,20 @@ export async function createTestEnv(
     push?: 'fake' | 'disabled';
     speech?: 'fake' | 'disabled';
     config?: Record<string, string>;
+    /**
+     * Connect the API as another role than the superuser that built the database: gets the
+     * test database's admin URL, returns the URL the API uses (issue #107: the API role from
+     * infra/supabase/templates/api-role.sql). The fake auth keeps the admin connection,
+     * because real accounts go through Supabase's own API, not through the API's role.
+     */
+    connectAs?: (adminUrl: string) => Promise<string>;
   } = {},
 ): Promise<TestEnv> {
   const database: TestDatabase = await createTestDatabase();
+  const apiUrl = opts.connectAs ? await opts.connectAs(database.url) : database.url;
   const config: Config = loadConfig({
     NODE_ENV: 'test',
-    DATABASE_URL: database.url,
+    DATABASE_URL: apiUrl,
     SUPABASE_URL: 'http://127.0.0.1:54321',
     SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key-not-used',
     TICK_SECRET: TEST_TICK_SECRET,
@@ -67,7 +75,8 @@ export async function createTestEnv(
     PUSH_BACKEND: 'disabled',
     ...opts.config,
   });
-  const db = createDb(database.url, { max: 8 });
+  const db = createDb(apiUrl, { max: 8 });
+  const adminDb = opts.connectAs ? createDb(database.url, { max: 2 }) : db;
   const clock = new TestClock(opts.start ?? '2026-09-28T08:00:00Z');
   // Background hints for new questions are answered with "none" unless a test scripts
   // them; the concept-image pass finds no figures unless a test scripts boxes (issue #50).
@@ -76,7 +85,7 @@ export async function createTestEnv(
     .byDefault('figures', { json: { assets: [] } });
   const push = new FakePush();
   const speech = new FakeSpeech();
-  const auth = new FakeAuth(db, clock.now);
+  const auth = new FakeAuth(adminDb, clock.now);
   const storage = new MemoryStorage();
   const embeddings = new FakeEmbeddings();
   const pending: Array<Promise<void>> = [];
@@ -115,6 +124,7 @@ export async function createTestEnv(
       // (harness-close-does-not-drain-background).
       while (pending.length > 0) await Promise.allSettled(pending.splice(0));
       await db.close();
+      if (adminDb !== db) await adminDb.close();
       await database.drop();
     },
   };
