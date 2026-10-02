@@ -8,7 +8,7 @@
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import Svg, {
   Circle,
   ClipPath,
@@ -24,6 +24,7 @@ import Svg, {
 // Imported by path: the mobile bundle takes only this small, dependency-free module
 // of @learnbuddy/shared-math (its index also pulls in mathjs).
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
+import { checkMolecule } from '../../../../packages/shared-math/src/molecule.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import {
   figureBodyWidth,
@@ -39,6 +40,8 @@ import { TYPE } from '../../lib/theme/type.js';
 import { describeStaff } from '../../lib/music/words.js';
 import { MathText } from './MathText.js';
 import { StaffLine } from './StaffLine.js';
+import { FAMILY, FONT, HaloText, SMALL } from './figureText.js';
+import { MoleculeView } from './MoleculeView.js';
 import { useSpokenWords } from './useSpokenMath.js';
 
 type FractionFig = Extract<Figure, { type: 'fraction' }>;
@@ -51,14 +54,6 @@ type TableFig = Extract<Figure, { type: 'table' }>;
 type T = (key: string, values?: Record<string, string | number>) => string;
 /** Reads a cell text with math out in words. */
 type Speak = (text: string) => string;
-
-const FONT = 13;
-/** The app's sans-serif inside SVG too (the web would fall back to a serif). */
-const FAMILY = Platform.select({
-  web: 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  default: undefined,
-});
-const SMALL = 12;
 
 /** 0.30000000000000004 → "0,3" (decimal comma where usual). */
 export function formatNumber(n: number): string {
@@ -141,6 +136,8 @@ function FigureBody({ figure, width }: { figure: Figure; width: number }) {
       return <Geometry fig={figure} width={width} />;
     case 'table':
       return <Table fig={figure} />;
+    case 'molecule':
+      return <MoleculeView fig={figure} width={width} />;
     // Die Notenzeile (issue #226). Gezeichnet wird sie in `StaffLine.tsx`, weil dieselbe
     // Zeichnung die Fläche ist, auf die sie schreibt — eine Figur ist, was sie LIEST.
     case 'staff':
@@ -584,56 +581,6 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
   );
 }
 
-/** A label with a paper-coloured outline underneath, so it stays readable over grid and graphs. */
-function HaloText({
-  x,
-  y,
-  color,
-  anchor,
-  text,
-  size = FONT + 1,
-  weight = '600',
-}: {
-  x: number;
-  y: number;
-  color: string;
-  anchor: 'start' | 'middle' | 'end';
-  text: string;
-  size?: number;
-  weight?: '400' | '600';
-}) {
-  const { figure: ink } = useTheme();
-  return (
-    <G>
-      <SvgText
-        fontFamily={FAMILY}
-        x={x}
-        y={y}
-        fontSize={size}
-        fontWeight={weight}
-        fill={ink.paper}
-        stroke={ink.paper}
-        strokeWidth={4}
-        strokeLinejoin="round"
-        textAnchor={anchor}
-      >
-        {text}
-      </SvgText>
-      <SvgText
-        fontFamily={FAMILY}
-        x={x}
-        y={y}
-        fontSize={size}
-        fontWeight={weight}
-        fill={color}
-        textAnchor={anchor}
-      >
-        {text}
-      </SvgText>
-    </G>
-  );
-}
-
 /** "x^2 - 2*x" → "x² − 2·x" for the legend. */
 export function prettyExpr(expr: string): string {
   const sup: Record<string, string> = {
@@ -829,8 +776,35 @@ function BarChart({ fig, width }: { fig: BarFig; width: number }) {
 
 // ─────────────── geometry ───────────────
 
+type ScreenXY = { x: number; y: number };
+
+/** Where a line from `p` in direction `d` leaves the drawing (inset a little from its edge). */
+function toEdge(p: ScreenXY, d: ScreenXY, w: number, h: number): ScreenXY {
+  const inset = 4;
+  let t = Infinity;
+  if (d.x > 1e-9) t = Math.min(t, (w - inset - p.x) / d.x);
+  if (d.x < -1e-9) t = Math.min(t, (inset - p.x) / d.x);
+  if (d.y > 1e-9) t = Math.min(t, (h - inset - p.y) / d.y);
+  if (d.y < -1e-9) t = Math.min(t, (inset - p.y) / d.y);
+  if (!Number.isFinite(t) || t < 0) return p;
+  return { x: p.x + d.x * t, y: p.y + d.y * t };
+}
+
+const unit = (from: ScreenXY, to: ScreenXY): ScreenXY => {
+  const l = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+  return { x: (to.x - from.x) / l, y: (to.y - from.y) / l };
+};
+
+/** A filled arrowhead with its tip at `tip`, pointing along `d`. */
+function headPath(tip: ScreenXY, d: ScreenXY, size = 10): string {
+  const back = { x: tip.x - d.x * size, y: tip.y - d.y * size };
+  const n = { x: -d.y * size * 0.45, y: d.x * size * 0.45 };
+  return `M${tip.x},${tip.y} L${back.x + n.x},${back.y + n.y} L${back.x - n.x},${back.y - n.y} Z`;
+}
+
 function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
   const { palette, figure: ink } = useTheme();
+  const { angles, lengths, arrows, rays, lines } = fig;
   const byName = new Map(fig.points.map((p) => [p.name, p]));
   let minX = Infinity;
   let maxX = -Infinity;
@@ -851,17 +825,47 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
   }
   const spanX = maxX - minX || 1;
   const spanY = maxY - minY || 1;
-  const margin = 24;
-  const maxH = Math.min(340, width);
+  // Room around the drawing for point names, measures and arrow labels.
+  const margin = 30;
+  const maxH = Math.min(320, width);
   const scale = Math.min((width - 2 * margin) / spanX, (maxH - 2 * margin) / spanY);
   const h = Math.round(spanY * scale + 2 * margin);
   const offX = (width - spanX * scale) / 2;
   const X = (x: number) => offX + (x - minX) * scale;
   const Y = (y: number) => margin + (maxY - y) * scale;
+  const at = (n: string): ScreenXY | null => {
+    const p = byName.get(n);
+    return p ? { x: X(p.x), y: Y(p.y) } : null;
+  };
   const cx = fig.points.reduce((s, p) => s + p.x, 0) / fig.points.length;
   const cy = fig.points.reduce((s, p) => s + p.y, 0) / fig.points.length;
+  const middle = { x: X(cx), y: Y(cy) };
+  /** The side of a segment that faces away from the middle of the drawing. */
+  const outward = (p: ScreenXY, q: ScreenXY): ScreenXY => {
+    const d = unit(p, q);
+    let n = { x: -d.y, y: d.x };
+    const mid = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+    if ((mid.x - middle.x) * n.x + (mid.y - middle.y) * n.y < 0) n = { x: -n.x, y: -n.y };
+    return n;
+  };
+  // A point that only marks where an arrow ends is no point of the figure: no dot, no name.
+  const named = new Set<string>([
+    ...fig.segments.flatMap((sg) => [sg.from, sg.to]),
+    ...fig.polygons.flat(),
+    ...fig.circles.map((c) => c.center),
+    ...angles.flatMap((a) => a.at),
+    ...lengths.flatMap((l) => [l.from, l.to]),
+    ...arrows.map((a) => a.from),
+    ...rays.flatMap((r) => [r.from, r.through]),
+    ...lines.flatMap((l) => [l.a, l.b]),
+  ]);
+  const tipsOnly = new Set(arrows.map((a) => a.to).filter((n) => !named.has(n)));
+  const label = (key: string, x: number, y: number, text: string, color = palette.ink) => (
+    <HaloText key={key} x={x} y={y + 5} size={FONT + 1} color={color} anchor="middle" text={text} />
+  );
 
   const nodes: ReactNode[] = [];
+  const labels: ReactNode[] = [];
   fig.polygons.forEach((poly, i) => {
     const pts = poly.map((n) => byName.get(n)).filter((p) => p !== undefined);
     if (pts.length < 3) return;
@@ -891,55 +895,220 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
       />,
     );
   });
+  lines.forEach((l, i) => {
+    const p = at(l.a);
+    const q = at(l.b);
+    if (!p || !q) return;
+    const d = unit(p, q);
+    const end1 = toEdge(p, d, width, h);
+    const end2 = toEdge(p, { x: -d.x, y: -d.y }, width, h);
+    nodes.push(
+      <Line
+        key={`l${i}`}
+        x1={end1.x}
+        y1={end1.y}
+        x2={end2.x}
+        y2={end2.y}
+        stroke={ink.axis}
+        strokeWidth={1.5}
+      />,
+    );
+    if (l.label) {
+      const n = outward(end2, end1);
+      const spot = { x: end1.x - d.x * 18 + n.x * 12, y: end1.y - d.y * 18 + n.y * 12 };
+      labels.push(label(`ll${i}`, spot.x, spot.y, l.label, palette.ink2));
+    }
+  });
   fig.segments.forEach((seg, i) => {
-    const p = byName.get(seg.from);
-    const q = byName.get(seg.to);
+    const p = at(seg.from);
+    const q = at(seg.to);
     if (!p || !q) return;
     nodes.push(
       <Line
         key={`s${i}`}
-        x1={X(p.x)}
-        y1={Y(p.y)}
-        x2={X(q.x)}
-        y2={Y(q.y)}
+        x1={p.x}
+        y1={p.y}
+        x2={q.x}
+        y2={q.y}
         stroke={ink.stroke}
         strokeWidth={1.75}
         strokeLinecap="round"
       />,
     );
   });
+  rays.forEach((r, i) => {
+    const p = at(r.from);
+    const q = at(r.through);
+    if (!p || !q) return;
+    const d = unit(p, q);
+    // Light that falls onto a mirror or a lens ends there; every other ray runs to the edge.
+    const end = r.kind === 'light_in' ? q : toEdge(p, d, width, h);
+    const light = r.kind !== 'ray';
+    const color = light ? ink.series[1] : ink.stroke;
+    nodes.push(
+      <Line
+        key={`r${i}`}
+        x1={p.x}
+        y1={p.y}
+        x2={end.x}
+        y2={end.y}
+        stroke={color}
+        strokeWidth={light ? 2.25 : 1.75}
+        strokeLinecap="round"
+      />,
+    );
+    // A light ray carries its direction in the middle of the line, as in a physics book.
+    if (light) {
+      const tip = { x: (p.x + end.x) / 2 + d.x * 5, y: (p.y + end.y) / 2 + d.y * 5 };
+      nodes.push(<Path key={`rh${i}`} d={headPath(tip, d, 11)} fill={color} />);
+    }
+  });
+  angles.forEach((a, i) => {
+    const [pa, pb, pc] = a.at.map(at);
+    if (!pa || !pb || !pc) return;
+    const a1 = Math.atan2(pa.y - pb.y, pa.x - pb.x);
+    const a2 = Math.atan2(pc.y - pb.y, pc.x - pb.x);
+    let delta = a2 - a1;
+    while (delta <= -Math.PI) delta += 2 * Math.PI;
+    while (delta > Math.PI) delta -= 2 * Math.PI;
+    const reflex = a.deg !== null && a.deg > 180;
+    const sweep = reflex ? delta - Math.sign(delta) * 2 * Math.PI : delta;
+    const size = Math.abs(sweep);
+    const mid = a1 + sweep / 2;
+    const text = a.label ?? (a.deg !== null ? `${formatNumber(a.deg)}°` : null);
+    if (a.deg === 90) {
+      // A right angle is a square with a dot, never an arc.
+      const s = 13;
+      const u = unit(pb, pa);
+      const v = unit(pb, pc);
+      const c1 = { x: pb.x + u.x * s, y: pb.y + u.y * s };
+      const c2 = { x: pb.x + (u.x + v.x) * s, y: pb.y + (u.y + v.y) * s };
+      const c3 = { x: pb.x + v.x * s, y: pb.y + v.y * s };
+      nodes.push(
+        <G key={`a${i}`}>
+          <Path
+            d={`M${c1.x},${c1.y} L${c2.x},${c2.y} L${c3.x},${c3.y}`}
+            fill="none"
+            stroke={ink.point}
+            strokeWidth={1.5}
+          />
+          <Circle
+            cx={pb.x + (u.x + v.x) * s * 0.5}
+            cy={pb.y + (u.y + v.y) * s * 0.5}
+            r={1.8}
+            fill={ink.point}
+          />
+        </G>,
+      );
+      if (a.label) {
+        const r = 30;
+        labels.push(
+          label(`al${i}`, pb.x + Math.cos(mid) * r, pb.y + Math.sin(mid) * r, a.label, ink.point),
+        );
+      }
+      return;
+    }
+    // A narrow angle gets a wider arc, so its value still fits between the arms.
+    const r = size < (35 * Math.PI) / 180 ? 34 : 22;
+    const start = { x: pb.x + Math.cos(a1) * r, y: pb.y + Math.sin(a1) * r };
+    const end = { x: pb.x + Math.cos(a1 + sweep) * r, y: pb.y + Math.sin(a1 + sweep) * r };
+    const large = size > Math.PI ? 1 : 0;
+    const flag = sweep > 0 ? 1 : 0;
+    nodes.push(
+      <Path
+        key={`a${i}`}
+        d={`M${pb.x},${pb.y} L${start.x},${start.y} A${r},${r} 0 ${large} ${flag} ${end.x},${end.y} Z`}
+        fill={ink.fillSoft}
+        stroke="none"
+      />,
+      <Path
+        key={`ae${i}`}
+        d={`M${start.x},${start.y} A${r},${r} 0 ${large} ${flag} ${end.x},${end.y}`}
+        fill="none"
+        stroke={ink.point}
+        strokeWidth={1.75}
+      />,
+    );
+    if (text) {
+      const lr = r + 15;
+      labels.push(
+        label(`al${i}`, pb.x + Math.cos(mid) * lr, pb.y + Math.sin(mid) * lr, text, ink.point),
+      );
+    }
+  });
+  lengths.forEach((l, i) => {
+    const p = at(l.from);
+    const q = at(l.to);
+    if (!p || !q) return;
+    const text = l.label ?? (l.value !== null ? formatNumber(l.value) : null);
+    if (!text) return;
+    const n = outward(p, q);
+    const mid = { x: (p.x + q.x) / 2 + n.x * 14, y: (p.y + q.y) / 2 + n.y * 14 };
+    labels.push(label(`len${i}`, mid.x, mid.y, text));
+  });
+  arrows.forEach((a, i) => {
+    const p = at(a.from);
+    const q = at(a.to);
+    if (!p || !q) return;
+    const d = unit(p, q);
+    const color = a.resultant ? ink.series[1] : ink.point;
+    nodes.push(
+      <G key={`v${i}`}>
+        <Line
+          x1={p.x}
+          y1={p.y}
+          x2={q.x - d.x * 8}
+          y2={q.y - d.y * 8}
+          stroke={color}
+          strokeWidth={2.25}
+          strokeLinecap="round"
+          strokeDasharray={a.resultant ? '7 4' : undefined}
+        />
+        <Path d={headPath(q, d, 11)} fill={color} />
+      </G>,
+    );
+    const text = a.label ?? (a.value !== null ? formatNumber(a.value) : null);
+    if (!text) return;
+    // The name sits beside the arrow's tip half, on the side away from the middle.
+    const n = outward(p, q);
+    const spot = { x: p.x + (q.x - p.x) * 0.62 + n.x * 14, y: p.y + (q.y - p.y) * 0.62 + n.y * 14 };
+    labels.push(label(`vl${i}`, spot.x, spot.y, text, color));
+  });
 
   return (
     <Svg width={width} height={h}>
       {nodes}
-      {fig.points.map((p) => {
-        // Name away from the middle of the drawing so it doesn't sit on a line.
-        let dx = p.x - cx;
-        let dy = p.y - cy;
-        const len = Math.hypot(dx, dy);
-        if (len < 1e-9) {
-          dx = 0;
-          dy = 1;
-        } else {
-          dx /= len;
-          dy /= len;
-        }
-        const lx = X(p.x) + dx * 14;
-        const ly = Y(p.y) - dy * 14 + 5;
-        return (
-          <G key={p.name}>
-            <Circle cx={X(p.x)} cy={Y(p.y)} r={3.5} fill={ink.stroke} />
-            <HaloText
-              x={lx}
-              y={ly}
-              size={FONT + 2}
-              color={palette.ink}
-              anchor="middle"
-              text={p.name}
-            />
-          </G>
-        );
-      })}
+      {fig.points
+        .filter((p) => !tipsOnly.has(p.name))
+        .map((p) => {
+          // Name away from the middle of the drawing so it doesn't sit on a line.
+          let dx = p.x - cx;
+          let dy = p.y - cy;
+          const len = Math.hypot(dx, dy);
+          if (len < 1e-9) {
+            dx = 0;
+            dy = 1;
+          } else {
+            dx /= len;
+            dy /= len;
+          }
+          const lx = X(p.x) + dx * 14;
+          const ly = Y(p.y) - dy * 14 + 5;
+          return (
+            <G key={p.name}>
+              <Circle cx={X(p.x)} cy={Y(p.y)} r={3.5} fill={ink.stroke} />
+              <HaloText
+                x={lx}
+                y={ly}
+                size={FONT + 2}
+                color={palette.ink}
+                anchor="middle"
+                text={p.name}
+              />
+            </G>
+          );
+        })}
+      {labels}
     </Svg>
   );
 }
@@ -1074,6 +1243,35 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
       for (const c of figure.circles) {
         parts.push(t('figure.circle', { center: c.center, radius: formatNumber(c.radius) }));
       }
+      for (const a of figure.angles) {
+        const value = a.label ?? (a.deg !== null ? `${formatNumber(a.deg)}°` : null);
+        parts.push(
+          value
+            ? t('figure.angle_value', { name: a.at.join(''), value: speak(value) })
+            : t('figure.angle', { name: a.at.join('') }),
+        );
+      }
+      for (const l of figure.lengths) {
+        const value = l.label ?? (l.value !== null ? formatNumber(l.value) : null);
+        if (value)
+          parts.push(t('figure.length', { name: `${l.from}${l.to}`, value: speak(value) }));
+      }
+      for (const a of figure.arrows) {
+        const value = a.label ?? (a.value !== null ? formatNumber(a.value) : null);
+        const key = a.resultant ? 'figure.resultant' : 'figure.arrow';
+        parts.push(t(key, { from: a.from, to: a.to, value: value ? speak(value) : '' }).trim());
+      }
+      for (const r of figure.rays) {
+        parts.push(
+          t(r.kind === 'ray' ? 'figure.ray' : 'figure.light_ray', {
+            from: r.from,
+            through: r.through,
+          }),
+        );
+      }
+      for (const l of figure.lines) {
+        parts.push(t('figure.line', { a: l.a, b: l.b }) + (l.label ? ` (${l.label})` : ''));
+      }
       return parts.join('. ');
     }
     case 'table': {
@@ -1085,10 +1283,60 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
       );
       return parts.join('. ');
     }
+    case 'molecule':
+      return describeMolecule(figure, t);
     // In Worten, wie issue #226 es verlangt („Violinschlüssel, Viervierteltakt: C, E, G,
     // Viertelnoten"). Das ist keine Beschreibung des Bildes, sondern derselbe Inhalt in Sprache:
     // mit dem Screenreader ist die Aufgabe damit lösbar, nicht nur vorhanden.
     case 'staff':
       return describeStaff(figure, t);
   }
+}
+
+const SUBSCRIPT = '₀₁₂₃₄₅₆₇₈₉';
+
+/**
+ * A structural formula in words: every atom with its hydrogens and charge, every bond between
+ * them (– single, = double, ≡ triple) and, where the drawing shows them, the lone pairs. The
+ * same content as the drawing, so the question can be answered without seeing it.
+ */
+function describeMolecule(fig: Extract<Figure, { type: 'molecule' }>, t: T): string {
+  const sub = (n: number) =>
+    n <= 1 ? '' : [...String(n)].map((c) => SUBSCRIPT[Number(c)]).join('');
+  const charge = (c: number) =>
+    c === 0 ? '' : `${Math.abs(c) === 1 ? '' : Math.abs(c)}${c > 0 ? '⁺' : '⁻'}`;
+  const bonded = new Set(fig.bonds.flatMap((b) => [b.a, b.b]));
+  // A lone particle is named as a school writes it (H₂O, HCl), an atom in a chain by its group
+  // (CH₃, OH) — the same rule as the drawing's labels.
+  const hFirst = (a: { id: string; el: string }) =>
+    !bonded.has(a.id) && ['O', 'S', 'F', 'Cl', 'Br', 'I'].includes(a.el);
+  const name = new Map(
+    fig.atoms.map((a) => {
+      const hs = a.h > 0 ? `H${sub(a.h)}` : '';
+      return [a.id, `${hFirst(a) ? `${hs}${a.el}` : `${a.el}${hs}`}${charge(a.charge)}`];
+    }),
+  );
+  const mark = ['', '–', '=', '≡'];
+  const bonds = fig.bonds.map(
+    (b) => `${name.get(b.a) ?? ''}${mark[b.order] ?? '–'}${name.get(b.b) ?? ''}`,
+  );
+  const alone = fig.atoms.filter((a) => !bonded.has(a.id)).map((a) => name.get(a.id) ?? '');
+  const parts = [
+    t('figure.molecule', {
+      style: t(`figure.molecule_${fig.style}`),
+      list: [...bonds, ...alone].join(', '),
+    }),
+  ];
+  if (fig.style !== 'skeletal') {
+    const check = checkMolecule(fig);
+    if (check.ok) {
+      for (const a of fig.atoms) {
+        const n = check.facts.lonePairs.get(a.id) ?? 0;
+        if (n > 0) parts.push(t('figure.lone_pairs', { atom: name.get(a.id) ?? a.el, count: n }));
+      }
+    }
+  }
+  const marked = fig.atoms.filter((a) => fig.mark.includes(a.id)).map((a) => name.get(a.id) ?? '');
+  if (marked.length > 0) parts.push(t('figure.molecule_marked', { list: marked.join(', ') }));
+  return parts.join('. ');
 }
