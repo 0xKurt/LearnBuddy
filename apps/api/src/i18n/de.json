@@ -82,6 +82,8 @@
     "speak_good": "Klingt super!",
     "speak_retry": "Versuch's nochmal – hör es dir vorher an.",
     "spelling": "Fast richtig – schau nochmal genau auf Groß- und Kleinschreibung, ß und Satzzeichen.",
+    "step_broke": "Bis Zeile {{line}} stimmt alles. Von dort zur nächsten Zeile geht etwas verloren – schau dir diesen Schritt nochmal an.",
+    "step_broke_last": "Dein Weg stimmt bis zum Schluss – nur der letzte Schritt nicht. Schau nochmal auf die letzte Zeile.",
     "test_no_hints": "Im Test gibt es keine Tipps – schreib einfach, was du denkst, oder überspring die Frage.",
     "test_noted": "Notiert – weiter geht's.",
     "try_again": "Noch nicht ganz – probier's nochmal. Mit „Tipp“ bekommst du einen Hinweis.",

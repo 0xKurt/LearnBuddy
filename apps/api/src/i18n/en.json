@@ -82,6 +82,8 @@
     "speak_good": "Sounds great!",
     "speak_retry": "Try again – listen to it first.",
     "spelling": "Almost right – look closely at capital letters and punctuation.",
+    "step_broke": "Everything holds up to line {{line}}. Something gets lost on the way to the next line – take another look at that step.",
+    "step_broke_last": "Your way is right all the way through – only the last step is not. Take another look at the last line.",
     "test_no_hints": "There are no hints in a test – just write what you think, or skip the question.",
     "test_noted": "Noted – on to the next one.",
     "try_again": "Not quite yet – have another go. Tap “Hint” for a clue.",

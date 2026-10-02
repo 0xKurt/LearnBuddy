@@ -1175,6 +1175,23 @@ a row is `queued`/`processing`, a fresher view of the sheet from its own screen 
 list at once, and a home poll that no longer reports a reading refreshes a list that still shows
 one (`lib/api/libraryCache.ts`).
 
+**"Dein Material" has two levels** (issue #189, owner's word 02.10.: it replaces "Materialien" in
+the menu and over the screen). `app/library.tsx` lists her SUBJECTS — what there is, and a glimpse
+of what is in each one; one tap opens `app/subject/[id].tsx` with that subject's sheets, the
+exercises that came from no sheet, and the topics that came up. The second level is a place to look
+things up, not a place to work: everything it can do is what the sheet list could do before
+(practise a sheet again, see its questions, read it again, delete it) plus going back into an
+exercise she already had. The glimpse NAMES the newest things instead of counting them
+(`components/library/subjects.ts`): a tally beside a subject reads as a workload the moment it
+stands there, and a learner is never shown one (rule 6). A subject with nothing in it is not
+listed, and a subject that is emptied while she looks at it says so with the way to fill it.
+`GET /materials` feeds both levels from one view — it needed no new endpoint, only the two things
+it did not carry yet: `LibrarySubject.exercises` (sessions with no `material_id`, active or
+finished, the subject taken from their questions) and `LibrarySubject.topics` (the distinct topics
+of her questions, newest first). A sheet's own practice is left out of `exercises`: it is reached
+from the sheet. `your-material.int.test.ts` holds the grouping, the two exclusions and that
+nothing of another learner's reaches her view.
+
 **Quick answers belong to their moment** (live finding 8): a Buddy message's options
 ("Foto machen / Später fotografieren") are sent with the thread only while she has not acted since
 — a material created or a practice started after the message removes them (`home.ts` threadOf).
@@ -1407,6 +1424,21 @@ selection already skips archived items) and rename the material (`PATCH /materia
 1–120 characters, trimmed). Both bump the context version; another learner's ids are 404.
 
 ## Practice
+
+**Der Weg, Schritt für Schritt** (Issue #209). In einer Klassenarbeit wird der Weg
+bewertet, nicht nur das Ergebnis (IQB-Operator „berechnen": „ausgehend von einem Ansatz
+darzustellen"). `modules/practice/steps.ts` prüft jeden Übergang Zeile n → n+1 auf
+Gleichwertigkeit und meldet die **erste** Zeile, die nicht mehr folgt — bei Termen über den
+Wert an festen Prüfstellen, bei Gleichungen über die **Proportionalität** der Seitendifferenz
+(eine Gleichung durch 2 zu teilen ist ein erlaubter Schritt und darf nicht als Fehler gelten).
+Die Prüfstellen sind fest und nie zufällig: ein Urteil über die Arbeit eines Kindes darf nicht
+von einem Würfel abhängen, und zwei Läufe müssen übereinstimmen. Ein durchgehend stimmiger Weg
+wird auf seiner **letzten Zeile** beurteilt, also zählt richtig gerechnet auch als richtig.
+
+Der erste Schnitt kann **eine** Variable, Terme und Gleichungen. Mehrere Variablen,
+Ungleichungen, Fallunterscheidungen, Beweise und jede Zeile, die nicht vollständig geparst
+wird, kommen als `unknown` zurück und gehen ans Modell — statt geraten zu werden. Eine Zeile
+halb zu verstehen ist schlimmer, als sie nicht zu verstehen.
 
 **Was gezählt wird, zählt Code** (Issue #212). Eine Reaktionsgleichung wird nicht mehr als
 Zeichenkette mit dem Schlüssel verglichen, sondern gezählt: `modules/practice/chemistry.ts`

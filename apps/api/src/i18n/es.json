@@ -82,6 +82,8 @@
     "speak_good": "¡Suena genial!",
     "speak_retry": "Inténtalo otra vez – escúchalo antes.",
     "spelling": "Casi bien – fíjate en las mayúsculas y la puntuación.",
+    "step_broke": "Hasta la línea {{line}} todo cuadra. Algo se pierde al pasar a la línea siguiente: mira otra vez ese paso.",
+    "step_broke_last": "Tu camino está bien hasta el final; solo el último paso no. Mira otra vez la última línea.",
     "test_no_hints": "En el examen no hay pistas: escribe lo que pienses o salta la pregunta.",
     "test_noted": "Anotado – seguimos.",
     "try_again": "Todavía no del todo – inténtalo otra vez. Con «Pista» te doy una ayuda.",

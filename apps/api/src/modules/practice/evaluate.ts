@@ -13,6 +13,7 @@
 //   vocabulary, or an item marked strict) and otherwise for the tutor to judge gently.
 
 import { checkEquation, type EquationFault, looksLikeEquation, sameRatio } from './chemistry.js';
+import { checkPath, lastValue } from './steps.js';
 import {
   canonicalMath,
   canonicalText,
@@ -72,6 +73,8 @@ export type RuleVerdict =
   | 'missing_word'
   | 'typo'
   | 'folded'
+  /** A written path whose steps stop following each other (issue #209). */
+  | 'step_broke'
   /** A reaction equation whose atoms or charge do not add up (issue #212). */
   | 'unbalanced'
   /** Balanced, but every coefficient divisible by the same number: right, not yet reduced. */
@@ -89,6 +92,9 @@ export const NEAR_MISS = new Set<RuleVerdict>([
   // and unhelpful, and the question stays open so she fixes it herself (issue #212).
   'unbalanced',
   'not_lowest',
+  // The way is hers and most of it holds; one step does not follow. Wrong would throw away
+  // everything that was right, which is what the class test does NOT do (issue #209).
+  'step_broke',
 ]);
 
 /** Optimal-string-alignment distance: insert, delete, replace, swap two neighbours. */
@@ -250,6 +256,7 @@ const STRENGTH: readonly RuleVerdict[] = [
   // Counting is certain, so it outranks "I cannot tell" — but never a match against a key.
   'not_lowest',
   'unbalanced',
+  'step_broke',
   'folded',
   'unknown',
 ];
@@ -385,8 +392,20 @@ export function ruleCheck(
     return 'unknown';
   }
 
-  const text = (answer.text ?? '').trim();
-  if (!text) return 'unknown';
+  const written = (answer.text ?? '').trim();
+  if (!written) return 'unknown';
+
+  // A written path, checked step by step (issue #209). Only where a calculation is plausible:
+  // a free text is many lines of prose, and `checkPath` leaves that alone anyway, but saying so
+  // here keeps the intent readable. A sound path is then judged on its LAST line — the value it
+  // arrives at — so a correct way with the right result counts as right.
+  let text = written;
+  if (item.kind === 'numeric' || item.kind === 'formula' || item.kind === 'short') {
+    const path = checkPath(written);
+    if (path.kind === 'broke') return 'step_broke';
+    if (path.kind === 'sound') text = lastValue(written) ?? written;
+  }
+
   if (item.kind === 'numeric') return numericVerdict(item, text);
 
   // A ratio — a Punnett cross, an inheritance pattern — compared reduced, and ONLY when the

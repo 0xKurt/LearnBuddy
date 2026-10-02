@@ -41,6 +41,7 @@ import {
   type TypoShape,
   typoShapeFor,
 } from './evaluate.js';
+import { checkPath } from './steps.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems } from './selection.js';
@@ -728,6 +729,19 @@ const NEAR_MISS_REPLY: Partial<Record<RuleVerdict, MessageKey>> = {
 };
 
 /**
+ * Where a written path stops following itself (issue #209). The line numbers are the ones she
+ * sees; the last step gets its own sentence, because "bis Zeile 2 stimmt alles" reads oddly
+ * when there are only three lines and the one that broke is the final one.
+ */
+function pathReply(locale: string, text: string): string | null {
+  const path = checkPath(text);
+  if (path.kind !== 'broke') return null;
+  return path.line === path.lines - 1
+    ? t(locale, 'practice.step_broke_last')
+    : t(locale, 'practice.step_broke', { line: String(path.line) });
+}
+
+/**
  * What a counted equation says, with the place in it (issue #212). The element symbol is the
  * same in every language, so it goes in as it stands.
  */
@@ -889,8 +903,10 @@ export async function answerItem(
           ? spellOut
             ? t(learner.locale, 'practice.typo', { answer: plainMath(item.answer) })
             : t(learner.locale, TYPO_REPLY[typoShapeFor(item, text)])
-          : // A counted equation says exactly where it does not add up (issue #212).
-            (equationReply(learner.locale, item, text) ??
+          : // Code found the place: the broken step (issue #209) or the count that does not
+            // add up (issue #212). Only then the fixed near-miss texts.
+            (pathReply(learner.locale, text) ??
+            equationReply(learner.locale, item, text) ??
             t(learner.locale, NEAR_MISS_REPLY[rule] ?? 'practice.accents')),
       gaveHint: spellOut,
       revealed: false,

@@ -82,6 +82,8 @@
     "speak_good": "C'est super !",
     "speak_retry": "Réessaie – écoute-le d'abord.",
     "spelling": "Presque juste – regarde bien les majuscules et la ponctuation.",
+    "step_broke": "Tout tient jusqu'à la ligne {{line}}. Quelque chose se perd en passant à la ligne suivante – regarde encore cette étape.",
+    "step_broke_last": "Ton raisonnement tient jusqu'au bout – seule la dernière étape ne va pas. Regarde encore la dernière ligne.",
     "test_no_hints": "Pas d'indices pendant le test – écris simplement ce que tu penses, ou passe la question.",
     "test_noted": "Noté – on continue.",
     "try_again": "Pas encore tout à fait – réessaie. Avec « Indice », tu as un coup de pouce.",
