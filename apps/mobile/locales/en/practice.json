@@ -5,8 +5,14 @@
     "harder": "More like this, a bit harder",
     "harder_topic": "More like this, a bit harder: {{topics}}"
   },
+  "dictation": {
+    "play": "Listen",
+    "again": "Listen again",
+    "play_hint": "Buddy reads it to you – as often as you like."
+  },
   "answer": {
     "mic_off": "The mic is off here – you're practising spelling.",
+    "placeholder_dictation": "Write what you hear – no mic here",
     "label": "Your answer",
     "placeholder": "Your answer …",
     "unit_hint": "Answer in {{unit}}"

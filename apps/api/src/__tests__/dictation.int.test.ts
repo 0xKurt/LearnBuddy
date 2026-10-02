@@ -88,7 +88,7 @@ describe.skipIf(!dbReady)('Diktat', () => {
       expect(si.hint_available).toBe(false);
       expect(si.hints_left).toBe(0);
       expect(si.item.tap_choices).toBeNull();
-      expect(si.item.prompt).toBe('Hör gut zu und schreib das Wort.');
+      expect(si.item.prompt).toBe('Hör zu und schreib das Wort.');
     }
     expect(new Set(session.items.map((si) => si.item.listen?.ref)).size).toBe(3);
     expect(leaked(session)).toEqual([]);
@@ -185,6 +185,10 @@ describe.skipIf(!dbReady)('Diktat', () => {
     const closed = third.body.session.items.find((si) => si.item.id === id)!;
     expect(closed.status).toBe('revealed');
     expect(closed.answer).toBe('Biene');
+    // The word stands in the solution card; the reply does not say it a second time.
+    expect(third.body.reply.text).toBe(
+      'Kein Problem – so schreibt man es. Hör es dir dazu noch einmal an.',
+    );
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 

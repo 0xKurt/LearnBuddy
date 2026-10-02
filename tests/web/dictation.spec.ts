@@ -58,57 +58,106 @@ async function onboardChild(page: Page): Promise<void> {
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
+/** One stop of the walk, in daylight and at night, at 390×844 and 360×740 (`shot`). */
+async function both(page: Page, name: string): Promise<void> {
+  await shot(page, name);
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, `${name}-night`);
+  await page.emulateMedia({ colorScheme: 'light' });
+}
+
+const listenCall = (page: Page) =>
+  page.waitForResponse((r) => r.url().includes('/listen') && r.request().method() === 'POST');
+
+/** One stop in the CURRENT colour scheme, at 390×844 and 360×740 (`shot`). */
+async function one(page: Page, name: string, night: boolean): Promise<void> {
+  await shot(page, night ? `${name}-night` : name);
+}
+
+async function scheme(page: Page, night: boolean): Promise<void> {
+  await page.emulateMedia({ colorScheme: night ? 'dark' : 'light' });
+}
+
 test('Diktat: she hears the word, types it, the mic is off (issue #242)', async ({ page }) => {
   await onboardChild(page);
   await page
     .getByLabel('Schreib Buddy …')
-    .fill('Mach mit mir ein Diktat: Schwimmen, Biene, Straße');
+    .fill('Mach mit mir ein Diktat: Schwimmen, Biene, Straße, Fahrrad');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('ich lese dir deine Lernwörter vor', { exact: false })).toBeVisible();
   await offerStart(page, 'Diktat üben').click();
 
-  // The question: a fixed line and the recording — the word itself is nowhere on the screen.
-  await expect(page.getByText('Hör gut zu und schreib das Wort.')).toBeVisible();
-  for (const word of ['Schwimmen', 'Biene', 'Straße']) {
-    await expect(page.getByText(word, { exact: false })).toHaveCount(0);
+  // The question: a fixed line and the way to hear it — the word itself is nowhere on the screen.
+  await expect(page.getByText('Hör zu und schreib das Wort.')).toBeVisible();
+  // Visible text only: the chat she came from stays mounted behind this screen, and it holds the
+  // list she typed herself.
+  for (const word of ['Schwimmen', 'Biene', 'Straße', 'Fahrrad']) {
+    await expect(page.getByText(word, { exact: false }).filter({ visible: true })).toHaveCount(0);
   }
-  // The mic is off, and one short line says why.
+  // The mic is off, and the field says so where she looks anyway.
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
-  await expect(page.getByText('Das Mikro ist hier aus – du übst das Schreiben.')).toBeVisible();
-  await shot(page, '60-diktat-question');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '60b-diktat-question-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  const field = page.getByLabel('Deine Antwort');
+  await expect(field).toHaveAttribute('placeholder', 'Schreib, was du hörst – ohne Mikro');
+  await both(page, '60-diktat-question');
 
   // Playing works: the app asks the server for the recording and plays it; once it sounded, the
-  // pill offers to hear it again.
-  const heard = page.waitForResponse(
-    (r) => r.url().includes('/listen') && r.request().method() === 'POST',
-  );
-  await page.getByRole('button', { name: 'Hörtext abspielen' }).click();
+  // big button offers to hear it again and steps back.
+  let heard = listenCall(page);
+  await page.getByRole('button', { name: 'Anhören', exact: true }).click();
   expect((await heard).status()).toBe(200);
-  await expect(page.getByText('Nochmal hören')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Nochmal hören' })).toBeVisible();
   // And slower, as often as she likes.
-  const slow = page.waitForResponse(
-    (r) => r.url().includes('/listen') && r.request().method() === 'POST',
-  );
+  heard = listenCall(page);
   await page.getByRole('button', { name: 'Langsam anhören' }).click();
-  expect((await slow).status()).toBe(200);
+  expect((await heard).status()).toBe(200);
+  await field.fill('Schwimen');
+  // Open questions survive the switch to the night palette, "heard" included.
+  await both(page, '61-diktat-typed');
+  await expect(page.getByRole('button', { name: 'Nochmal hören' })).toBeVisible();
 
   // A miss names the place, without a model and without spelling the word out.
-  const field = page.getByLabel('Deine Antwort');
-  await field.fill('Schwimen');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Fast – bei „Schwimen“ fehlt ein Doppel-m.')).toBeVisible();
-  await expect(page.getByText('Schwimmen', { exact: true })).toHaveCount(0);
-  await shot(page, '61-diktat-feedback');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '61b-diktat-feedback-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await expect(page.getByText('Schwimmen', { exact: true }).filter({ visible: true })).toHaveCount(
+    0,
+  );
+  await both(page, '62-diktat-feedback');
 
-  await field.fill('Schwimmen');
-  await page.getByRole('button', { name: 'Prüfen' }).click();
-  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
-  await page.getByRole('button', { name: 'Weiter' }).click();
-  await expect(page.getByText('Hör gut zu und schreib das Wort.')).toBeVisible();
+  // Closed states are shot in one scheme each — a switch rebuilds the screen, which then opens
+  // on the next open question. Word 1 right and word 2 shown in daylight, 3 and 4 at night.
+  for (const night of [false, true]) {
+    await scheme(page, night);
+    const [right, missed, shownWord] = night
+      ? (['Straße', 'Farad', 'Fahrrad'] as const)
+      : (['Schwimmen', 'bine', 'Biene'] as const);
+    await field.fill(right);
+    await page.getByRole('button', { name: 'Prüfen' }).click();
+    await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+    await one(page, '63-diktat-right', night);
+    // On to the next word ("Weiter", unless the app has moved on by itself already).
+    await page
+      .getByRole('button', { name: 'Weiter' })
+      .click({ timeout: 5000 })
+      .catch(() => undefined);
+    await expect(page.getByRole('button', { name: 'Anhören', exact: true })).toBeVisible();
+    // Three misses: then the word is shown, once, kindly.
+    for (let n = 0; n < 3; n++) {
+      await field.fill(missed);
+      await page.getByRole('button', { name: 'Prüfen' }).click();
+      // Sent: the field empties once the answer is on its way.
+      await expect(field).toHaveValue('');
+    }
+    await expect(
+      page.getByText('Kein Problem – so schreibt man es.', { exact: false }),
+    ).toBeVisible();
+    await expect(page.getByText(shownWord, { exact: true }).filter({ visible: true })).toHaveCount(
+      1,
+    );
+    await one(page, '64-diktat-shown', night);
+    await page
+      .getByRole('button', { name: 'Weiter' })
+      .click({ timeout: 5000 })
+      .catch(() => undefined);
+    if (!night) await expect(page.getByText('Frage 3 von 4')).toBeVisible();
+  }
 });

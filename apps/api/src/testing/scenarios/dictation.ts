@@ -14,12 +14,12 @@ export function scriptDictation(): void {
     answer: says('Gern – ich lese dir deine Lernwörter vor, du schreibst sie.', [
       {
         tool: 'offer_learning',
-        args: { kind: 'spelling_dictation', text: 'Schwimmen, Biene, Straße' },
+        args: { kind: 'spelling_dictation', text: 'Schwimmen, Biene, Straße, Fahrrad' },
       },
     ]),
   });
   scriptGenerations({
-    when: /LEARNER'S TEXT:\nSchwimmen, Biene, Straße/,
+    when: /LEARNER'S TEXT:\nSchwimmen, Biene, Straße, Fahrrad/,
     answer: () => ({
       usable: true,
       title: 'Lernwörter',
@@ -29,7 +29,7 @@ export function scriptDictation(): void {
         from: 'list',
         lang: 'de',
         topic: 'Lernwörter',
-        entries: ['Schwimmen', 'Biene', 'Straße'],
+        entries: ['Schwimmen', 'Biene', 'Straße', 'Fahrrad'],
       },
     }),
   });

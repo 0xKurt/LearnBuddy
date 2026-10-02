@@ -64,8 +64,9 @@
     "card_not_yet": "Non ancora",
     "correct": "Esatto – ottimo lavoro!",
     "dictation": {
-      "prompt_word": "Ascolta bene e scrivi la parola.",
-      "prompt_sentence": "Ascolta bene e scrivi la frase.",
+      "prompt_word": "Ascolta e scrivi la parola.",
+      "prompt_sentence": "Ascolta e scrivi la frase.",
+      "shown": "Nessun problema – si scrive così. Riascoltalo mentre lo guardi.",
       "capital": "Quasi – qui «{{word}}» si scrive con la maiuscola.",
       "lower": "Quasi – qui «{{word}}» si scrive con la minuscola.",
       "double_missing": "Quasi – in «{{word}}» manca una doppia {{letter}}.",

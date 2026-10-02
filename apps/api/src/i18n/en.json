@@ -64,8 +64,9 @@
     "card_not_yet": "Not yet",
     "correct": "That's right – well done!",
     "dictation": {
-      "prompt_word": "Listen carefully and write the word.",
-      "prompt_sentence": "Listen carefully and write the sentence.",
+      "prompt_word": "Listen and write the word.",
+      "prompt_sentence": "Listen and write the sentence.",
+      "shown": "No problem – this is how it's written. Listen to it once more while you look.",
       "capital": "Almost – “{{word}}” takes a capital letter here.",
       "lower": "Almost – “{{word}}” is written in small letters here.",
       "double_missing": "Almost – “{{word}}” needs a double {{letter}}.",

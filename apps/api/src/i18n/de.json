@@ -64,8 +64,9 @@
     "card_not_yet": "Noch nicht",
     "correct": "Stimmt – gut gemacht!",
     "dictation": {
-      "prompt_word": "Hör gut zu und schreib das Wort.",
-      "prompt_sentence": "Hör gut zu und schreib den Satz.",
+      "prompt_word": "Hör zu und schreib das Wort.",
+      "prompt_sentence": "Hör zu und schreib den Satz.",
+      "shown": "Kein Problem – so schreibt man es. Hör es dir dazu noch einmal an.",
       "capital": "Fast – „{{word}}“ schreibt man hier groß.",
       "lower": "Fast – „{{word}}“ schreibt man hier klein.",
       "double_missing": "Fast – bei „{{word}}“ fehlt ein Doppel-{{letter}}.",

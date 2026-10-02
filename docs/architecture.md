@@ -2429,7 +2429,7 @@ word list, so it stays a prompt rule.
   the recording is the Hörverstehen chain above with `items.listen_task.text` = the key.
   _Regel 0, in the database:_ `items_dictation_shape` refuses a Diktat row whose recording is not
   its key character for character, or whose spelling is not `strict` — the voice is given the KEY,
-  never a text a model rephrased. The question's line ("Hör gut zu und schreib das Wort.") is
+  never a text a model rephrased. The question's line ("Hör zu und schreib das Wort.") is
   written by code (`practice.dictation.prompt_*`), so the word is never in the view while the
   question is open; it arrives as `answer` once the question is closed (no `listen_transcript` —
   it would only repeat it). No hint ladder, no prepared hints, `POST …/hint` is 409 `no_hints`: a
@@ -2450,9 +2450,13 @@ word list, so it stays a prompt rule.
   every entry of a sheet, whatever the model says — must stand in that list word for word and in
   its own capitalisation (`standsIn`), or it is dropped, never corrected. Digits and markup are not
   spelling and are dropped too. Her own list is `origin = 'typed'`, a topic's words `'buddy'`.
-  _The app:_ the ordinary question card with the "Hörtext abspielen / Langsam" pills
-  (`HearText`), the answer field without a microphone — in its place one line, "Das Mikro ist hier
-  aus – du übst das Schreiben." — and no automatic capitalisation by the keyboard. Without a voice
+  _The app:_ the card IS the play control (`components/practice/DictationCard.tsx`): the line and
+  a large "Anhören" (primary until she has heard it, then soft, so "Prüfen" is the strong button)
+  with the quiet "Langsam" beside it, centred in the room the conversation does not need yet — the
+  card may take the whole middle while there is no reply, so no empty band is left (#286). The
+  playback is `useHearText`, the hook the Hörverstehen pills use. The answer field has no
+  microphone; its placeholder says so ("Schreib, was du hörst – ohne Mikro"), the keyboard does
+  not capitalise for her. Without a voice
   there is no Diktat (503 `speech_off` before any model call, the offer stops being a button).
   Not yet: a Diktat word does not come back by spaced repetition on its own (like a listening
   question, it is only ever asked in its own run). `dictation.int.test.ts`,

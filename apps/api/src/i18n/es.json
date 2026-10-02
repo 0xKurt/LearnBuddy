@@ -64,8 +64,9 @@
     "card_not_yet": "Todavía no",
     "correct": "¡Correcto, muy bien!",
     "dictation": {
-      "prompt_word": "Escucha bien y escribe la palabra.",
-      "prompt_sentence": "Escucha bien y escribe la frase.",
+      "prompt_word": "Escucha y escribe la palabra.",
+      "prompt_sentence": "Escucha y escribe la frase.",
+      "shown": "No pasa nada – así se escribe. Escúchalo otra vez mientras lo miras.",
       "capital": "Casi – aquí «{{word}}» se escribe con mayúscula.",
       "lower": "Casi – aquí «{{word}}» se escribe con minúscula.",
       "double_missing": "Casi – en «{{word}}» falta una {{letter}} doble.",

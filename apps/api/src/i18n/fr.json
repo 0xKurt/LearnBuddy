@@ -64,8 +64,9 @@
     "card_not_yet": "Pas encore",
     "correct": "C'est juste – bravo !",
     "dictation": {
-      "prompt_word": "Écoute bien et écris le mot.",
-      "prompt_sentence": "Écoute bien et écris la phrase.",
+      "prompt_word": "Écoute et écris le mot.",
+      "prompt_sentence": "Écoute et écris la phrase.",
+      "shown": "Pas de souci – voilà comment ça s'écrit. Réécoute-le en le regardant.",
       "capital": "Presque – ici, « {{word}} » prend une majuscule.",
       "lower": "Presque – ici, « {{word}} » s'écrit en minuscules.",
       "double_missing": "Presque – dans « {{word}} », il manque un double {{letter}}.",

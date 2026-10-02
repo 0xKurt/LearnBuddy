@@ -662,6 +662,9 @@ function workedReply(
     return `${t(locale, free ? 'practice.one_way_intro' : 'practice.worked_intro')} ${i.worked_solution}`;
   }
   if (free) return t(locale, 'practice.no_single_solution');
+  // A Diktat's word stands in the solution card right under this line (issue #242): said here
+  // too, it would be the same word twice (#286). The line says what to do with it instead.
+  if (i.kind === 'spelling_dictation') return t(locale, 'practice.dictation.shown');
   return t(locale, 'practice.solution_is', { answer: shownSolution(i) });
 }
 

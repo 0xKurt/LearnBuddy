@@ -5,8 +5,14 @@
     "harder": "Encore, un peu plus difficile",
     "harder_topic": "Encore, un peu plus difficile : {{topics}}"
   },
+  "dictation": {
+    "play": "Écouter",
+    "again": "Réécouter",
+    "play_hint": "Buddy te le lit – autant de fois que tu veux."
+  },
   "answer": {
     "mic_off": "Le micro est coupé ici – tu t'entraînes à écrire.",
+    "placeholder_dictation": "Écris ce que tu entends – sans micro",
     "label": "Ta réponse",
     "placeholder": "Ta réponse…",
     "unit_hint": "Réponse en {{unit}}"

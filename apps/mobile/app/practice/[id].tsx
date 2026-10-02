@@ -61,6 +61,7 @@ import {
   DisputeVerdictSheet,
 } from '../../components/practice/DisputeVerdict.js';
 import { FractionBarAnswer } from '../../components/practice/FractionBarAnswer.js';
+import { DictationCard } from '../../components/practice/DictationCard.js';
 import { HearText, HeardTextCard } from '../../components/practice/HearText.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
@@ -212,6 +213,9 @@ function questionOnScreen(session: SessionView, pinnedId: string | null): Sessio
   return shown;
 }
 
+/** The recordings heard per run, in memory only — see `heardTexts` (issue #242). */
+const HEARD = new Map<string, ReadonlySet<string>>();
+
 export default function PracticeScreen() {
   const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
@@ -238,7 +242,17 @@ export default function PracticeScreen() {
    * instead of announcing a text that is not new. It lives here, above the question, because
    * that is where the run is: a component keyed by the question would forget it every time.
    */
-  const [heardTexts, setHeardTexts] = useState<ReadonlySet<string>>(() => new Set());
+  const [heardTexts, setHeardTextsState] = useState<ReadonlySet<string>>(
+    () => HEARD.get(id ?? '') ?? new Set(),
+  );
+  // What she has heard outlives a rebuild of the screen (a switch to the night palette remounts
+  // it): kept per run in memory, so "Nochmal hören" does not turn back into "Anhören" (#242).
+  const setHeardTexts = (next: (was: ReadonlySet<string>) => ReadonlySet<string>): void =>
+    setHeardTextsState((was) => {
+      const now = next(was);
+      if (id) HEARD.set(id, now);
+      return now;
+    });
   /**
    * Die Notenzeile, die sie geschrieben hat, und zu welcher Frage (issue #226). Aus demselben
    * Grund an der Frage festgemacht wie die Anordnung darüber: die nächste Frage beginnt mit einer
@@ -925,7 +939,8 @@ export default function PracticeScreen() {
     // Hörverstehen (issue #210): the text is heard, not read, so the way to hear it stands in
     // the same row as every other "read this aloud" — and it stays after the question closes,
     // next to the words of it, because listening again while reading is how it is reviewed.
-    item.listen ? (
+    // A Diktat carries its play control in the card itself (`DictationCard`, issue #242).
+    item.listen && item.kind !== 'spelling_dictation' ? (
       <HearText
         key="hear"
         sessionId={session.id}
@@ -980,7 +995,9 @@ export default function PracticeScreen() {
   // gap (issue #96): the card grows into `cardMin`, its figure sizes itself from that
   // measured room. The cap keeps a third of the middle for the conversation once
   // there is one — past it only the conversation scrolls (CLAUDE.md rule 16).
-  const questionCap = Math.round(middleHeight * 0.7);
+  // A Diktat's card holds nothing but the way to hear the word (issue #242): while there is no
+  // conversation yet it may take the whole middle, so no empty band is left under it (#286).
+  const questionCap = Math.round(middleHeight * (item.kind === 'spelling_dictation' ? 1 : 0.7));
   // The conversation keeps its content plus the fade at its top edge, so a fully
   // visible first bubble never dissolves into the mask (EdgeFade.tsx).
   const spare = Math.min(Math.max(0, middleHeight - threadNeed - EDGE_FADE), questionCap);
@@ -1045,6 +1062,24 @@ export default function PracticeScreen() {
             >
               {speaking ? (
                 <SpeakCard item={item} turns={turns} live={speakLive} sessionId={session.id} />
+              ) : item.kind === 'spelling_dictation' ? (
+                // Diktat (issue #242): no word to read, so the card is the way to hear it.
+                <DictationCard
+                  sessionId={session.id}
+                  itemId={item.id}
+                  prompt={item.prompt}
+                  // Having answered, she has heard it — also after the screen was rebuilt.
+                  heard={
+                    shown.attempts > 0 || (item.listen !== null && heardTexts.has(item.listen.ref))
+                  }
+                  onHeard={() => {
+                    const ref = item.listen?.ref;
+                    if (ref !== undefined)
+                      setHeardTexts((was) => (was.has(ref) ? was : new Set(was).add(ref)));
+                  }}
+                  disabled={locked}
+                  minHeight={cardMin}
+                />
               ) : (
                 <QuestionCard
                   prompt={item.prompt}

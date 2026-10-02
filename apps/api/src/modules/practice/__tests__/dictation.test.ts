@@ -224,7 +224,7 @@ describe('where the words come from', () => {
     expect(item!.listen_task).toEqual({ text: 'Schwimmen', lang: 'de' });
     expect(item!.answer).toBe('Schwimmen');
     expect(item!.spelling).toBe('strict');
-    expect(item!.prompt).toBe('Hör gut zu und schreib das Wort.');
+    expect(item!.prompt).toBe('Hör zu und schreib das Wort.');
     expect(item!.prompt).not.toContain('Schwimmen');
     expect(item!.hints).toEqual([]);
   });

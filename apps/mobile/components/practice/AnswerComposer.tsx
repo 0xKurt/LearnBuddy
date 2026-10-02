@@ -52,7 +52,6 @@ import {
 } from '../../lib/practice/pathEntry.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
-import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
@@ -227,10 +226,14 @@ export function AnswerComposer({
             }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder={t('answer.placeholder')}
+            // A Diktat says in the field itself that the mic is off (issue #242): one line where
+            // she looks anyway, gone as soon as she types — not a second line of grey text.
+            placeholder={t(micOff ? 'answer.placeholder_dictation' : 'answer.placeholder')}
             placeholderTextColor={palette.ink3}
             accessibilityLabel={t('answer.label')}
-            accessibilityHint={unit ? t('answer.unit_hint', { unit }) : undefined}
+            accessibilityHint={
+              micOff ? t('answer.mic_off') : unit ? t('answer.unit_hint', { unit }) : undefined
+            }
             multiline
             // Where the growing starts: the web's textarea is two rows tall by default,
             // which makes an empty answer field look like a box to fill in. The growing
@@ -329,11 +332,6 @@ export function AnswerComposer({
             own under it. Long answers are texts; the preview would only repeat them. */}
         {/* In a path it draws the line with the cursor; the others stand in the field. */}
         {long ? null : <TypedMathPreview value={previewLine(kind, value, caret)} compact />}
-        {micOff ? (
-          <Text style={[TYPE.small, { color: palette.ink2, paddingBottom: SPACE.xs }]}>
-            {t('answer.mic_off')}
-          </Text>
-        ) : null}
       </View>
       {voiceMode && !micOff ? (
         <View style={{ alignItems: 'center', paddingVertical: 2 }}>
