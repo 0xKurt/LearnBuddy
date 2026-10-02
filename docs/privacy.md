@@ -127,7 +127,9 @@ sweep records when it ran and how many rows it removed — counts only, never co
 
 ## Access control
 
-- The app only talks to the API. The API connects to Postgres with a privileged role and scopes
+- The app only talks to the API. The API connects to Postgres with its own role — versioned in
+  `infra/supabase/templates/api-role.sql` and tested by running the API as it
+  (`api-role.int.test.ts`): no superuser, no DDL, nothing in `auth` — and scopes
   every query by the learner derived from the verified token; model output can only reference
   the learner's own rows through aliases.
 - Row level security is enabled on every table **without policies**, and no database function
