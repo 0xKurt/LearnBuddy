@@ -10,6 +10,17 @@ describe('plainMath', () => {
     expect(plainMath('$3\\,\\frac{1}{2}$')).toBe('3 1/2');
   });
 
+  it('reads a reaction arrow as an arrow, not as a backslash word (#217)', () => {
+    // The app's own renderer has always known it (lib/math/parse.ts SYMBOLS); server-side it
+    // stayed raw, so anything built from plain text — a spoken sentence, a near-miss reply —
+    // carried "\\rightarrow" instead of an arrow.
+    expect(plainMath('$2 H_{2} + O_{2} \\rightarrow 2 H_{2}O$')).toContain('→');
+    expect(plainMath('$a \\to b$')).toContain('→');
+    expect(plainMath('$a \\longrightarrow b$')).toContain('→');
+    expect(plainMath('$a \\rightleftharpoons b$')).toContain('⇌');
+    expect(plainMath('$a \\rightarrow b$')).not.toContain('\\');
+  });
+
   it('keeps the brackets of a numerator, denominator, root or power of several terms', () => {
     expect(plainMath('$\\frac{a+b}{c}$')).toBe('(a+b)/c');
     expect(plainMath('$\\sqrt{x+1}$')).toBe('√(x+1)');

@@ -17,6 +17,15 @@ function group(body: string): string {
 const SYMBOLS: ReadonlyArray<[RegExp, string]> = [
   [/\\(?:left|right)(?![a-zA-Z])/g, ''],
   [/\\cdot(?![a-zA-Z])/g, '·'],
+  // A reaction arrow (issue #217). The app's own renderer has always known it
+  // (apps/mobile/lib/math/parse.ts SYMBOLS); server-side it stayed as raw \rightarrow, so
+  // anything built from plain text — a spoken sentence, a near-miss reply — read it out as a
+  // backslash word. Both directions of an equilibrium too, which is the other arrow chemistry
+  // uses.
+  [/\\longrightarrow(?![a-zA-Z])/g, '→'],
+  [/\\rightarrow(?![a-zA-Z])/g, '→'],
+  [/\\to(?![a-zA-Z])/g, '→'],
+  [/\\(?:rightleftharpoons|leftrightarrow)(?![a-zA-Z])/g, '⇌'],
   [/\\times(?![a-zA-Z])/g, '×'],
   [/\\div(?![a-zA-Z])/g, ':'],
   [/\\pi(?![a-zA-Z])/g, 'π'],
