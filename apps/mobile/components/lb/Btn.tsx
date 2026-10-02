@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon, type IconName } from './Icon.js';
 
@@ -27,6 +28,13 @@ type Props = {
   center?: boolean;
   /** Let a long label wrap onto several lines (answer choices, starters) instead of shrinking it. */
   wrap?: boolean;
+  /**
+   * Tighter horizontal padding (`BTN_PAD_COMPACT`) for a button that is only half a screen
+   * wide and whose label needs every point of it — the two-column answer grid
+   * (`components/practice/ChoiceList.tsx`, issue #203). The height, and with it the touch
+   * target, is untouched.
+   */
+  compact?: boolean;
   disabled?: boolean;
   /**
    * Answers a tap on the waiting (disabled, not busy) button instead of swallowing it:
@@ -58,9 +66,22 @@ type Props = {
  */
 export const MAX_FONT_SCALE = 2;
 
+/**
+ * The md button's horizontal padding, and the tighter one `compact` uses. Both are exported
+ * because a caller that has to know how much room is left INSIDE the pill must read the real
+ * number instead of copying it: the choice grid derives from it how long a word may be before
+ * the option has to go full width (`components/practice/ChoiceList.tsx`, issue #203).
+ *
+ * 22 is the pill's own look and stays the default. SPACE.md (12) is the compact value, and it
+ * clears the rounded end: at the height where a 26 pt badge begins (11 pt down a 48 pt pill)
+ * the curve of the 24 pt radius has only come in to x ≈ 3.8, so 12 leaves 8 pt of air.
+ */
+export const BTN_PAD_MD = 22;
+export const BTN_PAD_COMPACT = SPACE.md;
+
 const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
   sm: { height: 44, paddingHorizontal: 16, fontSize: 15 },
-  md: { height: 48, paddingHorizontal: 22, fontSize: 16 },
+  md: { height: 48, paddingHorizontal: BTN_PAD_MD, fontSize: 16 },
   lg: { height: 54, paddingHorizontal: 26, fontSize: 17 },
 };
 
@@ -105,6 +126,7 @@ export function Btn({
   full = false,
   center = false,
   wrap = false,
+  compact = false,
   icon,
   grow = false,
   disabled = false,
@@ -177,7 +199,7 @@ export function Btn({
             ...(wrap ? { minHeight: s.height, paddingVertical: 12 } : { minHeight: s.height }),
             ...(grow ? { flexGrow: 1 } : {}),
             gap: icon || busy ? 10 : 0,
-            paddingHorizontal: s.paddingHorizontal,
+            paddingHorizontal: compact ? BTN_PAD_COMPACT : s.paddingHorizontal,
             backgroundColor: v.bg,
             borderRadius: radius,
             borderWidth: v.borderWidth,

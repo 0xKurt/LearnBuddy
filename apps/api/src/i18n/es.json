@@ -85,6 +85,10 @@
     "test_noted": "Anotado – seguimos.",
     "try_again": "Todavía no del todo – inténtalo otra vez. Con «Pista» te doy una ayuda.",
     "typo": "Casi – se escribe {{answer}}. Escríbelo otra vez.",
+    "typo_extra": "Casi – hay una letra de más. Míralo otra vez con calma.",
+    "typo_missing": "Casi – falta una letra. Míralo otra vez con calma.",
+    "typo_swapped": "Casi – dos letras están cambiadas de orden. ¿Las encuentras?",
+    "typo_wrong": "Casi – una letra todavía no está bien. ¿La encuentras?",
     "untitled": "Práctica",
     "worked_intro": "Mira, así se hace:"
   },

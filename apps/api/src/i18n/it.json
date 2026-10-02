@@ -85,6 +85,10 @@
     "test_noted": "Annotato – andiamo avanti.",
     "try_again": "Non ancora del tutto – riprova. Con «Indizio» ti do un aiuto.",
     "typo": "Quasi – si scrive {{answer}}. Scrivilo ancora una volta.",
+    "typo_extra": "Quasi – c'è una lettera in più. Guarda ancora con attenzione.",
+    "typo_missing": "Quasi – manca una lettera. Guarda ancora con attenzione.",
+    "typo_swapped": "Quasi – due lettere sono invertite. Le trovi?",
+    "typo_wrong": "Quasi – una lettera non è ancora giusta. La trovi?",
     "untitled": "Esercizio",
     "worked_intro": "Guarda, si fa così:"
   },

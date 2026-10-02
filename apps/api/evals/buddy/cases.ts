@@ -130,6 +130,78 @@ function foreignDayWord(reply: string, locale: keyof typeof DAY_WORDS): string {
   return '';
 }
 
+/**
+ * German words that cannot stand in an English, French, Spanish or Italian reply (issue #201) —
+ * the generalisation of the day-word check above, and the check that would have caught #200
+ * whatever German word had leaked. Function words, not content: a leak is a sentence the model
+ * carried over from an example, and it brings its small words with it. "du" (French), "die"
+ * (English), "am" (English), "in" and "no" are deliberately absent — they are words of the other
+ * four languages too, and a check that cries wolf gets switched off.
+ *
+ * Only used on cases whose subject is not the German language: a learner practising German
+ * vocabulary gets German words in her reply by right.
+ */
+const GERMAN_WORDS: readonly string[] = [
+  'ich',
+  'mir',
+  'mich',
+  'dein',
+  'deine',
+  'nicht',
+  'und',
+  'ist',
+  'sind',
+  'eine',
+  'einer',
+  'einen',
+  'kein',
+  'keine',
+  'hab',
+  'habe',
+  'hast',
+  'kannst',
+  'machen',
+  'gleich',
+  'schon',
+  'noch',
+  'auch',
+  'aber',
+  'oder',
+  'wenn',
+  'dann',
+  'sehr',
+  'für',
+  'über',
+  'Aufgabe',
+  'Aufgaben',
+  'Arbeitsblatt',
+  'Zettel',
+  'Klassenarbeit',
+  'Probetest',
+  'Hilfe',
+  'Rückgängig',
+  'Übung',
+  'Erinnerung',
+  'Einstellungen',
+  'Stunde',
+  'Minuten',
+  'Woche',
+  'Handballtraining',
+];
+
+/**
+ * The first German word standing in a reply that is not German — '' when there is none, and ''
+ * for a German learner. The German day words count too: they are what leaked in #200.
+ */
+function germanLeak(reply: string, locale: keyof typeof DAY_WORDS): string {
+  if (locale === 'de') return '';
+  for (const word of [...GERMAN_WORDS, ...DAY_WORDS.de]) {
+    const hit = new RegExp(`(?<!\\p{L})${word}(?!\\p{L})`, 'iu').exec(reply);
+    if (hit) return hit[0];
+  }
+  return '';
+}
+
 async function exam(
   env: TestEnv,
   l: Learner,
@@ -768,6 +840,9 @@ export const CASES: Case[] = [
       message,
       check: (o) => {
         const foreign = foreignDayWord(o.reply ?? '', locale);
+        // Not only the day (issue #201): any German word in a reply that is not German is a
+        // sentence copied out of the prompt, whichever rule it came from.
+        const german = germanLeak(o.reply ?? '', locale);
         return [
           ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
           ...must(
@@ -775,10 +850,149 @@ export const CASES: Case[] = [
             'exam on Friday 2026-10-02',
           ),
           ...must(foreign === '', `day named in a language that is not hers: ${foreign}`),
+          ...must(german === '', `a German word in a reply that is not German: ${german}`),
         ];
       },
     }),
   ),
+  // The four places a German example stood in the prompt until issue #201, each walked in a
+  // language that is not German. They were RECOGNITION hints — "if she writes something like
+  // this, she means that" — so the risk is two-sided: the German could leak into a reply (it did
+  // in #200), and restating the hint abstractly could cost the recognition. Each case measures
+  // both: the thing Buddy was supposed to recognise still happens, and no German comes with it.
+  //
+  // The provable one first. "Removing is reversible (she sees a card with "Rückgängig")" stood in
+  // the prompt while an English learner's card says "Undo" — the label is rendered in the app
+  // from her locale (apps/mobile/locales/<lang>/buddy.json → done.undo), so Buddy could send an
+  // English-speaking child to a button her app does not have. The prompt now states the
+  // capability and names no label at all.
+  {
+    id: 'en_removal_names_no_button',
+    learner: {
+      locale: 'en',
+      timezone: 'Europe/London',
+      relation: 'child',
+      birthDate: '2014-02-10',
+    },
+    setup: (env, l) => exam(env, l, 'Maths test on fractions', '2026-10-02'),
+    message: 'The maths test was cancelled, can you take it off my list?',
+    check: (o) => {
+      const german = germanLeak(o.reply ?? '', 'en');
+      return [
+        ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
+        ...must(o.tools.includes('close_goal'), 'takes the test out (close_goal)'),
+        ...must(
+          !o.goals.some((g) => g.status === 'active'),
+          `nothing left standing: ${JSON.stringify(o.goals)}`,
+        ),
+        ...must(german === '', `a German word in an English reply: ${german}`),
+      ];
+    },
+  },
+  // The three German phrases for a span from now ("in einer Stunde", "in 20 Minuten", "gleich")
+  // are gone; what is left says what her words DO. The server still has to be the one that turns
+  // it into a day and a time (in_minutes), and the reply still has to say WHEN.
+  {
+    id: 'it_relative_reminder_without_german',
+    learner: {
+      locale: 'it',
+      timezone: 'Europe/Rome',
+      relation: 'child',
+      birthDate: '2014-02-10',
+    },
+    message: 'Ricordami tra 20 minuti di studiare il vocabolario.',
+    check: (o) => {
+      const step = o.steps.find((s) => s.agreed);
+      const minutes = step?.planned_time
+        ? Number(step.planned_time.slice(0, 2)) * 60 + Number(step.planned_time.slice(3, 5))
+        : null;
+      const german = germanLeak(o.reply ?? '', 'it');
+      return [
+        ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
+        // She writes at 10:00 in Rome; twenty minutes later is 10:20, with a few minutes of
+        // slack so a model that rounds is not called wrong.
+        ...must(
+          step?.planned_date === '2026-09-28' &&
+            minutes !== null &&
+            minutes >= 10 * 60 + 15 &&
+            minutes <= 10 * 60 + 25,
+          `an agreed reminder twenty minutes from now (got ${step?.planned_date ?? 'none'} ${step?.planned_time ?? ''})`,
+        ),
+        ...must(german === '', `a German word in an Italian reply: ${german}`),
+      ];
+    },
+  },
+  // "Probetest" is gone from the practice-test rule, and "Hilfe" from the rule about a wish too
+  // bare to prepare anything from. She asks to be tested, in her own language, over a test that
+  // stands in STATE: one thing to tap, and no German in the sentence that offers it.
+  {
+    id: 'es_practice_test_without_german',
+    learner: {
+      locale: 'es',
+      timezone: 'Europe/Madrid',
+      relation: 'child',
+      birthDate: '2014-02-10',
+    },
+    setup: async (env, l) => {
+      await exam(env, l, 'Examen de mates sobre fracciones', '2026-10-02');
+      await env.db.query(
+        `insert into items (learner_id, kind, prompt, answer, topic, difficulty, origin)
+         select $1, 'short', p, '3/4', 'Fracciones', 2, 'buddy' from unnest($2::text[]) p`,
+        [l.learnerId, ['Simplifica 6/8.', 'Calcula 3/4 + 1/8.', 'Ordena 1/2, 2/3 y 3/4.']],
+      );
+    },
+    message: '¿Me pones a prueba antes del examen?',
+    check: (o) => {
+      const taps = o.tools.filter((t) => t === 'offer_learning' || t === 'prepare_practice').length;
+      const german = germanLeak(o.reply ?? '', 'es');
+      return [
+        ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
+        ...must(
+          taps === 1,
+          `one thing to tap (${o.tools.join(', ') || 'none'}); offers: ${JSON.stringify(o.offers)}`,
+        ),
+        ...must(german === '', `a German word in a Spanish reply: ${german}`),
+      ];
+    },
+  },
+  // Where the handball sample utterance stood: a memory holds the lasting thing, never the moment
+  // she happened to write in. The example showed the rewritten FORM as well — in German — so it
+  // is gone and the principle stands alone. What must survive is the restraint: nothing she did
+  // not say, and the moment left out of what is kept.
+  {
+    id: 'fr_commitment_memory_without_german',
+    learner: {
+      locale: 'fr',
+      timezone: 'Europe/Paris',
+      relation: 'child',
+      birthDate: '2014-02-10',
+    },
+    message: "J'ai entraînement de handball tout à l'heure, je réviserai après.",
+    check: (o) => {
+      const german = germanLeak(o.reply ?? '', 'fr');
+      const invented = o.memories.filter((m) =>
+        /tout à l'heure|bientôt|\d|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|chaque|tous les/i.test(
+          m.statement,
+        ),
+      );
+      return [
+        ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
+        // Keeping nothing is a fair answer to one occurrence; keeping a day, a time or a rhythm
+        // she did not name is not.
+        ...must(
+          invented.length === 0,
+          `a memory carrying the moment or an invented rhythm: ${JSON.stringify(invented)}`,
+        ),
+        // An unagreed suggestion of his own is allowed; an AGREED reminder is not, because she
+        // asked for none — agreed=true needs her own words.
+        ...must(
+          !o.steps.some((s) => s.agreed),
+          `a reminder agreed that she never asked for: ${JSON.stringify(o.steps)}`,
+        ),
+        ...must(german === '', `a German word in a French reply: ${german}`),
+      ];
+    },
+  },
   // Learning-only scope (issue #38): Buddy declines work that is not this
   // learner's learning — briefly, and without turning into a rule lecture —
   // while a school topic that sounds off-topic is never refused.

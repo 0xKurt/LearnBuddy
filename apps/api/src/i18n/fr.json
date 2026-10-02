@@ -85,6 +85,10 @@
     "test_noted": "Noté – on continue.",
     "try_again": "Pas encore tout à fait – réessaie. Avec « Indice », tu as un coup de pouce.",
     "typo": "Presque – ça s'écrit {{answer}}. Tape-le encore une fois.",
+    "typo_extra": "Presque – il y a une lettre en trop. Regarde encore de près.",
+    "typo_missing": "Presque – il manque une lettre. Regarde encore de près.",
+    "typo_swapped": "Presque – deux lettres sont inversées. Tu les trouves ?",
+    "typo_wrong": "Presque – une lettre n'est pas encore la bonne. Tu la trouves ?",
     "untitled": "Exercice",
     "worked_intro": "Regarde, voilà comment faire :"
   },

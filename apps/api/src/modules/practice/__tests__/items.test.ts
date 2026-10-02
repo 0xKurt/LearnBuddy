@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ItemDraft, usableItems } from '../items.js';
+import { ANSWER_FORM_RULES, ItemDraft, usableItems } from '../items.js';
 
 const draft = (over: Record<string, unknown>) =>
   ItemDraft.parse({
@@ -60,5 +60,26 @@ describe('usableItems: a number asked for behind a placeholder (live finding 5)'
       answer: '$\\frac{a}{4}$',
     });
     expect(usableItems([it])).toHaveLength(1);
+  });
+});
+
+describe('the answer form a question may ask for (#208)', () => {
+  it('reaches the prompt that INVENTS questions', async () => {
+    const { GENERATE_SYSTEM } = await import('../generate.js');
+    expect(GENERATE_SYSTEM).toContain(ANSWER_FORM_RULES);
+  });
+
+  it('does NOT reach extraction, which copies a printed task as it stands', async () => {
+    const { EXTRACT_SYSTEM, HOMEWORK_SYSTEM } = await import('../../materials/extract.js');
+    // A printed task may legitimately ask for the numerator; the rule would make the model
+    // rewrite her own homework.
+    expect(EXTRACT_SYSTEM).not.toContain(ANSWER_FORM_RULES);
+    expect(HOMEWORK_SYSTEM).not.toContain(ANSWER_FORM_RULES);
+  });
+
+  it('says what it means without a sample sentence in any language', () => {
+    // Sample utterances in a prompt get copied verbatim (issue #200/#201).
+    expect(ANSWER_FORM_RULES).not.toMatch(/[äöüßÄÖÜ]|„|“/);
+    expect(ANSWER_FORM_RULES).toMatch(/fraction/);
   });
 });

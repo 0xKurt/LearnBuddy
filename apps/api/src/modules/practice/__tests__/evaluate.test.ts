@@ -8,6 +8,8 @@ import {
   editDistance,
   noSingleSolution,
   ruleCheck,
+  typoShape,
+  typoShapeFor,
   spellingOf,
   valuesIn,
   type ItemForCheck,
@@ -481,6 +483,37 @@ describe('spelling strictness (decision D-2)', () => {
     for (const kind of ['short', 'numeric', 'multiple_choice', 'formula', 'vocab', 'speak']) {
       expect(noSingleSolution({ kind })).toBe(false);
     }
+  });
+});
+
+describe('what kind of slip a typo was (#207)', () => {
+  it('reads the shape off the two strings', () => {
+    expect(typoShape('pencil case', 'pencil cae')).toBe('missing');
+    expect(typoShape('pencil case', 'pencill case')).toBe('extra');
+    expect(typoShape('pencil case', 'pencil csae')).toBe('swapped');
+    expect(typoShape('pencil case', 'pencil cose')).toBe('wrong');
+  });
+
+  it('calls two neighbours the wrong way round swapped, not wrong', () => {
+    // "ein Buchstabe stimmt nicht" would send her looking in the wrong place: both letters
+    // are in the word, only their order is not.
+    expect(typoShape('Stundenplan', 'Studnenplan')).toBe('swapped');
+    expect(typoShape('receive', 'recieve')).toBe('swapped');
+  });
+
+  it('talks about the key she came closest to, not always the main answer', () => {
+    const vocab = item({
+      kind: 'vocab',
+      answer: 'das Federmäppchen',
+      accepted_answers: ['die Federtasche'],
+    });
+    // She nearly wrote the accepted answer: a hint about the main one would make no sense.
+    expect(typoShapeFor(vocab, 'die Federtasch')).toBe('missing');
+    expect(typoShapeFor(vocab, 'das Federmäppche')).toBe('missing');
+  });
+
+  it('is unaffected by accents, which have their own near miss', () => {
+    expect(typoShapeFor(item({ kind: 'vocab', answer: 'la récré' }), 'la recr')).toBe('missing');
   });
 });
 

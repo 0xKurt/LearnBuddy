@@ -21,6 +21,17 @@ export const MATH_RULES = `Math (also in choices, answers and accepted_answers):
 /** How a number key is written (docs/architecture.md §Practice, grading; audit C-1). */
 export const NUMERIC_KEY_RULES = `numeric: answer = the number with a decimal point and no thousands separators (0.125, 1250 — never 0,125 or 1.250); a fraction (3/4) or mixed number (3 1/2) only when the task asks for that form; the unit separately in "unit" ("%" for percent). tolerance only when the task says to round, estimate or measure — otherwise null (exact).`;
 
+/**
+ * A question asks for what the answer field holds (issue #208, seen in a video shoot: "Wie
+ * viel Pizza ist das als Bruch? Gib den Zähler ein." — a fraction is asked for and only part
+ * of it may be written). The restriction came from nowhere in the app: `numeric` accepts a
+ * fraction (see NUMERIC_KEY_RULES) and the app's math keyboard writes one.
+ *
+ * Only for questions the model INVENTS. Extraction must not get this rule: it copies a
+ * printed task as it stands, and a printed task may perfectly well ask for the numerator.
+ */
+export const ANSWER_FORM_RULES = `A question asks for exactly the whole answer, never for a part of it: if the answer is a fraction, ask for the fraction — the app's keyboard writes one and the key may be written that way. Never narrow the answer to one component of what you asked for, and never ask for a unit separately: it belongs in "unit".`;
+
 /** When case, ß and punctuation decide (decision D-2). */
 export const SPELLING_RULES = `spelling: "strict" when the task practises spelling, capitalisation or punctuation; "gentle" when they don't matter for the answer; null otherwise (the subject decides).`;
 

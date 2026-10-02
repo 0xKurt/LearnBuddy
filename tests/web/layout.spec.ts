@@ -5,6 +5,10 @@
 // could be truncated. The head is the mark alone now (#125, #135) and the name only appears
 // inside a chat bubble, which wraps — so the long name stays in the run as a realistic
 // account, and what is measured is the mark, the row and the composer.
+//
+// Since #203 it also measures the answer cards: where a LINE of an answer ends, and whether
+// the cards of a row are one row. That one needs specific words on the screen, so the test
+// says which (see `answerChoices`) — the geometry is the real app's.
 
 import { join } from 'node:path';
 
@@ -22,6 +26,10 @@ async function onboard(page: Page, name: string): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('radio', { name: 'Mein Kind' }).click();
   await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill(name);
+  // The Bundesland is a required field at registration (issue #199): one row that opens
+  // a sheet with the sixteen; without a choice the CTA stays muted.
+  await page.getByRole('button', { name: 'Bundesland wählen' }).click();
+  await page.getByRole('radio', { name: 'Niedersachsen' }).click();
   await page.getByLabel('Tag', { exact: true }).fill('10');
   await page.getByLabel('Monat', { exact: true }).fill('02');
   await page.getByLabel('Jahr', { exact: true }).fill('2014');
@@ -173,4 +181,208 @@ test('the composer row stays one row when the field grows', async ({ page }) => 
   expect(gap, 'send and the waveform have real air between them').toBeGreaterThanOrEqual(6);
 
   await page.screenshot({ path: join(SHOTS, '31-composer-grown.png') });
+});
+
+/**
+ * Answer cards: a line of an answer ends on a whole word, and the cards of a row are one row.
+ *
+ * This is the test for #203. In the owner's product video the English answer "the homework"
+ * stood as "the / homewor / k" — three lines, cut inside the word, the card taller than its
+ * neighbour, the row uneven. Nothing could see it: the component layer is blind to geometry
+ * (jsdom lays nothing out, docs/testing-layers.md), and the walkthrough only ever asked
+ * whether a control exists, fits and does not overlap — never where a line of it ends.
+ *
+ * The words have to be on the screen for that to be measurable, and the scripted model's own
+ * sets are all single short words ("Romulus", "Wem?"). So the session's open question is given
+ * the words of the issue on its way to the app: `page.route` patches `tap_choices` — the real
+ * production field for words to tap (issue #147) — in the real response from the real API, and
+ * everything after that is the app itself: its own build, its own component, its own layout in
+ * Chromium at the two phone sizes of rule 16. Nothing of the server's behaviour is faked; the
+ * subject here is the view.
+ */
+const PHONES = [
+  { width: 390, height: 844 },
+  { width: 360, height: 740 },
+] as const;
+
+/** The words of #203. A, B, C, D — short enough for the grid; "the homework" is the one from the video. */
+const GRID_WORDS = ['the homework', 'the eraser', 'le cahier', 'la récré'];
+/** And the ones with a word too long for half a line: these have to go full width instead. */
+const FULL_WIDTH_WORDS = ['das Federmäppchen', 'der Stundenplan', 'the exercise book', 'das Heft'];
+
+type ChoiceBox = {
+  label: string;
+  /** The text as the browser actually broke it, line by line. */
+  lines: string[];
+  /** The white card, the button inside it, and where the card starts. */
+  card: { top: number; left: number; width: number; height: number };
+  button: { top: number; height: number };
+};
+
+/**
+ * What the browser made of each answer: the real line breaks (read with a Range, character by
+ * character — the only way to see where a line actually ended) and the boxes around them.
+ */
+async function answerChoices(page: Page, labels: readonly string[]): Promise<ChoiceBox[]> {
+  return page.evaluate((wanted) => {
+    return wanted.map((label) => {
+      const el = Array.from(document.querySelectorAll<HTMLElement>('div, span')).find(
+        (node) => node.children.length === 0 && node.textContent === label,
+      );
+      if (!el) throw new Error(`no element on the screen shows exactly "${label}"`);
+      const text = el.firstChild;
+      if (!text || text.nodeType !== Node.TEXT_NODE)
+        throw new Error(`"${label}" is not one piece of text`);
+      const whole = text.textContent ?? '';
+      // Where each character sits. A character at a soft wrap can have an empty rect
+      // (a collapsed space); it belongs to the line it is written next to, so it never
+      // starts a new one by itself.
+      const range = document.createRange();
+      const lines: string[] = [];
+      let current = '';
+      let top: number | null = null;
+      for (let i = 0; i < whole.length; i++) {
+        range.setStart(text, i);
+        range.setEnd(text, i + 1);
+        const box = range.getBoundingClientRect();
+        const here = box.width === 0 && box.height === 0 ? null : Math.round(box.top);
+        if (here !== null && top !== null && Math.abs(here - top) > 2) {
+          lines.push(current);
+          current = '';
+        }
+        if (here !== null) top = here;
+        current += whole[i];
+      }
+      lines.push(current);
+      const button = el.closest('[role="button"]');
+      if (!(button instanceof HTMLElement)) throw new Error(`"${label}" is not inside a button`);
+      const card = button.parentElement;
+      if (!card) throw new Error(`the button of "${label}" has no card around it`);
+      const cb = card.getBoundingClientRect();
+      const bb = button.getBoundingClientRect();
+      return {
+        label,
+        lines,
+        card: {
+          top: Math.round(cb.top),
+          left: Math.round(cb.left),
+          width: Math.round(cb.width),
+          height: Math.round(cb.height),
+        },
+        button: { top: Math.round(bb.top), height: Math.round(bb.height) },
+      };
+    });
+  }, labels as string[]);
+}
+
+/** The cards grouped the way they stand: one entry per row, in reading order. */
+function rowsOf(boxes: ChoiceBox[]): ChoiceBox[][] {
+  const rows: ChoiceBox[][] = [];
+  for (const box of [...boxes].sort(
+    (a, b) => a.card.top - b.card.top || a.card.left - b.card.left,
+  )) {
+    const row = rows[rows.length - 1];
+    if (row && Math.abs(row[0]!.card.top - box.card.top) <= 2) row.push(box);
+    else rows.push([box]);
+  }
+  return rows;
+}
+
+test('answer choices break only between words, and a row of them is one row', async ({ page }) => {
+  let choices: readonly string[] = GRID_WORDS;
+  // The real response from the real API, with the open question's words replaced.
+  await page.route(/\/practice\/sessions(\/|$)/, async (route) => {
+    const response = await route.fetch();
+    const body: unknown = await response.json().catch(() => null);
+    if (body === null || typeof body !== 'object' || !('items' in body)) {
+      await route.fulfill({ response });
+      return;
+    }
+    const session = body as { items: { status: string; item: { tap_choices: string[] | null } }[] };
+    for (const entry of session.items) {
+      if (entry.status === 'open') entry.item.tap_choices = [...choices];
+    }
+    await route.fulfill({ response, json: session });
+  });
+
+  await onboard(page, 'Lena');
+  await page.getByLabel('Schreib Buddy …').fill('Ich will Hauptstädte üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await page.getByRole('button', { name: "Los geht's" }).click();
+  await expect(page.getByText('Wie heißt die Hauptstadt von Frankreich?')).toBeVisible({
+    timeout: 30_000,
+  });
+
+  for (const [what, set] of [
+    ['grid', GRID_WORDS],
+    ['full', FULL_WIDTH_WORDS],
+  ] as const) {
+    choices = set;
+    await page.reload();
+    await expect(page.getByRole('button', { name: set[0], exact: true })).toBeVisible({
+      timeout: 30_000,
+    });
+    for (const phone of PHONES) {
+      await page.setViewportSize(phone);
+      await page.waitForTimeout(400);
+      const where = `${what} @ ${phone.width}`;
+      const boxes = await answerChoices(page, set);
+
+      // 1. No line of an answer ends inside a word — the bug of #203. A break is only
+      //    allowed where the text itself allows one: at a space.
+      for (const box of boxes) {
+        for (let i = 1; i < box.lines.length; i++) {
+          const before = box.lines[i - 1]!;
+          const after = box.lines[i]!;
+          expect(
+            /\s$/.test(before) || /^\s/.test(after),
+            `${where}: "${box.label}" breaks inside a word (${box.lines.map((l) => `"${l}"`).join(' / ')})`,
+          ).toBe(true);
+        }
+      }
+
+      // 2. The set is laid out the way the arithmetic in ChoiceList.tsx decided: short words
+      //    two by two, a word too long for half a line full width, one under the other.
+      const rows = rowsOf(boxes);
+      const perRow = rows.map((row) => row.length);
+      if (what === 'grid') expect(perRow, `${where}: two by two`).toEqual([2, 2]);
+      else expect(perRow, `${where}: one per row`).toEqual([1, 1, 1, 1]);
+
+      // 3. Cards of a row are equally tall (the uneven row of the screenshot), and so are
+      //    their buttons: the whole white card is tappable, not only its top.
+      for (const row of rows) {
+        for (const box of row) {
+          expect(
+            Math.abs(box.card.height - row[0]!.card.height),
+            `${where}: "${box.label}" is as tall as its neighbour`,
+          ).toBeLessThanOrEqual(1);
+          expect(
+            Math.abs(box.button.height - box.card.height),
+            `${where}: the button of "${box.label}" fills its card`,
+          ).toBeLessThanOrEqual(1);
+          // A tappable thing is never smaller than this (TOUCH, lib/theme/space.ts).
+          expect(box.button.height, `${where}: "${box.label}" is tappable`).toBeGreaterThanOrEqual(
+            44,
+          );
+          // And nothing reaches past the screen.
+          expect(
+            box.card.left,
+            `${where}: "${box.label}" starts on the screen`,
+          ).toBeGreaterThanOrEqual(0);
+          expect(
+            box.card.left + box.card.width,
+            `${where}: "${box.label}" ends on the screen`,
+          ).toBeLessThanOrEqual(phone.width);
+        }
+      }
+
+      // 4. Nothing scrolls sideways (a word set with `overflow-wrap: normal` would show up here).
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow, `${where}: no sideways scrolling`).toBeLessThanOrEqual(0);
+
+      await page.screenshot({ path: join(SHOTS, `32-choices-${what}-${phone.width}.png`) });
+    }
+  }
 });

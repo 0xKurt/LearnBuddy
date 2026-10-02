@@ -85,6 +85,10 @@
     "test_noted": "Notiert – weiter geht's.",
     "try_again": "Noch nicht ganz – probier's nochmal. Mit „Tipp“ bekommst du einen Hinweis.",
     "typo": "Fast – so schreibt man es: {{answer}}. Tipp es nochmal.",
+    "typo_extra": "Fast – ein Buchstabe ist zu viel. Schau nochmal genau hin.",
+    "typo_missing": "Fast – da fehlt ein Buchstabe. Schau nochmal genau hin.",
+    "typo_swapped": "Fast – zwei Buchstaben stehen vertauscht. Findest du sie?",
+    "typo_wrong": "Fast – ein Buchstabe stimmt noch nicht. Findest du ihn?",
     "untitled": "Übung",
     "worked_intro": "Schau, so geht's:"
   },

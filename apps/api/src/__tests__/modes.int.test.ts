@@ -518,11 +518,20 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(accents.body.verdict).toBe('partially_correct');
     expect(accents.body.reply.text).toContain('Akzente');
 
-    // A slip: the spelling is shown, the question stays open — she types it herself.
+    // A slip: she hears WHAT slipped, not the word, and the question stays open — the
+    // spelling only from the second try on (issue #207: showing it at once turned the next
+    // answer into copying, and the "Richtig" after it claimed she had known it).
     const slip = await answer(l, res.body, forth, 'der Schühler');
     expect(slip.body.verdict).toBe('partially_correct');
-    expect(slip.body.reply.text).toContain('der Schüler');
+    expect(slip.body.reply.text).toBe('Fast – ein Buchstabe ist zu viel. Schau nochmal genau hin.');
+    expect(slip.body.reply.text).not.toContain('Schüler');
     expect(slip.body.session.items.find((i) => i.item.id === forth)?.status).toBe('open');
+
+    // Second slip on the same question: now the spelling, and it is recorded as help given.
+    // ("der Schuler" would be the ACCENT near miss, which has its own reply and no solution.)
+    const again = await answer(l, res.body, forth, 'der Schülerr');
+    expect(again.body.reply.text).toContain('der Schüler');
+    expect(again.body.session.items.find((i) => i.item.id === forth)?.hints_used).toBe(1);
     expect(tutorCalls()).toBe(before); // none of this needed a model
 
     // An answer the rules don't know goes to the tutor; judged right, the key learns it.

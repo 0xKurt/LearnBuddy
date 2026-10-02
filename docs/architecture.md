@@ -285,6 +285,27 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   cached prefix and cannot be locale-switched — so an example day word in it is German for
   every learner who is not German. The rule states the principle and the ban; the word comes
   from `dayLabel`, and the model only fits it into its own sentence's grammar.
+- **No sample sentence in the prompt, in any language** (issue #201, the generalisation of #200).
+  The same cleanup ran through the rest of the static block: six German literals stood there for
+  the same reason the day example did — written for a German learner, never switched by language.
+  Per literal the question is which kind it is. A hint for RECOGNISING what she wrote is restated
+  by what her words DO ("said as a span from now instead of a clock time", not three German
+  phrases for it); anything that showed the FORM of an answer is removed outright, because what a
+  language needs is rendered by code, which knows her locale. Translating the block per language
+  was never an option: it is the cached prefix (`docs/decisions/prefix-cache-2026-10-01.md`), so
+  five variants would splinter the cache fivefold and make five places a literal can leak from.
+  The one German phrase left is deliberate — the five school systems side by side in `set_level`
+  (`7. Klasse, 4e, 2º ESO, terza media, Year 8`), which exist precisely so the prompt does not
+  drift towards German. `__tests__/prompts.test.ts` scans both exported prompts and fails on a
+  German function word, a day word of any of the five languages, or an umlaut.
+- **Buddy names no button.** The provable half of #201: the removal rule said the card carries
+  "Rückgängig" while an English learner's card says "Undo" — the label is rendered in the app from
+  her locale (`apps/mobile/locales/<lang>/buddy.json` → `done.undo`), so Buddy could send an
+  English-speaking child to a button her app does not have. The prompt now states the capability
+  ("the card the app shows her for it offers to take it straight back") and bans naming any
+  button, card, screen or setting by a word of its own. The label is deliberately NOT injected per
+  locale: that would copy a mobile string into the server, where it can drift, and put a
+  per-learner word into the one part of the request that has to stay byte-identical to be cached.
 
 ## Tools
 

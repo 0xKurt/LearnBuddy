@@ -28,6 +28,7 @@ import {
   FIGURE_RULES,
   ItemDraft,
   itemsOneByOne,
+  ANSWER_FORM_RULES,
   LANGUAGE_RULES,
   MATH_RULES,
   MAX_ACCEPTED,
@@ -38,7 +39,7 @@ import {
 } from './items.js';
 import { createSession, type PracticeLearner } from './service.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.10';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.11';
 
 const SUBJECT_KINDS = [
   'math',
@@ -199,7 +200,7 @@ const TASK: Record<StartTopicRequest['kind'], string> = {
   help: `The learner TYPED A HOMEWORK TASK and wants help to solve it THEMSELVES. One item per task/sub-task, prompt = the task in the learner's own words (copy it), answer = the correct final answer, which the learner never sees — it guides hints. Never add tasks or intermediate questions of your own.`,
 };
 
-const SYSTEM = `You prepare learning in the LearnBuddy app for the learner in LEARNER — a school student, a university student or an adult learner (further education, work, languages, personal interest); their level says which. You never do homework for them; you help them learn.
+export const GENERATE_SYSTEM = `You prepare learning in the LearnBuddy app for the learner in LEARNER — a school student, a university student or an adult learner (further education, work, languages, personal interest); their level says which. You never do homework for them; you help them learn.
 
 Rules:
 - Pitch everything at the learner's age and grade. Instructions and explanations in the app language (LEARNER); foreign-language content in that language.
@@ -208,6 +209,7 @@ Rules:
 - Start with questions that make them think about the topic, not trivia or definitions of everyday words.
 - Items: prefer short answers and numbers; multiple_choice with 2–6 choices where it makes sense (correct_choice = index).
 - ${NUMERIC_KEY_RULES}
+- ${ANSWER_FORM_RULES}
 - ${SPELLING_RULES}
 - ${MATH_RULES}
 - ${FIGURE_RULES}
@@ -319,7 +321,7 @@ async function prepareTopic(
       purpose: 'explain',
       tier: 'smart',
       promptVersion: GENERATE_PROMPT_VERSION,
-      system: SYSTEM,
+      system: GENERATE_SYSTEM,
       contents: [
         {
           role: 'user',

@@ -237,6 +237,54 @@ const STRENGTH: readonly RuleVerdict[] = [
   'unknown',
 ];
 
+/**
+ * What kind of slip a typo was — read off the two strings, nothing guessed about the
+ * language (issue #207). Until now a typo was answered with the correct spelling at once,
+ * so the next "Richtig" was copying rather than knowing. This says WHAT slipped, so she
+ * finds it herself; the spelling follows on the second try.
+ */
+export type TypoShape = 'missing' | 'extra' | 'swapped' | 'wrong';
+
+/**
+ * The slip against the key she came closest to — the rules compare against the answer and
+ * every accepted answer, so the hint has to talk about the one she nearly wrote.
+ */
+export function typoShapeFor(
+  item: Pick<ItemForCheck, 'answer' | 'accepted_answers'>,
+  text: string,
+): TypoShape {
+  const said = withoutAccents(normalizeShortAnswer(text));
+  let best = withoutAccents(normalizeShortAnswer(item.answer));
+  let bestDistance = editDistance(said, best);
+  for (const alt of item.accepted_answers) {
+    const key = withoutAccents(normalizeShortAnswer(alt));
+    const d = editDistance(said, key);
+    if (d < bestDistance) {
+      best = key;
+      bestDistance = d;
+    }
+  }
+  return typoShape(best, said);
+}
+
+/** Exported for the tests; `typoShapeFor` picks the key first. */
+export function typoShape(wanted: string, said: string): TypoShape {
+  if (said.length < wanted.length) return 'missing';
+  if (said.length > wanted.length) return 'extra';
+  // Same length: two neighbours the wrong way round is the slip a learner recognises
+  // instantly once named, and it is the one case where "ein Buchstabe stimmt nicht" would
+  // send her looking in the wrong place.
+  const differs: number[] = [];
+  for (let i = 0; i < wanted.length; i++) {
+    if (wanted[i] !== said[i]) differs.push(i);
+  }
+  if (differs.length === 2) {
+    const [i, j] = differs as [number, number];
+    if (j === i + 1 && wanted[i] === said[j] && wanted[j] === said[i]) return 'swapped';
+  }
+  return 'wrong';
+}
+
 /** A written answer against one key. */
 function writtenAgainst(item: ItemForCheck, key: string, text: string): RuleVerdict {
   if (item.kind === 'formula' || isMathText(key) || isMathText(text)) {

@@ -37,6 +37,8 @@ import {
   plainMath,
   ruleCheck,
   type RuleVerdict,
+  type TypoShape,
+  typoShapeFor,
 } from './evaluate.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
@@ -724,6 +726,19 @@ const NEAR_MISS_REPLY: Partial<Record<RuleVerdict, MessageKey>> = {
   missing_word: 'practice.missing_word',
 };
 
+/**
+ * The FIRST answer to a typo: what slipped, not the word (issue #207). A missing accent was
+ * always answered this way ("schau nochmal auf die Akzente") and a typo was not — it was
+ * answered with the correct spelling at once, so what followed was copying and the "Richtig"
+ * after it claimed more than had happened.
+ */
+const TYPO_REPLY: Record<TypoShape, MessageKey> = {
+  missing: 'practice.typo_missing',
+  extra: 'practice.typo_extra',
+  swapped: 'practice.typo_swapped',
+  wrong: 'practice.typo_wrong',
+};
+
 export async function answerItem(
   deps: Deps,
   learner: PracticeLearner,
@@ -840,14 +855,21 @@ export async function answerItem(
     // A near miss needs no model: a fixed, kind answer at once. A slip shows the
     // spelling and stays open, so she types it right herself (never in homework,
     // which never shows the solution — there the tutor judges).
+    // The spelling only from the second try on, and then it counts as help given — like a
+    // hint, because that is what it is (issue #207). `first_try_correct` is false after the
+    // first attempt anyway, so a later right answer is already recorded as "with help"; the
+    // hint count makes the record say WHY.
+    const spellOut = rule === 'typo' && item.attempts > 0;
     judged = {
       verdict: 'partially_correct',
       evaluatedBy: 'rule',
       reply:
-        rule === 'typo'
-          ? t(learner.locale, 'practice.typo', { answer: plainMath(item.answer) })
-          : t(learner.locale, NEAR_MISS_REPLY[rule] ?? 'practice.accents'),
-      gaveHint: false,
+        rule !== 'typo'
+          ? t(learner.locale, NEAR_MISS_REPLY[rule] ?? 'practice.accents')
+          : spellOut
+            ? t(learner.locale, 'practice.typo', { answer: plainMath(item.answer) })
+            : t(learner.locale, TYPO_REPLY[typoShapeFor(item, text)]),
+      gaveHint: spellOut,
       revealed: false,
     };
   } else if (session.mode === 'test' && rule === 'incorrect') {
