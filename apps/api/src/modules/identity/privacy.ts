@@ -48,6 +48,8 @@ const LEARNER_TABLES = [
   'item_states',
   'practice_sessions',
   'practice_turns',
+  // A guided example's checked plan and where she stands in it (issue #298): hers.
+  'guided_examples',
   'usage_daily',
   'llm_calls',
 ] as const;
@@ -200,6 +202,7 @@ export async function cancelDeletion(deps: Deps, accountId: string): Promise<voi
 /** Learner-scoped tables, children first, so no delete waits on a cascade. */
 const CONTENT_TABLES: ReadonlyArray<{ table: string; rows: string }> = [
   { table: 'practice_turns', rows: `select ctid from practice_turns where learner_id = $1` },
+  { table: 'guided_examples', rows: `select ctid from guided_examples where learner_id = $1` },
   {
     table: 'session_items',
     rows: `select si.ctid from session_items si join practice_sessions ps on ps.id = si.session_id

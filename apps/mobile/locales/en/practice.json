@@ -221,5 +221,16 @@
     "partially_correct": "Almost",
     "incorrect": "Not quite yet",
     "unchecked": "Not checked"
+  },
+  "guide": {
+    "ask": "Show me step by step",
+    "stop": "I'll go on myself",
+    "offer": "Step by step",
+    "offer_label": "Show me step by step",
+    "offer_hint": "Buddy shows one step, you do the next, and he checks it.",
+    "leave": "Go on myself",
+    "leave_hint": "Ends the walk-through. The question stays open and you carry on yourself.",
+    "placeholder_step": "Your next line …",
+    "placeholder_point": "Your part of the text …"
   }
 }

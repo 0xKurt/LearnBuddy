@@ -92,7 +92,24 @@ import {
   tutorContext,
   type TutorDecision as TutorDecisionT,
 } from './tutor.js';
-import type { LlmMessage } from '../../llm/gateway.js';
+import { LlmError, type LlmMessage } from '../../llm/gateway.js';
+import { explainFigure } from './explainFigure.js';
+import {
+  guideKindFor,
+  guideOf,
+  insertGuide,
+  judgePoint,
+  openGuide,
+  planGuide,
+  planOf,
+  pointsTurn,
+  saveGuideStep,
+  stepsTurn,
+  type GuideKind,
+  type GuidePlan,
+  type GuideState,
+  type GuideTurn,
+} from './guide.js';
 
 const TUTOR_SCHEMA = toJsonSchema(TutorDecision);
 /**
@@ -626,6 +643,12 @@ function currentOpen<
 export const REVEAL_AFTER_MISSES = 3;
 
 /**
+ * "Zeig's mir Schritt für Schritt" is offered after this many wrong tries (issue #298): the
+ * second miss is a gap, not a slip (issue #156), and the third would show the solution.
+ */
+export const GUIDE_OFFER_AFTER = 2;
+
+/**
  * Asked for help again, the solution is explained only once she has seen this many hints and
  * every prepared one (live finding 1: the first "Tipp" after a miss showed the solution).
  */
@@ -785,11 +808,22 @@ export async function sessionView(
     verdict: PracticeTurnView['verdict'];
     pronunciation: PracticeTurnView['pronunciation'];
     reexplain: PracticeTurnView['reexplain'];
+    figure: unknown;
     created_at: Date;
   }>(
-    `select id, item_id, role, text, verdict, pronunciation, reexplain, created_at from practice_turns
-      where session_id = $1 order by seq`,
+    `select id, item_id, role, text, verdict, pronunciation, reexplain, figure, created_at
+       from practice_turns where session_id = $1 order by seq`,
     [sessionId],
+  );
+  // The guided examples of this run (issue #298): which question has one running, and which
+  // has had one — the offer comes once per question.
+  const guides = new Map(
+    (
+      await db.query<{ item_id: string; kind: GuideKind; status: string }>(
+        `select item_id, kind, status from guided_examples where session_id = $1`,
+        [sessionId],
+      )
+    ).map((g) => [g.item_id, g]),
   );
   const title = await db.maybeOne<{ title: string }>(
     `select coalesce(ps.title, g.title, st.title) as title from practice_sessions ps
@@ -881,7 +915,10 @@ export async function sessionView(
         // Listening: the help is hearing it again, and slower — which the card offers anyway
         // (issue #210). A written hint about a text she is supposed to be listening to is a
         // worse version of the replay, and it would be one more model call.
-        !hearing.has(i.id),
+        !hearing.has(i.id) &&
+        // While a guided example runs, it is the help (issue #298): a hint about the whole
+        // question would talk past the step she is on.
+        guides.get(i.id)?.status !== 'active',
       reveal_available: i.status === 'open' && active && !cardPass && revealReady(s.mode, i),
       deferred: i.status === 'open' && s.mode === 'help' && Boolean(i.deferred_at),
       // Never leak the solution of an open question, nor ever in help mode (homework) — and
@@ -898,6 +935,20 @@ export async function sessionView(
       // (issue #210): she hears it, answers, and reads it afterwards. While the question is
       // open the text is the solution, so it stays here.
       listen_transcript: solutionShown(i) ? (listenTaskOf(i.listen_task)?.text ?? null) : null,
+      // "Zeig's mir Schritt für Schritt" (issue #298): practice only, after the second wrong
+      // try, once per question, and only where code can follow the steps (`guideKindFor`).
+      guide_offered:
+        i.status === 'open' &&
+        active &&
+        !cardPass &&
+        s.mode === 'practice' &&
+        i.attempts >= GUIDE_OFFER_AFTER &&
+        !guides.has(i.id) &&
+        guideKindFor(i) !== null,
+      guide:
+        i.status === 'open' && active && guides.get(i.id)?.status === 'active'
+          ? { kind: guides.get(i.id)!.kind }
+          : null,
     })),
     turns: turns.map((tr) => ({
       id: tr.id,
@@ -907,6 +958,9 @@ export async function sessionView(
       verdict: tr.verdict,
       pronunciation: tr.pronunciation,
       reexplain: tr.reexplain,
+      // Checked when it was written; read forgivingly, so a figure this build cannot draw is
+      // simply not drawn (`explainFigure`).
+      figure: tr.role === 'tutor' ? explainFigure(tr.figure) : null,
       created_at: tr.created_at.toISOString(),
     })),
     current_item_id: active ? (current?.id ?? null) : null,
@@ -1196,6 +1250,16 @@ export async function answerItem(
     });
   }
 
+  // ── a guided example running on this question (issue #298) ──
+  //
+  // While it runs, what she sends is her NEXT STEP, not an answer to the whole question: code
+  // checks it against the last line that holds (`guide.ts`), and none of the answer machinery
+  // below — hints, the third-try solution, the rubric — speaks for it. Only practice has one.
+  const guideRow =
+    !hintRequest && session.mode === 'practice' ? await guideOf(deps.db, sessionId, item.id) : null;
+  const runningGuide = guideRow?.status === 'active' ? guideRow : null;
+  const runningPlan = runningGuide ? planOf(runningGuide.steps) : null;
+
   // ── an answer with SEVERAL PARTS (issues #228–#230) ──
   //
   // One shape per question, and the server refuses the other one. She can only answer with the
@@ -1339,9 +1403,50 @@ export async function answerItem(
     /** The hint shown is the next prepared one (prepared_hints_used moves on). */
     usedPrepared?: boolean;
     revealed: boolean;
+    /** A checked figure that goes with Buddy's explanation (issue #298). */
+    figure?: GuidePlan['figure'];
   };
+  // The guided example (issue #298): a step she wrote while it runs, or one that starts now
+  // because she asked to be shown ("zeig mir wie", classified by the tutor — never a word list).
+  let guideTurn: GuideTurn | null = null;
+  let guideStart: { kind: GuideKind; plan: GuidePlan | null; state: GuideState | null } | null =
+    null;
+  if (runningGuide && runningPlan) {
+    const state: GuideState = {
+      at: runningGuide.at,
+      misses: runningGuide.misses,
+      prev: runningGuide.prev,
+      status: 'active',
+    };
+    if (runningPlan.kind === 'steps') {
+      guideTurn = stepsTurn(learner.locale, item, runningPlan, state, text);
+    } else {
+      const tz = await deps.db.one<{ timezone: string }>(
+        `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
+        [learner.id],
+      );
+      const point = runningPlan.points[Math.min(state.at, runningPlan.points.length - 1)]!;
+      const claim = await judgePoint(
+        deps,
+        learner,
+        { prompt: item.prompt, point, herText: text },
+        localParts(now, tz.timezone).date,
+      );
+      guideTurn = pointsTurn(learner.locale, runningPlan, state, text, claim);
+    }
+  }
   let judged: Judged;
-  if (hintRequest && givesHints(session.mode) && ladderDone(item)) {
+  if (guideTurn !== null) {
+    // Her step, checked by code. Not an attempt at the question unless it arrives at the key —
+    // then the question is solved, with help (the guide itself counted as help when it began).
+    judged = {
+      verdict: guideTurn.solved ? 'correct' : 'not_an_attempt',
+      evaluatedBy: runningPlan?.kind === 'points' ? 'model' : 'rule',
+      reply: guideTurn.reply,
+      gaveHint: false,
+      revealed: guideTurn.revealed,
+    };
+  } else if (hintRequest && givesHints(session.mode) && ladderDone(item)) {
     // Asked again at the end of the ladder: the solution explained, at once, no model.
     judged = {
       verdict: 'not_an_attempt',
@@ -1649,36 +1754,76 @@ export async function answerItem(
           };
         }
       }
-      judged = hintRequest
+      // She asked to be SHOWN how it goes (issue #298). Practice only, on a question code can
+      // follow, and once per question: then a checked plan starts the guided example. A plan that
+      // does not hold is recorded, so the offer does not come back; a model outage leaves the
+      // tutor's own reply, and nothing is stored.
+      const wantsGuide = !hintRequest && d.intent === 'show_me' && session.mode === 'practice';
+      const guideKind = wantsGuide ? guideKindFor(item) : null;
+      let shown: { reply: string; figure: GuidePlan['figure'] } | null = null;
+      if (guideKind !== null && guideRow === null) {
+        try {
+          const planned = await planGuide(
+            deps,
+            learner,
+            item,
+            guideKind,
+            localParts(now, tz.timezone).date,
+          );
+          if (planned.ok) {
+            const opened = openGuide(learner.locale, planned.plan);
+            guideStart = { kind: guideKind, plan: planned.plan, state: opened.state };
+            shown = { reply: opened.reply, figure: planned.plan.figure };
+          } else {
+            guideStart = { kind: guideKind, plan: null, state: null };
+            shown = { reply: t(learner.locale, 'practice.guide.unavailable'), figure: null };
+          }
+        } catch (err) {
+          if (!(err instanceof LlmError) && !(isAppError(err) && err.code === 'budget_exhausted')) {
+            throw err;
+          }
+        }
+      }
+      judged = shown
         ? {
-            // "Tipp": whatever the model called it, this is help, shown as a hint — never a
-            // graded answer, and its own gentle hint is kept (live finding 1).
             verdict: 'not_an_attempt',
             evaluatedBy: 'model',
-            reply: d.reply,
-            gaveHint: !d.revealed_answer,
-            revealed: d.revealed_answer,
+            reply: shown.reply,
+            // Being shown is help: a question solved after it is never "first try".
+            gaveHint: guideStart?.plan != null,
+            revealed: false,
+            figure: shown.figure,
           }
-        : d.intent === 'wants_to_stop'
+        : hintRequest
           ? {
-              // She has had enough (issue #161). The words here are the app's, not the
-              // model's: this is the moment where a cheerful "du bist schon so nah dran"
-              // is both untrue and pressure, and the external audit caught exactly that.
-              // What she gets is a real choice — stop for today, or one small example —
-              // and the way out is already on screen ("Übung beenden").
+              // "Tipp": whatever the model called it, this is help, shown as a hint — never a
+              // graded answer, and its own gentle hint is kept (live finding 1).
               verdict: 'not_an_attempt',
-              evaluatedBy: 'rule',
-              reply: t(learner.locale, 'practice.had_enough'),
-              gaveHint: false,
-              revealed: false,
-            }
-          : {
-              verdict: d.verdict,
               evaluatedBy: 'model',
               reply: d.reply,
-              gaveHint: d.gave_hint,
+              gaveHint: !d.revealed_answer,
               revealed: d.revealed_answer,
-            };
+            }
+          : d.intent === 'wants_to_stop'
+            ? {
+                // She has had enough (issue #161). The words here are the app's, not the
+                // model's: this is the moment where a cheerful "du bist schon so nah dran"
+                // is both untrue and pressure, and the external audit caught exactly that.
+                // What she gets is a real choice — stop for today, or one small example —
+                // and the way out is already on screen ("Übung beenden").
+                verdict: 'not_an_attempt',
+                evaluatedBy: 'rule',
+                reply: t(learner.locale, 'practice.had_enough'),
+                gaveHint: false,
+                revealed: false,
+              }
+            : {
+                verdict: d.verdict,
+                evaluatedBy: 'model',
+                reply: d.reply,
+                gaveHint: d.gave_hint,
+                revealed: d.revealed_answer,
+              };
     } catch (err) {
       if (isAppError(err) && err.code !== 'budget_exhausted') throw err;
       // No model: say what the rules know, never pretend to have judged.
@@ -1734,7 +1879,12 @@ export async function answerItem(
   //
   // Nur für eine echte Antwort: eine Tipp-Bitte und alles, was keine Antwort war, bleiben
   // unberührt (dort hat sie nichts geschrieben, das gegen die Elemente zu halten wäre).
-  if (rubric && judged.verdict !== null && judged.verdict !== 'not_an_attempt') {
+  if (
+    rubric &&
+    guideTurn === null &&
+    judged.verdict !== null &&
+    judged.verdict !== 'not_an_attempt'
+  ) {
     const outcome = checkRubric(rubric, text, claims);
     judged = {
       ...judged,
@@ -1744,7 +1894,9 @@ export async function answerItem(
     };
   }
 
-  if (givesHints(session.mode)) {
+  // A step of a guided example has its own rules (`guide.ts`): the hint ladder and the
+  // third-try solution are about answers to the question, and a step is not one.
+  if (givesHints(session.mode) && guideTurn === null) {
     // Never the solution before the second hint — whatever the model wrote. The prepared
     // hint (or a neutral line) takes its place, without a second model call.
     if (
@@ -1812,10 +1964,32 @@ export async function answerItem(
         ],
       );
       await tx.query(
-        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, gave_hint, revealed)
-         values ($1, $2, $3, $4, 'tutor', $5, $6, $7)`,
-        [sessionId, learner.id, item.id, seq + 1, judged.reply, judged.gaveHint, judged.revealed],
+        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, gave_hint, revealed, figure)
+         values ($1, $2, $3, $4, 'tutor', $5, $6, $7, $8)`,
+        [
+          sessionId,
+          learner.id,
+          item.id,
+          seq + 1,
+          judged.reply,
+          judged.gaveHint,
+          judged.revealed,
+          judged.figure ? JSON.stringify(judged.figure) : null,
+        ],
       );
+      // The guided example moves on behind its own fence, in the same transaction as the turn
+      // that moved it: a step checked twice (a second tab) is refused, not counted twice.
+      if (runningGuide && guideTurn) await saveGuideStep(tx, runningGuide, guideTurn.next, now);
+      if (guideStart) {
+        await insertGuide(
+          tx,
+          { sessionId, learnerId: learner.id, itemId: item.id },
+          guideStart.kind,
+          guideStart.plan,
+          guideStart.state,
+          now,
+        );
+      }
       // The key learns: an answer the model judged right that the rules did not know
       // is accepted by the rules next time — at once and without a model.
       //

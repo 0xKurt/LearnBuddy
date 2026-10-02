@@ -31,6 +31,7 @@ const VertexRoutes = z
     transcribe: ModelSpec,
     hints: ModelSpec,
     reexplain: ModelSpec,
+    guide: ModelSpec,
     summary: ModelSpec,
     consolidate: ModelSpec,
   })
@@ -264,6 +265,11 @@ export const DAILY_LIMITS = {
   hints: 60,
   /** "Anders erklären": a new explanation after an explanation or a solution. */
   reexplain: 60,
+  /**
+   * The plan of a guided worked example (issue #298): one per question at most (a plan that
+   * fails the check is not asked for again), so this is far above what a day of practice uses.
+   */
+  guide: 40,
   /** Two to four sentences about a conversation that ended (issue #22); a handful a day. */
   summary: 12,
   /** Tidying up what Buddy knows (issue #20): one call per kind, once a day. */

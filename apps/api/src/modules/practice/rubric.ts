@@ -247,6 +247,15 @@ function says(text: string, phrase: string): boolean {
   return needle !== '' && padded(text).includes(needle);
 }
 
+/**
+ * Steht ein Zitat wirklich in ihrem Text? Dieselbe gefaltete Suche, mit der ein beurteiltes
+ * Element seinen Beleg braucht — auch das geführte Beispiel (issue #298, `guide.ts`) prüft
+ * einen Kernpunkt damit, statt eine zweite Zitatsuche zu bauen (#296).
+ */
+export function quoteHolds(text: string, quote: string): boolean {
+  return says(text, quote);
+}
+
 /** Wie viele Wörter sie geschrieben hat. */
 export function wordsIn(text: string): number {
   const trimmed = text.trim();

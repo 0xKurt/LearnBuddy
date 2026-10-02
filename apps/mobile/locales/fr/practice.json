@@ -221,5 +221,16 @@
     "partially_correct": "Presque",
     "incorrect": "Pas tout à fait",
     "unchecked": "Non vérifié"
+  },
+  "guide": {
+    "ask": "Montre-moi étape par étape",
+    "stop": "Je continue tout seul",
+    "offer": "Étape par étape",
+    "offer_label": "Montre-moi étape par étape",
+    "offer_hint": "Buddy montre une étape, tu fais la suivante, et il la vérifie.",
+    "leave": "Continuer seul",
+    "leave_hint": "Arrête la démonstration. La question reste ouverte, tu continues toi-même.",
+    "placeholder_step": "Ta ligne suivante …",
+    "placeholder_point": "Ta partie du texte …"
   }
 }

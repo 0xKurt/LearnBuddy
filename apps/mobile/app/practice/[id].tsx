@@ -99,8 +99,10 @@ import {
   deferItem,
   finishSession,
   flagItem,
+  guideItem,
   hintItem,
   reexplainItem,
+  stopGuide,
   revealItem,
   startCardPass,
 } from '../../lib/api/endpoints.js';
@@ -542,6 +544,31 @@ export default function PracticeScreen() {
     }
   }
 
+  /**
+   * "Zeig's mir Schritt für Schritt" (issue #298) and "Ich mach selbst weiter": both answer like a
+   * turn of the conversation, so her tap stands in it while Buddy writes, as an answer does.
+   */
+  async function guide(itemId: string, how: 'start' | 'stop'): Promise<void> {
+    if (working.current) return;
+    working.current = true;
+    haptic.tap();
+    setPinnedId(itemId);
+    setPending({ itemId, text: t(how === 'start' ? 'practice:guide.ask' : 'practice:guide.stop') });
+    setBusy(true);
+    try {
+      const res = how === 'start' ? await guideItem(id, itemId) : await stopGuide(id, itemId);
+      await store(res.session);
+      readFeedback(res, itemId);
+    } catch (err) {
+      toast.show(messageFor(err), 'error');
+      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+    } finally {
+      working.current = false;
+      setPending(null);
+      setBusy(false);
+    }
+  }
+
   /** "Anders erklären": a new explanation of a shown solution. */
   async function explainAgain(itemId: string, way: ReexplainWay): Promise<void> {
     if (working.current) return;
@@ -833,6 +860,10 @@ export default function PracticeScreen() {
         : undefined;
   const skipHint = canPostpone && !testing ? t('practice:later_hint') : undefined;
   const hint = shown.hint_available ? () => void askHint(shown.item.id) : undefined;
+  // The guided example (issue #298): offered by the server after the second wrong try; while it
+  // runs, the one way out is "Ich mach selbst weiter" — the question is hers again.
+  const showMe = shown.guide_offered ? () => void guide(shown.item.id, 'start') : undefined;
+  const leaveGuide = shown.guide !== null ? () => void guide(shown.item.id, 'stop') : undefined;
   const endButton = (
     // Stays while a question is on screen, also once the session was finished in the
     // background (finishing again is a no-op) – the header must not jump under the reader.
@@ -1145,6 +1176,8 @@ export default function PracticeScreen() {
                 {open ? (
                   <HelpChips
                     onHint={hint}
+                    onGuide={showMe}
+                    onLeaveGuide={leaveGuide}
                     // A spoken sentence has no solution to show — it stands in the card, and
                     // the bar under it already offers the one way past it ("Diesmal
                     // überspringen", which is this very `reveal` call). Two names in two
@@ -1330,6 +1363,15 @@ export default function PracticeScreen() {
             disabled={locked}
             onChange={setText}
             onCheck={check}
+            placeholder={
+              shown.guide
+                ? t(
+                    shown.guide.kind === 'steps'
+                      ? 'practice:guide.placeholder_step'
+                      : 'practice:guide.placeholder_point',
+                  )
+                : undefined
+            }
           />
         ) : null}
         {open && choices && voiceOn ? (

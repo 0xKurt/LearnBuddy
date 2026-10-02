@@ -226,7 +226,32 @@
     "unbalanced_mass": "Presque – les nombres de masse ne correspondent pas encore : {{left}} à gauche, {{right}} à droite.",
     "unbalanced_atomic": "Presque – les numéros atomiques ne correspondent pas encore : {{left}} à gauche, {{right}} à droite.",
     "untitled": "Exercice",
-    "worked_intro": "Regarde, voilà comment faire :"
+    "worked_intro": "Regarde, voilà comment faire :",
+    "guide": {
+      "ask": "Montre-moi étape par étape",
+      "stop": "Je continue tout seul",
+      "open_steps": "Je te montre la première étape. {{from}} devient {{to}} – {{say}}\nÀ toi : écris la ligne suivante.",
+      "ok_next": "Oui, cette ligne découle de la précédente. Je fais l'étape suivante : {{to}} – {{say}}\nÀ toi de nouveau : la ligne suivante.",
+      "ok_yours": "Oui, cette ligne découle de la précédente. Continue – la ligne suivante.",
+      "ok_own_way": "Oui, cette ligne découle de la précédente – ton propre chemin. Continue : la ligne suivante.",
+      "missed": "Cette ligne ne découle pas encore de {{from}}. {{hint}}",
+      "hint_generic": "Que peux-tu faire de la même façon des deux côtés ?",
+      "shown": "Cette étape se fait ainsi : {{to}} – {{say}}\nÀ toi : la ligne suivante.",
+      "shown_last": "La dernière étape se fait ainsi : {{to}} – {{say}}",
+      "solved": "Exactement – {{line}}. La dernière étape, tu l'as faite toi-même.",
+      "same_line": "C'est la même ligne qu'avant. Quelle est l'étape suivante ?",
+      "unreadable": "Je ne peux pas vérifier cette ligne. Écris-la comme une équation, par exemple {{from}}.",
+      "stopped": "D'accord – essaie toi-même. Avec « Indice », tu reçois une aide.",
+      "unavailable": "Je ne peux pas vérifier cet exercice étape par étape avec toi pour l'instant. « Indice » t'aidera à avancer.",
+      "open_points": "Je te montre la première partie – {{name}}, par exemple : « {{demo}} »\nÀ toi : {{next}}. {{missing}}",
+      "point_ok": "Oui, ça tient : « {{quote}} ».",
+      "point_next": "Je fais la partie suivante – {{name}}, par exemple : « {{demo}} »\nÀ toi : {{next}}. {{missing}}",
+      "point_yours": "À toi : {{next}}. {{missing}}",
+      "point_missed": "Je ne le vois pas encore dans ton texte. {{missing}}",
+      "point_shown": "Voici un exemple pour {{name}} : « {{demo}} »",
+      "points_done": "Tu as maintenant toutes les parties. Écris le texte en entier – je le regarde.",
+      "unchecked": "Je ne peux pas le vérifier pour l'instant. Renvoie-le dans un moment."
+    }
   },
   "contact": {
     "less_often": "C'est noté – désormais, je ne t'écris sur ton téléphone que si c'est vraiment important. Le reste t'attend ici. Tu peux changer ça dans les réglages."

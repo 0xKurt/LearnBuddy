@@ -99,6 +99,11 @@ type Props = {
   onChange: (text: string) => void;
   /** Checks this answer (the field's text, or what she just said in voice mode). */
   onCheck: (value: string) => void;
+  /**
+   * What the empty field says, when it is not an answer to the whole question: during a guided
+   * example (issue #298) she writes her next step — the field says so.
+   */
+  placeholder?: string | undefined;
 };
 
 export function AnswerComposer({
@@ -110,6 +115,7 @@ export function AnswerComposer({
   disabled,
   onChange,
   onCheck,
+  placeholder,
 }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
@@ -221,7 +227,7 @@ export function AnswerComposer({
             }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder={t('answer.placeholder')}
+            placeholder={placeholder ?? t('answer.placeholder')}
             placeholderTextColor={palette.ink3}
             accessibilityLabel={t('answer.label')}
             accessibilityHint={unit ? t('answer.unit_hint', { unit }) : undefined}

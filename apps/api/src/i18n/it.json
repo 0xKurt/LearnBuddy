@@ -226,7 +226,32 @@
     "unbalanced_mass": "Quasi – i numeri di massa non corrispondono ancora: {{left}} a sinistra, {{right}} a destra.",
     "unbalanced_atomic": "Quasi – i numeri atomici non corrispondono ancora: {{left}} a sinistra, {{right}} a destra.",
     "untitled": "Esercizio",
-    "worked_intro": "Guarda, si fa così:"
+    "worked_intro": "Guarda, si fa così:",
+    "guide": {
+      "ask": "Mostramelo passo per passo",
+      "stop": "Continuo da solo",
+      "open_steps": "Ti mostro il primo passo. {{from}} diventa {{to}} – {{say}}\nOra tu: scrivi la riga successiva.",
+      "ok_next": "Sì, questa riga segue dalla precedente. Il passo successivo lo faccio io: {{to}} – {{say}}\nDi nuovo tu: la riga successiva.",
+      "ok_yours": "Sì, questa riga segue dalla precedente. Vai avanti – la riga successiva.",
+      "ok_own_way": "Sì, questa riga segue dalla precedente – la tua strada. Continua così: la riga successiva.",
+      "missed": "Questa riga non segue ancora da {{from}}. {{hint}}",
+      "hint_generic": "Che cosa puoi fare allo stesso modo su entrambi i lati?",
+      "shown": "Questo passo si fa così: {{to}} – {{say}}\nOra tu: la riga successiva.",
+      "shown_last": "L'ultimo passo si fa così: {{to}} – {{say}}",
+      "solved": "Esatto – {{line}}. L'ultimo passo l'hai fatto tu.",
+      "same_line": "È la stessa riga di prima. Qual è il passo successivo?",
+      "unreadable": "Non riesco a controllare questa riga. Scrivila come un'equazione, come {{from}}.",
+      "stopped": "Va bene – prova tu. Con «Indizio» ricevi un aiuto.",
+      "unavailable": "Adesso non riesco a controllare questo esercizio passo per passo con te. «Indizio» ti aiuta ad andare avanti.",
+      "open_points": "Ti mostro la prima parte – {{name}}, per esempio: «{{demo}}»\nOra tu: {{next}}. {{missing}}",
+      "point_ok": "Sì, funziona: «{{quote}}».",
+      "point_next": "La parte successiva la faccio io – {{name}}, per esempio: «{{demo}}»\nOra tu: {{next}}. {{missing}}",
+      "point_yours": "Ora tu: {{next}}. {{missing}}",
+      "point_missed": "Non lo vedo ancora nel tuo testo. {{missing}}",
+      "point_shown": "Ecco un esempio per {{name}}: «{{demo}}»",
+      "points_done": "Ora hai tutte le parti. Scrivi il testo intero una volta – lo guardo io.",
+      "unchecked": "Adesso non riesco a controllarlo. Rimandalo tra un momento."
+    }
   },
   "contact": {
     "less_often": "Va bene: d'ora in poi ti scrivo sul telefono solo quando è davvero importante. Tutto il resto ti aspetta qui. Puoi cambiarlo nelle impostazioni."

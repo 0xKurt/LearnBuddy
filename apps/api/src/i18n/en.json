@@ -226,7 +226,32 @@
     "unbalanced_mass": "Almost – the mass numbers don't match yet: {{left}} on the left, {{right}} on the right.",
     "unbalanced_atomic": "Almost – the atomic numbers don't match yet: {{left}} on the left, {{right}} on the right.",
     "untitled": "Practice",
-    "worked_intro": "Here's how it works:"
+    "worked_intro": "Here's how it works:",
+    "guide": {
+      "ask": "Show me step by step",
+      "stop": "I'll go on myself",
+      "open_steps": "I'll show you the first step. {{from}} becomes {{to}} – {{say}}\nNow you: write the next line.",
+      "ok_next": "Yes, that line follows. I'll do the next step: {{to}} – {{say}}\nYour turn again: the next line.",
+      "ok_yours": "Yes, that line follows. Go on – the next line.",
+      "ok_own_way": "Yes, that line follows – your own way. Keep going: the next line.",
+      "missed": "This line doesn't follow from {{from}} yet. {{hint}}",
+      "hint_generic": "What can you do to both sides in the same way?",
+      "shown": "This step goes like this: {{to}} – {{say}}\nNow you: the next line.",
+      "shown_last": "The last step goes like this: {{to}} – {{say}}",
+      "solved": "Exactly – {{line}}. You did the last step yourself.",
+      "same_line": "That's the same line as before. What's the next step?",
+      "unreadable": "I can't check this line. Write it as one equation, like {{from}}.",
+      "stopped": "Alright – try it yourself. Tap “Hint” if you need one.",
+      "unavailable": "I can't check this task step by step with you right now. “Hint” will help you on.",
+      "open_points": "I'll show you the first part – {{name}}, for example: “{{demo}}”\nNow you: {{next}}. {{missing}}",
+      "point_ok": "Yes, that works: “{{quote}}”.",
+      "point_next": "I'll do the next part – {{name}}, for example: “{{demo}}”\nNow you: {{next}}. {{missing}}",
+      "point_yours": "Now you: {{next}}. {{missing}}",
+      "point_missed": "I can't see that in your text yet. {{missing}}",
+      "point_shown": "Here's an example for {{name}}: “{{demo}}”",
+      "points_done": "Now you have all the parts. Write the whole text once – I'll take a look.",
+      "unchecked": "I can't check that right now. Send it again in a moment."
+    }
   },
   "contact": {
     "less_often": "Got it – from now on I'll only message your phone when it really matters. Everything else waits here. You can change this in settings."

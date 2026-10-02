@@ -3,6 +3,7 @@
 import {
   AnswerRequest,
   CardRequest,
+  GuideRequest,
   HintRequest,
   ListenAudioRequest,
   ReexplainRequest,
@@ -11,6 +12,7 @@ import {
   StartCardPassRequest,
   StartPracticeRequest,
   StartTopicRequest,
+  StopGuideRequest,
   Uuid,
 } from '@learnbuddy/shared-types/contracts';
 import { Hono } from 'hono';
@@ -29,6 +31,7 @@ import { isAppError } from '../../lib/errors.js';
 import { runLearnerJobs } from '../buddy/check.js';
 import { recordCard, startCardPass } from './cardPass.js';
 import { startTopic } from './generate.js';
+import { startGuide, stopGuide } from './guideFlow.js';
 import { prepareHints } from './hints.js';
 import { listenAudio } from './listen.js';
 import { reexplain } from './reexplain.js';
@@ -90,6 +93,20 @@ practiceRoutes.post('/sessions/:id/reexplain', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const input = await readBody(c, ReexplainRequest);
   return c.json(await reexplain(depsOf(c), c.get('learner'), sessionId, input));
+});
+
+/** "Zeig's mir Schritt für Schritt" (issue #298): a guided worked example in the conversation. */
+practiceRoutes.post('/sessions/:id/guide', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, GuideRequest);
+  return c.json(await startGuide(depsOf(c), c.get('learner'), sessionId, input));
+});
+
+/** "Ich mach selbst weiter": the guided example ends, the question is hers again. */
+practiceRoutes.post('/sessions/:id/guide/stop', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, StopGuideRequest);
+  return c.json(await stopGuide(depsOf(c), c.get('learner'), sessionId, input));
 });
 
 practiceRoutes.post('/sessions/:id/reveal', async (c) => {

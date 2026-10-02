@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
-import { Figure } from './figure.js';
+import { Figure, ModelFigure } from './figure.js';
 import { AnswerPart, MAX_ANSWER_PARTS, PartsBoard } from './parts.js';
 import { ListenRef } from './listen.js';
 
@@ -492,6 +492,23 @@ export const SessionItemView = z.object({
    * question that is not a listening one.
    */
   listen_transcript: z.string().nullable().default(null),
+  /**
+   * "Zeig's mir Schritt für Schritt" may be offered now (issue #298): practice only, the question
+   * is open, it went wrong twice, no guided example ran on it yet, and it is a question code can
+   * follow step by step (a calculation `steps.ts` reads, or a free text with key points). The
+   * server decides it; the app only shows the chip.
+   */
+  guide_offered: z.boolean().default(false),
+  /**
+   * A guided example running on this question (issue #298): Buddy showed a step and the next one
+   * is hers. While it runs, what she sends is her next step, checked by code — not an answer to
+   * the whole question. `steps`: a line of a calculation; `points`: a key point of a text. Null
+   * when none runs.
+   */
+  guide: z
+    .object({ kind: z.enum(['steps', 'points']) })
+    .nullable()
+    .default(null),
 });
 export type SessionItemView = z.infer<typeof SessionItemView>;
 
@@ -525,6 +542,12 @@ export const PracticeTurnView = z.object({
   pronunciation: PronunciationFeedback.nullable(),
   /** Part of an "Anders erklären" exchange (her request and the new explanation), else null. */
   reexplain: ReexplainWay.nullable(),
+  /**
+   * A figure that goes with Buddy's explanation (issue #298): a parabola that changes with a, a
+   * number line. Data the model wrote and code checked (`modules/practice/explainFigure.ts`); the
+   * app draws it. Only on Buddy's turns, and only one per turn.
+   */
+  figure: ModelFigure.nullable().default(null),
   created_at: IsoDateTime,
 });
 export type PracticeTurnView = z.infer<typeof PracticeTurnView>;
@@ -695,6 +718,22 @@ export const ReexplainRequest = z.object({
   way: ReexplainWay,
 });
 export type ReexplainRequest = z.infer<typeof ReexplainRequest>;
+
+/**
+ * POST /practice/sessions/:id/guide — "Zeig's mir Schritt für Schritt" (issue #298). Buddy shows
+ * the first step of the question and the next one is hers. Answered like an answer
+ * (AnswerResponse, verdict not_an_attempt). Only where `SessionItemView.guide_offered` says so.
+ * Typing "zeig mir wie" starts the same thing: the tutor classifies it (no word list).
+ */
+export const GuideRequest = z.object({ client_turn_id: Uuid, item_id: Uuid });
+export type GuideRequest = z.infer<typeof GuideRequest>;
+
+/**
+ * POST /practice/sessions/:id/guide/stop — "Selbst weiter": the guided example ends and the
+ * question is hers again, exactly as open as before. Idempotent per `client_turn_id`.
+ */
+export const StopGuideRequest = z.object({ client_turn_id: Uuid, item_id: Uuid });
+export type StopGuideRequest = z.infer<typeof StopGuideRequest>;
 
 export const AnswerVerdict = z.enum([
   'correct',

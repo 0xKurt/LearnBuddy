@@ -221,5 +221,16 @@
     "partially_correct": "Fast",
     "incorrect": "Noch nicht ganz",
     "unchecked": "Nicht geprüft"
+  },
+  "guide": {
+    "ask": "Zeig's mir Schritt für Schritt",
+    "stop": "Ich mach selbst weiter",
+    "offer": "Schritt für Schritt",
+    "offer_label": "Zeig's mir Schritt für Schritt",
+    "offer_hint": "Buddy macht einen Schritt vor, den nächsten machst du, und er prüft ihn.",
+    "leave": "Selbst weiter",
+    "leave_hint": "Beendet das Vormachen. Die Frage bleibt offen, du rechnest selbst weiter.",
+    "placeholder_step": "Deine nächste Zeile …",
+    "placeholder_point": "Dein Teil des Textes …"
   }
 }

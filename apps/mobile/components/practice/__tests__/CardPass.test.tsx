@@ -55,6 +55,8 @@ const card = (over: Partial<SessionItemView['item']> = {}): SessionItemView => (
   // The back of the card: a pass sends it while the card is still open.
   answer: 'das Fahrrad',
   listen_transcript: null,
+  guide_offered: false,
+  guide: null,
 });
 
 const pass = (over: Partial<SessionView> = {}): SessionView => ({

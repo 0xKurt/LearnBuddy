@@ -351,6 +351,28 @@ export const reexplainItem = (id: string, itemId: string, way: ReexplainWay) =>
       schema: AnswerResponse,
     }),
   );
+/** A "Zeig's mir Schritt für Schritt" tap whose answer was lost is sent again as the same turn. */
+const guideTurns = turnIds(newId, noConnection);
+/**
+ * "Zeig's mir Schritt für Schritt" (issue #298): Buddy shows the first step of the question and
+ * the next one is hers. Her steps then go through `answerItem` as usual — the server knows a
+ * guided example runs and checks each one as a step.
+ */
+export const guideItem = (id: string, itemId: string) =>
+  guideTurns.run(`${id}:${itemId}:guide`, (clientTurnId) =>
+    request('POST', `/practice/sessions/${id}/guide`, {
+      body: { client_turn_id: clientTurnId, item_id: itemId },
+      schema: AnswerResponse,
+    }),
+  );
+/** "Ich mach selbst weiter": the guided example ends; the question is hers again. */
+export const stopGuide = (id: string, itemId: string) =>
+  guideTurns.run(`${id}:${itemId}:stop`, (clientTurnId) =>
+    request('POST', `/practice/sessions/${id}/guide/stop`, {
+      body: { client_turn_id: clientTurnId, item_id: itemId },
+      schema: AnswerResponse,
+    }),
+  );
 /**
  * "Die Bewertung stimmt nicht" (issue #164): the question leaves this result and future
  * practice, and its spaced-repetition effect goes back to what it was before.

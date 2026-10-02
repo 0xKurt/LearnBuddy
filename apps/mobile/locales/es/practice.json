@@ -221,5 +221,16 @@
     "partially_correct": "Casi",
     "incorrect": "Todavía no del todo",
     "unchecked": "Sin comprobar"
+  },
+  "guide": {
+    "ask": "Enséñamelo paso a paso",
+    "stop": "Sigo yo solo",
+    "offer": "Paso a paso",
+    "offer_label": "Enséñamelo paso a paso",
+    "offer_hint": "Buddy hace un paso, tú haces el siguiente y él lo comprueba.",
+    "leave": "Seguir yo solo",
+    "leave_hint": "Termina la demostración. La pregunta sigue abierta y sigues tú.",
+    "placeholder_step": "Tu siguiente línea …",
+    "placeholder_point": "Tu parte del texto …"
   }
 }

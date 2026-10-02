@@ -7,6 +7,9 @@
 // What arrives while the screen is open moves a little (Buddy's reply rises in, a right
 // answer is celebrated softly, a "not yet" nudges her answer; Verdict.tsx); what was
 // there when the question opened just stands.
+// A reply of Buddy's may carry a figure (issue #298): an explanation with a picture — a parabola
+// that changes with a. It stands right under his bubble, indented like the bubble, and opens
+// full screen on a tap like every figure.
 
 import type { PracticeTurnView } from '@learnbuddy/shared-types/contracts';
 import { useRef } from 'react';
@@ -20,10 +23,19 @@ import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
 import { MathText } from '../math/MathText.js';
+import { ZoomableFigure } from '../math/ZoomableFigure.js';
 import { useSpokenMath } from '../math/useSpokenMath.js';
 import { PronunciationNote } from './SpeakPanel.js';
 import { Thinking } from './Thinking.js';
 import { Nudge, VerdictTag, type VerdictKey } from './Verdict.js';
+
+/** Buddy's orb (26) and the gap after it (8): a figure lines up with his bubble, not the orb. */
+const ORB_INDENT = 34;
+/**
+ * A figure in the conversation stays a glance, not a page: on a 360×740 phone the question and
+ * the field keep their room, and a tap opens it full size.
+ */
+const FIGURE_MAX = 180;
 
 /** null verdict = the answer could not be judged (no model), nothing was graded. */
 function verdictKey(verdict: PracticeTurnView['verdict']): VerdictKey | null {
@@ -110,6 +122,14 @@ export function ItemThread({
             )}
             {verdict ? (
               <VerdictTag verdict={verdict} label={t(`verdict.${verdict}`)} fresh={fresh} />
+            ) : null}
+            {!mine && turn.figure ? (
+              <View
+                testID="reply-figure"
+                style={{ alignSelf: 'stretch', paddingLeft: ORB_INDENT, maxWidth: '92%' }}
+              >
+                <ZoomableFigure figure={turn.figure} maxHeight={FIGURE_MAX} />
+              </View>
             ) : null}
             {pronunciation && !mine && turn.pronunciation ? (
               <PronunciationNote feedback={turn.pronunciation} />

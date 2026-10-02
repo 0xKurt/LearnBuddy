@@ -22,13 +22,23 @@ import { RubricClaim, type AskedElement } from './rubric.js';
 // (v4, v4.0, v3.10); gemessen wird aber DIESER Prompt, und den gab es vorher nicht.
 // v7: der Kontext trägt eine FORM-CHECK-Zeile (was Code an den beiden Syntaxbäumen gelesen hat)
 // und kennt das Regelurteil `not_transformed` (#235). Der Systemprompt ist unverändert.
-export const TUTOR_PROMPT_VERSION = 'tutor.v7';
+// v8: die Absicht `show_me` (issue #298) — sie möchte es vorgemacht bekommen, Schritt für Schritt.
+// Das erkennt das Modell, keine Wortliste (Regel 3); was dann passiert, entscheidet Code.
+export const TUTOR_PROMPT_VERSION = 'tutor.v8';
 
 export const TutorDecision = z.object({
   intent: z
-    .enum(['answer', 'help_request', 'no_answer', 'question', 'off_topic', 'wants_to_stop'])
+    .enum([
+      'answer',
+      'help_request',
+      'show_me',
+      'no_answer',
+      'question',
+      'off_topic',
+      'wants_to_stop',
+    ])
     .describe(
-      'What the learner did: tried an answer, asked for help/a hint, did not really answer, asked something else, went off topic, or said they have had enough for now',
+      'What the learner did: tried an answer, asked for help/a hint, asked to be shown how it goes step by step, did not really answer, asked something else, went off topic, or said they have had enough for now',
     ),
   verdict: z
     .enum(['correct', 'partially_correct', 'incorrect', 'not_an_attempt'])
@@ -72,6 +82,7 @@ Judge honestly — the judgement decides what the learner practises next; callin
   - "partially_correct": name what is right, then nudge toward what is missing without giving it away.
   - "incorrect": stay warm. On a FIRST wrong answer a short encouragement is enough. From the SECOND one on, the same question has now gone wrong twice — that is a gap, not a slip, so do not repeat yourself: take up what she actually wrote. Name the step you think she stumbled on as a QUESTION she can answer ("Hast du … schon …?"), or show the same idea on smaller numbers. A guess she says no to is dropped, not repeated. Never state the solution.
 - intent "help_request" (asking for a hint, "I don't understand the question"), "no_answer" ("don't know", empty), "question" or "off_topic": verdict "not_an_attempt". Help them: explain the question or give the next hint; for off-topic, steer back kindly.
+- intent "show_me": she asks to be SHOWN how it goes — a worked example, step by step ("zeig mir wie", "mach mal vor", "show me how") — rather than for a hint. Verdict "not_an_attempt". Leave the reply to one short sentence: the app shows the first step itself.
 - intent "wants_to_stop": the learner says they have had enough for now, are fed up, or want to leave it. Verdict "not_an_attempt". The app answers this itself — leave the reply short; it is replaced. Do not try to talk them into one more.
 - NEVER claim how close they are. "Fast geschafft", "du bist schon so nah dran", "nur noch ein kleiner Schritt" — you do not know that, and a child who is nowhere near hears it as pressure. Say what you can see: what they wrote, what the next step would be.
 - Hints get more specific step by step and never repeat an earlier one. If PREPARED HINTS are given, your hint is the next one there, in your words. Only after at least 2 hints (see HINTS GIVEN) and the learner is still stuck may you reveal the answer kindly (revealed_answer = true). Never put the solution into an earlier hint.

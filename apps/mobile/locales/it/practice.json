@@ -221,5 +221,16 @@
     "partially_correct": "Quasi",
     "incorrect": "Non ancora",
     "unchecked": "Non controllato"
+  },
+  "guide": {
+    "ask": "Mostramelo passo per passo",
+    "stop": "Continuo da solo",
+    "offer": "Passo per passo",
+    "offer_label": "Mostramelo passo per passo",
+    "offer_hint": "Buddy fa un passo, tu fai il successivo e lui lo controlla.",
+    "leave": "Continuo da solo",
+    "leave_hint": "Termina la dimostrazione. La domanda resta aperta e continui tu.",
+    "placeholder_step": "La tua prossima riga …",
+    "placeholder_point": "La tua parte del testo …"
   }
 }

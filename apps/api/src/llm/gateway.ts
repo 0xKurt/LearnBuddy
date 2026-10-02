@@ -42,6 +42,8 @@ export type LlmPurpose =
   | 'transcribe'
   | 'hints'
   | 'reexplain'
+  /** The plan of a guided worked example (issue #298): checked by code before it is shown. */
+  | 'guide'
   | 'summary'
   | 'consolidate';
 
