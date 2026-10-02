@@ -73,6 +73,7 @@
     "no_single_solution": "There isn't one right answer I could show you here: in a text like this, what counts is how you argue it. Tell me where you're stuck and we'll look at your text together.",
     "not_lowest": "Balanced correctly! Now reduce it – every number in front divides by {{factor}}.",
     "not_quite": "Not quite yet. Have another look at the question – or show the solution.",
+    "not_transformed": "Equivalent – but that's exactly how the task already writes it. Transform it a bit further.",
     "one_way_intro": "Here's one way to go about it – one way, not the only one:",
     "reexplain": {
       "simpler": "Simpler, please",
@@ -197,6 +198,7 @@
       "fault_rest_here": "Position number {{index}} in bar {{bar}} needs a rest.",
       "fault_note_here": "Position number {{index}} in bar {{bar}} needs a note."
     },
+    "same_value": "The value is right – you've just written it differently. Check which form the task wants the result in.",
     "step_broke": "Everything holds up to line {{line}}. Something gets lost on the way to the next line – take another look at that step.",
     "step_broke_last": "Your way is right all the way through – only the last step is not. Take another look at the last line.",
     "test_no_hints": "There are no hints in a test – just write what you think, or skip the question.",
@@ -209,6 +211,8 @@
     "typo_wrong": "Almost – one letter isn't right yet. Can you spot it?",
     "unbalanced_charge": "Almost – the charges don't match yet: {{left}} on the left, {{right}} on the right.",
     "unbalanced_element": "Almost – count the {{element}} again: {{left}} on the left, {{right}} on the right.",
+    "unbalanced_mass": "Almost – the mass numbers don't match yet: {{left}} on the left, {{right}} on the right.",
+    "unbalanced_atomic": "Almost – the atomic numbers don't match yet: {{left}} on the left, {{right}} on the right.",
     "untitled": "Practice",
     "worked_intro": "Here's how it works:",
     "order": {

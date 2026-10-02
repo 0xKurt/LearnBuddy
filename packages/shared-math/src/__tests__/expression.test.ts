@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { compileExpression } from '../expression.js';
+import {
+  compileExpression,
+  evaluateExpression,
+  parseExpression,
+  variablesOf,
+} from '../expression.js';
 
 function at(expr: string, x: number): number {
   const f = compileExpression(expr);
@@ -102,4 +107,41 @@ describe('compileExpression — errors', () => {
       expect(compileExpression(expr)).toBeNull();
     });
   }
+});
+
+// The tree behind the compiler (issues #235, #263): the answer checks ask about the FORM of a
+// term and about several variables, which a compiled function cannot answer.
+describe('parseExpression — the tree and several variables', () => {
+  it('keeps the shape of what was written', () => {
+    expect(parseExpression('2(x+3)')).toEqual({
+      k: 'mul',
+      a: { k: 'num', v: 2, integer: true },
+      b: {
+        k: 'add',
+        a: { k: 'var', name: 'x' },
+        b: { k: 'num', v: 3, integer: true },
+      },
+    });
+    expect(parseExpression('0,5')).toEqual({ k: 'num', v: 0.5, integer: false });
+  });
+
+  it("reads every single letter as its own variable in 'letters' mode, case kept", () => {
+    const t = parseExpression('s/(v·t) + V', 'letters');
+    expect(t && variablesOf(t)).toEqual(['V', 's', 't', 'v']);
+    expect(t && evaluateExpression(t, { s: 6, v: 2, t: 3, V: 1 })).toBe(2);
+    // A run of letters is a product once the function names are taken out; e stays Euler's.
+    const r = parseExpression('2ab + sin(x) + e', 'letters');
+    expect(r && variablesOf(r)).toEqual(['a', 'b', 'x']);
+    expect(r && evaluateExpression(r, { a: 1, b: 2, x: 0 })).toBeCloseTo(4 + Math.E);
+  });
+
+  it("refuses other letters in 'x' mode, as the figures always did", () => {
+    expect(parseExpression('2a + 1')).toBeNull();
+    expect(parseExpression('2X + 1')).not.toBeNull();
+  });
+
+  it('evaluates an unassigned variable to NaN instead of throwing', () => {
+    const t = parseExpression('a + 1', 'letters');
+    expect(t && Number.isNaN(evaluateExpression(t, {}))).toBe(true);
+  });
 });

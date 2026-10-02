@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { enforceTutorInvariants, mentionsSolution, type TutorDecision } from '../tutor.js';
+import {
+  enforceTutorInvariants,
+  formText,
+  mentionsSolution,
+  tutorContext,
+  type TutorDecision,
+} from '../tutor.js';
 
 const d = (over: Partial<TutorDecision>): TutorDecision => ({
   intent: 'answer',
@@ -95,5 +101,95 @@ describe('mentionsSolution', () => {
     expect(mentionsSolution('Schau auf $\\frac{3}{4}$.', '0,75', 'Kürze $\\frac{6}{8}$.')).toBe(
       false,
     );
+  });
+});
+
+// ── A value code confirmed is never "wrong" (issue #227, finding 1; issue #235) ────────────
+// The prompt asked for this since #227; until now nothing held it when the model did not follow.
+describe('a value code has confirmed', () => {
+  it('turns the model’s "wrong" into "partly right" — the form may be open, the value is not', () => {
+    expect(enforceTutorInvariants(d({ verdict: 'incorrect' }), 'other_form').verdict).toBe(
+      'partially_correct',
+    );
+    expect(enforceTutorInvariants(d({ verdict: 'incorrect' }), 'not_transformed').verdict).toBe(
+      'partially_correct',
+    );
+    // A model that said "not an attempt" to a real answer: the same.
+    expect(enforceTutorInvariants(d({ verdict: 'not_an_attempt' }), 'other_form').verdict).toBe(
+      'partially_correct',
+    );
+  });
+
+  it('still lets the model decide the form either way', () => {
+    expect(enforceTutorInvariants(d({ verdict: 'correct' }), 'other_form').verdict).toBe('correct');
+    expect(enforceTutorInvariants(d({ verdict: 'partially_correct' }), 'other_form').verdict).toBe(
+      'partially_correct',
+    );
+    // The task typed back is never fully right.
+    expect(enforceTutorInvariants(d({ verdict: 'correct' }), 'not_transformed').verdict).toBe(
+      'partially_correct',
+    );
+  });
+
+  it('never counts a revealed answer as right, and never calls the value wrong for it', () => {
+    expect(
+      enforceTutorInvariants(d({ verdict: 'correct', revealed_answer: true }), 'other_form')
+        .verdict,
+    ).toBe('partially_correct');
+  });
+
+  it('does not stretch to a help request or to a rule-certain wrong answer', () => {
+    expect(
+      enforceTutorInvariants(d({ intent: 'help_request', verdict: 'incorrect' }), 'other_form')
+        .verdict,
+    ).toBe('not_an_attempt');
+    expect(enforceTutorInvariants(d({ verdict: 'correct' }), 'incorrect').verdict).toBe(
+      'incorrect',
+    );
+  });
+});
+
+describe('what the tutor is told about the form (#235)', () => {
+  const base = {
+    item: {
+      kind: 'formula',
+      prompt: 'Faktorisiere $x^2+2x$.',
+      answer: 'x(x+2)',
+      accepted_answers: [],
+      unit: null,
+      choices: null,
+      correct_choice: null,
+      topic: null,
+      lang: null,
+      prompt_lang: null,
+    },
+    hintsGiven: 0,
+    attempts: 0,
+    ruleVerdict: 'other_form' as const,
+    mode: 'practice' as const,
+    learnerLevel: 'school grade 8',
+    learnerAge: 13,
+    language: 'de',
+    material: null,
+    preferences: [],
+  };
+
+  it('names the two shapes code read, and only when there is a note', () => {
+    const note = { kind: 'shape', key: 'product', answer: 'sum' } as const;
+    expect(tutorContext({ ...base, formNote: note })).toContain(
+      `FORM CHECK (read by code, not judged): ${formText(note)}`,
+    );
+    expect(formText(note)).toContain('the key is factored (a product with a bracket)');
+    expect(tutorContext(base)).not.toContain('FORM CHECK');
+  });
+});
+
+describe('a solution given away in another order (#227 B7)', () => {
+  it('counts the same summands as the solution, but not a step on the way', () => {
+    const task = 'Multipliziere aus: $2(x+3)$';
+    expect(mentionsSolution('Schau: $6 + 2x$', '2x+6', task)).toBe(true);
+    expect(mentionsSolution('Rechne $2 \\cdot x + 2 \\cdot 3$ aus.', '2x+6', task)).toBe(false);
+    // The task's own term is no give-away.
+    expect(mentionsSolution('Was heißt $2(x+3)$?', '2(x+3)', task)).toBe(false);
   });
 });
