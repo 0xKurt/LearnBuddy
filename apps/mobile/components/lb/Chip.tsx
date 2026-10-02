@@ -18,6 +18,12 @@ const tones = (p: Palette): Record<Tone, { bg: string; color: string; border?: s
   mint: { bg: p.mint, color: p.successText },
 });
 
+/**
+ * A chip's outer height (5 + 17 + 5). A row that shows a chip only sometimes reserves it, so the
+ * chip arriving never pushes what is below it (issue #59: "Liegt bereit" on the offer card).
+ */
+export const CHIP_HEIGHT = 27;
+
 export function Chip({
   children,
   tone = 'gray',

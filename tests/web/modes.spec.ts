@@ -109,10 +109,16 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByLabel('Schreib Buddy …').fill('erklär mir den dativ');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Wem gebe ich den Knochen?', { exact: false })).toBeVisible();
+  // Where Buddy's words stand before the card can say "Liegt bereit": the thread is anchored at
+  // the bottom, so a card that grows when the chip appears would push them up.
+  const words = page.getByText('Wem gebe ich den Knochen?', { exact: false });
+  const before = await words.boundingBox();
   await shot(page, '21-explain-in-chat');
   // Buddy prepared the offered practice while she read (issues #48/#59): the card says so once
   // the questions stand there — never before (rule 5) — and her tap opens it without a request.
   await expect(page.getByText('Liegt bereit', { exact: true })).toBeVisible();
+  // The chip arrives in room the card kept for it: nothing above it moves (issue #59).
+  expect((await words.boundingBox())?.y).toBe(before?.y);
   await shot(page, '21b-offer-ready');
   await page.getByRole('button', { name: "Los geht's" }).click();
   await page.getByRole('button', { name: 'Wem?', exact: true }).click();

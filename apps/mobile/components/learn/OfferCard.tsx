@@ -13,7 +13,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
-import { Chip } from '../lb/Chip.js';
+import { Chip, CHIP_HEIGHT } from '../lb/Chip.js';
 import { Icon } from '../lb/Icon.js';
 import { KIND_ICON, KIND_LABEL } from './kinds.js';
 import { useStartTopic } from './useStartTopic.js';
@@ -115,7 +115,11 @@ export function OfferCard({
     // line that appeared above it. What is happening lives in the button itself.
     <Card tone="primaryLt" padding={16} radius={18}>
       <View style={{ gap: 10 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        {/* Tall enough for the "Liegt bereit" chip from the start: when it appears the card
+            keeps its height and the conversation does not jump. */}
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: CHIP_HEIGHT }}
+        >
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             <Icon name={KIND_ICON[offer.kind]} size={20} color={palette.primaryDk} />
           </View>
