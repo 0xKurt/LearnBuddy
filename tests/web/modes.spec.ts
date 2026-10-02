@@ -189,7 +189,15 @@ test('learning modes: explain, homework help without the solution, practice with
   // row is what starts the next line; on this 360×740 screen, with the keyboard row open.
   const answer = page.getByLabel('Deine Antwort');
   await answer.click();
-  await answer.fill('7·4');
+  await answer.fill('7');
+  // The first time any key of the row is tapped in a browser, and that is its own finding
+  // (issue #271): a tap took the focus out of the field, the row hid itself between mousedown and
+  // mouseup, and the tap never counted. Several taps in a row, because one alone looked fine.
+  const times = page.getByRole('button', { name: 'mal', exact: true });
+  await expect(times).toBeVisible();
+  await times.click();
+  await page.keyboard.type('4');
+  await expect(answer).toHaveValue('7·4');
   const newline = page.getByRole('button', { name: 'neue Zeile' });
   await expect(newline).toBeVisible();
   await newline.click();
@@ -197,6 +205,8 @@ test('learning modes: explain, homework help without the solution, practice with
   await newline.click();
   await page.keyboard.type('29');
   await expect(answer).toHaveValue('7·4\n28+1\n29');
+  // The row stood through all four taps — it is what she types with.
+  await expect(times).toBeVisible();
   // What the return key does is NOT provable here: react-native-web (0.21.2) knows no
   // `submitBehavior` and never routes Enter to `onSubmitEditing` on a multiline field, so in the
   // browser Enter always adds a line — for every kind, before and after this change. The rule

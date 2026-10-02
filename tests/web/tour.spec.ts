@@ -44,8 +44,37 @@ async function onboardChild(page: Page, email: string): Promise<void> {
   await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   // The three first-start cards (app/onboarding.tsx) come before the home.
+  // "Überspringen" showed 4–6 frames of an empty screen on the way out (issue #208, point 4).
+  // Sampled per frame, because that is what the complaint was about: how long the screen holds
+  // nothing at all. Started before the tap, read after the home is there.
+  await page.evaluate(() => {
+    const w = window as unknown as { __blank?: number[] };
+    w.__blank = [];
+    const t0 = performance.now();
+    const tick = (): void => {
+      w.__blank?.push((document.body.innerText || '').trim().length);
+      if (performance.now() - t0 < 2000) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
+  const empty = await page.evaluate(() => {
+    const seen = (window as unknown as { __blank?: number[] }).__blank ?? [];
+    let run = 0;
+    let worst = 0;
+    for (const n of seen) {
+      run = n === 0 ? run + 1 : 0;
+      if (run > worst) worst = run;
+    }
+    return { worst, frames: seen.length };
+  });
+  // Two frames is a repaint; more is the blank screen she saw. The sampler must have run at all.
+  expect(empty.frames, 'frames sampled').toBeGreaterThan(30);
+  expect(
+    empty.worst,
+    `empty frames in a row on the way out of the cards (of ${empty.frames})`,
+  ).toBeLessThanOrEqual(2);
 }
 
 async function say(page: Page, text: string): Promise<void> {

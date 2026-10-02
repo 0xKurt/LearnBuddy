@@ -15,7 +15,8 @@ import { Btn } from '../components/lb/Btn.js';
 import { Glow } from '../components/lb/Glow.js';
 import { Icon, type IconName } from '../components/lb/Icon.js';
 import { FamilyChoice, ModeChoice } from '../components/lb/LookChoice.js';
-import { useSettings } from '../lib/api/queries.js';
+import { useMe, useSettings } from '../lib/api/queries.js';
+import { gateRoute } from '../lib/gate.js';
 import { registerDeviceForPush } from '../lib/push.js';
 import { useAnnounce } from '../lib/announce.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
@@ -55,12 +56,20 @@ export default function Onboarding() {
   const key = STEPS[step] ?? 's1';
   const last = step === STEPS.length - 1;
   const settings = useSettings();
+  // Where she belongs, already answered: `/me` is in the cache since the gate sent her here.
+  const me = useMe();
   const done = () => {
     keptStep.at = 0;
     // Contact was allowed at registration: ask the OS right after the card
     // that explained why (permissions come with their context, never earlier).
     if (settings.data?.contact_enabled) void registerDeviceForPush().catch(() => undefined);
-    router.replace('/');
+    // Straight to where she belongs, not through `/` (issue #208, point 4). `/` renders NOTHING
+    // while it decides — a `<Redirect>` with a cold `/me` shows an empty screen for the 250 ms
+    // `LoadingState` deliberately waits before appearing, and that is the one mechanism that can
+    // produce the blank the owner saw on the way out of these cards. The decision is not
+    // duplicated: it is the same `gateRoute` the start screen uses, on the same cached answer.
+    // Without that answer `/` still decides.
+    router.replace(me.data ? gateRoute(me.data) : '/');
   };
 
   useAnnounce(`${t(`onboarding.${key}_title`)}. ${t(`onboarding.${key}_body`)}`, { key: step });

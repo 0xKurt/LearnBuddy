@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { currentLocale } from '../../lib/i18n/index.js';
+import { KEEPS_FOCUS } from '../../lib/keepsFocus.js';
 import { insertAtCursor, type Insertion, type Selection } from '../../lib/math/insert.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
@@ -112,6 +113,9 @@ function MathKey({
       ]}
     >
       <Pressable
+        // The row is only there while the field has focus, so a key that takes the focus away
+        // hides itself mid-tap — in the browser, where nothing else holds it (issue #271).
+        {...KEEPS_FOCUS}
         onPress={onPress}
         disabled={disabled}
         accessibilityRole="button"
