@@ -365,11 +365,11 @@ const TABLE: PartsBoard = {
   rows: [
     [
       { cell: 'given', text: 'ich' },
-      { cell: 'gap', ref: 'c1', expect: 'word' },
+      { cell: 'gap', ref: 'c1', expect: 'word', whole: false },
     ],
     [
       { cell: 'given', text: 'du' },
-      { cell: 'gap', ref: 'c2', expect: 'word' },
+      { cell: 'gap', ref: 'c2', expect: 'word', whole: false },
     ],
   ],
 };
@@ -416,8 +416,8 @@ describe('eine Tabelle', () => {
       header: ['', 'Zehner'],
       rows: [
         [
-          { cell: 'gap', ref: 'c1', expect: 'number' },
-          { cell: 'gap', ref: 'c2', expect: 'number' },
+          { cell: 'gap', ref: 'c1', expect: 'number', whole: false },
+          { cell: 'gap', ref: 'c2', expect: 'number', whole: false },
         ],
       ],
     };
@@ -436,8 +436,8 @@ describe('eine Tabelle', () => {
       header: ['Zahl', 'Wort'],
       rows: [
         [
-          { cell: 'gap', ref: 'c1', expect: 'number' },
-          { cell: 'gap', ref: 'c2', expect: 'word' },
+          { cell: 'gap', ref: 'c1', expect: 'number', whole: false },
+          { cell: 'gap', ref: 'c2', expect: 'word', whole: false },
         ],
       ],
     };
@@ -452,6 +452,29 @@ describe('eine Tabelle', () => {
     fireEvent.blur(screen.getByLabelText('Zahl, Zeile 1, /'));
     fireEvent.focus(screen.getByLabelText('Wort, Zeile 1, noch leer'));
     expect(keys()).toBeNull();
+  });
+
+  // Eine Zahlenmauer fragt ganze Zahlen; die Ziffern der Tastatur schreiben sie. Eine Reihe aus
+  // „/ , −" darüber wäre Lärm, der die Mauer verdeckt (issue #286 Befund 5, #239).
+  it('stellt über eine Lücke mit ganzer Zahl keine Rechentasten', () => {
+    const wall: PartsBoard = {
+      form: 'table_fill',
+      header: ['Zahl', 'Bruch'],
+      rows: [
+        [
+          { cell: 'gap', ref: 'c1', expect: 'number', whole: true },
+          { cell: 'gap', ref: 'c2', expect: 'number', whole: false },
+        ],
+      ],
+    };
+    show(wall);
+    const keys = () => screen.queryByRole('toolbar', { name: 'Mathe-Zeichen' });
+    fireEvent.focus(screen.getByLabelText('Zahl, Zeile 1, noch leer'));
+    expect(keys()).toBeNull();
+    fireEvent.blur(screen.getByLabelText('Zahl, Zeile 1, noch leer'));
+    fireEvent.focus(screen.getByLabelText('Bruch, Zeile 1, noch leer'));
+    expect(keys()).not.toBeNull();
+    expect(screen.queryByRole('button', { name: 'Wurzel' })).toBeNull();
   });
 });
 

@@ -3,6 +3,12 @@
 // symbols). Pure logic without React Native imports, so it runs in the unit tests.
 // Supported LaTeX subset: packages/shared-types/src/contracts/learning.ts (ItemView).
 
+import {
+  MATH_BLACKBOARD as BLACKBOARD,
+  MATH_LIMIT_OPERATORS,
+  MATH_SYMBOLS,
+} from '@learnbuddy/shared-types/contracts';
+
 export type MathAtom =
   /** Digits, letters and operators as they are written (operators already spaced). */
   | { type: 'chars'; text: string }
@@ -21,83 +27,23 @@ export type MathAtom =
   /** \vec{…}: a vector, drawn with an arrow above. */
   | { type: 'vec'; body: MathAtom[] }
   /** A gap to fill in inside math: "___" (3+ underscores), \square or \Box. */
-  | { type: 'blank' };
+  | { type: 'blank' }
+  /**
+   * An operator with limits (issue #239): \sum_{i=1}^{n}, \int_{a}^{b}, \lim_{x \to 0}. The
+   * limits belong to the operator — drawn with it and read as "Summe von … bis …".
+   */
+  | { type: 'limits'; op: string; name: string; lower: MathAtom[] | null; upper: MathAtom[] | null }
+  /** \binom{n}{k}: n over k in round brackets, without a bar. */
+  | { type: 'binom'; top: MathAtom[]; bottom: MathAtom[] }
+  /** \begin{pmatrix} … \end{pmatrix}: rows of cells in round brackets — one column is a vector. */
+  | { type: 'matrix'; rows: MathAtom[][][] }
+  /** \xrightarrow{…}: the reaction arrow with its condition written above it. */
+  | { type: 'arrow'; above: MathAtom[] };
 
 export type MathSegment = { type: 'plain'; text: string } | { type: 'math'; atoms: MathAtom[] };
 
-/** Symbol commands → the character shown. */
-export const SYMBOLS: Readonly<Record<string, string>> = {
-  cdot: '·',
-  times: '×',
-  div: '÷',
-  pi: 'π',
-  le: '≤',
-  leq: '≤',
-  ge: '≥',
-  geq: '≥',
-  ne: '≠',
-  neq: '≠',
-  approx: '≈',
-  degree: '°',
-  circ: '°',
-  pm: '±',
-  infty: '∞',
-  Rightarrow: '⇒',
-  rightarrow: '→',
-  to: '→',
-  Leftrightarrow: '⇔',
-  cdots: '⋯',
-  ldots: '…',
-  dots: '…',
-  percent: '%',
-  alpha: 'α',
-  beta: 'β',
-  gamma: 'γ',
-  delta: 'δ',
-  Delta: 'Δ',
-  varepsilon: 'ε',
-  epsilon: 'ε',
-  theta: 'θ',
-  lambda: 'λ',
-  mu: 'μ',
-  sigma: 'σ',
-  phi: 'φ',
-  varphi: 'φ',
-  omega: 'ω',
-  // Geometry and sets (grade 5–8).
-  angle: '∠',
-  measuredangle: '∠',
-  parallel: '∥',
-  perp: '⊥',
-  bot: '⊥',
-  triangle: '△',
-  cong: '≅',
-  sim: '∼',
-  in: '∈',
-  notin: '∉',
-  subset: '⊂',
-  subseteq: '⊆',
-  cup: '∪',
-  cap: '∩',
-  emptyset: '∅',
-  varnothing: '∅',
-  setminus: '∖',
-  mid: '|',
-  equiv: '≡',
-  neg: '¬',
-  wedge: '∧',
-  vee: '∨',
-  prime: '′',
-};
-
-/** \mathbb{…} letters for the number sets. */
-const BLACKBOARD: Readonly<Record<string, string>> = {
-  N: 'ℕ',
-  Z: 'ℤ',
-  Q: 'ℚ',
-  R: 'ℝ',
-  C: 'ℂ',
-};
+/** Symbol commands → the character shown (the one list, issue #239: contracts/notation.ts). */
+export const SYMBOLS = MATH_SYMBOLS;
 
 /** A thin space: the gap around + − = … (narrower than a normal space). */
 export const THIN = '\u2009';
@@ -120,6 +66,8 @@ const BINARY = new Set([
   '⇒',
   '→',
   '⇔',
+  '⟶',
+  '⇌',
   '∥',
   '⊥',
   '≅',
@@ -329,6 +277,67 @@ function parseCommand(r: Reader): MathAtom[] {
       const den = parseArgument(r, false);
       return [{ type: 'frac', num, den }];
     }
+    case 'binom': {
+      const top = parseArgument(r, false);
+      const bottom = parseArgument(r, false);
+      return [{ type: 'binom', top, bottom }];
+    }
+    case 'xrightarrow': {
+      // An optional [below] is read and dropped: a school writes the condition above.
+      r.skipSpace();
+      if (r.peek() === '[') {
+        const close = r.src.indexOf(']', r.pos);
+        if (close !== -1) r.pos = close + 1;
+      }
+      return [{ type: 'arrow', above: parseArgument(r, false) }];
+    }
+    case 'sum':
+    case 'prod':
+    case 'int':
+    case 'lim': {
+      // The limits that follow belong to the operator, in either order (\sum_{i=1}^{n}).
+      let lower: MathAtom[] | null = null;
+      let upper: MathAtom[] | null = null;
+      for (let k = 0; k < 2; k++) {
+        r.skipSpace();
+        const c = r.peek();
+        if (c === '_' && lower === null && !r.src.startsWith('___', r.pos)) {
+          r.pos++;
+          lower = parseArgument(r, true);
+        } else if (c === '^' && upper === null) {
+          r.pos++;
+          upper = parseArgument(r, true);
+        } else break;
+      }
+      return [{ type: 'limits', op: MATH_LIMIT_OPERATORS[name] ?? name, name, lower, upper }];
+    }
+    case 'begin': {
+      r.skipSpace();
+      if (r.peek() !== '{') return [];
+      const close = r.src.indexOf('}', r.pos);
+      if (close === -1) return [];
+      const env = r.src.slice(r.pos + 1, close).trim();
+      r.pos = close + 1;
+      const endTag = new RegExp(`\\\\end\\s*\\{\\s*${env.replace(/[^a-zA-Z*]/g, '')}\\s*\\}`);
+      const rest = r.src.slice(r.pos);
+      const end = endTag.exec(rest);
+      const body = end ? rest.slice(0, end.index) : rest;
+      r.pos += end ? end.index + end[0].length : rest.length;
+      if (env !== 'pmatrix') return [{ type: 'text', text: ` ${env} ` }];
+      const rows = body
+        .split(/\\\\/)
+        .map((row) => row.split('&').map((cell) => parseMath(cell)))
+        .filter((row) => row.some((cell) => cell.length > 0));
+      return rows.length > 0 ? [{ type: 'matrix', rows }] : [];
+    }
+    case 'end':
+      // A stray \end{…}: its environment name is not shown.
+      r.skipSpace();
+      if (r.peek() === '{') {
+        const close = r.src.indexOf('}', r.pos);
+        r.pos = close === -1 ? r.src.length : close + 1;
+      }
+      return [];
     case 'sqrt': {
       r.skipSpace();
       let index: MathAtom[] | null = null;
@@ -516,6 +525,16 @@ function mapChildren(a: MathAtom): MathAtom {
       return { type: 'overline', body: finish(a.body) };
     case 'vec':
       return { type: 'vec', body: finish(a.body) };
+    case 'limits':
+      return {
+        ...a,
+        lower: a.lower ? finish(a.lower) : null,
+        upper: a.upper ? finish(a.upper) : null,
+      };
+    case 'binom':
+      return { type: 'binom', top: finish(a.top), bottom: finish(a.bottom) };
+    case 'arrow':
+      return { type: 'arrow', above: finish(a.above) };
     default:
       return a;
   }
@@ -553,6 +572,14 @@ function atomsToPlain(atoms: MathAtom[]): string {
           return `${atomsToPlain(a.body)}\u20D7`;
         case 'blank':
           return '___';
+        case 'limits':
+          return `${a.op}${a.lower ? `_${wrap(a.lower)}` : ''}${a.upper ? `^${wrap(a.upper)}` : ''}`;
+        case 'binom':
+          return `binom(${atomsToPlain(a.top)}, ${atomsToPlain(a.bottom)})`;
+        case 'matrix':
+          return `(${a.rows.map((row) => row.map(atomsToPlain).join(' ')).join('; ')})`;
+        case 'arrow':
+          return ` ⟶ (${atomsToPlain(a.above)}) `;
       }
     })
     .join('');

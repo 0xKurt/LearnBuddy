@@ -196,6 +196,15 @@ describe.skipIf(!dbReady)('answers with several parts', () => {
       // What she has to type is nothing: there is no field on a board question.
       expect(si.item.surface).toBeNull();
     }
+    // A whole-number gap says so, and nothing more about its key: the app then shows no math
+    // keys over the table (issue #239, #286 finding 5).
+    const table = session.items[3]!.item.board;
+    expect(table?.form === 'table_fill' ? table.rows[0] : null).toEqual([
+      { cell: 'given', text: '342' },
+      { cell: 'gap', ref: 'c1', expect: 'number', whole: true },
+      { cell: 'gap', ref: 'c2', expect: 'number', whole: true },
+      { cell: 'gap', ref: 'c3', expect: 'number', whole: true },
+    ]);
     // The stored task is the ONE source: the key the model wrote never reached the question.
     const rows = await env.db.query<{ answer: string; parts_task: unknown; kind: string }>(
       `select i.answer, i.parts_task, i.kind from session_items si join items i on i.id = si.item_id

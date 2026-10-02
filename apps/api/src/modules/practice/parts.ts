@@ -326,12 +326,30 @@ export function boardOf(task: PartsTask, itemId: string): PartsBoard {
           row.map((c) =>
             c.cell === 'given'
               ? ({ cell: 'given', text: c.text } as const)
-              : ({ cell: 'gap', ref: `c${++n}`, expect: c.expect } as const),
+              : ({
+                  cell: 'gap',
+                  ref: `c${++n}`,
+                  expect: c.expect,
+                  whole: c.expect === 'number' && wholeKey([c.answer, ...c.accepted]),
+                } as const),
           ),
         ),
       };
     }
   }
+}
+
+/**
+ * Every form of a gap's key is a whole number (issue #239, #286 finding 5): the phone's digits
+ * write it, and the app shows no math keys over the table. One fact about the key and no more —
+ * not its size, not its sign. A key with a fraction or a decimal anywhere among its forms is not
+ * whole, so the keys that write those stay.
+ */
+function wholeKey(forms: readonly string[]): boolean {
+  return forms.every((form) => {
+    const k = parseCanonicalKey(plainMath(form));
+    return k.exact !== null && k.exact.den === 1n && k.form === 'integer';
+  });
 }
 
 /** `e1`, `e2` … over all groups in the order the task writes them. */

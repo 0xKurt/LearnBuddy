@@ -29,6 +29,84 @@ function lastText(req: LlmRequest): string {
 }
 
 export function scriptLearningModes(llm: ScriptedGateway): void {
+  // Formulas (issue #239): a reaction equation typed with the chemistry keys and counted by
+  // code (chemistry.ts), the new notation drawn in questions and in Buddy's own words, and a
+  // times table whose whole-number gaps get no math keys (#286 finding 5). Registered first,
+  // like the path above: the first rule that matches wins. The keys the model writes are in
+  // the app notation (MATH_NOTATION_RULE) — and no tutor is scripted: code decides.
+  scriptGenerations({
+    when: /Reaktionsgleichung/i,
+    answer: () => ({
+      usable: true,
+      title: 'Reaktionsgleichungen',
+      subject: { name: 'Chemie', kind: 'chemistry' },
+      items: [
+        {
+          ...base,
+          kind: 'formula',
+          prompt: 'Wasserstoff verbrennt zu Wasser. Stelle die Reaktionsgleichung auf.',
+          answer: '$2H_{2} + O_{2} \\longrightarrow 2H_{2}O$',
+          topic: 'Reaktionsgleichungen',
+        },
+        {
+          ...base,
+          kind: 'formula',
+          prompt:
+            'Das Haber-Bosch-Gleichgewicht: $N_{2} + 3H_{2} \\rightleftharpoons 2NH_{3}$. Welche Formel hat das Sulfat-Ion?',
+          answer: '$SO_{4}^{2-}$',
+          topic: 'Ionen',
+        },
+      ],
+    }),
+  });
+  scriptGenerations({
+    when: /Ungleichungen und Summen/i,
+    answer: () => ({
+      usable: true,
+      title: 'Ungleichungen und Summen',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: [
+        {
+          ...base,
+          kind: 'formula',
+          prompt: 'Schreibe als Ungleichung: Das Quadrat von $x$ ist höchstens 3.',
+          answer: '$x^{2} \\le 3$',
+          topic: 'Ungleichungen',
+        },
+        {
+          ...base,
+          kind: 'numeric',
+          prompt: 'Wie viel ist $\\sum_{i=1}^{4} i + \\binom{4}{2}$?',
+          answer: '16',
+          topic: 'Summen',
+        },
+        {
+          ...base,
+          kind: 'table_fill',
+          prompt: 'Fülle die Einmaleins-Tabelle aus.',
+          answer: 'wird berechnet',
+          topic: 'Einmaleins',
+          // Whole numbers only: the gaps get no math keys, the phone's digits write them.
+          parts_task: {
+            form: 'table_fill',
+            header: ['·', '3', '4'],
+            rows: [
+              [
+                { cell: 'given', text: '5' },
+                { cell: 'gap', expect: 'number', answer: '15', accepted: [] },
+                { cell: 'gap', expect: 'number', answer: '20', accepted: [] },
+              ],
+              [
+                { cell: 'given', text: '6' },
+                { cell: 'gap', expect: 'number', answer: '18', accepted: [] },
+                { cell: 'given', text: '24' },
+              ],
+            ],
+          },
+        },
+      ],
+    }),
+  });
   // A written calculation path (issues #209, #221): an equation she solves line by line, then
   // a one-liner the return key sends. Registered first: a later learner's request may carry
   // older topics, and the first rule that matches wins. The model only supplies the items —
@@ -336,6 +414,21 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
   // Said in the chat instead of a tile: Buddy answers with a start button (offer_learning).
   // By what she wrote, never by order (issue #81).
   scriptTurns(
+    {
+      // Buddy's own words carry the notation too (issue #239): drawn, not shown as LaTeX.
+      when: /reaktionsgleichungen aufstellen/i,
+      answer: says(
+        'Gern! So sieht eine aus: $2H_{2} + O_{2} \\longrightarrow 2H_{2}O$ – links und rechts gleich viele Atome. Ich hab dir Reaktionsgleichungen vorbereitet.',
+        [{ tool: 'offer_learning', args: { kind: 'practice', text: 'Reaktionsgleichungen' } }],
+      ),
+    },
+    {
+      when: /ungleichungen und summen/i,
+      answer: says(
+        'Klar – zum Beispiel $x^{2} \\le 3$, $\\int_{0}^{2} x \\, dx$ oder der Vektor $\\begin{pmatrix} 3 \\\\ 4 \\end{pmatrix}$. Ich hab dir Aufgaben vorbereitet.',
+        [{ tool: 'offer_learning', args: { kind: 'practice', text: 'Ungleichungen und Summen' } }],
+      ),
+    },
     {
       // The explanation is the answer (buddy.22+); practice on it is offered right after.
       when: /erklär mir den dativ/i,

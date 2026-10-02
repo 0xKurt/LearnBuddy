@@ -36,6 +36,9 @@ type Tok =
   | { t: 'space'; v: string }
   | { t: 'other'; v: string };
 
+/** The raised digits 0–9, in order. */
+const RAISED = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+
 const OPS = [
   '<=',
   '>=',
@@ -93,6 +96,13 @@ function tokenize(text: string): Tok[] {
       i += space[0].length;
       continue;
     }
+    // A run of raised digits is one power: the exponent key writes x⁴ and 10¹² (issue #239).
+    const raised = /^[⁰¹²³⁴⁵⁶⁷⁸⁹]+/.exec(rest);
+    if (raised) {
+      out.push({ t: 'pow', v: [...raised[0]].map((ch) => String(RAISED.indexOf(ch))).join('') });
+      i += raised[0].length;
+      continue;
+    }
     const op = OPS.find((o) => rest.startsWith(o));
     if (op) {
       out.push({ t: 'op', v: op });
@@ -103,7 +113,6 @@ function tokenize(text: string): Tok[] {
     if (c === '√') out.push({ t: 'sqrt' });
     else if (c === '/') out.push({ t: 'slash' });
     else if (c === '^') out.push({ t: 'caret' });
-    else if (c === '²' || c === '³') out.push({ t: 'pow', v: c === '²' ? '2' : '3' });
     else if (c === '°' || c === '%') out.push({ t: 'suffix', v: c });
     else if (c === '(') out.push({ t: 'lp' });
     else if (c === ')') out.push({ t: 'rp' });
@@ -373,7 +382,7 @@ function tokText(tok: Tok): string {
     case 'rp':
       return ')';
     case 'pow':
-      return tok.v === '2' ? '²' : '³';
+      return [...tok.v].map((d) => RAISED[Number(d)] ?? d).join('');
     default:
       return tok.v;
   }

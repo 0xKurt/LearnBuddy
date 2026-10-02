@@ -35,7 +35,7 @@ import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { StorageError } from '../../storage/gateway.js';
 import { insertItems, samePrompt, usableItems } from '../practice/items.js';
-import { createSession } from '../practice/service.js';
+import { createSession, subjectKindOf } from '../practice/service.js';
 import {
   clarifiedRules,
   EXTRACT_PROMPT_VERSION,
@@ -1889,6 +1889,7 @@ type MaterialItemRow = {
   lang: string | null;
   prompt_lang: string | null;
   figure: Figure | null;
+  subject_kind: string | null;
   last_status: 'correct' | 'revealed' | 'skipped' | 'missed' | null;
   last_first_try: boolean | null;
 };
@@ -1911,8 +1912,10 @@ export async function materialItems(
   const material = await materialView(db, learnerId, materialId);
   const rows = await db.query<MaterialItemRow>(
     `select i.id, i.kind, i.prompt, i.choices, i.unit, i.topic, i.origin, i.lang, i.prompt_lang, i.figure,
+            sub.kind as subject_kind,
             last.status as last_status, last.first_try_correct as last_first_try
        from items i
+       left join subjects sub on sub.id = i.subject_id
        left join lateral (
          select si.status, si.first_try_correct from session_items si
           where si.item_id = i.id and si.status <> 'open' and si.flagged_at is null
@@ -1936,6 +1939,7 @@ export async function materialItems(
       origin: r.origin,
       lang: r.lang,
       prompt_lang: r.prompt_lang,
+      subject_kind: subjectKindOf(r.subject_kind),
       figure: r.figure,
       // The concept image is shown where the question is shown full size (sessions);
       // the material list stays a list (issue #50).

@@ -57,6 +57,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { MathText } from '../math/MathText.js';
+import { cellKeys } from '../../lib/math/keys.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 
@@ -793,7 +794,10 @@ function TableBoard({
   );
 
   const done = gaps.filter((gap) => filled(answer, gap.ref)).length;
-  const numeric = focus !== null && gaps.find((gap) => gap.ref === focus)?.expect === 'number';
+  // Only the keys the focused gap needs: none for a word, none for a whole number (the phone's
+  // digits write it — issue #286 finding 5), the number signs otherwise (lib/math/keys.ts).
+  const focused = focus === null ? undefined : gaps.find((gap) => gap.ref === focus);
+  const keys = focused ? cellKeys(focused.expect, focused.whole) : [];
   return (
     <View style={{ gap: SPACE.sm }}>
       <How>{t('board.table_how')}</How>
@@ -813,7 +817,7 @@ function TableBoard({
       <Progress>{t('board.table_state', { done, total: gaps.length })}</Progress>
       {/* Tastaturzubehör, kein Möbel (issue #16): die Rechentasten stehen nur da, während
           sie in eine Zahlenlücke schreibt — und dann unten, wo die Tastatur ist. */}
-      {numeric ? <MathKeys onInsert={insert} disabled={disabled} /> : null}
+      {keys.length > 0 ? <MathKeys keys={keys} onInsert={insert} disabled={disabled} /> : null}
     </View>
   );
 }

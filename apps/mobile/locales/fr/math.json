@@ -239,8 +239,27 @@
       "cong": "isométrique à",
       "sim": "semblable à",
       "in": "appartient à",
-      "notin": "n'appartient pas à"
-    }
+      "notin": "n'appartient pas à",
+      "reacts": "donne",
+      "equilibrium": "est en équilibre avec",
+      "naturals": "entiers naturels",
+      "integers": "entiers relatifs",
+      "rationals": "nombres rationnels",
+      "reals": "nombres réels"
+    },
+    "operators": {
+      "sum": "somme",
+      "prod": "produit",
+      "int": "intégrale",
+      "lim": "limite"
+    },
+    "op_range": "{{op}} de {{from}} à {{to}}",
+    "op_lower": "{{op}} pour {{from}}",
+    "op_upper": "{{op}} jusqu’à {{to}}",
+    "binom": "{{bottom}} parmi {{top}}",
+    "column_vector": "vecteur colonne {{entries}}",
+    "matrix": "matrice avec les lignes {{rows}}",
+    "arrow_label": "donne, condition : {{label}}"
   },
   "staff": {
     "note": {
@@ -328,7 +347,27 @@
     "decimal": "virgule",
     "newline": "Nouvelle ligne",
     "newline_shown": "↵ Ligne",
-    "newline_hint": "Pour ton calcul : commence la ligne suivante. « Vérifier » vérifie ensuite toutes les lignes."
+    "newline_hint": "Pour ton calcul : commence la ligne suivante. « Vérifier » vérifie ensuite toutes les lignes.",
+    "row_chem": "Symboles de chimie",
+    "power": "Exposant",
+    "power_hint": "Les chiffres suivants sont mis en exposant jusqu’à ce que tu tapes autre chose.",
+    "sub": "Indice",
+    "sub_hint": "Les chiffres suivants sont mis en indice, comme dans H₂O.",
+    "charge": "Charge",
+    "charge_hint": "Les chiffres suivants et le plus ou le moins sont mis en exposant, comme dans SO₄²⁻.",
+    "plus": "plus",
+    "reacts": "Flèche de réaction",
+    "equilibrium": "Flèche d’équilibre",
+    "equals": "égal",
+    "lt": "inférieur à",
+    "gt": "supérieur à",
+    "le": "inférieur ou égal à",
+    "ge": "supérieur ou égal à",
+    "pm": "plus ou moins",
+    "more": "Autres symboles",
+    "more_hint": "Affiche les symboles suivants dans cette barre.",
+    "mode_on": "activé",
+    "brackets": "Parenthèses"
   },
   "blank": {
     "label": "Trou",

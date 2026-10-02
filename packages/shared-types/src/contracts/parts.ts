@@ -292,6 +292,12 @@ export const BoardCell = z.discriminatedUnion('cell', [
     ref: z.string().regex(/^c[1-9][0-9]?$/),
     /** Welche Tastatur die Lücke braucht: die Rechentasten oder die Schrifttastatur. */
     expect: z.enum(['number', 'word']),
+    /**
+     * Der Schlüssel der Lücke ist eine ganze Zahl (Code entscheidet es aus dem Schlüssel und
+     * allen gleichwertigen Formen). Dann reichen die Ziffern der Tastatur, und die App zeigt
+     * keine Rechentasten über der Tabelle (issue #286 Befund 5, #239).
+     */
+    whole: z.boolean().default(false),
   }),
 ]);
 export type BoardCell = z.infer<typeof BoardCell>;

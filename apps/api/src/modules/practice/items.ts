@@ -9,7 +9,9 @@
 
 import {
   hasSeveralParts,
+  MATH_NOTATION_RULE,
   ModelFigure,
+  unsupportedMath,
   PartsTask,
   Rubric,
   type BarTask,
@@ -29,7 +31,8 @@ import { usableRubric } from './rubric.js';
 import { mentionsSolution } from './tutor.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
 
-export const MATH_RULES = `Math (also in choices, answers and accepted_answers): write it between dollar signs in this LaTeX subset only: \\frac{a}{b}, x^{2}, x_{1}, \\sqrt{x}, \\cdot, \\times, \\div, \\pi, \\le, \\ge, \\ne, \\approx, \\degree, \\pm, \\rightarrow (a reaction arrow; \\rightleftharpoons for an equilibrium); for geometry and sets also \\overline{3} (repeating decimal, segment), \\angle, \\parallel, \\perp, \\in, \\mathbb{N}, \\vec{v}. Example: "Kürze $\\frac{6}{8}$." Plain numbers and words stay outside the dollar signs. A dollar sign meaning money is written \\$ ("kostet \\$5").`;
+/** The notation rule, generated from the one list the app draws and reads out (issue #239). */
+export const MATH_RULES = MATH_NOTATION_RULE;
 
 /** How a number key is written (docs/architecture.md §Practice, grading; audit C-1). */
 export const NUMERIC_KEY_RULES = `numeric: answer = the number with a decimal point and no thousands separators (0.125, 1250 — never 0,125 or 1.250); a fraction (3/4) or mixed number (3 1/2) only when the task asks for that form; the unit separately in "unit" ("%" for percent). tolerance only when the task says to round, estimate or measure — otherwise null (exact).`;
@@ -421,6 +424,13 @@ export function usableItems(
       // (issue #211). A rubric that does not hold costs itself, never the question.
       rubric: usableRubric(raw.rubric, raw.kind),
     };
+    // Notation the app cannot draw (issue #239): a learner would read "\\overbrace" in the middle
+    // of her question. Dropped, not repaired — the list is `MATH_NOTATION_RULE`, which the model
+    // was given, and guessing what an unknown command meant is the model's job, not ours.
+    if (drawsUnsupported(it)) continue;
+    it.hints = it.hints.filter((h) => unsupportedMath(h).length === 0);
+    if (it.worked_solution !== null && unsupportedMath(it.worked_solution).length > 0)
+      it.worked_solution = null;
     // ── an answer with several parts (issues #228–#230) ──
     //
     // The task is the whole question here, so it is settled before anything else: without a
@@ -504,6 +514,27 @@ export function usableItems(
     out.push({ ...plain, lang: null });
   }
   return out;
+}
+
+/** Every string in a value (a parts task is nested data, and each of its texts is shown). */
+function stringsIn(value: unknown): string[] {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.flatMap(stringsIn);
+  if (typeof value === 'object' && value !== null) return Object.values(value).flatMap(stringsIn);
+  return [];
+}
+
+/** Does a text the learner will see — question, options, key, the parts of a board — use notation the app cannot draw? */
+function drawsUnsupported(
+  it: Pick<ItemDraft, 'prompt' | 'answer' | 'accepted_answers' | 'choices' | 'parts_task'>,
+): boolean {
+  return [
+    it.prompt,
+    it.answer,
+    ...it.accepted_answers,
+    ...(it.choices ?? []),
+    ...stringsIn(it.parts_task),
+  ].some((text) => unsupportedMath(text).length > 0);
 }
 
 export type ItemSource = {

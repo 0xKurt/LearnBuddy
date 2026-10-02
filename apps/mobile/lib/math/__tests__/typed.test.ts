@@ -59,6 +59,9 @@ describe('typedMath: conversion', () => {
   it('writes powers from ^ and from the ² ³ keys', () => {
     expect(preview('x^2').text).toBe('$x^{2}$');
     expect(preview('x²').text).toBe('$x^{2}$');
+    // The exponent key raises any digits (issue #239): a run of them is one power.
+    expect(preview('x⁴').text).toBe('$x^{4}$');
+    expect(preview('10¹²').text).toBe('$10^{12}$');
     expect(preview('2^(n+1)').text).toBe('$2^{n+1}$');
     expect(preview('10^-3').text).toBe('$10^{-3}$');
     expect(preview('(3/4)²').text).toBe('$(\\frac{3}{4})^{2}$');

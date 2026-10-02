@@ -312,8 +312,8 @@ describe('the board shows the pieces without the solution', () => {
     if (board.form !== 'table_fill') throw new Error('wrong form');
     const gaps = board.rows.flat().filter((c) => c.cell === 'gap');
     expect(gaps).toEqual([
-      { cell: 'gap', ref: 'c1', expect: 'word' },
-      { cell: 'gap', ref: 'c2', expect: 'word' },
+      { cell: 'gap', ref: 'c1', expect: 'word', whole: false },
+      { cell: 'gap', ref: 'c2', expect: 'word', whole: false },
     ]);
     expect(JSON.stringify(board)).not.toContain('gehe');
   });
@@ -613,5 +613,34 @@ describe('the solution and her answer, in one line each', () => {
         fits: true,
       });
     }
+  });
+});
+
+describe('a gap with a whole number says so (issue #239, #286 finding 5)', () => {
+  it('marks a gap whole only when every form of its key is a whole number', () => {
+    const task: TableFillTask = {
+      form: 'table_fill',
+      computed: null,
+      header: ['a', 'b', 'c', 'd', 'e'],
+      rows: [
+        [
+          { cell: 'gap', expect: 'number', answer: '12', accepted: [] },
+          { cell: 'gap', expect: 'number', answer: '-3', accepted: [] },
+          { cell: 'gap', expect: 'number', answer: '2.5', accepted: [] },
+          { cell: 'gap', expect: 'number', answer: '4', accepted: ['$\\frac{8}{2}$'] },
+          { cell: 'gap', expect: 'word', answer: 'zwei', accepted: [] },
+        ],
+      ],
+    };
+    const board = boardOf(task, '00000000-0000-4000-8000-000000000001');
+    expect(board.form).toBe('table_fill');
+    if (board.form !== 'table_fill') return;
+    expect(board.rows[0]!.map((c) => (c.cell === 'gap' ? c.whole : null))).toEqual([
+      true,
+      true,
+      false,
+      false,
+      false,
+    ]);
   });
 });

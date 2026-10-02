@@ -240,3 +240,28 @@ describe('a single substance, counted (#227 finding 6)', () => {
     expect(sameSubstance('2 H2 + O2 -> 2 H2O', '2 H2 + O2 → 2 H2O')).toBe('unknown');
   });
 });
+
+describe('what the formula keys type, against a key in the app notation (#239)', () => {
+  // The chemistry keys write real sub- and superscripts (apps/mobile/lib/math/keys.ts); the
+  // model writes its key in the LaTeX subset (MATH_NOTATION_RULE). Both are the same equation.
+  const KEY = '$2H_{2} + O_{2} \\longrightarrow 2H_{2}O$';
+
+  it('counts what she typed with the keys against a LaTeX key', () => {
+    expect(checkEquation(KEY, '2 H₂ + O₂ → 2 H₂O').verdict).toBe('correct');
+    expect(checkEquation(KEY, 'O₂ + 2 H₂ → 2 H₂O').verdict).toBe('correct');
+    expect(checkEquation(KEY, '2 H₂ + O₂ ⇌ 2 H₂O').verdict).toBe('correct');
+    expect(checkEquation(KEY, 'H₂ + O₂ → H₂O').verdict).toBe('unbalanced');
+  });
+
+  it('reads charges written with the charge key and as LaTeX', () => {
+    const ions = '$Fe^{3+} + 3OH^{-} \\longrightarrow Fe(OH)_{3}$';
+    expect(checkEquation(ions, 'Fe³⁺ + 3 OH⁻ → Fe(OH)₃').verdict).toBe('correct');
+    expect(sameSubstance('$SO_{4}^{2-}$', 'SO₄²⁻')).toBe('same');
+  });
+
+  it('reads the LaTeX equilibrium arrow as an arrow', () => {
+    expect(
+      checkEquation('$N_{2} + 3H_{2} \\rightleftharpoons 2NH_{3}$', 'N₂ + 3 H₂ ⇌ 2 NH₃').verdict,
+    ).toBe('correct');
+  });
+});

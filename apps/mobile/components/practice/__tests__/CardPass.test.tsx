@@ -37,6 +37,7 @@ const card = (over: Partial<SessionItemView['item']> = {}): SessionItemView => (
     origin: 'typed',
     lang: 'de',
     prompt_lang: 'fr',
+    subject_kind: null,
     figure: null,
     image: null,
     tap_choices: null,

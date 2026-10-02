@@ -667,3 +667,188 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   expect((await quick).postDataJSON()).toMatchObject({ text: '12' });
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
 });
+
+/**
+ * The key row at both phone sizes, light and dark, with the field focused (the row only
+ * shows while she types) and with the keyboard up. The row is ONE line: nothing of it is
+ * cut off and nothing slides sideways (issue #286 finding 5, #239).
+ */
+async function keyRowShots(page: Page, name: string): Promise<void> {
+  const field = page.getByLabel('Deine Antwort');
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await field.focus();
+    await shot(page, `${name}-${scheme}`);
+    for (const phone of PHONES) {
+      const room = { width: phone.width, height: phone.height - KEYBOARD[phone.width] };
+      await page.setViewportSize(room);
+      await field.focus();
+      const row = page.getByTestId('math-keys');
+      await expect(row).toBeVisible();
+      await settle(page);
+      await page.screenshot({ path: join(SHOTS, `${name}-${scheme}-kb-${phone.width}.png`) });
+      const box = await row.boundingBox();
+      expect(box, 'the key row is laid out').not.toBeNull();
+      // Inside the screen with the bar's 16 pt on both sides — never past the right edge.
+      expect(Math.round(box!.x)).toBeGreaterThanOrEqual(16);
+      expect(Math.round(box!.x + box!.width)).toBeLessThanOrEqual(phone.width - 16);
+      // Every key inside the row, and none narrower than a touch target.
+      for (const key of await row.getByRole('button').all()) {
+        const k = await key.boundingBox();
+        expect(k!.x + k!.width).toBeLessThanOrEqual(box!.x + box!.width + 1);
+        expect(Math.round(k!.width)).toBeGreaterThanOrEqual(44);
+        expect(Math.round(k!.height)).toBeGreaterThanOrEqual(44);
+      }
+      // Nothing scrolls sideways.
+      expect(await row.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(1);
+      await expect(page.getByTestId('scroll-question').last()).toBeInViewport();
+    }
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize(PHONES[0]);
+  await field.focus();
+}
+
+/** Light and dark of one screen, both phones. */
+async function bothSchemes(page: Page, name: string): Promise<void> {
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await shot(page, `${name}-${scheme}`);
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+}
+
+/**
+ * On to the next question. A right answer at the first try may move on by itself; otherwise
+ * "Weiter" does — either way the next question's words are what this waits for.
+ */
+async function nextQuestion(page: Page, words: string): Promise<void> {
+  const next = page.getByText(words, { exact: false }).first();
+  const weiter = page.getByRole('button', { name: 'Weiter' });
+  await expect(next.or(weiter).first()).toBeVisible();
+  if (!(await next.isVisible())) await weiter.click();
+  await expect(next).toBeVisible();
+}
+
+const right = (page: Page) => page.getByText(/^(Richtig|Stimmt – gut gemacht!)$/).last();
+
+test('formulas: a reaction equation typed with the chemistry keys and counted (issue #239)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Ich will Reaktionsgleichungen aufstellen');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  // Buddy's own words carry the equation drawn: no LaTeX, the arrow read as "reagiert zu".
+  await expect(
+    page.getByText('links und rechts gleich viele Atome', { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText('longrightarrow', { exact: false })).toHaveCount(0);
+  await expect(page.getByLabel(/reagiert zu/).first()).toBeAttached();
+  await bothSchemes(page, '70-formula-buddy');
+  await offerStart(page, 'Reaktionsgleichungen vorbereitet').click();
+  await expect(page.getByText('Stelle die Reaktionsgleichung auf', { exact: false })).toBeVisible();
+
+  // The chemistry row: lower the index, +, the reaction arrow — no fraction bar, no π.
+  const field = page.getByLabel('Deine Antwort');
+  await field.click();
+  await expect(page.getByRole('toolbar', { name: 'Chemie-Zeichen' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Bruchstrich' })).toHaveCount(0);
+  const key = (name: string) => page.getByRole('button', { name, exact: true });
+  await keyRowShots(page, '71-chem-keys-empty');
+
+  await field.pressSequentially('2 H');
+  await key('Tiefstellen').click();
+  await expect(key('Tiefstellen, eingeschaltet')).toBeVisible();
+  await field.pressSequentially('2');
+  await key('plus').click();
+  await field.pressSequentially('O');
+  await key('Tiefstellen').click();
+  await field.pressSequentially('2');
+  await key('Reaktionspfeil').click();
+  await field.pressSequentially('2 H');
+  await key('Tiefstellen').click();
+  await field.pressSequentially('2O');
+  await expect(field).toHaveValue('2 H₂ + O₂ → 2 H₂O');
+  // The letter ended the mode by itself.
+  await expect(key('Tiefstellen')).toBeVisible();
+  await keyRowShots(page, '72-chem-typed');
+
+  const sent = page.waitForRequest((r) => r.url().endsWith('/answer') && r.method() === 'POST');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  expect((await sent).postDataJSON()).toMatchObject({ text: '2 H₂ + O₂ → 2 H₂O' });
+  // Counted by code against the key "$2H_{2} + O_{2} \longrightarrow 2H_{2}O$" — no tutor.
+  await expect(right(page)).toBeVisible();
+  await bothSchemes(page, '73-chem-correct');
+
+  // The equilibrium drawn in the question; a charge raised with its sign.
+  await nextQuestion(page, 'Sulfat-Ion');
+  await expect(page.getByLabel(/steht im Gleichgewicht mit/).first()).toBeAttached();
+  await field.click();
+  await field.pressSequentially('SO');
+  await key('Tiefstellen').click();
+  await field.pressSequentially('4');
+  await key('Ladung').click();
+  await field.pressSequentially('2-');
+  await expect(field).toHaveValue('SO₄²⁻');
+  await keyRowShots(page, '74-chem-charge');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(right(page)).toBeVisible();
+});
+
+test('formulas: math keys page by page, the new notation drawn, no keys over whole numbers (issue #239)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Ungleichungen und Summen üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('Ich hab dir Aufgaben vorbereitet', { exact: false })).toBeVisible();
+  await expect(page.getByText(/\\int|pmatrix/)).toHaveCount(0);
+  await expect(page.getByLabel(/Integral von 0 bis 2/).first()).toBeAttached();
+  await bothSchemes(page, '75-math-buddy');
+  await offerStart(page, 'Ich hab dir Aufgaben vorbereitet').click();
+  await expect(page.getByText('Das Quadrat von', { exact: false })).toBeVisible();
+
+  const field = page.getByLabel('Deine Antwort');
+  const key = (name: string) => page.getByRole('button', { name, exact: true });
+  await field.click();
+  await expect(page.getByRole('toolbar', { name: 'Mathe-Zeichen' })).toBeVisible();
+  await keyRowShots(page, '76-math-keys-page1');
+  await field.pressSequentially('x');
+  await key('Hochzahl').click();
+  await field.pressSequentially('2');
+  // ≤ is not on the first page of this question: "…" turns to the next keys.
+  await expect(key('kleiner gleich')).toHaveCount(0);
+  await key('Weitere Zeichen').click();
+  await keyRowShots(page, '77-math-keys-more');
+  // How the keys fall on pages depends on the width; "…" turns until ≤ shows.
+  await field.focus();
+  for (let i = 0; i < 4 && (await key('kleiner gleich').count()) === 0; i++)
+    await key('Weitere Zeichen').click();
+  await key('kleiner gleich').click();
+  await field.pressSequentially('3');
+  await expect(field).toHaveValue('x² ≤ 3');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(right(page)).toBeVisible();
+
+  // A sum and a binomial coefficient, drawn and read out.
+  await nextQuestion(page, 'Wie viel ist');
+  await expect(page.getByLabel(/Summe von i gleich 1 bis 4/).first()).toBeAttached();
+  await expect(page.getByLabel(/4 über 2/).first()).toBeAttached();
+  await bothSchemes(page, '78-math-sum-binom');
+  await field.fill('16');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(right(page)).toBeVisible();
+
+  // A table of whole numbers: the phone's digits write them, no row of math keys above.
+  await nextQuestion(page, 'Einmaleins-Tabelle');
+  const gap = page.getByLabel('3 bei 5, noch leer');
+  await expect(gap).toBeVisible();
+  await gap.click();
+  await expect(page.getByTestId('math-keys')).toHaveCount(0);
+  await gap.fill('15');
+  await page.getByLabel('4 bei 5, noch leer').fill('20');
+  await page.getByLabel('3 bei 6, noch leer').fill('18');
+  await page.getByLabel('3 bei 6, 18').focus();
+  await expect(page.getByTestId('math-keys')).toHaveCount(0);
+  await bothSchemes(page, '79-table-whole-no-keys');
+});

@@ -18,6 +18,7 @@ import type {
   PracticeTurnView,
   SessionView,
 } from '@learnbuddy/shared-types/contracts';
+import { SubjectKind } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
 import type { StorageGateway } from '../../storage/gateway.js';
@@ -743,6 +744,12 @@ function boardFor(stored: unknown, itemId: string): ItemView['board'] {
   return task ? boardOf(task, itemId) : null;
 }
 
+/** `subjects.kind` as the contract names it; a value the contract does not know is no kind. */
+export function subjectKindOf(kind: string | null): SubjectKind | null {
+  const parsed = SubjectKind.safeParse(kind);
+  return parsed.success ? parsed.data : null;
+}
+
 /** The crop that goes with the question, or null (contract: ItemImage). */
 function imageOf(row: ItemImageRow, urls: Map<string, string>): ItemView['image'] {
   const url = row.image_path ? urls.get(row.image_path) : undefined;
@@ -760,7 +767,9 @@ export async function sessionView(
 ): Promise<SessionView> {
   const s = await loadSession(db, learnerId, sessionId);
   const items = await db.query<
-    SessionItemRow & ItemRow & ItemImageRow & { archived_at: Date | null }
+    SessionItemRow &
+      ItemRow &
+      ItemImageRow & { archived_at: Date | null; subject_kind: string | null }
   >(
     `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.prepared_hints_used,
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
@@ -768,9 +777,10 @@ export async function sessionView(
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
             i.bar_task, i.parts_task, i.listen_task, i.staff_task, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
-            mi.label as image_label
+            mi.label as image_label, sub.kind as subject_kind
        from session_items si join items i on i.id = si.item_id
        left join material_images mi on mi.id = i.image_id
+       left join subjects sub on sub.id = i.subject_id
       where si.session_id = $1 order by si.position`,
     [sessionId],
   );
@@ -843,6 +853,8 @@ export async function sessionView(
         origin: i.origin,
         lang: i.lang,
         prompt_lang: i.prompt_lang,
+        // Which keys the answer field offers is the app's choice, made from this (issue #239).
+        subject_kind: subjectKindOf(i.subject_kind),
         figure: i.figure,
         image: imageOf(i, imageUrls),
         // A test asks her to produce, so nothing is offered to tap there — and a card has

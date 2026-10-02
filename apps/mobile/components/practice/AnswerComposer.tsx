@@ -3,8 +3,10 @@
 // "Später" in homework help (there is no solution to show). A number's unit stands next to
 // the field.
 // Autocorrect is off so the phone never "fixes" what the learner actually
-// wrote. For math questions a row of keys (², √, π, …) sits above the field
-// and inserts at the cursor.
+// wrote. For math and chemistry questions a row of keys sits above the field and inserts at
+// the cursor — exactly the keys this question needs, chosen by code from its kind, unit,
+// subject and the notation in its text (lib/math/keys.ts, issue #239). A raise/lower key
+// (xⁿ, x₂, x⁺⁻) changes the digits she types next on the phone's own keyboard.
 //
 // The field sits in one floating white pill with a filled mic, the same bar
 // as Buddy's home composer (components/buddy/Composer.tsx).
@@ -25,8 +27,8 @@
 // is allowed where, and what the return key does, is `lib/practice/pathEntry.ts`;
 // the server checks each step and names the first line that broke (issue #209).
 
-import type { ItemKind } from '@learnbuddy/shared-types/contracts';
-import { useRef, useState } from 'react';
+import type { ItemKind, SubjectKind } from '@learnbuddy/shared-types/contracts';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Platform,
@@ -38,7 +40,7 @@ import {
   type TextInputKeyPressEventData,
 } from 'react-native';
 
-import { hasMath } from '../../lib/math/parse.js';
+import { keysFor, typedUnder, type ScriptMode } from '../../lib/math/keys.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
@@ -92,6 +94,8 @@ type Props = {
   /** The question text: a short answer to a question with math ($…$) gets the math keys too. */
   prompt?: string;
   unit: string | null;
+  /** The kind of the question's subject: a formula in chemistry gets the chemistry keys (issue #239). */
+  subjectKind?: SubjectKind | null;
   /** The language the answer is spoken in (vocab: the item's answer language); null = the app language. */
   lang: string | null;
   value: string;
@@ -105,6 +109,7 @@ export function AnswerComposer({
   kind,
   prompt = '',
   unit,
+  subjectKind = null,
   lang,
   value,
   disabled,
@@ -131,10 +136,16 @@ export function AnswerComposer({
   // Keyboard accessory, not furniture (issue #16): the math row belongs above the keyboard
   // while she types. Without focus it only takes the room the question needs — on a small
   // phone with the keyboard open that is the difference between seeing the task and not.
-  const mathAnswer = exact || (kind === 'short' && hasMath(prompt));
-  const showKeys = mathAnswer && focused;
+  const keys = keysFor({ kind, unit, subjectKind, prompt, path: pathPossible(kind) });
+  const showKeys = keys.length > 0 && focused;
+  // A raise/lower key that is on: the next digits she types become x⁴, H₂, SO₄²⁻.
+  const [mode, setMode] = useState<ScriptMode | null>(null);
+  // The next question starts with plain digits.
+  useEffect(() => setMode(null), [prompt]);
 
   const insert = (insertion: Insertion) => {
+    // Another key ends a raise/lower mode: "x⁴ = " must not raise what comes after the "=".
+    setMode(null);
     const next = insertAtCursor(value, selection.current, insertion);
     if (next.value.length > MAX_ANSWER_LENGTH) return;
     // A key is typing too: it ends the hands-free loop like the keyboard does.
@@ -179,7 +190,17 @@ export function AnswerComposer({
     <BottomBar>
       <MicStatus voice={voice} />
       {showKeys ? (
-        <MathKeys onInsert={insert} disabled={disabled} newline={pathPossible(kind)} />
+        <MathKeys
+          keys={keys}
+          onInsert={insert}
+          mode={mode}
+          onMode={(next) => {
+            setMode(next);
+            inputRef.current?.focus();
+          }}
+          disabled={disabled}
+          chemistry={keys.includes('reacts')}
+        />
       ) : null}
       {/* One floating white pill, exactly like the composer on Buddy's home (issue #16): the
           field, the unit, and at its end the mic while it is empty – "Prüfen" once there is an
@@ -211,7 +232,16 @@ export function AnswerComposer({
               useHandsFree.getState().disarm();
               // …and a recording still running would replace what she types (audit M-78).
               if (voice.state === 'starting' || voice.state === 'recording') voice.cancel();
-              onChange(typed);
+              // Under a raise/lower key the digit she just typed becomes ² or ₂ — only that one
+              // character, and anything the mode does not take ends it (lib/math/keys.ts).
+              const under = typedUnder(value, typed, mode);
+              if (under.mode !== mode) setMode(under.mode);
+              if (under.at !== null && under.value !== typed) {
+                const at = { start: under.at, end: under.at };
+                selection.current = at;
+                setForced(at);
+              }
+              onChange(under.value);
             }}
             selection={forced}
             onSelectionChange={(e) => {
@@ -220,7 +250,11 @@ export function AnswerComposer({
               if (forced) setForced(undefined);
             }}
             onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
+            onBlur={() => {
+              setFocused(false);
+              // The row goes with the focus, and a mode nobody can see must not stay on.
+              setMode(null);
+            }}
             placeholder={t('answer.placeholder')}
             placeholderTextColor={palette.ink3}
             accessibilityLabel={t('answer.label')}
