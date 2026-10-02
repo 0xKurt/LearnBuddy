@@ -6,7 +6,7 @@
 // left out — the figure never crashes the question.
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useId, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 import Svg, {
@@ -26,6 +26,7 @@ import Svg, {
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import {
+  BARE_FIGURE_CHROME,
   figureBodyWidth,
   figureScale,
   naturalFigureHeight,
@@ -70,8 +71,23 @@ export function formatNumber(n: number): string {
 /**
  * `maxHeight` keeps a drawing from pushing the answer off a small screen: a figure
  * that comes out taller is drawn again, narrower (its height follows its width).
+ *
+ * `bare`: the figure IS an answer option ("Welcher Graph passt?", issue #231). Then it names
+ * no formula — no legend under a graph, none in its description, which describes the graph
+ * by points it passes instead (a legend reading "y = x² − 1" would answer the question) —
+ * it draws no frame of its own (the option card is the frame), its height follows its width
+ * alone so four fit a phone, and it is not a screen-reader element of its own: the option
+ * that holds it says what it shows.
  */
-export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: number }) {
+export function FigureView({
+  figure,
+  maxHeight,
+  bare = false,
+}: {
+  figure: Figure;
+  maxHeight?: number;
+  bare?: boolean;
+}) {
   const { palette, figure: ink } = useTheme();
   const { t } = useTranslation('math');
   const [width, setWidth] = useState(0);
@@ -82,15 +98,15 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
   const scale = figureScale(fullHeight, maxHeight);
   const words = useSpokenWords();
   const description = useMemo(
-    () => describeFigure(figure, t, (s) => speakMathText(s, words)),
-    [figure, t, words],
+    () => describeFigure(figure, t, (s) => speakMathText(s, words), { formulas: !bare }),
+    [figure, t, words, bare],
   );
 
   return (
     <View
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={`${t('figure.label')}: ${description}`}
+      accessible={!bare}
+      accessibilityRole={bare ? undefined : 'image'}
+      accessibilityLabel={bare ? undefined : `${t('figure.label')}: ${description}`}
       onLayout={(e) => {
         const w = newFigureWidth(width, e.nativeEvent.layout.width);
         if (w !== null) {
@@ -101,11 +117,12 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
       style={{
         alignSelf: 'stretch',
         backgroundColor: ink.paper,
-        borderRadius: 16,
-        borderWidth: 1,
+        borderRadius: bare ? 12 : 16,
+        borderWidth: bare ? 0 : 1,
         borderColor: palette.hairline,
-        padding: 12,
-        minHeight: 60,
+        // Half the chrome on each side (BARE_FIGURE_CHROME / FIGURE_CHROME minus the border).
+        padding: bare ? BARE_FIGURE_CHROME / 2 : 12,
+        minHeight: bare ? 0 : 60,
       }}
     >
       {width > 0 ? (
@@ -120,21 +137,25 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
             if (h !== null) setFullHeight(h);
           }}
         >
-          <FigureBody figure={figure} width={figureBodyWidth(width, scale)} />
+          <FigureBody
+            figure={figure}
+            width={figureBodyWidth(width, scale, bare ? BARE_FIGURE_CHROME : undefined)}
+            bare={bare}
+          />
         </View>
       ) : null}
     </View>
   );
 }
 
-function FigureBody({ figure, width }: { figure: Figure; width: number }) {
+function FigureBody({ figure, width, bare }: { figure: Figure; width: number; bare: boolean }) {
   switch (figure.type) {
     case 'fraction':
       return <FractionPicture fig={figure} width={width} />;
     case 'number_line':
       return <NumberLine fig={figure} width={width} />;
     case 'function_plot':
-      return <FunctionPlot fig={figure} width={width} />;
+      return <FunctionPlot fig={figure} width={width} bare={bare} />;
     case 'bar_chart':
       return <BarChart fig={figure} width={width} />;
     case 'geometry':
@@ -338,7 +359,7 @@ function ticksFor(lo: number, hi: number, step: number): number[] {
 
 const DASHES: ReadonlyArray<string | undefined> = [undefined, '8 5', '2 4'];
 
-function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
+function FunctionPlot({ fig, width, bare }: { fig: PlotFig; width: number; bare: boolean }) {
   const { palette, figure: ink } = useTheme();
   const x0 = Math.min(fig.x_min, fig.x_max);
   const x1 = Math.max(fig.x_min, fig.x_max);
@@ -346,7 +367,10 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
   const y1 = Math.max(fig.y_min, fig.y_max);
   const xs = x1 - x0 || 1;
   const ys = y1 - y0 || 1;
-  const h = Math.round(Math.min(Math.max(width * 0.8, 220), 380));
+  // An option's graph is small by design: four of them share a phone (issue #231).
+  const h = bare
+    ? Math.round(Math.max(width * 0.8, 60))
+    : Math.round(Math.min(Math.max(width * 0.8, 220), 380));
   const ph0 = h - 12 - 8;
   const yStep = niceStep(ys, Math.max(4, Math.min(10, Math.floor(ph0 / 32))));
   const yTicks = ticksFor(y0, y1, yStep);
@@ -380,7 +404,10 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
     [fig.functions, x0, x1, y0, y1, pw, ph],
   );
 
-  const clipId = 'plot-clip';
+  // One id per drawing: on the web `url(#…)` finds the FIRST element with that id in the
+  // document, so with four option graphs and the viewer's large one on the same page a shared
+  // id clipped the large curve to the first small graph's box — and it vanished (issue #231).
+  const clipId = `plot-clip-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   return (
     <View style={{ gap: 8 }}>
       <Svg width={width} height={h}>
@@ -507,7 +534,8 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
               />
             </G>
           ))}
-        {x0 <= 0 && x1 >= 0 && y0 <= 0 && y1 >= 0 ? (
+        {/* On a small option picture the origin's 0 would sit on the −2 below it (issue #231). */}
+        {!bare && x0 <= 0 && x1 >= 0 && y0 <= 0 && y1 >= 0 ? (
           <SvgText
             fontFamily={FAMILY}
             x={axisY - 6}
@@ -557,7 +585,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
             </G>
           ))}
       </Svg>
-      {graphs.length > 0 ? (
+      {graphs.length > 0 && !bare ? (
         <View style={{ gap: 4 }}>
           {graphs.map((g) => (
             <View key={g.i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -999,7 +1027,12 @@ function Table({ fig }: { fig: TableFig }) {
 
 // ─────────────── description for screen readers ───────────────
 
-export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): string {
+export function describeFigure(
+  figure: Figure,
+  t: T,
+  speak: Speak = (s) => s,
+  { formulas = true }: { formulas?: boolean } = {},
+): string {
   const list = (items: string[]) => items.join(', ');
   switch (figure.type) {
     case 'fraction':
@@ -1024,6 +1057,18 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
       return `${base}. ${t('figure.marked', { list: list(pts) })}`;
     }
     case 'function_plot': {
+      // An answer option (issue #231): the graph by points it passes, never by its formula.
+      if (!formulas) {
+        const through = figure.functions
+          .map((f) => pointsOnGraph(f.expr, figure))
+          .filter((pts) => pts.length > 0)
+          .map((pts) =>
+            t('figure.graph_through', {
+              list: list(pts.map((p) => `(${formatNumber(p.x)} | ${formatNumber(p.y)})`)),
+            }),
+          );
+        if (through.length > 0) return through.join('. ');
+      }
       const parts = [
         t('figure.function_plot', {
           x_min: formatNumber(figure.x_min),
@@ -1032,7 +1077,7 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
           y_max: formatNumber(figure.y_max),
         }),
       ];
-      for (const f of figure.functions) {
+      for (const f of formulas ? figure.functions : []) {
         if (!compileExpression(f.expr)) continue;
         const expr = prettyExpr(f.expr);
         parts.push(
@@ -1091,4 +1136,29 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
     case 'staff':
       return describeStaff(figure, t);
   }
+}
+
+/** Most points named for one graph: enough to tell four apart, short enough to listen to. */
+const SPOKEN_POINTS = 5;
+
+/**
+ * Whole-number points a graph passes inside its window, at most five, spread over it
+ * ("durch (−2 | 3), (−1 | 0), (0 | −1) …"). What a sighted learner reads off the grid, in words.
+ */
+export function pointsOnGraph(
+  expr: string,
+  fig: Pick<PlotFig, 'x_min' | 'x_max' | 'y_min' | 'y_max'>,
+): Array<{ x: number; y: number }> {
+  const fn = compileExpression(expr);
+  if (!fn) return [];
+  const pts: Array<{ x: number; y: number }> = [];
+  for (let x = Math.ceil(fig.x_min); x <= Math.floor(fig.x_max); x++) {
+    const y = fn(x);
+    if (Number.isFinite(y) && y >= fig.y_min && y <= fig.y_max) {
+      pts.push({ x, y: Math.round(y * 100) / 100 });
+    }
+  }
+  if (pts.length <= SPOKEN_POINTS) return pts;
+  const step = (pts.length - 1) / (SPOKEN_POINTS - 1);
+  return Array.from({ length: SPOKEN_POINTS }, (_, k) => pts[Math.round(k * step)]!);
 }

@@ -302,6 +302,7 @@
     "marked": "Segnati: {{list}}",
     "function_plot": "Piano cartesiano, x da {{x_min}} a {{x_max}}, y da {{y_min}} a {{y_max}}",
     "graph": "Grafico di y = {{expr}}",
+    "graph_through": "Grafico che passa per {{list}}",
     "graph_named": "Grafico {{label}}: y = {{expr}}",
     "points": "Punti: {{list}}",
     "bar_chart": "Istogramma: {{list}}",

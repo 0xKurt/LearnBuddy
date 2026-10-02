@@ -37,6 +37,7 @@
   },
   "check": "Check",
   "choice_tried": "Already tried",
+  "choice_zoom_hint": "Press and hold to see the picture large.",
   "dispute": {
     "button": "This verdict is wrong",
     "confirm": "Take the verdict back",

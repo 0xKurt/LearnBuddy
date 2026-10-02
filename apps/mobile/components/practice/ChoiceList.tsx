@@ -9,6 +9,8 @@
 // In voice mode SpokenChoiceBar pins a big mic under the options: what she
 // says is sent as a text answer (the server matches it to a choice by its text).
 
+import type { Figure } from '@learnbuddy/shared-types/contracts';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View, type TextStyle } from 'react-native';
 
@@ -18,6 +20,8 @@ import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn, BTN_PAD_COMPACT, BTN_PAD_MD } from '../lb/Btn.js';
+import { ZoomViewer } from '../lb/ZoomViewer.js';
+import { describeFigure, FigureView } from '../math/FigureView.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
@@ -68,13 +72,33 @@ export function SpokenChoiceBar({ prompt, disabled, onText, onReadAgain }: Spoke
 
 type Props = {
   choices: string[];
+  /**
+   * One picture per option, parallel to `choices` (issue #231): the options ARE these
+   * pictures, shown two by two instead of the texts. Ignored unless there is one per option.
+   */
+  figures?: readonly Figure[] | null;
   /** Options already answered and judged not right. */
   tried: ReadonlySet<string>;
   disabled: boolean;
   onChoose: (index: number, choice: string) => void;
 };
 
-export function ChoiceList({ choices, tried, disabled, onChoose }: Props) {
+export function ChoiceList({ choices, figures, tried, disabled, onChoose }: Props) {
+  if (figures && figures.length === choices.length && choices.length > 0) {
+    return (
+      <FigureChoices
+        choices={choices}
+        figures={figures}
+        tried={tried}
+        disabled={disabled}
+        onChoose={onChoose}
+      />
+    );
+  }
+  return <TextChoices choices={choices} tried={tried} disabled={disabled} onChoose={onChoose} />;
+}
+
+function TextChoices({ choices, tried, disabled, onChoose }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const words = useSpokenWords();
@@ -154,6 +178,113 @@ export function ChoiceList({ choices, tried, disabled, onChoose }: Props) {
           );
         })}
       </View>
+    </View>
+  );
+}
+
+// ─────────────── pictures as options (issue #231) ───────────────
+//
+// "Welcher Graph passt zu f(x) = x² − 1?": the options are four small drawings, two by two,
+// each in the same white card as a text option, with its letter in the corner. A tap answers,
+// exactly as with words — one obvious way to use the form (#224, "Minimalismus"). Holding a
+// card opens its picture large in the viewer every figure already has (`ZoomViewer`): no
+// extra button, no legend, nothing new to learn. The option's TEXT is not shown: it may be
+// the very formula the question asks about. A screen reader hears the letter and the picture
+// in words, by points the graph passes — never its formula (FigureView `bare`).
+//
+// The size, on the narrow phone of rule 16 (what fits 360 fits 390):
+//   (360 − 2 × 16 − 8) / 2 = 160 pt a card − 2 × 12 pt padding = 136 pt for the drawing,
+//   a graph 4 : 5 as high as wide: ≈ 102 pt, plus 2 × 12 pt → two rows ≈ 260 pt.
+// The letter sits ON the drawing's top left corner instead of above it — a whole badge row
+// would cost both rows 30 pt and the question the room to stay on screen.
+
+/** No option picture taller than this — an odd figure (a long table) is scaled down to it. */
+export const FIGURE_CHOICE_MAX_HEIGHT = 120;
+
+function FigureChoices({
+  choices,
+  figures,
+  tried,
+  disabled,
+  onChoose,
+}: Props & { figures: readonly Figure[] }) {
+  const { palette } = useTheme();
+  const { t } = useTranslation('practice');
+  const { t: tm } = useTranslation('math');
+  const words = useSpokenWords();
+  const [zoomed, setZoomed] = useState<number | null>(null);
+  // What each option shows, in words (the letter first, as voice mode names them).
+  const spoken = useMemo(
+    () =>
+      figures.map(
+        (f, i) =>
+          `${letterFor(i)}: ${describeFigure(f, tm, (x) => speakMathText(x, words), { formulas: false })}`,
+      ),
+    [figures, tm, words],
+  );
+  const open = zoomed !== null ? figures[zoomed] : undefined;
+  return (
+    <View testID="figure-choices" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP }}>
+      {choices.map((choice, index) => {
+        const wasTried = tried.has(choice);
+        const figure = figures[index]!;
+        return (
+          <View
+            key={`${index}:${choice}`}
+            style={[
+              {
+                borderRadius: CARD_RADIUS,
+                backgroundColor: wasTried ? palette.canvas : palette.paper,
+                flexBasis: '45%',
+                flexGrow: 1,
+              },
+              wasTried ? null : SHADOW.soft,
+            ]}
+          >
+            <Btn
+              variant="ghost"
+              pill
+              full
+              wrap
+              compact
+              grow
+              disabled={disabled || wasTried}
+              onPress={() => onChoose(index, choice)}
+              onLongPress={() => setZoomed(index)}
+              accessibilityHint={wasTried ? t('choice_tried') : t('choice_zoom_hint')}
+              label={
+                <View style={{ gap: SPACE.xs }}>
+                  <View style={{ opacity: wasTried ? 0.5 : 1 }}>
+                    <FigureView figure={figure} bare maxHeight={FIGURE_CHOICE_MAX_HEIGHT} />
+                  </View>
+                  {/* On the drawing's empty top left corner, not in a row of its own. */}
+                  <View style={{ position: 'absolute', top: SPACE.xs, left: SPACE.xs }}>
+                    <LetterBadge letter={letterFor(index)} tried={wasTried} compact />
+                  </View>
+                  {wasTried ? (
+                    <Text style={[TYPE.label, { color: palette.ink2, fontWeight: '500' }]}>
+                      {t('choice_tried')}
+                    </Text>
+                  ) : null}
+                </View>
+              }
+            >
+              {spoken[index]!}
+            </Btn>
+          </View>
+        );
+      })}
+      <ZoomViewer
+        visible={open !== undefined}
+        onClose={() => setZoomed(null)}
+        label={zoomed !== null ? (spoken[zoomed] ?? '') : ''}
+      >
+        {open ? (
+          <View style={{ alignSelf: 'stretch' }}>
+            <FigureView figure={open} bare />
+          </View>
+        ) : null}
+      </ZoomViewer>
     </View>
   );
 }

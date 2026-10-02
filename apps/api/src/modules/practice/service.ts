@@ -132,6 +132,8 @@ export type ItemRow = {
   lang: string | null;
   prompt_lang: string | null;
   figure: Figure | null;
+  /** multiple_choice: one picture per option, parallel to `choices` (issue #231). */
+  choice_figures: Figure[] | null;
   hints: string[];
   worked_solution: string | null;
   tolerance: number | null;
@@ -757,7 +759,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.task, i.listen_task, i.staff_task, i.archived_at,
+            i.bar_task, i.task, i.listen_task, i.staff_task, i.archived_at, i.choice_figures,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -829,6 +831,8 @@ export async function sessionView(
         kind: i.kind,
         prompt: i.prompt,
         choices: i.choices,
+        // The options' pictures: data the app draws, never the key (that is the index).
+        choice_figures: i.kind === 'multiple_choice' ? i.choice_figures : null,
         unit: i.unit,
         topic: i.topic,
         origin: i.origin,

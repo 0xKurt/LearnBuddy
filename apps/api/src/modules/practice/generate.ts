@@ -69,7 +69,7 @@ import {
 } from './structured.js';
 import { TABLE_RULES } from './table.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.14';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.15';
 
 const SUBJECT_KINDS = [
   'math',
@@ -701,9 +701,17 @@ async function prepareTopic(
   );
 
   const head = await firstItems;
+  // The first questions as they would be stored. The schema let them through, but the checks
+  // that run before storing (`usableItems`, Regel 0) may still drop some — three graph
+  // questions whose graphs do not hold together are no start, and a run must not fail as "nothing
+  // to learn" while the questions after them are fine (found with issue #231). Then, as for a
+  // prefix that did not validate, the run starts on the finished answer.
+  const first = head
+    ? preparedFrom(head, learner, input, !!sheets, sheets?.topics ?? null, deps.speech)
+    : null;
   // The whole answer arrived before three questions could be cut out of it (a short set, a model
   // that does not stream, a prefix that did not validate): this is the ordinary path, unchanged.
-  if (!head) {
+  if (!head || !first || first.items.length < FIRST_BATCH) {
     const { set, err } = await whole;
     if (!set) throw err;
     return store(
@@ -722,7 +730,6 @@ async function prepareTopic(
 
   // Three questions stand there and the rest is still being written. The run starts on them, and
   // it says so from the moment it exists: there is no instant at which three look like all.
-  const first = preparedFrom(head, learner, input, !!sheets, sheets?.topics ?? null, deps.speech);
   const sessionId = await store(
     deps,
     learner,

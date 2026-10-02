@@ -96,6 +96,7 @@ const ITEM: ItemView = {
   lang: 'fr',
   prompt_lang: 'fr',
   figure: null,
+  choice_figures: null,
   image: null,
   tap_choices: null,
   surface: null,

@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { BuddyHome } from '../buddy.js';
+import { ItemView } from '../learning.js';
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const at = '2026-09-28T10:00:00.000Z';
@@ -101,5 +102,44 @@ describe('BuddyHome is forward compatible', () => {
     );
     expect(r.system).toMatchObject({ push: 'disabled', scheduler: 'unknown' });
     expect(r.working).toBeNull();
+  });
+});
+
+describe('ItemView reads pictures as options (issue #231)', () => {
+  const item = (extra: Record<string, unknown> = {}) => ({
+    id: id(40),
+    kind: 'multiple_choice',
+    prompt: 'Welcher Graph passt?',
+    choices: ['a', 'b'],
+    unit: null,
+    topic: null,
+    origin: 'buddy',
+    lang: null,
+    prompt_lang: 'de',
+    figure: null,
+    ...extra,
+  });
+  const plot = {
+    type: 'function_plot',
+    functions: [{ expr: 'x', label: null }],
+    x_min: -1,
+    x_max: 1,
+    y_min: -1,
+    y_max: 1,
+    points: [],
+  };
+
+  it('reads a question from a server that does not send them yet as one without pictures', () => {
+    expect(ItemView.parse(item()).choice_figures).toBeNull();
+  });
+
+  it('reads the pictures', () => {
+    expect(ItemView.parse(item({ choice_figures: [plot, plot] })).choice_figures).toHaveLength(2);
+  });
+
+  it('keeps the question when a picture is of a kind this build does not know', () => {
+    const r = ItemView.parse(item({ choice_figures: [plot, { type: 'hologram' }] }));
+    expect(r.choice_figures).toBeNull();
+    expect(r.choices).toEqual(['a', 'b']);
   });
 });
