@@ -45,7 +45,10 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   matter for the states, and at twelve verified places in
   [lehrplan-und-uebungsformen.md](lehrplan-und-uebungsformen.md) the same answer is right in one
   state and wrong in another — so without it Buddy can practise something with her that counts as
-  a mistake in her own class test. It is not an address and not a location: it is a choice from a
+  a mistake in her own class test. **Stand 02.10.2026: der Wert wird erhoben und gespeichert,
+  aber von keiner Stelle gelesen** (Issue #214). Der genannte Zweck ist also der beabsichtigte,
+  nicht der heute wirksame; bis eine Stelle ihn liest, ist dies ein Datum ohne Wirkung, und das
+  steht hier, statt dass es jemand herausfinden muss. It is not an address and not a location: it is a choice from a
   list of sixteen, it is never derived from the device, the IP address or any position, and it is
   not used for anything but which curriculum rules apply. **Retention:** until deletion, with the
   rest of the profile (`learners`); it is in `GET /account/export` with the other profile fields

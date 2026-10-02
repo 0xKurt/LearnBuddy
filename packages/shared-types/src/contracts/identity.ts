@@ -24,8 +24,14 @@ export const Pin = z.string().regex(/^\d{4,8}$/, '4–8 digits');
  *
  * `other` is the escape for a learner who is not at a German school (the app ships in five
  * languages): a required field with sixteen German states would be a dead end for her.
- * `other` is a given answer, not a missing one — but the curriculum places treat it exactly
- * like `null`: no state-specific rule is applied and Buddy judges cautiously.
+ * `other` is a given answer, not a missing one — and once the curriculum places exist they are
+ * to treat it exactly like `null`: no state-specific rule applied.
+ *
+ * STORED ONLY, NOT YET READ (issue #214, found by the audit in #223). Nothing in practice,
+ * generation, extraction, the tutor or Buddy's prompts looks at this value today; it is
+ * collected for a purpose that is not yet built. That is the uncomfortable state for a datum
+ * about a child, and it is written here rather than left for someone to discover: do not
+ * describe this field as effective until a place reads it and a test proves it.
  *
  * The model never writes this value (CLAUDE.md rule 2): it comes from a tap at registration.
  */
