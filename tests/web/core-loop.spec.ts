@@ -301,7 +301,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: /^Eingetragen: Mathearbeit Brüche/ }).click();
   await expect(page.getByText('Was du zurücknehmen kannst')).toBeVisible();
   await expect(
-    page.getByRole('button', { name: /^Rückgängig machen: Vorbereitet: Mathearbeit Brüche/ }),
+    page.getByRole('button', { name: /^Rückgängig: Vorbereitet: Mathearbeit Brüche/ }),
   ).toBeVisible();
   await shot(page, '09b-what-can-be-taken-back');
   await page.getByRole('button', { name: 'Schließen' }).click();

@@ -124,7 +124,7 @@
   },
   "done": {
     "undo": "Rückgängig",
-    "undo_label": "Rückgängig machen: {{what}}",
+    "undo_label": "Rückgängig: {{what}}",
     "undone": "rückgängig gemacht",
     "undo_request_material": "Kein Foto nötig",
     "undo_title": "Was du zurücknehmen kannst",
