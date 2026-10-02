@@ -475,7 +475,15 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   await pathShots(page, '38-path-broke');
 
   // She writes it again; a sound path is judged on the value it arrives at.
-  await field.fill('2x + 3 = 7\n2x = 4\nx = 2');
+  // pathShots ends by switching the colour scheme back, and a scheme change rebuilds the
+  // tree: a fill that lands during that rebuild is wiped, the pill shows the mic instead of
+  // "Prüfen", and the click waits until the test times out (CI, 02.10.2026). Fill until
+  // the field holds the path, then check.
+  const corrected = '2x + 3 = 7\n2x = 4\nx = 2';
+  await expect(async () => {
+    await field.fill(corrected);
+    await expect(field).toHaveValue(corrected, { timeout: 1000 });
+  }).toPass();
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
