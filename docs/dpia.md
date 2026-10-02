@@ -60,13 +60,13 @@ des Modells darf kein Datenschutzversprechen tragen.
 
 **Datenflüsse.**
 
-| Schritt               | Was fließt wohin                                                                                                                                            |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chat                  | Nachricht → eigene API (Vercel, Region `fra1`/Frankfurt, `apps/api/vercel.json`) → Google Vertex AI (EU-Endpunkt) → Antwort                                 |
-| Foto eines Blattes    | Foto → Supabase Storage (EU, privater Bucket) → Vertex AI liest es → Fragen in der Datenbank; das Foto wird 7 Tage nach dem Lesen gelöscht                  |
-| Sprechen              | Erkennung **auf dem Gerät**, wo sie die Sprache kann; sonst Aufnahme → eigene API → Vertex AI (EU). Die Aufnahme wird **nie gespeichert**, nur ihr Ergebnis |
-| Vorlesen              | ein Satz je Aufruf → Google Cloud TTS (nur EU-Endpunkt), Audio 24 h zwischengespeichert (`speech_cache`), ohne Namensfeld, Id oder Kontodaten               |
-| Erinnerung aufs Handy | nur wenn Kontakt außerhalb der App eingeschaltet ist (Standard: aus); Titel/Text ohne Noten und ohne persönliche Details                                    |
+| Schritt               | Was fließt wohin                                                                                                                                                                                                                                                                  |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chat                  | Nachricht → eigene API (Vercel, Region `fra1`/Frankfurt, `apps/api/vercel.json`) → Google Vertex AI (EU-Endpunkt) → Antwort                                                                                                                                                       |
+| Foto eines Blattes    | Foto → Supabase Storage (EU, privater Bucket) → Vertex AI liest es → Fragen in der Datenbank; das Foto wird 7 Tage nach dem Lesen gelöscht                                                                                                                                        |
+| Sprechen              | Erkennung **auf dem Gerät**, wo sie die Sprache kann; sonst Aufnahme → eigene API → Vertex AI (EU). Die Aufnahme wird **nie gespeichert**, nur ihr Ergebnis. Im Gesprächsmodus hört das Mikro auch, während Buddy spricht — aber nur als **Pegel** (Reinreden, #35), nie als Wort |
+| Vorlesen              | ein Satz je Aufruf → Google Cloud TTS (nur EU-Endpunkt), Audio 24 h zwischengespeichert (`speech_cache`), ohne Namensfeld, Id oder Kontodaten                                                                                                                                     |
+| Erinnerung aufs Handy | nur wenn Kontakt außerhalb der App eingeschaltet ist (Standard: aus); Titel/Text ohne Noten und ohne persönliche Details                                                                                                                                                          |
 
 **Auftragsverarbeiter** (Details und offene Punkte: `docs/privacy.md` §Processors): Supabase
 (Datenbank, Auth, Storage; EU-Region) · Google Vertex AI (Modell; nur `eu` oder `europe-*`,
