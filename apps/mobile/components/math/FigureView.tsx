@@ -34,6 +34,7 @@ import {
 import { plotFrame, Y_LABEL_GAP } from '../../lib/math/plotLayout.js';
 import { speakMathText } from '../../lib/math/speak.js';
 import { localDecimal } from '../../lib/numbers.js';
+import { legendText, prettyExpr } from '../../lib/math/legend.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { describeStaff } from '../../lib/music/words.js';
@@ -574,7 +575,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
                 />
               </Svg>
               <Text style={[TYPE.small, { color: palette.ink }]}>
-                {g.label ? `${g.label}: ` : ''}y = {prettyExpr(g.expr)}
+                {legendText(g.label, g.expr)}
               </Text>
             </View>
           ))}
@@ -632,38 +633,6 @@ function HaloText({
       </SvgText>
     </G>
   );
-}
-
-/** "x^2 - 2*x" → "x² − 2·x" for the legend. */
-export function prettyExpr(expr: string): string {
-  const sup: Record<string, string> = {
-    '0': '⁰',
-    '1': '¹',
-    '2': '²',
-    '3': '³',
-    '4': '⁴',
-    '5': '⁵',
-    '6': '⁶',
-    '7': '⁷',
-    '8': '⁸',
-    '9': '⁹',
-  };
-  return expr
-    .replace(/^\s*(?:y|[a-z]\s*\(\s*x\s*\))\s*=\s*/i, '')
-    .replace(/\^(\d+)/g, (_, d: string) =>
-      d
-        .split('')
-        .map((c) => sup[c] ?? c)
-        .join(''),
-    )
-    .replace(/\*/g, '·')
-    .replace(/-/g, '−')
-    .replace(/sqrt/g, '√')
-    .replace(/\bpi\b/g, 'π')
-    .replace(/\s*([+−=])\s*/g, ' $1 ')
-    .replace(/^ − /, '−')
-    .replace(/\(\s*−\s*/g, '(−')
-    .trim();
 }
 
 /** Samples f across the plot; lifts the pen at gaps (NaN, ±∞) and jumps (asymptotes). */

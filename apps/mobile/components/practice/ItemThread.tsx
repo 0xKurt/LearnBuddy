@@ -19,6 +19,7 @@ import { View } from 'react-native';
 import { moonForReply, type MoonState } from '../../lib/buddy/moon.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
@@ -36,6 +37,26 @@ const ORB_INDENT = 34;
  * the field keep their room, and a tap opens it full size.
  */
 const FIGURE_MAX = 180;
+/**
+ * As wide as a bubble, not as the screen: a figure drawn at full width is taller than it is
+ * useful (its height follows its width), and on a 360×740 phone it pushed Buddy's own sentence
+ * out of view. 220 keeps a function plot’s labels readable and the text above it on screen.
+ */
+const FIGURE_WIDTH = 220;
+
+/** The lines of a reply; a text without a line break stays one paragraph. */
+function paragraphs(text: string): string[] {
+  const lines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l !== '');
+  return lines.length > 0 ? lines : [text];
+}
+
+/** A line that is one maths run and nothing else ("$2x = 8$"). */
+function mathLine(line: string): boolean {
+  return /^\$[^$]+\$[.,]?$/.test(line);
+}
 
 /** null verdict = the answer could not be judged (no model), nothing was graded. */
 function verdictKey(verdict: PracticeTurnView['verdict']): VerdictKey | null {
@@ -126,7 +147,11 @@ export function ItemThread({
             {!mine && turn.figure ? (
               <View
                 testID="reply-figure"
-                style={{ alignSelf: 'stretch', paddingLeft: ORB_INDENT, maxWidth: '92%' }}
+                style={{
+                  alignSelf: 'stretch',
+                  paddingLeft: ORB_INDENT,
+                  maxWidth: ORB_INDENT + FIGURE_WIDTH,
+                }}
               >
                 <ZoomableFigure figure={turn.figure} maxHeight={FIGURE_MAX} />
               </View>
@@ -186,11 +211,36 @@ function Bubble({
         mine ? null : SHADOW.soft,
       ]}
     >
-      <MathText
-        text={text}
-        accessible={false}
-        style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
-      />
+      {/* One paragraph per line: MathText lays a line with math out as one wrapping row, where
+          a line break would be lost — and a step of a guided example (issue #298) is only
+          readable when each equation stands on a line of its own, like in an exercise book. */}
+      <View style={{ gap: SPACE.xs }}>
+        {paragraphs(text).map((line, i) => {
+          const body = (
+            <MathText
+              text={line}
+              accessible={false}
+              style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
+            />
+          );
+          // A line that is nothing but maths is a line of a calculation: it gets a rule on its
+          // left, like a worked line in an exercise book, so the steps stand out from the words.
+          return mathLine(line) ? (
+            <View
+              key={i}
+              style={{
+                borderLeftWidth: 3,
+                borderLeftColor: mine ? palette.paper : palette.primary,
+                paddingLeft: SPACE.sm,
+              }}
+            >
+              {body}
+            </View>
+          ) : (
+            <View key={i}>{body}</View>
+          );
+        })}
+      </View>
     </View>
   );
   if (mine) return bubble;

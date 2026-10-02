@@ -225,7 +225,6 @@
   "guide": {
     "ask": "Mostramelo passo per passo",
     "stop": "Continuo da solo",
-    "offer": "Passo per passo",
     "offer_label": "Mostramelo passo per passo",
     "offer_hint": "Buddy fa un passo, tu fai il successivo e lui lo controlla.",
     "leave": "Continuo da solo",

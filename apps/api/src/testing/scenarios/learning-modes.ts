@@ -29,6 +29,34 @@ function lastText(req: LlmRequest): string {
 }
 
 export function scriptLearningModes(llm: ScriptedGateway): void {
+  // The guided worked example and an explanation with a figure (issue #298): an equation she
+  // gets wrong twice and is then shown step by step, and a parabola question whose "Mit
+  // Beispiel" explanation comes with a drawing. Code checks every step (guide.ts); the model
+  // only supplies the plan, the tutor's words for the second miss and the explanation.
+  scriptGenerations({
+    when: /Vormachen/i,
+    answer: () => ({
+      usable: true,
+      title: 'Gleichungen zum Vormachen',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: [
+        {
+          ...base,
+          kind: 'numeric',
+          prompt: 'Löse: $2x + 3 = 11$',
+          answer: '4',
+          topic: 'Gleichungen',
+        },
+        {
+          ...base,
+          kind: 'short',
+          prompt: 'Welche Parabel ist schmaler: $y = x^2$ oder $y = 2x^2$?',
+          answer: 'y = 2x^2',
+          topic: 'Parabeln',
+        },
+      ],
+    }),
+  });
   // A written calculation path (issues #209, #221): an equation she solves line by line, then
   // a one-liner the return key sends. Registered first: a later learner's request may carry
   // older topics, and the first rule that matches wins. The model only supplies the items —
@@ -133,12 +161,29 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
   });
   // "Anders erklären" under a shown solution (the chips after a wrong try or a hint).
   llm.byDefault('reexplain', (req) =>
-    ScriptedGateway.textOf(req).includes('WAY: example')
+    ScriptedGateway.textOf(req).includes('Parabel')
       ? {
           explanation:
-            'Stell dir vor, du schenkst deiner Oma Blumen. Wem schenkst du sie? Der Oma – „der Oma“ ist der Dativ.',
+            'Im Bild siehst du beide: Bei $y = 2x^2$ steigt die Kurve doppelt so schnell – darum ist sie schmaler.',
+          figure: {
+            type: 'function_plot',
+            functions: [
+              { expr: 'x^2', label: 'a = 1' },
+              { expr: '2*x^2', label: 'a = 2' },
+            ],
+            x_min: -3,
+            x_max: 3,
+            y_min: -1,
+            y_max: 9,
+            points: [],
+          },
         }
-      : { explanation: 'Frag „Wem?“. Die Antwort darauf steht im Dativ.' },
+      : ScriptedGateway.textOf(req).includes('WAY: example')
+        ? {
+            explanation:
+              'Stell dir vor, du schenkst deiner Oma Blumen. Wem schenkst du sie? Der Oma – „der Oma“ ist der Dativ.',
+          }
+        : { explanation: 'Frag „Wem?“. Die Antwort darauf steht im Dativ.' },
   );
   // Hints are written in the background after each topic session starts (hints.ts);
   // the fractions question gets two, everything else none (tests/web/modes.spec.ts taps "Tipp").
@@ -384,6 +429,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ]),
     },
     {
+      when: /vormachen üben/i,
+      answer: says('Gern – ich hab dir Gleichungen zum Vormachen vorbereitet.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Gleichungen zum Vormachen' } },
+      ]),
+    },
+    {
       when: /mit rechenweg üben/i,
       answer: says('Gern – ich hab dir Gleichungen mit Rechenweg vorbereitet.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Gleichungen mit Rechenweg' } },
@@ -433,6 +484,25 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
   // Tutor: hints for homework (never the solution).
   const hint = (req: LlmRequest) => {
     const text = lastText(req).toLowerCase();
+    // The guided example (issue #298): the second wrong try at 2x + 3 = 11 — after it the server
+    // offers "Schritt für Schritt". She can also ask for it in words.
+    if (ScriptedGateway.textOf(req).includes('2x + 3 = 11')) {
+      return /zeig|wie geht/.test(text)
+        ? {
+            intent: 'show_me',
+            verdict: 'not_an_attempt',
+            reply: 'Klar, ich zeig es dir.',
+            gave_hint: false,
+            revealed_answer: false,
+          }
+        : {
+            intent: 'answer',
+            verdict: 'incorrect',
+            reply: 'Hast du die 3 schon auf die andere Seite gebracht?',
+            gave_hint: false,
+            revealed_answer: false,
+          };
+    }
     if (text.includes('28')) {
       return {
         intent: 'answer',
@@ -463,6 +533,25 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
   // By rule, not by count: how many hints a run asks for depends on timing, and a queue
   // that runs dry fails the *next* spec instead of this one (issue #81).
   llm.byDefault('tutor', hint);
+  // The plan of a guided example (issue #298): four lines that code checks before it shows one.
+  llm.byDefault('guide', (req) => {
+    if (!ScriptedGateway.textOf(req).includes('2x + 3 = 11')) {
+      throw new Error('no scripted guided example for this question');
+    }
+    return {
+      lines: [
+        { line: '2x + 3 = 11', say: 'Das ist die Gleichung aus der Aufgabe.', hint: '' },
+        {
+          line: '2x = 11 - 3',
+          say: 'Die 3 kommt auf die andere Seite – dort wird sie abgezogen.',
+          hint: 'Bring die 3 auf die rechte Seite.',
+        },
+        { line: '2x = 8', say: 'Rechts ausgerechnet.', hint: 'Rechne die rechte Seite aus.' },
+        { line: 'x = 4', say: 'Durch 2 geteilt.', hint: 'Teile beide Seiten durch 2.' },
+      ],
+      figure: null,
+    };
+  });
 
   // tests/web/offline.spec.ts: asked in the chat, then two short questions answered offline.
   // tests/web/offline.spec.ts: two short questions, both answered offline.

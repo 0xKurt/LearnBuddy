@@ -225,7 +225,6 @@
   "guide": {
     "ask": "Zeig's mir Schritt für Schritt",
     "stop": "Ich mach selbst weiter",
-    "offer": "Schritt für Schritt",
     "offer_label": "Zeig's mir Schritt für Schritt",
     "offer_hint": "Buddy macht einen Schritt vor, den nächsten machst du, und er prüft ihn.",
     "leave": "Selbst weiter",

@@ -41,6 +41,23 @@ export function HelpChips({
 
   return (
     <Rise delay={120}>
+      {/* Buddy's offer to show it (issue #298) has its own row and the whole sentence: it is a
+          suggestion of his, not one more tool, and three chips in one row wrapped raggedly on
+          every phone (390 and 360 alike). Soft, not ghost: it is the one thing he proposes. */}
+      {onGuide ? (
+        <View style={{ flexDirection: 'row', marginBottom: SPACE.xs }}>
+          <Btn
+            variant="soft"
+            size="sm"
+            pill
+            onPress={onGuide}
+            disabled={disabled ?? false}
+            accessibilityHint={t('guide.offer_hint')}
+          >
+            {t('guide.offer_label')}
+          </Btn>
+        </View>
+      ) : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.xs }}>
         {onHint ? (
           <Btn
@@ -52,19 +69,6 @@ export function HelpChips({
             accessibilityLabel={t('hint_label')}
           >
             {t('hint')}
-          </Btn>
-        ) : null}
-        {onGuide ? (
-          <Btn
-            variant="ghost"
-            size="sm"
-            pill
-            onPress={onGuide}
-            disabled={disabled ?? false}
-            accessibilityLabel={t('guide.offer_label')}
-            accessibilityHint={t('guide.offer_hint')}
-          >
-            {t('guide.offer')}
           </Btn>
         ) : null}
         {onLeaveGuide ? (

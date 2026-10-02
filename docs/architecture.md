@@ -1061,7 +1061,7 @@ reasons (#159 keeps that promise separate from the internal pilot).
 
 | What                            | Limit                                                                                                                                                                                                                                                                                                                           |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12, pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                                                                                                                           |
+| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12, pronounce 200, transcribe 400, hints 60, reexplain 60, guide 40, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                                                                                                                 |
 | Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                                                                                                                                                                                              |
 | Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                                                                                                                                                                                                       |
 | Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                                                                                                                                                                                                      |
@@ -2270,6 +2270,71 @@ that states an open task's answer (`mentionsSolution`, any notation) gets one re
 is stored (503 `reexplain_unavailable`). A model outage stores nothing (503 `model_unavailable`).
 Also after the last question closed and the session finished.
 
+An explanation may come with a **figure** (issue #298; `practice/explainFigure.ts`,
+`practice_turns.figure`, migration `0108_guided_examples.sql`): the same library as a question's
+figure (`ModelFigure` — function plot, number line, fraction, bar chart, geometry, table), written
+by the model as data and drawn by the app under Buddy's bubble (`ItemThread`, tap to zoom). Stricter
+than for a question: a question's figure is cleaned up, an explanation's is taken as written or not
+at all — every curve must compile and be defined on most of its window, something must be visible,
+every point inside the window, every reference resolved. A figure that fails is dropped and the
+words stand alone; a broken figure never costs the explanation (`.catch(null)` on the schema). In
+homework, the figure's labels and cells are checked for an open task's answer like the text.
+The buddy chat's own explanation (the turn) carries no figure yet: its decision schema is the one
+every turn pays for (#281 D2), and adding the six figure shapes there is a change to measure live
+first.
+
+**"Zeig's mir Schritt für Schritt" — the guided worked example** (issue #298;
+`POST /practice/sessions/:id/guide`, `…/guide/stop`; `practice/guide.ts`, `practice/guideFlow.ts`;
+table `guided_examples`, migration `0108_guided_examples.sql`; purpose `guide`, 40 a day). Good
+tutoring shows one step, lets her do the next, checks it and goes on. In the question's own
+conversation, no new screen:
+
+- **Offered** (`SessionItemView.guide_offered`, a chip "Schritt für Schritt") in practice only,
+  after the second wrong try (`GUIDE_OFFER_AFTER`), once per question, and only where code can
+  follow the steps (`guideKindFor`): a calculation (`numeric`, `formula`, a `short` whose key is a
+  math line) or a free text (`long`). Never in a test or in homework help; never for fraction bars,
+  note lines, boards or listening. Typing "zeig mir wie" starts it at any try: the tutor classifies
+  it as intent `show_me` (tutor.v8) — no word list (rule 3).
+- **The plan** is one model call and is checked before anything is shown (Regel 0, both ways).
+  A calculation: 3–8 lines, every line readable by `steps.ts`, every step equivalent to the one
+  before, no repeated line, the last line the key by the same `ruleCheck` every answer gets, the
+  first not yet; an explanation that states the result before the end rejects the plan, a hint
+  that states its own line is dropped (as `hints.ts` does). A text: 2–4 key points with an example
+  sentence each (3–40 words); with a rubric (#211) the points ARE its judged elements, names and
+  "what is missing" from the rubric. A rejected plan gets one second try with the reason; rejected
+  again, the row is stored as `unavailable` (the offer does not return) and she is told plainly.
+  A model outage stores nothing (503 `model_unavailable`).
+- **Running**: Buddy shows line 1 → line 2 (or the first key point with its example); what she
+  sends now is her NEXT STEP — `answerItem` sees the active guide and checks it in code:
+  `sameStep` against the last line that holds (Buddy's or hers), several lines in order. Her own
+  way is accepted while it follows; Buddy then only shows a further line when she followed the
+  plan's line exactly, and she always writes the last line herself. A line that IS the result
+  closes the question as solved with help (never first try: the guide counts as a hint when it
+  starts). A line code cannot read is never called wrong and not counted. Two misses on one step:
+  Buddy shows it; shown on the last step, the question closes as shown. A step is not an attempt:
+  no hint ladder, no third-try solution, no FSRS, no rubric verdict. "Tipp" is off while it runs.
+  A text point counts only when the model says it is there AND its quote stands in her text
+  (`rubric.ts` `quoteHolds`); after the last point the guide ends without a grade and the text is
+  hers to write whole. Each step moves the row behind its own fence (`at`/`misses` as read) in the
+  answer's transaction.
+- **In the app** (`HelpChips`, `ItemThread`, `AnswerComposer`): the offer is Buddy's suggestion
+  on a row of its own, a soft pill with the whole sentence ("Zeig's mir Schritt für Schritt"),
+  above "Tipp · Lösung zeigen"; while it runs, "Selbst weiter" takes its place and the field says
+  "Deine nächste Zeile …". Buddy's bubble renders one paragraph per line, and a line that is
+  nothing but maths gets a rule on its left like a worked line in an exercise book — the step
+  texts put each equation on its own line for that. A figure stands under the bubble, bubble-wide
+  (220 pt), tap to zoom; a legend label that only repeats its curve is said once
+  (`lib/math/legend.ts`). Walkthrough: `tests/web/modes.spec.ts` "shown step by step", light and
+  dark.
+- **Leaving**: "Selbst weiter" (`…/guide/stop`) ends it; the question is open exactly as before
+  and "Tipp" is back. Both routes are idempotent per `client_turn_id` and answer like an answer.
+- **A known limit**, measured by the grade-10 eval (docs/evals/klasse10.md): with one variable
+  `steps.ts` compares equations by proportional differences, so a right step through a root, a
+  logarithm or a reciprocal (x² = 4 → x = 2 is rightly refused; 1/R = 1/2 → R = 2 is wrongly
+  refused) reads as "does not follow". The guide counts a line that is the result whatever the
+  step before, so the end is never refused; a plan that needs such a step in the middle is
+  rejected and the question goes on without a guided example.
+
 ### Learning modes (migration `0003_learning_modes.sql`)
 
 Questions come from a photo (`material`), from Buddy on a topic the learner named (`buddy`,
@@ -2902,6 +2967,18 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   `evals/speak` and `evals/voice` additionally need `espeak-ng` on the machine (they speak the
   test sentences themselves). Without it they stop with `spawnSync espeak-ng ENOENT` — that is
   a missing tool, not a broken eval.
+- **Grade-10 teaching eval** (issue #298, `evals/grade10`, `pnpm --filter @learnbuddy/api
+eval:grade10`, method and results in `docs/evals/klasse10.md`): eleven real Klasse-10 cases
+  (maths, physics, chemistry, German, English, history) through the real turn; a judge scores
+  subject correctness, clarity for 15/16-year-olds, curriculum fit and whether the length fits
+  (1–5, against the case's facts and pitfalls); code counts the words; a pairwise judge compares
+  each answer with a teacher reference ONCE IN EACH ORDER and a verdict that flips is counted as
+  position bias, never as a result; the real model writes a guided-example plan for every case with
+  a task and code checks it as the app does. It writes the report and a sheet for a human sample
+  (every flagged case plus a seeded draw); the filled sheet is read back with `GRADE10_HUMAN` into
+  agreement numbers, from the saved run (`GRADE10_FROM`) without paying for the model again. All of
+  that logic is unit-tested offline (`evals/grade10/__tests__`), and every task's reference path
+  passes the plan check.
 - **Regression comparison between prompt versions** (issue #80): "36/36" alone cannot show an
   answer that got worse while still passing. `BUDDY_EVAL_OUT=a.json npx tsx evals/buddy/run.ts`
   writes a transcript of the run — prompt version, model, time, every case's answer, options,

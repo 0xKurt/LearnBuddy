@@ -27,11 +27,11 @@ const turn = (over: Partial<PracticeTurnView>): PracticeTurnView => ({
 });
 
 describe('Schritt für Schritt', () => {
-  it('bietet das Vormachen als Chip an, mit dem ganzen Satz für den Screenreader', () => {
+  it('bietet das Vormachen als Buddys Vorschlag an, mit dem ganzen Satz', () => {
     const onGuide = vi.fn();
     renderInApp(<HelpChips onHint={() => {}} onGuide={onGuide} onReveal={() => {}} />);
     const chip = screen.getByRole('button', { name: "Zeig's mir Schritt für Schritt" });
-    expect(chip.textContent).toBe('Schritt für Schritt');
+    expect(chip.textContent).toBe("Zeig's mir Schritt für Schritt");
     fireEvent.click(chip);
     expect(onGuide).toHaveBeenCalledTimes(1);
   });

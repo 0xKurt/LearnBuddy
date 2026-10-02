@@ -225,7 +225,6 @@
   "guide": {
     "ask": "Show me step by step",
     "stop": "I'll go on myself",
-    "offer": "Step by step",
     "offer_label": "Show me step by step",
     "offer_hint": "Buddy shows one step, you do the next, and he checks it.",
     "leave": "Go on myself",

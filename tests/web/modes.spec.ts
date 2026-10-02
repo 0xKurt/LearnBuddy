@@ -719,3 +719,99 @@ test('the task typed back and a decay that does not add up, both named by code (
   ).toBeVisible();
   await bothSchemes(page, '42-decay-unbalanced');
 });
+
+/**
+ * Shown step by step, then explained with a figure (issue #298) — once in each colour scheme.
+ *
+ * Twice, because switching the scheme rebuilds the screen and a rebuilt practice opens the next
+ * open question: a closed question (solved, explained) can only be shot in the scheme the run is
+ * in. The open states are shot in both schemes by the light run.
+ */
+async function guideFlow(page: Page, scheme: 'light' | 'dark'): Promise<void> {
+  await onboardChild(page);
+  // The scheme is set once, before anything is typed: a switch rebuilds the tree, and a fill
+  // that lands during the rebuild is wiped.
+  await page.emulateMedia({ colorScheme: scheme });
+  await settle(page);
+  const both = async (name: string) => {
+    if (scheme === 'light') await bothSchemes(page, name);
+  };
+  const ask = 'Ich will Gleichungen vormachen üben';
+  const chat = page.getByLabel('Schreib Buddy …');
+  await expect(async () => {
+    await chat.fill(ask);
+    await expect(chat).toHaveValue(ask, { timeout: 1000 });
+  }).toPass();
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(
+    page.getByText('Gleichungen zum Vormachen vorbereitet', { exact: false }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: START }).last().click();
+  await expect(page.getByText('Löse:', { exact: false }).first()).toBeVisible();
+  const field = page.getByLabel('Deine Antwort');
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  // A scheme switch (bothSchemes) rebuilds the tree, and a fill that lands during it is wiped —
+  // the pill then shows the mic instead of "Prüfen" (see the written-path test above). Fill until
+  // the field holds the line, then check.
+  const send = async (line: string) => {
+    await expect(async () => {
+      await field.fill(line);
+      await expect(field).toHaveValue(line, { timeout: 1000 });
+    }).toPass();
+    await check.click();
+  };
+
+  // No offer before she has tried: the first wrong try is a slip.
+  const offer = page.getByRole('button', { name: "Zeig's mir Schritt für Schritt" });
+  await send('5');
+  await expect(page.getByText('Noch nicht ganz', { exact: false }).last()).toBeVisible();
+  await expect(offer).toHaveCount(0);
+  // The second one is a gap: now Buddy offers to show it.
+  await send('6');
+  await expect(page.getByText('Hast du die 3 schon', { exact: false })).toBeVisible();
+  await expect(offer).toBeVisible();
+  await both('60-guide-offer');
+
+  // Buddy shows the first step; the field now asks for her next line, and the way out is there.
+  await offer.click();
+  await expect(page.getByText('Ich zeig dir den ersten Schritt', { exact: false })).toBeVisible();
+  await expect(page.getByPlaceholder('Deine nächste Zeile …')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Selbst weiter' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tipp', exact: true })).toHaveCount(0);
+  await both('61-guide-first-step');
+
+  // A line that does not follow: named, with the step's hint, and not counted as a try.
+  await send('2x = 9');
+  await expect(page.getByText('Diese Zeile folgt noch nicht', { exact: false })).toBeVisible();
+  await expect(page.getByText('Rechne die rechte Seite aus.', { exact: false })).toBeVisible();
+  await both('62-guide-miss');
+
+  // Her line holds; the last one is hers too, and it closes the question.
+  await send('2x = 8');
+  await expect(page.getByText('Stimmt, die Zeile folgt.', { exact: false }).last()).toBeVisible();
+  await send('x = 4');
+  await expect(
+    page.getByText('Den letzten Schritt hast du selbst gemacht', { exact: false }),
+  ).toBeVisible();
+  await shot(page, `63-guide-solved-${scheme}`);
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // "Mit Beispiel" after a shown solution: the explanation comes with the parabolas, drawn by
+  // the app from data, under Buddy's bubble.
+  await expect(page.getByText('Welche Parabel', { exact: false }).first()).toBeVisible();
+  await send('y = x^2');
+  await expect(page.getByText('Noch nicht ganz', { exact: false }).last()).toBeVisible();
+  await page.getByRole('button', { name: 'Lösung zeigen' }).click();
+  await page.getByRole('button', { name: 'Mit Beispiel', exact: true }).click();
+  await expect(page.getByText('Im Bild siehst du beide', { exact: false })).toBeVisible();
+  await expect(page.getByTestId('reply-figure')).toBeVisible();
+  await shot(page, `64-explain-figure-${scheme}`);
+}
+
+test('shown step by step, then explained with a figure (issue #298)', async ({ page }) => {
+  await guideFlow(page, 'light');
+});
+
+test('shown step by step, then explained with a figure, dark (issue #298)', async ({ page }) => {
+  await guideFlow(page, 'dark');
+});
