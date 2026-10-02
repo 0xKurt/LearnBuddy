@@ -1,0 +1,22 @@
+{
+  "name": "@learnbuddy/buddy-kit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "create-buddy and provision: a new, independent Buddy app from this repository (issue #107).",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

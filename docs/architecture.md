@@ -3074,6 +3074,19 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
 - Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). The pre-commit
   hook and CI set `LB_REQUIRE_TEST_DB=1`, so a missing database fails the gate; only a plain
   `pnpm test` outside them skips the database tests.
+- **The API's own database role is versioned and tested** (issue #107): it used to exist only
+  live, made by hand, while every test ran as superuser. `infra/supabase/templates/api-role.sql`
+  (psql, idempotent) creates it — login, DML on `public`, execute on its functions, default
+  privileges for later migrations, BYPASSRLS because every table has RLS without policies; no
+  superuser, no DDL, nothing in `auth`. `api-role.int.test.ts` applies it with psql exactly as the
+  operator does and runs a whole account through the API **as that role** (sign-up, material,
+  export, deletion by the tick, `/v1/health`); the harness option `connectAs` makes that possible
+  for any test. Not verified live: whether hosted Supabase lets `postgres` grant BYPASSRLS (the
+  template names the fallback). How a new Buddy app is set up from this repository:
+  [buddy-kit.md](buddy-kit.md).
+- **Export and deletion completeness** (`export-completeness.int.test.ts`, issue #32): read from
+  `information_schema`, every column naming a learner or account cascades from it, and every such
+  table is in `GET /account/export` — a new table without an export entry fails the gate.
 - The app keys (anon, authenticated) reach nothing in the database: the test shim grants what a
   hosted Supabase project grants by default, and `database-exposure.int.test.ts` fails for any
   public function they can execute or any table without row level security.
