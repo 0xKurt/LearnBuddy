@@ -250,7 +250,8 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   adult's job is declined in one friendly sentence that names what he can do instead. The line is
   drawn by **purpose, not topic** — every school subject is learning, also the delicate ones, and
   an unclear purpose is asked about, never refused. No word lists (rule 3); the boundary lives in
-  the prompt and is checked by `evals/buddy` (`de_scope_*`, `de_insult_stays_calm`), because no
+  the prompt and is checked by `evals/buddy` (`de_scope_*`, `de_insult_stays_calm` — 20 runs,
+  §Testing, issue #225), because no
   code can tell learning from not-learning. What code does carry: the account budgets
   (§Limits) cap how much anyone can use a stolen session for.
 - **Injected text** (issue #39). STATE, the conversation, lookup results and the text of
@@ -2849,6 +2850,14 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   present in only one file are listed, not guessed about, so partial runs (`run.ts case-id …`)
   compare too. The comparison itself is pure and unit-tested
   (`evals/buddy/__tests__/compare.test.ts`); only producing the transcripts costs money.
+- **Repeated cases** (issue #225): a model decision is not deterministic, and a case that fails
+  one run in five is not checked by one run. A case can carry `repeat: { runs, maxFailures }`;
+  `evals/buddy/run.ts` then runs it that often, each on a fresh database, and fails it when more
+  than `maxFailures` runs fail (`evals/buddy/repeat.ts`, unit-tested in
+  `__tests__/repeat.test.ts`). `de_insult_stays_calm` runs 20 times with `maxFailures: 0` — the
+  issue's acceptance is that an insult never leads to the crisis number. Measured before this
+  (02.10.2026): about one run in five set `concern`, so this case is expected to **fail** until
+  the cause is fixed; twenty clean runs bound the rate to roughly 15 % or less, not to zero.
 - Integration against a real Postgres (`src/__tests__/*.int.test.ts`, harness in
   `src/testing/`): every test file gets its own database created from a template with the real
   migrations. Only the outside world is replaced: a scripted model (every call must be scripted;
