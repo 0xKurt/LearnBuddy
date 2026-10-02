@@ -53,6 +53,18 @@ Ich lege die Struktur an und dokumentiere, was hineingehört. **Die Werte musst 
 Für das interne Testen mit einem Dev-Build ist das egal — vor einer Store-Einreichung ist es
 der eine Punkt, der sie stoppt.
 
+Seit dem 02.10. verschwinden Datenschutz und Impressum nicht mehr still: `apps/mobile/lib/env.ts`
+lässt einen Release-Build ohne `EXPO_PUBLIC_PRIVACY_URL` oder `EXPO_PUBLIC_IMPRINT_URL` nicht
+starten. Das greift beim **Öffnen** der App, nicht beim Bauen — deshalb die Prüfzeile unten.
+
+### Release-Checkliste (vor jeder Store-Einreichung)
+
+Die alte Checkliste lebte in Issue #44 (Test vom 29.09., veraltet, `docs/issue-audit-2026-10-01.md`
+§#44). Was vor einer Einreichung geprüft wird, steht ab jetzt hier.
+
+- [ ] **App installieren, Einstellungen → Über öffnen. Fehlt die Datenschutz-Zeile, ist der Build
+      nicht einreichbar.** (#130)
+
 ---
 
 ## 4 · Fachliche Prüfungen, die kein Code ersetzt

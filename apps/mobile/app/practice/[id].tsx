@@ -1136,6 +1136,10 @@ export default function PracticeScreen() {
                   // A spoken answer: the judgement's words belong here, the marked sentence
                   // stays in the card (issue #14).
                   pronunciation={item.kind === 'speak'}
+                  // While a structured question is open her answer stands on its board, not in a
+                  // bubble (ItemThread). Once it is closed the board is gone, there is room, and
+                  // the bubble with its verdict shows what she did, like any other answer.
+                  echoAnswers={!(structured && open)}
                 />
                 {session.mode === 'help' && shown.status === 'correct' ? (
                   <Rise delay={180}>
