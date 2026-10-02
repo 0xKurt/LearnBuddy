@@ -80,7 +80,10 @@ const TABLE: Row[] = [
     { id: 'C-1', item: numeric('2.375'), text: '2,375', locale, expect: ['correct', 'unknown'] },
     { id: 'C-1', item: numeric('1.250'), text: '1,25', locale, expect: 'correct' },
     { id: 'C-1', item: numeric('0.001'), text: '1', locale, expect: 'incorrect' },
-    { id: 'C-1', item: numeric('0.125'), text: '1/8', locale, expect: 'unknown' },
+    // Was 'unknown' until issue #227: the rules KNOW the value is right, and handing that over
+    // as "not decidable" let the tutor call it wrong for the value. Now it goes over as
+    // 'other_form' — right in value, the form still the tutor's call (decision D-3 stands).
+    { id: 'C-1', item: numeric('0.125'), text: '1/8', locale, expect: 'other_form' },
   ]),
   { id: 'C-1', item: numeric('0.125'), text: '0.125', locale: 'en', expect: 'correct' },
   // H-2: "0,125" for an English profile is not 125.
@@ -118,16 +121,29 @@ const TABLE: Row[] = [
     locale: 'de',
     expect: 'incorrect',
   },
-  // C-3: mixed numbers.
-  { id: 'C-3', item: numeric('3.5'), text: '3 1/2', locale: 'de', expect: ['correct', 'unknown'] },
+  // C-3: mixed numbers. 'other_form' where it used to be 'unknown' (issue #227): the value is
+  // the same, and whether the form was asked for stays the tutor's call.
+  {
+    id: 'C-3',
+    item: numeric('3.5'),
+    text: '3 1/2',
+    locale: 'de',
+    expect: ['correct', 'other_form'],
+  },
   {
     id: 'C-3',
     item: numeric('1.5', { unit: 'h' }),
     text: '1 1/2 h',
     locale: 'de',
-    expect: ['correct', 'unknown'],
+    expect: ['correct', 'other_form'],
   },
-  { id: 'C-3', item: numeric('3 1/2'), text: '3,5', locale: 'de', expect: ['correct', 'unknown'] },
+  {
+    id: 'C-3',
+    item: numeric('3 1/2'),
+    text: '3,5',
+    locale: 'de',
+    expect: ['correct', 'other_form'],
+  },
   { id: 'C-3', item: numeric('3 1/2'), text: '3 1/2', locale: 'de', expect: 'correct' },
   { id: 'C-3', item: numeric('3.5'), text: '15,5', locale: 'de', expect: 'incorrect' },
   // C-4: percent is a unit.
@@ -443,8 +459,12 @@ describe('a question that asks for an amount, not a notation (issue #162)', () =
 
   it('changes nothing for a key the model wrote (decision D-3 stands)', () => {
     expect(check(written, '2/4')).toBe('correct');
-    expect(check(written, '1/2')).toBe('unknown');
-    expect(check(written, '0,5')).toBe('unknown');
+    // Still not 'correct' — whether "1/2" counts for a key of "2/4" (reduced? asked for in
+    // that form?) is the tutor's call, and that is decision D-3 unchanged. What changed with
+    // issue #227 is only WHAT the tutor is told: not "I cannot decide", but "the value is the
+    // same, the form is your call" — so it can no longer call it wrong for the value.
+    expect(check(written, '1/2')).toBe('other_form');
+    expect(check(written, '0,5')).toBe('other_form');
   });
 });
 

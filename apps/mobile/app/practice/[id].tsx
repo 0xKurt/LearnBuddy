@@ -13,6 +13,11 @@
 // "Frage passt nicht" (a quiet button, then a confirm sheet) takes a question
 // from a photo or from Buddy out for good — not for homework, not in a test.
 //
+// A flashcard pass is the same route and a different screen (issue #147, Stufe 2): the
+// session says `card_pass`, nothing in it is graded, and `components/practice/CardPass.tsx`
+// takes over. Keeping it here means every way into a session — Buddy's home card, the result
+// screen's offer, a link — lands in the right place without knowing which pass it is.
+//
 // Voice mode ("Sprachmodus", the headphones switch in the header): each new
 // question is read aloud (choices as "A: …, B: …", a vocab prompt in its own
 // language), and so is Buddy's reply with the verdict word after every answer.
@@ -47,6 +52,7 @@ import { Sheet } from '../../components/lb/Sheet.js';
 import { toast } from '../../components/lb/Toast.js';
 import { useSpokenWords } from '../../components/math/useSpokenMath.js';
 import { AnswerComposer } from '../../components/practice/AnswerComposer.js';
+import { CardPass } from '../../components/practice/CardPass.js';
 import { BottomBar } from '../../components/practice/BottomBar.js';
 import { ChoiceList, SpokenChoiceBar } from '../../components/practice/ChoiceList.js';
 import {
@@ -81,8 +87,9 @@ import {
   hintItem,
   reexplainItem,
   revealItem,
+  startCardPass,
 } from '../../lib/api/endpoints.js';
-import { keys, queryClient, usePracticeSession } from '../../lib/api/queries.js';
+import { keys, queryClient, seedSession, usePracticeSession } from '../../lib/api/queries.js';
 import { useDraft } from '../../lib/drafts.js';
 import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
@@ -240,7 +247,11 @@ export default function PracticeScreen() {
 
   // Voice mode: a question is read aloud once when it appears (or when voice mode is switched on).
   const onScreen = session ? questionOnScreen(session, pinnedId) : null;
-  const toRead = onScreen && onScreen.status === 'open' ? onScreen.item : null;
+  // A flashcard pass is not read aloud and never arms the mic: there is no answer to listen
+  // for (issue #147). The card itself offers "Anhören" for the word, which is the control
+  // that makes sense there.
+  const toRead =
+    onScreen && onScreen.status === 'open' && !session?.card_pass ? onScreen.item : null;
   // Hands-free (lib/speech/handsFree.ts): once she started a mic here herself, reading
   // to the end lets the mic listen again, and a closed question moves on by itself.
   const readQuestion = (item: ItemView) =>
@@ -335,6 +346,28 @@ export default function PracticeScreen() {
     } catch (err) {
       toast.show(messageFor(err), 'error');
       setFinishFailed(true);
+    }
+  }
+
+  /**
+   * "Die Wörter als Karten durchgehen" (issue #147): the server picks the words of this
+   * finished run that did not sit and opens the pass in place of the result — the result has
+   * been read by then, and the pass is where she is now.
+   */
+  async function goThroughCards(): Promise<void> {
+    if (working.current) return;
+    working.current = true;
+    haptic.tap();
+    setBusy(true);
+    try {
+      const pass = await startCardPass(id);
+      seedSession(pass);
+      router.replace(`/practice/${pass.id}`);
+    } catch (err) {
+      toast.show(messageFor(err), 'error');
+    } finally {
+      working.current = false;
+      setBusy(false);
     }
   }
 
@@ -600,6 +633,13 @@ export default function PracticeScreen() {
   }
 
   const title = session.title.trim() || t('practice:title_fallback');
+
+  // ─────────────── a flashcard pass ───────────────
+
+  if (session.card_pass) {
+    return <CardPass session={session} title={title} onChange={store} onClose={close} />;
+  }
+
   const shown = questionOnScreen(session, pinnedId);
 
   // ─────────────── nothing left to answer ───────────────
@@ -640,7 +680,26 @@ export default function PracticeScreen() {
               {/* Weiterüben ist immer einen Tipp entfernt (issue #47): das Wacklige zuerst,
                   sonst mehr vom Sitzenden — und wenn die Zusammenfassung keine Themen kennt,
                   die der Fragen selbst. Eine Übung endet nie in einer Sackgasse. */}
-              {session.mode !== 'help' && againTopics.length > 0 ? (
+              {/* Lernkarten statt tippen (issue #147): wo die Wiederholung ganz aus Vokabeln
+                  besteht, geht sie als Karten durch — nicht NEBEN „nochmal üben", sondern an
+                  seiner Stelle. Zwei Wege zum selben Ziel wären genau die Wahl, die die App
+                  ihr abnehmen soll (Regel 16), und für zwanzig Wörter auf dem Handy ist
+                  Tippen das, worüber der Owner sich beschwert hat. Der Server entscheidet,
+                  wann das gilt (practice/cards.ts offersCardPass). */}
+              {session.card_pass_offered ? (
+                <Btn
+                  size="lg"
+                  variant="soft"
+                  pill
+                  icon="practice"
+                  full
+                  busy={busy}
+                  onPress={() => void goThroughCards()}
+                  accessibilityHint={t('practice:cards.offer_hint')}
+                >
+                  {t('practice:cards.offer')}
+                </Btn>
+              ) : session.mode !== 'help' && againTopics.length > 0 ? (
                 <AgainButton
                   {...(session.summary.shaky_topics.length > 0 ? {} : { kind: 'harder' as const })}
                   title={session.title}

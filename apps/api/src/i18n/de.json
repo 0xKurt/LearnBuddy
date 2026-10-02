@@ -60,6 +60,8 @@
       "worked_add": "Beide Brüche sind in {{parts}} gleich große Teile geteilt. Zusammen sind {{answer}} gefärbt."
     },
     "cannot_check": "Das kann ich gerade nicht prüfen. Du kannst dir die Lösung ansehen und selbst vergleichen.",
+    "card_knew": "Wusste ich",
+    "card_not_yet": "Noch nicht",
     "correct": "Stimmt – gut gemacht!",
     "had_enough": "Okay — für heute reicht es auch. Du kannst die Übung beenden, oder wir machen noch ein kleines Beispiel zusammen. Sag einfach, was dir lieber ist.",
     "heard_retry": "Ich konnte dich nicht gut verstehen. Sprich nochmal etwas lauter und näher am Handy.",

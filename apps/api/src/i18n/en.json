@@ -60,6 +60,8 @@
       "worked_add": "Both fractions are divided into {{parts}} equal parts. Together {{answer}} is shaded."
     },
     "cannot_check": "I can't check that right now. You can look at the solution and compare yourself.",
+    "card_knew": "I knew it",
+    "card_not_yet": "Not yet",
     "correct": "That's right – well done!",
     "had_enough": "Okay — that is enough for today if you want. You can end the practice, or we do one small example together. Just say which you would rather.",
     "heard_retry": "I couldn't hear you well. Try again a bit louder and closer to the phone.",

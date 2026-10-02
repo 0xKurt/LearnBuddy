@@ -63,6 +63,7 @@ import { SHADOW } from '../lib/theme/shadow.js';
 import {
   acceptMissingPages,
   answerContactOptIn,
+  clarifyUnclear,
   reportOutcome,
   retryMaterial,
   sendMessageStreamed,
@@ -130,6 +131,8 @@ export default function BuddyScreen() {
   const [letGo, setLetGo] = useState<CaptureDraft | null>(null);
   /** The photo of the page Buddy could not read, while it is on the phone. */
   const [pageThumb, setPageThumb] = useState<string | null>(null);
+  /** The same for the page a spot could not be read on (issue #164): her own photo, whole. */
+  const [unclearThumb, setUnclearThumb] = useState<string | null>(null);
   const letGoRef = useRef<CaptureDraft | null>(null);
   letGoRef.current = letGo;
   // The KAV adjusts only while this screen is focused: keyboard events fired on a
@@ -175,6 +178,24 @@ export default function BuddyScreen() {
     };
     // Only when the page in question changes.
   }, [missingPage]);
+  // The page a spot sits on, from the app's own copy of what she sent — no crop and no
+  // coordinates from the model, which could not settle this spot in the first place.
+  const unclearNow = home.data?.notice?.type === 'unclear_spot' ? home.data.notice : null;
+  const unclearPage = unclearNow ? `${unclearNow.photo_material_id}:${unclearNow.page}` : null;
+  useEffect(() => {
+    if (!unclearNow) {
+      setUnclearThumb(null);
+      return;
+    }
+    let alive = true;
+    void drafts.sentPage(unclearNow.photo_material_id, unclearNow.page).then((uri) => {
+      if (alive) setUnclearThumb(uri);
+    });
+    return () => {
+      alive = false;
+    };
+    // Only when the page in question changes.
+  }, [unclearPage]);
   const readingId =
     home.data?.now?.type === 'material_processing' ? home.data.now.material_id : null;
   useEffect(() => {
@@ -668,6 +689,11 @@ export default function BuddyScreen() {
   // opposite of what she sees (issue #82).
   const shownDraft = attachedCount > 0 ? null : (draft ?? letGo);
   const missing = h.notice?.type === 'pages_missing' ? h.notice : null;
+  // One spot Buddy could not read, asked with the readings to tap (issue #164): she is holding
+  // the sheet, so the words say which task it is and she only has to say which reading. Never a
+  // cut-out of the photo — a box would come from the same reading that could not settle this
+  // spot, and a wrong one would show her another task of her own sheet.
+  const unclear = h.notice?.type === 'unclear_spot' ? h.notice : null;
   // Told at the end of the conversation, never as a card on top (lib/homeLayout.ts,
   // issue #17): the sheet that could not be read, and the finished practice.
   const failedNow = layout.failed && h.now?.type === 'material_failed' ? h.now : null;
@@ -730,6 +756,59 @@ export default function BuddyScreen() {
             {t('capture:draft.undo')}
           </Btn>
         )}
+      </NoticeBubble>
+    ) : null,
+    unclear ? (
+      <NoticeBubble
+        key="unclear"
+        text={
+          unclear.photo_count > 1
+            ? t('buddy:now.unclear_title', { page: unclear.page, about: unclear.spot.about })
+            : t('buddy:now.unclear_title_single', { about: unclear.spot.about })
+        }
+        detail={
+          unclear.spot.status === 'answered'
+            ? t('buddy:now.unclear_writing', { reading: unclear.spot.answer ?? '' })
+            : [unclear.spot.task, t('buddy:now.unclear_pick')].join('\n')
+        }
+        thumb={unclearThumb}
+      >
+        {/* Her answer is one of the readings the server offered, by its own alias — and
+            "weiß ich nicht" is always there, so the ask is never a wall. */}
+        {unclear.spot.status === 'open'
+          ? unclear.spot.readings.map((r) => (
+              <Btn
+                key={r.ref}
+                size="sm"
+                variant={quiet}
+                disabled={busy}
+                accessibilityLabel={t('buddy:now.unclear_reading_label', { reading: r.text })}
+                onPress={() =>
+                  void act(async () => {
+                    await clarifyUnclear(unclear.material_id, unclear.spot.ref, r.ref);
+                    await refresh();
+                  })
+                }
+              >
+                {r.text}
+              </Btn>
+            ))
+          : null}
+        {unclear.spot.status === 'open' ? (
+          <Btn
+            size="sm"
+            variant="ghost"
+            disabled={busy}
+            onPress={() =>
+              void act(async () => {
+                await clarifyUnclear(unclear.material_id, unclear.spot.ref, null);
+                await refresh();
+              })
+            }
+          >
+            {t('buddy:now.unclear_unknown')}
+          </Btn>
+        ) : null}
       </NoticeBubble>
     ) : null,
     missing ? (

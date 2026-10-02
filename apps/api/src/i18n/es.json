@@ -60,6 +60,8 @@
       "worked_add": "Las dos fracciones están divididas en {{parts}} partes iguales. Juntas hay {{answer}} coloreado."
     },
     "cannot_check": "Ahora mismo no puedo comprobarlo. Puedes ver la solución y compararla tú.",
+    "card_knew": "Lo sabía",
+    "card_not_yet": "Todavía no",
     "correct": "¡Correcto, muy bien!",
     "had_enough": "Vale, por hoy ya está bien. Puedes terminar el ejercicio, o hacemos un ejemplo pequeño juntos. Dime qué prefieres.",
     "heard_retry": "No te he oído bien. Inténtalo otra vez un poco más alto y más cerca del móvil.",

@@ -152,6 +152,37 @@ export type FocusRow = {
   updated_at: Date;
 };
 
+/**
+ * One spot on a sheet that could not be read, as Buddy sees it (issue #164 point 1,
+ * migration 0070). He may ask about it in his own words — the app asks it as a card with the
+ * readings to tap, and both say the same thing, as with the pages that could not be read.
+ */
+export type UnclearSpotBrief = {
+  /** The alias her answer names ('u1'); the server resolves it (CLAUDE.md rule 2). */
+  ref: string;
+  /**
+   * The material whose PHOTOS hold the spot — the sheet itself, unless these pages were added
+   * to an earlier one. The app shows that page from its own copy on the phone, so it has to be
+   * the right material or she would be looking at another page of her sheet.
+   */
+  material_id: string;
+  page: number;
+  /** How many pages that material has, so "page 2" is only said where there are several. */
+  photo_count: number;
+  /** The task as printed, so he can say WHICH one in the words she read on her sheet. */
+  task: string;
+  about: string;
+  readings: string[];
+  /**
+   * open: the ask stands · answered: she picked one and the question is being written ·
+   * read: the reading ran and added nothing (`items_added` 0) — said out loud, never swallowed.
+   */
+  status: 'open' | 'answered' | 'read';
+  /** The reading she confirmed, once she has. */
+  answer: string | null;
+  items_added: number;
+};
+
 export type MaterialBrief = {
   id: string;
   title: string | null;
@@ -170,6 +201,11 @@ export type MaterialBrief = {
    * can practise (issue #198). Buddy names them instead of letting the sheet look done.
    */
   not_practicable: NotPracticable[];
+  /**
+   * Spots the reading could not settle, where the smallest clarification is to ask HER
+   * (issue #164 point 1). Empty for almost every sheet.
+   */
+  unclear: UnclearSpotBrief[];
   created_at: Date;
   /**
    * When the reading failed (migration 0056). A send given up after a day fails a full day
@@ -476,7 +512,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     [learnerId, LIMITS.topics, now],
   );
 
-  const materials = await db.query<MaterialBrief>(
+  const materialRows = await db.query<Omit<MaterialBrief, 'unclear'>>(
     `select m.id, m.title, m.status, m.failure_reason, m.subject_id, m.goal_id, m.created_at,
             m.failed_at, m.photo_count,
             -- Pages not read: while unanswered, and for a day after the reading (the sheet is
@@ -498,6 +534,32 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
       limit $2`,
     [learnerId, LIMITS.materials, now],
   );
+  // Spots one of her sheets could not be read at, and what became of her answer (issue #164
+  // point 1). Three states reach Buddy, and no others: `open` while the ask still stands (it
+  // expires by itself — nothing nags), `answered` while the question is being written from her
+  // reading, and a reading that added nothing after she answered, for a day, because her answer
+  // disappearing without a word would be the opposite of rule 5. Attached to the sheet she sees.
+  const unclearRows = await db.query<UnclearSpotBrief & { sheet_id: string }>(
+    `select s.sheet_id, s.ref, s.material_id, s.page, p.photo_count, s.task, s.about, s.readings,
+            s.status, s.answer, s.items_added
+       from material_unclear_spots s
+       join materials m on m.id = s.sheet_id
+       join materials p on p.id = s.material_id
+      where s.learner_id = $1 and m.archived_at is null
+        and (s.status = 'answered'
+             or (s.status = 'open' and s.expires_at > $2)
+             or (s.status = 'read' and s.items_added = 0
+                 and s.read_at > $2::timestamptz - interval '24 hours'))
+      order by s.seq
+      limit $3`,
+    [learnerId, now, LIMITS.materials * 2],
+  );
+  const materials: MaterialBrief[] = materialRows.map((m) => ({
+    ...m,
+    unclear: unclearRows
+      .filter((u) => u.sheet_id === m.id)
+      .map(({ sheet_id: _sheet, ...spot }) => spot),
+  }));
 
   // The newest sessions, and every one still open however old (the scheduler closes idle
   // ones, practice/lifecycle.ts): an open homework is never out of reach (audit H-7).

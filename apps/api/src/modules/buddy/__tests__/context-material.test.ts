@@ -34,6 +34,7 @@ const material = (over: Partial<MaterialBrief>): MaterialBrief => ({
   status: 'ready',
   items_incomplete: false,
   not_practicable: [],
+  unclear: [],
   failure_reason: null,
   subject_id: null,
   goal_id: null,

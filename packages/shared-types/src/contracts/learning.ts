@@ -101,6 +101,46 @@ export const PageProblem = z.object({
 });
 export type PageProblem = z.infer<typeof PageProblem>;
 
+/** How many readings one unclear spot may offer: two is the usual case, four the most. */
+export const MOST_UNCLEAR_READINGS = 4;
+
+/** One reading a spot could be, with the alias the learner's answer names (CLAUDE.md rule 2). */
+export const UnclearReading = z.object({
+  /** 'r1' … 'r4', issued by the server from the position. */
+  ref: z.string().regex(/^r[1-9][0-9]*$/),
+  /** The reading as the model offered it ("12"), shown on the button she taps. */
+  text: z.string().min(1).max(60),
+});
+export type UnclearReading = z.infer<typeof UnclearReading>;
+
+/**
+ * One spot on a sheet the reading could not settle, and the smallest clarification it needs
+ * (issue #164 point 1, migration 0070). Before this, an unreadable digit cost the whole page:
+ * the page counted as partly read, the learner was asked to photograph it again, and the
+ * question for that task was never written — she never learned WHERE it stuck, so she could
+ * not help.
+ *
+ * The ask is in words, with the page she sent beside it: a box would have to come from the
+ * same model that just said it could not read this spot, and a wrong box shows her the wrong
+ * part of her own sheet. She taps one of `readings` — never free text the model would have to
+ * interpret — and the question for `task` is written from the reading SHE confirmed. Until
+ * then that question does not exist, and the rest of the sheet is ready and practicable.
+ */
+export const UnclearSpot = z.object({
+  /** 'u1', 'u2' … unique per sheet; her answer names this, never an id (rule 2). */
+  ref: z.string().regex(/^u[1-9][0-9]*$/),
+  /** The task as PRINTED, so she recognises which one is meant. */
+  task: z.string().min(1).max(120),
+  /** What about it could not be read, in a few words ("die erste Zahl"). */
+  about: z.string().min(1).max(80),
+  readings: z.array(UnclearReading).min(2).max(MOST_UNCLEAR_READINGS),
+  /** open: waiting for her · answered: she picked one and the question is being written. */
+  status: z.enum(['open', 'answered']),
+  /** The reading she confirmed, once she has (never a guess of the model's). */
+  answer: z.string().nullable(),
+});
+export type UnclearSpot = z.infer<typeof UnclearSpot>;
+
 export const CreateMaterialRequest = z.object({
   client_request_id: Uuid,
   /**
@@ -343,6 +383,22 @@ export const RenameMaterialRequest = z.object({
 });
 export type RenameMaterialRequest = z.infer<typeof RenameMaterialRequest>;
 
+/**
+ * Her answer to one unclear spot (issue #164 point 1). Both aliases were issued by the server
+ * and are resolved by it: nothing here is an id, a date or free text to be interpreted.
+ * `reading: null` is "weiß ich nicht" — the ask closes and no question is written for it.
+ */
+export const ClarifyUnclearRequest = z.object({
+  /** The spot's alias on this sheet ('u1'). */
+  spot: z.string().regex(/^u[1-9][0-9]*$/),
+  /** The reading she picked ('r2'), or null to let the ask go. */
+  reading: z
+    .string()
+    .regex(/^r[1-9][0-9]*$/)
+    .nullable(),
+});
+export type ClarifyUnclearRequest = z.infer<typeof ClarifyUnclearRequest>;
+
 export const SessionItemView = z.object({
   item: ItemView,
   /** missed: answered wrong in a test (one try, closed). */
@@ -363,6 +419,10 @@ export const SessionItemView = z.object({
   /**
    * Only once the item is closed — and after a finished test also for a question she never
    * got to (status still open: "nicht bearbeitet").
+   *
+   * A flashcard pass (`SessionView.card_pass`) is the one place where an OPEN item carries
+   * it: there the answer is the back of the card, which the pass exists to show her
+   * (issue #147).
    */
   answer: z.string().nullable(),
 });
@@ -427,6 +487,20 @@ export const SessionView = z.object({
   reveal_allowed: z.boolean(),
   status: z.enum(['active', 'finished', 'abandoned']),
   title: z.string(),
+  /**
+   * A flashcard pass instead of a run of questions to answer (issue #147): the card turns
+   * over and SHE says whether she knew it. Nothing here is checked — no answer to type, no
+   * verdict, no tutor, no hints, no "Lösung zeigen" — so every item carries its answer (the
+   * back of the card) while it is still open, and the one way on is `CardRequest`. The
+   * `mode` stays what it was: a card pass IS practice, just a different pass over it.
+   */
+  card_pass: z.boolean().default(false),
+  /**
+   * A flashcard pass over the words of THIS finished run can be started from it
+   * (`POST /practice/sessions/:id/cards`): it holds vocabulary that did not sit. The server
+   * decides it, with the same rule that picks the cards — the app never re-derives it.
+   */
+  card_pass_offered: z.boolean().default(false),
   items: z.array(SessionItemView),
   turns: z.array(PracticeTurnView),
   current_item_id: Uuid.nullable(),
@@ -471,6 +545,35 @@ export type AnswerRequest = z.infer<typeof AnswerRequest>;
 /** "Tipp": the next prepared hint for an open question — at once, no model. */
 export const HintRequest = z.object({ client_turn_id: Uuid, item_id: Uuid });
 export type HintRequest = z.infer<typeof HintRequest>;
+
+/**
+ * POST /practice/sessions/:id/cards — go through the words of a finished run as flashcards
+ * (issue #147, Stufe 2). The server picks them: the vocabulary of that run which did not
+ * sit. Idempotent per `client_request_id`, so a lost answer never starts a second pass.
+ */
+export const StartCardPassRequest = z.object({ client_request_id: Uuid });
+export type StartCardPassRequest = z.infer<typeof StartCardPassRequest>;
+
+/**
+ * What she says about a card once it has turned over. It is a SELF-ASSESSMENT, not a checked
+ * answer, and the two are deliberately not worth the same: `not_yet` is believed in full
+ * (nobody claims to have failed when they did not, and believing it only means more
+ * practice), while `knew_it` schedules more carefully than a measured right answer would —
+ * see `apps/api/src/modules/practice/fsrs.ts`.
+ */
+export const CardRecall = z.enum(['knew_it', 'not_yet']);
+export type CardRecall = z.infer<typeof CardRecall>;
+
+/**
+ * POST /practice/sessions/:id/card — one card of a flashcard pass, recorded. Idempotent per
+ * `client_turn_id` like an answer: tapping twice, or a retry after a lost reply, records one.
+ */
+export const CardRequest = z.object({
+  client_turn_id: Uuid,
+  item_id: Uuid,
+  recall: CardRecall,
+});
+export type CardRequest = z.infer<typeof CardRequest>;
 
 /**
  * "Anders erklären": a new explanation, written by the model, after a closed question's

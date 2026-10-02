@@ -349,8 +349,12 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
 
     // The same value in another form (C-3, D-3) and the task typed again (H-1): the tutor judges.
+    // What it is TOLD differs, and that is issue #227: for the mixed number the rules know the
+    // value is right and say so, instead of "not decidable" — which the tutor was allowed to
+    // answer with "wrong". For the typed-back task they really cannot decide.
     env.llm.script('tutor', (req) => {
-      expect(ScriptedGateway.textOf(req)).toContain('RULE CHECK: not decidable by rules');
+      expect(ScriptedGateway.textOf(req)).toContain('RULE CHECK: the VALUE is right');
+      expect(ScriptedGateway.textOf(req)).not.toContain('not decidable by rules');
       return tutor('ok', { verdict: 'correct', gave_hint: false }).json;
     });
     expect((await answer(l, s, mixed, '3 1/2')).body.verdict).toBe('correct');

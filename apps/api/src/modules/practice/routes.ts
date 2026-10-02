@@ -2,10 +2,12 @@
 
 import {
   AnswerRequest,
+  CardRequest,
   HintRequest,
   ReexplainRequest,
   SpeakRequest,
   SpeakWordRequest,
+  StartCardPassRequest,
   StartPracticeRequest,
   StartTopicRequest,
   Uuid,
@@ -24,6 +26,7 @@ import {
 import { check, readBody } from '../../http/validate.js';
 import { isAppError } from '../../lib/errors.js';
 import { runLearnerJobs } from '../buddy/check.js';
+import { recordCard, startCardPass } from './cardPass.js';
 import { startTopic } from './generate.js';
 import { prepareHints } from './hints.js';
 import { reexplain } from './reexplain.js';
@@ -113,6 +116,32 @@ practiceRoutes.post('/sessions/:id/items/:itemId/dispute', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const itemId = check(Uuid, c.req.param('itemId'));
   return c.json(await disputeVerdict(depsOf(c), c.get('learner').id, sessionId, itemId));
+});
+
+/**
+ * "Die Wörter als Karten durchgehen" (issue #147, Stufe 2): a flashcard pass over the
+ * vocabulary of this finished run that did not sit. Idempotent per `client_request_id`; 404
+ * when there is nothing to put on cards, 409 while the run is still going or from a pass
+ * that is itself cards.
+ */
+practiceRoutes.post('/sessions/:id/cards', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, StartCardPassRequest);
+  const deps = depsOf(c);
+  const learnerId = c.get('learner').id;
+  const id = await startCardPass(deps, learnerId, sessionId, input);
+  return c.json(await sessionView(deps.db, learnerId, id, deps.storage), 201);
+});
+
+/**
+ * One card of a flashcard pass, as SHE judged it ("Wusste ich" / "Noch nicht"). Nothing is
+ * graded and no model is called; the review it writes weighs less than a checked answer
+ * (`practice/fsrs.ts` RATING). Idempotent per `client_turn_id`.
+ */
+practiceRoutes.post('/sessions/:id/card', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, CardRequest);
+  return c.json(await recordCard(depsOf(c), c.get('learner'), sessionId, input));
 });
 
 practiceRoutes.post('/sessions/:id/finish', async (c) => {

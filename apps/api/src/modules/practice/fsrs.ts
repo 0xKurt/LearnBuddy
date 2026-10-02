@@ -2,8 +2,12 @@
 // how it went — first try without help = Good, needed hints or retries =
 // Hard, revealed or skipped = Again. (The legacy app reviewed on every single
 // attempt, which is not how FSRS is meant to be fed.)
+//
+// A flashcard pass feeds the same table through the same function, with its own two
+// outcomes — because what she says about a card was never checked, and the schedule must
+// not come out of it claiming otherwise (issue #147; see `RATING` below).
 
-import { createEmptyCard, fsrs, generatorParameters, Rating, type Card } from 'ts-fsrs';
+import { createEmptyCard, fsrs, generatorParameters, Rating, type Card, type Grade } from 'ts-fsrs';
 
 import type { Db } from '../../lib/db.js';
 
@@ -11,7 +15,52 @@ import type { Db } from '../../lib/db.js';
 // session, so every review schedules whole days ahead.
 const scheduler = fsrs(generatorParameters({ enable_short_term: false }));
 
-export type ItemOutcome = 'first_try' | 'with_help' | 'revealed';
+/**
+ * How one review of a question came about.
+ *
+ * The first three are OBSERVED: code or the tutor compared her answer with the key.
+ * The last two are REPORTED — a flashcard turned over and she said herself whether she knew
+ * it (issue #147, Stufe 2). Nothing checked those, and the difference is kept all the way
+ * into `item_states.last_outcome`, so a later reader can still see what an interval was
+ * built on.
+ */
+export type ItemOutcome = 'first_try' | 'with_help' | 'revealed' | 'self_known' | 'self_unknown';
+
+/**
+ * What each outcome is worth to the schedule.
+ *
+ * The three observed ones are the original ladder: right on the first try without help is
+ * `Good`, right after hints or retries is `Hard`, shown or skipped is `Again`.
+ *
+ * The two reported ones are deliberately NOT symmetrical, and that asymmetry is the whole
+ * design of the flashcard pass:
+ *
+ *   · `self_unknown` ("Noch nicht") → `Again`, exactly what a revealed answer gets. A report
+ *     of failure is the one self-assessment that can be taken at face value: nobody claims
+ *     to have failed a word they knew, and if she were wrong about it, the only cost is that
+ *     the word comes back sooner than it had to. Erring towards more practice claims less,
+ *     not more (CLAUDE.md rule 5).
+ *
+ *   · `self_known` ("Wusste ich") → `Hard`, NOT the `Good` a checked first try earns. `Hard`
+ *     still counts as a successful recall — it is not a lapse, the card stays on its way
+ *     forward — but it schedules the next look sooner than `Good` would. That is the honest
+ *     shape of the evidence: she says she recalled it, and nothing measured whether she did.
+ *     Giving it `Good` would let the schedule push the word weeks out on her own say-so, and
+ *     the app would then be claiming she knows a word nobody ever saw her produce. Children
+ *     over-rate recognition in particular — seeing "le vélo" next to "das Fahrrad" feels
+ *     exactly like knowing it — so the error this guards against is the likely one.
+ *
+ * It is the same decision as `answered_by = 'tapped'` (issue #163), one layer deeper: a
+ * weaker kind of evidence counts, and counts for less, instead of being either thrown away
+ * or quietly promoted to the strong kind.
+ */
+export const RATING: Record<ItemOutcome, Grade> = {
+  first_try: Rating.Good,
+  with_help: Rating.Hard,
+  revealed: Rating.Again,
+  self_known: Rating.Hard,
+  self_unknown: Rating.Again,
+};
 
 type StateRow = {
   due: Date;
@@ -74,9 +123,7 @@ export async function reviewItem(
         ...(prev.last_review ? { last_review: prev.last_review } : {}),
       }
     : createEmptyCard(now);
-  const rating =
-    outcome === 'first_try' ? Rating.Good : outcome === 'with_help' ? Rating.Hard : Rating.Again;
-  const next = scheduler.next(card, now, rating).card;
+  const next = scheduler.next(card, now, RATING[outcome]).card;
   await db.query(
     `insert into item_states (item_id, learner_id, due, stability, difficulty, elapsed_days, scheduled_days,
                               reps, lapses, state, last_review, last_outcome, updated_at)

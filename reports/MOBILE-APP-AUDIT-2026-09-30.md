@@ -8,6 +8,22 @@
 
 ---
 
+## Stand 2026-10-02 — dieser Bericht ist teilweise überholt
+
+Der Bericht beschreibt `9ad15ae`. Seitdem ist ein Teil davon abgearbeitet (#130, #131, #132, #133, #140), und **ein Haken in diesem Bericht ist kein Beleg**: beim Abarbeiten von #133 stellte sich heraus, dass drei Zeilen, die als erledigt durchgegangen wären, es nicht waren (die Support-Mail hatte keinen Text, der Wurzelrahmen abonnierte die Palette nie). Wer diesen Bericht als Quelle benutzt, prüft jede Zeile gegen den heutigen Code, nicht gegen ihren Status hier.
+
+Die drei TL;DR-Punkte, am 2026-10-02 im Code nachgesehen:
+
+1. **eas.json — halb erledigt.** `lib/env.ts` verweigert einen Release-Build jetzt auch ohne `EXPO_PUBLIC_PRIVACY_URL` und `EXPO_PUBLIC_IMPRINT_URL`, mit einer Meldung, die beide nennt (#130). Die unsichtbare Lücke ist damit laut. Offen bleiben die Werte selbst und `build.production.env` — die liegen beim Owner.
+2. **Passwortwechsel — behoben.** `apps/api/src/auth/verifier.ts:55,165` (`signOutOthers`), aufgerufen in `modules/identity/routes.ts:443` (#131).
+3. **Bestätigungsmail — behoben.** `lib/auth/supabase.ts:113` (`resendConfirmation`), verdrahtet in `app/welcome.tsx` samt Abkühlzeit (#132).
+
+Ebenso überholt: **Deep Links (Priorität 8).** Die Deklarationen waren bei `9ad15ae` vorhanden (`app.json` Zeile 15 `associatedDomains`, Zeile 57 `autoVerify`) und wurden in `2b60836` entfernt — die zweite der beiden vorgeschlagenen Lösungen. `app.json` deklariert heute keine Universal/App Links mehr, die App benutzt ihr `learnbuddy://`-Schema; es gibt nichts zu hosten.
+
+Weiter im heutigen Code sichtbar erledigt: Priorität 4 (Benachrichtigungs-Icon), 6 (Drücken-Zustand in `CircleBtn` und `Checkbox`), 7 (`keyboardAppearance` aus der Palette, plus zwei Achsen Farbe/Modus mit `system` als Standard, #140), 10 (Warteschlange, Dauer nach Ton, Angebot im Toast), 14 (Diagnose in der Support-Mail), 15 (`ITSAppUsesNonExemptEncryption`). Nicht nachgeprüft in diesem Nachtrag: 5, 9, 11, 12, 13, 16, 17, 18.
+
+---
+
 ## TL;DR
 
 LearnBuddy is a chat-first learning companion: one calm screen, Buddy in front, everything else behind tools. The implementation quality is unusually high for a pre-launch app — a single design system with palette tokens, one shared component per pattern, screen-reader announcements on every state change, an answer outbox that survives app kills, an offline banner with paused queries, on-device photo downscaling and quality checks, a parents' PIN enforced **server-side**, and automated checks that most shipped apps do not have (axe-core at every walkthrough stop, a "fits a 360×740 phone" gate, five-language key parity). Nine of the audit's domains are genuinely 🟢.

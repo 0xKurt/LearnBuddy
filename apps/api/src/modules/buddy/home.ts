@@ -146,11 +146,43 @@ async function workingOf(deps: Deps, learnerId: string, now: Date): Promise<Budd
 }
 
 /**
- * Pages Buddy could not read, while the sheet is still at hand (a day after the reading,
- * applied in loadBuddyState so Buddy's context says the same): Buddy says it at the end of
- * the conversation; the rest of the sheet is ready (docs/architecture.md §Material).
+ * The one thing Buddy tells at the end of the conversation about a sheet he could not read
+ * completely, while it is still at hand (a day after the reading, the window applied in
+ * loadBuddyState so Buddy's context says the same thing).
+ *
+ * The SMALL question comes first (issue #164 point 1): a spot he could not settle, asked with
+ * the readings to tap, so one smudged digit costs one tap and not a new photo of the whole page.
+ * Only then the coarse step — the pages that could not be read at all. One at a time, never a
+ * queue of asks: the next one stands here once this is answered or has let itself go.
  */
 function noticeOf(state: BuddyState): HomeNotice | null {
+  for (const want of ['open', 'answered'] as const) {
+    for (const m of state.materials) {
+      if (m.status !== 'ready') continue;
+      const spot = m.unclear.find((u) => u.status === want);
+      if (!spot) continue;
+      return {
+        type: 'unclear_spot',
+        // Her answer belongs to the sheet; the photos may have come as pages added to it, and
+        // the app finds that page in its own copy on the phone.
+        material_id: m.id,
+        title: m.title,
+        page: spot.page,
+        photo_count: spot.photo_count,
+        photo_material_id: spot.material_id,
+        spot: {
+          ref: spot.ref,
+          task: spot.task,
+          about: spot.about,
+          // The alias of each reading is issued here, from its position: her tap answers with
+          // it and the server resolves it back (CLAUDE.md rule 2).
+          readings: spot.readings.map((text, i) => ({ ref: `r${i + 1}`, text })),
+          status: want,
+          answer: spot.answer,
+        },
+      };
+    }
+  }
   const missing = state.materials.find((m) => m.status === 'ready' && m.page_problems.length > 0);
   if (!missing) return null;
   return {

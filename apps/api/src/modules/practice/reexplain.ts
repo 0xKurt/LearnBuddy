@@ -38,6 +38,7 @@ import {
   type PracticeLearner,
 } from './service.js';
 import { cleanPunctuation, cutToWords, REEXPLAIN_MAX_WORDS } from './brief.js';
+import { CARD_PASS } from './cards.js';
 import { mentionsSolution } from './tutor.js';
 
 export const REEXPLAIN_PROMPT_VERSION = 'reexplain.v3';
@@ -133,6 +134,13 @@ export async function reexplain(
   if (session.status === 'abandoned') throw new AppError('conflict', 'Session has ended');
   if (session.mode === 'test' && session.status === 'active') {
     throw new AppError('conflict', 'No explanations during a test', {
+      reason: 'reexplain_not_allowed',
+    });
+  }
+  // A flashcard pass has no explanation to redo: nothing was explained, and nothing judged
+  // (issue #147). One path per session — see modules/practice/cardPass.ts.
+  if (session.pass === CARD_PASS) {
+    throw new AppError('conflict', 'A card pass explains nothing to redo', {
       reason: 'reexplain_not_allowed',
     });
   }

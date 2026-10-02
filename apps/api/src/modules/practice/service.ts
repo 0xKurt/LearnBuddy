@@ -56,6 +56,8 @@ import {
 import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems } from './selection.js';
 import { tapChoicesFor } from './tapChoices.js';
+import { CARD_PASS, offersCardPass } from './cards.js';
+import { MAX_ACCEPTED } from './items.js';
 import {
   TUTOR_PROMPT_VERSION,
   TUTOR_SYSTEM,
@@ -122,6 +124,13 @@ export type SessionRow = {
   mode: SessionMode;
   status: 'active' | 'finished' | 'abandoned';
   title: string | null;
+  /**
+   * Which kind of pass this run is (migration 0069): null means its questions are answered
+   * and checked; 'cards' means the card turns over and she says herself whether she knew it
+   * (issue #147, `cards.ts`). Deliberately not a fourth `mode` — a card pass IS practice, and
+   * `mode` is read far outside this module, down to `NowCard.mode` in the app's contracts.
+   */
+  pass: 'cards' | null;
 };
 
 /**
@@ -130,7 +139,7 @@ export type SessionRow = {
  * untouched (migrations are immutable), but nothing shows or writes them any more.
  */
 export const SESSION_COLS = `id, learner_id, step_id, goal_id,
-       case when mode = 'explain' then 'practice' else mode end as mode, status, title`;
+       case when mode = 'explain' then 'practice' else mode end as mode, status, title, pass`;
 
 type SessionItemRow = {
   item_id: string;
@@ -145,8 +154,13 @@ type SessionItemRow = {
   flagged_at?: Date | null;
   /** Homework help "Später": still open, behind the other open tasks (migration 0024). */
   deferred_at?: Date | null;
-  /** How the closing answer was given (issue #163): typed, tapped or spoken. */
-  answered_by?: 'typed' | 'tapped' | 'spoken' | null;
+  /**
+   * How the closing answer was given (issue #163): typed, tapped, spoken — or `self_rated`,
+   * a flashcard she judged herself with nothing checking it (issue #147, `cards.ts`).
+   */
+  answered_by?: 'typed' | 'tapped' | 'spoken' | 'self_rated' | null;
+  /** "Die Bewertung stimmt nicht" (issue #164): the judgement was taken back. */
+  disputed_at?: Date | null;
 };
 
 // ─────────────── start ───────────────
@@ -155,6 +169,8 @@ export type SessionOptions = {
   stepId: string | null;
   goalId: string | null;
   mode: SessionMode;
+  /** 'cards' for a flashcard pass (issue #147); absent for an ordinary run of questions. */
+  pass?: 'cards' | null;
   materialId?: string | null;
   title?: string | null;
   clientRequestId?: string | null;
@@ -169,8 +185,8 @@ export async function createSession(
 ): Promise<string> {
   const s = await db.one<{ id: string }>(
     `insert into practice_sessions (learner_id, step_id, goal_id, mode, started_at, last_activity_at,
-                                    material_id, title, client_request_id)
-     values ($1, $2, $3, $4, $5, $5, $6, $7, $8) returning id`,
+                                    material_id, title, client_request_id, pass)
+     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) returning id`,
     [
       learnerId,
       opts.stepId,
@@ -180,6 +196,7 @@ export async function createSession(
       opts.materialId ?? null,
       opts.title ?? null,
       opts.clientRequestId ?? null,
+      opts.pass ?? null,
     ],
   );
   for (const [position, itemId] of itemIds.entries()) {
@@ -567,12 +584,14 @@ export async function sessionView(
   storage: StorageGateway,
 ): Promise<SessionView> {
   const s = await loadSession(db, learnerId, sessionId);
-  const items = await db.query<SessionItemRow & ItemRow & ItemImageRow>(
+  const items = await db.query<
+    SessionItemRow & ItemRow & ItemImageRow & { archived_at: Date | null }
+  >(
     `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.prepared_hints_used,
-            si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by,
+            si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.task,
+            i.bar_task, i.task, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -603,6 +622,9 @@ export async function sessionView(
   );
   const current = currentOpen(items);
   const active = s.status === 'active';
+  // A flashcard pass (issue #147): nothing in it is checked, so it offers no hint and no
+  // "Lösung zeigen", nothing to tap, and every card carries its own back — see cards.ts.
+  const cardPass = s.pass === CARD_PASS;
   // Her own words from this very set, so tapping never offers one she has not met
   // (issue #147). Computed here, not stored: the key stays the typed answer. Her app
   // language decides whether tapping is offered at all — recognising, not producing.
@@ -635,8 +657,10 @@ export async function sessionView(
         prompt_lang: i.prompt_lang,
         figure: i.figure,
         image: imageOf(i, imageUrls),
-        // A test asks her to produce, so nothing is offered to tap there.
-        tap_choices: s.mode === 'test' ? null : tapChoicesFor(i, vocabInSet, own.locale),
+        // A test asks her to produce, so nothing is offered to tap there — and a card has
+        // nothing to tap at all: it turns over (issue #147).
+        tap_choices:
+          s.mode === 'test' || cardPass ? null : tapChoicesFor(i, vocabInSet, own.locale),
         // The fraction bar she works with, derived from the task the question was computed
         // from (issue #162). Only while the question is open: once it is closed the bars
         // would be a control without a purpose, and the solution stands in the thread.
@@ -649,18 +673,24 @@ export async function sessionView(
       attempts: i.attempts,
       hints_used: i.hints_used,
       hints_left:
-        i.status === 'open' && active && givesHints(s.mode)
+        i.status === 'open' && active && !cardPass && givesHints(s.mode)
           ? Math.max(0, i.hints.length - i.prepared_hints_used)
           : 0,
       hint_available:
-        i.status === 'open' && active && offersHintButton(s.mode) && i.kind !== 'speak',
-      reveal_available: i.status === 'open' && active && revealReady(s.mode, i),
+        i.status === 'open' &&
+        active &&
+        !cardPass &&
+        offersHintButton(s.mode) &&
+        i.kind !== 'speak',
+      reveal_available: i.status === 'open' && active && !cardPass && revealReady(s.mode, i),
       deferred: i.status === 'open' && s.mode === 'help' && Boolean(i.deferred_at),
       // Never leak the solution of an open question, nor ever in help mode (homework) — and
       // never for a free text, which has none to send (issue #197): the key is a sketch the
       // model wrote, and the screen would label it "Lösung".
+      // A card carries its back while it is still open: showing it IS the pass, and there is
+      // nothing to grade that it could give away (issue #147). Everywhere else unchanged.
       answer:
-        (i.status === 'open' && !testOver) || !revealAllowed || noSingleSolution(i)
+        !cardPass && ((i.status === 'open' && !testOver) || !revealAllowed || noSingleSolution(i))
           ? null
           : i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null
             ? (i.choices[i.correct_choice] ?? i.answer)
@@ -678,6 +708,10 @@ export async function sessionView(
     })),
     current_item_id: active ? (current?.id ?? null) : null,
     summary: s.status === 'finished' ? summarize(items) : null,
+    card_pass: cardPass,
+    // Whether this finished run has words to go through as cards. One rule, in cards.ts, so
+    // the offer on the result screen and what the pass then holds can never disagree.
+    card_pass_offered: offersCardPass(s, items),
   };
 }
 
@@ -818,6 +852,14 @@ export async function answerItem(
 
   const session = await loadSession(deps.db, learner.id, sessionId);
   if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
+  // One path per session (issue #147): a flashcard pass is turned over, never answered,
+  // hinted at or revealed. The pass was decided when it started, so the server refuses the
+  // other way in rather than letting two kinds of evidence meet on one question.
+  if (session.pass === CARD_PASS) {
+    throw new AppError('conflict', 'These are cards: you say yourself whether you knew it', {
+      reason: 'use_cards',
+    });
+  }
   const item = await deps.db.maybeOne<
     ItemRow & SessionItemRow & { extracted_text: string | null; subject_kind: string | null }
   >(
@@ -1280,18 +1322,31 @@ export async function answerItem(
       );
       // The key learns: an answer the model judged right that the rules did not know
       // is accepted by the rules next time — at once and without a model.
+      //
+      // Two limits, because this is the one place where a MODEL judgement becomes a RULE and
+      // then outlives everything (issue #227, finding 3):
+      //
+      //   - never in a test. There the model judges with less context, its reply is thrown
+      //     away and replaced, and nobody reads what it decided — the worst possible moment
+      //     to make one of its judgements permanent.
+      //   - never past MAX_ACCEPTED, the same ceiling the reading prompts name. Without it the
+      //     list grows without end, every entry widens what counts as right, and a key that
+      //     accepts everything accepts a wrong answer too. Postgres does the counting, so two
+      //     answers arriving at once cannot both slip past a check done in code.
       if (
         judged.evaluatedBy === 'model' &&
         judged.verdict === 'correct' &&
         rule === 'unknown' &&
         (item.kind === 'vocab' || item.kind === 'short') &&
         session.mode !== 'help' &&
+        session.mode !== 'test' &&
         text.trim().length <= 80
       ) {
         await tx.query(
           `update items set accepted_answers = array_append(accepted_answers, $3)
-            where id = $1 and learner_id = $2 and not ($3 = any(accepted_answers))`,
-          [item.id, learner.id, text.trim()],
+            where id = $1 and learner_id = $2 and not ($3 = any(accepted_answers))
+              and coalesce(array_length(accepted_answers, 1), 0) < $4`,
+          [item.id, learner.id, text.trim(), MAX_ACCEPTED],
         );
       }
       const attempted = judged.verdict !== null && judged.verdict !== 'not_an_attempt';
@@ -1395,7 +1450,7 @@ export async function hintItem(
   if (replayed) return replayed;
   const session = await loadSession(deps.db, learner.id, sessionId);
   if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
-  if (!offersHintButton(session.mode)) {
+  if (!offersHintButton(session.mode) || session.pass === CARD_PASS) {
     throw new AppError('conflict', 'No hints in this mode', { reason: 'no_hints' });
   }
   try {
@@ -1503,6 +1558,11 @@ export async function revealItem(
   const now = deps.now();
   await deps.db.tx(async (tx) => {
     const s = await lockActiveSession(tx, learnerId, sessionId);
+    if (s.pass === CARD_PASS) {
+      throw new AppError('conflict', 'A card shows its answer by itself', {
+        reason: 'use_cards',
+      });
+    }
     const si = await tx.maybeOne<
       Pick<SessionItemRow, 'item_id' | 'status' | 'attempts' | 'hints_used'> & {
         kind: ItemRow['kind'];
@@ -1623,6 +1683,11 @@ export async function flagItem(
     if (s.mode === 'test') {
       throw new AppError('conflict', 'Not while a test runs', { reason: 'flag_not_allowed' });
     }
+    if (s.pass === CARD_PASS) {
+      // Her own words, chosen by the run before this one: there is no unfit question to
+      // take out here, and a card pass has no button for it.
+      throw new AppError('conflict', 'Cards are not taken out', { reason: 'flag_not_allowed' });
+    }
     if (si.origin !== 'material' && si.origin !== 'buddy') {
       throw new AppError('conflict', 'Only questions from a photo or from Buddy', {
         reason: 'flag_not_allowed',
@@ -1717,6 +1782,12 @@ export async function disputeVerdict(
         reason: 'not_judged',
       });
     }
+    // A card was never judged by anyone but her, so there is no judgement to disagree with.
+    if (await isCardPass(tx, sessionId)) {
+      throw new AppError('conflict', 'Nothing judged this card', {
+        reason: 'dispute_not_allowed',
+      });
+    }
     // Her homework is helped with, never graded, so there is no verdict to dispute.
     if (si.origin === 'homework') {
       throw new AppError('conflict', 'Homework tasks are not judged', {
@@ -1775,8 +1846,21 @@ export async function disputeVerdict(
 
 // ─────────────── lifecycle ───────────────
 
+/**
+ * Whether this session is a flashcard pass (issue #147). Read where the session row was
+ * loaded without its columns — `disputeVerdict` locks on id alone, and widening that read
+ * would change its lock shape for every ordinary dispute.
+ */
+async function isCardPass(db: Db, sessionId: string): Promise<boolean> {
+  const row = await db.one<{ pass: string | null }>(
+    `select pass from practice_sessions where id = $1`,
+    [sessionId],
+  );
+  return row.pass === CARD_PASS;
+}
+
 /** The session row, locked, and still running — else 404 / 409 (one lock order: session first). */
-async function lockActiveSession(
+export async function lockActiveSession(
   db: Db,
   learnerId: string,
   sessionId: string,
