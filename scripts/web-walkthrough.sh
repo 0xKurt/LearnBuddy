@@ -13,6 +13,11 @@ export LB_API_PORT="$API_PORT"
 #     production until this was set).
 #   --clear — Metro's transform cache hands out the EXPO_PUBLIC_* values it inlined last
 #     time, so without it the run silently talks to the previous port.
+#   EXPO_PUBLIC_PRIVACY_URL / _IMPRINT_URL — an export is a RELEASE build, and since issue
+#     #130 a release build refuses to start without them (an app children use may not reach a
+#     store with no privacy notice and no imprint, and their absence is invisible). Without
+#     these two lines the walkthrough sees a blank page and every spec times out — which is
+#     the guard working, not a product bug.
 # No comments inside the assignment block: a comment between the backslashes breaks the
 # continuation, and the command then runs with none of these set (that is how #71 slipped in).
 (
@@ -21,6 +26,8 @@ export LB_API_PORT="$API_PORT"
   EXPO_PUBLIC_API_URL=http://localhost:$API_PORT \
   EXPO_PUBLIC_SUPABASE_URL=http://localhost:$API_PORT \
   EXPO_PUBLIC_SUPABASE_ANON_KEY=dev-anon-key \
+  EXPO_PUBLIC_PRIVACY_URL=http://localhost:$API_PORT/datenschutz \
+  EXPO_PUBLIC_IMPRINT_URL=http://localhost:$API_PORT/impressum \
   npx expo export --platform web --output-dir dist-web --clear
 )
 # The exported bundle must talk to the local stack. Metro has handed out a cached bundle
