@@ -24,6 +24,7 @@ import { BlockAudit } from './blockaudit.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import { CASES, type Outcome } from './cases.js';
+import { judgeRuns, runsFor } from './repeat.js';
 
 loadDotenv({ path: '.env.local' });
 
@@ -70,50 +71,58 @@ async function main(): Promise<void> {
   const models = new Set<string>();
   const ranAt = new Date().toISOString();
   for (const c of cases) {
-    const env = await createTestEnv({ start: c.at ?? '2026-09-28T08:00:00Z', gateway });
-    try {
-      const l = await onboard(env, {
-        locale: c.learner?.locale ?? 'de',
-        timezone: c.learner?.timezone ?? 'Europe/Berlin',
-        relation: c.learner?.relation ?? 'self',
-        ...(c.learner?.birthDate ? { birthDate: c.learner.birthDate } : {}),
-      });
-      if (c.setup) {
-        await c.setup(env, l);
-        await env.db.query(
-          `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
+    // A case with `repeat` runs several times, each on its own fresh database, and is judged
+    // over all runs (issue #225). Every other case runs once, exactly as before.
+    const total = runsFor(c);
+    const perRun: string[][] = [];
+    // The run that is printed and written down: the first that failed, else the last.
+    let shown: { outcome: Outcome; problems: string[] } | null = null;
+    const caseCost = { micros: 0, calls: 0, input: 0, cached: 0 };
+    for (let run = 1; run <= total; run++) {
+      const env = await createTestEnv({ start: c.at ?? '2026-09-28T08:00:00Z', gateway });
+      try {
+        const l = await onboard(env, {
+          locale: c.learner?.locale ?? 'de',
+          timezone: c.learner?.timezone ?? 'Europe/Berlin',
+          relation: c.learner?.relation ?? 'self',
+          ...(c.learner?.birthDate ? { birthDate: c.learner.birthDate } : {}),
+        });
+        if (c.setup) {
+          await c.setup(env, l);
+          await env.db.query(
+            `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
+            [l.learnerId],
+          );
+        }
+        // Something she said first, so the measured turn is an answer to Buddy's own question
+        // (issue #111: deleting a sheet takes two turns on purpose).
+        // Everything she says before the measured turn, each a whole turn of its own.
+        for (const said of [...(c.before ? [c.before] : []), ...(c.conversation ?? [])]) {
+          await l.api.post('/buddy/messages', {
+            client_message_id: crypto.randomUUID(),
+            text: said,
+          });
+        }
+        const res = await l.api.post<{ status: Outcome['status']; error_code: string | null }>(
+          '/buddy/messages',
+          {
+            client_message_id: crypto.randomUUID(),
+            text: c.message,
+          },
+        );
+        const reply = await env.db.maybeOne<{ text: string; ask: { options?: string[] } | null }>(
+          `select text, ask from buddy_messages where learner_id = $1 and role = 'buddy' order by seq desc limit 1`,
           [l.learnerId],
         );
-      }
-      // Something she said first, so the measured turn is an answer to Buddy's own question
-      // (issue #111: deleting a sheet takes two turns on purpose).
-      // Everything she says before the measured turn, each a whole turn of its own.
-      for (const said of [...(c.before ? [c.before] : []), ...(c.conversation ?? [])]) {
-        await l.api.post('/buddy/messages', {
-          client_message_id: crypto.randomUUID(),
-          text: said,
-        });
-      }
-      const res = await l.api.post<{ status: Outcome['status']; error_code: string | null }>(
-        '/buddy/messages',
-        {
-          client_message_id: crypto.randomUUID(),
-          text: c.message,
-        },
-      );
-      const reply = await env.db.maybeOne<{ text: string; ask: { options?: string[] } | null }>(
-        `select text, ask from buddy_messages where learner_id = $1 and role = 'buddy' order by seq desc limit 1`,
-        [l.learnerId],
-      );
-      // Every turn of this conversation, so a case can judge the SHAPE and not only the
-      // last answer (issue #127).
-      const turns = (
-        await env.db.query<{
-          output: { asks_permission?: boolean } | null;
-          text: string | null;
-          tools: string[] | null;
-        }>(
-          `select d.output,
+        // Every turn of this conversation, so a case can judge the SHAPE and not only the
+        // last answer (issue #127).
+        const turns = (
+          await env.db.query<{
+            output: { asks_permission?: boolean } | null;
+            text: string | null;
+            tools: string[] | null;
+          }>(
+            `select d.output,
                   (select m.text from buddy_messages m
                     where m.decision_id = d.id and m.role = 'buddy'
                     order by m.seq limit 1) as text,
@@ -128,158 +137,183 @@ async function main(): Promise<void> {
             -- message that triggered each decision is what puts them in order.
             order by (select m.seq from buddy_messages m where m.id = d.trigger_message_id),
                      d.created_at`,
-          [l.learnerId],
-        )
-      ).map((r) => ({
-        // After a lookup the decision is stored as { lookups, final }.
-        asks:
-          (r.output as { asks_permission?: boolean; final?: { asks_permission?: boolean } } | null)
-            ?.asks_permission ??
-          (r.output as { final?: { asks_permission?: boolean } } | null)?.final?.asks_permission ??
-          false,
-        tools: r.tools ?? [],
-        reply: r.text ?? '',
-      }));
-      const outcome: Outcome = {
-        status: res.body.status,
-        errorCode: res.body.error_code,
-        reply: reply?.text ?? null,
-        options: reply?.ask?.options ?? null,
-        tools: (
-          await env.db.query<{ tool: string }>(
-            `select tool from buddy_actions where learner_id = $1 order by seq`,
             [l.learnerId],
           )
-        ).map((a) => a.tool),
-        goals: await env.db.query(
-          `select g.title, g.kind, g.due_date, g.status, g.outcome, s.kind as subject_kind
+        ).map((r) => ({
+          // After a lookup the decision is stored as { lookups, final }.
+          asks:
+            (
+              r.output as {
+                asks_permission?: boolean;
+                final?: { asks_permission?: boolean };
+              } | null
+            )?.asks_permission ??
+            (r.output as { final?: { asks_permission?: boolean } } | null)?.final
+              ?.asks_permission ??
+            false,
+          tools: r.tools ?? [],
+          reply: r.text ?? '',
+        }));
+        const outcome: Outcome = {
+          status: res.body.status,
+          errorCode: res.body.error_code,
+          reply: reply?.text ?? null,
+          options: reply?.ask?.options ?? null,
+          tools: (
+            await env.db.query<{ tool: string }>(
+              `select tool from buddy_actions where learner_id = $1 order by seq`,
+              [l.learnerId],
+            )
+          ).map((a) => a.tool),
+          goals: await env.db.query(
+            `select g.title, g.kind, g.due_date, g.status, g.outcome, s.kind as subject_kind
              from buddy_goals g left join subjects s on s.id = g.subject_id where g.learner_id = $1`,
-          [l.learnerId],
-        ),
-        turns,
-        offers: await env.db.query<{ kind: string; text: string; minutes: number | null }>(
-          `select result ->> 'kind' as kind, result ->> 'text' as text,
-                  (result ->> 'minutes')::int as minutes
+            [l.learnerId],
+          ),
+          turns,
+          offers: await env.db.query<{ kind: string; text: string; minutes: number | null }>(
+            `select result ->> 'kind' as kind, result ->> 'text' as text,
+                    (result ->> 'minutes')::int as minutes
              from buddy_actions
             where learner_id = $1 and tool = 'offer_learning' order by seq`,
-          [l.learnerId],
-        ),
-        materials: (
-          await env.db.query<{ title: string | null; archived_at: Date | null }>(
-            `select title, archived_at from materials where learner_id = $1`,
             [l.learnerId],
-          )
-        ).map((m) => ({ title: m.title, archived: m.archived_at !== null })),
-        pending: await env.db.query(
-          `select operation, title, detail, status from buddy_pending_actions where learner_id = $1`,
-          [l.learnerId],
-        ),
-        memories: await env.db.query(
-          `select kind, statement, valid_until from buddy_memories where learner_id = $1 and status = 'active'`,
-          [l.learnerId],
-        ),
-        steps: await env.db.query(
-          `select kind, title, planned_date, planned_time, repeat, agreed, state from buddy_steps where learner_id = $1`,
-          [l.learnerId],
-        ),
-        settings: await env.db.one(
-          `select contact_enabled, paused_until from buddy_settings where learner_id = $1`,
-          [l.learnerId],
-        ),
-        level: await env.db.one(`select level, grade from learners where id = $1`, [l.learnerId]),
-        lookups: (
-          await env.db.query<{ tool: string }>(
-            `select distinct c->>'tool' as tool
+          ),
+          materials: (
+            await env.db.query<{ title: string | null; archived_at: Date | null }>(
+              `select title, archived_at from materials where learner_id = $1`,
+              [l.learnerId],
+            )
+          ).map((m) => ({ title: m.title, archived: m.archived_at !== null })),
+          pending: await env.db.query(
+            `select operation, title, detail, status from buddy_pending_actions where learner_id = $1`,
+            [l.learnerId],
+          ),
+          memories: await env.db.query(
+            `select kind, statement, valid_until from buddy_memories where learner_id = $1 and status = 'active'`,
+            [l.learnerId],
+          ),
+          steps: await env.db.query(
+            `select kind, title, planned_date, planned_time, repeat, agreed, state from buddy_steps where learner_id = $1`,
+            [l.learnerId],
+          ),
+          settings: await env.db.one(
+            `select contact_enabled, paused_until from buddy_settings where learner_id = $1`,
+            [l.learnerId],
+          ),
+          level: await env.db.one(`select level, grade from learners where id = $1`, [l.learnerId]),
+          lookups: (
+            await env.db.query<{ tool: string }>(
+              `select distinct c->>'tool' as tool
                from buddy_decisions d,
                     jsonb_array_elements(coalesce(d.output->'lookups', '[]'::jsonb)) s,
                     jsonb_array_elements(s->'results') c
               where d.learner_id = $1`,
-            [l.learnerId],
-          )
-        ).map((r) => r.tool),
-      };
-      const problems =
-        outcome.status === 'done'
-          ? c.check(outcome)
-          : [
-              // Why the answer was rejected, not just that it was: a schema the model keeps
-              // missing is a bug in the schema, and "model_invalid" alone never says which.
-              `turn ${outcome.status} (${outcome.errorCode ?? 'no code'})`,
-              ...(
-                await env.db.query<{ errors: string[] | null }>(
-                  `select errors from buddy_decisions where learner_id = $1 and errors is not null
+              [l.learnerId],
+            )
+          ).map((r) => r.tool),
+        };
+        const problems =
+          outcome.status === 'done'
+            ? c.check(outcome)
+            : [
+                // Why the answer was rejected, not just that it was: a schema the model keeps
+                // missing is a bug in the schema, and "model_invalid" alone never says which.
+                `turn ${outcome.status} (${outcome.errorCode ?? 'no code'})`,
+                ...(
+                  await env.db.query<{ errors: string[] | null }>(
+                    `select errors from buddy_decisions where learner_id = $1 and errors is not null
                     order by created_at desc limit 1`,
-                  [l.learnerId],
-                )
-              ).flatMap((d) => d.errors ?? []),
-            ];
-      // cached: what the provider served from its prefix cache (issue #25). Every case is a
-      // different learner on its own throwaway database, so what can be cached between them
-      // is only the part before `contents` — system prompt plus response schema. Measured
-      // 2026-09-29: every hit 12 013–12 177 tokens, on 20 of 36 cases in one run and 31 of 36
-      // in the next — implicit caching is best-effort, so the hit rate swings between runs.
-      const cost = await env.db.one<{
-        micros: number;
-        calls: number;
-        input: number;
-        cached: number;
-        models: string[];
-      }>(
-        `select coalesce(sum(cost_micros), 0)::bigint as micros, count(*)::int as calls,
+                    [l.learnerId],
+                  )
+                ).flatMap((d) => d.errors ?? []),
+              ];
+        // cached: what the provider served from its prefix cache (issue #25). Every case is a
+        // different learner on its own throwaway database, so what can be cached between them
+        // is only the part before `contents` — system prompt plus response schema. Measured
+        // 2026-09-29: every hit 12 013–12 177 tokens, on 20 of 36 cases in one run and 31 of 36
+        // in the next — implicit caching is best-effort, so the hit rate swings between runs.
+        const cost = await env.db.one<{
+          micros: number;
+          calls: number;
+          input: number;
+          cached: number;
+          models: string[];
+        }>(
+          `select coalesce(sum(cost_micros), 0)::bigint as micros, count(*)::int as calls,
                 coalesce(sum(input_tokens), 0)::int as input,
                 coalesce(sum(cached_tokens), 0)::int as cached,
                 coalesce(array_agg(distinct model), '{}') as models
            from llm_calls`,
-      );
-      costMicros += cost.micros;
-      inputTokens += cost.input;
-      cachedTokens += cost.cached;
-      for (const m of cost.models) models.add(m);
-      if (problems.length) failed++;
-      console.info(
-        `${problems.length ? '✗' : '✓'} ${c.id}  (${cost.calls} call(s), $${(cost.micros / 1e6).toFixed(4)}` +
-          `, ${cost.input} in, ${cost.cached} cached)` +
-          (problems.length
-            ? `\n    - ${problems.join('\n    - ')}\n    reply: ${outcome.reply ?? '—'}\n    tools: ${outcome.tools.join(', ') || 'none'}\n    goals: ${JSON.stringify(outcome.goals)}`
-            : '') +
-          // A conversation is judged by its shape, so its shape is printed — pass or fail
-          // (issue #127). "How often did he ask back" is only readable next to what was said.
-          (c.conversation
-            ? `\n` +
-              outcome.turns
-                .map((t, i) => `    ${i + 1}.${t.asks ? ' [asks]' : ''} ${t.reply}`)
-                .join('\n')
-            : ''),
-      );
-      // What he actually answered, not only whether the check passed (issue #80): two runs
-      // side by side show an answer that got worse while still passing.
-      transcript.push({
-        id: c.id,
-        ok: problems.length === 0,
-        problems,
-        reply: outcome.reply,
-        options: outcome.options,
-        tools: outcome.tools,
-        calls: cost.calls,
-        costMicros: cost.micros,
-        inputTokens: cost.input,
-        cachedTokens: cost.cached,
-      });
-      // Every JSON object the model wrote in this case: its decisions carry the reply, the
-      // actions with their arguments and the lookup calls, applied or rejected.
-      if (blocks) {
-        const written = await env.db.query<{ output: unknown }>(
-          `select output from buddy_decisions where learner_id = $1 and output is not null`,
-          [l.learnerId],
         );
-        const turnCalls = await env.db.one<{ n: number }>(
-          `select count(*)::int as n from llm_calls where purpose = 'buddy_turn'`,
-        );
-        blocks.closeCase(written.map((r) => JSON.stringify(r.output)).join('\n'), turnCalls.n);
+        costMicros += cost.micros;
+        inputTokens += cost.input;
+        cachedTokens += cost.cached;
+        for (const m of cost.models) models.add(m);
+        perRun.push(problems);
+        caseCost.micros += cost.micros;
+        caseCost.calls += cost.calls;
+        caseCost.input += cost.input;
+        caseCost.cached += cost.cached;
+        // Replaced on every run until one fails; that one is kept.
+        if (!shown || shown.problems.length === 0) shown = { outcome, problems };
+        if (total > 1)
+          console.info(
+            `    run ${run}/${total} ${problems.length ? '✗' : '✓'}` +
+              (problems.length ? `  ${problems.join('; ')}` : ''),
+          );
+        // Every JSON object the model wrote in this case: its decisions carry the reply, the
+        // actions with their arguments and the lookup calls, applied or rejected.
+        if (blocks) {
+          const written = await env.db.query<{ output: unknown }>(
+            `select output from buddy_decisions where learner_id = $1 and output is not null`,
+            [l.learnerId],
+          );
+          const turnCalls = await env.db.one<{ n: number }>(
+            `select count(*)::int as n from llm_calls where purpose = 'buddy_turn'`,
+          );
+          blocks.closeCase(written.map((r) => JSON.stringify(r.output)).join('\n'), turnCalls.n);
+        }
+      } finally {
+        await env.close();
       }
-    } finally {
-      await env.close();
     }
+    if (!shown) throw new Error(`${c.id}: no run happened`);
+    const { outcome } = shown;
+    const verdict = judgeRuns(c.id, perRun, c.repeat);
+    const problems = verdict.problems;
+    if (!verdict.ok) failed++;
+    console.info(
+      `${problems.length ? '✗' : '✓'} ${c.id}` +
+        (total > 1 ? `  [${total - verdict.failures}/${total} runs passed]` : '') +
+        `  (${caseCost.calls} call(s), $${(caseCost.micros / 1e6).toFixed(4)}` +
+        `, ${caseCost.input} in, ${caseCost.cached} cached)` +
+        (problems.length
+          ? `\n    - ${problems.join('\n    - ')}\n    reply: ${outcome.reply ?? '—'}\n    tools: ${outcome.tools.join(', ') || 'none'}\n    goals: ${JSON.stringify(outcome.goals)}`
+          : '') +
+        // A conversation is judged by its shape, so its shape is printed — pass or fail
+        // (issue #127). "How often did he ask back" is only readable next to what was said.
+        (c.conversation
+          ? `\n` +
+            outcome.turns
+              .map((t, i) => `    ${i + 1}.${t.asks ? ' [asks]' : ''} ${t.reply}`)
+              .join('\n')
+          : ''),
+    );
+    // What he actually answered, not only whether the check passed (issue #80): two runs
+    // side by side show an answer that got worse while still passing. For a repeated case
+    // this is the first failing run's answer (else the last one's), with the costs of all runs.
+    transcript.push({
+      id: c.id,
+      ok: verdict.ok,
+      problems,
+      reply: outcome.reply,
+      options: outcome.options,
+      tools: outcome.tools,
+      calls: caseCost.calls,
+      costMicros: caseCost.micros,
+      inputTokens: caseCost.input,
+      cachedTokens: caseCost.cached,
+    });
   }
   console.info(
     `\n${cases.length - failed}/${cases.length} passed · total $${(costMicros / 1e6).toFixed(4)}` +
