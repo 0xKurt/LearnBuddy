@@ -30,7 +30,14 @@ import { ageOn } from '../identity/model.js';
 import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { pickAnswers, surfaceOf, taskOf, untriedPicks } from './bars.js';
-import { differentNumber, NEAR_MISS, plainMath, ruleCheck, type RuleVerdict } from './evaluate.js';
+import {
+  differentNumber,
+  NEAR_MISS,
+  noSingleSolution,
+  plainMath,
+  ruleCheck,
+  type RuleVerdict,
+} from './evaluate.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems } from './selection.js';
@@ -259,6 +266,8 @@ export async function startManual(
     [],
     questionCountFor(12),
     now,
+    {},
+    mode === 'test',
   );
   if (itemIds.length === 0)
     throw new AppError('not_found', 'No questions available yet', { reason: 'no_questions' });
@@ -377,6 +386,8 @@ function revealReady(
   si: { kind: ItemRow['kind']; attempts: number; hints_used: number },
 ): boolean {
   if (mode === 'help' || mode === 'test') return false;
+  // A free text keeps the way out (she must be able to move on), but nothing is revealed by
+  // it: the view sends no answer and the screen names it "Überspringen" (issue #197).
   return si.kind === 'speak' || si.attempts > 0 || si.hints_used > 0;
 }
 
@@ -438,14 +449,23 @@ export function solutionsOf(
   return [...new Set([shownSolution(i), i.answer, ...i.accepted_answers])];
 }
 
-/** The worked solution when prepared, otherwise the plain solution. */
+/**
+ * The worked solution when prepared, otherwise the plain solution.
+ *
+ * For a free text neither is "the solution" (issue #197): a prepared way is introduced as ONE
+ * way, and where none was prepared the app says plainly that there is no single right answer
+ * here — instead of reading out the 600-character key as if it were one.
+ */
 function workedReply(
   locale: string,
   i: Pick<ItemRow, 'kind' | 'answer' | 'choices' | 'correct_choice' | 'unit' | 'worked_solution'>,
 ): string {
-  return i.worked_solution
-    ? `${t(locale, 'practice.worked_intro')} ${i.worked_solution}`
-    : t(locale, 'practice.solution_is', { answer: shownSolution(i) });
+  const free = noSingleSolution(i);
+  if (i.worked_solution) {
+    return `${t(locale, free ? 'practice.one_way_intro' : 'practice.worked_intro')} ${i.worked_solution}`;
+  }
+  if (free) return t(locale, 'practice.no_single_solution');
+  return t(locale, 'practice.solution_is', { answer: shownSolution(i) });
 }
 
 // ─────────────── view ───────────────
@@ -603,9 +623,11 @@ export async function sessionView(
         i.status === 'open' && active && offersHintButton(s.mode) && i.kind !== 'speak',
       reveal_available: i.status === 'open' && active && revealReady(s.mode, i),
       deferred: i.status === 'open' && s.mode === 'help' && Boolean(i.deferred_at),
-      // Never leak the solution of an open question, nor ever in help mode (homework).
+      // Never leak the solution of an open question, nor ever in help mode (homework) — and
+      // never for a free text, which has none to send (issue #197): the key is a sketch the
+      // model wrote, and the screen would label it "Lösung".
       answer:
-        (i.status === 'open' && !testOver) || !revealAllowed
+        (i.status === 'open' && !testOver) || !revealAllowed || noSingleSolution(i)
           ? null
           : i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null
             ? (i.choices[i.correct_choice] ?? i.answer)
@@ -1175,7 +1197,12 @@ export async function answerItem(
           input.via ?? 'typed',
         ],
       );
-      if (status !== 'open' && learnsFsrs(session.mode)) {
+      // A free text she did not get right produces NO review: `Again` is a statement about
+      // memory, and nothing here was measured (issue #197). Got right, it counts like any
+      // other question. The cost is that such a question does not come back on a schedule —
+      // which is the honest price for not inventing the rating.
+      const rateable = status === 'correct' || !noSingleSolution(item);
+      if (status !== 'open' && learnsFsrs(session.mode) && rateable) {
         // What the spaced repetition held BEFORE this review is recorded by `reviewItem`
         // itself (`session_items.state_before`, issue #164), from the same read that
         // overwrites it — so a judgement she says is wrong can be taken back without
@@ -1366,8 +1393,11 @@ export async function revealItem(
       [sessionId, itemId, now],
     );
     // `reviewItem` records what it overwrites, so a solution she says was the wrong one can
-    // be taken back exactly (issue #164) — a reveal is the harshest review there is.
-    if (learnsFsrs(s.mode)) await reviewItem(tx, learnerId, sessionId, itemId, 'revealed', now);
+    // be taken back exactly (issue #164) — a reveal is the harshest review there is. A free
+    // text gets none: skipping an essay says nothing about memory (issue #197).
+    if (learnsFsrs(s.mode) && !noSingleSolution(si)) {
+      await reviewItem(tx, learnerId, sessionId, itemId, 'revealed', now);
+    }
     await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
       sessionId,
       now,

@@ -272,6 +272,10 @@ async function failedCard(
       failed.failure_reason !== 'not_learning_material' &&
       failed.failure_reason !== 'blocked' &&
       failed.failure_reason !== 'photos_missing' &&
+      // Read perfectly well: the tasks on it are forms Buddy has no exercise for (issue
+      // #198). A second reading would find the same tasks, so the card says what he can do
+      // instead and never offers one.
+      failed.failure_reason !== 'form_not_practicable' &&
       !(row?.photos_deleted ?? false) &&
       (row?.n ?? 0) < 3,
     purpose: row?.purpose ?? 'study',

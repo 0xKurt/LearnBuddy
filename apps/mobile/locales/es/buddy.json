@@ -187,6 +187,7 @@
     "failed_photos_missing": "Las fotos no han llegado completas.",
     "failed_budget_exhausted": "Por hoy ya no puedo leer más fichas. Mañana vuelve a funcionar.",
     "failed_blocked": "No puedo leer esta ficha: el filtro de seguridad no la deja pasar. Volver a leerla no servirá. Escribe las preguntas que necesites.",
+    "failed_form_not_practicable": "He podido leer tu ficha sin problema. Pero este tipo de ejercicio no lo puedo practicar contigo: pregúntame y te explico los pasos.",
     "failed_retry": "Volver a leer",
     "failed_new_photo": "Nueva foto",
     "result_title": "¡Lo has conseguido!",

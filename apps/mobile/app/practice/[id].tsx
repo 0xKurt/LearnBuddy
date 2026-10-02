@@ -693,11 +693,14 @@ export default function PracticeScreen() {
       : canPostpone
         ? () => void later(shown.item.id)
         : undefined;
-  const skipLabel = testing
-    ? t('practice:skip')
-    : canPostpone && !shown.reveal_available
-      ? t('practice:later')
-      : undefined;
+  // A free text has no solution to show, so the way past it is named for what it does
+  // (issue #197) — "Lösung zeigen" would promise something the server does not send.
+  const skipLabel =
+    testing || shown.item.kind === 'long'
+      ? t('practice:skip')
+      : canPostpone && !shown.reveal_available
+        ? t('practice:later')
+        : undefined;
   const skipHint = canPostpone && !testing ? t('practice:later_hint') : undefined;
   const hint = shown.hint_available ? () => void askHint(shown.item.id) : undefined;
   const endButton = (
@@ -737,7 +740,11 @@ export default function PracticeScreen() {
     !open &&
     !testing &&
     !satFirstTry &&
-    (shown.answer !== null || (session.mode === 'help' && shown.status === 'correct'));
+    (shown.answer !== null ||
+      (session.mode === 'help' && shown.status === 'correct') ||
+      // A free text sends no answer (issue #197) — but asking about her own text again is
+      // exactly where it helps most, so the offer stays.
+      shown.item.kind === 'long');
   const pendingText = pending?.itemId === item.id ? pending.text : null;
   const choices =
     item.kind === 'multiple_choice' && item.choices && item.choices.length > 0

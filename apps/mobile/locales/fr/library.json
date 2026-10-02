@@ -9,7 +9,8 @@
     "reading": "lecture en cours",
     "unreadable": "illisible",
     "not_read": "non lue",
-    "incomplete": "incomplète"
+    "incomplete": "incomplète",
+    "no_exercises": "sans exercices"
   },
   "failure": {
     "unreadable": "Les photos n'étaient pas bien lisibles. Réessaie avec plus de lumière, en prenant la photo d'en haut.",
@@ -17,9 +18,12 @@
     "model_error": "Un problème est survenu pendant la lecture.",
     "photos_missing": "Toutes les photos ne sont pas arrivées.",
     "budget_exhausted": "Je ne peux plus lire de fiches pour aujourd'hui. Ça remarchera demain.",
-    "blocked": "Le filtre de sécurité bloque cette fiche. La relire n'y changera rien – tape simplement les questions."
+    "blocked": "Le filtre de sécurité bloque cette fiche. La relire n'y changera rien – tape simplement les questions.",
+    "form_not_practicable": "J'ai bien pu lire la fiche – c'est juste ce type d'exercice que je ne peux pas faire avec toi. Demande-moi : je t'explique les étapes."
   },
   "incomplete_hint": "Les photos ne sont pas arrivées en entier. Supprime la fiche et reprends-la en photo.",
+  "not_practicable_one": "J'ai laissé un exercice de côté : « {{tasks}} ». Celui-là, je ne peux pas m'entraîner avec toi – mais je t'explique volontiers comment t'y prendre.",
+  "not_practicable_other": "J'ai laissé ces exercices de côté : {{tasks}}. Ceux-là, je ne peux pas m'entraîner avec toi – mais je t'explique volontiers comment t'y prendre.",
   "photos_deleted": "Les photos ne sont plus enregistrées. Supprime la feuille et reprends-la en photo.",
   "practice": "S'entraîner",
   "practice_label": "S'entraîner sur « {{title}} »",

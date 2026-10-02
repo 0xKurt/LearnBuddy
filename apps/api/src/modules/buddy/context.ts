@@ -105,7 +105,7 @@ export function spokenDay(date: string, today: string, locale: string): string {
 /**
  * What a failed sheet means for her next step (modules/materials/service.ts): a second
  * reading is possible after an unreadable photo, a failed run and an exhausted daily budget,
- * and `retryMaterial` refuses it for the other three — so Buddy must not offer it there
+ * and `retryMaterial` refuses it for the other four — so Buddy must not offer it there
  * (issue #115). A counted line ("N sheet(s) could not be read") could say none of this.
  */
 function failureNote(reason: string | null): string {
@@ -116,6 +116,8 @@ function failureNote(reason: string | null): string {
       return 'was not learning material, so it was not read; its photos are deleted and reading it again is not possible';
     case 'blocked':
       return 'was refused by the safety filter; reading it again is not possible';
+    case 'form_not_practicable':
+      return 'was read without any trouble, and every task on it is an exercise form Buddy has no exercise for (something drawn, free speaking, a long text, a real experiment, a piece of work over weeks, a practical or a heard task), so there is nothing on it to practise: say that plainly, offer to explain it or go through the steps with her instead, and do not offer a second reading — it would find the same tasks';
     case 'budget_exhausted':
       return 'could not be read: no more sheets could be read today (tomorrow it works again)';
     case 'unreadable':
@@ -368,6 +370,19 @@ export function buildContext(
     materialBlock.push(
       `- "${m.title ?? 'sheet'}": ${m.item_count} questions read, and the sheet has MORE. Say that plainly if she asks for all of it; never let it pass for the whole sheet`,
     );
+  // Read fine, and (part of) it is an exercise form he has no exercise for (issue #198). The
+  // tasks are named as printed, so he can say WHICH one in her words — a task nobody names is
+  // exactly what makes a sheet look done when its exercise never happened.
+  for (const m of state.materials.filter((x) => x.not_practicable.length > 0)) {
+    const named = m.not_practicable
+      .slice(0, 6)
+      .map((n) => `"${n.task}" (${n.form})`)
+      .join('; ');
+    const more = m.not_practicable.length > 6 ? ` and ${m.not_practicable.length - 6} more` : '';
+    materialBlock.push(
+      `- "${m.title ?? 'sheet'}": no exercises were made for ${named}${more} — that exercise form is not one Buddy can practise. Name it if it comes up, offer to explain it or go through the steps instead, and never let it pass for practised`,
+    );
+  }
   for (const m of state.materials.filter((x) => x.status === 'ready' && x.page_problems.length))
     materialBlock.push(
       `- "${m.title ?? 'sheet'}": page(s) ${m.page_problems.map((p) => p.page).join(', ')} of ${m.photo_count} not read completely; no questions from what was missing (the learner sees a card to photograph them again)`,

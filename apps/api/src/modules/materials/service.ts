@@ -16,6 +16,7 @@ import type {
   LibraryView,
   MaterialItemsView,
   MaterialView,
+  NotPracticable,
   PageProblem,
 } from '@learnbuddy/shared-types/contracts';
 
@@ -85,6 +86,8 @@ type MaterialRow = {
   page_problems: PageProblem[];
   /** The sheet holds more questions than were read into items (issue #150). */
   items_incomplete: boolean;
+  /** Tasks that got no questions because Buddy has no exercise for their form (issue #198). */
+  not_practicable: NotPracticable[];
   pages_resolved_at: Date | null;
   completes_material_id: string | null;
   merged_into: string | null;
@@ -140,6 +143,7 @@ function toView(
     session_status: m.session_status,
     page_problems: m.pages_resolved_at ? [] : m.page_problems,
     items_incomplete: m.items_incomplete,
+    not_practicable: m.not_practicable,
     photo_count: m.photo_count,
     merged_into: m.merged_into,
     subject_name: m.subject_name,
@@ -504,7 +508,14 @@ export async function retryMaterial(
     if (!m) throw new AppError('not_found', 'Material not found');
     if (m.status !== 'failed')
       throw new AppError('conflict', 'Only failed material can be retried');
-    if (m.failure_reason === 'not_learning_material' || m.failure_reason === 'blocked') {
+    if (
+      m.failure_reason === 'not_learning_material' ||
+      m.failure_reason === 'blocked' ||
+      // The sheet was read perfectly well: every task on it is an exercise form Buddy has
+      // no exercise for (issue #198). A second reading finds the same tasks — nothing about
+      // the photo or the reading is what went wrong, so there is nothing to try again.
+      m.failure_reason === 'form_not_practicable'
+    ) {
       throw new AppError('conflict', 'Reading this again would give the same answer', {
         reason: m.failure_reason,
       });
@@ -579,6 +590,9 @@ export async function markMaterialFailed(
   // something else (a letter, a recipe) not at all: it cannot be read again
   // anyway (docs/privacy.md).
   // The same holds for photos the safety filter refused to read.
+  // `form_not_practicable` is deliberately NOT one of them (issue #198): that sheet is
+  // valid school material, read without trouble — she may well want to look at it, so its
+  // photos keep the normal retention like any other sheet's.
   const keepMs =
     reason === 'not_learning_material' || reason === 'blocked'
       ? 0
@@ -598,7 +612,7 @@ async function fail(
   job: JobRow,
   materialId: string,
   reason: NonNullable<MaterialView['failure_reason']>,
-  opts: { uncounted?: boolean } = {},
+  opts: { uncounted?: boolean; notPracticable?: NotPracticable[] } = {},
 ): Promise<void> {
   // Fenced: a run whose lease was taken over must not fail a sheet another run owns now
   // (extraction-status-writes-unfenced). Job and material change in one transaction.
@@ -607,7 +621,16 @@ async function fail(
       status: 'done',
       result: { outcome: 'failed', reason, ...(opts.uncounted ? { uncounted: true } : {}) },
     });
-    if (finished) await markMaterialFailed(tx, materialId, reason, deps.now());
+    if (!finished) return;
+    await markMaterialFailed(tx, materialId, reason, deps.now());
+    // The tasks the reading refused are kept on the failed sheet too (issue #198): the card
+    // and Buddy name them, and a task nobody names is exactly what looks done.
+    if (opts.notPracticable && opts.notPracticable.length > 0) {
+      await tx.query(`update materials set not_practicable = $2::jsonb where id = $1`, [
+        materialId,
+        JSON.stringify(opts.notPracticable),
+      ]);
+    }
   });
 }
 
@@ -803,12 +826,19 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
           result = { success: true, data: { ...result.data, more_items: false } } as typeof result;
           break;
         }
+        // A continued reading sees the same photos, so it names the same refused tasks:
+        // only ones it has not named yet are added (issue #198).
+        const named = new Set(result.data.not_practicable.map((n) => samePrompt(n.task)));
         result = {
           success: true,
           data: {
             ...result.data,
             items: [...result.data.items, ...fresh],
             more_items: parsed.data.more_items,
+            not_practicable: [
+              ...result.data.not_practicable,
+              ...parsed.data.not_practicable.filter((n) => !named.has(samePrompt(n.task))),
+            ].slice(0, 20),
           },
         } as typeof result;
       }
@@ -836,6 +866,15 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
   // page report tells Lena what is missing.
   const somePageRead = x.pages.some((p) => p.page <= m.photo_count && p.read !== 'none');
   if (!x.readable && !somePageRead) return fail(deps, job, materialId, 'unreadable');
+  // Read without trouble, and nothing on it is an exercise form Buddy can practise
+  // (issue #198): its own reason, before the two that blame the reading or the photo. A
+  // reading that NAMED the tasks it refused has said why there is nothing to practise, and
+  // that is worth more to her than "something went wrong" — it also means no "Nochmal
+  // lesen", because a second reading finds the same tasks (retryMaterial refuses it).
+  if (items.length === 0 && x.not_practicable.length > 0)
+    return fail(deps, job, materialId, 'form_not_practicable', {
+      notPracticable: x.not_practicable,
+    });
   // Questions were written but none passed validation: the reading went wrong, not the
   // photo — no lighting advice for a fine photo (empty-after-validation-says-unreadable).
   if (items.length === 0)
@@ -936,11 +975,15 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
         )),
       );
     }
+    // Tasks this reading wrote no questions for, because their form is not one Buddy can
+    // practise (issue #198). They travel with the sheet the learner sees: pages added to an
+    // earlier sheet put theirs onto that sheet, after the ones already there.
+    const notPracticable = JSON.stringify(x.not_practicable);
     if (target) {
       await tx.query(
         `update materials set status = 'ready', failure_reason = null, title = $2, subject_id = $3,
                               ready_at = $4, page_problems = $5, merged_into = $6,
-                              items_incomplete = $7
+                              items_incomplete = $7, not_practicable = $8
           where id = $1`,
         [
           materialId,
@@ -950,20 +993,30 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
           JSON.stringify(pageProblems),
           target.id,
           x.more_items,
+          notPracticable,
         ],
       );
       await tx.query(
         `update materials set extracted_text = concat_ws(E'\n\n', extracted_text, $2::text),
                               subject_id = coalesce(subject_id, $3),
-                              items_incomplete = items_incomplete or $4
+                              items_incomplete = items_incomplete or $4,
+                              not_practicable = $5
           where id = $1`,
-        [target.id, x.extracted_text, subjectId, x.more_items],
+        [
+          target.id,
+          x.extracted_text,
+          subjectId,
+          x.more_items,
+          // The contract shows at most twenty; the sheet keeps the first twenty of them
+          // rather than silently dropping the ones it already named.
+          JSON.stringify([...target.not_practicable, ...x.not_practicable].slice(0, 20)),
+        ],
       );
     } else {
       await tx.query(
         `update materials set status = 'ready', failure_reason = null, title = coalesce(title, $2),
                               extracted_text = $3, subject_id = $4, ready_at = $5, page_problems = $6,
-                              items_incomplete = $7
+                              items_incomplete = $7, not_practicable = $8
           where id = $1`,
         [
           materialId,
@@ -975,6 +1028,7 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
           // Still more on the sheet after every reading it was given (#150): said out loud
           // instead of letting a half-read sheet pass for a whole one.
           x.more_items,
+          notPracticable,
         ],
       );
     }

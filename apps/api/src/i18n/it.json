@@ -68,7 +68,9 @@
     "help_step": "Andiamo passo per passo: cosa ti dà l'esercizio e cosa bisogna trovare?",
     "hint_request": "Un suggerimento, per favore",
     "missing_word": "Quasi – manca ancora una parola. Guarda di nuovo.",
+    "no_single_solution": "Qui non c'è un'unica risposta giusta che possa mostrarti: in un testo così conta come lo argomenti. Dimmi dove ti blocchi e guardiamo insieme il tuo testo.",
     "not_quite": "Non ancora del tutto. Riguarda la domanda – oppure mostra la soluzione.",
+    "one_way_intro": "Un modo per affrontarlo – uno, non il solo:",
     "reexplain": {
       "simpler": "Più semplice, per favore",
       "example": "Con un esempio, per favore",

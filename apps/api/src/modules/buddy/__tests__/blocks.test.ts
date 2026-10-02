@@ -119,6 +119,7 @@ const state: BuddyState = {
       photo_count: 2,
       page_problems: [],
       items_incomplete: false,
+      not_practicable: [],
       created_at: new Date('2026-09-26T10:00:00Z'),
       failed_at: null,
     },

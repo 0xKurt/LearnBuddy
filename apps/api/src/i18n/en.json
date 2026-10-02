@@ -68,7 +68,9 @@
     "help_step": "Let's go step by step: what does the task give you, and what are you looking for?",
     "hint_request": "A hint, please",
     "missing_word": "Almost – a word is still missing. Take another look.",
+    "no_single_solution": "There isn't one right answer I could show you here: in a text like this, what counts is how you argue it. Tell me where you're stuck and we'll look at your text together.",
     "not_quite": "Not quite yet. Have another look at the question – or show the solution.",
+    "one_way_intro": "Here's one way to go about it – one way, not the only one:",
     "reexplain": {
       "simpler": "Simpler, please",
       "example": "With an example, please",

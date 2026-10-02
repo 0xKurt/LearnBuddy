@@ -68,7 +68,9 @@
     "help_step": "Lass uns Schritt für Schritt schauen: Was ist in der Aufgabe gegeben, und was wird gesucht?",
     "hint_request": "Tipp, bitte",
     "missing_word": "Fast – da fehlt noch ein Wort. Schau nochmal genau hin.",
+    "no_single_solution": "Hier gibt es nicht die eine Lösung, die ich dir zeigen könnte: bei so einem Text zählt, wie du es begründest. Sag mir, woran du hängst, dann schauen wir zusammen auf deinen Text.",
     "not_quite": "Noch nicht ganz. Schau dir die Frage nochmal an – oder lass dir die Lösung zeigen.",
+    "one_way_intro": "So könnte man das angehen – ein Weg, nicht der einzige:",
     "reexplain": {
       "simpler": "Einfacher bitte",
       "example": "Mit Beispiel, bitte",

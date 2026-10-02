@@ -34,7 +34,7 @@ type Props = {
 };
 
 type Status = {
-  key: 'reading' | 'unreadable' | 'not_read' | 'incomplete';
+  key: 'reading' | 'unreadable' | 'not_read' | 'incomplete' | 'no_exercises';
   tone: 'gray' | 'primary' | 'warning';
 };
 
@@ -48,7 +48,10 @@ function statusOf(m: MaterialView): Status | null {
     case 'awaiting_upload':
       return { key: 'incomplete', tone: 'gray' };
     case 'failed':
-      // "nicht lesbar" only when that is what the reading found.
+      // "nicht lesbar" only when that is what the reading found — and a sheet whose tasks
+      // are exercise forms Buddy cannot practise WAS read (issue #198), so it never says
+      // "nicht gelesen": it has no exercises, and that is not a warning about her photo.
+      if (m.failure_reason === 'form_not_practicable') return { key: 'no_exercises', tone: 'gray' };
       return {
         key: m.failure_reason === 'unreadable' ? 'unreadable' : 'not_read',
         tone: 'warning',
@@ -84,6 +87,16 @@ export function MaterialCard({
         : m.status === 'awaiting_upload'
           ? t('incomplete_hint')
           : null;
+  // Tasks on the sheet that got no exercises, because their form is not one Buddy can
+  // practise (issue #198). A quiet line next to the note: unsaid, the sheet would look
+  // whole while the exercise she photographed never happened.
+  const missed =
+    m.not_practicable.length > 0
+      ? t('not_practicable', {
+          count: m.not_practicable.length,
+          tasks: m.not_practicable.map((n) => n.task).join(' · '),
+        })
+      : null;
   // A homework sheet leads back to its help session, never to drill practice (audit H-7).
   const action =
     m.purpose !== 'homework'
@@ -95,6 +108,8 @@ export function MaterialCard({
     m.status === 'failed' &&
     m.failure_reason !== 'not_learning_material' &&
     m.failure_reason !== 'blocked' &&
+    // Reading it again would find the same tasks; the API refuses it (issue #198).
+    m.failure_reason !== 'form_not_practicable' &&
     !m.photos_deleted;
 
   return (
@@ -128,6 +143,7 @@ export function MaterialCard({
           </View>
         </View>
         {note ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{note}</Text> : null}
+        {missed ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{missed}</Text> : null}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
           {m.status === 'ready' ? (
             <Btn

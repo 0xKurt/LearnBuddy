@@ -41,7 +41,7 @@ If a change diverges from these docs, update the doc in the same change or write
 5. **Never claim what isn't proven.** Delivery status only from provider tickets/receipts; "opened"
    only from the app; an uncertain external result is never repeated blindly. The UI shows
    planned / prepared / done / confirmed as different states.
-6. **Contact is opt-in; Buddy can only reduce it.** For minors, loosening needs the adult's PIN
+6. **Contact is opt-in; Buddy can only reduce it.** Under 16, loosening needs the adult's PIN
    (server-side admin token). Never show counts of due items or missed days to learners.
 7. **One clock.** Code uses `deps.now()`; SQL never decides "due" with `now()`; rows whose
    timestamps drive behaviour get `created_at` from the app clock.

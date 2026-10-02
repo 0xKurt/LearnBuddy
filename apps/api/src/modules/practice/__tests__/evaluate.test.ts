@@ -6,6 +6,7 @@ import {
   compareWithKeys,
   differentNumber,
   editDistance,
+  noSingleSolution,
   ruleCheck,
   spellingOf,
   valuesIn,
@@ -263,11 +264,13 @@ const TABLE: Row[] = [
     expect: 'spelling',
   },
   {
+    // Was 'spelling' until issue #197: a free text is not rebuked for a comma. It goes to
+    // the model as 'folded' — "judge gently whether that matters for this question".
     id: 'C-7',
     item: { kind: 'long', answer: 'Ich glaube, dass er kommt.', subject_kind: 'german' },
     text: 'Ich glaube dass er kommt',
     locale: 'de',
-    expect: 'spelling',
+    expect: 'folded',
   },
   {
     id: 'C-7',
@@ -447,11 +450,37 @@ describe('spelling strictness (decision D-2)', () => {
   it('is strict for vocabulary and language subjects, gentle elsewhere, and settable per item', () => {
     expect(spellingOf(item({ kind: 'vocab' }))).toBe('strict');
     expect(spellingOf(item({ subject_kind: 'german' }))).toBe('strict');
-    expect(spellingOf(item({ subject_kind: 'latin' }))).toBe('strict');
     expect(spellingOf(item({ subject_kind: 'math' }))).toBe('gentle');
     expect(spellingOf(item({ subject_kind: null }))).toBe('gentle');
     expect(spellingOf(item({ subject_kind: 'math', spelling: 'strict' }))).toBe('strict');
     expect(spellingOf(item({ kind: 'vocab', spelling: 'gentle' }))).toBe('gentle');
+  });
+
+  it('leaves a Latin translation its own criterion, and keeps Latin vocabulary strict (#197)', () => {
+    // Officially a translation is marked on how far it conveys the sense of the original.
+    // Rebuking a correct translation for a comma applies a criterion no curriculum has
+    // (docs/lehrplan-und-uebungsformen.md §8).
+    expect(spellingOf(item({ kind: 'short', subject_kind: 'latin' }))).toBe('gentle');
+    expect(spellingOf(item({ kind: 'long', subject_kind: 'latin' }))).toBe('gentle');
+    // The word form itself IS what is learnt, so a vocabulary pair stays strict.
+    expect(spellingOf(item({ kind: 'vocab', subject_kind: 'latin' }))).toBe('strict');
+    // And an item may still ask for it explicitly.
+    expect(spellingOf(item({ kind: 'short', subject_kind: 'latin', spelling: 'strict' }))).toBe(
+      'strict',
+    );
+  });
+
+  it('never marks the form of a free text, whatever the subject (#197)', () => {
+    for (const subject of ['german', 'english', 'french', 'spanish', 'other_language']) {
+      expect(spellingOf(item({ kind: 'long', subject_kind: subject }))).toBe('gentle');
+    }
+  });
+
+  it('knows which questions have no single solution to show (#197)', () => {
+    expect(noSingleSolution({ kind: 'long' })).toBe(true);
+    for (const kind of ['short', 'numeric', 'multiple_choice', 'formula', 'vocab', 'speak']) {
+      expect(noSingleSolution({ kind })).toBe(false);
+    }
   });
 });
 

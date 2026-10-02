@@ -108,21 +108,51 @@ function withoutAccents(s: string): string {
     .normalize('NFC');
 }
 
-/** Subject kinds (subjects.kind) where spelling, case and punctuation are what is learnt. */
+/**
+ * Subject kinds (subjects.kind) where spelling, case and punctuation are what is learnt.
+ *
+ * Latin is deliberately NOT in this set (issue #197). Its vocabulary still gets the strict
+ * rule through `kind === 'vocab'` below — a Latin word form IS the thing being learnt. But a
+ * Latin TRANSLATION is marked officially on the degree to which it conveys the sense of the
+ * original, not on the German spelling it happens to use; rebuking a correct translation for
+ * a comma claims a criterion that no curriculum applies
+ * (`docs/lehrplan-und-uebungsformen.md` §8).
+ */
 const LANGUAGE_SUBJECTS: ReadonlySet<string> = new Set([
   'german',
   'english',
   'french',
   'spanish',
-  'latin',
   'other_language',
 ]);
+
+/**
+ * A free text ("Erörtere …", "Nimm Stellung …", an Inhaltsangabe) has no single right
+ * answer that could be shown. Its quality is the object, and the quality is not what
+ * `items.answer` holds — at most 600 characters the model wrote as a key. So three things the
+ * app does after a wrong try must not happen here (issue #197, CLAUDE.md rule 5):
+ *
+ *   - no "Die Lösung ist …", because there is none to state;
+ *   - no FSRS rating, because `Again` would record a memory judgement nobody measured;
+ *   - no named weakness in the summary, for the same reason.
+ *
+ * A prepared `worked_solution` stays allowed: it shows ONE way, not THE answer — and says so.
+ * `docs/lehrplan-und-uebungsformen.md` §0 calls this class H: here code may claim nothing, and
+ * the model may not call a whole text wrong either.
+ */
+export function noSingleSolution(item: { kind: string }): boolean {
+  return item.kind === 'long';
+}
 
 /** Decision D-2: set per item; by default strict for vocabulary and language subjects. */
 export function spellingOf(
   item: Pick<ItemForCheck, 'kind' | 'spelling' | 'subject_kind'>,
 ): 'strict' | 'gentle' {
   if (item.spelling) return item.spelling;
+  // A free text is never rebuked for its form: in a text of several sentences a comma is not
+  // what is being asked, and in reading or listening comprehension marking language is
+  // expressly forbidden (`docs/lehrplan-und-uebungsformen.md` §7, issue #197).
+  if (noSingleSolution(item)) return 'gentle';
   return item.kind === 'vocab' ||
     (item.subject_kind !== null && LANGUAGE_SUBJECTS.has(item.subject_kind))
     ? 'strict'

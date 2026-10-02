@@ -68,7 +68,9 @@
     "help_step": "Allons-y pas à pas : qu'est-ce qui est donné dans l'exercice, et qu'est-ce qu'on cherche ?",
     "hint_request": "Un indice, s'il te plaît",
     "missing_word": "Presque – il manque encore un mot. Regarde encore une fois.",
+    "no_single_solution": "Il n'y a pas ici une seule bonne réponse que je pourrais te montrer : dans un texte comme celui-là, ce qui compte, c'est la façon dont tu argumentes. Dis-moi où tu bloques et on regarde ton texte ensemble.",
     "not_quite": "Pas encore tout à fait. Relis la question – ou affiche la solution.",
+    "one_way_intro": "Voilà une façon de s'y prendre – une façon, pas la seule :",
     "reexplain": {
       "simpler": "Plus simple, s'il te plaît",
       "example": "Avec un exemple, s'il te plaît",

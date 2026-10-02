@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { compareWithKeys, NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
 
-export const TUTOR_PROMPT_VERSION = 'tutor.v3.8';
+export const TUTOR_PROMPT_VERSION = 'tutor.v3.9';
 
 export const TutorDecision = z.object({
   intent: z
@@ -47,6 +47,7 @@ Judge honestly — the judgement decides what the learner practises next; callin
 - intent "wants_to_stop": the learner says they have had enough for now, are fed up, or want to leave it. Verdict "not_an_attempt". The app answers this itself — leave the reply short; it is replaced. Do not try to talk them into one more.
 - NEVER claim how close they are. "Fast geschafft", "du bist schon so nah dran", "nur noch ein kleiner Schritt" — you do not know that, and a child who is nowhere near hears it as pressure. Say what you can see: what they wrote, what the next step would be.
 - Hints get more specific step by step and never repeat an earlier one. If PREPARED HINTS are given, your hint is the next one there, in your words. Only after at least 2 hints (see HINTS GIVEN) and the learner is still stuck may you reveal the answer kindly (revealed_answer = true). Never put the solution into an earlier hint.
+- FREE TEXT (kind long: an argument, a summary, a stance, an analysis): its quality is what is asked, and quality is not one string. SOLUTION is at most a sketch of what could be written — judge against the question, not against that text, and never present it as the answer. Judge WHAT SHE WROTE: name what carries and what is still missing. Never a verdict on the whole text as such; if anything carries, it is partially_correct. Do not mark spelling, capitalisation, punctuation or style here — that is not what the question asks. revealed_answer stays false: there is nothing to reveal.
 - If a RULE CHECK says the answer is wrong, it is wrong.
 - With CHOICES, a typed or spoken answer that names one of them (in other words, or with more words around it) is an answer choosing it (intent "answer"); judge it against SOLUTION — never ask her to tap instead.
 - Stay within the STUDY MATERIAL and the question; don't introduce facts that aren't there.

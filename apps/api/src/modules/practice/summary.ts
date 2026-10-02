@@ -4,6 +4,8 @@
 
 import type { PracticeSummary } from '@learnbuddy/shared-types/contracts';
 
+import { noSingleSolution } from './evaluate.js';
+
 /** One closed or open question of a session, as far as the summary needs it. */
 export type SummaryRow = {
   topic: string | null;
@@ -12,6 +14,8 @@ export type SummaryRow = {
   flagged_at?: Date | null;
   /** How the closing answer was given (issue #163); absent in rows written before it. */
   answered_by?: 'typed' | 'tapped' | 'spoken' | null;
+  /** What kind of question it was: a free text says nothing about a topic (issue #197). */
+  kind?: string | null;
 };
 
 /**
@@ -42,6 +46,12 @@ export function summarize(items: readonly SummaryRow[]): PracticeSummary {
   for (const i of closed) {
     const name = i.topic?.trim();
     if (!name) continue;
+    // A free text she did not get right says nothing about the topic (issue #197). There was
+    // no single right answer to miss, so missing it is not evidence of a gap — and naming a
+    // weakness from a judgement nobody measured is exactly what rule 5 forbids. Got right, it
+    // counts like any other question.
+    const measured = i.status === 'correct' || !noSingleSolution({ kind: i.kind ?? '' });
+    if (!measured) continue;
     const key = name.toLocaleLowerCase();
     const t = byTopic.get(key) ?? { name, shaky: false, shown: 0 };
     if (!(i.status === 'correct' && i.first_try_correct)) t.shaky = true;
@@ -53,6 +63,9 @@ export function summarize(items: readonly SummaryRow[]): PracticeSummary {
     byTopic.set(key, t);
   }
   const topics = [...byTopic.values()];
+  // `answered` stays the plain count of questions she worked through: she DID write the free
+  // text, and only the JUDGEMENT of it is withheld (issue #197). Leaving it out would
+  // understate her work, which is a different kind of untrue.
   return {
     answered: closed.length,
     first_try: closed.filter((i) => i.status === 'correct' && i.first_try_correct).length,

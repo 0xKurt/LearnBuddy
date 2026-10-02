@@ -5,6 +5,7 @@
 import type {
   ActionSummary,
   DifficultyWish,
+  NotPracticable,
   PageProblem,
   VocabDirection,
   VoiceName,
@@ -164,6 +165,11 @@ export type MaterialBrief = {
   page_problems: PageProblem[];
   /** The sheet holds more questions than were read into items (issue #150). */
   items_incomplete: boolean;
+  /**
+   * Tasks on the sheet that got no questions because their exercise form is not one Buddy
+   * can practise (issue #198). Buddy names them instead of letting the sheet look done.
+   */
+  not_practicable: NotPracticable[];
   created_at: Date;
   /**
    * When the reading failed (migration 0056). A send given up after a day fails a full day
@@ -477,7 +483,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
             -- still at hand) — the home notice and Buddy's context see the same window.
             case when m.pages_resolved_at is null and m.ready_at > $3::timestamptz - interval '24 hours'
                  then m.page_problems else '[]'::jsonb end as page_problems,
-            m.items_incomplete,
+            m.items_incomplete, m.not_practicable,
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null
                 and i.origin <> 'homework')::int as item_count
        from materials m
@@ -509,7 +515,10 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
                                                 'first_try_correct', si.first_try_correct,
                                                 -- Recognition and production are different
                                                 -- evidence (issue #163).
-                                                'answered_by', si.answered_by))
+                                                'answered_by', si.answered_by,
+                                                -- A free text she did not get right names no
+                                                -- shaky topic (issue #197).
+                                                'kind', i.kind))
                        filter (where si.item_id is not null), '[]'::json) as topic_rows
        from practice_sessions ps
        -- A question she flagged as unfit counts as neither answered nor shaky.

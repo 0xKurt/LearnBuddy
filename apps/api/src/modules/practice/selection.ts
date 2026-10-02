@@ -75,6 +75,13 @@ export async function selectPracticeItems(
   count: HowMany,
   now: Date,
   wish: PracticeWish = {},
+  /**
+   * A mock test. A free text is not a test question: it would get one try, be judged against
+   * a key, and close as "missed" without anything having been measured (issue #197). The
+   * generated test already excludes it by its kind allow-list (`generate.ts`); this closes the
+   * same hole for a test started from her own material.
+   */
+  forTest = false,
 ): Promise<string[]> {
   // For a goal: its own material first; if it has none yet, its subject.
   let goalMaterialsOnly = false;
@@ -107,6 +114,8 @@ export async function selectPracticeItems(
         where i.learner_id = $1 and i.archived_at is null and (m.id is null or m.archived_at is null)
           -- Homework is helped with, not drilled; speaking needs a quiet moment the learner chooses.
           and i.origin <> 'homework' and i.kind <> 'speak'
+          -- A free text is not a test question (issue #197).
+          and (not $12::boolean or i.kind <> 'long')
           and ($2::uuid is null or m.goal_id = $2)
           and ($3::uuid is null or i.subject_id = $3)
           and ($4::uuid is null or i.material_id = $4)
@@ -155,6 +164,7 @@ export async function selectPracticeItems(
       wish.difficulty ?? null,
       wish.vocabularyOnly === true,
       count === 'all' ? null : Math.max(200, count),
+      forTest,
     ],
   );
   if (candidates.length === 0) return [];

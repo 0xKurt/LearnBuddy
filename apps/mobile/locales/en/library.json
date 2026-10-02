@@ -9,7 +9,8 @@
     "reading": "being read",
     "unreadable": "not readable",
     "not_read": "not read",
-    "incomplete": "incomplete"
+    "incomplete": "incomplete",
+    "no_exercises": "no exercises"
   },
   "failure": {
     "unreadable": "The photos were hard to read. Try more light and shoot from above.",
@@ -17,9 +18,12 @@
     "model_error": "Something went wrong while reading.",
     "photos_missing": "Not all photos arrived.",
     "budget_exhausted": "I can't read any more sheets today. It'll work again tomorrow.",
-    "blocked": "The safety filter won't let this sheet through. Reading it again won't help – just type the questions."
+    "blocked": "The safety filter won't let this sheet through. Reading it again won't help – just type the questions.",
+    "form_not_practicable": "I could read the sheet just fine – I just can't practise this kind of task with you. Ask me about it: I'll talk you through the steps."
   },
   "incomplete_hint": "The photos didn't fully arrive. Delete the sheet and photograph it again.",
+  "not_practicable_one": "I left one task out: “{{tasks}}”. I can't practise that one with you – but I'll gladly explain how to go about it.",
+  "not_practicable_other": "I left these tasks out: {{tasks}}. I can't practise those with you – but I'll gladly explain how to go about them.",
   "photos_deleted": "The photos are no longer stored. Delete the sheet and take new photos.",
   "practice": "Practise",
   "practice_label": "Practise “{{title}}”",

@@ -19,6 +19,7 @@ const material = (over: Partial<MaterialView> = {}): MaterialView => ({
   session_status: null,
   page_problems: [],
   items_incomplete: false,
+  not_practicable: [],
   photo_count: 2,
   merged_into: null,
   created_at: '2026-09-27T13:07:40.000Z',

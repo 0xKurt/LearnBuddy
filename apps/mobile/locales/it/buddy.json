@@ -187,6 +187,7 @@
     "failed_photos_missing": "Le foto non sono arrivate complete.",
     "failed_budget_exhausted": "Per oggi non posso leggere altre schede. Domani si riparte.",
     "failed_blocked": "Non posso leggere questa scheda: il filtro di sicurezza non la lascia passare. Rileggerla non servirà. Scrivi semplicemente le domande che ti servono.",
+    "failed_form_not_practicable": "Il tuo foglio l’ho letto bene. Ma questo tipo di esercizio non posso esercitarlo con te: chiedimi e ti spiego i passaggi.",
     "failed_retry": "Rileggi",
     "failed_new_photo": "Nuova foto",
     "result_title": "Ce l'hai fatta!",

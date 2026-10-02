@@ -63,6 +63,22 @@ less is refused at boot, and a database region outside the EU is logged as a boo
   rejects (a 4xx other than 408/429) is 401; when Supabase Auth cannot answer (network, 5xx, 429) the API answers 503 `unavailable`, so an auth outage never looks like a sign-out.
 - Every learner-scoped route takes the learner from the verified user (`http/context.ts`), never
   from the body, the path or a model output. The device sends its IANA zone in `x-timezone`.
+- **The Bundesland of the learner's school** (`learners.curriculum_region`, migration
+  `0068_curriculum_region.sql`, issue #199) is a **required field at registration**: `POST /learner`
+  refuses a profile without it (422 `invalid_input`), and the app's registration CTA stays muted
+  until one of the sixteen is tapped (`app/profile.tsx` through `components/lb/PickerField.tsx` —
+  one row that opens a sheet, because sixteen rows on the screen would not fit a 360×740 phone).
+  The curriculum is a matter for the states: at twelve verified places in
+  [lehrplan-und-uebungsformen.md](lehrplan-und-uebungsformen.md) the same answer is right in one
+  state and wrong in another, so a guessed value makes Buddy teach what counts as a mistake in her
+  class test. The values are a closed list in code (`CurriculumRegion` in
+  `contracts/identity.ts`: the sixteen ISO 3166-2:DE codes in lower case, plus `other` so a learner
+  at a school outside Germany is not stuck at a required field), mirrored by a CHECK on the column,
+  and the **model never writes it** (rule 2) — it comes from a tap. The column is **nullable**:
+  every profile from before this change has no value, nothing blocks or fails on it, and the
+  state-specific rules are simply not applied for such a learner. `PATCH /learner` sets or corrects
+  it like level and grade (bumping `context_version`, rule 4); it is in the export and goes with the
+  learner row on deletion (docs/privacy.md).
 - Under 16: loosening contact to the phone, account data, sign-in details, a birth-date
   correction and agreeing to a new privacy text need a short-lived admin token (PIN,
   `x-admin-token`, 5 minutes, HMAC; the app drops it after the one step). The gate is the age,
@@ -87,25 +103,25 @@ less is refused at boot, and a database region outside the EU is logged as a boo
   (`scale.int.test.ts` keeps it so for future foreign keys). `0028_scan_indexes.sql` does the
   same for the scheduler's per-minute lookups (jobs by material, turns still processing).
 
-| Route                                                                                                | Purpose                                                                                          |
-| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `GET /me`, `POST /account`, `POST /learner`, `PATCH /learner`                                        | onboarding (consent version must match); child + PIN in one request; birth-date correction (PIN) |
-| `PUT /account/pin`, `POST /account/admin-session`                                                    | PIN gate (shared lock, §Limits)                                                                  |
-| `PUT /account/password`                                                                              | new password (Supabase admin), PIN for a minor                                                   |
-| `GET /account/export`, `POST/DELETE /account/deletion`                                               | privacy (account holder; also without a profile)                                                 |
-| `GET /buddy`, `GET /buddy/thread`                                                                    | the home: now / decision / done / next / thread / system                                         |
-| `POST /buddy/messages`                                                                               | a learner message (idempotent on `client_message_id`)                                            |
-| `POST /buddy/messages/:clientMessageId/stop`                                                         | "Stopp" while Buddy writes: the turn ends stopped, or says it was already answered (§Turns)      |
-| `POST /buddy/steps/:id/start\|skip`, `POST /buddy/actions/:id/undo`, `POST /buddy/goals/:id/outcome` | explicit taps, no model                                                                          |
-| `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact; Buddy's voice (picked with a tap, ADR 0008 §Amendment)                                  |
-| `POST /push-devices/claim`, `POST /push-devices/release` (no session)                                | one learner per install (push)                                                                   |
-| `POST /buddy/outreach/:id/opened`                                                                    | the only evidence a message was opened                                                           |
-| `GET/PATCH /buddy/memory`                                                                            | what Buddy knows, correctable                                                                    |
-| `GET/POST /materials`, `GET/DELETE /materials/:id`, `POST /materials/:id/submit\|retry`              | photos → questions                                                                               |
-| `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one                                              |
-| `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                                                         |
-| `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived                                                      |
-| `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                       |
+| Route                                                                                                | Purpose                                                                                                               |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `GET /me`, `POST /account`, `POST /learner`, `PATCH /learner`                                        | onboarding (consent version must match, Bundesland required); child + PIN in one request; birth-date correction (PIN) |
+| `PUT /account/pin`, `POST /account/admin-session`                                                    | PIN gate (shared lock, §Limits)                                                                                       |
+| `PUT /account/password`                                                                              | new password (Supabase admin), PIN for a minor                                                                        |
+| `GET /account/export`, `POST/DELETE /account/deletion`                                               | privacy (account holder; also without a profile)                                                                      |
+| `GET /buddy`, `GET /buddy/thread`                                                                    | the home: now / decision / done / next / thread / system                                                              |
+| `POST /buddy/messages`                                                                               | a learner message (idempotent on `client_message_id`)                                                                 |
+| `POST /buddy/messages/:clientMessageId/stop`                                                         | "Stopp" while Buddy writes: the turn ends stopped, or says it was already answered (§Turns)                           |
+| `POST /buddy/steps/:id/start\|skip`, `POST /buddy/actions/:id/undo`, `POST /buddy/goals/:id/outcome` | explicit taps, no model                                                                                               |
+| `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact; Buddy's voice (picked with a tap, ADR 0008 §Amendment)                                                       |
+| `POST /push-devices/claim`, `POST /push-devices/release` (no session)                                | one learner per install (push)                                                                                        |
+| `POST /buddy/outreach/:id/opened`                                                                    | the only evidence a message was opened                                                                                |
+| `GET/PATCH /buddy/memory`                                                                            | what Buddy knows, correctable                                                                                         |
+| `GET/POST /materials`, `GET/DELETE /materials/:id`, `POST /materials/:id/submit\|retry`              | photos → questions                                                                                                    |
+| `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one                                                                   |
+| `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                                                                              |
+| `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived                                                                           |
+| `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
 ## Buddy decisions
 
@@ -1012,6 +1028,23 @@ has more after the last reading, `materials.items_incomplete` says so, Buddy is 
 he says it plainly instead of letting a half-read sheet pass for a whole one (rule 5). Homework is
 a short list by design and is never continued.
 
+**An exercise form Buddy cannot practise is reported, not replaced** (issue #198,
+`docs/lehrplan-und-uebungsformen.md` §12.3). A sheet whose task is an essay, a construction with
+compasses, a real experiment or a piece of work over weeks is perfectly readable — so the reading
+used to write eight to fifteen knowledge questions about its text instead, and the sheet looked
+done while the exercise she photographed never happened (the silent substitution of #150 one level
+up). Both readings (study and homework) now name such a task in `not_practicable` and write no
+question for it: the task as printed, plus its form. The forms are a closed enum in the contract
+(`NotPracticableForm` in `packages/shared-types/src/contracts/learning.ts`) and not a prompt list,
+because they decide a state the app shows and a retry the API refuses — code, not a suggestion
+(rule 1). A mixed sheet stays usable: five sums and one essay give five questions and one honest
+sentence (`materials.not_practicable`, migration 0067), shown on the card and on the sheet's screen
+and named task by task in STATE, so Buddy can say which one in her words and offer to explain it
+instead. A sheet where nothing was practicable fails with `form_not_practicable` — its own reason,
+so nothing blames her photo; `retryMaterial` refuses a second reading (it would find the same
+tasks) and the photos keep the normal 7-day retention, because the sheet is valid material she may
+want to look at.
+
 **Photo check on the phone** (`apps/mobile/lib/photo/quality.ts`, `check.ts`; the old app's most
 common failure was an unreadable photo): right after a photo is taken or picked, a small copy is
 decoded on the device (jpeg-js, the same on phone and web) and measured — too dark (mean
@@ -1051,9 +1084,9 @@ recovery alike: status, `failed_at` (migration 0056), the purge and a context bu
 transaction. **A sheet never fails invisibly** (issue #115): the home shows the failed card for a
 day after `failed_at` — the moment it failed, not the moment its photos were reserved, which is a
 full day earlier for a send that was given up — and "Nochmal lesen" is offered only where a second
-reading can work: not after `not_learning_material` or `blocked`, not when the photos never all
-arrived (`photos_missing`) and not when they are already deleted, all three of which `retryMaterial`
-refuses (409 `photos_never_arrived` for the missing ones). What Buddy says about it comes from the
+reading can work: not after `not_learning_material`, `blocked` or `form_not_practicable`, not when
+the photos never all arrived (`photos_missing`) and not when they are already deleted, all of which
+`retryMaterial` refuses (409 `photos_never_arrived` for the missing ones). What Buddy says about it comes from the
 same facts: STATE names each failed sheet with what its reason means for her next step, and names a
 send that is still on its way with the time it started (`context.ts`).
 

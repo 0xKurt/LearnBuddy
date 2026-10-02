@@ -23,8 +23,68 @@ export const MaterialFailure = z.enum([
   'budget_exhausted',
   /** The provider's safety filter refused to read it; reading again would not help. */
   'blocked',
+  /**
+   * The sheet was read perfectly well — and every task on it is an exercise form Buddy
+   * cannot practise (`NotPracticableForm`): a construction with compasses, an essay, a
+   * real experiment. Reading it again changes nothing, so this is a final state; the
+   * photos stay, because the sheet is valid and she may want to look at it (issue #198).
+   */
+  'form_not_practicable',
 ]);
 export type MaterialFailure = z.infer<typeof MaterialFailure>;
+
+/**
+ * Exercise forms Buddy has no exercise for, by what the task's PRODUCT is
+ * (docs/lehrplan-und-uebungsformen.md §12.3 "Gruppe 3"). The list lives here, in code,
+ * not in the extraction prompt: it decides a state the app shows and a failure the API
+ * refuses to retry, so it is enforced, not suggested (CLAUDE.md rule 1).
+ *
+ * Each of them is its own input surface AND its own marker — around fifteen features, not
+ * one. Until they exist, a task of this form gets NO questions written about it: a sheet
+ * that silently became knowledge questions about its own text is the quiet substitution
+ * of issue #198.
+ */
+export const NotPracticableForm = z.enum([
+  /**
+   * The product is a drawing: a construction with compasses and ruler, a function graph,
+   * a circuit diagram, force arrows, a Lewis/structural formula, a titration curve, a
+   * labelled schema, a family tree or cladogram, a climate or profile section, a map
+   * sketch, a flow chart, UML/ER/automaton diagram, musical notation.
+   */
+  'drawing',
+  /**
+   * Free speaking in a dialogue: a speaking exam with role cards, a tandem conversation,
+   * a debate, "thinking aloud". Buddy's `speak` is reading a GIVEN text aloud, word by
+   * word — a partner who asks back is a different machine.
+   */
+  'spoken_dialogue',
+  /** A real experiment, a specimen, a dissection, a survey in the field: the physical world. */
+  'experiment',
+  /**
+   * A text far beyond the answer field (2000 characters): material-based writing, an
+   * interpretation, an essay. An input problem, not a marking problem.
+   */
+  'long_text',
+  /** A piece of work over days or weeks as the PRODUCT: Facharbeit, GFS, project, presentation. */
+  'multi_day_project',
+  /** A practical subject done away from the device: art, an instrument, composition, sport. */
+  'practical',
+  /** Hearing it: intervals, chords, rhythm and melody dictation. */
+  'ear_training',
+]);
+export type NotPracticableForm = z.infer<typeof NotPracticableForm>;
+
+/**
+ * One task on the sheet that got no questions, and why (issue #198). The sheet keeps
+ * whatever else was practicable, so a sheet with five sums and one essay gives five
+ * questions and one honest sentence about the sixth — never six questions, never none.
+ */
+export const NotPracticable = z.object({
+  /** The task as PRINTED on the sheet, so she recognises which one is meant. */
+  task: z.string().trim().min(1).max(120),
+  form: NotPracticableForm,
+});
+export type NotPracticable = z.infer<typeof NotPracticable>;
 
 /**
  * A page Buddy could not read completely (cut off, blurred, …). Lena is told
@@ -97,6 +157,12 @@ export const MaterialView = z.object({
    * "ask me all the vocabulary" hand back half a word list.
    */
   items_incomplete: z.boolean().default(false),
+  /**
+   * Tasks on this sheet Buddy wrote no questions for, because their form is one he cannot
+   * practise (issue #198). Empty for almost every sheet; non-empty it is said out loud,
+   * on the card and on the sheet's own screen — a task nobody mentions would look done.
+   */
+  not_practicable: z.array(NotPracticable).max(20).default([]),
   /** Pages: a photo is one, a PDF counts its pages (known once submitted). */
   photo_count: z.number().int(),
   /** Pages added to a sheet: once read, their questions are part of that sheet. */

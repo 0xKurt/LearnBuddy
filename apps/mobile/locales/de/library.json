@@ -9,7 +9,8 @@
     "reading": "wird gelesen",
     "unreadable": "nicht lesbar",
     "not_read": "nicht gelesen",
-    "incomplete": "unvollständig"
+    "incomplete": "unvollständig",
+    "no_exercises": "ohne Übungen"
   },
   "failure": {
     "unreadable": "Die Fotos waren nicht gut lesbar. Versuch es mit mehr Licht und von oben.",
@@ -17,9 +18,12 @@
     "model_error": "Beim Lesen ist etwas schiefgelaufen.",
     "photos_missing": "Nicht alle Fotos sind angekommen.",
     "budget_exhausted": "Für heute kann ich keine Blätter mehr lesen. Morgen geht es wieder.",
-    "blocked": "Der Schutzfilter lässt dieses Blatt nicht durch. Nochmal lesen hilft nicht – tipp die Aufgaben einfach ab."
+    "blocked": "Der Schutzfilter lässt dieses Blatt nicht durch. Nochmal lesen hilft nicht – tipp die Aufgaben einfach ab.",
+    "form_not_practicable": "Das Blatt konnte ich gut lesen – nur diese Art Aufgabe kann ich nicht mit dir üben. Frag mich danach: Ich erkläre dir die Schritte."
   },
   "incomplete_hint": "Die Fotos sind nicht ganz angekommen. Lösch das Blatt und fotografier es neu.",
+  "not_practicable_one": "Eine Aufgabe habe ich weggelassen: „{{tasks}}“. Die kann ich nicht mit dir üben – aber ich erkläre dir gern, wie man sie angeht.",
+  "not_practicable_other": "Diese Aufgaben habe ich weggelassen: {{tasks}}. Die kann ich nicht mit dir üben – aber ich erkläre dir gern, wie man sie angeht.",
   "photos_deleted": "Die Fotos sind nicht mehr gespeichert. Lösch das Blatt und fotografier es neu.",
   "practice": "Üben",
   "practice_label": "„{{title}}“ üben",

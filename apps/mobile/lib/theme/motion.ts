@@ -3,8 +3,12 @@
 // component so the same kind of change always moves the same way.
 //
 // Calm, soft, never bouncy: the soft overshoot is only for celebratory moments.
-// Every animation respects the system's reduce-motion setting — use `REDUCE`
-// on layout animations and `useReducedMotion()` for shared values.
+//
+// Every animation respects the system's reduce-motion setting, but respecting it means
+// REPLACING movement with a cross-fade, not dropping the transition (issue #126): a thing
+// that moves gets `REDUCE`, a cross-fade gets `REDUCE_NEVER` and the question of what may
+// move is answered by `motionIsReduced()` / lib/theme/reduceMotion.ts. Shared values use
+// `useReducedMotion()` the same way.
 import { AccessibilityInfo } from 'react-native';
 import { Easing, ReduceMotion } from 'react-native-reanimated';
 
@@ -29,6 +33,13 @@ export const SPRING = { damping: 18, stiffness: 180, mass: 1 } as const;
  * Reduce-motion policy for things that MOVE and have no still equivalent — a list
  * re-ordering itself. There is nothing to cross-fade to there, so the system setting
  * decides and the change simply happens.
+ *
+ * Be clear about what this does, because the name reads milder than the effect: Reanimated
+ * does not shorten a reduced animation, it skips it. `getReduceMotionFromConfig` resolves
+ * `System` against the live system value and `decorateAnimation`'s `onStart` then sets
+ * `current = toValue; onFrame = () => true` (4.1.7, src/animation/util.ts:148 and :495). One
+ * frame, and the element stands at its end state. On a fade that is a hard cut — which is
+ * why a fade never gets this.
  */
 export const REDUCE = ReduceMotion.System;
 
@@ -42,7 +53,11 @@ export const REDUCE = ReduceMotion.System;
  * system-wide (owner 30.09., issue #126): nothing ruckelt, everything *springs*.
  *
  * The policy of what moves is decided here instead (`motionIsReduced`), so a fade can
- * stay a fade.
+ * stay a fade. The small rise gets this policy too, for the same reason: the app has already
+ * decided that movement is allowed, and handing the question to Reanimated a second time
+ * could only answer it with a snap. The app's reading is the fresher one as well — Reanimated
+ * captures the system value once, when its native module installs, while the subscription
+ * below keeps listening.
  */
 export const REDUCE_NEVER = ReduceMotion.Never;
 
@@ -52,7 +67,14 @@ export const REDUCE_NEVER = ReduceMotion.Never;
  * Reanimated's entering animations are built outside React, so a hook cannot reach them.
  * React Native's own AccessibilityInfo can: on Android it reads
  * `Settings.Global.TRANSITION_ANIMATION_SCALE == 0`, which is exactly the switch the test
- * device has on. Read once at start-up and kept current by the subscription below.
+ * device has on — and exactly the switch Reanimated's own native side reads
+ * (NativeProxy.java#getIsReducedMotion), so the two readings cannot disagree. Read once at
+ * start-up and kept current by the subscription below.
+ *
+ * The limit, stated rather than hidden: that first read is a promise. Until it resolves this
+ * answers `false`, so an entrance in the first frames after launch may still rise on a phone
+ * that asked for less motion. React Native offers no synchronous read. It errs towards one
+ * animation too many, never towards the hard jump of issue #126.
  */
 let reduced = false;
 

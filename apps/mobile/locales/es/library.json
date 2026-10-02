@@ -9,7 +9,8 @@
     "reading": "en lectura",
     "unreadable": "ilegible",
     "not_read": "sin leer",
-    "incomplete": "incompleta"
+    "incomplete": "incompleta",
+    "no_exercises": "sin ejercicios"
   },
   "failure": {
     "unreadable": "Las fotos no se leían bien. Prueba con más luz y desde arriba.",
@@ -17,9 +18,12 @@
     "model_error": "Algo ha fallado durante la lectura.",
     "photos_missing": "No han llegado todas las fotos.",
     "budget_exhausted": "Por hoy ya no puedo leer más fichas. Mañana vuelve a funcionar.",
-    "blocked": "El filtro de seguridad no deja pasar esta ficha. Volver a leerla no servirá: escribe las preguntas."
+    "blocked": "El filtro de seguridad no deja pasar esta ficha. Volver a leerla no servirá: escribe las preguntas.",
+    "form_not_practicable": "He podido leer la ficha sin problema: solo que este tipo de ejercicio no lo puedo practicar contigo. Pregúntame y te explico los pasos."
   },
   "incomplete_hint": "Las fotos no han llegado completas. Elimina la ficha y vuelve a hacerle una foto.",
+  "not_practicable_one": "He dejado un ejercicio fuera: «{{tasks}}». Ese no lo puedo practicar contigo, pero te explico con gusto cómo se hace.",
+  "not_practicable_other": "He dejado estos ejercicios fuera: {{tasks}}. Esos no los puedo practicar contigo, pero te explico con gusto cómo se hacen.",
   "photos_deleted": "Las fotos ya no están guardadas. Borra la hoja y vuelve a hacerle fotos.",
   "practice": "Practicar",
   "practice_label": "Practicar “{{title}}”",

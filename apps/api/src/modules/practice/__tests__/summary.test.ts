@@ -78,4 +78,33 @@ describe('what one practice may claim', () => {
     const s = summarize([row({ topic: 'Brüche' }), row({ topic: ' brüche ' })]);
     expect(s.secure_topics).toEqual(['Brüche']);
   });
+
+  it('names no topic from a free text she did not get right (#197)', () => {
+    // There was no single right answer to miss, so missing it is not evidence of a gap —
+    // and the app had been writing exactly that into "wacklige Themen".
+    const s = summarize([
+      row({ topic: 'Erörterung', kind: 'long', status: 'revealed', first_try_correct: false }),
+      row({ topic: 'Erörterung', kind: 'long', status: 'skipped', first_try_correct: false }),
+    ]);
+    expect(s.shaky_topics).toEqual([]);
+    expect(s.secure_topics).toEqual([]);
+    // She wrote them, though: the count of what she worked through is not reduced.
+    expect(s.answered).toBe(2);
+  });
+
+  it('counts a free text she DID get right like any other question (#197)', () => {
+    const s = summarize([
+      row({ topic: 'Erörterung', kind: 'long' }),
+      row({ topic: 'Erörterung', kind: 'long' }),
+    ]);
+    expect(s.secure_topics).toEqual(['Erörterung']);
+    expect(s.shaky_topics).toEqual([]);
+  });
+
+  it('still calls a missed question with one answer shaky (#197 changed nothing there)', () => {
+    const s = summarize([
+      row({ topic: 'Brüche', kind: 'numeric', status: 'revealed', first_try_correct: false }),
+    ]);
+    expect(s.shaky_topics).toEqual(['Brüche']);
+  });
 });

@@ -177,13 +177,27 @@ export default function MaterialScreen() {
       <QuestionsSkeleton label={t('library:items.loading')} />
     );
   } else {
+    // Tasks on the sheet that got no questions, because their exercise form is not one
+    // Buddy can practise (issue #198). Named here too: this is the screen that lists what
+    // the sheet became, so a task missing from it without a word would look done.
+    const missed =
+      material.not_practicable.length > 0
+        ? t('library:not_practicable', {
+            count: material.not_practicable.length,
+            tasks: material.not_practicable.map((n) => n.task).join(' · '),
+          })
+        : null;
     // No questions: all deleted, or the photos are not (yet) read — say which.
     let empty: { title: string; body?: string } | null = null;
     if (data.items.length === 0) {
       if (material.status === 'ready')
         empty = { title: t('library:items.empty_title'), body: t('library:items.empty_body') };
       else if (material.status === 'failed')
-        empty = { title: t(`library:failure.${material.failure_reason ?? 'model_error'}`) };
+        empty = {
+          title: t(`library:failure.${material.failure_reason ?? 'model_error'}`),
+          // Nothing came of this sheet BECAUSE of these tasks: they are the explanation.
+          ...(missed ? { body: missed } : {}),
+        };
       else if (material.status === 'awaiting_upload')
         empty = { title: t('library:incomplete_hint') };
       else empty = { title: t('library:items.reading') };
@@ -209,6 +223,9 @@ export default function MaterialScreen() {
               .filter(Boolean)
               .join(' · ')}
           </Text>
+          {missed !== null && empty?.body !== missed ? (
+            <Text style={[TYPE.body, { color: palette.ink2 }]}>{missed}</Text>
+          ) : null}
           {material.status === 'ready' ? (
             // A page she forgot: its questions join this sheet once read.
             <View style={{ flexDirection: 'row', marginTop: 4 }}>
