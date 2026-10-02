@@ -53,6 +53,36 @@ describe('tutor invariants', () => {
       'incorrect',
     );
   });
+
+  it('will not call an answer wrong where no Bundesland rule applies (#214)', () => {
+    // At one of the twelve places where the states disagree, with no rule for her state, a
+    // "wrong" is a claim nobody can back: what she wrote may be exactly what her own school
+    // asks for, in another state's wording.
+    expect(
+      enforceTutorInvariants(d({ verdict: 'incorrect' }), 'unknown', false, true).verdict,
+    ).toBe('partially_correct');
+    // With a rule for her state the model's judgement stands: it was told what counts.
+    expect(
+      enforceTutorInvariants(d({ verdict: 'incorrect' }), 'unknown', false, false).verdict,
+    ).toBe('incorrect');
+    // A state does not change what a number is: a rule-checked wrong answer stays wrong.
+    expect(
+      enforceTutorInvariants(d({ verdict: 'incorrect' }), 'incorrect', false, true).verdict,
+    ).toBe('incorrect');
+    // And it never lifts anything above "partly": a revealed answer is still not right.
+    expect(
+      enforceTutorInvariants(
+        d({ verdict: 'incorrect', revealed_answer: true }),
+        'unknown',
+        false,
+        true,
+      ).verdict,
+    ).toBe('incorrect');
+    // Nothing changes for a question at none of the twelve places (the normal case).
+    expect(enforceTutorInvariants(d({ verdict: 'incorrect' }), 'unknown').verdict).toBe(
+      'incorrect',
+    );
+  });
 });
 
 describe('mentionsSolution', () => {

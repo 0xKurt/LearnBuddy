@@ -12,6 +12,7 @@
 import type {
   ClarifyUnclearRequest,
   CreateMaterialRequest,
+  CurriculumRegion,
   Figure,
   ItemResult,
   LibraryView,
@@ -29,6 +30,7 @@ import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmPart, type LlmResult } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
+import { curriculumBlock } from '../curriculum/state.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { StorageError } from '../../storage/gateway.js';
@@ -756,6 +758,11 @@ type ReadingLearner = {
   level: string;
   grade: number | null;
   birth_date: string;
+  /**
+   * The Bundesland of her school (issue #199): at twelve verified places it decides what a
+   * complete answer is, so the key written from her sheet depends on it (issue #214).
+   */
+  curriculum_region: CurriculumRegion | null;
 };
 
 /** One reading of the photos already loaded. `extra` is what THIS reading is told on top. */
@@ -773,7 +780,7 @@ async function sheetReader(
   opts: { homework: boolean; parts: LlmPart[]; now: Date },
 ): Promise<{ learner: ReadingLearner; timezone: string; read: Reader }> {
   const learner = await deps.db.one<ReadingLearner>(
-    `select id, locale, level, grade, birth_date from learners where id = $1`,
+    `select id, locale, level, grade, birth_date, curriculum_region from learners where id = $1`,
     [learnerId],
   );
   const tz = await deps.db.one<{ timezone: string }>(
@@ -799,7 +806,14 @@ async function sheetReader(
           role: 'user',
           parts: [
             {
-              text: `LEARNER: ${ageOn(learner.birth_date, opts.now)} years, level ${level}, app language ${learner.locale}`,
+              text: [
+                `LEARNER: ${ageOn(learner.birth_date, opts.now)} years, level ${level}, app language ${learner.locale}`,
+                // Which curriculum decides what a complete answer is (issue #214). The sheet
+                // itself is never questioned here — only the key written from it.
+                curriculumBlock({ region: learner.curriculum_region, grade: learner.grade }),
+              ]
+                .filter(Boolean)
+                .join('\n'),
             },
             ...opts.parts,
           ],

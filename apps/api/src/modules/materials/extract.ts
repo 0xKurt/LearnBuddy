@@ -5,6 +5,7 @@
 import { MOST_UNCLEAR_READINGS, NotPracticable } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
+import { CURRICULUM_RULES } from '../curriculum/state.js';
 import {
   FIGURE_RULES,
   ItemDraft,
@@ -317,6 +318,7 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${PARTS_RULES}
    - ${PARTS_FROM_SHEET}
    - accepted_answers: other correct formulations (synonyms, spelling variants).
+   - ${CURRICULUM_RULES}
    - topic: a short topic name (2–4 words) shared by questions about the same thing.
    - Questions and answers in the language of the material (for language exercises, instructions in the learner's language).
    - Never invent facts that are not in the material.
@@ -341,6 +343,7 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}
+   - ${CURRICULUM_RULES}
    - ${FIGURE_RULES}
    - topic: 2–4 words.
    - hints: 2–3 hints, each a small step (never the answer); no worked solution for homework.

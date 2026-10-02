@@ -159,6 +159,9 @@ export function barItem(task: BarTask, locale: string): BarItem | null {
     tolerance: null,
     spelling: null,
     source_excerpt: null,
+    // A fraction bar is at none of the state-dependent curriculum places (issue #214):
+    // no Bundesland names a fraction differently.
+    curriculum_point: null,
     bar_task: task,
     // A fraction bar is one value against one key; its answer has no parts (issues #228–#230).
     parts_task: null,

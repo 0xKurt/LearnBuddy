@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { compareWithKeys, NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
 
-export const TUTOR_PROMPT_VERSION = 'tutor.v3.9';
+export const TUTOR_PROMPT_VERSION = 'tutor.v4';
 
 export const TutorDecision = z.object({
   intent: z
@@ -49,6 +49,7 @@ Judge honestly — the judgement decides what the learner practises next; callin
 - Hints get more specific step by step and never repeat an earlier one. If PREPARED HINTS are given, your hint is the next one there, in your words. Only after at least 2 hints (see HINTS GIVEN) and the learner is still stuck may you reveal the answer kindly (revealed_answer = true). Never put the solution into an earlier hint.
 - FREE TEXT (kind long: an argument, a summary, a stance, an analysis): its quality is what is asked, and quality is not one string. SOLUTION is at most a sketch of what could be written — judge against the question, not against that text, and never present it as the answer. Judge WHAT SHE WROTE: name what carries and what is still missing. Never a verdict on the whole text as such; if anything carries, it is partially_correct. Do not mark spelling, capitalisation, punctuation or style here — that is not what the question asks. revealed_answer stays false: there is nothing to reveal.
 - If a RULE CHECK says the answer is wrong, it is wrong.
+- CURRICULUM: in Germany the curriculum is a matter for the states, and at some places the expected answer differs from one Bundesland to the next. When a CURRICULUM line is given, it is her own state's curriculum: it decides what counts as a complete answer here, and you add nothing to it. When it says no state's rule applies, a wording another German curriculum uses is not an error — accept it, say what is missing rather than calling the answer wrong, and when you are not certain it is wrong, the verdict is partially_correct.
 - With CHOICES, a typed or spoken answer that names one of them (in other words, or with more words around it) is an answer choosing it (intent "answer"); judge it against SOLUTION — never ask her to tap instead.
 - Stay within the STUDY MATERIAL and the question; don't introduce facts that aren't there.
 - Tone: warm, calm, short (1–3 sentences), like a kind older sibling. Never "Falsch!". Adapt to the learner's age and level. Use the learner's language.
@@ -112,6 +113,12 @@ export function tutorContext(input: {
   language: string;
   material: string | null;
   preferences: string[];
+  /**
+   * What her Bundesland expects at this question's curriculum place, or the cautious line when
+   * no state rule applies (`curriculum/state.ts` → `curriculumLine`). Null for a question at
+   * none of the twelve places, which is almost every question (issue #214).
+   */
+  curriculum?: string | null;
 }): string {
   const i = input.item;
   const lines = [
@@ -124,6 +131,7 @@ export function tutorContext(input: {
     ...(i.accepted_answers.length ? [`ALSO ACCEPTED: ${i.accepted_answers.join(' | ')}`] : []),
     `HINTS GIVEN: ${input.hintsGiven} · ATTEMPTS SO FAR: ${input.attempts}`,
     `RULE CHECK: ${RULE_TEXT[input.ruleVerdict]}`,
+    ...(input.curriculum ? [input.curriculum] : []),
   ];
   const prepared = input.preparedHints ?? [];
   if (prepared.length) {
@@ -152,6 +160,21 @@ export function enforceTutorInvariants(
    * answer missing its accents is never fully right, whatever the model says.
    */
   modelDecidesTheNearMiss = false,
+  /**
+   * The question is at one of the twelve places where the expected answer differs from one
+   * Bundesland to the next, and no state rule applies to her: `other`, no value at all, or a
+   * state whose curriculum nobody has read (issue #214, `curriculum/state.ts` → `cautiousAt`).
+   *
+   * Then a "wrong" is a claim nobody can back: what she wrote may be exactly what her own
+   * school asks for, in a wording another state uses. The judgement becomes the cautious one
+   * instead — partly right, which keeps the question open and names what is missing. The
+   * prompt says the same thing (TUTOR_SYSTEM, CURRICULUM); this is what holds when the model
+   * does not follow it, like the near-miss cap below.
+   *
+   * Never against a rule check: a wrong choice or a wrong number stays wrong, whatever the
+   * curriculum — a state does not change what 7 · 8 is.
+   */
+  noStateRuleApplies = false,
 ): TutorDecision {
   let verdict = d.verdict;
   if (d.intent !== 'answer') verdict = 'not_an_attempt';
@@ -160,6 +183,9 @@ export function enforceTutorInvariants(
   if (verdict === 'not_an_attempt' && d.intent === 'answer') verdict = 'incorrect';
   if (ruleVerdict === 'incorrect' && (verdict === 'correct' || verdict === 'partially_correct')) {
     verdict = 'incorrect';
+  }
+  if (noStateRuleApplies && ruleVerdict !== 'incorrect' && verdict === 'incorrect') {
+    verdict = 'partially_correct';
   }
   // Accents missing is not fully right. The one exception is named here rather than left
   // to the caller: even with the flag set, only a missing WORD may be judged right.
