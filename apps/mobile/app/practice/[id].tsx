@@ -1077,7 +1077,9 @@ export default function PracticeScreen() {
                   imageKey={item.id}
                   imageMaxHeight={Math.min(180, Math.round(windowHeight * 0.2))}
                   fromBuddy={item.origin === 'buddy'}
-                  minHeight={cardMin}
+                  // Ein Programm bekommt seine natürliche Höhe (issue #262): der freie Platz um
+                  // einen Codeblock wäre leere Fläche, im Gespräch darunter wird er gebraucht.
+                  minHeight={item.figure?.type === 'code' ? undefined : cardMin}
                   pickLine={
                     codeLine
                       ? {
@@ -1142,6 +1144,7 @@ export default function PracticeScreen() {
               >
                 <ItemThread
                   turns={turns}
+                  code={item.figure?.type === 'code'}
                   pending={pendingText}
                   hideVerdicts={testing}
                   // A spoken answer: the judgement's words belong here, the marked sentence
@@ -1157,7 +1160,11 @@ export default function PracticeScreen() {
                     answer she got right herself, the chip and Buddy's reply carry it. */}
                 {shown.status !== 'open' && shown.status !== 'correct' && shown.answer !== null ? (
                   <Rise delay={180}>
-                    <SolutionCard answer={shown.answer} numeric={item.kind === 'numeric'} />
+                    <SolutionCard
+                      answer={shown.answer}
+                      numeric={item.kind === 'numeric'}
+                      code={item.figure?.type === 'code'}
+                    />
                   </Rise>
                 ) : null}
                 {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (

@@ -173,8 +173,14 @@ describe('write a function', () => {
   it('takes the expected values from running the solution', () => {
     const item = codeItem(SUMME, 'de');
     expect(item?.prompt).toBe(
-      'Schreibe die Funktion summe(liste). Sie gibt die Summe aller Zahlen der Liste zurück. Beispiel: summe([1, 2, 3]) ergibt 6. Beispiel: summe([]) ergibt 0.',
+      'Schreibe die Funktion summe(liste). Sie gibt die Summe aller Zahlen der Liste zurück.',
     );
+    // Die Beispiele stehen als Code darunter, mit dem, was die MUSTERLÖSUNG ergab.
+    const shown =
+      item?.figure?.type === 'code'
+        ? item.figure.lines.map((l) => l.map((x) => x.text).join(''))
+        : [];
+    expect(shown).toEqual(['summe([1, 2, 3])  # → 6', 'summe([])         # → 0']);
     expect(item?.answer).toBe(SUMME.task === 'write_function' ? SUMME.solution : '');
     expect(codeSurfaceOf(SUMME)).toEqual({
       mode: 'code_type',

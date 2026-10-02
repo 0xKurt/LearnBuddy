@@ -667,3 +667,136 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   expect((await quick).postDataJSON()).toMatchObject({ text: '12' });
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
 });
+
+/**
+ * A code question in both schemes, at both phones, and once more with the keyboard up: the
+ * program and the task stay in view above the pinned field (issue #262).
+ */
+async function codeShots(page: Page, name: string, { keyboard = false } = {}): Promise<void> {
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await shot(page, `${name}-${scheme}`);
+    if (!keyboard) continue;
+    for (const phone of PHONES) {
+      const room = { width: phone.width, height: phone.height - KEYBOARD[phone.width] };
+      await page.setViewportSize(room);
+      await page.getByTestId('code-input').focus();
+      await settle(page);
+      await page.screenshot({ path: join(SHOTS, `${name}-${scheme}-kb-${phone.width}.png`) });
+      await expect(page.getByTestId('scroll-question').last()).toBeInViewport();
+      const stack = await bottomStack(page, `${name}-${scheme}-kb`);
+      expect(stack, `pinned code field ${stack}pt`).toBeLessThanOrEqual(room.height / 2);
+    }
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize(PHONES[0]);
+}
+
+/**
+ * Fills a code field until it holds the text. `codeShots` switches the colour scheme, and a scheme
+ * change rebuilds the tree: a fill landing during that rebuild is wiped (see the path test above).
+ */
+async function fillCode(field: ReturnType<Page['getByLabel']>, value: string): Promise<void> {
+  await expect(async () => {
+    await field.fill(value);
+    await expect(field).toHaveValue(value, { timeout: 1000 });
+  }).toPass();
+}
+
+test('programs: read one, find the line that breaks, write a function (issue #262)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  const offer = 'drei kleine Python-Programme';
+  await page.getByLabel('Schreib Buddy …').fill('Ich will Python üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText(offer, { exact: false })).toBeVisible();
+  await offerStart(page, offer).click();
+
+  // ── Was gibt das Programm aus? The key came from RUNNING it, not from the model. ──
+  await expect(page.getByText('Was gibt dieses Programm aus?')).toBeVisible();
+  const block = page.getByTestId('question-figure');
+  await expect(block).toContainText('zahlen.sort()');
+  // Monospace with line numbers: the four lines stand as four lines.
+  await expect(block).toContainText('print(z * 10)');
+  const field = page.getByLabel('Was das Programm ausgibt');
+  await expect(field).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
+  await codeShots(page, '50-code-read');
+  // The first line right, the order wrong: code names how much holds — no model.
+  await fillCode(field, '10\n30\n20');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Die erste von 3 Zeilen stimmt.').last()).toBeVisible();
+  await codeShots(page, '51-code-read-partly');
+  await fillCode(field, '10\n20\n30');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // ── In welcher Zeile bricht es ab? Every line is a named 44 pt target. ──
+  await expect(page.getByText('Tippe die Zeile an', { exact: false })).toBeVisible();
+  const line3 = page.getByRole('button', { name: /^Zeile 3: for name in/ });
+  await expect(line3).toBeVisible();
+  const box = await page.getByTestId('code-line-1').boundingBox();
+  expect(box?.height ?? 0, 'a line is a real touch target').toBeGreaterThanOrEqual(44);
+  await codeShots(page, '52-code-find');
+  await line3.click();
+  await expect(
+    page.getByText('Spiel das Programm Schritt für Schritt durch', { exact: false }).last(),
+  ).toBeVisible();
+  // The tried line stays, but cannot be picked again — and says so in words.
+  await expect(page.getByRole('button', { name: /^Zeile 3: / })).toBeDisabled();
+  await codeShots(page, '53-code-find-tried');
+  await page.getByRole('button', { name: /^Zeile 4: / }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // ── Schreibe eine Funktion: her code runs against the tests. ──
+  await expect(
+    page.getByText('Schreibe die Funktion groesste(liste).', { exact: false }),
+  ).toBeVisible();
+  const editor = page.getByLabel('Dein Programm');
+  // The field starts with the signature and an indented line, never with any of the solution.
+  await expect(editor).toHaveValue('def groesste(liste):\n    ');
+  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
+  // Typed as on a phone: a new line keeps the indentation, one more after a colon.
+  await editor.click();
+  await editor.press('End');
+  await editor.press('Control+End');
+  await editor.pressSequentially('best = 0\nfor x in liste:\nif x > best:\nbest = x\n');
+  for (let i = 0; i < 8; i++) await editor.press('Backspace');
+  await editor.pressSequentially('return best');
+  await expect(editor).toHaveValue(
+    'def groesste(liste):\n    best = 0\n    for x in liste:\n        if x > best:\n            best = x\n    return best',
+  );
+  await codeShots(page, '54-code-write', { keyboard: true });
+  // A scheme change rebuilds the tree and takes what was typed with it (the same as in the
+  // path test above): the field is filled again before checking.
+  const first =
+    'def groesste(liste):\n    best = 0\n    for x in liste:\n        if x > best:\n            best = x\n    return best';
+  await fillCode(editor, first);
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  // Starting at 0 fails for a list of negative numbers: one test, named, with what came back.
+  await expect(
+    page
+      .getByText(
+        '3 von 4 Tests bestanden. groesste([-5, -2]) soll -2 ergeben, deine Funktion gibt 0 zurück.',
+      )
+      .last(),
+  ).toBeVisible();
+  await codeShots(page, '55-code-write-partly');
+  // "Einrücken" puts four spaces where the cursor is.
+  await fillCode(
+    editor,
+    'def groesste(liste):\n    best = liste[0]\n    for x in liste:\n        if x > best:\n            best = x\n',
+  );
+  await editor.press('Control+End');
+  await page.getByRole('button', { name: 'Vier Leerzeichen einrücken' }).click();
+  await editor.pressSequentially('return best');
+  await expect(editor).toHaveValue(
+    'def groesste(liste):\n    best = liste[0]\n    for x in liste:\n        if x > best:\n            best = x\n    return best',
+  );
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Alle 4 Tests bestanden.', { exact: false }).last()).toBeVisible();
+  await codeShots(page, '56-code-write-done');
+});

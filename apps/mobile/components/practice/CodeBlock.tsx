@@ -53,6 +53,15 @@ function inkOf(code: Palette['code'], ink: string, kind: CodeSpanKind): string {
   }
 }
 
+/**
+ * Leerzeichen, die stehen bleiben. Im Browser fasst Text mehrere Leerzeichen zu einem zusammen —
+ * und in Python ist die Einrückung die Struktur: `print` unter `for` ohne seine vier Leerzeichen
+ * ist ein anderes Programm. Ein geschütztes Leerzeichen ist in Monospace genauso breit.
+ */
+export function keepSpaces(text: string): string {
+  return text.replace(/ /g, '\u00a0');
+}
+
 /** Der Text einer Zeile, wie der Screenreader ihn vorliest. */
 export function lineText(spans: readonly CodeSpan[]): string {
   return spans.map((s) => s.text).join('');
@@ -77,7 +86,7 @@ function Spans({ spans }: { spans: readonly CodeSpan[] }) {
                 fontWeight: s.kind === 'keyword' ? '600' : '400',
               }}
             >
-              {s.text}
+              {keepSpaces(s.text)}
             </Text>
           ))}
     </Text>
@@ -115,7 +124,7 @@ export function CodeBlock({ figure, pick }: { figure: CodeFigure; pick?: LinePic
     if (!pick) {
       return (
         <View key={n} style={{ flexDirection: 'row', paddingHorizontal: SPACE.md }}>
-          <LineNo n={n} width={numWidth} />
+          {figure.numbered ? <LineNo n={n} width={numWidth} /> : null}
           <Spans spans={spans} />
         </View>
       );

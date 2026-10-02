@@ -144,7 +144,8 @@ describe.skipIf(!dbReady)(
       expect(read?.item.figure?.type === 'code' && read.item.figure.lines).toHaveLength(4);
       expect(read?.item.surface).toEqual({ mode: 'code_type', purpose: 'output', starter: '' });
       expect(find?.item.surface).toEqual({ mode: 'code_line', lines: 5 });
-      expect(write?.item.figure).toBeNull();
+      // Ihre Funktion schreibt sie selbst; gezeigt werden nur die Beispiele, als Code.
+      expect(write?.item.figure).toMatchObject({ type: 'code' });
       expect(write?.item.surface).toEqual({
         mode: 'code_type',
         purpose: 'program',

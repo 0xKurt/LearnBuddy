@@ -669,6 +669,15 @@ explizit, sondern _„geübte Modellierungstechnik"_; neu sind KI/ML, Kryptograf
 | **KI / ML (neu, stark wachsend)**             | **Forward Propagation rechnen** → **C** (Bayern Q gA) · **k-Means: Clusterzugehörigkeit rechnerisch nachweisen** → **C** · Lernart zuordnen → **C** · KNN-Schichten benennen/zeichnen → **R** · **Überanpassung/Datenqualität diagnostizieren** → **H** · KI-Modell nach Bias/Präzision/Spezifität bewerten → **R**                                                                                                                                                                                                                                                      |
 | **Informatik, Mensch, Gesellschaft**          | **Datenschutz-Beurteilung** (DSGVO, _„Verbotsprinzip mit Erlaubnisvorbehalt"_) → **H** · gesellschaftliche Auswirkungen eines Algorithmus bewerten → **H** · **Code-Qualität/Lesbarkeit beurteilen** → **H** · Lizenzmodelle vergleichen → **R**                                                                                                                                                                                                                                                                                                                         |
 
+**Stand in der App (02.10.2026, Issue #262):** drei der **C**-Formen aus „Programmieren" sind
+gebaut — **Ausgabe eines gegebenen Programms vorhersagen**, **Fehlersuche** (die Zeile, in der ein
+Laufzeitfehler auftritt) und **Funktion gegen Testfälle schreiben** (im Übungskontext, wie oben
+begründet) —, jeweils mit einem Schlüssel aus echter Ausführung (`docs/architecture.md`
+§Informatik). Sprache ist eine **Lehr-Teilmenge von Python**. Damit fehlt ausdrücklich, was §5.2
+für NRW verlangt (**Java** und **SQL**), ebenso blockbasiert (BW Kl. 7), die Tracetabelle
+(Niedersachsen) und Fehlersuche bei falschem Ergebnis statt Abbruch (dort ist die Fehlerzeile
+nicht eindeutig). Gründe und Grenzen in `docs/architecture.md` §Informatik.
+
 ### 5.2 Die Länderunterschiede sind hier maximal
 
 **Programmiersprache — der stärkste Unterschied im ganzen Bericht:** **NRW schreibt Java

@@ -11,7 +11,7 @@
 import type { PracticeTurnView } from '@learnbuddy/shared-types/contracts';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { moonForReply, type MoonState } from '../../lib/buddy/moon.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -20,6 +20,8 @@ import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
 import { MathText } from '../math/MathText.js';
+import { MONO } from '../../lib/theme/mono.js';
+import { keepSpaces } from './CodeBlock.js';
 import { useSpokenMath } from '../math/useSpokenMath.js';
 import { PronunciationNote } from './SpeakPanel.js';
 import { Thinking } from './Thinking.js';
@@ -45,6 +47,11 @@ type Props = {
   hideVerdicts?: boolean;
   /** What Buddy is doing while `pending` is on its way (default: looking at her answer). */
   thinkingLabel?: string;
+  /**
+   * Her answers are code or a program's output (issue #262): they stand in monospace with every
+   * space kept, as she typed them — the indentation of her function IS her answer.
+   */
+  code?: boolean;
 };
 
 export function ItemThread({
@@ -53,6 +60,7 @@ export function ItemThread({
   hideVerdicts = false,
   thinkingLabel,
   pronunciation = false,
+  code = false,
 }: Props) {
   const { t } = useTranslation('practice');
   // What was there when the screen opened stands still; what arrives now moves.
@@ -87,6 +95,7 @@ export function ItemThread({
             mine={mine}
             text={turn.text}
             speaker={mine ? t('thread.you') : t('thread.buddy')}
+            code={code && mine}
             orb={moonForReply({ fresh, afterCorrect })}
             // Only the newest reply's orb moves, and none while Buddy is looking again.
             alive={turn.id === latestReplyId && pending === null}
@@ -121,7 +130,7 @@ export function ItemThread({
         <>
           <Rise style={{ alignItems: 'flex-end' }}>
             <View style={{ maxWidth: '86%' }}>
-              <Bubble mine faded text={pending} speaker={t('thread.you')} />
+              <Bubble mine faded text={pending} speaker={t('thread.you')} code={code} />
             </View>
           </Rise>
           <Thinking label={thinkingLabel ?? t('thread.thinking')} />
@@ -138,6 +147,7 @@ function Bubble({
   faded = false,
   orb = 'idle',
   alive = false,
+  code = false,
 }: {
   mine: boolean;
   text: string;
@@ -145,6 +155,7 @@ function Bubble({
   faded?: boolean;
   orb?: MoonState;
   alive?: boolean;
+  code?: boolean;
 }) {
   const { palette } = useTheme();
   const spoken = useSpokenMath(text);
@@ -166,11 +177,25 @@ function Bubble({
         mine ? null : SHADOW.soft,
       ]}
     >
-      <MathText
-        text={text}
-        accessible={false}
-        style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
-      />
+      {code ? (
+        <Text
+          accessible={false}
+          style={{
+            fontFamily: MONO,
+            fontSize: 14,
+            lineHeight: 20,
+            color: mine ? palette.paper : palette.ink,
+          }}
+        >
+          {keepSpaces(text)}
+        </Text>
+      ) : (
+        <MathText
+          text={text}
+          accessible={false}
+          style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
+        />
+      )}
     </View>
   );
   if (mine) return bubble;

@@ -14,14 +14,18 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
 import { MathText } from '../math/MathText.js';
+import { MONO } from '../../lib/theme/mono.js';
+import { keepSpaces } from './CodeBlock.js';
 
 type Props = {
   answer: string;
   /** Numbers are shown the way the learner writes them (0,75 in German). */
   numeric: boolean;
+  /** A program or its output (issue #262): monospace, every space kept, never read as math. */
+  code?: boolean;
 };
 
-export function SolutionCard({ answer, numeric }: Props) {
+export function SolutionCard({ answer, numeric, code = false }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   return (
@@ -30,10 +34,16 @@ export function SolutionCard({ answer, numeric }: Props) {
         {t('solution.title')}
       </Text>
       <View style={{ marginTop: 4 }}>
-        <MathText
-          text={numeric ? localDecimal(answer, currentLocale()) : answer}
-          style={TYPE.title}
-        />
+        {code ? (
+          <Text style={{ fontFamily: MONO, fontSize: 14, lineHeight: 20, color: palette.ink }}>
+            {keepSpaces(answer)}
+          </Text>
+        ) : (
+          <MathText
+            text={numeric ? localDecimal(answer, currentLocale()) : answer}
+            style={TYPE.title}
+          />
+        )}
       </View>
       <Text style={[TYPE.body, { color: palette.ink2, marginTop: 8 }]}>{t('solution.calm')}</Text>
     </Card>

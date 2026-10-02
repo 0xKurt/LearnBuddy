@@ -75,6 +75,11 @@ export const CodeFigure = z.object({
   type: z.literal('code'),
   language: CodeLanguage,
   lines: z.array(z.array(CodeSpan).max(80)).min(1).max(CODE_LINES_MAX),
+  /**
+   * Zeilennummern zeigen. Ein Programm hat sie (nach ihnen wird gefragt), die Beispielaufrufe
+   * einer Funktionsaufgabe nicht: dort wären „1" und „2" Zahlen ohne Bedeutung.
+   */
+  numbered: z.boolean().default(true),
 });
 export type CodeFigure = z.infer<typeof CodeFigure>;
 

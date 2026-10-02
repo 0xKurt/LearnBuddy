@@ -2208,6 +2208,152 @@ that states an open task's answer (`mentionsSolution`, any notation) gets one re
 is stored (503 `reexplain_unavailable`). A model outage stores nothing (503 `model_unavailable`).
 Also after the last question closed and the session finished.
 
+### Informatik
+
+**Programme lesen, Fehler finden, Funktionen schreiben** (Issue #262; `contracts/code.ts`,
+`practice/code.ts`, Interpreter `practice/python/`, Migration `0098_code_tasks.sql`; App
+`components/practice/CodeBlock.tsx`, `CodeComposer.tsx`). Drei Übungsformen, gebaut wie Bruchbalken
+und Notenzeile — **das Modell wählt, Code rechnet** —, mit einem Schritt mehr: hier wird der
+Schlüssel nicht aus Parametern berechnet, sondern aus einer **Ausführung** genommen.
+
+| Aufgabe          | Was sie tut                             | Woher der Schlüssel kommt                          |
+| ---------------- | --------------------------------------- | -------------------------------------------------- |
+| `predict_output` | liest ein Programm, tippt seine Ausgabe | die Ausgabe des Laufs                              |
+| `find_error`     | tippt die Zeile an, in der es abbricht  | die Zeile des Python-Fehlers im Lauf               |
+| `write_function` | schreibt eine Funktion                  | die Musterlösung, auf jeder Testeingabe ausgeführt |
+
+Was das Modell zusätzlich behauptet — die Ausgabe, die Zeile, die erwarteten Werte — ist **nur eine
+Probe**: weicht es vom Lauf ab, hat das Modell sein eigenes Programm nicht verstanden, und **die Frage
+entsteht nicht** (`RejectReason` `output_disagrees`, `line_disagrees`, `expected_disagrees`). Bei den
+erwarteten Werten ist die Probe streng (dieselbe Darstellung, `2` ist nicht `2.0`), der Test über ihre
+Funktion dagegen wie `==` mit `math.isclose` bei Gleitkommazahlen: `0.1 + 0.2` und `0.3` sind dieselbe
+richtige Antwort.
+
+**Keine Antwort ruft ein Modell**, auch der Tutor nicht. Er kann kein Programm ausführen, und ein
+Modell, das über die Ausgabe eines Programms schreibt, das es nicht laufen lassen kann, klingt sicher
+und kann falsch sein (Regel 5). Die Rückmeldung schreibt Code aus dem Lauf: „Die erste von 3 Zeilen
+stimmt." · „3 von 4 Tests bestanden. groesste([-5, -2]) soll -2 ergeben, deine Funktion gibt 0
+zurück." · „… schreibt das Ergebnis mit print. Hier braucht es return." Ein Teiltreffer
+(`parts_left`) lässt die Frage offen wie bei Notenzeile und mehrteiligen Antworten; die dritte
+Fehlprobe zeigt die Lösung wie überall. Bei der Fehlerzeile ist **nur eine Zeilennummer des gezeigten
+Programms** eine Antwort — alles andere ist `invalid_input` (`use_line`). Die Tipps sind vorbereitet
+(zwei je Frage), also ist die Leiter zu Ende, bevor ein Tutor-Tipp fällig würde.
+
+**Ausgeführt wird in einem eigenen Interpreter, nicht in einer Sandbox um ein echtes Python.** Das
+war die Entscheidung dieses Issues, und sie hat drei Gründe:
+
+1. **Der Schlüssel entsteht auf dem Server.** Eine Frage darf nur angelegt werden, wenn die Ausführung
+   die Probe des Modells bestätigt — das passiert beim Vorbereiten, bevor ein Gerät die Frage je
+   sieht. Pyodide im Browser (Plan 2 des Issues) hätte das nicht leisten können, und ein Urteil, das
+   das Gerät meldet, wäre eine Behauptung des Geräts.
+2. **Ein echtes CPython auf dem Server bräuchte eine echte Sandbox** (Container, seccomp, gVisor,
+   eigener Prozess je Lauf) — auf Vercel-Funktionen nicht vorgesehen, und jede Lücke darin wäre eine
+   Codeausführung auf dem Server. Pyodide/WASM im Node-Prozess (die Distribution ist rund 10 MB groß;
+   Kaltstart hier nicht gemessen) teilt sich den Prozess mit allen Daten der Lernenden und kann ohne
+   `worker_threads` nicht hart unterbrochen werden.
+3. **Eine Lehr-Teilmenge reicht für die Schule** und lässt sich vollständig prüfen. Was sie nicht kann,
+   lehnt sie mit Namen ab (`unsupported`), statt es ungefähr zu tun.
+
+**Bedrohungsmodell.** Angreifer: wer Code einschickt — eine Lernende (oder jemand mit ihrem Konto)
+über `POST /practice/sessions/:id/answer`, oder das Modell über eine vergiftete Generierung
+(Prompt-Injection über ein Thema oder ein Foto). Schützenswert: die Daten aller Lernenden im selben
+Prozess, Geheimnisse in der Umgebung, Dateisystem und Netz des Servers, seine Verfügbarkeit.
+
+| Vektor                                                                                   | Warum er nicht greift                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code ausführen lassen (`eval`, `exec`, `import`, `__import__`, `open`)                   | Der Interpreter wertet nur seinen eigenen Baum aus. Es gibt keinen Knoten für `import`, `class`, `lambda`, `try`, `global`, … — der Parser lehnt sie ab —, und die eingebauten Funktionen sind ein `switch` über 24 feste Namen; alle anderen Namen, die Python eingebaut hat (`open`, `eval`, `input`, `globals`, `type`, …), enden in `unsupported`. Der Quelltext von `python/` enthält kein `eval(`, kein `Function(`, kein `import(`, kein `require(`, kein `process`, kein `globalThis` — ein Test liest ihn darauf (`__tests__/python.test.ts`). |
+| Aus dem Objektmodell ausbrechen (`().__class__.__bases__`, `x.constructor`, `__proto__`) | Werte sind eigene getaggte Objekte. Ein Attribut wird nie per Namen auf einem JS-Objekt gelesen (kein `obj[name]`, auch das prüft der Test): Methoden sind ein `switch` je Typ. Ein Dict ist eine `Map` — `d['__proto__'] = 1` ist ein gewöhnlicher Schlüssel.                                                                                                                                                                                                                                                                                          |
+| Endlosschleife, Rekursion ohne Ende                                                      | Jeder Knoten, jeder Schleifendurchlauf und jedes Element kostet einen **Schritt**; 200 000 je Lauf (5 000 für ein Programm, das sie im Kopf verfolgen soll, 50 000 je Testfall). Aufruftiefe 40, Schachtelung im Parser 40, und das JS-Stapelende wird als Grenze gefangen. Gezählt, nicht gemessen — keine Uhr (Regel 7), also auch kein Timer, der unter Last anders ausgeht.                                                                                                                                                                         |
+| Speicher (`"a" * 10**9`, `l = l + l`, `list(range(10**9))`)                              | Jede erzeugte Zeichenkette und Liste wird **vorher** gegen 20 000 Elemente und insgesamt 100 000 Einheiten gerechnet; eine ganze Zahl darf nicht über 2^1024, `**` wird vor dem Rechnen abgeschätzt.                                                                                                                                                                                                                                                                                                                                                    |
+| Ausgabeflut                                                                              | `print` schreibt in einen Puffer von höchstens 4 000 Zeichen.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Zu große Eingabe                                                                         | Quelle höchstens 2 000 Zeichen und 60 Zeilen (`AnswerRequest.text` ist ohnehin ≤ 2 000).                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Netz, Dateien, Uhr, Zufall                                                               | Gibt es im Interpreter nicht. Ein Lauf ist eine reine Funktion seiner Quelle.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Vergiftete Generierung                                                                   | Das Modell kann nur ein Programm vorschlagen; es läuft im selben Interpreter, und eine Frage entsteht nur, wenn der Lauf die eigene Behauptung des Modells bestätigt. Der Programmtext erreicht die App nur als gefärbte Spannen (`CodeFigure`), nie als HTML.                                                                                                                                                                                                                                                                                          |
+| Ihr Code im Gesprächsfaden                                                               | Wird als Text gezeigt (`ItemThread`, Monospace), nie interpretiert; `$` öffnet dort keine Formel. Gespeichert wird er wie jede Antwort (`practice_turns.text`), mit derselben Löschung (`docs/privacy.md`).                                                                                                                                                                                                                                                                                                                                             |
+
+**Gemessen** (Node 22, dieser Container, `__tests__/python.test.ts` und ein Mess-Skript): die
+teuersten Bomben enden nach 0,3–73 ms — Endlosschleife 16 ms, Endlosschleife mit Arbeit 56 ms,
+wachsendes Dict 73 ms (endet an der Schrittgrenze), Zeichenketten- und Listenverdopplung < 10 ms
+(Speichergrenze), `9 ** 9 ** 9` 0,3 ms. Eine Antwort auf eine Funktionsaufgabe kostet höchstens
+(1 + Testfälle) Läufe ihres Programms und ebenso viele der Musterlösung, also höchstens 14 Läufe à
+≤ 50 000 Schritte.
+
+**Restrisiko**, ausdrücklich: es gibt **kein Ratenlimit pro Antwort** über das hinaus, was jede
+Antwort schon hat — eine Lernende kann den Prozess also so oft je Sekunde für bis zu ~0,1 s
+beschäftigen, wie sie Antworten schickt. Ein Rechen-Budget je Lernender und Minute ist nicht gebaut
+(offener Punkt, `docs/dpia.md`). Und der Interpreter läuft im Request-Thread; ein Worker mit hartem
+Abbruch wäre die zweite Verteidigungslinie, falls eine Schrittzählung je eine Lücke hätte.
+
+**Rechnet er wie Python?** Gegen echtes **CPython 3.11** verglichen: 914 Programme (160 wie
+Schulaufgaben geschrieben, der Rest zufällige Ausdrücke über `int`, `float` und `bool`, Texte und
+Listen), Ausgabe, Fehlerart und Fehlerzeile **identisch, 0 Abweichungen**; 521 davon stehen als
+Fixture im Test (`__tests__/fixtures/cpython.json`). Dazu gehören die Stellen, an denen eine
+selbstgebaute Arithmetik am ehesten abweicht: `repr(float)` mit Pythons Umschaltgrenzen (`1e+16`,
+`1e-05`), `round(2.675, 2) == 2.67` und `f"{x:.2f}"` aus dem **genauen** Binärwert, `//` und `%`
+mit negativen Zahlen und Gleitkommazahlen nach CPythons `float_divmod`, `repr(str)` mit Pythons
+Anführungszeichen-Regel. **Wo die Teilmenge nicht genau wie CPython rechnen kann, lehnt sie ab:**
+eine ganze Zahl über 2^53 als Gleitkommazahl, `sum` über Gleitkommazahlen, wo Python 3.11 und 3.12
+verschieden ausgehen (3.12 summiert kompensiert), `is` bei Zahlen und Texten (hängt an CPythons
+Zwischenspeicher), Zeichen außerhalb der BMP (`len("🎉")` wäre in JavaScript 2), `print` eines
+Iterators oder einer Funktion (CPython schreibt eine Speicheradresse).
+
+**Was die Teilmenge kann**: Variablen, `int`/`float`/`str`/`bool`/`None`, Listen, Tupel, Dicts,
+`if`/`elif`/`else`, `while`, `for` über `range`/Listen/Texte/Dicts, `break`/`continue`, `def` mit
+Positions- und Schlüsselwortargumenten, `return`, Verkettung von Vergleichen, `a if b else c`,
+f-Strings (mit `:.Nf`), Slicing mit Schritt, Tupel-Zuweisung, `+=` auf Listen wie in Python (dieselbe
+Liste), `print(sep=, end=)`, 24 eingebaute Funktionen und die gängigen Methoden von `str`, `list` und
+`dict`. **Was nicht**, jeweils mit Namen abgelehnt: `import`, `input`, Klassen, `try`, `lambda`,
+Comprehensions, `global`, Default-Parameter, `*args`, Bitoperationen, `%`-Formatierung, Mengen.
+
+**Für ihre Antwort, nicht für das Modell**: typografische Anführungszeichen („ “ ‚ ‘), die eine
+Handytastatur von selbst setzt, gelten als Anführungszeichen; ein Tab zählt vier Spalten. Bei der
+Ausgabe zählen Rand-Leerzeichen einer Zeile und Leerzeilen am Ende nicht — ehrlich nur deshalb, weil
+eine Frage, deren echte Ausgabe Rand-Leerzeichen hat, gar nicht erst entsteht.
+
+**In der App**: das Programm steht in der Karte als `CodeBlock` — Monospace (`lib/theme/mono.ts`),
+13/20 pt, Zeilennummern, Farben aus `palette.code` (in jeder Palette ≥ 4,5:1 auf dem Grund des Blocks,
+`contrast.test.ts`), Einrückung mit geschützten Leerzeichen, weil der Browser sonst mehrere zu einem
+zusammenfasst. Es wird **nie verkleinert** und nicht gezoomt; seine Höhe begrenzt der Vertrag
+(`CODE_LINES_MAX` 12, beim Antippen `CODE_PICK_LINES_MAX` 8 Zeilen à 44 pt). Breitere Zeilen schieben
+sich waagerecht, nur im Block. Beim Antippen ist jede Zeile ein benannter Knopf („Zeile 3: for name in
+…"), eine schon versuchte bleibt stehen, trägt einen Strich statt der Nummer und ist nicht mehr
+wählbar. Code und Ausgabe schreibt sie in `CodeComposer`: Monospace, keine Autokorrektur, keine
+automatische Großschreibung; eine neue Zeile übernimmt die Einrückung (nach `:` eine Stufe mehr), und
+„Einrücken" setzt vier Leerzeichen (`lib/practice/codeEntry.ts`). Bei einer Funktionsaufgabe trägt das
+Feld schon `def name(param):` — nie etwas von der Lösung — und die Beispiele stehen als Code unter der
+Aufgabe (`groesste([3, 9, 2])  # → 9`), aus dem Lauf der Musterlösung. Im Gespräch und in der
+Lösungskarte steht ihr Code ebenfalls in Monospace mit erhaltener Einrückung.
+
+Auf 360×740 passt jede Form ohne Scrollen (Walkthrough `programs:` in `tests/web/modes.spec.ts`, beide
+Größen, hell und dunkel, mit Tastatur). **Ein gemessener Kompromiss**: hat ihr Programm sechs Zeilen,
+ist das Feld so hoch, dass auf 360×740 von Buddys Rückmeldung nur die letzten zwei Zeilen über dem Feld
+stehen — der fehlgeschlagene Test ist zu sehen, „3 von 4 Tests bestanden" steht darüber im Gespräch,
+das scrollt. Auf 390×844 steht alles.
+
+**Ausdrücklich draußen**, jeweils mit Grund:
+
+- **SQL** (Plan 2 des Issues). Ein SQL-Vergleich verlangt eine SQL-Engine; eine eigene Teilmenge von
+  `SELECT … WHERE … ORDER BY` wäre machbar, ist aber ein zweiter Interpreter mit eigener Prüfung gegen
+  SQLite und war in diesem Durchgang nicht fertig zu bauen. SQLite-WASM auf dem Server hätte dasselbe
+  Problem wie Pyodide (Grund 2 oben). Damit fehlt auch das Abnahmekriterium „SQL-Vergleich mit und ohne
+  `ORDER BY`".
+- **Java und blockbasiert.** Eine zweite Sprache ist ein zweiter Interpreter; Blöcke sind eine eigene
+  Oberfläche.
+- **„Fehler finden" bei falschem Ergebnis** (statt Abbruch). Welche Zeile „der" Fehler ist, ist dort
+  nicht eindeutig — oft lässt sich dasselbe Programm an zwei Stellen richtig machen —, und eine
+  zweite richtige Zeile würde als falsch gelten. Nur Laufzeitfehler haben genau eine Zeile.
+- **Syntaxfehler als Fehlerzeile.** Python meldet eine offene Klammer dort, wo es aufgibt, nicht dort,
+  wo man sie sucht.
+- **Trace-Tabelle** (#230): rechenbar mit genau diesem Interpreter (jede Zuweisung mitschreiben), aber
+  ein eigenes Brett — noch nicht gebaut.
+- **Ausführen im Browser** (Plan 2 des Issues). Nicht nötig: geprüft wird auf dem Server, und eine
+  „Ausprobieren"-Taste ohne Urteil wäre eine zweite Oberfläche, die die Regel 16 erst begründen müsste.
+
+**Woher sie kommen**: aus einem Thema im Chat und im Probetest (`generate.ts`, `CODE_RULES`), höchstens
+`MAX_CODE_ITEMS` (8) je Satz, nicht in der Hausaufgabenhilfe. Ein Satz, der früh mit drei
+gewöhnlichen Fragen beginnt (#220), bekommt seine Programme — und seine Notenzeilen, die dort bisher
+verloren gingen — mit dem Rest (`addTheRest`).
+
 ### Learning modes (migration `0003_learning_modes.sql`)
 
 Questions come from a photo (`material`), from Buddy on a topic the learner named (`buddy`,

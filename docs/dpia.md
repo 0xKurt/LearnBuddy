@@ -152,18 +152,19 @@ keine persönlichen Details.
 
 Bewertet aus der Sicht der betroffenen Person — des Kindes.
 
-| #   | Risiko                                                                                         | Wer trägt es | Schwere  | Eintritt     |
-| --- | ---------------------------------------------------------------------------------------------- | ------------ | -------- | ------------ |
-| R1  | Das Modell **behauptet etwas Falsches** über ihren Lernstand oder erfindet eine Notiz über sie | Kind         | mittel   | mittel       |
-| R2  | Das Modell antwortet **unangemessen** auf eine Notlage (Mobbing, Selbstverletzung)             | Kind         | **hoch** | gering       |
-| R3  | **Fremdzugriff** auf Chats, Fotos, Lernstand                                                   | Kind         | hoch     | gering       |
-| R4  | Ein **Auftragsverarbeiter** nutzt Inhalte weiter (Training, Missbrauchs-Logging)               | Kind         | hoch     | offen (§7)   |
-| R5  | **Text ins Ausland** über die Vorlesestimme oder die Spracherkennung des Telefons              | Kind         | mittel   | gering–offen |
-| R6  | **Druck und Dauerkontakt** („du hast 5 Tage nicht geübt")                                      | Kind         | mittel   | gering       |
-| R7  | **Eltern lesen mit**, ohne dass das Kind es weiß                                               | Kind         | mittel   | gering       |
-| R8  | **Falsches Alter** angegeben: ein zu junges Kind nutzt die App ohne Einwilligung der Eltern    | Kind         | mittel   | mittel       |
-| R9  | **Daten bleiben** nach dem Löschwunsch                                                         | Kind         | hoch     | gering       |
-| R10 | **Injection**: Text auf einem fotografierten Blatt steuert Buddy                               | Kind         | mittel   | gering       |
+| #   | Risiko                                                                                                                   | Wer trägt es | Schwere  | Eintritt     |
+| --- | ------------------------------------------------------------------------------------------------------------------------ | ------------ | -------- | ------------ |
+| R1  | Das Modell **behauptet etwas Falsches** über ihren Lernstand oder erfindet eine Notiz über sie                           | Kind         | mittel   | mittel       |
+| R2  | Das Modell antwortet **unangemessen** auf eine Notlage (Mobbing, Selbstverletzung)                                       | Kind         | **hoch** | gering       |
+| R3  | **Fremdzugriff** auf Chats, Fotos, Lernstand                                                                             | Kind         | hoch     | gering       |
+| R4  | Ein **Auftragsverarbeiter** nutzt Inhalte weiter (Training, Missbrauchs-Logging)                                         | Kind         | hoch     | offen (§7)   |
+| R5  | **Text ins Ausland** über die Vorlesestimme oder die Spracherkennung des Telefons                                        | Kind         | mittel   | gering–offen |
+| R6  | **Druck und Dauerkontakt** („du hast 5 Tage nicht geübt")                                                                | Kind         | mittel   | gering       |
+| R7  | **Eltern lesen mit**, ohne dass das Kind es weiß                                                                         | Kind         | mittel   | gering       |
+| R8  | **Falsches Alter** angegeben: ein zu junges Kind nutzt die App ohne Einwilligung der Eltern                              | Kind         | mittel   | mittel       |
+| R9  | **Daten bleiben** nach dem Löschwunsch                                                                                   | Kind         | hoch     | gering       |
+| R10 | **Injection**: Text auf einem fotografierten Blatt steuert Buddy                                                         | Kind         | mittel   | gering       |
+| R11 | **Eingeschickter Code** (Informatik, #262) läuft auf dem Server und greift auf fremde Daten zu oder legt den Dienst lahm | alle Kinder  | **hoch** | gering       |
 
 ---
 
@@ -186,6 +187,8 @@ Bewertet aus der Sicht der betroffenen Person — des Kindes.
 | R8     | Selbstauskunft des Geburtsdatums plus erzwungene E-Mail-Bestätigung des Kontos plus Eltern-PIN; der Klick auf den Bestätigungslink wird als bestätigte Einwilligung protokolliert (`accounts.consent_confirmed_at`; die Mail trägt den Einwilligungstext); Abwägung in §6                                                                                                                                                                                                                                                                                                                                                                                                                                            | `apps/mobile/lib/auth/supabase.ts` (`email_not_confirmed`); EDPB Statement 1/2025 §13, Guidelines 05/2020 Beispiel 23 (#30); `consent-confirmation.int.test.ts`, `docs/consent-email-templates.md` |
 | R9     | Export (Art. 15/20) sofort als JSON; Löschung (Art. 17) nach 7-Tage-Halt als Job mit unbegrenzten Wiederholungen; Storage-Schulden werden nachverfolgt; `/health` meldet eine mehr als einen Tag überfällige Löschung                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `modules/identity/privacy.ts` (`exportAccount`, `requestDeletion`, `executeAccountDeletion`), `modules/materials/purge.ts` (`erasureStatus`), `app.ts` (`/health`); `erasure.int.test.ts`          |
 | R10    | Blatt-Text, Nachschlage-Ergebnisse und STATE sind im Prompt ausdrücklich **Daten, keine Anweisungen**; die harte Garantie ist Code: jedes Werkzeug ist validiert, arbeitet nur auf den Aliassen dieser lernenden Person, hinter dem Kontext-Zaun                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Prompt buddy.23+; `apps/api/evals/buddy` Fall `de_sheet_instruction_is_not_an_order`; `tools.ts`, `policy.ts`; `docs/architecture.md` §Injected text                                               |
+
+| R11 | Ihr Programm (und jedes, das das Modell schreibt) läuft **nicht** in Python, sondern in einem eigenen Interpreter einer Lehr-Teilmenge, der nur seinen eigenen Syntaxbaum auswertet: kein `eval`, kein `import`, keine Dateien, kein Netz, keine Uhr, kein Attributzugriff per Namen auf ein Objekt des Servers. Schritte, Speicher, Ausgabe, Aufruftiefe und Zahlengröße sind **gezählt**; der teuerste gemessene Lauf endet nach rund 70 ms. Was echtes Python könnte und die Teilmenge nicht, wird mit Namen abgelehnt. Ihr Code wird wie jede Antwort gespeichert (`practice_turns.text`), mit derselben Löschung — keine neue Datenkategorie | `modules/practice/python/`, `modules/practice/code.ts`; `__tests__/python.test.ts` (Ausbruchsversuche, Bomben, Quelltext-Prüfung auf `eval`/`Function`/`import(`/`process`, 3 000 zufällige Eingaben werfen nur eigene Fehler), `code-practice.int.test.ts`; Bedrohungsmodell `docs/architecture.md` §Informatik |
 
 **Organisatorisch.** Ein Modell- oder Regionswechsel ist eine Codeänderung und wird erst
 übernommen, wenn die Evals der betroffenen Aufgabe auf ihm bestehen (`docs/architecture.md`
@@ -277,7 +280,12 @@ Restrisiko wird als **vertretbar** eingestuft.
     EU-Region in EU-Mitgliedstaaten verarbeitet und speichert (`docs/privacy.md` §Processors).
     Der Restrisiko-Punkt steht dort ebenfalls: eine Ausnahmemeldung wird von unserem Code
     geschrieben, künftiger Code könnte darin etwas zitieren, das die Lernende getippt hat.
-12. **Owner-Review** dieser Fassung; danach Datum und Fassung erhöhen. **Überprüfung** bei jeder
+12. **Informatik (#262), Restrisiko R11:** es gibt kein eigenes Rechenbudget je Lernender und
+    Minute — wer Antworten in schneller Folge schickt, kann den Server je Antwort für bis zu
+    rund 0,1 s beschäftigen. Ein Budget (`lib/limits.ts`) und ein Worker mit hartem Abbruch als
+    zweite Linie hinter der Schrittzählung sind nicht gebaut (`docs/architecture.md`
+    §Informatik).
+13. **Owner-Review** dieser Fassung; danach Datum und Fassung erhöhen. **Überprüfung** bei jeder
     Änderung an Zweck, Modell, Region oder Aufbewahrung, sonst jährlich.
 
 ---

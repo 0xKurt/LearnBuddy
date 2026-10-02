@@ -57,6 +57,51 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // Informatik (issue #262): the model writes three programs and says what it EXPECTS — the
+  // output, the failing line, the returned values. None of that is a key: the server runs every
+  // program in its teaching interpreter and takes the key from the run. Every verdict the
+  // walkthrough reads below is code's; no tutor is scripted, and none may be called.
+  scriptGenerations({
+    when: /Python/i,
+    answer: () => ({
+      usable: true,
+      title: 'Python-Programme',
+      subject: { name: 'Informatik', kind: 'other' },
+      items: [],
+      bars: [],
+      staffs: [],
+      codes: [
+        {
+          task: 'predict_output',
+          language: 'python',
+          program: 'zahlen = [3, 1, 2]\nzahlen.sort()\nfor z in zahlen:\n    print(z * 10)',
+          output: '10\n20\n30',
+        },
+        {
+          task: 'find_error',
+          language: 'python',
+          program:
+            'punkte = {"Ada": 3, "Bo": 5}\nsumme = 0\nfor name in ["Ada", "Cem"]:\n    summe += punkte[name]\nprint(summe)',
+          line: 4,
+        },
+        {
+          task: 'write_function',
+          language: 'python',
+          name: 'groesste',
+          params: ['liste'],
+          statement: 'Sie gibt die größte Zahl der Liste zurück, ohne max zu benutzen.',
+          tests: [
+            { args: '[3, 9, 2]', expected: '9' },
+            { args: '[-5, -2]', expected: '-2' },
+            { args: '[7]', expected: '7' },
+            { args: '[1, 1, 0]', expected: '1' },
+          ],
+          solution:
+            'def groesste(liste):\n    best = liste[0]\n    for x in liste:\n        if x > best:\n            best = x\n    return best',
+        },
+      ],
+    }),
+  });
   // "Erklär mir den Dativ" — since buddy.22 the explanation is the chat answer itself
   // (owner decision 28.09.); what can be started afterwards is practice on it.
   scriptGenerations({
@@ -354,6 +399,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /mit rechenweg üben/i,
       answer: says('Gern – ich hab dir Gleichungen mit Rechenweg vorbereitet.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Gleichungen mit Rechenweg' } },
+      ]),
+    },
+    {
+      when: /python üben/i,
+      answer: says('Gern – ich hab dir drei kleine Python-Programme vorbereitet.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Python-Programme' } },
       ]),
     },
     {

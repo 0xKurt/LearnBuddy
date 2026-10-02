@@ -19,7 +19,7 @@ import { tapped } from '../../lib/perf.js';
 import { growsWithText } from '../../lib/growsWithText.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { MONO } from '../../lib/theme/mono.js';
 import { Btn } from '../lb/Btn.js';
 import { BottomBar } from './BottomBar.js';
@@ -105,11 +105,14 @@ export function CodeComposer({ purpose, starter, value, disabled, onChange, onCh
           textAlignVertical="top"
           style={[
             {
-              minHeight: program ? 104 : 64,
-              maxHeight: program ? 184 : 124,
+              // Drei Zeilen für ein Programm, eine für eine Ausgabe; das Feld wächst bis sechs
+              // bzw. vier Zeilen mit. Mehr nimmt es nicht: auf 360×740 müssen darüber die
+              // Aufgabe und Buddys Rückmeldung zu sehen bleiben (CLAUDE.md Regel 16).
+              minHeight: program ? 3 * 20 + 12 : TOUCH,
+              maxHeight: program ? 6 * 20 + 12 : 4 * 20 + 12,
               paddingHorizontal: SPACE.sm,
-              paddingTop: SPACE.sm,
-              paddingBottom: SPACE.sm,
+              paddingTop: 6, // optisch: zusammen mit der Zeilenhöhe 20 eine Zeile auf 32 pt
+              paddingBottom: 6,
               fontFamily: MONO,
               fontSize: 14,
               lineHeight: 20,

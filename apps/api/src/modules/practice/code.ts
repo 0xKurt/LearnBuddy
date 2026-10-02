@@ -143,8 +143,8 @@ function clean(program: string): string {
   return program.replace(/\r\n?/g, '\n').replace(/\n+$/, '').replace(/^\n+/, '');
 }
 
-function figureOf(program: string): CodeFigure {
-  return { type: 'code', language: 'python', lines: highlight(program) };
+function figureOf(program: string, numbered = true): CodeFigure {
+  return { type: 'code', language: 'python', lines: highlight(program), numbered };
 }
 
 /** Führt ein Programm aus; der Fehler, mit dem es abbricht, oder null. */
@@ -312,6 +312,18 @@ function defined(
 
 // ─────────────── die Frage, die daraus wird ───────────────
 
+/** `summe([1, 2])  # → 3`, untereinander ausgerichtet. */
+function examplesOf(
+  name: string,
+  results: ReadonlyArray<{ args: Value[]; result: Value }>,
+): string {
+  const calls = results.map((r) => callText(name, r.args));
+  const width = Math.max(...calls.map((c) => c.length));
+  return results
+    .map((r, i) => `${(calls[i] as string).padEnd(width)}  # → ${repr(r.result, 1)}`)
+    .join('\n');
+}
+
 /** Die Frage, die eine Aufgabe wird — oder warum keine. Für Tests; der Rest nimmt `codeItem`. */
 export function buildCodeItem(raw: CodeTask, locale: string): Built {
   const parsedTask = CodeTask.safeParse(raw);
@@ -349,7 +361,7 @@ export function buildCodeItem(raw: CodeTask, locale: string): Built {
               ? text(locale, 'hint_first_line', { line: lines[0] as string })
               : text(locale, 'hint_print'),
           ],
-          worked_solution: text(locale, 'worked_output', { output: answer }),
+          worked_solution: text(locale, 'worked_output'),
         },
       };
     }
@@ -422,23 +434,14 @@ export function buildCodeItem(raw: CodeTask, locale: string): Built {
         // Die Probe, und streng: dieselbe Darstellung, nicht bloß gleich (`2` ist nicht `2.0`).
         if (repr(claimed, 1) !== shown) return { reject: 'expected_disagrees' };
         if (shown.length > 60 || shown.includes('$')) return { reject: 'bad_test' };
+        if (callText(task.name, args).includes('$')) return { reject: 'bad_test' };
         results.push({ args, result: run.value });
       }
       const distinct = new Set(results.map((r) => callText(task.name, r.args)));
       if (distinct.size < 3) return { reject: 'tests_not_distinct' };
       const signature = `${task.name}(${task.params.join(', ')})`;
-      const examples = results
-        .slice(0, 2)
-        .map((r) =>
-          text(locale, 'example', { call: callText(task.name, r.args), result: repr(r.result, 1) }),
-        )
-        .join(' ');
       const first = results[0] as { args: Value[]; result: Value };
-      const prompt = text(locale, 'write_prompt', {
-        signature,
-        statement: task.statement.trim(),
-        examples,
-      });
+      const prompt = text(locale, 'write_prompt', { signature, statement: task.statement.trim() });
       if (prompt.length > 600) return { reject: 'display' };
       return {
         item: {
@@ -449,8 +452,9 @@ export function buildCodeItem(raw: CodeTask, locale: string): Built {
           answer: solution,
           topic: text(locale, 'topic_functions'),
           difficulty: 3,
-          // Keine Figur: das Programm schreibt sie selbst (`codeSurfaceOf`).
-          figure: null,
+          // Die Beispiele als Code, nicht als Satz: zwei Aufrufe mit dem, was herauskommt — aus
+          // dem Lauf der Musterlösung, und so, wie man es in Python selbst notieren würde.
+          figure: figureOf(examplesOf(task.name, results.slice(0, 2)), false),
           hints: [
             text(locale, 'hint_example', {
               call: callText(task.name, first.args),
@@ -458,7 +462,7 @@ export function buildCodeItem(raw: CodeTask, locale: string): Built {
             }),
             text(locale, 'hint_return'),
           ],
-          worked_solution: text(locale, 'worked_write', { solution }),
+          worked_solution: text(locale, 'worked_write'),
         },
       };
     }
