@@ -210,21 +210,22 @@ function Rehearse({ brief }: { brief: RehearsalBrief }) {
       {/* The text to read is the one thing that may scroll here: she reads from it. */}
       <View
         style={{
-          // The passage takes the room it needs to be read from; the talk's short card does
-          // not, and the mic then sits in the middle of what is left — no dead band (#264).
-          flex: brief.text ? 1 : 0,
+          // The card takes the room it needs and gives way when the phone is short (the
+          // passage then scrolls inside it); the mic sits in the middle of what is left, so
+          // there is no dead band between them (#264).
+          flexShrink: 1,
+          minHeight: 0,
           paddingHorizontal: SPACE.lg,
           paddingTop: SPACE.lg,
         }}
       >
         {brief.text ? (
-          <Card padding={0} radius={20}>
+          <Card padding={0} radius={20} style={{ flexShrink: 1, minHeight: 0, overflow: 'hidden' }}>
             {/* She reads FROM this text, like a list she browses: the one area that may
                 scroll here (tests/web/fit.ts allows scroll-list). */}
             <ScrollView
               testID="scroll-list"
               contentContainerStyle={{ padding: SPACE.lg }}
-              style={{ maxHeight: '100%' }}
               accessibilityLabel={t('learn:rehearse.text_label')}
             >
               <Text style={[TYPE.prompt, { fontWeight: '400', lineHeight: 30 }]} selectable>
@@ -250,7 +251,8 @@ function Rehearse({ brief }: { brief: RehearsalBrief }) {
 
       <View
         style={{
-          flex: brief.text ? 0 : 1,
+          flexGrow: 1,
+          flexShrink: 0,
           justifyContent: 'center',
           alignItems: 'center',
           gap: SPACE.md,

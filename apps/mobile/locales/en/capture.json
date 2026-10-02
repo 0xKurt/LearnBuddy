@@ -96,11 +96,11 @@
   },
   "preview_failed": "No preview",
   "corrected": {
-    "title": "Photograph your test",
-    "intro": "The marked test with the corrections. We practise exactly what was marked – I don’t keep grades or points."
+    "title": "Your marked test",
+    "intro": "With all the corrections. We practise exactly what was marked – I don’t keep grades."
   },
   "today": {
     "title": "What was today?",
-    "intro": "Photograph today’s notes from your exercise book. I’ll make a few short questions for tomorrow morning."
+    "intro": "Today’s notes from your exercise book – I’ll make questions for tomorrow morning."
   }
 }

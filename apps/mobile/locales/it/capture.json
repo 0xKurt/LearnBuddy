@@ -96,11 +96,11 @@
   },
   "preview_failed": "Anteprima non disponibile",
   "corrected": {
-    "title": "Fotografa la tua verifica",
-    "intro": "La verifica corretta con le annotazioni. Ci esercitiamo proprio su ciò che è segnato: voti e punti non li salvo."
+    "title": "La tua verifica",
+    "intro": "Con tutte le correzioni. Ci esercitiamo su ciò che è segnato – i voti non li salvo."
   },
   "today": {
-    "title": "Cosa abbiamo fatto oggi?",
-    "intro": "Fotografa gli appunti di oggi sul quaderno. Ti preparo qualche domanda breve per domani mattina."
+    "title": "Cosa c’era oggi?",
+    "intro": "Gli appunti di oggi sul quaderno: ne faccio domande per domani mattina."
   }
 }

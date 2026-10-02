@@ -96,11 +96,11 @@
   },
   "preview_failed": "Vorschau nicht möglich",
   "corrected": {
-    "title": "Fotografier deine Arbeit",
-    "intro": "Die korrigierte Arbeit mit den Anmerkungen. Ich übe mit dir genau das, was angestrichen ist – Noten und Punkte speichere ich nicht."
+    "title": "Deine Arbeit",
+    "intro": "Mit allen Anmerkungen. Wir üben genau das Angestrichene – Noten speichere ich nicht."
   },
   "today": {
     "title": "Was war heute?",
-    "intro": "Fotografier deinen Hefteintrag von heute. Ich mache dir ein paar kurze Fragen für morgen früh."
+    "intro": "Dein Hefteintrag von heute – daraus mache ich Fragen für morgen früh."
   }
 }

@@ -96,11 +96,11 @@
   },
   "preview_failed": "Sin vista previa",
   "corrected": {
-    "title": "Haz una foto de tu examen",
-    "intro": "El examen corregido con las anotaciones. Practicamos justo lo que está marcado; no guardo notas ni puntos."
+    "title": "Tu examen",
+    "intro": "Con todas las correcciones. Practicamos justo lo marcado; no guardo notas."
   },
   "today": {
     "title": "¿Qué vimos hoy?",
-    "intro": "Haz una foto de lo que apuntaste hoy en el cuaderno. Te preparo unas preguntas cortas para mañana por la mañana."
+    "intro": "Tus apuntes de hoy: hago preguntas para mañana por la mañana."
   }
 }

@@ -96,11 +96,11 @@
   },
   "preview_failed": "Aperçu impossible",
   "corrected": {
-    "title": "Photographie ton contrôle",
-    "intro": "Le contrôle corrigé avec les annotations. On s’entraîne sur ce qui est souligné – je ne garde ni notes ni points."
+    "title": "Ton contrôle",
+    "intro": "Avec toutes les corrections. On travaille ce qui est souligné – je ne garde pas les notes."
   },
   "today": {
-    "title": "C’était quoi aujourd’hui ?",
-    "intro": "Photographie ta leçon du jour dans ton cahier. Je te prépare quelques questions courtes pour demain matin."
+    "title": "Et aujourd’hui ?",
+    "intro": "Ta leçon du jour dans ton cahier – j’en fais des questions pour demain matin."
   }
 }

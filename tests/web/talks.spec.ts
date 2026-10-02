@@ -119,7 +119,7 @@ test('a talk with its steps, a rehearsal, reading aloud, and two new photo sourc
   await expect(page.getByText('Deine korrigierte Mathearbeit').first()).toBeVisible();
   await shot(page, '98-corrected-ask');
   await page.getByRole('button', { name: 'Foto machen', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Fotografier deine Arbeit' })).toBeVisible();
-  await expect(page.getByText(/Noten und Punkte speichere ich nicht/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Deine Arbeit' })).toBeVisible();
+  await expect(page.getByText(/Noten speichere ich nicht/)).toBeVisible();
   await lightAndDark(page, '99-capture-corrected');
 });
