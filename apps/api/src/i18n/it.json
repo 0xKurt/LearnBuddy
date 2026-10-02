@@ -38,7 +38,10 @@
   },
   "material": {
     "ready": "Le tue domande su «{{title}}» sono pronte ({{count}}).",
-    "ready_untitled": "Le tue domande sono pronte ({{count}})."
+    "ready_untitled": "Le tue domande sono pronte ({{count}}).",
+    "corrected_title": "Dalla tua verifica: {{subject}}",
+    "corrected_title_plain": "Dalla tua verifica corretta",
+    "today_step": "Cosa abbiamo fatto ieri?"
   },
   "practice": {
     "accents": "Quasi – controlla di nuovo gli accenti.",
@@ -229,5 +232,14 @@
   },
   "voice": {
     "sample": "Ciao, sono Buddy. Ecco come suono quando ti leggo qualcosa."
+  },
+  "talk": {
+    "stage": {
+      "topic": "Scegliere l'argomento",
+      "outline": "Scaletta",
+      "sources": "Raccogliere le fonti",
+      "slides": "Slide o schede",
+      "rehearsal": "Prova generale"
+    }
   }
 }

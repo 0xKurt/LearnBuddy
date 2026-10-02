@@ -64,5 +64,76 @@
     "preparing": "Buddy is getting it ready …",
     "preparing_hint": "This takes a few seconds.",
     "not_usable": "I can't prepare anything from that, sorry – try a school topic."
+  },
+  "rehearse": {
+    "offer": {
+      "talk": "Rehearsal",
+      "read_aloud": "Read aloud",
+      "start": "Open recorder"
+    },
+    "stage": {
+      "topic": "Topic",
+      "outline": "Outline",
+      "sources": "Sources",
+      "slides": "Slides",
+      "rehearsal": "Rehearsal"
+    },
+    "gone": "This recording is no longer there. Just ask Buddy again.",
+    "back": "Back to Buddy",
+    "title_talk": "Rehearsal",
+    "title_read": "Read aloud",
+    "intro_talk": "“{{title}}” – give it the way you will in class.",
+    "intro_talk_minutes": "“{{title}}” · {{minutes}} minutes. Give it the way you will in class.",
+    "intro_read": "Read the text aloud, take your time. You can scroll while reading.",
+    "text_label": "Text to read aloud",
+    "what_i_measure": "What I listen for",
+    "measure_time": "How long you speak",
+    "measure_pace": "How fast you speak – and how often you say “um”",
+    "measure_parts": "Whether there is an opening, a main part and an ending",
+    "start_talk": "Start rehearsal",
+    "start_read": "Start reading",
+    "hint_talk": "Tap the mic and begin. Up to 10 minutes.",
+    "hint_read": "Tap the mic and start reading. Up to 2 minutes.",
+    "recording_talk": "I’m listening. Tap stop when you’re done.",
+    "recording_read": "I’m listening. Tap stop when you’re done.",
+    "listening_back": "Listening to it …",
+    "problem": {
+      "no_speech": "I didn’t hear anything. Try again, a little closer to the mic.",
+      "too_short": "That was very short. Tap the mic and just start talking.",
+      "denied": "I’m not allowed to use the microphone. You can allow it in settings.",
+      "failed": "I couldn’t listen just now. Try again in a moment.",
+      "offline": "No connection. Your recording is still here."
+    },
+    "send_again": "Send again",
+    "done_title": "Well done",
+    "done_talk": "Here’s what I measured. Tell Buddy how it felt.",
+    "done_read": "Here’s what I heard.",
+    "duration": "Length",
+    "duration_of": "{{time}} of {{target}}",
+    "length_fits": "Right on the length you were given.",
+    "length_short": "A little shorter than asked.",
+    "length_long": "A little longer than asked.",
+    "pace": "Pace",
+    "pace_value_one": "{{count}} word per minute",
+    "pace_value_other": "{{count}} words per minute",
+    "pace_note_read": "Counting the words you read correctly.",
+    "fillers": "Filler sounds",
+    "fillers_note": "“Um” and “uh” – a short pause often sounds calmer.",
+    "parts": "Structure",
+    "part": {
+      "opening": "Opening",
+      "main": "Main part",
+      "closing": "Ending"
+    },
+    "part_status": {
+      "heard": "heard",
+      "not_heard": "not yet",
+      "unknown": "unclear"
+    },
+    "words": "Look at these words again",
+    "words_none": "No word left out – you read it all.",
+    "words_note": "Left out or read differently.",
+    "again": "Again",
+    "finish": "Done"
   }
 }

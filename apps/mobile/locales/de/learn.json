@@ -64,5 +64,76 @@
     "preparing": "Buddy bereitet vor …",
     "preparing_hint": "Das dauert ein paar Sekunden.",
     "not_usable": "Damit kann ich leider nichts vorbereiten – probier ein Schulthema."
+  },
+  "rehearse": {
+    "offer": {
+      "talk": "Probevortrag",
+      "read_aloud": "Laut vorlesen",
+      "start": "Aufnahme öffnen"
+    },
+    "stage": {
+      "topic": "Thema",
+      "outline": "Gliederung",
+      "sources": "Quellen",
+      "slides": "Folien",
+      "rehearsal": "Probevortrag"
+    },
+    "gone": "Diese Aufnahme gibt es nicht mehr. Frag Buddy einfach nochmal danach.",
+    "back": "Zurück zu Buddy",
+    "title_talk": "Probevortrag",
+    "title_read": "Laut vorlesen",
+    "intro_talk": "„{{title}}“ – halte ihn so, wie du ihn in der Klasse hältst.",
+    "intro_talk_minutes": "„{{title}}“ · {{minutes}} Minuten. Halte ihn so wie in der Klasse.",
+    "intro_read": "Lies den Text in Ruhe vor. Du kannst dabei scrollen.",
+    "text_label": "Text zum Vorlesen",
+    "what_i_measure": "Darauf achte ich",
+    "measure_time": "Wie lange du sprichst",
+    "measure_pace": "Wie schnell du sprichst – und wie oft „äh“",
+    "measure_parts": "Ob Einleitung, Hauptteil und Schluss da sind",
+    "start_talk": "Probevortrag starten",
+    "start_read": "Vorlesen starten",
+    "hint_talk": "Tippe aufs Mikro und leg los. Bis zu 10 Minuten.",
+    "hint_read": "Tippe aufs Mikro und lies los. Bis zu 2 Minuten.",
+    "recording_talk": "Ich höre zu. Tippe auf Stopp, wenn du fertig bist.",
+    "recording_read": "Ich höre zu. Tippe auf Stopp, wenn du fertig bist.",
+    "listening_back": "Ich höre mir das an …",
+    "problem": {
+      "no_speech": "Ich habe nichts gehört. Versuch’s nochmal, etwas näher am Mikro.",
+      "too_short": "Das war sehr kurz. Tippe aufs Mikro und sprich einfach los.",
+      "denied": "Ich darf das Mikrofon nicht benutzen. Du kannst es in den Einstellungen erlauben.",
+      "failed": "Gerade konnte ich nicht zuhören. Probier es gleich nochmal.",
+      "offline": "Keine Verbindung. Deine Aufnahme ist noch da."
+    },
+    "send_again": "Nochmal senden",
+    "done_title": "Gut gemacht",
+    "done_talk": "Das habe ich gemessen. Erzähl Buddy, wie es sich angefühlt hat.",
+    "done_read": "Das habe ich gehört.",
+    "duration": "Dauer",
+    "duration_of": "{{time}} von {{target}}",
+    "length_fits": "Passt gut zur Vorgabe.",
+    "length_short": "Etwas kürzer als vorgegeben.",
+    "length_long": "Etwas länger als vorgegeben.",
+    "pace": "Tempo",
+    "pace_value_one": "{{count}} Wort pro Minute",
+    "pace_value_other": "{{count}} Wörter pro Minute",
+    "pace_note_read": "Gezählt sind die Wörter, die du richtig gelesen hast.",
+    "fillers": "Füllwörter",
+    "fillers_note": "„Äh“ und „ähm“ – eine kurze Pause wirkt oft ruhiger.",
+    "parts": "Aufbau",
+    "part": {
+      "opening": "Einleitung",
+      "main": "Hauptteil",
+      "closing": "Schluss"
+    },
+    "part_status": {
+      "heard": "gehört",
+      "not_heard": "noch nicht",
+      "unknown": "unklar"
+    },
+    "words": "Diese Wörter nochmal anschauen",
+    "words_none": "Kein Wort ausgelassen – alles gelesen.",
+    "words_note": "Ausgelassen oder anders gelesen.",
+    "again": "Nochmal",
+    "finish": "Fertig"
   }
 }

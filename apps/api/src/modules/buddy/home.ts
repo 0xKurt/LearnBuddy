@@ -467,6 +467,7 @@ async function nowCardOf(
       title: capture.title,
       goal: goal ? goalBrief(goal, today) : null,
       completes: capture.payload.completes ?? null,
+      source: capture.payload.source ?? 'sheet',
     };
   }
   return null;

@@ -60,9 +60,10 @@ export function createApp(deps: Deps): Hono<AppEnv> {
       throw new AppError('too_large', 'Request body too large');
     },
   });
-  // Recordings are the one larger body: speaking practice (≤ 15 s) and spoken
-  // messages (≤ ~3 min, TranscribeRequest caps the base64 at 2 000 000 chars —
-  // this leaves room for the JSON around it).
+  // Recordings are the one larger body: speaking practice (≤ 15 s), spoken
+  // messages (≤ ~3 min, TranscribeRequest caps the base64 at 2 000 000 chars) and a
+  // rehearsal talk (≤ 10 min at the long-recording rate, REHEARSAL_MAX_BASE64 = 2 800 000
+  // chars) — this leaves room for the JSON around them.
   const recordings = bodyLimit({
     maxSize: 3 * 1024 * 1024,
     onError: () => {
@@ -70,7 +71,7 @@ export function createApp(deps: Deps): Hono<AppEnv> {
     },
   });
   app.use('*', (c, next) =>
-    /\/practice\/sessions\/[^/]+\/speak$|\/voice\/transcribe$/.test(c.req.path)
+    /\/practice\/sessions\/[^/]+\/speak$|\/voice\/transcribe$|\/voice\/rehearse$/.test(c.req.path)
       ? recordings(c, next)
       : smallBodies(c, next),
   );

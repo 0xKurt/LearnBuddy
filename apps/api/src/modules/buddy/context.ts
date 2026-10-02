@@ -119,6 +119,8 @@ function failureNote(reason: string | null): string {
       return 'was refused by the safety filter; reading it again is not possible';
     case 'form_not_practicable':
       return 'was read without any trouble, and every task on it is an exercise form Buddy has no exercise for (something drawn, free speaking, a long text, a real experiment, a piece of work over weeks, a practical or a heard task), so there is nothing on it to practise: say that plainly, offer to explain it or go through the steps with her instead, and do not offer a second reading — it would find the same tasks';
+    case 'nothing_marked':
+      return 'was a corrected test on which no task marked by the teacher could be found, so no questions were written: say that plainly; she can have it read again (a photo with more light shows faint marks) or tell you which tasks were wrong';
     case 'budget_exhausted':
       return 'could not be read: no more sheets could be read today (tomorrow it works again)';
     case 'unreadable':
@@ -126,6 +128,23 @@ function failureNote(reason: string | null): string {
     default:
       return 'could not be read: something went wrong while reading (she can have it read again)';
   }
+}
+
+/**
+ * A step of a talk in STATE (issue #264): which stage it is and, once rehearsed, what the
+ * rehearsal measured — read from the step's evidence, which code wrote from the recording.
+ */
+function taskExtra(st: StepRow): string {
+  const stage = st.payload.stage ? ` [${st.payload.stage}]` : '';
+  const ev = st.evidence as {
+    duration_s?: number;
+    target_s?: number | null;
+    words_per_minute?: number;
+    fillers?: number | null;
+  } | null;
+  if (!ev || typeof ev.duration_s !== 'number') return stage;
+  const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  return `${stage} (rehearsed: ${mmss(ev.duration_s)}${ev.target_s ? ` of ${mmss(ev.target_s)}` : ''}, ${ev.words_per_minute ?? '?'} words/min${typeof ev.fillers === 'number' ? `, ${ev.fillers} filler sounds` : ''})`;
 }
 
 function fmtDay(date: string, today: string, locale: string): string {
@@ -268,7 +287,9 @@ export function buildContext(
     const extra =
       st.kind === 'practice' && st.payload.item_ids
         ? ` (${st.payload.item_ids.length} questions, ~${st.payload.est_minutes ?? '?'} min)`
-        : '';
+        : st.kind === 'task'
+          ? taskExtra(st)
+          : '';
     const done = st.done_source === 'learner_reported' ? ' (learner said so)' : '';
     // A standing arrangement, so a second "erinner mich jeden Tag" is recognised as the one
     // she already has instead of becoming a second one (issue #112).
@@ -291,6 +312,12 @@ export function buildContext(
     const status =
       g.status === 'active' ? '' : ` [${g.status}${g.outcome ? `, went ${g.outcome}` : ''}]`;
     goalsBlock.push(`- ${alias} ${g.kind} "${g.title}"${date}${subj}${status}`);
+    // A talk (issue #264): its length is what the rehearsal measures against. She writes and
+    // gives it herself — Buddy plans, listens and says what he measured, never writes it.
+    if (g.kind === 'talk')
+      goalsBlock.push(
+        `  a talk she gives herself${g.talk_minutes ? `, ${g.talk_minutes} min long` : ''}: never write it, its outline or its slides for her — give feedback on what she has, and offer a rehearsal (offer_rehearsal) when she wants to try it`,
+      );
     if (g.topics.length > 0) goalsBlock.push(`  topics: ${g.topics.join(', ')}`);
     const mats = state.materials.filter((m) => m.goal_id === g.id);
     if (g.status === 'active') {
@@ -355,7 +382,15 @@ export function buildContext(
         : m.status === 'failed'
           ? 'could not be read'
           : 'being read';
-    materialBlock.push(`- ${alias} "${m.title ?? 'untitled sheet'}" (${what})`);
+    // What the photo was decides what its questions are (issue #259): new questions for the
+    // tasks marked on a corrected test, or tomorrow morning's practice from today's notes.
+    const kind =
+      m.source === 'corrected_test'
+        ? ', a corrected test: new questions of the same type for the tasks the teacher marked — never the original tasks; its grade and points were not kept and are not known'
+        : m.source === 'today_notes'
+          ? ", her notebook entry of a day's lesson: its questions are prepared as practice for the next morning (a step in her plan) — do not prepare them again"
+          : '';
+    materialBlock.push(`- ${alias} "${m.title ?? 'untitled sheet'}" (${what}${kind})`);
   }
   if (state.totals.materials > state.materials.length)
     materialBlock.push(

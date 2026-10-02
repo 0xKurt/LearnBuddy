@@ -200,6 +200,22 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     does: 'offer a button that starts learning now (practice, test, vocab, speak, listen, help) — easier or harder, or one vocabulary direction, when she asks for that',
     run: ACT_HANDLERS.offer_learning,
   },
+  plan_talk: {
+    surfaces: TURN,
+    touches: ['goals', 'steps'],
+    needsQuote: true,
+    undoable: true,
+    does: 'plan a talk (Referat, GFS, presentation, recital) with its day and the steps before it',
+    run: ACT_HANDLERS.plan_talk,
+  },
+  offer_rehearsal: {
+    surfaces: TURN,
+    touches: ['nothing'],
+    needsQuote: false,
+    undoable: false,
+    does: 'offer a button that records a rehearsal of her talk, or her reading a given text aloud',
+    run: ACT_HANDLERS.offer_rehearsal,
+  },
   open_area: {
     surfaces: TURN,
     touches: ['nothing'],

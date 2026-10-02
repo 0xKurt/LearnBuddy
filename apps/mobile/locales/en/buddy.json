@@ -45,7 +45,8 @@
     "set_contact_days": "never on these days: {{days}}",
     "request_material_undone": "No photo needed: {{title}}",
     "set_voice": "My voice: {{voice}}, {{speed}}",
-    "forget_all": "Forgot everything I knew about you ({{count}})"
+    "forget_all": "Forgot everything I knew about you ({{count}})",
+    "plan_talk": "Talk planned: {{title}} on {{day}} – {{steps}}"
   },
   "area": {
     "library": "Your material",
@@ -236,7 +237,8 @@
       "build": "Practice",
       "a11y": "Step {{step}} of {{total}}: {{label}}"
     },
-    "reading_pages": "Your pages"
+    "reading_pages": "Your pages",
+    "failed_nothing_marked": "I couldn’t find anything marked on the test. Corrections show better with more light – or just tell me which tasks were wrong."
   },
   "practiced_today": "Practised today",
   "session": {

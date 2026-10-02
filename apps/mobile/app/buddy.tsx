@@ -1090,6 +1090,8 @@ export default function BuddyScreen() {
         // The forgotten back joins the sheet it was forgotten from instead of becoming a
         // second one (issue #118) — the same route the library's own "Seite hinzufügen" takes.
         ...(now.completes ? { completes: now.completes, add: '1' } : {}),
+        // What Buddy asked for (issue #259): the screen says it; the step decides it on the server.
+        ...(now.source && now.source !== 'sheet' ? { kind: now.source } : {}),
       };
       return (
         <CaptureBar

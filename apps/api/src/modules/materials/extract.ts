@@ -2,7 +2,11 @@
 // One structured model call per material; the answer is validated item by
 // item (broken items are dropped, not "repaired").
 
-import { MOST_UNCLEAR_READINGS, NotPracticable } from '@learnbuddy/shared-types/contracts';
+import {
+  MOST_UNCLEAR_READINGS,
+  NotPracticable,
+  TODAY_NOTES_QUESTIONS,
+} from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import { CURRICULUM_RULES } from '../curriculum/state.js';
@@ -226,6 +230,107 @@ export const ExtractionParse = ExtractionResult.extend({
 export const HomeworkExtraction = ExtractionResult.extend({
   items: z.array(ItemDraft.omit({ worked_solution: true })).max(12),
 });
+
+// ─────────────── the two other sources of a study photo (issue #259) ───────────────
+
+/**
+ * A new question for one task the teacher marked on a corrected test. `original` is that task
+ * as printed: it is what code compares the new question with (`differsFromOriginal`), and the
+ * only text of the test that is kept (the transcription is not — it would carry the grade).
+ * A question without its original cannot be checked and is dropped like any broken item.
+ */
+export const CorrectedItemDraft = ItemDraft.extend({
+  original: z
+    .string()
+    .trim()
+    .min(1)
+    .max(300)
+    .describe(
+      'The marked task this question practises, exactly as printed on the test — the task only, never points, marks or the grade',
+    ),
+});
+export type CorrectedItemDraft = z.infer<typeof CorrectedItemDraft>;
+
+export const CorrectedExtraction = ExtractionResult.extend({
+  items: z.array(CorrectedItemDraft).max(ITEMS_PER_READING),
+});
+export const CorrectedParse = CorrectedExtraction.extend({
+  items: itemsOneByOne(CorrectedItemDraft, ITEMS_PER_READING),
+});
+
+/** Today's notebook entry: at most five short questions, never a continued reading. */
+export const TodayExtraction = ExtractionResult.extend({
+  items: z.array(ItemDraft).max(TODAY_NOTES_QUESTIONS),
+});
+export const TodayParse = TodayExtraction.extend({
+  items: itemsOneByOne(ItemDraft, TODAY_NOTES_QUESTIONS),
+});
+
+/** Lower case, LaTeX dollars and punctuation gone, whitespace folded: the wording itself. */
+function wording(text: string): string {
+  return text
+    .toLocaleLowerCase()
+    .replace(/\$/g, ' ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+/** The numbers of a text as a multiset ("3,5" and "3.5" are one number). */
+function numbersOf(text: string): string[] {
+  return (text.match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => n.replace(',', '.'));
+}
+
+/** Is every element of `part` in `whole`, as often as it occurs in `part`? */
+function containedIn(part: readonly string[], whole: readonly string[]): boolean {
+  const left = new Map<string, number>();
+  for (const w of whole) left.set(w, (left.get(w) ?? 0) + 1);
+  for (const p of part) {
+    const n = left.get(p) ?? 0;
+    if (n === 0) return false;
+    left.set(p, n - 1);
+  }
+  return true;
+}
+
+/**
+ * Does a question written for a marked task actually DIFFER from that task (issue #259, rule 0)?
+ * The point of the corrected test is to practise the same kind of task again, not to hand her
+ * the task she already got back with red ink — so "the same task" is rejected, never repaired:
+ *
+ *   · the same wording (case, spacing and punctuation aside) is the same task;
+ *   · a task with numbers must have other numbers: every number of the original appearing again
+ *     in the new question means it still holds the original ("3 + 5" and "5 + 3", or "3 + 5 + 1");
+ *   · a task without numbers must have other words: at least one word that is not in the original,
+ *     and the original must not stand inside it whole.
+ *
+ * Purely mechanical; whether the new question is the same TYPE of task is the model's job and
+ * the prompt's rule. A reworded question about exactly the same fact passes this check — that
+ * is the honest limit of a comparison of words.
+ */
+export function differsFromOriginal(prompt: string, original: string): boolean {
+  const p = wording(prompt);
+  const o = wording(original);
+  if (p === '' || p === o || (o !== '' && ` ${p} `.includes(` ${o} `))) return false;
+  const oNums = numbersOf(original);
+  if (oNums.length > 0) return !containedIn(oNums, numbersOf(prompt));
+  const oWords = new Set(o.split(' '));
+  return p.split(' ').some((w) => !oWords.has(w));
+}
+
+/**
+ * Appended for a corrected class test (issue #259). It replaces "write questions for every task"
+ * by "write NEW questions for the marked ones": the marked tasks are the best list there is of
+ * what she cannot do yet. Categories, never a filled-in example (a sample task in a prompt comes
+ * back as a task of her test).
+ */
+export const CORRECTED_RULES = `THIS IS A CORRECTED CLASS TEST (or a corrected exercise) — the learner's own work with the teacher's corrections on it. It replaces rule 5's "a question for every task":
+- Find the tasks the teacher marked as wrong or incomplete: a correction mark next to them, a cross, a crossed-out or underlined answer, a corrected solution or a remark written beside them, usually in a different colour (red, green). A task with only a tick is not marked. Answers written by the learner are allowed here as context for WHAT went wrong — never copy them into a question.
+- For every marked task write 1–3 NEW questions of the same type: the same skill and the same kind of answer, with other numbers (arithmetic, measures, equations) or other words (vocabulary, grammar, spelling, facts of the same kind). NEVER the original task itself, not even reworded: a question that holds the original numbers or the original wording is thrown away. Put the marked task, exactly as printed and without points or marks, into "original" of each question you write for it.
+- Write nothing for tasks that were not marked. If nothing on the photos is marked, return no items.
+- NEVER write the grade, the points, a score, a percentage or the teacher's overall comment anywhere in your answer — not in extracted_text, not in a title, not in a hint. extracted_text: only the marked tasks, as printed. title: the subject and the topic of the test, nothing about how it went.`;
+
+/** Appended for today's notebook entry (issue #259, "Was war heute?"). */
+export const TODAY_RULES = `THIS IS TODAY'S NOTEBOOK ENTRY — what the class did in today's lesson, often handwritten. It replaces rule 5's "a question for every task": write at most ${TODAY_NOTES_QUESTIONS} short questions (short answers or numbers; no long texts) that check the main points of exactly this entry, as a teacher would ask them in a short unannounced quiz about the last lesson. The handwriting is the learner's own notes and is the material here: read it, but never invent what is not written. more_items is always false.`;
 
 /**
  * Added when an answer was cut off at the token limit (live finding 2: a 2-task sheet ran

@@ -94,5 +94,13 @@
     "nothing": "Envoie-moi une photo ou un PDF de ta fiche – je ne peux pas lire de texte ni de liens ici.",
     "signed_out": "Connecte-toi d'abord – puis partage à nouveau la fiche avec LearnBuddy."
   },
-  "preview_failed": "Aperçu impossible"
+  "preview_failed": "Aperçu impossible",
+  "corrected": {
+    "title": "Photographie ton contrôle",
+    "intro": "Le contrôle corrigé avec les annotations. On s’entraîne sur ce qui est souligné – je ne garde ni notes ni points."
+  },
+  "today": {
+    "title": "C’était quoi aujourd’hui ?",
+    "intro": "Photographie ta leçon du jour dans ton cahier. Je te prépare quelques questions courtes pour demain matin."
+  }
 }

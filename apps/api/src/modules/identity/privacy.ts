@@ -42,6 +42,8 @@ const LEARNER_TABLES = [
   'buddy_pending_actions',
   // What was talked about on earlier days (issue #22): hers, so it is in her export.
   'buddy_session_summaries',
+  // What her rehearsals measured (issue #264): numbers only, never the recording.
+  'rehearsals',
   'subjects',
   'materials',
   'items',
@@ -208,6 +210,7 @@ const CONTENT_TABLES: ReadonlyArray<{ table: string; rows: string }> = [
   { table: 'buddy_messages', rows: `select ctid from buddy_messages where learner_id = $1` },
   { table: 'buddy_decisions', rows: `select ctid from buddy_decisions where learner_id = $1` },
   { table: 'buddy_events', rows: `select ctid from buddy_events where learner_id = $1` },
+  { table: 'rehearsals', rows: `select ctid from rehearsals where learner_id = $1` },
   { table: 'buddy_steps', rows: `select ctid from buddy_steps where learner_id = $1` },
   { table: 'buddy_goals', rows: `select ctid from buddy_goals where learner_id = $1` },
   { table: 'subjects', rows: `select ctid from subjects where learner_id = $1` },

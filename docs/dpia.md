@@ -60,13 +60,15 @@ des Modells darf kein Datenschutzversprechen tragen.
 
 **Datenflüsse.**
 
-| Schritt               | Was fließt wohin                                                                                                                                            |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chat                  | Nachricht → eigene API (Vercel, Region `fra1`/Frankfurt, `apps/api/vercel.json`) → Google Vertex AI (EU-Endpunkt) → Antwort                                 |
-| Foto eines Blattes    | Foto → Supabase Storage (EU, privater Bucket) → Vertex AI liest es → Fragen in der Datenbank; das Foto wird 7 Tage nach dem Lesen gelöscht                  |
-| Sprechen              | Erkennung **auf dem Gerät**, wo sie die Sprache kann; sonst Aufnahme → eigene API → Vertex AI (EU). Die Aufnahme wird **nie gespeichert**, nur ihr Ergebnis |
-| Vorlesen              | ein Satz je Aufruf → Google Cloud TTS (nur EU-Endpunkt), Audio 24 h zwischengespeichert (`speech_cache`), ohne Namensfeld, Id oder Kontodaten               |
-| Erinnerung aufs Handy | nur wenn Kontakt außerhalb der App eingeschaltet ist (Standard: aus); Titel/Text ohne Noten und ohne persönliche Details                                    |
+| Schritt                 | Was fließt wohin                                                                                                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chat                    | Nachricht → eigene API (Vercel, Region `fra1`/Frankfurt, `apps/api/vercel.json`) → Google Vertex AI (EU-Endpunkt) → Antwort                                                                                               |
+| Foto eines Blattes      | Foto → Supabase Storage (EU, privater Bucket) → Vertex AI liest es → Fragen in der Datenbank; das Foto wird 7 Tage nach dem Lesen gelöscht                                                                                |
+| Sprechen                | Erkennung **auf dem Gerät**, wo sie die Sprache kann; sonst Aufnahme → eigene API → Vertex AI (EU). Die Aufnahme wird **nie gespeichert**, nur ihr Ergebnis                                                               |
+| Probevortrag, Lautlesen | Aufnahme bis 10 min (Lautlesen 2 min) → eigene API → Vertex AI (EU), ein Aufruf. Weder Aufnahme noch Transkript werden gespeichert; nur die von Code gerechneten Messwerte (`rehearsals`, Issue #264)                     |
+| Korrigierte Arbeit      | Foto wie jedes Blatt; gespeichert werden nur die angestrichenen Aufgaben und die neuen Fragen dazu — **Note und Punkte nie** (kein Feld dafür, die Transkription des Modells wird für diese Quelle verworfen; Issue #259) |
+| Vorlesen                | ein Satz je Aufruf → Google Cloud TTS (nur EU-Endpunkt), Audio 24 h zwischengespeichert (`speech_cache`), ohne Namensfeld, Id oder Kontodaten                                                                             |
+| Erinnerung aufs Handy   | nur wenn Kontakt außerhalb der App eingeschaltet ist (Standard: aus); Titel/Text ohne Noten und ohne persönliche Details                                                                                                  |
 
 **Auftragsverarbeiter** (Details und offene Punkte: `docs/privacy.md` §Processors): Supabase
 (Datenbank, Auth, Storage; EU-Region) · Google Vertex AI (Modell; nur `eu` oder `europe-*`,
@@ -152,18 +154,20 @@ keine persönlichen Details.
 
 Bewertet aus der Sicht der betroffenen Person — des Kindes.
 
-| #   | Risiko                                                                                         | Wer trägt es | Schwere  | Eintritt     |
-| --- | ---------------------------------------------------------------------------------------------- | ------------ | -------- | ------------ |
-| R1  | Das Modell **behauptet etwas Falsches** über ihren Lernstand oder erfindet eine Notiz über sie | Kind         | mittel   | mittel       |
-| R2  | Das Modell antwortet **unangemessen** auf eine Notlage (Mobbing, Selbstverletzung)             | Kind         | **hoch** | gering       |
-| R3  | **Fremdzugriff** auf Chats, Fotos, Lernstand                                                   | Kind         | hoch     | gering       |
-| R4  | Ein **Auftragsverarbeiter** nutzt Inhalte weiter (Training, Missbrauchs-Logging)               | Kind         | hoch     | offen (§7)   |
-| R5  | **Text ins Ausland** über die Vorlesestimme oder die Spracherkennung des Telefons              | Kind         | mittel   | gering–offen |
-| R6  | **Druck und Dauerkontakt** („du hast 5 Tage nicht geübt")                                      | Kind         | mittel   | gering       |
-| R7  | **Eltern lesen mit**, ohne dass das Kind es weiß                                               | Kind         | mittel   | gering       |
-| R8  | **Falsches Alter** angegeben: ein zu junges Kind nutzt die App ohne Einwilligung der Eltern    | Kind         | mittel   | mittel       |
-| R9  | **Daten bleiben** nach dem Löschwunsch                                                         | Kind         | hoch     | gering       |
-| R10 | **Injection**: Text auf einem fotografierten Blatt steuert Buddy                               | Kind         | mittel   | gering       |
+| #   | Risiko                                                                                                         | Wer trägt es | Schwere  | Eintritt     |
+| --- | -------------------------------------------------------------------------------------------------------------- | ------------ | -------- | ------------ |
+| R1  | Das Modell **behauptet etwas Falsches** über ihren Lernstand oder erfindet eine Notiz über sie                 | Kind         | mittel   | mittel       |
+| R2  | Das Modell antwortet **unangemessen** auf eine Notlage (Mobbing, Selbstverletzung)                             | Kind         | **hoch** | gering       |
+| R3  | **Fremdzugriff** auf Chats, Fotos, Lernstand                                                                   | Kind         | hoch     | gering       |
+| R4  | Ein **Auftragsverarbeiter** nutzt Inhalte weiter (Training, Missbrauchs-Logging)                               | Kind         | hoch     | offen (§7)   |
+| R5  | **Text ins Ausland** über die Vorlesestimme oder die Spracherkennung des Telefons                              | Kind         | mittel   | gering–offen |
+| R6  | **Druck und Dauerkontakt** („du hast 5 Tage nicht geübt")                                                      | Kind         | mittel   | gering       |
+| R7  | **Eltern lesen mit**, ohne dass das Kind es weiß                                                               | Kind         | mittel   | gering       |
+| R8  | **Falsches Alter** angegeben: ein zu junges Kind nutzt die App ohne Einwilligung der Eltern                    | Kind         | mittel   | mittel       |
+| R9  | **Daten bleiben** nach dem Löschwunsch                                                                         | Kind         | hoch     | gering       |
+| R10 | **Injection**: Text auf einem fotografierten Blatt steuert Buddy                                               | Kind         | mittel   | gering       |
+| R11 | **Lange Sprachaufnahmen eines Kindes** (Probevortrag bis 10 min) gelangen in falsche Hände oder bleiben liegen | Kind         | mittel   | gering       |
+| R12 | **Noten einer Klassenarbeit** werden gespeichert und später sichtbar (Druck, Vergleich)                        | Kind         | mittel   | gering       |
 
 ---
 
@@ -186,6 +190,8 @@ Bewertet aus der Sicht der betroffenen Person — des Kindes.
 | R8     | Selbstauskunft des Geburtsdatums plus erzwungene E-Mail-Bestätigung des Kontos plus Eltern-PIN; der Klick auf den Bestätigungslink wird als bestätigte Einwilligung protokolliert (`accounts.consent_confirmed_at`; die Mail trägt den Einwilligungstext); Abwägung in §6                                                                                                                                                                                                                                                                                                                                                                                                                                            | `apps/mobile/lib/auth/supabase.ts` (`email_not_confirmed`); EDPB Statement 1/2025 §13, Guidelines 05/2020 Beispiel 23 (#30); `consent-confirmation.int.test.ts`, `docs/consent-email-templates.md` |
 | R9     | Export (Art. 15/20) sofort als JSON; Löschung (Art. 17) nach 7-Tage-Halt als Job mit unbegrenzten Wiederholungen; Storage-Schulden werden nachverfolgt; `/health` meldet eine mehr als einen Tag überfällige Löschung                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `modules/identity/privacy.ts` (`exportAccount`, `requestDeletion`, `executeAccountDeletion`), `modules/materials/purge.ts` (`erasureStatus`), `app.ts` (`/health`); `erasure.int.test.ts`          |
 | R10    | Blatt-Text, Nachschlage-Ergebnisse und STATE sind im Prompt ausdrücklich **Daten, keine Anweisungen**; die harte Garantie ist Code: jedes Werkzeug ist validiert, arbeitet nur auf den Aliassen dieser lernenden Person, hinter dem Kontext-Zaun                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Prompt buddy.23+; `apps/api/evals/buddy` Fall `de_sheet_instruction_is_not_an_order`; `tools.ts`, `policy.ts`; `docs/architecture.md` §Injected text                                               |
+| R11    | Die Aufnahme lebt nur im Speicher der einen Anfrage und geht einmal an Vertex AI (EU); sie wird nirgends geschrieben, auch das Transkript nicht. Gespeichert werden nur Messwerte und beim Lautlesen die Wörter DES VORGELEGTEN TEXTES — nie ihre eigenen Worte (`rehearsals`; `talks.int.test.ts` prüft, dass weder Audio noch Transkript in der Zeile stehen). Wird die App verlassen, wird die laufende Aufnahme verworfen, nicht gesendet. Aufnahme nur nach ihrem Tipp, Begrenzung im Vertrag (10 min / 2 min, `REHEARSAL_MAX_MS`)                                                                                                                                                                              |
+| R12    | Das Leseschema der korrigierten Arbeit hat kein Feld für Note oder Punkte; die Transkription des Modells wird für diese Quelle nicht gespeichert, `extracted_text` setzt Code aus den angestrichenen Aufgaben zusammen, der Titel ist ein fester App-Text (`material-sources.int.test.ts` prüft, dass „Note", „Punkte" und „12/20" in keiner Zeile stehen). Restrisiko: ein Modell, das eine Punktzahl in den Aufgabentext selbst schreibt — die Regel verbietet es, Code kann es nicht vollständig ausschließen                                                                                                                                                                                                     |
 
 **Organisatorisch.** Ein Modell- oder Regionswechsel ist eine Codeänderung und wird erst
 übernommen, wenn die Evals der betroffenen Aufgabe auf ihm bestehen (`docs/architecture.md`

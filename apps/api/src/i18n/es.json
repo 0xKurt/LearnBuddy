@@ -38,7 +38,10 @@
   },
   "material": {
     "ready": "Tus preguntas de «{{title}}» están listas ({{count}}).",
-    "ready_untitled": "Tus preguntas están listas ({{count}})."
+    "ready_untitled": "Tus preguntas están listas ({{count}}).",
+    "corrected_title": "De tu examen: {{subject}}",
+    "corrected_title_plain": "De tu examen corregido",
+    "today_step": "¿Qué vimos ayer?"
   },
   "practice": {
     "accents": "Casi – revisa otra vez los acentos.",
@@ -229,5 +232,14 @@
   },
   "voice": {
     "sample": "Hola, soy Buddy. Así sueno cuando te leo algo."
+  },
+  "talk": {
+    "stage": {
+      "topic": "Elegir el tema",
+      "outline": "Esquema",
+      "sources": "Buscar fuentes",
+      "slides": "Diapositivas o fichas",
+      "rehearsal": "Ensayo"
+    }
   }
 }

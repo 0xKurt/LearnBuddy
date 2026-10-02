@@ -94,5 +94,13 @@
     "nothing": "Send me a photo or PDF of your sheet – I can't read text or links here.",
     "signed_out": "Please sign in first – then share the sheet with LearnBuddy again."
   },
-  "preview_failed": "No preview"
+  "preview_failed": "No preview",
+  "corrected": {
+    "title": "Photograph your test",
+    "intro": "The marked test with the corrections. We practise exactly what was marked – I don’t keep grades or points."
+  },
+  "today": {
+    "title": "What was today?",
+    "intro": "Photograph today’s notes from your exercise book. I’ll make a few short questions for tomorrow morning."
+  }
 }

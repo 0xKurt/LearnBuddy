@@ -64,5 +64,76 @@
     "preparing": "Buddy sta preparando …",
     "preparing_hint": "Ci vuole qualche secondo.",
     "not_usable": "Con questo non riesco a preparare niente, scusa – prova con un argomento di scuola."
+  },
+  "rehearse": {
+    "offer": {
+      "talk": "Prova",
+      "read_aloud": "Leggere ad alta voce",
+      "start": "Apri registrazione"
+    },
+    "stage": {
+      "topic": "Argomento",
+      "outline": "Scaletta",
+      "sources": "Fonti",
+      "slides": "Slide",
+      "rehearsal": "Prova"
+    },
+    "gone": "Questa registrazione non c’è più. Chiedilo di nuovo a Buddy.",
+    "back": "Torna da Buddy",
+    "title_talk": "Prova generale",
+    "title_read": "Leggere ad alta voce",
+    "intro_talk": "«{{title}}» – esponila come in classe.",
+    "intro_talk_minutes": "«{{title}}» · {{minutes}} minuti. Esponila come in classe.",
+    "intro_read": "Leggi il testo ad alta voce, con calma. Puoi scorrere.",
+    "text_label": "Testo da leggere ad alta voce",
+    "what_i_measure": "A cosa faccio attenzione",
+    "measure_time": "Quanto tempo parli",
+    "measure_pace": "Quanto veloce parli – e quante volte dici «ehm»",
+    "measure_parts": "Se ci sono introduzione, parte centrale e conclusione",
+    "start_talk": "Inizia la prova",
+    "start_read": "Inizia a leggere",
+    "hint_talk": "Tocca il microfono e comincia. Fino a 10 minuti.",
+    "hint_read": "Tocca il microfono e inizia a leggere. Fino a 2 minuti.",
+    "recording_talk": "Ti ascolto. Tocca Stop quando hai finito.",
+    "recording_read": "Ti ascolto. Tocca Stop quando hai finito.",
+    "listening_back": "Lo sto ascoltando …",
+    "problem": {
+      "no_speech": "Non ho sentito niente. Riprova, un po’ più vicino al microfono.",
+      "too_short": "Era molto breve. Tocca il microfono e parla.",
+      "denied": "Non posso usare il microfono. Puoi permetterlo nelle impostazioni.",
+      "failed": "Ora non sono riuscito ad ascoltare. Riprova tra poco.",
+      "offline": "Nessuna connessione. La tua registrazione c’è ancora."
+    },
+    "send_again": "Invia di nuovo",
+    "done_title": "Ben fatto",
+    "done_talk": "Ecco cosa ho misurato. Racconta a Buddy com’è andata.",
+    "done_read": "Ecco cosa ho sentito.",
+    "duration": "Durata",
+    "duration_of": "{{time}} su {{target}}",
+    "length_fits": "In linea con la durata richiesta.",
+    "length_short": "Un po’ più corta del richiesto.",
+    "length_long": "Un po’ più lunga del richiesto.",
+    "pace": "Ritmo",
+    "pace_value_one": "{{count}} parola al minuto",
+    "pace_value_other": "{{count}} parole al minuto",
+    "pace_note_read": "Conto le parole lette correttamente.",
+    "fillers": "Intercalari",
+    "fillers_note": "«Ehm» – una breve pausa spesso suona più calma.",
+    "parts": "Struttura",
+    "part": {
+      "opening": "Introduzione",
+      "main": "Parte centrale",
+      "closing": "Conclusione"
+    },
+    "part_status": {
+      "heard": "c’è",
+      "not_heard": "non ancora",
+      "unknown": "non chiaro"
+    },
+    "words": "Guarda di nuovo queste parole",
+    "words_none": "Nessuna parola saltata: hai letto tutto.",
+    "words_note": "Saltate o lette diversamente.",
+    "again": "Ancora",
+    "finish": "Fatto"
   }
 }

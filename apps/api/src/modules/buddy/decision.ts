@@ -553,6 +553,15 @@ const requestMaterial = z.object({
     material: MaterialRef.nullable()
       .optional()
       .describe('the sheet (sh1) this page belongs to, when it completes one she already sent'),
+    // Issue #259: two more things a photo can be, read by their own rules. Optional in parsing
+    // (older scripted answers have none); the model sees it.
+    source: z
+      .enum(['sheet', 'corrected_test', 'today_notes'])
+      .nullable()
+      .optional()
+      .describe(
+        "what the photo is: sheet (a worksheet or page, the default) · corrected_test (a class test or exercise she got back corrected — new questions are written for the tasks the teacher marked) · today_notes (her notebook entry of today's lesson — a few questions for tomorrow morning)",
+      ),
   }),
 });
 
@@ -684,6 +693,71 @@ const offerLearning = z.object({
   }),
 });
 
+/**
+ * A talk with a day — a Referat, a GFS, a presentation, a poem to recite (issue #264). Like a
+ * test it has a day; unlike a test it has steps she does herself. The model names the stages and
+ * their days as she agreed them (DaySpec, rule 2); code resolves every day, refuses a step after
+ * the talk or out of order, and writes the steps' titles itself.
+ */
+const planTalk = z.object({
+  tool: z.literal('plan_talk'),
+  args: z.object({
+    title: Title.describe("The talk's topic or title, in the learner's language"),
+    format: z
+      .enum(['referat', 'gfs', 'presentation', 'recital'])
+      .describe(
+        'referat · gfs (a graded presentation that counts like a class test) · presentation · recital (a poem or text recited)',
+      ),
+    subject: z.string().trim().min(1).max(40).describe("Subject name in the learner's language"),
+    subject_kind: z.enum(SUBJECT_KINDS),
+    day: DaySpecSchema.describe('the day of the talk'),
+    minutes: z
+      .number()
+      .int()
+      .min(1)
+      .max(45)
+      .nullable()
+      .describe('how long the talk must be, in minutes, only if she said so; else null'),
+    steps: z
+      .array(
+        z.object({
+          stage: z.enum(['topic', 'outline', 'sources', 'slides', 'rehearsal']),
+          day: DaySpecSchema.describe('the day this step should be done by'),
+        }),
+      )
+      .min(1)
+      .max(5)
+      .describe(
+        'the steps still ahead, in order (topic → outline → sources → slides → rehearsal), each on a day before the talk; leave out what she has already done',
+      ),
+    quote: Quote,
+  }),
+});
+
+/**
+ * A button that opens the recorder (issue #264): a rehearsal of a planned talk, or reading a
+ * longer text aloud. Nothing is recorded until she taps it and starts.
+ */
+const offerRehearsal = z.object({
+  tool: z.literal('offer_rehearsal'),
+  args: z.object({
+    kind: z
+      .enum(['talk', 'read_aloud'])
+      .describe(
+        'talk: she rehearses her talk (up to 10 min) · read_aloud: she reads a given text aloud (up to 2 min)',
+      ),
+    goal: GoalRef.nullable().describe('talk: the planned talk (g1) from STATE; null otherwise'),
+    text: z
+      .string()
+      .trim()
+      .max(2000)
+      .nullable()
+      .describe(
+        'read_aloud: the text she reads, exactly as she should read it — from her sheet, or one you write at her level (15–220 words, no headings or lists). null for a talk',
+      ),
+  }),
+});
+
 const openArea = z.object({
   tool: z.literal('open_area'),
   args: z.object({
@@ -717,6 +791,8 @@ export const ACT_SCHEMAS = {
   schedule_check: scheduleCheck,
   offer_learning: offerLearning,
   open_area: openArea,
+  plan_talk: planTalk,
+  offer_rehearsal: offerRehearsal,
 } as const;
 
 export type ToolName = keyof typeof ACT_SCHEMAS;

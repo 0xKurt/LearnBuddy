@@ -17,15 +17,18 @@ import type {
   ItemResult,
   LibraryView,
   MaterialItemsView,
+  MaterialSource,
   MaterialView,
   NotPracticable,
   PageProblem,
 } from '@learnbuddy/shared-types/contracts';
+import { MaterialSource as MaterialSourceSchema } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
 import type { Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
-import { localParts } from '../../lib/time.js';
+import { addDays, localParts } from '../../lib/time.js';
+import { t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmPart, type LlmResult } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
@@ -38,6 +41,10 @@ import { insertItems, samePrompt, usableItems } from '../practice/items.js';
 import { createSession } from '../practice/service.js';
 import {
   clarifiedRules,
+  CORRECTED_RULES,
+  CorrectedExtraction,
+  CorrectedParse,
+  differsFromOriginal,
   EXTRACT_PROMPT_VERSION,
   EXTRACT_SYSTEM,
   ExtractionParse,
@@ -50,6 +57,9 @@ import {
   HOMEWORK_SYSTEM,
   HomeworkExtraction,
   LEAN_RULES,
+  TODAY_RULES,
+  TodayExtraction,
+  TodayParse,
 } from './extract.js';
 import { emitEvent } from '../buddy/events.js';
 import {
@@ -66,6 +76,8 @@ import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
 const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
+const CORRECTED_SCHEMA = toJsonSchema(CorrectedExtraction);
+const TODAY_SCHEMA = toJsonSchema(TodayExtraction);
 const ABANDON_UPLOAD_MS = 24 * 3_600_000;
 const MAX_EXTRACTION_ATTEMPTS = 3;
 /**
@@ -89,6 +101,8 @@ type MaterialRow = {
   failure_reason: MaterialView['failure_reason'];
   photo_count: number;
   purpose: 'study' | 'homework';
+  /** Where the photos come from (issue #259, migration 0099). */
+  source: MaterialSource;
   page_problems: PageProblem[];
   /** The sheet holds more questions than were read into items (issue #150). */
   items_incomplete: boolean;
@@ -159,6 +173,7 @@ function toView(
     item_count: m.item_count,
     speak_count: m.speak_count,
     purpose: m.purpose,
+    source: m.source,
     session_id: m.session_id,
     session_status: m.session_status,
     page_problems: m.pages_resolved_at ? [] : m.page_problems,
@@ -182,8 +197,8 @@ export async function createMaterial(
 }> {
   // Everything referenced must belong to this learner.
   const step = input.step_id
-    ? await deps.db.maybeOne<{ id: string; goal_id: string | null }>(
-        `select id, goal_id from buddy_steps where id = $1 and learner_id = $2 and kind = 'capture'`,
+    ? await deps.db.maybeOne<{ id: string; goal_id: string | null; payload: { source?: string } }>(
+        `select id, goal_id, payload from buddy_steps where id = $1 and learner_id = $2 and kind = 'capture'`,
         [input.step_id, learner.id],
       )
     : null;
@@ -193,8 +208,8 @@ export async function createMaterial(
   // its goal, whichever way she took it (audit H-16). With two or more open, none is guessed.
   const asked =
     !step && !input.goal_id && !input.completes && input.purpose !== 'homework'
-      ? await deps.db.query<{ id: string; goal_id: string | null }>(
-          `select id, goal_id from buddy_steps
+      ? await deps.db.query<{ id: string; goal_id: string | null; payload: { source?: string } }>(
+          `select id, goal_id, payload from buddy_steps
             where learner_id = $1 and kind = 'capture' and state = 'planned' limit 2`,
           [learner.id],
         )
@@ -208,8 +223,9 @@ export async function createMaterial(
         root: string;
         goal_id: string | null;
         purpose: 'study' | 'homework';
+        source: MaterialSource;
       }>(
-        `select m.id, coalesce(m.merged_into, m.id) as root, r.goal_id, r.purpose
+        `select m.id, coalesce(m.merged_into, m.id) as root, r.goal_id, r.purpose, r.source
            from materials m join materials r on r.id = coalesce(m.merged_into, m.id)
           where m.id = $1 and m.learner_id = $2 and m.archived_at is null and r.archived_at is null`,
         [input.completes, learner.id],
@@ -218,6 +234,14 @@ export async function createMaterial(
   if (input.completes && !completes) throw new AppError('not_found', 'Material not found');
   const goalId = input.goal_id ?? captureStep?.goal_id ?? completes?.goal_id ?? null;
   const purpose = completes?.purpose ?? input.purpose;
+  // Where the photos come from (issue #259): pages for an earlier sheet are that sheet's kind;
+  // a photo Buddy asked for is what he asked for (the step says it, not the app); otherwise what
+  // the app sent. Homework is always the sheet she has to do.
+  const askedFor = MaterialSourceSchema.catch('sheet').parse(captureStep?.payload.source);
+  const source: MaterialSource =
+    purpose === 'homework'
+      ? 'sheet'
+      : (completes?.source ?? (captureStep ? askedFor : input.source));
   const goal = goalId
     ? await deps.db.maybeOne<{ subject_id: string | null }>(
         `select subject_id from buddy_goals where id = $1 and learner_id = $2`,
@@ -245,8 +269,8 @@ export async function createMaterial(
     // waits for the winner and answers with its material (create-material-idempotency-race).
     const row = await tx.maybeOne<{ id: string }>(
       `insert into materials (learner_id, client_request_id, goal_id, step_id, subject_id, photo_count,
-                              created_at, purpose, completes_material_id)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                              created_at, purpose, completes_material_id, source)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        on conflict (learner_id, client_request_id) do nothing
        returning id`,
       [
@@ -259,6 +283,7 @@ export async function createMaterial(
         deps.now(),
         purpose,
         completes?.root ?? null,
+        source,
       ],
     );
     if (!row) {
@@ -768,8 +793,20 @@ type Reader = (lean: boolean, extra: string) => Promise<LlmResult>;
 async function sheetReader(
   deps: Deps,
   learnerId: string,
-  opts: { homework: boolean; parts: LlmPart[]; now: Date },
+  opts: { homework: boolean; source?: MaterialSource; parts: LlmPart[]; now: Date },
 ): Promise<{ learner: ReadingLearner; timezone: string; read: Reader }> {
+  // The two other sources of a study photo read the same photos with one more paragraph and
+  // their own answer shape (issue #259); everything else about the reading is the same call.
+  const source = opts.homework ? 'sheet' : (opts.source ?? 'sheet');
+  const sourceRules =
+    source === 'corrected_test' ? CORRECTED_RULES : source === 'today_notes' ? TODAY_RULES : '';
+  const schema = opts.homework
+    ? HOMEWORK_SCHEMA
+    : source === 'corrected_test'
+      ? CORRECTED_SCHEMA
+      : source === 'today_notes'
+        ? TODAY_SCHEMA
+        : EXTRACTION_SCHEMA;
   const learner = await deps.db.one<ReadingLearner>(
     `select id, locale, level, grade, birth_date, curriculum_region from learners where id = $1`,
     [learnerId],
@@ -790,8 +827,8 @@ async function sheetReader(
       tier: 'smart',
       promptVersion: EXTRACT_PROMPT_VERSION,
       system: `${opts.homework ? HOMEWORK_SYSTEM : EXTRACT_SYSTEM}${
-        lean ? `\n\n${LEAN_RULES}` : ''
-      }${extra ? `\n\n${extra}` : ''}`,
+        sourceRules ? `\n\n${sourceRules}` : ''
+      }${lean ? `\n\n${LEAN_RULES}` : ''}${extra ? `\n\n${extra}` : ''}`,
       contents: [
         {
           role: 'user',
@@ -810,7 +847,7 @@ async function sheetReader(
           ],
         },
       ],
-      schema: opts.homework ? HOMEWORK_SCHEMA : EXTRACTION_SCHEMA,
+      schema,
       // Homework is at most 12 tasks without worked solutions: a smaller limit, so a
       // reading that runs on is cut off after seconds, not after 40 (live finding 2).
       maxOutputTokens: opts.homework ? 8_000 : 12_000,
@@ -871,9 +908,36 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     read: readOnce,
   } = await sheetReader(deps, m.learner_id, {
     homework,
+    source: m.source,
     parts: loaded.parts,
     now,
   });
+  const corrected = !homework && m.source === 'corrected_test';
+  const today = !homework && m.source === 'today_notes';
+  // A corrected test (issue #259): every question names the marked task it practises, and code
+  // throws away one that is that task again (`differsFromOriginal`, rule 0: reject, never
+  // repair). The originals are kept — they are the only text of the test that is stored.
+  const originals: string[] = [];
+  let sameAsOriginal = 0;
+  const parseReading = (json: unknown): ReturnType<typeof ExtractionParse.safeParse> => {
+    if (today) {
+      const r = TodayParse.safeParse(json);
+      return r.success ? { success: true, data: { ...r.data, more_items: false } } : r;
+    }
+    if (!corrected) return ExtractionParse.safeParse(json);
+    const r = CorrectedParse.safeParse(json);
+    if (!r.success) return r;
+    const kept = [];
+    for (const { original, ...item } of r.data.items) {
+      if (!differsFromOriginal(item.prompt, original)) {
+        sameAsOriginal++;
+        continue;
+      }
+      if (!originals.some((o) => samePrompt(o) === samePrompt(original))) originals.push(original);
+      kept.push(item);
+    }
+    return { success: true, data: { ...r.data, items: kept } };
+  };
 
   // Without a model nothing can read the photos: say so at once, not after minutes of futile
   // retries (p2-uf-llm-disabled-capture-dead-end). Not her sheet's fault: the run is uncounted.
@@ -900,12 +964,12 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       lean = true;
       res = await read(lean);
     }
-    result = ExtractionParse.safeParse(res.json);
+    result = parseReading(res.json);
     // The sheet has more than one answer could hold: read it again for the rest (#150).
     // A word list with fifty pairs is fifty questions — "das kunstlich deckeln ist der
     // falsche weg" (owner, 30.09.). Homework is a short list by design and is never
     // continued; a reading that had to go lean is already at the model's limit.
-    if (!homework && result.success) {
+    if (!homework && !today && result.success) {
       for (let pass = 1; pass < MOST_READINGS && result.data.more_items; pass++) {
         const seen = result.data.items.map((it) => it.prompt);
         let next;
@@ -917,7 +981,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           if (err instanceof LlmError && (err.retryable || err.truncated)) break;
           throw err;
         }
-        const parsed = ExtractionParse.safeParse(next.json);
+        const parsed = parseReading(next.json);
         if (!parsed.success) break;
         const known = new Set(seen.map(samePrompt));
         const fresh = parsed.data.items.filter((it) => !known.has(samePrompt(it.prompt)));
@@ -963,6 +1027,16 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   }
   if (!result.success) return fail(deps, job, materialId, 'model_error');
   const x = result.data;
+  // What is kept of the photos' text, and the sheet's name. For a corrected test both come from
+  // code (issue #259): the model's transcription of a test carries the grade and the points, and
+  // the schema has no field for them — so nothing of that transcription is stored, only the
+  // marked tasks as printed, and the name says the subject, never how it went.
+  const keptText = corrected ? originals.join('\n\n') : x.extracted_text;
+  const keptTitle = corrected
+    ? x.subject
+      ? t(learner.locale, 'material.corrected_title', { subject: x.subject.name })
+      : t(learner.locale, 'material.corrected_title_plain')
+    : x.title;
   if (!x.is_learning_material) return fail(deps, job, materialId, 'not_learning_material');
   // Homework help is given task by task; a board is not one of its forms (issues #228–#230).
   const items = usableItems(x.items, { severalParts: !homework });
@@ -981,6 +1055,15 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     return fail(deps, job, materialId, 'form_not_practicable', {
       notPracticable: x.not_practicable,
     });
+  // A corrected test with nothing marked on it is not a bad photo (issue #259): its own reason.
+  // A reading that only wrote the original tasks again went wrong, not the photo.
+  if (corrected && items.length === 0)
+    return fail(
+      deps,
+      job,
+      materialId,
+      x.items.length > 0 || sameAsOriginal > 0 ? 'model_error' : 'nothing_marked',
+    );
   // Questions were written but none passed validation: the reading went wrong, not the
   // photo — no lighting advice for a fine photo (empty-after-validation-says-unreadable).
   if (items.length === 0)
@@ -1110,7 +1193,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           where id = $1`,
         [
           target.id,
-          x.extracted_text,
+          keptText,
           subjectId,
           x.more_items,
           // The contract shows at most twenty; the sheet keeps the first twenty of them
@@ -1126,8 +1209,8 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           where id = $1`,
         [
           materialId,
-          x.title,
-          x.extracted_text,
+          keptTitle,
+          keptText,
           subjectId,
           now,
           JSON.stringify(pageProblems),
@@ -1157,7 +1240,10 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       learnerId: current.learner_id,
       materialId,
       sheetId: home.id,
-      spots: x.unclear,
+      // The other two sources are read with their own rules, and a clarified reading would
+      // write the plain sheet's question for the task — for a marked task of a test, the
+      // original itself. So they ask nothing; an unsettled spot costs its task (issue #259).
+      spots: corrected || today ? [] : x.unclear,
       photoCount: current.photo_count,
       now,
     });
@@ -1176,6 +1262,31 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           current.goal_id,
           now,
           { material_id: materialId, questions: items.length },
+        ],
+      );
+    }
+    // Today's notebook entry (issue #259, "Was war heute?"): its few questions are the practice
+    // for TOMORROW MORNING — an unannounced quiz is about the last lesson. Prepared now, on
+    // tomorrow's date in her zone, so the home shows it then and not before ("Heute nicht"
+    // uses the same date). Buddy's own suggestion, not an agreed reminder: whether he says
+    // anything tomorrow stays with the contact rules (CLAUDE.md rule 6).
+    if (today && !target && itemIds.length > 0) {
+      await tx.query(
+        `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date, payload, prepared_at)
+         values ($1, $2, 'practice', $3, 'prepared', $4, $5, $6)`,
+        [
+          current.learner_id,
+          current.goal_id,
+          t(learner.locale, 'material.today_step'),
+          addDays(localParts(now, timezone).date, 1),
+          {
+            item_ids: itemIds,
+            est_minutes: Math.max(2, itemIds.length),
+            focus_topics: [],
+            subject_id: subjectId,
+            material_id: home.id,
+          },
+          now,
         ],
       );
     }

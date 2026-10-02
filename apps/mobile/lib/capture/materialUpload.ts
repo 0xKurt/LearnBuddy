@@ -47,6 +47,8 @@ export type SendProgress =
   | { step: 'submitting' };
 
 export type MaterialPurpose = 'study' | 'homework';
+/** What the photo is (issue #259): a worksheet, a corrected test, today's notebook entry. */
+export type MaterialSource = 'sheet' | 'corrected_test' | 'today_notes';
 
 /** What is uploaded: prepared photos are JPEGs; a PDF goes as it is. */
 export type UploadMime = 'image/jpeg' | 'application/pdf';
@@ -60,6 +62,8 @@ export type MaterialLink = {
   stepId: string | null;
   goalId: string | null;
   purpose?: MaterialPurpose;
+  /** What the photo is (issue #259); a step Buddy asked with decides it on the server. */
+  source?: MaterialSource;
   /** The earlier material whose missing pages these photos are (keeps its goal and purpose). */
   completes?: string | null;
 };
@@ -221,6 +225,7 @@ export class MaterialUpload {
         ...(this.link.stepId ? { step_id: this.link.stepId } : {}),
         ...(this.link.goalId ? { goal_id: this.link.goalId } : {}),
         purpose: this.link.purpose ?? 'study',
+        ...(this.link.source && this.link.source !== 'sheet' ? { source: this.link.source } : {}),
         ...(this.link.completes ? { completes: this.link.completes } : {}),
         sending: requesting,
       });

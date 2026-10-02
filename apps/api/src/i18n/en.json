@@ -38,7 +38,10 @@
   },
   "material": {
     "ready": "Your questions for “{{title}}” are ready ({{count}}).",
-    "ready_untitled": "Your questions are ready ({{count}})."
+    "ready_untitled": "Your questions are ready ({{count}}).",
+    "corrected_title": "From your test: {{subject}}",
+    "corrected_title_plain": "From your marked test",
+    "today_step": "What was yesterday?"
   },
   "practice": {
     "accents": "Almost – check the accents again.",
@@ -229,5 +232,14 @@
   },
   "voice": {
     "sample": "Hi, I'm Buddy. This is how I sound when I read something to you."
+  },
+  "talk": {
+    "stage": {
+      "topic": "Pick the topic",
+      "outline": "Outline",
+      "sources": "Collect sources",
+      "slides": "Slides or cue cards",
+      "rehearsal": "Rehearsal"
+    }
   }
 }

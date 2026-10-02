@@ -1176,6 +1176,38 @@ her answer disappear (rule 5). STATE carries all three states (asked / answered 
 with the task as printed, so Buddy can ask it in his own words — and is told never to pick a
 reading himself.
 
+**Other sources of a study photo** (issue #259, migration 0099, `materials.source`). The same
+photo path, the same reading job, the same retention — the source only adds one paragraph to the
+reading and changes its answer shape (`materials/extract.ts`):
+
+- **`corrected_test`** — a class test or exercise she got back corrected. `CORRECTED_RULES` asks
+  for the tasks the teacher MARKED (a correction sign, a corrected answer, usually another colour)
+  and for 1–3 NEW questions of the same type per marked task, each naming its `original` as
+  printed (`CorrectedItemDraft`). Code drops every question that is the original again
+  (`differsFromOriginal`, rule 0, reject never repair): the same wording, every number of the
+  original still in it ("3 + 5" → "5 + 3"), or — without numbers — no new word, or the original
+  standing whole inside it. A question with no `original` cannot be checked and is dropped like
+  any broken item. **The grade and the points are never stored**: the schema has no field for
+  them, and the model's transcription of a test is not kept at all — `extracted_text` is the
+  marked tasks as printed, joined by code, and the title is the app's own words ("Aus deiner
+  Arbeit: Mathe"). A test with nothing marked fails as `nothing_marked`, its own honest reason
+  (not "unreadable"), and a second reading stays offered (a dim photo hides red ink). The honest
+  limit: a reworded question about exactly the same fact passes a comparison of words.
+- **`today_notes`** — today's notebook entry ("Was war heute?": a Bavarian Stegreifaufgabe or an
+  Ausfrage is about the last lesson). `TODAY_RULES` asks for at most `TODAY_NOTES_QUESTIONS` (5)
+  short questions; more are cut like any over-long list, and it is never read again "for the
+  rest". When it is ready, code prepares them as a practice step on TOMORROW's date in her zone
+  (`buddy_steps`, `prepared`, not agreed) — the home shows it the next morning, not before.
+  Whether Buddy says anything about it the next day stays with the contact rules (rule 6); STATE
+  tells him the step exists so he does not prepare it twice. She can also just tell Buddy what
+  they did; he then offers practice on her words (`offer_learning`).
+
+Neither source asks for an unclear spot (#164): a clarified reading would write the plain sheet's
+question for the task — for a marked task, the original itself. Buddy asks for these photos with
+`request_material { source }`; the capture step carries it (`payload.source`), so a photo linked
+to the step is that source whatever the app sends, and the capture screen says what to
+photograph. Homework is always `sheet`. `material-sources.int.test.ts`, `corrected.test.ts`.
+
 **Photo check on the phone** (`apps/mobile/lib/photo/quality.ts`, `check.ts`; the old app's most
 common failure was an unreadable photo): right after a photo is taken or picked, a small copy is
 decoded on the device (jpeg-js, the same on phone and web) and measured — too dark (mean
@@ -2515,6 +2547,57 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   text size up to 1.6× (`Btn` grows with `minHeight` instead of clipping), "Prüfen" wraps onto
   its own line rather than shrink, and toasts sit above the iOS keyboard. Not yet checked on a
   device at AX3/AX5.
+
+## Talks and reading aloud
+
+Issue #264, migration 0099, `modules/voice/rehearse.ts`, `reading.ts`, `app/rehearse.tsx`.
+
+**A talk is a goal with steps she does herself.** A Referat, a GFS, a presentation or a recital
+has a day like a test but no questions. `plan_talk` (turn only, quote-bound, undo drops it) makes
+a goal of kind `talk` (`talk_minutes` when she said how long) and one step of kind `task` per stage
+still ahead — topic → outline → sources → slides → rehearsal (`TalkStage`), each on a DaySpec the
+server resolves (rule 2). Code refuses a plan that cannot be kept: a stage twice or out of order,
+a step on or after the day of the talk, a later stage before an earlier one, a talk today. The
+steps' titles are the app's words (`talk.stage.*`), never the model's. They stand in the agenda
+like any planned step; she marks one done by telling Buddy (`mark_step_done`); reminders are
+`plan_step` agreements like any other. STATE says the talk is HERS: Buddy never writes it, its
+outline or its slides — he asks, gives feedback on what she has, and offers a rehearsal.
+
+**A rehearsal is a button, the recorder a screen.** `offer_rehearsal` (kind `talk` with the
+talk's goal, or `read_aloud` with the passage itself, 15–220 words — `READ_ALOUD_WORDS`, refused
+otherwise) changes nothing and puts a card in the chat (`RehearseCard`). Its tap opens
+`app/rehearse.tsx` with the offer's action id; `GET /voice/rehearse/:action` serves the talk's
+title and length or the passage, read back from the stored action of THIS learner (another
+learner's id is 404). The chat cannot carry this one: ten minutes with a running clock, and a
+text to read from. It records in one piece at half the usual rate (24 kbit/s mono, `long` in
+`lib/speech/record.ts`), up to 10 minutes for a talk and 2 for reading aloud
+(`REHEARSAL_MAX_MS`, enforced by the API against the offer's kind; 3 MB request body like every
+recording).
+
+**Measured by code** (`POST /voice/rehearse`). One model call under the `transcribe` budget writes
+down what she said — hesitation sounds in braces, nothing corrected — and, for a talk, names per
+part (opening, main, closing) whether it is there with a quote. The transcriber is never shown
+the passage, so it cannot hear the text instead of her. Everything else is code (`reading.ts`):
+words and words per minute over the recorder's own duration; filler sounds counted from the
+braces (a transcription convention, not a word list — rule 3); for reading aloud the passage is
+aligned word by word with the transcript (edit distance over words), so a word of the text with
+no partner was skipped and one paired with another word was misread, a number in the text may be
+said in words, and her own repetitions are no error; the pace there counts only words read right.
+A part of a talk is `heard` only when its quote is found in the transcript, `not_heard` when the
+model says it is missing, `unknown` otherwise — never "missing" by default (the rubric rule of
+#211). No speech at all is 422 `no_speech` and nothing is kept; an outage is 503 and nothing is
+kept; the same request id twice is the same rehearsal, without a second model call.
+
+**What is kept** is the numbers (`rehearsals`): duration, target, words, words per minute,
+filler count, per part heard/not heard, and for reading aloud the words OF THE GIVEN TEXT she
+skipped or read differently — never the recording and never the transcript (her own words).
+A talk's open rehearsal step is done with the rehearsal as evidence (`done_source = 'evidence'`),
+and Buddy reads the result in STATE ("rehearsed: 4:12 of 5:00, 118 words/min, 7 filler sounds").
+The screen shows the same numbers in words — the length against the one she was given ("passt",
+"etwas kürzer", "etwas länger", with slack), no score and no grade (rule 6).
+`talks.int.test.ts`, `reading.test.ts`, `lib/rehearse/__tests__/result.test.ts`. Not verified
+live: how well the Vertex model transcribes a child's ten-minute talk verbatim (braces included)
+and whether it really leaves misread words as said instead of "correcting" them.
 
 ## Home
 

@@ -38,7 +38,10 @@
   },
   "material": {
     "ready": "Deine Fragen zu „{{title}}“ sind fertig ({{count}} Stück).",
-    "ready_untitled": "Deine Fragen sind fertig ({{count}} Stück)."
+    "ready_untitled": "Deine Fragen sind fertig ({{count}} Stück).",
+    "corrected_title": "Aus deiner Arbeit: {{subject}}",
+    "corrected_title_plain": "Aus deiner korrigierten Arbeit",
+    "today_step": "Was war gestern?"
   },
   "practice": {
     "accents": "Fast – schau nochmal auf die Akzente.",
@@ -229,5 +232,14 @@
   },
   "voice": {
     "sample": "Hallo, ich bin Buddy. So klinge ich, wenn ich dir etwas vorlese."
+  },
+  "talk": {
+    "stage": {
+      "topic": "Thema festlegen",
+      "outline": "Gliederung",
+      "sources": "Quellen sammeln",
+      "slides": "Folien oder Karteikarten",
+      "rehearsal": "Probevortrag"
+    }
   }
 }

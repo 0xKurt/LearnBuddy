@@ -1,6 +1,11 @@
 // Voice HTTP surface. docs/architecture.md §Voice.
 
-import { SpeechRequest, TranscribeRequest } from '@learnbuddy/shared-types/contracts';
+import {
+  RehearseRequest,
+  SpeechRequest,
+  TranscribeRequest,
+  Uuid,
+} from '@learnbuddy/shared-types/contracts';
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 
@@ -13,6 +18,8 @@ import {
 } from '../../http/context.js';
 import { readBody } from '../../http/validate.js';
 import { isAppError } from '../../lib/errors.js';
+import { AppError } from '../../lib/errors.js';
+import { rehearsalBrief, rehearse } from './rehearse.js';
 import { transcribe } from './service.js';
 import { synthesizeSpeech } from './speech.js';
 
@@ -56,4 +63,20 @@ voiceRoutes.post('/speech', async (c) => {
       input,
     ),
   );
+});
+
+/**
+ * A rehearsal talk or a read-aloud (issue #264): what the recorder shows before she starts, and
+ * the recording itself, measured. The offer she tapped is the only source of the text and the
+ * talk; the app sends its id and the recording, nothing else.
+ */
+voiceRoutes.get('/rehearse/:action', async (c) => {
+  const id = Uuid.safeParse(c.req.param('action'));
+  if (!id.success) throw new AppError('not_found', 'Rehearsal not found');
+  return c.json(await rehearsalBrief(depsOf(c), c.get('learner').id, id.data));
+});
+
+voiceRoutes.post('/rehearse', async (c) => {
+  const input = await readBody(c, RehearseRequest);
+  return c.json(await rehearse(depsOf(c), c.get('learner'), input));
 });

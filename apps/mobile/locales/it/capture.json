@@ -94,5 +94,13 @@
     "nothing": "Mandami una foto o un PDF della tua scheda – qui non posso leggere testo o link.",
     "signed_out": "Prima accedi – poi condividi di nuovo la scheda con LearnBuddy."
   },
-  "preview_failed": "Anteprima non disponibile"
+  "preview_failed": "Anteprima non disponibile",
+  "corrected": {
+    "title": "Fotografa la tua verifica",
+    "intro": "La verifica corretta con le annotazioni. Ci esercitiamo proprio su ciò che è segnato: voti e punti non li salvo."
+  },
+  "today": {
+    "title": "Cosa abbiamo fatto oggi?",
+    "intro": "Fotografa gli appunti di oggi sul quaderno. Ti preparo qualche domanda breve per domani mattina."
+  }
 }

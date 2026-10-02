@@ -59,7 +59,13 @@ async function leftBehind(): Promise<CaptureDraft | null> {
 }
 
 function uploadLink(l: DraftLink): MaterialLink {
-  return { stepId: l.stepId, goalId: l.goalId, purpose: l.purpose, completes: l.completes };
+  return {
+    stepId: l.stepId,
+    goalId: l.goalId,
+    purpose: l.purpose,
+    source: l.source,
+    completes: l.completes,
+  };
 }
 
 type Options = {

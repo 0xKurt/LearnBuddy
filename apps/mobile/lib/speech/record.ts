@@ -51,6 +51,18 @@ const SPEECH_RECORDING: RecordingOptions = {
   web: { mimeType: 'audio/webm', bitsPerSecond: 48_000 },
 };
 
+/**
+ * A rehearsal talk or a read-aloud (issue #264): up to ten minutes in one piece, so half the
+ * rate — speech stays perfectly clear at 24 kbit/s mono, and ten minutes stay inside what the
+ * API takes in one request (REHEARSAL_MAX_BASE64).
+ */
+const LONG_RECORDING: RecordingOptions = {
+  ...SPEECH_RECORDING,
+  sampleRate: 16_000,
+  bitRate: 24_000,
+  web: { mimeType: 'audio/webm', bitsPerSecond: 24_000 },
+};
+
 export type Recording = { uri: string; mime: SpeakMime; durationMs: number; base64: string };
 
 /** Why no recording came out: no microphone access, only a tap, an unknown format, or it broke. */
@@ -83,6 +95,11 @@ type Handlers = {
 type Options = Handlers & {
   /** The recording stops by itself after this long (default 15 s, SpeakRequest's limit). */
   maxMs?: number;
+  /**
+   * A long recording in one piece (issue #264: a rehearsal talk, reading a text aloud): the
+   * lower rate above, and this many base64 characters at most instead of MAX_AUDIO_BASE64.
+   */
+  long?: { maxBase64: number };
 };
 
 function blobToBase64(blob: Blob): Promise<string> {
@@ -142,8 +159,16 @@ async function allowRecording(allowed: boolean): Promise<void> {
   }
 }
 
-export function useRecording({ onRecorded, onFailed, onChunk, maxMs = MAX_RECORDING_MS }: Options) {
-  const recorder = useAudioRecorder(SPEECH_RECORDING);
+export function useRecording({
+  onRecorded,
+  onFailed,
+  onChunk,
+  maxMs = MAX_RECORDING_MS,
+  long,
+}: Options) {
+  const recorder = useAudioRecorder(long ? LONG_RECORDING : SPEECH_RECORDING);
+  const maxBase64 = useRef(long?.maxBase64 ?? MAX_AUDIO_BASE64);
+  maxBase64.current = long?.maxBase64 ?? MAX_AUDIO_BASE64;
   const [phase, setPhaseState] = useState<RecordPhase>('idle');
   /** Microphone access was refused; canAskAgain = false means only the settings can change it. */
   const [denied, setDenied] = useState<{ canAskAgain: boolean } | null>(null);
@@ -212,7 +237,7 @@ export function useRecording({ onRecorded, onFailed, onChunk, maxMs = MAX_RECORD
       try {
         const read = await readRecording(uri);
         if (!mounted.current) return;
-        if (read.mime === null || read.base64.length > MAX_AUDIO_BASE64)
+        if (read.mime === null || read.base64.length > maxBase64.current)
           give(null, { index, last });
         else
           give(
@@ -355,7 +380,7 @@ export function useRecording({ onRecorded, onFailed, onChunk, maxMs = MAX_RECORD
               handlers.current.onFailed('too_short');
             } else if (index === 0 && read.mime === null) {
               handlers.current.onFailed('unsupported');
-            } else if (read.mime === null || read.base64.length > MAX_AUDIO_BASE64) {
+            } else if (read.mime === null || read.base64.length > maxBase64.current) {
               // Only this piece is unreadable; the earlier ones still count.
               give(null, { index, last: true });
             } else {
@@ -376,7 +401,7 @@ export function useRecording({ onRecorded, onFailed, onChunk, maxMs = MAX_RECORD
           if (!mounted.current) return;
           if (tooShort || read.base64.length < MIN_AUDIO_BASE64) {
             handlers.current.onFailed('too_short');
-          } else if (read.mime === null || read.base64.length > MAX_AUDIO_BASE64) {
+          } else if (read.mime === null || read.base64.length > maxBase64.current) {
             handlers.current.onFailed('unsupported');
           } else {
             handlers.current.onRecorded?.({

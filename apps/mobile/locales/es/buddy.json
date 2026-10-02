@@ -45,7 +45,8 @@
     "set_contact_days": "nunca estos días: {{days}}",
     "request_material_undone": "No hace falta foto: {{title}}",
     "set_voice": "Mi voz: {{voice}}, {{speed}}",
-    "forget_all": "He olvidado todo lo que sabía de ti ({{count}})"
+    "forget_all": "He olvidado todo lo que sabía de ti ({{count}})",
+    "plan_talk": "Exposición planificada: {{title}} el {{day}} – {{steps}}"
   },
   "area": {
     "library": "Tu material",
@@ -236,7 +237,8 @@
       "build": "Ejercicios",
       "a11y": "Paso {{step}} de {{total}}: {{label}}"
     },
-    "reading_pages": "Tus páginas"
+    "reading_pages": "Tus páginas",
+    "failed_nothing_marked": "No encontré nada marcado en el examen. Con más luz se ven mejor las correcciones, o dime qué ejercicios estaban mal."
   },
   "practiced_today": "Práctica hecha",
   "session": {

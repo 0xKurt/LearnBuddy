@@ -32,6 +32,12 @@ export const MaterialFailure = z.enum([
    * photos stay, because the sheet is valid and she may want to look at it (issue #198).
    */
   'form_not_practicable',
+  /**
+   * A corrected test (issue #259) on which the reading found no task the teacher marked. Not
+   * an unreadable photo — nothing to practise from it; a second reading may see marks a dim
+   * photo hid, so it is offered like after `unreadable`.
+   */
+  'nothing_marked',
 ]);
 export type MaterialFailure = z.infer<typeof MaterialFailure>;
 
@@ -156,6 +162,24 @@ export const UnclearSpot = z.object({
 });
 export type UnclearSpot = z.infer<typeof UnclearSpot>;
 
+/**
+ * Where the photos come from (issue #259, migration 0099). Same photo path, same reading job —
+ * the source only changes what the reading looks for and what is kept:
+ *   · sheet — a worksheet, a textbook or notebook page (everything before #259);
+ *   · corrected_test — a corrected class test: only the tasks the teacher marked are read, and
+ *     NEW questions of the same type are written for them (never the original task — code drops
+ *     one that is the same). Grades and points are never stored; the contract has no field for
+ *     them and the model's transcription of the test is not kept;
+ *   · today_notes — today's notebook entry ("Was war heute?"): at most five short questions,
+ *     prepared as practice for the next morning.
+ * Homework has no source: it is always the sheet she has to do.
+ */
+export const MaterialSource = z.enum(['sheet', 'corrected_test', 'today_notes']);
+export type MaterialSource = z.infer<typeof MaterialSource>;
+
+/** The most questions a notebook entry of the day becomes (issue #259: "5 kurze Fragen"). */
+export const TODAY_NOTES_QUESTIONS = 5;
+
 export const CreateMaterialRequest = z.object({
   client_request_id: Uuid,
   /**
@@ -171,6 +195,11 @@ export const CreateMaterialRequest = z.object({
   step_id: Uuid.nullable().optional(),
   /** homework: the learner needs help with these tasks — hints only, never the solution. */
   purpose: z.enum(['study', 'homework']).default('study'),
+  /**
+   * Where the photos come from (issue #259). Only for study material; with a capture step the
+   * server takes the step's own source and this is ignored. Default: a worksheet.
+   */
+  source: MaterialSource.default('sheet'),
   /**
    * The pages missing from this earlier material, photographed again: its notice
    * ends, and the new photos keep its goal and purpose.
@@ -207,6 +236,8 @@ export const MaterialView = z.object({
   subject_name: z.string().nullable(),
   goal_id: Uuid.nullable(),
   purpose: z.enum(['study', 'homework']),
+  /** Where the photos come from (issue #259); absent (older servers) is a worksheet. */
+  source: MaterialSource.optional(),
   /** homework: the help session, once the tasks are read. */
   session_id: Uuid.nullable(),
   /**

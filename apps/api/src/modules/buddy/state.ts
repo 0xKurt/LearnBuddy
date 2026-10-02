@@ -41,7 +41,10 @@ export type SettingsRow = {
 
 export type GoalRow = {
   id: string;
-  kind: 'exam' | 'topic';
+  /** talk: a Referat, GFS, presentation or recital with its own steps (issue #264). */
+  kind: 'exam' | 'topic' | 'talk';
+  /** talk: how long it must be, when she said so. */
+  talk_minutes?: number | null;
   title: string;
   subject_id: string | null;
   subject_name: string | null;
@@ -61,12 +64,19 @@ export type StepPayload = {
   subject_id?: string | null;
   /** capture: the sheet this page joins, when it completes one she already sent (issue #118). */
   completes?: string;
+  /** capture: what Buddy asked her to photograph — a corrected test, today's notes (issue #259). */
+  source?: 'sheet' | 'corrected_test' | 'today_notes';
+  /** practice made from one sheet by code (today's notes, issue #259). */
+  material_id?: string;
+  /** task: which step of a talk it is (issue #264). */
+  stage?: 'topic' | 'outline' | 'sources' | 'slides' | 'rehearsal';
 };
 
 export type StepRow = {
   id: string;
   goal_id: string | null;
-  kind: 'practice' | 'capture';
+  /** task: a step of a talk she does herself (issue #264). */
+  kind: 'practice' | 'capture' | 'task';
   title: string;
   state: 'planned' | 'prepared' | 'in_progress' | 'done' | 'skipped' | 'cancelled';
   planned_date: string | null;
@@ -192,6 +202,8 @@ export type MaterialBrief = {
   goal_id: string | null;
   item_count: number;
   photo_count: number;
+  /** Where the photos come from (issue #259); absent reads as a plain sheet. */
+  source?: 'sheet' | 'corrected_test' | 'today_notes';
   /** Pages not read completely that Lena has not answered yet (resolved: empty). */
   page_problems: PageProblem[];
   /** The sheet holds more questions than were read into items (issue #150). */
@@ -409,7 +421,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
 
   const goals = await db.query<GoalRow>(
     `select g.id, g.kind, g.title, g.subject_id, s.name as subject_name, g.due_date, g.topics,
-            g.status, g.outcome, g.version, g.created_at, g.closed_at
+            g.status, g.outcome, g.version, g.created_at, g.closed_at, g.talk_minutes
        from buddy_goals g left join subjects s on s.id = g.subject_id
       where g.learner_id = $1
         and (g.status = 'active' or g.closed_at > $2::timestamptz - interval '14 days')
@@ -514,7 +526,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
 
   const materialRows = await db.query<Omit<MaterialBrief, 'unclear'>>(
     `select m.id, m.title, m.status, m.failure_reason, m.subject_id, m.goal_id, m.created_at,
-            m.failed_at, m.photo_count,
+            m.failed_at, m.photo_count, m.source,
             -- Pages not read: while unanswered, and for a day after the reading (the sheet is
             -- still at hand) — the home notice and Buddy's context see the same window.
             case when m.pages_resolved_at is null and m.ready_at > $3::timestamptz - interval '24 hours'

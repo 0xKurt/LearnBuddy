@@ -21,6 +21,11 @@ const Link = z.object({
   stepId: z.string().nullable(),
   goalId: z.string().nullable(),
   purpose: z.enum(['study', 'homework']),
+  /**
+   * What the photo is (issue #259): a worksheet, a corrected test, today's notebook entry.
+   * Absent from drafts saved before it existed: a worksheet.
+   */
+  source: z.enum(['sheet', 'corrected_test', 'today_notes']).optional(),
   completes: z.string().nullable(),
   /** "2, 3": the pages photographed again (for the title). */
   pages: z.string().nullable(),

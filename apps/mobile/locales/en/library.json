@@ -37,7 +37,8 @@
     "photos_missing": "Not all photos arrived.",
     "budget_exhausted": "I can't read any more sheets today. It'll work again tomorrow.",
     "blocked": "The safety filter won't let this sheet through. Reading it again won't help – just type the questions.",
-    "form_not_practicable": "I could read the sheet just fine – I just can't practise this kind of task with you. Ask me about it: I'll talk you through the steps."
+    "form_not_practicable": "I could read the sheet just fine – I just can't practise this kind of task with you. Ask me about it: I'll talk you through the steps.",
+    "nothing_marked": "Nothing marked was found on the test. More light often helps – or tell Buddy which tasks were wrong."
   },
   "incomplete_hint": "The photos didn't fully arrive. Delete the sheet and photograph it again.",
   "not_practicable_one": "I left one task out: “{{tasks}}”. I can't practise that one with you – but I'll gladly explain how to go about it.",

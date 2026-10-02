@@ -99,6 +99,7 @@ export function Composer({
       stepId: null,
       goalId: null,
       purpose: 'study',
+      source: 'sheet',
       completes: null,
       pages: null,
       add: false,

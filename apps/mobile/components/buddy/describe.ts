@@ -165,6 +165,20 @@ export function describeAction(a: ActionSummary): string {
       return t('action.rename_material', { title: a.title });
     case 'delete_item':
       return t('action.delete_item', { question: a.question });
+    case 'plan_talk':
+      // The talk and its steps, each with its day (issue #264); the steps' names are the app's.
+      return t('action.plan_talk', {
+        title: a.title,
+        day: formatDay(a.due_date, locale),
+        steps: a.steps
+          .map(
+            (s) => `${i18n.t(`learn:rehearse.stage.${s.stage}`)} ${formatDayShort(s.date, locale)}`,
+          )
+          .join(' · '),
+      });
+    case 'offer_rehearsal':
+      // Shown as its own card (RehearseCard); the receipt list never carries it.
+      return '';
     case 'schedule_check':
       return t('action.schedule_check', {
         when: whenText(isoDate(a.at), formatTime(a.at, locale)),

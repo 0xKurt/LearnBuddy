@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { IsoDateTime, LocalDate, LocalTime, tolerantArray, Uuid } from './common.js';
 import {
   DifficultyWish,
+  MaterialSource,
   PageProblem,
   SessionView,
   UnclearSpot,
@@ -10,6 +11,7 @@ import {
   VoiceName,
   VoiceSpeed,
 } from './learning.js';
+import { RehearsalKind, TalkFormat, TalkStage } from './talk.js';
 
 // ─────────────── what Buddy did (rendered as cards, not prose) ───────────────
 
@@ -146,6 +148,31 @@ export const ActionSummary = z.discriminatedUnion('tool', [
      */
     startable: z.boolean().default(true),
   }),
+  /**
+   * A talk planned as a goal with its steps (issue #264): the day of the talk and one step per
+   * stage, each on a day the server resolved. The card lists them; undo drops the whole plan.
+   */
+  z.object({
+    tool: z.literal('plan_talk'),
+    goal_id: Uuid,
+    title: z.string(),
+    format: TalkFormat,
+    due_date: LocalDate,
+    /** The length she was asked for, in minutes; null when she did not say. */
+    minutes: z.number().int().nullable(),
+    steps: z.array(z.object({ stage: TalkStage, date: LocalDate })).max(5),
+  }),
+  /**
+   * Buddy offers a rehearsal talk or reading aloud (issue #264); the app shows a button that
+   * opens the recorder for this offer (`GET /voice/rehearse/:action_id`). Nothing starts by itself.
+   */
+  z.object({
+    tool: z.literal('offer_rehearsal'),
+    kind: RehearsalKind,
+    /** The talk's title, or the first words of the passage to read. */
+    title: z.string(),
+    goal_id: Uuid.nullable(),
+  }),
   /** Buddy points to a part of the app (said, not searched for); the app shows a button to open it. */
   z.object({
     tool: z.literal('open_area'),
@@ -224,7 +251,8 @@ export type MessageView = z.infer<typeof MessageView>;
 
 export const GoalBrief = z.object({
   id: Uuid,
-  kind: z.enum(['exam', 'topic']),
+  /** talk: a Referat, GFS, presentation or recital with its own steps (issue #264). */
+  kind: z.enum(['exam', 'topic', 'talk']),
   title: z.string(),
   due_date: LocalDate.nullable(),
   days_left: z.number().int().nullable(),
@@ -272,6 +300,8 @@ export const NowCard = z.discriminatedUnion('type', [
     goal: GoalBrief.nullable(),
     /** A page that joins a sheet she already sent, not a new one (issue #118). */
     completes: Uuid.nullable().default(null),
+    /** What Buddy asked her to photograph (issue #259); absent is a worksheet. */
+    source: MaterialSource.optional(),
   }),
   z.object({
     type: z.literal('material_processing'),

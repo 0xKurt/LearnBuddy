@@ -94,5 +94,13 @@
     "nothing": "Schick mir ein Foto oder PDF von deinem Blatt – Text und Links kann ich hier nicht lesen.",
     "signed_out": "Melde dich zuerst an – dann teil das Blatt nochmal mit LearnBuddy."
   },
-  "preview_failed": "Vorschau nicht möglich"
+  "preview_failed": "Vorschau nicht möglich",
+  "corrected": {
+    "title": "Fotografier deine Arbeit",
+    "intro": "Die korrigierte Arbeit mit den Anmerkungen. Ich übe mit dir genau das, was angestrichen ist – Noten und Punkte speichere ich nicht."
+  },
+  "today": {
+    "title": "Was war heute?",
+    "intro": "Fotografier deinen Hefteintrag von heute. Ich mache dir ein paar kurze Fragen für morgen früh."
+  }
 }

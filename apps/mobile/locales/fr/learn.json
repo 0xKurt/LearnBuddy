@@ -64,5 +64,76 @@
     "preparing": "Buddy prépare …",
     "preparing_hint": "Ça prend quelques secondes.",
     "not_usable": "Je ne peux rien préparer avec ça, désolé – essaie un sujet d'école."
+  },
+  "rehearse": {
+    "offer": {
+      "talk": "Répétition",
+      "read_aloud": "Lire à voix haute",
+      "start": "Ouvrir l’enregistrement"
+    },
+    "stage": {
+      "topic": "Sujet",
+      "outline": "Plan",
+      "sources": "Sources",
+      "slides": "Diapos",
+      "rehearsal": "Répétition"
+    },
+    "gone": "Cet enregistrement n’existe plus. Redemande simplement à Buddy.",
+    "back": "Retour à Buddy",
+    "title_talk": "Répétition",
+    "title_read": "Lire à voix haute",
+    "intro_talk": "« {{title}} » – présente-le comme en classe.",
+    "intro_talk_minutes": "« {{title}} » · {{minutes}} minutes. Présente-le comme en classe.",
+    "intro_read": "Lis le texte à voix haute, tranquillement. Tu peux faire défiler.",
+    "text_label": "Texte à lire à voix haute",
+    "what_i_measure": "Ce que j’écoute",
+    "measure_time": "Combien de temps tu parles",
+    "measure_pace": "À quelle vitesse – et combien de « euh »",
+    "measure_parts": "S’il y a une introduction, un développement et une conclusion",
+    "start_talk": "Commencer la répétition",
+    "start_read": "Commencer la lecture",
+    "hint_talk": "Touche le micro et commence. Jusqu’à 10 minutes.",
+    "hint_read": "Touche le micro et commence à lire. Jusqu’à 2 minutes.",
+    "recording_talk": "J’écoute. Touche Stop quand tu as fini.",
+    "recording_read": "J’écoute. Touche Stop quand tu as fini.",
+    "listening_back": "Je l’écoute …",
+    "problem": {
+      "no_speech": "Je n’ai rien entendu. Réessaie, un peu plus près du micro.",
+      "too_short": "C’était très court. Touche le micro et parle.",
+      "denied": "Je n’ai pas le droit d’utiliser le micro. Tu peux l’autoriser dans les réglages.",
+      "failed": "Je n’ai pas pu écouter. Réessaie dans un instant.",
+      "offline": "Pas de connexion. Ton enregistrement est encore là."
+    },
+    "send_again": "Renvoyer",
+    "done_title": "Bien joué",
+    "done_talk": "Voilà ce que j’ai mesuré. Raconte à Buddy comment ça s’est passé.",
+    "done_read": "Voilà ce que j’ai entendu.",
+    "duration": "Durée",
+    "duration_of": "{{time}} sur {{target}}",
+    "length_fits": "Ça correspond bien à la durée demandée.",
+    "length_short": "Un peu plus court que demandé.",
+    "length_long": "Un peu plus long que demandé.",
+    "pace": "Rythme",
+    "pace_value_one": "{{count}} mot par minute",
+    "pace_value_other": "{{count}} mots par minute",
+    "pace_note_read": "Je compte les mots lus correctement.",
+    "fillers": "Mots de remplissage",
+    "fillers_note": "« Euh » – une petite pause paraît souvent plus calme.",
+    "parts": "Structure",
+    "part": {
+      "opening": "Introduction",
+      "main": "Développement",
+      "closing": "Conclusion"
+    },
+    "part_status": {
+      "heard": "entendu",
+      "not_heard": "pas encore",
+      "unknown": "pas clair"
+    },
+    "words": "Regarde encore ces mots",
+    "words_none": "Aucun mot oublié – tu as tout lu.",
+    "words_note": "Oubliés ou lus autrement.",
+    "again": "Encore",
+    "finish": "Terminé"
   }
 }

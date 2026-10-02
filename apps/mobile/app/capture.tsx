@@ -35,7 +35,7 @@ import { Screen } from '../components/lb/Screen.js';
 import { Section } from '../components/lb/Section.js';
 import { toast } from '../components/lb/Toast.js';
 import { keys, queryClient } from '../lib/api/queries.js';
-import { MAX_PHOTOS, type MaterialPurpose } from '../lib/capture/upload.js';
+import { MAX_PHOTOS, type MaterialPurpose, type MaterialSource } from '../lib/capture/upload.js';
 import { useAttachments } from '../lib/capture/useAttachments.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -44,6 +44,12 @@ import { TYPE } from '../lib/theme/type.js';
 function purposeParam(value: string | string[] | undefined): MaterialPurpose {
   const v = Array.isArray(value) ? value[0] : value;
   return v === 'homework' ? 'homework' : 'study';
+}
+
+/** The kind param (issue #259): a corrected test or today's notes; anything else is a sheet. */
+function kindParam(value: string | string[] | undefined): MaterialSource {
+  const v = Array.isArray(value) ? value[0] : value;
+  return v === 'corrected_test' || v === 'today_notes' ? v : 'sheet';
 }
 
 /** "2,3" → "2, 3"; anything that is not a list of page numbers is ignored. */
@@ -65,6 +71,8 @@ export default function CaptureScreen() {
     stepId?: string | string[];
     goalId?: string | string[];
     purpose?: string | string[];
+    /** What Buddy asked her to photograph (issue #259): corrected_test or today_notes. */
+    kind?: string | string[];
     completes?: string | string[];
     pages?: string | string[];
     resume?: string | string[];
@@ -91,6 +99,7 @@ export default function CaptureScreen() {
       stepId: idParam(params.stepId),
       goalId: idParam(params.goalId),
       purpose: purposeParam(params.purpose),
+      source: kindParam(params.kind),
       completes: idParam(params.completes),
       pages: pagesParam(params.pages),
       add: params.add === '1',
@@ -119,6 +128,8 @@ export default function CaptureScreen() {
   const { link, photos, problems, pdfs, preparing, progress, failure, refused } = a;
   const { cameraBlocked, leftover, loaded, review, busy, room, dropping } = a;
   const homework = link.purpose === 'homework';
+  // A corrected test or today's notes says so in the title and the line under it (issue #259).
+  const source = homework ? 'sheet' : (link.source ?? 'sheet');
   const completes = link.completes;
   const missingPages = link.pages;
 
@@ -144,7 +155,11 @@ export default function CaptureScreen() {
                   : t('capture:again.title')
               : homework
                 ? t('capture:homework.title')
-                : t('capture:title')}
+                : source === 'corrected_test'
+                  ? t('capture:corrected.title')
+                  : source === 'today_notes'
+                    ? t('capture:today.title')
+                    : t('capture:title')}
           </Text>
           {photos.length === 0 ? (
             <Text style={[TYPE.body, { color: palette.ink2 }]}>
@@ -154,7 +169,11 @@ export default function CaptureScreen() {
                   : t('capture:again.intro')
                 : homework
                   ? t('capture:homework.intro')
-                  : t('capture:intro')}
+                  : source === 'corrected_test'
+                    ? t('capture:corrected.intro')
+                    : source === 'today_notes'
+                      ? t('capture:today.intro')
+                      : t('capture:intro')}
             </Text>
           ) : null}
         </View>

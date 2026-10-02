@@ -29,6 +29,7 @@ export {
   PhotoUploadError,
   type MaterialLink,
   type MaterialPurpose,
+  type MaterialSource,
   type SendProgress,
   type UploadFailure,
   type UploadFile,

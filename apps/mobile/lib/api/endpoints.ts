@@ -19,6 +19,8 @@ import {
   MeResponse,
   type OutreachAction,
   OutreachActionResponse,
+  RehearsalBrief,
+  RehearsalView,
   ReplyStreamEvent,
   SendMessageResponse,
   SessionView,
@@ -34,6 +36,7 @@ import {
   type CreateMaterialRequest,
   type ListenAudioRequest,
   type ReexplainWay,
+  type RehearseRequest,
   type SpeakWordRequest,
   SpeakStreamEvent,
   type SpeakRequest,
@@ -429,6 +432,14 @@ export const transcribe = (
         },
       })
     : request('POST', '/voice/transcribe', { body, schema: TranscribeResponse });
+
+/** What the recorder shows before she starts: the talk, or the text to read (issue #264). */
+export const getRehearsal = (actionId: string) =>
+  request('GET', `/voice/rehearse/${actionId}`, { schema: RehearsalBrief });
+
+/** A rehearsal talk or a read-aloud, measured; the recording is not kept anywhere. */
+export const sendRehearsal = (body: RehearseRequest) =>
+  request('POST', '/voice/rehearse', { body, schema: RehearsalView });
 
 /** One sentence in Buddy's natural voice (ADR 0008); voice and speed are her settings. */
 export const synthesizeSpeech = (body: SpeechRequest) =>

@@ -94,5 +94,13 @@
     "nothing": "Envíame una foto o un PDF de tu ficha – aquí no puedo leer texto ni enlaces.",
     "signed_out": "Inicia sesión primero – luego vuelve a compartir la ficha con LearnBuddy."
   },
-  "preview_failed": "Sin vista previa"
+  "preview_failed": "Sin vista previa",
+  "corrected": {
+    "title": "Haz una foto de tu examen",
+    "intro": "El examen corregido con las anotaciones. Practicamos justo lo que está marcado; no guardo notas ni puntos."
+  },
+  "today": {
+    "title": "¿Qué vimos hoy?",
+    "intro": "Haz una foto de lo que apuntaste hoy en el cuaderno. Te preparo unas preguntas cortas para mañana por la mañana."
+  }
 }

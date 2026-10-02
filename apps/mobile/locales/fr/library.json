@@ -37,7 +37,8 @@
     "photos_missing": "Toutes les photos ne sont pas arrivées.",
     "budget_exhausted": "Je ne peux plus lire de fiches pour aujourd'hui. Ça remarchera demain.",
     "blocked": "Le filtre de sécurité bloque cette fiche. La relire n'y changera rien – tape simplement les questions.",
-    "form_not_practicable": "J'ai bien pu lire la fiche – c'est juste ce type d'exercice que je ne peux pas faire avec toi. Demande-moi : je t'explique les étapes."
+    "form_not_practicable": "J'ai bien pu lire la fiche – c'est juste ce type d'exercice que je ne peux pas faire avec toi. Demande-moi : je t'explique les étapes.",
+    "nothing_marked": "Rien de corrigé n’a été trouvé sur le contrôle. Plus de lumière aide souvent – ou dis à Buddy quels exercices étaient faux."
   },
   "incomplete_hint": "Les photos ne sont pas arrivées en entier. Supprime la fiche et reprends-la en photo.",
   "not_practicable_one": "J'ai laissé un exercice de côté : « {{tasks}} ». Celui-là, je ne peux pas m'entraîner avec toi – mais je t'explique volontiers comment t'y prendre.",
