@@ -313,7 +313,7 @@
     "buddy": "Buddy",
     "failed_reason": {
       "model_unavailable": "Buddy couldn't answer just now",
-      "busy": "Buddy is overloaded right now – try again shortly",
+      "busy": "Buddy is overloaded right now",
       "budget": "Buddy can't answer any more today",
       "invalid": "Buddy got tangled up",
       "stale": "Not answered – too much at once",

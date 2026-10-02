@@ -105,7 +105,7 @@ describe.skipIf(!dbReady)('a throttled model provider', () => {
       error: new LlmError('rate_limited', 'provider rate limit'),
     });
     const throttled = await send(l, 'Erklär mir Bruchrechnen');
-    // She reads "Buddy ist gerade überlastet – gleich nochmal": a throttle is not her fault
+    // She reads "Buddy ist gerade überlastet" beside "Nochmal senden": a throttle is not her fault
     // and not a broken app, and it is exactly what the provider told us — no more (rule 5).
     expect(throttled.body).toMatchObject({ status: 'failed', error_code: 'model_busy' });
 

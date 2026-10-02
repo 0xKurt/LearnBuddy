@@ -794,7 +794,8 @@ their own project so they stop taking capacity from the live app (issue #206, po
 (3) **She is told what happened, and only that** (issue #206, 02.10.). A 429 that outlasts the
 retries is no longer said like an outage. A Buddy turn fails with `error_code 'model_busy'` and
 the message keeps `failure_code 'busy'` (migration `0106_turn_failure_busy.sql`): "Buddy ist
-gerade überlastet – gleich nochmal", with "Nochmal senden" beside it. Every other model endpoint
+gerade überlastet", in calm secondary ink (not red: not her fault, not a broken app), with
+"Nochmal senden" beside it. Every other model endpoint
 (preparing practice, explaining again, listening, dictation) keeps the wire code
 `model_unavailable` — an older app build still reads a true sentence — and adds
 `details.reason 'model_busy'`, which this build says as "überlastet, versuch's in einer Minute

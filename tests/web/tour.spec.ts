@@ -144,9 +144,13 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
 
   // ── Throttled by the provider: said as such, and "Nochmal senden" works (issue #206) ──
   await say(page, 'ich mag Hunde');
-  await expect(page.getByText('Buddy ist gerade überlastet – gleich nochmal')).toBeVisible();
+  await expect(page.getByText('Buddy ist gerade überlastet', { exact: true })).toBeVisible();
   await expect(resend).toBeVisible();
-  await shot(page, '41b-busy-message');
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await shot(page, `41b-busy-message-${scheme}`);
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
   await resend.click();
   await expect(page.getByText('Hunde, super! Das merke ich mir.')).toBeVisible();
   await expect(resend).toHaveCount(0);

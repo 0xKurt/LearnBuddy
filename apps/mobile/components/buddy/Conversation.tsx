@@ -260,6 +260,9 @@ export function Conversation({
         const takenBack = done.filter((a) => a.status === 'undone');
         const spoken = `${mine ? t('thread.you') : t('thread.buddy')}: ${speakMathText(markdownPlain(m.text, { spoken: true }), words)}`;
         const stopped = mine && m.status === 'failed' && m.failure_code === 'stopped';
+        // Throttled by the provider (issue #206): not her fault and not a broken app, so it
+        // is said calmly like a stop — the words carry it, and "Nochmal senden" stands beside.
+        const calm = stopped || (mine && m.status === 'failed' && m.failure_code === 'busy');
         const opensHere = sessionStart?.afterMessageId === m.id;
         return (
           <Animated.View
@@ -433,8 +436,8 @@ export function Conversation({
                 style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}
               >
                 {/* It arrived: say why it was not answered (CLAUDE.md rule 5). Stopped by
-                    her is no failure: said calmly, not in red. */}
-                <Text style={[TYPE.small, { color: stopped ? palette.ink2 : palette.danger }]}>
+                    her, or the provider busy, is no failure of hers: said calmly, not in red. */}
+                <Text style={[TYPE.small, { color: calm ? palette.ink2 : palette.danger }]}>
                   {failedLabel(m.failure_code)}
                 </Text>
                 {/* Resending cannot help once today's allowance is used up. */}
