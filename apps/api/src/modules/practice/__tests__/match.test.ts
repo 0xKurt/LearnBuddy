@@ -4,7 +4,18 @@
 // here, reached through the functions the server uses: `matchDraftProblem`/`matchTaskFrom`
 // for a draft, `matchProblem` for a task built by hand (a stored row could hold one).
 
-import { StructuredTask, type MatchTask } from '@learnbuddy/shared-types/contracts';
+import {
+  MATCH_ELEMENT_MAX,
+  MATCH_GROUP_TEXT_MAX,
+  MATCH_GROUPED_MAX,
+  MATCH_GROUPS_MAX,
+  MATCH_PAIRS_MAX,
+  MATCH_PAIRS_MIN,
+  MATCH_PROMPT_MAX,
+  MATCH_WORD_MAX,
+  StructuredTask,
+  type MatchTask,
+} from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -27,9 +38,8 @@ import {
 const ORGANE: Array<{ left: string; right: string }> = [
   { left: 'Bundestag', right: 'beschließt die Gesetze' },
   { left: 'Bundesrat', right: 'vertritt die Länder' },
-  { left: 'Bundeskanzler', right: 'bestimmt die Richtlinien der Politik' },
+  { left: 'Bundeskanzler', right: 'bestimmt die Richtlinien' },
   { left: 'Bundespräsident', right: 'unterschreibt die Gesetze' },
-  { left: 'Bundesverfassungsgericht', right: 'prüft, ob Gesetze dem Grundgesetz entsprechen' },
 ];
 
 const WORTARTEN: Array<{ name: string; elements: string[] }> = [
@@ -75,8 +85,8 @@ describe('match: what the model wrote (Regel 0)', () => {
   it('builds a pairing whose key reads back as the pairs the model wrote', () => {
     const task = built(pairs(ORGANE));
     expect(task.form).toBe('pairs');
-    expect(task.left).toHaveLength(5);
-    expect(task.right).toHaveLength(5);
+    expect(task.left).toHaveLength(4);
+    expect(task.right).toHaveLength(4);
     expect(matchProblem(task)).toBeNull();
     expect(StructuredTask.safeParse(task).success).toBe(true);
     // Every pair is in the key, whatever the display order.
@@ -84,8 +94,8 @@ describe('match: what the model wrote (Regel 0)', () => {
     const linked = task.key.map((k) => [text.get(k.left), text.get(k.right)]);
     expect(linked.sort()).toEqual(ORGANE.map((p) => [p.left, p.right]).sort());
     // Ids say where an element stands: a, b, c … on the left, r1, r2 … on the right.
-    expect(task.left.map((e) => e.id)).toEqual(['a', 'b', 'c', 'd', 'e']);
-    expect(task.right.map((e) => e.id)).toEqual(['r1', 'r2', 'r3', 'r4', 'r5']);
+    expect(task.left.map((e) => e.id)).toEqual(['a', 'b', 'c', 'd']);
+    expect(task.right.map((e) => e.id)).toEqual(['r1', 'r2', 'r3', 'r4']);
   });
 
   it('builds a grouping: the groups in the model order, the elements shuffled', () => {
@@ -97,7 +107,7 @@ describe('match: what the model wrote (Regel 0)', () => {
   });
 
   it('never shows a pairing already lined up, nor a grouping already sorted', () => {
-    for (let n = 3; n <= 6; n++) {
+    for (let n = MATCH_PAIRS_MIN; n <= MATCH_PAIRS_MAX; n++) {
       for (let v = 0; v < 30; v++) {
         const p = Array.from({ length: n }, (_, i) => ({
           left: `L${v}-${i}`,
@@ -135,11 +145,17 @@ describe('match: what the model wrote (Regel 0)', () => {
 
   it('rejects counts out of range', () => {
     expect(matchDraftProblem(pairs(ORGANE.slice(0, 2)))).toBe('count');
-    const seven = Array.from({ length: 7 }, (_, i) => ({ left: `l${i}`, right: `r${i}` }));
-    expect(matchDraftProblem(pairs(seven))).toBe('count');
+    const tooMany = Array.from({ length: MATCH_PAIRS_MAX + 1 }, (_, i) => ({
+      left: `l${i}`,
+      right: `r${i}`,
+    }));
+    expect(matchDraftProblem(pairs(tooMany))).toBe('count');
     expect(matchDraftProblem(groups([WORTARTEN[0]!]))).toBe('count');
-    const five = Array.from({ length: 5 }, (_, i) => ({ name: `G${i}`, elements: [`e${i}`] }));
-    expect(matchDraftProblem(groups(five))).toBe('count');
+    const tooManyGroups = Array.from({ length: MATCH_GROUPS_MAX + 1 }, (_, i) => ({
+      name: `G${i}`,
+      elements: [`e${i}`],
+    }));
+    expect(matchDraftProblem(groups(tooManyGroups))).toBe('count');
     // Two groups, three elements in all: too few to sort.
     expect(
       matchDraftProblem(
@@ -149,16 +165,92 @@ describe('match: what the model wrote (Regel 0)', () => {
         ]),
       ),
     ).toBe('count');
-    const thirteen = [
-      { name: 'A', elements: Array.from({ length: 7 }, (_, i) => `a${i}`) },
-      { name: 'B', elements: Array.from({ length: 6 }, (_, i) => `b${i}`) },
+    const tooManyThings = [
+      { name: 'A', elements: Array.from({ length: 5 }, (_, i) => `a${i}`) },
+      { name: 'B', elements: Array.from({ length: MATCH_GROUPED_MAX - 4 }, (_, i) => `b${i}`) },
     ];
-    expect(matchDraftProblem(groups(thirteen))).toBe('count');
-    expect(matchTaskFrom(groups(thirteen))).toBeNull();
+    expect(matchDraftProblem(groups(tooManyThings))).toBe('count');
+    expect(matchTaskFrom(groups(tooManyThings))).toBeNull();
+  });
+
+  // The maxima are what a 360×740 phone holds without the parts scrolling, measured in the
+  // walkthrough with every text at its cap ("zuordnen at its largest", rule 16): 4 pairs, or 8
+  // things in 3 groups. Exactly the maximum is a task; one more is not.
+  it('takes the largest that fits the phone, and nothing larger', () => {
+    expect(MATCH_PAIRS_MAX).toBe(4);
+    expect(MATCH_GROUPS_MAX).toBe(3);
+    expect(MATCH_GROUPED_MAX).toBe(8);
+    const side = (c: string) =>
+      `${c.repeat(MATCH_WORD_MAX)} ${c.repeat(MATCH_ELEMENT_MAX - MATCH_WORD_MAX - 1)}`;
+    const largestPairs = Array.from({ length: MATCH_PAIRS_MAX }, (_, i) => ({
+      left: side(String.fromCharCode(97 + i)),
+      right: side(String.fromCharCode(107 + i)),
+    }));
+    expect(largestPairs[0]!.left).toHaveLength(MATCH_ELEMENT_MAX);
+    expect(matchDraftProblem(pairs(largestPairs))).toBeNull();
+    const thing = (c: string) => c.repeat(MATCH_GROUP_TEXT_MAX);
+    const largestGroups = [
+      { name: thing('A'), elements: ['b', 'c', 'd'].map(thing) },
+      { name: thing('E'), elements: ['f', 'g', 'h'].map(thing) },
+      { name: thing('I'), elements: ['j', 'k'].map(thing) },
+    ];
+    expect(matchDraftProblem(groups(largestGroups))).toBeNull();
+    expect(
+      matchDraftProblem({ ...pairs(largestPairs), prompt: 'P'.repeat(MATCH_PROMPT_MAX) }),
+    ).toBeNull();
+  });
+
+  it('rejects a text, a word or a prompt that would not fit the phone', () => {
+    const base = ORGANE.slice(0, 3);
+    // A pair's side one character over.
+    const longSide = [
+      ...base,
+      { left: 'Landtag', right: 'a'.repeat(9) + ' ' + 'b'.repeat(MATCH_ELEMENT_MAX - 9) },
+    ];
+    expect(longSide[3]!.right.length).toBe(MATCH_ELEMENT_MAX + 1);
+    expect(matchDraftProblem(pairs(longSide))).toBe('too_long');
+    // A word longer than a column holds, even in a short text.
+    expect(
+      matchDraftProblem(pairs([...base, { left: 'Bundesverfassungsgericht', right: 'prüft' }])),
+    ).toBe('too_long');
+    // A thing to sort, or a group's name, over its own (smaller) cap.
+    const g = WORTARTEN.slice(0, 2);
+    expect(
+      matchDraftProblem(
+        groups([...g, { name: 'Artikel', elements: ['der die das und ein eine'] }]),
+      ),
+    ).toBe('too_long');
+    expect(
+      matchDraftProblem(groups([...g, { name: 'Artikel und Pronomen', elements: ['der'] }])),
+    ).toBe('too_long');
+    // The prompt above the parts: one character over.
+    expect(matchDraftProblem({ ...pairs(base), prompt: 'P'.repeat(MATCH_PROMPT_MAX + 1) })).toBe(
+      'too_long',
+    );
+    // Rejected at generation: the draft gives no question, nothing is shortened.
+    expect(
+      structuredItem({
+        type: 'match',
+        prompt: 'P'.repeat(MATCH_PROMPT_MAX + 1),
+        pairs: base,
+        groups: null,
+        topic: null,
+        difficulty: 2,
+        prompt_lang: 'de',
+      }),
+    ).toBeNull();
+    // And a stored task over the caps is not read back either.
+    const stored = built(pairs(base));
+    expect(
+      matchProblem({
+        ...stored,
+        left: stored.left.map((e, i) => (i === 0 ? { ...e, text: 'Bundesverfassungsgericht' } : e)),
+      }),
+    ).toBe('too_long');
   });
 
   it('rejects an empty group', () => {
-    const g = [...WORTARTEN, { name: 'Artikel', elements: [] }];
+    const g = [...WORTARTEN.slice(0, 2), { name: 'Artikel', elements: [] }];
     expect(matchDraftProblem(groups(g))).toBe('empty_group');
     expect(matchTaskFrom(groups(g))).toBeNull();
   });
@@ -246,7 +338,7 @@ describe('match: what the model wrote (Regel 0)', () => {
   it('turns a draft into a question whose answer is the readable solution', () => {
     const item = structuredItem({
       type: 'match',
-      prompt: 'Ordne jedem Verfassungsorgan seine Aufgabe zu.',
+      prompt: 'Ordne jedem Organ seine Aufgabe zu.',
       pairs: ORGANE.slice(0, 3),
       groups: null,
       topic: 'Verfassungsorgane',
@@ -313,7 +405,7 @@ describe('match: what she answers (Regel 0)', () => {
   it('judges all pairs right', () => {
     const check = checkStructured(p, answerFor(p, allPairs)) as MatchCheck;
     expect(check.correct).toBe(true);
-    expect(check.right).toBe(5);
+    expect(check.right).toBe(4);
     expect(check.first_wrong_text).toBeNull();
   });
 
@@ -325,25 +417,27 @@ describe('match: what she answers (Regel 0)', () => {
     };
     const check = checkStructured(p, answerFor(p, swapped)) as MatchCheck;
     expect(check.correct).toBe(false);
-    expect(check.right).toBe(3);
-    expect(check.total).toBe(5);
+    expect(check.right).toBe(2);
+    expect(check.total).toBe(4);
     expect(check.parts.filter((x) => !x.ok)).toHaveLength(2);
-    expect(structuredReply('de', check, 0)).toBe('3 von 5 Paaren stimmen schon.');
+    expect(structuredReply('de', check, 0)).toBe('2 von 4 Paaren stimmen schon.');
     expect(structuredNamesPart(check, 0)).toBe(false);
     const named = structuredReply('de', check, 1);
     expect(named).toMatch(
-      /^3 von 5 Paaren stimmen schon\. Schau dir „Bundes(tag|präsident)“ nochmal an\.$/,
+      /^2 von 4 Paaren stimmen schon\. Schau dir „Bundes(tag|präsident)“ nochmal an\.$/,
     );
     // The one it names is the first wrong one as she sees them.
     const firstWrong = p.left.find((e) => e.text === 'Bundestag' || e.text === 'Bundespräsident');
     expect(named).toContain(`„${firstWrong?.text}“`);
     expect(structuredNamesPart(check, 1)).toBe(true);
-    expect(structuredReply('en', check, 0)).toBe('3 of 5 pairs are already right.');
+    expect(structuredReply('en', check, 0)).toBe('2 of 4 pairs are already right.');
   });
 
   it('says it kindly when one or none is right', () => {
     // A rotation of the rights: every pair wrong.
-    const rot = Object.fromEntries(ORGANE.map((x, i) => [x.left, ORGANE[(i + 1) % 5]!.right]));
+    const rot = Object.fromEntries(
+      ORGANE.map((x, i) => [x.left, ORGANE[(i + 1) % ORGANE.length]!.right]),
+    );
     const none = checkStructured(p, answerFor(p, rot)) as MatchCheck;
     expect(none.right).toBe(0);
     expect(structuredReply('de', none)).toBe(
@@ -373,16 +467,16 @@ describe('match: what she answers (Regel 0)', () => {
   it('refuses an answer that does not fit the task (not graded)', () => {
     const ok = answerFor(p, allPairs);
     // One left missing.
-    expect(checkStructured(p, { type: 'match', links: ok.links.slice(0, 4) })).toBeNull();
+    expect(checkStructured(p, { type: 'match', links: ok.links.slice(0, 3) })).toBeNull();
     // A left twice.
     expect(
-      checkStructured(p, { type: 'match', links: [...ok.links.slice(0, 4), ok.links[0]!] }),
+      checkStructured(p, { type: 'match', links: [...ok.links.slice(0, 3), ok.links[0]!] }),
     ).toBeNull();
     // An id that is not there.
     expect(
       checkStructured(p, {
         type: 'match',
-        links: [...ok.links.slice(0, 4), { left: ok.links[4]!.left, right: 'r9' }],
+        links: [...ok.links.slice(0, 3), { left: ok.links[3]!.left, right: 'r9' }],
       }),
     ).toBeNull();
     // Two lefts to one right in a pairing.

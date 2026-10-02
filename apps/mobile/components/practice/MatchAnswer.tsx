@@ -8,10 +8,11 @@
 // zugeordnet, schickt „Prüfen" die Verbindungen als `parts`; geprüft wird auf dem Server, exakt
 // und ohne Modell (apps/api/src/modules/practice/structured.ts).
 //
-// Platz (Regel 16, 360×740): fünf Paare in zwei Spalten sind fünf Zeilen statt zehn, und die
-// Spalten teilen sich die Breite nach ihren längsten Wörtern (`leftShare`). Die Nummer steht
-// vor dem Wort; reicht die Breite für beide nicht, rutscht das Wort unter die Nummer — es wird
-// nie mitten im Wort getrennt.
+// Platz (Regel 16, 360×740): vier Paare in zwei Spalten sind vier Zeilen statt acht, und die
+// Spalten teilen sich die Breite nach ihren längsten Wörtern (`leftShare`). Die Nummer ist eine
+// fette Ziffer vor dem Text; der Text bricht daneben an Wortgrenzen um, nie mitten im Wort (kein
+// Wort ist länger als MATCH_WORD_MAX). Wie viel hier höchstens steht, ist gemessen, nicht gewählt:
+// die MATCH_*-Grenzen in contracts/structured.ts passen ohne Scrollen auf 360×740.
 //
 // Farbe ist nie das einzige Signal: die Nummer bzw. die Zeile sagt die Zuordnung, und ein
 // Screenreader hört sie in Worten („…, Paar 2 mit …" bzw. „…, in Nomen"). Mehr gibt es nicht —
@@ -139,39 +140,28 @@ export function linksText(view: MatchTaskView, links: readonly Link[]): string {
     .join('; ');
 }
 
-/** The pair number's disc: inside the element, before its word, at body size (≥ 14 pt). */
-const DISC = 20;
-
 /**
- * The pair's number inside an element, before its text. Decorative for a screen reader — the
- * element's name says the pair in words — but read at a glance: 14 pt, never a corner badge.
+ * The pair's number inside an element, before its text: a bold 14-pt numeral, read at a glance,
+ * never a corner badge. A numeral costs one character's width, so the word beside it keeps its
+ * room in a narrow column and the element stays one or two lines tall (a disc pushed the word
+ * below itself and made five pairs too tall for a 360×740 phone, #224). Decorative for a screen
+ * reader — the element's name says the pair in words.
  */
 function PairNumber({ n, held }: { n: number; held: boolean }) {
   const { palette } = useTheme();
   return (
-    <View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
+    <Text
+      accessible={false}
+      importantForAccessibility="no"
       style={{
-        width: DISC,
-        height: DISC,
-        borderRadius: DISC / 2,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: held ? palette.paper : palette.primary,
+        color: held ? palette.paper : palette.primary,
+        fontSize: 14,
+        lineHeight: 18,
+        fontWeight: '800',
       }}
     >
-      <Text
-        style={{
-          color: held ? palette.primaryDk : palette.paper,
-          fontSize: 14,
-          lineHeight: 18,
-          fontWeight: '700',
-        }}
-      >
-        {n}
-      </Text>
-    </View>
+      {n}
+    </Text>
   );
 }
 
@@ -253,10 +243,9 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: Props) {
             <View
               style={{
                 flexDirection: 'row',
-                flexWrap: 'wrap',
                 alignItems: 'center',
                 justifyContent: 'center',
-                columnGap: SPACE.sm,
+                gap: SPACE.xs,
                 // In a column every point counts: the label reaches SPACE.xs into the
                 // button's compact padding (12 → 8 at each side), so a long word fits.
                 ...(groups ? {} : { marginHorizontal: -SPACE.xs }),
@@ -267,7 +256,9 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: Props) {
                 text={text.get(id) ?? ''}
                 accessible={false}
                 style={{
-                  // Two lines still fit the 44 pt of one element.
+                  // Two lines still fit the 44 pt of one element; the text wraps beside the
+                  // number, at word boundaries (no word is longer than MATCH_WORD_MAX).
+                  flexShrink: 1,
                   paddingVertical: SPACE.xs,
                   textAlign: 'center',
                   color: isHeld ? palette.paper : link ? palette.primaryDk : palette.ink,
