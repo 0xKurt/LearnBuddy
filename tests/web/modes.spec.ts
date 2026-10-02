@@ -691,13 +691,23 @@ test('a table to fill in: Enter walks the gaps, each cell checked on its own (is
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
 
-test('zuordnen: pairs in two columns, things into groups (issue #229)', async ({ page }) => {
-  // Its own test: the learning-modes walk is long enough already (the 180 s budget).
+test('zuordnen at its largest: pairs in two columns, things into groups (issue #229)', async ({
+  page,
+}) => {
+  // Its own test: the learning-modes walk is long enough already (the 180 s budget). The scripted
+  // tasks are the LARGEST the contract allows, every text near its cap (learning-modes.ts), and
+  // every `shot` below fails if the parts would have to be scrolled (`scroll-parts` is not a
+  // scroll area fit.ts allows). That is the measurement behind MATCH_* in contracts/structured.ts.
   await onboardChild(page);
   await page.emulateMedia({ colorScheme: 'light' });
   await page.setViewportSize(PHONES[0]);
-  // The scripted model wrote only the correct links; the server shuffled them, keeps the key
-  // and counts the right links without a model.
+  /** Both colour schemes of the same moment; the switch rebuilds the tree, the draft keeps it. */
+  const both = async (name: string) => {
+    await shot(page, name);
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await shot(page, `${name}-night`);
+    await page.emulateMedia({ colorScheme: 'light' });
+  };
   await page.getByLabel('Schreib Buddy …').fill('Lass uns Verfassungsorgane zuordnen');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('ordne mal zu, wer was macht', { exact: false })).toBeVisible();
@@ -712,49 +722,48 @@ test('zuordnen: pairs in two columns, things into groups (issue #229)', async ({
   };
   const check = page.getByRole('button', { name: 'Prüfen' });
   await expect(check).toBeDisabled();
-  await pair('Bundestag', 'beschließt die Gesetze');
+  await both('39b-match-pairs-start');
+  await pair('Bundespräsident', 'unterschreibt die neuen Gesetze');
   // The one line of instruction has gone; the pair says itself in words.
   await expect(page.getByText('Tippe links eins an, dann sein Gegenstück rechts.')).toHaveCount(0);
   await expect(
-    page.getByRole('button', { name: 'Bundestag, Paar 1 mit beschließt die Gesetze' }),
+    page.getByRole('button', {
+      name: 'Bundespräsident, Paar 1 mit unterschreibt die neuen Gesetze',
+    }),
   ).toBeVisible();
-  await pair('Bundesrat', 'vertritt die Länder');
   // Below first, then above: works the other way round too.
-  await free('führt die Gesetze aus').click();
-  await free('Bundesregierung').click();
-  // Two swapped on purpose.
-  await pair('Bundespräsident', 'prüft die Gesetze am Grundgesetz');
-  await free('Bundesverfassungsgericht').click();
-  await shot(page, '39c-match-pairs');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '39d-match-pairs-night');
-  await page.emulateMedia({ colorScheme: 'light' });
-  await free('unterschreibt die Gesetze').click();
+  await free('bestimmt die Richtlinien im Bund').click();
+  await free('Bundeskanzlerin').click();
+  // Two swapped on purpose: Bund and Land.
+  await pair('Bundesregierung', 'führt die Gesetze des Landes aus');
+  await pair('Landesregierung', 'führt die Gesetze des Bundes aus');
+  await both('39c-match-pairs');
   await check.click();
-  // Code counted: three of five. Which ones, it says only on a second miss.
-  await expect(page.getByText('3 von 5 Paaren stimmen schon.')).toBeVisible();
-  await shot(page, '39e-match-feedback');
+  // Code counted: two of four. Which ones, it says only on a second miss. The reply and the
+  // whole board stand on the screen together — that is the case the maxima are measured for.
+  await expect(page.getByText('2 von 4 Paaren stimmen schon.')).toBeVisible();
+  await expect(page.getByText('2 von 4 Paaren stimmen schon.')).toBeInViewport();
+  await both('39e-match-feedback');
   // One tap on a pair dissolves it; she pairs the two again, right this time.
   await page
-    .getByRole('button', { name: 'Bundespräsident, Paar 4 mit prüft die Gesetze am Grundgesetz' })
+    .getByRole('button', { name: 'Bundesregierung, Paar 3 mit führt die Gesetze des Landes aus' })
     .click();
   await page
-    .getByRole('button', { name: 'Bundesverfassungsgericht, Paar 5 mit unterschreibt die Gesetze' })
+    .getByRole('button', { name: 'Landesregierung, Paar 4 mit führt die Gesetze des Bundes aus' })
     .click();
-  await pair('Bundespräsident', 'unterschreibt die Gesetze');
-  await pair('Bundesverfassungsgericht', 'prüft die Gesetze am Grundgesetz');
+  await pair('Bundesregierung', 'führt die Gesetze des Bundes aus');
+  await pair('Landesregierung', 'führt die Gesetze des Landes aus');
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 
-  // Twelve things in four groups, the most a grouping may have: still no scrolling on 360×740.
-  await expect(page.getByText('Wer ist dafür zuständig?')).toBeVisible();
+  // The most things in the most groups: no scrolling on 360×740, before or after sorting.
+  await expect(page.getByText('Wer ist denn zuständig: Stadt, Land, Bund?')).toBeVisible();
   await expect(page.getByText('Tippe oben eins an, dann seine Gruppe.')).toBeVisible();
   const GROUPS: Record<string, string[]> = {
-    Gemeinde: ['Müllabfuhr', 'Friedhöfe', 'Straßenbeleuchtung'],
-    Land: ['Schulen', 'Hochschulen', 'Landespolizei'],
-    Bund: ['Bundeswehr', 'Außenpolitik', 'Autobahnen'],
-    EU: ['Euro', 'Binnenmarkt', 'Roaming-Gebühren'],
+    Stadtverwaltung: ['Laternen planen', 'Friedhof pflegen', 'Kitaplätze geben'],
+    Landesverwaltung: ['Polizei aufbauen', 'Unis finanzieren', 'Lehrpläne machen'],
+    Bundesverwaltung: ['Armee ausrüsten', 'Verträge machen'],
   };
   const group = (name: string) =>
     page.getByRole('button', { name: new RegExp(`^Gruppe ${name},`) });
@@ -762,37 +771,33 @@ test('zuordnen: pairs in two columns, things into groups (issue #229)', async ({
   const row = (name: string) =>
     page.locator('[data-testid^="match-group-"]').filter({ has: group(name) });
   // A group only takes something while she holds it.
-  await expect(group('Land')).toBeDisabled();
-  // The tallest moment of a grouping: all twelve still above the four group rows.
-  await shot(page, '39f0-match-groups-start');
-  // One in, and it stands IN the Gemeinde row; one tap there takes it back out again.
+  await expect(group('Landesverwaltung')).toBeDisabled();
+  // The tallest moment of a grouping: everything still above the group rows.
+  await both('39f0-match-groups-start');
+  // One in, and it stands IN the Stadtverwaltung row; one tap there takes it back out again.
+  const sorted = (thing: string, name: string) =>
+    row(name).getByRole('button', { name: `${thing}, in ${name}`, exact: true });
   await page
-    .getByRole('button', { name: 'Müllabfuhr, noch in keiner Gruppe', exact: true })
+    .getByRole('button', { name: 'Friedhof pflegen, noch in keiner Gruppe', exact: true })
     .click();
-  await group('Gemeinde').click();
+  await group('Stadtverwaltung').click();
+  await expect(sorted('Friedhof pflegen', 'Stadtverwaltung')).toBeVisible();
+  await sorted('Friedhof pflegen', 'Stadtverwaltung').click();
   await expect(
-    row('Gemeinde').getByRole('button', { name: 'Müllabfuhr, in Gemeinde' }),
-  ).toBeVisible();
-  await row('Gemeinde').getByRole('button', { name: 'Müllabfuhr, in Gemeinde' }).click();
-  await expect(row('Gemeinde').getByRole('button', { name: /^Müllabfuhr,/ })).toHaveCount(0);
+    row('Stadtverwaltung').getByRole('button', { name: /^Friedhof pflegen,/ }),
+  ).toHaveCount(0);
   for (const [name, things] of Object.entries(GROUPS)) {
     for (const thing of things) {
-      // Exact: "Schulen" is also the end of "Hochschulen".
       await page
         .getByRole('button', { name: `${thing}, noch in keiner Gruppe`, exact: true })
         .click();
       await group(name).click();
-      await expect(
-        page.getByRole('button', { name: `${thing}, in ${name}`, exact: true }),
-      ).toBeVisible();
+      await expect(sorted(thing, name)).toBeVisible();
     }
   }
-  await shot(page, '39f-match-groups');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '39g-match-groups-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await both('39f-match-groups');
   // The theme switch rebuilt the tree; every element still stands in its group (the draft).
-  await expect(row('EU').getByRole('button', { name: 'Euro, in EU', exact: true })).toBeVisible();
+  await expect(sorted('Verträge machen', 'Bundesverwaltung')).toBeVisible();
   await check.click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();

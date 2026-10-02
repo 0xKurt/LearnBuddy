@@ -250,7 +250,8 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   adult's job is declined in one friendly sentence that names what he can do instead. The line is
   drawn by **purpose, not topic** — every school subject is learning, also the delicate ones, and
   an unclear purpose is asked about, never refused. No word lists (rule 3); the boundary lives in
-  the prompt and is checked by `evals/buddy` (`de_scope_*`, `de_insult_stays_calm`), because no
+  the prompt and is checked by `evals/buddy` (`de_scope_*`, `de_insult_stays_calm` — 20 runs,
+  §Testing, issue #225), because no
   code can tell learning from not-learning. What code does carry: the account budgets
   (§Limits) cap how much anyone can use a stolen session for.
 - **Injected text** (issue #39). STATE, the conversation, lookup results and the text of
@@ -1824,7 +1825,7 @@ representation), and bar tasks from a photographed sheet — the extraction prom
 them yet, so today they come from a topic she named.
 
 **Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`,
-`practice/table.ts`, migrations `0079_structured_items.sql` and `0080_drop_parts_task.sql`;
+`practice/table.ts`, migration `0079_structured_items.sql`;
 issues #228 order, #229 match, #230 table_fill, from the analysis #224). Some answers are not a
 sentence but an arrangement: an order, pairs, groups, table cells. They are their own item kinds
 (`order`, `match`, `table_fill`), and #224's "Regel 0" holds in both directions: code validates
@@ -1835,8 +1836,10 @@ _Two implementations existed for a day_ (#224, „Entscheidung: zwei Umsetzungen
 attacked both; `parts` handed out ids in solution order (an order and a pairing were solvable
 from the API response alone), asked the tutor on the second wholly wrong board, lost the board
 on a theme switch, shuffled 16 % of orders into their exact reverse and recomputed no number wall
-or two-way table. It was removed: 0080 drops `items.parts_task` and its check (production held no
-row with it). 0072 stays as it was applied — migrations are immutable (CLAUDE.md rule 10).
+or two-way table. Its code was removed, and 0079 drops its check `items_parts_shape`. The column
+`items.parts_task` stays as dead data that nothing reads or writes; it is dropped in the next
+release, once no deployed code reads it (§Testing, rollback). 0072 stays as it was applied —
+migrations are immutable (CLAUDE.md rule 10).
 
 Three shapes per kind, discriminated by `type` (= the item's kind):
 
@@ -1872,8 +1875,13 @@ item → 422 `no_parts`; a stored task that no longer reads → 409 `task_unread
 `incorrect` with that code-written reply, and the question stays open; nothing is locked and
 nothing cleared, her arrangement stays in the draft. The rest is the ordinary flow: the third
 miss explains the solution, a test only notes the answer (one try, no verdict until the end),
-FSRS rates the closed item, turns are idempotent per `client_turn_id`. Her answer stands in the
-thread in her order; the closing answer of an order or a match is recorded as `tapped`, which
+FSRS rates the closed item, turns are idempotent per `client_turn_id`. Her answer is stored as a
+turn in words, in her order (for the tutor's history, a dispute and the summary). While the
+question is open the screen does not echo it as a bubble (`ItemThread` `echoAnswers`; once it is
+closed the board is gone and the bubble with its verdict shows): her arrangement stands on the board,
+which is the state, and Buddy's reply says the verdict in words. Echoed, four pairs were a
+four-line bubble that the room above the board could only show as a cut-off strip under the
+question card (shot 39e). The closing answer of an order or a match is recorded as `tapped`, which
 for a structured kind still counts towards a topic in the summary (tapping is the only way to
 answer it, not recognition); a table's is `typed`.
 
@@ -1884,7 +1892,11 @@ to order, link or sort given things, or to fill a table, keeps that form and goe
 takes them too, with hints and without a worked solution (`StructuredDraftHomework`). At most
 `MAX_STRUCTURED_ITEMS` (4) per prepared set. A practice run that starts on its first questions
 before the rest is written (#220) starts on ordinary `items` only: the structured list stands
-after them in the answer and arrives with the rest (`addTheRest`).
+after them in the answer and arrives with the rest (`addTheRest`). The rest takes every list of the
+answer, exactly as a run that started on the whole set does — `items`, `structured`, `bars`,
+listening questions and note lines (issue #277: the note lines of an early run were dropped). Only
+the ordinary `items` are compared with the first questions by prompt; a note-line prompt is
+written by code and may read the same for two different notes.
 
 App: `components/practice/StructuredAnswer.tsx` switches on `task_view.type`; a new kind adds
 its component there and nothing else on the screen. Every surface keeps its arrangement in the
@@ -1893,16 +1905,16 @@ pinned bar, and that waits until the arrangement is complete. `OrderAnswer.tsx` 
 tap the elements in order, they get numbers; tapping a numbered one takes it back with
 everything after it. The place is said in words to a screen reader ("…, Platz 2").
 
-**Room on a small phone** (`components/practice/PartsArea.tsx`, rule 16). The question card never
-shrinks and 44 pt per touch target is the floor; an allowed task can still be taller than the room
-left (the contract allows twelve elements in four groups, eight long steps). The parts therefore
-stand in a `scroll-list` above the pinned "Prüfen", and while a structured surface is shown the
-middle column keeps at least the question's measured height, plus room for Buddy's reply once she
-has checked (`STRUCTURED_REPLY_ROOM` in `app/practice/[id].tsx`). Measured in the walkthrough: on
-390×844 every walkthrough task fits whole; on 360×740 the start of the twelve-element grouping
-scrolls inside itself by about one group row, and after a check of five long pairs the reply stays
-visible while the pairs scroll. Before this floor a tall arrangement was drawn over the question
-(found in the shots of #229).
+**Room on a small phone** (rule 16; `components/practice/PartsArea.tsx`). The question card never
+shrinks and 44 pt per touch target is the floor, so the largest task the contract allows has to fit
+the smallest phone as it is — the maxima of a match are measured, not chosen (below). While a
+structured surface is shown, the middle column keeps at least the question's measured height, plus
+room for Buddy's reply once she has checked (`STRUCTURED_REPLY_ROOM` in `app/practice/[id].tsx`).
+The parts stand in a scroll view only as the floor under a mistake: its testID `scroll-parts` is
+not one `tests/web/fit.ts` allows, so a walkthrough shot fails the moment the parts would have to
+be scrolled. (Before the floor, a tall arrangement was drawn over the question — found in the shots
+of #229.) An order of eight long steps and a table of ten rows are not measured at their maxima
+yet; their walkthrough tasks fit.
 
 **Tabelle ausfüllen** (`table_fill`, issue #230, `practice/table.ts`). A table of at most 6
 columns × 10 rows (like `TableFigure`), some cells gaps. The model writes every cell WITH its
@@ -1938,8 +1950,8 @@ that has the key's value but is written otherwise. The reply counts and names
 (`tableReply`): "2 von 3 Feldern stimmen. Schau nochmal bei „du“ / „Präteritum“." — a cell by
 its row label and heading, else by row and column numbers, a brick by row and place; three at
 most by name, the rest counted. When no cell is right but some are nearly right, it never says
-"none is right": it says they are almost there and names them (`table_almost`). Her cells stand
-in the thread in reading order ("6 · 8 · 20").
+"none is right": it says they are almost there and names them (`table_almost`). Her cells are stored as
+the turn in reading order ("6 · 8 · 20").
 
 App: `TableAnswer.tsx` shows the table as in the exercise book (a wall centred, brick on brick);
 each gap is a small field, Enter goes to the next gap and in the last one checks; the math keys
@@ -1949,36 +1961,51 @@ with words to type can make it wider, and only then does it scroll sideways, ins
 
 **Match — pairs and groups** (`match`, issue #229, on the same foundation). One shape for two
 forms: she takes an element on the LEFT (`left`, ids `a`, `b`, … by display position) and puts it
-to one on the RIGHT (`right`, ids `r1`, `r2`, …). `pairs`: 3–6 lefts and as many partners, every
-left with exactly one right and every right with exactly one left. `groups`: 4–12 elements and
-2–4 groups, every element in exactly one group, no group empty. The task holds `form`, both sides
+to one on the RIGHT (`right`, ids `r1`, `r2`, …). `pairs`: 3–4 lefts and as many partners, every
+left with exactly one right and every right with exactly one left. `groups`: 4–8 elements and
+2–3 groups, every element in exactly one group, no group empty. The task holds `form`, both sides
 and the key (one `{left, right}` link per left); the view the same without the key; the answer
 `links`, every left once (a partner twice in a pairing → 422 `parts_mismatch`). The model writes
 only the correct links (`pairs: [{left, right}]` or `groups: [{name, elements}]`, exactly one of
 them, `MATCH_RULES` without an example sentence). Code rejects — and stores nothing, repairs
-nothing — neither or both forms (`form`), counts out of range (`count`), an empty group
+nothing — neither or both forms (`form`), counts out of range (`count`), a text, a word or a
+prompt over its cap (`too_long`: a pair's side 32 characters, a thing to sort or a group's name
+16, any single word 16, the prompt 44), an empty group
 (`empty_group`), one element written to two places (`ambiguous`, seen on the draft by
 `matchDraftProblem`), and any two texts alike after normalising, across both sides
 (`duplicate`); `matchProblem` re-checks a stored task (a key that misses, doubles or invents a
 link → `not_mapping`). The display is shuffled deterministically and never already solved: in a
 pairing fewer than half of the rows line up, a grouping's elements never stand sorted by their
 groups (the groups keep the model's order). A prepared hint that states a whole link (both sides
-as words) is dropped. Checking is exact, link by link: the reply counts ("4 von 5 Paaren stimmen
+as words) is dropped. Checking is exact, link by link: the reply counts ("2 von 4 Paaren stimmen
 schon." / "5 von 7 sind schon richtig einsortiert."); which one is wrong it names only from the
 second miss on, as the next rung of the hint ladder (`structuredNamesPart` → counts as a hint),
 and the third miss explains the solution.
 
-App: `MatchAnswer.tsx`. Pairs stand in two columns (five pairs are five rows; the columns share
+App: `MatchAnswer.tsx`. Pairs stand in two columns (four pairs are four rows; the columns share
 the width by their longest words, `leftShare`); tap one, then its partner (either way round), and
-both carry the pair's number **inside** the chip, at body size — not a small badge on the corner.
+both carry the pair's number **inside** the chip, a bold 14-pt numeral before the text — not a
+small badge on the corner, and not a disc either: a disc pushed the word below itself in the
+narrow column and made the board too tall.
 Groups follow the display idea of the removed `parts` board, because there the box IS the state:
 the elements she has not sorted yet stand above, every group is a row with its name, and an
 element she puts in a group moves INTO that row, next to the name. Tapping it there takes it back
 out. Tapping a group row puts the element she holds into it; a group only takes something while
 she holds an element. What she holds is kept in the draft with the links, so a theme change does
 not drop it. One line of instruction until the first tap, nothing else; a screen reader hears
-"…, Paar 2 mit …" / "…, in Nomen". The walkthrough measures five long-worded pairs and twelve
-elements in four groups on 390×844 and 360×740, light and dark.
+"…, Paar 2 mit …" / "…, in Nomen".
+
+**The maxima are a measurement** (`contracts/structured.ts` `MATCH_*`). The walkthrough's match
+tasks are the largest the contract allows, every text near its cap ("zuordnen at its largest",
+`tests/web/modes.spec.ts`; `learning-modes.ts`): four pairs of a 15-character term and a
+32-character phrase under a 44-character prompt, and eight 15–16-character things in three groups
+with 16-character names. Shot at 390×844 and 360×740, light and dark, with `scroll-parts`
+disallowed: the pairing before and after a check (Buddy's reply and the whole board on screen
+together), and the grouping before she sorts anything (its tallest moment) and when everything is
+sorted. On 360×740 both tallest moments end within about 8 pt of "Prüfen", so one more pair row
+(about 52 pt) or one more group row (about 56 pt) would not fit; 20-character things (one per
+row) did not fit by 87 pt, and a 56-character prompt broke onto three lines. A draft over a cap is
+rejected (`too_long` / `count`), never shortened.
 
 **Die Notenzeile — lesen, selbst schreiben, anhören** (`contracts/staff.ts`,
 `practice/staff.ts`, `components/math/StaffLine.tsx`, `lib/music/`, Migration
@@ -2923,6 +2950,14 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   present in only one file are listed, not guessed about, so partial runs (`run.ts case-id …`)
   compare too. The comparison itself is pure and unit-tested
   (`evals/buddy/__tests__/compare.test.ts`); only producing the transcripts costs money.
+- **Repeated cases** (issue #225): a model decision is not deterministic, and a case that fails
+  one run in five is not checked by one run. A case can carry `repeat: { runs, maxFailures }`;
+  `evals/buddy/run.ts` then runs it that often, each on a fresh database, and fails it when more
+  than `maxFailures` runs fail (`evals/buddy/repeat.ts`, unit-tested in
+  `__tests__/repeat.test.ts`). `de_insult_stays_calm` runs 20 times with `maxFailures: 0` — the
+  issue's acceptance is that an insult never leads to the crisis number. Measured before this
+  (02.10.2026): about one run in five set `concern`, so this case is expected to **fail** until
+  the cause is fixed; twenty clean runs bound the rate to roughly 15 % or less, not to zero.
 - Integration against a real Postgres (`src/__tests__/*.int.test.ts`, harness in
   `src/testing/`): every test file gets its own database created from a template with the real
   migrations. Only the outside world is replaced: a scripted model (every call must be scripted;
@@ -2964,10 +2999,8 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   Migrations are therefore **additive only** — new tables, new columns with defaults, widened
   constraints; never a drop or rename that yesterday's code would trip over. A column that must
   go is stopped being written first and removed in a later release, when no deployed code reads
-  it. One deliberate exception: `0080_drop_parts_task.sql` drops `items.parts_task` in the same
-  release that stops reading it (#224); the code before it reads that column in every session
-  view, so between applying 0080 and promoting, the old build's practice screen fails. The file
-  says so, and it can be moved to a later release on its own — nothing else needs it. After
+  it. Pending: `items.parts_task` (migration 0072) has been dead since #224 replaced it with
+  `items.task`; it is dropped in the next release, with the next free migration number. After
   applying migrations, the Supabase advisors are run once (security + performance —
   issue #72); RLS-without-policy INFO lines are the deliberate design, anything new is triaged.
 - A dev build on a phone that talks to a real backend names its host on screen
