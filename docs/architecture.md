@@ -2217,7 +2217,12 @@ daneben und wird von beiden benutzt, dem Stecher und den Tippzielen der Schreibf
 prüft für jede Stufe beider Schlüssel, dass VexFlows Kopf dort sitzt, wo ein Tipp landet. VexFlow
 (rund 167 KB gzip) ist ein **eigener Bundle-Teil**: `staff/useEngraver.ts` lädt `staff/engrave.ts`
 per `import()` erst auf einem Bildschirm mit Notenzeile, das Haupt-Bundle bleibt im Budget (#313).
-Eine gelesene Zeile hat bis zu 24 pt Linienabstand (vorher 20): die Köpfe sind größer als vorher.
+Köpfe, Pausen und Fähnchen stehen auf jeder Zeile ×1,15 größer als im Druck (wie in Notenheften
+für Kinder), eine gelesene Zeile hat bis zu 24 pt Linienabstand (vorher 20). Die Schreibfläche
+setzt ihre Zeichen auf gleich breite Plätze statt nach Rhythmus (der Inhalt wächst unter dem
+Finger) und hält am Ende des aktiven Takts einen Platz für den Schreibstrich frei. Grenze: auf
+360 pt mit zwei Takten nehmen VexFlows Schlüssel und Taktart mehr Breite als die alte
+stilisierte Zeichnung, der Linienabstand dort ist deshalb kleiner als vorher.
 
 **Notennamen pro Übung** (`StaffFigure.labels`, Owner 03.10.: „dass die für gewisse Übungen auch
 beschriftet werden müssen"). `labels` ist die Liste der Noten (in Leserichtung, Pausen zählen
