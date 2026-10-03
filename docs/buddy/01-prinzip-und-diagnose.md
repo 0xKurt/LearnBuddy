@@ -247,5 +247,10 @@ Beim Lesen gefunden, **nicht** Teil dieser Umsetzung, als Folgeaufgaben notiert:
   gesetzter Variable den Service-Role-Key ins App-Bundle eingebaut. Regel seitdem: Die App liest
   `process.env` nur in `lib/env.ts` (ESLint erzwingt es); ein Service-Key gehört niemals in
   Mobile-Code, auch nicht "nur für dev".
+  Nachtrag 03.10.2026 (Issue #290): Der Code war gelöscht, die Zeile in der lokalen
+  `apps/mobile/.env.local` nicht — und Expos Dev-Bundle packte die ganze Datei als Modul ein,
+  gelesen oder nicht. Seitdem prüfen Metro (Start verweigert), ESLint und ein Scan des fertigen
+  Bundles mechanisch, dass kein solcher Name und kein solcher Wert ins Bundle gelangt
+  (`apps/mobile/scripts/client-secrets.cjs`).
 
 Buddy-Tabellen werden von Anfang an in DSGVO-Export und -Löschung (Cascade) einbezogen.

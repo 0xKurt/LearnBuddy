@@ -172,6 +172,17 @@ nicht antworten kann, und nutzt feste Ersatzabläufe (vorbereitete Übung vor ei
 
 ---
 
+### Die App ohne Vertex ausprobieren — gegen den lokalen Teststapel
+
+Wer die App auf dem Handy ausprobieren will, ohne Modellkosten und ohne echte Daten, braucht
+diesen Abschnitt nicht: `pnpm --filter @learnbuddy/api dev:stack` startet API, Anmelde-Ersatz
+und ein geskriptetes Modell auf Port 8787, und `sh scripts/dev-local-stack.sh` startet Metro so,
+dass der Dev-Build nur mit diesem Stapel spricht — belegt am ausgelieferten Bundle, ohne eine
+Schlüsseldatei anzufassen (Issue #291, docs/architecture.md §Testing). In
+`apps/mobile/.env.local` gehört **nie** ein Administrator- oder Server-Schlüssel: jeder
+`EXPO_PUBLIC_*`-Wert steht im App-Bundle, und Metro startet nicht, solange einer danach aussieht
+(Issue #290).
+
 ## 8. Vercel / Produktions-Deployment
 
 1. **Vercel Dashboard → Project → Settings → Environment Variables**.

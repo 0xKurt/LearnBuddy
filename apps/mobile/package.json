@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
-    "bundle:check": "expo export --platform ios --output-dir .expo/bundle-check",
+    "bundle:check": "expo export --platform ios --output-dir .expo/bundle-check && node scripts/client-secrets.cjs scan .expo/bundle-check",
     "web": "expo start --web"
   },
   "dependencies": {

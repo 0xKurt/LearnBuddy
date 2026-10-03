@@ -11,6 +11,13 @@ const path = require('path');
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
 
+const { assertClientEnvClean } = require('./scripts/client-secrets.cjs');
+
+// No secret may reach the bundle (issue #290): every EXPO_PUBLIC_* variable — from the shell,
+// or from an .env file Expo loads — is checked here, before Metro serves or exports anything.
+// This config is loaded by `expo start`, `expo export` and EAS builds alike.
+assertClientEnvClean({ projectRoot });
+
 const config = getSentryExpoConfig(projectRoot);
 
 // Workspace support: let Metro look up packages in the monorepo root.
@@ -29,7 +36,14 @@ config.resolver.nodeModulesPaths = [
 // mode requires. Intercept those at resolution time and try the
 // extension-less name (which falls through Metro's normal sourceExts).
 const defaultResolveRequest = config.resolver.resolveRequest;
+// Expo's dev-only `expo/virtual/env` bundles the project's .env files as modules and lets them
+// win over the shell, even with EXPO_NO_DOTENV=1 (issue #291, measured on the served bundle).
+// The dev bundle reads `process.env` instead — what Metro's own environment says (lib/processEnv.ts).
+const processEnv = path.resolve(projectRoot, 'lib/processEnv.ts');
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === 'expo/virtual/env') {
+    return { type: 'sourceFile', filePath: processEnv };
+  }
   if ((moduleName.startsWith('./') || moduleName.startsWith('../')) && moduleName.endsWith('.js')) {
     try {
       return context.resolveRequest(context, moduleName.slice(0, -3), platform);
