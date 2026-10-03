@@ -25,7 +25,9 @@ pnpm typecheck && pnpm lint && pnpm test
 
 API integration tests run against a real Postgres 16 on `127.0.0.1:5432` (user/password
 `postgres`, or set `LB_TEST_DATABASE_URL`); each test file gets its own throwaway database built
-from the real migrations. The pre-commit hook and CI set `LB_REQUIRE_TEST_DB=1`, so a missing
+from the real migrations. Those databases are always UTF8 with
+English (ICU `en-US`) collation like CI and production, whatever the cluster's own defaults
+(issue #335). The pre-commit hook and CI set `LB_REQUIRE_TEST_DB=1`, so a missing
 database fails the gate instead of skipping those tests; a plain `pnpm test` without Postgres
 skips them.
 

@@ -7,7 +7,12 @@
 
 import { randomUUID } from 'node:crypto';
 
-import type { AnswerResponse, Figure, SessionView } from '@learnbuddy/shared-types/contracts';
+import {
+  Figure as FigureSchema,
+  type AnswerResponse,
+  type Figure,
+  type SessionView,
+} from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
@@ -15,7 +20,9 @@ import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/h
 
 const dbReady = await testDatabaseAvailable();
 
-const graph = (expr: string): Figure => ({
+type Plot = Extract<Figure, { type: 'function_plot' }>;
+
+const graph = (expr: string): Plot => ({
   type: 'function_plot',
   functions: [{ expr, label: null }],
   x_min: -3,
@@ -24,6 +31,24 @@ const graph = (expr: string): Figure => ({
   y_max: 5,
   points: [],
 });
+
+const twoCurves: Plot = {
+  ...graph('x^2-1'),
+  functions: [
+    { expr: 'x^2-1', label: null },
+    { expr: 'x', label: null },
+  ],
+};
+
+/** A note line: a figure the app can show, but never one the model may write (issue #226). */
+const STAFF: Figure = {
+  type: 'staff',
+  clef: 'bass',
+  time: null,
+  bars: [[{ el: 'note', pitch: { name: 'F', octave: 3 }, value: 'quarter', dotted: false }]],
+  tempo: 80,
+  labels: [],
+};
 
 const GRAPHS = ['x^2+1', '-x^2+1', 'x^2-1', '(x-1)^2'];
 const TEXTS = ['$y = x^{2} + 1$', '$y = -x^{2} + 1$', '$y = x^{2} - 1$', '$y = (x - 1)^{2}$'];
@@ -185,6 +210,60 @@ describe.skipIf(!dbReady)('pictures as options', () => {
     const own = await prepare([which({ prompt: 'Welcher Graph gehört zu $f(x) = x^{2} - 1$?' })]);
     expect((await choose(own, si.item.id, 2)).status).toBe(404);
   });
+
+  // Regel 0 on the way out (issue #326): a stored row is read back through the checks it was
+  // written under. Each case is a row the write path would have refused — as if a contract or a
+  // check had changed since. The app never gets its pictures, only the plain options, and the
+  // tap is still judged by its index. Nothing is repaired: no picture is dropped or redrawn.
+  const BROKEN: Array<[string, (stored: Plot[]) => unknown[]]> = [
+    [
+      'a picture type the contract no longer knows',
+      (f) => [f[0], f[1], { type: 'hologram' }, f[3]],
+    ],
+    ['a picture missing a field', (f) => f.map(({ points: _gone, ...rest }) => rest)],
+    ['a note line, which only code ever writes', (f) => [f[0], f[1], f[2], STAFF]],
+    ['a graph the app cannot read', (f) => [f[0], f[1], graph('x^^2'), f[3]]],
+    ['two options the same drawing', (f) => [f[0], f[1], f[2], f[2]]],
+    ['two curves in one option', (f) => [f[0], f[1], twoCurves, f[3]]],
+    ['the key no longer the indexed graph', (f) => [f[2], f[1], f[0], f[3]]],
+    ['a window that draws nothing', (f) => [f[0], f[1], { ...f[2], x_min: 3, x_max: -3 }, f[3]]],
+  ];
+
+  it('holds a valid note line for a figure the app can show (the case above is not a typo)', () => {
+    expect(FigureSchema.safeParse(STAFF).success).toBe(true);
+  });
+
+  for (const [what, broken] of BROKEN) {
+    it(`never sends option pictures that no longer hold: ${what}`, async () => {
+      const session = await prepare([which()]);
+      const si = session.items[0]!;
+      const stored = await env.db.one<{ choice_figures: Plot[] }>(
+        `select choice_figures from items where id = $1`,
+        [si.item.id],
+      );
+      await env.db.query(`update items set choice_figures = $2::jsonb where id = $1`, [
+        si.item.id,
+        JSON.stringify(broken(stored.choice_figures)),
+      ]);
+
+      const view = await l.api.get<SessionView>(`/practice/sessions/${session.id}`);
+      expect(view.status).toBe(200);
+      const shown = view.body.items[0]!.item;
+      expect(shown.choice_figures).toBeNull();
+      // Shown as the plain multiple choice it also is: the option texts, the same index.
+      expect(shown.choices).toEqual(TEXTS);
+      const wrong = await choose(session, si.item.id, 0);
+      expect(wrong.body.verdict).toBe('incorrect');
+      expect(wrong.body.session.items[0]?.item.choice_figures).toBeNull();
+      expect((await choose(session, si.item.id, 2)).body.verdict).toBe('correct');
+      // Read, never repaired: the row is as it was left.
+      const after = await env.db.one<{ choice_figures: unknown }>(
+        `select choice_figures from items where id = $1`,
+        [si.item.id],
+      );
+      expect(after.choice_figures).toEqual(broken(stored.choice_figures));
+    });
+  }
 
   it('keeps reading an old multiple choice without pictures', async () => {
     const session = await prepare([

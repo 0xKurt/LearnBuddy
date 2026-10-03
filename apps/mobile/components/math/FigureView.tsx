@@ -24,6 +24,7 @@ import Svg, {
 // Imported by path: the mobile bundle takes only this small, dependency-free module
 // of @learnbuddy/shared-math (its index also pulls in mathjs).
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
+import { niceStep } from '../../../../packages/shared-math/src/charts.js';
 import { checkMolecule } from '../../../../packages/shared-math/src/molecule.js';
 import {
   BARE_FIGURE_CHROME,
@@ -33,7 +34,7 @@ import {
   naturalFigureHeight,
   newFigureWidth,
 } from '../../lib/math/figureScale.js';
-import { plotFrame, Y_LABEL_GAP } from '../../lib/math/plotLayout.js';
+import { plotFrame, ticksFor, yLabelsClearOf, Y_LABEL_GAP } from '../../lib/math/plotLayout.js';
 import { pointsOnGraph, prettyExpr, tracePath } from '../../lib/math/plotMath.js';
 import { speakMathText } from '../../lib/math/speak.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -342,23 +343,6 @@ function NumberLine({ fig, width }: { fig: NumberLineFig; width: number }) {
 
 // ─────────────── function plot ───────────────
 
-/** A step of 1, 2 or 5 × 10^k that gives about `target` intervals. */
-function niceStep(span: number, target: number): number {
-  const raw = span / target;
-  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
-  const norm = raw / mag;
-  const nice = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
-  return nice * mag;
-}
-
-function ticksFor(lo: number, hi: number, step: number): number[] {
-  const out: number[] = [];
-  const start = Math.ceil(lo / step - 1e-9) * step;
-  for (let v = start; v <= hi + 1e-9 && out.length < 60; v += step)
-    out.push(Math.round(v / step) * step);
-  return out;
-}
-
 const DASHES: ReadonlyArray<string | undefined> = [undefined, '8 5', '2 4'];
 
 function FunctionPlot({ fig, width, bare }: { fig: PlotFig; width: number; bare: boolean }) {
@@ -406,6 +390,19 @@ function FunctionPlot({ fig, width, bare }: { fig: PlotFig; width: number; bare:
     [fig.functions, x0, x1, y0, y1, pw, ph],
   );
 
+  // Every tick label where it is drawn, so a y label that would sit on an x label can give
+  // way (issue #326: "−2" and "−2" on each other next to the origin of a small option graph).
+  const yLabelled = (v: number) => Math.abs(v) > yStep / 2 || axisX !== Y(0);
+  const xLabels = xTicks
+    .filter((v) => Math.abs(v) > xStep / 2 || axisY !== X(0))
+    .map((v) => ({ v, x: X(v), y: Math.min(axisX + 15, top + ph - 2), text: formatNumber(v) }));
+  const yLabels = yLabelsClearOf(
+    xLabels,
+    yTicks
+      .filter(yLabelled)
+      .map((v) => ({ v, x: axisY - Y_LABEL_GAP, y: Y(v) + 4, text: formatNumber(v) })),
+    SMALL,
+  );
   // One id per drawing: on the web `url(#…)` finds the FIRST element with that id in the
   // document, so with four option graphs and the viewer's large one on the same page a shared
   // id clipped the large curve to the first small graph's box — and it vanished (issue #231).
@@ -490,52 +487,40 @@ function FunctionPlot({ fig, width, bare }: { fig: PlotFig; width: number; bare:
         >
           y
         </SvgText>
-        {xTicks
-          .filter((v) => Math.abs(v) > xStep / 2 || axisY !== X(0))
-          .map((v) => (
-            <G key={`tx${v}`}>
-              <Line
-                x1={X(v)}
-                y1={axisX - 3}
-                x2={X(v)}
-                y2={axisX + 3}
-                stroke={ink.axis}
-                strokeWidth={1}
-              />
-              <HaloText
-                x={X(v)}
-                y={Math.min(axisX + 15, top + ph - 2)}
-                size={SMALL}
-                weight="400"
-                color={ink.label}
-                anchor="middle"
-                text={formatNumber(v)}
-              />
-            </G>
-          ))}
-        {yTicks
-          .filter((v) => Math.abs(v) > yStep / 2 || axisX !== Y(0))
-          .map((v) => (
-            <G key={`ty${v}`}>
-              <Line
-                x1={axisY - 3}
-                y1={Y(v)}
-                x2={axisY + 3}
-                y2={Y(v)}
-                stroke={ink.axis}
-                strokeWidth={1}
-              />
-              <HaloText
-                x={axisY - Y_LABEL_GAP}
-                y={Y(v) + 4}
-                size={SMALL}
-                weight="400"
-                color={ink.label}
-                anchor="end"
-                text={formatNumber(v)}
-              />
-            </G>
-          ))}
+        {xLabels.map((l) => (
+          <G key={`tx${l.v}`}>
+            <Line
+              x1={l.x}
+              y1={axisX - 3}
+              x2={l.x}
+              y2={axisX + 3}
+              stroke={ink.axis}
+              strokeWidth={1}
+            />
+            <HaloText {...l} size={SMALL} weight="400" color={ink.label} anchor="middle" />
+          </G>
+        ))}
+        {yTicks.filter(yLabelled).map((v) => (
+          <Line
+            key={`ty${v}`}
+            x1={axisY - 3}
+            y1={Y(v)}
+            x2={axisY + 3}
+            y2={Y(v)}
+            stroke={ink.axis}
+            strokeWidth={1}
+          />
+        ))}
+        {yLabels.map((l) => (
+          <HaloText
+            key={`yl${l.v}`}
+            {...l}
+            size={SMALL}
+            weight="400"
+            color={ink.label}
+            anchor="end"
+          />
+        ))}
         {/* On a small option picture the origin's 0 would sit on the −2 below it (issue #231). */}
         {!bare && x0 <= 0 && x1 >= 0 && y0 <= 0 && y1 >= 0 ? (
           <SvgText

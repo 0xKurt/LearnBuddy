@@ -2451,6 +2451,16 @@ so the rules only say it when it is certain; everything else goes to the tutor (
   what finding 4 of the same issue was reverted for). A unit that happens to be a single letter
   is no variable ("1250 m" against "1350 m" stays undecided), and a free text is decided here
   never (#197).
+- _Another unit of the same quantity_ (issue #227 A6, `shared-math/src/units.ts`
+  `unitFactor`, `compareNumbers` with `convertUnits`), numeric items only. Every school unit of length, area,
+  volume, mass, time, speed, force and euro/cent is an exact rational multiple of its base unit,
+  so "1,4 m" for 150 cm is converted without rounding and certainly wrong, and "1,5 m" or "90 min"
+  for 1.5 h is `other_form` — right in value, never `correct` by rule, because the question may
+  have asked for the unit ("in cm") and that is the tutor's (D-3). The key's tolerance and
+  decimals still decide (D-1). Not converted, and so still the tutor's: units of different
+  quantities ("5 m" for 5 min), °C against kelvin (not a factor), one currency against another.
+  The parser also reads "cm2", "m3", "°", "Grad", "ct", "ha" and — written as a capital only —
+  "N"/"kN" ("2n" stays a variable).
 - _The form of a right value_ (issue #235, `form.ts`), read off the syntax tree, never off the
   question's words. **The same summands and factors in another order** are the key's form and
   `correct` without a model ("6+2x" for 2x+6, "(x+1)(x+1)" for (x+1)²; −4x, (−4)·x and −(4x) are
@@ -2822,6 +2832,11 @@ word list, so it stays a prompt rule.
   ≤ 15 s recording, bodies up to 2 MB only on this route). The model listens to the audio itself:
   it writes the expected pronunciation and the sounds actually produced (IPA), then judges word
   by word (`practice/speak.ts`). good → right, almost → right with help, retry → stays open.
+  **Code checks the judgement before anything counts** (issue #227 A8, `judgementFault`): the
+  words it colours must be words of the sentence in its order, and `overall` must agree with
+  them — good exactly when every word is ok. A judgement that contradicts itself is refused like
+  an unreadable one (`model_unavailable`: nothing stored, the question stays open, she says it
+  again); code cannot know which half is right, so it repairs nothing.
   The recording is never stored. Live checks (`evals/speak/run.ts`, espeak-ng recordings): wrong
   words are recognised reliably, a strong German accent in 2 of 3 runs; it is an AI assessment,
   not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores) would
@@ -2980,6 +2995,12 @@ word list, so it stays a prompt rule.
   (`$f(x) = …$`), the key must be that function (a key named `f'` is held only against `f'`, so
   "which graph is the derivative" stays possible). Any failure drops the item, never repairs it.
   Not decided by code: whether a geometry option is symmetric, whether a word option is right.
+  **And again on the way out** (issue #326): `sessionView` sends a row's pictures only through
+  `storedChoiceFigures` (`practice/items.ts`), which holds the stored row to all of the above —
+  each picture a `ModelFigure` (never a note line), drawable exactly as stored, one per option,
+  and `choiceProblem` still `null`. A row that fails (written before a contract or a check
+  changed) reaches the app as the plain multiple choice it also is — its option texts, judged by
+  the same index; the row itself is neither repaired nor rewritten.
 - **How options look** (issue #288). Every option is a white tile with its letter as a quiet mark
   in a fixed column (no badge on the content); the texts of all options start on one line. Two by
   two only when EVERY option fits one line of half a 360 pt screen (`twoColumnChoices`: 9

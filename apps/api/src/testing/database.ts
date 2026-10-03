@@ -40,10 +40,20 @@ function schema(): { sql: string; hash: string } {
     .join('\n;\n')
     // Supabase-only extensions; the shim provides the schemas they would create.
     .replace(/^create extension if not exists (pg_cron|pg_net);$/gim, '-- test: $&');
-  return { sql, hash: createHash('sha256').update(sql).digest('hex').slice(0, 12) };
+  // The encoding is part of the name, so templates built before it was pinned are never reused.
+  const hash = createHash('sha256').update(sql).update(TEMPLATE_ENCODING).digest('hex');
+  return { sql, hash: hash.slice(0, 12) };
 }
 
 let available: boolean | null = null;
+
+/**
+ * Every template is UTF8 with English collation, whatever the cluster's defaults: production
+ * (Supabase) and CI (postgres:16) sort and check text this way, and a SQL_ASCII/C cluster once
+ * let a test pass locally that failed in CI (issue #335). Copies inherit it from the template.
+ */
+const TEMPLATE_ENCODING =
+  "encoding 'UTF8' locale_provider icu icu_locale 'en-US' locale 'C.UTF-8' template template0";
 
 export async function testDatabaseAvailable(): Promise<boolean> {
   if (available !== null) return available;
@@ -128,7 +138,7 @@ export async function createTestDatabase(): Promise<TestDatabase> {
         // Built under another name and renamed when complete: an interrupted build is
         // never mistaken for the template.
         const build = `lb_tplbuild_${hash}_${randomBytes(4).toString('hex')}`;
-        await admin.query(`create database "${build}"`);
+        await admin.query(`create database "${build}" ${TEMPLATE_ENCODING}`);
         const setup = new pg.Client({ connectionString: urlFor(build) });
         await setup.connect();
         try {

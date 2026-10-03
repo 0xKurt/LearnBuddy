@@ -28,6 +28,8 @@ import {
   isChart,
   parseCanonicalKey,
 } from '@learnbuddy/shared-math';
+import { isDeepStrictEqual } from 'node:util';
+
 import { z } from 'zod';
 
 import type { Db } from '../../lib/db.js';
@@ -37,7 +39,7 @@ import { figureHolds } from './figureCheck.js';
 import { CHOICE_FIGURE_KINDS, kindIn, SPELLING_KINDS, TOLERANCE_KINDS } from './itemFields.js';
 import { usableRubric } from './rubric.js';
 import { mentionsSolution } from './tutor.js';
-import { choiceProblem, MAX_FIGURE_CHOICES } from './choiceCheck.js';
+import { choiceProblem, MAX_FIGURE_CHOICES, type ChoiceDraft } from './choiceCheck.js';
 import { checkedRead, figureIsRejectedChart } from './chartRead.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
 
@@ -294,6 +296,26 @@ function optionFigures(raw: ItemDraft): ModelFigure[] | null {
     drawn.push(f);
   }
   return drawn;
+}
+
+/**
+ * The options' pictures as READ back from a stored question (issue #326) — Regel 0 the other
+ * way round: a row is held to everything a draft was held to when it was written. Each picture
+ * is the model's shape (`ModelFigure`: a note line is never an option), drawable exactly as it
+ * stands (`usableFigure` would change nothing), one per option, and the whole question still
+ * passes `choiceProblem` with them. A row written before a contract or a check changed that
+ * fails any of it reaches the app as the plain multiple choice it also is — the option texts,
+ * judged by the same index. Nothing is repaired: four pictures with one dropped or redrawn
+ * would be another question than the one that was checked.
+ */
+export function storedChoiceFigures(
+  row: Omit<ChoiceDraft, 'choice_figures'> & { kind: string; choice_figures: unknown },
+): Figure[] | null {
+  if (row.kind !== 'multiple_choice' || row.choice_figures == null) return null;
+  const read = z.array(ModelFigure).min(2).max(MAX_FIGURE_CHOICES).safeParse(row.choice_figures);
+  if (!read.success) return null;
+  if (!read.data.every((f) => isDeepStrictEqual(usableFigure(f), f))) return null;
+  return choiceProblem({ ...row, choice_figures: read.data }) === null ? read.data : null;
 }
 
 /**
