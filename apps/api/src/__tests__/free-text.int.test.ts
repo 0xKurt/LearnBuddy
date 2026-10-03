@@ -14,7 +14,13 @@ import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contr
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
-import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import {
+  createTestEnv,
+  finishRun,
+  onboard,
+  type Learner,
+  type TestEnv,
+} from '../testing/harness.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -75,18 +81,6 @@ const answer = (l: Learner, s: SessionView, itemId: string, text: string) =>
     text,
   });
 
-/**
- * Ends the run. Finishing wakes Buddy to look at it (`session_finished`, a background check
- * with one model call); he plans nothing here. Awaited, so that call is part of this test.
- */
-async function finish(env: TestEnv, l: Learner, s: SessionView) {
-  env.llm.script('buddy_check', {
-    json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null },
-  });
-  await l.api.post(`/practice/sessions/${s.id}/finish`, {});
-  await env.flushBackground();
-}
-
 /** What the tutor says; the judgement stays the server's (enforceTutorInvariants). */
 const judges = (verdict: string, reply: string) => ({
   json: { intent: 'answer', verdict, reply, gave_hint: false, revealed_answer: false },
@@ -104,19 +98,7 @@ describe.skipIf(!dbReady)('a free text claims nothing it did not measure', () =>
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    // Background work a route started (Buddy's look after /finish) lands BEFORE the model's
-    // calls are counted, not somewhere between the count and `close()` (#323): counted before
-    // it, an unscripted call was seen or missed depending on how busy the machine was.
-    await env.flushBackground();
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('never states a solution, never rates memory and names no weakness', async () => {
     const s = await start(env, l, [essay()]);
@@ -153,7 +135,7 @@ describe.skipIf(!dbReady)('a free text claims nothing it did not measure', () =>
     expect(states[0]!.n).toBe(0);
 
     // And no named weakness.
-    await finish(env, l, s);
+    await finishRun(env, l, s.id);
     const done = (await l.api.get<SessionView>(`/practice/sessions/${s.id}`)).body;
     expect(done.summary?.shaky_topics).toEqual([]);
     expect(done.summary?.secure_topics).toEqual([]);
@@ -210,7 +192,7 @@ describe.skipIf(!dbReady)('a free text claims nothing it did not measure', () =>
       [id],
     );
     expect(states[0]!.n).toBe(1);
-    await finish(env, l, s);
+    await finishRun(env, l, s.id);
     const done = (await l.api.get<SessionView>(`/practice/sessions/${s.id}`)).body;
     expect(done.summary?.shaky_topics).toEqual(['Thema']);
   });

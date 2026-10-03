@@ -155,15 +155,7 @@ describe.skipIf(!dbReady)('figures that state numbers are checked, stored and gr
     env = await createTestEnv({ start: '2026-10-02T09:00:00Z' });
     l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2012-02-10' });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('stores only the questions whose figure holds, and grades them by code', async () => {
     const s = await start(env, l);

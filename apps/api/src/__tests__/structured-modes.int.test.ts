@@ -71,14 +71,8 @@ describe.skipIf(!dbReady)('structured items in help mode and in a run that grows
   });
   afterEach(async () => {
     while (holding.length > 0) holding.pop()?.();
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      // A tutor call would mean a structured answer went to a model.
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
+    // A tutor call would mean a structured answer went to a model.
+    await env.closeChecked();
   });
 
   it('helps with a photographed ordering task: code judges, hints come, the solution never', async () => {

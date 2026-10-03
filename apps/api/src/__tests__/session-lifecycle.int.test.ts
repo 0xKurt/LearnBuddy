@@ -147,15 +147,9 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
     env.llm.byDefault('buddy_check', WAIT);
   });
   afterEach(async () => {
-    // Buddy's wake-up after a session the server finished runs in the background.
-    await env.flushBackground();
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
+    // Buddy's wake-up after a session the server finished runs in the background: the report
+    // waits for it (issue #323).
+    await env.closeChecked();
   });
 
   it('H-7 (repro-05), H-8: homework paused with "Beenden" is found again the next day and after two weeks', async () => {

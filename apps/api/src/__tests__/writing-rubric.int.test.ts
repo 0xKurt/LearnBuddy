@@ -18,7 +18,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
-import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import {
+  createTestEnv,
+  finishRun,
+  onboard,
+  type Learner,
+  type TestEnv,
+} from '../testing/harness.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -140,15 +146,7 @@ describe.skipIf(!dbReady)('a writing task is answered element by element', () =>
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('costs ONE model call per answer, whatever the rubric asks about', async () => {
     const s = await start(env, l, [essay()]);
@@ -285,7 +283,7 @@ describe.skipIf(!dbReady)('a writing task is answered element by element', () =>
     expect(after.items[0]!.status).toBe('correct');
     // Here something WAS measured, so the schedule may learn from it (issue #197).
     expect(await reviews(env, id)).toBe(1);
-    await l.api.post(`/practice/sessions/${s.id}/finish`, {});
+    await finishRun(env, l, s.id);
     const done = (await l.api.get<SessionView>(`/practice/sessions/${s.id}`)).body;
     expect(done.summary?.shaky_topics).toEqual([]);
   });

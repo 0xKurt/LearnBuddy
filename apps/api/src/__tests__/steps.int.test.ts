@@ -76,15 +76,7 @@ describe.skipIf(!dbReady)('a written path is judged by code, step by step', () =
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('accepts a sound path and judges it on the value it arrives at', async () => {
     const s = await start(env, l, [item({})]);

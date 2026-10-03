@@ -49,15 +49,7 @@ describe.skipIf(!dbReady)('home: the card on top', () => {
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   /** Practice Buddy prepared for Thursday's test, for the given learner. */
   async function preparedForTest(learnerId: string, plannedDate: string | null = null) {

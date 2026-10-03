@@ -114,15 +114,7 @@ describe.skipIf(!dbReady)('Dein Material: a subject with everything there is for
     });
     other = await onboard(env, { name: 'Sam' });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('carries her sheets, the exercises that came from no sheet and the topics, per subject', async () => {
     await upload(env, lena, 'Europa');

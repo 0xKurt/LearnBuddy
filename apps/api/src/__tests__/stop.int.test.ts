@@ -74,15 +74,7 @@ describe.skipIf(!dbReady)('stopping a reply', () => {
     lena = await onboard(env, { relation: 'self', name: 'Lena', birthDate: '2000-02-10' });
     tom = await onboard(env, { relation: 'self', name: 'Tom', birthDate: '1999-05-01' });
   });
-  afterEach(() => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    env.llm.reset();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.checkScript({ reset: true }));
   afterAll(async () => {
     await env?.close();
   });

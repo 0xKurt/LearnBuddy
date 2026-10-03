@@ -57,15 +57,7 @@ describe.skipIf(!dbReady)('notification buttons', () => {
   beforeEach(async () => {
     env = await createTestEnv({ start: START });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.length,
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: 0, pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   async function tick(): Promise<void> {
     const res = await env.app.request('/v1/internal/tick', {

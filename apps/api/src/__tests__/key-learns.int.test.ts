@@ -84,15 +84,7 @@ describe.skipIf(!dbReady)('what the key may learn from the model', () => {
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('learns a synonym the model accepted while practising', async () => {
     const s = await start(env, l, 'practice');

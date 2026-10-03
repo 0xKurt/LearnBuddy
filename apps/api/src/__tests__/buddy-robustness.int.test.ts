@@ -65,17 +65,7 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
   beforeAll(async () => {
     env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
   });
-  afterEach(() => {
-    const { scriptErrors, unexpected } = env.llm;
-    const pending = env.llm.pending();
-    const report = {
-      scriptErrors: [...scriptErrors],
-      unexpected: unexpected.map((u) => u.purpose),
-      pending,
-    };
-    env.llm.reset();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.checkScript({ reset: true }));
   afterAll(async () => {
     await env?.close();
   });

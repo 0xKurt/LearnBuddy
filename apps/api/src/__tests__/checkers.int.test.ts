@@ -104,15 +104,7 @@ describe.skipIf(!dbReady)('the mechanical checkers, through the answer endpoint'
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('decides form, systems, inequalities, integrals and decays with no tutor call', async () => {
     const all = [FACTORISE, EXPAND, SYSTEM, INEQUALITY, ANTIDERIVATIVE, DECAY, REDOX];

@@ -72,15 +72,7 @@ describe.skipIf(!dbReady)('worksheets as PDF', () => {
     tom = await onboard(env, { relation: 'child', name: 'Tom', birthDate: '2013-05-01' });
     env.llm.byDefault('buddy_check', WAIT);
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('reads a PDF and a photo as one sheet: its pages count, the model gets the PDF', async () => {
     const created = await reserve(lena, ['application/pdf', 'image/jpeg']);

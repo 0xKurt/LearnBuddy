@@ -79,15 +79,7 @@ describe.skipIf(!dbReady)('reading stages on the home card', () => {
     lena = await onboard(env, { name: 'Lena' });
     tom = await onboard(env, { name: 'Tom' });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('follows the real stages: sending → waiting → reading → read, tasks found, practice being made', async () => {
     const m = await create(lena, 2);

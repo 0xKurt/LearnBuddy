@@ -1,7 +1,7 @@
 // Test environment: the real app and schema, fake outside world, one clock.
 // requires live verification in Claude Code session (needs a running Postgres)
 
-import type { CurriculumRegion } from '@learnbuddy/shared-types/contracts';
+import type { CurriculumRegion, SessionView } from '@learnbuddy/shared-types/contracts';
 import type { Hono } from 'hono';
 
 import { createApp } from '../app.js';
@@ -43,8 +43,26 @@ export type TestEnv = {
    * BEFORE the task lands races it — and loses under load (issue #323).
    */
   holdBackground(): void;
+  /**
+   * Fails unless the scripted model was used exactly as scripted: no unexpected call, no error
+   * inside a scripted answer, nothing scripted left over. It reads that only after the background
+   * work the routes started has landed (issue #323) — read before, a background model call
+   * (Buddy's look after /finish, a reading, hints) was counted or missed depending on how busy
+   * the machine was. `reset` forgets the scripts, for tests that share one environment.
+   */
+  checkScript(opts?: { reset?: boolean }): Promise<void>;
+  /** `close()`, then `checkScript()`'s verdict: the afterEach of a test with its own environment. */
+  closeChecked(): Promise<void>;
   close(): Promise<void>;
 };
+
+/** What the scripted model saw that it should not have, and what it was promised but never asked. */
+type ScriptReport = { scriptErrors: string[]; unexpected: string[]; pending: number };
+
+function verdict(r: ScriptReport): void {
+  if (r.scriptErrors.length > 0 || r.unexpected.length > 0 || r.pending > 0)
+    throw new Error(`The model was not used as scripted: ${JSON.stringify(r)}`);
+}
 
 export const TEST_TICK_SECRET = 'test-tick-secret-0123456789abcdef';
 
@@ -96,6 +114,38 @@ export async function createTestEnv(
   const embeddings = new FakeEmbeddings();
   const pending: Array<Promise<void>> = [];
   let held: Array<() => Promise<void>> | null = null;
+  const flushBackground = async (): Promise<void> => {
+    const release = held ?? [];
+    held = null;
+    for (const task of release) pending.push(task());
+    while (pending.length > 0) await pending.shift();
+  };
+  // Every background task, held or running, finishes or fails. A failure is not thrown here: what
+  // it did wrong shows in the model report or in the test's own assertions, as it did before.
+  const settleBackground = async (): Promise<void> => {
+    for (const task of held ?? []) pending.push(task());
+    held = null;
+    while (pending.length > 0) await Promise.allSettled(pending.splice(0));
+  };
+  const scriptReport = async (o: { reset?: boolean } = {}): Promise<ScriptReport> => {
+    await settleBackground();
+    const report = {
+      scriptErrors: [...llm.scriptErrors],
+      unexpected: llm.unexpected.map((u) => u.purpose),
+      pending: llm.pending(),
+    };
+    if (o.reset) llm.reset();
+    return report;
+  };
+  const close = async (): Promise<void> => {
+    // Work the routes started in the background finishes (or fails) first: a task still
+    // running on a closed pool would surface as an unhandled rejection in another test
+    // (harness-close-does-not-drain-background).
+    await settleBackground();
+    await db.close();
+    if (adminDb !== db) await adminDb.close();
+    await database.drop();
+  };
   const deps: Deps = {
     config,
     db,
@@ -126,23 +176,18 @@ export async function createTestEnv(
     holdBackground: () => {
       held ??= [];
     },
-    flushBackground: async () => {
-      const release = held ?? [];
-      held = null;
-      for (const task of release) pending.push(task());
-      while (pending.length > 0) await pending.shift();
+    flushBackground,
+    checkScript: async (o) => verdict(await scriptReport(o)),
+    closeChecked: async () => {
+      let report: ScriptReport;
+      try {
+        report = await scriptReport();
+      } finally {
+        await close();
+      }
+      verdict(report);
     },
-    close: async () => {
-      // Work the routes started in the background finishes (or fails) first: a task still
-      // running on a closed pool would surface as an unhandled rejection in another test
-      // (harness-close-does-not-drain-background).
-      for (const task of held ?? []) pending.push(task());
-      held = null;
-      while (pending.length > 0) await Promise.allSettled(pending.splice(0));
-      await db.close();
-      if (adminDb !== db) await adminDb.close();
-      await database.drop();
-    },
+    close,
   };
 }
 
@@ -265,4 +310,23 @@ export async function enableContact(
     return `${k} = $${values.length}`;
   });
   await env.db.query(`update buddy_settings set ${sets.join(', ')} where learner_id = $1`, values);
+}
+
+/**
+ * Ends a practice run as the app does. Finishing wakes Buddy to look at it (`session_finished`,
+ * one background `buddy_check`); here he plans nothing. The look is awaited, so its model call
+ * belongs to the test that caused it instead of landing before or after the model report by
+ * chance (issue #323).
+ */
+export async function finishRun(
+  env: TestEnv,
+  l: Learner,
+  sessionId: string,
+): Promise<ApiResponse<SessionView>> {
+  env.llm.script('buddy_check', {
+    json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null },
+  });
+  const res = await l.api.post<SessionView>(`/practice/sessions/${sessionId}/finish`, {});
+  await env.flushBackground();
+  return res;
 }

@@ -96,15 +96,7 @@ describe.skipIf(!dbReady)('an exercise form Buddy cannot practise', () => {
     lena = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
     env.llm.byDefault('buddy_check', WAIT);
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('keeps the five sums of a mixed sheet and names the sixth task instead of inventing questions', async () => {
     const m = await send(env, lena, {

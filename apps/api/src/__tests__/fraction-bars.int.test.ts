@@ -69,14 +69,8 @@ describe.skipIf(!dbReady)('fraction bars', () => {
     l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
   });
   afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      // A tutor call here would mean a rule could not decide an amount it must decide.
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
+    // A tutor call here would mean a rule could not decide an amount it must decide.
+    await env.closeChecked();
   });
 
   it('writes the question, draws the bars and keeps the solution, from the task alone', async () => {
