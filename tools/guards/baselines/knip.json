@@ -1,6 +1,6 @@
 {
   "$comment": "Ausnahmeliste toter Code (knip, Issue #313): heutige ungenutzte Dateien, Exporte, Typen und Pakete. Darf nur schrumpfen — ein neuer Fund macht `pnpm lint` rot, ein behobener verlangt `pnpm guards:shrink`. Siehe docs/engineering-guards.md.",
-  "total": 214,
+  "total": 211,
   "findings": [
     "devDependencies: apps/mobile/package.json: babel-plugin-module-resolver",
     "devDependencies: package.json: @typescript-eslint/eslint-plugin",
@@ -84,8 +84,6 @@
     "exports: apps/api/src/modules/practice/selection.ts: QUESTIONS_PER_MINUTE",
     "exports: apps/api/src/modules/practice/service.ts: HINTS_BEFORE_SOLUTION",
     "exports: apps/api/src/modules/practice/service.ts: REVEAL_AFTER_MISSES",
-    "exports: apps/api/src/modules/practice/service.ts: SESSION_COLS",
-    "exports: apps/api/src/modules/practice/service.ts: stillPreparing",
     "exports: apps/api/src/modules/practice/speak.ts: PRONOUNCE_PROMPT_VERSION",
     "exports: apps/api/src/modules/practice/staff.ts: clefWord",
     "exports: apps/api/src/modules/practice/staff.ts: lineWords",
@@ -174,7 +172,6 @@
     "types: apps/api/src/lib/time.ts: TemporalError",
     "types: apps/api/src/llm/embeddings.ts: EmbedTask",
     "types: apps/api/src/llm/embeddings.ts: EmbedUsage",
-    "types: apps/api/src/modules/buddy/apply.ts: DecisionMeta",
     "types: apps/api/src/modules/buddy/consolidate.ts: ConsolidationResult",
     "types: apps/api/src/modules/buddy/consolidate.ts: MemoryItem",
     "types: apps/api/src/modules/buddy/delivery.ts: OutreachOrigin",

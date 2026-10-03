@@ -5,7 +5,14 @@
     "harder": "Ancora, un po’ più difficile",
     "harder_topic": "Ancora, un po’ più difficile: {{topics}}"
   },
+  "dictation": {
+    "play": "Ascolta",
+    "again": "Riascolta",
+    "play_hint": "Buddy te lo legge – tutte le volte che vuoi."
+  },
   "answer": {
+    "mic_off": "Qui il microfono è spento: ti eserciti a scrivere.",
+    "placeholder_dictation": "Scrivi quello che senti – senza microfono",
     "label": "La tua risposta",
     "placeholder": "La tua risposta…",
     "unit_hint": "Risposta in {{unit}}"
@@ -97,6 +104,13 @@
     "check_waits": "Solo quando tutto è abbinato."
   },
   "next": "Avanti",
+  "cloze": {
+    "gap": "Spazio {{n}} di {{total}}",
+    "gap_filled": "Spazio {{n}} di {{total}}: {{word}}",
+    "gap_clear": "Svuota di nuovo lo spazio.",
+    "word_used": "{{word}}, già inserita",
+    "check_waits": "Solo quando ogni spazio ha qualcosa."
+  },
   "order": {
     "how": "Toccali in ordine.",
     "element_open": "{{text}}, ancora senza posto",
@@ -213,7 +227,12 @@
     "missed": "Non ancora giusto",
     "skipped": "Saltata",
     "solution": "Soluzione: {{answer}}",
-    "untouched": "Non svolto"
+    "untouched": "Non svolto",
+    "time_up_title": "Il tempo è finito",
+    "time_up_line_one": "Nel tempo a disposizione hai risposto a {{answered}} domanda su {{count}}.",
+    "time_up_line_other": "Nel tempo a disposizione hai risposto a {{answered}} domande su {{count}}.",
+    "time_up_rest": "Quello che è rimasto aperto non conta come sbagliato.",
+    "unanswered": "Senza risposta"
   },
   "test_note": "Verifica di prova – una risposta per domanda, niente suggerimenti. Vedrai il risultato alla fine.",
   "thread": {
@@ -234,5 +253,38 @@
     "brick": "fila {{row}}, mattone {{n}}",
     "check_waits": "Solo quando tutte le caselle sono compilate.",
     "scroll": "Tabella, scorre di lato"
+  },
+  "drill": {
+    "progress": "Calcolo {{current}} di {{total}}",
+    "end_hint": "Torna da Buddy. Quello che hai calcolato resta salvato.",
+    "typed": "La tua risposta: {{value}}",
+    "delete": "Cancella",
+    "slash": "Linea di frazione",
+    "right": "Giusto: {{task}}",
+    "was": "Era: {{task}}",
+    "right_short": "Giusto:",
+    "was_short": "Era:",
+    "done_title": "Fatto!",
+    "again": "Un altro giro",
+    "line": {
+      "better_times": "La tabellina del {{n}} ora va meglio.",
+      "better_divide": "Dividere per {{n}} ora va meglio.",
+      "better_range": "{{what}}: ora va meglio.",
+      "solid_times": "La tabellina del {{n}} la sai già bene.",
+      "solid_divide": "Dividere per {{n}} lo sai già bene.",
+      "solid_range": "{{what}}: lo sai già bene.",
+      "again_times": "Continuiamo con la tabellina del {{n}}.",
+      "again_divide": "Continuiamo con dividere per {{n}}.",
+      "again_range": "Continuiamo con {{what}}."
+    }
+  },
+  "timer": {
+    "chip_one": "ancora {{count}} min",
+    "chip_other": "ancora {{count}} min",
+    "left_one": "Manca {{count}} minuto",
+    "left_other": "Mancano {{count}} minuti",
+    "note": "Una risposta per domanda, niente suggerimenti.",
+    "soon": "Guarda con calma cos’altro riesci a fare.",
+    "up": "Il tempo è finito – il tuo risultato sta arrivando."
   }
 }

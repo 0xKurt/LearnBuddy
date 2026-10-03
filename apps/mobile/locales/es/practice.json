@@ -5,7 +5,14 @@
     "harder": "Más de esto, un poco más difícil",
     "harder_topic": "Más de esto, un poco más difícil: {{topics}}"
   },
+  "dictation": {
+    "play": "Escuchar",
+    "again": "Escuchar otra vez",
+    "play_hint": "Buddy te lo lee – tantas veces como quieras."
+  },
   "answer": {
+    "mic_off": "Aquí el micro está apagado: practicas la ortografía.",
+    "placeholder_dictation": "Escribe lo que oyes – sin micro",
     "label": "Tu respuesta",
     "placeholder": "Tu respuesta…",
     "unit_hint": "Respuesta en {{unit}}"
@@ -97,6 +104,13 @@
     "check_waits": "Solo cuando todo esté emparejado."
   },
   "next": "Siguiente",
+  "cloze": {
+    "gap": "Hueco {{n}} de {{total}}",
+    "gap_filled": "Hueco {{n}} de {{total}}: {{word}}",
+    "gap_clear": "Vacía el hueco otra vez.",
+    "word_used": "{{word}}, ya colocada",
+    "check_waits": "Solo cuando cada hueco tenga algo."
+  },
   "order": {
     "how": "Tócalos en orden.",
     "element_open": "{{text}}, todavía sin lugar",
@@ -213,7 +227,12 @@
     "missed": "Todavía no",
     "skipped": "Saltada",
     "solution": "Solución: {{answer}}",
-    "untouched": "Sin responder"
+    "untouched": "Sin responder",
+    "time_up_title": "Se acabó el tiempo",
+    "time_up_line_one": "En ese tiempo has respondido {{answered}} de {{count}} pregunta.",
+    "time_up_line_other": "En ese tiempo has respondido {{answered}} de {{count}} preguntas.",
+    "time_up_rest": "Lo que quedó abierto no cuenta como incorrecto.",
+    "unanswered": "Sin responder"
   },
   "test_note": "Examen de prueba: una respuesta por pregunta, sin pistas. Verás el resultado al final.",
   "thread": {
@@ -234,5 +253,38 @@
     "brick": "fila {{row}}, ladrillo {{n}}",
     "check_waits": "Solo cuando todas las casillas estén rellenas.",
     "scroll": "Tabla, se desplaza hacia los lados"
+  },
+  "drill": {
+    "progress": "Cuenta {{current}} de {{total}}",
+    "end_hint": "Volver con Buddy. Lo que has calculado queda guardado.",
+    "typed": "Tu respuesta: {{value}}",
+    "delete": "Borrar",
+    "slash": "Barra de fracción",
+    "right": "Correcto: {{task}}",
+    "was": "Era: {{task}}",
+    "right_short": "Correcto:",
+    "was_short": "Era:",
+    "done_title": "¡Hecho!",
+    "again": "Otra ronda",
+    "line": {
+      "better_times": "La tabla del {{n}} ya te sale mejor.",
+      "better_divide": "Dividir entre {{n}} ya te sale mejor.",
+      "better_range": "{{what}}: ya te sale mejor.",
+      "solid_times": "La tabla del {{n}} ya te sale muy bien.",
+      "solid_divide": "Dividir entre {{n}} ya te sale muy bien.",
+      "solid_range": "{{what}}: ya te sale muy bien.",
+      "again_times": "Seguimos con la tabla del {{n}}.",
+      "again_divide": "Seguimos con dividir entre {{n}}.",
+      "again_range": "Seguimos con {{what}}."
+    }
+  },
+  "timer": {
+    "chip_one": "queda {{count}} min",
+    "chip_other": "quedan {{count}} min",
+    "left_one": "Queda {{count}} minuto",
+    "left_other": "Quedan {{count}} minutos",
+    "note": "Una respuesta por pregunta, sin pistas.",
+    "soon": "Mira con calma qué más puedes hacer.",
+    "up": "Se acabó el tiempo: enseguida llega tu resultado."
   }
 }

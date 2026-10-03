@@ -63,6 +63,31 @@
     "card_knew": "Lo sabía",
     "card_not_yet": "Todavía no",
     "correct": "¡Correcto, muy bien!",
+    "dictation": {
+      "prompt_word": "Escucha y escribe la palabra.",
+      "prompt_sentence": "Escucha y escribe la frase.",
+      "shown": "No pasa nada – así se escribe. Escúchalo otra vez mientras lo miras.",
+      "capital": "Casi – aquí «{{word}}» se escribe con mayúscula.",
+      "lower": "Casi – aquí «{{word}}» se escribe con minúscula.",
+      "double_missing": "Casi – en «{{word}}» falta una {{letter}} doble.",
+      "double_extra": "Casi – en «{{word}}» la {{letter}} va sola.",
+      "ie_missing": "Casi – en «{{word}}» falta la e: aquí se escribe ie.",
+      "ie_extra": "Casi – en «{{word}}» solo va una i, sin e.",
+      "sz_needed": "Casi – «{{word}}» se escribe con ß en vez de s o ss.",
+      "ss_needed": "Casi – «{{word}}» se escribe con ss en vez de ß.",
+      "letter_missing": "Casi – en «{{word}}» falta una letra después de «{{before}}».",
+      "letter_missing_start": "Casi – en «{{word}}» falta una letra al principio.",
+      "letter_extra": "Casi – en «{{word}}» sobra una {{letter}}.",
+      "letter_wrong": "Casi – en «{{word}}» la letra {{n}} ({{letter}}) aún no está bien.",
+      "swapped": "Casi – en «{{word}}» hay dos letras cambiadas de sitio.",
+      "word_wrong": "Todavía no – «{{word}}» suena distinto. Escúchalo otra vez.",
+      "word_missing": "Casi – falta una palabra después de «{{before}}».",
+      "word_missing_start": "Casi – falta una palabra al principio.",
+      "word_extra": "Casi – «{{word}}» sobra.",
+      "together": "Casi – «{{first}} {{second}}» se escribe junto.",
+      "apart": "Casi – «{{word}}» se escribe separado.",
+      "punctuation": "Casi – revisa la puntuación en «{{word}}»."
+    },
     "had_enough": "Vale, por hoy ya está bien. Puedes terminar el ejercicio, o hacemos un ejemplo pequeño juntos. Dime qué prefieres.",
     "heard_retry": "No te he oído bien. Inténtalo otra vez un poco más alto y más cerca del móvil.",
     "help_final_answer": "¡Eso va bien! Ahora escríbeme tu resultado final, tal como lo pide el ejercicio.",
@@ -251,6 +276,14 @@
       "urn": "Urna",
       "humid": "Húmedo",
       "arid": "Árido"
+    },
+    "cloze": {
+      "quote": "«{{word}}»",
+      "none_yet": "Todavía no del todo: vuelve a mirar los huecos.",
+      "right_of": "{{count}} de {{total}} huecos ya están bien.",
+      "right_of_one": "1 de {{total}} huecos ya está bien.",
+      "wrong": "Todavía no encaja: {{words}}.",
+      "near": "{{words}}: solo falta un pequeño detalle de ortografía."
     }
   },
   "contact": {
@@ -258,5 +291,33 @@
   },
   "voice": {
     "sample": "Hola, soy Buddy. Así sueno cuando te leo algo."
+  },
+  "drill": {
+    "and": "y",
+    "percent_of": "{{p}} % de {{n}}",
+    "carry_with": "llevando",
+    "carry_without": "sin llevar",
+    "title": {
+      "times": "Tablas de multiplicar",
+      "times_rows": "Tablas del {{rows}}",
+      "divide": "Divisiones",
+      "divide_rows": "Dividir entre {{rows}}",
+      "plus_10": "Sumas hasta 10",
+      "plus_20": "Sumas hasta 20",
+      "minus_20": "Restas hasta 20",
+      "plus_100": "Sumas hasta 100",
+      "minus_100": "Restas hasta 100",
+      "fractions": "Sumar fracciones",
+      "percent": "Porcentajes"
+    }
+  },
+  "roleplay": {
+    "feedback_head": "El juego de rol ha terminado – así ha ido:",
+    "point_met": "✓ {{name}}: conseguido – «{{quote}}»",
+    "point_open": "○ {{name}}: todavía no",
+    "better_head": "Así suena aún mejor:",
+    "better_line": "«{{said}}» → «{{better}}»",
+    "ended": "Vale, paramos el juego de rol. Dime cuando quieras otra vez.",
+    "try_in": "Inténtalo en {{language}} – sigo en mi papel. Si quieres parar, dilo sin más."
   }
 }

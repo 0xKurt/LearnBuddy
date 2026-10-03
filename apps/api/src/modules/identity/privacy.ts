@@ -40,6 +40,8 @@ const LEARNER_TABLES = [
   // What Buddy proposed to delete and what she answered (issue #151): hers, and part of
   // the record of what was done with her data.
   'buddy_pending_actions',
+  // Her roleplays in a foreign language and the checked feedback on them (issue #244).
+  'buddy_roleplays',
   // What was talked about on earlier days (issue #22): hers, so it is in her export.
   'buddy_session_summaries',
   'subjects',
@@ -224,6 +226,7 @@ const CONTENT_TABLES: ReadonlyArray<{ table: string; rows: string }> = [
     table: 'buddy_pending_actions',
     rows: `select ctid from buddy_pending_actions where learner_id = $1`,
   },
+  { table: 'buddy_roleplays', rows: `select ctid from buddy_roleplays where learner_id = $1` },
   { table: 'buddy_outreach', rows: `select ctid from buddy_outreach where learner_id = $1` },
   { table: 'buddy_actions', rows: `select ctid from buddy_actions where learner_id = $1` },
   { table: 'buddy_memories', rows: `select ctid from buddy_memories where learner_id = $1` },

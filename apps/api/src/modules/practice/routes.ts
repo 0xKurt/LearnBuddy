@@ -3,12 +3,14 @@
 import {
   AnswerRequest,
   CardRequest,
+  DrillAnswerRequest,
   HintRequest,
   ListenAudioRequest,
   ReexplainRequest,
   SpeakRequest,
   SpeakWordRequest,
   StartCardPassRequest,
+  StartDrillRequest,
   StartPracticeRequest,
   StartTopicRequest,
   Uuid,
@@ -28,21 +30,16 @@ import { check, readBody } from '../../http/validate.js';
 import { isAppError } from '../../lib/errors.js';
 import { runLearnerJobs } from '../buddy/check.js';
 import { recordCard, startCardPass } from './cardPass.js';
+import { answerDrill, startDrill } from './drillRound.js';
 import { startTopic } from './generate.js';
 import { prepareHints } from './hints.js';
 import { listenAudio } from './listen.js';
 import { reexplain } from './reexplain.js';
-import {
-  answerItem,
-  deferItem,
-  finishSession,
-  disputeVerdict,
-  flagItem,
-  hintItem,
-  revealItem,
-  sessionView,
-  startManual,
-} from './service.js';
+import { answerItem, finishSession, sessionView, startManual } from './service.js';
+import { deferItem, revealItem } from './setAside.js';
+import { settleTestClock } from './testClock.js';
+import { hintItem } from './hint.js';
+import { disputeVerdict, flagItem } from './contest.js';
 import { speakItem, speakWord } from './speak.js';
 
 export const practiceRoutes = new Hono<AppEnv>();
@@ -68,6 +65,9 @@ practiceRoutes.post('/sessions', async (c) => {
 practiceRoutes.get('/sessions/:id', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const deps = depsOf(c);
+  // A timed test's clock starts the first time she opens it, and a test whose time is up is
+  // ended before it is shown (issue #241) — so she never sees a test as running that is over.
+  await settleTestClock(deps.db, c.get('learner').id, sessionId, deps.now());
   return c.json(
     await sessionView(deps.db, c.get('learner').id, sessionId, deps.storage, deps.now()),
   );
@@ -149,6 +149,29 @@ practiceRoutes.post('/sessions/:id/card', async (c) => {
 });
 
 /**
+ * Kopfrechnen (issue #243): a round of tasks CODE wrote from the range Buddy offered. No model
+ * is asked — not to start it, not for any answer. Idempotent per `client_request_id` (the
+ * offer's id), so the same offer always opens the same round.
+ */
+practiceRoutes.post('/drills', async (c) => {
+  const input = await readBody(c, StartDrillRequest);
+  const deps = depsOf(c);
+  const learner = c.get('learner');
+  const id = await startDrill(deps, learner, input);
+  return c.json(await sessionView(deps.db, learner.id, id, deps.storage, deps.now()), 201);
+});
+
+/**
+ * One answer of a round, checked by code at once against the value computed from the task.
+ * One try; the next task follows. Idempotent per `client_turn_id`.
+ */
+practiceRoutes.post('/sessions/:id/drill', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, DrillAnswerRequest);
+  return c.json(await answerDrill(depsOf(c), c.get('learner'), sessionId, input));
+});
+
+/**
  * Hörverstehen (issue #210): the recording of one question's listening text. The app names the
  * question and gets audio — the words stay here until the question is closed. `slow` is the
  * same recording read more slowly; asking again is the form, not an extra, and after the first
@@ -185,6 +208,8 @@ practiceRoutes.post('/topic', async (c) => {
   const deps = depsOf(c);
   const learner = c.get('learner');
   const id = await startTopic(deps, learner, input);
+  // Her tap opens it: a test she asked to sit with time starts its clock now (issue #241).
+  await settleTestClock(deps.db, learner.id, id, deps.now());
   // Hints for the new questions, while she reads the first one. Best effort: if this
   // never runs, the tutor model helps as before (hints.ts).
   if (input.kind === 'practice') {

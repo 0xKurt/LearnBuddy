@@ -46,7 +46,8 @@
     "stream_lost": "La conexión se cortó a mitad. Si tu mensaje llegó, Buddy responderá igualmente.",
     "too_many_pages": "Son demasiadas páginas – una ficha puede tener 20 como máximo. Elige solo las que necesitas.",
     "file_unreadable": "Este archivo no se abre. Elige otro o haz una foto de la ficha.",
-    "file_too_large": "El archivo es demasiado grande – 15 MB como máximo. Mejor haz una foto de la ficha."
+    "file_too_large": "El archivo es demasiado grande – 15 MB como máximo. Mejor haz una foto de la ficha.",
+    "time_up": "El tiempo ya se había acabado: esta respuesta ya no cuenta."
   },
   "turn": {
     "model_unavailable": "Buddy no ha podido responder en este momento.",

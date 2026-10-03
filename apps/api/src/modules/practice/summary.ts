@@ -67,14 +67,18 @@ export function summarize(items: readonly SummaryRow[]): PracticeSummary {
     // towards naming the topic as one that went well, or recognising four words would
     // read the same as writing them.
     //
-    // A STRUCTURED answer is the one place where tapping is not that (issues #228–#230). There the taps ARE the answer — a time line she puts in order, pairs she
-    // connects, elements she sorts — and the class test asks for exactly that form, with a
-    // pencil instead of a finger. Nothing was offered to her that replaced producing something,
-    // so there is nothing to weigh down: an eight-cell table right at the first try is more
-    // evidence than a four-option choice, not less. The rule stays "weaker evidence counts for
-    // less"; what changes is that this is not weaker evidence.
-    const recognisedRatherThanProduced =
-      i.answered_by === 'tapped' && !isStructuredKind(i.kind ?? '');
+    // A STRUCTURED answer is the one place where tapping is not that (issues #228–#230). There
+    // the taps ARE the answer — a time line she puts in order, pairs she connects, elements she
+    // sorts — and the class test asks for exactly that form, with a pencil instead of a finger.
+    // Nothing was offered to her that replaced producing something, so there is nothing to
+    // weigh down: an eight-cell table right at the first try is more evidence than a four-option
+    // choice, not less. The rule stays "weaker evidence counts for less"; what changes is that
+    // this is not weaker evidence.
+    //
+    // Not so a cloze filled from its word bank (issue #232): picking the key among the words
+    // offered is recognition again, like a tapped vocabulary word. Typed into its gaps it counts.
+    const tappingIsProducing = isStructuredKind(i.kind ?? '') && i.kind !== 'cloze';
+    const recognisedRatherThanProduced = i.answered_by === 'tapped' && !tappingIsProducing;
     if (!recognisedRatherThanProduced) t.shown += 1;
     byTopic.set(key, t);
   }

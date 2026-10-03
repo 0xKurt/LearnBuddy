@@ -13,7 +13,8 @@ import { z } from 'zod';
 
 import { ACT_SCHEMAS, Outreach, type ActionOf, type AnyAction, type ToolName } from './decision.js';
 import type { Surface } from './lookups.js';
-import { ACT_HANDLERS, ToolRejection, type ToolContext, type ToolOutcome } from './tools.js';
+import { ToolRejection, type ToolContext, type ToolOutcome } from './toolKit.js';
+import { ACT_HANDLERS } from './tools.js';
 
 /** What an act tool changes (for the catalogue, the audit and privacy review). */
 export type Touches =
@@ -26,6 +27,8 @@ export type Touches =
   | 'material'
   | 'settings'
   | 'checks'
+  /** A roleplay in a foreign language (issue #244). */
+  | 'roleplay'
   | 'nothing';
 
 type ActSpec<K extends ToolName> = {
@@ -197,8 +200,16 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     touches: ['nothing'],
     needsQuote: false,
     undoable: false,
-    does: 'offer a button that starts learning now (practice, test, vocab, speak, listen, help) — easier or harder, or one vocabulary direction, when she asks for that',
+    does: 'offer a button that starts learning now (practice, test, vocab, speak, listen, help) — easier or harder, one vocabulary direction, or a test with time, when she asks for that',
     run: ACT_HANDLERS.offer_learning,
+  },
+  offer_drill: {
+    surfaces: TURN,
+    touches: ['nothing'],
+    needsQuote: false,
+    undoable: false,
+    does: 'offer a button that starts a quick mental-arithmetic round (Einmaleins, plus/minus, simple fractions or percentages): code writes every task from the range you pick, she types on a digit pad',
+    run: ACT_HANDLERS.offer_drill,
   },
   open_area: {
     surfaces: TURN,
@@ -207,6 +218,14 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     undoable: false,
     does: 'show a button that opens a part of the app she asks for (her sheets, what you know, settings, earlier messages, the camera)',
     run: ACT_HANDLERS.open_area,
+  },
+  start_roleplay: {
+    surfaces: TURN,
+    touches: ['roleplay'],
+    needsQuote: true,
+    undoable: false,
+    does: 'start a roleplay in the foreign language she wants to practise speaking (she asks for one, or sends a role card): you set the scene, your role and 3 to 5 tasks for her; the app then runs it turn by turn with you in the role and gives her feedback on each task afterwards. Your reply says in her language that it starts, then opens the scene in the roleplay language',
+    run: ACT_HANDLERS.start_roleplay,
   },
 };
 

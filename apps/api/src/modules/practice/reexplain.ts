@@ -30,9 +30,9 @@ import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import {
-  loadSession,
   nextSeq,
-  replay,
+  replayOrLoad,
+  replayTurn,
   shownSolution,
   solutionsOf,
   type ItemRow,
@@ -127,18 +127,10 @@ export async function reexplain(
   sessionId: string,
   input: ReexplainRequest,
 ): Promise<AnswerResponse> {
+  const first = await replayOrLoad(deps, learner.id, sessionId, input.client_turn_id);
+  if ('replayed' in first) return first.replayed;
+  const { session } = first;
   const now = deps.now();
-  const replayed = await replay(
-    deps.db,
-    learner.id,
-    sessionId,
-    input.client_turn_id,
-    deps.storage,
-    deps.now(),
-  );
-  if (replayed) return replayed;
-
-  const session = await loadSession(deps.db, learner.id, sessionId);
   if (session.status === 'abandoned') throw new AppError('conflict', 'Session has ended');
   if (session.mode === 'test' && session.status === 'active') {
     throw new AppError('conflict', 'No explanations during a test', {
@@ -309,26 +301,12 @@ export async function reexplain(
   } catch (err) {
     // A concurrent duplicate of the same tap won: return its result.
     if (isUniqueViolation(err)) {
-      const r = await replay(
-        deps.db,
-        learner.id,
-        sessionId,
-        input.client_turn_id,
-        deps.storage,
-        deps.now(),
-      );
+      const r = await replayTurn(deps, learner.id, sessionId, input.client_turn_id);
       if (r) return r;
     }
     throw err;
   }
-  const done = await replay(
-    deps.db,
-    learner.id,
-    sessionId,
-    input.client_turn_id,
-    deps.storage,
-    deps.now(),
-  );
+  const done = await replayTurn(deps, learner.id, sessionId, input.client_turn_id);
   if (!done) throw new AppError('internal', 'explanation missing');
   return done;
 }

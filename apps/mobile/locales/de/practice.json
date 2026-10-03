@@ -5,7 +5,14 @@
     "harder": "Mehr davon, etwas schwerer",
     "harder_topic": "Mehr davon, etwas schwerer: {{topics}}"
   },
+  "dictation": {
+    "play": "Anhören",
+    "again": "Nochmal hören",
+    "play_hint": "Buddy liest es dir vor – so oft du magst."
+  },
   "answer": {
+    "mic_off": "Das Mikro ist hier aus – du übst das Schreiben.",
+    "placeholder_dictation": "Schreib, was du hörst – ohne Mikro",
     "label": "Deine Antwort",
     "placeholder": "Deine Antwort …",
     "unit_hint": "Antwort in {{unit}}"
@@ -97,6 +104,13 @@
     "check_waits": "Erst wenn alles zugeordnet ist."
   },
   "next": "Weiter",
+  "cloze": {
+    "gap": "Lücke {{n}} von {{total}}",
+    "gap_filled": "Lücke {{n}} von {{total}}: {{word}}",
+    "gap_clear": "Leert die Lücke wieder.",
+    "word_used": "{{word}}, schon eingesetzt",
+    "check_waits": "Erst wenn jede Lücke etwas hat."
+  },
   "order": {
     "how": "Tippe sie der Reihe nach an.",
     "element_open": "{{text}}, noch ohne Platz",
@@ -213,7 +227,12 @@
     "missed": "Noch nicht richtig",
     "skipped": "Übersprungen",
     "solution": "Lösung: {{answer}}",
-    "untouched": "Nicht bearbeitet"
+    "untouched": "Nicht bearbeitet",
+    "time_up_title": "Die Zeit ist um",
+    "time_up_line_one": "In der Zeit hast du {{answered}} von {{count}} Frage beantwortet.",
+    "time_up_line_other": "In der Zeit hast du {{answered}} von {{count}} Fragen beantwortet.",
+    "time_up_rest": "Was offen blieb, zählt nicht als falsch.",
+    "unanswered": "Nicht beantwortet"
   },
   "test_note": "Probetest – eine Antwort pro Frage, keine Tipps. Das Ergebnis siehst du am Ende.",
   "thread": {
@@ -234,5 +253,38 @@
     "brick": "Reihe {{row}}, Stein {{n}}",
     "check_waits": "Erst wenn jedes Feld ausgefüllt ist.",
     "scroll": "Tabelle, seitlich verschiebbar"
+  },
+  "drill": {
+    "progress": "Aufgabe {{current}} von {{total}}",
+    "end_hint": "Zurück zu Buddy. Was du gerechnet hast, bleibt gespeichert.",
+    "typed": "Deine Antwort: {{value}}",
+    "delete": "Löschen",
+    "slash": "Bruchstrich",
+    "right": "Richtig: {{task}}",
+    "was": "Das war: {{task}}",
+    "right_short": "Richtig:",
+    "was_short": "Das war:",
+    "done_title": "Geschafft!",
+    "again": "Noch eine Runde",
+    "line": {
+      "better_times": "Die {{n}}er sitzen jetzt besser.",
+      "better_divide": "Geteilt durch {{n}} sitzt jetzt besser.",
+      "better_range": "{{what}} sitzt jetzt besser.",
+      "solid_times": "Die {{n}}er sitzen schon gut.",
+      "solid_divide": "Geteilt durch {{n}} sitzt schon gut.",
+      "solid_range": "{{what}} sitzt schon gut.",
+      "again_times": "Bei den {{n}}ern bleiben wir dran.",
+      "again_divide": "Bei geteilt durch {{n}} bleiben wir dran.",
+      "again_range": "Bei {{what}} bleiben wir dran."
+    }
+  },
+  "timer": {
+    "chip_one": "noch {{count}} Min.",
+    "chip_other": "noch {{count}} Min.",
+    "left_one": "Noch {{count}} Minute",
+    "left_other": "Noch {{count}} Minuten",
+    "note": "Eine Antwort pro Frage, keine Tipps.",
+    "soon": "Schau in Ruhe, was du noch schaffst.",
+    "up": "Die Zeit ist um – dein Ergebnis kommt gleich."
   }
 }

@@ -5,7 +5,8 @@
     "test": "Examen de prueba",
     "vocab": "Repasar vocabulario",
     "speak": "Practicar pronunciación",
-    "listen": "Comprensión oral"
+    "listen": "Comprensión oral",
+    "spelling_dictation": "Practicar dictado"
   },
   "homework": {
     "title": "Ayuda con los deberes",
@@ -53,6 +54,11 @@
       "hint": "Te leo un texto corto y luego te pregunto.",
       "placeholder": "p. ej. Unit 3 de inglés, las vacaciones en francés"
     },
+    "spelling_dictation": {
+      "title": "¿Qué palabras para el dictado?",
+      "hint": "Te leo cada palabra y tú la escribes.",
+      "placeholder": "p. ej. tus palabras de ortografía"
+    },
     "help": {
       "title": "¿Qué ejercicio? Cópialo aquí.",
       "hint": "Te doy pistas – la solución la encuentras tú.",
@@ -63,6 +69,11 @@
     "submit": "¡Vamos!",
     "preparing": "Buddy lo está preparando …",
     "preparing_hint": "Tarda unos segundos.",
-    "not_usable": "Con eso no puedo preparar nada, lo siento – prueba con un tema del cole."
+    "not_usable": "Con eso no puedo preparar nada, lo siento – prueba con un tema del cole.",
+    "minutes_one": "con {{count}} minuto",
+    "minutes_other": "con {{count}} minutos"
+  },
+  "drill": {
+    "label": "Cálculo mental"
   }
 }

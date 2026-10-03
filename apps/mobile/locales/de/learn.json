@@ -5,7 +5,8 @@
     "test": "Probetest",
     "vocab": "Vokabeln abfragen",
     "speak": "Aussprache üben",
-    "listen": "Hörverstehen üben"
+    "listen": "Hörverstehen üben",
+    "spelling_dictation": "Diktat üben"
   },
   "homework": {
     "title": "Hilfe bei Hausaufgaben",
@@ -53,6 +54,11 @@
       "hint": "Ich lese dir einen kurzen Text vor und frage dich dazu.",
       "placeholder": "z. B. Englisch Unit 3, Ferien auf Französisch"
     },
+    "spelling_dictation": {
+      "title": "Welche Wörter sollen ins Diktat?",
+      "hint": "Ich lese dir jedes Wort vor, du schreibst es.",
+      "placeholder": "z. B. deine Lernwörter oder ie-Wörter"
+    },
     "help": {
       "title": "Welche Aufgabe? Schreib sie ab.",
       "hint": "Ich gebe dir Tipps – die Lösung findest du selbst.",
@@ -63,6 +69,11 @@
     "submit": "Los geht's",
     "preparing": "Buddy bereitet vor …",
     "preparing_hint": "Das dauert ein paar Sekunden.",
-    "not_usable": "Damit kann ich leider nichts vorbereiten – probier ein Schulthema."
+    "not_usable": "Damit kann ich leider nichts vorbereiten – probier ein Schulthema.",
+    "minutes_one": "mit {{count}} Minute",
+    "minutes_other": "mit {{count}} Minuten"
+  },
+  "drill": {
+    "label": "Kopfrechnen"
   }
 }

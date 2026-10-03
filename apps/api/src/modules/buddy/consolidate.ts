@@ -37,7 +37,7 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { consentCurrentSql, enqueueJob, finishJob, type JobRow } from '../scheduler/jobs.js';
 import { bumpContext } from './plan.js';
 import { unsupportedSpecifics } from './text.js';
-import { MAX_ACTIVE_MEMORIES } from './tools.js';
+import { MAX_ACTIVE_MEMORIES } from './toolKit.js';
 
 export const CONSOLIDATE_PROMPT_VERSION = 'consolidate.v1';
 

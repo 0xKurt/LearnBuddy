@@ -209,12 +209,11 @@ export function QuestionCard({
             // A fraction in the question sits in its sentence (issue #288).
             inlineFractions
             accessibilityRole="header"
-            style={[
-              TYPE.title,
+            style={
               dense
-                ? { fontSize: 18, lineHeight: 25, fontWeight: '500' }
-                : { fontSize: 21, lineHeight: 29, fontWeight: '500' },
-            ]}
+                ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
+                : TYPE.question
+            }
           />
         </View>
         {figure ? (

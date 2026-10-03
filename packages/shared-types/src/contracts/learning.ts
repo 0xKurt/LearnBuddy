@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
+import { DrillView } from './drill.js';
 import { Figure } from './figure.js';
 import { ListenRef } from './listen.js';
 import { StructuredAnswer, StructuredTaskView } from './structured.js';
@@ -296,7 +297,7 @@ export const ItemKind = z.enum([
   'vocab',
   /** Say the prompt aloud in lang; the model listens to the recording. */
   'speak',
-  // Structured items (issues #228–#230, contracts/structured.ts): answered with `parts`,
+  // Structured items (issues #228–#232, contracts/structured.ts): answered with `parts`,
   // judged by code against `items.task`. `ItemView.task_view` shows what to arrange.
   /** Put 3–8 elements into the right order (#228). */
   'order',
@@ -304,6 +305,16 @@ export const ItemKind = z.enum([
   'match',
   /** Fill the gaps of a table (#230). */
   'table_fill',
+  /** Fill 2–8 gaps in one text, typed or from a word bank (#232). */
+  'cloze',
+  /**
+   * Diktat (issue #242, contracts/dictation.ts): Buddy reads a word or sentence aloud, she types
+   * it. The word is never in the view while the question is open; `ItemView.listen` names the
+   * recording, `POST /practice/sessions/:id/listen` plays it. Not called "dictation" alone: in
+   * the app that word already means voice input (`lib/speech/dictation.ts`), which is exactly
+   * what this question must NOT offer.
+   */
+  'spelling_dictation',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
 
@@ -541,6 +552,43 @@ export type PracticeSummary = z.infer<typeof PracticeSummary>;
 export const SessionMode = z.enum(['practice', 'test', 'help']);
 export type SessionMode = z.infer<typeof SessionMode>;
 
+/**
+ * How long a practice test with a time limit runs, in minutes (issue #241). A fixed list, never
+ * a free number: the model picks one of these when she asks for time, and the server refuses
+ * anything else (CLAUDE.md rule 2 — the model never writes durations or instants of its own).
+ */
+export const TEST_MINUTES = [10, 20, 30, 45, 60, 90] as const;
+export const TestMinutes = z.union([
+  z.literal(10),
+  z.literal(20),
+  z.literal(30),
+  z.literal(45),
+  z.literal(60),
+  z.literal(90),
+]);
+export type TestMinutes = z.infer<typeof TestMinutes>;
+
+/**
+ * The clock of a practice test she asked to sit with a time limit (issue #241). The server keeps
+ * the deadline; the app only counts down from what it is told here.
+ */
+export const TestTimer = z.object({
+  minutes: TestMinutes,
+  /**
+   * Milliseconds left at the moment the server answered (0 once it is up). The app counts down
+   * from the time it received the view — never from its own wall clock against a deadline, so a
+   * phone whose clock is wrong still shows the right time left.
+   */
+  remaining_ms: z.number().int().min(0),
+  /**
+   * The test ended because the time was up (not handed in earlier, not answered to the end).
+   * Then the result says how far she got; the questions still open are "nicht beantwortet",
+   * never wrong.
+   */
+  ran_out: z.boolean(),
+});
+export type TestTimer = z.infer<typeof TestTimer>;
+
 export const SessionView = z.object({
   id: Uuid,
   /** help: homework, hints only and the solution is never shown. */
@@ -567,6 +615,12 @@ export const SessionView = z.object({
    */
   card_pass_offered: z.boolean().default(false),
   /**
+   * A Kopfrechnen round (issue #243, `contracts/drill.ts`): tasks code wrote, a digit pad, one
+   * try each, checked at once. Null for every other session. A build that does not know a
+   * newer shape reads null rather than failing the whole session.
+   */
+  drill: DrillView.nullable().default(null).catch(null),
+  /**
    * More questions for this run are still being written (issue #220): a practice run starts
    * with its first few questions and grows while she works, so for a few seconds `items` is
    * shorter than the run will be.
@@ -582,6 +636,8 @@ export const SessionView = z.object({
    * run can never be left unfinishable.
    */
   preparing: z.boolean().default(false),
+  /** A test with a time limit she asked for (issue #241); null for every other run. */
+  timer: TestTimer.nullable().default(null),
   items: z.array(SessionItemView),
   turns: z.array(PracticeTurnView),
   current_item_id: Uuid.nullable(),
@@ -725,10 +781,18 @@ export const StartTopicRequest = z.object({
    * (Hörverstehen, issue #210 — refused before any model call when there is no voice to
    * read it) · help: a homework task the learner typed ·
    * test: a practice test on a topic (one try per question, no hints, results at the
-   * end). Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
+   * end) · spelling_dictation: a Diktat — words or sentences read aloud that she types
+   * (issue #242; refused before any model call when there is no voice, like listen).
+   * Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
    */
-  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test']),
+  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test', 'spelling_dictation']),
   text: z.string().trim().min(2).max(3000),
+  /**
+   * spelling_dictation only: the photographed sheet the words come from (a Lernwörter list,
+   * issue #242). The words are then taken from that sheet's text and every one must stand in it
+   * (`practice/dictation.ts`); any other kind ignores it. Another learner's sheet is a 404.
+   */
+  material_id: Uuid.nullable().optional(),
   subject: z.string().trim().max(60).nullable().optional(),
   /**
    * practice / test for a planned test (Buddy's offer names it): the questions stay within the
@@ -749,6 +813,12 @@ export const StartTopicRequest = z.object({
    * either way, so the other one can be practised later; null asks both, as before.
    */
   direction: VocabDirection.nullable().optional(),
+  /**
+   * test only: a time limit she asked for in the chat (issue #241), carried by Buddy's offer.
+   * One of `TEST_MINUTES` — anything else is refused here; on any other kind the server refuses
+   * it before a model is asked (`practice/generate.ts`).
+   */
+  minutes: TestMinutes.nullable().optional(),
 });
 export type StartTopicRequest = z.infer<typeof StartTopicRequest>;
 

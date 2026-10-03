@@ -1,6 +1,8 @@
 import { Text, View } from 'react-native';
 import type { Palette } from '../../lib/theme/palettes.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { Icon, type IconName } from './Icon.js';
 
 type Tone = 'gray' | 'primary' | 'success' | 'warning' | 'dark';
 
@@ -14,14 +16,29 @@ const tones = (p: Palette): Record<Tone, { bg: string; color: string; border?: s
   dark: { bg: p.ink, color: p.paper },
 });
 
-export function Chip({ children, tone = 'gray' }: { children: string; tone?: Tone }) {
+export function Chip({
+  children,
+  tone = 'gray',
+  icon,
+  accessibilityLabel,
+}: {
+  children: string;
+  tone?: Tone;
+  /** A small sign before the words (the clock of a test with time, issue #241). */
+  icon?: IconName;
+  /** What a screen reader says when the short label is not enough on its own. */
+  accessibilityLabel?: string;
+}) {
   const { palette } = useTheme();
   const t = tones(palette)[tone];
   return (
     <View
       accessibilityRole="text"
-      accessibilityLabel={children}
+      accessibilityLabel={accessibilityLabel ?? children}
       style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACE.xs,
         backgroundColor: t.bg,
         borderColor: t.border ?? 'transparent',
         borderWidth: t.border ? 1 : 0,
@@ -32,6 +49,11 @@ export function Chip({ children, tone = 'gray' }: { children: string; tone?: Ton
         maxWidth: '100%',
       }}
     >
+      {icon ? (
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Icon name={icon} size={14} color={t.color} />
+        </View>
+      ) : null}
       <Text style={{ color: t.color, fontSize: 13, lineHeight: 17, fontWeight: '600' }}>
         {children}
       </Text>

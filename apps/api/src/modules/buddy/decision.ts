@@ -14,6 +14,10 @@
 
 import {
   DifficultyWish as DifficultyWishSchema,
+  DrillCarry,
+  DrillRange,
+  DrillRow,
+  RoleplayLanguage,
   VocabDirection as VocabDirectionSchema,
   VOICE_NAMES,
 } from '@learnbuddy/shared-types/contracts';
@@ -649,13 +653,16 @@ const scheduleCheck = z.object({
   }),
 });
 
+/** The minutes a timed test may have, as the model picks them (`TEST_MINUTES`, issue #241). */
+export const TEST_MINUTE_CHOICES = ['10', '20', '30', '45', '60', '90'] as const;
+
 const offerLearning = z.object({
   tool: z.literal('offer_learning'),
   args: z.object({
     kind: z
-      .enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test'])
+      .enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test', 'spelling_dictation'])
       .describe(
-        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end)',
+        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end) · spelling_dictation: a dictation: the app reads words or sentences aloud and she types them (when she asks for a dictation or to practise writing/spelling her word list)',
       ),
     text: z
       .string()
@@ -670,6 +677,13 @@ const offerLearning = z.object({
       .describe(
         'practice or test for a planned test in STATE: its alias (g1) — the questions then stay within the sheets she photographed for it; otherwise null',
       ),
+    // A Diktat of the words on one of her sheets (issue #242). Optional in parsing like the two
+    // below: older scripted answers have none.
+    sheet: MaterialRef.nullable()
+      .optional()
+      .describe(
+        'spelling_dictation only: the sheet (sh1) whose words she wants dictated — a word list she photographed. The words are then taken from that sheet, and "text" names it. null for every other kind, and when she typed or named the words.',
+      ),
     // Optional in parsing (older scripted answers have neither); the model sees both. Issue #113.
     difficulty: DifficultyWishSchema.nullable()
       .optional()
@@ -680,6 +694,43 @@ const offerLearning = z.object({
       .optional()
       .describe(
         'vocab only, and only what she asked for: "recognise" asks what the foreign word means, "produce" shows it in her own language and asks for the foreign word. null asks both directions, as usual.',
+      ),
+    // Issue #241: a clock only on her wish. The minutes are a value from a fixed list, never a
+    // number of the model's own (rule 2), and her words asking for it are checked by code.
+    time_limit: z
+      .object({
+        minutes: z
+          .enum(TEST_MINUTE_CHOICES)
+          .describe('the minutes she named, else the nearest on this list; 45 when she named none'),
+        quote: Quote.describe('her words asking to sit it with time'),
+      })
+      .nullable()
+      .optional()
+      .describe(
+        'test only, and only when she herself asks to sit it with a time limit, as in a class test, or names a length. null otherwise — never a clock she did not ask for.',
+      ),
+  }),
+});
+
+const offerDrill = z.object({
+  tool: z.literal('offer_drill'),
+  args: z.object({
+    range: DrillRange.describe(
+      'plus_10 · plus_20 · minus_20 · plus_100 · minus_100 · times (the times tables) · divide (the tables backwards) · fractions (1/2 + 1/4, one family) · percent (25 % of 80)',
+    ),
+    rows: z
+      .array(DrillRow)
+      .min(1)
+      .max(10)
+      .nullable()
+      .default(null)
+      .describe(
+        'times/divide only: the rows she named (the 6 and 7 times tables → [6, 7]); null = all',
+      ),
+    carry: DrillCarry.nullable()
+      .default(null)
+      .describe(
+        'plus/minus within 20 or 100 only, and only when she said it: with = crossing the ten, without = not; null = mixed',
       ),
   }),
 });
@@ -692,6 +743,41 @@ const openArea = z.object({
       .describe(
         "library = her sheets and their questions · memory = what you know about her · settings = contact, language, parents' area · history = all earlier messages · capture = take a photo of a sheet",
       ),
+  }),
+});
+
+/**
+ * A roleplay in a foreign language (issue #244). The model sets the frame once — the language,
+ * where it plays, who Buddy is, and the 3–5 things she has to manage (the role card) — and code
+ * keeps it: every in-role turn after this one is written against the stored row, never against
+ * what the model remembers of it (modules/buddy/roleplay.ts).
+ */
+const startRoleplay = z.object({
+  tool: z.literal('start_roleplay'),
+  args: z.object({
+    language: RoleplayLanguage.describe(
+      'the language the roleplay is spoken in: the foreign language she wants to practise, never her own app language',
+    ),
+    scene: z
+      .string()
+      .trim()
+      .min(3)
+      .max(80)
+      .describe("where it plays, a few words in the learner's own language"),
+    role: z
+      .string()
+      .trim()
+      .min(2)
+      .max(40)
+      .describe("who you play in it, one to three words in the learner's own language"),
+    points: z
+      .array(z.string().trim().min(2).max(60))
+      .min(3)
+      .max(5)
+      .describe(
+        "the role card: 3 to 5 things she has to manage in the conversation (to greet, to ask for the price…), each a short phrase in the learner's own language. From her photographed role card when she has one. The feedback afterwards is given on exactly these.",
+      ),
+    quote: Quote.describe('her words asking for the roleplay'),
   }),
 });
 
@@ -716,7 +802,9 @@ export const ACT_SCHEMAS = {
   set_voice: setVoice,
   schedule_check: scheduleCheck,
   offer_learning: offerLearning,
+  offer_drill: offerDrill,
   open_area: openArea,
+  start_roleplay: startRoleplay,
 } as const;
 
 export type ToolName = keyof typeof ACT_SCHEMAS;

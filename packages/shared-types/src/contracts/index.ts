@@ -10,4 +10,6 @@ export * from './structured.js';
 export * from './rubric.js';
 export * from './listen.js';
 export * from './notation.js';
+export * from './dictation.js';
+export * from './drill.js';
 export * from './learning.js';

@@ -5,7 +5,8 @@
     "test": "Verifica di prova",
     "vocab": "Ripassare i vocaboli",
     "speak": "Esercitare la pronuncia",
-    "listen": "Comprensione orale"
+    "listen": "Comprensione orale",
+    "spelling_dictation": "Esercitarsi con il dettato"
   },
   "homework": {
     "title": "Aiuto con i compiti",
@@ -53,6 +54,11 @@
       "hint": "Ti leggo un testo breve e poi ti faccio delle domande.",
       "placeholder": "per es. Unit 3 di inglese, le vacanze in francese"
     },
+    "spelling_dictation": {
+      "title": "Quali parole per il dettato?",
+      "hint": "Ti leggo ogni parola e tu la scrivi.",
+      "placeholder": "p. es. le tue parole da imparare"
+    },
     "help": {
       "title": "Quale esercizio? Ricopialo qui.",
       "hint": "Ti do degli indizi – la soluzione la trovi tu.",
@@ -63,6 +69,11 @@
     "submit": "Andiamo",
     "preparing": "Buddy sta preparando …",
     "preparing_hint": "Ci vuole qualche secondo.",
-    "not_usable": "Con questo non riesco a preparare niente, scusa – prova con un argomento di scuola."
+    "not_usable": "Con questo non riesco a preparare niente, scusa – prova con un argomento di scuola.",
+    "minutes_one": "con {{count}} minuto",
+    "minutes_other": "con {{count}} minuti"
+  },
+  "drill": {
+    "label": "Calcolo mentale"
   }
 }

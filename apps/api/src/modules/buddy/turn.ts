@@ -26,7 +26,7 @@ import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { homeworkSolved, mentionsSolution } from '../practice/tutor.js';
-import { applyDecision, recordUnapplied } from './apply.js';
+import { applyDecision, recordUnapplied, type DecisionMeta } from './apply.js';
 import { preInjectedPassages } from './connectors/material.js';
 import { buildContents, buildContext } from './context.js';
 import { prepareOffered } from '../practice/prepare.js';
@@ -37,6 +37,23 @@ import { replyProgress, type ReplyProgress } from './stream.js';
 import { BUDDY_PROMPT_VERSION, TURN_SYSTEM, repairMessage } from './prompts.js';
 import { lookupsField, withLookups } from './lookups.js';
 import { loadBuddyState, type MessageRow, TURN_STALL_MS } from './state.js';
+import {
+  activeRoleplay,
+  endForConcern,
+  feedbackText,
+  languageName,
+  ROLEPLAY_PROMPT_VERSION,
+  ROLEPLAY_SYSTEM,
+  ROLEPLAY_TURN_SCHEMA,
+  roleplayContents,
+  roleplayFrame,
+  roleplayMessages,
+  RoleplayTurnForModel,
+  writeFeedback,
+  type RoleplayFeedback,
+  type RoleplayRow,
+  type RoleplayStep,
+} from './roleplay.js';
 
 const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
 /**
@@ -194,6 +211,8 @@ async function decideTurn(
   onReply?: OnReply,
 ): Promise<TurnOutcome> {
   let repairErrors: string[] | null = null;
+  /** Whether the last attempt was an in-role turn: a repair note never crosses into the other kind. */
+  let lastInRole: boolean | null = null;
   let round = 0;
   // Computed once per turn (one embedding call), reused across repair/stale rounds.
   let preInjected: string | null | undefined;
@@ -228,6 +247,27 @@ async function decideTurn(
       return { status: outcome, errorCode: null };
     }
 
+    // A roleplay is running (issue #244): this message is her line in the scene, answered in
+    // the role against the stored frame — not a Buddy turn with STATE and tools.
+    const play = await activeRoleplay(deps.db, learner.id, now);
+    if (lastInRole !== null && lastInRole !== (play !== null)) repairErrors = null;
+    lastInRole = play !== null;
+    if (play) {
+      const step = await roleplayRound(deps, learner, message, play, {
+        contextVersion: state.settings.context_version,
+        attempt,
+        repairErrors,
+        now,
+        timezone: state.settings.timezone,
+      });
+      if (step.kind === 'outcome') return step.outcome;
+      if (step.kind === 'repair') {
+        if (repairErrors) return failTurn(deps, message, 'model_invalid');
+        repairErrors = step.errors;
+      }
+      continue;
+    }
+
     const tz = state.settings.timezone;
     const written = localParts(message.created_at, tz).date;
     const today = localParts(now, tz).date;
@@ -256,29 +296,12 @@ async function decideTurn(
       dialogue,
       repairErrors ? repairMessage(repairErrors) : undefined,
     );
-    const meta = {
-      mode: 'turn' as const,
-      attempt,
-      model: null as string | null,
+    const { meta, record } = turnRecord(deps, learner.id, message.id, {
+      contextVersion: ctx.contextVersion,
+      attempt: attempt,
       promptVersion: BUDDY_PROMPT_VERSION,
-      output: undefined as unknown,
       triggers: [{ message_id: message.id }],
-      reason: null,
-      topicKey: null,
-    };
-    const record = (disposition: 'failed' | 'rejected', errors: string[]) =>
-      recordUnapplied(
-        deps.db,
-        {
-          learnerId: learner.id,
-          triggerMessageId: message.id,
-          contextVersion: ctx.contextVersion,
-          meta,
-          now: deps.now(),
-        },
-        disposition,
-        errors,
-      );
+    });
 
     let raw: unknown;
     try {
@@ -417,6 +440,200 @@ async function decideTurn(
   return failTurn(deps, message, 'stale');
 }
 
+type RoleplayRound =
+  | { kind: 'outcome'; outcome: TurnOutcome }
+  | { kind: 'repair'; errors: string[] }
+  | { kind: 'stale' };
+
+/**
+ * One in-role turn of a running roleplay (issue #244). Same ownership, fence, failure codes and
+ * audit as any turn — what differs is what the model sees (the stored frame and the scene's own
+ * lines, `roleplay.ts`), what it may answer (a line, no tools) and what code decides from it:
+ *
+ *   concern            → the fixed caring reply, the roleplay ends without feedback;
+ *   leave              → it ends; with turns played, the checked feedback follows;
+ *   another language   → the app's own hint, the turn is not counted;
+ *   otherwise          → the role's line; the turn counts, and the last allowed one ends it
+ *                        with the feedback in the same transaction.
+ *
+ * Not streamed: whether the model's words are shown at all is decided by code after the whole
+ * answer (the language hint replaces them), so nothing is shown that could be withdrawn.
+ */
+async function roleplayRound(
+  deps: Deps,
+  learner: TurnLearner,
+  message: ClaimedMessage,
+  play: RoleplayRow,
+  at: {
+    contextVersion: number;
+    attempt: number;
+    repairErrors: string[] | null;
+    now: Date;
+    timezone: string;
+  },
+): Promise<RoleplayRound> {
+  const today = localParts(at.now, at.timezone).date;
+  const rows = await roleplayMessages(deps.db, play);
+  const { dialogue, learnerWords } = turnDialogue(rows, message.id, learner.locale);
+  const { meta, record } = turnRecord(deps, learner.id, message.id, {
+    contextVersion: at.contextVersion,
+    attempt: at.attempt,
+    promptVersion: ROLEPLAY_PROMPT_VERSION,
+    triggers: [{ message_id: message.id, roleplay_id: play.id }],
+  });
+
+  let raw: unknown;
+  try {
+    const mine = await deps.db.query(
+      `update buddy_messages set claimed_at = $3
+        where id = $1 and claim_token = $2 and status = 'processing' returning id`,
+      [message.id, message.claim_token, deps.now()],
+    );
+    if (mine.length === 0) throw new ClaimLost();
+    const result = await callModel(deps, learner.id, today, {
+      purpose: 'buddy_turn',
+      tier: 'smart',
+      promptVersion: ROLEPLAY_PROMPT_VERSION,
+      system: ROLEPLAY_SYSTEM,
+      contents: roleplayContents(
+        roleplayFrame(play, learner),
+        dialogue,
+        at.repairErrors ? repairMessage(at.repairErrors) : undefined,
+      ),
+      schema: ROLEPLAY_TURN_SCHEMA,
+      maxOutputTokens: 1024,
+      temperature: 0.6,
+      timeoutMs: 30_000,
+      thinkingBudget: 256,
+    });
+    meta.model = result.usage.model;
+    raw = result.json;
+  } catch (err) {
+    if (err instanceof ClaimLost)
+      return { kind: 'outcome', outcome: await currentOutcome(deps, message.id) };
+    if (err instanceof LlmError && err.kind === 'blocked') {
+      await record('failed', [err.finishReason ? `blocked:${err.finishReason}` : 'blocked']);
+      return {
+        kind: 'outcome',
+        outcome: await answerWithSafeguarding(deps, learner, message, 'blocked'),
+      };
+    }
+    const code = turnErrorCode(err);
+    await record('failed', [code]);
+    return { kind: 'outcome', outcome: await failTurn(deps, message, code) };
+  }
+  meta.output = raw;
+
+  const parsed = RoleplayTurnForModel.safeParse(raw);
+  if (!parsed.success) {
+    const errors = parsed.error.issues.slice(0, 6).map((i) => `${i.path.join('.')}: ${i.message}`);
+    await record('rejected', errors);
+    return { kind: 'repair', errors };
+  }
+  const d = parsed.data;
+  const inLanguage = d.her_language === play.language || d.her_language === 'other';
+  if (!d.concern && !d.leave && inLanguage && d.reply.trim().length === 0) {
+    const errors = ['reply: write your next line in the role (empty only for concern or leave)'];
+    await record('rejected', errors);
+    return { kind: 'repair', errors };
+  }
+
+  // What code makes of it. The model's own words are shown only for a counted line in the role.
+  let reply: { text: string; options: null } | null;
+  let step: RoleplayStep;
+  const base = { id: play.id, expectTurns: play.turns, feedback: null, closing: null };
+  if (d.concern) {
+    reply = { text: concernText(learner, d.also_asked), options: null };
+    step = { ...base, count: false, end: 'concern' };
+  } else if (d.leave) {
+    reply = null;
+    step = { ...base, count: false, end: 'her' };
+  } else if (!inLanguage) {
+    reply = {
+      text: t(learner.locale, 'roleplay.try_in', {
+        language: languageName(play.language, learner.locale),
+      }),
+      options: null,
+    };
+    step = { ...base, count: false, end: null };
+  } else {
+    reply = { text: d.reply, options: null };
+    step = { ...base, count: true, end: play.turns + 1 >= play.max_turns ? 'turns' : null };
+  }
+
+  if (step.end === 'her' || step.end === 'turns') {
+    const played = play.turns + (step.count ? 1 : 0);
+    let feedback: RoleplayFeedback | null = null;
+    if (played > 0) {
+      try {
+        // Her words of this turn are hers to be quoted, when they were a line in the scene.
+        feedback = await writeFeedback(
+          deps,
+          learner.id,
+          today,
+          play,
+          learner,
+          rows.filter((r) => step.count || r.id !== message.id),
+          learner.locale,
+          step.count ? learnerWords : [],
+        );
+      } catch (err) {
+        const code = turnErrorCode(err);
+        await record('failed', [`feedback:${code}`]);
+        return { kind: 'outcome', outcome: await failTurn(deps, message, code) };
+      }
+    }
+    step = {
+      ...step,
+      feedback,
+      closing: feedback
+        ? feedbackText(learner.locale, feedback)
+        : t(learner.locale, 'roleplay.ended'),
+    };
+  }
+
+  const result = await applyDecision(deps.db, {
+    learnerId: learner.id,
+    locale: learner.locale,
+    contextVersion: at.contextVersion,
+    // A scene has no tools, so it resolves no aliases.
+    aliases: {
+      goals: new Map(),
+      steps: new Map(),
+      memories: new Map(),
+      subjects: new Map(),
+      materials: new Map(),
+    },
+    now: at.now,
+    reference: at.now,
+    learnerWords,
+    concern: d.concern,
+    triggerMessageId: message.id,
+    messageClaim: { id: message.id, token: message.claim_token },
+    actions: [],
+    reply,
+    outreach: null,
+    roleplay: step,
+    meta,
+  });
+  if (result.status === 'applied')
+    return { kind: 'outcome', outcome: { status: 'done', errorCode: null } };
+  if (result.status === 'superseded')
+    return { kind: 'outcome', outcome: await currentOutcome(deps, message.id) };
+  if (result.status === 'rejected') return { kind: 'repair', errors: result.errors };
+  return { kind: 'stale' };
+}
+
+function turnErrorCode(err: unknown): string {
+  return isAppError(err)
+    ? err.code
+    : err instanceof LlmError
+      ? err.kind === 'invalid_output'
+        ? 'model_invalid'
+        : 'model_unavailable'
+      : 'internal';
+}
+
 /**
  * What the model sees of the conversation, and the learner's words this turn answers.
  *   - A message the safety filter held back is replaced by a neutral placeholder, so one
@@ -546,6 +763,8 @@ async function answerWithSafeguarding(
        values ($1, 'buddy', $2, $3, $4)`,
       [learner.id, safeguardingText(learner, kind), message.id, now],
     );
+    // A scene does not go on over a held-back message (issue #244): it ends, without feedback.
+    await endForConcern(tx, learner.id, now);
     await bumpContext(tx, learner.id);
     return true;
   });
@@ -633,4 +852,45 @@ export async function pushAvailable(deps: Deps, learnerId: string): Promise<bool
     [learnerId],
   );
   return row !== null;
+}
+
+/**
+ * A turn decision's record, filled in while the call runs, and how it is kept when it is not
+ * applied (failed or rejected) — the same for an ordinary turn and an in-role one (#244).
+ */
+function turnRecord(
+  deps: Deps,
+  learnerId: string,
+  messageId: string,
+  at: {
+    contextVersion: number;
+    attempt: number;
+    promptVersion: string;
+    triggers: DecisionMeta['triggers'];
+  },
+) {
+  const meta = {
+    mode: 'turn' as const,
+    attempt: at.attempt,
+    model: null as string | null,
+    promptVersion: at.promptVersion,
+    output: undefined as unknown,
+    triggers: at.triggers,
+    reason: null,
+    topicKey: null,
+  };
+  const record = (disposition: 'failed' | 'rejected', errors: string[]) =>
+    recordUnapplied(
+      deps.db,
+      {
+        learnerId,
+        triggerMessageId: messageId,
+        contextVersion: at.contextVersion,
+        meta,
+        now: deps.now(),
+      },
+      disposition,
+      errors,
+    );
+  return { meta, record };
 }

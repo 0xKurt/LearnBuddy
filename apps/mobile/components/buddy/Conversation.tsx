@@ -28,10 +28,12 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
+import { DrillOfferCard } from '../learn/DrillOfferCard.js';
 import { OfferCard } from '../learn/OfferCard.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { AreaCard } from './AreaCard.js';
 import { ConfirmCard } from './ConfirmCard.js';
+import { RoleplayCard } from './RoleplayCard.js';
 import { deliveryText, describeAction, onlyInApp } from './describe.js';
 import { UndoSheet } from './UndoSheet.js';
 import { i18n } from '../../lib/i18n/index.js';
@@ -69,8 +71,10 @@ function receiptOf(m: MessageView): MessageView['actions'] {
   return m.actions.filter(
     (a) =>
       a.summary.tool !== 'offer_learning' &&
+      a.summary.tool !== 'offer_drill' &&
       a.summary.tool !== 'open_area' &&
-      a.summary.tool !== 'confirm_delete',
+      a.summary.tool !== 'confirm_delete' &&
+      a.summary.tool !== 'start_roleplay',
   );
 }
 
@@ -362,6 +366,15 @@ export function Conversation({
                 >
                   <OfferCard actionId={a.id} offer={a.summary} spoken={spokenMode} />
                 </Animated.View>
+              ) : a.summary.tool === 'offer_drill' ? (
+                // A Kopfrechnen round (issue #243): the same card, code writes the tasks.
+                <Animated.View
+                  key={a.id}
+                  entering={riseIn(1)}
+                  style={{ width: '86%', marginTop: SPACE.xs }}
+                >
+                  <DrillOfferCard actionId={a.id} offer={a.summary} />
+                </Animated.View>
               ) : a.summary.tool === 'open_area' ? (
                 <Animated.View
                   key={a.id}
@@ -378,6 +391,15 @@ export function Conversation({
                   style={{ width: '86%', marginTop: SPACE.xs }}
                 >
                   <ConfirmCard confirm={a.summary} />
+                </Animated.View>
+              ) : a.summary.tool === 'start_roleplay' ? (
+                // The role card: the scene, her tasks and the way out (issue #244).
+                <Animated.View
+                  key={a.id}
+                  entering={riseIn(1)}
+                  style={{ width: '86%', marginTop: SPACE.xs }}
+                >
+                  <RoleplayCard roleplay={a.summary} />
                 </Animated.View>
               ) : null,
             )}

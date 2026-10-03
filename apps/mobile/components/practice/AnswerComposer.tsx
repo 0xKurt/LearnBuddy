@@ -121,6 +121,11 @@ export function AnswerComposer({
   const voiceMode = useVoiceMode((s) => s.on);
   const long = kind === 'long';
   const exact = kind === 'numeric' || kind === 'formula';
+  // A Diktat (issue #242) is spelling practice: voice input would write the word the way the
+  // recogniser spells it, so the mic is off here — not hidden without a word, but replaced by one
+  // short line that says why. The keyboard does not capitalise for her either: the capital letter
+  // is part of what she practises.
+  const micOff = kind === 'spelling_dictation';
   // A written path, and what the return key therefore does (issue #221).
   const path = hasPath(kind, value);
   const sends = returnKey(kind, value) === 'send';
@@ -181,7 +186,7 @@ export function AnswerComposer({
     // Hands-free (voice mode): on the phone listening ends by itself when she pauses.
     untilPause: voiceMode,
   });
-  useHandsFreeMic(voice, disabled, prompt);
+  useHandsFreeMic(voice, disabled || micOff, prompt);
   // iOS number pads lack minus, comma and letters (units); this one has them all.
   const keyboardType: KeyboardTypeOptions =
     kind === 'numeric' && Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default';
@@ -255,10 +260,14 @@ export function AnswerComposer({
               // The row goes with the focus, and a mode nobody can see must not stay on.
               setMode(null);
             }}
-            placeholder={t('answer.placeholder')}
+            // A Diktat says in the field itself that the mic is off (issue #242): one line where
+            // she looks anyway, gone as soon as she types — not a second line of grey text.
+            placeholder={t(micOff ? 'answer.placeholder_dictation' : 'answer.placeholder')}
             placeholderTextColor={palette.ink3}
             accessibilityLabel={t('answer.label')}
-            accessibilityHint={unit ? t('answer.unit_hint', { unit }) : undefined}
+            accessibilityHint={
+              micOff ? t('answer.mic_off') : unit ? t('answer.unit_hint', { unit }) : undefined
+            }
             multiline
             // Where the growing starts: the web's textarea is two rows tall by default,
             // which makes an empty answer field look like a box to fill in. The growing
@@ -272,7 +281,7 @@ export function AnswerComposer({
             autoCorrect={false}
             spellCheck={false}
             autoComplete="off"
-            autoCapitalize={exact ? 'none' : 'sentences'}
+            autoCapitalize={exact || micOff ? 'none' : 'sentences'}
             keyboardType={keyboardType}
             // A one-liner goes out with the return key, so a simple answer stays fast; prose and
             // a calculation path take the line instead (issue #221, lib/practice/pathEntry.ts).
@@ -343,7 +352,7 @@ export function AnswerComposer({
             >
               {t('check')}
             </Btn>
-          ) : voiceMode ? null : (
+          ) : voiceMode || micOff ? null : (
             <MicButton
               voice={voice}
               size="sm"
@@ -358,7 +367,7 @@ export function AnswerComposer({
         {/* In a path it draws the line with the cursor; the others stand in the field. */}
         {long ? null : <TypedMathPreview value={previewLine(kind, value, caret)} compact />}
       </View>
-      {voiceMode ? (
+      {voiceMode && !micOff ? (
         <View style={{ alignItems: 'center', paddingVertical: 2 }}>
           <MicButton voice={voice} size="lg" label={t('common:voice.answer')} disabled={disabled} />
         </View>
