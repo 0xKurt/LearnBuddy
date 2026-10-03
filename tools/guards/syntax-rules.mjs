@@ -83,4 +83,16 @@ export const syntaxRules = {
     ],
     'Die Fensterhöhe ignoriert die Tastatur (edge-to-edge) — useVisibleHeight() aus lib/useVisibleHeight.ts nehmen (Issue #289).',
   ),
+  // The scripted model's report is read in ONE place, after the background work has landed
+  // (issue #323): `env.checkScript()` / `env.closeChecked()` in apps/api/src/testing/harness.ts.
+  // A test that reads `env.llm.unexpected`, `.scriptErrors` or `.pending()` itself counts
+  // before a background call (Buddy's check after /finish) lands — green on a quiet machine,
+  // red under load. 60 files did that until #327.
+  'no-early-script-report': forbid(
+    'Die Modell-Bilanz nur über env.checkScript() / env.closeChecked() (Issue #323).',
+    [
+      "MemberExpression[object.type='MemberExpression'][object.property.name='llm'][property.name=/^(unexpected|scriptErrors|pending)$/]",
+    ],
+    'Die Bilanz des geskripteten Modells nur über env.checkScript() oder env.closeChecked() lesen — die warten zuerst die Hintergrundarbeit ab (apps/api/src/testing/harness.ts, Issue #323).',
+  ),
 };

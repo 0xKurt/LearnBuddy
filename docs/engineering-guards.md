@@ -32,7 +32,9 @@ ganze Repository: jscpd, knip und die Wächter-Tests mit der Ratsche
 
 Verbotene Code-Formen sind je eine eigene Regel in `tools/guards/syntax-rules.mjs`:
 `lb/no-context-bump` und `lb/no-default-zone` (#315), `lb/no-public-secret` (#290) und
-`lb/no-window-height` (#289). Nie als Eintrag von ESLints `no-restricted-syntax`: Diese Regel hat
+`lb/no-window-height` (#289) sowie `lb/no-early-script-report` (#323): Integrationstests lesen die
+Bilanz des geskripteten Modells nur über `env.checkScript()` / `env.closeChecked()`, die zuerst die
+Hintergrundarbeit abwarten. Nie als Eintrag von ESLints `no-restricted-syntax`: Diese Regel hat
 pro Datei genau eine Liste, ein späterer Config-Block ersetzt die Liste eines früheren, statt sie
 zu ergänzen. Beim Zusammenführen von #290, #289 und #315 schwieg so die Secret-Sperre auf allen
 Screens, ohne Fehlermeldung. `guards.test.mjs` lintet deshalb eine Datei, die alle vier
