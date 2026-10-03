@@ -2057,7 +2057,7 @@ shrinks and 44 pt per touch target is the floor, so the largest task the contrac
 the smallest phone as it is — the maxima of a match are measured, not chosen (below). While a
 structured surface is shown, the parts stand right under the question and the conversation; the
 newest turn (Buddy's reply after a check) always stays visible, and the free room collects between
-the parts and "Prüfen" (`FreeSpace` inside `PartsArea`; the shell, #286).
+the parts and "Prüfen" (`FreeSpace` in the answer shell, #286, #310 — see below).
 The parts stand in a scroll view only as the floor under a mistake: its testID `scroll-parts` is
 not one `tests/web/fit.ts` allows, so a walkthrough shot fails the moment the parts would have to
 be scrolled. (Before the floor, a tall arrangement was drawn over the question — found in the shots
@@ -2103,7 +2103,7 @@ the turn in reading order ("6 · 8 · 20").
 
 App: `TableAnswer.tsx` shows the table as in the exercise book (a wall centred, brick on brick);
 each gap is a small field, Enter goes to the next gap and in the last one checks; the math keys
-stand above "Prüfen" while a number cell has the focus. Her cells are kept in the draft, so after
+stand right under the table (the answer shell's keys slot, #310) while a number cell has the focus. Her cells are kept in the draft, so after
 a wrong check she changes only the cell named. The table is as wide as the screen; only columns
 with words to type can make it wider, and only then does it scroll sideways, inside itself.
 
@@ -2650,6 +2650,50 @@ the key.** No migration: the figure is an item's `figure` (jsonb), like the char
 - **Not checked by code**: the prompt's words. A prompt that names another person than `at` or
   another word than `w` is caught only where the numbers then disagree. A screen reader reads
   `$AA$` and `$aa$` alike (case is not spoken).
+
+### Explain profiles (issue #281, D2)
+
+Every explain call is sent only the forms its run can use — the schema is derived from the kind
+of run, through the nested unions, not only at the top. One table decides it, `SET_PROFILES` in
+`practice/generate.ts`, and both directions read it: `setSchemaForModel(kind, topics)` builds what
+the model is shown (`explainSchemaFor` is the call site's and the inventory's one seam), and
+`parseSetFor(kind, topics)` plus `preparedFrom` decide what is kept — a form outside the profile is
+dropped, whatever the model wrote (Rule 0). Every row was a rule in `preparedFrom` before it became
+a row, so a profile leaves out only what code already threw away: item kinds (`KINDS`), structured
+kinds (`STRUCTURED`), bars only in practice (#162), note lines in practice and tests (#226), the
+listening task only in a listening run (#210), a Diktat's entries only in a Diktat run (#242).
+Inside an item, the fields no allowed kind keeps are
+left out too, from `practice/itemFields.ts` — the same constants `usableItems` and `usableRubric`
+discard by: a rubric (and its `RubricCheck` union) without a long answer, a tolerance without a
+number, a spelling mode without a typed word, pictures as options (`choice_figures`, an array of the
+`ModelFigure` union, #231) without a multiple choice. The subject is never a rule.
+
+| kind               | items                                                 | structured                      | bars | staffs | listen | dictation |
+| ------------------ | ----------------------------------------------------- | ------------------------------- | ---- | ------ | ------ | --------- |
+| practice           | short, long, numeric, multiple_choice, formula, vocab | order, table_fill, match, cloze | ✓    | ✓      | —      | —         |
+| test               | short, numeric, multiple_choice, formula, vocab       | order, table_fill, match, cloze | —    | ✓      | —      | —         |
+| vocab              | vocab                                                 | —                               | —    | —      | —      | —         |
+| speak              | speak                                                 | —                               | —    | —      | —      | —         |
+| help               | short, long, numeric, multiple_choice, formula        | —                               | —    | —      | —      | —         |
+| listen             | —                                                     | —                               | —    | —      | ✓      | —         |
+| spelling_dictation | —                                                     | —                               | —    | —      | —      | ✓         |
+
+A sheet-bound run (a practice or test for a planned test) is the same profile with the sheets'
+topics as the item `topic` enum. With no kind known (`setSchemaForModel(null, …)`), the fallback is
+every form but the listening task and the Diktat — byte for byte `GENERATED_SCHEMA`, what every
+run without sheets was sent before D2; today every call knows its kind, so it is the measured baseline. Not
+narrowed, because code cannot prove a form unusable there: `ModelFigure` (all 17 figure types stay
+in every profile with items, also vocab and speak — that would need a code rule first), the
+extraction schemas (a sheet is read before anyone knows what is on it) and the Buddy turn's
+`actions` (tool growth, D3 deferred by the #279 consensus). Proven by
+`practice/__tests__/profiles.test.ts` (every valid form passes `testing/schemaCheck.ts`, a stand-in
+for the decoder with exactly the emitted keywords, and code's parse; every form outside is
+rejected by both; the `answerUpTo` prefix validates under every profile) and
+`__tests__/explain-profiles.int.test.ts` (the model answers with every form, and each kind stores
+exactly what it stored before D2 — the expectation is written from the pre-D2 rules and was run
+green on the pre-D2 commit). Sizes before and after: `docs/measurements/schema-inventory.md`
+§Before → after. Whether Vertex accepts every profile and what it does to native tokens and
+quality is the live pilot of #281, not measured here.
 
 ### Learning modes (migration `0003_learning_modes.sql`)
 
@@ -3441,7 +3485,20 @@ The practice screen (issue #286) stands the question (with its drawing scaled to
 conversation about it and the way to answer together at the top, in that order; the free room
 collects BELOW the way to answer (`components/practice/FreeSpace.tsx`), above what is pinned
 (the answer field, "Prüfen", "Weiter"). Before, the conversation took all free room and the way
-to answer sat at the bottom, which left a hole under the card with a lonely "Tipp" in it. The
+to answer sat at the bottom, which left a hole under the card with a lonely "Tipp" in it.
+**The answer shell** (issue #310, `components/practice/AnswerShell.tsx`) holds an answer and its
+action in fixed slots: the answer right under the question, optional keys for what she types
+directly under it, the free room, and "Prüfen" (`CheckBar.tsx`: one full-width pill in the pinned bar,
+waiting until the form says its answer is complete). A form fills the slots and decides nothing
+about place, spacing or the look of its action. Order, match, table and cloze are in it; the typed
+field, the note line and the voice bar follow (#310 steps 3–5) — owner's decision 03.10.: the typed
+field too stands under the question, with "Prüfen" in the same bar. A tile that answers by a tap is
+`components/lb/AnswerTile.tsx`; corners come from `lib/theme/radius.ts`. Guarded twice: a source
+test (`apps/mobile/lib/__tests__/answerShell.test.ts`) fails when a form brings its own bar,
+spacer, "Prüfen", keyboard handling or shadowed tile (the forms not moved yet are listed with the
+step that moves them, and the list only shrinks), and the walkthrough measures at every shot with
+an answer slot that at most one Tipp row (44 pt) stands empty above it, the free room lies under
+it and "Prüfen" is lowest (`answerPlace` in `tests/web/fit.ts`). The
 conversation shows WHOLE turns only (`threadRoom` in `lib/practice/threadRoom.ts`): everything when it
 fits into its box plus the free room, otherwise from the earliest turn whose rest still fits,
 so at rest the top edge lies in the gap above a whole turn and nothing is cut under the card.
@@ -3713,6 +3770,31 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   issue's acceptance is that an insult never leads to the crisis number. Measured before this
   (02.10.2026): about one run in five set `concern`, so this case is expected to **fail** until
   the cause is fixed; twenty clean runs bound the rate to roughly 15 % or less, not to zero.
+- **Schema inventory** (issue #281, D1 of the consensus in #279): `pnpm --filter
+@learnbuddy/api inventory:schema` writes `docs/measurements/schema-inventory.md` and `.json` —
+  for every model purpose and every profile it has today (turn step/final, the roleplay line and
+  its feedback, check step/final,
+  explain per kind of run and sheet-bound practice/test plus the `GENERATED_SCHEMA` fallback,
+  extraction study/homework with and without
+  `LEAN_RULES`, tutor/rubric/cloze gaps, pronounce sentence/word, figures, hints, transcribe, reexplain,
+  consolidate, summary): commit, prompt version, sha256 of the serialized schema, system-prompt
+  and schema characters, description text and description-with-key characters (two different
+  numbers, both labelled), and the structure (`anyOf` nodes, nullable wrappers, real unions and
+  their branches, depth, optional fields, enums and their values, and the characters of every
+  property name and enum value — Google's first named cause of "too many states", counted, not a
+  state count). The `actions` container is
+  broken down per action branch and every union of the task schemas (figures, parts tasks,
+  table cells, rubric checks, bars, staff tasks and elements) per branch, with where each union
+  declares its tag. No model call, no database, no cost: it imports the constants the call sites
+  pass (`toJsonSchema` output) — the private ones are exported for it, and the explain schemas
+  come from `explainSchemaFor` in `practice/generate.ts`, the one function the call site itself
+  uses. `--baseline <older json>` adds a before → after table per call;
+  `schema-inventory.before-d2.json` is the baseline D2 was measured against: generated on the merge of D1/D2 into main 9ec7a86 with `explainSchemaFor` temporarily set back to main's pre-D2 call-site logic (the `forModel` chain), which is why it says "with uncommitted changes"; every other call is byte-equal between the two files. The counting is pure (`evals/schema/measure.ts`, unit-tested on handmade schemas in
+  `evals/schema/__tests__/measure.test.ts`). With Vertex credentials in `apps/api/.env.local`
+  it adds `countTokens` numbers, labelled as a **text-token count of the serialized text — not
+  native usage, billing or cache**; without them it says "not counted" instead of estimating.
+  `--out <dir>` writes elsewhere, e.g. to compare another branch; `docs/measurements/` is out of
+  Prettier's reach so a rerun on the same commit is byte-identical.
 - Integration against a real Postgres (`src/__tests__/*.int.test.ts`, harness in
   `src/testing/`): every test file gets its own database created from a template with the real
   migrations. Only the outside world is replaced: a scripted model (every call must be scripted;
@@ -3769,7 +3851,12 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   database's TLS and region, that the app keys can execute nothing and every table has RLS —
   and that **every migration on disk is applied** before new code goes live. The last one was
   added after two missing migrations made a learner's voice choice fail with a bare error
-  (issues #67, #79): the schema a build expects is part of the build.
+  (issues #67, #79): the schema a build expects is part of the build. Production itself says
+  it too (issue #342): `/v1/health` lists every migration of the running build
+  (`apps/api/src/lib/migrations.ts`, kept equal to the folder by a test) that
+  `supabase_migrations.schema_migrations` lacks, and goes 503. The Health workflow probes right
+  after each production deployment, not only every half hour. Owner rule since 03.10.: a merged
+  migration is applied to production at once, then the advisors and `/v1/health`.
 - Rollback is asymmetric (issue #79): Vercel can roll a function back, the database cannot.
   Migrations are therefore **additive only** — new tables, new columns with defaults, widened
   constraints; never a drop or rename that yesterday's code would trip over. A column that must

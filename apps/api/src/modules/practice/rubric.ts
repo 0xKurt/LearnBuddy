@@ -69,6 +69,7 @@ import { normalizeShortAnswer } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import { t, type MessageKey } from '../../i18n/index.js';
+import { kindIn, RUBRIC_KINDS } from './itemFields.js';
 
 /**
  * Wie weit „der erste Satz" reicht. Der Satz selbst, und mindestens so viele Zeichen — die
@@ -119,7 +120,7 @@ export function rubricOf(stored: unknown): Rubric | null {
  */
 export function usableRubric(rubric: Rubric | null | undefined, kind: string): Rubric | null {
   if (!rubric) return null;
-  if (kind !== 'long') return null;
+  if (!kindIn(RUBRIC_KINDS, kind)) return null;
   const names = new Set<string>();
   for (const e of rubric.elements) {
     const key = normalizeShortAnswer(e.name);

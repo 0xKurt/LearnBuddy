@@ -3,6 +3,7 @@
 
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
@@ -36,7 +37,7 @@ export function Card({
   tone = 'paper',
   onPress,
   padding = 18,
-  radius = 22,
+  radius = RADIUS.card,
   style,
   accessibilityLabel,
   accessibilityHint,

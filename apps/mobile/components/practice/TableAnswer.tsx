@@ -26,15 +26,15 @@ import { Platform, ScrollView, TextInput, View, type KeyboardTypeOptions } from 
 
 import { useDraft } from '../../lib/drafts.js';
 import { speakMathText } from '../../lib/math/speak.js';
+import { around, RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
 import { cellKeys } from '../../lib/math/keys.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
-import { BottomBar } from './BottomBar.js';
+import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
 
 /** How her cells stand in the conversation while the server checks them. */
@@ -190,7 +190,7 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: Props) {
           minWidth: 0,
           width: '100%',
           paddingHorizontal: SPACE.xs,
-          borderRadius: 8,
+          borderRadius: RADIUS.cell,
           borderWidth: on ? 2 : 1.5,
           borderColor: on ? palette.primary : palette.field,
           backgroundColor: palette.paper,
@@ -229,7 +229,8 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: Props) {
       style={{
         borderWidth: 1,
         borderColor: ink.gridStrong,
-        borderRadius: 10,
+        // Concentric with the cells it holds (their corners plus the padding around them).
+        borderRadius: around(RADIUS.cell, SPACE.xs),
         overflow: 'hidden',
         // Wider than the screen only when the columns need it; then the table scrolls.
         width: tooWide ? needed.reduce((a, b) => a + b, 0) : '100%',
@@ -299,7 +300,7 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: Props) {
                 width: brickWidth,
                 minHeight: TOUCH,
                 justifyContent: 'center',
-                borderRadius: 8,
+                borderRadius: RADIUS.cell,
                 borderWidth: isGap(cell) ? 0 : 1,
                 borderColor: ink.gridStrong,
                 backgroundColor: isGap(cell) ? 'transparent' : palette.lavender,
@@ -314,46 +315,39 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   );
 
   return (
-    <>
-      <PartsArea>
-        <View onLayout={(e) => setWidth(Math.floor(e.nativeEvent.layout.width))}>
-          {wall ? (
-            wallView
-          ) : tooWide ? (
-            <ScrollView
-              horizontal
-              keyboardShouldPersistTaps="handled"
-              accessibilityLabel={t('table.scroll')}
-            >
-              {grid}
-            </ScrollView>
-          ) : (
-            grid
-          )}
-        </View>
-      </PartsArea>
-      <BottomBar>
-        {/* The math keys while a number or term cell has the focus — a keyboard accessory,
-            not furniture (issue #16). */}
-        {/* Only what the gap needs: none for a word, only the minus for a whole number — the
-            phone's digits write the rest (#286 finding 5, #239, lib/math/keys.ts). */}
-        {focusedGap ? (
+    <AnswerShell
+      answer={
+        <PartsArea>
+          <View onLayout={(e) => setWidth(Math.floor(e.nativeEvent.layout.width))}>
+            {wall ? (
+              wallView
+            ) : tooWide ? (
+              <ScrollView
+                horizontal
+                keyboardShouldPersistTaps="handled"
+                accessibilityLabel={t('table.scroll')}
+              >
+                {grid}
+              </ScrollView>
+            ) : (
+              grid
+            )}
+          </View>
+        </PartsArea>
+      }
+      // The math keys while a number or term cell has the focus. Only what the gap needs: none
+      // for a word, only the minus for a whole number — the phone's digits write the rest
+      // (#286 finding 5, #239, lib/math/keys.ts).
+      keys={
+        focusedGap ? (
           <MathKeys
             keys={cellKeys(focusedGap.input, focusedGap.whole)}
             onInsert={insert}
             disabled={disabled}
           />
-        ) : null}
-        <Btn
-          pill
-          full
-          disabled={disabled || !complete}
-          onPress={submit}
-          accessibilityHint={complete ? undefined : t('table.check_waits')}
-        >
-          {t('check')}
-        </Btn>
-      </BottomBar>
-    </>
+        ) : null
+      }
+      action={{ ready: complete, disabled, onPress: submit, waitsHint: t('table.check_waits') }}
+    />
   );
 }

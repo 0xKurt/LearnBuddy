@@ -16,6 +16,13 @@ export const SPACE = {
 export const TOUCH = 44;
 
 /**
+ * The heights of a `<Btn>` by size (components/lb/Btn.tsx). Here, not in the button, because a
+ * layout that has to know what a pinned bar takes reads the real number instead of copying it
+ * (the practice screen's room for a board under its "Prüfen", lib/practice/threadRoom.ts).
+ */
+export const CONTROL = { sm: TOUCH, md: 48, lg: 54 } as const;
+
+/**
  * The bottom padding of a bar or a page that ends at the screen's edge (issue #142).
  *
  * The safe-area inset is what the SYSTEM takes from the edge — a gesture bar, a
