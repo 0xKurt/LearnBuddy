@@ -123,8 +123,9 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one                                                                   |
 | `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                                                                              |
 | `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived                                                                           |
-| `POST /practice/sessions/:id/listen`                                                                 | Hörverstehen: the recording of one question's spoken text (issue #210)                                                |
+| `POST /practice/sessions/:id/listen`                                                                 | Hörverstehen and Diktat: the recording of one question's spoken text or key (issues #210, #242)                       |
 | `POST /practice/sessions/:id/cards`, `POST …/card`                                                   | Lernkarten: a pass over the words that did not sit, each card judged by her (#147)                                    |
+| `POST /practice/drills`, `POST /practice/sessions/:id/drill`                                         | Kopfrechnen: a round of tasks code wrote, one answer checked by code (#243)                                           |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
 ## Buddy decisions
@@ -334,6 +335,10 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   per-learner word into the one part of the request that has to stay byte-identical to be cached.
 
 ## Tools
+
+The tools live in `modules/buddy/tools.ts`; what every tool is given and shares — `ToolContext`,
+`ToolOutcome`/`UndoSpec`, `ToolRejection`, the quote and day checks, the alias resolvers — in
+`modules/buddy/toolKit.ts`.
 
 `modules/buddy/registry.ts` (ADR 0005 stage 2) registers every act tool once: its call schema
 (`decision.ts`), the surfaces allowed to call it (`turn`, `check`), what it touches, whether it
@@ -1623,6 +1628,13 @@ zwei Urteile; `null`, `other` und `he` erzeugen denselben Prompt Wort für Wort)
 
 ## Practice
 
+Where it lives (`modules/practice/`, one use case per file, #313): `service.ts` answers a
+question and builds the session view; beside it `hint.ts` („Tipp“), `setAside.ts` („Lösung
+zeigen“, „Später“), `contest.ts` („Frage passt nicht“, „Bewertung stimmt nicht“),
+`partsAnswer.ts` (a structured answer taken in), `passTurn.ts` (one turn of a card pass or a
+Kopfrechnen round), `sessionRow.ts` (the session row and the one way to lock it), `finish.ts`
+(the end of a run) and `testClock.ts` (a practice test with time, #241).
+
 **Eine Übung darf anfangen, bevor alle ihre Fragen geschrieben sind** (Issue #220, Migration
 0073). Gemessen 02.10.: „üben wir Brüche" kostete 6,45 s am Endpoint, davon 6,42 s der
 `explain`-Aufruf für 1 432 geschriebene und 0 gedachte Tokens — reine Schreibzeit. Neun Fragen
@@ -1954,10 +1966,11 @@ them yet, so today they come from a topic she named.
 
 **Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`,
 `practice/table.ts`, migration `0079_structured_items.sql`;
-issues #228 order, #229 match, #230 table_fill, from the analysis #224). Some answers are not a
-sentence but an arrangement: an order, pairs, groups, table cells. They are their own item kinds
-(`order`, `match`, `table_fill`), and #224's "Regel 0" holds in both directions: code validates
-what the model wrote, and code judges what she answers — never a model.
+issues #228 order, #229 match, #230 table_fill, #232 cloze, from the analysis #224). Some answers
+are not a sentence but an arrangement: an order, pairs, groups, table cells, the gaps of a text.
+They are their own item kinds (`order`, `match`, `table_fill`, `cloze`), and #224's "Regel 0"
+holds in both directions: code validates what the model wrote, and code judges what she answers —
+never a model, except a cloze gap no rule can decide (below: only that gap, only its verdict).
 
 _Two implementations existed for a day_ (#224, „Entscheidung: zwei Umsetzungen …“): `parts`
 (migration 0072, `items.parts_task`, `ItemView.board`) and this one. A neutral review ran and
@@ -2262,6 +2275,54 @@ Bauweise verhindern soll). Höchstens `MAX_STAFF_ITEMS` (8) je vorbereitetem Sat
 Bruchbalken, weil eine Notenzeile keine Beigabe ist, sondern die Frage selbst — in `practice` und im
 Probetest, nicht in der Hausaufgabenhilfe.
 
+**Cloze — one text, 2–8 gaps** (`practice/cloze.ts`, `ClozeAnswer.tsx`, issue #232). The model
+writes the text with `___` for each gap, the keys in reading order (`gaps[].answer`, plus a
+gap's own `accepted_answers`) and optionally a `word_bank`; `CLOZE_RULES` says so without an
+example sentence. Code cuts the text into `segments` (always one more than gaps), names the
+gaps `g1 … g8` by position, shuffles the bank deterministically and stores
+`{segments, gaps: [{id, key, accepted}], bank}`; the view drops `key` and `accepted`. Regel 0
+on the way in (`clozeProblem`, rejected — never repaired): fewer than 2 or more than 8 gaps;
+gap marks and keys that differ in number; a gap with an empty key or one over 40 characters;
+more than 260 visible characters or an instruction over 80 (`CLOZE_TEXT_MAX`,
+`CLOZE_PROMPT_MAX`: what fits 360×740 without scrolling, rule 16 — measured with 8 filled gaps:
+the text has 418 pt there, 256–262 characters took 380 pt, 279–301 took 407 pt, 350 took 434;
+the walkthrough shows the longest case, shot 44-cloze-eight); a key that can already be read in the text or the
+instruction (`mentionsSolution`, the leak check of every prepared hint); and with a bank: two
+gaps sharing a key, a key missing or a word twice in the bank, more than 12 words, or a
+distractor some gap accepts. Prepared hints that name any key or accepted form are dropped
+(`secretsOf`, also in `hints.ts`, which shows the hint writer the text with its gaps).
+
+Her answer is every gap once (`parts.gaps: [{id, text}]`, 1–80 characters each). Each gap is
+checked with the rules of every written answer — `ruleCheck` as a `short` answer against its
+key and accepted forms, with the item's spelling rule (strict in language subjects), so a typo,
+missing accents or case where spelling counts is a named near miss, and a plain number with
+another value is wrong. With a bank, a bank word that is not this gap's is wrong for sure.
+Whatever no rule decides (`unknown`, or `folded` case/punctuation where spelling is not the
+point) is `open`; only those gaps go to the model (`judgeOpenGaps`, purpose `tutor`, prompt
+`cloze-gaps.v1`): the model returns a verdict per listed gap and nothing else — the reply stays
+code's. No model call when another gap is already wrong for sure; no model, no budget or an
+unreadable answer leaves the gap open, and then nothing is claimed (verdict null,
+`practice.cannot_check`, no try counted). Verdict: every gap right → correct; one wrong →
+incorrect; only near misses → partially_correct. The reply (`clozeReply`) counts the right gaps
+and names the others by HER words ("4 von 5 Lücken stimmen schon. Bei „gegesen“ fehlt nur noch
+eine Kleinigkeit …") — no numbers on the gaps needed. `evaluated_by` is `model` as soon as the
+model judged one gap. Her words stand in the thread joined by " · "; the solution is the whole
+text with its keys. Recorded `via`: a cloze without a bank can only be typed (`typed`), one with
+a bank only tapped (`tapped`), and in the summary a bank cloze counts like tapped vocabulary —
+recognition, not production.
+
+App: the text flows as words and gaps (`unitsOf`: a gap keeps the punctuation touching it, math
+stays whole). One look for every gap, typed or tapped: empty, a dashed blank; filled, her word
+in the accent on a soft tint without a frame (her words stand apart from the print); where she
+types or what the next bank word fills, the accent frame. Without a bank each gap is a small field in the line; the return key goes to the
+next gap and in the last one sends a complete text. With a bank, a tapped word fills the active
+gap (then the next empty one is active), a tap on a filled gap empties it, and a used word
+stays in place, muted. "Prüfen" waits until every gap has something. The text scrolls only when
+the keyboard leaves too little room (the screen keeps the question whole and the surface gives
+way); the focused gap is scrolled to, also after the keyboard shrank the window. Generated in a
+topic's practice and practice test, and read from a sheet (its printed word box as the bank;
+generate.v1.18, extract.v8.2, hints.v5).
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:
@@ -2308,7 +2369,7 @@ session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
   #155, rule 5). FSRS per question is not a statement about "Brüche". The app says it in words (`apps/mobile/lib/practice/summaryLine.ts`): homework
   "Du hast N Aufgaben selbst gelöst", otherwise "Du hast N Fragen beantwortet" and only a whole
   round right at once is named — never a hit rate, never a zero (user feedback #1, #3).
-- _"Die Bewertung stimmt nicht"_ (`disputeVerdict`, migrations `0062` and `0065`, issue #164).
+- _"Die Bewertung stimmt nicht"_ (`disputeVerdict` in `practice/contest.ts`, migrations `0062` and `0065`, issue #164).
   The rule check is certain by design, and that certainty can stand in for a key nobody verified.
   Issue #157 catches it where arithmetic makes it decidable; everywhere else the only one who
   can see it is the child in front of it, and she must be able to say so without arguing with
@@ -2588,6 +2649,33 @@ word list, so it stays a prompt rule.
   "Lösung zeigen", no answers in the view while it runs (`reveal_allowed = false`), no FSRS.
   At the end: every question with its solution, and one tap "Die wackligen nochmal üben"
   (kind `practice` on the shaky topics; also after ordinary practice).
+- **test with time — only on her wish** (issue #241, migration `0083_test_time_limit.sql`;
+  decided in #224: no switch, no setting — Prüfungsangst speaks against a clock as default).
+  When she asks in the chat ("mit Zeit, wie in der Arbeit", "45 Minuten"), `offer_learning`
+  carries `time_limit { minutes, quote }`: `minutes` is a value from a fixed list
+  (`TEST_MINUTES` = 10/20/30/45/60/90, the model picks one, never a free number or an instant —
+  rule 2), and `quote` must be her own words from this message (`requireQuote`), so a timer is
+  never Buddy's idea and a background check can never set one. Only `kind: 'test'` may carry it
+  (tool rejection; `POST /practice/topic` answers 422 for a value off the list or a limit on
+  another kind, before any model call; CHECK constraints hold the database to both). The offer
+  card says it ("PROBETEST · MIT 45 MINUTEN"). **The server keeps the clock** (rule 7,
+  `practice/service.ts` `settleTestClock`): `time_limit_minutes` is stored with the session,
+  `deadline_at` is set from `deps.now()` the first time she opens the test (`GET` or the tap on
+  `POST /practice/topic`) — not when Buddy prepared it while she read his reply (#48). An
+  answer or a skip that arrives after `deadline_at + TIME_UP_GRACE_MS` (20 s, an allowance for
+  the network, not extra time) is not graded (409 `time_up`, no rule, no model, no turn) and the
+  test ends in the same transaction; the scheduler's session sweep ends one she never came back
+  to (`lifecycle.ts`). `SessionView.timer` = `{ minutes, remaining_ms, ran_out }`; the app counts
+  down from the moment the view arrived (never its wall clock against a deadline), shows whole
+  minutes in a small chip at the end of the progress row ("noch 10 Min." — no red, no seconds),
+  the test's one rule on the line under it, and at five minutes that line turns into one quiet
+  sentence ("Schau in Ruhe, was du noch schaffst."), announced once (`TestClock.tsx`,
+  `lib/practice/testClock.ts`). The offer card carries a clock and the minutes. At zero the app
+  hands the test in once no answer is on its way.
+  `ran_out` (finished at or after the deadline) makes the result say how far she got ("In der
+  Zeit hast du 2 von 3 Fragen beantwortet", then plainly "Was offen blieb, zählt nicht als
+  falsch.") and the review marks it **"Nicht beantwortet", never wrong**: open questions are
+  not closed, so `summarize` never counts them.
 - **vocab** — pairs (`prompt_lang` → `lang`) from a photographed list or typed (kind `vocab`);
   each pair becomes two questions (both directions, own FSRS state). Rule check: exact after
   normalisation = right; only accents differ = `close` → partially right, the tutor names the
@@ -2623,6 +2711,67 @@ word list, so it stays a prompt rule.
   verdict out of nowhere. Cards never lead to cards. Screen: `components/practice/CardPass.tsx`
   on the same route, where both answers are the same soft pill — a primary "Wusste ich" would
   nudge her towards the claim the rating already has to discount.
+- **Kopfrechnen — a quick round code writes** (issue #243; `contracts/drill.ts`,
+  `practice/drill.ts`, `practice/drillRound.ts`, `practice/drillView.ts`, migration
+  `0082_drill_rounds.sql`). Einspluseins and Einmaleins have to become automatic, and a model
+  writing "noch 20 Aufgaben" was slow and cost a call per round although code can write and
+  check every one of them. #224 "Regel 0" in its strongest form: **the model never sees a task.**
+  _Buddy chooses, code computes._ "Lass uns Einmaleins üben" → the act tool `offer_drill`
+  (turn-only, changes nothing, no undo): one `range` from a closed list (`plus_10`, `plus_20`,
+  `minus_20`, `plus_100`, `minus_100`, `times`, `divide`, `fractions`, `percent`), for the tables
+  the `rows` she named, for plus/minus above ten `carry` (with/without crossing the ten). The
+  contract (`DrillSpec`) refuses rows outside the tables and carry where it means nothing, and
+  the tool rejects such a call back to the model. The card in the chat (`DrillOfferCard`) shows
+  the server's own name for the range ("Einmaleins mit 6 und 7"); her tap sends the offer's id
+  as `client_request_id` to `POST /practice/drills`, so the same offer opens the same round.
+  _A task is a fact with a key_ (`times:7x8`, `plus:37+48`, `frac:1/2+1/4`, `pct:25%80`,
+  `items.drill_fact`, unique per learner): text and key are computed from it, and the key makes
+  "7 · 8" the SAME question across rounds, with one FSRS state. A key no range can produce
+  (`factOf`) is not a task. The values the ranges keep: no negative result, no remainder, a
+  fraction family (halves/quarters/eighths, thirds/sixths, fifths/tenths) with the sum at most 1,
+  a whole-number percentage.
+  _The round_ (`pickRound`): at most `DRILL_ROUND` (20) tasks, each fact once, drawn by weight
+  from FSRS (missed last time > due > new > sitting, Efraimidis–Spirakis with a seed from the
+  request id, so a round is reproducible); a task never right after its mirror (7 · 8, 8 · 7) and
+  a round never opens with the task the last one ended with. A range with fewer facts is a
+  shorter round (`divide` with one row: 19), never a repeated task — `session_items` holds a
+  question once per session. It is an ordinary session (`pass = 'drill'`,
+  `practice_sessions.drill` = the spec), so the lock order, tenant isolation, export and deletion
+  are the ones every session has; its tasks are `numeric` items of origin `buddy`, and
+  `selectPracticeItems` leaves every one of them out of the practice the model prepares.
+  _Answering_ (`POST /practice/sessions/:id/drill`, idempotent per `client_turn_id`, a
+  concurrent duplicate reads the first one's answer): one try. `checkDrill` compares her value
+  with the value COMPUTED from the fact — never with `items.answer` — exactly, as fractions of
+  whole numbers; because code wrote the task, it asks for an amount, so 6/8 and 0,75 answer
+  ½ + ¼ (the bars' `form_free` licence, #162). Right → `correct`, FSRS `Good`; not right →
+  `missed`, `Again`, and the key stands under the next task. No reply text, no tutor, no hint,
+  no reveal: the generic answer, hint and reveal doors refuse a round (409 `use_drill`), because
+  the tutor door would call the model on a second miss. Text that is not a number is not an
+  answer (422 at the contract). **Zero model calls per round**, and the finished round emits no
+  `session_finished` event — Buddy's follow-up would be a model call after twenty seconds of
+  practice; he sees the round in STATE like any session (`drill.int.test.ts`: twenty tasks,
+  `llm_calls` unchanged after the chat turn).
+  _The end says one sentence, never a count_ (rule 6, `drillLine`): `better` when a task of a row
+  she had missed before (`session_items.state_before`, written by the review itself) is right
+  now — measured on the same question, not a feeling; `solid` when a row (or the whole round)
+  was all right; otherwise `again`, said as where to go on ("Bei den 7ern bleiben wir dran").
+  The app words it ("Die 7er sitzen jetzt besser."), and offers "Noch eine Runde" and the way
+  back. _Screen_ (`components/practice/DrillRound.tsx`, on the practice route), designed against
+  #286/#287: the round's name on ONE line; one lavender card that takes all the room between the
+  progress and the pad (no dead gap), the task as big as fits a 360 pt line (56/44/34 pt) and
+  the typed answer under it; the task she answered last as one pill at the card's foot
+  ("✓ Richtig: 6 · 7 = 42" on mint / "Das war: 7 · 8 = 56", words and a mark, never colour
+  alone); a 3×4 digit pad (52 pt keys; "/" only for fractions, otherwise the 0 is double width
+  so the grid has no hole); "Prüfen" in the pinned bar. The next task stands there the moment
+  she presses "Prüfen" — the answers go out in order behind it, and the server's verdict
+  arrives in the pill. What she typed is a draft (`useDraft`), so a theme switch keeps it. A
+  keyboard types on the same pad in the browser. No settings, no instructions, and **no
+  clock**: #224 decided "Timer nur auf Wunsch", and a speed drill is exactly where a visible
+  clock turns practice into pressure — the speed comes from no waiting, not from a countdown.
+  **Not built**: a timer, mixing ranges in one round, a task asked twice in one round, starting
+  a round without Buddy (there is no tile — the chat is the way in), an offer that stands is not
+  yet in STATE's "Already waiting for her" (only `offer_learning` is), so a repeated
+  `offer_drill` is not refused by code.
 - **speak** — say a sentence aloud (kind `speak`; `POST /practice/sessions/:id/speak` with a
   ≤ 15 s recording, bodies up to 2 MB only on this route). The model listens to the audio itself:
   it writes the expected pronunciation and the sounds actually produced (IPA), then judges word
@@ -2683,6 +2832,51 @@ word list, so it stays a prompt rule.
   same structured call) plus one synthesis per pass. Honestly: it is a synthetic voice reading
   prose, not a recording of several speakers, and it is never sold as "like in the exam".
   `listening.int.test.ts`, `practice/__tests__/listen.test.ts`.
+- **spelling_dictation** — **Diktat**: Buddy reads a word or a sentence aloud, she TYPES it
+  (issue #242; `contracts/dictation.ts`, `practice/dictation.ts`, migration
+  `0081_spelling_dictation.sql`). Spelling practised WITHOUT voice input. Internally never called
+  "dictation": in the app that word already means voice input (`lib/speech/dictation.ts`), which is
+  exactly what this question switches off. A new item kind, because it is graded differently from
+  everything else, but no new column and no second speech stack: the key is `items.answer`, and
+  the recording is the Hörverstehen chain above with `items.listen_task.text` = the key.
+  _Regel 0, in the database:_ `items_dictation_shape` refuses a Diktat row whose recording is not
+  its key character for character, or whose spelling is not `strict` — the voice is given the KEY,
+  never a text a model rephrased. The question's line ("Hör zu und schreib das Wort.") is
+  written by code (`practice.dictation.prompt_*`), so the word is never in the view while the
+  question is open; it arrives as `answer` once the question is closed (no `listen_transcript` —
+  it would only repeat it). No hint ladder, no prepared hints, `POST …/hint` is 409 `no_hints`: a
+  hint about a word she is to spell spells it. Like a listening question it is kept out of every
+  written run.
+  _The check is code alone_ (`checkDictation`): exact — case, ß/ss, umlauts and punctuation count;
+  only runs of spaces, the kind of apostrophe/quote/dash and Unicode composition are folded. A miss
+  names the PLACE (`wordSpot` via an optimal-string-alignment diff, word level first, then letters):
+  a missing or extra double consonant ("Doppel-m fehlt"), ie/i, ß/ss, capital/small, a missing,
+  extra, wrong or swapped letter (named by its position in HER word — the key is never spelled out
+  before the third miss or "Lösung zeigen"), a missing or extra word, two words that are one and
+  one that is two, and punctuation only once every word stands. 0 model calls per answer; one
+  synthesis per word and pass (cached 24 h like every spoken sentence).
+  _Where the words come from:_ a list she typed, a sheet she photographed (`offer_learning` with
+  `sheet: sh1` → `StartTopicRequest.material_id`, read from `materials.extracted_text`; another
+  learner's sheet is a 404), or Buddy's own words for a spelling topic ("ie-Wörter"). One model
+  call picks the entries (`DictationDraft`, `from: list|topic`); every entry claimed as hers — and
+  every entry of a sheet, whatever the model says — must stand in that list word for word and in
+  its own capitalisation (`standsIn`), or it is dropped, never corrected. Digits and markup are not
+  spelling and are dropped too. Her own list is `origin = 'typed'`, a topic's words `'buddy'`.
+  _The app:_ the card IS the play control (`components/practice/DictationCard.tsx`): the line and
+  a large "Anhören" (primary until she has heard it, then soft, so "Prüfen" is the strong button)
+  with the quiet "Langsam" beside it, centred in the room the conversation does not need yet — the
+  card may take the whole middle while there is no reply, so no empty band is left (#286). Once
+  there is a reply the card collapses to one row ("Nochmal hören" · "Langsam") and the thread
+  shows only her latest try and what followed — three tries do not fit under the card on 360×740,
+  and an older bubble would sit half cut under its edge. The
+  playback is `useHearText`, the hook the Hörverstehen pills use. The answer field has no
+  microphone; its placeholder says so ("Schreib, was du hörst – ohne Mikro"), the keyboard does
+  not capitalise for her. Without a voice
+  there is no Diktat (503 `speech_off` before any model call, the offer stops being a button).
+  Not yet: a Diktat word does not come back by spaced repetition on its own (like a listening
+  question, it is only ever asked in its own run). `dictation.int.test.ts`,
+  `practice/__tests__/dictation.test.ts`, walkthrough `tests/web/dictation.spec.ts` (needs
+  `LB_DEV_SPEECH=fake`, skips without it).
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
   renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
   symbols, sums, integrals and limits with their bounds, binomial coefficients, column vectors
@@ -2982,6 +3176,82 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   its own line rather than shrink, and toasts sit above the iOS keyboard. Not yet checked on a
   device at AX3/AX5.
 
+## Roleplay
+
+Issue #244, migration `0084_roleplays.sql`, `modules/buddy/roleplay.ts`. A roleplay in a foreign
+language: Buddy plays a role (a waiter in London, a shopkeeper in Paris), she talks or types, and
+afterwards she gets feedback per key point — no grade. **Defined narrowly on purpose** (owner
+02.10.: "kommt drauf an wie man es definiert, weil buddy das schon gut kann"): the model plays
+the role; code holds the frame (CLAUDE.md rule 1).
+
+- **Starts in the chat, no new screen** (rule 16). `start_roleplay` is an act tool (turn only,
+  quote-bound): the model names the language, the scene, its role and 3–5 key points — the role
+  card, from her photographed one when she has one. Code refuses it in her own app language (a
+  roleplay practises a foreign one), in a concern, beside a practice prepared in the same answer,
+  with two equal points, or while one is running (one per learner, a partial unique index). The
+  card (`components/buddy/RoleplayCard.tsx`) shows the scene, the role and her tasks; once over
+  it shrinks to a quiet line. The way out is **not** on the card: after a few lines the card has
+  scrolled away with the scene (the first walkthrough found its button behind "Ältere
+  Nachrichten"), so while it runs one strip above the conversation (`RoleplayStrip`, in the slot
+  of the focus line, from `BuddyHome.roleplay`) names it and carries the one "Beenden" button.
+  No count of turns, no progress bar (rule 6).
+- **While it runs, her message is a line in the scene, not a Buddy turn.** `decideTurn` sees the
+  running roleplay and answers through `roleplayRound` (`turn.ts`) — same claim, fence, takeover,
+  failure codes and audit (`buddy_decisions`, prompt version `roleplay.N`) as every turn, but a
+  different request: `ROLEPLAY_SYSTEM`, the frame **rendered from the row** (`roleplayFrame`: the
+  language, scene, role, `k1…k5`, her level, the turns left) and the scene's own messages since
+  the one that started it. No STATE, no memories, not her name: nothing personal can reach a scene
+  because nothing personal is in the request. The answer (`RoleplayTurnForModel`) has **no
+  actions** — a scene changes nothing — and its bits come before the line: `concern`,
+  `her_language`, `leave`.
+- **What code makes of it**: `concern` → the fixed caring reply (§Turns), the roleplay ends
+  without feedback (a provider block ends it the same way); `leave` → it ends, with the feedback
+  when a line was played; a line in another language than the roleplay's → the app's own hint
+  (`roleplay.try_in`, the language named via `Intl.DisplayNames` in her locale), the model's words
+  are not shown and the turn is not counted; otherwise the role's line (≤ 300 characters) and the
+  turn counts. The twelfth counted turn (`ROLEPLAY_MAX_TURNS`) ends it **in the same
+  transaction** that stores it, the role's last line followed by the feedback. Applied inside
+  `applyDecision` behind the context fence: the row must still be running with the turn count the
+  model saw (`RoleplayMoved` counts as stale), so a takeover or a stale retry counts a turn once.
+- **The feedback is checked, not believed** (rule 0 from #224, the same rule as #211's `judged`).
+  One model call (`ROLEPLAY_FEEDBACK_SYSTEM`, `RoleplayFeedbackForModel`, zod): per key point
+  `met` and a quote, plus 2–3 lines of hers with a better version. `checkFeedback` counts a point
+  as managed **only** when the quote stands in her own lines (`quoteOccursIn`, whole words); an
+  invented quote, a fragment or a point the model left out is "noch nicht dabei". A better line
+  whose `said` is not hers is dropped, never rewritten. The text she reads and hears is the
+  app's (`i18n roleplay.*`): each point in words, a managed one with her own words as the proof —
+  no score, no grade, no count. Stored as checked in `buddy_roleplays.feedback` (her export).
+- **Her tap on "end"** in the strip (`POST /buddy/roleplays/:id/end`): with lines played, one feedback call,
+  then under the settings lock the row must still be running with the same count (else 409 — a
+  turn landed meanwhile; the tap can be repeated); with none, it simply ends. Another learner's
+  id is 404, an ended one 409; a model outage leaves it running. It bumps the context, so a
+  message decided inside the scene meanwhile is decided again outside it.
+- **A scene she left** stops taking over her messages after 30 minutes without a line
+  (`ROLEPLAY_IDLE_MS`, read against the app clock): her next message is a normal turn, the card
+  says it is over, and the row is closed as `lapsed` (no feedback) the next time one starts.
+- **Voice** is the conversation mode as it is: while a roleplay runs `BuddyHome.roleplay` names
+  its language, `app/talk.tsx` listens in it (`useVoiceInput` `lang`, so the transcript request
+  carries it as EXPECTED LANGUAGE) and reads the role's line in it; the feedback (the newest
+  message once it ended) is read in hers. In-role turns are **not streamed**: whether the model's
+  line is shown at all is decided after the whole answer (the language hint replaces it).
+- **What is prompt, not code**: that the role stays in its language and in character, keeps it
+  age-appropriate and invents names instead of asking for hers, and that `her_language` and
+  `leave` are read right. Code bounds what a wrong judgement can do — no tools, a short line, a
+  fixed frame, nothing personal in the request, a hint instead of a counted turn — but cannot
+  tell a language or a wish to stop without the model (rule 3). The hint the app gives in her
+  language is read aloud in the roleplay's voice while it runs (the app cannot tell the two
+  kinds of message apart; known, small).
+- **Not done** (the issue's acceptance): the eval set of 10 roleplays per language with a
+  teacher's agreement on the key-point verdicts needs live model runs and a teacher; it is not
+  written. The language check rests on the model's `her_language`, not on the recogniser: the
+  device recogniser is set to a language rather than detecting one.
+- Tests: `roleplay.int.test.ts` (start on her words and never in her own language; the frame and
+  nothing personal in the request; the hint; twelve turns, then the feedback with an invented
+  quote discarded; leaving; a concern; the tap, a second tap, another learner's id; a stale
+  context; an interrupted turn taken over once; a scene left for half an hour),
+  `buddy/__tests__/roleplay.test.ts`, walkthrough `tests/web/roleplay.spec.ts` (scripted in
+  `src/testing/scenarios/roleplay.ts`).
+
 ## Home
 
 `modules/buddy/home.ts`. Everything is derived from stored state: **now** (practice used in the
@@ -3101,13 +3371,15 @@ conversation about it and the way to answer together at the top, in that order; 
 collects BELOW the way to answer (`components/practice/FreeSpace.tsx`), above what is pinned
 (the answer field, "Prüfen", "Weiter"). Before, the conversation took all free room and the way
 to answer sat at the bottom, which left a hole under the card with a lonely "Tipp" in it. The
-conversation shows WHOLE turns only (`threadCap` in `app/practice/[id].tsx`): everything when it
+conversation shows WHOLE turns only (`threadRoom` in `lib/practice/threadRoom.ts`): everything when it
 fits into its box plus the free room, otherwise from the earliest turn whose rest still fits,
 so at rest the top edge lies in the gap above a whole turn and nothing is cut under the card.
 Earlier turns are a scroll up away; the edge is masked exactly when the box holds more than it
 shows, with a short fade over that gap at rest and the full EDGE_FADE (#63) once she scrolls up
 or when the newest turn alone does not fit. Over an open structured board the newest turn keeps
-its full height and the board scrolls inside itself; with nothing else that can give (choices, a
+its full height and the board scrolls inside itself — down to two lines of its parts and its
+"Prüfen" bar (`boardKeeps`), which it never gives: with the keyboard up on 360×740 a cloze's
+reply took the whole board and the gap she was fixing vanished under it (#232); with nothing else that can give (choices, a
 field, the voice bar) a drawing or photo in the card gives room first, its cap lowered by up to
 48 pt (`CARD_GIVES`, never below figureScale's legible minimum), and only what is still missing
 is cut from the newest turn under the full fade rather than pushing the bar off the screen. Before the first turn the conversation is only the hint row; at the

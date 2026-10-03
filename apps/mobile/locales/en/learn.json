@@ -5,7 +5,8 @@
     "test": "Practice test",
     "vocab": "Test my vocab",
     "speak": "Practise speaking",
-    "listen": "Practise listening"
+    "listen": "Practise listening",
+    "spelling_dictation": "Practise dictation"
   },
   "homework": {
     "title": "Homework help",
@@ -53,6 +54,11 @@
       "hint": "I read you a short text and ask you about it.",
       "placeholder": "e.g. English Unit 3, holidays in French"
     },
+    "spelling_dictation": {
+      "title": "Which words for the dictation?",
+      "hint": "I read each word aloud, you write it.",
+      "placeholder": "e.g. your spelling words or words with ie"
+    },
     "help": {
       "title": "Which task? Copy it here.",
       "hint": "I'll give you hints – you'll find the answer yourself.",
@@ -63,6 +69,11 @@
     "submit": "Let's go",
     "preparing": "Buddy is getting it ready …",
     "preparing_hint": "This takes a few seconds.",
-    "not_usable": "I can't prepare anything from that, sorry – try a school topic."
+    "not_usable": "I can't prepare anything from that, sorry – try a school topic.",
+    "minutes_one": "with {{count}} minute",
+    "minutes_other": "with {{count}} minutes"
+  },
+  "drill": {
+    "label": "Mental maths"
   }
 }

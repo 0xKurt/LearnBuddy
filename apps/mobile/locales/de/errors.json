@@ -46,7 +46,8 @@
     "stream_lost": "Die Verbindung ist mittendrin abgerissen. Ist deine Nachricht angekommen, antwortet Buddy trotzdem.",
     "too_many_pages": "Das sind zu viele Seiten – für ein Blatt gehen höchstens 20. Nimm nur die Seiten, die du brauchst.",
     "file_unreadable": "Diese Datei lässt sich nicht öffnen. Nimm eine andere oder fotografier das Blatt.",
-    "file_too_large": "Die Datei ist zu groß – höchstens 15 MB gehen. Fotografier das Blatt lieber."
+    "file_too_large": "Die Datei ist zu groß – höchstens 15 MB gehen. Fotografier das Blatt lieber.",
+    "time_up": "Die Zeit war schon um – diese Antwort zählt nicht mehr."
   },
   "turn": {
     "model_unavailable": "Buddy konnte gerade nicht antworten.",

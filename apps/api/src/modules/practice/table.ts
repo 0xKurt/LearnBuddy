@@ -52,6 +52,7 @@ import {
 import { z } from 'zod';
 
 import { t } from '../../i18n/index.js';
+import { sameness } from './arrange.js';
 import { dollarMathRuns } from './dollarMath.js';
 import { compareWithKeys, NEAR_MISS, ruleCheck, type ItemForCheck } from './evaluate.js';
 import { ItemDraft } from './items.js';
@@ -149,17 +150,6 @@ export type TableProblem =
   | 'totals_mismatch'
   /** The solution as she reads it does not fit `items.answer`. */
   | 'too_long';
-
-/** A cell as it is compared for sameness: markup, case and surrounding marks set aside. */
-function sameness(text: string): string {
-  return plainMath(text)
-    .normalize('NFKC')
-    .toLowerCase()
-    .replace(/ß/g, 'ss')
-    .replace(/\s+/g, ' ')
-    .replace(/^[\s.,;:!?"'„“”‚‘’«»]+|[\s.,;:!?"'„“”‚‘’«»]+$/g, '')
-    .trim();
-}
 
 function isGap(cell: TableTaskCell): cell is TableGapCell {
   return 'id' in cell;

@@ -19,7 +19,8 @@ import { planOutreach, type OutreachPlan } from './delivery.js';
 import { bumpContext } from './plan.js';
 import { LIMITS, loadSettings, TURN_STALL_MS, type SettingsRow } from './state.js';
 import { runAct } from './registry.js';
-import { ToolRejection, type ToolOutcome } from './tools.js';
+import { applyRoleplayStep, RoleplayMoved, type RoleplayStep } from './roleplay.js';
+import { ToolRejection, type ToolOutcome } from './toolKit.js';
 
 export type DecisionMeta = {
   mode: 'turn' | 'check';
@@ -54,6 +55,11 @@ export type ApplyInput = {
   outreach: Outreach | null;
   /** A look-back Buddy says in the app (lookback.ts): the model's sentence and the fact. */
   lookBack?: { text: string; fact: LookBackFact } | null;
+  /**
+   * An in-role turn of a running roleplay (issue #244): counted, ended and its feedback stored
+   * in this same transaction, and its closing message posted after the reply.
+   */
+  roleplay?: RoleplayStep;
   /** 'learner' when the outreach answers something she just did (policy.ts). */
   outreachOrigin?: 'buddy' | 'learner';
   meta: DecisionMeta;
@@ -104,6 +110,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
         throw new SupersededClaim();
       }
       if (settings.context_version !== input.contextVersion) throw new StaleDecision();
+      if (input.roleplay) await applyRoleplayStep(tx, input.learnerId, input.roleplay, input.now);
 
       const outcomes: Array<{ action: AnyAction; outcome: ToolOutcome }> = [];
       const created = {
@@ -201,6 +208,14 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
         );
         replyMessageId = msg.id;
       }
+      if (input.roleplay?.closing) {
+        // After the reply: the role's last line first, then what the app says about the scene.
+        await tx.query(
+          `insert into buddy_messages (learner_id, role, text, reply_to_id, decision_id, created_at)
+           values ($1, 'buddy', $2, $3, $4, $5)`,
+          [input.learnerId, input.roleplay.closing, input.triggerMessageId, decision.id, input.now],
+        );
+      }
       if (input.lookBack) {
         // Said once, in the app only (never pushed): the row keeps it rare (lookback.ts).
         const f = input.lookBack.fact;
@@ -296,6 +311,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
       if (
         outcomes.length > 0 ||
         input.reply ||
+        input.roleplay ||
         input.lookBack ||
         (outreach && outreach.status !== 'suppressed')
       ) {
@@ -311,7 +327,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
     });
   } catch (err) {
     if (err instanceof SupersededClaim) return { status: 'superseded' };
-    if (err instanceof StaleDecision || lostLockRace(err)) {
+    if (err instanceof StaleDecision || err instanceof RoleplayMoved || lostLockRace(err)) {
       await recordUnapplied(db, input, 'stale', null);
       return { status: 'stale' };
     }

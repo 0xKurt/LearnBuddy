@@ -17,7 +17,6 @@ import {
   VOICE_NAMES,
   VOICE_SPEED_MAX,
   VOICE_SPEED_MIN,
-  type ActionSummary,
   type VoiceName,
 } from '@learnbuddy/shared-types/contracts';
 
@@ -28,13 +27,9 @@ import {
   inWindow,
   localParts,
   minutesOf,
-  resolveDay,
   resolveLocalDateTime,
-  resolveUntil,
   weekdayOf,
   zonedToInstant,
-  type DaySpec,
-  type UntilSpec,
 } from '../../lib/time.js';
 import { t } from '../../i18n/index.js';
 import {
@@ -43,317 +38,39 @@ import {
   type HowMany,
   type PracticeWish,
 } from '../practice/selection.js';
-import { fromLearnerText } from '../practice/generate.js';
 import { enqueueJob } from '../scheduler/jobs.js';
-import type { Aliases } from './context.js';
 import { bumpContext, rollRepeatingStep } from './plan.js';
-import { schoolYearsOf, type ActionOf, type MemoryAbout, type ToolName } from './decision.js';
+import { schoolYearsOf, type ActionOf, type ToolName } from './decision.js';
 import {
   cancelGoalWakeups,
   findOrCreateSubject,
   scheduleExamWakeups,
   scheduleStepReminder,
 } from './plan.js';
-import {
-  loadStandingOffers,
-  type GoalRow,
-  type MemoryRow,
-  type SettingsRow,
-  type StepRow,
-} from './state.js';
+import { type SettingsRow } from './state.js';
 import { loosens } from './policy.js';
-import { holdsWordPairs, normalizeForMatch, quoteOccursIn, unsupportedSpecifics } from './text.js';
-
-export class ToolRejection extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ToolRejection';
-  }
-}
-
-export type ToolContext = {
-  db: Db;
-  learnerId: string;
-  settings: SettingsRow;
-  aliases: Aliases;
-  now: Date;
-  /** When the learner wrote the message this decision answers (or now for checks). */
-  reference: Date;
-  mode: 'turn' | 'check';
-  /** What the learner wrote that this decision answers (one or several quick messages). */
-  learnerWords: readonly string[] | null;
-  /** The turn is a safeguarding answer (TurnDecision.concern): nothing about it is remembered. */
-  concern: boolean;
-  triggerMessageId: string | null;
-  /** Learner's app language, for titles the server writes itself. */
-  locale: string;
-  /** Shared by all actions of one decision: what earlier actions created. */
-  created: {
-    goalId: string | null;
-    stepId: string | null;
-    /**
-     * The practice an earlier action of this decision PREPARED — the card she can tap right
-     * now. Kept apart from `stepId`, which any step claims for the "new" alias: a `plan_step`
-     * reminder for later is nothing to tap, so it must not count as the answer's one button
-     * (issue #196).
-     */
-    preparedStepId: string | null;
-  };
-};
-
-export type UndoSpec =
-  | { type: 'retract_memory'; memory_id: string }
-  | { type: 'restore_memory'; old_id: string; new_id: string }
-  | { type: 'unretract_memory'; memory_id: string }
-  | { type: 'rename_material_back'; material_id: string; title: string | null }
-  /** Undo of "forget everything" (issue #114): exactly the notes that call retracted. */
-  | { type: 'unretract_memories'; memory_ids: string[] }
-  | {
-      type: 'restore_level';
-      level: string;
-      grade: number | null;
-      expect_level: string;
-      expect_grade: number | null;
-    }
-  | { type: 'drop_goal'; goal_id: string }
-  | {
-      type: 'restore_goal';
-      goal_id: string;
-      title: string;
-      due_date: string | null;
-      topics: string[];
-      status: string;
-      outcome: string | null;
-      /** Undo only if nothing changed the goal since (no blind overwrite). */
-      expect_version: number;
-      /**
-       * Steps closing the goal cancelled: undo opens them again, each only if nothing
-       * changed it since (restore-goal-leaves-steps-cancelled). Absent in older records.
-       */
-      steps?: Array<{ id: string; state: string; expect_version: number }>;
-    }
-  | { type: 'cancel_step'; step_id: string }
-  | {
-      type: 'restore_step';
-      step_id: string;
-      state: string;
-      planned_date: string | null;
-      planned_time: string | null;
-      done_source: string | null;
-      /** Absent in undo records written before repeating reminders existed (issue #112). */
-      repeat?: 'daily' | 'weekdays' | 'weekly' | null;
-      repeat_until?: string | null;
-      expect_version: number;
-    }
-  | {
-      type: 'restore_settings';
-      /** Absent in undo records written before quiet hours could be changed. */
-      quiet_start?: string;
-      /** Absent in undo records written before the morning end could be changed (#114). */
-      quiet_end?: string;
-      preferred_start: string;
-      preferred_end: string;
-      avoid_weekdays: number[];
-      paused_until: string | null;
-      /** Written by undo records from before ADR 0006; ignored. */
-      max_per_week?: number;
-      expect_version: number;
-    }
-  | {
-      type: 'restore_voice';
-      voice: VoiceName;
-      speed: number;
-      /** Undo only while the settings are as the action left them (no blind overwrite). */
-      expect_version: number;
-    }
-  | { type: 'cancel_check'; job_id: string };
-
-export type ToolOutcome = { summary: ActionSummary; undo: UndoSpec | null };
-
-/** What Buddy may know at once; at the cap he asks her what he may forget (never evicts). */
-export const MAX_ACTIVE_MEMORIES = 60;
-const MAX_CONSTRAINT_DAYS = 60;
-const MAX_PLAN_DAYS = 366;
-
-// ─────────────── helpers ───────────────
-
-function requireQuote(ctx: ToolContext, quote: string | null): void {
-  if (ctx.mode !== 'turn')
-    throw new ToolRejection('this change is not allowed in a background check');
-  if (!quote || !ctx.learnerWords || !quoteOccursIn(quote, ctx.learnerWords)) {
-    throw new ToolRejection(
-      `quote "${quote ?? ''}" is not the learner's exact words (whole words) from what they wrote since your last answer; only what they just said can justify this change`,
-    );
-  }
-}
-
-/**
- * A memory repeats only what she said: every day, time of day, month or number in the statement
- * must be in her quote (or in what was known already, for a correction) — live finding 4.
- */
-function requireSupported(
-  ctx: ToolContext,
-  statement: string,
-  quote: string | null,
-  known: string | null = null,
-): void {
-  const extra = unsupportedSpecifics(
-    statement,
-    [quote ?? '', ...(known ? [known] : [])],
-    ctx.locale,
-  );
-  if (extra.length > 0) {
-    throw new ToolRejection(
-      `the statement adds details the learner did not say (${extra.join(', ')}); keep only what her quote says — or quote the words where she said it`,
-    );
-  }
-}
-
-/** Code-enforced, not only prompted: a disclosure of distress never becomes a memory (audit M-9). */
-function refuseDuringConcern(ctx: ToolContext): void {
-  if (ctx.concern)
-    throw new ToolRejection(
-      'nothing is remembered from a message about distress (concern is true); leave memory alone',
-    );
-}
-
-/**
- * What a memory may never be about — Art. 9 categories and what a learning companion has no
- * business holding about a child (`docs/dpia.md` §1).
- *
- * Until issue #108 this ban lived only in the prompt, and the only code-side guard was
- * `refuseDuringConcern`, which needs `concern === true`. Illness, an argument at home or a
- * threat without a deed are no emergency — so the live run of 29.09. stored "isst seit drei
- * Tagen fast nichts und möchte dünner werden" and a death in the family in turns the model
- * had not flagged. The model names the category in its structured answer (`about`), code
- * refuses on it: interpretation with the model, enforcement in code (rules 1 and 3).
- */
-const NEVER_KEPT: readonly MemoryAbout[] = ['health', 'family', 'harm', 'identity'];
-
-function refuseForbiddenAbout(about: MemoryAbout): void {
-  if (!NEVER_KEPT.includes(about)) return;
-  throw new ToolRejection(
-    `about "${about}": a learner's health, trouble at home, being hurt, and who they are are never kept — in no wording and under no other label. Answer again without a memory action. What it means for learning (that they cannot practise, and until when) may be kept as a temporary situation, without the reason.`,
-  );
-}
-
-function today(ctx: ToolContext): string {
-  return localParts(ctx.now, ctx.settings.timezone).date;
-}
-
-function resolveFutureDay(ctx: ToolContext, spec: DaySpec, what: string): string {
-  const r = resolveDay(spec, ctx.reference, ctx.settings.timezone);
-  if (!r.ok) {
-    throw new ToolRejection(
-      r.error === 'unresolved_time'
-        ? `the day for ${what} is unclear — ask the learner instead of guessing`
-        : `the day for ${what} is invalid (${r.error})`,
-    );
-  }
-  const d = daysBetween(today(ctx), r.date);
-  if (d < 0)
-    throw new ToolRejection(
-      `${what} would be on ${r.date}, which is in the past — ask the learner`,
-    );
-  if (d > MAX_PLAN_DAYS)
-    throw new ToolRejection(
-      `${what} is more than a year ahead — ask her for a nearer day instead of planning one`,
-    );
-  return r.date;
-}
-
-function resolveEnd(ctx: ToolContext, spec: UntilSpec, what: string): Date {
-  const r = resolveUntil(spec, ctx.reference, ctx.settings.timezone);
-  if (!r.ok) {
-    throw new ToolRejection(
-      r.error === 'unresolved_time'
-        ? `how long ${what} lasts is unclear — ask the learner`
-        : `the end of ${what} is invalid (${r.error})`,
-    );
-  }
-  if (r.until.getTime() <= ctx.now.getTime())
-    throw new ToolRejection(`${what} would already be over`);
-  // Counted in days, not in milliseconds. An UntilSpec ends at midnight AFTER its last day,
-  // so measuring the instant made the longest expressible end (end_of_day with 60 days) always
-  // too long by the rest of today — the model repaired into the same rejection and the learner
-  // got model_invalid instead of an answer (issue #119).
-  const lastDay = addDays(localParts(r.until, ctx.settings.timezone).date, -1);
-  if (daysBetween(localParts(ctx.now, ctx.settings.timezone).date, lastDay) > MAX_CONSTRAINT_DAYS) {
-    // A rejection is a repair instruction: it says the way out, not only the limit.
-    throw new ToolRejection(
-      `${what} is limited to ${MAX_CONSTRAINT_DAYS} days: use kind "end_of_day" with days ${MAX_CONSTRAINT_DAYS} for the longest there is, and say in your reply that this is how far it reaches`,
-    );
-  }
-  return r.until;
-}
-
-function goalOf(ctx: ToolContext, alias: string): GoalRow {
-  const g = ctx.aliases.goals.get(alias);
-  if (!g)
-    throw new ToolRejection(
-      `there is no goal ${alias} — STATE lists every one she has. Leave this action out instead of picking another`,
-    );
-  return g;
-}
-
-function stepOf(ctx: ToolContext, alias: string): StepRow {
-  const s = ctx.aliases.steps.get(alias);
-  if (!s)
-    throw new ToolRejection(
-      `there is no step ${alias} — STATE lists every one she has. Leave this action out instead of picking another`,
-    );
-  return s;
-}
-
-function memoryOf(ctx: ToolContext, alias: string): MemoryRow {
-  const m = ctx.aliases.memories.get(alias);
-  if (!m)
-    throw new ToolRejection(
-      `there is nothing known as ${alias} — STATE lists what you know about her. Leave this action out instead of picking another`,
-    );
-  return m;
-}
-
-async function lockGoal(ctx: ToolContext, id: string, ref: string): Promise<GoalRow> {
-  const row = await ctx.db.maybeOne<GoalRow>(
-    `select g.*, s.name as subject_name from buddy_goals g left join subjects s on s.id = g.subject_id
-      where g.id = $1 and g.learner_id = $2 for update of g`,
-    [id, ctx.learnerId],
-  );
-  if (!row)
-    throw new ToolRejection(
-      `goal ${ref} is gone since STATE was written — leave this action out and answer her without it`,
-    );
-  return row;
-}
-
-async function currentGoal(ctx: ToolContext, alias: string): Promise<GoalRow> {
-  return lockGoal(ctx, goalOf(ctx, alias).id, alias);
-}
-
-/** A goal alias, or "new" = the test plan_exam created earlier in this decision. */
-async function targetGoal(ctx: ToolContext, ref: string): Promise<GoalRow> {
-  if (ref !== 'new') return currentGoal(ctx, ref);
-  if (!ctx.created.goalId) {
-    throw new ToolRejection(
-      '"new" refers to a test planned with plan_exam earlier in this same answer — there is none',
-    );
-  }
-  return lockGoal(ctx, ctx.created.goalId, 'new');
-}
-
-async function currentStep(ctx: ToolContext, alias: string): Promise<StepRow> {
-  const s = stepOf(ctx, alias);
-  const row = await ctx.db.maybeOne<StepRow>(
-    `select * from buddy_steps where id = $1 and learner_id = $2 for update`,
-    [s.id, ctx.learnerId],
-  );
-  if (!row)
-    throw new ToolRejection(
-      `step ${alias} is gone since STATE was written — leave this action out and answer her without it`,
-    );
-  return row;
-}
+import { normalizeForMatch } from './text.js';
+import {
+  currentGoal,
+  currentStep,
+  materialOf,
+  MAX_ACTIVE_MEMORIES,
+  memoryOf,
+  refuseDuringConcern,
+  refuseForbiddenAbout,
+  requireQuote,
+  requireSupported,
+  resolveEnd,
+  resolveFutureDay,
+  targetGoal,
+  today,
+  ToolRejection,
+  type ToolContext,
+  type ToolOutcome,
+  type UndoSpec,
+} from './toolKit.js';
+import { runOfferDrill, runOfferLearning, runOpenArea } from './offers.js';
+import { runStartRoleplay } from './roleplay.js';
 
 // ─────────────── tools ───────────────
 
@@ -1339,16 +1056,6 @@ async function proposeDeletion(
   });
 }
 
-/** The sheet she named, from this learner's aliases only. */
-function materialOf(ctx: ToolContext, alias: string) {
-  const m = ctx.aliases.materials.get(alias);
-  if (!m)
-    throw new ToolRejection(
-      `there is no sheet ${alias} — STATE lists her sheets. Leave this action out instead of picking another`,
-    );
-  return m;
-}
-
 /**
  * She asked for a sheet to go (issue #111). This is the library's own delete — the same
  * service the button calls, so merged pages, questions, running sessions and the photo and
@@ -1591,96 +1298,6 @@ async function runSetVoice(action: ActionOf<'set_voice'>, ctx: ToolContext): Pro
   };
 }
 
-async function runOfferLearning(
-  action: ActionOf<'offer_learning'>,
-  ctx: ToolContext,
-): Promise<ToolOutcome> {
-  const a = action.args;
-  // Practice or a test for a planned test stays within its sheets (live finding 6): the goal
-  // the model named, or the one active goal whose title the offer names exactly.
-  const forGoal = a.kind === 'test' || a.kind === 'practice';
-  let goal = forGoal && a.goal ? goalOf(ctx, a.goal) : null;
-  if (forGoal && !goal) {
-    const named = [...ctx.aliases.goals.values()].filter(
-      (g) => g.status === 'active' && normalizeForMatch(g.title) === normalizeForMatch(a.text),
-    );
-    goal = named.length === 1 ? named[0]! : null;
-  }
-  // Two of the five kinds are a button over CONTENT, not over a topic, and the generator says so
-  // itself: `vocab` makes one question per pair the text holds and sets usable = false when it
-  // holds none; `help` keeps only tasks whose words are in the text it was given
-  // (practice/generate.ts: TASK.vocab, TASK.help, fromLearnerText). So an offer of those kinds
-  // whose text NAMES the content instead of being it can never start. It still reaches the chat,
-  // she taps it, and the card replaces "Let's go" with "I can't prepare anything from that,
-  // sorry" under a reply that says the practice is ready (issue #196). Reproduced on every live
-  // run: the text was the sheet's own title, "French vocabulary Unité 3", and the tap came back
-  // 422 not_usable.
-  //
-  // So the floor is each generator's own precondition, enforced one step earlier where the model
-  // can still be told — never something stricter than the thing it protects:
-  //   vocab — the text has to BE a list of pairs (text.ts holdsWordPairs: structure, no language
-  //           in it). Where the pairs come from is not the question: she may have typed them, or
-  //           Buddy may have copied them off her sheet to ask them in one direction (#113).
-  //   help  — the task has to be in her own words, which is exactly what the generator keeps.
-  if (a.kind === 'vocab' && !holdsWordPairs(a.text)) {
-    throw new ToolRejection(
-      `"${a.text}" names a vocabulary list instead of being one, and questions are made from the pairs this text holds — so this button could not start anything. Either put the pairs themselves in "text" (one per line, "word – translation"), or, for a list on a sheet she photographed, use prepare_practice on that sheet with vocabulary_only.`,
-    );
-  }
-  if (a.kind === 'help' && !fromLearnerText(a.text, (ctx.learnerWords ?? []).join('\n'))) {
-    throw new ToolRejection(
-      `a help offer works on the task the learner wrote, so "text" must be their own words from this message — "${a.text}" names it instead, and hints cannot be made from a name. Without the task in the message, ask her to type or photograph it (no offer).`,
-    );
-  }
-  // One answer, one thing to tap. `prepare_practice` earlier in this same decision already made
-  // the card she asked for; an offer beside it is a second button for the same wish — at best
-  // redundant, and in the live run of 01.10. it was a refused one sitting under a reply that
-  // said the practice was ready (issue #196; left open as a known gap when #184 landed). The
-  // model gets the reason and answers again pointing at what it just prepared.
-  if (ctx.created.preparedStepId) {
-    throw new ToolRejection(
-      'you already prepared practice in this same answer — that is the one thing she taps. Leave this offer out and say in your reply where the practice you prepared is.',
-    );
-  }
-  // The same offer twice is not a second thing she can tap — the first button is still there,
-  // unstarted (issue #184). STATE says what stands, so this is the floor under the prompt, not
-  // the rule itself: only an offer identical in every field it carries is refused, with the
-  // reason, and the model answers again pointing at the one she already has.
-  const standing = await loadStandingOffers(ctx.db, ctx.learnerId, ctx.now);
-  const wanted = normalizeForMatch(a.text);
-  if (
-    standing.some(
-      (o) =>
-        o.kind === a.kind &&
-        normalizeForMatch(o.text) === wanted &&
-        o.goal_id === (goal?.id ?? null) &&
-        o.difficulty === (a.difficulty ?? null) &&
-        o.direction === (a.direction ?? null),
-    )
-  ) {
-    throw new ToolRejection(
-      'you already offered exactly this and its button is still standing, unstarted — leave this action out and tell her where it is instead',
-    );
-  }
-  // Changes nothing: the learner starts it with a tap (the model never starts sessions).
-  return {
-    summary: {
-      tool: 'offer_learning',
-      kind: a.kind,
-      text: a.text,
-      goal_id: goal?.id ?? null,
-      // What she asked for beyond the topic; the tap hands it to the generator (issue #113).
-      // A direction only ever reaches vocabulary pairs — other questions have none.
-      difficulty: a.difficulty ?? null,
-      direction: a.direction ?? null,
-      // Nothing proves otherwise yet. The preparation that runs right after this (issue #48)
-      // is what can take it back, by stamping `cannot_start_at` (issue #196).
-      startable: true,
-    },
-    undo: null,
-  };
-}
-
 async function runScheduleCheck(
   action: ActionOf<'schedule_check'>,
   ctx: ToolContext,
@@ -1729,11 +1346,6 @@ async function runScheduleCheck(
   };
 }
 
-async function runOpenArea(action: ActionOf<'open_area'>, _ctx: ToolContext): Promise<ToolOutcome> {
-  // Changes nothing: the app shows a button that opens that part of the app.
-  return { summary: { tool: 'open_area', area: action.args.area }, undo: null };
-}
-
 /** One handler per act tool (the registry in registry.ts attaches them to their schemas). */
 export const ACT_HANDLERS: {
   [K in ToolName]: (action: ActionOf<K>, ctx: ToolContext) => Promise<ToolOutcome>;
@@ -1756,8 +1368,10 @@ export const ACT_HANDLERS: {
   set_contact: runSetContact,
   set_voice: runSetVoice,
   offer_learning: runOfferLearning,
+  offer_drill: runOfferDrill,
   open_area: runOpenArea,
   schedule_check: runScheduleCheck,
+  start_roleplay: runStartRoleplay,
 };
 
 /** Reverse an applied action. Returns false when the thing changed since (no blind overwrite). */

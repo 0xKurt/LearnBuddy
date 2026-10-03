@@ -40,9 +40,15 @@ type Props = {
   disabled?: boolean;
 };
 
-type Pass = 'normal' | 'slow';
+/** A pass of the recording: the normal speed, or the slower one. */
+export type Pass = 'normal' | 'slow';
 
-export function HearText({ sessionId, itemId, heard, onHeard, disabled = false }: Props) {
+/**
+ * Fetching and playing one question's recording (issue #210), shared by the two pills below and
+ * the Diktat card (issue #242, `DictationCard.tsx`): the same request, the same "nothing kept on
+ * the phone", the same stop-on-leave. Tapping the pass that runs stops it; the other one switches.
+ */
+export function useHearText(sessionId: string, itemId: string, onHeard: () => void) {
   const { t } = useTranslation('practice');
   /** Which pass is being fetched or playing; null = nothing is. */
   const [busy, setBusy] = useState<Pass | null>(null);
@@ -110,6 +116,17 @@ export function HearText({ sessionId, itemId, heard, onHeard, disabled = false }
       },
     });
   }
+
+  /** Fetching, not yet sounding: the pill shows its spinner. */
+  const loading = (pass: Pass): boolean => busy === pass && playing === null;
+  /** Something is being fetched: the other pill waits. */
+  const fetching = busy !== null && playing === null;
+  return { busy, playing, play, loading, fetching };
+}
+
+export function HearText({ sessionId, itemId, heard, onHeard, disabled = false }: Props) {
+  const { t } = useTranslation('practice');
+  const { busy, playing, play } = useHearText(sessionId, itemId, onHeard);
 
   // What stands on the pills, and what a screen reader hears. The state is in the words, never
   // in the colour alone: while something plays, both say "Anhalten".

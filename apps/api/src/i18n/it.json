@@ -63,6 +63,31 @@
     "card_knew": "Lo sapevo",
     "card_not_yet": "Non ancora",
     "correct": "Esatto – ottimo lavoro!",
+    "dictation": {
+      "prompt_word": "Ascolta e scrivi la parola.",
+      "prompt_sentence": "Ascolta e scrivi la frase.",
+      "shown": "Nessun problema – si scrive così. Riascoltalo mentre lo guardi.",
+      "capital": "Quasi – qui «{{word}}» si scrive con la maiuscola.",
+      "lower": "Quasi – qui «{{word}}» si scrive con la minuscola.",
+      "double_missing": "Quasi – in «{{word}}» manca una doppia {{letter}}.",
+      "double_extra": "Quasi – in «{{word}}» la {{letter}} è singola.",
+      "ie_missing": "Quasi – in «{{word}}» manca la e: qui si scrive ie.",
+      "ie_extra": "Quasi – in «{{word}}» c'è solo una i, senza e.",
+      "sz_needed": "Quasi – «{{word}}» si scrive con ß invece di s o ss.",
+      "ss_needed": "Quasi – «{{word}}» si scrive con ss invece di ß.",
+      "letter_missing": "Quasi – in «{{word}}» manca una lettera dopo «{{before}}».",
+      "letter_missing_start": "Quasi – in «{{word}}» manca una lettera all'inizio.",
+      "letter_extra": "Quasi – in «{{word}}» c'è una {{letter}} di troppo.",
+      "letter_wrong": "Quasi – in «{{word}}» la lettera {{n}} ({{letter}}) non è ancora giusta.",
+      "swapped": "Quasi – in «{{word}}» due lettere sono invertite.",
+      "word_wrong": "Non ancora – «{{word}}» suona diverso. Riascoltalo.",
+      "word_missing": "Quasi – manca una parola dopo «{{before}}».",
+      "word_missing_start": "Quasi – manca una parola all'inizio.",
+      "word_extra": "Quasi – «{{word}}» è di troppo.",
+      "together": "Quasi – «{{first}} {{second}}» si scrive attaccato.",
+      "apart": "Quasi – «{{word}}» si scrive staccato.",
+      "punctuation": "Quasi – ricontrolla la punteggiatura in «{{word}}»."
+    },
     "had_enough": "Va bene, per oggi può bastare. Puoi chiudere l’esercizio, oppure facciamo insieme un esempio piccolo. Dimmi tu.",
     "heard_retry": "Non ti ho sentito bene. Riprova un po' più forte e più vicino al telefono.",
     "help_final_answer": "Sembra giusto! Adesso scrivimi il tuo risultato finale, come lo chiede l'esercizio.",
@@ -251,6 +276,14 @@
       "urn": "Urna",
       "humid": "Umido",
       "arid": "Arido"
+    },
+    "cloze": {
+      "quote": "«{{word}}»",
+      "none_yet": "Non ancora del tutto – guarda di nuovo gli spazi vuoti.",
+      "right_of": "{{count}} spazi su {{total}} sono già giusti.",
+      "right_of_one": "1 spazio su {{total}} è già giusto.",
+      "wrong": "Non va ancora bene: {{words}}.",
+      "near": "{{words}}: manca solo un piccolo dettaglio di ortografia."
     }
   },
   "contact": {
@@ -258,5 +291,33 @@
   },
   "voice": {
     "sample": "Ciao, sono Buddy. Ecco come suono quando ti leggo qualcosa."
+  },
+  "drill": {
+    "and": "e",
+    "percent_of": "{{p}}% di {{n}}",
+    "carry_with": "con riporto",
+    "carry_without": "senza riporto",
+    "title": {
+      "times": "Tabelline",
+      "times_rows": "Tabelline del {{rows}}",
+      "divide": "Divisioni",
+      "divide_rows": "Dividere per {{rows}}",
+      "plus_10": "Addizioni fino a 10",
+      "plus_20": "Addizioni fino a 20",
+      "minus_20": "Sottrazioni entro 20",
+      "plus_100": "Addizioni fino a 100",
+      "minus_100": "Sottrazioni entro 100",
+      "fractions": "Sommare frazioni",
+      "percent": "Percentuali"
+    }
+  },
+  "roleplay": {
+    "feedback_head": "Il gioco di ruolo è finito – ecco com'è andata:",
+    "point_met": "✓ {{name}}: fatto – «{{quote}}»",
+    "point_open": "○ {{name}}: non ancora",
+    "better_head": "Così suona ancora meglio:",
+    "better_line": "«{{said}}» → «{{better}}»",
+    "ended": "Va bene, chiudiamo il gioco di ruolo. Dimmi quando vuoi rifarlo.",
+    "try_in": "Prova in {{language}} – resto nel mio ruolo. Se vuoi smettere, dillo e basta."
   }
 }

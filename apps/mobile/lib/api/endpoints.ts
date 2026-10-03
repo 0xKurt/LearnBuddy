@@ -8,6 +8,7 @@ import {
   BuddySettingsView,
   CreateMaterialResponse,
   DeletionResponse,
+  EndRoleplayResponse,
   LearnerView,
   LibraryView,
   ListenAudioResponse,
@@ -30,6 +31,7 @@ import {
   type AnswerRequest,
   type AppLocale,
   type CardRecall,
+  type DrillSpec,
   type CreateLearnerRequest,
   type CreateMaterialRequest,
   type ListenAudioRequest,
@@ -161,6 +163,13 @@ export const answerConfirmation = (pendingId: string, confirm: boolean) =>
   request('POST', `/buddy/confirmations/${pendingId}`, {
     body: { confirm },
     schema: BuddyHome,
+  });
+
+/** Her tap on "end" under a running roleplay: the feedback lands in the thread (issue #244). */
+export const endRoleplay = (roleplayId: string) =>
+  request('POST', `/buddy/roleplays/${roleplayId}/end`, {
+    body: {},
+    schema: EndRoleplayResponse,
   });
 
 export const reportOutcome = (goalId: string, outcome: 'good' | 'ok' | 'hard') =>
@@ -391,6 +400,30 @@ export const recordCard = (sessionId: string, itemId: string, recall: CardRecall
   cardTurns.run(`${sessionId}:${itemId}:${recall}`, (clientTurnId) =>
     request('POST', `/practice/sessions/${sessionId}/card`, {
       body: { client_turn_id: clientTurnId, item_id: itemId, recall },
+      schema: SessionView,
+    }),
+  );
+
+/**
+ * Kopfrechnen (issue #243): start a round from the range Buddy offered. The offer's action id
+ * is the request id, so the same offer always opens the same round — and a lost reply is
+ * picked up by the next tap instead of starting a second round.
+ */
+export const startDrill = (requestId: string, spec: DrillSpec) =>
+  request('POST', '/practice/drills', {
+    body: { client_request_id: requestId, spec },
+    schema: SessionView,
+  });
+
+/**
+ * One answer of a round, checked by the server at once (code, no model). Retrying the same
+ * answer keeps its client_turn_id, so it is recorded once.
+ */
+const drillTurns = turnIds(newId, noConnection);
+export const answerDrill = (sessionId: string, itemId: string, text: string) =>
+  drillTurns.run(`${sessionId}:${itemId}`, (clientTurnId) =>
+    request('POST', `/practice/sessions/${sessionId}/drill`, {
+      body: { client_turn_id: clientTurnId, item_id: itemId, text },
       schema: SessionView,
     }),
   );

@@ -146,6 +146,8 @@ export function describeAction(a: ActionSummary): string {
         what: i18n.t(`learn:${KIND_LABEL[a.kind]}`),
         text: a.text,
       });
+    case 'offer_drill':
+      return t('action.offer_drill', { text: a.title });
     case 'open_area':
       return t('action.open_area', { what: t(`area.${a.area}`) });
     case 'set_voice':
@@ -158,6 +160,9 @@ export function describeAction(a: ActionSummary): string {
       return a.title
         ? t('action.delete_material', { title: a.title })
         : t('action.delete_material_untitled');
+    case 'start_roleplay':
+      // History: what she played. In the chat the roleplay has a card of its own (issue #244).
+      return t('action.start_roleplay', { scene: a.scene });
     case 'confirm_delete':
       // The card says it; the chip list would only repeat the question she is looking at.
       return '';

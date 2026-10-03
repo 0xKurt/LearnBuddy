@@ -63,6 +63,31 @@
     "card_knew": "I knew it",
     "card_not_yet": "Not yet",
     "correct": "That's right – well done!",
+    "dictation": {
+      "prompt_word": "Listen and write the word.",
+      "prompt_sentence": "Listen and write the sentence.",
+      "shown": "No problem – this is how it's written. Listen to it once more while you look.",
+      "capital": "Almost – “{{word}}” takes a capital letter here.",
+      "lower": "Almost – “{{word}}” is written in small letters here.",
+      "double_missing": "Almost – “{{word}}” needs a double {{letter}}.",
+      "double_extra": "Almost – in “{{word}}” the {{letter}} is single.",
+      "ie_missing": "Almost – in “{{word}}” the e is missing: it's ie here.",
+      "ie_extra": "Almost – in “{{word}}” there is just an i, no e.",
+      "sz_needed": "Almost – “{{word}}” is written with ß instead of s or ss.",
+      "ss_needed": "Almost – “{{word}}” is written with ss instead of ß.",
+      "letter_missing": "Almost – in “{{word}}” a letter is missing after “{{before}}”.",
+      "letter_missing_start": "Almost – “{{word}}” is missing a letter at the start.",
+      "letter_extra": "Almost – “{{word}}” has one {{letter}} too many.",
+      "letter_wrong": "Almost – in “{{word}}” letter {{n}} ({{letter}}) isn't right yet.",
+      "swapped": "Almost – in “{{word}}” two letters are swapped.",
+      "word_wrong": "Not yet – “{{word}}” sounds different. Listen to it again.",
+      "word_missing": "Almost – a word is missing after “{{before}}”.",
+      "word_missing_start": "Almost – a word is missing at the start.",
+      "word_extra": "Almost – “{{word}}” is one word too many.",
+      "together": "Almost – “{{first}} {{second}}” is written as one word.",
+      "apart": "Almost – “{{word}}” is written as two words.",
+      "punctuation": "Almost – check the punctuation at “{{word}}”."
+    },
     "had_enough": "Okay — that is enough for today if you want. You can end the practice, or we do one small example together. Just say which you would rather.",
     "heard_retry": "I couldn't hear you well. Try again a bit louder and closer to the phone.",
     "help_final_answer": "That looks good! Now write down your final result – the way the task asks for it.",
@@ -251,6 +276,14 @@
       "urn": "Urn",
       "humid": "Humid",
       "arid": "Arid"
+    },
+    "cloze": {
+      "quote": "“{{word}}”",
+      "none_yet": "Not quite yet – have another look at the gaps.",
+      "right_of": "{{count}} of {{total}} gaps are right already.",
+      "right_of_one": "1 of {{total}} gaps is right already.",
+      "wrong": "Not right yet: {{words}}.",
+      "near": "{{words}}: only a small spelling detail is missing."
     }
   },
   "contact": {
@@ -258,5 +291,33 @@
   },
   "voice": {
     "sample": "Hi, I'm Buddy. This is how I sound when I read something to you."
+  },
+  "drill": {
+    "and": "and",
+    "percent_of": "{{p}}% of {{n}}",
+    "carry_with": "with regrouping",
+    "carry_without": "without regrouping",
+    "title": {
+      "times": "Times tables",
+      "times_rows": "Times tables: {{rows}}",
+      "divide": "Division facts",
+      "divide_rows": "Dividing by {{rows}}",
+      "plus_10": "Adding up to 10",
+      "plus_20": "Adding up to 20",
+      "minus_20": "Subtracting within 20",
+      "plus_100": "Adding up to 100",
+      "minus_100": "Subtracting within 100",
+      "fractions": "Adding fractions",
+      "percent": "Percent of"
+    }
+  },
+  "roleplay": {
+    "feedback_head": "The roleplay is over – here's how it went:",
+    "point_met": "✓ {{name}}: done – “{{quote}}”",
+    "point_open": "○ {{name}}: not yet",
+    "better_head": "This sounds even better:",
+    "better_line": "“{{said}}” → “{{better}}”",
+    "ended": "Okay, we'll stop the roleplay. Just say when you want another go.",
+    "try_in": "Try it in {{language}} – I'm staying in my role. If you want to stop, just say so."
   }
 }

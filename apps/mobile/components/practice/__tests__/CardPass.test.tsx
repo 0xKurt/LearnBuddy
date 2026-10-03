@@ -68,9 +68,11 @@ const pass = (over: Partial<SessionView> = {}): SessionView => ({
   title: 'Unité 3',
   card_pass: true,
   card_pass_offered: false,
+  drill: null,
   // A card pass is never written in two parts (issue #220): it is made from questions she
   // already has.
   preparing: false,
+  timer: null,
   items: [card()],
   turns: [],
   current_item_id: '11111111-1111-4111-8111-111111111111',

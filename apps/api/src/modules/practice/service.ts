@@ -8,16 +8,15 @@
 // plan what comes next.
 
 import {
-  isStructuredKind,
   type AnswerRequest,
   type CurriculumRegion,
   type Figure,
   type ItemKind,
   type SessionMode,
   type AnswerResponse,
-  type HintRequest,
   type PracticeTurnView,
   type SessionView,
+  type TestMinutes,
 } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
@@ -31,10 +30,10 @@ import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { cautiousAt, curriculumLine, pointOf } from '../curriculum/state.js';
-import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { pickAnswers, taskOf, untriedPicks } from './bars.js';
 import { listenRefs, listenTaskOf } from './listen.js';
+import { checkDictation, dictationReply, nearlyRight, type DictationCheck } from './dictation.js';
 import {
   differentNumber,
   formNoteFor,
@@ -53,13 +52,25 @@ import {
   writtenStaffLine,
   type StaffCheck,
 } from './staff.js';
+import { takeParts } from './partsAnswer.js';
+import { finishIfComplete, finishLocked } from './finish.js';
+import {
+  changeSession,
+  loadSession,
+  lockActiveSession,
+  SESSION_COLS,
+  stillPreparing,
+  type SessionRow,
+} from './sessionRow.js';
+import { settleTestClock, timerOf, timeUpError } from './testClock.js';
 import {
   answerTextOf,
-  checkStructured,
   structuredNamesPart,
+  partsVia,
+  secretsOf,
+  structuredDecidedBy,
   structuredReply,
-  structuredTaskOf,
-  type StructuredCheck,
+  structuredVerdict,
 } from './structured.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
@@ -83,6 +94,8 @@ import {
   type ItemImageRow,
 } from './viewParts.js';
 import { CARD_PASS, offersCardPass } from './cards.js';
+import { DRILL_PASS } from './drill.js';
+import { drillViewOf } from './drillView.js';
 import { MAX_ACCEPTED, storedFigure } from './items.js';
 import {
   askedElements,
@@ -189,52 +202,7 @@ export type ItemRow = {
   staff_task: unknown;
 };
 
-export type SessionRow = {
-  id: string;
-  learner_id: string;
-  step_id: string | null;
-  goal_id: string | null;
-  mode: SessionMode;
-  status: 'active' | 'finished' | 'abandoned';
-  title: string | null;
-  /**
-   * Which kind of pass this run is (migration 0069): null means its questions are answered
-   * and checked; 'cards' means the card turns over and she says herself whether she knew it
-   * (issue #147, `cards.ts`). Deliberately not a fourth `mode` — a card pass IS practice, and
-   * `mode` is read far outside this module, down to `NowCard.mode` in the app's contracts.
-   */
-  pass: 'cards' | null;
-  /**
-   * Set while the rest of this run's questions is still being written (migration 0073,
-   * issue #220); null for every run that was written in one go. Never compared in SQL — see
-   * `stillPreparing`.
-   */
-  items_pending_until: Date | null;
-};
-
-/**
- * The session columns as code reads them. Sessions of the removed explain mode (issue #70)
- * are served as plain practice — their stored `mode` and `intro` stay in the database
- * untouched (migrations are immutable), but nothing shows or writes them any more.
- */
-export const SESSION_COLS = `id, learner_id, step_id, goal_id,
-       case when mode = 'explain' then 'practice' else mode end as mode, status, title, pass,
-       items_pending_until`;
-
-/**
- * Is this run still waiting for the rest of its questions (issue #220)? The one place that
- * decides it, because two different answers would mean a run that cannot be finished in one
- * code path and is finished behind its own back in the other.
- *
- * The deadline is compared against the app clock, never against SQL `now()` (CLAUDE.md rule 7):
- * past it the run is complete with the questions it has, so a refill that never arrived costs
- * her the extra questions and never her result.
- */
-export function stillPreparing(s: Pick<SessionRow, 'items_pending_until'>, now: Date): boolean {
-  return s.items_pending_until !== null && s.items_pending_until.getTime() > now.getTime();
-}
-
-type SessionItemRow = {
+export type SessionItemRow = {
   item_id: string;
   position: number;
   status: 'open' | 'correct' | 'revealed' | 'skipped' | 'missed';
@@ -263,7 +231,9 @@ export type SessionOptions = {
   goalId: string | null;
   mode: SessionMode;
   /** 'cards' for a flashcard pass (issue #147); absent for an ordinary run of questions. */
-  pass?: 'cards' | null;
+  pass?: 'cards' | 'drill' | null;
+  /** The range of a Kopfrechnen round (issue #243); set exactly when `pass` is 'drill'. */
+  drill?: unknown;
   materialId?: string | null;
   title?: string | null;
   clientRequestId?: string | null;
@@ -272,6 +242,8 @@ export type SessionOptions = {
    * start sets it; every other run is complete when it is created.
    */
   itemsPendingUntil?: Date | null;
+  /** A test she asked to sit with time (issue #241); its clock starts when she opens it. */
+  timeLimitMinutes?: TestMinutes | null;
 };
 
 export async function createSession(
@@ -283,8 +255,9 @@ export async function createSession(
 ): Promise<string> {
   const s = await db.one<{ id: string }>(
     `insert into practice_sessions (learner_id, step_id, goal_id, mode, started_at, last_activity_at,
-                                    material_id, title, client_request_id, pass, items_pending_until)
-     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10) returning id`,
+                                    material_id, title, client_request_id, pass, items_pending_until,
+                                    drill, time_limit_minutes)
+     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10, $11, $12) returning id`,
     [
       learnerId,
       opts.stepId,
@@ -296,6 +269,8 @@ export async function createSession(
       opts.clientRequestId ?? null,
       opts.pass ?? null,
       opts.itemsPendingUntil ?? null,
+      opts.drill ?? null,
+      opts.timeLimitMinutes ?? null,
     ],
   );
   for (const [position, itemId] of itemIds.entries()) {
@@ -572,7 +547,7 @@ async function helpSessionFor(
 }
 
 /** Practice feeds spaced repetition; tests and homework do not. */
-function learnsFsrs(mode: SessionMode): boolean {
+export function learnsFsrs(mode: SessionMode): boolean {
   return mode === 'practice';
 }
 
@@ -585,7 +560,7 @@ function givesHints(mode: SessionMode): boolean {
  * "Tipp" on request: also in homework help (the help sheet promises tips; user feedback #7),
  * where a hint never carries the solution (checked like every homework reply).
  */
-function offersHintButton(mode: SessionMode): boolean {
+export function offersHintButton(mode: SessionMode): boolean {
   return mode === 'practice' || mode === 'help';
 }
 
@@ -593,7 +568,7 @@ function offersHintButton(mode: SessionMode): boolean {
  * "Lösung zeigen" only after a real try or a hint, never from the first second (user feedback
  * #8); a spoken sentence can always be skipped. Never in homework, never while a test runs.
  */
-function revealReady(
+export function revealReady(
   mode: SessionMode,
   si: { kind: ItemRow['kind']; attempts: number; hints_used: number },
 ): boolean {
@@ -662,6 +637,63 @@ export function solutionsOf(
 }
 
 /**
+ * Her run was active just now; with its last question closed it finishes here, in the same
+ * transaction, so a lost /finish never leaves it looking unfinished (audit H-12).
+ */
+export async function touchRun(
+  db: Db,
+  learnerId: string,
+  sessionId: string,
+  now: Date,
+): Promise<void> {
+  await db.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
+    sessionId,
+    now,
+  ]);
+  await finishIfComplete(db, learnerId, sessionId, now);
+}
+
+/** An answer as the screen gets it: the session, the verdict, Buddy's newest reply to it. */
+export async function answerWithReply(
+  deps: Deps,
+  learnerId: string,
+  sessionId: string,
+  itemId: string,
+  verdict: AnswerResponse['verdict'],
+): Promise<AnswerResponse> {
+  const view = await sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
+  const reply = [...view.turns]
+    .reverse()
+    .find((tr) => tr.item_id === itemId && tr.role === 'tutor');
+  if (!reply) throw new AppError('internal', 'reply missing');
+  return { session: view, verdict, reply };
+}
+
+/**
+ * A request of hers in a run: the same `client_turn_id` again gets what the first one got;
+ * otherwise the run as it stands, for the request to go on with.
+ */
+export async function replayOrLoad(
+  deps: Deps,
+  learnerId: string,
+  sessionId: string,
+  clientTurnId: string,
+): Promise<{ replayed: AnswerResponse } | { session: SessionRow }> {
+  const replayed = await replayTurn(deps, learnerId, sessionId, clientTurnId);
+  return replayed ? { replayed } : { session: await loadSession(deps.db, learnerId, sessionId) };
+}
+
+/** `replay` for a request of hers: the same turn sent again gets the first one's answer. */
+export function replayTurn(
+  deps: Deps,
+  learnerId: string,
+  sessionId: string,
+  clientTurnId: string,
+): Promise<AnswerResponse | null> {
+  return replay(deps.db, learnerId, sessionId, clientTurnId, deps.storage, deps.now());
+}
+
+/**
  * The worked solution when prepared, otherwise the plain solution.
  *
  * For a free text neither is "the solution" (issue #197): a prepared way is introduced as ONE
@@ -677,24 +709,13 @@ function workedReply(
     return `${t(locale, free ? 'practice.one_way_intro' : 'practice.worked_intro')} ${i.worked_solution}`;
   }
   if (free) return t(locale, 'practice.no_single_solution');
+  // A Diktat's word stands in the solution card right under this line (issue #242): said here
+  // too, it would be the same word twice (#286). The line says what to do with it instead.
+  if (i.kind === 'spelling_dictation') return t(locale, 'practice.dictation.shown');
   return t(locale, 'practice.solution_is', { answer: shownSolution(i) });
 }
 
 // ─────────────── view ───────────────
-
-export async function loadSession(
-  db: Db,
-  learnerId: string,
-  sessionId: string,
-): Promise<SessionRow> {
-  const s = await db.maybeOne<SessionRow>(
-    `select ${SESSION_COLS} from practice_sessions
-      where id = $1 and learner_id = $2`,
-    [sessionId, learnerId],
-  );
-  if (!s) throw new AppError('not_found', 'Session not found');
-  return s;
-}
 
 export async function sessionView(
   db: Db,
@@ -781,6 +802,7 @@ export async function sessionView(
     // The rest of the questions is still being written (issue #220). The app shows no total
     // that would still change, and does not read "no open question" as "this run is over".
     preparing: active && stillPreparing(s, now),
+    timer: timerOf(s, now),
     title: title?.title ?? '',
     items: items.map((i) => ({
       item: {
@@ -852,7 +874,12 @@ export async function sessionView(
       // The words of a listening text, under exactly the condition the solution is sent under
       // (issue #210): she hears it, answers, and reads it afterwards. While the question is
       // open the text is the solution, so it stays here.
-      listen_transcript: solutionShown(i) ? (listenTaskOf(i.listen_task)?.text ?? null) : null,
+      // A Diktat's recording IS its key (issue #242): the solution above already says it, so it is
+      // not repeated as a "what you heard" text.
+      listen_transcript:
+        solutionShown(i) && i.kind !== 'spelling_dictation'
+          ? (listenTaskOf(i.listen_task)?.text ?? null)
+          : null,
     })),
     turns: turns.map((tr) => ({
       id: tr.id,
@@ -870,6 +897,8 @@ export async function sessionView(
     // Whether this finished run has words to go through as cards. One rule, in cards.ts, so
     // the offer on the result screen and what the pass then holds can never disagree.
     card_pass_offered: offersCardPass(s, items),
+    // A Kopfrechnen round (issue #243): the range, the pad, the task just answered, the line.
+    drill: s.pass === DRILL_PASS ? await drillViewOf(db, s) : null,
   };
 }
 
@@ -888,7 +917,7 @@ function outcomeOf(si: { status: string; first_try_correct: boolean | null }): I
   return 'revealed';
 }
 
-export async function replay(
+async function replay(
   db: Db,
   learnerId: string,
   sessionId: string,
@@ -937,18 +966,15 @@ export async function answerItem(
   opts: { hintRequest?: boolean } = {},
 ): Promise<AnswerResponse> {
   const hintRequest = opts.hintRequest === true;
+  const first = await replayOrLoad(deps, learner.id, sessionId, input.client_turn_id);
+  if ('replayed' in first) return first.replayed;
+  const { session } = first;
   const now = deps.now();
-  const replayed = await replay(
-    deps.db,
-    learner.id,
-    sessionId,
-    input.client_turn_id,
-    deps.storage,
-    deps.now(),
-  );
-  if (replayed) return replayed;
-
-  const session = await loadSession(deps.db, learner.id, sessionId);
+  // A timed test (issue #241): an answer that arrives after the time is up is not graded — no
+  // rule, no model, no turn — and the test ends with what she had answered in time.
+  if ((await settleTestClock(deps.db, learner.id, sessionId, now)) === 'time_up') {
+    throw timeUpError();
+  }
   if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
   // One path per session (issue #147): a flashcard pass is turned over, never answered,
   // hinted at or revealed. The pass was decided when it started, so the server refuses the
@@ -956,6 +982,13 @@ export async function answerItem(
   if (session.pass === CARD_PASS) {
     throw new AppError('conflict', 'These are cards: you say yourself whether you knew it', {
       reason: 'use_cards',
+    });
+  }
+  // A Kopfrechnen round (issue #243) is answered through its own door, which checks by code
+  // and never reaches the tutor; this path would call the model on a second miss.
+  if (session.pass === DRILL_PASS) {
+    throw new AppError('conflict', 'A quick round is answered on its pad', {
+      reason: 'use_drill',
     });
   }
   const item = await deps.db.maybeOne<
@@ -977,44 +1010,18 @@ export async function answerItem(
       reason: 'use_speak',
     });
   }
+  // A Diktat has no written hint (issue #242): a hint about a word she is to spell would spell it,
+  // and writing one would be a model call. The help is hearing it again, slower — on the card.
+  if (hintRequest && item.kind === 'spelling_dictation') {
+    throw new AppError('conflict', 'The help here is hearing it again', { reason: 'no_hints' });
+  }
 
-  // ── a STRUCTURED answer (issues #228–#230) ──
-  //
-  // A structured question is answered with parts and judged by code alone: the parts are
-  // compared with the key in `items.task` (Regel 0 of #224). One shape per question, and the
-  // server refuses the other one: a structured question takes no typed text, a question with one
-  // answer takes no parts. A request for help is still a request for help — its text goes the
-  // way it goes for any question.
-  const structured = isStructuredKind(item.kind) ? structuredTaskOf(item.task, item.kind) : null;
-  if (isStructuredKind(item.kind) && !structured) {
-    // The kind says structured and the stored task no longer reads as one. Nothing can be
-    // compared, so nothing is claimed; "Lösung zeigen" and "Frage passt nicht" still work.
-    throw new AppError('conflict', 'This question cannot be answered', {
-      reason: 'task_unreadable',
-    });
-  }
-  let partsCheck: StructuredCheck | null = null;
-  if (!hintRequest && input.parts) {
-    if (!structured) {
-      throw new AppError('invalid_input', 'This question is not answered with parts', {
-        reason: 'no_parts',
-      });
-    }
-    // The word cells of a table (#230) follow the subject's spelling rule like any answer.
-    partsCheck = checkStructured(structured, input.parts, {
-      spelling: item.spelling,
-      subject_kind: item.subject_kind,
-    });
-    if (!partsCheck) {
-      throw new AppError('invalid_input', 'These parts do not fit this question', {
-        reason: 'parts_mismatch',
-      });
-    }
-  } else if (!hintRequest && structured) {
-    throw new AppError('invalid_input', 'This question is answered with parts', {
-      reason: 'use_parts',
-    });
-  }
+  // ── a STRUCTURED answer (issues #228–#232): parts, judged by code (partsAnswer.ts) ──
+  const { structured, partsCheck } = await takeParts(deps, item, {
+    parts: input.parts,
+    hintRequest,
+    learnerId: learner.id,
+  });
 
   // ── eine NOTENZEILE, die sie selbst geschrieben hat (issue #226) ──
   //
@@ -1060,12 +1067,21 @@ export async function answerItem(
   // things below: that only the content is judged (never the spelling of a word she HEARD),
   // and that the tutor is given that text as the material it may judge against.
   const listenTask = listenTaskOf(item.listen_task);
+  // A Diktat (issue #242) is checked by code alone, exactly, against its key — and a miss is
+  // answered with the PLACE (`practice/dictation.ts`), never by the tutor. It is no listening
+  // task in the sense of #210: there the spelling of what she heard does NOT count, here it is the
+  // whole point. So `listening` below stays false for it.
+  const dictationCheck: DictationCheck | null =
+    !hintRequest && item.kind === 'spelling_dictation'
+      ? checkDictation(item.answer, input.text ?? '')
+      : null;
+  const listening = listenTask !== null && item.kind !== 'spelling_dictation';
   // A request for help is not an answer: nothing for the rules to check.
   // Two checks that code does ENTIRELY on its own and that therefore come before the key
   // comparison: every part of a structured answer (issues #228–#230), right or not yet right,
   // and a written note line (issue #226), which ends in `parts_left` when some of it holds.
   // Neither ever asks a model.
-  const byRules: RuleVerdict = hintRequest
+  const byOtherRules: RuleVerdict = hintRequest
     ? 'unknown'
     : partsCheck !== null
       ? partsCheck.correct
@@ -1080,9 +1096,12 @@ export async function answerItem(
         : ruleCheck(
             // A question code computed asks for an amount, so any form of it is right (#162);
             // a question she HEARD is judged on what she understood, not how she wrote it (#210).
-            { ...item, form_free: barTask !== null, listening: listenTask !== null },
+            { ...item, form_free: barTask !== null, listening },
             { text: input.text ?? null, choice: input.choice ?? null },
           );
+  // A Diktat is decided by its own exact check (issue #242), never by the key comparison above.
+  const byRules: RuleVerdict =
+    dictationCheck !== null ? (dictationCheck.correct ? 'correct' : 'incorrect') : byOtherRules;
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
   const rule: RuleVerdict =
@@ -1139,7 +1158,8 @@ export async function answerItem(
   } else if (rule === 'correct') {
     judged = {
       verdict: 'correct',
-      evaluatedBy: 'rule',
+      // A cloze gap the model judged (issue #232) makes it the model's verdict, honestly.
+      evaluatedBy: partsCheck ? structuredDecidedBy(partsCheck) : 'rule',
       reply: t(
         learner.locale,
         session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
@@ -1156,6 +1176,16 @@ export async function answerItem(
       verdict: 'partially_correct',
       evaluatedBy: 'rule',
       reply: staffLineReply(learner.locale, staffCheck, item.attempts),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (partsCheck && structuredVerdict(partsCheck) === null) {
+    // A cloze gap nobody could judge (no model, issue #232) and nothing else wrong: no
+    // verdict is claimed and no try is counted (CLAUDE.md rule 5).
+    judged = {
+      verdict: null,
+      evaluatedBy: null,
+      reply: t(learner.locale, 'practice.cannot_check'),
       gaveHint: false,
       revealed: false,
     };
@@ -1193,7 +1223,7 @@ export async function answerItem(
     // call (it would only write a hint the test replaces with a neutral word).
     judged = {
       verdict: 'incorrect',
-      evaluatedBy: 'rule',
+      evaluatedBy: partsCheck ? structuredDecidedBy(partsCheck) : 'rule',
       reply: '',
       gaveHint: false,
       revealed: false,
@@ -1245,12 +1275,25 @@ export async function answerItem(
     // being right, so it says so — every time, not only on the first try, and never through a
     // model (0 model calls per answer). The third miss above shows the solution; a test above
     // says nothing until the end.
+    // A cloze whose gaps are only off by spelling is a near miss, not wrong (issue #232);
+    // its reply names her words, gap by gap.
     judged = {
-      verdict: 'incorrect',
-      evaluatedBy: 'rule',
+      verdict: structuredVerdict(partsCheck) ?? 'incorrect',
+      evaluatedBy: structuredDecidedBy(partsCheck),
       reply: structuredReply(learner.locale, partsCheck, item.attempts),
       // A match names its wrong link from the second miss on: that is a hint (#229).
       gaveHint: structuredNamesPart(partsCheck, item.attempts),
+      revealed: false,
+    };
+  } else if (dictationCheck !== null && !dictationCheck.correct && rule === 'incorrect') {
+    // A Diktat she did not get right yet (issue #242): code names the place — "Doppel-m fehlt",
+    // "groß schreiben" — at every try, never through a model (0 model calls per answer). Her word
+    // stays hers in the sentence; the key comes with the third miss above or "Lösung zeigen".
+    judged = {
+      verdict: nearlyRight(dictationCheck.spot) ? 'partially_correct' : 'incorrect',
+      evaluatedBy: 'rule',
+      reply: dictationReply(learner.locale, dictationCheck.spot),
+      gaveHint: false,
       revealed: false,
     };
   } else if (givesHints(session.mode) && rule === 'incorrect' && item.attempts === 0) {
@@ -1290,7 +1333,13 @@ export async function answerItem(
           parts: [
             {
               text: tutorContext({
-                item: { ...item, listening: listenTask !== null },
+                // A listening item says so (#210; never a Diktat, #242); a structured item's
+                // question is more than its instruction: a cloze's text with its gaps (#232).
+                item: {
+                  ...item,
+                  listening,
+                  ...(structured ? { prompt: secretsOf(structured, item.prompt).visible } : {}),
+                },
                 hintsGiven: item.hints_used,
                 preparedHints: givesHints(session.mode) ? item.hints : [],
                 preparedShown: item.prepared_hints_used,
@@ -1526,11 +1575,20 @@ export async function answerItem(
   if (givesHints(session.mode)) {
     // Never the solution before the second hint — whatever the model wrote. The prepared
     // hint (or a neutral line) takes its place, without a second model call.
+    // A cloze reply quotes HER words and is code's, even where the model judged a gap
+    // (issue #232); only a reply the tutor wrote can give a key away — any gap's key.
+    const leaks = (reply: string) =>
+      structured
+        ? secretsOf(structured, item.prompt).secrets.some((s) =>
+            mentionsSolution(reply, s, secretsOf(structured, item.prompt).visible),
+          )
+        : mentionsSolution(reply, shownSolution(item), item.prompt);
     if (
       judged.evaluatedBy === 'model' &&
+      !partsCheck &&
       judged.verdict !== 'correct' &&
       item.hints_used < 2 &&
-      (judged.revealed || mentionsSolution(judged.reply, shownSolution(item), item.prompt))
+      (judged.revealed || leaks(judged.reply))
     ) {
       judged = {
         ...judged,
@@ -1659,9 +1717,9 @@ export async function answerItem(
           firstTry,
           now,
           prepared,
-          // Arranging parts is tapping (issue #163), unless the app says otherwise — but the
-          // cells of a table (#230) are typed, every one of them.
-          input.via ?? (partsCheck && partsCheck.type !== 'table_fill' ? 'tapped' : 'typed'),
+          // Arranging parts is tapping (issue #163), unless the app says otherwise — and a
+          // cloze without a word bank can only be typed (issue #232).
+          input.via ?? (partsCheck && structured ? partsVia(structured) : 'typed'),
         ],
       );
       // A free text she did not get right produces NO review: `Again` is a statement about
@@ -1683,565 +1741,17 @@ export async function answerItem(
           now,
         );
       }
-      await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-        sessionId,
-        now,
-      ]);
-      await finishIfComplete(tx, learner.id, sessionId, now);
+      await touchRun(tx, learner.id, sessionId, now);
     });
   } catch (err) {
     // A concurrent duplicate of the same answer won: return its result.
     if (isUniqueViolation(err)) {
-      const r = await replay(
-        deps.db,
-        learner.id,
-        sessionId,
-        input.client_turn_id,
-        deps.storage,
-        deps.now(),
-      );
+      const r = await replayTurn(deps, learner.id, sessionId, input.client_turn_id);
       if (r) return r;
     }
     throw err;
   }
-  const view = await sessionView(deps.db, learner.id, sessionId, deps.storage, deps.now());
-  const reply = [...view.turns]
-    .reverse()
-    .find((tr) => tr.item_id === item.id && tr.role === 'tutor');
-  if (!reply) throw new AppError('internal', 'reply missing');
-  return { session: view, verdict: judged.verdict, reply };
-}
-
-class NoPreparedHint extends Error {}
-
-/**
- * "Tipp": the next prepared hint for an open question, at once and without a model;
- * with none prepared (yet), the tutor writes one like for "weiß nicht".
- * Recorded as a learner turn ("Tipp, bitte") and a tutor turn; idempotent per
- * client_turn_id; 409 for a closed question or in a test. In homework help a prepared hint
- * is used only when it does not state the solution; otherwise the tutor writes one, under
- * the same leak check as every homework reply (user feedback #7).
- */
-export async function hintItem(
-  deps: Deps,
-  learner: PracticeLearner,
-  sessionId: string,
-  input: HintRequest,
-): Promise<AnswerResponse> {
-  const now = deps.now();
-  const replayed = await replay(
-    deps.db,
-    learner.id,
-    sessionId,
-    input.client_turn_id,
-    deps.storage,
-    deps.now(),
-  );
-  if (replayed) return replayed;
-  const session = await loadSession(deps.db, learner.id, sessionId);
-  if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
-  if (!offersHintButton(session.mode) || session.pass === CARD_PASS) {
-    throw new AppError('conflict', 'No hints in this mode', { reason: 'no_hints' });
-  }
-  try {
-    await deps.db.tx(async (tx) => {
-      await lockActiveSession(tx, learner.id, sessionId);
-      const si = await tx.maybeOne<
-        {
-          status: SessionItemRow['status'];
-          hints_used: number;
-          prepared_hints_used: number;
-          hints: string[];
-        } & Pick<
-          ItemRow,
-          'kind' | 'prompt' | 'answer' | 'accepted_answers' | 'choices' | 'correct_choice' | 'unit'
-        >
-      >(
-        `select si.status, si.hints_used, si.prepared_hints_used, i.hints, i.kind, i.prompt, i.answer, i.accepted_answers,
-                i.choices, i.correct_choice, i.unit
-           from session_items si join items i on i.id = si.item_id
-          where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
-          for update of si`,
-        [sessionId, input.item_id, learner.id],
-      );
-      if (!si) throw new AppError('not_found', 'Question not in this session');
-      if (si.status !== 'open') throw new AppError('conflict', 'This question is already closed');
-      const hint = si.hints[si.prepared_hints_used];
-      if (hint === undefined) throw new NoPreparedHint();
-      if (
-        session.mode === 'help' &&
-        solutionsOf(si).some((sol) => mentionsSolution(hint, sol, si.prompt))
-      ) {
-        throw new NoPreparedHint();
-      }
-      const seq = await nextSeq(tx, sessionId);
-      await tx.query(
-        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, verdict, evaluated_by, client_turn_id)
-         values ($1, $2, $3, $4, 'learner', $5, 'not_an_attempt', 'rule', $6)`,
-        [
-          sessionId,
-          learner.id,
-          input.item_id,
-          seq,
-          t(learner.locale, 'practice.hint_request'),
-          input.client_turn_id,
-        ],
-      );
-      await tx.query(
-        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, gave_hint, revealed)
-         values ($1, $2, $3, $4, 'tutor', $5, true, false)`,
-        [sessionId, learner.id, input.item_id, seq + 1, hint],
-      );
-      await tx.query(
-        `update session_items set hints_used = hints_used + 1,
-                                  prepared_hints_used = prepared_hints_used + 1, deferred_at = null
-          where session_id = $1 and item_id = $2`,
-        [sessionId, input.item_id],
-      );
-      await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-        sessionId,
-        now,
-      ]);
-    });
-  } catch (err) {
-    // None prepared (yet, or used up): the tutor writes one, as for "weiß nicht".
-    if (err instanceof NoPreparedHint) {
-      return answerItem(
-        deps,
-        learner,
-        sessionId,
-        {
-          client_turn_id: input.client_turn_id,
-          item_id: input.item_id,
-          text: t(learner.locale, 'practice.hint_request'),
-        },
-        { hintRequest: true },
-      );
-    }
-    if (isUniqueViolation(err)) {
-      const r = await replay(
-        deps.db,
-        learner.id,
-        sessionId,
-        input.client_turn_id,
-        deps.storage,
-        deps.now(),
-      );
-      if (r) return r;
-    }
-    throw err;
-  }
-  const replayedNow = await replay(
-    deps.db,
-    learner.id,
-    sessionId,
-    input.client_turn_id,
-    deps.storage,
-    deps.now(),
-  );
-  if (!replayedNow) throw new AppError('internal', 'hint missing');
-  return replayedNow;
-}
-
-/**
- * "Show me the solution": close the question as not known (FSRS: again). Only after a real
- * try or a hint (user feedback #8); in a running test it is "Überspringen" (any time).
- */
-export async function revealItem(
-  deps: Deps,
-  learnerId: string,
-  sessionId: string,
-  itemId: string,
-): Promise<SessionView> {
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    const s = await lockActiveSession(tx, learnerId, sessionId);
-    if (s.pass === CARD_PASS) {
-      throw new AppError('conflict', 'A card shows its answer by itself', {
-        reason: 'use_cards',
-      });
-    }
-    const si = await tx.maybeOne<
-      Pick<SessionItemRow, 'item_id' | 'status' | 'attempts' | 'hints_used'> & {
-        kind: ItemRow['kind'];
-      }
-    >(
-      `select si.item_id, si.status, si.attempts, si.hints_used, i.kind
-         from session_items si join items i on i.id = si.item_id
-        where si.session_id = $1 and si.item_id = $2 for update of si`,
-      [sessionId, itemId],
-    );
-    if (!si) throw new AppError('not_found', 'Question not in this session');
-    if (si.status !== 'open') return;
-    if (s.mode === 'help') {
-      throw new AppError('conflict', 'Homework help never shows the solution', {
-        reason: 'reveal_not_allowed',
-      });
-    }
-    if (s.mode !== 'test' && !revealReady(s.mode, si)) {
-      throw new AppError('conflict', 'Try it first, or ask for a hint', { reason: 'try_first' });
-    }
-    await tx.query(
-      `update session_items set status = 'skipped', first_try_correct = false, closed_at = $3
-        where session_id = $1 and item_id = $2`,
-      [sessionId, itemId, now],
-    );
-    // `reviewItem` records what it overwrites, so a solution she says was the wrong one can
-    // be taken back exactly (issue #164) — a reveal is the harshest review there is. A free
-    // text gets none: skipping an essay says nothing about memory (issue #197).
-    if (learnsFsrs(s.mode) && !noSingleSolution(si)) {
-      await reviewItem(tx, learnerId, sessionId, itemId, 'revealed', now);
-    }
-    await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-      sessionId,
-      now,
-    ]);
-    await finishIfComplete(tx, learnerId, sessionId, now);
-  });
-  return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
-}
-
-/**
- * Homework help "Später": the task stays open (nothing solved, nothing shown) and moves
- * behind the other open tasks, so she can get help with the next one (audit H-11).
- * Idempotent; 409 outside homework help or once the session ended.
- */
-export async function deferItem(
-  deps: Deps,
-  learnerId: string,
-  sessionId: string,
-  itemId: string,
-): Promise<SessionView> {
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    const s = await lockActiveSession(tx, learnerId, sessionId);
-    if (s.mode !== 'help') {
-      throw new AppError('conflict', 'Only homework tasks are set aside', {
-        reason: 'defer_not_allowed',
-      });
-    }
-    const si = await tx.maybeOne<Pick<SessionItemRow, 'status'>>(
-      `select status from session_items where session_id = $1 and item_id = $2 for update`,
-      [sessionId, itemId],
-    );
-    if (!si) throw new AppError('not_found', 'Question not in this session');
-    if (si.status !== 'open') return;
-    await tx.query(
-      `update session_items set deferred_at = $3 where session_id = $1 and item_id = $2`,
-      [sessionId, itemId, now],
-    );
-    await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-      sessionId,
-      now,
-    ]);
-  });
-  return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
-}
-
-/**
- * "Frage passt nicht": the learner takes a question out. It is archived (never
- * practised again) and, if still open here, closed as skipped — no FSRS review, and
- * it counts neither as answered nor as shaky. Not for homework (help) and not while
- * a test runs; only for questions from a photo or from Buddy. Idempotent.
- */
-export async function flagItem(
-  deps: Deps,
-  learnerId: string,
-  sessionId: string,
-  itemId: string,
-): Promise<SessionView> {
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    const s = await tx.maybeOne<SessionRow>(
-      `select ${SESSION_COLS} from practice_sessions
-        where id = $1 and learner_id = $2 for update`,
-      [sessionId, learnerId],
-    );
-    if (!s) throw new AppError('not_found', 'Session not found');
-    const si = await tx.maybeOne<
-      Pick<SessionItemRow, 'status' | 'flagged_at'> & {
-        origin: ItemRow['origin'];
-        archived_at: Date | null;
-      }
-    >(
-      `select si.status, si.flagged_at, i.origin, i.archived_at
-         from session_items si join items i on i.id = si.item_id
-        where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
-        for update of si, i`,
-      [sessionId, itemId, learnerId],
-    );
-    if (!si) throw new AppError('not_found', 'Question not in this session');
-    if (si.flagged_at) return; // already taken out
-    if (s.status !== 'active') throw new AppError('conflict', 'Session has ended');
-    if (s.mode === 'help') {
-      throw new AppError('conflict', 'Homework tasks are not taken out', {
-        reason: 'flag_not_allowed',
-      });
-    }
-    if (s.mode === 'test') {
-      throw new AppError('conflict', 'Not while a test runs', { reason: 'flag_not_allowed' });
-    }
-    if (s.pass === CARD_PASS) {
-      // Her own words, chosen by the run before this one: there is no unfit question to
-      // take out here, and a card pass has no button for it.
-      throw new AppError('conflict', 'Cards are not taken out', { reason: 'flag_not_allowed' });
-    }
-    if (si.origin !== 'material' && si.origin !== 'buddy') {
-      throw new AppError('conflict', 'Only questions from a photo or from Buddy', {
-        reason: 'flag_not_allowed',
-      });
-    }
-    if (!si.archived_at) {
-      await tx.query(`update items set archived_at = $2 where id = $1`, [itemId, now]);
-    }
-    if (si.status === 'open') {
-      await tx.query(
-        `update session_items set status = 'skipped', flagged_at = $3, closed_at = $3
-          where session_id = $1 and item_id = $2`,
-        [sessionId, itemId, now],
-      );
-    }
-    await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-      sessionId,
-      now,
-    ]);
-    await finishIfComplete(tx, learnerId, sessionId, now);
-    // Buddy's prepared practice and picture of her questions may include it.
-    await bumpContext(tx, learnerId);
-  });
-  return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
-}
-
-/**
- * "Die Bewertung stimmt nicht" (issue #164).
- *
- * The rule check is certain by design, and that certainty can stand in for a key nobody
- * verified — the external audit put `8` on `6 + 4` and watched the right answer `10` be
- * rejected. Issue #157 now catches that where arithmetic makes it decidable; everywhere
- * else the only one who can see it is the child in front of it, and she must be able to say
- * so without arguing with a tutor that is sure of itself.
- *
- * Three things happen, and all three are hers: the question leaves this result, it leaves
- * future practice (its key is suspect, so asking it again would repeat the mistake), and
- * the spaced repetition goes back to exactly what it held before this session reviewed it —
- * the history from earlier, undisputed sessions stays. Nothing is deleted: the judgement,
- * her answer and the key it was compared against stay on the row (`disputed_at`,
- * `practice_turns`, `items`), so what she disagreed with can still be read.
- *
- * What this never does is guess. `state_before` is written by `reviewItem` (fsrs.ts) and
- * says one of three things: a state to go back to, jsonb `null` ("there was nothing, so
- * remove the row"), or nothing at all — SQL NULL, meaning this session never reviewed the
- * question (a test, homework help). Then there is no effect of its own to take back, and
- * `item_states` is left exactly as it is rather than cleared on a hunch (rule 5).
- *
- * Different from "Frage passt nicht", which takes an unfit question out while it is still
- * open. This is about a judgement she has already been given.
- */
-export async function disputeVerdict(
-  deps: Deps,
-  learnerId: string,
-  sessionId: string,
-  itemId: string,
-): Promise<SessionView> {
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    // The session row first, as every other writer does (`lockActiveSession`): this one also
-    // touches `last_activity_at` at the end, and taking that lock last would cross an answer
-    // committing at the same moment. A finished session keeps its verdicts disputable — the
-    // result screen is where she reads them.
-    const session = await tx.maybeOne<{ id: string }>(
-      `select id from practice_sessions where id = $1 and learner_id = $2 for update`,
-      [sessionId, learnerId],
-    );
-    if (!session) throw new AppError('not_found', 'Session not found');
-    const si = await tx.maybeOne<{
-      status: SessionItemRow['status'];
-      flagged_at: Date | null;
-      disputed_at: Date | null;
-      state_before: Record<string, unknown> | null;
-      /** False when nothing was ever recorded; true also for jsonb `null` (see above). */
-      reviewed: boolean;
-      origin: ItemRow['origin'];
-      archived_at: Date | null;
-    }>(
-      `select si.status, si.flagged_at, si.disputed_at, si.state_before,
-              si.state_before is not null as reviewed, i.origin, i.archived_at
-         from session_items si
-         join items i on i.id = si.item_id
-        where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
-        for update of si, i`,
-      [sessionId, itemId, learnerId],
-    );
-    if (!si) throw new AppError('not_found', 'Question not in this session');
-    // Saying it twice changes nothing — and must not undo a second time.
-    if (si.disputed_at) return;
-    if (si.status === 'open') {
-      throw new AppError('conflict', 'There is no judgement yet to disagree with', {
-        reason: 'not_judged',
-      });
-    }
-    // A card was never judged by anyone but her, so there is no judgement to disagree with.
-    if (await isCardPass(tx, sessionId)) {
-      throw new AppError('conflict', 'Nothing judged this card', {
-        reason: 'dispute_not_allowed',
-      });
-    }
-    // Her homework is helped with, never graded, so there is no verdict to dispute.
-    if (si.origin === 'homework') {
-      throw new AppError('conflict', 'Homework tasks are not judged', {
-        reason: 'dispute_not_allowed',
-      });
-    }
-    await tx.query(
-      `update session_items set disputed_at = $3, flagged_at = coalesce(flagged_at, $3)
-        where session_id = $1 and item_id = $2`,
-      [sessionId, itemId, now],
-    );
-    // The key is suspect: asking it again would repeat the same wrong judgement.
-    if (!si.archived_at) {
-      await tx.query(`update items set archived_at = $2 where id = $1`, [itemId, now]);
-    }
-    // And the spaced repetition goes back to what it was before this review.
-    if (si.state_before) {
-      await tx.query(
-        `update item_states set due = $3, stability = $4, difficulty = $5, elapsed_days = $6,
-                                scheduled_days = $7, reps = $8, lapses = $9, state = $10,
-                                last_review = $11, last_outcome = $12
-          where item_id = $1 and learner_id = $2`,
-        [
-          itemId,
-          learnerId,
-          si.state_before.due,
-          si.state_before.stability,
-          si.state_before.difficulty,
-          si.state_before.elapsed_days,
-          si.state_before.scheduled_days,
-          si.state_before.reps,
-          si.state_before.lapses,
-          si.state_before.state,
-          si.state_before.last_review,
-          si.state_before.last_outcome,
-        ],
-      );
-    } else if (si.reviewed) {
-      // Recorded, and it said there was nothing: back to never practised.
-      await tx.query(`delete from item_states where item_id = $1 and learner_id = $2`, [
-        itemId,
-        learnerId,
-      ]);
-    }
-    // Nothing recorded: this session never reviewed the question, so it left no effect of
-    // its own. Whatever `item_states` holds comes from somewhere else and stays.
-    await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-      sessionId,
-      now,
-    ]);
-    // Buddy's picture of her questions and his prepared practice may hold it.
-    await bumpContext(tx, learnerId);
-  });
-  return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
-}
-
-// ─────────────── lifecycle ───────────────
-
-/**
- * Whether this session is a flashcard pass (issue #147). Read where the session row was
- * loaded without its columns — `disputeVerdict` locks on id alone, and widening that read
- * would change its lock shape for every ordinary dispute.
- */
-async function isCardPass(db: Db, sessionId: string): Promise<boolean> {
-  const row = await db.one<{ pass: string | null }>(
-    `select pass from practice_sessions where id = $1`,
-    [sessionId],
-  );
-  return row.pass === CARD_PASS;
-}
-
-/** The session row, locked, and still running — else 404 / 409 (one lock order: session first). */
-export async function lockActiveSession(
-  db: Db,
-  learnerId: string,
-  sessionId: string,
-): Promise<SessionRow> {
-  const s = await db.maybeOne<SessionRow>(
-    `select ${SESSION_COLS} from practice_sessions
-      where id = $1 and learner_id = $2 for update`,
-    [sessionId, learnerId],
-  );
-  if (!s) throw new AppError('not_found', 'Session not found');
-  if (s.status !== 'active') throw new AppError('conflict', 'Session has ended');
-  return s;
-}
-
-/**
- * Finish the (locked, active) session: Buddy's step gets its evidence — done only if
- * something was answered, else back to prepared — and Buddy is woken to plan next.
- */
-async function finishLocked(db: Db, learnerId: string, s: SessionRow, now: Date): Promise<void> {
-  const counts = await db.one<{ answered: number; first_try: number; total: number }>(
-    `select count(*) filter (where status <> 'open' and flagged_at is null)::int as answered,
-            count(*) filter (where first_try_correct)::int as first_try,
-            count(*)::int as total
-       from session_items where session_id = $1`,
-    [s.id],
-  );
-  await db.query(
-    `update practice_sessions set status = 'finished', finished_at = $2, last_activity_at = $2 where id = $1`,
-    [s.id, now],
-  );
-  if (s.step_id) {
-    if (counts.answered > 0) {
-      await db.query(
-        `update buddy_steps set state = 'done', done_source = 'evidence', finished_at = $2, version = version + 1,
-                                evidence = $3
-          where id = $1 and state in ('planned','prepared','in_progress')`,
-        [s.step_id, now, { session_id: s.id, ...counts }],
-      );
-    } else {
-      // Nothing answered: the step is still open, not "done".
-      await db.query(
-        `update buddy_steps set state = 'prepared', version = version + 1 where id = $1 and state = 'in_progress'`,
-        [s.step_id],
-      );
-    }
-  }
-  if (counts.answered > 0) {
-    await emitEvent(db, learnerId, { type: 'session_finished', sessionId: s.id }, now, counts);
-  }
-  await bumpContext(db, learnerId);
-}
-
-/**
- * Once no question is open any more, the session is finished on the server — in the same
- * transaction as the answer that closed the last one, so a lost /finish call (network, a
- * killed app) never leaves an answered session invisible and Buddy's step without evidence
- * (audit H-12). The caller holds the session lock.
- *
- * Unless the rest of the questions is still being written (issue #220, trap 1): then "nothing
- * open" means she was faster than the generator, not that the run is over. Finishing here would
- * end a practice after three questions and hand Buddy's step its evidence, and the six questions
- * still being written would land in a run that already has a result.
- */
-export async function finishIfComplete(
-  db: Db,
-  learnerId: string,
-  sessionId: string,
-  now: Date,
-): Promise<boolean> {
-  const s = await db.maybeOne<SessionRow>(
-    `select ${SESSION_COLS} from practice_sessions
-      where id = $1 and learner_id = $2 for update`,
-    [sessionId, learnerId],
-  );
-  if (!s || s.status !== 'active') return false;
-  if (stillPreparing(s, now)) return false;
-  const open = await db.one<{ n: number }>(
-    `select count(*)::int as n from session_items where session_id = $1 and status = 'open'`,
-    [sessionId],
-  );
-  if (open.n > 0) return false;
-  await finishLocked(db, learnerId, s, now);
-  return true;
+  return answerWithReply(deps, learner.id, sessionId, item.id, judged.verdict);
 }
 
 /**
@@ -2261,36 +1771,35 @@ export async function finishSession(
   learnerId: string,
   sessionId: string,
 ): Promise<SessionView> {
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    const s = await tx.maybeOne<SessionRow>(
-      `select ${SESSION_COLS} from practice_sessions
-        where id = $1 and learner_id = $2 for update`,
-      [sessionId, learnerId],
-    );
-    if (!s) throw new AppError('not_found', 'Session not found');
-    if (s.status !== 'active') return; // idempotent
-    if (stillPreparing(s, now)) {
-      await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-        sessionId,
-        now,
-      ]);
-      return;
-    }
-    if (s.mode === 'help') {
-      const open = await tx.one<{ n: number }>(
-        `select count(*)::int as n from session_items where session_id = $1 and status = 'open'`,
-        [sessionId],
-      );
-      if (open.n > 0) {
+  await changeSession(
+    deps,
+    learnerId,
+    sessionId,
+    async (tx, s, now) => {
+      if (s.status !== 'active') return; // idempotent
+      if (stillPreparing(s, now)) {
         await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
           sessionId,
           now,
         ]);
         return;
       }
-    }
-    await finishLocked(tx, learnerId, s, now);
-  });
+      if (s.mode === 'help') {
+        const open = await tx.one<{ n: number }>(
+          `select count(*)::int as n from session_items where session_id = $1 and status = 'open'`,
+          [sessionId],
+        );
+        if (open.n > 0) {
+          await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
+            sessionId,
+            now,
+          ]);
+          return;
+        }
+      }
+      await finishLocked(tx, learnerId, s, now);
+    },
+    { active: false },
+  );
   return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
 }
