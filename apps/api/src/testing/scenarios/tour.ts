@@ -196,7 +196,5 @@ export function scriptTour(llm: ScriptedGateway): void {
       },
     },
   );
-  llm.script('buddy_check', {
-    json: { disposition: 'wait', reason: 'Nothing to add now.', actions: [], outreach: null },
-  });
+  // Buddy's check after this practice waits: the checks' default (checks.ts).
 }

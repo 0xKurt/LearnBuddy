@@ -5,6 +5,7 @@
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import type { ScriptedGateway } from '../fakes.js';
+import { scriptChecks } from './checks.js';
 import { latestLearnerText, quoteFrom, scriptTurns } from './turns.js';
 
 export const DEMO_WORKSHEET = {
@@ -95,9 +96,11 @@ export function scriptCoreLoop(llm: ScriptedGateway): void {
   });
   // 2 · the photographed worksheet
   llm.script('extraction', { json: DEMO_WORKSHEET });
-  // 3 · Buddy acts on the ready material
-  llm.script('buddy_check', {
-    json: {
+  // 3 · Buddy acts on the ready material — keyed by the check's trigger, the worksheet above
+  // (checks.ts): a practice another spec finishes first wakes Buddy too.
+  scriptChecks({
+    when: new RegExp(`new material is ready: "${DEMO_WORKSHEET.title}"`),
+    answer: () => ({
       disposition: 'act',
       reason: 'Material is ready and the test is close: prepare a first practice.',
       actions: [
@@ -117,7 +120,7 @@ export function scriptCoreLoop(llm: ScriptedGateway): void {
         goal: 'g1',
         step: 'new',
       },
-    },
+    }),
   });
   // 4 · the free-text question in practice
   llm.script('tutor', (req) => {
@@ -139,15 +142,7 @@ export function scriptCoreLoop(llm: ScriptedGateway): void {
           revealed_answer: false,
         };
   });
-  // 5 · after practice: nothing to add right now
-  llm.script('buddy_check', {
-    json: {
-      disposition: 'wait',
-      reason: 'Just practised; nothing to add.',
-      actions: [],
-      outreach: null,
-    },
-  });
+  // 5 · after practice: nothing to add right now — the checks' default (checks.ts).
   // 6 · "Mach die Übungen bitte kürzer."
   scriptTurns({
     when: /bitte kürzer/i,

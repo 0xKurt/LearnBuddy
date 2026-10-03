@@ -3104,7 +3104,11 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   practice is matched the same way** (`scenarios/generations.ts`): the generation request carries
   what was asked for, so a spec asking for fractions can never get the set meant for another —
   the queue drifted as soon as Buddy began preparing an offer in the background (#48), because
-  _when_ a generation happens then depends on timing. The remaining purposes (tutor, hints,
+  _when_ a generation happens then depends on timing. **Buddy's own checks** too
+  (`scenarios/checks.ts`): a check answers by its TRIGGERS block — the core loop acts only on its
+  own worksheet being ready, every other check waits — because every spec that finishes a
+  practice wakes Buddy, and `charts.spec.ts`, running first, once took the core loop's queued
+  "prepare a practice" (PR #303). The remaining purposes (tutor, hints,
   reading a photographed sheet) answer by rule or from a queue, so the walkthrough is still run
   **as a whole** — a single spec on its own gets the answers meant for the run (issue #81).
   A run started right after another waits for the previous run's ports to be free
