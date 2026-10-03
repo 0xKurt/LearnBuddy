@@ -116,6 +116,35 @@ export function modelFor(config: Config, req: Pick<LlmRequest, 'purpose' | 'tier
   );
 }
 
+/**
+ * The one request the provider SDK is handed for a call (exported for the wire test,
+ * `__tests__/vertex-request.test.ts`). Structured output goes out as `responseMimeType` +
+ * `responseJsonSchema`: the Vertex discovery document marks both as deprecated in favour of
+ * `response_format`, but no `@google/genai` release up to 2.27.0 has that field on
+ * `GenerateContentConfig`, and its Vertex converter drops it without a word — so it cannot be
+ * sent from here yet (issue #283, docs/architecture.md §Model calls).
+ */
+export function paramsFor(req: LlmRequest, model: string, timeoutMs: number) {
+  return {
+    model,
+    contents: req.contents,
+    config: {
+      systemInstruction: req.system,
+      temperature: req.temperature,
+      maxOutputTokens: req.maxOutputTokens,
+      responseMimeType: 'application/json',
+      responseJsonSchema: req.schema,
+      safetySettings: SAFETY,
+      ...(req.thinkingBudget !== undefined
+        ? { thinkingConfig: { thinkingBudget: req.thinkingBudget } }
+        : {}),
+      // Not req.timeoutMs: that is the budget for the whole call including retries, and
+      // this attempt only gets what is left of it (retry.ts).
+      abortSignal: AbortSignal.timeout(timeoutMs),
+    },
+  };
+}
+
 export class VertexGateway implements LlmGateway {
   readonly available = true;
   /** One client per location (the EU multi-region "eu" serves models europe-west4 doesn't). */
@@ -156,24 +185,7 @@ export class VertexGateway implements LlmGateway {
     );
     const started = Date.now();
     let response: GenerateContentResponse;
-    const params = {
-      model,
-      contents: req.contents,
-      config: {
-        systemInstruction: req.system,
-        temperature: req.temperature,
-        maxOutputTokens: req.maxOutputTokens,
-        responseMimeType: 'application/json',
-        responseJsonSchema: req.schema,
-        safetySettings: SAFETY,
-        ...(req.thinkingBudget !== undefined
-          ? { thinkingConfig: { thinkingBudget: req.thinkingBudget } }
-          : {}),
-        // Not req.timeoutMs: that is the budget for the whole call including retries, and
-        // this attempt only gets what is left of it (retry.ts).
-        abortSignal: AbortSignal.timeout(timeoutMs),
-      },
-    };
+    const params = paramsFor(req, model, timeoutMs);
     let streamedText: string | null = null;
     try {
       if (req.onPartial) {
