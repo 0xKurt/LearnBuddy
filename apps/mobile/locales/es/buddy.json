@@ -299,7 +299,8 @@
     "short": "Hablar",
     "photo": "Foto",
     "photo_label": "Enseñar una foto",
-    "tap_orb": "Toca a Buddy y te escucha."
+    "tap_orb": "Toca a Buddy y te escucha.",
+    "barge_sub": "Habla sin más y te escucha."
   },
   "thread": {
     "title": "Chat con Buddy",

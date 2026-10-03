@@ -72,21 +72,29 @@ describe('a receipt gets the whole line (issue #191)', () => {
     expect(screen.getByText(SENTENCE)).toBeTruthy();
   });
 
-  it('does not make the sentence share a row with the undo button', () => {
+  it('keeps the whole line for the sentence; the way back is a small arrow at its end (#295)', () => {
     renderThread(() => undefined);
     const sentence = screen.getByText(SENTENCE);
-    const undo = screen.getByRole('button', { name: `Rückgängig machen: ${SENTENCE}` });
-    // The nearest box holding both decides it: a row puts them side by side and the longer
-    // one loses, a column puts the way back underneath. That row was the bug.
-    expect(
-      styleOf(commonBox(sentence, undo)).flexDirection,
-      'the sentence and "Rückgängig" must not divide one row between them',
-    ).not.toBe('row');
+    const undo = screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` });
+    // Since #295 the arrow stands right after the sentence, on its line — which is only
+    // safe because the sentence is the one that gives way (it wraps) and the arrow cannot
+    // grow: the old pill took the width it wanted and left three letters ("Ein", #191).
+    const row = commonBox(sentence, undo);
+    expect(styleOf(row).flexDirection).toBe('row');
+    const childOf = (el: Element) => [...ancestors(el)].find((up) => up.parentElement === row);
+    expect(styleOf(childOf(sentence) ?? sentence).flexShrink, 'the sentence gives way').toBe('1');
+    expect(styleOf(childOf(undo) ?? undo).flexShrink, 'the arrow never shrinks').toBe('0');
+    expect(styleOf(sentence).flexShrink, 'and the text inside wraps').toBe('1');
+    // No word on it: the round arrow carries the meaning, the label says what it takes back.
+    expect(undo.textContent).toBe('');
+    // 44 × 44 to the finger, laid out as 24 (the negative margin gives the rest back).
+    expect(styleOf(undo).width).toBe('44px');
+    expect(styleOf(undo).height).toBe('44px');
   });
 
   it('stretches across the message block instead of shrinking to its button', () => {
     renderThread(() => undefined);
-    const undo = screen.getByRole('button', { name: `Rückgängig machen: ${SENTENCE}` });
+    const undo = screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` });
     const column = commonBox(screen.getByText(SENTENCE), undo);
     // Buddy's messages sit in a block with `alignItems: 'flex-start'`. Anything inside it
     // that must be wider than its content has to say so.
@@ -102,8 +110,73 @@ describe('the way back works (UX-PRINCIPLES: undo over confirmation)', () => {
   it('hands the action id to onUndo when she taps Rückgängig', () => {
     const onUndo = vi.fn();
     renderThread(onUndo);
-    fireEvent.click(screen.getByRole('button', { name: `Rückgängig machen: ${SENTENCE}` }));
+    fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
     expect(onUndo).toHaveBeenCalledWith(PLAN_EXAM.id);
+  });
+
+  it('takes it back at once, without asking first', () => {
+    const onUndo = vi.fn();
+    renderThread(onUndo);
+    fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
+    expect(onUndo).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByText('Was du zurücknehmen kannst')).toBeNull();
+  });
+
+  it('turns the arrow into a spinner while undoing, and back into an arrow if it failed', () => {
+    const onUndo = vi.fn();
+    const thread = (undoBusy: boolean) => (
+      <Conversation
+        messages={[buddySaid([PLAN_EXAM])]}
+        pending={null}
+        busy={false}
+        showActions
+        undoScope="last"
+        undoBusy={undoBusy}
+        onUndo={onUndo}
+      />
+    );
+    const view = renderInApp(thread(false));
+    const name = `Rückgängig: ${SENTENCE}`;
+    expect(screen.getByRole('button', { name }).getAttribute('aria-busy')).not.toBe('true');
+    fireEvent.click(screen.getByRole('button', { name }));
+    // In flight: the same button, in the same place, now busy (the spinner) and locked.
+    view.rerender(thread(true));
+    const running = screen.getByRole('button', { name });
+    expect(running.getAttribute('aria-busy')).toBe('true');
+    expect(running.getAttribute('aria-disabled')).toBe('true');
+    expect(running.querySelector('[role="progressbar"]')).not.toBeNull();
+    // The server said no (the step stays applied): the arrow is back and can be tapped again.
+    view.rerender(thread(false));
+    const again = screen.getByRole('button', { name });
+    expect(again.getAttribute('aria-busy')).not.toBe('true');
+    expect(again.querySelector('[role="progressbar"]')).toBeNull();
+    fireEvent.click(again);
+    expect(onUndo).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not set an old arrow spinning when something else is busy later', () => {
+    const thread = (undoBusy: boolean) => (
+      <Conversation
+        messages={[buddySaid([PLAN_EXAM])]}
+        pending={null}
+        busy={false}
+        showActions
+        undoScope="last"
+        undoBusy={undoBusy}
+        onUndo={() => undefined}
+      />
+    );
+    const view = renderInApp(thread(false));
+    // She tapped, it ran and failed…
+    fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
+    view.rerender(thread(true));
+    view.rerender(thread(false));
+    // …and now something else is in flight: the arrow is locked, but it is not its spinner.
+    view.rerender(thread(true));
+    const locked = screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` });
+    expect(locked.getAttribute('aria-busy')).not.toBe('true');
+    expect(locked.getAttribute('aria-disabled')).toBe('true');
   });
 
   it('offers no way back once the action was taken back', () => {
@@ -116,7 +189,7 @@ describe('the way back works (UX-PRINCIPLES: undo over confirmation)', () => {
         onUndo={() => undefined}
       />,
     );
-    expect(screen.queryByRole('button', { name: /Rückgängig machen/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Rückgängig: / })).toBeNull();
     // It still says what happened, now as something that was taken back.
     expect(screen.getByText(/zurückgenommen|rückgängig/i)).toBeTruthy();
   });
@@ -271,14 +344,14 @@ describe('one turn is one receipt, with one way back (issue #204)', () => {
 
   it('shows "Rückgängig" on the newest step only; History keeps every one', () => {
     const chatView = chat();
-    const inChat = screen.getAllByRole('button', { name: /^Rückgängig machen/ });
+    const inChat = screen.getAllByRole('button', { name: /^Rückgängig: / });
     expect(inChat).toHaveLength(1);
     // …and it is the newest step's, not the first one's.
-    expect(inChat[0]?.getAttribute('aria-label')).toBe(`Rückgängig machen: ${PREPARED_SENTENCE}`);
+    expect(inChat[0]?.getAttribute('aria-label')).toBe(`Rückgängig: ${PREPARED_SENTENCE}`);
     // History is the record of the single steps: there every one carries its own.
     chatView.unmount();
     chat({ undoScope: 'all' });
-    expect(screen.getAllByRole('button', { name: /^Rückgängig machen/ })).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: /^Rückgängig: / })).toHaveLength(3);
   });
 
   it('keeps the older ones reachable: a tap on a receipt opens what can be taken back', () => {
@@ -291,9 +364,9 @@ describe('one turn is one receipt, with one way back (issue #204)', () => {
     // The newest step is in both places now — in the chat and in the sheet; the older one
     // is in the sheet alone, which is the whole point of it.
     expect(
-      screen.getAllByRole('button', { name: `Rückgängig machen: ${PREPARED_SENTENCE}` }),
+      screen.getAllByRole('button', { name: `Rückgängig: ${PREPARED_SENTENCE}` }),
     ).toHaveLength(2);
-    fireEvent.click(screen.getByRole('button', { name: `Rückgängig machen: ${SENTENCE}` }));
+    fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
     expect(onUndo).toHaveBeenCalledWith(PLAN_EXAM.id);
   });
 
@@ -310,7 +383,7 @@ describe('one turn is one receipt, with one way back (issue #204)', () => {
     );
     // The line is a line, not a button: there is nothing behind it.
     expect(screen.queryByRole('button', { name: SENTENCE })).toBeNull();
-    expect(screen.getAllByRole('button', { name: /^Rückgängig machen/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /^Rückgängig: / })).toHaveLength(1);
   });
 });
 
@@ -319,12 +392,10 @@ describe('what the bar on top already says is not said twice (issue #204)', () =
     chat({ carriedOnTop: new Set([PREPARED.id]) });
     expect(screen.queryByText(PREPARED_SENTENCE)).toBeNull();
     // The one button in view is now the older step's; the prepared one lives in the sheet.
-    const inChat = screen.getAllByRole('button', { name: /^Rückgängig machen/ });
+    const inChat = screen.getAllByRole('button', { name: /^Rückgängig: / });
     expect(inChat).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: `${SENTENCE} · ${PHOTO_SENTENCE}` }));
-    expect(
-      screen.getByRole('button', { name: `Rückgängig machen: ${PREPARED_SENTENCE}` }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: `Rückgängig: ${PREPARED_SENTENCE}` })).toBeTruthy();
   });
 });
 

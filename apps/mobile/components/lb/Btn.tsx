@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon, type IconName } from './Icon.js';
 
 type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
-type Props = {
+type Common = {
   /** The button's text; also what a screen reader says unless accessibilityLabel is set. */
   children: string;
   /**
@@ -25,8 +25,6 @@ type Props = {
   variant?: Variant;
   size?: Size;
   full?: boolean;
-  /** An icon before the text (the start tiles on Buddy's home, the choices in a sheet). */
-  icon?: IconName;
   /** Fill the container's height too (tiles in a grid row stay equally tall). */
   grow?: boolean;
   /** Centre a button that is not full width (it sits at the start otherwise). */
@@ -64,6 +62,34 @@ type Props = {
   accessibilityLabel?: string;
   accessibilityHint?: string;
 };
+
+type Props = Common &
+  (
+    | {
+        iconOnly?: false;
+        /** An icon before the text (the start tiles on Buddy's home, the choices in a sheet). */
+        icon?: IconName;
+      }
+    | {
+        /**
+         * The icon alone, small and quiet: a side control next to a line it belongs to, not
+         * a CTA (issue #295 — the round "Rückgängig" arrow beside a receipt in the chat).
+         * `children` stays the accessible name; the icon is all a sighted reader sees.
+         * Variant, size, tone and the layout props do not apply to it.
+         */
+        iconOnly: true;
+        icon: IconName;
+      }
+  );
+
+/**
+ * The icon-only button's visible circle. The touch target around it stays TOUCH (44): the
+ * Pressable is 44 × 44 and gives the difference back through a negative margin, so a row
+ * lays it out as ICON_BTN_SIZE and the target still reaches 44 — on the web too, where
+ * `hitSlop` does not exist (issue #295).
+ */
+export const ICON_BTN_SIZE = SPACE.xl;
+const ICON_BTN_REACH = (TOUCH - ICON_BTN_SIZE) / 2;
 
 /**
  * How far a button label follows the system text size (iOS AX sizes go past 3×): the WCAG
@@ -122,30 +148,32 @@ const mutedStyle = (variant: Variant, p: Palette): VariantSkin =>
       ? { bg: 'transparent', color: p.placeholder, borderColor: p.hairline, borderWidth: 1 }
       : { bg: p.canvas, color: p.ink2, borderColor: p.hairline, borderWidth: 1 };
 
-export function Btn({
-  children,
-  label,
-  onPress,
-  onLongPress,
-  variant = 'primary',
-  size = 'md',
-  full = false,
-  center = false,
-  wrap = false,
-  compact = false,
-  icon,
-  grow = false,
-  disabled = false,
-  onDisabledPress,
-  busy = false,
-  selected,
-  expanded,
-  tone,
-  pill = false,
-  accessibilityLabel,
-  accessibilityHint,
-}: Props) {
+export function Btn(props: Props) {
   const { palette, tones } = useTheme();
+  if (props.iconOnly) return <IconOnlyBtn {...props} />;
+  const {
+    children,
+    label,
+    onPress,
+    onLongPress,
+    variant = 'primary',
+    size = 'md',
+    full = false,
+    center = false,
+    wrap = false,
+    compact = false,
+    icon,
+    grow = false,
+    disabled = false,
+    onDisabledPress,
+    busy = false,
+    selected,
+    expanded,
+    tone,
+    pill = false,
+    accessibilityLabel,
+    accessibilityHint,
+  } = props;
   const s = SIZE_STYLE[size];
   const off = disabled || busy;
   // Busy keeps the variant's colours — the spinner says why nothing happens. Only a
@@ -291,5 +319,70 @@ export function Btn({
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
     </View>
+  );
+}
+
+/**
+ * A round icon on its own (issue #295). The owner, 02.10.: "Dieser rückgängig Button der
+ * immer erscheint muss kleiner und dezenter werden. Ggfs ein rundes Pfeil icon neben der
+ * entsprechenden Nachricht und kein großer fetter button." So: no fill, no ring, the icon in
+ * the secondary ink — it stands beside a line and does not shout over it. The symbol carries
+ * the meaning (never colour alone); a press shows a soft disc, busy turns the icon into a
+ * spinner in the very same place, and a waiting one steps back to the placeholder tone.
+ */
+function IconOnlyBtn({
+  children,
+  icon,
+  onPress,
+  disabled = false,
+  busy = false,
+  accessibilityLabel,
+  accessibilityHint,
+}: Common & { icon: IconName }) {
+  const { palette } = useTheme();
+  const off = disabled || busy;
+  const muted = disabled && !busy;
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={off}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? children}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: off, busy }}
+      // On the web `accessibilityState.busy` does not become `aria-busy`: say it directly,
+      // so a screen reader there hears the spinner as well.
+      aria-busy={busy}
+      style={{
+        width: TOUCH,
+        height: TOUCH,
+        margin: -ICON_BTN_REACH,
+        borderRadius: TOUCH / 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {({ pressed }) => (
+        <View
+          style={{
+            width: ICON_BTN_SIZE,
+            height: ICON_BTN_SIZE,
+            borderRadius: ICON_BTN_SIZE / 2,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: pressed ? palette.primaryLt : 'transparent',
+          }}
+        >
+          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            {busy ? (
+              <ActivityIndicator size="small" color={palette.primaryDk} />
+            ) : (
+              // 18 inside the 24 circle: the arrow reads at a glance and stays a side note.
+              <Icon name={icon} size={18} color={muted ? palette.placeholder : palette.ink2} />
+            )}
+          </View>
+        </View>
+      )}
+    </Pressable>
   );
 }
