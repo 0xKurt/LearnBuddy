@@ -251,6 +251,14 @@
       "urn": "Urn",
       "humid": "Humid",
       "arid": "Arid"
+    },
+    "cloze": {
+      "quote": "“{{word}}”",
+      "none_yet": "Not quite yet – have another look at the gaps.",
+      "right_of": "{{count}} of {{total}} gaps are right already.",
+      "right_of_one": "1 of {{total}} gaps is right already.",
+      "wrong": "Not right yet: {{words}}.",
+      "near": "{{words}}: only a small spelling detail is missing."
     }
   },
   "contact": {

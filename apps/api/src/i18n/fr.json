@@ -251,6 +251,14 @@
       "urn": "Urne",
       "humid": "Humide",
       "arid": "Aride"
+    },
+    "cloze": {
+      "quote": "« {{word}} »",
+      "none_yet": "Pas encore tout à fait – regarde encore les trous.",
+      "right_of": "{{count}} trous sur {{total}} sont déjà justes.",
+      "right_of_one": "1 trou sur {{total}} est déjà juste.",
+      "wrong": "Pas encore juste : {{words}}.",
+      "near": "{{words}} : il ne manque qu’un petit détail d’orthographe."
     }
   },
   "contact": {

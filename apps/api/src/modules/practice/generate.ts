@@ -53,6 +53,7 @@ import {
   usableItems,
   type StoredItem,
 } from './items.js';
+import { CLOZE_RULES } from './cloze.js';
 import {
   addPreparedItems,
   createSession,
@@ -72,7 +73,8 @@ import { TABLE_RULES } from './table.js';
 
 // v1.16: car 2's structured rules (v1.15) and #253/#257's figures (v1.14) together.
 // v1.17: pictures as the options of a multiple choice (choice_figures, #231).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.17';
+// v1.18: cloze, a text with several gaps (#232).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.18';
 
 const SUBJECT_KINDS = [
   'math',
@@ -293,6 +295,7 @@ Rules:
 - ${ORDER_RULES}
 - ${TABLE_RULES}
 - ${MATCH_RULES}
+- ${CLOZE_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${CURRICULUM_RULES}
 - ${LANGUAGE_RULES}
@@ -342,8 +345,8 @@ const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> =
  * run (its questions come out of the text she hears).
  */
 const STRUCTURED: Record<StartTopicRequest['kind'], ReadonlySet<string>> = {
-  practice: new Set(['order', 'table_fill', 'match']),
-  test: new Set(['order', 'table_fill', 'match']),
+  practice: new Set(['order', 'table_fill', 'match', 'cloze']),
+  test: new Set(['order', 'table_fill', 'match', 'cloze']),
   vocab: new Set(),
   speak: new Set(),
   listen: new Set(),

@@ -251,6 +251,14 @@
       "urn": "Urna",
       "humid": "Húmedo",
       "arid": "Árido"
+    },
+    "cloze": {
+      "quote": "«{{word}}»",
+      "none_yet": "Todavía no del todo: vuelve a mirar los huecos.",
+      "right_of": "{{count}} de {{total}} huecos ya están bien.",
+      "right_of_one": "1 de {{total}} huecos ya está bien.",
+      "wrong": "Todavía no encaja: {{words}}.",
+      "near": "{{words}}: solo falta un pequeño detalle de ortografía."
     }
   },
   "contact": {

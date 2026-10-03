@@ -1954,10 +1954,11 @@ them yet, so today they come from a topic she named.
 
 **Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`,
 `practice/table.ts`, migration `0079_structured_items.sql`;
-issues #228 order, #229 match, #230 table_fill, from the analysis #224). Some answers are not a
-sentence but an arrangement: an order, pairs, groups, table cells. They are their own item kinds
-(`order`, `match`, `table_fill`), and #224's "Regel 0" holds in both directions: code validates
-what the model wrote, and code judges what she answers — never a model.
+issues #228 order, #229 match, #230 table_fill, #232 cloze, from the analysis #224). Some answers
+are not a sentence but an arrangement: an order, pairs, groups, table cells, the gaps of a text.
+They are their own item kinds (`order`, `match`, `table_fill`, `cloze`), and #224's "Regel 0"
+holds in both directions: code validates what the model wrote, and code judges what she answers —
+never a model, except a cloze gap no rule can decide (below: only that gap, only its verdict).
 
 _Two implementations existed for a day_ (#224, „Entscheidung: zwei Umsetzungen …“): `parts`
 (migration 0072, `items.parts_task`, `ItemView.board`) and this one. A neutral review ran and
@@ -2230,6 +2231,54 @@ und eine Zeile, die leise von der abgedruckten abweicht, wäre genau der falsche
 Bauweise verhindern soll). Höchstens `MAX_STAFF_ITEMS` (8) je vorbereitetem Satz — mehr als die drei
 Bruchbalken, weil eine Notenzeile keine Beigabe ist, sondern die Frage selbst — in `practice` und im
 Probetest, nicht in der Hausaufgabenhilfe.
+
+**Cloze — one text, 2–8 gaps** (`practice/cloze.ts`, `ClozeAnswer.tsx`, issue #232). The model
+writes the text with `___` for each gap, the keys in reading order (`gaps[].answer`, plus a
+gap's own `accepted_answers`) and optionally a `word_bank`; `CLOZE_RULES` says so without an
+example sentence. Code cuts the text into `segments` (always one more than gaps), names the
+gaps `g1 … g8` by position, shuffles the bank deterministically and stores
+`{segments, gaps: [{id, key, accepted}], bank}`; the view drops `key` and `accepted`. Regel 0
+on the way in (`clozeProblem`, rejected — never repaired): fewer than 2 or more than 8 gaps;
+gap marks and keys that differ in number; a gap with an empty key or one over 40 characters;
+more than 260 visible characters or an instruction over 80 (`CLOZE_TEXT_MAX`,
+`CLOZE_PROMPT_MAX`: what fits 360×740 without scrolling, rule 16 — measured with 8 filled gaps:
+the text has 418 pt there, 256–262 characters took 380 pt, 279–301 took 407 pt, 350 took 434;
+the walkthrough shows the longest case, shot 44-cloze-eight); a key that can already be read in the text or the
+instruction (`mentionsSolution`, the leak check of every prepared hint); and with a bank: two
+gaps sharing a key, a key missing or a word twice in the bank, more than 12 words, or a
+distractor some gap accepts. Prepared hints that name any key or accepted form are dropped
+(`secretsOf`, also in `hints.ts`, which shows the hint writer the text with its gaps).
+
+Her answer is every gap once (`parts.gaps: [{id, text}]`, 1–80 characters each). Each gap is
+checked with the rules of every written answer — `ruleCheck` as a `short` answer against its
+key and accepted forms, with the item's spelling rule (strict in language subjects), so a typo,
+missing accents or case where spelling counts is a named near miss, and a plain number with
+another value is wrong. With a bank, a bank word that is not this gap's is wrong for sure.
+Whatever no rule decides (`unknown`, or `folded` case/punctuation where spelling is not the
+point) is `open`; only those gaps go to the model (`judgeOpenGaps`, purpose `tutor`, prompt
+`cloze-gaps.v1`): the model returns a verdict per listed gap and nothing else — the reply stays
+code's. No model call when another gap is already wrong for sure; no model, no budget or an
+unreadable answer leaves the gap open, and then nothing is claimed (verdict null,
+`practice.cannot_check`, no try counted). Verdict: every gap right → correct; one wrong →
+incorrect; only near misses → partially_correct. The reply (`clozeReply`) counts the right gaps
+and names the others by HER words ("4 von 5 Lücken stimmen schon. Bei „gegesen“ fehlt nur noch
+eine Kleinigkeit …") — no numbers on the gaps needed. `evaluated_by` is `model` as soon as the
+model judged one gap. Her words stand in the thread joined by " · "; the solution is the whole
+text with its keys. Recorded `via`: a cloze without a bank can only be typed (`typed`), one with
+a bank only tapped (`tapped`), and in the summary a bank cloze counts like tapped vocabulary —
+recognition, not production.
+
+App: the text flows as words and gaps (`unitsOf`: a gap keeps the punctuation touching it, math
+stays whole). One look for every gap, typed or tapped: empty, a dashed blank; filled, her word
+in the accent on a soft tint without a frame (her words stand apart from the print); where she
+types or what the next bank word fills, the accent frame. Without a bank each gap is a small field in the line; the return key goes to the
+next gap and in the last one sends a complete text. With a bank, a tapped word fills the active
+gap (then the next empty one is active), a tap on a filled gap empties it, and a used word
+stays in place, muted. "Prüfen" waits until every gap has something. The text scrolls only when
+the keyboard leaves too little room (the screen keeps the question whole and the surface gives
+way); the focused gap is scrolled to, also after the keyboard shrank the window. Generated in a
+topic's practice and practice test, and read from a sheet (its printed word box as the bank;
+generate.v1.18, extract.v8.2, hints.v5).
 
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
@@ -3070,13 +3119,15 @@ conversation about it and the way to answer together at the top, in that order; 
 collects BELOW the way to answer (`components/practice/FreeSpace.tsx`), above what is pinned
 (the answer field, "Prüfen", "Weiter"). Before, the conversation took all free room and the way
 to answer sat at the bottom, which left a hole under the card with a lonely "Tipp" in it. The
-conversation shows WHOLE turns only (`threadCap` in `app/practice/[id].tsx`): everything when it
+conversation shows WHOLE turns only (`threadRoom` in `lib/practice/threadRoom.ts`): everything when it
 fits into its box plus the free room, otherwise from the earliest turn whose rest still fits,
 so at rest the top edge lies in the gap above a whole turn and nothing is cut under the card.
 Earlier turns are a scroll up away; the edge is masked exactly when the box holds more than it
 shows, with a short fade over that gap at rest and the full EDGE_FADE (#63) once she scrolls up
 or when the newest turn alone does not fit. Over an open structured board the newest turn keeps
-its full height and the board scrolls inside itself; with nothing else that can give (choices, a
+its full height and the board scrolls inside itself — down to two lines of its parts and its
+"Prüfen" bar (`boardKeeps`), which it never gives: with the keyboard up on 360×740 a cloze's
+reply took the whole board and the gap she was fixing vanished under it (#232); with nothing else that can give (choices, a
 field, the voice bar) a drawing or photo in the card gives room first, its cap lowered by up to
 48 pt (`CARD_GIVES`, never below figureScale's legible minimum), and only what is still missing
 is cut from the newest turn under the full fade rather than pushing the bar off the screen. Before the first turn the conversation is only the hint row; at the

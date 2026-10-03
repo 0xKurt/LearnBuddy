@@ -106,6 +106,7 @@ import { useDraft } from '../../lib/drafts.js';
 import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { questionParts } from '../../lib/practice/questionParts.js';
+import { boardKeeps, threadRoom } from '../../lib/practice/threadRoom.js';
 import { announce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
 import { speakInOrder, stop as stopListening } from '../../lib/speech/listen.js';
@@ -142,15 +143,6 @@ type SentAnswer = {
    */
   parts: string | null;
 };
-
-/**
- * How far a drawing or photo may shrink below its own cap so Buddy's newest turn shows whole
- * (issue #286); figureScale.ts still keeps a drawing legible.
- */
-const CARD_GIVES = 48;
-
-/** The conversation's padding above its first turn (its content container's paddingVertical). */
-const THREAD_PAD = 12;
 
 /** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
 function foreign(lang: string | null): lang is string {
@@ -247,6 +239,8 @@ export default function PracticeScreen() {
   const [questionContentHeight, setQuestionContentHeight] = useState(0);
   /** The question card as laid out, and its own height before it grew (issue #96). */
   const [cardHeight, setCardHeight] = useState(0);
+  /** The structured board's height as laid out; null until it has been (issue #232). */
+  const [surfaceHeight, setSurfaceHeight] = useState<number | null>(null);
   const [natural, setNatural] = useState<{ key: string; height: number } | null>(null);
   /** The column's height and where its content ends: what runs past is `overrun`. */
   const [column, setColumn] = useState(0);
@@ -961,17 +955,7 @@ export default function PracticeScreen() {
     ) : null,
   ].filter((node) => node !== null);
 
-  // The conversation shows WHOLE turns only (issue #286). It may take its own box plus the free
-  // room under the answer (`FreeSpace`) — that sum does not change while the box is sized, so the
-  // measurement is stable. If everything fits, everything shows. Otherwise the box starts at the
-  // earliest turn from which the rest still fits, so at rest the top edge lies in the gap above
-  // a whole turn — nothing of the turn before peeks out under the question card. Earlier turns
-  // are a scroll up away; the edge then fades (#63, `scrolledUp` below). Never less than the
-  // newest turn: after "Prüfen" Buddy's reply is what matters, and the way to answer gives way
-  // first (a structured board scrolls inside itself before the reply is hidden). Only when the
-  // newest turn alone is taller than the room is it cut, under the full fade (rule 16 allows a
-  // conversation to scroll). A question card with a drawing lends its growth back to the
-  // conversation (`cardDelta`, also negative when the drawing gave room), so the room counts it.
+  // How the conversation and the card share the room (issues #96, #286, #232): `threadRoom`.
   // Per question AND per window: a narrower phone wraps the prompt onto another line and gives
   // the drawing a smaller cap, so its own height measured on another size is wrong here.
   const naturalKey = `${item.id}:${windowWidth}x${viewHeight}`;
@@ -988,69 +972,25 @@ export default function PracticeScreen() {
       : 0;
   // What the conversation would have next to the card at its own height.
   const room = Math.max(0, threadBox + freeSpace + cardDelta - overrun);
-  // How much each turn needs to the end of the conversation, newest last. The tops are in
-  // ItemThread's coordinates; it starts after the thread's padding.
-  const tops = turns.map((turn) => turnTops[turn.id]).filter((y): y is number => y !== undefined);
-  // From a turn's top, with SPACE.sm of the gap above it, to the end of the conversation.
-  const fromTurn = tops
-    .map((y) => threadNeed - (THREAD_PAD + y) + SPACE.sm)
-    .filter((h) => h < threadNeed);
-  // Before the first turn the conversation is only the hint row ("Tipp"): nothing of Buddy's
-  // to protect, so at the largest board it gives way whole — never half a row (as before #286).
-  const quiet = turns.length === 0;
-  const newestNeed = fromTurn.length > 0 ? Math.min(...fromTurn) : quiet ? 0 : threadNeed;
-  let threadCap: number | undefined;
-  let threadClipped = false;
-  // An open structured board shrinks (`PartsArea` scrolls) before Buddy's reply is hidden.
+  // An open structured board gives way under Buddy's reply, down to what it keeps (#232).
   const boardGives = open && item.task_view !== null && item.task_view !== undefined;
-  // A quiet thread decides even at room 0 — else the row would come back half and flicker.
-  if ((room > 0 || quiet) && threadNeed > 0) {
-    if (threadNeed <= room) {
-      threadCap = threadNeed;
-    } else if (quiet) {
-      threadCap = 0;
-    } else {
-      const fits = fromTurn.filter((h) => h <= room);
-      // The newest turn alone does not fit: it keeps its full height only where a board can
-      // give way under it (a structured surface scrolls inside itself); with nothing to give
-      // — choices, a field, the voice bar — it is cut to the room under the fade instead of
-      // pushing the bar off the screen.
-      threadCap =
-        fits.length > 0 ? Math.max(...fits) : boardGives ? Math.max(room, newestNeed) : room;
-      threadClipped = fits.length === 0 && newestNeed > room;
-    }
-  }
-  const threadFloor = boardGives ? Math.min(newestNeed, threadNeed) : 0;
-
-  // The card with a drawing or photo and the conversation share the room (issue #96, #286).
-  // What the conversation leaves, the card grows into (`cardGrowTo` > 0: its figure sizes itself
-  // from the measured room, at most to half the window) instead of an empty gap under the answer.
-  // When Buddy's newest turn would be cut, the drawing gives room first (`cardGrowTo` < 0: a
-  // lower cap, down to its legible minimum, lib/math/figureScale.ts) — a reply half under the
-  // card read as a fault. The room is the same sum whatever the card does, so both settle in one
-  // pass, and a new reply or a taller bar takes its room back from the card first.
-  const visual = cardNatural > 0 && (item.figure || item.image) && !speaking;
-  const threadWants =
-    threadCap === undefined || !threadClipped ? (threadCap ?? threadNeed) : newestNeed;
-  // A note line never grows past its natural size: its height follows its width, and that is
-  // already the card's (`StaffLine`). Growing the card for it left an empty band under the staff
-  // (issue #275, 73-staff-time) — so it may only GIVE room, never take it.
-  const growable = item.figure?.type !== 'staff';
-  const cardGrowTo =
-    visual && growable
-      ? Math.max(
-          -CARD_GIVES,
-          Math.min(room - threadWants, Math.round(viewHeight * 0.5) - cardNatural),
-        )
-      : 0;
-  if (cardGrowTo < 0 && threadCap !== undefined && !boardGives) {
-    // The room the drawing really gave (measured, `cardDelta`: at its legible minimum it may
-    // give less than asked) goes to the newest turn; whatever is still missing is cut.
-    threadCap = Math.min(threadWants, Math.max(room, room - cardDelta));
-    threadClipped = threadCap < newestNeed;
-  }
-  // Something lies above what the box shows: its top edge fades (#63).
-  const threadHolds = threadClipped || (threadCap !== undefined && threadCap < threadNeed);
+  const { threadCap, threadFloor, threadClipped, threadHolds, cardGrowTo } = threadRoom({
+    room,
+    threadNeed,
+    // The tops are in ItemThread's coordinates; it starts after the thread's padding.
+    tops: turns.map((turn) => turnTops[turn.id]).filter((y): y is number => y !== undefined),
+    quiet: turns.length === 0,
+    boardGives,
+    boardSpare:
+      boardGives && surfaceHeight !== null
+        ? Math.max(0, surfaceHeight - boardKeeps(insets.bottom))
+        : Infinity,
+    cardNatural,
+    cardDelta,
+    visual: cardNatural > 0 && Boolean(item.figure || item.image) && !speaking,
+    growable: item.figure?.type !== 'staff',
+    viewHeight,
+  });
 
   // No scrolling to find what matters (CLAUDE.md rule 16): the question stays on top,
   // the way to answer stays at the bottom, and only the conversation between them
@@ -1327,13 +1267,17 @@ export default function PracticeScreen() {
             own "Prüfen" in the pinned bar and its arrangement in a draft, so a theme switch
             (a remount) keeps it. Keyed by the question, so a new one starts empty. */}
             {open && item.task_view ? (
-              <View testID="answer-surface" style={{ flexGrow: 1, flexShrink: 1, minHeight: 0 }}>
+              <View
+                testID="answer-surface"
+                style={{ flexGrow: 1, flexShrink: 1, minHeight: 0 }}
+                onLayout={(e) => setSurfaceHeight(Math.round(e.nativeEvent.layout.height))}
+              >
                 <StructuredAnswer
                   key={item.id}
                   view={item.task_view}
                   draftKey={`session.${id}.${item.id}`}
                   disabled={locked}
-                  onSubmit={(parts, shownText) => void answer(item.id, { parts }, shownText)}
+                  onSubmit={(body, shownText) => void answer(item.id, body, shownText)}
                 />
               </View>
             ) : null}

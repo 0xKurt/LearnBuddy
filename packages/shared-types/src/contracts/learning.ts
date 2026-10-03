@@ -296,7 +296,7 @@ export const ItemKind = z.enum([
   'vocab',
   /** Say the prompt aloud in lang; the model listens to the recording. */
   'speak',
-  // Structured items (issues #228–#230, contracts/structured.ts): answered with `parts`,
+  // Structured items (issues #228–#232, contracts/structured.ts): answered with `parts`,
   // judged by code against `items.task`. `ItemView.task_view` shows what to arrange.
   /** Put 3–8 elements into the right order (#228). */
   'order',
@@ -304,6 +304,8 @@ export const ItemKind = z.enum([
   'match',
   /** Fill the gaps of a table (#230). */
   'table_fill',
+  /** Fill 2–8 gaps in one text, typed or from a word bank (#232). */
+  'cloze',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
 

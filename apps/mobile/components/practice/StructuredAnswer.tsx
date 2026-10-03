@@ -6,7 +6,7 @@
 //
 // Each surface brings its own "Prüfen" in the pinned bar (it knows when its answer is
 // complete) and sends `parts` plus a short text of the answer for the conversation while
-// the server judges it.
+// the server judges it — and, where she could type OR tap, which one it was (issue #163).
 
 import type {
   StructuredAnswer as Parts,
@@ -14,6 +14,7 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 
 import { MatchAnswer } from './MatchAnswer.js';
+import { ClozeAnswer } from './ClozeAnswer.js';
 import { OrderAnswer } from './OrderAnswer.js';
 import { TableAnswer } from './TableAnswer.js';
 
@@ -22,10 +23,13 @@ type Props = {
   /** Where the surface keeps her unsent arrangement (`lib/drafts.ts`), per question. */
   draftKey: string;
   disabled: boolean;
-  onSubmit: (parts: Parts, shown: string) => void;
+  /** Her answer as it goes to the server (`via` only where she could type OR tap), and its text. */
+  onSubmit: (answer: { parts: Parts; via?: 'typed' | 'tapped' }, shown: string) => void;
 };
 
-export function StructuredAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+export function StructuredAnswer({ view, draftKey, disabled, onSubmit: send }: Props) {
+  const onSubmit = (parts: Parts, shown: string, via?: 'typed' | 'tapped') =>
+    send(via ? { parts, via } : { parts }, shown);
   switch (view.type) {
     case 'order':
       return (
@@ -38,6 +42,10 @@ export function StructuredAnswer({ view, draftKey, disabled, onSubmit }: Props) 
     case 'match':
       return (
         <MatchAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
+      );
+    case 'cloze':
+      return (
+        <ClozeAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
       );
   }
 }
