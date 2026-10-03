@@ -1437,6 +1437,15 @@ the home notice and a capture screen opened meanwhile skip them (`lib/capture/li
 after the app is closed and opened again do they show up as what waits. `app/capture.tsx` stays
 for what has no place in the chat: a page added to an existing sheet (`completes`), a capture
 step Buddy asked for, files shared from other apps and a resumed draft.
+The squares must show the photo (issue #294: on the phone the tile stayed one flat dark colour
+while the same file showed in the card after sending). `AttachStrip` is now built like the two
+thumbnails that do show on the phone: the shadow on an outer view and the clipping on an inner one
+(as `PhotoStrip` always had it), the image at a fixed size without a cross-fade (as the sent card
+has it). A camera mark lies under the image, so a photo that never paints is not an empty box, and
+one that fails to load says "Vorschau nicht möglich" under the strip. `components/buddy/__tests__/
+AttachStrip.test.tsx` holds the build; `tests/web/visible.spec.ts` measures the tile's pixels like
+the owner did. **Not proven:** which of the differences was the phone's reason — the measurement
+on the device is owed in #294.
 
 **Files and sharing in the app** (`app/capture.tsx`, `lib/capture/files.ts`, `incoming.ts`,
 `drop.web.ts`, `components/capture/ShareIntake.tsx`). One more quiet choice next to the camera:
@@ -3148,6 +3157,28 @@ so `restoreTheme` now tells the provider (which also fixed the look settings sho
 default as selected after a restart). **Android's navigation bar is not verified on a
 device:** with edge-to-edge (SDK 54's default) the style reaches the three-button bar, while a
 gesture bar draws its own handle and ignores it.
+
+### The keyboard and the height a screen lays itself out in (issues #46, #141, #289)
+
+Since edge-to-edge, Android keeps the window's height while the keyboard is up. Two things follow,
+each in one place. **Getting out of the way:** `components/lb/KeyboardSafe.tsx` pads by what the
+keyboard covers less what the window gave up by itself (`keyboardOverlap`, `lib/keyboard.ts`), so a
+device that still resizes is not padded twice (#46) and one that does not is not covered (#141).
+**Deciding the layout:** a screen reads `useVisibleHeight()` (`lib/useVisibleHeight.ts`: the
+window less that same overlap), never `useWindowDimensions().height` — the welcome form decided on
+the window, stayed roomy behind the keyboard and left one field above the pinned CTA (POCO X3: 873
+window, ~567 visible; #289). `formDensity()` turns the visible height into `roomy` (≥ 780),
+`compact` (a 360×740 phone) or `tight` (< 600: every phone while she types). The welcome screen in
+`tight` keeps only the form — the choice of signing up or in, the fields, their errors — and the
+flags, Buddy, the intro and the under-16 note come back when the keyboard goes; the practice screen takes its
+figure and photo caps from the visible height, so the card no longer grows into the room Buddy's
+newest turn needs. A lint rule (`eslint.config.mjs`, `no-restricted-syntax`) refuses the window's
+height in `app/` and `components/`; the one exception is the sheet's slide-out offset
+(`components/lb/Sheet.tsx`), which should ignore the keyboard. **Tests:** the numbers in
+`lib/__tests__/keyboard.test.ts`; the layout in `tests/web/visible.spec.ts` at the room a keyboard
+leaves (390×508, 360×440, 393×567: every field and error above the CTA, light and dark). The
+browser has no keyboard that keeps the window's height, so the wiring between the OS's keyboard
+event and the screen is proven only on the phone (screenshot owed in #289).
 
 ### Crash reports (issue #36)
 

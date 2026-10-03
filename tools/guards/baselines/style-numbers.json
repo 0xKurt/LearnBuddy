@@ -1,6 +1,6 @@
 {
   "$comment": "Ausnahmeliste zu Regel 5 (Nur Tokens, Issue #313): freie Zahlen für padding*/margin*/gap/fontSize/lineHeight/border*Radius je Datei in apps/mobile/app und apps/mobile/components. Darf nur schrumpfen — mehr macht `pnpm lint` rot, weniger verlangt `pnpm guards:shrink`. Siehe docs/engineering-guards.md.",
-  "total": 803,
+  "total": 802,
   "files": {
     "apps/mobile/app/buddy.tsx": 11,
     "apps/mobile/app/capture.tsx": 19,
@@ -18,7 +18,7 @@
     "apps/mobile/app/welcome.tsx": 19,
     "apps/mobile/components/auth/NewPasswordFields.tsx": 2,
     "apps/mobile/components/buddy/AreaCard.tsx": 4,
-    "apps/mobile/components/buddy/AttachStrip.tsx": 8,
+    "apps/mobile/components/buddy/AttachStrip.tsx": 7,
     "apps/mobile/components/buddy/Composer.tsx": 4,
     "apps/mobile/components/buddy/Conversation.tsx": 15,
     "apps/mobile/components/buddy/Header.tsx": 3,
