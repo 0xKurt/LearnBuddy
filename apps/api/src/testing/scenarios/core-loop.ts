@@ -4,8 +4,8 @@
 // Test tooling only.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
-import type { ScriptedGateway } from '../fakes.js';
 import { scriptChecks } from './checks.js';
+import { readingRules, tutorRules } from './rules.js';
 import { latestLearnerText, quoteFrom, scriptTurns } from './turns.js';
 
 export const DEMO_WORKSHEET = {
@@ -67,7 +67,7 @@ export const DEMO_WORKSHEET = {
   ],
 };
 
-export function scriptCoreLoop(llm: ScriptedGateway): void {
+export function scriptCoreLoop(): void {
   // 1 · "Ich schreibe am Freitag eine Mathearbeit über Brüche."
   scriptTurns({
     when: /mathearbeit über brüche/i,
@@ -94,8 +94,14 @@ export function scriptCoreLoop(llm: ScriptedGateway): void {
       };
     },
   });
-  // 2 · the photographed worksheet
-  llm.script('extraction', { json: DEMO_WORKSHEET });
+  // 2 · the photographed worksheet — by the photo she took (core-loop.spec.ts draws it at
+  // 800 × 1000 on a 2× screen, the app sends it at 1600 px on the long side), not by being the
+  // first sheet anyone reads: run alone, tour.spec.ts would take it (#350).
+  readingRules.add({
+    when: /<image 1280x1600>/,
+    system: /learner's study material/,
+    answer: () => DEMO_WORKSHEET,
+  });
   // 3 · Buddy acts on the ready material — keyed by the check's trigger, the worksheet above
   // (checks.ts): a practice another spec finishes first wakes Buddy too.
   scriptChecks({
@@ -122,25 +128,29 @@ export function scriptCoreLoop(llm: ScriptedGateway): void {
       },
     }),
   });
-  // 4 · the free-text question in practice
-  llm.script('tutor', (req) => {
-    const text = latestLearnerText(req).toLowerCase();
-    const right = text.includes('wert') || text.includes('gleich');
-    return right
-      ? {
-          intent: 'answer',
-          verdict: 'correct',
-          reply: 'Genau – der Wert bleibt gleich, nur die Darstellung ändert sich.',
-          gave_hint: false,
-          revealed_answer: false,
-        }
-      : {
-          intent: 'answer',
-          verdict: 'incorrect',
-          reply: 'Fast. Denk daran, was mit dem Wert des Bruchs passiert.',
-          gave_hint: true,
-          revealed_answer: false,
-        };
+  // 4 · the free-text question in practice — by its question: queued, it went to whichever
+  // spec asked the tutor first, and modes.spec.ts run alone got this reply (#350).
+  tutorRules.add({
+    when: /Warum multipliziert man beim Erweitern/,
+    answer: (req) => {
+      const text = latestLearnerText(req).toLowerCase();
+      const right = text.includes('wert') || text.includes('gleich');
+      return right
+        ? {
+            intent: 'answer',
+            verdict: 'correct',
+            reply: 'Genau – der Wert bleibt gleich, nur die Darstellung ändert sich.',
+            gave_hint: false,
+            revealed_answer: false,
+          }
+        : {
+            intent: 'answer',
+            verdict: 'incorrect',
+            reply: 'Fast. Denk daran, was mit dem Wert des Bruchs passiert.',
+            gave_hint: true,
+            revealed_answer: false,
+          };
+    },
   });
   // 5 · after practice: nothing to add right now — keyed by this learner's test and the
   // finished practice, so another spec's practice is not answered with it (checks.ts).

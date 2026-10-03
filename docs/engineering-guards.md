@@ -40,6 +40,14 @@ zu ergänzen. Beim Zusammenführen von #290, #289 und #315 schwieg so die Secret
 Screens, ohne Fehlermeldung. `guards.test.mjs` lintet deshalb eine Datei, die alle vier
 abdecken, über die echte `eslint.config.mjs` und erwartet jede einzelne.
 
+**Tests unabhängig von der Reihenfolge** (Regel 7, Issue #350): Die geskripteten Modellantworten
+des Browser-Walkthroughs werden nur nach dem Inhalt der Anfrage gewählt, nie aus einer
+Warteschlange, die der erste fragende Spec leert. `apps/api/src/testing/__tests__/walkthrough.test.ts`
+(Teil von `pnpm test`, ohne Browser und Datenbank) prüft, dass das Walkthrough-Modell keine
+Antwort in einer Warteschlange hält und dass die Anfragen der Specs vorwärts wie rückwärts dieselben
+Antworten bekommen. Jeden Walkthrough-Test einzeln auf eigenem Stack fährt
+`scripts/web-walkthrough-each.sh` — nur lokal, für die CI zu teuer.
+
 **Kurze Branches** (Regel 8, Issue #328): `tools/guards/fresh-base.mjs` macht in der CI jeden PR
 rot, dem ein Commit von main fehlt, der älter als 24 h ist. Gezählt werden nur mains eigene
 Commits (`--first-parent`), denn ein gemergter PR bringt seine Commits mit ihrer Schreibzeit mit.
