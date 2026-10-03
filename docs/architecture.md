@@ -2459,7 +2459,10 @@ word list, so it stays a prompt rule.
   _The app:_ the card IS the play control (`components/practice/DictationCard.tsx`): the line and
   a large "Anhören" (primary until she has heard it, then soft, so "Prüfen" is the strong button)
   with the quiet "Langsam" beside it, centred in the room the conversation does not need yet — the
-  card may take the whole middle while there is no reply, so no empty band is left (#286). The
+  card may take the whole middle while there is no reply, so no empty band is left (#286). Once
+  there is a reply the card collapses to one row ("Nochmal hören" · "Langsam") and the thread
+  shows only her latest try and what followed — three tries do not fit under the card on 360×740,
+  and an older bubble would sit half cut under its edge. The
   playback is `useHearText`, the hook the Hörverstehen pills use. The answer field has no
   microphone; its placeholder says so ("Schreib, was du hörst – ohne Mikro"), the keyboard does
   not capitalise for her. Without a voice

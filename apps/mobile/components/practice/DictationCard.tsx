@@ -30,6 +30,12 @@ type Props = {
   disabled?: boolean;
   /** The room the screen grants the card while the conversation is still empty. */
   minHeight?: number;
+  /**
+   * There is a conversation under the card: it shrinks to one row — "Nochmal hören" and
+   * "Langsam" — so the replies sit directly under it, with no empty block in the card and no
+   * bubble pushed half under its edge (orchestrator review of #286).
+   */
+  compact?: boolean;
 };
 
 export function DictationCard({
@@ -40,10 +46,11 @@ export function DictationCard({
   onHeard,
   disabled = false,
   minHeight,
+  compact = false,
 }: Props) {
   const { t } = useTranslation('practice');
   const { playing, play, loading, fetching } = useHearText(sessionId, itemId, onHeard);
-  const grown = minHeight !== undefined && minHeight > 0;
+  const grown = !compact && minHeight !== undefined && minHeight > 0;
 
   const mainLabel =
     playing === 'normal'
@@ -53,6 +60,47 @@ export function DictationCard({
         : heard
           ? t('dictation.again')
           : t('dictation.play');
+
+  if (compact) {
+    return (
+      <Card tone="lavender" padding={SPACE.md} radius={24}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: SPACE.sm,
+          }}
+        >
+          <Btn
+            size="md"
+            pill
+            variant="outline"
+            icon={playing === 'normal' ? 'stop' : 'speak'}
+            busy={loading('normal')}
+            disabled={disabled || (fetching && !loading('normal'))}
+            onPress={() => void play('normal')}
+            accessibilityLabel={mainLabel}
+            {...(playing === 'normal' ? {} : { accessibilityHint: t('dictation.play_hint') })}
+          >
+            {mainLabel}
+          </Btn>
+          <Btn
+            size="sm"
+            pill
+            variant="ghost"
+            {...(playing === 'slow' ? { icon: 'stop' as const } : {})}
+            busy={loading('slow')}
+            disabled={disabled || (fetching && !loading('slow'))}
+            onPress={() => void play('slow')}
+            accessibilityLabel={playing === 'slow' ? t('listen.stop') : t('speak.listen_slow')}
+          >
+            {playing === 'slow' ? t('listen.stop') : t('speak.listen_slow_short')}
+          </Btn>
+        </View>
+      </Card>
+    );
+  }
 
   return (
     <Card tone="lavender" padding={18} radius={24} style={grown ? { minHeight } : null}>

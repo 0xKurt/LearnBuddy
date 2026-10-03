@@ -860,6 +860,12 @@ export default function PracticeScreen() {
   const itemTurns = session.turns.filter((turn) => turn.item_id === item.id);
   // Her tries and Buddy's replies; "Anders erklären" exchanges stand after the solution.
   const turns = itemTurns.filter((turn) => turn.reexplain === null);
+  // A Diktat shows only her latest try and what followed it (issue #242): each try replaces the
+  // last, and three tries with three replies, the word and the follow-ups do not fit under the
+  // card on 360×740 — an older bubble would sit half cut under its edge (review of #286).
+  const lastTry = turns.map((turn) => turn.role).lastIndexOf('learner');
+  const threadTurns =
+    item.kind === 'spelling_dictation' && lastTry > 0 ? turns.slice(lastTry) : turns;
   const turnsAgain = itemTurns.filter((turn) => turn.reexplain !== null);
   // After a shown solution — in homework after a task she solved herself (never in a test).
   // Not after a clean first try: there the three ways to re-explain were three chips of
@@ -1079,6 +1085,7 @@ export default function PracticeScreen() {
                   }}
                   disabled={locked}
                   minHeight={cardMin}
+                  compact={itemTurns.length > 0 || pendingText !== null}
                 />
               ) : (
                 <QuestionCard
@@ -1133,7 +1140,7 @@ export default function PracticeScreen() {
                 onLayout={(e) => setThreadNeed(Math.round(e.nativeEvent.layout.height) + 24)}
               >
                 <ItemThread
-                  turns={turns}
+                  turns={threadTurns}
                   pending={pendingText}
                   hideVerdicts={testing}
                   // A spoken answer: the judgement's words belong here, the marked sentence

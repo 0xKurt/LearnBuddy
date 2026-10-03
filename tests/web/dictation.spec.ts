@@ -130,7 +130,12 @@ test('Diktat: she hears the word, types it, the mic is off (issue #242)', async 
     const [right, missed, shownWord] = night
       ? (['Straße', 'Farad', 'Fahrrad'] as const)
       : (['Schwimmen', 'bine', 'Biene'] as const);
-    await field.fill(right);
+    // The scheme switch rebuilds the screen; a fill that lands mid-rebuild is wiped, so it is
+    // repeated until the text stands.
+    await expect(async () => {
+      await field.fill(right);
+      await expect(field).toHaveValue(right, { timeout: 1000 });
+    }).toPass();
     await page.getByRole('button', { name: 'Prüfen' }).click();
     await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
     await one(page, '63-diktat-right', night);
