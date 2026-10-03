@@ -379,7 +379,20 @@
     "molecule_skeletal": "Formula scheletrica",
     "lone_pairs_one": "{{atom}} ha {{count}} doppietto libero",
     "lone_pairs_other": "{{atom}} ha {{count}} doppietti liberi",
-    "molecule_marked": "Evidenziato: {{list}}"
+    "molecule_marked": "Evidenziato: {{list}}",
+    "tree_prob": "Diagramma ad albero",
+    "tree_plain": "Albero",
+    "tree_root": "inizio",
+    "tree_branch": "Ramo da {{from}} a {{to}}",
+    "tree_branch_label": "Ramo da {{from}} a {{to}}: {{label}}",
+    "tree_unknown": "punto interrogativo",
+    "pedigree": "Albero genealogico su {{gens}} generazioni",
+    "pedigree_man": "Persona {{n}}, uomo, generazione {{gen}}",
+    "pedigree_woman": "Persona {{n}}, donna, generazione {{gen}}",
+    "pedigree_affected": "affetta",
+    "pedigree_child": "figlia o figlio di {{fa}} e {{mo}}",
+    "automaton": "Automa con stato iniziale {{start}}, stato finale: {{finals}}",
+    "automaton_move": "Transizione da {{from}} a {{to}} con {{symbols}}"
   },
   "keys": {
     "row": "Simboli matematici",

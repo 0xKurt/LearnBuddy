@@ -38,6 +38,10 @@
     "apps/mobile/components/math/staff/useEngraver.ts": {
       "issue": "#312",
       "libraryCheck": "Lädt den VexFlow-Stecher per import() erst auf Bildschirmen mit Notenzeile (Bundle-Budget, #313). Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): VexFlow 4.2.5, MIT, letztes 4.x-Release 2024-07, rund 155 KB gzip mit Bravura (eigener Bundle-Teil, nur auf Bildschirmen mit Notenzeile geladen), läuft headless ohne DOM/WebView über einen eigenen RenderContext → SVG-String → SvgXml auf iOS, Android und Web; A11y: die Bibliothek hat keine, die Zeile bleibt für Screenreader ein Satz (lib/music/words.ts). Verworfen: VexFlow 5 (misst Glyphen mit Canvas, nicht headless), abcjs (DOM/getBBox, nur WebView), Verovio (LGPL-3.0, WASM). Owner-Entscheidung 03.10.: „Ja, VexFlow (Recommended)“."
+    },
+    "apps/mobile/components/math/TreeFigures.tsx": {
+      "issue": "#256",
+      "libraryCheck": "Baumdiagramm, Suchbaum, Stammbaum und Automat mit react-native-svg; Layout und alle Fakten aus packages/shared-math (trees.ts, pedigree.ts), die der Server prüft. Bibliotheks-Check 03.10. (npm view, esbuild --bundle --minify + gzip -9, headless in Node): d3-hierarchy 3.1.2 (ISC, 1,8 KB gzip, headless) legt Bäume genauso Blatt für Blatt aus wie die 15 Zeilen in trees.ts, die der Server für die Breitenprüfung ohnehin braucht — eine Abhängigkeit für dasselbe Ergebnis; @dagrejs/dagre 3.1.1 (MIT, 2026-08, 17 KB gzip, headless) legt Graphen in Rängen aus — für 1–6 Zustände ist der Ring mit Start links das Schulbuchbild, Schleifen und Hin-/Rückwege ohne Umwege, und 17 KB gzip im Haupt-Bundle für eine Figur; Stammbaum: pedigreejs ist GPL-3.0, braucht DOM/d3 und liegt nicht auf npm, elkjs ist EPL-2.0/GPL und 8 MB; @viz-js/viz (Graphviz) ist WASM, unter Hermes nur per WebView. A11y: describeTree sagt jeden Ast, jede Person, jeden Übergang in Worten. Eigenbau begründet: keine freie RN-taugliche Bibliothek zeichnet Stammbaumsymbole, und die beiden Layout-Bibliotheken ersetzen je nur rund 15 Zeilen."
     }
   }
 }

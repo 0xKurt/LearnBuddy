@@ -284,6 +284,14 @@
       "right_of_one": "1 spazio su {{total}} è già giusto.",
       "wrong": "Non va ancora bene: {{words}}.",
       "near": "{{words}}: manca solo un piccolo dettaglio di ortografia."
+    },
+    "tree": {
+      "mode_ad": "autosomico dominante",
+      "mode_ar": "autosomico recessivo",
+      "mode_xd": "dominante legato all’X",
+      "mode_xr": "recessivo legato all’X",
+      "accepted": "Sì, viene accettata",
+      "rejected": "No, non viene accettata"
     }
   },
   "contact": {

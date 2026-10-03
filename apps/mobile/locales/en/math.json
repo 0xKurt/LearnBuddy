@@ -379,7 +379,20 @@
     "molecule_skeletal": "Skeletal formula",
     "lone_pairs_one": "{{atom}} has {{count}} lone pair",
     "lone_pairs_other": "{{atom}} has {{count}} lone pairs",
-    "molecule_marked": "Marked: {{list}}"
+    "molecule_marked": "Marked: {{list}}",
+    "tree_prob": "Tree diagram",
+    "tree_plain": "Tree",
+    "tree_root": "start",
+    "tree_branch": "Branch from {{from}} to {{to}}",
+    "tree_branch_label": "Branch from {{from}} to {{to}}: {{label}}",
+    "tree_unknown": "question mark",
+    "pedigree": "Pedigree over {{gens}} generations",
+    "pedigree_man": "Person {{n}}, man, generation {{gen}}",
+    "pedigree_woman": "Person {{n}}, woman, generation {{gen}}",
+    "pedigree_affected": "affected",
+    "pedigree_child": "child of {{fa}} and {{mo}}",
+    "automaton": "Automaton with start state {{start}}, final state: {{finals}}",
+    "automaton_move": "Transition from {{from}} to {{to}} on {{symbols}}"
   },
   "keys": {
     "row": "Math symbols",
