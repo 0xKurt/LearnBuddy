@@ -6,6 +6,7 @@
 import { z } from 'zod';
 
 import { StaffFigure } from './staff.js';
+import { AutomatonFigure, PedigreeFigure, TreeFigure } from './tree.js';
 
 const Label = z.string().trim().min(1).max(40);
 const Num = z.number().finite();
@@ -359,6 +360,9 @@ export const ModelFigure = z.discriminatedUnion('type', [
   HistogramFigure,
   ScatterPlotFigure,
   PyramidFigure,
+  TreeFigure,
+  PedigreeFigure,
+  AutomatonFigure,
 ]);
 export type ModelFigure = z.infer<typeof ModelFigure>;
 
@@ -378,6 +382,9 @@ export const Figure = z.discriminatedUnion('type', [
   HistogramFigure,
   ScatterPlotFigure,
   PyramidFigure,
+  TreeFigure,
+  PedigreeFigure,
+  AutomatonFigure,
   StaffFigure,
 ]);
 export type ChartFigure = Extract<Figure, { type: (typeof CHART_TYPES)[number] }>;

@@ -284,6 +284,14 @@
       "right_of_one": "1 trou sur {{total}} est déjà juste.",
       "wrong": "Pas encore juste : {{words}}.",
       "near": "{{words}} : il ne manque qu’un petit détail d’orthographe."
+    },
+    "tree": {
+      "mode_ad": "autosomique dominant",
+      "mode_ar": "autosomique récessif",
+      "mode_xd": "dominant lié à l’X",
+      "mode_xr": "récessif lié à l’X",
+      "accepted": "Oui, il est accepté",
+      "rejected": "Non, il n’est pas accepté"
     }
   },
   "contact": {

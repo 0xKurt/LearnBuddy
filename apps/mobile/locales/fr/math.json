@@ -379,7 +379,20 @@
     "molecule_skeletal": "Formule topologique",
     "lone_pairs_one": "{{atom}} a {{count}} doublet non liant",
     "lone_pairs_other": "{{atom}} a {{count}} doublets non liants",
-    "molecule_marked": "Marqué : {{list}}"
+    "molecule_marked": "Marqué : {{list}}",
+    "tree_prob": "Arbre de probabilités",
+    "tree_plain": "Arbre",
+    "tree_root": "départ",
+    "tree_branch": "Branche de {{from}} à {{to}}",
+    "tree_branch_label": "Branche de {{from}} à {{to}} : {{label}}",
+    "tree_unknown": "point d’interrogation",
+    "pedigree": "Arbre généalogique sur {{gens}} générations",
+    "pedigree_man": "Personne {{n}}, homme, génération {{gen}}",
+    "pedigree_woman": "Personne {{n}}, femme, génération {{gen}}",
+    "pedigree_affected": "atteinte",
+    "pedigree_child": "enfant de {{fa}} et {{mo}}",
+    "automaton": "Automate avec l’état initial {{start}}, état final : {{finals}}",
+    "automaton_move": "Transition de {{from}} vers {{to}} avec {{symbols}}"
   },
   "keys": {
     "row": "Symboles mathématiques",

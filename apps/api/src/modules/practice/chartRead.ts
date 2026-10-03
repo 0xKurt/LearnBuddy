@@ -37,7 +37,7 @@ import type { ItemDraft } from './items.js';
 
 const LOCALES: readonly Locale[] = ['de', 'en', 'fr', 'es', 'it'];
 
-function asLocale(lang: string | null | undefined): Locale | null {
+export function asLocale(lang: string | null | undefined): Locale | null {
   return LOCALES.find((l) => l === lang) ?? null;
 }
 
