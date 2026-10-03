@@ -30,7 +30,10 @@ export type IconName =
   | 'speak-off'
   | 'voice'
   | 'stop'
-  | 'file';
+  | 'file'
+  | 'up'
+  | 'down'
+  | 'undo';
 
 type IconProps = {
   name: IconName;
@@ -117,6 +120,26 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Path d="M5 12h14M13 6l6 6-6 6" {...common} />
+        </Svg>
+      );
+    // Höher / tiefer und zurück auf der Notenzeile (issue #275).
+    case 'up':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M6 15l6-6 6 6" {...common} strokeWidth={2.2} />
+        </Svg>
+      );
+    case 'down':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M6 9l6 6 6-6" {...common} strokeWidth={2.2} />
+        </Svg>
+      );
+    case 'undo':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M9 14L4 9l5-5" {...common} />
+          <Path d="M4 9h10.5a5.5 5.5 0 010 11H11" {...common} />
         </Svg>
       );
     case 'chevron':

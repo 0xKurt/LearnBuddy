@@ -70,7 +70,9 @@ import {
   StaffAnswer,
   staffComplete,
   staffLineOf,
-  type StaffAnswerState,
+  readStaffDraft,
+  STAFF_ANSWER_MIN,
+  type StaffDraft,
 } from '../../components/practice/StaffAnswer.js';
 import { StructuredAnswer } from '../../components/practice/StructuredAnswer.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMask } from '../../components/lb/EdgeFade.js';
@@ -144,6 +146,13 @@ type SentAnswer = {
  * rounded). The parts below scroll inside themselves before the reply is pushed away.
  */
 const STRUCTURED_REPLY_ROOM = 140;
+/**
+ * The same for the staff she writes on (issue #275): the reply bubble of two lines AND the help
+ * chips under it (12 + 2 × 22 + 12 + 44 + 2 × 12, rounded — the same as STRUCTURED_REPLY_ROOM). Measured on 360×740 under the
+ * longest writing prompt: with less, the thread showed the chips and pushed her reply out of
+ * sight. The staff gives way instead — down to `STAFF_ANSWER_MIN`.
+ */
+const STAFF_REPLY_ROOM = 140;
 
 /** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
 function foreign(lang: string | null): lang is string {
@@ -244,7 +253,11 @@ export default function PracticeScreen() {
    * Grund an der Frage festgemacht wie die Anordnung darüber: die nächste Frage beginnt mit einer
    * leeren Zeile, und nichts Geschriebenes rutscht hinein.
    */
-  const [written, setWritten] = useState<{ itemId: string; answer: StaffAnswerState } | null>(null);
+  // Im Entwurf und nicht nur im Zustand (issue #275): ein Farbwechsel baut den Bildschirm neu
+  // auf, und ihre halbe Zeile war danach weg.
+  const staffDraft = useDraft(`session.${id}.staff`);
+  const written = readStaffDraft(staffDraft.text);
+  const setWritten = (next: StaffDraft) => staffDraft.setText(JSON.stringify(next));
   /** The pronunciation judgement while the model is still listening (issue #8). */
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -1002,11 +1015,13 @@ export default function PracticeScreen() {
             // whole column and draw itself over the question card. Once she has checked, Buddy's
             // reply ("3 von 5 Paaren stimmen schon") is what matters next, so the conversation
             // keeps room for it too, up to STRUCTURED_REPLY_ROOM.
-            ...(open && item.task_view
+            ...(open && (item.task_view || staff)
               ? {
                   minHeight:
                     questionContentHeight +
-                    (turns.length > 0 ? Math.min(threadNeed, STRUCTURED_REPLY_ROOM) : 0),
+                    (turns.length > 0
+                      ? Math.min(threadNeed, staff ? STAFF_REPLY_ROOM : STRUCTURED_REPLY_ROOM)
+                      : 0),
                 }
               : {}),
           }}
@@ -1056,6 +1071,7 @@ export default function PracticeScreen() {
                   imageMaxHeight={Math.min(180, Math.round(windowHeight * 0.2))}
                   fromBuddy={item.origin === 'buddy'}
                   minHeight={cardMin}
+                  dense={staff !== null}
                   // Her short answer appears in the gap of a fill-in sentence while she types.
                   answer={
                     typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined
@@ -1226,21 +1242,27 @@ export default function PracticeScreen() {
             oder das Antwortfeld steht, und gibt als Erstes Platz her: die gemessene Höhe
             und was sie kostet, stehen in `StaffAnswer.tsx`. */}
         {staff ? (
-          <View testID="answer-staff" style={{ flexShrink: 1, minHeight: 0, paddingTop: SPACE.sm }}>
-            <ScrollView
-              testID="scroll-list"
-              style={{ flexGrow: 0, flexShrink: 1 }}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingHorizontal: SPACE.lg }}
-            >
-              <StaffAnswer
-                key={item.id}
-                surface={staff}
-                answer={staffAnswer}
-                disabled={locked}
-                onChange={(next) => setWritten({ itemId: item.id, answer: next })}
-              />
-            </ScrollView>
+          // Kein ScrollView mehr (issue #275): die Fläche passt, weil die Zeile ihre Höhe aus dem
+          // Platz nimmt, der da ist (`StaffAnswer`), und die Tasten darunter fest sind.
+          <View
+            testID="answer-staff"
+            style={{
+              flexShrink: 1,
+              // Never below what the keys and the smallest staff need: if the screen is too
+              // short, the page overflows and the walkthrough says so (`fit.ts`), instead of the
+              // keys sliding silently under „Prüfen".
+              // No top padding: the thread above ends in its own 12 pt.
+              minHeight: STAFF_ANSWER_MIN,
+              paddingHorizontal: SPACE.lg,
+            }}
+          >
+            <StaffAnswer
+              key={item.id}
+              surface={staff}
+              answer={staffAnswer}
+              disabled={locked}
+              onChange={(next) => setWritten({ itemId: item.id, answer: next })}
+            />
           </View>
         ) : null}
         {staff ? (

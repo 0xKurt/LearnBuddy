@@ -124,6 +124,12 @@ type QuestionProps = {
    * height, or without a visual, it does nothing.
    */
   minHeight?: number;
+  /**
+   * A smaller prompt (18 pt instead of 21): for a question whose answer surface needs the
+   * height more than the words do — the staff she writes on (issue #275), where a six-line
+   * prompt left no room for the staff, its keys AND Buddy's reply on 360×740.
+   */
+  dense?: boolean;
 };
 
 export function QuestionCard({
@@ -137,6 +143,7 @@ export function QuestionCard({
   figureMaxHeight,
   imageMaxHeight = 180,
   minHeight,
+  dense = false,
 }: QuestionProps) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
@@ -188,7 +195,12 @@ export function QuestionCard({
             text={prompt}
             blanks={{ filled }}
             accessibilityRole="header"
-            style={[TYPE.title, { fontSize: 21, lineHeight: 29, fontWeight: '500' }]}
+            style={[
+              TYPE.title,
+              dense
+                ? { fontSize: 18, lineHeight: 25, fontWeight: '500' }
+                : { fontSize: 21, lineHeight: 29, fontWeight: '500' },
+            ]}
           />
         </View>
         {figure ? (
