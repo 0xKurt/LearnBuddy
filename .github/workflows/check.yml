@@ -117,6 +117,13 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Walkthrough (web build against the dev stack)
         run: scripts/web-walkthrough.sh
+      - name: Walkthrough with a voice (Diktat)
+        # The Diktat spec needs Buddy's voice, which the dev stack has only with a fake speech
+        # provider — and core-loop asserts there is none, so it runs on its own stack (issue #334).
+        # The web export from the step above is reused (same sources, same port).
+        env:
+          LB_DEV_SPEECH: fake
+        run: scripts/web-walkthrough.sh dictation
       - name: Keep screenshots and fit measurements
         if: always()
         uses: actions/upload-artifact@v4
