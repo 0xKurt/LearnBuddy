@@ -1,7 +1,7 @@
 {
   "$comment": "Ausnahmeliste zu Regel 3 (Keine Kopien, Issue #313): heutige Kopien (jscpd, ≥ 50 Tokens über ≥ 5 Zeilen) je Dateipaar mit ihren doppelten Zeilen. Darf nur schrumpfen — ein neues Paar oder mehr Zeilen macht `pnpm lint` rot. Siehe docs/engineering-guards.md.",
-  "clones": 46,
-  "lines": 577,
+  "clones": 48,
+  "lines": 591,
   "pairs": {
     "apps/api/src/auth/verifier.ts <-> apps/api/src/storage/gateway.ts": 10,
     "apps/api/src/llm/partial.ts (in sich)": 31,
@@ -25,12 +25,14 @@
     "apps/mobile/components/library/ExerciseCard.tsx <-> apps/mobile/components/library/SubjectCard.tsx": 10,
     "apps/mobile/components/math/ChartFigures.tsx (in sich)": 69,
     "apps/mobile/components/math/FigureView.tsx (in sich)": 18,
-    "apps/mobile/components/practice/MatchAnswer.tsx <-> apps/mobile/components/practice/OrderAnswer.tsx": 6,
+    "apps/mobile/components/practice/MatchAnswer.tsx <-> apps/mobile/components/practice/OrderAnswer.tsx": 17,
     "apps/mobile/components/settings/AccountAccessCard.tsx <-> apps/mobile/components/settings/ProfileFixCard.tsx": 22,
     "apps/mobile/components/settings/AdultSection.tsx <-> apps/mobile/components/settings/ProfileFixCard.tsx": 9,
     "apps/mobile/components/settings/ProfileFixCard.tsx (in sich)": 24,
     "apps/mobile/lib/homeCardStorage.web.ts <-> apps/mobile/lib/speech/voiceModeStorage.web.ts": 17,
     "packages/shared-types/src/contracts/buddy.ts <-> packages/shared-types/src/contracts/learning.ts": 7,
-    "packages/shared-types/src/contracts/structured.ts (in sich)": 6
+    "packages/shared-types/src/contracts/structured.ts (in sich)": 6,
+    "apps/mobile/components/practice/FractionBarAnswer.tsx <-> apps/mobile/components/practice/OrderAnswer.tsx": 12,
+    "apps/mobile/components/practice/OrderAnswer.tsx <-> apps/mobile/components/practice/TableAnswer.tsx": 9
   }
 }

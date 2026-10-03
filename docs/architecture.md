@@ -823,15 +823,17 @@ read (`evals/tts` also needs `SPEECH_BACKEND=google`: it measures a whole voice-
 when each sentence is written, what it costs to synthesise and how long it plays). A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
 
-**Structured output stays on `responseJsonSchema` for now** (issue #283, checked 03.10.2026).
-The live Vertex v1 discovery document (revision 20260920, read 02.10.) marks
-`GenerationConfig.responseSchema`, `responseJsonSchema` and `responseMimeType` deprecated:
-"Use `response_format` instead". We cannot follow it from our side yet: `@google/genai` 2.25.0
-(ours) and 2.27.0 (newest, published 02.10.2026) have no `responseFormat` on
-`GenerateContentConfig`, the type their raw `GenerationConfig.responseFormat` points at
-(`ResponseFormat`) is not even declared, and the Vertex converter of `models.generateContent`
-copies only the fields it knows — a `responseFormat` passed in is dropped without an error
-(the request goes to `v1beta1`, where the SDK still sends `responseJsonSchema`). So the code is
+**Structured output stays on `responseJsonSchema` for now** (issue #283, checked 02.10. and
+again 03.10.2026). The live Vertex discovery documents — v1 and, since revision 20260930 (read
+03.10.), also v1beta1, the version the SDK sends to — mark `GenerationConfig.responseSchema`,
+`responseJsonSchema` and `responseMimeType` deprecated: "Use `response_format` instead". The new
+field is a list of `ResponseFormat` (`text: { mimeType, schema }`, plus audio, image, video); the
+document names no schema keyword list and no shutdown date. We cannot follow it from our side
+yet: `@google/genai` 2.25.0 (ours) and 2.27.0 (newest, published 02.10.2026) declare
+`ResponseFormat` and a `responseFormat` on the raw `GenerationConfig`, but only the
+`countTokens` and Live converters forward it — `GenerateContentConfig` has no such field, and
+the Vertex converter of `models.generateContent` copies only the fields it knows, so a
+`responseFormat` passed in is dropped without an error. So the code is
 unchanged: `paramsFor` in `llm/vertex.ts` builds the one request, and
 `llm/__tests__/vertex-request.test.ts` hands it to the real SDK with only `fetch` replaced. It
 pins that our zod-derived schema arrives byte for byte as `responseJsonSchema` (turn,
@@ -2934,6 +2936,12 @@ word list, so it stays a prompt rule.
   (`$f(x) = …$`), the key must be that function (a key named `f'` is held only against `f'`, so
   "which graph is the derivative" stays possible). Any failure drops the item, never repairs it.
   Not decided by code: whether a geometry option is symmetric, whether a word option is right.
+  **And again on the way out** (issue #326): `sessionView` sends a row's pictures only through
+  `storedChoiceFigures` (`practice/items.ts`), which holds the stored row to all of the above —
+  each picture a `ModelFigure` (never a note line), drawable exactly as stored, one per option,
+  and `choiceProblem` still `null`. A row that fails (written before a contract or a check
+  changed) reaches the app as the plain multiple choice it also is — its option texts, judged by
+  the same index; the row itself is neither repaired nor rewritten.
 - **How options look** (issue #288). Every option is a white tile with its letter as a quiet mark
   in a fixed column (no badge on the content); the texts of all options start on one line. Two by
   two only when EVERY option fits one line of half a 360 pt screen (`twoColumnChoices`: 9

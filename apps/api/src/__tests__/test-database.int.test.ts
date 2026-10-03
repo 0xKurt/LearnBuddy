@@ -95,6 +95,26 @@ describe.skipIf(!dbReady)('test databases', () => {
     }
   });
 
+  it('is UTF8 and sorts like CI and production, whatever the cluster defaults (#335)', async () => {
+    const db = await createTestDatabase();
+    try {
+      const c = new pg.Client({ connectionString: db.url });
+      await c.connect();
+      try {
+        const enc = await c.query<{ e: string }>(`select current_setting('server_encoding') as e`);
+        expect(enc.rows[0]?.e).toBe('UTF8');
+        const sorted = await c.query<{ w: string }>(
+          `select w from (values ('Straße'), ('schwimmen'), ('Biene')) v(w) order by w`,
+        );
+        expect(sorted.rows.map((r) => r.w)).toEqual(['Biene', 'schwimmen', 'Straße']);
+      } finally {
+        await c.end();
+      }
+    } finally {
+      await db.drop();
+    }
+  });
+
   it('closing an environment waits for its background work', async () => {
     const env = await createTestEnv();
     let finished = false;
