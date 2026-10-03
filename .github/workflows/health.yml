@@ -27,6 +27,9 @@ on:
     # Every 30 minutes. GitHub does not guarantee the start time (delayed under load).
     - cron: '*/30 * * * *'
   workflow_dispatch:
+  # Right after Vercel reports a production deployment as live (issue #342): new code without
+  # its migrations shows up here within minutes, not at the next half hour.
+  deployment_status:
 
 permissions:
   contents: read
@@ -40,6 +43,10 @@ jobs:
     name: /v1/health (production)
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+       startsWith(github.event.deployment.environment, 'Production'))
     env:
       HEALTH_URL: https://learn-buddy-api.vercel.app/v1/health
       # The tick runs every minute (pg_cron). The server calls itself stale only after 10
@@ -53,7 +60,7 @@ jobs:
 
           body="$RUNNER_TEMP/health.json"
 
-          # The six rules, in one place. Each emits a line when it is violated, nothing when
+          # The seven rules, in one place. Each emits a line when it is violated, nothing when
           # it holds — so "no output" means healthy.
           rules='
             [
@@ -71,6 +78,8 @@ jobs:
                          else empty end
                      end
                  end),
+              (if ((.migrations.missing // []) | length) == 0 then empty
+               else "migrations not applied: \((.migrations.missing // []) | join(", "))" end),
               (if .erasure.overdue_deletions == 0 then empty
                else "erasure.overdue_deletions = \(.erasure.overdue_deletions | tojson)" end),
               (if .erasure.overdue_photo_deletions == 0 then empty

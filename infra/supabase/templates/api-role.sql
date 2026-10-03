@@ -49,3 +49,13 @@ alter default privileges in schema public
   grant usage, select, update on sequences to :"api_role";
 alter default privileges in schema public
   grant execute on functions to :"api_role";
+
+-- Read-only view of which migrations are applied, for /v1/health (issue #342): code that went
+-- live without its migrations is named there. Only on a Supabase project; a plain Postgres has
+-- no such schema.
+select exists (select 1 from pg_namespace where nspname = 'supabase_migrations')
+  as has_migration_record \gset
+\if :has_migration_record
+grant usage on schema supabase_migrations to :"api_role";
+grant select on supabase_migrations.schema_migrations to :"api_role";
+\endif
