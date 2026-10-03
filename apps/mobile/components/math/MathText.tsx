@@ -19,6 +19,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import type { MathAtom } from '../../lib/math/parse.js';
 import { parsePrompt, promptForSpeech, type PromptRun } from '../../lib/math/prompt.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { useSpokenMath } from './useSpokenMath.js';
 
@@ -349,6 +350,7 @@ function AtomView({ atom, m, size = m.size }: { atom: MathAtom; m: Metrics; size
     case 'binom':
       return (
         <Fenced m={m} size={size}>
+          {/* token-exempt: hairline, so the stacked rows clear the bracket's curved ends */}
           <View style={{ alignItems: 'center', paddingVertical: 1 }}>
             <Row atoms={atom.top} m={m} size={Math.max(11, Math.round(size * 0.86))} />
             <Row atoms={atom.bottom} m={m} size={Math.max(11, Math.round(size * 0.86))} />
@@ -358,8 +360,10 @@ function AtomView({ atom, m, size = m.size }: { atom: MathAtom; m: Metrics; size
     case 'matrix':
       return (
         <Fenced m={m} size={size}>
+          {/* token-exempt: hairline, so the stacked rows clear the bracket's curved ends */}
           <View style={{ alignItems: 'center', paddingVertical: 1 }}>
             {atom.rows.map((row, r) => (
+              // token-exempt: column gap in em of the math size (0.6 em), not a layout space
               <View key={r} style={{ flexDirection: 'row', gap: Math.round(size * 0.6) }}>
                 {row.map((cell, c) => (
                   <View key={c} style={{ alignItems: 'center' }}>
@@ -396,6 +400,7 @@ function Limits({
     <Text
       style={[
         textStyle(m, big),
+        // token-exempt: the big operator's own line height, 1.1 em of its glyph size
         word ? null : { lineHeight: Math.round(big * 1.1), fontWeight: '400' },
       ]}
     >
@@ -404,8 +409,10 @@ function Limits({
   );
   if (atom.name === 'int') {
     return (
+      // token-exempt: optical kerning of ∫ — 2 pt after the limits, the limits 1 pt into the slant
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 2 }}>
         {op}
+        {/* token-exempt: optical, the limits sit 1 pt into the integral sign's slant */}
         <View style={{ justifyContent: 'space-between', alignSelf: 'stretch', marginLeft: -1 }}>
           {atom.upper ? <Row atoms={atom.upper} m={m} size={small} /> : <View />}
           {atom.lower ? <Row atoms={atom.lower} m={m} size={small} /> : <View />}
@@ -414,6 +421,7 @@ function Limits({
     );
   }
   return (
+    // token-exempt: optical side bearing of 2 pt, so ∑/∏ do not touch their neighbours
     <View style={{ alignItems: 'center', paddingHorizontal: 2 }}>
       {atom.upper ? <Row atoms={atom.upper} m={m} size={small} /> : null}
       {op}
@@ -443,6 +451,7 @@ function Fenced({ children, m, size }: { children: ReactNode; m: Metrics; size: 
     );
   };
   return (
+    // token-exempt: optical side bearing of 1 pt outside the drawn brackets, like a glyph's own
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 1 }}>
       {paren('left')}
       <View
@@ -450,6 +459,7 @@ function Fenced({ children, m, size }: { children: ReactNode; m: Metrics; size: 
           const next = Math.round(e.nativeEvent.layout.height);
           if (next > 0 && Math.abs(next - height) > 1) setHeight(next);
         }}
+        // token-exempt: optical, 2 pt between a drawn bracket and what it holds
         style={{ paddingHorizontal: 2 }}
       >
         {children}
@@ -469,9 +479,9 @@ function LabelledArrow({ above, m, size }: { above: MathAtom[]; m: Metrics; size
   const mid = h / 2;
   return (
     <View
-      style={{ alignItems: 'center', minWidth: Math.round(size * 2), paddingHorizontal: 4 }}
+      style={{ alignItems: 'center', minWidth: Math.round(size * 2), paddingHorizontal: SPACE.xs }}
       onLayout={(e) => {
-        const next = Math.round(e.nativeEvent.layout.width) - 8;
+        const next = Math.round(e.nativeEvent.layout.width) - 2 * SPACE.xs;
         if (next > 0 && Math.abs(next - width) > 1) setWidth(next);
       }}
     >

@@ -150,7 +150,7 @@ function unique(ids: KeyId[]): KeyId[] {
 // ─────────────── one line, never sideways ───────────────
 
 /** The smallest key (TOUCH in lib/theme/space.ts) and the gap between two keys (SPACE.sm). */
-export const KEY_MIN = 44;
+const KEY_MIN = 44;
 export const KEY_GAP = 8;
 
 /** How many key places one line of this width holds. */

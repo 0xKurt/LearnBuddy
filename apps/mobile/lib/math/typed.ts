@@ -276,6 +276,15 @@ function fractions(items: Node[]): Node[] {
 
 // ─────────────── worth drawing? ───────────────
 
+/** An operator with a term on either side of it (spaces between them don't count). */
+function betweenOperands(items: Node[], i: number): boolean {
+  let l = i - 1;
+  while (items[l]?.k === 'space') l--;
+  let r = i + 1;
+  while (items[r]?.k === 'space') r++;
+  return isOperand(items[l]) && isOperand(items[r]);
+}
+
 /** Math to set as math at all: a fraction, a root, a power or an operator between two terms. */
 function drawable(items: Node[]): boolean {
   for (let i = 0; i < items.length; i++) {
@@ -283,13 +292,7 @@ function drawable(items: Node[]): boolean {
     if (n.k === 'frac' || n.k === 'sqrt') return true;
     if (n.k === 'pow' && n.exp !== null) return true;
     if (n.k === 'group' && drawable(n.items)) return true;
-    if (n.k === 'op') {
-      let l = i - 1;
-      while (items[l]?.k === 'space') l--;
-      let r = i + 1;
-      while (items[r]?.k === 'space') r++;
-      if (isOperand(items[l]) && isOperand(items[r])) return true;
-    }
+    if (n.k === 'op' && betweenOperands(items, i)) return true;
   }
   return false;
 }
@@ -312,13 +315,7 @@ function worth(items: Node[]): boolean {
     if (n.k === 'frac' || n.k === 'sqrt') return true;
     if (n.k === 'pow' && n.exp !== null && (!n.raised || worth([n.base]))) return true;
     if (n.k === 'group' && worth(n.items)) return true;
-    if (n.k === 'op' && REDRAWN_OPS.has(n.v)) {
-      let l = i - 1;
-      while (items[l]?.k === 'space') l--;
-      let r = i + 1;
-      while (items[r]?.k === 'space') r++;
-      if (isOperand(items[l]) && isOperand(items[r])) return true;
-    }
+    if (n.k === 'op' && REDRAWN_OPS.has(n.v) && betweenOperands(items, i)) return true;
   }
   return false;
 }

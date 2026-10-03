@@ -11,6 +11,11 @@ import { ApiError } from './api/apiError.js';
 import { AuthFailure } from './auth/authFailure.js';
 import { i18n } from './i18n/index.js';
 
+/** The thing changed elsewhere: the question is already closed, the session ended or is gone. */
+export function outdated(err: unknown): boolean {
+  return err instanceof ApiError && (err.code === 'conflict' || err.code === 'not_found');
+}
+
 export function messageFor(err: unknown): string {
   if (err instanceof ApiError) {
     const reasonKey = err.reason ? `errors:reason.${err.reason}` : null;

@@ -103,7 +103,7 @@ import {
 } from '../../lib/api/endpoints.js';
 import { keys, queryClient, seedSession, usePracticeSession } from '../../lib/api/queries.js';
 import { useDraft } from '../../lib/drafts.js';
-import { messageFor } from '../../lib/errors.js';
+import { messageFor, outdated } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { announce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
@@ -198,11 +198,6 @@ function backToBuddy(): void {
 /** A 4xx won't get better by trying again. */
 function retryable(err: unknown): boolean {
   return !(err instanceof ApiError && err.status >= 400 && err.status < 500);
-}
-
-/** The session changed elsewhere: the question is already closed, the session ended or is gone. */
-function outdated(err: unknown): boolean {
-  return err instanceof ApiError && (err.code === 'conflict' || err.code === 'not_found');
 }
 
 /**

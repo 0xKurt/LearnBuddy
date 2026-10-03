@@ -30,7 +30,7 @@ import { ApiError, newId } from '../../lib/api/client.js';
 import { speakItem } from '../../lib/api/endpoints.js';
 import { useOnline } from '../../lib/api/queries.js';
 import { WaitAborted } from '../../lib/api/whenOnline.js';
-import { messageFor } from '../../lib/errors.js';
+import { messageFor, outdated } from '../../lib/errors.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
 import { formatClock, MAX_RECORDING_MS, type SpeakMime } from '../../lib/speech/voice.js';
@@ -305,10 +305,6 @@ function retryable(err: unknown): boolean {
   if (!(err instanceof ApiError)) return true;
   if (err.code === 'rate_limited') return true;
   return !(err.status >= 400 && err.status < 500);
-}
-
-function outdated(err: unknown): boolean {
-  return err instanceof ApiError && (err.code === 'conflict' || err.code === 'not_found');
 }
 
 export function SpeakPanel({
