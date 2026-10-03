@@ -13,7 +13,6 @@ import {
   type CurriculumRegion,
   type Figure,
   type ItemKind,
-  type ItemView,
   type SessionMode,
   type AnswerResponse,
   type HintRequest,
@@ -33,7 +32,7 @@ import { ageOn } from '../identity/model.js';
 import { cautiousAt, curriculumLine, pointOf } from '../curriculum/state.js';
 import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
-import { pickAnswers, surfaceOf, taskOf, untriedPicks } from './bars.js';
+import { pickAnswers, taskOf, untriedPicks } from './bars.js';
 import { listenRefs, listenTaskOf } from './listen.js';
 import {
   differentNumber,
@@ -51,7 +50,6 @@ import {
   checkStaffLine,
   staffAgain,
   staffLineReply,
-  staffSurfaceOf,
   staffTaskOf,
   writtenStaffLine,
   type StaffCheck,
@@ -63,13 +61,14 @@ import {
   structuredNamesPart,
   structuredReply,
   structuredTaskOf,
-  viewOf,
   type StructuredCheck,
 } from './structured.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems, type PracticeRun } from './selection.js';
 import { tapChoicesFor } from './tapChoices.js';
+import { readAloudAllowed } from './readAloud.js';
+import { imageOf, signImageUrls, surfaceFor, taskViewFor, type ItemImageRow } from './viewParts.js';
 import { CARD_PASS, offersCardPass } from './cards.js';
 import { MAX_ACCEPTED, storedFigure } from './items.js';
 import {
@@ -682,67 +681,6 @@ export async function loadSession(
   return s;
 }
 
-/** How long a signed concept-image URL lives; every session fetch signs afresh (issue #50). */
-const IMAGE_URL_TTL_SECONDS = 1800;
-
-type ItemImageRow = {
-  image_path: string | null;
-  image_width: number | null;
-  image_height: number | null;
-  image_label: string | null;
-};
-
-/**
- * Signed URLs for the concept images of a view, one sign per distinct crop. A Storage
- * outage never breaks loading the session: the image is simply left out (null).
- */
-async function signImageUrls(
-  storage: StorageGateway,
-  rows: ItemImageRow[],
-): Promise<Map<string, string>> {
-  const urls = new Map<string, string>();
-  for (const path of new Set(rows.map((r) => r.image_path).filter((p): p is string => !!p))) {
-    try {
-      urls.set(path, await storage.createDownloadUrl(path, IMAGE_URL_TTL_SECONDS));
-    } catch {
-      // Left out; the next fetch tries again.
-    }
-  }
-  return urls;
-}
-
-/**
- * The learning surface of a question computed from a reviewed task, or null (issue #162).
- * A column that no longer parses as a task yields no surface: the question is still
- * answerable by typing, and nothing is guessed at.
- */
-function surfaceFor(bar: unknown, staff: unknown): ItemView['surface'] {
-  const barTask = taskOf(bar);
-  if (barTask) return surfaceOf(barTask);
-  // The empty staff she writes a note line on (issue #226). The two can never both be there
-  // (migration 0078 `items_one_computed_source`), so the order here settles nothing.
-  const staffTask = staffTaskOf(staff);
-  return staffTask ? staffSurfaceOf(staffTask) : null;
-}
-
-/**
- * What a structured question shows (issues #228–#230): its task without the key, or null for
- * every other question — and for a stored task that no longer reads (nothing is guessed at: the
- * question can still be revealed or taken out, "Frage passt nicht").
- */
-function taskViewFor(row: Pick<ItemRow, 'kind' | 'task'>): ItemView['task_view'] {
-  if (!isStructuredKind(row.kind)) return null;
-  const task = structuredTaskOf(row.task, row.kind);
-  return task ? viewOf(task) : null;
-}
-
-/** The crop that goes with the question, or null (contract: ItemImage). */
-function imageOf(row: ItemImageRow, urls: Map<string, string>): ItemView['image'] {
-  const url = row.image_path ? urls.get(row.image_path) : undefined;
-  if (!url || !row.image_width || !row.image_height) return null;
-  return { url, width: row.image_width, height: row.image_height, label: row.image_label ?? '' };
-}
-
 export async function sessionView(
   db: Db,
   learnerId: string,
@@ -759,7 +697,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.task, i.listen_task, i.staff_task, i.archived_at,
+            i.bar_task, i.task, i.listen_task, i.staff_task, i.spelling, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -855,6 +793,9 @@ export async function sessionView(
         // It stays while the question is closed: hearing the text again next to the words of
         // it is exactly what a listening task is reviewed with.
         listen: hearing.has(i.id) ? { ref: hearing.get(i.id)! } : null,
+        // The "Vorlesen" button (issue #238): code decides, from what the question is, whether
+        // hearing it would hand over the solution. A card is read by its own "Anhören".
+        read_aloud: !cardPass && readAloudAllowed(i),
       },
       status: i.status,
       attempts: i.attempts,

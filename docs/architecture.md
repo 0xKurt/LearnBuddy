@@ -2745,6 +2745,24 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   on screen. Pronunciation
   recordings stay tap by tap. Buddy's chat replies stream on screen and are read once stored
   (§Speed). A realtime audio API (speech in, speech out) is not built.
+- **"Vorlesen" at every question, also without voice mode** (issue #238): a round speaker in the
+  question's progress row, right above the card (`components/practice/ReadQuestionButton.tsx`,
+  `CircleBtn`), for a screen reader "Frage vorlesen". That row is 44 pt tall anyway, so it costs
+  no height: a pill row under the card cost 54 pt on every question, and the icon inside the card
+  took width from the topic line or the prompt and added a line — both pushed a structured
+  question's parts off a 360×740 phone (rule 16). It says exactly what voice mode says (`questionReadText`: math,
+  fractions and chemical formulas in words — "H 2 O", not "H Index 2 O" —, choices as
+  "A: …, B: …") in the question's language, through the same natural voice (`POST /voice/speech`,
+  cached per learner for 24 h) at her own speed step, with the phone's own voice as fallback;
+  offline that fallback reads, and where the phone has no voice for the language she is told so
+  instead of being left in silence. A second tap, the next question (the button is keyed by the
+  question), leaving the screen and the app going to the background all stop it. **Whether a
+  question may be heard is decided by code on the server** (`ItemView.read_aloud`,
+  `apps/api/src/modules/practice/readAloud.ts`): never a task that practises spelling
+  (`spelling: 'strict'`), never a vocabulary prompt that already contains its answer — and voice
+  mode follows the same flag. Not offered where another control already reads it: voice mode's
+  "Nochmal vorlesen", the pronunciation card, a foreign vocabulary word's own "Anhören", a
+  flashcard pass.
 - **Conversation mode** (`app/talk.tsx`, headphones on the home): hands-free, in the same
   conversation as the chat. She speaks → written down → Buddy answers (a normal turn) → the answer
   is read aloud → Buddy listens again. The screen is a camera angle on that one thread, not a

@@ -58,7 +58,6 @@ import { BottomBar } from '../../components/practice/BottomBar.js';
 import { ChoiceList, SpokenChoiceBar } from '../../components/practice/ChoiceList.js';
 import {
   canDisputeVerdict,
-  DisputeVerdictButton,
   DisputeVerdictSheet,
 } from '../../components/practice/DisputeVerdict.js';
 import { FractionBarAnswer } from '../../components/practice/FractionBarAnswer.js';
@@ -66,6 +65,7 @@ import { HearText, HeardTextCard } from '../../components/practice/HearText.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
+import { QuestionCorner } from '../../components/practice/QuestionCorner.js';
 import {
   emptyStaffAnswer,
   readStaffDraft,
@@ -308,8 +308,13 @@ export default function PracticeScreen() {
   // A flashcard pass is not read aloud and never arms the mic: there is no answer to listen
   // for (issue #147). The card itself offers "Anhören" for the word, which is the control
   // that makes sense there.
+  // Nor a question the server says must not be heard (issue #238, `read_aloud`): a spelling
+  // task, a vocabulary prompt that holds its own answer. Voice mode obeys the same rule as the
+  // "Vorlesen" button — hearing it would hand over the solution either way.
   const toRead =
-    onScreen && onScreen.status === 'open' && !session?.card_pass ? onScreen.item : null;
+    onScreen && onScreen.status === 'open' && !session?.card_pass && onScreen.item.read_aloud
+      ? onScreen.item
+      : null;
   // Hands-free (lib/speech/handsFree.ts): once she started a mic here herself, reading
   // to the end lets the mic listen again, and a closed question moves on by itself.
   const readQuestion = (item: ItemView) =>
@@ -946,15 +951,32 @@ export default function PracticeScreen() {
   }
 
   // A small row of quiet tools under the question (never a second headline).
+  // A foreign vocabulary word has its own "Anhören" (its pronunciation is the point); that IS
+  // its read-aloud button, so it never gets a second one.
+  const hearWord = item.kind === 'vocab' && foreign(item.prompt_lang);
+  // "Vorlesen" at every question, also without voice mode (issue #238): the round speaker in the
+  // question's progress row, right above the card (ReadQuestionButton). That row is 44 pt tall
+  // anyway ("Frage passt nicht"), so the speaker costs no height; inside the card it narrowed the
+  // "Frage von Buddy · topic" line or the prompt by a line and pushed a structured question's
+  // parts off a 360×740 phone (rule 16). Only where the server allows it (`read_aloud`, decided by
+  // code), only while the question is open, and not where another control already reads it —
+  // voice mode's "Nochmal vorlesen", the pronunciation card's own "Anhören", the foreign word's
+  // "Anhören". What it says is what voice mode says: math, fractions and formulas in words,
+  // choices as "A: …, B: …". Keyed by the question, so a new question never inherits a reading
+  // that is still running: the old button goes away and stops it.
+  const readOut =
+    !voiceOn && open && item.read_aloud && !speaking && !hearWord
+      ? (questionParts(item, words, t)[0] ?? null)
+      : null;
   const tools = [
     // With options the voice bar carries it (SpokenChoiceBar).
-    voiceOn && open && !choices ? (
+    voiceOn && open && !choices && item.read_aloud ? (
       <Btn key="read" size="sm" variant="soft" pill icon="speak" onPress={() => readQuestion(item)}>
         {t('common:voice.read_again')}
       </Btn>
     ) : null,
-    item.kind === 'vocab' && foreign(item.prompt_lang) ? (
-      <ListenButton key="listen" text={item.prompt} lang={item.prompt_lang} />
+    hearWord && item.read_aloud && item.prompt_lang ? (
+      <ListenButton key={`listen-${item.id}`} text={item.prompt} lang={item.prompt_lang} />
     ) : null,
     // Hörverstehen (issue #210): the text is heard, not read, so the way to hear it stands in
     // the same row as every other "read this aloud" — and it stays after the question closes,
@@ -974,40 +996,6 @@ export default function PracticeScreen() {
       />
     ) : null,
   ].filter((node) => node !== null);
-
-  // A judgement she has been given and may disagree with (issue #164). The rule and the copy
-  // live in components/practice/DisputeVerdict.tsx, where a component test holds them.
-  const disputeButton = canDisputeVerdict({
-    open,
-    sessionStatus: session.status,
-    testing,
-    mode: session.mode,
-    origin: item.origin,
-  }) ? (
-    <DisputeVerdictButton
-      disabled={locked}
-      onPress={() => {
-        setDisputeFor(item.id);
-        setDisputeOpen(true);
-      }}
-    />
-  ) : null;
-
-  const flagButton = flaggable ? (
-    <Btn
-      size="sm"
-      variant="ghost"
-      pill
-      disabled={locked}
-      onPress={() => {
-        setFlagFor(item.id);
-        setFlagOpen(true);
-      }}
-      accessibilityHint={t('practice:flag.hint')}
-    >
-      {t('practice:flag.button')}
-    </Btn>
-  ) : null;
 
   // The conversation shows WHOLE turns only (issue #286). It may take its own box plus the free
   // room under the answer (`FreeSpace`) — that sum does not change while the box is sized, so the
@@ -1145,7 +1133,31 @@ export default function PracticeScreen() {
                   // The server's word, never the app's guess: while it says more questions are coming,
                   // the total is not the number it will be (issue #220).
                   preparing={session.preparing}
-                  right={flagButton ?? disputeButton}
+                  right={
+                    <QuestionCorner
+                      itemId={item.id}
+                      read={readOut}
+                      flaggable={flaggable}
+                      // A judgement she has been given and may disagree with (issue #164). The
+                      // rule and the copy live in components/practice/DisputeVerdict.tsx.
+                      canDispute={canDisputeVerdict({
+                        open,
+                        sessionStatus: session.status,
+                        testing,
+                        mode: session.mode,
+                        origin: item.origin,
+                      })}
+                      disabled={locked}
+                      onFlag={() => {
+                        setFlagFor(item.id);
+                        setFlagOpen(true);
+                      }}
+                      onDispute={() => {
+                        setDisputeFor(item.id);
+                        setDisputeOpen(true);
+                      }}
+                    />
+                  }
                 />
                 {session.mode === 'help' || testing ? (
                   <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
@@ -1442,7 +1454,7 @@ export default function PracticeScreen() {
                 prompt={item.prompt}
                 disabled={locked}
                 onText={(said) => void answer(item.id, { text: said, via: 'spoken' }, said)}
-                onReadAgain={() => readQuestion(item)}
+                {...(item.read_aloud ? { onReadAgain: () => readQuestion(item) } : {})}
               />
             ) : null}
             {open && speaking ? (

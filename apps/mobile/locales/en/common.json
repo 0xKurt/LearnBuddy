@@ -6,6 +6,7 @@
     "add": "Add",
     "mic": "Speak",
     "speak": "Read aloud",
+    "stop": "Stop",
     "pin_delete": "Delete last digit",
     "pin_progress": "{{count}} of 4 digits entered",
     "camera": "Take a photo",
