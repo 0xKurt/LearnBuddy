@@ -3706,7 +3706,12 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   database's TLS and region, that the app keys can execute nothing and every table has RLS —
   and that **every migration on disk is applied** before new code goes live. The last one was
   added after two missing migrations made a learner's voice choice fail with a bare error
-  (issues #67, #79): the schema a build expects is part of the build.
+  (issues #67, #79): the schema a build expects is part of the build. Production itself says
+  it too (issue #342): `/v1/health` lists every migration of the running build
+  (`apps/api/src/lib/migrations.ts`, kept equal to the folder by a test) that
+  `supabase_migrations.schema_migrations` lacks, and goes 503. The Health workflow probes right
+  after each production deployment, not only every half hour. Owner rule since 03.10.: a merged
+  migration is applied to production at once, then the advisors and `/v1/health`.
 - Rollback is asymmetric (issue #79): Vercel can roll a function back, the database cannot.
   Migrations are therefore **additive only** — new tables, new columns with defaults, widened
   constraints; never a drop or rename that yesterday's code would trip over. A column that must
