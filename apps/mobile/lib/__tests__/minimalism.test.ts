@@ -38,6 +38,10 @@ const ROUTES: Record<string, string> = {
   index:
     'not a screen of its own: the gate that sends her to welcome, consent, profile or Buddy, decided from the API',
 
+  // ── PROTOTYPE, only on claude/train2-libs-312, never merged (issue #312) ──
+  'proto-312':
+    'WEAK: not a learner screen — the side-by-side library comparison of #312 Phase 1, shot for the owner',
+
   // ── the chat itself ──
   buddy: 'the chat itself — the one screen everything else is measured against',
   talk: 'the same thread hands-free: the microphone may only be on while a screen she opened herself is open, and it ends with that screen',

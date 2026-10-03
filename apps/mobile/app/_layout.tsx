@@ -108,7 +108,8 @@ function ThemedStatusBar() {
 export const unstable_settings = { initialRouteName: 'index' };
 
 /** Screens that exist before sign-in; every other route needs a session. */
-const OPEN_ROUTES = new Set(['/', '/welcome', '/reset-password', '/update']);
+// PROTOTYPE (issue #312): /proto-312 is open so the library comparison can be shot signed out.
+const OPEN_ROUTES = new Set(['/', '/welcome', '/reset-password', '/update', '/proto-312']);
 
 export default function RootLayout() {
   // Subscribed, not read once: this frame sits above the provider, and the palette she
