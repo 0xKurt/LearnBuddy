@@ -210,7 +210,18 @@ describe('speakMathText', () => {
     // "4. Wurzel" is read "vier Punkt Wurzel"; the index is an ordinal (issue #175).
     expect(speakMathText('$\\sqrt[4]{16}$', DE)).toBe('vierte Wurzel aus 16');
     expect(speakMathText('$x_{1}$', DE)).toBe('x Index 1');
+    expect(speakMathText('$a_n$', DE)).toBe('a Index n');
     expect(speakMathText('$2^{5}$', DE)).toBe('2 hoch 5');
+  });
+  it('reads a chemical formula as a chemistry teacher says it (issue #238)', () => {
+    // A number under an element symbol is the count of atoms, not an index.
+    expect(speakMathText('$H_2O$', DE)).toBe('H 2 O');
+    expect(speakMathText('$CO_{2}$', DE)).toBe('CO 2');
+    expect(speakMathText('$Fe_2O_3$', DE)).toBe('Fe 2 O 3');
+    expect(speakMathText('$Ca(OH)_2$', DE)).toBe('Ca Klammer auf OH Klammer zu 2');
+    expect(speakMathText('$2H_2 + O_2 \\rightarrow 2H_2O$', DE)).toBe(
+      '2H 2 plus O 2 geht nach 2H 2 O',
+    );
   });
   it('reads a longer fraction with the long form', () => {
     expect(speakMathText('$\\frac{x+1}{2}$', DE)).toBe('Bruch: x plus 1, geteilt durch 2');

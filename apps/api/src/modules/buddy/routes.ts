@@ -620,13 +620,16 @@ buddyRoutes.patch('/settings', async (c) => {
       throw new AppError('invalid_input', 'The preferred window must start before it ends');
     }
     const by = loosens(before, after, now) ? assertAccountHolder(c) : actorOf(c);
+    // Every setting here is part of Buddy's context (rule 4); the row is locked above, and
+    // `returning *` below carries the new context version.
+    await bumpContext(tx, learnerId);
     const row = await tx.one<SettingsRow>(
       `update buddy_settings
           set contact_enabled = $2, quiet_start = $3, quiet_end = $4, preferred_start = $5, preferred_end = $6,
               avoid_weekdays = $7, paused_until = $8, phone_only_important = $11, voice = $12,
               contact_changed_by = case when contact_enabled <> $2 then $9::text else contact_changed_by end,
               contact_changed_at = case when contact_enabled <> $2 then $10::timestamptz else contact_changed_at end,
-              version = version + 1, context_version = context_version + 1
+              version = version + 1
         where learner_id = $1 returning *`,
       [
         learnerId,

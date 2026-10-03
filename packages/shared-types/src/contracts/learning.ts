@@ -388,6 +388,14 @@ export const ItemView = z.object({
    * (`SessionItemView.listen_transcript`). Questions about one text share the `ref`.
    */
   listen: ListenRef.nullable().default(null),
+  /**
+   * Whether the question may be read aloud by its "Vorlesen" button, also outside voice mode
+   * (issue #238). Code decides it (`apps/api/src/modules/practice/readAloud.ts`): not for a task
+   * that practises spelling, not for vocabulary whose prompt already holds the answer — hearing
+   * it would hand the solution over. False where the server does not say: a question is never
+   * read aloud by default.
+   */
+  read_aloud: z.boolean().default(false),
 });
 export type ItemView = z.infer<typeof ItemView>;
 

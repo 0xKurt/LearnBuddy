@@ -20,3 +20,20 @@ export class ApiError extends Error {
     return typeof r === 'string' ? r : null;
   }
 }
+
+/**
+ * Whether the same request is worth sending again (issue #315): one rule for every screen.
+ * A failure without an answer (no connection, a cut stream) and a 5xx may pass; a "slow down"
+ * (`rate_limited`, 429) passes by waiting. Any other 4xx will not get better by repeating it —
+ * that includes the day's model budget (`budget_exhausted`, also 429).
+ */
+export function isRetryable(err: unknown): boolean {
+  if (!(err instanceof ApiError)) return true;
+  if (err.code === 'rate_limited') return true;
+  return !(err.status >= 400 && err.status < 500);
+}
+
+/** The session changed elsewhere: the question is already closed, the session ended or is gone. */
+export function isOutdated(err: unknown): boolean {
+  return err instanceof ApiError && (err.code === 'conflict' || err.code === 'not_found');
+}

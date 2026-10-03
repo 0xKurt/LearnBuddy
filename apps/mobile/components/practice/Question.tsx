@@ -49,6 +49,9 @@ type ProgressProps = {
   preparing?: boolean;
 };
 
+/** The narrowest progress bar still worth drawing. */
+const MIN_BAR = 40;
+
 export function ProgressRow({ position, total, closed, right, label, preparing }: ProgressProps) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
@@ -62,6 +65,11 @@ export function ProgressRow({ position, total, closed, right, label, preparing }
       : withTiming(share, { duration: DURATION.gentle * 2, easing: EASE.standard });
   }, [share, reduced, width]);
   const fill = useAnimatedStyle(() => ({ width: `${width.value * 100}%` }));
+  // What the row leaves the bar. Squeezed by the controls on the right (a 360 pt phone with
+  // "Vorlesen" and "Frage passt nicht", issue #238) it shrank to a dot that read as a glitch;
+  // below MIN_BAR it is not drawn at all — the text says where she is anyway.
+  const [room, setRoom] = useState<number | null>(null);
+  const drawn = room === null || room >= MIN_BAR;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Text style={[TYPE.label, { color: palette.ink2, fontSize: 14 }]}>
@@ -78,17 +86,20 @@ export function ProgressRow({ position, total, closed, right, label, preparing }
         <View
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
+          onLayout={(e) => setRoom(Math.round(e.nativeEvent.layout.width))}
           style={{
             flex: 1,
             height: 8,
             borderRadius: 4,
-            backgroundColor: palette.lavender,
+            backgroundColor: drawn ? palette.lavender : 'transparent',
             overflow: 'hidden',
           }}
         >
-          <Animated.View
-            style={[{ height: '100%', borderRadius: 4, backgroundColor: palette.primary }, fill]}
-          />
+          {drawn ? (
+            <Animated.View
+              style={[{ height: '100%', borderRadius: 4, backgroundColor: palette.primary }, fill]}
+            />
+          ) : null}
         </View>
       )}
       {right}

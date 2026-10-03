@@ -243,6 +243,11 @@ function followsWholeNumber(atoms: MathAtom[], i: number): boolean {
   return prev?.type === 'chars' && /(^|[^\d.,])\d+$/.test(prev.text);
 }
 
+/** What stands right before a subscript reads as a chemical element or a closed group. */
+function formulaBase(prev: MathAtom | undefined): boolean {
+  return prev?.type === 'chars' && /(?:[A-Z][a-z]?|\))$/.test(prev.text);
+}
+
 function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
   return squash(
     atoms
@@ -287,8 +292,15 @@ function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
             if (exp === '3') return ` ${words.cubed} `;
             return ` ${fill(words.power, { exp })} `;
           }
-          case 'sub':
-            return ` ${fill(words.sub, { sub: speakAtoms(a.body, words) })} `;
+          case 'sub': {
+            const sub = speakAtoms(a.body, words);
+            // A chemical formula is said the way a chemistry teacher says it: "H zwei O",
+            // "C O zwei" — never "H Index 2 O" (issue #238). It is a formula when a number
+            // stands under an element symbol (a capital, maybe one small letter) or under a
+            // closing bracket ("Ca(OH)₂"). x₁, aₙ keep their "Index".
+            if (/^\d+$/.test(sub) && formulaBase(atoms[i - 1])) return ` ${sub} `;
+            return ` ${fill(words.sub, { sub })} `;
+          }
           case 'sqrt': {
             const body = speakAtoms(a.body, words);
             if (!a.index) return ` ${fill(words.sqrt, { body })} `;

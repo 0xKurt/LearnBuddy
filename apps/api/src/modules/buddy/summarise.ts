@@ -17,6 +17,7 @@ import { z } from 'zod';
 import type { Deps } from '../../deps.js';
 import type { Db } from '../../lib/db.js';
 import { localParts } from '../../lib/time.js';
+import { DEFAULT_TIMEZONE, learnerTimezone, learnerZoneSql } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { enqueueJob, finishJob, type JobRow } from '../scheduler/jobs.js';
@@ -215,10 +216,9 @@ export async function runSummary(deps: Deps, job: JobRow): Promise<void> {
   // issue #154). Now it is cut at a message boundary and the pointer says where.
   let coveredIndex = due.rows.length - 1;
   const learner = await deps.db.maybeOne<{ locale: string; timezone: string }>(
-    `select l.locale,
-            coalesce((select timezone from buddy_settings where learner_id = l.id), 'Europe/Berlin') as timezone
+    `select l.locale, ${learnerZoneSql('l.id', 2)} as timezone
        from learners l where l.id = $1`,
-    [learnerId],
+    [learnerId, DEFAULT_TIMEZONE],
   );
   if (!learner) {
     await finishJob(deps.db, job, now, { status: 'done', result: { outcome: 'no_learner' } });
@@ -308,14 +308,11 @@ export async function skipSession(deps: Deps, job: JobRow): Promise<void> {
     [until, learnerId],
   );
   if (!row) return;
-  const tz = await deps.db.one<{ timezone: string }>(
-    `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
-    [learnerId],
-  );
+  const tz = await learnerTimezone(deps.db, learnerId);
   await deps.db.query(
     `insert into buddy_session_summaries (learner_id, day, started_at, ended_at, summary, topics, until_message_id)
      values ($1, $2, $3, $3, '—', '[]'::jsonb, $4)
      on conflict do nothing`,
-    [learnerId, localParts(row.created_at, tz.timezone).date, row.created_at, until],
+    [learnerId, localParts(row.created_at, tz).date, row.created_at, until],
   );
 }

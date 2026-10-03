@@ -17,7 +17,7 @@ import { z } from 'zod';
 import type { Deps } from '../../deps.js';
 import { isUniqueViolation } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
-import { localParts } from '../../lib/time.js';
+import { learnerDay } from '../../lib/zone.js';
 import { t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import type { AudioMime } from '../../llm/gateway.js';
@@ -165,14 +165,11 @@ export async function speakItem(
     throw new AppError('conflict', 'This question is not spoken', { reason: 'not_speak' });
   if (item.status !== 'open') throw new AppError('conflict', 'This question is already closed');
 
-  const tz = await deps.db.one<{ timezone: string }>(
-    `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
-    [learner.id],
-  );
+  const day = await learnerDay(deps.db, learner.id, now);
   let judged: z.infer<typeof Judgement>;
   let lastProgress = '';
   try {
-    const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
+    const res = await callModel(deps, learner.id, day, {
       purpose: 'pronounce',
       tier: 'smart',
       promptVersion: PRONOUNCE_PROMPT_VERSION,
@@ -380,12 +377,9 @@ export async function speakWord(
       reason: 'word_not_in_sentence',
     });
 
-  const tz = await deps.db.one<{ timezone: string }>(
-    `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
-    [learner.id],
-  );
+  const day = await learnerDay(deps.db, learner.id, now);
   try {
-    const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
+    const res = await callModel(deps, learner.id, day, {
       purpose: 'pronounce',
       tier: 'smart',
       promptVersion: `${PRONOUNCE_PROMPT_VERSION}-word`,

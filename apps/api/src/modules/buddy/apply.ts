@@ -16,6 +16,7 @@ import { canonicalTopicKey, type Aliases } from './context.js';
 import type { AnyAction, Outreach } from './decision.js';
 import type { LookBackFact } from './lookback.js';
 import { planOutreach, type OutreachPlan } from './delivery.js';
+import { bumpContext } from './plan.js';
 import { LIMITS, loadSettings, TURN_STALL_MS, type SettingsRow } from './state.js';
 import { runAct } from './registry.js';
 import { ToolRejection, type ToolOutcome } from './tools.js';
@@ -298,10 +299,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
         input.lookBack ||
         (outreach && outreach.status !== 'suppressed')
       ) {
-        await tx.query(
-          `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
-          [input.learnerId],
-        );
+        await bumpContext(tx, input.learnerId);
       }
       return {
         status: 'applied' as const,

@@ -225,7 +225,7 @@ export function listenRefs(
   for (const row of rows) {
     const task = listenTaskOf(row.listen_task);
     if (!task) continue;
-    const key = `${task.lang} ${task.text}`;
+    const key = `${task.lang}\u0000${task.text}`;
     const ref = byText.get(key) ?? `h${byText.size + 1}`;
     byText.set(key, ref);
     refs.set(row.id, ref);

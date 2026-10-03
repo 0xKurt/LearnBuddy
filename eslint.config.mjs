@@ -2,7 +2,6 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
-
 import lb from './tools/guards/eslint-plugin.mjs';
 import { MAX_LINES, pressableRestriction } from './tools/guards/measure.mjs';
 import maxLinesBaseline from './tools/guards/baselines/max-lines.json' with { type: 'json' };
@@ -74,7 +73,11 @@ export default tseslint.config(
     // key read here once nearly shipped. Configuration flows through lib/env.ts
     // only (the one file allowed to read process.env, plus the build-time config).
     files: ['apps/mobile/**/*.ts', 'apps/mobile/**/*.tsx'],
-    ignores: ['apps/mobile/lib/env.ts', 'apps/mobile/app.config.ts'],
+    ignores: [
+      'apps/mobile/lib/env.ts',
+      'apps/mobile/lib/processEnv.ts',
+      'apps/mobile/app.config.ts',
+    ],
     rules: {
       'no-restricted-properties': [
         'error',
@@ -116,35 +119,53 @@ export default tseslint.config(
     },
   },
   {
-    // A screen lays itself out on the height she can SEE, never on the window's (issue #289).
-    // Since edge-to-edge Android keeps the window's height while the keyboard is up, so a
-    // layout decided on `useWindowDimensions().height` stayed roomy behind it: one field above
-    // the pinned CTA, the others and their errors under it. `useVisibleHeight()`
-    // (lib/useVisibleHeight.ts) subtracts the keyboard; `formDensity()` (lib/keyboard.ts)
-    // turns it into roomy/compact. Widths are free — the keyboard never takes any.
+    // Forbidden code shapes, each its own rule (tools/guards/syntax-rules.mjs): as entries of
+    // `no-restricted-syntax` a later block replaced an earlier one's list and a guard went silent.
+    files: ['apps/**/*.{ts,tsx}', 'packages/**/*.ts'],
+    plugins: { lb },
+    rules: { 'lb/no-context-bump': 'error', 'lb/no-default-zone': 'error' },
+  },
+  {
+    // The one door itself (issue #315).
+    files: ['apps/api/src/modules/buddy/plan.ts'],
+    rules: { 'lb/no-context-bump': 'off' },
+  },
+  {
+    // Tests and fixtures pick their zones on purpose; the context fence still holds there.
     files: [
-      'apps/mobile/app/**/*.ts',
-      'apps/mobile/app/**/*.tsx',
-      'apps/mobile/components/**/*.ts',
-      'apps/mobile/components/**/*.tsx',
+      '**/__tests__/**',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      'apps/api/src/testing/**',
+      'apps/api/evals/**',
+      'apps/mobile/testing/**',
+      'packages/shared-types/src/contracts/common.ts',
     ],
-    rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector:
-            "MemberExpression[object.callee.name='useWindowDimensions'][property.name='height']",
-          message:
-            'Die Fensterhöhe ignoriert die Tastatur (edge-to-edge) — useVisibleHeight() aus lib/useVisibleHeight.ts nehmen (Issue #289).',
-        },
-        {
-          selector:
-            "VariableDeclarator[init.callee.name='useWindowDimensions'] > ObjectPattern > Property[key.name='height']",
-          message:
-            'Die Fensterhöhe ignoriert die Tastatur (edge-to-edge) — useVisibleHeight() aus lib/useVisibleHeight.ts nehmen (Issue #289).',
-        },
-      ],
+    rules: { 'lb/no-default-zone': 'off' },
+  },
+  {
+    files: ['apps/mobile/**/*.{ts,tsx}'],
+    rules: { 'lb/no-public-secret': 'error' },
+  },
+  {
+    files: ['apps/mobile/app/**/*.{ts,tsx}', 'apps/mobile/components/**/*.{ts,tsx}'],
+    rules: { 'lb/no-window-height': 'error' },
+  },
+  {
+    // CommonJS tooling loaded by Metro with `require` (apps/mobile/scripts/client-secrets.cjs).
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        require: 'readonly',
+        module: 'writable',
+        process: 'readonly',
+        console: 'readonly',
+        URL: 'readonly',
+        Buffer: 'readonly',
+      },
     },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
     // Rule 5: spacing, type size, line height and radius only from lib/theme.

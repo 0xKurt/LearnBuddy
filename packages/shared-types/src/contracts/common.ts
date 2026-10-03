@@ -4,6 +4,13 @@ export const Uuid = z.string().uuid();
 export const IsoDateTime = z.string().datetime({ offset: true });
 /** Learner-local calendar date. */
 export const LocalDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD');
+/**
+ * The zone used when nothing better is known: no `x-timezone` header on a learner's first
+ * request, a device that cannot say, a learner without a settings row (issue #315). The one
+ * place that names it — the column default in infra/supabase/migrations/0001_baseline.sql is
+ * the same value and stays (migrations are immutable). Lint forbids the literal elsewhere.
+ */
+export const DEFAULT_TIMEZONE = 'Europe/Berlin';
 /** Learner-local wall time. */
 export const LocalTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'HH:MM');
 

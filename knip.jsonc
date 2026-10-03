@@ -26,6 +26,9 @@
         "scripts/*.mjs",
         "plugins/*.js",
         "global.css",
+        // metro.config.js resolves Expo's dev-only `expo/virtual/env` to this file (issue #291);
+        // no import path names it, and knip does not load metro.config.js (below).
+        "lib/processEnv.ts",
       ],
       "project": ["**/*.{ts,tsx}"],
       // metro.config.js needs NativeWind's tailwind config resolved from apps/mobile, which
