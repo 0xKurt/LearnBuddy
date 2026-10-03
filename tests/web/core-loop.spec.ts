@@ -301,7 +301,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: /^Eingetragen: Mathearbeit Brüche/ }).click();
   await expect(page.getByText('Was du zurücknehmen kannst')).toBeVisible();
   await expect(
-    page.getByRole('button', { name: /^Rückgängig machen: Vorbereitet: Mathearbeit Brüche/ }),
+    page.getByRole('button', { name: /^Rückgängig: Vorbereitet: Mathearbeit Brüche/ }),
   ).toBeVisible();
   await shot(page, '09b-what-can-be-taken-back');
   await page.getByRole('button', { name: 'Schließen' }).click();
@@ -442,11 +442,11 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   await openMenu('Einstellungen');
-  await expect(page.getByText('Darf Buddy dir Benachrichtigungen schicken?')).toBeVisible();
+  await expect(page.getByText('Benachrichtigungen', { exact: true })).toBeVisible();
   await expect(page.getByText('Für Eltern')).toBeVisible();
   await shot(page, '15-settings');
   // Every group is closed with what is set now; one tap opens it.
-  await page.getByRole('button', { name: 'Darf Buddy dir Benachrichtigungen schicken?' }).click();
+  await page.getByRole('button', { name: 'Benachrichtigungen', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Nicht mehr erlauben' })).toBeVisible();
   // Where the note about phone messages lives, calmly (instead of a toast on the home).
   await expect(page.getByText(/Alles kommt hier in der App\./)).toBeVisible();

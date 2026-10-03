@@ -13,7 +13,7 @@
 export type TypedMath = {
   /** The text with its math as $…$; plain parts escaped so they never turn into math. */
   text: string;
-  /** True when there is math worth drawing: a fraction, a power, a root or an operator between two terms. */
+  /** True when the preview shows something the field does not: a fraction, a root, a ^ power, a redrawn operator. */
   worth: boolean;
 };
 
@@ -127,7 +127,8 @@ type Node =
   | { k: 'atom'; latex: string }
   | { k: 'group'; items: Node[]; closed: boolean }
   | { k: 'sqrt'; body: Node | null }
-  | { k: 'pow'; base: Node; exp: Node | null; sign: string }
+  /** `raised`: typed as raised digits (x², 10¹²) — the field already shows it set. */
+  | { k: 'pow'; base: Node; exp: Node | null; sign: string; raised?: true }
   | { k: 'frac'; num: Node; den: Node }
   | { k: 'op'; v: string }
   | { k: 'space' }
@@ -197,7 +198,7 @@ class Parser {
       const tok = this.toks[this.pos];
       if (tok?.t === 'pow') {
         this.pos++;
-        base = { k: 'pow', base, exp: { k: 'atom', latex: tok.v }, sign: '' };
+        base = { k: 'pow', base, exp: { k: 'atom', latex: tok.v }, sign: '', raised: true };
         continue;
       }
       if (tok?.t === 'caret') {
@@ -275,13 +276,43 @@ function fractions(items: Node[]): Node[] {
 
 // ─────────────── worth drawing? ───────────────
 
-function worth(items: Node[]): boolean {
+/** Math to set as math at all: a fraction, a root, a power or an operator between two terms. */
+function drawable(items: Node[]): boolean {
   for (let i = 0; i < items.length; i++) {
     const n = items[i] as Node;
     if (n.k === 'frac' || n.k === 'sqrt') return true;
     if (n.k === 'pow' && n.exp !== null) return true;
-    if (n.k === 'group' && worth(n.items)) return true;
+    if (n.k === 'group' && drawable(n.items)) return true;
     if (n.k === 'op') {
+      let l = i - 1;
+      while (items[l]?.k === 'space') l--;
+      let r = i + 1;
+      while (items[r]?.k === 'space') r++;
+      if (isOperand(items[l]) && isOperand(items[r])) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Operators the preview draws differently from how they are typed ("2*3" → 2·3, "<=" → ≤).
+ * Every other operator stands in the field exactly as the preview would draw it.
+ */
+const REDRAWN_OPS = new Set(['*', '<=', '>=', '!=']);
+
+/**
+ * Worth a second line only where the line shows something the field does not: a fraction set
+ * as one, a root, a power typed with "^", an operator drawn differently. "x² ≤ 3" typed with
+ * the keys already stands in the field as it will be read — the same text twice under each
+ * other is noise, not help (issue #239, owner review of the composites).
+ */
+function worth(items: Node[]): boolean {
+  for (let i = 0; i < items.length; i++) {
+    const n = items[i] as Node;
+    if (n.k === 'frac' || n.k === 'sqrt') return true;
+    if (n.k === 'pow' && n.exp !== null && (!n.raised || worth([n.base]))) return true;
+    if (n.k === 'group' && worth(n.items)) return true;
+    if (n.k === 'op' && REDRAWN_OPS.has(n.v)) {
       let l = i - 1;
       while (items[l]?.k === 'space') l--;
       let r = i + 1;
@@ -414,8 +445,8 @@ export function typedMath(input: string): TypedMath {
     while (end > i && toks[end - 1]?.t === 'space') end--;
     const run = toks.slice(i, end);
     const { items } = new Parser(run).seq(false);
-    if (worth(items)) {
-      any = true;
+    if (drawable(items)) {
+      if (worth(items)) any = true;
       text += `$${seqLatex(items)}$`;
     } else text += escapePlain(run.map(tokText).join(''));
     i = end;

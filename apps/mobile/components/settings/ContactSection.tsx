@@ -1,4 +1,4 @@
-// "Darf Buddy dir Benachrichtigungen schicken?" — contact outside the app
+// "Benachrichtigungen" — contact outside the app
 // (docs/architecture.md §Delivery, docs/privacy.md §Contact outside the app).
 //
 // Every change is PATCH /buddy/settings with only the changed fields and the

@@ -21,6 +21,8 @@
 // point, a list) are compared one by one (issue #263, `systems.ts`), a nuclear equation is
 // counted (`nuclear.ts`).
 
+import { isStructuredKind, type ItemKind } from '@learnbuddy/shared-types/contracts';
+
 import {
   checkEquation,
   type EquationFault,
@@ -49,18 +51,8 @@ import {
 export { plainMath };
 
 export type ItemForCheck = {
-  kind:
-    | 'short'
-    | 'long'
-    | 'numeric'
-    | 'multiple_choice'
-    | 'formula'
-    | 'vocab'
-    | 'speak'
-    // Answers with several parts; `ruleCheck` refuses them and `parts.ts` decides them.
-    | 'order'
-    | 'match'
-    | 'table_fill';
+  /** Structured kinds (#228–#230) never reach `ruleCheck`: their parts are checked in structured.ts. */
+  kind: ItemKind;
   answer: string;
   accepted_answers: string[];
   unit: string | null;
@@ -152,8 +144,8 @@ export type RuleVerdict =
    */
   | 'not_transformed'
   /**
-   * An answer with several parts where some hold and some do not (issues #228–#230). It never
-   * comes out of a per-key comparison — `parts.ts` compares every part and sets it — so it is
+   * A note line she wrote where some of it holds and some does not (issue #226). It never comes
+   * out of a per-key comparison — `staff.ts` compares note by note and sets it — so it is
    * deliberately absent from `STRENGTH` below, which only aggregates per-key verdicts.
    */
   | 'parts_left'
@@ -180,9 +172,9 @@ export const NEAR_MISS = new Set<RuleVerdict>([
   // The value is the key's because nothing was done to the task's term: not wrong, and not the
   // answer either (issue #235). She is told what code saw and transforms it herself.
   'not_transformed',
-  // Six of eight cells, three of five steps: the same argument one form further (issues
-  // #228–#230). Partly right, so the question stays open and she fixes the parts that do not
-  // hold — it is not a score, and it is not a grade (see `parts.ts`).
+  // Three of four notes in a line she wrote: the same argument one form further (issue #226).
+  // Partly right, so the question stays open and she fixes what does not hold — it is not a
+  // score, and it is not a grade (see `staff.ts`).
   'parts_left',
 ]);
 
@@ -508,54 +500,6 @@ export function equationDetail(
 }
 
 /**
- * One PART of a multi-part answer — a gap in a table — checked with exactly the rules a single
- * short field gets (issue #230): a number through `numericVerdict`, a word through
- * `writtenAgainst` including its named near misses. Nothing new is invented here; the point is
- * that a cell is not a smaller kind of question with weaker rules, it is the same rules on a
- * smaller answer.
- *
- * Two decisions a cell has to settle that a single field hands on, because a multi-part answer
- * has no tutor to hand anything to — the whole answer is decided by code (`parts.ts`):
- *
- *   · `folded` — the same except case, ß or punctuation, where spelling is NOT the point. For a
- *     single field the tutor judges that gently; here it is settled as right, because that IS
- *     the gentle judgement and a gap holds one form of a word, not a sentence to mark.
- *   · `other_form` — the right value written another way (0,5 for $\frac{1}{2}$). A number gap
- *     is read as asking for the VALUE: what the column is about stands in its heading, and a
- *     table of values — the commonest table in maths — asks what comes out, not how to write
- *     it. So any form of the right value counts, which is `form_free` (issue #162) for the one
- *     place where decision D-3 would otherwise reject the right number with no way to say why.
- */
-export function partVerdict(
-  base: Pick<ItemForCheck, 'subject_kind'>,
-  expect: 'number' | 'word',
-  key: string,
-  accepted: readonly string[],
-  text: string,
-): RuleVerdict {
-  const item: ItemForCheck = {
-    kind: expect === 'number' ? 'numeric' : 'short',
-    answer: key,
-    accepted_answers: [...accepted],
-    unit: null,
-    choices: null,
-    correct_choice: null,
-    tolerance: null,
-    // Whether capitals are the point is the subject's call, exactly as for a short answer.
-    spelling: null,
-    subject_kind: base.subject_kind,
-    form_free: expect === 'number',
-  };
-  if (expect === 'number') {
-    const v = numericVerdict(item, text);
-    return v === 'other_form' ? 'correct' : v;
-  }
-  const verdicts = [key, ...accepted].map((k) => writtenAgainst(item, k, text));
-  const best = STRENGTH.find((v) => verdicts.includes(v)) ?? 'unknown';
-  return best === 'folded' ? 'correct' : best;
-}
-
-/**
  * One key against the answer, by VALUE where comparing the characters said nothing: algebra
  * (issue #227, finding 5), a date, a clock time, a year inside a sentence (finding 8), several
  * values (issue #263). 'same_form' means the value is the key's and the form is the key's up to
@@ -652,14 +596,12 @@ export function ruleCheck(
   item: ItemForCheck,
   answer: { text: string | null; choice: number | null },
 ): RuleVerdict {
-  // An answer with several parts is never one value against one key: `parts.ts` compares every
-  // part and this function has nothing to say about it. Saying so here rather than letting it
-  // fall through to `writtenAgainst` keeps a rendered multi-part answer from being compared,
-  // as a string, with the rendered solution — which would occasionally say "correct" for the
-  // wrong reason.
-  if (item.kind === 'order' || item.kind === 'match' || item.kind === 'table_fill') {
-    return 'unknown';
-  }
+  // A structured answer (issues #228–#230) is never one value against one key: `structured.ts`
+  // compares every part and this function has nothing to say about it. Saying so here rather
+  // than letting it fall through to `writtenAgainst` keeps her arrangement in words from being
+  // compared, as a string, with the solution in words — which would occasionally say "correct"
+  // for the wrong reason.
+  if (isStructuredKind(item.kind)) return 'unknown';
   if (item.kind === 'multiple_choice') {
     if (answer.choice !== null && item.correct_choice !== null) {
       return answer.choice === item.correct_choice ? 'correct' : 'incorrect';

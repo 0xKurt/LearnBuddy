@@ -263,26 +263,53 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.waitForTimeout(500);
   await page.getByRole('button', { name: 'Einen Tipp bekommen' }).click();
   await expect(page.getByText('Schau auf die Kreise: Welcher ist mehr gefüllt?')).toBeVisible();
+  // Whole turns only (#286): on the smallest phone, with the drawing in the card, "Tipp, bitte"
+  // and the hint are each shown whole or not at all — never half a bubble under the card.
+  for (const phone of PHONES) {
+    await page.setViewportSize(phone);
+    await settle(page);
+    const cut = await page
+      .getByTestId('scroll-thread')
+      .last()
+      .evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return Array.from(el.querySelectorAll('[data-testid="thread-turn"]'))
+          .map((turn) => turn.getBoundingClientRect())
+          .filter((r) => r.bottom > box.top + 1 && r.top < box.bottom - 1)
+          .filter((r) => r.top < box.top - 1 || r.bottom > box.bottom + 1)
+          .map((r) => `${Math.round(r.top - box.top)}..${Math.round(r.bottom - box.top)}`);
+      });
+    expect(cut, `turns cut at the conversation's edge on ${phone.width} px`).toEqual([]);
+  }
+  await page.setViewportSize(PHONES[0]!);
   // What scrolls up out of the conversation fades away instead of being cut hard under the
   // question card, where half a line stood readable and looked like a rendering fault
-  // (owner 28.09., issue #63). On the web the scroll view itself is masked (EdgeFade.tsx);
-  // on phones the same edge is covered by <TopEdgeFade>, which a screenshot has to show.
+  // (owner 28.09., issue #63). Since #286 the conversation shows whole turns, so the fade is
+  // there exactly when the box holds more than it shows; a conversation that fits whole has
+  // no edge to fade. On the web the scroll view itself is masked (EdgeFade.tsx); on phones
+  // the same edge is covered by <TopEdgeFade>, which a screenshot has to show.
   // .last(): the home under this screen keeps its own thread mounted (expo-router).
-  const faded = await page
+  const edge = await page
     .getByTestId('scroll-thread')
     .last()
     .evaluate((el) => {
       let node: Element | null = el;
+      let masked = false;
       while (node) {
         const s = getComputedStyle(node);
         const mask = `${s.getPropertyValue('mask-image')} ${s.getPropertyValue('-webkit-mask-image')}`;
-        if (mask.includes('gradient')) return true;
+        if (mask.includes('gradient')) masked = true;
         node = node.parentElement;
       }
-      return false;
+      return { masked, holdsMore: el.scrollHeight > el.clientHeight + 1 };
     });
-  expect(faded, 'the conversation fades out at its top edge').toBe(true);
+  expect(edge.masked, 'the conversation fades out at its top edge exactly when it holds more').toBe(
+    edge.holdsMore,
+  );
   await shot(page, '25-practice-fractions');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '25b-practice-fractions-night');
+  await page.emulateMedia({ colorScheme: 'light' });
   // The drawing takes the measured room of the grown question card (issue #96) — more
   // than the old fixed 14 % of the window (118 pt inside a ~144 pt frame) ever allowed.
   const fig = await partHeight(page, 'question-figure', '25-practice-fractions');
@@ -302,6 +329,10 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(1);
   await expect(explained).toBeHidden({ timeout: 8000 });
   await shot(page, '27-practice-voice-mode');
+  // The same moment at night: the voice bar, the reply and the drawing share the room (#286).
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '27b-practice-voice-mode-night');
+  await page.emulateMedia({ colorScheme: 'light' });
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   // Still in voice mode at Buddy: the bar is voice-first (keyboard · big mic · photo).
@@ -376,114 +407,6 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   // That was the last question: the server finished the session, so "Weiter" leads to the
   // summary rather than to another bar.
-  await page.getByRole('button', { name: 'Weiter' }).click();
-  await expect(page.getByText('Geschafft!')).toBeVisible();
-  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
-  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
-
-  // ── Antworten mit mehreren Teilen: ordnen, zuordnen, Tabelle füllen (#228, #229, #230) ──
-  // The scripted model wrote only the four tasks — the elements in their right order, the pairs,
-  // the groups, the table with its gaps. Every board below is the server's (shuffled from the
-  // item id, never into its own order), every verdict is code's, and no model is asked at all.
-  const boards = 'mit einer Tabelle am Ende';
-  await page.getByLabel('Schreib Buddy …').fill('Lass uns ordnen und zuordnen üben');
-  await page.getByRole('button', { name: 'Senden' }).click();
-  await expect(page.getByText(boards, { exact: false })).toBeVisible();
-  await offerStart(page, boards).click();
-
-  // Reihenfolge: five steps. Their state stands in words on every element, so a screen reader
-  // can order them too — that is why this is tapping and not drag and drop.
-  await expect(page.getByText('Tippe die Elemente in der richtigen Reihenfolge an.')).toBeVisible();
-  await expect(page.getByText('0 von 5 gesetzt')).toBeVisible();
-  // Nothing to check until the board is complete: a half-arranged board is not a wrong answer,
-  // it is an answer that was not given.
-  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
-  // Undo over confirmation, before anything is judged: a tap on a numbered element takes it back.
-  await page.getByRole('button', { name: 'Wurzel wächst, Element' }).click();
-  await expect(page.getByText('1 von 5 gesetzt')).toBeVisible();
-  await page.getByRole('button', { name: 'Wurzel wächst, als 1 gesetzt' }).click();
-  await expect(page.getByText('0 von 5 gesetzt')).toBeVisible();
-  for (const step of [
-    'Samen quillt auf',
-    'Wurzel wächst',
-    'Keimblätter öffnen sich',
-    'Erstes Blatt wächst',
-    'Pflanze blüht',
-  ]) {
-    await page.getByRole('button', { name: `${step}, Element` }).click();
-  }
-  await expect(page.getByText('5 von 5 gesetzt')).toBeVisible();
-  await shot(page, '37-order-board');
-  await page.getByRole('button', { name: 'Prüfen' }).click();
-  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
-  await page.getByRole('button', { name: 'Weiter' }).click();
-
-  // Zuordnen: five pairs — the number issue #229 names for a 360×740 phone. Left, then right;
-  // the pair gets a number that stands on both sides as text.
-  await expect(page.getByText('Tippe links etwas an, dann rechts, was dazu gehört.')).toBeVisible();
-  await expect(page.getByText('0 von 5 Paaren gebildet')).toBeVisible();
-  const pairs: [string, string][] = [
-    ['Lunge', 'Gasaustausch'],
-    ['Herz', 'Blut pumpen'],
-    ['Niere', 'Blut filtern'],
-    ['Magen', 'Nahrung zersetzen'],
-    ['Leber', 'Gift abbauen'],
-  ];
-  for (const [left, right] of pairs) {
-    await page.getByRole('button', { name: `${left}, noch ohne Paar` }).click();
-    await page.getByRole('button', { name: `${right}, noch ohne Paar` }).click();
-  }
-  await expect(page.getByText('5 von 5 Paaren gebildet')).toBeVisible();
-  await shot(page, '38-match-pairs-board');
-  await page.getByRole('button', { name: 'Prüfen' }).click();
-  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
-  await page.getByRole('button', { name: 'Weiter' }).click();
-
-  // Gruppen: an element, then the box it belongs in. The box IS the state, and the name says it
-  // again in words.
-  await expect(
-    page.getByText('Tippe ein Element an, dann die Gruppe, in die es gehört.'),
-  ).toBeVisible();
-  const intoGroup: [string, string][] = [
-    ['Hund', 'Säugetier'],
-    ['Fledermaus', 'Säugetier'],
-    ['Amsel', 'Vogel'],
-    ['Pinguin', 'Vogel'],
-    ['Frosch', 'Lurch'],
-    ['Molch', 'Lurch'],
-  ];
-  for (const [animal, group] of intoGroup) {
-    await page.getByRole('button', { name: `${animal}, noch nicht einsortiert` }).click();
-    await page.getByRole('button', { name: `In ${group} einsortieren` }).click();
-  }
-  await expect(page.getByText('6 von 6 einsortiert')).toBeVisible();
-  await shot(page, '39-match-groups-board');
-  await page.getByRole('button', { name: 'Prüfen' }).click();
-  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
-  await page.getByRole('button', { name: 'Weiter' }).click();
-
-  // Tabelle: a 4×4 table, each gap its own short field, named by the two words the table itself
-  // gives ("Pflanzenzelle bei Zellwand"). One cell wrong on purpose — the one thing this whole
-  // feature turns on: six of six is right, five of six is PARTLY right, the question stays open,
-  // and she corrects only the cell that does not hold.
-  await expect(page.getByText('Schreibe in die leeren Felder.')).toBeVisible();
-  await page.getByLabel('Pflanzenzelle bei Zellwand, noch leer').fill('ja');
-  await page.getByLabel('Tierzelle bei Zellwand, noch leer').fill('nein');
-  await page.getByLabel('Tierzelle bei Zellkern, noch leer').fill('ja');
-  await page.getByLabel('Bakterium bei Zellkern, noch leer').fill('nein');
-  await page.getByLabel('Pflanzenzelle bei Chloroplasten, noch leer').fill('nein');
-  await page.getByLabel('Bakterium bei Chloroplasten, noch leer').fill('nein');
-  await expect(page.getByText('6 von 6 Feldern gefüllt')).toBeVisible();
-  await shot(page, '40-table-fill-board');
-  await page.getByRole('button', { name: 'Prüfen' }).click();
-  // How much holds is always said; WHICH cell follows the hint ladder, so not yet on the first try.
-  await expect(
-    page.getByText('5 von 6 Feldern stimmen. Probier die anderen nochmal.'),
-  ).toBeVisible();
-  await expect(page.getByText('Schreibe in die leeren Felder.')).toBeVisible();
-  await page.getByLabel('Pflanzenzelle bei Chloroplasten, nein').fill('ja');
-  await page.getByRole('button', { name: 'Prüfen' }).click();
-  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
@@ -709,6 +632,254 @@ async function keyRowShots(page: Page, name: string): Promise<void> {
   await field.focus();
 }
 
+// Its own test (like the written path): the learning-modes walk is near its time budget, and an
+// order needs only a learner and Buddy.
+test('an order: tap in order, tap again to take back (issue #228)', async ({ page }) => {
+  await onboardChild(page);
+
+  // ── Reihenfolge: tap in order, tap again to take back (issue #228) ──
+  // The scripted model wrote the elements in the right order and nothing else; the server
+  // shuffled them, keeps the key and judges the order without a model.
+  await page.getByLabel('Schreib Buddy …').fill('Lass mich die Keimung ordnen');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('ordne mal die Keimung', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('Bring die Keimung einer Bohne', { exact: false })).toBeVisible();
+  const STEP = [
+    'Der Samen nimmt Wasser auf und quillt',
+    'Die Keimwurzel wächst nach unten',
+    'Der Keimstängel streckt sich zum Licht',
+    'Die ersten Laubblätter entfalten sich',
+  ];
+  const open = (text: string) => page.getByRole('button', { name: `${text}, noch ohne Platz` });
+  const placed = (text: string, n: number) =>
+    page.getByRole('button', { name: `${text}, Platz ${n}` });
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  // Nothing placed: "Prüfen" waits.
+  await expect(check).toBeDisabled();
+  await open(STEP[0]!).click();
+  await open(STEP[1]!).click();
+  await open(STEP[2]!).click();
+  await expect(placed(STEP[2]!, 3)).toBeVisible();
+  // Changed her mind: tapping place 2 takes it back, and place 3 with it.
+  await placed(STEP[1]!, 2).click();
+  await expect(open(STEP[1]!)).toBeVisible();
+  await expect(open(STEP[2]!)).toBeVisible();
+  await open(STEP[1]!).click();
+  await open(STEP[3]!).click();
+  await open(STEP[2]!).click();
+  await shot(page, '37-order-placed');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '37b-order-placed-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await check.click();
+  // Code found the place: the first two are right.
+  await expect(page.getByText("Bis Schritt 2 stimmt's", { exact: false })).toBeVisible();
+  await shot(page, '38-order-feedback');
+  // Her order stays; she fixes only the end.
+  await placed(STEP[3]!, 3).click();
+  await open(STEP[2]!).click();
+  await open(STEP[3]!).click();
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // Eight numbers, the most an order may have: it still fits 360×740 without scrolling.
+  await expect(page.getByText('Ordne die Zahlen der Größe nach', { exact: false })).toBeVisible();
+  for (const n of ['-12', '-3', '0,5', '3 Viertel', '2', '17', '105', '1000']) {
+    await page.getByRole('button', { name: `${n}, noch ohne Platz` }).click();
+  }
+  await shot(page, '39-order-eight');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '39b-order-eight-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await check.click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+});
+
+// Its own test (like the written path): the learning-modes walk is long already, and a table
+// needs only a learner and Buddy.
+test('a table to fill in: Enter walks the gaps, each cell checked on its own (issue #230)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  // ── Tabelle ausfüllen: type into the gaps, Enter walks on (issue #230) ──
+  // A 4×4 two-way table whose totals the server recomputed before storing it, then a number
+  // wall. Every cell is checked by code; the reply counts the right ones and names the rest.
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns eine Vierfeldertafel ausfüllen');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('eine Vierfeldertafel und danach', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('30 Kinder der 6b', { exact: false })).toBeVisible();
+  const tableCheck = page.getByRole('button', { name: 'Prüfen' });
+  await expect(tableCheck).toBeDisabled();
+  const cell = (name: string) => page.getByLabel(name, { exact: true });
+  // Typed like on the phone: a cell, Enter, the next cell.
+  await cell('Katze, kein Hund').click();
+  await page.keyboard.type('6');
+  await page.keyboard.press('Enter');
+  await expect(cell('keine Katze, Hund')).toBeFocused();
+  await page.keyboard.type('8');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('20');
+  await page.keyboard.press('Enter');
+  // The last one wrong, and still focused: the math keys stand above "Prüfen".
+  await page.keyboard.type('17');
+  await expect(page.getByRole('toolbar')).toBeVisible();
+  await shot(page, '60-table-filled');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '60b-table-filled-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await tableCheck.click();
+  await expect(
+    page.getByText('3 von 4 Feldern stimmen. Schau nochmal bei „Summe“ / „kein Hund“.'),
+  ).toBeVisible();
+  await shot(page, '61-table-feedback');
+  // What she typed stays; she fixes the one cell.
+  await expect(cell('Katze, kein Hund')).toHaveValue('6');
+  await cell('Summe, kein Hund').fill('18');
+  await tableCheck.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // The number wall: brick on brick, centred.
+  await expect(page.getByText('Rechne die Zahlenmauer aus', { exact: false })).toBeVisible();
+  await cell('Reihe 1, Stein 1').fill('20');
+  await cell('Reihe 2, Stein 2').fill('12');
+  await cell('Reihe 3, Stein 1').fill('3');
+  await shot(page, '62-table-wall');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '62b-table-wall-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await tableCheck.click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+});
+
+// Its own test, with its own learner: the main walkthrough above is already near its time
+
+test('zuordnen at its largest: pairs in two columns, things into groups (issue #229)', async ({
+  page,
+}) => {
+  // Its own test: the learning-modes walk is long enough already (the 180 s budget). The scripted
+  // tasks are the LARGEST the contract allows, every text near its cap (learning-modes.ts), and
+  // every `shot` below fails if the parts would have to be scrolled (`scroll-parts` is not a
+  // scroll area fit.ts allows). That is the measurement behind MATCH_* in contracts/structured.ts.
+  await onboardChild(page);
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize(PHONES[0]);
+  /** Both colour schemes of the same moment; the switch rebuilds the tree, the draft keeps it. */
+  const both = async (name: string) => {
+    await shot(page, name);
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await shot(page, `${name}-night`);
+    await page.emulateMedia({ colorScheme: 'light' });
+  };
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns Verfassungsorgane zuordnen');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('ordne mal zu, wer was macht', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('Welches Verfassungsorgan hat welche Aufgabe?')).toBeVisible();
+  await expect(page.getByText('Tippe links eins an, dann sein Gegenstück rechts.')).toBeVisible();
+  const free = (text: string) => page.getByRole('button', { name: `${text}, noch ohne Partner` });
+  const pair = async (left: string, right: string) => {
+    await free(left).click();
+    await expect(page.getByRole('button', { name: `${left}, ausgewählt` })).toBeVisible();
+    await free(right).click();
+  };
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  await expect(check).toBeDisabled();
+  await both('39b-match-pairs-start');
+  await pair('Bundespräsident', 'unterschreibt die neuen Gesetze');
+  // The one line of instruction has gone; the pair says itself in words.
+  await expect(page.getByText('Tippe links eins an, dann sein Gegenstück rechts.')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', {
+      name: 'Bundespräsident, Paar 1 mit unterschreibt die neuen Gesetze',
+    }),
+  ).toBeVisible();
+  // Below first, then above: works the other way round too.
+  await free('bestimmt die Richtlinien im Bund').click();
+  await free('Bundeskanzlerin').click();
+  // Two swapped on purpose: Bund and Land.
+  await pair('Bundesregierung', 'führt die Gesetze des Landes aus');
+  await pair('Landesregierung', 'führt die Gesetze des Bundes aus');
+  await both('39c-match-pairs');
+  await check.click();
+  // Code counted: two of four. Which ones, it says only on a second miss. The reply and the
+  // whole board stand on the screen together — that is the case the maxima are measured for.
+  await expect(page.getByText('2 von 4 Paaren stimmen schon.')).toBeVisible();
+  await expect(page.getByText('2 von 4 Paaren stimmen schon.')).toBeInViewport();
+  await both('39e-match-feedback');
+  // One tap on a pair dissolves it; she pairs the two again, right this time.
+  await page
+    .getByRole('button', { name: 'Bundesregierung, Paar 3 mit führt die Gesetze des Landes aus' })
+    .click();
+  await page
+    .getByRole('button', { name: 'Landesregierung, Paar 4 mit führt die Gesetze des Bundes aus' })
+    .click();
+  await pair('Bundesregierung', 'führt die Gesetze des Bundes aus');
+  await pair('Landesregierung', 'führt die Gesetze des Landes aus');
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // The most things in the most groups: no scrolling on 360×740, before or after sorting.
+  await expect(page.getByText('Wer ist denn zuständig: Stadt, Land, Bund?')).toBeVisible();
+  await expect(page.getByText('Tippe oben eins an, dann seine Gruppe.')).toBeVisible();
+  const GROUPS: Record<string, string[]> = {
+    Stadtverwaltung: ['Laternen planen', 'Friedhof pflegen', 'Kitaplätze geben'],
+    Landesverwaltung: ['Polizei aufbauen', 'Unis finanzieren', 'Lehrpläne machen'],
+    Bundesverwaltung: ['Armee ausrüsten', 'Verträge machen'],
+  };
+  const group = (name: string) =>
+    page.getByRole('button', { name: new RegExp(`^Gruppe ${name},`) });
+  /** A group's row: its name, and what she has put in it (the box is the state). */
+  const row = (name: string) =>
+    page.locator('[data-testid^="match-group-"]').filter({ has: group(name) });
+  // A group only takes something while she holds it.
+  await expect(group('Landesverwaltung')).toBeDisabled();
+  // The tallest moment of a grouping: everything still above the group rows.
+  await both('39f0-match-groups-start');
+  // One in, and it stands IN the Stadtverwaltung row; one tap there takes it back out again.
+  const sorted = (thing: string, name: string) =>
+    row(name).getByRole('button', { name: `${thing}, in ${name}`, exact: true });
+  await page
+    .getByRole('button', { name: 'Friedhof pflegen, noch in keiner Gruppe', exact: true })
+    .click();
+  await group('Stadtverwaltung').click();
+  await expect(sorted('Friedhof pflegen', 'Stadtverwaltung')).toBeVisible();
+  await sorted('Friedhof pflegen', 'Stadtverwaltung').click();
+  await expect(
+    row('Stadtverwaltung').getByRole('button', { name: /^Friedhof pflegen,/ }),
+  ).toHaveCount(0);
+  for (const [name, things] of Object.entries(GROUPS)) {
+    for (const thing of things) {
+      await page
+        .getByRole('button', { name: `${thing}, noch in keiner Gruppe`, exact: true })
+        .click();
+      await group(name).click();
+      await expect(sorted(thing, name)).toBeVisible();
+    }
+  }
+  await both('39f-match-groups');
+  // The theme switch rebuilt the tree; every element still stands in its group (the draft).
+  await expect(sorted('Verträge machen', 'Bundesverwaltung')).toBeVisible();
+  await check.click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+});
+
 /** One state at both phone sizes, light and dark (fit and contrast checked by `shot`). */
 async function bothSchemes(page: Page, name: string): Promise<void> {
   for (const scheme of ['light', 'dark'] as const) {
@@ -841,14 +1012,14 @@ test('formulas: math keys page by page, the new notation drawn, no keys over who
 
   // A table of whole numbers: the phone's digits write them, no row of math keys above.
   await nextQuestion(page, 'Einmaleins-Tabelle');
-  const gap = page.getByLabel('3 bei 5, noch leer');
+  const gap = page.getByLabel('5, 3', { exact: true });
   await expect(gap).toBeVisible();
   await gap.click();
   await expect(page.getByTestId('math-keys')).toHaveCount(0);
   await gap.fill('15');
-  await page.getByLabel('4 bei 5, noch leer').fill('20');
-  await page.getByLabel('3 bei 6, noch leer').fill('18');
-  await page.getByLabel('3 bei 6, 18').focus();
+  await page.getByLabel('5, 4', { exact: true }).fill('20');
+  await page.getByLabel('6, 3', { exact: true }).fill('18');
+  await page.getByLabel('6, 3', { exact: true }).focus();
   await expect(page.getByTestId('math-keys')).toHaveCount(0);
   await bothSchemes(page, '79-table-whole-no-keys');
 });

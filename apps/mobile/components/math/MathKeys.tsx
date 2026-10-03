@@ -13,6 +13,7 @@
 //     never the only signal: its name says "eingeschaltet" while it is on;
 //   - "↵ Neue Zeile" starts the next line of a written calculation path (issue #221). It
 //     carries a word, not only the glyph: "↵" alone is a symbol a child has to know.
+//     A cell of a table takes one line, so the table never offers it (TableAnswer.tsx).
 //
 // All keys of a line are the same width and fill it edge to edge, so the row reads as one
 // calm strip rather than a ragged list; each is at least 44 × 44 pt (TOUCH).

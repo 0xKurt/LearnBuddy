@@ -134,9 +134,10 @@ export function keysFor(ctx: KeyContext): KeyId[] {
 }
 
 /** A gap of a table: a whole number needs nothing beyond the digits; any other number its signs. */
-export function cellKeys(expect: 'number' | 'word', whole: boolean): KeyId[] {
-  if (expect !== 'number' || whole) return [];
-  return ['decimal', 'fraction', 'minus'];
+export function cellKeys(input: 'math' | 'text', whole: boolean): KeyId[] {
+  if (input !== 'math' || whole) return [];
+  // A number or a short term: its signs, and the exponent for a term like x².
+  return ['decimal', 'fraction', 'minus', 'power', 'brackets'];
 }
 
 function unique(ids: KeyId[]): KeyId[] {

@@ -1641,8 +1641,8 @@ rendert und eine `TextInput`-Eigenschaft dort nicht im DOM steht:
   ersten Umbruch macht deshalb nicht die Eingabetaste, sondern die Taste **„↵ Neue Zeile"** in
   der Zeichenreihe (`components/math/MathKeys.tsx`) — die eine Taste, die kein Zeichen einfügt,
   sondern etwas tut, und die deshalb ein Wort trägt statt nur des Zeichens. Sie steht vorn und
-  belegt zwei Plätze der Reihe. Eine Tabellenzelle ist einzeilig, das Brett (#228–#230) bietet sie
-  deshalb nicht an.
+  belegt zwei Plätze der Reihe. Eine Tabellenzelle ist einzeilig, die Tabelle (#230, `TableAnswer.tsx`) bietet sie deshalb
+  nicht an.
 
 **Die Zeichenreihe** (Issue #239, Befund 5 aus #286). Welche Tasten eine Frage bekommt, entscheidet
 Code aus der Frage selbst — Art, Einheit, Fach (`ItemView.subject_kind`) und die Notation im
@@ -1657,7 +1657,7 @@ Fragetext —, nie aus dem Schlüssel (`apps/mobile/lib/math/keys.ts`):
 - **Zahl**: Dezimaltrennzeichen, Bruchstrich, Minus (mit Einheit zuerst das Komma) und die
   Rechenzeichen eines Rechenwegs; Wurzel, π und Hochzahl nur, wo die Frage sie zeigt.
 - **Tabellenlücke**: eine Lücke, deren Schlüssel in jeder Form eine ganze Zahl ist
-  (`BoardCell.whole`, vom Server aus dem Schlüssel entschieden — eine Aussage über ihn und nicht
+  (`TableViewGap.whole`, vom Server aus dem Schlüssel entschieden — eine Aussage über ihn und nicht
   mehr), bekommt **keine** Reihe; die Ziffern der Tastatur schreiben sie.
 
 Hochzahl, Tiefstellen und Ladung sind Schalter: Die nächsten Ziffern, die sie auf der Tastatur des
@@ -1884,123 +1884,193 @@ Still open for a later step: the number line and the vocabulary card (#162's sec
 representation), and bar tasks from a photographed sheet — the extraction prompt does not offer
 them yet, so today they come from a topic she named.
 
-**Antworten mit mehreren Teilen — ordnen, zuordnen, eine Tabelle füllen** (`contracts/parts.ts`,
-`practice/parts.ts`, `practice/shuffle.ts`, Migration `0072_answers_with_several_parts.sql`;
-Issues #228, #229, #230 aus der Analyse #224). Bis hierher war jede Antwort **ein** Wert gegen
-**einen** Schlüssel. Die Analyse hat gezählt, was das kostet: von 347 Aufgabentypen gehen 240 nur
-„teilweise", und das heißt fast immer **Wissen ja, Form nein** — die Fakten lassen sich als
-Kurzantwort abfragen, die Aufgabenform der Klassenarbeit nicht. Die drei häufigsten dieser Formen
-tragen zusammen 95 Aufgabentypen aus 14 Fächern (`docs/lehrplan-und-uebungsformen.md`), und alle
-drei sind von Code **vollständig** entscheidbar. Also entscheidet Code sie — jedes Teil, ohne
-Modellaufruf (Regel 1; Issue #227 ist die Liste der Stellen, an denen das einmal nicht galt).
+**Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`,
+`practice/table.ts`, migration `0079_structured_items.sql`;
+issues #228 order, #229 match, #230 table_fill, from the analysis #224). Some answers are not a
+sentence but an arrangement: an order, pairs, groups, table cells. They are their own item kinds
+(`order`, `match`, `table_fill`), and #224's "Regel 0" holds in both directions: code validates
+what the model wrote, and code judges what she answers — never a model.
 
-_Das Modell schreibt die Aufgabe und urteilt über sie nichts._ Ein `PartsTask` ist alles, was es
-sagen darf, und die Lösung steht **in der Struktur**, nicht als Feld daneben: die Elemente stehen
-in der richtigen Reihenfolge, ein Paar ist ein Objekt mit links und rechts, eine Gruppe trägt ihre
-Mitglieder, eine Lücke ihren Inhalt. Ein Schlüssel, der den Elementen widerspricht, ist damit nicht
-sagbar — dasselbe Mittel wie bei den Bruchbalken. Und das Modell schreibt **keine Kürzel** (Regel
-2): `e1`, `l2`, `g3`, `c4` vergibt der Server aus der Position.
+_Two implementations existed for a day_ (#224, „Entscheidung: zwei Umsetzungen …“): `parts`
+(migration 0072, `items.parts_task`, `ItemView.board`) and this one. A neutral review ran and
+attacked both; `parts` handed out ids in solution order (an order and a pairing were solvable
+from the API response alone), asked the tutor on the second wholly wrong board, lost the board
+on a theme switch, shuffled 16 % of orders into their exact reverse and recomputed no number wall
+or two-way table. Its code was removed, and 0079 drops its check `items_parts_shape`. The column
+`items.parts_task` stays as dead data that nothing reads or writes; it is dropped in the next
+release, once no deployed code reads it (§Testing, rollback). 0072 stays as it was applied —
+migrations are immutable (CLAUDE.md rule 10).
 
-| Form           | das Modell schreibt                 | sie tut                                                |
-| -------------- | ----------------------------------- | ------------------------------------------------------ |
-| `order`        | 3–8 Elemente in der richtigen Folge | tippt sie nacheinander an: 1, 2, 3 …                   |
-| `match_pairs`  | 3–6 Paare                           | tippt links, dann rechts; das Paar bekommt eine Nummer |
-| `match_groups` | 2–4 Gruppen, 4–12 Mitglieder        | tippt ein Element, dann die Gruppe                     |
-| `table_fill`   | Tabelle bis 6×10, 1–12 Lücken       | füllt jede Lücke wie ein kurzes Feld, der Reihe nach   |
+Three shapes per kind, discriminated by `type` (= the item's kind):
 
-Daraus leitet der Server **das Brett** ab (`ItemView.board`) — ohne Lösung, nur während die Frage
-offen ist, in einer Anzeige-Reihenfolge, die **stabil pro Frage** ist (ein Hash der Item-Id, keine
-Uhr und keine Zufallsquelle, `practice/shuffle.ts`): ein Neuladen darf die Elemente nicht unter
-ihrem Finger neu mischen. Bei `order` ist die Mischung garantiert **nicht** die Ausgangsfolge, und
-bei `match_pairs` stehen die beiden Spalten nie Zeile für Zeile beieinander — sonst läge die Lösung
-da. _Eine Figur ist, was sie LIEST; eine Fläche ist, was sie BERÜHRT, um einen Wert zu schreiben;
-ein Brett ist, was sie ANORDNET._
+| shape                | where                 | what it holds                                                      |
+| -------------------- | --------------------- | ------------------------------------------------------------------ |
+| `StructuredTask`     | `items.task` (server) | the definition WITH the key; `order`: elements, key (ids), numeric |
+| `StructuredTaskView` | `ItemView.task_view`  | the same WITHOUT the key, only while the question is open          |
+| `StructuredAnswer`   | `AnswerRequest.parts` | what she arranged, by part id; `order`: every element id once      |
 
-Ihre Antwort ist **eine Form für alle drei**: `AnswerRequest.parts`, je ein `{ slot, value }` —
-Position → Element, linke Seite → rechte Seite, Element → Gruppe, Lücke → ihr Text. Der Server nimmt
-genau die Fächer dieser Frage an, jedes einmal, mit Werten aus genau dem Vorrat, den diese Frage
-ausgegeben hat (`readParts`); alles andere ist eine abgewiesene Anfrage und nichts zu deuten. Ein
-Brett nimmt keinen getippten Text, eine Frage mit einer Antwort nimmt keine Teile. Ein halb
-gefülltes Brett ist **keine schwächere Antwort**, sondern eine, die noch nicht gegeben wurde.
+The model writes the content in a separate list of its answer (`structured`, next to `items`;
+generation and both photo readings), for `order` the 3–8 elements **in the right order** plus
+`numeric` (`ascending`/`descending` when every element is a number). Code then checks
+(`orderProblem`) and stores nothing that fails — nothing is repaired: fewer than 3 or more than 8
+elements, two elements alike after normalising (case, spacing, math markup), a key that is not a
+permutation (reachable for a stored row; a draft cannot produce one because code writes the key),
+numbers without a stated direction, a direction for elements that are not all numbers of one
+unit, and a numeric key that is not strictly sorted by value. Code gives the ids (`a`, `b`, …
+by display position, so an id says where an element stands, never where it belongs), shuffles
+deterministically per content (never the right order, never its reverse) and writes `answer` as
+the readable solution ("A → B → C"), so "Lösung zeigen", the hint ladder, the tutor for "Tipp",
+the test review and the summary run unchanged. The database holds the two together
+(`items_task_matches_kind`: a structured kind always has a task, every other kind never, and
+`task->>'type' = kind`); a stored task is read through `structuredTaskOf`, which re-checks it.
+The kind check already allows `cloze` (#232, a text with several gaps) — decided in 0079 so the
+next structured kind needs no constraint migration; no code writes it until #232 is built, and
+`STRUCTURED_KINDS` in the contract lists only the three that exist.
 
-**Was eine teilweise richtige Antwort heißt.** Sechs von acht Zellen richtig ist
-`partially_correct`, und die Frage **bleibt offen** — die Form, die das Haus für Beinahe-Treffer
-schon hat (`NEAR_MISS`). Nicht `correct`, weil zwei Zellen nicht stimmen; nicht `incorrect`, weil
-das sechs richtige Zellen wegwirft, und genau das tut eine Klassenarbeit nicht (dieselbe Begründung
-wie `step_broke`, Issue #209). Erst wenn **kein** Teil hält, ist es falsch.
+Answering (`answerItem`): a structured item takes only `parts` (text → 422 `use_parts`; a
+foreign shape, a missing, doubled or unknown id → 422 `parts_mismatch`; `parts` for any other
+item → 422 `no_parts`; a stored task that no longer reads → 409 `task_unreadable`).
+`checkStructured` returns the verdict and a result per part, and the reply names the place
+(`structuredReply`) on every wrong try — 0 model calls per answer. A partly right arrangement is
+`incorrect` with that code-written reply, and the question stays open; nothing is locked and
+nothing cleared, her arrangement stays in the draft. The rest is the ordinary flow: the third
+miss explains the solution, a test only notes the answer (one try, no verdict until the end),
+FSRS rates the closed item, turns are idempotent per `client_turn_id`. Her answer is stored as a
+turn in words, in her order (for the tutor's history, a dispute and the summary). While the
+question is open the screen does not echo it as a bubble (`ItemThread` `echoAnswers`; once it is
+closed the board is gone and the bubble with its verdict shows): her arrangement stands on the board,
+which is the state, and Buddy's reply says the verdict in words. Echoed, four pairs were a
+four-line bubble that the room above the board could only show as a cut-off strip under the
+question card (shot 39e). The closing answer of an order or a match is recorded as `tapped`, which
+for a structured kind still counts towards a topic in the summary (tapping is the only way to
+answer it, not recognition); a table's is `typed`.
 
-Daraus folgt der Rest, und zwar ohne eine einzige neue Zahl:
+Where they come from: a topic's practice and practice test (`generate.ts` `STRUCTURED`; not typed
+homework, vocabulary, speaking or listening), and both photo readings — a printed task that asks
+to order, link or sort given things, or to fill a table, keeps that form and goes into
+`structured`, never into knowledge questions about its own content. Homework help from a photo
+takes them too, with hints and without a worked solution (`StructuredDraftHomework`). At most
+`MAX_STRUCTURED_ITEMS` (4) per prepared set. A practice run that starts on its first questions
+before the rest is written (#220) starts on ordinary `items` only: the structured list stands
+after them in the answer and arrives with the rest (`addTheRest`). The rest takes every list of the
+answer, exactly as a run that started on the whole set does — `items`, `structured`, `bars`,
+listening questions and note lines (issue #277: the note lines of an early run were dropped). Only
+the ordinary `items` are compared with the first questions by prompt; a note-line prompt is
+written by code and may read the same for two different notes.
 
-- **FSRS bekommt keinen Bruchteil.** Es gibt kein „0,75 von Good"; eine erfundene Zwischennote wäre
-  die Behauptung, sie beherrsche das Thema zu 75 %. Eine teilweise richtige Antwort schließt die
-  Frage nicht, schreibt also keine Wiederholung — sie kostet aber den ersten Versuch, und die
-  richtige Antwort danach ist `with_help` → `Hard` statt `Good`. Nach dem dritten Versuch kommt die
-  Lösung und es wird `revealed` → `Again`, wie überall. Schwächere Evidenz zählt **weniger**, nicht
-  anders (dasselbe Muster wie `answered_by = 'tapped'`, #163, und `self_rated`, #147).
-- **Sie sieht, wie viel hält, und genau EINE Stelle.** Nicht die Liste aller falschen Teile:
-  `chemistry.ts` nennt bei mehreren unausgeglichenen Elementen eines, „weil alle auf einmal zu
-  nennen eine Liste zum Abarbeiten ist statt eines nächsten Schritts". Die Menge, die hält, steht
-  immer da; die **Stelle** folgt der Hinweisleiter, also ab dem zweiten Versuch (Issue #229 verlangt
-  genau das). `order` ist die Ausnahme und keine Inkonsistenz: dort IST die Menge eine Stelle („bis
-  Schritt 3 stimmt alles"), wie `steps.ts` die erste gebrochene Zeile sofort nennt. Eine Lücke mit
-  einem Verschreiber bekommt den Satz, den ein Verschreiber im Antwortfeld bekommt (#207).
-- **Sie korrigiert nur die falschen Teile.** Der Server setzt nichts zurück und sperrt nichts fest:
-  ihre Anordnung bleibt stehen, ein Tipp auf ein gesetztes Teil nimmt es zurück („rückgängig statt
-  bestätigen"). Richtige Teile festzusperren wäre bequem und würde die Lösung verraten — bei fünf
-  Paaren stünde das fünfte damit da. (Dass bei einer Paarung nie genau n−1 Paare stimmen können,
-  ist derselbe Grund, aus dem die Zahl „4 von 5" dort nicht vorkommt.)
-- **Für `summary.ts` zählt sie wie jede andere Frage.** Eine mehrteilige Antwort, die beim ersten
-  Mal ganz stimmt, ist mehr Evidenz als ein angetippter Vierer-Multiple-Choice, nicht weniger. Was
-  dort eine Ausnahme braucht, ist nur `answered_by = 'tapped'`: bei einer Vokabel ersetzt Antippen
-  das Produzieren, hier **ist** Antippen die Form der Aufgabe — die Klassenarbeit verlangt sie, nur
-  mit einem Stift statt einem Finger.
+App: `components/practice/StructuredAnswer.tsx` switches on `task_view.type`; a new kind adds
+its component there and nothing else on the screen. Every surface keeps its arrangement in the
+draft (`lib/drafts.ts`), so a theme switch — a remount — keeps it, brings its own "Prüfen" in the
+pinned bar, and that waits until the arrangement is complete. `OrderAnswer.tsx` is one gesture:
+tap the elements in order, they get numbers; tapping a numbered one takes it back with
+everything after it. The place is said in words to a screen reader ("…, Platz 2"). Steps (text)
+keep their place and get the number in a circle before them; short things — numbers — stand as
+places and a pool (#286): numbered places on top, the number ABOVE the place and never beside the
+value ("1" before "−12" read as one number, "4 ¾" as a mixed fraction), the pool below in equal
+tiles, four to a row; a tap puts a tile on the next free place.
 
-**Was gar nicht angelegt wird.** Eine Aufgabe, deren Lösung nicht die einzige ist, gibt keine Frage
-(`usablePartsTask`, wie `barItem` bei unmöglichen Parametern): doppelte Elemente, eine linke Seite
-mit zwei passenden rechten, ein Element in zwei Gruppen, eine Zeile schmaler als der Kopf, eine
-Tabelle ohne Lücke, eine Zahlenlücke mit einem Wort als Schlüssel. Und die eine Prüfung, die Issue
-#228 namentlich verlangt: sind **alle** Elemente Zahlen, muss die Folge streng monoton sein
-(auf- oder absteigend) — sonst wird nichts angelegt. Der Preis ist, dass eine Zahlenfolge nach einem
-anderen Kriterium nicht schreibbar ist; der Gegenwert ist, dass ein falscher Schlüssel auffällt,
-bevor sie die Frage sieht.
+**Room on a small phone** (rule 16; `components/practice/PartsArea.tsx`). The question card never
+shrinks and 44 pt per touch target is the floor, so the largest task the contract allows has to fit
+the smallest phone as it is — the maxima of a match are measured, not chosen (below). While a
+structured surface is shown, the parts stand right under the question and the conversation; the
+newest turn (Buddy's reply after a check) always stays visible, and the free room collects between
+the parts and "Prüfen" (`FreeSpace` inside `PartsArea`; the shell, #286).
+The parts stand in a scroll view only as the floor under a mistake: its testID `scroll-parts` is
+not one `tests/web/fit.ts` allows, so a walkthrough shot fails the moment the parts would have to
+be scrolled. (Before the floor, a tall arrangement was drawn over the question — found in the shots
+of #229.) An order of eight long steps and a table of ten rows are not measured at their maxima
+yet; their walkthrough tasks fit.
 
-Dasselbe eine Ebene weiter für die **Wertetabelle** (Issue #230, „Jeder Wert wird aus der Funktion
-nachgerechnet"): setzt das Modell `computed` — Ausdruck, Eingabespalte, Ergebnisspalte — rechnet der
-Server **jeden** Wert mit `compileExpression` nach und legt bei einer einzigen Abweichung keine Frage
-an. Das ist `keyCheck.ts` (Issue #157) über eine ganze Tabelle: ein Rechenfehler des Modells kostet
-eine Frage, nie ihr Vertrauen in eine Antwort, die richtig war. Ohne das Feld ist die Tabelle eine
-gewöhnliche Tabelle, deren Schlüssel niemand nachrechnen kann, und dann wird darüber auch nichts
-behauptet. **Noch nicht gebaut** sind die drei anderen gerechneten Tabellen aus #230 — Zahlenmauer,
-Vierfeldertafel, Wahrheitstabelle: jede braucht ihre eigene geprüfte Form (eine Zahlenmauer ist keine
-Tabelle, eine Wahrheitstabelle braucht Logik statt Arithmetik), und halb gebaut wären sie genau die
-„drei zusammenhanglosen Halbsysteme", die dieses Feature vermeiden sollte.
+**Tabelle ausfüllen** (`table_fill`, issue #230, `practice/table.ts`). A table of at most 6
+columns × 10 rows (like `TableFigure`), some cells gaps. The model writes every cell WITH its
+value and marks the gaps (`{text, gap, also}`; `also` = up to 4 accepted spellings), plus an
+optional `family` code can recompute. Code names the gaps by place (`r0c2` = row 0, column 2),
+decides how each is typed (`input`: `math` for a number or term — the math keys come up —,
+`text` for a word) and stores the keys in `items.task`; the view (`task_view`) carries the
+cells she reads and the gaps' ids and inputs, never a key. `answer` is the readable solution row
+by row ("ich: ging · du: gehst, gingst").
 
-**Wie viel auf ein 360×740-Handy geht** (`components/practice/PartsBoardAnswer.tsx`, nachgerechnet,
-nicht geschätzt). Vom Bildschirm bleiben nach Kopfzeile, Fragekarte und der Leiste mit „Prüfen"
-**459 pt** für das Brett (bei dreizeiliger Frage 404). Ein Tippziel ist 44 pt (`TOUCH`), und bei
-15 pt Schrift passen über die ganze Breite 27 Zeichen in eine Zeile. Daraus: acht kurze Elemente
-254 · vier Paare 330 · eine sechszeilige Konjugationstabelle 367 — alles mit Luft. Auch der
-schlimmste Fall, den `order` zulässt, passt: acht Elemente mit 48 Zeichen sind 446.
+Regel 0 on what the model wrote (`tableProblem`; every rejection is a unit test): always the
+structure — one cell per heading in each row (a wall: row k has k bricks and no headings), at
+least one gap and one visible cell, no empty key, no word key standing in its own column heading
+or row label, a solution that fits `items.answer`. And per declared family, recomputed:
+`values` — every value (shown or gap) is `fn` at its x, compiled by `shared-math`'s
+`compileExpression`, to the value's own rounding (x in the headings with one row of values, or
+in the first of two columns); `wall` — every brick is the exact sum of the two under it;
+`totals` (Vierfeldertafel) — the last column and the last row are the exact sums of their row and
+column. A table that does not add up gives no question; nothing is repaired. Truth tables are
+not recomputed yet: they pass with the structural checks only, like a conjugation table. A table
+without a declared family is not recomputed either — whether it is checked is the model's
+declaration, and that is a known weakness (the review found the same for `parts`).
 
-Drei Formen haben aber **erlaubte** Eingaben, die auf dieses Handy nicht passen: sechs Paare mit je
-40 Zeichen (590), zwölf Elemente mit 32 Zeichen in vier Gruppen (866), zehn Tabellenzeilen mit
-Lücken (543). Die Zahlen stehen so in den Issues (#229: 3–6 Paare, 4–12 Elemente; #230: bis 6×10),
-und sie sind keine Übertreibung — „Begriff ↔ Erklärung" ist eine der häufigsten Zuordnungen
-überhaupt. Die Fragekarte darf dafür nicht schrumpfen, und 44 pt pro Tippziel ist der Boden. Also
-gibt **der Brettbereich** nach, in dieser Reihenfolge: das Gespräch darüber gibt seinen Platz als
-Erstes her (`flexBasis: 0`), dann schiebt sich das Brett in sich selbst — als `scroll-list`, die
-eine Kategorie, die `tests/web/fit.ts` erlaubt und die hier auch stimmt: was dort scrollt, ist eine
-Liste, die sie durchgeht. Die Frage bleibt stehen, und die Seite läuft nicht über.
+Her answer (`checkTable`): every gap once and non-empty, else 422 `parts_mismatch`. Each cell
+goes through `ruleCheck` like a single answer — a number by `numericVerdict`, a word by
+`writtenAgainst` with its near misses and the subject's spelling rule (D-2), a term by its text
+and then by value (`checkPath` over "key ↵ answer": the same value at every probe point). A
+table cell is **closed** — it holds its key and the listed spellings and nothing else — so a
+cell no rule calls right or nearly right is not right yet, and no cell goes to the tutor
+(0 model calls per answer). In a recomputed table a cell asks for an amount, so another form of
+the right value is right (as for #162's bars); elsewhere it is nearly right (D-3), like a term
+that has the key's value but is written otherwise. The reply counts and names
+(`tableReply`): "2 von 3 Feldern stimmen. Schau nochmal bei „du“ / „Präteritum“." — a cell by
+its row label and heading, else by row and column numbers, a brick by row and place; three at
+most by name, the rest counted. When no cell is right but some are nearly right, it never says
+"none is right": it says they are almost there and names them (`table_almost`). Her cells are stored as
+the turn in reading order ("6 · 8 · 20").
 
-**Woher sie kommen.** Aus einem Thema im Chat und aus dem Probetest (`generate.ts` `KINDS`), und aus
-dem Foto (`extract.ts`): dort entscheidet **die gedruckte Aufgabenstellung**, nicht ihr Inhalt — eine
-Aufgabe, die ordnen, verbinden, zuordnen oder eine Tabelle vervollständigen lässt, behält diese Form
-und wird **nicht** zu Wissensfragen über ihren eigenen Inhalt (`PARTS_FROM_SHEET`; das ist die
-Spiegelung von Issue #198). Nicht in der Hausaufgabenhilfe: dort ist die Aufgabe die, die sie
-mitgebracht hat, und ein Brett wäre eine Form, die das Blatt nicht hat. Die Lösung steht gerendert
-in `items.answer`, damit „Lösung zeigen", die Fragenliste eines Blattes, der Leak-Check für Tipps
-und das Zurücknehmen eines Urteils unverändert weiterlaufen; die Textgrenzen in `contracts/parts.ts`
-sind so gerechnet, dass die größte erlaubte Aufgabe jeder Form in diese Spalte passt.
+App: `TableAnswer.tsx` shows the table as in the exercise book (a wall centred, brick on brick);
+each gap is a small field, Enter goes to the next gap and in the last one checks; the math keys
+stand above "Prüfen" while a number cell has the focus. Her cells are kept in the draft, so after
+a wrong check she changes only the cell named. The table is as wide as the screen; only columns
+with words to type can make it wider, and only then does it scroll sideways, inside itself.
+
+**Match — pairs and groups** (`match`, issue #229, on the same foundation). One shape for two
+forms: she takes an element on the LEFT (`left`, ids `a`, `b`, … by display position) and puts it
+to one on the RIGHT (`right`, ids `r1`, `r2`, …). `pairs`: 3–4 lefts and as many partners, every
+left with exactly one right and every right with exactly one left. `groups`: 4–8 elements and
+2–3 groups, every element in exactly one group, no group empty. The task holds `form`, both sides
+and the key (one `{left, right}` link per left); the view the same without the key; the answer
+`links`, every left once (a partner twice in a pairing → 422 `parts_mismatch`). The model writes
+only the correct links (`pairs: [{left, right}]` or `groups: [{name, elements}]`, exactly one of
+them, `MATCH_RULES` without an example sentence). Code rejects — and stores nothing, repairs
+nothing — neither or both forms (`form`), counts out of range (`count`), a text, a word or a
+prompt over its cap (`too_long`: a pair's side 32 characters, a thing to sort or a group's name
+16, any single word 16, the prompt 44), an empty group
+(`empty_group`), one element written to two places (`ambiguous`, seen on the draft by
+`matchDraftProblem`), and any two texts alike after normalising, across both sides
+(`duplicate`); `matchProblem` re-checks a stored task (a key that misses, doubles or invents a
+link → `not_mapping`). The display is shuffled deterministically and never already solved: in a
+pairing fewer than half of the rows line up, a grouping's elements never stand sorted by their
+groups (the groups keep the model's order). A prepared hint that states a whole link (both sides
+as words) is dropped. Checking is exact, link by link: the reply counts ("2 von 4 Paaren stimmen
+schon." / "5 von 7 sind schon richtig einsortiert."); which one is wrong it names only from the
+second miss on, as the next rung of the hint ladder (`structuredNamesPart` → counts as a hint),
+and the third miss explains the solution.
+
+App: `MatchAnswer.tsx`. Pairs stand in two columns (four pairs are four rows; the columns share
+the width near-equally, 42–58 %, `leftShare`); a row's two tiles are equally tall, the text stands
+left. Tap one, then its partner (either way round): both tiles then wear the pair's pastel tint
+AND its symbol (● ▲ ■ ◆, `pairLook`), so a pair is seen at a glance and colour is never the only
+signal (#286; before, the pair was a number in the text and the board looked like a form).
+Groups follow the display idea of the removed `parts` board, because there the box IS the state:
+the elements she has not sorted yet stand above, every group is a row with its name, and an
+element she puts in a group moves INTO that row, next to the name. Tapping it there takes it back
+out. Tapping a group row puts the element she holds into it; a group only takes something while
+she holds an element. What she holds is kept in the draft with the links, so a theme change does
+not drop it. One line of instruction until the first tap, nothing else; a screen reader hears
+"…, Paar 2 mit …" / "…, in Nomen".
+
+**The maxima are a measurement** (`contracts/structured.ts` `MATCH_*`). The walkthrough's match
+tasks are the largest the contract allows, every text near its cap ("zuordnen at its largest",
+`tests/web/modes.spec.ts`; `learning-modes.ts`): four pairs of a 15-character term and a
+32-character phrase under a 44-character prompt, and eight 15–16-character things in three groups
+with 16-character names. Shot at 390×844 and 360×740, light and dark, with `scroll-parts`
+disallowed: the pairing before and after a check (Buddy's reply and the whole board on screen
+together), and the grouping before she sorts anything (its tallest moment) and when everything is
+sorted. On 360×740 both tallest moments end within about 8 pt of "Prüfen", so one more pair row
+(about 52 pt) or one more group row (about 56 pt) would not fit; 20-character things (one per
+row) did not fit by 87 pt, and a 56-character prompt broke onto three lines. A draft over a cap is
+rejected (`too_long` / `count`), never shortened.
 
 **Die Notenzeile — lesen, selbst schreiben, anhören** (`contracts/staff.ts`,
 `practice/staff.ts`, `components/math/StaffLine.tsx`, `lib/music/`, Migration
@@ -2107,7 +2177,9 @@ nothing stays open forever:
 - _"Beenden"._ In a test it hands the test in (the review shows questions she never got to as
   "nicht bearbeitet", with their solution). Everywhere else it is a pause: the app goes back to
   Buddy without finishing; `POST …/finish` on homework help with open tasks only touches its
-  last activity.
+  last activity. On screen it is a round 44 pt ✕ beside the speaker (a screen reader hears
+  "Übung beenden" and where it leads): the header title is one line (#287), and a worded pill
+  left the topic ~125 pt at 360 wide, cut to "Flächeninhalt Rec…" (#286).
 - _Resuming_ is keyed on `last_activity_at`: a session used in the last 12 h is the first now
   card; an older open one (homework help up to 14 days, any other session up to 3 days) comes
   after Buddy's prepared practice. Every open session is loaded into Buddy's state, however old.
@@ -2300,6 +2372,62 @@ that states an open task's answer (`mentionsSolution`, any notation) gets one re
 is stored (503 `reexplain_unavailable`). A model outage stores nothing (503 `model_unavailable`).
 Also after the last question closed and the session finished.
 
+### Charts (issues #245, #246)
+
+Line and climate charts, pies, box plots, histograms, scatter plots and population pyramids next to
+a question. **The model writes data, code checks it, draws it and computes the key.** No migration:
+the chart is an item's `figure` (jsonb), and everything code derives from it is written into the
+item's ordinary columns before it is stored.
+
+- **Contract** (`contracts/figure.ts`): seven `ModelFigure` branches — `line_chart` (1–3 series,
+  categories or a measured x, one optional column series, an optional right axis for a second
+  unit), `climate_chart` (place, height, 12 × °C, 12 × mm), `pie_chart` (labels and shares in %,
+  `half` for a parliament), `box_plot` (1–3 boxes of five numbers, optionally the raw data list),
+  `histogram` (equal classes), `scatter_plot` (points, `fit` for the least-squares line),
+  `pyramid` (age groups from `a0` in steps of `w`, men and women). Short property names and **no
+  nullable field**: they sit in every item of every generated set, under the schema-size pressure
+  of #281 (the generate schema grew from 21,575 to 24,541 characters with 0 new `anyOf`).
+- **Checked, then rejected — never repaired** (`chartProblem`, `packages/shared-math/src/charts.ts`):
+  every series as long as its labels, at most one column series, one unit per axis and a second
+  axis only for a second unit, a measured x that increases, no duplicate labels, category labels
+  that fit the 266 px a 360 px phone leaves the drawing, pie shares that add up to 100 % (± 0.1),
+  a box plot in order and — given a data list — equal to its five numbers under one of the three
+  schoolbook quartile definitions, a scatter plot with a spread in x, a pyramid within 125 years. A
+  chart that breaks one costs its **question**, not only its drawing (`clipDraft`,
+  `chartRead.ts`): "Werte das Klimadiagramm aus" without the diagram is no question.
+- **What a question reads off** (`ItemDraft.read`, `ChartRead`): the model says which reading its
+  question is — `value`, `max`, `min`, `argmax`/`argmin` (a label: a month, a category, a slice),
+  `sum`, `mean`, `range`, `diff`, `angle` (a pie's centre angle), `iqr`, `humid`/`arid` (number of
+  months), `humid_at`, `slope`/`intercept`, `type` (pyramid / bell / urn) — and code computes it
+  (`readChart`). A number key must be the computed value at the precision it is written in; a label
+  must be the label at the computed position (the other ways to write it, "Juli"/"Jul", become the
+  accepted answers, and nothing else); a fixed choice (humid/arid, the pyramid's type) gets its
+  options written by code in the question's language and the model's `correct_choice` must point at
+  the computed one. Disagreement drops the question. A **numeric question on a chart without
+  `read` is dropped** too: its key could not be checked. Interpretation questions ("Welche
+  Klimazone?") stay multiple choice with `read` null. Why a structured claim and not code reading
+  the question's words: that would be a word list standing in for language understanding (rule 3).
+- **Reading tolerance from the drawing**: the learner gets the tolerance the grid allows, never one
+  the model chose — a fifth of a labelled step (the app draws a faint line at every half step),
+  √n of that for a sum of n readings, ÷ n for a mean, twice for a range or a difference. A climate
+  chart is Walter–Lieth as in the atlas (10 °C ≙ 20 mm, above 100 mm compressed tenfold, read
+  tenfold less precisely there). A reading the drawing cannot settle is no question: two months
+  closer than both readings (Berlin, July 19.4 °C, August 19.1 °C → no "warmest month"), a month
+  whose column ends on the temperature line (no humid/arid count), a pyramid between the bands
+  (young third ≥ 1.2 × middle third = pyramid, ≤ 0.8 = urn, 0.9–1.1 = bell). Answers are judged by
+  the rules, no model call (`charts.int.test.ts`: "Üb mit mir Klimadiagramme" → 5 questions, all
+  `evaluated_by = 'rule'`).
+- **Drawing** (`apps/mobile/components/math/ChartFigures.tsx`): react-native-svg with the same axes
+  the API used for the tolerance (`niceAxis`, `climateAxes`, imported by path). Colour is never the
+  only signal: series have markers and dash patterns, columns are columns, pie slices are numbered
+  and listed with their shares, the halves of a pyramid are named. Theme tokens `figure.warm`,
+  `wet`, `wetDeep`, `slices` (light and dark). The screen-reader text (`describeChart`) says every
+  value and nothing derived — no sum, no warmest month, no type — because that is what a question
+  asks her to read off. Walkthrough: `tests/web/charts.spec.ts`, every chart at 390 × 844 and
+  360 × 740, light and dark.
+- **Not checked by code**: the meaning of the prompt itself. A question that claims `read: sum` and
+  asks something else is caught only when the numbers then disagree.
+
 ### Learning modes (migration `0003_learning_modes.sql`)
 
 Questions come from a photo (`material`), from Buddy on a topic the learner named (`buddy`,
@@ -2473,9 +2601,10 @@ word list, so it stays a prompt rule.
   compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
   when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
   may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table,
-  molecule) as data
-  (`contracts/figure.ts`); the server drops figures it cannot draw (e.g. an expression that does
-  not compile with `@learnbuddy/shared-math` `compileExpression`) without dropping the question.
+  molecule, and the charts of §Charts below) as data (`contracts/figure.ts`); the server drops
+  figures it cannot draw (e.g. an expression that does not compile with `@learnbuddy/shared-math`
+  `compileExpression`) without dropping the question — except a chart, which costs its question
+  (§Charts), and a geometry or molecule figure that contradicts its numbers (below).
   A figure is drawn to be READ. What she can work with is a `surface` — today the Bruchbalken
   (§Practice above, issue #162), whose question, picture and key are computed from one reviewed
   task instead of written by the model.
@@ -2609,13 +2738,46 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   moon's movement plus a one-line caption with a quiet hint under it. On the phone listening ends
   by itself when she pauses
   (on-device recogniser, `untilPause`); on the recording path (browser) she taps the mic when done.
-  Tapping the mic — or Buddy himself — while he speaks interrupts him and listens at once
-  (issue #35). That tap is the honest part of barge-in: while Buddy speaks the mic stays off,
-  because neither expo-audio playback nor expo-speech-recognition promises device echo
-  cancellation, and an open mic would write down Buddy's own voice (a recording that starts
-  while he speaks is already dropped, audit M-78). expo-speech-recognition 3.1.3 does expose
-  `iosCategory: playAndRecord`, but without a device test that is no promise (rule 5); real
-  talking-over needs the duplex realtime audio stack that is deliberately not built (above).
+  Tapping the mic — or Buddy himself — while he speaks interrupts him and listens at once.
+  **She can also just talk over him** (barge-in, issue #35), in the browser and on Android:
+  while he speaks (and the mic may open by itself — no screen reader) an ear watches the mic's
+  **level**, never its words (`lib/speech/bargeMonitor.ts`: the browser's `getUserMedia` with
+  `echoCancellation` on and an analyser, no recorder; Android a level-only recorder on the
+  `voice_communication` source, the one the platform runs its echo canceller on, its cache file
+  deleted at once). So an echo can at worst stop him by mistake — it can never be written down
+  as her words; the recogniser only starts once he is silent. Two layers keep his voice out:
+  the platform's echo cancellation, then a gate (`lib/speech/bargeIn.ts`, pure, unit-tested)
+  that first learns how loud his residue is while he really sounds (600 ms), keeps learning
+  from everything that is not a candidate, and counts a frame as her only when it is 10 dB
+  above the residue's 90th percentile and above −42 dBFS — for 300 ms of loud time, dips
+  between syllables up to 200 ms allowed. A click, a cough or Chromium's 20 ms fake-mic beep
+  never gets there (`tests/web/talk-voice.spec.ts`: three replies read to the end over the
+  beeps); a voice-shaped signal stops him 0.3 s after it starts (`talk-barge.spec.ts`). Where
+  echo cancellation is weak his residue is loud, the bar rises with it and she has to speak up:
+  a missed barge-in, never a false one. Frames between sentences (his next one still on its
+  way) count for nothing — calibrating on silence would let his first loud syllable through.
+  The hint under "Buddy spricht …" says "Sprich einfach dazwischen" only once the ear really
+  hears (a level arrived), otherwise it keeps naming the tap. On Android the ear lets go of
+  the mic before the on-device recogniser starts (two captures must not race for one device);
+  in the browser it stays open until the recorder runs, so the recorder finds the device
+  awake. **Not on iOS:** expo-audio cannot put the session into the voice-processing mode
+  (`voiceChat`) that cancels echo, and switching to recording while he plays may move his
+  voice to the earpiece — there the tap stays the way in. (The research question of #35, how
+  the realtime voice products do it: they stream the mic continuously through a voice-processing
+  audio path — WebRTC's echo canceller, iOS's voice-processing I/O unit — and a voice-activity
+  detector decides the interruption, the duplex stack this app deliberately does not build. The
+  ear here is the same idea cut down to what expo-audio offers: the platform's echo path plus a
+  level gate, with no audio leaving the phone. That description is general knowledge, not
+  measured here.) What only a phone can tell (needs
+  live verification): how much echo Android's canceller leaves with media playback on the
+  loudspeaker (the gate's bar adapts, but how loud she must be is a device number), whether
+  the level-only recorder and Buddy's player coexist on every Android audio route (the
+  recorder requests no audio focus; Bluetooth headsets switch to call mode for
+  `voice_communication` on some phones), and how long the recorder takes to let go before the
+  recogniser starts (it adds to `relisten`: after an interruption, and after his last word
+  while the recorder is still letting go — the recogniser always waits for it, never races it).
+  The first syllables she said before the gate decided (≈ 0.3 s) and while the recogniser
+  starts are not written down: the ear holds only levels, by design.
   Opening the screen warms the recogniser (issue #41, `warmRecognition` in
   `lib/speech/recognize.ts`): the Android service choice with its installed languages, the
   engine decision and the permission answer — the latter remembered while the app stays in
@@ -2640,7 +2802,8 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   The moon runs on the UI thread: one Reanimated frame callback per moving orb writes a pose that
   a few animated views read (moon in front and behind the glass, trail dots, ping, reflection) —
   no JS re-render per frame. Tapping Buddy while he
-  speaks stops him and listens ("Tipp auf Buddy, dann hört er dir zu.", issue #35). Two quiet synthesised tones
+  speaks stops him and listens ("Tipp auf Buddy, dann hört er dir zu.", issue #35); where the
+  barge-in ear hears, the hint says she can just talk instead. Two quiet synthesised tones
   (`scripts/make-talk-tones.mjs`, `lib/speech/cues.ts`) mark listening starting and ending; on
   iOS they play in a session that obeys the silent switch, then talk mode's session is restored
   (needs live verification on a phone); the web plays none. The camera next to "Tastatur"
@@ -2744,9 +2907,13 @@ scrolling up) — the bar on top never covers the conversation (only its opened 
 over the conversation's top, and only while she reads them); a
 quiet line names the day where a new one starts (never how many days passed) — what Buddy did
 stands under its message as **one receipt for the turn**, not one line per action, and only the
-newest step she can still take back carries "Rückgängig" (issue #204: two things done in one
+newest step she can still take back carries a way back (issue #204: two things done in one
 answer were two ticks, two sentences and two buttons — "vier Statuszeilen für zwei Dinge, die
-sie getan hat"). Nothing is lost with the buttons that went: a tap or a long press on a receipt
+sie getan hat"). That way back is a small round arrow at the end of the receipt's own line, not
+a pill of its own under it (issue #295: "kein großer fetter button"): `<Btn iconOnly
+icon="undo">` (`components/lb/Btn.tsx`), a 24 pt circle in the secondary ink with a 44 pt
+target, named "Rückgängig: <what>", a tap takes the step back without asking, and while that
+runs the arrow is a spinner in the same place. Nothing is lost with the buttons that went: a tap or a long press on a receipt
 opens everything that can still be taken back, newest first, each with its own way back
 (`components/buddy/UndoSheet.tsx`) — undo over confirmation stays whole
 (`docs/UX-PRINCIPLES.md`). History is the record of the single steps and keeps a line and a
@@ -2769,9 +2936,25 @@ account's e-mail (DESIGN-BRIEF §Onboarding); there is no age check beyond the b
 Once the profile exists, one last short step for everyone (after the hand-over for a child, so
 she picks it herself): "Wie soll Buddy klingen?" — four voices, a tap plays a sample and picks
 it, "Warm" is already chosen so "Weiter" is always possible (ADR 0008 §Amendment).
-The practice screen pins the question (with its drawing scaled to fit) on top and the way to
-answer at the bottom; only the conversation about the question scrolls between them; short
-options sit two by two.
+The practice screen (issue #286) stands the question (with its drawing scaled to fit), the
+conversation about it and the way to answer together at the top, in that order; the free room
+collects BELOW the way to answer (`components/practice/FreeSpace.tsx`), above what is pinned
+(the answer field, "Prüfen", "Weiter"). Before, the conversation took all free room and the way
+to answer sat at the bottom, which left a hole under the card with a lonely "Tipp" in it. The
+conversation shows WHOLE turns only (`threadCap` in `app/practice/[id].tsx`): everything when it
+fits into its box plus the free room, otherwise from the earliest turn whose rest still fits,
+so at rest the top edge lies in the gap above a whole turn and nothing is cut under the card.
+Earlier turns are a scroll up away; the edge is masked exactly when the box holds more than it
+shows, with a short fade over that gap at rest and the full EDGE_FADE (#63) once she scrolls up
+or when the newest turn alone does not fit. Over an open structured board the newest turn keeps
+its full height and the board scrolls inside itself; with nothing else that can give (choices, a
+field, the voice bar) a drawing or photo in the card gives room first, its cap lowered by up to
+48 pt (`CARD_GIVES`, never below figureScale's legible minimum), and only what is still missing
+is cut from the newest turn under the full fade rather than pushing the bar off the screen. Before the first turn the conversation is only the hint row; at the
+largest board it gives way whole rather than half. A card with a drawing or photo still grows
+into what the conversation leaves (#96, `cardGrowTo`, at most half the window, its own height
+measured per question and window size), and a new reply or a taller bar below (the voice bar)
+takes its room back from the card first — the overrun past the column or the window counts. Short options sit two by two.
 Level and grade are learned in the conversation (the profile has no grade field: Buddy asks when
 the level is unknown and it matters for the next step — `context.ts`, `set_level`).
 
@@ -3055,7 +3238,9 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   Migrations are therefore **additive only** — new tables, new columns with defaults, widened
   constraints; never a drop or rename that yesterday's code would trip over. A column that must
   go is stopped being written first and removed in a later release, when no deployed code reads
-  it. After applying migrations, the Supabase advisors are run once (security + performance —
+  it. Pending: `items.parts_task` (migration 0072) has been dead since #224 replaced it with
+  `items.task`; it is dropped in the next release, with the next free migration number. After
+  applying migrations, the Supabase advisors are run once (security + performance —
   issue #72); RLS-without-policy INFO lines are the deliberate design, anything new is triaged.
 - A dev build on a phone that talks to a real backend names its host on screen
   (`components/lb/DevHostNote.tsx`, dev builds only — issue #79: a test run on real data must
@@ -3087,7 +3272,12 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   practice is matched the same way** (`scenarios/generations.ts`): the generation request carries
   what was asked for, so a spec asking for fractions can never get the set meant for another —
   the queue drifted as soon as Buddy began preparing an offer in the background (#48), because
-  _when_ a generation happens then depends on timing. The remaining purposes (tutor, hints,
+  _when_ a generation happens then depends on timing. **Buddy's own checks** too
+  (`scenarios/checks.ts`): a check answers by its STATE and TRIGGERS — the core loop acts only
+  on its own worksheet being ready and waits only after its own test's practice; every other
+  check stays unscripted and gets the check's fixed fallback — because every spec that finishes
+  a practice wakes Buddy, and `charts.spec.ts`, running first, once took the core loop's queued
+  "prepare a practice" (PR #303). The remaining purposes (tutor, hints,
   reading a photographed sheet) answer by rule or from a queue, so the walkthrough is still run
   **as a whole** — a single spec on its own gets the answers meant for the run (issue #81).
   A run started right after another waits for the previous run's ports to be free

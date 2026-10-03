@@ -132,9 +132,9 @@ describe.skipIf(!dbReady)('die Notenzeile', () => {
       // ihn abzulesen IST die Aufgabe; was sie nicht enthält, ist ein Feld mit der Antwort darin.
       expect(si.answer).toBeNull();
       expect(JSON.stringify(si.item.figure)).not.toContain('"answer"');
-      // Angetippt wird hier, nicht geschrieben: keine Fläche, kein Brett.
+      // Angetippt wird hier, nicht geschrieben: keine Fläche, nichts zum Anordnen.
       expect(si.item.surface).toBeNull();
-      expect(si.item.board).toBeNull();
+      expect(si.item.task_view).toBeNull();
     }
     // Die gespeicherte Aufgabe ist die EINE Quelle: ein Test rechnet aus ihr nach.
     const rows = await env.db.query<{ answer: string; staff_task: StaffTask; figure: unknown }>(

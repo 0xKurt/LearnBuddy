@@ -37,9 +37,20 @@ function reachable(root: z.ZodTypeAny): z.ZodTypeAny[] {
   return [...seen];
 }
 
+/**
+ * The one exception, by identity: the `type` tag of a structured answer (`AnswerRequest.parts`,
+ * issues #228–#230). It names the shape of the parts she arranged for the question in front of
+ * her, not a form she picks — the server compares it with the stored task's kind and rejects a
+ * mismatch (apps/api/src/modules/practice/structured.ts, `checkStructured` returns null), so no tag chooses one.
+ */
+const ANSWER_TAGS = new Set<z.ZodTypeAny>(
+  contracts.StructuredAnswer.options.map((o) => o.shape.type),
+);
+
 /** Does this schema let the sender pick a form? */
 function namesAForm(s: z.ZodTypeAny): boolean {
   if (s === ItemKind) return true;
+  if (ANSWER_TAGS.has(s)) return false;
   if (s instanceof z.ZodEnum) {
     const options = s.options as readonly string[];
     return options.length > 0 && options.every((o) => FORMS.includes(o));

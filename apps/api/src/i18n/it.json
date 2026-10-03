@@ -75,18 +75,6 @@
     "not_quite": "Non ancora del tutto. Riguarda la domanda – oppure mostra la soluzione.",
     "not_transformed": "È equivalente – ma è scritto esattamente come nel testo. Trasformalo ancora.",
     "one_way_intro": "Un modo per affrontarlo – uno, non il solo:",
-    "parts": {
-      "order_prefix": "Fino al passo {{step}} va tutto bene. Guarda di nuovo il passo {{next}}.",
-      "pairs_held": "{{held}} coppie su {{total}} sono già giuste. Riprova con le altre.",
-      "pairs_place": "{{held}} coppie su {{total}} sono giuste. Guarda di nuovo «{{piece}}».",
-      "groups_held": "{{held}} su {{total}} sono al posto giusto. Riprova con gli altri.",
-      "groups_place": "{{held}} su {{total}} sono al posto giusto. Guarda di nuovo «{{piece}}».",
-      "cells_held": "{{held}} caselle su {{total}} sono giuste. Riprova con le altre.",
-      "cells_place": "{{held}} caselle su {{total}} sono giuste. Guarda di nuovo {{cell}}.",
-      "cell_named": "{{column}} a «{{row}}»",
-      "cell_column": "{{column}} nella riga {{row}}",
-      "cell_numbered": "colonna {{column}}, riga {{row}}"
-    },
     "reexplain": {
       "simpler": "Più semplice, per favore",
       "example": "Con un esempio, per favore",
@@ -226,7 +214,44 @@
     "unbalanced_mass": "Quasi – i numeri di massa non corrispondono ancora: {{left}} a sinistra, {{right}} a destra.",
     "unbalanced_atomic": "Quasi – i numeri atomici non corrispondono ancora: {{left}} a sinistra, {{right}} a destra.",
     "untitled": "Esercizio",
-    "worked_intro": "Guarda, si fa così:"
+    "worked_intro": "Guarda, si fa così:",
+    "order": {
+      "first_wrong": "Non ancora del tutto: guarda di nuovo cosa viene per primo.",
+      "right_until": "Fino al passo {{right}} è giusto! Dal passo {{from}} in poi l'ordine non è ancora del tutto giusto."
+    },
+    "table": {
+      "right": "{{count}} caselle su {{total}} sono giuste.",
+      "right_one": "1 casella su {{total}} è giusta.",
+      "look_one": "Guarda di nuovo {{cell}}.",
+      "near_one": "A {{cell}} manca solo un piccolo dettaglio.",
+      "look_many": "Guarda di nuovo {{cells}}.",
+      "look_more": "Guarda di nuovo {{cells}} e altre {{more}}.",
+      "none_right": "Nessuna casella è ancora giusta: inizia da {{cell}}.",
+      "cell": "«{{row}}» / «{{column}}»",
+      "cell_in_column": "riga {{row}}, colonna «{{column}}»",
+      "cell_at": "riga {{row}}, colonna {{column}}",
+      "brick": "fila {{row}}, mattone {{n}}",
+      "and": "e",
+      "almost": "Ci sei quasi!",
+      "near_many": "A {{cells}} manca solo un piccolo dettaglio ciascuna.",
+      "near_more": "A {{cells}} e ad altre {{more}} manca solo un piccolo dettaglio ciascuna."
+    },
+    "match": {
+      "pairs_some": "{{count}} coppie su {{total}} sono già giuste.",
+      "pairs_some_one": "1 coppia su {{total}} è già giusta.",
+      "pairs_none": "Nessuna coppia va ancora bene – guardale di nuovo con calma.",
+      "groups_some": "{{count}} su {{total}} sono già nel gruppo giusto.",
+      "groups_some_one": "1 su {{total}} è già nel gruppo giusto.",
+      "groups_none": "Nessuno è ancora nel gruppo giusto – guarda di nuovo con calma.",
+      "look_at": "Guarda di nuovo «{{text}}»."
+    },
+    "chart": {
+      "pyramid": "Piramide",
+      "bell": "Campana",
+      "urn": "Urna",
+      "humid": "Umido",
+      "arid": "Arido"
+    }
   },
   "contact": {
     "less_often": "Va bene: d'ora in poi ti scrivo sul telefono solo quando è davvero importante. Tutto il resto ti aspetta qui. Puoi cambiarlo nelle impostazioni."

@@ -76,6 +76,15 @@ If a change diverges from these docs, update the doc in the same change or write
     (`packages/shared-types/src/contracts/__tests__/forms.test.ts`); Buddy or code picks the form.
     Every PR names the USP point it serves (`docs/buddy/01-prinzip-und-diagnose.md` §1.1).
 
+17. **Look at your own screenshots like a designer before you submit UI** (issue #287). Passing
+    gates is not the bar; looking good is. Whoever builds or changes a screen runs the
+    walkthrough, looks at every affected shot at 360×740 and 390×844, light and dark, and
+    critiques it honestly: empty voids, a title on two lines, clipped or doubled elements,
+    a new card style or accent where an existing one would do, small grey noise, a hard edge
+    where something scrolls under a bar. Then revise and shoot again. The PR carries a
+    before/after image (same screen, old next to new) — no UI change is handed to the owner
+    without one. Screen titles in a header stay on one line (`components/lb/Screen.tsx`).
+
 ## Required quality gates
 
 Run after every change (the pre-commit hook enforces them — never `--no-verify`):

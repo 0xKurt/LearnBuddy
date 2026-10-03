@@ -35,6 +35,7 @@ import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { StorageError } from '../../storage/gateway.js';
 import { insertItems, samePrompt, storedFigure, usableItems } from '../practice/items.js';
+import { structuredItems } from '../practice/structured.js';
 import { createSession, subjectKindOf } from '../practice/service.js';
 import {
   clarifiedRules,
@@ -63,6 +64,9 @@ import {
 import { attachConceptImages } from './images.js';
 import { indexMaterialPassages } from './passages.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
+
+/** The structured kinds a sheet may give (#228 an order, #230 a table, #229 links to make). */
+const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order', 'table_fill', 'match']);
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
 const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
@@ -907,7 +911,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     // continued; a reading that had to go lean is already at the model's limit.
     if (!homework && result.success) {
       for (let pass = 1; pass < MOST_READINGS && result.data.more_items; pass++) {
-        const seen = result.data.items.map((it) => it.prompt);
+        const seen = [...result.data.items, ...result.data.structured].map((it) => it.prompt);
         let next;
         try {
           next = await read(lean, seen);
@@ -921,8 +925,11 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
         if (!parsed.success) break;
         const known = new Set(seen.map(samePrompt));
         const fresh = parsed.data.items.filter((it) => !known.has(samePrompt(it.prompt)));
+        const freshStructured = parsed.data.structured.filter(
+          (it) => !known.has(samePrompt(it.prompt)),
+        );
         // No progress: stop rather than ask a fourth time for the same nothing.
-        if (fresh.length === 0) {
+        if (fresh.length === 0 && freshStructured.length === 0) {
           result = { success: true, data: { ...result.data, more_items: false } } as typeof result;
           break;
         }
@@ -935,6 +942,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           data: {
             ...result.data,
             items: [...result.data.items, ...fresh],
+            structured: [...result.data.structured, ...freshStructured],
             more_items: parsed.data.more_items,
             not_practicable: [
               ...result.data.not_practicable,
@@ -964,8 +972,12 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   if (!result.success) return fail(deps, job, materialId, 'model_error');
   const x = result.data;
   if (!x.is_learning_material) return fail(deps, job, materialId, 'not_learning_material');
-  // Homework help is given task by task; a board is not one of its forms (issues #228–#230).
-  const items = usableItems(x.items, { severalParts: !homework });
+  // The ordinary questions, and after them the structured ones that pass Regel 0 (#228–#230):
+  // an order, a table or links to make, each checked by code before it is stored.
+  const items = [
+    ...usableItems(x.items),
+    ...structuredItems(x.structured, SHEET_STRUCTURED, x.structured.length),
+  ];
   const pageProblems = pageProblemsOf(x.pages, m.photo_count);
   // "Not readable" with questions and a page that was read: one bad page must not
   // cost the whole sheet (the model says so for a cut-off page at times); the
@@ -984,7 +996,12 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // Questions were written but none passed validation: the reading went wrong, not the
   // photo — no lighting advice for a fine photo (empty-after-validation-says-unreadable).
   if (items.length === 0)
-    return fail(deps, job, materialId, x.items.length > 0 ? 'model_error' : 'unreadable');
+    return fail(
+      deps,
+      job,
+      materialId,
+      x.items.length + x.structured.length > 0 ? 'model_error' : 'unreadable',
+    );
 
   // The sheet this run's questions went onto (the merge target, else this material);
   // null when another run finished first or the sheet was deleted meanwhile.
@@ -1543,9 +1560,7 @@ async function runClarifiedReading(deps: Deps, job: JobRow, spotId: string): Pro
     throw err;
   }
   const fresh = parsed.success
-    ? usableItems(parsed.data.items, { severalParts: !homework }).filter(
-        (it) => !known.has(samePrompt(it.prompt)),
-      )
+    ? usableItems(parsed.data.items).filter((it) => !known.has(samePrompt(it.prompt)))
     : [];
 
   await deps.db.tx(async (tx) => {
@@ -1947,9 +1962,9 @@ export async function materialItems(
       // Same for the fraction bar (issue #162): a surface is something she works WITH on
       // an open question, not a control in a list of what the sheet holds.
       surface: null,
-      // And the same for a board (issues #228–#230): the list says what the sheet asks, and
-      // arranging it belongs to the session where the answer counts.
-      board: null,
+      // And for a structured item's parts (issues #228–#230): the list says what the sheet
+      // asks, and arranging it belongs to the session where the answer counts.
+      task_view: null,
       // A sheet holds no listening question: a spoken text comes from a listening run, never
       // from a photo (issue #210, `practice/listen.ts`). Nothing to play here either way — the
       // recording belongs to a session, like the crop and the bar above.

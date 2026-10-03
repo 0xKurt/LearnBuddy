@@ -73,9 +73,9 @@ describe('keysFor: what the question needs, chosen from the question', () => {
   });
 
   it('gives a table gap with a whole number no row (#286 finding 5)', () => {
-    expect(cellKeys('number', true)).toEqual([]);
-    expect(cellKeys('word', false)).toEqual([]);
-    expect(cellKeys('number', false)).toEqual(['decimal', 'fraction', 'minus']);
+    expect(cellKeys('math', true)).toEqual([]);
+    expect(cellKeys('text', false)).toEqual([]);
+    expect(cellKeys('math', false)).toEqual(['decimal', 'fraction', 'minus', 'power', 'brackets']);
   });
 });
 

@@ -75,18 +75,6 @@
     "not_quite": "Not quite yet. Have another look at the question – or show the solution.",
     "not_transformed": "Equivalent – but that's exactly how the task already writes it. Transform it a bit further.",
     "one_way_intro": "Here's one way to go about it – one way, not the only one:",
-    "parts": {
-      "order_prefix": "Everything is right up to step {{step}}. Have another look at step {{next}}.",
-      "pairs_held": "{{held}} of {{total}} pairs are right already. Try the others again.",
-      "pairs_place": "{{held}} of {{total}} pairs are right. Have another look at “{{piece}}”.",
-      "groups_held": "{{held}} of {{total}} are in the right place. Try the others again.",
-      "groups_place": "{{held}} of {{total}} are in the right place. Have another look at “{{piece}}”.",
-      "cells_held": "{{held}} of {{total}} cells are right. Try the others again.",
-      "cells_place": "{{held}} of {{total}} cells are right. Have another look at {{cell}}.",
-      "cell_named": "{{column}} at “{{row}}”",
-      "cell_column": "{{column}} in row {{row}}",
-      "cell_numbered": "column {{column}}, row {{row}}"
-    },
     "reexplain": {
       "simpler": "Simpler, please",
       "example": "With an example, please",
@@ -226,7 +214,44 @@
     "unbalanced_mass": "Almost – the mass numbers don't match yet: {{left}} on the left, {{right}} on the right.",
     "unbalanced_atomic": "Almost – the atomic numbers don't match yet: {{left}} on the left, {{right}} on the right.",
     "untitled": "Practice",
-    "worked_intro": "Here's how it works:"
+    "worked_intro": "Here's how it works:",
+    "order": {
+      "first_wrong": "Not quite yet – have another look at what comes first.",
+      "right_until": "Right up to step {{right}}! From step {{from}} on, the order isn't quite there yet."
+    },
+    "table": {
+      "right": "{{count}} of {{total}} cells are right.",
+      "right_one": "1 of {{total}} cells is right.",
+      "look_one": "Have another look at {{cell}}.",
+      "near_one": "Only a tiny detail is missing at {{cell}}.",
+      "look_many": "Have another look at {{cells}}.",
+      "look_more": "Have another look at {{cells}} and {{more}} more.",
+      "none_right": "None of the cells is right yet – best start with {{cell}}.",
+      "cell": "“{{row}}” / “{{column}}”",
+      "cell_in_column": "row {{row}}, column “{{column}}”",
+      "cell_at": "row {{row}}, column {{column}}",
+      "brick": "row {{row}}, brick {{n}}",
+      "and": "and",
+      "almost": "Nearly there!",
+      "near_many": "Only a tiny detail is missing at {{cells}}.",
+      "near_more": "Only a tiny detail is missing at {{cells}} and {{more}} more."
+    },
+    "match": {
+      "pairs_some": "{{count}} of {{total}} pairs are already right.",
+      "pairs_some_one": "1 of {{total}} pairs is already right.",
+      "pairs_none": "None of the pairs fits yet – take another calm look.",
+      "groups_some": "{{count}} of {{total}} are already in the right group.",
+      "groups_some_one": "1 of {{total}} is already in the right group.",
+      "groups_none": "None is in the right group yet – take another calm look.",
+      "look_at": "Have another look at “{{text}}”."
+    },
+    "chart": {
+      "pyramid": "Pyramid",
+      "bell": "Bell",
+      "urn": "Urn",
+      "humid": "Humid",
+      "arid": "Arid"
+    }
   },
   "contact": {
     "less_often": "Got it – from now on I'll only message your phone when it really matters. Everything else waits here. You can change this in settings."

@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  ANSWER_FORM_RULES,
-  ItemDraft,
-  itemsOneByOne,
-  PARTS_FROM_SHEET,
-  PARTS_RULES,
-  usableItems,
-} from '../items.js';
+import { ANSWER_FORM_RULES, ItemDraft, usableItems } from '../items.js';
+import { MATCH_RULES, ORDER_RULES } from '../structured.js';
+import { TABLE_RULES } from '../table.js';
 
 const draft = (over: Record<string, unknown>) =>
   ItemDraft.parse({
@@ -142,105 +137,26 @@ describe('a multiple-choice question whose shape contradicts itself (#227)', () 
   });
 });
 
-describe('usableItems: an answer with several parts (issues #228–#230)', () => {
-  const task = { form: 'order', elements: ['Samen quillt auf', 'Wurzel wächst', 'Blatt wächst'] };
-  const order = (over: Record<string, unknown> = {}) =>
-    draft({
-      kind: 'order',
-      prompt: 'Bring die Schritte der Keimung in die richtige Reihenfolge.',
-      // A key the model wrote: it is never used — the solution is computed from the task.
-      answer: 'irgendwas',
-      topic: 'Pflanzen',
-      parts_task: task,
-      ...over,
-    });
+describe('how a structured task is asked for (issues #228–#230)', () => {
+  const RULES = [ORDER_RULES, TABLE_RULES, MATCH_RULES];
 
-  it('computes the solution from the task and throws the written key away', () => {
-    const [item] = usableItems([order()]);
-    expect(item).toMatchObject({
-      kind: 'order',
-      answer: 'Samen quillt auf → Wurzel wächst → Blatt wächst',
-      accepted_answers: [],
-      choices: null,
-      unit: null,
-      spelling: null,
-    });
-  });
-
-  it('drops the question when there is no task to ask', () => {
-    expect(usableItems([order({ parts_task: null })])).toEqual([]);
-  });
-
-  it('drops the question when the task has more than one right answer', () => {
-    const twice = { form: 'order', elements: ['Wurzel wächst', 'Blatt', 'wurzel wächst'] };
-    expect(usableItems([order({ parts_task: twice })])).toEqual([]);
-  });
-
-  // Deriving the kind from the task would turn a question whose own text asks for an order into
-  // a pairing exercise; repairing the task from the kind is not possible at all. So a
-  // disagreement drops the question, like every other shape that does not hold together.
-  it('drops the question when the kind and the task disagree', () => {
-    const pairs = {
-      form: 'match_pairs',
-      pairs: [
-        { left: 'Lunge', right: 'Gasaustausch' },
-        { left: 'Herz', right: 'Blut pumpen' },
-        { left: 'Niere', right: 'Blut filtern' },
-      ],
-    };
-    expect(usableItems([order({ parts_task: pairs })])).toEqual([]);
-  });
-
-  it('keeps a task off every other kind, the way choices stay off every non-choice', () => {
-    const [item] = usableItems([draft({ parts_task: task })]);
-    expect(item).toMatchObject({ kind: 'short', parts_task: null });
-  });
-
-  it('leaves homework alone: there the task is the one she brought', () => {
-    expect(usableItems([order()], { severalParts: false })).toEqual([]);
-    expect(usableItems([draft({})], { severalParts: false })).toHaveLength(1);
-  });
-
-  it('does not lose the question over the unused key the schema still asks for', () => {
-    // The schema wants a non-empty `answer` for every kind. A reading that correctly left it
-    // out for one of these three must not lose its question over a field nothing reads, so
-    // `clipDraft` fills it in and `usableItems` overwrites it.
-    const [read] = itemsOneByOne(ItemDraft, 5).parse([
-      {
-        kind: 'order',
-        prompt: 'Bring die Schritte der Keimung in die richtige Reihenfolge.',
-        accepted_answers: [],
-        unit: null,
-        choices: null,
-        correct_choice: null,
-        topic: 'Pflanzen',
-        difficulty: 2,
-        source_excerpt: null,
-        parts_task: task,
-      },
-    ]);
-    expect(read).toBeDefined();
-    const [item] = usableItems(read ? [read] : []);
-    expect(item?.answer).toBe('Samen quillt auf → Wurzel wächst → Blatt wächst');
-  });
-});
-
-describe('how a printed task keeps its form (issues #228–#230)', () => {
-  it('tells extraction, and only extraction, that the instruction decides', async () => {
+  it('goes to every prompt that writes questions, homework included', async () => {
     const { EXTRACT_SYSTEM, HOMEWORK_SYSTEM } = await import('../../materials/extract.js');
     const { GENERATE_SYSTEM } = await import('../generate.js');
-    expect(EXTRACT_SYSTEM).toContain(PARTS_FROM_SHEET);
-    expect(EXTRACT_SYSTEM).toContain(PARTS_RULES);
-    expect(GENERATE_SYSTEM).toContain(PARTS_RULES);
-    // Homework help has no boards: the task is the one she brought.
-    expect(HOMEWORK_SYSTEM).not.toContain(PARTS_RULES);
-    expect(HOMEWORK_SYSTEM).not.toContain(PARTS_FROM_SHEET);
+    for (const rules of RULES) {
+      expect(EXTRACT_SYSTEM).toContain(rules);
+      // A sheet she brought for help keeps its form: an ordering task stays one (with hints).
+      expect(HOMEWORK_SYSTEM).toContain(rules);
+      expect(GENERATE_SYSTEM).toContain(rules);
+    }
   });
 
   it('says it in categories, with no sample instruction in any language', () => {
-    for (const rules of [PARTS_RULES, PARTS_FROM_SHEET]) {
-      expect(rules).not.toMatch(/[äöüßÄÖÜ]|„|“|»|«/);
-    }
+    for (const rules of RULES) expect(rules).not.toMatch(/[äöüßÄÖÜ]|„|“|»|«/);
+  });
+
+  it('is never an ordinary item: the model cannot write an order as text', () => {
+    expect(ItemDraft.safeParse({ ...draft({}), kind: 'order' }).success).toBe(false);
   });
 });
 
