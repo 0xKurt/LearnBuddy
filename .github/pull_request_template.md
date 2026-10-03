@@ -9,6 +9,9 @@
 - [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test` grün
 - [ ] Walkthrough grün (`scripts/web-walkthrough.sh`) — bei UI-Änderungen mit Screenshots 360×740 und 390×844
 - [ ] Neue Route? Eintrag mit Begründung in `ROUTES` (`apps/mobile/lib/__tests__/minimalism.test.ts`)
+- [ ] **Bibliotheks-Check:** <!-- Neuer Darstellungs-, Interaktions- oder Infrastruktur-Baustein? Issue mit Check (Lizenz, React-Native-Weg, Größe, Pflege, A11y) verlinken — oder „keiner“. Eigenbau nur mit Begründung (CLAUDE.md Engineering-Regel 1). -->
+- [ ] **Kohärenz: verwandte Screens verglichen** <!-- Welche Screens daneben gelegt (gleiche Position, gleiche Aktion, gleiche Abstände)? Bilder 360×740 und 390×844. Engineering-Regel 6 und 10. -->
+- [ ] Ausnahmelisten (`tools/guards/baselines/`) nicht gewachsen — oder Zuwachs begründet (`Ausnahmeliste-Zuwachs: #… …`)
 
 ## Nicht geprüft
 

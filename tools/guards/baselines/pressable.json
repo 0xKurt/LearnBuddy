@@ -1,0 +1,17 @@
+{
+  "$comment": "Ausnahmeliste zu Regel 13/2 (Aktionen nur über <Btn>, Issue #313): Dateien außerhalb components/lb, die heute rohes Pressable/Touchable* importieren. Darf nur schrumpfen. Siehe docs/engineering-guards.md.",
+  "files": [
+    "apps/mobile/app/buddy.tsx",
+    "apps/mobile/components/buddy/AttachStrip.tsx",
+    "apps/mobile/components/buddy/Conversation.tsx",
+    "apps/mobile/components/buddy/Header.tsx",
+    "apps/mobile/components/buddy/SlimBar.tsx",
+    "apps/mobile/components/math/MathKeys.tsx",
+    "apps/mobile/components/practice/FractionBarAnswer.tsx",
+    "apps/mobile/components/practice/StaffAnswer.tsx",
+    "apps/mobile/components/voice/MicButton.tsx",
+    "apps/mobile/components/voice/TalkButton.tsx",
+    "apps/mobile/components/voice/TalkOrb.tsx",
+    "apps/mobile/components/voice/VoiceModeToggle.tsx"
+  ]
+}

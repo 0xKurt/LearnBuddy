@@ -1,0 +1,23 @@
+{
+  "$comment": "Zeichenkomponenten (Engineering-Regel 1, Issue #313): jede Datei in apps/mobile/components/math, in einem Ordner `figures` und jede Komponente in app/ oder components/, die react-native-svg nutzt, steht hier — mit dem Issue, in dem der Bibliotheks-Check steht (Lizenz, React-Native-Weg, Größe, Pflege, A11y). Eine neue Datei ohne Eintrag macht `pnpm lint` rot (tools/guards/guards.test.mjs). `bestand` ist der Stand vor der Regel: ungeprüft, darf nur schrumpfen. Neues kommt nur nach `geprueft`. Siehe docs/engineering-guards.md.",
+  "bestand": {
+    "apps/mobile/components/math/ChartFigures.tsx": "Diagramme selbst gezeichnet; Prüfung Victory Native / gifted-charts offen in #312",
+    "apps/mobile/components/math/FigureView.tsx": "Graphen und Geometrie selbst gezeichnet; Prüfung JSXGraph / Mafs / function-plot offen in #312",
+    "apps/mobile/components/math/MathKeys.tsx": "Formel-Tastenreihe; Prüfung offen in #311 (eine Tastenreihe)",
+    "apps/mobile/components/math/MathText.tsx": "eigener Formelsatz; Prüfung KaTeX / MathJax offen in #312",
+    "apps/mobile/components/math/MoleculeView.tsx": "eigenes Molekül-Layout; Prüfung SmilesDrawer / RDKit.js offen in #312",
+    "apps/mobile/components/math/StaffLine.tsx": "eigene Notenzeile; Prüfung VexFlow / abcjs offen in #312",
+    "apps/mobile/components/math/TypedMathPreview.tsx": "Vorschau über MathText; hängt an der Formelsatz-Prüfung in #312",
+    "apps/mobile/components/math/ZoomableFigure.tsx": "Zoom-Hülle um Figuren; Prüfung offen in #312",
+    "apps/mobile/components/math/figureText.tsx": "Text in Figuren-SVG; hängt an den Figuren-Prüfungen in #312",
+    "apps/mobile/components/math/useSpokenMath.ts": "Screenreader-Form von Formeln; hängt an der Formelsatz-Prüfung in #312",
+    "apps/mobile/components/lb/BuddyOrb.tsx": "Buddys Orb (Markenzeichen, Owner-Entscheidung 27.09.); Bibliotheks-Check nie gemacht (#313)",
+    "apps/mobile/components/lb/EdgeFade.tsx": "Verlauf am Rand der Unterhaltung; Bibliotheks-Check nie gemacht (#313)",
+    "apps/mobile/components/lb/Glow.tsx": "Hintergrundlicht; Bibliotheks-Check nie gemacht (#313)",
+    "apps/mobile/components/lb/Icon.tsx": "eigener Icon-Satz; Prüfung gegen eine Icon-Bibliothek nie gemacht (#313)",
+    "apps/mobile/components/lb/Skeleton.tsx": "Lade-Platzhalter; Bibliotheks-Check nie gemacht (#313)",
+    "apps/mobile/components/practice/Verdict.tsx": "Urteils-Chip mit gezeichnetem Haken; Bibliotheks-Check nie gemacht (#313)",
+    "apps/mobile/components/voice/TalkOrb.tsx": "Orb im Sprechmodus; Bibliotheks-Check nie gemacht (#313)"
+  },
+  "geprueft": {}
+}

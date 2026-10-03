@@ -177,6 +177,14 @@ export async function shot(
  */
 /** How tall one tagged part of a screen is, recorded so slimming stays measured (#64). */
 export async function partHeight(page: Page, testId: string, name: string): Promise<number> {
+  // Measured once the page stands still. A theme switch remounts the whole tree (ThemeProvider
+  // `key`, issues #84/#148) about 100 ms after `emulateMedia` returns. Measured right after the
+  // switch, the part read 0 pt in 2 of 4 runs in CI order — the intermittent "figure 0pt" of
+  // modes.spec (CI run 37094324242) — most likely because the element `isVisible` saw was
+  // replaced before `boundingBox` read it. The app is not at fault: watched with a
+  // MutationObserver over the same switch, every committed frame has the figure, the new tree's
+  // first at its 60 pt frame and the next at full size.
+  await settle(page);
   const part = page.getByTestId(testId);
   if (!(await part.isVisible())) return 0;
   const box = await part.boundingBox();
