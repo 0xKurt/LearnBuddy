@@ -45,7 +45,8 @@
     "set_contact_days": "nunca estos días: {{days}}",
     "request_material_undone": "No hace falta foto: {{title}}",
     "set_voice": "Mi voz: {{voice}}, {{speed}}",
-    "forget_all": "He olvidado todo lo que sabía de ti ({{count}})"
+    "forget_all": "He olvidado todo lo que sabía de ti ({{count}})",
+    "offer_drill": "Propuesto: cálculo mental – «{{text}}»"
   },
   "area": {
     "library": "Tu material",

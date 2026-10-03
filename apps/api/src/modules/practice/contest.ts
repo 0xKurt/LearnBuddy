@@ -9,7 +9,8 @@ import type { Db } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
 import { bumpContext } from '../buddy/plan.js';
 import { CARD_PASS } from './cards.js';
-import { finishIfComplete, sessionView, type ItemRow, type SessionItemRow } from './service.js';
+import { DRILL_PASS } from './drill.js';
+import { sessionView, touchRun, type ItemRow, type SessionItemRow } from './service.js';
 import { changeSession } from './sessionRow.js';
 
 /**
@@ -24,58 +25,66 @@ export async function flagItem(
   sessionId: string,
   itemId: string,
 ): Promise<SessionView> {
-  await changeSession(deps, learnerId, sessionId, { active: false }, async (tx, s, now) => {
-    const si = await tx.maybeOne<
-      Pick<SessionItemRow, 'status' | 'flagged_at'> & {
-        origin: ItemRow['origin'];
-        archived_at: Date | null;
-      }
-    >(
-      `select si.status, si.flagged_at, i.origin, i.archived_at
+  await changeSession(
+    deps,
+    learnerId,
+    sessionId,
+    async (tx, s, now) => {
+      const si = await tx.maybeOne<
+        Pick<SessionItemRow, 'status' | 'flagged_at'> & {
+          origin: ItemRow['origin'];
+          archived_at: Date | null;
+        }
+      >(
+        `select si.status, si.flagged_at, i.origin, i.archived_at
          from session_items si join items i on i.id = si.item_id
         where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
         for update of si, i`,
-      [sessionId, itemId, learnerId],
-    );
-    if (!si) throw new AppError('not_found', 'Question not in this session');
-    if (si.flagged_at) return; // already taken out
-    if (s.status !== 'active') throw new AppError('conflict', 'Session has ended');
-    if (s.mode === 'help') {
-      throw new AppError('conflict', 'Homework tasks are not taken out', {
-        reason: 'flag_not_allowed',
-      });
-    }
-    if (s.mode === 'test') {
-      throw new AppError('conflict', 'Not while a test runs', { reason: 'flag_not_allowed' });
-    }
-    if (s.pass === CARD_PASS) {
-      // Her own words, chosen by the run before this one: there is no unfit question to
-      // take out here, and a card pass has no button for it.
-      throw new AppError('conflict', 'Cards are not taken out', { reason: 'flag_not_allowed' });
-    }
-    if (si.origin !== 'material' && si.origin !== 'buddy') {
-      throw new AppError('conflict', 'Only questions from a photo or from Buddy', {
-        reason: 'flag_not_allowed',
-      });
-    }
-    if (!si.archived_at) {
-      await tx.query(`update items set archived_at = $2 where id = $1`, [itemId, now]);
-    }
-    if (si.status === 'open') {
-      await tx.query(
-        `update session_items set status = 'skipped', flagged_at = $3, closed_at = $3
-          where session_id = $1 and item_id = $2`,
-        [sessionId, itemId, now],
+        [sessionId, itemId, learnerId],
       );
-    }
-    await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-      sessionId,
-      now,
-    ]);
-    await finishIfComplete(tx, learnerId, sessionId, now);
-    // Buddy's prepared practice and picture of her questions may include it.
-    await bumpContext(tx, learnerId);
-  });
+      if (!si) throw new AppError('not_found', 'Question not in this session');
+      if (si.flagged_at) return; // already taken out
+      if (s.status !== 'active') throw new AppError('conflict', 'Session has ended');
+      if (s.mode === 'help') {
+        throw new AppError('conflict', 'Homework tasks are not taken out', {
+          reason: 'flag_not_allowed',
+        });
+      }
+      if (s.mode === 'test') {
+        throw new AppError('conflict', 'Not while a test runs', { reason: 'flag_not_allowed' });
+      }
+      if (s.pass === CARD_PASS) {
+        // Her own words, chosen by the run before this one: there is no unfit question to
+        // take out here, and a card pass has no button for it.
+        throw new AppError('conflict', 'Cards are not taken out', { reason: 'flag_not_allowed' });
+      }
+      if (s.pass === DRILL_PASS) {
+        // Code wrote every task of a round from a closed range: there is no unfit one.
+        throw new AppError('conflict', 'Quick-round tasks are not taken out', {
+          reason: 'flag_not_allowed',
+        });
+      }
+      if (si.origin !== 'material' && si.origin !== 'buddy') {
+        throw new AppError('conflict', 'Only questions from a photo or from Buddy', {
+          reason: 'flag_not_allowed',
+        });
+      }
+      if (!si.archived_at) {
+        await tx.query(`update items set archived_at = $2 where id = $1`, [itemId, now]);
+      }
+      if (si.status === 'open') {
+        await tx.query(
+          `update session_items set status = 'skipped', flagged_at = $3, closed_at = $3
+          where session_id = $1 and item_id = $2`,
+          [sessionId, itemId, now],
+        );
+      }
+      await touchRun(tx, learnerId, sessionId, now);
+      // Buddy's prepared practice and picture of her questions may include it.
+      await bumpContext(tx, learnerId);
+    },
+    { active: false },
+  );
   return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
 }
 

@@ -131,6 +131,8 @@ export async function selectPracticeItems(
         where i.learner_id = $1 and i.archived_at is null and (m.id is null or m.archived_at is null)
           -- Homework is helped with, not drilled.
           and i.origin <> 'homework'
+          -- A Kopfrechnen fact belongs to its quick round, with its pad (issue #243).
+          and i.drill_fact is null
           -- Speaking needs a quiet moment the learner chooses: a spoken sentence never turns up
           -- inside a written run, and a run she asked to speak holds nothing else (issue #223
           -- point 2). One predicate, so the two can never both be true or both be false.

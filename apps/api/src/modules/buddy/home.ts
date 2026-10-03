@@ -597,7 +597,7 @@ async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<Acti
     created_at: Date;
   }>(
     `select id, status, result, undo, created_at from buddy_actions
-      where learner_id = $1 and created_at > $2 and tool not in ('offer_learning', 'open_area')
+      where learner_id = $1 and created_at > $2 and tool not in ('offer_learning', 'offer_drill', 'open_area')
       order by seq desc limit 12`,
     [learnerId, new Date(now.getTime() - DONE_WINDOW_MS)],
   );

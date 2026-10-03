@@ -1,0 +1,147 @@
+// Buddy's offers (docs/architecture.md §Tools): a button in the conversation that she starts with a
+// tap — something to learn (`offer_learning`) or a Kopfrechnen round (`offer_drill`, #243). They
+// change nothing; what code enforces is that the button can really start what it promises.
+
+import { DrillSpec } from '@learnbuddy/shared-types/contracts';
+
+import { titleOf } from '../practice/drill.js';
+import { fromLearnerText } from '../practice/generate.js';
+import { type ActionOf } from './decision.js';
+import { loadStandingOffers } from './state.js';
+import { holdsWordPairs, normalizeForMatch } from './text.js';
+import {
+  goalOf,
+  materialOf,
+  ToolRejection,
+  type ToolContext,
+  type ToolOutcome,
+} from './toolKit.js';
+
+export async function runOfferLearning(
+  action: ActionOf<'offer_learning'>,
+  ctx: ToolContext,
+): Promise<ToolOutcome> {
+  const a = action.args;
+  // Practice or a test for a planned test stays within its sheets (live finding 6): the goal
+  // the model named, or the one active goal whose title the offer names exactly.
+  const forGoal = a.kind === 'test' || a.kind === 'practice';
+  let goal = forGoal && a.goal ? goalOf(ctx, a.goal) : null;
+  if (forGoal && !goal) {
+    const named = [...ctx.aliases.goals.values()].filter(
+      (g) => g.status === 'active' && normalizeForMatch(g.title) === normalizeForMatch(a.text),
+    );
+    goal = named.length === 1 ? named[0]! : null;
+  }
+  // Two of the five kinds are a button over CONTENT, not over a topic, and the generator says so
+  // itself: `vocab` makes one question per pair the text holds and sets usable = false when it
+  // holds none; `help` keeps only tasks whose words are in the text it was given
+  // (practice/generate.ts: TASK.vocab, TASK.help, fromLearnerText). So an offer of those kinds
+  // whose text NAMES the content instead of being it can never start. It still reaches the chat,
+  // she taps it, and the card replaces "Let's go" with "I can't prepare anything from that,
+  // sorry" under a reply that says the practice is ready (issue #196). Reproduced on every live
+  // run: the text was the sheet's own title, "French vocabulary Unité 3", and the tap came back
+  // 422 not_usable.
+  //
+  // So the floor is each generator's own precondition, enforced one step earlier where the model
+  // can still be told — never something stricter than the thing it protects:
+  //   vocab — the text has to BE a list of pairs (text.ts holdsWordPairs: structure, no language
+  //           in it). Where the pairs come from is not the question: she may have typed them, or
+  //           Buddy may have copied them off her sheet to ask them in one direction (#113).
+  //   help  — the task has to be in her own words, which is exactly what the generator keeps.
+  if (a.kind === 'vocab' && !holdsWordPairs(a.text)) {
+    throw new ToolRejection(
+      `"${a.text}" names a vocabulary list instead of being one, and questions are made from the pairs this text holds — so this button could not start anything. Either put the pairs themselves in "text" (one per line, "word – translation"), or, for a list on a sheet she photographed, use prepare_practice on that sheet with vocabulary_only.`,
+    );
+  }
+  // A Diktat of her sheet (issue #242): the sheet must be one of hers, and only a Diktat takes one —
+  // every other kind is about a topic or her text, and a sheet there would be silently ignored.
+  const sheet = a.kind === 'spelling_dictation' && a.sheet ? materialOf(ctx, a.sheet) : null;
+  if (a.kind === 'help' && !fromLearnerText(a.text, (ctx.learnerWords ?? []).join('\n'))) {
+    throw new ToolRejection(
+      `a help offer works on the task the learner wrote, so "text" must be their own words from this message — "${a.text}" names it instead, and hints cannot be made from a name. Without the task in the message, ask her to type or photograph it (no offer).`,
+    );
+  }
+  // One answer, one thing to tap. `prepare_practice` earlier in this same decision already made
+  // the card she asked for; an offer beside it is a second button for the same wish — at best
+  // redundant, and in the live run of 01.10. it was a refused one sitting under a reply that
+  // said the practice was ready (issue #196; left open as a known gap when #184 landed). The
+  // model gets the reason and answers again pointing at what it just prepared.
+  if (ctx.created.preparedStepId) {
+    throw new ToolRejection(
+      'you already prepared practice in this same answer — that is the one thing she taps. Leave this offer out and say in your reply where the practice you prepared is.',
+    );
+  }
+  // The same offer twice is not a second thing she can tap — the first button is still there,
+  // unstarted (issue #184). STATE says what stands, so this is the floor under the prompt, not
+  // the rule itself: only an offer identical in every field it carries is refused, with the
+  // reason, and the model answers again pointing at the one she already has.
+  const standing = await loadStandingOffers(ctx.db, ctx.learnerId, ctx.now);
+  const wanted = normalizeForMatch(a.text);
+  if (
+    standing.some(
+      (o) =>
+        o.kind === a.kind &&
+        normalizeForMatch(o.text) === wanted &&
+        o.goal_id === (goal?.id ?? null) &&
+        o.difficulty === (a.difficulty ?? null) &&
+        o.direction === (a.direction ?? null) &&
+        (o.material_id ?? null) === (sheet?.id ?? null),
+    )
+  ) {
+    throw new ToolRejection(
+      'you already offered exactly this and its button is still standing, unstarted — leave this action out and tell her where it is instead',
+    );
+  }
+  // Changes nothing: the learner starts it with a tap (the model never starts sessions).
+  return {
+    summary: {
+      tool: 'offer_learning',
+      kind: a.kind,
+      text: a.text,
+      goal_id: goal?.id ?? null,
+      material_id: sheet?.id ?? null,
+      // What she asked for beyond the topic; the tap hands it to the generator (issue #113).
+      // A direction only ever reaches vocabulary pairs — other questions have none.
+      difficulty: a.difficulty ?? null,
+      direction: a.direction ?? null,
+      // Nothing proves otherwise yet. The preparation that runs right after this (issue #48)
+      // is what can take it back, by stamping `cannot_start_at` (issue #196).
+      startable: true,
+    },
+    undo: null,
+  };
+}
+
+/**
+ * A Kopfrechnen round (issue #243). Like `offer_learning` it changes nothing — she starts it
+ * with a tap — but everything it can carry is a value from a closed list, and code checks the
+ * combination the model is not able to see in the schema alone: rows only for the tables,
+ * carry only where crossing the ten exists. The title is the server's, in her language.
+ */
+export async function runOfferDrill(
+  action: ActionOf<'offer_drill'>,
+  ctx: ToolContext,
+): Promise<ToolOutcome> {
+  const parsed = DrillSpec.safeParse(action.args);
+  if (!parsed.success) {
+    throw new ToolRejection(
+      `this range does not fit together (${parsed.error.issues.map((i) => i.message).join('; ')}) — rows only for times or divide, carry only for plus/minus within 20 or 100; leave the other null`,
+    );
+  }
+  const spec = parsed.data;
+  if (ctx.created.preparedStepId) {
+    throw new ToolRejection(
+      'you already prepared practice in this same answer — that is the one thing she taps. Leave this offer out.',
+    );
+  }
+  return {
+    summary: {
+      tool: 'offer_drill',
+      range: spec.range,
+      rows: spec.rows ? [...spec.rows].sort((a, b) => a - b) : null,
+      carry: spec.carry,
+      title: titleOf(spec, ctx.locale),
+    },
+    undo: null,
+  };
+}

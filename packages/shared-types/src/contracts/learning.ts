@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
+import { DrillView } from './drill.js';
 import { Figure } from './figure.js';
 import { ListenRef } from './listen.js';
 import { StructuredAnswer, StructuredTaskView } from './structured.js';
@@ -576,6 +577,12 @@ export const SessionView = z.object({
    * decides it, with the same rule that picks the cards — the app never re-derives it.
    */
   card_pass_offered: z.boolean().default(false),
+  /**
+   * A Kopfrechnen round (issue #243, `contracts/drill.ts`): tasks code wrote, a digit pad, one
+   * try each, checked at once. Null for every other session. A build that does not know a
+   * newer shape reads null rather than failing the whole session.
+   */
+  drill: DrillView.nullable().default(null).catch(null),
   /**
    * More questions for this run are still being written (issue #220): a practice run starts
    * with its first few questions and grows while she works, so for a few seconds `items` is

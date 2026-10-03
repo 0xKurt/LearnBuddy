@@ -248,5 +248,29 @@
     "brick": "fila {{row}}, mattone {{n}}",
     "check_waits": "Solo quando tutte le caselle sono compilate.",
     "scroll": "Tabella, scorre di lato"
+  },
+  "drill": {
+    "progress": "Calcolo {{current}} di {{total}}",
+    "end_hint": "Torna da Buddy. Quello che hai calcolato resta salvato.",
+    "typed": "La tua risposta: {{value}}",
+    "delete": "Cancella",
+    "slash": "Linea di frazione",
+    "right": "Giusto: {{task}}",
+    "was": "Era: {{task}}",
+    "right_short": "Giusto:",
+    "was_short": "Era:",
+    "done_title": "Fatto!",
+    "again": "Un altro giro",
+    "line": {
+      "better_times": "La tabellina del {{n}} ora va meglio.",
+      "better_divide": "Dividere per {{n}} ora va meglio.",
+      "better_range": "{{what}}: ora va meglio.",
+      "solid_times": "La tabellina del {{n}} la sai già bene.",
+      "solid_divide": "Dividere per {{n}} lo sai già bene.",
+      "solid_range": "{{what}}: lo sai già bene.",
+      "again_times": "Continuiamo con la tabellina del {{n}}.",
+      "again_divide": "Continuiamo con dividere per {{n}}.",
+      "again_range": "Continuiamo con {{what}}."
+    }
   }
 }

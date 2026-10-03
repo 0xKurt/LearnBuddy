@@ -248,5 +248,29 @@
     "brick": "rangée {{row}}, brique {{n}}",
     "check_waits": "Seulement quand toutes les cases sont remplies.",
     "scroll": "Tableau, défile sur le côté"
+  },
+  "drill": {
+    "progress": "Calcul {{current}} sur {{total}}",
+    "end_hint": "Retour à Buddy. Ce que tu as calculé reste enregistré.",
+    "typed": "Ta réponse : {{value}}",
+    "delete": "Effacer",
+    "slash": "Barre de fraction",
+    "right": "Juste : {{task}}",
+    "was": "C’était : {{task}}",
+    "right_short": "Juste :",
+    "was_short": "C’était :",
+    "done_title": "Bravo !",
+    "again": "Encore une manche",
+    "line": {
+      "better_times": "La table de {{n}} est mieux en place maintenant.",
+      "better_divide": "Diviser par {{n}} est mieux en place maintenant.",
+      "better_range": "{{what}} : c’est mieux en place maintenant.",
+      "solid_times": "La table de {{n}} est déjà bien en place.",
+      "solid_divide": "Diviser par {{n}} est déjà bien en place.",
+      "solid_range": "{{what}} : c’est déjà bien en place.",
+      "again_times": "On continue avec la table de {{n}}.",
+      "again_divide": "On continue avec diviser par {{n}}.",
+      "again_range": "On continue avec {{what}}."
+    }
   }
 }

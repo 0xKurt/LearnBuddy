@@ -52,6 +52,7 @@ import { toast } from '../../components/lb/Toast.js';
 import { useSpokenWords } from '../../components/math/useSpokenMath.js';
 import { AnswerComposer } from '../../components/practice/AnswerComposer.js';
 import { CardPass } from '../../components/practice/CardPass.js';
+import { DrillRound } from '../../components/practice/DrillRound.js';
 import { BottomBar } from '../../components/practice/BottomBar.js';
 import { ChoiceList, SpokenChoiceBar } from '../../components/practice/ChoiceList.js';
 import {
@@ -108,6 +109,7 @@ import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { questionParts } from '../../lib/practice/questionParts.js';
 import { answerForm } from '../../lib/practice/answerForm.js';
+import { useFinishWhenDone } from '../../lib/practice/finishWhenDone.js';
 import { useHeardTexts } from '../../lib/practice/heardTexts.js';
 import { boardKeeps, threadRoom } from '../../lib/practice/threadRoom.js';
 import { announce } from '../../lib/announce.js';
@@ -217,7 +219,6 @@ export default function PracticeScreen() {
   /** The pronunciation judgement while the model is still listening (issue #8). */
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
-  const [finishFailed, setFinishFailed] = useState(false);
   const [closing, setClosing] = useState(false);
   /** "Frage passt nicht": the confirm sheet, and the question it is about. */
   const [flagFor, setFlagFor] = useState<string | null>(null);
@@ -249,7 +250,6 @@ export default function PracticeScreen() {
   const [scrolledUp, setScrolledUp] = useState(false);
   const working = useRef(false);
   const lastSent = useRef<SentAnswer | null>(null);
-  const finishStarted = useRef(false);
   const scroll = useRef<ScrollView>(null);
 
   const session = query.data;
@@ -268,7 +268,11 @@ export default function PracticeScreen() {
   // task, a vocabulary prompt that holds its own answer. Voice mode obeys the same rule as the
   // "Vorlesen" button — hearing it would hand over the solution either way.
   const toRead =
-    onScreen && onScreen.status === 'open' && !session?.card_pass && onScreen.item.read_aloud
+    onScreen &&
+    onScreen.status === 'open' &&
+    !session?.card_pass &&
+    !session?.drill &&
+    onScreen.item.read_aloud
       ? onScreen.item
       : null;
   // Hands-free (lib/speech/handsFree.ts): once she started a mic here herself, reading
@@ -332,21 +336,8 @@ export default function PracticeScreen() {
     });
   }
 
-  const nothingOpen =
-    session?.status === 'active' &&
-    // Not while more questions are still being written (issue #220): she was faster than the
-    // generator, and ending the run here would throw away the questions still on their way — the
-    // server refuses it too, this only saves the pointless call.
-    !session.preparing &&
-    session.items.every((i) => i.status !== 'open');
-
-  // Once no question is open, the session is finished – once, while the
-  // learner may still be reading the last solution.
-  useEffect(() => {
-    if (!nothingOpen || finishStarted.current) return;
-    finishStarted.current = true;
-    void finish();
-  }, [nothingOpen]);
+  // Once no question is open, the run is finished — once (`useFinishWhenDone`).
+  const { finish, finishFailed } = useFinishWhenDone(id, session, store);
 
   // Buddy's home shows this session (questions left, the result): refresh it on the way out.
   useEffect(
@@ -360,17 +351,6 @@ export default function PracticeScreen() {
     // A refetch that started before this change must not overwrite it.
     await queryClient.cancelQueries({ queryKey: keys.session(id) });
     queryClient.setQueryData(keys.session(id), next);
-  }
-
-  async function finish(): Promise<void> {
-    setFinishFailed(false);
-    try {
-      await store(await finishSession(id));
-      void queryClient.invalidateQueries({ queryKey: keys.home });
-    } catch (err) {
-      toast.show(messageFor(err), 'error');
-      setFinishFailed(true);
-    }
   }
 
   /**
@@ -662,6 +642,12 @@ export default function PracticeScreen() {
 
   if (session.card_pass) {
     return <CardPass session={session} title={title} onChange={store} onClose={close} />;
+  }
+
+  // ─────────────── a Kopfrechnen round (issue #243) ───────────────
+
+  if (session.drill) {
+    return <DrillRound session={session} title={title} onChange={store} onClose={close} />;
   }
 
   const shown = questionOnScreen(session, pinnedId);

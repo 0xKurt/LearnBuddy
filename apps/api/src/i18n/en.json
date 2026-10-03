@@ -291,5 +291,24 @@
   },
   "voice": {
     "sample": "Hi, I'm Buddy. This is how I sound when I read something to you."
+  },
+  "drill": {
+    "and": "and",
+    "percent_of": "{{p}}% of {{n}}",
+    "carry_with": "with regrouping",
+    "carry_without": "without regrouping",
+    "title": {
+      "times": "Times tables",
+      "times_rows": "Times tables: {{rows}}",
+      "divide": "Division facts",
+      "divide_rows": "Dividing by {{rows}}",
+      "plus_10": "Adding up to 10",
+      "plus_20": "Adding up to 20",
+      "minus_20": "Subtracting within 20",
+      "plus_100": "Adding up to 100",
+      "minus_100": "Subtracting within 100",
+      "fractions": "Adding fractions",
+      "percent": "Percent of"
+    }
   }
 }

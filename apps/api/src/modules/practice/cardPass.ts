@@ -24,21 +24,14 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
-import { isUniqueViolation, type Db } from '../../lib/db.js';
+import { isUniqueViolation } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
 import { t } from '../../i18n/index.js';
 import { bumpContext } from '../buddy/plan.js';
 import { CARD_PASS, goesOnACard, offersCardPass, type CardCandidate } from './cards.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
-import {
-  createSession,
-  finishIfComplete,
-  loadSession,
-  nextSeq,
-  sessionView,
-  type PracticeLearner,
-} from './service.js';
-import { lockActiveSession } from './sessionRow.js';
+import { createSession, loadSession, nextSeq, type PracticeLearner } from './service.js';
+import { passTurn } from './passTurn.js';
 
 /** The columns `goesOnACard` needs, for a session whose rows are not loaded yet. */
 const CANDIDATE_COLS = `si.item_id, si.position, si.status, si.first_try_correct, si.flagged_at,
@@ -139,15 +132,6 @@ function recallText(locale: string, recall: CardRequest['recall']): string {
   return t(locale, recall === 'knew_it' ? 'practice.card_knew' : 'practice.card_not_yet');
 }
 
-/** Has this very tap already been recorded? (Idempotency, like an answer: issue #163.) */
-async function alreadyRecorded(db: Db, sessionId: string, clientTurnId: string): Promise<boolean> {
-  const turn = await db.maybeOne<{ id: string }>(
-    `select id from practice_turns where session_id = $1 and client_turn_id = $2`,
-    [sessionId, clientTurnId],
-  );
-  return turn !== null;
-}
-
 /**
  * One card, recorded: her own report becomes a turn in the session's conversation, the
  * question closes as shown (because it was), and one review goes into the spaced repetition
@@ -161,23 +145,21 @@ export async function recordCard(
   sessionId: string,
   input: CardRequest,
 ): Promise<SessionView> {
-  const now = deps.now();
-  if (await alreadyRecorded(deps.db, sessionId, input.client_turn_id)) {
-    return sessionView(deps.db, learner.id, sessionId, deps.storage, deps.now());
-  }
-  try {
-    await deps.db.tx(async (tx) => {
-      // The session row first, as every other writer does (one lock order).
-      const s = await lockActiveSession(tx, learner.id, sessionId);
-      if (s.pass !== CARD_PASS) {
-        throw new AppError('conflict', 'This practice is answered, not turned over', {
-          reason: 'not_a_card_pass',
-        });
-      }
+  return passTurn(
+    deps,
+    learner,
+    sessionId,
+    input.client_turn_id,
+    {
+      pass: CARD_PASS,
+      message: 'This practice is answered, not turned over',
+      reason: 'not_a_card_pass',
+    },
+    async (tx, now) => {
       const si = await tx.maybeOne<{ status: string }>(
         `select si.status from session_items si join items i on i.id = si.item_id
-          where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
-          for update of si`,
+        where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
+        for update of si`,
         [sessionId, input.item_id, learner.id],
       );
       if (!si) throw new AppError('not_found', 'Card not in this pass');
@@ -189,7 +171,7 @@ export async function recordCard(
       // `not_an_attempt` for the same reason — it was never an attempt at the answer.
       await tx.query(
         `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, verdict, client_turn_id)
-         values ($1, $2, $3, $4, 'learner', $5, 'not_an_attempt', $6)`,
+       values ($1, $2, $3, $4, 'learner', $5, 'not_an_attempt', $6)`,
         [
           sessionId,
           learner.id,
@@ -204,31 +186,14 @@ export async function recordCard(
       // module honest — the word stays in rotation whatever she said about it.
       await tx.query(
         `update session_items
-            set status = 'revealed', first_try_correct = false, closed_at = $3,
-                answered_by = 'self_rated'
-          where session_id = $1 and item_id = $2`,
+          set status = 'revealed', first_try_correct = false, closed_at = $3,
+              answered_by = 'self_rated'
+        where session_id = $1 and item_id = $2`,
         [sessionId, input.item_id, now],
       );
       // The state this overwrites is recorded by `reviewItem` from the same read, so a card
       // pass can be taken back exactly like any other review (issue #164).
       await reviewItem(tx, learner.id, sessionId, input.item_id, outcomeOf(input.recall), now);
-      await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-        sessionId,
-        now,
-      ]);
-      // The last card closes the pass here, in this transaction, so a lost /finish call never
-      // leaves a finished pass looking unfinished (audit H-12).
-      await finishIfComplete(tx, learner.id, sessionId, now);
-    });
-  } catch (err) {
-    // A concurrent duplicate of the same tap won: read what it wrote.
-    if (
-      isUniqueViolation(err) &&
-      (await alreadyRecorded(deps.db, sessionId, input.client_turn_id))
-    ) {
-      return sessionView(deps.db, learner.id, sessionId, deps.storage, deps.now());
-    }
-    throw err;
-  }
-  return sessionView(deps.db, learner.id, sessionId, deps.storage, deps.now());
+    },
+  );
 }

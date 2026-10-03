@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { IsoDateTime, LocalDate, LocalTime, tolerantArray, Uuid } from './common.js';
+import { DrillCarry, DrillRange, DrillRow } from './drill.js';
 import {
   DifficultyWish,
   PageProblem,
@@ -150,6 +151,19 @@ export const ActionSummary = z.discriminatedUnion('tool', [
      * record written before this existed.
      */
     startable: z.boolean().default(true),
+  }),
+  /**
+   * Buddy offers a Kopfrechnen round (issue #243): one range from a closed list, and for the
+   * times tables which rows. Code writes every task (`POST /practice/drills`); nothing here is
+   * a task, a key or a text the model wrote — `title` is the server's own name for the range,
+   * in her language.
+   */
+  z.object({
+    tool: z.literal('offer_drill'),
+    range: DrillRange,
+    rows: z.array(DrillRow).nullable().default(null),
+    carry: DrillCarry.nullable().default(null),
+    title: z.string(),
   }),
   /** Buddy points to a part of the app (said, not searched for); the app shows a button to open it. */
   z.object({

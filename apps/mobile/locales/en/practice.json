@@ -248,5 +248,29 @@
     "brick": "row {{row}}, brick {{n}}",
     "check_waits": "Only once every cell is filled in.",
     "scroll": "Table, scrolls sideways"
+  },
+  "drill": {
+    "progress": "Task {{current}} of {{total}}",
+    "end_hint": "Back to Buddy. What you worked out stays saved.",
+    "typed": "Your answer: {{value}}",
+    "delete": "Delete",
+    "slash": "Fraction bar",
+    "right": "Right: {{task}}",
+    "was": "It was: {{task}}",
+    "right_short": "Right:",
+    "was_short": "It was:",
+    "done_title": "Done!",
+    "again": "One more round",
+    "line": {
+      "better_times": "Your {{n}} times table is sitting better now.",
+      "better_divide": "Dividing by {{n}} is sitting better now.",
+      "better_range": "{{what}} is sitting better now.",
+      "solid_times": "Your {{n}} times table is already solid.",
+      "solid_divide": "Dividing by {{n}} is already solid.",
+      "solid_range": "{{what}} is already solid.",
+      "again_times": "We'll keep at the {{n}} times table.",
+      "again_divide": "We'll keep at dividing by {{n}}.",
+      "again_range": "We'll keep at {{what}}."
+    }
   }
 }

@@ -21,24 +21,25 @@ function inSheet(page: Page) {
 const START = "Los geht's";
 
 /**
- * The start button of the offer whose card says `says`.
+ * The start button of the offer card whose own line is `title` (the offer's text).
  *
  * Not "the newest `Los geht's`", and that cost two runs to learn (issue #267). The thread keeps
  * every earlier offer, and the new one renders a frame AFTER Buddy's words — so `.last()` after
  * waiting for the text clicked the PREVIOUS offer about one run in two, and counting the buttons
- * first raced the other way: the earlier offers also render after the composer does, so the
- * baseline came out too low and the expected count was never reached.
+ * first raced the other way.
  *
- * Scoping to the card that carries the offer's own words needs neither a count nor a timing
- * assumption. `.last()` over the divs that both contain those words and hold a start button is
- * the INNERMOST such div — the card itself — because an ancestor always precedes its child in
- * document order.
+ * Nor "the block that contains some words and a button" (#243 merge, 03.10.): a new card enters
+ * with an animation and is invisible for a moment (Reanimated `entering` on the web). Its text
+ * already counts for `hasText`, its button not yet for `getByRole` — so the innermost block with
+ * both was the thread itself, holding the earlier cards' buttons: two of them failed the click
+ * (strict mode), one would have been clicked. Hence the card's own title, and only once it is
+ * VISIBLE: `.last()` over the divs holding that visible title and a start button is the card.
  */
-function offerStart(page: Page, says: string) {
+function offerStart(page: Page, title: string) {
   return page
     .locator('div')
     .filter({ has: page.getByRole('button', { name: START }) })
-    .filter({ hasText: says })
+    .filter({ has: page.getByText(title, { exact: true }).filter({ visible: true }) })
     .last()
     .getByRole('button', { name: START });
 }
@@ -255,7 +256,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText(fractions, { exact: false })).toBeVisible();
   // The offer card in the thread, not a sheet — and the button is taken from THAT card's own
   // words rather than from the order or the number of the buttons (see `offerStart`, issue #267).
-  await offerStart(page, fractions).click();
+  await offerStart(page, 'Brüche vergleichen').click();
   await expect(page.getByText('Frage von Buddy')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
   // "Tipp": the next prepared hint at once — no model involved. The hints are written
@@ -395,7 +396,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Bruchbalken zum Ausprobieren', { exact: false })).toBeVisible();
   // Its own card's button, not "the newest" — under load the earlier offer rendered last (#267).
-  await offerStart(page, 'Bruchbalken zum Ausprobieren').click();
+  await offerStart(page, 'Bruchbalken').click();
   // The question code wrote from the task: one half, on a bar of quarters.
   await expect(page.getByText('Färbe', { exact: false }).first()).toBeVisible();
   await expect(page.getByText('0 von 4 Teilen gefärbt')).toBeVisible();
@@ -1128,7 +1129,7 @@ test('formulas: a reaction equation typed with the chemistry keys and counted (i
   await expect(page.getByText('longrightarrow', { exact: false })).toHaveCount(0);
   await expect(page.getByLabel(/reagiert zu/).first()).toBeAttached();
   await bothSchemes(page, '70-formula-buddy');
-  await offerStart(page, 'Reaktionsgleichungen vorbereitet').click();
+  await offerStart(page, 'Reaktionsgleichungen').click();
   await expect(page.getByText('Stelle die Reaktionsgleichung auf', { exact: false })).toBeVisible();
 
   // The chemistry row: lower the index, +, the reaction arrow — no fraction bar, no π.
@@ -1195,7 +1196,7 @@ test('formulas: math keys page by page, the new notation drawn, only the sign ov
   await expect(page.getByText(/\\int|pmatrix/)).toHaveCount(0);
   await expect(page.getByLabel(/Integral von 0 bis 2/).first()).toBeAttached();
   await bothSchemes(page, '75-math-buddy');
-  await offerStart(page, 'Ich hab dir Aufgaben vorbereitet').click();
+  await offerStart(page, 'Ungleichungen und Summen').click();
   await expect(page.getByText('Das Quadrat von', { exact: false })).toBeVisible();
 
   const field = page.getByLabel('Deine Antwort');
@@ -1439,4 +1440,115 @@ test('a cloze: five gaps typed, a word bank, the longest that fits; each gap che
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();
+});
+
+// Kopfrechnen (issue #243): started from the chat, twenty tasks code wrote, a digit pad, the
+// next task without a pause, and no count of mistakes at the end. Its own test: it needs only a
+// learner and Buddy, and it answers twenty tasks.
+test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async ({ page }) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns Einmaleins üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('eine schnelle Runde', { exact: false })).toBeVisible();
+  await expect(page.getByText('Einmaleins mit 6 und 7')).toBeVisible();
+  await shot(page, '39h-drill-offer');
+  // The offer card names the range in the server's words; the tap starts the round at once.
+  await offerStart(page, 'Einmaleins mit 6 und 7').click();
+  const taskCard = page.getByTestId('drill-task');
+  await expect(taskCard).toBeVisible();
+  await expect(page.getByText('Aufgabe 1 von 20')).toBeVisible();
+  await shot(page, '40-drill-task');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '40b-drill-task-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  /** The task on the card, solved the way a child would: read it, multiply. */
+  async function solveShown(): Promise<{ task: string; value: number }> {
+    const text = (await taskCard.innerText()).replace(/\s+/g, ' ');
+    const m = /(\d+)\s*·\s*(\d+)/.exec(text);
+    expect(m, `a times task on the card, got "${text}"`).not.toBeNull();
+    return { task: m![0], value: Number(m![1]) * Number(m![2]) };
+  }
+  async function type(value: string): Promise<void> {
+    for (const d of value) await page.getByRole('button', { name: d, exact: true }).click();
+  }
+
+  for (let n = 0; n < 20; n++) {
+    const { task, value } = await solveShown();
+    // The second task is answered wrong on purpose: the right one shows under the next task.
+    const typed = n === 1 ? String(value + 1) : String(value);
+    await type(typed);
+    if (n === 0) {
+      await expect(page.getByLabel(`Deine Antwort: ${typed}`)).toBeVisible();
+      await shot(page, '41-drill-typed');
+    }
+    await check.click();
+    if (n === 1) {
+      await expect(page.getByTestId('drill-last')).toContainText('Das war:');
+      await expect(page.getByTestId('drill-last')).toContainText(`= ${value}`);
+      await shot(page, '42-drill-was');
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await shot(page, '42b-drill-was-night');
+      await page.emulateMedia({ colorScheme: 'light' });
+    }
+    if (n === 2) {
+      await expect(page.getByTestId('drill-last')).toContainText('Richtig:');
+      await shot(page, '42c-drill-right');
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await shot(page, '42d-drill-right-night');
+      await page.emulateMedia({ colorScheme: 'light' });
+    }
+    if (n < 19) {
+      // No pause: the next task is on the card (or the same numbers the other way round
+      // never directly — the server keeps mirror tasks apart).
+      await expect(page.getByLabel('Deine Antwort: –')).toBeVisible();
+      await expect.poll(async () => (await solveShown()).task, { timeout: 5000 }).not.toBe(task);
+    }
+  }
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  const line = page.getByTestId('drill-line');
+  await expect(line).toBeVisible();
+  // One sentence about a row — never a number of mistakes (CLAUDE.md rule 6).
+  await expect(line).not.toContainText(/\d+\s*(von|Fehler|falsch)/);
+  await expect(line).toContainText(/(sitzt|sitzen|bleiben wir dran)/);
+  await shot(page, '43-drill-done');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '43b-drill-done-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  // "Noch eine Runde": the same range, new tasks, again without a model.
+  await page.getByRole('button', { name: 'Noch eine Runde' }).click();
+  await expect(page.getByText('Aufgabe 1 von 20')).toBeVisible();
+  await page.getByRole('button', { name: 'Beenden' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+
+  // Fractions: the pad gets its "/" — once, never first.
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns Brüche im Kopf addieren');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('Brüche addieren, ganz schnell', { exact: false })).toBeVisible();
+  await offerStart(page, 'Brüche addieren').click();
+  await expect(taskCard).toBeVisible();
+  await type('3');
+  await page.getByRole('button', { name: 'Bruchstrich' }).click();
+  await type('4');
+  await expect(page.getByLabel('Deine Antwort: 3/4')).toBeVisible();
+  await shot(page, '44-drill-fraction');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '44b-drill-fraction-night');
+  // The theme switch rebuilt the screen; what she typed is a draft and still there.
+  await expect(page.getByLabel('Deine Antwort: 3/4')).toBeVisible();
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'Beenden' }).click();
+
+  // The longest name a round has stays on one line, and the longest task fits.
+  await page.getByLabel('Schreib Buddy …').fill('Plus bis 100 im Kopf');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await offerStart(page, 'Plus bis 100 ohne Übergang').click();
+  await expect(taskCard).toBeVisible();
+  const header = page.getByRole('heading', { name: 'Plus bis 100 ohne Übergang' });
+  const box = await header.boundingBox();
+  expect(box!.height).toBeLessThan(40);
+  await shot(page, '45-drill-long-title');
+  await page.getByRole('button', { name: 'Beenden' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });

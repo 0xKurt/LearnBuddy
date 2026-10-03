@@ -37,13 +37,12 @@ import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
-import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
-import { EmptyState } from '../lb/EmptyState.js';
 import { Rise } from '../lb/Motion.js';
 import { Screen } from '../lb/Screen.js';
 import { toast } from '../lb/Toast.js';
 import { BottomBar } from './BottomBar.js';
+import { PassEnd } from './PassEnd.js';
 import { ListenButton } from './ListenButton.js';
 import { ProgressRow } from './Question.js';
 
@@ -114,27 +113,11 @@ export function CardPass({ session, title, onChange, onClose }: Props) {
     const finished = session.status === 'finished';
     return (
       <Screen title={title}>
-        <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: SPACE.lg }}>
-          {finished ? (
-            <View style={{ alignItems: 'center', gap: SPACE.lg }}>
-              <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                <BuddyOrb size={88} />
-              </View>
-              <Rise slow delay={160}>
-                <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
-                  {t('practice:cards.done_title')}
-                </Text>
-              </Rise>
-              <Rise slow delay={320}>
-                <Text style={[TYPE.body, { textAlign: 'center', color: palette.ink2 }]}>
-                  {t('practice:cards.done_body')}
-                </Text>
-              </Rise>
-            </View>
-          ) : (
-            <EmptyState title={t('practice:ended')} />
-          )}
-        </View>
+        <PassEnd
+          finished={finished}
+          title={t('practice:cards.done_title')}
+          line={t('practice:cards.done_body')}
+        />
         <BottomBar>
           <Btn size="lg" pill full onPress={onClose}>
             {t('practice:back_to_buddy')}

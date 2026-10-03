@@ -22,7 +22,12 @@ export type SessionRow = {
    * (issue #147, `cards.ts`). Deliberately not a fourth `mode` — a card pass IS practice, and
    * `mode` is read far outside this module, down to `NowCard.mode` in the app's contracts.
    */
-  pass: 'cards' | null;
+  pass: 'cards' | 'drill' | null;
+  /**
+   * The range of a Kopfrechnen round (migration 0082, issue #243) — set exactly when `pass` is
+   * 'drill'. Read through `drillViewOf`, never trusted as it stands.
+   */
+  drill: unknown;
   /**
    * Set while the rest of this run's questions is still being written (migration 0073,
    * issue #220); null for every run that was written in one go. Never compared in SQL — see
@@ -38,7 +43,7 @@ export type SessionRow = {
  */
 export const SESSION_COLS = `id, learner_id, step_id, goal_id,
        case when mode = 'explain' then 'practice' else mode end as mode, status, title, pass,
-       items_pending_until`;
+       items_pending_until, drill`;
 
 /** The session row, locked, and still running — else 404 / 409 (one lock order: session first). */
 export async function lockActiveSession(
@@ -59,8 +64,8 @@ export async function changeSession(
   deps: Deps,
   learnerId: string,
   sessionId: string,
-  opts: { active: boolean },
   change: (tx: Db, s: SessionRow, now: Date) => Promise<void>,
+  opts: { active: boolean } = { active: true },
 ): Promise<void> {
   const now = deps.now();
   await deps.db.tx(async (tx) =>

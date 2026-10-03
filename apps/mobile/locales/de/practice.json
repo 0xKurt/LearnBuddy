@@ -248,5 +248,29 @@
     "brick": "Reihe {{row}}, Stein {{n}}",
     "check_waits": "Erst wenn jedes Feld ausgefüllt ist.",
     "scroll": "Tabelle, seitlich verschiebbar"
+  },
+  "drill": {
+    "progress": "Aufgabe {{current}} von {{total}}",
+    "end_hint": "Zurück zu Buddy. Was du gerechnet hast, bleibt gespeichert.",
+    "typed": "Deine Antwort: {{value}}",
+    "delete": "Löschen",
+    "slash": "Bruchstrich",
+    "right": "Richtig: {{task}}",
+    "was": "Das war: {{task}}",
+    "right_short": "Richtig:",
+    "was_short": "Das war:",
+    "done_title": "Geschafft!",
+    "again": "Noch eine Runde",
+    "line": {
+      "better_times": "Die {{n}}er sitzen jetzt besser.",
+      "better_divide": "Geteilt durch {{n}} sitzt jetzt besser.",
+      "better_range": "{{what}} sitzt jetzt besser.",
+      "solid_times": "Die {{n}}er sitzen schon gut.",
+      "solid_divide": "Geteilt durch {{n}} sitzt schon gut.",
+      "solid_range": "{{what}} sitzt schon gut.",
+      "again_times": "Bei den {{n}}ern bleiben wir dran.",
+      "again_divide": "Bei geteilt durch {{n}} bleiben wir dran.",
+      "again_range": "Bei {{what}} bleiben wir dran."
+    }
   }
 }

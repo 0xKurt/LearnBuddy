@@ -25,6 +25,7 @@ import { FakeEmbeddings, FakeSpeech, ScriptedGateway } from './fakes.js';
 import { scriptCloze } from './scenarios/cloze.js';
 import { scriptCoreLoop } from './scenarios/core-loop.js';
 import { scriptDictation } from './scenarios/dictation.js';
+import { scriptDrill } from './scenarios/drill.js';
 import { scriptFigures } from './scenarios/figures.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
 import { scriptTour } from './scenarios/tour.js';
@@ -63,6 +64,7 @@ async function main(): Promise<void> {
     scriptTour(scripted);
     scriptFigures();
     scriptCloze();
+    scriptDrill();
     // Chat answers are matched by what the learner wrote and prepared practice by what was
     // asked for, so one spec cannot shift the answers of the next (issue #81). Installed
     // after every scenario added its rules.
