@@ -1,11 +1,12 @@
-// Die Notenzeile, auf die sie schreibt (issue #226). Festgehalten wird hier, was zwischen „es
-// sieht aus wie Noten" und „sie kann damit schreiben" liegt:
+// Die Notenzeile, auf die sie schreibt (issues #226, #275). Festgehalten wird hier, was zwischen
+// „es sieht aus wie Noten" und „sie kann damit schreiben" liegt:
 //
-//   · jede Stelle der Zeile ist ein echter Knopf, dessen NAME sagt, was er setzt und wo („H auf
-//     der 3. Linie in Takt 1 setzen") — damit ist die Fläche auch mit dem Screenreader bedienbar,
-//     und zwar auf genau demselben Weg und nicht auf einem zweiten daneben;
-//   · ein Tipp **spielt den Ton sofort** — das ist die Rückmeldung, auf die es ankommt;
-//   · die Zeile steht die ganze Zeit **in Worten** darunter, auch solange sie leer ist;
+//   · jeder Takt ist EIN großes Tippziel, dessen Name sagt, was schon darin steht („Takt 1: noch
+//     leer") — und ein Tipp ohne Fingerposition (Screenreader, Tastatur) setzt die Note auf die
+//     mittlere Linie, von wo „Höher" und „Tiefer" sie an ihren Platz schieben: ein Weg für alle;
+//   · ein Tipp und jeder Schritt **spielen den Ton sofort** — das ist die Rückmeldung;
+//   · „Höher"/„Tiefer" bewegen nur die zuletzt gesetzte NOTE, nie eine Pause, und halten an der
+//     Hilfslinie an;
 //   · „Zurück" nimmt das letzte Zeichen weg („rückgängig statt bestätigen");
 //   · „Prüfen" bleibt aus, solange ein Takt leer ist, und was herausgeht, ist genau die Form,
 //     die der Server zurückliest (`parseStaffLine`).
@@ -13,10 +14,10 @@
 // Die Sätze stehen hier als deutsche Sätze und nicht als Schlüssel: die Texte kommen aus den
 // echten Locale-Dateien, und was hier steht, ist, was sie liest und hört.
 //
-// Was diese Schicht nicht sehen kann: Geometrie und Klang. Dass die Fläche auf ein 360×740-Handy
-// passt, misst der Browser (`tests/web/fit.ts`); dass die erzeugten Bytes die richtige Tonhöhe
-// haben, misst `lib/music/__tests__/tone.test.ts`. Hier wird geprüft, DASS gespielt wird und mit
-// welchem Ton — der Klangweg selbst ist ersetzt.
+// Was diese Schicht nicht sehen kann: Geometrie und Klang. Dass ein Tipp auf eine Linie dort
+// landet und die Fläche auf ein 360×740-Handy passt, misst der Browser (`tests/web/modes.spec.ts`,
+// `tests/web/fit.ts`) — der Testbaum hat keinen Rahmen und damit keine Fingerposition. Dass die
+// erzeugten Bytes die richtige Tonhöhe haben, misst `lib/music/__tests__/tone.test.ts`.
 
 import { parseStaffLine, type StaffWriteSurface } from '@learnbuddy/shared-types/contracts';
 import { fireEvent, screen } from '@testing-library/react';
@@ -74,94 +75,130 @@ beforeEach(() => {
   lines.length = 0;
 });
 
+const BAR1 = 'Takt 1: noch leer';
+
 describe('eine Note setzen', () => {
-  it('bietet jede Stelle der Zeile als eigenen Knopf an, mit Ton UND Ort im Namen', () => {
-    show();
-    // Dreizehn Stellen: eine Hilfslinie unter der Zeile, die fünf Linien, ihre vier
-    // Zwischenräume und eine Hilfslinie darüber.
-    expect(screen.getAllByRole('button', { name: /in Takt 1 setzen$/ })).toHaveLength(13);
-    // Der Violinschlüssel, von unten abgezählt — und der Ort steht dabei, weil derselbe Ton
-    // zweimal vorkommt (E auf der 1. Linie und im 4. Zwischenraum).
-    for (const name of [
-      'E auf der 1. Linie in Takt 1 setzen',
-      'F im 1. Zwischenraum in Takt 1 setzen',
-      'G auf der 2. Linie in Takt 1 setzen',
-      'H auf der 3. Linie in Takt 1 setzen',
-      'D auf der 4. Linie in Takt 1 setzen',
-      'F auf der 5. Linie in Takt 1 setzen',
-      'E im 4. Zwischenraum in Takt 1 setzen',
-      'C unter der Zeile in Takt 1 setzen',
-      'A über der Zeile in Takt 1 setzen',
-    ]) {
-      expect(screen.getByRole('button', { name }), name).toBeTruthy();
-    }
+  it('bietet jeden Takt als EIN Tippziel an, das sagt, was darin steht', () => {
+    show({ ...SURFACE, time: '2/4', bars: 2 });
+    expect(screen.getByRole('button', { name: 'Takt 1: noch leer' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Takt 2: noch leer' })).toBeTruthy();
+    // Keine dreizehn Streifen à 11 pt mehr (issue #275).
+    expect(screen.queryAllByRole('button', { name: /in Takt \d setzen$/ })).toEqual([]);
   });
 
-  it('spielt die Note, die sie getroffen hat, und schreibt sie in die Zeile', () => {
+  it('setzt ohne Fingerposition auf die mittlere Linie, spielt sie und nennt den Takt neu', () => {
     const seen = show();
+    tap(BAR1);
     // Die mittlere Linie des Violinschlüssels ist das H.
-    tap('H auf der 3. Linie in Takt 1 setzen');
     expect(seen.answer.bars[0]).toEqual([
       { el: 'note', pitch: { name: 'B', octave: 4 }, value: 'quarter', dotted: false },
     ]);
     // Sofort gehört, nicht erst bei „Prüfen" (issue #226).
     expect(played).toEqual([{ name: 'B', octave: 4 }]);
+    expect(screen.getByRole('button', { name: 'Takt 1: H als Viertelnote' })).toBeTruthy();
   });
 
-  it('sagt die ganze Zeile in Worten, auch solange sie leer ist', () => {
-    show();
-    expect(screen.getByText('Takt 1: noch leer')).toBeTruthy();
-    tap('H auf der 3. Linie in Takt 1 setzen');
-    expect(screen.getByText('Takt 1: H als Viertelnote')).toBeTruthy();
+  it('schiebt die gesetzte Note mit Höher und Tiefer, und jeder Schritt klingt', () => {
+    const seen = show();
+    expect(screen.getByRole('button', { name: 'Höher' }).getAttribute('aria-disabled')).toBe(
+      'true',
+    );
+    tap(BAR1);
+    tap('Tiefer');
+    tap('Tiefer');
+    tap('Tiefer');
+    // H → A → G → F: dreimal eine Stelle tiefer, auf den ersten Zwischenraum.
+    expect(seen.answer.bars[0]?.[0]).toMatchObject({ pitch: { name: 'F', octave: 4 } });
+    expect(played).toEqual([
+      { name: 'B', octave: 4 },
+      { name: 'A', octave: 4 },
+      { name: 'G', octave: 4 },
+      { name: 'F', octave: 4 },
+    ]);
+    tap('Höher');
+    expect(seen.answer.bars[0]?.[0]).toMatchObject({ pitch: { name: 'G', octave: 4 } });
+    // Es bleibt EINE Note: schieben ist nicht noch einmal setzen.
+    expect(seen.answer.bars[0]).toHaveLength(1);
+  });
+
+  it('hält an der Hilfslinie an', () => {
+    const seen = show();
+    tap(BAR1);
+    for (let i = 0; i < 8; i++) {
+      if (screen.getByRole('button', { name: 'Tiefer' }).getAttribute('aria-disabled') === 'true')
+        break;
+      tap('Tiefer');
+    }
+    // Sechs Stellen unter dem H: das C auf der Hilfslinie, und weiter geht es nicht.
+    expect(seen.answer.bars[0]?.[0]).toMatchObject({ pitch: { name: 'C', octave: 4 } });
+    expect(screen.getByRole('button', { name: 'Tiefer' }).getAttribute('aria-disabled')).toBe(
+      'true',
+    );
+  });
+
+  it('bewegt nur die zuletzt gesetzte Note, und nach einer Pause nichts', () => {
+    const seen = show();
+    tap(BAR1);
+    tap('Höher');
+    tap('Takt 1: C als Viertelnote');
+    tap('Tiefer');
+    expect(seen.answer.bars[0]?.map((el) => (el.el === 'note' ? el.pitch.name : 'R'))).toEqual([
+      'C',
+      'A',
+    ]);
+    tap('Viertelpause setzen');
+    expect(screen.getByRole('button', { name: 'Höher' }).getAttribute('aria-disabled')).toBe(
+      'true',
+    );
   });
 
   it('nimmt den gewählten Wert und den Punkt mit', () => {
     const seen = show();
     choose('halbe Note');
     tap('Punkt');
-    tap('G auf der 2. Linie in Takt 1 setzen');
+    tap(BAR1);
     expect(seen.answer.bars[0]?.[0]).toMatchObject({ value: 'half', dotted: true });
-    expect(screen.getByText('Takt 1: G als punktierte halbe Note')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Takt 1: H als punktierte halbe Note' }),
+    ).toBeTruthy();
   });
 
   it('setzt eine Pause ohne Tonhöhe und spielt dafür nichts', () => {
     const seen = show();
-    tap('Pause');
+    tap('Viertelpause setzen');
     expect(seen.answer.bars[0]?.[0]).toEqual({ el: 'rest', value: 'quarter', dotted: false });
     expect(played).toEqual([]);
-    expect(screen.getByText('Takt 1: Viertelpause')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Takt 1: Viertelpause' })).toBeTruthy();
   });
 
   it('nimmt mit Zurück das letzte Zeichen weg', () => {
     const seen = show();
-    tap('E auf der 1. Linie in Takt 1 setzen');
-    tap('G auf der 2. Linie in Takt 1 setzen');
+    tap(BAR1);
+    tap('Takt 1: H als Viertelnote');
     expect(seen.answer.bars[0]).toHaveLength(2);
     tap('Zurück');
     expect(seen.answer.bars[0]).toHaveLength(1);
-    expect(seen.answer.bars[0]?.[0]).toMatchObject({ pitch: { name: 'E', octave: 4 } });
+  });
+
+  it('sagt die ganze Zeile für den Screenreader in Worten, auch solange sie leer ist', () => {
+    show();
+    expect(screen.getByText('Takt 1: noch leer')).toBeTruthy();
   });
 });
 
 describe('das Kreuz', () => {
-  it('benennt und setzt den erhöhten Ton, und lässt ihn weg, wo es keinen gibt', () => {
+  it('setzt den erhöhten Ton, und lässt ihn weg, wo es keinen gibt', () => {
     const seen = show();
     tap('Kreuz ♯');
     // Der Schalter sagt im Namen, dass er an ist — die Farbe ist nie das einzige Signal.
     expect(screen.getByRole('button', { name: 'Kreuz ♯, ist an' })).toBeTruthy();
-    // Auf dem F gibt es ein Fis …
-    expect(
-      screen.getByRole('button', { name: 'Fis auf der 5. Linie in Takt 1 setzen' }),
-    ).toBeTruthy();
-    // … auf dem E nicht: „Eis" gehört nicht zu den zwölf Namen, und der Knopf sagt deshalb
-    // weiter E, statt etwas zu versprechen, was er nicht setzt.
-    expect(
-      screen.getByRole('button', { name: 'E auf der 1. Linie in Takt 1 setzen' }),
-    ).toBeTruthy();
-    expect(screen.queryAllByRole('button', { name: /^Eis/ })).toEqual([]);
-    tap('Fis auf der 5. Linie in Takt 1 setzen');
-    expect(seen.answer.bars[0]?.[0]).toMatchObject({ pitch: { name: 'F#', octave: 5 } });
-    expect(played[0]).toEqual({ name: 'F#', octave: 5 });
+    tap(BAR1);
+    // Auf dem H gibt es kein „His": es bleibt H …
+    expect(seen.answer.bars[0]?.[0]).toMatchObject({ pitch: { name: 'B', octave: 4 } });
+    // … eine Stelle tiefer liegt das A, und dort gibt es ein Ais.
+    tap('Tiefer');
+    expect(seen.answer.bars[0]?.[0]).toMatchObject({ pitch: { name: 'A#', octave: 4 } });
+    expect(played[1]).toEqual({ name: 'A#', octave: 4 });
   });
 });
 
@@ -170,9 +207,9 @@ describe('was herausgeht', () => {
     const two: StaffWriteSurface = { ...SURFACE, time: '2/4', bars: 2 };
     const seen = show(two);
     expect(staffComplete(seen.answer)).toBe(false);
-    tap('H auf der 3. Linie in Takt 1 setzen');
+    tap('Takt 1: noch leer');
     expect(staffComplete(seen.answer)).toBe(false);
-    tap('H auf der 3. Linie in Takt 2 setzen');
+    tap('Takt 2: noch leer');
     expect(staffComplete(seen.answer)).toBe(true);
   });
 
@@ -180,8 +217,10 @@ describe('was herausgeht', () => {
     const two: StaffWriteSurface = { ...SURFACE, time: '2/4', bars: 2 };
     const seen = show(two);
     choose('halbe Note');
-    tap('H auf der 3. Linie in Takt 1 setzen');
-    tap('D auf der 4. Linie in Takt 2 setzen');
+    tap('Takt 1: noch leer');
+    tap('Takt 2: noch leer');
+    tap('Höher');
+    tap('Höher');
     const line = staffLineOf(seen.answer);
     expect(line).toBe('B4h | D5h');
     // Der Server liest sie mit derselben Funktion zurück, mit der die App sie schreibt.
@@ -194,7 +233,7 @@ describe('was herausgeht', () => {
     expect(screen.getByRole('button', { name: 'Anhören' }).getAttribute('aria-disabled')).toBe(
       'true',
     );
-    tap('H auf der 3. Linie in Takt 1 setzen');
+    tap(BAR1);
     tap('Anhören');
     expect(lines).toHaveLength(1);
     expect(lines[0]?.tempo).toBe(80);
@@ -207,7 +246,7 @@ describe('was herausgeht', () => {
 describe('wenn die Frage zu ist', () => {
   it('lässt nichts mehr setzen', () => {
     const seen = show(SURFACE, true);
-    tap('H auf der 3. Linie in Takt 1 setzen');
+    tap(BAR1);
     expect(seen.answer.bars[0]).toHaveLength(0);
     expect(played).toEqual([]);
   });

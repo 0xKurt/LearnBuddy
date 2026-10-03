@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { fillableAnswer } from '../../lib/math/prompt.js';
+import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -135,6 +136,12 @@ type QuestionProps = {
    * height, or without a visual, it does nothing.
    */
   minHeight?: number;
+  /**
+   * A smaller prompt (18 pt instead of 21): for a question whose answer surface needs the
+   * height more than the words do — the staff she writes on (issue #275), where a six-line
+   * prompt left no room for the staff, its keys AND Buddy's reply on 360×740.
+   */
+  dense?: boolean;
 };
 
 export function QuestionCard({
@@ -148,6 +155,7 @@ export function QuestionCard({
   figureMaxHeight,
   imageMaxHeight = 180,
   minHeight,
+  dense = false,
 }: QuestionProps) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
@@ -199,7 +207,12 @@ export function QuestionCard({
             text={prompt}
             blanks={{ filled }}
             accessibilityRole="header"
-            style={[TYPE.title, { fontSize: 21, lineHeight: 29, fontWeight: '500' }]}
+            style={[
+              TYPE.title,
+              dense
+                ? { fontSize: 18, lineHeight: 25, fontWeight: '500' }
+                : { fontSize: 21, lineHeight: 29, fontWeight: '500' },
+            ]}
           />
         </View>
         {figure ? (
@@ -208,18 +221,25 @@ export function QuestionCard({
               grown ? { marginTop: 12, flexGrow: 1, justifyContent: 'center' } : { marginTop: 12 }
             }
           >
-            {/* The tight box around the drawing itself: the walkthrough records its height. */}
-            <View testID="question-figure">
-              <ZoomableFigure figure={figure} maxHeight={figureMax} />
-            </View>
-            {/* Eine Notenzeile kann man hören (issue #226). Der Knopf steht unter der Zeichnung,
-                weil er zu ihr gehört und nicht zur Frage — und er ist die kleine Pille, mit der
-                die App überall vorliest. */}
             {figure.type === 'staff' ? (
-              <View style={{ marginTop: 8, alignSelf: 'flex-start' }}>
-                <StaffPlayButton bars={figure.bars} tempo={figure.tempo} />
+              // Eine Notenzeile kann man hören (issue #226). Der Knopf steht NEBEN der Zeichnung
+              // (issue #275): eine Reihe darunter kostete auf 360×740 genau die Höhe, die bei vier
+              // langen Antworten fehlte, und eine kurze Notenzeile lässt in der Breite ohnehin
+              // Platz. Dieselbe weiche Pille mit dem Lautsprecher wie überall, ohne das Wort.
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
+                <View testID="question-figure" style={{ flex: 1 }}>
+                  <ZoomableFigure figure={figure} maxHeight={figureMax} />
+                </View>
+                <View style={{ width: TOUCH + SPACE.sm }}>
+                  <StaffPlayButton iconOnly bars={figure.bars} tempo={figure.tempo} />
+                </View>
               </View>
-            ) : null}
+            ) : (
+              // The tight box around the drawing itself: the walkthrough records its height.
+              <View testID="question-figure">
+                <ZoomableFigure figure={figure} maxHeight={figureMax} />
+              </View>
+            )}
           </View>
         ) : null}
         {image && imageKey ? (

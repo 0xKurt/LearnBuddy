@@ -2085,14 +2085,17 @@ statt den Tutor zu rufen; die dritte Fehlprobe erklärt die Lösung, wie überal
 
 **Geschrieben wird wirklich geschrieben.** `write_line` gibt ihr eine leere Notenzeile
 (`ItemView.surface`, `mode: 'notes'` — dieselbe Fläche wie der Bruchbalken, eine dritte Form).
-Dreizehn Stellen je Takt sind einzelne Knöpfe mit Namen („H auf der 3. Linie in Takt 1 setzen"), weil
-derselbe Tonname in einem Schlüssel zweimal vorkommt und weil eine Fläche, deren Bedeutung am
-Berührungspunkt hängt, mit dem Screenreader nicht bedienbar wäre. Sie sind 11 pt hoch und damit
-**unter den 44 pt**, die CLAUDE.md verlangt: 13 × 44 = 572 pt nur für die Zeile, und auf einem
-360×740-Handy bleiben unter der Frage und über „Prüfen" 459 pt (die Rechnung steht in
-`StaffAnswer.tsx`). Der Tausch ist zugunsten „alles sichtbar" entschieden; ein Knopf ist dabei immer
-noch ~129 pt breit, trägt seinen Namen, **klingt in dem Moment, in dem er getroffen wird**, und
-danebengetroffen kostet einen Tipp auf „Zurück". Ihre Zeile reist als kompakte Maschinenform in
+**Setzen, dann schieben** (Issue #275, ersetzt die dreizehn 11-pt-Knöpfe aus #226): jeder Takt ist
+EIN Tippziel über die ganze Höhe der Zeile (≥ 44 pt in beide Richtungen); die Höhe des Fingers
+wählt die Linie, die Note **klingt sofort** und bleibt violett mit Ring ausgewählt. **„Höher" und
+„Tiefer"** (≥ 44 pt) schieben sie stufenweise, jede Stufe klingt — dasselbe Muster wie Noteflight,
+Flat und StaffPad: grob setzen, fein korrigieren, dabei hören. Ohne Fingerposition (Screenreader,
+Tastatur) landet die Note auf der mittleren Linie und wird mit denselben Tasten verschoben; der
+Screenreader hört Ton und Ort („E auf der 1. Linie, Takt 1"). Sichtbar steht der Tonname NICHT da,
+sonst übte die Fläche „schieben, bis E dasteht" statt Notenlesen. Die Zeile nimmt ihren
+Linienabstand aus Breite und verfügbarer Höhe (16–26 pt) und bleibt mit Hilfslinien ganz zu sehen;
+Werte stehen als gezeichnete Notenzeichen auf den Tasten. Der Walkthrough misst jede Taste der
+Fläche auf 360×740 und 390×844 (`tests/web/modes.spec.ts`, „note lines"). Ihre Zeile reist als kompakte Maschinenform in
 `AnswerRequest.text` (`renderStaffLine`: `E4q G4q B4h`, Takte durch `|` getrennt) — die App soll
 nichts Deutsches zusammenbauen und der Server nichts raten; im Gesprächsfaden steht sie in Worten.
 `checkStaffLine` vergleicht **Tonnamen, Dauern und Taktfüllung**, zählt wie `order` ein PRÄFIX und

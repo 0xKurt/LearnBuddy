@@ -23,6 +23,7 @@
 import {
   staffStep,
   type Clef,
+  type NoteValue,
   type StaffElement,
   type StaffFigure,
   type TimeSignature,
@@ -51,6 +52,8 @@ const HEIGHT_IN_GAPS = 4 + STAFF_MARGIN_STEPS / 2 + STAFF_MARGIN_STEPS / 2;
 /** Der engste und der weiteste Linienabstand, den wir zeichnen (Punkte). */
 const GAP_MIN = 8;
 const GAP_MAX = 15;
+/** Der weiteste Linienabstand einer GELESENEN Zeile (`StaffLine`, issue #275). */
+const READ_GAP_MAX = 20;
 
 /** Wie breit ein Element im Takt steht und wie breit Schlüssel und Taktart sind, in Abständen. */
 const ELEMENT_GAPS = 2.4;
@@ -78,6 +81,19 @@ export function stepAtY(y: number, gap: number): number {
   return Math.round((2 * (middleY(gap) - y)) / gap);
 }
 
+/**
+ * Wie weit die SCHREIBfläche reicht: vier Linienabstände über und unter der Mitte. Das trägt die
+ * Hilfslinie (±6) mit ihrem Kopf, und die Hälse zeigen immer zur Mitte, ragen also höchstens 1,2
+ * Linienabstände über die Zeile hinaus. Zwei Abstände weniger als der feste Rand — auf 360×740
+ * unter einer langen Frage und Buddys Antwort genau der Platz, der fehlte (issue #275).
+ */
+export const WRITE_REACH = { top: 8, bottom: -8 } as const;
+
+/** Die Höhe der Schreibfläche bei diesem Linienabstand. */
+export function writeHeight(gap: number): number {
+  return ((WRITE_REACH.top - WRITE_REACH.bottom) / 2) * gap;
+}
+
 /** Die Höhe einer Zeile bei diesem Linienabstand. */
 export function staffHeight(gap: number): number {
   return HEIGHT_IN_GAPS * gap;
@@ -89,12 +105,17 @@ export function staffHeight(gap: number): number {
  * winzig in der Mitte einer breiten Karte stehen.
  */
 export function staffGap(width: number, bars: readonly StaffElement[][], hasTime: boolean): number {
+  const needed = lineGaps(bars, hasTime);
+  return Math.max(GAP_MIN, Math.min(GAP_MAX, width / Math.max(needed, 1)));
+}
+
+/** Wie viele Linienabstände eine Zeile mit diesem Inhalt in der Breite mindestens braucht. */
+function lineGaps(bars: readonly StaffElement[][], hasTime: boolean): number {
   const barGaps = bars.reduce(
     (sum, bar) => sum + Math.max(BAR_MIN_GAPS, bar.length * ELEMENT_GAPS + 0.8),
     0,
   );
-  const needed = CLEF_GAPS + (hasTime ? TIME_GAPS : 0) + barGaps;
-  return Math.max(GAP_MIN, Math.min(GAP_MAX, width / Math.max(needed, 1)));
+  return CLEF_GAPS + (hasTime ? TIME_GAPS : 0) + barGaps;
 }
 
 type Ink = ReturnType<typeof useTheme>['figure'];
@@ -104,47 +125,65 @@ type Ink = ReturnType<typeof useTheme>['figure'];
 /** Welche Linie der Schlüssel festlegt, in Stufen: die G-Linie bzw. die F-Linie. */
 const CLEF_LINE: Record<Clef, number> = { treble: -2, bass: 2 };
 
+/**
+ * Wie weit ein Schlüssel über und unter die Zeile reicht, in Stufen — damit eine gelesene Zeile
+ * nur so hoch gezeichnet wird, wie ihr Inhalt es braucht (`trim`).
+ */
+const CLEF_REACH: Record<Clef, { top: number; bottom: number }> = {
+  treble: { top: 6.6, bottom: -7.6 },
+  bass: { top: 4.4, bottom: -3 },
+};
+
+/**
+ * Die Schlüssel, nach der Form gezeichnet, die im Notenheft steht (issue #275: die erste Fassung
+ * war ein Haken mit Kreis und sah aus wie eine Sechs). Die Koordinaten sind Linienabstände um die
+ * Linie, die der Schlüssel festlegt — beim Violinschlüssel windet sich die Spirale um die G-Linie,
+ * beim Bassschlüssel beginnt der Bogen mit dem dicken Punkt auf der F-Linie, und die zwei Punkte
+ * rahmen sie ein. Das ist der Teil, der beim Abzählen zählt, und er ist genau.
+ */
 function ClefMark({ clef, gap, x, ink }: { clef: Clef; gap: number; x: number; ink: Ink }) {
   const line = yOfStep(CLEF_LINE[clef], gap);
-  const w = gap * 1.1;
   if (clef === 'treble') {
-    // Hals von über der Zeile bis darunter, eine Schleife um die G-Linie, ein Haken unten.
-    const top = yOfStep(5, gap);
-    const bottom = yOfStep(-6, gap);
+    const cx = x + gap * 1.05;
+    const p = (dx: number, dy: number) => `${cx + dx * gap} ${line + dy * gap}`;
+    const d = [
+      `M ${p(0.18, -0.62)}`,
+      `C ${p(0.72, -0.55)} ${p(0.78, 0.42)} ${p(0.08, 0.48)}`,
+      `C ${p(-0.62, 0.52)} ${p(-0.92, -0.32)} ${p(-0.42, -0.78)}`,
+      `C ${p(0.05, -1.2)} ${p(0.78, -1.7)} ${p(0.72, -2.75)}`,
+      `C ${p(0.68, -3.45)} ${p(0.38, -4.05)} ${p(0.1, -4.05)}`,
+      `C ${p(-0.25, -4.05)} ${p(-0.42, -3.3)} ${p(-0.28, -2.7)}`,
+      `L ${p(0.38, 1.55)}`,
+      `C ${p(0.46, 2.15)} ${p(0.05, 2.42)} ${p(-0.28, 2.2)}`,
+    ].join(' ');
     return (
       <G>
         <Path
-          d={`M ${x + w} ${bottom} C ${x - w * 0.6} ${bottom} ${x - w * 0.9} ${line + gap} ${x + w * 0.2} ${line}
-              C ${x + w * 1.4} ${line - gap * 0.8} ${x + w * 0.9} ${top} ${x + w * 0.1} ${top}`}
+          d={d}
           fill="none"
           stroke={ink.stroke}
-          strokeWidth={gap * 0.22}
+          strokeWidth={gap * 0.2}
           strokeLinecap="round"
+          strokeLinejoin="round"
         />
-        <Circle
-          cx={x + w * 0.2}
-          cy={line}
-          r={gap * 0.62}
-          fill="none"
-          stroke={ink.stroke}
-          strokeWidth={gap * 0.22}
-        />
+        <Circle cx={cx - gap * 0.22} cy={line + gap * 2.05} r={gap * 0.24} fill={ink.stroke} />
       </G>
     );
   }
-  // Bassschlüssel: ein Haken, der auf der F-Linie beginnt, und die zwei Punkte daneben.
+  const bx = x + gap * 0.35;
+  const q = (dx: number, dy: number) => `${bx + dx * gap} ${line + dy * gap}`;
   return (
     <G>
       <Path
-        d={`M ${x + w * 0.1} ${line} C ${x + w * 1.6} ${line - gap * 0.5} ${x + w * 1.9} ${line + gap * 1.6} ${x - w * 0.2} ${line + gap * 2.4}`}
+        d={`M ${q(0, 0.05)} C ${q(-0.1, -0.75)} ${q(0.9, -1.05)} ${q(1.25, -0.35)} C ${q(1.55, 0.4)} ${q(1, 1.6)} ${q(-0.15, 2.35)}`}
         fill="none"
         stroke={ink.stroke}
-        strokeWidth={gap * 0.26}
+        strokeWidth={gap * 0.24}
         strokeLinecap="round"
       />
-      <Circle cx={x + w * 0.1} cy={line} r={gap * 0.26} fill={ink.stroke} />
-      <Circle cx={x + w * 1.9} cy={line - gap * 0.5} r={gap * 0.17} fill={ink.stroke} />
-      <Circle cx={x + w * 1.9} cy={line + gap * 0.5} r={gap * 0.17} fill={ink.stroke} />
+      <Circle cx={bx + gap * 0.12} cy={line} r={gap * 0.3} fill={ink.stroke} />
+      <Circle cx={bx + gap * 1.75} cy={line - gap * 0.5} r={gap * 0.14} fill={ink.stroke} />
+      <Circle cx={bx + gap * 1.75} cy={line + gap * 0.5} r={gap * 0.14} fill={ink.stroke} />
     </G>
   );
 }
@@ -239,12 +278,18 @@ function Note({
   gap,
   step,
   ink,
+  halo,
 }: {
   el: Extract<StaffElement, { el: 'note' }>;
   x: number;
   gap: number;
   step: number;
   ink: Ink;
+  /**
+   * The note she is moving right now (`StaffAnswer`): a soft ring behind its head. A ring and
+   * not only a colour, so the selection reads without telling violet from black.
+   */
+  halo?: string;
 }) {
   const y = yOfStep(step, gap);
   const filled = el.value !== 'whole' && el.value !== 'half';
@@ -260,6 +305,17 @@ function Note({
   }
   return (
     <G>
+      {halo ? (
+        <Circle
+          cx={x}
+          cy={y}
+          r={gap * 0.95}
+          fill={halo}
+          fillOpacity={0.16}
+          stroke={halo}
+          strokeWidth={gap * 0.1}
+        />
+      ) : null}
       {ledgers.map((s) => (
         <Line
           key={s}
@@ -428,6 +484,25 @@ export type StaffProps = {
   equalBars?: boolean;
   /** Der Takt, in den als Nächstes geschrieben wird — er wird leicht hervorgehoben. */
   activeBar?: number | null;
+  /**
+   * Die Note, die sie gerade setzt und mit „höher"/„tiefer" verschiebt (Index über die ganze
+   * Zeile): in der Akzentfarbe UND mit einem Ring dahinter (issue #275).
+   */
+  selected?: number | null;
+  /**
+   * Der Schreibstrich: eine senkrechte Linie im aktiven Takt an der Stelle, an die das nächste
+   * Zeichen kommt — derselbe Cursor, den Notensatzprogramme zeigen. Er sagt WO, nie welcher Ton.
+   */
+  cursor?: boolean;
+  /**
+   * Nur so hoch zeichnen, wie Schlüssel, Hälse und Hilfslinien reichen, statt mit dem festen Rand
+   * der Schreibfläche (die braucht ihn: jede Stufe muss dort antippbar sein). Eine gelesene Zeile
+   * mit drei Linienabständen leerer Luft darüber und darunter war ein weißer Kasten mit einer
+   * kleinen Zeile darin (issue #275).
+   */
+  trim?: boolean;
+  /** Eine feste Reichweite statt der aus dem Inhalt gerechneten (die Schreibfläche: `WRITE_REACH`). */
+  reach?: { top: number; bottom: number };
 };
 
 /**
@@ -443,10 +518,17 @@ export function Staff({
   gap: fixedGap,
   equalBars = false,
   activeBar = null,
+  selected = null,
+  cursor = false,
+  trim = false,
+  reach: fixedReach,
 }: StaffProps) {
   const { figure: ink, palette } = useTheme();
   const gap = fixedGap ?? staffGap(width, bars, time !== null);
-  const height = staffHeight(gap);
+  const reach = fixedReach ?? (trim ? reachOf(clef, bars, steps) : null);
+  const height = reach ? ((reach.top - reach.bottom) / 2) * gap : staffHeight(gap);
+  /** Wie weit die Zeichnung nach oben geschoben wird, damit der getrimmte Rand oben beginnt. */
+  const lift = reach ? yOfStep(reach.top, gap) : 0;
   const left = gap * 0.4;
   const clefX = left + gap * 0.3;
   const timeX = left + CLEF_GAPS * gap + (TIME_GAPS * gap) / 2;
@@ -462,71 +544,187 @@ export function Staff({
     const content = bar.map((el, i) => {
       const at = barX + slot * (i + 0.5);
       const step = steps[seen + i] ?? 0;
+      const picked = selected === seen + i;
       return el.el === 'rest' ? (
         <RestMark key={i} el={el} x={at} gap={gap} ink={ink} />
       ) : (
-        <Note key={i} el={el} x={at} gap={gap} step={step} ink={ink} />
+        <Note
+          key={i}
+          el={el}
+          x={at}
+          gap={gap}
+          step={step}
+          ink={picked ? { ...ink, stroke: palette.primary } : ink}
+          {...(picked ? { halo: palette.primary } : {})}
+        />
       );
     });
     seen += bar.length;
-    return { barX, barWidth, content, b };
+    // Where the next symbol of this bar will stand once it is there: the middle of the slot
+    // it gets when the bar holds one more.
+    const nextX = barX + (barWidth / (bar.length + 1)) * (bar.length + 0.5);
+    return { barX, barWidth, content, b, nextX };
   });
+  const caret = cursor && activeBar !== null ? drawn[activeBar] : undefined;
 
   return (
     <Svg width={width} height={height}>
-      {/* Der Takt, der gerade gefüllt wird: ein ruhiger Hintergrund, nie das einzige Signal. */}
-      {drawn.map(({ barX, barWidth, b }) =>
-        activeBar === b ? (
-          <Rect
-            key={`a${b}`}
-            x={barX}
-            y={yOfStep(5, gap)}
-            width={barWidth}
-            height={gap * 5}
-            fill={palette.lavender}
-            opacity={0.45}
-            rx={gap * 0.3}
+      <G transform={`translate(0 ${-lift})`}>
+        {/* Der Takt, der gerade gefüllt wird: ein ruhiger Hintergrund, nie das einzige Signal. */}
+        {drawn.map(({ barX, barWidth, b }) =>
+          activeBar === b ? (
+            <Rect
+              key={`a${b}`}
+              x={barX}
+              y={yOfStep(5, gap)}
+              width={barWidth}
+              height={gap * 5}
+              fill={palette.lavender}
+              opacity={0.45}
+              rx={gap * 0.3}
+            />
+          ) : null,
+        )}
+        {[4, 2, 0, -2, -4].map((step) => (
+          <Line
+            key={step}
+            x1={left}
+            x2={width - gap * 0.4}
+            y1={yOfStep(step, gap)}
+            y2={yOfStep(step, gap)}
+            // Alle fünf gleich, wie im Notenheft. Die Linie, von der abgezählt wird, zeigt der
+            // Schlüssel selbst (die Spirale um G, die Punkte um F); eine dickere Linie daneben sah
+            // aus wie ein Druckfehler (issue #275).
+            stroke={ink.axis}
+            strokeWidth={1.2}
           />
-        ) : null,
-      )}
-      {[4, 2, 0, -2, -4].map((step) => (
+        ))}
+        <ClefMark clef={clef} gap={gap} x={clefX} ink={ink} />
+        {time !== null ? <TimeMark time={time} gap={gap} x={timeX} ink={ink} /> : null}
+        {/* Taktstriche: zwischen den Takten einer, am Ende ein doppelter. */}
+        {drawn.slice(1).map(({ barX, b }) => (
+          <Line
+            key={`b${b}`}
+            x1={barX}
+            x2={barX}
+            y1={yOfStep(4, gap)}
+            y2={yOfStep(-4, gap)}
+            stroke={ink.stroke}
+            strokeWidth={1.4}
+          />
+        ))}
+        {caret ? (
+          <Line
+            x1={caret.nextX}
+            x2={caret.nextX}
+            y1={yOfStep(5, gap)}
+            y2={yOfStep(-5, gap)}
+            stroke={palette.primary}
+            strokeOpacity={0.55}
+            strokeWidth={2}
+            strokeLinecap="round"
+          />
+        ) : null}
+        {drawn.map(({ content, b }) => (
+          <G key={`c${b}`}>{content}</G>
+        ))}
         <Line
-          key={step}
-          x1={left}
+          x1={width - gap * 0.4}
           x2={width - gap * 0.4}
-          y1={yOfStep(step, gap)}
-          y2={yOfStep(step, gap)}
-          // Die Linie, die der Schlüssel festlegt, wird stärker gezogen: sie ist die, von der
-          // abgezählt wird, und ein Kind soll sie finden, ohne sie zu suchen.
-          stroke={step === CLEF_LINE[clef] ? ink.stroke : ink.axis}
-          strokeWidth={step === CLEF_LINE[clef] ? 1.8 : 1}
-        />
-      ))}
-      <ClefMark clef={clef} gap={gap} x={clefX} ink={ink} />
-      {time !== null ? <TimeMark time={time} gap={gap} x={timeX} ink={ink} /> : null}
-      {/* Taktstriche: zwischen den Takten einer, am Ende ein doppelter. */}
-      {drawn.slice(1).map(({ barX, b }) => (
-        <Line
-          key={`b${b}`}
-          x1={barX}
-          x2={barX}
           y1={yOfStep(4, gap)}
           y2={yOfStep(-4, gap)}
           stroke={ink.stroke}
-          strokeWidth={1.4}
+          strokeWidth={2.2}
         />
-      ))}
-      {drawn.map(({ content, b }) => (
-        <G key={`c${b}`}>{content}</G>
-      ))}
-      <Line
-        x1={width - gap * 0.4}
-        x2={width - gap * 0.4}
-        y1={yOfStep(4, gap)}
-        y2={yOfStep(-4, gap)}
-        stroke={ink.stroke}
-        strokeWidth={2.2}
-      />
+      </G>
+    </Svg>
+  );
+}
+
+/**
+ * Von welcher bis zu welcher Stufe eine Zeile Tinte trägt: die fünf Linien, der Schlüssel, jeder
+ * Notenkopf mit seinem Hals (oben, solange die Note unter der Mitte liegt) und jede Pause — und
+ * eine halbe Stufe Luft.
+ */
+function reachOf(
+  clef: Clef,
+  bars: readonly StaffElement[][],
+  steps: readonly number[],
+): { top: number; bottom: number } {
+  let top = Math.max(4, CLEF_REACH[clef].top);
+  let bottom = Math.min(-4, CLEF_REACH[clef].bottom);
+  bars.flat().forEach((el, i) => {
+    if (el.el === 'rest') {
+      top = Math.max(top, 3.5);
+      bottom = Math.min(bottom, -2.5);
+      return;
+    }
+    const step = steps[i] ?? 0;
+    const up = step < 1;
+    // Der Hals ist 3,2 Linienabstände lang, also 6,4 Stufen; ein Kopf reicht eine Stufe weit.
+    top = Math.max(top, up && el.value !== 'whole' ? step + 6.6 : step + 1.2);
+    bottom = Math.min(bottom, !up && el.value !== 'whole' ? step - 6.6 : step - 1.2);
+  });
+  return { top: top + 0.5, bottom: bottom - 0.5 };
+}
+
+/**
+ * Ein Notenwert als Zeichen, ohne Zeile: was auf den Wert-Tasten der Schreibfläche steht
+ * (issue #275). Gezeichnet mit DENSELBEN `Note` und `RestMark` wie die Zeile — die Taste für die
+ * Viertel sieht genau aus wie die Viertel, die sie dann setzt. Worte wie „Sechzehntelnote"
+ * passen auf keine Taste, die auf einem 360-pt-Handy zu fünft in eine Reihe muss, und das Zeichen
+ * ist ohnehin das, was sie lernt; den Namen hört der Screenreader.
+ */
+export function ValueGlyph({
+  value,
+  rest = false,
+  dotted = false,
+  size = 30,
+  color,
+}: {
+  value: NoteValue;
+  rest?: boolean;
+  dotted?: boolean;
+  /** Die Höhe in Punkten; die Breite ist drei Fünftel davon. */
+  size?: number;
+  color: string;
+}) {
+  const { figure } = useTheme();
+  const gap = size / 5;
+  const ink = { ...figure, stroke: color, axis: color };
+  const x = gap * 1.2;
+  // Die Zeichen stehen in Stufen der Zeile; verschoben, damit jedes mittig in seinem Kasten sitzt.
+  const shift = rest ? -2.25 * gap : -1.1 * gap;
+  const anchorStep = value === 'whole' ? 2 : 0;
+  return (
+    <Svg width={gap * 3} height={size}>
+      <G transform={`translate(0 ${shift})`}>
+        {rest ? (
+          <G>
+            {/* Ganze und halbe Pause hängen an bzw. liegen auf einer Linie: ohne sie wären beide
+                nur ein Rechteck, und ein Rechteck ist kein Notenwert. */}
+            {value === 'whole' || value === 'half' ? (
+              <Line
+                x1={x - gap * 1.05}
+                x2={x + gap * 1.05}
+                y1={yOfStep(anchorStep, gap)}
+                y2={yOfStep(anchorStep, gap)}
+                stroke={color}
+                strokeWidth={1.2}
+              />
+            ) : null}
+            <RestMark el={{ el: 'rest', value, dotted }} x={x} gap={gap} ink={ink} />
+          </G>
+        ) : (
+          <Note
+            el={{ el: 'note', pitch: { name: 'B', octave: 4 }, value, dotted }}
+            x={x}
+            gap={gap}
+            step={0}
+            ink={ink}
+          />
+        )}
+      </G>
     </Svg>
   );
 }
@@ -553,13 +751,24 @@ export function barsStartX(gap: number, hasTime: boolean): number {
 
 /** Die Figur, wie `FigureView` sie zeichnet. */
 export function StaffLine({ fig, width }: { fig: StaffFigure; width: number }) {
+  const room = Math.min(width, 520);
+  // So breit, wie der Inhalt braucht, und etwas Luft — eine einzelne Note auf einer Zeile über die
+  // ganze Karte stand verloren in der Mitte; ein kurzes Stück Notenzeile liest sich wie eine
+  // Karteikarte (issue #275). Der Linienabstand folgt der Breite: wird die Figur schmaler gemacht,
+  // weil die Höhe fehlt (`FigureView`, `maxHeight`), wird die Zeile mit ihr kleiner — mit einem
+  // festen Abstand behielt sie ihre Höhe und schob sich unter die Antworten.
+  const spanGaps = Math.max(lineGaps(fig.bars, fig.time !== null) + 4, 14);
+  const gap = Math.max(GAP_MIN, Math.min(READ_GAP_MAX, room / spanGaps));
+  const wanted = gap * spanGaps;
   return (
     <Staff
       clef={fig.clef}
       time={fig.time}
       bars={fig.bars}
       steps={stepsOfBars(fig.bars, fig.clef)}
-      width={Math.min(width, 520)}
+      width={Math.min(room, wanted)}
+      gap={gap}
+      trim
     />
   );
 }

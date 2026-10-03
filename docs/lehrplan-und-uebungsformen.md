@@ -1505,8 +1505,8 @@ Zahlen wählt und Code Frage, Bild und Lösung rechnet. Das ist die erste Antwor
 vorhanden.
 
 > **Nachtrag 02.10.2026 (Welle 6, Issue #226).** `AnswerSurface` hat eine dritte Form: `notes`, die
-> **Notenzeile**, auf die sie schreibt. Dreizehn Stellen je Takt sind einzelne Knöpfe; ein Tipp setzt
-> eine Note und **spielt sie sofort** (`components/practice/StaffAnswer.tsx`, `lib/music/`). Dazu
+> **Notenzeile**, auf die sie schreibt. Ein Tipp in einen Takt setzt eine Note dort, wo der Finger
+> liegt, „Höher"/„Tiefer" schieben sie (Issue #275), und jede Note **spielt sofort** (`components/practice/StaffAnswer.tsx`, `lib/music/`). Dazu
 > kommt eine siebte Darstellung zum Ansehen: `staff` in `contracts/figure.ts`, die einzige, die das
 > Modell **nicht** schreiben darf (`ModelFigure`) — weil ihr Schlüssel von der Zeichnung abgelesen
 > wird. Fünf geprüfte Notenaufgaben (`contracts/staff.ts`), alle von Code geschrieben und von Code

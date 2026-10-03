@@ -179,9 +179,15 @@
     "sharp": "Dièse ♯",
     "rest": "Silence",
     "undo": "Annuler",
-    "place": "Placer {{note}} {{where}} dans la mesure {{bar}}",
     "toggle_on": "{{label}}, activé",
-    "bar_crowded": "Dans la mesure {{n}}, il n'y a plus de place pour un autre signe."
+    "bar_crowded": "Dans la mesure {{n}}, il n'y a plus de place pour un autre signe.",
+    "bar_hint": "Touche l’endroit où la note doit aller. Ensuite, déplace-la avec « Plus haut » et « Plus bas ».",
+    "higher": "Plus haut",
+    "lower": "Plus bas",
+    "placed": "{{what}} {{where}}, mesure {{bar}}",
+    "moved": "{{what}} {{where}}",
+    "rest_placed": "{{what}}, mesure {{bar}}",
+    "rest_of": "Placer : {{value}}"
   },
   "summary": {
     "title": "C'est fait !",
