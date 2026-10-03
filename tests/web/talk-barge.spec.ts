@@ -12,6 +12,7 @@ import { join } from 'node:path';
 
 import { expect, test } from '@playwright/test';
 
+import { CHROMIUM } from './chromium';
 import { PHONES, shot } from './fit';
 import { recordPerf } from './perf';
 import { FIXTURES, onboardTalker, REPLY, sayOneThing, voiceAsSilence, voiceFile } from './talk';
@@ -22,7 +23,7 @@ const MIC = voiceFile(join(FIXTURES, 'barge-voice.wav'), QUIET_MS, 4000);
 
 test.use({
   launchOptions: {
-    executablePath: process.env.LB_CHROMIUM ?? '/opt/pw-browsers/chromium',
+    executablePath: CHROMIUM,
     args: [
       '--use-fake-ui-for-media-stream',
       '--use-fake-device-for-media-stream',
