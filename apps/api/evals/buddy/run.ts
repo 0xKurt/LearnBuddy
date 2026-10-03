@@ -169,8 +169,9 @@ async function main(): Promise<void> {
             [l.learnerId],
           ),
           turns,
-          offers: await env.db.query<{ kind: string; text: string }>(
-            `select result ->> 'kind' as kind, result ->> 'text' as text
+          offers: await env.db.query<{ kind: string; text: string; minutes: number | null }>(
+            `select result ->> 'kind' as kind, result ->> 'text' as text,
+                    (result ->> 'minutes')::int as minutes
              from buddy_actions
             where learner_id = $1 and tool = 'offer_learning' order by seq`,
             [l.learnerId],

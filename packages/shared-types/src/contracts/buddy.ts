@@ -6,6 +6,7 @@ import {
   DifficultyWish,
   PageProblem,
   SessionView,
+  TestMinutes,
   UnclearSpot,
   VocabDirection,
   VoiceName,
@@ -143,6 +144,11 @@ export const ActionSummary = z.discriminatedUnion('tool', [
      */
     difficulty: DifficultyWish.nullable().default(null),
     direction: VocabDirection.nullable().default(null),
+    /**
+     * test only: the time limit she asked for (issue #241), one of `TEST_MINUTES`. Null — and
+     * absent in older records — means no clock: a timer is never there without her wish.
+     */
+    minutes: TestMinutes.nullable().default(null),
     /**
      * Whether its button can still start anything (issue #196). False once preparing this
      * offer was refused as unusable — the app then shows the quiet line instead of a button

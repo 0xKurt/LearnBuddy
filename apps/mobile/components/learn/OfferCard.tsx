@@ -55,7 +55,12 @@ export function OfferCard({
           ? state.message
           : null,
   );
-  const label = t(`learn:${KIND_LABEL[offer.kind]}`);
+  // A test with time says so on its card, before she taps (issue #241) — never a surprise clock.
+  const kindLabel = t(`learn:${KIND_LABEL[offer.kind]}`);
+  const label =
+    offer.minutes !== null
+      ? `${kindLabel} · ${t('learn:topic.minutes', { count: offer.minutes })}`
+      : kindLabel;
 
   async function go(): Promise<void> {
     // Tap → the first question on screen (issue #66): the wait she complained about.
@@ -67,6 +72,8 @@ export function OfferCard({
       direction: offer.direction,
       // A Diktat of her sheet takes its words from there (issue #242).
       materialId: offer.material_id,
+      // A test she asked to sit with time (issue #241): the minutes travel with the offer.
+      minutes: offer.minutes,
     });
     if (session) {
       if (spoken) useVoiceMode.getState().setOn(true);
@@ -83,7 +90,11 @@ export function OfferCard({
       <View style={{ gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Icon name={KIND_ICON[offer.kind]} size={20} color={palette.primaryDk} />
+            <Icon
+              name={offer.minutes !== null ? 'clock' : KIND_ICON[offer.kind]}
+              size={20}
+              color={palette.primaryDk}
+            />
           </View>
           <Text style={[TYPE.label, { color: palette.primaryDk }]}>{label.toUpperCase()}</Text>
         </View>

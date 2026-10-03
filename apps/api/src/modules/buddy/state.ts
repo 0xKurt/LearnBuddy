@@ -7,6 +7,7 @@ import type {
   DifficultyWish,
   NotPracticable,
   PageProblem,
+  TestMinutes,
   VocabDirection,
   VoiceName,
 } from '@learnbuddy/shared-types/contracts';
@@ -279,6 +280,8 @@ export type StandingOffer = {
   material_id?: string | null;
   difficulty: DifficultyWish | null;
   direction: VocabDirection | null;
+  /** A test she asked to sit with time: its minutes (issue #241); null without a clock. */
+  minutes: TestMinutes | null;
   created_at: Date;
 };
 
@@ -374,6 +377,7 @@ export async function loadStandingOffers(
       material_id?: string | null;
       difficulty?: DifficultyWish | null;
       direction?: VocabDirection | null;
+      minutes?: TestMinutes | null;
     };
     created_at: Date;
   }>(
@@ -404,6 +408,7 @@ export async function loadStandingOffers(
     material_id: r.result.material_id ?? null,
     difficulty: r.result.difficulty ?? null,
     direction: r.result.direction ?? null,
+    minutes: r.result.minutes ?? null,
     created_at: r.created_at,
   }));
 }

@@ -16,6 +16,7 @@ import {
   type AnswerResponse,
   type PracticeTurnView,
   type SessionView,
+  type TestMinutes,
 } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
@@ -29,7 +30,6 @@ import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { cautiousAt, curriculumLine, pointOf } from '../curriculum/state.js';
-import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { pickAnswers, taskOf, untriedPicks } from './bars.js';
 import { listenRefs, listenTaskOf } from './listen.js';
@@ -53,7 +53,16 @@ import {
   type StaffCheck,
 } from './staff.js';
 import { takeParts } from './partsAnswer.js';
-import { changeSession, lockActiveSession, SESSION_COLS, type SessionRow } from './sessionRow.js';
+import { finishIfComplete, finishLocked } from './finish.js';
+import {
+  changeSession,
+  loadSession,
+  lockActiveSession,
+  SESSION_COLS,
+  stillPreparing,
+  type SessionRow,
+} from './sessionRow.js';
+import { settleTestClock, timerOf, timeUpError } from './testClock.js';
 import {
   answerTextOf,
   structuredNamesPart,
@@ -193,19 +202,6 @@ export type ItemRow = {
   staff_task: unknown;
 };
 
-/**
- * Is this run still waiting for the rest of its questions (issue #220)? The one place that
- * decides it, because two different answers would mean a run that cannot be finished in one
- * code path and is finished behind its own back in the other.
- *
- * The deadline is compared against the app clock, never against SQL `now()` (CLAUDE.md rule 7):
- * past it the run is complete with the questions it has, so a refill that never arrived costs
- * her the extra questions and never her result.
- */
-export function stillPreparing(s: Pick<SessionRow, 'items_pending_until'>, now: Date): boolean {
-  return s.items_pending_until !== null && s.items_pending_until.getTime() > now.getTime();
-}
-
 export type SessionItemRow = {
   item_id: string;
   position: number;
@@ -246,6 +242,8 @@ export type SessionOptions = {
    * start sets it; every other run is complete when it is created.
    */
   itemsPendingUntil?: Date | null;
+  /** A test she asked to sit with time (issue #241); its clock starts when she opens it. */
+  timeLimitMinutes?: TestMinutes | null;
 };
 
 export async function createSession(
@@ -258,8 +256,8 @@ export async function createSession(
   const s = await db.one<{ id: string }>(
     `insert into practice_sessions (learner_id, step_id, goal_id, mode, started_at, last_activity_at,
                                     material_id, title, client_request_id, pass, items_pending_until,
-                                    drill)
-     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10, $11) returning id`,
+                                    drill, time_limit_minutes)
+     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10, $11, $12) returning id`,
     [
       learnerId,
       opts.stepId,
@@ -272,6 +270,7 @@ export async function createSession(
       opts.pass ?? null,
       opts.itemsPendingUntil ?? null,
       opts.drill ?? null,
+      opts.timeLimitMinutes ?? null,
     ],
   );
   for (const [position, itemId] of itemIds.entries()) {
@@ -718,20 +717,6 @@ function workedReply(
 
 // ─────────────── view ───────────────
 
-export async function loadSession(
-  db: Db,
-  learnerId: string,
-  sessionId: string,
-): Promise<SessionRow> {
-  const s = await db.maybeOne<SessionRow>(
-    `select ${SESSION_COLS} from practice_sessions
-      where id = $1 and learner_id = $2`,
-    [sessionId, learnerId],
-  );
-  if (!s) throw new AppError('not_found', 'Session not found');
-  return s;
-}
-
 export async function sessionView(
   db: Db,
   learnerId: string,
@@ -817,6 +802,7 @@ export async function sessionView(
     // The rest of the questions is still being written (issue #220). The app shows no total
     // that would still change, and does not read "no open question" as "this run is over".
     preparing: active && stillPreparing(s, now),
+    timer: timerOf(s, now),
     title: title?.title ?? '',
     items: items.map((i) => ({
       item: {
@@ -984,6 +970,11 @@ export async function answerItem(
   if ('replayed' in first) return first.replayed;
   const { session } = first;
   const now = deps.now();
+  // A timed test (issue #241): an answer that arrives after the time is up is not graded — no
+  // rule, no model, no turn — and the test ends with what she had answered in time.
+  if ((await settleTestClock(deps.db, learner.id, sessionId, now)) === 'time_up') {
+    throw timeUpError();
+  }
   if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
   // One path per session (issue #147): a flashcard pass is turned over, never answered,
   // hinted at or revealed. The pass was decided when it started, so the server refuses the
@@ -1761,79 +1752,6 @@ export async function answerItem(
     throw err;
   }
   return answerWithReply(deps, learner.id, sessionId, item.id, judged.verdict);
-}
-
-/**
- * Finish the (locked, active) session: Buddy's step gets its evidence — done only if
- * something was answered, else back to prepared — and Buddy is woken to plan next.
- */
-async function finishLocked(db: Db, learnerId: string, s: SessionRow, now: Date): Promise<void> {
-  const counts = await db.one<{ answered: number; first_try: number; total: number }>(
-    `select count(*) filter (where status <> 'open' and flagged_at is null)::int as answered,
-            count(*) filter (where first_try_correct)::int as first_try,
-            count(*)::int as total
-       from session_items where session_id = $1`,
-    [s.id],
-  );
-  await db.query(
-    `update practice_sessions set status = 'finished', finished_at = $2, last_activity_at = $2 where id = $1`,
-    [s.id, now],
-  );
-  if (s.step_id) {
-    if (counts.answered > 0) {
-      await db.query(
-        `update buddy_steps set state = 'done', done_source = 'evidence', finished_at = $2, version = version + 1,
-                                evidence = $3
-          where id = $1 and state in ('planned','prepared','in_progress')`,
-        [s.step_id, now, { session_id: s.id, ...counts }],
-      );
-    } else {
-      // Nothing answered: the step is still open, not "done".
-      await db.query(
-        `update buddy_steps set state = 'prepared', version = version + 1 where id = $1 and state = 'in_progress'`,
-        [s.step_id],
-      );
-    }
-  }
-  // A Kopfrechnen round wakes nobody (issue #243): Buddy's follow-up is a model call, and a
-  // round is twenty seconds of practice with zero of them. Buddy still sees it in STATE.
-  if (counts.answered > 0 && s.pass !== DRILL_PASS) {
-    await emitEvent(db, learnerId, { type: 'session_finished', sessionId: s.id }, now, counts);
-  }
-  await bumpContext(db, learnerId);
-}
-
-/**
- * Once no question is open any more, the session is finished on the server — in the same
- * transaction as the answer that closed the last one, so a lost /finish call (network, a
- * killed app) never leaves an answered session invisible and Buddy's step without evidence
- * (audit H-12). The caller holds the session lock.
- *
- * Unless the rest of the questions is still being written (issue #220, trap 1): then "nothing
- * open" means she was faster than the generator, not that the run is over. Finishing here would
- * end a practice after three questions and hand Buddy's step its evidence, and the six questions
- * still being written would land in a run that already has a result.
- */
-export async function finishIfComplete(
-  db: Db,
-  learnerId: string,
-  sessionId: string,
-  now: Date,
-): Promise<boolean> {
-  const s = await db.maybeOne<SessionRow>(
-    `select ${SESSION_COLS} from practice_sessions
-      where id = $1 and learner_id = $2 for update`,
-    [sessionId, learnerId],
-  );
-  if (!s || s.status !== 'active') return false;
-  if (stillPreparing(s, now)) return false;
-  const open = await db.one<{ n: number }>(
-    `select count(*)::int as n from session_items where session_id = $1 and status = 'open'`,
-    [sessionId],
-  );
-  if (open.n > 0) return false;
-  await finishLocked(db, learnerId, s, now);
-  return true;
 }
 
 /**

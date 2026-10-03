@@ -48,6 +48,9 @@ export function prepareOffered(
           // prepared session and the tapped one would be two different things.
           difficulty: offer.difficulty,
           direction: offer.direction,
+          // A test she asked to sit with time keeps its minutes (issue #241). The clock itself
+          // starts only when she opens it — not here, while she is still reading his reply.
+          minutes: offer.minutes,
         });
       } catch (err) {
         // "Nothing to learn from this" is not an outage — it is the generator saying this

@@ -69,7 +69,9 @@
     "submit": "Andiamo",
     "preparing": "Buddy sta preparando …",
     "preparing_hint": "Ci vuole qualche secondo.",
-    "not_usable": "Con questo non riesco a preparare niente, scusa – prova con un argomento di scuola."
+    "not_usable": "Con questo non riesco a preparare niente, scusa – prova con un argomento di scuola.",
+    "minutes_one": "con {{count}} minuto",
+    "minutes_other": "con {{count}} minuti"
   },
   "drill": {
     "label": "Calcolo mentale"

@@ -1,7 +1,7 @@
 {
   "$comment": "Ausnahmeliste zu Regel 4 (Kleine Einheiten, Issue #313): Dateien über 600 (App) / 800 (API) Zeilen ohne Leer- und Kommentarzeilen, mit ihrer heutigen Größe als eigener Grenze. Darf nur schrumpfen. Siehe docs/engineering-guards.md.",
   "files": {
-    "apps/api/evals/buddy/cases.ts": 1235,
+    "apps/api/evals/buddy/cases.ts": 1110,
     "apps/api/evals/lena/run.ts": 944,
     "apps/api/src/__tests__/buddy-tools.int.test.ts": 916,
     "apps/api/src/__tests__/contact.int.test.ts": 814,
@@ -11,9 +11,9 @@
     "apps/api/src/modules/buddy/tools.ts": 1510,
     "apps/api/src/modules/materials/service.ts": 1600,
     "apps/api/src/modules/practice/__tests__/evaluate.test.ts": 825,
-    "apps/api/src/modules/practice/service.ts": 1397,
+    "apps/api/src/modules/practice/service.ts": 1343,
     "apps/mobile/app/buddy.tsx": 1245,
-    "apps/mobile/app/practice/[id].tsx": 1089,
+    "apps/mobile/app/practice/[id].tsx": 1056,
     "apps/mobile/app/profile.tsx": 644,
     "apps/mobile/components/lb/BuddyOrb.tsx": 612,
     "apps/mobile/components/math/ChartFigures.tsx": 983,

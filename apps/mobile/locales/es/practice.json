@@ -227,7 +227,12 @@
     "missed": "Todavía no",
     "skipped": "Saltada",
     "solution": "Solución: {{answer}}",
-    "untouched": "Sin responder"
+    "untouched": "Sin responder",
+    "time_up_title": "Se acabó el tiempo",
+    "time_up_line_one": "En ese tiempo has respondido {{answered}} de {{count}} pregunta.",
+    "time_up_line_other": "En ese tiempo has respondido {{answered}} de {{count}} preguntas.",
+    "time_up_rest": "Lo que quedó abierto no cuenta como incorrecto.",
+    "unanswered": "Sin responder"
   },
   "test_note": "Examen de prueba: una respuesta por pregunta, sin pistas. Verás el resultado al final.",
   "thread": {
@@ -272,5 +277,14 @@
       "again_divide": "Seguimos con dividir entre {{n}}.",
       "again_range": "Seguimos con {{what}}."
     }
+  },
+  "timer": {
+    "chip_one": "queda {{count}} min",
+    "chip_other": "quedan {{count}} min",
+    "left_one": "Queda {{count}} minuto",
+    "left_other": "Quedan {{count}} minutos",
+    "note": "Una respuesta por pregunta, sin pistas.",
+    "soon": "Mira con calma qué más puedes hacer.",
+    "up": "Se acabó el tiempo: enseguida llega tu resultado."
   }
 }

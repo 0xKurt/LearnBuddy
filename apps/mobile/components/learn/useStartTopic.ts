@@ -13,6 +13,7 @@ import type {
   DifficultyWish,
   SessionView,
   StartTopicRequest,
+  TestMinutes,
   VocabDirection,
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
@@ -44,6 +45,8 @@ export type StartOptions = {
   direction?: VocabDirection | null;
   /** spelling_dictation: the sheet whose words are dictated (issue #242). */
   materialId?: string | null;
+  /** test: the time limit she asked Buddy for (issue #241); the server keeps the clock. */
+  minutes?: TestMinutes | null;
 };
 
 export function useStartTopic() {
@@ -83,6 +86,7 @@ export function useStartTopic() {
         ...(opts.difficulty ? { difficulty: opts.difficulty } : {}),
         ...(opts.direction ? { direction: opts.direction } : {}),
         ...(opts.materialId ? { material_id: opts.materialId } : {}),
+        ...(opts.minutes ? { minutes: opts.minutes } : {}),
       });
       last.current = null;
       // The home shows the new session (to resume it) from now on.

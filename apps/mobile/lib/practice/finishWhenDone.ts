@@ -3,6 +3,8 @@
 // questions are still being written (issue #220): she was faster than the generator, and ending
 // the run would throw away the questions on their way (the server refuses it too; this only saves
 // the call). Not a Kopfrechnen round: the server finishes it with its last answer (issue #243).
+// A test she sat with time is handed in when its time is up (issue #241) — but never while her
+// last answer is still travelling, or it would arrive at a test that has already ended.
 
 import type { SessionView } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
@@ -16,6 +18,7 @@ export function useFinishWhenDone(
   id: string,
   session: SessionView | undefined,
   store: (next: SessionView) => Promise<void>,
+  handIn: { timeUp: boolean; busy: boolean; onHandIn: () => void },
 ): { finish: () => Promise<void>; finishFailed: boolean } {
   const [finishFailed, setFinishFailed] = useState(false);
   const started = useRef(false);
@@ -24,6 +27,7 @@ export function useFinishWhenDone(
     !session.preparing &&
     !session.drill &&
     session.items.every((i) => i.status !== 'open');
+  const timeUp = handIn.timeUp && !handIn.busy && session?.status === 'active';
 
   async function finish(): Promise<void> {
     setFinishFailed(false);
@@ -37,10 +41,11 @@ export function useFinishWhenDone(
   }
 
   useEffect(() => {
-    if (!nothingOpen || started.current) return;
+    if (!(nothingOpen || timeUp) || started.current) return;
     started.current = true;
+    if (timeUp) handIn.onHandIn();
     void finish();
-  }, [nothingOpen]);
+  }, [nothingOpen, timeUp]);
 
   return { finish, finishFailed };
 }

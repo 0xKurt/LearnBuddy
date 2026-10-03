@@ -30,7 +30,8 @@ import { t } from '../../i18n/index.js';
 import { bumpContext } from '../buddy/plan.js';
 import { CARD_PASS, goesOnACard, offersCardPass, type CardCandidate } from './cards.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
-import { createSession, loadSession, nextSeq, type PracticeLearner } from './service.js';
+import { createSession, nextSeq, type PracticeLearner } from './service.js';
+import { loadSession } from './sessionRow.js';
 import { passTurn } from './passTurn.js';
 
 /** The columns `goesOnACard` needs, for a session whose rows are not loaded yet. */

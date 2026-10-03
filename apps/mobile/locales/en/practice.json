@@ -227,7 +227,12 @@
     "missed": "Not right yet",
     "skipped": "Skipped",
     "solution": "Answer: {{answer}}",
-    "untouched": "Not answered"
+    "untouched": "Not answered",
+    "time_up_title": "Time is up",
+    "time_up_line_one": "In the time you answered {{answered}} of {{count}} question.",
+    "time_up_line_other": "In the time you answered {{answered}} of {{count}} questions.",
+    "time_up_rest": "What stayed open does not count as wrong.",
+    "unanswered": "Not answered"
   },
   "test_note": "Practice test – one answer per question, no hints. You'll see the result at the end.",
   "thread": {
@@ -272,5 +277,14 @@
       "again_divide": "We'll keep at dividing by {{n}}.",
       "again_range": "We'll keep at {{what}}."
     }
+  },
+  "timer": {
+    "chip_one": "{{count}} min left",
+    "chip_other": "{{count}} min left",
+    "left_one": "{{count}} minute left",
+    "left_other": "{{count}} minutes left",
+    "note": "One answer per question, no hints.",
+    "soon": "Calmly see what else you can do.",
+    "up": "Time is up – your result is on its way."
   }
 }

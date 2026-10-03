@@ -19,6 +19,7 @@ import {
   type ItemRow,
   type SessionItemRow,
 } from './service.js';
+import { settleTestClock, timeUpError } from './testClock.js';
 
 /**
  * "Show me the solution": close the question as not known (FSRS: again). Only after a real
@@ -30,6 +31,10 @@ export async function revealItem(
   sessionId: string,
   itemId: string,
 ): Promise<SessionView> {
+  // "Überspringen" after the time is up changes nothing: the question stays "nicht beantwortet".
+  if ((await settleTestClock(deps.db, learnerId, sessionId, deps.now())) === 'time_up') {
+    throw timeUpError();
+  }
   await changeSession(deps, learnerId, sessionId, async (tx, s, now) => {
     if (s.pass === CARD_PASS) {
       throw new AppError('conflict', 'A card shows its answer by itself', {

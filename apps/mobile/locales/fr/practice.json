@@ -227,7 +227,12 @@
     "missed": "Pas encore juste",
     "skipped": "Passée",
     "solution": "Solution : {{answer}}",
-    "untouched": "Pas traitée"
+    "untouched": "Pas traitée",
+    "time_up_title": "Le temps est écoulé",
+    "time_up_line_one": "Pendant ce temps, tu as répondu à {{answered}} question sur {{count}}.",
+    "time_up_line_other": "Pendant ce temps, tu as répondu à {{answered}} questions sur {{count}}.",
+    "time_up_rest": "Ce qui est resté ouvert ne compte pas comme faux.",
+    "unanswered": "Sans réponse"
   },
   "test_note": "Test d'entraînement – une réponse par question, pas d'indices. Tu verras le résultat à la fin.",
   "thread": {
@@ -272,5 +277,14 @@
       "again_divide": "On continue avec diviser par {{n}}.",
       "again_range": "On continue avec {{what}}."
     }
+  },
+  "timer": {
+    "chip_one": "encore {{count}} min",
+    "chip_other": "encore {{count}} min",
+    "left_one": "Encore {{count}} minute",
+    "left_other": "Encore {{count}} minutes",
+    "note": "Une réponse par question, pas d’indices.",
+    "soon": "Regarde tranquillement ce que tu peux encore faire.",
+    "up": "Le temps est écoulé – ton résultat arrive."
   }
 }

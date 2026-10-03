@@ -652,6 +652,9 @@ const scheduleCheck = z.object({
   }),
 });
 
+/** The minutes a timed test may have, as the model picks them (`TEST_MINUTES`, issue #241). */
+export const TEST_MINUTE_CHOICES = ['10', '20', '30', '45', '60', '90'] as const;
+
 const offerLearning = z.object({
   tool: z.literal('offer_learning'),
   args: z.object({
@@ -690,6 +693,20 @@ const offerLearning = z.object({
       .optional()
       .describe(
         'vocab only, and only what she asked for: "recognise" asks what the foreign word means, "produce" shows it in her own language and asks for the foreign word. null asks both directions, as usual.',
+      ),
+    // Issue #241: a clock only on her wish. The minutes are a value from a fixed list, never a
+    // number of the model's own (rule 2), and her words asking for it are checked by code.
+    time_limit: z
+      .object({
+        minutes: z
+          .enum(TEST_MINUTE_CHOICES)
+          .describe('the minutes she named, else the nearest on this list; 45 when she named none'),
+        quote: Quote.describe('her words asking to sit it with time'),
+      })
+      .nullable()
+      .optional()
+      .describe(
+        'test only, and only when she herself asks to sit it with a time limit, as in a class test, or names a length. null otherwise — never a clock she did not ask for.',
       ),
   }),
 });

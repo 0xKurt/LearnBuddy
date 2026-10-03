@@ -69,7 +69,9 @@
     "submit": "Let's go",
     "preparing": "Buddy is getting it ready …",
     "preparing_hint": "This takes a few seconds.",
-    "not_usable": "I can't prepare anything from that, sorry – try a school topic."
+    "not_usable": "I can't prepare anything from that, sorry – try a school topic.",
+    "minutes_one": "with {{count}} minute",
+    "minutes_other": "with {{count}} minutes"
   },
   "drill": {
     "label": "Mental maths"

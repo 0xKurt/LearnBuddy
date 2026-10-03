@@ -2,7 +2,7 @@
 // tap — something to learn (`offer_learning`) or a Kopfrechnen round (`offer_drill`, #243). They
 // change nothing; what code enforces is that the button can really start what it promises.
 
-import { DrillSpec } from '@learnbuddy/shared-types/contracts';
+import { DrillSpec, TEST_MINUTES, TestMinutes } from '@learnbuddy/shared-types/contracts';
 
 import { titleOf } from '../practice/drill.js';
 import { fromLearnerText } from '../practice/generate.js';
@@ -15,6 +15,7 @@ import {
   ToolRejection,
   type ToolContext,
   type ToolOutcome,
+  requireQuote,
 } from './toolKit.js';
 
 export async function runOfferLearning(
@@ -71,6 +72,25 @@ export async function runOfferLearning(
       'you already prepared practice in this same answer — that is the one thing she taps. Leave this offer out and say in your reply where the practice you prepared is.',
     );
   }
+  // A clock only when she asked for one (issue #241). The minutes are one of a fixed list,
+  // checked again here — the schema is what the model was shown, this is what holds — and the
+  // words asking for it must be hers, from what she just wrote: a timer is never Buddy's idea,
+  // and a background check, where she said nothing, can never set one. Prüfungsangst is the
+  // reason a clock is not the default, so the floor is code, not a line in the prompt.
+  let minutes: TestMinutes | null = null;
+  if (a.time_limit) {
+    if (a.kind !== 'test') {
+      throw new ToolRejection(
+        'a time limit only goes with a practice test (kind "test") — leave time_limit null here',
+      );
+    }
+    const parsed = TestMinutes.safeParse(Number(a.time_limit.minutes));
+    if (!parsed.success) {
+      throw new ToolRejection(`a test runs ${TEST_MINUTES.join(', ')} minutes — pick one of them`);
+    }
+    requireQuote(ctx, a.time_limit.quote);
+    minutes = parsed.data;
+  }
   // The same offer twice is not a second thing she can tap — the first button is still there,
   // unstarted (issue #184). STATE says what stands, so this is the floor under the prompt, not
   // the rule itself: only an offer identical in every field it carries is refused, with the
@@ -85,7 +105,8 @@ export async function runOfferLearning(
         o.goal_id === (goal?.id ?? null) &&
         o.difficulty === (a.difficulty ?? null) &&
         o.direction === (a.direction ?? null) &&
-        (o.material_id ?? null) === (sheet?.id ?? null),
+        (o.material_id ?? null) === (sheet?.id ?? null) &&
+        o.minutes === minutes,
     )
   ) {
     throw new ToolRejection(
@@ -104,6 +125,8 @@ export async function runOfferLearning(
       // A direction only ever reaches vocabulary pairs — other questions have none.
       difficulty: a.difficulty ?? null,
       direction: a.direction ?? null,
+      // Only a test, and only on her wish (above); the tap hands it to the run (issue #241).
+      minutes,
       // Nothing proves otherwise yet. The preparation that runs right after this (issue #48)
       // is what can take it back, by stamping `cannot_start_at` (issue #196).
       startable: true,

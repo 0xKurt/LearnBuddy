@@ -70,6 +70,7 @@ const round = (over: Partial<SessionView> = {}): SessionView => ({
   card_pass: false,
   card_pass_offered: false,
   preparing: false,
+  timer: null,
   items: [task(A, '7 · 8'), task(B, '6 · 7')],
   turns: [],
   current_item_id: A,

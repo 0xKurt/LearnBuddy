@@ -12,7 +12,8 @@ import { actToolsPrompt } from './registry.js';
 
 // buddy.55: offer_learning kind spelling_dictation with a sheet (Diktat, #242), on top of 54.
 // buddy.56: offer_drill, a Kopfrechnen round code writes and checks (#243), on top of 55.
-export const BUDDY_PROMPT_VERSION = 'buddy.56';
+// buddy.57: offer_learning may carry a test's time_limit, on her wish only (#241), on top of 56.
+export const BUDDY_PROMPT_VERSION = 'buddy.57';
 
 // No example in here is a phrase in one language that the model is meant to WRITE. An English
 // learner was told "I've planned your maths test for am Freitag" in 2 of 3 live runs (issue

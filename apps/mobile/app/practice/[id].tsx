@@ -81,8 +81,8 @@ import { StructuredAnswer } from '../../components/practice/StructuredAnswer.js'
 import { TopEdgeFade, topEdgeMask, topEdgeMaskFrom } from '../../components/lb/EdgeFade.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
 import { Reexplain } from '../../components/practice/Reexplain.js';
-import { AgainButton } from '../../components/practice/AgainButton.js';
-import { SessionSummary } from '../../components/practice/SessionSummary.js';
+import { RunResult } from '../../components/practice/RunResult.js';
+import { TestClockHeader } from '../../components/practice/TestClock.js';
 import { SelfSolvedCard, SolutionCard } from '../../components/practice/SolutionCard.js';
 import {
   latestPronunciation,
@@ -220,6 +220,12 @@ export default function PracticeScreen() {
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
   const [closing, setClosing] = useState(false);
+  /**
+   * A test she sat with time has run out on this screen (issue #241). The questions go away at
+   * once and the test is handed in as soon as no answer is on its way — an answer she sent at
+   * the last second is still graded (the server allows for the network).
+   */
+  const [timeUp, setTimeUp] = useState(false);
   /** "Frage passt nicht": the confirm sheet, and the question it is about. */
   const [flagFor, setFlagFor] = useState<string | null>(null);
   const [flagOpen, setFlagOpen] = useState(false);
@@ -337,7 +343,12 @@ export default function PracticeScreen() {
   }
 
   // Once no question is open, the run is finished — once (`useFinishWhenDone`).
-  const { finish, finishFailed } = useFinishWhenDone(id, session, store);
+  // And a test whose time is up (issue #241) is handed in once no answer is on its way.
+  const { finish, finishFailed } = useFinishWhenDone(id, session, store, {
+    timeUp,
+    busy,
+    onHandIn: () => setPinnedId(null),
+  });
 
   // Buddy's home shows this session (questions left, the result): refresh it on the way out.
   useEffect(
@@ -653,83 +664,28 @@ export default function PracticeScreen() {
   const shown = questionOnScreen(session, pinnedId);
 
   // ─────────────── nothing left to answer ───────────────
+  // Also when the time of a test with time is up (issue #241): no question stays on screen to be
+  // answered into the void; the result comes as soon as the test is handed in.
 
-  if (!shown) {
+  if (!shown || (timeUp && session.status === 'active')) {
     if (session.status === 'finished' && session.summary) {
-      // What more practice would be about: what did not sit, else what did, else the
-      // topics of the questions she just worked on.
-      const summary = session.summary;
-      const againTopics =
-        summary.shaky_topics.length > 0
-          ? summary.shaky_topics
-          : summary.secure_topics.length > 0
-            ? summary.secure_topics
-            : [
-                ...new Set(
-                  session.items
-                    .map((i) => i.item.topic?.trim())
-                    .filter((t): t is string => t !== undefined && t.length > 0),
-                ),
-              ];
       return (
-        <Screen title={title}>
-          <ScrollView
-            testID="scroll-list"
-            contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
-            keyboardShouldPersistTaps="handled"
-          >
-            <SessionSummary
-              celebrate={sawActive.current}
-              summary={session.summary}
-              mode={session.mode}
-              review={session.mode === 'test' ? session.items : null}
-            />
-          </ScrollView>
-          <BottomBar>
-            <Appear delay={sawActive.current ? 900 : 0} style={{ gap: 10 }}>
-              {/* Weiterüben ist immer einen Tipp entfernt (issue #47): das Wacklige zuerst,
-                  sonst mehr vom Sitzenden — und wenn die Zusammenfassung keine Themen kennt,
-                  die der Fragen selbst. Eine Übung endet nie in einer Sackgasse. */}
-              {/* Lernkarten statt tippen (issue #147): wo die Wiederholung ganz aus Vokabeln
-                  besteht, geht sie als Karten durch — nicht NEBEN „nochmal üben", sondern an
-                  seiner Stelle. Zwei Wege zum selben Ziel wären genau die Wahl, die die App
-                  ihr abnehmen soll (Regel 16), und für zwanzig Wörter auf dem Handy ist
-                  Tippen das, worüber der Owner sich beschwert hat. Der Server entscheidet,
-                  wann das gilt (practice/cards.ts offersCardPass). */}
-              {session.card_pass_offered ? (
-                <Btn
-                  size="lg"
-                  variant="soft"
-                  pill
-                  icon="practice"
-                  full
-                  busy={busy}
-                  onPress={() => void goThroughCards()}
-                  accessibilityHint={t('practice:cards.offer_hint')}
-                >
-                  {t('practice:cards.offer')}
-                </Btn>
-              ) : session.mode !== 'help' && againTopics.length > 0 ? (
-                <AgainButton
-                  {...(session.summary.shaky_topics.length > 0 ? {} : { kind: 'harder' as const })}
-                  title={session.title}
-                  topics={againTopics}
-                  sessionId={session.id}
-                />
-              ) : null}
-              <Btn size="lg" pill full onPress={backToBuddy}>
-                {t('practice:back_to_buddy')}
-              </Btn>
-            </Appear>
-          </BottomBar>
-        </Screen>
+        <RunResult
+          session={session}
+          summary={session.summary}
+          title={title}
+          celebrate={sawActive.current}
+          busy={busy}
+          onCards={() => void goThroughCards()}
+          onBack={backToBuddy}
+        />
       );
     }
     const active = session.status === 'active';
     // She answered the questions the run started with and the rest is still being written
     // (issue #220). Not a result and not an error — the next questions are on their way, and the
     // screen asks for them until they are there (`usePracticeSession`).
-    if (active && session.preparing) {
+    if (active && session.preparing && !timeUp) {
       return (
         <Screen title={title}>
           <LoadingState label={t('practice:more_coming')} />
@@ -739,7 +695,7 @@ export default function PracticeScreen() {
     if (active && !finishFailed) {
       return (
         <Screen title={title}>
-          <LoadingState label={t('practice:finishing')} />
+          <LoadingState label={t(timeUp ? 'practice:timer.up' : 'practice:finishing')} />
         </Screen>
       );
     }
@@ -938,6 +894,40 @@ export default function PracticeScreen() {
     viewHeight,
   });
 
+  // Where she is — the server's word, never the app's guess: while it says more questions are
+  // coming, the total is not the number it will be (issue #220).
+  const progress = {
+    position: session.items.indexOf(shown) + 1,
+    total: session.items.length,
+    closed: session.items.filter((i) => i.status !== 'open').length,
+    preparing: session.preparing,
+  };
+  const corner = (
+    <QuestionCorner
+      itemId={item.id}
+      read={readOut}
+      flaggable={flaggable}
+      // A judgement she has been given and may disagree with (issue #164). The
+      // rule and the copy live in components/practice/DisputeVerdict.tsx.
+      canDispute={canDisputeVerdict({
+        open,
+        sessionStatus: session.status,
+        testing,
+        mode: session.mode,
+        origin: item.origin,
+      })}
+      disabled={locked}
+      onFlag={() => {
+        setFlagFor(item.id);
+        setFlagOpen(true);
+      }}
+      onDispute={() => {
+        setDisputeFor(item.id);
+        setDisputeOpen(true);
+      }}
+    />
+  );
+
   // No scrolling to find what matters (CLAUDE.md rule 16): the question stays on top,
   // the way to answer stays at the bottom, and only the conversation between them
   // grows — like a chat, newest at the bottom.
@@ -976,44 +966,25 @@ export default function PracticeScreen() {
                 contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, gap: 10 }}
                 onContentSizeChange={(_, h) => setQuestionContentHeight(Math.round(h))}
               >
-                <ProgressRow
-                  position={session.items.indexOf(shown) + 1}
-                  total={session.items.length}
-                  closed={session.items.filter((i) => i.status !== 'open').length}
-                  // The server's word, never the app's guess: while it says more questions are coming,
-                  // the total is not the number it will be (issue #220).
-                  preparing={session.preparing}
-                  right={
-                    <QuestionCorner
-                      itemId={item.id}
-                      read={readOut}
-                      flaggable={flaggable}
-                      // A judgement she has been given and may disagree with (issue #164). The
-                      // rule and the copy live in components/practice/DisputeVerdict.tsx.
-                      canDispute={canDisputeVerdict({
-                        open,
-                        sessionStatus: session.status,
-                        testing,
-                        mode: session.mode,
-                        origin: item.origin,
-                      })}
-                      disabled={locked}
-                      onFlag={() => {
-                        setFlagFor(item.id);
-                        setFlagOpen(true);
-                      }}
-                      onDispute={() => {
-                        setDisputeFor(item.id);
-                        setDisputeOpen(true);
-                      }}
-                    />
-                  }
-                />
-                {session.mode === 'help' || testing ? (
-                  <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
-                    {t(testing ? 'practice:test_note' : 'practice:help_note')}
-                  </Text>
-                ) : null}
+                {testing && session.timer ? (
+                  // A test she asked to sit with time (issue #241): the time left in a small chip
+                  // at the end of the same row, and the one line under it — the header does not grow.
+                  <TestClockHeader
+                    timer={session.timer}
+                    receivedAt={query.dataUpdatedAt}
+                    onTimeUp={() => setTimeUp(true)}
+                    progress={{ ...progress, right: corner }}
+                  />
+                ) : (
+                  <>
+                    <ProgressRow {...progress} right={corner} />
+                    {session.mode === 'help' || testing ? (
+                      <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
+                        {t(testing ? 'practice:test_note' : 'practice:help_note')}
+                      </Text>
+                    ) : null}
+                  </>
+                )}
                 {/* The next question comes in softly from the side (keyed by the question). */}
                 <SlideIn
                   key={item.id}

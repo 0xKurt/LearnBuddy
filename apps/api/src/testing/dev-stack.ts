@@ -28,6 +28,7 @@ import { scriptDictation } from './scenarios/dictation.js';
 import { scriptDrill } from './scenarios/drill.js';
 import { scriptFigures } from './scenarios/figures.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
+import { scriptTimedTest } from './scenarios/timedTest.js';
 import { scriptTour } from './scenarios/tour.js';
 import { installChecks } from './scenarios/checks.js';
 import { installGenerations } from './scenarios/generations.js';
@@ -60,6 +61,8 @@ async function main(): Promise<void> {
     // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
     scriptDictation();
     scriptCoreLoop(scripted);
+    // Before the learning modes: their "probetest" sentence would answer this one too (#241).
+    scriptTimedTest();
     scriptLearningModes(scripted);
     scriptTour(scripted);
     scriptFigures();
