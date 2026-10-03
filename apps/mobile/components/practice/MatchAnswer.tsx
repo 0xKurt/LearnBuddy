@@ -1,6 +1,7 @@
 // Zuordnen (issue #229). Paare: zwei Spalten, links antippen, dann rechts (oder andersherum
-// — niemand muss eine Richtung lernen); beide tragen dann dieselbe Nummer, IM Element und in
-// Lesegröße. Gruppen: oben, was noch einzusortieren ist, darunter je Gruppe eine Zeile mit
+// — niemand muss eine Richtung lernen); beide tragen dann dieselbe Pastellfarbe UND dasselbe
+// Zeichen (● ▲ ■ ◆), damit ein Paar auf einen Blick zu sehen ist und Farbe nie das einzige Signal
+// ist (#286; vorher eine Nummer im Text, das Brett wirkte wie ein Formular). Gruppen: oben, was noch einzusortieren ist, darunter je Gruppe eine Zeile mit
 // ihrem Namen; ein Ding antippen, dann seine Gruppe — und es wandert IN deren Zeile, neben
 // den Namen. Der Kasten ist der Zustand: keine Nummer, die sie einer Legende zuordnen müsste
 // (die Darstellung stammt aus dem ersetzten `parts`-Brett, #224). Ein Tipp auf etwas
@@ -8,10 +9,10 @@
 // zugeordnet, schickt „Prüfen" die Verbindungen als `parts`; geprüft wird auf dem Server, exakt
 // und ohne Modell (apps/api/src/modules/practice/structured.ts).
 //
-// Platz (Regel 16, 360×740): vier Paare in zwei Spalten sind vier Zeilen statt acht, und die
-// Spalten teilen sich die Breite nach ihren längsten Wörtern (`leftShare`). Die Nummer ist eine
-// fette Ziffer vor dem Text; der Text bricht daneben an Wortgrenzen um, nie mitten im Wort (kein
-// Wort ist länger als MATCH_WORD_MAX). Wie viel hier höchstens steht, ist gemessen, nicht gewählt:
+// Platz (Regel 16, 360×740): vier Paare in zwei Spalten sind vier Zeilen statt acht; die beiden
+// Kacheln einer Zeile sind gleich hoch, die Spalten fast gleich breit (42–58 %, nach den längsten
+// Wörtern). Der Text steht links und bricht an Wortgrenzen um, nie mitten im Wort (kein Wort ist
+// länger als MATCH_WORD_MAX). Wie viel hier höchstens steht, ist gemessen, nicht gewählt:
 // die MATCH_*-Grenzen in contracts/structured.ts passen ohne Scrollen auf 360×740.
 //
 // Farbe ist nie das einzige Signal: die Nummer bzw. die Zeile sagt die Zuordnung, und ein
@@ -21,6 +22,7 @@
 // (ThemeProvider).
 
 import type { MatchTaskView, StructuredAnswer } from '@learnbuddy/shared-types/contracts';
+import type { SubjectTone } from '../../lib/theme/palettes.js';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -141,29 +143,26 @@ export function linksText(view: MatchTaskView, links: readonly Link[]): string {
 }
 
 /**
- * The pair's number inside an element, before its text: a bold 14-pt numeral, read at a glance,
- * never a corner badge. A numeral costs one character's width, so the word beside it keeps its
- * room in a narrow column and the element stays one or two lines tall (a disc pushed the word
- * below itself and made five pairs too tall for a 360×740 phone, #224). Decorative for a screen
- * reader — the element's name says the pair in words.
+ * How a formed pair looks (issue #286): both of its tiles wear the same pastel tint AND the same
+ * symbol, so the pair is seen at a glance and colour is never the only signal (CLAUDE.md). One
+ * per pair, by its number; a pairing has at most MATCH_PAIRS_MAX (4) pairs. The tints are the
+ * subject tones (`useTheme().tones`), never a free colour; lavender stays out, it is the colour
+ * of a tile that has no partner yet.
  */
-function PairNumber({ n, held }: { n: number; held: boolean }) {
-  const { palette } = useTheme();
-  return (
-    <Text
-      accessible={false}
-      importantForAccessibility="no"
-      style={{
-        color: held ? palette.paper : palette.primary,
-        fontSize: 14,
-        lineHeight: 18,
-        fontWeight: '800',
-      }}
-    >
-      {n}
-    </Text>
-  );
+const PAIR_LOOKS: ReadonlyArray<{ tone: SubjectTone; symbol: string }> = [
+  { tone: 'sky', symbol: '●' },
+  { tone: 'mint', symbol: '▲' },
+  { tone: 'peach', symbol: '■' },
+  { tone: 'blush', symbol: '◆' },
+];
+
+/** The look of pair n (1-based); wraps around rather than failing for an old, larger task. */
+export function pairLook(n: number): { tone: SubjectTone; symbol: string } {
+  return PAIR_LOOKS[(n - 1) % PAIR_LOOKS.length]!;
 }
+
+/** The width kept for a pair's symbol, so a tile's text does not move when it is paired. */
+const SYMBOL = 16;
 
 /**
  * How wide the left column of a pairing is: as much as its longest word needs next to the
@@ -251,7 +250,6 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: Props) {
                 ...(groups ? {} : { marginHorizontal: -SPACE.xs }),
               }}
             >
-              {link && !groups ? <PairNumber n={link.n} held={isHeld} /> : null}
               <MathText
                 text={text.get(id) ?? ''}
                 accessible={false}
@@ -273,6 +271,91 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: Props) {
           {me}
         </Btn>
       </View>
+    );
+  };
+
+  /**
+   * One tile of a pairing (issue #286). Unpaired it is a calm lilac tile; held, it is filled; in
+   * a pair it wears the pair's tint and symbol — the same on both sides. The text stands left,
+   * the symbol at the end, so nothing is read as part of the word.
+   */
+  const pairTile = (id: string, side: 'left' | 'right') => {
+    const link = links.find((k) => (side === 'left' ? k.left === id : k.right === id));
+    const isHeld = held === id;
+    const look = link ? pairLook(link.n) : null;
+    const me = spoken(id);
+    const other = link ? spoken(side === 'left' ? link.right : link.left) : '';
+    return (
+      <Btn
+        key={id}
+        variant={isHeld ? 'primary' : 'soft'}
+        {...(look && !isHeld ? { tone: look.tone } : {})}
+        size="sm"
+        full
+        grow
+        compact
+        disabled={disabled}
+        onPress={() => tap(id)}
+        accessibilityLabel={
+          isHeld
+            ? t('match.held', { text: me })
+            : link
+              ? t('match.paired', { text: me, n: link.n, other })
+              : t('match.no_partner', { text: me })
+        }
+        accessibilityHint={
+          link
+            ? t('match.hint_linked')
+            : isHeld
+              ? t('match.hint_held')
+              : held !== null && (side === 'left') !== heldIsLeft
+                ? t('match.hint_link', { other: spoken(held) })
+                : t('match.hint_take')
+        }
+        label={
+          // Like a group's element: the label reaches SPACE.xs into the compact padding and
+          // carries SPACE.xs above and below, so two lines still fit the 44 pt of one tile and
+          // four pairs of the longest texts fit a 360×740 phone (no `wrap`: its 12 pt each side
+          // pushed the board under the bar).
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: SPACE.xs,
+              marginHorizontal: -SPACE.xs,
+            }}
+          >
+            <MathText
+              text={text.get(id) ?? ''}
+              accessible={false}
+              style={{
+                flex: 1,
+                paddingVertical: SPACE.xs,
+                color: isHeld ? palette.paper : link ? palette.ink : palette.primaryDk,
+                fontSize: 14,
+                lineHeight: 18,
+                fontWeight: '600',
+              }}
+            />
+            <Text
+              accessible={false}
+              importantForAccessibility="no"
+              style={{
+                width: SYMBOL,
+                textAlign: 'center',
+                fontSize: 16,
+                lineHeight: 18,
+                // The shape carries the pair; it is drawn in ink, not in the pale tint.
+                color: look ? palette.ink2 : 'transparent',
+              }}
+            >
+              {look?.symbol ?? ''}
+            </Text>
+          </View>
+        }
+      >
+        {me}
+      </Btn>
     );
   };
 
@@ -331,6 +414,9 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: Props) {
     );
   };
 
+  // A pairing's columns are near-equal (issue #286: a narrow right column wrapped every phrase
+  // into three lines); only a long word may move the split, and then within 42–58 %.
+  const pairShare = (l: number) => Math.min(0.58, Math.max(0.42, l));
   const share = leftShare(
     view.left.map((e) => e.text),
     view.right.map((e) => e.text),
@@ -357,14 +443,22 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: Props) {
               <View style={{ gap: SPACE.xs }}>{view.right.map((g) => group(g.id))}</View>
             </>
           ) : (
-            // Pairs: two columns, so five pairs take five rows, not ten.
-            <View style={{ flexDirection: 'row', gap: SPACE.sm }}>
-              <View style={{ gap: SPACE.sm, flexBasis: 0, flexGrow: share }}>
-                {view.left.map((e) => element(e.id, 'left'))}
-              </View>
-              <View style={{ gap: SPACE.sm, flexBasis: 0, flexGrow: 1 - share }}>
-                {view.right.map((e) => element(e.id, 'right'))}
-              </View>
+            // Pairs: two columns of rows, so four pairs are four rows, and the two tiles of a
+            // row are equally tall (issue #286: ragged boxes looked like a form).
+            <View style={{ gap: SPACE.sm }}>
+              {view.left.map((e, i) => {
+                const r = view.right[i];
+                return (
+                  <View key={e.id} style={{ flexDirection: 'row', gap: SPACE.sm }}>
+                    <View style={{ flexBasis: 0, flexGrow: pairShare(share) }}>
+                      {pairTile(e.id, 'left')}
+                    </View>
+                    <View style={{ flexBasis: 0, flexGrow: 1 - pairShare(share) }}>
+                      {r ? pairTile(r.id, 'right') : null}
+                    </View>
+                  </View>
+                );
+              })}
             </View>
           )}
         </View>

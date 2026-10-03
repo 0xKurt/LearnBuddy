@@ -335,7 +335,10 @@ describe('table_fill: her answer, cell by cell', () => {
     const gap = terms.rows[0]![1]!;
     if (!('key' in gap)) throw new Error('gap expected');
     expect(cellVerdict(gap, '2x+6', CTX, false)).toBe('right');
-    expect(cellVerdict(gap, '6+2x', CTX, false)).toBe('near');
+    // The same summands in another order are the same form (#235, form.ts): right.
+    expect(cellVerdict(gap, '6+2x', CTX, false)).toBe('right');
+    // The same value in another form: the column asks for the expanded one, so nearly.
+    expect(cellVerdict(gap, 'x+x+6', CTX, false)).toBe('near');
     expect(cellVerdict(gap, '2x+3', CTX, false)).toBe('wrong');
   });
 

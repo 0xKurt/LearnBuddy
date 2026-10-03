@@ -310,7 +310,22 @@
     "polygons": "Polygons: {{list}}",
     "circle": "Circle around {{center}} with radius {{radius}}",
     "table": "Table with {{rows}} rows. Columns: {{header}}",
-    "row": "Row {{n}}: {{cells}}"
+    "row": "Row {{n}}: {{cells}}",
+    "angle": "Angle {{name}}",
+    "angle_value": "Angle {{name}}: {{value}}",
+    "length": "Side {{name}}: {{value}}",
+    "arrow": "Arrow from {{from}} to {{to}} {{value}}",
+    "resultant": "Resultant from {{from}} to {{to}} {{value}}",
+    "ray": "Ray from {{from}} through {{through}}",
+    "light_ray": "Light ray from {{from}} through {{through}}",
+    "line": "Line through {{a}} and {{b}}",
+    "molecule": "{{style}}: {{list}}",
+    "molecule_lewis": "Lewis structure",
+    "molecule_structural": "Structural formula",
+    "molecule_skeletal": "Skeletal formula",
+    "lone_pairs_one": "{{atom}} has {{count}} lone pair",
+    "lone_pairs_other": "{{atom}} has {{count}} lone pairs",
+    "molecule_marked": "Marked: {{list}}"
   },
   "keys": {
     "row": "Math symbols",
