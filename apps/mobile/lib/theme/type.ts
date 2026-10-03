@@ -57,6 +57,20 @@ function typeOf(p: Palette) {
       color: p.ink,
       letterSpacing: -0.2,
     },
+    /**
+     * A screen's title in a header that also carries buttons on its right (components/lb/
+     * Screen.tsx): one line, one step below `title` so a two-word topic still fits next to
+     * them. "Flächeninhalt Rechteck" broke onto a second line and pushed the question down
+     * (issue #287, docs/DESIGN-BRIEF.md §How it should feel: calm). 17 is the platform's own
+     * navigation-title size.
+     */
+    header: {
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: weightOf('600'),
+      color: p.ink,
+      letterSpacing: -0.2,
+    },
     /** The one thing being asked right now (a question, a word to speak). */
     prompt: {
       fontSize: 21,

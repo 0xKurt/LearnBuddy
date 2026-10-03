@@ -60,3 +60,46 @@ describe('whether the key may be trusted', () => {
     expect(item({ kind: 'multiple_choice', prompt: '6 + 4', answer: '8' })).toBe(true);
   });
 });
+
+// ── Keys the question itself proves wrong (issues #235, #263, #227 B4–B6, B10) ─────────────
+describe('a key its own maths proves wrong', () => {
+  const formula = (prompt: string, answer: string, over: Record<string, unknown> = {}) =>
+    keyAgreesWithPrompt({ kind: 'formula', prompt, answer, unit: null, ...over });
+
+  it('solves a printed system and a printed equation', () => {
+    const lgs = 'Löse: $x + y = 5$ und $x - y = 1$.';
+    expect(formula(lgs, 'x = 3, y = 2')).toBe(true);
+    expect(formula(lgs, 'x = 2, y = 3')).toBe(false);
+    expect(formula('$2x + y = 7$; $4x + 2y = 14$', 'x = 2, y = 3')).toBe(false);
+    expect(formula('Löse $3x - 4 = 11$.', 'x = 5')).toBe(true);
+    expect(formula('Löse $3x - 4 = 11$.', 'x = 7')).toBe(false);
+  });
+
+  it('checks a derivative and an antiderivative against the function the question defines', () => {
+    const f = 'Gegeben ist $f(x) = x^3 - 2x$.';
+    expect(formula(f, "f'(x) = 3x^2 - 2")).toBe(true);
+    expect(formula(f, "f'(x) = 3x^2 - 2x")).toBe(false);
+    expect(formula(f, 'F(x) = x^4/4 - x^2 + C')).toBe(true);
+    expect(formula(f, 'F(x) = x^4 - x^2 + C')).toBe(false);
+    // An accepted answer is a key too.
+    expect(formula(f, "f'(x) = 3x^2 - 2", { accepted_answers: ["f'(x) = 3x^2"] })).toBe(false);
+    // Without "+ C", F may be any function the task calls F: nothing is claimed.
+    expect(formula(f, 'F(x) = x^4')).toBe(true);
+    // A function with a kink is only compared where the slope can be computed.
+    expect(formula('$f(x) = abs(x)$', "f'(x) = 1")).toBe(true);
+  });
+
+  it('rejects a reaction or nuclear key that does not balance', () => {
+    expect(formula('Stelle die Gleichung auf.', '2 H2 + O2 → 2 H2O')).toBe(true);
+    expect(formula('Stelle die Gleichung auf.', 'H2 + O2 → H2O')).toBe(false);
+    expect(formula('Alpha-Zerfall von U-238', '²³⁸₉₂U → ²³⁴₉₀Th + ⁴₂He')).toBe(true);
+    expect(formula('Alpha-Zerfall von U-238', '²³⁸₉₂U → ²³⁴₉₀Th + ³₂He')).toBe(false);
+  });
+
+  it('rejects a number key whose accepted answers or unit say another value', () => {
+    expect(item({ prompt: 'Runde 1/3.', answer: '1/3', accepted_answers: ['0.33'] })).toBe(true);
+    expect(item({ prompt: 'Wie viel?', answer: '12', accepted_answers: ['13'] })).toBe(false);
+    expect(item({ prompt: 'Wie lang?', answer: '12 cm', unit: 'cm' })).toBe(true);
+    expect(item({ prompt: 'Wie lang?', answer: '12 mm', unit: 'cm' })).toBe(false);
+  });
+});

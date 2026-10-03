@@ -154,6 +154,11 @@ describe('every multiple choice (#227 Nr. 2)', () => {
       segments: [],
       polygons: [['A', 'B', 'C', 'D']],
       circles: [],
+      angles: [],
+      lengths: [],
+      arrows: [],
+      rays: [],
+      lines: [],
     });
     const two = mc({
       prompt: 'Welches Quadrat ist größer?',

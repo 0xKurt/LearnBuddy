@@ -4,7 +4,7 @@
   "clock": "{{time}}",
   "pin_first": "This needs your parents' PIN. There isn't one yet. It's set below under “For parents”.",
   "contact": {
-    "question": "May Buddy send you notifications?",
+    "question": "Notifications",
     "state_on": "Yes – never after {{quiet}}.",
     "state_off": "No – only here in the app.",
     "answer_off": "No. Buddy only writes to you here in the app.",

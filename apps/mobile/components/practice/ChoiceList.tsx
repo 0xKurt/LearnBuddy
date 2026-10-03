@@ -12,7 +12,7 @@
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View, type TextStyle } from 'react-native';
+import { Platform, Text, useWindowDimensions, View, type TextStyle } from 'react-native';
 
 import { speakMathText } from '../../lib/math/speak.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -196,9 +196,16 @@ function TextChoices({ choices, tried, disabled, onChoose }: Props) {
 //   (360 − 2 × 16 − 8) / 2 = 160 pt a tile − 2 × 12 pt padding = 136 pt for the drawing,
 //   a graph 4 : 5 as high as wide: ≈ 109 pt; with the letter's row (LETTER_LINE + 4) and the
 //   padding a tile is ≈ 157 pt, two rows ≈ 322 pt.
+//
+// The height, on the short phone: once she has tried one, Buddy's reply and "Lösung zeigen"
+// stand between question and tiles (#286: the board directly under them), and at 360×740 the
+// second row ran 24 pt past the screen. So a drawing is never taller than 12 % of the window:
+// 89 pt at 740 (the two rows give back ≈ 40 pt), 101 pt at 844.
 
 /** No option picture taller than this — an odd figure (a long table) is scaled down to it. */
 export const FIGURE_CHOICE_MAX_HEIGHT = 120;
+/** Share of the window's height one option picture may take (see above). */
+export const FIGURE_CHOICE_SCREEN_SHARE = 0.12;
 
 function FigureChoices({
   choices,
@@ -212,6 +219,11 @@ function FigureChoices({
   const { t: tm } = useTranslation('math');
   const words = useSpokenWords();
   const [zoomed, setZoomed] = useState<number | null>(null);
+  const { height: windowHeight } = useWindowDimensions();
+  const pictureMax = Math.min(
+    FIGURE_CHOICE_MAX_HEIGHT,
+    Math.round(windowHeight * FIGURE_CHOICE_SCREEN_SHARE),
+  );
   // What each option shows, in words (the letter first, as voice mode names them).
   const spoken = useMemo(
     () =>
@@ -275,7 +287,7 @@ function FigureChoices({
                     )}
                   </View>
                   <View style={{ opacity: wasTried ? 0.45 : 1 }}>
-                    <FigureView figure={figure} bare maxHeight={FIGURE_CHOICE_MAX_HEIGHT} />
+                    <FigureView figure={figure} bare maxHeight={pictureMax} />
                   </View>
                 </View>
               }
@@ -334,8 +346,8 @@ const CHOICE_WEIGHT = '600';
  * A math-only option ($\frac{2}{3}$, $x^{2}$): larger than the question's own 21 pt line, so a
  * stacked fraction's digits are not smaller than the sentence that asks about them.
  */
-const MATH_CHOICE_FONT = 24;
-const MATH_CHOICE_LINE = 32;
+const MATH_CHOICE_FONT = 22;
+const MATH_CHOICE_LINE = 29;
 /** The gap between the tiles, across and down. */
 const CARD_GAP = SPACE.sm;
 /** The padding `app/practice/[id].tsx` puts around the options, left and right. */

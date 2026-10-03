@@ -311,7 +311,22 @@
     "polygons": "Polygones : {{list}}",
     "circle": "Cercle de centre {{center}} et de rayon {{radius}}",
     "table": "Tableau de {{rows}} lignes. Colonnes : {{header}}",
-    "row": "Ligne {{n}} : {{cells}}"
+    "row": "Ligne {{n}} : {{cells}}",
+    "angle": "Angle {{name}}",
+    "angle_value": "Angle {{name}} : {{value}}",
+    "length": "Côté {{name}} : {{value}}",
+    "arrow": "Flèche de {{from}} à {{to}} {{value}}",
+    "resultant": "Résultante de {{from}} à {{to}} {{value}}",
+    "ray": "Demi-droite d’origine {{from}} passant par {{through}}",
+    "light_ray": "Rayon lumineux de {{from}} passant par {{through}}",
+    "line": "Droite passant par {{a}} et {{b}}",
+    "molecule": "{{style}} : {{list}}",
+    "molecule_lewis": "Formule de Lewis",
+    "molecule_structural": "Formule développée",
+    "molecule_skeletal": "Formule topologique",
+    "lone_pairs_one": "{{atom}} a {{count}} doublet non liant",
+    "lone_pairs_other": "{{atom}} a {{count}} doublets non liants",
+    "molecule_marked": "Marqué : {{list}}"
   },
   "keys": {
     "row": "Symboles mathématiques",

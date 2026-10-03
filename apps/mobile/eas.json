@@ -25,7 +25,8 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://learn-buddy-api-zero-x-ventures-projects.vercel.app",
         "EXPO_PUBLIC_SUPABASE_URL": "https://ngxtokmtfrblcnjonxsv.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_lFA0CvKxXF4Vfr0CLQaiCQ_Bc7zsAB6"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_lFA0CvKxXF4Vfr0CLQaiCQ_Bc7zsAB6",
+        "EXPO_PUBLIC_INTERNAL_BUILD": "1"
       }
     },
     "production": {

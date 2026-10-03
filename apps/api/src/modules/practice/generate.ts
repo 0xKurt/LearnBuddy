@@ -69,7 +69,9 @@ import {
 } from './structured.js';
 import { TABLE_RULES } from './table.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.16';
+// v1.16: car 2's structured rules (v1.15) and #253/#257's figures (v1.14) together.
+// v1.17: pictures as the options of a multiple choice (choice_figures, #231).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.17';
 
 const SUBJECT_KINDS = [
   'math',
