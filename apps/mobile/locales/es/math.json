@@ -239,8 +239,27 @@
       "cong": "congruente con",
       "sim": "semejante a",
       "in": "pertenece a",
-      "notin": "no pertenece a"
-    }
+      "notin": "no pertenece a",
+      "reacts": "reacciona para dar",
+      "equilibrium": "está en equilibrio con",
+      "naturals": "números naturales",
+      "integers": "números enteros",
+      "rationals": "números racionales",
+      "reals": "números reales"
+    },
+    "operators": {
+      "sum": "suma",
+      "prod": "producto",
+      "int": "integral",
+      "lim": "límite"
+    },
+    "op_range": "{{op}} de {{from}} a {{to}}",
+    "op_lower": "{{op}} para {{from}}",
+    "op_upper": "{{op}} hasta {{to}}",
+    "binom": "{{top}} sobre {{bottom}}",
+    "column_vector": "vector columna {{entries}}",
+    "matrix": "matriz con las filas {{rows}}",
+    "arrow_label": "reacciona para dar, condición: {{label}}"
   },
   "staff": {
     "note": {
@@ -302,6 +321,7 @@
     "marked": "Marcados: {{list}}",
     "function_plot": "Sistema de coordenadas, x de {{x_min}} a {{x_max}}, y de {{y_min}} a {{y_max}}",
     "graph": "Gráfica de y = {{expr}}",
+    "graph_through": "Gráfica que pasa por {{list}}",
     "graph_named": "Gráfica {{label}}: y = {{expr}}",
     "points": "Puntos: {{list}}",
     "bar_chart": "Diagrama de barras: {{list}}",
@@ -363,7 +383,27 @@
     "decimal": "coma",
     "newline": "Nueva línea",
     "newline_shown": "↵ Línea",
-    "newline_hint": "Para tu procedimiento: empieza la línea siguiente. «Comprobar» revisa luego todas las líneas."
+    "newline_hint": "Para tu procedimiento: empieza la línea siguiente. «Comprobar» revisa luego todas las líneas.",
+    "row_chem": "Símbolos de química",
+    "power": "Exponente",
+    "power_hint": "Las siguientes cifras se elevan hasta que escribas otra cosa.",
+    "sub": "Subíndice",
+    "sub_hint": "Las siguientes cifras se bajan, como en H₂O.",
+    "charge": "Carga",
+    "charge_hint": "Las siguientes cifras y el más o el menos se elevan, como en SO₄²⁻.",
+    "plus": "más",
+    "reacts": "Flecha de reacción",
+    "equilibrium": "Flecha de equilibrio",
+    "equals": "igual",
+    "lt": "menor que",
+    "gt": "mayor que",
+    "le": "menor o igual que",
+    "ge": "mayor o igual que",
+    "pm": "más menos",
+    "more": "Más símbolos",
+    "more_hint": "Muestra los siguientes símbolos en esta barra.",
+    "mode_on": "activado",
+    "brackets": "Paréntesis"
   },
   "blank": {
     "label": "Hueco",

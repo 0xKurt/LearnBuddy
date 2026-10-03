@@ -13,6 +13,18 @@ const PREFIX = 'lb.draft.';
 const INDEX_KEY = 'lb.draft.index';
 const SAVE_AFTER_MS = 400;
 
+/**
+ * The drafts of this process, held synchronously (issue #239, CI walkthrough of PR #306).
+ *
+ * The device copy is written with a debounce and on unmount — both asynchronous. A remount
+ * (the theme switch remounts the whole tree, lib/theme/ThemeProvider.tsx) used to read the
+ * device copy before the old instance's write had landed, found nothing and showed an empty
+ * field: what she had just typed was gone. Measured in CI: "2 H" typed, the dark→light
+ * switch landed a moment later, and the field held "₂ + O₂ → 2 H₂O". The new instance now
+ * reads this first; the device copy is for after a restart.
+ */
+const memory = new Map<string, string>();
+
 async function remember(key: string): Promise<void> {
   const kept = (await readItem(INDEX_KEY)) ?? '';
   const all = new Set(kept ? kept.split('\n') : []);
@@ -23,9 +35,21 @@ async function remember(key: string): Promise<void> {
 
 /** Deletes every kept draft (sign-out, another learner signs in). */
 export async function clearDrafts(): Promise<void> {
+  memory.clear();
   const kept = (await readItem(INDEX_KEY)) ?? '';
   await Promise.all(kept.split('\n').map((key) => (key ? writeItem(key, null) : undefined)));
   await writeItem(INDEX_KEY, null);
+}
+
+/**
+ * The last keystrokes before an unmount are kept too, not only the debounce — in memory at
+ * once (a remount reads them from there) and on the device, indexed, or the sign-out wipe
+ * would miss them (review 28.09.).
+ */
+function persist(key: string, text: string): void {
+  memory.set(key, text);
+  if (text.trim().length > 0) void remember(key).then(() => writeItem(key, text));
+  else void writeItem(key, null);
 }
 
 /**
@@ -47,31 +71,35 @@ export function useDraft(name: string): {
     let alive = true;
     // A new key is a new field: the previous one's text must not stay on screen
     // (a session's answer draft in the next session, review 28.09.).
-    latest.current = '';
-    setValue('');
+    // What this process already holds wins: it is newer than anything on the device.
+    const held = memory.get(key);
+    latest.current = held ?? '';
+    setValue(held ?? '');
+    if (held !== undefined) {
+      return () => {
+        if (timer.current) clearTimeout(timer.current);
+        persist(key, latest.current);
+      };
+    }
     void readItem(key).then((kept) => {
       // Whatever she typed before the read finished wins over the old draft.
       if (alive && kept && latest.current.length === 0) {
         latest.current = kept;
+        memory.set(key, kept);
         setValue(kept);
       }
     });
     return () => {
       alive = false;
-      // The last keystrokes before unmount are kept too, not only the debounce —
-      // and indexed, or the sign-out wipe would miss them (review 28.09.).
       if (timer.current) clearTimeout(timer.current);
-      if (latest.current.trim().length > 0) {
-        void remember(key).then(() => writeItem(key, latest.current));
-      } else {
-        void writeItem(key, null);
-      }
+      persist(key, latest.current);
     };
   }, [key]);
 
   const setText = (value: string | ((current: string) => string)) => {
     const next = typeof value === 'function' ? value(latest.current) : value;
     latest.current = next;
+    memory.set(key, next);
     setValue(next);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
@@ -82,6 +110,7 @@ export function useDraft(name: string): {
 
   const clear = () => {
     latest.current = '';
+    memory.set(key, '');
     setValue('');
     if (timer.current) clearTimeout(timer.current);
     void writeItem(key, null);

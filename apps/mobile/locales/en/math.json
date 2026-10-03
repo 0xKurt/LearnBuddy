@@ -239,8 +239,27 @@
       "cong": "congruent to",
       "sim": "similar to",
       "in": "element of",
-      "notin": "not an element of"
-    }
+      "notin": "not an element of",
+      "reacts": "reacts to give",
+      "equilibrium": "is in equilibrium with",
+      "naturals": "natural numbers",
+      "integers": "integers",
+      "rationals": "rational numbers",
+      "reals": "real numbers"
+    },
+    "operators": {
+      "sum": "sum",
+      "prod": "product",
+      "int": "integral",
+      "lim": "limit"
+    },
+    "op_range": "{{op}} from {{from}} to {{to}}",
+    "op_lower": "{{op}} for {{from}}",
+    "op_upper": "{{op}} up to {{to}}",
+    "binom": "{{top}} choose {{bottom}}",
+    "column_vector": "column vector {{entries}}",
+    "matrix": "matrix with the rows {{rows}}",
+    "arrow_label": "reacts to give, condition: {{label}}"
   },
   "staff": {
     "note": {
@@ -302,6 +321,7 @@
     "marked": "Marked: {{list}}",
     "function_plot": "Coordinate grid, x from {{x_min}} to {{x_max}}, y from {{y_min}} to {{y_max}}",
     "graph": "Graph of y = {{expr}}",
+    "graph_through": "Graph through {{list}}",
     "graph_named": "Graph {{label}}: y = {{expr}}",
     "points": "Points: {{list}}",
     "bar_chart": "Bar chart: {{list}}",
@@ -363,7 +383,27 @@
     "decimal": "decimal point",
     "newline": "New line",
     "newline_shown": "↵ New line",
-    "newline_hint": "For your working: starts the next line. “Check” then checks every line."
+    "newline_hint": "For your working: starts the next line. “Check” then checks every line.",
+    "row_chem": "Chemistry symbols",
+    "power": "Exponent",
+    "power_hint": "The next digits are raised until you type something else.",
+    "sub": "Subscript",
+    "sub_hint": "The next digits are lowered, as in H₂O.",
+    "charge": "Charge",
+    "charge_hint": "The next digits and the plus or minus are raised, as in SO₄²⁻.",
+    "plus": "plus",
+    "reacts": "Reaction arrow",
+    "equilibrium": "Equilibrium arrow",
+    "equals": "equals",
+    "lt": "less than",
+    "gt": "greater than",
+    "le": "less than or equal to",
+    "ge": "greater than or equal to",
+    "pm": "plus or minus",
+    "more": "More symbols",
+    "more_hint": "Shows the next symbols in this row.",
+    "mode_on": "on",
+    "brackets": "Brackets"
   },
   "blank": {
     "label": "Blank",

@@ -9,6 +9,8 @@
 // produces is measured again, so more room gives the figure its full size back
 // without a second measurement, and less room shrinks it without one either.
 
+import { SPACE } from '../theme/space.js';
+
 /** Never smaller than this: below it the drawing stops being readable. */
 export const MIN_FIGURE_SCALE = 0.4;
 /** The card's padding and border, taken off the width before the drawing gets it. */
@@ -46,7 +48,12 @@ export function figureScale(fullHeight: number, maxHeight: number | undefined): 
     : 1;
 }
 
+/** The padding on each side of a bare figure (an answer option's picture: the option card is its frame). */
+export const BARE_FIGURE_PAD = SPACE.xs;
+/** Both sides of it, taken off the width like FIGURE_CHROME. */
+export const BARE_FIGURE_CHROME = 2 * BARE_FIGURE_PAD;
+
 /** The width the drawing itself is given inside the card. */
-export function figureBodyWidth(width: number, scale: number): number {
-  return Math.floor((width - FIGURE_CHROME) * scale);
+export function figureBodyWidth(width: number, scale: number, chrome = FIGURE_CHROME): number {
+  return Math.floor((width - chrome) * scale);
 }

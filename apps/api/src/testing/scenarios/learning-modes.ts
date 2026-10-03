@@ -140,6 +140,86 @@ function lastText(req: LlmRequest): string {
 }
 
 export function scriptLearningModes(llm: ScriptedGateway): void {
+  // Formulas (issue #239): a reaction equation typed with the chemistry keys and counted by
+  // code (chemistry.ts), the new notation drawn in questions and in Buddy's own words, and a
+  // times table whose whole-number gaps get no math keys (#286 finding 5). Registered first,
+  // like the path above: the first rule that matches wins. The keys the model writes are in
+  // the app notation (MATH_NOTATION_RULE) — and no tutor is scripted: code decides.
+  scriptGenerations({
+    when: /Reaktionsgleichung/i,
+    answer: () => ({
+      usable: true,
+      title: 'Reaktionsgleichungen',
+      subject: { name: 'Chemie', kind: 'chemistry' },
+      items: [
+        {
+          ...base,
+          kind: 'formula',
+          prompt: 'Wasserstoff verbrennt zu Wasser. Stelle die Reaktionsgleichung auf.',
+          answer: '$2H_{2} + O_{2} \\longrightarrow 2H_{2}O$',
+          topic: 'Reaktionsgleichungen',
+        },
+        {
+          ...base,
+          kind: 'formula',
+          prompt:
+            'Das Haber-Bosch-Gleichgewicht: $N_{2} + 3H_{2} \\rightleftharpoons 2NH_{3}$. Welche Formel hat das Sulfat-Ion?',
+          answer: '$SO_{4}^{2-}$',
+          topic: 'Ionen',
+        },
+      ],
+    }),
+  });
+  scriptGenerations({
+    when: /Ungleichungen und Summen/i,
+    answer: () => ({
+      usable: true,
+      title: 'Ungleichungen und Summen',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: [
+        {
+          ...base,
+          kind: 'formula',
+          prompt: 'Schreibe als Ungleichung: Das Quadrat von $x$ ist höchstens 3.',
+          answer: '$x^{2} \\le 3$',
+          topic: 'Ungleichungen',
+        },
+        {
+          ...base,
+          kind: 'numeric',
+          prompt: 'Wie viel ist $\\sum_{i=1}^{4} i + \\binom{4}{2}$?',
+          answer: '16',
+          topic: 'Summen',
+        },
+      ],
+      // Whole numbers only: the gaps get no math keys, the phone's digits write them (#286, #239).
+      structured: [
+        {
+          type: 'table_fill',
+          prompt: 'Fülle die Einmaleins-Tabelle aus.',
+          header: ['·', '3', '4'],
+          rows: [
+            [
+              { text: '5', gap: false, also: [] },
+              { text: '15', gap: true, also: [] },
+              { text: '20', gap: true, also: [] },
+            ],
+            [
+              { text: '6', gap: false, also: [] },
+              { text: '18', gap: true, also: [] },
+              { text: '24', gap: false, also: [] },
+            ],
+          ],
+          family: null,
+          fn: null,
+          x_in: null,
+          topic: 'Einmaleins',
+          difficulty: 1,
+          prompt_lang: 'de',
+        },
+      ],
+    }),
+  });
   // Note lines (issues #226, #275): the model chooses only the task and its musical
   // parameters (`StaffTask`); question, drawing, options and key are the server's. One of each
   // reading task, then a two-bar line to write — the tallest staff surface there is, so the
@@ -481,6 +561,47 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // Pictures as the options (issue #231): "Welcher Graph passt zu f(x) = x² − 1?" with four
+  // parabolas. The model writes the graphs, the texts and the key as a function; the server
+  // checks that exactly one graph IS that function and that it is the one the index points
+  // at (choiceCheck.ts) — and the index judges her tap, without a model.
+  scriptGenerations({
+    when: /Parabel/i,
+    answer: () => {
+      const plot = (expr: string) => ({
+        type: 'function_plot',
+        functions: [{ expr, label: null }],
+        x_min: -3,
+        x_max: 3,
+        y_min: -3,
+        y_max: 5,
+        points: [],
+      });
+      return {
+        usable: true,
+        title: 'Parabeln erkennen',
+        subject: { name: 'Mathe', kind: 'math' },
+        items: [
+          {
+            ...base,
+            kind: 'multiple_choice',
+            prompt: 'Welcher Graph passt zu $f(x) = x^{2} - 1$?',
+            answer: 'f(x) = x^2 - 1',
+            choices: [
+              '$y = x^{2} + 1$',
+              '$y = -x^{2} + 1$',
+              '$y = x^{2} - 1$',
+              '$y = (x - 1)^{2}$',
+            ],
+            correct_choice: 2,
+            choice_figures: ['x^2+1', '-x^2+1', 'x^2-1', '(x-1)^2'].map(plot),
+            topic: 'Parabeln',
+            prompt_lang: 'de',
+          },
+        ],
+      };
+    },
+  });
   // Charts (issues #245, #246): one question per chart, each with what it reads off, so the
   // walkthrough sees every drawing at both phone sizes, light and dark. Every key here is the
   // value code computes from the data — a wrong one would not reach the screen at all.
@@ -574,6 +695,21 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
   // By what she wrote, never by order (issue #81).
   scriptTurns(
     {
+      // Buddy's own words carry the notation too (issue #239): drawn, not shown as LaTeX.
+      when: /reaktionsgleichungen aufstellen/i,
+      answer: says(
+        'Gern! So sieht eine aus: $2H_{2} + O_{2} \\longrightarrow 2H_{2}O$ – links und rechts gleich viele Atome. Ich hab dir Reaktionsgleichungen vorbereitet.',
+        [{ tool: 'offer_learning', args: { kind: 'practice', text: 'Reaktionsgleichungen' } }],
+      ),
+    },
+    {
+      when: /ungleichungen und summen/i,
+      answer: says(
+        'Klar – zum Beispiel $x^{2} \\le 3$, $\\int_{0}^{2} x \\, dx$ oder der Vektor $\\begin{pmatrix} 3 \\\\ 4 \\end{pmatrix}$. Ich hab dir Aufgaben vorbereitet.',
+        [{ tool: 'offer_learning', args: { kind: 'practice', text: 'Ungleichungen und Summen' } }],
+      ),
+    },
+    {
       // The explanation is the answer (buddy.22+); practice on it is offered right after.
       when: /erklär mir den dativ/i,
       answer: says(
@@ -627,6 +763,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /verfassungsorgane zuordnen/i,
       answer: says('Gern – ordne mal zu, wer was macht.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Verfassungsorgane zuordnen' } },
+      ]),
+    },
+    {
+      when: /parabel/i,
+      answer: says('Gern – schau dir die vier Graphen an: welcher passt?', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Parabeln erkennen' } },
       ]),
     },
     {

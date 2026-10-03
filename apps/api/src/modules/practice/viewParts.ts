@@ -2,7 +2,7 @@
 // `service.ts`): the signed concept image, the learning surface, a structured task's parts.
 // Their own file so `service.ts` stays within its size (docs/engineering-guards.md, rule 4).
 
-import { isStructuredKind, type ItemView } from '@learnbuddy/shared-types/contracts';
+import { isStructuredKind, SubjectKind, type ItemView } from '@learnbuddy/shared-types/contracts';
 
 import type { StorageGateway } from '../../storage/gateway.js';
 import { surfaceOf, taskOf } from './bars.js';
@@ -62,6 +62,12 @@ export function taskViewFor(row: Pick<ItemRow, 'kind' | 'task'>): ItemView['task
   if (!isStructuredKind(row.kind)) return null;
   const task = structuredTaskOf(row.task, row.kind);
   return task ? viewOf(task) : null;
+}
+
+/** `subjects.kind` as the contract names it; a value the contract does not know is no kind. */
+export function subjectKindOf(kind: string | null): SubjectKind | null {
+  const parsed = SubjectKind.safeParse(kind);
+  return parsed.success ? parsed.data : null;
 }
 
 /** The crop that goes with the question, or null (contract: ItemImage). */

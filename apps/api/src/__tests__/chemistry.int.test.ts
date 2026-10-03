@@ -164,4 +164,53 @@ describe.skipIf(!dbReady)('reaction equations are counted, not guessed at', () =
     expect(r.body.verdict).toBe('incorrect');
     expect(env.llm.callsFor('tutor')).toHaveLength(1);
   });
+
+  // Issue #239: the keys write "H₂" and "→"; the model writes its key as LaTeX, the notation it
+  // was told (MATH_NOTATION_RULE). The two meet in the counting, and a question in notation the
+  // app cannot draw never reaches her.
+  it('counts what the formula keys type against a key in the app notation', async () => {
+    env.llm.script('explain', {
+      json: {
+        usable: true,
+        title: 'Reaktionsgleichungen',
+        subject: { name: 'Chemie', kind: 'chemistry' },
+        items: [
+          equation(
+            'Stelle die Gleichung für die Bildung von Wasser auf.',
+            '$2H_{2} + O_{2} \\longrightarrow 2H_{2}O$',
+          ),
+          equation(
+            'Fällung: $Fe^{3+}$ und Hydroxid-Ionen.',
+            '$Fe^{3+} + 3OH^{-} \\longrightarrow Fe(OH)_{3}$',
+          ),
+          // \ce is a chemistry package the app does not draw: dropped, never shown.
+          equation(
+            'Gleiche aus: $\\ce{N2 + H2 -> NH3}$',
+            '$N_{2} + 3H_{2} \\rightleftharpoons 2NH_{3}$',
+          ),
+        ],
+      },
+    });
+    const res = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'practice',
+      text: 'Reaktionsgleichungen',
+    });
+    expect(res.status).toBe(201);
+    await env.flushBackground();
+    const s = (await l.api.get<SessionView>(`/practice/sessions/${res.body.id}`)).body;
+
+    expect(s.items.map((i) => i.item.prompt)).toEqual([
+      'Stelle die Gleichung für die Bildung von Wasser auf.',
+      'Fällung: $Fe^{3+}$ und Hydroxid-Ionen.',
+    ]);
+    // The app picks the chemistry keys from this (apps/mobile/lib/math/keys.ts).
+    expect(s.items.map((i) => i.item.subject_kind)).toEqual(['chemistry', 'chemistry']);
+
+    const water = await answer(l, s, s.items[0]!.item.id, '2 H₂ + O₂ → 2 H₂O');
+    expect(water.body.verdict).toBe('correct');
+    const ions = await answer(l, s, s.items[1]!.item.id, 'Fe³⁺ + 3 OH⁻ → Fe(OH)₃');
+    expect(ions.body.verdict).toBe('correct');
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
+  });
 });

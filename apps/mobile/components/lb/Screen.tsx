@@ -46,13 +46,14 @@ export function Screen({ title, back = false, right, children }: Props) {
             // everything under it down and read as a layout fault. With buttons on the right
             // the room is narrower, so the title steps down to the header size; what still
             // does not fit ends in "…" — the full name stays with a screen reader, and on the
-            // practice screen the question card names the topic again.
+            // practice screen the question card names the topic again. `minWidth: 0` lets one long
+            // word ("Reaktionsgleichungen") end in "…" instead of pushing the buttons off (#239).
             <Text
               accessibilityRole="header"
               accessibilityLabel={title}
               numberOfLines={1}
               ellipsizeMode="tail"
-              style={[right ? TYPE.header : TYPE.title, { flex: 1 }]}
+              style={[right ? TYPE.header : TYPE.title, { flex: 1, minWidth: 0 }]}
             >
               {title}
             </Text>

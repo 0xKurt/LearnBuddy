@@ -20,11 +20,11 @@ const VERBS = {
   type: 'table_fill' as const,
   header: ['Person', 'Präsens', 'Präteritum'],
   rows: [
-    [{ text: 'ich' }, { text: 'gehe' }, { id: 'r0c2', input: 'text' as const }],
+    [{ text: 'ich' }, { text: 'gehe' }, { id: 'r0c2', input: 'text' as const, whole: false }],
     [
       { text: 'du' },
-      { id: 'r1c1', input: 'text' as const },
-      { id: 'r1c2', input: 'text' as const },
+      { id: 'r1c1', input: 'text' as const, whole: false },
+      { id: 'r1c2', input: 'text' as const, whole: false },
     ],
   ],
   layout: 'grid' as const,
@@ -33,7 +33,7 @@ const VERBS = {
 const VALUES = {
   type: 'table_fill' as const,
   header: ['x', '1', '2'],
-  rows: [[{ text: 'f(x)' }, { id: 'r0c1', input: 'math' as const }, { text: '5' }]],
+  rows: [[{ text: 'f(x)' }, { id: 'r0c1', input: 'math' as const, whole: false }, { text: '5' }]],
   layout: 'grid' as const,
 };
 
@@ -105,6 +105,23 @@ describe('a table she fills in', () => {
     expect(screen.getByRole('toolbar')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'minus' }));
     expect((cell as HTMLInputElement).value).toBe('-');
+  });
+
+  // A whole number is written with the phone's digits: no row over the table (#286 Befund 5, #239).
+  it('brings only the minus for a gap whose key is a whole number', () => {
+    const wall = {
+      ...VALUES,
+      rows: [
+        [{ text: 'f(x)' }, { id: 'r0c1', input: 'math' as const, whole: true }, { text: '5' }],
+      ],
+    };
+    renderInApp(
+      <TableAnswer view={wall} draftKey="tab-whole" disabled={false} onSubmit={() => undefined} />,
+    );
+    fireEvent.focus(screen.getByLabelText('f(x), 1'));
+    expect(screen.getByRole('toolbar')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'minus' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Bruchstrich' })).toBeNull();
   });
 
   it('keeps word cells free of the math keys', () => {

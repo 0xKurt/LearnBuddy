@@ -74,6 +74,22 @@ export type SpokenWords = {
   blank: string;
   /** Operators and symbols by character. */
   symbols: Readonly<Record<string, string>>;
+  /** What an operator with limits is called: sum "Summe", prod "Produkt", int "Integral", lim "Grenzwert" (issue #239). */
+  operators: Readonly<Record<'sum' | 'prod' | 'int' | 'lim', string>>;
+  /** "{{op}} von {{from}} bis {{to}}" — both limits. */
+  op_range: string;
+  /** "{{op}} für {{from}}" — only the lower one (lim_{x→0}, \sum_{k}). */
+  op_lower: string;
+  /** "{{op}} bis {{to}}" — only the upper one. */
+  op_upper: string;
+  /** "{{top}} über {{bottom}}" — a binomial coefficient. */
+  binom: string;
+  /** "Spaltenvektor {{entries}}" — a matrix of one column; entries joined by ", ". */
+  column_vector: string;
+  /** "Matrix mit den Zeilen {{rows}}" — rows joined by "; ", cells by ", ". */
+  matrix: string;
+  /** "reagiert zu, Bedingung: {{label}}" — a reaction arrow with its condition above it. */
+  arrow_label: string;
 };
 
 /** Characters read out as words → their key under "spoken.symbols" in locales/<lang>/math.json. */
@@ -111,6 +127,13 @@ export const SYMBOL_KEYS: Readonly<Record<string, string>> = {
   '∼': 'sim',
   '∈': 'in',
   '∉': 'notin',
+  // Chemistry (issue #239): a reaction "reagiert zu", an equilibrium "steht im Gleichgewicht mit".
+  '⟶': 'reacts',
+  '⇌': 'equilibrium',
+  ℕ: 'naturals',
+  ℤ: 'integers',
+  ℚ: 'rationals',
+  ℝ: 'reals',
 };
 
 function fill(template: string, values: Record<string, string>): string {
@@ -323,6 +346,35 @@ function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
             return ` ${fill(words.vector, { body: speakAtoms(a.body, words) })} `;
           case 'blank':
             return ` ${words.blank} `;
+          case 'limits': {
+            const op =
+              a.name === 'sum' || a.name === 'prod' || a.name === 'int' || a.name === 'lim'
+                ? words.operators[a.name]
+                : a.op;
+            const from = a.lower ? speakAtoms(a.lower, words) : null;
+            const to = a.upper ? speakAtoms(a.upper, words) : null;
+            if (from !== null && to !== null) return ` ${fill(words.op_range, { op, from, to })} `;
+            if (from !== null) return ` ${fill(words.op_lower, { op, from })} `;
+            if (to !== null) return ` ${fill(words.op_upper, { op, to })} `;
+            return ` ${op} `;
+          }
+          case 'binom':
+            return ` ${fill(words.binom, {
+              top: speakAtoms(a.top, words),
+              bottom: speakAtoms(a.bottom, words),
+            })} `;
+          case 'matrix': {
+            const rows = a.rows.map((row) => row.map((cell) => speakAtoms(cell, words)));
+            if (rows.every((row) => row.length === 1))
+              return ` ${fill(words.column_vector, { entries: rows.map((row) => row[0]).join(', ') })} `;
+            return ` ${fill(words.matrix, { rows: rows.map((row) => row.join(', ')).join('; ') })} `;
+          }
+          case 'arrow': {
+            const label = speakAtoms(a.above, words);
+            return label === ''
+              ? ` ${words.symbols['⟶'] ?? '⟶'} `
+              : ` ${fill(words.arrow_label, { label })} `;
+          }
         }
       })
       .join(''),

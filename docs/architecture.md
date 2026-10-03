@@ -1636,6 +1636,11 @@ bekommen, was der erste geschrieben hat, den Systemprompt nochmal bezahlen (5 10
 könnte sich wiederholen; dieselbe Antwort in zwei Teilen kann das nicht. Ergebnis am Endpoint:
 **3,13–4,87 s statt 6,27–7,03 s** (`docs/speed-audit.md` §Ausgabe-Tokens).
 
+Früh angefangen wird nur, wenn die ersten drei auch die Prüfungen **vor dem Speichern**
+überstehen (`usableItems`, Regel 0) — das Schema allein reicht nicht. Drei Graphen-Fragen, deren
+Graphen nicht zusammenpassen, ergaben sonst „nichts zu lernen" (422), obwohl die vierte gut war
+(gefunden mit #231). Fällt eine der ersten drei weg, beginnt die Übung auf der fertigen Antwort.
+
 Damit hält eine Übung für ein paar Sekunden weniger Fragen, als sie halten wird, und daran
 hängen drei Regeln im Code:
 
@@ -1702,9 +1707,40 @@ rendert und eine `TextInput`-Eigenschaft dort nicht im DOM steht:
   abgeschickt werden; wer den Umbruch wieder löscht, hat wieder den schnellen Einzeiler. Den
   ersten Umbruch macht deshalb nicht die Eingabetaste, sondern die Taste **„↵ Neue Zeile"** in
   der Zeichenreihe (`components/math/MathKeys.tsx`) — die eine Taste, die kein Zeichen einfügt,
-  sondern etwas tut, und die deshalb ein Wort trägt statt nur des Zeichens. Sie steht vorn, weil
-  die Reihe seitlich scrollt: eine Taste, zu der man scrollen muss, kennt niemand. Eine
-  Tabellenzelle ist einzeilig, die Tabelle (#230, `TableAnswer.tsx`) bietet sie deshalb nicht an.
+  sondern etwas tut, und die deshalb ein Wort trägt statt nur des Zeichens. Sie steht vorn und
+  belegt zwei Plätze der Reihe. Eine Tabellenzelle ist einzeilig, die Tabelle (#230, `TableAnswer.tsx`) bietet sie deshalb
+  nicht an.
+
+**Die Zeichenreihe** (Issue #239, Befund 5 aus #286). Welche Tasten eine Frage bekommt, entscheidet
+Code aus der Frage selbst — Art, Einheit, Fach (`ItemView.subject_kind`) und die Notation im
+Fragetext —, nie aus dem Schlüssel (`apps/mobile/lib/math/keys.ts`):
+
+- **Chemie** (eine Formel im Fach Chemie, oder ein Reaktionspfeil im Fragetext): Tiefstellen,
+  Ladung, `+`, Reaktionspfeil `→`, Gleichgewicht `⇌`, Klammern. „2 H₂ + O₂ → 2 H₂O" entsteht ohne
+  die Reihe zu verlassen, und `chemistry.ts` zählt genau das gegen einen Schlüssel in der
+  App-Notation (`$2H_{2} + O_{2} \longrightarrow 2H_{2}O$`; `SO₄²⁻` = `$SO_{4}^{2-}$`).
+- **Mathe**: Hochzahl, Bruchstrich, `=`, die Vergleiche, Wurzel, π …; zeigt die Frage einen
+  Vergleich, stehen `< ≤ > ≥` vorn.
+- **Zahl**: Dezimaltrennzeichen, Bruchstrich, Minus (mit Einheit zuerst das Komma) und die
+  Rechenzeichen eines Rechenwegs; Wurzel, π und Hochzahl nur, wo die Frage sie zeigt.
+- **Tabellenlücke**: eine Lücke, deren Schlüssel in jeder Form eine ganze Zahl ist
+  (`TableViewGap.whole`, vom Server aus dem Schlüssel entschieden — eine Aussage über ihn und nicht
+  mehr), bekommt nur das Minus; die Ziffern der Tastatur schreiben den Rest (eine
+  Android-Buchstabentastatur zeigt kein „−").
+
+Hochzahl, Tiefstellen und Ladung sind Schalter: Die nächsten Ziffern, die sie auf der Tastatur des
+Handys tippt, werden hoch- oder tiefgestellt (`typedUnder`), bei der Ladung auch das Vorzeichen,
+das sie abschließt. Alles, was der Schalter nicht nimmt — ein Buchstabe, ein Leerzeichen, ein
+Einfügen, ein Löschen —, bleibt wie getippt und schaltet ihn aus; ein eingeschalteter Schalter ist
+gefüllt und sagt „eingeschaltet" im Namen. Die Prüfer lesen hochgestellte Ziffern als Potenz
+(`typographicToAscii`, `canonicalMath`: `x⁴` = `x^{4}`), tiefgestellte als Index.
+
+Die Reihe ist **eine** Zeile und scrollt nie seitlich: so viele gleich breite Tasten (≥ 44 pt), wie
+in die Breite passen (sechs Plätze bei 360 pt, sieben bei 390 pt), und braucht die Frage mehr, hält
+der letzte Platz „…", das zur nächsten Seite blättert. Belegt im Walkthrough
+(`tests/web/modes.spec.ts`, „formulas"): die Reihe liegt bei beiden Größen innerhalb des Rands,
+keine Taste schmaler als 44 pt, kein seitliches Scrollen; die Gleichung wird mit den Tasten
+getippt und von Code gezählt.
 
 Die Vorschau zeichnet bei einem Weg die Zeile mit dem Cursor (ohne bekannten Cursor die, bei der
 sie gerade ankommt — dieselbe, die `lastLine` für das Ergebnis liest); alle Zeilen auf einmal
@@ -2618,8 +2654,18 @@ word list, so it stays a prompt rule.
   `listening.int.test.ts`, `practice/__tests__/listen.test.ts`.
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
   renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
-  symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in
-  `apps/mobile/lib/math/`). An unknown command shows its name set apart by spaces. A `$` right
+  symbols, sums, integrals and limits with their bounds, binomial coefficients, column vectors
+  (`pmatrix`), the reaction arrow `\longrightarrow`, a reaction arrow with its condition
+  (`\xrightarrow`), the equilibrium `\rightleftharpoons`, and a fill-in blank inside math as a
+  gap; `apps/mobile/components/math/`, parser in `apps/mobile/lib/math/`). **One list** says what
+  that subset is: `packages/shared-types/src/contracts/notation.ts` (issue #239). The app's parser
+  takes its symbols from it, the model's rule (`MATH_NOTATION_RULE`, and the short form for the
+  tutor, hints, re-explanations and Buddy's own replies) is generated from it, and a unit test
+  (`apps/mobile/lib/math/__tests__/notation.test.ts`) parses every listed command and speaks every
+  entry the model is told about in all five languages. A question whose text, options or key use
+  a command outside the list is **dropped** by the server (`usableItems`); a hint or worked
+  solution that does is dropped on its own. Old rows with an unknown command still show its name
+  set apart by spaces. A `$` right
   before a digit never closes math and one followed by a space never opens it, so prices
   ("$5 and $3") stay text. LaTeX the model forgot to wrap is wrapped server-side — in a sentence
   only the math runs (`practice/dollarMath.ts`), a math field as a whole — and rule checks
@@ -2633,6 +2679,46 @@ word list, so it stays a prompt rule.
   A figure is drawn to be READ. What she can work with is a `surface` — today the Bruchbalken
   (§Practice above, issue #162), whose question, picture and key are computed from one reviewed
   task instead of written by the model.
+- **Pictures as options** (issue #231, migration `0080_choice_figures.sql`) — a multiple choice
+  may carry `choice_figures`: one `Figure` per option, any type, parallel to `choices` (all or
+  none, 2–4, so they fit a 2×2 grid). A parallel list rather than a new shape for `choices`:
+  `choices text[]`, the index judgement, the tutor, voice matching and the shown solution stay
+  exactly as they are, and a build that does not know the field still reads the question
+  (`ItemView.choice_figures` is `.catch(null)`; an old build then shows the option texts). The
+  texts stay what the option IS ("$y = x^{2} - 1$", "Quadrat") — the tutor, a spoken answer and
+  the solution use them — but the app never shows or reads them for a picture option: the text
+  can be the very formula asked about. The tile shows the drawing under a row with its letter
+  (`ChoiceList` → `FigureChoices`; a tried tile says "Schon ausprobiert" in that row); `FigureView bare` drops the legend and the frame, and the
+  screen-reader label describes a graph by the whole-number points it passes, never by its
+  formula ("C: Graph durch (−2 | 3), (−1 | 0) …"). A tap answers; holding a card opens the
+  picture in the figure viewer (`Btn onLongPress` → `ZoomViewer`) — no extra button.
+  **Regel 0 before storing** (`practice/choiceCheck.ts`, every multiple choice, #227 Nr. 2):
+  no two options the same as written (math via `canonicalMath`, words via `canonicalText`
+  regardless of case — "Augustus" and "augustus" are one option for her; a capitalisation
+  question is asked as a typed answer with strict spelling) or by value ("0,5" and "1/2";
+  consequence: a question that offers equal values in different forms, "which is fully
+  reduced?", is not asked as multiple choice); the key must BE the option `correct_choice`
+  points at, as written or by value (a key in other words or a letter is rejected: it cannot be
+  told from an off-by-one) — except for graphs, whose key is a function and is held against the
+  drawings below; a numeric prompt's arithmetic must agree with the option the
+  index points at (`keyCheck.ts`, as for numeric keys). With pictures: no two identical
+  drawings; function graphs are one function per option, each visible in its window, no two
+  within 2 % of the window's height of each other everywhere (they would LOOK alike), the
+  key (`answer`, "f(x) = x^2 - 1") must compile, exactly one graph must equal it at 61 sample
+  points, that graph must be the indexed one — and when the prompt defines the function
+  (`$f(x) = …$`), the key must be that function (a key named `f'` is held only against `f'`, so
+  "which graph is the derivative" stays possible). Any failure drops the item, never repairs it.
+  Not decided by code: whether a geometry option is symmetric, whether a word option is right.
+- **How options look** (issue #288). Every option is a white tile with its letter as a quiet mark
+  in a fixed column (no badge on the content); the texts of all options start on one line. Two by
+  two only when EVERY option fits one line of half a 360 pt screen (`twoColumnChoices`: 9
+  characters at 17 pt), otherwise one under the other — a grid where one tile wraps and its
+  neighbour does not looked restless. A fraction or term alone (`mathOnly`) is set at 22 pt and
+  centred; a fraction inside the question's sentence is set flat (`MathText inlineFractions`) so it
+  does not tear the line. The options stand directly under the hint row (no padding of their own above, #286). A picture option is at most 12 % of the window high (`FIGURE_CHOICE_SCREEN_SHARE`), so after a wrong try — Buddy's reply and "Lösung zeigen" above the tiles — both rows still fit 360×740.
+  While a tapped question is open her answer is not echoed as a bubble (`ItemThread echoAnswers`,
+  as for structured items): the tried tile says it — except in voice mode, where the bubble is the
+  only place she sees what was heard.
 - **Figures that state numbers (issues #253, #257)** — two figures carry measures, and code
   checks them in both directions before a question is stored (`practice/figureCheck.ts`, called
   from `usableItems`); a figure that contradicts its numbers or its key costs the QUESTION, not
@@ -2669,7 +2755,7 @@ word list, so it stays a prompt rule.
     a side branch on a longer bond when its hydrogens would sit on its neighbours'; skeletal
     formulas zigzag (120°); rings are regular polygons with the second line of a double bond
     inside. Naming a molecule is answered like any short answer; a "which structure is ethanol"
-    choice between four drawings waits for picture options (#231).
+    choice between four drawings can use picture options (#231, `choice_figures`).
     Both figures describe themselves in words for a screen reader (angles with sizes, sides,
     forces, rays; every bond and the lone pairs). `figureCheck.test.ts`, `molecule.test.ts`,
     `figures-to-scale.int.test.ts`, walkthrough `tests/web/figures.spec.ts`.

@@ -80,3 +80,19 @@ describe('canonicalText keeps case, ß and punctuation (C-7)', () => {
     expect(isMathText('Ich glaube, dass er kommt.')).toBe(false);
   });
 });
+
+describe('raised digits from the exponent key (issue #239)', () => {
+  it('reads a run of raised digits as one exponent, the same as the key in LaTeX', () => {
+    expect(canonicalMath('x⁴ ≤ 3')).toBe(canonicalMath('$x^{4} \\le 3$'));
+    expect(canonicalMath('10¹²')).toBe(canonicalMath('$10^{12}$'));
+    expect(canonicalMath('x²')).toBe('x^2');
+    // A different exponent stays a different answer.
+    expect(canonicalMath('x⁴')).not.toBe(canonicalMath('x^{14}'));
+  });
+
+  it('hands the number check a power it can compute', async () => {
+    const { parseNumericInput } = await import('../numeric-input.js');
+    expect(parseNumericInput('2⁴').value).toBe(16);
+    expect(parseNumericInput('10¹²').value).toBe(1e12);
+  });
+});

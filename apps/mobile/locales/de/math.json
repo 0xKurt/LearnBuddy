@@ -239,8 +239,27 @@
       "cong": "kongruent zu",
       "sim": "ähnlich zu",
       "in": "Element von",
-      "notin": "kein Element von"
-    }
+      "notin": "kein Element von",
+      "reacts": "reagiert zu",
+      "equilibrium": "steht im Gleichgewicht mit",
+      "naturals": "natürliche Zahlen",
+      "integers": "ganze Zahlen",
+      "rationals": "rationale Zahlen",
+      "reals": "reelle Zahlen"
+    },
+    "operators": {
+      "sum": "Summe",
+      "prod": "Produkt",
+      "int": "Integral",
+      "lim": "Grenzwert"
+    },
+    "op_range": "{{op}} von {{from}} bis {{to}}",
+    "op_lower": "{{op}} für {{from}}",
+    "op_upper": "{{op}} bis {{to}}",
+    "binom": "{{top}} über {{bottom}}",
+    "column_vector": "Spaltenvektor {{entries}}",
+    "matrix": "Matrix mit den Zeilen {{rows}}",
+    "arrow_label": "reagiert zu, Bedingung: {{label}}"
   },
   "staff": {
     "note": {
@@ -302,6 +321,7 @@
     "marked": "Markiert: {{list}}",
     "function_plot": "Koordinatensystem, x von {{x_min}} bis {{x_max}}, y von {{y_min}} bis {{y_max}}",
     "graph": "Graph von y = {{expr}}",
+    "graph_through": "Graph durch {{list}}",
     "graph_named": "Graph {{label}}: y = {{expr}}",
     "points": "Punkte: {{list}}",
     "bar_chart": "Säulendiagramm: {{list}}",
@@ -363,7 +383,27 @@
     "decimal": "Komma",
     "newline": "Neue Zeile",
     "newline_shown": "↵ Neue Zeile",
-    "newline_hint": "Für deinen Rechenweg: beginnt die nächste Zeile. „Prüfen“ prüft dann alle Zeilen."
+    "newline_hint": "Für deinen Rechenweg: beginnt die nächste Zeile. „Prüfen“ prüft dann alle Zeilen.",
+    "row_chem": "Chemie-Zeichen",
+    "power": "Hochzahl",
+    "power_hint": "Die nächsten Ziffern werden hochgestellt, bis du etwas anderes tippst.",
+    "sub": "Tiefstellen",
+    "sub_hint": "Die nächsten Ziffern werden tiefgestellt, wie in H₂O.",
+    "charge": "Ladung",
+    "charge_hint": "Die nächsten Ziffern und das Plus oder Minus werden hochgestellt, wie in SO₄²⁻.",
+    "plus": "plus",
+    "reacts": "Reaktionspfeil",
+    "equilibrium": "Gleichgewichtspfeil",
+    "equals": "gleich",
+    "lt": "kleiner als",
+    "gt": "größer als",
+    "le": "kleiner gleich",
+    "ge": "größer gleich",
+    "pm": "plus minus",
+    "more": "Weitere Zeichen",
+    "more_hint": "Zeigt die nächsten Zeichen in dieser Leiste.",
+    "mode_on": "eingeschaltet",
+    "brackets": "Klammern"
   },
   "blank": {
     "label": "Lücke",

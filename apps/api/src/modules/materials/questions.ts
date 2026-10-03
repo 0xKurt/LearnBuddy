@@ -8,6 +8,7 @@ import type { Figure, ItemResult, MaterialItemsView } from '@learnbuddy/shared-t
 
 import type { Db } from '../../lib/db.js';
 import { storedFigure } from '../practice/items.js';
+import { subjectKindOf } from '../practice/viewParts.js';
 import { materialView } from './service.js';
 
 type MaterialItemRow = {
@@ -21,6 +22,7 @@ type MaterialItemRow = {
   lang: string | null;
   prompt_lang: string | null;
   figure: Figure | null;
+  subject_kind: string | null;
   last_status: 'correct' | 'revealed' | 'skipped' | 'missed' | null;
   last_first_try: boolean | null;
 };
@@ -43,8 +45,10 @@ export async function materialItems(
   const material = await materialView(db, learnerId, materialId);
   const rows = await db.query<MaterialItemRow>(
     `select i.id, i.kind, i.prompt, i.choices, i.unit, i.topic, i.origin, i.lang, i.prompt_lang, i.figure,
+            sub.kind as subject_kind,
             last.status as last_status, last.first_try_correct as last_first_try
        from items i
+       left join subjects sub on sub.id = i.subject_id
        left join lateral (
          select si.status, si.first_try_correct from session_items si
           where si.item_id = i.id and si.status <> 'open' and si.flagged_at is null
@@ -68,6 +72,7 @@ export async function materialItems(
       origin: r.origin,
       lang: r.lang,
       prompt_lang: r.prompt_lang,
+      subject_kind: subjectKindOf(r.subject_kind),
       figure: storedFigure(r.figure),
       // The concept image is shown where the question is shown full size (sessions);
       // the material list stays a list (issue #50).
@@ -82,6 +87,8 @@ export async function materialItems(
       // from a photo (issue #210, `practice/listen.ts`). Nothing to play here either way — the
       // recording belongs to a session, like the crop and the bar above.
       listen: null,
+      // The options' pictures (issue #231) too: the list names its questions by their text.
+      choice_figures: null,
       // Reading a question aloud belongs to the session too (issue #238): the list says what
       // the sheet asks, and the rule that decides it needs the key this list never loads.
       read_aloud: false,

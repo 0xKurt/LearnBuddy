@@ -30,6 +30,7 @@ import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
+import { cellKeys } from '../../lib/math/keys.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
@@ -334,7 +335,15 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: Props) {
       <BottomBar>
         {/* The math keys while a number or term cell has the focus — a keyboard accessory,
             not furniture (issue #16). */}
-        {focusedGap?.input === 'math' ? <MathKeys onInsert={insert} disabled={disabled} /> : null}
+        {/* Only what the gap needs: none for a word, only the minus for a whole number — the
+            phone's digits write the rest (#286 finding 5, #239, lib/math/keys.ts). */}
+        {focusedGap ? (
+          <MathKeys
+            keys={cellKeys(focusedGap.input, focusedGap.whole)}
+            onInsert={insert}
+            disabled={disabled}
+          />
+        ) : null}
         <Btn
           pill
           full

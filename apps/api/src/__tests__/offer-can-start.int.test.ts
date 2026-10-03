@@ -295,6 +295,8 @@ describe.skipIf(!dbReady)('an offer has to be able to start', () => {
     );
     // The generator refuses: nothing it can make questions from (practice/generate.ts).
     env.llm.script('explain', generated(false));
+    // The preparation waits until the flush below: the state in between is what is asserted.
+    env.holdBackground();
     const sent = await say(l, `frag mich meine vokabeln ab: ${typed}`);
     expect(sent.status).toBe('done');
     // While the preparation is still running nothing is claimed either way: the card is a

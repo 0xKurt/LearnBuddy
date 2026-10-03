@@ -11,6 +11,7 @@
 //   ß → ss, no punctuation) only recognises a near miss; it never makes an answer right.
 
 import { plainMath } from './latex.js';
+import { superscriptDigits } from './numeric-input.js';
 
 /** Does the text hold math: a digit, LaTeX, or an operator between terms? */
 export function isMathText(s: string): boolean {
@@ -34,8 +35,7 @@ export function canonicalMath(s: string): string {
       .replace(/<=/g, '≤')
       .replace(/>=/g, '≥')
       .replace(/!=/g, '≠')
-      .replace(/²/g, '^2')
-      .replace(/³/g, '^3')
+      .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, (run) => `^${superscriptDigits(run)}`)
       .replace(/sqrt\s*\(/g, '√(')
       .replace(/√\s*\(([\p{L}\p{N}.,]+)\)/gu, '√$1')
       .replace(/\bpi\b/g, 'π')

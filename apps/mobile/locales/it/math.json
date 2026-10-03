@@ -239,8 +239,27 @@
       "cong": "congruente a",
       "sim": "simile a",
       "in": "appartiene a",
-      "notin": "non appartiene a"
-    }
+      "notin": "non appartiene a",
+      "reacts": "reagisce e dà",
+      "equilibrium": "è in equilibrio con",
+      "naturals": "numeri naturali",
+      "integers": "numeri interi",
+      "rationals": "numeri razionali",
+      "reals": "numeri reali"
+    },
+    "operators": {
+      "sum": "somma",
+      "prod": "prodotto",
+      "int": "integrale",
+      "lim": "limite"
+    },
+    "op_range": "{{op}} da {{from}} a {{to}}",
+    "op_lower": "{{op}} per {{from}}",
+    "op_upper": "{{op}} fino a {{to}}",
+    "binom": "{{top}} su {{bottom}}",
+    "column_vector": "vettore colonna {{entries}}",
+    "matrix": "matrice con le righe {{rows}}",
+    "arrow_label": "reagisce e dà, condizione: {{label}}"
   },
   "staff": {
     "note": {
@@ -302,6 +321,7 @@
     "marked": "Segnati: {{list}}",
     "function_plot": "Piano cartesiano, x da {{x_min}} a {{x_max}}, y da {{y_min}} a {{y_max}}",
     "graph": "Grafico di y = {{expr}}",
+    "graph_through": "Grafico che passa per {{list}}",
     "graph_named": "Grafico {{label}}: y = {{expr}}",
     "points": "Punti: {{list}}",
     "bar_chart": "Istogramma: {{list}}",
@@ -363,7 +383,27 @@
     "decimal": "virgola",
     "newline": "Nuova riga",
     "newline_shown": "↵ Riga",
-    "newline_hint": "Per il tuo procedimento: inizia la riga successiva. «Controlla» controlla poi tutte le righe."
+    "newline_hint": "Per il tuo procedimento: inizia la riga successiva. «Controlla» controlla poi tutte le righe.",
+    "row_chem": "Simboli di chimica",
+    "power": "Esponente",
+    "power_hint": "Le cifre successive vengono messe in alto finché scrivi altro.",
+    "sub": "Pedice",
+    "sub_hint": "Le cifre successive vengono messe in basso, come in H₂O.",
+    "charge": "Carica",
+    "charge_hint": "Le cifre successive e il più o il meno vengono messi in alto, come in SO₄²⁻.",
+    "plus": "più",
+    "reacts": "Freccia di reazione",
+    "equilibrium": "Freccia di equilibrio",
+    "equals": "uguale",
+    "lt": "minore di",
+    "gt": "maggiore di",
+    "le": "minore o uguale a",
+    "ge": "maggiore o uguale a",
+    "pm": "più o meno",
+    "more": "Altri simboli",
+    "more_hint": "Mostra i simboli successivi in questa barra.",
+    "mode_on": "attivo",
+    "brackets": "Parentesi"
   },
   "blank": {
     "label": "Spazio vuoto",

@@ -43,6 +43,7 @@ import {
   type OrderTask,
   type PartId,
   type StructuredAnswer,
+  unsupportedMath,
   type StructuredKind,
   type StructuredTaskView,
 } from '@learnbuddy/shared-types/contracts';
@@ -505,6 +506,14 @@ export function structuredItem(
   }
 }
 
+/** Every string in a value: a structured task is nested data, and each of its texts is shown. */
+function textsIn(value: unknown): string[] {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.flatMap(textsIn);
+  if (typeof value === 'object' && value !== null) return Object.values(value).flatMap(textsIn);
+  return [];
+}
+
 /** The drafts of one model answer as questions; one that fails costs only itself. */
 export function structuredItems(
   drafts: ReadonlyArray<StructuredDraft | StructuredDraftHomework | StructuredDraftNoHelp>,
@@ -515,6 +524,9 @@ export function structuredItems(
     .filter((d) => allowed.has(d.type))
     .flatMap((d) => {
       const item = structuredItem(d);
+      // Notation the app cannot draw (issue #239) costs the question, as in `usableItems`:
+      // every text she reads — the prompt, the pieces, the cells — is held to the one list.
+      if (item && textsIn(item).some((text) => unsupportedMath(text).length > 0)) return [];
       return item ? [item] : [];
     })
     .slice(0, max);

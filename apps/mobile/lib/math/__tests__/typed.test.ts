@@ -6,21 +6,15 @@ import { MAX_PREVIEW_INPUT, typedMath } from '../typed.js';
 const preview = (s: string) => typedMath(s);
 
 describe('typedMath: worth a preview', () => {
-  it.each([
-    '3/4',
-    'x^2',
-    'x²',
-    '2³',
-    'sqrt(16)',
-    '√16',
-    '√(x+1)',
-    '3+4',
-    '12 : 3',
-    '2*3',
-    'x = 5',
-    '7 − 2',
-    '5 <= 6',
-  ])('%s is math worth drawing', (s) => expect(preview(s).worth).toBe(true));
+  it.each(['3/4', 'x^2', 'sqrt(16)', '√16', '√(x+1)', '2*3', '5 <= 6', '√x²'])(
+    '%s is math worth drawing',
+    (s) => expect(preview(s).worth).toBe(true),
+  );
+  // The field already shows these exactly as the preview would: one rendering, not two (#239).
+  it.each(['x²', '2³', 'x² ≤ 3', '10¹²', '3+4', '12 : 3', 'x = 5', '7 − 2'])(
+    '%s stands in the field as it is read: no second line',
+    (s) => expect(preview(s).worth).toBe(false),
+  );
   it.each([
     '',
     '12',
@@ -59,6 +53,9 @@ describe('typedMath: conversion', () => {
   it('writes powers from ^ and from the ² ³ keys', () => {
     expect(preview('x^2').text).toBe('$x^{2}$');
     expect(preview('x²').text).toBe('$x^{2}$');
+    // The exponent key raises any digits (issue #239): a run of them is one power.
+    expect(preview('x⁴').text).toBe('$x^{4}$');
+    expect(preview('10¹²').text).toBe('$10^{12}$');
     expect(preview('2^(n+1)').text).toBe('$2^{n+1}$');
     expect(preview('10^-3').text).toBe('$10^{-3}$');
     expect(preview('(3/4)²').text).toBe('$(\\frac{3}{4})^{2}$');
