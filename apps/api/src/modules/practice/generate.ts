@@ -46,7 +46,6 @@ import {
   MATH_RULES,
   MAX_ACCEPTED,
   NUMERIC_KEY_RULES,
-  PARTS_RULES,
   SPELLING_RULES,
   insertItems,
   samePrompt,
@@ -60,8 +59,18 @@ import {
   type PracticeLearner,
 } from './service.js';
 import { MAX_STAFF_ITEMS, STAFF_RULES, staffItems } from './staff.js';
+import {
+  MAX_STRUCTURED_ITEMS,
+  MATCH_RULES,
+  ORDER_RULES,
+  StructuredDraftNoHelp,
+  structuredItems,
+  type StructuredItem,
+} from './structured.js';
+import { TABLE_RULES } from './table.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.14';
+// v1.16: car 2's structured rules (v1.15) and #253/#257's figures (v1.14) together.
+export const GENERATE_PROMPT_VERSION = 'generate.v1.16';
 
 const SUBJECT_KINDS = [
   'math',
@@ -121,6 +130,12 @@ export const GeneratedSet = z.object({
    * disagrees with the staff that is drawn (`practice/staff.ts`).
    */
   staffs: z.array(StaffTask).max(MAX_STAFF_ITEMS).default([]),
+  /**
+   * Structured items (issues #228–#230): an order to find, a table to fill in, links to make.
+   * Their own list, because their key is a shape code builds and checks
+   * (`practice/structured.ts`, Regel 0 of #224), not a text in `answer`.
+   */
+  structured: z.array(StructuredDraftNoHelp).max(MAX_STRUCTURED_ITEMS).default([]),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
@@ -273,7 +288,9 @@ Rules:
 - ${FIGURE_RULES}
 - ${BAR_RULES}
 - ${STAFF_RULES}
-- ${PARTS_RULES}
+- ${ORDER_RULES}
+- ${TABLE_RULES}
+- ${MATCH_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${CURRICULUM_RULES}
 - ${LANGUAGE_RULES}
@@ -305,31 +322,8 @@ const ORIGIN: Record<StartTopicRequest['kind'], 'buddy' | 'typed' | 'homework'> 
 
 /** Items a kind may produce (the model may only use these). */
 const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> = {
-  // The three forms with an answer in several parts belong in practice and in a test: the class
-  // test asks for them, and one try is enough for a whole board (issues #228–#230). Not in
-  // homework help — there the task is what SHE typed, and turning it into a board would be
-  // inventing a form the sheet does not have.
-  practice: new Set([
-    'short',
-    'long',
-    'numeric',
-    'multiple_choice',
-    'formula',
-    'vocab',
-    'order',
-    'match',
-    'table_fill',
-  ]),
-  test: new Set([
-    'short',
-    'numeric',
-    'multiple_choice',
-    'formula',
-    'vocab',
-    'order',
-    'match',
-    'table_fill',
-  ]),
+  practice: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula', 'vocab']),
+  test: new Set(['short', 'numeric', 'multiple_choice', 'formula', 'vocab']),
   vocab: new Set(['vocab']),
   speak: new Set(['speak']),
   // Nothing in `items` at all: the questions of a listening run come out of `listen`, where
@@ -337,6 +331,21 @@ const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> =
   // An ordinary question mixed in would be one she could answer without listening.
   listen: new Set([]),
   help: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
+};
+
+/**
+ * Structured kinds a kind may produce (issues #228–#230): in a topic's practice and in a practice
+ * test — the class test asks for these forms, and one try is enough for a whole arrangement. Not
+ * in typed homework (that is the task she typed), a vocabulary or speaking list, or a listening
+ * run (its questions come out of the text she hears).
+ */
+const STRUCTURED: Record<StartTopicRequest['kind'], ReadonlySet<string>> = {
+  practice: new Set(['order', 'table_fill', 'match']),
+  test: new Set(['order', 'table_fill', 'match']),
+  vocab: new Set(),
+  speak: new Set(),
+  listen: new Set(),
+  help: new Set(),
 };
 
 /** Most words of a task (≥ 60 %) occur in what the learner typed. */
@@ -427,6 +436,7 @@ async function generateSet(
     // One unusable task costs its own question, never the whole set (audit H-14/H-15).
     bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
     staffs: itemsOneByOne(StaffTask, MAX_STAFF_ITEMS),
+    structured: itemsOneByOne(StructuredDraftNoHelp, MAX_STRUCTURED_ITEMS),
     // The same for the listening questions: one that does not fit its schema costs itself, not
     // the text. A listening task that does not fit at all is no listening task, and the run then
     // has nothing — which the caller says plainly (`not_usable`, issue #210).
@@ -443,7 +453,7 @@ async function generateSet(
   // field that is there gets filled in.
   const forModel =
     input.kind === 'listen'
-      ? setSchema.omit({ bars: true, items: true })
+      ? setSchema.omit({ bars: true, items: true, structured: true })
       : setSchema.omit({ listen: true });
   let handedOver = false;
   const onPartial = opts.onFirstItems
@@ -526,6 +536,8 @@ type Prepared = {
   listening: ItemDraft[];
   /** Note lines, as questions code wrote from the tasks the model chose (issue #226). */
   staffs: StoredItem[];
+  /** Orders, tables and links to make, after Regel 0 (issues #228–#230). */
+  structured: StructuredItem[];
 };
 
 /**
@@ -544,6 +556,11 @@ function preparedFrom(
    * #220) — and both must be prepared by exactly the same rules.
    */
   ownSheets: boolean,
+  /**
+   * The topics of the sheets this run is built from, or null. An ordinary question's topic is
+   * held to them by the schema; a structured one's is checked here (live finding 6).
+   */
+  sheetTopics: readonly string[] | null,
   /**
    * Whether anything can read a text aloud, and in which languages (issue #210). A listening
    * question whose text cannot be spoken is no question, and that is decided here rather than
@@ -606,11 +623,18 @@ function preparedFrom(
     input.kind === 'practice' || input.kind === 'test'
       ? staffItems(set.staffs, learner.locale)
       : [];
+  // Orders, tables and links to make (issues #228–#230), each checked by code before it is
+  // stored: one that fails costs only itself. Built from her sheets, their topic must be one of
+  // the sheets' too, like every other question.
+  const structured = structuredItems(set.structured, STRUCTURED[input.kind]).filter(
+    (it) => sheetTopics === null || (it.topic !== null && sheetTopics.includes(it.topic)),
+  );
   return {
     items,
     bars,
     listening: input.kind === 'listen' ? listenItems(set.listen, speech) : [],
     staffs,
+    structured,
   };
 }
 
@@ -691,7 +715,7 @@ async function prepareTopic(
       learner,
       input,
       set,
-      preparedFrom(set, learner, input, !!sheets, deps.speech),
+      preparedFrom(set, learner, input, !!sheets, sheets?.topics ?? null, deps.speech),
       {
         now,
         goalId: sheets?.goalId ?? null,
@@ -702,7 +726,7 @@ async function prepareTopic(
 
   // Three questions stand there and the rest is still being written. The run starts on them, and
   // it says so from the moment it exists: there is no instant at which three look like all.
-  const first = preparedFrom(head, learner, input, !!sheets, deps.speech);
+  const first = preparedFrom(head, learner, input, !!sheets, sheets?.topics ?? null, deps.speech);
   const sessionId = await store(
     deps,
     learner,
@@ -710,17 +734,30 @@ async function prepareTopic(
     head,
     // Only the first questions start the run — never the bars, which belong last. A listening run
     // never starts early (it has no `items` at all), so there is nothing of its own to hold back.
-    { items: first.items.slice(0, FIRST_BATCH), bars: [], listening: [], staffs: [] },
+    {
+      items: first.items.slice(0, FIRST_BATCH),
+      bars: [],
+      listening: [],
+      staffs: [],
+      structured: [],
+    },
     { now, goalId: sheets?.goalId ?? null, pendingUntil: new Date(now.getTime() + REST_WINDOW_MS) },
   );
   deps.background(async () => {
     // Whatever goes wrong behind her, the run stops saying "more is coming" instead of waiting out
     // its window for questions that will never arrive (rule 5).
-    await addTheRest(deps, learner, input, sessionId, first.items, whole, !!sheets).catch(
-      async () => {
-        await givenUpOnPreparing(deps.db, learner.id, sessionId).catch(() => undefined);
-      },
-    );
+    await addTheRest(
+      deps,
+      learner,
+      input,
+      sessionId,
+      first.items,
+      whole,
+      !!sheets,
+      sheets?.topics ?? null,
+    ).catch(async () => {
+      await givenUpOnPreparing(deps.db, learner.id, sessionId).catch(() => undefined);
+    });
   });
   return sessionId;
 }
@@ -748,7 +785,8 @@ async function store(
     prepared.items.length +
       prepared.bars.length +
       prepared.listening.length +
-      prepared.staffs.length ===
+      prepared.staffs.length +
+      prepared.structured.length ===
       0
   ) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
@@ -762,7 +800,13 @@ async function store(
       const itemIds = await insertItems(
         tx,
         { learnerId: learner.id, materialId: null, subjectId, origin: ORIGIN[input.kind] },
-        [...prepared.items, ...prepared.bars, ...prepared.listening, ...prepared.staffs],
+        [
+          ...prepared.items,
+          ...prepared.structured,
+          ...prepared.bars,
+          ...prepared.listening,
+          ...prepared.staffs,
+        ],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
       );
@@ -818,6 +862,8 @@ async function addTheRest(
   whole: Promise<{ set: GeneratedSet | null; err: unknown }>,
   /** She brought the material herself — the same answer as for the first questions (#214). */
   ownSheets: boolean,
+  /** The sheets' topics, as for the first questions. */
+  sheetTopics: readonly string[] | null,
 ): Promise<void> {
   const { set } = await whole;
   if (!set) {
@@ -826,15 +872,23 @@ async function addTheRest(
     await givenUpOnPreparing(deps.db, learner.id, sessionId);
     return;
   }
-  const prepared = preparedFrom(set, learner, input, ownSheets, deps.speech);
+  const prepared = preparedFrom(set, learner, input, ownSheets, sheetTopics, deps.speech);
   const known = new Set(head.slice(0, FIRST_BATCH).map((i) => samePrompt(i.prompt)));
-  const rest: ItemDraft[] = [];
-  for (const it of [...prepared.items, ...prepared.bars]) {
+  const rest: StoredItem[] = [];
+  // The first questions are always ordinary `items`, so only those can repeat one of them.
+  for (const it of prepared.items) {
     const key = samePrompt(it.prompt);
     if (known.has(key)) continue;
     known.add(key);
     rest.push(it);
   }
+  // Everything else of the answer arrives here, with the rest — the same lists, in the same order,
+  // as a run that started on the whole set (`store`). They stand in their own lists of the answer,
+  // after `items`, so they are never among the first questions. Not deduplicated by prompt: a
+  // note-line or bar prompt is written by code and may be the same words for two questions that
+  // differ in their figure (issue #277: the note lines and listening questions of a run that
+  // started early were dropped here altogether).
+  rest.push(...prepared.structured, ...prepared.bars, ...prepared.listening, ...prepared.staffs);
   if (rest.length === 0) {
     await givenUpOnPreparing(deps.db, learner.id, sessionId);
     return;

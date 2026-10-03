@@ -24,15 +24,16 @@
 // The mic is the main control; reading stops when she starts speaking or
 // leaves. The microphone itself only ever starts with her tap.
 
-import type {
-  AnswerPart,
-  AnswerResponse,
-  ItemView,
-  PracticeTurnView,
-  ReexplainWay,
-  SessionItemView,
-  SessionView,
-  SpeakStreamEvent,
+import {
+  isStructuredKind,
+  type AnswerResponse,
+  type ItemView,
+  type PracticeTurnView,
+  type ReexplainWay,
+  type SessionItemView,
+  type SessionView,
+  type SpeakStreamEvent,
+  type StructuredAnswer as StructuredParts,
 } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import type { TFunction } from 'i18next';
@@ -42,6 +43,7 @@ import { Keyboard, ScrollView, Text, useWindowDimensions, View } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Btn } from '../../components/lb/Btn.js';
+import { Icon } from '../../components/lb/Icon.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
 import { Appear, Rise, SlideIn } from '../../components/lb/Motion.js';
 import { LoadingState } from '../../components/lb/LoadingState.js';
@@ -60,15 +62,6 @@ import {
   DisputeVerdictSheet,
 } from '../../components/practice/DisputeVerdict.js';
 import { FractionBarAnswer } from '../../components/practice/FractionBarAnswer.js';
-import {
-  boardComplete,
-  EMPTY_BOARD_ANSWER,
-  partsOf,
-  PartsBoardAnswer,
-  renderBoardAnswer,
-  viaFor,
-  type BoardAnswer,
-} from '../../components/practice/PartsBoardAnswer.js';
 import { HearText, HeardTextCard } from '../../components/practice/HearText.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
@@ -80,7 +73,9 @@ import {
   staffLineOf,
   type StaffAnswerState,
 } from '../../components/practice/StaffAnswer.js';
-import { EDGE_FADE, TopEdgeFade, topEdgeMask } from '../../components/lb/EdgeFade.js';
+import { FreeSpace, FreeSpaceReport } from '../../components/practice/FreeSpace.js';
+import { StructuredAnswer } from '../../components/practice/StructuredAnswer.js';
+import { TopEdgeFade, topEdgeMask, topEdgeMaskFrom } from '../../components/lb/EdgeFade.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
 import { Reexplain } from '../../components/practice/Reexplain.js';
 import { AgainButton } from '../../components/practice/AgainButton.js';
@@ -127,7 +122,7 @@ import { bottomRoom, SPACE } from '../../lib/theme/space.js';
  * travels as ordinary text so grading stays one path — so the text alone no longer shows
  * whether she recognised the word or wrote it, and a class test asks for the second.
  */
-type AnswerInput = ({ text: string } | { choice: number } | { parts: AnswerPart[] }) & {
+type AnswerInput = ({ text: string } | { choice: number } | { parts: StructuredParts }) & {
   via?: 'typed' | 'tapped' | 'spoken';
 };
 
@@ -138,19 +133,21 @@ type SentAnswer = {
   text: string | null;
   choice: number | null;
   /**
-   * An arrangement has no text of its own (issue #228): its parts are what makes it the same
-   * answer or a different one. Without this a re-arranged board would reuse the first id and
-   * the server would file it as the same turn — the retry rule turned into a lost answer.
+   * A structured answer (issue #228), as JSON: an arrangement has no text of its own, its parts
+   * are what makes it the same answer or a different one. Without this a re-arranged order
+   * would reuse the first id and the server would file it as the same turn.
    */
   parts: string | null;
 };
 
-/** The arrangement as one comparable line, for exactly that rule. */
-function partsKey(input: AnswerInput): string | null {
-  return 'parts' in input
-    ? input.parts.map((part) => `${part.slot}=${part.value}`).join('|')
-    : null;
-}
+/**
+ * How far a drawing or photo may shrink below its own cap so Buddy's newest turn shows whole
+ * (issue #286); figureScale.ts still keeps a drawing legible.
+ */
+const CARD_GIVES = 48;
+
+/** The conversation's padding above its first turn (its content container's paddingVertical). */
+const THREAD_PAD = 12;
 
 /** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
 function foreign(lang: string | null): lang is string {
@@ -226,7 +223,7 @@ export default function PracticeScreen() {
   const id = (Array.isArray(params.id) ? params.id[0] : params.id) ?? '';
   const query = usePracticeSession(id);
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
 
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   // Kept on the device: a half-typed answer survives Android killing the app.
@@ -239,13 +236,6 @@ export default function PracticeScreen() {
    * happens to want the same fraction — it is hers again.
    */
   const [shadedAnswer, setShadedAnswer] = useState<{ itemId: string; text: string } | null>(null);
-  /**
-   * How she has arranged the board, and for which question (issue #228). Kept by item id for
-   * the same reason the shaded bar is: the next question gets an empty board, and nothing she
-   * arranged leaks into it. Not a draft on the device — an arrangement only means anything
-   * next to the question it belongs to.
-   */
-  const [arranged, setArranged] = useState<{ itemId: string; answer: BoardAnswer } | null>(null);
   /**
    * The listening texts she has already heard in this run, by their recording's alias (issue
    * #210). Three questions about one text share it, so the second one offers "nochmal hören"
@@ -272,13 +262,24 @@ export default function PracticeScreen() {
   const [disputeOpen, setDisputeOpen] = useState(false);
   /** "Anders erklären": the way she tapped, while Buddy writes. */
   const [again, setAgain] = useState<{ itemId: string; way: ReexplainWay } | null>(null);
-  // Measured, so free space goes to the question instead of an empty conversation
-  // (issue #96): the middle of the screen, what the conversation's content really
-  // needs, and what stands around the question card (progress row, tools).
-  const [middleHeight, setMiddleHeight] = useState(0);
+  // Measured: what the conversation's content really needs and what the question takes, so the
+  // conversation can show whole turns in the room there is (issue #286, `threadCap`).
+  /** The conversation's box and the free room under the answer (issue #286, `threadCap`). */
+  const [threadBox, setThreadBox] = useState(0);
+  const [freeSpace, setFreeSpace] = useState(0);
+  const [turnTops, setTurnTops] = useState<Readonly<Record<string, number>>>({});
   const [threadNeed, setThreadNeed] = useState(0);
   const [questionContentHeight, setQuestionContentHeight] = useState(0);
+  /** The question card as laid out, and its own height before it grew (issue #96). */
   const [cardHeight, setCardHeight] = useState(0);
+  const [natural, setNatural] = useState<{ key: string; height: number } | null>(null);
+  /** The column's height and where its content ends: what runs past is `overrun`. */
+  const [column, setColumn] = useState(0);
+  const [columnEnd, setColumnEnd] = useState(0);
+  const [columnTop, setColumnTop] = useState(0);
+  const columnRef = useRef<View>(null);
+  /** She scrolled the conversation up from its end: its top edge fades fully (#63). */
+  const [scrolledUp, setScrolledUp] = useState(false);
   const working = useRef(false);
   const lastSent = useRef<SentAnswer | null>(null);
   const finishStarted = useRef(false);
@@ -452,7 +453,7 @@ export default function PracticeScreen() {
     working.current = true;
     const answerText = 'text' in input ? input.text : null;
     const choice = 'choice' in input ? input.choice : null;
-    const parts = partsKey(input);
+    const parts = 'parts' in input ? JSON.stringify(input.parts) : null;
     const prev = lastSent.current;
     // Retrying the very same answer keeps its id, so the server records it only once.
     const clientTurnId =
@@ -836,12 +837,20 @@ export default function PracticeScreen() {
   const endButton = (
     // Stays while a question is on screen, also once the session was finished in the
     // background (finishing again is a no-op) – the header must not jump under the reader.
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+    //
+    // "Beenden" is a round ✕ beside the speaker, both 44 pt: the header title is one line
+    // (components/lb/Screen.tsx, issue #287) and a worded pill left it ~125 pt at 360 wide —
+    // the topic came out as "Flächeninhalt Rec…" (issue #286). The words stay with a screen
+    // reader ("Übung beenden") and the hint says where it leads.
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
       <VoiceModeToggle />
       <Btn
         variant="outline"
         size="sm"
         pill
+        // compact (12 each side) + the 20 pt icon = 44: a circle, like the speaker.
+        compact
+        label={<Icon name="close" size={20} color={closing ? palette.ink2 : palette.ink} />}
         onPress={() => void close()}
         disabled={closing}
         accessibilityLabel={t('practice:end_label')}
@@ -890,24 +899,17 @@ export default function PracticeScreen() {
   const tapChoices =
     choices === null && item.tap_choices && item.tap_choices.length > 0 ? item.tap_choices : null;
   const speaking = item.kind === 'speak';
-  // The board she arranges (issue #228): ordering, matching, filling in a table. It is the
-  // WHOLE way to answer here — a board question has no answer field, not even the table, whose
-  // writing happens in its own cells. The one CTA is "Prüfen" under it.
-  const board = open ? item.board : null;
-  // Die leere Notenzeile, auf die sie schreibt (issue #226). Wie das Brett ist sie der GANZE Weg
+  // A structured item (issues #228–#230): ordering, matching, filling in a table. Its own surface
+  // is the WHOLE way to answer — no answer field, not even for the table, whose writing happens
+  // in its own cells; the server takes only `parts` for it.
+  const structured = isStructuredKind(item.kind);
+  // Die leere Notenzeile, auf die sie schreibt (issue #226). Wie eine Anordnung ist sie der GANZE Weg
   // zu antworten: ein Antwortfeld gibt es daneben nicht, und das eine „Prüfen“ steht darunter.
   // Der Bruchbalken bleibt der andere Fall derselben Fläche — er schreibt ins Feld, sie nicht.
   const staff = open && item.surface?.mode === 'notes' ? item.surface : null;
   const barSurface = open && item.surface && item.surface.mode !== 'notes' ? item.surface : null;
   const typed =
-    open &&
-    choices === null &&
-    tapChoices === null &&
-    board === null &&
-    staff === null &&
-    !speaking;
-  /** Her arrangement of THIS question; a different question starts with an empty board. */
-  const boardAnswer = arranged?.itemId === item.id ? arranged.answer : EMPTY_BOARD_ANSWER;
+    open && choices === null && tapChoices === null && !structured && staff === null && !speaking;
   /** Ihre Notenzeile zu DIESER Frage; eine andere Frage beginnt mit einer leeren Zeile. */
   const staffAnswer =
     written?.itemId === item.id ? written.answer : emptyStaffAnswer(staff?.bars ?? 1);
@@ -996,17 +998,91 @@ export default function PracticeScreen() {
     </Btn>
   ) : null;
 
-  // The middle of the screen belongs to the question and the conversation. What the
-  // conversation's content does not need goes to the question card, not to an empty
-  // gap (issue #96): the card grows into `cardMin`, its figure sizes itself from that
-  // measured room. The cap keeps a third of the middle for the conversation once
-  // there is one — past it only the conversation scrolls (CLAUDE.md rule 16).
-  const questionCap = Math.round(middleHeight * 0.7);
-  // The conversation keeps its content plus the fade at its top edge, so a fully
-  // visible first bubble never dissolves into the mask (EdgeFade.tsx).
-  const spare = Math.min(Math.max(0, middleHeight - threadNeed - EDGE_FADE), questionCap);
-  const aroundCard = Math.max(0, questionContentHeight - cardHeight);
-  const cardMin = middleHeight > 0 && cardHeight > 0 ? Math.max(0, spare - aroundCard) : 0;
+  // The conversation shows WHOLE turns only (issue #286). It may take its own box plus the free
+  // room under the answer (`FreeSpace`) — that sum does not change while the box is sized, so the
+  // measurement is stable. If everything fits, everything shows. Otherwise the box starts at the
+  // earliest turn from which the rest still fits, so at rest the top edge lies in the gap above
+  // a whole turn — nothing of the turn before peeks out under the question card. Earlier turns
+  // are a scroll up away; the edge then fades (#63, `scrolledUp` below). Never less than the
+  // newest turn: after "Prüfen" Buddy's reply is what matters, and the way to answer gives way
+  // first (a structured board scrolls inside itself before the reply is hidden). Only when the
+  // newest turn alone is taller than the room is it cut, under the full fade (rule 16 allows a
+  // conversation to scroll). A question card with a drawing lends its growth back to the
+  // conversation (`cardDelta`, also negative when the drawing gave room), so the room counts it.
+  // Per question AND per window: a narrower phone wraps the prompt onto another line and gives
+  // the drawing a smaller cap, so its own height measured on another size is wrong here.
+  const naturalKey = `${item.id}:${windowWidth}x${windowHeight}`;
+  const cardNatural = natural?.key === naturalKey ? natural.height : 0;
+  const cardDelta = cardNatural > 0 ? cardHeight - cardNatural : 0;
+  // When something below grows (the voice bar, the keyboard's room) and the column runs past
+  // its end, that overrun comes off the room too — a grown card gives it back first.
+  // Two ways to see it: past the column's own end (phones, where a flex child may shrink below
+  // its content), and past the window (the web, where the column grows with its content and the
+  // page itself would scroll).
+  const overrun =
+    column > 0
+      ? Math.max(0, columnEnd - column, columnTop > 0 ? columnTop + columnEnd - windowHeight : 0)
+      : 0;
+  // What the conversation would have next to the card at its own height.
+  const room = Math.max(0, threadBox + freeSpace + cardDelta - overrun);
+  // How much each turn needs to the end of the conversation, newest last. The tops are in
+  // ItemThread's coordinates; it starts after the thread's padding.
+  const tops = turns.map((turn) => turnTops[turn.id]).filter((y): y is number => y !== undefined);
+  // From a turn's top, with SPACE.sm of the gap above it, to the end of the conversation.
+  const fromTurn = tops
+    .map((y) => threadNeed - (THREAD_PAD + y) + SPACE.sm)
+    .filter((h) => h < threadNeed);
+  // Before the first turn the conversation is only the hint row ("Tipp"): nothing of Buddy's
+  // to protect, so at the largest board it gives way whole — never half a row (as before #286).
+  const quiet = turns.length === 0;
+  const newestNeed = fromTurn.length > 0 ? Math.min(...fromTurn) : quiet ? 0 : threadNeed;
+  let threadCap: number | undefined;
+  let threadClipped = false;
+  // An open structured board shrinks (`PartsArea` scrolls) before Buddy's reply is hidden.
+  const boardGives = open && item.task_view !== null && item.task_view !== undefined;
+  // A quiet thread decides even at room 0 — else the row would come back half and flicker.
+  if ((room > 0 || quiet) && threadNeed > 0) {
+    if (threadNeed <= room) {
+      threadCap = threadNeed;
+    } else if (quiet) {
+      threadCap = 0;
+    } else {
+      const fits = fromTurn.filter((h) => h <= room);
+      // The newest turn alone does not fit: it keeps its full height only where a board can
+      // give way under it (a structured surface scrolls inside itself); with nothing to give
+      // — choices, a field, the voice bar — it is cut to the room under the fade instead of
+      // pushing the bar off the screen.
+      threadCap =
+        fits.length > 0 ? Math.max(...fits) : boardGives ? Math.max(room, newestNeed) : room;
+      threadClipped = fits.length === 0 && newestNeed > room;
+    }
+  }
+  const threadFloor = boardGives ? Math.min(newestNeed, threadNeed) : 0;
+
+  // The card with a drawing or photo and the conversation share the room (issue #96, #286).
+  // What the conversation leaves, the card grows into (`cardGrowTo` > 0: its figure sizes itself
+  // from the measured room, at most to half the window) instead of an empty gap under the answer.
+  // When Buddy's newest turn would be cut, the drawing gives room first (`cardGrowTo` < 0: a
+  // lower cap, down to its legible minimum, lib/math/figureScale.ts) — a reply half under the
+  // card read as a fault. The room is the same sum whatever the card does, so both settle in one
+  // pass, and a new reply or a taller bar takes its room back from the card first.
+  const visual = cardNatural > 0 && (item.figure || item.image) && !speaking;
+  const threadWants =
+    threadCap === undefined || !threadClipped ? (threadCap ?? threadNeed) : newestNeed;
+  const cardGrowTo = visual
+    ? Math.max(
+        -CARD_GIVES,
+        Math.min(room - threadWants, Math.round(windowHeight * 0.5) - cardNatural),
+      )
+    : 0;
+  if (cardGrowTo < 0 && threadCap !== undefined && !boardGives) {
+    // The room the drawing really gave (measured, `cardDelta`: at its legible minimum it may
+    // give less than asked) goes to the newest turn; whatever is still missing is cut.
+    threadCap = Math.min(threadWants, Math.max(room, room - cardDelta));
+    threadClipped = threadCap < newestNeed;
+  }
+  // Something lies above what the box shows: its top edge fades (#63).
+  const threadHolds = threadClipped || (threadCap !== undefined && threadCap < threadNeed);
 
   // No scrolling to find what matters (CLAUDE.md rule 16): the question stays on top,
   // the way to answer stays at the bottom, and only the conversation between them
@@ -1014,353 +1090,372 @@ export default function PracticeScreen() {
   return (
     <Screen title={title} right={endButton}>
       <KeyboardSafe style={{ flex: 1 }}>
-        <View
-          style={{ flex: 1 }}
-          onLayout={(e) => setMiddleHeight(Math.round(e.nativeEvent.layout.height))}
-        >
-          <ScrollView
-            testID="scroll-question"
-            // No clamp and no shrinking: the question must NEVER scroll (rule 16), so
-            // nothing may cut it below its content — an irreducible question (three-line
-            // fraction prompt + the figure's legible minimum) beat every cap by a few px
-            // on 360×740. When space runs out the conversation yields: it scrolls.
-            // The cap still bounds how far the card GROWS (cardMin below).
-            style={{ flexGrow: 0, flexShrink: 0 }}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, gap: 10 }}
-            onContentSizeChange={(_, h) => setQuestionContentHeight(Math.round(h))}
+        <FreeSpaceReport.Provider value={setFreeSpace}>
+          {/* The column, measured: its end mark (below) says how far its content runs past it. */}
+          <View
+            style={{ flex: 1, minHeight: 0 }}
+            ref={columnRef}
+            onLayout={(e) => {
+              setColumn(Math.round(e.nativeEvent.layout.height));
+              columnRef.current?.measureInWindow((_x, y) => setColumnTop(Math.round(y)));
+            }}
           >
-            <ProgressRow
-              position={session.items.indexOf(shown) + 1}
-              total={session.items.length}
-              closed={session.items.filter((i) => i.status !== 'open').length}
-              // The server's word, never the app's guess: while it says more questions are coming,
-              // the total is not the number it will be (issue #220).
-              preparing={session.preparing}
-              right={flagButton ?? disputeButton}
-            />
-            {session.mode === 'help' || testing ? (
-              <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
-                {t(testing ? 'practice:test_note' : 'practice:help_note')}
-              </Text>
-            ) : null}
-            {/* The next question comes in softly from the side (keyed by the question). */}
-            <SlideIn
-              key={item.id}
-              onLayout={(e) => setCardHeight(Math.round(e.nativeEvent.layout.height))}
+            <View
+              style={{
+                // The question and the conversation take what they need, no more: the way to answer
+                // stands right under them, and the free room collects below it (`FreeSpace`, issue
+                // #286). The question never shrinks; the conversation does, by whole turns
+                // (`threadCap`).
+                flexGrow: 0,
+                flexShrink: 1,
+                minHeight: questionContentHeight + threadFloor,
+              }}
             >
-              {speaking ? (
-                <SpeakCard item={item} turns={turns} live={speakLive} sessionId={session.id} />
-              ) : (
-                <QuestionCard
-                  prompt={item.prompt}
-                  topic={item.topic}
-                  figure={item.figure}
-                  figureMaxHeight={Math.round(windowHeight * 0.14)}
-                  image={item.image}
-                  imageKey={item.id}
-                  imageMaxHeight={Math.min(180, Math.round(windowHeight * 0.2))}
-                  fromBuddy={item.origin === 'buddy'}
-                  minHeight={cardMin}
-                  // Her short answer appears in the gap of a fill-in sentence while she types.
-                  answer={
-                    typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined
-                  }
+              <ScrollView
+                testID="scroll-question"
+                // No clamp and no shrinking: the question must NEVER scroll (rule 16), so
+                // nothing may cut it below its content — an irreducible question (three-line
+                // fraction prompt + the figure's legible minimum) beat every cap by a few px
+                // on 360×740. When space runs out the conversation yields: whole turns (threadCap).
+                style={{ flexGrow: 0, flexShrink: 0 }}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, gap: 10 }}
+                onContentSizeChange={(_, h) => setQuestionContentHeight(Math.round(h))}
+              >
+                <ProgressRow
+                  position={session.items.indexOf(shown) + 1}
+                  total={session.items.length}
+                  closed={session.items.filter((i) => i.status !== 'open').length}
+                  // The server's word, never the app's guess: while it says more questions are coming,
+                  // the total is not the number it will be (issue #220).
+                  preparing={session.preparing}
+                  right={flagButton ?? disputeButton}
                 />
-              )}
-            </SlideIn>
-            {tools.length > 0 ? (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{tools}</View>
-            ) : null}
-          </ScrollView>
-          {/* minHeight 0: on the web a flex child's min-height is its content, and the
+                {session.mode === 'help' || testing ? (
+                  <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
+                    {t(testing ? 'practice:test_note' : 'practice:help_note')}
+                  </Text>
+                ) : null}
+                {/* The next question comes in softly from the side (keyed by the question). */}
+                <SlideIn
+                  key={item.id}
+                  onLayout={(e) => {
+                    const h = Math.round(e.nativeEvent.layout.height);
+                    setCardHeight(h);
+                    // Its own height before it grows: measured only while it has no minHeight.
+                    // (While it shrinks back its height lags a render behind; taking that as its
+                    // own height made it never give the room back. A picture that loads while it
+                    // is grown pushes the column past its end — the overrun takes the growth
+                    // away, and then it measures itself again.)
+                    if (cardGrowTo === 0) setNatural({ key: naturalKey, height: h });
+                  }}
+                >
+                  {speaking ? (
+                    <SpeakCard item={item} turns={turns} live={speakLive} sessionId={session.id} />
+                  ) : (
+                    <QuestionCard
+                      prompt={item.prompt}
+                      topic={item.topic}
+                      figure={item.figure}
+                      figureMaxHeight={Math.round(windowHeight * 0.14) + Math.min(0, cardGrowTo)}
+                      image={item.image}
+                      imageKey={item.id}
+                      imageMaxHeight={
+                        Math.min(180, Math.round(windowHeight * 0.2)) + Math.min(0, cardGrowTo)
+                      }
+                      fromBuddy={item.origin === 'buddy'}
+                      minHeight={cardGrowTo > 0 ? cardNatural + cardGrowTo : undefined}
+                      // Her short answer appears in the gap of a fill-in sentence while she types.
+                      answer={
+                        typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined
+                      }
+                    />
+                  )}
+                </SlideIn>
+                {tools.length > 0 ? (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{tools}</View>
+                ) : null}
+              </ScrollView>
+              {/* minHeight 0: on the web a flex child's min-height is its content, and the
               conversation then SQUEEZES the question below its own content instead of
               scrolling itself (issue #96 — 39 px overflow in voice mode; Yoga on the
               phones already defaults to 0). The conversation is the one that scrolls. */}
-          <View style={{ flex: 1, minHeight: 0 }}>
-            <ScrollView
-              ref={scroll}
-              testID="scroll-thread"
-              style={[{ flex: 1 }, topEdgeMask]}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{
-                flexGrow: 1,
-                justifyContent: 'flex-end',
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-              }}
-              onContentSizeChange={() => {
-                if (followEnd) scroll.current?.scrollToEnd({ animated: true });
-              }}
-              onLayout={() => {
-                // The keyboard shrinks this view; keep the latest reply visible above it.
-                if (followEnd) scroll.current?.scrollToEnd({ animated: false });
-              }}
-            >
-              {/* One measured column: what the conversation truly holds (plus the 12 pt
-                  of padding above and below), so the question knows what is spare. */}
               <View
-                style={{ gap: 12 }}
-                onLayout={(e) => setThreadNeed(Math.round(e.nativeEvent.layout.height) + 24)}
+                style={{ flexShrink: 1, minHeight: threadFloor, maxHeight: threadCap }}
+                onLayout={(e) => setThreadBox(Math.round(e.nativeEvent.layout.height))}
               >
-                <ItemThread
-                  turns={turns}
-                  pending={pendingText}
-                  hideVerdicts={testing}
-                  // A spoken answer: the judgement's words belong here, the marked sentence
-                  // stays in the card (issue #14).
-                  pronunciation={item.kind === 'speak'}
-                />
-                {session.mode === 'help' && shown.status === 'correct' ? (
-                  <Rise delay={180}>
-                    <SelfSolvedCard />
-                  </Rise>
-                ) : null}
-                {/* The solution only where it says something new (issue #93): after an
+                <ScrollView
+                  ref={scroll}
+                  testID="scroll-thread"
+                  // The fade only where the box holds more than it shows (`threadHolds`).
+                  // At rest on a whole turn the fade covers only the gap above it (SPACE.sm);
+                  // scrolled up, or cut, it is the full EDGE_FADE over what passes the edge.
+                  style={[
+                    { flexGrow: 0, flexShrink: 1 },
+                    threadHolds
+                      ? scrolledUp || threadClipped
+                        ? topEdgeMask
+                        : topEdgeMaskFrom(0, SPACE.sm)
+                      : null,
+                  ]}
+                  scrollEventThrottle={64}
+                  onScroll={(e) => {
+                    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+                    const up =
+                      contentSize.height - (contentOffset.y + layoutMeasurement.height) > 4;
+                    if (up !== scrolledUp) setScrolledUp(up);
+                  }}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                  }}
+                  onContentSizeChange={() => {
+                    if (followEnd) scroll.current?.scrollToEnd({ animated: true });
+                  }}
+                  onLayout={() => {
+                    // The keyboard shrinks this view; keep the latest reply visible above it.
+                    if (followEnd) scroll.current?.scrollToEnd({ animated: false });
+                  }}
+                >
+                  {/* One measured column: what the conversation truly holds (plus the 12 pt
+                  of padding above and below), so the question knows what is spare. */}
+                  <View
+                    style={{ gap: 12 }}
+                    onLayout={(e) => setThreadNeed(Math.round(e.nativeEvent.layout.height) + 24)}
+                  >
+                    <ItemThread
+                      turns={turns}
+                      pending={pendingText}
+                      hideVerdicts={testing}
+                      // A spoken answer: the judgement's words belong here, the marked sentence
+                      // stays in the card (issue #14).
+                      pronunciation={item.kind === 'speak'}
+                      // While a structured question is open her answer stands on its board, not in a
+                      // bubble (ItemThread). Once it is closed the board is gone, there is room, and
+                      // the bubble with its verdict shows what she did, like any other answer.
+                      echoAnswers={!(structured && open)}
+                      onTurnTops={setTurnTops}
+                    />
+                    {session.mode === 'help' && shown.status === 'correct' ? (
+                      <Rise delay={180}>
+                        <SelfSolvedCard />
+                      </Rise>
+                    ) : null}
+                    {/* The solution only where it says something new (issue #93): after an
                     answer she got right herself, the chip and Buddy's reply carry it. */}
-                {shown.status !== 'open' && shown.status !== 'correct' && shown.answer !== null ? (
-                  <Rise delay={180}>
-                    <SolutionCard answer={shown.answer} numeric={item.kind === 'numeric'} />
-                  </Rise>
-                ) : null}
-                {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (
-                  <ListenButton text={shown.answer} lang={item.lang} />
-                ) : null}
-                {/* What the Hörtext said, once the question is closed (issue #210). The server
+                    {shown.status !== 'open' &&
+                    shown.status !== 'correct' &&
+                    shown.answer !== null ? (
+                      <Rise delay={180}>
+                        <SolutionCard answer={shown.answer} numeric={item.kind === 'numeric'} />
+                      </Rise>
+                    ) : null}
+                    {item.kind === 'vocab' &&
+                    !open &&
+                    shown.answer !== null &&
+                    foreign(item.lang) ? (
+                      <ListenButton text={shown.answer} lang={item.lang} />
+                    ) : null}
+                    {/* What the Hörtext said, once the question is closed (issue #210). The server
                     sends it under exactly the condition it sends the solution under. */}
-                {shown.listen_transcript !== null ? (
-                  <Rise delay={180}>
-                    <HeardTextCard text={shown.listen_transcript} />
-                  </Rise>
-                ) : null}
-                {canExplainAgain ? (
-                  <Reexplain
-                    turns={turnsAgain}
-                    pending={again?.itemId === item.id ? again.way : null}
-                    disabled={locked}
-                    delay={1000}
-                    onAsk={(way) => void explainAgain(item.id, way)}
-                  />
-                ) : null}
-                {open ? (
-                  <HelpChips
-                    onHint={hint}
-                    // A spoken sentence has no solution to show — it stands in the card, and
-                    // the bar under it already offers the one way past it ("Diesmal
-                    // überspringen", which is this very `reveal` call). Two names in two
-                    // shapes for one action, on opposite sides of the screen, was half of
-                    // why this screen felt unlike the rest (issue #186). In a running test
-                    // the bar has no way out, so there the chip stays.
-                    onReveal={speaking && canReveal ? undefined : skip}
-                    revealLabel={skipLabel}
-                    revealHint={skipHint}
-                    disabled={locked}
-                  />
-                ) : null}
+                    {shown.listen_transcript !== null ? (
+                      <Rise delay={180}>
+                        <HeardTextCard text={shown.listen_transcript} />
+                      </Rise>
+                    ) : null}
+                    {canExplainAgain ? (
+                      <Reexplain
+                        turns={turnsAgain}
+                        pending={again?.itemId === item.id ? again.way : null}
+                        disabled={locked}
+                        delay={1000}
+                        onAsk={(way) => void explainAgain(item.id, way)}
+                      />
+                    ) : null}
+                    {open ? (
+                      <HelpChips
+                        onHint={hint}
+                        // A spoken sentence has no solution to show — it stands in the card, and
+                        // the bar under it already offers the one way past it ("Diesmal
+                        // überspringen", which is this very `reveal` call). Two names in two
+                        // shapes for one action, on opposite sides of the screen, was half of
+                        // why this screen felt unlike the rest (issue #186). In a running test
+                        // the bar has no way out, so there the chip stays.
+                        onReveal={speaking && canReveal ? undefined : skip}
+                        revealLabel={skipLabel}
+                        revealHint={skipHint}
+                        disabled={locked}
+                      />
+                    ) : null}
+                  </View>
+                </ScrollView>
+                {/* What scrolls up under the question fades out instead of peeking out (finding 8). */}
+                {threadHolds && (scrolledUp || threadClipped) ? <TopEdgeFade /> : null}
               </View>
-            </ScrollView>
-            {/* What scrolls up under the question fades out instead of peeking out (finding 8). */}
-            <TopEdgeFade />
-          </View>
-        </View>
-        {open && choices ? (
-          <View
-            style={{
-              paddingHorizontal: 16,
-              paddingTop: 8,
-              paddingBottom: voiceOn ? 0 : bottomRoom(insets.bottom, SPACE.md),
-            }}
-          >
-            <ChoiceList
-              choices={choices}
-              tried={tried}
-              disabled={locked}
-              onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}
-            />
-          </View>
-        ) : null}
-        {open && tapChoices ? (
-          <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
-            <ChoiceList
-              choices={tapChoices}
-              tried={tried}
-              disabled={locked}
-              // The word goes as if she had typed it: same grading, same key (issue #147).
-              onChoose={(_index, choice) =>
-                void answer(item.id, { text: choice, via: 'tapped' }, choice)
-              }
-            />
-          </View>
-        ) : null}
-        {/* The fraction bar she works with (issue #162). It sits where her finger already
+            </View>
+            {open && choices ? (
+              <View
+                style={{
+                  paddingHorizontal: 16,
+                  paddingTop: 8,
+                  paddingBottom: voiceOn ? 0 : bottomRoom(insets.bottom, SPACE.md),
+                }}
+              >
+                <ChoiceList
+                  choices={choices}
+                  tried={tried}
+                  disabled={locked}
+                  onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}
+                />
+              </View>
+            ) : null}
+            {open && tapChoices ? (
+              <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+                <ChoiceList
+                  choices={tapChoices}
+                  tried={tried}
+                  disabled={locked}
+                  // The word goes as if she had typed it: same grading, same key (issue #147).
+                  onChoose={(_index, choice) =>
+                    void answer(item.id, { text: choice, via: 'tapped' }, choice)
+                  }
+                />
+              </View>
+            ) : null}
+            {/* A structured item's parts (issues #228–#230): one surface per kind, each with its
+            own "Prüfen" in the pinned bar and its arrangement in a draft, so a theme switch
+            (a remount) keeps it. Keyed by the question, so a new one starts empty. */}
+            {open && item.task_view ? (
+              <View testID="answer-surface" style={{ flexGrow: 1, flexShrink: 1, minHeight: 0 }}>
+                <StructuredAnswer
+                  key={item.id}
+                  view={item.task_view}
+                  draftKey={`session.${id}.${item.id}`}
+                  disabled={locked}
+                  onSubmit={(parts, shownText) => void answer(item.id, { parts }, shownText)}
+                />
+              </View>
+            ) : null}
+            {/* Die Notenzeile, auf die sie schreibt (issue #226). Sie steht, wo sonst eine Anordnung
+            oder das Antwortfeld steht, und gibt als Erstes Platz her: die gemessene Höhe
+            und was sie kostet, stehen in `StaffAnswer.tsx`. */}
+            {staff ? (
+              <View
+                testID="answer-staff"
+                style={{ flexShrink: 1, minHeight: 0, paddingTop: SPACE.sm }}
+              >
+                <ScrollView
+                  testID="scroll-list"
+                  style={{ flexGrow: 0, flexShrink: 1 }}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={{ paddingHorizontal: SPACE.lg }}
+                >
+                  <StaffAnswer
+                    key={item.id}
+                    surface={staff}
+                    answer={staffAnswer}
+                    disabled={locked}
+                    onChange={(next) => setWritten({ itemId: item.id, answer: next })}
+                  />
+                </ScrollView>
+              </View>
+            ) : null}
+            {/* The free room (issue #286): below the way to answer, above what is pinned. A structured
+            surface carries its own, between its board and its "Prüfen" (`PartsArea`). */}
+            {open && item.task_view ? null : <FreeSpace />}
+            {/* The fraction bar she works with (issue #162). It sits where her finger already
             is — right above the field — and it writes into that very field, so "Prüfen",
             the math keys and typing stay exactly what they were. A picked bar goes out at
             once, like a choice. */}
-        {barSurface ? (
-          <View style={{ paddingHorizontal: 16, paddingTop: 8 }} testID="answer-surface">
-            <FractionBarAnswer
-              surface={barSurface}
-              value={text}
-              disabled={locked}
-              onChange={(next) => {
-                setShadedAnswer({ itemId: item.id, text: next });
-                setText(next);
-              }}
-              onPick={(picked) => void answer(item.id, { text: picked, via: 'tapped' }, picked)}
+            {barSurface ? (
+              <View style={{ paddingHorizontal: 16, paddingTop: 8 }} testID="answer-surface">
+                <FractionBarAnswer
+                  surface={barSurface}
+                  value={text}
+                  disabled={locked}
+                  onChange={(next) => {
+                    setShadedAnswer({ itemId: item.id, text: next });
+                    setText(next);
+                  }}
+                  onPick={(picked) => void answer(item.id, { text: picked, via: 'tapped' }, picked)}
+                />
+              </View>
+            ) : null}
+            {staff ? (
+              <BottomBar>
+                <Btn
+                  size="lg"
+                  pill
+                  full
+                  // Nichts zu prüfen, solange ein Takt noch leer ist: eine halb geschriebene Zeile
+                  // wäre eine Antwort, die noch nicht gegeben wurde.
+                  disabled={locked || !staffComplete(staffAnswer)}
+                  onPress={() => {
+                    tapped('check');
+                    const line = staffLineOf(staffAnswer);
+                    // Kein `via: 'tapped'`, obwohl sie getippt hat: `via` unterscheidet
+                    // WIEDERERKENNEN von PRODUZIEREN (issue #163), und hier ist nichts
+                    // wiedererkannt. Ein Wort aus vier eigenen anzutippen ist leichter, als es zu
+                    // schreiben; eine Notenzeile selbst zu setzen ist genau das, was die
+                    // Klassenarbeit verlangt — mit einem Stift statt mit dem Finger. Dasselbe
+                    // Argument, das `summary.ts` für die mehrteiligen Antworten führt.
+                    void answer(item.id, { text: line }, line);
+                  }}
+                >
+                  {t('practice:check')}
+                </Btn>
+              </BottomBar>
+            ) : null}
+            {typed ? (
+              <AnswerComposer
+                kind={item.kind}
+                prompt={item.prompt}
+                unit={item.unit}
+                lang={item.kind === 'vocab' ? item.lang : item.prompt_lang}
+                value={text}
+                disabled={locked}
+                onChange={setText}
+                onCheck={check}
+              />
+            ) : null}
+            {open && choices && voiceOn ? (
+              <SpokenChoiceBar
+                prompt={item.prompt}
+                disabled={locked}
+                onText={(said) => void answer(item.id, { text: said, via: 'spoken' }, said)}
+                onReadAgain={() => readQuestion(item)}
+              />
+            ) : null}
+            {open && speaking ? (
+              <SpeakPanel
+                item={item}
+                sessionId={id}
+                hasFeedback={latestPronunciation(turns) !== null}
+                disabled={locked}
+                onResult={(res) => spoke(item.id, res)}
+                onProgress={setSpeakLive}
+                onOutdated={() =>
+                  void queryClient.invalidateQueries({ queryKey: keys.session(id) })
+                }
+                onSkip={canReveal ? () => void reveal(item.id) : undefined}
+              />
+            ) : null}
+            {open ? null : (
+              <BottomBar>
+                <Appear delay={120}>
+                  <Btn size="lg" pill full onPress={next}>
+                    {t('practice:next')}
+                  </Btn>
+                </Appear>
+              </BottomBar>
+            )}
+            <View
+              style={{ height: 0 }}
+              onLayout={(e) => setColumnEnd(Math.round(e.nativeEvent.layout.y))}
             />
           </View>
-        ) : null}
-        {/* Das Brett, das sie anordnet (issues #228–#230): ordnen, zuordnen, eine Tabelle
-            füllen. Es steht, wo sonst die Fläche oder das Antwortfeld steht, und darunter
-            steht das eine „Prüfen" — ein Antwortfeld gibt es hier nicht, auch bei der
-            Tabelle nicht: dort wird in den Zellen selbst geschrieben.
-
-            Zur Höhe (CLAUDE.md Regel 16, gerechnet für das 360×740-Handy): von den 688 pt
-            unter dem Kopf nimmt die Frage 155 — 4 Polster + 18 Fortschritt + 10 Abstand +
-            123 Karte (2×18 Polster, 29 Themenzeile, 58 zweizeilige Frage), und sie darf NIE
-            schrumpfen — und die Leiste mit „Prüfen" 74 (8 + 54 + 12). Für den Brett-Bereich
-            bleiben 459; mit dreizeiliger Frage und „Frage passt nicht" sind es 404.
-
-            Die Bretter, die wirklich kommen, liegen darunter: acht kurze Elemente 254, vier
-            Paare 330, eine sechszeilige Konjugationstabelle 367. Die größten, die der Vertrag
-            zulässt, nicht: acht 48-Zeichen-Elemente 446 (passt knapp), sechs 40-Zeichen-Paare
-            590, zwölf 32-Zeichen-Elemente in vier Gruppen 866, zehn Tabellenzeilen mit Lücken
-            543. Darum ist dieser Bereich der einzige, der nachgibt: `flexShrink` lässt ihn nur
-            bis an den Platz wachsen, der übrig ist — das Gespräch darüber gibt seinen Platz
-            als Erstes her (es ist die Spalte, die scrollen darf, und sein `flexBasis: 0`
-            verbraucht nichts von dem Fehlbetrag), und erst wenn auch das nicht reicht,
-            schiebt sich das Brett in sich selbst (`scroll-list`: die Liste, die sie
-            durchgeht). Die Frage bleibt stehen, und die Seite läuft nicht über. */}
-        {board ? (
-          <View testID="answer-board" style={{ flexShrink: 1, minHeight: 0, paddingTop: SPACE.sm }}>
-            <ScrollView
-              testID="scroll-list"
-              style={{ flexGrow: 0, flexShrink: 1 }}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingHorizontal: SPACE.lg }}
-            >
-              <PartsBoardAnswer
-                // Keyed by the question: the open selection ("which left side waits for its
-                // right one") is a glance, not an answer, and it must not survive the question.
-                key={item.id}
-                board={board}
-                answer={boardAnswer}
-                disabled={locked}
-                onChange={(next) => setArranged({ itemId: item.id, answer: next })}
-              />
-            </ScrollView>
-          </View>
-        ) : null}
-        {board ? (
-          <BottomBar>
-            <Btn
-              size="lg"
-              pill
-              full
-              // Nothing to check until every slot is filled: a half-arranged board would be
-              // sent as a wrong answer and counted as one.
-              disabled={locked || !boardComplete(board, boardAnswer)}
-              onPress={() => {
-                // Tap → the verdict on screen (issue #66), the same mark the field sets.
-                tapped('check');
-                void answer(
-                  item.id,
-                  { parts: partsOf(boardAnswer), via: viaFor(board) },
-                  renderBoardAnswer(board, boardAnswer),
-                );
-              }}
-            >
-              {t('practice:check')}
-            </Btn>
-          </BottomBar>
-        ) : null}
-        {/* Die Notenzeile, auf die sie schreibt (issue #226). Sie steht, wo sonst das Brett oder
-            das Antwortfeld steht, und gibt wie das Brett als Erstes Platz her: die gemessene Höhe
-            und was sie kostet, stehen in `StaffAnswer.tsx`. */}
-        {staff ? (
-          <View testID="answer-staff" style={{ flexShrink: 1, minHeight: 0, paddingTop: SPACE.sm }}>
-            <ScrollView
-              testID="scroll-list"
-              style={{ flexGrow: 0, flexShrink: 1 }}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingHorizontal: SPACE.lg }}
-            >
-              <StaffAnswer
-                key={item.id}
-                surface={staff}
-                answer={staffAnswer}
-                disabled={locked}
-                onChange={(next) => setWritten({ itemId: item.id, answer: next })}
-              />
-            </ScrollView>
-          </View>
-        ) : null}
-        {staff ? (
-          <BottomBar>
-            <Btn
-              size="lg"
-              pill
-              full
-              // Nichts zu prüfen, solange ein Takt noch leer ist: eine halb geschriebene Zeile
-              // wäre eine Antwort, die noch nicht gegeben wurde.
-              disabled={locked || !staffComplete(staffAnswer)}
-              onPress={() => {
-                tapped('check');
-                const line = staffLineOf(staffAnswer);
-                // Kein `via: 'tapped'`, obwohl sie getippt hat: `via` unterscheidet
-                // WIEDERERKENNEN von PRODUZIEREN (issue #163), und hier ist nichts
-                // wiedererkannt. Ein Wort aus vier eigenen anzutippen ist leichter, als es zu
-                // schreiben; eine Notenzeile selbst zu setzen ist genau das, was die
-                // Klassenarbeit verlangt — mit einem Stift statt mit dem Finger. Dasselbe
-                // Argument, das `summary.ts` für die mehrteiligen Antworten führt.
-                void answer(item.id, { text: line }, line);
-              }}
-            >
-              {t('practice:check')}
-            </Btn>
-          </BottomBar>
-        ) : null}
-        {typed ? (
-          <AnswerComposer
-            kind={item.kind}
-            prompt={item.prompt}
-            unit={item.unit}
-            lang={item.kind === 'vocab' ? item.lang : item.prompt_lang}
-            value={text}
-            disabled={locked}
-            onChange={setText}
-            onCheck={check}
-          />
-        ) : null}
-        {open && choices && voiceOn ? (
-          <SpokenChoiceBar
-            prompt={item.prompt}
-            disabled={locked}
-            onText={(said) => void answer(item.id, { text: said, via: 'spoken' }, said)}
-            onReadAgain={() => readQuestion(item)}
-          />
-        ) : null}
-        {open && speaking ? (
-          <SpeakPanel
-            item={item}
-            sessionId={id}
-            hasFeedback={latestPronunciation(turns) !== null}
-            disabled={locked}
-            onResult={(res) => spoke(item.id, res)}
-            onProgress={setSpeakLive}
-            onOutdated={() => void queryClient.invalidateQueries({ queryKey: keys.session(id) })}
-            onSkip={canReveal ? () => void reveal(item.id) : undefined}
-          />
-        ) : null}
-        {open ? null : (
-          <BottomBar>
-            <Appear delay={120}>
-              <Btn size="lg" pill full onPress={next}>
-                {t('practice:next')}
-              </Btn>
-            </Appear>
-          </BottomBar>
-        )}
+        </FreeSpaceReport.Provider>
       </KeyboardSafe>
       <Sheet
         visible={flagOpen}

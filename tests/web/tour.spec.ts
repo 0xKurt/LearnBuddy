@@ -185,7 +185,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
 
   // ── Settings: messages to the phone (parents' PIN), times, language ──
   await openMenu(page, 'Einstellungen');
-  await page.getByRole('button', { name: 'Darf Buddy dir Benachrichtigungen schicken?' }).click();
+  await page.getByRole('button', { name: 'Benachrichtigungen', exact: true }).click();
   await expect(page.getByText('Nein. Buddy schreibt dir nur hier in der App.')).toBeVisible();
   await page.getByRole('button', { name: 'Eltern fragen' }).click();
   for (const digit of '2468') await page.getByRole('button', { name: digit, exact: true }).click();

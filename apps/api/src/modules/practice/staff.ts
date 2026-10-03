@@ -301,8 +301,8 @@ const LETTERS: readonly NoteName[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
 /**
  * Die Optionen einer Lesefrage: die richtige und ihre nächsten Nachbarn, in einer festen
- * Ordnung. Fest ist hier das Entscheidende — kein `Math.random()` und keine Uhr (Regel 7,
- * `shuffle.ts`): zwei Läufe müssen dieselbe Frage ergeben, sonst ist nichts nachrechenbar.
+ * Ordnung. Fest ist hier das Entscheidende — kein `Math.random()` und keine Uhr (Regel 7):
+ * zwei Läufe müssen dieselbe Frage ergeben, sonst ist nichts nachrechenbar.
  *
  * Null, wenn nicht genug verschiedene Nachbarn zusammenkommen; dann entsteht keine Frage,
  * statt einer mit zwei gleichen Optionen (was `usableItems` einem vom Modell geschriebenen
@@ -361,8 +361,6 @@ const COMMON = {
   tolerance: null,
   spelling: null,
   source_excerpt: null,
-  // A note question is one value against one key; its answer has no parts (issues #228–#230).
-  parts_task: null,
   // A note line is no chart; its key comes from the task itself (issues #245, #246).
   read: null,
   // None of the twelve state-dependent curriculum places is about music (issue #214), a note
@@ -582,7 +580,7 @@ export function staffItems(tasks: readonly StaffTask[], locale: string): StaffIt
 /**
  * Die EINE Stelle, auf die sie als nächstes schauen kann. Nie die Liste aller Fehler: `held`
  * sagt, wie viel hält, und genau eine Stelle sagt, wo es aufhört — dieselbe Entscheidung wie in
- * `parts.ts` und `chemistry.ts`, aus demselben Grund (alles auf einmal zu nennen ist eine Liste
+ * `chemistry.ts`, aus demselben Grund (alles auf einmal zu nennen ist eine Liste
  * zum Abarbeiten statt eines nächsten Schritts).
  */
 export type StaffFault =
@@ -635,7 +633,8 @@ function placeOf(bars: StaffBars, at: number): { bar: number; index: number } {
  * geprüft — Regel 5: nichts behaupten, was nicht gemessen wurde.
  *
  * `held` ist ein PRÄFIX und keine Zahl übereinstimmender Stellen — dieselbe Messung wie bei
- * `order` in `parts.ts` und bei einem gerechneten Weg in `steps.ts`: wer die richtige Folge hat
+ * einer Reihenfolge in `structured.ts` („Bis Schritt 2 stimmt's") und bei einem gerechneten Weg in
+ * `steps.ts`: wer die richtige Folge hat
  * und eine Note zu früh anfängt, hat sonst „alles falsch", obwohl sie die Zeile kennt, und „bis
  * hierher stimmt alles" ist der Satz, mit dem sie weiterarbeiten kann.
  *

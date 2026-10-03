@@ -42,7 +42,18 @@ export function Screen({ title, back = false, right, children }: Props) {
             />
           )}
           {title ? (
-            <Text accessibilityRole="header" numberOfLines={2} style={[TYPE.title, { flex: 1 }]}>
+            // One line, always (issue #287): a title that broke onto a second line pushed
+            // everything under it down and read as a layout fault. With buttons on the right
+            // the room is narrower, so the title steps down to the header size; what still
+            // does not fit ends in "…" — the full name stays with a screen reader, and on the
+            // practice screen the question card names the topic again.
+            <Text
+              accessibilityRole="header"
+              accessibilityLabel={title}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[right ? TYPE.header : TYPE.title, { flex: 1 }]}
+            >
               {title}
             </Text>
           ) : (

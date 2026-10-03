@@ -43,11 +43,10 @@ const question = (over: Partial<ListenDraft['questions'][number]> = {}) => ({
   correct_choice: null,
   topic: 'Shopping',
   difficulty: 2,
-  // Fields every draft carries since #211, #214 and #228–#230; a listening question has none of
-  // them — it is a spoken stimulus with a short answer.
+  // Fields every draft carries since #211 and #214; a listening question has none of them — it
+  // is a spoken stimulus with a short answer.
   rubric: null,
   curriculum_point: null,
-  parts_task: null,
   ...over,
 });
 

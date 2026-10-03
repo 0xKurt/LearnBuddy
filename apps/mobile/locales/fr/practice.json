@@ -18,34 +18,6 @@
     "pick_how": "Touche la barre qui est la plus grande.",
     "pick_option": "Choisir {{fraction}}"
   },
-  "board": {
-    "order_how": "Touche les éléments dans le bon ordre.",
-    "order_unset": "{{text}}, élément {{n}} sur {{total}}, pas encore placé",
-    "order_set": "{{text}}, placé en {{position}}, touche encore pour le reprendre",
-    "order_state": "{{placed}} sur {{total}} placés",
-    "pairs_how": "Touche quelque chose à gauche, puis ce qui va avec à droite.",
-    "pairs_left": "{{text}}, encore sans paire, touche pour le choisir",
-    "pairs_left_open": "{{text}}, choisi, touche maintenant ce qui va avec à droite",
-    "pairs_left_done": "{{text}}, paire {{pair}}, touche encore pour défaire la paire",
-    "pairs_right": "{{text}}, encore sans paire",
-    "pairs_right_done": "{{text}}, paire {{pair}}, touche encore pour défaire la paire",
-    "pairs_pick_left": "Choisis d'abord quelque chose à gauche.",
-    "pairs_state": "{{done}} paires sur {{total}} formées",
-    "groups_how": "Touche un élément, puis le groupe auquel il appartient.",
-    "groups_unset": "{{text}}, pas encore rangé, touche pour le choisir",
-    "groups_open": "{{text}}, choisi, touche maintenant le groupe",
-    "groups_set": "{{text}}, dans {{group}}, touche encore pour le ressortir",
-    "groups_target": "Ranger dans {{group}}",
-    "groups_pick_element": "Choisis d'abord un élément.",
-    "groups_state": "{{done}} sur {{total}} rangés",
-    "table_how": "Écris dans les cases vides.",
-    "table_empty": "{{where}}, encore vide",
-    "table_filled": "{{where}}, {{value}}",
-    "table_where": "{{column}} pour {{row}}",
-    "table_where_col": "{{column}}, ligne {{row}}",
-    "table_where_cell": "Colonne {{column}}, ligne {{row}}",
-    "table_state": "{{done}} cases sur {{total}} remplies"
-  },
   "cards": {
     "progress": "Carte {{current}} sur {{total}}",
     "note": "Cartes – c'est toi qui dis si tu le savais.",
@@ -106,7 +78,32 @@
     "transcript_title": "Voici le texte"
   },
   "loading": "Je récupère tes questions…",
+  "match": {
+    "how_pairs": "Touche un élément à gauche, puis son partenaire à droite.",
+    "how_groups": "Touche un élément en haut, puis son groupe.",
+    "held": "{{text}}, sélectionné",
+    "paired": "{{text}}, paire {{n}} avec {{other}}",
+    "no_partner": "{{text}}, pas encore de partenaire",
+    "in_group": "{{text}}, dans {{group}}",
+    "no_group": "{{text}}, dans aucun groupe pour l'instant",
+    "group": "Groupe {{group}}, {{count}} dedans",
+    "hint_take": "Le sélectionne.",
+    "hint_held": "Le désélectionne.",
+    "hint_link": "Le relie à {{other}}.",
+    "hint_linked": "Défait le lien.",
+    "hint_put": "Met {{text}} ici.",
+    "hint_group_waits": "Touche d'abord un élément en haut.",
+    "check_waits": "Seulement quand tout est relié."
+  },
   "next": "Suivant",
+  "order": {
+    "how": "Touche-les dans l'ordre.",
+    "element_open": "{{text}}, pas encore de place",
+    "element_placed": "{{text}}, place {{n}}",
+    "hint_open": "Reçoit la place {{n}}.",
+    "hint_placed": "Le retire – avec tout ce qui vient après.",
+    "check_waits": "Seulement quand chacun a sa place."
+  },
   "origin_buddy": "Question de Buddy",
   "progress": "Question {{current}} sur {{total}}",
   "progress_more_coming": "Question {{current}} · j’en écris d’autres",
@@ -221,5 +218,12 @@
     "partially_correct": "Presque",
     "incorrect": "Pas tout à fait",
     "unchecked": "Non vérifié"
+  },
+  "table": {
+    "cell": "{{row}}, {{column}}",
+    "cell_at": "ligne {{row}}, colonne {{column}}",
+    "brick": "rangée {{row}}, brique {{n}}",
+    "check_waits": "Seulement quand toutes les cases sont remplies.",
+    "scroll": "Tableau, défile sur le côté"
   }
 }

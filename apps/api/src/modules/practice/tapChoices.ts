@@ -18,18 +18,24 @@
 // The distractors are her own words from the same session, never invented: a word she has
 // not met is no test of the one she has.
 
-import { seedOf } from './shuffle.js';
-
 /** The answer of every vocabulary question in the set, in the session's own order. */
 export type VocabSibling = { id: string; answer: string; lang: string | null };
 
 /** How many words she sees at once, the right one included. */
 export const TAP_CHOICE_COUNT = 4;
 
-// The order is stable per question, without a clock or a random source: reloading the screen
-// must not reshuffle the words under her finger, and the walkthrough must see the same set
-// twice. `seedOf` moved to `shuffle.ts` when the multi-part boards needed the same rule
-// (issues #228–#230); the function itself is unchanged.
+/**
+ * Stable per question, without a clock or a random source: reloading the screen must not
+ * reshuffle the words under her finger, and the walkthrough must see the same set twice.
+ */
+function seedOf(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
 
 export function tapChoicesFor(
   item: { id: string; kind: string; answer: string; lang: string | null },
