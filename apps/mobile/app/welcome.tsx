@@ -1,12 +1,12 @@
 // Sign up or sign in. CLAUDE.md rule 15: the CTA is pinned outside the
-// ScrollView, inside a KeyboardAvoidingView, so the keyboard never hides it.
+// ScrollView, inside <KeyboardSafe>, so the keyboard never hides it.
 // The first impression: Buddy's soft light and orb, one headline, two pills to
 // choose, soft white fields. Problems stay on the screen (a text above the CTA,
 // field errors below their field) — never only a vanishing toast.
 
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, Text, View, useWindowDimensions, type TextInput } from 'react-native';
+import { ScrollView, Text, View, type TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -33,6 +33,8 @@ import { chooseDeviceLocale, currentLocale } from '../lib/i18n/index.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
+import { formDensity } from '../lib/keyboard.js';
+import { useVisibleHeight } from '../lib/useVisibleHeight.js';
 
 /** How long before the confirmation mail may be sent again (issue #132). */
 const RESEND_COOLDOWN_S = 60;
@@ -72,8 +74,15 @@ export default function Welcome() {
   const repeatRef = useRef<TextInput>(null);
   const inFlight = useRef(false);
   // A small phone (e.g. 360×740) gets a smaller orb and tighter spacing, so the
-  // under-16 hint and the pinned CTA fit without scrolling (CLAUDE.md rule 16).
-  const compact = useWindowDimensions().height < 780;
+  // under-16 hint and the pinned CTA fit without scrolling (CLAUDE.md rule 16). Decided on
+  // what is VISIBLE: with the keyboard up the window keeps its height (edge-to-edge), and a
+  // roomy layout then left one field above the pinned CTA and hid the others and their
+  // errors below it (issue #289).
+  const view = useVisibleHeight();
+  const density = formDensity(view.window, view.overlap);
+  const compact = density !== 'roomy';
+  // While she types, only the form fits (567 pt on the owner's phone, ~440 on a 360×740).
+  const tight = density === 'tight';
 
   const emailOk = looksLikeEmail(email.trim());
   // Sign-in never enforces the sign-up rule: older accounts may have shorter
@@ -230,29 +239,37 @@ export default function Welcome() {
           }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* The very first thing: pick your language with one tap on a flag
-              (owner decision 2026-09-28). */}
-          <LanguageFlags value={lang} onChange={chooseDeviceLocale} compact={dense} />
-          <View style={{ alignItems: 'center', gap, marginBottom: 4 }}>
-            {showOrb ? <BuddyOrb size={dense ? 52 : 88} /> : null}
-            <Text
-              accessibilityRole="header"
-              style={[dense ? TYPE.displaySm : TYPE.display, { textAlign: 'center' }]}
-            >
-              {t('welcome.title')}
-            </Text>
-            {/* Never clamped: the two-line cap from issue #55 outlived the tall layout it
-                was for and cut the sentence mid-word on 360×740 while ~70 pt sat free
-                below (issue #95). The page still fits both phones — tests/web/fit.ts. */}
-            <Text
-              style={[
-                dense ? TYPE.small : TYPE.body,
-                { color: palette.ink2, textAlign: 'center', maxWidth: 420 },
-              ]}
-            >
-              {t('welcome.body')}
-            </Text>
-          </View>
+          {/* While she types (`tight`), only the form fits: the flags, Buddy and the words
+              above it wait until the keyboard goes — the form starts at the choice of
+              signing up or in, and every field with its error stays above the pinned CTA
+              (issue #289, tests/web/visible.spec.ts). */}
+          {tight ? null : (
+            <>
+              {/* The very first thing: pick your language with one tap on a flag
+                  (owner decision 2026-09-28). */}
+              <LanguageFlags value={lang} onChange={chooseDeviceLocale} compact={dense} />
+              <View style={{ alignItems: 'center', gap, marginBottom: 4 }}>
+                {showOrb ? <BuddyOrb size={dense ? 52 : 88} /> : null}
+                <Text
+                  accessibilityRole="header"
+                  style={[dense ? TYPE.displaySm : TYPE.display, { textAlign: 'center' }]}
+                >
+                  {t('welcome.title')}
+                </Text>
+                {/* Never clamped: the two-line cap from issue #55 outlived the tall layout it
+                    was for and cut the sentence mid-word on 360×740 while ~70 pt sat free
+                    below (issue #95). The page still fits both phones — tests/web/fit.ts. */}
+                <Text
+                  style={[
+                    dense ? TYPE.small : TYPE.body,
+                    { color: palette.ink2, textAlign: 'center', maxWidth: 420 },
+                  ]}
+                >
+                  {t('welcome.body')}
+                </Text>
+              </View>
+            </>
+          )}
 
           {confirmSent ? (
             <Card tone="mint">
