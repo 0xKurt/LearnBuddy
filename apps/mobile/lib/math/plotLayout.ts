@@ -54,3 +54,43 @@ export function plotFrame(opts: {
   const ph = height - TOP - BOTTOM;
   return { left, right: RIGHT, top: TOP, bottom: BOTTOM, pw, ph, axisY: left + f * pw };
 }
+
+/** The multiples of `step` in [lo, hi], at most 60. */
+export function ticksFor(lo: number, hi: number, step: number): number[] {
+  const out: number[] = [];
+  const start = Math.ceil(lo / step - 1e-9) * step;
+  for (let v = start; v <= hi + 1e-9 && out.length < 60; v += step)
+    out.push(Math.round(v / step) * step);
+  return out;
+}
+
+/** A tick label as it is drawn: its value, its anchor point (SVG baseline) and its text. */
+export type TickLabel = { v: number; x: number; y: number; text: string };
+
+/** How far the paper-coloured halo behind a label reaches (`HaloText`, stroke 4). */
+const HALO = 2;
+
+/** The box a label covers with its halo; x labels are centred, y labels end at their x. */
+function boxOf(l: TickLabel, anchor: 'middle' | 'end', fontSize: number) {
+  const w = labelWidth(l.text, fontSize);
+  const left = anchor === 'middle' ? l.x - w / 2 : l.x - w;
+  return { x0: left - HALO, x1: left + w + HALO, y0: l.y - fontSize * 0.75 - HALO, y1: l.y + HALO };
+}
+
+/**
+ * The y labels that stay clear of every x label (issue #326). In a small option picture the
+ * x-axis' "−2" under the axis and the y-axis' "−2" left of it land on each other next to the
+ * origin. Two labels are never drawn over each other: where they would touch, the y label gives
+ * way — its grid line and tick stay, and the x labels along the axis are read first.
+ */
+export function yLabelsClearOf(
+  xLabels: readonly TickLabel[],
+  yLabels: readonly TickLabel[],
+  fontSize: number,
+): TickLabel[] {
+  const taken = xLabels.map((l) => boxOf(l, 'middle', fontSize));
+  return yLabels.filter((l) => {
+    const b = boxOf(l, 'end', fontSize);
+    return !taken.some((a) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1);
+  });
+}

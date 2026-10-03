@@ -2936,6 +2936,12 @@ word list, so it stays a prompt rule.
   (`$f(x) = …$`), the key must be that function (a key named `f'` is held only against `f'`, so
   "which graph is the derivative" stays possible). Any failure drops the item, never repairs it.
   Not decided by code: whether a geometry option is symmetric, whether a word option is right.
+  **And again on the way out** (issue #326): `sessionView` sends a row's pictures only through
+  `storedChoiceFigures` (`practice/items.ts`), which holds the stored row to all of the above —
+  each picture a `ModelFigure` (never a note line), drawable exactly as stored, one per option,
+  and `choiceProblem` still `null`. A row that fails (written before a contract or a check
+  changed) reaches the app as the plain multiple choice it also is — its option texts, judged by
+  the same index; the row itself is neither repaired nor rewritten.
 - **How options look** (issue #288). Every option is a white tile with its letter as a quiet mark
   in a fixed column (no badge on the content); the texts of all options start on one line. Two by
   two only when EVERY option fits one line of half a 360 pt screen (`twoColumnChoices`: 9
