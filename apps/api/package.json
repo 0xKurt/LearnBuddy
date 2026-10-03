@@ -17,7 +17,8 @@
     "dev:stack": "tsx src/testing/dev-stack.ts",
     "eval:buddy": "tsx evals/buddy/run.ts",
     "eval:buddy:compare": "tsx evals/buddy/compare.ts",
-    "eval:concern": "tsx evals/concern/run.ts"
+    "eval:concern": "tsx evals/concern/run.ts",
+    "inventory:schema": "tsx evals/schema/inventory.ts"
   },
   "dependencies": {
     "@google/genai": "^2.25.0",

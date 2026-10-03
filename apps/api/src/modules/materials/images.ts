@@ -111,7 +111,8 @@ const FiguresResult = z.object({
     )
     .max(MAX_IMAGES_PER_MATERIAL * 2),
 });
-const FIGURES_SCHEMA = toJsonSchema(FiguresResult);
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const FIGURES_SCHEMA = toJsonSchema(FiguresResult);
 /** Read tolerantly: a broken figure entry is dropped, never the whole list. */
 const FiguresParse = z
   .object({ assets: itemsOneByOne(FigureBox, MAX_IMAGES_PER_MATERIAL * 2) })

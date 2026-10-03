@@ -195,7 +195,8 @@ const RoleplayFeedbackForModel = z.object({
     ),
 });
 export type RoleplayFeedbackRaw = z.infer<typeof RoleplayFeedbackForModel>;
-const FEEDBACK_SCHEMA = toJsonSchema(RoleplayFeedbackForModel);
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const FEEDBACK_SCHEMA = toJsonSchema(RoleplayFeedbackForModel);
 
 // Kept in English and free of example sentences in any language: like the turn prompt it is one
 // static block for every learner (issue #201), and the roleplay language comes from ROLEPLAY.

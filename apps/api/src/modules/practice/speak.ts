@@ -65,14 +65,16 @@ const Judgement = z.object({
 });
 // The model must write both transcriptions before judging (they are its way of listening
 // closely); parsing stays lenient so a reply without them is still usable.
-const JUDGEMENT_SCHEMA = toJsonSchema(
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const JUDGEMENT_SCHEMA = toJsonSchema(
   Judgement.extend({
     expected_ipa: z.string().describe('The standard pronunciation of TARGET in IPA'),
     heard_ipa: z.string().describe('Narrow IPA of the sounds actually produced in the recording'),
   }),
 );
 
-const SYSTEM = `You are Buddy in the LearnBuddy app and listen to a school student practising pronunciation of a foreign language.
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const SYSTEM = `You are Buddy in the LearnBuddy app and listen to a school student practising pronunciation of a foreign language.
 
 You get the TARGET text, its language and the student's recording. Judge the SOUNDS, not the words: a speech recogniser would "hear" the right words even in a strong foreign accent — you must not.
 1. expected_ipa: write the standard pronunciation of TARGET.
@@ -294,14 +296,16 @@ const WordJudgement = z.object({
     .nullable()
     .describe('One short, concrete tip in the student’s app language; null when it was right'),
 });
-const WORD_SCHEMA = toJsonSchema(
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const WORD_SCHEMA = toJsonSchema(
   WordJudgement.extend({
     expected_ipa: z.string().describe('The standard pronunciation of the WORD in IPA'),
     heard_ipa: z.string().describe('Narrow IPA of the sounds actually produced'),
   }),
 );
 
-const WORD_SYSTEM = `You are Buddy in the LearnBuddy app and listen to a school student practising ONE word of a foreign language.
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const WORD_SYSTEM = `You are Buddy in the LearnBuddy app and listen to a school student practising ONE word of a foreign language.
 
 You get the WORD, the SENTENCE it comes from, its language and the student's recording. Judge the SOUNDS of that word, not the words around it.
 1. expected_ipa: the standard pronunciation of WORD.
