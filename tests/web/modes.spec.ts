@@ -766,7 +766,7 @@ test('a table to fill in: Enter walks the gaps, each cell checked on its own (is
   await page.keyboard.press('Enter');
   await page.keyboard.type('20');
   await page.keyboard.press('Enter');
-  // The last one wrong, and still focused: the math keys stand above "Prüfen".
+  // The last one wrong, and still focused: the math keys stand right under the table (#310).
   await page.keyboard.type('17');
   await expect(page.getByRole('toolbar')).toBeVisible();
   await shot(page, '60-table-filled');

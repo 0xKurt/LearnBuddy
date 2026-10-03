@@ -16,10 +16,10 @@ import { Platform, Text, View, type TextStyle } from 'react-native';
 
 import { speakMathText } from '../../lib/math/speak.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
+import { AnswerTile } from '../lb/AnswerTile.js';
 import { Btn, BTN_PAD_COMPACT } from '../lb/Btn.js';
 import { ZoomViewer } from '../lb/ZoomViewer.js';
 import { describeFigure, FigureView } from '../math/FigureView.js';
@@ -117,17 +117,10 @@ function TextChoices({ choices, tried, disabled, onChoose }: Props) {
         // least as large as the question's own line (issue #288, finding 4).
         const big = mathOnly(choice);
         return (
-          // The white card and its shadow sit around the button (Btn clips what is inside it).
-          <View
+          <AnswerTile
             key={`${index}:${choice}`}
-            style={[
-              {
-                borderRadius: CARD_RADIUS,
-                backgroundColor: wasTried ? palette.canvas : palette.paper,
-              },
-              grid ? { flexBasis: '45%', flexGrow: 1 } : null,
-              wasTried ? null : SHADOW.soft,
-            ]}
+            tried={wasTried}
+            style={grid ? { flexBasis: '45%', flexGrow: 1 } : null}
           >
             <Btn
               variant="ghost"
@@ -175,7 +168,7 @@ function TextChoices({ choices, tried, disabled, onChoose }: Props) {
             >
               {speakMathText(choice, words)}
             </Btn>
-          </View>
+          </AnswerTile>
         );
       })}
     </View>
@@ -242,19 +235,13 @@ function FigureChoices({
         const wasTried = tried.has(choice);
         const figure = figures[index]!;
         return (
-          <View
+          // A tried picture keeps its white ground and steps back by its hairline (AnswerTile)
+          // and by fading the drawing.
+          <AnswerTile
             key={`${index}:${choice}`}
-            style={[
-              {
-                borderRadius: CARD_RADIUS,
-                // A tried picture keeps its white ground (a drawing on grey looked like a box in a
-                // box) and steps back by losing its shadow for a hairline and fading the drawing.
-                backgroundColor: palette.paper,
-                flexBasis: '45%',
-                flexGrow: 1,
-              },
-              wasTried ? { borderWidth: 1, borderColor: palette.hairline } : SHADOW.soft,
-            ]}
+            tried={wasTried}
+            picture
+            style={{ flexBasis: '45%', flexGrow: 1 }}
           >
             <Btn
               variant="ghost"
@@ -296,7 +283,7 @@ function FigureChoices({
             >
               {spoken[index]!}
             </Btn>
-          </View>
+          </AnswerTile>
         );
       })}
       <ZoomViewer
@@ -356,8 +343,6 @@ const CARD_GAP = SPACE.sm;
 const SCREEN_PAD = SPACE.lg;
 /** The small Android of rule 16; 390 is wider, so whatever fits here fits there too. */
 const NARROW_PHONE = 360;
-/** A tile's corners: those of the button inside it (Btn's radius when it is not a pill). */
-const CARD_RADIUS = 14;
 /**
  * The letter's column: as wide as its widest letter at LETTER_FONT (a "W" ≈ 15 pt), so the texts
  * of all options start on one vertical line whatever letter stands before them. 16 is a width,

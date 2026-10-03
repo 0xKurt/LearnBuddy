@@ -14,7 +14,7 @@
 // alone is taller than that is it cut, under the full fade (rule 16 allows a conversation to
 // scroll).
 
-import { bottomRoom, SPACE, TOUCH } from '../theme/space.js';
+import { bottomRoom, CONTROL, SPACE, TOUCH } from '../theme/space.js';
 
 /**
  * How far a drawing or photo may shrink below its own cap so Buddy's newest turn shows whole
@@ -26,12 +26,12 @@ const CARD_GIVES = 48;
 const THREAD_PAD = 12;
 
 /**
- * What a structured board keeps while it gives way under a reply: its top padding and two lines
- * of gaps or cells (2 × TOUCH and the step between them), then its own "Prüfen" bar
- * (`BottomBar.tsx`: its top padding, the md `<Btn>` of 48 pt, the room under it).
+ * What a structured board keeps while it gives way under a reply: the answer slot's top padding
+ * and two lines of gaps or cells (2 × TOUCH and the step between them), then "Prüfen"
+ * (`CheckBar.tsx` in `BottomBar.tsx`: its top padding, the md `<Btn>`, the room under it).
  */
 export function boardKeeps(safeBottom: number): number {
-  return SPACE.sm + 2 * TOUCH + SPACE.xs + SPACE.sm + 48 + bottomRoom(safeBottom, SPACE.md);
+  return SPACE.sm + 2 * TOUCH + SPACE.xs + SPACE.sm + CONTROL.md + bottomRoom(safeBottom, SPACE.md);
 }
 
 export type RoomInput = {

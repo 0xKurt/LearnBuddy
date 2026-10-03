@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
-import { SPACE, TOUCH } from '../../lib/theme/space.js';
+import { RADIUS } from '../../lib/theme/radius.js';
+import { CONTROL, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon, type IconName } from './Icon.js';
 
@@ -111,9 +112,9 @@ const BTN_PAD_MD = 22;
 export const BTN_PAD_COMPACT = SPACE.md;
 
 const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
-  sm: { height: 44, paddingHorizontal: 16, fontSize: 15 },
-  md: { height: 48, paddingHorizontal: BTN_PAD_MD, fontSize: 16 },
-  lg: { height: 54, paddingHorizontal: 26, fontSize: 17 },
+  sm: { height: CONTROL.sm, paddingHorizontal: 16, fontSize: 15 },
+  md: { height: CONTROL.md, paddingHorizontal: BTN_PAD_MD, fontSize: 16 },
+  lg: { height: CONTROL.lg, paddingHorizontal: 26, fontSize: 17 },
 };
 
 type VariantSkin = { bg: string; color: string; borderColor: string; borderWidth: number };
@@ -182,7 +183,7 @@ export function Btn(props: Props) {
   const base = variantStyle(palette)[variant];
   const active = tone ? { ...base, bg: tones.bg[tone], color: palette.ink, borderWidth: 0 } : base;
   const v = muted ? mutedStyle(variant, palette) : active;
-  const radius = pill ? s.height / 2 : 14;
+  const radius = pill ? s.height / 2 : RADIUS.tile;
   // A tap on the waiting button answers ("what is missing?") instead of being swallowed.
   // The button itself STAYS truly disabled — un-disabling it made the web lose its
   // `disabled` attribute and read as ready (RN Web's Pressable overwrites any passed
