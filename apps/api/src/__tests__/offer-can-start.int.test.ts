@@ -19,6 +19,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import { bumpContext } from '../modules/buddy/plan.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -101,10 +102,7 @@ async function vocabSheet(env: TestEnv, l: Learner): Promise<string> {
       [l.learnerId, sheet.id, subject.id, fr, de],
     );
   }
-  await env.db.query(
-    `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
-    [l.learnerId],
-  );
+  await bumpContext(env.db, l.learnerId);
   return sheet.id;
 }
 

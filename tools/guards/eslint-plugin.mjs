@@ -15,6 +15,8 @@ import { readFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { syntaxRules } from './syntax-rules.mjs';
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 /** The repository root: every path on an Ausnahmeliste is relative to it. */
 export const REPO_ROOT = join(HERE, '..', '..');
@@ -185,7 +187,7 @@ export function countRawStyleNumbers(linter, text, filename, baseConfig) {
 
 const plugin = {
   meta: { name: 'eslint-plugin-lb' },
-  rules: { 'no-raw-style-number': noRawStyleNumber },
+  rules: { 'no-raw-style-number': noRawStyleNumber, ...syntaxRules },
 };
 
 export default plugin;

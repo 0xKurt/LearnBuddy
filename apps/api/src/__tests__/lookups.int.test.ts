@@ -14,6 +14,7 @@ import { searchMaterials } from '../modules/buddy/connectors/material.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import { bumpContext } from '../modules/buddy/plan.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -271,10 +272,7 @@ describe.skipIf(!dbReady)('Buddy lookups', () => {
       `insert into buddy_goals (learner_id, kind, title, due_date) values ($1, 'exam', 'Mathearbeit', '2026-10-02')`,
       [lena.learnerId],
     );
-    await env.db.query(
-      `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
-      [lena.learnerId],
-    );
+    await bumpContext(env.db, lena.learnerId);
     env.llm.script(
       'buddy_turn',
       (req) => {

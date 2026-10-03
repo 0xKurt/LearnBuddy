@@ -32,6 +32,7 @@ import { isCheckViolation, isUniqueViolation } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
 import { consume, limitError, lockedUntil, resetCounter } from '../../lib/limits.js';
 import { isValidTimeZone } from '../../lib/time.js';
+import { DEFAULT_TIMEZONE } from '../../lib/zone.js';
 import {
   ageOn,
   findAccountByUser,
@@ -46,6 +47,7 @@ import {
   type LearnerRow,
 } from './model.js';
 import { cancelDeletion, exportAccount, requestDeletion } from './privacy.js';
+import { bumpContext } from '../buddy/plan.js';
 
 export const identityRoutes = new Hono<AppEnv>();
 
@@ -244,7 +246,7 @@ identityRoutes.post('/learner', requireUser, requireAccount, async (c) => {
   }
   const account = c.get('account');
   const tzHeader = c.req.header('x-timezone');
-  const timezone = tzHeader && isValidTimeZone(tzHeader) ? tzHeader : 'Europe/Berlin';
+  const timezone = tzHeader && isValidTimeZone(tzHeader) ? tzHeader : DEFAULT_TIMEZONE;
   const pinHash = input.pin ? await hashPin(input.pin) : null;
   try {
     const learner = await deps.db.tx(async (tx) => {
@@ -332,10 +334,7 @@ identityRoutes.patch('/learner', requireUser, requireAccount, requireLearner, as
     );
     if (rows.length === 0)
       throw new AppError('stale', 'The profile changed meanwhile; reload and try again');
-    await tx.query(
-      `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
-      [learner.id],
-    );
+    await bumpContext(tx, learner.id);
     return rows[0]!;
   });
   return c.json(learnerView(updated, deps.now()));

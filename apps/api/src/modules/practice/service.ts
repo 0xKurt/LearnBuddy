@@ -25,6 +25,7 @@ import type { StorageGateway } from '../../storage/gateway.js';
 import { isUniqueViolation, type Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
+import { learnerTimezone } from '../../lib/zone.js';
 import { t, type MessageKey } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
@@ -1365,10 +1366,7 @@ export async function answerItem(
         `select role, text from practice_turns where session_id = $1 and item_id = $2 order by seq`,
         [sessionId, item.id],
       );
-      const tz = await deps.db.one<{ timezone: string }>(
-        `select timezone from buddy_settings where learner_id = $1`,
-        [learner.id],
-      );
+      const tz = await learnerTimezone(deps.db, learner.id);
       const tutorContents: LlmMessage[] = [
         {
           role: 'user',
@@ -1423,7 +1421,7 @@ export async function answerItem(
       // question has always cost stays one call. The repair round below (homework only)
       // overwrites what the first round said — right, it is the same answer judged again.
       const askTutor = async (messages: LlmMessage[]) => {
-        const r = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
+        const r = await callModel(deps, learner.id, localParts(now, tz).date, {
           purpose: 'tutor',
           tier: 'smart',
           promptVersion: TUTOR_PROMPT_VERSION,

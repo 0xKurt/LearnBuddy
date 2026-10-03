@@ -26,7 +26,8 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, Easing, Linking, Platform, Text, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
-import { ApiError, newId } from '../../lib/api/client.js';
+import { isOutdated, isRetryable } from '../../lib/api/apiError.js';
+import { newId } from '../../lib/api/client.js';
 import { speakItem } from '../../lib/api/endpoints.js';
 import { useOnline } from '../../lib/api/queries.js';
 import { WaitAborted } from '../../lib/api/whenOnline.js';
@@ -300,17 +301,6 @@ type PanelProps = {
   onSkip?: () => void;
 };
 
-/** A 4xx (other than "slow down") won't get better by sending the same recording again. */
-function retryable(err: unknown): boolean {
-  if (!(err instanceof ApiError)) return true;
-  if (err.code === 'rate_limited') return true;
-  return !(err.status >= 400 && err.status < 500);
-}
-
-function outdated(err: unknown): boolean {
-  return err instanceof ApiError && (err.code === 'conflict' || err.code === 'not_found');
-}
-
 export function SpeakPanel({
   item,
   sessionId,
@@ -391,12 +381,12 @@ export function SpeakPanel({
       onProgress?.(null);
       if (err instanceof WaitAborted) return; // she recorded again or skipped while offline
       if (!mounted.current) return;
-      if (outdated(err)) {
+      if (isOutdated(err)) {
         pending.current = null;
         setSending('idle');
         toast.show(messageFor(err), 'error');
         onOutdated?.();
-      } else if (retryable(err)) {
+      } else if (isRetryable(err)) {
         // Kept: "Nochmal senden" sends this very recording with the same id.
         setSending('failed');
       } else {

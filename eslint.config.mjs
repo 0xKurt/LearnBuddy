@@ -2,15 +2,10 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
-import { createRequire } from 'node:module';
 import lb from './tools/guards/eslint-plugin.mjs';
 import { MAX_LINES, pressableRestriction } from './tools/guards/measure.mjs';
 import maxLinesBaseline from './tools/guards/baselines/max-lines.json' with { type: 'json' };
 import pressableBaseline from './tools/guards/baselines/pressable.json' with { type: 'json' };
-
-// The one definition of a secret-sounding EXPO_PUBLIC_* name (issue #290), shared with the
-// Metro gate and the bundle scan.
-const { SECRET_NAME } = createRequire(import.meta.url)('./apps/mobile/scripts/client-secrets.cjs');
 
 // The colour rule below (issue #29) and the Pressable guard (issue #313) are both options of
 // `no-restricted-imports`; a later block replaces the option of an earlier one, so the pattern
@@ -96,22 +91,6 @@ export default tseslint.config(
     },
   },
   {
-    // A secret-sounding name under EXPO_PUBLIC_* is a secret in every bundle (issue #290):
-    // reading one in the app is an error at the source already, before Metro's gate
-    // (metro.config.js) and the scan of the finished bundle (scripts/web-walkthrough.sh).
-    files: ['apps/mobile/**/*.ts', 'apps/mobile/**/*.tsx'],
-    rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: `MemberExpression[object.object.name='process'][object.property.name='env'][property.name=/^EXPO_PUBLIC_.*${SECRET_NAME.source}/]`,
-          message:
-            'Ein EXPO_PUBLIC_*-Name mit SERVICE/SECRET/ADMIN/… landet im App-Bundle — Administrator- und Server-Schlüssel gehören nur auf den Server (Issue #290).',
-        },
-      ],
-    },
-  },
-  {
     // Colours come from the palette in use, never from the module that applies it
     // (issue #29, layer 3). `LB` and its derived maps in lib/theme/colors.ts are live
     // objects: read into a screen at import time they can only be right for the palette
@@ -140,35 +119,37 @@ export default tseslint.config(
     },
   },
   {
-    // A screen lays itself out on the height she can SEE, never on the window's (issue #289).
-    // Since edge-to-edge Android keeps the window's height while the keyboard is up, so a
-    // layout decided on `useWindowDimensions().height` stayed roomy behind it: one field above
-    // the pinned CTA, the others and their errors under it. `useVisibleHeight()`
-    // (lib/useVisibleHeight.ts) subtracts the keyboard; `formDensity()` (lib/keyboard.ts)
-    // turns it into roomy/compact. Widths are free — the keyboard never takes any.
+    // Forbidden code shapes, each its own rule (tools/guards/syntax-rules.mjs): as entries of
+    // `no-restricted-syntax` a later block replaced an earlier one's list and a guard went silent.
+    files: ['apps/**/*.{ts,tsx}', 'packages/**/*.ts'],
+    plugins: { lb },
+    rules: { 'lb/no-context-bump': 'error', 'lb/no-default-zone': 'error' },
+  },
+  {
+    // The one door itself (issue #315).
+    files: ['apps/api/src/modules/buddy/plan.ts'],
+    rules: { 'lb/no-context-bump': 'off' },
+  },
+  {
+    // Tests and fixtures pick their zones on purpose; the context fence still holds there.
     files: [
-      'apps/mobile/app/**/*.ts',
-      'apps/mobile/app/**/*.tsx',
-      'apps/mobile/components/**/*.ts',
-      'apps/mobile/components/**/*.tsx',
+      '**/__tests__/**',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      'apps/api/src/testing/**',
+      'apps/api/evals/**',
+      'apps/mobile/testing/**',
+      'packages/shared-types/src/contracts/common.ts',
     ],
-    rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector:
-            "MemberExpression[object.callee.name='useWindowDimensions'][property.name='height']",
-          message:
-            'Die Fensterhöhe ignoriert die Tastatur (edge-to-edge) — useVisibleHeight() aus lib/useVisibleHeight.ts nehmen (Issue #289).',
-        },
-        {
-          selector:
-            "VariableDeclarator[init.callee.name='useWindowDimensions'] > ObjectPattern > Property[key.name='height']",
-          message:
-            'Die Fensterhöhe ignoriert die Tastatur (edge-to-edge) — useVisibleHeight() aus lib/useVisibleHeight.ts nehmen (Issue #289).',
-        },
-      ],
-    },
+    rules: { 'lb/no-default-zone': 'off' },
+  },
+  {
+    files: ['apps/mobile/**/*.{ts,tsx}'],
+    rules: { 'lb/no-public-secret': 'error' },
+  },
+  {
+    files: ['apps/mobile/app/**/*.{ts,tsx}', 'apps/mobile/components/**/*.{ts,tsx}'],
+    rules: { 'lb/no-window-height': 'error' },
   },
   {
     // CommonJS tooling loaded by Metro with `require` (apps/mobile/scripts/client-secrets.cjs).

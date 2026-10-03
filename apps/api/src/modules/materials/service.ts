@@ -23,6 +23,7 @@ import type { Deps } from '../../deps.js';
 import type { Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
+import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmPart, type LlmResult } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
@@ -775,10 +776,7 @@ async function sheetReader(
     `select id, locale, level, grade, birth_date, curriculum_region from learners where id = $1`,
     [learnerId],
   );
-  const tz = await deps.db.one<{ timezone: string }>(
-    `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
-    [learnerId],
-  );
+  const tz = await learnerTimezone(deps.db, learnerId);
   const level =
     learner.level === 'school'
       ? `school, grade ${learner.grade ?? 'unknown'}`
@@ -786,7 +784,7 @@ async function sheetReader(
         ? 'unknown'
         : learner.level;
   const read: Reader = (lean, extra) =>
-    callModel(deps, learner.id, localParts(opts.now, tz.timezone).date, {
+    callModel(deps, learner.id, localParts(opts.now, tz).date, {
       purpose: 'extraction',
       tier: 'smart',
       promptVersion: EXTRACT_PROMPT_VERSION,
@@ -820,7 +818,7 @@ async function sheetReader(
       // Read once in the background: time to think (see generate.ts).
       thinkingBudget: 2048,
     });
-  return { learner, timezone: tz.timezone, read };
+  return { learner, timezone: tz, read };
 }
 
 /** The extraction job. Idempotent: a re-run after a crash starts over for the same material. */

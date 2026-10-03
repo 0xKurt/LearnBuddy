@@ -11,7 +11,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
-import { RuleTester } from 'eslint';
+import { ESLint, RuleTester } from 'eslint';
 import tseslint from 'typescript-eslint';
 
 import plugin from './eslint-plugin.mjs';
@@ -247,5 +247,50 @@ describe('no-growth: the lists are compared with the base branch', () => {
     assert.ok(TRAILER.test('fix\n\nAusnahmeliste-Zuwachs: #306 Formeln fertig vor den Wächtern'));
     assert.ok(!TRAILER.test('Ausnahmeliste-Zuwachs: #306'));
     assert.ok(!TRAILER.test('Ausnahmeliste-Zuwachs: weil'));
+  });
+});
+
+describe('forbidden code shapes: every guard fires where the guards overlap', () => {
+  // As `no-restricted-syntax` lists, the last config block for a file replaced the others and a
+  // guard went silent without any error (tools/guards/syntax-rules.mjs). This lints one screen
+  // that all four cover through the real eslint.config.mjs and expects each of them.
+  const probe = [
+    'const zone = "Europe/Berlin";',
+    'const sql = `update learner set context_version = context_version + 1`;',
+    'const key = process.env.EXPO_PUBLIC_SUPABASE_SERVICE_KEY;',
+    'const h = useWindowDimensions().height;',
+    'export { zone, sql, key, h };',
+  ].join('\n');
+
+  it('a screen gets the zone, context, secret and window-height guards at once', async () => {
+    const eslint = new ESLint({ cwd: REPO_ROOT });
+    const [result] = await eslint.lintText(probe, {
+      filePath: join(REPO_ROOT, 'apps/mobile/app/__guard-probe__.tsx'),
+    });
+    const fired = new Set(result?.messages.map((m) => m.ruleId));
+    for (const rule of [
+      'lb/no-default-zone',
+      'lb/no-context-bump',
+      'lb/no-public-secret',
+      'lb/no-window-height',
+    ]) {
+      assert.ok(fired.has(rule), `${rule} schweigt auf einem Screen`);
+    }
+  });
+
+  it('the exemptions stay narrow: plan.ts may bump, a test may name a zone', async () => {
+    const eslint = new ESLint({ cwd: REPO_ROOT });
+    const [plan] = await eslint.lintText(probe, {
+      filePath: join(REPO_ROOT, 'apps/api/src/modules/buddy/plan.ts'),
+    });
+    const planRules = new Set(plan?.messages.map((m) => m.ruleId));
+    assert.ok(!planRules.has('lb/no-context-bump'));
+    assert.ok(planRules.has('lb/no-default-zone'));
+    const [test] = await eslint.lintText(probe, {
+      filePath: join(REPO_ROOT, 'apps/api/src/__tests__/guard-probe.test.ts'),
+    });
+    const testRules = new Set(test?.messages.map((m) => m.ruleId));
+    assert.ok(!testRules.has('lb/no-default-zone'));
+    assert.ok(testRules.has('lb/no-context-bump'));
   });
 });

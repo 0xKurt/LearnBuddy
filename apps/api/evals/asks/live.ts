@@ -33,6 +33,7 @@ import { MATERIAL } from './material.js';
 import { SAMPLE } from './sample.js';
 import { TIME } from './time.js';
 import type { Ask } from './types.js';
+import { bumpContext } from '../../src/modules/buddy/plan.js';
 
 const ASKS: readonly Ask[] = [...LEARNING, ...TIME, ...MATERIAL, ...BUDDY, ...LIFE];
 
@@ -139,10 +140,7 @@ async function main(): Promise<void> {
       });
       if (c.setup) {
         await c.setup(env, l);
-        await env.db.query(
-          `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
-          [l.learnerId],
-        );
+        await bumpContext(env.db, l.learnerId);
       }
       await l.api.post('/buddy/messages', {
         client_message_id: randomUUID(),

@@ -31,6 +31,7 @@ import type { Deps } from '../../deps.js';
 import type { Db } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
+import { DEFAULT_TIMEZONE, learnerZoneSql } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { consentCurrentSql, enqueueJob, finishJob, type JobRow } from '../scheduler/jobs.js';
@@ -121,9 +122,7 @@ export async function activeMemories(db: Db, learnerId: string, now: Date): Prom
 export async function planConsolidations(deps: Deps): Promise<number> {
   const now = deps.now();
   const learners = await deps.db.query<{ id: string; timezone: string }>(
-    `select l.id,
-            coalesce((select timezone from buddy_settings where learner_id = l.id), 'Europe/Berlin')
-              as timezone
+    `select l.id, ${learnerZoneSql('l.id', 4)} as timezone
        from learners l
       where (select count(*) from buddy_memories m
               where m.learner_id = l.id and m.status = 'active'
@@ -133,7 +132,7 @@ export async function planConsolidations(deps: Deps): Promise<number> {
                            and j.status in ('queued','running'))
         and ${consentCurrentSql('l.id', 3)}
       limit 50`,
-    [now, CONSOLIDATE_AT, deps.config.CONSENT_VERSION],
+    [now, CONSOLIDATE_AT, deps.config.CONSENT_VERSION, DEFAULT_TIMEZONE],
   );
   let planned = 0;
   for (const l of learners) {
@@ -327,11 +326,9 @@ export async function runConsolidation(deps: Deps, job: JobRow): Promise<void> {
   const learnerId = job.learner_id;
   if (!learnerId) return;
   const learner = await deps.db.maybeOne<{ locale: string; timezone: string }>(
-    `select l.locale,
-            coalesce((select timezone from buddy_settings where learner_id = l.id), 'Europe/Berlin')
-              as timezone
+    `select l.locale, ${learnerZoneSql('l.id', 2)} as timezone
        from learners l where l.id = $1`,
-    [learnerId],
+    [learnerId, DEFAULT_TIMEZONE],
   );
   if (!learner) return;
   const result: ConsolidationResult = { groups: 0, merged: 0, invalidated: 0, discarded: 0 };
