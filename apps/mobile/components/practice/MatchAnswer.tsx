@@ -28,13 +28,14 @@ import { Text, View } from 'react-native';
 
 import { useDraft } from '../../lib/drafts.js';
 import { speakMathText } from '../../lib/math/speak.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
-import { BottomBar } from './BottomBar.js';
+import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
 
 /** One link she made: an element above, the partner or group below, and its number. */
@@ -378,7 +379,7 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: Props) {
           alignItems: 'center',
           gap: SPACE.sm,
           padding: SPACE.xs,
-          borderRadius: SPACE.lg,
+          borderRadius: RADIUS.frame,
           backgroundColor: palette.canvas,
         }}
       >
@@ -423,62 +424,58 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   );
 
   return (
-    <>
-      <PartsArea>
-        <View style={{ gap: SPACE.sm }}>
-          {/* The one line of instruction, only until she has started (like an order's). */}
-          {started ? null : (
-            <Text style={[TYPE.small, { color: palette.ink2 }]}>
-              {t(groups ? 'match.how_groups' : 'match.how_pairs')}
-            </Text>
-          )}
-          {groups ? (
-            <>
-              {/* What is still to be sorted; it empties as she sorts, and then it is gone. */}
-              {unsorted.length > 0 ? (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
-                  {unsorted.map((e) => element(e.id, 'left'))}
-                </View>
-              ) : null}
-              <View style={{ gap: SPACE.xs }}>{view.right.map((g) => group(g.id))}</View>
-            </>
-          ) : (
-            // Pairs: two columns of rows, so four pairs are four rows, and the two tiles of a
-            // row are equally tall (issue #286: ragged boxes looked like a form).
-            <View style={{ gap: SPACE.sm }}>
-              {view.left.map((e, i) => {
-                const r = view.right[i];
-                return (
-                  <View key={e.id} style={{ flexDirection: 'row', gap: SPACE.sm }}>
-                    <View style={{ flexBasis: 0, flexGrow: pairShare(share) }}>
-                      {pairTile(e.id, 'left')}
-                    </View>
-                    <View style={{ flexBasis: 0, flexGrow: 1 - pairShare(share) }}>
-                      {r ? pairTile(r.id, 'right') : null}
-                    </View>
+    <AnswerShell
+      answer={
+        <PartsArea>
+          <View style={{ gap: SPACE.sm }}>
+            {/* The one line of instruction, only until she has started (like an order's). */}
+            {started ? null : (
+              <Text style={[TYPE.small, { color: palette.ink2 }]}>
+                {t(groups ? 'match.how_groups' : 'match.how_pairs')}
+              </Text>
+            )}
+            {groups ? (
+              <>
+                {/* What is still to be sorted; it empties as she sorts, and then it is gone. */}
+                {unsorted.length > 0 ? (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
+                    {unsorted.map((e) => element(e.id, 'left'))}
                   </View>
-                );
-              })}
-            </View>
-          )}
-        </View>
-      </PartsArea>
-      <BottomBar>
-        <Btn
-          pill
-          full
-          disabled={disabled || !complete}
-          onPress={() =>
-            onSubmit(
-              { type: 'match', links: links.map((k) => ({ left: k.left, right: k.right })) },
-              linksText(view, links),
-            )
-          }
-          accessibilityHint={complete ? undefined : t('match.check_waits')}
-        >
-          {t('check')}
-        </Btn>
-      </BottomBar>
-    </>
+                ) : null}
+                <View style={{ gap: SPACE.xs }}>{view.right.map((g) => group(g.id))}</View>
+              </>
+            ) : (
+              // Pairs: two columns of rows, so four pairs are four rows, and the two tiles of a
+              // row are equally tall (issue #286: ragged boxes looked like a form).
+              <View style={{ gap: SPACE.sm }}>
+                {view.left.map((e, i) => {
+                  const r = view.right[i];
+                  return (
+                    <View key={e.id} style={{ flexDirection: 'row', gap: SPACE.sm }}>
+                      <View style={{ flexBasis: 0, flexGrow: pairShare(share) }}>
+                        {pairTile(e.id, 'left')}
+                      </View>
+                      <View style={{ flexBasis: 0, flexGrow: 1 - pairShare(share) }}>
+                        {r ? pairTile(r.id, 'right') : null}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        </PartsArea>
+      }
+      action={{
+        ready: complete,
+        disabled,
+        onPress: () =>
+          onSubmit(
+            { type: 'match', links: links.map((k) => ({ left: k.left, right: k.right })) },
+            linksText(view, links),
+          ),
+        waitsHint: t('match.check_waits'),
+      }}
+    />
   );
 }

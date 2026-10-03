@@ -29,8 +29,7 @@ import { Btn } from '../lb/Btn.js';
 import { TopEdgeFade, topEdgeMask } from '../lb/EdgeFade.js';
 import { Slot, slotStyle, slotText, slotWidth } from '../lb/Slot.js';
 import { MathText } from '../math/MathText.js';
-import { BottomBar } from './BottomBar.js';
-import { FreeSpace } from './FreeSpace.js';
+import { AnswerShell } from './AnswerShell.js';
 
 /** A piece of the flowing text: words, or the gap with this index. */
 export type Piece = { kind: 'text'; text: string } | { kind: 'gap'; index: number };
@@ -239,108 +238,95 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   };
 
   return (
-    <>
-      <View
-        style={{
-          // It gives way when the keyboard takes the room (the screen keeps the question
-          // whole): then the text scrolls, and the gap she types in is scrolled to. With the
-          // whole phone to itself it fits and nothing scrolls (tests/web/fit.ts).
-          flexShrink: 1,
-          minHeight: 0,
-          paddingHorizontal: SPACE.lg,
-          paddingTop: SPACE.sm,
-          gap: SPACE.md,
-        }}
-      >
-        <ScrollView
-          ref={scroller}
-          testID="cloze-text"
-          // Scrolled, the text fades out under the question instead of a half line standing
-          // cut off there (the conversation's edge, EdgeFade.tsx) — only then: unscrolled,
-          // its first line must stay crisp.
-          style={[{ flexGrow: 0, flexShrink: 1 }, scrolled ? topEdgeMask : null]}
-          scrollEventThrottle={32}
-          onScroll={(e) => setScrolled(e.nativeEvent.contentOffset.y > 1)}
-          keyboardShouldPersistTaps="handled"
-          // The keyboard comes up AFTER the focus and shrinks the text: the gap she types in
-          // must stay in view then too.
-          onLayout={(e) => {
-            windowHeight.current = e.nativeEvent.layout.height;
-            if (typingIn.current !== null) showGap(typingIn.current);
-          }}
-          contentContainerStyle={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            // A space's width between words (≈ 4 pt at 16 pt type); one step between lines.
-            columnGap: SPACE.xs,
-            rowGap: SPACE.xs,
+    <AnswerShell
+      answer={
+        <View
+          style={{
+            // It gives way when the keyboard takes the room (the screen keeps the question
+            // whole): then the text scrolls, and the gap she types in is scrolled to. With the
+            // whole phone to itself it fits and nothing scrolls (tests/web/fit.ts).
+            flexShrink: 1,
+            minHeight: 0,
+            gap: SPACE.md,
           }}
         >
-          {units.map((unit, u) => (
-            <View
-              key={u}
-              style={{ flexDirection: 'row', alignItems: 'center' }}
-              onLayout={(e) => {
-                boxes.current[u] = {
-                  y: e.nativeEvent.layout.y,
-                  h: e.nativeEvent.layout.height,
-                };
-              }}
-            >
-              {unit.map((piece, p) =>
-                piece.kind === 'gap' ? (
-                  gap(piece.index)
-                ) : piece.text.includes('$') ? (
-                  <MathText key={p} text={piece.text} style={TYPE.body} />
-                ) : (
-                  <Text key={p} style={TYPE.body}>
-                    {piece.text}
-                  </Text>
-                ),
-              )}
-            </View>
-          ))}
-        </ScrollView>
-        {scrolled ? <TopEdgeFade top={SPACE.sm} /> : null}
-        {bank ? (
-          <View
-            testID="cloze-bank"
-            style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}
+          <ScrollView
+            ref={scroller}
+            testID="cloze-text"
+            // Scrolled, the text fades out under the question instead of a half line standing
+            // cut off there (the conversation's edge, EdgeFade.tsx) — only then: unscrolled,
+            // its first line must stay crisp.
+            style={[{ flexGrow: 0, flexShrink: 1 }, scrolled ? topEdgeMask : null]}
+            scrollEventThrottle={32}
+            onScroll={(e) => setScrolled(e.nativeEvent.contentOffset.y > 1)}
+            keyboardShouldPersistTaps="handled"
+            // The keyboard comes up AFTER the focus and shrinks the text: the gap she types in
+            // must stay in view then too.
+            onLayout={(e) => {
+              windowHeight.current = e.nativeEvent.layout.height;
+              if (typingIn.current !== null) showGap(typingIn.current);
+            }}
+            contentContainerStyle={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              // A space's width between words (≈ 4 pt at 16 pt type); one step between lines.
+              columnGap: SPACE.xs,
+              rowGap: SPACE.xs,
+            }}
           >
-            {bank.map((word) => {
-              const taken = used.has(word);
-              return (
-                <Btn
-                  key={word}
-                  variant="outline"
-                  size="sm"
-                  pill
-                  disabled={disabled || taken}
-                  onPress={() => place(word)}
-                  accessibilityLabel={taken ? t('cloze.word_used', { word }) : word}
-                >
-                  {word}
-                </Btn>
-              );
-            })}
-          </View>
-        ) : null}
-      </View>
-      {/* The free room collects between the text and the pinned "Prüfen", as under every other
-          form's board (`PartsArea`, issue #286): "Prüfen" stays in the one place at the bottom. */}
-      <FreeSpace />
-      <BottomBar>
-        <Btn
-          pill
-          full
-          disabled={disabled || !complete}
-          onPress={submit}
-          accessibilityHint={complete ? undefined : t('cloze.check_waits')}
-        >
-          {t('check')}
-        </Btn>
-      </BottomBar>
-    </>
+            {units.map((unit, u) => (
+              <View
+                key={u}
+                style={{ flexDirection: 'row', alignItems: 'center' }}
+                onLayout={(e) => {
+                  boxes.current[u] = {
+                    y: e.nativeEvent.layout.y,
+                    h: e.nativeEvent.layout.height,
+                  };
+                }}
+              >
+                {unit.map((piece, p) =>
+                  piece.kind === 'gap' ? (
+                    gap(piece.index)
+                  ) : piece.text.includes('$') ? (
+                    <MathText key={p} text={piece.text} style={TYPE.body} />
+                  ) : (
+                    <Text key={p} style={TYPE.body}>
+                      {piece.text}
+                    </Text>
+                  ),
+                )}
+              </View>
+            ))}
+          </ScrollView>
+          {scrolled ? <TopEdgeFade /> : null}
+          {bank ? (
+            <View
+              testID="cloze-bank"
+              style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}
+            >
+              {bank.map((word) => {
+                const taken = used.has(word);
+                return (
+                  <Btn
+                    key={word}
+                    variant="outline"
+                    size="sm"
+                    pill
+                    disabled={disabled || taken}
+                    onPress={() => place(word)}
+                    accessibilityLabel={taken ? t('cloze.word_used', { word }) : word}
+                  >
+                    {word}
+                  </Btn>
+                );
+              })}
+            </View>
+          ) : null}
+        </View>
+      }
+      action={{ ready: complete, disabled, onPress: submit, waitsHint: t('cloze.check_waits') }}
+    />
   );
 }

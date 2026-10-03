@@ -4,9 +4,9 @@
 //
 // Its height is reported to the screen (`FreeSpaceReport`), because the conversation may take it:
 // the screen shows as many whole turns as fit into the conversation's box plus this room
-// (app/practice/[id].tsx). A structured surface has its own "Prüfen" bar inside it, so the spacer
-// stands inside that surface (`PartsArea`), between the board and the bar; every other form gets
-// it from the screen.
+// (app/practice/[id].tsx). A form in the answer shell gets it there, between its answer and
+// "Prüfen" (`AnswerShell`, issue #310); the forms not moved into the shell yet get it from the
+// screen.
 
 import { createContext, useContext } from 'react';
 import { View } from 'react-native';

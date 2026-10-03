@@ -421,9 +421,11 @@ const GapJudgement = z.object({
     )
     .max(CLOZE_MAX_GAPS),
 });
-const GAP_SCHEMA = toJsonSchema(GapJudgement);
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const GAP_SCHEMA = toJsonSchema(GapJudgement);
 
-const JUDGE_SYSTEM = `You judge single gaps of a fill-in text a learner completed in the LearnBuddy app. Code has already judged every gap it could; you get only the ones it could not.
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const JUDGE_SYSTEM = `You judge single gaps of a fill-in text a learner completed in the LearnBuddy app. Code has already judged every gap it could; you get only the ones it could not.
 
 For each listed gap:
 - "correct": her words fit the gap as well as the SOLUTION does — the same meaning and the form the sentence needs (tense, case, agreement), spelled correctly.

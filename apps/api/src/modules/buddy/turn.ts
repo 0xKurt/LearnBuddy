@@ -55,7 +55,8 @@ import {
   type RoleplayStep,
 } from './roleplay.js';
 
-const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
 /**
  * A step that may still ask for lookups first (ADR 0005 §The agent loop).
  *

@@ -38,6 +38,7 @@ import type { Db } from '../../lib/db.js';
 import { CurriculumPointId } from '../curriculum/state.js';
 import { dollarMathField, dollarMathRuns } from './dollarMath.js';
 import { figureHolds, figureIsRejectedPrimary } from './figureCheck.js';
+import { CHOICE_FIGURE_KINDS, kindIn, SPELLING_KINDS, TOLERANCE_KINDS } from './itemFields.js';
 import { usableRubric } from './rubric.js';
 import { mentionsSolution } from './tutor.js';
 import { choiceProblem, MAX_FIGURE_CHOICES, type ChoiceDraft } from './choiceCheck.js';
@@ -289,7 +290,7 @@ function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
  * function the app cannot read would be an empty option.
  */
 function optionFigures(raw: ItemDraft): ModelFigure[] | null {
-  if (raw.kind !== 'multiple_choice' || !raw.choice_figures) return null;
+  if (!kindIn(CHOICE_FIGURE_KINDS, raw.kind) || !raw.choice_figures) return null;
   const drawn: ModelFigure[] = [];
   for (const written of raw.choice_figures) {
     const f = usableFigure(written);
@@ -328,7 +329,7 @@ export function storedChoiceFigures(
  * a model-written tolerance must not turn 242 for 240 into a right answer).
  */
 function usableTolerance(it: ItemDraft): number | null {
-  if (it.kind !== 'numeric' || it.tolerance === null) return null;
+  if (!kindIn(TOLERANCE_KINDS, it.kind) || it.tolerance === null) return null;
   const key = parseCanonicalKey(it.answer);
   if (key.value === null || key.value === 0) return null;
   return it.tolerance <= Math.abs(key.value) / 10 ? it.tolerance : null;
@@ -402,8 +403,7 @@ export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}):
       figure: usableFigure(raw.figure),
       choice_figures: optionFigures(raw),
       tolerance: usableTolerance(raw),
-      spelling:
-        raw.kind === 'short' || raw.kind === 'long' || raw.kind === 'vocab' ? raw.spelling : null,
+      spelling: kindIn(SPELLING_KINDS, raw.kind) ? raw.spelling : null,
       // Only a free text has required elements, and only a rubric that can be checked is kept
       // (issue #211). A rubric that does not hold costs itself, never the question.
       rubric: usableRubric(raw.rubric, raw.kind),

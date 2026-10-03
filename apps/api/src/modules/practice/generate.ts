@@ -16,6 +16,7 @@ import {
   StaffTask,
   type DifficultyWish,
   type StartTopicRequest,
+  type StructuredKind,
 } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
@@ -25,6 +26,7 @@ import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
 import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
+import type { JsonSchema } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { answerUpTo } from '../../llm/partial.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
@@ -39,6 +41,13 @@ import {
   type DictationItem,
 } from './dictation.js';
 import { prepareHints } from './hints.js';
+import {
+  CHOICE_FIGURE_KINDS,
+  kindIn,
+  RUBRIC_KINDS,
+  SPELLING_KINDS,
+  TOLERANCE_KINDS,
+} from './itemFields.js';
 import {
   LISTEN_RULES,
   ListenDraft,
@@ -160,7 +169,212 @@ export const GeneratedSet = z.object({
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
-const GENERATED_SCHEMA = toJsonSchema(GeneratedSet.omit({ listen: true, dictation: true }));
+
+type ModelItemKind = ItemDraft['kind'];
+
+/**
+ * What a run of each kind can USE — the forms that can reach her (issue #281, D2). The one table
+ * both directions are derived from:
+ *
+ *   - what the model is SHOWN (`setSchemaForModel`): a form no run of this kind can use is not
+ *     in its schema, down through the nested unions — the item `kind` enum, the structured
+ *     union's branches, and the fields an item kind never keeps (`itemFields.ts`: a rubric
+ *     without a long answer, a tolerance without a number, a spelling mode without a typed word);
+ *   - what code KEEPS (`parseSetFor`, `preparedFrom`): a form outside the table is dropped,
+ *     whatever the model wrote (Rule 0: reject, never repair).
+ *
+ * So a profile can only leave out what code already threw away before D2 — derived from the
+ * mode alone, never from the subject (a chart is as much geography as maths). Every row here was
+ * a rule in `preparedFrom` before it became a row: `KINDS`, `STRUCTURED`, bars only in practice
+ * (#162), note lines in practice and tests (#226), the listening task only in a listening run
+ * (#210).
+ */
+export type SetProfile = {
+  items: readonly ModelItemKind[];
+  structured: readonly StructuredKind[];
+  bars: boolean;
+  staffs: boolean;
+  listen: boolean;
+  /** A Diktat's entries (#242): only in a Diktat run, where they are all there is. */
+  dictation: boolean;
+};
+
+const STRUCTURED_FORMS = [
+  'order',
+  'table_fill',
+  'match',
+  'cloze',
+] as const satisfies StructuredKind[];
+
+/** A profile with these item kinds and no list of its own. */
+function onlyItems(items: readonly ModelItemKind[]): SetProfile {
+  return { items, structured: [], bars: false, staffs: false, listen: false, dictation: false };
+}
+
+export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
+  practice: {
+    items: ['short', 'long', 'numeric', 'multiple_choice', 'formula', 'vocab'],
+    structured: STRUCTURED_FORMS,
+    bars: true,
+    staffs: true,
+    listen: false,
+    dictation: false,
+  },
+  // One try per question: no long answer, and no bar — a test is not a place to try a surface.
+  test: {
+    items: ['short', 'numeric', 'multiple_choice', 'formula', 'vocab'],
+    structured: STRUCTURED_FORMS,
+    bars: false,
+    staffs: true,
+    listen: false,
+    dictation: false,
+  },
+  vocab: onlyItems(['vocab']),
+  speak: onlyItems(['speak']),
+  // Nothing in `items` at all: the questions of a listening run come out of `listen`, where each
+  // is checked against the spoken text first (#210, `listen.ts` Rule 0).
+  listen: { ...onlyItems([]), listen: true },
+  // Nothing in `items` either: a Diktat's words come out of `dictation`, held to her list (#242).
+  spelling_dictation: { ...onlyItems([]), dictation: true },
+  // Homework is the task she typed: no form of the app's own around it.
+  help: onlyItems(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
+};
+
+/**
+ * The fallback when no kind is known: every form but the listening task — the schema every run
+ * without sheets was sent before D2, byte for byte (`GENERATED_SCHEMA`). Today every explain call
+ * knows its kind (the contract requires it), so nothing sends it; it stays the measured baseline
+ * and the answer for a caller that cannot narrow.
+ */
+export const FALLBACK_PROFILE: SetProfile = {
+  items: ['short', 'long', 'numeric', 'multiple_choice', 'formula', 'vocab', 'speak'],
+  structured: STRUCTURED_FORMS,
+  bars: true,
+  staffs: true,
+  listen: false,
+  dictation: false,
+};
+
+/**
+ * The item a run asks for. Built from her sheets: every question's topic is one of theirs — the
+ * schema offers only those, and a question on anything else is dropped (live finding 6). Its kind
+ * is one the profile allows — in the enum's own order, so an unnarrowed enum stays byte-equal.
+ * This is the PARSE side: every field stays, with its default.
+ */
+function itemSchemaFor(profile: SetProfile, topics: [string, ...string[]] | null) {
+  const base = topics
+    ? DraftItem.extend({
+        topic: z.enum(topics).describe('Exactly one of the SHEETS topics — never another'),
+      })
+    : DraftItem;
+  const kinds = DraftItem.shape.kind.options.filter((k) => profile.items.includes(k));
+  const [first, ...rest] = kinds;
+  // No item kind at all (a listening run): a schema that takes nothing, so any item is dropped.
+  if (first === undefined) return null;
+  return base.extend({ kind: DraftItem.shape.kind.extract([first, ...rest]) });
+}
+
+/** The fields no allowed item kind keeps — left out of what the model is shown (`itemFields.ts`). */
+function unusedItemFields(profile: SetProfile): {
+  rubric?: true;
+  tolerance?: true;
+  spelling?: true;
+  choice_figures?: true;
+} {
+  const none = (kinds: readonly string[]) => !profile.items.some((k) => kindIn(kinds, k));
+  return {
+    ...(none(RUBRIC_KINDS) ? { rubric: true } : {}),
+    ...(none(TOLERANCE_KINDS) ? { tolerance: true } : {}),
+    ...(none(SPELLING_KINDS) ? { spelling: true } : {}),
+    ...(none(CHOICE_FIGURE_KINDS) ? { choice_figures: true } : {}),
+  };
+}
+
+/** The structured union narrowed to the profile's branches, or null when none is allowed. */
+function structuredSchemaFor(profile: SetProfile) {
+  const options = StructuredDraftNoHelp.options.filter((o) =>
+    profile.structured.includes(o.shape.type.value),
+  );
+  const [first, ...rest] = options;
+  return first === undefined ? null : z.discriminatedUnion('type', [first, ...rest]);
+}
+
+/** A disabled list: whatever the model wrote there is dropped, and it reads as empty. */
+const NOTHING = z.never();
+
+/**
+ * What the model is SHOWN for a run of this kind (issue #281, D2): only the forms its profile
+ * allows, through every nested union the profile reaches. A null kind gets the fallback.
+ */
+export function setSchemaForModel(
+  kind: StartTopicRequest['kind'] | null,
+  topics: [string, ...string[]] | null,
+) {
+  const profile = kind === null ? FALLBACK_PROFILE : SET_PROFILES[kind];
+  const item = itemSchemaFor(profile, topics);
+  const structured = structuredSchemaFor(profile);
+  return GeneratedSet.extend({
+    items: z.array(item ? item.omit(unusedItemFields(profile)) : DraftItem).max(25),
+    structured: z
+      .array(structured ?? StructuredDraftNoHelp)
+      .max(MAX_STRUCTURED_ITEMS)
+      .default([]),
+  }).omit({
+    ...(item ? {} : { items: true }),
+    ...(profile.bars ? {} : { bars: true }),
+    ...(profile.staffs ? {} : { staffs: true }),
+    ...(structured ? {} : { structured: true }),
+    ...(profile.listen ? {} : { listen: true }),
+    ...(profile.dictation ? {} : { dictation: true }),
+  });
+}
+
+/**
+ * What code KEEPS of an answer for a run of this kind: the same profile, every form read one by
+ * one (one unusable task costs itself, audit H-14/H-15), and a form outside the profile dropped
+ * — the model was not shown it, so one that arrives anyway is not repaired into the run.
+ */
+export function parseSetFor(kind: StartTopicRequest['kind'], topics: [string, ...string[]] | null) {
+  const profile = SET_PROFILES[kind];
+  const item = itemSchemaFor(profile, topics);
+  const structured = structuredSchemaFor(profile);
+  return GeneratedSet.extend({
+    items: itemsOneByOne(item ?? NOTHING, 25),
+    bars: itemsOneByOne(profile.bars ? BarTask : NOTHING, MAX_BAR_ITEMS),
+    staffs: itemsOneByOne(profile.staffs ? StaffTask : NOTHING, MAX_STAFF_ITEMS),
+    structured: itemsOneByOne(structured ?? NOTHING, MAX_STRUCTURED_ITEMS),
+    // A listening task that does not fit its schema is no listening task, and the run then has
+    // nothing — which the caller says plainly (`not_usable`, issue #210). Its questions are read
+    // one by one like every other list.
+    listen: profile.listen
+      ? ListenDraft.extend({
+          questions: itemsOneByOne(ListenQuestion, MAX_LISTEN_QUESTIONS),
+        })
+          .nullable()
+          .default(null)
+          .catch(null)
+      : z.null().catch(null),
+    dictation: profile.dictation
+      ? DictationDraftParsed.nullable().default(null).catch(null)
+      : z.null().catch(null),
+  });
+}
+
+// Exported for the schema inventory (`evals/schema`, issue #281): the fallback, which is what every
+// run without sheets was sent before D2.
+export const GENERATED_SCHEMA = toJsonSchema(setSchemaForModel(null, null));
+
+/**
+ * The `responseJsonSchema` an explain call sends for this kind and these sheet topics — the one
+ * seam the call site and the schema inventory (`evals/schema`, issue #281) both go through, so the
+ * inventory measures exactly what is sent.
+ */
+export function explainSchemaFor(
+  kind: StartTopicRequest['kind'],
+  topics: [string, ...string[]] | null,
+): JsonSchema {
+  return toJsonSchema(setSchemaForModel(kind, topics));
+}
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;
@@ -360,37 +574,6 @@ function dictationOrigin(set: GeneratedSet, source: DictationSource | null): 'ty
 /** The list a Diktat's words are held to (issue #242): what she typed, or her sheet's text. */
 type DictationSource = { text: string; fromSheet: boolean };
 
-/** Items a kind may produce (the model may only use these). */
-const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> = {
-  practice: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula', 'vocab']),
-  test: new Set(['short', 'numeric', 'multiple_choice', 'formula', 'vocab']),
-  vocab: new Set(['vocab']),
-  speak: new Set(['speak']),
-  // Nothing in `items` at all: the questions of a listening run come out of `listen`, where
-  // each of them is checked against the spoken text first (issue #210, `listen.ts` Rule 0).
-  // An ordinary question mixed in would be one she could answer without listening.
-  listen: new Set([]),
-  // Nothing in `items` either: a Diktat's questions come out of `dictation`, held to her list.
-  spelling_dictation: new Set([]),
-  help: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
-};
-
-/**
- * Structured kinds a kind may produce (issues #228–#230): in a topic's practice and in a practice
- * test — the class test asks for these forms, and one try is enough for a whole arrangement. Not
- * in typed homework (that is the task she typed), a vocabulary or speaking list, or a listening
- * run (its questions come out of the text she hears).
- */
-const STRUCTURED: Record<StartTopicRequest['kind'], ReadonlySet<string>> = {
-  practice: new Set(['order', 'table_fill', 'match', 'cloze']),
-  test: new Set(['order', 'table_fill', 'match', 'cloze']),
-  vocab: new Set(),
-  speak: new Set(),
-  listen: new Set(),
-  spelling_dictation: new Set(),
-  help: new Set(),
-};
-
 /** Most words of a task (≥ 60 %) occur in what the learner typed. */
 export function fromLearnerText(task: string, typed: string): boolean {
   const words = (x: string) =>
@@ -493,43 +676,7 @@ async function generateSet(
   opts: { onFirstItems?: (set: GeneratedSet) => void } = {},
 ): Promise<GeneratedSet> {
   const { level, timezone, sheets, pattern, dictation } = ground;
-  // Built from her sheets: every question's topic is one of theirs — the schema offers only
-  // those, and a question on anything else is dropped (live finding 6).
-  const itemSchema = sheets
-    ? DraftItem.extend({
-        topic: z.enum(sheets.topics).describe('Exactly one of the SHEETS topics — never another'),
-      })
-    : DraftItem;
-  const setSchema = GeneratedSet.extend({ items: z.array(itemSchema).max(25) });
-  const parseSet = GeneratedSet.extend({
-    items: itemsOneByOne(itemSchema, 25),
-    // One unusable task costs its own question, never the whole set (audit H-14/H-15).
-    bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
-    staffs: itemsOneByOne(StaffTask, MAX_STAFF_ITEMS),
-    structured: itemsOneByOne(StructuredDraftNoHelp, MAX_STRUCTURED_ITEMS),
-    // The same for the listening questions: one that does not fit its schema costs itself, not
-    // the text. A listening task that does not fit at all is no listening task, and the run then
-    // has nothing — which the caller says plainly (`not_usable`, issue #210).
-    listen: ListenDraft.extend({
-      questions: itemsOneByOne(ListenQuestion, MAX_LISTEN_QUESTIONS),
-    })
-      .nullable()
-      .default(null)
-      .catch(null),
-    dictation: DictationDraftParsed.nullable().default(null).catch(null),
-  });
-  // What the model is shown. A listening run gets the listening task and nothing else: no
-  // fraction bars (a bar is a maths surface, and this run is about hearing) and no ordinary
-  // `items` either — a question she could answer without listening is not the exercise, and a
-  // field that is there gets filled in.
-  // A Diktat run gets its entries and nothing else, for the same reason (issue #242).
-  const forModel =
-    input.kind === 'listen'
-      ? setSchema.omit({ bars: true, items: true, structured: true, dictation: true })
-      : input.kind === 'spelling_dictation'
-        ? setSchema.omit({ bars: true, items: true, structured: true, listen: true, staffs: true })
-        : setSchema.omit({ listen: true, dictation: true });
-  const ownSchema = sheets || input.kind === 'listen' || input.kind === 'spelling_dictation';
+  const parseSet = parseSetFor(input.kind, sheets?.topics ?? null);
   let handedOver = false;
   const onPartial = opts.onFirstItems
     ? (rawSoFar: string) => {
@@ -582,7 +729,7 @@ async function generateSet(
           ],
         },
       ],
-      schema: ownSchema ? toJsonSchema(forModel) : GENERATED_SCHEMA,
+      schema: explainSchemaFor(input.kind, sheets?.topics ?? null),
       maxOutputTokens: 10_000,
       temperature: 0.4,
       // A streamed run must be finished inside the window the run waits for it, or it would
@@ -650,10 +797,11 @@ function preparedFrom(
   /** A Diktat's list (issue #242): every entry claimed as hers must stand in it. */
   dictationSource: DictationSource | null = null,
 ): Prepared {
+  const profile = SET_PROFILES[input.kind];
   let items = atLevel(
     usableItems(
       set.items
-        .filter((i) => KINDS[input.kind].has(i.kind))
+        .filter((i) => profile.items.includes(i.kind))
         .map((i) => ({ ...i, hints: [], worked_solution: null })),
       // The options code writes for a chart question (humid/arid, pyramid type) speak her
       // language when the question does not name its own (issues #245, #246).
@@ -693,7 +841,7 @@ function preparedFrom(
   // marks; a bar's mark is computed, and a surface is not a difficulty tier anyway — taking
   // the bar away because she asked for something harder would remove the one thing that
   // makes a harder fraction task approachable.
-  const bars = input.kind === 'practice' ? barItems(set.bars, learner.locale) : [];
+  const bars = profile.bars ? barItems(set.bars, learner.locale) : [];
   // The listening questions, each one checked against the text that will be read aloud
   // (issue #210): the answer has to stand in it, and the speech provider has to be able to read
   // its language. Whatever fails that is not a question.
@@ -701,24 +849,21 @@ function preparedFrom(
   // an interval and reading a time signature off the values are exactly what a music test asks, and
   // one try is enough for a tapped answer. Not in homework or a vocabulary list — there the task is
   // what she brought.
-  const staffs =
-    input.kind === 'practice' || input.kind === 'test'
-      ? staffItems(set.staffs, learner.locale)
-      : [];
+  const staffs = profile.staffs ? staffItems(set.staffs, learner.locale) : [];
   // Orders, tables and links to make (issues #228–#230), each checked by code before it is
   // stored: one that fails costs only itself. Built from her sheets, their topic must be one of
   // the sheets' too, like every other question.
-  const structured = structuredItems(set.structured, STRUCTURED[input.kind]).filter(
+  const structured = structuredItems(set.structured, new Set(profile.structured)).filter(
     (it) => sheetTopics === null || (it.topic !== null && sheetTopics.includes(it.topic)),
   );
   return {
     items,
     bars,
-    listening: input.kind === 'listen' ? listenItems(set.listen, speech) : [],
+    listening: profile.listen ? listenItems(set.listen, speech) : [],
     staffs,
     structured,
     dictation:
-      input.kind === 'spelling_dictation' && dictationSource
+      profile.dictation && dictationSource
         ? dictationItems(set.dictation, dictationSource, speech, learner.locale)
         : [],
   };
