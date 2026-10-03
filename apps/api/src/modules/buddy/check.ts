@@ -47,7 +47,8 @@ import { BUDDY_PROMPT_VERSION, CHECK_SYSTEM, repairMessage } from './prompts.js'
 import { loadBuddyState, type BuddyState, type SettingsRow } from './state.js';
 import { claimMessage, processTurn, pushAvailable, TURN_STALL_MS } from './turn.js';
 
-const CHECK_SCHEMA = toJsonSchema(CheckDecision);
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const CHECK_SCHEMA = toJsonSchema(CheckDecision);
 /** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
 // Lookups first, as in a turn: the model chooses what to read before it writes a decision
 // (p2-check-step-schema-lookups-last).

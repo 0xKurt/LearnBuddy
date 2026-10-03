@@ -66,8 +66,9 @@ import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './
 /** The structured kinds a sheet may give (#228 an order, #230 a table, #229 links, #232 gaps). */
 const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order', 'table_fill', 'match', 'cloze']);
 
-const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
-const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
+// Both exported for the schema inventory (`evals/schema`, issue #281); nothing else reads them.
+export const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
+export const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
 const ABANDON_UPLOAD_MS = 24 * 3_600_000;
 const MAX_EXTRACTION_ATTEMPTS = 3;
 /**
