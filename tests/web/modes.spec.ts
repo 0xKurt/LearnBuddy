@@ -307,6 +307,10 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(1);
   await expect(explained).toBeHidden({ timeout: 8000 });
   await shot(page, '27-practice-voice-mode');
+  // The same moment at night: the voice bar, the reply and the drawing share the room (#286).
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '27b-practice-voice-mode-night');
+  await page.emulateMedia({ colorScheme: 'light' });
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   // Still in voice mode at Buddy: the bar is voice-first (keyboard · big mic · photo).

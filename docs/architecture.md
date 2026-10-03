@@ -2808,13 +2808,18 @@ collects BELOW the way to answer (`components/practice/FreeSpace.tsx`), above wh
 to answer sat at the bottom, which left a hole under the card with a lonely "Tipp" in it. The
 conversation shows WHOLE turns only (`threadCap` in `app/practice/[id].tsx`): everything when it
 fits into its box plus the free room, otherwise from the earliest turn whose rest still fits,
-never less than the newest turn — so at rest the top edge lies in the gap above a whole turn and
-nothing is cut under the card. Earlier turns are a scroll up away; the edge is masked exactly when
-the box holds more than it shows, with a short fade over that gap at rest and the full EDGE_FADE
-(#63) once she scrolls up or when the newest turn alone does not fit. Before the first turn the conversation
-is only the hint row; at the largest board it gives way whole rather than half. A card with a
-drawing or photo still grows into what the conversation leaves (#96, `cardGrowTo`, at most half
-the window), and a new reply takes its room back from the card first. Short options sit two by two.
+so at rest the top edge lies in the gap above a whole turn and nothing is cut under the card.
+Earlier turns are a scroll up away; the edge is masked exactly when the box holds more than it
+shows, with a short fade over that gap at rest and the full EDGE_FADE (#63) once she scrolls up
+or when the newest turn alone does not fit. Over an open structured board the newest turn keeps
+its full height and the board scrolls inside itself; with nothing else that can give (choices, a
+field, the voice bar) a drawing or photo in the card gives room first, its cap lowered by up to
+48 pt (`CARD_GIVES`, never below figureScale's legible minimum), and only what is still missing
+is cut from the newest turn under the full fade rather than pushing the bar off the screen. Before the first turn the conversation is only the hint row; at the
+largest board it gives way whole rather than half. A card with a drawing or photo still grows
+into what the conversation leaves (#96, `cardGrowTo`, at most half the window, its own height
+measured per question and window size), and a new reply or a taller bar below (the voice bar)
+takes its room back from the card first — the overrun past the column or the window counts. Short options sit two by two.
 Level and grade are learned in the conversation (the profile has no grade field: Buddy asks when
 the level is unknown and it matters for the next step — `context.ts`, `set_level`).
 
