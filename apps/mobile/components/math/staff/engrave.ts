@@ -20,13 +20,22 @@
 //   · `engraveGlyph` — ein Notenwert ohne Zeile, für die Wert-Tasten: die Taste für die Viertel
 //     sieht genau aus wie die Viertel, die sie setzt.
 
-import type {
-  Clef,
-  NoteValue,
-  StaffElement,
-  TimeSignature,
+import {
+  type Clef,
+  type NoteValue,
+  type StaffElement,
+  type TimeSignature,
 } from '@learnbuddy/shared-types/contracts';
-import { Accidental, BarlineType, Dot, Formatter, Stave, StaveNote } from 'vexflow/bravura';
+import {
+  Accidental,
+  BarlineType,
+  Dot,
+  Formatter,
+  ModifierContext,
+  Stave,
+  StaveNote,
+  TickContext,
+} from 'vexflow/bravura';
 
 import { SPACE_UNITS, TAIL_UNITS, headUnits, unitsOfStep, WRITE_REACH } from './geometry.js';
 import { SvgStringContext, escapeXml, r2, type StaffInk } from './svgContext.js';
@@ -39,22 +48,39 @@ const DURATION: Record<NoteValue, string> = {
   sixteenth: '16',
 };
 
+/** VexFlows Schriftmaß für Köpfe, Pausen und Fähnchen (`Tables.NOTATION_FONT_SCALE`). */
+const NOTATION_FONT_SCALE = 39;
+/**
+ * Wie viel größer Köpfe, Pausen und Fähnchen stehen als im Druck: gut ein Siebtel, wie in
+ * Notenheften für Kinder (Owner, #312: „Die Notenköpfe werden größer"). Auf jeder Zeile gleich —
+ * gelesen, geschrieben, auf den Wert-Tasten —, damit eine Viertel überall gleich aussieht. Mehr
+ * nicht: auf der Schreibfläche (Schlüssel, Taktart und zwei Takte auf 328 pt) stießen volle Takte
+ * sonst aneinander. Die Linien bleiben, wo sie sind.
+ */
+const HEAD_SCALE = 1.15;
+
 /** Wo VexFlow eine Pause hinsetzt: auf die mittlere Linie des Schlüssels. */
 const REST_KEY: Record<Clef, string> = { treble: 'b/4', bass: 'd/3' };
 
-/** Breite je Zeichen und kleinster Takt einer gelesenen Zeile, in Einheiten. */
-const PER_ELEMENT = 28;
+/**
+ * Breite je Zeichen und kleinster Takt einer gelesenen Zeile, in Einheiten. Eng genug, dass eine
+ * kurze Zeile in der Figurkarte groß gezeichnet wird (die Breite bestimmt den Maßstab), weit genug,
+ * dass Köpfe, Kreuze und Fähnchen nicht aneinanderstoßen.
+ */
+const PER_ELEMENT = 24;
 /** Mit Notennamen darunter: „Sol" und „Do" brauchen nebeneinander mehr Luft als ein Kopf. */
-const PER_LABELLED = 36;
-const BAR_MIN = 60;
+const PER_LABELLED = 28;
+const BAR_PAD = 14;
+const BAR_MIN = 44;
 
 /**
- * Die Notennamen: Schriftgröße in Einheiten (1 = ein Zehntel Linienabstand) und der Abstand zur
- * tiefsten Tinte darüber. Eine eigene Zeile UNTER allem, was eine Note zeichnet — Kopf, Hilfslinie,
- * ein Hals nach unten, ein Kreuz —, nie dazwischen: so stoßen Namen nie an Linien oder Hälse.
+ * Die Notennamen stehen in einer eigenen Zeile UNTER allem, was eine Note zeichnet — Kopf,
+ * Hilfslinie, ein Hals nach unten, ein Kreuz —, nie dazwischen: so stoßen Namen nie an Linien oder
+ * Hälse. Ihre Schriftgröße gibt der Aufrufer in Einheiten (er kennt den Maßstab und rechnet sie aus
+ * Punkten um, damit ein Name auf jeder Zeile gleich groß zu lesen ist); dazu ein halber
+ * Linienabstand Luft.
  */
-export const LABEL_SIZE = 9;
-const LABEL_GAP = 5;
+const LABEL_GAP = 3;
 /** Wie weit ein Großbuchstabe über die Grundlinie reicht, als Anteil der Schriftgröße. */
 const CAP_HEIGHT = 0.75;
 
@@ -82,6 +108,7 @@ function toNote(
     keys: [rest ? REST_KEY[clef] : `${el.pitch.name[0]!.toLowerCase()}/${el.pitch.octave}`],
     duration: `${DURATION[el.value]}${rest ? 'r' : ''}`,
     clef,
+    glyph_font_scale: NOTATION_FONT_SCALE * HEAD_SCALE,
     ...(options.stemUp ? { stem_direction: 1 } : { auto_stem: !rest }),
   });
   if (!rest && el.pitch.name.endsWith('#')) note.addModifier(new Accidental('#'), 0);
@@ -113,6 +140,13 @@ type Line = {
   /** Die Note (Index über die ganze Zeile), die in der Akzentfarbe steht. */
   selected?: number | null;
   accent?: string;
+  /**
+   * Die Schreibfläche: jeder Takt verteilt seinen Inhalt über die ganze Breite, statt ihn nach
+   * seinem Platz im vollen Takt zu setzen — eine halb geschriebene Zeile sähe sonst gedrängt links
+   * mit einem leeren Loch dahinter aus. Der Takt `slot` hält am Ende einen Platz für das nächste
+   * Zeichen frei (ein unsichtbares Viertel); dort steht der Schreibstrich.
+   */
+  spread?: { slot: number | null };
 };
 
 /**
@@ -120,8 +154,9 @@ type Line = {
  * jeder Takt genau dort steht, wo `starts`/`widths` ihn haben wollen (die Tippziele der
  * Schreibfläche liegen darüber).
  */
-function drawLine(ctx: SvgStringContext, line: Line): Placed[] {
+function drawLine(ctx: SvgStringContext, line: Line): { placed: Placed[]; slotX: number | null } {
   const placed: Placed[] = [];
+  let slotX: number | null = null;
   let seen = 0;
   line.bars.forEach((bar, k) => {
     const start = line.starts[k] ?? 0;
@@ -139,17 +174,43 @@ function drawLine(ctx: SvgStringContext, line: Line): Placed[] {
     stave.setEndBarType(k === line.bars.length - 1 ? BarlineType.END : BarlineType.NONE);
     stave.setContext(ctx).draw();
     const notes = bar.map((el, i) =>
-      toNote(
-        el,
-        line.clef,
-        line.selected === seen + i && line.accent ? { accent: line.accent } : {},
-      ),
+      toNote(el, line.clef, {
+        ...(line.selected === seen + i && line.accent ? { accent: line.accent } : {}),
+      }),
     );
-    if (notes.length > 0) Formatter.FormatAndDraw(ctx, stave, notes);
+    if (line.spread) {
+      // Gleiche Plätze statt Rhythmus-Abständen: auf der Schreibfläche wächst der Inhalt unter
+      // ihrem Finger, und ein Zeichen, das beim nächsten Tipp weit wegrutscht, wäre ein bewegtes
+      // Ziel. Der freie Platz am Ende ist der für das nächste Zeichen.
+      const free = line.spread.slot === k ? 1 : 0;
+      // Luft an beiden Enden — hinten mehr, dort steht der Ring der gesetzten Note neben dem
+      // (Schluss-)Strich: kein Kopf und kein Ring berührt einen Taktstrich.
+      const from = stave.getNoteStartX() + SPACE_UNITS * 0.3;
+      const to = stave.getNoteEndX() - SPACE_UNITS * 1.5;
+      const slot = (to - from) / Math.max(notes.length + free, 1);
+      notes.forEach((note, i) => {
+        note.addToModifierContext(new ModifierContext());
+        const tick = new TickContext().addTickable(note).preFormat().setX(0);
+        note.setStave(stave).setContext(ctx);
+        // VexFlow rechnet die Stelle eines Kopfes von Taktanfang und Polster aus; wir setzen ihn
+        // genau in die Mitte seines Platzes.
+        const centre = from + slot * (i + 0.5);
+        tick.setX(centre - note.getGlyphWidth() / 2 - note.getAbsoluteX());
+        // Eine Pause hat keinen Kopf: sie steht mit ihrer Tinte mittig, nicht mit VexFlows Maß.
+        if (note.isRest()) {
+          const box = note.getBoundingBox();
+          tick.setX(tick.getX() + centre - (box.getX() + box.getW() / 2));
+        }
+        note.draw();
+      });
+      if (free) slotX = from + slot * (notes.length + 0.5);
+    } else if (notes.length > 0) {
+      Formatter.FormatAndDraw(ctx, stave, notes);
+    }
     placed.push(...notes.map(placedOf));
     seen += bar.length;
   });
-  return placed;
+  return { placed, slotX };
 }
 
 /**
@@ -157,9 +218,9 @@ function drawLine(ctx: SvgStringContext, line: Line): Placed[] {
  * Note liegt (auch der unbeschrifteten daneben — deren Hals oder Hilfslinie soll ein Name so wenig
  * berühren wie die eigene) und mindestens unter der untersten Linie.
  */
-export function labelRow(placed: readonly Placed[]): number {
+export function labelRow(placed: readonly Placed[], size: number): number {
   const lowest = Math.max(unitsOfStep(-4), ...placed.map((p) => p.bottom));
-  return lowest + LABEL_GAP + LABEL_SIZE * CAP_HEIGHT;
+  return lowest + LABEL_GAP + size * CAP_HEIGHT;
 }
 
 /** Die gelesene Zeile, zugeschnitten auf ihre Tinte. `names[i]` beschriftet das i-te Zeichen. */
@@ -170,34 +231,37 @@ export function engraveRead(input: {
   names: readonly (string | null)[];
   colors: StaffInk & { label: string };
   font: string | undefined;
+  /** Schriftgröße der Namen in Einheiten. */
+  labelSize: number;
 }): Picture & { placed: Placed[]; baseline: number | null } {
   const ctx = new SvgStringContext(input.colors);
   const head = headUnits(input.time !== null);
   const labelled = input.names.some((n) => n !== null);
   const per = labelled ? PER_LABELLED : PER_ELEMENT;
-  const widths = input.bars.map((bar) => Math.max(BAR_MIN, bar.length * per + 20));
+  const widths = input.bars.map((bar) => Math.max(BAR_MIN, bar.length * per + BAR_PAD));
   const starts: number[] = [];
   widths.reduce((x, w) => {
     starts.push(x);
     return x + w;
   }, head);
-  const placed = drawLine(ctx, { ...input, starts, widths });
+  const { placed } = drawLine(ctx, { ...input, starts, widths });
   let baseline: number | null = null;
   if (labelled) {
-    baseline = labelRow(placed);
+    const size = input.labelSize;
+    baseline = labelRow(placed, size);
     const family = input.font ? ` font-family="${escapeXml(input.font)}"` : '';
     placed.forEach((p, i) => {
       const name = input.names[i];
       if (!name) return;
-      const half = (name.length * LABEL_SIZE * 0.6) / 2;
-      ctx.see(p.x - half, (baseline as number) - LABEL_SIZE);
-      ctx.see(p.x + half, (baseline as number) + LABEL_SIZE * 0.25);
+      const half = (name.length * size * 0.6) / 2;
+      ctx.see(p.x - half, (baseline as number) - size);
+      ctx.see(p.x + half, (baseline as number) + size * 0.25);
       ctx.over(
-        `<text x="${r2(p.x)}" y="${r2(baseline as number)}" fill="${input.colors.label}" font-size="${LABEL_SIZE}" font-weight="600" text-anchor="middle"${family}>${escapeXml(name)}</text>`,
+        `<text x="${r2(p.x)}" y="${r2(baseline as number)}" fill="${input.colors.label}" font-size="${size}" font-weight="600" text-anchor="middle"${family}>${escapeXml(name)}</text>`,
       );
     });
   }
-  const pad = 4;
+  const pad = 2;
   const box = {
     x: ctx.minX - pad,
     y: ctx.minY - pad,
@@ -223,7 +287,15 @@ export function engraveWrite(input: {
   const each = Math.max(input.width - head - TAIL_UNITS, SPACE_UNITS) / input.bars.length;
   const starts = input.bars.map((_, k) => head + k * each);
   const widths = input.bars.map(() => each);
-  const placed = drawLine(ctx, { ...input, starts, widths, accent: input.colors.accent });
+  // Der Takt, in den sie gerade schreibt, hält einen Platz für das nächste Zeichen frei.
+  const slot = input.cursor ? input.activeBar : null;
+  const { placed, slotX } = drawLine(ctx, {
+    ...input,
+    starts,
+    widths,
+    spread: { slot },
+    accent: input.colors.accent,
+  });
   const { accent, soft } = input.colors;
   const band = { top: unitsOfStep(5), height: 5 * SPACE_UNITS };
   // Der Takt, der gerade gefüllt wird: ein ruhiger Hintergrund, nie das einzige Signal.
@@ -238,35 +310,20 @@ export function engraveWrite(input: {
   const picked = input.selected === null ? undefined : placed[input.selected];
   if (picked) {
     ctx.over(
-      `<circle cx="${r2(picked.x)}" cy="${r2(picked.y)}" r="9.5" fill="${accent}" fill-opacity="0.16" stroke="${accent}" stroke-width="1"/>`,
+      `<circle cx="${r2(picked.x)}" cy="${r2(picked.y)}" r="${r2(9.5 * HEAD_SCALE)}" fill="${accent}" fill-opacity="0.16" stroke="${accent}" stroke-width="1"/>`,
     );
   }
   // Der Schreibstrich: wohin das nächste Zeichen kommt. Er sagt WO, nie welcher Ton.
-  if (input.cursor && input.activeBar !== null) {
-    const x = cursorX(input.bars, placed, input.activeBar, starts, each);
+  if (slotX !== null) {
+    const x = slotX;
     ctx.over(
       `<line x1="${r2(x)}" x2="${r2(x)}" y1="${r2(unitsOfStep(5))}" y2="${r2(unitsOfStep(-5))}" stroke="${accent}" stroke-opacity="0.55" stroke-width="1.6" stroke-linecap="round"/>`,
     );
   }
+
   const top = unitsOfStep(WRITE_REACH.top);
   const height = unitsOfStep(WRITE_REACH.bottom) - top;
   return { xml: ctx.toSvg({ x: 0, y: top, width: input.width, height }), placed };
-}
-
-/** Wo der Schreibstrich steht: mitten im leeren Takt, sonst zwischen letztem Zeichen und Taktende. */
-function cursorX(
-  bars: readonly StaffElement[][],
-  placed: readonly Placed[],
-  bar: number,
-  starts: readonly number[],
-  each: number,
-): number {
-  const start = starts[bar] ?? 0;
-  const before = bars.slice(0, bar).reduce((n, b) => n + b.length, 0);
-  const inBar = placed.slice(before, before + (bars[bar]?.length ?? 0));
-  if (inBar.length === 0) return start + each / 2;
-  const right = Math.max(...inBar.map((p) => p.right));
-  return (right + start + each) / 2;
 }
 
 /**

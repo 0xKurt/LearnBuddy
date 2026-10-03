@@ -93,9 +93,11 @@ const GAP_MIN = 12;
 const GAP_MAX = 26;
 /**
  * Wie viele Linienabstände eine Zeile in der Breite braucht: Schlüssel und Taktart
- * (`headUnits`), je Takt fünf (Platz für drei bis vier Köpfe mit Vorzeichen) und der Schlussstrich.
+ * (`headUnits`), je Takt sieben (Platz für drei bis vier Köpfe mit Vorzeichen; VexFlows
+ * Köpfe und Pausen sind breiter als die alten, mit fünf stießen sie im vollen Takt aneinander,
+ * #312) und der Schlussstrich.
  */
-const WIDTH_IN_GAPS = (bars: number) => (headUnits(true) + TAIL_UNITS) / SPACE_UNITS + bars * 5;
+const WIDTH_IN_GAPS = (bars: number) => (headUnits(true) + TAIL_UNITS) / SPACE_UNITS + bars * 7;
 
 /**
  * Die kleinste Höhe der ganzen Fläche: die engste Zeile, zwei Tastenreihen à 44 pt und die

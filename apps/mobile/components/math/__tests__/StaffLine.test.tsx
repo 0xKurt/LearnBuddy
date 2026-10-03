@@ -28,7 +28,7 @@ import { i18n } from '../../../lib/i18n/index.js';
 import { paletteOf } from '../../../lib/theme/palettes.js';
 import { renderInApp } from '../../../testing/render.js';
 import { StaffLine, noteLabels } from '../StaffLine.js';
-import { LABEL_SIZE, engraveRead, engraveWrite } from '../staff/engrave.js';
+import { engraveRead, engraveWrite } from '../staff/engrave.js';
 import {
   SPACE_UNITS,
   headUnits,
@@ -123,9 +123,10 @@ describe('Notennamen', () => {
         names: ['A', 'B', 'C', 'D'],
         colors: INK,
         font: undefined,
+        labelSize: 9,
       });
       const lowest = Math.max(...picture.placed.map((p) => p.bottom));
-      const capTop = (picture.baseline as number) - LABEL_SIZE * 0.75;
+      const capTop = (picture.baseline as number) - 9 * 0.75;
       expect(capTop, clef).toBeGreaterThan(lowest);
       expect(capTop).toBeGreaterThan(unitsOfStep(-4));
       // Und jeder Name steht unter seiner Note, nicht verrutscht.

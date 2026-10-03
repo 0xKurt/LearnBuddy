@@ -43,27 +43,42 @@ const FAMILY = Platform.select({
  */
 const READ_SPACE_MAX = 24;
 
+/**
+ * Wie groß ein Notenname zu lesen ist, in Punkten — so groß wie die Antworten darunter, auf jeder
+ * Zeile gleich, egal wie eng die Zeile selbst gezeichnet ist.
+ */
+const LABEL_PT = 15;
+
 /** Die gelesene Zeile, wie `FigureView` sie zeichnet. */
 export function StaffLine({ fig, width }: { fig: StaffFigure; width: number }) {
   const { figure: ink } = useTheme();
   const { t } = useTranslation('math');
   const engraver = useEngraver();
+  const room = Math.min(width, 520);
   const names = useMemo(() => noteLabels(fig, (name) => t(`staff.note_short.${name}`)), [fig, t]);
-  const picture = useMemo(
-    () =>
-      engraver?.engraveRead({
+  const drawn = useMemo(() => {
+    if (engraver === null) return null;
+    const engrave = (labelSize: number) =>
+      engraver.engraveRead({
         clef: fig.clef,
         time: fig.time,
         bars: fig.bars,
         names,
         colors: { ink: ink.stroke, lines: ink.axis, accent: ink.point, label: ink.point },
         font: FAMILY,
-      }) ?? null,
-    [engraver, fig, names, ink],
-  );
-  if (picture === null) return null;
-  const room = Math.min(width, 520);
-  const scale = Math.min(READ_SPACE_MAX / SPACE_UNITS, room / picture.width);
+        labelSize,
+      });
+    const largest = READ_SPACE_MAX / SPACE_UNITS;
+    const scaleOf = (w: number) => Math.min(largest, room / w);
+    // Zweimal: der Maßstab folgt aus der Breite, die Schriftgröße der Namen aus dem Maßstab.
+    // Die Namen ändern die Breite kaum, also steht der Maßstab nach dem ersten Durchgang fest.
+    const first = engrave(LABEL_PT / largest);
+    const scale = scaleOf(first.width);
+    const picture = names.some((n) => n !== null) ? engrave(LABEL_PT / scale) : first;
+    return { picture, scale: scaleOf(picture.width) };
+  }, [engraver, fig, names, ink, room]);
+  if (drawn === null) return null;
+  const { picture, scale } = drawn;
   return <SvgXml xml={picture.xml} width={picture.width * scale} height={picture.height * scale} />;
 }
 
