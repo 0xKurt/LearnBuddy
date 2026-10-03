@@ -130,12 +130,23 @@ export async function settle(page: Page, maxMs = 1600): Promise<void> {
 export async function shot(
   page: Page,
   name: string,
-  { opened = false }: { opened?: boolean } = {},
+  {
+    opened = false,
+    phones = PHONES,
+  }: {
+    opened?: boolean;
+    /**
+     * Only these sizes. For a state that does not survive a resize: the walkthrough's
+     * resizing remounts the full-screen talk modal, so a turn in progress is shot at the size
+     * it was started in (talk-voice.spec.ts).
+     */
+    phones?: ReadonlyArray<{ width: number; height: number }>;
+  } = {},
 ): Promise<Overflow[]> {
   mkdirSync(SHOTS, { recursive: true });
   const size = page.viewportSize();
   const found: Overflow[] = [];
-  for (const phone of PHONES) {
+  for (const phone of phones) {
     await page.setViewportSize(phone);
     await settle(page);
     const here = await overflows(page);

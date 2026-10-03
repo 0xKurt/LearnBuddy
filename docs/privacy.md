@@ -244,6 +244,13 @@ Familienkreis hinaus.
   servers; so the system recogniser is used only when the language she speaks is exactly the
   phone's language (with region), every other language goes the recording path (EU). **Not yet
   verified on a real iPhone**; until it is, treat the iOS on-device promise as unproven.
+  **While Buddy speaks in conversation mode** (barge-in, issue #35; browser and Android) the
+  mic is open too, but only its **level** is read — how loud, in dBFS, every 50 ms — to notice
+  that she is talking over him (`apps/mobile/lib/speech/bargeIn.ts`). Nothing of it is written
+  down, sent or kept: in the browser it is an analyser on the stream (no recorder at all); on
+  Android a recorder must run to meter, and its cache file is deleted the moment Buddy stops.
+  Only when her voice is detected does Buddy stop and the normal listening above begin. Not on
+  iOS, not with a screen reader on, and only on the conversation screen she opened.
 - **Google Cloud Text-to-Speech** (Buddy's natural voice, ADR 0008): off unless
   `SPEECH_BACKEND=google`; only the EU endpoint `eu-texttospeech.googleapis.com` is accepted
   (`apps/api/src/config.ts`). **What is sent:** one sentence at a time of what the app reads
