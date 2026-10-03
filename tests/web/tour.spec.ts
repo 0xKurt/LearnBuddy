@@ -405,7 +405,15 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // ── Pronunciation: record (a fake microphone), sent, feedback per word ──
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
   await page.getByRole('button', { name: 'Aussprache', exact: true }).click();
-  await page.getByRole('textbox').last().fill('Englisch: The weather is nice today.');
+  // The sheet opens a tick AFTER the menu closes (`fromMenu`, `SHEET_SWAP_MS`). An unscoped
+  // `getByRole('textbox').last()` could resolve in that gap to the only field on screen, Buddy's
+  // composer behind the menu, so the sentence went into the chat bar and the sheet's
+  // "Los geht's" stayed disabled (CI on PR #308 and on car 2 at a7b8670; reproduced 4 of 15
+  // times at 8× CPU throttling). The sheet's own field, named by its title, waits until it is
+  // there.
+  await page
+    .getByRole('textbox', { name: 'Was willst du sagen üben?' })
+    .fill('Englisch: The weather is nice today.');
   await inSheet(page).getByRole('button', { name: "Los geht's" }).click();
   await expect(page.getByText('The weather is nice today.').first()).toBeVisible();
   // One leading action and one way past the sentence (issue #186). "Lösung zeigen" was the
