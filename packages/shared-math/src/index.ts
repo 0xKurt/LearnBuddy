@@ -8,5 +8,6 @@ export * from './latex.js';
 export * from './answer.js';
 export * from './charts.js';
 export * from './molecule.js';
+export * from './primary.js';
 export * from './trees.js';
 export * from './pedigree.js';

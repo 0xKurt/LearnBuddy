@@ -28,6 +28,7 @@ import { scriptDictation } from './scenarios/dictation.js';
 import { scriptDrill } from './scenarios/drill.js';
 import { scriptFigures } from './scenarios/figures.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
+import { scriptPrimary } from './scenarios/primary.js';
 import { scriptTimedTest } from './scenarios/timedTest.js';
 import { scriptRoleplay } from './scenarios/roleplay.js';
 import { scriptTour } from './scenarios/tour.js';
@@ -62,6 +63,8 @@ async function main(): Promise<void> {
     // First: its generation rule is keyed on her list, and a broader rule registered earlier
     // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
     scriptDictation();
+    // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
+    scriptPrimary();
     scriptCoreLoop(scripted);
     // Before the learning modes: their "probetest" sentence would answer this one too (#241).
     scriptTimedTest();

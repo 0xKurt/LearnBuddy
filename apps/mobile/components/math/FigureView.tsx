@@ -1,6 +1,7 @@
 // Draws the figure that goes with a question (packages/shared-types/src/contracts/figure.ts):
 // fraction pictures, number lines, function graphs, bar charts, geometry
-// drawings, tables and the charts of ChartFigures.tsx. The model only sends data; this draws it with
+// drawings, tables, the charts of ChartFigures.tsx and the primary-school figures of
+// PrimaryFigures.tsx. The model only sends data; this draws it with
 // react-native-svg at the width that is available. Every figure also carries a
 // text description for screen readers. A function the grammar can't read is
 // left out — the figure never crashes the question.
@@ -25,6 +26,8 @@ import Svg, {
 // of @learnbuddy/shared-math (its index also pulls in mathjs).
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
 import { niceStep } from '../../../../packages/shared-math/src/charts.js';
+import { isPrimary } from '../../../../packages/shared-math/src/primary.js';
+import { isTreeFigure } from '../../../../packages/shared-math/src/trees.js';
 import {
   BARE_FIGURE_CHROME,
   BARE_FIGURE_PAD,
@@ -46,6 +49,7 @@ import { MathText } from './MathText.js';
 import { StaffLine } from './StaffLine.js';
 import { FAMILY, FONT, formatNumber, HaloText, SMALL } from './figureText.js';
 import { describeMolecule, MoleculeView } from './MoleculeView.js';
+import { describePrimary, PrimaryBody } from './PrimaryFigures.js';
 import { describeTree, TreeBody } from './TreeFigures.js';
 import { useSpokenWords } from './useSpokenMath.js';
 
@@ -141,6 +145,10 @@ export function FigureView({
 }
 
 function FigureBody({ figure, width, bare }: { figure: Figure; width: number; bare: boolean }) {
+  // Uhr, Geld, Zwanziger-/Hunderterfeld, Zehnersystem (#254) and trees, pedigrees, automata
+  // (#256) are drawn in their own files.
+  if (isPrimary(figure)) return <PrimaryBody figure={figure} width={width} />;
+  if (isTreeFigure(figure)) return <TreeBody figure={figure} width={width} />;
   switch (figure.type) {
     case 'fraction':
       return <FractionPicture fig={figure} width={width} />;
@@ -169,11 +177,6 @@ function FigureBody({ figure, width, bare }: { figure: Figure; width: number; ba
     case 'scatter_plot':
     case 'pyramid':
       return <ChartBody figure={figure} width={width} />;
-    // Trees, pedigrees and automata (issue #256) are drawn in TreeFigures.tsx.
-    case 'tree':
-    case 'pedigree':
-    case 'automaton':
-      return <TreeBody figure={figure} width={width} />;
   }
 }
 
@@ -1167,6 +1170,8 @@ export function describeFigure(
   { formulas = true }: { formulas?: boolean } = {},
 ): string {
   const list = (items: string[]) => items.join(', ');
+  if (isPrimary(figure)) return describePrimary(figure, t);
+  if (isTreeFigure(figure)) return describeTree(figure, t);
   switch (figure.type) {
     case 'fraction':
       return figure.fractions
@@ -1307,9 +1312,5 @@ export function describeFigure(
     case 'scatter_plot':
     case 'pyramid':
       return describeChart(figure, t);
-    case 'tree':
-    case 'pedigree':
-    case 'automaton':
-      return describeTree(figure, t);
   }
 }

@@ -17,6 +17,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY, HaloText } from './figureText.js';
 
 type MoleculeFig = Extract<Figure, { type: 'molecule' }>;
+type T = (key: string, values?: Record<string, string | number>) => string;
 
 /** The element letters: large enough to read a subscript at 360 px. */
 const ATOM_FONT = 17;
@@ -228,9 +229,7 @@ export function MoleculeView({ fig, width }: { fig: MoleculeFig; width: number }
   );
 }
 
-// ─────────────── description for screen readers ───────────────
-
-type T = (key: string, values?: Record<string, string | number>) => string;
+// ─────────────── description for screen readers (FigureView `describeFigure`) ───────────────
 
 const SUBSCRIPT = '₀₁₂₃₄₅₆₇₈₉';
 
