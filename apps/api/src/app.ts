@@ -24,6 +24,7 @@ import { materialRoutes } from './modules/materials/routes.js';
 import { erasureBacklog } from './modules/materials/purge.js';
 import { voiceRoutes } from './modules/voice/routes.js';
 import { practiceRoutes } from './modules/practice/routes.js';
+import { missingMigrations } from './lib/migrations.js';
 import { schedulerHealth, type SchedulerHealth } from './modules/scheduler/health.js';
 import { runTick } from './modules/scheduler/tick.js';
 
@@ -151,7 +152,15 @@ export function createApp(deps: Deps): Hono<AppEnv> {
       dbOk = false;
     }
     const erasureOk = erasure.overdue_deletions === 0 && erasure.overdue_photo_deletions === 0;
-    const ok = dbOk && schedulerOk && erasureOk;
+    // Code that went live without its migrations (issue #342): named, so the probe says why.
+    let migrations: string[] | null = null;
+    try {
+      if (dbOk) migrations = await missingMigrations(deps.db);
+    } catch {
+      dbOk = false;
+    }
+    const migrationsOk = migrations === null || migrations.length === 0;
+    const ok = dbOk && schedulerOk && erasureOk && migrationsOk;
     return c.json(
       {
         ok,
@@ -164,6 +173,8 @@ export function createApp(deps: Deps): Hono<AppEnv> {
           retention: { last_run_at: null, counts: null },
         },
         erasure: { ok: erasureOk, ...erasure },
+        // null: this database keeps no migration record (test and dev stacks).
+        migrations: { ok: migrationsOk, missing: migrations },
         model: deps.llm.available,
         push: deps.push.enabled,
         // Whether Buddy reads with his own voice or the app falls back to the phone's

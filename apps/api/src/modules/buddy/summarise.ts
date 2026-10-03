@@ -42,9 +42,11 @@ const Summary = z.object({
     .max(5)
     .describe('What it was about, in her words (e.g. "Brüche", "Referat Rom")'),
 });
-const SCHEMA = toJsonSchema(Summary);
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const SCHEMA = toJsonSchema(Summary);
 
-const SYSTEM = `You write down what a school student and her learning companion talked about, so he still knows it weeks later.
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const SYSTEM = `You write down what a school student and her learning companion talked about, so he still knows it weeks later.
 - Two to four sentences, in the student's language, in the third person about her ("Sie hat …").
 - What matters later: what she is learning for, what she found hard or easy, what she decided or asked for, what she said about herself (a holiday, a bad day) — never small talk for its own sake.
 - Write nothing the conversation does not say. No dates, no numbers you did not read, no advice, no judgement of her.

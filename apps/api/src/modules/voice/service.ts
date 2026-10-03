@@ -19,9 +19,11 @@ const Transcript = z.object({
   heard_speech: z.boolean().describe('false if there is no understandable speech'),
   text: z.string().max(2000).describe('What was said, written down'),
 });
-const SCHEMA = toJsonSchema(Transcript);
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const SCHEMA = toJsonSchema(Transcript);
 
-const SYSTEM = `You write down what a school student says to the LearnBuddy app, exactly as said — nothing added, nothing answered, nothing corrected in content.
+// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
+export const SYSTEM = `You write down what a school student says to the LearnBuddy app, exactly as said — nothing added, nothing answered, nothing corrected in content.
 - Language: as spoken (EXPECTED LANGUAGE is a hint; a student may mix languages). Normal spelling and punctuation.
 - ANSWER mode: numbers as digits ("achtundzwanzig" → 28, "drei Komma fünf" → 3,5), fractions as 3/4 ("drei Viertel"), units as symbols (cm², km/h, °C) — but keep the student's words; if they answer wrongly, write down the wrong answer.
 - MESSAGE mode: write it as a chat message; numbers as digits.
