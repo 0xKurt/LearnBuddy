@@ -310,5 +310,14 @@
       "fractions": "Additionner des fractions",
       "percent": "Pourcentages"
     }
+  },
+  "roleplay": {
+    "feedback_head": "Le jeu de rôle est terminé – voilà comment ça s'est passé :",
+    "point_met": "✓ {{name}} : réussi – « {{quote}} »",
+    "point_open": "○ {{name}} : pas encore",
+    "better_head": "Ça sonne encore mieux comme ça :",
+    "better_line": "« {{said}} » → « {{better}} »",
+    "ended": "D'accord, on arrête le jeu de rôle. Dis-moi quand tu veux recommencer.",
+    "try_in": "Essaie en {{language}} – je reste dans mon rôle. Si tu veux arrêter, dis-le simplement."
   }
 }

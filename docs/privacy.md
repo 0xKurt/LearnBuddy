@@ -183,6 +183,13 @@ sweep records when it ran and how many rows it removed — counts only, never co
   she decides. Her answer, and what was proposed, are part of her export and are deleted with
   the account.
 
+- **A roleplay sees nothing personal** (`buddy_roleplays`, issue #244, docs/architecture.md
+  §Roleplay). An in-role turn sends the model only the stored frame (language, scene, role, the
+  key points), her school level and the scene's own lines — no name, no memories, no STATE — and
+  it has no tools, so nothing said in a scene is remembered or changed. The frame, the turn count
+  and the checked feedback are stored in `buddy_roleplays`, part of her export and deleted with the
+  account; the lines themselves are ordinary messages of her conversation.
+
 ## Export and deletion (DSGVO Art. 15, 17, 20)
 
 - `GET /account/export` returns everything stored about the learner as JSON, immediately —

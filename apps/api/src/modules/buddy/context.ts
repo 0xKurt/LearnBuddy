@@ -661,6 +661,11 @@ export function buildContents(
     raw.push({ role: m.role === 'learner' ? 'user' : 'model', parts: [{ text: m.text }] });
   }
   if (tail) raw.push({ role: 'user', parts: [{ text: tail }] });
+  return mergeRoles(raw);
+}
+
+/** Consecutive messages of one role as one: the model API wants the roles to alternate. */
+export function mergeRoles(raw: readonly LlmMessage[]): LlmMessage[] {
   const merged: LlmMessage[] = [];
   for (const m of raw) {
     const last = merged[merged.length - 1];

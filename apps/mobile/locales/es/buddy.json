@@ -46,7 +46,8 @@
     "request_material_undone": "No hace falta foto: {{title}}",
     "set_voice": "Mi voz: {{voice}}, {{speed}}",
     "forget_all": "He olvidado todo lo que sabía de ti ({{count}})",
-    "offer_drill": "Propuesto: cálculo mental – «{{text}}»"
+    "offer_drill": "Propuesto: cálculo mental – «{{text}}»",
+    "start_roleplay": "Juego de rol: {{scene}}"
   },
   "area": {
     "library": "Tu material",
@@ -373,5 +374,21 @@
   "working": {
     "material": "Estoy convirtiendo tu ficha en ejercicios…",
     "session": "Estoy viendo cómo te ha ido la práctica…"
+  },
+  "roleplay": {
+    "label": "Juego de rol",
+    "plays": "Buddy hace de: {{role}}",
+    "tasks": "Tus tareas",
+    "end": "Terminar – ¿qué tal ha ido?",
+    "end_hint": "Buddy para y te dice cómo te ha ido en cada tarea.",
+    "ended": "Terminado. Mis comentarios están en la conversación.",
+    "lang": {
+      "de": "alemán",
+      "en": "inglés",
+      "fr": "francés",
+      "es": "español",
+      "it": "italiano"
+    },
+    "end_short": "Terminar"
   }
 }

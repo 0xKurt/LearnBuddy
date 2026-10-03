@@ -310,5 +310,14 @@
       "fractions": "Sommare frazioni",
       "percent": "Percentuali"
     }
+  },
+  "roleplay": {
+    "feedback_head": "Il gioco di ruolo è finito – ecco com'è andata:",
+    "point_met": "✓ {{name}}: fatto – «{{quote}}»",
+    "point_open": "○ {{name}}: non ancora",
+    "better_head": "Così suona ancora meglio:",
+    "better_line": "«{{said}}» → «{{better}}»",
+    "ended": "Va bene, chiudiamo il gioco di ruolo. Dimmi quando vuoi rifarlo.",
+    "try_in": "Prova in {{language}} – resto nel mio ruolo. Se vuoi smettere, dillo e basta."
   }
 }

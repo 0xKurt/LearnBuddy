@@ -32,6 +32,7 @@ import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard, optInRules, type OptInDecision } from '../components/buddy/DecisionCard.js';
 import { whenText } from '../components/buddy/describe.js';
 import { CaptureBar, ReadingBar, ReadyBar, ResumeBar } from '../components/buddy/SlimBar.js';
+import { RoleplayStrip } from '../components/buddy/RoleplayCard.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMaskFrom } from '../components/lb/EdgeFade.js';
 import { NoticeBubble } from '../components/buddy/NoticeBubble.js';
 import { CLOSE_INSET, TopOverlay } from '../components/buddy/TopOverlay.js';
@@ -46,7 +47,8 @@ import { Glow } from '../components/lb/Glow.js';
 import { Icon } from '../components/lb/Icon.js';
 import { headState } from '../lib/buddy/headState.js';
 import { Header } from '../components/buddy/Header.js';
-import { MenuSheet, type StartItem } from '../components/buddy/MenuSheet.js';
+import { MenuSheet } from '../components/buddy/MenuSheet.js';
+import { startItems } from '../components/buddy/startItems.js';
 import { HomeSkeleton } from '../components/lb/Skeletons.js';
 import { toast } from '../components/lb/Toast.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
@@ -526,49 +528,6 @@ export default function BuddyScreen() {
       // The PIN was for this one step, also when it failed (docs/privacy.md §PIN gate).
       if (asAdult) clearAdminToken();
     }
-  }
-
-  /**
-   * The ways to start, on the ring around Buddy (docs/UX-PRINCIPLES.md §6:
-   * examples of what Buddy does, not a feature catalog). The first one fits her
-   * situation; everything else she just says, and Buddy answers with a button.
-   */
-  /** The four ways to start, as the ⋯ menu lists them (issue #174). */
-  function orbitItems(next: BuddyHome['next']): StartItem[] {
-    const exam = next.find((i) => i.kind === 'exam');
-    return [
-      // Always "Arbeit" where she looks for it (user feedback #17); with a test planned it
-      // prepares her for that one.
-      {
-        key: 'exam',
-        icon: 'clock',
-        label: t('buddy:suggest.exam_short'),
-        onPress: () =>
-          void send(
-            exam ? t('buddy:suggest.test_message', { title: exam.title }) : t('buddy:suggest.exam'),
-          ),
-      },
-      {
-        key: 'homework',
-        icon: 'pencil',
-        label: t('buddy:suggest.homework'),
-        onPress: () => setChoice('homework'),
-      },
-      {
-        key: 'speak',
-        icon: 'mic',
-        label: t('buddy:suggest.speak'),
-        onPress: () => setTopic('speak'),
-      },
-      {
-        key: 'vocab',
-        icon: 'book',
-        label: t('buddy:suggest.vocab'),
-        onPress: () => setChoice('vocab'),
-      },
-      // "Erklär mir was" lives in the chat itself (owner decision 2026-09-28):
-      // explanations are conversation, at whatever length the question needs.
-    ];
   }
 
   /** From a choice sheet on: first let it close, then go on. */
@@ -1210,11 +1169,17 @@ export default function BuddyScreen() {
                   when there is something — an empty slot waiting to be filled would be a
                   dashboard (rule 16). Tapping opens the sheet it is about. */}
               <View
-                style={{ paddingHorizontal: SPACE.lg, paddingBottom: h.focus ? SPACE.xs : 0 }}
+                style={{
+                  paddingHorizontal: SPACE.lg,
+                  paddingBottom: h.focus || h.roleplay ? SPACE.xs : 0,
+                }}
                 // Where the conversation starts (for its fade-out under the head).
                 onLayout={(e) => setThreadTop(e.nativeEvent.layout.height)}
               >
-                {h.focus ? (
+                {/* A running roleplay takes the line: its way out stays in reach (#244). */}
+                {h.roleplay ? (
+                  <RoleplayStrip roleplay={h.roleplay} />
+                ) : h.focus ? (
                   <Pressable
                     disabled={!h.focus.material_id}
                     accessibilityRole={h.focus.material_id ? 'button' : 'text'}
@@ -1433,7 +1398,9 @@ export default function BuddyScreen() {
         visible={menuOpen}
         // Each way to start closes the sheet first: two of them open a sheet of their
         // own, and two modals in one frame do not come up on iOS.
-        start={orbitItems(h.next).map((i) => ({ ...i, onPress: () => fromMenu(i.onPress) }))}
+        start={startItems(h.next, t, { send: (text) => void send(text), setChoice, setTopic }).map(
+          (i) => ({ ...i, onPress: () => fromMenu(i.onPress) }),
+        )}
         canStart={pending === null}
         onGo={(path) => fromMenu(() => router.push(path))}
         onClose={() => setMenuOpen(false)}

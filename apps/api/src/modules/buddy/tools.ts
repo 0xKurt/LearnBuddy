@@ -69,7 +69,8 @@ import {
   type ToolOutcome,
   type UndoSpec,
 } from './toolKit.js';
-import { runOfferDrill, runOfferLearning } from './offers.js';
+import { runOfferDrill, runOfferLearning, runOpenArea } from './offers.js';
+import { runStartRoleplay } from './roleplay.js';
 
 // ─────────────── tools ───────────────
 
@@ -1345,11 +1346,6 @@ async function runScheduleCheck(
   };
 }
 
-async function runOpenArea(action: ActionOf<'open_area'>, _ctx: ToolContext): Promise<ToolOutcome> {
-  // Changes nothing: the app shows a button that opens that part of the app.
-  return { summary: { tool: 'open_area', area: action.args.area }, undo: null };
-}
-
 /** One handler per act tool (the registry in registry.ts attaches them to their schemas). */
 export const ACT_HANDLERS: {
   [K in ToolName]: (action: ActionOf<K>, ctx: ToolContext) => Promise<ToolOutcome>;
@@ -1375,6 +1371,7 @@ export const ACT_HANDLERS: {
   offer_drill: runOfferDrill,
   open_area: runOpenArea,
   schedule_check: runScheduleCheck,
+  start_roleplay: runStartRoleplay,
 };
 
 /** Reverse an applied action. Returns false when the thing changed since (no blind overwrite). */

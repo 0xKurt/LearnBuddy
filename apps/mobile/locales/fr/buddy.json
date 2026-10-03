@@ -46,7 +46,8 @@
     "request_material_undone": "Pas besoin de photo : {{title}}",
     "set_voice": "Ma voix : {{voice}}, {{speed}}",
     "forget_all": "Tout ce que je savais sur toi est oublié ({{count}})",
-    "offer_drill": "Proposé : calcul mental – « {{text}} »"
+    "offer_drill": "Proposé : calcul mental – « {{text}} »",
+    "start_roleplay": "Jeu de rôle : {{scene}}"
   },
   "area": {
     "library": "Tes documents",
@@ -373,5 +374,21 @@
   "working": {
     "material": "Je transforme ta fiche en exercices…",
     "session": "Je regarde comment s'est passé ton entraînement…"
+  },
+  "roleplay": {
+    "label": "Jeu de rôle",
+    "plays": "Buddy joue : {{role}}",
+    "tasks": "Tes tâches",
+    "end": "Terminer – ça s'est passé comment ?",
+    "end_hint": "Buddy arrête et te dit comment s'est passée chaque tâche.",
+    "ended": "Terminé. Le retour est dans la conversation.",
+    "lang": {
+      "de": "allemand",
+      "en": "anglais",
+      "fr": "français",
+      "es": "espagnol",
+      "it": "italien"
+    },
+    "end_short": "Terminer"
   }
 }

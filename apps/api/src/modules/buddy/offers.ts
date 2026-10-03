@@ -1,6 +1,7 @@
 // Buddy's offers (docs/architecture.md §Tools): a button in the conversation that she starts with a
-// tap — something to learn (`offer_learning`) or a Kopfrechnen round (`offer_drill`, #243). They
-// change nothing; what code enforces is that the button can really start what it promises.
+// tap — something to learn (`offer_learning`), a Kopfrechnen round (`offer_drill`, #243) or a part
+// of the app to open (`open_area`). They change nothing; what code enforces is that the button can
+// really start what it promises.
 
 import { DrillSpec, TEST_MINUTES, TestMinutes } from '@learnbuddy/shared-types/contracts';
 
@@ -167,4 +168,12 @@ export async function runOfferDrill(
     },
     undo: null,
   };
+}
+
+/** A button that opens a part of the app she asks for; it changes nothing (docs §Tools). */
+export async function runOpenArea(
+  action: ActionOf<'open_area'>,
+  _ctx: ToolContext,
+): Promise<ToolOutcome> {
+  return { summary: { tool: 'open_area', area: action.args.area }, undo: null };
 }
