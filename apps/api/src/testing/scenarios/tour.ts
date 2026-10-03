@@ -196,5 +196,7 @@ export function scriptTour(llm: ScriptedGateway): void {
       },
     },
   );
-  // Buddy's check after this practice waits: the checks' default (checks.ts).
+  // No check is scripted for the tour: its sheet's practice comes from the check's fixed
+  // fallback (checks.ts). The "wait" that stood queued here never reached the tour — the first
+  // spec to finish a practice took it.
 }

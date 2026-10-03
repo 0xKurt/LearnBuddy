@@ -142,7 +142,17 @@ export function scriptCoreLoop(llm: ScriptedGateway): void {
           revealed_answer: false,
         };
   });
-  // 5 · after practice: nothing to add right now — the checks' default (checks.ts).
+  // 5 · after practice: nothing to add right now — keyed by this learner's test and the
+  // finished practice, so another spec's practice is not answered with it (checks.ts).
+  scriptChecks({
+    when: /^(?=[\s\S]*"Mathearbeit Brüche")(?=[\s\S]*the learner just finished practice)/,
+    answer: () => ({
+      disposition: 'wait',
+      reason: 'Just practised; nothing to add.',
+      actions: [],
+      outreach: null,
+    }),
+  });
   // 6 · "Mach die Übungen bitte kürzer."
   scriptTurns({
     when: /bitte kürzer/i,
