@@ -15,7 +15,8 @@
     "placeholder_dictation": "Escribe lo que oyes – sin micro",
     "label": "Tu respuesta",
     "placeholder": "Tu respuesta…",
-    "unit_hint": "Respuesta en {{unit}}"
+    "unit_hint": "Respuesta en {{unit}}",
+    "check_waits": "Solo cuando haya algo en el campo."
   },
   "back_to_buddy": "Volver con Buddy",
   "bar": {
@@ -202,7 +203,8 @@
     "placed": "{{what}} {{where}}, compás {{bar}}",
     "moved": "{{what}} {{where}}",
     "rest_placed": "{{what}}, compás {{bar}}",
-    "rest_of": "Poner: {{value}}"
+    "rest_of": "Poner: {{value}}",
+    "check_waits": "Solo cuando cada compás tenga algo."
   },
   "summary": {
     "title": "¡Lo has conseguido!",

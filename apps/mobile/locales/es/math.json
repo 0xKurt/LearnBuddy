@@ -407,7 +407,20 @@
     "rods_one": "{{count}} barra de diez",
     "rods_other": "{{count}} barras de diez",
     "cubes_one": "{{count}} cubo unidad",
-    "cubes_other": "{{count}} cubos unidad"
+    "cubes_other": "{{count}} cubos unidad",
+    "tree_prob": "Diagrama de árbol",
+    "tree_plain": "Árbol",
+    "tree_root": "inicio",
+    "tree_branch": "Rama de {{from}} a {{to}}",
+    "tree_branch_label": "Rama de {{from}} a {{to}}: {{label}}",
+    "tree_unknown": "signo de interrogación",
+    "pedigree": "Árbol genealógico de {{gens}} generaciones",
+    "pedigree_man": "Persona {{n}}, hombre, generación {{gen}}",
+    "pedigree_woman": "Persona {{n}}, mujer, generación {{gen}}",
+    "pedigree_affected": "afectada",
+    "pedigree_child": "hija o hijo de {{fa}} y {{mo}}",
+    "automaton": "Autómata con estado inicial {{start}}, estado final: {{finals}}",
+    "automaton_move": "Transición de {{from}} a {{to}} con {{symbols}}"
   },
   "keys": {
     "row": "Símbolos matemáticos",

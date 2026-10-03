@@ -15,7 +15,8 @@
     "placeholder_dictation": "Write what you hear – no mic here",
     "label": "Your answer",
     "placeholder": "Your answer …",
-    "unit_hint": "Answer in {{unit}}"
+    "unit_hint": "Answer in {{unit}}",
+    "check_waits": "Only once there is something in the field."
   },
   "back_to_buddy": "Back to Buddy",
   "bar": {
@@ -202,7 +203,8 @@
     "placed": "{{what}} {{where}}, bar {{bar}}",
     "moved": "{{what}} {{where}}",
     "rest_placed": "{{what}}, bar {{bar}}",
-    "rest_of": "Place a {{value}}"
+    "rest_of": "Place a {{value}}",
+    "check_waits": "Only once every bar has something in it."
   },
   "summary": {
     "title": "Done!",

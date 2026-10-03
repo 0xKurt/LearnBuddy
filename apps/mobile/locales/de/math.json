@@ -407,7 +407,20 @@
     "rods_one": "{{count}} Zehnerstange",
     "rods_other": "{{count}} Zehnerstangen",
     "cubes_one": "{{count}} Einerwürfel",
-    "cubes_other": "{{count}} Einerwürfel"
+    "cubes_other": "{{count}} Einerwürfel",
+    "tree_prob": "Baumdiagramm",
+    "tree_plain": "Baum",
+    "tree_root": "Start",
+    "tree_branch": "Ast von {{from}} zu {{to}}",
+    "tree_branch_label": "Ast von {{from}} zu {{to}}: {{label}}",
+    "tree_unknown": "Fragezeichen",
+    "pedigree": "Stammbaum über {{gens}} Generationen",
+    "pedigree_man": "Person {{n}}, Mann, Generation {{gen}}",
+    "pedigree_woman": "Person {{n}}, Frau, Generation {{gen}}",
+    "pedigree_affected": "betroffen",
+    "pedigree_child": "Kind von {{fa}} und {{mo}}",
+    "automaton": "Automat mit Startzustand {{start}}, Endzustand: {{finals}}",
+    "automaton_move": "Übergang von {{from}} nach {{to}} mit {{symbols}}"
   },
   "keys": {
     "row": "Mathe-Zeichen",

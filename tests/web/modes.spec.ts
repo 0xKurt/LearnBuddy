@@ -133,7 +133,7 @@ test('learning modes: explain, homework help without the solution, practice with
   expect(grown, `the gap grows with the answer (${narrow} → ${grown}pt)`).toBeGreaterThan(narrow);
   await page.getByLabel('Deine Antwort').fill('der');
   await expect(page.getByLabel(/Lücke, darin: der/)).toBeVisible();
-  // The focus ring is the answer pill's, not the browser's black box around the bare field.
+  // The focus ring is the answer field's border, not the browser's black box around the bare text.
   expect(
     await page.getByLabel('Deine Antwort').evaluate((el) => getComputedStyle(el).outlineWidth),
   ).toBe('0px');
@@ -179,12 +179,13 @@ test('learning modes: explain, homework help without the solution, practice with
   // Typed math is previewed as it will be read — named, not divided (issue #175).
   await page.getByLabel('Deine Antwort').fill('3/4');
   await expect(page.getByLabel('Vorschau deiner Antwort: 3 Viertel')).toBeVisible();
-  // The worst case of the pinned bar: math keys (the field has focus), the preview under
-  // the pill, "Prüfen". What it takes, the question loses on a small phone with the
-  // keyboard open — help is a chip in the conversation, not a row down here (issue #16).
+  // The pinned bar holds "Prüfen" and nothing else (#310): the field, its preview and the math
+  // keys stand in the answer slot under the question. What the bar takes, the question loses on
+  // a small phone with the keyboard open — help is a chip in the conversation, not a row down
+  // here (issue #16): its top padding, the 48 pt button, the room under it.
   await page.setViewportSize({ width: 360, height: 740 });
   const stack = await bottomStack(page, 'practice-typed-math');
-  expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(200);
+  expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(72);
   await expect(page.getByText('Welche zwei Längen kennst du vom Rechteck?')).toBeVisible();
 
   // ── Der Rechenweg wird in der App getippt, nicht nur von den Tests geschickt (issue #221) ──
@@ -226,9 +227,10 @@ test('learning modes: explain, homework help without the solution, practice with
   // line is a hint, not a solution, so it holds here too (issue #274).
   await expect(page.getByText('Bis Zeile 1 stimmt alles', { exact: false })).toBeVisible();
   // A near miss, not a wrong answer: her way is mostly right, so the question stays OPEN — the
-  // answer field is still there and so is the hint. Not „Prüfen": that button only exists while
-  // something is typed, and the field was emptied when the answer went out.
+  // answer field is still there and so is the hint. „Prüfen" stands in its bar and waits: the
+  // field was emptied when the answer went out (#310: one bar for every form).
   await expect(page.getByLabel('Deine Antwort')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Einen Tipp bekommen' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toHaveCount(0);
@@ -604,8 +606,8 @@ test('a written path: three lines in, the first broken step named (issue #221)',
 
   // She writes it again; a sound path is judged on the value it arrives at.
   // pathShots ends by switching the colour scheme back, and a scheme change rebuilds the
-  // tree: a fill that lands during that rebuild is wiped, the pill shows the mic instead of
-  // "Prüfen", and the click waits until the test times out (CI, 02.10.2026). Fill until
+  // tree: a fill that lands during that rebuild is wiped, "Prüfen" waits for an answer that is
+  // not there, and the click waits until the test times out (CI, 02.10.2026). Fill until
   // the field holds the path, then check.
   const corrected = '2x + 3 = 7\n2x = 4\nx = 2';
   await expect(async () => {

@@ -77,6 +77,7 @@ import {
   type StaffDraft,
 } from '../../components/practice/StaffAnswer.js';
 import { FreeSpace, FreeSpaceReport } from '../../components/practice/FreeSpace.js';
+import { AnswerShell } from '../../components/practice/AnswerShell.js';
 import { StructuredAnswer } from '../../components/practice/StructuredAnswer.js';
 import { TopEdgeFade, topEdgeMask, topEdgeMaskFrom } from '../../components/lb/EdgeFade.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
@@ -1219,62 +1220,37 @@ export default function PracticeScreen() {
                 />
               </View>
             ) : null}
-            {/* Die Notenzeile, auf die sie schreibt (issue #226). Sie steht, wo sonst eine Anordnung
-            oder das Antwortfeld steht, und gibt als Erstes Platz her: die gemessene Höhe
-            und was sie kostet, stehen in `StaffAnswer.tsx`. */}
+            {/* Die Notenzeile, auf die sie schreibt (issue #226), in der Antworthülle wie jede
+            andere Form (issue #310): direkt unter der Frage, darunter der freie Platz, unten
+            „Prüfen“ in derselben Leiste wie bei Tabelle, Ordnen und Zuordnen. Kein ScrollView
+            (issue #275): die Zeile nimmt ihre Höhe aus dem Platz, der da ist (`StaffAnswer`),
+            die Tasten darunter sind fest — und nie weniger als die engste Zeile mit beiden
+            Tastenreihen (`keeps`): fehlt der Platz, sagt es der Walkthrough (`fit.ts`), statt
+            dass die Tasten still unter „Prüfen" rutschen. */}
             {staff ? (
-              // Kein ScrollView (issue #275): die Zeile nimmt ihre Höhe aus dem Platz, der da ist
-              // (`StaffAnswer`), die Tasten darunter sind fest — und nie weniger als die engste
-              // Zeile mit beiden Tastenreihen: fehlt der Platz, sagt es der Walkthrough (`fit.ts`),
-              // statt dass die Tasten still unter „Prüfen" rutschen.
-              <View
-                testID="answer-staff"
-                style={{
-                  flexShrink: 1,
-                  minHeight: STAFF_ANSWER_MIN,
-                  paddingHorizontal: SPACE.lg,
-                }}
-              >
-                <StaffAnswer
-                  key={item.id}
-                  surface={staff}
-                  answer={staffAnswer}
-                  disabled={locked}
-                  onChange={(next) => setWritten({ itemId: item.id, answer: next })}
-                />
-              </View>
-            ) : null}
-            {/* The free room (issue #286): below the way to answer, above what is pinned. A form in
-            the answer shell carries its own, between its answer and "Prüfen" (`AnswerShell`). */}
-            {open && item.task_view ? null : <FreeSpace />}
-            {/* The fraction bar she works with (issue #162). It sits where her finger already
-            is — right above the field — and it writes into that very field, so "Prüfen",
-            the math keys and typing stay exactly what they were. A picked bar goes out at
-            once, like a choice. */}
-            {barSurface ? (
-              <View style={{ paddingHorizontal: 16, paddingTop: 8 }} testID="answer-surface">
-                <FractionBarAnswer
-                  surface={barSurface}
-                  value={text}
-                  disabled={locked}
-                  onChange={(next) => {
-                    setShadedAnswer({ itemId: item.id, text: next });
-                    setText(next);
-                  }}
-                  onPick={(picked) => void answer(item.id, { text: picked, via: 'tapped' }, picked)}
-                />
-              </View>
-            ) : null}
-            {staff ? (
-              <BottomBar>
-                <Btn
-                  size="lg"
-                  pill
-                  full
-                  // Nichts zu prüfen, solange ein Takt noch leer ist: eine halb geschriebene Zeile
-                  // wäre eine Antwort, die noch nicht gegeben wurde.
-                  disabled={locked || !staffComplete(staffAnswer)}
-                  onPress={() => {
+              <AnswerShell
+                keeps={STAFF_ANSWER_MIN + SPACE.sm}
+                answer={
+                  <View
+                    testID="answer-staff"
+                    style={{ flexShrink: 1, minHeight: STAFF_ANSWER_MIN }}
+                  >
+                    <StaffAnswer
+                      key={item.id}
+                      surface={staff}
+                      answer={staffAnswer}
+                      disabled={locked}
+                      onChange={(next) => setWritten({ itemId: item.id, answer: next })}
+                    />
+                  </View>
+                }
+                action={{
+                  // Nichts zu prüfen, solange ein Takt noch leer ist: eine halb geschriebene
+                  // Zeile wäre eine Antwort, die noch nicht gegeben wurde.
+                  ready: staffComplete(staffAnswer),
+                  disabled: locked,
+                  waitsHint: t('practice:staff.check_waits'),
+                  onPress: () => {
                     tapped('check');
                     const line = staffLineOf(staffAnswer);
                     // Kein `via: 'tapped'`, obwohl sie getippt hat: `via` unterscheidet
@@ -1284,12 +1260,14 @@ export default function PracticeScreen() {
                     // Klassenarbeit verlangt — mit einem Stift statt mit dem Finger. Dasselbe
                     // Argument, das `summary.ts` für die mehrteiligen Antworten führt.
                     void answer(item.id, { text: line }, line);
-                  }}
-                >
-                  {t('practice:check')}
-                </Btn>
-              </BottomBar>
+                  },
+                }}
+              />
             ) : null}
+            {/* The free room (issue #286) for the forms not in the answer shell yet — the options,
+            the pronunciation panel, "Weiter": below the way to answer, above what is pinned. A
+            form in the shell carries its own, between its answer and "Prüfen" (`AnswerShell`). */}
+            {(open && item.task_view) || staff || typed ? null : <FreeSpace />}
             {typed ? (
               <AnswerComposer
                 kind={item.kind}
@@ -1301,6 +1279,27 @@ export default function PracticeScreen() {
                 disabled={locked}
                 onChange={setText}
                 onCheck={check}
+                // The fraction bar she works with (issue #162). It stands right above the field
+                // and writes into that very field, so "Prüfen", the math keys and typing stay
+                // exactly what they were. A picked bar goes out at once, like a choice.
+                surface={
+                  barSurface ? (
+                    <View testID="answer-surface">
+                      <FractionBarAnswer
+                        surface={barSurface}
+                        value={text}
+                        disabled={locked}
+                        onChange={(next) => {
+                          setShadedAnswer({ itemId: item.id, text: next });
+                          setText(next);
+                        }}
+                        onPick={(picked) =>
+                          void answer(item.id, { text: picked, via: 'tapped' }, picked)
+                        }
+                      />
+                    </View>
+                  ) : null
+                }
               />
             ) : null}
             {open && choices && voiceOn ? (

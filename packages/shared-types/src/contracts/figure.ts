@@ -6,6 +6,7 @@
 import { z } from 'zod';
 
 import { StaffFigure } from './staff.js';
+import { AutomatonFigure, PedigreeFigure, TreeFigure } from './tree.js';
 
 const Label = z.string().trim().min(1).max(40);
 const Num = z.number().finite();
@@ -416,7 +417,8 @@ export const CHART_TYPES = [
  * `apps/api/src/modules/practice/staff.ts`, which computes the question, the drawing and the
  * key from one reviewed task.
  */
-export const ModelFigure = z.discriminatedUnion('type', [
+/** The figures the model may write — one list, shared with `Figure` below. */
+const MODEL_FIGURES = [
   FractionFigure,
   NumberLineFigure,
   FunctionPlotFigure,
@@ -435,31 +437,16 @@ export const ModelFigure = z.discriminatedUnion('type', [
   MoneyFigure,
   DotFieldFigure,
   BaseTenFigure,
-]);
+  TreeFigure,
+  PedigreeFigure,
+  AutomatonFigure,
+] as const;
+
+export const ModelFigure = z.discriminatedUnion('type', [...MODEL_FIGURES]);
 export type ModelFigure = z.infer<typeof ModelFigure>;
 
 /** Every figure a question can SHOW (`ItemView.figure`) — the model's figures and the note line. */
-export const Figure = z.discriminatedUnion('type', [
-  FractionFigure,
-  NumberLineFigure,
-  FunctionPlotFigure,
-  BarChartFigure,
-  GeometryFigure,
-  TableFigure,
-  MoleculeFigure,
-  LineChartFigure,
-  ClimateChartFigure,
-  PieChartFigure,
-  BoxPlotFigure,
-  HistogramFigure,
-  ScatterPlotFigure,
-  PyramidFigure,
-  ClockFigure,
-  MoneyFigure,
-  DotFieldFigure,
-  BaseTenFigure,
-  StaffFigure,
-]);
+export const Figure = z.discriminatedUnion('type', [...MODEL_FIGURES, StaffFigure]);
 export type ChartFigure = Extract<Figure, { type: (typeof CHART_TYPES)[number] }>;
 export type PrimaryFigure = Extract<Figure, { type: (typeof PRIMARY_TYPES)[number] }>;
 export type Figure = z.infer<typeof Figure>;

@@ -32,6 +32,7 @@ import { scriptPrimary } from './scenarios/primary.js';
 import { scriptTimedTest } from './scenarios/timedTest.js';
 import { scriptRoleplay } from './scenarios/roleplay.js';
 import { scriptTour } from './scenarios/tour.js';
+import { scriptTrees } from './scenarios/trees.js';
 import { installChecks } from './scenarios/checks.js';
 import { installGenerations } from './scenarios/generations.js';
 import { installTurns } from './scenarios/turns.js';
@@ -70,6 +71,7 @@ async function main(): Promise<void> {
     scriptLearningModes(scripted);
     scriptTour(scripted);
     scriptFigures();
+    scriptTrees();
     scriptCloze();
     scriptDrill();
     scriptRoleplay(scripted);
