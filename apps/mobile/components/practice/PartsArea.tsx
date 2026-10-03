@@ -1,5 +1,5 @@
-// The area a structured answer is arranged in (issues #228–#230): it takes the room left between
-// the question and the pinned "Prüfen", and no more.
+// The floor under a structured answer (issues #228–#230): the parts scroll inside themselves
+// rather than be drawn over the question, if they ever had to.
 //
 // The question card never shrinks and 44 pt per touch target is the floor, so when an allowed
 // task is taller than the room — twelve elements still above four groups on a 360×740 phone, an
@@ -11,28 +11,20 @@
 // moment the parts would have to be scrolled. The scroll is the floor under a mistake, not a
 // feature (rule 16).
 //
-// `BottomBar` with "Prüfen" stays outside, pinned — it is never scrolled away.
+// Where it stands, the room around it and "Prüfen" are the answer shell's (`AnswerShell`,
+// issue #310): this is only the floor.
 
 import type { ReactNode } from 'react';
 import { ScrollView } from 'react-native';
 
-import { SPACE } from '../../lib/theme/space.js';
-import { FreeSpace } from './FreeSpace.js';
-
 export function PartsArea({ children }: { children: ReactNode }) {
-  // The parts stand right under the question; the free room collects between them and the
-  // pinned "Prüfen" (`FreeSpace`, issue #286), not as a hole above the parts.
   return (
-    <>
-      <ScrollView
-        testID="scroll-parts"
-        style={{ flexGrow: 0, flexShrink: 1 }}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: SPACE.lg, paddingTop: SPACE.sm }}
-      >
-        {children}
-      </ScrollView>
-      <FreeSpace />
-    </>
+    <ScrollView
+      testID="scroll-parts"
+      style={{ flexGrow: 0, flexShrink: 1 }}
+      keyboardShouldPersistTaps="handled"
+    >
+      {children}
+    </ScrollView>
   );
 }

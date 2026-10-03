@@ -24,10 +24,11 @@ import { speakMathText } from '../../lib/math/speak.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { Btn } from '../lb/Btn.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
-import { BottomBar } from './BottomBar.js';
+import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
 
 /**
@@ -83,8 +84,6 @@ function PlaceBadge({ n }: { n: number | null }) {
   );
 }
 
-/** The radius of a place: the same as a small `Btn`, so a tile drops into it exactly. */
-const SLOT_RADIUS = 14;
 /** Short things (numbers, single short words) stand four to a row. */
 const GRID_COLS = 4;
 /** Plain characters a thing may have to stand in the grid (a fraction counts as its digits). */
@@ -176,7 +175,8 @@ export function OrderAnswer({ view, draftKey, disabled, onSubmit }: Props) {
       importantForAccessibility="no-hide-descendants"
       style={{
         minHeight: TOUCH,
-        borderRadius: SLOT_RADIUS,
+        // A tile's corners, like the small `Btn` that drops into it.
+        borderRadius: RADIUS.tile,
         borderWidth: 1.5,
         borderStyle: 'dashed',
         borderColor: palette.field,
@@ -199,109 +199,107 @@ export function OrderAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const slots = view.elements.map((_, i) => placed[i] ?? null);
 
   return (
-    <>
-      <PartsArea>
-        <View
-          style={{ gap: SPACE.md }}
-          onLayout={(e) => setWidth(Math.floor(e.nativeEvent.layout.width))}
-        >
-          {/* The one line of instruction, only until she has started. */}
-          {placed.length === 0 ? (
-            <Text style={[TYPE.small, { color: palette.ink2 }]}>{t('order.how')}</Text>
-          ) : null}
-          {grid ? (
-            <>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
-                {slots.map((id, i) => (
-                  <View key={`slot-${i}`} style={{ width: cell, gap: SPACE.xs }}>
-                    {placeNumber(i + 1)}
-                    {id === null ? emptySlot : tile(id, i + 1)}
-                  </View>
-                ))}
-              </View>
-              {pool.length > 0 ? (
+    <AnswerShell
+      answer={
+        <PartsArea>
+          <View
+            style={{ gap: SPACE.md }}
+            onLayout={(e) => setWidth(Math.floor(e.nativeEvent.layout.width))}
+          >
+            {/* The one line of instruction, only until she has started. */}
+            {placed.length === 0 ? (
+              <Text style={[TYPE.small, { color: palette.ink2 }]}>{t('order.how')}</Text>
+            ) : null}
+            {grid ? (
+              <>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
-                  {pool.map((e) => (
-                    <View key={e.id} style={{ width: cell }}>
-                      {tile(e.id, null)}
+                  {slots.map((id, i) => (
+                    <View key={`slot-${i}`} style={{ width: cell, gap: SPACE.xs }}>
+                      {placeNumber(i + 1)}
+                      {id === null ? emptySlot : tile(id, i + 1)}
                     </View>
                   ))}
                 </View>
-              ) : null}
-            </>
-          ) : (
-            // Steps (text): as they were (the owner, #286: these look fine) — every step stays
-            // where it stands and gets its place number.
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
-              {view.elements.map((e) => {
-                const at = placed.indexOf(e.id);
-                const n = at === -1 ? null : at + 1;
-                const spoken = speakMathText(e.text, words);
-                return (
-                  // The wrapper keeps a long step inside the screen: it may take the whole line
-                  // and wrap, a short number sits next to its neighbours.
-                  <View key={e.id} style={{ maxWidth: '100%' }}>
-                    <Btn
-                      variant={n === null ? 'outline' : 'soft'}
-                      size="sm"
-                      wrap
-                      compact
-                      disabled={disabled}
-                      onPress={() =>
-                        keep((now) => JSON.stringify(placeOrTake(placedFrom(now, ids), e.id)))
-                      }
-                      accessibilityLabel={
-                        n === null
-                          ? t('order.element_open', { text: spoken })
-                          : t('order.element_placed', { text: spoken, n })
-                      }
-                      accessibilityHint={
-                        n === null
-                          ? t('order.hint_open', { n: placed.length + 1 })
-                          : t('order.hint_placed')
-                      }
-                      label={
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-                          <PlaceBadge n={n} />
-                          <MathText
-                            text={e.text}
-                            accessible={false}
-                            style={{
-                              flexShrink: 1,
-                              color: n === null ? palette.ink : palette.primaryDk,
-                              fontSize: 15,
-                              lineHeight: 20,
-                              fontWeight: '600',
-                            }}
-                          />
-                        </View>
-                      }
-                    >
-                      {spoken}
-                    </Btn>
+                {pool.length > 0 ? (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
+                    {pool.map((e) => (
+                      <View key={e.id} style={{ width: cell }}>
+                        {tile(e.id, null)}
+                      </View>
+                    ))}
                   </View>
-                );
-              })}
-            </View>
-          )}
-        </View>
-      </PartsArea>
-      <BottomBar>
-        <Btn
-          pill
-          full
-          disabled={disabled || !complete}
-          onPress={() =>
-            onSubmit(
-              { type: 'order', order: placed },
-              placed.map((id) => textOf.get(id) ?? '').join(' → '),
-            )
-          }
-          accessibilityHint={complete ? undefined : t('order.check_waits')}
-        >
-          {t('check')}
-        </Btn>
-      </BottomBar>
-    </>
+                ) : null}
+              </>
+            ) : (
+              // Steps (text): as they were (the owner, #286: these look fine) — every step stays
+              // where it stands and gets its place number.
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
+                {view.elements.map((e) => {
+                  const at = placed.indexOf(e.id);
+                  const n = at === -1 ? null : at + 1;
+                  const spoken = speakMathText(e.text, words);
+                  return (
+                    // The wrapper keeps a long step inside the screen: it may take the whole line
+                    // and wrap, a short number sits next to its neighbours.
+                    <View key={e.id} style={{ maxWidth: '100%' }}>
+                      <Btn
+                        variant={n === null ? 'outline' : 'soft'}
+                        size="sm"
+                        wrap
+                        compact
+                        disabled={disabled}
+                        onPress={() =>
+                          keep((now) => JSON.stringify(placeOrTake(placedFrom(now, ids), e.id)))
+                        }
+                        accessibilityLabel={
+                          n === null
+                            ? t('order.element_open', { text: spoken })
+                            : t('order.element_placed', { text: spoken, n })
+                        }
+                        accessibilityHint={
+                          n === null
+                            ? t('order.hint_open', { n: placed.length + 1 })
+                            : t('order.hint_placed')
+                        }
+                        label={
+                          <View
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}
+                          >
+                            <PlaceBadge n={n} />
+                            <MathText
+                              text={e.text}
+                              accessible={false}
+                              style={{
+                                flexShrink: 1,
+                                color: n === null ? palette.ink : palette.primaryDk,
+                                fontSize: 15,
+                                lineHeight: 20,
+                                fontWeight: '600',
+                              }}
+                            />
+                          </View>
+                        }
+                      >
+                        {spoken}
+                      </Btn>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        </PartsArea>
+      }
+      action={{
+        ready: complete,
+        disabled,
+        onPress: () =>
+          onSubmit(
+            { type: 'order', order: placed },
+            placed.map((id) => textOf.get(id) ?? '').join(' → '),
+          ),
+        waitsHint: t('order.check_waits'),
+      }}
+    />
   );
 }

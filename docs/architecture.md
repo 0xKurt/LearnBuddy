@@ -2057,7 +2057,7 @@ shrinks and 44 pt per touch target is the floor, so the largest task the contrac
 the smallest phone as it is — the maxima of a match are measured, not chosen (below). While a
 structured surface is shown, the parts stand right under the question and the conversation; the
 newest turn (Buddy's reply after a check) always stays visible, and the free room collects between
-the parts and "Prüfen" (`FreeSpace` inside `PartsArea`; the shell, #286).
+the parts and "Prüfen" (`FreeSpace` in the answer shell, #286, #310 — see below).
 The parts stand in a scroll view only as the floor under a mistake: its testID `scroll-parts` is
 not one `tests/web/fit.ts` allows, so a walkthrough shot fails the moment the parts would have to
 be scrolled. (Before the floor, a tall arrangement was drawn over the question — found in the shots
@@ -2103,7 +2103,7 @@ the turn in reading order ("6 · 8 · 20").
 
 App: `TableAnswer.tsx` shows the table as in the exercise book (a wall centred, brick on brick);
 each gap is a small field, Enter goes to the next gap and in the last one checks; the math keys
-stand above "Prüfen" while a number cell has the focus. Her cells are kept in the draft, so after
+stand right under the table (the answer shell's keys slot, #310) while a number cell has the focus. Her cells are kept in the draft, so after
 a wrong check she changes only the cell named. The table is as wide as the screen; only columns
 with words to type can make it wider, and only then does it scroll sideways, inside itself.
 
@@ -3393,7 +3393,20 @@ The practice screen (issue #286) stands the question (with its drawing scaled to
 conversation about it and the way to answer together at the top, in that order; the free room
 collects BELOW the way to answer (`components/practice/FreeSpace.tsx`), above what is pinned
 (the answer field, "Prüfen", "Weiter"). Before, the conversation took all free room and the way
-to answer sat at the bottom, which left a hole under the card with a lonely "Tipp" in it. The
+to answer sat at the bottom, which left a hole under the card with a lonely "Tipp" in it.
+**The answer shell** (issue #310, `components/practice/AnswerShell.tsx`) holds an answer and its
+action in fixed slots: the answer right under the question, optional keys for what she types
+directly under it, the free room, and "Prüfen" (`CheckBar.tsx`: one full-width pill in the pinned bar,
+waiting until the form says its answer is complete). A form fills the slots and decides nothing
+about place, spacing or the look of its action. Order, match, table and cloze are in it; the typed
+field, the note line and the voice bar follow (#310 steps 3–5) — owner's decision 03.10.: the typed
+field too stands under the question, with "Prüfen" in the same bar. A tile that answers by a tap is
+`components/lb/AnswerTile.tsx`; corners come from `lib/theme/radius.ts`. Guarded twice: a source
+test (`apps/mobile/lib/__tests__/answerShell.test.ts`) fails when a form brings its own bar,
+spacer, "Prüfen", keyboard handling or shadowed tile (the forms not moved yet are listed with the
+step that moves them, and the list only shrinks), and the walkthrough measures at every shot with
+an answer slot that at most one Tipp row (44 pt) stands empty above it, the free room lies under
+it and "Prüfen" is lowest (`answerPlace` in `tests/web/fit.ts`). The
 conversation shows WHOLE turns only (`threadRoom` in `lib/practice/threadRoom.ts`): everything when it
 fits into its box plus the free room, otherwise from the earliest turn whose rest still fits,
 so at rest the top edge lies in the gap above a whole turn and nothing is cut under the card.

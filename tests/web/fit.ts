@@ -51,6 +51,9 @@ export async function a11y(page: Page, name: string): Promise<string[]> {
     .map((f) => `${f.id} (${f.nodes}×): ${f.help}`);
 }
 
+/** The Tipp row's height: the most that may stand empty between the question and the answer. */
+const TOUCH = 44;
+
 export const PHONES = [
   { width: 390, height: 844 }, // iPhone 12–15
   { width: 360, height: 740 }, // small Android
@@ -105,6 +108,73 @@ export async function overflows(page: Page): Promise<Overflow[]> {
   });
 }
 
+/** Where the answer stands (issue #310): the empty band above it, and what lies below it. */
+export type AnswerPlace = {
+  /** From the lowest thing drawn above the answer slot to the slot's top. */
+  band: number;
+  /** Every free room lies below the answer (and its keys). */
+  spacerBelow: boolean;
+  /** "Prüfen" is the lowest of answer, keys, free room and action. */
+  actionLowest: boolean;
+};
+
+/**
+ * The one rule of the answer shell, measured (issue #310 §3.4, rule 0): the answer stands
+ * directly under the question, its Tipp row and the conversation — no hole in between, at most
+ * one Tipp row (TOUCH) — the free room collects under it, and "Prüfen" is lowest. Null where no
+ * answer slot is on screen (a form not in the shell yet, an answered question, any other screen).
+ */
+export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
+  return page.evaluate(() => {
+    const slot = document.querySelector<HTMLElement>('[data-testid="answer-slot"]');
+    if (!slot) return null;
+    const at = slot.getBoundingClientRect();
+    if (at.height === 0 || at.width === 0) return null;
+    // The lowest thing drawn above the slot: text, a picture, a control — as far as its scroll
+    // box shows it (a turn scrolled away above the conversation's edge is not drawn there).
+    let above = -Infinity;
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
+      if (slot.contains(el) || el.contains(slot)) continue;
+      const drawn =
+        Array.from(el.childNodes).some(
+          (n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').trim() !== '',
+        ) ||
+        ['IMG', 'CANVAS', 'svg'].includes(el.tagName) ||
+        el.getAttribute('role') === 'button';
+      if (!drawn) continue;
+      const style = getComputedStyle(el);
+      if (style.visibility === 'hidden' || style.opacity === '0') continue;
+      const box = el.getBoundingClientRect();
+      if (box.height === 0 || box.width === 0) continue;
+      if (box.right <= at.left || box.left >= at.right) continue;
+      let top = box.top;
+      let bottom = box.bottom;
+      for (let p = el.parentElement; p; p = p.parentElement) {
+        if (!['auto', 'scroll', 'hidden'].includes(getComputedStyle(p).overflowY)) continue;
+        const clip = p.getBoundingClientRect();
+        top = Math.max(top, clip.top);
+        bottom = Math.min(bottom, clip.bottom);
+      }
+      if (bottom <= top || bottom > at.top + 1) continue;
+      above = Math.max(above, bottom);
+    }
+    const boxOf = (id: string) =>
+      Array.from(document.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`))
+        .map((el) => el.getBoundingClientRect())
+        .filter((b) => b.height > 0 || id === 'free-space');
+    const keys = boxOf('answer-keys');
+    const answerEnd = Math.max(at.bottom, ...keys.map((b) => b.bottom));
+    const spacers = boxOf('free-space');
+    const actions = boxOf('answer-action');
+    const lowestBefore = Math.max(answerEnd, ...spacers.map((b) => b.bottom));
+    return {
+      band: Math.round(above === -Infinity ? 0 : at.top - above),
+      spacerBelow: spacers.every((b) => b.top >= answerEnd - 1),
+      actionLowest: actions.every((b) => b.top >= lowestBefore - 1),
+    };
+  });
+}
+
 /**
  * Waits until the screen stops changing: an entrance, a verdict or the summary's arrival has
  * finished, so a shot never keeps an element caught half-faded mid-animation. What moves
@@ -151,7 +221,20 @@ export async function shot(
     await settle(page);
     const here = await overflows(page);
     found.push(...here);
-    appendFileSync(REPORT, `${JSON.stringify({ name, phone: phone.width, overflows: here })}\n`);
+    const place = await answerPlace(page);
+    appendFileSync(
+      REPORT,
+      `${JSON.stringify({ name, phone: phone.width, overflows: here, ...(place ? { place } : {}) })}\n`,
+    );
+    if (place) {
+      // One rule for every form in the answer shell (issue #310): no hole above the answer.
+      expect(
+        place.band,
+        `${name} @${phone.width}: empty band above the answer`,
+      ).toBeLessThanOrEqual(TOUCH);
+      expect(place.spacerBelow, `${name} @${phone.width}: free room under the answer`).toBe(true);
+      expect(place.actionLowest, `${name} @${phone.width}: "Prüfen" lowest`).toBe(true);
+    }
     await page.screenshot({
       path: join(SHOTS, phone.width === 390 ? `${name}.png` : `${name}-${phone.width}.png`),
     });

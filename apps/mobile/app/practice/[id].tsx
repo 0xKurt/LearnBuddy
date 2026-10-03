@@ -1201,12 +1201,12 @@ export default function PracticeScreen() {
                 />
               </View>
             ) : null}
-            {/* A structured item's parts (issues #228–#230): one surface per kind, each with its
-            own "Prüfen" in the pinned bar and its arrangement in a draft, so a theme switch
-            (a remount) keeps it. Keyed by the question, so a new one starts empty. */}
+            {/* A structured item's parts (issues #228–#230): one form per kind in the answer
+            shell (answer, free room, "Prüfen" — `AnswerShell`, issue #310), its arrangement in a
+            draft, so a theme switch (a remount) keeps it. Keyed by the question, so a new one
+            starts empty. */}
             {open && item.task_view ? (
               <View
-                testID="answer-surface"
                 style={{ flexGrow: 1, flexShrink: 1, minHeight: 0 }}
                 onLayout={(e) => setSurfaceHeight(Math.round(e.nativeEvent.layout.height))}
               >
@@ -1244,8 +1244,8 @@ export default function PracticeScreen() {
                 />
               </View>
             ) : null}
-            {/* The free room (issue #286): below the way to answer, above what is pinned. A structured
-            surface carries its own, between its board and its "Prüfen" (`PartsArea`). */}
+            {/* The free room (issue #286): below the way to answer, above what is pinned. A form in
+            the answer shell carries its own, between its answer and "Prüfen" (`AnswerShell`). */}
             {open && item.task_view ? null : <FreeSpace />}
             {/* The fraction bar she works with (issue #162). It sits where her finger already
             is — right above the field — and it writes into that very field, so "Prüfen",

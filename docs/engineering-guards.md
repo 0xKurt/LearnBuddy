@@ -83,7 +83,12 @@ hält die Grenze gegen main.
   bleibt der Doppelbau-Durchgang aus #296 und #311 nötig. jscpd 5.x (Rust) kann Typ 2, hat in
   5.4.0 aber eine 60-Zeilen-Kopie eines Dateianfangs nicht erkannt und ist deshalb nicht im
   Einsatz.
-- Der Walkthrough-Wächter für gleiche Lage von Antwort und Aktion je Form (#313, Regel 6) und
-  `dependency-cruiser` gegen eigene Layout-Bausteine in Übungsformen kommen mit dem Umbau in #310.
+- Gleiche Lage von Antwort und Aktion je Form (#313, Regel 6) prüfen seit #310 Schritt 2 zwei
+  Wächter: der Quelltext-Test `apps/mobile/lib/__tests__/answerShell.test.ts` (eigene Leiste,
+  eigener Freiraum, eigenes „Prüfen“, eigene Tastaturbehandlung oder Schattenkachel in einer Form;
+  die noch nicht umgezogenen Formen stehen mit ihrem Schritt auf einer Liste, die nur schrumpft) und
+  `answerPlace` in `tests/web/fit.ts` (Abstand über der Antwort ≤ 44 pt, Freiraum darunter,
+  „Prüfen“ zuunterst — an jedem Shot mit `answer-slot`). Die Tastatur-Probe bei 360×420 kommt mit
+  dem Eingabefeld (#310 Schritt 3).
 - Zusätzliche CI-Zeit: etwa 20 s im Lint-Schritt (jscpd etwa 13 s, knip und Tests parallel) und
   unter 1 s für das Bundle-Budget.
