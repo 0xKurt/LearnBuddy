@@ -64,8 +64,10 @@ hält die Grenze gegen main.
   (eine Plattformdatei, ein Skript), kommt der Einstieg mit Begründung in `knip.jsonc`, nicht auf
   die Ausnahmeliste.
 - **Bundle-Budget:** Nachsehen, was neu im Bundle ist. Eine neue Bibliothek braucht den
-  Bibliotheks-Check (Regel 1). Ist der Zuwachs gewollt, steht das neue Budget mit Begründung in
-  `bundle-budget.json`, und der Commit trägt die Zuwachs-Zeile.
+  Bibliotheks-Check (Regel 1). Braucht sie nur ein Teil der App, zuerst per `import()` nachladen:
+  Metro macht daraus im Web einen eigenen Bundle-Teil, den `index.html` nicht lädt (VexFlow für die
+  Notenzeile, #312: `components/math/staff/useEngraver.ts`). Ist der Zuwachs trotzdem gewollt, steht
+  das neue Budget mit Begründung in `bundle-budget.json`, und der Commit trägt die Zuwachs-Zeile.
 - **Neue Zeichenkomponente:** Erst den Bibliotheks-Check im Issue machen, dann den Eintrag unter
   `geprueft` anlegen: `{ "issue": "#…", "libraryCheck": "Ergebnis und Begründung" }`.
 - **„Ausnahmeliste veraltet“:** Etwas wurde besser. `pnpm guards:shrink` zieht alle Listen auf den

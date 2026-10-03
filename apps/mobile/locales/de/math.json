@@ -276,6 +276,20 @@
       "As": "Ais",
       "B": "H"
     },
+    "note_short": {
+      "C": "C",
+      "Cs": "Cis",
+      "D": "D",
+      "Ds": "Dis",
+      "E": "E",
+      "F": "F",
+      "Fs": "Fis",
+      "G": "G",
+      "Gs": "Gis",
+      "A": "A",
+      "As": "Ais",
+      "B": "H"
+    },
     "value_note": {
       "whole": "ganze Note",
       "half": "halbe Note",

@@ -180,8 +180,38 @@ export const TEMPO_MAX = 200;
 /** Das Tempo, in dem eine Übungszeile klingt — ruhig genug, um mitzulesen. */
 export const TEMPO_DEFAULT = 80;
 
+/** Die meisten Noten einer Zeile: zwei Takte zu je acht Zeichen. */
+const STAFF_NOTES_MAX = BARS_MAX * ELEMENTS_PER_BAR_MAX;
+
 /**
- * Die gezeichnete Notenzeile (`ItemView.figure`): Schlüssel, Taktart, Takte, Tempo.
+ * Welche Noten ihren NAMEN unter sich tragen (issue #312, Owner 03.10.: „dass die für gewisse
+ * Übungen auch beschriftet werden müssen"): die Nummern der Noten in Leserichtung über die ganze
+ * Zeile, von 0 an; Pausen haben keinen Namen und zählen nicht mit.
+ *
+ * Eine Liste von Nummern und nicht `'none' | 'given' | 'all'`, weil die Regel, die hier gilt, eine
+ * Regel über EINZELNE Noten ist: die Note, deren Name gefragt ist, steht nie beschriftet da — auch
+ * dann nicht, wenn die anderen es sind. Ein Schalter für die ganze Zeile müsste daneben noch sagen,
+ * welche Noten „gegeben" sind; die Liste sagt es direkt, und „keine" (`[]`), „alle" und „die schon
+ * gelösten" sind drei Inhalte derselben Form.
+ *
+ * Gesetzt wird sie nur von Code aus der geprüften Aufgabe (`practice/staff.ts`, `staffLabels`),
+ * nie vom Modell: `StaffFigure` steht nicht in `ModelFigure`. Fehlt sie (eine Zeile von vor #312),
+ * ist sie leer — ohne Beschriftung, wie diese Zeilen immer aussahen.
+ */
+const StaffLabels = z
+  .array(
+    z
+      .number()
+      .int()
+      .min(0)
+      .max(STAFF_NOTES_MAX - 1),
+  )
+  .max(STAFF_NOTES_MAX)
+  .default([]);
+
+/**
+ * Die gezeichnete Notenzeile (`ItemView.figure`): Schlüssel, Taktart, Takte, Tempo und welche
+ * Noten beschriftet sind.
  *
  * Sie steht in `Figure` und **nicht** in `ModelFigure`: eine Notenzeile schreibt nur Code
  * (`practice/staff.ts`), aus der geprüften Aufgabe, aus der auch Frage und Schlüssel kommen.
@@ -199,6 +229,7 @@ export const StaffFigure = z.object({
   time: TimeSignature.nullable(),
   bars: StaffBars,
   tempo: z.number().int().min(TEMPO_MIN).max(TEMPO_MAX),
+  labels: StaffLabels,
 });
 export type StaffFigure = z.infer<typeof StaffFigure>;
 

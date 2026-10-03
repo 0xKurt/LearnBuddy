@@ -255,6 +255,39 @@ describe.skipIf(!dbReady)('die Notenzeile', () => {
     expect(session.items[0]?.item.figure).toBeNull();
   });
 
+  it('zeigt Notennamen nur, wo der Name nicht die Antwort ist (#312)', async () => {
+    const rhythm: StaffTask = {
+      task: 'time_signature',
+      clef: 'treble',
+      time: '2/4',
+      bars: [
+        [
+          { el: 'note', pitch: { name: 'G', octave: 4 }, value: 'quarter', dotted: false },
+          { el: 'rest', value: 'quarter', dotted: false },
+        ],
+      ],
+    };
+    const session = await prepare([NOTE_NAMES[1] as StaffTask, INTERVAL, rhythm]);
+    const labels = session.items.map((si) =>
+      si.item.figure?.type === 'staff' ? si.item.figure.labels : 'keine Notenzeile',
+    );
+    // „Wie heißt diese Note?" — ohne Namen; das Intervall und der Rhythmus mit den gegebenen
+    // Noten beschriftet (die Pause hat keinen Namen und zählt nicht mit).
+    expect(labels).toEqual([[], [0, 1], [0]]);
+
+    // Eine Zeile von vor #312 hat kein Feld `labels`: sie kommt unbeschriftet zurück, wie sie
+    // immer aussah, und nicht als kaputte Figur.
+    await env.db.query(
+      `update items i set figure = i.figure - 'labels' from session_items si
+        where si.item_id = i.id and si.session_id = $1`,
+      [session.id],
+    );
+    const again = (await l.api.get<SessionView>(`/practice/sessions/${session.id}`)).body;
+    expect(
+      again.items.map((si) => (si.item.figure?.type === 'staff' ? si.item.figure.labels : null)),
+    ).toEqual([[], [], []]);
+  });
+
   it('bringt Notenfragen auch in einen Übungstest', async () => {
     const session = await prepare([NOTE_NAMES[0] as StaffTask, INTERVAL], { kind: 'test' });
     expect(session.mode).toBe('test');

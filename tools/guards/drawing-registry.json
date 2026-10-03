@@ -6,7 +6,6 @@
     "apps/mobile/components/math/MathKeys.tsx": "Formel-Tastenreihe; Prüfung offen in #311 (eine Tastenreihe)",
     "apps/mobile/components/math/MathText.tsx": "eigener Formelsatz; Prüfung KaTeX / MathJax offen in #312",
     "apps/mobile/components/math/MoleculeView.tsx": "eigenes Molekül-Layout; Prüfung SmilesDrawer / RDKit.js offen in #312",
-    "apps/mobile/components/math/StaffLine.tsx": "eigene Notenzeile; Prüfung VexFlow / abcjs offen in #312",
     "apps/mobile/components/math/TypedMathPreview.tsx": "Vorschau über MathText; hängt an der Formelsatz-Prüfung in #312",
     "apps/mobile/components/math/ZoomableFigure.tsx": "Zoom-Hülle um Figuren; Prüfung offen in #312",
     "apps/mobile/components/math/figureText.tsx": "Text in Figuren-SVG; hängt an den Figuren-Prüfungen in #312",
@@ -19,5 +18,26 @@
     "apps/mobile/components/practice/Verdict.tsx": "Urteils-Chip mit gezeichnetem Haken; Bibliotheks-Check nie gemacht (#313)",
     "apps/mobile/components/voice/TalkOrb.tsx": "Orb im Sprechmodus; Bibliotheks-Check nie gemacht (#313)"
   },
-  "geprueft": {}
+  "geprueft": {
+    "apps/mobile/components/math/StaffLine.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Notenzeile (lesen, schreiben, Wert-Tasten) gestochen von VexFlow. Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): VexFlow 4.2.5, MIT, letztes 4.x-Release 2024-07, rund 155 KB gzip mit Bravura (eigener Bundle-Teil, nur auf Bildschirmen mit Notenzeile geladen), läuft headless ohne DOM/WebView über einen eigenen RenderContext → SVG-String → SvgXml auf iOS, Android und Web; A11y: die Bibliothek hat keine, die Zeile bleibt für Screenreader ein Satz (lib/music/words.ts). Verworfen: VexFlow 5 (misst Glyphen mit Canvas, nicht headless), abcjs (DOM/getBBox, nur WebView), Verovio (LGPL-3.0, WASM). Owner-Entscheidung 03.10.: „Ja, VexFlow (Recommended)“."
+    },
+    "apps/mobile/components/math/staff/engrave.ts": {
+      "issue": "#312",
+      "libraryCheck": "Der einzige VexFlow-Import: StaffFigure/StaffElement → StaveNote; zeichnet nur, entscheidet nichts (Regel 0). Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): VexFlow 4.2.5, MIT, letztes 4.x-Release 2024-07, rund 155 KB gzip mit Bravura (eigener Bundle-Teil, nur auf Bildschirmen mit Notenzeile geladen), läuft headless ohne DOM/WebView über einen eigenen RenderContext → SVG-String → SvgXml auf iOS, Android und Web; A11y: die Bibliothek hat keine, die Zeile bleibt für Screenreader ein Satz (lib/music/words.ts). Verworfen: VexFlow 5 (misst Glyphen mit Canvas, nicht headless), abcjs (DOM/getBBox, nur WebView), Verovio (LGPL-3.0, WASM). Owner-Entscheidung 03.10.: „Ja, VexFlow (Recommended)“."
+    },
+    "apps/mobile/components/math/staff/svgContext.ts": {
+      "issue": "#312",
+      "libraryCheck": "VexFlows RenderContext als SVG-String (VexFlows eigener SVGContext braucht ein DOM). Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): VexFlow 4.2.5, MIT, letztes 4.x-Release 2024-07, rund 155 KB gzip mit Bravura (eigener Bundle-Teil, nur auf Bildschirmen mit Notenzeile geladen), läuft headless ohne DOM/WebView über einen eigenen RenderContext → SVG-String → SvgXml auf iOS, Android und Web; A11y: die Bibliothek hat keine, die Zeile bleibt für Screenreader ein Satz (lib/music/words.ts). Verworfen: VexFlow 5 (misst Glyphen mit Canvas, nicht headless), abcjs (DOM/getBBox, nur WebView), Verovio (LGPL-3.0, WASM). Owner-Entscheidung 03.10.: „Ja, VexFlow (Recommended)“."
+    },
+    "apps/mobile/components/math/staff/geometry.ts": {
+      "issue": "#312",
+      "libraryCheck": "Stufen ↔ Einheiten, die VexFlow und die Tippziele der Schreibfläche teilen; ohne VexFlow-Import, damit sie vor dem Laden gilt. Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): VexFlow 4.2.5, MIT, letztes 4.x-Release 2024-07, rund 155 KB gzip mit Bravura (eigener Bundle-Teil, nur auf Bildschirmen mit Notenzeile geladen), läuft headless ohne DOM/WebView über einen eigenen RenderContext → SVG-String → SvgXml auf iOS, Android und Web; A11y: die Bibliothek hat keine, die Zeile bleibt für Screenreader ein Satz (lib/music/words.ts). Verworfen: VexFlow 5 (misst Glyphen mit Canvas, nicht headless), abcjs (DOM/getBBox, nur WebView), Verovio (LGPL-3.0, WASM). Owner-Entscheidung 03.10.: „Ja, VexFlow (Recommended)“."
+    },
+    "apps/mobile/components/math/staff/useEngraver.ts": {
+      "issue": "#312",
+      "libraryCheck": "Lädt den VexFlow-Stecher per import() erst auf Bildschirmen mit Notenzeile (Bundle-Budget, #313). Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): VexFlow 4.2.5, MIT, letztes 4.x-Release 2024-07, rund 155 KB gzip mit Bravura (eigener Bundle-Teil, nur auf Bildschirmen mit Notenzeile geladen), läuft headless ohne DOM/WebView über einen eigenen RenderContext → SVG-String → SvgXml auf iOS, Android und Web; A11y: die Bibliothek hat keine, die Zeile bleibt für Screenreader ein Satz (lib/music/words.ts). Verworfen: VexFlow 5 (misst Glyphen mit Canvas, nicht headless), abcjs (DOM/getBBox, nur WebView), Verovio (LGPL-3.0, WASM). Owner-Entscheidung 03.10.: „Ja, VexFlow (Recommended)“."
+    }
+  }
 }
