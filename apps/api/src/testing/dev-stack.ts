@@ -26,6 +26,7 @@ import { scriptCoreLoop } from './scenarios/core-loop.js';
 import { scriptFigures } from './scenarios/figures.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
 import { scriptTour } from './scenarios/tour.js';
+import { installChecks } from './scenarios/checks.js';
 import { installGenerations } from './scenarios/generations.js';
 import { installTurns } from './scenarios/turns.js';
 
@@ -61,6 +62,7 @@ async function main(): Promise<void> {
     // after every scenario added its rules.
     installTurns(scripted);
     installGenerations(scripted);
+    installChecks(scripted);
     // A conversation that came to rest is summarised by the scheduler (issue #22); in the
     // walkthrough nobody asks for those sentences, so one answer for all of them is enough.
     scripted.byDefault('summary', {

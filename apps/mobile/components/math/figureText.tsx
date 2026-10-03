@@ -1,9 +1,12 @@
-// The text inside a figure's SVG (FigureView.tsx, MoleculeView.tsx): one font, one size scale,
-// and a label that stays readable over lines, grid and graphs.
+// The text inside a figure's SVG (FigureView.tsx, MoleculeView.tsx, ChartFigures.tsx): one font,
+// one size scale, numbers with the learner's decimal comma, and a label that stays readable over
+// lines, grid and graphs.
 
 import { Platform } from 'react-native';
 import { G, Text as SvgText } from 'react-native-svg';
 
+import { currentLocale } from '../../lib/i18n/index.js';
+import { localDecimal } from '../../lib/numbers.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export const FONT = 13;
@@ -13,6 +16,13 @@ export const FAMILY = Platform.select({
   default: undefined,
 });
 export const SMALL = 12;
+
+/** 0.30000000000000004 → "0,3" (decimal comma where usual). */
+export function formatNumber(n: number): string {
+  const rounded = Math.round(n * 1e6) / 1e6;
+  const plain = Object.is(rounded, -0) ? '0' : String(rounded);
+  return localDecimal(plain, currentLocale()).replace('-', '−');
+}
 
 /** A label with a paper-coloured outline underneath, so it stays readable over grid and graphs. */
 export function HaloText({

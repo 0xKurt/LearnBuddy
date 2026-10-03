@@ -418,6 +418,8 @@ export function structuredItem(
         prompt_lang: draft.prompt_lang,
         lang: null,
         figure: null,
+        // No chart to read: the task is the board (issues #245, #246).
+        read: null,
         tolerance: null,
         spelling: null,
         source_excerpt: null,
@@ -453,6 +455,8 @@ export function structuredItem(
         prompt_lang: draft.prompt_lang,
         lang: null,
         figure: null,
+        // No chart to read: the task is the board (issues #245, #246).
+        read: null,
         tolerance: null,
         spelling: null,
         source_excerpt: null,
@@ -486,6 +490,8 @@ export function structuredItem(
         prompt_lang: draft.prompt_lang,
         lang: null,
         figure: null,
+        // No chart to read: the task is the board (issues #245, #246).
+        read: null,
         tolerance: null,
         spelling: null,
         source_excerpt: null,

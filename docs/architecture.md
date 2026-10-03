@@ -2342,6 +2342,62 @@ that states an open task's answer (`mentionsSolution`, any notation) gets one re
 is stored (503 `reexplain_unavailable`). A model outage stores nothing (503 `model_unavailable`).
 Also after the last question closed and the session finished.
 
+### Charts (issues #245, #246)
+
+Line and climate charts, pies, box plots, histograms, scatter plots and population pyramids next to
+a question. **The model writes data, code checks it, draws it and computes the key.** No migration:
+the chart is an item's `figure` (jsonb), and everything code derives from it is written into the
+item's ordinary columns before it is stored.
+
+- **Contract** (`contracts/figure.ts`): seven `ModelFigure` branches — `line_chart` (1–3 series,
+  categories or a measured x, one optional column series, an optional right axis for a second
+  unit), `climate_chart` (place, height, 12 × °C, 12 × mm), `pie_chart` (labels and shares in %,
+  `half` for a parliament), `box_plot` (1–3 boxes of five numbers, optionally the raw data list),
+  `histogram` (equal classes), `scatter_plot` (points, `fit` for the least-squares line),
+  `pyramid` (age groups from `a0` in steps of `w`, men and women). Short property names and **no
+  nullable field**: they sit in every item of every generated set, under the schema-size pressure
+  of #281 (the generate schema grew from 21,575 to 24,541 characters with 0 new `anyOf`).
+- **Checked, then rejected — never repaired** (`chartProblem`, `packages/shared-math/src/charts.ts`):
+  every series as long as its labels, at most one column series, one unit per axis and a second
+  axis only for a second unit, a measured x that increases, no duplicate labels, category labels
+  that fit the 266 px a 360 px phone leaves the drawing, pie shares that add up to 100 % (± 0.1),
+  a box plot in order and — given a data list — equal to its five numbers under one of the three
+  schoolbook quartile definitions, a scatter plot with a spread in x, a pyramid within 125 years. A
+  chart that breaks one costs its **question**, not only its drawing (`clipDraft`,
+  `chartRead.ts`): "Werte das Klimadiagramm aus" without the diagram is no question.
+- **What a question reads off** (`ItemDraft.read`, `ChartRead`): the model says which reading its
+  question is — `value`, `max`, `min`, `argmax`/`argmin` (a label: a month, a category, a slice),
+  `sum`, `mean`, `range`, `diff`, `angle` (a pie's centre angle), `iqr`, `humid`/`arid` (number of
+  months), `humid_at`, `slope`/`intercept`, `type` (pyramid / bell / urn) — and code computes it
+  (`readChart`). A number key must be the computed value at the precision it is written in; a label
+  must be the label at the computed position (the other ways to write it, "Juli"/"Jul", become the
+  accepted answers, and nothing else); a fixed choice (humid/arid, the pyramid's type) gets its
+  options written by code in the question's language and the model's `correct_choice` must point at
+  the computed one. Disagreement drops the question. A **numeric question on a chart without
+  `read` is dropped** too: its key could not be checked. Interpretation questions ("Welche
+  Klimazone?") stay multiple choice with `read` null. Why a structured claim and not code reading
+  the question's words: that would be a word list standing in for language understanding (rule 3).
+- **Reading tolerance from the drawing**: the learner gets the tolerance the grid allows, never one
+  the model chose — a fifth of a labelled step (the app draws a faint line at every half step),
+  √n of that for a sum of n readings, ÷ n for a mean, twice for a range or a difference. A climate
+  chart is Walter–Lieth as in the atlas (10 °C ≙ 20 mm, above 100 mm compressed tenfold, read
+  tenfold less precisely there). A reading the drawing cannot settle is no question: two months
+  closer than both readings (Berlin, July 19.4 °C, August 19.1 °C → no "warmest month"), a month
+  whose column ends on the temperature line (no humid/arid count), a pyramid between the bands
+  (young third ≥ 1.2 × middle third = pyramid, ≤ 0.8 = urn, 0.9–1.1 = bell). Answers are judged by
+  the rules, no model call (`charts.int.test.ts`: "Üb mit mir Klimadiagramme" → 5 questions, all
+  `evaluated_by = 'rule'`).
+- **Drawing** (`apps/mobile/components/math/ChartFigures.tsx`): react-native-svg with the same axes
+  the API used for the tolerance (`niceAxis`, `climateAxes`, imported by path). Colour is never the
+  only signal: series have markers and dash patterns, columns are columns, pie slices are numbered
+  and listed with their shares, the halves of a pyramid are named. Theme tokens `figure.warm`,
+  `wet`, `wetDeep`, `slices` (light and dark). The screen-reader text (`describeChart`) says every
+  value and nothing derived — no sum, no warmest month, no type — because that is what a question
+  asks her to read off. Walkthrough: `tests/web/charts.spec.ts`, every chart at 390 × 844 and
+  360 × 740, light and dark.
+- **Not checked by code**: the meaning of the prompt itself. A question that claims `read: sum` and
+  asks something else is caught only when the numbers then disagree.
+
 ### Learning modes (migration `0003_learning_modes.sql`)
 
 Questions come from a photo (`material`), from Buddy on a topic the learner named (`buddy`,
@@ -2505,9 +2561,10 @@ word list, so it stays a prompt rule.
   compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
   when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
   may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table,
-  molecule) as data
-  (`contracts/figure.ts`); the server drops figures it cannot draw (e.g. an expression that does
-  not compile with `@learnbuddy/shared-math` `compileExpression`) without dropping the question.
+  molecule, and the charts of §Charts below) as data (`contracts/figure.ts`); the server drops
+  figures it cannot draw (e.g. an expression that does not compile with `@learnbuddy/shared-math`
+  `compileExpression`) without dropping the question — except a chart, which costs its question
+  (§Charts), and a geometry or molecule figure that contradicts its numbers (below).
   A figure is drawn to be READ. What she can work with is a `surface` — today the Bruchbalken
   (§Practice above, issue #162), whose question, picture and key are computed from one reviewed
   task instead of written by the model.
@@ -2641,13 +2698,46 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   moon's movement plus a one-line caption with a quiet hint under it. On the phone listening ends
   by itself when she pauses
   (on-device recogniser, `untilPause`); on the recording path (browser) she taps the mic when done.
-  Tapping the mic — or Buddy himself — while he speaks interrupts him and listens at once
-  (issue #35). That tap is the honest part of barge-in: while Buddy speaks the mic stays off,
-  because neither expo-audio playback nor expo-speech-recognition promises device echo
-  cancellation, and an open mic would write down Buddy's own voice (a recording that starts
-  while he speaks is already dropped, audit M-78). expo-speech-recognition 3.1.3 does expose
-  `iosCategory: playAndRecord`, but without a device test that is no promise (rule 5); real
-  talking-over needs the duplex realtime audio stack that is deliberately not built (above).
+  Tapping the mic — or Buddy himself — while he speaks interrupts him and listens at once.
+  **She can also just talk over him** (barge-in, issue #35), in the browser and on Android:
+  while he speaks (and the mic may open by itself — no screen reader) an ear watches the mic's
+  **level**, never its words (`lib/speech/bargeMonitor.ts`: the browser's `getUserMedia` with
+  `echoCancellation` on and an analyser, no recorder; Android a level-only recorder on the
+  `voice_communication` source, the one the platform runs its echo canceller on, its cache file
+  deleted at once). So an echo can at worst stop him by mistake — it can never be written down
+  as her words; the recogniser only starts once he is silent. Two layers keep his voice out:
+  the platform's echo cancellation, then a gate (`lib/speech/bargeIn.ts`, pure, unit-tested)
+  that first learns how loud his residue is while he really sounds (600 ms), keeps learning
+  from everything that is not a candidate, and counts a frame as her only when it is 10 dB
+  above the residue's 90th percentile and above −42 dBFS — for 300 ms of loud time, dips
+  between syllables up to 200 ms allowed. A click, a cough or Chromium's 20 ms fake-mic beep
+  never gets there (`tests/web/talk-voice.spec.ts`: three replies read to the end over the
+  beeps); a voice-shaped signal stops him 0.3 s after it starts (`talk-barge.spec.ts`). Where
+  echo cancellation is weak his residue is loud, the bar rises with it and she has to speak up:
+  a missed barge-in, never a false one. Frames between sentences (his next one still on its
+  way) count for nothing — calibrating on silence would let his first loud syllable through.
+  The hint under "Buddy spricht …" says "Sprich einfach dazwischen" only once the ear really
+  hears (a level arrived), otherwise it keeps naming the tap. On Android the ear lets go of
+  the mic before the on-device recogniser starts (two captures must not race for one device);
+  in the browser it stays open until the recorder runs, so the recorder finds the device
+  awake. **Not on iOS:** expo-audio cannot put the session into the voice-processing mode
+  (`voiceChat`) that cancels echo, and switching to recording while he plays may move his
+  voice to the earpiece — there the tap stays the way in. (The research question of #35, how
+  the realtime voice products do it: they stream the mic continuously through a voice-processing
+  audio path — WebRTC's echo canceller, iOS's voice-processing I/O unit — and a voice-activity
+  detector decides the interruption, the duplex stack this app deliberately does not build. The
+  ear here is the same idea cut down to what expo-audio offers: the platform's echo path plus a
+  level gate, with no audio leaving the phone. That description is general knowledge, not
+  measured here.) What only a phone can tell (needs
+  live verification): how much echo Android's canceller leaves with media playback on the
+  loudspeaker (the gate's bar adapts, but how loud she must be is a device number), whether
+  the level-only recorder and Buddy's player coexist on every Android audio route (the
+  recorder requests no audio focus; Bluetooth headsets switch to call mode for
+  `voice_communication` on some phones), and how long the recorder takes to let go before the
+  recogniser starts (it adds to `relisten`: after an interruption, and after his last word
+  while the recorder is still letting go — the recogniser always waits for it, never races it).
+  The first syllables she said before the gate decided (≈ 0.3 s) and while the recogniser
+  starts are not written down: the ear holds only levels, by design.
   Opening the screen warms the recogniser (issue #41, `warmRecognition` in
   `lib/speech/recognize.ts`): the Android service choice with its installed languages, the
   engine decision and the permission answer — the latter remembered while the app stays in
@@ -2672,7 +2762,8 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   The moon runs on the UI thread: one Reanimated frame callback per moving orb writes a pose that
   a few animated views read (moon in front and behind the glass, trail dots, ping, reflection) —
   no JS re-render per frame. Tapping Buddy while he
-  speaks stops him and listens ("Tipp auf Buddy, dann hört er dir zu.", issue #35). Two quiet synthesised tones
+  speaks stops him and listens ("Tipp auf Buddy, dann hört er dir zu.", issue #35); where the
+  barge-in ear hears, the hint says she can just talk instead. Two quiet synthesised tones
   (`scripts/make-talk-tones.mjs`, `lib/speech/cues.ts`) mark listening starting and ending; on
   iOS they play in a session that obeys the silent switch, then talk mode's session is restored
   (needs live verification on a phone); the web plays none. The camera next to "Tastatur"
@@ -2776,9 +2867,13 @@ scrolling up) — the bar on top never covers the conversation (only its opened 
 over the conversation's top, and only while she reads them); a
 quiet line names the day where a new one starts (never how many days passed) — what Buddy did
 stands under its message as **one receipt for the turn**, not one line per action, and only the
-newest step she can still take back carries "Rückgängig" (issue #204: two things done in one
+newest step she can still take back carries a way back (issue #204: two things done in one
 answer were two ticks, two sentences and two buttons — "vier Statuszeilen für zwei Dinge, die
-sie getan hat"). Nothing is lost with the buttons that went: a tap or a long press on a receipt
+sie getan hat"). That way back is a small round arrow at the end of the receipt's own line, not
+a pill of its own under it (issue #295: "kein großer fetter button"): `<Btn iconOnly
+icon="undo">` (`components/lb/Btn.tsx`), a 24 pt circle in the secondary ink with a 44 pt
+target, named "Rückgängig: <what>", a tap takes the step back without asking, and while that
+runs the arrow is a spinner in the same place. Nothing is lost with the buttons that went: a tap or a long press on a receipt
 opens everything that can still be taken back, newest first, each with its own way back
 (`components/buddy/UndoSheet.tsx`) — undo over confirmation stays whole
 (`docs/UX-PRINCIPLES.md`). History is the record of the single steps and keeps a line and a
@@ -3137,7 +3232,12 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   practice is matched the same way** (`scenarios/generations.ts`): the generation request carries
   what was asked for, so a spec asking for fractions can never get the set meant for another —
   the queue drifted as soon as Buddy began preparing an offer in the background (#48), because
-  _when_ a generation happens then depends on timing. The remaining purposes (tutor, hints,
+  _when_ a generation happens then depends on timing. **Buddy's own checks** too
+  (`scenarios/checks.ts`): a check answers by its STATE and TRIGGERS — the core loop acts only
+  on its own worksheet being ready and waits only after its own test's practice; every other
+  check stays unscripted and gets the check's fixed fallback — because every spec that finishes
+  a practice wakes Buddy, and `charts.spec.ts`, running first, once took the core loop's queued
+  "prepare a practice" (PR #303). The remaining purposes (tutor, hints,
   reading a photographed sheet) answer by rule or from a queue, so the walkthrough is still run
   **as a whole** — a single spec on its own gets the answers meant for the run (issue #81).
   A run started right after another waits for the previous run's ports to be free
