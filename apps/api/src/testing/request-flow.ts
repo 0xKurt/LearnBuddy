@@ -21,7 +21,7 @@ import type { Learner, TestEnv } from './harness.js';
  * A worksheet's transcription the size Recherche 2 measured with (943 characters, issue #279):
  * fractions, numbers and slashes, the densest German text the app sends.
  */
-export const JOURNEY_SHEET_TEXT = [
+const JOURNEY_SHEET_TEXT = [
   'Arbeitsblatt 4 — Brüche kürzen und erweitern (Klasse 6)',
   'Merke: Beim Kürzen teilst du Zähler und Nenner durch dieselbe Zahl. Der Wert des Bruches bleibt gleich.',
   'Beim Erweitern multiplizierst du Zähler und Nenner mit derselben Zahl.',
@@ -36,7 +36,7 @@ export const JOURNEY_SHEET_TEXT = [
 ].join('\n');
 
 /** The four questions she answers in prose — each one goes to the tutor. */
-export const JOURNEY_QUESTIONS = [
+const JOURNEY_QUESTIONS = [
   'Erkläre mit eigenen Worten, warum 3/4 und 15/20 denselben Wert haben.',
   'Lisa sagt: „Wenn ich 4/6 kürze, wird der Bruch kleiner.“ Hat sie recht? Begründe.',
   'Ein Kuchen wird in 12 Stücke geteilt. Tom isst 3 Stücke, Mia 1/6 des Kuchens. Wer hat mehr gegessen?',
