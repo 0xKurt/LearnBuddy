@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { labelWidth, plotFrame, Y_LABEL_GAP } from '../plotLayout.js';
+import { labelWidth, plotFrame, yLabelsClearOf, Y_LABEL_GAP } from '../plotLayout.js';
 
 const FONT = 12;
 
@@ -62,5 +62,33 @@ describe('plotFrame', () => {
     });
     expect(frame.left).toBe(8);
     expect(frame.axisY).toBe(frame.left + frame.pw);
+  });
+});
+
+describe('yLabelsClearOf (issue #326)', () => {
+  // A small option graph as in the walkthrough's shot 40: -3…3 × -3…5 in about 100 × 75
+  // points — 16 points per unit across, 9 up.
+  const axisY = 60;
+  const axisX = 60;
+  const xLabel = (v: number) => ({ v, x: axisY + v * 16, y: axisX + 15, text: String(v) });
+  const yLabel = (v: number, u = 9) => ({
+    v,
+    x: axisY - Y_LABEL_GAP,
+    y: axisX - v * u + 4,
+    text: String(v),
+  });
+
+  it('lets a y label give way where it would sit on an x label next to the origin', () => {
+    const shown = yLabelsClearOf([xLabel(-2), xLabel(2)], [yLabel(-2), yLabel(2), yLabel(4)], FONT);
+    expect(shown.map((l) => l.v)).toEqual([2, 4]);
+  });
+
+  it('keeps every y label on a large graph, where nothing touches', () => {
+    const shown = yLabelsClearOf([xLabel(-2), xLabel(2)], [yLabel(-2, 30), yLabel(2, 30)], FONT);
+    expect(shown.map((l) => l.v)).toEqual([-2, 2]);
+  });
+
+  it('keeps every y label when there are no x labels', () => {
+    expect(yLabelsClearOf([], [yLabel(-2), yLabel(2)], FONT)).toHaveLength(2);
   });
 });

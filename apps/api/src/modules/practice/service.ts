@@ -96,7 +96,7 @@ import {
 import { CARD_PASS, offersCardPass } from './cards.js';
 import { DRILL_PASS } from './drill.js';
 import { drillViewOf } from './drillView.js';
-import { MAX_ACCEPTED, storedFigure } from './items.js';
+import { MAX_ACCEPTED, storedChoiceFigures, storedFigure } from './items.js';
 import {
   askedElements,
   checkRubric,
@@ -159,8 +159,9 @@ export type ItemRow = {
   lang: string | null;
   prompt_lang: string | null;
   figure: Figure | null;
-  /** multiple_choice: one picture per option, parallel to `choices` (issue #231). */
-  choice_figures: Figure[] | null;
+  /** multiple_choice: one picture per option, parallel to `choices` (issue #231). As stored:
+   * read through `storedChoiceFigures` before it goes anywhere (issue #326). */
+  choice_figures: unknown;
   hints: string[];
   worked_solution: string | null;
   tolerance: number | null;
@@ -810,8 +811,9 @@ export async function sessionView(
         kind: i.kind,
         prompt: i.prompt,
         choices: i.choices,
-        // The options' pictures: data the app draws, never the key (that is the index).
-        choice_figures: i.kind === 'multiple_choice' ? i.choice_figures : null,
+        // The options' pictures: data the app draws, never the key (that is the index) — read
+        // back through the checks they were written under, or not sent at all (issue #326).
+        choice_figures: storedChoiceFigures(i),
         unit: i.unit,
         topic: i.topic,
         origin: i.origin,
