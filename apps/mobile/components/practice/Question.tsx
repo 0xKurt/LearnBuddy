@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { fillableAnswer } from '../../lib/math/prompt.js';
+import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -209,18 +210,25 @@ export function QuestionCard({
               grown ? { marginTop: 12, flexGrow: 1, justifyContent: 'center' } : { marginTop: 12 }
             }
           >
-            {/* The tight box around the drawing itself: the walkthrough records its height. */}
-            <View testID="question-figure">
-              <ZoomableFigure figure={figure} maxHeight={figureMax} />
-            </View>
-            {/* Eine Notenzeile kann man hören (issue #226). Der Knopf steht unter der Zeichnung,
-                weil er zu ihr gehört und nicht zur Frage — und er ist die kleine Pille, mit der
-                die App überall vorliest. */}
             {figure.type === 'staff' ? (
-              <View style={{ marginTop: 8, alignSelf: 'flex-start' }}>
-                <StaffPlayButton bars={figure.bars} tempo={figure.tempo} />
+              // Eine Notenzeile kann man hören (issue #226). Der Knopf steht NEBEN der Zeichnung
+              // (issue #275): eine Reihe darunter kostete auf 360×740 genau die Höhe, die bei vier
+              // langen Antworten fehlte, und eine kurze Notenzeile lässt in der Breite ohnehin
+              // Platz. Dieselbe weiche Pille mit dem Lautsprecher wie überall, ohne das Wort.
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
+                <View testID="question-figure" style={{ flex: 1 }}>
+                  <ZoomableFigure figure={figure} maxHeight={figureMax} />
+                </View>
+                <View style={{ width: TOUCH + SPACE.sm }}>
+                  <StaffPlayButton iconOnly bars={figure.bars} tempo={figure.tempo} />
+                </View>
               </View>
-            ) : null}
+            ) : (
+              // The tight box around the drawing itself: the walkthrough records its height.
+              <View testID="question-figure">
+                <ZoomableFigure figure={figure} maxHeight={figureMax} />
+              </View>
+            )}
           </View>
         ) : null}
         {image && imageKey ? (
