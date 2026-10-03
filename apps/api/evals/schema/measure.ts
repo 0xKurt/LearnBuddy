@@ -37,6 +37,14 @@ export type Shape = {
   enumValues: number;
   /** One-value enums — the tags string literals become (`z.literal('x')`). */
   singletonEnums: number;
+  /**
+   * Characters of every property name, and of every enum value — the text the decoder has to
+   * spell out exactly. Google names "lots of text (very long property or enum names)" first
+   * among the causes of "too many states for serving"; this counts that text, it is not a state
+   * count (none is published, issue #279).
+   */
+  propertyNameChars: number;
+  enumValueChars: number;
   descriptions: DescriptionCount;
 };
 
@@ -195,6 +203,8 @@ export function shapeOf(root: JsonSchema): Shape {
     enums: 0,
     enumValues: 0,
     singletonEnums: 0,
+    propertyNameChars: 0,
+    enumValueChars: 0,
     descriptions: {
       count: 0,
       textChars: 0,
@@ -215,10 +225,12 @@ export function shapeOf(root: JsonSchema): Shape {
       s.objects += 1;
       s.properties += keys.length;
       s.optionalFields += keys.filter((k) => !required.includes(k)).length;
+      s.propertyNameChars += keys.reduce((sum, k) => sum + k.length, 0);
     }
     if (Array.isArray(node.enum)) {
       s.enums += 1;
       s.enumValues += node.enum.length;
+      s.enumValueChars += node.enum.reduce<number>((sum, v) => sum + String(v).length, 0);
       if (node.enum.length === 1) s.singletonEnums += 1;
     }
     const branches = schemaArray(node.anyOf);

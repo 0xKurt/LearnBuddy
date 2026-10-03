@@ -6,8 +6,11 @@
 //   pnpm --filter @learnbuddy/api inventory:schema -- --out <dir>   # anywhere else
 //
 // It imports the very constants the call sites pass (`TURN_STEP_SCHEMA`, `GENERATED_SCHEMA`, the
-// explain profiles from `setSchemaForModel` …) — `toJsonSchema` output, byte for byte — and counts
-// with `measure.ts`. Token counts are added ONLY when Vertex credentials are configured
+// explain schema of every kind of run from `explainSchemaFor` …) — `toJsonSchema` output, byte for
+// byte — and counts with `measure.ts`.
+//
+//   … inventory:schema -- --baseline <older schema-inventory.json>
+// adds a before → after table per call (D2's proof that each profile shrank, and by how much). Token counts are added ONLY when Vertex credentials are configured
 // (`apps/api/.env.local` like every eval), via `countTokens`; they are the text-token count of the
 // serialized text, NOT native usage, billing or cache (the provider may bill a schema
 // differently from the same text sent as a prompt).
@@ -15,17 +18,17 @@
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { GoogleGenAI } from '@google/genai';
 import * as contracts from '@learnbuddy/shared-types/contracts';
+import type { StartTopicRequest } from '@learnbuddy/shared-types/contracts';
 import { config as loadDotenv } from 'dotenv';
 import { z } from 'zod';
 
 import { loadConfig } from '../../src/config.js';
 import type { JsonSchema, LlmRequest } from '../../src/llm/gateway.js';
-import { toJsonSchema } from '../../src/llm/json-schema.js';
 import { ensureCredentialsFile, modelFor, splitModelSpec } from '../../src/llm/vertex.js';
 import * as buddyCheck from '../../src/modules/buddy/check.js';
 import * as consolidate from '../../src/modules/buddy/consolidate.js';
@@ -43,6 +46,7 @@ import * as hints from '../../src/modules/practice/hints.js';
 import * as reexplain from '../../src/modules/practice/reexplain.js';
 import * as practice from '../../src/modules/practice/service.js';
 import * as speak from '../../src/modules/practice/speak.js';
+import * as structured from '../../src/modules/practice/structured.js';
 import * as tutor from '../../src/modules/practice/tutor.js';
 import * as voice from '../../src/modules/voice/service.js';
 import {
@@ -67,6 +71,22 @@ const DEFAULT_OUT = join(REPO, 'docs/measurements');
  */
 const SHEET_TOPICS: [string, ...string[]] = ['Brüche addieren', 'Brüche kürzen', 'Dezimalzahlen'];
 
+/**
+ * Every explain call there is: each kind of run, and the two kinds a photographed sheet can bind
+ * (`sheetsOf` reads sheets only for a test or a practice). One row each, so a profile per kind
+ * (D2) is measured against what that very kind sent before.
+ */
+const EXPLAIN_RUNS: { kind: StartTopicRequest['kind']; sheets: boolean }[] = [
+  { kind: 'practice', sheets: false },
+  { kind: 'test', sheets: false },
+  { kind: 'vocab', sheets: false },
+  { kind: 'speak', sheets: false },
+  { kind: 'help', sheets: false },
+  { kind: 'listen', sheets: false },
+  { kind: 'practice', sheets: true },
+  { kind: 'test', sheets: true },
+];
+
 const TOKEN_LABEL =
   'Text-token count of the serialized text (countTokens on a plain text part) — NOT native usage, billing or cache.';
 
@@ -84,10 +104,6 @@ type Variant = {
 };
 
 function variants(): Variant[] {
-  const explainProfile = (kind: 'test' | 'listen', topics: [string, ...string[]] | null) =>
-    typeof generate.setSchemaForModel === 'function'
-      ? toJsonSchema(generate.setSchemaForModel(kind, topics))
-      : undefined;
   const leanOf = (system: string | undefined) =>
     system === undefined ? undefined : `${system}\n\n${extract.LEAN_RULES}`;
   const buddy = prompts.BUDDY_PROMPT_VERSION;
@@ -130,31 +146,26 @@ function variants(): Variant[] {
     },
     {
       purpose: 'explain',
-      profile: 'global (no sheets; practice, test, vocab, speak, help)',
+      profile: 'GENERATED_SCHEMA (global)',
       tier: 'smart',
       promptVersion: generate.GENERATE_PROMPT_VERSION,
       system: generate.GENERATE_SYSTEM,
       schema: generate.GENERATED_SCHEMA,
       where: 'practice/generate.ts — GENERATED_SCHEMA',
     },
-    {
-      purpose: 'explain',
-      profile: `sheet-bound (forModel, topic enum of ${SHEET_TOPICS.length} placeholder topics)`,
-      tier: 'smart',
-      promptVersion: generate.GENERATE_PROMPT_VERSION,
-      system: generate.GENERATE_SYSTEM,
-      schema: explainProfile('test', SHEET_TOPICS),
-      where: 'practice/generate.ts — setSchemaForModel(kind, sheets.topics)',
-    },
-    {
-      purpose: 'explain',
-      profile: 'listen (forModel)',
-      tier: 'smart',
-      promptVersion: generate.GENERATE_PROMPT_VERSION,
-      system: generate.GENERATE_SYSTEM,
-      schema: explainProfile('listen', null),
-      where: "practice/generate.ts — setSchemaForModel('listen', null)",
-    },
+    ...EXPLAIN_RUNS.map(
+      ({ kind, sheets }): Variant => ({
+        purpose: 'explain',
+        profile: sheets
+          ? `kind=${kind} + sheets (${SHEET_TOPICS.length} placeholder topics)`
+          : `kind=${kind}`,
+        tier: 'smart',
+        promptVersion: generate.GENERATE_PROMPT_VERSION,
+        system: generate.GENERATE_SYSTEM,
+        schema: generate.explainSchemaFor(kind, sheets ? SHEET_TOPICS : null),
+        where: `practice/generate.ts — explainSchemaFor('${kind}', ${sheets ? 'sheets.topics' : 'null'})`,
+      }),
+    ),
     {
       purpose: 'extraction',
       profile: 'study',
@@ -286,7 +297,7 @@ function variants(): Variant[] {
 
 /** Every exported zod discriminated union of the contracts and the Buddy modules, by name. */
 function namedUnions(): NamedUnion[] {
-  const sources: Record<string, unknown>[] = [contracts, registry, lookups, decision];
+  const sources: Record<string, unknown>[] = [contracts, structured, registry, lookups, decision];
   const out: NamedUnion[] = [];
   for (const ns of sources) {
     for (const [name, value] of Object.entries(ns)) {
@@ -333,6 +344,8 @@ export type Report = {
   method: string[];
   variants: Measured[];
   missing: { purpose: string; profile: string; what: string }[];
+  /** The older report the markdown compares against (`--baseline`), or null. */
+  baseline: { commit: string; file: string } | null;
 };
 
 function versionOf(pkg: string): string {
@@ -473,12 +486,15 @@ export async function buildReport(): Promise<Report> {
       'anyOfNodes counts every anyOf; nullableAnyOf = anyOf [X, {type:null}]; unions = the rest (real choices), unionBranches = their branches.',
       'maxDepth counts schema nodes (properties, items, anyOf branches), root = 1. optionalFields = properties not in required.',
       'enums / enumValues over every enum keyword; singletonEnums = one-value enums (string-literal tags).',
+      'name + enum chars = characters of every property name plus every enum value: the text the decoder must spell exactly (Google lists long property/enum names first among the causes of "too many states"). A cause counted, not a state count.',
+      'explain: one row per kind of run (and per kind a photographed sheet can bind), each the schema explainSchemaFor(kind, topics) returns — the function the call site sends.',
       'A union is tagged by the first property that is a required one-value enum in every branch; tagPositions = index of that key in each branch (declared order of the emitted schema, not the order the model writes).',
       `The sheet-bound explain profile uses ${SHEET_TOPICS.length} placeholder topics; the real enum is the learner's sheet topics.`,
       'Token counts (when present): ' + TOKEN_LABEL,
     ],
     variants: measured,
     missing,
+    baseline: null,
   };
 }
 
@@ -496,16 +512,18 @@ function structureCells(s: Shape): string[] {
     n(s.maxDepth),
     n(s.optionalFields),
     `${n(s.enums)} / ${n(s.enumValues)}`,
+    n(s.propertyNameChars + s.enumValueChars),
   ];
 }
-const STRUCTURE_HEAD = 'anyOf | nullable | unions / branches | depth | optional | enums / values';
+const STRUCTURE_HEAD =
+  'anyOf | nullable | unions / branches | depth | optional | enums / values | name + enum chars';
 
 function branchTable(u: Union): string[] {
   const total = u.shape.chars;
   const rows = [...u.branches].sort((a, b) => b.shape.chars - a.shape.chars);
   return [
     `| ${u.tagKey ?? 'branch'} | chars | share | desc text | desc + key | ${STRUCTURE_HEAD} |`,
-    '|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|',
+    '|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|',
     ...rows.map(
       (b) =>
         `| \`${b.tag}\` | ${n(b.shape.chars)} | ${pct(b.shape.chars / total)} | ${n(b.shape.descriptions.textChars)} | ${n(b.shape.descriptions.withKeyChars)} | ${structureCells(b.shape).join(' | ')} |`,
@@ -542,7 +560,7 @@ export function renderMarkdown(r: Report): string {
   out.push(
     `| purpose | profile | prompt | system chars | system tok | schema chars | schema tok | desc # | desc text | desc + key (share) | ${STRUCTURE_HEAD} | schema sha256 |`,
   );
-  out.push('|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|---|');
+  out.push('|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|---|');
   for (const v of r.variants) {
     const s = v.schema.shape;
     out.push(
@@ -553,7 +571,15 @@ export function renderMarkdown(r: Report): string {
 
   out.push('## Top-level fields of the large schemas');
   out.push('');
+  const topShown = new Map<string, string>();
   for (const v of r.variants.filter((x) => x.schema.chars >= 5000 && !x.profile.includes('LEAN'))) {
+    const same = topShown.get(v.schema.sha256);
+    if (same) {
+      out.push(`**${v.purpose} — ${v.profile}**: the same schema as ${same}.`);
+      out.push('');
+      continue;
+    }
+    topShown.set(v.schema.sha256, `${v.purpose} — ${v.profile}`);
     out.push(`**${v.purpose} — ${v.profile}** (${n(v.schema.chars)} chars)`);
     out.push('');
     out.push('| field | chars | share | desc text | desc + key |');
@@ -587,13 +613,26 @@ export function renderMarkdown(r: Report): string {
     'Every real union in the explain and extraction schemas, where it sits and what it costs (one row per occurrence: a union used in two places costs twice). The item `kind` is an enum, not a union, so it has no per-form serialization of its own; the forms that carry their own structure are the union branches below.',
   );
   out.push('');
+  const tasksShown = new Map<string, string>();
   for (const v of r.variants.filter(
     (x) => (x.purpose === 'explain' || x.purpose === 'extraction') && !x.profile.includes('LEAN'),
   )) {
+    const same = tasksShown.get(v.schema.sha256);
+    if (same) {
+      out.push(`**${v.purpose} — ${v.profile}**: the same schema as ${same}.`);
+      out.push('');
+      continue;
+    }
+    tasksShown.set(v.schema.sha256, `${v.purpose} — ${v.profile}`);
     out.push(`**${v.purpose} — ${v.profile}** (${n(v.schema.chars)} chars)`);
     out.push('');
+    if (v.unions.length === 0) {
+      out.push('No union left in this schema.');
+      out.push('');
+      continue;
+    }
     out.push(`| path | union | tag | branches | chars | share | desc + key | ${STRUCTURE_HEAD} |`);
-    out.push('|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|');
+    out.push('|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|');
     for (const u of v.unions) {
       out.push(
         `| \`${u.path}\` | ${u.name ?? '—'} | ${u.tagKey ?? '—'} | ${u.branches.length} | ${n(u.shape.chars)} | ${pct(u.shape.chars / v.schema.chars)} | ${n(u.shape.descriptions.withKeyChars)} | ${structureCells(u.shape).join(' | ')} |`,
@@ -601,9 +640,11 @@ export function renderMarkdown(r: Report): string {
     }
     out.push('');
   }
-  const global = r.variants.find((x) => x.purpose === 'explain' && x.profile.startsWith('global'));
+  const global = r.variants.find(
+    (x) => x.purpose === 'explain' && x.profile.startsWith('GENERATED_SCHEMA'),
+  );
   if (global) {
-    out.push(`### Branches of every union in \`explain — global\``);
+    out.push(`### Branches of every union in \`explain — ${global.profile}\``);
     out.push('');
     for (const u of global.unions) {
       out.push(`**\`${u.path}\`** — ${u.name ?? 'unnamed'} (${n(u.shape.chars)} chars)`);
@@ -647,13 +688,90 @@ export function renderMarkdown(r: Report): string {
   return out.join('\n');
 }
 
+/** One call measured on two commits: what it sent before and what it sends now. */
+export type Change = {
+  purpose: string;
+  profile: string;
+  before: Shape;
+  after: Shape;
+  sameSchema: boolean;
+};
+
+/** The calls measured in both reports, matched by purpose and profile, in `after`'s order. */
+export function changesBetween(before: Report, after: Report): Change[] {
+  const old = new Map(before.variants.map((v) => [`${v.purpose}|${v.profile}`, v]));
+  return after.variants.flatMap((v) => {
+    const b = old.get(`${v.purpose}|${v.profile}`);
+    return b
+      ? [
+          {
+            purpose: v.purpose,
+            profile: v.profile,
+            before: b.schema.shape,
+            after: v.schema.shape,
+            sameSchema: b.schema.sha256 === v.schema.sha256,
+          },
+        ]
+      : [];
+  });
+}
+
+const arrow = (a: number, b: number) => (a === b ? n(a) : `${n(a)} → ${n(b)}`);
+const delta = (a: number, b: number) =>
+  a === b ? '±0' : `${b < a ? '−' : '+'}${((Math.abs(b - a) / a) * 100).toFixed(1)} %`;
+
+export function renderComparison(before: Report, after: Report): string {
+  const out: string[] = [];
+  out.push(`## Before → after (D2: profiles per call, issue #281)`);
+  out.push('');
+  out.push(
+    `Before: commit \`${before.commit.slice(0, 12)}\`${before.dirty ? ' (with uncommitted changes)' : ''}. After: commit \`${after.commit.slice(0, 12)}\`${after.dirty ? ' (with uncommitted changes)' : ''}. ` +
+      'Same purpose and profile = the same call. The structural columns are the causes Google names for "too many states for serving" (optional properties, enum values, long names, nesting), counted — Vertex publishes no state count and none is computed here.',
+  );
+  out.push('');
+  out.push(
+    '| purpose | profile | schema chars | Δ chars | anyOf | nullable | unions / branches | optional | enum values | name + enum chars | depth |',
+  );
+  out.push('|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|');
+  for (const c of changesBetween(before, after)) {
+    const a = c.before;
+    const b = c.after;
+    out.push(
+      `| ${c.purpose} | ${c.profile} | ${arrow(a.chars, b.chars)} | ${c.sameSchema ? 'same bytes' : delta(a.chars, b.chars)} | ${arrow(a.anyOfNodes, b.anyOfNodes)} | ${arrow(a.nullableAnyOf, b.nullableAnyOf)} | ${arrow(a.unions, b.unions)} / ${arrow(a.unionBranches, b.unionBranches)} | ${arrow(a.optionalFields, b.optionalFields)} | ${arrow(a.enumValues, b.enumValues)} | ${arrow(a.propertyNameChars + a.enumValueChars, b.propertyNameChars + b.enumValueChars)} | ${arrow(a.maxDepth, b.maxDepth)} |`,
+    );
+  }
+  const gone = before.variants.filter(
+    (v) => !after.variants.some((x) => x.purpose === v.purpose && x.profile === v.profile),
+  );
+  if (gone.length > 0) {
+    out.push('');
+    out.push(`Only in the baseline: ${gone.map((v) => `${v.purpose} / ${v.profile}`).join(', ')}.`);
+  }
+  out.push('');
+  return out.join('\n');
+}
+
+function argOf(flag: string): string | null {
+  const i = process.argv.indexOf(flag);
+  const v = i >= 0 ? process.argv[i + 1] : undefined;
+  return v ? resolve(v) : null;
+}
+
 async function main(): Promise<void> {
-  const i = process.argv.indexOf('--out');
-  const dir = i >= 0 && process.argv[i + 1] ? resolve(process.argv[i + 1] ?? '') : DEFAULT_OUT;
+  const dir = argOf('--out') ?? DEFAULT_OUT;
+  const baselinePath = argOf('--baseline');
   const report = await buildReport();
+  const baseline: Report | null = baselinePath
+    ? (JSON.parse(readFileSync(baselinePath, 'utf8')) as Report)
+    : null;
+  if (baseline && baselinePath)
+    report.baseline = { commit: baseline.commit, file: relative(REPO, baselinePath) };
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, 'schema-inventory.json'), `${JSON.stringify(report, null, 1)}\n`);
-  writeFileSync(join(dir, 'schema-inventory.md'), renderMarkdown(report));
+  writeFileSync(
+    join(dir, 'schema-inventory.md'),
+    renderMarkdown(report) + (baseline ? `\n${renderComparison(baseline, report)}` : ''),
+  );
   for (const v of report.variants) {
     console.log(
       `${v.purpose.padEnd(12)} ${v.profile.slice(0, 40).padEnd(40)} system ${String(v.system.chars).padStart(6)}  schema ${String(v.schema.chars).padStart(6)}  unions ${v.schema.shape.unions}`,

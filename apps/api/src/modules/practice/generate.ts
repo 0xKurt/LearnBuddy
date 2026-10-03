@@ -23,6 +23,7 @@ import { isUniqueViolation } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
 import { callModel } from '../../llm/call.js';
+import type { JsonSchema } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { answerUpTo } from '../../llm/partial.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
@@ -172,6 +173,20 @@ export function setSchemaForModel(
   return kind === 'listen'
     ? setSchema.omit({ bars: true, items: true, structured: true })
     : setSchema.omit({ listen: true });
+}
+
+/**
+ * The `responseJsonSchema` an explain call sends for this kind and these sheet topics — the one
+ * seam the call site and the schema inventory (`evals/schema`, issue #281) both go through, so the
+ * inventory measures exactly what is sent.
+ */
+export function explainSchemaFor(
+  kind: StartTopicRequest['kind'],
+  topics: [string, ...string[]] | null,
+): JsonSchema {
+  return topics || kind === 'listen'
+    ? toJsonSchema(setSchemaForModel(kind, topics))
+    : GENERATED_SCHEMA;
 }
 
 /** How much of the sheets' text grounds a test built from them. */
@@ -473,7 +488,6 @@ async function generateSet(
       .default(null)
       .catch(null),
   });
-  const forModel = setSchemaForModel(input.kind, sheets?.topics ?? null);
   let handedOver = false;
   const onPartial = opts.onFirstItems
     ? (rawSoFar: string) => {
@@ -523,7 +537,7 @@ async function generateSet(
           ],
         },
       ],
-      schema: sheets || input.kind === 'listen' ? toJsonSchema(forModel) : GENERATED_SCHEMA,
+      schema: explainSchemaFor(input.kind, sheets?.topics ?? null),
       maxOutputTokens: 10_000,
       temperature: 0.4,
       // A streamed run must be finished inside the window the run waits for it, or it would

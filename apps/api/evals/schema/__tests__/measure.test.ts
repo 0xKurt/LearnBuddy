@@ -55,6 +55,10 @@ describe('shapeOf', () => {
     expect(s.enums).toBe(3);
     expect(s.enumValues).toBe(4);
     expect(s.singletonEnums).toBe(2);
+    // title note description marks pick · kind size · kind label color
+    expect(s.propertyNameChars).toBe(5 + 4 + 11 + 5 + 4 + (4 + 4) + (4 + 5 + 5));
+    // dot · box · red blue
+    expect(s.enumValueChars).toBe(3 + 3 + 3 + 4);
     // root → marks → items → box → color (nullable) → the enum
     expect(s.maxDepth).toBe(6);
     // the null branches of the two nullable fields are not nodes of their own
@@ -145,11 +149,33 @@ describe('small helpers', () => {
 });
 
 describe('the inventory measures what the call sites send', () => {
-  it('the explain seam reproduces the global schema byte for byte', async () => {
-    const { GENERATED_SCHEMA, setSchemaForModel } =
+  it('the explain seam is what the call site sends: GENERATED_SCHEMA unless sheets or listening', async () => {
+    const { GENERATED_SCHEMA, explainSchemaFor, setSchemaForModel } =
       await import('../../../src/modules/practice/generate.js');
+    expect(serialize(explainSchemaFor('practice', null))).toBe(serialize(GENERATED_SCHEMA));
     expect(serialize(toJsonSchema(setSchemaForModel('practice', null)))).toBe(
       serialize(GENERATED_SCHEMA),
     );
+    expect(serialize(explainSchemaFor('listen', null))).toBe(
+      serialize(toJsonSchema(setSchemaForModel('listen', null))),
+    );
+  });
+
+  it('a baseline is compared call by call, and an unchanged call says so', async () => {
+    const { buildReport, changesBetween, renderComparison } = await import('../inventory.js');
+    const after = await buildReport();
+    const before = structuredClone(after);
+    const turn = before.variants.find((v) => v.purpose === 'buddy_turn');
+    if (!turn) throw new Error('no buddy_turn variant');
+    turn.schema.sha256 = 'older';
+    turn.schema.shape = { ...turn.schema.shape, chars: turn.schema.shape.chars * 2 };
+    before.variants.push({ ...turn, profile: 'gone since' });
+    const changes = changesBetween(before, after);
+    expect(changes).toHaveLength(after.variants.length);
+    const changed = changes.filter((c) => !c.sameSchema);
+    expect(changed.map((c) => c.purpose)).toEqual(['buddy_turn']);
+    const md = renderComparison(before, after);
+    expect(md).toContain('−50.0 %');
+    expect(md).toContain('Only in the baseline: buddy_turn / gone since.');
   });
 });
