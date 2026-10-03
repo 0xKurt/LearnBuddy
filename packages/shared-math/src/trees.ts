@@ -292,8 +292,8 @@ export function treeProblem(f: TreeFigureData): TreeProblem | null {
 export type XY = { x: number; y: number };
 
 /** Vertical room per leaf of a probability tree, and per level of a plain tree. */
-export const TREE_ROW = 26;
-export const TREE_LEVEL = 50;
+export const TREE_ROW = 36;
+export const TREE_LEVEL = 56;
 
 /**
  * Where each node of a tree stands: leaves one slot apart in the order they are listed, every
@@ -332,13 +332,13 @@ export function treeLayout(
     }));
     return { at, width, height: leaves * TREE_ROW };
   }
-  const gap = Math.min(TREE_ROW * 2, width / leaves);
+  const gap = Math.min(64, width / leaves);
   const used = gap * leaves;
   const at = t.n.map((_, i) => ({
     x: (width - used) / 2 + gap / 2 + (slot[i] ?? 0) * gap,
-    y: 16 + (depth[i] ?? 0) * TREE_LEVEL,
+    y: 20 + (depth[i] ?? 0) * TREE_LEVEL,
   }));
-  return { at, width, height: 32 + levels * TREE_LEVEL };
+  return { at, width, height: 40 + levels * TREE_LEVEL };
 }
 
 /**

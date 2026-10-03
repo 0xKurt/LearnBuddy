@@ -67,7 +67,7 @@ test('trees, pedigrees and automata: read, answered, graded by code', async ({ p
   await onboardChild(page);
   await page.getByLabel('Schreib Buddy …').fill('Lass uns Bäume üben');
   await page.getByRole('button', { name: 'Senden' }).click();
-  const offer = 'Stammbäume und Automaten';
+  const offer = 'Bäume zum Rechnen';
   await expect(page.getByText(offer, { exact: false })).toBeVisible();
   await page
     .locator('div')

@@ -94,7 +94,7 @@ function ProbTree({ fig, width }: { fig: TreeFig; width: number }) {
     // The probability sits on its branch, above it where the branch rises, below where it falls,
     // so two branches from one node never share a corner.
     const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
-    const dy = to.y < from.y ? -5 : to.y > from.y ? 13 : -5;
+    const dy = to.y < from.y ? -5 : to.y > from.y ? 15 : -5;
     nodes.push(
       <HaloText
         key={`p${i}`}
@@ -102,7 +102,7 @@ function ProbTree({ fig, width }: { fig: TreeFig; width: number }) {
         y={mid.y + dy}
         anchor="middle"
         text={node.e}
-        size={SMALL}
+        size={asked ? FONT + 3 : FONT}
         color={asked ? ink.point : ink.label}
       />,
     );
@@ -133,7 +133,7 @@ function ProbTree({ fig, width }: { fig: TreeFig; width: number }) {
 
 // ─────────────── plain tree (top down) ───────────────
 
-const NODE_R = 15;
+const NODE_R = 16;
 
 function PlainTree({ fig, width }: { fig: TreeFig; width: number }) {
   const { figure: ink } = useTheme();

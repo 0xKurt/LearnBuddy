@@ -162,7 +162,7 @@ export function scriptTrees(): void {
   });
   scriptTurns({
     when: /bäume üben/i,
-    answer: says('Gern – Baumdiagramme, Stammbäume und Automaten.', [
+    answer: says('Gern – Bäume zum Rechnen und Ablesen.', [
       {
         tool: 'offer_learning',
         args: { kind: 'practice', text: 'Baumdiagramme, Stammbäume und Automaten' },
