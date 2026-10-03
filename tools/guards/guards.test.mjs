@@ -384,3 +384,30 @@ describe('fresh base: a PR does not lag main by more than a day (issue #328)', (
     assert.ok(hours !== null && hours > MAX_AGE_HOURS);
   });
 });
+
+describe('lb/no-early-script-report: a test reads the model report only after background work', () => {
+  const probe = [
+    'const a = env.llm.unexpected.length;',
+    'const b = env.llm.scriptErrors;',
+    'const c = env.llm.pending();',
+    'export { a, b, c };',
+  ].join('\n');
+
+  it('fires on each of the three in an integration test', async () => {
+    const eslint = new ESLint({ cwd: REPO_ROOT });
+    const [result] = await eslint.lintText(probe, {
+      filePath: join(REPO_ROOT, 'apps/api/src/__tests__/guard-probe.int.test.ts'),
+    });
+    const hits = (result?.messages ?? []).filter((m) => m.ruleId === 'lb/no-early-script-report');
+    assert.equal(hits.length, 3);
+  });
+
+  it('stays quiet in the harness, the one place that builds the report', async () => {
+    const eslint = new ESLint({ cwd: REPO_ROOT });
+    const [result] = await eslint.lintText(probe, {
+      filePath: join(REPO_ROOT, 'apps/api/src/testing/harness-probe.ts'),
+    });
+    const hits = (result?.messages ?? []).filter((m) => m.ruleId === 'lb/no-early-script-report');
+    assert.equal(hits.length, 0);
+  });
+});
