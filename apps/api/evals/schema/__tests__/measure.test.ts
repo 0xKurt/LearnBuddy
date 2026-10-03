@@ -149,16 +149,17 @@ describe('small helpers', () => {
 });
 
 describe('the inventory measures what the call sites send', () => {
-  it('the explain seam is what the call site sends: GENERATED_SCHEMA unless sheets or listening', async () => {
+  it("the explain seam is what the call site sends: the kind's profile, GENERATED_SCHEMA the fallback", async () => {
     const { GENERATED_SCHEMA, explainSchemaFor, setSchemaForModel } =
       await import('../../../src/modules/practice/generate.js');
-    expect(serialize(explainSchemaFor('practice', null))).toBe(serialize(GENERATED_SCHEMA));
-    expect(serialize(toJsonSchema(setSchemaForModel('practice', null)))).toBe(
+    expect(serialize(toJsonSchema(setSchemaForModel(null, null)))).toBe(
       serialize(GENERATED_SCHEMA),
     );
-    expect(serialize(explainSchemaFor('listen', null))).toBe(
-      serialize(toJsonSchema(setSchemaForModel('listen', null))),
-    );
+    for (const kind of ['practice', 'test', 'vocab', 'speak', 'help', 'listen'] as const) {
+      expect(serialize(explainSchemaFor(kind, null))).toBe(
+        serialize(toJsonSchema(setSchemaForModel(kind, null))),
+      );
+    }
   });
 
   it('a baseline is compared call by call, and an unchanged call says so', async () => {

@@ -2401,6 +2401,47 @@ item's ordinary columns before it is stored.
 - **Not checked by code**: the meaning of the prompt itself. A question that claims `read: sum` and
   asks something else is caught only when the numbers then disagree.
 
+### Explain profiles (issue #281, D2)
+
+Every explain call is sent only the forms its run can use — the schema is derived from the kind
+of run, through the nested unions, not only at the top. One table decides it, `SET_PROFILES` in
+`practice/generate.ts`, and both directions read it: `setSchemaForModel(kind, topics)` builds what
+the model is shown (`explainSchemaFor` is the call site's and the inventory's one seam), and
+`parseSetFor(kind, topics)` plus `preparedFrom` decide what is kept — a form outside the profile is
+dropped, whatever the model wrote (Rule 0). Every row was a rule in `preparedFrom` before it became
+a row, so a profile leaves out only what code already threw away: item kinds (`KINDS`), structured
+kinds (`STRUCTURED`), bars only in practice (#162), note lines in practice and tests (#226), the
+listening task only in a listening run (#210). Inside an item, the fields no allowed kind keeps are
+left out too, from `practice/itemFields.ts` — the same constants `usableItems` and `usableRubric`
+discard by: a rubric (and its `RubricCheck` union) without a long answer, a tolerance without a
+number, a spelling mode without a typed word. The subject is never a rule.
+
+| kind     | items                                                 | structured               | bars | staffs | listen |
+| -------- | ----------------------------------------------------- | ------------------------ | ---- | ------ | ------ |
+| practice | short, long, numeric, multiple_choice, formula, vocab | order, table_fill, match | ✓    | ✓      | —      |
+| test     | short, numeric, multiple_choice, formula, vocab       | order, table_fill, match | —    | ✓      | —      |
+| vocab    | vocab                                                 | —                        | —    | —      | —      |
+| speak    | speak                                                 | —                        | —    | —      | —      |
+| help     | short, long, numeric, multiple_choice, formula        | —                        | —    | —      | —      |
+| listen   | —                                                     | —                        | —    | —      | ✓      |
+
+A sheet-bound run (a practice or test for a planned test) is the same profile with the sheets'
+topics as the item `topic` enum. With no kind known (`setSchemaForModel(null, …)`), the fallback is
+every form but the listening task — byte for byte `GENERATED_SCHEMA`, what every run without
+sheets was sent before D2; today every call knows its kind, so it is the measured baseline. Not
+narrowed, because code cannot prove a form unusable there: `ModelFigure` (all 14 figure types stay
+in every profile with items, also vocab and speak — that would need a code rule first), the
+extraction schemas (a sheet is read before anyone knows what is on it) and the Buddy turn's
+`actions` (tool growth, D3 deferred by the #279 consensus). Proven by
+`practice/__tests__/profiles.test.ts` (every valid form passes `testing/schemaCheck.ts`, a stand-in
+for the decoder with exactly the emitted keywords, and code's parse; every form outside is
+rejected by both; the `answerUpTo` prefix validates under every profile) and
+`__tests__/explain-profiles.int.test.ts` (the model answers with every form, and each kind stores
+exactly what it stored before D2 — the expectation is written from the pre-D2 rules and was run
+green on the pre-D2 commit). Sizes before and after: `docs/measurements/schema-inventory.md`
+§Before → after. Whether Vertex accepts every profile and what it does to native tokens and
+quality is the live pilot of #281, not measured here.
+
 ### Learning modes (migration `0003_learning_modes.sql`)
 
 Questions come from a photo (`material`), from Buddy on a topic the learner named (`buddy`,
@@ -3150,18 +3191,22 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
 - **Schema inventory** (issue #281, D1 of the consensus in #279): `pnpm --filter
 @learnbuddy/api inventory:schema` writes `docs/measurements/schema-inventory.md` and `.json` —
   for every model purpose and every profile it has today (turn step/final, check step/final,
-  explain global / sheet-bound / listen, extraction study/homework with and without
+  explain per kind of run and sheet-bound practice/test plus the `GENERATED_SCHEMA` fallback,
+  extraction study/homework with and without
   `LEAN_RULES`, tutor/rubric, pronounce sentence/word, figures, hints, transcribe, reexplain,
   consolidate, summary): commit, prompt version, sha256 of the serialized schema, system-prompt
   and schema characters, description text and description-with-key characters (two different
   numbers, both labelled), and the structure (`anyOf` nodes, nullable wrappers, real unions and
-  their branches, depth, optional fields, enums and their values). The `actions` container is
+  their branches, depth, optional fields, enums and their values, and the characters of every
+  property name and enum value — Google's first named cause of "too many states", counted, not a
+  state count). The `actions` container is
   broken down per action branch and every union of the task schemas (figures, parts tasks,
   table cells, rubric checks, bars, staff tasks and elements) per branch, with where each union
   declares its tag. No model call, no database, no cost: it imports the constants the call sites
-  pass (`toJsonSchema` output) — the private ones are exported for it, and the explain profiles
-  come from `setSchemaForModel` in `practice/generate.ts`, the one function `generateSet` itself
-  uses. The counting is pure (`evals/schema/measure.ts`, unit-tested on handmade schemas in
+  pass (`toJsonSchema` output) — the private ones are exported for it, and the explain schemas
+  come from `explainSchemaFor` in `practice/generate.ts`, the one function the call site itself
+  uses. `--baseline <older json>` adds a before → after table per call;
+  `schema-inventory.before-d2.json` is the baseline D2 was measured against. The counting is pure (`evals/schema/measure.ts`, unit-tested on handmade schemas in
   `evals/schema/__tests__/measure.test.ts`). With Vertex credentials in `apps/api/.env.local`
   it adds `countTokens` numbers, labelled as a **text-token count of the serialized text — not
   native usage, billing or cache**; without them it says "not counted" instead of estimating.
