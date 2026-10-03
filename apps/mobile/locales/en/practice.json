@@ -178,9 +178,15 @@
     "sharp": "Sharp ♯",
     "rest": "Rest",
     "undo": "Undo",
-    "place": "Place {{note}} {{where}} in bar {{bar}}",
     "toggle_on": "{{label}}, on",
-    "bar_crowded": "There is no room for another symbol in bar {{n}}."
+    "bar_crowded": "There is no room for another symbol in bar {{n}}.",
+    "bar_hint": "Tap where the note should go. Then move it with “Higher” and “Lower”.",
+    "higher": "Higher",
+    "lower": "Lower",
+    "placed": "{{what}} {{where}}, bar {{bar}}",
+    "moved": "{{what}} {{where}}",
+    "rest_placed": "{{what}}, bar {{bar}}",
+    "rest_of": "Place a {{value}}"
   },
   "summary": {
     "title": "Done!",

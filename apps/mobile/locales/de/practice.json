@@ -178,9 +178,15 @@
     "sharp": "Kreuz ♯",
     "rest": "Pause",
     "undo": "Zurück",
-    "place": "{{note}} {{where}} in Takt {{bar}} setzen",
     "toggle_on": "{{label}}, ist an",
-    "bar_crowded": "In Takt {{n}} ist kein Platz mehr für ein weiteres Zeichen."
+    "bar_crowded": "In Takt {{n}} ist kein Platz mehr für ein weiteres Zeichen.",
+    "bar_hint": "Tippe dorthin, wo die Note stehen soll. Mit „Höher“ und „Tiefer“ schiebst du sie danach.",
+    "higher": "Höher",
+    "lower": "Tiefer",
+    "placed": "{{what}} {{where}}, Takt {{bar}}",
+    "moved": "{{what}} {{where}}",
+    "rest_placed": "{{what}}, Takt {{bar}}",
+    "rest_of": "{{value}} setzen"
   },
   "summary": {
     "title": "Geschafft!",

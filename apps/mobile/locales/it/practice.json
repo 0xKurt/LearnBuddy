@@ -178,9 +178,15 @@
     "sharp": "Diesis ♯",
     "rest": "Pausa",
     "undo": "Annulla",
-    "place": "Metti {{note}} {{where}} nella battuta {{bar}}",
     "toggle_on": "{{label}}, attivo",
-    "bar_crowded": "Nella battuta {{n}} non c'è più posto per un altro segno."
+    "bar_crowded": "Nella battuta {{n}} non c'è più posto per un altro segno.",
+    "bar_hint": "Tocca dove deve andare la nota. Poi spostala con «Più su» e «Più giù».",
+    "higher": "Più su",
+    "lower": "Più giù",
+    "placed": "{{what}} {{where}}, battuta {{bar}}",
+    "moved": "{{what}} {{where}}",
+    "rest_placed": "{{what}}, battuta {{bar}}",
+    "rest_of": "Metti: {{value}}"
   },
   "summary": {
     "title": "Ce l'hai fatta!",

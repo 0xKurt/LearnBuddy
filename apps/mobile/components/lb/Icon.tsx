@@ -31,7 +31,9 @@ export type IconName =
   | 'voice'
   | 'stop'
   | 'undo'
-  | 'file';
+  | 'file'
+  | 'up'
+  | 'down';
 
 type IconProps = {
   name: IconName;
@@ -118,6 +120,19 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Path d="M5 12h14M13 6l6 6-6 6" {...common} />
+        </Svg>
+      );
+    // Höher / tiefer auf der Notenzeile (issue #275); „Zurück“ nimmt das eine 'undo' unten.
+    case 'up':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M6 15l6-6 6 6" {...common} strokeWidth={2.2} />
+        </Svg>
+      );
+    case 'down':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M6 9l6 6 6-6" {...common} strokeWidth={2.2} />
         </Svg>
       );
     case 'chevron':

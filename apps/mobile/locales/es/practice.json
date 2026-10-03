@@ -178,9 +178,15 @@
     "sharp": "Sostenido ♯",
     "rest": "Silencio",
     "undo": "Deshacer",
-    "place": "Poner {{note}} {{where}} en el compás {{bar}}",
     "toggle_on": "{{label}}, activado",
-    "bar_crowded": "En el compás {{n}} ya no cabe otro signo."
+    "bar_crowded": "En el compás {{n}} ya no cabe otro signo.",
+    "bar_hint": "Toca donde debe ir la nota. Después muévela con «Más alto» y «Más bajo».",
+    "higher": "Más alto",
+    "lower": "Más bajo",
+    "placed": "{{what}} {{where}}, compás {{bar}}",
+    "moved": "{{what}} {{where}}",
+    "rest_placed": "{{what}}, compás {{bar}}",
+    "rest_of": "Poner: {{value}}"
   },
   "summary": {
     "title": "¡Lo has conseguido!",
