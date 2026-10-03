@@ -1,0 +1,47 @@
+// knip: unused files, exports and dependencies (issue #313, docs/engineering-guards.md).
+// It runs through tools/guards/knip.mjs, which compares its findings with the
+// Ausnahmeliste in tools/guards/baselines/knip.json: a new finding is red, a fixed one must
+// leave the list. Entries below are the ways code is started that knip cannot see itself.
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      // Node scripts started by hand or from CI, the walkthrough specs, the guards themselves.
+      "entry": ["scripts/**/*.mjs", "tests/web/**/*.{ts,mjs}", "tools/**/*.mjs"],
+      "project": ["scripts/**/*.mjs", "tests/web/**/*.{ts,mjs}", "tools/**/*.mjs"],
+    },
+    "apps/api": {
+      // Vercel's function entry, the evals and one-off scripts are run with tsx by hand.
+      "entry": ["api/index.ts", "src/server.ts", "evals/**/*.ts", "scripts/*.{ts,mjs}"],
+      "project": ["**/*.ts"],
+    },
+    "apps/mobile": {
+      // Platform twins (`*.web.ts`) are picked by Metro's resolver, not by an import path;
+      // the component-test project is listed in vitest.workspace.ts. Expo config plugins
+      // are named in app.json, global.css by NativeWind in metro.config.js.
+      "entry": [
+        "**/*.web.{ts,tsx}",
+        "vitest.components.config.ts",
+        "testing/*.{ts,tsx}",
+        "scripts/*.mjs",
+        "plugins/*.js",
+        "global.css",
+      ],
+      "project": ["**/*.{ts,tsx}"],
+      // metro.config.js needs NativeWind's tailwind config resolved from apps/mobile, which
+      // knip cannot load; the expo plugin already knows the router's entry points.
+      "metro": false,
+    },
+  },
+  "ignoreDependencies": [
+    // The guard wrapper starts jscpd's binary (tools/guards/clones.mjs).
+    "jscpd",
+    // NativeWind 4 resolves it at build time; its install guide lists it as a direct dependency.
+    "react-native-css-interop",
+    // scripts/deploy-check.sh installs Vercel's detector into a temp dir (LB_FS_DETECTORS_DIR).
+    "@vercel/fs-detectors",
+  ],
+  // Programs on the machine, not from npm: psql (the API's role test), supabase (the CLI
+  // behind `pnpm db:*`), espeak-ng (the voice evals synthesise test audio with it).
+  "ignoreBinaries": ["psql", "supabase", "espeak-ng"],
+}

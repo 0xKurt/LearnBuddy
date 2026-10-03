@@ -3169,6 +3169,10 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
 
 ## Testing
 
+- **Engineering guards** (issue #313): copies (jscpd), file size, tokens only, raw `Pressable`,
+  dead code (knip), the web bundle budget and the drawing-component registry, each with an
+  Ausnahmeliste that only shrinks. They run in `pnpm lint`, the pre-commit hook and the
+  walkthrough; what each checks and how to fix a failure: `docs/engineering-guards.md`.
 - Unit: time and DST (`lib/__tests__`), contact policy, i18n parity.
 - Live evals need the Vertex variables from `apps/api/.env.local` and a local Postgres;
   `evals/speak` and `evals/voice` additionally need `espeak-ng` on the machine (they speak the
