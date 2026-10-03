@@ -265,23 +265,28 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText('Schau auf die Kreise: Welcher ist mehr gefüllt?')).toBeVisible();
   // What scrolls up out of the conversation fades away instead of being cut hard under the
   // question card, where half a line stood readable and looked like a rendering fault
-  // (owner 28.09., issue #63). On the web the scroll view itself is masked (EdgeFade.tsx);
-  // on phones the same edge is covered by <TopEdgeFade>, which a screenshot has to show.
+  // (owner 28.09., issue #63). Since #286 the conversation shows whole turns, so the fade is
+  // there exactly when the box holds more than it shows; a conversation that fits whole has
+  // no edge to fade. On the web the scroll view itself is masked (EdgeFade.tsx); on phones
+  // the same edge is covered by <TopEdgeFade>, which a screenshot has to show.
   // .last(): the home under this screen keeps its own thread mounted (expo-router).
-  const faded = await page
+  const edge = await page
     .getByTestId('scroll-thread')
     .last()
     .evaluate((el) => {
       let node: Element | null = el;
+      let masked = false;
       while (node) {
         const s = getComputedStyle(node);
         const mask = `${s.getPropertyValue('mask-image')} ${s.getPropertyValue('-webkit-mask-image')}`;
-        if (mask.includes('gradient')) return true;
+        if (mask.includes('gradient')) masked = true;
         node = node.parentElement;
       }
-      return false;
+      return { masked, holdsMore: el.scrollHeight > el.clientHeight + 1 };
     });
-  expect(faded, 'the conversation fades out at its top edge').toBe(true);
+  expect(edge.masked, 'the conversation fades out at its top edge exactly when it holds more').toBe(
+    edge.holdsMore,
+  );
   await shot(page, '25-practice-fractions');
   // The drawing takes the measured room of the grown question card (issue #96) — more
   // than the old fixed 14 % of the window (118 pt inside a ~144 pt frame) ever allowed.
@@ -830,4 +835,56 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   await expect(page.getByText('Geschafft!')).toBeVisible();
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+});
+
+/** One state at both phone sizes, light and dark (fit and contrast checked by `shot`). */
+async function bothSchemes(page: Page, name: string): Promise<void> {
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await shot(page, `${name}-${scheme}`);
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+}
+
+test('the task typed back and a decay that does not add up, both named by code (#235, #263)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Ich will Faktorisieren üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(
+    page.getByText('Faktorisieren und einen Zerfall vorbereitet', { exact: false }),
+  ).toBeVisible();
+  // A fresh learner: this is the only offer in the thread.
+  await page.getByRole('button', { name: START }).last().click();
+  await expect(page.getByText('Faktorisiere', { exact: false }).first()).toBeVisible();
+
+  // The task's own term written back: the same value, nothing done — a near miss, said gently.
+  const field = page.getByLabel('Deine Antwort');
+  await field.fill('x^2+2x+1');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(
+    page.getByText('Gleichwertig – aber das steht genau so schon in der Aufgabe.', {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await bothSchemes(page, '41-typed-back');
+
+  // The key's form with its factors written out is right.
+  await expect(async () => {
+    await field.fill('(x+1)(x+1)');
+    await expect(field).toHaveValue('(x+1)(x+1)', { timeout: 1000 });
+  }).toPass();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // A decay whose mass numbers do not add up: the place, counted.
+  await expect(page.getByText('Zerfallsgleichung', { exact: false }).first()).toBeVisible();
+  await field.fill('U-238 → Th-234 + He-3');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(
+    page.getByText('Fast – die Massenzahlen stimmen noch nicht: links 238, rechts 237.'),
+  ).toBeVisible();
+  await bothSchemes(page, '42-decay-unbalanced');
 });
