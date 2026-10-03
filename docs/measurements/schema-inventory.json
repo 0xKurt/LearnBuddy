@@ -1,8 +1,8 @@
 {
  "issue": "#281",
- "commit": "9ec7a86aa19e8c3683079d0410182fb289d8654b",
- "commitDate": "2026-10-03T21:57:12+02:00",
- "dirty": true,
+ "commit": "e1f23ee0ce6020aa1798d911d9bd97789647c8fd",
+ "commitDate": "2026-10-03T20:31:39+00:00",
+ "dirty": false,
  "sdk": "@google/genai 2.25.0",
  "zod": "3.25.76",
  "models": {
@@ -19052,6 +19052,6 @@
  "missing": [],
  "baseline": {
   "commit": "9ec7a86aa19e8c3683079d0410182fb289d8654b",
-  "file": "../../../../../../tmp/claude-0/-home-user-LearnBuddy/7a72860e-6b79-5bc6-a36d-28174ff43f45/scratchpad/inv-before/schema-inventory.json"
+  "file": "docs/measurements/schema-inventory.before-d2.json"
  }
 }

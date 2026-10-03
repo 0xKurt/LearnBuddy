@@ -3707,7 +3707,7 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   pass (`toJsonSchema` output) — the private ones are exported for it, and the explain schemas
   come from `explainSchemaFor` in `practice/generate.ts`, the one function the call site itself
   uses. `--baseline <older json>` adds a before → after table per call;
-  `schema-inventory.before-d2.json` is the baseline D2 was measured against. The counting is pure (`evals/schema/measure.ts`, unit-tested on handmade schemas in
+  `schema-inventory.before-d2.json` is the baseline D2 was measured against: generated on the merge of D1/D2 into main 9ec7a86 with `explainSchemaFor` temporarily set back to main's pre-D2 call-site logic (the `forModel` chain), which is why it says "with uncommitted changes"; every other call is byte-equal between the two files. The counting is pure (`evals/schema/measure.ts`, unit-tested on handmade schemas in
   `evals/schema/__tests__/measure.test.ts`). With Vertex credentials in `apps/api/.env.local`
   it adds `countTokens` numbers, labelled as a **text-token count of the serialized text — not
   native usage, billing or cache**; without them it says "not counted" instead of estimating.
