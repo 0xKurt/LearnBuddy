@@ -58,7 +58,6 @@ import { BottomBar } from '../../components/practice/BottomBar.js';
 import { ChoiceList, SpokenChoiceBar } from '../../components/practice/ChoiceList.js';
 import {
   canDisputeVerdict,
-  DisputeVerdictButton,
   DisputeVerdictSheet,
 } from '../../components/practice/DisputeVerdict.js';
 import { FractionBarAnswer } from '../../components/practice/FractionBarAnswer.js';
@@ -66,7 +65,7 @@ import { HearText, HeardTextCard } from '../../components/practice/HearText.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
-import { ReadQuestionButton } from '../../components/practice/ReadQuestionButton.js';
+import { QuestionCorner } from '../../components/practice/QuestionCorner.js';
 import {
   emptyStaffAnswer,
   readStaffDraft,
@@ -993,40 +992,6 @@ export default function PracticeScreen() {
     ) : null,
   ].filter((node) => node !== null);
 
-  // A judgement she has been given and may disagree with (issue #164). The rule and the copy
-  // live in components/practice/DisputeVerdict.tsx, where a component test holds them.
-  const disputeButton = canDisputeVerdict({
-    open,
-    sessionStatus: session.status,
-    testing,
-    mode: session.mode,
-    origin: item.origin,
-  }) ? (
-    <DisputeVerdictButton
-      disabled={locked}
-      onPress={() => {
-        setDisputeFor(item.id);
-        setDisputeOpen(true);
-      }}
-    />
-  ) : null;
-
-  const flagButton = flaggable ? (
-    <Btn
-      size="sm"
-      variant="ghost"
-      pill
-      disabled={locked}
-      onPress={() => {
-        setFlagFor(item.id);
-        setFlagOpen(true);
-      }}
-      accessibilityHint={t('practice:flag.hint')}
-    >
-      {t('practice:flag.button')}
-    </Btn>
-  ) : null;
-
   // The conversation shows WHOLE turns only (issue #286). It may take its own box plus the free
   // room under the answer (`FreeSpace`) — that sum does not change while the box is sized, so the
   // measurement is stable. If everything fits, everything shows. Otherwise the box starts at the
@@ -1166,18 +1131,29 @@ export default function PracticeScreen() {
                   // the total is not the number it will be (issue #220).
                   preparing={session.preparing}
                   right={
-                    readOut ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-                        <ReadQuestionButton
-                          key={`read-${item.id}`}
-                          text={readOut.text}
-                          lang={readOut.lang}
-                        />
-                        {flagButton ?? disputeButton}
-                      </View>
-                    ) : (
-                      (flagButton ?? disputeButton)
-                    )
+                    <QuestionCorner
+                      itemId={item.id}
+                      read={readOut}
+                      flaggable={flaggable}
+                      // A judgement she has been given and may disagree with (issue #164). The
+                      // rule and the copy live in components/practice/DisputeVerdict.tsx.
+                      canDispute={canDisputeVerdict({
+                        open,
+                        sessionStatus: session.status,
+                        testing,
+                        mode: session.mode,
+                        origin: item.origin,
+                      })}
+                      disabled={locked}
+                      onFlag={() => {
+                        setFlagFor(item.id);
+                        setFlagOpen(true);
+                      }}
+                      onDispute={() => {
+                        setDisputeFor(item.id);
+                        setDisputeOpen(true);
+                      }}
+                    />
                   }
                 />
                 {session.mode === 'help' || testing ? (

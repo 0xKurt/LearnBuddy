@@ -17,12 +17,10 @@
 // What is read is handed in already SPOKEN (`questionReadText`: math, fractions and formulas in
 // words); this button never turns LaTeX into sound.
 
-import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { speak, stop, type ListenEnd } from '../../lib/speech/listen.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
-import { toast } from '../lb/Toast.js';
+import { useListenToggle } from './useListenToggle.js';
 
 type Props = {
   /** The question as it is said (math in words). */
@@ -33,34 +31,7 @@ type Props = {
 
 export function ReadQuestionButton({ text, lang }: Props) {
   const { t } = useTranslation('practice');
-  const [playing, setPlaying] = useState(false);
-  const mounted = useRef(true);
-  const playingRef = useRef(false);
-  playingRef.current = playing;
-
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-      if (playingRef.current) stop();
-    };
-  }, []);
-
-  function onEnd(why: ListenEnd): void {
-    if (!mounted.current) return;
-    setPlaying(false);
-    // Neither the natural voice nor the phone's own could read it: said, not left in silence.
-    if (why === 'error') toast.show(t('speak.no_voice'), 'info');
-  }
-
-  function press(): void {
-    if (playing) {
-      stop();
-      return;
-    }
-    setPlaying(true);
-    void speak(text, lang, { onEnd });
-  }
+  const { playing, press } = useListenToggle(text, lang);
 
   return (
     <CircleBtn
