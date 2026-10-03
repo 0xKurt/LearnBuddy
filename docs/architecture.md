@@ -2704,9 +2704,13 @@ scrolling up) — the bar on top never covers the conversation (only its opened 
 over the conversation's top, and only while she reads them); a
 quiet line names the day where a new one starts (never how many days passed) — what Buddy did
 stands under its message as **one receipt for the turn**, not one line per action, and only the
-newest step she can still take back carries "Rückgängig" (issue #204: two things done in one
+newest step she can still take back carries a way back (issue #204: two things done in one
 answer were two ticks, two sentences and two buttons — "vier Statuszeilen für zwei Dinge, die
-sie getan hat"). Nothing is lost with the buttons that went: a tap or a long press on a receipt
+sie getan hat"). That way back is a small round arrow at the end of the receipt's own line, not
+a pill of its own under it (issue #295: "kein großer fetter button"): `<Btn iconOnly
+icon="undo">` (`components/lb/Btn.tsx`), a 24 pt circle in the secondary ink with a 44 pt
+target, named "Rückgängig: <what>", a tap takes the step back without asking, and while that
+runs the arrow is a spinner in the same place. Nothing is lost with the buttons that went: a tap or a long press on a receipt
 opens everything that can still be taken back, newest first, each with its own way back
 (`components/buddy/UndoSheet.tsx`) — undo over confirmation stays whole
 (`docs/UX-PRINCIPLES.md`). History is the record of the single steps and keeps a line and a

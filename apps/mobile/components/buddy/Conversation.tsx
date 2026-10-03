@@ -16,7 +16,7 @@
 // opened stands still, and the list glides when something is added. A long
 // press on a message opens "Kopieren" / "Vorlesen" (MessageMenu).
 
-import { isValidElement, useRef, useState, type ReactNode } from 'react';
+import { isValidElement, useEffect, useRef, useState, type ReactNode } from 'react';
 import { speakMathText } from '../../lib/math/speak.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
@@ -180,6 +180,18 @@ export function Conversation({
   const [menu, setMenu] = useState<MenuMessage | null>(null);
   /** The sheet with everything that can still be taken back (issue #204). */
   const [undoOpen, setUndoOpen] = useState(false);
+  /** The step whose arrow was tapped: its arrow turns into the spinner while that runs (#295). */
+  const [undoingId, setUndoingId] = useState<string | null>(null);
+  const undoLocked = undoBusy ?? busy;
+  // Once nothing is in flight any more the arrow is an arrow again — after a failed undo too,
+  // so a later send (busy as well) does not set an old arrow spinning.
+  useEffect(() => {
+    if (!undoLocked) setUndoingId(null);
+  }, [undoLocked]);
+  const undo = (id: string) => {
+    setUndoingId(id);
+    onUndo?.(id);
+  };
   const last = messages[messages.length - 1];
   const lastBuddy = [...messages].reverse().find((m) => m.role === 'buddy');
   const breaks = dayBreaks(messages.map((m) => m.created_at));
@@ -217,24 +229,31 @@ export function Conversation({
     a.summary.tool === 'request_material'
       ? t('action.request_material_undone', { title: a.summary.title })
       : `${describeAction(a.summary)} – ${t('done.undone')}`;
-  /** The way back for one step, or nothing where there is none. */
+  /**
+   * The way back for one step, or nothing where there is none: a small round arrow at the end
+   * of the receipt's line (issue #295), not a pill of its own under it. The owner, 02.10.:
+   * "muss kleiner und dezenter werden … ein rundes Pfeil icon neben der entsprechenden
+   * Nachricht und kein großer fetter button". What it takes back is in its label; a tap takes
+   * it back at once (UX-PRINCIPLES: undo over confirmation), and while that runs the arrow is
+   * a spinner in the same place.
+   */
   const undoButton = (a: MessageView['actions'][number] | null): ReactNode => {
     if (!onUndo || a === null || !takeableBack(a)) return null;
     const what = describeAction(a.summary);
+    const running = undoLocked && undoingId === a.id;
     return (
       <Btn
-        size="sm"
-        variant="outline"
-        pill
+        iconOnly
+        icon="undo"
         onPress={() => {
           haptic.tap();
-          onUndo(a.id);
+          undo(a.id);
         }}
-        disabled={undoBusy ?? busy}
+        busy={running}
+        disabled={undoLocked}
         accessibilityLabel={t('done.undo_label', { what })}
       >
-        {/* Taking back a request for a photo: "no photo needed" (#14). */}
-        {a.summary.tool === 'request_material' ? t('done.undo_request_material') : t('done.undo')}
+        {t('done.undo')}
       </Btn>
     );
   };
@@ -547,8 +566,8 @@ export function Conversation({
         <UndoSheet
           actions={takeable}
           visible={undoOpen}
-          busy={undoBusy ?? busy}
-          onUndo={onUndo}
+          busy={undoLocked}
+          onUndo={undo}
           onClose={() => setUndoOpen(false)}
         />
       ) : null}
@@ -562,8 +581,8 @@ export function Conversation({
 }
 
 /**
- * One turn's receipt: a tick, what Buddy did in one quiet line, and under it the way back
- * where that is offered here (issue #204).
+ * One turn's receipt: a tick, what Buddy did in one quiet line, and at its end the way back
+ * where that is offered here (issue #204) — a small round arrow since issue #295.
  *
  * It used to be a green pill with the text squeezed into whatever the "Rückgängig" button
  * left over — on a phone that came out as "✓" on one line and "Ein" on the next, and two of
@@ -591,7 +610,14 @@ function Receipt({
 }) {
   const { palette } = useTheme();
   return (
-    <Animated.View layout={glide} style={{ gap: SPACE.xs }}>
+    // The way back stands right after the sentence, on its line (issue #295: "neben der
+    // entsprechenden Nachricht" — at the far edge it belonged to nothing). The sentence may
+    // shrink and wrap, the arrow is a fixed 24 pt that never grows, so the sentence never
+    // shrinks to its first word the way it did beside the old pill (issue #191).
+    <Animated.View
+      layout={glide}
+      style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.sm }}
+    >
       <Pressable
         accessibilityRole={onOpenAll ? 'button' : 'text'}
         accessibilityLabel={text}
@@ -611,7 +637,7 @@ function Receipt({
         // (CLAUDE.md §Design system, 44 pt): the reach grows, the line does not — padding
         // here would put empty air between every turn and its receipt.
         hitSlop={{ top: SPACE.md, bottom: SPACE.md, left: SPACE.xs, right: SPACE.xs }}
-        style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.xs }}
+        style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.xs }}
       >
         <View style={{ paddingTop: 2 }}>
           <Icon
@@ -623,14 +649,14 @@ function Receipt({
         <Text
           style={[
             TYPE.small,
-            { flex: 1, fontSize: 13, color: undone ? palette.ink3 : palette.ink2 },
+            { flexShrink: 1, fontSize: 13, color: undone ? palette.ink3 : palette.ink2 },
           ]}
         >
           {text}
         </Text>
       </Pressable>
-      {/* 14 (the tick) + xs: the way back starts where the sentence does. */}
-      {undo ? <View style={{ paddingLeft: 14 + SPACE.xs }}>{undo}</View> : null}
+      {/* -2: the 24 pt circle centred on the first 21 pt line, not hanging below it. */}
+      {undo ? <View style={{ marginTop: -2, flexShrink: 0 }}>{undo}</View> : null}
     </Animated.View>
   );
 }
