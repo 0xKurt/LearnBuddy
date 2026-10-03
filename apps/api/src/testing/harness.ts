@@ -37,6 +37,12 @@ export type TestEnv = {
   app: Hono<AppEnv>;
   /** Awaits work the routes started with deps.background (e.g. reading photos). */
   flushBackground(): Promise<void>;
+  /**
+   * Holds every background task started from now on until the next `flushBackground()`.
+   * Without it a task runs at once, beside the request, so a test that asserts the state
+   * BEFORE the task lands races it — and loses under load (issue #323).
+   */
+  holdBackground(): void;
   close(): Promise<void>;
 };
 
@@ -89,6 +95,7 @@ export async function createTestEnv(
   const storage = new MemoryStorage();
   const embeddings = new FakeEmbeddings();
   const pending: Array<Promise<void>> = [];
+  let held: Array<() => Promise<void>> | null = null;
   const deps: Deps = {
     config,
     db,
@@ -101,7 +108,8 @@ export async function createTestEnv(
     push: opts.push === 'disabled' ? new DisabledPush() : push,
     speech: opts.speech === 'disabled' ? new DisabledSpeech() : speech,
     background: (task) => {
-      pending.push(task());
+      if (held) held.push(task);
+      else pending.push(task());
     },
   };
   return {
@@ -115,13 +123,21 @@ export async function createTestEnv(
     auth,
     storage,
     app: createApp(deps),
+    holdBackground: () => {
+      held ??= [];
+    },
     flushBackground: async () => {
+      const release = held ?? [];
+      held = null;
+      for (const task of release) pending.push(task());
       while (pending.length > 0) await pending.shift();
     },
     close: async () => {
       // Work the routes started in the background finishes (or fails) first: a task still
       // running on a closed pool would surface as an unhandled rejection in another test
       // (harness-close-does-not-drain-background).
+      for (const task of held ?? []) pending.push(task());
+      held = null;
       while (pending.length > 0) await Promise.allSettled(pending.splice(0));
       await db.close();
       if (adminDb !== db) await adminDb.close();

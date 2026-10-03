@@ -321,6 +321,7 @@
     "marked": "Marked: {{list}}",
     "function_plot": "Coordinate grid, x from {{x_min}} to {{x_max}}, y from {{y_min}} to {{y_max}}",
     "graph": "Graph of y = {{expr}}",
+    "graph_through": "Graph through {{list}}",
     "graph_named": "Graph {{label}}: y = {{expr}}",
     "points": "Points: {{list}}",
     "bar_chart": "Bar chart: {{list}}",

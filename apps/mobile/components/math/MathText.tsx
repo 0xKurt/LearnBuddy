@@ -37,6 +37,12 @@ type Props = {
    * the learner's answer drawn into the gap while she types (one blank only).
    */
   blanks?: { filled?: string | null };
+  /**
+   * Fractions INSIDE a sentence (a question): set flatter, so a stacked ⅔ sits in the line instead
+   * of tearing it apart — numerator and denominator a step smaller and on tight lines (issue
+   * #288, finding 4). A fraction standing on its own (an answer option) keeps the full size.
+   */
+  inlineFractions?: boolean;
 };
 
 type Metrics = {
@@ -58,6 +64,8 @@ function emphasis(p: { bold: boolean; italic?: boolean }): TextStyle | null {
 }
 /** Her answer for a blank inside math (the text's only blank), or null. */
 const FilledBlank = createContext<string | null>(null);
+/** Whether fractions are set flat, for running text (`inlineFractions`). */
+const FlatFractions = createContext(false);
 
 export function MathText({
   text,
@@ -66,6 +74,7 @@ export function MathText({
   accessibilityLabel,
   accessible = true,
   blanks,
+  inlineFractions = false,
 }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('math');
@@ -115,51 +124,53 @@ export function MathText({
 
   return (
     <FilledBlank.Provider value={withBlanks ? filled : null}>
-      <View
-        // Inside a parent that speaks for it (a bubble, a button) it stays silent.
-        {...(accessible
-          ? {
-              accessible: true,
-              accessibilityRole: accessibilityRole ?? 'text',
-              accessibilityLabel: accessibilityLabel ?? spoken,
-            }
-          : { accessible: false })}
-        style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', flexShrink: 1 }}
-      >
-        {units.map((unit, i) => (
-          <View
-            key={i}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              flexShrink: 1,
-              minHeight: lineHeight,
-            }}
-          >
-            {unit.map((piece, j) => {
-              switch (piece.kind) {
-                case 'plain':
-                  return (
-                    <Text key={j} style={[style, { lineHeight }, emphasis(piece)]}>
-                      {piece.text}
-                    </Text>
-                  );
-                case 'atom':
-                  return <AtomView key={j} atom={piece.atom} m={piece.bold ? mBold : m} />;
-                case 'blank':
-                  return (
-                    <Gap
-                      key={j}
-                      style={[style, { lineHeight }, piece.bold ? BOLD : null]}
-                      lineHeight={lineHeight}
-                      filled={filled}
-                    />
-                  );
+      <FlatFractions.Provider value={inlineFractions}>
+        <View
+          // Inside a parent that speaks for it (a bubble, a button) it stays silent.
+          {...(accessible
+            ? {
+                accessible: true,
+                accessibilityRole: accessibilityRole ?? 'text',
+                accessibilityLabel: accessibilityLabel ?? spoken,
               }
-            })}
-          </View>
-        ))}
-      </View>
+            : { accessible: false })}
+          style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', flexShrink: 1 }}
+        >
+          {units.map((unit, i) => (
+            <View
+              key={i}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                flexShrink: 1,
+                minHeight: lineHeight,
+              }}
+            >
+              {unit.map((piece, j) => {
+                switch (piece.kind) {
+                  case 'plain':
+                    return (
+                      <Text key={j} style={[style, { lineHeight }, emphasis(piece)]}>
+                        {piece.text}
+                      </Text>
+                    );
+                  case 'atom':
+                    return <AtomView key={j} atom={piece.atom} m={piece.bold ? mBold : m} />;
+                  case 'blank':
+                    return (
+                      <Gap
+                        key={j}
+                        style={[style, { lineHeight }, piece.bold ? BOLD : null]}
+                        lineHeight={lineHeight}
+                        filled={filled}
+                      />
+                    );
+                }
+              })}
+            </View>
+          ))}
+        </View>
+      </FlatFractions.Provider>
     </FilledBlank.Provider>
   );
 }
@@ -553,8 +564,12 @@ function Fraction({
   m: Metrics;
   size: number;
 }) {
-  // Numerator and denominator a little smaller, nested ones smaller still (never below 11).
-  const inner = Math.max(11, Math.round(size * 0.86));
+  const flat = useContext(FlatFractions);
+  // Numerator and denominator a little smaller, nested ones smaller still (never below 11). In
+  // running text (`inlineFractions`) a step smaller again, and their lines pulled together, so the
+  // whole fraction is about one and a half lines of the sentence instead of two (issue #288).
+  const inner = Math.max(11, Math.round(size * (flat ? 0.78 : 0.86)));
+  const tighten = flat ? -Math.round(inner * 0.12) : 0;
   // A whole-pixel rule so every fraction bar looks equally strong.
   const rule = size >= 15 ? 2 : 1;
   return (
@@ -562,12 +577,15 @@ function Fraction({
       style={{
         alignItems: 'center',
         paddingHorizontal: 3,
-        marginVertical: 2,
+        marginVertical: flat ? 0 : 2,
         // Put the fraction bar near the height of a minus sign instead of the line's middle.
-        marginTop: Math.round(size * 0.18),
+        // token-exempt: optical lift as a share of the font size, not a spacing step
+        marginTop: Math.round(size * (flat ? 0.08 : 0.18)),
       }}
     >
-      <Row atoms={num} m={m} size={inner} />
+      <View style={{ marginVertical: tighten }}>
+        <Row atoms={num} m={m} size={inner} />
+      </View>
       <View
         style={{
           alignSelf: 'stretch',
@@ -577,7 +595,9 @@ function Fraction({
           marginVertical: 1,
         }}
       />
-      <Row atoms={den} m={m} size={inner} />
+      <View style={{ marginVertical: tighten }}>
+        <Row atoms={den} m={m} size={inner} />
+      </View>
     </View>
   );
 }

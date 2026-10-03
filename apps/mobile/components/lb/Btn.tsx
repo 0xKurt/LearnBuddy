@@ -17,6 +17,11 @@ type Common = {
    */
   label?: ReactNode;
   onPress?: () => void;
+  /**
+   * A second, quieter way in on the same target — never the only way to anything. The answer
+   * option with a picture opens it large this way, while a tap still answers (issue #231).
+   */
+  onLongPress?: () => void;
   variant?: Variant;
   size?: Size;
   full?: boolean;
@@ -102,7 +107,7 @@ export const MAX_FONT_SCALE = 2;
  * clears the rounded end: at the height where a 26 pt badge begins (11 pt down a 48 pt pill)
  * the curve of the 24 pt radius has only come in to x ≈ 3.8, so 12 leaves 8 pt of air.
  */
-export const BTN_PAD_MD = 22;
+const BTN_PAD_MD = 22;
 export const BTN_PAD_COMPACT = SPACE.md;
 
 const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
@@ -150,6 +155,7 @@ export function Btn(props: Props) {
     children,
     label,
     onPress,
+    onLongPress,
     variant = 'primary',
     size = 'md',
     full = false,
@@ -187,6 +193,7 @@ export function Btn(props: Props) {
   const button = (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
       disabled={off}
       accessibilityRole={selected === undefined ? 'button' : 'radio'}
       accessibilityLabel={accessibilityLabel ?? children}

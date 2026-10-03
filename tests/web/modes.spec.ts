@@ -314,6 +314,10 @@ test('learning modes: explain, homework help without the solution, practice with
   // than the old fixed 14 % of the window (118 pt inside a ~144 pt frame) ever allowed.
   const fig = await partHeight(page, 'question-figure', '25-practice-fractions');
   expect(fig, `figure ${fig}pt`).toBeGreaterThan(150);
+  // The fraction tiles at night too (issue #288): large digits, the letter column, the shadow.
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '25b-practice-fractions-night');
+  await page.emulateMedia({ colorScheme: 'light' });
 
   // ── "Vorlesen" at the question, without voice mode (issue #238) ──
   // The round speaker in the card's corner. One tap reads the question in Buddy's voice — what
@@ -793,8 +797,6 @@ test('a table to fill in: Enter walks the gaps, each cell checked on its own (is
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
 
-// Its own test, with its own learner: the main walkthrough above is already near its time
-
 test('zuordnen at its largest: pairs in two columns, things into groups (issue #229)', async ({
   page,
 }) => {
@@ -903,6 +905,58 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   // The theme switch rebuilt the tree; every element still stands in its group (the draft).
   await expect(sorted('Verträge machen', 'Bundesverwaltung')).toBeVisible();
   await check.click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+});
+
+// Its own test, with its own learner: the main walkthrough above is already near its time
+// budget, and this form needs nothing of what came before.
+test('pictures as options: four graphs two by two, a tap answers, holding opens one large (issue #231)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  // ── Bilder als Antwortoptionen: „Welcher Graph passt?" (issue #231) ──
+  // Four parabolas two by two, the letter on each. A tap answers; holding one opens it large
+  // in the figure viewer. Nowhere a formula: the texts behind the options are the answer.
+  await page.getByLabel('Schreib Buddy …').fill('Ich will Parabeln erkennen üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('schau dir die vier Graphen an', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('Welcher Graph passt zu', { exact: false })).toBeVisible();
+  const graphOption = (letter: string) =>
+    page.getByRole('button', { name: new RegExp(`^${letter}: Graph durch`) });
+  for (const letter of ['A', 'B', 'C', 'D']) await expect(graphOption(letter)).toBeVisible();
+  await expect(page.getByText('y =', { exact: false })).toHaveCount(0);
+  await shot(page, '40-figure-choices');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '40b-figure-choices-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  // Held, not tapped: the picture opens large, and nothing is answered.
+  await graphOption('B').hover();
+  await page.mouse.down();
+  await page.waitForTimeout(900);
+  await page.mouse.up();
+  const viewer = inSheet(page);
+  await expect(viewer.getByRole('button', { name: 'Schließen' })).toBeVisible();
+  await shot(page, '41-figure-choice-zoom', { opened: true });
+  await viewer.getByRole('button', { name: 'Schließen' }).click();
+  await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
+  await expect(page.getByText('Schon ausprobiert')).toHaveCount(0);
+  // A wrong graph: judged by its index, the card stays and says so in words.
+  await graphOption('A').click();
+  await expect(page.getByText('Schon ausprobiert')).toBeVisible();
+  await expect(graphOption('A')).toBeDisabled();
+  // Her tap is not echoed as a bubble while the question is open (issue #288): the tile says it,
+  // and the text behind a picture — its formula — never shows.
+  await expect(page.getByText('y =', { exact: false })).toHaveCount(0);
+  await shot(page, '42-figure-choice-tried');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '42b-figure-choice-tried-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await graphOption('C').click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();

@@ -26,13 +26,18 @@ import Svg, {
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
 import { checkMolecule } from '../../../../packages/shared-math/src/molecule.js';
 import {
+  BARE_FIGURE_CHROME,
+  BARE_FIGURE_PAD,
   figureBodyWidth,
   figureScale,
   naturalFigureHeight,
   newFigureWidth,
 } from '../../lib/math/figureScale.js';
 import { plotFrame, Y_LABEL_GAP } from '../../lib/math/plotLayout.js';
+import { pointsOnGraph, prettyExpr, tracePath } from '../../lib/math/plotMath.js';
 import { speakMathText } from '../../lib/math/speak.js';
+import { SPACE } from '../../lib/theme/space.js';
+import { useSvgId } from '../../lib/theme/svgId.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { describeStaff } from '../../lib/music/words.js';
@@ -57,8 +62,23 @@ type Speak = (text: string) => string;
 /**
  * `maxHeight` keeps a drawing from pushing the answer off a small screen: a figure
  * that comes out taller is drawn again, narrower (its height follows its width).
+ *
+ * `bare`: the figure IS an answer option ("Welcher Graph passt?", issue #231). Then it names
+ * no formula — no legend under a graph, none in its description, which describes the graph
+ * by points it passes instead (a legend reading "y = x² − 1" would answer the question) —
+ * it draws no frame of its own (the option card is the frame), its height follows its width
+ * alone so four fit a phone, and it is not a screen-reader element of its own: the option
+ * that holds it says what it shows.
  */
-export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: number }) {
+export function FigureView({
+  figure,
+  maxHeight,
+  bare = false,
+}: {
+  figure: Figure;
+  maxHeight?: number;
+  bare?: boolean;
+}) {
   const { palette, figure: ink } = useTheme();
   const { t } = useTranslation('math');
   const [width, setWidth] = useState(0);
@@ -69,15 +89,15 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
   const scale = figureScale(fullHeight, maxHeight);
   const words = useSpokenWords();
   const description = useMemo(
-    () => describeFigure(figure, t, (s) => speakMathText(s, words)),
-    [figure, t, words],
+    () => describeFigure(figure, t, (s) => speakMathText(s, words), { formulas: !bare }),
+    [figure, t, words, bare],
   );
 
   return (
     <View
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={`${t('figure.label')}: ${description}`}
+      accessible={!bare}
+      accessibilityRole={bare ? undefined : 'image'}
+      accessibilityLabel={bare ? undefined : `${t('figure.label')}: ${description}`}
       onLayout={(e) => {
         const w = newFigureWidth(width, e.nativeEvent.layout.width);
         if (w !== null) {
@@ -88,11 +108,12 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
       style={{
         alignSelf: 'stretch',
         backgroundColor: ink.paper,
-        borderRadius: 16,
-        borderWidth: 1,
+        borderRadius: bare ? SPACE.md : 16,
+        borderWidth: bare ? 0 : 1,
         borderColor: palette.hairline,
-        padding: 12,
-        minHeight: 60,
+        // Half the chrome on each side (BARE_FIGURE_CHROME / FIGURE_CHROME minus the border).
+        padding: bare ? BARE_FIGURE_PAD : 12,
+        minHeight: bare ? 0 : 60,
       }}
     >
       {width > 0 ? (
@@ -107,21 +128,25 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
             if (h !== null) setFullHeight(h);
           }}
         >
-          <FigureBody figure={figure} width={figureBodyWidth(width, scale)} />
+          <FigureBody
+            figure={figure}
+            width={figureBodyWidth(width, scale, bare ? BARE_FIGURE_CHROME : undefined)}
+            bare={bare}
+          />
         </View>
       ) : null}
     </View>
   );
 }
 
-function FigureBody({ figure, width }: { figure: Figure; width: number }) {
+function FigureBody({ figure, width, bare }: { figure: Figure; width: number; bare: boolean }) {
   switch (figure.type) {
     case 'fraction':
       return <FractionPicture fig={figure} width={width} />;
     case 'number_line':
       return <NumberLine fig={figure} width={width} />;
     case 'function_plot':
-      return <FunctionPlot fig={figure} width={width} />;
+      return <FunctionPlot fig={figure} width={width} bare={bare} />;
     case 'bar_chart':
       return <BarChart fig={figure} width={width} />;
     case 'geometry':
@@ -336,7 +361,7 @@ function ticksFor(lo: number, hi: number, step: number): number[] {
 
 const DASHES: ReadonlyArray<string | undefined> = [undefined, '8 5', '2 4'];
 
-function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
+function FunctionPlot({ fig, width, bare }: { fig: PlotFig; width: number; bare: boolean }) {
   const { palette, figure: ink } = useTheme();
   const x0 = Math.min(fig.x_min, fig.x_max);
   const x1 = Math.max(fig.x_min, fig.x_max);
@@ -344,7 +369,10 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
   const y1 = Math.max(fig.y_min, fig.y_max);
   const xs = x1 - x0 || 1;
   const ys = y1 - y0 || 1;
-  const h = Math.round(Math.min(Math.max(width * 0.8, 220), 380));
+  // An option's graph is small by design: four of them share a phone (issue #231).
+  const h = bare
+    ? Math.round(Math.max(width * 0.8, 60))
+    : Math.round(Math.min(Math.max(width * 0.8, 220), 380));
   const ph0 = h - 12 - 8;
   const yStep = niceStep(ys, Math.max(4, Math.min(10, Math.floor(ph0 / 32))));
   const yTicks = ticksFor(y0, y1, yStep);
@@ -378,7 +406,10 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
     [fig.functions, x0, x1, y0, y1, pw, ph],
   );
 
-  const clipId = 'plot-clip';
+  // One id per drawing: on the web `url(#…)` finds the FIRST element with that id in the
+  // document, so with four option graphs and the viewer's large one on the same page a shared
+  // id clipped the large curve to the first small graph's box — and it vanished (issue #231).
+  const clipId = useSvgId('plotclip');
   return (
     <View style={{ gap: 8 }}>
       <Svg width={width} height={h}>
@@ -505,7 +536,8 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
               />
             </G>
           ))}
-        {x0 <= 0 && x1 >= 0 && y0 <= 0 && y1 >= 0 ? (
+        {/* On a small option picture the origin's 0 would sit on the −2 below it (issue #231). */}
+        {!bare && x0 <= 0 && x1 >= 0 && y0 <= 0 && y1 >= 0 ? (
           <SvgText
             fontFamily={FAMILY}
             x={axisY - 6}
@@ -555,7 +587,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
             </G>
           ))}
       </Svg>
-      {graphs.length > 0 ? (
+      {graphs.length > 0 && !bare ? (
         <View style={{ gap: 4 }}>
           {graphs.map((g) => (
             <View key={g.i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -580,83 +612,6 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
       ) : null}
     </View>
   );
-}
-
-/** "x^2 - 2*x" → "x² − 2·x" for the legend. */
-export function prettyExpr(expr: string): string {
-  const sup: Record<string, string> = {
-    '0': '⁰',
-    '1': '¹',
-    '2': '²',
-    '3': '³',
-    '4': '⁴',
-    '5': '⁵',
-    '6': '⁶',
-    '7': '⁷',
-    '8': '⁸',
-    '9': '⁹',
-  };
-  return expr
-    .replace(/^\s*(?:y|[a-z]\s*\(\s*x\s*\))\s*=\s*/i, '')
-    .replace(/\^(\d+)/g, (_, d: string) =>
-      d
-        .split('')
-        .map((c) => sup[c] ?? c)
-        .join(''),
-    )
-    .replace(/\*/g, '·')
-    .replace(/-/g, '−')
-    .replace(/sqrt/g, '√')
-    .replace(/\bpi\b/g, 'π')
-    .replace(/\s*([+−=])\s*/g, ' $1 ')
-    .replace(/^ − /, '−')
-    .replace(/\(\s*−\s*/g, '(−')
-    .trim();
-}
-
-/** Samples f across the plot; lifts the pen at gaps (NaN, ±∞) and jumps (asymptotes). */
-function tracePath(
-  f: (x: number) => number,
-  x0: number,
-  x1: number,
-  y0: number,
-  y1: number,
-  X: (v: number) => number,
-  Y: (v: number) => number,
-  pw: number,
-): string {
-  const n = Math.max(120, Math.min(800, Math.round(pw * 2)));
-  const ys = y1 - y0;
-  const lo = y0 - ys * 2;
-  const hi = y1 + ys * 2;
-  let d = '';
-  let pen = false;
-  let prev: number | null = null;
-  for (let i = 0; i <= n; i++) {
-    const x = x0 + ((x1 - x0) * i) / n;
-    let y: number;
-    try {
-      y = f(x);
-    } catch {
-      y = NaN;
-    }
-    if (!Number.isFinite(y)) {
-      pen = false;
-      prev = null;
-      continue;
-    }
-    // A jump across most of the view between two samples is a pole, not a line.
-    if (prev !== null && Math.abs(y - prev) > ys * 1.5 && (prev - y0) * (y - y0) !== 0) {
-      const crosses = (prev > y1 && y < y0) || (prev < y0 && y > y1);
-      if (crosses) pen = false;
-    }
-    prev = y;
-    const yc = Math.min(hi, Math.max(lo, y));
-    const cmd = pen ? 'L' : 'M';
-    d += `${cmd} ${X(x).toFixed(1)} ${Y(yc).toFixed(1)} `;
-    pen = true;
-  }
-  return d.trim();
 }
 
 // ─────────────── bar chart ───────────────
@@ -1215,7 +1170,12 @@ function Table({ fig }: { fig: TableFig }) {
 
 // ─────────────── description for screen readers ───────────────
 
-export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): string {
+export function describeFigure(
+  figure: Figure,
+  t: T,
+  speak: Speak = (s) => s,
+  { formulas = true }: { formulas?: boolean } = {},
+): string {
   const list = (items: string[]) => items.join(', ');
   switch (figure.type) {
     case 'fraction':
@@ -1240,6 +1200,18 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
       return `${base}. ${t('figure.marked', { list: list(pts) })}`;
     }
     case 'function_plot': {
+      // An answer option (issue #231): the graph by points it passes, never by its formula.
+      if (!formulas) {
+        const through = figure.functions
+          .map((f) => pointsOnGraph(f.expr, figure))
+          .filter((pts) => pts.length > 0)
+          .map((pts) =>
+            t('figure.graph_through', {
+              list: list(pts.map((p) => `(${formatNumber(p.x)} | ${formatNumber(p.y)})`)),
+            }),
+          );
+        if (through.length > 0) return through.join('. ');
+      }
       const parts = [
         t('figure.function_plot', {
           x_min: formatNumber(figure.x_min),
@@ -1248,7 +1220,7 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
           y_max: formatNumber(figure.y_max),
         }),
       ];
-      for (const f of figure.functions) {
+      for (const f of formulas ? figure.functions : []) {
         if (!compileExpression(f.expr)) continue;
         const expr = prettyExpr(f.expr);
         parts.push(

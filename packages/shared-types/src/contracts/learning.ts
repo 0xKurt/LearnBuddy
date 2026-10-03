@@ -353,6 +353,15 @@ export const ItemView = z.object({
   subject_kind: SubjectKind.nullable().default(null),
   figure: Figure.nullable(),
   /**
+   * multiple_choice only: one drawn figure per option, in the order of `choices` ("Welcher
+   * Graph passt zu f(x) = …?", issue #231). Either every option has one or the field is null —
+   * a grid with one text card among pictures would not be one form. `choices` keeps its texts
+   * (what the option is, for the tutor, a spoken answer and the solution); the app shows the
+   * pictures instead of them. A parallel list, not a new shape for `choices`, so a build that
+   * does not know the field still reads every question; one it cannot read is null (`.catch`).
+   */
+  choice_figures: z.array(Figure).nullable().default(null).catch(null),
+  /**
    * The sheet's own figure for this question, where the question is shown full size
    * (sessions); null in the material list and when the sheet has none (issue #50).
    */

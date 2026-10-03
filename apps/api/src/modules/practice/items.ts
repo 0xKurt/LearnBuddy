@@ -23,7 +23,6 @@ import {
   type VocabDirection,
 } from '@learnbuddy/shared-types/contracts';
 import {
-  canonicalText,
   chartProblem,
   compileExpression,
   isChart,
@@ -37,6 +36,7 @@ import { dollarMathField, dollarMathRuns } from './dollarMath.js';
 import { figureHolds } from './figureCheck.js';
 import { usableRubric } from './rubric.js';
 import { mentionsSolution } from './tutor.js';
+import { choiceProblem, MAX_FIGURE_CHOICES } from './choiceCheck.js';
 import { checkedRead, figureIsRejectedChart } from './chartRead.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
 
@@ -60,7 +60,7 @@ export const ANSWER_FORM_RULES = `A question asks for exactly the whole answer, 
 /** When case, ß and punctuation decide (decision D-2). */
 export const SPELLING_RULES = `spelling: "strict" when the task practises spelling, capitalisation or punctuation; "gentle" when they don't matter for the answer; null otherwise (the subject decides).`;
 
-export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table, a structural formula, a chart) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). A geometry figure is drawn to scale and checked: its coordinates must give every stated angle (deg) and every side length (value, one unit for all), a force arrow's length is proportional to its value, and a resultant arrow is the vector sum of the others; label the one measure the question asks for "?" — the key must be that measure. A molecule is atoms (aliases a1, a2 …, hydrogens counted in h, charge) and bonds; the app computes the lone pairs and checks every shell, so an atom whose octet does not hold costs the question; set "ask" when the key is its formula, its number of lone pairs or its molar mass. Otherwise figure is null.
+export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table, a structural formula, a chart) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). A geometry figure is drawn to scale and checked: its coordinates must give every stated angle (deg) and every side length (value, one unit for all), a force arrow's length is proportional to its value, and a resultant arrow is the vector sum of the others; label the one measure the question asks for "?" — the key must be that measure. A molecule is atoms (aliases a1, a2 …, hydrogens counted in h, charge) and bonds; the app computes the lone pairs and checks every shell, so an atom whose octet does not hold costs the question; set "ask" when the key is its formula, its number of lone pairs or its molar mass. Otherwise figure is null. Pictures as the OPTIONS of a multiple_choice ("Welcher Graph passt zu $f(x) = x^{2} - 1$?"): 2–4 choices, "choice_figures" = one figure per choice in the same order, "choices" = what each option shows in words or math (the app shows the pictures, not these texts); for graphs every option is a function_plot with exactly one function, all with the same window, no two alike, and "answer" = the right graph's function, named as in the question ("f(x) = x^2 - 1"; for a derivative "f'(x) = 2*x"); for any other picture "answer" = the right option's text exactly. Otherwise choice_figures is null.
 Charts are data only; the app draws axes, scale and colours. line_chart: x = up to 12 labels in order (numbers for a measured x such as time, else categories so short that count × (longest + 1) ≤ 30 characters, so "J"…"D" for 12 months, e.g. "Jan"…"Jun"); s = 1–3 series {n name, u unit, v one value per x label, bar true for columns (one series at most), r true for a right axis — only for a second unit}. climate_chart: place, alt in m, t = 12 monthly means in °C and p = 12 monthly sums in mm, January first. pie_chart: l labels and v shares in % that add up to exactly 100; half for a half circle. box_plot: b = 1–3 boxes {l, v = [min, Q1, median, Q3, max]}, raw = the data list when the task gives one (then one box), else []. histogram: x0 start of the first class, w class width, v heights. scatter_plot: x and y of each point; fit draws the least-squares line. pyramid: a0 first age, w years per group, m men and f women per group from young to old, u unit. A chart that breaks one of these rules is dropped together with its question.
 "read" — for every question whose answer is read off or computed from its chart, so the app can check the key: q = value (s, i) · max, min, sum, mean, range (largest − smallest) of series s · argmax, argmin (answer = the label: month, category or slice) · diff (value at j minus value at i) · angle (centre angle of slice i in degrees) · iqr (box s) · humid, arid (number of humid or arid months) · humid_at (month i; multiple_choice, correct_choice 0 = humid, 1 = arid) · slope, intercept (the fitted line) · type (pyramid; multiple_choice, correct_choice 0 = pyramid, 1 = bell, 2 = urn). s = series (climate 0 = °C, 1 = mm; pyramid 0 = men, 1 = women; box plot: which box), i and j = positions from 0 (box plot value: i 0 = min … 4 = max); unused numbers 0. The app writes the options for humid_at and type. A numeric question about a chart always has "read"; any other question read null.`;
 
@@ -117,6 +117,18 @@ export const ItemDraft = z.object({
   // `ModelFigure` and not `Figure`: a note line is the one figure the model may not write,
   // because its key is READ OFF the drawing (issue #226, `contracts/figure.ts` says why).
   figure: ModelFigure.nullable().default(null).catch(null),
+  // No `.catch` here: an option's picture that cannot be read costs the whole question — a
+  // "which graph" question with one graph missing is not a question (#231, Regel 0).
+  choice_figures: z
+    .array(ModelFigure)
+    .min(2)
+    .max(MAX_FIGURE_CHOICES)
+    // Optional, not defaulted: the drafts code builds itself (bars.ts, structured.ts) never
+    // have option pictures and need not say so.
+    .nullish()
+    .describe(
+      'multiple_choice only: one figure per choice, same order as choices, when the options ARE pictures ("Welcher Graph passt zu …?"); else null',
+    ),
   /**
    * What the question reads off its chart (issues #245, #246). With it, code computes the key
    * from the chart's data and drops the question when the model's key disagrees
@@ -212,44 +224,6 @@ export function itemsOneByOne<S extends z.ZodTypeAny>(schema: S, max: number) {
 }
 
 /** The solution as a learner would see it (a choice's text for multiple choice). */
-/** Two options that are the same thing — as text, or as a number written two ways. */
-function sameTwice(choices: readonly string[]): boolean {
-  const seen = new Set<string>();
-  for (const c of choices) {
-    // Case-insensitive on purpose: two options that differ only in capitalisation are one
-    // option for her — she taps the other right one and is told she is wrong. `canonicalText`
-    // only folds whitespace, which is the right strictness for GRADING and too weak here.
-    const text = canonicalText(c).toLocaleLowerCase();
-    const num = parseCanonicalKey(c);
-    // A number is compared by VALUE: "0,5" and "$\\frac{1}{2}$" are one option, written twice.
-    const key = num.value !== null && !num.unit ? `n:${num.value}` : `t:${text}`;
-    if (seen.has(key)) return true;
-    seen.add(key);
-  }
-  return false;
-}
-
-/**
- * The key and the option the index points at must be the same answer. They are written
- * separately by the model, so they can disagree — and then the index wins and the verdict is
- * final. An empty key says nothing and is left alone; the option is the answer there.
- */
-function keyMatchesChoice(it: ItemDraft): boolean {
-  if (!it.choices || it.correct_choice === null) return true;
-  const chosen = it.choices[it.correct_choice];
-  if (chosen === undefined) return false;
-  // The schema already refuses an empty key (`answer` is min(1)), so there is no "no key"
-  // case to let through — this only compares the two things that exist.
-  const key = it.answer.trim();
-  if (canonicalText(key) === canonicalText(chosen)) return true;
-  const a = parseCanonicalKey(key);
-  const b = parseCanonicalKey(chosen);
-  if (a.value !== null && b.value !== null && a.unit === b.unit) {
-    return Math.abs(a.value - b.value) <= 1e-9 * Math.max(1, Math.abs(a.value));
-  }
-  return false;
-}
-
 function solutionText(it: ItemDraft): string {
   return it.kind === 'multiple_choice' && it.choices && it.correct_choice !== null
     ? (it.choices[it.correct_choice] ?? it.answer)
@@ -299,6 +273,26 @@ function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
       // A chart is checked whole (`chartProblem`); a broken one never gets here (`clipDraft`).
       return isChart(f) && chartProblem(f) !== null ? null : f;
   }
+}
+
+/**
+ * The options' pictures as the app will draw them — all of them or the question goes (an
+ * empty list stands for "one could not be drawn": `choiceProblem` then rejects the count).
+ * Unlike the question's own figure nothing is dropped from a picture either: a graph whose
+ * function the app cannot read would be an empty option.
+ */
+function optionFigures(raw: ItemDraft): ModelFigure[] | null {
+  if (raw.kind !== 'multiple_choice' || !raw.choice_figures) return null;
+  const drawn: ModelFigure[] = [];
+  for (const written of raw.choice_figures) {
+    const f = usableFigure(written);
+    if (f === null) return [];
+    if (f.type === 'function_plot' && written.type === 'function_plot') {
+      if (f.functions.length !== written.functions.length) return [];
+    }
+    drawn.push(f);
+  }
+  return drawn;
 }
 
 /**
@@ -379,6 +373,7 @@ export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}):
       accepted_answers: raw.accepted_answers.map(dollarMathField),
       choices: raw.choices ? raw.choices.map(dollarMathField) : null,
       figure: usableFigure(raw.figure),
+      choice_figures: optionFigures(raw),
       tolerance: usableTolerance(raw),
       spelling:
         raw.kind === 'short' || raw.kind === 'long' || raw.kind === 'vocab' ? raw.spelling : null,
@@ -411,22 +406,13 @@ export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}):
     // drawing, so it goes with it — dropped, not repaired (`figureCheck.ts`).
     if (!figureHolds(it.figure, solutionText(it), it.kind === 'numeric')) continue;
     if (it.kind === 'multiple_choice') {
-      if (!it.choices || it.choices.length < 2 || it.correct_choice === null) continue;
-      if (it.correct_choice >= it.choices.length) continue;
-      // Only the index was ever checked, and it decides the verdict with full authority — a
-      // multiple-choice answer never reaches the tutor (issue #227, finding 2). Three ways the
-      // shape can be broken while the index is in range, and all three grade silently wrong:
-      //
-      //   - two options that are the SAME: she picks the other right one and is told she is
-      //     wrong, with no way to argue;
-      //   - two options worth the same ("0,5" and "$\\frac{1}{2}$") — the same thing, and the
-      //     model usually does not notice it wrote the answer twice;
-      //   - a key that does not match the option it points at: then `answer` says one thing and
-      //     the index another, and nobody can tell which the question meant.
-      //
-      // Dropped, not repaired — like every other item whose shape does not hold together.
-      if (sameTwice(it.choices)) continue;
-      if (!keyMatchesChoice(it)) continue;
+      // One question with ONE right option, or none at all (issue #227, finding 2; #231). Only the
+      // index was ever checked, and it decides the verdict with full authority — a multiple-choice
+      // answer never reaches the tutor. So the options must hold together: no two the same (as
+      // text, or worth the same), the key IS the option the index points at, and pictures as
+      // options are distinct graphs of which exactly the indexed one is the key's function
+      // (`choiceCheck.ts` has every case). Dropped, not repaired.
+      if (choiceProblem(it) !== null) continue;
       it.hints = it.hints.filter((h) => !mentionsSolution(h, solutionText(it), it.prompt));
       out.push(it);
       continue;
@@ -439,7 +425,7 @@ export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}):
     // the hint rule (issue #211). Here the whole rubric goes rather than the one sentence: an
     // element with nothing to say when it is missing would be a tick box without a next step.
     if (it.rubric && it.rubric.elements.some((e) => leaks(e.missing))) it.rubric = null;
-    const plain = { ...it, choices: null, correct_choice: null };
+    const plain = { ...it, choices: null, correct_choice: null, choice_figures: null };
     if (it.kind === 'vocab') {
       if (!it.lang || !it.prompt_lang || it.lang === it.prompt_lang) continue;
       out.push(plain);
@@ -522,8 +508,8 @@ export async function insertItems(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
                           hints, worked_solution, tolerance, spelling, bar_task, task,
-                          curriculum_point, rubric, listen_task, staff_task)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) returning id`,
+                          curriculum_point, rubric, listen_task, staff_task, choice_figures)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -552,6 +538,7 @@ export async function insertItems(
         it.rubric ? JSON.stringify(it.rubric) : null,
         it.listen_task ? JSON.stringify(it.listen_task) : null,
         it.staff_task ? JSON.stringify(it.staff_task) : null,
+        it.choice_figures ? JSON.stringify(it.choice_figures) : null,
       ],
     );
     if (asked) ids.push(row.id);

@@ -1,14 +1,16 @@
-// Multiple choice: every option is a tappable white card with a round letter
-// (A, B, C – the letters voice mode reads out). Short options stand two by two,
-// longer ones one under the other, full width – which of the two it is, is
-// arithmetic, see "what fits half a line" below. An option that was already
-// tried (and wasn't it) stays visible but can't be picked again: it fades, its
-// letter turns into a quiet dash and "Schon ausprobiert" stands under it (never
-// colour alone) – the conversation above says what happened with it. Choices may
-// hold math ($…$).
+// Multiple choice: every option is a tappable white tile with its letter in a quiet column of
+// its own (A, B, C – the letters voice mode reads out). Options that each fit one line of half
+// a screen stand two by two, all others one under the other, full width – which of the two it
+// is, is arithmetic, see "what fits half a line" below. A fraction or term on its own is set
+// large and centred. An option that was already tried (and wasn't it) stays visible but can't
+// be picked again: it fades, its letter turns into a quiet dash and "Schon ausprobiert" stands
+// under it (never colour alone) – the conversation above says what happened with it. Choices
+// may hold math ($…$).
 // In voice mode SpokenChoiceBar pins a big mic under the options: what she
 // says is sent as a text answer (the server matches it to a choice by its text).
 
+import type { Figure } from '@learnbuddy/shared-types/contracts';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View, type TextStyle } from 'react-native';
 
@@ -17,7 +19,10 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn, BTN_PAD_COMPACT, BTN_PAD_MD } from '../lb/Btn.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
+import { Btn, BTN_PAD_COMPACT } from '../lb/Btn.js';
+import { ZoomViewer } from '../lb/ZoomViewer.js';
+import { describeFigure, FigureView } from '../math/FigureView.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
@@ -68,144 +73,299 @@ export function SpokenChoiceBar({ prompt, disabled, onText, onReadAgain }: Spoke
 
 type Props = {
   choices: string[];
+  /**
+   * One picture per option, parallel to `choices` (issue #231): the options ARE these
+   * pictures, shown two by two instead of the texts. Ignored unless there is one per option.
+   */
+  figures?: readonly Figure[] | null;
   /** Options already answered and judged not right. */
   tried: ReadonlySet<string>;
   disabled: boolean;
   onChoose: (index: number, choice: string) => void;
 };
 
-export function ChoiceList({ choices, tried, disabled, onChoose }: Props) {
+export function ChoiceList({ choices, figures, tried, disabled, onChoose }: Props) {
+  if (figures && figures.length === choices.length && choices.length > 0) {
+    return (
+      <FigureChoices
+        choices={choices}
+        figures={figures}
+        tried={tried}
+        disabled={disabled}
+        onChoose={onChoose}
+      />
+    );
+  }
+  return <TextChoices choices={choices} tried={tried} disabled={disabled} onChoose={onChoose} />;
+}
+
+function TextChoices({ choices, tried, disabled, onChoose }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const words = useSpokenWords();
-  // Short options (a number, a fraction, a word) sit two by two: all of them and the
-  // question fit on the screen without scrolling. What counts as short is the arithmetic
-  // below, not a character count alone (issue #203).
+  // Short options (a word, a number, a fraction) sit two by two — but only when EVERY one of
+  // them fits one line of half a screen, so the tiles of the grid are equally tall (issue #288).
+  // What fits is arithmetic, not a feeling (see "what fits half a line" below).
   const grid = twoColumnChoices(choices);
   return (
-    <View style={{ gap: CARD_GAP }}>
-      <View
-        style={grid ? { flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP } : { gap: CARD_GAP }}
-      >
-        {choices.map((choice, index) => {
-          const wasTried = tried.has(choice);
-          return (
-            // The white card and its shadow sit around the button (Btn clips what is inside it).
-            <View
-              key={`${index}:${choice}`}
-              style={[
-                {
-                  borderRadius: CARD_RADIUS,
-                  backgroundColor: wasTried ? palette.canvas : palette.paper,
-                },
-                grid ? { flexBasis: '45%', flexGrow: 1 } : null,
-                wasTried ? null : SHADOW.soft,
-              ]}
-            >
-              <Btn
-                variant="ghost"
-                pill
-                full
-                wrap
-                // In the grid the card gives the word every point it can spare, and the
-                // button fills the card: two cards of a row are equally tall, so the whole
-                // white area under the taller label is tappable and not just its top.
-                compact={grid}
-                grow={grid}
-                disabled={disabled || wasTried}
-                onPress={() => onChoose(index, choice)}
-                accessibilityHint={wasTried ? t('choice_tried') : undefined}
-                // Math in a choice is set properly; a screen reader hears it in words.
-                label={
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: grid ? BADGE_GAP_GRID : BADGE_GAP,
-                    }}
-                  >
-                    <LetterBadge letter={letterFor(index)} tried={wasTried} compact={grid} />
-                    <View style={{ flexShrink: 1, gap: 2 }}>
-                      <MathText
-                        text={choice}
-                        accessible={false}
-                        style={[
-                          {
-                            color: wasTried ? palette.ink2 : palette.ink,
-                            fontSize: CHOICE_FONT,
-                            lineHeight: 23,
-                            fontWeight: CHOICE_WEIGHT,
-                          },
-                          wholeWordsFit(choice, grid) ? WHOLE_WORDS : null,
-                        ]}
-                      />
-                      {wasTried ? (
-                        <Text style={[TYPE.label, { color: palette.ink2, fontWeight: '500' }]}>
-                          {t('choice_tried')}
-                        </Text>
-                      ) : null}
-                    </View>
+    <View
+      style={grid ? { flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP } : { gap: CARD_GAP }}
+    >
+      {choices.map((choice, index) => {
+        const wasTried = tried.has(choice);
+        // A fraction or a term on its own is the thing to look at: set large and centred, at
+        // least as large as the question's own line (issue #288, finding 4).
+        const big = mathOnly(choice);
+        return (
+          // The white card and its shadow sit around the button (Btn clips what is inside it).
+          <View
+            key={`${index}:${choice}`}
+            style={[
+              {
+                borderRadius: CARD_RADIUS,
+                backgroundColor: wasTried ? palette.canvas : palette.paper,
+              },
+              grid ? { flexBasis: '45%', flexGrow: 1 } : null,
+              wasTried ? null : SHADOW.soft,
+            ]}
+          >
+            <Btn
+              variant="ghost"
+              full
+              wrap
+              compact
+              // The button fills its card: the tiles of a row are equally tall, and the whole
+              // white area is tappable, not just its top.
+              grow
+              disabled={disabled || wasTried}
+              onPress={() => onChoose(index, choice)}
+              accessibilityHint={wasTried ? t('choice_tried') : undefined}
+              // Math in a choice is set properly; a screen reader hears it in words.
+              label={
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: big ? 'center' : 'flex-start',
+                    gap: LETTER_GAP,
+                  }}
+                >
+                  <LetterMark letter={letterFor(index)} tried={wasTried} />
+                  <View style={{ flex: 1, gap: 2, alignItems: big ? 'center' : 'flex-start' }}>
+                    <MathText
+                      text={choice}
+                      accessible={false}
+                      style={[
+                        {
+                          color: wasTried ? palette.ink2 : palette.ink,
+                          fontSize: big ? MATH_CHOICE_FONT : CHOICE_FONT,
+                          lineHeight: big ? MATH_CHOICE_LINE : CHOICE_LINE,
+                          fontWeight: CHOICE_WEIGHT,
+                        },
+                        wholeWordsFit(choice, grid) ? WHOLE_WORDS : null,
+                      ]}
+                    />
+                    {wasTried ? (
+                      <Text style={[TYPE.label, { color: palette.ink2, fontWeight: '500' }]}>
+                        {t('choice_tried')}
+                      </Text>
+                    ) : null}
                   </View>
-                }
-              >
-                {speakMathText(choice, words)}
-              </Btn>
-            </View>
-          );
-        })}
-      </View>
+                </View>
+              }
+            >
+              {speakMathText(choice, words)}
+            </Btn>
+          </View>
+        );
+      })}
     </View>
   );
 }
 
-// ─────────────── what fits half a line (issue #203) ───────────────
+// ─────────────── pictures as options (issue #231) ───────────────
 //
-// In the owner's video "the homework" stood as "the / homewor / k": three lines, broken
-// inside the word, and the card taller than its neighbour. Two causes, both here. The
-// decision to put options two by two counted CHARACTERS only (12 ≤ 14) and never asked
-// whether the longest WORD fits a half-width line. And react-native-web gives every <Text>
-// `word-wrap: break-word` (its own Text/index.js), so a word that did not fit was not moved
-// to the next line — it was cut.
+// "Welcher Graph passt zu f(x) = x² − 1?": the options are four drawings, two by two, each in
+// the same white tile as a text option. The letter stands in the tile's own top row, in the same
+// quiet mark as on a text option — never on the drawing, where it covered an axis like a sticker
+// (issue #288). A tap answers, exactly as with words — one obvious way to use the form (#224,
+// "Minimalismus"). Holding a tile opens its picture large in the viewer every figure already has
+// (`ZoomViewer`): no extra button, no legend, nothing new to learn. The option's TEXT is not
+// shown: it may be the very formula the question asks about. A screen reader hears the letter and
+// the picture in words, by points the graph passes — never its formula (FigureView `bare`).
 //
-// So the grid is decided by arithmetic, on the NARROW phone, because the same decision has to
-// hold on both sizes of CLAUDE.md rule 16 (what fits 360 fits 390):
+// The size, on the narrow phone of rule 16 (what fits 360 fits 390):
+//   (360 − 2 × 16 − 8) / 2 = 160 pt a tile − 2 × 12 pt padding = 136 pt for the drawing,
+//   a graph 4 : 5 as high as wide: ≈ 109 pt; with the letter's row (LETTER_LINE + 4) and the
+//   padding a tile is ≈ 157 pt, two rows ≈ 322 pt.
+//
+// The height, on the short phone: once she has tried one, Buddy's reply and "Lösung zeigen"
+// stand between question and tiles (#286: the board directly under them), and at 360×740 the
+// second row ran 24 pt past the screen. So a drawing is never taller than 12 % of the window:
+// 89 pt at 740 (the two rows give back ≈ 40 pt), 101 pt at 844.
+
+/** No option picture taller than this — an odd figure (a long table) is scaled down to it. */
+const FIGURE_CHOICE_MAX_HEIGHT = 120;
+/** Share of the window's height one option picture may take (see above). */
+const FIGURE_CHOICE_SCREEN_SHARE = 0.12;
+
+function FigureChoices({
+  choices,
+  figures,
+  tried,
+  disabled,
+  onChoose,
+}: Props & { figures: readonly Figure[] }) {
+  const { palette } = useTheme();
+  const { t } = useTranslation('practice');
+  const { t: tm } = useTranslation('math');
+  const words = useSpokenWords();
+  const [zoomed, setZoomed] = useState<number | null>(null);
+  // What is on screen (issue #289): a tapped question has no keyboard up, so this is the window.
+  const { visible: screenHeight } = useVisibleHeight();
+  const pictureMax = Math.min(
+    FIGURE_CHOICE_MAX_HEIGHT,
+    Math.round(screenHeight * FIGURE_CHOICE_SCREEN_SHARE),
+  );
+  // What each option shows, in words (the letter first, as voice mode names them).
+  const spoken = useMemo(
+    () =>
+      figures.map(
+        (f, i) =>
+          `${letterFor(i)}: ${describeFigure(f, tm, (x) => speakMathText(x, words), { formulas: false })}`,
+      ),
+    [figures, tm, words],
+  );
+  const open = zoomed !== null ? figures[zoomed] : undefined;
+  return (
+    <View testID="figure-choices" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP }}>
+      {choices.map((choice, index) => {
+        const wasTried = tried.has(choice);
+        const figure = figures[index]!;
+        return (
+          <View
+            key={`${index}:${choice}`}
+            style={[
+              {
+                borderRadius: CARD_RADIUS,
+                // A tried picture keeps its white ground (a drawing on grey looked like a box in a
+                // box) and steps back by losing its shadow for a hairline and fading the drawing.
+                backgroundColor: palette.paper,
+                flexBasis: '45%',
+                flexGrow: 1,
+              },
+              wasTried ? { borderWidth: 1, borderColor: palette.hairline } : SHADOW.soft,
+            ]}
+          >
+            <Btn
+              variant="ghost"
+              full
+              wrap
+              compact
+              grow
+              disabled={disabled || wasTried}
+              onPress={() => onChoose(index, choice)}
+              onLongPress={() => setZoomed(index)}
+              accessibilityHint={wasTried ? t('choice_tried') : t('choice_zoom_hint')}
+              label={
+                <View style={{ gap: SPACE.xs }}>
+                  {/* The letter's own row. A tried option says so in words there instead — at
+                      360 pt "– Schon ausprobiert" did not fit next to a mark, and the words are
+                      what carries it (never colour alone). */}
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'center', minHeight: CHOICE_LINE }}
+                  >
+                    {wasTried ? (
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          TYPE.label,
+                          { flexShrink: 1, color: palette.ink2, fontWeight: '600' },
+                        ]}
+                      >
+                        {t('choice_tried')}
+                      </Text>
+                    ) : (
+                      <LetterMark letter={letterFor(index)} tried={false} />
+                    )}
+                  </View>
+                  <View style={{ opacity: wasTried ? 0.45 : 1 }}>
+                    <FigureView figure={figure} bare maxHeight={pictureMax} />
+                  </View>
+                </View>
+              }
+            >
+              {spoken[index]!}
+            </Btn>
+          </View>
+        );
+      })}
+      <ZoomViewer
+        visible={open !== undefined}
+        onClose={() => setZoomed(null)}
+        label={zoomed !== null ? (spoken[zoomed] ?? '') : ''}
+      >
+        {open ? (
+          <View style={{ alignSelf: 'stretch' }}>
+            <FigureView figure={open} bare />
+          </View>
+        ) : null}
+      </ZoomViewer>
+    </View>
+  );
+}
+
+// ─────────────── what fits half a line (issues #203, #288) ───────────────
+//
+// In the owner's video "the homework" stood as "the / homewor / k": three lines, broken inside
+// the word, and the card taller than its neighbour (#203). And even when no word broke, a grid in
+// which one tile wraps to two lines and its neighbour does not looked restless (#288, finding 3).
+// So two by two only when EVERY option fits ONE line of half a screen; otherwise one under the
+// other, full width, where a longer option has a whole line.
+//
+// The arithmetic, on the NARROW phone, because the same decision has to hold on both sizes of
+// CLAUDE.md rule 16 (what fits 360 fits 390):
 //
 //     360 pt                 the small Android
 //   −   2 × 16 pt            the padding around the options (app/practice/[id].tsx)
-//   −       8 pt             the gap between the two cards of a row
+//   −       8 pt             the gap between the two tiles of a row
 //   ───────────── / 2
-//   =     160 pt             one card
-//   −   2 × 12 pt            the compact pill's padding (BTN_PAD_COMPACT)
-//   −      26 pt             the letter badge (BADGE_GRID)
-//   −       8 pt             badge to text (BADGE_GAP_GRID)
+//   =     160 pt             one tile
+//   −   2 × 12 pt            the tile's padding (BTN_PAD_COMPACT)
+//   −      16 pt             the letter's column (LETTER_COL)
+//   −      12 pt             letter to text (LETTER_GAP)
 //   ─────────────
-//   =     102 pt             the text's own room, in one line
+//   =     108 pt             the text's own room, in one line
 //
-// At 0.64 em per character (EM_PER_CHAR) and 17 pt type that is 102 / 10.88 = 9.3 → a word of
-// at most nine characters is certain to fit. A longer one sends the whole set to the full
-// width, where there is a line it fits in.
+// At 0.64 em per character (EM_PER_CHAR) and 17 pt type that is 108 / 10.88 = 9.9 → an option of
+// at most nine characters is certain to fit one line. A math-only option is set larger
+// (MATH_CHOICE_FONT) and measured at that size.
 
 /** The option's own type: 17 pt semibold (`CHOICE_WEIGHT` is what EM_PER_CHAR was measured at). */
 const CHOICE_FONT = 17;
+const CHOICE_LINE = 23;
 const CHOICE_WEIGHT = '600';
-/** The gap between the cards, across and down. */
+/**
+ * A math-only option ($\frac{2}{3}$, $x^{2}$): larger than the question's own 21 pt line, so a
+ * stacked fraction's digits are not smaller than the sentence that asks about them.
+ */
+const MATH_CHOICE_FONT = 22;
+const MATH_CHOICE_LINE = 29;
+/** The gap between the tiles, across and down. */
 const CARD_GAP = SPACE.sm;
 /** The padding `app/practice/[id].tsx` puts around the options, left and right. */
 const SCREEN_PAD = SPACE.lg;
 /** The small Android of rule 16; 390 is wider, so whatever fits here fits there too. */
 const NARROW_PHONE = 360;
-/** Rounded, but still a card and not a pill (Btn's md pill radius: the card follows the button). */
-const CARD_RADIUS = 24;
+/** A tile's corners: those of the button inside it (Btn's radius when it is not a pill). */
+const CARD_RADIUS = 14;
 /**
- * The round letter: 34 pt in the full-width list, 26 pt in the grid, where every point the
- * badge does not take is a point the word gets (issue #203). 26 and its 13 pt letter are
- * sizes, not spacing — the touch target is the card's, and `Btn`'s `minHeight` keeps that at
- * 48 pt (≥ TOUCH), which `tests/web/layout.spec.ts` measures.
+ * The letter's column: as wide as its widest letter at LETTER_FONT (a "W" ≈ 15 pt), so the texts
+ * of all options start on one vertical line whatever letter stands before them. 16 is a width,
+ * not spacing.
  */
-const BADGE = 34;
-const BADGE_GRID = 26;
-const BADGE_GAP = 14;
-const BADGE_GAP_GRID = SPACE.sm;
+const LETTER_COL = 16;
+const LETTER_FONT = 15;
+const LETTER_GAP = SPACE.md;
 
 /**
  * How wide one character of an option is at most, as a share of the font size.
@@ -214,54 +374,51 @@ const BADGE_GAP_GRID = SPACE.sm;
  * (`apps/mobile/locales/**`), set at 17 pt / weight 600 in the walkthrough's Chromium with
  * react-native-web's system font stack. Half of them sit at 0.52 em per character; the widest
  * nine-letter word ("Empecemos") is 98.0 pt = 0.64 em per character, and the widest ten-letter
- * one ("Angekommen") 110.3 pt. Against the 102 pt a card has, that is exactly the line this
- * budget has to draw. (A short pair like "mm" is wider per character — 0.89 — but far too
+ * one ("Angekommen") 110.3 pt. (A short pair like "mm" is wider per character — 0.89 — but far too
  * short to overflow anything, which is why the bound is taken at the length it decides about.)
  */
 const EM_PER_CHAR = 0.64;
 
 /** The room an option's text has in one line, by variant, on the narrow phone. */
 const GRID_TEXT_ROOM =
-  (NARROW_PHONE - 2 * SCREEN_PAD - CARD_GAP) / 2 -
-  2 * BTN_PAD_COMPACT -
-  BADGE_GRID -
-  BADGE_GAP_GRID;
-const LIST_TEXT_ROOM = NARROW_PHONE - 2 * SCREEN_PAD - 2 * BTN_PAD_MD - BADGE - BADGE_GAP;
+  (NARROW_PHONE - 2 * SCREEN_PAD - CARD_GAP) / 2 - 2 * BTN_PAD_COMPACT - LETTER_COL - LETTER_GAP;
+const LIST_TEXT_ROOM =
+  NARROW_PHONE - 2 * SCREEN_PAD - 2 * BTN_PAD_COMPACT - LETTER_COL - LETTER_GAP;
 
-/** The longest word that still fits one line of a card, by variant: 9 in the grid, 21 full width. */
-export const GRID_WORD_MAX = Math.floor(GRID_TEXT_ROOM / (CHOICE_FONT * EM_PER_CHAR));
+/** The longest option that still fits ONE line of a grid tile: 9 characters. */
+export const GRID_CHARS_MAX = Math.floor(GRID_TEXT_ROOM / (CHOICE_FONT * EM_PER_CHAR));
+/** The longest word that fits one line of a full-width tile: 22 characters. */
 const LIST_WORD_MAX = Math.floor(LIST_TEXT_ROOM / (CHOICE_FONT * EM_PER_CHAR));
 
 /**
- * How long a whole option may be for the grid. Unchanged: an option may still use two lines
- * of a card (and two short words often do), this only keeps a sentence out of the grid.
- */
-export const GRID_CHARS_MAX = 14;
-
-/**
- * Do these options go two by two? Only up to four of them, each short enough as a whole AND
- * with every word short enough for half a line — one word that cannot fit sends all of them
- * to the full width, because a grid with one three-line card is the very thing #203 is about.
+ * Do these options go two by two? Only up to four of them, and only when every one fits one
+ * line of half a screen — one that cannot sends all of them to the full width, because a grid
+ * with one taller tile is the very thing #203 and #288 are about.
  */
 export function twoColumnChoices(choices: readonly string[]): boolean {
   return choices.length > 0 && choices.length <= 4 && choices.every((c) => fitsHalfLine(c));
 }
 
-/** One option: short as a whole, and no word in it longer than half a line holds. */
+/** One option in one line of a grid tile, at the size it is set in. */
 function fitsHalfLine(choice: string): boolean {
-  const text = plainChoice(choice);
-  return text.length <= GRID_CHARS_MAX && longestWord(text) <= GRID_WORD_MAX;
+  const font = mathOnly(choice) ? MATH_CHOICE_FONT : CHOICE_FONT;
+  return plainWidth(choice) * font * EM_PER_CHAR <= GRID_TEXT_ROOM;
 }
 
 /**
  * Whether this option may be set with whole words only. True whenever its longest word fits
  * the line of the variant it is in — which the grid guarantees, so there it is always true.
- * A word longer than even the full width (21 characters) keeps the browser's last-resort
- * break: a word wider than the screen has to be cut somewhere, and cutting it is better than
- * letting it run out of the card.
+ * A word longer than even the full width keeps the browser's last-resort break: a word wider
+ * than the screen has to be cut somewhere, and cutting it is better than letting it run out of
+ * the tile.
  */
 function wholeWordsFit(choice: string, grid: boolean): boolean {
-  return longestWord(plainChoice(choice)) <= (grid ? GRID_WORD_MAX : LIST_WORD_MAX);
+  return grid || longestWord(plainChoice(choice)) <= LIST_WORD_MAX;
+}
+
+/** An option that is nothing but one piece of math ("$\frac{2}{3}$", "$x^{2}$"). */
+export function mathOnly(choice: string): boolean {
+  return /^\s*\$[^$]+\$\s*$/.test(choice);
 }
 
 /** The option as the learner reads it: math written out (`\frac{2}{3}` → `2/3`), no LaTeX marks. */
@@ -270,6 +427,17 @@ function plainChoice(choice: string): string {
     .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '$1/$2')
     .replace(/[$\\{}]/g, '')
     .trim();
+}
+
+/**
+ * How many characters wide the option is drawn. A stacked fraction is as wide as the longer of
+ * its two lines, not as "2/3" written in a row.
+ */
+function plainWidth(choice: string): number {
+  const stacked = choice.replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, (_m, a: string, b: string) =>
+    'x'.repeat(Math.max(a.length, b.length)),
+  );
+  return plainChoice(stacked).length;
 }
 
 /** The longest run without a space — the part that has to fit a line in one piece. */
@@ -297,44 +465,26 @@ function letterFor(index: number): string {
   return index < 26 ? String.fromCharCode(65 + index) : String(index + 1);
 }
 
-/** The round letter in front of a choice; a tried one shows a dash instead (not only a paler colour). */
-function LetterBadge({
-  letter,
-  tried,
-  compact,
-}: {
-  letter: string;
-  tried: boolean;
-  compact: boolean;
-}) {
+/**
+ * The letter before an option — the name voice mode reads out. A quiet mark in a column of its
+ * own, not a badge on the content (issue #288): the accent's dark tone, no circle. A tried
+ * option shows a dash instead (and says "Schon ausprobiert" in words — never colour alone).
+ */
+function LetterMark({ letter, tried }: { letter: string; tried: boolean }) {
   const { palette } = useTheme();
-  const size = compact ? BADGE_GRID : BADGE;
-  const font = compact ? 13 : 15;
   return (
-    <View
+    <Text
+      testID="choice-letter"
       style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: tried ? palette.paper : palette.lavender,
-        borderWidth: tried ? 1 : 0,
-        borderColor: palette.ink4,
+        width: LETTER_COL,
+        color: tried ? palette.ink3 : palette.primaryDk,
+        fontSize: LETTER_FONT,
+        // The first text line's height, so the letter sits on that line, not above it.
+        lineHeight: CHOICE_LINE,
+        fontWeight: '700',
       }}
     >
-      <Text
-        style={{
-          color: tried ? palette.ink3 : palette.primaryDk,
-          fontSize: font,
-          // The letter's own line, one step above its size, so a 13 pt letter sits as
-          // centred in its 26 pt circle as a 15 pt one does in 34.
-          lineHeight: font + 4,
-          fontWeight: '700',
-        }}
-      >
-        {tried ? '–' : letter}
-      </Text>
-    </View>
+      {tried ? '–' : letter}
+    </Text>
   );
 }

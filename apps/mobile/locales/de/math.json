@@ -321,6 +321,7 @@
     "marked": "Markiert: {{list}}",
     "function_plot": "Koordinatensystem, x von {{x_min}} bis {{x_max}}, y von {{y_min}} bis {{y_max}}",
     "graph": "Graph von y = {{expr}}",
+    "graph_through": "Graph durch {{list}}",
     "graph_named": "Graph {{label}}: y = {{expr}}",
     "points": "Punkte: {{list}}",
     "bar_chart": "Säulendiagramm: {{list}}",

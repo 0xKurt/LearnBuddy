@@ -36,7 +36,6 @@ import {
   type StructuredAnswer as StructuredParts,
 } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, ScrollView, Text, useWindowDimensions, View } from 'react-native';
@@ -106,11 +105,11 @@ import { keys, queryClient, seedSession, usePracticeSession } from '../../lib/ap
 import { useDraft } from '../../lib/drafts.js';
 import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
+import { questionParts } from '../../lib/practice/questionParts.js';
 import { announce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
-import type { SpokenWords } from '../../lib/math/speak.js';
-import { speakInOrder, stop as stopListening, type SpokenPart } from '../../lib/speech/listen.js';
-import { feedbackReadText, questionReadText, spokenText } from '../../lib/speech/spoken.js';
+import { speakInOrder, stop as stopListening } from '../../lib/speech/listen.js';
+import { feedbackReadText, spokenText } from '../../lib/speech/spoken.js';
 import { baseLanguage } from '../../lib/speech/voice.js';
 import { afterFeedback, useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
@@ -157,32 +156,6 @@ const THREAD_PAD = 12;
 function foreign(lang: string | null): lang is string {
   const base = baseLanguage(lang);
   return base !== null && base !== currentLocale();
-}
-
-/** What voice mode reads when a question appears (never the topic). */
-function questionParts(item: ItemView, words: SpokenWords, t: TFunction): SpokenPart[] {
-  const app = currentLocale();
-  switch (item.kind) {
-    case 'speak':
-      return [
-        { text: t('practice:speak.instruction'), lang: app },
-        { text: item.prompt, lang: item.lang ?? item.prompt_lang ?? app },
-      ];
-    case 'vocab':
-      return [{ text: spokenText(item.prompt, words), lang: item.prompt_lang ?? app }];
-    default:
-      return [
-        {
-          text: questionReadText(
-            item.prompt,
-            item.kind === 'multiple_choice' ? item.choices : null,
-            words,
-          ),
-          // The sheet's language (a German biology sheet stays German on an English phone).
-          lang: item.prompt_lang ?? app,
-        },
-      ];
-  }
 }
 
 /** The verdict word read before Buddy's reply (as ItemThread shows it); none for "not an attempt". */
@@ -1254,7 +1227,11 @@ export default function PracticeScreen() {
                       // While a structured question is open her answer stands on its board, not in a
                       // bubble (ItemThread). Once it is closed the board is gone, there is room, and
                       // the bubble with its verdict shows what she did, like any other answer.
-                      echoAnswers={!(structured && open)}
+                      // The same for tapped options (issue #288): a tried tile says "Schon
+                      // ausprobiert" itself, and a bubble repeating it was a duplicate — for a
+                      // picture option even the formula behind the drawing. In voice mode the
+                      // bubble stays: there it is the only place she sees what was heard.
+                      echoAnswers={!((structured || ((choices || tapChoices) && !voiceOn)) && open)}
                       onTurnTops={setTurnTops}
                     />
                     {session.mode === 'help' && shown.status === 'correct' ? (
@@ -1315,15 +1292,18 @@ export default function PracticeScreen() {
               </View>
             </View>
             {open && choices ? (
+              // No room of its own above the options (issue #288): the hint row's touch height
+              // already sets them apart, and 8 pt more was a gap and cost the second row of
+              // pictures its place on 360×740.
               <View
                 style={{
                   paddingHorizontal: 16,
-                  paddingTop: 8,
                   paddingBottom: voiceOn ? 0 : bottomRoom(insets.bottom, SPACE.md),
                 }}
               >
                 <ChoiceList
                   choices={choices}
+                  figures={item.choice_figures}
                   tried={tried}
                   disabled={locked}
                   onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}
@@ -1331,7 +1311,7 @@ export default function PracticeScreen() {
               </View>
             ) : null}
             {open && tapChoices ? (
-              <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+              <View style={{ paddingHorizontal: 16 }}>
                 <ChoiceList
                   choices={tapChoices}
                   tried={tried}

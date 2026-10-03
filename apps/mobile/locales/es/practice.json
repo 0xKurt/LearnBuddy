@@ -37,6 +37,7 @@
   },
   "check": "Comprobar",
   "choice_tried": "Ya la has probado",
+  "choice_zoom_hint": "Mantén pulsado para ver la imagen en grande.",
   "dispute": {
     "button": "La corrección no es correcta",
     "confirm": "Retirar la corrección",

@@ -561,6 +561,47 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // Pictures as the options (issue #231): "Welcher Graph passt zu f(x) = x² − 1?" with four
+  // parabolas. The model writes the graphs, the texts and the key as a function; the server
+  // checks that exactly one graph IS that function and that it is the one the index points
+  // at (choiceCheck.ts) — and the index judges her tap, without a model.
+  scriptGenerations({
+    when: /Parabel/i,
+    answer: () => {
+      const plot = (expr: string) => ({
+        type: 'function_plot',
+        functions: [{ expr, label: null }],
+        x_min: -3,
+        x_max: 3,
+        y_min: -3,
+        y_max: 5,
+        points: [],
+      });
+      return {
+        usable: true,
+        title: 'Parabeln erkennen',
+        subject: { name: 'Mathe', kind: 'math' },
+        items: [
+          {
+            ...base,
+            kind: 'multiple_choice',
+            prompt: 'Welcher Graph passt zu $f(x) = x^{2} - 1$?',
+            answer: 'f(x) = x^2 - 1',
+            choices: [
+              '$y = x^{2} + 1$',
+              '$y = -x^{2} + 1$',
+              '$y = x^{2} - 1$',
+              '$y = (x - 1)^{2}$',
+            ],
+            correct_choice: 2,
+            choice_figures: ['x^2+1', '-x^2+1', 'x^2-1', '(x-1)^2'].map(plot),
+            topic: 'Parabeln',
+            prompt_lang: 'de',
+          },
+        ],
+      };
+    },
+  });
   // Charts (issues #245, #246): one question per chart, each with what it reads off, so the
   // walkthrough sees every drawing at both phone sizes, light and dark. Every key here is the
   // value code computes from the data — a wrong one would not reach the screen at all.
@@ -722,6 +763,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /verfassungsorgane zuordnen/i,
       answer: says('Gern – ordne mal zu, wer was macht.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Verfassungsorgane zuordnen' } },
+      ]),
+    },
+    {
+      when: /parabel/i,
+      answer: says('Gern – schau dir die vier Graphen an: welcher passt?', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Parabeln erkennen' } },
       ]),
     },
     {
