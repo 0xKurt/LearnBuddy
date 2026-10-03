@@ -839,6 +839,130 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
 
+// Its own test: note lines need only a learner and Buddy (issues #226, #275).
+test('note lines: read four, then write one — set with a tap, move with Höher/Tiefer (#275)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns Noten üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('Noten lesen und zum Schluss', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+
+  /** Both phones in light, then both in the night palette. */
+  const both = async (name: string) => {
+    await shot(page, name);
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await shot(page, `${name}-night`);
+    await page.emulateMedia({ colorScheme: 'light' });
+  };
+
+  // ── Lesen: the server wrote question, drawing and options from the task ──
+  await expect(page.getByText('Wie heißt diese Note?')).toBeVisible();
+  await expect(page.getByTestId('question-figure')).toBeVisible();
+  await both('70-staff-name-note');
+  await page.getByRole('button', { name: 'C', exact: true }).click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  await expect(page.getByText('Welcher Notenwert ist das?')).toBeVisible();
+  await both('71-staff-name-value');
+  await page.getByRole('button', { name: 'punktierte Achtelnote', exact: true }).click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  await expect(page.getByText('Welches Intervall', { exact: false })).toBeVisible();
+  await both('72-staff-interval');
+  await page.getByRole('button', { name: 'kleine Terz', exact: true }).click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  await expect(page.getByText('In welcher Taktart', { exact: false })).toBeVisible();
+  await both('73-staff-time');
+  await page.getByRole('button', { name: '3/4', exact: true }).click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // ── Schreiben (issue #275): a bar is ONE target; the finger's height picks the line ──
+  await expect(page.getByText('Schreibe diese Zeile', { exact: false })).toBeVisible();
+  const surface = page.getByTestId('answer-staff');
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  await expect(check).toBeDisabled();
+  await both('74-staff-write-empty');
+
+  // Every control on the surface is a real touch target: ≥ 44 pt both ways, at both widths
+  // (CLAUDE.md §Design system). The 11-pt rows of #226 are gone.
+  for (const phone of PHONES) {
+    await page.setViewportSize(phone);
+    await settle(page);
+    for (const target of await surface.getByRole('button').all()) {
+      const box = await target.boundingBox();
+      const name = await target.getAttribute('aria-label');
+      expect(box, `${name} at ${phone.width}`).not.toBeNull();
+      expect(box!.height, `${name} at ${phone.width}: height`).toBeGreaterThanOrEqual(44);
+      expect(box!.width, `${name} at ${phone.width}: width`).toBeGreaterThanOrEqual(44);
+    }
+  }
+  await page.setViewportSize({ width: 360, height: 740 });
+  await settle(page);
+
+  /** Where a step lies on screen: the drawn staff is centred in the bar, 8 gaps tall (`WRITE_REACH`). */
+  const tapAt = async (bar: number, step: number) => {
+    const zone = await page.getByTestId(`staff-bar-${bar}`).boundingBox();
+    const drawn = await surface.locator('svg').first().boundingBox();
+    if (!zone || !drawn) throw new Error('staff not laid out');
+    const gap = drawn.height / 8;
+    const middle = drawn.y + drawn.height / 2;
+    await page.mouse.click(zone.x + zone.width / 2, middle - (step * gap) / 2);
+  };
+  const bar = (n: number, list: string) =>
+    expect(page.getByRole('button', { name: `Takt ${n}: ${list}` })).toBeVisible();
+
+  // E on the first line: one tap, on the line.
+  await tapAt(1, -4);
+  await bar(1, 'E als Viertelnote');
+  // A finger a line too low (F instead of G) is no new attempt: "Höher" moves THAT note.
+  await tapAt(1, -3);
+  await bar(1, 'E als Viertelnote, F als Viertelnote');
+  await both('75-staff-write-moving');
+  await page.getByRole('button', { name: 'Höher' }).click();
+  await bar(1, 'E als Viertelnote, G als Viertelnote');
+  await page.getByRole('radio', { name: 'halbe Note', exact: true }).click();
+  await tapAt(1, 0);
+  await bar(1, 'E als Viertelnote, G als Viertelnote, H als halbe Note');
+  await page.getByRole('radio', { name: 'Viertelnote', exact: true }).click();
+  await tapAt(2, -1);
+  await page.getByRole('button', { name: 'Viertelpause setzen' }).click();
+  await page.getByRole('radio', { name: 'halbe Note', exact: true }).click();
+  // On purpose one too high (G instead of F): the check names the place.
+  await tapAt(2, 5);
+  await bar(2, 'A als Viertelnote, Viertelpause, G als halbe Note');
+  await both('76-staff-write-full');
+  await check.click();
+  await expect(
+    page.getByText('Die ersten 5 von 6 Zeichen stimmen', { exact: false }),
+  ).toBeVisible();
+  await both('77-staff-write-feedback');
+  // With Buddy's reply in the conversation, the keys still sit above „Prüfen", not under it:
+  // the tightest moment of this screen, on the smallest phone.
+  await page.setViewportSize({ width: 360, height: 740 });
+  await settle(page);
+  const checkTop = (await check.boundingBox())!.y;
+  for (const target of await surface.getByRole('button').all()) {
+    const box = (await target.boundingBox())!;
+    expect(
+      box.y + box.height,
+      `${await target.getAttribute('aria-label')}: above Prüfen`,
+    ).toBeLessThanOrEqual(checkTop);
+  }
+  // Her line stays; one step down and it is right.
+  await page.getByRole('button', { name: 'Tiefer' }).click();
+  await bar(2, 'A als Viertelnote, Viertelpause, F als halbe Note');
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await both('78-staff-write-right');
+});
+
 /** One state at both phone sizes, light and dark (fit and contrast checked by `shot`). */
 async function bothSchemes(page: Page, name: string): Promise<void> {
   for (const scheme of ['light', 'dark'] as const) {

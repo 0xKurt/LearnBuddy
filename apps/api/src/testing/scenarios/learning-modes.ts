@@ -140,6 +140,60 @@ function lastText(req: LlmRequest): string {
 }
 
 export function scriptLearningModes(llm: ScriptedGateway): void {
+  // Note lines (issues #226, #275): the model chooses only the task and its musical
+  // parameters (`StaffTask`); question, drawing, options and key are the server's. One of each
+  // reading task, then a two-bar line to write — the tallest staff surface there is, so the
+  // walkthrough measures it on 360×740. Matched on her own request only.
+  scriptGenerations({
+    when: /LEARNER'S TEXT:\n[^\n]*Noten/i,
+    answer: () => {
+      const q = (name: 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B', octave: number) => ({
+        el: 'note' as const,
+        pitch: { name, octave },
+        value: 'quarter' as const,
+        dotted: false,
+      });
+      return {
+        usable: true,
+        title: 'Noten lesen und schreiben',
+        subject: { name: 'Musik', kind: 'art_music' },
+        items: [],
+        staffs: [
+          // Middle C: the ledger line under the treble staff, the step up from the five lines.
+          { task: 'name_note', clef: 'treble', pitch: { name: 'C', octave: 4 } },
+          { task: 'name_value', clef: 'treble', value: 'eighth', dotted: true, rest: false },
+          {
+            task: 'interval',
+            clef: 'treble',
+            lower: { name: 'E', octave: 4 },
+            upper: { name: 'G', octave: 4 },
+          },
+          {
+            task: 'time_signature',
+            clef: 'bass',
+            time: '3/4',
+            bars: [
+              [q('G', 2), q('B', 2), q('D', 3)],
+              [{ ...q('C', 3), value: 'half' }, q('A', 2)],
+            ],
+          },
+          {
+            task: 'write_line',
+            clef: 'treble',
+            time: '4/4',
+            bars: [
+              [q('E', 4), q('G', 4), { ...q('B', 4), value: 'half' }],
+              [
+                q('A', 4),
+                { el: 'rest', value: 'quarter', dotted: false },
+                { ...q('F', 5), value: 'half' },
+              ],
+            ],
+          },
+        ],
+      };
+    },
+  });
   // Match items (issue #229): the model writes only the correct links — pairs, and things
   // sorted into groups. The server checks them (Regel 0), gives the ids, shuffles and keeps
   // the key. Both are the LARGEST a match may be (contracts/structured.ts): the most pairs and
@@ -549,6 +603,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /mit rechenweg üben/i,
       answer: says('Gern – ich hab dir Gleichungen mit Rechenweg vorbereitet.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Gleichungen mit Rechenweg' } },
+      ]),
+    },
+    {
+      when: /noten üben/i,
+      answer: says('Gern – Noten lesen und zum Schluss eine Zeile selbst schreiben.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Noten lesen und schreiben' } },
       ]),
     },
     {
