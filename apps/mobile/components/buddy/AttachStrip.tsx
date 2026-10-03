@@ -24,6 +24,8 @@ import { Icon } from '../lb/Icon.js';
 import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 
 const THUMB = 72;
+// The tile's corner, unchanged from before #294 — shared by the shadow and the clipping view so
+// they stay one shape (no radius token yet, docs/engineering-guards.md, #310).
 const RADIUS = 14;
 
 type Props = {

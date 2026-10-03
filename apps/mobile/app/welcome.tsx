@@ -33,6 +33,7 @@ import { chooseDeviceLocale, currentLocale } from '../lib/i18n/index.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
+import { SPACE } from '../lib/theme/space.js';
 import { formDensity } from '../lib/keyboard.js';
 import { useVisibleHeight } from '../lib/useVisibleHeight.js';
 
@@ -234,7 +235,7 @@ export default function Welcome() {
           contentContainerStyle={{
             paddingHorizontal: 20,
             // Tight: the form is the first thing, so it gets SPACE.md from the edge, not 4.
-            paddingTop: tight ? 12 : dense ? 4 : 16,
+            paddingTop: tight ? SPACE.md : dense ? 4 : 16,
             paddingBottom: 24,
             gap,
           }}

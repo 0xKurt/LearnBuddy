@@ -1084,15 +1084,13 @@ export default function PracticeScreen() {
   // already the card's (`StaffLine`). Growing the card for it left an empty band under the staff
   // (issue #275, 73-staff-time) — so it may only GIVE room, never take it.
   const growable = item.figure?.type !== 'staff';
-  const cardGrowTo = visual
-    ? Math.max(
-        -CARD_GIVES,
-        Math.min(
-          growable ? room - threadWants : 0,
-          growable ? Math.round(viewHeight * 0.5) - cardNatural : 0,
-        ),
-      )
-    : 0;
+  const cardGrowTo =
+    visual && growable
+      ? Math.max(
+          -CARD_GIVES,
+          Math.min(room - threadWants, Math.round(viewHeight * 0.5) - cardNatural),
+        )
+      : 0;
   if (cardGrowTo < 0 && threadCap !== undefined && !boardGives) {
     // The room the drawing really gave (measured, `cardDelta`: at its legible minimum it may
     // give less than asked) goes to the newest turn; whatever is still missing is cut.

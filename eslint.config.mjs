@@ -3,6 +3,28 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
+import lb from './tools/guards/eslint-plugin.mjs';
+import { MAX_LINES, pressableRestriction } from './tools/guards/measure.mjs';
+import maxLinesBaseline from './tools/guards/baselines/max-lines.json' with { type: 'json' };
+import pressableBaseline from './tools/guards/baselines/pressable.json' with { type: 'json' };
+
+// The colour rule below (issue #29) and the Pressable guard (issue #313) are both options of
+// `no-restricted-imports`; a later block replaces the option of an earlier one, so the pattern
+// lives here once and both blocks spread it.
+const COLOURS_FROM_THEME = {
+  group: ['**/theme/colors', '**/theme/colors.js'],
+  message:
+    'Farben kommen aus useTheme() (lib/theme/ThemeProvider.tsx), nicht aus lib/theme/colors.ts — LB & Co. sind lebende Objekte und frieren sonst die Startpalette ein (Issue #29).',
+};
+/** A file path as a glob that matches only itself (`app/practice/[id].tsx` has brackets). */
+const literal = (/** @type {string} */ file) => file.replace(/[[\]*?{}()!]/g, '\\$&');
+const UI_FILES = [
+  'apps/mobile/app/**/*.ts',
+  'apps/mobile/app/**/*.tsx',
+  'apps/mobile/components/**/*.ts',
+  'apps/mobile/components/**/*.tsx',
+];
+
 export default tseslint.config(
   {
     ignores: [
@@ -73,24 +95,23 @@ export default tseslint.config(
     // the tokens then arrive as props of a render, and React knows when they change.
     // Palette data and types (lib/theme/palettes.ts) stay free to import: they are plain
     // values, tied to no active theme.
-    files: [
-      'apps/mobile/app/**/*.ts',
-      'apps/mobile/app/**/*.tsx',
-      'apps/mobile/components/**/*.ts',
-      'apps/mobile/components/**/*.tsx',
-    ],
+    files: UI_FILES,
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [COLOURS_FROM_THEME] }],
+    },
+  },
+  // ── Engineering guards (issue #313, docs/engineering-guards.md) ──────────────────────────
+  // Each has an Ausnahmeliste in tools/guards/baselines/ that may only shrink: a file on it may
+  // not get worse, and once it is better the list has to follow (tools/guards/guards.test.mjs).
+  {
+    // Rule 2 / CLAUDE.md rule 13: actions are <Btn>/<IconBtn> from components/lb. A raw
+    // Pressable or Touchable* is the design system's business only.
+    files: [...UI_FILES, 'apps/mobile/lib/**/*.ts', 'apps/mobile/lib/**/*.tsx'],
+    ignores: ['apps/mobile/components/lb/**', ...pressableBaseline.files.map(literal)],
     rules: {
       'no-restricted-imports': [
         'error',
-        {
-          patterns: [
-            {
-              group: ['**/theme/colors', '**/theme/colors.js'],
-              message:
-                'Farben kommen aus useTheme() (lib/theme/ThemeProvider.tsx), nicht aus lib/theme/colors.ts — LB & Co. sind lebende Objekte und frieren sonst die Startpalette ein (Issue #29).',
-            },
-          ],
-        },
+        { patterns: [COLOURS_FROM_THEME], ...pressableRestriction() },
       ],
     },
   },
@@ -125,6 +146,23 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Rule 5: spacing, type size, line height and radius only from lib/theme.
+    files: UI_FILES,
+    ignores: ['**/__tests__/**'],
+    plugins: { lb },
+    rules: { 'lb/no-raw-style-number': 'error' },
+  },
+  // Rule 4: small units — 600 lines per file in the app, 800 in the API, blank lines and
+  // comments not counted. The files above it today keep their own size as their limit.
+  ...Object.entries(MAX_LINES).map(([dir, max]) => ({
+    files: [`${dir}/**/*.{ts,tsx,js,mjs}`],
+    rules: { 'max-lines': ['error', { max, skipBlankLines: true, skipComments: true }] },
+  })),
+  ...Object.entries(maxLinesBaseline.files).map(([file, max]) => ({
+    files: [literal(file)],
+    rules: { 'max-lines': ['error', { max, skipBlankLines: true, skipComments: true }] },
+  })),
   {
     // Plain Node scripts (tooling): Node's globals.
     files: ['**/*.mjs'],
