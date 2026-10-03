@@ -6,7 +6,7 @@
 
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Text, View, useWindowDimensions } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,6 +21,8 @@ import { registerDeviceForPush } from '../lib/push.js';
 import { useAnnounce } from '../lib/announce.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
+import { formDensity } from '../lib/keyboard.js';
+import { useVisibleHeight } from '../lib/useVisibleHeight.js';
 import { SPACE, bottomRoom } from '../lib/theme/space.js';
 
 // The look comes last: it is the one answer she sees IMMEDIATELY — the next screen is
@@ -52,7 +54,8 @@ export default function Onboarding() {
       return value;
     });
   };
-  const compact = useWindowDimensions().height < 780;
+  const view = useVisibleHeight();
+  const compact = formDensity(view.window, view.overlap) !== 'roomy';
   const key = STEPS[step] ?? 's1';
   const last = step === STEPS.length - 1;
   const settings = useSettings();

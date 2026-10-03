@@ -116,6 +116,37 @@ export default tseslint.config(
     },
   },
   {
+    // A screen lays itself out on the height she can SEE, never on the window's (issue #289).
+    // Since edge-to-edge Android keeps the window's height while the keyboard is up, so a
+    // layout decided on `useWindowDimensions().height` stayed roomy behind it: one field above
+    // the pinned CTA, the others and their errors under it. `useVisibleHeight()`
+    // (lib/useVisibleHeight.ts) subtracts the keyboard; `formDensity()` (lib/keyboard.ts)
+    // turns it into roomy/compact. Widths are free — the keyboard never takes any.
+    files: [
+      'apps/mobile/app/**/*.ts',
+      'apps/mobile/app/**/*.tsx',
+      'apps/mobile/components/**/*.ts',
+      'apps/mobile/components/**/*.tsx',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "MemberExpression[object.callee.name='useWindowDimensions'][property.name='height']",
+          message:
+            'Die Fensterhöhe ignoriert die Tastatur (edge-to-edge) — useVisibleHeight() aus lib/useVisibleHeight.ts nehmen (Issue #289).',
+        },
+        {
+          selector:
+            "VariableDeclarator[init.callee.name='useWindowDimensions'] > ObjectPattern > Property[key.name='height']",
+          message:
+            'Die Fensterhöhe ignoriert die Tastatur (edge-to-edge) — useVisibleHeight() aus lib/useVisibleHeight.ts nehmen (Issue #289).',
+        },
+      ],
+    },
+  },
+  {
     // Rule 5: spacing, type size, line height and radius only from lib/theme.
     files: UI_FILES,
     ignores: ['**/__tests__/**'],
