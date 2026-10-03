@@ -116,18 +116,21 @@ describe.skipIf(!dbReady)('primary-school figures are checked, stored and graded
     );
     expect(stored.map((r) => r.prompt).sort()).toEqual([...prompts].sort());
     expect(s.items[0]?.item.figure).toEqual(clock(7, 45));
-    expect(s.items[5]?.item.choice_figures).toHaveLength(3);
+    expect(s.items[6]?.item.choice_figures).toHaveLength(4);
   });
 
   it('grades a time, a span, an amount and a count without a model', async () => {
     const s = await start(env, l, PRIMARY_ITEMS);
-    const [time, span, money, dots, blocks, choice] = s.items.map((i) => i.item.id) as string[];
+    const [time, span, money, dots, hundred, blocks, choice] = s.items.map(
+      (i) => i.item.id,
+    ) as string[];
     // 19:45 is the same position of the hands, and German writes 7.45 for 7:45.
     expect((await answer(l, s, time!, { text: '19:45' })).body.verdict).toBe('correct');
     expect((await answer(l, s, span!, { text: '45' })).body.verdict).toBe('correct');
     // The amount in cents is the same amount.
     expect((await answer(l, s, money!, { text: '845 ct' })).body.verdict).toBe('correct');
     expect((await answer(l, s, dots!, { text: '14' })).body.verdict).toBe('correct');
+    expect((await answer(l, s, hundred!, { text: '37' })).body.verdict).toBe('correct');
     expect((await answer(l, s, blocks!, { text: '234' })).body.verdict).toBe('correct');
     expect((await answer(l, s, choice!, { choice: 0 })).body.verdict).toBe('correct');
     expect(env.llm.callsFor('tutor')).toHaveLength(0);

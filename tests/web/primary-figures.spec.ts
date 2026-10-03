@@ -97,6 +97,11 @@ test('primary-school figures: read, answered, graded by code', async ({ page }) 
   await bothRooms(page, '93-twenty-frame');
   await typed(page, '14');
 
+  await expect(page.getByText('Wie viele Punkte sind gefärbt?')).toBeVisible();
+  await expect(page.getByRole('img', { name: /Hunderterfeld/ })).toBeVisible();
+  await bothRooms(page, '93b-hundred-frame');
+  await typed(page, '37');
+
   await expect(page.getByText('Welche Zahl ist das?')).toBeVisible();
   await expect(
     page.getByRole('img', { name: /2 Hunderterplatten, 3 Zehnerstangen/ }),
@@ -107,7 +112,7 @@ test('primary-school figures: read, answered, graded by code', async ({ page }) 
   await expect(page.getByText('Welche Uhr zeigt halb drei?')).toBeVisible();
   const option = (letter: string) =>
     page.getByRole('button', { name: new RegExp(`^${letter}: Uhr`) });
-  for (const letter of ['A', 'B', 'C']) await expect(option(letter)).toBeVisible();
+  for (const letter of ['A', 'B', 'C', 'D']) await expect(option(letter)).toBeVisible();
   await shot(page, '95-clock-choices');
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '95-clock-choices-dark');

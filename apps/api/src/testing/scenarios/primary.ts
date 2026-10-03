@@ -1,6 +1,6 @@
 // Scripted model answers for the browser walkthrough of the primary-school figures
 // (tests/web/primary-figures.spec.ts, issue #254): a clock to read, two clocks for a span, coins
-// and notes to count, a Zwanzigerfeld, base-ten blocks and clocks as the options of a multiple
+// and notes to count, a Zwanzigerfeld, a Hunderterfeld, base-ten blocks and clocks as the options of a multiple
 // choice. Every figure and key here passes the server's own checks
 // (`modules/practice/figureCheck.ts`) — the walkthrough sees what a learner would.
 // Test tooling only; answers are keyed by the learner's text, never guessed.
@@ -84,6 +84,14 @@ export const PRIMARY_ITEMS = [
   {
     ...base,
     kind: 'numeric',
+    prompt: 'Wie viele Punkte sind gefärbt?',
+    answer: '37',
+    topic: 'Hunderterfeld',
+    figure: { type: 'dot_field', field: 'hundred', n: [37], ask: 'count' },
+  },
+  {
+    ...base,
+    kind: 'numeric',
     prompt: 'Welche Zahl ist das?',
     answer: '234',
     topic: 'Stellenwerte',
@@ -94,10 +102,10 @@ export const PRIMARY_ITEMS = [
     kind: 'multiple_choice',
     prompt: 'Welche Uhr zeigt halb drei?',
     answer: '2:30',
-    choices: ['2:30', '6:15', '3:30'],
+    choices: ['2:30', '6:15', '3:30', '8:45'],
     correct_choice: 0,
     topic: 'Uhr lesen',
-    choice_figures: [clock(2, 30), clock(6, 15), clock(3, 30)],
+    choice_figures: [clock(2, 30), clock(6, 15), clock(3, 30), clock(8, 45)],
   },
 ];
 

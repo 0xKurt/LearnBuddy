@@ -30,7 +30,7 @@ import {
 } from '../../../../packages/shared-math/src/primary.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { FAMILY, FONT, SMALL } from './figureText.js';
+import { FAMILY, FONT, HaloText, SMALL } from './figureText.js';
 
 type ClockFig = Extract<PrimaryFigure, { type: 'clock' }>;
 type MoneyFig = Extract<PrimaryFigure, { type: 'money' }>;
@@ -108,8 +108,12 @@ function ClockFaceView({
     y: cy + len * Math.sin(rad(deg)),
   });
   const num = Math.max(SMALL, Math.round(d * 0.09));
+  // A small face (an answer option, two clocks side by side) keeps 12, 3, 6 and 9: twelve
+  // numbers at the smallest readable size would touch each other there.
+  const numerals = d < 160 ? [12, 3, 6, 9] : [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
   const hourTip = at(hour, r * 0.5);
-  const minuteTip = at(minute, r * 0.8);
+  // The long hand reaches the minute track, past the numbers, so it points at a minute.
+  const minuteTip = at(minute, r * 0.9);
   return (
     <G>
       <Circle cx={cx} cy={cy} r={r} fill={ink.paper} stroke={ink.stroke} strokeWidth={2.5} />
@@ -127,23 +131,6 @@ function ClockFaceView({
             stroke={five ? ink.stroke : ink.label}
             strokeWidth={five ? 2 : 1}
           />
-        );
-      })}
-      {Array.from({ length: 12 }, (_, i) => {
-        const p = at((i + 1) * 30, r * 0.72);
-        return (
-          <SvgText
-            key={i}
-            x={p.x}
-            y={p.y + num * 0.36}
-            fontFamily={FAMILY}
-            fontSize={num}
-            fontWeight="600"
-            fill={ink.stroke}
-            textAnchor="middle"
-          >
-            {String(i + 1)}
-          </SvgText>
         );
       })}
       <Line
@@ -164,6 +151,21 @@ function ClockFaceView({
         strokeWidth={Math.max(2.5, d * 0.022)}
         strokeLinecap="round"
       />
+      {/* The numbers over the hands, on a paper halo: a hand never hides the 9 it points at. */}
+      {numerals.map((n) => {
+        const p = at(n * 30, r * 0.7);
+        return (
+          <HaloText
+            key={n}
+            x={p.x}
+            y={p.y + num * 0.36}
+            size={num}
+            color={ink.stroke}
+            anchor="middle"
+            text={String(n)}
+          />
+        );
+      })}
       <Circle cx={cx} cy={cy} r={Math.max(3.5, d * 0.03)} fill={ink.stroke} />
     </G>
   );
@@ -378,49 +380,32 @@ function DotFieldView({ fig, width }: { fig: DotFig; width: number }) {
 
 // ─────────────── base-ten blocks ───────────────
 
-/** One unit cube's edge in px: a plate is 10 × 10 of them, a rod 1 × 10. */
-const UNIT = 7;
+/** A unit cube's edge in px, largest first (`BaseTenView` takes the biggest that fits). */
+const UNITS = [10, 9, 8, 7, 6] as const;
 
-function Blocks({ kind, x, y }: { kind: 'plate' | 'rod' | 'cube'; x: number; y: number }) {
+type Kind = 'plate' | 'rod' | 'cube';
+
+function Blocks({ kind, x, y, u }: { kind: Kind; x: number; y: number; u: number }) {
   const { figure: ink } = useTheme();
   const cols = kind === 'plate' ? 10 : 1;
   const rows = kind === 'cube' ? 1 : 10;
-  const lines = [];
-  for (let i = 1; i < cols; i++) {
-    lines.push(
-      <Line
-        key={`c${i}`}
-        x1={x + i * UNIT}
-        y1={y}
-        x2={x + i * UNIT}
-        y2={y + rows * UNIT}
-        stroke={ink.gridStrong}
-        strokeWidth={0.75}
-      />,
-    );
-  }
-  for (let i = 1; i < rows; i++) {
-    lines.push(
-      <Line
-        key={`r${i}`}
-        x1={x}
-        y1={y + i * UNIT}
-        x2={x + cols * UNIT}
-        y2={y + i * UNIT}
-        stroke={ink.gridStrong}
-        strokeWidth={0.75}
-      />,
-    );
-  }
+  const grid = (key: string, x1: number, y1: number, x2: number, y2: number) => (
+    <Line key={key} x1={x1} y1={y1} x2={x2} y2={y2} stroke={ink.gridStrong} strokeWidth={0.75} />
+  );
   return (
     <G>
-      <Rect x={x} y={y} width={cols * UNIT} height={rows * UNIT} fill={ink.fill} />
-      {lines}
+      <Rect x={x} y={y} width={cols * u} height={rows * u} fill={ink.fill} />
+      {Array.from({ length: cols - 1 }, (_, i) =>
+        grid(`c${i}`, x + (i + 1) * u, y, x + (i + 1) * u, y + rows * u),
+      )}
+      {Array.from({ length: rows - 1 }, (_, i) =>
+        grid(`r${i}`, x, y + (i + 1) * u, x + cols * u, y + (i + 1) * u),
+      )}
       <Rect
         x={x}
         y={y}
-        width={cols * UNIT}
-        height={rows * UNIT}
+        width={cols * u}
+        height={rows * u}
         fill="none"
         stroke={ink.stroke}
         strokeWidth={1.25}
@@ -429,43 +414,43 @@ function Blocks({ kind, x, y }: { kind: 'plate' | 'rod' | 'cube'; x: number; y: 
   );
 }
 
-function BaseTenView({ fig, width }: { fig: BaseTenFig; width: number }) {
-  // Plates, then rods, then cubes in stacks of five: three groups with more room between them
-  // than inside, so the bundles read as bundles.
-  const kinds: ('plate' | 'rod' | 'cube')[] = [];
+/**
+ * Plates, then rods, then cubes in stacks of five (like the ones on a Stellenwerttafel): three
+ * groups with more room between them than inside, so the bundles read as bundles.
+ */
+function blockLayout(fig: BaseTenFig, u: number, width: number) {
+  const kinds: Kind[] = [];
   const boxes: Box[] = [];
-  const add = (kind: 'plate' | 'rod' | 'cube', n: number, w: number, h: number, inner: number) => {
+  const add = (kind: Kind, n: number, w: number, inner: number) => {
     for (let i = 0; i < n; i++) {
       kinds.push(kind);
-      boxes.push({ w, h, gap: boxes.length === 0 ? 0 : i === 0 ? SPACE.lg : inner });
+      boxes.push({ w, h: 10 * u, gap: boxes.length === 0 ? 0 : i === 0 ? SPACE.lg : inner });
     }
   };
-  add('plate', fig.h, 10 * UNIT, 10 * UNIT, SPACE.sm);
-  add('rod', fig.t, UNIT, 10 * UNIT, SPACE.xs);
-  // Cubes stand in columns of five, bottom up, like the ones on a Stellenwerttafel.
-  const columns = Math.ceil(fig.o / 5);
-  const cubeBoxes = Array.from({ length: columns }, (_, c) => Math.min(5, fig.o - 5 * c));
-  cubeBoxes.forEach((_, i) => {
-    kinds.push('cube');
-    boxes.push({
-      w: UNIT,
-      h: 10 * UNIT,
-      gap: boxes.length === 0 ? 0 : i === 0 ? SPACE.lg : SPACE.xs,
-    });
-  });
-  const { at, height } = flow(boxes, width, 12);
-  let column = 0;
+  add('plate', fig.h, 10 * u, SPACE.sm);
+  add('rod', fig.t, u, SPACE.xs);
+  const stacks = Array.from({ length: Math.ceil(fig.o / 5) }, (_, c) => Math.min(5, fig.o - 5 * c));
+  add('cube', stacks.length, u, SPACE.xs);
+  return { kinds, stacks, rows: flow(boxes, width, SPACE.md) };
+}
+
+function BaseTenView({ fig, width }: { fig: BaseTenFig; width: number }) {
+  // The largest cube at which everything stands in one row; else in two; else the smallest.
+  const fits = (rowCount: number) =>
+    UNITS.find((c) => blockLayout(fig, c, width).rows.height <= rowCount * (10 * c + SPACE.md));
+  const u = fits(1) ?? fits(2) ?? UNITS[4];
+  const { kinds, stacks, rows } = blockLayout(fig, u, width);
+  let stack = 0;
   return (
-    <Svg width={width} height={height + 2}>
-      {boxes.map((_, i) => {
-        const p = at[i] as Placed;
-        const kind = kinds[i] as 'plate' | 'rod' | 'cube';
-        if (kind !== 'cube') return <Blocks key={i} kind={kind} x={p.x} y={p.y + 1} />;
-        const n = cubeBoxes[column++] ?? 0;
+    <Svg width={width} height={rows.height + 2}>
+      {kinds.map((kind, i) => {
+        const p = rows.at[i] as Placed;
+        if (kind !== 'cube') return <Blocks key={i} kind={kind} x={p.x} y={p.y + 1} u={u} />;
+        const n = stacks[stack++] ?? 0;
         return (
           <G key={i}>
             {Array.from({ length: n }, (_, k) => (
-              <Blocks key={k} kind="cube" x={p.x} y={p.y + 1 + (9 - k) * UNIT - k} />
+              <Blocks key={k} kind="cube" x={p.x} y={p.y + 1 + (9 - k) * u - k} u={u} />
             ))}
           </G>
         );
