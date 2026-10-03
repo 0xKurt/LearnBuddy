@@ -14,6 +14,8 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { settle } from './fit';
+
 const SHOTS = join(__dirname, '../../test-results/web/shots');
 
 async function onboard(page: Page, name: string): Promise<void> {
@@ -393,11 +395,14 @@ test('answer choices break only between words, and a row of them is one row', as
 
       await page.screenshot({ path: join(SHOTS, `32-choices-${what}-${phone.width}.png`) });
       // And at night: the tiles, their letters and the shadow have to hold on the dark palette.
+      // A theme switch remounts the practice screen, and for a moment Buddy's loading orb
+      // fades out over it: after a fixed 300 ms the night shot caught that orb as a large
+      // pale circle behind the options. Wait until the screen stands still (`settle`).
       await page.emulateMedia({ colorScheme: 'dark' });
-      await page.waitForTimeout(300);
+      await settle(page);
       await page.screenshot({ path: join(SHOTS, `32-choices-${what}-${phone.width}-night.png`) });
       await page.emulateMedia({ colorScheme: 'light' });
-      await page.waitForTimeout(300);
+      await settle(page);
     }
   }
 });

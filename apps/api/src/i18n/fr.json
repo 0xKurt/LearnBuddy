@@ -244,6 +244,13 @@
       "groups_some_one": "1 sur {{total}} est déjà dans le bon groupe.",
       "groups_none": "Aucun n'est encore dans le bon groupe – regarde encore une fois tranquillement.",
       "look_at": "Regarde encore « {{text}} »."
+    },
+    "chart": {
+      "pyramid": "Pyramide",
+      "bell": "Cloche",
+      "urn": "Urne",
+      "humid": "Humide",
+      "arid": "Aride"
     }
   },
   "contact": {

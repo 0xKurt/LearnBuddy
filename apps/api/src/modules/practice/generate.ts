@@ -574,6 +574,9 @@ function preparedFrom(
       set.items
         .filter((i) => KINDS[input.kind].has(i.kind))
         .map((i) => ({ ...i, hints: [], worked_solution: null })),
+      // The options code writes for a chart question (humid/arid, pyramid type) speak her
+      // language when the question does not name its own (issues #245, #246).
+      { locale: learner.locale },
     ),
     input.difficulty,
   );

@@ -8,6 +8,7 @@
 // ask just one of them when the learner asked for that direction (issue #113).
 
 import {
+  ChartRead,
   Figure as FigureSchema,
   ModelFigure,
   Rubric,
@@ -19,7 +20,12 @@ import {
   type StructuredTask,
   type VocabDirection,
 } from '@learnbuddy/shared-types/contracts';
-import { compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
+import {
+  chartProblem,
+  compileExpression,
+  isChart,
+  parseCanonicalKey,
+} from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import type { Db } from '../../lib/db.js';
@@ -29,6 +35,7 @@ import { figureHolds } from './figureCheck.js';
 import { usableRubric } from './rubric.js';
 import { mentionsSolution } from './tutor.js';
 import { choiceProblem, MAX_FIGURE_CHOICES } from './choiceCheck.js';
+import { checkedRead, figureIsRejectedChart } from './chartRead.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
 
 export const MATH_RULES = `Math (also in choices, answers and accepted_answers): write it between dollar signs in this LaTeX subset only: \\frac{a}{b}, x^{2}, x_{1}, \\sqrt{x}, \\cdot, \\times, \\div, \\pi, \\le, \\ge, \\ne, \\approx, \\degree, \\pm, \\rightarrow (a reaction arrow; \\rightleftharpoons for an equilibrium); for geometry and sets also \\overline{3} (repeating decimal, segment), \\angle, \\parallel, \\perp, \\in, \\mathbb{N}, \\vec{v}. Example: "Kürze $\\frac{6}{8}$." Plain numbers and words stay outside the dollar signs. A dollar sign meaning money is written \\$ ("kostet \\$5").`;
@@ -50,7 +57,9 @@ export const ANSWER_FORM_RULES = `A question asks for exactly the whole answer, 
 /** When case, ß and punctuation decide (decision D-2). */
 export const SPELLING_RULES = `spelling: "strict" when the task practises spelling, capitalisation or punctuation; "gentle" when they don't matter for the answer; null otherwise (the subject decides).`;
 
-export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table, a structural formula) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). A geometry figure is drawn to scale and checked: its coordinates must give every stated angle (deg) and every side length (value, one unit for all), a force arrow's length is proportional to its value, and a resultant arrow is the vector sum of the others; label the one measure the question asks for "?" — the key must be that measure. A molecule is atoms (aliases a1, a2 …, hydrogens counted in h, charge) and bonds; the app computes the lone pairs and checks every shell, so an atom whose octet does not hold costs the question; set "ask" when the key is its formula, its number of lone pairs or its molar mass. Otherwise figure is null. Pictures as the OPTIONS of a multiple_choice ("Welcher Graph passt zu $f(x) = x^{2} - 1$?"): 2–4 choices, "choice_figures" = one figure per choice in the same order, "choices" = what each option shows in words or math (the app shows the pictures, not these texts); for graphs every option is a function_plot with exactly one function, all with the same window, no two alike, and "answer" = the right graph's function, named as in the question ("f(x) = x^2 - 1"; for a derivative "f'(x) = 2*x"); for any other picture "answer" = the right option's text exactly. Otherwise choice_figures is null.`;
+export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table, a structural formula, a chart) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). A geometry figure is drawn to scale and checked: its coordinates must give every stated angle (deg) and every side length (value, one unit for all), a force arrow's length is proportional to its value, and a resultant arrow is the vector sum of the others; label the one measure the question asks for "?" — the key must be that measure. A molecule is atoms (aliases a1, a2 …, hydrogens counted in h, charge) and bonds; the app computes the lone pairs and checks every shell, so an atom whose octet does not hold costs the question; set "ask" when the key is its formula, its number of lone pairs or its molar mass. Otherwise figure is null. Pictures as the OPTIONS of a multiple_choice ("Welcher Graph passt zu $f(x) = x^{2} - 1$?"): 2–4 choices, "choice_figures" = one figure per choice in the same order, "choices" = what each option shows in words or math (the app shows the pictures, not these texts); for graphs every option is a function_plot with exactly one function, all with the same window, no two alike, and "answer" = the right graph's function, named as in the question ("f(x) = x^2 - 1"; for a derivative "f'(x) = 2*x"); for any other picture "answer" = the right option's text exactly. Otherwise choice_figures is null.
+Charts are data only; the app draws axes, scale and colours. line_chart: x = up to 12 labels in order (numbers for a measured x such as time, else categories so short that count × (longest + 1) ≤ 30 characters, so "J"…"D" for 12 months, e.g. "Jan"…"Jun"); s = 1–3 series {n name, u unit, v one value per x label, bar true for columns (one series at most), r true for a right axis — only for a second unit}. climate_chart: place, alt in m, t = 12 monthly means in °C and p = 12 monthly sums in mm, January first. pie_chart: l labels and v shares in % that add up to exactly 100; half for a half circle. box_plot: b = 1–3 boxes {l, v = [min, Q1, median, Q3, max]}, raw = the data list when the task gives one (then one box), else []. histogram: x0 start of the first class, w class width, v heights. scatter_plot: x and y of each point; fit draws the least-squares line. pyramid: a0 first age, w years per group, m men and f women per group from young to old, u unit. A chart that breaks one of these rules is dropped together with its question.
+"read" — for every question whose answer is read off or computed from its chart, so the app can check the key: q = value (s, i) · max, min, sum, mean, range (largest − smallest) of series s · argmax, argmin (answer = the label: month, category or slice) · diff (value at j minus value at i) · angle (centre angle of slice i in degrees) · iqr (box s) · humid, arid (number of humid or arid months) · humid_at (month i; multiple_choice, correct_choice 0 = humid, 1 = arid) · slope, intercept (the fitted line) · type (pyramid; multiple_choice, correct_choice 0 = pyramid, 1 = bell, 2 = urn). s = series (climate 0 = °C, 1 = mm; pyramid 0 = men, 1 = women; box plot: which box), i and j = positions from 0 (box plot value: i 0 = min … 4 = max); unused numbers 0. The app writes the options for humid_at and type. A numeric question about a chart always has "read"; any other question read null.`;
 
 /**
  * Correct language (live finding 5: "gekürt", "echtdarstellbar", "echtere/größer als 1",
@@ -117,6 +126,13 @@ export const ItemDraft = z.object({
     .describe(
       'multiple_choice only: one figure per choice, same order as choices, when the options ARE pictures ("Welcher Graph passt zu …?"); else null',
     ),
+  /**
+   * What the question reads off its chart (issues #245, #246). With it, code computes the key
+   * from the chart's data and drops the question when the model's key disagrees
+   * (`chartRead.ts`). Not caught: a reading that does not parse cannot be checked, and an
+   * unchecked key on a chart question is what this field exists to end.
+   */
+  read: ChartRead.nullable().default(null),
   tolerance: z
     .number()
     .positive()
@@ -170,6 +186,11 @@ export type ItemDraft = z.infer<typeof ItemDraft>;
 function clipDraft(raw: unknown): unknown {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return raw;
   const o = { ...(raw as Record<string, unknown>) };
+  // A chart that does not hold costs its QUESTION, not just the drawing (issues #245, #246):
+  // unlike a fraction picture, a chart is what the question is about — "Werte das
+  // Klimadiagramm aus" without the diagram is no question. Any other broken figure is still
+  // dropped alone (`figure` is caught to null, audit H-15).
+  if (figureIsRejectedChart(o.figure)) return null;
   if (Array.isArray(o.accepted_answers)) {
     o.accepted_answers = o.accepted_answers
       .filter((a): a is string => typeof a === 'string' && a.trim().length > 0 && a.length <= 200)
@@ -246,7 +267,8 @@ function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
     case 'table':
       return f.rows.every((r) => r.length === f.header.length) ? f : null;
     default:
-      return f;
+      // A chart is checked whole (`chartProblem`); a broken one never gets here (`clipDraft`).
+      return isChart(f) && chartProblem(f) !== null ? null : f;
   }
 }
 
@@ -337,10 +359,10 @@ export function samePrompt(prompt: string): string {
 }
 
 /** Keep only items whose shape is consistent; returns them normalised. */
-export function usableItems(items: ItemDraft[]): ItemDraft[] {
+export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}): ItemDraft[] {
   const out: ItemDraft[] = [];
   for (const raw of items) {
-    const it = {
+    const normalised = {
       ...raw,
       // LaTeX without dollar signs: only the math runs of a sentence, a math field as a whole.
       prompt: dollarMathRuns(raw.prompt),
@@ -356,6 +378,11 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
       // (issue #211). A rubric that does not hold costs itself, never the question.
       rubric: usableRubric(raw.rubric, raw.kind),
     };
+    // A question about a chart (issues #245, #246): its key is computed from the chart's data
+    // and the model's must agree with it — before anything else looks at the key, because the
+    // options of a type question and the tolerance of a reading are written here.
+    const it = checkedRead(normalised, raw.figure, opts.locale ?? null);
+    if (it === null) continue;
     // A number asked for behind a placeholder is no clear question: dropped, not guessed at.
     if (placeholderQuestion(it)) continue;
     // The key contradicts the arithmetic its own question asks for (issue #157). A rule
