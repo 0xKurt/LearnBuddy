@@ -1702,9 +1702,40 @@ rendert und eine `TextInput`-Eigenschaft dort nicht im DOM steht:
   abgeschickt werden; wer den Umbruch wieder löscht, hat wieder den schnellen Einzeiler. Den
   ersten Umbruch macht deshalb nicht die Eingabetaste, sondern die Taste **„↵ Neue Zeile"** in
   der Zeichenreihe (`components/math/MathKeys.tsx`) — die eine Taste, die kein Zeichen einfügt,
-  sondern etwas tut, und die deshalb ein Wort trägt statt nur des Zeichens. Sie steht vorn, weil
-  die Reihe seitlich scrollt: eine Taste, zu der man scrollen muss, kennt niemand. Eine
-  Tabellenzelle ist einzeilig, die Tabelle (#230, `TableAnswer.tsx`) bietet sie deshalb nicht an.
+  sondern etwas tut, und die deshalb ein Wort trägt statt nur des Zeichens. Sie steht vorn und
+  belegt zwei Plätze der Reihe. Eine Tabellenzelle ist einzeilig, die Tabelle (#230, `TableAnswer.tsx`) bietet sie deshalb
+  nicht an.
+
+**Die Zeichenreihe** (Issue #239, Befund 5 aus #286). Welche Tasten eine Frage bekommt, entscheidet
+Code aus der Frage selbst — Art, Einheit, Fach (`ItemView.subject_kind`) und die Notation im
+Fragetext —, nie aus dem Schlüssel (`apps/mobile/lib/math/keys.ts`):
+
+- **Chemie** (eine Formel im Fach Chemie, oder ein Reaktionspfeil im Fragetext): Tiefstellen,
+  Ladung, `+`, Reaktionspfeil `→`, Gleichgewicht `⇌`, Klammern. „2 H₂ + O₂ → 2 H₂O" entsteht ohne
+  die Reihe zu verlassen, und `chemistry.ts` zählt genau das gegen einen Schlüssel in der
+  App-Notation (`$2H_{2} + O_{2} \longrightarrow 2H_{2}O$`; `SO₄²⁻` = `$SO_{4}^{2-}$`).
+- **Mathe**: Hochzahl, Bruchstrich, `=`, die Vergleiche, Wurzel, π …; zeigt die Frage einen
+  Vergleich, stehen `< ≤ > ≥` vorn.
+- **Zahl**: Dezimaltrennzeichen, Bruchstrich, Minus (mit Einheit zuerst das Komma) und die
+  Rechenzeichen eines Rechenwegs; Wurzel, π und Hochzahl nur, wo die Frage sie zeigt.
+- **Tabellenlücke**: eine Lücke, deren Schlüssel in jeder Form eine ganze Zahl ist
+  (`TableViewGap.whole`, vom Server aus dem Schlüssel entschieden — eine Aussage über ihn und nicht
+  mehr), bekommt nur das Minus; die Ziffern der Tastatur schreiben den Rest (eine
+  Android-Buchstabentastatur zeigt kein „−").
+
+Hochzahl, Tiefstellen und Ladung sind Schalter: Die nächsten Ziffern, die sie auf der Tastatur des
+Handys tippt, werden hoch- oder tiefgestellt (`typedUnder`), bei der Ladung auch das Vorzeichen,
+das sie abschließt. Alles, was der Schalter nicht nimmt — ein Buchstabe, ein Leerzeichen, ein
+Einfügen, ein Löschen —, bleibt wie getippt und schaltet ihn aus; ein eingeschalteter Schalter ist
+gefüllt und sagt „eingeschaltet" im Namen. Die Prüfer lesen hochgestellte Ziffern als Potenz
+(`typographicToAscii`, `canonicalMath`: `x⁴` = `x^{4}`), tiefgestellte als Index.
+
+Die Reihe ist **eine** Zeile und scrollt nie seitlich: so viele gleich breite Tasten (≥ 44 pt), wie
+in die Breite passen (sechs Plätze bei 360 pt, sieben bei 390 pt), und braucht die Frage mehr, hält
+der letzte Platz „…", das zur nächsten Seite blättert. Belegt im Walkthrough
+(`tests/web/modes.spec.ts`, „formulas"): die Reihe liegt bei beiden Größen innerhalb des Rands,
+keine Taste schmaler als 44 pt, kein seitliches Scrollen; die Gleichung wird mit den Tasten
+getippt und von Code gezählt.
 
 Die Vorschau zeichnet bei einem Weg die Zeile mit dem Cursor (ohne bekannten Cursor die, bei der
 sie gerade ankommt — dieselbe, die `lastLine` für das Ergebnis liest); alle Zeilen auf einmal
@@ -2618,8 +2649,18 @@ word list, so it stays a prompt rule.
   `listening.int.test.ts`, `practice/__tests__/listen.test.ts`.
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
   renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
-  symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in
-  `apps/mobile/lib/math/`). An unknown command shows its name set apart by spaces. A `$` right
+  symbols, sums, integrals and limits with their bounds, binomial coefficients, column vectors
+  (`pmatrix`), the reaction arrow `\longrightarrow`, a reaction arrow with its condition
+  (`\xrightarrow`), the equilibrium `\rightleftharpoons`, and a fill-in blank inside math as a
+  gap; `apps/mobile/components/math/`, parser in `apps/mobile/lib/math/`). **One list** says what
+  that subset is: `packages/shared-types/src/contracts/notation.ts` (issue #239). The app's parser
+  takes its symbols from it, the model's rule (`MATH_NOTATION_RULE`, and the short form for the
+  tutor, hints, re-explanations and Buddy's own replies) is generated from it, and a unit test
+  (`apps/mobile/lib/math/__tests__/notation.test.ts`) parses every listed command and speaks every
+  entry the model is told about in all five languages. A question whose text, options or key use
+  a command outside the list is **dropped** by the server (`usableItems`); a hint or worked
+  solution that does is dropped on its own. Old rows with an unknown command still show its name
+  set apart by spaces. A `$` right
   before a digit never closes math and one followed by a space never opens it, so prices
   ("$5 and $3") stay text. LaTeX the model forgot to wrap is wrapped server-side — in a sentence
   only the math runs (`practice/dollarMath.ts`), a math field as a whole — and rule checks

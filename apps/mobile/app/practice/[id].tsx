@@ -1433,6 +1433,7 @@ export default function PracticeScreen() {
                 kind={item.kind}
                 prompt={item.prompt}
                 unit={item.unit}
+                subjectKind={item.subject_kind}
                 lang={item.kind === 'vocab' ? item.lang : item.prompt_lang}
                 value={text}
                 disabled={locked}

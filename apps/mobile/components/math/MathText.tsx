@@ -5,7 +5,7 @@
 // Screen readers get the whole text in words ("3 durch 4"), never the LaTeX.
 // Parsing: lib/math/parse.ts; spoken form: lib/math/speak.ts.
 
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,
@@ -19,6 +19,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import type { MathAtom } from '../../lib/math/parse.js';
 import { parsePrompt, promptForSpeech, type PromptRun } from '../../lib/math/prompt.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { useSpokenMath } from './useSpokenMath.js';
 
@@ -344,7 +345,159 @@ function AtomView({ atom, m, size = m.size }: { atom: MathAtom; m: Metrics; size
     }
     case 'blank':
       return <MathGap m={m} size={size} />;
+    case 'limits':
+      return <Limits atom={atom} m={m} size={size} />;
+    case 'binom':
+      return (
+        <Fenced m={m} size={size}>
+          {/* token-exempt: hairline, so the stacked rows clear the bracket's curved ends */}
+          <View style={{ alignItems: 'center', paddingVertical: 1 }}>
+            <Row atoms={atom.top} m={m} size={Math.max(11, Math.round(size * 0.86))} />
+            <Row atoms={atom.bottom} m={m} size={Math.max(11, Math.round(size * 0.86))} />
+          </View>
+        </Fenced>
+      );
+    case 'matrix':
+      return (
+        <Fenced m={m} size={size}>
+          {/* token-exempt: hairline, so the stacked rows clear the bracket's curved ends */}
+          <View style={{ alignItems: 'center', paddingVertical: 1 }}>
+            {atom.rows.map((row, r) => (
+              // token-exempt: column gap in em of the math size (0.6 em), not a layout space
+              <View key={r} style={{ flexDirection: 'row', gap: Math.round(size * 0.6) }}>
+                {row.map((cell, c) => (
+                  <View key={c} style={{ alignItems: 'center' }}>
+                    <Row atoms={cell} m={m} size={size} />
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        </Fenced>
+      );
+    case 'arrow':
+      return <LabelledArrow above={atom.above} m={m} size={size} />;
   }
+}
+
+/**
+ * ∑, ∏ and lim carry their limits below and above, centred — the way a schoolbook sets them;
+ * ∫ carries them at its right, low and high (issue #239).
+ */
+function Limits({
+  atom,
+  m,
+  size,
+}: {
+  atom: Extract<MathAtom, { type: 'limits' }>;
+  m: Metrics;
+  size: number;
+}) {
+  const small = Math.max(10, Math.round(size * 0.62));
+  const word = atom.name === 'lim';
+  const big = word ? size : Math.round(size * 1.35);
+  const op = (
+    <Text
+      style={[
+        textStyle(m, big),
+        // token-exempt: the big operator's own line height, 1.1 em of its glyph size
+        word ? null : { lineHeight: Math.round(big * 1.1), fontWeight: '400' },
+      ]}
+    >
+      {atom.op}
+    </Text>
+  );
+  if (atom.name === 'int') {
+    return (
+      // token-exempt: optical kerning of ∫ — 2 pt after the limits, the limits 1 pt into the slant
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 2 }}>
+        {op}
+        {/* token-exempt: optical, the limits sit 1 pt into the integral sign's slant */}
+        <View style={{ justifyContent: 'space-between', alignSelf: 'stretch', marginLeft: -1 }}>
+          {atom.upper ? <Row atoms={atom.upper} m={m} size={small} /> : <View />}
+          {atom.lower ? <Row atoms={atom.lower} m={m} size={small} /> : <View />}
+        </View>
+      </View>
+    );
+  }
+  return (
+    // token-exempt: optical side bearing of 2 pt, so ∑/∏ do not touch their neighbours
+    <View style={{ alignItems: 'center', paddingHorizontal: 2 }}>
+      {atom.upper ? <Row atoms={atom.upper} m={m} size={small} /> : null}
+      {op}
+      {atom.lower ? <Row atoms={atom.lower} m={m} size={small} /> : null}
+    </View>
+  );
+}
+
+/** Round brackets as tall as what they hold (a binomial coefficient, a column vector). */
+function Fenced({ children, m, size }: { children: ReactNode; m: Metrics; size: number }) {
+  const [height, setHeight] = useState(Math.round(size * 1.3));
+  const stroke = Math.max(1.3, size / 15);
+  const width = Math.max(5, Math.round(size * 0.32));
+  const paren = (side: 'left' | 'right') => {
+    const x0 = side === 'left' ? width - stroke : stroke;
+    const x1 = side === 'left' ? stroke : width - stroke;
+    return (
+      <Svg width={width} height={height}>
+        <Path
+          d={`M ${x0} ${stroke} Q ${x1} ${height / 2} ${x0} ${height - stroke}`}
+          stroke={m.color}
+          strokeWidth={stroke}
+          fill="none"
+          strokeLinecap="round"
+        />
+      </Svg>
+    );
+  };
+  return (
+    // token-exempt: optical side bearing of 1 pt outside the drawn brackets, like a glyph's own
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 1 }}>
+      {paren('left')}
+      <View
+        onLayout={(e) => {
+          const next = Math.round(e.nativeEvent.layout.height);
+          if (next > 0 && Math.abs(next - height) > 1) setHeight(next);
+        }}
+        // token-exempt: optical, 2 pt between a drawn bracket and what it holds
+        style={{ paddingHorizontal: 2 }}
+      >
+        {children}
+      </View>
+      {paren('right')}
+    </View>
+  );
+}
+
+/** ⟶ with its condition written small above it, the arrow as wide as the condition. */
+function LabelledArrow({ above, m, size }: { above: MathAtom[]; m: Metrics; size: number }) {
+  const [width, setWidth] = useState(Math.round(size * 2));
+  const small = Math.max(10, Math.round(size * 0.62));
+  const stroke = Math.max(1.3, size / 15);
+  const head = Math.round(size * 0.32);
+  const h = head * 2;
+  const mid = h / 2;
+  return (
+    <View
+      style={{ alignItems: 'center', minWidth: Math.round(size * 2), paddingHorizontal: SPACE.xs }}
+      onLayout={(e) => {
+        const next = Math.round(e.nativeEvent.layout.width) - 2 * SPACE.xs;
+        if (next > 0 && Math.abs(next - width) > 1) setWidth(next);
+      }}
+    >
+      <Row atoms={above} m={m} size={small} />
+      <Svg width={width} height={h}>
+        <Path
+          d={`M ${stroke} ${mid} L ${width - stroke} ${mid} M ${width - head} ${mid - head * 0.6} L ${width - stroke} ${mid} L ${width - head} ${mid + head * 0.6}`}
+          stroke={m.color}
+          strokeWidth={stroke}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+    </View>
+  );
 }
 
 /** A blank inside math: the same light box as in the text, sized to the math around it. */

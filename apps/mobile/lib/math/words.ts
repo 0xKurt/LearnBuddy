@@ -65,6 +65,14 @@ export const KEEP_PLACEHOLDERS = {
   frac: '{{frac}}',
   unit: '{{unit}}',
   ordinal: '{{ordinal}}',
+  op: '{{op}}',
+  from: '{{from}}',
+  to: '{{to}}',
+  top: '{{top}}',
+  bottom: '{{bottom}}',
+  entries: '{{entries}}',
+  rows: '{{rows}}',
+  label: '{{label}}',
 } as const;
 
 /** Looks up one key under the "math" namespace ("spoken.frac", "blank.label"). */
@@ -115,5 +123,18 @@ export function spokenWordsFrom(t: Lookup): SpokenWords {
     vector: raw('vector'),
     blank: t('blank.label'),
     symbols,
+    operators: {
+      sum: t('spoken.operators.sum'),
+      prod: t('spoken.operators.prod'),
+      int: t('spoken.operators.int'),
+      lim: t('spoken.operators.lim'),
+    },
+    op_range: raw('op_range'),
+    op_lower: raw('op_lower'),
+    op_upper: raw('op_upper'),
+    binom: raw('binom'),
+    column_vector: raw('column_vector'),
+    matrix: raw('matrix'),
+    arrow_label: raw('arrow_label'),
   };
 }

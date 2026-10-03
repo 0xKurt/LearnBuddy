@@ -160,7 +160,16 @@ export const TableFillTask = z.object({
 export type TableFillTask = z.infer<typeof TableFillTask>;
 
 /** A gap as the app shows it: where it is and how it is typed in — never its key. */
-export const TableViewGap = z.object({ id: PartId, input: TableInput });
+export const TableViewGap = z.object({
+  id: PartId,
+  input: TableInput,
+  /**
+   * Every form of the gap's key is a whole number (code decides it from the key and its other
+   * spellings; one fact about the key and no more — not its size, not its sign). The phone's
+   * digits then write it, and the app shows only the minus over the table (#286 finding 5, #239).
+   */
+  whole: z.boolean().default(false),
+});
 export type TableViewGap = z.infer<typeof TableViewGap>;
 
 export const TableViewCell = z.union([TableViewGap, TableShownCell]);

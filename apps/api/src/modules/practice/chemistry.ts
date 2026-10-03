@@ -36,7 +36,7 @@ const STATE = /\((?:s|l|g|aq|fest|flüssig|gasf|gasförmig|sol|liq|gaz|ac|aq\.)\
  * produce a confident, wrong verdict — exactly what rule 5 forbids. A reaction needs a
  * reaction arrow.
  */
-const ARROW = /(?:<=>|<->|⇌|⟶|→|->|\\rightarrow|\\longrightarrow|\\to)/;
+const ARROW = /(?:<=>|<->|⇌|⟶|→|->|\\rightleftharpoons|\\rightarrow|\\longrightarrow|\\to)/;
 
 function cleaned(s: string): string {
   return (
@@ -46,6 +46,14 @@ function cleaned(s: string): string {
       // chemistry, and a stray \, is a thin space.
       .replace(/\$/g, '')
       .replace(/\\(?:cdot|,|;|:|!|quad|qquad|text|mathrm|ce)\b/g, ' ')
+      // The key is written in the app's notation (MATH_NOTATION_RULE, issue #239): an index is
+      // `_{2}` and a charge `^{2-}`. The index is just the digits that follow the symbol; the
+      // charge keeps its caret, which is what tells "SO4^2-" from "SO42-".
+      .replace(
+        /_\{\s*(\d+)\s*\}|_(\d+)/g,
+        (_, braced?: string, bare?: string) => braced ?? bare ?? '',
+      )
+      .replace(/\^\{\s*([^{}]*?)\s*\}/g, '^$1')
       .replace(/[{}]/g, ' ')
       // Non-breaking and thin spaces are spaces; a middle dot or bullet is NOT normalised
       // away, because it marks a hydrate ("CuSO4 · 5 H2O"), which this module refuses — and
@@ -262,6 +270,7 @@ function substancesOf(side: string): string[] {
     termsOf(side)
       // The caret only says the digits after it are a charge: "Fe^3+" and "Fe3+" are one ion,
       // "e^-" and "e-" one electron.
+      // "OH^-" (the app's notation) and "OH⁻" (the charge key) are one ion too (issue #239).
       .map((p) => p.replace(/\s+/g, '').replace(/^\d+/, '').replace(/\^/g, ''))
       .filter((p) => p !== '')
       .sort()

@@ -10,7 +10,9 @@
 import {
   ChartRead,
   Figure as FigureSchema,
+  MATH_NOTATION_RULE,
   ModelFigure,
+  unsupportedMath,
   Rubric,
   type BarTask,
   type Figure,
@@ -38,7 +40,8 @@ import { mentionsSolution } from './tutor.js';
 import { checkedRead, figureIsRejectedChart } from './chartRead.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
 
-export const MATH_RULES = `Math (also in choices, answers and accepted_answers): write it between dollar signs in this LaTeX subset only: \\frac{a}{b}, x^{2}, x_{1}, \\sqrt{x}, \\cdot, \\times, \\div, \\pi, \\le, \\ge, \\ne, \\approx, \\degree, \\pm, \\rightarrow (a reaction arrow; \\rightleftharpoons for an equilibrium); for geometry and sets also \\overline{3} (repeating decimal, segment), \\angle, \\parallel, \\perp, \\in, \\mathbb{N}, \\vec{v}. Example: "Kürze $\\frac{6}{8}$." Plain numbers and words stay outside the dollar signs. A dollar sign meaning money is written \\$ ("kostet \\$5").`;
+/** The notation rule, generated from the one list the app draws and reads out (issue #239). */
+export const MATH_RULES = MATH_NOTATION_RULE;
 
 /** How a number key is written (docs/architecture.md §Practice, grading; audit C-1). */
 export const NUMERIC_KEY_RULES = `numeric: answer = the number with a decimal point and no thousands separators (0.125, 1250 — never 0,125 or 1.250); a fraction (3/4) or mixed number (3 1/2) only when the task asks for that form; the unit separately in "unit" ("%" for percent). tolerance only when the task says to round, estimate or measure — otherwise null (exact).`;
@@ -388,6 +391,13 @@ export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}):
     // options of a type question and the tolerance of a reading are written here.
     const it = checkedRead(normalised, raw.figure, opts.locale ?? null);
     if (it === null) continue;
+    // Notation the app cannot draw (issue #239): a learner would read "\\overbrace" in the middle
+    // of her question. Dropped, not repaired — the list is `MATH_NOTATION_RULE`, which the model
+    // was given, and guessing what an unknown command meant is the model's job, not ours.
+    if (drawsUnsupported(it)) continue;
+    it.hints = it.hints.filter((h) => unsupportedMath(h).length === 0);
+    if (it.worked_solution !== null && unsupportedMath(it.worked_solution).length > 0)
+      it.worked_solution = null;
     // A number asked for behind a placeholder is no clear question: dropped, not guessed at.
     if (placeholderQuestion(it)) continue;
     // The key contradicts the arithmetic its own question asks for (issue #157). A rule
@@ -445,6 +455,15 @@ export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}):
     out.push({ ...plain, lang: null });
   }
   return out;
+}
+
+/** Does a text the learner will see — question, options, key — use notation the app cannot draw? */
+function drawsUnsupported(
+  it: Pick<ItemDraft, 'prompt' | 'answer' | 'accepted_answers' | 'choices'>,
+): boolean {
+  return [it.prompt, it.answer, ...it.accepted_answers, ...(it.choices ?? [])].some(
+    (text) => unsupportedMath(text).length > 0,
+  );
 }
 
 export type ItemSource = {

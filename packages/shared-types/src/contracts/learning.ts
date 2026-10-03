@@ -328,9 +328,9 @@ export type ItemImage = z.infer<typeof ItemImage>;
 
 /**
  * A question as shown while it is open: never includes the answer.
- * Texts may contain math between dollar signs in a small LaTeX subset
- * (\frac{a}{b}, x^{2}, x_{1}, \sqrt{x}, \cdot, \times, \div, \pi, \le, \ge, \ne, \approx, \degree;
- * \overline, \angle, \parallel, \perp, \in, \mathbb, \vec; a blank "___" or \square inside math).
+ * Texts may contain math between dollar signs in the LaTeX subset of `contracts/notation.ts`
+ * (`MATH_COMMANDS`; a blank "___" or \square inside math); a question using anything else is
+ * dropped by the server (issue #239).
  * A dollar for money is written \$; a "$" before a digit never closes math.
  */
 export const ItemView = z.object({
@@ -345,6 +345,12 @@ export const ItemView = z.object({
   lang: z.string().nullable(),
   /** vocab: the language of the prompt. */
   prompt_lang: z.string().nullable(),
+  /**
+   * The kind of the subject the question belongs to (`subjects.kind`), or null for a question
+   * with no subject. The app chooses the insert keys of the answer field from it — a formula in
+   * chemistry gets the index, charge and reaction-arrow keys (issue #239, apps/mobile/lib/math/keys.ts).
+   */
+  subject_kind: SubjectKind.nullable().default(null),
   figure: Figure.nullable(),
   /**
    * The sheet's own figure for this question, where the question is shown full size

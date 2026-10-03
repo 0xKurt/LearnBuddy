@@ -138,9 +138,9 @@ describe.skipIf(!dbReady)('table items', () => {
       rows: [
         [
           { text: 'f(x)' },
-          { id: 'r0c1', input: 'math' },
+          { id: 'r0c1', input: 'math', whole: true },
           { text: '1' },
-          { id: 'r0c3', input: 'math' },
+          { id: 'r0c3', input: 'math', whole: true },
         ],
       ],
       layout: 'grid',

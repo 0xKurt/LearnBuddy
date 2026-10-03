@@ -95,6 +95,7 @@ const ITEM: ItemView = {
   origin: 'material',
   lang: 'fr',
   prompt_lang: 'fr',
+  subject_kind: null,
   figure: null,
   image: null,
   tap_choices: null,

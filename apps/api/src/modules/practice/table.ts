@@ -416,13 +416,28 @@ export function tableShownText(task: TableFillTask): string {
   ].join(' ');
 }
 
+/**
+ * Every form of a gap's key is a whole number (#239, #286 finding 5): the phone's digits write
+ * it. A fraction, a decimal or a term anywhere among its forms keeps the keys that write those.
+ */
+function wholeKey(forms: readonly string[]): boolean {
+  return forms.every((form) => {
+    const k = parseCanonicalKey(plainMath(form));
+    return k.exact !== null && k.exact.den === 1n && k.form === 'integer' && k.unit === null;
+  });
+}
+
 /** What the app shows: the table without its keys. */
 export function tableView(task: TableFillTask): TableFillTaskView {
   return {
     type: 'table_fill',
     header: task.header,
     rows: task.rows.map((cells) =>
-      cells.map((c) => (isGap(c) ? { id: c.id, input: c.input } : { text: c.text })),
+      cells.map((c) =>
+        isGap(c)
+          ? { id: c.id, input: c.input, whole: c.input === 'math' && wholeKey([c.key, ...c.also]) }
+          : { text: c.text },
+      ),
     ),
     layout: task.family === 'wall' ? 'wall' : 'grid',
   };

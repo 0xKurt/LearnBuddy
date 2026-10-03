@@ -22,6 +22,7 @@ import {
   tableProblem,
   tableReply,
   tableTaskFrom,
+  tableView,
   type TableCheck,
   type TableDraft,
 } from '../table.js';
@@ -123,10 +124,10 @@ describe('table_fill: what the model wrote (Regel 0)', () => {
       rows: [
         [
           { text: 'f(x)' },
-          { id: 'r0c1', input: 'math' },
+          { id: 'r0c1', input: 'math', whole: true },
           { text: '1' },
-          { id: 'r0c3', input: 'math' },
-          { id: 'r0c4', input: 'math' },
+          { id: 'r0c3', input: 'math', whole: true },
+          { id: 'r0c4', input: 'math', whole: true },
         ],
       ],
       layout: 'grid',
@@ -448,5 +449,25 @@ describe('table_fill: her answer, cell by cell', () => {
     expect(tableReply('de', mixed)).toBe(
       'Noch stimmt keins der Felder – fang am besten bei Zeile 1, Spalte „y“ an.',
     );
+  });
+});
+
+describe('a gap with a whole number says so (issue #239, #286 finding 5)', () => {
+  it('marks a gap whole only when every form of its key is a whole number', () => {
+    const task = built(
+      shape({
+        header: ['', 'a', 'b', 'c', 'd', 'e'],
+        rows: [[v('Wert'), g('12'), g('-3'), g('2.5'), g('4', ['$\\frac{8}{2}$']), g('zwei')]],
+      }),
+    );
+    const cells = tableView(task).rows[0]!;
+    expect(cells.map((c) => ('id' in c ? c.whole : null))).toEqual([
+      null,
+      true,
+      true,
+      false,
+      false,
+      false,
+    ]);
   });
 });

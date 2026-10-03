@@ -74,20 +74,29 @@ function stripTrailingUnit(input: string): {
   return { rest: input, unit: null, alias: null };
 }
 
+const RAISED = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+
+/** "¹²" → "12": raised digits as plain ones. */
+export function superscriptDigits(run: string): string {
+  return [...run].map((ch) => String(RAISED.indexOf(ch))).join('');
+}
+
 /**
  * The characters the app's math keys insert (and phones type) → what the
- * evaluator reads: − → -, · × → *, ÷ → /, ² ³ → ^2 ^3, π → pi, √x / √(x) → sqrt(…).
+ * evaluator reads: − → -, · × → *, ÷ → /, ² ³ ⁴ … → ^2 ^3 ^4, π → pi, √x / √(x) → sqrt(…).
  */
 export function typographicToAscii(text: string): string {
-  return text
-    .replace(/[−–]/g, '-')
-    .replace(/[·×⋅]/g, '*')
-    .replace(/÷/g, '/')
-    .replace(/²/g, '^2')
-    .replace(/³/g, '^3')
-    .replace(/π/g, 'pi')
-    .replace(/√\s*\(/g, 'sqrt(')
-    .replace(/√\s*(\d+(?:[.,]\d+)?|[a-zA-Z]+)/g, 'sqrt($1)');
+  return (
+    text
+      .replace(/[−–]/g, '-')
+      .replace(/[·×⋅]/g, '*')
+      .replace(/÷/g, '/')
+      // A run of raised digits is one exponent: the exponent key writes x⁴ or 10¹² (issue #239).
+      .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, (run) => `^${superscriptDigits(run)}`)
+      .replace(/π/g, 'pi')
+      .replace(/√\s*\(/g, 'sqrt(')
+      .replace(/√\s*(\d+(?:[.,]\d+)?|[a-zA-Z]+)/g, 'sqrt($1)')
+  );
 }
 
 type Mode = 'learner' | 'key';
@@ -217,7 +226,7 @@ function readWritten(body: string, mode: Mode): Written | null {
 function evaluateCalculation(body: string): number | null {
   // Digits, separators, + − · : / ^ ( ), powers, roots, π — nothing else (no names, no "e").
   const withoutNames = body.replace(/sqrt|abs|pi|π|√/g, '');
-  if (!/^[\d.,+\-*/:^()\s·×⋅÷²³]*$/.test(withoutNames)) return null;
+  if (!/^[\d.,+\-*/:^()\s·×⋅÷⁰¹²³⁴⁵⁶⁷⁸⁹]*$/.test(withoutNames)) return null;
   let failed = false;
   const canonical = body.replace(/\d[\d.,]*\d|\d/g, (lit) => {
     const l = literal(lit, 'learner');

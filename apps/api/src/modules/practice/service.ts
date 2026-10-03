@@ -69,7 +69,14 @@ import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems, type PracticeRun } from './selection.js';
 import { tapChoicesFor } from './tapChoices.js';
 import { readAloudAllowed } from './readAloud.js';
-import { imageOf, signImageUrls, surfaceFor, taskViewFor, type ItemImageRow } from './viewParts.js';
+import {
+  imageOf,
+  signImageUrls,
+  subjectKindOf,
+  surfaceFor,
+  taskViewFor,
+  type ItemImageRow,
+} from './viewParts.js';
 import { CARD_PASS, offersCardPass } from './cards.js';
 import { MAX_ACCEPTED, storedFigure } from './items.js';
 import {
@@ -692,7 +699,9 @@ export async function sessionView(
 ): Promise<SessionView> {
   const s = await loadSession(db, learnerId, sessionId);
   const items = await db.query<
-    SessionItemRow & ItemRow & ItemImageRow & { archived_at: Date | null }
+    SessionItemRow &
+      ItemRow &
+      ItemImageRow & { archived_at: Date | null; subject_kind: string | null }
   >(
     `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.prepared_hints_used,
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
@@ -700,9 +709,10 @@ export async function sessionView(
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
             i.bar_task, i.task, i.listen_task, i.staff_task, i.spelling, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
-            mi.label as image_label
+            mi.label as image_label, sub.kind as subject_kind
        from session_items si join items i on i.id = si.item_id
        left join material_images mi on mi.id = i.image_id
+       left join subjects sub on sub.id = i.subject_id
       where si.session_id = $1 order by si.position`,
     [sessionId],
   );
@@ -775,6 +785,8 @@ export async function sessionView(
         origin: i.origin,
         lang: i.lang,
         prompt_lang: i.prompt_lang,
+        // Which keys the answer field offers is the app's choice, made from this (issue #239).
+        subject_kind: subjectKindOf(i.subject_kind),
         figure: storedFigure(i.figure),
         image: imageOf(i, imageUrls),
         // A test asks her to produce, so nothing is offered to tap there — and a card has

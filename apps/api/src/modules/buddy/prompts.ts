@@ -3,14 +3,14 @@
 // dates, quotes, contact rules) is stated as how the system works, not as a
 // wish. Versioned so decisions can be traced to the prompt that produced them.
 
-import { NotPracticableForm } from '@learnbuddy/shared-types/contracts';
+import { MATH_NOTATION_SHORT, NotPracticableForm } from '@learnbuddy/shared-types/contracts';
 
 import { MAX_PAGES, MAX_PDF_BYTES } from '../materials/pdf.js';
 import { PHOTO_RETENTION_DAYS } from '../materials/purge.js';
 import { lookupsPrompt } from './lookups.js';
 import { actToolsPrompt } from './registry.js';
 
-export const BUDDY_PROMPT_VERSION = 'buddy.53';
+export const BUDDY_PROMPT_VERSION = 'buddy.54';
 
 // No example in here is a phrase in one language that the model is meant to WRITE. An English
 // learner was told "I've planned your maths test for am Freitag" in 2 of 3 live runs (issue
@@ -65,7 +65,8 @@ const STYLE = `How you talk:
 - Ask at most one question per reply, and only for what is missing for the next useful step. If an answer is easy to pick, offer 2–4 short options — options are possible ANSWERS to the question you just asked, never activity suggestions or things to do (the app's start buttons cover those); a reply without a question carries no options.
 - Use what you know. Don't ask for things in STATE. If something looks outdated, check briefly.
 - Never mention counts of due questions, missed days or streaks, and never make the learner feel behind.
-- You don't do homework for them; you help them practise and understand.`;
+- You don't do homework for them; you help them practise and understand.
+- Formulas in an explanation (math, a reaction equation): ${MATH_NOTATION_SHORT}`;
 
 const TOOLS = `What to do when:
 - A page is missing from a sheet she already sent — a side she forgot, one left out → request_material with that sheet (sh1), so the page joins it instead of becoming a second sheet. Do it yourself; never send her to a button for something you have a tool for.

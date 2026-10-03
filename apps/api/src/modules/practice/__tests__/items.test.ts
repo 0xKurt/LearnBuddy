@@ -226,3 +226,32 @@ describe('the rubric of a writing task (#211)', () => {
     expect(item).toMatchObject({ kind: 'long', rubric: null });
   });
 });
+
+describe('usableItems: notation the app cannot draw (issue #239)', () => {
+  it('drops a question whose text, options or key use a command outside the list', () => {
+    const items = usableItems([
+      draft({ prompt: 'Gleiche aus: $\\ce{H2 + O2 -> H2O}$' }),
+      draft({ kind: 'formula', prompt: 'Wie lautet die Formel?', answer: '$\\overbrace{x}$' }),
+      draft({
+        kind: 'multiple_choice',
+        prompt: 'Welche Matrix?',
+        answer: 'a',
+        choices: ['$\\begin{bmatrix} 1 \\end{bmatrix}$', 'b'],
+        correct_choice: 0,
+      }),
+      draft({ prompt: 'Was ergibt $\\sum_{i=1}^{3} i$?', answer: '6', kind: 'numeric' }),
+    ]);
+    expect(items.map((i) => i.prompt)).toEqual(['Was ergibt $\\sum_{i=1}^{3} i$?']);
+  });
+
+  it('drops only the hint or the worked solution that uses one, never the question for it', () => {
+    const [item] = usableItems([
+      draft({
+        hints: ['Denk an $\\iint$.', 'Was steht im Zellkern?'],
+        worked_solution: 'Mit $\\mathcal{Z}$ …',
+      }),
+    ]);
+    expect(item?.hints).toEqual(['Was steht im Zellkern?']);
+    expect(item?.worked_solution).toBeNull();
+  });
+});

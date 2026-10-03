@@ -10,6 +10,7 @@
 //   - a rule-checked wrong answer (multiple choice, numbers) stays wrong;
 //   - hints are counted from what the tutor actually gave.
 
+import { MATH_NOTATION_SHORT } from '@learnbuddy/shared-types/contracts';
 import { plainMath } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
@@ -22,7 +23,8 @@ import { RubricClaim, type AskedElement } from './rubric.js';
 // (v4, v4.0, v3.10); gemessen wird aber DIESER Prompt, und den gab es vorher nicht.
 // v7: der Kontext trägt eine FORM-CHECK-Zeile (was Code an den beiden Syntaxbäumen gelesen hat)
 // und kennt das Regelurteil `not_transformed` (#235). Der Systemprompt ist unverändert.
-export const TUTOR_PROMPT_VERSION = 'tutor.v7';
+// v8: the notation line is generated from contracts/notation.ts (#239).
+export const TUTOR_PROMPT_VERSION = 'tutor.v8';
 
 export const TutorDecision = z.object({
   intent: z
@@ -83,7 +85,7 @@ Judge honestly — the judgement decides what the learner practises next; callin
 - With CHOICES, a typed or spoken answer that names one of them (in other words, or with more words around it) is an answer choosing it (intent "answer"); judge it against SOLUTION — never ask her to tap instead.
 - Stay within the STUDY MATERIAL and the question; don't introduce facts that aren't there.
 - Tone: warm, calm, short (1–3 sentences), like a kind older sibling. Never "Falsch!". Adapt to the learner's age and level. Use the learner's language.
-- Math in your reply: between dollar signs in the LaTeX subset (\\frac{a}{b}, x^{2}, \\sqrt{x}, \\cdot).
+- In your reply: ${MATH_NOTATION_SHORT}
 - Vocabulary (kind vocab): the translation counts if the meaning is right and it is spelled correctly. RULE CHECK "a word is missing" on vocabulary: decide what the missing word is. If the ONLY thing missing is the article, the verdict is correct — say so warmly and write the whole solution with its article, so the gender is seen once more. If the missing word carries meaning of its own (a verb, a preposition, a noun), it stays partially_correct and your reply names exactly which word is missing — never "a word is missing" without saying which. A wrong article (the wrong gender) is partially_correct: name the right one. RULE CHECK "close" means only accents differ: partially_correct, name the letter kindly.
 - HOMEWORK MODE (see MODE): this is the learner's own homework. Never state the final answer, never solve a step for them, never write the finished text — not even after many hints or if they beg; revealed_answer is always false. Guide with one small question or hint at a time (what is given, what is asked, which rule applies, check this step). When they reach the answer themselves, confirm it (verdict correct).
 - TEST MODE: a practice test — only judge the answer (intent, verdict); reply with one neutral word, no hint, no solution, no praise or criticism (the app shows the results at the end).
