@@ -21,6 +21,7 @@ import { VertexGateway } from '../../src/llm/vertex.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../../src/testing/harness.js';
 import { SHEETS, type Sheet } from './fixtures.js';
+import { bumpContext } from '../../src/modules/buddy/plan.js';
 
 loadDotenv({ path: '.env.local' });
 
@@ -117,10 +118,7 @@ async function seed(env: TestEnv, l: Learner, sheets: Case['sheets']): Promise<v
       [l.learnerId, sheet.subject, sheet.title, sheet.text, randomUUID(), s.readOn],
     );
   }
-  await env.db.query(
-    `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
-    [l.learnerId],
-  );
+  await bumpContext(env.db, l.learnerId);
 }
 
 async function main(): Promise<void> {

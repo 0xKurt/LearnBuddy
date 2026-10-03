@@ -89,7 +89,8 @@ import {
   SpeakPanel,
 } from '../../components/practice/SpeakPanel.js';
 import { VoiceModeToggle } from '../../components/voice/VoiceModeToggle.js';
-import { ApiError, newId } from '../../lib/api/client.js';
+import { isOutdated, isRetryable } from '../../lib/api/apiError.js';
+import { newId } from '../../lib/api/client.js';
 import {
   answerItem,
   disputeVerdict,
@@ -193,16 +194,6 @@ function backToBuddy(): void {
   // Pops back to Buddy when it is below in the stack, otherwise replaces this
   // screen with it (router.replace would leave a second Buddy on the stack).
   router.dismissTo('/buddy');
-}
-
-/** A 4xx won't get better by trying again. */
-function retryable(err: unknown): boolean {
-  return !(err instanceof ApiError && err.status >= 400 && err.status < 500);
-}
-
-/** The session changed elsewhere: the question is already closed, the session ended or is gone. */
-function outdated(err: unknown): boolean {
-  return err instanceof ApiError && (err.code === 'conflict' || err.code === 'not_found');
 }
 
 /**
@@ -488,7 +479,7 @@ export default function PracticeScreen() {
     } catch (err) {
       // The typed answer stays in the field, so trying again is one tap.
       toast.show(messageFor(err), 'error');
-      if (outdated(err)) {
+      if (isOutdated(err)) {
         lastSent.current = null;
         void queryClient.invalidateQueries({ queryKey: keys.session(id) });
       }
@@ -522,7 +513,7 @@ export default function PracticeScreen() {
       Keyboard.dismiss();
     } catch (err) {
       toast.show(messageFor(err), 'error');
-      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+      if (isOutdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
     } finally {
       working.current = false;
       setBusy(false);
@@ -542,7 +533,7 @@ export default function PracticeScreen() {
       readFeedback(res, itemId);
     } catch (err) {
       toast.show(messageFor(err), 'error');
-      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+      if (isOutdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
     } finally {
       working.current = false;
       setBusy(false);
@@ -565,7 +556,7 @@ export default function PracticeScreen() {
       else announce(said);
     } catch (err) {
       toast.show(messageFor(err), 'error');
-      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+      if (isOutdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
     } finally {
       working.current = false;
       setAgain(null);
@@ -587,7 +578,7 @@ export default function PracticeScreen() {
       announce(t('practice:later_done'));
     } catch (err) {
       toast.show(messageFor(err), 'error');
-      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+      if (isOutdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
     } finally {
       working.current = false;
       setBusy(false);
@@ -616,7 +607,7 @@ export default function PracticeScreen() {
     } catch (err) {
       setDisputeOpen(false);
       toast.show(messageFor(err), 'error');
-      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+      if (isOutdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
     } finally {
       working.current = false;
       setBusy(false);
@@ -641,7 +632,7 @@ export default function PracticeScreen() {
     } catch (err) {
       setFlagOpen(false);
       toast.show(messageFor(err), 'error');
-      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+      if (isOutdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
     } finally {
       working.current = false;
       setBusy(false);
@@ -660,7 +651,7 @@ export default function PracticeScreen() {
 
   if (!session) {
     if (query.isError) {
-      const canRetry = retryable(query.error);
+      const canRetry = isRetryable(query.error);
       return (
         <Screen>
           <View style={{ flex: 1, justifyContent: 'center' }}>

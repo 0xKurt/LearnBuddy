@@ -3,6 +3,30 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
+/** In a string or a template (SQL), both checked; `.` stands for the slash esquery cannot escape. */
+const forbidText = (pattern, message) => [
+  { selector: `TemplateElement[value.raw=/${pattern}/]`, message },
+  { selector: `Literal[value=/${pattern}/]`, message },
+];
+
+// The context fence has one door (CLAUDE.md rule 4, issue #315): every change a decision depends
+// on moves `context_version` through `bumpContext` (apps/api/src/modules/buddy/plan.ts), in the
+// caller's transaction. The #311 audit found a hand-written `context_version + 1` at three
+// places — the same SQL that day, a silent drift the next.
+const CONTEXT_BUMP_GUARD = forbidText(
+  'context_version\\s*\\+',
+  'context_version nur über bumpContext() (modules/buddy/plan.ts) erhöhen — CLAUDE.md Regel 4, Issue #315.',
+);
+
+// One default zone (issue #315): DEFAULT_TIMEZONE in packages/shared-types
+// (src/contracts/common.ts) is the only place that names it; a learner's zone comes from
+// learnerTimezone() / learnerZoneSql() (apps/api/src/lib/zone.ts). The audit found it written
+// 14 times, and one lookup without any fallback.
+const DEFAULT_ZONE_GUARD = forbidText(
+  'Europe.Berlin',
+  'Standard-Zeitzone nur als DEFAULT_TIMEZONE (@learnbuddy/shared-types/contracts); die Zone eines Lernenden über learnerTimezone() — Issue #315.',
+);
+
 export default tseslint.config(
   {
     ignores: [
@@ -93,6 +117,30 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  {
+    // Two guards of issue #315, as one `no-restricted-syntax` list (a later block replaces the
+    // list for its files, it does not add to it — hence the variants below).
+    files: ['apps/**/*.ts', 'apps/**/*.tsx', 'packages/**/*.ts'],
+    rules: { 'no-restricted-syntax': ['error', ...CONTEXT_BUMP_GUARD, ...DEFAULT_ZONE_GUARD] },
+  },
+  {
+    // Tests and fixtures pick their zones on purpose; the context fence still holds there.
+    files: [
+      '**/__tests__/**',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      'apps/api/src/testing/**',
+      'apps/api/evals/**',
+      'apps/mobile/testing/**',
+      'packages/shared-types/src/contracts/common.ts',
+    ],
+    rules: { 'no-restricted-syntax': ['error', ...CONTEXT_BUMP_GUARD] },
+  },
+  {
+    // The one door itself.
+    files: ['apps/api/src/modules/buddy/plan.ts'],
+    rules: { 'no-restricted-syntax': ['error', ...DEFAULT_ZONE_GUARD] },
   },
   {
     // Plain Node scripts (tooling): Node's globals.

@@ -141,10 +141,16 @@ The model never writes ids, dates or instants (`modules/buddy/decision.ts`):
   words — whole words from what she wrote since Buddy's last answer — checked by normalised
   word-boundary match (provenance, not language understanding; §Turns).
 - **Context fence** — `buddy_settings.context_version` is bumped by every change a decision
-  depends on, including the learner's time zone (the `x-timezone` header bumps it in the same
-  statement when the zone changes). `apply.ts` applies a whole decision in one transaction only
-  if the version is unchanged (compare-and-set, row lock); otherwise the decision is stale and
-  nothing is applied. A lock conflict Postgres breaks (deadlock, serialization) counts as stale.
+  depends on, including the learner's time zone (a request whose `x-timezone` names another
+  zone moves it and bumps in one transaction). `apply.ts` applies a whole decision in one
+  transaction only if the version is unchanged (compare-and-set, row lock); otherwise the
+  decision is stale and nothing is applied. A lock conflict Postgres breaks (deadlock,
+  serialization) counts as stale. The version has one door, `bumpContext` (`plan.ts`), called
+  inside the caller's transaction; lint forbids `context_version +` anywhere else (issue #315).
+- **One zone lookup** — a learner's zone is read through `learnerTimezone()` / `learnerZoneSql()`
+  (`lib/zone.ts`), which fall back to `DEFAULT_TIMEZONE` (`@learnbuddy/shared-types/contracts`)
+  when she has no settings row; lint forbids the default's literal outside that constant
+  (issue #315).
 - **One lock order** — every transaction that bumps the context locks the learner's
   `buddy_settings` row first (`plan.ts lockContext`), then steps, goals, memories or outreach,
   as applying a decision does; a tap during an apply waits instead of deadlocking (repro-01).

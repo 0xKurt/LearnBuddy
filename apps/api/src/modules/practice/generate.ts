@@ -22,6 +22,7 @@ import type { Deps } from '../../deps.js';
 import { isUniqueViolation } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
+import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { answerUpTo } from '../../llm/partial.js';
@@ -657,15 +658,12 @@ async function prepareTopic(
   if (noVoice) throw noVoice;
 
   const now = deps.now();
-  const tz = await deps.db.one<{ timezone: string }>(
-    `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
-    [learner.id],
-  );
+  const tz = await learnerTimezone(deps.db, learner.id);
   const sheets = await sheetsOf(deps, learner.id, input);
   const ground: Ground = {
     level:
       learner.level === 'school' ? `school, grade ${learner.grade ?? 'unknown'}` : learner.level,
-    timezone: tz.timezone,
+    timezone: tz,
     sheets,
     // More of the same: what she just did grounds the new questions (issue #58).
     pattern: sheets ? null : await patternOf(deps, learner.id, input.from_session_id),

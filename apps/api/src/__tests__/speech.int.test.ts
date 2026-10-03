@@ -20,6 +20,7 @@ import { SpeechError } from '../speech/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import { bumpContext } from '../modules/buddy/plan.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -304,10 +305,7 @@ describe.skipIf(!dbReady)('Buddy’s natural voice', () => {
       'buddy_turn',
       async () => {
         // Something she did meanwhile (another device changed a setting) moves the context on.
-        await env.db.query(
-          `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
-          [l.learnerId],
-        );
+        await bumpContext(env.db, l.learnerId);
         return reply('Klar.', [setVoice('slower', null, 'langsamer')]).json;
       },
       reply('Klar, langsamer.', [setVoice('slower', null, 'langsamer')]),

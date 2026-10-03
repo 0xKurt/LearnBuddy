@@ -25,6 +25,7 @@ import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import { CASES, type Outcome } from './cases.js';
 import { judgeRuns, runsFor } from './repeat.js';
+import { bumpContext } from '../../src/modules/buddy/plan.js';
 
 loadDotenv({ path: '.env.local' });
 
@@ -89,10 +90,7 @@ async function main(): Promise<void> {
         });
         if (c.setup) {
           await c.setup(env, l);
-          await env.db.query(
-            `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
-            [l.learnerId],
-          );
+          await bumpContext(env.db, l.learnerId);
         }
         // Something she said first, so the measured turn is an answer to Buddy's own question
         // (issue #111: deleting a sheet takes two turns on purpose).

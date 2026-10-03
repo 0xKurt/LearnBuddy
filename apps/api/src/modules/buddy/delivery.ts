@@ -29,6 +29,7 @@ import type { Deps } from '../../deps.js';
 import { consentCurrentSql } from '../scheduler/jobs.js';
 import type { Db } from '../../lib/db.js';
 import { daysBetween, localParts, weekdayOf } from '../../lib/time.js';
+import { DEFAULT_TIMEZONE, learnerZoneSql } from '../../lib/zone.js';
 import { dayLabel, t, type MessageKey } from '../../i18n/index.js';
 import {
   PushRejectedError,
@@ -36,6 +37,7 @@ import {
   type PushMessage,
   type PushTicket,
 } from '../../push/transport.js';
+import { bumpContext } from './plan.js';
 import { decideContact, IN_APP_REASONS, type PastContact } from './policy.js';
 import type { SettingsRow } from './state.js';
 
@@ -244,10 +246,9 @@ export function renderBody(
  */
 async function postToThread(db: Db, o: ThreadCopy, now: Date): Promise<void> {
   const where = await db.one<{ locale: string; timezone: string }>(
-    `select l.locale, coalesce(s.timezone, 'Europe/Berlin') as timezone
-       from learners l left join buddy_settings s on s.learner_id = l.id
-      where l.id = $1`,
-    [o.learner_id],
+    `select l.locale, ${learnerZoneSql('l.id', 2)} as timezone
+       from learners l where l.id = $1`,
+    [o.learner_id, DEFAULT_TIMEZONE],
   );
   await db.query(
     `insert into buddy_messages (learner_id, role, text, outreach_id, decision_id, created_at)
@@ -255,10 +256,8 @@ async function postToThread(db: Db, o: ThreadCopy, now: Date): Promise<void> {
       where not exists (select 1 from buddy_messages where outreach_id = $3)`,
     [o.learner_id, renderBody(o, where.locale, where.timezone, now), o.id, o.decision_id, now],
   );
-  await db.query(
-    `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
-    [o.learner_id],
-  );
+  // What Buddy said is now part of what the next decision sees (CLAUDE.md rule 4).
+  await bumpContext(db, o.learner_id);
 }
 
 type StatusFields = {

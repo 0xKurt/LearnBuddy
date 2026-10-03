@@ -1,10 +1,12 @@
 // Device time zone and locale-aware formatting of the API's local dates.
 
+import { DEFAULT_TIMEZONE } from '@learnbuddy/shared-types/contracts';
+
 export function deviceTimeZone(): string {
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Berlin';
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || DEFAULT_TIMEZONE;
   } catch {
-    return 'Europe/Berlin';
+    return DEFAULT_TIMEZONE;
   }
 }
 
