@@ -142,6 +142,12 @@ type SentAnswer = {
   parts: string | null;
 };
 
+/**
+ * How far a drawing or photo may shrink below its own cap so Buddy's newest turn shows whole
+ * (issue #286); figureScale.ts still keeps a drawing legible.
+ */
+const CARD_GIVES = 48;
+
 /** The conversation's padding above its first turn (its content container's paddingVertical). */
 const THREAD_PAD = 12;
 
@@ -219,7 +225,7 @@ export default function PracticeScreen() {
   const id = (Array.isArray(params.id) ? params.id[0] : params.id) ?? '';
   const query = usePracticeSession(id);
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
 
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   // Kept on the device: a half-typed answer survives Android killing the app.
@@ -272,10 +278,12 @@ export default function PracticeScreen() {
   const [questionContentHeight, setQuestionContentHeight] = useState(0);
   /** The question card as laid out, and its own height before it grew (issue #96). */
   const [cardHeight, setCardHeight] = useState(0);
-  const [natural, setNatural] = useState<{ itemId: string; height: number } | null>(null);
+  const [natural, setNatural] = useState<{ key: string; height: number } | null>(null);
   /** The column's height and where its content ends: what runs past is `overrun`. */
   const [column, setColumn] = useState(0);
   const [columnEnd, setColumnEnd] = useState(0);
+  const [columnTop, setColumnTop] = useState(0);
+  const columnRef = useRef<View>(null);
   /** She scrolled the conversation up from its end: its top edge fades fully (#63). */
   const [scrolledUp, setScrolledUp] = useState(false);
   const working = useRef(false);
@@ -1005,15 +1013,24 @@ export default function PracticeScreen() {
   // newest turn: after "Prüfen" Buddy's reply is what matters, and the way to answer gives way
   // first (a structured board scrolls inside itself before the reply is hidden). Only when the
   // newest turn alone is taller than the room is it cut, under the full fade (rule 16 allows a
-  // conversation to scroll). A question card with a drawing also lends its growth (`cardGrow`
-  // below) back to the conversation, so the room counts it.
-  // Per question: the next card measures itself afresh before it may grow.
-  const cardNatural = natural?.itemId === item.id ? natural.height : 0;
-  const cardGrow = cardNatural > 0 ? Math.max(0, cardHeight - cardNatural) : 0;
+  // conversation to scroll). A question card with a drawing lends its growth back to the
+  // conversation (`cardDelta`, also negative when the drawing gave room), so the room counts it.
+  // Per question AND per window: a narrower phone wraps the prompt onto another line and gives
+  // the drawing a smaller cap, so its own height measured on another size is wrong here.
+  const naturalKey = `${item.id}:${windowWidth}x${windowHeight}`;
+  const cardNatural = natural?.key === naturalKey ? natural.height : 0;
+  const cardDelta = cardNatural > 0 ? cardHeight - cardNatural : 0;
   // When something below grows (the voice bar, the keyboard's room) and the column runs past
   // its end, that overrun comes off the room too — a grown card gives it back first.
-  const overrun = column > 0 ? Math.max(0, columnEnd - column) : 0;
-  const room = Math.max(0, threadBox + freeSpace + cardGrow - overrun);
+  // Two ways to see it: past the column's own end (phones, where a flex child may shrink below
+  // its content), and past the window (the web, where the column grows with its content and the
+  // page itself would scroll).
+  const overrun =
+    column > 0
+      ? Math.max(0, columnEnd - column, columnTop > 0 ? columnTop + columnEnd - windowHeight : 0)
+      : 0;
+  // What the conversation would have next to the card at its own height.
+  const room = Math.max(0, threadBox + freeSpace + cardDelta - overrun);
   // How much each turn needs to the end of the conversation, newest last. The tops are in
   // ItemThread's coordinates; it starts after the thread's padding.
   const tops = turns.map((turn) => turnTops[turn.id]).filter((y): y is number => y !== undefined);
@@ -1027,6 +1044,8 @@ export default function PracticeScreen() {
   const newestNeed = fromTurn.length > 0 ? Math.min(...fromTurn) : quiet ? 0 : threadNeed;
   let threadCap: number | undefined;
   let threadClipped = false;
+  // An open structured board shrinks (`PartsArea` scrolls) before Buddy's reply is hidden.
+  const boardGives = open && item.task_view !== null && item.task_view !== undefined;
   // A quiet thread decides even at room 0 — else the row would come back half and flicker.
   if ((room > 0 || quiet) && threadNeed > 0) {
     if (threadNeed <= room) {
@@ -1035,24 +1054,48 @@ export default function PracticeScreen() {
       threadCap = 0;
     } else {
       const fits = fromTurn.filter((h) => h <= room);
-      threadCap = fits.length > 0 ? Math.max(...fits) : Math.max(room, newestNeed);
+      // The newest turn alone does not fit: it keeps its full height only where a board can
+      // give way under it (a structured surface scrolls inside itself); with nothing to give
+      // — choices, a field, the voice bar — it is cut to the room under the fade instead of
+      // pushing the bar off the screen.
+      threadCap =
+        fits.length > 0 ? Math.max(...fits) : boardGives ? Math.max(room, newestNeed) : room;
       threadClipped = fits.length === 0 && newestNeed > room;
     }
   }
-  const threadFloor = Math.min(newestNeed, threadNeed);
+  const threadFloor = boardGives ? Math.min(newestNeed, threadNeed) : 0;
+
+  // The card with a drawing or photo and the conversation share the room (issue #96, #286).
+  // What the conversation leaves, the card grows into (`cardGrowTo` > 0: its figure sizes itself
+  // from the measured room, at most to half the window) instead of an empty gap under the answer.
+  // When Buddy's newest turn would be cut, the drawing gives room first (`cardGrowTo` < 0: a
+  // lower cap, down to its legible minimum, lib/math/figureScale.ts) — a reply half under the
+  // card read as a fault. The room is the same sum whatever the card does, so both settle in one
+  // pass, and a new reply or a taller bar takes its room back from the card first.
+  const visual = cardNatural > 0 && (item.figure || item.image) && !speaking;
+  const threadWants =
+    threadCap === undefined || !threadClipped ? (threadCap ?? threadNeed) : newestNeed;
+  // A note line never grows past its natural size: its height follows its width, and that is
+  // already the card's (`StaffLine`). Growing the card for it left an empty band under the staff
+  // (issue #275, 73-staff-time) — so it may only GIVE room, never take it.
+  const growable = item.figure?.type !== 'staff';
+  const cardGrowTo = visual
+    ? Math.max(
+        -CARD_GIVES,
+        Math.min(
+          growable ? room - threadWants : 0,
+          growable ? Math.round(windowHeight * 0.5) - cardNatural : 0,
+        ),
+      )
+    : 0;
+  if (cardGrowTo < 0 && threadCap !== undefined && !boardGives) {
+    // The room the drawing really gave (measured, `cardDelta`: at its legible minimum it may
+    // give less than asked) goes to the newest turn; whatever is still missing is cut.
+    threadCap = Math.min(threadWants, Math.max(room, room - cardDelta));
+    threadClipped = threadCap < newestNeed;
+  }
   // Something lies above what the box shows: its top edge fades (#63).
   const threadHolds = threadClipped || (threadCap !== undefined && threadCap < threadNeed);
-
-  // What the conversation leaves goes to a question card with a drawing, not to an empty gap
-  // under the answer (issue #96): the card grows by `cardGrowTo`, its figure sizes itself from
-  // that room — at most to half the window, so the answer and the bar keep their place. The
-  // room is the same sum as above, so the card and the conversation settle in one pass; a new
-  // reply takes its room back from the card first.
-  const threadUses = threadCap ?? threadNeed;
-  const cardGrowTo =
-    cardNatural > 0 && (item.figure || item.image) && !speaking
-      ? Math.max(0, Math.min(room - threadUses, Math.round(windowHeight * 0.5) - cardNatural))
-      : 0;
 
   // No scrolling to find what matters (CLAUDE.md rule 16): the question stays on top,
   // the way to answer stays at the bottom, and only the conversation between them
@@ -1064,7 +1107,11 @@ export default function PracticeScreen() {
           {/* The column, measured: its end mark (below) says how far its content runs past it. */}
           <View
             style={{ flex: 1, minHeight: 0 }}
-            onLayout={(e) => setColumn(Math.round(e.nativeEvent.layout.height))}
+            ref={columnRef}
+            onLayout={(e) => {
+              setColumn(Math.round(e.nativeEvent.layout.height));
+              columnRef.current?.measureInWindow((_x, y) => setColumnTop(Math.round(y)));
+            }}
           >
             <View
               style={{
@@ -1113,7 +1160,7 @@ export default function PracticeScreen() {
                     // own height made it never give the room back. A picture that loads while it
                     // is grown pushes the column past its end — the overrun takes the growth
                     // away, and then it measures itself again.)
-                    if (cardGrowTo === 0) setNatural({ itemId: item.id, height: h });
+                    if (cardGrowTo === 0) setNatural({ key: naturalKey, height: h });
                   }}
                 >
                   {speaking ? (
@@ -1123,10 +1170,12 @@ export default function PracticeScreen() {
                       prompt={item.prompt}
                       topic={item.topic}
                       figure={item.figure}
-                      figureMaxHeight={Math.round(windowHeight * 0.14)}
+                      figureMaxHeight={Math.round(windowHeight * 0.14) + Math.min(0, cardGrowTo)}
                       image={item.image}
                       imageKey={item.id}
-                      imageMaxHeight={Math.min(180, Math.round(windowHeight * 0.2))}
+                      imageMaxHeight={
+                        Math.min(180, Math.round(windowHeight * 0.2)) + Math.min(0, cardGrowTo)
+                      }
                       fromBuddy={item.origin === 'buddy'}
                       minHeight={cardGrowTo > 0 ? cardNatural + cardGrowTo : undefined}
                       dense={staff !== null}

@@ -115,6 +115,7 @@ export function ItemThread({
         return (
           <Rise
             key={turn.id}
+            testID="thread-turn"
             // Her own answer was on screen already (while it was sent): only Buddy's reply
             // rises in.
             animate={fresh && !mine}

@@ -244,6 +244,13 @@
       "groups_some_one": "1 von {{total}} ist schon richtig einsortiert.",
       "groups_none": "Noch ist keins richtig einsortiert – schau nochmal in Ruhe hin.",
       "look_at": "Schau dir „{{text}}“ nochmal an."
+    },
+    "chart": {
+      "pyramid": "Pyramide",
+      "bell": "Glocke",
+      "urn": "Urne",
+      "humid": "humid",
+      "arid": "arid"
     }
   },
   "contact": {

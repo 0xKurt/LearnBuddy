@@ -244,6 +244,13 @@
       "groups_some_one": "1 su {{total}} è già nel gruppo giusto.",
       "groups_none": "Nessuno è ancora nel gruppo giusto – guarda di nuovo con calma.",
       "look_at": "Guarda di nuovo «{{text}}»."
+    },
+    "chart": {
+      "pyramid": "Piramide",
+      "bell": "Campana",
+      "urn": "Urna",
+      "humid": "Umido",
+      "arid": "Arido"
     }
   },
   "contact": {
