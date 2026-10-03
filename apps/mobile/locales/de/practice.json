@@ -204,7 +204,9 @@
     "moved": "{{what}} {{where}}",
     "rest_placed": "{{what}}, Takt {{bar}}",
     "rest_of": "{{value}} setzen",
-    "check_waits": "Erst wenn jeder Takt etwas hat."
+    "check_waits": "Erst wenn jeder Takt etwas hat.",
+    "keys_label": "Tasten zur Notenzeile",
+    "values_label": "Notenwert"
   },
   "summary": {
     "title": "Geschafft!",
