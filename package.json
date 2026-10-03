@@ -22,7 +22,7 @@
     "create-buddy": "tsx packages/buddy-kit/src/cli/create-buddy.ts",
     "provision": "tsx packages/buddy-kit/src/cli/provision.ts",
     "build": "pnpm -r --parallel build",
-    "prepare": "husky",
+    "prepare": "husky && (git config merge.lb-baseline.driver 'node tools/guards/merge-baseline.mjs %O %A %B' || true)",
     "postinstall": "node apps/api/scripts/vercel-shared.mjs",
     "db:start": "cd infra/supabase && supabase start",
     "db:stop": "cd infra/supabase && supabase stop",
