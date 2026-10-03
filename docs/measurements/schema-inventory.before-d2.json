@@ -1,7 +1,7 @@
 {
  "issue": "#281",
- "commit": "d40aa3f498a8cb5d728f5a23f6d81d5901a2ff8b",
- "commitDate": "2026-10-03T05:27:23+00:00",
+ "commit": "42e23be9164721795ee0f792c8506b8a1b89436a",
+ "commitDate": "2026-10-03T05:05:56+00:00",
  "dirty": false,
  "sdk": "@google/genai 2.25.0",
  "zod": "3.25.76",
@@ -3656,11 +3656,11 @@
     "textTokens": null
    },
    "schema": {
-    "chars": 27364,
-    "sha256": "5c03f017801853fdee1d9cfe3ea8192119e876dfcf56d74e1876563ec64b7e38",
+    "chars": 27372,
+    "sha256": "e491820afd69d8a718e6e3a89ae88c2380906d081639df2aa8e258a4268673d0",
     "textTokens": null,
     "shape": {
-     "chars": 27364,
+     "chars": 27372,
      "nodes": 384,
      "maxDepth": 11,
      "objects": 64,
@@ -3671,10 +3671,10 @@
      "unions": 7,
      "unionBranches": 33,
      "enums": 67,
-     "enumValues": 256,
+     "enumValues": 257,
      "singletonEnums": 33,
      "propertyNameChars": 1132,
-     "enumValueChars": 1313,
+     "enumValueChars": 1318,
      "descriptions": {
       "count": 141,
       "textChars": 7448,
@@ -3685,7 +3685,7 @@
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.004019880134483263,
+      "share": 0.004018705246237031,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -3695,7 +3695,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.0006212542026019588,
+      "share": 0.0006210726289639047,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -3705,7 +3705,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.01406958047069142,
+      "share": 0.014065468361829607,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -3714,8 +3714,8 @@
      },
      {
       "key": "items",
-      "chars": 15876,
-      "share": 0.5801783365005116,
+      "chars": 15884,
+      "share": 0.5803010375566272,
       "descriptions": {
        "count": 85,
        "textChars": 3963,
@@ -3725,7 +3725,7 @@
      {
       "key": "bars",
       "chars": 1708,
-      "share": 0.06241777517906739,
+      "share": 0.062399532368844074,
       "descriptions": {
        "count": 9,
        "textChars": 752,
@@ -3735,7 +3735,7 @@
      {
       "key": "staffs",
       "chars": 4933,
-      "share": 0.18027335184914486,
+      "share": 0.18022066345170246,
       "descriptions": {
        "count": 16,
        "textChars": 1191,
@@ -3745,7 +3745,7 @@
      {
       "key": "structured",
       "chars": 4155,
-      "share": 0.1518418359888905,
+      "share": 0.15179745725558966,
       "descriptions": {
        "count": 30,
        "textChars": 1467,
@@ -4878,36 +4878,36 @@
     "textTokens": null
    },
    "schema": {
-    "chars": 22404,
-    "sha256": "323a4a2017c9f0fd4cd97b939a252c5b2b5154f0890bbc18afe45e18d6ee94ca",
+    "chars": 27372,
+    "sha256": "e491820afd69d8a718e6e3a89ae88c2380906d081639df2aa8e258a4268673d0",
     "textTokens": null,
     "shape": {
-     "chars": 22404,
-     "nodes": 345,
-     "maxDepth": 10,
-     "objects": 55,
-     "properties": 226,
-     "optionalFields": 33,
-     "anyOfNodes": 43,
-     "nullableAnyOf": 38,
-     "unions": 5,
-     "unionBranches": 26,
-     "enums": 56,
-     "enumValues": 222,
-     "singletonEnums": 26,
-     "propertyNameChars": 1018,
-     "enumValueChars": 1173,
+     "chars": 27372,
+     "nodes": 384,
+     "maxDepth": 11,
+     "objects": 64,
+     "properties": 252,
+     "optionalFields": 35,
+     "anyOfNodes": 48,
+     "nullableAnyOf": 41,
+     "unions": 7,
+     "unionBranches": 33,
+     "enums": 67,
+     "enumValues": 257,
+     "singletonEnums": 33,
+     "propertyNameChars": 1132,
+     "enumValueChars": 1318,
      "descriptions": {
-      "count": 119,
-      "textChars": 4840,
-      "withKeyChars": 6875
+      "count": 141,
+      "textChars": 7448,
+      "withKeyChars": 9865
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.004909837529012676,
+      "share": 0.004018705246237031,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -4917,7 +4917,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.0007587930726655954,
+      "share": 0.0006210726289639047,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -4927,7 +4927,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.017184431351544367,
+      "share": 0.014065468361829607,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -4936,18 +4936,28 @@
      },
      {
       "key": "items",
-      "chars": 12632,
-      "share": 0.5638278878771648,
+      "chars": 15884,
+      "share": 0.5803010375566272,
       "descriptions": {
-       "count": 72,
-       "textChars": 2107,
-       "withKeyChars": 3339
+       "count": 85,
+       "textChars": 3963,
+       "withKeyChars": 5422
+      }
+     },
+     {
+      "key": "bars",
+      "chars": 1708,
+      "share": 0.062399532368844074,
+      "descriptions": {
+       "count": 9,
+       "textChars": 752,
+       "withKeyChars": 907
       }
      },
      {
       "key": "staffs",
       "chars": 4933,
-      "share": 0.22018389573290484,
+      "share": 0.18022066345170246,
       "descriptions": {
        "count": 16,
        "textChars": 1191,
@@ -4957,1938 +4967,11 @@
      {
       "key": "structured",
       "chars": 4155,
-      "share": 0.185457953936797,
+      "share": 0.15179745725558966,
       "descriptions": {
        "count": 30,
        "textChars": 1467,
        "withKeyChars": 1981
-      }
-     }
-    ]
-   },
-   "unions": [
-    {
-     "path": ".items[].figure",
-     "name": "ModelFigure",
-     "tagKey": "type",
-     "tagPositions": [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-     ],
-     "shape": {
-      "chars": 9478,
-      "nodes": 186,
-      "maxDepth": 6,
-      "objects": 31,
-      "properties": 122,
-      "optionalFields": 7,
-      "anyOfNodes": 13,
-      "nullableAnyOf": 12,
-      "unions": 1,
-      "unionBranches": 14,
-      "enums": 19,
-      "enumValues": 42,
-      "singletonEnums": 14,
-      "propertyNameChars": 437,
-      "enumValueChars": 229,
-      "descriptions": {
-       "count": 55,
-       "textChars": 965,
-       "withKeyChars": 1902
-      }
-     },
-     "branches": [
-      {
-       "tag": "fraction",
-       "sha256": "7b3f33778c78295c81fd6b794abd165093aab4b2d516a435be720795dfedc294",
-       "shape": {
-        "chars": 454,
-        "nodes": 7,
-        "maxDepth": 4,
-        "objects": 2,
-        "properties": 5,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 2,
-        "enumValues": 3,
-        "singletonEnums": 1,
-        "propertyNameChars": 29,
-        "enumValueChars": 17,
-        "descriptions": {
-         "count": 3,
-         "textChars": 23,
-         "withKeyChars": 74
-        }
-       }
-      },
-      {
-       "tag": "number_line",
-       "sha256": "ede5879e1979652a48362b85f25c124f60229dab0330e505bcab68a47a2ba16e",
-       "shape": {
-        "chars": 498,
-        "nodes": 10,
-        "maxDepth": 5,
-        "objects": 2,
-        "properties": 7,
-        "optionalFields": 0,
-        "anyOfNodes": 1,
-        "nullableAnyOf": 1,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 30,
-        "enumValueChars": 11,
-        "descriptions": {
-         "count": 2,
-         "textChars": 29,
-         "withKeyChars": 63
-        }
-       }
-      },
-      {
-       "tag": "function_plot",
-       "sha256": "314d38ff52b530ef6add8184699db71770b1f482c83b0075fd85e743f045c4e5",
-       "shape": {
-        "chars": 785,
-        "nodes": 17,
-        "maxDepth": 5,
-        "objects": 3,
-        "properties": 12,
-        "optionalFields": 0,
-        "anyOfNodes": 2,
-        "nullableAnyOf": 2,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 55,
-        "enumValueChars": 13,
-        "descriptions": {
-         "count": 2,
-         "textChars": 34,
-         "withKeyChars": 68
-        }
-       }
-      },
-      {
-       "tag": "bar_chart",
-       "sha256": "01d98dc975376eb118f37a298d03beafecfb7203ccd7feef205851561443e645",
-       "shape": {
-        "chars": 398,
-        "nodes": 8,
-        "maxDepth": 4,
-        "objects": 2,
-        "properties": 5,
-        "optionalFields": 0,
-        "anyOfNodes": 1,
-        "nullableAnyOf": 1,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 22,
-        "enumValueChars": 9,
-        "descriptions": {
-         "count": 1,
-         "textChars": 12,
-         "withKeyChars": 29
-        }
-       }
-      },
-      {
-       "tag": "geometry",
-       "sha256": "5ceb216e271674f301d61aad4ba82f235877f830c0742f6eb7082887c75fb244",
-       "shape": {
-        "chars": 2762,
-        "nodes": 54,
-        "maxDepth": 5,
-        "objects": 9,
-        "properties": 35,
-        "optionalFields": 5,
-        "anyOfNodes": 7,
-        "nullableAnyOf": 7,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 2,
-        "enumValues": 4,
-        "singletonEnums": 1,
-        "propertyNameChars": 158,
-        "enumValueChars": 24,
-        "descriptions": {
-         "count": 14,
-         "textChars": 353,
-         "withKeyChars": 593
-        }
-       }
-      },
-      {
-       "tag": "table",
-       "sha256": "a015f639dc9d027047a34914cb02955a04702de198b8ec227ca567a0cb2a88d5",
-       "shape": {
-        "chars": 351,
-        "nodes": 7,
-        "maxDepth": 4,
-        "objects": 1,
-        "properties": 3,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 14,
-        "enumValueChars": 5,
-        "descriptions": {
-         "count": 3,
-         "textChars": 34,
-         "withKeyChars": 85
-        }
-       }
-      },
-      {
-       "tag": "molecule",
-       "sha256": "c9b1b31f00456b00c9d02ca7c9f7307ec768d7a84e72f801c207fa75c80bf7b3",
-       "shape": {
-        "chars": 1246,
-        "nodes": 18,
-        "maxDepth": 4,
-        "objects": 3,
-        "properties": 13,
-        "optionalFields": 2,
-        "anyOfNodes": 1,
-        "nullableAnyOf": 1,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 4,
-        "enumValues": 24,
-        "singletonEnums": 1,
-        "propertyNameChars": 44,
-        "enumValueChars": 82,
-        "descriptions": {
-         "count": 8,
-         "textChars": 239,
-         "withKeyChars": 375
-        }
-       }
-      },
-      {
-       "tag": "line_chart",
-       "sha256": "759ab5b9c2e8bcb326a840d07476339af3b253723384f653b46485eb50c02d62",
-       "shape": {
-        "chars": 562,
-        "nodes": 13,
-        "maxDepth": 5,
-        "objects": 2,
-        "properties": 9,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 15,
-        "enumValueChars": 10,
-        "descriptions": {
-         "count": 3,
-         "textChars": 35,
-         "withKeyChars": 86
-        }
-       }
-      },
-      {
-       "tag": "climate_chart",
-       "sha256": "4ca89686c9033e57efa05e03defc561c5d993f3d1d65a70411f87ddca4bc6510",
-       "shape": {
-        "chars": 376,
-        "nodes": 8,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 5,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 14,
-        "enumValueChars": 13,
-        "descriptions": {
-         "count": 3,
-         "textChars": 27,
-         "withKeyChars": 78
-        }
-       }
-      },
-      {
-       "tag": "pie_chart",
-       "sha256": "fe1befdc189cf32c956f37c5f2cfc00d992108967750f7a40340a3bea9a72552",
-       "shape": {
-        "chars": 342,
-        "nodes": 7,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 4,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 10,
-        "enumValueChars": 9,
-        "descriptions": {
-         "count": 3,
-         "textChars": 29,
-         "withKeyChars": 80
-        }
-       }
-      },
-      {
-       "tag": "box_plot",
-       "sha256": "3d5f0fbf53dcd100a7912bb7297128c7f92583384ea0ac3a2ac84de829bfb064",
-       "shape": {
-        "chars": 455,
-        "nodes": 10,
-        "maxDepth": 5,
-        "objects": 2,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 11,
-        "enumValueChars": 8,
-        "descriptions": {
-         "count": 2,
-         "textChars": 29,
-         "withKeyChars": 63
-        }
-       }
-      },
-      {
-       "tag": "histogram",
-       "sha256": "07aa4ed5d1298a49e9a98dcb708455e57117bb679bbe013533d135929486edea",
-       "shape": {
-        "chars": 375,
-        "nodes": 8,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 12,
-        "enumValueChars": 9,
-        "descriptions": {
-         "count": 3,
-         "textChars": 36,
-         "withKeyChars": 87
-        }
-       }
-      },
-      {
-       "tag": "scatter_plot",
-       "sha256": "205bf0538e9453c15f468025feb451f28baa1bc1d987e4091392c36f3bfa1e3d",
-       "shape": {
-        "chars": 377,
-        "nodes": 9,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 13,
-        "enumValueChars": 12,
-        "descriptions": {
-         "count": 2,
-         "textChars": 24,
-         "withKeyChars": 58
-        }
-       }
-      },
-      {
-       "tag": "pyramid",
-       "sha256": "64bc080081a0945db55e562bb7c8c79ff3b9535917584c6969ca155ff7e8fd11",
-       "shape": {
-        "chars": 472,
-        "nodes": 9,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 10,
-        "enumValueChars": 7,
-        "descriptions": {
-         "count": 6,
-         "textChars": 61,
-         "withKeyChars": 163
-        }
-       }
-      }
-     ]
-    },
-    {
-     "path": ".staffs[]",
-     "name": "StaffTask",
-     "tagKey": "task",
-     "tagPositions": [
-      0,
-      0,
-      0,
-      0,
-      0
-     ],
-     "shape": {
-      "chars": 4874,
-      "nodes": 58,
-      "maxDepth": 8,
-      "objects": 14,
-      "properties": 44,
-      "optionalFields": 6,
-      "anyOfNodes": 3,
-      "nullableAnyOf": 0,
-      "unions": 3,
-      "unionBranches": 9,
-      "enums": 26,
-      "enumValues": 116,
-      "singletonEnums": 9,
-      "propertyNameChars": 198,
-      "enumValueChars": 393,
-      "descriptions": {
-       "count": 15,
-       "textChars": 1174,
-       "withKeyChars": 1429
-      }
-     },
-     "branches": [
-      {
-       "tag": "name_note",
-       "sha256": "925adcd8a9ecaea0535793a4fadfeb890e6820059fefd0bf0e7523d425f001d9",
-       "shape": {
-        "chars": 641,
-        "nodes": 6,
-        "maxDepth": 3,
-        "objects": 2,
-        "properties": 5,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 3,
-        "enumValues": 15,
-        "singletonEnums": 1,
-        "propertyNameChars": 23,
-        "enumValueChars": 36,
-        "descriptions": {
-         "count": 2,
-         "textChars": 201,
-         "withKeyChars": 235
-        }
-       }
-      },
-      {
-       "tag": "name_value",
-       "sha256": "2b1a4f224cca48eee0469bb04465ed9a91e63a7c2f6ff19ff642e5637fd1ea45",
-       "shape": {
-        "chars": 568,
-        "nodes": 6,
-        "maxDepth": 2,
-        "objects": 1,
-        "properties": 5,
-        "optionalFields": 2,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 3,
-        "enumValues": 8,
-        "singletonEnums": 1,
-        "propertyNameChars": 23,
-        "enumValueChars": 51,
-        "descriptions": {
-         "count": 2,
-         "textChars": 206,
-         "withKeyChars": 240
-        }
-       }
-      },
-      {
-       "tag": "interval",
-       "sha256": "764ecb2e6f5787a4c09a6ebbb217a8b08945c1df4b225eefcbbebaf24c174c07",
-       "shape": {
-        "chars": 946,
-        "nodes": 9,
-        "maxDepth": 3,
-        "objects": 3,
-        "properties": 8,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 4,
-        "enumValues": 27,
-        "singletonEnums": 1,
-        "propertyNameChars": 38,
-        "enumValueChars": 52,
-        "descriptions": {
-         "count": 3,
-         "textChars": 268,
-         "withKeyChars": 319
-        }
-       }
-      },
-      {
-       "tag": "time_signature",
-       "sha256": "a2d5d3a2f0b23eb7fe676850fb06b561a9b23888ee330b4b832ee383a4545733",
-       "shape": {
-        "chars": 1424,
-        "nodes": 18,
-        "maxDepth": 7,
-        "objects": 4,
-        "properties": 13,
-        "optionalFields": 2,
-        "anyOfNodes": 1,
-        "nullableAnyOf": 0,
-        "unions": 1,
-        "unionBranches": 2,
-        "enums": 8,
-        "enumValues": 33,
-        "singletonEnums": 3,
-        "propertyNameChars": 57,
-        "enumValueChars": 129,
-        "descriptions": {
-         "count": 4,
-         "textChars": 320,
-         "withKeyChars": 388
-        }
-       }
-      },
-      {
-       "tag": "write_line",
-       "sha256": "18e926e9b0fb13f3936953a23e4f90ab6c2e496ad2fce4a46853a411364e8b37",
-       "shape": {
-        "chars": 1279,
-        "nodes": 18,
-        "maxDepth": 7,
-        "objects": 4,
-        "properties": 13,
-        "optionalFields": 2,
-        "anyOfNodes": 1,
-        "nullableAnyOf": 0,
-        "unions": 1,
-        "unionBranches": 2,
-        "enums": 8,
-        "enumValues": 33,
-        "singletonEnums": 3,
-        "propertyNameChars": 57,
-        "enumValueChars": 125,
-        "descriptions": {
-         "count": 4,
-         "textChars": 179,
-         "withKeyChars": 247
-        }
-       }
-      }
-     ]
-    },
-    {
-     "path": ".staffs[]<time_signature>.bars[][]",
-     "name": "StaffElement",
-     "tagKey": "el",
-     "tagPositions": [
-      0,
-      0
-     ],
-     "shape": {
-      "chars": 727,
-      "nodes": 12,
-      "maxDepth": 4,
-      "objects": 3,
-      "properties": 9,
-      "optionalFields": 2,
-      "anyOfNodes": 1,
-      "nullableAnyOf": 0,
-      "unions": 1,
-      "unionBranches": 2,
-      "enums": 5,
-      "enumValues": 24,
-      "singletonEnums": 2,
-      "propertyNameChars": 41,
-      "enumValueChars": 87,
-      "descriptions": {
-       "count": 1,
-       "textChars": 5,
-       "withKeyChars": 22
-      }
-     },
-     "branches": [
-      {
-       "tag": "note",
-       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
-       "shape": {
-        "chars": 479,
-        "nodes": 7,
-        "maxDepth": 3,
-        "objects": 2,
-        "properties": 6,
-        "optionalFields": 1,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 3,
-        "enumValues": 18,
-        "singletonEnums": 1,
-        "propertyNameChars": 28,
-        "enumValueChars": 52,
-        "descriptions": {
-         "count": 1,
-         "textChars": 5,
-         "withKeyChars": 22
-        }
-       }
-      },
-      {
-       "tag": "rest",
-       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
-       "shape": {
-        "chars": 235,
-        "nodes": 4,
-        "maxDepth": 2,
-        "objects": 1,
-        "properties": 3,
-        "optionalFields": 1,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 2,
-        "enumValues": 6,
-        "singletonEnums": 1,
-        "propertyNameChars": 13,
-        "enumValueChars": 35,
-        "descriptions": {
-         "count": 0,
-         "textChars": 0,
-         "withKeyChars": 0
-        }
-       }
-      }
-     ]
-    },
-    {
-     "path": ".staffs[]<write_line>.bars[][]",
-     "name": "StaffElement",
-     "tagKey": "el",
-     "tagPositions": [
-      0,
-      0
-     ],
-     "shape": {
-      "chars": 727,
-      "nodes": 12,
-      "maxDepth": 4,
-      "objects": 3,
-      "properties": 9,
-      "optionalFields": 2,
-      "anyOfNodes": 1,
-      "nullableAnyOf": 0,
-      "unions": 1,
-      "unionBranches": 2,
-      "enums": 5,
-      "enumValues": 24,
-      "singletonEnums": 2,
-      "propertyNameChars": 41,
-      "enumValueChars": 87,
-      "descriptions": {
-       "count": 1,
-       "textChars": 5,
-       "withKeyChars": 22
-      }
-     },
-     "branches": [
-      {
-       "tag": "note",
-       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
-       "shape": {
-        "chars": 479,
-        "nodes": 7,
-        "maxDepth": 3,
-        "objects": 2,
-        "properties": 6,
-        "optionalFields": 1,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 3,
-        "enumValues": 18,
-        "singletonEnums": 1,
-        "propertyNameChars": 28,
-        "enumValueChars": 52,
-        "descriptions": {
-         "count": 1,
-         "textChars": 5,
-         "withKeyChars": 22
-        }
-       }
-      },
-      {
-       "tag": "rest",
-       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
-       "shape": {
-        "chars": 235,
-        "nodes": 4,
-        "maxDepth": 2,
-        "objects": 1,
-        "properties": 3,
-        "optionalFields": 1,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 2,
-        "enumValues": 6,
-        "singletonEnums": 1,
-        "propertyNameChars": 13,
-        "enumValueChars": 35,
-        "descriptions": {
-         "count": 0,
-         "textChars": 0,
-         "withKeyChars": 0
-        }
-       }
-      }
-     ]
-    },
-    {
-     "path": ".structured[]",
-     "name": "StructuredAnswer = StructuredTask = StructuredTaskView = StructuredDraft = StructuredDraftHomework = StructuredDraftNoHelp",
-     "tagKey": "type",
-     "tagPositions": [
-      0,
-      0,
-      0
-     ],
-     "shape": {
-      "chars": 4096,
-      "nodes": 56,
-      "maxDepth": 7,
-      "objects": 6,
-      "properties": 31,
-      "optionalFields": 11,
-      "anyOfNodes": 14,
-      "nullableAnyOf": 13,
-      "unions": 1,
-      "unionBranches": 3,
-      "enums": 6,
-      "enumValues": 10,
-      "singletonEnums": 3,
-      "propertyNameChars": 188,
-      "enumValueChars": 73,
-      "descriptions": {
-       "count": 29,
-       "textChars": 1450,
-       "withKeyChars": 1947
-      }
-     },
-     "branches": [
-      {
-       "tag": "order",
-       "sha256": "a149972fc51aba2eb73344314b8831c19dbf108ae6e1b0956db1060aa17a470b",
-       "shape": {
-        "chars": 978,
-        "nodes": 12,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 7,
-        "optionalFields": 2,
-        "anyOfNodes": 3,
-        "nullableAnyOf": 3,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 2,
-        "enumValues": 3,
-        "singletonEnums": 1,
-        "propertyNameChars": 51,
-        "enumValueChars": 24,
-        "descriptions": {
-         "count": 6,
-         "textChars": 395,
-         "withKeyChars": 497
-        }
-       }
-      },
-      {
-       "tag": "table_fill",
-       "sha256": "2a0869e81e0e019f3edf34f6ab0692f2dfe205bc2ffe4e46e5f72392da70a74e",
-       "shape": {
-        "chars": 1771,
-        "nodes": 24,
-        "maxDepth": 6,
-        "objects": 2,
-        "properties": 13,
-        "optionalFields": 6,
-        "anyOfNodes": 6,
-        "nullableAnyOf": 6,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 3,
-        "enumValues": 6,
-        "singletonEnums": 1,
-        "propertyNameChars": 69,
-        "enumValueChars": 44,
-        "descriptions": {
-         "count": 14,
-         "textChars": 637,
-         "withKeyChars": 879
-        }
-       }
-      },
-      {
-       "tag": "match",
-       "sha256": "578de24afb27f8437d14865c7ea5325ff15c3695d4bd8696b0ab6a353f331beb",
-       "shape": {
-        "chars": 1333,
-        "nodes": 19,
-        "maxDepth": 6,
-        "objects": 3,
-        "properties": 11,
-        "optionalFields": 3,
-        "anyOfNodes": 4,
-        "nullableAnyOf": 4,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 68,
-        "enumValueChars": 5,
-        "descriptions": {
-         "count": 9,
-         "textChars": 418,
-         "withKeyChars": 571
-        }
-       }
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "purpose": "explain",
-   "profile": "kind=vocab",
-   "tier": "smart",
-   "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.16",
-   "where": "practice/generate.ts — explainSchemaFor('vocab', null)",
-   "system": {
-    "chars": 11124,
-    "sha256": "b9aaebc2c9bd514e33e34a2427d3df4c8fbb9c53670f4dce37071552b145c99e",
-    "textTokens": null
-   },
-   "schema": {
-    "chars": 12962,
-    "sha256": "aef2767cd6f6aaa73cae1e34307a9e21c6a54a6a2c541854b7dcbd0ac1cc3a50",
-    "textTokens": null,
-    "shape": {
-     "chars": 12962,
-     "nodes": 227,
-     "maxDepth": 10,
-     "objects": 35,
-     "properties": 148,
-     "optionalFields": 13,
-     "anyOfNodes": 25,
-     "nullableAnyOf": 24,
-     "unions": 1,
-     "unionBranches": 14,
-     "enums": 24,
-     "enumValues": 92,
-     "singletonEnums": 15,
-     "propertyNameChars": 607,
-     "enumValueChars": 673,
-     "descriptions": {
-      "count": 71,
-      "textChars": 1992,
-      "withKeyChars": 3205
-     }
-    },
-    "topLevel": [
-     {
-      "key": "usable",
-      "chars": 110,
-      "share": 0.008486344699891991,
-      "descriptions": {
-       "count": 1,
-       "textChars": 75,
-       "withKeyChars": 92
-      }
-     },
-     {
-      "key": "title",
-      "chars": 17,
-      "share": 0.001311525999074217,
-      "descriptions": {
-       "count": 0,
-       "textChars": 0,
-       "withKeyChars": 0
-      }
-     },
-     {
-      "key": "subject",
-      "chars": 385,
-      "share": 0.029702206449621973,
-      "descriptions": {
-       "count": 0,
-       "textChars": 0,
-       "withKeyChars": 0
-      }
-     },
-     {
-      "key": "items",
-      "chars": 12302,
-      "share": 0.949081931800648,
-      "descriptions": {
-       "count": 70,
-       "textChars": 1917,
-       "withKeyChars": 3113
-      }
-     }
-    ]
-   },
-   "unions": [
-    {
-     "path": ".items[].figure",
-     "name": "ModelFigure",
-     "tagKey": "type",
-     "tagPositions": [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-     ],
-     "shape": {
-      "chars": 9478,
-      "nodes": 186,
-      "maxDepth": 6,
-      "objects": 31,
-      "properties": 122,
-      "optionalFields": 7,
-      "anyOfNodes": 13,
-      "nullableAnyOf": 12,
-      "unions": 1,
-      "unionBranches": 14,
-      "enums": 19,
-      "enumValues": 42,
-      "singletonEnums": 14,
-      "propertyNameChars": 437,
-      "enumValueChars": 229,
-      "descriptions": {
-       "count": 55,
-       "textChars": 965,
-       "withKeyChars": 1902
-      }
-     },
-     "branches": [
-      {
-       "tag": "fraction",
-       "sha256": "7b3f33778c78295c81fd6b794abd165093aab4b2d516a435be720795dfedc294",
-       "shape": {
-        "chars": 454,
-        "nodes": 7,
-        "maxDepth": 4,
-        "objects": 2,
-        "properties": 5,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 2,
-        "enumValues": 3,
-        "singletonEnums": 1,
-        "propertyNameChars": 29,
-        "enumValueChars": 17,
-        "descriptions": {
-         "count": 3,
-         "textChars": 23,
-         "withKeyChars": 74
-        }
-       }
-      },
-      {
-       "tag": "number_line",
-       "sha256": "ede5879e1979652a48362b85f25c124f60229dab0330e505bcab68a47a2ba16e",
-       "shape": {
-        "chars": 498,
-        "nodes": 10,
-        "maxDepth": 5,
-        "objects": 2,
-        "properties": 7,
-        "optionalFields": 0,
-        "anyOfNodes": 1,
-        "nullableAnyOf": 1,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 30,
-        "enumValueChars": 11,
-        "descriptions": {
-         "count": 2,
-         "textChars": 29,
-         "withKeyChars": 63
-        }
-       }
-      },
-      {
-       "tag": "function_plot",
-       "sha256": "314d38ff52b530ef6add8184699db71770b1f482c83b0075fd85e743f045c4e5",
-       "shape": {
-        "chars": 785,
-        "nodes": 17,
-        "maxDepth": 5,
-        "objects": 3,
-        "properties": 12,
-        "optionalFields": 0,
-        "anyOfNodes": 2,
-        "nullableAnyOf": 2,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 55,
-        "enumValueChars": 13,
-        "descriptions": {
-         "count": 2,
-         "textChars": 34,
-         "withKeyChars": 68
-        }
-       }
-      },
-      {
-       "tag": "bar_chart",
-       "sha256": "01d98dc975376eb118f37a298d03beafecfb7203ccd7feef205851561443e645",
-       "shape": {
-        "chars": 398,
-        "nodes": 8,
-        "maxDepth": 4,
-        "objects": 2,
-        "properties": 5,
-        "optionalFields": 0,
-        "anyOfNodes": 1,
-        "nullableAnyOf": 1,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 22,
-        "enumValueChars": 9,
-        "descriptions": {
-         "count": 1,
-         "textChars": 12,
-         "withKeyChars": 29
-        }
-       }
-      },
-      {
-       "tag": "geometry",
-       "sha256": "5ceb216e271674f301d61aad4ba82f235877f830c0742f6eb7082887c75fb244",
-       "shape": {
-        "chars": 2762,
-        "nodes": 54,
-        "maxDepth": 5,
-        "objects": 9,
-        "properties": 35,
-        "optionalFields": 5,
-        "anyOfNodes": 7,
-        "nullableAnyOf": 7,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 2,
-        "enumValues": 4,
-        "singletonEnums": 1,
-        "propertyNameChars": 158,
-        "enumValueChars": 24,
-        "descriptions": {
-         "count": 14,
-         "textChars": 353,
-         "withKeyChars": 593
-        }
-       }
-      },
-      {
-       "tag": "table",
-       "sha256": "a015f639dc9d027047a34914cb02955a04702de198b8ec227ca567a0cb2a88d5",
-       "shape": {
-        "chars": 351,
-        "nodes": 7,
-        "maxDepth": 4,
-        "objects": 1,
-        "properties": 3,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 14,
-        "enumValueChars": 5,
-        "descriptions": {
-         "count": 3,
-         "textChars": 34,
-         "withKeyChars": 85
-        }
-       }
-      },
-      {
-       "tag": "molecule",
-       "sha256": "c9b1b31f00456b00c9d02ca7c9f7307ec768d7a84e72f801c207fa75c80bf7b3",
-       "shape": {
-        "chars": 1246,
-        "nodes": 18,
-        "maxDepth": 4,
-        "objects": 3,
-        "properties": 13,
-        "optionalFields": 2,
-        "anyOfNodes": 1,
-        "nullableAnyOf": 1,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 4,
-        "enumValues": 24,
-        "singletonEnums": 1,
-        "propertyNameChars": 44,
-        "enumValueChars": 82,
-        "descriptions": {
-         "count": 8,
-         "textChars": 239,
-         "withKeyChars": 375
-        }
-       }
-      },
-      {
-       "tag": "line_chart",
-       "sha256": "759ab5b9c2e8bcb326a840d07476339af3b253723384f653b46485eb50c02d62",
-       "shape": {
-        "chars": 562,
-        "nodes": 13,
-        "maxDepth": 5,
-        "objects": 2,
-        "properties": 9,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 15,
-        "enumValueChars": 10,
-        "descriptions": {
-         "count": 3,
-         "textChars": 35,
-         "withKeyChars": 86
-        }
-       }
-      },
-      {
-       "tag": "climate_chart",
-       "sha256": "4ca89686c9033e57efa05e03defc561c5d993f3d1d65a70411f87ddca4bc6510",
-       "shape": {
-        "chars": 376,
-        "nodes": 8,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 5,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 14,
-        "enumValueChars": 13,
-        "descriptions": {
-         "count": 3,
-         "textChars": 27,
-         "withKeyChars": 78
-        }
-       }
-      },
-      {
-       "tag": "pie_chart",
-       "sha256": "fe1befdc189cf32c956f37c5f2cfc00d992108967750f7a40340a3bea9a72552",
-       "shape": {
-        "chars": 342,
-        "nodes": 7,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 4,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 10,
-        "enumValueChars": 9,
-        "descriptions": {
-         "count": 3,
-         "textChars": 29,
-         "withKeyChars": 80
-        }
-       }
-      },
-      {
-       "tag": "box_plot",
-       "sha256": "3d5f0fbf53dcd100a7912bb7297128c7f92583384ea0ac3a2ac84de829bfb064",
-       "shape": {
-        "chars": 455,
-        "nodes": 10,
-        "maxDepth": 5,
-        "objects": 2,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 11,
-        "enumValueChars": 8,
-        "descriptions": {
-         "count": 2,
-         "textChars": 29,
-         "withKeyChars": 63
-        }
-       }
-      },
-      {
-       "tag": "histogram",
-       "sha256": "07aa4ed5d1298a49e9a98dcb708455e57117bb679bbe013533d135929486edea",
-       "shape": {
-        "chars": 375,
-        "nodes": 8,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 12,
-        "enumValueChars": 9,
-        "descriptions": {
-         "count": 3,
-         "textChars": 36,
-         "withKeyChars": 87
-        }
-       }
-      },
-      {
-       "tag": "scatter_plot",
-       "sha256": "205bf0538e9453c15f468025feb451f28baa1bc1d987e4091392c36f3bfa1e3d",
-       "shape": {
-        "chars": 377,
-        "nodes": 9,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 13,
-        "enumValueChars": 12,
-        "descriptions": {
-         "count": 2,
-         "textChars": 24,
-         "withKeyChars": 58
-        }
-       }
-      },
-      {
-       "tag": "pyramid",
-       "sha256": "64bc080081a0945db55e562bb7c8c79ff3b9535917584c6969ca155ff7e8fd11",
-       "shape": {
-        "chars": 472,
-        "nodes": 9,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 10,
-        "enumValueChars": 7,
-        "descriptions": {
-         "count": 6,
-         "textChars": 61,
-         "withKeyChars": 163
-        }
-       }
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "purpose": "explain",
-   "profile": "kind=speak",
-   "tier": "smart",
-   "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.16",
-   "where": "practice/generate.ts — explainSchemaFor('speak', null)",
-   "system": {
-    "chars": 11124,
-    "sha256": "b9aaebc2c9bd514e33e34a2427d3df4c8fbb9c53670f4dce37071552b145c99e",
-    "textTokens": null
-   },
-   "schema": {
-    "chars": 12630,
-    "sha256": "acc0ca23eddc7a418507636c1557620dbb37e9ed4fe59bef5aa99db4e5c705f8",
-    "textTokens": null,
-    "shape": {
-     "chars": 12630,
-     "nodes": 225,
-     "maxDepth": 10,
-     "objects": 35,
-     "properties": 147,
-     "optionalFields": 12,
-     "anyOfNodes": 24,
-     "nullableAnyOf": 23,
-     "unions": 1,
-     "unionBranches": 14,
-     "enums": 23,
-     "enumValues": 90,
-     "singletonEnums": 15,
-     "propertyNameChars": 599,
-     "enumValueChars": 661,
-     "descriptions": {
-      "count": 70,
-      "textChars": 1765,
-      "withKeyChars": 2957
-     }
-    },
-    "topLevel": [
-     {
-      "key": "usable",
-      "chars": 110,
-      "share": 0.00870942201108472,
-      "descriptions": {
-       "count": 1,
-       "textChars": 75,
-       "withKeyChars": 92
-      }
-     },
-     {
-      "key": "title",
-      "chars": 17,
-      "share": 0.0013460015835312748,
-      "descriptions": {
-       "count": 0,
-       "textChars": 0,
-       "withKeyChars": 0
-      }
-     },
-     {
-      "key": "subject",
-      "chars": 385,
-      "share": 0.030482977038796516,
-      "descriptions": {
-       "count": 0,
-       "textChars": 0,
-       "withKeyChars": 0
-      }
-     },
-     {
-      "key": "items",
-      "chars": 11970,
-      "share": 0.9477434679334917,
-      "descriptions": {
-       "count": 69,
-       "textChars": 1690,
-       "withKeyChars": 2865
-      }
-     }
-    ]
-   },
-   "unions": [
-    {
-     "path": ".items[].figure",
-     "name": "ModelFigure",
-     "tagKey": "type",
-     "tagPositions": [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-     ],
-     "shape": {
-      "chars": 9478,
-      "nodes": 186,
-      "maxDepth": 6,
-      "objects": 31,
-      "properties": 122,
-      "optionalFields": 7,
-      "anyOfNodes": 13,
-      "nullableAnyOf": 12,
-      "unions": 1,
-      "unionBranches": 14,
-      "enums": 19,
-      "enumValues": 42,
-      "singletonEnums": 14,
-      "propertyNameChars": 437,
-      "enumValueChars": 229,
-      "descriptions": {
-       "count": 55,
-       "textChars": 965,
-       "withKeyChars": 1902
-      }
-     },
-     "branches": [
-      {
-       "tag": "fraction",
-       "sha256": "7b3f33778c78295c81fd6b794abd165093aab4b2d516a435be720795dfedc294",
-       "shape": {
-        "chars": 454,
-        "nodes": 7,
-        "maxDepth": 4,
-        "objects": 2,
-        "properties": 5,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 2,
-        "enumValues": 3,
-        "singletonEnums": 1,
-        "propertyNameChars": 29,
-        "enumValueChars": 17,
-        "descriptions": {
-         "count": 3,
-         "textChars": 23,
-         "withKeyChars": 74
-        }
-       }
-      },
-      {
-       "tag": "number_line",
-       "sha256": "ede5879e1979652a48362b85f25c124f60229dab0330e505bcab68a47a2ba16e",
-       "shape": {
-        "chars": 498,
-        "nodes": 10,
-        "maxDepth": 5,
-        "objects": 2,
-        "properties": 7,
-        "optionalFields": 0,
-        "anyOfNodes": 1,
-        "nullableAnyOf": 1,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 30,
-        "enumValueChars": 11,
-        "descriptions": {
-         "count": 2,
-         "textChars": 29,
-         "withKeyChars": 63
-        }
-       }
-      },
-      {
-       "tag": "function_plot",
-       "sha256": "314d38ff52b530ef6add8184699db71770b1f482c83b0075fd85e743f045c4e5",
-       "shape": {
-        "chars": 785,
-        "nodes": 17,
-        "maxDepth": 5,
-        "objects": 3,
-        "properties": 12,
-        "optionalFields": 0,
-        "anyOfNodes": 2,
-        "nullableAnyOf": 2,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 55,
-        "enumValueChars": 13,
-        "descriptions": {
-         "count": 2,
-         "textChars": 34,
-         "withKeyChars": 68
-        }
-       }
-      },
-      {
-       "tag": "bar_chart",
-       "sha256": "01d98dc975376eb118f37a298d03beafecfb7203ccd7feef205851561443e645",
-       "shape": {
-        "chars": 398,
-        "nodes": 8,
-        "maxDepth": 4,
-        "objects": 2,
-        "properties": 5,
-        "optionalFields": 0,
-        "anyOfNodes": 1,
-        "nullableAnyOf": 1,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 22,
-        "enumValueChars": 9,
-        "descriptions": {
-         "count": 1,
-         "textChars": 12,
-         "withKeyChars": 29
-        }
-       }
-      },
-      {
-       "tag": "geometry",
-       "sha256": "5ceb216e271674f301d61aad4ba82f235877f830c0742f6eb7082887c75fb244",
-       "shape": {
-        "chars": 2762,
-        "nodes": 54,
-        "maxDepth": 5,
-        "objects": 9,
-        "properties": 35,
-        "optionalFields": 5,
-        "anyOfNodes": 7,
-        "nullableAnyOf": 7,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 2,
-        "enumValues": 4,
-        "singletonEnums": 1,
-        "propertyNameChars": 158,
-        "enumValueChars": 24,
-        "descriptions": {
-         "count": 14,
-         "textChars": 353,
-         "withKeyChars": 593
-        }
-       }
-      },
-      {
-       "tag": "table",
-       "sha256": "a015f639dc9d027047a34914cb02955a04702de198b8ec227ca567a0cb2a88d5",
-       "shape": {
-        "chars": 351,
-        "nodes": 7,
-        "maxDepth": 4,
-        "objects": 1,
-        "properties": 3,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 14,
-        "enumValueChars": 5,
-        "descriptions": {
-         "count": 3,
-         "textChars": 34,
-         "withKeyChars": 85
-        }
-       }
-      },
-      {
-       "tag": "molecule",
-       "sha256": "c9b1b31f00456b00c9d02ca7c9f7307ec768d7a84e72f801c207fa75c80bf7b3",
-       "shape": {
-        "chars": 1246,
-        "nodes": 18,
-        "maxDepth": 4,
-        "objects": 3,
-        "properties": 13,
-        "optionalFields": 2,
-        "anyOfNodes": 1,
-        "nullableAnyOf": 1,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 4,
-        "enumValues": 24,
-        "singletonEnums": 1,
-        "propertyNameChars": 44,
-        "enumValueChars": 82,
-        "descriptions": {
-         "count": 8,
-         "textChars": 239,
-         "withKeyChars": 375
-        }
-       }
-      },
-      {
-       "tag": "line_chart",
-       "sha256": "759ab5b9c2e8bcb326a840d07476339af3b253723384f653b46485eb50c02d62",
-       "shape": {
-        "chars": 562,
-        "nodes": 13,
-        "maxDepth": 5,
-        "objects": 2,
-        "properties": 9,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 15,
-        "enumValueChars": 10,
-        "descriptions": {
-         "count": 3,
-         "textChars": 35,
-         "withKeyChars": 86
-        }
-       }
-      },
-      {
-       "tag": "climate_chart",
-       "sha256": "4ca89686c9033e57efa05e03defc561c5d993f3d1d65a70411f87ddca4bc6510",
-       "shape": {
-        "chars": 376,
-        "nodes": 8,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 5,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 14,
-        "enumValueChars": 13,
-        "descriptions": {
-         "count": 3,
-         "textChars": 27,
-         "withKeyChars": 78
-        }
-       }
-      },
-      {
-       "tag": "pie_chart",
-       "sha256": "fe1befdc189cf32c956f37c5f2cfc00d992108967750f7a40340a3bea9a72552",
-       "shape": {
-        "chars": 342,
-        "nodes": 7,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 4,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 10,
-        "enumValueChars": 9,
-        "descriptions": {
-         "count": 3,
-         "textChars": 29,
-         "withKeyChars": 80
-        }
-       }
-      },
-      {
-       "tag": "box_plot",
-       "sha256": "3d5f0fbf53dcd100a7912bb7297128c7f92583384ea0ac3a2ac84de829bfb064",
-       "shape": {
-        "chars": 455,
-        "nodes": 10,
-        "maxDepth": 5,
-        "objects": 2,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 11,
-        "enumValueChars": 8,
-        "descriptions": {
-         "count": 2,
-         "textChars": 29,
-         "withKeyChars": 63
-        }
-       }
-      },
-      {
-       "tag": "histogram",
-       "sha256": "07aa4ed5d1298a49e9a98dcb708455e57117bb679bbe013533d135929486edea",
-       "shape": {
-        "chars": 375,
-        "nodes": 8,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 12,
-        "enumValueChars": 9,
-        "descriptions": {
-         "count": 3,
-         "textChars": 36,
-         "withKeyChars": 87
-        }
-       }
-      },
-      {
-       "tag": "scatter_plot",
-       "sha256": "205bf0538e9453c15f468025feb451f28baa1bc1d987e4091392c36f3bfa1e3d",
-       "shape": {
-        "chars": 377,
-        "nodes": 9,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 13,
-        "enumValueChars": 12,
-        "descriptions": {
-         "count": 2,
-         "textChars": 24,
-         "withKeyChars": 58
-        }
-       }
-      },
-      {
-       "tag": "pyramid",
-       "sha256": "64bc080081a0945db55e562bb7c8c79ff3b9535917584c6969ca155ff7e8fd11",
-       "shape": {
-        "chars": 472,
-        "nodes": 9,
-        "maxDepth": 3,
-        "objects": 1,
-        "properties": 6,
-        "optionalFields": 0,
-        "anyOfNodes": 0,
-        "nullableAnyOf": 0,
-        "unions": 0,
-        "unionBranches": 0,
-        "enums": 1,
-        "enumValues": 1,
-        "singletonEnums": 1,
-        "propertyNameChars": 10,
-        "enumValueChars": 7,
-        "descriptions": {
-         "count": 6,
-         "textChars": 61,
-         "withKeyChars": 163
-        }
-       }
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "purpose": "explain",
-   "profile": "kind=help",
-   "tier": "smart",
-   "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.16",
-   "where": "practice/generate.ts — explainSchemaFor('help', null)",
-   "system": {
-    "chars": 11124,
-    "sha256": "b9aaebc2c9bd514e33e34a2427d3df4c8fbb9c53670f4dce37071552b145c99e",
-    "textTokens": null
-   },
-   "schema": {
-    "chars": 16528,
-    "sha256": "27d865dc0dbfed7fbfd9fc2a7f1718398f503a2640ce88ead5e0616e0e3ecb0f",
-    "textTokens": null,
-    "shape": {
-     "chars": 16528,
-     "nodes": 253,
-     "maxDepth": 11,
-     "objects": 41,
-     "properties": 164,
-     "optionalFields": 15,
-     "anyOfNodes": 30,
-     "nullableAnyOf": 28,
-     "unions": 2,
-     "unionBranches": 18,
-     "enums": 30,
-     "enumValues": 104,
-     "singletonEnums": 18,
-     "propertyNameChars": 679,
-     "enumValueChars": 761,
-     "descriptions": {
-      "count": 86,
-      "textChars": 4038,
-      "withKeyChars": 5514
-     }
-    },
-    "topLevel": [
-     {
-      "key": "usable",
-      "chars": 110,
-      "share": 0.006655372700871249,
-      "descriptions": {
-       "count": 1,
-       "textChars": 75,
-       "withKeyChars": 92
-      }
-     },
-     {
-      "key": "title",
-      "chars": 17,
-      "share": 0.0010285575992255566,
-      "descriptions": {
-       "count": 0,
-       "textChars": 0,
-       "withKeyChars": 0
-      }
-     },
-     {
-      "key": "subject",
-      "chars": 385,
-      "share": 0.02329380445304937,
-      "descriptions": {
-       "count": 0,
-       "textChars": 0,
-       "withKeyChars": 0
-      }
-     },
-     {
-      "key": "items",
-      "chars": 15868,
-      "share": 0.9600677637947725,
-      "descriptions": {
-       "count": 85,
-       "textChars": 3963,
-       "withKeyChars": 5422
       }
      }
     ]
@@ -7441,6 +5524,4232 @@
        }
       }
      ]
+    },
+    {
+     "path": ".bars[]",
+     "name": "BarTask",
+     "tagKey": "task",
+     "tagPositions": [
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 1649,
+      "nodes": 14,
+      "maxDepth": 3,
+      "objects": 3,
+      "properties": 10,
+      "optionalFields": 0,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 3,
+      "enums": 5,
+      "enumValues": 25,
+      "singletonEnums": 3,
+      "propertyNameChars": 47,
+      "enumValueChars": 81,
+      "descriptions": {
+       "count": 8,
+       "textChars": 735,
+       "withKeyChars": 873
+      }
+     },
+     "branches": [
+      {
+       "tag": "shade",
+       "sha256": "e90d36246743649a8dfb3a77b67e002d4bb6c6a6c81e3c466ae5ff4fb672d891",
+       "shape": {
+        "chars": 538,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 14,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 3,
+         "textChars": 294,
+         "withKeyChars": 345
+        }
+       }
+      },
+      {
+       "tag": "compare",
+       "sha256": "d8faf994f65dc439ef67d9b9e42b1a7e0199a772c408a71891ce9aa7525479d3",
+       "shape": {
+        "chars": 534,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 23,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 73,
+        "descriptions": {
+         "count": 1,
+         "textChars": 176,
+         "withKeyChars": 193
+        }
+       }
+      },
+      {
+       "tag": "add",
+       "sha256": "bc6aa61a3f1bae1fd0ee347cfb22d048de27c78e9f6a5213f903c0cae0b7a5a4",
+       "shape": {
+        "chars": 563,
+        "nodes": 5,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 4,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 20,
+        "enumValueChars": 3,
+        "descriptions": {
+         "count": 4,
+         "textChars": 265,
+         "withKeyChars": 335
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]",
+     "name": "StaffTask",
+     "tagKey": "task",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 4874,
+      "nodes": 58,
+      "maxDepth": 8,
+      "objects": 14,
+      "properties": 44,
+      "optionalFields": 6,
+      "anyOfNodes": 3,
+      "nullableAnyOf": 0,
+      "unions": 3,
+      "unionBranches": 9,
+      "enums": 26,
+      "enumValues": 116,
+      "singletonEnums": 9,
+      "propertyNameChars": 198,
+      "enumValueChars": 393,
+      "descriptions": {
+       "count": 15,
+       "textChars": 1174,
+       "withKeyChars": 1429
+      }
+     },
+     "branches": [
+      {
+       "tag": "name_note",
+       "sha256": "925adcd8a9ecaea0535793a4fadfeb890e6820059fefd0bf0e7523d425f001d9",
+       "shape": {
+        "chars": 641,
+        "nodes": 6,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 15,
+        "singletonEnums": 1,
+        "propertyNameChars": 23,
+        "enumValueChars": 36,
+        "descriptions": {
+         "count": 2,
+         "textChars": 201,
+         "withKeyChars": 235
+        }
+       }
+      },
+      {
+       "tag": "name_value",
+       "sha256": "2b1a4f224cca48eee0469bb04465ed9a91e63a7c2f6ff19ff642e5637fd1ea45",
+       "shape": {
+        "chars": 568,
+        "nodes": 6,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 5,
+        "optionalFields": 2,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 8,
+        "singletonEnums": 1,
+        "propertyNameChars": 23,
+        "enumValueChars": 51,
+        "descriptions": {
+         "count": 2,
+         "textChars": 206,
+         "withKeyChars": 240
+        }
+       }
+      },
+      {
+       "tag": "interval",
+       "sha256": "764ecb2e6f5787a4c09a6ebbb217a8b08945c1df4b225eefcbbebaf24c174c07",
+       "shape": {
+        "chars": 946,
+        "nodes": 9,
+        "maxDepth": 3,
+        "objects": 3,
+        "properties": 8,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 4,
+        "enumValues": 27,
+        "singletonEnums": 1,
+        "propertyNameChars": 38,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 3,
+         "textChars": 268,
+         "withKeyChars": 319
+        }
+       }
+      },
+      {
+       "tag": "time_signature",
+       "sha256": "a2d5d3a2f0b23eb7fe676850fb06b561a9b23888ee330b4b832ee383a4545733",
+       "shape": {
+        "chars": 1424,
+        "nodes": 18,
+        "maxDepth": 7,
+        "objects": 4,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 0,
+        "unions": 1,
+        "unionBranches": 2,
+        "enums": 8,
+        "enumValues": 33,
+        "singletonEnums": 3,
+        "propertyNameChars": 57,
+        "enumValueChars": 129,
+        "descriptions": {
+         "count": 4,
+         "textChars": 320,
+         "withKeyChars": 388
+        }
+       }
+      },
+      {
+       "tag": "write_line",
+       "sha256": "18e926e9b0fb13f3936953a23e4f90ab6c2e496ad2fce4a46853a411364e8b37",
+       "shape": {
+        "chars": 1279,
+        "nodes": 18,
+        "maxDepth": 7,
+        "objects": 4,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 0,
+        "unions": 1,
+        "unionBranches": 2,
+        "enums": 8,
+        "enumValues": 33,
+        "singletonEnums": 3,
+        "propertyNameChars": 57,
+        "enumValueChars": 125,
+        "descriptions": {
+         "count": 4,
+         "textChars": 179,
+         "withKeyChars": 247
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]<time_signature>.bars[][]",
+     "name": "StaffElement",
+     "tagKey": "el",
+     "tagPositions": [
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 727,
+      "nodes": 12,
+      "maxDepth": 4,
+      "objects": 3,
+      "properties": 9,
+      "optionalFields": 2,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 2,
+      "enums": 5,
+      "enumValues": 24,
+      "singletonEnums": 2,
+      "propertyNameChars": 41,
+      "enumValueChars": 87,
+      "descriptions": {
+       "count": 1,
+       "textChars": 5,
+       "withKeyChars": 22
+      }
+     },
+     "branches": [
+      {
+       "tag": "note",
+       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
+       "shape": {
+        "chars": 479,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 18,
+        "singletonEnums": 1,
+        "propertyNameChars": 28,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 1,
+         "textChars": 5,
+         "withKeyChars": 22
+        }
+       }
+      },
+      {
+       "tag": "rest",
+       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
+       "shape": {
+        "chars": 235,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 35,
+        "descriptions": {
+         "count": 0,
+         "textChars": 0,
+         "withKeyChars": 0
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]<write_line>.bars[][]",
+     "name": "StaffElement",
+     "tagKey": "el",
+     "tagPositions": [
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 727,
+      "nodes": 12,
+      "maxDepth": 4,
+      "objects": 3,
+      "properties": 9,
+      "optionalFields": 2,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 2,
+      "enums": 5,
+      "enumValues": 24,
+      "singletonEnums": 2,
+      "propertyNameChars": 41,
+      "enumValueChars": 87,
+      "descriptions": {
+       "count": 1,
+       "textChars": 5,
+       "withKeyChars": 22
+      }
+     },
+     "branches": [
+      {
+       "tag": "note",
+       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
+       "shape": {
+        "chars": 479,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 18,
+        "singletonEnums": 1,
+        "propertyNameChars": 28,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 1,
+         "textChars": 5,
+         "withKeyChars": 22
+        }
+       }
+      },
+      {
+       "tag": "rest",
+       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
+       "shape": {
+        "chars": 235,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 35,
+        "descriptions": {
+         "count": 0,
+         "textChars": 0,
+         "withKeyChars": 0
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".structured[]",
+     "name": "StructuredAnswer = StructuredTask = StructuredTaskView = StructuredDraft = StructuredDraftHomework = StructuredDraftNoHelp",
+     "tagKey": "type",
+     "tagPositions": [
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 4096,
+      "nodes": 56,
+      "maxDepth": 7,
+      "objects": 6,
+      "properties": 31,
+      "optionalFields": 11,
+      "anyOfNodes": 14,
+      "nullableAnyOf": 13,
+      "unions": 1,
+      "unionBranches": 3,
+      "enums": 6,
+      "enumValues": 10,
+      "singletonEnums": 3,
+      "propertyNameChars": 188,
+      "enumValueChars": 73,
+      "descriptions": {
+       "count": 29,
+       "textChars": 1450,
+       "withKeyChars": 1947
+      }
+     },
+     "branches": [
+      {
+       "tag": "order",
+       "sha256": "a149972fc51aba2eb73344314b8831c19dbf108ae6e1b0956db1060aa17a470b",
+       "shape": {
+        "chars": 978,
+        "nodes": 12,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 7,
+        "optionalFields": 2,
+        "anyOfNodes": 3,
+        "nullableAnyOf": 3,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 51,
+        "enumValueChars": 24,
+        "descriptions": {
+         "count": 6,
+         "textChars": 395,
+         "withKeyChars": 497
+        }
+       }
+      },
+      {
+       "tag": "table_fill",
+       "sha256": "2a0869e81e0e019f3edf34f6ab0692f2dfe205bc2ffe4e46e5f72392da70a74e",
+       "shape": {
+        "chars": 1771,
+        "nodes": 24,
+        "maxDepth": 6,
+        "objects": 2,
+        "properties": 13,
+        "optionalFields": 6,
+        "anyOfNodes": 6,
+        "nullableAnyOf": 6,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 69,
+        "enumValueChars": 44,
+        "descriptions": {
+         "count": 14,
+         "textChars": 637,
+         "withKeyChars": 879
+        }
+       }
+      },
+      {
+       "tag": "match",
+       "sha256": "578de24afb27f8437d14865c7ea5325ff15c3695d4bd8696b0ab6a353f331beb",
+       "shape": {
+        "chars": 1333,
+        "nodes": 19,
+        "maxDepth": 6,
+        "objects": 3,
+        "properties": 11,
+        "optionalFields": 3,
+        "anyOfNodes": 4,
+        "nullableAnyOf": 4,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 68,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 9,
+         "textChars": 418,
+         "withKeyChars": 571
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "purpose": "explain",
+   "profile": "kind=vocab",
+   "tier": "smart",
+   "model": "eu/gemini-3.6-flash",
+   "promptVersion": "generate.v1.16",
+   "where": "practice/generate.ts — explainSchemaFor('vocab', null)",
+   "system": {
+    "chars": 11124,
+    "sha256": "b9aaebc2c9bd514e33e34a2427d3df4c8fbb9c53670f4dce37071552b145c99e",
+    "textTokens": null
+   },
+   "schema": {
+    "chars": 27372,
+    "sha256": "e491820afd69d8a718e6e3a89ae88c2380906d081639df2aa8e258a4268673d0",
+    "textTokens": null,
+    "shape": {
+     "chars": 27372,
+     "nodes": 384,
+     "maxDepth": 11,
+     "objects": 64,
+     "properties": 252,
+     "optionalFields": 35,
+     "anyOfNodes": 48,
+     "nullableAnyOf": 41,
+     "unions": 7,
+     "unionBranches": 33,
+     "enums": 67,
+     "enumValues": 257,
+     "singletonEnums": 33,
+     "propertyNameChars": 1132,
+     "enumValueChars": 1318,
+     "descriptions": {
+      "count": 141,
+      "textChars": 7448,
+      "withKeyChars": 9865
+     }
+    },
+    "topLevel": [
+     {
+      "key": "usable",
+      "chars": 110,
+      "share": 0.004018705246237031,
+      "descriptions": {
+       "count": 1,
+       "textChars": 75,
+       "withKeyChars": 92
+      }
+     },
+     {
+      "key": "title",
+      "chars": 17,
+      "share": 0.0006210726289639047,
+      "descriptions": {
+       "count": 0,
+       "textChars": 0,
+       "withKeyChars": 0
+      }
+     },
+     {
+      "key": "subject",
+      "chars": 385,
+      "share": 0.014065468361829607,
+      "descriptions": {
+       "count": 0,
+       "textChars": 0,
+       "withKeyChars": 0
+      }
+     },
+     {
+      "key": "items",
+      "chars": 15884,
+      "share": 0.5803010375566272,
+      "descriptions": {
+       "count": 85,
+       "textChars": 3963,
+       "withKeyChars": 5422
+      }
+     },
+     {
+      "key": "bars",
+      "chars": 1708,
+      "share": 0.062399532368844074,
+      "descriptions": {
+       "count": 9,
+       "textChars": 752,
+       "withKeyChars": 907
+      }
+     },
+     {
+      "key": "staffs",
+      "chars": 4933,
+      "share": 0.18022066345170246,
+      "descriptions": {
+       "count": 16,
+       "textChars": 1191,
+       "withKeyChars": 1463
+      }
+     },
+     {
+      "key": "structured",
+      "chars": 4155,
+      "share": 0.15179745725558966,
+      "descriptions": {
+       "count": 30,
+       "textChars": 1467,
+       "withKeyChars": 1981
+      }
+     }
+    ]
+   },
+   "unions": [
+    {
+     "path": ".items[].figure",
+     "name": "ModelFigure",
+     "tagKey": "type",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 9478,
+      "nodes": 186,
+      "maxDepth": 6,
+      "objects": 31,
+      "properties": 122,
+      "optionalFields": 7,
+      "anyOfNodes": 13,
+      "nullableAnyOf": 12,
+      "unions": 1,
+      "unionBranches": 14,
+      "enums": 19,
+      "enumValues": 42,
+      "singletonEnums": 14,
+      "propertyNameChars": 437,
+      "enumValueChars": 229,
+      "descriptions": {
+       "count": 55,
+       "textChars": 965,
+       "withKeyChars": 1902
+      }
+     },
+     "branches": [
+      {
+       "tag": "fraction",
+       "sha256": "7b3f33778c78295c81fd6b794abd165093aab4b2d516a435be720795dfedc294",
+       "shape": {
+        "chars": 454,
+        "nodes": 7,
+        "maxDepth": 4,
+        "objects": 2,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 29,
+        "enumValueChars": 17,
+        "descriptions": {
+         "count": 3,
+         "textChars": 23,
+         "withKeyChars": 74
+        }
+       }
+      },
+      {
+       "tag": "number_line",
+       "sha256": "ede5879e1979652a48362b85f25c124f60229dab0330e505bcab68a47a2ba16e",
+       "shape": {
+        "chars": 498,
+        "nodes": 10,
+        "maxDepth": 5,
+        "objects": 2,
+        "properties": 7,
+        "optionalFields": 0,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 1,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 30,
+        "enumValueChars": 11,
+        "descriptions": {
+         "count": 2,
+         "textChars": 29,
+         "withKeyChars": 63
+        }
+       }
+      },
+      {
+       "tag": "function_plot",
+       "sha256": "314d38ff52b530ef6add8184699db71770b1f482c83b0075fd85e743f045c4e5",
+       "shape": {
+        "chars": 785,
+        "nodes": 17,
+        "maxDepth": 5,
+        "objects": 3,
+        "properties": 12,
+        "optionalFields": 0,
+        "anyOfNodes": 2,
+        "nullableAnyOf": 2,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 55,
+        "enumValueChars": 13,
+        "descriptions": {
+         "count": 2,
+         "textChars": 34,
+         "withKeyChars": 68
+        }
+       }
+      },
+      {
+       "tag": "bar_chart",
+       "sha256": "01d98dc975376eb118f37a298d03beafecfb7203ccd7feef205851561443e645",
+       "shape": {
+        "chars": 398,
+        "nodes": 8,
+        "maxDepth": 4,
+        "objects": 2,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 1,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 22,
+        "enumValueChars": 9,
+        "descriptions": {
+         "count": 1,
+         "textChars": 12,
+         "withKeyChars": 29
+        }
+       }
+      },
+      {
+       "tag": "geometry",
+       "sha256": "5ceb216e271674f301d61aad4ba82f235877f830c0742f6eb7082887c75fb244",
+       "shape": {
+        "chars": 2762,
+        "nodes": 54,
+        "maxDepth": 5,
+        "objects": 9,
+        "properties": 35,
+        "optionalFields": 5,
+        "anyOfNodes": 7,
+        "nullableAnyOf": 7,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 4,
+        "singletonEnums": 1,
+        "propertyNameChars": 158,
+        "enumValueChars": 24,
+        "descriptions": {
+         "count": 14,
+         "textChars": 353,
+         "withKeyChars": 593
+        }
+       }
+      },
+      {
+       "tag": "table",
+       "sha256": "a015f639dc9d027047a34914cb02955a04702de198b8ec227ca567a0cb2a88d5",
+       "shape": {
+        "chars": 351,
+        "nodes": 7,
+        "maxDepth": 4,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 14,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 3,
+         "textChars": 34,
+         "withKeyChars": 85
+        }
+       }
+      },
+      {
+       "tag": "molecule",
+       "sha256": "c9b1b31f00456b00c9d02ca7c9f7307ec768d7a84e72f801c207fa75c80bf7b3",
+       "shape": {
+        "chars": 1246,
+        "nodes": 18,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 1,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 4,
+        "enumValues": 24,
+        "singletonEnums": 1,
+        "propertyNameChars": 44,
+        "enumValueChars": 82,
+        "descriptions": {
+         "count": 8,
+         "textChars": 239,
+         "withKeyChars": 375
+        }
+       }
+      },
+      {
+       "tag": "line_chart",
+       "sha256": "759ab5b9c2e8bcb326a840d07476339af3b253723384f653b46485eb50c02d62",
+       "shape": {
+        "chars": 562,
+        "nodes": 13,
+        "maxDepth": 5,
+        "objects": 2,
+        "properties": 9,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 15,
+        "enumValueChars": 10,
+        "descriptions": {
+         "count": 3,
+         "textChars": 35,
+         "withKeyChars": 86
+        }
+       }
+      },
+      {
+       "tag": "climate_chart",
+       "sha256": "4ca89686c9033e57efa05e03defc561c5d993f3d1d65a70411f87ddca4bc6510",
+       "shape": {
+        "chars": 376,
+        "nodes": 8,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 14,
+        "enumValueChars": 13,
+        "descriptions": {
+         "count": 3,
+         "textChars": 27,
+         "withKeyChars": 78
+        }
+       }
+      },
+      {
+       "tag": "pie_chart",
+       "sha256": "fe1befdc189cf32c956f37c5f2cfc00d992108967750f7a40340a3bea9a72552",
+       "shape": {
+        "chars": 342,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 4,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 10,
+        "enumValueChars": 9,
+        "descriptions": {
+         "count": 3,
+         "textChars": 29,
+         "withKeyChars": 80
+        }
+       }
+      },
+      {
+       "tag": "box_plot",
+       "sha256": "3d5f0fbf53dcd100a7912bb7297128c7f92583384ea0ac3a2ac84de829bfb064",
+       "shape": {
+        "chars": 455,
+        "nodes": 10,
+        "maxDepth": 5,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 11,
+        "enumValueChars": 8,
+        "descriptions": {
+         "count": 2,
+         "textChars": 29,
+         "withKeyChars": 63
+        }
+       }
+      },
+      {
+       "tag": "histogram",
+       "sha256": "07aa4ed5d1298a49e9a98dcb708455e57117bb679bbe013533d135929486edea",
+       "shape": {
+        "chars": 375,
+        "nodes": 8,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 12,
+        "enumValueChars": 9,
+        "descriptions": {
+         "count": 3,
+         "textChars": 36,
+         "withKeyChars": 87
+        }
+       }
+      },
+      {
+       "tag": "scatter_plot",
+       "sha256": "205bf0538e9453c15f468025feb451f28baa1bc1d987e4091392c36f3bfa1e3d",
+       "shape": {
+        "chars": 377,
+        "nodes": 9,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 12,
+        "descriptions": {
+         "count": 2,
+         "textChars": 24,
+         "withKeyChars": 58
+        }
+       }
+      },
+      {
+       "tag": "pyramid",
+       "sha256": "64bc080081a0945db55e562bb7c8c79ff3b9535917584c6969ca155ff7e8fd11",
+       "shape": {
+        "chars": 472,
+        "nodes": 9,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 10,
+        "enumValueChars": 7,
+        "descriptions": {
+         "count": 6,
+         "textChars": 61,
+         "withKeyChars": 163
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".items[].rubric.elements[].check",
+     "name": "RubricCheck",
+     "tagKey": "by",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 1820,
+      "nodes": 17,
+      "maxDepth": 4,
+      "objects": 4,
+      "properties": 9,
+      "optionalFields": 0,
+      "anyOfNodes": 3,
+      "nullableAnyOf": 2,
+      "unions": 1,
+      "unionBranches": 4,
+      "enums": 6,
+      "enumValues": 8,
+      "singletonEnums": 4,
+      "propertyNameChars": 29,
+      "enumValueChars": 55,
+      "descriptions": {
+       "count": 8,
+       "textChars": 883,
+       "withKeyChars": 1019
+      }
+     },
+     "branches": [
+      {
+       "tag": "word_count",
+       "sha256": "055150f71dbbf5cf9c21396f32a543e7a050df1c188e8a01c17787f3081919fa",
+       "shape": {
+        "chars": 436,
+        "nodes": 6,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 2,
+        "nullableAnyOf": 2,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 8,
+        "enumValueChars": 10,
+        "descriptions": {
+         "count": 3,
+         "textChars": 143,
+         "withKeyChars": 194
+        }
+       }
+      },
+      {
+       "tag": "mentions",
+       "sha256": "96daa49ba40ea46a7e6c0c7b5349251181101f007daaaf784ac432ccb2a91fb1",
+       "shape": {
+        "chars": 695,
+        "nodes": 5,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 12,
+        "enumValueChars": 23,
+        "descriptions": {
+         "count": 3,
+         "textChars": 399,
+         "withKeyChars": 450
+        }
+       }
+      },
+      {
+       "tag": "tense",
+       "sha256": "eaff0aabdfe14c8511c3417a15ed2d71056fba3cdafcf25ed506b7a5e6e77447",
+       "shape": {
+        "chars": 336,
+        "nodes": 3,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 2,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 7,
+        "enumValueChars": 16,
+        "descriptions": {
+         "count": 1,
+         "textChars": 140,
+         "withKeyChars": 157
+        }
+       }
+      },
+      {
+       "tag": "judged",
+       "sha256": "06ecec88c9d81327de54821bc3e896597e1a38341e1fdf6a224b7b25a3754d49",
+       "shape": {
+        "chars": 338,
+        "nodes": 2,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 1,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 2,
+        "enumValueChars": 6,
+        "descriptions": {
+         "count": 1,
+         "textChars": 201,
+         "withKeyChars": 218
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".bars[]",
+     "name": "BarTask",
+     "tagKey": "task",
+     "tagPositions": [
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 1649,
+      "nodes": 14,
+      "maxDepth": 3,
+      "objects": 3,
+      "properties": 10,
+      "optionalFields": 0,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 3,
+      "enums": 5,
+      "enumValues": 25,
+      "singletonEnums": 3,
+      "propertyNameChars": 47,
+      "enumValueChars": 81,
+      "descriptions": {
+       "count": 8,
+       "textChars": 735,
+       "withKeyChars": 873
+      }
+     },
+     "branches": [
+      {
+       "tag": "shade",
+       "sha256": "e90d36246743649a8dfb3a77b67e002d4bb6c6a6c81e3c466ae5ff4fb672d891",
+       "shape": {
+        "chars": 538,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 14,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 3,
+         "textChars": 294,
+         "withKeyChars": 345
+        }
+       }
+      },
+      {
+       "tag": "compare",
+       "sha256": "d8faf994f65dc439ef67d9b9e42b1a7e0199a772c408a71891ce9aa7525479d3",
+       "shape": {
+        "chars": 534,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 23,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 73,
+        "descriptions": {
+         "count": 1,
+         "textChars": 176,
+         "withKeyChars": 193
+        }
+       }
+      },
+      {
+       "tag": "add",
+       "sha256": "bc6aa61a3f1bae1fd0ee347cfb22d048de27c78e9f6a5213f903c0cae0b7a5a4",
+       "shape": {
+        "chars": 563,
+        "nodes": 5,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 4,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 20,
+        "enumValueChars": 3,
+        "descriptions": {
+         "count": 4,
+         "textChars": 265,
+         "withKeyChars": 335
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]",
+     "name": "StaffTask",
+     "tagKey": "task",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 4874,
+      "nodes": 58,
+      "maxDepth": 8,
+      "objects": 14,
+      "properties": 44,
+      "optionalFields": 6,
+      "anyOfNodes": 3,
+      "nullableAnyOf": 0,
+      "unions": 3,
+      "unionBranches": 9,
+      "enums": 26,
+      "enumValues": 116,
+      "singletonEnums": 9,
+      "propertyNameChars": 198,
+      "enumValueChars": 393,
+      "descriptions": {
+       "count": 15,
+       "textChars": 1174,
+       "withKeyChars": 1429
+      }
+     },
+     "branches": [
+      {
+       "tag": "name_note",
+       "sha256": "925adcd8a9ecaea0535793a4fadfeb890e6820059fefd0bf0e7523d425f001d9",
+       "shape": {
+        "chars": 641,
+        "nodes": 6,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 15,
+        "singletonEnums": 1,
+        "propertyNameChars": 23,
+        "enumValueChars": 36,
+        "descriptions": {
+         "count": 2,
+         "textChars": 201,
+         "withKeyChars": 235
+        }
+       }
+      },
+      {
+       "tag": "name_value",
+       "sha256": "2b1a4f224cca48eee0469bb04465ed9a91e63a7c2f6ff19ff642e5637fd1ea45",
+       "shape": {
+        "chars": 568,
+        "nodes": 6,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 5,
+        "optionalFields": 2,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 8,
+        "singletonEnums": 1,
+        "propertyNameChars": 23,
+        "enumValueChars": 51,
+        "descriptions": {
+         "count": 2,
+         "textChars": 206,
+         "withKeyChars": 240
+        }
+       }
+      },
+      {
+       "tag": "interval",
+       "sha256": "764ecb2e6f5787a4c09a6ebbb217a8b08945c1df4b225eefcbbebaf24c174c07",
+       "shape": {
+        "chars": 946,
+        "nodes": 9,
+        "maxDepth": 3,
+        "objects": 3,
+        "properties": 8,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 4,
+        "enumValues": 27,
+        "singletonEnums": 1,
+        "propertyNameChars": 38,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 3,
+         "textChars": 268,
+         "withKeyChars": 319
+        }
+       }
+      },
+      {
+       "tag": "time_signature",
+       "sha256": "a2d5d3a2f0b23eb7fe676850fb06b561a9b23888ee330b4b832ee383a4545733",
+       "shape": {
+        "chars": 1424,
+        "nodes": 18,
+        "maxDepth": 7,
+        "objects": 4,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 0,
+        "unions": 1,
+        "unionBranches": 2,
+        "enums": 8,
+        "enumValues": 33,
+        "singletonEnums": 3,
+        "propertyNameChars": 57,
+        "enumValueChars": 129,
+        "descriptions": {
+         "count": 4,
+         "textChars": 320,
+         "withKeyChars": 388
+        }
+       }
+      },
+      {
+       "tag": "write_line",
+       "sha256": "18e926e9b0fb13f3936953a23e4f90ab6c2e496ad2fce4a46853a411364e8b37",
+       "shape": {
+        "chars": 1279,
+        "nodes": 18,
+        "maxDepth": 7,
+        "objects": 4,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 0,
+        "unions": 1,
+        "unionBranches": 2,
+        "enums": 8,
+        "enumValues": 33,
+        "singletonEnums": 3,
+        "propertyNameChars": 57,
+        "enumValueChars": 125,
+        "descriptions": {
+         "count": 4,
+         "textChars": 179,
+         "withKeyChars": 247
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]<time_signature>.bars[][]",
+     "name": "StaffElement",
+     "tagKey": "el",
+     "tagPositions": [
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 727,
+      "nodes": 12,
+      "maxDepth": 4,
+      "objects": 3,
+      "properties": 9,
+      "optionalFields": 2,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 2,
+      "enums": 5,
+      "enumValues": 24,
+      "singletonEnums": 2,
+      "propertyNameChars": 41,
+      "enumValueChars": 87,
+      "descriptions": {
+       "count": 1,
+       "textChars": 5,
+       "withKeyChars": 22
+      }
+     },
+     "branches": [
+      {
+       "tag": "note",
+       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
+       "shape": {
+        "chars": 479,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 18,
+        "singletonEnums": 1,
+        "propertyNameChars": 28,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 1,
+         "textChars": 5,
+         "withKeyChars": 22
+        }
+       }
+      },
+      {
+       "tag": "rest",
+       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
+       "shape": {
+        "chars": 235,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 35,
+        "descriptions": {
+         "count": 0,
+         "textChars": 0,
+         "withKeyChars": 0
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]<write_line>.bars[][]",
+     "name": "StaffElement",
+     "tagKey": "el",
+     "tagPositions": [
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 727,
+      "nodes": 12,
+      "maxDepth": 4,
+      "objects": 3,
+      "properties": 9,
+      "optionalFields": 2,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 2,
+      "enums": 5,
+      "enumValues": 24,
+      "singletonEnums": 2,
+      "propertyNameChars": 41,
+      "enumValueChars": 87,
+      "descriptions": {
+       "count": 1,
+       "textChars": 5,
+       "withKeyChars": 22
+      }
+     },
+     "branches": [
+      {
+       "tag": "note",
+       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
+       "shape": {
+        "chars": 479,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 18,
+        "singletonEnums": 1,
+        "propertyNameChars": 28,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 1,
+         "textChars": 5,
+         "withKeyChars": 22
+        }
+       }
+      },
+      {
+       "tag": "rest",
+       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
+       "shape": {
+        "chars": 235,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 35,
+        "descriptions": {
+         "count": 0,
+         "textChars": 0,
+         "withKeyChars": 0
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".structured[]",
+     "name": "StructuredAnswer = StructuredTask = StructuredTaskView = StructuredDraft = StructuredDraftHomework = StructuredDraftNoHelp",
+     "tagKey": "type",
+     "tagPositions": [
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 4096,
+      "nodes": 56,
+      "maxDepth": 7,
+      "objects": 6,
+      "properties": 31,
+      "optionalFields": 11,
+      "anyOfNodes": 14,
+      "nullableAnyOf": 13,
+      "unions": 1,
+      "unionBranches": 3,
+      "enums": 6,
+      "enumValues": 10,
+      "singletonEnums": 3,
+      "propertyNameChars": 188,
+      "enumValueChars": 73,
+      "descriptions": {
+       "count": 29,
+       "textChars": 1450,
+       "withKeyChars": 1947
+      }
+     },
+     "branches": [
+      {
+       "tag": "order",
+       "sha256": "a149972fc51aba2eb73344314b8831c19dbf108ae6e1b0956db1060aa17a470b",
+       "shape": {
+        "chars": 978,
+        "nodes": 12,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 7,
+        "optionalFields": 2,
+        "anyOfNodes": 3,
+        "nullableAnyOf": 3,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 51,
+        "enumValueChars": 24,
+        "descriptions": {
+         "count": 6,
+         "textChars": 395,
+         "withKeyChars": 497
+        }
+       }
+      },
+      {
+       "tag": "table_fill",
+       "sha256": "2a0869e81e0e019f3edf34f6ab0692f2dfe205bc2ffe4e46e5f72392da70a74e",
+       "shape": {
+        "chars": 1771,
+        "nodes": 24,
+        "maxDepth": 6,
+        "objects": 2,
+        "properties": 13,
+        "optionalFields": 6,
+        "anyOfNodes": 6,
+        "nullableAnyOf": 6,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 69,
+        "enumValueChars": 44,
+        "descriptions": {
+         "count": 14,
+         "textChars": 637,
+         "withKeyChars": 879
+        }
+       }
+      },
+      {
+       "tag": "match",
+       "sha256": "578de24afb27f8437d14865c7ea5325ff15c3695d4bd8696b0ab6a353f331beb",
+       "shape": {
+        "chars": 1333,
+        "nodes": 19,
+        "maxDepth": 6,
+        "objects": 3,
+        "properties": 11,
+        "optionalFields": 3,
+        "anyOfNodes": 4,
+        "nullableAnyOf": 4,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 68,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 9,
+         "textChars": 418,
+         "withKeyChars": 571
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "purpose": "explain",
+   "profile": "kind=speak",
+   "tier": "smart",
+   "model": "eu/gemini-3.6-flash",
+   "promptVersion": "generate.v1.16",
+   "where": "practice/generate.ts — explainSchemaFor('speak', null)",
+   "system": {
+    "chars": 11124,
+    "sha256": "b9aaebc2c9bd514e33e34a2427d3df4c8fbb9c53670f4dce37071552b145c99e",
+    "textTokens": null
+   },
+   "schema": {
+    "chars": 27372,
+    "sha256": "e491820afd69d8a718e6e3a89ae88c2380906d081639df2aa8e258a4268673d0",
+    "textTokens": null,
+    "shape": {
+     "chars": 27372,
+     "nodes": 384,
+     "maxDepth": 11,
+     "objects": 64,
+     "properties": 252,
+     "optionalFields": 35,
+     "anyOfNodes": 48,
+     "nullableAnyOf": 41,
+     "unions": 7,
+     "unionBranches": 33,
+     "enums": 67,
+     "enumValues": 257,
+     "singletonEnums": 33,
+     "propertyNameChars": 1132,
+     "enumValueChars": 1318,
+     "descriptions": {
+      "count": 141,
+      "textChars": 7448,
+      "withKeyChars": 9865
+     }
+    },
+    "topLevel": [
+     {
+      "key": "usable",
+      "chars": 110,
+      "share": 0.004018705246237031,
+      "descriptions": {
+       "count": 1,
+       "textChars": 75,
+       "withKeyChars": 92
+      }
+     },
+     {
+      "key": "title",
+      "chars": 17,
+      "share": 0.0006210726289639047,
+      "descriptions": {
+       "count": 0,
+       "textChars": 0,
+       "withKeyChars": 0
+      }
+     },
+     {
+      "key": "subject",
+      "chars": 385,
+      "share": 0.014065468361829607,
+      "descriptions": {
+       "count": 0,
+       "textChars": 0,
+       "withKeyChars": 0
+      }
+     },
+     {
+      "key": "items",
+      "chars": 15884,
+      "share": 0.5803010375566272,
+      "descriptions": {
+       "count": 85,
+       "textChars": 3963,
+       "withKeyChars": 5422
+      }
+     },
+     {
+      "key": "bars",
+      "chars": 1708,
+      "share": 0.062399532368844074,
+      "descriptions": {
+       "count": 9,
+       "textChars": 752,
+       "withKeyChars": 907
+      }
+     },
+     {
+      "key": "staffs",
+      "chars": 4933,
+      "share": 0.18022066345170246,
+      "descriptions": {
+       "count": 16,
+       "textChars": 1191,
+       "withKeyChars": 1463
+      }
+     },
+     {
+      "key": "structured",
+      "chars": 4155,
+      "share": 0.15179745725558966,
+      "descriptions": {
+       "count": 30,
+       "textChars": 1467,
+       "withKeyChars": 1981
+      }
+     }
+    ]
+   },
+   "unions": [
+    {
+     "path": ".items[].figure",
+     "name": "ModelFigure",
+     "tagKey": "type",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 9478,
+      "nodes": 186,
+      "maxDepth": 6,
+      "objects": 31,
+      "properties": 122,
+      "optionalFields": 7,
+      "anyOfNodes": 13,
+      "nullableAnyOf": 12,
+      "unions": 1,
+      "unionBranches": 14,
+      "enums": 19,
+      "enumValues": 42,
+      "singletonEnums": 14,
+      "propertyNameChars": 437,
+      "enumValueChars": 229,
+      "descriptions": {
+       "count": 55,
+       "textChars": 965,
+       "withKeyChars": 1902
+      }
+     },
+     "branches": [
+      {
+       "tag": "fraction",
+       "sha256": "7b3f33778c78295c81fd6b794abd165093aab4b2d516a435be720795dfedc294",
+       "shape": {
+        "chars": 454,
+        "nodes": 7,
+        "maxDepth": 4,
+        "objects": 2,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 29,
+        "enumValueChars": 17,
+        "descriptions": {
+         "count": 3,
+         "textChars": 23,
+         "withKeyChars": 74
+        }
+       }
+      },
+      {
+       "tag": "number_line",
+       "sha256": "ede5879e1979652a48362b85f25c124f60229dab0330e505bcab68a47a2ba16e",
+       "shape": {
+        "chars": 498,
+        "nodes": 10,
+        "maxDepth": 5,
+        "objects": 2,
+        "properties": 7,
+        "optionalFields": 0,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 1,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 30,
+        "enumValueChars": 11,
+        "descriptions": {
+         "count": 2,
+         "textChars": 29,
+         "withKeyChars": 63
+        }
+       }
+      },
+      {
+       "tag": "function_plot",
+       "sha256": "314d38ff52b530ef6add8184699db71770b1f482c83b0075fd85e743f045c4e5",
+       "shape": {
+        "chars": 785,
+        "nodes": 17,
+        "maxDepth": 5,
+        "objects": 3,
+        "properties": 12,
+        "optionalFields": 0,
+        "anyOfNodes": 2,
+        "nullableAnyOf": 2,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 55,
+        "enumValueChars": 13,
+        "descriptions": {
+         "count": 2,
+         "textChars": 34,
+         "withKeyChars": 68
+        }
+       }
+      },
+      {
+       "tag": "bar_chart",
+       "sha256": "01d98dc975376eb118f37a298d03beafecfb7203ccd7feef205851561443e645",
+       "shape": {
+        "chars": 398,
+        "nodes": 8,
+        "maxDepth": 4,
+        "objects": 2,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 1,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 22,
+        "enumValueChars": 9,
+        "descriptions": {
+         "count": 1,
+         "textChars": 12,
+         "withKeyChars": 29
+        }
+       }
+      },
+      {
+       "tag": "geometry",
+       "sha256": "5ceb216e271674f301d61aad4ba82f235877f830c0742f6eb7082887c75fb244",
+       "shape": {
+        "chars": 2762,
+        "nodes": 54,
+        "maxDepth": 5,
+        "objects": 9,
+        "properties": 35,
+        "optionalFields": 5,
+        "anyOfNodes": 7,
+        "nullableAnyOf": 7,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 4,
+        "singletonEnums": 1,
+        "propertyNameChars": 158,
+        "enumValueChars": 24,
+        "descriptions": {
+         "count": 14,
+         "textChars": 353,
+         "withKeyChars": 593
+        }
+       }
+      },
+      {
+       "tag": "table",
+       "sha256": "a015f639dc9d027047a34914cb02955a04702de198b8ec227ca567a0cb2a88d5",
+       "shape": {
+        "chars": 351,
+        "nodes": 7,
+        "maxDepth": 4,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 14,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 3,
+         "textChars": 34,
+         "withKeyChars": 85
+        }
+       }
+      },
+      {
+       "tag": "molecule",
+       "sha256": "c9b1b31f00456b00c9d02ca7c9f7307ec768d7a84e72f801c207fa75c80bf7b3",
+       "shape": {
+        "chars": 1246,
+        "nodes": 18,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 1,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 4,
+        "enumValues": 24,
+        "singletonEnums": 1,
+        "propertyNameChars": 44,
+        "enumValueChars": 82,
+        "descriptions": {
+         "count": 8,
+         "textChars": 239,
+         "withKeyChars": 375
+        }
+       }
+      },
+      {
+       "tag": "line_chart",
+       "sha256": "759ab5b9c2e8bcb326a840d07476339af3b253723384f653b46485eb50c02d62",
+       "shape": {
+        "chars": 562,
+        "nodes": 13,
+        "maxDepth": 5,
+        "objects": 2,
+        "properties": 9,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 15,
+        "enumValueChars": 10,
+        "descriptions": {
+         "count": 3,
+         "textChars": 35,
+         "withKeyChars": 86
+        }
+       }
+      },
+      {
+       "tag": "climate_chart",
+       "sha256": "4ca89686c9033e57efa05e03defc561c5d993f3d1d65a70411f87ddca4bc6510",
+       "shape": {
+        "chars": 376,
+        "nodes": 8,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 14,
+        "enumValueChars": 13,
+        "descriptions": {
+         "count": 3,
+         "textChars": 27,
+         "withKeyChars": 78
+        }
+       }
+      },
+      {
+       "tag": "pie_chart",
+       "sha256": "fe1befdc189cf32c956f37c5f2cfc00d992108967750f7a40340a3bea9a72552",
+       "shape": {
+        "chars": 342,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 4,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 10,
+        "enumValueChars": 9,
+        "descriptions": {
+         "count": 3,
+         "textChars": 29,
+         "withKeyChars": 80
+        }
+       }
+      },
+      {
+       "tag": "box_plot",
+       "sha256": "3d5f0fbf53dcd100a7912bb7297128c7f92583384ea0ac3a2ac84de829bfb064",
+       "shape": {
+        "chars": 455,
+        "nodes": 10,
+        "maxDepth": 5,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 11,
+        "enumValueChars": 8,
+        "descriptions": {
+         "count": 2,
+         "textChars": 29,
+         "withKeyChars": 63
+        }
+       }
+      },
+      {
+       "tag": "histogram",
+       "sha256": "07aa4ed5d1298a49e9a98dcb708455e57117bb679bbe013533d135929486edea",
+       "shape": {
+        "chars": 375,
+        "nodes": 8,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 12,
+        "enumValueChars": 9,
+        "descriptions": {
+         "count": 3,
+         "textChars": 36,
+         "withKeyChars": 87
+        }
+       }
+      },
+      {
+       "tag": "scatter_plot",
+       "sha256": "205bf0538e9453c15f468025feb451f28baa1bc1d987e4091392c36f3bfa1e3d",
+       "shape": {
+        "chars": 377,
+        "nodes": 9,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 12,
+        "descriptions": {
+         "count": 2,
+         "textChars": 24,
+         "withKeyChars": 58
+        }
+       }
+      },
+      {
+       "tag": "pyramid",
+       "sha256": "64bc080081a0945db55e562bb7c8c79ff3b9535917584c6969ca155ff7e8fd11",
+       "shape": {
+        "chars": 472,
+        "nodes": 9,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 10,
+        "enumValueChars": 7,
+        "descriptions": {
+         "count": 6,
+         "textChars": 61,
+         "withKeyChars": 163
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".items[].rubric.elements[].check",
+     "name": "RubricCheck",
+     "tagKey": "by",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 1820,
+      "nodes": 17,
+      "maxDepth": 4,
+      "objects": 4,
+      "properties": 9,
+      "optionalFields": 0,
+      "anyOfNodes": 3,
+      "nullableAnyOf": 2,
+      "unions": 1,
+      "unionBranches": 4,
+      "enums": 6,
+      "enumValues": 8,
+      "singletonEnums": 4,
+      "propertyNameChars": 29,
+      "enumValueChars": 55,
+      "descriptions": {
+       "count": 8,
+       "textChars": 883,
+       "withKeyChars": 1019
+      }
+     },
+     "branches": [
+      {
+       "tag": "word_count",
+       "sha256": "055150f71dbbf5cf9c21396f32a543e7a050df1c188e8a01c17787f3081919fa",
+       "shape": {
+        "chars": 436,
+        "nodes": 6,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 2,
+        "nullableAnyOf": 2,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 8,
+        "enumValueChars": 10,
+        "descriptions": {
+         "count": 3,
+         "textChars": 143,
+         "withKeyChars": 194
+        }
+       }
+      },
+      {
+       "tag": "mentions",
+       "sha256": "96daa49ba40ea46a7e6c0c7b5349251181101f007daaaf784ac432ccb2a91fb1",
+       "shape": {
+        "chars": 695,
+        "nodes": 5,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 12,
+        "enumValueChars": 23,
+        "descriptions": {
+         "count": 3,
+         "textChars": 399,
+         "withKeyChars": 450
+        }
+       }
+      },
+      {
+       "tag": "tense",
+       "sha256": "eaff0aabdfe14c8511c3417a15ed2d71056fba3cdafcf25ed506b7a5e6e77447",
+       "shape": {
+        "chars": 336,
+        "nodes": 3,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 2,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 7,
+        "enumValueChars": 16,
+        "descriptions": {
+         "count": 1,
+         "textChars": 140,
+         "withKeyChars": 157
+        }
+       }
+      },
+      {
+       "tag": "judged",
+       "sha256": "06ecec88c9d81327de54821bc3e896597e1a38341e1fdf6a224b7b25a3754d49",
+       "shape": {
+        "chars": 338,
+        "nodes": 2,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 1,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 2,
+        "enumValueChars": 6,
+        "descriptions": {
+         "count": 1,
+         "textChars": 201,
+         "withKeyChars": 218
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".bars[]",
+     "name": "BarTask",
+     "tagKey": "task",
+     "tagPositions": [
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 1649,
+      "nodes": 14,
+      "maxDepth": 3,
+      "objects": 3,
+      "properties": 10,
+      "optionalFields": 0,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 3,
+      "enums": 5,
+      "enumValues": 25,
+      "singletonEnums": 3,
+      "propertyNameChars": 47,
+      "enumValueChars": 81,
+      "descriptions": {
+       "count": 8,
+       "textChars": 735,
+       "withKeyChars": 873
+      }
+     },
+     "branches": [
+      {
+       "tag": "shade",
+       "sha256": "e90d36246743649a8dfb3a77b67e002d4bb6c6a6c81e3c466ae5ff4fb672d891",
+       "shape": {
+        "chars": 538,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 14,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 3,
+         "textChars": 294,
+         "withKeyChars": 345
+        }
+       }
+      },
+      {
+       "tag": "compare",
+       "sha256": "d8faf994f65dc439ef67d9b9e42b1a7e0199a772c408a71891ce9aa7525479d3",
+       "shape": {
+        "chars": 534,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 23,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 73,
+        "descriptions": {
+         "count": 1,
+         "textChars": 176,
+         "withKeyChars": 193
+        }
+       }
+      },
+      {
+       "tag": "add",
+       "sha256": "bc6aa61a3f1bae1fd0ee347cfb22d048de27c78e9f6a5213f903c0cae0b7a5a4",
+       "shape": {
+        "chars": 563,
+        "nodes": 5,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 4,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 20,
+        "enumValueChars": 3,
+        "descriptions": {
+         "count": 4,
+         "textChars": 265,
+         "withKeyChars": 335
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]",
+     "name": "StaffTask",
+     "tagKey": "task",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 4874,
+      "nodes": 58,
+      "maxDepth": 8,
+      "objects": 14,
+      "properties": 44,
+      "optionalFields": 6,
+      "anyOfNodes": 3,
+      "nullableAnyOf": 0,
+      "unions": 3,
+      "unionBranches": 9,
+      "enums": 26,
+      "enumValues": 116,
+      "singletonEnums": 9,
+      "propertyNameChars": 198,
+      "enumValueChars": 393,
+      "descriptions": {
+       "count": 15,
+       "textChars": 1174,
+       "withKeyChars": 1429
+      }
+     },
+     "branches": [
+      {
+       "tag": "name_note",
+       "sha256": "925adcd8a9ecaea0535793a4fadfeb890e6820059fefd0bf0e7523d425f001d9",
+       "shape": {
+        "chars": 641,
+        "nodes": 6,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 15,
+        "singletonEnums": 1,
+        "propertyNameChars": 23,
+        "enumValueChars": 36,
+        "descriptions": {
+         "count": 2,
+         "textChars": 201,
+         "withKeyChars": 235
+        }
+       }
+      },
+      {
+       "tag": "name_value",
+       "sha256": "2b1a4f224cca48eee0469bb04465ed9a91e63a7c2f6ff19ff642e5637fd1ea45",
+       "shape": {
+        "chars": 568,
+        "nodes": 6,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 5,
+        "optionalFields": 2,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 8,
+        "singletonEnums": 1,
+        "propertyNameChars": 23,
+        "enumValueChars": 51,
+        "descriptions": {
+         "count": 2,
+         "textChars": 206,
+         "withKeyChars": 240
+        }
+       }
+      },
+      {
+       "tag": "interval",
+       "sha256": "764ecb2e6f5787a4c09a6ebbb217a8b08945c1df4b225eefcbbebaf24c174c07",
+       "shape": {
+        "chars": 946,
+        "nodes": 9,
+        "maxDepth": 3,
+        "objects": 3,
+        "properties": 8,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 4,
+        "enumValues": 27,
+        "singletonEnums": 1,
+        "propertyNameChars": 38,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 3,
+         "textChars": 268,
+         "withKeyChars": 319
+        }
+       }
+      },
+      {
+       "tag": "time_signature",
+       "sha256": "a2d5d3a2f0b23eb7fe676850fb06b561a9b23888ee330b4b832ee383a4545733",
+       "shape": {
+        "chars": 1424,
+        "nodes": 18,
+        "maxDepth": 7,
+        "objects": 4,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 0,
+        "unions": 1,
+        "unionBranches": 2,
+        "enums": 8,
+        "enumValues": 33,
+        "singletonEnums": 3,
+        "propertyNameChars": 57,
+        "enumValueChars": 129,
+        "descriptions": {
+         "count": 4,
+         "textChars": 320,
+         "withKeyChars": 388
+        }
+       }
+      },
+      {
+       "tag": "write_line",
+       "sha256": "18e926e9b0fb13f3936953a23e4f90ab6c2e496ad2fce4a46853a411364e8b37",
+       "shape": {
+        "chars": 1279,
+        "nodes": 18,
+        "maxDepth": 7,
+        "objects": 4,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 0,
+        "unions": 1,
+        "unionBranches": 2,
+        "enums": 8,
+        "enumValues": 33,
+        "singletonEnums": 3,
+        "propertyNameChars": 57,
+        "enumValueChars": 125,
+        "descriptions": {
+         "count": 4,
+         "textChars": 179,
+         "withKeyChars": 247
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]<time_signature>.bars[][]",
+     "name": "StaffElement",
+     "tagKey": "el",
+     "tagPositions": [
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 727,
+      "nodes": 12,
+      "maxDepth": 4,
+      "objects": 3,
+      "properties": 9,
+      "optionalFields": 2,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 2,
+      "enums": 5,
+      "enumValues": 24,
+      "singletonEnums": 2,
+      "propertyNameChars": 41,
+      "enumValueChars": 87,
+      "descriptions": {
+       "count": 1,
+       "textChars": 5,
+       "withKeyChars": 22
+      }
+     },
+     "branches": [
+      {
+       "tag": "note",
+       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
+       "shape": {
+        "chars": 479,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 18,
+        "singletonEnums": 1,
+        "propertyNameChars": 28,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 1,
+         "textChars": 5,
+         "withKeyChars": 22
+        }
+       }
+      },
+      {
+       "tag": "rest",
+       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
+       "shape": {
+        "chars": 235,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 35,
+        "descriptions": {
+         "count": 0,
+         "textChars": 0,
+         "withKeyChars": 0
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]<write_line>.bars[][]",
+     "name": "StaffElement",
+     "tagKey": "el",
+     "tagPositions": [
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 727,
+      "nodes": 12,
+      "maxDepth": 4,
+      "objects": 3,
+      "properties": 9,
+      "optionalFields": 2,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 2,
+      "enums": 5,
+      "enumValues": 24,
+      "singletonEnums": 2,
+      "propertyNameChars": 41,
+      "enumValueChars": 87,
+      "descriptions": {
+       "count": 1,
+       "textChars": 5,
+       "withKeyChars": 22
+      }
+     },
+     "branches": [
+      {
+       "tag": "note",
+       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
+       "shape": {
+        "chars": 479,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 18,
+        "singletonEnums": 1,
+        "propertyNameChars": 28,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 1,
+         "textChars": 5,
+         "withKeyChars": 22
+        }
+       }
+      },
+      {
+       "tag": "rest",
+       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
+       "shape": {
+        "chars": 235,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 35,
+        "descriptions": {
+         "count": 0,
+         "textChars": 0,
+         "withKeyChars": 0
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".structured[]",
+     "name": "StructuredAnswer = StructuredTask = StructuredTaskView = StructuredDraft = StructuredDraftHomework = StructuredDraftNoHelp",
+     "tagKey": "type",
+     "tagPositions": [
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 4096,
+      "nodes": 56,
+      "maxDepth": 7,
+      "objects": 6,
+      "properties": 31,
+      "optionalFields": 11,
+      "anyOfNodes": 14,
+      "nullableAnyOf": 13,
+      "unions": 1,
+      "unionBranches": 3,
+      "enums": 6,
+      "enumValues": 10,
+      "singletonEnums": 3,
+      "propertyNameChars": 188,
+      "enumValueChars": 73,
+      "descriptions": {
+       "count": 29,
+       "textChars": 1450,
+       "withKeyChars": 1947
+      }
+     },
+     "branches": [
+      {
+       "tag": "order",
+       "sha256": "a149972fc51aba2eb73344314b8831c19dbf108ae6e1b0956db1060aa17a470b",
+       "shape": {
+        "chars": 978,
+        "nodes": 12,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 7,
+        "optionalFields": 2,
+        "anyOfNodes": 3,
+        "nullableAnyOf": 3,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 51,
+        "enumValueChars": 24,
+        "descriptions": {
+         "count": 6,
+         "textChars": 395,
+         "withKeyChars": 497
+        }
+       }
+      },
+      {
+       "tag": "table_fill",
+       "sha256": "2a0869e81e0e019f3edf34f6ab0692f2dfe205bc2ffe4e46e5f72392da70a74e",
+       "shape": {
+        "chars": 1771,
+        "nodes": 24,
+        "maxDepth": 6,
+        "objects": 2,
+        "properties": 13,
+        "optionalFields": 6,
+        "anyOfNodes": 6,
+        "nullableAnyOf": 6,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 69,
+        "enumValueChars": 44,
+        "descriptions": {
+         "count": 14,
+         "textChars": 637,
+         "withKeyChars": 879
+        }
+       }
+      },
+      {
+       "tag": "match",
+       "sha256": "578de24afb27f8437d14865c7ea5325ff15c3695d4bd8696b0ab6a353f331beb",
+       "shape": {
+        "chars": 1333,
+        "nodes": 19,
+        "maxDepth": 6,
+        "objects": 3,
+        "properties": 11,
+        "optionalFields": 3,
+        "anyOfNodes": 4,
+        "nullableAnyOf": 4,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 68,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 9,
+         "textChars": 418,
+         "withKeyChars": 571
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "purpose": "explain",
+   "profile": "kind=help",
+   "tier": "smart",
+   "model": "eu/gemini-3.6-flash",
+   "promptVersion": "generate.v1.16",
+   "where": "practice/generate.ts — explainSchemaFor('help', null)",
+   "system": {
+    "chars": 11124,
+    "sha256": "b9aaebc2c9bd514e33e34a2427d3df4c8fbb9c53670f4dce37071552b145c99e",
+    "textTokens": null
+   },
+   "schema": {
+    "chars": 27372,
+    "sha256": "e491820afd69d8a718e6e3a89ae88c2380906d081639df2aa8e258a4268673d0",
+    "textTokens": null,
+    "shape": {
+     "chars": 27372,
+     "nodes": 384,
+     "maxDepth": 11,
+     "objects": 64,
+     "properties": 252,
+     "optionalFields": 35,
+     "anyOfNodes": 48,
+     "nullableAnyOf": 41,
+     "unions": 7,
+     "unionBranches": 33,
+     "enums": 67,
+     "enumValues": 257,
+     "singletonEnums": 33,
+     "propertyNameChars": 1132,
+     "enumValueChars": 1318,
+     "descriptions": {
+      "count": 141,
+      "textChars": 7448,
+      "withKeyChars": 9865
+     }
+    },
+    "topLevel": [
+     {
+      "key": "usable",
+      "chars": 110,
+      "share": 0.004018705246237031,
+      "descriptions": {
+       "count": 1,
+       "textChars": 75,
+       "withKeyChars": 92
+      }
+     },
+     {
+      "key": "title",
+      "chars": 17,
+      "share": 0.0006210726289639047,
+      "descriptions": {
+       "count": 0,
+       "textChars": 0,
+       "withKeyChars": 0
+      }
+     },
+     {
+      "key": "subject",
+      "chars": 385,
+      "share": 0.014065468361829607,
+      "descriptions": {
+       "count": 0,
+       "textChars": 0,
+       "withKeyChars": 0
+      }
+     },
+     {
+      "key": "items",
+      "chars": 15884,
+      "share": 0.5803010375566272,
+      "descriptions": {
+       "count": 85,
+       "textChars": 3963,
+       "withKeyChars": 5422
+      }
+     },
+     {
+      "key": "bars",
+      "chars": 1708,
+      "share": 0.062399532368844074,
+      "descriptions": {
+       "count": 9,
+       "textChars": 752,
+       "withKeyChars": 907
+      }
+     },
+     {
+      "key": "staffs",
+      "chars": 4933,
+      "share": 0.18022066345170246,
+      "descriptions": {
+       "count": 16,
+       "textChars": 1191,
+       "withKeyChars": 1463
+      }
+     },
+     {
+      "key": "structured",
+      "chars": 4155,
+      "share": 0.15179745725558966,
+      "descriptions": {
+       "count": 30,
+       "textChars": 1467,
+       "withKeyChars": 1981
+      }
+     }
+    ]
+   },
+   "unions": [
+    {
+     "path": ".items[].figure",
+     "name": "ModelFigure",
+     "tagKey": "type",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 9478,
+      "nodes": 186,
+      "maxDepth": 6,
+      "objects": 31,
+      "properties": 122,
+      "optionalFields": 7,
+      "anyOfNodes": 13,
+      "nullableAnyOf": 12,
+      "unions": 1,
+      "unionBranches": 14,
+      "enums": 19,
+      "enumValues": 42,
+      "singletonEnums": 14,
+      "propertyNameChars": 437,
+      "enumValueChars": 229,
+      "descriptions": {
+       "count": 55,
+       "textChars": 965,
+       "withKeyChars": 1902
+      }
+     },
+     "branches": [
+      {
+       "tag": "fraction",
+       "sha256": "7b3f33778c78295c81fd6b794abd165093aab4b2d516a435be720795dfedc294",
+       "shape": {
+        "chars": 454,
+        "nodes": 7,
+        "maxDepth": 4,
+        "objects": 2,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 29,
+        "enumValueChars": 17,
+        "descriptions": {
+         "count": 3,
+         "textChars": 23,
+         "withKeyChars": 74
+        }
+       }
+      },
+      {
+       "tag": "number_line",
+       "sha256": "ede5879e1979652a48362b85f25c124f60229dab0330e505bcab68a47a2ba16e",
+       "shape": {
+        "chars": 498,
+        "nodes": 10,
+        "maxDepth": 5,
+        "objects": 2,
+        "properties": 7,
+        "optionalFields": 0,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 1,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 30,
+        "enumValueChars": 11,
+        "descriptions": {
+         "count": 2,
+         "textChars": 29,
+         "withKeyChars": 63
+        }
+       }
+      },
+      {
+       "tag": "function_plot",
+       "sha256": "314d38ff52b530ef6add8184699db71770b1f482c83b0075fd85e743f045c4e5",
+       "shape": {
+        "chars": 785,
+        "nodes": 17,
+        "maxDepth": 5,
+        "objects": 3,
+        "properties": 12,
+        "optionalFields": 0,
+        "anyOfNodes": 2,
+        "nullableAnyOf": 2,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 55,
+        "enumValueChars": 13,
+        "descriptions": {
+         "count": 2,
+         "textChars": 34,
+         "withKeyChars": 68
+        }
+       }
+      },
+      {
+       "tag": "bar_chart",
+       "sha256": "01d98dc975376eb118f37a298d03beafecfb7203ccd7feef205851561443e645",
+       "shape": {
+        "chars": 398,
+        "nodes": 8,
+        "maxDepth": 4,
+        "objects": 2,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 1,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 22,
+        "enumValueChars": 9,
+        "descriptions": {
+         "count": 1,
+         "textChars": 12,
+         "withKeyChars": 29
+        }
+       }
+      },
+      {
+       "tag": "geometry",
+       "sha256": "5ceb216e271674f301d61aad4ba82f235877f830c0742f6eb7082887c75fb244",
+       "shape": {
+        "chars": 2762,
+        "nodes": 54,
+        "maxDepth": 5,
+        "objects": 9,
+        "properties": 35,
+        "optionalFields": 5,
+        "anyOfNodes": 7,
+        "nullableAnyOf": 7,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 4,
+        "singletonEnums": 1,
+        "propertyNameChars": 158,
+        "enumValueChars": 24,
+        "descriptions": {
+         "count": 14,
+         "textChars": 353,
+         "withKeyChars": 593
+        }
+       }
+      },
+      {
+       "tag": "table",
+       "sha256": "a015f639dc9d027047a34914cb02955a04702de198b8ec227ca567a0cb2a88d5",
+       "shape": {
+        "chars": 351,
+        "nodes": 7,
+        "maxDepth": 4,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 14,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 3,
+         "textChars": 34,
+         "withKeyChars": 85
+        }
+       }
+      },
+      {
+       "tag": "molecule",
+       "sha256": "c9b1b31f00456b00c9d02ca7c9f7307ec768d7a84e72f801c207fa75c80bf7b3",
+       "shape": {
+        "chars": 1246,
+        "nodes": 18,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 1,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 4,
+        "enumValues": 24,
+        "singletonEnums": 1,
+        "propertyNameChars": 44,
+        "enumValueChars": 82,
+        "descriptions": {
+         "count": 8,
+         "textChars": 239,
+         "withKeyChars": 375
+        }
+       }
+      },
+      {
+       "tag": "line_chart",
+       "sha256": "759ab5b9c2e8bcb326a840d07476339af3b253723384f653b46485eb50c02d62",
+       "shape": {
+        "chars": 562,
+        "nodes": 13,
+        "maxDepth": 5,
+        "objects": 2,
+        "properties": 9,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 15,
+        "enumValueChars": 10,
+        "descriptions": {
+         "count": 3,
+         "textChars": 35,
+         "withKeyChars": 86
+        }
+       }
+      },
+      {
+       "tag": "climate_chart",
+       "sha256": "4ca89686c9033e57efa05e03defc561c5d993f3d1d65a70411f87ddca4bc6510",
+       "shape": {
+        "chars": 376,
+        "nodes": 8,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 14,
+        "enumValueChars": 13,
+        "descriptions": {
+         "count": 3,
+         "textChars": 27,
+         "withKeyChars": 78
+        }
+       }
+      },
+      {
+       "tag": "pie_chart",
+       "sha256": "fe1befdc189cf32c956f37c5f2cfc00d992108967750f7a40340a3bea9a72552",
+       "shape": {
+        "chars": 342,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 4,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 10,
+        "enumValueChars": 9,
+        "descriptions": {
+         "count": 3,
+         "textChars": 29,
+         "withKeyChars": 80
+        }
+       }
+      },
+      {
+       "tag": "box_plot",
+       "sha256": "3d5f0fbf53dcd100a7912bb7297128c7f92583384ea0ac3a2ac84de829bfb064",
+       "shape": {
+        "chars": 455,
+        "nodes": 10,
+        "maxDepth": 5,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 11,
+        "enumValueChars": 8,
+        "descriptions": {
+         "count": 2,
+         "textChars": 29,
+         "withKeyChars": 63
+        }
+       }
+      },
+      {
+       "tag": "histogram",
+       "sha256": "07aa4ed5d1298a49e9a98dcb708455e57117bb679bbe013533d135929486edea",
+       "shape": {
+        "chars": 375,
+        "nodes": 8,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 12,
+        "enumValueChars": 9,
+        "descriptions": {
+         "count": 3,
+         "textChars": 36,
+         "withKeyChars": 87
+        }
+       }
+      },
+      {
+       "tag": "scatter_plot",
+       "sha256": "205bf0538e9453c15f468025feb451f28baa1bc1d987e4091392c36f3bfa1e3d",
+       "shape": {
+        "chars": 377,
+        "nodes": 9,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 12,
+        "descriptions": {
+         "count": 2,
+         "textChars": 24,
+         "withKeyChars": 58
+        }
+       }
+      },
+      {
+       "tag": "pyramid",
+       "sha256": "64bc080081a0945db55e562bb7c8c79ff3b9535917584c6969ca155ff7e8fd11",
+       "shape": {
+        "chars": 472,
+        "nodes": 9,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 6,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 10,
+        "enumValueChars": 7,
+        "descriptions": {
+         "count": 6,
+         "textChars": 61,
+         "withKeyChars": 163
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".items[].rubric.elements[].check",
+     "name": "RubricCheck",
+     "tagKey": "by",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 1820,
+      "nodes": 17,
+      "maxDepth": 4,
+      "objects": 4,
+      "properties": 9,
+      "optionalFields": 0,
+      "anyOfNodes": 3,
+      "nullableAnyOf": 2,
+      "unions": 1,
+      "unionBranches": 4,
+      "enums": 6,
+      "enumValues": 8,
+      "singletonEnums": 4,
+      "propertyNameChars": 29,
+      "enumValueChars": 55,
+      "descriptions": {
+       "count": 8,
+       "textChars": 883,
+       "withKeyChars": 1019
+      }
+     },
+     "branches": [
+      {
+       "tag": "word_count",
+       "sha256": "055150f71dbbf5cf9c21396f32a543e7a050df1c188e8a01c17787f3081919fa",
+       "shape": {
+        "chars": 436,
+        "nodes": 6,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 2,
+        "nullableAnyOf": 2,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 8,
+        "enumValueChars": 10,
+        "descriptions": {
+         "count": 3,
+         "textChars": 143,
+         "withKeyChars": 194
+        }
+       }
+      },
+      {
+       "tag": "mentions",
+       "sha256": "96daa49ba40ea46a7e6c0c7b5349251181101f007daaaf784ac432ccb2a91fb1",
+       "shape": {
+        "chars": 695,
+        "nodes": 5,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 12,
+        "enumValueChars": 23,
+        "descriptions": {
+         "count": 3,
+         "textChars": 399,
+         "withKeyChars": 450
+        }
+       }
+      },
+      {
+       "tag": "tense",
+       "sha256": "eaff0aabdfe14c8511c3417a15ed2d71056fba3cdafcf25ed506b7a5e6e77447",
+       "shape": {
+        "chars": 336,
+        "nodes": 3,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 2,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 7,
+        "enumValueChars": 16,
+        "descriptions": {
+         "count": 1,
+         "textChars": 140,
+         "withKeyChars": 157
+        }
+       }
+      },
+      {
+       "tag": "judged",
+       "sha256": "06ecec88c9d81327de54821bc3e896597e1a38341e1fdf6a224b7b25a3754d49",
+       "shape": {
+        "chars": 338,
+        "nodes": 2,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 1,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 2,
+        "enumValueChars": 6,
+        "descriptions": {
+         "count": 1,
+         "textChars": 201,
+         "withKeyChars": 218
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".bars[]",
+     "name": "BarTask",
+     "tagKey": "task",
+     "tagPositions": [
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 1649,
+      "nodes": 14,
+      "maxDepth": 3,
+      "objects": 3,
+      "properties": 10,
+      "optionalFields": 0,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 3,
+      "enums": 5,
+      "enumValues": 25,
+      "singletonEnums": 3,
+      "propertyNameChars": 47,
+      "enumValueChars": 81,
+      "descriptions": {
+       "count": 8,
+       "textChars": 735,
+       "withKeyChars": 873
+      }
+     },
+     "branches": [
+      {
+       "tag": "shade",
+       "sha256": "e90d36246743649a8dfb3a77b67e002d4bb6c6a6c81e3c466ae5ff4fb672d891",
+       "shape": {
+        "chars": 538,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 14,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 3,
+         "textChars": 294,
+         "withKeyChars": 345
+        }
+       }
+      },
+      {
+       "tag": "compare",
+       "sha256": "d8faf994f65dc439ef67d9b9e42b1a7e0199a772c408a71891ce9aa7525479d3",
+       "shape": {
+        "chars": 534,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 23,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 73,
+        "descriptions": {
+         "count": 1,
+         "textChars": 176,
+         "withKeyChars": 193
+        }
+       }
+      },
+      {
+       "tag": "add",
+       "sha256": "bc6aa61a3f1bae1fd0ee347cfb22d048de27c78e9f6a5213f903c0cae0b7a5a4",
+       "shape": {
+        "chars": 563,
+        "nodes": 5,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 4,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 20,
+        "enumValueChars": 3,
+        "descriptions": {
+         "count": 4,
+         "textChars": 265,
+         "withKeyChars": 335
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]",
+     "name": "StaffTask",
+     "tagKey": "task",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 4874,
+      "nodes": 58,
+      "maxDepth": 8,
+      "objects": 14,
+      "properties": 44,
+      "optionalFields": 6,
+      "anyOfNodes": 3,
+      "nullableAnyOf": 0,
+      "unions": 3,
+      "unionBranches": 9,
+      "enums": 26,
+      "enumValues": 116,
+      "singletonEnums": 9,
+      "propertyNameChars": 198,
+      "enumValueChars": 393,
+      "descriptions": {
+       "count": 15,
+       "textChars": 1174,
+       "withKeyChars": 1429
+      }
+     },
+     "branches": [
+      {
+       "tag": "name_note",
+       "sha256": "925adcd8a9ecaea0535793a4fadfeb890e6820059fefd0bf0e7523d425f001d9",
+       "shape": {
+        "chars": 641,
+        "nodes": 6,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 15,
+        "singletonEnums": 1,
+        "propertyNameChars": 23,
+        "enumValueChars": 36,
+        "descriptions": {
+         "count": 2,
+         "textChars": 201,
+         "withKeyChars": 235
+        }
+       }
+      },
+      {
+       "tag": "name_value",
+       "sha256": "2b1a4f224cca48eee0469bb04465ed9a91e63a7c2f6ff19ff642e5637fd1ea45",
+       "shape": {
+        "chars": 568,
+        "nodes": 6,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 5,
+        "optionalFields": 2,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 8,
+        "singletonEnums": 1,
+        "propertyNameChars": 23,
+        "enumValueChars": 51,
+        "descriptions": {
+         "count": 2,
+         "textChars": 206,
+         "withKeyChars": 240
+        }
+       }
+      },
+      {
+       "tag": "interval",
+       "sha256": "764ecb2e6f5787a4c09a6ebbb217a8b08945c1df4b225eefcbbebaf24c174c07",
+       "shape": {
+        "chars": 946,
+        "nodes": 9,
+        "maxDepth": 3,
+        "objects": 3,
+        "properties": 8,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 4,
+        "enumValues": 27,
+        "singletonEnums": 1,
+        "propertyNameChars": 38,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 3,
+         "textChars": 268,
+         "withKeyChars": 319
+        }
+       }
+      },
+      {
+       "tag": "time_signature",
+       "sha256": "a2d5d3a2f0b23eb7fe676850fb06b561a9b23888ee330b4b832ee383a4545733",
+       "shape": {
+        "chars": 1424,
+        "nodes": 18,
+        "maxDepth": 7,
+        "objects": 4,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 0,
+        "unions": 1,
+        "unionBranches": 2,
+        "enums": 8,
+        "enumValues": 33,
+        "singletonEnums": 3,
+        "propertyNameChars": 57,
+        "enumValueChars": 129,
+        "descriptions": {
+         "count": 4,
+         "textChars": 320,
+         "withKeyChars": 388
+        }
+       }
+      },
+      {
+       "tag": "write_line",
+       "sha256": "18e926e9b0fb13f3936953a23e4f90ab6c2e496ad2fce4a46853a411364e8b37",
+       "shape": {
+        "chars": 1279,
+        "nodes": 18,
+        "maxDepth": 7,
+        "objects": 4,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 0,
+        "unions": 1,
+        "unionBranches": 2,
+        "enums": 8,
+        "enumValues": 33,
+        "singletonEnums": 3,
+        "propertyNameChars": 57,
+        "enumValueChars": 125,
+        "descriptions": {
+         "count": 4,
+         "textChars": 179,
+         "withKeyChars": 247
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]<time_signature>.bars[][]",
+     "name": "StaffElement",
+     "tagKey": "el",
+     "tagPositions": [
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 727,
+      "nodes": 12,
+      "maxDepth": 4,
+      "objects": 3,
+      "properties": 9,
+      "optionalFields": 2,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 2,
+      "enums": 5,
+      "enumValues": 24,
+      "singletonEnums": 2,
+      "propertyNameChars": 41,
+      "enumValueChars": 87,
+      "descriptions": {
+       "count": 1,
+       "textChars": 5,
+       "withKeyChars": 22
+      }
+     },
+     "branches": [
+      {
+       "tag": "note",
+       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
+       "shape": {
+        "chars": 479,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 18,
+        "singletonEnums": 1,
+        "propertyNameChars": 28,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 1,
+         "textChars": 5,
+         "withKeyChars": 22
+        }
+       }
+      },
+      {
+       "tag": "rest",
+       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
+       "shape": {
+        "chars": 235,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 35,
+        "descriptions": {
+         "count": 0,
+         "textChars": 0,
+         "withKeyChars": 0
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]<write_line>.bars[][]",
+     "name": "StaffElement",
+     "tagKey": "el",
+     "tagPositions": [
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 727,
+      "nodes": 12,
+      "maxDepth": 4,
+      "objects": 3,
+      "properties": 9,
+      "optionalFields": 2,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 2,
+      "enums": 5,
+      "enumValues": 24,
+      "singletonEnums": 2,
+      "propertyNameChars": 41,
+      "enumValueChars": 87,
+      "descriptions": {
+       "count": 1,
+       "textChars": 5,
+       "withKeyChars": 22
+      }
+     },
+     "branches": [
+      {
+       "tag": "note",
+       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
+       "shape": {
+        "chars": 479,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 18,
+        "singletonEnums": 1,
+        "propertyNameChars": 28,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 1,
+         "textChars": 5,
+         "withKeyChars": 22
+        }
+       }
+      },
+      {
+       "tag": "rest",
+       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
+       "shape": {
+        "chars": 235,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 35,
+        "descriptions": {
+         "count": 0,
+         "textChars": 0,
+         "withKeyChars": 0
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".structured[]",
+     "name": "StructuredAnswer = StructuredTask = StructuredTaskView = StructuredDraft = StructuredDraftHomework = StructuredDraftNoHelp",
+     "tagKey": "type",
+     "tagPositions": [
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 4096,
+      "nodes": 56,
+      "maxDepth": 7,
+      "objects": 6,
+      "properties": 31,
+      "optionalFields": 11,
+      "anyOfNodes": 14,
+      "nullableAnyOf": 13,
+      "unions": 1,
+      "unionBranches": 3,
+      "enums": 6,
+      "enumValues": 10,
+      "singletonEnums": 3,
+      "propertyNameChars": 188,
+      "enumValueChars": 73,
+      "descriptions": {
+       "count": 29,
+       "textChars": 1450,
+       "withKeyChars": 1947
+      }
+     },
+     "branches": [
+      {
+       "tag": "order",
+       "sha256": "a149972fc51aba2eb73344314b8831c19dbf108ae6e1b0956db1060aa17a470b",
+       "shape": {
+        "chars": 978,
+        "nodes": 12,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 7,
+        "optionalFields": 2,
+        "anyOfNodes": 3,
+        "nullableAnyOf": 3,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 51,
+        "enumValueChars": 24,
+        "descriptions": {
+         "count": 6,
+         "textChars": 395,
+         "withKeyChars": 497
+        }
+       }
+      },
+      {
+       "tag": "table_fill",
+       "sha256": "2a0869e81e0e019f3edf34f6ab0692f2dfe205bc2ffe4e46e5f72392da70a74e",
+       "shape": {
+        "chars": 1771,
+        "nodes": 24,
+        "maxDepth": 6,
+        "objects": 2,
+        "properties": 13,
+        "optionalFields": 6,
+        "anyOfNodes": 6,
+        "nullableAnyOf": 6,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 69,
+        "enumValueChars": 44,
+        "descriptions": {
+         "count": 14,
+         "textChars": 637,
+         "withKeyChars": 879
+        }
+       }
+      },
+      {
+       "tag": "match",
+       "sha256": "578de24afb27f8437d14865c7ea5325ff15c3695d4bd8696b0ab6a353f331beb",
+       "shape": {
+        "chars": 1333,
+        "nodes": 19,
+        "maxDepth": 6,
+        "objects": 3,
+        "properties": 11,
+        "optionalFields": 3,
+        "anyOfNodes": 4,
+        "nullableAnyOf": 4,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 68,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 9,
+         "textChars": 418,
+         "withKeyChars": 571
+        }
+       }
+      }
+     ]
     }
    ]
   },
@@ -7457,36 +9766,36 @@
     "textTokens": null
    },
    "schema": {
-    "chars": 5951,
-    "sha256": "b3c363de0bce647101320060028e6ea5463620cf34de79595354fcd6d34f5ed9",
+    "chars": 10894,
+    "sha256": "9dd266ab4b51bb498f1922002d435bbe36944a0ecc544d47dd04f70d89b2b132",
     "textTokens": null,
     "shape": {
-     "chars": 5951,
-     "nodes": 52,
+     "chars": 10894,
+     "nodes": 111,
      "maxDepth": 13,
-     "objects": 10,
-     "properties": 33,
-     "optionalFields": 3,
-     "anyOfNodes": 10,
+     "objects": 24,
+     "properties": 78,
+     "optionalFields": 10,
+     "anyOfNodes": 13,
      "nullableAnyOf": 9,
-     "unions": 1,
-     "unionBranches": 4,
-     "enums": 9,
-     "enumValues": 40,
-     "singletonEnums": 4,
-     "propertyNameChars": 196,
-     "enumValueChars": 420,
+     "unions": 4,
+     "unionBranches": 13,
+     "enums": 35,
+     "enumValues": 156,
+     "singletonEnums": 13,
+     "propertyNameChars": 400,
+     "enumValueChars": 813,
      "descriptions": {
-      "count": 26,
-      "textChars": 2700,
-      "withKeyChars": 3148
+      "count": 42,
+      "textChars": 3891,
+      "withKeyChars": 4611
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.018484288354898338,
+      "share": 0.01009730126675234,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -7496,7 +9805,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.0028566627457570154,
+      "share": 0.0015604920139526345,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -7506,7 +9815,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.06469500924214418,
+      "share": 0.035340554433633195,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -7516,11 +9825,21 @@
      {
       "key": "listen",
       "chars": 5298,
-      "share": 0.8902705427659217,
+      "share": 0.48632274646594453,
       "descriptions": {
        "count": 25,
        "textChars": 2625,
        "withKeyChars": 3056
+      }
+     },
+     {
+      "key": "staffs",
+      "chars": 4933,
+      "share": 0.4528180649899027,
+      "descriptions": {
+       "count": 16,
+       "textChars": 1191,
+       "withKeyChars": 1463
       }
      }
     ]
@@ -7664,6 +9983,342 @@
        }
       }
      ]
+    },
+    {
+     "path": ".staffs[]",
+     "name": "StaffTask",
+     "tagKey": "task",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 4874,
+      "nodes": 58,
+      "maxDepth": 8,
+      "objects": 14,
+      "properties": 44,
+      "optionalFields": 6,
+      "anyOfNodes": 3,
+      "nullableAnyOf": 0,
+      "unions": 3,
+      "unionBranches": 9,
+      "enums": 26,
+      "enumValues": 116,
+      "singletonEnums": 9,
+      "propertyNameChars": 198,
+      "enumValueChars": 393,
+      "descriptions": {
+       "count": 15,
+       "textChars": 1174,
+       "withKeyChars": 1429
+      }
+     },
+     "branches": [
+      {
+       "tag": "name_note",
+       "sha256": "925adcd8a9ecaea0535793a4fadfeb890e6820059fefd0bf0e7523d425f001d9",
+       "shape": {
+        "chars": 641,
+        "nodes": 6,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 5,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 15,
+        "singletonEnums": 1,
+        "propertyNameChars": 23,
+        "enumValueChars": 36,
+        "descriptions": {
+         "count": 2,
+         "textChars": 201,
+         "withKeyChars": 235
+        }
+       }
+      },
+      {
+       "tag": "name_value",
+       "sha256": "2b1a4f224cca48eee0469bb04465ed9a91e63a7c2f6ff19ff642e5637fd1ea45",
+       "shape": {
+        "chars": 568,
+        "nodes": 6,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 5,
+        "optionalFields": 2,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 8,
+        "singletonEnums": 1,
+        "propertyNameChars": 23,
+        "enumValueChars": 51,
+        "descriptions": {
+         "count": 2,
+         "textChars": 206,
+         "withKeyChars": 240
+        }
+       }
+      },
+      {
+       "tag": "interval",
+       "sha256": "764ecb2e6f5787a4c09a6ebbb217a8b08945c1df4b225eefcbbebaf24c174c07",
+       "shape": {
+        "chars": 946,
+        "nodes": 9,
+        "maxDepth": 3,
+        "objects": 3,
+        "properties": 8,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 4,
+        "enumValues": 27,
+        "singletonEnums": 1,
+        "propertyNameChars": 38,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 3,
+         "textChars": 268,
+         "withKeyChars": 319
+        }
+       }
+      },
+      {
+       "tag": "time_signature",
+       "sha256": "a2d5d3a2f0b23eb7fe676850fb06b561a9b23888ee330b4b832ee383a4545733",
+       "shape": {
+        "chars": 1424,
+        "nodes": 18,
+        "maxDepth": 7,
+        "objects": 4,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 0,
+        "unions": 1,
+        "unionBranches": 2,
+        "enums": 8,
+        "enumValues": 33,
+        "singletonEnums": 3,
+        "propertyNameChars": 57,
+        "enumValueChars": 129,
+        "descriptions": {
+         "count": 4,
+         "textChars": 320,
+         "withKeyChars": 388
+        }
+       }
+      },
+      {
+       "tag": "write_line",
+       "sha256": "18e926e9b0fb13f3936953a23e4f90ab6c2e496ad2fce4a46853a411364e8b37",
+       "shape": {
+        "chars": 1279,
+        "nodes": 18,
+        "maxDepth": 7,
+        "objects": 4,
+        "properties": 13,
+        "optionalFields": 2,
+        "anyOfNodes": 1,
+        "nullableAnyOf": 0,
+        "unions": 1,
+        "unionBranches": 2,
+        "enums": 8,
+        "enumValues": 33,
+        "singletonEnums": 3,
+        "propertyNameChars": 57,
+        "enumValueChars": 125,
+        "descriptions": {
+         "count": 4,
+         "textChars": 179,
+         "withKeyChars": 247
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]<time_signature>.bars[][]",
+     "name": "StaffElement",
+     "tagKey": "el",
+     "tagPositions": [
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 727,
+      "nodes": 12,
+      "maxDepth": 4,
+      "objects": 3,
+      "properties": 9,
+      "optionalFields": 2,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 2,
+      "enums": 5,
+      "enumValues": 24,
+      "singletonEnums": 2,
+      "propertyNameChars": 41,
+      "enumValueChars": 87,
+      "descriptions": {
+       "count": 1,
+       "textChars": 5,
+       "withKeyChars": 22
+      }
+     },
+     "branches": [
+      {
+       "tag": "note",
+       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
+       "shape": {
+        "chars": 479,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 18,
+        "singletonEnums": 1,
+        "propertyNameChars": 28,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 1,
+         "textChars": 5,
+         "withKeyChars": 22
+        }
+       }
+      },
+      {
+       "tag": "rest",
+       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
+       "shape": {
+        "chars": 235,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 35,
+        "descriptions": {
+         "count": 0,
+         "textChars": 0,
+         "withKeyChars": 0
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".staffs[]<write_line>.bars[][]",
+     "name": "StaffElement",
+     "tagKey": "el",
+     "tagPositions": [
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 727,
+      "nodes": 12,
+      "maxDepth": 4,
+      "objects": 3,
+      "properties": 9,
+      "optionalFields": 2,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 2,
+      "enums": 5,
+      "enumValues": 24,
+      "singletonEnums": 2,
+      "propertyNameChars": 41,
+      "enumValueChars": 87,
+      "descriptions": {
+       "count": 1,
+       "textChars": 5,
+       "withKeyChars": 22
+      }
+     },
+     "branches": [
+      {
+       "tag": "note",
+       "sha256": "d1aa1585a639fcd97b4cd469f66b801ebeeeb8277252782b5a73a5805e19174a",
+       "shape": {
+        "chars": 479,
+        "nodes": 7,
+        "maxDepth": 3,
+        "objects": 2,
+        "properties": 6,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 18,
+        "singletonEnums": 1,
+        "propertyNameChars": 28,
+        "enumValueChars": 52,
+        "descriptions": {
+         "count": 1,
+         "textChars": 5,
+         "withKeyChars": 22
+        }
+       }
+      },
+      {
+       "tag": "rest",
+       "sha256": "02dba5f10ca41dc0898c564fe40782689c42599361c5a3586860960070bfb06b",
+       "shape": {
+        "chars": 235,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 1,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 6,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 35,
+        "descriptions": {
+         "count": 0,
+         "textChars": 0,
+         "withKeyChars": 0
+        }
+       }
+      }
+     ]
     }
    ]
   },
@@ -7680,11 +10335,11 @@
     "textTokens": null
    },
    "schema": {
-    "chars": 27401,
-    "sha256": "7e243a9aa46f1db504336b7f46e0665ef4c3bbc1e97c8a9e4b03973c6c699bd6",
+    "chars": 27409,
+    "sha256": "ca90ae78b1ba326876405c3f2b14925805b0be305e05dca04e4fb63ca26b351b",
     "textTokens": null,
     "shape": {
-     "chars": 27401,
+     "chars": 27409,
      "nodes": 383,
      "maxDepth": 11,
      "objects": 64,
@@ -7695,10 +10350,10 @@
      "unions": 7,
      "unionBranches": 33,
      "enums": 68,
-     "enumValues": 259,
+     "enumValues": 260,
      "singletonEnums": 33,
      "propertyNameChars": 1132,
-     "enumValueChars": 1354,
+     "enumValueChars": 1359,
      "descriptions": {
       "count": 141,
       "textChars": 7454,
@@ -7709,7 +10364,7 @@
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.004014452027298274,
+      "share": 0.004013280309387427,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -7719,7 +10374,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.0006204153133097332,
+      "share": 0.0006202342296326024,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -7729,7 +10384,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.014050582095543959,
+      "share": 0.014046481082855996,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -7738,8 +10393,8 @@
      },
      {
       "key": "items",
-      "chars": 15913,
-      "share": 0.5807452282763402,
+      "chars": 15921,
+      "share": 0.5808675982341567,
       "descriptions": {
        "count": 85,
        "textChars": 3969,
@@ -7749,7 +10404,7 @@
      {
       "key": "bars",
       "chars": 1708,
-      "share": 0.062333491478413196,
+      "share": 0.06231529789485206,
       "descriptions": {
        "count": 9,
        "textChars": 752,
@@ -7759,7 +10414,7 @@
      {
       "key": "staffs",
       "chars": 4933,
-      "share": 0.18002992591511258,
+      "share": 0.17997737969280164,
       "descriptions": {
        "count": 16,
        "textChars": 1191,
@@ -7769,7 +10424,7 @@
      {
       "key": "structured",
       "chars": 4155,
-      "share": 0.1516368015765848,
+      "share": 0.15159254259549784,
       "descriptions": {
        "count": 30,
        "textChars": 1467,
@@ -8902,36 +11557,36 @@
     "textTokens": null
    },
    "schema": {
-    "chars": 22441,
-    "sha256": "9bd3786f8d2036df23aaffe3d116d5e53c5dbb1f5f2870d746eba7e3077719ba",
+    "chars": 27409,
+    "sha256": "ca90ae78b1ba326876405c3f2b14925805b0be305e05dca04e4fb63ca26b351b",
     "textTokens": null,
     "shape": {
-     "chars": 22441,
-     "nodes": 344,
-     "maxDepth": 10,
-     "objects": 55,
-     "properties": 226,
-     "optionalFields": 33,
-     "anyOfNodes": 42,
-     "nullableAnyOf": 37,
-     "unions": 5,
-     "unionBranches": 26,
-     "enums": 57,
-     "enumValues": 225,
-     "singletonEnums": 26,
-     "propertyNameChars": 1018,
-     "enumValueChars": 1214,
+     "chars": 27409,
+     "nodes": 383,
+     "maxDepth": 11,
+     "objects": 64,
+     "properties": 252,
+     "optionalFields": 35,
+     "anyOfNodes": 47,
+     "nullableAnyOf": 40,
+     "unions": 7,
+     "unionBranches": 33,
+     "enums": 68,
+     "enumValues": 260,
+     "singletonEnums": 33,
+     "propertyNameChars": 1132,
+     "enumValueChars": 1359,
      "descriptions": {
-      "count": 119,
-      "textChars": 4846,
-      "withKeyChars": 6881
+      "count": 141,
+      "textChars": 7454,
+      "withKeyChars": 9871
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.004901742346597745,
+      "share": 0.004013280309387427,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -8941,7 +11596,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.0007575419990196515,
+      "share": 0.0006202342296326024,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -8951,7 +11606,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.017156098213092108,
+      "share": 0.014046481082855996,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -8960,18 +11615,28 @@
      },
      {
       "key": "items",
-      "chars": 12669,
-      "share": 0.5645470344458803,
+      "chars": 15921,
+      "share": 0.5808675982341567,
       "descriptions": {
-       "count": 72,
-       "textChars": 2113,
-       "withKeyChars": 3345
+       "count": 85,
+       "textChars": 3969,
+       "withKeyChars": 5428
+      }
+     },
+     {
+      "key": "bars",
+      "chars": 1708,
+      "share": 0.06231529789485206,
+      "descriptions": {
+       "count": 9,
+       "textChars": 752,
+       "withKeyChars": 907
       }
      },
      {
       "key": "staffs",
       "chars": 4933,
-      "share": 0.2198208635978789,
+      "share": 0.17997737969280164,
       "descriptions": {
        "count": 16,
        "textChars": 1191,
@@ -8981,7 +11646,7 @@
      {
       "key": "structured",
       "chars": 4155,
-      "share": 0.18515217681921484,
+      "share": 0.15159254259549784,
       "descriptions": {
        "count": 30,
        "textChars": 1467,
@@ -9395,6 +12060,257 @@
          "count": 6,
          "textChars": 61,
          "withKeyChars": 163
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".items[].rubric.elements[].check",
+     "name": "RubricCheck",
+     "tagKey": "by",
+     "tagPositions": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 1820,
+      "nodes": 17,
+      "maxDepth": 4,
+      "objects": 4,
+      "properties": 9,
+      "optionalFields": 0,
+      "anyOfNodes": 3,
+      "nullableAnyOf": 2,
+      "unions": 1,
+      "unionBranches": 4,
+      "enums": 6,
+      "enumValues": 8,
+      "singletonEnums": 4,
+      "propertyNameChars": 29,
+      "enumValueChars": 55,
+      "descriptions": {
+       "count": 8,
+       "textChars": 883,
+       "withKeyChars": 1019
+      }
+     },
+     "branches": [
+      {
+       "tag": "word_count",
+       "sha256": "055150f71dbbf5cf9c21396f32a543e7a050df1c188e8a01c17787f3081919fa",
+       "shape": {
+        "chars": 436,
+        "nodes": 6,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 2,
+        "nullableAnyOf": 2,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 8,
+        "enumValueChars": 10,
+        "descriptions": {
+         "count": 3,
+         "textChars": 143,
+         "withKeyChars": 194
+        }
+       }
+      },
+      {
+       "tag": "mentions",
+       "sha256": "96daa49ba40ea46a7e6c0c7b5349251181101f007daaaf784ac432ccb2a91fb1",
+       "shape": {
+        "chars": 695,
+        "nodes": 5,
+        "maxDepth": 3,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 12,
+        "enumValueChars": 23,
+        "descriptions": {
+         "count": 3,
+         "textChars": 399,
+         "withKeyChars": 450
+        }
+       }
+      },
+      {
+       "tag": "tense",
+       "sha256": "eaff0aabdfe14c8511c3417a15ed2d71056fba3cdafcf25ed506b7a5e6e77447",
+       "shape": {
+        "chars": 336,
+        "nodes": 3,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 2,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 3,
+        "singletonEnums": 1,
+        "propertyNameChars": 7,
+        "enumValueChars": 16,
+        "descriptions": {
+         "count": 1,
+         "textChars": 140,
+         "withKeyChars": 157
+        }
+       }
+      },
+      {
+       "tag": "judged",
+       "sha256": "06ecec88c9d81327de54821bc3e896597e1a38341e1fdf6a224b7b25a3754d49",
+       "shape": {
+        "chars": 338,
+        "nodes": 2,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 1,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 2,
+        "enumValueChars": 6,
+        "descriptions": {
+         "count": 1,
+         "textChars": 201,
+         "withKeyChars": 218
+        }
+       }
+      }
+     ]
+    },
+    {
+     "path": ".bars[]",
+     "name": "BarTask",
+     "tagKey": "task",
+     "tagPositions": [
+      0,
+      0,
+      0
+     ],
+     "shape": {
+      "chars": 1649,
+      "nodes": 14,
+      "maxDepth": 3,
+      "objects": 3,
+      "properties": 10,
+      "optionalFields": 0,
+      "anyOfNodes": 1,
+      "nullableAnyOf": 0,
+      "unions": 1,
+      "unionBranches": 3,
+      "enums": 5,
+      "enumValues": 25,
+      "singletonEnums": 3,
+      "propertyNameChars": 47,
+      "enumValueChars": 81,
+      "descriptions": {
+       "count": 8,
+       "textChars": 735,
+       "withKeyChars": 873
+      }
+     },
+     "branches": [
+      {
+       "tag": "shade",
+       "sha256": "e90d36246743649a8dfb3a77b67e002d4bb6c6a6c81e3c466ae5ff4fb672d891",
+       "shape": {
+        "chars": 538,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 14,
+        "enumValueChars": 5,
+        "descriptions": {
+         "count": 3,
+         "textChars": 294,
+         "withKeyChars": 345
+        }
+       }
+      },
+      {
+       "tag": "compare",
+       "sha256": "d8faf994f65dc439ef67d9b9e42b1a7e0199a772c408a71891ce9aa7525479d3",
+       "shape": {
+        "chars": 534,
+        "nodes": 4,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 3,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 3,
+        "enumValues": 23,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 73,
+        "descriptions": {
+         "count": 1,
+         "textChars": 176,
+         "withKeyChars": 193
+        }
+       }
+      },
+      {
+       "tag": "add",
+       "sha256": "bc6aa61a3f1bae1fd0ee347cfb22d048de27c78e9f6a5213f903c0cae0b7a5a4",
+       "shape": {
+        "chars": 563,
+        "nodes": 5,
+        "maxDepth": 2,
+        "objects": 1,
+        "properties": 4,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 1,
+        "enumValues": 1,
+        "singletonEnums": 1,
+        "propertyNameChars": 20,
+        "enumValueChars": 3,
+        "descriptions": {
+         "count": 4,
+         "textChars": 265,
+         "withKeyChars": 335
         }
        }
       }
@@ -13908,8 +16824,5 @@
   }
  ],
  "missing": [],
- "baseline": {
-  "commit": "42e23be9164721795ee0f792c8506b8a1b89436a",
-  "file": "docs/measurements/schema-inventory.before-d2.json"
- }
+ "baseline": null
 }
