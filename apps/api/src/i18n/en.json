@@ -284,6 +284,14 @@
       "right_of_one": "1 of {{total}} gaps is right already.",
       "wrong": "Not right yet: {{words}}.",
       "near": "{{words}}: only a small spelling detail is missing."
+    },
+    "tree": {
+      "mode_ad": "autosomal dominant",
+      "mode_ar": "autosomal recessive",
+      "mode_xd": "X-linked dominant",
+      "mode_xr": "X-linked recessive",
+      "accepted": "Yes, it is accepted",
+      "rejected": "No, it is not accepted"
     }
   },
   "contact": {

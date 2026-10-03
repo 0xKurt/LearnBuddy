@@ -26,7 +26,9 @@ import {
   chartProblem,
   compileExpression,
   isChart,
+  isTreeFigure,
   parseCanonicalKey,
+  treeProblem,
 } from '@learnbuddy/shared-math';
 import { isDeepStrictEqual } from 'node:util';
 
@@ -41,6 +43,7 @@ import { mentionsSolution } from './tutor.js';
 import { choiceProblem, MAX_FIGURE_CHOICES, type ChoiceDraft } from './choiceCheck.js';
 import { checkedRead, figureIsRejectedChart } from './chartRead.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
+import { checkedTree, figureIsRejectedTree } from './treeCheck.js';
 
 /** The notation rule, generated from the one list the app draws and reads out (issue #239). */
 export const MATH_RULES = MATH_NOTATION_RULE;
@@ -62,9 +65,10 @@ export const ANSWER_FORM_RULES = `A question asks for exactly the whole answer, 
 /** When case, ß and punctuation decide (decision D-2). */
 export const SPELLING_RULES = `spelling: "strict" when the task practises spelling, capitalisation or punctuation; "gentle" when they don't matter for the answer; null otherwise (the subject decides).`;
 
-export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table, a structural formula, a chart) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). A geometry figure is drawn to scale and checked: its coordinates must give every stated angle (deg) and every side length (value, one unit for all), a force arrow's length is proportional to its value, and a resultant arrow is the vector sum of the others; label the one measure the question asks for "?" — the key must be that measure. A molecule is atoms (aliases a1, a2 …, hydrogens counted in h, charge) and bonds; the app computes the lone pairs and checks every shell, so an atom whose octet does not hold costs the question; set "ask" when the key is its formula, its number of lone pairs or its molar mass. Otherwise figure is null. Pictures as the OPTIONS of a multiple_choice ("Welcher Graph passt zu $f(x) = x^{2} - 1$?"): 2–4 choices, "choice_figures" = one figure per choice in the same order, "choices" = what each option shows in words or math (the app shows the pictures, not these texts); for graphs every option is a function_plot with exactly one function, all with the same window, no two alike, and "answer" = the right graph's function, named as in the question ("f(x) = x^2 - 1"; for a derivative "f'(x) = 2*x"); for any other picture "answer" = the right option's text exactly. Otherwise choice_figures is null.
+export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table, a structural formula, a chart, a tree) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). A geometry figure is drawn to scale and checked: its coordinates must give every stated angle (deg) and every side length (value, one unit for all), a force arrow's length is proportional to its value, and a resultant arrow is the vector sum of the others; label the one measure the question asks for "?" — the key must be that measure. A molecule is atoms (aliases a1, a2 …, hydrogens counted in h, charge) and bonds; the app computes the lone pairs and checks every shell, so an atom whose octet does not hold costs the question; set "ask" when the key is its formula, its number of lone pairs or its molar mass. Otherwise figure is null. Pictures as the OPTIONS of a multiple_choice ("Welcher Graph passt zu $f(x) = x^{2} - 1$?"): 2–4 choices, "choice_figures" = one figure per choice in the same order, "choices" = what each option shows in words or math (the app shows the pictures, not these texts); for graphs every option is a function_plot with exactly one function, all with the same window, no two alike, and "answer" = the right graph's function, named as in the question ("f(x) = x^2 - 1"; for a derivative "f'(x) = 2*x"); for any other picture "answer" = the right option's text exactly. Otherwise choice_figures is null.
 Charts are data only; the app draws axes, scale and colours. line_chart: x = up to 12 labels in order (numbers for a measured x such as time, else categories so short that count × (longest + 1) ≤ 30 characters, so "J"…"D" for 12 months, e.g. "Jan"…"Jun"); s = 1–3 series {n name, u unit, v one value per x label, bar true for columns (one series at most), r true for a right axis — only for a second unit}. climate_chart: place, alt in m, t = 12 monthly means in °C and p = 12 monthly sums in mm, January first. pie_chart: l labels and v shares in % that add up to exactly 100; half for a half circle. box_plot: b = 1–3 boxes {l, v = [min, Q1, median, Q3, max]}, raw = the data list when the task gives one (then one box), else []. histogram: x0 start of the first class, w class width, v heights. scatter_plot: x and y of each point; fit draws the least-squares line. pyramid: a0 first age, w years per group, m men and f women per group from young to old, u unit. A chart that breaks one of these rules is dropped together with its question.
-"read" — for every question whose answer is read off or computed from its chart, so the app can check the key: q = value (s, i) · max, min, sum, mean, range (largest − smallest) of series s · argmax, argmin (answer = the label: month, category or slice) · diff (value at j minus value at i) · angle (centre angle of slice i in degrees) · iqr (box s) · humid, arid (number of humid or arid months) · humid_at (month i; multiple_choice, correct_choice 0 = humid, 1 = arid) · slope, intercept (the fitted line) · type (pyramid; multiple_choice, correct_choice 0 = pyramid, 1 = bell, 2 = urn). s = series (climate 0 = °C, 1 = mm; pyramid 0 = men, 1 = women; box plot: which box), i and j = positions from 0 (box plot value: i 0 = min … 4 = max); unused numbers 0. The app writes the options for humid_at and type. A numeric question about a chart always has "read"; any other question read null.`;
+"read" — for every question whose answer is read off or computed from its chart, so the app can check the key: q = value (s, i) · max, min, sum, mean, range (largest − smallest) of series s · argmax, argmin (answer = the label: month, category or slice) · diff (value at j minus value at i) · angle (centre angle of slice i in degrees) · iqr (box s) · humid, arid (number of humid or arid months) · humid_at (month i; multiple_choice, correct_choice 0 = humid, 1 = arid) · slope, intercept (the fitted line) · type (pyramid; multiple_choice, correct_choice 0 = pyramid, 1 = bell, 2 = urn). s = series (climate 0 = °C, 1 = mm; pyramid 0 = men, 1 = women; box plot: which box), i and j = positions from 0 (box plot value: i 0 = min … 4 = max); unused numbers 0. The app writes the options for humid_at and type. A numeric question about a chart always has "read"; any other question read null.
+Trees are data only; the app lays them out, checks them and computes their keys. tree: n = nodes, root first (p = parent index, -1 for the root; l = label; e = label of the branch from the parent); pr true for a probability tree: every e a probability ("3/5", "0.4"), the branches of each node add up to exactly 1, at most one branch "?". ask = the key: path (probability of the path to node at[0]), sum (of the paths to the leaves in at), edge (the "?" branch), else none; a numeric question on a tree always has an ask. pedigree: p = persons, numbered 1, 2 … in this order, generation by generation (s "m"/"f", a = affected, fa/mo = the father's and mother's index, listed earlier, or -1); md = the mode it shows; ask mode ("Welcher Erbgang?", only when the pedigree rules out the other three; multiple_choice, correct_choice 0 = autosomal dominant, 1 = autosomal recessive, 2 = X-linked dominant, 3 = X-linked recessive) or gt (genotype of person at; multiple_choice, correct_choice 0 = AA, 1 = Aa, 2 = aa; X-linked: a woman XAXA, XAXa, XaXa, a man XAY, XaY; A = the dominant allele), else none. automaton: s = states (l "q0", f = final state), the first is the start; t = transitions from a to b on the symbols in c ("0,1"); w = the word a question asks about: multiple_choice, correct_choice 0 = accepted, 1 = not accepted. The app writes the options of mode, gt and w.`;
 
 /**
  * Correct language (live finding 5: "gekürt", "echtdarstellbar", "echtere/größer als 1",
@@ -195,7 +199,7 @@ function clipDraft(raw: unknown): unknown {
   // unlike a fraction picture, a chart is what the question is about — "Werte das
   // Klimadiagramm aus" without the diagram is no question. Any other broken figure is still
   // dropped alone (`figure` is caught to null, audit H-15).
-  if (figureIsRejectedChart(o.figure)) return null;
+  if (figureIsRejectedChart(o.figure) || figureIsRejectedTree(o.figure)) return null;
   if (Array.isArray(o.accepted_answers)) {
     o.accepted_answers = o.accepted_answers
       .filter((a): a is string => typeof a === 'string' && a.trim().length > 0 && a.length <= 200)
@@ -272,7 +276,9 @@ function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
     case 'table':
       return f.rows.every((r) => r.length === f.header.length) ? f : null;
     default:
-      // A chart is checked whole (`chartProblem`); a broken one never gets here (`clipDraft`).
+      // A chart or a tree is checked whole; a broken one never gets here (`clipDraft`), except
+      // as an option's picture, which then costs its question (`optionFigures`).
+      if (isTreeFigure(f)) return treeProblem(f) === null ? f : null;
       return isChart(f) && chartProblem(f) !== null ? null : f;
   }
 }
@@ -406,8 +412,10 @@ export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}):
     // A question about a chart (issues #245, #246): its key is computed from the chart's data
     // and the model's must agree with it — before anything else looks at the key, because the
     // options of a type question and the tolerance of a reading are written here.
-    const it = checkedRead(normalised, raw.figure, opts.locale ?? null);
-    if (it === null) continue;
+    const read = checkedRead(normalised, raw.figure, opts.locale ?? null);
+    // The same for a tree, a pedigree or an automaton (issue #256, `treeCheck.ts`).
+    const it = read && checkedTree(read, opts.locale ?? null);
+    if (!it) continue;
     // Notation the app cannot draw (issue #239): a learner would read "\\overbrace" in the middle
     // of her question. Dropped, not repaired — the list is `MATH_NOTATION_RULE`, which the model
     // was given, and guessing what an unknown command meant is the model's job, not ours.

@@ -284,6 +284,14 @@
       "right_of_one": "1 de {{total}} huecos ya está bien.",
       "wrong": "Todavía no encaja: {{words}}.",
       "near": "{{words}}: solo falta un pequeño detalle de ortografía."
+    },
+    "tree": {
+      "mode_ad": "autosómico dominante",
+      "mode_ar": "autosómico recesivo",
+      "mode_xd": "dominante ligado al X",
+      "mode_xr": "recesivo ligado al X",
+      "accepted": "Sí, se acepta",
+      "rejected": "No, no se acepta"
     }
   },
   "contact": {
