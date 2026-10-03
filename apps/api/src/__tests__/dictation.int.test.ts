@@ -221,10 +221,12 @@ describe.skipIf(!dbReady)('Diktat', () => {
     const res = await start({ text: 'die Lernwörter vom Blatt', material_id: sheet.id });
     expect(res.status).toBe(201);
     const keys = await env.db.query<{ answer: string }>(
-      `select answer from items where learner_id = $1 order by answer`,
+      `select answer from items where learner_id = $1`,
       [lena.learnerId],
     );
-    expect(keys.map((k) => k.answer)).toEqual(['Biene', 'Straße', 'schwimmen']);
+    // Which words, not in what order: `order by answer` sorts by the database's collation
+    // (C locally, en_US in CI), and "Straße" and "schwimmen" swap places between them.
+    expect(keys.map((k) => k.answer).sort()).toEqual(['Biene', 'Straße', 'schwimmen'].sort());
     // The model was given the sheet's text to copy from.
     const sent = JSON.stringify(env.llm.callsFor('explain')[0]);
     expect(sent).toContain('SHEET TEXT');
