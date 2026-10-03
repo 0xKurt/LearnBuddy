@@ -148,6 +148,10 @@ export default tseslint.config(
     rules: { 'lb/no-public-secret': 'error' },
   },
   {
+    files: ['apps/api/src/__tests__/**/*.ts'],
+    rules: { 'lb/no-early-script-report': 'error' },
+  },
+  {
     files: ['apps/mobile/app/**/*.{ts,tsx}', 'apps/mobile/components/**/*.{ts,tsx}'],
     rules: { 'lb/no-window-height': 'error' },
   },

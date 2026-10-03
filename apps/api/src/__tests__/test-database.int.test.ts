@@ -1,6 +1,6 @@
 // The test harness itself: real databases come and go cleanly, also after interrupted runs
 // (audit template-db-lifecycle, template-force-drop-and-single-lock,
-// harness-close-does-not-drain-background).
+// harness-close-does-not-drain-background, #323).
 // requires live verification in Claude Code session (needs a running Postgres)
 
 import pg from 'pg';
@@ -13,6 +13,7 @@ import {
   templateName,
   testDatabaseAvailable,
 } from '../testing/database.js';
+import type { LlmRequest } from '../llm/gateway.js';
 import { createTestEnv } from '../testing/harness.js';
 
 const dbReady = await testDatabaseAvailable();
@@ -104,5 +105,28 @@ describe.skipIf(!dbReady)('test databases', () => {
     });
     await env.close();
     expect(finished).toBe(true);
+  });
+
+  it('counts a model call made in the background, however late it comes (#323)', async () => {
+    const env = await createTestEnv();
+    const call: LlmRequest = {
+      purpose: 'buddy_check',
+      tier: 'smart',
+      promptVersion: 'probe',
+      system: '',
+      contents: [],
+      schema: {},
+      maxOutputTokens: 1,
+      temperature: 0,
+      timeoutMs: 1_000,
+    };
+    // One late, one held: the report waits for both, and their failures do not throw it.
+    env.deps.background(async () => {
+      await new Promise((r) => setTimeout(r, 50));
+      await env.deps.llm.generate(call);
+    });
+    env.holdBackground();
+    env.deps.background(() => env.deps.llm.generate(call).then(() => undefined));
+    await expect(env.closeChecked()).rejects.toThrow('"unexpected":["buddy_check","buddy_check"]');
   });
 });

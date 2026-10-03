@@ -54,15 +54,7 @@ describe.skipIf(!dbReady)('Kopfrechnen: a round code writes and checks', () => {
     env = await createTestEnv({ start: '2026-10-02T14:00:00Z' });
     l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2016-02-10' });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   async function start(spec: Record<string, unknown>, id: string = randomUUID()) {
     return l.api.post<SessionView>('/practice/drills', { client_request_id: id, spec });

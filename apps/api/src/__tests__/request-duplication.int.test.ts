@@ -26,15 +26,7 @@ describe.skipIf(!dbReady)('nothing goes out twice in one request (issue #284)', 
     lena = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
     journey = await playSheetJourney(env, lena);
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('plays the whole journey: every call type of a photographed sheet', () => {
     expect(env.llm.calls.map((c) => c.purpose)).toEqual([

@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+# LearnBuddy pre-push gate (issue #330): the full test suite, once per push. The pre-commit
+# hook only runs the tests related to what is staged; this is where the rest is caught before
+# it reaches a PR. CI runs the same suite again on every PR.
+# Don't bypass with --no-verify.
+
+set -e
+export LB_REQUIRE_TEST_DB=1
+echo "→ pre-push: full test suite"
+pnpm -r --parallel test || {
+  echo "✗ tests failed — fix before pushing. If the API reports 'LB_REQUIRE_TEST_DB=1 but no" >&2
+  echo "  Postgres', start a Postgres 16 (or set LB_TEST_DATABASE_URL) — README.md §Develop." >&2
+  exit 1
+}
+echo "✓ pre-push gate green"

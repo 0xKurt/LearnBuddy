@@ -19,7 +19,7 @@ import type {
   SendMessageResponse,
   SessionView,
 } from '@learnbuddy/shared-types/contracts';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import type { LlmRequest } from '../llm/gateway.js';
 import { closeIdleSessions } from '../modules/practice/lifecycle.js';
@@ -108,10 +108,9 @@ describe.skipIf(!dbReady)('a practice test with time (issue #241)', () => {
   beforeAll(async () => {
     env = await createTestEnv({ start: '2026-10-02T14:00:00Z' });
   });
+  afterEach(() => env.checkScript({ reset: true }));
   afterAll(async () => {
-    const report = { scriptErrors: [...env.llm.scriptErrors], pending: env.llm.pending() };
     await env?.close();
-    expect(report).toEqual({ scriptErrors: [], pending: 0 });
   });
 
   it('starts a clock only when she asked, from the list, and only when she opens the test', async () => {
@@ -335,7 +334,8 @@ describe.skipIf(!dbReady)('a practice test with time (issue #241)', () => {
     env.llm.script('explain', { json: testSet() });
     const s = (await startTest(l, 20)).body;
     env.clock.minutes(4);
-    const done = await l.api.post<SessionView>(`/practice/sessions/${s.id}/finish`);
+    // Nothing answered: the run goes back to prepared and Buddy is not woken (finish.ts).
+    const done = await l.api.post<SessionView>(`/practice/sessions/${s.id}/finish`, {});
     await env.flushBackground();
     expect(done.body.status).toBe('finished');
     expect(done.body.timer).toEqual({ minutes: 20, remaining_ms: 0, ran_out: false });

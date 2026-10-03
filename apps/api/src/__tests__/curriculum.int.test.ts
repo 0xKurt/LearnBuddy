@@ -57,15 +57,7 @@ const SATZGLIEDER = item({
 
 describe.skipIf(!dbReady)('the Bundesland decides what counts', () => {
   let env: TestEnv;
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
   beforeEach(async () => {
     env = await createTestEnv({ start: '2026-09-28T14:00:00Z' });
   });

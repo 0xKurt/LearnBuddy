@@ -104,12 +104,7 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
   beforeAll(async () => {
     env = await createTestEnv({ start: '2026-10-02T14:00:00Z' });
   });
-  afterEach(() => {
-    const { scriptErrors, unexpected } = env.llm;
-    env.llm.reset();
-    expect(scriptErrors).toEqual([]);
-    expect(unexpected.map((r) => r.purpose)).toEqual([]);
-  });
+  afterEach(() => env.checkScript({ reset: true }));
   afterAll(async () => {
     await env?.close();
   });

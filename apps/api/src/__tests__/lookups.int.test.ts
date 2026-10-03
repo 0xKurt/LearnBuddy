@@ -72,15 +72,7 @@ describe.skipIf(!dbReady)('Buddy lookups', () => {
       pin: '1357',
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it("reads her own worksheet within the turn — never another learner's", async () => {
     await sheet(

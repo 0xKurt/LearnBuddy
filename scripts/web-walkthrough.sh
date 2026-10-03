@@ -20,6 +20,14 @@ export LB_API_PORT="$API_PORT"
 #     the guard working, not a product bug.
 # No comments inside the assignment block: a comment between the backslashes breaks the
 # continuation, and the command then runs with none of these set (that is how #71 slipped in).
+# The export is reused when nothing it is built from changed (issue #330): the same sources
+# (tracked and uncommitted, under apps/mobile and packages, plus the lockfile) and the same
+# API port give the same bundle. The check below still greps the bundle for the port, so a
+# reused bundle that points elsewhere fails exactly as a fresh one would.
+SOURCE_ID=$( (git ls-files -s apps/mobile packages pnpm-lock.yaml; git diff HEAD -- apps/mobile packages pnpm-lock.yaml; git ls-files -o --exclude-standard apps/mobile packages | xargs -r sha1sum; echo "port=$API_PORT") | sha1sum | cut -d' ' -f1)
+if [ -f apps/mobile/dist-web/.lb-source ] && [ "$(cat apps/mobile/dist-web/.lb-source)" = "$SOURCE_ID" ]; then
+  echo "web-walkthrough: reusing the web export (same sources, same port)"
+else
 (
   cd apps/mobile
   EXPO_NO_DOTENV=1 \
@@ -30,6 +38,8 @@ export LB_API_PORT="$API_PORT"
   EXPO_PUBLIC_IMPRINT_URL=http://localhost:$API_PORT/impressum \
   npx expo export --platform web --output-dir dist-web --clear
 )
+  echo "$SOURCE_ID" > apps/mobile/dist-web/.lb-source
+fi
 # The exported bundle must talk to the local stack. Metro has handed out a cached bundle
 # with stale EXPO_PUBLIC_* values before, and the walkthrough then signed up against the
 # real Supabase project (28.09.) — that must fail loudly, not quietly.

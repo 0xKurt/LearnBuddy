@@ -12,7 +12,13 @@ import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contr
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
-import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import {
+  createTestEnv,
+  finishRun,
+  onboard,
+  type Learner,
+  type TestEnv,
+} from '../testing/harness.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -66,15 +72,7 @@ describe.skipIf(!dbReady)('a typo gets a hint before it gets the spelling', () =
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('names what slipped first, spells it out second, and records the help', async () => {
     const s = await start(env, l, [vocab({})]);
@@ -107,7 +105,7 @@ describe.skipIf(!dbReady)('a typo gets a hint before it gets the spelling', () =
     );
     expect(st.last_outcome).toBe('with_help');
 
-    await l.api.post(`/practice/sessions/${s.id}/finish`, {});
+    await finishRun(env, l, s.id);
     const done = (await l.api.get<SessionView>(`/practice/sessions/${s.id}`)).body;
     // One question is not a topic (#155), but it must not be called one that went well.
     expect(done.summary?.secure_topics).toEqual([]);

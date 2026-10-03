@@ -9,6 +9,7 @@
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:related": "vitest related --run --passWithNoTests",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "bundle:check": "expo export --platform ios --output-dir .expo/bundle-check && node scripts/client-secrets.cjs scan .expo/bundle-check",

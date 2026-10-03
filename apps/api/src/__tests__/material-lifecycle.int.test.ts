@@ -137,15 +137,7 @@ describe.skipIf(!dbReady)('material lifecycle and erasure', () => {
     lena = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
     env.llm.byDefault('buddy_check', WAIT);
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('a reading given up by the scheduler still purges its photos and tells Buddy (repro-14)', async () => {
     const m = await create(env, lena);

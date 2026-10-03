@@ -107,14 +107,9 @@ describe.skipIf(!dbReady)('die Notenzeile', () => {
     env.llm.byDefault('buddy_check', WAIT);
   });
   afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      // Jeder Aufruf hier wäre ein Modell, das über eine Zeichnung urteilt, die es nicht hat.
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      tutor: env.llm.callsFor('tutor').length,
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], tutor: 0 });
+    await env.closeChecked();
+    // Jeder Aufruf hier wäre ein Modell, das über eine Zeichnung urteilt, die es nicht hat.
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 
   it('macht aus acht Aufgaben acht Fragen, jede mit ihrer gezeichneten Zeile', async () => {

@@ -32,11 +32,21 @@ ganze Repository: jscpd, knip und die Wächter-Tests mit der Ratsche
 
 Verbotene Code-Formen sind je eine eigene Regel in `tools/guards/syntax-rules.mjs`:
 `lb/no-context-bump` und `lb/no-default-zone` (#315), `lb/no-public-secret` (#290) und
-`lb/no-window-height` (#289). Nie als Eintrag von ESLints `no-restricted-syntax`: Diese Regel hat
+`lb/no-window-height` (#289) sowie `lb/no-early-script-report` (#323): Integrationstests lesen die
+Bilanz des geskripteten Modells nur über `env.checkScript()` / `env.closeChecked()`, die zuerst die
+Hintergrundarbeit abwarten. Nie als Eintrag von ESLints `no-restricted-syntax`: Diese Regel hat
 pro Datei genau eine Liste, ein späterer Config-Block ersetzt die Liste eines früheren, statt sie
 zu ergänzen. Beim Zusammenführen von #290, #289 und #315 schwieg so die Secret-Sperre auf allen
 Screens, ohne Fehlermeldung. `guards.test.mjs` lintet deshalb eine Datei, die alle vier
 abdecken, über die echte `eslint.config.mjs` und erwartet jede einzelne.
+
+**Kurze Branches** (Regel 8, Issue #328): `tools/guards/fresh-base.mjs` macht in der CI jeden PR
+rot, dem ein Commit von main fehlt, der älter als 24 h ist. Gezählt werden nur mains eigene
+Commits (`--first-parent`), denn ein gemergter PR bringt seine Commits mit ihrer Schreibzeit mit.
+Konflikte in den Ausnahmelisten löst der Merge-Treiber `tools/guards/merge-baseline.mjs`
+(`.gitattributes`, eingerichtet von `pnpm install`): je Eintrag die größere Zahl, Listen
+vereinigt. Danach zieht `pnpm guards:shrink` auf den echten Stand herunter, `no-growth.mjs`
+hält die Grenze gegen main.
 
 ## Wenn ein Wächter rot ist
 

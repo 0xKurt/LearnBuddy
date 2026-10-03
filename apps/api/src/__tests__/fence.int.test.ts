@@ -54,15 +54,7 @@ describe.skipIf(!dbReady)('context fence, lock order, leases', () => {
   beforeEach(async () => {
     env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('a tap during an apply waits instead of deadlocking (repro-01)', async () => {
     const l = await onboard(env);

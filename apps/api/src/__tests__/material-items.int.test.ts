@@ -102,15 +102,7 @@ describe.skipIf(!dbReady)('the questions of a material', () => {
     });
     other = await onboard(env, { name: 'Sam' });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('lists her questions with the latest result and never a solution', async () => {
     const id = await upload(env, lena);

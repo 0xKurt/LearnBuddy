@@ -141,15 +141,7 @@ describe.skipIf(!dbReady)('reading the sentences from a sheet aloud (issue #223 
     lena = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
     other = await onboard(env, { name: 'Sam' });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('says on the sheet how many sentences it has to read aloud', async () => {
     const mixed = await send(env, lena, mixedSheet());

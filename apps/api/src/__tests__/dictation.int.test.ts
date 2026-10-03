@@ -55,9 +55,7 @@ describe.skipIf(!dbReady)('Diktat', () => {
     env = await createTestEnv({ start: '2026-10-02T15:00:00Z' });
     lena = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2016-02-10' });
   });
-  afterEach(async () => {
-    await env?.close();
-  });
+  afterEach(() => env.closeChecked());
 
   const start = (over: Record<string, unknown> = {}) =>
     lena.api.post<SessionView>('/practice/topic', {
@@ -322,7 +320,7 @@ describe.skipIf(!dbReady)('Diktat', () => {
        values ($1, gen_random_uuid(), 'ready', 1, 'Schwimmen', $2) returning id`,
       [lena.learnerId, env.clock.now()],
     );
-    script(env);
+    // Refused before anything is written: no model call (the teardown would see one).
     const stolen = await sam.api.post<ErrorBody>('/practice/topic', {
       client_request_id: uuid(),
       kind: 'spelling_dictation',

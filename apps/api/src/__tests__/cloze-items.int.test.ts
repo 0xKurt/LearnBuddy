@@ -129,16 +129,8 @@ describe.skipIf(!dbReady)('cloze items', () => {
     env = await createTestEnv({ start: '2026-10-02T15:00:00Z' });
     l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      // A tutor call here would mean code sent a gap to the model that a rule decides.
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  // A tutor call here would mean code sent a gap to the model that a rule decides.
+  afterEach(() => env.closeChecked());
 
   it('stores the checked text, shows it without its keys, and judges it right by rules', async () => {
     const session = await prepare([perfekt()]);

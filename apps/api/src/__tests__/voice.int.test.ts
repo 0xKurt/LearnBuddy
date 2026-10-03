@@ -25,15 +25,7 @@ describe.skipIf(!dbReady)('voice', () => {
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.length,
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: 0, pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('writes down a spoken answer, tells the model the mode and language, stores nothing', async () => {
     env.llm.script('transcribe', (req) => {

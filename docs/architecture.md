@@ -3623,7 +3623,14 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   A template is built under a temporary name and marked complete, so a killed build is never
   copied; test databases and templates that interrupted runs left behind are dropped after a
   day, never those a concurrent run may still use. Closing a test environment waits for the
-  background work it started. Every file under `src/testing` and `evals` carries the rule-8
+  background work it started. Whether the scripted model was used exactly as scripted (no
+  unexpected call, no error inside a script, nothing left over) is read in one place,
+  `env.closeChecked()` / `env.checkScript()`, and only **after** that background work has landed
+  (issue #323). Every file's `afterEach` read it before `close()` drained the background, so a
+  background model call, such as Buddy's look after `/finish`, was counted or missed depending
+  on machine load. A test that finishes a run uses `finishRun()`, which scripts that look and
+  awaits it. `env.holdBackground()` stops background tasks until `flushBackground()`, for tests
+  that check the state before a task lands. Every file under `src/testing` and `evals` carries the rule-8
   banner (`testing/__tests__/banner.test.ts`).
 - Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). The pre-commit
   hook and CI set `LB_REQUIRE_TEST_DB=1`, so a missing database fails the gate; only a plain

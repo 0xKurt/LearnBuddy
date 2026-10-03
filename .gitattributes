@@ -1,0 +1,2 @@
+# Ausnahmelisten: conflicts resolve themselves (issue #328, tools/guards/merge-baseline.mjs).
+tools/guards/baselines/*.json merge=lb-baseline
