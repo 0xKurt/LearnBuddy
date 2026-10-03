@@ -60,6 +60,13 @@ jobs:
         if: github.event_name == 'pull_request'
         run: node tools/guards/no-growth.mjs origin/${{ github.base_ref }}
 
+      - name: Fresh base (no long branches)
+        # A PR missing main commits older than a day is red: merge main while the conflict is
+        # still small (Engineering-Regel 8, tools/guards/fresh-base.mjs, issue #328).
+        if: github.event_name == 'pull_request'
+        # The PR's own head, not the merge commit GitHub checks out (that contains main always).
+        run: node tools/guards/fresh-base.mjs origin/${{ github.base_ref }} ${{ github.event.pull_request.head.sha }}
+
       - name: Test
         run: pnpm test
 

@@ -109,7 +109,12 @@ Entwickler (Claude), nicht der Owner. Was mechanisch prüfbar ist, prüfen die W
    Gleiches muss gleich aussehen.
 7. **Tests unabhängig von der Reihenfolge.** Jeder Spec bringt seine Szenarien selbst mit. Ein
    Fehler ist nie „Flake“ oder „Last“, bevor die Ursache belegt ist.
-8. **Kurze Branches.** Von main, klein, schnell gemergt; kein Stapeln über Stunden.
+8. **Kurze Branches, sofort mergen.** Jeder Branch geht von main ab, ist klein und wird gemergt,
+   sobald die CI grün ist — am selben Tag. Keine Merge-Züge, keine gestapelten Branches, kein
+   Sammeln fertiger PRs (Issue #328: ein Tag Konflikte, weil fünf fertige Features ~100 Commits
+   hinter main warteten). CI macht einen PR rot, dem ein main-Commit fehlt, der älter als 24 h
+   ist (`tools/guards/fresh-base.mjs`). Parallele Aufträge teilen keine Datei auf, die ein anderer
+   auch anfasst — Aufteilen ist ein eigener, vorgezogener Schritt (#313).
 9. **Belegt heißt belegt.** Live- und Geräte-Lücken stehen im PR und als Issue, bis sie geschlossen
    sind.
 10. **Integrationsverantwortung.** Bei paralleler Arbeit prüft der Orchestrator vor jedem Merge die

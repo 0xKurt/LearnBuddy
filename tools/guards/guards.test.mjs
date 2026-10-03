@@ -7,7 +7,17 @@
 // fixed has to go, or the debt could come back unnoticed. The second half is here.
 
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
@@ -15,6 +25,8 @@ import { ESLint, RuleTester } from 'eslint';
 import tseslint from 'typescript-eslint';
 
 import plugin from './eslint-plugin.mjs';
+import { MAX_AGE_HOURS, staleHours } from './fresh-base.mjs';
+import { mergeBaselines } from './merge-baseline.mjs';
 import { growth, TRAILER } from './no-growth.mjs';
 import {
   MAX_LINES,
@@ -292,5 +304,83 @@ describe('forbidden code shapes: every guard fires where the guards overlap', ()
     const testRules = new Set(test?.messages.map((m) => m.ruleId));
     assert.ok(!testRules.has('lb/no-default-zone'));
     assert.ok(testRules.has('lb/no-context-bump'));
+  });
+});
+
+describe('merge driver: an Ausnahmeliste conflict resolves itself (issue #328)', () => {
+  it('takes the larger number per entry and the union of lists', () => {
+    const ours = { $comment: 'c', total: 5, files: { a: 3, b: 9 }, findings: ['x', 'y'] };
+    const theirs = { $comment: 'c', total: 7, files: { a: 4, c: 1 }, findings: ['y', 'z'] };
+    assert.deepEqual(mergeBaselines(ours, theirs), {
+      $comment: 'c',
+      total: 7,
+      files: { a: 4, b: 9, c: 1 },
+      findings: ['x', 'y', 'z'],
+    });
+  });
+
+  it('resolves a real git conflict in max-lines.json without a hand', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'lb-merge-'));
+    const driver = join(REPO_ROOT, 'tools', 'guards', 'merge-baseline.mjs');
+    // Inside the pre-commit hook git exports GIT_DIR, GIT_INDEX_FILE … — inherited, they point
+    // this throwaway repo's commands at the REAL repository (it happened: commits and config
+    // written into the project's .git). So: none of the hook's GIT_* variables, no global or
+    // system config, and every setting passed with -c, never written anywhere.
+    const env = Object.fromEntries(
+      Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_')),
+    );
+    Object.assign(env, { GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' });
+    const git = (/** @type {string[]} */ ...args) =>
+      execFileSync(
+        'git',
+        [
+          '-c',
+          'user.email=t@example.test',
+          '-c',
+          'user.name=t',
+          '-c',
+          `merge.lb-baseline.driver=node ${driver} %O %A %B`,
+          ...args,
+        ],
+        { cwd: repo, env, encoding: 'utf8', stdio: 'pipe' },
+      );
+    const list = 'tools/guards/baselines/max-lines.json';
+    const write = (/** @type {Record<string, number>} */ files) => {
+      mkdirSync(join(repo, 'tools', 'guards', 'baselines'), { recursive: true });
+      writeFileSync(join(repo, list), `${JSON.stringify({ files }, null, 2)}\n`);
+    };
+    try {
+      git('init', '-q', '-b', 'main');
+      // The guard against the leak itself: this must be the throwaway repository.
+      assert.equal(git('rev-parse', '--show-toplevel').trim(), realpathSync(repo));
+      writeFileSync(join(repo, '.gitattributes'), readFileSync(join(REPO_ROOT, '.gitattributes')));
+      write({ 'a.ts': 900, 'b.ts': 850 });
+      git('add', '-A');
+      git('commit', '-qm', 'base');
+      git('checkout', '-qb', 'feature');
+      write({ 'a.ts': 880, 'b.ts': 850 });
+      git('commit', '-qam', 'feature shrinks a');
+      git('checkout', '-q', 'main');
+      write({ 'a.ts': 900, 'b.ts': 820 });
+      git('commit', '-qam', 'main shrinks b');
+      git('merge', '-q', '--no-edit', 'feature');
+      const merged = JSON.parse(readFileSync(join(repo, list), 'utf8'));
+      // The larger side per entry: safe for lint; `pnpm guards:shrink` then tightens it.
+      assert.deepEqual(merged.files, { 'a.ts': 900, 'b.ts': 850 });
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('fresh base: a PR does not lag main by more than a day (issue #328)', () => {
+  const now = 1_800_000_000;
+  it('is fresh when it contains main, or misses only recent commits', () => {
+    assert.equal(staleHours([], now), null);
+    assert.ok((staleHours([now - 3600], now) ?? 0) <= MAX_AGE_HOURS);
+  });
+  it('is stale when the oldest missing main commit is older than the limit', () => {
+    const hours = staleHours([now - 3600, now - 30 * 3600], now);
+    assert.ok(hours !== null && hours > MAX_AGE_HOURS);
   });
 });
