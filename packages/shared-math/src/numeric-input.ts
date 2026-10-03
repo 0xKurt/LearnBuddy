@@ -22,7 +22,7 @@
 
 import { compileExpression } from './expression.js';
 import { plainMath } from './latex.js';
-import { canonicalizeUnit, UNIT_ALIASES } from './units.js';
+import { CASE_SENSITIVE_UNITS, canonicalizeUnit, UNIT_ALIASES, unitFactor } from './units.js';
 
 /** Longest learner input read as a number; anything longer is not a number answer. */
 export const MAX_NUMERIC_INPUT = 64;
@@ -56,6 +56,11 @@ export type NumericParseResult = {
 
 // Longest unit alias first ("km/h" before "h").
 const SORTED_UNIT_KEYS = Object.keys(UNIT_ALIASES).sort((a, b) => b.length - a.length);
+const SORTED_CASED_KEYS = Object.keys(CASE_SENSITIVE_UNITS).sort((a, b) => b.length - a.length);
+
+/** The unit follows the number ("5 km", "25%"), never the end of a word ("okm"). */
+const afterNumber = (before: string) =>
+  before.length === 0 || /[\s\d.,)]/.test(before[before.length - 1]!);
 
 function stripTrailingUnit(input: string): {
   rest: string;
@@ -66,9 +71,15 @@ function stripTrailingUnit(input: string): {
   for (const alias of SORTED_UNIT_KEYS) {
     if (lower.endsWith(alias)) {
       const before = input.slice(0, input.length - alias.length).replace(/\s+$/, '');
-      // The unit follows the number ("5 km", "25%"), never the end of a word ("okm").
-      const boundary = before.length === 0 || /[\s\d.,)]/.test(before[before.length - 1]!);
-      if (boundary) return { rest: before, unit: canonicalizeUnit(alias), alias };
+      if (afterNumber(before)) return { rest: before, unit: canonicalizeUnit(alias), alias };
+    }
+  }
+  // Symbols that are a unit only as written ("5 N", never "5 n" — issue #227 A6).
+  for (const symbol of SORTED_CASED_KEYS) {
+    if (input.endsWith(symbol)) {
+      const before = input.slice(0, input.length - symbol.length).replace(/\s+$/, '');
+      if (afterNumber(before))
+        return { rest: before, unit: CASE_SENSITIVE_UNITS[symbol]!, alias: symbol };
     }
   }
   return { rest: input, unit: null, alias: null };
@@ -305,6 +316,14 @@ export type KeyOptions = {
   unit?: string | null;
   /** An explicit ± tolerance the item declares (rounded or measured results); else D-1 below. */
   tolerance?: number | null;
+  /**
+   * Convert a number in ANOTHER unit of the same quantity before comparing ("1,5 m" for 150 cm,
+   * "90 min" for 1.5 h; issue #227 A6). Off by default, and a caller that turns it on must not
+   * read 'equal' as "correct": an answer in another unit is never the key's FORM, and whether
+   * the unit was the question ("in cm") is the tutor's (decision D-3). Units of different
+   * quantities ("5 m" for 5 min) stay 'unknown' either way.
+   */
+  convertUnits?: boolean;
 };
 
 function abs(x: bigint): bigint {
@@ -319,7 +338,8 @@ function abs(x: bigint): bigint {
  * (audit C-2: 242 for 240 was "correct").
  *
  * The form is not compared here (3/4 and 0,75 are equal values): see `sameWrittenForm`.
- * A calculation ('expression'), a different unit or an unreadable key is 'unknown'.
+ * A calculation ('expression'), a different unit (unless `convertUnits`) or an unreadable key
+ * is 'unknown'.
  */
 export function compareNumbers(
   given: NumericParseResult,
@@ -328,7 +348,14 @@ export function compareNumbers(
 ): ValueComparison {
   if (!key.exact || !given.exact || given.value === null || key.value === null) return 'unknown';
   const keyUnit = canonicalizeUnit(options.unit ?? null) ?? key.unit;
-  if (given.unit !== null && given.unit !== keyUnit) return 'unknown';
+  if (given.unit !== null && given.unit !== keyUnit) {
+    // Exact, so no conversion ever rounds a verdict (`units.ts`).
+    const factor =
+      options.convertUnits && keyUnit !== null ? unitFactor(given.unit, keyUnit) : null;
+    if (factor === null) return 'unknown';
+    const exact = reduce(given.exact.num * factor.num, given.exact.den * factor.den);
+    return compareNumbers({ ...given, exact, value: toNumber(exact), unit: keyUnit }, key, options);
+  }
   const tolerance = options.tolerance ?? null;
   if (tolerance !== null && tolerance > 0) {
     const diff = Math.abs(given.value - key.value);

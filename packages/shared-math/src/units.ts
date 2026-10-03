@@ -89,6 +89,32 @@ export const UNIT_ALIASES: Record<string, string> = {
   '°c': '°C',
   std: 'h',
   t: 't',
+  // Written without the raised digit, as a phone keyboard leaves it (issue #227 A6).
+  mm2: 'mm²',
+  cm2: 'cm²',
+  dm2: 'dm²',
+  m2: 'm²',
+  km2: 'km²',
+  'mm³': 'mm³',
+  'mm^3': 'mm³',
+  mm3: 'mm³',
+  cm3: 'cm³',
+  dm3: 'dm³',
+  m3: 'm³',
+  ha: 'ha',
+  hektar: 'ha',
+  hectare: 'ha',
+  hectares: 'ha',
+
+  // angle (issue #227 A6): a bare degree sign; "°C" above is longer and wins.
+  '°': '°',
+  grad: '°',
+  degree: '°',
+  degrees: '°',
+
+  // force: only the unit's name here — "N" is a capital letter, see CASE_SENSITIVE_UNITS.
+  newton: 'N',
+  kilonewton: 'kN',
 
   // percent and per mille: a unit, never "÷ 100" (audit C-4). The unit's names as they are
   // said, so a dictated "25 Prozent" is read like "25 %".
@@ -109,13 +135,93 @@ export const UNIT_ALIASES: Record<string, string> = {
   '€': 'EUR',
   dollar: 'USD',
   $: 'USD',
+  ct: 'ct',
+  cent: 'ct',
+  cents: 'ct',
   stück: 'stk',
   stueck: 'stk',
   pieces: 'pcs',
 };
 
+/**
+ * Units whose symbol is a capital letter that, written small, is something else: "5 N" is five
+ * newton, "5 n" or "2n" is a variable. Matched as written, never lower-cased (issue #227 A6).
+ */
+export const CASE_SENSITIVE_UNITS: Record<string, string> = {
+  N: 'N',
+  kN: 'kN',
+};
+
 export function canonicalizeUnit(raw: string | null | undefined): string | null {
   if (!raw) return null;
-  const key = raw.trim().toLowerCase();
-  return UNIT_ALIASES[key] ?? raw.trim();
+  const trimmed = raw.trim();
+  return CASE_SENSITIVE_UNITS[trimmed] ?? UNIT_ALIASES[trimmed.toLowerCase()] ?? trimmed;
+}
+
+// ─────────────── converting between units of one quantity (issue #227 A6) ───────────────
+//
+// "1,5 m" for a key of 150 cm is the same length; "1,4 m" is certainly another one. Without a
+// conversion both reached the tutor as "not decidable by rules". Every unit below is an exact
+// rational multiple of one base unit of its quantity, so a conversion never rounds. Units that
+// are not a pure multiple (°C and kelvin, a currency against another) are deliberately absent:
+// for those another unit stays the tutor's.
+
+type Ratio = { num: bigint; den: bigint };
+type Scale = { quantity: string; ratio: Ratio };
+
+const r = (num: bigint, den: bigint = 1n): Ratio => ({ num, den });
+
+const SCALES: Record<string, Scale> = {
+  // length, in metres
+  mm: { quantity: 'length', ratio: r(1n, 1000n) },
+  cm: { quantity: 'length', ratio: r(1n, 100n) },
+  dm: { quantity: 'length', ratio: r(1n, 10n) },
+  m: { quantity: 'length', ratio: r(1n) },
+  km: { quantity: 'length', ratio: r(1000n) },
+  in: { quantity: 'length', ratio: r(127n, 5000n) },
+  // area, in square metres
+  'mm²': { quantity: 'area', ratio: r(1n, 1_000_000n) },
+  'cm²': { quantity: 'area', ratio: r(1n, 10_000n) },
+  'dm²': { quantity: 'area', ratio: r(1n, 100n) },
+  'm²': { quantity: 'area', ratio: r(1n) },
+  ha: { quantity: 'area', ratio: r(10_000n) },
+  'km²': { quantity: 'area', ratio: r(1_000_000n) },
+  // volume, in litres (1 dm³ = 1 l, 1 cm³ = 1 ml)
+  'mm³': { quantity: 'volume', ratio: r(1n, 1_000_000n) },
+  ml: { quantity: 'volume', ratio: r(1n, 1000n) },
+  'cm³': { quantity: 'volume', ratio: r(1n, 1000n) },
+  l: { quantity: 'volume', ratio: r(1n) },
+  'dm³': { quantity: 'volume', ratio: r(1n) },
+  'm³': { quantity: 'volume', ratio: r(1000n) },
+  // mass, in grams
+  mg: { quantity: 'mass', ratio: r(1n, 1000n) },
+  g: { quantity: 'mass', ratio: r(1n) },
+  kg: { quantity: 'mass', ratio: r(1000n) },
+  t: { quantity: 'mass', ratio: r(1_000_000n) },
+  // time, in seconds
+  s: { quantity: 'time', ratio: r(1n) },
+  min: { quantity: 'time', ratio: r(60n) },
+  h: { quantity: 'time', ratio: r(3600n) },
+  d: { quantity: 'time', ratio: r(86_400n) },
+  // speed, in metres per second (1 km/h = 5/18 m/s)
+  'm/s': { quantity: 'speed', ratio: r(1n) },
+  'km/h': { quantity: 'speed', ratio: r(5n, 18n) },
+  // force, in newton
+  N: { quantity: 'force', ratio: r(1n) },
+  kN: { quantity: 'force', ratio: r(1000n) },
+  // money in euro, in cents — cents of another currency are another quantity
+  ct: { quantity: 'euro', ratio: r(1n) },
+  EUR: { quantity: 'euro', ratio: r(100n) },
+};
+
+/**
+ * The exact factor that turns an amount in `from` into the same amount in `to` (canonical
+ * symbols): 100 for m → cm, 1/60 for s → min. Null when the two are not units of the same
+ * quantity, or when either is not convertible at all.
+ */
+export function unitFactor(from: string, to: string): Ratio | null {
+  const a = SCALES[from];
+  const b = SCALES[to];
+  if (!a || !b || a.quantity !== b.quantity) return null;
+  return { num: a.ratio.num * b.ratio.den, den: a.ratio.den * b.ratio.num };
 }
