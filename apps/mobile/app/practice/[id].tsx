@@ -68,10 +68,12 @@ import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
 import {
   emptyStaffAnswer,
+  readStaffDraft,
+  STAFF_ANSWER_MIN,
   StaffAnswer,
   staffComplete,
   staffLineOf,
-  type StaffAnswerState,
+  type StaffDraft,
 } from '../../components/practice/StaffAnswer.js';
 import { FreeSpace, FreeSpaceReport } from '../../components/practice/FreeSpace.js';
 import { StructuredAnswer } from '../../components/practice/StructuredAnswer.js';
@@ -248,7 +250,11 @@ export default function PracticeScreen() {
    * Grund an der Frage festgemacht wie die Anordnung darüber: die nächste Frage beginnt mit einer
    * leeren Zeile, und nichts Geschriebenes rutscht hinein.
    */
-  const [written, setWritten] = useState<{ itemId: string; answer: StaffAnswerState } | null>(null);
+  // Im Entwurf und nicht nur im Zustand (issue #275): ein Farbwechsel baut den Bildschirm neu
+  // auf, und ihre halbe Zeile war danach weg.
+  const staffDraft = useDraft(`session.${id}.staff`);
+  const written = readStaffDraft(staffDraft.text);
+  const setWritten = (next: StaffDraft) => staffDraft.setText(JSON.stringify(next));
   /** The pronunciation judgement while the model is still listening (issue #8). */
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -1069,10 +1075,17 @@ export default function PracticeScreen() {
   const visual = cardNatural > 0 && (item.figure || item.image) && !speaking;
   const threadWants =
     threadCap === undefined || !threadClipped ? (threadCap ?? threadNeed) : newestNeed;
+  // A note line never grows past its natural size: its height follows its width, and that is
+  // already the card's (`StaffLine`). Growing the card for it left an empty band under the staff
+  // (issue #275, 73-staff-time) — so it may only GIVE room, never take it.
+  const growable = item.figure?.type !== 'staff';
   const cardGrowTo = visual
     ? Math.max(
         -CARD_GIVES,
-        Math.min(room - threadWants, Math.round(windowHeight * 0.5) - cardNatural),
+        Math.min(
+          growable ? room - threadWants : 0,
+          growable ? Math.round(windowHeight * 0.5) - cardNatural : 0,
+        ),
       )
     : 0;
   if (cardGrowTo < 0 && threadCap !== undefined && !boardGives) {
@@ -1165,6 +1178,7 @@ export default function PracticeScreen() {
                       }
                       fromBuddy={item.origin === 'buddy'}
                       minHeight={cardGrowTo > 0 ? cardNatural + cardGrowTo : undefined}
+                      dense={staff !== null}
                       // Her short answer appears in the gap of a fill-in sentence while she types.
                       answer={
                         typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined
@@ -1341,24 +1355,25 @@ export default function PracticeScreen() {
             oder das Antwortfeld steht, und gibt als Erstes Platz her: die gemessene Höhe
             und was sie kostet, stehen in `StaffAnswer.tsx`. */}
             {staff ? (
+              // Kein ScrollView (issue #275): die Zeile nimmt ihre Höhe aus dem Platz, der da ist
+              // (`StaffAnswer`), die Tasten darunter sind fest — und nie weniger als die engste
+              // Zeile mit beiden Tastenreihen: fehlt der Platz, sagt es der Walkthrough (`fit.ts`),
+              // statt dass die Tasten still unter „Prüfen" rutschen.
               <View
                 testID="answer-staff"
-                style={{ flexShrink: 1, minHeight: 0, paddingTop: SPACE.sm }}
+                style={{
+                  flexShrink: 1,
+                  minHeight: STAFF_ANSWER_MIN,
+                  paddingHorizontal: SPACE.lg,
+                }}
               >
-                <ScrollView
-                  testID="scroll-list"
-                  style={{ flexGrow: 0, flexShrink: 1 }}
-                  keyboardShouldPersistTaps="handled"
-                  contentContainerStyle={{ paddingHorizontal: SPACE.lg }}
-                >
-                  <StaffAnswer
-                    key={item.id}
-                    surface={staff}
-                    answer={staffAnswer}
-                    disabled={locked}
-                    onChange={(next) => setWritten({ itemId: item.id, answer: next })}
-                  />
-                </ScrollView>
+                <StaffAnswer
+                  key={item.id}
+                  surface={staff}
+                  answer={staffAnswer}
+                  disabled={locked}
+                  onChange={(next) => setWritten({ itemId: item.id, answer: next })}
+                />
               </View>
             ) : null}
             {/* The free room (issue #286): below the way to answer, above what is pinned. A structured
@@ -1412,6 +1427,7 @@ export default function PracticeScreen() {
                 kind={item.kind}
                 prompt={item.prompt}
                 unit={item.unit}
+                subjectKind={item.subject_kind}
                 lang={item.kind === 'vocab' ? item.lang : item.prompt_lang}
                 value={text}
                 disabled={locked}
