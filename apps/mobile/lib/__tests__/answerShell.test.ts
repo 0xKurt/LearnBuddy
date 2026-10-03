@@ -35,13 +35,18 @@ function imports(text: string): Set<string> {
 }
 
 /** The forms in the shell: they fill its slots and nothing else. */
-const IN_SHELL = ['OrderAnswer.tsx', 'MatchAnswer.tsx', 'TableAnswer.tsx', 'ClozeAnswer.tsx'];
+const IN_SHELL = [
+  'OrderAnswer.tsx',
+  'MatchAnswer.tsx',
+  'TableAnswer.tsx',
+  'ClozeAnswer.tsx',
+  'AnswerComposer.tsx',
+];
 
 /** Who renders the pinned bar, and why it is not (yet) the shell's "Prüfen". */
 const BAR: Record<string, string> = {
   'CheckBar.tsx': 'the shell’s action',
-  'AnswerComposer.tsx': 'the typed field — moves into the shell in #310 step 3',
-  '[id].tsx': 'the note line’s "Prüfen" and "Weiter" — #310 step 3',
+  '[id].tsx': '"Weiter" once a question is closed: the next step, not an answer to check',
   'ChoiceList.tsx': 'the voice bar under the options (SpokenChoiceBar) — the shell’s voice slot',
   'SpeakPanel.tsx': 'pronunciation: the recording is the action, not "Prüfen"',
   'CardPass.tsx': 'flash cards: a screen of their own, no answer to check',
@@ -52,20 +57,17 @@ const BAR: Record<string, string> = {
 /** Who places the free room. */
 const SPACER: Record<string, string> = {
   'AnswerShell.tsx': 'between the answer and "Prüfen"',
-  '[id].tsx': 'for the forms not in the shell yet — #310 step 3',
+  '[id].tsx': 'for the options, the pronunciation panel and "Weiter" — not in the shell yet',
 };
 
 /** Who writes "Prüfen" (the key `check`) on a button. */
 const CHECK: Record<string, string> = {
   'CheckBar.tsx': 'the shell’s action',
-  'AnswerComposer.tsx': 'inside the typed field’s pill — #310 step 3 moves it into CheckBar',
-  '[id].tsx': 'the note line — #310 step 3',
   'DrillRound.tsx': 'Kopfrechnen’s pad (#243)',
 };
 
 /** Who draws with the shadow: never an answer form (its tiles are `AnswerTile`). */
 const SHADOWED: Record<string, string> = {
-  'AnswerComposer.tsx': 'the floating field — #310 step 3',
   'ItemThread.tsx': 'a speech bubble of the conversation, not an answer',
   'SessionSummary.tsx': 'a card on the summary, not an answer',
 };

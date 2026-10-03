@@ -176,6 +176,50 @@ export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
 }
 
 /**
+ * A small phone with the keyboard up (issue #310, #309 Abnahme 2): the 360×740 phone keeps
+ * 740 − 300 pt, a small Android keyboard being about 300 dp (the same room modes.spec gives its
+ * keyboard shots; core-loop checks the chat at a rounder 420). The web cannot open a keyboard;
+ * the window shrinks by its height, as Android does on its own (adjustResize, issue #46).
+ */
+const KEYBOARD_ROOM = { width: 360, height: 740 - 300 } as const;
+
+/**
+ * Where a typed answer stands in the answer shell, the keyboard pass: the field has the focus
+ * (so the math keys show, as while she types), and the field and anything said as an alert (a
+ * toast, the mic's problem) are both inside the window. Since the field stands under the
+ * question rather than at the bottom edge, this is what proves the keyboard does not cover it.
+ */
+async function keyboardPass(page: Page, name: string): Promise<void> {
+  const field = page.locator('[data-testid="answer-slot"] [data-testid="answer-field"]').last();
+  const wasFocused = await field.evaluate((el) => el === document.activeElement);
+  await page.setViewportSize(KEYBOARD_ROOM);
+  await field.focus();
+  await settle(page);
+  await page.screenshot({ path: join(SHOTS, `${name}-kb.png`) });
+  const alerts = page.locator('[role="alert"]:visible');
+  // "Prüfen" is recorded, not required: with a tall question card it may sit under the keyboard
+  // (the return key sends a one-liner; a path is sent once the keyboard is down). The question
+  // never shrinks (rule 16), so above the keyboard the field and the keys win over the bar.
+  const actionPast = await page
+    .getByTestId('answer-action')
+    .last()
+    .evaluate((el) => Math.max(0, Math.round(el.getBoundingClientRect().bottom - innerHeight)));
+  const record = {
+    name,
+    phone: 'kb',
+    alerts: await alerts.count(),
+    actionPast,
+    place: await answerPlace(page),
+  };
+  appendFileSync(REPORT, `${JSON.stringify(record)}\n`);
+  await expect(field, `${name} @kb: the field above the keyboard`).toBeInViewport({ ratio: 1 });
+  for (const alert of await alerts.all()) {
+    await expect(alert, `${name} @kb: what is said as an alert`).toBeInViewport();
+  }
+  if (!wasFocused) await field.blur();
+}
+
+/**
  * Waits until the screen stops changing: an entrance, a verdict or the summary's arrival has
  * finished, so a shot never keeps an element caught half-faded mid-animation. What moves
  * forever (Buddy's breathing orb, typing dots) never settles and only costs the wait.
@@ -239,6 +283,9 @@ export async function shot(
       path: join(SHOTS, phone.width === 390 ? `${name}.png` : `${name}-${phone.width}.png`),
     });
   }
+  // A typed answer in the answer shell: once more with the keyboard up.
+  if ((await page.locator('[data-testid="answer-slot"] [data-testid="answer-field"]').count()) > 0)
+    await keyboardPass(page, name);
   if (size) await page.setViewportSize(size);
   const tooLong = found.filter((o) => !o.allowed && !(opened && o.label !== 'page'));
   expect(tooLong, `${name}: must fit the screen without scrolling`).toEqual([]);

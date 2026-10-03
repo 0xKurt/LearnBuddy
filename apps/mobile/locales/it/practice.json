@@ -15,7 +15,8 @@
     "placeholder_dictation": "Scrivi quello che senti – senza microfono",
     "label": "La tua risposta",
     "placeholder": "La tua risposta…",
-    "unit_hint": "Risposta in {{unit}}"
+    "unit_hint": "Risposta in {{unit}}",
+    "check_waits": "Solo quando c'è qualcosa nel campo."
   },
   "back_to_buddy": "Torna da Buddy",
   "bar": {
@@ -202,7 +203,8 @@
     "placed": "{{what}} {{where}}, battuta {{bar}}",
     "moved": "{{what}} {{where}}",
     "rest_placed": "{{what}}, battuta {{bar}}",
-    "rest_of": "Metti: {{value}}"
+    "rest_of": "Metti: {{value}}",
+    "check_waits": "Solo quando ogni battuta ha qualcosa."
   },
   "summary": {
     "title": "Ce l'hai fatta!",
