@@ -80,14 +80,7 @@ describe.skipIf(!dbReady)('home: one snapshot', () => {
       json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null },
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [] });
-  });
+  afterEach(() => env.closeChecked());
 
   async function upload(body: Record<string, unknown>): Promise<string> {
     const created = await lena.api.post<{

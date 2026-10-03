@@ -140,15 +140,7 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
     env = await createTestEnv({ start: START });
     l = await onboard(env);
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.length,
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: 0, pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   async function withPhone() {
     await enableContact(env, l.learnerId);

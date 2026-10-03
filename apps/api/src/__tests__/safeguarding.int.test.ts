@@ -38,15 +38,7 @@ describe.skipIf(!dbReady)('safeguarding', () => {
   beforeAll(async () => {
     env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
   });
-  afterEach(() => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    env.llm.reset();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.checkScript({ reset: true }));
   afterAll(async () => {
     await env?.close();
   });

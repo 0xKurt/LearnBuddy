@@ -24,16 +24,7 @@ describe.skipIf(!dbReady)('school year (M-39)', () => {
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    await env.flushBackground();
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('"je suis en 4e" is her 8th school year, shown back as such', async () => {
     env.llm.script('buddy_turn', {

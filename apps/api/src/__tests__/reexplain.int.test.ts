@@ -82,15 +82,7 @@ describe.skipIf(!dbReady)('explain again ("Anders erklären")', () => {
     env = await createTestEnv({ start: '2026-09-28T14:00:00Z' });
     l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('explains a solution again, the way she asked, once per tap', async () => {
     const s = await start(env, l, [item({ prompt: 'Was steht unten?', answer: 'Nenner' })]);

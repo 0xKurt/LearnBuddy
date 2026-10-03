@@ -109,14 +109,8 @@ describe.skipIf(!dbReady)('order items', () => {
     l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
   });
   afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      // A tutor call here would mean code could not decide an order it must decide.
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
+    // A tutor call here would mean code could not decide an order it must decide.
+    await env.closeChecked();
   });
 
   it('stores the checked task, shows it without its key, and judges it right', async () => {

@@ -86,14 +86,11 @@ describe.skipIf(!dbReady)('a throttled model provider', () => {
     env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
   });
   afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    env.llm.reset();
-    await env.db.query(`delete from llm_calls`);
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
+    try {
+      await env.checkScript({ reset: true });
+    } finally {
+      await env.db.query(`delete from llm_calls`);
+    }
   });
   afterAll(async () => {
     await env?.close();

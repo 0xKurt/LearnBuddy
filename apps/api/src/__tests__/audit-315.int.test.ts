@@ -45,15 +45,7 @@ describe.skipIf(!dbReady)('audit #315: context bumps and the learner zone', () =
     env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
     l = await onboard(env);
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   describe('finding 1: the context moves on with the change, never without it', () => {
     it('a profile change moves it once; a refused (stale) one leaves it where it was', async () => {

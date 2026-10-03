@@ -85,15 +85,7 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
     l = await onboard(env);
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.length,
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: 0, pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('keeps purpose and sheet on a failed card, and the sheet being read comes first (M-18, M-19)', async () => {
     env.llm.script('extraction', { error: new LlmError('invalid_output', 'truncated') });

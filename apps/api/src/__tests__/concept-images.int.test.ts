@@ -130,15 +130,7 @@ describe.skipIf(!dbReady)('concept images (issue #50)', () => {
     lena = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
     env.llm.byDefault('buddy_check', WAIT);
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('crops the figure the vision pass found and shows it with the question', async () => {
     env.llm.script('extraction', { json: sheet() });

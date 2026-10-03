@@ -138,15 +138,7 @@ describe.skipIf(!dbReady)('a spot that could not be read', () => {
     lena = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
     env.llm.byDefault('buddy_check', WAIT);
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('keeps every other question and asks the one small question about the spot', async () => {
     // One good entry and one that is no choice at all (a single reading): the broken one costs

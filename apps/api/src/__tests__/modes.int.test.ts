@@ -68,15 +68,7 @@ describe.skipIf(!dbReady)('learning modes', () => {
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('helps with photographed homework without ever giving the solution', async () => {
     env.llm.script('extraction', async (req) => {

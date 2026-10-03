@@ -126,17 +126,9 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
       pin: '1357',
     });
   });
-  afterEach(() => {
+  afterEach(async () => {
     // A failed expectation inside a scripted model answer surfaces here.
-    expect({
-      scriptErrors: env.llm.scriptErrors,
-      unexpected: env.llm.unexpected.length,
-      pending: env.llm.pending(),
-    }).toEqual({
-      scriptErrors: [],
-      unexpected: 0,
-      pending: 0,
-    });
+    await env.checkScript();
   });
   afterAll(async () => {
     await env?.close();

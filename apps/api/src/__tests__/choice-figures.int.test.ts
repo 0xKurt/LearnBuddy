@@ -82,14 +82,8 @@ describe.skipIf(!dbReady)('pictures as options', () => {
     l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2010-02-10' });
   });
   afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      // A tutor call would mean code could not judge a tapped option — it always can.
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
+    // A tutor call would mean code could not judge a tapped option — it always can.
+    await env.closeChecked();
   });
 
   it('stores the graphs, shows them without the key, and judges the tap by its index', async () => {

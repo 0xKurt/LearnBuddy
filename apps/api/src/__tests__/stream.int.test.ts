@@ -69,15 +69,7 @@ describe.skipIf(!dbReady)('streamed replies', () => {
       pin: '4826',
     });
   });
-  afterEach(() => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    env.llm.reset();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.checkScript({ reset: true }));
   afterAll(async () => {
     await env?.close();
   });

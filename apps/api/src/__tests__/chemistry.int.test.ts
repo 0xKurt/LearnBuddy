@@ -12,7 +12,13 @@ import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contr
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
-import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import {
+  createTestEnv,
+  finishRun,
+  onboard,
+  type Learner,
+  type TestEnv,
+} from '../testing/harness.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -76,15 +82,7 @@ describe.skipIf(!dbReady)('reaction equations are counted, not guessed at', () =
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('grades a whole sheet without asking the model once', async () => {
     const s = await start(env, l);
@@ -106,7 +104,7 @@ describe.skipIf(!dbReady)('reaction equations are counted, not guessed at', () =
     // The proof: no tutor was scripted, and the harness fails on an unscripted call.
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
 
-    await l.api.post(`/practice/sessions/${s.id}/finish`, {});
+    await finishRun(env, l, s.id);
     const done = (await l.api.get<SessionView>(`/practice/sessions/${s.id}`)).body;
     expect(done.summary?.first_try).toBe(5);
     expect(done.summary?.secure_topics).toEqual(['Reaktionsgleichungen']);

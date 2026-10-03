@@ -90,15 +90,7 @@ describe.skipIf(!dbReady)('which questions may be read aloud', () => {
       pin: '4826',
     });
   });
-  afterEach(async () => {
-    const report = {
-      scriptErrors: [...env.llm.scriptErrors],
-      unexpected: env.llm.unexpected.map((u) => u.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
-  });
+  afterEach(() => env.closeChecked());
 
   it('reads a word problem and a vocabulary prompt, never a spelling task or a given-away word', async () => {
     const s = await start(env, l);

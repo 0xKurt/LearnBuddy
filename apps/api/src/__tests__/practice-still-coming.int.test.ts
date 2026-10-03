@@ -94,13 +94,7 @@ describe.skipIf(!dbReady)('a run that starts before its questions are all writte
   });
   afterEach(async () => {
     while (holding.length > 0) holding.pop()?.();
-    const report = {
-      scriptErrors: env.llm.scriptErrors,
-      unexpected: env.llm.unexpected.map((c) => c.purpose),
-      pending: env.llm.pending(),
-    };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
+    await env.closeChecked();
   });
 
   it('starts on the first questions, says more is coming, and grows without repeating itself', async () => {

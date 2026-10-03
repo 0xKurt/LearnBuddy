@@ -48,11 +48,7 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
     env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
     l = await onboard(env);
   });
-  afterEach(async () => {
-    const report = { scriptErrors: [...env.llm.scriptErrors], unexpected: env.llm.unexpected };
-    await env.close();
-    expect(report).toEqual({ scriptErrors: [], unexpected: [] });
-  });
+  afterEach(() => env.closeChecked());
 
   it('update_step with a state and a new day is refused, never half applied (update-step-state-drops-move)', async () => {
     await env.db.query(
