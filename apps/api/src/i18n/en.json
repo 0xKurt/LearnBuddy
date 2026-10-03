@@ -226,7 +226,14 @@
     "unbalanced_mass": "Almost – the mass numbers don't match yet: {{left}} on the left, {{right}} on the right.",
     "unbalanced_atomic": "Almost – the atomic numbers don't match yet: {{left}} on the left, {{right}} on the right.",
     "untitled": "Practice",
-    "worked_intro": "Here's how it works:"
+    "worked_intro": "Here's how it works:",
+    "chart": {
+      "pyramid": "Pyramid",
+      "bell": "Bell",
+      "urn": "Urn",
+      "humid": "Humid",
+      "arid": "Arid"
+    }
   },
   "contact": {
     "less_often": "Got it – from now on I'll only message your phone when it really matters. Everything else waits here. You can change this in settings."

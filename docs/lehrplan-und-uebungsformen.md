@@ -1464,7 +1464,9 @@ Symbol und ist mit `grep` auffindbar.
 
 **Zwei Darstellungen, die sie ansehen aber nicht bearbeiten kann:** `Figure` aus Daten gezeichnet
 (`contracts/figure.ts`: `fraction`, `number_line`, `function_plot`, `bar_chart`, `geometry`,
-`table`) und `ItemImage` — ein **echter Ausschnitt** aus dem fotografierten Blatt
+`table` und seit #245/#246 die Diagramme `line_chart`, `climate_chart`, `pie_chart`, `box_plot`,
+`histogram`, `scatter_plot`, `pyramid` — deren Ablesefragen rechnet Code nach, `docs/architecture.md`
+§Charts) und `ItemImage` — ein **echter Ausschnitt** aus dem fotografierten Blatt
 (`modules/materials/images.ts`, Issue #50).
 
 **Hörverstehen** (Issue #210, `contracts/listen.ts`, `modules/practice/listen.ts`,

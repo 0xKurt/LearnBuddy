@@ -226,7 +226,14 @@
     "unbalanced_mass": "Presque – les nombres de masse ne correspondent pas encore : {{left}} à gauche, {{right}} à droite.",
     "unbalanced_atomic": "Presque – les numéros atomiques ne correspondent pas encore : {{left}} à gauche, {{right}} à droite.",
     "untitled": "Exercice",
-    "worked_intro": "Regarde, voilà comment faire :"
+    "worked_intro": "Regarde, voilà comment faire :",
+    "chart": {
+      "pyramid": "Pyramide",
+      "bell": "Cloche",
+      "urn": "Urne",
+      "humid": "Humide",
+      "arid": "Aride"
+    }
   },
   "contact": {
     "less_often": "C'est noté – désormais, je ne t'écris sur ton téléphone que si c'est vraiment important. Le reste t'attend ici. Tu peux changer ça dans les réglages."

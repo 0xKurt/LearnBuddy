@@ -226,7 +226,14 @@
     "unbalanced_mass": "Quasi – i numeri di massa non corrispondono ancora: {{left}} a sinistra, {{right}} a destra.",
     "unbalanced_atomic": "Quasi – i numeri atomici non corrispondono ancora: {{left}} a sinistra, {{right}} a destra.",
     "untitled": "Esercizio",
-    "worked_intro": "Guarda, si fa così:"
+    "worked_intro": "Guarda, si fa così:",
+    "chart": {
+      "pyramid": "Piramide",
+      "bell": "Campana",
+      "urn": "Urna",
+      "humid": "Umido",
+      "arid": "Arido"
+    }
   },
   "contact": {
     "less_often": "Va bene: d'ora in poi ti scrivo sul telefono solo quando è davvero importante. Tutto il resto ti aspetta qui. Puoi cambiarlo nelle impostazioni."
