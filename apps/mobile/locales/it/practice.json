@@ -18,34 +18,6 @@
     "pick_how": "Tocca la barra che è maggiore.",
     "pick_option": "Scegli {{fraction}}"
   },
-  "board": {
-    "order_how": "Tocca gli elementi nell'ordine giusto.",
-    "order_unset": "{{text}}, elemento {{n}} su {{total}}, non ancora messo",
-    "order_set": "{{text}}, messo come {{position}}, tocca di nuovo per riprenderlo",
-    "order_state": "{{placed}} su {{total}} messi",
-    "pairs_how": "Tocca qualcosa a sinistra, poi a destra ciò che gli corrisponde.",
-    "pairs_left": "{{text}}, ancora senza coppia, tocca per sceglierlo",
-    "pairs_left_open": "{{text}}, scelto, tocca ora a destra ciò che gli corrisponde",
-    "pairs_left_done": "{{text}}, coppia {{pair}}, tocca di nuovo per sciogliere la coppia",
-    "pairs_right": "{{text}}, ancora senza coppia",
-    "pairs_right_done": "{{text}}, coppia {{pair}}, tocca di nuovo per sciogliere la coppia",
-    "pairs_pick_left": "Scegli prima qualcosa a sinistra.",
-    "pairs_state": "{{done}} coppie su {{total}} formate",
-    "groups_how": "Tocca un elemento, poi il gruppo a cui appartiene.",
-    "groups_unset": "{{text}}, non ancora sistemato, tocca per sceglierlo",
-    "groups_open": "{{text}}, scelto, tocca ora il gruppo",
-    "groups_set": "{{text}}, in {{group}}, tocca di nuovo per riprenderlo",
-    "groups_target": "Sistemare in {{group}}",
-    "groups_pick_element": "Scegli prima un elemento.",
-    "groups_state": "{{done}} su {{total}} sistemati",
-    "table_how": "Scrivi nelle caselle vuote.",
-    "table_empty": "{{where}}, ancora vuota",
-    "table_filled": "{{where}}, {{value}}",
-    "table_where": "{{column}} per {{row}}",
-    "table_where_col": "{{column}}, riga {{row}}",
-    "table_where_cell": "Colonna {{column}}, riga {{row}}",
-    "table_state": "{{done}} caselle su {{total}} riempite"
-  },
   "cards": {
     "progress": "Carta {{current}} di {{total}}",
     "note": "Carte: sei tu a dire se lo sapevi.",
@@ -106,7 +78,32 @@
     "transcript_title": "Questo era il testo"
   },
   "loading": "Sto caricando le tue domande…",
+  "match": {
+    "how_pairs": "Tocca un elemento a sinistra, poi il suo compagno a destra.",
+    "how_groups": "Tocca un elemento in alto, poi il suo gruppo.",
+    "held": "{{text}}, selezionato",
+    "paired": "{{text}}, coppia {{n}} con {{other}}",
+    "no_partner": "{{text}}, ancora senza compagno",
+    "in_group": "{{text}}, in {{group}}",
+    "no_group": "{{text}}, ancora in nessun gruppo",
+    "group": "Gruppo {{group}}, {{count}} dentro",
+    "hint_take": "Lo seleziona.",
+    "hint_held": "Lo deseleziona.",
+    "hint_link": "Lo collega a {{other}}.",
+    "hint_linked": "Scioglie il collegamento.",
+    "hint_put": "Mette {{text}} qui.",
+    "hint_group_waits": "Prima tocca qualcosa in alto.",
+    "check_waits": "Solo quando tutto è abbinato."
+  },
   "next": "Avanti",
+  "order": {
+    "how": "Toccali in ordine.",
+    "element_open": "{{text}}, ancora senza posto",
+    "element_placed": "{{text}}, posto {{n}}",
+    "hint_open": "Riceve il posto {{n}}.",
+    "hint_placed": "Lo toglie, insieme a tutto ciò che viene dopo.",
+    "check_waits": "Solo quando ognuno ha il suo posto."
+  },
   "origin_buddy": "Domanda di Buddy",
   "progress": "Domanda {{current}} di {{total}}",
   "progress_more_coming": "Domanda {{current}} · ne sto scrivendo altre",
@@ -180,9 +177,15 @@
     "sharp": "Diesis ♯",
     "rest": "Pausa",
     "undo": "Annulla",
-    "place": "Metti {{note}} {{where}} nella battuta {{bar}}",
     "toggle_on": "{{label}}, attivo",
-    "bar_crowded": "Nella battuta {{n}} non c'è più posto per un altro segno."
+    "bar_crowded": "Nella battuta {{n}} non c'è più posto per un altro segno.",
+    "bar_hint": "Tocca dove deve andare la nota. Poi spostala con «Più su» e «Più giù».",
+    "higher": "Più su",
+    "lower": "Più giù",
+    "placed": "{{what}} {{where}}, battuta {{bar}}",
+    "moved": "{{what}} {{where}}",
+    "rest_placed": "{{what}}, battuta {{bar}}",
+    "rest_of": "Metti: {{value}}"
   },
   "summary": {
     "title": "Ce l'hai fatta!",
@@ -221,5 +224,12 @@
     "partially_correct": "Quasi",
     "incorrect": "Non ancora",
     "unchecked": "Non controllato"
+  },
+  "table": {
+    "cell": "{{row}}, {{column}}",
+    "cell_at": "riga {{row}}, colonna {{column}}",
+    "brick": "fila {{row}}, mattone {{n}}",
+    "check_waits": "Solo quando tutte le caselle sono compilate.",
+    "scroll": "Tabella, scorre di lato"
   }
 }

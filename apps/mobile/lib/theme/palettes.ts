@@ -75,6 +75,16 @@ export type Palette = {
     fill: string;
     fillSoft: string;
     series: readonly [string, string, string];
+    /**
+     * Charts (issues #245, #246). A climate chart's temperature line and precipitation
+     * columns in the atlas colours (red, blue; `wetDeep` is the compressed part above
+     * 100 mm), and the slices of a pie — numbered on the drawing, so colour is never the
+     * only signal.
+     */
+    warm: string;
+    wet: string;
+    wetDeep: string;
+    slices: readonly string[];
   };
 };
 
@@ -136,6 +146,19 @@ const pastellSoft: Palette = {
     fill: '#b9a4f0',
     fillSoft: 'rgba(106,72,215,0.14)',
     series: ['#6a48d7', '#2f7fb8', '#3f8a5c'],
+    warm: '#c8473b',
+    wet: '#8fb9e8',
+    wetDeep: '#3f6fa8',
+    slices: [
+      '#b9a4f0',
+      '#9cc7ec',
+      '#a6d8b9',
+      '#f5c48f',
+      '#f2a7c3',
+      '#e3d37a',
+      '#c9b8a6',
+      '#9fd6d6',
+    ],
   },
 };
 
@@ -201,6 +224,19 @@ const night: Palette = {
     fill: '#6f5bb8',
     fillSoft: 'rgba(157,130,245,0.20)',
     series: ['#b9a4ff', '#7fb6e6', '#87c79c'],
+    warm: '#f08a7e',
+    wet: '#3d6894',
+    wetDeep: '#8fbcef',
+    slices: [
+      '#6f5bb8',
+      '#3f74a6',
+      '#3f8a5c',
+      '#a8703d',
+      '#a8566f',
+      '#8f8339',
+      '#7a6a5c',
+      '#3f8a8a',
+    ],
   },
 };
 
@@ -427,6 +463,12 @@ export type Figure = {
    * never the only signal (each graph also has a label and its own dash pattern).
    */
   series: string[];
+  /** Climate chart: temperature line, precipitation columns, the compressed part above 100 mm. */
+  warm: string;
+  wet: string;
+  wetDeep: string;
+  /** Pie slices and the two halves of a population pyramid. */
+  slices: string[];
 };
 
 export function toneBgOf(p: Palette): Record<SubjectTone, string> {
@@ -466,5 +508,9 @@ export function figureOf(p: Palette): Figure {
     empty: p.paper,
     point: p.primaryDk,
     series: [...p.figure.series],
+    warm: p.figure.warm,
+    wet: p.figure.wet,
+    wetDeep: p.figure.wetDeep,
+    slices: [...p.figure.slices],
   };
 }

@@ -69,6 +69,21 @@ If a change diverges from these docs, update the doc in the same change or write
     rare settings stay closed until opened. Check new UI against `docs/UX-PRINCIPLES.md` §31–32.
     **No scrolling to find what matters:** every screen fits a 390×844 and a 360×740 phone; only a
     conversation or a browsed list scrolls (`tests/web/fit.ts` fails the walkthrough otherwise).
+    **Every route is on an allowlist** with a one-line reason the chat cannot carry it
+    (`ROUTES` in `apps/mobile/lib/__tests__/minimalism.test.ts`): a new file under `apps/mobile/app/`
+    without an entry fails `pnpm test`. Practice forms (`ItemKind`) never get a picker of their own —
+    no screen or component lists two or more side by side, no request carries one
+    (`packages/shared-types/src/contracts/__tests__/forms.test.ts`); Buddy or code picks the form.
+    Every PR names the USP point it serves (`docs/buddy/01-prinzip-und-diagnose.md` §1.1).
+
+17. **Look at your own screenshots like a designer before you submit UI** (issue #287). Passing
+    gates is not the bar; looking good is. Whoever builds or changes a screen runs the
+    walkthrough, looks at every affected shot at 360×740 and 390×844, light and dark, and
+    critiques it honestly: empty voids, a title on two lines, clipped or doubled elements,
+    a new card style or accent where an existing one would do, small grey noise, a hard edge
+    where something scrolls under a bar. Then revise and shoot again. The PR carries a
+    before/after image (same screen, old next to new) — no UI change is handed to the owner
+    without one. Screen titles in a header stay on one line (`components/lb/Screen.tsx`).
 
 ## Required quality gates
 

@@ -10,7 +10,7 @@
 // first because the row scrolls sideways — a key she has to scroll to find is
 // a key she does not know exists — and it carries a word, not only the glyph:
 // "↵" alone is a symbol a child has to know. A cell of a table takes one
-// line, so the board does not offer it (components/practice/PartsBoardAnswer.tsx).
+// line, so the table does not offer it (components/practice/TableAnswer.tsx).
 //
 // The keys are soft and round (white on a soft shadow, the "Pastell Soft"
 // look of the composer below them), at least 44 × 44 pt.

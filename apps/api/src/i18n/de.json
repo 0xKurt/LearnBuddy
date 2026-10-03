@@ -73,19 +73,8 @@
     "no_single_solution": "Hier gibt es nicht die eine Lösung, die ich dir zeigen könnte: bei so einem Text zählt, wie du es begründest. Sag mir, woran du hängst, dann schauen wir zusammen auf deinen Text.",
     "not_lowest": "Richtig ausgeglichen! Jetzt noch kürzen – alle Zahlen davor lassen sich durch {{factor}} teilen.",
     "not_quite": "Noch nicht ganz. Schau dir die Frage nochmal an – oder lass dir die Lösung zeigen.",
+    "not_transformed": "Gleichwertig – aber das steht genau so schon in der Aufgabe. Forme es noch um.",
     "one_way_intro": "So könnte man das angehen – ein Weg, nicht der einzige:",
-    "parts": {
-      "order_prefix": "Bis Schritt {{step}} stimmt alles. Schau dir Schritt {{next}} nochmal an.",
-      "pairs_held": "{{held}} von {{total}} Paaren stimmen schon. Probier die anderen nochmal.",
-      "pairs_place": "{{held}} von {{total}} Paaren stimmen. Schau dir „{{piece}}“ nochmal an.",
-      "groups_held": "{{held}} von {{total}} liegen richtig. Probier die anderen nochmal.",
-      "groups_place": "{{held}} von {{total}} liegen richtig. Schau dir „{{piece}}“ nochmal an.",
-      "cells_held": "{{held}} von {{total}} Feldern stimmen. Probier die anderen nochmal.",
-      "cells_place": "{{held}} von {{total}} Feldern stimmen. Schau dir {{cell}} nochmal an.",
-      "cell_named": "{{column}} bei „{{row}}“",
-      "cell_column": "{{column}} in Zeile {{row}}",
-      "cell_numbered": "Spalte {{column}}, Zeile {{row}}"
-    },
     "reexplain": {
       "simpler": "Einfacher bitte",
       "example": "Mit Beispiel, bitte",
@@ -209,6 +198,7 @@
       "fault_rest_here": "An der {{index}}. Stelle in Takt {{bar}} gehört eine Pause hin.",
       "fault_note_here": "An der {{index}}. Stelle in Takt {{bar}} gehört eine Note hin."
     },
+    "same_value": "Der Wert stimmt – du hast es nur anders geschrieben. Schau noch, in welcher Form die Aufgabe das Ergebnis haben möchte.",
     "step_broke": "Bis Zeile {{line}} stimmt alles. Von dort zur nächsten Zeile geht etwas verloren – schau dir diesen Schritt nochmal an.",
     "step_broke_last": "Dein Weg stimmt bis zum Schluss – nur der letzte Schritt nicht. Schau nochmal auf die letzte Zeile.",
     "test_no_hints": "Im Test gibt es keine Tipps – schreib einfach, was du denkst, oder überspring die Frage.",
@@ -221,8 +211,47 @@
     "typo_wrong": "Fast – ein Buchstabe stimmt noch nicht. Findest du ihn?",
     "unbalanced_charge": "Fast – die Ladungen stimmen noch nicht: links {{left}}, rechts {{right}}.",
     "unbalanced_element": "Fast – zähl das {{element}} nochmal: links {{left}}, rechts {{right}}.",
+    "unbalanced_mass": "Fast – die Massenzahlen stimmen noch nicht: links {{left}}, rechts {{right}}.",
+    "unbalanced_atomic": "Fast – die Ordnungszahlen stimmen noch nicht: links {{left}}, rechts {{right}}.",
     "untitled": "Übung",
-    "worked_intro": "Schau, so geht's:"
+    "worked_intro": "Schau, so geht's:",
+    "order": {
+      "first_wrong": "Noch nicht ganz – schau nochmal, was ganz am Anfang steht.",
+      "right_until": "Bis Schritt {{right}} stimmt's! Ab Schritt {{from}} passt die Reihenfolge noch nicht ganz."
+    },
+    "table": {
+      "right": "{{count}} von {{total}} Feldern stimmen.",
+      "right_one": "1 von {{total}} Feldern stimmt.",
+      "look_one": "Schau nochmal bei {{cell}}.",
+      "near_one": "Bei {{cell}} fehlt nur noch eine Kleinigkeit.",
+      "look_many": "Schau nochmal bei {{cells}}.",
+      "look_more": "Schau nochmal bei {{cells}} und {{more}} weiteren.",
+      "none_right": "Noch stimmt keins der Felder – fang am besten bei {{cell}} an.",
+      "cell": "„{{row}}“ / „{{column}}“",
+      "cell_in_column": "Zeile {{row}}, Spalte „{{column}}“",
+      "cell_at": "Zeile {{row}}, Spalte {{column}}",
+      "brick": "Reihe {{row}}, Stein {{n}}",
+      "and": "und",
+      "almost": "Fast geschafft!",
+      "near_many": "Bei {{cells}} fehlt jeweils nur noch eine Kleinigkeit.",
+      "near_more": "Bei {{cells}} und {{more}} weiteren fehlt jeweils nur noch eine Kleinigkeit."
+    },
+    "match": {
+      "pairs_some": "{{count}} von {{total}} Paaren stimmen schon.",
+      "pairs_some_one": "1 von {{total}} Paaren stimmt schon.",
+      "pairs_none": "Noch passt keins der Paare – schau sie dir nochmal in Ruhe an.",
+      "groups_some": "{{count}} von {{total}} sind schon richtig einsortiert.",
+      "groups_some_one": "1 von {{total}} ist schon richtig einsortiert.",
+      "groups_none": "Noch ist keins richtig einsortiert – schau nochmal in Ruhe hin.",
+      "look_at": "Schau dir „{{text}}“ nochmal an."
+    },
+    "chart": {
+      "pyramid": "Pyramide",
+      "bell": "Glocke",
+      "urn": "Urne",
+      "humid": "humid",
+      "arid": "arid"
+    }
   },
   "contact": {
     "less_often": "Alles klar – aufs Handy schreibe ich dir ab jetzt nur noch, wenn's wirklich wichtig ist. Alles andere findest du hier. Ändern kannst du das in den Einstellungen."

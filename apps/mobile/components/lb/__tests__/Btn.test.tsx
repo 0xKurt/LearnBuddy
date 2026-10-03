@@ -164,3 +164,58 @@ function asRgb(hex: string): string {
   const n = Number.parseInt(full, 16);
   return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
 }
+
+describe('the icon-only Btn is small to the eye and 44 to the finger (issue #295)', () => {
+  it('shows no text, is named by its label and keeps a 44 pt target', () => {
+    const onPress = vi.fn();
+    renderInApp(
+      <Btn iconOnly icon="undo" onPress={onPress} accessibilityLabel="Rückgängig: Eingetragen">
+        Rückgängig
+      </Btn>,
+    );
+    const button = screen.getByRole('button', { name: 'Rückgängig: Eingetragen' });
+    expect(button.textContent).toBe('');
+    expect(styleOf(button).width).toBe('44px');
+    expect(styleOf(button).height).toBe('44px');
+    // The 20 pt beyond the 24 pt circle come back as a negative margin: the row it sits in
+    // lays out the circle, the finger gets the whole 44.
+    expect(styleOf(button).marginTop).toBe('-10px');
+    expect(styleOf(button).marginLeft).toBe('-10px');
+    fireEvent.click(button);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('turns into a spinner in the same place while busy, and does not fire twice', () => {
+    const onPress = vi.fn();
+    renderInApp(
+      <Btn iconOnly icon="undo" busy onPress={onPress}>
+        Rückgängig
+      </Btn>,
+    );
+    const button = screen.getByRole('button', { name: 'Rückgängig' });
+    expect(button.getAttribute('aria-busy')).toBe('true');
+    expect(button.querySelector('[role="progressbar"]')).not.toBeNull();
+    // The arrow itself is gone while the spinner stands in its place.
+    expect(button.querySelector('path[d^="M4.5 4.5"]')).toBeNull();
+    fireEvent.click(button);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
+  it('draws its icon in the secondary ink, and steps back to the placeholder tone when waiting', () => {
+    const p = paletteOf('pastell');
+    const strokeOf = (el: Element) => el.querySelector('path')?.getAttribute('stroke');
+    const { unmount } = renderInApp(
+      <Btn iconOnly icon="undo" onPress={() => undefined}>
+        Rückgängig
+      </Btn>,
+    );
+    expect(strokeOf(screen.getByRole('button', { name: 'Rückgängig' }))).toBe(p.ink2);
+    unmount();
+    renderInApp(
+      <Btn iconOnly icon="undo" disabled onPress={() => undefined}>
+        Rückgängig
+      </Btn>,
+    );
+    expect(strokeOf(screen.getByRole('button', { name: 'Rückgängig' }))).toBe(p.placeholder);
+  });
+});

@@ -14,12 +14,18 @@ import {
   MATH_RULES,
   MAX_ACCEPTED,
   NUMERIC_KEY_RULES,
-  PARTS_FROM_SHEET,
-  PARTS_RULES,
   SPELLING_RULES,
 } from '../practice/items.js';
+import {
+  MATCH_RULES,
+  ORDER_RULES,
+  StructuredDraft,
+  StructuredDraftHomework,
+} from '../practice/structured.js';
+import { TABLE_RULES } from '../practice/table.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v6';
+// v8: car 2's structured rules (v7.1) and #253/#257's figures (v7) together.
+export const EXTRACT_PROMPT_VERSION = 'extract.v8';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -33,6 +39,13 @@ export const EXTRACT_PROMPT_VERSION = 'extract.v6';
  * not work however well the selection behaved.
  */
 export const ITEMS_PER_READING = 60;
+
+/**
+ * The most structured tasks (an order to find #228, a table to fill in #230, links to make #229)
+ * ONE reading may return. A sheet rarely has more than a few; like `items`, the rest is read on
+ * the next pass.
+ */
+export const STRUCTURED_PER_READING = 12;
 
 /** How often one sheet may be read for more, before it is called incomplete out loud. */
 export const MOST_READINGS = 4;
@@ -166,6 +179,12 @@ export const ExtractionResult = z.object({
     .describe('Faithful transcription (Markdown), used to ground explanations'),
   items: z.array(ItemDraft).max(ITEMS_PER_READING),
   /**
+   * Tasks whose answer is a shape, not a text: an order to find (#228), a table to fill in
+   * (#230), links to make (#229). Checked by code before anything is stored
+   * (`practice/structured.ts`, Regel 0 of #224).
+   */
+  structured: z.array(StructuredDraft).max(STRUCTURED_PER_READING).default([]),
+  /**
    * The sheet holds more questions or word pairs than this answer lists (issue #150).
    * Saying so is what lets the rest be read; guessing from a full list would mistake a
    * sheet that happens to have exactly as many for one that was cut off.
@@ -217,6 +236,7 @@ export type ExtractionResult = z.infer<typeof ExtractionResult>;
 /** How the answer is parsed: item by item, so one broken item costs only itself (H-14, H-15). */
 export const ExtractionParse = ExtractionResult.extend({
   items: itemsOneByOne(ItemDraft, ITEMS_PER_READING),
+  structured: itemsOneByOne(StructuredDraft, STRUCTURED_PER_READING),
 });
 
 /**
@@ -225,6 +245,7 @@ export const ExtractionParse = ExtractionResult.extend({
  */
 export const HomeworkExtraction = ExtractionResult.extend({
   items: z.array(ItemDraft.omit({ worked_solution: true })).max(12),
+  structured: z.array(StructuredDraftHomework).max(STRUCTURED_PER_READING).default([]),
 });
 
 /**
@@ -310,13 +331,14 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
 5. Write practice questions that check exactly this material, pitched at the learner's level (LEARNER). Each has the correct answer.
    - A vocabulary list: one "vocab" item per pair (prompt = foreign word as printed incl. article, answer = translation, prompt_lang / lang = their languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). The app asks both directions itself.
    - Write questions for EVERY pair or task the sheet has except the ones you named in not_practicable, not a selection of them: the learner asked for her sheet, not for a sample of it. If they do not all fit in one answer, write as many as fit, in the order they stand on the sheet, and set more_items true — you will be asked for the rest. Set more_items false only when nothing is left.
+   - ${ORDER_RULES} A task on the sheet that asks to put given things in order becomes one such task in "structured", never a question in items.
+   - ${TABLE_RULES} A table on the sheet whose cells are to be filled in becomes one such task in "structured" (its cells as printed, the empty ones as gaps), never one question per cell in items.
+   - ${MATCH_RULES} A task on the sheet that asks to link given things to each other or sort them into given groups becomes one such task in "structured", never questions in items.
    - Otherwise 8–15 questions — and none at all for a sheet whose every task went into not_practicable. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}
    - ${FIGURE_RULES}
-   - ${PARTS_RULES}
-   - ${PARTS_FROM_SHEET}
    - accepted_answers: other correct formulations (synonyms, spelling variants).
    - ${CURRICULUM_RULES}
    - topic: a short topic name (2–4 words) shared by questions about the same thing.
@@ -339,7 +361,10 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
 5. One item per task (or per numbered sub-task) you did NOT name in not_practicable, in the order printed, up to 12:
    - prompt: the task exactly as printed (you may add the needed context from the sheet in one sentence).
    - answer: the correct final answer, as short as possible. It is used only to check the learner's answer and to plan hints; the learner never sees it.
-   - kind: numeric for a single number (unit in "unit"), multiple_choice if the task offers choices, long for explanations or texts, short otherwise. Never one of the kinds with an answer in several parts here: help is given task by task, and parts_task stays null.
+   - kind: numeric for a single number (unit in "unit"), multiple_choice if the task offers choices, long for explanations or texts, short otherwise.
+   - ${ORDER_RULES} A task that asks to put given things in order goes into "structured" instead of items (its prompt as printed).
+   - ${TABLE_RULES} A table whose cells are to be filled in goes into "structured" instead of items (its prompt as printed).
+   - ${MATCH_RULES} A task that asks to link given things or sort them into groups goes into "structured" instead of items (its prompt as printed).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}

@@ -67,6 +67,7 @@ export const LISTEN_KINDS = ['multiple_choice', 'short'] as const;
  */
 export const ListenQuestion = ItemDraft.omit({
   figure: true,
+  read: true,
   unit: true,
   tolerance: true,
   spelling: true,
@@ -189,6 +190,7 @@ export function listenItems(
       lang: null,
       unit: null,
       figure: null,
+      read: null,
       tolerance: null,
       // Never 'strict': what she wrote is judged on what she understood, not on how she spells
       // it (issue #197). `evaluate.ts` enforces it as well, from the stored text.

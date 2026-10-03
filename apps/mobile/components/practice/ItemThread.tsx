@@ -45,6 +45,21 @@ type Props = {
   hideVerdicts?: boolean;
   /** What Buddy is doing while `pending` is on its way (default: looking at her answer). */
   thinkingLabel?: string;
+  /**
+   * Whether her own answers stand in the thread (default). Not for a structured answer while its
+   * question is open (issues #228–#230): her arrangement stands on the board itself, which is the
+   * state, and Buddy's reply
+   * says the verdict in words ("2 von 4 Paaren stimmen schon"). Echoed, four pairs became a
+   * four-line bubble that the room above the board (`STRUCTURED_REPLY_ROOM`) could only show as a
+   * cut-off strip under the question card (#229, shot 39e).
+   */
+  echoAnswers?: boolean;
+  /**
+   * Where each turn starts in the thread, by turn id (y in this component's own coordinates).
+   * The screen uses it to show only WHOLE turns when the conversation does not fit (issue #286):
+   * a bubble half under the question card is clutter, not context.
+   */
+  onTurnTops?: (tops: Readonly<Record<string, number>>) => void;
 };
 
 export function ItemThread({
@@ -53,12 +68,15 @@ export function ItemThread({
   hideVerdicts = false,
   thinkingLabel,
   pronunciation = false,
+  echoAnswers = true,
+  onTurnTops,
 }: Props) {
   const { t } = useTranslation('practice');
   // What was there when the screen opened stands still; what arrives now moves.
   const initial = useRef<ReadonlySet<string> | null>(null);
   if (initial.current === null) initial.current = new Set(turns.map((turn) => turn.id));
   const known = initial.current;
+  const tops = useRef<Record<string, number>>({});
   if (turns.length === 0 && pending === null) return null;
 
   let latestAnswerId: string | null = null;
@@ -72,6 +90,8 @@ export function ItemThread({
     <View style={{ gap: 12 }}>
       {turns.map((turn, index) => {
         const mine = turn.role === 'learner';
+        // Not echoed: neither the bubble nor its tag — the reply below says it in words.
+        if (mine && !echoAnswers) return null;
         const fresh = !known.has(turn.id);
         // Buddy's reply to a right answer that arrives now: his moon celebrates (happy).
         const before = index > 0 ? turns[index - 1] : undefined;
@@ -95,11 +115,16 @@ export function ItemThread({
         return (
           <Rise
             key={turn.id}
+            testID="thread-turn"
             // Her own answer was on screen already (while it was sent): only Buddy's reply
             // rises in.
             animate={fresh && !mine}
             delay={60}
             style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 6 }}
+            onLayout={(e) => {
+              tops.current = { ...tops.current, [turn.id]: Math.round(e.nativeEvent.layout.y) };
+              onTurnTops?.(tops.current);
+            }}
           >
             {mine ? (
               <Nudge active={fresh && (verdict === 'partially_correct' || verdict === 'incorrect')}>
@@ -119,11 +144,13 @@ export function ItemThread({
       })}
       {pending !== null ? (
         <>
-          <Rise style={{ alignItems: 'flex-end' }}>
-            <View style={{ maxWidth: '86%' }}>
-              <Bubble mine faded text={pending} speaker={t('thread.you')} />
-            </View>
-          </Rise>
+          {echoAnswers ? (
+            <Rise style={{ alignItems: 'flex-end' }}>
+              <View style={{ maxWidth: '86%' }}>
+                <Bubble mine faded text={pending} speaker={t('thread.you')} />
+              </View>
+            </Rise>
+          ) : null}
           <Thinking label={thinkingLabel ?? t('thread.thinking')} />
         </>
       ) : null}

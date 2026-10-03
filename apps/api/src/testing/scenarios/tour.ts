@@ -196,7 +196,7 @@ export function scriptTour(llm: ScriptedGateway): void {
       },
     },
   );
-  llm.script('buddy_check', {
-    json: { disposition: 'wait', reason: 'Nothing to add now.', actions: [], outreach: null },
-  });
+  // No check is scripted for the tour: its sheet's practice comes from the check's fixed
+  // fallback (checks.ts). The "wait" that stood queued here never reached the tour — the first
+  // spec to finish a practice took it.
 }

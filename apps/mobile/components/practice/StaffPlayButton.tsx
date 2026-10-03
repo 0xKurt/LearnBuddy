@@ -16,7 +16,9 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { playLine, stopNotes } from '../../lib/music/play.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Btn } from '../lb/Btn.js';
+import { Icon } from '../lb/Icon.js';
 import { toast } from '../lb/Toast.js';
 
 type Props = {
@@ -24,10 +26,18 @@ type Props = {
   /** Viertel pro Minute — das Tempo steht in den Daten der Zeile. */
   tempo: number;
   disabled?: boolean;
+  /**
+   * Nur der Lautsprecher, in voller Breite ihrer Zelle: auf der Schreibfläche steht der Knopf in
+   * einer Reihe aus sechs gleich breiten Tasten (issue #275), und „Anhören" passt auf ein Sechstel
+   * von 328 pt nicht. Dieselbe Pille, dieselbe Farbe, dasselbe Zeichen — nur ohne das Wort, das
+   * der Screenreader weiter hört.
+   */
+  iconOnly?: boolean;
 };
 
-export function StaffPlayButton({ bars, tempo, disabled = false }: Props) {
+export function StaffPlayButton({ bars, tempo, disabled = false, iconOnly = false }: Props) {
   const { t } = useTranslation('practice');
+  const { palette } = useTheme();
   const [playing, setPlaying] = useState(false);
   const mounted = useRef(true);
 
@@ -63,6 +73,7 @@ export function StaffPlayButton({ bars, tempo, disabled = false }: Props) {
     });
   }
 
+  const off = disabled || bars.length === 0;
   // Was draufsteht, ist auch der Zustand: niemals die Farbe allein.
   const label = playing ? t('staff.play_stop') : t('staff.play');
   return (
@@ -73,9 +84,23 @@ export function StaffPlayButton({ bars, tempo, disabled = false }: Props) {
         size="sm"
         pill
         variant="soft"
-        icon={playing ? 'stop' : 'speak'}
+        {...(iconOnly
+          ? {
+              full: true,
+              compact: true,
+              label: (
+                <View style={{ alignItems: 'center' }}>
+                  <Icon
+                    name={playing ? 'stop' : 'speak'}
+                    size={24}
+                    color={off ? palette.ink2 : palette.primaryDk}
+                  />
+                </View>
+              ),
+            }
+          : { icon: playing ? 'stop' : 'speak' })}
         onPress={press}
-        disabled={disabled || bars.length === 0}
+        disabled={off}
         accessibilityLabel={label}
         {...(playing ? {} : { accessibilityHint: t('staff.play_hint') })}
       >

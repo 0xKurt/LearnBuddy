@@ -288,13 +288,53 @@ erst die Gerätemessung — dazwischen liegen noch App→API→Google und die Wi
 Gegen ein langes erstes Stück stehen `shortOpening` und die 2,5-s-Grenze, ab der die
 Handy-Stimme einspringt.
 
-**Barge-in (#35).** Während Buddy spricht, bleibt das Mikrofon aus: weder expo-audio noch
+**Barge-in (#35), Stand 29.09. — überholt am 02.10. (unten):** Während Buddy spricht, blieb das Mikrofon aus: weder expo-audio noch
 expo-speech-recognition sichern Geräte-Echo-Cancellation zu, ein offenes Mikrofon schriebe
 Buddys eigene Stimme mit (Aufnahmen, die währenddessen starten, werden schon verworfen —
 Audit M-78). Ehrlich geht: der Tipp auf Buddy **oder** das Mikro unterbricht und hört
 sofort zu — ein Tipp statt zwei. `iosCategory: playAndRecord` existiert in
 expo-speech-recognition 3.1.3, ist aber ohne Gerätetest kein Versprechen; echtes Reinreden
 bräuchte einen Duplex-Audio-Stack (nicht gebaut, `docs/architecture.md` §Voice).
+
+### Nachgemessen 02.10.: Gesprächsmodus im Browser, vorher/nachher (#41, mit Barge-in #35)
+
+Methode: `tests/web/talk-voice.spec.ts` — die echte App gegen die echte API (Dev-Stack,
+geskriptetes Modell), drei Gesprächs-Turns hintereinander, die App-eigene Stoppuhr
+(`lib/perf.ts`) nach `test-results/web/perf.jsonl`. Buddys Stimme ist am Netzrand durch Stille
+der passenden Länge ersetzt (wie die `FakeSpeech` der API): die Synthese-Zeit ist also **nicht**
+enthalten — sie steht oben (0,59–0,78 s für das erste Stück). „Vorher" = `app/talk.tsx` von
+`main` (4ed87e3) mit derselben Spec, „nachher" = mit Barge-in-Ohr.
+
+| Spanne                                     | vorher (3 Turns)   | nachher (3 Turns)  | Abnahme #41 |
+| ------------------------------------------ | ------------------ | ------------------ | ----------- |
+| `first_audio` (Worte da → erster Ton)      | 218 / 148 / 161 ms | 194 / 153 / 203 ms | < 1 s       |
+| `relisten` (letztes Wort → Aufnahme läuft) | 46 / 55 / 41 ms    | 42 / 52 / 36 ms    | < 0,5 s     |
+
+**Lesart, ehrlich:** im Browser gibt es keine Lücke mehr zu schließen — beide Spannen liegen
+weit unter der Abnahme, vorher wie nachher; der Unterschied ist Rauschen. Dass das Ohr den
+Mikrofon-Stream offen hält, bis die Aufnahme läuft, kann hier nichts zeigen: Chromiums
+Fake-Mikrofon öffnet sofort. Ein echtes Laptop-Mikrofon braucht dafür messbar länger — nicht
+gemessen, nicht behauptet. Das Satz-Pipelining (#24) und der kurze erste Satz (`shortOpening`)
+waren schon drin; dieser Durchlauf bestätigt nur, dass die App selbst nichts mehr dazulegt.
+
+Zweiter Lauf am selben Abend, nachdem der Erkenner auf ein noch loslassendes Ohr warten muss
+(`lib/speech/bargeMonitor.ts`): `first_audio` 204 / 169 / 182 ms, `relisten` 45 / 39 / 49 ms
+— im Browser unverändert (dort gibt das Ohr nichts frei, es teilt das Gerät); was das Warten auf
+Android kostet, misst nur das Gerät.
+
+**Barge-in (#35), gemessen im selben Aufbau** (`tests/web/talk-barge.spec.ts`): ein Mikrofon,
+das nach 3 s Stille etwas Stimmförmiges „sagt" (150 Hz mit Obertönen, vier Silben pro Sekunde),
+stoppt Buddy **3,87 s** nach „Buddy spricht …" — also rund 0,3 s Torzeit plus Bildschirm, nachdem
+die Stimme einsetzt. Chromiums Standard-Fake-Mikrofon (ein 20-ms-Piep zweimal pro Sekunde, gemessen
+−8 bis −17 dBFS) stoppt ihn in drei vollen Antworten **kein einziges Mal**.
+
+**Was weiter nur das Gerät sagt:** `first_audio` und `relisten` auf Android/iOS (die
+Logcat-Zeilen `[lb-perf]`, siehe oben), dazu für Barge-in: wie viel Echo Androids Canceller bei
+Medienwiedergabe über den Lautsprecher übrig lässt (also wie laut sie sprechen muss), wie lange
+der Pegel-Rekorder braucht, um das Mikro für den Erkenner freizugeben (das kommt nach einem
+Reinreden zu `relisten` dazu), und ob Rekorder und Buddys Player auf jedem Audioweg
+(Lautsprecher, Kopfhörer, Bluetooth) nebeneinander laufen. Auf iOS bleibt es beim Tipp
+(`docs/architecture.md` §Voice).
 
 ## Ausgabe-Tokens sind die Wartezeit: die zwei gemessenen Hebel (02.10., Issues #219/#220)
 

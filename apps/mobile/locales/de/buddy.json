@@ -124,7 +124,7 @@
   },
   "done": {
     "undo": "Rückgängig",
-    "undo_label": "Rückgängig machen: {{what}}",
+    "undo_label": "Rückgängig: {{what}}",
     "undone": "rückgängig gemacht",
     "undo_request_material": "Kein Foto nötig",
     "undo_title": "Was du zurücknehmen kannst",
@@ -299,7 +299,8 @@
     "short": "Reden",
     "photo": "Foto",
     "photo_label": "Foto zeigen",
-    "tap_orb": "Tipp auf Buddy, dann hört er dir zu."
+    "tap_orb": "Tipp auf Buddy, dann hört er dir zu.",
+    "barge_sub": "Sprich einfach dazwischen, dann hört er dir zu."
   },
   "thread": {
     "title": "Chat mit Buddy",

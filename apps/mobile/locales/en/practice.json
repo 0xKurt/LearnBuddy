@@ -18,34 +18,6 @@
     "pick_how": "Tap the bar that is more.",
     "pick_option": "Choose {{fraction}}"
   },
-  "board": {
-    "order_how": "Tap the elements in the right order.",
-    "order_unset": "{{text}}, element {{n}} of {{total}}, not placed yet",
-    "order_set": "{{text}}, placed as {{position}}, tap again to take it back",
-    "order_state": "{{placed}} of {{total}} placed",
-    "pairs_how": "Tap something on the left, then what belongs to it on the right.",
-    "pairs_left": "{{text}}, no pair yet, tap to choose it",
-    "pairs_left_open": "{{text}}, chosen, now tap what belongs to it on the right",
-    "pairs_left_done": "{{text}}, pair {{pair}}, tap again to undo the pair",
-    "pairs_right": "{{text}}, no pair yet",
-    "pairs_right_done": "{{text}}, pair {{pair}}, tap again to undo the pair",
-    "pairs_pick_left": "Choose something on the left first.",
-    "pairs_state": "{{done}} of {{total}} pairs made",
-    "groups_how": "Tap an element, then the group it belongs to.",
-    "groups_unset": "{{text}}, not sorted yet, tap to choose it",
-    "groups_open": "{{text}}, chosen, now tap the group",
-    "groups_set": "{{text}}, in {{group}}, tap again to take it out",
-    "groups_target": "Sort into {{group}}",
-    "groups_pick_element": "Choose an element first.",
-    "groups_state": "{{done}} of {{total}} sorted",
-    "table_how": "Write in the empty cells.",
-    "table_empty": "{{where}}, still empty",
-    "table_filled": "{{where}}, {{value}}",
-    "table_where": "{{column}} at {{row}}",
-    "table_where_col": "{{column}}, row {{row}}",
-    "table_where_cell": "Column {{column}}, row {{row}}",
-    "table_state": "{{done}} of {{total}} cells filled"
-  },
   "cards": {
     "progress": "Card {{current}} of {{total}}",
     "note": "Flashcards – you say yourself whether you knew it.",
@@ -106,7 +78,32 @@
     "transcript_title": "This was the text"
   },
   "loading": "Getting your questions …",
+  "match": {
+    "how_pairs": "Tap one on the left, then its partner on the right.",
+    "how_groups": "Tap one at the top, then its group.",
+    "held": "{{text}}, selected",
+    "paired": "{{text}}, pair {{n}} with {{other}}",
+    "no_partner": "{{text}}, no partner yet",
+    "in_group": "{{text}}, in {{group}}",
+    "no_group": "{{text}}, in no group yet",
+    "group": "Group {{group}}, {{count}} in it",
+    "hint_take": "Selects it.",
+    "hint_held": "Deselects it.",
+    "hint_link": "Links it with {{other}}.",
+    "hint_linked": "Undoes the link.",
+    "hint_put": "Puts {{text}} here.",
+    "hint_group_waits": "Tap something at the top first.",
+    "check_waits": "Once everything is matched."
+  },
   "next": "Next",
+  "order": {
+    "how": "Tap them in order.",
+    "element_open": "{{text}}, no place yet",
+    "element_placed": "{{text}}, place {{n}}",
+    "hint_open": "Gets place {{n}}.",
+    "hint_placed": "Takes it back – and everything after it.",
+    "check_waits": "Once every one has a place."
+  },
   "origin_buddy": "Question from Buddy",
   "progress": "Question {{current}} of {{total}}",
   "progress_more_coming": "Question {{current}} · I’m writing more",
@@ -180,9 +177,15 @@
     "sharp": "Sharp ♯",
     "rest": "Rest",
     "undo": "Undo",
-    "place": "Place {{note}} {{where}} in bar {{bar}}",
     "toggle_on": "{{label}}, on",
-    "bar_crowded": "There is no room for another symbol in bar {{n}}."
+    "bar_crowded": "There is no room for another symbol in bar {{n}}.",
+    "bar_hint": "Tap where the note should go. Then move it with “Higher” and “Lower”.",
+    "higher": "Higher",
+    "lower": "Lower",
+    "placed": "{{what}} {{where}}, bar {{bar}}",
+    "moved": "{{what}} {{where}}",
+    "rest_placed": "{{what}}, bar {{bar}}",
+    "rest_of": "Place a {{value}}"
   },
   "summary": {
     "title": "Done!",
@@ -221,5 +224,12 @@
     "partially_correct": "Almost",
     "incorrect": "Not quite yet",
     "unchecked": "Not checked"
+  },
+  "table": {
+    "cell": "{{row}}, {{column}}",
+    "cell_at": "row {{row}}, column {{column}}",
+    "brick": "row {{row}}, brick {{n}}",
+    "check_waits": "Only once every cell is filled in.",
+    "scroll": "Table, scrolls sideways"
   }
 }

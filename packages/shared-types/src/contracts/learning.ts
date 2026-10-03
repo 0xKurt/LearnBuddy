@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
 import { Figure } from './figure.js';
-import { AnswerPart, MAX_ANSWER_PARTS, PartsBoard } from './parts.js';
 import { ListenRef } from './listen.js';
+import { StructuredAnswer, StructuredTaskView } from './structured.js';
 
 // ─────────────── material (photographed worksheets) ───────────────
 
@@ -296,41 +296,16 @@ export const ItemKind = z.enum([
   'vocab',
   /** Say the prompt aloud in lang; the model listens to the recording. */
   'speak',
-  /**
-   * Put 3–8 elements in the right order by tapping them 1, 2, 3 … (issue #228). The answer
-   * has several parts; the board she arranges is `ItemView.board`.
-   */
+  // Structured items (issues #228–#230, contracts/structured.ts): answered with `parts`,
+  // judged by code against `items.task`. `ItemView.task_view` shows what to arrange.
+  /** Put 3–8 elements into the right order (#228). */
   'order',
-  /**
-   * Connect pairs, or sort elements into groups (issue #229). Which of the two the question
-   * is stands in its board (`match_pairs` · `match_groups`).
-   */
+  /** Pair elements, or sort them into groups (#229). */
   'match',
-  /** Fill the gaps of a table, each gap checked on its own (issue #230). */
+  /** Fill the gaps of a table (#230). */
   'table_fill',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
-
-/**
- * The kinds whose answer has SEVERAL PARTS (issues #228–#230): she arranges a board and sends
- * one part per slot (`AnswerRequest.parts`) instead of one value in `text`.
- *
- * Three facts hang off this list, which is why it lives in the contract and not in three
- * places:
- *   · the app shows a board instead of the answer field;
- *   · the server takes `parts` for these and `text`/`choice` for everything else, and refuses
- *     the other shape (`modules/practice/parts.ts`);
- *   · tapping is the WAY these are answered, not a weaker substitute for producing something —
- *     the class test itself asks her to arrange and to connect. So `answered_by = 'tapped'` is
- *     not weighed down here the way it is for a vocabulary word tapped from four of her own
- *     (issue #163, `modules/practice/summary.ts`).
- */
-export const MULTI_PART_KINDS: readonly ItemKind[] = ['order', 'match', 'table_fill'];
-
-/** Does this question's answer have several parts (issues #228–#230)? */
-export function hasSeveralParts(kind: string): boolean {
-  return (MULTI_PART_KINDS as readonly string[]).includes(kind);
-}
 
 /** Where a question comes from: a photo, Buddy (a topic the learner named), a typed list, homework. */
 export const ItemOrigin = z.enum(['material', 'buddy', 'typed', 'homework']);
@@ -394,17 +369,17 @@ export const ItemView = z.object({
    */
   surface: AnswerSurface.nullable().default(null),
   /**
-   * The board she ARRANGES, for a question whose answer has several parts (issues #228–#230):
-   * elements to put in order, two columns to connect, groups to sort into, a table with gaps.
-   * Derived on the server from the reviewed task (`items.parts_task`) and therefore never
-   * carrying the solution; the display order is stable per question (a hash of the item id, no
-   * clock and no random source — see `modules/practice/shuffle.ts`). Null for every other kind
-   * and once the question is closed.
+   * A structured item's task as she works with it (issues #228–#230): for `order` the
+   * elements, shuffled, with server-given ids that say nothing about the right place. Never
+   * the key — that stays in `items.task` on the server. Set for every structured kind while
+   * the question is open, null for every other question. A view type this build does not
+   * know reads as null (`.catch`): the question then shows without its surface instead of the
+   * whole session failing to load.
    *
-   * A figure is what she READS, a surface what she TOUCHES to write one value, a board what she
-   * ARRANGES — and its answer has several parts (`AnswerRequest.parts`).
+   * A figure is what she READS, a surface what she TOUCHES to write one value, a task view
+   * what she ARRANGES — and its answer has several parts (`AnswerRequest.parts`).
    */
-  board: PartsBoard.nullable().default(null),
+  task_view: StructuredTaskView.nullable().default(null).catch(null),
   /**
    * The question is answered from HEARING a spoken text (issue #210, `contracts/listen.ts`):
    * the app plays it with `POST /practice/sessions/:id/listen` and may play it again as often
@@ -632,20 +607,14 @@ export const AnswerRequest = z
      */
     via: z.enum(['typed', 'tapped', 'spoken']).optional(),
     /**
-     * An answer with SEVERAL PARTS (issues #228–#230): one entry per slot of the question's
-     * board — the position an element was put in, the right side a left side was connected to,
-     * the group an element was sorted into, what was written in a gap. Only for the kinds in
-     * `MULTI_PART_KINDS`, and then instead of `text`: the server takes exactly the slots that
-     * question has, no more, none twice, none missing (`modules/practice/parts.ts`), so she can
-     * only answer with the pieces the question gives her.
+     * The answer to a structured item (issues #228–#230): the parts she arranged, by the ids
+     * of `ItemView.task_view`. Its `type` must be the item's kind. A structured item takes
+     * only this; every other item takes text or a choice (`modules/practice/structured.ts`).
      */
-    parts: z.array(AnswerPart).min(1).max(MAX_ANSWER_PARTS).optional(),
+    parts: StructuredAnswer.nullable().optional(),
   })
   .refine(
-    (v) =>
-      (v.text ?? null) !== null ||
-      (v.choice ?? null) !== null ||
-      (v.parts !== undefined && v.parts.length > 0),
+    (v) => (v.text ?? null) !== null || (v.choice ?? null) !== null || (v.parts ?? null) !== null,
     { message: 'text, choice or parts is required' },
   );
 export type AnswerRequest = z.infer<typeof AnswerRequest>;
