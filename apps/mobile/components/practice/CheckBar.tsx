@@ -8,10 +8,15 @@
 // allows are measured against this bar on 360×740, and 6 pt more pushed a match and an order with
 // Buddy's reply into scrolling (walkthrough 38-order-feedback, 39e-match-feedback, #310).
 //
+// In voice mode the spoken answer is the main control (the big mic, issue #310 §3.1 "voice slot"):
+// it stands in this bar right above "Prüfen", and "Prüfen" steps back to the soft skin — the
+// field is still there for typing, but the mic is what voice mode is for.
+//
 // It waits until the answer is complete. While it waits it says why to a screen reader (the
 // form's own hint: "Leg erst alle an ihren Platz"), and a tap on it does nothing — the button
 // wears the waiting skin (`Btn`, issue #97).
 
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -27,15 +32,23 @@ export type CheckAction = {
   onPress: () => void;
   /** Said while it waits: what is still missing. */
   waitsHint: string;
+  /** Voice mode: the big mic, above "Prüfen" (undefined: none). */
+  voice?: ReactNode;
 };
 
-export function CheckBar({ ready, disabled, onPress, waitsHint }: CheckAction) {
+export function CheckBar({ ready, disabled, onPress, waitsHint, voice }: CheckAction) {
   const { t } = useTranslation('practice');
   return (
     <BottomBar>
+      {voice ? (
+        <View testID="answer-voice" style={{ alignItems: 'center' }}>
+          {voice}
+        </View>
+      ) : null}
       <View testID="answer-action">
         <Btn
           size="md"
+          variant={voice ? 'soft' : 'primary'}
           pill
           full
           disabled={disabled || !ready}

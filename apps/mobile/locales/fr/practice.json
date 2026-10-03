@@ -15,7 +15,8 @@
     "placeholder_dictation": "Écris ce que tu entends – sans micro",
     "label": "Ta réponse",
     "placeholder": "Ta réponse…",
-    "unit_hint": "Réponse en {{unit}}"
+    "unit_hint": "Réponse en {{unit}}",
+    "check_waits": "Seulement quand le champ contient quelque chose."
   },
   "back_to_buddy": "Retour à Buddy",
   "bar": {
@@ -202,7 +203,8 @@
     "placed": "{{what}} {{where}}, mesure {{bar}}",
     "moved": "{{what}} {{where}}",
     "rest_placed": "{{what}}, mesure {{bar}}",
-    "rest_of": "Placer : {{value}}"
+    "rest_of": "Placer : {{value}}",
+    "check_waits": "Seulement quand chaque mesure contient quelque chose."
   },
   "summary": {
     "title": "C'est fait !",

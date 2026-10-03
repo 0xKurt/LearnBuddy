@@ -1,7 +1,8 @@
 // The place an answer is given in (issue #310): fixed slots, top to bottom, for every form —
 //
-//   [answer]     the form itself: a board, a table, a text with gaps. Right under the question
-//                and its Tipp row, never anywhere else.
+//   [answer]     the form itself: a board, a table, a text with gaps, the typed field (with the
+//                fraction bar it writes from), the note line. Right under the question and its
+//                Tipp row, never anywhere else.
 //   [keys]       optional: a row of keys for what she is typing (the math keys), directly under
 //                the answer — a keyboard accessory, not furniture (issue #16).
 //   [free room]  what nobody needs collects here, under the answer (`FreeSpace`, issue #286).
@@ -32,9 +33,16 @@ type Props = {
   keys?: ReactNode;
   /** "Prüfen": when the answer may go and how. */
   action: CheckAction;
+  /**
+   * What the answer slot keeps when the room runs out. 0: it may give all of it (a board scrolls
+   * inside itself). A number: at least that (the note line: its tightest staff with both key
+   * rows, `STAFF_ANSWER_MIN`). 'whole': nothing — the typed field never shrinks, it is what she
+   * types into; the conversation above gives way instead (`threadRoom`).
+   */
+  keeps?: number | 'whole';
 };
 
-export function AnswerShell({ answer, keys = null, action }: Props) {
+export function AnswerShell({ answer, keys = null, action, keeps = 0 }: Props) {
   return (
     <>
       <View
@@ -43,8 +51,8 @@ export function AnswerShell({ answer, keys = null, action }: Props) {
           // It gives way when the room runs out (the conversation's reply, the keyboard); the
           // form inside scrolls then, "Prüfen" stays.
           flexGrow: 0,
-          flexShrink: 1,
-          minHeight: 0,
+          flexShrink: keeps === 'whole' ? 0 : 1,
+          minHeight: keeps === 'whole' ? undefined : keeps,
           paddingHorizontal: SPACE.lg,
           paddingTop: SPACE.sm,
         }}

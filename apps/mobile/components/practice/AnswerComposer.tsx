@@ -1,23 +1,27 @@
-// The field for typed answers (short, long, numeric, formula, vocab) with
-// "Prüfen", "Tipp" and a quiet side option: "Lösung zeigen" only after a try or a hint,
-// "Später" in homework help (there is no solution to show). A number's unit stands next to
-// the field.
+// The field for typed answers (short, long, numeric, formula, vocab, a written path), in the
+// answer shell like every other form (issue #310, owner's decision B; #309): the field stands
+// right under the question and its Tipp row, the math keys directly under it while she types,
+// the free room below, and "Prüfen" in the same bar at the bottom as for a table, an order or a
+// match. Before this the field sat in a floating pill at the bottom edge with its own small
+// "Prüfen" inside, and the hole between question and field was the free room (#309). A number's
+// unit stands next to the field. The fraction bar she shades writes into this very field
+// (`surface`, issue #162): it stands right above it, in the same slot.
 // Autocorrect is off so the phone never "fixes" what the learner actually
-// wrote. For math and chemistry questions a row of keys sits above the field and inserts at
+// wrote. For math and chemistry questions a row of keys sits under the field and inserts at
 // the cursor — exactly the keys this question needs, chosen by code from its kind, unit,
 // subject and the notation in its text (lib/math/keys.ts, issue #239). A raise/lower key
 // (xⁿ, x₂, x⁺⁻) changes the digits she types next on the phone's own keyboard.
 //
-// The field sits in one floating white pill with a filled mic, the same bar
-// as Buddy's home composer (components/buddy/Composer.tsx).
+// The field looks like every other place she types into on this screen — a table's cell, a
+// cloze's gap: paper, a hairline that turns violet while she types (`RADIUS`, issue #310).
 //
-// The mic next to the field writes what she said into it (numbers and
+// The mic in the field writes what she said into it (numbers and
 // fractions as such: "drei Viertel" → "3/4"), so she can check it. In voice
-// mode the spoken answer is checked right away and the mic is the big main
-// control; "Prüfen" and the field stay for typing. After her first tap on the
-// mic in voice mode the loop listens again by itself (useHandsFreeMic).
+// mode the spoken answer is checked right away and the big mic is the main
+// control, in the bar above "Prüfen" (`CheckBar`); "Prüfen" and the field stay for typing. After
+// her first tap on the mic in voice mode the loop listens again by itself (useHandsFreeMic).
 //
-// Under the field a live preview shows typed math set properly ("3/4" as a
+// Under the field's text a live preview shows typed math set properly ("3/4" as a
 // fraction), once there is math worth drawing (components/math/TypedMathPreview).
 //
 // A calculation may be written out line by line (issue #221): where the math
@@ -28,7 +32,7 @@
 // the server checks each step and names the first line that broke (issue #209).
 
 import type { ItemKind, SubjectKind } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Platform,
@@ -53,15 +57,15 @@ import {
   returnKey,
 } from '../../lib/practice/pathEntry.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SHADOW } from '../../lib/theme/shadow.js';
+import { RADIUS } from '../../lib/theme/radius.js';
+import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
 import { TypedMathPreview } from '../math/TypedMathPreview.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { useHandsFreeMic } from '../voice/useHandsFreeMic.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
-import { BottomBar } from './BottomBar.js';
+import { AnswerShell } from './AnswerShell.js';
 import { tapped } from '../../lib/perf.js';
 
 /** AnswerRequest.text allows at most 2000 characters. */
@@ -103,6 +107,8 @@ type Props = {
   onChange: (text: string) => void;
   /** Checks this answer (the field's text, or what she just said in voice mode). */
   onCheck: (value: string) => void;
+  /** What she works with that writes into the field: the fraction bar (issue #162). */
+  surface?: ReactNode;
 };
 
 export function AnswerComposer({
@@ -115,6 +121,7 @@ export function AnswerComposer({
   disabled,
   onChange,
   onCheck,
+  surface = null,
 }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
@@ -191,187 +198,209 @@ export function AnswerComposer({
   const keyboardType: KeyboardTypeOptions =
     kind === 'numeric' && Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default';
 
-  return (
-    <BottomBar>
-      <MicStatus voice={voice} />
-      {showKeys ? (
-        <MathKeys
-          keys={keys}
-          onInsert={insert}
-          mode={mode}
-          onMode={(next) => {
-            setMode(next);
-            inputRef.current?.focus();
+  const check = () => {
+    // Tap → the verdict on screen (issue #66).
+    tapped('check');
+    onCheck(value.trim());
+  };
+  // The field: one row with the mic at its end (not in voice mode, where the big mic in the bar
+  // is the one; not in a Diktat, issue #242), the unit beside the text, the preview under it.
+  const field = (
+    <View
+      style={{
+        backgroundColor: palette.paper,
+        borderRadius: RADIUS.tile,
+        // The ring is the field's border, as at a table's cell (TableAnswer): violet while she
+        // types, never the browser's black box around the bare text inside.
+        borderWidth: focused ? 2 : 1.5,
+        borderColor: focused ? palette.primary : palette.field,
+        paddingLeft: SPACE.md,
+        paddingRight: SPACE.xs,
+        paddingVertical: SPACE.xs,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.xs }}>
+        <TextInput
+          ref={inputRef}
+          // The keyboard pass of the walkthrough finds the field by this (tests/web/fit.ts).
+          testID="answer-field"
+          value={value}
+          onChangeText={(typed) => {
+            // Typing ends the hands-free loop: she answers with the keyboard now.
+            useHandsFree.getState().disarm();
+            // …and a recording still running would replace what she types (audit M-78).
+            if (voice.state === 'starting' || voice.state === 'recording') voice.cancel();
+            // Under a raise/lower key the digit she just typed becomes ² or ₂ — only that one
+            // character, and anything the mode does not take ends it (lib/math/keys.ts).
+            const under = typedUnder(value, typed, mode);
+            if (under.mode !== mode) setMode(under.mode);
+            if (under.at !== null && under.value !== typed) {
+              const at = { start: under.at, end: under.at };
+              selection.current = at;
+              setForced(at);
+            }
+            onChange(under.value);
           }}
-          disabled={disabled}
-          chemistry={keys.includes('reacts')}
+          selection={forced}
+          onSelectionChange={(e) => {
+            selection.current = e.nativeEvent.selection;
+            setCaret(e.nativeEvent.selection.end);
+            if (forced) setForced(undefined);
+          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => {
+            setFocused(false);
+            // The row goes with the focus, and a mode nobody can see must not stay on.
+            setMode(null);
+          }}
+          // A Diktat says in the field itself that the mic is off (issue #242): one line where
+          // she looks anyway, gone as soon as she types — not a second line of grey text.
+          placeholder={t(micOff ? 'answer.placeholder_dictation' : 'answer.placeholder')}
+          placeholderTextColor={palette.ink3}
+          accessibilityLabel={t('answer.label')}
+          accessibilityHint={
+            micOff ? t('answer.mic_off') : unit ? t('answer.unit_hint', { unit }) : undefined
+          }
+          multiline
+          // Where the growing starts: the web's textarea is two rows tall by default,
+          // which makes an empty answer field look like a box to fill in. The growing
+          // itself is `growsWithText` in the style below — without it a long answer
+          // scrolled away inside one row in the browser (issue #188). A path asks for its
+          // lines, so a browser without `field-sizing` shows them too (issue #221).
+          {...(Platform.OS === 'web' && !long
+            ? { numberOfLines: Math.min(lineCount(value), PATH_ROWS) }
+            : {})}
+          maxLength={MAX_ANSWER_LENGTH}
+          autoCorrect={false}
+          spellCheck={false}
+          autoComplete="off"
+          autoCapitalize={exact || micOff ? 'none' : 'sentences'}
+          keyboardType={keyboardType}
+          // A one-liner goes out with the return key, so a simple answer stays fast; prose and
+          // a calculation path take the line instead (issue #221, lib/practice/pathEntry.ts).
+          submitBehavior={sends ? 'submit' : 'newline'}
+          returnKeyType={sends ? 'send' : 'default'}
+          onSubmitEditing={() => {
+            if (sends && canCheck) check();
+          }}
+          // The browser does not know `submitBehavior` (react-native-web reads only the
+          // deprecated `blurOnSubmit`), so a multiline field there turned every Enter into a
+          // new line. Same rule as on the phone; Shift+Enter is the browser's own new line.
+          onKeyPress={
+            Platform.OS === 'web'
+              ? (e) =>
+                  sendOnEnter(e, sends, () => {
+                    if (canCheck) check();
+                  })
+              : undefined
+          }
+          textAlignVertical={lines ? 'top' : 'center'}
+          style={[
+            {
+              flex: 1,
+              minWidth: 0,
+              minHeight: long ? 88 : TOUCH,
+              // A path grows with its lines (growsWithText below) and may then scroll inside
+              // the field; the cap keeps the field from pushing the question off a 360×740
+              // screen, which rule 16 does not allow.
+              maxHeight: 150,
+              alignSelf: 'center',
+              backgroundColor: 'transparent',
+              paddingHorizontal: 0,
+              // Centred in the field's row: (TOUCH − lineHeight) / 2 above and below.
+              paddingTop: 11, // token-exempt: centres one 22 pt line in a TOUCH row
+              paddingBottom: 11, // token-exempt: as above
+              fontSize: 16,
+              lineHeight: 22,
+              color: palette.ink,
+              outlineWidth: 0,
+            },
+            growsWithText,
+          ]}
         />
-      ) : null}
-      {/* One floating white pill, exactly like the composer on Buddy's home (issue #16): the
-          field, the unit, and at its end the mic while it is empty – "Prüfen" once there is an
-          answer. Nothing else is pinned down here. */}
-      <View
-        style={[
-          {
-            gap: 2,
-            backgroundColor: palette.paper,
-            borderRadius: lines ? 26 : 30,
-            paddingVertical: 6,
-            paddingLeft: 16,
-            paddingRight: 6,
-            minHeight: 60,
-            // The focus ring sits on the pill, not on the bare field inside (the web drew a black box).
-            outlineStyle: 'solid',
-            outlineWidth: focused ? 4 : 0,
-            outlineColor: palette.ring,
-          },
-          SHADOW.float,
-        ]}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4 }}>
-          <TextInput
-            ref={inputRef}
-            value={value}
-            onChangeText={(typed) => {
-              // Typing ends the hands-free loop: she answers with the keyboard now.
-              useHandsFree.getState().disarm();
-              // …and a recording still running would replace what she types (audit M-78).
-              if (voice.state === 'starting' || voice.state === 'recording') voice.cancel();
-              // Under a raise/lower key the digit she just typed becomes ² or ₂ — only that one
-              // character, and anything the mode does not take ends it (lib/math/keys.ts).
-              const under = typedUnder(value, typed, mode);
-              if (under.mode !== mode) setMode(under.mode);
-              if (under.at !== null && under.value !== typed) {
-                const at = { start: under.at, end: under.at };
-                selection.current = at;
-                setForced(at);
-              }
-              onChange(under.value);
-            }}
-            selection={forced}
-            onSelectionChange={(e) => {
-              selection.current = e.nativeEvent.selection;
-              setCaret(e.nativeEvent.selection.end);
-              if (forced) setForced(undefined);
-            }}
-            onFocus={() => setFocused(true)}
-            onBlur={() => {
-              setFocused(false);
-              // The row goes with the focus, and a mode nobody can see must not stay on.
-              setMode(null);
-            }}
-            // A Diktat says in the field itself that the mic is off (issue #242): one line where
-            // she looks anyway, gone as soon as she types — not a second line of grey text.
-            placeholder={t(micOff ? 'answer.placeholder_dictation' : 'answer.placeholder')}
-            placeholderTextColor={palette.ink3}
-            accessibilityLabel={t('answer.label')}
-            accessibilityHint={
-              micOff ? t('answer.mic_off') : unit ? t('answer.unit_hint', { unit }) : undefined
-            }
-            multiline
-            // Where the growing starts: the web's textarea is two rows tall by default,
-            // which makes an empty answer field look like a box to fill in. The growing
-            // itself is `growsWithText` in the style below — without it a long answer
-            // scrolled away inside one row in the browser (issue #188). A path asks for its
-            // lines, so a browser without `field-sizing` shows them too (issue #221).
-            {...(Platform.OS === 'web' && !long
-              ? { numberOfLines: Math.min(lineCount(value), PATH_ROWS) }
-              : {})}
-            maxLength={MAX_ANSWER_LENGTH}
-            autoCorrect={false}
-            spellCheck={false}
-            autoComplete="off"
-            autoCapitalize={exact || micOff ? 'none' : 'sentences'}
-            keyboardType={keyboardType}
-            // A one-liner goes out with the return key, so a simple answer stays fast; prose and
-            // a calculation path take the line instead (issue #221, lib/practice/pathEntry.ts).
-            submitBehavior={sends ? 'submit' : 'newline'}
-            returnKeyType={sends ? 'send' : 'default'}
-            onSubmitEditing={() => {
-              if (sends && canCheck) onCheck(value.trim());
-            }}
-            // The browser does not know `submitBehavior` (react-native-web reads only the
-            // deprecated `blurOnSubmit`), so a multiline field there turned every Enter into a
-            // new line. Same rule as on the phone; Shift+Enter is the browser's own new line.
-            onKeyPress={
-              Platform.OS === 'web'
-                ? (e) =>
-                    sendOnEnter(e, sends, () => {
-                      if (canCheck) onCheck(value.trim());
-                    })
-                : undefined
-            }
-            textAlignVertical={lines ? 'top' : 'center'}
+        {unit ? (
+          <Text
+            accessibilityElementsHidden
+            importantForAccessibility="no"
             style={[
-              {
-                flex: 1,
-                minWidth: 0,
-                minHeight: long ? 88 : 48,
-                // A path grows with its lines (growsWithText below) and may then scroll inside
-                // the field; the cap keeps the bar from pushing the question off a 360×740
-                // screen, which rule 16 does not allow.
-                maxHeight: 150,
-                alignSelf: 'center',
-                backgroundColor: 'transparent',
-                paddingHorizontal: 0,
-                paddingTop: 13,
-                paddingBottom: 13,
-                fontSize: 16,
-                lineHeight: 22,
-                color: palette.ink,
-                outlineWidth: 0,
-              },
-              growsWithText,
+              TYPE.body,
+              { color: palette.ink2, alignSelf: 'center', paddingHorizontal: SPACE.xs },
             ]}
+          >
+            {unit}
+          </Text>
+        ) : null}
+        {voiceMode || micOff ? (
+          // Nothing at the end: the text keeps the field's room up to its border.
+          <View style={{ width: SPACE.sm }} />
+        ) : (
+          <MicButton
+            voice={voice}
+            size="sm"
+            // The way in while the field is empty; once there is an answer "Prüfen" is the one
+            // filled control, and the mic steps back (it still adds what she says).
+            filled={value.trim().length === 0}
+            label={t('common:voice.answer')}
+            disabled={disabled}
           />
-          {unit ? (
-            <Text
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-              style={[
-                TYPE.body,
-                { color: palette.ink2, alignSelf: 'center', paddingHorizontal: 4 },
-              ]}
-            >
-              {unit}
-            </Text>
-          ) : null}
-          {/* Like the chat: the mic while the field is empty (or she is speaking), "Prüfen"
-              once there is an answer to check. */}
-          {canCheck ? (
-            <Btn
-              pill
-              size="sm"
-              variant={voiceMode ? 'soft' : 'primary'}
-              onPress={() => {
-                // Tap → the verdict on screen (issue #66).
-                tapped('check');
-                onCheck(value.trim());
-              }}
-              disabled={disabled}
-            >
-              {t('check')}
-            </Btn>
-          ) : voiceMode || micOff ? null : (
+        )}
+      </View>
+      {/* How her math will be read, on a thin line in the field itself – not a row of its
+            own under it. Long answers are texts; the preview would only repeat them. */}
+      {/* In a path it draws the line with the cursor; the others stand in the field. */}
+      {long ? null : <TypedMathPreview value={previewLine(kind, value, caret)} compact />}
+    </View>
+  );
+  // In voice mode the big mic stands in the bar above "Prüfen" — not while she types: then the
+  // keyboard is up, typing has ended the hands-free loop, and the room above the keyboard is the
+  // field's and the keys' (a small phone has about 440 pt left). A recording still running keeps
+  // it, so she can always stop it.
+  const bigMic =
+    voiceMode && !micOff && (!focused || voice.state === 'recording' || voice.state === 'starting');
+
+  return (
+    <AnswerShell
+      keeps="whole"
+      answer={
+        <View style={{ gap: SPACE.md }}>
+          {surface}
+          {field}
+          {bigMic ? null : <MicStatus voice={voice} />}
+        </View>
+      }
+      // Keyboard accessory, not furniture (issue #16): the row is there while she types.
+      keys={
+        showKeys ? (
+          <MathKeys
+            keys={keys}
+            onInsert={insert}
+            mode={mode}
+            onMode={(next) => {
+              setMode(next);
+              inputRef.current?.focus();
+            }}
+            disabled={disabled}
+            chemistry={keys.includes('reacts')}
+          />
+        ) : null
+      }
+      action={{
+        ready: value.trim().length > 0,
+        disabled,
+        onPress: check,
+        waitsHint: t('answer.check_waits'),
+        voice: bigMic ? (
+          <>
+            <MicStatus voice={voice} />
             <MicButton
               voice={voice}
-              size="sm"
-              filled
+              size="lg"
               label={t('common:voice.answer')}
               disabled={disabled}
             />
-          )}
-        </View>
-        {/* How her math will be read, on a thin line in the pill itself – not a row of its
-            own under it. Long answers are texts; the preview would only repeat them. */}
-        {/* In a path it draws the line with the cursor; the others stand in the field. */}
-        {long ? null : <TypedMathPreview value={previewLine(kind, value, caret)} compact />}
-      </View>
-      {voiceMode && !micOff ? (
-        <View style={{ alignItems: 'center', paddingVertical: 2 }}>
-          <MicButton voice={voice} size="lg" label={t('common:voice.answer')} disabled={disabled} />
-        </View>
-      ) : null}
-    </BottomBar>
+          </>
+        ) : undefined,
+      }}
+    />
   );
 }

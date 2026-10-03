@@ -3392,15 +3392,26 @@ it, "Warm" is already chosen so "Weiter" is always possible (ADR 0008 §Amendmen
 The practice screen (issue #286) stands the question (with its drawing scaled to fit), the
 conversation about it and the way to answer together at the top, in that order; the free room
 collects BELOW the way to answer (`components/practice/FreeSpace.tsx`), above what is pinned
-(the answer field, "Prüfen", "Weiter"). Before, the conversation took all free room and the way
+("Prüfen", "Weiter"). Before, the conversation took all free room and the way
 to answer sat at the bottom, which left a hole under the card with a lonely "Tipp" in it.
 **The answer shell** (issue #310, `components/practice/AnswerShell.tsx`) holds an answer and its
 action in fixed slots: the answer right under the question, optional keys for what she types
 directly under it, the free room, and "Prüfen" (`CheckBar.tsx`: one full-width pill in the pinned bar,
 waiting until the form says its answer is complete). A form fills the slots and decides nothing
-about place, spacing or the look of its action. Order, match, table and cloze are in it; the typed
-field, the note line and the voice bar follow (#310 steps 3–5) — owner's decision 03.10.: the typed
-field too stands under the question, with "Prüfen" in the same bar. A tile that answers by a tap is
+about place, spacing or the look of its action. Order, match, table, cloze, the note line and the
+typed field are in it (owner's decision 03.10., variant B, #309): the typed field
+(`AnswerComposer.tsx`) stands under the question like a board — a bordered field like a table's
+cell, the mic at its end, the return key still sends — with the math keys in the keys slot under
+it, the fraction bar it writes from right above it, and "Prüfen" in the same bar as everywhere,
+waiting until something is in the field. In voice mode the big mic stands in that bar above
+"Prüfen", which steps back to the soft skin. A form that cannot scroll says what the slot keeps
+when the room runs out (`keeps`: the field all of it, the note line its tightest staff). The
+walkthrough shoots every stop with a typed field once more at 360×440 (the keyboard up): the
+field and every alert must stay in the window (`keyboardPass` in `tests/web/fit.ts`); how far
+"Prüfen" lies under the keyboard is recorded — with a tall card it does (up to 78 pt with chemistry
+keys), the return key sends a one-liner there, and the big mic of voice mode steps aside while she
+types. The
+options, the pronunciation panel and the voice bar under the options follow (#310 steps 4–5). A tile that answers by a tap is
 `components/lb/AnswerTile.tsx`; corners come from `lib/theme/radius.ts`. Guarded twice: a source
 test (`apps/mobile/lib/__tests__/answerShell.test.ts`) fails when a form brings its own bar,
 spacer, "Prüfen", keyboard handling or shadowed tile (the forms not moved yet are listed with the

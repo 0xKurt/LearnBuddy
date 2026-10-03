@@ -15,7 +15,8 @@
     "placeholder_dictation": "Schreib, was du hörst – ohne Mikro",
     "label": "Deine Antwort",
     "placeholder": "Deine Antwort …",
-    "unit_hint": "Antwort in {{unit}}"
+    "unit_hint": "Antwort in {{unit}}",
+    "check_waits": "Erst wenn etwas im Feld steht."
   },
   "back_to_buddy": "Zurück zu Buddy",
   "bar": {
@@ -202,7 +203,8 @@
     "placed": "{{what}} {{where}}, Takt {{bar}}",
     "moved": "{{what}} {{where}}",
     "rest_placed": "{{what}}, Takt {{bar}}",
-    "rest_of": "{{value}} setzen"
+    "rest_of": "{{value}} setzen",
+    "check_waits": "Erst wenn jeder Takt etwas hat."
   },
   "summary": {
     "title": "Geschafft!",
