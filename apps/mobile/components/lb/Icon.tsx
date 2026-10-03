@@ -30,10 +30,10 @@ export type IconName =
   | 'speak-off'
   | 'voice'
   | 'stop'
+  | 'undo'
   | 'file'
   | 'up'
-  | 'down'
-  | 'undo';
+  | 'down';
 
 type IconProps = {
   name: IconName;
@@ -122,7 +122,7 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
           <Path d="M5 12h14M13 6l6 6-6 6" {...common} />
         </Svg>
       );
-    // Höher / tiefer und zurück auf der Notenzeile (issue #275).
+    // Höher / tiefer auf der Notenzeile (issue #275); „Zurück“ nimmt das eine 'undo' unten.
     case 'up':
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -133,13 +133,6 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Path d="M6 9l6 6 6-6" {...common} strokeWidth={2.2} />
-        </Svg>
-      );
-    case 'undo':
-      return (
-        <Svg width={size} height={size} viewBox="0 0 24 24">
-          <Path d="M9 14L4 9l5-5" {...common} />
-          <Path d="M4 9h10.5a5.5 5.5 0 010 11H11" {...common} />
         </Svg>
       );
     case 'chevron':
@@ -278,6 +271,14 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
           <Path d="M7.5 9v6" {...common} strokeWidth={2.2} />
           <Path d="M12 5.25v13.5" {...common} strokeWidth={2.2} />
           <Path d="M16.5 9v6" {...common} strokeWidth={2.2} />
+        </Svg>
+      );
+    case 'undo':
+      // A round arrow turning back (issue #295): the receipt's quiet way back in the chat.
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3L4.5 9" {...common} />
+          <Path d="M4.5 4.5V9H9" {...common} />
         </Svg>
       );
     case 'stop':
