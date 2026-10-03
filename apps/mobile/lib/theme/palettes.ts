@@ -85,6 +85,12 @@ export type Palette = {
     wet: string;
     wetDeep: string;
     slices: readonly string[];
+    /**
+     * Euro coins (issue #254), schematic: copper (1–5 ct), brass (10–50 ct), silver (the
+     * other metal of 1 € and 2 €). The value is written on every coin, so colour is never the
+     * only signal.
+     */
+    coins: readonly [string, string, string];
   };
 };
 
@@ -159,6 +165,7 @@ const pastellSoft: Palette = {
       '#c9b8a6',
       '#9fd6d6',
     ],
+    coins: ['#e2ab86', '#ecd081', '#d9dce3'],
   },
 };
 
@@ -237,6 +244,7 @@ const night: Palette = {
       '#7a6a5c',
       '#3f8a8a',
     ],
+    coins: ['#8f5d40', '#9a8236', '#7c818c'],
   },
 };
 
@@ -467,8 +475,10 @@ export type Figure = {
   warm: string;
   wet: string;
   wetDeep: string;
-  /** Pie slices and the two halves of a population pyramid. */
+  /** Pie slices and the two halves of a population pyramid; the tints of euro notes. */
   slices: string[];
+  /** Euro coins: copper, brass, silver (issue #254). */
+  coins: readonly [string, string, string];
 };
 
 export function toneBgOf(p: Palette): Record<SubjectTone, string> {
@@ -512,5 +522,6 @@ export function figureOf(p: Palette): Figure {
     wet: p.figure.wet,
     wetDeep: p.figure.wetDeep,
     slices: [...p.figure.slices],
+    coins: p.figure.coins,
   };
 }

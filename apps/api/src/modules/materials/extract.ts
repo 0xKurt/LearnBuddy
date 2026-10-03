@@ -28,7 +28,8 @@ import { TABLE_RULES } from '../practice/table.js';
 // v8: car 2's structured rules (v7.1) and #253/#257's figures (v7) together.
 // v8.1: pictures as the options of a multiple choice (choice_figures, #231).
 // v8.2: a text with several gaps becomes one cloze task (#232).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.2';
+// v8.3: primary-school figures — clock, money, dot field, base-ten blocks (#254).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.3';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

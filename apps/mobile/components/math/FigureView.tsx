@@ -1,6 +1,7 @@
 // Draws the figure that goes with a question (packages/shared-types/src/contracts/figure.ts):
 // fraction pictures, number lines, function graphs, bar charts, geometry
-// drawings, tables and the charts of ChartFigures.tsx. The model only sends data; this draws it with
+// drawings, tables, the charts of ChartFigures.tsx and the primary-school figures of
+// PrimaryFigures.tsx. The model only sends data; this draws it with
 // react-native-svg at the width that is available. Every figure also carries a
 // text description for screen readers. A function the grammar can't read is
 // left out — the figure never crashes the question.
@@ -25,7 +26,6 @@ import Svg, {
 // of @learnbuddy/shared-math (its index also pulls in mathjs).
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
 import { niceStep } from '../../../../packages/shared-math/src/charts.js';
-import { checkMolecule } from '../../../../packages/shared-math/src/molecule.js';
 import {
   BARE_FIGURE_CHROME,
   BARE_FIGURE_PAD,
@@ -46,7 +46,8 @@ import { ChartBody, describeChart } from './ChartFigures.js';
 import { MathText } from './MathText.js';
 import { StaffLine } from './StaffLine.js';
 import { FAMILY, FONT, formatNumber, HaloText, SMALL } from './figureText.js';
-import { MoleculeView } from './MoleculeView.js';
+import { describeMolecule, MoleculeView } from './MoleculeView.js';
+import { describePrimary, PrimaryBody } from './PrimaryFigures.js';
 import { useSpokenWords } from './useSpokenMath.js';
 
 type FractionFig = Extract<Figure, { type: 'fraction' }>;
@@ -169,6 +170,12 @@ function FigureBody({ figure, width, bare }: { figure: Figure; width: number; ba
     case 'scatter_plot':
     case 'pyramid':
       return <ChartBody figure={figure} width={width} />;
+    // Uhr, Geld, Zwanziger- und Hunderterfeld, Zehnersystem (issue #254).
+    case 'clock':
+    case 'money':
+    case 'dot_field':
+    case 'base_ten':
+      return <PrimaryBody figure={figure} width={width} />;
   }
 }
 
@@ -1289,6 +1296,11 @@ export function describeFigure(
     }
     case 'molecule':
       return describeMolecule(figure, t);
+    case 'clock':
+    case 'money':
+    case 'dot_field':
+    case 'base_ten':
+      return describePrimary(figure, t);
     // In Worten, wie issue #226 es verlangt („Violinschlüssel, Viervierteltakt: C, E, G,
     // Viertelnoten"). Das ist keine Beschreibung des Bildes, sondern derselbe Inhalt in Sprache:
     // mit dem Screenreader ist die Aufgabe damit lösbar, nicht nur vorhanden.
@@ -1303,52 +1315,4 @@ export function describeFigure(
     case 'pyramid':
       return describeChart(figure, t);
   }
-}
-
-const SUBSCRIPT = '₀₁₂₃₄₅₆₇₈₉';
-
-/**
- * A structural formula in words: every atom with its hydrogens and charge, every bond between
- * them (– single, = double, ≡ triple) and, where the drawing shows them, the lone pairs. The
- * same content as the drawing, so the question can be answered without seeing it.
- */
-function describeMolecule(fig: Extract<Figure, { type: 'molecule' }>, t: T): string {
-  const sub = (n: number) =>
-    n <= 1 ? '' : [...String(n)].map((c) => SUBSCRIPT[Number(c)]).join('');
-  const charge = (c: number) =>
-    c === 0 ? '' : `${Math.abs(c) === 1 ? '' : Math.abs(c)}${c > 0 ? '⁺' : '⁻'}`;
-  const bonded = new Set(fig.bonds.flatMap((b) => [b.a, b.b]));
-  // A lone particle is named as a school writes it (H₂O, HCl), an atom in a chain by its group
-  // (CH₃, OH) — the same rule as the drawing's labels.
-  const hFirst = (a: { id: string; el: string }) =>
-    !bonded.has(a.id) && ['O', 'S', 'F', 'Cl', 'Br', 'I'].includes(a.el);
-  const name = new Map(
-    fig.atoms.map((a) => {
-      const hs = a.h > 0 ? `H${sub(a.h)}` : '';
-      return [a.id, `${hFirst(a) ? `${hs}${a.el}` : `${a.el}${hs}`}${charge(a.charge)}`];
-    }),
-  );
-  const mark = ['', '–', '=', '≡'];
-  const bonds = fig.bonds.map(
-    (b) => `${name.get(b.a) ?? ''}${mark[b.order] ?? '–'}${name.get(b.b) ?? ''}`,
-  );
-  const alone = fig.atoms.filter((a) => !bonded.has(a.id)).map((a) => name.get(a.id) ?? '');
-  const parts = [
-    t('figure.molecule', {
-      style: t(`figure.molecule_${fig.style}`),
-      list: [...bonds, ...alone].join(', '),
-    }),
-  ];
-  if (fig.style !== 'skeletal') {
-    const check = checkMolecule(fig);
-    if (check.ok) {
-      for (const a of fig.atoms) {
-        const n = check.facts.lonePairs.get(a.id) ?? 0;
-        if (n > 0) parts.push(t('figure.lone_pairs', { atom: name.get(a.id) ?? a.el, count: n }));
-      }
-    }
-  }
-  const marked = fig.atoms.filter((a) => fig.mark.includes(a.id)).map((a) => name.get(a.id) ?? '');
-  if (marked.length > 0) parts.push(t('figure.molecule_marked', { list: marked.join(', ') }));
-  return parts.join('. ');
 }
