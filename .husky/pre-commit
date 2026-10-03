@@ -15,16 +15,35 @@ echo "→ engineering guards (copies, dead code, Ausnahmelisten — issue #313)"
 # these look at the whole repository: docs/engineering-guards.md.
 pnpm guards
 
-echo "→ tests (all workspaces, API integration tests on a real Postgres)"
+# Tests (issue #330): only the test files that depend on what is staged — `vitest related`
+# follows the import graph, so a changed module runs every test that imports it, directly or
+# not. A change to what EVERY test stands on (the test harness, a migration, a shared contract,
+# a package manifest or the lockfile, the hooks and the guards) runs the full suite. The full
+# suite also runs in pre-push and in CI on every PR — nothing reaches main without it.
+#
 # Integration tests must never skip silently: without a reachable Postgres
 # (LB_TEST_DATABASE_URL, default 127.0.0.1:5432) the gate fails instead of
 # passing with every database test skipped (audit precommit-green-without-postgres).
 export LB_REQUIRE_TEST_DB=1
-pnpm -r --parallel test || {
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+shared=$(echo "$staged" | grep -E '^(apps/api/src/testing/|apps/mobile/testing/|infra/supabase/migrations/|packages/|package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|apps/[^/]+/package\.json|apps/[^/]+/vitest[^/]*|apps/[^/]+/tsconfig[^/]*|\.husky/|tools/)' || true)
+tests_failed() {
   echo "✗ tests failed. If the API reports 'LB_REQUIRE_TEST_DB=1 but no Postgres', start a" >&2
   echo "  Postgres 16 (or set LB_TEST_DATABASE_URL) — see README.md §Develop." >&2
   exit 1
 }
+if [ -n "$shared" ]; then
+  echo "→ tests: full suite (shared ground changed: $(echo "$shared" | head -3 | tr '\n' ' '))"
+  pnpm -r --parallel test || tests_failed
+else
+  for ws in apps/api apps/mobile; do
+    files=$(echo "$staged" | grep "^$ws/" | grep -E '\.(ts|tsx|js|mjs|json)$' | sed "s#^$ws/##" || true)
+    [ -z "$files" ] && continue
+    echo "→ tests related to the staged files in $ws"
+    # shellcheck disable=SC2086
+    pnpm -C "$ws" run test:related $files || tests_failed
+  done
+fi
 
 # Mobile-bundle smoke test. The earlier gates (tsc, vitest) don't actually
 # run the Metro bundler, so module-resolution issues (.js → .ts rewrites,
