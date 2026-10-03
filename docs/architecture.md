@@ -3123,7 +3123,7 @@ the window, stayed roomy behind the keyboard and left one field above the pinned
 window, ~567 visible; #289). `formDensity()` turns the visible height into `roomy` (≥ 780),
 `compact` (a 360×740 phone) or `tight` (< 600: every phone while she types). The welcome screen in
 `tight` keeps only the form — the choice of signing up or in, the fields, their errors — and the
-flags, Buddy and the intro come back with the keyboard's going; the practice screen takes its
+flags, Buddy, the intro and the under-16 note come back when the keyboard goes; the practice screen takes its
 figure and photo caps from the visible height, so the card no longer grows into the room Buddy's
 newest turn needs. A lint rule (`eslint.config.mjs`, `no-restricted-syntax`) refuses the window's
 height in `app/` and `components/`; the one exception is the sheet's slide-out offset

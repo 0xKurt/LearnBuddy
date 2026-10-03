@@ -233,14 +233,15 @@ export default function Welcome() {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingTop: dense ? 4 : 16,
+            // Tight: the form is the first thing, so it gets SPACE.md from the edge, not 4.
+            paddingTop: tight ? 12 : dense ? 4 : 16,
             paddingBottom: 24,
             gap,
           }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* While she types (`tight`), only the form fits: the flags, Buddy and the words
-              above it wait until the keyboard goes — the form starts at the choice of
+          {/* While she types (`tight`), only the form fits: the flags, Buddy, the words
+              above it and the under-16 note wait until the keyboard goes — the form starts at the choice of
               signing up or in, and every field with its error stays above the pinned CTA
               (issue #289, tests/web/visible.spec.ts). */}
           {tight ? null : (
@@ -423,7 +424,9 @@ export default function Welcome() {
                 {t('welcome.forgot')}
               </Btn>
             )
-          ) : (
+          ) : tight ? null : (
+            // Read with the keyboard closed; while she types it would only stand half under
+            // the scroll edge (issue #289).
             <Card tone="lavender" padding={dense ? 12 : 16}>
               <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
                 <View

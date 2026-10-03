@@ -185,28 +185,36 @@ async function emptyShare(page: Page, tile: Locator): Promise<number> {
   );
 }
 
-test('an attached photo shows itself in its tile before sending (#294)', async ({ page }) => {
-  await onboardChild(page, `visible-${Date.now()}@example.test`);
-  // The owner's case: dark room, "+" → "Aus der Galerie" → a white worksheet.
-  await page.evaluate(() => localStorage.setItem('lb.themeMode', 'dark'));
-  await page.reload();
-  await expect(page.getByText('LearnBuddy')).toBeVisible();
+/** "+" → "Aus der Galerie" → a white worksheet, as the owner did it. */
+async function attachSheet(page: Page): Promise<Locator> {
   await page.getByRole('button', { name: 'Was möchtest du anhängen?' }).click();
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Aus der Galerie' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
   await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
-  const tile = page.getByTestId('attach-tile');
   await settle(page);
-  // A sheet of paper fills the tile: next to nothing of it is the empty box's colour.
-  expect(
-    await emptyShare(page, tile),
-    'share of the tile that is still the empty box',
-  ).toBeLessThan(0.2);
-  await expect(page.getByText('Vorschau nicht möglich')).toHaveCount(0);
-  await shot(page, 'attach-tile-dark');
-  await page.evaluate(() => localStorage.setItem('lb.themeMode', 'light'));
-  await page.reload();
-  await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
-  await shot(page, 'attach-tile-light');
+  return page.getByTestId('attach-tile');
+}
+
+test('an attached photo shows itself in its tile before sending (#294)', async ({ page }) => {
+  await onboardChild(page, `visible-${Date.now()}@example.test`);
+  // Both rooms; the browser keeps no picked file across a reload, so each attaches its own.
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.evaluate((s) => localStorage.setItem('lb.themeMode', s), scheme);
+    await page.reload();
+    await expect(page.getByText('LearnBuddy')).toBeVisible();
+    const tile = await attachSheet(page);
+    // A sheet of paper fills the tile: next to nothing of it is the empty box's colour. The
+    // dark room is the owner's case and the sharp test (white paper on a dark box); in the light
+    // room the box itself is nearly white, so only the dark pass measures.
+    if (scheme === 'dark') {
+      expect(
+        await emptyShare(page, tile),
+        'share of the tile that is still the empty box',
+      ).toBeLessThan(0.2);
+    }
+    await expect(page.getByText('Vorschau nicht möglich')).toHaveCount(0);
+    await shot(page, `attach-tile-${scheme}`);
+  }
+  await page.evaluate(() => localStorage.removeItem('lb.themeMode'));
 });
