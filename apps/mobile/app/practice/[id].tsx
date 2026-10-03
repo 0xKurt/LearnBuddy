@@ -937,7 +937,10 @@ export default function PracticeScreen() {
   // its read-aloud button, so it never gets a second one.
   const hearWord = item.kind === 'vocab' && foreign(item.prompt_lang);
   // "Vorlesen" at every question, also without voice mode (issue #238): the round speaker in the
-  // card's corner (ReadQuestionButton). Only where the server allows it (`read_aloud`, decided by
+  // question's progress row, right above the card (ReadQuestionButton). That row is 44 pt tall
+  // anyway ("Frage passt nicht"), so the speaker costs no height; inside the card it narrowed the
+  // "Frage von Buddy · topic" line or the prompt by a line and pushed a structured question's
+  // parts off a 360×740 phone (rule 16). Only where the server allows it (`read_aloud`, decided by
   // code), only while the question is open, and not where another control already reads it —
   // voice mode's "Nochmal vorlesen", the pronunciation card's own "Anhören", the foreign word's
   // "Anhören". What it says is what voice mode says: math, fractions and formulas in words,
@@ -1109,7 +1112,20 @@ export default function PracticeScreen() {
                   // The server's word, never the app's guess: while it says more questions are coming,
                   // the total is not the number it will be (issue #220).
                   preparing={session.preparing}
-                  right={flagButton ?? disputeButton}
+                  right={
+                    readOut ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
+                        <ReadQuestionButton
+                          key={`read-${item.id}`}
+                          text={readOut.text}
+                          lang={readOut.lang}
+                        />
+                        {flagButton ?? disputeButton}
+                      </View>
+                    ) : (
+                      (flagButton ?? disputeButton)
+                    )
+                  }
                 />
                 {session.mode === 'help' || testing ? (
                   <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
@@ -1143,15 +1159,6 @@ export default function PracticeScreen() {
                       imageMaxHeight={Math.min(180, Math.round(windowHeight * 0.2))}
                       fromBuddy={item.origin === 'buddy'}
                       minHeight={cardGrowTo > 0 ? cardNatural + cardGrowTo : undefined}
-                      corner={
-                        readOut ? (
-                          <ReadQuestionButton
-                            key={`read-${item.id}`}
-                            text={readOut.text}
-                            lang={readOut.lang}
-                          />
-                        ) : undefined
-                      }
                       // Her short answer appears in the gap of a fill-in sentence while she types.
                       answer={
                         typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined

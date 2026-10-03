@@ -124,21 +124,7 @@ type QuestionProps = {
    * height, or without a visual, it does nothing.
    */
   minHeight?: number;
-  /**
-   * A small round control at the prompt's top right — the "Vorlesen" speaker (issue #238). It
-   * takes room the card already has instead of a row of its own (CORNER_PULL).
-   */
-  corner?: ReactNode;
 };
-
-/**
- * The corner control (44 pt) stands beside the prompt's first line, pulled 12 pt into the card's
- * padding on the right and 8 pt up; with the pull at the bottom it takes no more height than one
- * line of the prompt (29 pt), so a one-line question does not grow. Not beside the "Frage von
- * Buddy · topic" line: there it pushed the topic onto a second line and a full match board off a
- * 360×740 phone (rule 16) — the prompt wraps anyway, that line should not.
- */
-const CORNER_PULL = { marginTop: -8, marginBottom: -7, marginRight: -12 } as const;
 
 export function QuestionCard({
   prompt,
@@ -151,7 +137,6 @@ export function QuestionCard({
   figureMaxHeight,
   imageMaxHeight = 180,
   minHeight,
-  corner,
 }: QuestionProps) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
@@ -199,21 +184,12 @@ export function QuestionCard({
               ) : null}
             </View>
           ) : null}
-          <View
-            style={corner ? { flexDirection: 'row', alignItems: 'flex-start', columnGap: 6 } : null}
-          >
-            <MathText
-              text={prompt}
-              blanks={{ filled }}
-              accessibilityRole="header"
-              style={[
-                TYPE.title,
-                { fontSize: 21, lineHeight: 29, fontWeight: '500' },
-                corner ? { flex: 1 } : null,
-              ]}
-            />
-            {corner ? <View style={CORNER_PULL}>{corner}</View> : null}
-          </View>
+          <MathText
+            text={prompt}
+            blanks={{ filled }}
+            accessibilityRole="header"
+            style={[TYPE.title, { fontSize: 21, lineHeight: 29, fontWeight: '500' }]}
+          />
         </View>
         {figure ? (
           <View

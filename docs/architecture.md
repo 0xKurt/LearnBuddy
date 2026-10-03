@@ -2630,10 +2630,11 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   recordings stay tap by tap. Buddy's chat replies stream on screen and are read once stored
   (§Speed). A realtime audio API (speech in, speech out) is not built.
 - **"Vorlesen" at every question, also without voice mode** (issue #238): a round speaker in the
-  question card's top-right corner (`components/practice/ReadQuestionButton.tsx`, `CircleBtn`,
-  slot `QuestionCard.corner`), for a screen reader "Frage vorlesen". The corner and not a pill row
-  under the card: a row cost 54 pt on every question and pushed a structured question's parts
-  off a 360×740 phone (rule 16). It says exactly what voice mode says (`questionReadText`: math,
+  question's progress row, right above the card (`components/practice/ReadQuestionButton.tsx`,
+  `CircleBtn`), for a screen reader "Frage vorlesen". That row is 44 pt tall anyway, so it costs
+  no height: a pill row under the card cost 54 pt on every question, and the icon inside the card
+  took width from the topic line or the prompt and added a line — both pushed a structured
+  question's parts off a 360×740 phone (rule 16). It says exactly what voice mode says (`questionReadText`: math,
   fractions and chemical formulas in words — "H 2 O", not "H Index 2 O" —, choices as
   "A: …, B: …") in the question's language, through the same natural voice (`POST /voice/speech`,
   cached per learner for 24 h) at her own speed step, with the phone's own voice as fallback;

@@ -1,10 +1,11 @@
 // "Vorlesen" at every question, also without voice mode (issue #238): the round speaker in the
-// question card's corner. For the child who reads slowly — first grade, LRS, German as a second
+// question's progress row, right above the card. For the child who reads slowly — first grade, LRS, German as a second
 // language, a word problem where the reading blocks the arithmetic.
 //
-// Why a round icon in the corner and not the pill row under the card: that row costs a whole
-// line (54 pt) on every question, and on a 360×740 phone a structured question then pushed its
-// own parts off the screen (rule 16). The corner is room the card already has. The speaker is
+// Why a round icon in the progress row and not a pill row under the card or a corner of it: a
+// row costs a whole line (54 pt) on every question, and inside the card the icon took width from
+// the topic line or the prompt and added a line there — either way a structured question's parts
+// were pushed off a 360×740 phone (rule 16). The progress row is 44 pt tall anyway. The speaker is
 // the app's one sign for "read aloud" (the voice-mode switch, every "Anhören"), and a screen
 // reader hears "Frage vorlesen" — never the icon alone.
 //
