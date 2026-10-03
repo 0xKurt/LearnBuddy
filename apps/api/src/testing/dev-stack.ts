@@ -22,9 +22,14 @@ import { runTick } from '../modules/scheduler/tick.js';
 import { createTestDatabase, testDatabaseAvailable } from './database.js';
 import { createDevApp, DevAuth, DevStorage } from './dev-app.js';
 import { FakeEmbeddings, FakeSpeech, ScriptedGateway } from './fakes.js';
+import { scriptCloze } from './scenarios/cloze.js';
 import { scriptCoreLoop } from './scenarios/core-loop.js';
+import { scriptDictation } from './scenarios/dictation.js';
+import { scriptDrill } from './scenarios/drill.js';
 import { scriptFigures } from './scenarios/figures.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
+import { scriptTimedTest } from './scenarios/timedTest.js';
+import { scriptRoleplay } from './scenarios/roleplay.js';
 import { scriptTour } from './scenarios/tour.js';
 import { installChecks } from './scenarios/checks.js';
 import { installGenerations } from './scenarios/generations.js';
@@ -53,10 +58,18 @@ async function main(): Promise<void> {
   const scripted = new ScriptedGateway();
   const model = process.env.LB_DEV_MODEL === 'disabled' ? new DisabledGateway() : scripted;
   if (model === scripted) {
+    // First: its generation rule is keyed on her list, and a broader rule registered earlier
+    // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
+    scriptDictation();
     scriptCoreLoop(scripted);
+    // Before the learning modes: their "probetest" sentence would answer this one too (#241).
+    scriptTimedTest();
     scriptLearningModes(scripted);
     scriptTour(scripted);
     scriptFigures();
+    scriptCloze();
+    scriptDrill();
+    scriptRoleplay(scripted);
     // Chat answers are matched by what the learner wrote and prepared practice by what was
     // asked for, so one spec cannot shift the answers of the next (issue #81). Installed
     // after every scenario added its rules.

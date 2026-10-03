@@ -21,24 +21,25 @@ function inSheet(page: Page) {
 const START = "Los geht's";
 
 /**
- * The start button of the offer whose card says `says`.
+ * The start button of the offer card whose own line is `title` (the offer's text).
  *
  * Not "the newest `Los geht's`", and that cost two runs to learn (issue #267). The thread keeps
  * every earlier offer, and the new one renders a frame AFTER Buddy's words — so `.last()` after
  * waiting for the text clicked the PREVIOUS offer about one run in two, and counting the buttons
- * first raced the other way: the earlier offers also render after the composer does, so the
- * baseline came out too low and the expected count was never reached.
+ * first raced the other way.
  *
- * Scoping to the card that carries the offer's own words needs neither a count nor a timing
- * assumption. `.last()` over the divs that both contain those words and hold a start button is
- * the INNERMOST such div — the card itself — because an ancestor always precedes its child in
- * document order.
+ * Nor "the block that contains some words and a button" (#243 merge, 03.10.): a new card enters
+ * with an animation and is invisible for a moment (Reanimated `entering` on the web). Its text
+ * already counts for `hasText`, its button not yet for `getByRole` — so the innermost block with
+ * both was the thread itself, holding the earlier cards' buttons: two of them failed the click
+ * (strict mode), one would have been clicked. Hence the card's own title, and only once it is
+ * VISIBLE: `.last()` over the divs holding that visible title and a start button is the card.
  */
-function offerStart(page: Page, says: string) {
+function offerStart(page: Page, title: string) {
   return page
     .locator('div')
     .filter({ has: page.getByRole('button', { name: START }) })
-    .filter({ hasText: says })
+    .filter({ has: page.getByText(title, { exact: true }).filter({ visible: true }) })
     .last()
     .getByRole('button', { name: START });
 }
@@ -255,7 +256,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText(fractions, { exact: false })).toBeVisible();
   // The offer card in the thread, not a sheet — and the button is taken from THAT card's own
   // words rather than from the order or the number of the buttons (see `offerStart`, issue #267).
-  await offerStart(page, fractions).click();
+  await offerStart(page, 'Brüche vergleichen').click();
   await expect(page.getByText('Frage von Buddy')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
   // "Tipp": the next prepared hint at once — no model involved. The hints are written
@@ -395,7 +396,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Bruchbalken zum Ausprobieren', { exact: false })).toBeVisible();
   // Its own card's button, not "the newest" — under load the earlier offer rendered last (#267).
-  await offerStart(page, 'Bruchbalken zum Ausprobieren').click();
+  await offerStart(page, 'Bruchbalken').click();
   // The question code wrote from the task: one half, on a bar of quarters.
   await expect(page.getByText('Färbe', { exact: false }).first()).toBeVisible();
   await expect(page.getByText('0 von 4 Teilen gefärbt')).toBeVisible();
@@ -442,10 +443,14 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 
   // ── Practice test: no verdicts or solutions until the end ──
+  // The fraction-bar offer above still carries its button. Buddy's words show while he is still
+  // answering (the streamed bubble), the card with the new button only once the turn is stored —
+  // so waiting for the words and taking `.last()` hit the OLD button under load, which reopened
+  // the finished bar run (walkthrough 03.10., #242 merge). The new card's own button, by its text.
   await page.getByLabel('Schreib Buddy …').fill('Mach einen Probetest über die Römer');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('ein Probetest über die Römer', { exact: false })).toBeVisible();
-  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await offerStart(page, 'Die Römer').click();
   await expect(
     page.getByText('Probetest – eine Antwort pro Frage, keine Tipps.', { exact: false }),
   ).toBeVisible();
@@ -1124,7 +1129,7 @@ test('formulas: a reaction equation typed with the chemistry keys and counted (i
   await expect(page.getByText('longrightarrow', { exact: false })).toHaveCount(0);
   await expect(page.getByLabel(/reagiert zu/).first()).toBeAttached();
   await bothSchemes(page, '70-formula-buddy');
-  await offerStart(page, 'Reaktionsgleichungen vorbereitet').click();
+  await offerStart(page, 'Reaktionsgleichungen').click();
   await expect(page.getByText('Stelle die Reaktionsgleichung auf', { exact: false })).toBeVisible();
 
   // The chemistry row: lower the index, +, the reaction arrow — no fraction bar, no π.
@@ -1191,7 +1196,7 @@ test('formulas: math keys page by page, the new notation drawn, only the sign ov
   await expect(page.getByText(/\\int|pmatrix/)).toHaveCount(0);
   await expect(page.getByLabel(/Integral von 0 bis 2/).first()).toBeAttached();
   await bothSchemes(page, '75-math-buddy');
-  await offerStart(page, 'Ich hab dir Aufgaben vorbereitet').click();
+  await offerStart(page, 'Ungleichungen und Summen').click();
   await expect(page.getByText('Das Quadrat von', { exact: false })).toBeVisible();
 
   const field = page.getByLabel('Deine Antwort');
@@ -1290,4 +1295,357 @@ test('the task typed back and a decay that does not add up, both named by code (
     page.getByText('Fast – die Massenzahlen stimmen noch nicht: links 238, rechts 237.'),
   ).toBeVisible();
   await bothSchemes(page, '42-decay-unbalanced');
+});
+
+/**
+ * A cloze at both phone sizes, light and dark, without and with the keyboard up (issue #232:
+ * "360×740 mit 5 Lücken und Tastatur offen"). The gap she types in gets the focus back for
+ * each pass; with the keyboard up the question, that gap and "Prüfen" must all still show.
+ */
+async function clozeShots(page: Page, name: string, gap: string): Promise<void> {
+  const field = page.getByLabel(gap, { exact: true });
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await field.focus();
+    await shot(page, `${name}-${scheme}`);
+    for (const phone of PHONES) {
+      const room = { width: phone.width, height: phone.height - KEYBOARD[phone.width] };
+      await page.setViewportSize(room);
+      await field.focus();
+      await settle(page);
+      await page.screenshot({ path: join(SHOTS, `${name}-${scheme}-kb-${phone.width}.png`) });
+      await expect(page.getByTestId('scroll-question').last()).toBeInViewport();
+      await expect(field).toBeInViewport();
+      await expect(page.getByRole('button', { name: 'Prüfen' })).toBeInViewport();
+    }
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize(PHONES[0]);
+}
+
+test('a cloze: five gaps typed, a word bank, the longest that fits; each gap checked by the rules (issue #232)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Ich will einen Lückentext üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('drei Lückentexte vorbereitet', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('Setze die Verben im Perfekt ein.')).toBeVisible();
+
+  // Five gaps in the flowing text; "Prüfen" waits until every one has something.
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  await expect(check).toBeDisabled();
+  const gap = (n: number) => page.getByLabel(`Lücke ${n} von 5`, { exact: true });
+  // Untouched: every gap a dashed blank in the line.
+  await shot(page, '40a-cloze-empty');
+  await gap(1).click();
+  await gap(1).pressSequentially('sind');
+  // The return key goes on to the next gap.
+  await gap(1).press('Enter');
+  await expect(gap(2)).toBeFocused();
+  await gap(2).pressSequentially('haben');
+  await gap(2).press('Enter');
+  await gap(3).pressSequentially('gegesen');
+  await gap(3).press('Enter');
+  await gap(4).pressSequentially('sind');
+  await gap(4).press('Enter');
+  await gap(5).pressSequentially('schöner');
+  await expect(check).toBeEnabled();
+  await clozeShots(page, '40-cloze-typed', 'Lücke 5 von 5');
+
+  // In the last gap the return key sends the whole text: parts, typed.
+  const sent = page.waitForRequest((r) => r.url().endsWith('/answer') && r.method() === 'POST');
+  await gap(5).press('Enter');
+  expect((await sent).postDataJSON()).toMatchObject({
+    via: 'typed',
+    parts: {
+      type: 'cloze',
+      gaps: [
+        { id: 'g1', text: 'sind' },
+        { id: 'g2', text: 'haben' },
+        { id: 'g3', text: 'gegesen' },
+        { id: 'g4', text: 'sind' },
+        { id: 'g5', text: 'schöner' },
+      ],
+    },
+  });
+  // Code named the gap by her word — a near miss, not wrong, and no model asked.
+  await expect(
+    page
+      .getByText('4 von 5 Lücken stimmen schon. Bei „gegesen“ fehlt nur noch', { exact: false })
+      .last(),
+  ).toBeVisible();
+  // Her words stay; she fixes only the one.
+  await expect(gap(1)).toHaveValue('sind');
+  await gap(3).fill('gegessen');
+  await clozeShots(page, '41-cloze-feedback', 'Lücke 3 von 5');
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // ── With a word bank: tap a word, it fills the active gap; tap a filled gap to empty it ──
+  await expect(page.getByText('Setze die passenden Verben ein.')).toBeVisible();
+  const bankGap = (n: number, word?: string) =>
+    page.getByRole('button', {
+      name: word ? `Lücke ${n} von 3: ${word}` : `Lücke ${n} von 3`,
+      exact: true,
+    });
+  const word = (w: string) => page.getByRole('button', { name: w, exact: true });
+  await expect(check).toBeDisabled();
+  // Untouched: the first gap framed as the one a word fills, the bank under the text.
+  await shot(page, '42a-cloze-bank-empty');
+  await word('isst').click();
+  await word('steht').click();
+  await word('fährt').click();
+  await expect(bankGap(1, 'isst')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'isst, schon eingesetzt' })).toBeDisabled();
+  await shot(page, '42-cloze-bank');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '42b-cloze-bank-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  const banked = page.waitForRequest((r) => r.url().endsWith('/answer') && r.method() === 'POST');
+  await check.click();
+  expect((await banked).postDataJSON()).toMatchObject({ via: 'tapped' });
+  // A word of the bank in the wrong gap is wrong for sure: named, without a model.
+  await expect(
+    page.getByText('1 von 3 Lücken stimmt schon. Bei „isst“, „steht“ passt es noch nicht.').last(),
+  ).toBeVisible();
+  await shot(page, '43-cloze-bank-feedback');
+  // Changed her mind: both back to the bank, then in the right order.
+  await bankGap(2, 'steht').click();
+  await bankGap(1, 'isst').click();
+  await expect(word('steht')).toBeEnabled();
+  await word('steht').click();
+  await word('isst').click();
+  await expect(bankGap(2, 'isst')).toBeVisible();
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // ── The longest a cloze may be: 8 gaps, 256 of 260 characters, an instruction of 78 of 80
+  // (CLOZE_TEXT_MAX / CLOZE_PROMPT_MAX). Filled, it still fits 360×740 — `shot` fails on any
+  // scrolling (rule 16), the text's own scroll view included. ──
+  await expect(page.getByText('Achte dabei auf die Person', { exact: false })).toBeVisible();
+  const eight = ['ging', 'traf', 'saßen', 'rannte', 'rief', 'kam', 'erzählte', 'schliefen'];
+  for (const [i, verb] of eight.entries()) {
+    await page.getByLabel(`Lücke ${i + 1} von 8`, { exact: true }).fill(verb);
+  }
+  await page.getByLabel('Lücke 8 von 8', { exact: true }).blur();
+  await shot(page, '44-cloze-eight');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '44b-cloze-eight-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+});
+
+// Kopfrechnen (issue #243): started from the chat, twenty tasks code wrote, a digit pad, the
+// next task without a pause, and no count of mistakes at the end. Its own test: it needs only a
+// learner and Buddy, and it answers twenty tasks.
+test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async ({ page }) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns Einmaleins üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('eine schnelle Runde', { exact: false })).toBeVisible();
+  await expect(page.getByText('Einmaleins mit 6 und 7')).toBeVisible();
+  await shot(page, '39h-drill-offer');
+  // The offer card names the range in the server's words; the tap starts the round at once.
+  await offerStart(page, 'Einmaleins mit 6 und 7').click();
+  const taskCard = page.getByTestId('drill-task');
+  await expect(taskCard).toBeVisible();
+  await expect(page.getByText('Aufgabe 1 von 20')).toBeVisible();
+  await shot(page, '40-drill-task');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '40b-drill-task-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  /** The task on the card, solved the way a child would: read it, multiply. */
+  async function solveShown(): Promise<{ task: string; value: number }> {
+    const text = (await taskCard.innerText()).replace(/\s+/g, ' ');
+    const m = /(\d+)\s*·\s*(\d+)/.exec(text);
+    expect(m, `a times task on the card, got "${text}"`).not.toBeNull();
+    return { task: m![0], value: Number(m![1]) * Number(m![2]) };
+  }
+  async function type(value: string): Promise<void> {
+    for (const d of value) await page.getByRole('button', { name: d, exact: true }).click();
+  }
+
+  for (let n = 0; n < 20; n++) {
+    const { task, value } = await solveShown();
+    // The second task is answered wrong on purpose: the right one shows under the next task.
+    const typed = n === 1 ? String(value + 1) : String(value);
+    await type(typed);
+    if (n === 0) {
+      await expect(page.getByLabel(`Deine Antwort: ${typed}`)).toBeVisible();
+      await shot(page, '41-drill-typed');
+    }
+    await check.click();
+    if (n === 1) {
+      await expect(page.getByTestId('drill-last')).toContainText('Das war:');
+      await expect(page.getByTestId('drill-last')).toContainText(`= ${value}`);
+      await shot(page, '42-drill-was');
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await shot(page, '42b-drill-was-night');
+      await page.emulateMedia({ colorScheme: 'light' });
+    }
+    if (n === 2) {
+      await expect(page.getByTestId('drill-last')).toContainText('Richtig:');
+      await shot(page, '42c-drill-right');
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await shot(page, '42d-drill-right-night');
+      await page.emulateMedia({ colorScheme: 'light' });
+    }
+    if (n < 19) {
+      // No pause: the next task is on the card (or the same numbers the other way round
+      // never directly — the server keeps mirror tasks apart).
+      await expect(page.getByLabel('Deine Antwort: –')).toBeVisible();
+      await expect.poll(async () => (await solveShown()).task, { timeout: 5000 }).not.toBe(task);
+    }
+  }
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  const line = page.getByTestId('drill-line');
+  await expect(line).toBeVisible();
+  // One sentence about a row — never a number of mistakes (CLAUDE.md rule 6).
+  await expect(line).not.toContainText(/\d+\s*(von|Fehler|falsch)/);
+  await expect(line).toContainText(/(sitzt|sitzen|bleiben wir dran)/);
+  await shot(page, '43-drill-done');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '43b-drill-done-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  // "Noch eine Runde": the same range, new tasks, again without a model.
+  await page.getByRole('button', { name: 'Noch eine Runde' }).click();
+  await expect(page.getByText('Aufgabe 1 von 20')).toBeVisible();
+  await page.getByRole('button', { name: 'Beenden' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+
+  // Fractions: the pad gets its "/" — once, never first.
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns Brüche im Kopf addieren');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('Brüche addieren, ganz schnell', { exact: false })).toBeVisible();
+  await offerStart(page, 'Brüche addieren').click();
+  await expect(taskCard).toBeVisible();
+  await type('3');
+  await page.getByRole('button', { name: 'Bruchstrich' }).click();
+  await type('4');
+  await expect(page.getByLabel('Deine Antwort: 3/4')).toBeVisible();
+  await shot(page, '44-drill-fraction');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '44b-drill-fraction-night');
+  // The theme switch rebuilt the screen; what she typed is a draft and still there.
+  await expect(page.getByLabel('Deine Antwort: 3/4')).toBeVisible();
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'Beenden' }).click();
+
+  // The longest name a round has stays on one line, and the longest task fits.
+  await page.getByLabel('Schreib Buddy …').fill('Plus bis 100 im Kopf');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await offerStart(page, 'Plus bis 100 ohne Übergang').click();
+  await expect(taskCard).toBeVisible();
+  const header = page.getByRole('heading', { name: 'Plus bis 100 ohne Übergang' });
+  const box = await header.boundingBox();
+  expect(box!.height).toBeLessThan(40);
+  await shot(page, '45-drill-long-title');
+  await page.getByRole('button', { name: 'Beenden' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+});
+
+// A practice test with time, only because she asked for it in the chat (issue #241). The API
+// keeps the deadline; to see the last five minutes and the end without sitting them out, the
+// dev stack moves that deadline closer (testing/dev-app.ts) — the app's countdown, the quiet
+// hint, the hand-in and the "ran out" result all run their real paths from there.
+test('a test with time: a calm clock, a quiet hint, and how far she got (issue #241)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  const api = `http://localhost:${process.env.LB_API_PORT ?? '8787'}`;
+  const deadlineIn = async (ms: number) => {
+    const id = /\/practice\/([0-9a-f-]{36})/.exec(page.url())?.[1];
+    expect(id, 'on a practice screen').toBeTruthy();
+    const res = await page.request.post(`${api}/__dev/practice/${id}/deadline`, {
+      data: { in_ms: ms },
+    });
+    expect(res.status()).toBe(204);
+  };
+
+  await page
+    .getByLabel('Schreib Buddy …')
+    .fill('Mach einen Probetest zur Photosynthese mit Zeit, wie in der Arbeit');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('mit 10 Minuten, wie in der Arbeit', { exact: false })).toBeVisible();
+  // The card says the clock before she taps — it is never a surprise.
+  await expect(page.getByText('PROBETEST · MIT 10 MINUTEN')).toBeVisible();
+  await shot(page, '40a-test-offer');
+  await offerStart(page, 'Photosynthese').click();
+
+  // The time left: a small chip at the end of the progress row — whole minutes, no red, no
+  // seconds — and the test's one rule under it.
+  await expect(page.getByText('noch 10 Min.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Eine Antwort pro Frage, keine Tipps.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
+  await shot(page, '40-test-clock');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '40b-test-clock-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'Kohlenstoffdioxid', exact: true }).click();
+  await expect(page.getByText("Notiert – weiter geht's.")).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // Five minutes left: one quiet sentence in the same place, nothing more.
+  await deadlineIn(5 * 60_000 - 2_000);
+  await page.reload();
+  await expect(page.getByText('noch 5 Min.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Schau in Ruhe, was du noch schaffst.')).toBeVisible();
+  await shot(page, '41-test-clock-five');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '41b-test-clock-five-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'In den Chloroplasten', exact: true }).click();
+  await expect(page.getByText("Notiert – weiter geht's.")).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // The time runs out with the third question open: the test is handed in by itself, and what
+  // stayed open is "nicht beantwortet" — never wrong.
+  await deadlineIn(4_000);
+  await page.reload();
+  await expect(
+    page.getByText('Was entsteht bei der Photosynthese', { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText('Die Zeit ist um', { exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('In der Zeit hast du 2 von 3 Fragen beantwortet.')).toBeVisible();
+  await expect(page.getByText('Was offen blieb, zählt nicht als falsch.')).toBeVisible();
+  await expect(page.getByText('3 · Nicht beantwortet')).toBeVisible();
+  await expect(page.getByText('Lösung: Traubenzucker')).toBeVisible();
+  await shot(page, '42-test-time-up');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '42b-test-time-up-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  // The end of the review: the question she did not get to, its solution, nothing marked wrong.
+  // Shot per phone after a swipe to the end (`shot` re-lays the page out at each size, which
+  // puts a list back to its top); the fit itself was checked at 42 above.
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    for (const phone of PHONES) {
+      await page.setViewportSize(phone);
+      await page.mouse.move(phone.width / 2, phone.height * 0.6);
+      await expect(async () => {
+        await page.mouse.wheel(0, 600);
+        await expect(page.getByText('Lösung: Traubenzucker')).toBeInViewport({
+          ratio: 1,
+          timeout: 500,
+        });
+      }).toPass({ timeout: 10_000 });
+      await settle(page);
+      await page.screenshot({
+        path: join(SHOTS, `42c-test-time-up-review-${scheme}-${phone.width}.png`),
+      });
+    }
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize(PHONES[0]);
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });

@@ -42,10 +42,15 @@ export function prepareOffered(
           kind: offer.kind,
           text: offer.text,
           goal_id: offer.goal_id,
+          // A Diktat of her sheet takes its words from there (issue #242).
+          material_id: offer.material_id,
           // Prepared exactly as her tap would ask for it (issue #113) — otherwise the
           // prepared session and the tapped one would be two different things.
           difficulty: offer.difficulty,
           direction: offer.direction,
+          // A test she asked to sit with time keeps its minutes (issue #241). The clock itself
+          // starts only when she opens it — not here, while she is still reading his reply.
+          minutes: offer.minutes,
         });
       } catch (err) {
         // "Nothing to learn from this" is not an outage — it is the generator saying this
@@ -53,7 +58,7 @@ export function prepareOffered(
         // kept: the button stops being a button, and STATE stops calling it something waiting
         // for her. Every other failure (model down, timeout) says nothing about the offer —
         // her tap prepares it then, and says what went wrong there.
-        // 'speech_off' is the same kind of answer for a listening offer (issue #210): there is
+        // 'speech_off' is the same kind of answer for a listening offer (issue #210) and a Diktat (#242): there is
         // no voice configured to read a text aloud, which her tap would hit just the same. Both
         // are stable facts about this deployment, not an outage — so the button stops being a
         // button instead of promising a text nobody can hear.

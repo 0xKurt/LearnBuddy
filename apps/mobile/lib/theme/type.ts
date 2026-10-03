@@ -79,6 +79,17 @@ function typeOf(p: Palette) {
       color: p.ink,
       letterSpacing: -0.2,
     },
+    /**
+     * The question on a practice card (`QuestionCard`, the Diktat card): as large as `prompt`,
+     * one step lighter, so a long question reads as text and not as a headline.
+     */
+    question: {
+      fontSize: 21,
+      lineHeight: 29,
+      fontWeight: weightOf('500'),
+      color: p.ink,
+      letterSpacing: -0.2,
+    },
     body: { fontSize: 16, lineHeight: 23, fontWeight: weightOf(undefined), color: p.ink },
     small: { fontSize: 15, lineHeight: 21, fontWeight: weightOf(undefined), color: p.ink2 },
     caption: { fontSize: 14, lineHeight: 19, fontWeight: weightOf(undefined), color: p.ink2 },

@@ -163,6 +163,7 @@ const state: BuddyState = {
       goal_id: 'g-1',
       difficulty: null,
       direction: null,
+      minutes: null,
       created_at: new Date('2026-09-28T07:30:00Z'),
     },
   ],

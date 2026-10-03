@@ -5,7 +5,14 @@
     "harder": "More like this, a bit harder",
     "harder_topic": "More like this, a bit harder: {{topics}}"
   },
+  "dictation": {
+    "play": "Listen",
+    "again": "Listen again",
+    "play_hint": "Buddy reads it to you – as often as you like."
+  },
   "answer": {
+    "mic_off": "The mic is off here – you're practising spelling.",
+    "placeholder_dictation": "Write what you hear – no mic here",
     "label": "Your answer",
     "placeholder": "Your answer …",
     "unit_hint": "Answer in {{unit}}"
@@ -97,6 +104,13 @@
     "check_waits": "Once everything is matched."
   },
   "next": "Next",
+  "cloze": {
+    "gap": "Gap {{n}} of {{total}}",
+    "gap_filled": "Gap {{n}} of {{total}}: {{word}}",
+    "gap_clear": "Empties the gap again.",
+    "word_used": "{{word}}, already used",
+    "check_waits": "Only once every gap has something in it."
+  },
   "order": {
     "how": "Tap them in order.",
     "element_open": "{{text}}, no place yet",
@@ -213,7 +227,12 @@
     "missed": "Not right yet",
     "skipped": "Skipped",
     "solution": "Answer: {{answer}}",
-    "untouched": "Not answered"
+    "untouched": "Not answered",
+    "time_up_title": "Time is up",
+    "time_up_line_one": "In the time you answered {{answered}} of {{count}} question.",
+    "time_up_line_other": "In the time you answered {{answered}} of {{count}} questions.",
+    "time_up_rest": "What stayed open does not count as wrong.",
+    "unanswered": "Not answered"
   },
   "test_note": "Practice test – one answer per question, no hints. You'll see the result at the end.",
   "thread": {
@@ -234,5 +253,38 @@
     "brick": "row {{row}}, brick {{n}}",
     "check_waits": "Only once every cell is filled in.",
     "scroll": "Table, scrolls sideways"
+  },
+  "drill": {
+    "progress": "Task {{current}} of {{total}}",
+    "end_hint": "Back to Buddy. What you worked out stays saved.",
+    "typed": "Your answer: {{value}}",
+    "delete": "Delete",
+    "slash": "Fraction bar",
+    "right": "Right: {{task}}",
+    "was": "It was: {{task}}",
+    "right_short": "Right:",
+    "was_short": "It was:",
+    "done_title": "Done!",
+    "again": "One more round",
+    "line": {
+      "better_times": "Your {{n}} times table is sitting better now.",
+      "better_divide": "Dividing by {{n}} is sitting better now.",
+      "better_range": "{{what}} is sitting better now.",
+      "solid_times": "Your {{n}} times table is already solid.",
+      "solid_divide": "Dividing by {{n}} is already solid.",
+      "solid_range": "{{what}} is already solid.",
+      "again_times": "We'll keep at the {{n}} times table.",
+      "again_divide": "We'll keep at dividing by {{n}}.",
+      "again_range": "We'll keep at {{what}}."
+    }
+  },
+  "timer": {
+    "chip_one": "{{count}} min left",
+    "chip_other": "{{count}} min left",
+    "left_one": "{{count}} minute left",
+    "left_other": "{{count}} minutes left",
+    "note": "One answer per question, no hints.",
+    "soon": "Calmly see what else you can do.",
+    "up": "Time is up – your result is on its way."
   }
 }

@@ -40,6 +40,13 @@ export type TurnRule = {
    * through that). Counted per rule, per process.
    */
   failFirst?: boolean;
+  /**
+   * Only for requests with exactly this system prompt (a roleplay line or its feedback, issue
+   * #244). A request whose system has rules of its own is matched only against those: the
+   * feedback request carries her whole scene, and a chat rule for one of her words must not
+   * answer it.
+   */
+  system?: string;
 };
 
 const rules: TurnRule[] = [];
@@ -54,7 +61,9 @@ export function installTurns(llm: ScriptedGateway): void {
   const failedOnce = new Set<string>();
   llm.byDefault('buddy_turn', (req: LlmRequest) => {
     const text = latestLearnerText(req);
-    const rule = rules.find((r) => r.when.test(text));
+    const own = rules.filter((r) => r.system !== undefined && r.system === req.system);
+    const pool = own.length > 0 ? own : rules.filter((r) => r.system === undefined);
+    const rule = pool.find((r) => r.when.test(text));
     if (!rule) {
       // Loud on purpose: a spec that says something nobody scripted must fail with the
       // sentence it said, not with a wrong answer meant for another spec.

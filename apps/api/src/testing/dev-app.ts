@@ -153,6 +153,20 @@ export function createDevApp(deps: Deps, auth: DevAuth, storage: DevStorage): Ho
     storage.put(decodeURIComponent(c.req.param('path')), new Uint8Array(await c.req.arrayBuffer()));
     return c.json({ Key: c.req.param('path') });
   });
+  // The walkthrough of a test with time (issue #241, tests/web/modes.spec.ts): moves a timed
+  // test's deadline closer, so the browser sees the last five minutes and the end without
+  // sitting them out. Only the deadline moves; the app's countdown, the quiet hint, the hand-in
+  // and the server's "ran out" all run their real paths from there. Dev stack only.
+  outer.post('/__dev/practice/:id/deadline', async (c) => {
+    const { in_ms: inMs } = (await c.req.json()) as { in_ms?: number };
+    if (typeof inMs !== 'number') return c.json({ error: 'in_ms' }, 400);
+    await deps.db.query(
+      `update practice_sessions set deadline_at = $2
+        where id = $1 and time_limit_minutes is not null and status = 'active'`,
+      [c.req.param('id'), new Date(deps.now().getTime() + inMs)],
+    );
+    return c.body(null, 204);
+  });
   outer.route('/', createApp(deps));
 
   return outer;

@@ -10,7 +10,8 @@ import { ScriptedGateway } from '../fakes.js';
 import { scriptGenerations } from './generations.js';
 import { says, scriptTurns } from './turns.js';
 
-const base = {
+/** The fields of a generated question that most scripted questions leave at their default. */
+export const base = {
   accepted_answers: [],
   unit: null,
   choices: null,

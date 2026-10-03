@@ -25,7 +25,7 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { partialArray, partialString } from '../../llm/partial.js';
 import { ageOn } from '../identity/model.js';
 import { reviewItem } from './fsrs.js';
-import { finishIfComplete, sessionView, type PracticeLearner } from './service.js';
+import { answerWithReply, replayTurn, touchRun, type PracticeLearner } from './service.js';
 
 export const PRONOUNCE_PROMPT_VERSION = 'pronounce.v2.2';
 
@@ -98,27 +98,6 @@ type SpeakItem = {
   first_try_correct: boolean | null;
 };
 
-async function replay(
-  deps: Deps,
-  learnerId: string,
-  sessionId: string,
-  clientTurnId: string,
-): Promise<AnswerResponse | null> {
-  const turn = await deps.db.maybeOne<{ seq: number; verdict: AnswerResponse['verdict'] }>(
-    `select seq, verdict from practice_turns where session_id = $1 and client_turn_id = $2`,
-    [sessionId, clientTurnId],
-  );
-  if (!turn) return null;
-  const view = await sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
-  const reply = await deps.db.maybeOne<{ id: string }>(
-    `select id from practice_turns where session_id = $1 and seq = $2 and role = 'tutor'`,
-    [sessionId, turn.seq + 1],
-  );
-  const r = view.turns.find((x) => x.id === reply?.id);
-  if (!r) throw new AppError('conflict', 'Recording is still being processed');
-  return { session: view, verdict: turn.verdict, reply: r };
-}
-
 /**
  * What the model has written so far, for the app to show while it still listens
  * (issue #8). Only finished words: a judgement that flips two characters later must
@@ -145,7 +124,7 @@ export async function speakItem(
   /** Called while the model writes its judgement (SSE); absent for the plain JSON call. */
   onProgress?: (event: SpeakStreamEvent) => void,
 ): Promise<AnswerResponse> {
-  const replayed = await replay(deps, learner.id, sessionId, input.client_turn_id);
+  const replayed = await replayTurn(deps, learner.id, sessionId, input.client_turn_id);
   if (replayed) return replayed;
   const now = deps.now();
   const session = await deps.db.maybeOne<{ status: string; mode: string }>(
@@ -290,23 +269,16 @@ export async function speakItem(
           now,
         );
       }
-      await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-        sessionId,
-        now,
-      ]);
-      await finishIfComplete(tx, learner.id, sessionId, now);
+      await touchRun(tx, learner.id, sessionId, now);
     });
   } catch (err) {
     if (isUniqueViolation(err)) {
-      const r = await replay(deps, learner.id, sessionId, input.client_turn_id);
+      const r = await replayTurn(deps, learner.id, sessionId, input.client_turn_id);
       if (r) return r;
     }
     throw err;
   }
-  const view = await sessionView(deps.db, learner.id, sessionId, deps.storage, deps.now());
-  const turn = [...view.turns].reverse().find((x) => x.item_id === item.id && x.role === 'tutor');
-  if (!turn) throw new AppError('internal', 'reply missing');
-  return { session: view, verdict, reply: turn };
+  return answerWithReply(deps, learner.id, sessionId, item.id, verdict);
 }
 
 // ─────────────── one word, on its own (issue #83) ───────────────

@@ -45,7 +45,9 @@
     "set_contact_days": "mai in questi giorni: {{days}}",
     "request_material_undone": "Nessuna foto necessaria: {{title}}",
     "set_voice": "La mia voce: {{voice}}, {{speed}}",
-    "forget_all": "Ho dimenticato tutto quello che sapevo di te ({{count}})"
+    "forget_all": "Ho dimenticato tutto quello che sapevo di te ({{count}})",
+    "offer_drill": "Proposto: calcolo mentale – «{{text}}»",
+    "start_roleplay": "Gioco di ruolo: {{scene}}"
   },
   "area": {
     "library": "Il tuo materiale",
@@ -372,5 +374,21 @@
   "working": {
     "material": "Sto trasformando la tua scheda in esercizi…",
     "session": "Sto guardando com'è andata con gli esercizi…"
+  },
+  "roleplay": {
+    "label": "Gioco di ruolo",
+    "plays": "Buddy fa: {{role}}",
+    "tasks": "I tuoi compiti",
+    "end": "Finisci – com'è andata?",
+    "end_hint": "Buddy si ferma e ti dice com'è andato ogni compito.",
+    "ended": "Finito. Il commento è nella conversazione.",
+    "lang": {
+      "de": "tedesco",
+      "en": "inglese",
+      "fr": "francese",
+      "es": "spagnolo",
+      "it": "italiano"
+    },
+    "end_short": "Finisci"
   }
 }

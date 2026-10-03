@@ -83,9 +83,11 @@ export default function TalkScreen() {
   const [problem, setProblem] = useState<string | null>(null);
   const open = useRef(true);
 
+  // While a roleplay runs (issue #244) she speaks its language, and the mic listens in it.
+  const roleplayLang = useHome().data?.roleplay?.language ?? null;
   const voice = useVoiceInput({
     purpose: 'message',
-    lang: null,
+    lang: roleplayLang,
     untilPause: true,
     onText: (text) => void answer(text),
   });
@@ -216,7 +218,9 @@ export default function TalkScreen() {
         // Nothing was said yet (the answer changed something, or a safeguarding reply):
         // read the stored text, sentence by sentence, so it reads along in his bubble.
         tapped('first_audio');
-        void speak(r.text, currentLocale(), {
+        // A line in a roleplay is read in the roleplay's language; once it has ended, the
+        // feedback (the newest message then) is read in hers again (issue #244).
+        void speak(r.text, res.home.roleplay?.language ?? currentLocale(), {
           transform: (sentence) => spokenText(sentence, words),
           onEnd: (why) => {
             spokenEnd = why;
