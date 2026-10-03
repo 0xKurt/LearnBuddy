@@ -812,6 +812,53 @@ read (`evals/tts` also needs `SPEECH_BACKEND=google`: it measures a whole voice-
 when each sentence is written, what it costs to synthesise and how long it plays). A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
 
+**Structured output stays on `responseJsonSchema` for now** (issue #283, checked 03.10.2026).
+The live Vertex v1 discovery document (revision 20260920, read 02.10.) marks
+`GenerationConfig.responseSchema`, `responseJsonSchema` and `responseMimeType` deprecated:
+"Use `response_format` instead". We cannot follow it from our side yet: `@google/genai` 2.25.0
+(ours) and 2.27.0 (newest, published 02.10.2026) have no `responseFormat` on
+`GenerateContentConfig`, the type their raw `GenerationConfig.responseFormat` points at
+(`ResponseFormat`) is not even declared, and the Vertex converter of `models.generateContent`
+copies only the fields it knows — a `responseFormat` passed in is dropped without an error
+(the request goes to `v1beta1`, where the SDK still sends `responseJsonSchema`). So the code is
+unchanged: `paramsFor` in `llm/vertex.ts` builds the one request, and
+`llm/__tests__/vertex-request.test.ts` hands it to the real SDK with only `fetch` replaced. It
+pins that our zod-derived schema arrives byte for byte as `responseJsonSchema` (turn,
+extraction and a small schema), and it carries a **canary**: the day an SDK upgrade starts
+forwarding `responseFormat`, that test fails — that is when #283 is looked at again, with the
+questions still open: which schema subset Vertex EU accepts in `response_format` for
+`gemini-3.6-flash`, whether streaming (`partial.ts`) is unchanged, and whether there is a
+shutdown date (none is published; none is claimed here). Those need a live call.
+
+**What a request carries once** (issue #284, from Recherche 2 of #279). Measured on the request
+by `evals/requests/measure.ts` (real app and Postgres, scripted model; `--tokens` adds a text
+token estimate with the SDK's local Gemma 3 tokenizer, which reproduced `countTokens` exactly
+for the turn schema, 8 194, and the tutor schema, 210 — still an estimate, never native usage).
+Inside **one** request nothing is sent twice; the repetition #279 found is **across** calls, and
+each of those calls is a separate, stateless task that needs its input. Decided per finding:
+
+- **Page photos in `extraction` and `figures` — kept.** Each request carries each page once.
+  `figures` answers with pixel boxes on the page and `extraction` writes no boxes, so the
+  figures pass cannot work from the reading's result; folding it into `extraction` would grow
+  the schema #281 is trying to shrink and make the reading she waits for longer, for ≈2 × 1 120
+  image tokens per two-page sheet. Only a live eval (figure boxes, reading time, native usage)
+  could justify that construction change.
+- **The sheet's text in `explain` and every `tutor` call — kept.** Once per request (≤ 6 000
+  characters in `explain`, ≤ 4 000 in `tutor`, ≈ 1 530 text tokens at that cap, 2.6 characters
+  per token for a fractions sheet); each tutor call is a new request and has no other way to
+  know the sheet it judges against. Narrowing it to "the part of the sheet the question is
+  from" is a grounding change and needs the tutor eval with the live model.
+- **The day list of `## Now` — kept.** Once per Buddy request (`buddy_turn`, `buddy_check`):
+  471 characters, ≈ 353 text tokens. Grouping the dates by month ("2026-10: +0 Fri 02, …")
+  carries the same days in 312 characters / ≈ 188 tokens, but it changes what the model reads
+  to resolve a DaySpec (rule 2), so it waits for a DaySpec eval on Vertex before it ships.
+
+`src/__tests__/request-duplication.int.test.ts` plays the journey of one photographed sheet
+(`src/testing/request-flow.ts`: reading, figures, background check, a practice test from it,
+four prose answers, one message) and fails when a page photo appears twice in a request or in
+a call that does not look at pages, or when the sheet's text or the day list is sent twice in
+one request or reaches a call that is not grounded in it.
+
 **One word on its own** (`POST /practice/sessions/:id/speak-word`, issue #83): in the
 pronunciation card every word of the judged sentence is tappable. The sheet reads it aloud
 (normal and slow), shows the tip the model wrote for it, and takes a recording of just that
