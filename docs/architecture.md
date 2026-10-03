@@ -4010,9 +4010,14 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   on its own worksheet being ready and waits only after its own test's practice; every other
   check stays unscripted and gets the check's fixed fallback — because every spec that finishes
   a practice wakes Buddy, and `charts.spec.ts`, running first, once took the core loop's queued
-  "prepare a practice" (PR #303). The remaining purposes (tutor, hints,
-  reading a photographed sheet) answer by rule or from a queue, so the walkthrough is still run
-  **as a whole** — a single spec on its own gets the answers meant for the run (issue #81).
+  "prepare a practice" (PR #303). **No purpose answers from a queue any more** (issue #350):
+  the tutor by the question (`scenarios/rules.ts`; run alone, `modes.spec.ts` once took the core
+  loop's queued tutor reply), a photographed sheet by the photo and whether it is homework (the
+  fake model sees a photo as its size, `<image 800x1080>`), a spoken sentence by the sentence.
+  So every spec runs alone as well as in the whole run. The cheap guard is
+  `src/testing/__tests__/walkthrough.test.ts` (the walkthrough's model holds no queued answer,
+  and a set of each spec's requests gets the same answers forwards and backwards); running every
+  test alone on its own stack is `scripts/web-walkthrough-each.sh`, local only.
   A run started right after another waits for the previous run's ports to be free
   (`scripts/web-walkthrough.sh`): Playwright reuses whatever already listens, and the dying
   servers of the run before gave a white screen after a reload — a failure that looks like a

@@ -16,30 +16,20 @@
 // Test tooling only.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
-import { LlmError, type LlmRequest } from '../../llm/gateway.js';
-import { ScriptedGateway } from '../fakes.js';
+import type { ScriptedGateway } from '../fakes.js';
+import { RuleBook, type Rule } from './rules.js';
 
-export type CheckRule = {
-  /** What the check request must contain (matched over its text). */
-  when: RegExp;
-  /** Buddy's decision; a function sees the whole request. */
-  answer: (req: LlmRequest) => unknown;
-};
+export type CheckRule = Rule;
 
-const rules: CheckRule[] = [];
+// A check no rule is about: the same error as a purpose nobody scripted.
+const book = new RuleBook('buddy_check');
 
 /** Scenarios add their rules; the order only decides which of two matching rules wins. */
 export function scriptChecks(...added: CheckRule[]): void {
-  rules.push(...added);
+  book.add(...added);
 }
 
 /** Installs the dispatcher; call it once, after every scenario has added its rules. */
 export function installChecks(llm: ScriptedGateway): void {
-  llm.byDefault('buddy_check', (req: LlmRequest) => {
-    const text = ScriptedGateway.textOf(req);
-    const rule = rules.find((r) => r.when.test(text));
-    // The same error as a purpose nobody scripted (`ScriptedGateway.generate`).
-    if (!rule) throw new LlmError('unavailable', 'unscripted model call (buddy_check)');
-    return rule.answer(req);
-  });
+  book.install(llm);
 }
