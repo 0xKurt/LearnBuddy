@@ -134,6 +134,11 @@ Browser walkthrough of the real app against the real API (scripted model):
 four in order — the pre-commit hook stays fast (without the walkthrough), but nothing reaches
 the owner without one green run (issue #74).
 
+**Lokal prüfen, selten pushen (issue #321).** Ein PR wird lokal fertig geprüft (`pnpm verify`)
+und dann **einmal** gepusht — keine Zwischenstände, kein Push pro Teilschritt. Merges auf main
+kommen gebündelt als ein Merge-Zug, nicht jeder PR einzeln: jeder Merge ist ein Production-Deploy.
+Agenten-Branches (`claude/**`) bauen keinen Vercel-Preview (`apps/api/vercel.json` → `git.deploymentEnabled`).
+
 ## Kritik wird erst ein Issue, dann Arbeit (Owner-Regel 28.09.)
 
 Jede Kritik, jeder Fehlerbericht und jede Produktidee des Owners bekommt **zuerst ein

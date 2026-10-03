@@ -1,6 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
+  "git": {
+    "deploymentEnabled": {
+      "claude/**": false
+    }
+  },
   "buildCommand": "",
   "outputDirectory": "public",
   "regions": ["fra1"],
