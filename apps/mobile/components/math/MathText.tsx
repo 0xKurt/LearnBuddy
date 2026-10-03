@@ -426,6 +426,7 @@ function Fraction({
         paddingHorizontal: 3,
         marginVertical: flat ? 0 : 2,
         // Put the fraction bar near the height of a minus sign instead of the line's middle.
+        // token-exempt: optical lift as a share of the font size, not a spacing step
         marginTop: Math.round(size * (flat ? 0.08 : 0.18)),
       }}
     >

@@ -25,12 +25,12 @@ import {
   clarifyUnclearSpot,
   createMaterial,
   libraryView,
-  materialItems,
   materialView,
   renameMaterial,
   retryMaterial,
   submitMaterial,
 } from './service.js';
+import { materialItems } from './items.js';
 
 export const materialRoutes = new Hono<AppEnv>();
 materialRoutes.use('*', requireUser, requireAccount, requireLearner);

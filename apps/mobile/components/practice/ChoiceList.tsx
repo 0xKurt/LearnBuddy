@@ -203,9 +203,9 @@ function TextChoices({ choices, tried, disabled, onChoose }: Props) {
 // 89 pt at 740 (the two rows give back ≈ 40 pt), 101 pt at 844.
 
 /** No option picture taller than this — an odd figure (a long table) is scaled down to it. */
-export const FIGURE_CHOICE_MAX_HEIGHT = 120;
+const FIGURE_CHOICE_MAX_HEIGHT = 120;
 /** Share of the window's height one option picture may take (see above). */
-export const FIGURE_CHOICE_SCREEN_SHARE = 0.12;
+const FIGURE_CHOICE_SCREEN_SHARE = 0.12;
 
 function FigureChoices({
   choices,

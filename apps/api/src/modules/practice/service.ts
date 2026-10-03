@@ -72,6 +72,7 @@ import { questionCountFor, selectPracticeItems, type PracticeRun } from './selec
 import { tapChoicesFor } from './tapChoices.js';
 import { CARD_PASS, offersCardPass } from './cards.js';
 import { MAX_ACCEPTED, storedFigure } from './items.js';
+import { imageOf, signImageUrls, type ItemImageRow } from './itemImage.js';
 import {
   askedElements,
   checkRubric,
@@ -684,35 +685,6 @@ export async function loadSession(
   return s;
 }
 
-/** How long a signed concept-image URL lives; every session fetch signs afresh (issue #50). */
-const IMAGE_URL_TTL_SECONDS = 1800;
-
-type ItemImageRow = {
-  image_path: string | null;
-  image_width: number | null;
-  image_height: number | null;
-  image_label: string | null;
-};
-
-/**
- * Signed URLs for the concept images of a view, one sign per distinct crop. A Storage
- * outage never breaks loading the session: the image is simply left out (null).
- */
-async function signImageUrls(
-  storage: StorageGateway,
-  rows: ItemImageRow[],
-): Promise<Map<string, string>> {
-  const urls = new Map<string, string>();
-  for (const path of new Set(rows.map((r) => r.image_path).filter((p): p is string => !!p))) {
-    try {
-      urls.set(path, await storage.createDownloadUrl(path, IMAGE_URL_TTL_SECONDS));
-    } catch {
-      // Left out; the next fetch tries again.
-    }
-  }
-  return urls;
-}
-
 /**
  * The learning surface of a question computed from a reviewed task, or null (issue #162).
  * A column that no longer parses as a task yields no surface: the question is still
@@ -736,13 +708,6 @@ function taskViewFor(row: Pick<ItemRow, 'kind' | 'task'>): ItemView['task_view']
   if (!isStructuredKind(row.kind)) return null;
   const task = structuredTaskOf(row.task, row.kind);
   return task ? viewOf(task) : null;
-}
-
-/** The crop that goes with the question, or null (contract: ItemImage). */
-function imageOf(row: ItemImageRow, urls: Map<string, string>): ItemView['image'] {
-  const url = row.image_path ? urls.get(row.image_path) : undefined;
-  if (!url || !row.image_width || !row.image_height) return null;
-  return { url, width: row.image_width, height: row.image_height, label: row.image_label ?? '' };
 }
 
 export async function sessionView(
