@@ -990,6 +990,11 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   // ── Lesen: the server wrote question, drawing and options from the task ──
   await expect(page.getByText('Wie heißt diese Note?')).toBeVisible();
   await expect(page.getByTestId('question-figure')).toBeVisible();
+  // Gestochen von VexFlow (#312), geladen erst hier: die Zeile ist da, wenn ihr Schlüssel da ist.
+  const figureNames = page.getByTestId('question-figure').locator('svg text');
+  await expect(page.getByTestId('question-figure').locator('svg').first()).toBeVisible();
+  // Ihr Name IST die Antwort: kein Name an der Note (#312, Code erzwingt es).
+  await expect(figureNames).toHaveCount(0);
   await both('70-staff-name-note');
   await page.getByRole('button', { name: 'C', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
@@ -1002,6 +1007,8 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   await page.getByRole('button', { name: 'Weiter' }).click();
 
   await expect(page.getByText('Welches Intervall', { exact: false })).toBeVisible();
+  // Beim Intervall sind die Noten gegeben und tragen ihre Namen; gefragt ist der Abstand (#312).
+  await expect(figureNames).toHaveText(['E', 'G']);
   await both('72-staff-interval');
   await page.getByRole('button', { name: 'kleine Terz', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();

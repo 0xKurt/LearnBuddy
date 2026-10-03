@@ -2154,8 +2154,8 @@ row) did not fit by 87 pt, and a 56-character prompt broke onto three lines. A d
 rejected (`too_long` / `count`), never shortened.
 
 **Die Notenzeile — lesen, selbst schreiben, anhören** (`contracts/staff.ts`,
-`practice/staff.ts`, `components/math/StaffLine.tsx`, `lib/music/`, Migration
-`0078_staff_tasks.sql`; Issue #226 aus der Analyse #224). Musik war das schwächste Fach: Notenschrift
+`practice/staff.ts`, `components/math/StaffLine.tsx` mit `components/math/staff/`, `lib/music/`,
+Migration `0078_staff_tasks.sql`; Issue #226 aus der Analyse #224, gestochen von VexFlow seit #312). Musik war das schwächste Fach: Notenschrift
 stand als `drawing` in `NotPracticableForm`, also bekamen 21 Aufgabentypen keine Frage. Dabei ist
 Notenlehre der Teil des Lehrplans mit dem **höchsten Anteil formal entscheidbarer Fehlerklassen**
 (`docs/lehrplan-und-uebungsformen.md` §10.2): ein Notenname, ein Notenwert, ein Intervall, eine
@@ -2217,6 +2217,37 @@ die Form, die die mehrteiligen Antworten schon haben. Die **Oktave** entscheidet
 Frage, die Code geschrieben hat, nennt Tonnamen, also ist jede Oktave dieses Namens richtig
 (dieselbe Lizenz wie `form_free`), und damit die Übung nicht leer wird, liegen die Töne einer
 Schreibaufgabe innerhalb der fünf Linien, wo es von den meisten Namen nur einen gibt.
+
+**Gestochen von VexFlow** (Issue #312, Owner 03.10.: „Ja, VexFlow"). Schlüssel, Köpfe, Hälse,
+Fähnchen, Pausen, Kreuz, Punkt und Hilfslinien zeichnet **VexFlow 4.2.5** (MIT) mit den
+Bravura-Umrissen; vorher waren das 783 eigene Zeilen. Unser Datenmodell bleibt die geprüfte Wahrheit:
+VexFlow bekommt nur Noten, die Code schon abgeleitet hat, und entscheidet nichts außer der Tinte.
+Es läuft **headless**: ein eigener `RenderContext` (`staff/svgContext.ts`) schreibt einen SVG-String,
+den `SvgXml` auf iOS, Android und im Web zeichnet — kein DOM, keine WebView, keine Musikschrift auf
+dem Gerät (VexFlow 5 misst Glyphen mit Canvas und ginge so nicht). Farben kommen aus `useTheme()`.
+Die Geometrie (`staff/geometry.ts`: Stufe ↔ Höhe, Beginn des ersten Takts) liegt **ohne** VexFlow
+daneben und wird von beiden benutzt, dem Stecher und den Tippzielen der Schreibfläche; ein Test
+prüft für jede Stufe beider Schlüssel, dass VexFlows Kopf dort sitzt, wo ein Tipp landet. VexFlow
+(rund 167 KB gzip) ist ein **eigener Bundle-Teil**: `staff/useEngraver.ts` lädt `staff/engrave.ts`
+per `import()` erst auf einem Bildschirm mit Notenzeile, das Haupt-Bundle bleibt im Budget (#313).
+Köpfe, Pausen und Fähnchen stehen auf jeder Zeile ×1,15 größer als im Druck (wie in Notenheften
+für Kinder), eine gelesene Zeile hat bis zu 24 pt Linienabstand (vorher 20). Die Schreibfläche
+setzt ihre Zeichen auf gleich breite Plätze statt nach Rhythmus (der Inhalt wächst unter dem
+Finger) und hält am Ende des aktiven Takts einen Platz für den Schreibstrich frei. Grenze: auf
+360 pt mit zwei Takten nehmen VexFlows Schlüssel und Taktart mehr Breite als die alte
+stilisierte Zeichnung, der Linienabstand dort ist deshalb kleiner als vorher.
+
+**Notennamen pro Übung** (`StaffFigure.labels`, Owner 03.10.: „dass die für gewisse Übungen auch
+beschriftet werden müssen"). `labels` ist die Liste der Noten (in Leserichtung, Pausen zählen
+nicht), die ihren Namen unter sich tragen — kein Schalter für die Lernenden, sondern gesetzt von
+Code aus der Aufgabe (`staffLabels` in `practice/staff.ts`; `StaffTask` hat kein Feld dafür):
+`interval` und `time_signature` beschriften die gegebenen Noten, `name_note` und `name_value` nicht,
+die Schreibfläche nie. Darüber steht eine Regel, die Code erzwingt (`visibleLabels`): **eine Note,
+deren Name die Antwort ist, wird nie beschriftet** — auch keine zweite desselben Namens; ein Test
+prüft das für jeden Ton beider Schlüssel, und dass die gegebenen Noten beschriftet bleiben. Die
+Namen kommen aus den Sprachdateien (`staff.note_short`: C D E F G A H auf Deutsch, Do Ré Mi … auf
+Französisch); sie stehen in einer Zeile unter der tiefsten Tinte jeder Note und stoßen so nie an
+Hilfslinien oder Hälse. Eine gespeicherte Zeile von vor #312 hat kein Feld und kommt unbeschriftet.
 
 **Anhören** (`lib/music/tone.ts`, `lib/music/play.ts`): die Töne werden als PCM-WAV **im Gerät
 gerechnet** — Dreieckswelle mit Hüllkurve, Tempo aus den Daten — und durch dieselbe Strecke gespielt,

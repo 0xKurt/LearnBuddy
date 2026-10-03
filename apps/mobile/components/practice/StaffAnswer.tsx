@@ -40,8 +40,10 @@
 // Note auf der mittleren Linie — die Mitte des Takts ist genau dort, die Zeile ist symmetrisch —
 // und wird mit denselben Pfeilen an ihren Platz geschoben. Ein Weg für alle, kein zweiter daneben.
 //
-// Gezeichnet wird mit `components/math/StaffLine.tsx`, also mit demselben Zeichner wie die Zeile,
-// die sie LIEST: eine Viertel sieht hier so aus wie dort, und auf der Wert-Taste auch.
+// Gestochen wird mit `components/math/StaffLine.tsx` (VexFlow, issue #312), also mit demselben
+// Stecher wie die Zeile, die sie LIEST: eine Viertel sieht hier so aus wie dort, und auf der
+// Wert-Taste auch. Sichtbare Notennamen gibt es hier nie (`StaffFigure.labels` gilt nur für
+// gelesene Zeilen): sie schreibt, was die Frage in Worten nennt.
 
 import {
   BARS_MAX,
@@ -71,16 +73,14 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon, type IconName } from '../lb/Icon.js';
 import { toast } from '../lb/Toast.js';
+import { Staff, ValueGlyph } from '../math/StaffLine.js';
 import {
-  Staff,
-  ValueGlyph,
-  barsStartX,
-  WRITE_REACH,
-  stepAtY,
+  SPACE_UNITS,
+  TAIL_UNITS,
+  headUnits,
+  stepAtWriteY,
   writeHeight,
-  yOfStep,
-  stepsOfBars,
-} from '../math/StaffLine.js';
+} from '../math/staff/geometry.js';
 import { StaffPlayButton } from './StaffPlayButton.js';
 
 /**
@@ -92,10 +92,12 @@ import { StaffPlayButton } from './StaffPlayButton.js';
 const GAP_MIN = 12;
 const GAP_MAX = 26;
 /**
- * Wie viele Linienabstände eine Zeile in der Breite braucht: Schlüssel und Taktart (5,4), je Takt
- * fünf (Platz für drei bis vier Köpfe mit Vorzeichen) und der Schlussstrich.
+ * Wie viele Linienabstände eine Zeile in der Breite braucht: Schlüssel und Taktart
+ * (`headUnits`), je Takt sieben (Platz für drei bis vier Köpfe mit Vorzeichen; VexFlows
+ * Köpfe und Pausen sind breiter als die alten, mit fünf stießen sie im vollen Takt aneinander,
+ * #312) und der Schlussstrich.
  */
-const WIDTH_IN_GAPS = (bars: number) => 5.8 + bars * 5;
+const WIDTH_IN_GAPS = (bars: number) => (headUnits(true) + TAIL_UNITS) / SPACE_UNITS + bars * 7;
 
 /**
  * Die kleinste Höhe der ganzen Fläche: die engste Zeile, zwei Tastenreihen à 44 pt und die
@@ -260,10 +262,7 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
     const y = touchY.current;
     touchY.current = null;
     // Ohne Fingerposition — oder bevor die Zeile vermessen ist — die mittlere Linie.
-    const step =
-      y === null || box.height === 0
-        ? 0
-        : clampStep(stepAtY(y - top + yOfStep(WRITE_REACH.top, gap), gap));
+    const step = y === null || box.height === 0 ? 0 : clampStep(stepAtWriteY(y - top, gap));
     const pitch = pitchAt(step);
     // Sofort hören, was gesetzt wurde — darum geht es auf dieser Fläche (issue #226).
     playPitch(pitch);
@@ -307,7 +306,9 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
   }
 
   const empty = answer.bars.every((bar) => bar.length === 0);
-  const startX = barsStartX(gap, true);
+  /** Wo der erste Takt beginnt und wie viel hinter dem letzten frei bleibt — wie gestochen. */
+  const startX = (headUnits(true) * gap) / SPACE_UNITS;
+  const tailX = (TAIL_UNITS * gap) / SPACE_UNITS;
 
   return (
     <View style={{ flexShrink: 1, minHeight: 0, gap: SPACE.sm }}>
@@ -331,20 +332,18 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
               clef={surface.clef}
               time={surface.time}
               bars={answer.bars}
-              steps={stepsOfBars(answer.bars, surface.clef)}
               width={box.width}
               gap={gap}
-              equalBars
               activeBar={active}
               selected={selected}
-              reach={WRITE_REACH}
               cursor={!disabled && !staffComplete(answer)}
             />
           </View>
         ) : null}
         {/* Die Tippziele liegen ÜBER der Zeichnung und teilen sich die Breite mit Flexbox, nicht
             mit gemessenen Zahlen: so sitzen sie schon im ersten Bild richtig, und sie stimmen
-            mit den gezeichneten Takten überein, weil die alle gleich breit sind (`equalBars`). */}
+            mit den gestochenen Takten überein, weil die alle gleich breit sind und hinter
+            demselben Kopf beginnen (`staff/geometry.ts`). */}
         <View style={{ ...ABSOLUTE_FILL, flexDirection: 'row' }}>
           {/* Vor dem ersten Takt stehen Schlüssel und Taktart; dort wird nicht geschrieben. */}
           <View style={{ width: startX }} />
@@ -371,7 +370,7 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
               style={{ flex: 1 }}
             />
           ))}
-          <View style={{ width: gap * 0.4 }} />
+          <View style={{ width: tailX }} />
         </View>
       </View>
 

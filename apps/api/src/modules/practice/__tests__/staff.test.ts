@@ -45,8 +45,10 @@ import {
   staffItem,
   staffItems,
   staffLineReply,
+  staffLabels,
   staffSurfaceOf,
   usableStaffTask,
+  visibleLabels,
   writtenStaffLine,
   MAX_STAFF_ITEMS,
 } from '../staff.js';
@@ -378,6 +380,8 @@ describe('die Frage, die eine Aufgabe wird', () => {
       time: null,
       bars: [[{ el: 'note', pitch: p('F', 3), value: 'quarter', dotted: false }]],
       tempo: 80,
+      // Ihr Name ist die Antwort: unbeschriftet (issue #312).
+      labels: [],
     });
 
     const fifth = staffItem(
@@ -552,6 +556,91 @@ describe('eine geschriebene Zeile prüfen', () => {
     );
     expect(writtenStaffLine('de', 'Rq.')).toBe('punktierte Viertelpause');
     expect(writtenStaffLine('de', 'kein Notentext')).toBeNull();
+  });
+});
+
+// Notennamen auf der Zeile (issue #312, Owner 03.10.: „dass die für gewisse Übungen auch
+// beschriftet werden müssen"). Die Zusage ist eine in BEIDE Richtungen: der gefragte Name steht nie
+// da — und wo nichts gefragt ist, wird die Beschriftung auch nicht verschluckt.
+describe('Notennamen auf der Zeile', () => {
+  /** Jeder Ton, den ein Schlüssel zeichnet — die ganze Menge, nicht ein Beispiel. */
+  const everyPitch = (clef: Clef): Pitch[] =>
+    [2, 3, 4, 5, 6].flatMap((octave) =>
+      (['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const)
+        .map((name) => p(name, octave))
+        .filter((pitch) => onStaff(pitch, clef)),
+    );
+
+  it('beschriftet die gefragte Note nie, in keinem Schlüssel und bei keinem Ton', () => {
+    for (const clef of ['treble', 'bass'] as const) {
+      for (const pitch of everyPitch(clef)) {
+        const task: StaffTask = { task: 'name_note', clef, pitch };
+        const item = staffItem(task, 'de');
+        const figure = item?.figure;
+        expect(figure?.type, `${pitch.name}${pitch.octave}`).toBe('staff');
+        expect(figure?.type === 'staff' ? figure.labels : null).toEqual([]);
+        // Und die Regel selbst, unabhängig davon, was die Aufgabe wollte: auch wer die Note
+        // ausdrücklich beschriftet haben will, bekommt sie nicht beschriftet.
+        expect(visibleLabels(task, quarters(pitch), [0])).toEqual([]);
+      }
+    }
+  });
+
+  it('verschweigt auch eine zweite Note desselben Namens, die die Antwort ebenso verriete', () => {
+    const task: StaffTask = { task: 'name_note', clef: 'treble', pitch: p('E', 4) };
+    expect(visibleLabels(task, quarters(p('E', 4), p('G', 4), p('E', 5)), [0, 1, 2])).toEqual([1]);
+  });
+
+  it('beschriftet die gegebenen Noten, wo nicht ihr Name gefragt ist', () => {
+    // Die andere Richtung: ein Intervall und ein Rhythmus tragen ihre Namen — die Regel nimmt
+    // nichts weg, was nicht die Antwort ist.
+    const interval: StaffTask = {
+      task: 'interval',
+      clef: 'treble',
+      lower: p('E', 4),
+      upper: p('G', 4),
+    };
+    const fifth = staffItem(interval, 'de')?.figure;
+    expect(fifth?.type === 'staff' ? fifth.labels : null).toEqual([0, 1]);
+    expect(visibleLabels(interval, quarters(p('E', 4), p('G', 4)), [0, 1])).toEqual([0, 1]);
+
+    const rhythm: StaffTask = {
+      task: 'time_signature',
+      clef: 'bass',
+      time: '3/4',
+      bars: [
+        [
+          { el: 'note', pitch: p('G', 2), value: 'quarter', dotted: false },
+          { el: 'rest', value: 'quarter', dotted: false },
+          { el: 'note', pitch: p('D', 3), value: 'quarter', dotted: false },
+        ],
+      ],
+    };
+    // Die Pause hat keinen Namen und zählt nicht mit: Noten 0 und 1 sind G und D.
+    expect(staffLabels(rhythm, rhythm.bars)).toEqual([0, 1]);
+  });
+
+  it('lässt den Platzhalter eines Notenwerts unbeschriftet', () => {
+    const value: StaffTask = {
+      task: 'name_value',
+      clef: 'treble',
+      value: 'half',
+      dotted: false,
+      rest: false,
+    };
+    const figure = staffItem(value, 'de')?.figure;
+    expect(figure?.type === 'staff' ? figure.labels : null).toEqual([]);
+  });
+
+  it('nimmt nur Nummern, die eine Note der Zeile sind, und keine doppelt', () => {
+    const interval: StaffTask = {
+      task: 'interval',
+      clef: 'treble',
+      lower: p('C', 5),
+      upper: p('G', 5),
+    };
+    const bars = quarters(p('C', 5), p('G', 5));
+    expect(visibleLabels(interval, bars, [1, 1, 0, 2, -1, 0.5])).toEqual([0, 1]);
   });
 });
 
