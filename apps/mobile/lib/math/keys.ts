@@ -18,7 +18,8 @@
 // phone's digits write the rest, and a row of /, √, π over a number wall is noise.
 //
 // The row never scrolls sideways (a key she has to scroll to find is a key she does not know
-// exists): as many keys as fit on one line, and a "…" key that shows the next ones.
+// exists): as many keys as fit on one line, and a "…" key that shows the next ones — the one
+// key row's rule (lib/keyRow.ts, components/lb/KeyRow.tsx).
 //
 // Pure logic without React Native imports, so it runs in the unit tests.
 
@@ -147,45 +148,14 @@ function unique(ids: KeyId[]): KeyId[] {
   return ids.filter((id, i) => ids.indexOf(id) === i);
 }
 
-// ─────────────── one line, never sideways ───────────────
-
-/** The smallest key (TOUCH in lib/theme/space.ts) and the gap between two keys (SPACE.sm). */
-const KEY_MIN = 44;
-export const KEY_GAP = 8;
-
-/** How many key places one line of this width holds. */
-export function slotsIn(width: number): number {
-  return Math.max(3, Math.floor((width + KEY_GAP) / (KEY_MIN + KEY_GAP)));
-}
-
-/** "↵ Neue Zeile" carries a word, so it takes two places. */
-export function slotsOf(id: KeyId): number {
-  return id === 'newline' ? 2 : 1;
-}
+// ─────────────── its places on the line ───────────────
 
 /**
- * The keys split into pages of one line each. Everything on one page when it fits; otherwise
- * every page keeps its last place for the "…" key that turns to the next page.
+ * "↵ Neue Zeile" carries a word, so it takes two places; every other key one. How the places
+ * fill a line and turn into pages is the one key row's (lib/keyRow.ts, issue #310).
  */
-export function pagesOf(keys: readonly KeyId[], slots: number): KeyId[][] {
-  const total = keys.reduce((n, id) => n + slotsOf(id), 0);
-  if (total <= slots) return keys.length > 0 ? [[...keys]] : [];
-  const room = slots - 1;
-  const pages: KeyId[][] = [];
-  let page: KeyId[] = [];
-  let used = 0;
-  for (const id of keys) {
-    const need = slotsOf(id);
-    if (used + need > room && page.length > 0) {
-      pages.push(page);
-      page = [];
-      used = 0;
-    }
-    page.push(id);
-    used += need;
-  }
-  if (page.length > 0) pages.push(page);
-  return pages;
+export function slotsOf(id: KeyId): number {
+  return id === 'newline' ? 2 : 1;
 }
 
 // ─────────────── what a key writes ───────────────

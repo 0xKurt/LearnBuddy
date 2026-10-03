@@ -6,8 +6,9 @@
 // be picked again: it fades, its letter turns into a quiet dash and "Schon ausprobiert" stands
 // under it (never colour alone) – the conversation above says what happened with it. Choices
 // may hold math ($…$).
-// In voice mode SpokenChoiceBar pins a big mic under the options: what she
-// says is sent as a text answer (the server matches it to a choice by its text).
+// In voice mode `SpokenChoice` puts the mic in the answer shell's voice slot, pinned at the
+// bottom where "Prüfen" stands for every other form (`CheckBar`, issue #310): what she says is
+// sent as a text answer (the server matches it to a choice by its text).
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { useMemo, useState } from 'react';
@@ -28,7 +29,6 @@ import { useSpokenWords } from '../math/useSpokenMath.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { useHandsFreeMic } from '../voice/useHandsFreeMic.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
-import { BottomBar } from './BottomBar.js';
 
 type SpokenChoiceProps = {
   /** The question (sent as context, so a short spoken answer is heard right). */
@@ -39,8 +39,8 @@ type SpokenChoiceProps = {
   onReadAgain?: () => void;
 };
 
-/** Voice mode: the pinned bar under the options – say the answer instead of tapping it. */
-export function SpokenChoiceBar({ prompt, disabled, onText, onReadAgain }: SpokenChoiceProps) {
+/** Voice mode: the spoken way to answer options — say it instead of tapping it. */
+export function SpokenChoice({ prompt, disabled, onText, onReadAgain }: SpokenChoiceProps) {
   const { t } = useTranslation('common');
   // Hands-free: listening ends when she pauses (on the phone), and starts again by itself.
   const voice = useVoiceInput({
@@ -52,11 +52,16 @@ export function SpokenChoiceBar({ prompt, disabled, onText, onReadAgain }: Spoke
   });
   useHandsFreeMic(voice, disabled, prompt);
   return (
-    <BottomBar>
+    <View style={{ gap: SPACE.sm, alignItems: 'center' }}>
       <MicStatus voice={voice} />
       {/* One row next to the options' actions: the options stay on screen. */}
       <View
-        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: SPACE.md,
+        }}
       >
         {onReadAgain ? (
           <Btn size="sm" variant="soft" pill icon="speak" onPress={onReadAgain}>
@@ -67,7 +72,7 @@ export function SpokenChoiceBar({ prompt, disabled, onText, onReadAgain }: Spoke
         )}
         <MicButton voice={voice} filled label={t('voice.answer')} disabled={disabled} />
       </View>
-    </BottomBar>
+    </View>
   );
 }
 

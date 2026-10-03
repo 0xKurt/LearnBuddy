@@ -18,6 +18,7 @@ import { describe, expect, it } from 'vitest';
 
 const PRACTICE = join(__dirname, '../../components/practice');
 const SCREEN = join(__dirname, '../../app/practice');
+const MATH = join(__dirname, '../../components/math');
 
 const sources = [PRACTICE, SCREEN].flatMap((dir) =>
   readdirSync(dir)
@@ -41,14 +42,14 @@ const IN_SHELL = [
   'TableAnswer.tsx',
   'ClozeAnswer.tsx',
   'AnswerComposer.tsx',
+  'StaffWriting.tsx',
 ];
 
 /** Who renders the pinned bar, and why it is not (yet) the shell's "Prüfen". */
 const BAR: Record<string, string> = {
   'CheckBar.tsx': 'the shell’s action',
-  '[id].tsx': '"Weiter" once a question is closed: the next step, not an answer to check',
-  'ChoiceList.tsx': 'the voice bar under the options (SpokenChoiceBar) — the shell’s voice slot',
-  'SpeakPanel.tsx': 'pronunciation: the recording is the action, not "Prüfen"',
+  '[id].tsx': '"Weiter" once a question is closed, handed to the shell as its bar (`action.bar`)',
+  'SpeakPanel.tsx': 'pronunciation: the recording is the action, handed to the shell as its bar',
   'CardPass.tsx': 'flash cards: a screen of their own, no answer to check',
   'DrillRound.tsx': 'Kopfrechnen: a timed round on its own digit pad (#243)',
   'RunResult.tsx': 'the end of a round: "Weiter", not an answer',
@@ -56,8 +57,7 @@ const BAR: Record<string, string> = {
 
 /** Who places the free room. */
 const SPACER: Record<string, string> = {
-  'AnswerShell.tsx': 'between the answer and "Prüfen"',
-  '[id].tsx': 'for the options, the pronunciation panel and "Weiter" — not in the shell yet',
+  'AnswerShell.tsx': 'between the answer and "Prüfen" (or what stands in its place)',
 };
 
 /** Who writes "Prüfen" (the key `check`) on a button. */
@@ -71,6 +71,9 @@ const SHADOWED: Record<string, string> = {
   'ItemThread.tsx': 'a speech bubble of the conversation, not an answer',
   'SessionSummary.tsx': 'a card on the summary, not an answer',
 };
+
+/** What fills the shell's `keys` slot: each is the one key row with its own keys (step 4). */
+const KEY_ROWS = ['MathKeys.tsx', 'StaffKeys.tsx'];
 
 function holders(test: (s: { name: string; text: string }) => boolean): string[] {
   return sources
@@ -95,7 +98,10 @@ describe('the answer shell is the only place for an answer and its action (#310)
   });
 
   it('places the free room only through its listed owners', () => {
-    expect(holders((s) => s.name !== 'FreeSpace.tsx' && imports(s.text).has('FreeSpace'))).toEqual(
+    // The spacer itself, not its report: the screen provides where the room is measured
+    // (`FreeSpaceReport`), and only the shell places the room.
+    const placesRoom = (text: string) => /^import\s*\{[^}]*\bFreeSpace\b[^}]*\}/m.test(text);
+    expect(holders((s) => s.name !== 'FreeSpace.tsx' && placesRoom(s.text))).toEqual(
       Object.keys(SPACER).sort(),
     );
   });
@@ -121,5 +127,25 @@ describe('the answer shell is the only place for an answer and its action (#310)
       for (const part of ['BottomBar', 'FreeSpace', 'CheckBar', 'KeyboardSafe'])
         expect(from.has(part), `${name} imports ${part}`).toBe(false);
     }
+  });
+
+  it('has one key row: what fills the keys slot is `KeyRow`, and no form builds keys itself', () => {
+    const withMath = [
+      ...sources,
+      ...readdirSync(MATH)
+        .filter((f) => f.endsWith('.tsx'))
+        .map((f) => ({ name: basename(f), text: readFileSync(join(MATH, f), 'utf8') })),
+    ];
+    for (const name of KEY_ROWS) {
+      const file = withMath.find((s) => s.name === name);
+      expect(file, name).toBeDefined();
+      expect([...imports(file!.text)], name).toContain('KeyRow');
+    }
+    // A row of keys is a toolbar or a choice of keys; the one key row draws it.
+    expect(
+      withMath
+        .filter((s) => /accessibilityRole="(toolbar|radiogroup)"/.test(s.text))
+        .map((s) => s.name),
+    ).toEqual([]);
   });
 });
