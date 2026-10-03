@@ -2,6 +2,11 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
+import { createRequire } from 'node:module';
+
+// The one definition of a secret-sounding EXPO_PUBLIC_* name (issue #290), shared with the
+// Metro gate and the bundle scan.
+const { SECRET_NAME } = createRequire(import.meta.url)('./apps/mobile/scripts/client-secrets.cjs');
 
 export default tseslint.config(
   {
@@ -52,7 +57,11 @@ export default tseslint.config(
     // key read here once nearly shipped. Configuration flows through lib/env.ts
     // only (the one file allowed to read process.env, plus the build-time config).
     files: ['apps/mobile/**/*.ts', 'apps/mobile/**/*.tsx'],
-    ignores: ['apps/mobile/lib/env.ts', 'apps/mobile/app.config.ts'],
+    ignores: [
+      'apps/mobile/lib/env.ts',
+      'apps/mobile/lib/processEnv.ts',
+      'apps/mobile/app.config.ts',
+    ],
     rules: {
       'no-restricted-properties': [
         'error',
@@ -61,6 +70,22 @@ export default tseslint.config(
           property: 'env',
           message:
             'EXPO_PUBLIC_* wird ins Bundle inline kompiliert — Konfiguration nur über lib/env.ts.',
+        },
+      ],
+    },
+  },
+  {
+    // A secret-sounding name under EXPO_PUBLIC_* is a secret in every bundle (issue #290):
+    // reading one in the app is an error at the source already, before Metro's gate
+    // (metro.config.js) and the scan of the finished bundle (scripts/web-walkthrough.sh).
+    files: ['apps/mobile/**/*.ts', 'apps/mobile/**/*.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: `MemberExpression[object.object.name='process'][object.property.name='env'][property.name=/^EXPO_PUBLIC_.*${SECRET_NAME.source}/]`,
+          message:
+            'Ein EXPO_PUBLIC_*-Name mit SERVICE/SECRET/ADMIN/… landet im App-Bundle — Administrator- und Server-Schlüssel gehören nur auf den Server (Issue #290).',
         },
       ],
     },
@@ -93,6 +118,22 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  {
+    // CommonJS tooling loaded by Metro with `require` (apps/mobile/scripts/client-secrets.cjs).
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        require: 'readonly',
+        module: 'writable',
+        process: 'readonly',
+        console: 'readonly',
+        URL: 'readonly',
+        Buffer: 'readonly',
+      },
+    },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
     // Plain Node scripts (tooling): Node's globals.

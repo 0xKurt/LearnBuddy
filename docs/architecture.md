@@ -3208,6 +3208,44 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
 - A dev build on a phone that talks to a real backend names its host on screen
   (`components/lb/DevHostNote.tsx`, dev builds only — issue #79: a test run on real data must
   be visible).
+- **Dev build against the local stack** (issue #291): `sh scripts/dev-local-stack.sh` starts
+  Metro so the dev build on the phone talks to `pnpm --filter @learnbuddy/api dev:stack`
+  (port 8787, scripted model, stand-in auth) — no model money, no real data, and no change to
+  any key file. Why a script and not just exported `EXPO_PUBLIC_*`: in a **dev** bundle Expo
+  SDK 54 rewrites `process.env.EXPO_PUBLIC_X` to its module `expo/virtual/env`, which bundles
+  the project's `.env*` files as modules and merges them **over** `process.env` — and
+  `EXPO_NO_DOTENV=1` and `--clear` do not stop it (measured 03.10.2026 on the served bundle:
+  both value sets present, the file's winning; release exports inline the values and were never
+  affected). `metro.config.js` therefore resolves `expo/virtual/env` to `lib/processEnv.ts`
+  (`export const env = process.env`): a dev bundle carries only what Metro's own environment
+  says — the shell first, then the `.env` files unless `EXPO_NO_DOTENV` is set. The cost: an
+  edited `.env` file needs a Metro restart instead of a hot reload. The script sets
+  `EXPO_NO_DOTENV=1`, drops every `EXPO_PUBLIC_*` the shell carries, sets the three local
+  ones, runs `adb reverse` for 8081 and 8787 when a device is connected, refuses a Metro port
+  that is already served, and starts Metro with `--clear`. **The proof is the bundle, not the
+  intent**: as soon as Metro answers, the script fetches the Android dev bundle and runs
+  `client-secrets.cjs local-only` over it — no `.env` file bundled as a module, every
+  `EXPO_PUBLIC_*_URL` on this machine (`localhost`, `127.0.0.1`, `10.0.2.2`, or a LAN host
+  named in `LB_LOCAL_HOST`), `EXPO_PUBLIC_API_URL` exactly the local origin, no secret — and
+  stops Metro if any of that fails. Counter-check (03.10.2026, sandbox): with a planted
+  `.env.local` naming hosted URLs and a service key, and hosted values exported in the shell,
+  the served bundle named only `http://localhost:<port>`; a sign-in through Metro's web dev
+  bundle with an account that exists only in the local stack reached the consent step and
+  contacted no other host. **Not verified here:** the same sign-in in the native dev build on
+  a phone (no device in the sandbox). `LB_API_PORT`, `LB_METRO_PORT`, `LB_LOCAL_HOST` move
+  ports and host.
+- **No secret reaches the client bundle** (issue #290): one module,
+  `apps/mobile/scripts/client-secrets.cjs`, decides what a secret is — an `EXPO_PUBLIC_*` name
+  containing SERVICE, SECRET, PRIVATE, PASSWORD, ADMIN, CREDENTIAL or an auth/access/refresh
+  token, or a value that is a JWT with any role but `anon`, a Supabase `sb_secret_` key, a PEM
+  private key, Google service-account JSON or a Sentry auth token. Three gates use it: ESLint
+  rejects reading such a name in app code; `metro.config.js` refuses to start (dev server,
+  `expo export`, EAS build) while such a variable is in the environment or in an `.env` file
+  Expo would load; and `scripts/web-walkthrough.sh` (so `pnpm verify` and CI) and
+  `pnpm --filter @learnbuddy/mobile bundle:check` scan the **finished** export. No gate prints
+  a value. `lib/__tests__/clientSecrets.test.ts` plants a service-role JWT in each and expects
+  each to fire, and stays silent on everything `lib/env.ts`, `.env.example` and `eas.json`
+  really carry.
 - **Component tests** (`apps/mobile/components/**/__tests__/*.test.tsx`): one component in any
   state, rendered through react-native-web under jsdom — the same engine the walkthrough's web
   build uses. One runner, two projects (`vitest.workspace.ts`: `lib` under Node as before,

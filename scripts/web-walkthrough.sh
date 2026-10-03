@@ -39,6 +39,13 @@ if ! grep -q "http://localhost:$API_PORT" apps/mobile/dist-web/_expo/static/js/w
   exit 1
 fi
 
+# Nothing secret may be in what the browser downloads (issue #290): an administrator token
+# once sat in every locally built bundle under an EXPO_PUBLIC_* name. This reads the finished
+# export — the bundle itself, not the source — and fails on a secret-named EXPO_PUBLIC_*
+# variable, a JWT with any role but anon, a Supabase secret key, a private key or service
+# account (apps/mobile/scripts/client-secrets.cjs). Values are never printed.
+node apps/mobile/scripts/client-secrets.cjs scan apps/mobile/dist-web
+
 # A killed run leaves its servers listening, and the next run then reuses them against a
 # stale bundle — a white screen that looks like a product bug. On the DEFAULT ports we only
 # wait (8081 may be the owner's Metro, 8787 another local server — never kill those); on
