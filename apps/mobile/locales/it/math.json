@@ -276,6 +276,20 @@
       "As": "La diesis",
       "B": "Si"
     },
+    "note_short": {
+      "C": "Do",
+      "Cs": "Do♯",
+      "D": "Re",
+      "Ds": "Re♯",
+      "E": "Mi",
+      "F": "Fa",
+      "Fs": "Fa♯",
+      "G": "Sol",
+      "Gs": "Sol♯",
+      "A": "La",
+      "As": "La♯",
+      "B": "Si"
+    },
     "value_note": {
       "whole": "semibreve",
       "half": "minima",
