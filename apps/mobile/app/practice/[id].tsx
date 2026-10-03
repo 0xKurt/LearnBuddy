@@ -116,6 +116,7 @@ import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { reacted, tapped } from '../../lib/perf.js';
 import { bottomRoom, SPACE } from '../../lib/theme/space.js';
 
@@ -228,7 +229,11 @@ export default function PracticeScreen() {
   const id = (Array.isArray(params.id) ? params.id[0] : params.id) ?? '';
   const query = usePracticeSession(id);
   const insets = useSafeAreaInsets();
-  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
+  // What she can see, keyboard or not: with it up the window keeps its height (edge-to-edge),
+  // and caps taken from the window grew the card into the room the conversation needed — its
+  // newest turn then stood half under the card (issue #289, second case).
+  const viewHeight = useVisibleHeight().visible;
 
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   // Kept on the device: a half-typed answer survives Android killing the app.
@@ -1020,7 +1025,7 @@ export default function PracticeScreen() {
   // conversation (`cardDelta`, also negative when the drawing gave room), so the room counts it.
   // Per question AND per window: a narrower phone wraps the prompt onto another line and gives
   // the drawing a smaller cap, so its own height measured on another size is wrong here.
-  const naturalKey = `${item.id}:${windowWidth}x${windowHeight}`;
+  const naturalKey = `${item.id}:${windowWidth}x${viewHeight}`;
   const cardNatural = natural?.key === naturalKey ? natural.height : 0;
   const cardDelta = cardNatural > 0 ? cardHeight - cardNatural : 0;
   // When something below grows (the voice bar, the keyboard's room) and the column runs past
@@ -1030,7 +1035,7 @@ export default function PracticeScreen() {
   // page itself would scroll).
   const overrun =
     column > 0
-      ? Math.max(0, columnEnd - column, columnTop > 0 ? columnTop + columnEnd - windowHeight : 0)
+      ? Math.max(0, columnEnd - column, columnTop > 0 ? columnTop + columnEnd - viewHeight : 0)
       : 0;
   // What the conversation would have next to the card at its own height.
   const room = Math.max(0, threadBox + freeSpace + cardDelta - overrun);
@@ -1082,15 +1087,13 @@ export default function PracticeScreen() {
   // already the card's (`StaffLine`). Growing the card for it left an empty band under the staff
   // (issue #275, 73-staff-time) — so it may only GIVE room, never take it.
   const growable = item.figure?.type !== 'staff';
-  const cardGrowTo = visual
-    ? Math.max(
-        -CARD_GIVES,
-        Math.min(
-          growable ? room - threadWants : 0,
-          growable ? Math.round(windowHeight * 0.5) - cardNatural : 0,
-        ),
-      )
-    : 0;
+  const cardGrowTo =
+    visual && growable
+      ? Math.max(
+          -CARD_GIVES,
+          Math.min(room - threadWants, Math.round(viewHeight * 0.5) - cardNatural),
+        )
+      : 0;
   if (cardGrowTo < 0 && threadCap !== undefined && !boardGives) {
     // The room the drawing really gave (measured, `cardDelta`: at its legible minimum it may
     // give less than asked) goes to the newest turn; whatever is still missing is cut.
@@ -1173,11 +1176,11 @@ export default function PracticeScreen() {
                       prompt={item.prompt}
                       topic={item.topic}
                       figure={item.figure}
-                      figureMaxHeight={Math.round(windowHeight * 0.14) + Math.min(0, cardGrowTo)}
+                      figureMaxHeight={Math.round(viewHeight * 0.14) + Math.min(0, cardGrowTo)}
                       image={item.image}
                       imageKey={item.id}
                       imageMaxHeight={
-                        Math.min(180, Math.round(windowHeight * 0.2)) + Math.min(0, cardGrowTo)
+                        Math.min(180, Math.round(viewHeight * 0.2)) + Math.min(0, cardGrowTo)
                       }
                       fromBuddy={item.origin === 'buddy'}
                       minHeight={cardGrowTo > 0 ? cardNatural + cardGrowTo : undefined}

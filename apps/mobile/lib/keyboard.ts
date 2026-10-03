@@ -23,3 +23,37 @@ export function keyboardOverlap(keyboard: number, baseHeight: number, height: nu
   const shrank = Math.max(0, baseHeight - height);
   return Math.max(0, keyboard - shrank);
 }
+
+/**
+ * The height a screen really has to show itself in: the window less what the keyboard covers
+ * (`overlap`, from `keyboardOverlap`). Since edge-to-edge the window keeps its height while she
+ * types, so a layout decided on the window alone stays in its roomy form behind the keyboard
+ * (issue #289).
+ */
+export function visibleHeight(windowHeight: number, overlap: number): number {
+  return Math.max(0, windowHeight - Math.max(0, overlap));
+}
+
+/**
+ * Below this many points of visible height a form screen takes its tighter layout — a
+ * 360×740 phone, or any phone with the keyboard up (issues #55, #289). The one place the
+ * number stands.
+ */
+export const COMPACT_BELOW = 780;
+
+/**
+ * Below this, only the form itself still fits: what no phone is upright with the keyboard
+ * closed, and every phone is while she types (POCO X3 567, 390×844 ~508, 360×740 ~440 —
+ * issue #289). A screen then keeps its headline and its fields and lets the rest wait until
+ * the keyboard goes.
+ */
+export const TIGHT_BELOW = 600;
+
+export type FormDensity = 'roomy' | 'compact' | 'tight';
+
+/** How much a form screen may show, from what is visible — never from the window alone (#289). */
+export function formDensity(windowHeight: number, overlap: number): FormDensity {
+  const visible = visibleHeight(windowHeight, overlap);
+  if (visible < TIGHT_BELOW) return 'tight';
+  return visible < COMPACT_BELOW ? 'compact' : 'roomy';
+}

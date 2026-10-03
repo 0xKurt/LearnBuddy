@@ -812,6 +812,53 @@ read (`evals/tts` also needs `SPEECH_BACKEND=google`: it measures a whole voice-
 when each sentence is written, what it costs to synthesise and how long it plays). A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
 
+**Structured output stays on `responseJsonSchema` for now** (issue #283, checked 03.10.2026).
+The live Vertex v1 discovery document (revision 20260920, read 02.10.) marks
+`GenerationConfig.responseSchema`, `responseJsonSchema` and `responseMimeType` deprecated:
+"Use `response_format` instead". We cannot follow it from our side yet: `@google/genai` 2.25.0
+(ours) and 2.27.0 (newest, published 02.10.2026) have no `responseFormat` on
+`GenerateContentConfig`, the type their raw `GenerationConfig.responseFormat` points at
+(`ResponseFormat`) is not even declared, and the Vertex converter of `models.generateContent`
+copies only the fields it knows — a `responseFormat` passed in is dropped without an error
+(the request goes to `v1beta1`, where the SDK still sends `responseJsonSchema`). So the code is
+unchanged: `paramsFor` in `llm/vertex.ts` builds the one request, and
+`llm/__tests__/vertex-request.test.ts` hands it to the real SDK with only `fetch` replaced. It
+pins that our zod-derived schema arrives byte for byte as `responseJsonSchema` (turn,
+extraction and a small schema), and it carries a **canary**: the day an SDK upgrade starts
+forwarding `responseFormat`, that test fails — that is when #283 is looked at again, with the
+questions still open: which schema subset Vertex EU accepts in `response_format` for
+`gemini-3.6-flash`, whether streaming (`partial.ts`) is unchanged, and whether there is a
+shutdown date (none is published; none is claimed here). Those need a live call.
+
+**What a request carries once** (issue #284, from Recherche 2 of #279). Measured on the request
+by `evals/requests/measure.ts` (real app and Postgres, scripted model; `--tokens` adds a text
+token estimate with the SDK's local Gemma 3 tokenizer, which reproduced `countTokens` exactly
+for the turn schema, 8 194, and the tutor schema, 210 — still an estimate, never native usage).
+Inside **one** request nothing is sent twice; the repetition #279 found is **across** calls, and
+each of those calls is a separate, stateless task that needs its input. Decided per finding:
+
+- **Page photos in `extraction` and `figures` — kept.** Each request carries each page once.
+  `figures` answers with pixel boxes on the page and `extraction` writes no boxes, so the
+  figures pass cannot work from the reading's result; folding it into `extraction` would grow
+  the schema #281 is trying to shrink and make the reading she waits for longer, for ≈2 × 1 120
+  image tokens per two-page sheet. Only a live eval (figure boxes, reading time, native usage)
+  could justify that construction change.
+- **The sheet's text in `explain` and every `tutor` call — kept.** Once per request (≤ 6 000
+  characters in `explain`, ≤ 4 000 in `tutor`, ≈ 1 530 text tokens at that cap, 2.6 characters
+  per token for a fractions sheet); each tutor call is a new request and has no other way to
+  know the sheet it judges against. Narrowing it to "the part of the sheet the question is
+  from" is a grounding change and needs the tutor eval with the live model.
+- **The day list of `## Now` — kept.** Once per Buddy request (`buddy_turn`, `buddy_check`):
+  471 characters, ≈ 353 text tokens. Grouping the dates by month ("2026-10: +0 Fri 02, …")
+  carries the same days in 312 characters / ≈ 188 tokens, but it changes what the model reads
+  to resolve a DaySpec (rule 2), so it waits for a DaySpec eval on Vertex before it ships.
+
+`src/__tests__/request-duplication.int.test.ts` plays the journey of one photographed sheet
+(`src/testing/request-flow.ts`: reading, figures, background check, a practice test from it,
+four prose answers, one message) and fails when a page photo appears twice in a request or in
+a call that does not look at pages, or when the sheet's text or the day list is sent twice in
+one request or reaches a call that is not grounded in it.
+
 **One word on its own** (`POST /practice/sessions/:id/speak-word`, issue #83): in the
 pronunciation card every word of the judged sentence is tappable. The sheet reads it aloud
 (normal and slow), shows the tip the model wrote for it, and takes a recording of just that
@@ -1390,6 +1437,15 @@ the home notice and a capture screen opened meanwhile skip them (`lib/capture/li
 after the app is closed and opened again do they show up as what waits. `app/capture.tsx` stays
 for what has no place in the chat: a page added to an existing sheet (`completes`), a capture
 step Buddy asked for, files shared from other apps and a resumed draft.
+The squares must show the photo (issue #294: on the phone the tile stayed one flat dark colour
+while the same file showed in the card after sending). `AttachStrip` is now built like the two
+thumbnails that do show on the phone: the shadow on an outer view and the clipping on an inner one
+(as `PhotoStrip` always had it), the image at a fixed size without a cross-fade (as the sent card
+has it). A camera mark lies under the image, so a photo that never paints is not an empty box, and
+one that fails to load says "Vorschau nicht möglich" under the strip. `components/buddy/__tests__/
+AttachStrip.test.tsx` holds the build; `tests/web/visible.spec.ts` measures the tile's pixels like
+the owner did. **Not proven:** which of the differences was the phone's reason — the measurement
+on the device is owed in #294.
 
 **Files and sharing in the app** (`app/capture.tsx`, `lib/capture/files.ts`, `incoming.ts`,
 `drop.web.ts`, `components/capture/ShareIntake.tsx`). One more quiet choice next to the camera:
@@ -3146,6 +3202,28 @@ so `restoreTheme` now tells the provider (which also fixed the look settings sho
 default as selected after a restart). **Android's navigation bar is not verified on a
 device:** with edge-to-edge (SDK 54's default) the style reaches the three-button bar, while a
 gesture bar draws its own handle and ignores it.
+
+### The keyboard and the height a screen lays itself out in (issues #46, #141, #289)
+
+Since edge-to-edge, Android keeps the window's height while the keyboard is up. Two things follow,
+each in one place. **Getting out of the way:** `components/lb/KeyboardSafe.tsx` pads by what the
+keyboard covers less what the window gave up by itself (`keyboardOverlap`, `lib/keyboard.ts`), so a
+device that still resizes is not padded twice (#46) and one that does not is not covered (#141).
+**Deciding the layout:** a screen reads `useVisibleHeight()` (`lib/useVisibleHeight.ts`: the
+window less that same overlap), never `useWindowDimensions().height` — the welcome form decided on
+the window, stayed roomy behind the keyboard and left one field above the pinned CTA (POCO X3: 873
+window, ~567 visible; #289). `formDensity()` turns the visible height into `roomy` (≥ 780),
+`compact` (a 360×740 phone) or `tight` (< 600: every phone while she types). The welcome screen in
+`tight` keeps only the form — the choice of signing up or in, the fields, their errors — and the
+flags, Buddy, the intro and the under-16 note come back when the keyboard goes; the practice screen takes its
+figure and photo caps from the visible height, so the card no longer grows into the room Buddy's
+newest turn needs. A lint rule (`eslint.config.mjs`, `no-restricted-syntax`) refuses the window's
+height in `app/` and `components/`; the one exception is the sheet's slide-out offset
+(`components/lb/Sheet.tsx`), which should ignore the keyboard. **Tests:** the numbers in
+`lib/__tests__/keyboard.test.ts`; the layout in `tests/web/visible.spec.ts` at the room a keyboard
+leaves (390×508, 360×440, 393×567: every field and error above the CTA, light and dark). The
+browser has no keyboard that keeps the window's height, so the wiring between the OS's keyboard
+event and the screen is proven only on the phone (screenshot owed in #289).
 
 ### Crash reports (issue #36)
 

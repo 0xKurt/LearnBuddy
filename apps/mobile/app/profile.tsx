@@ -11,14 +11,7 @@
 import { CurriculumRegion, type AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import {
-  Platform,
-  ScrollView,
-  Text,
-  View,
-  useWindowDimensions,
-  type TextInput,
-} from 'react-native';
+import { Platform, ScrollView, Text, View, type TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -50,6 +43,8 @@ import { signOutHere } from '../lib/leave.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
+import { formDensity } from '../lib/keyboard.js';
+import { useVisibleHeight } from '../lib/useVisibleHeight.js';
 import { bottomRoom } from '../lib/theme/space.js';
 import { useFormDraft } from '../lib/drafts.js';
 
@@ -61,7 +56,9 @@ export default function Profile() {
   const { t } = useTranslation('auth');
   const insets = useSafeAreaInsets();
   // A small phone (360×740) gets tighter spacing so each step fits (CLAUDE.md rule 16).
-  const compact = useWindowDimensions().height < 780;
+  const view = useVisibleHeight();
+  // From what is visible: the keyboard keeps the window's height (issue #289).
+  const compact = formDensity(view.window, view.overlap) !== 'roomy';
   const [relation, setRelation] = useState<'self' | 'child' | null>(null);
   const [name, setName] = useState('');
   const [day, setDay] = useState('');
@@ -700,7 +697,9 @@ function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
   const { t } = useTranslation('auth');
   const insets = useSafeAreaInsets();
   const settings = useSettings();
-  const compact = useWindowDimensions().height < 780;
+  const view = useVisibleHeight();
+  // From what is visible: the keyboard keeps the window's height (issue #289).
+  const compact = formDensity(view.window, view.overlap) !== 'roomy';
   return (
     <Screen>
       <ScrollView

@@ -59,6 +59,9 @@ export function Sheet({
   const { palette } = useTheme();
   const { reduceTransparency } = useA11ySettings();
   const insets = useSafeAreaInsets();
+  // The one height here that SHOULD ignore the keyboard: how far down it slides to be off the
+  // screen (the lint rule of issue #289 is about laying out, not about this).
+  // eslint-disable-next-line no-restricted-syntax
   const { height: screen } = useWindowDimensions();
   const reduced = useReducedMotion();
   // Stays mounted while it slides out.

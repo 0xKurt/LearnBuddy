@@ -12,13 +12,14 @@
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, useWindowDimensions, View, type TextStyle } from 'react-native';
+import { Platform, Text, View, type TextStyle } from 'react-native';
 
 import { speakMathText } from '../../lib/math/speak.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { Btn, BTN_PAD_COMPACT } from '../lb/Btn.js';
 import { ZoomViewer } from '../lb/ZoomViewer.js';
 import { describeFigure, FigureView } from '../math/FigureView.js';
@@ -219,10 +220,11 @@ function FigureChoices({
   const { t: tm } = useTranslation('math');
   const words = useSpokenWords();
   const [zoomed, setZoomed] = useState<number | null>(null);
-  const { height: windowHeight } = useWindowDimensions();
+  // What is on screen (issue #289): a tapped question has no keyboard up, so this is the window.
+  const { visible: screenHeight } = useVisibleHeight();
   const pictureMax = Math.min(
     FIGURE_CHOICE_MAX_HEIGHT,
-    Math.round(windowHeight * FIGURE_CHOICE_SCREEN_SHARE),
+    Math.round(screenHeight * FIGURE_CHOICE_SCREEN_SHARE),
   );
   // What each option shows, in words (the letter first, as voice mode names them).
   const spoken = useMemo(

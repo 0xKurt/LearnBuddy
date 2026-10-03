@@ -147,6 +147,7 @@ re-introducing the defect it guards against — a test that cannot fail is worth
 | `components/lb/__tests__/Btn.test.tsx`              | the alignment contract (#187); a waiting button answers instead of swallowing the tap and stays disabled (#97); a busy one never sends twice; it paints the palette it is told to (#84)             | removing `full`'s `stretch`; a frozen `variantStyle(paletteOf('pastell'))`   |
 | `components/buddy/__tests__/Conversation.test.tsx`  | a receipt's sentence does not share a row with its button, and the column stretches (#191); undo passes the right action id and disappears once used                                                | putting the sentence back beside the button; dropping `alignSelf: 'stretch'` |
 | `components/practice/__tests__/SpeakPanel.test.tsx` | a refused microphone turns the big control into "Einstellungen öffnen", opens the settings instead of recording, stays pressable, and says why (#185); on the web it says the browser thing instead | reverting the control to always offer `recordLabel`                          |
+| `components/buddy/__tests__/AttachStrip.test.tsx`   | the attached photo is sized, sits in a clipping view that carries no shadow, has a mark under it, and a failed load says "Vorschau nicht möglich" in words (#294)                                   | the tile of `origin/main` before #294 (four of six fail)                     |
 
 No snapshots. A snapshot of a bug is a green test.
 
