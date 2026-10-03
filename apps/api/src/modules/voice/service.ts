@@ -7,8 +7,7 @@ import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
 import { AppError, isAppError } from '../../lib/errors.js';
-import { localParts } from '../../lib/time.js';
-import { learnerTimezone } from '../../lib/zone.js';
+import { learnerDay } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import type { AudioMime } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
@@ -48,10 +47,10 @@ export async function transcribe(
   onProgress?: (event: TranscribeStreamEvent) => void,
 ): Promise<{ text: string }> {
   const now = deps.now();
-  const tz = await learnerTimezone(deps.db, learner.id);
+  const day = await learnerDay(deps.db, learner.id, now);
   let lastText = '';
   try {
-    const res = await callModel(deps, learner.id, localParts(now, tz).date, {
+    const res = await callModel(deps, learner.id, day, {
       purpose: 'transcribe',
       // The lite model invented words ("Dativ" → "Mathematik") in live checks.
       tier: 'smart',

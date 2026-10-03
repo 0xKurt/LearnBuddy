@@ -28,6 +28,10 @@ jobs:
       LB_REQUIRE_TEST_DB: '1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The Ausnahmelisten are compared with the base branch, and a growth needs a reason in
+          # one of the PR's commits (tools/guards/no-growth.mjs, issue #313).
+          fetch-depth: 0
 
       - name: Setup pnpm
         # Version comes solely from package.json `packageManager`
@@ -47,8 +51,14 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Lint
+      - name: Lint + engineering guards
+        # eslint (incl. file size, tokens only, raw Pressable) and `pnpm guards` (copies, dead
+        # code, the Ausnahmelisten' ratchet) — docs/engineering-guards.md.
         run: pnpm lint
+
+      - name: Ausnahmelisten only shrink
+        if: github.event_name == 'pull_request'
+        run: node tools/guards/no-growth.mjs origin/${{ github.base_ref }}
 
       - name: Test
         run: pnpm test

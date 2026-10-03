@@ -11,8 +11,7 @@
 import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
-import { localParts } from '../../lib/time.js';
-import { learnerTimezone } from '../../lib/zone.js';
+import { learnerDay } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
@@ -79,7 +78,7 @@ export async function prepareHints(
   );
   if (rows.length === 0) return 0;
   const now = deps.now();
-  const tz = await learnerTimezone(deps.db, learner.id);
+  const day = await learnerDay(deps.db, learner.id, now);
   const level =
     learner.level === 'school' ? `school, grade ${learner.grade ?? 'unknown'}` : learner.level;
   const list = rows
@@ -88,7 +87,7 @@ export async function prepareHints(
         `${n + 1}. [${r.kind}] QUESTION: ${r.prompt}${r.choices ? `\n   CHOICES: ${r.choices.join(' | ')}` : ''}\n   SOLUTION: ${shown(r)}`,
     )
     .join('\n');
-  const res = await callModel(deps, learner.id, localParts(now, tz).date, {
+  const res = await callModel(deps, learner.id, day, {
     purpose: 'hints',
     tier: 'smart',
     promptVersion: HINTS_PROMPT_VERSION,

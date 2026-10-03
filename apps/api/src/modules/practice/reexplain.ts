@@ -23,8 +23,7 @@ import type { Deps } from '../../deps.js';
 import { t } from '../../i18n/index.js';
 import { isUniqueViolation } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
-import { localParts } from '../../lib/time.js';
-import { learnerTimezone } from '../../lib/zone.js';
+import { learnerDay } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
@@ -198,8 +197,7 @@ export async function reexplain(
   const leaks = (text: string) =>
     open.some((o) => solutionsOf(o).some((sol) => mentionsSolution(text, sol, o.prompt)));
 
-  const tz = await learnerTimezone(deps.db, learner.id);
-  const day = localParts(now, tz).date;
+  const day = await learnerDay(deps.db, learner.id, now);
   const context: LlmMessage[] = [
     {
       role: 'user',

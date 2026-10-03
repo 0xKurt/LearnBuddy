@@ -10,6 +10,11 @@ pnpm -r --parallel typecheck
 echo "→ lint (staged only)"
 pnpm exec lint-staged
 
+echo "→ engineering guards (copies, dead code, Ausnahmelisten — issue #313)"
+# The per-file guards (file size, tokens only, raw Pressable) ran with lint-staged above;
+# these look at the whole repository: docs/engineering-guards.md.
+pnpm guards
+
 echo "→ tests (all workspaces, API integration tests on a real Postgres)"
 # Integration tests must never skip silently: without a reachable Postgres
 # (LB_TEST_DATABASE_URL, default 127.0.0.1:5432) the gate fails instead of

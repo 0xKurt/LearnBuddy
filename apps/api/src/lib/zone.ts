@@ -9,6 +9,7 @@
 import { DEFAULT_TIMEZONE } from '@learnbuddy/shared-types/contracts';
 
 import type { Db } from './db.js';
+import { localParts } from './time.js';
 
 export { DEFAULT_TIMEZONE };
 
@@ -28,4 +29,9 @@ export async function learnerTimezone(db: Db, learnerId: string): Promise<string
     DEFAULT_TIMEZONE,
   ]);
   return row.timezone;
+}
+
+/** The learner's calendar day at `instant` (YYYY-MM-DD in her zone) — the model budget's key. */
+export async function learnerDay(db: Db, learnerId: string, instant: Date): Promise<string> {
+  return localParts(instant, await learnerTimezone(db, learnerId)).date;
 }
