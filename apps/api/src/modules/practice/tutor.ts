@@ -10,15 +10,19 @@
 //   - a rule-checked wrong answer (multiple choice, numbers) stays wrong;
 //   - hints are counted from what the tutor actually gave.
 
+import { plainMath } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import { compareWithKeys, NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
+import { type FormNote, mathRunsOf, orderFreeLine } from './form.js';
 import { RubricClaim, type AskedElement } from './rubric.js';
 
 // v6: drei Änderungen auf einmal — die Regel ihres Bundeslandes (#214), die Pflichtelemente einer
 // Schreibaufgabe (#211) und das Gehörte (#210). Drei Agenten hatten unabhängig voneinander erhöht
 // (v4, v4.0, v3.10); gemessen wird aber DIESER Prompt, und den gab es vorher nicht.
-export const TUTOR_PROMPT_VERSION = 'tutor.v6';
+// v7: der Kontext trägt eine FORM-CHECK-Zeile (was Code an den beiden Syntaxbäumen gelesen hat)
+// und kennt das Regelurteil `not_transformed` (#235). Der Systemprompt ist unverändert.
+export const TUTOR_PROMPT_VERSION = 'tutor.v7';
 
 export const TutorDecision = z.object({
   intent: z
@@ -117,6 +121,8 @@ const RULE_TEXT: Record<RuleVerdict, string> = {
     'differs from the solution only in capitalisation, ß/ss or punctuation — judge gently whether that matters for this question',
   other_form:
     'the VALUE is right — it is the same amount, written another way. Only the form differs from the key: decide whether the form is what this question asks for, and never call it wrong for the value',
+  not_transformed:
+    'the value is right only because it is the task’s own term, typed back — the transformation the question asks for has not been done yet (checked, not judged)',
   step_broke:
     'her written path stops following itself at one line; code found which one (checked, not judged)',
   unbalanced:
@@ -158,6 +164,13 @@ export function tutorContext(input: {
    * steht, also nicht widersprechen (CLAUDE.md Regel 1, `rubric.ts` `askedElements`).
    */
   rubric?: { form: string; asked: readonly AskedElement[] } | null;
+  /**
+   * What code read off the two syntax trees when the value is right and the form is not the
+   * key's (issue #235): their shapes, a missing constant, an equation solved for another
+   * variable. Facts about the algebra, so the tutor only decides whether the QUESTION asked
+   * for a form.
+   */
+  formNote?: FormNote | null;
 }): string {
   const i = input.item;
   const lines = [
@@ -170,6 +183,9 @@ export function tutorContext(input: {
     ...(i.accepted_answers.length ? [`ALSO ACCEPTED: ${i.accepted_answers.join(' | ')}`] : []),
     `HINTS GIVEN: ${input.hintsGiven} · ATTEMPTS SO FAR: ${input.attempts}`,
     `RULE CHECK: ${RULE_TEXT[input.ruleVerdict]}`,
+    ...(input.formNote
+      ? [`FORM CHECK (read by code, not judged): ${formText(input.formNote)}`]
+      : []),
     ...(input.curriculum ? [input.curriculum] : []),
   ];
   const prepared = input.preparedHints ?? [];
@@ -193,6 +209,35 @@ export function tutorContext(input: {
   if (input.material) lines.push('', `STUDY MATERIAL:\n${input.material}`);
   return lines.join('\n');
 }
+
+const SHAPE_TEXT: Record<'product' | 'sum' | 'other', string> = {
+  product: 'factored (a product with a bracket)',
+  sum: 'expanded (a sum)',
+  other: 'neither factored nor expanded',
+};
+
+/** The form facts in words the tutor reads; never shown to her. */
+export function formText(note: FormNote): string {
+  switch (note.kind) {
+    case 'shape':
+      return `the key is ${SHAPE_TEXT[note.key]}, her answer is ${SHAPE_TEXT[note.answer]} — the same value. If the question asks for the key's form, this is partially_correct; otherwise it is correct.`;
+    case 'constant_missing':
+      return 'her antiderivative is right, but without the constant of integration (+ C) the key has. Whether all antiderivatives were asked for is your call; it is never incorrect.';
+    case 'not_solved_for':
+      return `her equation is equivalent to the key, but not solved for ${note.variable} as the key is. If the question asks to solve for ${note.variable}, this is partially_correct.`;
+  }
+}
+
+/**
+ * Verdicts where code has CONFIRMED the value (issue #227, finding 1; issue #235). The tutor may
+ * still decide that the form was the question, so "partly right" — never "wrong" for a value
+ * code has just checked. The prompt says so; `enforceTutorInvariants` is what holds when the
+ * model does not follow it.
+ */
+export const VALUE_CONFIRMED: ReadonlySet<RuleVerdict> = new Set<RuleVerdict>([
+  'other_form',
+  'not_transformed',
+]);
 
 /** What the model has to supply for one element — the only two kinds it is ever asked about. */
 function askedFor(e: AskedElement): string {
@@ -241,6 +286,11 @@ export function enforceTutorInvariants(
   if (noStateRuleApplies && ruleVerdict !== 'incorrect' && verdict === 'incorrect') {
     verdict = 'partially_correct';
   }
+  // The value is right — code computed it (issue #227, finding 1). At most the form is missing,
+  // so a "wrong" becomes "partly right"; an answer that was not an attempt stays one.
+  if (VALUE_CONFIRMED.has(ruleVerdict) && verdict === 'incorrect') {
+    verdict = 'partially_correct';
+  }
   // Accents missing is not fully right. The one exception is named here rather than left
   // to the caller: even with the flag set, only a missing WORD may be judged right.
   const mayAccept = modelDecidesTheNearMiss && ruleVerdict === 'missing_word';
@@ -248,7 +298,9 @@ export function enforceTutorInvariants(
     verdict = 'partially_correct';
   }
   if (d.revealed_answer && (verdict === 'correct' || verdict === 'partially_correct')) {
-    verdict = 'incorrect';
+    // A reply that gives the solution away never counts as solved — but where code confirmed
+    // the value, it is not "wrong" either: it stays partly right.
+    verdict = VALUE_CONFIRMED.has(ruleVerdict) ? 'partially_correct' : 'incorrect';
   }
   return { ...d, verdict };
 }
@@ -282,6 +334,16 @@ export function givesAwayHomework(
   return all.some((s) => mentionsSolution(d.reply, s, task));
 }
 
+/** A maths run of the text that is the solution up to order, and that the task does not print. */
+function sameAlgebraWritten(text: string, solution: string, task: string): boolean {
+  if (!/[A-Za-z]/.test(plainMath(solution))) return false;
+  const want = orderFreeLine(solution);
+  if (want === null) return false;
+  const given = new Set(mathRunsOf(task).map((r) => orderFreeLine(r)));
+  if (given.has(want)) return false;
+  return mathRunsOf(text).some((r) => orderFreeLine(r) === want);
+}
+
 /**
  * Does a text contain the solution (any math notation)? A solution that is a single
  * short word or number counts only as a separate token that is not already part of
@@ -296,6 +358,10 @@ export function mentionsSolution(text: string, solution: string, task: string): 
     const same = (x: number) => Math.abs(x - v) < 1e-9;
     if (!valuesIn(task).some(same) && valuesIn(text).some(same)) return true;
   }
+  // A term or equation in another order is the same solution written down (#227 B7): "6+2x"
+  // gives 2x+6 away as surely as "2x+6" does. Only the SAME form counts — an equivalent step
+  // on the way ("2·x + 2·3") is a hint, and calling it a leak would take the hint away.
+  if (sameAlgebraWritten(text, solution, task)) return true;
   const sol = mathNorm(solution);
   if (!sol) return false;
   const simple = /^[\p{L}\p{N}]+$/u.test(sol) && sol.length < 4;

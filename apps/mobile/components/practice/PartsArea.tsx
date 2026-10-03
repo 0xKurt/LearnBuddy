@@ -17,16 +17,22 @@ import type { ReactNode } from 'react';
 import { ScrollView } from 'react-native';
 
 import { SPACE } from '../../lib/theme/space.js';
+import { FreeSpace } from './FreeSpace.js';
 
 export function PartsArea({ children }: { children: ReactNode }) {
+  // The parts stand right under the question; the free room collects between them and the
+  // pinned "Prüfen" (`FreeSpace`, issue #286), not as a hole above the parts.
   return (
-    <ScrollView
-      testID="scroll-parts"
-      style={{ flexGrow: 0, flexShrink: 1 }}
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ paddingHorizontal: SPACE.lg, paddingTop: SPACE.sm }}
-    >
-      {children}
-    </ScrollView>
+    <>
+      <ScrollView
+        testID="scroll-parts"
+        style={{ flexGrow: 0, flexShrink: 1 }}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingHorizontal: SPACE.lg, paddingTop: SPACE.sm }}
+      >
+        {children}
+      </ScrollView>
+      <FreeSpace />
+    </>
   );
 }

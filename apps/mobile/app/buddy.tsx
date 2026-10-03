@@ -32,7 +32,7 @@ import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard, optInRules, type OptInDecision } from '../components/buddy/DecisionCard.js';
 import { whenText } from '../components/buddy/describe.js';
 import { CaptureBar, ReadingBar, ReadyBar, ResumeBar } from '../components/buddy/SlimBar.js';
-import { EDGE_FADE, TopEdgeFade, topEdgeMask } from '../components/lb/EdgeFade.js';
+import { EDGE_FADE, TopEdgeFade, topEdgeMaskFrom } from '../components/lb/EdgeFade.js';
 import { NoticeBubble } from '../components/buddy/NoticeBubble.js';
 import { CLOSE_INSET, TopOverlay } from '../components/buddy/TopOverlay.js';
 import { WorkingNote } from '../components/buddy/WorkingNote.js';
@@ -1026,6 +1026,8 @@ export default function BuddyScreen() {
   // without its height in this sum "Weiterüben" was painted straight across the greeting
   // (owner 01.10.: "meldungen wie die uebung wieter zu machen verdecken die willkommens
   // nachricht", issue #190). The block only shrinks while a card is actually open.
+  /** Where the conversation is first seen while a card lies on top of it (issue #287). */
+  const underCard = cardHeight > 0 ? cardHeight + SPACE.sm : 0;
   const sessionRoom = greetingOpens
     ? greetingRoom(threadView, SPACE.sm + EDGE_FADE + cardHeight)
     : 0;
@@ -1244,7 +1246,11 @@ export default function BuddyScreen() {
               <ScrollView
                 ref={scroll}
                 testID="scroll-thread"
-                style={[{ flex: 1 }, topEdgeMask]}
+                // The fade starts where the view is first seen: under the slim bar while one
+                // lies on top (issue #287), at the view's own top otherwise. Under the bar it
+                // starts an sm further down: a tinted offer card half-faded right at the
+                // bar's edge still read as a lavender sliver in the first round of shots.
+                style={[{ flex: 1 }, topEdgeMaskFrom(underCard - threadTop)]}
                 contentContainerStyle={{
                   flexGrow: 1,
                   justifyContent: 'flex-end',
@@ -1343,7 +1349,11 @@ export default function BuddyScreen() {
                   conversation starts then, not a reason to leave the fade out. On the
                   phone that showed as a message sliced off hard under the head (seen on
                   the Xiaomi, 01.10.), the very fault this exists to remove. */}
-              <TopEdgeFade top={threadTop} />
+              {/* …and under a card lying on top it starts at the card's lower edge: the
+                  fade at the thread's top sat hidden behind the card, so a bubble scrolled
+                  under it was cut off hard right where the card ends (issue #287). This fade
+                  is opaque at its own top, so it starts right at the card's edge. */}
+              <TopEdgeFade top={Math.max(threadTop, cardHeight)} />
               {pill ? (
                 <Animated.View
                   entering={riseIn(0)}

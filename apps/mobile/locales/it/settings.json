@@ -4,7 +4,7 @@
   "clock": "{{time}}",
   "pin_first": "Per questo serve il PIN dei genitori. Non c'è ancora. Si imposta più sotto, in “Per i genitori”.",
   "contact": {
-    "question": "Buddy può mandarti delle notifiche?",
+    "question": "Notifiche",
     "state_on": "Sì – mai dopo le {{quiet}}.",
     "state_off": "No – solo qui nell'app.",
     "answer_off": "No. Buddy ti scrive solo qui nell'app.",

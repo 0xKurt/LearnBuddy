@@ -24,7 +24,8 @@ import {
 } from '../practice/structured.js';
 import { TABLE_RULES } from '../practice/table.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v7.1';
+// v8: car 2's structured rules (v7.1) and #253/#257's figures (v7) together.
+export const EXTRACT_PROMPT_VERSION = 'extract.v8';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

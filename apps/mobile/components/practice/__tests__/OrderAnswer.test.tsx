@@ -14,7 +14,7 @@ import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
-import { OrderAnswer, placedFrom, placeOrTake } from '../OrderAnswer.js';
+import { isShortList, OrderAnswer, placedFrom, placeOrTake } from '../OrderAnswer.js';
 
 const VIEW = {
   type: 'order' as const,
@@ -80,5 +80,39 @@ describe('an order she taps', () => {
       { type: 'order', order: ['b', 'a', 'c'] },
       'Samen quillt → Keimwurzel wächst → Laubblätter',
     );
+  });
+});
+
+describe('which layout an order gets', () => {
+  it('puts short things (numbers) in a grid and steps in a list', () => {
+    expect(isShortList(['-12', '0,5', '$\\frac{3}{4}$', '1000'])).toBe(true);
+    expect(isShortList(['Samen quillt', 'Keimwurzel wächst'])).toBe(false);
+  });
+});
+
+describe('numbers to order: places and a pool (#286)', () => {
+  const NUMBERS = {
+    type: 'order' as const,
+    elements: [
+      { id: 'a', text: '1000' },
+      { id: 'b', text: '-12' },
+      { id: 'c', text: '0,5' },
+      { id: 'd', text: '17' },
+    ],
+  };
+
+  it('numbers the places above them, never next to a value', () => {
+    renderInApp(
+      <OrderAnswer view={NUMBERS} draftKey="g1" disabled={false} onSubmit={() => undefined} />,
+    );
+    // Every place is there from the start, numbered.
+    for (const n of ['1.', '2.', '3.', '4.']) expect(screen.getByText(n)).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: '-12, noch ohne Platz' }));
+    const placed = screen.getByRole('button', { name: '-12, Platz 1' });
+    // The place's number is not inside the tile: "1" beside "-12" would read as one number.
+    expect(placed.textContent).toBe('-12');
+    // Back to the pool with one tap.
+    fireEvent.click(placed);
+    expect(screen.getByRole('button', { name: '-12, noch ohne Platz' })).toBeDefined();
   });
 });
