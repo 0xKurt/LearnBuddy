@@ -54,6 +54,8 @@ export type RoomInput = {
   visual: boolean;
   /** It may grow (a note line only gives, issue #275). */
   growable: boolean;
+  /** The card takes ALL the room the conversation leaves (a Diktat before her answer, #242). */
+  fills?: boolean;
   viewHeight: number;
 };
 
@@ -112,8 +114,9 @@ export function threadRoom(m: RoomInput): Room {
   // pass, and a new reply or a taller bar takes its room back from the card first.
   const threadWants =
     threadCap === undefined || !threadClipped ? (threadCap ?? threadNeed) : newestNeed;
-  const cardGrowTo =
-    m.visual && m.growable
+  const cardGrowTo = m.fills
+    ? Math.max(0, room - threadWants)
+    : m.visual && m.growable
       ? Math.max(
           -CARD_GIVES,
           Math.min(room - threadWants, Math.round(m.viewHeight * 0.5) - m.cardNatural),

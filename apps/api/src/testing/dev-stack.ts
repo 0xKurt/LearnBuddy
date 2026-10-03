@@ -24,6 +24,7 @@ import { createDevApp, DevAuth, DevStorage } from './dev-app.js';
 import { FakeEmbeddings, FakeSpeech, ScriptedGateway } from './fakes.js';
 import { scriptCloze } from './scenarios/cloze.js';
 import { scriptCoreLoop } from './scenarios/core-loop.js';
+import { scriptDictation } from './scenarios/dictation.js';
 import { scriptFigures } from './scenarios/figures.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
 import { scriptTour } from './scenarios/tour.js';
@@ -54,6 +55,9 @@ async function main(): Promise<void> {
   const scripted = new ScriptedGateway();
   const model = process.env.LB_DEV_MODEL === 'disabled' ? new DisabledGateway() : scripted;
   if (model === scripted) {
+    // First: its generation rule is keyed on her list, and a broader rule registered earlier
+    // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
+    scriptDictation();
     scriptCoreLoop(scripted);
     scriptLearningModes(scripted);
     scriptTour(scripted);

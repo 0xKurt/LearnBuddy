@@ -34,11 +34,11 @@ import {
   createSession,
   finishIfComplete,
   loadSession,
-  lockActiveSession,
   nextSeq,
   sessionView,
   type PracticeLearner,
 } from './service.js';
+import { lockActiveSession } from './sessionRow.js';
 
 /** The columns `goesOnACard` needs, for a session whose rows are not loaded yet. */
 const CANDIDATE_COLS = `si.item_id, si.position, si.status, si.first_try_correct, si.flagged_at,

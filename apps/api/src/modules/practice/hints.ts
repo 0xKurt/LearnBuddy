@@ -83,6 +83,8 @@ export async function prepareHints(
   learner: PracticeLearner,
   sessionId: string,
 ): Promise<number> {
+  // A Diktat gets none (issue #242): a hint about a word she is to spell spells it, and it would be
+  // a model call for a question code checks alone.
   const rows = await deps.db.query<Row>(
     `select i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.choices, i.correct_choice, i.unit,
             i.task
@@ -90,7 +92,7 @@ export async function prepareHints(
        join items i on i.id = si.item_id
        join practice_sessions ps on ps.id = si.session_id
       where si.session_id = $1 and ps.learner_id = $2 and ps.mode = 'practice'
-        and i.hints = '{}' and i.kind not in ('vocab', 'speak')
+        and i.hints = '{}' and i.kind not in ('vocab', 'speak', 'spelling_dictation')
       order by si.position`,
     [sessionId, learner.id],
   );

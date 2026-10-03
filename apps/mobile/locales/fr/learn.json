@@ -5,7 +5,8 @@
     "test": "Test d'entraînement",
     "vocab": "Réviser le vocabulaire",
     "speak": "Travailler la prononciation",
-    "listen": "Compréhension orale"
+    "listen": "Compréhension orale",
+    "spelling_dictation": "S'entraîner à la dictée"
   },
   "homework": {
     "title": "Aide aux devoirs",
@@ -52,6 +53,11 @@
       "title": "Le texte doit parler de quoi ?",
       "hint": "Je te lis un petit texte, puis je te pose des questions.",
       "placeholder": "p. ex. Unité 3, les vacances en anglais"
+    },
+    "spelling_dictation": {
+      "title": "Quels mots pour la dictée ?",
+      "hint": "Je te lis chaque mot, tu l'écris.",
+      "placeholder": "p. ex. tes mots à apprendre"
     },
     "help": {
       "title": "Quel exercice ? Recopie-le.",

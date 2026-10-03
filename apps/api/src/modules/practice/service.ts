@@ -34,6 +34,7 @@ import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { pickAnswers, taskOf, untriedPicks } from './bars.js';
 import { listenRefs, listenTaskOf } from './listen.js';
+import { checkDictation, dictationReply, nearlyRight, type DictationCheck } from './dictation.js';
 import {
   differentNumber,
   formNoteFor,
@@ -53,6 +54,7 @@ import {
   type StaffCheck,
 } from './staff.js';
 import { takeParts } from './partsAnswer.js';
+import { changeSession, lockActiveSession, SESSION_COLS, type SessionRow } from './sessionRow.js';
 import {
   answerTextOf,
   structuredNamesPart,
@@ -190,38 +192,6 @@ export type ItemRow = {
   staff_task: unknown;
 };
 
-export type SessionRow = {
-  id: string;
-  learner_id: string;
-  step_id: string | null;
-  goal_id: string | null;
-  mode: SessionMode;
-  status: 'active' | 'finished' | 'abandoned';
-  title: string | null;
-  /**
-   * Which kind of pass this run is (migration 0069): null means its questions are answered
-   * and checked; 'cards' means the card turns over and she says herself whether she knew it
-   * (issue #147, `cards.ts`). Deliberately not a fourth `mode` — a card pass IS practice, and
-   * `mode` is read far outside this module, down to `NowCard.mode` in the app's contracts.
-   */
-  pass: 'cards' | null;
-  /**
-   * Set while the rest of this run's questions is still being written (migration 0073,
-   * issue #220); null for every run that was written in one go. Never compared in SQL — see
-   * `stillPreparing`.
-   */
-  items_pending_until: Date | null;
-};
-
-/**
- * The session columns as code reads them. Sessions of the removed explain mode (issue #70)
- * are served as plain practice — their stored `mode` and `intro` stay in the database
- * untouched (migrations are immutable), but nothing shows or writes them any more.
- */
-export const SESSION_COLS = `id, learner_id, step_id, goal_id,
-       case when mode = 'explain' then 'practice' else mode end as mode, status, title, pass,
-       items_pending_until`;
-
 /**
  * Is this run still waiting for the rest of its questions (issue #220)? The one place that
  * decides it, because two different answers would mean a run that cannot be finished in one
@@ -235,7 +205,7 @@ export function stillPreparing(s: Pick<SessionRow, 'items_pending_until'>, now: 
   return s.items_pending_until !== null && s.items_pending_until.getTime() > now.getTime();
 }
 
-type SessionItemRow = {
+export type SessionItemRow = {
   item_id: string;
   position: number;
   status: 'open' | 'correct' | 'revealed' | 'skipped' | 'missed';
@@ -678,6 +648,9 @@ function workedReply(
     return `${t(locale, free ? 'practice.one_way_intro' : 'practice.worked_intro')} ${i.worked_solution}`;
   }
   if (free) return t(locale, 'practice.no_single_solution');
+  // A Diktat's word stands in the solution card right under this line (issue #242): said here
+  // too, it would be the same word twice (#286). The line says what to do with it instead.
+  if (i.kind === 'spelling_dictation') return t(locale, 'practice.dictation.shown');
   return t(locale, 'practice.solution_is', { answer: shownSolution(i) });
 }
 
@@ -853,7 +826,12 @@ export async function sessionView(
       // The words of a listening text, under exactly the condition the solution is sent under
       // (issue #210): she hears it, answers, and reads it afterwards. While the question is
       // open the text is the solution, so it stays here.
-      listen_transcript: solutionShown(i) ? (listenTaskOf(i.listen_task)?.text ?? null) : null,
+      // A Diktat's recording IS its key (issue #242): the solution above already says it, so it is
+      // not repeated as a "what you heard" text.
+      listen_transcript:
+        solutionShown(i) && i.kind !== 'spelling_dictation'
+          ? (listenTaskOf(i.listen_task)?.text ?? null)
+          : null,
     })),
     turns: turns.map((tr) => ({
       id: tr.id,
@@ -978,6 +956,11 @@ export async function answerItem(
       reason: 'use_speak',
     });
   }
+  // A Diktat has no written hint (issue #242): a hint about a word she is to spell would spell it,
+  // and writing one would be a model call. The help is hearing it again, slower — on the card.
+  if (hintRequest && item.kind === 'spelling_dictation') {
+    throw new AppError('conflict', 'The help here is hearing it again', { reason: 'no_hints' });
+  }
 
   // ── a STRUCTURED answer (issues #228–#232): parts, judged by code (partsAnswer.ts) ──
   const { structured, partsCheck } = await takeParts(deps, item, {
@@ -1030,12 +1013,21 @@ export async function answerItem(
   // things below: that only the content is judged (never the spelling of a word she HEARD),
   // and that the tutor is given that text as the material it may judge against.
   const listenTask = listenTaskOf(item.listen_task);
+  // A Diktat (issue #242) is checked by code alone, exactly, against its key — and a miss is
+  // answered with the PLACE (`practice/dictation.ts`), never by the tutor. It is no listening
+  // task in the sense of #210: there the spelling of what she heard does NOT count, here it is the
+  // whole point. So `listening` below stays false for it.
+  const dictationCheck: DictationCheck | null =
+    !hintRequest && item.kind === 'spelling_dictation'
+      ? checkDictation(item.answer, input.text ?? '')
+      : null;
+  const listening = listenTask !== null && item.kind !== 'spelling_dictation';
   // A request for help is not an answer: nothing for the rules to check.
   // Two checks that code does ENTIRELY on its own and that therefore come before the key
   // comparison: every part of a structured answer (issues #228–#230), right or not yet right,
   // and a written note line (issue #226), which ends in `parts_left` when some of it holds.
   // Neither ever asks a model.
-  const byRules: RuleVerdict = hintRequest
+  const byOtherRules: RuleVerdict = hintRequest
     ? 'unknown'
     : partsCheck !== null
       ? partsCheck.correct
@@ -1050,9 +1042,12 @@ export async function answerItem(
         : ruleCheck(
             // A question code computed asks for an amount, so any form of it is right (#162);
             // a question she HEARD is judged on what she understood, not how she wrote it (#210).
-            { ...item, form_free: barTask !== null, listening: listenTask !== null },
+            { ...item, form_free: barTask !== null, listening },
             { text: input.text ?? null, choice: input.choice ?? null },
           );
+  // A Diktat is decided by its own exact check (issue #242), never by the key comparison above.
+  const byRules: RuleVerdict =
+    dictationCheck !== null ? (dictationCheck.correct ? 'correct' : 'incorrect') : byOtherRules;
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
   const rule: RuleVerdict =
@@ -1236,6 +1231,17 @@ export async function answerItem(
       gaveHint: structuredNamesPart(partsCheck, item.attempts),
       revealed: false,
     };
+  } else if (dictationCheck !== null && !dictationCheck.correct && rule === 'incorrect') {
+    // A Diktat she did not get right yet (issue #242): code names the place — "Doppel-m fehlt",
+    // "groß schreiben" — at every try, never through a model (0 model calls per answer). Her word
+    // stays hers in the sentence; the key comes with the third miss above or "Lösung zeigen".
+    judged = {
+      verdict: nearlyRight(dictationCheck.spot) ? 'partially_correct' : 'incorrect',
+      evaluatedBy: 'rule',
+      reply: dictationReply(learner.locale, dictationCheck.spot),
+      gaveHint: false,
+      revealed: false,
+    };
   } else if (givesHints(session.mode) && rule === 'incorrect' && item.attempts === 0) {
     // The FIRST wrong try: kind feedback at once, no model. A slip deserves a quick "try
     // again" and not a lesson, and the hints stay for "Tipp" (live finding 1).
@@ -1273,12 +1279,11 @@ export async function answerItem(
           parts: [
             {
               text: tutorContext({
-                // A listening item says so (#210); a structured item's question is more than its
-                // instruction: a cloze's text with its gaps (issue #232) is what a hint has to
-                // talk about.
+                // A listening item says so (#210; never a Diktat, #242); a structured item's
+                // question is more than its instruction: a cloze's text with its gaps (#232).
                 item: {
                   ...item,
-                  listening: listenTask !== null,
+                  listening,
                   ...(structured ? { prompt: secretsOf(structured, item.prompt).visible } : {}),
                 },
                 hintsGiven: item.hints_used,
@@ -1852,9 +1857,7 @@ export async function revealItem(
   sessionId: string,
   itemId: string,
 ): Promise<SessionView> {
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    const s = await lockActiveSession(tx, learnerId, sessionId);
+  await changeSession(deps, learnerId, sessionId, { active: true }, async (tx, s, now) => {
     if (s.pass === CARD_PASS) {
       throw new AppError('conflict', 'A card shows its answer by itself', {
         reason: 'use_cards',
@@ -1911,9 +1914,7 @@ export async function deferItem(
   sessionId: string,
   itemId: string,
 ): Promise<SessionView> {
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    const s = await lockActiveSession(tx, learnerId, sessionId);
+  await changeSession(deps, learnerId, sessionId, { active: true }, async (tx, s, now) => {
     if (s.mode !== 'help') {
       throw new AppError('conflict', 'Only homework tasks are set aside', {
         reason: 'defer_not_allowed',
@@ -1935,241 +1936,6 @@ export async function deferItem(
     ]);
   });
   return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
-}
-
-/**
- * "Frage passt nicht": the learner takes a question out. It is archived (never
- * practised again) and, if still open here, closed as skipped — no FSRS review, and
- * it counts neither as answered nor as shaky. Not for homework (help) and not while
- * a test runs; only for questions from a photo or from Buddy. Idempotent.
- */
-export async function flagItem(
-  deps: Deps,
-  learnerId: string,
-  sessionId: string,
-  itemId: string,
-): Promise<SessionView> {
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    const s = await tx.maybeOne<SessionRow>(
-      `select ${SESSION_COLS} from practice_sessions
-        where id = $1 and learner_id = $2 for update`,
-      [sessionId, learnerId],
-    );
-    if (!s) throw new AppError('not_found', 'Session not found');
-    const si = await tx.maybeOne<
-      Pick<SessionItemRow, 'status' | 'flagged_at'> & {
-        origin: ItemRow['origin'];
-        archived_at: Date | null;
-      }
-    >(
-      `select si.status, si.flagged_at, i.origin, i.archived_at
-         from session_items si join items i on i.id = si.item_id
-        where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
-        for update of si, i`,
-      [sessionId, itemId, learnerId],
-    );
-    if (!si) throw new AppError('not_found', 'Question not in this session');
-    if (si.flagged_at) return; // already taken out
-    if (s.status !== 'active') throw new AppError('conflict', 'Session has ended');
-    if (s.mode === 'help') {
-      throw new AppError('conflict', 'Homework tasks are not taken out', {
-        reason: 'flag_not_allowed',
-      });
-    }
-    if (s.mode === 'test') {
-      throw new AppError('conflict', 'Not while a test runs', { reason: 'flag_not_allowed' });
-    }
-    if (s.pass === CARD_PASS) {
-      // Her own words, chosen by the run before this one: there is no unfit question to
-      // take out here, and a card pass has no button for it.
-      throw new AppError('conflict', 'Cards are not taken out', { reason: 'flag_not_allowed' });
-    }
-    if (si.origin !== 'material' && si.origin !== 'buddy') {
-      throw new AppError('conflict', 'Only questions from a photo or from Buddy', {
-        reason: 'flag_not_allowed',
-      });
-    }
-    if (!si.archived_at) {
-      await tx.query(`update items set archived_at = $2 where id = $1`, [itemId, now]);
-    }
-    if (si.status === 'open') {
-      await tx.query(
-        `update session_items set status = 'skipped', flagged_at = $3, closed_at = $3
-          where session_id = $1 and item_id = $2`,
-        [sessionId, itemId, now],
-      );
-    }
-    await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-      sessionId,
-      now,
-    ]);
-    await finishIfComplete(tx, learnerId, sessionId, now);
-    // Buddy's prepared practice and picture of her questions may include it.
-    await bumpContext(tx, learnerId);
-  });
-  return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
-}
-
-/**
- * "Die Bewertung stimmt nicht" (issue #164).
- *
- * The rule check is certain by design, and that certainty can stand in for a key nobody
- * verified — the external audit put `8` on `6 + 4` and watched the right answer `10` be
- * rejected. Issue #157 now catches that where arithmetic makes it decidable; everywhere
- * else the only one who can see it is the child in front of it, and she must be able to say
- * so without arguing with a tutor that is sure of itself.
- *
- * Three things happen, and all three are hers: the question leaves this result, it leaves
- * future practice (its key is suspect, so asking it again would repeat the mistake), and
- * the spaced repetition goes back to exactly what it held before this session reviewed it —
- * the history from earlier, undisputed sessions stays. Nothing is deleted: the judgement,
- * her answer and the key it was compared against stay on the row (`disputed_at`,
- * `practice_turns`, `items`), so what she disagreed with can still be read.
- *
- * What this never does is guess. `state_before` is written by `reviewItem` (fsrs.ts) and
- * says one of three things: a state to go back to, jsonb `null` ("there was nothing, so
- * remove the row"), or nothing at all — SQL NULL, meaning this session never reviewed the
- * question (a test, homework help). Then there is no effect of its own to take back, and
- * `item_states` is left exactly as it is rather than cleared on a hunch (rule 5).
- *
- * Different from "Frage passt nicht", which takes an unfit question out while it is still
- * open. This is about a judgement she has already been given.
- */
-export async function disputeVerdict(
-  deps: Deps,
-  learnerId: string,
-  sessionId: string,
-  itemId: string,
-): Promise<SessionView> {
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    // The session row first, as every other writer does (`lockActiveSession`): this one also
-    // touches `last_activity_at` at the end, and taking that lock last would cross an answer
-    // committing at the same moment. A finished session keeps its verdicts disputable — the
-    // result screen is where she reads them.
-    const session = await tx.maybeOne<{ id: string }>(
-      `select id from practice_sessions where id = $1 and learner_id = $2 for update`,
-      [sessionId, learnerId],
-    );
-    if (!session) throw new AppError('not_found', 'Session not found');
-    const si = await tx.maybeOne<{
-      status: SessionItemRow['status'];
-      flagged_at: Date | null;
-      disputed_at: Date | null;
-      state_before: Record<string, unknown> | null;
-      /** False when nothing was ever recorded; true also for jsonb `null` (see above). */
-      reviewed: boolean;
-      origin: ItemRow['origin'];
-      archived_at: Date | null;
-    }>(
-      `select si.status, si.flagged_at, si.disputed_at, si.state_before,
-              si.state_before is not null as reviewed, i.origin, i.archived_at
-         from session_items si
-         join items i on i.id = si.item_id
-        where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
-        for update of si, i`,
-      [sessionId, itemId, learnerId],
-    );
-    if (!si) throw new AppError('not_found', 'Question not in this session');
-    // Saying it twice changes nothing — and must not undo a second time.
-    if (si.disputed_at) return;
-    if (si.status === 'open') {
-      throw new AppError('conflict', 'There is no judgement yet to disagree with', {
-        reason: 'not_judged',
-      });
-    }
-    // A card was never judged by anyone but her, so there is no judgement to disagree with.
-    if (await isCardPass(tx, sessionId)) {
-      throw new AppError('conflict', 'Nothing judged this card', {
-        reason: 'dispute_not_allowed',
-      });
-    }
-    // Her homework is helped with, never graded, so there is no verdict to dispute.
-    if (si.origin === 'homework') {
-      throw new AppError('conflict', 'Homework tasks are not judged', {
-        reason: 'dispute_not_allowed',
-      });
-    }
-    await tx.query(
-      `update session_items set disputed_at = $3, flagged_at = coalesce(flagged_at, $3)
-        where session_id = $1 and item_id = $2`,
-      [sessionId, itemId, now],
-    );
-    // The key is suspect: asking it again would repeat the same wrong judgement.
-    if (!si.archived_at) {
-      await tx.query(`update items set archived_at = $2 where id = $1`, [itemId, now]);
-    }
-    // And the spaced repetition goes back to what it was before this review.
-    if (si.state_before) {
-      await tx.query(
-        `update item_states set due = $3, stability = $4, difficulty = $5, elapsed_days = $6,
-                                scheduled_days = $7, reps = $8, lapses = $9, state = $10,
-                                last_review = $11, last_outcome = $12
-          where item_id = $1 and learner_id = $2`,
-        [
-          itemId,
-          learnerId,
-          si.state_before.due,
-          si.state_before.stability,
-          si.state_before.difficulty,
-          si.state_before.elapsed_days,
-          si.state_before.scheduled_days,
-          si.state_before.reps,
-          si.state_before.lapses,
-          si.state_before.state,
-          si.state_before.last_review,
-          si.state_before.last_outcome,
-        ],
-      );
-    } else if (si.reviewed) {
-      // Recorded, and it said there was nothing: back to never practised.
-      await tx.query(`delete from item_states where item_id = $1 and learner_id = $2`, [
-        itemId,
-        learnerId,
-      ]);
-    }
-    // Nothing recorded: this session never reviewed the question, so it left no effect of
-    // its own. Whatever `item_states` holds comes from somewhere else and stays.
-    await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-      sessionId,
-      now,
-    ]);
-    // Buddy's picture of her questions and his prepared practice may hold it.
-    await bumpContext(tx, learnerId);
-  });
-  return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
-}
-
-// ─────────────── lifecycle ───────────────
-
-/**
- * Whether this session is a flashcard pass (issue #147). Read where the session row was
- * loaded without its columns — `disputeVerdict` locks on id alone, and widening that read
- * would change its lock shape for every ordinary dispute.
- */
-async function isCardPass(db: Db, sessionId: string): Promise<boolean> {
-  const row = await db.one<{ pass: string | null }>(
-    `select pass from practice_sessions where id = $1`,
-    [sessionId],
-  );
-  return row.pass === CARD_PASS;
-}
-
-/** The session row, locked, and still running — else 404 / 409 (one lock order: session first). */
-export async function lockActiveSession(
-  db: Db,
-  learnerId: string,
-  sessionId: string,
-): Promise<SessionRow> {
-  const s = await db.maybeOne<SessionRow>(
-    `select ${SESSION_COLS} from practice_sessions
-      where id = $1 and learner_id = $2 for update`,
-    [sessionId, learnerId],
-  );
-  if (!s) throw new AppError('not_found', 'Session not found');
-  if (s.status !== 'active') throw new AppError('conflict', 'Session has ended');
-  return s;
 }
 
 /**
@@ -2260,14 +2026,7 @@ export async function finishSession(
   learnerId: string,
   sessionId: string,
 ): Promise<SessionView> {
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    const s = await tx.maybeOne<SessionRow>(
-      `select ${SESSION_COLS} from practice_sessions
-        where id = $1 and learner_id = $2 for update`,
-      [sessionId, learnerId],
-    );
-    if (!s) throw new AppError('not_found', 'Session not found');
+  await changeSession(deps, learnerId, sessionId, { active: false }, async (tx, s, now) => {
     if (s.status !== 'active') return; // idempotent
     if (stillPreparing(s, now)) {
       await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [

@@ -13,7 +13,8 @@ import { z } from 'zod';
 
 import { ACT_SCHEMAS, Outreach, type ActionOf, type AnyAction, type ToolName } from './decision.js';
 import type { Surface } from './lookups.js';
-import { ACT_HANDLERS, ToolRejection, type ToolContext, type ToolOutcome } from './tools.js';
+import { ToolRejection, type ToolContext, type ToolOutcome } from './toolKit.js';
+import { ACT_HANDLERS } from './tools.js';
 
 /** What an act tool changes (for the catalogue, the audit and privacy review). */
 export type Touches =

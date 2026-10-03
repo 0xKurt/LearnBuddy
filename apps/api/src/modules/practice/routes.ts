@@ -36,13 +36,12 @@ import {
   answerItem,
   deferItem,
   finishSession,
-  disputeVerdict,
-  flagItem,
   hintItem,
   revealItem,
   sessionView,
   startManual,
 } from './service.js';
+import { disputeVerdict, flagItem } from './contest.js';
 import { speakItem, speakWord } from './speak.js';
 
 export const practiceRoutes = new Hono<AppEnv>();

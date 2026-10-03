@@ -653,9 +653,9 @@ const offerLearning = z.object({
   tool: z.literal('offer_learning'),
   args: z.object({
     kind: z
-      .enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test'])
+      .enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test', 'spelling_dictation'])
       .describe(
-        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end)',
+        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end) · spelling_dictation: a dictation: the app reads words or sentences aloud and she types them (when she asks for a dictation or to practise writing/spelling her word list)',
       ),
     text: z
       .string()
@@ -669,6 +669,13 @@ const offerLearning = z.object({
       .default(null)
       .describe(
         'practice or test for a planned test in STATE: its alias (g1) — the questions then stay within the sheets she photographed for it; otherwise null',
+      ),
+    // A Diktat of the words on one of her sheets (issue #242). Optional in parsing like the two
+    // below: older scripted answers have none.
+    sheet: MaterialRef.nullable()
+      .optional()
+      .describe(
+        'spelling_dictation only: the sheet (sh1) whose words she wants dictated — a word list she photographed. The words are then taken from that sheet, and "text" names it. null for every other kind, and when she typed or named the words.',
       ),
     // Optional in parsing (older scripted answers have neither); the model sees both. Issue #113.
     difficulty: DifficultyWishSchema.nullable()

@@ -25,7 +25,6 @@
 // leaves. The microphone itself only ever starts with her tap.
 
 import {
-  isStructuredKind,
   type AnswerResponse,
   type ItemView,
   type PracticeTurnView,
@@ -60,11 +59,13 @@ import {
   DisputeVerdictSheet,
 } from '../../components/practice/DisputeVerdict.js';
 import { FractionBarAnswer } from '../../components/practice/FractionBarAnswer.js';
-import { HearText, HeardTextCard } from '../../components/practice/HearText.js';
+import { DictationCard } from '../../components/practice/DictationCard.js';
+import { HeardTextCard } from '../../components/practice/HearText.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
 import { QuestionCorner } from '../../components/practice/QuestionCorner.js';
+import { QuestionTools } from '../../components/practice/QuestionTools.js';
 import {
   emptyStaffAnswer,
   readStaffDraft,
@@ -106,6 +107,8 @@ import { useDraft } from '../../lib/drafts.js';
 import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { questionParts } from '../../lib/practice/questionParts.js';
+import { answerForm } from '../../lib/practice/answerForm.js';
+import { useHeardTexts } from '../../lib/practice/heardTexts.js';
 import { boardKeeps, threadRoom } from '../../lib/practice/threadRoom.js';
 import { announce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
@@ -199,13 +202,8 @@ export default function PracticeScreen() {
    * happens to want the same fraction — it is hers again.
    */
   const [shadedAnswer, setShadedAnswer] = useState<{ itemId: string; text: string } | null>(null);
-  /**
-   * The listening texts she has already heard in this run, by their recording's alias (issue
-   * #210). Three questions about one text share it, so the second one offers "nochmal hören"
-   * instead of announcing a text that is not new. It lives here, above the question, because
-   * that is where the run is: a component keyed by the question would forget it every time.
-   */
-  const [heardTexts, setHeardTexts] = useState<ReadonlySet<string>>(() => new Set());
+  /** The recordings she already heard in this run (issues #210, #242). */
+  const { heard, markHeard } = useHeardTexts(id);
   /**
    * Die Notenzeile, die sie geschrieben hat, und zu welcher Frage (issue #226). Aus demselben
    * Grund an der Frage festgemacht wie die Anordnung darüber: die nächste Frage beginnt mit einer
@@ -843,6 +841,12 @@ export default function PracticeScreen() {
   const itemTurns = session.turns.filter((turn) => turn.item_id === item.id);
   // Her tries and Buddy's replies; "Anders erklären" exchanges stand after the solution.
   const turns = itemTurns.filter((turn) => turn.reexplain === null);
+  // A Diktat shows only her latest try and what followed it (issue #242): each try replaces the
+  // last, and three tries with three replies, the word and the follow-ups do not fit under the
+  // card on 360×740 — an older bubble would sit half cut under its edge (review of #286).
+  const lastTry = turns.map((turn) => turn.role).lastIndexOf('learner');
+  const threadTurns =
+    item.kind === 'spelling_dictation' && lastTry > 0 ? turns.slice(lastTry) : turns;
   const turnsAgain = itemTurns.filter((turn) => turn.reexplain !== null);
   // After a shown solution — in homework after a task she solved herself (never in a test).
   // Not after a clean first try: there the three ways to re-explain were three chips of
@@ -859,31 +863,13 @@ export default function PracticeScreen() {
       // exactly where it helps most, so the offer stays.
       shown.item.kind === 'long');
   const pendingText = pending?.itemId === item.id ? pending.text : null;
-  const choices =
-    item.kind === 'multiple_choice' && item.choices && item.choices.length > 0
-      ? item.choices
-      : null;
-  // Vocabulary she is recognising: her own words to tap, instead of typing every one of
-  // them on a phone (issue #147). Not a different question — tapping one sends it as the
-  // answer and the same rules grade it — but it IS the whole way to answer here: four
-  // cards and a field would not fit a 360×740 phone without scrolling (rule 16), and
-  // asking her to choose between two ways to say the same thing is the complexity this
-  // app is supposed to carry for her. Producing the foreign word is still typed; the
-  // server only offers tapping where she is recognising (practice/tapChoices.ts).
-  const tapChoices =
-    choices === null && item.tap_choices && item.tap_choices.length > 0 ? item.tap_choices : null;
-  const speaking = item.kind === 'speak';
-  // A structured item (issues #228–#230): ordering, matching, filling in a table. Its own surface
-  // is the WHOLE way to answer — no answer field, not even for the table, whose writing happens
-  // in its own cells; the server takes only `parts` for it.
-  const structured = isStructuredKind(item.kind);
-  // Die leere Notenzeile, auf die sie schreibt (issue #226). Wie eine Anordnung ist sie der GANZE Weg
-  // zu antworten: ein Antwortfeld gibt es daneben nicht, und das eine „Prüfen“ steht darunter.
-  // Der Bruchbalken bleibt der andere Fall derselben Fläche — er schreibt ins Feld, sie nicht.
-  const staff = open && item.surface?.mode === 'notes' ? item.surface : null;
-  const barSurface = open && item.surface && item.surface.mode !== 'notes' ? item.surface : null;
-  const typed =
-    open && choices === null && tapChoices === null && !structured && staff === null && !speaking;
+  // Once there is a conversation the Diktat card is one row (DictationCard `compact`).
+  const dictationCompact = itemTurns.length > 0 || pendingText !== null;
+  // Which way she answers — exactly one (`answerForm`).
+  const { choices, tapChoices, speaking, structured, staff, barSurface, typed } = answerForm(
+    item,
+    open,
+  );
   /** Ihre Notenzeile zu DIESER Frage; eine andere Frage beginnt mit einer leeren Zeile. */
   const staffAnswer =
     written?.itemId === item.id ? written.answer : emptyStaffAnswer(staff?.bars ?? 1);
@@ -908,7 +894,6 @@ export default function PracticeScreen() {
     if (value) void answer(item.id, { text: value, via: shaded ? 'tapped' : 'typed' }, value);
   }
 
-  // A small row of quiet tools under the question (never a second headline).
   // A foreign vocabulary word has its own "Anhören" (its pronunciation is the point); that IS
   // its read-aloud button, so it never gets a second one.
   const hearWord = item.kind === 'vocab' && foreign(item.prompt_lang);
@@ -926,34 +911,6 @@ export default function PracticeScreen() {
     !voiceOn && open && item.read_aloud && !speaking && !hearWord
       ? (questionParts(item, words, t)[0] ?? null)
       : null;
-  const tools = [
-    // With options the voice bar carries it (SpokenChoiceBar).
-    voiceOn && open && !choices && item.read_aloud ? (
-      <Btn key="read" size="sm" variant="soft" pill icon="speak" onPress={() => readQuestion(item)}>
-        {t('common:voice.read_again')}
-      </Btn>
-    ) : null,
-    hearWord && item.read_aloud && item.prompt_lang ? (
-      <ListenButton key={`listen-${item.id}`} text={item.prompt} lang={item.prompt_lang} />
-    ) : null,
-    // Hörverstehen (issue #210): the text is heard, not read, so the way to hear it stands in
-    // the same row as every other "read this aloud" — and it stays after the question closes,
-    // next to the words of it, because listening again while reading is how it is reviewed.
-    item.listen ? (
-      <HearText
-        key="hear"
-        sessionId={session.id}
-        itemId={item.id}
-        heard={heardTexts.has(item.listen.ref)}
-        onHeard={() => {
-          const ref = item.listen?.ref;
-          if (ref !== undefined)
-            setHeardTexts((was) => (was.has(ref) ? was : new Set(was).add(ref)));
-        }}
-        disabled={locked}
-      />
-    ) : null,
-  ].filter((node) => node !== null);
 
   // How the conversation and the card share the room (issues #96, #286, #232): `threadRoom`.
   // Per question AND per window: a narrower phone wraps the prompt onto another line and gives
@@ -978,7 +935,7 @@ export default function PracticeScreen() {
     room,
     threadNeed,
     // The tops are in ItemThread's coordinates; it starts after the thread's padding.
-    tops: turns.map((turn) => turnTops[turn.id]).filter((y): y is number => y !== undefined),
+    tops: threadTurns.map((turn) => turnTops[turn.id]).filter((y): y is number => y !== undefined),
     quiet: turns.length === 0,
     boardGives,
     boardSpare:
@@ -989,6 +946,9 @@ export default function PracticeScreen() {
     cardDelta,
     visual: cardNatural > 0 && Boolean(item.figure || item.image) && !speaking,
     growable: item.figure?.type !== 'staff',
+    // A Diktat card before her first answer holds only the way to hear the word (issue #242): it
+    // takes all the room the conversation does not use, so no empty band is left under it (#286).
+    fills: cardNatural > 0 && item.kind === 'spelling_dictation' && !dictationCompact,
     viewHeight,
   });
 
@@ -1084,6 +1044,19 @@ export default function PracticeScreen() {
                 >
                   {speaking ? (
                     <SpeakCard item={item} turns={turns} live={speakLive} sessionId={session.id} />
+                  ) : item.kind === 'spelling_dictation' ? (
+                    // Diktat (issue #242): no word to read, so the card is the way to hear it.
+                    <DictationCard
+                      sessionId={session.id}
+                      itemId={item.id}
+                      prompt={item.prompt}
+                      // Having answered, she has heard it — also after the screen was rebuilt.
+                      heard={shown.attempts > 0 || heard(item.listen?.ref)}
+                      onHeard={() => markHeard(item.listen?.ref)}
+                      disabled={locked}
+                      minHeight={cardGrowTo > 0 ? cardNatural + cardGrowTo : undefined}
+                      compact={dictationCompact}
+                    />
                   ) : (
                     <QuestionCard
                       prompt={item.prompt}
@@ -1105,9 +1078,17 @@ export default function PracticeScreen() {
                     />
                   )}
                 </SlideIn>
-                {tools.length > 0 ? (
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{tools}</View>
-                ) : null}
+                <QuestionTools
+                  item={item}
+                  sessionId={session.id}
+                  readAgain={
+                    voiceOn && open && !choices && item.read_aloud ? () => readQuestion(item) : null
+                  }
+                  hearWord={hearWord}
+                  heard={heard}
+                  markHeard={markHeard}
+                  disabled={locked}
+                />
               </ScrollView>
               {/* minHeight 0: on the web a flex child's min-height is its content, and the
               conversation then SQUEEZES the question below its own content instead of
@@ -1158,7 +1139,7 @@ export default function PracticeScreen() {
                     onLayout={(e) => setThreadNeed(Math.round(e.nativeEvent.layout.height) + 24)}
                   >
                     <ItemThread
-                      turns={turns}
+                      turns={threadTurns}
                       pending={pendingText}
                       hideVerdicts={testing}
                       // A spoken answer: the judgement's words belong here, the marked sentence

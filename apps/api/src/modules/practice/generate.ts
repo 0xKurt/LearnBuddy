@@ -4,6 +4,7 @@
 //   vocab    — a typed vocabulary list, asked in both directions
 //   speak    — words or sentences to say aloud
 //   listen   — a text she HEARS, with questions about it (Hörverstehen, issue #210)
+//   spelling_dictation — a Diktat: words or sentences read aloud that she types (issue #242)
 //   help     — a homework task they typed: hints only, never the solution
 // Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
 // One structured model call; items are validated like extracted ones.
@@ -30,6 +31,13 @@ import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { ageOn } from '../identity/model.js';
 import { CURRICULUM_RULES, curriculumBlock, offCurriculum, pointOf } from '../curriculum/state.js';
 import { BAR_RULES, barItems, MAX_BAR_ITEMS } from './bars.js';
+import {
+  DICTATION_RULES,
+  DictationDraft,
+  DictationDraftParsed,
+  dictationItems,
+  type DictationItem,
+} from './dictation.js';
 import { prepareHints } from './hints.js';
 import {
   LISTEN_RULES,
@@ -74,7 +82,8 @@ import { TABLE_RULES } from './table.js';
 // v1.16: car 2's structured rules (v1.15) and #253/#257's figures (v1.14) together.
 // v1.17: pictures as the options of a multiple choice (choice_figures, #231).
 // v1.18: cloze, a text with several gaps (#232).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.18';
+// v1.19: a Diktat run (spelling_dictation, #242) with its own task and entries.
+export const GENERATE_PROMPT_VERSION = 'generate.v1.19';
 
 const SUBJECT_KINDS = [
   'math',
@@ -140,10 +149,17 @@ export const GeneratedSet = z.object({
    * (`practice/structured.ts`, Regel 0 of #224), not a text in `answer`.
    */
   structured: z.array(StructuredDraftNoHelp).max(MAX_STRUCTURED_ITEMS).default([]),
+  /**
+   * The entries of a Diktat run (issue #242): words or sentences to be read aloud and typed. A
+   * separate list for the reason `listen` is one — an entry is not a question the model writes,
+   * it is a KEY, held to her list by code before it becomes one (`practice/dictation.ts`). In the
+   * schema the model sees only for a Diktat run.
+   */
+  dictation: DictationDraft.nullable().default(null),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
-const GENERATED_SCHEMA = toJsonSchema(GeneratedSet.omit({ listen: true }));
+const GENERATED_SCHEMA = toJsonSchema(GeneratedSet.omit({ listen: true, dictation: true }));
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;
@@ -272,6 +288,7 @@ const TASK: Record<StartTopicRequest['kind'], string> = {
   practice: `Write 6–10 PRACTICE questions on the topic the learner named, at their grade, easy to harder, mixing kinds sensibly.`,
   vocab: `The learner TYPED A VOCABULARY LIST. Turn every pair into one "vocab" item exactly as typed (prompt = the foreign word/phrase incl. article, answer = the translation, prompt_lang / lang = their ISO languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). Do not add words. Up to 25 pairs. If there are no pairs, usable = false.`,
   listen: LISTEN_RULES,
+  spelling_dictation: DICTATION_RULES,
   speak: `The learner wants to PRACTISE SPEAKING. If they typed words or sentences in a foreign language, make one "speak" item per sentence or word as typed; if they named a topic or unit, write 5–8 short, useful sentences for their level. lang = the language to speak. prompt = what to say (answer = the same). topic = 2–4 words.`,
   test: `Write a PRACTICE TEST of 8–12 questions on the topic the learner named, like a real class test at their grade: the important points, easy to harder, mixing kinds; answerable in one try (no multi-step long answers).`,
   help: `The learner TYPED A HOMEWORK TASK and wants help to solve it THEMSELVES. One item per task/sub-task, prompt = the task in the learner's own words (copy it), answer = the correct final answer, which the learner never sees — it guides hints. Never add tasks or intermediate questions of your own.`,
@@ -312,6 +329,8 @@ const MODE: Record<StartTopicRequest['kind'], 'practice' | 'help' | 'test'> = {
   // A listening run IS practice — the same hints rule, the same spaced repetition, the same
   // card. Only what she gets the question from is different (issue #210).
   listen: 'practice',
+  // A Diktat is practice too: the same card, the same spaced repetition (issue #242).
+  spelling_dictation: 'practice',
   help: 'help',
 };
 
@@ -322,8 +341,23 @@ const ORIGIN: Record<StartTopicRequest['kind'], 'buddy' | 'typed' | 'homework'> 
   speak: 'typed',
   // Buddy wrote the text and the questions, so the card says so ("Frage von Buddy").
   listen: 'buddy',
+  // Overridden per run (`dictationOrigin`): her own list is 'typed', a topic's words are Buddy's.
+  spelling_dictation: 'typed',
   help: 'homework',
 };
+
+/**
+ * Where a Diktat's words come from decides what the card says about them: her own list — typed or
+ * read off her sheet — is hers ('typed'); words Buddy chose for a spelling topic are his ('buddy').
+ * Read from what code kept, not from the model's say-so: an entry claimed as hers that is not on
+ * her list never got this far (`dictationItems`).
+ */
+function dictationOrigin(set: GeneratedSet, source: DictationSource | null): 'typed' | 'buddy' {
+  return source?.fromSheet || set.dictation?.from === 'list' ? 'typed' : 'buddy';
+}
+
+/** The list a Diktat's words are held to (issue #242): what she typed, or her sheet's text. */
+type DictationSource = { text: string; fromSheet: boolean };
 
 /** Items a kind may produce (the model may only use these). */
 const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> = {
@@ -335,6 +369,8 @@ const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> =
   // each of them is checked against the spoken text first (issue #210, `listen.ts` Rule 0).
   // An ordinary question mixed in would be one she could answer without listening.
   listen: new Set([]),
+  // Nothing in `items` either: a Diktat's questions come out of `dictation`, held to her list.
+  spelling_dictation: new Set([]),
   help: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
 };
 
@@ -350,6 +386,7 @@ const STRUCTURED: Record<StartTopicRequest['kind'], ReadonlySet<string>> = {
   vocab: new Set(),
   speak: new Set(),
   listen: new Set(),
+  spelling_dictation: new Set(),
   help: new Set(),
 };
 
@@ -365,6 +402,31 @@ export function fromLearnerText(task: string, typed: string): boolean {
   const need = words(task);
   if (need.length === 0) return true;
   return need.filter((w) => have.has(w)).length / need.length >= 0.6;
+}
+
+/**
+ * The list a Diktat's words are held to (issue #242): her photographed sheet when the run names
+ * one — hers, read, not archived, or it does not exist for her (404, like every other id of
+ * someone else's) — and otherwise what she typed. Her sheet's text is the reading the app already
+ * has (`materials.extracted_text`); nothing is read again.
+ */
+async function dictationSourceOf(
+  deps: Deps,
+  learnerId: string,
+  input: StartTopicRequest,
+): Promise<DictationSource> {
+  if (!input.material_id) return { text: input.text, fromSheet: false };
+  const sheet = await deps.db.maybeOne<{ extracted_text: string | null }>(
+    `select extracted_text from materials
+      where id = $1 and learner_id = $2 and archived_at is null and status = 'ready'`,
+    [input.material_id, learnerId],
+  );
+  if (!sheet) throw new AppError('not_found', 'Material not found');
+  const text = (sheet.extracted_text ?? '').trim();
+  if (text.length === 0) {
+    throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
+  }
+  return { text: text.slice(0, SHEET_CHARS), fromSheet: true };
 }
 
 /**
@@ -403,6 +465,8 @@ type Ground = {
   timezone: string;
   sheets: Awaited<ReturnType<typeof sheetsOf>>;
   pattern: Awaited<ReturnType<typeof patternOf>>;
+  /** A Diktat's list (issue #242), or null for every other kind. */
+  dictation: DictationSource | null;
 };
 
 /**
@@ -427,7 +491,7 @@ async function generateSet(
   now: Date,
   opts: { onFirstItems?: (set: GeneratedSet) => void } = {},
 ): Promise<GeneratedSet> {
-  const { level, timezone, sheets, pattern } = ground;
+  const { level, timezone, sheets, pattern, dictation } = ground;
   // Built from her sheets: every question's topic is one of theirs — the schema offers only
   // those, and a question on anything else is dropped (live finding 6).
   const itemSchema = sheets
@@ -451,15 +515,20 @@ async function generateSet(
       .nullable()
       .default(null)
       .catch(null),
+    dictation: DictationDraftParsed.nullable().default(null).catch(null),
   });
   // What the model is shown. A listening run gets the listening task and nothing else: no
   // fraction bars (a bar is a maths surface, and this run is about hearing) and no ordinary
   // `items` either — a question she could answer without listening is not the exercise, and a
   // field that is there gets filled in.
+  // A Diktat run gets its entries and nothing else, for the same reason (issue #242).
   const forModel =
     input.kind === 'listen'
-      ? setSchema.omit({ bars: true, items: true, structured: true })
-      : setSchema.omit({ listen: true });
+      ? setSchema.omit({ bars: true, items: true, structured: true, dictation: true })
+      : input.kind === 'spelling_dictation'
+        ? setSchema.omit({ bars: true, items: true, structured: true, listen: true, staffs: true })
+        : setSchema.omit({ listen: true, dictation: true });
+  const ownSchema = sheets || input.kind === 'listen' || input.kind === 'spelling_dictation';
   let handedOver = false;
   const onPartial = opts.onFirstItems
     ? (rawSoFar: string) => {
@@ -501,6 +570,9 @@ async function generateSet(
                 pattern
                   ? `SHE JUST WORKED ON THESE (write more of exactly this kind — same topics, same level, other numbers or words; never something her class has not had):${pattern.topics.length > 0 ? `\nTOPICS: ${pattern.topics.join(' | ')}` : ''}\nQUESTIONS:\n${pattern.prompts.map((p) => `- ${p}`).join('\n')}`
                   : null,
+                dictation?.fromSheet
+                  ? `SHEET TEXT (her photographed list; copy entries only from here):\n${dictation.text}`
+                  : null,
                 `LEARNER'S TEXT:\n${input.text}`,
               ]
                 .filter(Boolean)
@@ -509,7 +581,7 @@ async function generateSet(
           ],
         },
       ],
-      schema: sheets || input.kind === 'listen' ? toJsonSchema(forModel) : GENERATED_SCHEMA,
+      schema: ownSchema ? toJsonSchema(forModel) : GENERATED_SCHEMA,
       maxOutputTokens: 10_000,
       temperature: 0.4,
       // A streamed run must be finished inside the window the run waits for it, or it would
@@ -543,6 +615,8 @@ type Prepared = {
   staffs: StoredItem[];
   /** Orders, tables and links to make, after Regel 0 (issues #228–#230). */
   structured: StructuredItem[];
+  /** A Diktat's words, each held to her list and recorded as its own key (issue #242). */
+  dictation: DictationItem[];
 };
 
 /**
@@ -572,6 +646,8 @@ function preparedFrom(
    * later, so a run never holds one.
    */
   speech: { available: boolean; localeFor: (locale: string) => string | null },
+  /** A Diktat's list (issue #242): every entry claimed as hers must stand in it. */
+  dictationSource: DictationSource | null = null,
 ): Prepared {
   let items = atLevel(
     usableItems(
@@ -640,6 +716,10 @@ function preparedFrom(
     listening: input.kind === 'listen' ? listenItems(set.listen, speech) : [],
     staffs,
     structured,
+    dictation:
+      input.kind === 'spelling_dictation' && dictationSource
+        ? dictationItems(set.dictation, dictationSource, speech, learner.locale)
+        : [],
   };
 }
 
@@ -658,8 +738,12 @@ async function prepareTopic(
   // asked: a set of questions about a text nobody can hear would be worse than none, and the call
   // would be spent on it. The offer in the chat stops being a button for the same reason
   // (`practice/prepare.ts`), so nothing promises a listening task that cannot be heard.
-  const noVoice = input.kind === 'listen' ? noVoiceToReadIt(deps) : null;
+  // A Diktat is the same: words nobody can read aloud are not a Diktat (issue #242).
+  const noVoice =
+    input.kind === 'listen' || input.kind === 'spelling_dictation' ? noVoiceToReadIt(deps) : null;
   if (noVoice) throw noVoice;
+  const dictation =
+    input.kind === 'spelling_dictation' ? await dictationSourceOf(deps, learner.id, input) : null;
 
   const now = deps.now();
   const tz = await learnerTimezone(deps.db, learner.id);
@@ -671,6 +755,7 @@ async function prepareTopic(
     sheets,
     // More of the same: what she just did grounds the new questions (issue #58).
     pattern: sheets ? null : await patternOf(deps, learner.id, input.from_session_id),
+    dictation,
   };
   /**
    * A practice run may start on its first questions while the rest of the answer is still being
@@ -725,11 +810,12 @@ async function prepareTopic(
       learner,
       input,
       set,
-      preparedFrom(set, learner, input, !!sheets, sheets?.topics ?? null, deps.speech),
+      preparedFrom(set, learner, input, !!sheets, sheets?.topics ?? null, deps.speech, dictation),
       {
         now,
         goalId: sheets?.goalId ?? null,
         pendingUntil: null,
+        origin: input.kind === 'spelling_dictation' ? dictationOrigin(set, dictation) : null,
       },
     );
   }
@@ -749,8 +835,14 @@ async function prepareTopic(
       listening: [],
       staffs: [],
       structured: [],
+      dictation: [],
     },
-    { now, goalId: sheets?.goalId ?? null, pendingUntil: new Date(now.getTime() + REST_WINDOW_MS) },
+    {
+      now,
+      goalId: sheets?.goalId ?? null,
+      pendingUntil: new Date(now.getTime() + REST_WINDOW_MS),
+      origin: null,
+    },
   );
   deps.background(async () => {
     // Whatever goes wrong behind her, the run stops saying "more is coming" instead of waiting out
@@ -787,6 +879,8 @@ async function store(
     goalId: string | null;
     /** Until when this run says more questions are coming (issue #220), or null. */
     pendingUntil: Date | null;
+    /** Where this run's questions come from, when the kind alone does not say (a Diktat, #242). */
+    origin: 'typed' | 'buddy' | null;
   },
 ): Promise<string> {
   if (
@@ -795,7 +889,8 @@ async function store(
       prepared.bars.length +
       prepared.listening.length +
       prepared.staffs.length +
-      prepared.structured.length ===
+      prepared.structured.length +
+      prepared.dictation.length ===
       0
   ) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
@@ -808,13 +903,19 @@ async function store(
         : null;
       const itemIds = await insertItems(
         tx,
-        { learnerId: learner.id, materialId: null, subjectId, origin: ORIGIN[input.kind] },
+        {
+          learnerId: learner.id,
+          materialId: null,
+          subjectId,
+          origin: opts.origin ?? ORIGIN[input.kind],
+        },
         [
           ...prepared.items,
           ...prepared.structured,
           ...prepared.bars,
           ...prepared.listening,
           ...prepared.staffs,
+          ...prepared.dictation,
         ],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,

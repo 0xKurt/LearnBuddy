@@ -19,7 +19,7 @@ import { planOutreach, type OutreachPlan } from './delivery.js';
 import { bumpContext } from './plan.js';
 import { LIMITS, loadSettings, TURN_STALL_MS, type SettingsRow } from './state.js';
 import { runAct } from './registry.js';
-import { ToolRejection, type ToolOutcome } from './tools.js';
+import { ToolRejection, type ToolOutcome } from './toolKit.js';
 
 export type DecisionMeta = {
   mode: 'turn' | 'check';

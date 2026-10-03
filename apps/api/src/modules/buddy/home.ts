@@ -21,7 +21,8 @@ import { DAILY_LIMITS } from '../../config.js';
 import type { Deps } from '../../deps.js';
 import { daysBetween, localParts, startOfLocalDay } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
-import { undoApplies, undoLoosensContact, type UndoSpec } from './tools.js';
+import type { UndoSpec } from './toolKit.js';
+import { undoApplies, undoLoosensContact } from './tools.js';
 import { loadBuddyState, loadSettings } from './state.js';
 import { resumable } from '../practice/lifecycle.js';
 

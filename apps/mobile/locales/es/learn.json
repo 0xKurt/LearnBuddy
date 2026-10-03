@@ -5,7 +5,8 @@
     "test": "Examen de prueba",
     "vocab": "Repasar vocabulario",
     "speak": "Practicar pronunciación",
-    "listen": "Comprensión oral"
+    "listen": "Comprensión oral",
+    "spelling_dictation": "Practicar dictado"
   },
   "homework": {
     "title": "Ayuda con los deberes",
@@ -52,6 +53,11 @@
       "title": "¿De qué quieres el texto?",
       "hint": "Te leo un texto corto y luego te pregunto.",
       "placeholder": "p. ej. Unit 3 de inglés, las vacaciones en francés"
+    },
+    "spelling_dictation": {
+      "title": "¿Qué palabras para el dictado?",
+      "hint": "Te leo cada palabra y tú la escribes.",
+      "placeholder": "p. ej. tus palabras de ortografía"
     },
     "help": {
       "title": "¿Qué ejercicio? Cópialo aquí.",

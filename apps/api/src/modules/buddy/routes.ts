@@ -46,7 +46,8 @@ import { addDays, localParts, zonedToInstant } from '../../lib/time.js';
 import { bumpContext, cancelGoalWakeups, lockContext, scheduleStepReminder } from './plan.js';
 import { loosens } from './policy.js';
 import { loadSettings, type SettingsRow } from './state.js';
-import { runUndo, undoLoosensContact, type UndoSpec } from './tools.js';
+import type { UndoSpec } from './toolKit.js';
+import { runUndo, undoLoosensContact } from './tools.js';
 import { receiveLearnerMessage, stopTurn, type OnReply, type TurnOutcome } from './turn.js';
 
 export const buddyRoutes = new Hono<AppEnv>();

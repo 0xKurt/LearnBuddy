@@ -442,10 +442,14 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 
   // ── Practice test: no verdicts or solutions until the end ──
+  // The fraction-bar offer above still carries its button. Buddy's words show while he is still
+  // answering (the streamed bubble), the card with the new button only once the turn is stored —
+  // so waiting for the words and taking `.last()` hit the OLD button under load, which reopened
+  // the finished bar run (walkthrough 03.10., #242 merge). The new card's own button, by its text.
   await page.getByLabel('Schreib Buddy …').fill('Mach einen Probetest über die Römer');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('ein Probetest über die Römer', { exact: false })).toBeVisible();
-  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await offerStart(page, 'Die Römer').click();
   await expect(
     page.getByText('Probetest – eine Antwort pro Frage, keine Tipps.', { exact: false }),
   ).toBeVisible();
