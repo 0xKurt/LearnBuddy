@@ -628,8 +628,13 @@ async function keyRowShots(page: Page, name: string): Promise<void> {
       await expect(page.getByTestId('scroll-question').last()).toBeInViewport();
     }
   }
+  // The switch back to light remounts the whole tree (ThemeProvider). Let it land before she
+  // types on: keys pressed into the field that is being replaced go nowhere — in CI the
+  // remount landed after the first keystrokes ("2 H" lost). Since #239 a draft survives the
+  // remount itself (lib/drafts.ts); a keystroke into a field that is gone cannot.
   await page.emulateMedia({ colorScheme: 'light' });
   await page.setViewportSize(PHONES[0]);
+  await settle(page);
   await field.focus();
 }
 
