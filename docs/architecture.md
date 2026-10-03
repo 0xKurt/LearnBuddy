@@ -2569,13 +2569,46 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   moon's movement plus a one-line caption with a quiet hint under it. On the phone listening ends
   by itself when she pauses
   (on-device recogniser, `untilPause`); on the recording path (browser) she taps the mic when done.
-  Tapping the mic — or Buddy himself — while he speaks interrupts him and listens at once
-  (issue #35). That tap is the honest part of barge-in: while Buddy speaks the mic stays off,
-  because neither expo-audio playback nor expo-speech-recognition promises device echo
-  cancellation, and an open mic would write down Buddy's own voice (a recording that starts
-  while he speaks is already dropped, audit M-78). expo-speech-recognition 3.1.3 does expose
-  `iosCategory: playAndRecord`, but without a device test that is no promise (rule 5); real
-  talking-over needs the duplex realtime audio stack that is deliberately not built (above).
+  Tapping the mic — or Buddy himself — while he speaks interrupts him and listens at once.
+  **She can also just talk over him** (barge-in, issue #35), in the browser and on Android:
+  while he speaks (and the mic may open by itself — no screen reader) an ear watches the mic's
+  **level**, never its words (`lib/speech/bargeMonitor.ts`: the browser's `getUserMedia` with
+  `echoCancellation` on and an analyser, no recorder; Android a level-only recorder on the
+  `voice_communication` source, the one the platform runs its echo canceller on, its cache file
+  deleted at once). So an echo can at worst stop him by mistake — it can never be written down
+  as her words; the recogniser only starts once he is silent. Two layers keep his voice out:
+  the platform's echo cancellation, then a gate (`lib/speech/bargeIn.ts`, pure, unit-tested)
+  that first learns how loud his residue is while he really sounds (600 ms), keeps learning
+  from everything that is not a candidate, and counts a frame as her only when it is 10 dB
+  above the residue's 90th percentile and above −42 dBFS — for 300 ms of loud time, dips
+  between syllables up to 200 ms allowed. A click, a cough or Chromium's 20 ms fake-mic beep
+  never gets there (`tests/web/talk-voice.spec.ts`: three replies read to the end over the
+  beeps); a voice-shaped signal stops him 0.3 s after it starts (`talk-barge.spec.ts`). Where
+  echo cancellation is weak his residue is loud, the bar rises with it and she has to speak up:
+  a missed barge-in, never a false one. Frames between sentences (his next one still on its
+  way) count for nothing — calibrating on silence would let his first loud syllable through.
+  The hint under "Buddy spricht …" says "Sprich einfach dazwischen" only once the ear really
+  hears (a level arrived), otherwise it keeps naming the tap. On Android the ear lets go of
+  the mic before the on-device recogniser starts (two captures must not race for one device);
+  in the browser it stays open until the recorder runs, so the recorder finds the device
+  awake. **Not on iOS:** expo-audio cannot put the session into the voice-processing mode
+  (`voiceChat`) that cancels echo, and switching to recording while he plays may move his
+  voice to the earpiece — there the tap stays the way in. (The research question of #35, how
+  the realtime voice products do it: they stream the mic continuously through a voice-processing
+  audio path — WebRTC's echo canceller, iOS's voice-processing I/O unit — and a voice-activity
+  detector decides the interruption, the duplex stack this app deliberately does not build. The
+  ear here is the same idea cut down to what expo-audio offers: the platform's echo path plus a
+  level gate, with no audio leaving the phone. That description is general knowledge, not
+  measured here.) What only a phone can tell (needs
+  live verification): how much echo Android's canceller leaves with media playback on the
+  loudspeaker (the gate's bar adapts, but how loud she must be is a device number), whether
+  the level-only recorder and Buddy's player coexist on every Android audio route (the
+  recorder requests no audio focus; Bluetooth headsets switch to call mode for
+  `voice_communication` on some phones), and how long the recorder takes to let go before the
+  recogniser starts (it adds to `relisten`: after an interruption, and after his last word
+  while the recorder is still letting go — the recogniser always waits for it, never races it).
+  The first syllables she said before the gate decided (≈ 0.3 s) and while the recogniser
+  starts are not written down: the ear holds only levels, by design.
   Opening the screen warms the recogniser (issue #41, `warmRecognition` in
   `lib/speech/recognize.ts`): the Android service choice with its installed languages, the
   engine decision and the permission answer — the latter remembered while the app stays in
@@ -2600,7 +2633,8 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   The moon runs on the UI thread: one Reanimated frame callback per moving orb writes a pose that
   a few animated views read (moon in front and behind the glass, trail dots, ping, reflection) —
   no JS re-render per frame. Tapping Buddy while he
-  speaks stops him and listens ("Tipp auf Buddy, dann hört er dir zu.", issue #35). Two quiet synthesised tones
+  speaks stops him and listens ("Tipp auf Buddy, dann hört er dir zu.", issue #35); where the
+  barge-in ear hears, the hint says she can just talk instead. Two quiet synthesised tones
   (`scripts/make-talk-tones.mjs`, `lib/speech/cues.ts`) mark listening starting and ending; on
   iOS they play in a session that obeys the silent switch, then talk mode's session is restored
   (needs live verification on a phone); the web plays none. The camera next to "Tastatur"
