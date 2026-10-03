@@ -14,8 +14,8 @@
 //   - a number: the decimal separator, the fraction bar and the minus sign, plus the
 //     operators a written path needs.
 //
-// A table cell whose key is a whole number gets NO row (issue #286 finding 5): the phone's
-// digits are all it needs, and a row of /, √, π over a number wall is noise that hides the wall.
+// A table cell whose key is a whole number gets only the minus (issue #286 finding 5): the
+// phone's digits write the rest, and a row of /, √, π over a number wall is noise.
 //
 // The row never scrolls sideways (a key she has to scroll to find is a key she does not know
 // exists): as many keys as fit on one line, and a "…" key that shows the next ones.
@@ -135,7 +135,10 @@ export function keysFor(ctx: KeyContext): KeyId[] {
 
 /** A gap of a table: a whole number needs nothing beyond the digits; any other number its signs. */
 export function cellKeys(input: 'math' | 'text', whole: boolean): KeyId[] {
-  if (input !== 'math' || whole) return [];
+  if (input !== 'math') return [];
+  // A whole number: the digits are the phone's, but its sign is not on every keyboard (an
+  // Android letter keyboard hides "−"). So the minus alone — no fraction bar, no root, no π.
+  if (whole) return ['minus'];
   // A number or a short term: its signs, and the exponent for a term like x².
   return ['decimal', 'fraction', 'minus', 'power', 'brackets'];
 }

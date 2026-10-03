@@ -335,8 +335,8 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: Props) {
       <BottomBar>
         {/* The math keys while a number or term cell has the focus — a keyboard accessory,
             not furniture (issue #16). */}
-        {/* Only what the gap needs: none for a word, none for a whole number — the phone's
-            digits write it (#286 finding 5, #239, lib/math/keys.ts). */}
+        {/* Only what the gap needs: none for a word, only the minus for a whole number — the
+            phone's digits write the rest (#286 finding 5, #239, lib/math/keys.ts). */}
         {focusedGap ? (
           <MathKeys
             keys={cellKeys(focusedGap.input, focusedGap.whole)}

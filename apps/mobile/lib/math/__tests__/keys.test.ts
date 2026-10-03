@@ -72,8 +72,8 @@ describe('keysFor: what the question needs, chosen from the question', () => {
     expect(keysFor(ask({ kind: 'multiple_choice' }))).toEqual([]);
   });
 
-  it('gives a table gap with a whole number no row (#286 finding 5)', () => {
-    expect(cellKeys('math', true)).toEqual([]);
+  it('gives a table gap with a whole number only its sign (#286 finding 5)', () => {
+    expect(cellKeys('math', true)).toEqual(['minus']);
     expect(cellKeys('text', false)).toEqual([]);
     expect(cellKeys('math', false)).toEqual(['decimal', 'fraction', 'minus', 'power', 'brackets']);
   });

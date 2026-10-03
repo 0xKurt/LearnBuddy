@@ -1658,7 +1658,8 @@ Fragetext —, nie aus dem Schlüssel (`apps/mobile/lib/math/keys.ts`):
   Rechenzeichen eines Rechenwegs; Wurzel, π und Hochzahl nur, wo die Frage sie zeigt.
 - **Tabellenlücke**: eine Lücke, deren Schlüssel in jeder Form eine ganze Zahl ist
   (`TableViewGap.whole`, vom Server aus dem Schlüssel entschieden — eine Aussage über ihn und nicht
-  mehr), bekommt **keine** Reihe; die Ziffern der Tastatur schreiben sie.
+  mehr), bekommt nur das Minus; die Ziffern der Tastatur schreiben den Rest (eine
+  Android-Buchstabentastatur zeigt kein „−").
 
 Hochzahl, Tiefstellen und Ladung sind Schalter: Die nächsten Ziffern, die sie auf der Tastatur des
 Handys tippt, werden hoch- oder tiefgestellt (`typedUnder`), bei der Ladung auch das Vorzeichen,

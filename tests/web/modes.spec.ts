@@ -366,7 +366,8 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByLabel('Schreib Buddy …').fill('Zeig mir Bruchbalken zum Üben');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Bruchbalken zum Ausprobieren', { exact: false })).toBeVisible();
-  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  // Its own card's button, not "the newest" — under load the earlier offer rendered last (#267).
+  await offerStart(page, 'Bruchbalken zum Ausprobieren').click();
   // The question code wrote from the task: one half, on a bar of quarters.
   await expect(page.getByText('Färbe', { exact: false }).first()).toBeVisible();
   await expect(page.getByText('0 von 4 Teilen gefärbt')).toBeVisible();
@@ -1049,19 +1050,26 @@ test('formulas: a reaction equation typed with the chemistry keys and counted (i
   await expect(page.getByRole('toolbar', { name: 'Chemie-Zeichen' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Bruchstrich' })).toHaveCount(0);
   const key = (name: string) => page.getByRole('button', { name, exact: true });
+  // A key of the row, tapped the way she does it: the row lives while the field has the focus
+  // (a shot's contrast check or a resize can take it), so the field gets it back first.
+  const tap = async (name: string): Promise<void> => {
+    await field.focus();
+    await expect(key(name)).toBeVisible();
+    await key(name).click();
+  };
   await keyRowShots(page, '71-chem-keys-empty');
 
   await field.pressSequentially('2 H');
-  await key('Tiefstellen').click();
+  await tap('Tiefstellen');
   await expect(key('Tiefstellen, eingeschaltet')).toBeVisible();
   await field.pressSequentially('2');
-  await key('plus').click();
+  await tap('plus');
   await field.pressSequentially('O');
-  await key('Tiefstellen').click();
+  await tap('Tiefstellen');
   await field.pressSequentially('2');
-  await key('Reaktionspfeil').click();
+  await tap('Reaktionspfeil');
   await field.pressSequentially('2 H');
-  await key('Tiefstellen').click();
+  await tap('Tiefstellen');
   await field.pressSequentially('2O');
   await expect(field).toHaveValue('2 H₂ + O₂ → 2 H₂O');
   // The letter ended the mode by itself.
@@ -1080,9 +1088,9 @@ test('formulas: a reaction equation typed with the chemistry keys and counted (i
   await expect(page.getByLabel(/steht im Gleichgewicht mit/).first()).toBeAttached();
   await field.click();
   await field.pressSequentially('SO');
-  await key('Tiefstellen').click();
+  await tap('Tiefstellen');
   await field.pressSequentially('4');
-  await key('Ladung').click();
+  await tap('Ladung');
   await field.pressSequentially('2-');
   await expect(field).toHaveValue('SO₄²⁻');
   await keyRowShots(page, '74-chem-charge');
@@ -1090,7 +1098,7 @@ test('formulas: a reaction equation typed with the chemistry keys and counted (i
   await expect(right(page)).toBeVisible();
 });
 
-test('formulas: math keys page by page, the new notation drawn, no keys over whole numbers (issue #239)', async ({
+test('formulas: math keys page by page, the new notation drawn, only the sign over whole numbers (issue #239)', async ({
   page,
 }) => {
   await onboardChild(page);
@@ -1105,21 +1113,28 @@ test('formulas: math keys page by page, the new notation drawn, no keys over who
 
   const field = page.getByLabel('Deine Antwort');
   const key = (name: string) => page.getByRole('button', { name, exact: true });
+  // A key of the row, tapped the way she does it: the row lives while the field has the focus
+  // (a shot's contrast check or a resize can take it), so the field gets it back first.
+  const tap = async (name: string): Promise<void> => {
+    await field.focus();
+    await expect(key(name)).toBeVisible();
+    await key(name).click();
+  };
   await field.click();
   await expect(page.getByRole('toolbar', { name: 'Mathe-Zeichen' })).toBeVisible();
   await keyRowShots(page, '76-math-keys-page1');
   await field.pressSequentially('x');
-  await key('Hochzahl').click();
+  await tap('Hochzahl');
   await field.pressSequentially('2');
   // ≤ is not on the first page of this question: "…" turns to the next keys.
   await expect(key('kleiner gleich')).toHaveCount(0);
-  await key('Weitere Zeichen').click();
+  await tap('Weitere Zeichen');
   await keyRowShots(page, '77-math-keys-more');
   // How the keys fall on pages depends on the width; "…" turns until ≤ shows.
   await field.focus();
   for (let i = 0; i < 4 && (await key('kleiner gleich').count()) === 0; i++)
-    await key('Weitere Zeichen').click();
-  await key('kleiner gleich').click();
+    await tap('Weitere Zeichen');
+  await tap('kleiner gleich');
   await field.pressSequentially('3');
   await expect(field).toHaveValue('x² ≤ 3');
   await page.getByRole('button', { name: 'Prüfen' }).click();
@@ -1134,17 +1149,18 @@ test('formulas: math keys page by page, the new notation drawn, no keys over who
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(right(page)).toBeVisible();
 
-  // A table of whole numbers: the phone's digits write them, no row of math keys above.
+  // A table of whole numbers: the phone's digits write them; above, only the minus.
   await nextQuestion(page, 'Einmaleins-Tabelle');
   const gap = page.getByLabel('5, 3', { exact: true });
   await expect(gap).toBeVisible();
   await gap.click();
-  await expect(page.getByTestId('math-keys')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'minus', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Bruchstrich' })).toHaveCount(0);
   await gap.fill('15');
   await page.getByLabel('5, 4', { exact: true }).fill('20');
   await page.getByLabel('6, 3', { exact: true }).fill('18');
   await page.getByLabel('6, 3', { exact: true }).focus();
-  await expect(page.getByTestId('math-keys')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Bruchstrich' })).toHaveCount(0);
   await bothSchemes(page, '79-table-whole-no-keys');
 });
 
@@ -1159,7 +1175,9 @@ test('the task typed back and a decay that does not add up, both named by code (
   ).toBeVisible();
   // A fresh learner: this is the only offer in the thread.
   await page.getByRole('button', { name: START }).last().click();
-  await expect(page.getByText('Faktorisiere', { exact: false }).first()).toBeVisible();
+  // The question itself: the home's "Weiterüben" card behind the practice also says
+  // "Faktorisieren – noch 2 Aufgaben", and under load it was the first match.
+  await expect(page.getByRole('heading', { name: /^Faktorisiere x/ })).toBeVisible();
 
   // The task's own term written back: the same value, nothing done — a near miss, said gently.
   const field = page.getByLabel('Deine Antwort');

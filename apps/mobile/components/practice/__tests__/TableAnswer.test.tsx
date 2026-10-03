@@ -108,7 +108,7 @@ describe('a table she fills in', () => {
   });
 
   // A whole number is written with the phone's digits: no row over the table (#286 Befund 5, #239).
-  it('brings no math keys for a gap whose key is a whole number', () => {
+  it('brings only the minus for a gap whose key is a whole number', () => {
     const wall = {
       ...VALUES,
       rows: [
@@ -119,7 +119,9 @@ describe('a table she fills in', () => {
       <TableAnswer view={wall} draftKey="tab-whole" disabled={false} onSubmit={() => undefined} />,
     );
     fireEvent.focus(screen.getByLabelText('f(x), 1'));
-    expect(screen.queryByRole('toolbar')).toBeNull();
+    expect(screen.getByRole('toolbar')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'minus' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Bruchstrich' })).toBeNull();
   });
 
   it('keeps word cells free of the math keys', () => {
