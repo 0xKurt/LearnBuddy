@@ -162,4 +162,57 @@ describe.skipIf(!dbReady)('streamed pronunciation judgement', () => {
     );
     expect(turns).toHaveLength(0);
   });
+
+  // Issue #227 A8: the model's own answer is checked by code before anything counts. A judgement
+  // that says "good" over a red word, or colours a word the sentence does not have, cannot be
+  // stored as it is — code cannot know which half is right — so it is refused like an unreadable
+  // one: nothing is stored, the question stays open, she simply says it again.
+  it('refuses a judgement that contradicts itself, and judges nothing', async () => {
+    for (const broken of [
+      { ...judgement, overall: 'good' },
+      {
+        ...judgement,
+        words: [
+          { text: 'Je', ok: true, tip: null },
+          { text: 'suis', ok: false, tip: 'x' },
+        ],
+      },
+      {
+        ...judgement,
+        overall: 'retry',
+        words: judgement.words.map((w) => ({ ...w, ok: true, tip: null })),
+      },
+    ]) {
+      scriptGeneration(env, "Je m'appelle Lena.");
+      const run = await l.api.post<SessionView>('/practice/topic', {
+        client_request_id: randomUUID(),
+        kind: 'speak',
+        text: "Je m'appelle Lena.",
+      });
+      const item = run.body.items[0]!.item.id;
+      env.llm.script('pronounce', { json: broken });
+      const s = await speak(env, l, run.body.id, item);
+      expect(s.done).toBeNull();
+      expect(s.error).toEqual({ code: 'model_unavailable' });
+      // The plain JSON call refuses it the same way.
+      env.llm.script('pronounce', { json: broken });
+      const plain = await l.api.post(`/practice/sessions/${run.body.id}/speak`, {
+        client_turn_id: randomUUID(),
+        item_id: item,
+        mime: 'audio/m4a',
+        audio_base64: audio,
+      });
+      expect(plain.status).toBe(503);
+      const turns = await env.db.query(
+        `select 1 from practice_turns where session_id = $1 and item_id = $2`,
+        [run.body.id, item],
+      );
+      expect(turns).toHaveLength(0);
+      const si = await env.db.one<{ attempts: number; status: string }>(
+        'select attempts, status from session_items where session_id = $1 and item_id = $2',
+        [run.body.id, item],
+      );
+      expect(si).toEqual({ attempts: 0, status: 'open' });
+    }
+  });
 });

@@ -190,6 +190,46 @@ describe('compareNumbers — exact, or within the key’s own rounding (D-1, C-2
     expect(cmp('240', '4 h', null, 'min')).toBe('unknown');
   });
 
+  it('converts another unit of the same quantity exactly (#227 A6)', () => {
+    const other = (key: string, given: string, unit: string | null = null, tolerance = null) =>
+      compareNumbers(parseNumericInput(given), parseCanonicalKey(key), {
+        unit,
+        tolerance,
+        convertUnits: true,
+      });
+    expect(other('150', '1,5 m', 'cm')).toBe('equal');
+    expect(other('150', '1,4 m', 'cm')).toBe('different');
+    expect(other('150 cm', '1500 mm')).toBe('equal');
+    expect(other('240', '4 h', 'min')).toBe('equal');
+    expect(other('1.5', '90 min', 'h')).toBe('equal');
+    expect(other('1.5', '80 min', 'h')).toBe('different');
+    expect(other('2.5', '2500 g', 'kg')).toBe('equal');
+    expect(other('1', '1000 cm³', 'l')).toBe('equal');
+    expect(other('1', '10000 cm2', 'm²')).toBe('equal');
+    expect(other('36', '10 m/s', 'km/h')).toBe('equal');
+    expect(other('0.5', '50 ct', '€')).toBe('equal');
+    expect(other('2', '2000 N', 'kN')).toBe('equal');
+    // Off unless asked for; another quantity, or a calculation, is never converted.
+    expect(cmp('150', '1,5 m', null, 'cm')).toBe('unknown');
+    expect(other('150', '1,5', 'cm')).toBe('different');
+    expect(other('5', '5 m', 'min')).toBe('unknown');
+    expect(other('20', '293 K', '°C')).toBe('unknown');
+    expect(other('391', '17·23 cm', 'm')).toBe('unknown');
+  });
+
+  it('reads the school units a phone types (#227 A6)', () => {
+    expect(parseNumericInput('24 cm2')).toMatchObject({ value: 24, unit: 'cm²' });
+    expect(parseNumericInput('3 m3')).toMatchObject({ value: 3, unit: 'm³' });
+    expect(parseNumericInput('90°')).toMatchObject({ value: 90, unit: '°' });
+    expect(parseNumericInput('20 °C')).toMatchObject({ value: 20, unit: '°C' });
+    expect(parseNumericInput('50 ct')).toMatchObject({ value: 50, unit: 'ct' });
+    expect(parseNumericInput('12 N')).toMatchObject({ value: 12, unit: 'N' });
+    expect(parseNumericInput('3 kN')).toMatchObject({ value: 3, unit: 'kN' });
+    // A small n is a variable, never newton.
+    expect(parseNumericInput('2n').value).toBeNull();
+    expect(parseNumericInput('2 n').value).toBeNull();
+  });
+
   it('leaves calculations and ambiguous numbers to the tutor', () => {
     expect(cmp('391', '17·23')).toBe('unknown');
     expect(cmp('1000', '1.000')).toBe('unknown');
