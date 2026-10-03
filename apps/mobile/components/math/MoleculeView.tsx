@@ -8,11 +8,16 @@ import type { ReactNode } from 'react';
 import Svg, { Circle, G, Line, Path } from 'react-native-svg';
 
 // Imported by path, like expression.js in FigureView: dependency-free, no mathjs in the bundle.
-import { layoutMolecule, type LaidAtom } from '../../../../packages/shared-math/src/molecule.js';
+import {
+  checkMolecule,
+  layoutMolecule,
+  type LaidAtom,
+} from '../../../../packages/shared-math/src/molecule.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY, HaloText } from './figureText.js';
 
 type MoleculeFig = Extract<Figure, { type: 'molecule' }>;
+type T = (key: string, values?: Record<string, string | number>) => string;
 
 /** The element letters: large enough to read a subscript at 360 px. */
 const ATOM_FONT = 17;
@@ -222,4 +227,54 @@ export function MoleculeView({ fig, width }: { fig: MoleculeFig; width: number }
       {letters}
     </Svg>
   );
+}
+
+// ─────────────── description for screen readers (FigureView `describeFigure`) ───────────────
+
+const SUBSCRIPT = '₀₁₂₃₄₅₆₇₈₉';
+
+/**
+ * A structural formula in words: every atom with its hydrogens and charge, every bond between
+ * them (– single, = double, ≡ triple) and, where the drawing shows them, the lone pairs. The
+ * same content as the drawing, so the question can be answered without seeing it.
+ */
+export function describeMolecule(fig: MoleculeFig, t: T): string {
+  const sub = (n: number) =>
+    n <= 1 ? '' : [...String(n)].map((c) => SUBSCRIPT[Number(c)]).join('');
+  const charge = (c: number) =>
+    c === 0 ? '' : `${Math.abs(c) === 1 ? '' : Math.abs(c)}${c > 0 ? '⁺' : '⁻'}`;
+  const bonded = new Set(fig.bonds.flatMap((b) => [b.a, b.b]));
+  // A lone particle is named as a school writes it (H₂O, HCl), an atom in a chain by its group
+  // (CH₃, OH) — the same rule as the drawing's labels.
+  const hFirst = (a: { id: string; el: string }) =>
+    !bonded.has(a.id) && ['O', 'S', 'F', 'Cl', 'Br', 'I'].includes(a.el);
+  const name = new Map(
+    fig.atoms.map((a) => {
+      const hs = a.h > 0 ? `H${sub(a.h)}` : '';
+      return [a.id, `${hFirst(a) ? `${hs}${a.el}` : `${a.el}${hs}`}${charge(a.charge)}`];
+    }),
+  );
+  const mark = ['', '–', '=', '≡'];
+  const bonds = fig.bonds.map(
+    (b) => `${name.get(b.a) ?? ''}${mark[b.order] ?? '–'}${name.get(b.b) ?? ''}`,
+  );
+  const alone = fig.atoms.filter((a) => !bonded.has(a.id)).map((a) => name.get(a.id) ?? '');
+  const parts = [
+    t('figure.molecule', {
+      style: t(`figure.molecule_${fig.style}`),
+      list: [...bonds, ...alone].join(', '),
+    }),
+  ];
+  if (fig.style !== 'skeletal') {
+    const check = checkMolecule(fig);
+    if (check.ok) {
+      for (const a of fig.atoms) {
+        const n = check.facts.lonePairs.get(a.id) ?? 0;
+        if (n > 0) parts.push(t('figure.lone_pairs', { atom: name.get(a.id) ?? a.el, count: n }));
+      }
+    }
+  }
+  const marked = fig.atoms.filter((a) => fig.mark.includes(a.id)).map((a) => name.get(a.id) ?? '');
+  if (marked.length > 0) parts.push(t('figure.molecule_marked', { list: marked.join(', ') }));
+  return parts.join('. ');
 }

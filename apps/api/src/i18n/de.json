@@ -284,6 +284,14 @@
       "right_of_one": "1 von {{total}} Lücken stimmt schon.",
       "wrong": "Bei {{words}} passt es noch nicht.",
       "near": "Bei {{words}} fehlt nur noch eine Kleinigkeit in der Schreibweise."
+    },
+    "tree": {
+      "mode_ad": "autosomal-dominant",
+      "mode_ar": "autosomal-rezessiv",
+      "mode_xd": "X-chromosomal-dominant",
+      "mode_xr": "X-chromosomal-rezessiv",
+      "accepted": "Ja, es wird akzeptiert",
+      "rejected": "Nein, es wird nicht akzeptiert"
     }
   },
   "contact": {

@@ -2603,6 +2603,54 @@ item's ordinary columns before it is stored.
 - **Not checked by code**: the meaning of the prompt itself. A question that claims `read: sum` and
   asks something else is caught only when the numbers then disagree.
 
+### Trees (issue #256)
+
+Probability trees, plain trees (Informatik), pedigrees (Stammbaumanalyse) and finite automata
+next to a question. **The model writes the structure, code checks it, lays it out and computes
+the key.** No migration: the figure is an item's `figure` (jsonb), like the charts.
+
+- **Contract** (`contracts/tree.ts`): three `ModelFigure` branches with short names and no
+  nullable field (they sit in every generated item; the generate item schema grew from 25,842 to
+  29,416 characters, 0 new `anyOf` — the figure union appears in `figure` and `choice_figures`).
+  `tree`: nodes with a parent index (root first), a label and a branch label; `pr` marks a
+  probability tree; `ask` = `path` / `sum` / `edge` / `none` with `at`. `pedigree`: persons (sex,
+  affected, father and mother by index, listed before the child), `md` the mode it is drawn for,
+  `ask` = `mode` / `gt` / `none` with `at`. `automaton`: states (the first is the start, `f` =
+  final), transitions `a → b` on the symbols `c`, `w` the word a question asks about.
+- **Checked, then rejected — never repaired** (`treeProblem`, `packages/shared-math/src/trees.ts`
+  and `pedigree.ts`): a probability tree's branches are probabilities and add up to **exactly** 1
+  per node, in fractions (0.3 + 0.7 holds, 0.3 + 0.6 does not); at most one `"?"`, which is what
+  its siblings leave; a sum over disjoint leaves only. A pedigree has both parents or none, a
+  father who is a man, one partner per person, partners in one generation. Code finds the modes
+  of inheritance that explain it by **searching genotype assignments** (complete penetrance, no
+  new mutation — the school model) for autosomal/X-linked × dominant/recessive; `md` must be one
+  of them; "Welcher Erbgang?" and "Welcher Genotyp?" need it to be the **only** one, and a
+  genotype question also needs the person's genotype to be the only one that fits (search budget
+  200,000 steps, else the figure is undecidable and dropped). An automaton has distinct state
+  names, at least one final state, one-character symbols, one arrow per pair of states, and a
+  word over its alphabet; NEAs are followed along every way at once. Every figure must fit the
+  360 px phone (leaves, levels, label lengths, eight persons per generation, four generations).
+  A tree figure that breaks a rule costs its **question** (`clipDraft`, `treeCheck.ts`).
+- **The key** (`apps/api/src/modules/practice/treeCheck.ts`): a probability is a number question
+  whose key must be the computed fraction — as a fraction, a decimal, a percentage or rounded at
+  the precision it is written in (`numberKeyTolerance`, as for charts). Mode, genotype and "Wird
+  das Wort akzeptiert?" are multiple choice whose **options code writes** in the question's
+  language (`practice.tree.*` in `src/i18n`), and the model's `correct_choice` must point at the
+  computed one. Genotypes are options in math notation (`$Aa$`, `$X^{A}Y$`), never typed text:
+  written answers are compared without case where spelling does not count, so "AA" would pass
+  for "aa". A number asked about a tree that declares no key is dropped.
+- **Drawing** (`apps/mobile/components/math/TreeFigures.tsx`, layout from shared-math imported by
+  path): a probability tree left to right with the probabilities on the branches and a `"?"` in
+  the accent colour; a plain tree top down in circles; a pedigree with □ / ○, filled = affected,
+  partner lines, sibship lines, person numbers and generation numerals I–IV; an automaton on a
+  ring, the start at the left with an entry arrow, final states as double circles, loops above or
+  below, a way back bent to one side. The screen-reader text (`describeTree`) says every branch,
+  person and transition and nothing derived. Walkthrough: `tests/web/trees.spec.ts` at 390 × 844
+  and 360 × 740, light and dark. Library check: `tools/guards/drawing-registry.json`.
+- **Not checked by code**: the prompt's words. A prompt that names another person than `at` or
+  another word than `w` is caught only where the numbers then disagree. A screen reader reads
+  `$AA$` and `$aa$` alike (case is not spoken).
+
 ### Explain profiles (issue #281, D2)
 
 Every explain call is sent only the forms its run can use — the schema is derived from the kind
@@ -2634,7 +2682,7 @@ A sheet-bound run (a practice or test for a planned test) is the same profile wi
 topics as the item `topic` enum. With no kind known (`setSchemaForModel(null, …)`), the fallback is
 every form but the listening task and the Diktat — byte for byte `GENERATED_SCHEMA`, what every
 run without sheets was sent before D2; today every call knows its kind, so it is the measured baseline. Not
-narrowed, because code cannot prove a form unusable there: `ModelFigure` (all 14 figure types stay
+narrowed, because code cannot prove a form unusable there: `ModelFigure` (all 17 figure types stay
 in every profile with items, also vocab and speak — that would need a code rule first), the
 extraction schemas (a sheet is read before anyone knows what is on it) and the Buddy turn's
 `actions` (tool growth, D3 deferred by the #279 consensus). Proven by
@@ -2958,10 +3006,16 @@ word list, so it stays a prompt rule.
   compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
   when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
   may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table,
-  molecule, and the charts of §Charts below) as data (`contracts/figure.ts`); the server drops
+  molecule, the charts of §Charts below, and the primary-school figures clock, money, dot field
+  and base-ten blocks) as data (`contracts/figure.ts`); the server drops
   figures it cannot draw (e.g. an expression that does not compile with `@learnbuddy/shared-math`
-  `compileExpression`) without dropping the question — except a chart, which costs its question
-  (§Charts), and a geometry or molecule figure that contradicts its numbers (below).
+  `compileExpression`) without dropping the question — except a chart and a primary-school
+  figure, which cost their question (§Charts, below), and a geometry or molecule figure that
+  contradicts its numbers (below).
+  molecule, the charts of §Charts and the trees of §Trees) as data (`contracts/figure.ts`); the server drops
+  figures it cannot draw (e.g. an expression that does not compile with `@learnbuddy/shared-math`
+  `compileExpression`) without dropping the question — except a chart or a tree, which costs its
+  question (§Charts, §Trees), and a geometry or molecule figure that contradicts its numbers (below).
   A figure is drawn to be READ. What she can work with is a `surface` — today the Bruchbalken
   (§Practice above, issue #162), whose question, picture and key are computed from one reviewed
   task instead of written by the model.
@@ -3051,6 +3105,50 @@ word list, so it stays a prompt rule.
     Both figures describe themselves in words for a screen reader (angles with sizes, sides,
     forces, rays; every bond and the lone pairs). `figureCheck.test.ts`, `molecule.test.ts`,
     `figures-to-scale.int.test.ts`, walkthrough `tests/web/figures.spec.ts`.
+- **Primary-school figures (issue #254)** — Anschauung for Grundschule maths, drawn by code from
+  data (`ClockFigure`, `MoneyFigure`, `DotFieldFigure`, `BaseTenFigure`; short field names under
+  the schema pressure of #281). No migration: the figure is the item's `figure` (jsonb).
+  - `clock`: one analog face `{h, m}`, or two for a span from the first to the second; `h24` only
+    when the task asks for the 24-hour time. `money`: euro coins and notes, each piece once with
+    its count (`MONEY_PIECES` — 1 ct … 200 €; a piece that is not a euro denomination does not
+    parse), at most 12 pieces; drawn as a schematic (round coins with their value in copper,
+    brass and the bimetal of 1 € / 2 €, notes as tinted paper with their value) — never a picture
+    of a real banknote. `dot_field`: Zwanzigerfeld (2 × 10) or Hunderterfeld (10 × 10), filled
+    row by row in one or two colours, with the gap after five ("Kraft der Fünf"). `base_ten`:
+    hundred plates, ten rods (up to 19, for bundling) and unit cubes in stacks of five.
+  - **Rules** (`primaryProblem`, `packages/shared-math/src/primary.ts`): a time is read off one
+    clock, a span needs two that differ, each money piece once, no more dots than the field has
+    and no empty second colour, at least one and at most 30 blocks. A figure that breaks one —
+    or does not parse (a 3-ct coin, 25 o'clock) — costs its QUESTION (`figureIsRejectedPrimary`
+    in `clipDraft`): "Wie spät ist es?" without its clock is no question.
+  - **What a question reads off** (`ask`, `"none"` for nothing; `primaryKey`): `time` (the key is written "7:45", the
+    item is `short` — as a number "7:45" would be 7 ÷ 45), `span` (minutes forward from the first
+    clock to the second, the key a number in min or h), `sum` (the coins' amount, the key in € or
+    ct, exact to the cent — an amount euro pieces cannot lay, 3,455 €, is no key), `count` (dots,
+    or 100·plates + 10·rods + cubes). A key that is not the computed value drops the question
+    (`primaryHolds` in `practice/figureCheck.ts`); pictures as options (#231) are held to it too:
+    an option whose clock declares `ask` must be written as the time it shows (`figure_text`).
+  - **Grading without a model**: next to a clock that asks the time, an answer in digits is read
+    as a time (`clockVerdict` in `practice/evaluate.ts`, before the ratio check) — "7:45", "7.45"
+    and "19:45" are right for the same hands (unless `h24`), any other time is certainly wrong.
+    The figure, not a guess, says the characters are a time; without a clock "14:30" stays as
+    undecided as issue #175 left it. An answer in words ("Viertel vor acht") is language and goes
+    to the tutor with the key — reading it in code would need a word list (rule 3). Next to coins
+    that ask the sum, the amount in another unit (845 ct for 8,45 €) is right by rule.
+  - **Drawing** (`apps/mobile/components/math/PrimaryFigures.tsx`, react-native-svg; library check
+    in `tools/guards/drawing-registry.json`): the hands come from `handAngles`, the same arithmetic
+    the key is computed with (and `timeFromHands` reads hands back, for setting a clock by touch
+    later). The two hands differ in length and width, every coin and note carries its value, and
+    the screen-reader text (`describePrimary`) says what is drawn — where the hands stand, which
+    pieces lie there, how many dots per colour, plates, rods and cubes — never the time, sum or
+    number asked. Theme token `figure.coins` (copper, brass, silver), notes use `figure.slices`.
+  - **Not built here**: setting a clock by touch ("Stell die Uhr auf 7:45") and laying an amount
+    by tapping coins ("Leg 3,45 €") — both are answer forms, not figures, and wait for the
+    answer-area rebuild (#310). Zahlenmauer and Stellenwerttafel are structured tables (#230).
+  - Prompts: generate.v1.20, extract.v8.3 (`FIGURE_RULES`).
+  - Tests: `primary.test.ts` (hands ↔ time incl. quarter and half, amounts, counts, refusals),
+    `primaryFigures.test.ts`, `PrimaryFigures.test.tsx`, `primary-figures.int.test.ts`; walkthrough
+    `tests/web/primary-figures.spec.ts` (scenario `testing/scenarios/primary.ts`).
 
 ## Voice
 
