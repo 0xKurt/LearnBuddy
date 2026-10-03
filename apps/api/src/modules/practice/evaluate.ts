@@ -456,13 +456,20 @@ function numericVerdict(item: ItemForCheck, text: string): RuleVerdict {
   let allDifferent = true;
   for (const keyText of [item.answer, ...item.accepted_answers]) {
     const key = parseCanonicalKey(keyText);
-    const c = compareNumbers(given, key, { unit: item.unit, tolerance: item.tolerance });
+    const options = { unit: item.unit, tolerance: item.tolerance };
+    const c = compareNumbers(given, key, options);
     if (c === 'equal') {
       // The question asks for an amount (issue #162): any way of writing it is the answer.
       if (item.form_free === true || sameWrittenForm(given, key)) return 'correct';
       equalInOtherForm = true;
     }
-    if (c !== 'different') allDifferent = false;
+    // Another unit of the same quantity (issue #227 A6): "1,4 m" for 150 cm is certainly
+    // another length; "1,5 m" the same one — right in value, and whether the unit was the
+    // question ("in cm") is the tutor's, like any other form (D-3). Never 'correct' by rule.
+    const converted =
+      c === 'unknown' ? compareNumbers(given, key, { ...options, convertUnits: true }) : c;
+    if (c === 'unknown' && converted === 'equal') equalInOtherForm = true;
+    if (converted !== 'different') allDifferent = false;
   }
   // Decision D-3 stands: whether the FORM matters ("4/8" for "1/2" may still be unreduced) is
   // the tutor's call, not the rules'. But it used to be handed over as "not decidable", and the
