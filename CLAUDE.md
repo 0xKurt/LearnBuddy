@@ -22,6 +22,7 @@ Cite the relevant section in commit messages and PR bodies (e.g. `docs/architect
 - `docs/DESIGN-BRIEF.md` — how the product must feel (still valid)
 - `docs/UX-PRINCIPLES.md` — hide system complexity, keep understanding and control (intent → result; examples, not feature catalogs; progressive disclosure; undo over confirmation)
 - `docs/SETUP-VERTEX.md` — model setup
+- `docs/engineering-guards.md` — the CI guards behind the Engineering-Regeln (#313) and their Ausnahmelisten
 - `docs/legacy/` — the previous app's specs and audits: history, **not** requirements
 
 If a change diverges from these docs, update the doc in the same change or write an ADR.
@@ -84,6 +85,39 @@ If a change diverges from these docs, update the doc in the same change or write
     where something scrolls under a bar. Then revise and shoot again. The PR carries a
     before/after image (same screen, old next to new) — no UI change is handed to the owner
     without one. Screen titles in a header stay on one line (`components/lb/Screen.tsx`).
+
+## Engineering-Regeln (#313)
+
+Verbindlich, gleichrangig mit den Hard rules. Die Verantwortung für die Codequalität trägt der
+Entwickler (Claude), nicht der Owner. Was mechanisch prüfbar ist, prüfen die Wächter
+(`docs/engineering-guards.md`); der heutige Bestand steht auf Ausnahmelisten, die nur schrumpfen.
+
+1. **Erst Bibliothek, dann Eigenbau.** Vor jedem neuen Darstellungs-, Interaktions- oder
+   Infrastruktur-Baustein steht ein Bibliotheks-Check im Issue: Lizenz, React-Native-Weg, Größe,
+   Pflege, A11y. Eigenbau nur mit Begründung. Neue Zeichenkomponenten brauchen einen Eintrag in
+   `tools/guards/drawing-registry.json`.
+2. **Erst Fundament, dann Feature.** Ein Feature nutzt die gemeinsamen Bausteine (Hülle, Kachel,
+   Hörknopf, Karte mit Figur, `<Btn>`, Tokens). Fehlt einer, wird er zuerst gebaut. Kein rohes
+   `Pressable` außerhalb `components/lb`.
+3. **Keine Kopien.** Gleiches Verhalten hat genau eine Implementierung; wer etwas zum zweiten Mal
+   braucht, extrahiert es (jscpd).
+4. **Kleine Einheiten.** Höchstens 600 Zeilen pro Datei in der App, 800 im Backend (ohne Leer- und
+   Kommentarzeilen); eine Aufgabe pro Datei oder Modul.
+5. **Nur Tokens.** Abstände, Schrift, Radien und Farben nur aus `lib/theme`. Eine Ausnahme trägt
+   `// token-exempt: <Grund>`.
+6. **Design im Vergleich.** Jede sichtbare Änderung zeigt den Screen neben verwandten Screens;
+   Gleiches muss gleich aussehen.
+7. **Tests unabhängig von der Reihenfolge.** Jeder Spec bringt seine Szenarien selbst mit. Ein
+   Fehler ist nie „Flake“ oder „Last“, bevor die Ursache belegt ist.
+8. **Kurze Branches.** Von main, klein, schnell gemergt; kein Stapeln über Stunden.
+9. **Belegt heißt belegt.** Live- und Geräte-Lücken stehen im PR und als Issue, bis sie geschlossen
+   sind.
+10. **Integrationsverantwortung.** Bei paralleler Arbeit prüft der Orchestrator vor jedem Merge die
+    Kohärenz mit dem Rest der App, nicht nur das einzelne Feature.
+
+Ausnahmelisten (`tools/guards/baselines/`) wachsen nie still: CI vergleicht sie mit main, Zuwachs
+braucht im Commit die Zeile `Ausnahmeliste-Zuwachs: #<issue> <Grund>`. Nach einem Refactor zieht
+`pnpm guards:shrink` die Listen nach unten.
 
 ## Required quality gates
 
