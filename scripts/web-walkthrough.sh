@@ -38,6 +38,10 @@ if ! grep -q "http://localhost:$API_PORT" apps/mobile/dist-web/_expo/static/js/w
   echo "  (delete apps/mobile/dist-web and .expo, then run again)" >&2
   exit 1
 fi
+# The same export is measured against the web bundle budget (issue #313,
+# docs/engineering-guards.md): a library or a big component that grows the bundle by more
+# than the tolerance is a decision for the PR, not an accident.
+node tools/guards/bundle-budget.mjs apps/mobile/dist-web
 
 # Nothing secret may be in what the browser downloads (issue #290): an administrator token
 # once sat in every locally built bundle under an EXPO_PUBLIC_* name. This reads the finished
