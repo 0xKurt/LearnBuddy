@@ -13,10 +13,10 @@
     "apps/api/src/modules/practice/__tests__/evaluate.test.ts": 825,
     "apps/api/src/modules/practice/service.ts": 1343,
     "apps/mobile/app/buddy.tsx": 1223,
-    "apps/mobile/app/practice/[id].tsx": 1056,
+    "apps/mobile/app/practice/[id].tsx": 1055,
     "apps/mobile/app/profile.tsx": 644,
     "apps/mobile/components/lb/BuddyOrb.tsx": 612,
     "apps/mobile/components/math/ChartFigures.tsx": 983,
-    "apps/mobile/components/math/FigureView.tsx": 1249
+    "apps/mobile/components/math/FigureView.tsx": 1235
   }
 }
