@@ -64,6 +64,9 @@ export function ReadQuestionButton({ text, lang }: Props) {
 
   return (
     <CircleBtn
+      // Plain, without the ring: the ringed speaker in the header is the voice-mode switch, and
+      // two equal circles one above the other read as the same control twice.
+      plain
       icon={playing ? 'stop' : 'speak'}
       onPress={press}
       accessibilityLabel={playing ? t('speak.listen_stop') : t('speak.read_question_label')}
