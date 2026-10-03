@@ -121,9 +121,24 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // ── Undo what Buddy did ──
   await say(page, 'Ich spiele Handball');
   await expect(page.getByText('Cool – Handball merke ich mir.')).toBeVisible();
-  const undo = page.getByRole('button', { name: /^Rückgängig machen: / });
+  const undo = page.getByRole('button', { name: /^Rückgängig: / });
   await expect(undo).toBeVisible();
-  await undo.click();
+  // A small round arrow at the end of the receipt's line, not a pill under it (issue #295):
+  // its circle is small, the target is still 44 × 44, and it stands on the receipt's line.
+  const target = await undo.boundingBox();
+  expect(target?.width ?? 0, 'the arrow is 44 wide to the finger').toBeGreaterThanOrEqual(44);
+  expect(target?.height ?? 0, 'the arrow is 44 tall to the finger').toBeGreaterThanOrEqual(44);
+  const line = await page.getByText('Gemerkt: Spielt Handball', { exact: true }).boundingBox();
+  const mid = (b: { y: number; height: number } | null) => (b ? b.y + b.height / 2 : -1);
+  expect(
+    Math.abs(mid(target) - mid(line)),
+    'the arrow stands on the receipt’s own line (issue #295)',
+  ).toBeLessThanOrEqual(12);
+  await shot(page, '39b-undo-arrow');
+  // Keyboard on the web (issue #295): it takes focus and Enter takes the step back.
+  await undo.focus();
+  await expect(undo).toBeFocused();
+  await page.keyboard.press('Enter');
   await expect(undo).toHaveCount(0);
   // Said in words, not only by colour.
   await expect(page.getByText('Gemerkt: Spielt Handball – rückgängig gemacht')).toBeVisible();

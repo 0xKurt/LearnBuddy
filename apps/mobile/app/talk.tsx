@@ -3,9 +3,11 @@
 // She speaks → it is written down → Buddy answers → the answer is read aloud →
 // Buddy listens again. On the phone, listening ends by itself when she pauses;
 // on the recording path (the browser) she taps the mic when she is done.
-// Tapping the mic or Buddy himself while he speaks interrupts him and listens at
-// once (issue #35: the honest part of barge-in — the mic stays off while he
-// speaks, it would hear his own voice). When Buddy offers something to tap
+// She can talk over Buddy (issue #35): where the platform cancels echo (the
+// browser, Android), the mic's LEVEL is watched while he speaks — never its words
+// — and her voice, clearly above his echo for long enough (lib/speech/bargeIn.ts),
+// stops him and listens. Tapping the mic or Buddy himself does the same, on every
+// phone. When Buddy offers something to tap
 // (start learning, open a part of the app), the card stays tappable while the
 // loop simply listens again (issue #40). The mic is only on while this screen
 // is open, which she opened herself; "Beenden" or the keyboard ends it.
@@ -51,6 +53,9 @@ import { speak, stop as stopSpeaking, type ListenEnd } from '../lib/speech/liste
 import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { talkListensByItself } from '../lib/speech/handsFree.js';
 import { warmRecognition } from '../lib/speech/recognize.js';
+import { BargeGate } from '../lib/speech/bargeIn.js';
+import { bargeSupported, useBargeMonitor } from '../lib/speech/bargeMonitor.js';
+import { voiceStore } from '../lib/speech/voiceState.js';
 import { talkHeadline, type TalkPhase } from '../lib/speech/talkState.js';
 import { afterReply } from '../lib/speech/talkTurn.js';
 import { voiceLocale } from '../lib/speech/voice.js';
@@ -92,7 +97,7 @@ export default function TalkScreen() {
 
   function listen(): void {
     if (!open.current) return;
-    ++turnSeq.current;
+    const me = ++turnSeq.current;
     stopSpeaking();
     setProblem(null);
     setLive(null);
@@ -101,7 +106,16 @@ export default function TalkScreen() {
     // for the recogniser to write down, and waiting for it read as a stall
     // between turns (owner feedback 2026-09-28).
     void playCue('listen');
-    if (voiceRef.current.state === 'idle') voiceRef.current.toggle();
+    const start = () => {
+      if (!open.current || turnSeq.current !== me) return;
+      if (voiceRef.current.state === 'idle') voiceRef.current.toggle();
+    };
+    // On the phone the barge-in ear lets go of the mic first (two captures race for one
+    // device). Otherwise the mic starts in this same tap: a deferred start would say
+    // "Ich höre zu." for a frame before the recorder runs (issue #158).
+    const freeing = barge.release();
+    if (freeing) void freeing.then(start);
+    else start();
   }
 
   async function answer(text: string): Promise<void> {
@@ -320,14 +334,46 @@ export default function TalkScreen() {
   }
 
   /**
-   * A tap on Buddy while he speaks: he stops and listens at once (issue #35). The honest
-   * part of barge-in: while he speaks the mic stays off — it would hear his own voice
-   * (no echo cancellation to trust, audit M-78) — so her tap is the "I want to talk now".
+   * A tap on Buddy while he speaks: he stops and listens at once (issue #35) — on every
+   * phone, also where the barge-in ear below cannot run (iOS, a screen reader on).
    */
   function interrupt(): void {
     haptic.tap();
     listen();
   }
+
+  // Barge-in (issue #35): while Buddy speaks — and the mic may open by itself — the mic's
+  // level is watched, never its words. The gate learns his echo first and stops him only for
+  // her voice: clearly louder than his residue, for long enough (lib/speech/bargeIn.ts).
+  const gate = useRef(new BargeGate());
+  /** The ear really hears (a first level arrived): only then may the screen say "just talk". */
+  const [bargeHears, setBargeHears] = useState(false);
+  const watching =
+    bargeSupported && phase === 'speaking' && talkListensByItself(screenReader.current);
+  useEffect(() => {
+    if (!watching) return;
+    gate.current = new BargeGate();
+    return () => setBargeHears(false);
+  }, [watching]);
+  const barge = useBargeMonitor({
+    // In the browser the open stream is held while the recorder starts: its own getUserMedia
+    // then finds the device awake (issue #41: listening without a gap). Only while starting —
+    // once it records, or writes down what she said, no second stream stays open.
+    active:
+      watching ||
+      (Platform.OS === 'web' &&
+        bargeSupported &&
+        phase === 'listening' &&
+        (voice.state === 'idle' || voice.state === 'starting')),
+    onLevel: (db, at) => {
+      if (!watching) return;
+      setBargeHears(true);
+      if (gate.current.observe(db, at, voiceStore.get().phase === 'speaking')) {
+        // She talked over him: he stops and listens, as if she had tapped him.
+        listen();
+      }
+    },
+  });
 
   // Her photo is being read (she showed Buddy something): said here too.
   const home = useHome();
@@ -356,7 +402,7 @@ export default function TalkScreen() {
       ? t('buddy:talk.listening_sub')
       : t('buddy:talk.tap_when_done')
     : phase === 'speaking'
-      ? t('buddy:talk.tap_orb')
+      ? t(bargeHears ? 'buddy:talk.barge_sub' : 'buddy:talk.tap_orb')
       : phase === 'paused' && !problem && !voice.hint && !voice.denied
         ? t('buddy:talk.paused_sub')
         : null;

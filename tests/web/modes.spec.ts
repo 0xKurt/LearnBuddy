@@ -263,6 +263,25 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.waitForTimeout(500);
   await page.getByRole('button', { name: 'Einen Tipp bekommen' }).click();
   await expect(page.getByText('Schau auf die Kreise: Welcher ist mehr gefüllt?')).toBeVisible();
+  // Whole turns only (#286): on the smallest phone, with the drawing in the card, "Tipp, bitte"
+  // and the hint are each shown whole or not at all — never half a bubble under the card.
+  for (const phone of PHONES) {
+    await page.setViewportSize(phone);
+    await settle(page);
+    const cut = await page
+      .getByTestId('scroll-thread')
+      .last()
+      .evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return Array.from(el.querySelectorAll('[data-testid="thread-turn"]'))
+          .map((turn) => turn.getBoundingClientRect())
+          .filter((r) => r.bottom > box.top + 1 && r.top < box.bottom - 1)
+          .filter((r) => r.top < box.top - 1 || r.bottom > box.bottom + 1)
+          .map((r) => `${Math.round(r.top - box.top)}..${Math.round(r.bottom - box.top)}`);
+      });
+    expect(cut, `turns cut at the conversation's edge on ${phone.width} px`).toEqual([]);
+  }
+  await page.setViewportSize(PHONES[0]!);
   // What scrolls up out of the conversation fades away instead of being cut hard under the
   // question card, where half a line stood readable and looked like a rendering fault
   // (owner 28.09., issue #63). Since #286 the conversation shows whole turns, so the fade is
@@ -288,6 +307,9 @@ test('learning modes: explain, homework help without the solution, practice with
     edge.holdsMore,
   );
   await shot(page, '25-practice-fractions');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '25b-practice-fractions-night');
+  await page.emulateMedia({ colorScheme: 'light' });
   // The drawing takes the measured room of the grown question card (issue #96) — more
   // than the old fixed 14 % of the window (118 pt inside a ~144 pt frame) ever allowed.
   const fig = await partHeight(page, 'question-figure', '25-practice-fractions');
@@ -331,6 +353,10 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(1);
   await expect(explained).toBeHidden({ timeout: 8000 });
   await shot(page, '27-practice-voice-mode');
+  // The same moment at night: the voice bar, the reply and the drawing share the room (#286).
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '27b-practice-voice-mode-night');
+  await page.emulateMedia({ colorScheme: 'light' });
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   // Still in voice mode at Buddy: the bar is voice-first (keyboard · big mic · photo).

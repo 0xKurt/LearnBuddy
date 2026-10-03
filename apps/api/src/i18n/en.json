@@ -244,6 +244,13 @@
       "groups_some_one": "1 of {{total}} is already in the right group.",
       "groups_none": "None is in the right group yet – take another calm look.",
       "look_at": "Have another look at “{{text}}”."
+    },
+    "chart": {
+      "pyramid": "Pyramid",
+      "bell": "Bell",
+      "urn": "Urn",
+      "humid": "Humid",
+      "arid": "Arid"
     }
   },
   "contact": {

@@ -53,6 +53,8 @@ pins it — but it cannot see 8 pt. **Alignment is a measurement; it belongs to 
 Freitag, 2. Oktober". Two causes, both structural: the sentence was a `Text` with `flex: 1`
 sitting **next to** the "Rückgängig" button in a row, and the column stood in a block that aligns
 its children to the side, so each receipt was only as wide as its own button.
+Since #295 a small round arrow shares the line again — on purpose and safely: the sentence keeps
+`flex: 1` and the arrow is a fixed 24 pt, which is what the test now pins instead of "no row".
 
 **Which layer should have caught it: the component layer** — and now does, both causes
 (`components/buddy/__tests__/Conversation.test.tsx`). Verified by re-introducing each cause
