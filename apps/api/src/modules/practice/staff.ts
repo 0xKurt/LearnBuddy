@@ -290,8 +290,68 @@ const MIDDLE_PITCH: Record<Clef, Pitch> = {
   bass: { name: 'D', octave: 3 },
 };
 
-function staffFigure(clef: Clef, time: TimeSignature | null, bars: StaffBars): StaffFigure {
-  return { type: 'staff', clef, time, bars, tempo: TEMPO_DEFAULT };
+/** The line of a task as the app draws it — with the note names this task may show. */
+function staffFigure(
+  task: StaffTask,
+  clef: Clef,
+  time: TimeSignature | null,
+  bars: StaffBars,
+): StaffFigure {
+  return { type: 'staff', clef, time, bars, tempo: TEMPO_DEFAULT, labels: staffLabels(task, bars) };
+}
+
+// ─────────────── Notennamen auf der Zeile (issue #312) ───────────────
+
+/**
+ * Ob die Noten einer Aufgabe ihren Namen unter sich tragen (Owner 03.10.: „dass die für gewisse
+ * Übungen auch beschriftet werden müssen"). Entschieden von Code aus der Art der Aufgabe, nie vom
+ * Modell — `StaffTask` hat kein Feld dafür (Regel 0):
+ *
+ *   · `name_note`: nein — der Name IST die Antwort.
+ *   · `name_value`: nein — die Note steht nur als Platzhalter auf der mittleren Linie; ein Name
+ *     darunter behauptete, die Tonhöhe spiele eine Rolle.
+ *   · `interval`: ja — die zwei Noten sind gegeben, gefragt ist ihr Abstand; mit den Namen zählt
+ *     sie die Stufen ab, und gelesen werden muss trotzdem (Halbtöne, groß oder klein).
+ *   · `time_signature`: ja — Rhythmus lesen: gegeben sind die Noten, gefragt die Taktart.
+ *   · `write_line`: hat keine Figur; ihre Schreibfläche trägt nie Namen (sonst übte sie „schieben,
+ *     bis E dasteht" statt Notenlesen, `StaffAnswer.tsx`).
+ */
+const NAMED: Record<StaffTask['task'], boolean> = {
+  name_note: false,
+  name_value: false,
+  interval: true,
+  time_signature: true,
+  write_line: false,
+};
+
+/** Die Tonnamen, die die Antwort dieser Aufgabe SIND — sie stehen nie sichtbar auf ihrer Zeile. */
+function askedNames(task: StaffTask): ReadonlySet<NoteName> {
+  return new Set(task.task === 'name_note' ? [task.pitch.name] : []);
+}
+
+/**
+ * Die Regel, die über jeder Beschriftung steht: **eine Note, deren Name gefragt ist, wird nie
+ * beschriftet** — gleich, wer die Beschriftung wollte, und auch eine zweite Note desselben Namens
+ * nicht, die ihn ebenso verriete. Dazu fällt jede Nummer weg, die keine Note der Zeile ist. Nichts
+ * wird ergänzt: was hier herauskommt, ist eine Teilmenge dessen, was gewünscht war.
+ */
+export function visibleLabels(
+  task: StaffTask,
+  bars: StaffBars,
+  wanted: readonly number[],
+): number[] {
+  const asked = askedNames(task);
+  const notes = notesOf(bars);
+  return [...new Set(wanted)]
+    .filter((i) => Number.isInteger(i) && i >= 0 && i < notes.length)
+    .filter((i) => !asked.has((notes[i] as Pitch).name))
+    .sort((a, b) => a - b);
+}
+
+/** Welche Noten der Zeile dieser Aufgabe ihren Namen zeigen (`StaffFigure.labels`). */
+export function staffLabels(task: StaffTask, bars: StaffBars): number[] {
+  const all = notesOf(bars).map((_, i) => i);
+  return visibleLabels(task, bars, NAMED[task.task] ? all : []);
 }
 
 // ─────────────── die Auswahl ───────────────
@@ -423,7 +483,7 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
         topic: text(locale, 'topic_notes'),
         // A note inside the five lines is the easier one; a ledger line is the step up.
         difficulty: Math.abs(staffStep(task.pitch, task.clef)) > 4 ? 3 : 2,
-        figure: staffFigure(task.clef, null, bars),
+        figure: staffFigure(task, task.clef, null, bars),
         hints: [
           text(locale, 'hint_note_clef', { clef: clefWord(locale, task.clef) }),
           text(locale, 'hint_note_step'),
@@ -463,7 +523,7 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
         ...picked,
         topic: text(locale, 'topic_values'),
         difficulty: task.dotted ? 3 : 2,
-        figure: staffFigure(task.clef, null, [[el]]),
+        figure: staffFigure(task, task.clef, null, [[el]]),
         hints: [
           text(locale, task.rest ? 'hint_value_rest' : 'hint_value_head'),
           text(locale, 'hint_value_flag'),
@@ -500,7 +560,7 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
         topic: text(locale, 'topic_intervals'),
         // Telling a major from a minor third needs the semitones, not just the steps.
         difficulty: interval.quality === 'perfect' ? 3 : 4,
-        figure: staffFigure(task.clef, null, bars),
+        figure: staffFigure(task, task.clef, null, bars),
         hints: [text(locale, 'hint_interval_count'), text(locale, 'hint_interval_quality')],
         worked_solution: text(locale, 'worked_interval', {
           lower: noteWord(locale, task.lower.name),
@@ -529,7 +589,7 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
         topic: text(locale, 'topic_time'),
         difficulty: 3,
         // Drawn WITHOUT its time signature: it is what the question asks for.
-        figure: staffFigure(task.clef, null, task.bars),
+        figure: staffFigure(task, task.clef, null, task.bars),
         hints: [text(locale, 'hint_time_add'), text(locale, 'hint_time_unit')],
         worked_solution: text(locale, 'worked_time', { answer: timeWord(locale, task.time) }),
       };

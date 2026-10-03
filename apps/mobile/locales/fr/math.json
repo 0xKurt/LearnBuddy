@@ -276,6 +276,20 @@
       "As": "La dièse",
       "B": "Si"
     },
+    "note_short": {
+      "C": "Do",
+      "Cs": "Do♯",
+      "D": "Ré",
+      "Ds": "Ré♯",
+      "E": "Mi",
+      "F": "Fa",
+      "Fs": "Fa♯",
+      "G": "Sol",
+      "Gs": "Sol♯",
+      "A": "La",
+      "As": "La♯",
+      "B": "Si"
+    },
     "value_note": {
       "whole": "ronde",
       "half": "blanche",
