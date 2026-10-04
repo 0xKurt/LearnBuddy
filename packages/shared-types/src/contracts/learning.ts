@@ -750,8 +750,9 @@ const ASK_TEXT_MAX = 600;
  * her (issue #391, report „Hilfe und Fragen beim Üben" §1). The route itself says „this is a
  * question", so it is never graded and never costs a try, on every form — a tap form and a
  * structured one included. Answered like „Tipp" (AnswerResponse, verdict `not_an_attempt`) and
- * idempotent per `client_turn_id`. In a practice test it gets a fixed line with no model call;
- * a Kopfrechnen round has no question route (409 `use_drill`).
+ * idempotent per `client_turn_id`. In a practice test the reply is always the test's fixed line
+ * (or the fixed help answer to distress: the one tutor call there is that check); a Kopfrechnen
+ * round has no question route (409 `use_drill`).
  */
 export const AskRequest = z.object({
   client_turn_id: Uuid,

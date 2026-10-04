@@ -1699,10 +1699,12 @@ its own route, so nothing she asks is ever misread as an answer:
     is a hint by definition.
   - Distress gets the fixed help answer (#389, `safeguard()`), a model outage the honest
     `practice.ask_unavailable`, „ich hab keine Lust mehr" the app's own `practice.had_enough`.
-  - **Practice test:** the fixed `practice.test_no_hints` („… Nach dem Test erklär ich dir alles.")
-    at once, **no model call** (`llm_calls` unchanged). Not covered: distress typed into the
-    question field of a test is not detected there — that would need the model call the test
-    route saves. The answer field of a test still asks the tutor (below).
+  - **Practice test: one tutor call for the distress check, reply always fixed.** The question
+    goes to the tutor in TEST mode like a test answer, because child safety beats the saved call
+    (#389, report §7: "In the Probetest too"). With `concern` she gets the fixed help answer;
+    otherwise always `practice.test_no_hints` („… Nach dem Test erklär ich dir alles.") — the
+    model's words are never shown, no hint, no solution, no chip, and her one try stays hers.
+    Measured in `practice-ask.int.test.ts`: `llm_calls` + 1 per question.
   - **Kopfrechnen:** 409 `use_drill`, still zero model calls.
 - **The same words in the answer field of a test** (point 2 of #391): code cannot see that a
   typed text is a question rather than an answer without a word list (CLAUDE.md rule 3), so

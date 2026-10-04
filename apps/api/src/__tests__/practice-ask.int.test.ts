@@ -3,7 +3,7 @@
 // nachher" (`POST …/later`). Checked against the database, not only the reply:
 //   - a question is never graded and never costs a try (`session_items`), on every form;
 //   - the solution never comes by a question, also after the hint ladder (the reply is code's then);
-//   - a practice test answers with its fixed line and no model call (`llm_calls` unchanged);
+//   - a practice test answers with its fixed line; its one tutor call is the distress check;
 //   - a Kopfrechnen round has no question route (409, still no model call);
 //   - distress gets the fixed help answer, an outage an honest fixed text;
 //   - a kept question reaches Buddy's STATE once the practice is over, and only with the tap.
@@ -343,17 +343,25 @@ describe.skipIf(!dbReady)('a question to the tutor during practice (issue #391)'
     expect(elsewhere.status).toBe(404);
   });
 
-  it('answers in a practice test with the fixed line and no model call', async () => {
+  it('answers in a practice test with the fixed line: one tutor call for the distress check', async () => {
     const s = await start('test', [item({}), item({ prompt: 'Was ist 6 · 7?', answer: '42' })]);
     const id = s.items[0]!.item.id;
     const before = await llmCalls();
+    // Whatever the model writes — a hint, the solution, an off-topic chip — none of it is shown.
+    env.llm.script(
+      'tutor',
+      tutor({ intent: 'off_topic', reply: 'Es ist 12.', gave_hint: true, revealed_answer: true }),
+    );
     const res = await ask(s, id, 'Was heißt nochmal mal?');
     expect(res.status).toBe(200);
     expect(res.body.reply.text).toBe(t('de', 'practice.test_no_hints'));
     expect(res.body.reply.text).toContain('Nach dem Test erklär ich dir alles');
+    expect(res.body.reply.later ?? null).toBeNull();
     expect(res.body.verdict).toBe('not_an_attempt');
-    expect(await llmCalls()).toBe(before);
-    // Her one try in the test is still hers.
+    // The one call is the distress check (#389); its words are never shown.
+    expect(await llmCalls()).toBe(before + 1);
+    expect(contextOf(env.llm.callsFor('tutor')[0]!)).toContain('MODE: TEST');
+    // Her one try in the test is still hers; no hint, nothing revealed.
     expect(await row(s.id, id)).toEqual({ attempts: 0, hints_used: 0, status: 'open' });
 
     // The measurement behind #391 point 2: the same words typed into the ANSWER field of a typed
@@ -366,8 +374,20 @@ describe.skipIf(!dbReady)('a question to the tutor during practice (issue #391)'
       text: 'Was heißt nochmal mal?',
     });
     expect(typed.body.reply.text).toBe(t('de', 'practice.test_no_hints'));
-    expect(await llmCalls()).toBe(before + 1);
+    expect(await llmCalls()).toBe(before + 2);
     expect(await row(s.id, id)).toMatchObject({ attempts: 0, status: 'open' });
+  });
+
+  it('gives the fixed help answer to distress asked in a practice test, and the try stays hers', async () => {
+    const s = await start('test', [item({}), item({ prompt: 'Was ist 6 · 7?', answer: '42' })]);
+    const id = s.items[0]!.item.id;
+    env.llm.script('tutor', tutor({ intent: 'off_topic', concern: true, reply: 'Oh je.' }));
+    const res = await ask(s, id, 'Ich will mir etwas antun.');
+    expect(res.status).toBe(200);
+    expect(res.body.reply.text).toBe(t('de', 'safeguarding.concern'));
+    expect(res.body.reply.text).not.toBe(t('de', 'practice.test_no_hints'));
+    expect(res.body.reply.later ?? null).toBeNull();
+    expect(await row(s.id, id)).toEqual({ attempts: 0, hints_used: 0, status: 'open' });
   });
 
   it('has no question route in a Kopfrechnen round: 409, and still no model call', async () => {

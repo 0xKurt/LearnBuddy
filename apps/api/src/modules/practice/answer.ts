@@ -348,17 +348,10 @@ export async function answerItem(
       revealed: false,
     };
   };
-  if (question && session.mode === 'test') {
-    // A question in a practice test (#391): the test's fixed line at once — a model would only
-    // write words the test replaces (`asTestTurn`), so none is asked.
-    judged = {
-      verdict: 'not_an_attempt',
-      evaluatedBy: 'rule',
-      reply: t(learner.locale, 'practice.test_no_hints'),
-      gaveHint: false,
-      revealed: false,
-    };
-  } else if (essay) {
+  // A question in a practice test (#391) goes to the tutor like a test answer: its one call is the
+  // distress check (#389). Its words are never shown — `asTestTurn` puts the test's fixed line in
+  // their place, unless `concern` brought the fixed help answer.
+  if (essay) {
     judged = await judgeEssay(deps, learner, item, text);
   } else if (hintRequest && !question && givesHints(session.mode) && ladderDone(item)) {
     // Asked again at the end of the ladder: the solution explained, at once, no model.
@@ -704,7 +697,8 @@ export async function answerItem(
               reply: d.reply,
               gaveHint: !d.revealed_answer && (!question || d.gave_hint),
               revealed: d.revealed_answer,
-              offersLater: question && d.intent === 'off_topic',
+              // Never in a test: there nothing but the fixed line is shown (#391).
+              offersLater: question && d.intent === 'off_topic' && session.mode !== 'test',
             }
           : d.intent === 'wants_to_stop'
             ? {
