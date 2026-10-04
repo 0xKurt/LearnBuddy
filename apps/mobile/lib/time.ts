@@ -10,6 +10,7 @@ export function deviceTimeZone(): string {
   }
 }
 
+/** The region an app language is formatted in when the phone does not name its own. */
 const LOCALE_TAG: Record<string, string> = {
   de: 'de-DE',
   en: 'en-GB',
@@ -18,8 +19,35 @@ const LOCALE_TAG: Record<string, string> = {
   it: 'it-IT',
 };
 
-function tag(locale: string): string {
-  return LOCALE_TAG[locale] ?? 'de-DE';
+/** "en-US", "de-AT", "sr-Latn-RS" → language and region; null without a region. */
+const REGIONAL = /^([a-z]{2,3})(?:-[A-Za-z]{4})?-([A-Z]{2}|\d{3})(?:-|$)/;
+
+/**
+ * The formatting locale for the app language (audit 30.09., #133): the phone's own region
+ * when the phone speaks that language, so an English learner in the US reads "October 2"
+ * and 3:00 PM instead of the British day-first default, and a German one in Vienna gets
+ * de-AT. A phone in another language says nothing about how she reads English dates — the
+ * default stands. An unsupported app language formats as German, the app's fallback.
+ */
+export function localeTag(language: string, device: string = deviceLocaleTag()): string {
+  const fallback = LOCALE_TAG[language];
+  if (fallback === undefined) return 'de-DE';
+  const regional = REGIONAL.exec(device);
+  return regional && regional[1] === language ? `${language}-${regional[2]}` : fallback;
+}
+
+let deviceTag: string | null = null;
+
+/** The phone's locale as Intl reports it — the same source as deviceTimeZone(). */
+function deviceLocaleTag(): string {
+  if (deviceTag === null) {
+    try {
+      deviceTag = Intl.DateTimeFormat().resolvedOptions().locale;
+    } catch {
+      deviceTag = '';
+    }
+  }
+  return deviceTag;
 }
 
 /** Days from today (device-local) to a YYYY-MM-DD date. */
@@ -33,7 +61,7 @@ export function daysUntil(date: string, now: Date = new Date()): number {
 /** "Freitag, 2. Oktober" for a learner-local date. */
 export function formatDay(date: string, locale: string): string {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number];
-  return new Intl.DateTimeFormat(tag(locale), {
+  return new Intl.DateTimeFormat(localeTag(locale), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -44,7 +72,7 @@ export function formatDay(date: string, locale: string): string {
 /** "Fr., 2. Okt." */
 export function formatDayShort(date: string, locale: string): string {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number];
-  return new Intl.DateTimeFormat(tag(locale), {
+  return new Intl.DateTimeFormat(localeTag(locale), {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -54,14 +82,14 @@ export function formatDayShort(date: string, locale: string): string {
 
 /** Wall time of an instant in the device zone, e.g. "15:00". */
 export function formatTime(iso: string, locale: string): string {
-  return new Intl.DateTimeFormat(tag(locale), { hour: '2-digit', minute: '2-digit' }).format(
+  return new Intl.DateTimeFormat(localeTag(locale), { hour: '2-digit', minute: '2-digit' }).format(
     new Date(iso),
   );
 }
 
 /** Calendar date of an instant in the device zone, e.g. "4. Okt.". */
 export function formatDate(iso: string, locale: string): string {
-  return new Intl.DateTimeFormat(tag(locale), { day: 'numeric', month: 'short' }).format(
+  return new Intl.DateTimeFormat(localeTag(locale), { day: 'numeric', month: 'short' }).format(
     new Date(iso),
   );
 }
@@ -69,7 +97,7 @@ export function formatDate(iso: string, locale: string): string {
 /** Ends are exclusive midnights; people think in the last day that still counts. */
 export function formatLastDay(endIso: string, locale: string): string {
   const last = new Date(new Date(endIso).getTime() - 1);
-  return new Intl.DateTimeFormat(tag(locale), {
+  return new Intl.DateTimeFormat(localeTag(locale), {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -79,7 +107,7 @@ export function formatLastDay(endIso: string, locale: string): string {
 /** "Freitag" */
 export function formatWeekday(date: string, locale: string): string {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number];
-  return new Intl.DateTimeFormat(tag(locale), { weekday: 'long', timeZone: 'UTC' }).format(
+  return new Intl.DateTimeFormat(localeTag(locale), { weekday: 'long', timeZone: 'UTC' }).format(
     new Date(Date.UTC(y, m - 1, d)),
   );
 }

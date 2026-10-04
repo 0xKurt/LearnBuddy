@@ -2,6 +2,8 @@
 // stores them (YYYY-MM-DD). Pure: used by onboarding and the correction in the
 // parents' area.
 
+import { localeTag } from './time.js';
+
 /** YYYY-MM-DD for a real, past date; null otherwise. */
 export function birthDateOf(
   day: string,
@@ -36,7 +38,7 @@ export function partsOf(iso: string): { day: string; month: string; year: string
 
 /** "10. März 2014" in the app's language (a calendar date, no time zone shift). */
 export function formatBirthDate(iso: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(localeTag(locale), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
