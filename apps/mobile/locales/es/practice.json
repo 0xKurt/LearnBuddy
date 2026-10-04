@@ -302,6 +302,18 @@
     "evidence_one": "Respuesta en la línea {{from}}",
     "evidence": "Respuesta en las líneas {{from}}–{{to}}"
   },
+  "mark": {
+    "how_words": "Toca cada palabra que encaje.",
+    "how_gaps": "Toca la palabra tras la que falta una coma.",
+    "how_syllables": "Toca donde termina una sílaba.",
+    "marked": "Marcado – {{list}}",
+    "split": "Separado: {{list}}",
+    "check_waits": "Solo cuando hayas marcado al menos un sitio.",
+    "word_in": "{{word}}, marcado como {{name}}",
+    "gap": "Coma después de «{{word}}»",
+    "cut": "La sílaba termina después de «{{before}}» en {{word}}",
+    "how_sorted": "Elige arriba el tipo y luego toca las palabras."
+  },
   "select": {
     "several": "Hay varias correctas: tócalas todas.",
     "check_waits": "Cuando hayas marcado al menos una."

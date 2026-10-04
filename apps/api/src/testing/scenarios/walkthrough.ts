@@ -14,6 +14,7 @@ import { scriptDrill } from './drill.js';
 import { scriptFigures } from './figures.js';
 import { installGenerations } from './generations.js';
 import { scriptLearningModes } from './learning-modes.js';
+import { scriptMark } from './mark.js';
 import { scriptPeriodic } from './periodic.js';
 import { scriptPrimary } from './primary.js';
 import { scriptReading } from './reading.js';
@@ -33,6 +34,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptDictation();
   // Also first: "Latein" and "Fahrrad" are words an older, broader rule may know (#240).
   scriptSelectAll();
+  // Also first: "Nomen", "Kommas" and "Silben" are words an older rule may know (#234).
+  scriptMark();
   // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
   scriptPrimary();
   scriptCoreLoop();

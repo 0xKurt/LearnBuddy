@@ -18,6 +18,7 @@ import {
 } from '../practice/items.js';
 import { ORDER_RULES, StructuredDraft, StructuredDraftHomework } from '../practice/structured.js';
 import { MATCH_RULES } from '../practice/match.js';
+import { MARK_RULES } from '../practice/mark.js';
 import { SELECT_RULES } from '../practice/selectAll.js';
 import { CLOZE_RULES } from '../practice/cloze.js';
 import {
@@ -36,7 +37,9 @@ import { TABLE_RULES } from '../practice/table.js';
 // v8.5: the periodic table as a figure (#250).
 // v8.6: a reading text with its questions becomes one entry in "reading" (#233).
 // v8.7: solids, cube nets and points in space (#255).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.7';
+// v8.8: a task to mark words, set commas or split syllables becomes one mark task (#234); a
+//       reading group may ask to mark in a sentence of its text.
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.8';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -357,6 +360,7 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${MATCH_RULES} A task on the sheet that asks to link given things to each other or sort them into given groups becomes one such task in "structured", never questions in items.
    - ${CLOZE_RULES} A text on the sheet with several gaps to fill becomes one such task in "structured" (its word box, if printed, as word_bank), never one question per gap in items.
    - ${SELECT_RULES} A question on the sheet that asks to tick all right answers becomes one such task in "structured", never a multiple_choice item.
+   - ${MARK_RULES} A task on the sheet that asks to underline or mark words, to set the missing commas or to split words into syllables becomes one such task in "structured", never questions in items.
    - ${READING_RULES} A text on the sheet with questions about it, or a text to read and understand, becomes one entry in "reading": its lines exactly as printed and its questions — never the same questions again in items.
    - Otherwise 8–15 questions — and none at all for a sheet whose every task went into not_practicable. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
@@ -391,6 +395,7 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
    - ${MATCH_RULES} A task that asks to link given things or sort them into groups goes into "structured" instead of items (its prompt as printed).
    - ${CLOZE_RULES} A text with several gaps to fill goes into "structured" instead of items (its word box, if printed, as word_bank).
    - ${SELECT_RULES} A task that asks to tick all right answers goes into "structured" instead of items (its prompt as printed).
+   - ${MARK_RULES} A task that asks to mark words, set commas or split syllables goes into "structured" instead of items (its prompt as printed).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}

@@ -80,6 +80,7 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
   '0084_roleplays',
   '0085_select_all_items',
   '0086_reading_passages',
+  '0087_mark_items',
 ];
 
 /**

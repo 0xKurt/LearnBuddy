@@ -313,6 +313,17 @@
       "extra_one": "Pero una no encaja.",
       "look_at": "Mira otra vez «{{text}}»."
     },
+    "mark": {
+      "right": "{{count}} bien",
+      "right_one": "1 bien",
+      "misfiled": "{{count}} con la categoría equivocada",
+      "misfiled_one": "1 con la categoría equivocada",
+      "missing": "faltan {{count}}",
+      "missing_one": "falta 1",
+      "extra": "{{count}} de más",
+      "extra_one": "1 de más",
+      "reply": "Todavía no del todo: {{parts}}."
+    },
     "solid": {
       "net_yes": "Sí, es un desarrollo del cubo",
       "net_no": "No, no es un desarrollo del cubo"

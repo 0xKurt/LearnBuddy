@@ -318,6 +318,8 @@ export const ItemKind = z.enum([
   'spelling_dictation',
   /** Tick every right answer among several options (#240). */
   'select_all',
+  /** Tap words, comma gaps or syllable breaks in a sentence or text (#234). */
+  'mark',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
 

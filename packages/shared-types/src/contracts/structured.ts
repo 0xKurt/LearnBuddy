@@ -7,6 +7,7 @@
 //   table_fill  — fill the gaps of a table (#230)
 //   cloze       — fill several gaps in one text (#232); its kind is allowed since migration 0079
 //   select_all  — tick every right answer among several options (#240, migration 0085)
+//   mark        — tap words, comma gaps or syllable breaks in a text (#234, migration 0087)
 //
 // Three shapes per kind, and the difference between them is the whole design:
 //
@@ -30,7 +31,14 @@
 import { z } from 'zod';
 
 /** The item kinds whose answer is structured. Each has a task, a view and an answer shape. */
-export const STRUCTURED_KINDS = ['order', 'match', 'table_fill', 'cloze', 'select_all'] as const;
+export const STRUCTURED_KINDS = [
+  'order',
+  'match',
+  'table_fill',
+  'cloze',
+  'select_all',
+  'mark',
+] as const;
 export const StructuredKind = z.enum(STRUCTURED_KINDS);
 export type StructuredKind = z.infer<typeof StructuredKind>;
 
@@ -405,6 +413,212 @@ export const SelectAllAnswer = z.object({
 });
 export type SelectAllAnswer = z.infer<typeof SelectAllAnswer>;
 
+// ─────────────── mark (#234) ───────────────
+//
+// A sentence or a short text she marks by tapping. Three modes, one shape:
+//   words     — she taps words (the nouns of an all-lower-case text, parts of speech, the wrong
+//               words of an error text, signal words — or, with 2–3 categories she picks first,
+//               Subjekt / Prädikat / Objekt);
+//   gaps      — she taps the word after which a comma belongs: the gap behind it gets the comma;
+//   syllables — she taps the letter after which a syllable ends.
+//
+// Code splits the text into words (`apps/api/src/modules/practice/mark.ts`), never the model: the
+// model names the words, code finds where they stand, and a word that stands there twice needs
+// its occurrence or the task is not stored (#234, Regel 0). The ids say WHERE a target stands
+// (`w3` the third word, `g3` the gap after it, `w3_2` the cut after its second letter) — never
+// whether it is one of the key's.
+//
+// The maxima are what a 360×740 phone holds with every target at 44 pt and nothing scrolling
+// (CLAUDE.md rule 16), shot in tests/web/mark.spec.ts.
+
+/** Words of one marking text (words and gaps): a sentence or two, never a page. */
+export const MARK_WORDS_MIN = 3;
+export const MARK_WORDS_MAX = 24;
+/** One word as it stands in the text; a longer one would not fit a line as one target. */
+export const MARK_WORD_MAX = 20;
+/**
+ * Syllables: a few words, one per row and NEVER wrapped — a word broken over two rows no longer
+ * reads as a word (owner review of #234). Ten letters in 30-pt cells is the widest row a 360-pt
+ * phone holds (`MarkAnswer.tsx`, LETTER_CELL); four such rows fit 360×740 with Buddy's reply
+ * (tests/web/mark.spec.ts, 46g). A longer word is rejected when it is written, never wrapped.
+ */
+export const MARK_SYLLABLE_WORDS_MAX = 4;
+export const MARK_SYLLABLE_LETTERS_MAX = 10;
+/**
+ * A text whose marks are sorted into categories: the category buttons take up to two rows of their
+ * own, and the line saying what is marked runs longer ("Subjekt: …; Prädikat: …"). So the text may
+ * take two rows of word tiles at most — counted in words AND in characters, because long words fill
+ * a row sooner. Measured on 360×740 in the worst case — three long names on two rows, a three-line
+ * instruction, every word marked, Buddy's reply above (tests/web/mark.spec.ts, 46h): a sentence of
+ * 59 characters took three rows of tiles and was 62 pt too much.
+ */
+export const MARK_SORTED_WORDS_MAX = 7;
+export const MARK_SORTED_CHARS_MAX = 45;
+
+/** Does a text to sort into categories stay within its measured size? */
+export function sortedTextFits(
+  words: ReadonlyArray<{ lead: string; text: string; tail: string }>,
+): boolean {
+  const chars = [...words.map((w) => `${w.lead}${w.text}${w.tail}`).join(' ')].length;
+  return words.length <= MARK_SORTED_WORDS_MAX && chars <= MARK_SORTED_CHARS_MAX;
+}
+export const MARK_CATEGORIES_MIN = 2;
+export const MARK_CATEGORIES_MAX = 3;
+/**
+ * A category's name — the grammar term as school uses it: "Akkusativobjekt" (15),
+ * "Präpositionalobjekt" (19). The content decides, never the layout (owner review of #234).
+ */
+export const MARK_CATEGORY_MAX = 20;
+/**
+ * Two category names stand side by side as buttons on a 360-pt phone when together they have at
+ * most this many characters (a button is about 52 pt plus 7.4 pt a character, 328 pt of row).
+ */
+export const MARK_CATEGORY_PAIR_CHARS = 28;
+
+/**
+ * Do the category buttons wrap to at most two rows? They flow in order: two or fewer always do;
+ * three do when the first two, or the last two, share a row.
+ */
+export function categoriesInTwoRows(names: readonly string[]): boolean {
+  if (names.length < 3) return true;
+  const len = names.map((n) => [...n].length);
+  const pair = (i: number) => len[i]! + len[i + 1]! <= MARK_CATEGORY_PAIR_CHARS;
+  return pair(0) || pair(1);
+}
+/** Punctuation that stands before or after a word ("„Hund,“"): shown, never tapped. */
+export const MARK_AFFIX_MAX = 6;
+/** The instruction above a marking text: two lines of the question card at most. */
+export const MARK_PROMPT_MAX = 60;
+
+export const MarkMode = z.enum(['words', 'gaps', 'syllables']);
+export type MarkMode = z.infer<typeof MarkMode>;
+
+/** A word of the text, as code split it: what she reads, and the marks around it. */
+export const MarkWord = z.object({
+  id: PartId,
+  text: z.string().min(1).max(MARK_WORD_MAX),
+  /** Opening marks before the word ("„", "("), shown with it. */
+  lead: z.string().max(MARK_AFFIX_MAX),
+  /** Punctuation after it (".", "“"): shown, never a target. Commas to set are left out. */
+  tail: z.string().max(MARK_AFFIX_MAX),
+});
+export type MarkWord = z.infer<typeof MarkWord>;
+
+export const MarkCategory = z.object({
+  id: PartId,
+  name: z.string().trim().min(1).max(MARK_CATEGORY_MAX),
+});
+export type MarkCategory = z.infer<typeof MarkCategory>;
+
+/** One mark: a target (word, gap or cut) and, with categories, the one she gave it. */
+export const MarkPick = z.object({ at: PartId, category: PartId.nullable() });
+export type MarkPick = z.infer<typeof MarkPick>;
+
+/** The most marks one answer may carry: every word, or every gap, of the longest text. */
+export const MARK_PICKS_MAX = 60;
+
+/** What the app shows: the words as code split them, and the categories. Never the key. */
+export const MarkTaskView = z.object({
+  type: z.literal('mark'),
+  mode: MarkMode,
+  words: z.array(MarkWord).min(1).max(MARK_WORDS_MAX),
+  /** Empty: plain marking. Two or three: she picks a category, then the words. */
+  categories: z.array(MarkCategory).max(MARK_CATEGORIES_MAX),
+});
+export type MarkTaskView = z.infer<typeof MarkTaskView>;
+
+/** The stored task: the view plus the key (server only). */
+export const MarkTask = MarkTaskView.extend({
+  /** The targets that are to be marked (with their category). At least one. */
+  key: z.array(MarkPick).min(1).max(MARK_PICKS_MAX),
+  /**
+   * An error text's corrected words, by the id of the word they correct (#234: the corrected
+   * version differs from the text exactly at the key). Shown in the solution; empty otherwise.
+   */
+  corrections: z.array(z.object({ at: PartId, text: z.string().min(1).max(MARK_WORD_MAX) })),
+});
+export type MarkTask = z.infer<typeof MarkTask>;
+
+export const MarkAnswer = z.object({
+  type: z.literal('mark'),
+  /** Every target she marked, once; at least one (nothing marked is no answer yet). */
+  marks: z.array(MarkPick).min(1).max(MARK_PICKS_MAX),
+});
+export type MarkAnswer = z.infer<typeof MarkAnswer>;
+
+/** The id of the gap after word `wordIndex` (0-based; gaps mode). */
+export function gapId(wordIndex: number): PartId {
+  return `g${wordIndex + 1}`;
+}
+
+/** The id of the cut after letter `letter` (1-based) of word `wordIndex` (syllables mode). */
+export function cutId(wordIndex: number, letter: number): PartId {
+  return `w${wordIndex + 1}_${letter}`;
+}
+
+/** Every place she can tap in this task, in reading order. */
+export function markTargets(task: Pick<MarkTaskView, 'mode' | 'words'>): PartId[] {
+  switch (task.mode) {
+    case 'words':
+      return task.words.map((w) => w.id);
+    case 'gaps':
+      return task.words.slice(0, -1).map((_, i) => gapId(i));
+    case 'syllables':
+      return task.words.flatMap((w, wi) =>
+        [...w.text].slice(0, -1).map((_, li) => cutId(wi, li + 1)),
+      );
+  }
+}
+
+/** Words that stand next to each other read as one run ("der Hund"); runs apart with ", ". */
+function markRuns(words: readonly MarkWord[], ids: ReadonlySet<string>): string {
+  const runs: string[][] = [];
+  let last = -2;
+  words.forEach((w, i) => {
+    if (!ids.has(w.id)) return;
+    if (i === last + 1 && runs.length > 0) runs[runs.length - 1]!.push(w.text);
+    else runs.push([w.text]);
+    last = i;
+  });
+  return runs.map((r) => r.join(' ')).join(', ');
+}
+
+/**
+ * Marks as she reads them — the line under the text in the app, her answer in the conversation
+ * and the solution on the server, one implementation: "Subjekt: der Hund; Prädikat: bellt",
+ * "Hund, Katze", the sentence with its commas set, the words with their syllables cut.
+ */
+export function markedText(view: Omit<MarkTaskView, 'type'>, marks: readonly MarkPick[]): string {
+  const at = new Set(marks.map((m) => m.at));
+  switch (view.mode) {
+    case 'gaps':
+      return view.words
+        .map((w, i) => `${w.lead}${w.text}${at.has(gapId(i)) ? ',' : ''}${w.tail}`)
+        .join(' ');
+    case 'syllables':
+      return view.words
+        .map((w, wi) =>
+          [...w.text].map((ch, li) => (at.has(cutId(wi, li + 1)) ? `${ch}-` : ch)).join(''),
+        )
+        .join(' ');
+    case 'words':
+      // Without categories every word stands alone: "montag fährt" would read as one phrase.
+      if (view.categories.length === 0) {
+        return view.words
+          .filter((w) => at.has(w.id))
+          .map((w) => w.text)
+          .join(', ');
+      }
+      return view.categories
+        .map((c) => {
+          const ids = new Set(marks.filter((m) => m.category === c.id).map((m) => m.at));
+          return ids.size === 0 ? null : `${c.name}: ${markRuns(view.words, ids)}`;
+        })
+        .filter((x): x is string => x !== null)
+        .join('; ');
+  }
+}
+
 // ─────────────── the unions (one member per kind that exists) ───────────────
 
 /** The stored definition including the key (`items.task`). Server only. */
@@ -414,6 +628,7 @@ export const StructuredTask = z.discriminatedUnion('type', [
   MatchTask,
   ClozeTask,
   SelectAllTask,
+  MarkTask,
 ]);
 export type StructuredTask = z.infer<typeof StructuredTask>;
 
@@ -424,6 +639,7 @@ export const StructuredTaskView = z.discriminatedUnion('type', [
   MatchTaskView,
   ClozeTaskView,
   SelectAllTaskView,
+  MarkTaskView,
 ]);
 export type StructuredTaskView = z.infer<typeof StructuredTaskView>;
 
@@ -434,5 +650,6 @@ export const StructuredAnswer = z.discriminatedUnion('type', [
   MatchAnswer,
   ClozeAnswer,
   SelectAllAnswer,
+  MarkAnswer,
 ]);
 export type StructuredAnswer = z.infer<typeof StructuredAnswer>;

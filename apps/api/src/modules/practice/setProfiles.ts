@@ -29,6 +29,7 @@ import {
 } from './itemFields.js';
 import { ItemDraft, itemsOneByOne } from './items.js';
 import { ListenDraft, ListenQuestion } from './listen.js';
+import { MARK_RULES } from './mark.js';
 import { MATCH_RULES } from './match.js';
 import { SELECT_RULES } from './selectAll.js';
 import { MAX_STAFF_ITEMS } from './staff.js';
@@ -145,13 +146,21 @@ const STRUCTURED_FORMS = [
   'match',
   'cloze',
   'select_all',
+  'mark',
 ] as const satisfies StructuredKind[];
 
 /**
  * What the generator is told about the structured forms, one "- " line each, in the order of
  * `GENERATE_SYSTEM` (`generate.ts`).
  */
-export const STRUCTURED_RULES = [ORDER_RULES, TABLE_RULES, MATCH_RULES, CLOZE_RULES, SELECT_RULES]
+export const STRUCTURED_RULES = [
+  ORDER_RULES,
+  TABLE_RULES,
+  MATCH_RULES,
+  CLOZE_RULES,
+  SELECT_RULES,
+  MARK_RULES,
+]
   .map((rule) => `- ${rule}`)
   .join('\n');
 

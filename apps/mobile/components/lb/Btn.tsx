@@ -39,6 +39,13 @@ type Common = {
    * target, is untouched.
    */
   compact?: boolean;
+  /**
+   * No padding at the sides at all: a target set in running text, whose label already has the
+   * width it needs — a letter of a word to cut into syllables (`MarkAnswer`, issue #234), where
+   * padding would pull the letters apart until the word no longer reads as one. The height, and
+   * with it the 44-pt touch height, is untouched.
+   */
+  bare?: boolean;
   disabled?: boolean;
   /**
    * Answers a tap on the waiting (disabled, not busy) button instead of swallowing it:
@@ -168,6 +175,7 @@ export function Btn(props: Props) {
     center = false,
     wrap = false,
     compact = false,
+    bare = false,
     icon,
     grow = false,
     disabled = false,
@@ -245,7 +253,7 @@ export function Btn(props: Props) {
             ...(wrap ? { minHeight: s.height, paddingVertical: 12 } : { minHeight: s.height }),
             ...(grow ? { flexGrow: 1 } : {}),
             gap: icon || busy ? 10 : 0,
-            paddingHorizontal: compact ? BTN_PAD_COMPACT : s.paddingHorizontal,
+            paddingHorizontal: bare ? 0 : compact ? BTN_PAD_COMPACT : s.paddingHorizontal,
             backgroundColor: v.bg,
             borderRadius: radius,
             borderWidth: v.borderWidth,

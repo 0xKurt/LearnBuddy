@@ -14,7 +14,8 @@
 // for display and records the key as a sequence of ids (CLAUDE.md rule 2). The stored task
 // (`items.task`) carries the key; the view (`ItemView.task_view`) never does.
 //
-// Adding a kind (#229 match, #230 table_fill, #232 cloze, #240 select_all): its draft schema, a
+// Adding a kind (#229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark): its draft
+// schema, a
 // builder from draft to task, a `problem` check, a view, a checker and a reply — each one more
 // `case` in the switches below. The answer flow in `service.ts` only ever calls the exported
 // functions.
@@ -56,6 +57,20 @@ import {
 import { displayOrder, idAt, sameness } from './arrange.js';
 import { dollarMathRuns } from './dollarMath.js';
 import { ItemDraft } from './items.js';
+import {
+  checkMark,
+  MarkDraftBase,
+  markAnswerText,
+  markProblem,
+  markReply,
+  markSecrets,
+  markSolution,
+  markTaskFrom,
+  markView,
+  namesAMark,
+  type MarkCheck,
+  type MarkProblem,
+} from './mark.js';
 import {
   checkMatch,
   MatchDraftBase,
@@ -100,7 +115,7 @@ import { mentionsSolution } from './tutor.js';
 
 /**
  * The structured kinds a photographed sheet may give: every one — an order, a table, links, gaps
- * (#228–#232) and options to tick (#240) are all printed on worksheets.
+ * (#228–#232), options to tick (#240) and words to mark (#234) are all printed on worksheets.
  */
 export const SHEET_STRUCTURED: ReadonlySet<string> = new Set(STRUCTURED_KINDS);
 
@@ -160,6 +175,10 @@ export const StructuredDraft = z.discriminatedUnion('type', [
     hints: ItemDraft.shape.hints,
     worked_solution: ItemDraft.shape.worked_solution,
   }),
+  MarkDraftBase.extend({
+    hints: ItemDraft.shape.hints,
+    worked_solution: ItemDraft.shape.worked_solution,
+  }),
 ]);
 export type StructuredDraft = z.infer<typeof StructuredDraft>;
 
@@ -170,6 +189,7 @@ export const StructuredDraftHomework = z.discriminatedUnion('type', [
   MatchDraftBase.extend({ hints: ItemDraft.shape.hints }),
   ClozeDraftBase.extend({ hints: ItemDraft.shape.hints }),
   SelectDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  MarkDraftBase.extend({ hints: ItemDraft.shape.hints }),
 ]);
 export type StructuredDraftHomework = z.infer<typeof StructuredDraftHomework>;
 
@@ -180,6 +200,7 @@ export const StructuredDraftNoHelp = z.discriminatedUnion('type', [
   MatchDraftBase,
   ClozeDraftBase,
   SelectDraftBase,
+  MarkDraftBase,
 ]);
 export type StructuredDraftNoHelp = z.infer<typeof StructuredDraftNoHelp>;
 
@@ -215,7 +236,9 @@ export type TaskProblem =
   /** A cloze text that fails Regel 0 (#232, `cloze.ts`). */
   | ClozeProblem
   /** A select-all task that fails Regel 0 (#240, `selectAll.ts`). */
-  | SelectProblem;
+  | SelectProblem
+  /** A marking task that fails Regel 0 (#234, `mark.ts`). */
+  | MarkProblem;
 
 type Exact = { num: bigint; den: bigint };
 
@@ -276,6 +299,8 @@ export function taskProblem(task: StructuredTask): TaskProblem | null {
       return clozeProblem(task);
     case 'select_all':
       return selectProblem(task);
+    case 'mark':
+      return markProblem(task);
   }
 }
 
@@ -316,6 +341,8 @@ export function solutionOf(task: StructuredTask): string {
       return clozeSolution(task);
     case 'select_all':
       return selectText(task, task.key);
+    case 'mark':
+      return markSolution(task);
   }
 }
 
@@ -440,6 +467,16 @@ export function structuredItem(
       );
       return asItem(draft, { kind: 'select_all', task, prompt, answer: solutionOf(task), hints });
     }
+    case 'mark': {
+      const prompt = dollarMathRuns(draft.prompt);
+      const task = markTaskFrom(draft);
+      if (!task) return null;
+      // Help never names a place to mark: every target stands in the text she reads.
+      const hints = ('hints' in draft ? draft.hints : []).filter(
+        (h) => !namesAMark(h, task, prompt),
+      );
+      return asItem(draft, { kind: 'mark', task, prompt, answer: solutionOf(task), hints });
+    }
   }
 }
 
@@ -500,6 +537,8 @@ export function viewOf(task: StructuredTask): StructuredTaskView {
       };
     case 'select_all':
       return { type: 'select_all', options: task.options };
+    case 'mark':
+      return markView(task);
   }
 }
 
@@ -523,6 +562,8 @@ export function secretsOf(
       return { secrets: clozeSecrets(task), visible: visibleOf(task, prompt) };
     case 'select_all':
       return { secrets: task.options.map((o) => o.text), visible: prompt };
+    case 'mark':
+      return { secrets: markSecrets(task), visible: prompt };
   }
 }
 
@@ -535,7 +576,13 @@ export type PartResult = { id: PartId; ok: boolean };
  * The verdict on a structured answer, with what is right part by part. Kinds add their own
  * detail beside `parts` (order: the first place that is wrong, 1-based).
  */
-export type StructuredCheck = OrderCheck | TableCheck | MatchCheck | ClozeCheck | SelectCheck;
+export type StructuredCheck =
+  | OrderCheck
+  | TableCheck
+  | MatchCheck
+  | ClozeCheck
+  | SelectCheck
+  | MarkCheck;
 
 export type OrderCheck = {
   type: 'order';
@@ -583,6 +630,8 @@ export function checkStructured(
       return answer.type === 'cloze' ? checkCloze(task, answer, ctx) : null;
     case 'select_all':
       return answer.type === 'select_all' ? checkSelect(task, answer) : null;
+    case 'mark':
+      return answer.type === 'mark' ? checkMark(task, answer) : null;
   }
 }
 
@@ -599,6 +648,7 @@ export function structuredVerdict(
     case 'table_fill':
     case 'match':
     case 'select_all':
+    case 'mark':
       return check.correct ? 'correct' : 'incorrect';
     case 'cloze':
       return clozeVerdict(check);
@@ -615,6 +665,7 @@ export function partsVia(task: StructuredTask): 'tapped' | 'typed' {
     case 'order':
     case 'match':
     case 'select_all':
+    case 'mark':
       return 'tapped';
     case 'table_fill':
       return 'typed';
@@ -630,6 +681,7 @@ export function structuredDecidedBy(check: StructuredCheck): 'rule' | 'model' {
     case 'table_fill':
     case 'match':
     case 'select_all':
+    case 'mark':
       return 'rule';
     case 'cloze':
       return clozeDecidedBy(check);
@@ -652,6 +704,8 @@ export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): st
       return answer.type === 'cloze' ? clozeAnswerText(task, answer) : '';
     case 'select_all':
       return answer.type === 'select_all' ? selectText(task, answer.chosen) : '';
+    case 'mark':
+      return answer.type === 'mark' ? markAnswerText(task, answer) : '';
   }
 }
 
@@ -680,6 +734,8 @@ export function structuredReply(
       return clozeReply(locale, check);
     case 'select_all':
       return selectReply(locale, check, priorMisses);
+    case 'mark':
+      return markReply(locale, check);
   }
 }
 
@@ -694,6 +750,7 @@ export function structuredNamesPart(check: StructuredCheck, priorMisses: number)
     case 'order':
     case 'table_fill':
     case 'cloze':
+    case 'mark':
       return false;
     case 'match':
       return matchNamesPart(check, priorMisses);

@@ -302,6 +302,18 @@
     "evidence_one": "Risposta alla riga {{from}}",
     "evidence": "Risposta alle righe {{from}}–{{to}}"
   },
+  "mark": {
+    "how_words": "Tocca ogni parola che va bene.",
+    "how_gaps": "Tocca la parola dopo cui manca una virgola.",
+    "how_syllables": "Tocca dove finisce una sillaba.",
+    "marked": "Segnato – {{list}}",
+    "split": "Diviso: {{list}}",
+    "check_waits": "Solo quando hai segnato almeno un punto.",
+    "word_in": "{{word}}, segnato come {{name}}",
+    "gap": "Virgola dopo «{{word}}»",
+    "cut": "La sillaba finisce dopo «{{before}}» in {{word}}",
+    "how_sorted": "Scegli prima il tipo in alto, poi tocca le parole."
+  },
   "select": {
     "several": "Più di una è giusta: toccale tutte.",
     "check_waits": "Quando ne hai spuntata almeno una."

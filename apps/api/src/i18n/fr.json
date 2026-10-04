@@ -313,6 +313,17 @@
       "extra_one": "Mais une n'en fait pas partie.",
       "look_at": "Regarde encore « {{text}} »."
     },
+    "mark": {
+      "right": "{{count}} justes",
+      "right_one": "1 juste",
+      "misfiled": "{{count}} avec la mauvaise catégorie",
+      "misfiled_one": "1 avec la mauvaise catégorie",
+      "missing": "il en manque encore {{count}}",
+      "missing_one": "il en manque encore 1",
+      "extra": "{{count}} en trop",
+      "extra_one": "1 en trop",
+      "reply": "Pas encore tout à fait : {{parts}}."
+    },
     "solid": {
       "net_yes": "Oui, c'est un patron de cube",
       "net_no": "Non, ce n'est pas un patron de cube"

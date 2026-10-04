@@ -313,6 +313,17 @@
       "extra_one": "But one doesn't belong.",
       "look_at": "Take another look at “{{text}}”."
     },
+    "mark": {
+      "right": "{{count}} right",
+      "right_one": "1 right",
+      "misfiled": "{{count}} with the wrong category",
+      "misfiled_one": "1 with the wrong category",
+      "missing": "{{count}} still missing",
+      "missing_one": "1 still missing",
+      "extra": "{{count}} too many",
+      "extra_one": "1 too many",
+      "reply": "Not quite yet: {{parts}}."
+    },
     "solid": {
       "net_yes": "Yes, it is a cube net",
       "net_no": "No, it is not a cube net"
