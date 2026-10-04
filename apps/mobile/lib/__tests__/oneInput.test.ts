@@ -33,7 +33,12 @@ describe('one input bar for the chat and every typed answer (#365)', () => {
       .filter((s) => /^import \{[^}]*\bInputBar\b[^}]*\} from '[^']*\/InputBar\.js';/m.test(s.text))
       .map((s) => s.file)
       .sort();
-    expect(users).toEqual(['components/buddy/Composer.tsx', 'components/practice/TypedAnswer.tsx']);
+    expect(users).toEqual([
+      'components/buddy/Composer.tsx',
+      // A board's bar: the input bar without its field, "Prüfen" its action (#395).
+      'components/practice/CheckBar.tsx',
+      'components/practice/TypedAnswer.tsx',
+    ]);
   });
 
   it('draws the pill itself: no other file asks the field for it', () => {

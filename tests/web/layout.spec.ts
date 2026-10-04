@@ -186,6 +186,51 @@ test('the composer row stays one row when the field grows', async ({ page }) => 
 });
 
 /**
+ * The placeholder stays on one line once "Senden" shows (issue #394). With a page attached and
+ * nothing typed, "Senden" takes the mic's place and the field is narrower than the mic left it:
+ * at 360 "Schreib Buddy …" broke onto a second line and the empty bar stood two lines high. One
+ * line, at both phone sizes, light and dark: the empty field is as tall as it was before the page
+ * came, and the placeholder is one line of its text.
+ */
+test('the placeholder stays on one line when "Senden" shows (#394)', async ({ page }) => {
+  await onboard(page, 'Lena');
+  const field = page.getByLabel('Schreib Buddy …');
+  await expect(field).toBeVisible();
+  // A theme switch remounts the screen and parks an unsent page in the chat ("Deine Fotos sind
+  // noch nicht gesendet"), so each scheme attaches its own page and lets it go again.
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await settle(page);
+    await page.getByRole('button', { name: 'Was möchtest du anhängen?' }).click();
+    const chooser = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: 'Aus der Galerie' }).click();
+    await (
+      await chooser
+    ).setFiles(join(__dirname, '../../apps/mobile/lib/photo/__tests__/fixtures/sharp.jpg'));
+    await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Senden' })).toBeVisible();
+    for (const phone of PHONES) {
+      await page.setViewportSize(phone);
+      await settle(page);
+      const where = `${phone.width} ${scheme}`;
+      // The shot first, so a failing run still shows what broke.
+      await page.screenshot({
+        path: join(SHOTS, `31b-composer-sent-${phone.width}-${scheme}.png`),
+      });
+      await expect(page.getByRole('button', { name: 'Senden' }), where).toBeVisible();
+      expect(await field.inputValue(), `${where}: nothing typed`).toBe('');
+      // One line of the bar: the touch height (`TOUCH`, the bar's text without a second line).
+      expect
+        .soft((await field.boundingBox())!.height, `${where}: the empty field is one line`)
+        .toBe(44);
+    }
+    await page.getByRole('button', { name: 'Foto 1 entfernen' }).click();
+    await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toHaveCount(0);
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+});
+
+/**
  * Answer cards: a line of an answer ends on a whole word, and the cards of a row are one row.
  *
  * This is the test for #203. In the owner's product video the English answer "the homework"

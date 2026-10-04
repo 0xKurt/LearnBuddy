@@ -12,7 +12,13 @@
 // mic is doing, and the count shows only when the end of the field is near (#133 position 17).
 //
 // What the bar sends and how is its screen's: the chat sends, practice checks with "Prüfen"
-// right under it (`CheckBar`). Voice mode's big mic is the screen's as well.
+// (`CheckBar`). Voice mode's big mic is the screen's as well.
+//
+// Every practice form with a check action holds "Prüfen" in this bar's action slot (issue #395,
+// report #388 §9: one bar, the same in every task). A board has no text to type yet — the field
+// it gets ("Frag zur Aufgabe …") comes with the question route (#388 step 6) — so until then its
+// bar is this one without the field (`field={false}`): no pill around nothing, the action alone
+// across the bar's width, exactly where and how "Prüfen" stood before.
 
 import { forwardRef, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
@@ -28,42 +34,47 @@ import { LbTextInput, type LbTextInputProps, type LbTextInputRef } from './LbTex
 /** The count appears this close to the end, not before: a permanent 0/2000 is noise. */
 const COUNT_WITHIN = 200;
 
-type Props = Omit<LbTextInputProps, 'variant' | 'multiline' | 'rows' | 'end'> & {
-  value: string;
-  maxLength: number;
+/** What stands in the bar around her text: the same with and without the field. */
+type Controls = {
   /** What she says, written into the field (and its status line); none: no voice here. */
   voice?: VoiceInput;
   /** The mic's name for a screen reader ("Nachricht sprechen", "Antwort sagen"). */
   micLabel?: string;
   /** False: no mic in the pill (a Diktat; voice mode, where the big mic is the screen's). */
   mic?: boolean;
-  /** Takes the mic's place while the mic is idle ("Senden", "Stopp"); null: the mic stays. */
+  /** Takes the mic's place while the mic is idle ("Senden", "Stopp", "Prüfen"); null: the mic stays. */
   action?: ReactNode;
   /** After the mic or action, at the pill's end (the chat's conversation mode). */
   after?: ReactNode;
-  /** A unit, beside the text ("cm"). */
-  unit?: string | null;
   /** Above the pill: what goes with the text (the pages she attached). */
   above?: ReactNode;
   disabled?: boolean;
 };
 
-export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(
-  {
-    value,
-    maxLength,
+type WithField = Omit<LbTextInputProps, 'variant' | 'multiline' | 'rows' | 'end'> & {
+  field?: true;
+  value: string;
+  maxLength: number;
+  /** A unit, beside the text ("cm"). */
+  unit?: string | null;
+};
+
+/**
+ * `field={false}`: the bar without its field — a board, which has nothing to type yet (#395).
+ * The action (or the mic) then stands alone across the bar.
+ */
+type Props = Controls & (WithField | { field: false });
+
+export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(props, ref) {
+  const {
     voice,
     micLabel = '',
     mic = true,
     action = null,
     after = null,
-    unit = null,
     above = null,
     disabled = false,
-    ...field
-  },
-  ref,
-) {
+  } = props;
   const { palette } = useTheme();
   const { t } = useTranslation('common');
   const idle = voice === undefined || voice.state === 'idle';
@@ -73,6 +84,31 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(
     ) : mic && voice ? (
       <MicButton voice={voice} size="sm" label={micLabel} disabled={disabled} />
     ) : null;
+  if (props.field === false)
+    return (
+      <>
+        {voice ? <MicStatus voice={voice} /> : null}
+        {above}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm }}>
+          <View style={{ flex: 1 }}>{control}</View>
+          {after}
+        </View>
+      </>
+    );
+  const {
+    value,
+    maxLength,
+    unit = null,
+    field: _field,
+    voice: _voice,
+    micLabel: _micLabel,
+    mic: _mic,
+    action: _action,
+    after: _after,
+    above: _above,
+    disabled: _disabled,
+    ...field
+  } = props;
   return (
     <>
       {voice ? <MicStatus voice={voice} /> : null}
@@ -97,6 +133,14 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(
       <LbTextInput
         ref={ref}
         {...field}
+        // An empty field next to an action says nothing (issue #394): "Senden" or "Stopp" takes
+        // more of the pill than the mic, and at 360 "Schreib Buddy …" broke onto a second line
+        // beside it — the empty bar two lines high. The action says what comes next; the field
+        // keeps its name for a screen reader (`accessibilityLabel`). With the mic at the end the
+        // placeholder has its room back.
+        placeholder={
+          control !== null && control === action && value === '' ? undefined : field.placeholder
+        }
         variant="bar"
         value={value}
         maxLength={maxLength}

@@ -106,5 +106,11 @@ hält die Grenze gegen main.
   „Prüfen“ zuunterst — an jedem Shot mit `answer-slot`; seit #365 außerdem: das Feld einer
   getippten Antwort steht in der Leiste unten mit „Prüfen“, `fieldInBar`). Die Tastatur-Probe bei
   360×440 läuft an jedem Shot mit einem Antwortfeld.
+- Eine Leiste je Übungsbildschirm, und sie ist die Eingabeleiste (#395): der Quelltext-Test
+  `apps/mobile/lib/__tests__/oneBar.test.ts` (jede `BottomBar` im Übungscode hält genau eine
+  `InputBar`, keine Leiste in einer Leiste; die noch eigenen Leisten stehen mit ihrem Schritt auf
+  einer Liste, die nur schrumpft) und `room` in `tests/web/fit.ts` (höchstens eine angeheftete
+  Leiste an jedem Shot; Freiraum, Leiste und Antwortfeld jeder Übungsstation in `fit.jsonl`, auch
+  bei 360×440).
 - Zusätzliche CI-Zeit: etwa 20 s im Lint-Schritt (jscpd etwa 13 s, knip und Tests parallel) und
   unter 1 s für das Bundle-Budget.

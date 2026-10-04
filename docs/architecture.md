@@ -4072,7 +4072,18 @@ form: every answer sits at the bottom.**
 **The answer shell** (issue #310, `components/practice/AnswerShell.tsx`) holds an answer and its
 action in fixed slots: the free room, the answer, optional keys for what she types directly under
 it, and "Prüfen" (`CheckBar.tsx`: one full-width pill in the pinned bar,
-waiting until the form says its answer is complete). A form fills the slots and decides nothing
+waiting until the form says its answer is complete). **One bar per practice screen, and it is the
+input bar** (issue #395, report #388 §9): "Prüfen" is the action of the app's one `InputBar`, as
+"Senden" is the chat's. A board (order, match, table, cloze, mark, select-all, the note line) has
+nothing to type yet, so its bar is the input bar without its field (`field={false}`) and "Prüfen"
+stands alone across it — measured at every walkthrough stop, it costs 0 pt against the bar of its
+own it had before; the field ("Frag zur Aufgabe …") joins it in #388 step 6. Guarded by the source
+test `apps/mobile/lib/__tests__/oneBar.test.ts` (every `BottomBar` in practice code holds one
+`InputBar`, none inside another; the bars not moved yet — tap options in voice mode, "Weiter",
+pronunciation, flash cards, Kopfrechnen, a round's end — are listed with their step, and the list
+only shrinks) and by the walkthrough (`room` in `tests/web/fit.ts`: at most one pinned bar at every
+stop, and the free room, bar and answer slot of every practice stop recorded in `fit.jsonl`,
+also at 360×440). A form fills the slots and decides nothing
 about place, spacing or the look of its action. Order, match, table, cloze, the note line and the
 typed answer are in it. **Free text is typed at the bottom, like in the chat** (issue #365, owner
 04.10.; it replaces #310's variant B "Eingabefeld direkt unter der Frage" for free text): a typed
@@ -4324,7 +4335,10 @@ chat's composer (`components/buddy/Composer.tsx`: + · text · mic or "Senden"/"
 typed practice answer (`components/practice/TypedAnswer.tsx`: text · unit · mic, math keys under it,
 "Prüfen" under it) are the same pill in the same pinned `components/lb/BottomBar.tsx`, with the
 same mic rule (a soft circle at the end; an action takes its place once there is something to send),
-status line and character count. A birth date is `components/auth/BirthDateFields.tsx` in the
+status line and character count. An empty field next to an action ("Senden" with a page attached,
+"Stopp" while Buddy writes) shows no placeholder: at 360 "Schreib Buddy …" broke onto a second line
+beside it (issue #394, guarded in `tests/web/layout.spec.ts`); the field keeps its name for a
+screen reader. A birth date is `components/auth/BirthDateFields.tsx` in the
 profile form and in the parents' correction. Guarded: `lb/one-text-field`
 (docs/engineering-guards.md) refuses `TextInput` anywhere else in the app, and
 `apps/mobile/lib/__tests__/oneInput.test.ts` holds that the chat and practice type into

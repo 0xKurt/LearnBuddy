@@ -217,6 +217,42 @@ export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
 }
 
 /**
+ * The room of a practice screen, measured (issue #395, report #388 §9 "Space"): the free room
+ * (`FreeSpace`), the pinned bar and the answer slot, in pt, with the scheme it was taken in. What
+ * a change to the bar costs a form is read from these lines, not computed. Null on a screen with
+ * neither a free room nor a pinned bar.
+ */
+export type Room = {
+  scheme: 'light' | 'dark';
+  free: number;
+  bar: number;
+  /** How many pinned bars the screen shows: one (#395). */
+  bars: number;
+  slot: number;
+};
+
+export async function room(page: Page): Promise<Room | null> {
+  return page.evaluate(() => {
+    const height = (id: string) =>
+      Array.from(document.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`)).map(
+        (el) => el.getBoundingClientRect().height,
+      );
+    // A free room squeezed to nothing still counts (0 pt); a bar counts where it is drawn.
+    const free = height('free-space');
+    const bars = height('bottom-bar').filter((h) => h > 0);
+    if (free.length === 0 && bars.length === 0) return null;
+    const sum = (xs: number[]) => Math.round(xs.reduce((a, b) => a + b, 0));
+    return {
+      scheme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+      free: sum(free),
+      bar: sum(bars),
+      bars: bars.length,
+      slot: sum(height('answer-slot')),
+    };
+  });
+}
+
+/**
  * A small phone with the keyboard up (issue #310, #309 Abnahme 2): the 360×740 phone keeps
  * 740 − 300 pt, a small Android keyboard being about 300 dp (the same room modes.spec gives its
  * keyboard shots; core-loop checks the chat at a rounder 420). The web cannot open a keyboard;
@@ -256,6 +292,7 @@ async function keyboardPass(page: Page, name: string): Promise<void> {
     alerts: await alerts.count(),
     actionPast,
     place: await answerPlace(page),
+    room: await room(page),
   };
   appendFileSync(REPORT, `${JSON.stringify(record)}\n`);
   await expect(field, `${name} @kb: the field above the keyboard`).toBeInViewport({ ratio: 1 });
@@ -312,10 +349,13 @@ export async function shot(
     const here = await overflows(page);
     found.push(...here);
     const place = await answerPlace(page);
+    const space = await room(page);
     appendFileSync(
       REPORT,
-      `${JSON.stringify({ name, phone: phone.width, overflows: here, ...(place ? { place } : {}) })}\n`,
+      `${JSON.stringify({ name, phone: phone.width, overflows: here, ...(place ? { place } : {}), ...(space ? { room: space } : {}) })}\n`,
     );
+    // One bar per screen (issue #395): the input bar, never a second one under or above it.
+    if (space) expect(space.bars, `${name} @${phone.width}: one pinned bar`).toBeLessThanOrEqual(1);
     if (place) {
       // One rule for every form in the answer shell (issue #386): the answer at the bottom.
       expect(
@@ -335,6 +375,13 @@ export async function shot(
   // A typed answer: once more with the keyboard up.
   if ((await page.locator('[data-testid="answer-field"]').count()) > 0)
     await keyboardPass(page, name);
+  // Any other answer (a board, options): its room in the same window, so every form has a keyboard
+  // column in the measurement (issue #395) — a board's cell or gap brings the keyboard up too.
+  else if ((await page.getByTestId('answer-slot').count()) > 0) {
+    await page.setViewportSize(KEYBOARD_ROOM);
+    await settle(page);
+    appendFileSync(REPORT, `${JSON.stringify({ name, phone: 'kb', room: await room(page) })}\n`);
+  }
   if (size) await page.setViewportSize(size);
   const tooLong = found.filter((o) => !o.allowed && !(opened && o.label !== 'page'));
   expect(tooLong, `${name}: must fit the screen without scrolling`).toEqual([]);

@@ -3,10 +3,11 @@
 //
 //   · a form in the answer shell brings nothing of the shell itself — no bar, no spacer, no
 //     "Prüfen", no keyboard handling, no hand-built tile;
-//   · the bar (`BottomBar`), the spacer (`FreeSpace`) and "Prüfen" have the owners listed below
-//     and no others. The lists name what has not moved into the shell yet and the step that moves
-//     it; they only shrink — an entry whose file no longer needs it fails too, so the list is
-//     pulled down in the change that moves it.
+//   · the spacer (`FreeSpace`) and "Prüfen" have the owners listed below and no others; the bar
+//     (`BottomBar`) is the input bar's, guarded by `oneBar.test.ts` (#395). The lists name what
+//     has not moved into the shell yet and the step that moves it; they only shrink — an entry
+//     whose file no longer needs it fails too, so the list is pulled down in the change that
+//     moves it.
 //
 // What this cannot see is where things end up on a phone; the walkthrough measures that at every
 // stop (`tests/web/fit.ts`, `answerPlace`).
@@ -47,16 +48,6 @@ const IN_SHELL = [
   'StaffWriting.tsx',
 ];
 
-/** Who renders the pinned bar, and why it is not (yet) the shell's "Prüfen". */
-const BAR: Record<string, string> = {
-  'CheckBar.tsx': 'the shell’s action',
-  '[id].tsx': '"Weiter" once a question is closed, handed to the shell as its bar (`action.bar`)',
-  'SpeakPanel.tsx': 'pronunciation: the recording is the action, handed to the shell as its bar',
-  'CardPass.tsx': 'flash cards: a screen of their own, no answer to check',
-  'DrillRound.tsx': 'Kopfrechnen: a timed round on its own digit pad (#243)',
-  'RunResult.tsx': 'the end of a round: "Weiter", not an answer',
-};
-
 /** Who places the free room. */
 const SPACER: Record<string, string> = {
   'AnswerShell.tsx': 'above the answer, between the conversation and the answer (#386)',
@@ -91,12 +82,6 @@ describe('the answer shell is the only place for an answer and its action (#310)
       expect(file, name).toBeDefined();
       expect([...imports(file!.text)], name).toContain('AnswerShell');
     }
-  });
-
-  it('renders the pinned bar only through its listed owners', () => {
-    expect(holders((s) => s.name !== 'BottomBar.tsx' && imports(s.text).has('BottomBar'))).toEqual(
-      Object.keys(BAR).sort(),
-    );
   });
 
   it('places the free room only through its listed owners', () => {
