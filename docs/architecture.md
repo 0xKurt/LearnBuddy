@@ -212,6 +212,16 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
     message `failure_code = 'blocked'`, releases the budget reservation, and replaces the
     blocked text with a neutral placeholder in every later prompt — one block can never mute
     Buddy (audit H-31, H-32).
+  - **The practice tutor takes the same path** (issue #389). Distress typed into an answer
+    field reaches the tutor, not Buddy, so `TutorDecision` carries the same `concern` bit with
+    the same two-sided description; code then answers with the same fixed text
+    (`i18n/safeguarding.ts`, one implementation for chat and tutor). The turn is
+    `not_an_attempt`: no try is counted (in a test the one try stays hers), no hint, never the
+    solution, and the test's neutral line is not put on top. A provider block in the tutor gets
+    the `blocked` text instead of "kann ich gerade nicht prüfen". Not covered: a text the rules
+    already judge without a model (a named choice, a different number) never reaches the tutor —
+    a disclosure has neither. Measured by `practice-safeguarding.int.test.ts` (scripted) and the
+    `distress_*`/`*_no_alarm` cases in `evals/tutor` (live run still open).
   - The copy needs pedagogical and legal review before real learners (noted for the ADR).
   - A concern answer may come **without any reply text**: the model knows its words are thrown
     away, so it rightly writes none. `reply` therefore has no minimum length; `emptyReply()`
