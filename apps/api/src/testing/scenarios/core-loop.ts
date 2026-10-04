@@ -94,7 +94,7 @@ export function scriptCoreLoop(): void {
       };
     },
   });
-  // 2 · the photographed worksheet — by the photo she took (core-loop.spec.ts draws it at
+  // 2 · the photographed worksheet — by the photo she took (coreLoop.ts draws it at
   // 800 × 1000 on a 2× screen, the app sends it at 1600 px on the long side), not by being the
   // first sheet anyone reads: run alone, tour.spec.ts would take it (#350).
   readingRules.add({

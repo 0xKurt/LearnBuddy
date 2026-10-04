@@ -1,4 +1,4 @@
-// Browser walkthrough of the learning modes (after core-loop.spec.ts, same dev
+// Browser walkthrough of the learning modes (after the core-loop-*.spec.ts, same dev
 // stack; scripted answers in apps/api/src/testing/scenarios/learning-modes.ts):
 // "Erklär mir …", homework help with hints only, practice without a photo with
 // math and a figure, a practice test (no hints, results at the end) and

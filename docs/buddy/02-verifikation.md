@@ -55,7 +55,8 @@ Anmeldung und Foto-Speicher, dazu eine gemeinsame Test-Uhr.
 ## 2. Im Browser durchgespielt
 
 `scripts/web-walkthrough.sh` baut die echte App fürs Web und spielt den Kernablauf in Chromium
-durch (`tests/web/core-loop.spec.ts`), gegen die echte API mit Scheduler und Schema. Ersetzt sind
+durch (`tests/web/core-loop-*.spec.ts`: fünf Teile, die je mit einer eigenen Schülerin beginnen und
+ihren Weg dorthin selbst mitbringen, `tests/web/coreLoop.ts`; Issue #381), gegen die echte API mit Scheduler und Schema. Ersetzt sind
 nur Anmeldung, Foto-Speicher und das Modell (feste Antworten aus
 `apps/api/src/testing/scenarios/core-loop.ts`). Die Screenshots landen in
 `test-results/web/shots`. Der Ablauf ist der Hauptfall der Zielgruppe (7.–12. Klasse):
