@@ -259,7 +259,9 @@
     "binom": "{{top}} über {{bottom}}",
     "column_vector": "Spaltenvektor {{entries}}",
     "matrix": "Matrix mit den Zeilen {{rows}}",
-    "arrow_label": "reagiert zu, Bedingung: {{label}}"
+    "arrow_label": "reagiert zu, Bedingung: {{label}}",
+    "allele_upper": "groß {{letter}}",
+    "allele_lower": "klein {{letter}}"
   },
   "staff": {
     "note": {

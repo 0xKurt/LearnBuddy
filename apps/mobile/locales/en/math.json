@@ -259,7 +259,9 @@
     "binom": "{{top}} choose {{bottom}}",
     "column_vector": "column vector {{entries}}",
     "matrix": "matrix with the rows {{rows}}",
-    "arrow_label": "reacts to give, condition: {{label}}"
+    "arrow_label": "reacts to give, condition: {{label}}",
+    "allele_upper": "capital {{letter}}",
+    "allele_lower": "small {{letter}}"
   },
   "staff": {
     "note": {

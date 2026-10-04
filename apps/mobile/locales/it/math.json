@@ -259,7 +259,9 @@
     "binom": "{{top}} su {{bottom}}",
     "column_vector": "vettore colonna {{entries}}",
     "matrix": "matrice con le righe {{rows}}",
-    "arrow_label": "reagisce e dà, condizione: {{label}}"
+    "arrow_label": "reagisce e dà, condizione: {{label}}",
+    "allele_upper": "{{letter}} maiuscola",
+    "allele_lower": "{{letter}} minuscola"
   },
   "staff": {
     "note": {

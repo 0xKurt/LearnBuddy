@@ -1,15 +1,7 @@
 {
   "$comment": "Zeichenkomponenten (Engineering-Regel 1, Issue #313): jede Datei in apps/mobile/components/math, in einem Ordner `figures` und jede Komponente in app/ oder components/, die react-native-svg nutzt, steht hier — mit dem Issue, in dem der Bibliotheks-Check steht (Lizenz, React-Native-Weg, Größe, Pflege, A11y). Eine neue Datei ohne Eintrag macht `pnpm lint` rot (tools/guards/guards.test.mjs). `bestand` ist der Stand vor der Regel: ungeprüft, darf nur schrumpfen. Neues kommt nur nach `geprueft`. Siehe docs/engineering-guards.md.",
   "bestand": {
-    "apps/mobile/components/math/ChartFigures.tsx": "Diagramme selbst gezeichnet; Prüfung Victory Native / gifted-charts offen in #312",
-    "apps/mobile/components/math/FigureView.tsx": "Graphen und Geometrie selbst gezeichnet; Prüfung JSXGraph / Mafs / function-plot offen in #312",
     "apps/mobile/components/math/MathKeys.tsx": "Formel-Tastenreihe; Prüfung offen in #311 (eine Tastenreihe)",
-    "apps/mobile/components/math/MathText.tsx": "eigener Formelsatz; Prüfung KaTeX / MathJax offen in #312",
-    "apps/mobile/components/math/MoleculeView.tsx": "eigenes Molekül-Layout; Prüfung SmilesDrawer / RDKit.js offen in #312",
-    "apps/mobile/components/math/TypedMathPreview.tsx": "Vorschau über MathText; hängt an der Formelsatz-Prüfung in #312",
-    "apps/mobile/components/math/ZoomableFigure.tsx": "Zoom-Hülle um Figuren; Prüfung offen in #312",
-    "apps/mobile/components/math/figureText.tsx": "Text in Figuren-SVG; hängt an den Figuren-Prüfungen in #312",
-    "apps/mobile/components/math/useSpokenMath.ts": "Screenreader-Form von Formeln; hängt an der Formelsatz-Prüfung in #312",
     "apps/mobile/components/lb/BuddyOrb.tsx": "Buddys Orb (Markenzeichen, Owner-Entscheidung 27.09.); Bibliotheks-Check nie gemacht (#313)",
     "apps/mobile/components/lb/EdgeFade.tsx": "Verlauf am Rand der Unterhaltung; Bibliotheks-Check nie gemacht (#313)",
     "apps/mobile/components/lb/Glow.tsx": "Hintergrundlicht; Bibliotheks-Check nie gemacht (#313)",
@@ -46,6 +38,38 @@
     "apps/mobile/components/math/TreeFigures.tsx": {
       "issue": "#256",
       "libraryCheck": "Baumdiagramm, Suchbaum, Stammbaum und Automat mit react-native-svg; Layout und alle Fakten aus packages/shared-math (trees.ts, pedigree.ts), die der Server prüft. Bibliotheks-Check 03.10. (npm view, esbuild --bundle --minify + gzip -9, headless in Node): d3-hierarchy 3.1.2 (ISC, 1,8 KB gzip, headless) legt Bäume genauso Blatt für Blatt aus wie die 15 Zeilen in trees.ts, die der Server für die Breitenprüfung ohnehin braucht — eine Abhängigkeit für dasselbe Ergebnis; @dagrejs/dagre 3.1.1 (MIT, 2026-08, 17 KB gzip, headless) legt Graphen in Rängen aus — für 1–6 Zustände ist der Ring mit Start links das Schulbuchbild, Schleifen und Hin-/Rückwege ohne Umwege, und 17 KB gzip im Haupt-Bundle für eine Figur; Stammbaum: pedigreejs ist GPL-3.0, braucht DOM/d3 und liegt nicht auf npm, elkjs ist EPL-2.0/GPL und 8 MB; @viz-js/viz (Graphviz) ist WASM, unter Hermes nur per WebView. A11y: describeTree sagt jeden Ast, jede Person, jeden Übergang in Worten. Eigenbau begründet: keine freie RN-taugliche Bibliothek zeichnet Stammbaumsymbole, und die beiden Layout-Bibliotheken ersetzen je nur rund 15 Zeilen."
+    },
+    "apps/mobile/components/math/ChartFigures.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Diagramme bleiben Eigenbau mit react-native-svg. Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): react-native-gifted-charts 1.4.80 (MIT, 80 KB gzip) spart kaum Zeilen, kennt nur kategoriale x-Achsen (gemessene x-Werte falsch platziert, Regel-0-Risiko), lässt das Web-Bundle ohne Shim abstürzen und deckt nur 4 von 7 Diagrammtypen (kein Boxplot, keine Ausgleichsgerade, kein Klimadiagramm); victory-native XL braucht Skia ≥ 2.6 (Expo 54: 2.2.12) und 7 MB CanvasKit-WASM im Web, ohne SVG-Text für Screenreader. A11y: describeChart sagt das Diagramm in Worten. Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/FigureView.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Graphen und Geometrie bleiben Eigenbau mit react-native-svg. Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): JSXGraph 1.13.3 (MIT/LGPL) und function-plot 1.25.4 (MIT) brauchen ein DOM, Mafs 0.21 (MIT) nur react-dom — keiner läuft unter React Native ohne WebView; eine WebView kostete A11y, Theme und Fit (Regel 16). Winkelbögen, Maße, Lichtstrahlen und Resultierende sind kein Bibliotheksstandard. A11y: describeFigure sagt die Figur in Worten. Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/MathText.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Formelsatz bleibt Eigenbau mit nativem Text/View. Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): KaTeX 0.19 (MIT) gibt nur HTML+CSS aus, nativ also nur per WebView; MathJax 4.1.3 (Apache-2.0) liefe headless als SVG, aber mit 478 KB gzip, und Formeln im Satz würden Bilder, die nicht mit dem Text umbrechen und Dynamic Type nicht folgen; react-native-math-view ist seit 2022 ungepflegt. A11y: eigene Sprachausgabe (lib/math/speak.ts). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/MoleculeView.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Molekül-Layout bleibt Eigenbau. Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): SmilesDrawer 2.4.1 (MIT) braucht ein DOM und zeichnet nur Skelettformeln; OpenChemLib 9.25 (BSD-3) liefe headless, aber mit 341 KB gzip nur fürs Layout und ohne freie Elektronenpaare; RDKit.js ist WASM (Hermes ohne WebAssembly, nur WebView). Lewis-Formeln mit freien Elektronenpaaren und Valenzstrich-Schreibweise (#253) kann keiner. Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/TypedMathPreview.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Vorschau der getippten Formel über MathText; folgt dem Formelsatz-Entscheid in #312 (Phase 1, Kommentar vom 03.10.: KaTeX nur per WebView, MathJax 478 KB gzip und Formeln als Bild). Zeichnet selbst nichts Eigenes. Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/ZoomableFigure.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Zeichnet nichts selbst: legt FigureView (Graphen/Geometrie, Eigenbau entschieden in #312) in die Zoom-Hülle aus components/lb/ZoomViewer und gibt dem Tippziel die Beschreibung in Worten. Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/figureText.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Text in Figuren-SVG für FigureView und ChartFigures; folgt deren Entscheid in #312 (Phase 1, Kommentar vom 03.10.: keine RN-taugliche Bibliothek für Graphen/Geometrie, gifted-charts/victory-native passen nicht). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/useSpokenMath.ts": {
+      "issue": "#312",
+      "libraryCheck": "Screenreader-Form von Formeln über lib/math/speak.ts; folgt dem Formelsatz-Entscheid in #312 (Phase 1, Kommentar vom 03.10.: KaTeX/MathJax ersetzen unseren Satz nicht; MathJax' speech-rule-engine kostete noch mehr Größe). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
     },
     "apps/mobile/components/math/SolidFigures.tsx": {
       "issue": "#255",

@@ -175,3 +175,12 @@ describe('nie mitten im Wort', () => {
     expect(styleOf(screen.getByText(monster)).overflowWrap).not.toBe('normal');
   });
 });
+
+describe('Genotypen klingen verschieden (Issue #352)', () => {
+  it('gibt AA, Aa und aa drei unterscheidbare Namen für den Screenreader', () => {
+    show(['$AA$', '$Aa$', '$aa$']);
+    expect(screen.getByRole('button', { name: /groß A, groß A/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /groß A, klein a/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /klein a, klein a/ })).toBeTruthy();
+  });
+});
