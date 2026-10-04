@@ -2974,8 +2974,9 @@ run without sheets was sent before D2; today every call knows its kind, so it is
 narrowed, because code cannot prove a form unusable there: `ModelFigure` (all 25 figure types stay
 in every profile with items, also vocab and speak, and as the options of a listening multiple
 choice — `usableItems` and `listenItems` keep a figure on every kind, so leaving it out needs a
-product rule first, not a profile; at `generate.v1.27` it is 82–84 % of the vocab, speak and listen
-schemas and appears twice in every item schema, as `figure` and `choice_figures[]`), the
+product rule first, not a profile; at `generate.v1.27` it is 80–83 % of the vocab, speak and listen
+schemas and appears twice in every item schema with a multiple choice, as `figure` and
+`choice_figures[]`), the
 extraction schemas (a sheet is read before anyone knows what is on it) and the Buddy turn's
 `actions` (tool growth, D3 deferred by the #279 consensus). Proven by
 `practice/__tests__/profiles.test.ts` (every valid form passes `testing/schemaCheck.ts`, a stand-in
