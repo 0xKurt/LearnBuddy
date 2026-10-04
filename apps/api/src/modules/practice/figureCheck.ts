@@ -31,7 +31,7 @@
 // The older parts of a geometry figure (segments, polygons and circles naming a point that
 // does not exist) keep their pre-#257 handling in `items.ts`: dropped, the question stays.
 
-import { ModelFigure, PRIMARY_TYPES } from '@learnbuddy/shared-types/contracts';
+import type { ModelFigure } from '@learnbuddy/shared-types/contracts';
 import {
   canonicalizeUnit,
   checkMolecule,
@@ -334,20 +334,6 @@ export function primaryHolds(
       return v !== null && v === key.n;
     }
   }
-}
-
-/**
- * Whether a raw figure is a primary-school figure that may not be shown: its shape does not
- * parse (a coin of 3 ct, a clock at 25:00) or it breaks a rule of its own. Read before the item
- * is parsed, because the item's parse catches a broken figure to null and would leave "Wie spät
- * ist es?" without its clock (`items.ts` `clipDraft`) — like a chart, it costs the question.
- */
-export function figureIsRejectedPrimary(raw: unknown): boolean {
-  if (typeof raw !== 'object' || raw === null) return false;
-  const type = (raw as { type?: unknown }).type;
-  if (!(PRIMARY_TYPES as readonly unknown[]).includes(type)) return false;
-  const parsed = ModelFigure.safeParse(raw);
-  return !parsed.success || !isPrimary(parsed.data) || primaryProblem(parsed.data) !== null;
 }
 
 /**

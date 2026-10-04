@@ -91,7 +91,7 @@ export type ReadQuestion =
   | 'type';
 export type ChartReadSpec = { q: ReadQuestion; s: number; i: number; j: number };
 
-export const CHART_TYPE_NAMES: readonly Chart['type'][] = [
+const CHART_TYPE_NAMES: readonly Chart['type'][] = [
   'line_chart',
   'climate_chart',
   'pie_chart',

@@ -7,6 +7,7 @@ export * from './staff.js';
 export * from './tree.js';
 export * from './periodic.js';
 export * from './solid.js';
+export * from './diagram.js';
 export * from './figure.js';
 export * from './bars.js';
 export * from './structured.js';

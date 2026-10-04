@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 import { choiceProblem } from '../choiceCheck.js';
 import { clockVerdict, ruleCheck, type ItemForCheck } from '../evaluate.js';
-import { figureHolds, figureIsRejectedPrimary } from '../figureCheck.js';
+import { figureHolds } from '../figureCheck.js';
+import { figureIsRejected } from '../wholeFigure.js';
 
 type Fig = Parameters<typeof figureHolds>[0];
 
@@ -85,13 +86,13 @@ describe('a broken primary-school figure costs its question', () => {
     ['21 dots in a field of 20', { type: 'dot_field', field: 'twenty', n: [15, 6], ask: 'count' }],
     ['a span with one clock', { type: 'clock', c: [{ h: 7, m: 0 }], h24: false, ask: 'span' }],
   ])('%s', (_, raw) => {
-    expect(figureIsRejectedPrimary(raw)).toBe(true);
+    expect(figureIsRejected(raw)).toBe(true);
   });
 
   it('a figure that holds, and any other figure, is not rejected here', () => {
-    expect(figureIsRejectedPrimary(coins)).toBe(false);
-    expect(figureIsRejectedPrimary({ type: 'fraction', shape: 'bar', fractions: [] })).toBe(false);
-    expect(figureIsRejectedPrimary(null)).toBe(false);
+    expect(figureIsRejected(coins)).toBe(false);
+    expect(figureIsRejected({ type: 'fraction', shape: 'bar', fractions: [] })).toBe(false);
+    expect(figureIsRejected(null)).toBe(false);
   });
 });
 

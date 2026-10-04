@@ -69,7 +69,8 @@ import { structuredItems, type StructuredItem } from './structured.js';
 // v1.24: mark, tapping words, comma places or syllable breaks in a text (#234).
 // v1.25: a teach_back run („Erklär mal", #236) with its own task and key points.
 // v1.26: a question marks the calculation inside its sentence that the key is (`computes`, #227).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.26';
+// v1.27: diagrams — boxes with arrows, chains, cycles, trees, grids, gaps lettered A–C (#247).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.27';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

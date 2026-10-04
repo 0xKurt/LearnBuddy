@@ -81,7 +81,11 @@
     },
     "apps/mobile/components/math/schoolFigures.tsx": {
       "issue": "#255",
-      "libraryCheck": "Zeichnet nichts selbst: ordnet Uhr/Geld (#254), Bäume (#256), Periodensystem (#250) und Körper (#255) per Typwächter ihren eigenen Zeichendateien zu; deren Bibliotheks-Checks stehen bei PrimaryFigures.tsx, TreeFigures.tsx, PeriodicTable.tsx und SolidFigures.tsx."
+      "libraryCheck": "Zeichnet nichts selbst: ordnet Uhr/Geld (#254), Bäume (#256), Periodensystem (#250), Körper (#255) und Schemata (#247) per Typwächter ihren eigenen Zeichendateien zu; deren Bibliotheks-Checks stehen bei PrimaryFigures.tsx, TreeFigures.tsx, PeriodicTable.tsx, SolidFigures.tsx und DiagramFigures.tsx."
+    },
+    "apps/mobile/components/math/DiagramFigures.tsx": {
+      "issue": "#247",
+      "libraryCheck": "Schema-Figur (Kästchen mit Pfeilen: Kette, Kreislauf, Baum, Raster) mit react-native-svg; Layout, Zeilenumbruch, Pfeil- und Beschriftungslage und alle Prüfungen aus packages/shared-math/src/diagram.ts, die der Server prüft. Bibliotheks-Check 04.10. (npm view, esbuild --bundle --minify + gzip -9, headless in Node gerechnet): @dagrejs/dagre 3.1.1 (MIT, 2026-08, 16,9 KB gzip, headless) legt in Rängen aus — einen Kreislauf aus vier Kästchen stellt es als Säule 117 × 255 px mit Rückpfeil dar statt als Ring (das Schulbuchbild), kennt weder Zeilenumbruch noch die Breitenprüfung, die der Server ohnehin rechnen muss; d3-dag 1.2.2 (MIT, 2026-07, 37,9 KB gzip, headless) dasselbe Rangmodell, doppelt so groß; elkjs 0.12 ist EPL-2.0/GPL und 8 MB; cytoscape 3.34 (MIT, 5,7 MB entpackt) und @xyflow/react 12 brauchen ein DOM; mermaid 12 (122 MB entpackt) rendert per DOM. Für höchstens acht Kästchen sind Kette (Schlange), Ring (zwei Spalten), Baum (treeSlots aus trees.ts wiederverwendet) und Raster je wenige Zeilen. A11y: describeDiagram sagt Art, jeden Pfeil mit Beschriftung und jede Lücke mit ihrem Buchstaben, nie die Antwort. Eigenbau begründet: keine RN-taugliche Bibliothek zeichnet einen Kreislauf als Ring, und Layout plus Passt-Prüfung braucht der Server ohnehin (Regel 0)."
     }
   }
 }

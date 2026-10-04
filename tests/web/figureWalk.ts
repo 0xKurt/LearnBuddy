@@ -1,0 +1,81 @@
+// The steps every figure walkthrough shares (trees #256, solids #255, diagrams #247): a parent
+// signs up her child, Buddy offers a practice run, each question is shot with its figure at both
+// phone sizes in the light and the dark room, and answered — typed or tapped.
+// One copy for every spec that walks figures; the specs keep only their own questions.
+
+import { expect, type Page } from '@playwright/test';
+
+import { shot } from './fit';
+
+/** A new parent account with a child Lena (born 2014), onboarding done, on Buddy's screen. */
+export async function onboardChild(page: Page, tag: string): Promise<void> {
+  await page.goto('/');
+  await page.getByLabel('E-Mail').fill(`${tag}-${Date.now()}@example.test`);
+  await page.getByLabel('Passwort', { exact: true }).fill('geheim-1234');
+  await page.getByLabel('Passwort wiederholen').fill('geheim-1234');
+  await page.getByRole('button', { name: 'Konto erstellen' }).click();
+  await page.getByRole('checkbox').click();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await page.getByRole('radio', { name: 'Mein Kind' }).click();
+  await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill('Lena');
+  await page.getByRole('button', { name: 'Bundesland wählen' }).click();
+  await page.getByRole('radio', { name: 'Niedersachsen' }).click();
+  await page.getByLabel('Tag', { exact: true }).fill('10');
+  await page.getByLabel('Monat', { exact: true }).fill('02');
+  await page.getByLabel('Jahr', { exact: true }).fill('2014');
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
+  await page.getByLabel('PIN der Eltern').fill('4826');
+  await page.getByLabel('PIN wiederholen').fill('4826');
+  await page.getByRole('button', { name: "Los geht's" }).click();
+  await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's, Lena!" }).click();
+  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await page.getByRole('button', { name: 'Überspringen' }).click();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
+}
+
+/** She writes `message`; Buddy offers a practice run with `offer` in it, and she starts it. */
+export async function startOffer(page: Page, message: string, offer: string): Promise<void> {
+  await page.getByLabel('Schreib Buddy …').fill(message);
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText(offer, { exact: false })).toBeVisible();
+  await page
+    .locator('div')
+    .filter({ has: page.getByRole('button', { name: "Los geht's" }) })
+    .filter({ hasText: offer })
+    .last()
+    .getByRole('button', { name: "Los geht's" })
+    .click();
+}
+
+/** The question with its figure, at both phone sizes, in the light and the dark room. */
+export async function bothRooms(page: Page, name: string): Promise<void> {
+  await expect(page.getByTestId('question-figure')).toBeVisible();
+  await shot(page, name);
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, `${name}-dark`);
+  await page.emulateMedia({ colorScheme: 'light' });
+}
+
+/** A typed answer that code grades right, then on to the next question. */
+export async function typed(page: Page, text: string): Promise<void> {
+  // Right after the switch back from the dark room the field can render once more; fill until
+  // the value holds instead of typing into the copy that is about to go.
+  const field = page.getByLabel('Deine Antwort');
+  await expect(async () => {
+    await field.fill(text);
+    await expect(field).toHaveValue(text, { timeout: 1000 });
+  }).toPass();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+}
+
+/** A tapped option that code grades right, then on to the next question. */
+export async function chosen(page: Page, option: string): Promise<void> {
+  await page.getByRole('button', { name: option, exact: true }).click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+}

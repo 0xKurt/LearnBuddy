@@ -192,7 +192,7 @@ export function axesRange(f: Axes3d): Record<'x' | 'y' | 'z', [number, number]> 
 // ─────────────── all three ───────────────
 
 export type SpaceFigureData = Solid | CubeNet | Axes3d;
-export const SPACE_TYPE_NAMES: readonly SpaceFigureData['type'][] = ['solid', 'cube_net', 'axes3d'];
+const SPACE_TYPE_NAMES: readonly SpaceFigureData['type'][] = ['solid', 'cube_net', 'axes3d'];
 
 export function isSpaceFigure(f: { type: string }): f is SpaceFigureData {
   return (SPACE_TYPE_NAMES as readonly string[]).includes(f.type);

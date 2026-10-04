@@ -444,7 +444,14 @@
     "net_square": "Quadrat {{n}} in Zeile {{row}}, Spalte {{col}}",
     "axes3d": "Räumliches Koordinatensystem mit x-, y- und z-Achse",
     "axes3d_point": "Punkt {{l}}: {{x}} in x-Richtung, {{y}} in y-Richtung, {{z}} in z-Richtung",
-    "axes3d_arrow": "Pfeil von {{a}} nach {{b}}"
+    "arrow_to": "Pfeil von {{a}} nach {{b}}",
+    "arrow_to_label": "Pfeil von {{a}} nach {{b}}: {{label}}",
+    "diagram": "{{kind}} mit {{n}} Kästchen",
+    "diagram_chain": "Kette",
+    "diagram_cycle": "Kreislauf",
+    "diagram_tree": "Baumschema",
+    "diagram_free": "Schema",
+    "diagram_gap": "Lücke {{letter}}"
   },
   "keys": {
     "row": "Mathe-Zeichen",
