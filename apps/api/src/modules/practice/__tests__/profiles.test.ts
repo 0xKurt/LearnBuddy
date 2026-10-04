@@ -365,6 +365,21 @@ describe('the nested unions', () => {
     );
   });
 
+  it('a listening question carries only the fields its two kinds keep', () => {
+    const listen = explainSchemaFor('listen', null).properties as Record<string, unknown>;
+    const task = (listen.listen as { anyOf: { properties?: Record<string, unknown> }[] }).anyOf
+      .map((b) => b.properties)
+      .find((p) => p !== undefined)!;
+    const question = (task.questions as { items: { properties: Record<string, unknown> } }).items;
+    const fields = Object.keys(question.properties);
+    // No long answer, no number: no rubric (and no RubricCheck union), no tolerance.
+    expect(fields).not.toContain('rubric');
+    expect(fields).not.toContain('tolerance');
+    expect(JSON.stringify(question)).not.toContain('word_count');
+    // A multiple choice may show pictures as its options (#231).
+    expect(fields).toContain('choice_figures');
+  });
+
   it('a sheet-bound run keeps its topic enum inside the profile', () => {
     const schema = explainSchemaFor('test', TOPICS);
     const answer = validAnswer('test');
