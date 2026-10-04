@@ -68,7 +68,8 @@ import { structuredItems, type StructuredItem } from './structured.js';
 // v1.23: solids, cube nets and points in space (#255).
 // v1.24: mark, tapping words, comma places or syllable breaks in a text (#234).
 // v1.25: a teach_back run („Erklär mal", #236) with its own task and key points.
-export const GENERATE_PROMPT_VERSION = 'generate.v1.25';
+// v1.26: a listening question's schema without `rubric` (#281 D2: no listening kind keeps one).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.26';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;
