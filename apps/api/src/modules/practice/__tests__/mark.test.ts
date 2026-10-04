@@ -179,6 +179,21 @@ describe('marking words: the model names them, code finds them', () => {
     ).toBeNull();
   });
 
+  it('the category buttons stand in one row: their names together have a measured cap', () => {
+    const three = (names: string[]) =>
+      words(
+        'Die Oma liest den Kindern vor.',
+        [
+          { word: 'Die Oma', occurrence: null, category: names[0]! },
+          { word: 'liest', occurrence: null, category: names[1]! },
+          { word: 'den Kindern', occurrence: null, category: names[2]! },
+        ],
+        { categories: names },
+      );
+    expect(markDraftProblem(three(['Subjekt', 'Prädikat', 'Objekt']))).toBeNull();
+    expect(markDraftProblem(three(['Subjekt', 'Prädikat', 'Dativobjekt']))).toBe('too_long');
+  });
+
   it('too few or too many words, no target, or a long prompt is no task', () => {
     expect(
       markDraftProblem(words('Hund bellt', [{ word: 'Hund', occurrence: null, category: null }])),

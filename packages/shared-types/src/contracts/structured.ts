@@ -437,11 +437,13 @@ export const MARK_WORDS_MAX = 24;
 /** One word as it stands in the text; a longer one would not fit a line as one target. */
 export const MARK_WORD_MAX = 20;
 /**
- * Syllables: a few words, each short enough for two rows of 44-pt letter tiles. Three, measured on
- * 360×740 (tests/web/mark.spec.ts, 46g): four words of 10–11 letters were 19 pt too many.
+ * Syllables: a few words, one per row and NEVER wrapped — a word broken over two rows no longer
+ * reads as a word (owner review of #234). Ten letters in 30-pt cells is the widest row a 360-pt
+ * phone holds (`MarkAnswer.tsx`, LETTER_CELL); four such rows fit 360×740 with Buddy's reply
+ * (tests/web/mark.spec.ts, 46g). A longer word is rejected when it is written, never wrapped.
  */
-export const MARK_SYLLABLE_WORDS_MAX = 3;
-export const MARK_SYLLABLE_LETTERS_MAX = 12;
+export const MARK_SYLLABLE_WORDS_MAX = 4;
+export const MARK_SYLLABLE_LETTERS_MAX = 10;
 /**
  * Words of a text whose marks are sorted into categories: the row of categories takes a line of
  * its own, and the line saying what is marked runs longer ("Subjekt: …; Prädikat: …"). Eight, measured
@@ -452,6 +454,19 @@ export const MARK_CATEGORIES_MIN = 2;
 export const MARK_CATEGORIES_MAX = 3;
 /** A category's name ("Subjekt", "Signalwort"): one button in a row of three. */
 export const MARK_CATEGORY_MAX = 16;
+/**
+ * The categories' buttons stand in ONE row on a 360-pt phone: their names together at most this
+ * many characters, by how many there are. Measured (tests/web/mark.spec.ts, 46e): "Subjekt",
+ * "Prädikat", "Akkusativobjekt" (30) took a second row, and with it the sentence's last row did
+ * not fit 360×740 any more; "Subjekt", "Prädikat", "Objekt" (21) stand in one.
+ */
+export const MARK_CATEGORY_ROW_CHARS: Readonly<Record<number, number>> = { 2: 28, 3: 21 };
+
+/** Do these category names fit one row of buttons? */
+export function categoryRowFits(names: readonly string[]): boolean {
+  const max = MARK_CATEGORY_ROW_CHARS[names.length];
+  return max !== undefined && names.reduce((n, c) => n + [...c].length, 0) <= max;
+}
 /** Punctuation that stands before or after a word ("„Hund,“"): shown, never tapped. */
 export const MARK_AFFIX_MAX = 6;
 /** The instruction above a marking text: two lines of the question card at most. */

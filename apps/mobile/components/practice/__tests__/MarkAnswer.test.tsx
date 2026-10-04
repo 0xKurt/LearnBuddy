@@ -85,7 +85,7 @@ describe('one tap, as a pure step', () => {
 describe('marking words', () => {
   it('says how, marks and unmarks with a tap, and says in words what is marked', () => {
     show(NOUNS);
-    expect(screen.getByText('Tippe die Wörter an – noch ein Tipp nimmt es zurück.')).toBeDefined();
+    expect(screen.getByTestId('mark-how').textContent).toBe('Tippe jedes Wort an, das passt.');
     const hund = () => screen.getByRole('checkbox', { name: 'hund' });
     expect(screen.getAllByRole('checkbox')).toHaveLength(3);
     fireEvent.click(hund());
@@ -149,6 +149,9 @@ describe('commas and syllables', () => {
   it('sets a comma after the tapped word — the last word is no target', () => {
     const onSubmit = vi.fn();
     show(COMMAS, onSubmit);
+    expect(screen.getByTestId('mark-how').textContent).toBe(
+      'Tippe das Wort an, nach dem ein Komma fehlt.',
+    );
     expect(screen.getAllByRole('checkbox')).toHaveLength(3);
     fireEvent.click(screen.getByRole('checkbox', { name: 'Komma nach „glaube“' }));
     expect(screen.getByText(',')).toBeDefined();
@@ -165,5 +168,19 @@ describe('commas and syllables', () => {
     expect(screen.getAllByRole('checkbox')).toHaveLength(3);
     fireEvent.click(screen.getByRole('checkbox', { name: 'Silbe endet nach „Ha“ in Hase' }));
     expect(screen.getByTestId('mark-summary').textContent).toBe('Getrennt: Ha-se');
+    // The cut is a bar between the letters; the word stays one row of plain letters.
+    expect(screen.getAllByTestId('syllable-cut')).toHaveLength(1);
+    expect(screen.getByTestId('mark-how').textContent).toBe('Tippe an, wo eine Silbe endet.');
+  });
+
+  it('keeps its one line of how-to until the first "Prüfen", for every kind', () => {
+    show(PARTS);
+    expect(screen.getByTestId('mark-how').textContent).toBe(
+      'Erst oben die Art wählen, dann die Wörter antippen.',
+    );
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Hund' }));
+    expect(screen.getByTestId('mark-how')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Prüfen' }));
+    expect(screen.queryByTestId('mark-how')).toBeNull();
   });
 });

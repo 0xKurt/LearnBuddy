@@ -6,8 +6,8 @@
 // The model writes the text and NAMES the words to mark (or writes the commas and hyphens); code
 // splits, finds and keeps the places (Regel 0). Each case is the LARGEST its mode may be
 // (contracts/structured.ts, MARK_*), so the shots measure the worst case on 360×740 (rule 16):
-// 24 words to tap, 8 words sorted into three categories with the longest category name, a
-// sentence of 16 words with two commas to set, three words of up to 12 letters to split.
+// 24 words to tap, 8 words sorted into three categories whose names fill their one row, a
+// sentence of 16 words with two commas to set, four words of up to 10 letters to split.
 
 import { scriptGenerations } from './generations.js';
 import { says, scriptTurns } from './turns.js';
@@ -46,16 +46,16 @@ const CASES: Case[] = [
     ask: 'Satzglieder bestimmen',
     title: 'Satzglieder',
     task: {
-      prompt: 'Markiere Subjekt, Prädikat und Akkusativobjekt.',
+      prompt: 'Markiere Subjekt, Prädikat und Objekt.',
       mode: 'words',
       text: 'Die Oma liest den Kindern eine Geschichte vor.',
       targets: [
         { word: 'Die Oma', occurrence: null, category: 'Subjekt' },
         { word: 'liest', occurrence: null, category: 'Prädikat' },
         { word: 'vor', occurrence: null, category: 'Prädikat' },
-        { word: 'eine Geschichte', occurrence: null, category: 'Akkusativobjekt' },
+        { word: 'eine Geschichte', occurrence: null, category: 'Objekt' },
       ],
-      categories: ['Subjekt', 'Prädikat', 'Akkusativobjekt'],
+      categories: ['Subjekt', 'Prädikat', 'Objekt'],
       corrected: null,
     },
   },
@@ -81,7 +81,7 @@ const CASES: Case[] = [
     task: {
       prompt: 'Trenne die Wörter nach Silben.',
       mode: 'syllables',
-      text: 'Re-gen-bo-gen Scho-ko-la-de Ki-cher-erb-se',
+      text: 'Re-gen-bo-gen Scho-ko-la-de Mu-si-kan-ten Lö-wen-zahn',
       targets: null,
       categories: null,
       corrected: null,

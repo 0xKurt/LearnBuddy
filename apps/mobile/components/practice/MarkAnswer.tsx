@@ -36,12 +36,22 @@ import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { BTN_PAD_COMPACT, Btn } from '../lb/Btn.js';
+import { Btn } from '../lb/Btn.js';
 import { Segmented } from '../lb/Segmented.js';
 import { AnswerShell } from './AnswerShell.js';
 
-/** The label inside a compact Btn is never narrower than this: the target stays 44 pt wide. */
-const LABEL_MIN = TOUCH - 2 * BTN_PAD_COMPACT;
+/**
+ * A word's tile: its own padding (`Btn bare`), one step tighter than a compact button — a sentence
+ * of eight words sorted into categories, each with its digit, then stays in two rows on 360×740 —
+ * and never narrower than a touch target.
+ */
+const WORD_PAD = SPACE.sm;
+/**
+ * One letter of a word to split: the longest word (MARK_SYLLABLE_LETTERS_MAX) fills a 360-pt
+ * phone in one row with these cells — narrower than 44 pt, but the cells touch, so every point of
+ * the row is a target (issue #234: a word is never wrapped, it must read as one word).
+ */
+const LETTER_CELL = 30; // token-exempt: a letter's width, measured against MARK_SYLLABLE_LETTERS_MAX
 /** The underline under a marked word: a bar, so it reads the same on every platform. */
 const UNDERLINE = 3; // token-exempt: a stroke, not a gap — thick enough to see at arm's length
 /** The digit a category carries, on its button and on every word marked with it. */
@@ -102,6 +112,8 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const { t } = useTranslation('practice');
   const { text: kept, setText: keep } = useDraft(draftKey);
   const { text: chosenKept, setText: choose } = useDraft(`${draftKey}.category`);
+  // Whether she has pressed "Prüfen" here before (then Buddy's reply says how it went).
+  const { text: checkedOnce, setText: markChecked } = useDraft(`${draftKey}.checked`);
   const marks = marksFrom(kept, view);
   const { categories } = view;
   const chosen =
@@ -118,11 +130,14 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
       flush
       answer={
         <View style={{ gap: SPACE.sm }}>
-          {/* How to mark, only until the first mark: after that the marks say it. With
-              categories, their buttons above the words say it (one is already chosen). */}
-          {marks.length === 0 && categories.length === 0 ? (
-            <Text style={[TYPE.small, { color: palette.ink2 }]}>{t(`mark.how_${view.mode}`)}</Text>
-          ) : null}
+          {/* What a tap does, one line in the same place for every kind of marking — until the
+              first "Prüfen": then Buddy's reply says how it went, and on 360×740 it needs the
+              room (the same as the one line of a select-all task, #240). */}
+          {checkedOnce ? null : (
+            <Text testID="mark-how" style={[TYPE.small, { color: palette.ink2 }]}>
+              {t(categories.length > 0 ? 'mark.how_sorted' : `mark.how_${view.mode}`)}
+            </Text>
+          )}
           {categories.length > 0 ? (
             // One chosen at a time, each with the digit its words carry (the shared choice row).
             <Segmented
@@ -158,7 +173,10 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
       action={{
         ready: marks.length > 0,
         disabled,
-        onPress: () => onSubmit({ type: 'mark', marks }, markedText(view, marks)),
+        onPress: () => {
+          markChecked('1');
+          onSubmit({ type: 'mark', marks }, markedText(view, marks));
+        },
         waitsHint: t('mark.check_waits'),
       }}
     />
@@ -196,7 +214,7 @@ function Words({ view, marks, categories, disabled, tap }: Own & { view: MarkTas
           <Btn
             key={w.id}
             size="sm"
-            compact
+            bare
             variant={mark ? 'soft' : 'outline'}
             checked={mark !== undefined}
             disabled={disabled}
@@ -235,7 +253,15 @@ function WordLabel({
   const { palette } = useTheme();
   const ink = marked || comma ? palette.primaryDk : palette.ink;
   return (
-    <View style={{ minWidth: LABEL_MIN, flexDirection: 'row', alignItems: 'baseline' }}>
+    <View
+      style={{
+        minWidth: TOUCH,
+        paddingHorizontal: WORD_PAD,
+        flexDirection: 'row',
+        alignItems: 'baseline',
+        justifyContent: 'center',
+      }}
+    >
       {word.lead ? <Text style={[TYPE.body, { color: palette.ink }]}>{word.lead}</Text> : null}
       <View>
         <Text style={[TYPE.body, { color: ink, fontWeight: marked ? '700' : '400' }]}>
@@ -253,22 +279,10 @@ function WordLabel({
         <Text style={[TYPE.body, { color: palette.primaryDk, fontWeight: '800' }]}>,</Text>
       ) : null}
       {word.tail ? <Text style={[TYPE.body, { color: palette.ink }]}>{word.tail}</Text> : null}
-      {/* The category's digit sits in the tile's top corner, in its padding: beside the word it
-          made every marked tile wider, and the largest task took a row more on 360×740. */}
+      {/* The category's digit, beside the word in the meta text's size and full ink: in
+          the corner, smaller and tinted, it could hardly be read (dark mode above all). */}
       {digit ? (
-        <Text
-          style={[
-            TYPE.label,
-            {
-              position: 'absolute',
-              top: -SPACE.sm,
-              right: -BTN_PAD_COMPACT,
-              color: palette.primaryDk,
-            },
-          ]}
-        >
-          {digit}
-        </Text>
+        <Text style={[TYPE.small, { color: palette.ink, fontWeight: '700' }]}>{` ${digit}`}</Text>
       ) : null}
     </View>
   );
@@ -278,9 +292,7 @@ function WordLabel({
 function PlainWord({ word }: { word: MarkWord }) {
   const { palette } = useTheme();
   return (
-    <View
-      style={{ minHeight: TOUCH, justifyContent: 'center', paddingHorizontal: BTN_PAD_COMPACT }}
-    >
+    <View style={{ minHeight: TOUCH, justifyContent: 'center', paddingHorizontal: WORD_PAD }}>
       <Text
         style={[TYPE.body, { color: palette.ink }]}
       >{`${word.lead}${word.text}${word.tail}`}</Text>
@@ -288,12 +300,16 @@ function PlainWord({ word }: { word: MarkWord }) {
   );
 }
 
-/** Syllables: each word in a quiet field, each letter but its last a 44-pt target. */
+/**
+ * Syllables: one word per row, never wrapped, its letters set as text so it still reads as one
+ * word. Each letter but the last is a target the full 44 pt high and one letter cell wide; the
+ * cells touch, so there is no dead space between them. A cut stands as a bar between the letters.
+ */
 function Syllables({ words, marks, disabled, tap }: Own & { words: readonly MarkWord[] }) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   return (
-    <View testID="mark-text" style={{ gap: SPACE.sm }}>
+    <View testID="mark-text" style={{ gap: SPACE.xs }}>
       {words.map((w, wi) => {
         const letters = [...w.text];
         return (
@@ -301,9 +317,8 @@ function Syllables({ words, marks, disabled, tap }: Own & { words: readonly Mark
             key={w.id}
             style={{
               flexDirection: 'row',
-              flexWrap: 'wrap',
-              gap: SPACE.xs,
-              padding: SPACE.xs,
+              alignSelf: 'flex-start',
+              paddingHorizontal: SPACE.sm,
               borderRadius: RADIUS.frame,
               backgroundColor: palette.canvas,
             }}
@@ -311,39 +326,14 @@ function Syllables({ words, marks, disabled, tap }: Own & { words: readonly Mark
             {letters.map((ch, li) => {
               const at = cutId(wi, li + 1);
               const cut = marks.some((m) => m.at === at);
-              const label = (
-                <Text
-                  style={[
-                    TYPE.title,
-                    { minWidth: LABEL_MIN, textAlign: 'center', color: palette.ink },
-                  ]}
-                >
-                  {ch}
-                  {cut ? (
-                    <Text style={{ color: palette.primaryDk, fontWeight: '800' }}>-</Text>
-                  ) : null}
-                </Text>
-              );
-              if (li === letters.length - 1) {
-                return (
-                  <View
-                    key={at}
-                    style={{
-                      minHeight: TOUCH,
-                      justifyContent: 'center',
-                      paddingHorizontal: BTN_PAD_COMPACT,
-                    }}
-                  >
-                    {label}
-                  </View>
-                );
-              }
+              const cell = <LetterCell letter={ch} cut={cut} />;
+              if (li === letters.length - 1) return <View key={at}>{cell}</View>;
               return (
                 <Btn
                   key={at}
                   size="sm"
-                  compact
-                  variant={cut ? 'soft' : 'outline'}
+                  bare
+                  variant="ghost"
                   checked={cut}
                   disabled={disabled}
                   onPress={() => tap(at)}
@@ -351,7 +341,7 @@ function Syllables({ words, marks, disabled, tap }: Own & { words: readonly Mark
                     before: letters.slice(0, li + 1).join(''),
                     word: w.text,
                   })}
-                  label={label}
+                  label={cell}
                 >
                   {ch}
                 </Btn>
@@ -360,6 +350,34 @@ function Syllables({ words, marks, disabled, tap }: Own & { words: readonly Mark
           </View>
         );
       })}
+    </View>
+  );
+}
+
+/** One letter in its cell; the bar on its right edge when a syllable ends after it. */
+function LetterCell({ letter, cut }: { letter: string; cut: boolean }) {
+  const { palette } = useTheme();
+  return (
+    <View style={{ width: LETTER_CELL, minHeight: TOUCH, justifyContent: 'center' }}>
+      <Text
+        style={[TYPE.displaySm, { textAlign: 'center', color: palette.ink, fontWeight: '500' }]}
+      >
+        {letter}
+      </Text>
+      {cut ? (
+        <View
+          testID="syllable-cut"
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: SPACE.sm,
+            bottom: SPACE.sm,
+            width: UNDERLINE,
+            borderRadius: UNDERLINE,
+            backgroundColor: palette.primary,
+          }}
+        />
+      ) : null}
     </View>
   );
 }

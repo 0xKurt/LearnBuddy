@@ -25,6 +25,8 @@ import {
   MARK_CATEGORIES_MAX,
   MARK_CATEGORIES_MIN,
   MARK_CATEGORY_MAX,
+  MARK_CATEGORY_ROW_CHARS,
+  categoryRowFits,
   MARK_PROMPT_MAX,
   MARK_SORTED_WORDS_MAX,
   MARK_SYLLABLE_LETTERS_MAX,
@@ -54,7 +56,7 @@ import { mentionsSolution } from './tutor.js';
  * What the generator and the photo reading are told about marking tasks. Exact and minimal,
  * without an example sentence (models copy examples — repo convention).
  */
-export const MARK_RULES = `Marking tasks ("structured", type "mark"): the learner TAPS places in a short text — words (the nouns of a text written all in lower case, parts of speech, sentence parts, signal words, the wrong words of an error text), the places where commas belong, or the cuts between syllables. mode "words": text is the sentence(s) exactly as she sees them, ${MARK_WORDS_MIN}–${MARK_WORDS_MAX} words; targets lists every word (or group of adjacent words) to be marked, each written exactly as in the text, with occurrence = which occurrence (1, 2 …) when that word stands in the text more than once, else null. categories: null, or ${MARK_CATEGORIES_MIN}–${MARK_CATEGORIES_MAX} short names (at most ${MARK_CATEGORY_MAX} characters) when each target belongs to one of them — then every target names its category, every category is used and the text has at most ${MARK_SORTED_WORDS_MAX} words. An error text: corrected is the same text with every error fixed, word for word, and targets are exactly the wrong words; otherwise corrected is null. mode "gaps": text is the sentence WITH every comma correctly placed — the app removes them and she taps where they belong; targets, categories and corrected null. mode "syllables": text is 1–${MARK_SYLLABLE_WORDS_MAX} words separated by spaces, letters only, at most ${MARK_SYLLABLE_LETTERS_MAX} letters each, with a hyphen at every syllable boundary; targets, categories and corrected null. The prompt (at most ${MARK_PROMPT_MAX} characters) says what to mark and never names the answer. Only a task with exactly one right set of marks.`;
+export const MARK_RULES = `Marking tasks ("structured", type "mark"): the learner TAPS places in a short text — words (the nouns of a text written all in lower case, parts of speech, sentence parts, signal words, the wrong words of an error text), the places where commas belong, or the cuts between syllables. mode "words": text is the sentence(s) exactly as she sees them, ${MARK_WORDS_MIN}–${MARK_WORDS_MAX} words; targets lists every word (or group of adjacent words) to be marked, each written exactly as in the text, with occurrence = which occurrence (1, 2 …) when that word stands in the text more than once, else null. categories: null, or ${MARK_CATEGORIES_MIN}–${MARK_CATEGORIES_MAX} short names (at most ${MARK_CATEGORY_MAX} characters each; all together at most ${MARK_CATEGORY_ROW_CHARS[3]} characters for three, ${MARK_CATEGORY_ROW_CHARS[2]} for two) when each target belongs to one of them — then every target names its category, every category is used and the text has at most ${MARK_SORTED_WORDS_MAX} words. An error text: corrected is the same text with every error fixed, word for word, and targets are exactly the wrong words; otherwise corrected is null. mode "gaps": text is the sentence WITH every comma correctly placed — the app removes them and she taps where they belong; targets, categories and corrected null. mode "syllables": text is 1–${MARK_SYLLABLE_WORDS_MAX} words separated by spaces, letters only, at most ${MARK_SYLLABLE_LETTERS_MAX} letters each, with a hyphen at every syllable boundary; targets, categories and corrected null. The prompt (at most ${MARK_PROMPT_MAX} characters) says what to mark and never names the answer. Only a task with exactly one right set of marks.`;
 
 const MarkTarget = z.object({
   word: z
@@ -227,6 +229,8 @@ function categoriesOf(draft: MarkDraft, words: number): string[] | MarkProblem {
   }
   if (words > MARK_SORTED_WORDS_MAX) return 'count';
   if (categories.some((c) => c.length > MARK_CATEGORY_MAX)) return 'too_long';
+  // Their buttons stand in one row: two rows cost the sentence its room on 360×740.
+  if (!categoryRowFits(categories)) return 'too_long';
   if (new Set(categories.map(fold)).size !== categories.length) return 'ambiguous';
   // An error text has nothing to sort: its marks are the errors.
   if (draft.corrected !== null) return 'form';
@@ -416,6 +420,7 @@ function shapeProblem(task: MarkTask): MarkProblem | null {
   const cats = task.categories.length;
   if (cats !== 0 && (cats < MARK_CATEGORIES_MIN || cats > MARK_CATEGORIES_MAX)) return 'count';
   if (cats !== 0 && n > MARK_SORTED_WORDS_MAX) return 'count';
+  if (cats !== 0 && !categoryRowFits(task.categories.map((c) => c.name))) return 'too_long';
   return null;
 }
 

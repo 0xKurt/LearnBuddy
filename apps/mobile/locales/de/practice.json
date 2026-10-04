@@ -303,15 +303,16 @@
     "evidence": "Antwort in den Zeilen {{from}}–{{to}}"
   },
   "mark": {
-    "how_words": "Tippe die Wörter an – noch ein Tipp nimmt es zurück.",
-    "how_gaps": "Tippe das Wort an, hinter das ein Komma gehört.",
-    "how_syllables": "Tippe den Buchstaben an, nach dem eine Silbe endet.",
+    "how_words": "Tippe jedes Wort an, das passt.",
+    "how_gaps": "Tippe das Wort an, nach dem ein Komma fehlt.",
+    "how_syllables": "Tippe an, wo eine Silbe endet.",
     "marked": "Markiert – {{list}}",
     "split": "Getrennt: {{list}}",
     "check_waits": "Erst wenn du mindestens eine Stelle markiert hast.",
     "word_in": "{{word}}, markiert als {{name}}",
     "gap": "Komma nach „{{word}}“",
-    "cut": "Silbe endet nach „{{before}}“ in {{word}}"
+    "cut": "Silbe endet nach „{{before}}“ in {{word}}",
+    "how_sorted": "Erst oben die Art wählen, dann die Wörter antippen."
   },
   "select": {
     "several": "Mehrere sind richtig – tippe alle an.",

@@ -2417,17 +2417,24 @@ Kategorie"). A wrong set is `incorrect`; the third miss shows the solution. What
 the conversation in words, one implementation for app and server (`markedText` in the contract):
 "Subjekt: die Oma; Prädikat: liest, vor", the sentence with her commas, "Re-gen-bo-gen".
 
-App: `MarkAnswer.tsx` in the answer shell. Every place is a `<Btn>` of the small size with `checked`
-(a checkbox to a screen reader, 44 pt high and never narrower than 44 pt); words flow like text and
-wrap. Marked is the accent's light tint AND an underline AND, with categories, the category's
-digit ①②③ (the same as on its button in the `Segmented` row above) — and a line under the text
-says in words what is marked ("Markiert – Subjekt: …"); a set comma is a comma, a cut a hyphen.
-Colour is never the only signal. A second tap takes a mark back. One quiet line says how to mark
-until the first mark. Marks and the chosen category live in the draft.
+App: `MarkAnswer.tsx` in the answer shell. Every place is a `<Btn>` with `checked` (a checkbox to
+a screen reader, 44 pt high). Words and commas: a word is a tile of the small size, never narrower
+than 44 pt; words flow like text and wrap. Marked is the accent's light tint AND an underline AND,
+with categories, the category's digit ①②③ beside the word, in the meta text's size and full ink
+(the same digit as on its button in the `Segmented` row above) — and a line under the text says in
+words what is marked ("Subjekt: die Oma; …"); a set comma is a comma after the word. Syllables:
+one word per row, never wrapped, its letters set as text in 30-pt cells (`Btn bare`, no padding,
+so the letters stay together); each letter but the last is a target 44 pt high and one cell wide,
+the cells touch, and a cut is a bar between the letters ("Getrennt: Re-gen-bo-gen" below). Colour
+is never the only signal. A second tap takes a mark back. One line in the same place says what a tap
+does, for every kind of marking (`practice.mark.how_*`), until the first "Prüfen" — then Buddy's
+reply needs the room. Marks and the chosen category live in the draft.
 
 **Its maxima are a measurement** (`MARK_*` in `contracts/structured.ts`, `tests/web/mark.spec.ts`,
 shots 46a–46g at 360×740 and 390×844, light and dark): 24 words to tap, 8 when sorted into three
-categories, a category name of 16 characters, three words of at most 12 letters to split.
+categories, a category name of 16 characters and all names together in one row of buttons
+(`categoryRowFits`: 21 characters for three, 28 for two), four words of at most 10 letters to split — each
+word in ONE row of 30-pt letter cells, never wrapped, so it still reads as a word.
 Generated in a topic's practice and practice test, read from a sheet and inside a reading text
 (generate.v1.24, extract.v8.8).
 

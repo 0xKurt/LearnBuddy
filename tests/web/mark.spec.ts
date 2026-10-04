@@ -54,16 +54,24 @@ async function start(page: Page, ask: string, reply: string, prompt: string): Pr
   await expect(page.getByText(prompt)).toBeVisible();
 }
 
-/** Every target is at least 44 × 44 pt (issue #234 acceptance, rule: touch targets). */
-async function targetsAreLarge(page: Page): Promise<void> {
-  // The theme switch in `both` remounts the tree: measure the new one once it stands.
-  await expect(page.getByRole('checkbox').first()).toBeVisible();
-  for (const box of await page.getByRole('checkbox').all()) {
-    await expect(box).toBeVisible();
-    const b = await box.boundingBox();
-    expect(b?.width ?? 0).toBeGreaterThanOrEqual(44);
-    expect(b?.height ?? 0).toBeGreaterThanOrEqual(44);
-  }
+/**
+ * Every target is at least 44 pt high and `minWidth` wide (issue #234 acceptance, rule: touch
+ * targets): 44 for a word; a letter of a word to split is one 30-pt cell, and the cells touch.
+ */
+async function targetsAreLarge(page: Page, minWidth = 44): Promise<void> {
+  // The theme switch in `both` remounts the tree: measure all targets in one snapshot of the
+  // page, polled until the new tree stands (an element read one by one may be replaced between).
+  const smallest = () =>
+    page.evaluate(() => {
+      const boxes = [...document.querySelectorAll('[role="checkbox"]')].map((e) =>
+        e.getBoundingClientRect(),
+      );
+      return boxes.length === 0
+        ? { w: 0, h: 0 }
+        : { w: Math.min(...boxes.map((b) => b.width)), h: Math.min(...boxes.map((b) => b.height)) };
+    });
+  await expect.poll(async () => (await smallest()).w).toBeGreaterThanOrEqual(minWidth);
+  await expect.poll(async () => (await smallest()).h).toBeGreaterThanOrEqual(44);
 }
 
 async function finish(page: Page): Promise<void> {
@@ -120,11 +128,11 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   await both(page, '46d-mark-categories-feedback');
   await page.getByRole('checkbox', { name: 'den, markiert als Prädikat' }).click();
   await word('vor').click();
-  await page.getByRole('radio', { name: '③ Akkusativobjekt' }).click();
+  await page.getByRole('radio', { name: '③ Objekt' }).click();
   for (const w of ['eine', 'Geschichte']) await word(w).click();
   // Everything marked: the longest line saying what is marked, under Buddy's reply.
   await expect(page.getByTestId('mark-summary')).toHaveText(
-    'Subjekt: Die Oma; Prädikat: liest, vor; Akkusativobjekt: eine Geschichte',
+    'Subjekt: Die Oma; Prädikat: liest, vor; Objekt: eine Geschichte',
   );
   await both(page, '46e-mark-categories-all');
   await finish(page);
@@ -133,15 +141,26 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   await start(page, 'Lass uns Kommas setzen', 'hinter das ein Komma gehört', 'Setze die fehlenden');
   await expect(page.getByRole('checkbox')).toHaveCount(15);
   await page.getByRole('checkbox', { name: 'Komma nach „ankamen“' }).click();
+  // The same one line of how-to as every other kind of marking.
+  await expect(page.getByTestId('mark-how')).toHaveText(
+    'Tippe das Wort an, nach dem ein Komma fehlt.',
+  );
   await both(page, '46f-mark-commas');
   await targetsAreLarge(page);
   await page.getByRole('checkbox', { name: 'Komma nach „weg“' }).click();
   await finish(page);
 
-  // ── three words to split into syllables ──
+  // ── four words of up to ten letters, one per row ──
   await start(page, 'Ich möchte Silben trennen', 'nach dem eine Silbe endet', 'Trenne die Wörter');
   await page.getByRole('checkbox', { name: 'Silbe endet nach „Re“ in Regenbogen' }).click();
   await page.getByRole('checkbox', { name: 'Silbe endet nach „Regen“ in Regenbogen' }).click();
+  await expect(page.getByTestId('syllable-cut')).toHaveCount(2);
   await both(page, '46g-mark-syllables');
-  await targetsAreLarge(page);
+  await targetsAreLarge(page, 30);
+  // One word, one row: every letter of "Regenbogen" stands on the same line.
+  const tops = new Set<number>();
+  for (const box of await page.getByRole('checkbox', { name: /in Regenbogen$/ }).all()) {
+    tops.add(Math.round((await box.boundingBox())?.y ?? -1));
+  }
+  expect(tops.size).toBe(1);
 });
