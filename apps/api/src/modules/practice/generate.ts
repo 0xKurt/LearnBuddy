@@ -95,7 +95,8 @@ import { TABLE_RULES } from './table.js';
 // v1.19: a Diktat run (spelling_dictation, #242) with its own task and entries.
 // v1.20: primary-school figures — clock, money, dot field, base-ten blocks (#254).
 // v1.21: select_all, a question with several right options to tick (#240).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.21';
+// v1.22: the periodic table as a figure (#250).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.22';
 
 const SUBJECT_KINDS = [
   'math',

@@ -31,7 +31,8 @@ import { TABLE_RULES } from '../practice/table.js';
 // v8.2: a text with several gaps becomes one cloze task (#232).
 // v8.3: primary-school figures — clock, money, dot field, base-ten blocks (#254).
 // v8.4: a question to tick every right answer becomes one select_all task (#240).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.4';
+// v8.5: the periodic table as a figure (#250).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.5';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

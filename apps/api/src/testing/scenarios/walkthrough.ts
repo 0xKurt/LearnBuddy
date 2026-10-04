@@ -14,6 +14,7 @@ import { scriptDrill } from './drill.js';
 import { scriptFigures } from './figures.js';
 import { installGenerations } from './generations.js';
 import { scriptLearningModes } from './learning-modes.js';
+import { scriptPeriodic } from './periodic.js';
 import { scriptPrimary } from './primary.js';
 import { scriptRoleplay } from './roleplay.js';
 import { pronounceRules, readingRules, tutorRules } from './rules.js';
@@ -39,6 +40,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptTour();
   scriptFigures();
   scriptTrees();
+  scriptPeriodic();
   scriptCloze();
   scriptDrill();
   scriptRoleplay(scripted);

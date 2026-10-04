@@ -293,6 +293,11 @@
       "accepted": "Oui, il est accepté",
       "rejected": "Non, il n’est pas accepté"
     },
+    "periodic": {
+      "metal": "métal",
+      "metalloid": "métalloïde",
+      "nonmetal": "non-métal"
+    },
     "select": {
       "found_some": "Tu as déjà {{count}} des {{total}} bonnes réponses.",
       "found_some_one": "Tu as déjà 1 des {{total}} bonnes réponses.",
