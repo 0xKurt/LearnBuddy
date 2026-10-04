@@ -5,7 +5,7 @@
 // no form: it is Buddy's first conversation.
 
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,7 +15,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { Glow } from '../components/lb/Glow.js';
 import { Icon, type IconName } from '../components/lb/Icon.js';
 import { FamilyChoice, ModeChoice } from '../components/lb/LookChoice.js';
-import { useMe, useSettings } from '../lib/api/queries.js';
+import { prefetchHome, useMe, useSettings } from '../lib/api/queries.js';
 import { gateRoute } from '../lib/gate.js';
 import { registerDeviceForPush } from '../lib/push.js';
 import { useAnnounce } from '../lib/announce.js';
@@ -61,6 +61,15 @@ export default function Onboarding() {
   const settings = useSettings();
   // Where she belongs, already answered: `/me` is in the cache since the gate sent her here.
   const me = useMe();
+  const next = me.data ? gateRoute(me.data) : null;
+  // The home is loaded before she leaves the cards, so it stands there with its words the moment
+  // she does — not as a wordless skeleton for a round trip (issue #392, measured per frame in
+  // tests/web/tour.spec.ts). The profile step starts it as soon as the learner exists; this
+  // covers an app that opens on the cards. Only when the home is where she goes: a learner who
+  // still has to consent would only be refused.
+  useEffect(() => {
+    if (next === '/buddy') prefetchHome();
+  }, [next]);
   const done = () => {
     keptStep.at = 0;
     // Contact was allowed at registration: ask the OS right after the card
@@ -72,7 +81,7 @@ export default function Onboarding() {
     // seven empty frames in a row over `/`, three without it. Seven is exactly the "4–6 frames"
     // the owner reported. The decision is not duplicated: it is the same `gateRoute` the start
     // screen uses, on the same cached answer. Without that answer `/` still decides.
-    router.replace(me.data ? gateRoute(me.data) : '/');
+    router.replace(next ?? '/');
   };
 
   useAnnounce(`${t(`onboarding.${key}_title`)}. ${t(`onboarding.${key}_body`)}`, { key: step });

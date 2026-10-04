@@ -77,15 +77,28 @@ export { keys };
 
 export const useMe = () => useQuery({ queryKey: keys.me, queryFn: getMe });
 
+/** The home from the server, and what it carries into the other caches. */
+async function loadHome(): Promise<BuddyHome> {
+  const home = await getHome();
+  followHome(queryClient, home);
+  return home;
+}
+
+/**
+ * The home, loaded before she gets there (issue #392): the first-start cards come right before
+ * it, and without this its request only left on her tap — the home then stood as a skeleton
+ * without a word for a round trip (seven empty frames, `tests/web/tour.spec.ts`). Same query as
+ * `useHome`, so the home finds it in the cache and refreshes it once it is stale.
+ */
+export function prefetchHome(): void {
+  void queryClient.prefetchQuery({ queryKey: keys.home, queryFn: loadHome });
+}
+
 /** Polls faster while something is in progress (a turn, reading photos, Buddy acting on them). */
 export const useHome = () =>
   useQuery({
     queryKey: keys.home,
-    queryFn: async () => {
-      const home = await getHome();
-      followHome(queryClient, home);
-      return home;
-    },
+    queryFn: loadHome,
     refetchInterval: (q) => {
       const h = q.state.data;
       if (!h) return false;
