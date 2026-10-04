@@ -90,6 +90,10 @@ export type SpokenWords = {
   matrix: string;
   /** "reagiert zu, Bedingung: {{label}}" — a reaction arrow with its condition above it. */
   arrow_label: string;
+  /** "groß {{letter}}" — an allele written as a capital letter, in a genotype (issue #352). */
+  allele_upper: string;
+  /** "klein {{letter}}" — an allele written as a small letter. */
+  allele_lower: string;
 };
 
 /** Characters read out as words → their key under "spoken.symbols" in locales/<lang>/math.json. */
@@ -381,11 +385,57 @@ function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
   );
 }
 
+// ─────────────── genotypes (issue #352) ───────────────
+
+/** One allele letter with its case said out loud: "A" → "groß A", "a" → "klein a". */
+function spokenAllele(letter: string, words: SpokenWords): string {
+  const upper = letter === letter.toUpperCase();
+  return fill(upper ? words.allele_upper : words.allele_lower, { letter });
+}
+
+/** A single letter as the whole body of a superscript: the allele on a sex chromosome. */
+function alleleOf(atom: MathAtom | undefined): string | null {
+  if (atom?.type !== 'sup' || atom.body.length !== 1) return null;
+  const only = atom.body[0];
+  return only?.type === 'chars' && /^[A-Za-z]$/.test(only.text) ? only.text : null;
+}
+
+/**
+ * A genotype, read so that its alleles differ by ear: "$Aa$" → "groß A, klein a". A voice
+ * does not say case, so "AA", "Aa" and "aa" — three different answer options — sound alike.
+ *
+ * Decided by structure, never by a list of words (rule 3), and only when the whole math run
+ * is the genotype: a pair of one letter in any case ("AA", "Aa", "bb"), or a gonosomal one
+ * — an X with one allele letter as its superscript, followed by a second such X or by a Y
+ * ("$X^{A}X^{a}$", "$X^{a}Y$"). These are exactly the forms the pedigree options are written
+ * in (shared-math `genotypeOptions`). Anything longer or mixed is ordinary math.
+ */
+function speakGenotype(atoms: MathAtom[], words: SpokenWords): string | null {
+  const first = atoms[0];
+  if (atoms.length === 1 && first?.type === 'chars' && /^([A-Za-z])\1$/i.test(first.text)) {
+    return [...first.text].map((letter) => spokenAllele(letter, words)).join(', ');
+  }
+  const isX = (a: MathAtom | undefined) => a?.type === 'chars' && a.text === 'X';
+  const a1 = alleleOf(atoms[1]);
+  if (!isX(first) || a1 === null) return null;
+  const head = `X ${spokenAllele(a1, words)}`;
+  if (atoms.length === 3 && atoms[2]?.type === 'chars' && atoms[2].text === 'Y')
+    return `${head}, Y`;
+  const a2 = alleleOf(atoms[3]);
+  if (atoms.length === 4 && isX(atoms[2]) && a2 !== null && a1.toUpperCase() === a2.toUpperCase())
+    return `${head}, X ${spokenAllele(a2, words)}`;
+  return null;
+}
+
 /** The whole text in words: plain runs as they are, math read out. */
 export function speakMathText(text: string, words: SpokenWords): string {
   return squash(
     splitMath(text)
-      .map((s) => (s.type === 'plain' ? s.text : ` ${speakAtoms(s.atoms, words)} `))
+      .map((s) =>
+        s.type === 'plain'
+          ? s.text
+          : ` ${speakGenotype(s.atoms, words) ?? speakAtoms(s.atoms, words)} `,
+      )
       .join(''),
   ).replace(/\s+([.,!?;:])(?=\s|$)/g, '$1');
 }

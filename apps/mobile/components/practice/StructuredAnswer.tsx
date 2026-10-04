@@ -1,6 +1,6 @@
 // The place in the practice card where a structured item is answered (issues #228–#230).
 // One component per `task_view.type`; this switch is the only thing the screen knows about
-// them. A new kind (#229 match, #230 table_fill, #232 cloze) adds its component and one
+// them. A new kind (#229 match, #230 table_fill, #232 cloze, #240 select_all) adds its component and one
 // `case` here — the screen (`app/practice/[id].tsx`), the outbox and the answer flow stay as
 // they are, because every kind answers with the same `parts`.
 //
@@ -16,6 +16,7 @@ import type {
 import { MatchAnswer } from './MatchAnswer.js';
 import { ClozeAnswer } from './ClozeAnswer.js';
 import { OrderAnswer } from './OrderAnswer.js';
+import { SelectAllAnswer } from './SelectAllAnswer.js';
 import { TableAnswer } from './TableAnswer.js';
 
 type Props = {
@@ -30,22 +31,18 @@ type Props = {
 export function StructuredAnswer({ view, draftKey, disabled, onSubmit: send }: Props) {
   const onSubmit = (parts: Parts, shown: string, via?: 'typed' | 'tapped') =>
     send(via ? { parts, via } : { parts }, shown);
+  // What every form takes besides its own view.
+  const own = { draftKey, disabled, onSubmit };
   switch (view.type) {
     case 'order':
-      return (
-        <OrderAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
-      );
+      return <OrderAnswer view={view} {...own} />;
     case 'table_fill':
-      return (
-        <TableAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
-      );
+      return <TableAnswer view={view} {...own} />;
     case 'match':
-      return (
-        <MatchAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
-      );
+      return <MatchAnswer view={view} {...own} />;
     case 'cloze':
-      return (
-        <ClozeAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
-      );
+      return <ClozeAnswer view={view} {...own} />;
+    case 'select_all':
+      return <SelectAllAnswer view={view} {...own} />;
   }
 }

@@ -297,6 +297,15 @@
       "metal": "metal",
       "metalloid": "metaloide",
       "nonmetal": "no metal"
+    },
+    "select": {
+      "found_some": "Ya tienes {{count}} de las {{total}} correctas.",
+      "found_some_one": "Ya tienes 1 de las {{total}} correctas.",
+      "all_found": "Ya tienes todas las correctas.",
+      "none": "Todavía no está ninguna de las correctas – míralas todas otra vez con calma.",
+      "extra": "Pero {{count}} no encajan.",
+      "extra_one": "Pero una no encaja.",
+      "look_at": "Mira otra vez «{{text}}»."
     }
   },
   "contact": {

@@ -259,7 +259,9 @@
     "binom": "{{bottom}} parmi {{top}}",
     "column_vector": "vecteur colonne {{entries}}",
     "matrix": "matrice avec les lignes {{rows}}",
-    "arrow_label": "donne, condition : {{label}}"
+    "arrow_label": "donne, condition : {{label}}",
+    "allele_upper": "{{letter}} majuscule",
+    "allele_lower": "{{letter}} minuscule"
   },
   "staff": {
     "note": {

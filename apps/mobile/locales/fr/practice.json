@@ -290,5 +290,9 @@
     "note": "Une réponse par question, pas d’indices.",
     "soon": "Regarde tranquillement ce que tu peux encore faire.",
     "up": "Le temps est écoulé – ton résultat arrive."
+  },
+  "select": {
+    "several": "Plusieurs sont justes – touche-les toutes.",
+    "check_waits": "Dès que tu en as coché au moins une."
   }
 }

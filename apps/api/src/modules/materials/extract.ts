@@ -22,6 +22,7 @@ import {
   StructuredDraft,
   StructuredDraftHomework,
 } from '../practice/structured.js';
+import { SELECT_RULES } from '../practice/selectAll.js';
 import { CLOZE_RULES } from '../practice/cloze.js';
 import { TABLE_RULES } from '../practice/table.js';
 
@@ -29,8 +30,9 @@ import { TABLE_RULES } from '../practice/table.js';
 // v8.1: pictures as the options of a multiple choice (choice_figures, #231).
 // v8.2: a text with several gaps becomes one cloze task (#232).
 // v8.3: primary-school figures — clock, money, dot field, base-ten blocks (#254).
-// v8.4: the periodic table as a figure (#250).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.4';
+// v8.4: a question to tick every right answer becomes one select_all task (#240).
+// v8.5: the periodic table as a figure (#250).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.5';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -340,6 +342,7 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${TABLE_RULES} A table on the sheet whose cells are to be filled in becomes one such task in "structured" (its cells as printed, the empty ones as gaps), never one question per cell in items.
    - ${MATCH_RULES} A task on the sheet that asks to link given things to each other or sort them into given groups becomes one such task in "structured", never questions in items.
    - ${CLOZE_RULES} A text on the sheet with several gaps to fill becomes one such task in "structured" (its word box, if printed, as word_bank), never one question per gap in items.
+   - ${SELECT_RULES} A question on the sheet that asks to tick all right answers becomes one such task in "structured", never a multiple_choice item.
    - Otherwise 8–15 questions — and none at all for a sheet whose every task went into not_practicable. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
@@ -372,6 +375,7 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
    - ${TABLE_RULES} A table whose cells are to be filled in goes into "structured" instead of items (its prompt as printed).
    - ${MATCH_RULES} A task that asks to link given things or sort them into groups goes into "structured" instead of items (its prompt as printed).
    - ${CLOZE_RULES} A text with several gaps to fill goes into "structured" instead of items (its word box, if printed, as word_bank).
+   - ${SELECT_RULES} A task that asks to tick all right answers goes into "structured" instead of items (its prompt as printed).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}

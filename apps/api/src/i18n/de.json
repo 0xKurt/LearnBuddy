@@ -297,6 +297,15 @@
       "metal": "Metall",
       "metalloid": "Halbmetall",
       "nonmetal": "Nichtmetall"
+    },
+    "select": {
+      "found_some": "{{count}} von {{total}} richtigen hast du schon.",
+      "found_some_one": "1 von {{total}} richtigen hast du schon.",
+      "all_found": "Alle richtigen hast du schon.",
+      "none": "Noch ist keine der richtigen dabei – schau dir alle nochmal in Ruhe an.",
+      "extra": "{{count}} passen aber nicht dazu.",
+      "extra_one": "Eine passt aber nicht dazu.",
+      "look_at": "Schau dir „{{text}}“ nochmal an."
     }
   },
   "contact": {

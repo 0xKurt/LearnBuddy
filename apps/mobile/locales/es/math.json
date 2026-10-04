@@ -259,7 +259,9 @@
     "binom": "{{top}} sobre {{bottom}}",
     "column_vector": "vector columna {{entries}}",
     "matrix": "matriz con las filas {{rows}}",
-    "arrow_label": "reacciona para dar, condición: {{label}}"
+    "arrow_label": "reacciona para dar, condición: {{label}}",
+    "allele_upper": "{{letter}} mayúscula",
+    "allele_lower": "{{letter}} minúscula"
   },
   "staff": {
     "note": {
