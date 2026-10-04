@@ -14,9 +14,10 @@
 // for display and records the key as a sequence of ids (CLAUDE.md rule 2). The stored task
 // (`items.task`) carries the key; the view (`ItemView.task_view`) never does.
 //
-// Adding a kind (#229 match, #230 table_fill, #232 cloze): its draft schema, a builder from
-// draft to task, a `problem` check, a view, a checker and a reply — each one more `case` in
-// the switches below. The answer flow in `service.ts` only ever calls the exported functions.
+// Adding a kind (#229 match, #230 table_fill, #232 cloze, #240 select_all): its draft schema, a
+// builder from draft to task, a `problem` check, a view, a checker and a reply — each one more
+// `case` in the switches below. The answer flow in `service.ts` only ever calls the exported
+// functions.
 
 import {
   MATCH_ELEMENT_MAX,
@@ -39,6 +40,7 @@ import {
   ORDER_MAX,
   ORDER_MIN,
   StructuredTask,
+  STRUCTURED_KINDS,
   type OrderAnswer,
   type OrderTask,
   type PartId,
@@ -84,7 +86,25 @@ import {
   type TableCheck,
   type TableProblem,
 } from './table.js';
+import {
+  checkSelect,
+  namesAnOption,
+  SelectDraftBase,
+  selectNamesPart,
+  selectProblem,
+  selectReply,
+  selectTaskFrom,
+  selectText,
+  type SelectCheck,
+  type SelectProblem,
+} from './selectAll.js';
 import { mentionsSolution } from './tutor.js';
+
+/**
+ * The structured kinds a photographed sheet may give: every one — an order, a table, links, gaps
+ * (#228–#232) and options to tick (#240) are all printed on worksheets.
+ */
+export const SHEET_STRUCTURED: ReadonlySet<string> = new Set(STRUCTURED_KINDS);
 
 /** At most this many structured questions in one prepared set (a set is not a puzzle book). */
 export const MAX_STRUCTURED_ITEMS = 4;
@@ -197,6 +217,10 @@ export const StructuredDraft = z.discriminatedUnion('type', [
     hints: ItemDraft.shape.hints,
     worked_solution: ItemDraft.shape.worked_solution,
   }),
+  SelectDraftBase.extend({
+    hints: ItemDraft.shape.hints,
+    worked_solution: ItemDraft.shape.worked_solution,
+  }),
 ]);
 export type StructuredDraft = z.infer<typeof StructuredDraft>;
 
@@ -206,6 +230,7 @@ export const StructuredDraftHomework = z.discriminatedUnion('type', [
   TableDraftBase.extend({ hints: ItemDraft.shape.hints }),
   MatchDraftBase.extend({ hints: ItemDraft.shape.hints }),
   ClozeDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  SelectDraftBase.extend({ hints: ItemDraft.shape.hints }),
 ]);
 export type StructuredDraftHomework = z.infer<typeof StructuredDraftHomework>;
 
@@ -215,6 +240,7 @@ export const StructuredDraftNoHelp = z.discriminatedUnion('type', [
   TableDraftBase,
   MatchDraftBase,
   ClozeDraftBase,
+  SelectDraftBase,
 ]);
 export type StructuredDraftNoHelp = z.infer<typeof StructuredDraftNoHelp>;
 
@@ -260,7 +286,9 @@ export type TaskProblem =
    */
   | 'too_long'
   /** A cloze text that fails Regel 0 (#232, `cloze.ts`). */
-  | ClozeProblem;
+  | ClozeProblem
+  /** A select-all task that fails Regel 0 (#240, `selectAll.ts`). */
+  | SelectProblem;
 
 type Exact = { num: bigint; den: bigint };
 
@@ -319,6 +347,8 @@ export function taskProblem(task: StructuredTask): TaskProblem | null {
       return matchProblem(task);
     case 'cloze':
       return clozeProblem(task);
+    case 'select_all':
+      return selectProblem(task);
   }
 }
 
@@ -357,6 +387,8 @@ export function solutionOf(task: StructuredTask): string {
       return matchText(task, task.key);
     case 'cloze':
       return clozeSolution(task);
+    case 'select_all':
+      return selectText(task, task.key);
   }
 }
 
@@ -470,6 +502,16 @@ export function structuredItem(
         // Each gap is checked with the item's spelling rule (strict in language subjects).
         spelling: draft.spelling,
       });
+    }
+    case 'select_all': {
+      const prompt = dollarMathRuns(draft.prompt);
+      const task = selectTaskFrom({ options: draft.options, prompt: draft.prompt });
+      if (!task) return null;
+      // Help never says of an option whether it is right: no hint may name one.
+      const hints = ('hints' in draft ? draft.hints : []).filter(
+        (h) => !namesAnOption(h, task, prompt),
+      );
+      return asItem(draft, { kind: 'select_all', task, prompt, answer: solutionOf(task), hints });
     }
   }
 }
@@ -736,13 +778,16 @@ export function viewOf(task: StructuredTask): StructuredTaskView {
         gaps: task.gaps.map((g) => g.id),
         bank: task.bank,
       };
+    case 'select_all':
+      return { type: 'select_all', options: task.options };
   }
 }
 
 /**
  * What a prepared hint for this task must not say (`hints.ts`), and what she can read of it
  * — a hint may repeat what is visible. For an order or a match the whole solution is the
- * secret; for a table every key of a gap; for a cloze every key and accepted form.
+ * secret; for a table every key of a gap; for a cloze every key and accepted form; for a
+ * select-all task every option — naming one, right or wrong, says which it is (#240).
  */
 export function secretsOf(
   task: StructuredTask,
@@ -756,6 +801,8 @@ export function secretsOf(
       return { secrets: tableKeys(task), visible: `${prompt} ${tableShownText(task)}` };
     case 'cloze':
       return { secrets: clozeSecrets(task), visible: visibleOf(task, prompt) };
+    case 'select_all':
+      return { secrets: task.options.map((o) => o.text), visible: prompt };
   }
 }
 
@@ -768,7 +815,7 @@ export type PartResult = { id: PartId; ok: boolean };
  * The verdict on a structured answer, with what is right part by part. Kinds add their own
  * detail beside `parts` (order: the first place that is wrong, 1-based).
  */
-export type StructuredCheck = OrderCheck | TableCheck | MatchCheck | ClozeCheck;
+export type StructuredCheck = OrderCheck | TableCheck | MatchCheck | ClozeCheck | SelectCheck;
 
 export type OrderCheck = {
   type: 'order';
@@ -854,6 +901,8 @@ export function checkStructured(
       return answer.type === 'match' ? checkMatch(task, answer) : null;
     case 'cloze':
       return answer.type === 'cloze' ? checkCloze(task, answer, ctx) : null;
+    case 'select_all':
+      return answer.type === 'select_all' ? checkSelect(task, answer) : null;
   }
 }
 
@@ -869,6 +918,7 @@ export function structuredVerdict(
     case 'order':
     case 'table_fill':
     case 'match':
+    case 'select_all':
       return check.correct ? 'correct' : 'incorrect';
     case 'cloze':
       return clozeVerdict(check);
@@ -884,6 +934,7 @@ export function partsVia(task: StructuredTask): 'tapped' | 'typed' {
   switch (task.type) {
     case 'order':
     case 'match':
+    case 'select_all':
       return 'tapped';
     case 'table_fill':
       return 'typed';
@@ -898,6 +949,7 @@ export function structuredDecidedBy(check: StructuredCheck): 'rule' | 'model' {
     case 'order':
     case 'table_fill':
     case 'match':
+    case 'select_all':
       return 'rule';
     case 'cloze':
       return clozeDecidedBy(check);
@@ -918,6 +970,8 @@ export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): st
       return answer.type === 'match' ? matchText(task, answer.links) : '';
     case 'cloze':
       return answer.type === 'cloze' ? clozeAnswerText(task, answer) : '';
+    case 'select_all':
+      return answer.type === 'select_all' ? selectText(task, answer.chosen) : '';
   }
 }
 
@@ -957,6 +1011,8 @@ export function structuredReply(
     }
     case 'cloze':
       return clozeReply(locale, check);
+    case 'select_all':
+      return selectReply(locale, check, priorMisses);
   }
 }
 
@@ -974,5 +1030,7 @@ export function structuredNamesPart(check: StructuredCheck, priorMisses: number)
       return false;
     case 'match':
       return !check.correct && priorMisses >= 1;
+    case 'select_all':
+      return selectNamesPart(check, priorMisses);
   }
 }

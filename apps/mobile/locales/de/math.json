@@ -422,7 +422,11 @@
     "pedigree_affected": "betroffen",
     "pedigree_child": "Kind von {{fa}} und {{mo}}",
     "automaton": "Automat mit Startzustand {{start}}, Endzustand: {{finals}}",
-    "automaton_move": "Übergang von {{from}} nach {{to}} mit {{symbols}}"
+    "automaton_move": "Übergang von {{from}} nach {{to}} mit {{symbols}}",
+    "periodic_main": "Periodensystem der Hauptgruppen I bis VIII, Perioden 1 bis 6",
+    "periodic_full": "Periodensystem mit den Gruppen 1 bis 18 und den Perioden 1 bis 7, ohne Lanthanoide und Actinoide",
+    "periodic_stair": "Eine Treppenlinie trennt die Metalle links von den Halbmetallen und Nichtmetallen rechts",
+    "periodic_marked": "Markiert: {{sym}}, Ordnungszahl {{z}}, Atommasse {{mass}} u, Gruppe {{group}}, Periode {{period}}"
   },
   "keys": {
     "row": "Mathe-Zeichen",

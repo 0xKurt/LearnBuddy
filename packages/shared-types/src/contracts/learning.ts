@@ -316,6 +316,8 @@ export const ItemKind = z.enum([
    * what this question must NOT offer.
    */
   'spelling_dictation',
+  /** Tick every right answer among several options (#240). */
+  'select_all',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
 

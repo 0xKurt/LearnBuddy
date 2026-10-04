@@ -301,5 +301,9 @@
     "line": "Ligne {{n}}",
     "evidence_one": "Réponse à la ligne {{from}}",
     "evidence": "Réponse aux lignes {{from}}–{{to}}"
+  },
+  "select": {
+    "several": "Plusieurs sont justes – touche-les toutes.",
+    "check_waits": "Dès que tu en as coché au moins une."
   }
 }

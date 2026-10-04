@@ -301,5 +301,9 @@
     "line": "Zeile {{n}}",
     "evidence_one": "Antwort in Zeile {{from}}",
     "evidence": "Antwort in den Zeilen {{from}}–{{to}}"
+  },
+  "select": {
+    "several": "Mehrere sind richtig – tippe alle an.",
+    "check_waits": "Erst wenn du mindestens eine angetippt hast."
   }
 }

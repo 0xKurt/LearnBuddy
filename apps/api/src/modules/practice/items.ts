@@ -27,9 +27,11 @@ import {
   chartProblem,
   compileExpression,
   isChart,
+  isPeriodicTable,
   isPrimary,
   isTreeFigure,
   parseCanonicalKey,
+  periodicProblem,
   primaryProblem,
   treeProblem,
 } from '@learnbuddy/shared-math';
@@ -47,6 +49,7 @@ import { mentionsSolution } from './tutor.js';
 import { choiceProblem, MAX_FIGURE_CHOICES, type ChoiceDraft } from './choiceCheck.js';
 import { checkedRead, figureIsRejectedChart } from './chartRead.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
+import { checkedPeriodic, figureIsRejectedPeriodic } from './periodicCheck.js';
 import { checkedTree, figureIsRejectedTree } from './treeCheck.js';
 
 /** The notation rule, generated from the one list the app draws and reads out (issue #239). */
@@ -72,7 +75,8 @@ export const SPELLING_RULES = `spelling: "strict" when the task practises spelli
 export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table, a structural formula, a chart, a tree, a clock, coins and notes, a Zwanziger- or Hunderterfeld, base-ten blocks) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). A geometry figure is drawn to scale and checked: its coordinates must give every stated angle (deg) and every side length (value, one unit for all), a force arrow's length is proportional to its value, and a resultant arrow is the vector sum of the others; label the one measure the question asks for "?" — the key must be that measure. A molecule is atoms (aliases a1, a2 …, hydrogens counted in h, charge) and bonds; the app computes the lone pairs and checks every shell, so an atom whose octet does not hold costs the question; set "ask" when the key is its formula, its number of lone pairs or its molar mass. Primary school: clock c = one time {h, m} (two for a span from the first to the second), h24 only when the task asks for the 24-hour time, ask "time" (kind short, answer "7:45") or "span" (a number, unit min or h); money p = each euro coin or note once with its count n, at most 12 pieces, ask "sum" (the amount, unit € or ct); dot_field = field twenty or hundred, n = filled dots per colour (two colours for 8 + 6), ask "count"; base_ten = h hundred plates, t ten rods, o unit cubes (more than 9 to practise bundling), ask "count". Set ask whenever the key is read off such a figure, else "none": code computes the key, and one that differs costs the question. Otherwise figure is null. Pictures as the OPTIONS of a multiple_choice ("Welcher Graph passt zu $f(x) = x^{2} - 1$?"): 2–4 choices, "choice_figures" = one figure per choice in the same order, "choices" = what each option shows in words or math (the app shows the pictures, not these texts); for graphs every option is a function_plot with exactly one function, all with the same window, no two alike, and "answer" = the right graph's function, named as in the question ("f(x) = x^2 - 1"; for a derivative "f'(x) = 2*x"); for any other picture "answer" = the right option's text exactly. Otherwise choice_figures is null.
 Charts are data only; the app draws axes, scale and colours. line_chart: x = up to 12 labels in order (numbers for a measured x such as time, else categories so short that count × (longest + 1) ≤ 30 characters, so "J"…"D" for 12 months, e.g. "Jan"…"Jun"); s = 1–3 series {n name, u unit, v one value per x label, bar true for columns (one series at most), r true for a right axis — only for a second unit}. climate_chart: place, alt in m, t = 12 monthly means in °C and p = 12 monthly sums in mm, January first. pie_chart: l labels and v shares in % that add up to exactly 100; half for a half circle. box_plot: b = 1–3 boxes {l, v = [min, Q1, median, Q3, max]}, raw = the data list when the task gives one (then one box), else []. histogram: x0 start of the first class, w class width, v heights. scatter_plot: x and y of each point; fit draws the least-squares line. pyramid: a0 first age, w years per group, m men and f women per group from young to old, u unit. A chart that breaks one of these rules is dropped together with its question.
 "read" — for every question whose answer is read off or computed from its chart, so the app can check the key: q = value (s, i) · max, min, sum, mean, range (largest − smallest) of series s · argmax, argmin (answer = the label: month, category or slice) · diff (value at j minus value at i) · angle (centre angle of slice i in degrees) · iqr (box s) · humid, arid (number of humid or arid months) · humid_at (month i; multiple_choice, correct_choice 0 = humid, 1 = arid) · slope, intercept (the fitted line) · type (pyramid; multiple_choice, correct_choice 0 = pyramid, 1 = bell, 2 = urn). s = series (climate 0 = °C, 1 = mm; pyramid 0 = men, 1 = women; box plot: which box), i and j = positions from 0 (box plot value: i 0 = min … 4 = max); unused numbers 0. The app writes the options for humid_at and type. A numeric question about a chart always has "read"; any other question read null.
-Trees are data only; the app lays them out, checks them and computes their keys. tree: n = nodes, root first (p = parent index, -1 for the root; l = label; e = label of the branch from the parent); pr true for a probability tree: every e a probability ("3/5", "0.4"), the branches of each node add up to exactly 1, at most one branch "?". ask = the key: path (probability of the path to node at[0]), sum (of the paths to the leaves in at), edge (the "?" branch), else none; a numeric question on a tree always has an ask. pedigree: p = persons, numbered 1, 2 … in this order, generation by generation (s "m"/"f", a = affected, fa/mo = the father's and mother's index, listed earlier, or -1); md = the mode it shows; ask mode ("Welcher Erbgang?", only when the pedigree rules out the other three; multiple_choice, correct_choice 0 = autosomal dominant, 1 = autosomal recessive, 2 = X-linked dominant, 3 = X-linked recessive) or gt (genotype of person at; multiple_choice, correct_choice 0 = AA, 1 = Aa, 2 = aa; X-linked: a woman XAXA, XAXa, XaXa, a man XAY, XaY; A = the dominant allele), else none. automaton: s = states (l "q0", f = final state), the first is the start; t = transitions from a to b on the symbols in c ("0,1"); w = the word a question asks about: multiple_choice, correct_choice 0 = accepted, 1 = not accepted. The app writes the options of mode, gt and w.`;
+Trees are data only; the app lays them out, checks them and computes their keys. tree: n = nodes, root first (p = parent index, -1 for the root; l = label; e = label of the branch from the parent); pr true for a probability tree: every e a probability ("3/5", "0.4"), the branches of each node add up to exactly 1, at most one branch "?". ask = the key: path (probability of the path to node at[0]), sum (of the paths to the leaves in at), edge (the "?" branch), else none; a numeric question on a tree always has an ask. pedigree: p = persons, numbered 1, 2 … in this order, generation by generation (s "m"/"f", a = affected, fa/mo = the father's and mother's index, listed earlier, or -1); md = the mode it shows; ask mode ("Welcher Erbgang?", only when the pedigree rules out the other three; multiple_choice, correct_choice 0 = autosomal dominant, 1 = autosomal recessive, 2 = X-linked dominant, 3 = X-linked recessive) or gt (genotype of person at; multiple_choice, correct_choice 0 = AA, 1 = Aa, 2 = aa; X-linked: a woman XAXA, XAXa, XaXa, a man XAY, XaY; A = the dominant allele), else none. automaton: s = states (l "q0", f = final state), the first is the start; t = transitions from a to b on the symbols in c ("0,1"); w = the word a question asks about: multiple_choice, correct_choice 0 = accepted, 1 = not accepted. The app writes the options of mode, gt and w.
+periodic_table: the app draws the table from its own element data — never state a fact the table holds yourself. v = main (main groups I–VIII, periods 1–6, years 7–10) or full (groups 1–18, upper school); hl = symbols of the marked elements ("Na"); ask = what the key is, computed by the app: protons, electrons, neutrons (from the rounded mass), valence, group (I–VIII as 1–8 in main, 1–18 in full), period, shells — each a numeric question about the marked element at, answer the whole number, unit null; class (multiple_choice, correct_choice 0 = metal, 1 = metalloid, 2 = nonmetal, about at); en_max or radius_max (multiple_choice: which of the 2–4 marked elements has the highest electronegativity or the largest atom; choices = hl in order, at ""; radius_max only within one group or one period); none (at ""). A key that differs from the computed one costs the question.`;
 
 /**
  * Correct language (live finding 5: "gekürt", "echtdarstellbar", "echtere/größer als 1",
@@ -210,6 +214,7 @@ function clipDraft(raw: unknown): unknown {
     figureIsRejectedTree(o.figure)
   )
     return null;
+  if (figureIsRejectedPeriodic(o.figure)) return null; // a periodic table too (#250)
   if (Array.isArray(o.accepted_answers)) {
     o.accepted_answers = o.accepted_answers
       .filter((a): a is string => typeof a === 'string' && a.trim().length > 0 && a.length <= 200)
@@ -291,6 +296,7 @@ function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
       // except as an option's picture, which then costs its question (`optionFigures`).
       if (isPrimary(f)) return primaryProblem(f) === null ? f : null;
       if (isTreeFigure(f)) return treeProblem(f) === null ? f : null;
+      if (isPeriodicTable(f)) return periodicProblem(f) === null ? f : null;
       return isChart(f) && chartProblem(f) !== null ? null : f;
   }
 }
@@ -425,7 +431,8 @@ export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}):
     // options of a type question and the tolerance of a reading are written here.
     const read = checkedRead(normalised, raw.figure, opts.locale ?? null);
     // The same for a tree, a pedigree or an automaton (issue #256, `treeCheck.ts`).
-    const it = read && checkedTree(read, opts.locale ?? null);
+    // And for a periodic table (issue #250, `periodicCheck.ts`).
+    const it = checkedPeriodic(read && checkedTree(read, opts.locale ?? null), opts.locale ?? null);
     if (!it) continue;
     // Notation the app cannot draw (issue #239): a learner would read "\\overbrace" in the middle
     // of her question. Dropped, not repaired — the list is `MATH_NOTATION_RULE`, which the model

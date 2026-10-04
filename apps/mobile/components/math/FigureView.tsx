@@ -25,7 +25,8 @@ import Svg, {
 // Imported by path: the mobile bundle takes only this small, dependency-free module
 // of @learnbuddy/shared-math (its index also pulls in mathjs).
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
-import { niceStep } from '../../../../packages/shared-math/src/charts.js';
+import { isChart, niceStep } from '../../../../packages/shared-math/src/charts.js';
+import { isPeriodicTable } from '../../../../packages/shared-math/src/periodic.js';
 import { isPrimary } from '../../../../packages/shared-math/src/primary.js';
 import { isTreeFigure } from '../../../../packages/shared-math/src/trees.js';
 import {
@@ -50,6 +51,7 @@ import { StaffLine } from './StaffLine.js';
 import { FAMILY, FONT, formatNumber, HaloText, SMALL } from './figureText.js';
 import { describeMolecule, MoleculeView } from './MoleculeView.js';
 import { describePrimary, PrimaryBody } from './PrimaryFigures.js';
+import { describePeriodic, PeriodicBody } from './PeriodicTable.js';
 import { describeTree, TreeBody } from './TreeFigures.js';
 import { useSpokenWords } from './useSpokenMath.js';
 
@@ -162,6 +164,8 @@ function FigureBody({ figure, width, bare }: { figure: Figure; width: number; ba
       return <Geometry fig={figure} width={width} />;
     case 'table':
       return <Table fig={figure} />;
+    case 'periodic_table': // issue #250, PeriodicTable.tsx
+      return <PeriodicBody figure={figure} width={width} />;
     case 'molecule':
       return <MoleculeView fig={figure} width={width} />;
     // Die Notenzeile (issue #226). Gezeichnet wird sie in `StaffLine.tsx`, weil dieselbe
@@ -1172,6 +1176,8 @@ export function describeFigure(
   const list = (items: string[]) => items.join(', ');
   if (isPrimary(figure)) return describePrimary(figure, t);
   if (isTreeFigure(figure)) return describeTree(figure, t);
+  if (isChart(figure)) return describeChart(figure, t);
+  if (isPeriodicTable(figure)) return describePeriodic(figure, t);
   switch (figure.type) {
     case 'fraction':
       return figure.fractions
@@ -1304,13 +1310,5 @@ export function describeFigure(
     // mit dem Screenreader ist die Aufgabe damit lösbar, nicht nur vorhanden.
     case 'staff':
       return describeStaff(figure, t);
-    case 'line_chart':
-    case 'climate_chart':
-    case 'pie_chart':
-    case 'box_plot':
-    case 'histogram':
-    case 'scatter_plot':
-    case 'pyramid':
-      return describeChart(figure, t);
   }
 }

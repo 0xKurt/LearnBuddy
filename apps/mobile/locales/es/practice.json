@@ -301,5 +301,9 @@
     "line": "Línea {{n}}",
     "evidence_one": "Respuesta en la línea {{from}}",
     "evidence": "Respuesta en las líneas {{from}}–{{to}}"
+  },
+  "select": {
+    "several": "Hay varias correctas: tócalas todas.",
+    "check_waits": "Cuando hayas marcado al menos una."
   }
 }

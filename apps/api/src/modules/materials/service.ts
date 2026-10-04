@@ -33,7 +33,7 @@ import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { StorageError } from '../../storage/gateway.js';
 import { insertItems, samePrompt, usableItems } from '../practice/items.js';
-import { structuredItems } from '../practice/structured.js';
+import { SHEET_STRUCTURED, structuredItems } from '../practice/structured.js';
 import { readingItems } from '../practice/reading.js';
 import { createSession } from '../practice/service.js';
 import {
@@ -63,9 +63,6 @@ import {
 import { attachConceptImages } from './images.js';
 import { indexMaterialPassages } from './passages.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
-
-/** The structured kinds a sheet may give (#228 an order, #230 a table, #229 links, #232 gaps). */
-const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order', 'table_fill', 'match', 'cloze']);
 
 // Both exported for the schema inventory (`evals/schema`, issue #281); nothing else reads them.
 export const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);

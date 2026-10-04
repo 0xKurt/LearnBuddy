@@ -26,6 +26,7 @@ import {
   parseSetFor,
   setSchemaForModel,
 } from '../generate.js';
+import { MAX_STRUCTURED_ITEMS } from '../structured.js';
 
 type Kind = keyof typeof SET_PROFILES;
 const KINDS = Object.keys(SET_PROFILES) as Kind[];
@@ -130,6 +131,18 @@ const STRUCTURED: Record<string, Record<string, unknown>> = {
     difficulty: 2,
     prompt_lang: 'de',
   },
+  select_all: {
+    type: 'select_all',
+    prompt: 'Welche Fälle kann „rosae“ sein?',
+    options: [
+      { text: 'Genitiv', correct: true },
+      { text: 'Dativ', correct: true },
+      { text: 'Akkusativ', correct: false },
+    ],
+    topic: 'Brüche addieren',
+    difficulty: 2,
+    prompt_lang: 'de',
+  },
 };
 const DICTATION = { from: 'list', lang: 'de', topic: 'Lernwörter', entries: ['Biene', 'Straße'] };
 const LISTEN = {
@@ -150,8 +163,18 @@ const LISTEN = {
 };
 
 /** A valid answer of a run of this kind: every form its profile allows, in schema order. */
-function validAnswer(kind: Kind): Record<string, unknown> {
+/**
+ * The structured forms of a profile, `MAX_STRUCTURED_ITEMS` at a time: a set holds no more than
+ * that, and since #240 a practice run allows five forms — so they are tried in turns.
+ */
+function structuredChunk(kind: Kind, chunk: number): readonly string[] {
   const p = SET_PROFILES[kind];
+  return p.structured.slice(chunk * MAX_STRUCTURED_ITEMS, (chunk + 1) * MAX_STRUCTURED_ITEMS);
+}
+
+function validAnswer(kind: Kind, chunk = 0): Record<string, unknown> {
+  const p = SET_PROFILES[kind];
+  const structured = structuredChunk(kind, chunk);
   return {
     usable: true,
     title: 'Übung',
@@ -160,7 +183,7 @@ function validAnswer(kind: Kind): Record<string, unknown> {
     ...(p.bars ? { bars: [BAR] } : {}),
     ...(p.listen ? { listen: LISTEN } : {}),
     ...(p.staffs ? { staffs: [STAFF] } : {}),
-    ...(p.structured.length > 0 ? { structured: p.structured.map((t) => STRUCTURED[t]) } : {}),
+    ...(structured.length > 0 ? { structured: structured.map((t) => STRUCTURED[t]) } : {}),
     ...(p.dictation ? { dictation: DICTATION } : {}),
   };
 }
@@ -232,18 +255,21 @@ describe.each(KINDS)('the profile of a %s run', (kind) => {
   });
 
   it('accepts a valid answer of every allowed form — through the decoder and through code', () => {
-    const answer = validAnswer(kind);
-    expect(schemaErrors(schema, answer)).toEqual([]);
     const p = SET_PROFILES[kind];
-    expect(kept(kind, answer)).toEqual({
-      items: [...p.items],
-      rubrics: p.items.includes('long') ? 1 : 0,
-      bars: p.bars ? 1 : 0,
-      staffs: p.staffs ? 1 : 0,
-      structured: [...p.structured],
-      listen: p.listen ? 1 : 0,
-      dictation: p.dictation ? DICTATION.entries.length : 0,
-    });
+    const chunks = Math.max(1, Math.ceil(p.structured.length / MAX_STRUCTURED_ITEMS));
+    for (let chunk = 0; chunk < chunks; chunk++) {
+      const answer = validAnswer(kind, chunk);
+      expect(schemaErrors(schema, answer)).toEqual([]);
+      expect(kept(kind, answer)).toEqual({
+        items: [...p.items],
+        rubrics: p.items.includes('long') ? 1 : 0,
+        bars: p.bars ? 1 : 0,
+        staffs: p.staffs ? 1 : 0,
+        structured: [...structuredChunk(kind, chunk)],
+        listen: p.listen ? 1 : 0,
+        dictation: p.dictation ? DICTATION.entries.length : 0,
+      });
+    }
   });
 
   it('rejects every form outside it — the decoder would not write it, code drops it', () => {

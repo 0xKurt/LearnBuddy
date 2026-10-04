@@ -301,5 +301,9 @@
     "line": "Line {{n}}",
     "evidence_one": "Answer in line {{from}}",
     "evidence": "Answer in lines {{from}}–{{to}}"
+  },
+  "select": {
+    "several": "More than one is right – tap all of them.",
+    "check_waits": "Once you've ticked at least one."
   }
 }
