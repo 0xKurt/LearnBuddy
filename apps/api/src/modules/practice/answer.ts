@@ -4,7 +4,11 @@
 // of its own beside the start and the view (`service.ts`, `sessionView.ts`), like "Tipp"
 // (`hint.ts`) and "Lösung zeigen" (`setAside.ts`).
 
-import { type AnswerRequest, type AnswerResponse } from '@learnbuddy/shared-types/contracts';
+import {
+  type AnswerRequest,
+  type AnswerResponse,
+  type EssayFeedback,
+} from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
 import { AppError, isAppError } from '../../lib/errors.js';
@@ -62,6 +66,7 @@ import { CARD_PASS } from './cards.js';
 import { DRILL_PASS } from './drill.js';
 import { MAX_ACCEPTED } from './items.js';
 import { explanationSoFar, NOTHING_EXPLAINED, recordExplained } from './teachBack.js';
+import { admitText, judgeEssay } from './essay.js';
 import {
   askedElements,
   checkRubric,
@@ -232,6 +237,10 @@ export async function answerItem(
   if (hintRequest && item.kind === 'spelling_dictation') {
     throw new AppError('conflict', 'The help here is hearing it again', { reason: 'no_hints' });
   }
+  // Only a long text takes up to 12 000 characters, and it is never a test question (#258).
+  admitText(item.kind, session.mode, input.text);
+  /** A version of her long text: feedback per key point, never a verdict (`essay.ts`, #258). */
+  const essay = item.kind === 'essay' && !hintRequest;
 
   // ── a STRUCTURED answer (issues #228–#232): parts, judged by code (partsAnswer.ts) ──
   const { structured, partsCheck } = await takeParts(deps, item, {
@@ -274,7 +283,7 @@ export async function answerItem(
   // The required elements of a writing task, if any (issue #211). A free text with a rubric is
   // judged element by element instead of getting one of four verdicts about the whole text; a
   // free text without one behaves exactly as it has since #197.
-  const rubric = hintRequest ? null : rubricOf(item.rubric);
+  const rubric = hintRequest || essay ? null : rubricOf(item.rubric);
   // An explanation goes on over the follow-ups („Erklär mal", #236): what she said before counts,
   // a point once confirmed stays confirmed, and the model is not asked about it again.
   const explaining = rubric !== null && isExplanation(rubric);
@@ -362,16 +371,20 @@ export async function answerItem(
   }
 
   type Judged = {
-    verdict: 'correct' | 'partially_correct' | 'incorrect' | 'not_an_attempt' | null;
+    verdict: AnswerResponse['verdict'];
     evaluatedBy: 'rule' | 'model' | null;
     reply: string;
     gaveHint: boolean;
     /** The hint shown is the next prepared one (prepared_hints_used moves on). */
     usedPrepared?: boolean;
     revealed: boolean;
+    /** The feedback on a version of her long text, stored with the tutor turn (#258). */
+    essay?: EssayFeedback | null;
   };
   let judged: Judged;
-  if (hintRequest && givesHints(session.mode) && ladderDone(item)) {
+  if (essay) {
+    judged = await judgeEssay(deps, learner, item, text);
+  } else if (hintRequest && givesHints(session.mode) && ladderDone(item)) {
     // Asked again at the end of the ladder: the solution explained, at once, no model.
     judged = {
       verdict: 'not_an_attempt',
@@ -813,6 +826,7 @@ export async function answerItem(
         : mentionsSolution(reply, shownSolution(item), item.prompt);
     if (
       judged.evaluatedBy === 'model' &&
+      !essay &&
       !partsCheck &&
       judged.verdict !== 'correct' &&
       item.hints_used < 2 &&
@@ -834,6 +848,7 @@ export async function answerItem(
     const askedAfterLastHint = judged.verdict === 'not_an_attempt' && ladderDone(item);
     if (
       !judged.revealed &&
+      !essay &&
       judged.verdict !== 'correct' &&
       judged.verdict !== null &&
       (misses >= REVEAL_AFTER_MISSES || askedAfterLastHint)
@@ -886,9 +901,18 @@ export async function answerItem(
           ],
         );
         await tx.query(
-          `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, gave_hint, revealed)
-         values ($1, $2, $3, $4, 'tutor', $5, $6, $7)`,
-          [sessionId, learner.id, item.id, seq + 1, judged.reply, judged.gaveHint, judged.revealed],
+          `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, gave_hint, revealed, essay_feedback)
+         values ($1, $2, $3, $4, 'tutor', $5, $6, $7, $8)`,
+          [
+            sessionId,
+            learner.id,
+            item.id,
+            seq + 1,
+            judged.reply,
+            judged.gaveHint,
+            judged.revealed,
+            judged.essay ? JSON.stringify(judged.essay) : null,
+          ],
         );
         // The key learns: an answer the model judged right that the rules did not know
         // is accepted by the rules next time — at once and without a model.
@@ -930,7 +954,9 @@ export async function answerItem(
             [item.id, learner.id, text.trim(), MAX_ACCEPTED, sessionId],
           );
         }
-        const attempted = judged.verdict !== null && judged.verdict !== 'not_an_attempt';
+        // A version of her long text is a try though nothing was graded (#258).
+        const attempted =
+          (judged.verdict !== null && judged.verdict !== 'not_an_attempt') || !!judged.essay;
         const attempts = si.attempts + (attempted ? 1 : 0);
         const hints = si.hints_used + (judged.gaveHint ? 1 : 0);
         const prepared = si.prepared_hints_used + (judged.usedPrepared ? 1 : 0);

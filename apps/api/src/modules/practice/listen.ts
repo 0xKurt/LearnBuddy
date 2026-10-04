@@ -29,8 +29,10 @@
 //     about a text she is supposed to be listening to is a worse version of the replay, and
 //     it costs a model call.
 
+import { isPrimary, primaryKey } from '@learnbuddy/shared-math';
 import {
   ListenTask,
+  ModelFigure,
   MAX_LISTEN_CHARS,
   MAX_LISTEN_QUESTIONS,
   MIN_LISTEN_CHARS,
@@ -43,7 +45,7 @@ import type { Deps } from '../../deps.js';
 import { AppError } from '../../lib/errors.js';
 import { synthesizeSpeech } from '../voice/speech.js';
 import { unusedItemFields } from './itemFields.js';
-import { ItemDraft, usableItems } from './items.js';
+import { ItemDraft, optionPictures, usableItems } from './items.js';
 
 /**
  * How many listening texts one prepared set may hold: one. A listening exercise IS a text
@@ -60,11 +62,24 @@ export const LISTEN_TEXTS_PER_SET = 1;
 export const LISTEN_KINDS = ['multiple_choice', 'short'] as const;
 
 /**
+ * The pictures a listening option may be (#375): exactly those `choiceProblem` holds to their
+ * option's own TEXT (`primaryHolds` — a clock under "7:45" must show 7:45). The option text is what
+ * Rule 0 holds to the words she heard (`answerIsInText`), so only such a picture is held to them
+ * too; a graph or a cube net is checked against the key or its sibling options, never against the
+ * text, and a chart, a tree or a solid against nothing an option says. And only when the picture
+ * says what it shows (`ask`, `primaryKey`): `listenItems` drops a question with one that does not.
+ */
+const [heardFirst, ...heardRest] = ModelFigure.options.filter((o) =>
+  isPrimary({ type: o.shape.type.value }),
+);
+const HeardOptionFigure = z.discriminatedUnion('type', [heardFirst!, ...heardRest]);
+
+/**
  * One question about the spoken text, as the model writes it. Everything that has nothing to
  * do with a listening question is left out of the schema rather than validated away: a figure
- * (there is nothing to draw), a unit, a spelling mark (spelling is expressly not marked here),
- * the languages (the text's own language covers it), a source excerpt, hints and a worked
- * solution (see the file header) — and every field neither of `LISTEN_KINDS` keeps
+ * beside the question (there is nothing to draw; as an option only a `HeardOptionFigure`), a
+ * unit, a spelling mark (spelling is expressly not marked here), the languages (the text's own
+ * language covers it), a source excerpt, hints and a worked solution (see the file header) — and every field neither of `LISTEN_KINDS` keeps
  * (`unusedItemFields`, issue #281 D2): a tolerance and a rubric, which belong to a number and a
  * long answer.
  */
@@ -80,6 +95,11 @@ export const ListenQuestion = ItemDraft.omit({
   hints: true,
   worked_solution: true,
 }).extend({
+  // A picture outside `HeardOptionFigure` does not parse, and the question goes (Regel 0).
+  choice_figures: optionPictures(
+    HeardOptionFigure,
+    'multiple_choice only: one picture per choice, same order as choices, when the options ARE pictures of what the text says (a time as a clock, an amount as coins and notes, a number as dots or base-ten blocks), with ask set to what each option names; else null',
+  ),
   kind: z
     .enum(LISTEN_KINDS)
     .describe('multiple_choice: she taps one of the options · short: she writes the answer'),
@@ -185,6 +205,8 @@ export function listenItems(
     // the one that must come out of the text is the one she can actually tap.
     const said = choices && correct !== null ? (choices[correct] ?? null) : q.answer;
     if (said === null || !answerIsInText(said, task.data.text)) continue;
+    // An option's picture is held to that option's text only when it says what it shows (#375).
+    if (choices && q.choice_figures?.some((f) => isPrimary(f) && primaryKey(f) === null)) continue;
     heard.push({
       ...q,
       choices,

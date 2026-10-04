@@ -82,6 +82,7 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
   '0086_reading_passages',
   '0087_mark_items',
   '0088_teach_back_points',
+  '0089_essay_feedback',
 ];
 
 /**

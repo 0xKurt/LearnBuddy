@@ -1923,6 +1923,48 @@ die sie kennt, mit Mikro (Sprachmodus, freihändige Schleife) oder Tastatur.
 das Modellurteil „sagt dieses Zitat den Punkt?" ist ungemessen. Es kann keinen Punkt ohne ihre
 eigenen Worte bestätigen und keine exakte Angabe überstimmen.
 
+**„Lange Texte": Aufsatz, Erörterung, Interpretation — Rückmeldung je Kernpunkt, keine Note**
+(Issue #258, Migration 0089, `practice/essay.ts`, `contracts/essay.ts`). Eine Frageart `essay`: bis
+`ESSAY_TEXT_MAX` = 12 000 Zeichen (≈ 1800 Wörter); jede andere Antwort bleibt bei
+`ANSWER_TEXT_MAX` = 2000 (der Vertrag lässt 12 000 durch, der Server kennt die Art und antwortet
+422). Dieselbe Maschine wie #211 und #236, keine zweite:
+
+- **Kernpunkte setzt Code, nicht das Modell.** Die Textsorte (`EssayType`: `argue_linear` —
+  Stellungnahme, Kommentar; `argue_dialectic` — dialektische Erörterung; `analyse` — Textanalyse
+  und Interpretation) wählt die Punkte aus `ESSAY_POINTS`: Einleitung mit Thema/These, Argumente
+  mit Beispiel, Gegenargument (dialektisch), Schluss mit eigener Position, Deutung am Text, Zitate
+  mit Zeilenangabe, Präsens. Gespeichert als `StoredRubric` mit der Prüfart `essay_point` (`part`:
+  erster Absatz / irgendwo / letzter Absatz; `lines`: das Zitat nennt Zeilen) und `tense`. Namen und
+  nächste Schritte kommen aus den Sprachdateien der API; die nächsten Schritte der ersten drei Punkte
+  sind die vorbereiteten Tipps. Keine Musterlösung. Ein Text, um den es geht, steht als
+  `read_passage` an der Frage (#233) und wird mit Zeilennummern gezeigt.
+- **Prüfen: ein Modellaufruf je Fassung** (`essay.v1`, Zweck `tutor`, Schema `EssayDecision`, mit
+  zod geprüft). Das Modell urteilt je Kernpunkt mit einem Zitat aus ihrem Text und nennt GENAU drei
+  Stellen zum Verbessern, jede als Zitat plus ein Satz. Code (`checkRubric`, `says`): ein Punkt gilt
+  nur, wenn sein Zitat in ihrem Text steht — gefaltet (Groß/klein, Leerraum, Anführungszeichen) —,
+  und zwar an seinem Platz (eine Einleitung im ersten Absatz, ein Schluss im letzten); ein Zitat mit
+  Zeilenangabe nennt nur Zeilen, die es im Text gibt (`lineRefs`/`lineCount` aus #233); die
+  Zeitform prüft `tense` wie bei #211. Eine Stelle, deren Zitat nicht in ihrem Text steht, fällt weg.
+- **Antworten.** Die Rückmeldung reist zweifach: als Struktur `PracticeTurnView.essay`
+  (`EssayFeedback`: jeder Punkt `met` mit ihrem Zitat oder `open` mit dem nächsten Schritt, bis zu
+  drei Stellen, `last`) in `practice_turns.essay_feedback`, und als Satz für Vorlesen und ältere
+  Builds („Textanalyse – so steht dein Text: ✓ Einleitung · Präsens fehlt noch", die Stellen, „Überarbeite
+  …"). Keine Zahl, keine Note, kein richtig/falsch: der Turn trägt `not_an_attempt` (nichts benotet),
+  jede Fassung zählt trotzdem als Versuch. Die dritte Fassung (`ESSAY_VERSIONS_MAX`) schließt die
+  Frage (`revealed`, wie der letzte Versuch einer Erklärung); FSRS und die Themen der Zusammenfassung
+  bekommen nichts (`FREE_TEXT_KINDS`). „Anders erklären" und „Das stimmt nicht" gibt es dazu nicht (409).
+- **Nie im Probetest**: die Auswahl lässt `essay` aus (`selection.ts`), und eine Antwort auf einen
+  Aufsatz in einem Test wird abgelehnt (409, `admitText`).
+- **Ausfall.** Kein Modell, kaputte Ausgabe oder Tageslimit: kein Urteil (`verdict` null), kein
+  Versuch, der ehrliche Satz „Ich kann deinen Text gerade nicht lesen. Er ist nicht verloren …".
+- **Noch nicht verdrahtet (Schritt 2, mit der App):** woher eine Aufsatzfrage kommt (Buddys Angebot
+  und/oder eine `long_text`-Aufgabe auf ihrem Blatt, die heute noch `NotPracticable` ist), das
+  Antwortfeld bis 12 000 Zeichen mit lokalem Entwurf, die Darstellung je Punkt und Stelle.
+
+**Offen**: Eval-Satz (≥ 20 Texte je Textsorte, Übereinstimmung mit einer Lehrkraft) vor dem
+Live-Gang — wie bei #211 gibt es keinen Korpus. Ein Modellurteil kann keinen Punkt ohne ihre eigenen
+Worte am richtigen Platz bestätigen und keine Note erzeugen.
+
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
 focus topics; one sheet or vocabulary only when she asked for that, issue #144). Answers are checked by rules where exactness is decidable (multiple choice,
 written numbers, exact matches, and near misses on written answers — missing
@@ -3012,11 +3054,33 @@ Inside an item, the fields no allowed kind keeps are
 left out too, from `practice/itemFields.ts` — the same constants `usableItems` and `usableRubric`
 discard by: a rubric (and its `RubricCheck` union) without a long answer, a tolerance without a
 number, a spelling mode without a typed word, pictures as options (`choice_figures`, an array of the
-`ModelFigure` union, #231) without a multiple choice. The subject is never a rule. The mask is
+`ModelFigure` union, #231) without a multiple choice, and a figure with its chart reading (`figure`,
+`read`) on a vocab or speak card (`FIGURE_KINDS`, #375: a word or a pronunciation needs no
+drawing). The subject is never a rule. The mask is
 `unusedItemFields(kinds)` in `itemFields.ts`, and the listening question uses it too
 (`listen.ts`, `ListenQuestion`): its two kinds (`multiple_choice`, `short`) keep no rubric and no
 tolerance, so neither is in its schema, and `listenItems` stores `rubric: null` (before
 `generate.v1.27` a rubric the model wrote on a listening question was stored as it came).
+
+**Figure mask (#375, `generate.v1.30`).** `ModelFigure` was 80–83 % of the vocab, speak and listen
+schemas. Since the rule above, a vocab or speak run's schema holds no figure at all, and a figure
+the model writes on such a card anyway is dropped by `usableItems` while the card stays — like a
+spelling mode on a number; it is gone before anything checks it, so even a broken one does not
+cost the card (`clipDraft` asks `wholeFigure.ts` only for kinds that keep a figure). That holds for
+the card in every run (a vocab card in a practice run or from a sheet keeps no figure either); the
+practice, test and help schemas are unchanged byte for byte. A listening question keeps pictures as
+options, but only those `choiceProblem` holds to their option's own text (`primaryHolds`): a clock,
+coins and notes, a dot field, base-ten blocks — `HeardOptionFigure` in `listen.ts`, the
+`ModelFigure` branches `isPrimary` admits, so no list of its own. The option text is what Rule 0
+holds to the words she heard, so only such a picture is held to them too; a graph or a cube net is
+checked against the key or its sibling options, a chart, a tree or a solid against nothing an
+option says. A picture outside that subset does not parse and the question goes, and so does one
+whose picture does not say what it shows (`ask` "none", no `primaryKey`) — `listenItems`.
+Proven by `__tests__/figure-mask.int.test.ts` (vocab and speak runs, practice unchanged),
+`__tests__/listening.int.test.ts` (a table and an `ask`-less clock refused, real clocks kept) and
+`practice/__tests__/profiles.test.ts`. Sizes before → after at `generate.v1.30` (characters of the
+emitted schema): vocab 20 754 → 3 379, speak 20 422 → 3 047, listen 20 240 → 5 472; every other call
+of the inventory has the same schema and system prompt sha256 as before.
 
 | kind               | items                                                 | structured                                        | bars | staffs | listen | dictation | teach_back |
 | ------------------ | ----------------------------------------------------- | ------------------------------------------------- | ---- | ------ | ------ | --------- | ---------- |
@@ -3033,12 +3097,9 @@ A sheet-bound run (a practice or test for a planned test) is the same profile wi
 topics as the item `topic` enum. With no kind known (`setSchemaForModel(null, …)`), the fallback is
 every form but the listening task and the Diktat — byte for byte `GENERATED_SCHEMA`, what every
 run without sheets was sent before D2; today every call knows its kind, so it is the measured baseline. Not
-narrowed, because code cannot prove a form unusable there: `ModelFigure` (all 25 figure types stay
-in every profile with items, also vocab and speak, and as the options of a listening multiple
-choice — `usableItems` and `listenItems` keep a figure on every kind, so leaving it out needs a
-product rule first, not a profile; at `generate.v1.27` it is 80–83 % of the vocab, speak and listen
-schemas and appears twice in every item schema with a multiple choice, as `figure` and
-`choice_figures[]`), the
+narrowed, because code cannot prove a form unusable there: `ModelFigure` in the practice, test and
+help schemas (all figure types, twice in every item schema with a multiple choice, as `figure` and
+`choice_figures[]` — narrowed only for vocab, speak and listen, see "Figure mask" above), the
 extraction schemas (a sheet is read before anyone knows what is on it) and the Buddy turn's
 `actions` (tool growth, D3 deferred by the #279 consensus). Proven by
 `practice/__tests__/profiles.test.ts` (every valid form passes `testing/schemaCheck.ts`, a stand-in
@@ -3291,7 +3352,8 @@ word list, so it stays a prompt rule.
   What passes then goes through `usableItems`, the checks every other question gets (issue #374):
   options and their pictures (`choiceProblem`, the figure bounds) and the key against a marked
   calculation (`computes`, #227) — a listening question is never stored less checked than a
-  written one. Only the content is judged: a slip of the pen on something she understood is right and her
+  written one. Its option pictures are only those held to the option's text — a clock, coins, a
+  dot field, base-ten blocks, each saying what it shows (#375, §Explain profiles "Figure mask"). Only the content is judged: a slip of the pen on something she understood is right and her
   spelling is never marked (`contentOnly` in `practice/evaluate.ts`, read off the stored text —
   NRW: "sprachliche Verstöße werden nicht gewertet", `lehrplan-und-uebungsformen.md` §7.3, issue
   #197). There is no hint ladder: the help is hearing it again, slower.

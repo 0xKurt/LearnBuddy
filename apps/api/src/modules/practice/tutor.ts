@@ -205,13 +205,7 @@ export function tutorContext(input: {
     );
   }
   const rubric = input.rubric;
-  if (rubric && rubric.asked.length) {
-    lines.push(
-      '',
-      `REQUIRED ELEMENTS of this ${rubric.form} — one entry in "elements" for each, named by its ref:`,
-      ...rubric.asked.map((e) => `${e.ref} "${e.name}" — ${askedFor(e)}`),
-    );
-  }
+  if (rubric && rubric.asked.length) lines.push('', ...requiredElements(rubric.form, rubric.asked));
   if (input.material) lines.push('', `STUDY MATERIAL:\n${input.material}`);
   return lines.join('\n');
 }
@@ -245,10 +239,30 @@ export const VALUE_CONFIRMED: ReadonlySet<RuleVerdict> = new Set<RuleVerdict>([
   'not_transformed',
 ]);
 
-/** What the model has to supply for one element — the only two kinds it is ever asked about. */
+/**
+ * The REQUIRED ELEMENTS block: each element the model is asked about, by its server ref — for the
+ * tutor (#211, #236) and for a long text's feedback (`essay.ts`, #258) alike.
+ */
+export function requiredElements(form: string, asked: readonly AskedElement[]): string[] {
+  return [
+    `REQUIRED ELEMENTS of this ${form} — one entry in "elements" for each, named by its ref:`,
+    ...asked.map((e) => `${e.ref} "${e.name}" — ${askedFor(e)}`),
+  ];
+}
+
+const PART_TEXT = {
+  opening: 'in her FIRST paragraph',
+  body: 'anywhere in her text',
+  closing: 'in her LAST paragraph',
+} as const;
+
+/** What the model has to supply for one element: never one code counts itself. */
 function askedFor(e: AskedElement): string {
   if (e.check.by === 'key_point') {
     return `key point: "${e.check.point}" — set met only if her explanation states this, and quote her words that do`;
+  }
+  if (e.check.by === 'essay_point') {
+    return `key point of the text type: "${e.check.point}" ${PART_TEXT[e.check.part]} — set met only if her text really does this there, and quote her words that do${e.check.lines ? ' — a quotation of hers WITH its line reference, e.g. „…“ (Z. 12), copied together' : ''}`;
   }
   return e.check.by === 'tense'
     ? `the whole text has to be in the ${e.check.tense} tense: list the verb forms in her text that are not, copied out of it`

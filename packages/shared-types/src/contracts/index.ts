@@ -12,6 +12,7 @@ export * from './figure.js';
 export * from './bars.js';
 export * from './structured.js';
 export * from './rubric.js';
+export * from './essay.js';
 export * from './listen.js';
 export * from './reading.js';
 export * from './notation.js';

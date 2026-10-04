@@ -334,6 +334,49 @@
       "start": "Fang mit einem Punkt an: {{ask}}",
       "all": "Alles drin – genau so erklärt man das.",
       "closing": "Den Rest schauen wir uns beim nächsten Mal zusammen an."
+    },
+    "essay": {
+      "form": {
+        "argue_linear": "Stellungnahme",
+        "argue_dialectic": "Erörterung",
+        "analyse": "Textanalyse"
+      },
+      "point": {
+        "intro": {
+          "name": "Einleitung",
+          "missing": "Nenn in der Einleitung das Thema und deine These."
+        },
+        "arguments": {
+          "name": "Argumente mit Beispiel",
+          "missing": "Stütz jedes Argument mit einem Beispiel."
+        },
+        "counter": {
+          "name": "Gegenargument",
+          "missing": "Nimm ein Gegenargument auf und wäge es gegen deine Seite ab."
+        },
+        "conclusion": {
+          "name": "Schluss mit Position",
+          "missing": "Sag im Schluss, wo du selbst stehst – und warum."
+        },
+        "analysis": {
+          "name": "Deutung am Text",
+          "missing": "Zeig, wie der Text wirkt: Sprache, Aufbau, Mittel – und was sie bewirken."
+        },
+        "quotes": {
+          "name": "Zitate mit Zeile",
+          "missing": "Belege deine Deutung mit einem Zitat und der Zeile, z. B. (Z. 12)."
+        },
+        "tense": {
+          "name": "Präsens",
+          "missing": "Schreib die Analyse im Präsens."
+        }
+      },
+      "intro": "{{form}} – so steht dein Text:",
+      "places": "Hier kannst du noch nachschärfen:",
+      "place": "„{{quote}}“ – {{better}}",
+      "revise": "Überarbeite diese Stellen und schick mir die neue Fassung.",
+      "closing": "Das war deine letzte Fassung für diesmal. Nimm die Punkte mit in den nächsten Text.",
+      "unavailable": "Ich kann deinen Text gerade nicht lesen. Er ist nicht verloren – schick ihn gleich noch einmal."
     }
   },
   "contact": {

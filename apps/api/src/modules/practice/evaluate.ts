@@ -36,6 +36,7 @@ import {
   sameSubstance,
 } from './chemistry.js';
 import { clockTime, isYear, sameDate, yearIn } from './dates.js';
+import { FREE_TEXT_KINDS, kindIn } from './itemFields.js';
 import { type FormNote, judgeAlgebra, typedBack } from './form.js';
 import { checkNuclear, looksNuclear, type NuclearImbalance } from './nuclear.js';
 import { checkPath, lastValue, solvedValue } from './steps.js';
@@ -262,7 +263,7 @@ const LANGUAGE_SUBJECTS: ReadonlySet<string> = new Set([
  * the model may not call a whole text wrong either.
  */
 export function noSingleSolution(item: { kind: string }): boolean {
-  return item.kind === 'long';
+  return kindIn(FREE_TEXT_KINDS, item.kind);
 }
 
 /** Decision D-2: set per item; by default strict for vocabulary and language subjects. */

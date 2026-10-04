@@ -182,11 +182,35 @@ export const KeyPointCheck = z.object({
 });
 export type KeyPointCheck = z.infer<typeof KeyPointCheck>;
 
-const StoredCheck = z.discriminatedUnion('by', [...RubricCheck.options, KeyPointCheck]);
+// ─────────────── Lange Texte: die Kernpunkte einer Textsorte (issue #258) ───────────────
 
 /**
- * Was `items.rubric` hält: die Rubrik einer Schreibaufgabe, wie das Modell sie schreibt, oder die
- * Kernpunkte einer Erklärfrage, wie Code sie aus dem geprüften Entwurf baut (#236). Gelesen wird
+ * Die Prüfart eines Kernpunkts im Aufsatz — nur der Server schreibt sie (wie `key_point`, #236).
+ *
+ *   · `part`  — wo das Zitat stehen muss: `opening` im ersten Absatz, `closing` im letzten,
+ *               `body` irgendwo im Text. Eine Einleitung am Ende ist keine Einleitung.
+ *   · `lines` — das Zitat trägt eine Zeilenangabe („Z. 12"), und jede genannte Zeile gibt es im
+ *               Text, um den es geht (sonst gilt der Punkt als nicht erfüllt).
+ */
+export const EssayPointCheck = z.object({
+  by: z.literal('essay_point'),
+  /** Was der Punkt verlangt, für das Urteil des Modells; sie sieht nur den Namen. */
+  point: z.string().trim().min(1).max(200),
+  part: z.enum(['opening', 'body', 'closing']),
+  lines: z.boolean(),
+});
+export type EssayPointCheck = z.infer<typeof EssayPointCheck>;
+
+const StoredCheck = z.discriminatedUnion('by', [
+  ...RubricCheck.options,
+  KeyPointCheck,
+  EssayPointCheck,
+]);
+
+/**
+ * Was `items.rubric` hält: die Rubrik einer Schreibaufgabe, wie das Modell sie schreibt, die
+ * Kernpunkte einer Erklärfrage, wie Code sie aus dem geprüften Entwurf baut (#236), oder die
+ * Kernpunkte einer Textsorte, wie Code sie für einen Aufsatz baut (#258). Gelesen wird
  * die Spalte immer hierdurch (`rubricOf`), nie als gegeben genommen.
  */
 export const StoredRubric = Rubric.extend({

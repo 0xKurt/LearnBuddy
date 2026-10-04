@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
 import { DrillView } from './drill.js';
+import { ESSAY_TEXT_MAX, EssayFeedback } from './essay.js';
 import { Figure } from './figure.js';
 import { ListenRef } from './listen.js';
 import { PassageView } from './reading.js';
@@ -72,7 +73,9 @@ export const NotPracticableForm = z.enum([
   'experiment',
   /**
    * A text far beyond the answer field (2000 characters): material-based writing, an
-   * interpretation, an essay. An input problem, not a marking problem.
+   * interpretation, an essay. An input problem, not a marking problem. The question form
+   * `essay` (issue #258) now checks such a text; a sheet's task of this form still gets no
+   * question until the app's long-text field ships (#258 step 2).
    */
   'long_text',
   /** A piece of work over days or weeks as the PRODUCT: Facharbeit, GFS, project, presentation. */
@@ -320,6 +323,13 @@ export const ItemKind = z.enum([
   'select_all',
   /** Tap words, comma gaps or syllable breaks in a sentence or text (#234). */
   'mark',
+  /**
+   * A long text — Aufsatz, Erörterung, Interpretation (issue #258, contracts/essay.ts): up to
+   * `ESSAY_TEXT_MAX` characters, feedback per key point of its text type and three places to
+   * improve, never a grade: its turns carry `not_an_attempt` (nothing graded) and the feedback in
+   * `PracticeTurnView.essay`. Never in a practice test.
+   */
+  'essay',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
 
@@ -544,6 +554,13 @@ export const PracticeTurnView = z.object({
   text: z.string(),
   verdict: z.enum(['correct', 'partially_correct', 'incorrect', 'not_an_attempt']).nullable(),
   pronunciation: PronunciationFeedback.nullable(),
+  /**
+   * The feedback on a version of her long text (issue #258): each key point of its text type and
+   * up to three places to improve, quoted from her text. Only on the tutor turn after an essay;
+   * absent or null everywhere else. A shape this build cannot read is null (`.catch`), never a
+   * failed view. Its turns carry the verdict `not_an_attempt`: nothing was graded.
+   */
+  essay: EssayFeedback.nullable().optional().catch(null),
   /** Part of an "Anders erklären" exchange (her request and the new explanation), else null. */
   reexplain: ReexplainWay.nullable(),
   created_at: IsoDateTime,
@@ -688,7 +705,11 @@ export const AnswerRequest = z
   .object({
     client_turn_id: Uuid,
     item_id: Uuid,
-    text: z.string().trim().min(1).max(2000).nullable().optional(),
+    /**
+     * Up to `ESSAY_TEXT_MAX` characters for a long text (`essay`, issue #258); every other
+     * question takes at most `ANSWER_TEXT_MAX` — the server knows the kind and answers 422.
+     */
+    text: z.string().trim().min(1).max(ESSAY_TEXT_MAX).nullable().optional(),
     choice: z.number().int().min(0).max(5).nullable().optional(),
     /**
      * How she gave it (issue #163). A word she TAPPED from four of her own is recognition;

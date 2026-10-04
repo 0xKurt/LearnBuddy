@@ -43,6 +43,7 @@ import * as extract from '../../src/modules/materials/extract.js';
 import * as images from '../../src/modules/materials/images.js';
 import * as materials from '../../src/modules/materials/service.js';
 import * as cloze from '../../src/modules/practice/cloze.js';
+import * as essay from '../../src/modules/practice/essay.js';
 import * as generate from '../../src/modules/practice/generate.js';
 import * as setProfiles from '../../src/modules/practice/setProfiles.js';
 import * as hints from '../../src/modules/practice/hints.js';
@@ -242,6 +243,15 @@ function variants(): Variant[] {
       system: tutor.TUTOR_SYSTEM,
       schema: practice.RUBRIC_SCHEMA,
       where: 'practice/answer.ts',
+    },
+    {
+      purpose: 'tutor',
+      profile: 'long text (#258)',
+      tier: 'smart',
+      promptVersion: essay.ESSAY_PROMPT_VERSION,
+      system: essay.ESSAY_SYSTEM,
+      schema: essay.ESSAY_SCHEMA,
+      where: 'practice/essay.ts',
     },
     {
       purpose: 'tutor',
