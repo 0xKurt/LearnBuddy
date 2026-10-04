@@ -331,6 +331,7 @@
   },
   "figure": {
     "label": "Figure",
+    "show": "Voir",
     "fraction_circle": "Disque partagé en {{parts}} parts égales, dont {{filled}} coloriées",
     "fraction_bar": "Bande partagée en {{parts}} parts égales, dont {{filled}} coloriées",
     "number_line": "Droite graduée de {{min}} à {{max}}, pas de {{step}}",

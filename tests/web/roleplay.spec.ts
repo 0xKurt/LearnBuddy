@@ -68,6 +68,12 @@ test('roleplay: in the chat, in the role, by voice, and feedback per key point',
   await expect(end).toHaveCount(1);
   await expect(page.getByTestId('roleplay-strip')).toBeVisible();
   await shot(page, '40-roleplay-card');
+  // What runs stays whole on its one line at 360 too, beside the round ✕ (issue #334.3).
+  await page.setViewportSize({ width: 360, height: 740 });
+  const what = page.getByTestId('roleplay-strip').getByText('Rollenspiel · Im Café in London');
+  await expect(what).toBeVisible();
+  expect(await what.evaluate((el) => el.scrollWidth <= el.clientWidth), 'not cut').toBe(true);
+  await page.setViewportSize({ width: 390, height: 844 });
 
   // ── A line in English: Buddy answers in the role ──
   await send(page, 'Hello! A hot chocolate, please.');

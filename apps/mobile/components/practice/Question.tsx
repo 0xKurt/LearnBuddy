@@ -15,18 +15,19 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { FIGURE_CHROME } from '../../lib/math/figureScale.js';
 import { fillableAnswer } from '../../lib/math/prompt.js';
+import { formDensity } from '../../lib/keyboard.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
-import { SPACE, TOUCH } from '../../lib/theme/space.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
-import { ZoomableFigure } from '../math/ZoomableFigure.js';
 import { MathText } from '../math/MathText.js';
 import { PassagePanel } from './PassagePanel.js';
-import { StaffPlayButton } from './StaffPlayButton.js';
+import { QuestionFigure } from './QuestionFigure.js';
 import { StimulusImage } from './StimulusImage.js';
 
 type ProgressProps = {
@@ -37,6 +38,11 @@ type ProgressProps = {
   closed: number;
   /** A quiet action at the end of the row ("Frage passt nicht"). */
   right?: ReactNode;
+  /**
+   * The time left in a test she sits with time (issue #241): its own fixed place right after the
+   * bar (issue #334.2). The bar keeps its least width beside it, so the clock never pushes it out.
+   */
+  clock?: ReactNode;
   /**
    * What the row says instead of "Frage x von y". A flashcard pass counts cards, not
    * questions (issue #147) — same row, same bar, same place on the screen.
@@ -51,10 +57,18 @@ type ProgressProps = {
   preparing?: boolean;
 };
 
-/** The narrowest progress bar still worth drawing. */
+/** The narrowest the progress bar gets: whatever stands beside it, it keeps this. */
 const MIN_BAR = 40;
 
-export function ProgressRow({ position, total, closed, right, label, preparing }: ProgressProps) {
+export function ProgressRow({
+  position,
+  total,
+  closed,
+  right,
+  clock,
+  label,
+  preparing,
+}: ProgressProps) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const share = total > 0 ? Math.max(0, Math.min(1, closed / total)) : 0;
@@ -67,11 +81,6 @@ export function ProgressRow({ position, total, closed, right, label, preparing }
       : withTiming(share, { duration: DURATION.gentle * 2, easing: EASE.standard });
   }, [share, reduced, width]);
   const fill = useAnimatedStyle(() => ({ width: `${width.value * 100}%` }));
-  // What the row leaves the bar. Squeezed by the controls on the right (a 360 pt phone with
-  // "Vorlesen" and "Frage passt nicht", issue #238) it shrank to a dot that read as a glitch;
-  // below MIN_BAR it is not drawn at all — the text says where she is anyway.
-  const [room, setRoom] = useState<number | null>(null);
-  const drawn = room === null || room >= MIN_BAR;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Text style={[TYPE.label, { color: palette.ink2, fontSize: 14 }]}>
@@ -86,24 +95,24 @@ export function ProgressRow({ position, total, closed, right, label, preparing }
         <View style={{ flex: 1 }} />
       ) : (
         <View
+          testID="progress-bar"
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          onLayout={(e) => setRoom(Math.round(e.nativeEvent.layout.width))}
           style={{
             flex: 1,
+            minWidth: MIN_BAR,
             height: 8,
             borderRadius: 4,
-            backgroundColor: drawn ? palette.lavender : 'transparent',
+            backgroundColor: palette.lavender,
             overflow: 'hidden',
           }}
         >
-          {drawn ? (
-            <Animated.View
-              style={[{ height: '100%', borderRadius: 4, backgroundColor: palette.primary }, fill]}
-            />
-          ) : null}
+          <Animated.View
+            style={[{ height: '100%', borderRadius: 4, backgroundColor: palette.primary }, fill]}
+          />
         </View>
       )}
+      {clock ? <View style={{ flexShrink: 0 }}>{clock}</View> : null}
       {right}
     </View>
   );
@@ -121,6 +130,11 @@ type QuestionProps = {
   imageKey?: string;
   /** Buddy wrote this question (origin 'buddy'), it is not from the learner's own material. */
   fromBuddy?: boolean;
+  /**
+   * A small control at the end of the meta row ("Frage von Buddy · Thema"): "Frage vorlesen"
+   * (`ReadQuestionButton`, issue #310). It lays out no taller than the row, so it costs no height.
+   */
+  read?: ReactNode;
   /**
    * The short answer she is typing: shown inside the blank when the question
    * has exactly one (lib/math/prompt.ts fillableAnswer). Leave it out for
@@ -167,8 +181,9 @@ const PASSAGE_SHARE = 0.26;
  * or three lines of the text, which scrolls on, and folds away with one tap.
  */
 const PASSAGE_SHARE_SHORT = 0.15;
-/** A window shorter than this is one with the keyboard up: no phone is this short without it. */
-const SHORT_WINDOW = 600;
+/** The card's padding, and the gap between the prompt and the drawing. */
+const CARD_PAD = 18;
+const FIGURE_GAP = SPACE.md;
 
 export function QuestionCard({
   prompt,
@@ -177,6 +192,7 @@ export function QuestionCard({
   image = null,
   imageKey,
   fromBuddy = false,
+  read = null,
   answer,
   figureMaxHeight,
   imageMaxHeight = 180,
@@ -186,12 +202,14 @@ export function QuestionCard({
   answerBoard = false,
 }: QuestionProps) {
   const { palette } = useTheme();
-  // What she can see, keyboard or not: while she types, the text gives way to the field.
-  const viewHeight = useVisibleHeight().visible;
-  const passageShare =
-    answerBoard || viewHeight < SHORT_WINDOW ? PASSAGE_SHARE_SHORT : PASSAGE_SHARE;
+  // What she can see, keyboard or not: while she types (`tight`), the text gives way to the field.
+  const seen = useVisibleHeight();
+  const viewHeight = seen.visible;
+  const typing = formDensity(seen.window, seen.overlap) === 'tight';
+  const passageShare = answerBoard || typing ? PASSAGE_SHARE_SHORT : PASSAGE_SHARE;
   // A reading question's topic is its text: the text's heading already names it.
   const shownTopic = passage ? null : topic;
+  const meta = fromBuddy || Boolean(shownTopic);
   const { t } = useTranslation('practice');
   // What the header row and the prompt keep for themselves; the rest is the figure's.
   const [headHeight, setHeadHeight] = useState(0);
@@ -205,79 +223,81 @@ export function QuestionCard({
   // conversation that appears right under it a moment later.
   const grown = hasVisual && minHeight !== undefined && minHeight > 0;
   // The room the drawing really has inside the grown card, measured instead of guessed
-  // from the window (issue #96): the card's padding (18 pt twice), the 12 pt gap under
-  // the prompt and the drawing's own frame (FigureView: 12 pt padding twice, 1 pt border
-  // twice) all come off first, so the card never outgrows what the screen granted it.
-  // Never below the old fixed cap.
-  const figureRoom = grown && headHeight > 0 ? minHeight - 36 - headHeight - 12 - 26 : 0;
+  // from the window (issue #96): the card's padding, the gap under the prompt and the
+  // drawing's own frame (FigureView's padding and border) all come off first, so the card
+  // never outgrows what the screen granted it. Never below the old fixed cap.
+  const figureRoom =
+    grown && headHeight > 0
+      ? minHeight - 2 * CARD_PAD - headHeight - FIGURE_GAP - FIGURE_CHROME
+      : 0;
   const figureMax = figureRoom > (figureMaxHeight ?? 0) ? figureRoom : figureMaxHeight;
   return (
-    <Card tone="lavender" padding={18} radius={24} style={grown ? { minHeight } : null}>
+    <Card tone="lavender" padding={CARD_PAD} radius={24} style={grown ? { minHeight } : null}>
       <View style={grown ? { flexGrow: 1 } : null}>
         {passage ? (
           <PassagePanel passage={passage} maxHeight={Math.round(viewHeight * passageShare)} />
         ) : null}
         <View onLayout={(e) => setHeadHeight(Math.round(e.nativeEvent.layout.height))}>
-          {fromBuddy || shownTopic ? (
-            // Where it comes from and what it is about share one line.
+          {meta ? (
+            // Where it comes from and what it is about share one line; "Frage vorlesen" ends it.
             <View
+              testID="question-meta"
               style={{
                 flexDirection: 'row',
-                flexWrap: 'wrap',
                 alignItems: 'center',
-                columnGap: 10,
-                rowGap: 4,
-                marginBottom: 8,
+                gap: SPACE.sm,
+                marginBottom: SPACE.sm,
               }}
             >
               {fromBuddy ? <FromBuddyTag label={t('origin_buddy')} /> : null}
+              {/* One line, never a second (it would cost the card a line, issue #310): a long
+                  topic ends in "…" — the header's title names the run, a screen reader the rest. */}
               {shownTopic ? (
                 <Text
-                  style={[TYPE.small, { color: palette.ink2, fontWeight: '600', flexShrink: 1 }]}
+                  numberOfLines={1}
+                  style={[
+                    TYPE.small,
+                    { color: palette.ink2, fontWeight: '600', flex: 1, minWidth: 0 },
+                  ]}
                 >
                   {shownTopic}
                 </Text>
-              ) : null}
+              ) : (
+                <View style={{ flex: 1 }} />
+              )}
+              {read}
             </View>
           ) : null}
-          <MathText
-            text={prompt}
-            blanks={{ filled }}
-            // A fraction in the question sits in its sentence (issue #288).
-            inlineFractions
-            accessibilityRole="header"
-            style={
-              dense
-                ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
-                : TYPE.question
-            }
-          />
+          {/* No meta line (a reading question names its text above): "Frage vorlesen" ends the
+              prompt's first line instead — a line of its own would cost the card a row. */}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.sm }}>
+            <View style={{ flex: 1 }}>
+              <MathText
+                text={prompt}
+                blanks={{ filled }}
+                // A fraction in the question sits in its sentence (issue #288).
+                inlineFractions
+                accessibilityRole="header"
+                style={
+                  dense
+                    ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
+                    : TYPE.question
+                }
+              />
+            </View>
+            {meta ? null : read}
+          </View>
         </View>
         {figure ? (
           <View
             style={
-              grown ? { marginTop: 12, flexGrow: 1, justifyContent: 'center' } : { marginTop: 12 }
+              grown
+                ? { marginTop: FIGURE_GAP, flexGrow: 1, justifyContent: 'center' }
+                : { marginTop: FIGURE_GAP }
             }
           >
-            {figure.type === 'staff' ? (
-              // Eine Notenzeile kann man hören (issue #226). Der Knopf steht NEBEN der Zeichnung
-              // (issue #275): eine Reihe darunter kostete auf 360×740 genau die Höhe, die bei vier
-              // langen Antworten fehlte, und eine kurze Notenzeile lässt in der Breite ohnehin
-              // Platz. Dieselbe weiche Pille mit dem Lautsprecher wie überall, ohne das Wort.
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-                <View testID="question-figure" style={{ flex: 1 }}>
-                  <ZoomableFigure figure={figure} maxHeight={figureMax} />
-                </View>
-                <View style={{ width: TOUCH + SPACE.sm }}>
-                  <StaffPlayButton bars={figure.bars} tempo={figure.tempo} />
-                </View>
-              </View>
-            ) : (
-              // The tight box around the drawing itself: the walkthrough records its height.
-              <View testID="question-figure">
-                <ZoomableFigure figure={figure} maxHeight={figureMax} />
-              </View>
-            )}
+            {/* While she types the drawing folds to one line (issue #379). */}
+            <QuestionFigure figure={figure} maxHeight={figureMax} folded={typing} />
           </View>
         ) : null}
         {image && imageKey ? (

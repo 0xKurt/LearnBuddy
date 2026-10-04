@@ -330,10 +330,14 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.emulateMedia({ colorScheme: 'light' });
 
   // ── "Vorlesen" at the question, without voice mode (issue #238) ──
-  // The round speaker in the card's corner. One tap reads the question in Buddy's voice — what
-  // is sent is the SPOKEN text, math in words, never LaTeX — a second tap stops it.
+  // The small speaker at the end of the card's meta row (issue #310), the one place for it. One
+  // tap reads the question in Buddy's voice — what is sent is the SPOKEN text, math in words,
+  // never LaTeX — a second tap stops it.
   const readQuestion = page.getByRole('button', { name: 'Frage vorlesen' });
-  await expect(readQuestion).toBeVisible();
+  await expect(readQuestion).toHaveCount(1);
+  await expect(
+    page.getByTestId('question-meta').getByRole('button', { name: 'Frage vorlesen' }),
+  ).toBeVisible();
   const spokenRequest = page.waitForRequest(
     (r) => r.url().includes('/voice/speech') && r.method() === 'POST',
   );
@@ -1603,6 +1607,15 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
   await expect(page.getByText('Eine Antwort pro Frage, keine Tipps.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
   await shot(page, '40-test-clock');
+  // The clock has its own slot in the row and never pushes the bar out (issue #334.2), at 360 too.
+  for (const width of [390, 360]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 740 });
+    const bar = await page.getByTestId('progress-bar').boundingBox();
+    expect(bar?.width ?? 0, `the progress bar beside the clock @${width}`).toBeGreaterThanOrEqual(
+      80,
+    );
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '40b-test-clock-night');
   await page.emulateMedia({ colorScheme: 'light' });

@@ -27,6 +27,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { bottomEdgeMask, TopEdgeFade } from '../lb/EdgeFade.js';
+import { FoldLabel } from '../lb/FoldLabel.js';
 import { Icon } from '../lb/Icon.js';
 
 /** Every fifth line carries its number, like a schoolbook; the first one too. */
@@ -103,18 +104,12 @@ export function PassagePanel({ passage, maxHeight }: Props) {
         accessibilityLabel={title}
         accessibilityHint={t(open ? 'reading.hide_hint' : 'reading.show_hint')}
         label={
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-            <Icon name="book" size={18} color={palette.primaryDk} />
-            <Text numberOfLines={1} style={[TYPE.label, { flex: 1, color: palette.ink }]}>
-              {title}
-            </Text>
-            <Text style={[TYPE.label, { color: palette.primaryDk }]}>
-              {t(open ? 'reading.hide' : 'reading.show')}
-            </Text>
-            <View style={{ transform: [{ rotate: open ? '-90deg' : '90deg' }] }}>
-              <Icon name="chevron" size={16} color={palette.primaryDk} />
-            </View>
-          </View>
+          <FoldLabel
+            icon="book"
+            title={title}
+            action={t(open ? 'reading.hide' : 'reading.show')}
+            open={open}
+          />
         }
       >
         {title}

@@ -13,7 +13,7 @@
 
 import type { SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 
@@ -30,6 +30,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { PadKey } from '../lb/PadKey.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
+import { EndButton } from '../lb/EndButton.js';
 import { Icon } from '../lb/Icon.js';
 import { Screen } from '../lb/Screen.js';
 import { toast } from '../lb/Toast.js';
@@ -65,31 +66,6 @@ function typedWith(typed: string, key: Key): string {
   if (typed.length >= MAX_TYPED) return typed;
   if (key === 'slash') return typed.length === 0 || typed.includes('/') ? typed : `${typed}/`;
   return `${typed}${key}`;
-}
-
-/**
- * The round's name on ONE line (issue #287: a title that wraps pushes everything down), and
- * what stands to its right. Screen's own header allows two lines, which a name like "Plus bis
- * 100 ohne Übergang" next to "Beenden" needs on a 360 pt phone.
- */
-function RoundHeader({ title, right }: { title: string; right?: ReactNode }) {
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: SPACE.md,
-        paddingHorizontal: SPACE.lg,
-        paddingVertical: SPACE.sm,
-        minHeight: 52,
-      }}
-    >
-      <Text accessibilityRole="header" numberOfLines={1} style={[TYPE.title, { flex: 1 }]}>
-        {title}
-      </Text>
-      {right}
-    </View>
-  );
 }
 
 export function DrillRound({ session, title, onChange, onClose }: Props) {
@@ -209,8 +185,7 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
   if (session.status !== 'active') {
     const finished = session.status === 'finished';
     return (
-      <Screen>
-        <RoundHeader title={title} />
+      <Screen title={title}>
         <PassEnd
           finished={finished}
           title={t('practice:drill.done_title')}
@@ -267,21 +242,17 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
   const size = taskSize(prompt);
 
   return (
-    <Screen>
-      <RoundHeader
-        title={title}
-        right={
-          <Btn
-            variant="outline"
-            size="sm"
-            pill
-            onPress={onClose}
-            accessibilityHint={t('practice:drill.end_hint')}
-          >
-            {t('practice:end')}
-          </Btn>
-        }
-      />
+    // The practice screens' header (issue #334.1): the round's name on one line and the round ✕.
+    <Screen
+      title={title}
+      right={
+        <EndButton
+          onPress={onClose}
+          label={t('practice:end_label')}
+          hint={t('practice:drill.end_hint')}
+        />
+      }
+    >
       <View style={{ flex: 1, paddingHorizontal: SPACE.lg, gap: SPACE.md }}>
         <ProgressRow
           position={Math.min(answered + 1, session.items.length)}
