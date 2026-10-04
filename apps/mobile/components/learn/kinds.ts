@@ -14,6 +14,9 @@ export const KIND_ICON: Record<TopicKind, IconName> = {
   listen: 'speak',
   // Diktat (issue #242): she WRITES what she hears — the pencil of writing, not her microphone.
   spelling_dictation: 'pencil',
+  // „Erklär mal" (issue #236): she explains an idea in her own words — the bulb, not the mic,
+  // because she may just as well type it.
+  teach_back: 'bulb',
   help: 'pencil',
 };
 
@@ -25,6 +28,7 @@ export const KIND_LABEL: Record<TopicKind, string> = {
   speak: 'start.speak',
   listen: 'start.listen',
   spelling_dictation: 'start.spelling_dictation',
+  teach_back: 'start.teach_back',
   help: 'start.homework',
 };
 
@@ -39,5 +43,7 @@ export const KIND_EXAMPLES: Record<TopicKind, number> = {
   listen: 0,
   // Asked for in the chat like listening; the words are hers or her sheet's, not examples.
   spelling_dictation: 0,
+  // Asked for in the chat ("Frag mich ab", "Darf ich's dir erklären?"), about a topic or her sheet.
+  teach_back: 0,
   help: 0,
 };

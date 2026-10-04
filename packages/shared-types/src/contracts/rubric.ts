@@ -154,6 +154,50 @@ export const Rubric = z
   );
 export type Rubric = z.infer<typeof Rubric>;
 
+// ─────────────── „Erklär mal": die Kernpunkte einer Erklärung (issue #236) ───────────────
+//
+// Eine offene Frage („Erklär mir, wie die Fotosynthese funktioniert") hat keinen Schlüssel, sondern
+// 3–6 KERNPUNKTE, die eine vollständige Erklärung nennt. Sie stehen in derselben Spalte wie die
+// Rubrik einer Schreibaufgabe (`items.rubric`), als eine fünfte Prüfart, die nur der Server
+// schreibt: `key_point`. Das Modell, das Fragen erzeugt, bekommt diese Prüfart nie zu sehen — sie
+// entsteht aus einem eigenen Entwurf (`apps/api/src/modules/practice/teachBack.ts`), den Code erst
+// prüft. Eine Rubrik ist entweder ganz aus Kernpunkten oder hat keinen.
+//
+//   · `point` — was die Erklärung hier sagt, als Aussage. Nur für das Urteil, nie für sie sichtbar:
+//               sie sieht den Namen („Ort") und, wenn er fehlt, die Nachfrage (`missing`).
+//   · `exact` — eine Zahl, Formel oder ein Fachwort, ohne das der Punkt nicht gesagt ist. Das prüft
+//               Code in ihrer Erklärung, gefaltet verglichen; das Modell kann es nicht überstimmen.
+
+/** Wie viele Kernpunkte eine Erklärfrage hat: unter drei ist es eine Kurzantwort, über sechs eine Liste. */
+export const KEY_POINTS_MIN = 3;
+export const KEY_POINTS_MAX = 6;
+
+/** Wie viele exakte Angaben ein Kernpunkt tragen darf. */
+export const KEY_POINT_EXACT_MAX = 3;
+
+export const KeyPointCheck = z.object({
+  by: z.literal('key_point'),
+  point: z.string().trim().min(1).max(200),
+  exact: z.array(RubricTerm).max(KEY_POINT_EXACT_MAX),
+});
+export type KeyPointCheck = z.infer<typeof KeyPointCheck>;
+
+const StoredCheck = z.discriminatedUnion('by', [...RubricCheck.options, KeyPointCheck]);
+
+/**
+ * Was `items.rubric` hält: die Rubrik einer Schreibaufgabe, wie das Modell sie schreibt, oder die
+ * Kernpunkte einer Erklärfrage, wie Code sie aus dem geprüften Entwurf baut (#236). Gelesen wird
+ * die Spalte immer hierdurch (`rubricOf`), nie als gegeben genommen.
+ */
+export const StoredRubric = Rubric.extend({
+  elements: z
+    .array(RubricElement.extend({ check: StoredCheck }))
+    .min(RUBRIC_MIN)
+    .max(RUBRIC_MAX),
+});
+export type StoredRubric = z.infer<typeof StoredRubric>;
+export type StoredRubricElement = StoredRubric['elements'][number];
+
 // ─────────────── Was hier (noch) NICHT steht: die Rückmeldung als Struktur ───────────────
 //
 // Die Rückmeldung pro Element verlässt den Server als SATZ, nicht als Struktur: Buddys Antwort

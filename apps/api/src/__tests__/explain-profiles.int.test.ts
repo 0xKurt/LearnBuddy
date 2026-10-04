@@ -166,6 +166,34 @@ const EVERYTHING = {
   staffs: [{ task: 'name_note', clef: 'treble', pitch: { name: 'E', octave: 4 } }],
   structured: STRUCTURED,
   dictation: { from: 'list', lang: 'de', topic: 'Lernwörter', entries: DICTATION_WORDS },
+  // „Erklär mal" (#236): an open question with its key points.
+  teach_back: [
+    {
+      prompt: 'Erklär mir, was ein Bruch ist.',
+      topic: 'Brüche',
+      difficulty: 2,
+      points: [
+        {
+          name: 'Ganzes',
+          point: 'ein Ganzes wird in gleich große Teile geteilt',
+          ask: 'Was passiert mit dem Ganzen?',
+          exact: [],
+        },
+        {
+          name: 'Nenner',
+          point: 'der Nenner sagt, in wie viele Teile',
+          ask: 'Was sagt die untere Zahl?',
+          exact: [],
+        },
+        {
+          name: 'Zähler',
+          point: 'der Zähler sagt, wie viele Teile man nimmt',
+          ask: 'Und die obere Zahl?',
+          exact: [],
+        },
+      ],
+    },
+  ],
 };
 
 /** What a run of each kind kept of EVERYTHING before D2 — the pre-D2 rules, written out. */
@@ -225,6 +253,9 @@ const BEFORE_D2: Record<
     staff: false,
     listen: false,
   },
+  // A new kind (#236), not a pre-D2 rule: only its explanation questions, stored as `long` with
+  // key points in the rubric column.
+  teach_back: { kinds: ['long'], rubric: true, bar: false, staff: false, listen: false },
 };
 
 describe.skipIf(!dbReady)('explain profiles (#281 D2)', () => {
@@ -291,7 +322,12 @@ describe.skipIf(!dbReady)('explain profiles (#281 D2)', () => {
       // The decoder would not have let the everything-answer through this run's schema …
       expect(schemaErrors(call!.schema!, EVERYTHING)).not.toEqual([]);
       // … and through the fallback it would have (it was written for it).
-      const { listen: _listen, dictation: _dictation, ...withoutOwnRuns } = EVERYTHING;
+      const {
+        listen: _listen,
+        dictation: _dictation,
+        teach_back: _teachBack,
+        ...withoutOwnRuns
+      } = EVERYTHING;
       expect(schemaErrors(GENERATED_SCHEMA, withoutOwnRuns)).toEqual([]);
 
       const want = BEFORE_D2[kind];

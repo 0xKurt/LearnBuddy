@@ -24,6 +24,7 @@ import { pronounceRules, readingRules, tutorRules } from './rules.js';
 import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
 import { scriptTour } from './tour.js';
+import { scriptTeachBack } from './teachBack.js';
 import { scriptTrees } from './trees.js';
 import { installTurns } from './turns.js';
 
@@ -38,6 +39,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptMark();
   // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
   scriptPrimary();
+  // Before the core loop: "Fotosynthese" is a topic an older, broader rule may know (#236).
+  scriptTeachBack();
   scriptCoreLoop();
   // Before the learning modes: their "probetest" sentence would answer this one too (#241).
   scriptTimedTest();

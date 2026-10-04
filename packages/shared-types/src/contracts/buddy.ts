@@ -147,10 +147,20 @@ export const ActionSummary = z.discriminatedUnion('tool', [
   /** Buddy offers to start learning; the app shows a button that starts it (POST /practice/topic). */
   z.object({
     tool: z.literal('offer_learning'),
-    kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test', 'spelling_dictation']),
+    kind: z.enum([
+      'practice',
+      'vocab',
+      'speak',
+      'listen',
+      'help',
+      'test',
+      'spelling_dictation',
+      'teach_back',
+    ]),
     /**
-     * spelling_dictation: the sheet the words come from (issue #242) — the button hands it to
-     * `POST /practice/topic` as `material_id`. Null for every other kind and in older records.
+     * spelling_dictation: the sheet the words come from (issue #242); teach_back: the sheet the
+     * questions are about (issue #236) — the button hands it to `POST /practice/topic` as
+     * `material_id`. Null for every other kind and in older records.
      */
     material_id: Uuid.nullable().default(null),
     text: z.string(),

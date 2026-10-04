@@ -6,7 +6,8 @@
     "vocab": "Ripassare i vocaboli",
     "speak": "Esercitare la pronuncia",
     "listen": "Comprensione orale",
-    "spelling_dictation": "Esercitarsi con il dettato"
+    "spelling_dictation": "Esercitarsi con il dettato",
+    "teach_back": "Spiegamelo"
   },
   "homework": {
     "title": "Aiuto con i compiti",

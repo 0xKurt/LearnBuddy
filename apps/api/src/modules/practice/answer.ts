@@ -61,9 +61,12 @@ import {
 import { CARD_PASS } from './cards.js';
 import { DRILL_PASS } from './drill.js';
 import { MAX_ACCEPTED } from './items.js';
+import { explanationSoFar, NOTHING_EXPLAINED, recordExplained } from './teachBack.js';
 import {
   askedElements,
   checkRubric,
+  isExplanation,
+  newlyExplained,
   rubricOf,
   rubricReply,
   rubricVerdict,
@@ -272,7 +275,15 @@ export async function answerItem(
   // judged element by element instead of getting one of four verdicts about the whole text; a
   // free text without one behaves exactly as it has since #197.
   const rubric = hintRequest ? null : rubricOf(item.rubric);
-  const asked = rubric ? askedElements(rubric) : [];
+  // An explanation goes on over the follow-ups („Erklär mal", #236): what she said before counts,
+  // a point once confirmed stays confirmed, and the model is not asked about it again.
+  const explaining = rubric !== null && isExplanation(rubric);
+  const sofar = explaining
+    ? await explanationSoFar(deps.db, sessionId, item.id)
+    : NOTHING_EXPLAINED;
+  const asked = rubric ? askedElements(rubric, sofar.settled) : [];
+  /** The key points this answer newly covered, stored with it (`recordExplained`). */
+  let explained: string[] = [];
   // What the model said about the elements it was asked about. It stays empty when no model was
   // called at all (the rules alone answered, or the model was unavailable) — and then every
   // judged element is `unknown` rather than missing: nobody measured it.
@@ -777,11 +788,14 @@ export async function answerItem(
   // Nur für eine echte Antwort: eine Tipp-Bitte und alles, was keine Antwort war, bleiben
   // unberührt (dort hat sie nichts geschrieben, das gegen die Elemente zu halten wäre).
   if (rubric && judged.verdict !== null && judged.verdict !== 'not_an_attempt') {
-    const outcome = checkRubric(rubric, text, claims);
+    const outcome = checkRubric(rubric, [...sofar.before, text].join('\n'), claims, sofar.settled);
+    explained = newlyExplained(outcome, sofar.settled);
+    // Her last try at an explanation ends with a closing line instead of a follow-up (#236).
+    const last = item.attempts + 1 >= REVEAL_AFTER_MISSES;
     judged = {
       ...judged,
       verdict: rubricVerdict(outcome),
-      reply: rubricReply(learner.locale, outcome, judged.reply),
+      reply: rubricReply(learner.locale, outcome, judged.reply, last),
       revealed: false,
     };
   }
@@ -826,7 +840,8 @@ export async function answerItem(
     ) {
       judged = {
         ...judged,
-        reply: workedReply(learner.locale, item),
+        // An explanation shows no model answer (#236): its points and the closing line stand.
+        reply: explaining ? judged.reply : workedReply(learner.locale, item),
         gaveHint: false,
         usedPrepared: false,
         revealed: true,
@@ -944,6 +959,7 @@ export async function answerItem(
             input.via ?? (partsCheck && structured ? partsVia(structured) : 'typed'),
           ],
         );
+        await recordExplained(tx, sessionId, item.id, explained);
         // A free text she did not get right produces NO review: `Again` is a statement about
         // memory, and nothing here was measured (issue #197). Got right, it counts like any
         // other question. The cost is that such a question does not come back on a schedule —

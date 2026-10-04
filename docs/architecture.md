@@ -1863,6 +1863,36 @@ ist die Bauweise: ein falsches Modellurteil kann hier kein Element bestätigen, 
 ist, keine gezählte Angabe überstimmen, keine Note und keine FSRS-Bewertung erzeugen und keinen
 Text für falsch erklären, solange irgendetwas trägt.
 
+**„Erklär mal": sie erklärt, Buddy hakt Kernpunkte ab und fragt EINMAL nach** (Issue #236,
+Migration 0088, `practice/teachBack.ts`). Eine eigene Art von Lauf, `teach_back`, gestartet aus
+dem Chat („Frag mich ab", „Darf ich's dir erklären?") über Buddys Angebot — zu einem Thema oder zu
+einem ihrer Blätter (`sheet`, dann `material_id`). Kein neuer Bildschirm: es ist die Übungskarte,
+die sie kennt, mit Mikro (Sprachmodus, freihändige Schleife) oder Tastatur.
+
+- **Erzeugen.** Der Generator schreibt offene Fragen in eine eigene Liste (`teach_back`, nur im
+  Schema dieses Laufs), jede mit 3–6 Kernpunkten: ein Name, den sie sieht („Ort"), eine Aussage
+  nur für die Prüfung („findet in den Chloroplasten statt"), EINE Nachfrage („Und wo in der Zelle
+  passiert das?") und optional exakte Angaben (Zahl, Formel, Fachwort). Code verwirft eine Frage
+  ganz (`teachBackProblem`), wenn zwei Punkte gleich sind, die Frage einen Punkt schon nennt, eine
+  Nachfrage keine Frage ist oder ihren Punkt bzw. eine exakte Angabe verrät, ein Name eine exakte
+  Angabe enthält, oder — aus ihrem Blatt — eine exakte Angabe nicht auf dem Blatt steht. Gespeichert
+  als `long` mit einer Rubrik aus `key_point`-Elementen (`StoredRubric`); die Nachfragen sind die
+  vorbereiteten Tipps, eine Musterlösung gibt es nicht.
+- **Prüfen.** Derselbe eine Tutor-Aufruf wie bei #211. Das Modell urteilt je offenem Punkt
+  `erfüllt`/`nicht erfüllt` mit einem Zitat; Code prüft das Zitat gegen alles, was sie zu dieser
+  Frage in diesem Lauf gesagt hat, und die exakten Angaben selbst. Belegte Punkte stehen in
+  `session_items.explained` (wächst nur, als Vereinigung in der Transaktion der Antwort) und werden nicht
+  wieder gefragt — ein „✓" verschwindet nie.
+- **Antworten.** „✓ Licht · ✓ Ausgangsstoffe · Ort fehlt noch", darunter als eigener Absatz die
+  vorbereitete Nachfrage des ersten fehlenden Punkts. Hält noch nichts, nur die Nachfrage (keine
+  Liste aus „fehlt noch"). Alles da → „Alles drin", die Frage schließt und zählt für FSRS wie jede
+  richtige. Nach dem dritten Versuch eine Schlusszeile statt Nachfrage — keine Lösung, keine Note,
+  keine FSRS-Bewertung.
+
+**Offen**: wie bei #211 fehlt der Eval-Satz (≥ 20 echte Erklärungen je Fach mit Lehrkraft-Abgleich);
+das Modellurteil „sagt dieses Zitat den Punkt?" ist ungemessen. Es kann keinen Punkt ohne ihre
+eigenen Worte bestätigen und keine exakte Angabe überstimmen.
+
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
 focus topics; one sheet or vocabulary only when she asked for that, issue #144). Answers are checked by rules where exactness is decidable (multiple choice,
 written numbers, exact matches, and near misses on written answers — missing

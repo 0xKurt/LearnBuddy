@@ -14,6 +14,7 @@ import {
   ModelFigure,
   unsupportedMath,
   Rubric,
+  type StoredRubric,
   type BarTask,
   type Figure,
   type ItemKind,
@@ -524,10 +525,12 @@ export type ItemSource = {
  * (`StaffFigure`) only ever comes from `practice/staff.ts`, which computed this item's prompt,
  * options, key and drawing together (issue #226).
  */
-export type StoredItem = Omit<ItemDraft, 'figure' | 'kind'> & {
+export type StoredItem = Omit<ItemDraft, 'figure' | 'kind' | 'rubric'> & {
   /** One of the model's kinds, or a structured kind built by `practice/structured.ts`. */
   kind: ItemKind;
   figure: Figure | null;
+  /** A writing task's rubric as the model wrote it, or an explanation's key points (#236). */
+  rubric: StoredRubric | null;
   /**
    * A structured question's task WITH its key (issues #228–#230): set only by
    * `practice/structured.ts`, after Regel 0. Migration 0079 makes it an either/or with the kind.

@@ -794,15 +794,28 @@ export const StartTopicRequest = z.object({
    * read it) · help: a homework task the learner typed ·
    * test: a practice test on a topic (one try per question, no hints, results at the
    * end) · spelling_dictation: a Diktat — words or sentences read aloud that she types
-   * (issue #242; refused before any model call when there is no voice, like listen).
-   * Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
+   * (issue #242; refused before any model call when there is no voice, like listen) ·
+   * teach_back: „Erklär mal" (issue #236) — open questions she answers by explaining, by voice or
+   * in writing, checked against 3–6 key points. Buddy explaining something stays the chat's
+   * answer, never a mode (owner decision 28.09., issue #70); here SHE explains.
    */
-  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test', 'spelling_dictation']),
+  kind: z.enum([
+    'practice',
+    'vocab',
+    'speak',
+    'listen',
+    'help',
+    'test',
+    'spelling_dictation',
+    'teach_back',
+  ]),
   text: z.string().trim().min(2).max(3000),
   /**
-   * spelling_dictation only: the photographed sheet the words come from (a Lernwörter list,
+   * spelling_dictation: the photographed sheet the words come from (a Lernwörter list,
    * issue #242). The words are then taken from that sheet's text and every one must stand in it
-   * (`practice/dictation.ts`); any other kind ignores it. Another learner's sheet is a 404.
+   * (`practice/dictation.ts`). teach_back: the sheet the questions are asked about (issue #236);
+   * an exact term of a key point must stand in it. Any other kind ignores it. Another learner's
+   * sheet is a 404.
    */
   material_id: Uuid.nullable().optional(),
   subject: z.string().trim().max(60).nullable().optional(),

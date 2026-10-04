@@ -61,9 +61,10 @@
 import {
   RUBRIC_QUOTE_MAX,
   RUBRIC_VERBS_MAX,
-  Rubric as RubricSchema,
+  StoredRubric as StoredRubricSchema,
   type Rubric,
-  type RubricElement,
+  type StoredRubric,
+  type StoredRubricElement,
 } from '@learnbuddy/shared-types/contracts';
 import { normalizeShortAnswer } from '@learnbuddy/shared-math';
 import { z } from 'zod';
@@ -95,10 +96,18 @@ function refOf(index: number): string {
  * und dann verhält sich die Frage genau wie seit #197: Buddy beurteilt, was sie geschrieben hat,
  * und behauptet keine Lösung. Nichts wird geraten.
  */
-export function rubricOf(stored: unknown): Rubric | null {
+export function rubricOf(stored: unknown): StoredRubric | null {
   if (stored === null || stored === undefined) return null;
-  const r = RubricSchema.safeParse(stored);
+  const r = StoredRubricSchema.safeParse(stored);
   return r.success ? r.data : null;
+}
+
+/**
+ * Die Kernpunkte einer Erklärfrage („Erklär mal", issue #236) — eine Rubrik, die ganz aus
+ * `key_point` besteht. Nur Code baut sie (`teachBack.ts`); eine gemischte gilt als keine.
+ */
+export function isExplanation(rubric: StoredRubric): boolean {
+  return rubric.elements.every((e) => e.check.by === 'key_point');
 }
 
 /**
@@ -141,7 +150,7 @@ export function usableRubric(rubric: Rubric | null | undefined, kind: string): R
 // ─────────────── was das Modell gefragt wird (und was nicht) ───────────────
 
 /** Ein Element, über das nur das Modell etwas sagen kann — mit dem Kürzel, das der Server vergibt. */
-export type AskedElement = { ref: string; name: string; check: RubricElement['check'] };
+export type AskedElement = { ref: string; name: string; check: StoredRubricElement['check'] };
 
 /**
  * Die Elemente, über die das Modell befragt wird: `tense` und `judged`. Und nur die.
@@ -154,10 +163,15 @@ export type AskedElement = { ref: string; name: string; check: RubricElement['ch
  * Ist die Liste leer, ist der Tutor-Aufruf der gewöhnliche: dieselbe Antwort, dasselbe Schema,
  * ein Aufruf.
  */
-export function askedElements(rubric: Rubric): AskedElement[] {
+export function askedElements(
+  rubric: StoredRubric,
+  /** Kernpunkte, die in diesem Lauf schon belegt sind (#236): danach wird nicht mehr gefragt. */
+  settled: readonly string[] = [],
+): AskedElement[] {
   return rubric.elements
     .map((e, i) => ({ ref: refOf(i), name: e.name, check: e.check }))
-    .filter((e) => e.check.by === 'tense' || e.check.by === 'judged');
+    .filter((e) => e.check.by === 'tense' || e.check.by === 'judged' || e.check.by === 'key_point')
+    .filter((e) => !settled.includes(e.ref));
 }
 
 /**
@@ -228,6 +242,8 @@ export type RubricElementState = {
 
 export type RubricOutcome = {
   form: string;
+  /** Eine Erklärfrage (#236): die Rückmeldung nennt Kernpunkte und stellt eine Nachfrage. */
+  explain: boolean;
   elements: RubricElementState[];
   /** Jedes Element steht auf `met`. */
   all: boolean;
@@ -243,7 +259,7 @@ function padded(s: string): string {
 }
 
 /** Steht dieser Wortlaut in dem Text — gefaltet (Groß-/Kleinschreibung, ß, Satzzeichen)? */
-function says(text: string, phrase: string): boolean {
+export function says(text: string, phrase: string): boolean {
   const needle = padded(phrase);
   return needle !== '' && padded(text).includes(needle);
 }
@@ -266,7 +282,11 @@ type Decided = { state: 'met' | 'open' | 'unknown'; verb: string | null };
  * Ein Element gegen ihren Text. Die drei zählbaren Prüfungen kennen kein Modell; `judged`
  * verlangt ein Zitat, das in ihrem Text steht.
  */
-function decide(element: RubricElement, text: string, claim: RubricClaim | undefined): Decided {
+function decide(
+  element: StoredRubricElement,
+  text: string,
+  claim: RubricClaim | undefined,
+): Decided {
   const check = element.check;
   switch (check.by) {
     case 'word_count': {
@@ -295,6 +315,13 @@ function decide(element: RubricElement, text: string, claim: RubricClaim | undef
       if (claim.met && says(text, claim.quote)) return { state: 'met', verb: null };
       return { state: 'open', verb: null };
     }
+    case 'key_point': {
+      if (claim === undefined) return { state: 'unknown', verb: null };
+      // Wie `judged`, und dazu gehört jede exakte Angabe des Punktes (eine Zahl, eine Formel, ein
+      // Fachwort) wörtlich in ihre Erklärung — das prüft Code, nicht das Modell (#236).
+      const held = claim.met && says(text, claim.quote) && check.exact.every((x) => says(text, x));
+      return { state: held ? 'met' : 'open', verb: null };
+    }
   }
 }
 
@@ -307,20 +334,25 @@ function decide(element: RubricElement, text: string, claim: RubricClaim | undef
  * die Behauptung, die #197 abgeschafft hat.
  */
 export function checkRubric(
-  rubric: Rubric,
+  rubric: StoredRubric,
   text: string,
   claims: readonly RubricClaim[],
+  /** Kernpunkte, die in diesem Lauf schon belegt sind (#236): sie bleiben belegt. */
+  settled: readonly string[] = [],
 ): RubricOutcome {
   const byRef = new Map<string, RubricClaim>();
   for (const c of claims) if (!byRef.has(c.element)) byRef.set(c.element, c);
   const decided = rubric.elements.map((element, i) => {
     const ref = refOf(i);
-    const counted = element.check.by !== 'judged';
-    return { ref, element, counted, ...decide(element, text, byRef.get(ref)) };
+    const counted = element.check.by !== 'judged' && element.check.by !== 'key_point';
+    const was = element.check.by === 'key_point' && settled.includes(ref);
+    const now: Decided = was ? { state: 'met', verb: null } : decide(element, text, byRef.get(ref));
+    return { ref, element, counted, ...now };
   });
   const first = decided.find((d) => d.state === 'open');
   return {
     form: rubric.form,
+    explain: isExplanation(rubric),
     elements: decided.map((d) => ({
       ref: d.ref,
       name: d.element.name,
@@ -365,7 +397,14 @@ export function rubricVerdict(o: RubricOutcome): 'correct' | 'partially_correct'
  * Steht alles, oder zeigt nichts auf eine Stelle, gibt es keinen nächsten Schritt: dann bleibt
  * Buddys eigener Satz stehen (`fallback`), denn dann hat die App nichts Genaueres zu sagen als er.
  */
-export function rubricReply(locale: string, o: RubricOutcome, fallback: string): string {
+export function rubricReply(
+  locale: string,
+  o: RubricOutcome,
+  fallback: string,
+  /** Ihr letzter Versuch an dieser Frage: eine Erklärfrage schließt dann ab, statt nachzufragen. */
+  last = false,
+): string {
+  if (o.explain) return explainReply(locale, o, fallback, last);
   const named = o.elements.filter((e) => e.state !== 'unknown');
   const line = named
     .map((e) =>
@@ -393,4 +432,47 @@ export function rubricReply(locale: string, o: RubricOutcome, fallback: string):
     verb: step.verb ?? '',
   });
   return line === '' ? sentence : `${line}\n${sentence}`;
+}
+
+/**
+ * Was Buddy zu einer Erklärung sagt („Erklär mal", issue #236): jeder Kernpunkt mit „✓" oder
+ * „fehlt noch", darunter EINE Nachfrage zum ersten fehlenden Punkt — die, die beim Erzeugen
+ * geschrieben und geprüft wurde, wie eine Lehrkraft sie im Unterricht stellt. Keine Note, keine
+ * Zahl, keine Lösung.
+ *
+ * Hält noch kein Punkt, steht keine Liste aus lauter „fehlt noch" da, sondern nur die Nachfrage:
+ * drei Zeilen „fehlt noch" nach ihrem ersten Satz wären das „Falsch!", das die App nie sagt. Beim
+ * letzten Versuch kommt statt der Nachfrage ein Abschluss, der nichts verrät. Hat niemand etwas
+ * gemessen (das Modell blieb aus), bleibt Buddys eigener Satz stehen.
+ */
+function explainReply(locale: string, o: RubricOutcome, fallback: string, last: boolean): string {
+  const line = o.elements
+    .filter((e) => e.state !== 'unknown')
+    .map((e) =>
+      t(locale, e.state === 'met' ? 'practice.explain.point_met' : 'practice.explain.point_open', {
+        name: e.name,
+      })
+        // One point never breaks across two lines („Ort / fehlt noch" reads as two things).
+        .replace(/ /g, NBSP),
+    )
+    .join(' · ');
+  // The follow-up is its own paragraph: it is what she answers next, not part of the list.
+  const then = (s: string) => (line === '' ? s : `${line}\n\n${s}`);
+  if (o.all) return then(t(locale, 'practice.explain.all'));
+  const step = o.step;
+  if (step === null) return then(fallback);
+  if (last) {
+    const closing = t(locale, 'practice.explain.closing');
+    return o.some ? then(closing) : closing;
+  }
+  return o.some ? then(step.missing) : t(locale, 'practice.explain.start', { ask: step.missing });
+}
+
+/** A space that does not break a line. */
+const NBSP = ' ';
+
+/** Die Kernpunkte, die diese Antwort neu belegt hat (#236): was `session_items.explained` dazubekommt. */
+export function newlyExplained(o: RubricOutcome, settled: readonly string[]): string[] {
+  if (!o.explain) return [];
+  return o.elements.filter((e) => e.state === 'met' && !settled.includes(e.ref)).map((e) => e.ref);
 }

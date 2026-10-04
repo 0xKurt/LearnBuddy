@@ -35,6 +35,7 @@ import { SELECT_RULES } from './selectAll.js';
 import { MAX_STAFF_ITEMS } from './staff.js';
 import { MAX_STRUCTURED_ITEMS, ORDER_RULES, StructuredDraftNoHelp } from './structured.js';
 import { TABLE_RULES } from './table.js';
+import { MAX_TEACH_BACK, TeachBackDraft } from './teachBack.js';
 
 const SUBJECT_KINDS = [
   'math',
@@ -107,6 +108,12 @@ export const GeneratedSet = z.object({
    * schema the model sees only for a Diktat run.
    */
   dictation: DictationDraft.nullable().default(null),
+  /**
+   * The open questions of a teach_back run (issue #236), each with its key points. A separate list
+   * for the reason `dictation` is one: the key points ARE the key, held to their rules by code
+   * before a question is stored (`practice/teachBack.ts`). In the schema only for that run.
+   */
+  teach_back: z.array(TeachBackDraft).max(MAX_TEACH_BACK).default([]),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
@@ -138,6 +145,8 @@ export type SetProfile = {
   listen: boolean;
   /** A Diktat's entries (#242): only in a Diktat run, where they are all there is. */
   dictation: boolean;
+  /** Explanation questions with key points (#236): only in a teach_back run. */
+  teachBack: boolean;
 };
 
 const STRUCTURED_FORMS = [
@@ -166,7 +175,15 @@ export const STRUCTURED_RULES = [
 
 /** A profile with these item kinds and no list of its own. */
 function onlyItems(items: readonly ModelItemKind[]): SetProfile {
-  return { items, structured: [], bars: false, staffs: false, listen: false, dictation: false };
+  return {
+    items,
+    structured: [],
+    bars: false,
+    staffs: false,
+    listen: false,
+    dictation: false,
+    teachBack: false,
+  };
 }
 
 export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
@@ -177,6 +194,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     staffs: true,
     listen: false,
     dictation: false,
+    teachBack: false,
   },
   // One try per question: no long answer, and no bar — a test is not a place to try a surface.
   test: {
@@ -186,6 +204,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     staffs: true,
     listen: false,
     dictation: false,
+    teachBack: false,
   },
   vocab: onlyItems(['vocab']),
   speak: onlyItems(['speak']),
@@ -194,6 +213,9 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
   listen: { ...onlyItems([]), listen: true },
   // Nothing in `items` either: a Diktat's words come out of `dictation`, held to her list (#242).
   spelling_dictation: { ...onlyItems([]), dictation: true },
+  // „Erklär mal" (#236): nothing in `items` — its questions come out of `teach_back`, each with key
+  // points code checked first.
+  teach_back: { ...onlyItems([]), teachBack: true },
   // Homework is the task she typed: no form of the app's own around it.
   help: onlyItems(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
 };
@@ -211,6 +233,7 @@ export const FALLBACK_PROFILE: SetProfile = {
   staffs: true,
   listen: false,
   dictation: false,
+  teachBack: false,
 };
 
 /**
@@ -284,6 +307,7 @@ export function setSchemaForModel(
     ...(structured ? {} : { structured: true }),
     ...(profile.listen ? {} : { listen: true }),
     ...(profile.dictation ? {} : { dictation: true }),
+    ...(profile.teachBack ? {} : { teach_back: true }),
   });
 }
 
@@ -315,6 +339,8 @@ export function parseSetFor(kind: StartTopicRequest['kind'], topics: [string, ..
     dictation: profile.dictation
       ? DictationDraftParsed.nullable().default(null).catch(null)
       : z.null().catch(null),
+    // Read one by one: a question whose points do not fit costs only itself.
+    teach_back: itemsOneByOne(profile.teachBack ? TeachBackDraft : NOTHING, MAX_TEACH_BACK),
   });
 }
 

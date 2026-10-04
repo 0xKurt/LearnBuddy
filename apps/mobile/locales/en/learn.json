@@ -6,7 +6,8 @@
     "vocab": "Test my vocab",
     "speak": "Practise speaking",
     "listen": "Practise listening",
-    "spelling_dictation": "Practise dictation"
+    "spelling_dictation": "Practise dictation",
+    "teach_back": "Explain it"
   },
   "homework": {
     "title": "Homework help",
