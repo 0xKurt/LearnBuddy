@@ -20,13 +20,7 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { MAX_BAR_ITEMS } from './bars.js';
 import { CLOZE_RULES } from './cloze.js';
 import { DictationDraft, DictationDraftParsed } from './dictation.js';
-import {
-  CHOICE_FIGURE_KINDS,
-  kindIn,
-  RUBRIC_KINDS,
-  SPELLING_KINDS,
-  TOLERANCE_KINDS,
-} from './itemFields.js';
+import { unusedItemFields } from './itemFields.js';
 import { ItemDraft, itemsOneByOne } from './items.js';
 import { ListenDraft, ListenQuestion } from './listen.js';
 import { MARK_RULES } from './mark.js';
@@ -255,22 +249,6 @@ function itemSchemaFor(profile: SetProfile, topics: [string, ...string[]] | null
   return base.extend({ kind: DraftItem.shape.kind.extract([first, ...rest]) });
 }
 
-/** The fields no allowed item kind keeps — left out of what the model is shown (`itemFields.ts`). */
-function unusedItemFields(profile: SetProfile): {
-  rubric?: true;
-  tolerance?: true;
-  spelling?: true;
-  choice_figures?: true;
-} {
-  const none = (kinds: readonly string[]) => !profile.items.some((k) => kindIn(kinds, k));
-  return {
-    ...(none(RUBRIC_KINDS) ? { rubric: true } : {}),
-    ...(none(TOLERANCE_KINDS) ? { tolerance: true } : {}),
-    ...(none(SPELLING_KINDS) ? { spelling: true } : {}),
-    ...(none(CHOICE_FIGURE_KINDS) ? { choice_figures: true } : {}),
-  };
-}
-
 /** The structured union narrowed to the profile's branches, or null when none is allowed. */
 function structuredSchemaFor(profile: SetProfile) {
   const options = StructuredDraftNoHelp.options.filter((o) =>
@@ -295,7 +273,7 @@ export function setSchemaForModel(
   const item = itemSchemaFor(profile, topics);
   const structured = structuredSchemaFor(profile);
   return GeneratedSet.extend({
-    items: z.array(item ? item.omit(unusedItemFields(profile)) : DraftItem).max(25),
+    items: z.array(item ? item.omit(unusedItemFields(profile.items)) : DraftItem).max(25),
     structured: z
       .array(structured ?? StructuredDraftNoHelp)
       .max(MAX_STRUCTURED_ITEMS)

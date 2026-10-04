@@ -42,6 +42,7 @@ import { z } from 'zod';
 import type { Deps } from '../../deps.js';
 import { AppError } from '../../lib/errors.js';
 import { synthesizeSpeech } from '../voice/speech.js';
+import { unusedItemFields } from './itemFields.js';
 import { ItemDraft, usableItems } from './items.js';
 
 /**
@@ -61,15 +62,17 @@ export const LISTEN_KINDS = ['multiple_choice', 'short'] as const;
 /**
  * One question about the spoken text, as the model writes it. Everything that has nothing to
  * do with a listening question is left out of the schema rather than validated away: a figure
- * (there is nothing to draw), a unit, a tolerance, a spelling mark (spelling is expressly not
- * marked here), the languages (the text's own language covers it), a source excerpt, hints and
- * a worked solution (see the file header).
+ * (there is nothing to draw), a unit, a spelling mark (spelling is expressly not marked here),
+ * the languages (the text's own language covers it), a source excerpt, hints and a worked
+ * solution (see the file header) — and every field neither of `LISTEN_KINDS` keeps
+ * (`unusedItemFields`, issue #281 D2): a tolerance and a rubric, which belong to a number and a
+ * long answer.
  */
 export const ListenQuestion = ItemDraft.omit({
+  ...unusedItemFields(LISTEN_KINDS),
   figure: true,
   read: true,
   unit: true,
-  tolerance: true,
   spelling: true,
   lang: true,
   prompt_lang: true,
@@ -194,6 +197,8 @@ export function listenItems(
       figure: null,
       read: null,
       tolerance: null,
+      // No listening question is a long answer, so none has a rubric (`itemFields.ts`).
+      rubric: null,
       // Never 'strict': what she wrote is judged on what she understood, not on how she spells
       // it (issue #197). `evaluate.ts` enforces it as well, from the stored text.
       spelling: 'gentle',

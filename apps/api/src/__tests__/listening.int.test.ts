@@ -201,6 +201,62 @@ describe.skipIf(!dbReady)('Hörverstehen', () => {
     expect(session.items.map((si) => si.item.prompt)).toEqual(['What did Tom buy for his sister?']);
   });
 
+  it('is shown no rubric and keeps none a model writes anyway (#281 D2: no long answer here)', async () => {
+    // A valid rubric (a long answer would keep it): before #281 D2 a listening question stored it.
+    const rubric = {
+      form: 'Antwort',
+      elements: [
+        {
+          name: 'Länge',
+          missing: 'Schreib noch etwas mehr.',
+          check: { by: 'word_count', min: 40, max: null },
+        },
+        { name: 'Präsens', missing: 'Bleib im Präsens.', check: { by: 'tense', tense: 'present' } },
+      ],
+    };
+    env.llm.script('explain', (req) => {
+      // The schema sent for a listening run has no rubric (and no tolerance) in its questions.
+      const { listen } = (
+        req.schema as unknown as {
+          properties: {
+            listen: { anyOf: { properties?: { questions?: { items: { properties: object } } } }[] };
+          };
+        }
+      ).properties;
+      const question = listen.anyOf.find((b) => b.properties)!.properties!.questions!.items;
+      expect(Object.keys(question.properties)).not.toContain('rubric');
+      expect(Object.keys(question.properties)).not.toContain('tolerance');
+      return {
+        usable: true,
+        title: 'Listening: Tom’s Saturday',
+        subject: { name: 'Englisch', kind: 'english' },
+        listen: {
+          text: TEXT,
+          lang: 'en',
+          questions: [
+            {
+              kind: 'short',
+              prompt: QUESTIONS[0]!.prompt,
+              answer: QUESTIONS[0]!.answer,
+              accepted_answers: [],
+              choices: null,
+              correct_choice: null,
+              topic: 'Tom’s Saturday',
+              difficulty: 2,
+              rubric,
+            },
+          ],
+        },
+      };
+    });
+    expect((await start()).status).toBe(201);
+    const rows = await env.db.query<{ rubric: unknown }>(
+      `select rubric from items where learner_id = $1`,
+      [lena.learnerId],
+    );
+    expect(rows).toEqual([{ rubric: null }]);
+  });
+
   it('prepares nothing at all when there is no voice to read it', async () => {
     const off = await createTestEnv({ speech: 'disabled', start: '2026-10-02T15:00:00Z' });
     try {

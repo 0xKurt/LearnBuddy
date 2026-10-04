@@ -2950,24 +2950,33 @@ Inside an item, the fields no allowed kind keeps are
 left out too, from `practice/itemFields.ts` — the same constants `usableItems` and `usableRubric`
 discard by: a rubric (and its `RubricCheck` union) without a long answer, a tolerance without a
 number, a spelling mode without a typed word, pictures as options (`choice_figures`, an array of the
-`ModelFigure` union, #231) without a multiple choice. The subject is never a rule.
+`ModelFigure` union, #231) without a multiple choice. The subject is never a rule. The mask is
+`unusedItemFields(kinds)` in `itemFields.ts`, and the listening question uses it too
+(`listen.ts`, `ListenQuestion`): its two kinds (`multiple_choice`, `short`) keep no rubric and no
+tolerance, so neither is in its schema, and `listenItems` stores `rubric: null` (before
+`generate.v1.27` a rubric the model wrote on a listening question was stored as it came).
 
-| kind               | items                                                 | structured                                        | bars | staffs | listen | dictation |
-| ------------------ | ----------------------------------------------------- | ------------------------------------------------- | ---- | ------ | ------ | --------- |
-| practice           | short, long, numeric, multiple_choice, formula, vocab | order, table_fill, match, cloze, select_all, mark | ✓    | ✓      | —      | —         |
-| test               | short, numeric, multiple_choice, formula, vocab       | order, table_fill, match, cloze, select_all, mark | —    | ✓      | —      | —         |
-| vocab              | vocab                                                 | —                                                 | —    | —      | —      | —         |
-| speak              | speak                                                 | —                                                 | —    | —      | —      | —         |
-| help               | short, long, numeric, multiple_choice, formula        | —                                                 | —    | —      | —      | —         |
-| listen             | —                                                     | —                                                 | —    | —      | ✓      | —         |
-| spelling_dictation | —                                                     | —                                                 | —    | —      | —      | ✓         |
+| kind               | items                                                 | structured                                        | bars | staffs | listen | dictation | teach_back |
+| ------------------ | ----------------------------------------------------- | ------------------------------------------------- | ---- | ------ | ------ | --------- | ---------- |
+| practice           | short, long, numeric, multiple_choice, formula, vocab | order, table_fill, match, cloze, select_all, mark | ✓    | ✓      | —      | —         | —          |
+| test               | short, numeric, multiple_choice, formula, vocab       | order, table_fill, match, cloze, select_all, mark | —    | ✓      | —      | —         | —          |
+| vocab              | vocab                                                 | —                                                 | —    | —      | —      | —         | —          |
+| speak              | speak                                                 | —                                                 | —    | —      | —      | —         | —          |
+| help               | short, long, numeric, multiple_choice, formula        | —                                                 | —    | —      | —      | —         | —          |
+| listen             | —                                                     | —                                                 | —    | —      | ✓      | —         | —          |
+| spelling_dictation | —                                                     | —                                                 | —    | —      | —      | ✓         | —          |
+| teach_back         | —                                                     | —                                                 | —    | —      | —      | —         | ✓          |
 
 A sheet-bound run (a practice or test for a planned test) is the same profile with the sheets'
 topics as the item `topic` enum. With no kind known (`setSchemaForModel(null, …)`), the fallback is
 every form but the listening task and the Diktat — byte for byte `GENERATED_SCHEMA`, what every
 run without sheets was sent before D2; today every call knows its kind, so it is the measured baseline. Not
-narrowed, because code cannot prove a form unusable there: `ModelFigure` (all 17 figure types stay
-in every profile with items, also vocab and speak — that would need a code rule first), the
+narrowed, because code cannot prove a form unusable there: `ModelFigure` (all 25 figure types stay
+in every profile with items, also vocab and speak, and as the options of a listening multiple
+choice — `usableItems` and `listenItems` keep a figure on every kind, so leaving it out needs a
+product rule first, not a profile; at `generate.v1.27` it is 80–83 % of the vocab, speak and listen
+schemas and appears twice in every item schema with a multiple choice, as `figure` and
+`choice_figures[]`), the
 extraction schemas (a sheet is read before anyone knows what is on it) and the Buddy turn's
 `actions` (tool growth, D3 deferred by the #279 consensus). Proven by
 `practice/__tests__/profiles.test.ts` (every valid form passes `testing/schemaCheck.ts`, a stand-in
@@ -2975,9 +2984,12 @@ for the decoder with exactly the emitted keywords, and code's parse; every form 
 rejected by both; the `answerUpTo` prefix validates under every profile) and
 `__tests__/explain-profiles.int.test.ts` (the model answers with every form, and each kind stores
 exactly what it stored before D2 — the expectation is written from the pre-D2 rules and was run
-green on the pre-D2 commit). Sizes before and after: `docs/measurements/schema-inventory.md`
-§Before → after. Whether Vertex accepts every profile and what it does to native tokens and
-quality is the live pilot of #281, not measured here.
+green on the pre-D2 commit). Sizes: `docs/measurements/schema-inventory.md`, every profile next to
+the fallback on the same commit; the before → after of D2 as it merged stays in
+`docs/measurements/schema-inventory.before-d2.json` and in the inventory of commit `a06c975`
+(later forms grew every profile, so a new before → after against that baseline would mix them
+in). Whether Vertex accepts every profile and what it does to native tokens and quality is the
+live pilot of #281 (live checks: #367), not measured here.
 
 ### Learning modes (migration `0003_learning_modes.sql`)
 
