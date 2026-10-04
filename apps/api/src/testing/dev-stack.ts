@@ -29,6 +29,7 @@ import { scriptDrill } from './scenarios/drill.js';
 import { scriptFigures } from './scenarios/figures.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
 import { scriptPrimary } from './scenarios/primary.js';
+import { scriptReading } from './scenarios/reading.js';
 import { scriptTimedTest } from './scenarios/timedTest.js';
 import { scriptRoleplay } from './scenarios/roleplay.js';
 import { scriptTour } from './scenarios/tour.js';
@@ -75,6 +76,8 @@ async function main(): Promise<void> {
     scriptCloze();
     scriptDrill();
     scriptRoleplay(scripted);
+    // Keyed by her age, so it never takes another spec's queued sheet (issue #233).
+    scriptReading(scripted);
     // Chat answers are matched by what the learner wrote and prepared practice by what was
     // asked for, so one spec cannot shift the answers of the next (issue #81). Installed
     // after every scenario added its rules.

@@ -102,10 +102,26 @@ export class ScriptedGateway implements LlmGateway {
   private readonly queues = new Map<LlmPurpose, ScriptedAnswer[]>();
   /** Answers for purposes a test does not care about (scripted answers still come first). */
   private readonly defaults = new Map<LlmPurpose, ScriptedAnswer>();
+  /** Answers for the calls a spec recognises as its own; they come before any queue. */
+  private readonly keyed: Array<{
+    purpose: LlmPurpose;
+    when: RegExp;
+    answer: ScriptedAnswer;
+  }> = [];
 
   /** Answer every unscripted call of this purpose with the same answer. */
   byDefault(purpose: LlmPurpose, answer: ScriptedAnswer): this {
     this.defaults.set(purpose, answer);
+    return this;
+  }
+
+  /**
+   * Answer every call of this purpose whose text (`textOf`) matches `when` — before the queue,
+   * so a spec's own photo is read as its own sheet whichever spec queued a reading first (the
+   * walkthrough runs every spec against one model, issue #81).
+   */
+  whenAsked(purpose: LlmPurpose, when: RegExp, answer: ScriptedAnswer): this {
+    this.keyed.push({ purpose, when, answer });
     return this;
   }
 
@@ -117,6 +133,7 @@ export class ScriptedGateway implements LlmGateway {
   /** Forget scripted answers, calls and errors (between tests sharing one environment). */
   reset(): void {
     this.queues.clear();
+    this.keyed.length = 0;
     this.calls.length = 0;
     this.unexpected.length = 0;
     this.scriptErrors.length = 0;
@@ -142,7 +159,11 @@ export class ScriptedGateway implements LlmGateway {
 
   async generate(req: LlmRequest): Promise<LlmResult> {
     this.calls.push(req);
-    const answer = this.queues.get(req.purpose)?.shift() ?? this.defaults.get(req.purpose);
+    const own = this.keyed.find(
+      (k) => k.purpose === req.purpose && k.when.test(ScriptedGateway.textOf(req)),
+    );
+    const answer =
+      own?.answer ?? this.queues.get(req.purpose)?.shift() ?? this.defaults.get(req.purpose);
     if (!answer) {
       this.unexpected.push(req);
       throw new LlmError('unavailable', `unscripted model call (${req.purpose})`);

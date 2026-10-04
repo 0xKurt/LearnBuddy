@@ -810,6 +810,9 @@ export default function PracticeScreen() {
     item,
     open,
   );
+  // Her short answer appears in the gap of a fill-in sentence while she types.
+  const filling = typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined;
+  const reRead = voiceOn && open && !choices && item.read_aloud ? () => readQuestion(item) : null;
   /** Ihre Notenzeile zu DIESER Frage; eine andere Frage beginnt mit einer leeren Zeile. */
   const staffAnswer =
     written?.itemId === item.id ? written.answer : emptyStaffAnswer(staff?.bars ?? 1);
@@ -1026,19 +1029,17 @@ export default function PracticeScreen() {
                       fromBuddy={item.origin === 'buddy'}
                       minHeight={cardGrowTo > 0 ? cardNatural + cardGrowTo : undefined}
                       dense={staff !== null}
-                      // Her short answer appears in the gap of a fill-in sentence while she types.
-                      answer={
-                        typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined
-                      }
+                      answer={filling}
+                      // The text she reads it from, above the question (Leseverständnis, #233).
+                      passage={item.passage}
+                      answerBoard={open && structured}
                     />
                   )}
                 </SlideIn>
                 <QuestionTools
                   item={item}
                   sessionId={session.id}
-                  readAgain={
-                    voiceOn && open && !choices && item.read_aloud ? () => readQuestion(item) : null
-                  }
+                  readAgain={reRead}
                   hearWord={hearWord}
                   heard={heard}
                   markHeard={markHeard}

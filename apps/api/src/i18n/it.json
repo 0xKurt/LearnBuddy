@@ -292,6 +292,12 @@
       "mode_xr": "recessivo legato all’X",
       "accepted": "Sì, viene accettata",
       "rejected": "No, non viene accettata"
+    },
+    "reading": {
+      "true": "Vero",
+      "false": "Falso",
+      "look_line": "Rileggi la riga {{from}}.",
+      "look": "Rileggi le righe da {{from}} a {{to}}."
     }
   },
   "contact": {

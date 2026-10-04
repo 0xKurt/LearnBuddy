@@ -290,5 +290,16 @@
     "note": "Eine Antwort pro Frage, keine Tipps.",
     "soon": "Schau in Ruhe, was du noch schaffst.",
     "up": "Die Zeit ist um – dein Ergebnis kommt gleich."
+  },
+  "reading": {
+    "label": "Lesetext",
+    "show": "Text zeigen",
+    "hide": "Einklappen",
+    "show_hint": "Zeigt den Text zu dieser Frage.",
+    "hide_hint": "Klappt den Text ein, damit die Frage mehr Platz hat.",
+    "scroll_hint": "Der Text scrollt für sich; die Frage bleibt stehen.",
+    "line": "Zeile {{n}}",
+    "evidence_one": "Antwort in Zeile {{from}}",
+    "evidence": "Antwort in den Zeilen {{from}}–{{to}}"
   }
 }
