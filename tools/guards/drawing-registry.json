@@ -74,6 +74,14 @@
     "apps/mobile/components/math/useSpokenMath.ts": {
       "issue": "#312",
       "libraryCheck": "Screenreader-Form von Formeln über lib/math/speak.ts; folgt dem Formelsatz-Entscheid in #312 (Phase 1, Kommentar vom 03.10.: KaTeX/MathJax ersetzen unseren Satz nicht; MathJax' speech-rule-engine kostete noch mehr Größe). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/SolidFigures.tsx": {
+      "issue": "#255",
+      "libraryCheck": "Schrägbild eines Körpers, Würfelnetz auf Karopapier und räumliches Koordinatensystem mit react-native-svg; Projektion, verdeckte Kanten, Faltung und alle Schlüssel aus packages/shared-math (solids.ts, space.ts), die der Server prüft. Bibliotheks-Check 03.10. (npm view, Quellen gelesen): zdog 1.1.3 (MIT, letztes Release 2022-05, 146 KB entpackt) zeichnet Pseudo-3D nur in Canvas oder ein DOM-SVG (document.createElementNS in shape/cylinder/cone), also unter React Native nur per WebView, und kennt weder Kavalierperspektive noch gestrichelte verdeckte Kanten; isomer 0.2.6 (MIT, 2022-06) zeichnet nur isometrisch und nur in Canvas; three 0.186 (MIT, 20 MB entpackt) braucht WebGL oder für SVGRenderer ein DOM — für drei Strichzeichnungen ein 3D-Motor; JSXGraph 1.13 (MIT/LGPL) braucht ein DOM (#312, Phase 1); cubenet 0.0.1 ist ein leeres Paket. Für Würfelnetze gibt es keine gepflegte Bibliothek. A11y: describeSpace sagt Körper und Maße, jedes Quadrat, jeden Punkt und Pfeil in Worten. Eigenbau begründet: keine freie RN-taugliche Bibliothek zeichnet ein Schrägbild mit verdeckten Kanten headless; die Rechnung (Projektion, Sichtbarkeit, Faltung) braucht der Server ohnehin für die Prüfung."
+    },
+    "apps/mobile/components/math/schoolFigures.tsx": {
+      "issue": "#255",
+      "libraryCheck": "Zeichnet nichts selbst: ordnet Uhr/Geld (#254), Bäume (#256), Periodensystem (#250) und Körper (#255) per Typwächter ihren eigenen Zeichendateien zu; deren Bibliotheks-Checks stehen bei PrimaryFigures.tsx, TreeFigures.tsx, PeriodicTable.tsx und SolidFigures.tsx."
     }
   }
 }

@@ -39,7 +39,8 @@ import { TABLE_RULES } from '../practice/table.js';
 // v8.4: a question to tick every right answer becomes one select_all task (#240).
 // v8.5: the periodic table as a figure (#250).
 // v8.6: a reading text with its questions becomes one entry in "reading" (#233).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.6';
+// v8.7: solids, cube nets and points in space (#255).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.7';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

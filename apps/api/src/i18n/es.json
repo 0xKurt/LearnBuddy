@@ -312,6 +312,10 @@
       "extra": "Pero {{count}} no encajan.",
       "extra_one": "Pero una no encaja.",
       "look_at": "Mira otra vez «{{text}}»."
+    },
+    "solid": {
+      "net_yes": "Sí, es un desarrollo del cubo",
+      "net_no": "No, no es un desarrollo del cubo"
     }
   },
   "contact": {

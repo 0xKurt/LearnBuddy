@@ -312,6 +312,10 @@
       "extra": "Mais {{count}} n'en font pas partie.",
       "extra_one": "Mais une n'en fait pas partie.",
       "look_at": "Regarde encore « {{text}} »."
+    },
+    "solid": {
+      "net_yes": "Oui, c'est un patron de cube",
+      "net_no": "Non, ce n'est pas un patron de cube"
     }
   },
   "contact": {

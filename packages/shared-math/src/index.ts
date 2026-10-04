@@ -12,3 +12,5 @@ export * from './primary.js';
 export * from './trees.js';
 export * from './pedigree.js';
 export * from './periodic.js';
+export * from './solids.js';
+export * from './space.js';

@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { PeriodicTableFigure } from './periodic.js';
 import { StaffFigure } from './staff.js';
 import { AutomatonFigure, PedigreeFigure, TreeFigure } from './tree.js';
+import { Axes3dFigure, CubeNetFigure, SolidFigure } from './solid.js';
 
 const Label = z.string().trim().min(1).max(40);
 const Num = z.number().finite();
@@ -442,6 +443,9 @@ const MODEL_FIGURES = [
   PedigreeFigure,
   AutomatonFigure,
   PeriodicTableFigure,
+  SolidFigure,
+  CubeNetFigure,
+  Axes3dFigure,
 ] as const;
 
 export const ModelFigure = z.discriminatedUnion('type', [...MODEL_FIGURES]);

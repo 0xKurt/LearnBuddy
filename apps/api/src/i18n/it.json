@@ -312,6 +312,10 @@
       "extra": "Però {{count}} non c'entrano.",
       "extra_one": "Però una non c'entra.",
       "look_at": "Riguarda «{{text}}»."
+    },
+    "solid": {
+      "net_yes": "Sì, è uno sviluppo del cubo",
+      "net_no": "No, non è uno sviluppo del cubo"
     }
   },
   "contact": {

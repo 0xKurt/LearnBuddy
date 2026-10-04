@@ -312,6 +312,10 @@
       "extra": "{{count}} passen aber nicht dazu.",
       "extra_one": "Eine passt aber nicht dazu.",
       "look_at": "Schau dir „{{text}}“ nochmal an."
+    },
+    "solid": {
+      "net_yes": "Ja, das ist ein Würfelnetz",
+      "net_no": "Nein, das ist kein Würfelnetz"
     }
   },
   "contact": {

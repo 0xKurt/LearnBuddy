@@ -312,6 +312,10 @@
       "extra": "But {{count}} don't belong.",
       "extra_one": "But one doesn't belong.",
       "look_at": "Take another look at “{{text}}”."
+    },
+    "solid": {
+      "net_yes": "Yes, it is a cube net",
+      "net_no": "No, it is not a cube net"
     }
   },
   "contact": {

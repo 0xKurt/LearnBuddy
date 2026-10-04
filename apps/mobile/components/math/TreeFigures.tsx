@@ -54,8 +54,8 @@ export function TreeBody({
   }
 }
 
-/** A small filled triangle at `tip`, pointing along `from → tip`. */
-function arrowHead(from: XY, tip: XY, size = 7): string {
+/** A small filled triangle at `tip`, pointing along `from → tip` (also SolidFigures). */
+export function arrowHead(from: XY, tip: XY, size = 7): string {
   const len = Math.hypot(tip.x - from.x, tip.y - from.y) || 1;
   const ux = (tip.x - from.x) / len;
   const uy = (tip.y - from.y) / len;

@@ -18,6 +18,7 @@ import { scriptPeriodic } from './periodic.js';
 import { scriptPrimary } from './primary.js';
 import { scriptReading } from './reading.js';
 import { scriptRoleplay } from './roleplay.js';
+import { scriptSolids } from './solids.js';
 import { pronounceRules, readingRules, tutorRules } from './rules.js';
 import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
@@ -44,6 +45,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptFigures();
   scriptTrees();
   scriptPeriodic();
+  scriptSolids();
   scriptCloze();
   scriptDrill();
   scriptRoleplay(scripted);
