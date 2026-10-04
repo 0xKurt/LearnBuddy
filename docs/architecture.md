@@ -2638,7 +2638,12 @@ the key.** No migration: the figure is an item's `figure` (jsonb), like the char
   language (`practice.tree.*` in `src/i18n`), and the model's `correct_choice` must point at the
   computed one. Genotypes are options in math notation (`$Aa$`, `$X^{A}Y$`), never typed text:
   written answers are compared without case where spelling does not count, so "AA" would pass
-  for "aa". A number asked about a tree that declares no key is dropped.
+  for "aa". A screen reader does not say case either, so the math speech (`lib/math/speak.ts`,
+  `speakGenotype`) reads a math run that is exactly a genotype — a pair of one letter (`$Aa$`) or
+  an X with one allele letter followed by a second such X or a Y (`$X^{A}X^{a}$`, `$X^{a}Y$`) —
+  with the case as a word: „groß A, klein a", "capital A, small a" (`spoken.allele_upper/lower`
+  in the five locales, issue #352). Decided by structure only; `$ab$`, `$X^{2}$` stay math.
+  A number asked about a tree that declares no key is dropped.
 - **Drawing** (`apps/mobile/components/math/TreeFigures.tsx`, layout from shared-math imported by
   path): a probability tree left to right with the probabilities on the branches and a `"?"` in
   the accent colour; a plain tree top down in circles; a pedigree with □ / ○, filled = affected,
