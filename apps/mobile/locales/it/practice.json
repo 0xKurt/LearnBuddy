@@ -290,5 +290,20 @@
     "note": "Una risposta per domanda, niente suggerimenti.",
     "soon": "Guarda con calma cos’altro riesci a fare.",
     "up": "Il tempo è finito – il tuo risultato sta arrivando."
+  },
+  "reading": {
+    "label": "Testo da leggere",
+    "show": "Mostra il testo",
+    "hide": "Comprimi",
+    "show_hint": "Mostra il testo di questa domanda.",
+    "hide_hint": "Comprime il testo per lasciare più spazio alla domanda.",
+    "scroll_hint": "Il testo scorre da solo; la domanda resta ferma.",
+    "line": "Riga {{n}}",
+    "evidence_one": "Risposta alla riga {{from}}",
+    "evidence": "Risposta alle righe {{from}}–{{to}}"
+  },
+  "select": {
+    "several": "Più di una è giusta: toccale tutte.",
+    "check_waits": "Quando ne hai spuntata almeno una."
   }
 }

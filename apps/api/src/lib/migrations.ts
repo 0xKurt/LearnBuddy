@@ -78,6 +78,8 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
   '0082_drill_rounds',
   '0083_test_time_limit',
   '0084_roleplays',
+  '0085_select_all_items',
+  '0086_reading_passages',
 ];
 
 /**

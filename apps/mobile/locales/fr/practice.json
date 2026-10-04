@@ -290,5 +290,20 @@
     "note": "Une réponse par question, pas d’indices.",
     "soon": "Regarde tranquillement ce que tu peux encore faire.",
     "up": "Le temps est écoulé – ton résultat arrive."
+  },
+  "reading": {
+    "label": "Texte à lire",
+    "show": "Afficher le texte",
+    "hide": "Replier",
+    "show_hint": "Affiche le texte de cette question.",
+    "hide_hint": "Replie le texte pour laisser plus de place à la question.",
+    "scroll_hint": "Le texte défile seul ; la question reste en place.",
+    "line": "Ligne {{n}}",
+    "evidence_one": "Réponse à la ligne {{from}}",
+    "evidence": "Réponse aux lignes {{from}}–{{to}}"
+  },
+  "select": {
+    "several": "Plusieurs sont justes – touche-les toutes.",
+    "check_waits": "Dès que tu en as coché au moins une."
   }
 }

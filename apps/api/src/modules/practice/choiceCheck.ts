@@ -143,13 +143,21 @@ function sameValue(a: string, b: string): boolean {
 }
 
 /**
+ * Two options that are one for her: the same as written or by value. Also what keeps two ticks
+ * of a select-all task apart (issue #240, `selectAll.ts`).
+ */
+export function sameOption(a: string, b: string): boolean {
+  return sameWriting(a, b) || sameValue(a, b);
+}
+
+/**
  * The key and the option the index points at are the same answer — as written or by value
  * ("0,5" names "$\\frac{1}{2}$"). They are written separately by the model, so they can
  * disagree, and then the index would win with full authority while nobody could tell which
  * the question meant (#227 Nr. 2).
  */
 function isTheOption(answer: string, chosen: string): boolean {
-  return sameWriting(answer, chosen) || sameValue(answer, chosen);
+  return sameOption(answer, chosen);
 }
 
 /** One JSON text per drawing: the same data in another key order is the same drawing. */

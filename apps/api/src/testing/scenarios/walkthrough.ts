@@ -14,10 +14,13 @@ import { scriptDrill } from './drill.js';
 import { scriptFigures } from './figures.js';
 import { installGenerations } from './generations.js';
 import { scriptLearningModes } from './learning-modes.js';
+import { scriptPeriodic } from './periodic.js';
 import { scriptPrimary } from './primary.js';
+import { scriptReading } from './reading.js';
 import { scriptRoleplay } from './roleplay.js';
 import { scriptSolids } from './solids.js';
 import { pronounceRules, readingRules, tutorRules } from './rules.js';
+import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
 import { scriptTour } from './tour.js';
 import { scriptTrees } from './trees.js';
@@ -28,15 +31,20 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   // First: its generation rule is keyed on her list, and a broader rule registered earlier
   // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
   scriptDictation();
+  // Also first: "Latein" and "Fahrrad" are words an older, broader rule may know (#240).
+  scriptSelectAll();
   // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
   scriptPrimary();
   scriptCoreLoop();
   // Before the learning modes: their "probetest" sentence would answer this one too (#241).
   scriptTimedTest();
+  // Before the tour: both read the same photo fixture; hers is keyed by her age (#233).
+  scriptReading();
   scriptLearningModes(scripted);
   scriptTour();
   scriptFigures();
   scriptTrees();
+  scriptPeriodic();
   scriptSolids();
   scriptCloze();
   scriptDrill();

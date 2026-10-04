@@ -293,6 +293,26 @@
       "accepted": "Yes, it is accepted",
       "rejected": "No, it is not accepted"
     },
+    "reading": {
+      "true": "True",
+      "false": "False",
+      "look_line": "Read line {{from}} again.",
+      "look": "Read lines {{from}} to {{to}} again."
+    },
+    "periodic": {
+      "metal": "metal",
+      "metalloid": "metalloid",
+      "nonmetal": "nonmetal"
+    },
+    "select": {
+      "found_some": "You've got {{count}} of the {{total}} right ones.",
+      "found_some_one": "You've got 1 of the {{total}} right ones.",
+      "all_found": "You've got all the right ones.",
+      "none": "None of the right ones is in there yet – take another calm look at all of them.",
+      "extra": "But {{count}} don't belong.",
+      "extra_one": "But one doesn't belong.",
+      "look_at": "Take another look at “{{text}}”."
+    },
     "solid": {
       "net_yes": "Yes, it is a cube net",
       "net_no": "No, it is not a cube net"

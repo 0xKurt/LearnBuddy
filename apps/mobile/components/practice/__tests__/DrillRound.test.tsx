@@ -42,6 +42,7 @@ const task = (
     surface: null,
     task_view: null,
     listen: null,
+    passage: null,
     subject_kind: null,
     choice_figures: null,
     read_aloud: false,

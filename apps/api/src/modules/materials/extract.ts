@@ -22,15 +22,25 @@ import {
   StructuredDraft,
   StructuredDraftHomework,
 } from '../practice/structured.js';
+import { SELECT_RULES } from '../practice/selectAll.js';
 import { CLOZE_RULES } from '../practice/cloze.js';
+import {
+  READING_RULES,
+  ReadingDraft,
+  ReadingDraftParse,
+  READINGS_PER_READING,
+} from '../practice/reading.js';
 import { TABLE_RULES } from '../practice/table.js';
 
 // v8: car 2's structured rules (v7.1) and #253/#257's figures (v7) together.
 // v8.1: pictures as the options of a multiple choice (choice_figures, #231).
 // v8.2: a text with several gaps becomes one cloze task (#232).
 // v8.3: primary-school figures — clock, money, dot field, base-ten blocks (#254).
-// v8.4: solids, cube nets and points in space (#255).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.4';
+// v8.4: a question to tick every right answer becomes one select_all task (#240).
+// v8.5: the periodic table as a figure (#250).
+// v8.6: a reading text with its questions becomes one entry in "reading" (#233).
+// v8.7: solids, cube nets and points in space (#255).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.7';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -190,6 +200,13 @@ export const ExtractionResult = z.object({
    */
   structured: z.array(StructuredDraft).max(STRUCTURED_PER_READING).default([]),
   /**
+   * Reading texts with their questions (Leseverständnis, #233): the text line by line as
+   * printed, and the questions about it. Checked by code before anything is stored
+   * (`practice/reading.ts`): the text stands in the transcription, the lines a question names
+   * exist, every answer stands in the text.
+   */
+  reading: z.array(ReadingDraft).max(READINGS_PER_READING).default([]),
+  /**
    * The sheet holds more questions or word pairs than this answer lists (issue #150).
    * Saying so is what lets the rest be read; guessing from a full list would mistake a
    * sheet that happens to have exactly as many for one that was cut off.
@@ -242,6 +259,7 @@ export type ExtractionResult = z.infer<typeof ExtractionResult>;
 export const ExtractionParse = ExtractionResult.extend({
   items: itemsOneByOne(ItemDraft, ITEMS_PER_READING),
   structured: itemsOneByOne(StructuredDraft, STRUCTURED_PER_READING),
+  reading: itemsOneByOne(ReadingDraftParse, READINGS_PER_READING),
 });
 
 /**
@@ -251,7 +269,9 @@ export const ExtractionParse = ExtractionResult.extend({
 export const HomeworkExtraction = ExtractionResult.extend({
   items: z.array(ItemDraft.omit({ worked_solution: true })).max(12),
   structured: z.array(StructuredDraftHomework).max(STRUCTURED_PER_READING).default([]),
-});
+  // Homework is helped task by task, as printed: a reading text there stays the questions she
+  // brought (#233 is study material). Not in the schema, so nothing is written there.
+}).omit({ reading: true });
 
 /**
  * Added when an answer was cut off at the token limit (live finding 2: a 2-task sheet ran
@@ -340,6 +360,8 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${TABLE_RULES} A table on the sheet whose cells are to be filled in becomes one such task in "structured" (its cells as printed, the empty ones as gaps), never one question per cell in items.
    - ${MATCH_RULES} A task on the sheet that asks to link given things to each other or sort them into given groups becomes one such task in "structured", never questions in items.
    - ${CLOZE_RULES} A text on the sheet with several gaps to fill becomes one such task in "structured" (its word box, if printed, as word_bank), never one question per gap in items.
+   - ${SELECT_RULES} A question on the sheet that asks to tick all right answers becomes one such task in "structured", never a multiple_choice item.
+   - ${READING_RULES} A text on the sheet with questions about it, or a text to read and understand, becomes one entry in "reading": its lines exactly as printed and its questions — never the same questions again in items.
    - Otherwise 8–15 questions — and none at all for a sheet whose every task went into not_practicable. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
@@ -372,6 +394,7 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
    - ${TABLE_RULES} A table whose cells are to be filled in goes into "structured" instead of items (its prompt as printed).
    - ${MATCH_RULES} A task that asks to link given things or sort them into groups goes into "structured" instead of items (its prompt as printed).
    - ${CLOZE_RULES} A text with several gaps to fill goes into "structured" instead of items (its word box, if printed, as word_bank).
+   - ${SELECT_RULES} A task that asks to tick all right answers goes into "structured" instead of items (its prompt as printed).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}

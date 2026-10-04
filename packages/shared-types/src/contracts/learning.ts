@@ -5,6 +5,7 @@ import { IsoDateTime, SubjectKind, Uuid } from './common.js';
 import { DrillView } from './drill.js';
 import { Figure } from './figure.js';
 import { ListenRef } from './listen.js';
+import { PassageView } from './reading.js';
 import { StructuredAnswer, StructuredTaskView } from './structured.js';
 
 // ─────────────── material (photographed worksheets) ───────────────
@@ -315,6 +316,8 @@ export const ItemKind = z.enum([
    * what this question must NOT offer.
    */
   'spelling_dictation',
+  /** Tick every right answer among several options (#240). */
+  'select_all',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
 
@@ -414,6 +417,13 @@ export const ItemView = z.object({
    * (`SessionItemView.listen_transcript`). Questions about one text share the `ref`.
    */
   listen: ListenRef.nullable().default(null),
+  /**
+   * The text this question is about (Leseverständnis, issue #233, `contracts/reading.ts`): its
+   * lines as printed, shown above the question while she answers — unlike a listening text it is
+   * what she answers FROM, not the answer. Questions about one text share the `ref`. A text this
+   * build cannot read shows the question without it (`.catch`) rather than failing the session.
+   */
+  passage: PassageView.nullable().default(null).catch(null),
   /**
    * Whether the question may be read aloud by its "Vorlesen" button, also outside voice mode
    * (issue #238). Code decides it (`apps/api/src/modules/practice/readAloud.ts`): not for a task

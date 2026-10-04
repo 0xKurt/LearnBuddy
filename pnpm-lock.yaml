@@ -356,6 +356,9 @@ importers:
       fast-check:
         specifier: ^4.10.2
         version: 4.10.2
+      periodic-table-data:
+        specifier: 1.1.1
+        version: 1.1.1
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
@@ -5464,6 +5467,9 @@ packages:
 
   pdf-lib@1.17.1:
     resolution: {integrity: sha512-V/mpyJAoTsN4cnP31vc0wfNA1+p20evqqnap0KLoRUN0Yk/p3wN52DOEsL4oBFcLdb76hlpKPtzJIgo67j/XLw==}
+
+  periodic-table-data@1.1.1:
+    resolution: {integrity: sha512-nzQh23eWtDFNc4tlaONT41YJbMvom6/INNkrw7sgJrPGCnT+j7tWVX6NRJssHeH+M/P2iKKFcCe/ODVqAB2l5g==}
 
   pg-cloudflare@1.4.0:
     resolution: {integrity: sha512-Vo7z/6rrQYxpNRylp4Tlob2elzbh+N/MOQbxFVWCxS7oEx6jF53GTJFxK2WWpKuBRkmiin4Mt+xofFDjx09R0A==}
@@ -12657,6 +12663,8 @@ snapshots:
       '@pdf-lib/upng': 1.0.1
       pako: 1.0.11
       tslib: 1.14.1
+
+  periodic-table-data@1.1.1: {}
 
   pg-cloudflare@1.4.0:
     optional: true

@@ -6,11 +6,15 @@
 // be picked again: it fades, its letter turns into a quiet dash and "Schon ausprobiert" stands
 // under it (never colour alone) – the conversation above says what happened with it. Choices
 // may hold math ($…$).
+// Several right answers (issue #240, `SelectAllAnswer`): the same tiles, but each one a checkbox
+// she ticks and unticks — a square box in the letter's column instead of the letter, the tile
+// tinted while ticked (the box's check mark says it too, never colour alone). Up to six short
+// options stand two by two; "Prüfen" sends the set.
 // In voice mode `SpokenChoice` puts the mic in the answer shell's voice slot, pinned at the
 // bottom where "Prüfen" stands for every other form (`CheckBar`, issue #310): what she says is
 // sent as a text answer (the server matches it to a choice by its text).
 
-import type { Figure } from '@learnbuddy/shared-types/contracts';
+import { SELECT_MAX, type Figure } from '@learnbuddy/shared-types/contracts';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View, type TextStyle } from 'react-native';
@@ -22,6 +26,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { AnswerTile } from '../lb/AnswerTile.js';
 import { Btn, BTN_PAD_COMPACT } from '../lb/Btn.js';
+import { Icon } from '../lb/Icon.js';
 import { ZoomViewer } from '../lb/ZoomViewer.js';
 import { describeFigure, FigureView } from '../math/FigureView.js';
 import { MathText } from '../math/MathText.js';
@@ -85,11 +90,16 @@ type Props = {
   figures?: readonly Figure[] | null;
   /** Options already answered and judged not right. */
   tried: ReadonlySet<string>;
+  /**
+   * Several may be right (select-all, issue #240): the options she has ticked, by index. Set,
+   * every option is a checkbox and a tap ticks or unticks it; unset, a tap answers.
+   */
+  ticked?: ReadonlySet<number>;
   disabled: boolean;
   onChoose: (index: number, choice: string) => void;
 };
 
-export function ChoiceList({ choices, figures, tried, disabled, onChoose }: Props) {
+export function ChoiceList({ choices, figures, tried, ticked, disabled, onChoose }: Props) {
   if (figures && figures.length === choices.length && choices.length > 0) {
     return (
       <FigureChoices
@@ -101,23 +111,33 @@ export function ChoiceList({ choices, figures, tried, disabled, onChoose }: Prop
       />
     );
   }
-  return <TextChoices choices={choices} tried={tried} disabled={disabled} onChoose={onChoose} />;
+  return (
+    <TextChoices
+      choices={choices}
+      tried={tried}
+      {...(ticked ? { ticked } : {})}
+      disabled={disabled}
+      onChoose={onChoose}
+    />
+  );
 }
 
-function TextChoices({ choices, tried, disabled, onChoose }: Props) {
+function TextChoices({ choices, tried, ticked, disabled, onChoose }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const words = useSpokenWords();
   // Short options (a word, a number, a fraction) sit two by two — but only when EVERY one of
   // them fits one line of half a screen, so the tiles of the grid are equally tall (issue #288).
-  // What fits is arithmetic, not a feeling (see "what fits half a line" below).
-  const grid = twoColumnChoices(choices);
+  // What fits is arithmetic, not a feeling (see "what fits half a line" below). Options to tick
+  // may be six: three rows of short ones (contracts/structured.ts, SELECT_MAX).
+  const grid = twoColumnChoices(choices, ticked ? SELECT_MAX : CHOICE_GRID_MAX);
   return (
     <View
       style={grid ? { flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP } : { gap: CARD_GAP }}
     >
       {choices.map((choice, index) => {
         const wasTried = tried.has(choice);
+        const on = ticked?.has(index) ?? false;
         // A fraction or a term on its own is the thing to look at: set large and centred, at
         // least as large as the question's own line (issue #288, finding 4).
         const big = mathOnly(choice);
@@ -125,6 +145,7 @@ function TextChoices({ choices, tried, disabled, onChoose }: Props) {
           <AnswerTile
             key={`${index}:${choice}`}
             tried={wasTried}
+            ticked={on}
             style={grid ? { flexBasis: '45%', flexGrow: 1 } : null}
           >
             <Btn
@@ -137,6 +158,7 @@ function TextChoices({ choices, tried, disabled, onChoose }: Props) {
               grow
               disabled={disabled || wasTried}
               onPress={() => onChoose(index, choice)}
+              {...(ticked ? { checked: on } : {})}
               accessibilityHint={wasTried ? t('choice_tried') : undefined}
               // Math in a choice is set properly; a screen reader hears it in words.
               label={
@@ -147,14 +169,18 @@ function TextChoices({ choices, tried, disabled, onChoose }: Props) {
                     gap: LETTER_GAP,
                   }}
                 >
-                  <LetterMark letter={letterFor(index)} tried={wasTried} />
+                  {ticked ? (
+                    <TickBox on={on} />
+                  ) : (
+                    <LetterMark letter={letterFor(index)} tried={wasTried} />
+                  )}
                   <View style={{ flex: 1, gap: 2, alignItems: big ? 'center' : 'flex-start' }}>
                     <MathText
                       text={choice}
                       accessible={false}
                       style={[
                         {
-                          color: wasTried ? palette.ink2 : palette.ink,
+                          color: wasTried ? palette.ink2 : on ? palette.primaryDk : palette.ink,
                           fontSize: big ? MATH_CHOICE_FONT : CHOICE_FONT,
                           lineHeight: big ? MATH_CHOICE_LINE : CHOICE_LINE,
                           fontWeight: CHOICE_WEIGHT,
@@ -375,18 +401,24 @@ const GRID_TEXT_ROOM =
 const LIST_TEXT_ROOM =
   NARROW_PHONE - 2 * SCREEN_PAD - 2 * BTN_PAD_COMPACT - LETTER_COL - LETTER_GAP;
 
+/** How many single-choice options may stand two by two (two rows). */
+const CHOICE_GRID_MAX = 4;
+
 /** The longest option that still fits ONE line of a grid tile: 9 characters. */
 export const GRID_CHARS_MAX = Math.floor(GRID_TEXT_ROOM / (CHOICE_FONT * EM_PER_CHAR));
 /** The longest word that fits one line of a full-width tile: 22 characters. */
 const LIST_WORD_MAX = Math.floor(LIST_TEXT_ROOM / (CHOICE_FONT * EM_PER_CHAR));
 
 /**
- * Do these options go two by two? Only up to four of them, and only when every one fits one
- * line of half a screen — one that cannot sends all of them to the full width, because a grid
- * with one taller tile is the very thing #203 and #288 are about.
+ * Do these options go two by two? Only up to `max` of them (four to choose one, six to tick), and
+ * only when every one fits one line of half a screen — one that cannot sends all of them to the
+ * full width, because a grid with one taller tile is the very thing #203 and #288 are about.
  */
-export function twoColumnChoices(choices: readonly string[]): boolean {
-  return choices.length > 0 && choices.length <= 4 && choices.every((c) => fitsHalfLine(c));
+export function twoColumnChoices(
+  choices: readonly string[],
+  max: number = CHOICE_GRID_MAX,
+): boolean {
+  return choices.length > 0 && choices.length <= max && choices.every((c) => fitsHalfLine(c));
 }
 
 /** One option in one line of a grid tile, at the size it is set in. */
@@ -449,6 +481,39 @@ const WHOLE_WORDS: TextStyle | null =
   Platform.OS === 'web'
     ? ({ wordWrap: 'normal', overflowWrap: 'normal', wordBreak: 'normal' } as unknown as TextStyle)
     : null;
+
+/**
+ * The square box of an option to tick (issue #240): square with soft corners, because round
+ * reads as "one of these" — the questionnaire's convention for "tick several". It stands in the
+ * letter's column, centred on the first text line; at TICK_BOX it is 4 pt wider than the letter,
+ * which still leaves a grid tile room for GRID_CHARS_MAX characters ((160 − 24 − 20 − 12) / 10.88
+ * = 9.6). Ticked, it is filled and carries the check mark — never colour alone.
+ */
+function TickBox({ on }: { on: boolean }) {
+  const { palette } = useTheme();
+  return (
+    <View style={{ height: CHOICE_LINE, justifyContent: 'center' }}>
+      <View
+        testID="choice-box"
+        style={{
+          width: TICK_BOX,
+          height: TICK_BOX,
+          borderRadius: 6, // token-exempt: the lb Checkbox's corner (9 on 26 pt), scaled to 20 pt
+          borderWidth: 1.5,
+          borderColor: on ? palette.primary : palette.field,
+          backgroundColor: on ? palette.primary : palette.paper,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {on ? <Icon name="check" size={14} color={palette.paper} /> : null}
+      </View>
+    </View>
+  );
+}
+
+/** The box's side: a mark, not a target — the whole tile is what she taps. */
+const TICK_BOX = 20;
 
 /** A, B, C … (after Z it simply goes on counting: 27, 28 …). */
 function letterFor(index: number): string {

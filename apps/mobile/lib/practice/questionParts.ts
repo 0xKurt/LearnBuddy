@@ -29,7 +29,12 @@ export function questionParts(item: ItemView, words: SpokenWords, t: TFunction):
             // Options that are pictures are not read by their texts: the text may be the
             // very formula the question asks about (issue #231). They are seen, and a screen
             // reader hears each one described.
-            item.kind === 'multiple_choice' && !item.choice_figures ? item.choices : null,
+            // Options to tick (issue #240) are read like options to choose.
+            item.kind === 'multiple_choice' && !item.choice_figures
+              ? item.choices
+              : item.task_view?.type === 'select_all'
+                ? item.task_view.options.map((o) => o.text)
+                : null,
             words,
           ),
           // The sheet's language (a German biology sheet stays German on an English phone).

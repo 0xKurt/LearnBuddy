@@ -5,6 +5,7 @@
 
 import { z } from 'zod';
 
+import { PeriodicTableFigure } from './periodic.js';
 import { StaffFigure } from './staff.js';
 import { AutomatonFigure, PedigreeFigure, TreeFigure } from './tree.js';
 import { Axes3dFigure, CubeNetFigure, SolidFigure } from './solid.js';
@@ -441,6 +442,7 @@ const MODEL_FIGURES = [
   TreeFigure,
   PedigreeFigure,
   AutomatonFigure,
+  PeriodicTableFigure,
   SolidFigure,
   CubeNetFigure,
   Axes3dFigure,

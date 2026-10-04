@@ -40,28 +40,52 @@ export function topEdgeMaskFrom(from: number, size: number = EDGE_FADE): ViewSty
   return { maskImage: gradient, WebkitMaskImage: gradient } as unknown as ViewStyle;
 }
 
-/** Phones: lies over the top edge of the scroll view it is placed after (its parent is the frame). */
-export function TopEdgeFade({ top = 0 }: { top?: number }) {
+/**
+ * The web: the scroll view's BOTTOM edge fades out — a text that scrolls on in its own box (the
+ * reading text above a question, issue #233) shows that there is more instead of ending in a
+ * line cut in half.
+ */
+export function bottomEdgeMask(size: number = EDGE_FADE): ViewStyle | null {
+  if (Platform.OS !== 'web') return null;
+  const gradient = `linear-gradient(to top, transparent 0px, black ${size}px)`;
+  return { maskImage: gradient, WebkitMaskImage: gradient } as unknown as ViewStyle;
+}
+
+/**
+ * Phones: lies over the top edge of the scroll view it is placed after (its parent is the frame)
+ * — or over its bottom edge (`bottom`, the reading text, issue #233), fading to `color` (the
+ * surface the scroll view stands on; the screen's background by default).
+ */
+export function TopEdgeFade({
+  top = 0,
+  bottom = false,
+  color,
+}: {
+  top?: number;
+  bottom?: boolean;
+  color?: string;
+}) {
   const { palette } = useTheme();
   const id = useSvgId('edge');
   if (Platform.OS === 'web') return null;
+  const at = bottom ? { bottom: 0 } : { top };
   return (
     <View
       pointerEvents="none"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={{ position: 'absolute', left: 0, right: 0, top, height: EDGE_FADE, zIndex: 1 }}
+      style={{ position: 'absolute', left: 0, right: 0, ...at, height: EDGE_FADE, zIndex: 1 }}
     >
       <Svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 1 1">
         <Defs>
-          <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <LinearGradient id={id} x1="0" y1={bottom ? '1' : '0'} x2="0" y2={bottom ? '0' : '1'}>
             {/* Fully opaque at the very top: at 0.9 a tenth of the card underneath still
                 came through, and on a real phone that reads as a hard-cut lavender sliver
                 under the row (measured on the Xiaomi, 01.10.) — the very fault this fade
                 exists to remove (live finding 8, issue #63). */}
-            <Stop offset="0" stopColor={palette.bg} stopOpacity={1} />
-            <Stop offset="0.35" stopColor={palette.bg} stopOpacity={0.7} />
-            <Stop offset="1" stopColor={palette.bg} stopOpacity={0} />
+            <Stop offset="0" stopColor={color ?? palette.bg} stopOpacity={1} />
+            <Stop offset="0.35" stopColor={color ?? palette.bg} stopOpacity={0.7} />
+            <Stop offset="1" stopColor={color ?? palette.bg} stopOpacity={0} />
           </LinearGradient>
         </Defs>
         <Rect x="0" y="0" width="1" height="1" fill={`url(#${id})`} />

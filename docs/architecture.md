@@ -1972,9 +1972,10 @@ them yet, so today they come from a topic she named.
 
 **Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`,
 `practice/table.ts`, migration `0079_structured_items.sql`;
-issues #228 order, #229 match, #230 table_fill, #232 cloze, from the analysis #224). Some answers
-are not a sentence but an arrangement: an order, pairs, groups, table cells, the gaps of a text.
-They are their own item kinds (`order`, `match`, `table_fill`, `cloze`), and #224's "Regel 0"
+issues #228 order, #229 match, #230 table_fill, #232 cloze, #240 select_all, from the analysis
+#224). Some answers are not a sentence but an arrangement: an order, pairs, groups, table cells,
+the gaps of a text, a set of ticked options. They are their own item kinds (`order`, `match`,
+`table_fill`, `cloze`, `select_all`), and #224's "Regel 0"
 holds in both directions: code validates what the model wrote, and code judges what she answers —
 never a model, except a cloze gap no rule can decide (below: only that gap, only its verdict).
 
@@ -2331,6 +2332,58 @@ way); the focused gap is scrolled to, also after the keyboard shrank the window.
 topic's practice and practice test, and read from a sheet (its printed word box as the bank;
 generate.v1.18, extract.v8.2, hints.v5).
 
+**Select all — several right answers** (`practice/selectAll.ts`, `SelectAllAnswer.tsx`, issue
+#240, migration `0085_select_all_items.sql`). "Kreuze alle richtigen an": the cycling test of year
+4, Latin forms ("which cases can _rosae_ be?"), true statements in any subject. Before, a question
+with several right answers could only be bent into "which ONE is right?" or dropped, because
+`correct_choice` is one index. It is a structured kind and not a second meaning of
+`multiple_choice` on purpose: a single choice is tapped and judged at once, a set is collected
+and sent with "Prüfen" as `parts` — exactly the path the structured kinds have, with the key that
+never leaves the server. The task holds the options (ids `a`, `b`, … by display position) and the
+key as a set of ids (the issue's `correct_choices`, as ids rather than indices); the view only
+the options; the answer `chosen`, each option at most once, at least one (else 422
+`parts_mismatch`). The migration adds no column: it extends the two kind checks from the
+definition that is live (`pg_get_constraintdef`), so a parallel migration that allows another
+kind is not silently undone by the order they are applied in.
+
+The model writes the options and marks each `correct` (`SELECT_RULES`, no example sentence).
+Code rejects — stores nothing, repairs nothing — fewer than two right or every option right
+(`right_count`: one right answer is ordinary multiple choice, all right is no question), fewer
+than 3 or more options than fit (`count`), two options alike as written or **by value** ("0,5"
+and "1/2" — `sameOption`, the same check multiple choice runs, `duplicate`), and an option or a
+question over its cap (`too_long`); `selectProblem` re-checks a stored task (a key id twice or
+unknown → `not_mapping`). The display is a deterministic shuffle that never puts every right
+option first. A prepared hint is dropped when it names an option: the whole option (`secretsOf`,
+also for hints written later), or a word of at least four letters that stands in this option
+alone and not in the question ("Klingel" for "Eine helltönende Klingel"; "Singular", shared by
+several, names none). Checking is set equality, no model: the reply counts what she found and
+what does not belong, never which right one is missing ("2 von 4 richtigen hast du schon. Eine
+passt aber nicht dazu."); from the second miss on it names one option she ticked that does not
+belong (a rung of the hint ladder, `structuredNamesPart`), and the third miss shows the solution.
+Nothing tells her how many are right before she checks. A wrong set is `incorrect`, not
+`partially_correct`: the count is the feedback, and the question stays open for her to change it.
+
+App: `SelectAllAnswer.tsx` in the answer shell (`AnswerShell`, "Prüfen" from `CheckBar`). The
+options are the tiles of a single choice (`ChoiceList` with `ticked`, `AnswerTile`): each one a
+`checkbox` (`Btn checked`, `aria-checked`), a square box in the letter's column instead of the
+letter, the tile in the accent's light tint while ticked and the box filled with a check mark
+(colour is never the only signal). A tap ticks, a second tap unticks (undo over confirmation);
+the ticks live in the draft, so a theme switch keeps them. One quiet line above the tiles says
+"Mehrere sind richtig – tippe alle an." (the issue's "mehrere möglich"; in the same form as the
+one line of instruction a match has); after the first "Prüfen" it steps aside, because Buddy's
+reply says it then and needs the room on 360×740. "Prüfen" waits for one tick. In the shell the
+form stands like a single choice (`keeps="whole"`, flush under the Tipp row, nothing in it
+scrolls): when room runs out, the conversation above gives way. Voice mode reads the options like
+options to choose.
+
+**Its maxima are a measurement** (`SELECT_*` in `contracts/structured.ts`, the walkthrough
+`tests/web/select-all.spec.ts`, shots 45a–45e). Short options stand two by two by the grid
+arithmetic of #203 — ONE line of half a 360-pt phone, `GRID_CHARS_MAX` 9 characters (7 for an
+option that is only math); a unit test holds `SELECT_SHORT_CHARS` to it — and then six fit in
+three rows. One longer option sends them all full width, and four is the most then; an option has
+at most 28 characters, the question at most 60 (two lines of the card). Generated in a topic's
+practice and practice test, and read from a sheet (generate.v1.21, extract.v8.4).
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:
@@ -2553,6 +2606,41 @@ that states an open task's answer (`mentionsSolution`, any notation) gets one re
 is stored (503 `reexplain_unavailable`). A model outage stores nothing (503 `model_unavailable`).
 Also after the last question closed and the session finished.
 
+### Lesetexte (issue #233, migration `0086_reading_passages.sql`)
+
+Several questions about ONE text she reads, the text visible while she answers. Today only from a
+photographed sheet (`materials/extract.ts`, `reading` in the reading's answer; not in homework,
+which is helped task by task as printed): the printed questions, or Buddy's own where the sheet
+prints none.
+
+- **Stored per question.** `items.read_passage` = `{title, lines, lang}` (`ReadPassage`,
+  `contracts/reading.ts`) on every question of the group, for the reason `listen_task` is: spaced
+  repetition brings one question back alone. A question has at most one text as stimulus
+  (`items_one_text`: never `read_passage` and `listen_task` together).
+- **Line by line, as print counts.** The lines as printed; an empty line between paragraphs is kept
+  for the layout but not counted (`lineNumbers`, one count for server and app). "Z. 12" is the
+  twelfth line of text.
+- **Regel 0 (`practice/reading.ts`, reject — never repair):** the text stands, word for word, in
+  the reading's own transcription (`extracted_text`); a line a question names (read by format:
+  "Z.", "Zeile", "line", "ligne", "línea", "riga" + number) exists, and the answer's evidence touches
+  it; every short / MC / true-false question quotes its evidence, which must stand in the text; a
+  short answer's key words occur in it; a true/false statement may not copy the text, and its two
+  options are written by code (`practice.reading.true/false`, in the text's language); an order
+  (#228) is checked like every order. Fewer than two questions left → no group, nothing stored.
+- **Grading:** MC, true/false and order exact by rules; a short answer by the usual rules, content
+  only (`aboutAText` in `evaluate.ts`: a form near miss is right, as for listening, #197). The one
+  prepared hint is code's: "Lies nochmal die Zeilen 5 bis 6." — no model call.
+- **View:** `ItemView.passage` (`PassageView`): the lines, an alias `t1`… shared by the group,
+  `named` (the lines the question itself names, so the text opens there) and `evidence` (where the
+  answer stands — only once the solution may be sent). The app shows it at the top of the question
+  card (`components/practice/PassagePanel.tsx`): its heading is the fold button, line numbers on
+  every fifth line, the named and the answer's lines; a fixed box of 26 % of the visible height
+  (15 % above an answer board or with the keyboard up) that scrolls in itself — `scroll-text`, the
+  one scrolling surface allowed besides a conversation and a browsed list (`tests/web/fit.ts`).
+  Folded or not, and where she scrolled, carries over to the next question of the same text.
+- **Not yet:** a reading text Buddy writes on request (a `read` run beside `listen`) — it needs a
+  run kind in `practice/generate.ts`, which is at its size limit; and marking in the text (#234).
+
 ### Charts (issues #245, #246)
 
 Line and climate charts, pies, box plots, histograms, scatter plots and population pyramids next to
@@ -2709,7 +2797,9 @@ computes the key.** No migration: the figure is an item's `figure` (jsonb), like
   question names squares. The 3D system as in the schoolbook (x to the front left, half a box
   diagonal per unit; y right; z up) with ticks, each point's dashed path from the origin along x,
   y, z (without it a drawn point is every point on a line) and arrows for vectors. The
-  screen-reader text (`describeSpace`) says the kind and measures, every square, every point's
+  FigureView reaches it, like the clock, the trees and the periodic table, through one dispatch
+  file (`components/math/schoolFigures.tsx`): a new figure of this kind is added there, never in
+  FigureView. The screen-reader text (`describeSpace`) says the kind and measures, every square, every point's
   path and every arrow — never a computed key. Walkthrough: `tests/web/solids.spec.ts` at
   390 × 844 and 360 × 740, light and dark. Library check: `tools/guards/drawing-registry.json`.
 - **Not checked by code**: the prompt's words. "Welches Quadrat liegt gegenüber von Quadrat 2?"
@@ -2735,15 +2825,15 @@ discard by: a rubric (and its `RubricCheck` union) without a long answer, a tole
 number, a spelling mode without a typed word, pictures as options (`choice_figures`, an array of the
 `ModelFigure` union, #231) without a multiple choice. The subject is never a rule.
 
-| kind               | items                                                 | structured                      | bars | staffs | listen | dictation |
-| ------------------ | ----------------------------------------------------- | ------------------------------- | ---- | ------ | ------ | --------- |
-| practice           | short, long, numeric, multiple_choice, formula, vocab | order, table_fill, match, cloze | ✓    | ✓      | —      | —         |
-| test               | short, numeric, multiple_choice, formula, vocab       | order, table_fill, match, cloze | —    | ✓      | —      | —         |
-| vocab              | vocab                                                 | —                               | —    | —      | —      | —         |
-| speak              | speak                                                 | —                               | —    | —      | —      | —         |
-| help               | short, long, numeric, multiple_choice, formula        | —                               | —    | —      | —      | —         |
-| listen             | —                                                     | —                               | —    | —      | ✓      | —         |
-| spelling_dictation | —                                                     | —                               | —    | —      | —      | ✓         |
+| kind               | items                                                 | structured                                  | bars | staffs | listen | dictation |
+| ------------------ | ----------------------------------------------------- | ------------------------------------------- | ---- | ------ | ------ | --------- |
+| practice           | short, long, numeric, multiple_choice, formula, vocab | order, table_fill, match, cloze, select_all | ✓    | ✓      | —      | —         |
+| test               | short, numeric, multiple_choice, formula, vocab       | order, table_fill, match, cloze, select_all | —    | ✓      | —      | —         |
+| vocab              | vocab                                                 | —                                           | —    | —      | —      | —         |
+| speak              | speak                                                 | —                                           | —    | —      | —      | —         |
+| help               | short, long, numeric, multiple_choice, formula        | —                                           | —    | —      | —      | —         |
+| listen             | —                                                     | —                                           | —    | —      | ✓      | —         |
+| spelling_dictation | —                                                     | —                                           | —    | —      | —      | ✓         |
 
 A sheet-bound run (a practice or test for a planned test) is the same profile with the sheets'
 topics as the item `topic` enum. With no kind known (`setSchemaForModel(null, …)`), the fallback is
@@ -3212,6 +3302,56 @@ word list, so it stays a prompt rule.
   - Tests: `primary.test.ts` (hands ↔ time incl. quarter and half, amounts, counts, refusals),
     `primaryFigures.test.ts`, `PrimaryFigures.test.tsx`, `primary-figures.int.test.ts`; walkthrough
     `tests/web/primary-figures.spec.ts` (scenario `testing/scenarios/primary.ts`).
+- **Periodic table (issue #250)** — the table as a figure (`PeriodicTableFigure`,
+  `contracts/periodic.ts`; short names, no nullable field: about 650 characters per occurrence
+  in the explain schema, 0 new `anyOf`). No migration: the figure is the item's `figure` (jsonb).
+  - **The model writes no fact.** It picks the table (`v`: `main` = main groups I–VIII, periods
+    1–6, years 7–10; `full` = groups 1–18, periods 1–7, upper school, without the f block — La and
+    Ac stand in group 3 as on school tables), the marked elements (`hl`, symbols) and what is
+    asked (`ask`, about `at`). Symbol, atomic mass, Pauling electronegativity and class (metal /
+    metalloid / nonmetal) are DATA in `packages/shared-math/src/elements.data.ts`, generated by
+    `packages/shared-math/scripts/elements.mjs` from the MIT package `periodic-table-data` 1.1.1
+    (PubChem's table; dev dependency only, licence carried in the file). Nothing is typed in by
+    hand; `periodic.test.ts` fails when the file and the package differ. Group and period are not
+    data at all: `position(z)` derives them from the atomic number (checked against
+    `@chemistry/elements`' positions for all 118 while building).
+  - **Keys computed by code** (`periodicKey`, `packages/shared-math/src/periodic.ts`): protons and
+    electrons = Z; neutrons = rounded mass − Z (only for an element with a stable isotope: not Tc,
+    Pm or anything from Po on); valence electrons from the main group (He 2; none for a
+    transition metal); the group as the drawn table numbers it (I–VIII → 1–8 in `main`, 1–18 in
+    `full`); period = shells. `class` is multiple choice whose three options code writes in the
+    question's language (`practice.periodic.*`; not asked from Po on, where sources disagree).
+    `en_max` compares the data's electronegativity, `radius_max` reads the trend off the position
+    — only within one group or one period of the main groups 1–17; across both, or with a noble
+    gas, it is not asked. Their options are the 2–4 marked symbols in order.
+  - **Rejected, never repaired** (`periodicProblem`; `apps/api/src/modules/practice/periodicCheck.ts`):
+    an unknown symbol (case counts: "NA" is no element), an element the chosen table does not
+    have (Fe in the main-group table), a mark twice, a question about an unmarked element, a key
+    the table cannot give, a count with a unit, a count that is not exactly the computed whole
+    number, a `correct_choice` that is not the computed option, a number next to a table that
+    asks nothing. A broken table costs its QUESTION (`figureIsRejectedPeriodic` in `clipDraft`).
+  - **Drawing** (`apps/mobile/components/math/PeriodicTable.tsx`, react-native-svg, library check
+    in `tools/guards/drawing-registry.json`): a grid with group names on top and period numbers
+    at the left; a main-group cell shows atomic number and symbol, a full-table cell only the
+    symbol (the small cells are read by tapping the figure open and zooming, `ZoomableFigure`);
+    the marked cells filled and framed; the element a question is about (`at`) magnified in the
+    empty gap over the table with atomic number and mass — a phone's cells have no room for the
+    mass, and a neutron question needs it; a staircase line between metals and the rest,
+    metalloids and nonmetals tinted. `describePeriodic` says the table, the staircase
+    and each marked cell (Z, mass, group, period) — never an element's class or a computed key.
+    `FigureView` draws it through one `case` and describes it (like the charts now) by type
+    guard (`isPeriodicTable`, `isChart`).
+  - **Not built here**: tapping an element as the answer ("Tipp das Element an, das …") — that is
+    an answer form and waits for the answer-area rebuild (#310, as the clock of #254). Element
+    names are not shown (they would need 118 names in five languages); the prompt names the
+    element, the table shows its symbol. Isotope notation (mass number given) is not a figure
+    field yet.
+  - Prompts: generate.v1.22, extract.v8.5 (`FIGURE_RULES`).
+  - Tests: `packages/shared-math/src/__tests__/periodic.test.ts` (every main-group element up to
+    Ca: protons, electrons, neutrons, valence, group, period, shells; positions; refusals),
+    `practice/__tests__/periodicCheck.test.ts`, `PeriodicTable.test.tsx`,
+    `periodic.int.test.ts`; walkthrough `tests/web/periodic.spec.ts` (scenario
+    `testing/scenarios/periodic.ts`).
 
 ## Voice
 

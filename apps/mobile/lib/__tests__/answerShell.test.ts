@@ -41,6 +41,7 @@ const IN_SHELL = [
   'MatchAnswer.tsx',
   'TableAnswer.tsx',
   'ClozeAnswer.tsx',
+  'SelectAllAnswer.tsx',
   'AnswerComposer.tsx',
   'StaffWriting.tsx',
 ];

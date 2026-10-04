@@ -7,7 +7,8 @@
 // shadow has to sit around it). A tried option — answered, and not it — steps back: it loses its
 // shadow, and the text in it says so in words (never colour alone). A tile with a picture keeps
 // its white ground then and gets a hairline instead: a drawing on grey looked like a box in a box
-// (issue #231).
+// (issue #231). A ticked option of several (select-all, issue #240) keeps its shadow and takes
+// the accent's light tint; the box in it carries the check mark, so colour is not the only signal.
 
 import type { ReactNode } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
@@ -21,18 +22,26 @@ type Props = {
   tried?: boolean;
   /** It shows a picture: tried, it stays white and takes a hairline. */
   picture?: boolean;
+  /** Ticked, one of several she may tick (issue #240): the light accent tint. */
+  ticked?: boolean;
   /** Where the tile stands in its row (a grid's share); never its look. */
   style?: StyleProp<ViewStyle>;
   /** The `<Btn>` that answers. */
   children: ReactNode;
 };
 
-export function AnswerTile({ tried = false, picture = false, style, children }: Props) {
+export function AnswerTile({
+  tried = false,
+  picture = false,
+  ticked = false,
+  style,
+  children,
+}: Props) {
   const { palette } = useTheme();
   const look: ViewStyle = tried
     ? picture
       ? { backgroundColor: palette.paper, borderWidth: 1, borderColor: palette.hairline }
       : { backgroundColor: palette.canvas }
-    : { backgroundColor: palette.paper, ...SHADOW.soft };
+    : { backgroundColor: ticked ? palette.primaryLt : palette.paper, ...SHADOW.soft };
   return <View style={[{ borderRadius: RADIUS.tile }, look, style]}>{children}</View>;
 }

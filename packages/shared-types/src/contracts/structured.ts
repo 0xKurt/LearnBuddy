@@ -6,6 +6,7 @@
 //   match       — pair or group elements (#229)
 //   table_fill  — fill the gaps of a table (#230)
 //   cloze       — fill several gaps in one text (#232); its kind is allowed since migration 0079
+//   select_all  — tick every right answer among several options (#240, migration 0085)
 //
 // Three shapes per kind, and the difference between them is the whole design:
 //
@@ -29,7 +30,7 @@
 import { z } from 'zod';
 
 /** The item kinds whose answer is structured. Each has a task, a view and an answer shape. */
-export const STRUCTURED_KINDS = ['order', 'match', 'table_fill', 'cloze'] as const;
+export const STRUCTURED_KINDS = ['order', 'match', 'table_fill', 'cloze', 'select_all'] as const;
 export const StructuredKind = z.enum(STRUCTURED_KINDS);
 export type StructuredKind = z.infer<typeof StructuredKind>;
 
@@ -338,6 +339,72 @@ export const MatchAnswer = z.object({
 });
 export type MatchAnswer = z.infer<typeof MatchAnswer>;
 
+// ─────────────── select_all (#240) ───────────────
+//
+// Multiple choice with SEVERAL right answers ("Kreuze alle richtigen an"): the cycling test of
+// year 4, Latin forms ("which cases are possible?"), true statements in any subject. The model
+// writes the options and marks the right ones; code checks the set (at least two right and one
+// wrong — one right is ordinary multiple choice, all right is no question), shuffles the
+// options, names them and keeps the key. Her answer is the set she ticked, compared exactly.
+
+// The maxima are what a 360×740 phone holds with the question above, the one line "Mehrere sind
+// richtig" and Buddy's reply after a check (CLAUDE.md rule 16; shot in tests/web/modes.spec.ts,
+// "mehrere richtige"). Short options stand two by two by the app's grid arithmetic (issue #203,
+// `apps/mobile/components/practice/ChoiceList.tsx`, GRID_CHARS_MAX), so six fit in three rows; one
+// longer option sends all of them full width, one per row, and then four is the most that fits.
+// A draft over them is rejected when it is written, never shrunk.
+
+/** Two right and one wrong at the least. */
+export const SELECT_MIN = 3;
+/** Six short options (three rows of two). */
+export const SELECT_MAX = 6;
+/** Four when any option is longer and they stand one under the other. */
+export const SELECT_LONG_MAX = 4;
+export const SELECT_RIGHT_MIN = 2;
+/** One option is a word, a form or a short statement: one or two lines of a full-width tile. */
+export const SELECT_OPTION_MAX = 28;
+/**
+ * A short option: ONE line of half a 360-pt phone — the app's `GRID_CHARS_MAX` (a unit test there
+ * holds the two together). An option that is only math is set larger, so it has fewer.
+ */
+export const SELECT_SHORT_CHARS = 9;
+export const SELECT_SHORT_MATH_CHARS = 7;
+/** The question above the options: two lines of the question card at most. */
+export const SELECT_PROMPT_MAX = 60;
+
+export const SelectOption = z.object({
+  id: PartId,
+  /** Plain text, math between dollar signs like everywhere else. */
+  text: z.string().trim().min(1).max(SELECT_OPTION_MAX),
+});
+export type SelectOption = z.infer<typeof SelectOption>;
+
+export const SelectAllTask = z.object({
+  type: z.literal('select_all'),
+  /** In the order she sees them: shuffled once by the server and stored that way. */
+  options: z.array(SelectOption).min(SELECT_MIN).max(SELECT_MAX),
+  /** The ids of the right options, in display order: at least two, never all. */
+  key: z
+    .array(PartId)
+    .min(SELECT_RIGHT_MIN)
+    .max(SELECT_MAX - 1),
+});
+export type SelectAllTask = z.infer<typeof SelectAllTask>;
+
+export const SelectAllTaskView = z.object({
+  type: z.literal('select_all'),
+  /** The options in display order. Never the key, never how many are right. */
+  options: z.array(SelectOption).min(SELECT_MIN).max(SELECT_MAX),
+});
+export type SelectAllTaskView = z.infer<typeof SelectAllTaskView>;
+
+export const SelectAllAnswer = z.object({
+  type: z.literal('select_all'),
+  /** The options she ticked, each once; at least one (an empty tick is no answer). */
+  chosen: z.array(PartId).min(1).max(SELECT_MAX),
+});
+export type SelectAllAnswer = z.infer<typeof SelectAllAnswer>;
+
 // ─────────────── the unions (one member per kind that exists) ───────────────
 
 /** The stored definition including the key (`items.task`). Server only. */
@@ -346,6 +413,7 @@ export const StructuredTask = z.discriminatedUnion('type', [
   TableFillTask,
   MatchTask,
   ClozeTask,
+  SelectAllTask,
 ]);
 export type StructuredTask = z.infer<typeof StructuredTask>;
 
@@ -355,6 +423,7 @@ export const StructuredTaskView = z.discriminatedUnion('type', [
   TableFillTaskView,
   MatchTaskView,
   ClozeTaskView,
+  SelectAllTaskView,
 ]);
 export type StructuredTaskView = z.infer<typeof StructuredTaskView>;
 
@@ -364,5 +433,6 @@ export const StructuredAnswer = z.discriminatedUnion('type', [
   TableFillAnswer,
   MatchAnswer,
   ClozeAnswer,
+  SelectAllAnswer,
 ]);
 export type StructuredAnswer = z.infer<typeof StructuredAnswer>;
