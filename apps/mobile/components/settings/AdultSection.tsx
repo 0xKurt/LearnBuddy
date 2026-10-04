@@ -14,7 +14,7 @@
 
 import type { LearnerView, MeResponse } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
-import { AppState, Text, View, type TextInput } from 'react-native';
+import { AppState, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { adminToken, clearAdminToken } from '../../lib/admin.js';
@@ -38,6 +38,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { formatDate, formatTime } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
+import type { LbTextInputRef } from '../lb/LbTextInput.js';
 import { Sheet } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
 import { AccountAccessCard } from './AccountAccessCard.js';
@@ -58,7 +59,7 @@ const EXPORT_DONE = {
 type Props = {
   account: NonNullable<MeResponse['account']>;
   learner: LearnerView;
-  onInputFocus: (input: TextInput | null) => void;
+  onInputFocus: (input: LbTextInputRef | null) => void;
 };
 
 function setDeletionDue(due: string | null): void {

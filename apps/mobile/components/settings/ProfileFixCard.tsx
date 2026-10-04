@@ -16,6 +16,7 @@ import { birthDateOf, formatBirthDate, partsOf } from '../../lib/birthDate.js';
 import { messageFor } from '../../lib/errors.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { BirthDateFields, type DateParts } from '../auth/BirthDateFields.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
@@ -38,13 +39,11 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
   const [opening, setOpening] = useState(false);
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState(learner.display_name);
-  const [day, setDay] = useState('');
-  const [month, setMonth] = useState('');
-  const [year, setYear] = useState('');
+  const [date, setDate] = useState<DateParts>({ day: '', month: '', year: '' });
   const [failure, setFailure] = useState<string | null>(null);
   const minor = learner.is_minor;
-  const birthDate = birthDateOf(day, month, year);
-  const dateComplete = day.length > 0 && month.length > 0 && year.length === 4;
+  const birthDate = birthDateOf(date.day, date.month, date.year);
+  const dateComplete = date.day.length > 0 && date.month.length > 0 && date.year.length === 4;
   // iOS has no live regions: problems in this sheet say themselves (lib/announce.ts).
   useAnnounce(failure);
   useAnnounce(dateComplete && !birthDate ? t('auth:profile.birth_date_invalid') : null);
@@ -62,11 +61,8 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
         await confirmAdult(pinSet, 'profile');
         if (prompted) await afterModalCloses();
       }
-      const parts = partsOf(learner.birth_date);
       setName(learner.display_name);
-      setDay(parts.day);
-      setMonth(parts.month);
-      setYear(parts.year);
+      setDate(partsOf(learner.birth_date));
       setFailure(null);
       setOpen(true);
     } catch (err) {
@@ -171,41 +167,7 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
         </View>
         <View style={{ gap: 8 }}>
           <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('auth:profile.birth_date')}</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1 }}>
-              <LbTextInput
-                value={day}
-                onChangeText={setDay}
-                placeholder={t('auth:profile.day')}
-                accessibilityLabel={t('auth:profile.day')}
-                keyboardType="number-pad"
-                maxLength={2}
-                editable={!busy}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <LbTextInput
-                value={month}
-                onChangeText={setMonth}
-                placeholder={t('auth:profile.month')}
-                accessibilityLabel={t('auth:profile.month')}
-                keyboardType="number-pad"
-                maxLength={2}
-                editable={!busy}
-              />
-            </View>
-            <View style={{ flex: 1.6 }}>
-              <LbTextInput
-                value={year}
-                onChangeText={setYear}
-                placeholder={t('auth:profile.year')}
-                accessibilityLabel={t('auth:profile.year')}
-                keyboardType="number-pad"
-                maxLength={4}
-                editable={!busy}
-              />
-            </View>
-          </View>
+          <BirthDateFields value={date} onChange={setDate} editable={!busy} />
           {dateComplete && !birthDate ? (
             <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
               {t('auth:profile.birth_date_invalid')}

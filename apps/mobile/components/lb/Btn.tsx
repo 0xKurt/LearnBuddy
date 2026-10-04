@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { KEEPS_FOCUS } from '../../lib/keepsFocus.js';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { CONTROL, SPACE, TOUCH } from '../../lib/theme/space.js';
@@ -72,6 +73,11 @@ type Common = {
   checked?: boolean;
   /** Opens and closes something below it (a folding group): read out as expanded or collapsed. */
   expanded?: boolean;
+  /**
+   * A tap that must not take the focus from the field it stands in (`lib/keepsFocus.ts`): the
+   * input bar's own "Prüfen" while she types (issue #365).
+   */
+  keepsFocus?: boolean;
   accessibilityLabel?: string;
   accessibilityHint?: string;
 };
@@ -186,6 +192,7 @@ export function Btn(props: Props) {
     expanded,
     tone,
     pill = false,
+    keepsFocus = false,
     accessibilityLabel,
     accessibilityHint,
   } = props;
@@ -207,6 +214,7 @@ export function Btn(props: Props) {
 
   const button = (
     <Pressable
+      {...(keepsFocus ? KEEPS_FOCUS : {})}
       onPress={onPress}
       onLongPress={onLongPress}
       disabled={off}

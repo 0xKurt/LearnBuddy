@@ -1101,6 +1101,16 @@
     opens one. A long form is split into short steps. The walkthroughs check
     this on every screen (tests/web/fit.ts).
 
+    Free text is typed at the bottom, everywhere (issue #365): the chat and
+    every typed answer in practice ("Erklär mal", a short or long answer, a
+    Diktat) use the same input bar, pinned at the bottom — in practice right
+    above "Prüfen". The question, Buddy's reply and the follow-up stand above
+    it like a conversation; a field never floats under the question with an
+    empty band below it. Boards (table, order, match, cloze …) are the answer
+    themselves and stay under the question. There is one text field in the
+    whole app: a form field, the bar, a table's cell and a cloze's gap look
+    and behave the same (components/lb/LbTextInput.tsx).
+
 
     --------------------------------------------------
     33. REUSABLE PRODUCT STATES

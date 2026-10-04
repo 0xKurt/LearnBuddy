@@ -26,6 +26,11 @@
     "save": "Speichern",
     "undo": "Rückgängig"
   },
+  "field": {
+    "full": "Das Feld ist voll — schick das erst mal ab.",
+    "remaining_one": "Noch ein Zeichen",
+    "remaining_other": "Noch {{count}} Zeichen"
+  },
   "loading": "Einen Moment …",
   "offline": "Keine Verbindung – ich versuche es gleich wieder.",
   "voice": {

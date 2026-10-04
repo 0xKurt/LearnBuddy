@@ -2022,7 +2022,7 @@ _A figure is what she READS, a surface is what she TOUCHES._ `ItemView.surface` 
 second: `shade` (an empty bar of `parts` parts; a tap fills it up to that part, a tap on the last
 filled part gives one back) or `pick` (two bars; a tap answers with that bar's fraction). It never
 carries the solution, and it is gone once the question closes. Shading writes the fraction into
-the same answer field — so "Prüfen", the math keys and typing are unchanged and text stays
+the input bar's field at the bottom — so "Prüfen", the math keys and typing are unchanged and text stays
 reachable (`components/practice/FractionBarAnswer.tsx`; every part is a real button with a name,
 and how much is shaded stands there in words, never colour alone). A picked bar goes out at once
 like a choice, and two bars are two options: once one is ruled out, tapping the other closes the
@@ -3968,18 +3968,28 @@ action in fixed slots: the answer right under the question, optional keys for wh
 directly under it, the free room, and "Prüfen" (`CheckBar.tsx`: one full-width pill in the pinned bar,
 waiting until the form says its answer is complete). A form fills the slots and decides nothing
 about place, spacing or the look of its action. Order, match, table, cloze, the note line and the
-typed field are in it (owner's decision 03.10., variant B, #309): the typed field
-(`AnswerComposer.tsx`) stands under the question like a board — a bordered field like a table's
-cell, the mic at its end, the return key still sends — with the math keys in the keys slot under
-it, the fraction bar it writes from right above it, and "Prüfen" in the same bar as everywhere,
-waiting until something is in the field. In voice mode the big mic stands in that bar above
-"Prüfen", which steps back to the soft skin. A form that cannot scroll says what the slot keeps
-when the room runs out (`keeps`: the field all of it, the note line its tightest staff). The
-walkthrough shoots every stop with a typed field once more at 360×440 (the keyboard up): the
-field and every alert must stay in the window (`keyboardPass` in `tests/web/fit.ts`); how far
-"Prüfen" lies under the keyboard is recorded — with a tall card it does (up to 78 pt with chemistry
-keys), the return key sends a one-liner there, and the big mic of voice mode steps aside while she
-types. The
+typed answer are in it. **Free text is typed at the bottom, like in the chat** (issue #365, owner
+04.10.; it replaces #310's variant B "Eingabefeld direkt unter der Frage" for free text): a typed
+answer (`TypedAnswer.tsx` — short, long, numeric, formula, vocab, "Erklär mal", a Diktat) is
+written in the app's one input bar (`components/lb/InputBar.tsx`, the same component as the chat's
+composer), pinned in the bar at the bottom right above "Prüfen" (`action.input` of `CheckBar`),
+inside the screen's `KeyboardSafe`. The question, Buddy's reply and the follow-up stand above it
+like a conversation; nothing floats under the question with an empty band down to "Prüfen". The
+math keys stand right under the input bar, on top of the keyboard, while she types, the fraction bar it writes from stays
+under the question in the answer slot like every board, the mic sits at the bar's end (a soft
+circle, as in the chat), the return key still sends a one-liner, and "Prüfen"
+waits until something is in the field. While she types, "Prüfen" stands in the bar itself, where the chat has
+"Senden" (`typing` in `CheckBar`), and the full-width one steps aside — with the keyboard up on a
+small phone it would push the bar she types in under the keyboard. In voice mode the big mic stands in the pinned bar above
+the input bar, and "Prüfen" steps back to the soft skin. Structured forms (table, order, match,
+mark, select-all, cloze) keep their board under the question; their cells and gaps are the same
+one text field (`LbTextInput`, variant `cell`). A form that cannot scroll says what the slot keeps
+when the room runs out (`keeps`: options and the fraction bar all of it, the note line its
+tightest staff). The walkthrough shoots every stop with a typed answer once more at 360×440 (the
+keyboard up): the field and every alert must stay in the window (`keyboardPass` in
+`tests/web/fit.ts`), and the field must stand in the pinned bar with "Prüfen" (`fieldInBar`); how
+far "Prüfen" lies under the keyboard is recorded, and the big mic of voice mode steps aside while
+she types. The
 options are in it too, flush under the Tipp row with nothing to check (`action: { tap }`); in
 voice mode their spoken answer (mic, "Nochmal vorlesen") stands in the same voice slot as the
 typed field's mic. The pronunciation recorder and "Weiter" take the action's place under the free
@@ -4191,6 +4201,25 @@ so `restoreTheme` now tells the provider (which also fixed the look settings sho
 default as selected after a restart). **Android's navigation bar is not verified on a
 device:** with edge-to-edge (SDK 54's default) the style reaches the three-button bar, while a
 gesture bar draws its own handle and ignores it.
+
+### One text field, one input bar (issue #365)
+
+Owner, 04.10.: "Es sollte EIN Inputfeld in der ganzen App existieren, das immer benutzt wird." Every
+place she types into is `components/lb/LbTextInput.tsx`, the only file that renders React Native's
+`TextInput`: a form field (`variant` field), the input bar's pill (bar) and a table's cell or a
+cloze's gap (cell) — one frame with the same paper, hairline, violet focus frame with its halo,
+type size and token corners (`RADIUS.frame`, `.bar`, `.cell`); controls stand inside the frame
+(`start`, `end`, the clear ×, the password eye), a visible name above it is `label`, a ref to it
+is `LbTextInputRef`. Free text goes into the one input bar (`components/lb/InputBar.tsx`): the
+chat's composer (`components/buddy/Composer.tsx`: + · text · mic or "Senden"/"Stopp" · talk) and a
+typed practice answer (`components/practice/TypedAnswer.tsx`: text · unit · mic, math keys under it,
+"Prüfen" under it) are the same pill in the same pinned `components/lb/BottomBar.tsx`, with the
+same mic rule (a soft circle at the end; an action takes its place once there is something to send),
+status line and character count. A birth date is `components/auth/BirthDateFields.tsx` in the
+profile form and in the parents' correction. Guarded: `lb/one-text-field`
+(docs/engineering-guards.md) refuses `TextInput` anywhere else in the app, and
+`apps/mobile/lib/__tests__/oneInput.test.ts` holds that the chat and practice type into
+`InputBar` and that no other file draws its pill.
 
 ### The keyboard and the height a screen lays itself out in (issues #46, #141, #289)
 

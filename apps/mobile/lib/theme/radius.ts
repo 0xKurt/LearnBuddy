@@ -12,6 +12,11 @@ export const RADIUS = {
   frame: 16,
   /** A card on the page (`components/lb/Card.tsx`). */
   card: 22,
+  /**
+   * The input bar's pill (`components/lb/InputBar.tsx`, issue #365): half its one-line height
+   * (a touch target and its padding), so it stays a pill on one line and a soft box on five.
+   */
+  bar: 26,
 } as const;
 
 /**

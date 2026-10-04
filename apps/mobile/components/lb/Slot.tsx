@@ -1,5 +1,6 @@
 // A place in a line of text that holds one word (issue #232): the gap of a cloze, tapped full
-// from a word bank or typed into. One look for both ways in (design pass #287):
+// from a word bank. A gap she types into is the app's one text field (`LbTextInput`, variant
+// cell, issue #365) as wide as this slot would be (`slotWidth`). The look (design pass #287):
 //
 //   · empty — a dashed blank: "something goes here";
 //   · filled — her word in the accent, a step bolder, on a soft tint without a frame, so her
@@ -7,13 +8,13 @@
 //   · current (where she types, or what the next bank word fills) — the accent frame: the shape
 //     says it, not only the colour.
 //
-// `slotStyle` is the look alone, for a slot that is a text field; `<Slot>` is the tappable one.
 // Built here and not in the form because a raw Pressable belongs in components/lb (CLAUDE.md
 // Regel 13, Engineering-Regel 2): neither <Btn> nor <CircleBtn> draws a dashed blank.
 
 import { Pressable, Text, View, type TextStyle } from 'react-native';
 
 import type { Palette } from '../../lib/theme/palettes.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -24,12 +25,12 @@ export function slotWidth(text: string): number {
 }
 
 /** Her word in a slot: the accent, a step bolder than the body text around it. */
-export function slotText(palette: Palette): TextStyle {
+function slotText(palette: Palette): TextStyle {
   return { color: palette.primaryDk, fontSize: TYPE.body.fontSize, fontWeight: '600' };
 }
 
-/** The slot's box for this word and state; a text field adds its own text style. */
-export function slotStyle(palette: Palette, value: string, current: boolean) {
+/** The slot's box for this word and state. */
+function slotStyle(palette: Palette, value: string, current: boolean) {
   const frame = current
     ? { borderWidth: 2, borderColor: palette.primary, borderStyle: 'solid' as const }
     : value
@@ -39,8 +40,8 @@ export function slotStyle(palette: Palette, value: string, current: boolean) {
     minWidth: slotWidth(value),
     height: TOUCH,
     paddingHorizontal: SPACE.sm,
-    // token-exempt: the corner of a table cell (TableAnswer), until the radius tokens of #311
-    borderRadius: 10,
+    // The corner of a cell to type into, like the typed gap beside it.
+    borderRadius: RADIUS.cell,
     backgroundColor: value && !current ? palette.primaryLt : palette.paper,
     ...frame,
   };

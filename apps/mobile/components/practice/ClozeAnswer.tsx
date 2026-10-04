@@ -19,15 +19,15 @@
 import type { ClozeTaskView, StructuredAnswer } from '@learnbuddy/shared-types/contracts';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { useDraft } from '../../lib/drafts.js';
 import { SPACE } from '../../lib/theme/space.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { TopEdgeFade, topEdgeMask } from '../lb/EdgeFade.js';
-import { Slot, slotStyle, slotText, slotWidth } from '../lb/Slot.js';
+import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
+import { Slot, slotWidth } from '../lb/Slot.js';
 import { MathText } from '../math/MathText.js';
 import { AnswerShell } from './AnswerShell.js';
 
@@ -104,7 +104,6 @@ type Props = {
 };
 
 export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: Props) {
-  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const { text: kept, setText: keep } = useDraft(draftKey);
   const ids = view.gaps;
@@ -112,9 +111,8 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const bank = view.bank;
   const complete = ids.every((id) => (filled[id] ?? '').trim().length > 0);
   const [active, setActive] = useState(0);
-  const [focused, setFocused] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
-  const fields = useRef<Array<TextInput | null>>([]);
+  const fields = useRef<Array<LbTextInputRef | null>>([]);
   const scroller = useRef<ScrollView | null>(null);
   /** Where each unit of the text stands (top and height), for scrolling to a gap. */
   const boxes = useRef<Array<{ y: number; h: number }>>([]);
@@ -174,47 +172,38 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: Props) {
     const value = filled[id] ?? '';
     const n = index + 1;
     if (bank === null) {
-      const isFocused = focused === index;
       return (
-        <TextInput
-          key={`gap-${id}`}
-          ref={(el) => {
-            fields.current[index] = el;
-          }}
-          value={value}
-          editable={!disabled}
-          onChangeText={(v) => write(id, v)}
-          onFocus={() => {
-            setFocused(index);
-            typingIn.current = index;
-            showGap(index);
-          }}
-          onBlur={() => {
-            setFocused((f) => (f === index ? null : f));
-            if (typingIn.current === index) typingIn.current = null;
-          }}
-          accessibilityLabel={t('cloze.gap', { n, total })}
-          autoCapitalize="none"
-          autoCorrect={false}
-          spellCheck={false}
-          returnKeyType={index < total - 1 ? 'next' : 'done'}
-          blurOnSubmit={index === total - 1}
-          onSubmitEditing={() => {
-            // "Weiter" goes to the next gap; in the last one, a complete text goes out.
-            if (index < total - 1) fields.current[index + 1]?.focus();
-            else submit();
-          }}
-          style={{
-            ...slotStyle(palette, value, isFocused),
-            width: slotWidth(value),
-            ...slotText(palette),
-            textAlign: 'center',
-            // The app's focus ring (as LbTextInput), never the browser's black one.
-            outlineStyle: 'solid',
-            outlineWidth: isFocused ? 3 : 0,
-            outlineColor: palette.ring,
-          }}
-        />
+        // As wide as what she wrote, like a slot (`slotWidth`); the field itself is the app's one
+        // field, the size of a cell (issue #365).
+        <View key={`gap-${id}`} style={{ width: slotWidth(value) }}>
+          <LbTextInput
+            variant="cell"
+            ref={(el) => {
+              fields.current[index] = el;
+            }}
+            value={value}
+            editable={!disabled}
+            onChangeText={(v) => write(id, v)}
+            onFocus={() => {
+              typingIn.current = index;
+              showGap(index);
+            }}
+            onBlur={() => {
+              if (typingIn.current === index) typingIn.current = null;
+            }}
+            accessibilityLabel={t('cloze.gap', { n, total })}
+            autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
+            returnKeyType={index < total - 1 ? 'next' : 'done'}
+            submitBehavior={index === total - 1 ? 'blurAndSubmit' : 'submit'}
+            onSubmitEditing={() => {
+              // "Weiter" goes to the next gap; in the last one, a complete text goes out.
+              if (index < total - 1) fields.current[index + 1]?.focus();
+              else submit();
+            }}
+          />
+        </View>
       );
     }
     const isActive = !disabled && active === index && !value;

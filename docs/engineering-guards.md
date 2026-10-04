@@ -21,6 +21,7 @@ schrumpfen:
 | 4 Kleine Einheiten | ESLint `max-lines`: 600 in `apps/mobile`, 800 in `apps/api`, ohne Leer- und Kommentarzeilen                                                                                                      | `eslint`                                                    | `max-lines.json`, die heutige Größe als eigene Grenze | 18 Dateien (7 App, 11 API), größte 1 805                       |
 | 5 Nur Tokens       | eigene Regel `lb/no-raw-style-number` (`tools/guards/eslint-plugin.mjs`): keine Zahl ≠ 0 bei `padding*`, `margin*`, `gap`, `fontSize`, `lineHeight`, `border*Radius` in `app/` und `components/` | `eslint`                                                    | `style-numbers.json`, Zahl je Datei                   | 803 Zahlen in 105 Dateien                                      |
 | 2 Bausteine        | ESLint `no-restricted-imports`: kein `Pressable`/`Touchable*` (react-native, gesture-handler) außerhalb `components/lb`                                                                          | `eslint`                                                    | `pressable.json`                                      | 12 Dateien                                                     |
+| 2 Ein Textfeld     | eigene Regel `lb/one-text-field` (`tools/guards/syntax-rules.mjs`): `<TextInput>` und der Import von `TextInput` aus react-native nur in `components/lb/LbTextInput.tsx` (#365)                  | `eslint`                                                    | keine — es gibt keinen Bestand                        | 0 (vorher 5 eigene Felder in 4 Dateien)                        |
 | toter Code         | knip 6.39.0 (`knip.jsonc`): ungenutzte Dateien, Exporte, Typen, Pakete                                                                                                                           | `pnpm guards`                                               | `knip.json`                                           | 217 Funde: 165 Exporte, 46 Typen, 4 devDependencies, 2 Dateien |
 | Bundle             | `tools/guards/bundle-budget.mjs` nach `expo export` im Walkthrough: das JS, das `index.html` lädt, roh und gzip                                                                                  | `scripts/web-walkthrough.sh` (CI-Job „browser walkthrough“) | `bundle-budget.json`, Toleranz 5 %                    | 4 165 KB roh, 1 084 KB gzip (#234)                             |
 | 1 Bibliothek       | Test: jede Datei in `components/math`, in einem Ordner `figures` und jede UI-Datei mit `react-native-svg` steht in `tools/guards/drawing-registry.json`                                          | `pnpm guards`                                               | `bestand` in der Registry                             | 17 ungeprüfte Zeichenkomponenten                               |
@@ -34,7 +35,13 @@ Verbotene Code-Formen sind je eine eigene Regel in `tools/guards/syntax-rules.mj
 `lb/no-context-bump` und `lb/no-default-zone` (#315), `lb/no-public-secret` (#290) und
 `lb/no-window-height` (#289) sowie `lb/no-early-script-report` (#323): Integrationstests lesen die
 Bilanz des geskripteten Modells nur über `env.checkScript()` / `env.closeChecked()`, die zuerst die
-Hintergrundarbeit abwarten. Nie als Eintrag von ESLints `no-restricted-syntax`: Diese Regel hat
+Hintergrundarbeit abwarten. `lb/one-text-field` (#365, Owner 04.10.: „Es sollte EIN Inputfeld in der
+ganzen App existieren, das immer benutzt wird.“): React Natives `TextInput` steht nur in
+`components/lb/LbTextInput.tsx` — als Element und als Import, in `apps/mobile` überall, Tests
+eingeschlossen. Jedes Feld ist `<LbTextInput>` (Varianten field, bar, cell), die Eingabeleiste von
+Chat und Übung ist `<InputBar>`, ein Ref heißt `LbTextInputRef`. Dass Chat und Übung dieselbe
+Leiste benutzen und keine andere Datei deren Pille zeichnet, prüft
+`apps/mobile/lib/__tests__/oneInput.test.ts`. Nie als Eintrag von ESLints `no-restricted-syntax`: Diese Regel hat
 pro Datei genau eine Liste, ein späterer Config-Block ersetzt die Liste eines früheren, statt sie
 zu ergänzen. Beim Zusammenführen von #290, #289 und #315 schwieg so die Secret-Sperre auf allen
 Screens, ohne Fehlermeldung. `guards.test.mjs` lintet deshalb eine Datei, die alle vier
@@ -96,7 +103,8 @@ hält die Grenze gegen main.
   eigener Freiraum, eigenes „Prüfen“, eigene Tastaturbehandlung oder Schattenkachel in einer Form;
   die noch nicht umgezogenen Formen stehen mit ihrem Schritt auf einer Liste, die nur schrumpft) und
   `answerPlace` in `tests/web/fit.ts` (Abstand über der Antwort ≤ 44 pt, Freiraum darunter,
-  „Prüfen“ zuunterst — an jedem Shot mit `answer-slot`). Die Tastatur-Probe bei 360×420 kommt mit
-  dem Eingabefeld (#310 Schritt 3).
+  „Prüfen“ zuunterst — an jedem Shot mit `answer-slot`; seit #365 außerdem: das Feld einer
+  getippten Antwort steht in der Leiste unten mit „Prüfen“, `fieldInBar`). Die Tastatur-Probe bei
+  360×440 läuft an jedem Shot mit einem Antwortfeld.
 - Zusätzliche CI-Zeit: etwa 20 s im Lint-Schritt (jscpd etwa 13 s, knip und Tests parallel) und
   unter 1 s für das Bundle-Budget.

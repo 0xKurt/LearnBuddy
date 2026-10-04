@@ -119,16 +119,8 @@ export function TopicSheet({ kind, onClose }: Props) {
             maxLength={MAX_TEXT}
             autoFocus={KIND_EXAMPLES[k] === 0}
             autoCapitalize="sentences"
-            style={{
-              height: 'auto',
-              minHeight: k === 'vocab' || k === 'help' ? 120 : 76,
-              maxHeight: 220,
-              paddingTop: 14,
-              paddingBottom: 14,
-              fontSize: 16,
-              lineHeight: 22,
-              textAlignVertical: 'top',
-            }}
+            // A list of words or a task wants a few lines from the start.
+            rows={k === 'vocab' || k === 'help' ? 4 : 2}
           />
         </View>
         <MicButton voice={voice} label={t('common:voice.topic')} disabled={preparing} />

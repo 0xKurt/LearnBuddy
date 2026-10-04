@@ -6,7 +6,7 @@
 
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, Text, View, type TextInput } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,7 +15,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { Glow } from '../components/lb/Glow.js';
 import { Icon } from '../components/lb/Icon.js';
-import { LbTextInput } from '../components/lb/LbTextInput.js';
+import { LbTextInput, type LbTextInputRef } from '../components/lb/LbTextInput.js';
 import { Segmented } from '../components/lb/Segmented.js';
 import { LanguageFlags } from '../components/lb/LanguageFlags.js';
 import { WaitHint } from '../components/lb/WaitHint.js';
@@ -71,8 +71,8 @@ export default function Welcome() {
   // She tapped the waiting CTA: from then on the line above it says what is still
   // missing (issue #97). Counted, so every further tap announces it again.
   const [whyWait, setWhyWait] = useState(0);
-  const passwordRef = useRef<TextInput>(null);
-  const repeatRef = useRef<TextInput>(null);
+  const passwordRef = useRef<LbTextInputRef>(null);
+  const repeatRef = useRef<LbTextInputRef>(null);
   const inFlight = useRef(false);
   // A small phone (e.g. 360×740) gets a smaller orb and tighter spacing, so the
   // under-16 hint and the pinned CTA fit without scrolling (CLAUDE.md rule 16). Decided on
