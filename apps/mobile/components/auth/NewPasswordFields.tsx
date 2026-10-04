@@ -3,11 +3,11 @@
 // complains once something has been typed into it.
 
 import { useRef, useState } from 'react';
-import { Text, View, type TextInput } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { passwordProblem } from '../../lib/auth/recovery.js';
-import { LbTextInput } from '../lb/LbTextInput.js';
+import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 import { TYPE } from '../../lib/theme/type.js';
 
 type Props = {
@@ -27,7 +27,7 @@ export function NewPasswordFields({
 }: Props) {
   const { t } = useTranslation('auth');
   const [shown, setShown] = useState(false);
-  const repeatRef = useRef<TextInput>(null);
+  const repeatRef = useRef<LbTextInputRef>(null);
   const mismatch = repeat.length > 0 && passwordProblem(password, repeat) === 'mismatch';
   const toggleLabel = shown ? t('welcome.hide_password') : t('welcome.show_password');
 

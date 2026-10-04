@@ -12,9 +12,8 @@
 
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { Platform, Text, TextInput, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Animated from 'react-native-reanimated';
 
@@ -25,31 +24,26 @@ import { fadeIn } from '../../lib/theme/enter.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
-import { growsWithText } from '../../lib/growsWithText.js';
-import { isDarkBackground } from '../../lib/theme/luminance.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { PhotoCheckCard } from '../capture/PhotoCheckCard.js';
+import { BottomBar } from '../lb/BottomBar.js';
 import { Btn } from '../lb/Btn.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
 import { ErrorNote } from '../lb/ErrorNote.js';
+import { InputBar } from '../lb/InputBar.js';
 import { Progress } from '../lb/Progress.js';
-import { useToastBar } from '../lb/Toast.js';
 import { AttachStrip } from './AttachStrip.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { TalkButton } from '../voice/TalkButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
-import { SPACE, bottomRoom } from '../../lib/theme/space.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { Sheet } from '../lb/Sheet.js';
 import { useAttachments } from '../../lib/capture/useAttachments.js';
 import type { SendProgress } from '../../lib/capture/upload.js';
 
 /** SendMessageRequest.text allows at most 2000 characters. */
 const MAX_MESSAGE_LENGTH = 2000;
-// The count only appears once it is about to matter: a permanent 0/2000 under the field
-// would be one more number on a screen that is meant to be calm (#133 position 17).
-const COUNT_FROM = MAX_MESSAGE_LENGTH - 200;
 
 export function Composer({
   disabled,
@@ -70,12 +64,10 @@ export function Composer({
 }) {
   const { palette } = useTheme();
   const { t } = useTranslation(['buddy', 'common']);
-  const insets = useSafeAreaInsets();
   const voiceMode = useVoiceMode((s) => s.on);
   const setVoiceMode = useVoiceMode((s) => s.setOn);
   // Kept on the device: a half-typed question survives Android killing the app.
   const { text, setText, clear } = useDraft('chat');
-  const [focused, setFocused] = useState(false);
   /** The little "where from" menu behind the + (issue #82). */
   const [attach, setAttach] = useState(false);
   const latest = useRef({ text, disabled });
@@ -151,18 +143,6 @@ export function Composer({
       [],
     ),
   );
-
-  // A toast stands above this bar, not on the conversation (issue #91).
-  const onToastBar = useToastBar();
-
-  // Slim (issue #64): the bar carries the field and three buttons, nothing more — every
-  // point it takes is one the conversation loses.
-  const frame = {
-    gap: SPACE.sm,
-    paddingHorizontal: SPACE.md,
-    paddingTop: SPACE.xs,
-    paddingBottom: bottomRoom(insets.bottom, SPACE.md),
-  };
 
   const stopBtn = (size: 'sm' | 'lg') => (
     <Animated.View key="stop" entering={fadeIn(DURATION.quick)}>
@@ -264,7 +244,7 @@ export function Composer({
   if (voiceMode) {
     // Voice first: keyboard · big mic · camera.
     return (
-      <View style={frame} onLayout={onToastBar}>
+      <BottomBar>
         {attachSheet}
         <MicStatus voice={voice} />
         {attachments}
@@ -315,130 +295,48 @@ export function Composer({
             </Text>
           </View>
         </View>
-      </View>
+      </BottomBar>
     );
   }
 
   return (
-    <View testID="composer" style={frame} onLayout={onToastBar}>
+    <BottomBar testID="composer">
       {attachSheet}
-      <MicStatus voice={voice} />
-      {attachments}
-      {text.length >= COUNT_FROM ? (
-        <Text
-          accessibilityLiveRegion="polite"
-          style={[
-            TYPE.label,
-            {
-              color: text.length >= MAX_MESSAGE_LENGTH ? palette.danger : palette.ink2,
-              alignSelf: 'flex-end',
-              marginBottom: SPACE.xs,
-              marginRight: SPACE.sm,
-            },
-          ]}
-        >
-          {text.length >= MAX_MESSAGE_LENGTH
-            ? t('buddy:composer.full')
-            : t('buddy:composer.remaining', { count: MAX_MESSAGE_LENGTH - text.length })}
-        </Text>
-      ) : null}
-      <View
-        style={[
-          {
-            flexDirection: 'row',
-            // flex-end, not center: while the field grows over several lines the
-            // buttons stay on its last line, like every messenger (user feedback).
-            alignItems: 'flex-end',
-            // 2, off the scale: the field carries its own xs padding on each side —
-            // a full step here would double the air inside the pill.
-            gap: 2,
-            backgroundColor: palette.paper,
-            borderRadius: 28,
-            padding: SPACE.xs,
-            // 52 + the bar's padding keeps the buttons at their 44 pt target while the
-            // pill stops looking like a drawer (was 60).
-            minHeight: 52,
-            // The focus ring sits on the pill, not on the bare field inside (the web drew a black box).
-            outlineStyle: 'solid',
-            outlineWidth: focused ? 4 : 0,
-            outlineColor: palette.ring,
-          },
-          SHADOW.float,
-        ]}
-      >
-        {/* Like the assistants she knows: one + that asks where it comes from, instead of a
-            page of its own (owner 29.09., issue #82). */}
-        <CircleBtn
-          icon="plus"
-          plain
-          onPress={() => setAttach(true)}
-          accessibilityLabel={t('buddy:composer.attach.title')}
-        />
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder={t('buddy:composer.placeholder')}
-          placeholderTextColor={palette.ink3}
-          // Same as every other field: a light keyboard over the night palette is the one
-          // white rectangle on a dark screen (#133 position 7).
-          keyboardAppearance={isDarkBackground(palette.bg) ? 'dark' : 'light'}
-          accessibilityLabel={t('buddy:composer.placeholder')}
-          multiline
-          // Where the growing starts: the web's textarea is two rows tall by default, which
-          // makes an empty field look like a box to fill in (`growsWithText` does the rest).
-          {...(Platform.OS === 'web' ? { numberOfLines: 1 } : {})}
-          maxLength={MAX_MESSAGE_LENGTH}
-          onSubmitEditing={send}
-          textAlignVertical="center"
-          style={[
-            {
-              flex: 1,
-              minHeight: 44,
-              maxHeight: 120,
-              backgroundColor: 'transparent',
-              paddingHorizontal: SPACE.xs,
-              paddingVertical: SPACE.sm,
-              fontSize: 16,
-              lineHeight: 22,
-              color: palette.ink,
-              outlineWidth: 0,
-            },
-            growsWithText,
-          ]}
-        />
-        {/* The two controls at the end, in their own row.
-            Two reasons, both from the owner on 01.10. (issue #187):
-            - **Their own alignment.** `Btn` pins itself with `alignSelf: 'flex-start'`,
-              which overrode the pill's `alignItems: 'flex-end'` — so "Senden" floated 8 pt
-              above the + and the waveform once the field grew to two lines. Inside this
-              row the pill's rule governs again and all three sit on the last line.
-            - **Their own gap.** The pill's gap is 2, because the field carries its own
-              padding on both sides; between two round controls that is too tight
-              ("der abstand zwischen senden und voice mode button sollte groesser sein"). */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm }}>
-          {/* Like a messenger: the mic while the field is empty (or she is speaking),
-              send once there is text. */}
-          {stoppable ? (
+      <InputBar
+        value={text}
+        onChangeText={setText}
+        maxLength={MAX_MESSAGE_LENGTH}
+        placeholder={t('buddy:composer.placeholder')}
+        accessibilityLabel={t('buddy:composer.placeholder')}
+        onSubmitEditing={send}
+        voice={voice}
+        micLabel={t('common:voice.message')}
+        disabled={disabled}
+        above={attachments}
+        // Like the assistants she knows: one + that asks where it comes from, instead of a
+        // page of its own (owner 29.09., issue #82).
+        start={
+          <CircleBtn
+            icon="plus"
+            plain
+            onPress={() => setAttach(true)}
+            accessibilityLabel={t('buddy:composer.attach.title')}
+          />
+        }
+        // Like a messenger: the mic while there is nothing to send, "Senden" once there is.
+        action={
+          stoppable ? (
             stopBtn('sm')
-          ) : (trimmed.length === 0 && !attached) || voice.state !== 'idle' ? (
-            <MicButton
-              voice={voice}
-              size="sm"
-              label={t('common:voice.message')}
-              disabled={disabled}
-            />
-          ) : (
+          ) : trimmed.length > 0 || attached ? (
             <Btn onPress={send} disabled={disabled || pages.busy} pill size="sm">
               {t('buddy:composer.send')}
             </Btn>
-          )}
-          {/* Conversation mode: the waveform circle at the pill's end, same scale
-              as its neighbours (owner feedback 2026-09-28). */}
-          <TalkButton onPress={onTalk} />
-        </View>
-      </View>
-    </View>
+          ) : null
+        }
+        // Conversation mode: the waveform circle at the pill's end, same scale as its
+        // neighbours (owner feedback 2026-09-28).
+        after={<TalkButton onPress={onTalk} />}
+      />
+    </BottomBar>
   );
 }

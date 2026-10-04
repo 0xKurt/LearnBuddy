@@ -1,12 +1,13 @@
 // The place an answer is given in (issue #310): fixed slots, top to bottom, for every form —
 //
-//   [answer]     the form itself: a board, a table, a text with gaps, the typed field (with the
-//                fraction bar it writes from), the note line. Right under the question and its
-//                Tipp row, never anywhere else.
-//   [keys]       optional: a row of keys for what she is typing (the math keys), directly under
-//                the answer — a keyboard accessory, not furniture (issue #16).
+//   [answer]     the form itself: a board, a table, a text with gaps, the fraction bar, the note
+//                line. Right under the question and its Tipp row, never anywhere else.
+//   [keys]       optional: a row of keys for what she is typing in a board (the math keys of a
+//                table's cell), directly under the answer — a keyboard accessory (issue #16).
 //   [free room]  what nobody needs collects here, under the answer (`FreeSpace`, issue #286).
-//   [action]     "Prüfen" (`CheckBar`), pinned at the bottom, the same for every form — or, where
+//   [action]     "Prüfen" (`CheckBar`), pinned at the bottom, the same for every form — with a
+//                typed answer's input bar right above it (`InputBar`, issue #365: free text is
+//                typed at the bottom, like in the chat, never under the question) — or, where
 //                there is nothing to check, what stands in its place: options answered by a tap
 //                (with the voice slot in voice mode), "Weiter" once the question is closed, the
 //                pronunciation recorder. The free room is above it in every case.
@@ -39,8 +40,8 @@ type Props = {
   /**
    * What the answer slot keeps when the room runs out. 0: it may give all of it (a board scrolls
    * inside itself). A number: at least that (the note line: its tightest staff with both key
-   * rows, `STAFF_ANSWER_MIN`). 'whole': nothing — the typed field never shrinks, it is what she
-   * types into; the conversation above gives way instead (`threadRoom`).
+   * rows, `STAFF_ANSWER_MIN`). 'whole': nothing — options she taps and the fraction bar she
+   * shades never shrink; the conversation above gives way instead (`threadRoom`).
    */
   keeps?: number | 'whole';
   /**

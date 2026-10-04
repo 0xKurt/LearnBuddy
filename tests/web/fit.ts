@@ -116,26 +116,42 @@ export async function overflows(page: Page): Promise<Overflow[]> {
 
 /** Where the answer stands (issue #310): the empty band above it, and what lies below it. */
 export type AnswerPlace = {
-  /** From the lowest thing drawn above the answer slot to the slot's top. */
+  /** From the lowest thing drawn above the answer slot to the slot's top (0: no slot). */
   band: number;
   /** Every free room lies below the answer (and its keys). */
   spacerBelow: boolean;
   /** "Prüfen" is the lowest of answer, keys, free room and action. */
   actionLowest: boolean;
+  /**
+   * A typed answer's field is in the pinned bar, right above "Prüfen" (or with it inside while she
+   * types), at the bottom like the chat's (issue #365) — never under the question, never floating
+   * above an empty band.
+   */
+  fieldInBar: boolean;
 };
 
 /**
  * The one rule of the answer shell, measured (issue #310 §3.4, rule 0): the answer stands
  * directly under the question, its Tipp row and the conversation — no hole in between, at most
- * one Tipp row (TOUCH) — the free room collects under it, and "Prüfen" is lowest. Null where no
- * answer slot is on screen (a form not in the shell yet, an answered question, any other screen).
+ * one Tipp row (TOUCH) — the free room collects under it, and "Prüfen" is lowest. A typed answer
+ * is written in the input bar right above "Prüfen" (issue #365). Null where neither an answer slot
+ * nor a typed answer is on screen (an answered question, any other screen).
  */
 export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
   return page.evaluate(() => {
-    const slot = document.querySelector<HTMLElement>('[data-testid="answer-slot"]');
-    if (!slot) return null;
+    const visible = (el: HTMLElement | null): el is HTMLElement => {
+      const box = el?.getBoundingClientRect();
+      return box !== undefined && box.height > 0 && box.width > 0;
+    };
+    const slotEl = document.querySelector<HTMLElement>('[data-testid="answer-slot"]');
+    const field = document.querySelector<HTMLElement>('[data-testid="answer-field"]');
+    const slot = visible(slotEl) ? slotEl : null;
+    if (!slot && !visible(field)) return null;
+    const bars = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="bottom-bar"]'));
+    const fieldInBar = !visible(field) || bars.some((bar) => bar.contains(field));
+    // A typed answer without a board: nothing stands under the question to measure.
+    if (!slot) return { band: 0, spacerBelow: true, actionLowest: true, fieldInBar };
     const at = slot.getBoundingClientRect();
-    if (at.height === 0 || at.width === 0) return null;
     // The lowest thing drawn above the slot: text, a picture, a control — as far as its scroll
     // box shows it (a turn scrolled away above the conversation's edge is not drawn there).
     let above = -Infinity;
@@ -168,7 +184,11 @@ export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
       Array.from(document.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`))
         .map((el) => el.getBoundingClientRect())
         .filter((b) => b.height > 0 || id === 'free-space');
-    const keys = boxOf('answer-keys');
+    // A board's keys stand under it; a typed answer's stand in the pinned bar, above its field.
+    const keys = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="answer-keys"]'))
+      .filter((el) => !bars.some((bar) => bar.contains(el)))
+      .map((el) => el.getBoundingClientRect())
+      .filter((b) => b.height > 0);
     const answerEnd = Math.max(at.bottom, ...keys.map((b) => b.bottom));
     const spacers = boxOf('free-space');
     const actions = boxOf('answer-action');
@@ -177,6 +197,7 @@ export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
       band: Math.round(above === -Infinity ? 0 : at.top - above),
       spacerBelow: spacers.every((b) => b.top >= answerEnd - 1),
       actionLowest: actions.every((b) => b.top >= lowestBefore - 1),
+      fieldInBar,
     };
   });
 }
@@ -190,26 +211,31 @@ export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
 const KEYBOARD_ROOM = { width: 360, height: 740 - 300 } as const;
 
 /**
- * Where a typed answer stands in the answer shell, the keyboard pass: the field has the focus
- * (so the math keys show, as while she types), and the field and anything said as an alert (a
- * toast, the mic's problem) are both inside the window. Since the field stands under the
- * question rather than at the bottom edge, this is what proves the keyboard does not cover it.
+ * Where a typed answer stands, the keyboard pass: the field has the focus (so the math keys show,
+ * as while she types), and the field, "Prüfen" under it and anything said as an alert (a toast,
+ * the mic's problem) are all inside the window — the bar at the bottom rides on the keyboard, as
+ * the chat's does (issue #365).
  */
 async function keyboardPass(page: Page, name: string): Promise<void> {
-  const field = page.locator('[data-testid="answer-slot"] [data-testid="answer-field"]').last();
+  const field = page.locator('[data-testid="answer-field"]').last();
   const wasFocused = await field.evaluate((el) => el === document.activeElement);
   await page.setViewportSize(KEYBOARD_ROOM);
   await field.focus();
   await settle(page);
   await page.screenshot({ path: join(SHOTS, `${name}-kb.png`) });
   const alerts = page.locator('[role="alert"]:visible');
-  // "Prüfen" is recorded, not required: with a tall question card it may sit under the keyboard
-  // (the return key sends a one-liner; a path is sent once the keyboard is down). The question
-  // never shrinks (rule 16), so above the keyboard the field and the keys win over the bar.
-  const actionPast = await page
-    .getByTestId('answer-action')
-    .last()
-    .evaluate((el) => Math.max(0, Math.round(el.getBoundingClientRect().bottom - innerHeight)));
+  // How far "Prüfen" lies under the keyboard is recorded: while she types it stands in the bar
+  // (issue #365), so it rides on the keyboard with the field.
+  // While she types, "Prüfen" stands in the bar itself once there is something to check (#365).
+  const action = page.getByTestId('answer-action');
+  const actionPast =
+    (await action.count()) === 0
+      ? null
+      : await action
+          .last()
+          .evaluate((el) =>
+            Math.max(0, Math.round(el.getBoundingClientRect().bottom - innerHeight)),
+          );
   const record = {
     name,
     phone: 'kb',
@@ -284,13 +310,16 @@ export async function shot(
       ).toBeLessThanOrEqual(TOUCH);
       expect(place.spacerBelow, `${name} @${phone.width}: free room under the answer`).toBe(true);
       expect(place.actionLowest, `${name} @${phone.width}: "Prüfen" lowest`).toBe(true);
+      expect(place.fieldInBar, `${name} @${phone.width}: the field in the bar above "Prüfen"`).toBe(
+        true,
+      );
     }
     await page.screenshot({
       path: join(SHOTS, phone.width === 390 ? `${name}.png` : `${name}-${phone.width}.png`),
     });
   }
-  // A typed answer in the answer shell: once more with the keyboard up.
-  if ((await page.locator('[data-testid="answer-slot"] [data-testid="answer-field"]').count()) > 0)
+  // A typed answer: once more with the keyboard up.
+  if ((await page.locator('[data-testid="answer-field"]').count()) > 0)
     await keyboardPass(page, name);
   if (size) await page.setViewportSize(size);
   const tooLong = found.filter((o) => !o.allowed && !(opened && o.label !== 'page'));

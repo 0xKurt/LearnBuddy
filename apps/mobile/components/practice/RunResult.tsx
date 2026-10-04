@@ -11,7 +11,7 @@ import { Btn } from '../lb/Btn.js';
 import { Appear } from '../lb/Motion.js';
 import { Screen } from '../lb/Screen.js';
 import { AgainButton } from './AgainButton.js';
-import { BottomBar } from './BottomBar.js';
+import { BottomBar } from '../lb/BottomBar.js';
 import { SessionSummary } from './SessionSummary.js';
 
 type Props = {

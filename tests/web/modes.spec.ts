@@ -179,13 +179,18 @@ test('learning modes: explain, homework help without the solution, practice with
   // Typed math is previewed as it will be read — named, not divided (issue #175).
   await page.getByLabel('Deine Antwort').fill('3/4');
   await expect(page.getByLabel('Vorschau deiner Antwort: 3 Viertel')).toBeVisible();
-  // The pinned bar holds "Prüfen" and nothing else (#310): the field, its preview and the math
-  // keys stand in the answer slot under the question. What the bar takes, the question loses on
-  // a small phone with the keyboard open — help is a chip in the conversation, not a row down
-  // here (issue #16): its top padding, the 48 pt button, the room under it.
+  // The pinned bar holds what she types with and "Prüfen", nothing else (#365): the math keys and
+  // the input bar (with its preview), "Prüfen" at its end while she types, like the chat's bar. What the bar
+  // takes, the question loses on a small phone with the keyboard open — help is a chip in the
+  // conversation, not a row down here (issue #16).
   await page.setViewportSize({ width: 360, height: 740 });
   const stack = await bottomStack(page, 'practice-typed-math');
-  expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(72);
+  const pinned = page.getByTestId('bottom-bar');
+  await expect(pinned.getByLabel('Deine Antwort')).toBeVisible();
+  await expect(pinned.getByText('Tipp')).toHaveCount(0);
+  // While she types "Prüfen" is in the bar itself (#365): its padding (8 + 12), the key row (48),
+  // the bar with a drawn fraction under the text (97) and the step between them (8): 173 pt.
+  expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(176);
   await expect(page.getByText('Welche zwei Längen kennst du vom Rechteck?')).toBeVisible();
 
   // ── Der Rechenweg wird in der App getippt, nicht nur von den Tests geschickt (issue #221) ──
@@ -227,9 +232,11 @@ test('learning modes: explain, homework help without the solution, practice with
   // line is a hint, not a solution, so it holds here too (issue #274).
   await expect(page.getByText('Bis Zeile 1 stimmt alles', { exact: false })).toBeVisible();
   // A near miss, not a wrong answer: her way is mostly right, so the question stays OPEN — the
-  // answer field is still there and so is the hint. „Prüfen" stands in its bar and waits: the
-  // field was emptied when the answer went out (#310: one bar for every form).
+  // answer field is still there and so is the hint. The field was emptied when the answer went
+  // out; while she is still in it, the mic has the bar's end, like the chat's (#365) — out of it,
+  // „Prüfen" stands under the bar and waits (#310: one bar for every form).
   await expect(page.getByLabel('Deine Antwort')).toBeVisible();
+  await page.getByLabel('Deine Antwort').blur();
   await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Einen Tipp bekommen' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });

@@ -26,6 +26,11 @@
     "save": "Salva",
     "undo": "Annulla"
   },
+  "field": {
+    "full": "Il campo è pieno: manda prima questo.",
+    "remaining_one": "Ancora un carattere",
+    "remaining_other": "Ancora {{count}} caratteri"
+  },
   "loading": "Un momento…",
   "offline": "Nessuna connessione – riprovo tra poco.",
   "voice": {

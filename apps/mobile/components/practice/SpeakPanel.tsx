@@ -42,7 +42,7 @@ import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { toast } from '../lb/Toast.js';
 import { dropped, reacted, tapped } from '../../lib/perf.js';
-import { BottomBar } from './BottomBar.js';
+import { BottomBar } from '../lb/BottomBar.js';
 import { ListenButton } from './ListenButton.js';
 import { WordSheet, type SpokenWord } from './WordSheet.js';
 

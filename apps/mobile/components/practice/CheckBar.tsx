@@ -8,8 +8,12 @@
 // allows are measured against this bar on 360×740, and 6 pt more pushed a match and an order with
 // Buddy's reply into scrolling (walkthrough 38-order-feedback, 39e-match-feedback, #310).
 //
+// A typed answer's input bar stands in this bar too, right above "Prüfen" (issue #365): the same
+// bar as the chat's, at the bottom, never floating under the question. While she types, "Prüfen"
+// moves into that bar, where the chat has "Senden" (`CheckInBar`).
+//
 // In voice mode the spoken answer is the main control (the big mic, issue #310 §3.1 "voice slot"):
-// it stands in this bar right above "Prüfen", and "Prüfen" steps back to the soft skin — the
+// it stands in this bar above the input bar, and "Prüfen" steps back to the soft skin — the
 // field is still there for typing, but the mic is what voice mode is for.
 //
 // It waits until the answer is complete. While it waits it says why to a screen reader (the
@@ -32,7 +36,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { bottomRoom, SPACE } from '../../lib/theme/space.js';
 import { Btn } from '../lb/Btn.js';
-import { BottomBar } from './BottomBar.js';
+import { BottomBar } from '../lb/BottomBar.js';
 
 /** "Prüfen": what a form hands to the bar — when its answer may go, how it goes, and why it waits. */
 type Check = {
@@ -45,6 +49,18 @@ type Check = {
   waitsHint: string;
   /** Voice mode: the big mic, above "Prüfen" (undefined: none). */
   voice?: ReactNode;
+  /**
+   * The input bar a typed answer is written in (`InputBar`, issue #365), with the keys she types
+   * with: right above "Prüfen", in the same pinned bar, like the chat's. Handed what stands at the
+   * bar's end while she types: "Prüfen" itself (null while there is nothing to check).
+   */
+  input?: (checkInBar: ReactNode) => ReactNode;
+  /**
+   * She is typing in that bar: "Prüfen" stands in the bar itself (`CheckInBar`), as "Senden" does
+   * in the chat, and the full-width one steps aside — with the keyboard up on a small phone it
+   * would push the bar she types in under the keyboard.
+   */
+  typing?: boolean;
 };
 
 /** The tile is the action; in voice mode the spoken answer has the voice slot. */
@@ -76,24 +92,54 @@ function VoiceSlot({ voice, bar = false }: { voice: ReactNode; bar?: boolean }) 
   return bar ? <BottomBar>{slot}</BottomBar> : slot;
 }
 
-function CheckButton({ ready, disabled, onPress, waitsHint, voice }: Check) {
+function CheckButton({ ready, disabled, onPress, waitsHint, voice, input, typing }: Check) {
   const { t } = useTranslation('practice');
   return (
     <BottomBar>
       {voice ? <VoiceSlot voice={voice} /> : null}
-      <View testID="answer-action">
-        <Btn
-          size="md"
-          variant={voice ? 'soft' : 'primary'}
-          pill
-          full
-          disabled={disabled || !ready}
-          onPress={onPress}
-          accessibilityHint={ready ? undefined : waitsHint}
-        >
-          {t('check')}
-        </Btn>
-      </View>
+      {input?.(
+        typing && ready ? (
+          <CheckInBar ready={ready} disabled={disabled} onPress={onPress} waitsHint={waitsHint} />
+        ) : null,
+      )}
+      {typing ? null : (
+        <View testID="answer-action">
+          <Btn
+            size="md"
+            variant={voice ? 'soft' : 'primary'}
+            pill
+            full
+            disabled={disabled || !ready}
+            onPress={onPress}
+            accessibilityHint={ready ? undefined : waitsHint}
+          >
+            {t('check')}
+          </Btn>
+        </View>
+      )}
     </BottomBar>
+  );
+}
+
+/**
+ * "Prüfen" inside the input bar while she types (issue #365), in the place the chat's "Senden"
+ * has: small, at the bar's end, and it keeps the focus in the field, so a tap never closes the
+ * keyboard under her finger before it lands.
+ */
+function CheckInBar({ ready, disabled, onPress, waitsHint }: Check) {
+  const { t } = useTranslation('practice');
+  return (
+    <View testID="answer-action">
+      <Btn
+        size="sm"
+        pill
+        keepsFocus
+        disabled={disabled || !ready}
+        onPress={onPress}
+        accessibilityHint={ready ? undefined : waitsHint}
+      >
+        {t('check')}
+      </Btn>
+    </View>
   );
 }

@@ -307,6 +307,27 @@ describe('forbidden code shapes: every guard fires where the guards overlap', ()
   });
 });
 
+describe('lb/one-text-field: the app has one text field (issue #365)', () => {
+  const probe = [
+    "import { TextInput, View } from 'react-native';",
+    'export const Field = () => <View><TextInput /></View>;',
+  ].join('\n');
+  const hits = async (/** @type {string} */ file) => {
+    const eslint = new ESLint({ cwd: REPO_ROOT });
+    const [result] = await eslint.lintText(probe, { filePath: join(REPO_ROOT, file) });
+    return (result?.messages ?? []).filter((m) => m.ruleId === 'lb/one-text-field').length;
+  };
+
+  it('fires on the import and the element anywhere in the app', async () => {
+    assert.equal(await hits('apps/mobile/components/practice/__guard-probe__.tsx'), 2);
+    assert.equal(await hits('apps/mobile/app/__guard-probe__.tsx'), 2);
+  });
+
+  it('stays quiet in the one field itself', async () => {
+    assert.equal(await hits('apps/mobile/components/lb/LbTextInput.tsx'), 0);
+  });
+});
+
 describe('merge driver: an Ausnahmeliste conflict resolves itself (issue #328)', () => {
   it('takes the larger number per entry and the union of lists', () => {
     const ours = { $comment: 'c', total: 5, files: { a: 3, b: 9 }, findings: ['x', 'y'] };

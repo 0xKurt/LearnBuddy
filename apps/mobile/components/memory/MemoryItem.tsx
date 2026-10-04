@@ -4,7 +4,7 @@
 
 import type { MemoryView } from '@learnbuddy/shared-types/contracts';
 import { useRef } from 'react';
-import { Text, View, type TextInput } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -12,7 +12,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { formatLastDay } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
-import { LbTextInput } from '../lb/LbTextInput.js';
+import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 
 /** UpdateMemoryRequest allows 1–300 characters (trimmed). */
 export const STATEMENT_MAX = 300;
@@ -31,7 +31,7 @@ type Props = {
   onCancel: () => void;
   onSave: () => void;
   onRemove: () => void;
-  onInputFocus: (input: TextInput | null) => void;
+  onInputFocus: (input: LbTextInputRef | null) => void;
 };
 
 export function MemoryItem({
@@ -50,7 +50,7 @@ export function MemoryItem({
 }: Props) {
   const { palette } = useTheme();
   const { t, i18n } = useTranslation('memory');
-  const input = useRef<TextInput>(null);
+  const input = useRef<LbTextInputRef>(null);
 
   const next = draft.trim();
   const canSave =
@@ -76,16 +76,6 @@ export function MemoryItem({
             maxLength={STATEMENT_MAX}
             editable={!saving}
             accessibilityLabel={t('edit_input')}
-            style={{
-              height: undefined,
-              minHeight: 52,
-              paddingTop: 14,
-              paddingBottom: 14,
-              fontSize: 16,
-              lineHeight: 22,
-              textAlignVertical: 'top',
-              backgroundColor: palette.paper,
-            }}
           />
         ) : (
           <Text style={[TYPE.body, { fontWeight: '600' }]}>{memory.statement}</Text>
