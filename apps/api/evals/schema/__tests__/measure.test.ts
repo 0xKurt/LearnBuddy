@@ -151,7 +151,7 @@ describe('small helpers', () => {
 describe('the inventory measures what the call sites send', () => {
   it("the explain seam is what the call site sends: the kind's profile, GENERATED_SCHEMA the fallback", async () => {
     const { GENERATED_SCHEMA, explainSchemaFor, setSchemaForModel } =
-      await import('../../../src/modules/practice/generate.js');
+      await import('../../../src/modules/practice/setProfiles.js');
     expect(serialize(toJsonSchema(setSchemaForModel(null, null)))).toBe(
       serialize(GENERATED_SCHEMA),
     );

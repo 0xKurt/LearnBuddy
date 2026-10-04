@@ -21,9 +21,6 @@ import { describe, expect, it } from 'vitest';
 import {
   answerTextOf,
   checkStructured,
-  matchDraftProblem,
-  matchProblem,
-  matchTaskFrom,
   solutionOf,
   structuredItem,
   structuredItems,
@@ -31,9 +28,14 @@ import {
   structuredReply,
   structuredTaskOf,
   viewOf,
+} from '../structured.js';
+import {
+  matchDraftProblem,
+  matchProblem,
+  matchTaskFrom,
   type MatchCheck,
   type MatchDraft,
-} from '../structured.js';
+} from '../match.js';
 
 const ORGANE: Array<{ left: string; right: string }> = [
   { left: 'Bundestag', right: 'beschließt die Gesetze' },

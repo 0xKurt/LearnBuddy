@@ -25,7 +25,7 @@ import {
   explainSchemaFor,
   parseSetFor,
   setSchemaForModel,
-} from '../generate.js';
+} from '../setProfiles.js';
 import { MAX_STRUCTURED_ITEMS } from '../structured.js';
 
 type Kind = keyof typeof SET_PROFILES;

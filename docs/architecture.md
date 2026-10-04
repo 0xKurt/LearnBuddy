@@ -1970,8 +1970,9 @@ Still open for a later step: the number line and the vocabulary card (#162's sec
 representation), and bar tasks from a photographed sheet — the extraction prompt does not offer
 them yet, so today they come from a topic she named.
 
-**Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`,
-`practice/table.ts`, migration `0079_structured_items.sql`;
+**Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`
+dispatching to one file per kind — `table.ts`, `match.ts`, `cloze.ts`, `selectAll.ts` —, migration
+`0079_structured_items.sql`;
 issues #228 order, #229 match, #230 table_fill, #232 cloze, #240 select_all, from the analysis
 #224). Some answers are not a sentence but an arrangement: an order, pairs, groups, table cells,
 the gaps of a text, a set of ticked options. They are their own item kinds (`order`, `match`,
@@ -2033,7 +2034,8 @@ question card (shot 39e). The closing answer of an order or a match is recorded 
 for a structured kind still counts towards a topic in the summary (tapping is the only way to
 answer it, not recognition); a table's is `typed`.
 
-Where they come from: a topic's practice and practice test (`generate.ts` `STRUCTURED`; not typed
+Where they come from: a topic's practice and practice test (`setProfiles.ts` `STRUCTURED_FORMS`, the
+rules beside it in `STRUCTURED_RULES`; not typed
 homework, vocabulary, speaking or listening), and both photo readings — a printed task that asks
 to order, link or sort given things, or to fill a table, keeps that form and goes into
 `structured`, never into knowledge questions about its own content. Homework help from a photo
@@ -2639,7 +2641,7 @@ prints none.
   one scrolling surface allowed besides a conversation and a browsed list (`tests/web/fit.ts`).
   Folded or not, and where she scrolled, carries over to the next question of the same text.
 - **Not yet:** a reading text Buddy writes on request (a `read` run beside `listen`) — it needs a
-  run kind in `practice/generate.ts`, which is at its size limit; and marking in the text (#234).
+  run kind (`practice/setProfiles.ts`, `practice/generate.ts`); and marking in the text (#234).
 
 ### Charts (issues #245, #246)
 
@@ -2812,7 +2814,8 @@ computes the key.** No migration: the figure is an item's `figure` (jsonb), like
 
 Every explain call is sent only the forms its run can use — the schema is derived from the kind
 of run, through the nested unions, not only at the top. One table decides it, `SET_PROFILES` in
-`practice/generate.ts`, and both directions read it: `setSchemaForModel(kind, topics)` builds what
+`practice/setProfiles.ts` (beside `GeneratedSet`; the call itself stays in `generate.ts`), and both
+directions read it: `setSchemaForModel(kind, topics)` builds what
 the model is shown (`explainSchemaFor` is the call site's and the inventory's one seam), and
 `parseSetFor(kind, topics)` plus `preparedFrom` decide what is kept — a form outside the profile is
 dropped, whatever the model wrote (Rule 0). Every row was a rule in `preparedFrom` before it became
@@ -4056,7 +4059,7 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   table cells, rubric checks, bars, staff tasks and elements) per branch, with where each union
   declares its tag. No model call, no database, no cost: it imports the constants the call sites
   pass (`toJsonSchema` output) — the private ones are exported for it, and the explain schemas
-  come from `explainSchemaFor` in `practice/generate.ts`, the one function the call site itself
+  come from `explainSchemaFor` in `practice/setProfiles.ts`, the one function the call site itself
   uses. `--baseline <older json>` adds a before → after table per call;
   `schema-inventory.before-d2.json` is the baseline D2 was measured against: generated on the merge of D1/D2 into main 9ec7a86 with `explainSchemaFor` temporarily set back to main's pre-D2 call-site logic (the `forModel` chain), which is why it says "with uncommitted changes"; every other call is byte-equal between the two files. The counting is pure (`evals/schema/measure.ts`, unit-tested on handmade schemas in
   `evals/schema/__tests__/measure.test.ts`). With Vertex credentials in `apps/api/.env.local`

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { ANSWER_FORM_RULES, ItemDraft, usableItems } from '../items.js';
-import { MATCH_RULES, ORDER_RULES } from '../structured.js';
+import { MATCH_RULES } from '../match.js';
+import { ORDER_RULES } from '../structured.js';
 import { TABLE_RULES } from '../table.js';
 
 const draft = (over: Record<string, unknown>) =>

@@ -22,7 +22,7 @@ import { randomUUID } from 'node:crypto';
 import type { SessionView, StartTopicRequest } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { explainSchemaFor, GENERATED_SCHEMA } from '../modules/practice/generate.js';
+import { explainSchemaFor, GENERATED_SCHEMA } from '../modules/practice/setProfiles.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 import { schemaErrors } from '../testing/schemaCheck.js';

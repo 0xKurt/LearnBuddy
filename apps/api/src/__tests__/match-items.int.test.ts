@@ -16,7 +16,7 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { MATCH_PAIR_JOIN } from '../modules/practice/structured.js';
+import { MATCH_PAIR_JOIN } from '../modules/practice/match.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
