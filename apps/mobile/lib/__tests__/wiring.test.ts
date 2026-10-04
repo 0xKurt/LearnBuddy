@@ -61,6 +61,10 @@ const SERVER_ONLY: Record<string, string> = {
   'POST /internal/tick': 'the scheduler (pg_cron) calls it every minute',
   'DELETE /buddy/push-tokens':
     'older app builds sign out with it; this build releases the install (POST /push-devices/release)',
+  // Issue #391 is the server half of #388 step 4; the practice screen calls these in step 6.
+  // Remove both lines there, when `lib/api/endpoints.ts` calls them.
+  'POST /practice/sessions/:p/ask': 'the app half follows in #388 step 6 (server first, #391)',
+  'POST /practice/sessions/:p/later': 'the app half follows in #388 step 6 (server first, #391)',
 };
 
 // ─────────────── app calls ───────────────

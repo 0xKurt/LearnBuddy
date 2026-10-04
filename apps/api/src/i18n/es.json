@@ -226,7 +226,7 @@
     "same_value": "El valor es correcto – solo lo has escrito de otra forma. Mira en qué forma quiere la tarea el resultado.",
     "step_broke": "Hasta la línea {{line}} todo cuadra. Algo se pierde al pasar a la línea siguiente: mira otra vez ese paso.",
     "step_broke_last": "Tu camino está bien hasta el final; solo el último paso no. Mira otra vez la última línea.",
-    "test_no_hints": "En el examen no hay pistas: escribe lo que pienses o salta la pregunta.",
+    "test_no_hints": "En el examen no hay pistas: escribe lo que pienses o salta la pregunta. Después del examen te lo explico todo.",
     "test_noted": "Anotado – seguimos.",
     "try_again": "Todavía no del todo – inténtalo otra vez. Con «Pista» te doy una ayuda.",
     "typo": "Casi – se escribe {{answer}}. Escríbelo otra vez.",
@@ -377,7 +377,8 @@
       "revise": "Revisa estos pasajes y mándame la nueva versión.",
       "closing": "Esa fue tu última versión por esta vez. Llévate estos puntos a tu próximo texto.",
       "unavailable": "Ahora no puedo leer tu texto. No se ha perdido: envíalo de nuevo en un momento."
-    }
+    },
+    "ask_unavailable": "Ahora mismo no puedo responder a tu pregunta. Vuelve a intentarlo en un momento."
   },
   "contact": {
     "less_often": "Entendido: a partir de ahora solo te escribiré al móvil cuando sea realmente importante. Todo lo demás te espera aquí. Puedes cambiarlo en los ajustes."

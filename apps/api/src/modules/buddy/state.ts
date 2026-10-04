@@ -14,6 +14,7 @@ import type {
 
 import type { Db } from '../../lib/db.js';
 import { summarize, type SummaryRow } from '../practice/summary.js';
+import type { RecallableMessage } from './recall.js';
 
 export type SettingsRow = {
   learner_id: string;
@@ -285,6 +286,18 @@ export type StandingOffer = {
   created_at: Date;
 };
 
+/**
+ * „Merk ich mir für nachher" (issue #391): a question she asked the tutor during a practice that
+ * is over now, which she tapped to keep. Her words only — never the tutor's reply, which may
+ * hold a hint — shaped as a message so a model reads it through `recall.ts` like any other.
+ */
+type LaterNote = RecallableMessage & {
+  /** The practice it came from, as she knows it (topic, sheet, goal), if it has a title. */
+  session_title: string | null;
+  /** When that practice ended. */
+  ended_at: Date;
+};
+
 export type BuddyState = {
   settings: SettingsRow;
   goals: GoalRow[];
@@ -301,6 +314,8 @@ export type BuddyState = {
   sessions: SessionBrief[];
   /** Offers of his she has not taken up yet, oldest first (issue #184). */
   standing: StandingOffer[];
+  /** Questions she kept for after a practice that has ended, oldest first (issue #391). */
+  later: LaterNote[];
   outreach: OutreachRow[];
   /** Totals irrespective of the bounded lists (coverage signals). */
   totals: {
@@ -332,6 +347,8 @@ export const LIMITS = {
   outreachDays: 14,
   /** Offers still standing; more than a handful is not a list the model needs to read. */
   standing: 5,
+  /** Questions kept for after practice (issue #391): a few, never a backlog to work through. */
+  later: 3,
 } as const;
 
 /**
@@ -411,6 +428,31 @@ export async function loadStandingOffers(
     minutes: r.result.minutes ?? null,
     created_at: r.created_at,
   }));
+}
+
+/**
+ * Questions she kept for after practice (issue #391), from practices that are over — finished or
+ * closed for idleness — within the same day-long window as a standing offer: "Du wolltest vorhin
+ * wissen, …" reaches back that far honestly, and not further. While the practice still runs the
+ * note waits: no jumping into the chat in the middle of a task (report §4).
+ */
+async function loadLaterNotes(db: Db, learnerId: string, now: Date): Promise<LaterNote[]> {
+  const rows = await db.query<{ text: string; session_title: string | null; ended_at: Date }>(
+    `select q.text, ps.title as session_title,
+            coalesce(ps.finished_at, ps.last_activity_at) as ended_at
+       from practice_turns t
+       join practice_turns q on q.session_id = t.session_id and q.seq = t.seq - 1
+                            and q.role = 'learner'
+       join practice_sessions ps on ps.id = t.session_id
+      where t.learner_id = $1 and t.later = 'kept' and ps.status <> 'active'
+        and coalesce(ps.finished_at, ps.last_activity_at) > $2
+      order by t.later_at desc, t.seq desc
+      limit $3`,
+    [learnerId, new Date(now.getTime() - STANDING_WINDOW_MS), LIMITS.later],
+  );
+  // A kept question was never a disclosure or a held-back message: those get the fixed help
+  // answer and no chip (practice/answer.ts). So no practice turn carries a recall block today.
+  return rows.reverse().map((r) => ({ role: 'learner' as const, recall_block: null, ...r }));
 }
 
 export async function loadBuddyState(db: Db, learnerId: string, now: Date): Promise<BuddyState> {
@@ -610,6 +652,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
 
   // What he already put in front of her and she has not taken up (issue #184).
   const standing = await loadStandingOffers(db, learnerId, now);
+  // What she kept for after a practice that is over (issue #391).
+  const later = await loadLaterNotes(db, learnerId, now);
 
   const outreach = await db.query<OutreachRow>(
     `select id, kind, origin, topic_key, title, body, why, status, send_at, sent_at, opened_at,
@@ -653,6 +697,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     focus,
     sessions,
     standing,
+    later,
     outreach,
     totals: {
       activeGoals: totals.goals,

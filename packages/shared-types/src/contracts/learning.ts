@@ -563,6 +563,13 @@ export const PracticeTurnView = z.object({
   essay: EssayFeedback.nullable().optional().catch(null),
   /** Part of an "Anders erklären" exchange (her request and the new explanation), else null. */
   reexplain: ReexplainWay.nullable(),
+  /**
+   * „Merk ich mir für nachher" (issue #391). Only on the tutor turn after a question that had
+   * nothing to do with the task (`POST …/ask`, the tutor's intent `off_topic`): `offered` — the
+   * reply carries the chip; `kept` — she tapped it (`POST …/later`), and Buddy brings the
+   * question up in the chat once the practice is over. Absent or null everywhere else.
+   */
+  later: z.enum(['offered', 'kept']).nullable().optional(),
   created_at: IsoDateTime,
 });
 export type PracticeTurnView = z.infer<typeof PracticeTurnView>;
@@ -734,6 +741,33 @@ export type AnswerRequest = z.infer<typeof AnswerRequest>;
 /** "Tipp": the next prepared hint for an open question — at once, no model. */
 export const HintRequest = z.object({ client_turn_id: Uuid, item_id: Uuid });
 export type HintRequest = z.infer<typeof HintRequest>;
+
+/** How long a question to the tutor may be: a sentence or three, typed or spoken. */
+const ASK_TEXT_MAX = 600;
+
+/**
+ * POST /practice/sessions/:id/ask — a free question to the tutor about the question in front of
+ * her (issue #391, report „Hilfe und Fragen beim Üben" §1). The route itself says „this is a
+ * question", so it is never graded and never costs a try, on every form — a tap form and a
+ * structured one included. Answered like „Tipp" (AnswerResponse, verdict `not_an_attempt`) and
+ * idempotent per `client_turn_id`. In a practice test the reply is always the test's fixed line
+ * (or the fixed help answer to distress: the one tutor call there is that check); a Kopfrechnen
+ * round has no question route (409 `use_drill`).
+ */
+export const AskRequest = z.object({
+  client_turn_id: Uuid,
+  item_id: Uuid,
+  text: z.string().trim().min(1).max(ASK_TEXT_MAX),
+});
+export type AskRequest = z.infer<typeof AskRequest>;
+
+/**
+ * POST /practice/sessions/:id/later — „Merk ich mir für nachher" (issue #391): the tap on the
+ * chip of a tutor turn that offered it (`PracticeTurnView.later` = `offered`). Her question is
+ * kept as a note on the session; nothing else goes into the chat. Tapping again changes nothing.
+ */
+export const KeepForLaterRequest = z.object({ turn_id: Uuid });
+export type KeepForLaterRequest = z.infer<typeof KeepForLaterRequest>;
 
 /**
  * POST /practice/sessions/:id/cards — go through the words of a finished run as flashcards
@@ -1028,3 +1062,7 @@ export const AnswerResponse = z.object({
   reply: PracticeTurnView,
 });
 export type AnswerResponse = z.infer<typeof AnswerResponse>;
+
+/** The tutor turn whose chip she tapped, now `later: 'kept'`. */
+export const KeepForLaterResponse = z.object({ turn: PracticeTurnView });
+export type KeepForLaterResponse = z.infer<typeof KeepForLaterResponse>;

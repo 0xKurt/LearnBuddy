@@ -126,6 +126,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `POST /practice/sessions/:id/listen`                                                                 | Hörverstehen and Diktat: the recording of one question's spoken text or key (issues #210, #242)                       |
 | `POST /practice/sessions/:id/cards`, `POST …/card`                                                   | Lernkarten: a pass over the words that did not sit, each card judged by her (#147)                                    |
 | `POST /practice/drills`, `POST /practice/sessions/:id/drill`                                         | Kopfrechnen: a round of tasks code wrote, one answer checked by code (#243)                                           |
+| `POST /practice/sessions/:id/ask`, `POST …/later`                                                    | a question to the tutor, never graded; „Merk ich mir für nachher" for an off-topic one (#391)                         |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
 ## Buddy decisions
@@ -1677,7 +1678,52 @@ beside them `hint.ts` („Tipp“), `setAside.ts` („Lösung
 zeigen“, „Später“), `contest.ts` („Frage passt nicht“, „Bewertung stimmt nicht“),
 `partsAnswer.ts` (a structured answer taken in), `passTurn.ts` (one turn of a card pass or a
 Kopfrechnen round), `sessionRow.ts` (the session row and the one way to lock it), `finish.ts`
-(the end of a run) and `testClock.ts` (a practice test with time, #241).
+(the end of a run) and `testClock.ts` (a practice test with time, #241). `ladder.ts` says where
+the hint ladder ends and what a test says instead; `later.ts` keeps an off-topic question for
+after the practice (#391).
+
+**Fragen beim Üben** (issue #391, report „Hilfe und Fragen beim Üben" §1, §3, §4). The first help
+stays the buttons („Tipp", „Warum?", „Erklär's anders"); free text is the second path, through
+its own route, so nothing she asks is ever misread as an answer:
+
+- **`POST /practice/sessions/:id/ask`** (`AskRequest`: `client_turn_id`, `item_id`, `text` ≤ 600)
+  is the „Tipp" path of `answerItem` with `{ question: true }` — one implementation, not a copy.
+  It is **never graded and never a try** (`session_items.attempts` unchanged, verdict
+  `not_an_attempt`), idempotent per `client_turn_id`, and allowed on **every form**: a tap form, a
+  structured one (whose answer field refuses text with 422 `use_parts`), a sentence to say and a
+  flashcard. The tutor's context says `ASKED: …` instead of a rule check (`tutor.v12`).
+  - **The solution lock holds always**, not only before the second hint: a question never reveals
+    (`revealed` or a reply that names the key → the next prepared hint or a neutral line), and it
+    never ends the ladder — the solution comes by „Tipp", a try or „Lösung zeigen".
+  - **A hint only counts when one was given** (`gave_hint` of the tutor), unlike „Tipp", which
+    is a hint by definition.
+  - Distress gets the fixed help answer (#389, `safeguard()`), a model outage the honest
+    `practice.ask_unavailable`, „ich hab keine Lust mehr" the app's own `practice.had_enough`.
+  - **Practice test: one tutor call for the distress check, reply always fixed.** The question
+    goes to the tutor in TEST mode like a test answer, because child safety beats the saved call
+    (#389, report §7: "In the Probetest too"). With `concern` she gets the fixed help answer;
+    otherwise always `practice.test_no_hints` („… Nach dem Test erklär ich dir alles.") — the
+    model's words are never shown, no hint, no solution, no chip, and her one try stays hers.
+    Measured in `practice-ask.int.test.ts`: `llm_calls` + 1 per question.
+  - **Kopfrechnen:** 409 `use_drill`, still zero model calls.
+- **The same words in the answer field of a test** (point 2 of #391): code cannot see that a
+  typed text is a question rather than an answer without a word list (CLAUDE.md rule 3), so
+  `/answer` stays as it is — one tutor call, whose reply the test replaces with the same fixed
+  line. Measured in `practice-ask.int.test.ts`: `llm_calls` + 1 per such text; the call also
+  carries the distress check.
+- **„Merk ich mir für nachher".** A question the tutor classifies as `off_topic` is answered in
+  one kind sentence that steers back, and its tutor turn carries `later = 'offered'`
+  (`PracticeTurnView.later`, migration `0090_practice_later.sql`). Her tap
+  (`POST …/later`, `{ turn_id }`; 404 for any turn not hers in this session, 409 `not_offered`)
+  sets `kept` and bumps the context. Once that practice is over — finished or closed for
+  idleness, within a day — Buddy's STATE lists her question („Questions she kept for after
+  practice", `state.ts` `loadLaterNotes`, through `recall.ts`) with the instruction to bring it up
+  once: the check woken by `session_finished` and every chat turn of that day read it (measured on
+  the check's request in `practice-ask.int.test.ts`; whether the live model then says it is an
+  eval question still open). Her words only, never the tutor's reply.
+  Without the tap nothing reaches the chat; while the practice runs nothing does either.
+- Eval cases (`evals/tutor`): `ask_content_question`, `ask_off_topic_offers_later`,
+  `ask_coax_no_giveaway` — the live run is still open.
 
 **Eine Übung darf anfangen, bevor alle ihre Fragen geschrieben sind** (Issue #220, Migration
 0073). Gemessen 02.10.: „üben wir Brüche" kostete 6,45 s am Endpoint, davon 6,42 s der

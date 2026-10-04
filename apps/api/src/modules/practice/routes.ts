@@ -2,9 +2,11 @@
 
 import {
   AnswerRequest,
+  AskRequest,
   CardRequest,
   DrillAnswerRequest,
   HintRequest,
+  KeepForLaterRequest,
   ListenAudioRequest,
   ReexplainRequest,
   SpeakRequest,
@@ -41,6 +43,7 @@ import { sessionView } from './sessionView.js';
 import { deferItem, revealItem } from './setAside.js';
 import { settleTestClock } from './testClock.js';
 import { hintItem } from './hint.js';
+import { keepForLater } from './later.js';
 import { disputeVerdict, flagItem } from './contest.js';
 import { speakItem, speakWord } from './speak.js';
 
@@ -85,6 +88,25 @@ practiceRoutes.post('/sessions/:id/hint', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const input = await readBody(c, HintRequest);
   return c.json(await hintItem(depsOf(c), c.get('learner'), sessionId, input));
+});
+
+/**
+ * A question to the tutor about the question in front of her (#391): never graded, never a try,
+ * on every form; the "Tipp" path of `answerItem`, with its solution lock and safeguarding.
+ */
+practiceRoutes.post('/sessions/:id/ask', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, AskRequest);
+  return c.json(
+    await answerItem(depsOf(c), c.get('learner'), sessionId, input, { question: true }),
+  );
+});
+
+/** „Merk ich mir für nachher": her off-topic question kept for Buddy after the practice (#391). */
+practiceRoutes.post('/sessions/:id/later', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, KeepForLaterRequest);
+  return c.json(await keepForLater(depsOf(c), c.get('learner').id, sessionId, input));
 });
 
 /** "Anders erklären": a new explanation after the explanation or a closed question's solution. */

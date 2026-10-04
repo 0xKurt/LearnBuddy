@@ -226,7 +226,7 @@
     "same_value": "The value is right – you've just written it differently. Check which form the task wants the result in.",
     "step_broke": "Everything holds up to line {{line}}. Something gets lost on the way to the next line – take another look at that step.",
     "step_broke_last": "Your way is right all the way through – only the last step is not. Take another look at the last line.",
-    "test_no_hints": "There are no hints in a test – just write what you think, or skip the question.",
+    "test_no_hints": "There are no hints in a test – just write what you think, or skip the question. After the test I'll explain everything.",
     "test_noted": "Noted – on to the next one.",
     "try_again": "Not quite yet – have another go. Tap “Hint” for a clue.",
     "typo": "Almost – it's spelled {{answer}}. Type it once more.",
@@ -377,7 +377,8 @@
       "revise": "Rework these places and send me the new version.",
       "closing": "That was your last version for now. Take these points into your next text.",
       "unavailable": "I can't read your text right now. It isn't lost – send it again in a moment."
-    }
+    },
+    "ask_unavailable": "I can't answer your question right now. Try again in a moment."
   },
   "contact": {
     "less_often": "Got it – from now on I'll only message your phone when it really matters. Everything else waits here. You can change this in settings."

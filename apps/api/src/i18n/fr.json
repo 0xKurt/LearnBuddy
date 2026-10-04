@@ -226,7 +226,7 @@
     "same_value": "La valeur est juste – tu l'as seulement écrite autrement. Regarde sous quelle forme l'exercice veut le résultat.",
     "step_broke": "Tout tient jusqu'à la ligne {{line}}. Quelque chose se perd en passant à la ligne suivante – regarde encore cette étape.",
     "step_broke_last": "Ton raisonnement tient jusqu'au bout – seule la dernière étape ne va pas. Regarde encore la dernière ligne.",
-    "test_no_hints": "Pas d'indices pendant le test – écris simplement ce que tu penses, ou passe la question.",
+    "test_no_hints": "Pas d'indices pendant le test – écris simplement ce que tu penses, ou passe la question. Après le test, je t'explique tout.",
     "test_noted": "Noté – on continue.",
     "try_again": "Pas encore tout à fait – réessaie. Avec « Indice », tu as un coup de pouce.",
     "typo": "Presque – ça s'écrit {{answer}}. Tape-le encore une fois.",
@@ -377,7 +377,8 @@
       "revise": "Retravaille ces passages et envoie-moi la nouvelle version.",
       "closing": "C'était ta dernière version pour cette fois. Garde ces points pour ton prochain texte.",
       "unavailable": "Je ne peux pas lire ton texte pour l'instant. Il n'est pas perdu – renvoie-le dans un moment."
-    }
+    },
+    "ask_unavailable": "Je ne peux pas répondre à ta question pour le moment. Réessaie dans un instant."
   },
   "contact": {
     "less_often": "C'est noté – désormais, je ne t'écris sur ton téléphone que si c'est vraiment important. Le reste t'attend ici. Tu peux changer ça dans les réglages."

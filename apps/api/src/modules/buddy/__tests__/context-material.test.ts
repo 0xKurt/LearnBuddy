@@ -69,6 +69,7 @@ function block(materials: MaterialBrief[]): string {
     focus: null,
     sessions: [],
     standing: [],
+    later: [],
     outreach: [],
     totals: {
       activeGoals: 0,

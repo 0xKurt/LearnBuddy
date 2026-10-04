@@ -28,6 +28,7 @@ import { addDays, daysBetween, localParts, weekdayName, weekdayOf } from '../../
 import type { LlmMessage } from '../../llm/gateway.js';
 import type { LearnerContext } from '../../http/context.js';
 import { likelyGrade } from './grade.js';
+import { recallText } from './recall.js';
 import { aliasesIn, blockData, occursIn, reportState, type BlockName } from './blocks.js';
 import type {
   BuddyState,
@@ -466,6 +467,25 @@ export function buildContext(
     const shaky = s.shaky_topics.length ? `; shaky: ${s.shaky_topics.slice(0, 4).join(', ')}` : '';
     practiceBlock.push(
       `- ${when.date} ${when.time} ${s.status}: ${s.answered}/${s.total} answered, ${s.first_try} right first try${shaky}`,
+    );
+  }
+  // What she kept for after practice (issue #391): her own words, through the recall rule, only
+  // once that practice is over (state.ts) — never the tutor's reply, which may hold a hint.
+  const kept = state.later.flatMap((n) => {
+    const text = recallText(n, learner.locale, false);
+    return text === null ? [] : [{ ...n, text }];
+  });
+  if (kept.length > 0) {
+    practiceBlock.push('## Questions she kept for after practice (that practice is over now)');
+    for (const n of kept) {
+      const ended = localParts(n.ended_at, tz);
+      const during = n.session_title ? ` (during "${n.session_title}")` : '';
+      practiceBlock.push(`- "${n.text}"${during}, practice ended ${ended.date} ${ended.time}`);
+    }
+    practiceBlock.push(
+      '  She tapped "Merk ich mir für nachher" for these. Bring each up once, in your own words' +
+        ' ("Du wolltest vorhin wissen, …"), and answer it — unless the conversation below shows' +
+        ' you already have.',
     );
   }
 
