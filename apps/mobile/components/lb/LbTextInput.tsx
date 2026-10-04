@@ -256,8 +256,15 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
         </View>
         {under}
       </View>
+      {/* A note under the field, like the label above it and the hint it replaces (welcome's
+          "Mindestens 8 Zeichen."): `small`, in from the frame's edge by the same xs. At `body`
+          size (issue #365) "Die beiden Passwörter sind noch nicht gleich." took a second line on
+          a 360 phone and pushed the sign-up form under its pinned CTA (issue #392). */}
       {errorMessage && (
-        <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[TYPE.small, { color: palette.danger, paddingHorizontal: SPACE.xs }]}
+        >
           {errorMessage}
         </Text>
       )}

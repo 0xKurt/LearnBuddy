@@ -35,7 +35,7 @@ import { useAnnounce } from '../lib/announce.js';
 import { handoverContactKey } from '../lib/contact/state.js';
 import { ApiError } from '../lib/api/client.js';
 import { createLearner, getMe } from '../lib/api/endpoints.js';
-import { keys, queryClient, useSettings } from '../lib/api/queries.js';
+import { keys, prefetchHome, queryClient, useSettings } from '../lib/api/queries.js';
 import { ageOf, birthDateOf } from '../lib/birthDate.js';
 import { messageFor } from '../lib/errors.js';
 import { applyLocale, currentLocale } from '../lib/i18n/index.js';
@@ -195,6 +195,9 @@ export default function Profile() {
         ...(needsParents ? { pin } : {}),
       });
       applyLocale(locale);
+      // The learner exists now: her home loads while the hand-over, the voice and the cards are
+      // on screen, so it is there with its words when she arrives (issue #392).
+      prefetchHome();
       // Saved on the server: the draft has done its job (issue #133 position 9).
       form.clear();
       // The parents set it up: first what is set now, then the phone goes to the child.
@@ -213,6 +216,8 @@ export default function Profile() {
 
   /** Loads the fresh state before routing, so the gate never decides on stale data. */
   async function goOn() {
+    // Also on the way in for a profile that already existed (no-op while the one above is fresh).
+    prefetchHome();
     await queryClient.fetchQuery({ queryKey: keys.me, queryFn: getMe, staleTime: 0 });
     // Three short cards on how to use Buddy, then the first conversation.
     router.replace('/onboarding');
