@@ -38,6 +38,19 @@ function withHint(s: z.ZodTypeAny, out: JsonSchema, hint: string | null): JsonSc
   return text ? { ...out, description: text } : out;
 }
 
+/**
+ * The value behind a wrapper that only concerns parsing (optional, default, catch, refine,
+ * transform), carrying the wrapper's own words. zod copies a value's text onto every wrapper put
+ * around it, so a wrapper only has words of its own when they differ from the value's — and then
+ * they are what was written for this field. They go onto the value, where a nullable keeps the
+ * value's own text beside them and an array or number adds its bounds. Before issue #282 such words were dropped whenever the value had a text of its own:
+ * `MaterialRef.nullable().optional().describe(…)` reached the model as "sheet alias from STATE".
+ */
+function ownWords(wrapper: z.ZodTypeAny, value: z.ZodTypeAny): z.ZodTypeAny {
+  const words = wrapper.description;
+  return words !== undefined && words !== value.description ? value.describe(words) : value;
+}
+
 function convert(s: z.ZodTypeAny): JsonSchema {
   const def = s._def as { typeName: z.ZodFirstPartyTypeKind };
   switch (def.typeName) {
@@ -104,13 +117,13 @@ function convert(s: z.ZodTypeAny): JsonSchema {
       return withDescription(s, { anyOf: [inner, { type: 'null' }] });
     }
     case z.ZodFirstPartyTypeKind.ZodOptional:
-      return toJsonSchema((s as z.ZodOptional<z.ZodTypeAny>).unwrap());
+      return toJsonSchema(ownWords(s, (s as z.ZodOptional<z.ZodTypeAny>).unwrap()));
     case z.ZodFirstPartyTypeKind.ZodDefault:
-      return toJsonSchema((s as z.ZodDefault<z.ZodTypeAny>).removeDefault());
+      return toJsonSchema(ownWords(s, (s as z.ZodDefault<z.ZodTypeAny>).removeDefault()));
     case z.ZodFirstPartyTypeKind.ZodCatch:
-      return withDescription(s, toJsonSchema((s as z.ZodCatch<z.ZodTypeAny>).removeCatch()));
+      return toJsonSchema(ownWords(s, (s as z.ZodCatch<z.ZodTypeAny>).removeCatch()));
     case z.ZodFirstPartyTypeKind.ZodEffects:
-      return withDescription(s, toJsonSchema((s as z.ZodEffects<z.ZodTypeAny>).innerType()));
+      return toJsonSchema(ownWords(s, (s as z.ZodEffects<z.ZodTypeAny>).innerType()));
     default:
       throw new Error(`toJsonSchema: unsupported zod type ${String(def.typeName)}`);
   }

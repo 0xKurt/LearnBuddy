@@ -25,7 +25,9 @@ import { RubricClaim, type AskedElement } from './rubric.js';
 // und kennt das Regelurteil `not_transformed` (#235). Der Systemprompt ist unverändert.
 // v8: the notation line is generated from contracts/notation.ts (#239).
 // v9: KEY POINTS of an explanation she gives over several answers („Erklär mal", #236).
-export const TUTOR_PROMPT_VERSION = 'tutor.v9';
+// v10: the rubric schema says what was written for `verbs`, dropped before by `toJsonSchema`
+// (#282).
+export const TUTOR_PROMPT_VERSION = 'tutor.v10';
 
 export const TutorDecision = z.object({
   intent: z

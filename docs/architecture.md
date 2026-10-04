@@ -325,6 +325,15 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   integer field: the model writes the number, the server resolves the day, and it cannot tell a
   number counted from Monday from one counted from Sunday, so dropping the anchor would not remove
   a risk but add a wrong day.
+- **Every text written for a field reaches the model** (issue #282). zod copies a value's text
+  onto every wrapper around it; `toJsonSchema` used to take the value behind `.optional()` and
+  `.default()` and drop the wrapper's own words whenever the value had a text or a bound hint of
+  its own — six Buddy fields, the hint ladder, the rubric's `verbs`, Erklär mal's `exact` and a
+  table gap's `also` never reached the model, and `refine`/`transform` overwrote four bound hints.
+  Now a parsing-only wrapper's words go onto the value (`ownWords`), beside the value's own text
+  and bounds (`llm/__tests__/json-schema.test.ts`). With it the Buddy texts were made denser
+  without losing a rule, each change argued in `docs/decisions/schema-texte-282-2026-10-04.md`,
+  which also holds the live steps for D4–D6 (#367).
 - **Buddy names no button.** The provable half of #201: the removal rule said the card carries
   "Rückgängig" while an English learner's card says "Undo" — the label is rendered in the app from
   her locale (`apps/mobile/locales/<lang>/buddy.json` → `done.undo`), so Buddy could send an
