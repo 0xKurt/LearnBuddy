@@ -1,6 +1,6 @@
 {
   "$comment": "Ausnahmeliste toter Code (knip, Issue #313): heutige ungenutzte Dateien, Exporte, Typen und Pakete. Darf nur schrumpfen — ein neuer Fund macht `pnpm lint` rot, ein behobener verlangt `pnpm guards:shrink`. Siehe docs/engineering-guards.md.",
-  "total": 195,
+  "total": 194,
   "findings": [
     "devDependencies: apps/mobile/package.json: babel-plugin-module-resolver",
     "devDependencies: package.json: @typescript-eslint/eslint-plugin",
@@ -83,7 +83,6 @@
     "exports: apps/api/src/modules/practice/steps.ts: halfLine",
     "exports: apps/api/src/modules/practice/steps.ts: sameStep",
     "exports: apps/api/src/modules/practice/steps.ts: sameTermOn",
-    "exports: apps/api/src/modules/practice/structured.ts: MATCH_LIST_JOIN",
     "exports: apps/api/src/modules/practice/table.ts: TABLE_JOIN",
     "exports: apps/api/src/modules/practice/table.ts: gapId",
     "exports: apps/api/src/modules/practice/table.ts: inputFor",

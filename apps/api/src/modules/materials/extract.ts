@@ -16,12 +16,8 @@ import {
   NUMERIC_KEY_RULES,
   SPELLING_RULES,
 } from '../practice/items.js';
-import {
-  MATCH_RULES,
-  ORDER_RULES,
-  StructuredDraft,
-  StructuredDraftHomework,
-} from '../practice/structured.js';
+import { ORDER_RULES, StructuredDraft, StructuredDraftHomework } from '../practice/structured.js';
+import { MATCH_RULES } from '../practice/match.js';
 import { SELECT_RULES } from '../practice/selectAll.js';
 import { CLOZE_RULES } from '../practice/cloze.js';
 import {

@@ -3,11 +3,11 @@
 //
 //   - `usableItems` / `usableRubric` throw the field away on every other kind (Rule 0: the value
 //     cannot be checked or used there, so it is not kept);
-//   - the generator's profiles (`generate.ts`, `setSchemaForModel`) leave the field out of the
+//   - the generator's profiles (`setProfiles.ts`, `setSchemaForModel`) leave the field out of the
 //     schema the model is shown when the run allows none of these kinds — a field that code would
 //     discard anyway is only tokens and decoder states.
 //
-// No imports on purpose: `items.ts`, `rubric.ts` and `generate.ts` all read it.
+// No imports on purpose: `items.ts`, `rubric.ts` and `setProfiles.ts` all read it.
 
 /** A free-text answer's required elements (issue #211): only a long answer has any. */
 export const RUBRIC_KINDS = ['long'] as const;

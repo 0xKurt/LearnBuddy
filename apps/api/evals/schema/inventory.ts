@@ -44,6 +44,7 @@ import * as images from '../../src/modules/materials/images.js';
 import * as materials from '../../src/modules/materials/service.js';
 import * as cloze from '../../src/modules/practice/cloze.js';
 import * as generate from '../../src/modules/practice/generate.js';
+import * as setProfiles from '../../src/modules/practice/setProfiles.js';
 import * as hints from '../../src/modules/practice/hints.js';
 import * as reexplain from '../../src/modules/practice/reexplain.js';
 import * as practice from '../../src/modules/practice/service.js';
@@ -171,8 +172,8 @@ function variants(): Variant[] {
       tier: 'smart',
       promptVersion: generate.GENERATE_PROMPT_VERSION,
       system: generate.GENERATE_SYSTEM,
-      schema: generate.GENERATED_SCHEMA,
-      where: 'practice/generate.ts — GENERATED_SCHEMA',
+      schema: setProfiles.GENERATED_SCHEMA,
+      where: 'practice/setProfiles.ts — GENERATED_SCHEMA',
     },
     ...EXPLAIN_RUNS.map(
       ({ kind, sheets }): Variant => ({
@@ -183,8 +184,8 @@ function variants(): Variant[] {
         tier: 'smart',
         promptVersion: generate.GENERATE_PROMPT_VERSION,
         system: generate.GENERATE_SYSTEM,
-        schema: generate.explainSchemaFor(kind, sheets ? SHEET_TOPICS : null),
-        where: `practice/generate.ts — explainSchemaFor('${kind}', ${sheets ? 'sheets.topics' : 'null'})`,
+        schema: setProfiles.explainSchemaFor(kind, sheets ? SHEET_TOPICS : null),
+        where: `practice/setProfiles.ts — explainSchemaFor('${kind}', ${sheets ? 'sheets.topics' : 'null'})`,
       }),
     ),
     {
