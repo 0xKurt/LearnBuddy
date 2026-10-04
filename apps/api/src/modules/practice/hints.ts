@@ -22,7 +22,8 @@ import { secretsOf, structuredTaskOf } from './structured.js';
 import { mentionsSolution } from './tutor.js';
 
 // v5: a structured item's question is its visible text, its secrets every gap key (cloze, #232).
-export const HINTS_PROMPT_VERSION = 'hints.v5';
+// v6: the schema says what was written for `hints`, dropped before by `toJsonSchema` (#282).
+export const HINTS_PROMPT_VERSION = 'hints.v6';
 
 const HintSet = z.object({
   items: z

@@ -71,7 +71,9 @@ import { structuredItems, type StructuredItem } from './structured.js';
 // v1.26: a question marks the calculation inside its sentence that the key is (`computes`, #227).
 // v1.27: a listening question's schema without `rubric` (#281 D2: no listening kind keeps one).
 // v1.28: diagrams — boxes with arrows, chains, cycles, trees, grids, gaps lettered A–C (#247).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.28';
+// v1.29: the schema says what was written for a table gap's `also` and a teach_back point's
+//        `exact`, dropped before by `toJsonSchema` (#282).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.29';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

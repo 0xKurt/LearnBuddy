@@ -41,7 +41,10 @@ import { TABLE_RULES } from '../practice/table.js';
 //       reading group may ask to mark in a sentence of its text.
 // v8.9: a question marks the calculation inside its sentence that the key is (`computes`, #227).
 // v8.10: diagrams — boxes with arrows, chains, cycles, trees, grids, gaps lettered A–C (#247).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.10';
+// v8.11: the schema says what was written for `hints`, a table gap's `also` and the bounds of
+//        `pages`, `unclear` and `not_practicable`, dropped before by `toJsonSchema` (#282); a
+//        page number and the readings no longer say their bounds twice (#282 D5).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.11';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -107,7 +110,7 @@ export const PageReport = z.object({
     .int()
     .min(1)
     .max(20)
-    .describe('Page number as labelled (a photo is one page, a PDF one per PDF page), from 1'),
+    .describe('Page number as labelled (a photo is one page, a PDF one per PDF page)'),
   read: z
     .enum(['all', 'part', 'none'])
     .describe('all: everything read; part: some of it missing (e.g. cut off at the edge); none'),
@@ -156,7 +159,7 @@ export const UnclearReport = z.object({
     .array(z.string().trim().min(1).max(60))
     .min(2)
     .max(MOST_UNCLEAR_READINGS)
-    .describe('The 2-4 readings this spot could be; never pick one')
+    .describe('The readings this spot could be; never pick one')
     // The same reading twice is not a choice: the duplicate goes, and an entry left with fewer
     // than two is dropped rather than turned into a question with a guessed value.
     .transform((rs) => [...new Map(rs.map((r) => [r.toLocaleLowerCase(), r])).values()])

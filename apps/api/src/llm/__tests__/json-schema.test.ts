@@ -186,6 +186,54 @@ describe('the forms the app actually uses', () => {
     });
   });
 
+  // Issue #282: zod copies a value's text onto every wrapper, and the wrapper's own words were
+  // dropped whenever the value had a text — or a bound hint — of its own. Six Buddy fields, the
+  // hint ladder and the rubric's verbs reached the model without what was written for them.
+  it('says what was written for an optional or defaulted field, beside the value’s own text', () => {
+    const alias = z.string().describe('sheet alias from STATE, e.g. sh1');
+    const field = {
+      anyOf: [
+        { type: 'string', description: 'sheet alias from STATE, e.g. sh1' },
+        { type: 'null' },
+      ],
+      description: 'the sheet she pointed at',
+    };
+    expect(toJsonSchema(alias.nullable().optional().describe('the sheet she pointed at'))).toEqual(
+      field,
+    );
+    expect(
+      toJsonSchema(alias.nullable().default(null).describe('the sheet she pointed at')),
+    ).toEqual(field);
+    // Without words of its own the wrapper says nothing new: the value's text, once.
+    expect(toJsonSchema(alias.nullable().optional())).toEqual({
+      anyOf: [{ type: 'string' }, { type: 'null' }],
+      description: 'sheet alias from STATE, e.g. sh1',
+    });
+  });
+
+  it('keeps the bounds next to the words of a wrapped array or number', () => {
+    const hints = z.array(z.string()).max(3);
+    expect(toJsonSchema(hints.default([]).describe('the ladder'))).toEqual({
+      type: 'array',
+      items: { type: 'string' },
+      description: 'the ladder (at most 3 items)',
+    });
+    expect(toJsonSchema(hints.optional().describe('the ladder'))).toEqual({
+      type: 'array',
+      items: { type: 'string' },
+      description: 'the ladder (at most 3 items)',
+    });
+    expect(toJsonSchema(hints.refine((h) => h.length > 0).describe('the ladder'))).toEqual({
+      type: 'array',
+      items: { type: 'string' },
+      description: 'the ladder (at most 3 items)',
+    });
+    expect(toJsonSchema(z.number().int().min(1).max(5).catch(3).describe('how hard'))).toEqual({
+      type: 'integer',
+      description: 'how hard (1–5)',
+    });
+  });
+
   it('keeps the order of an array and describes what is in it', () => {
     expect(toJsonSchema(z.array(z.object({ id: z.string() })))).toEqual({
       type: 'array',

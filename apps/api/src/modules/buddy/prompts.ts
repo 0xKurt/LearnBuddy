@@ -15,7 +15,9 @@ import { actToolsPrompt } from './registry.js';
 // buddy.57: offer_learning may carry a test's time_limit, on her wish only (#241), on top of 56.
 // buddy.58: start_roleplay and the roleplay turn (#244), on top of 57.
 // buddy.59: offer_learning kind teach_back, „Erklär mal" (#236), on top of 58.
-export const BUDDY_PROMPT_VERSION = 'buddy.59';
+// buddy.60: the schema says what was written for six sheet/subject/goal/topic fields, dropped
+//           before (#282), and the act-tool texts are denser with the same meaning (#282 D5).
+export const BUDDY_PROMPT_VERSION = 'buddy.60';
 
 // No example in here is a phrase in one language that the model is meant to WRITE. An English
 // learner was told "I've planned your maths test for am Freitag" in 2 of 3 live runs (issue
