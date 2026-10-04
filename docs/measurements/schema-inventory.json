@@ -1,7 +1,7 @@
 {
  "issue": "#281",
- "commit": "6e852e526b97c1ed9787c375f2ac9ee391f8ac84",
- "commitDate": "2026-10-04T08:35:21+00:00",
+ "commit": "ae8686d46bb45f55fb262f668284616e6713ac8a",
+ "commitDate": "2026-10-04T09:43:13+00:00",
  "dirty": false,
  "sdk": "@google/genai 2.25.0",
  "zod": "3.25.76",
@@ -2690,44 +2690,44 @@
    "profile": "GENERATED_SCHEMA (global)",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.28",
+   "promptVersion": "generate.v1.29",
    "where": "practice/setProfiles.ts — GENERATED_SCHEMA",
    "system": {
-    "chars": 20121,
-    "sha256": "6436b691ef46e5703e9f231b5992e052adc4b73c76e34bacb75a87554d90858b",
+    "chars": 21165,
+    "sha256": "b0d54f7a6127b9e82c6574bf25bbc532e37ced3e1a010760d020237e1cee712c",
     "textTokens": null
    },
    "schema": {
-    "chars": 54748,
-    "sha256": "be6c262c350f5e4427a459322c78a3bb567ac75e5b9a4723a9a768d7962529f8",
+    "chars": 56832,
+    "sha256": "f713d1efaac6eff86b951a858a094b164b7f5fb29cabdeca64ebb9e65da87768",
     "textTokens": null,
     "shape": {
-     "chars": 54748,
-     "nodes": 830,
+     "chars": 56832,
+     "nodes": 858,
      "maxDepth": 11,
-     "objects": 141,
-     "properties": 564,
+     "objects": 147,
+     "properties": 584,
      "optionalFields": 55,
      "anyOfNodes": 76,
      "nullableAnyOf": 68,
      "unions": 8,
-     "unionBranches": 72,
-     "enums": 147,
-     "enumValues": 479,
-     "singletonEnums": 72,
-     "propertyNameChars": 2112,
-     "enumValueChars": 2420,
+     "unionBranches": 74,
+     "enums": 151,
+     "enumValues": 489,
+     "singletonEnums": 74,
+     "propertyNameChars": 2138,
+     "enumValueChars": 2470,
      "descriptions": {
-      "count": 327,
-      "textChars": 12316,
-      "withKeyChars": 17915
+      "count": 343,
+      "textChars": 12936,
+      "withKeyChars": 18815
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.0020092058157375613,
+      "share": 0.0019355292792792792,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -2737,7 +2737,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.0003105136260685322,
+      "share": 0.00029912725225225223,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -2747,7 +2747,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.007032220355081464,
+      "share": 0.006774352477477478,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -2756,18 +2756,18 @@
      },
      {
       "key": "items",
-      "chars": 38758,
-      "share": 0.7079345364214218,
+      "chars": 40842,
+      "share": 0.7186444256756757,
       "descriptions": {
-       "count": 241,
-       "textChars": 6959,
-       "withKeyChars": 11086
+       "count": 257,
+       "textChars": 7579,
+       "withKeyChars": 11986
       }
      },
      {
       "key": "bars",
       "chars": 1708,
-      "share": 0.031197486666179587,
+      "share": 0.03005349099099099,
       "descriptions": {
        "count": 9,
        "textChars": 752,
@@ -2777,7 +2777,7 @@
      {
       "key": "staffs",
       "chars": 4933,
-      "share": 0.09010374808212172,
+      "share": 0.08679969031531531,
       "descriptions": {
        "count": 16,
        "textChars": 1191,
@@ -2787,7 +2787,7 @@
      {
       "key": "structured",
       "chars": 8657,
-      "share": 0.15812449769854606,
+      "share": 0.15232615427927929,
       "descriptions": {
        "count": 60,
        "textChars": 3339,
@@ -2826,28 +2826,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -3498,6 +3499,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -3532,28 +3559,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -4204,6 +4232,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -4996,44 +5050,44 @@
    "profile": "kind=practice",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.28",
+   "promptVersion": "generate.v1.29",
    "where": "practice/setProfiles.ts — explainSchemaFor('practice', null)",
    "system": {
-    "chars": 20121,
-    "sha256": "6436b691ef46e5703e9f231b5992e052adc4b73c76e34bacb75a87554d90858b",
+    "chars": 21165,
+    "sha256": "b0d54f7a6127b9e82c6574bf25bbc532e37ced3e1a010760d020237e1cee712c",
     "textTokens": null
    },
    "schema": {
-    "chars": 54740,
-    "sha256": "cb84bb8eb290e595aa3da4009b56b312102bbb26377e637ffa803c73be72c21b",
+    "chars": 56824,
+    "sha256": "3d4c638be0ad044e73fc76d9b3568684289ff11c4179e40a3845dac143e6807a",
     "textTokens": null,
     "shape": {
-     "chars": 54740,
-     "nodes": 830,
+     "chars": 56824,
+     "nodes": 858,
      "maxDepth": 11,
-     "objects": 141,
-     "properties": 564,
+     "objects": 147,
+     "properties": 584,
      "optionalFields": 55,
      "anyOfNodes": 76,
      "nullableAnyOf": 68,
      "unions": 8,
-     "unionBranches": 72,
-     "enums": 147,
-     "enumValues": 478,
-     "singletonEnums": 72,
-     "propertyNameChars": 2112,
-     "enumValueChars": 2415,
+     "unionBranches": 74,
+     "enums": 151,
+     "enumValues": 488,
+     "singletonEnums": 74,
+     "propertyNameChars": 2138,
+     "enumValueChars": 2465,
      "descriptions": {
-      "count": 327,
-      "textChars": 12316,
-      "withKeyChars": 17915
+      "count": 343,
+      "textChars": 12936,
+      "withKeyChars": 18815
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.002009499451954695,
+      "share": 0.0019358017738983528,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -5043,7 +5097,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.00031055900621118014,
+      "share": 0.00029916936505701815,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -5053,7 +5107,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.007033248081841432,
+      "share": 0.006775306208644235,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -5062,18 +5116,18 @@
      },
      {
       "key": "items",
-      "chars": 38750,
-      "share": 0.7078918523931311,
+      "chars": 40834,
+      "share": 0.7186048148669576,
       "descriptions": {
-       "count": 241,
-       "textChars": 6959,
-       "withKeyChars": 11086
+       "count": 257,
+       "textChars": 7579,
+       "withKeyChars": 11986
       }
      },
      {
       "key": "bars",
       "chars": 1708,
-      "share": 0.031202046035805626,
+      "share": 0.03005772208925806,
       "descriptions": {
        "count": 9,
        "textChars": 752,
@@ -5083,7 +5137,7 @@
      {
       "key": "staffs",
       "chars": 4933,
-      "share": 0.09011691633175009,
+      "share": 0.08681191046036886,
       "descriptions": {
        "count": 16,
        "textChars": 1191,
@@ -5093,7 +5147,7 @@
      {
       "key": "structured",
       "chars": 8657,
-      "share": 0.1581476068688345,
+      "share": 0.15234759960580035,
       "descriptions": {
        "count": 60,
        "textChars": 3339,
@@ -5132,28 +5186,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -5804,6 +5859,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -5838,28 +5919,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -6510,6 +6592,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -7302,44 +7410,44 @@
    "profile": "kind=test",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.28",
+   "promptVersion": "generate.v1.29",
    "where": "practice/setProfiles.ts — explainSchemaFor('test', null)",
    "system": {
-    "chars": 20121,
-    "sha256": "6436b691ef46e5703e9f231b5992e052adc4b73c76e34bacb75a87554d90858b",
+    "chars": 21165,
+    "sha256": "b0d54f7a6127b9e82c6574bf25bbc532e37ced3e1a010760d020237e1cee712c",
     "textTokens": null
    },
    "schema": {
-    "chars": 49780,
-    "sha256": "a673b94138ca41a87d661ccf8388271561349ea0f8f58b277917acabc5c8a976",
+    "chars": 51864,
+    "sha256": "f64fcdefb4803a219351e12f8cf449a091ebe240420b72145d025b37f3c02bc9",
     "textTokens": null,
     "shape": {
-     "chars": 49780,
-     "nodes": 791,
+     "chars": 51864,
+     "nodes": 819,
      "maxDepth": 11,
-     "objects": 132,
-     "properties": 538,
+     "objects": 138,
+     "properties": 558,
      "optionalFields": 53,
      "anyOfNodes": 71,
      "nullableAnyOf": 65,
      "unions": 6,
-     "unionBranches": 65,
-     "enums": 136,
-     "enumValues": 444,
-     "singletonEnums": 65,
-     "propertyNameChars": 1998,
-     "enumValueChars": 2275,
+     "unionBranches": 67,
+     "enums": 140,
+     "enumValues": 454,
+     "singletonEnums": 67,
+     "propertyNameChars": 2024,
+     "enumValueChars": 2325,
      "descriptions": {
-      "count": 305,
-      "textChars": 9708,
-      "withKeyChars": 14925
+      "count": 321,
+      "textChars": 10328,
+      "withKeyChars": 15825
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.0022097227802330252,
+      "share": 0.0021209316674379143,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -7349,7 +7457,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.0003415026114905585,
+      "share": 0.0003277803486040413,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -7359,7 +7467,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.0077340297308155885,
+      "share": 0.007423260836032701,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -7368,18 +7476,18 @@
      },
      {
       "key": "items",
-      "chars": 35506,
-      "share": 0.7132583366813982,
+      "chars": 37590,
+      "share": 0.7247801943544655,
       "descriptions": {
-       "count": 228,
-       "textChars": 5103,
-       "withKeyChars": 9003
+       "count": 244,
+       "textChars": 5723,
+       "withKeyChars": 9903
       }
      },
      {
       "key": "staffs",
       "chars": 4933,
-      "share": 0.09909602249899559,
+      "share": 0.09511414468610212,
       "descriptions": {
        "count": 16,
        "textChars": 1191,
@@ -7389,7 +7497,7 @@
      {
       "key": "structured",
       "chars": 8657,
-      "share": 0.1739051828043391,
+      "share": 0.16691732222736388,
       "descriptions": {
        "count": 60,
        "textChars": 3339,
@@ -7428,28 +7536,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -8100,6 +8209,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -8134,28 +8269,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -8806,6 +8942,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -9347,44 +9509,44 @@
    "profile": "kind=vocab",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.28",
+   "promptVersion": "generate.v1.29",
    "where": "practice/setProfiles.ts — explainSchemaFor('vocab', null)",
    "system": {
-    "chars": 20121,
-    "sha256": "6436b691ef46e5703e9f231b5992e052adc4b73c76e34bacb75a87554d90858b",
+    "chars": 21165,
+    "sha256": "b0d54f7a6127b9e82c6574bf25bbc532e37ced3e1a010760d020237e1cee712c",
     "textTokens": null
    },
    "schema": {
-    "chars": 19712,
-    "sha256": "27ac46849ca13765f3f6191a4ce4d558bd8303bd594704de8cda6482c93e4239",
+    "chars": 20754,
+    "sha256": "6ae7d31137f0796da6fcd7c34d75ae41b202dba8ab4dd2c2b12e3e75d6f30854",
     "textTokens": null,
     "shape": {
-     "chars": 19712,
-     "nodes": 330,
+     "chars": 20754,
+     "nodes": 344,
      "maxDepth": 10,
-     "objects": 55,
-     "properties": 227,
+     "objects": 58,
+     "properties": 237,
      "optionalFields": 14,
      "anyOfNodes": 26,
      "nullableAnyOf": 25,
      "unions": 1,
-     "unionBranches": 25,
-     "enums": 52,
-     "enumValues": 178,
-     "singletonEnums": 26,
-     "propertyNameChars": 761,
-     "enumValueChars": 1085,
+     "unionBranches": 26,
+     "enums": 54,
+     "enumValues": 183,
+     "singletonEnums": 27,
+     "propertyNameChars": 774,
+     "enumValueChars": 1110,
      "descriptions": {
-      "count": 121,
-      "textChars": 3074,
-      "withKeyChars": 5145
+      "count": 129,
+      "textChars": 3384,
+      "withKeyChars": 5595
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.005580357142857143,
+      "share": 0.005300183097234268,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -9394,7 +9556,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.0008624188311688311,
+      "share": 0.000819119205936205,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -9404,7 +9566,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.01953125,
+      "share": 0.01855064084031994,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -9413,12 +9575,12 @@
      },
      {
       "key": "items",
-      "chars": 19052,
-      "share": 0.9665178571428571,
+      "chars": 20094,
+      "share": 0.9681989014165944,
       "descriptions": {
-       "count": 120,
-       "textChars": 2999,
-       "withKeyChars": 5053
+       "count": 128,
+       "textChars": 3309,
+       "withKeyChars": 5503
       }
      }
     ]
@@ -9453,28 +9615,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -10125,6 +10288,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -10137,44 +10326,44 @@
    "profile": "kind=speak",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.28",
+   "promptVersion": "generate.v1.29",
    "where": "practice/setProfiles.ts — explainSchemaFor('speak', null)",
    "system": {
-    "chars": 20121,
-    "sha256": "6436b691ef46e5703e9f231b5992e052adc4b73c76e34bacb75a87554d90858b",
+    "chars": 21165,
+    "sha256": "b0d54f7a6127b9e82c6574bf25bbc532e37ced3e1a010760d020237e1cee712c",
     "textTokens": null
    },
    "schema": {
-    "chars": 19380,
-    "sha256": "88689bfb40525d934d1ca8cb90cf2e5e0b4290615b0accfb5f5a8f2bf87e70e3",
+    "chars": 20422,
+    "sha256": "934a2539c20930b8bdf32a3d673cd073f2e394e283c45793d69a7e473e567708",
     "textTokens": null,
     "shape": {
-     "chars": 19380,
-     "nodes": 328,
+     "chars": 20422,
+     "nodes": 342,
      "maxDepth": 10,
-     "objects": 55,
-     "properties": 226,
+     "objects": 58,
+     "properties": 236,
      "optionalFields": 13,
      "anyOfNodes": 25,
      "nullableAnyOf": 24,
      "unions": 1,
-     "unionBranches": 25,
-     "enums": 51,
-     "enumValues": 176,
-     "singletonEnums": 26,
-     "propertyNameChars": 753,
-     "enumValueChars": 1073,
+     "unionBranches": 26,
+     "enums": 53,
+     "enumValues": 181,
+     "singletonEnums": 27,
+     "propertyNameChars": 766,
+     "enumValueChars": 1098,
      "descriptions": {
-      "count": 120,
-      "textChars": 2847,
-      "withKeyChars": 4897
+      "count": 128,
+      "textChars": 3157,
+      "withKeyChars": 5347
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.005675954592363261,
+      "share": 0.00538634805601802,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -10184,7 +10373,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.0008771929824561404,
+      "share": 0.0008324356086573303,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -10194,7 +10383,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.019865841073271415,
+      "share": 0.01885221819606307,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -10203,12 +10392,12 @@
      },
      {
       "key": "items",
-      "chars": 18720,
-      "share": 0.9659442724458205,
+      "chars": 19762,
+      "share": 0.9676819116638918,
       "descriptions": {
-       "count": 119,
-       "textChars": 2772,
-       "withKeyChars": 4805
+       "count": 127,
+       "textChars": 3082,
+       "withKeyChars": 5255
       }
      }
     ]
@@ -10243,28 +10432,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -10915,6 +11105,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -10927,44 +11143,44 @@
    "profile": "kind=help",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.28",
+   "promptVersion": "generate.v1.29",
    "where": "practice/setProfiles.ts — explainSchemaFor('help', null)",
    "system": {
-    "chars": 20121,
-    "sha256": "6436b691ef46e5703e9f231b5992e052adc4b73c76e34bacb75a87554d90858b",
+    "chars": 21165,
+    "sha256": "b0d54f7a6127b9e82c6574bf25bbc532e37ced3e1a010760d020237e1cee712c",
     "textTokens": null
    },
    "schema": {
-    "chars": 39402,
-    "sha256": "840ffcf96c7db74c8213cb67c98e11d94debe1c4deb3c9e5ce819f128adf774f",
+    "chars": 41486,
+    "sha256": "5b61fdcb8210d85e6a1609dcd304c8e74ff85e16bb32f42d6bb8f16bc2133701",
     "textTokens": null,
     "shape": {
-     "chars": 39402,
-     "nodes": 645,
+     "chars": 41486,
+     "nodes": 673,
      "maxDepth": 11,
-     "objects": 112,
-     "properties": 444,
+     "objects": 118,
+     "properties": 464,
      "optionalFields": 24,
      "anyOfNodes": 45,
      "nullableAnyOf": 42,
      "unions": 3,
-     "unionBranches": 54,
-     "enums": 105,
-     "enumValues": 318,
-     "singletonEnums": 54,
-     "propertyNameChars": 1430,
-     "enumValueChars": 1814,
+     "unionBranches": 56,
+     "enums": 109,
+     "enumValues": 328,
+     "singletonEnums": 56,
+     "propertyNameChars": 1456,
+     "enumValueChars": 1864,
      "descriptions": {
-      "count": 242,
-      "textChars": 7034,
-      "withKeyChars": 11178
+      "count": 258,
+      "textChars": 7654,
+      "withKeyChars": 12078
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.0027917364600781687,
+      "share": 0.002651496890517283,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -10974,7 +11190,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.0004314501801938988,
+      "share": 0.00040977679217085283,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -10984,7 +11200,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.00977107761027359,
+      "share": 0.009280239116810491,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -10993,12 +11209,12 @@
      },
      {
       "key": "items",
-      "chars": 38742,
-      "share": 0.983249581239531,
+      "chars": 40826,
+      "share": 0.9840910186568963,
       "descriptions": {
-       "count": 241,
-       "textChars": 6959,
-       "withKeyChars": 11086
+       "count": 257,
+       "textChars": 7579,
+       "withKeyChars": 11986
       }
      }
     ]
@@ -11033,28 +11249,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -11705,6 +11922,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -11739,28 +11982,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -12411,6 +12655,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -12562,44 +12832,44 @@
    "profile": "kind=listen",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.28",
+   "promptVersion": "generate.v1.29",
    "where": "practice/setProfiles.ts — explainSchemaFor('listen', null)",
    "system": {
-    "chars": 20121,
-    "sha256": "6436b691ef46e5703e9f231b5992e052adc4b73c76e34bacb75a87554d90858b",
+    "chars": 21165,
+    "sha256": "b0d54f7a6127b9e82c6574bf25bbc532e37ced3e1a010760d020237e1cee712c",
     "textTokens": null
    },
    "schema": {
-    "chars": 19198,
-    "sha256": "663cc83f759613832529dfded7df2e0753645c7eebdcabe734902e249a588a83",
+    "chars": 20240,
+    "sha256": "afcbce8b7cc6add94a356d2c3873920e1476fbeb4d87b39c13036780e8fc7174",
     "textTokens": null,
     "shape": {
-     "chars": 19198,
-     "nodes": 319,
+     "chars": 20240,
+     "nodes": 333,
      "maxDepth": 13,
-     "objects": 55,
-     "properties": 220,
+     "objects": 58,
+     "properties": 230,
      "optionalFields": 11,
      "anyOfNodes": 21,
      "nullableAnyOf": 20,
      "unions": 1,
-     "unionBranches": 25,
-     "enums": 50,
-     "enumValues": 160,
-     "singletonEnums": 25,
-     "propertyNameChars": 738,
-     "enumValueChars": 1006,
+     "unionBranches": 26,
+     "enums": 52,
+     "enumValues": 165,
+     "singletonEnums": 26,
+     "propertyNameChars": 751,
+     "enumValueChars": 1031,
      "descriptions": {
-      "count": 120,
-      "textChars": 3040,
-      "withKeyChars": 5092
+      "count": 128,
+      "textChars": 3350,
+      "withKeyChars": 5542
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.005729763517033025,
+      "share": 0.005434782608695652,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -12609,7 +12879,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.000885508907177831,
+      "share": 0.0008399209486166008,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -12619,7 +12889,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.020054172309615585,
+      "share": 0.019021739130434784,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -12628,12 +12898,12 @@
      },
      {
       "key": "listen",
-      "chars": 18545,
-      "share": 0.9659860402125221,
+      "chars": 19587,
+      "share": 0.9677371541501977,
       "descriptions": {
-       "count": 119,
-       "textChars": 2965,
-       "withKeyChars": 5000
+       "count": 127,
+       "textChars": 3275,
+       "withKeyChars": 5450
       }
      }
     ]
@@ -12668,28 +12938,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -13342,6 +13613,32 @@
          "withKeyChars": 219
         }
        }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
+        }
+       }
       }
      ]
     }
@@ -13352,11 +13649,11 @@
    "profile": "kind=spelling_dictation",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.28",
+   "promptVersion": "generate.v1.29",
    "where": "practice/setProfiles.ts — explainSchemaFor('spelling_dictation', null)",
    "system": {
-    "chars": 20121,
-    "sha256": "6436b691ef46e5703e9f231b5992e052adc4b73c76e34bacb75a87554d90858b",
+    "chars": 21165,
+    "sha256": "b0d54f7a6127b9e82c6574bf25bbc532e37ced3e1a010760d020237e1cee712c",
     "textTokens": null
    },
    "schema": {
@@ -13435,11 +13732,11 @@
    "profile": "kind=teach_back",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.28",
+   "promptVersion": "generate.v1.29",
    "where": "practice/setProfiles.ts — explainSchemaFor('teach_back', null)",
    "system": {
-    "chars": 20121,
-    "sha256": "6436b691ef46e5703e9f231b5992e052adc4b73c76e34bacb75a87554d90858b",
+    "chars": 21165,
+    "sha256": "b0d54f7a6127b9e82c6574bf25bbc532e37ced3e1a010760d020237e1cee712c",
     "textTokens": null
    },
    "schema": {
@@ -13518,44 +13815,44 @@
    "profile": "kind=practice + sheets (3 placeholder topics)",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.28",
+   "promptVersion": "generate.v1.29",
    "where": "practice/setProfiles.ts — explainSchemaFor('practice', sheets.topics)",
    "system": {
-    "chars": 20121,
-    "sha256": "6436b691ef46e5703e9f231b5992e052adc4b73c76e34bacb75a87554d90858b",
+    "chars": 21165,
+    "sha256": "b0d54f7a6127b9e82c6574bf25bbc532e37ced3e1a010760d020237e1cee712c",
     "textTokens": null
    },
    "schema": {
-    "chars": 54777,
-    "sha256": "ccf815e0edd72889d8a3e71ff6c12e55124d7d7351ca36815d774f00520e28db",
+    "chars": 56861,
+    "sha256": "22c146ece9ceae130a28cac89215c853ebd5618b6a664ec6bc5ce8a0fe5fcee4",
     "textTokens": null,
     "shape": {
-     "chars": 54777,
-     "nodes": 829,
+     "chars": 56861,
+     "nodes": 857,
      "maxDepth": 11,
-     "objects": 141,
-     "properties": 564,
+     "objects": 147,
+     "properties": 584,
      "optionalFields": 55,
      "anyOfNodes": 75,
      "nullableAnyOf": 67,
      "unions": 8,
-     "unionBranches": 72,
-     "enums": 148,
-     "enumValues": 481,
-     "singletonEnums": 72,
-     "propertyNameChars": 2112,
-     "enumValueChars": 2456,
+     "unionBranches": 74,
+     "enums": 152,
+     "enumValues": 491,
+     "singletonEnums": 74,
+     "propertyNameChars": 2138,
+     "enumValueChars": 2506,
      "descriptions": {
-      "count": 327,
-      "textChars": 12322,
-      "withKeyChars": 17921
+      "count": 343,
+      "textChars": 12942,
+      "withKeyChars": 18821
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.002008142103437574,
+      "share": 0.0019345421290515468,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -13565,7 +13862,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.0003103492341676251,
+      "share": 0.00029897469267160267,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -13575,7 +13872,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.00702849736203151,
+      "share": 0.006770897451680413,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -13584,18 +13881,18 @@
      },
      {
       "key": "items",
-      "chars": 38787,
-      "share": 0.7080891615093926,
+      "chars": 40871,
+      "share": 0.7187879214224161,
       "descriptions": {
-       "count": 241,
-       "textChars": 6965,
-       "withKeyChars": 11092
+       "count": 257,
+       "textChars": 7585,
+       "withKeyChars": 11992
       }
      },
      {
       "key": "bars",
       "chars": 1708,
-      "share": 0.031180970115194332,
+      "share": 0.0300381632401822,
       "descriptions": {
        "count": 9,
        "textChars": 752,
@@ -13605,7 +13902,7 @@
      {
       "key": "staffs",
       "chars": 4933,
-      "share": 0.09005604542052321,
+      "share": 0.086755421114648,
       "descriptions": {
        "count": 16,
        "textChars": 1191,
@@ -13615,7 +13912,7 @@
      {
       "key": "structured",
       "chars": 8657,
-      "share": 0.15804078354053708,
+      "share": 0.15224846555635674,
       "descriptions": {
        "count": 60,
        "textChars": 3339,
@@ -13654,28 +13951,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -14326,6 +14624,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -14360,28 +14684,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -15032,6 +15357,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -15824,44 +16175,44 @@
    "profile": "kind=test + sheets (3 placeholder topics)",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "generate.v1.28",
+   "promptVersion": "generate.v1.29",
    "where": "practice/setProfiles.ts — explainSchemaFor('test', sheets.topics)",
    "system": {
-    "chars": 20121,
-    "sha256": "6436b691ef46e5703e9f231b5992e052adc4b73c76e34bacb75a87554d90858b",
+    "chars": 21165,
+    "sha256": "b0d54f7a6127b9e82c6574bf25bbc532e37ced3e1a010760d020237e1cee712c",
     "textTokens": null
    },
    "schema": {
-    "chars": 49817,
-    "sha256": "8961986d8b0f8bceaec8dae76aa4bdd8e5834e4e0fd482183576d3df5be8da59",
+    "chars": 51901,
+    "sha256": "85d7cfa957b2955b48fdbfd4c79b54ea1ae4b0e9630548ae160c10e22bfdc1c9",
     "textTokens": null,
     "shape": {
-     "chars": 49817,
-     "nodes": 790,
+     "chars": 51901,
+     "nodes": 818,
      "maxDepth": 11,
-     "objects": 132,
-     "properties": 538,
+     "objects": 138,
+     "properties": 558,
      "optionalFields": 53,
      "anyOfNodes": 70,
      "nullableAnyOf": 64,
      "unions": 6,
-     "unionBranches": 65,
-     "enums": 137,
-     "enumValues": 447,
-     "singletonEnums": 65,
-     "propertyNameChars": 1998,
-     "enumValueChars": 2316,
+     "unionBranches": 67,
+     "enums": 141,
+     "enumValues": 457,
+     "singletonEnums": 67,
+     "propertyNameChars": 2024,
+     "enumValueChars": 2366,
      "descriptions": {
-      "count": 305,
-      "textChars": 9714,
-      "withKeyChars": 14931
+      "count": 321,
+      "textChars": 10334,
+      "withKeyChars": 15831
      }
     },
     "topLevel": [
      {
       "key": "usable",
       "chars": 110,
-      "share": 0.002208081578577594,
+      "share": 0.002119419664360995,
       "descriptions": {
        "count": 1,
        "textChars": 75,
@@ -15871,7 +16222,7 @@
      {
       "key": "title",
       "chars": 17,
-      "share": 0.00034124897123471906,
+      "share": 0.00032754667540124465,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -15881,7 +16232,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.007728285525021579,
+      "share": 0.007417968825263482,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -15890,18 +16241,18 @@
      },
      {
       "key": "items",
-      "chars": 35543,
-      "share": 0.7134713049762129,
+      "chars": 37627,
+      "share": 0.7249763973719197,
       "descriptions": {
-       "count": 228,
-       "textChars": 5109,
-       "withKeyChars": 9009
+       "count": 244,
+       "textChars": 5729,
+       "withKeyChars": 9909
       }
      },
      {
       "key": "staffs",
       "chars": 4933,
-      "share": 0.099022422064757,
+      "share": 0.09504633822084353,
       "descriptions": {
        "count": 16,
        "textChars": 1191,
@@ -15911,7 +16262,7 @@
      {
       "key": "structured",
       "chars": 8657,
-      "share": 0.17377602023405664,
+      "share": 0.1667983275852103,
       "descriptions": {
        "count": 60,
        "textChars": 3339,
@@ -15950,28 +16301,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -16622,6 +16974,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -16656,28 +17034,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -17328,6 +17707,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -17869,44 +18274,44 @@
    "profile": "study",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "extract.v8.10",
+   "promptVersion": "extract.v8.11",
    "where": "materials/service.ts — homework ? HOMEWORK_* : EXTRACT_*",
    "system": {
-    "chars": 26144,
-    "sha256": "d75776d146fc61480af481def4692dafe31d9f16514b8b665969b7ca76437eb4",
+    "chars": 27188,
+    "sha256": "ce7b0e2354573cf6d2d25e7cab02eef823df44314a043c19d14b983fe18e1fa6",
     "textTokens": null
    },
    "schema": {
-    "chars": 58258,
-    "sha256": "d9dce71442c248dffa5c0742badff37ebd0af593787eb537a81f3f674686ffe8",
+    "chars": 60342,
+    "sha256": "7790f00a42cbc84d6d3896705cbfdfbe993446f9d87b152fc7c4e3bb368dd89c",
     "textTokens": null,
     "shape": {
-     "chars": 58258,
-     "nodes": 868,
+     "chars": 60342,
+     "nodes": 896,
      "maxDepth": 11,
-     "objects": 135,
-     "properties": 579,
+     "objects": 141,
+     "properties": 599,
      "optionalFields": 73,
      "anyOfNodes": 89,
      "nullableAnyOf": 84,
      "unions": 5,
-     "unionBranches": 65,
-     "enums": 126,
-     "enumValues": 381,
-     "singletonEnums": 65,
-     "propertyNameChars": 2417,
-     "enumValueChars": 2295,
+     "unionBranches": 67,
+     "enums": 130,
+     "enumValues": 391,
+     "singletonEnums": 67,
+     "propertyNameChars": 2443,
+     "enumValueChars": 2345,
      "descriptions": {
-      "count": 357,
-      "textChars": 14879,
-      "withKeyChars": 20986
+      "count": 373,
+      "textChars": 15499,
+      "withKeyChars": 21886
      }
     },
     "topLevel": [
      {
       "key": "is_learning_material",
       "chars": 18,
-      "share": 0.00030897044182773184,
+      "share": 0.00029829969175698516,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -17916,7 +18321,7 @@
      {
       "key": "readable",
       "chars": 18,
-      "share": 0.00030897044182773184,
+      "share": 0.00029829969175698516,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -17926,7 +18331,7 @@
      {
       "key": "pages",
       "chars": 639,
-      "share": 0.01096845068488448,
+      "share": 0.010589639057372974,
       "descriptions": {
        "count": 4,
        "textChars": 236,
@@ -17936,7 +18341,7 @@
      {
       "key": "title",
       "chars": 90,
-      "share": 0.001544852209138659,
+      "share": 0.001491498458784926,
       "descriptions": {
        "count": 1,
        "textChars": 28,
@@ -17946,7 +18351,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.006608534450204264,
+      "share": 0.006380298962579961,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -17956,7 +18361,7 @@
      {
       "key": "extracted_text",
       "chars": 96,
-      "share": 0.0016478423564145696,
+      "share": 0.0015909316893705876,
       "descriptions": {
        "count": 1,
        "textChars": 62,
@@ -17965,18 +18370,18 @@
      },
      {
       "key": "items",
-      "chars": 39295,
-      "share": 0.6744996395344846,
+      "chars": 41379,
+      "share": 0.6857412747340161,
       "descriptions": {
-       "count": 243,
-       "textChars": 7347,
-       "withKeyChars": 11508
+       "count": 259,
+       "textChars": 7967,
+       "withKeyChars": 12408
       }
      },
      {
       "key": "structured",
       "chars": 11880,
-      "share": 0.203920491606303,
+      "share": 0.1968777965596102,
       "descriptions": {
        "count": 72,
        "textChars": 5668,
@@ -17986,7 +18391,7 @@
      {
       "key": "reading",
       "chars": 3830,
-      "share": 0.06574204401112294,
+      "share": 0.0634715455238474,
       "descriptions": {
        "count": 28,
        "textChars": 995,
@@ -17996,7 +18401,7 @@
      {
       "key": "more_items",
       "chars": 18,
-      "share": 0.00030897044182773184,
+      "share": 0.00029829969175698516,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -18006,7 +18411,7 @@
      {
       "key": "not_practicable",
       "chars": 372,
-      "share": 0.006385389131106457,
+      "share": 0.006164860296311027,
       "descriptions": {
        "count": 1,
        "textChars": 83,
@@ -18016,7 +18421,7 @@
      {
       "key": "unclear",
       "chars": 707,
-      "share": 0.012135672354011466,
+      "share": 0.011716549004010474,
       "descriptions": {
        "count": 5,
        "textChars": 359,
@@ -18026,7 +18431,7 @@
      {
       "key": "other_subject",
       "chars": 581,
-      "share": 0.009972879261217343,
+      "share": 0.009628451161711578,
       "descriptions": {
        "count": 2,
        "textChars": 101,
@@ -18065,28 +18470,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -18737,6 +19143,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -18771,28 +19203,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -19443,6 +19876,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -19953,44 +20412,44 @@
    "profile": "study + LEAN_RULES (after a cut-off answer)",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "extract.v8.10",
+   "promptVersion": "extract.v8.11",
    "where": "materials/service.ts — lean",
    "system": {
-    "chars": 26549,
-    "sha256": "aebc1278f0f0ef5b20b2d54e4a289a31ecd668b100d06c79e975059b367230cd",
+    "chars": 27593,
+    "sha256": "496b35cc62325c98cfc20201a55760f448d07f52fa439127ec2e01ce95683d3a",
     "textTokens": null
    },
    "schema": {
-    "chars": 58258,
-    "sha256": "d9dce71442c248dffa5c0742badff37ebd0af593787eb537a81f3f674686ffe8",
+    "chars": 60342,
+    "sha256": "7790f00a42cbc84d6d3896705cbfdfbe993446f9d87b152fc7c4e3bb368dd89c",
     "textTokens": null,
     "shape": {
-     "chars": 58258,
-     "nodes": 868,
+     "chars": 60342,
+     "nodes": 896,
      "maxDepth": 11,
-     "objects": 135,
-     "properties": 579,
+     "objects": 141,
+     "properties": 599,
      "optionalFields": 73,
      "anyOfNodes": 89,
      "nullableAnyOf": 84,
      "unions": 5,
-     "unionBranches": 65,
-     "enums": 126,
-     "enumValues": 381,
-     "singletonEnums": 65,
-     "propertyNameChars": 2417,
-     "enumValueChars": 2295,
+     "unionBranches": 67,
+     "enums": 130,
+     "enumValues": 391,
+     "singletonEnums": 67,
+     "propertyNameChars": 2443,
+     "enumValueChars": 2345,
      "descriptions": {
-      "count": 357,
-      "textChars": 14879,
-      "withKeyChars": 20986
+      "count": 373,
+      "textChars": 15499,
+      "withKeyChars": 21886
      }
     },
     "topLevel": [
      {
       "key": "is_learning_material",
       "chars": 18,
-      "share": 0.00030897044182773184,
+      "share": 0.00029829969175698516,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -20000,7 +20459,7 @@
      {
       "key": "readable",
       "chars": 18,
-      "share": 0.00030897044182773184,
+      "share": 0.00029829969175698516,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -20010,7 +20469,7 @@
      {
       "key": "pages",
       "chars": 639,
-      "share": 0.01096845068488448,
+      "share": 0.010589639057372974,
       "descriptions": {
        "count": 4,
        "textChars": 236,
@@ -20020,7 +20479,7 @@
      {
       "key": "title",
       "chars": 90,
-      "share": 0.001544852209138659,
+      "share": 0.001491498458784926,
       "descriptions": {
        "count": 1,
        "textChars": 28,
@@ -20030,7 +20489,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.006608534450204264,
+      "share": 0.006380298962579961,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -20040,7 +20499,7 @@
      {
       "key": "extracted_text",
       "chars": 96,
-      "share": 0.0016478423564145696,
+      "share": 0.0015909316893705876,
       "descriptions": {
        "count": 1,
        "textChars": 62,
@@ -20049,18 +20508,18 @@
      },
      {
       "key": "items",
-      "chars": 39295,
-      "share": 0.6744996395344846,
+      "chars": 41379,
+      "share": 0.6857412747340161,
       "descriptions": {
-       "count": 243,
-       "textChars": 7347,
-       "withKeyChars": 11508
+       "count": 259,
+       "textChars": 7967,
+       "withKeyChars": 12408
       }
      },
      {
       "key": "structured",
       "chars": 11880,
-      "share": 0.203920491606303,
+      "share": 0.1968777965596102,
       "descriptions": {
        "count": 72,
        "textChars": 5668,
@@ -20070,7 +20529,7 @@
      {
       "key": "reading",
       "chars": 3830,
-      "share": 0.06574204401112294,
+      "share": 0.0634715455238474,
       "descriptions": {
        "count": 28,
        "textChars": 995,
@@ -20080,7 +20539,7 @@
      {
       "key": "more_items",
       "chars": 18,
-      "share": 0.00030897044182773184,
+      "share": 0.00029829969175698516,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -20090,7 +20549,7 @@
      {
       "key": "not_practicable",
       "chars": 372,
-      "share": 0.006385389131106457,
+      "share": 0.006164860296311027,
       "descriptions": {
        "count": 1,
        "textChars": 83,
@@ -20100,7 +20559,7 @@
      {
       "key": "unclear",
       "chars": 707,
-      "share": 0.012135672354011466,
+      "share": 0.011716549004010474,
       "descriptions": {
        "count": 5,
        "textChars": 359,
@@ -20110,7 +20569,7 @@
      {
       "key": "other_subject",
       "chars": 581,
-      "share": 0.009972879261217343,
+      "share": 0.009628451161711578,
       "descriptions": {
        "count": 2,
        "textChars": 101,
@@ -20149,28 +20608,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -20821,6 +21281,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -20855,28 +21341,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -21527,6 +22014,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -22037,44 +22550,44 @@
    "profile": "homework",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "extract.v8.10",
+   "promptVersion": "extract.v8.11",
    "where": "materials/service.ts",
    "system": {
-    "chars": 23047,
-    "sha256": "39f4e28c5e59e4ebf2fca320a3dd52f87ccb661e27e169bcccbd8d632eb12f72",
+    "chars": 24091,
+    "sha256": "5c16032076c953fa64e0a97abc32a4aa402f75e0ce193dab9aea39137cfe42ac",
     "textTokens": null
    },
    "schema": {
-    "chars": 53024,
-    "sha256": "5e167af1de2fcc1bb519e10cea6271e1c83bc75dcf1cd1d1184ce2cf76ac8b16",
+    "chars": 55108,
+    "sha256": "4747caedbf5ed8c30811cb1a1821e71f299b59145d1f3350bf7953851db4ca9e",
     "textTokens": null,
     "shape": {
-     "chars": 53024,
-     "nodes": 797,
+     "chars": 55108,
+     "nodes": 825,
      "maxDepth": 11,
-     "objects": 128,
-     "properties": 534,
+     "objects": 134,
+     "properties": 554,
      "optionalFields": 59,
      "anyOfNodes": 75,
      "nullableAnyOf": 71,
      "unions": 4,
-     "unionBranches": 60,
-     "enums": 120,
-     "enumValues": 373,
-     "singletonEnums": 60,
-     "propertyNameChars": 2036,
-     "enumValueChars": 2238,
+     "unionBranches": 62,
+     "enums": 124,
+     "enumValues": 383,
+     "singletonEnums": 62,
+     "propertyNameChars": 2062,
+     "enumValueChars": 2288,
      "descriptions": {
-      "count": 322,
-      "textChars": 13058,
-      "withKeyChars": 18570
+      "count": 338,
+      "textChars": 13678,
+      "withKeyChars": 19470
      }
     },
     "topLevel": [
      {
       "key": "is_learning_material",
       "chars": 18,
-      "share": 0.00033946891973445987,
+      "share": 0.00032663134209189227,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -22084,7 +22597,7 @@
      {
       "key": "readable",
       "chars": 18,
-      "share": 0.00033946891973445987,
+      "share": 0.00032663134209189227,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -22094,7 +22607,7 @@
      {
       "key": "pages",
       "chars": 639,
-      "share": 0.012051146650573325,
+      "share": 0.011595412644262176,
       "descriptions": {
        "count": 4,
        "textChars": 236,
@@ -22104,7 +22617,7 @@
      {
       "key": "title",
       "chars": 90,
-      "share": 0.0016973445986722994,
+      "share": 0.0016331567104594614,
       "descriptions": {
        "count": 1,
        "textChars": 28,
@@ -22114,7 +22627,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.007260863005431503,
+      "share": 0.006986281483632141,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -22124,7 +22637,7 @@
      {
       "key": "extracted_text",
       "chars": 96,
-      "share": 0.0018105009052504525,
+      "share": 0.0017420338244900921,
       "descriptions": {
        "count": 1,
        "textChars": 62,
@@ -22133,18 +22646,18 @@
      },
      {
       "key": "items",
-      "chars": 39096,
-      "share": 0.7373264936632469,
+      "chars": 41180,
+      "share": 0.7472599259635625,
       "descriptions": {
-       "count": 242,
-       "textChars": 7229,
-       "withKeyChars": 11373
+       "count": 258,
+       "textChars": 7849,
+       "withKeyChars": 12273
       }
      },
      {
       "key": "structured",
       "chars": 10686,
-      "share": 0.201531382015691,
+      "share": 0.1939101400885534,
       "descriptions": {
        "count": 66,
        "textChars": 4960,
@@ -22154,7 +22667,7 @@
      {
       "key": "more_items",
       "chars": 18,
-      "share": 0.00033946891973445987,
+      "share": 0.00032663134209189227,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -22164,7 +22677,7 @@
      {
       "key": "not_practicable",
       "chars": 372,
-      "share": 0.007015691007845504,
+      "share": 0.006750381069899107,
       "descriptions": {
        "count": 1,
        "textChars": 83,
@@ -22174,7 +22687,7 @@
      {
       "key": "unclear",
       "chars": 707,
-      "share": 0.013333584791792396,
+      "share": 0.012829353269942658,
       "descriptions": {
        "count": 5,
        "textChars": 359,
@@ -22184,7 +22697,7 @@
      {
       "key": "other_subject",
       "chars": 581,
-      "share": 0.010957302353651176,
+      "share": 0.010542933875299412,
       "descriptions": {
        "count": 2,
        "textChars": 101,
@@ -22223,28 +22736,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -22895,6 +23409,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -22929,28 +23469,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -23601,6 +24142,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -23945,44 +24512,44 @@
    "profile": "homework + LEAN_RULES",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "extract.v8.10",
+   "promptVersion": "extract.v8.11",
    "where": "materials/service.ts — lean",
    "system": {
-    "chars": 23452,
-    "sha256": "75ff6f74e6d3835ddc4608f497f1227f88573ac121bc08b86ac35e6676fa3b76",
+    "chars": 24496,
+    "sha256": "2b90a279d2f593b44cc706b2e822d583c94fa99fb540d0c05861b33f339c0040",
     "textTokens": null
    },
    "schema": {
-    "chars": 53024,
-    "sha256": "5e167af1de2fcc1bb519e10cea6271e1c83bc75dcf1cd1d1184ce2cf76ac8b16",
+    "chars": 55108,
+    "sha256": "4747caedbf5ed8c30811cb1a1821e71f299b59145d1f3350bf7953851db4ca9e",
     "textTokens": null,
     "shape": {
-     "chars": 53024,
-     "nodes": 797,
+     "chars": 55108,
+     "nodes": 825,
      "maxDepth": 11,
-     "objects": 128,
-     "properties": 534,
+     "objects": 134,
+     "properties": 554,
      "optionalFields": 59,
      "anyOfNodes": 75,
      "nullableAnyOf": 71,
      "unions": 4,
-     "unionBranches": 60,
-     "enums": 120,
-     "enumValues": 373,
-     "singletonEnums": 60,
-     "propertyNameChars": 2036,
-     "enumValueChars": 2238,
+     "unionBranches": 62,
+     "enums": 124,
+     "enumValues": 383,
+     "singletonEnums": 62,
+     "propertyNameChars": 2062,
+     "enumValueChars": 2288,
      "descriptions": {
-      "count": 322,
-      "textChars": 13058,
-      "withKeyChars": 18570
+      "count": 338,
+      "textChars": 13678,
+      "withKeyChars": 19470
      }
     },
     "topLevel": [
      {
       "key": "is_learning_material",
       "chars": 18,
-      "share": 0.00033946891973445987,
+      "share": 0.00032663134209189227,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -23992,7 +24559,7 @@
      {
       "key": "readable",
       "chars": 18,
-      "share": 0.00033946891973445987,
+      "share": 0.00032663134209189227,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -24002,7 +24569,7 @@
      {
       "key": "pages",
       "chars": 639,
-      "share": 0.012051146650573325,
+      "share": 0.011595412644262176,
       "descriptions": {
        "count": 4,
        "textChars": 236,
@@ -24012,7 +24579,7 @@
      {
       "key": "title",
       "chars": 90,
-      "share": 0.0016973445986722994,
+      "share": 0.0016331567104594614,
       "descriptions": {
        "count": 1,
        "textChars": 28,
@@ -24022,7 +24589,7 @@
      {
       "key": "subject",
       "chars": 385,
-      "share": 0.007260863005431503,
+      "share": 0.006986281483632141,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -24032,7 +24599,7 @@
      {
       "key": "extracted_text",
       "chars": 96,
-      "share": 0.0018105009052504525,
+      "share": 0.0017420338244900921,
       "descriptions": {
        "count": 1,
        "textChars": 62,
@@ -24041,18 +24608,18 @@
      },
      {
       "key": "items",
-      "chars": 39096,
-      "share": 0.7373264936632469,
+      "chars": 41180,
+      "share": 0.7472599259635625,
       "descriptions": {
-       "count": 242,
-       "textChars": 7229,
-       "withKeyChars": 11373
+       "count": 258,
+       "textChars": 7849,
+       "withKeyChars": 12273
       }
      },
      {
       "key": "structured",
       "chars": 10686,
-      "share": 0.201531382015691,
+      "share": 0.1939101400885534,
       "descriptions": {
        "count": 66,
        "textChars": 4960,
@@ -24062,7 +24629,7 @@
      {
       "key": "more_items",
       "chars": 18,
-      "share": 0.00033946891973445987,
+      "share": 0.00032663134209189227,
       "descriptions": {
        "count": 0,
        "textChars": 0,
@@ -24072,7 +24639,7 @@
      {
       "key": "not_practicable",
       "chars": 372,
-      "share": 0.007015691007845504,
+      "share": 0.006750381069899107,
       "descriptions": {
        "count": 1,
        "textChars": 83,
@@ -24082,7 +24649,7 @@
      {
       "key": "unclear",
       "chars": 707,
-      "share": 0.013333584791792396,
+      "share": 0.012829353269942658,
       "descriptions": {
        "count": 5,
        "textChars": 359,
@@ -24092,7 +24659,7 @@
      {
       "key": "other_subject",
       "chars": 581,
-      "share": 0.010957302353651176,
+      "share": 0.010542933875299412,
       "descriptions": {
        "count": 2,
        "textChars": 101,
@@ -24131,28 +24698,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -24803,6 +25371,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
@@ -24837,28 +25431,29 @@
       0,
       0,
       0,
+      0,
       0
      ],
      "shape": {
-      "chars": 15868,
-      "nodes": 287,
+      "chars": 16910,
+      "nodes": 301,
       "maxDepth": 6,
-      "objects": 51,
-      "properties": 200,
+      "objects": 54,
+      "properties": 210,
       "optionalFields": 7,
       "anyOfNodes": 13,
       "nullableAnyOf": 12,
       "unions": 1,
-      "unionBranches": 25,
-      "enums": 47,
-      "enumValues": 128,
-      "singletonEnums": 25,
-      "propertyNameChars": 583,
-      "enumValueChars": 641,
+      "unionBranches": 26,
+      "enums": 49,
+      "enumValues": 133,
+      "singletonEnums": 26,
+      "propertyNameChars": 596,
+      "enumValueChars": 666,
       "descriptions": {
-       "count": 104,
-       "textChars": 1765,
-       "withKeyChars": 3539
+       "count": 112,
+       "textChars": 2075,
+       "withKeyChars": 3989
       }
      },
      "branches": [
@@ -25509,6 +26104,32 @@
          "count": 9,
          "textChars": 66,
          "withKeyChars": 219
+        }
+       }
+      },
+      {
+       "tag": "diagram",
+       "sha256": "ffa6755b5268ff165dc4e16a98567907c7db04fc851c636f62385dd461bd236f",
+       "shape": {
+        "chars": 1041,
+        "nodes": 14,
+        "maxDepth": 4,
+        "objects": 3,
+        "properties": 10,
+        "optionalFields": 0,
+        "anyOfNodes": 0,
+        "nullableAnyOf": 0,
+        "unions": 0,
+        "unionBranches": 0,
+        "enums": 2,
+        "enumValues": 5,
+        "singletonEnums": 1,
+        "propertyNameChars": 13,
+        "enumValueChars": 25,
+        "descriptions": {
+         "count": 8,
+         "textChars": 310,
+         "withKeyChars": 450
         }
        }
       }
