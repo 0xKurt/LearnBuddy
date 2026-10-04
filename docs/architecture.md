@@ -3012,11 +3012,33 @@ Inside an item, the fields no allowed kind keeps are
 left out too, from `practice/itemFields.ts` — the same constants `usableItems` and `usableRubric`
 discard by: a rubric (and its `RubricCheck` union) without a long answer, a tolerance without a
 number, a spelling mode without a typed word, pictures as options (`choice_figures`, an array of the
-`ModelFigure` union, #231) without a multiple choice. The subject is never a rule. The mask is
+`ModelFigure` union, #231) without a multiple choice, and a figure with its chart reading (`figure`,
+`read`) on a vocab or speak card (`FIGURE_KINDS`, #375: a word or a pronunciation needs no
+drawing). The subject is never a rule. The mask is
 `unusedItemFields(kinds)` in `itemFields.ts`, and the listening question uses it too
 (`listen.ts`, `ListenQuestion`): its two kinds (`multiple_choice`, `short`) keep no rubric and no
 tolerance, so neither is in its schema, and `listenItems` stores `rubric: null` (before
 `generate.v1.27` a rubric the model wrote on a listening question was stored as it came).
+
+**Figure mask (#375, `generate.v1.30`).** `ModelFigure` was 80–83 % of the vocab, speak and listen
+schemas. Since the rule above, a vocab or speak run's schema holds no figure at all, and a figure
+the model writes on such a card anyway is dropped by `usableItems` while the card stays — like a
+spelling mode on a number; it is gone before anything checks it, so even a broken one does not
+cost the card (`clipDraft` asks `wholeFigure.ts` only for kinds that keep a figure). That holds for
+the card in every run (a vocab card in a practice run or from a sheet keeps no figure either); the
+practice, test and help schemas are unchanged byte for byte. A listening question keeps pictures as
+options, but only those `choiceProblem` holds to their option's own text (`primaryHolds`): a clock,
+coins and notes, a dot field, base-ten blocks — `HeardOptionFigure` in `listen.ts`, the
+`ModelFigure` branches `isPrimary` admits, so no list of its own. The option text is what Rule 0
+holds to the words she heard, so only such a picture is held to them too; a graph or a cube net is
+checked against the key or its sibling options, a chart, a tree or a solid against nothing an
+option says. A picture outside that subset does not parse and the question goes, and so does one
+whose picture does not say what it shows (`ask` "none", no `primaryKey`) — `listenItems`.
+Proven by `__tests__/figure-mask.int.test.ts` (vocab and speak runs, practice unchanged),
+`__tests__/listening.int.test.ts` (a table and an `ask`-less clock refused, real clocks kept) and
+`practice/__tests__/profiles.test.ts`. Sizes before → after at `generate.v1.30` (characters of the
+emitted schema): vocab 20 754 → 3 379, speak 20 422 → 3 047, listen 20 240 → 5 472; every other call
+of the inventory has the same schema and system prompt sha256 as before.
 
 | kind               | items                                                 | structured                                        | bars | staffs | listen | dictation | teach_back |
 | ------------------ | ----------------------------------------------------- | ------------------------------------------------- | ---- | ------ | ------ | --------- | ---------- |
@@ -3033,12 +3055,9 @@ A sheet-bound run (a practice or test for a planned test) is the same profile wi
 topics as the item `topic` enum. With no kind known (`setSchemaForModel(null, …)`), the fallback is
 every form but the listening task and the Diktat — byte for byte `GENERATED_SCHEMA`, what every
 run without sheets was sent before D2; today every call knows its kind, so it is the measured baseline. Not
-narrowed, because code cannot prove a form unusable there: `ModelFigure` (all 25 figure types stay
-in every profile with items, also vocab and speak, and as the options of a listening multiple
-choice — `usableItems` and `listenItems` keep a figure on every kind, so leaving it out needs a
-product rule first, not a profile; at `generate.v1.27` it is 80–83 % of the vocab, speak and listen
-schemas and appears twice in every item schema with a multiple choice, as `figure` and
-`choice_figures[]`), the
+narrowed, because code cannot prove a form unusable there: `ModelFigure` in the practice, test and
+help schemas (all figure types, twice in every item schema with a multiple choice, as `figure` and
+`choice_figures[]` — narrowed only for vocab, speak and listen, see "Figure mask" above), the
 extraction schemas (a sheet is read before anyone knows what is on it) and the Buddy turn's
 `actions` (tool growth, D3 deferred by the #279 consensus). Proven by
 `practice/__tests__/profiles.test.ts` (every valid form passes `testing/schemaCheck.ts`, a stand-in
@@ -3289,7 +3308,8 @@ word list, so it stays a prompt rule.
   What passes then goes through `usableItems`, the checks every other question gets (issue #374):
   options and their pictures (`choiceProblem`, the figure bounds) and the key against a marked
   calculation (`computes`, #227) — a listening question is never stored less checked than a
-  written one. Only the content is judged: a slip of the pen on something she understood is right and her
+  written one. Its option pictures are only those held to the option's text — a clock, coins, a
+  dot field, base-ten blocks, each saying what it shows (#375, §Explain profiles "Figure mask"). Only the content is judged: a slip of the pen on something she understood is right and her
   spelling is never marked (`contentOnly` in `practice/evaluate.ts`, read off the stored text —
   NRW: "sprachliche Verstöße werden nicht gewertet", `lehrplan-und-uebungsformen.md` §7.3, issue
   #197). There is no hint ladder: the help is hearing it again, slower.

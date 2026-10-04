@@ -33,7 +33,13 @@ import type { Db } from '../../lib/db.js';
 import { CurriculumPointId } from '../curriculum/state.js';
 import { dollarMathField, dollarMathRuns } from './dollarMath.js';
 import { figureHolds } from './figureCheck.js';
-import { CHOICE_FIGURE_KINDS, kindIn, SPELLING_KINDS, TOLERANCE_KINDS } from './itemFields.js';
+import {
+  CHOICE_FIGURE_KINDS,
+  FIGURE_KINDS,
+  kindIn,
+  SPELLING_KINDS,
+  TOLERANCE_KINDS,
+} from './itemFields.js';
 import { usableRubric } from './rubric.js';
 import { mentionsSolution } from './tutor.js';
 import { choiceProblem, MAX_FIGURE_CHOICES, type ChoiceDraft } from './choiceCheck.js';
@@ -83,6 +89,17 @@ export const LANGUAGE_RULES = `Language: everything you write yourself (question
 /** The most other accepted answers per item — the number the prompts name (audit H-14). */
 export const MAX_ACCEPTED = 8;
 
+/**
+ * Pictures as the options of a multiple choice (#231), one per option, each one of `figure` — every
+ * model figure for a question of her own, fewer for a listening question (#375, `listen.ts`).
+ * No `.catch`: an option's picture that cannot be read costs the whole question — a "which graph"
+ * question with one graph missing is not a question (Regel 0). Optional, not defaulted: the drafts
+ * code builds itself (bars.ts, structured.ts) never have option pictures and need not say so.
+ */
+export function optionPictures<F extends z.ZodTypeAny>(figure: F, description: string) {
+  return z.array(figure).min(2).max(MAX_FIGURE_CHOICES).nullish().describe(description);
+}
+
 export const ItemDraft = z.object({
   kind: z
     .enum(['short', 'long', 'numeric', 'multiple_choice', 'formula', 'vocab', 'speak'])
@@ -126,18 +143,10 @@ export const ItemDraft = z.object({
   // `ModelFigure` and not `Figure`: a note line is the one figure the model may not write,
   // because its key is READ OFF the drawing (issue #226, `contracts/figure.ts` says why).
   figure: ModelFigure.nullable().default(null).catch(null),
-  // No `.catch` here: an option's picture that cannot be read costs the whole question — a
-  // "which graph" question with one graph missing is not a question (#231, Regel 0).
-  choice_figures: z
-    .array(ModelFigure)
-    .min(2)
-    .max(MAX_FIGURE_CHOICES)
-    // Optional, not defaulted: the drafts code builds itself (bars.ts, structured.ts) never
-    // have option pictures and need not say so.
-    .nullish()
-    .describe(
-      'multiple_choice only: one figure per choice, same order as choices, when the options ARE pictures ("Welcher Graph passt zu …?"); else null',
-    ),
+  choice_figures: optionPictures(
+    ModelFigure,
+    'multiple_choice only: one figure per choice, same order as choices, when the options ARE pictures ("Welcher Graph passt zu …?"); else null',
+  ),
   /**
    * What the question reads off its chart (issues #245, #246). With it, code computes the key
    * from the chart's data and drops the question when the model's key disagrees
@@ -217,8 +226,9 @@ function clipDraft(raw: unknown): unknown {
   const o = { ...(raw as Record<string, unknown>) };
   // A figure that IS the question costs it when it does not hold (`wholeFigure.ts`): "Werte das
   // Klimadiagramm aus" without the diagram is no question. Any other broken figure is still
-  // dropped alone (`figure` is caught to null, audit H-15).
-  if (figureIsRejected(o.figure)) return null;
+  // dropped alone (`figure` is caught to null, audit H-15). A kind that keeps no figure (#375,
+  // `FIGURE_KINDS`) is never about one: `usableItems` drops it, whatever it holds.
+  if (kindIn(FIGURE_KINDS, String(o.kind)) && figureIsRejected(o.figure)) return null;
   if (Array.isArray(o.accepted_answers)) {
     o.accepted_answers = o.accepted_answers
       .filter((a): a is string => typeof a === 'string' && a.trim().length > 0 && a.length <= 200)
@@ -412,6 +422,9 @@ export function samePrompt(prompt: string): string {
 export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}): ItemDraft[] {
   const out: ItemDraft[] = [];
   for (const raw of items) {
+    // A word to translate or a sentence to say carries no drawing (#375): its figure is dropped
+    // before anything reads it, the card stays — like a spelling mode on a number.
+    const figure = kindIn(FIGURE_KINDS, raw.kind) ? raw.figure : null;
     const normalised = {
       ...raw,
       // LaTeX without dollar signs: only the math runs of a sentence, a math field as a whole.
@@ -419,7 +432,7 @@ export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}):
       answer: dollarMathField(raw.answer),
       accepted_answers: raw.accepted_answers.map(dollarMathField),
       choices: raw.choices ? raw.choices.map(dollarMathField) : null,
-      figure: usableFigure(raw.figure),
+      figure: usableFigure(figure),
       choice_figures: optionFigures(raw),
       tolerance: usableTolerance(raw),
       spelling: kindIn(SPELLING_KINDS, raw.kind) ? raw.spelling : null,
@@ -430,7 +443,7 @@ export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}):
     // A question about a chart (issues #245, #246): its key is computed from the chart's data
     // and the model's must agree with it — before anything else looks at the key, because the
     // options of a type question and the tolerance of a reading are written here.
-    const read = checkedRead(normalised, raw.figure, opts.locale ?? null);
+    const read = checkedRead(normalised, figure, opts.locale ?? null);
     // The same for a tree, a pedigree or an automaton (issue #256, `treeCheck.ts`).
     // And for a periodic table (issue #250, `periodicCheck.ts`).
     const periodic = checkedPeriodic(

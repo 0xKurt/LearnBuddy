@@ -12,6 +12,7 @@
 // The fixtures are written once per FORM, so a new form shows up here as a row to add, not as a
 // silently untested branch.
 
+import { PRIMARY_TYPES } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { toJsonSchema } from '../../../llm/json-schema.js';
@@ -354,6 +355,13 @@ describe('the nested unions', () => {
     expect(Object.keys(itemOf('speak'))).not.toContain('choice_figures');
     for (const kind of ['practice', 'test', 'help'] as const) {
       expect(Object.keys(itemOf(kind))).toContain('choice_figures');
+      expect(Object.keys(itemOf(kind))).toEqual(expect.arrayContaining(['figure', 'read']));
+    }
+    // A word to translate or a sentence to say carries no drawing (#375): no ModelFigure at all.
+    for (const kind of ['vocab', 'speak'] as const) {
+      expect(Object.keys(itemOf(kind))).not.toContain('figure');
+      expect(Object.keys(itemOf(kind))).not.toContain('read');
+      expect(JSON.stringify(explainSchemaFor(kind, null))).not.toContain('function_plot');
     }
     // A test has no long answer, so no rubric and no RubricCheck union in it.
     expect(Object.keys(itemOf('test'))).not.toContain('rubric');
@@ -376,8 +384,16 @@ describe('the nested unions', () => {
     expect(fields).not.toContain('rubric');
     expect(fields).not.toContain('tolerance');
     expect(JSON.stringify(question)).not.toContain('word_count');
-    // A multiple choice may show pictures as its options (#231).
+    // A multiple choice may show pictures as its options (#231) — only those held to the option's
+    // text, the primary-school pictures (#375).
     expect(fields).toContain('choice_figures');
+    const pictures = question.properties.choice_figures as {
+      anyOf: { items?: { anyOf: { properties: { type: { enum: string[] } } }[] } }[];
+    };
+    const types = pictures.anyOf
+      .flatMap((b) => b.items?.anyOf ?? [])
+      .map((f) => f.properties.type.enum[0]);
+    expect(types).toEqual([...PRIMARY_TYPES]);
   });
 
   it('a sheet-bound run keeps its topic enum inside the profile', () => {
