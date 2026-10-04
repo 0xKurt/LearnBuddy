@@ -292,6 +292,11 @@
       "mode_xr": "X-chromosomal-rezessiv",
       "accepted": "Ja, es wird akzeptiert",
       "rejected": "Nein, es wird nicht akzeptiert"
+    },
+    "periodic": {
+      "metal": "Metall",
+      "metalloid": "Halbmetall",
+      "nonmetal": "Nichtmetall"
     }
   },
   "contact": {

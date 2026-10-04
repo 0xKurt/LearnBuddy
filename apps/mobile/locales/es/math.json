@@ -420,7 +420,11 @@
     "pedigree_affected": "afectada",
     "pedigree_child": "hija o hijo de {{fa}} y {{mo}}",
     "automaton": "Autómata con estado inicial {{start}}, estado final: {{finals}}",
-    "automaton_move": "Transición de {{from}} a {{to}} con {{symbols}}"
+    "automaton_move": "Transición de {{from}} a {{to}} con {{symbols}}",
+    "periodic_main": "Tabla periódica de los grupos principales I a VIII, periodos 1 a 6",
+    "periodic_full": "Tabla periódica con los grupos 1 a 18 y los periodos 1 a 7, sin lantánidos ni actínidos",
+    "periodic_stair": "Una línea escalonada separa los metales a la izquierda de los metaloides y no metales a la derecha",
+    "periodic_marked": "Marcado: {{sym}}, número atómico {{z}}, masa atómica {{mass}} u, grupo {{group}}, periodo {{period}}"
   },
   "keys": {
     "row": "Símbolos matemáticos",

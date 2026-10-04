@@ -54,7 +54,11 @@ export function figureIsRejectedTree(raw: unknown): boolean {
 }
 
 /** The item with its options and key as code wrote them, if `correct` is the model's choice. */
-function fixedChoice<T extends ItemDraft>(it: T, choices: string[], correct: number): T | null {
+export function fixedChoice<T extends ItemDraft>(
+  it: T,
+  choices: string[],
+  correct: number,
+): T | null {
   if (it.kind !== 'multiple_choice' || it.correct_choice !== correct) return null;
   const right = choices[correct];
   if (right === undefined) return null;

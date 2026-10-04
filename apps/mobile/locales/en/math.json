@@ -420,7 +420,11 @@
     "pedigree_affected": "affected",
     "pedigree_child": "child of {{fa}} and {{mo}}",
     "automaton": "Automaton with start state {{start}}, final state: {{finals}}",
-    "automaton_move": "Transition from {{from}} to {{to}} on {{symbols}}"
+    "automaton_move": "Transition from {{from}} to {{to}} on {{symbols}}",
+    "periodic_main": "Periodic table of the main groups I to VIII, periods 1 to 6",
+    "periodic_full": "Periodic table with groups 1 to 18 and periods 1 to 7, without lanthanides and actinides",
+    "periodic_stair": "A staircase line separates the metals on the left from the metalloids and nonmetals on the right",
+    "periodic_marked": "Marked: {{sym}}, atomic number {{z}}, atomic mass {{mass}} u, group {{group}}, period {{period}}"
   },
   "keys": {
     "row": "Math symbols",

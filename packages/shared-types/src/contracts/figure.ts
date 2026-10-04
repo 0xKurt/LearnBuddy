@@ -5,6 +5,7 @@
 
 import { z } from 'zod';
 
+import { PeriodicTableFigure } from './periodic.js';
 import { StaffFigure } from './staff.js';
 import { AutomatonFigure, PedigreeFigure, TreeFigure } from './tree.js';
 
@@ -440,6 +441,7 @@ const MODEL_FIGURES = [
   TreeFigure,
   PedigreeFigure,
   AutomatonFigure,
+  PeriodicTableFigure,
 ] as const;
 
 export const ModelFigure = z.discriminatedUnion('type', [...MODEL_FIGURES]);

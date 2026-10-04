@@ -292,6 +292,11 @@
       "mode_xr": "recessivo legato all’X",
       "accepted": "Sì, viene accettata",
       "rejected": "No, non viene accettata"
+    },
+    "periodic": {
+      "metal": "metallo",
+      "metalloid": "semimetallo",
+      "nonmetal": "non metallo"
     }
   },
   "contact": {

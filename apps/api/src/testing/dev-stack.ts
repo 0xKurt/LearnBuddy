@@ -28,6 +28,7 @@ import { scriptDictation } from './scenarios/dictation.js';
 import { scriptDrill } from './scenarios/drill.js';
 import { scriptFigures } from './scenarios/figures.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
+import { scriptPeriodic } from './scenarios/periodic.js';
 import { scriptPrimary } from './scenarios/primary.js';
 import { scriptTimedTest } from './scenarios/timedTest.js';
 import { scriptRoleplay } from './scenarios/roleplay.js';
@@ -72,6 +73,7 @@ async function main(): Promise<void> {
     scriptTour(scripted);
     scriptFigures();
     scriptTrees();
+    scriptPeriodic();
     scriptCloze();
     scriptDrill();
     scriptRoleplay(scripted);

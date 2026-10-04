@@ -93,7 +93,8 @@ import { TABLE_RULES } from './table.js';
 // v1.18: cloze, a text with several gaps (#232).
 // v1.19: a Diktat run (spelling_dictation, #242) with its own task and entries.
 // v1.20: primary-school figures — clock, money, dot field, base-ten blocks (#254).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.20';
+// v1.21: the periodic table as a figure (#250).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.21';
 
 const SUBJECT_KINDS = [
   'math',

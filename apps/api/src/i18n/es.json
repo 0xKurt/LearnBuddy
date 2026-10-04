@@ -292,6 +292,11 @@
       "mode_xr": "recesivo ligado al X",
       "accepted": "Sí, se acepta",
       "rejected": "No, no se acepta"
+    },
+    "periodic": {
+      "metal": "metal",
+      "metalloid": "metaloide",
+      "nonmetal": "no metal"
     }
   },
   "contact": {

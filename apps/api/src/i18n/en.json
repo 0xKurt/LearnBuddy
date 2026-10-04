@@ -292,6 +292,11 @@
       "mode_xr": "X-linked recessive",
       "accepted": "Yes, it is accepted",
       "rejected": "No, it is not accepted"
+    },
+    "periodic": {
+      "metal": "metal",
+      "metalloid": "metalloid",
+      "nonmetal": "nonmetal"
     }
   },
   "contact": {
