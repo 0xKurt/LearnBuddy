@@ -290,5 +290,9 @@
     "note": "Una risposta per domanda, niente suggerimenti.",
     "soon": "Guarda con calma cos’altro riesci a fare.",
     "up": "Il tempo è finito – il tuo risultato sta arrivando."
+  },
+  "select": {
+    "several": "Più di una è giusta: toccale tutte.",
+    "check_waits": "Quando ne hai spuntata almeno una."
   }
 }

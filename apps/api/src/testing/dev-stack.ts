@@ -23,6 +23,7 @@ import { createTestDatabase, testDatabaseAvailable } from './database.js';
 import { createDevApp, DevAuth, DevStorage } from './dev-app.js';
 import { FakeEmbeddings, FakeSpeech, ScriptedGateway } from './fakes.js';
 import { scriptCloze } from './scenarios/cloze.js';
+import { scriptSelectAll } from './scenarios/selectAll.js';
 import { scriptCoreLoop } from './scenarios/core-loop.js';
 import { scriptDictation } from './scenarios/dictation.js';
 import { scriptDrill } from './scenarios/drill.js';
@@ -63,6 +64,8 @@ async function main(): Promise<void> {
     // First: its generation rule is keyed on her list, and a broader rule registered earlier
     // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
     scriptDictation();
+    // Also first: "Latein" and "Fahrrad" are words an older, broader rule may know (#240).
+    scriptSelectAll();
     // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
     scriptPrimary();
     scriptCoreLoop(scripted);
