@@ -4,6 +4,11 @@
   "buildCommand": "",
   "outputDirectory": "public",
   "regions": ["fra1"],
+  "git": {
+    "deploymentEnabled": {
+      "claude/**": false
+    }
+  },
   "functions": {
     "api/index.ts": {
       "maxDuration": 300,
