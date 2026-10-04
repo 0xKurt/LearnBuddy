@@ -1,27 +1,31 @@
-// The place an answer is given in (issue #310): fixed slots, top to bottom, for every form —
+// The place an answer is given in (issues #310, #386): fixed slots, top to bottom, for every form —
+// one rule, the answer at the bottom, like the chat's input bar:
 //
-//   [answer]     the form itself: a board, a table, a text with gaps, the fraction bar, the note
-//                line. Right under the question and its Tipp row, never anywhere else.
+//   [free room]  what nobody needs collects here, between the question and its conversation above
+//                and the answer below (`FreeSpace`, issue #286) — never under the answer.
+//   [answer]     the form itself: options she taps, a board, a table, a text with gaps, the
+//                fraction bar, the note line. At the bottom, directly above its action.
 //   [keys]       optional: a row of keys for what she is typing in a board (the math keys of a
 //                table's cell), directly under the answer — a keyboard accessory (issue #16).
-//   [free room]  what nobody needs collects here, under the answer (`FreeSpace`, issue #286).
 //   [action]     "Prüfen" (`CheckBar`), pinned at the bottom, the same for every form — with a
-//                typed answer's input bar right above it (`InputBar`, issue #365: free text is
-//                typed at the bottom, like in the chat, never under the question) — or, where
+//                typed answer's input bar right above it (`InputBar`, issue #365) — or, where
 //                there is nothing to check, what stands in its place: options answered by a tap
-//                (with the voice slot in voice mode), "Weiter" once the question is closed, the
-//                pronunciation recorder. The free room is above it in every case.
+//                (with the voice slot in voice mode; without it only the screen edge's room, the
+//                tile being the action), "Weiter" once the question is closed, the pronunciation
+//                recorder.
 //
-// A form fills the slots and decides nothing about where they stand, how far apart they are or
-// how its action looks: before this every form brought its own bar and its own spacer, and which
-// side of the free room it ended up on depended on where it stood in the screen (#309). The
-// keyboard is handled once, by the screen's `KeyboardSafe` (CLAUDE.md rule 15); this column only
-// gives way inside it: the answer slot may shrink, and a board then scrolls inside itself
-// (`PartsArea`) rather than push "Prüfen" away.
+// Before #386 a board, a table and tap options stood right under the question with the free room
+// below them (#310 option B, 03.10.), while typed text sat at the bottom (#365): two rules in one
+// shell, and on a tall phone the answer floated in the middle of the screen (owner 04.10.). Now no
+// form decides its place, how far apart the slots are or how its action looks. The keyboard is
+// handled once, by the screen's `KeyboardSafe` (CLAUDE.md rule 15); this column only gives way
+// inside it: the free room goes first, then the answer slot may shrink, and a board then scrolls
+// inside itself (`PartsArea`) rather than push "Prüfen" away.
 //
-// Guarded (issue #310 §3.4): `lib/__tests__/answerShell.test.ts` fails when a
-// form imports the bar or the spacer itself; the walkthrough (`tests/web/fit.ts`) measures at
-// every stop that the answer stands right under what is above it and "Prüfen" lowest.
+// Guarded (issues #310 §3.4, #386): `lib/__tests__/answerShell.test.ts` fails when a form imports
+// the bar or the spacer itself, or when the shell puts the spacer under the answer; the
+// walkthrough (`tests/web/fit.ts`, `answerPlace`) measures at every stop that the answer stands
+// directly above its action or the bottom edge, the free room above it, and "Prüfen" lowest.
 
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
@@ -45,8 +49,9 @@ type Props = {
    */
   keeps?: number | 'whole';
   /**
-   * Tiles stand flush under the Tipp row: its touch height already sets them apart, and 8 pt more
-   * cost the second row of picture options its place on 360×740 (issue #288).
+   * Tiles need no gap above them: when the free room is used up they meet the Tipp row, whose
+   * touch height already sets them apart, and 8 pt more cost the second row of picture options
+   * its place on 360×740 (issue #288).
    */
   flush?: boolean;
 };
@@ -60,6 +65,7 @@ export function AnswerShell({
 }: Props) {
   return (
     <>
+      <FreeSpace />
       {answer === null ? null : (
         <View
           testID="answer-slot"
@@ -81,7 +87,6 @@ export function AnswerShell({
           {keys}
         </View>
       ) : null}
-      <FreeSpace />
       <CheckBar {...action} />
     </>
   );

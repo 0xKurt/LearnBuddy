@@ -27,7 +27,7 @@
 //     mic and "Nochmal vorlesen", before #310 a bar of its own under the options), and without
 //     voice the bar is only the screen edge's room;
 //   · `bar` — the question's own pinned bar: "Weiter" once it is closed, the pronunciation
-//     recorder. The shell places it like "Prüfen", under the free room.
+//     recorder. The shell places it like "Prüfen", at the bottom.
 
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';

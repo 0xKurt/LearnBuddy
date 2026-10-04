@@ -1,12 +1,11 @@
-// The free room on the practice screen (issue #286): one flexible spacer under the way to answer,
-// above the pinned controls. The question, the conversation and the answer form stand together at
-// the top; what nobody needs collects here, at the bottom, instead of as a hole in the middle.
+// The free room on the practice screen (issues #286, #386): one flexible spacer between the
+// question with its conversation at the top and the answer at the bottom, right above its action.
+// What nobody needs collects here, and the answer never floats above an empty band.
 //
 // Its height is reported to the screen (`FreeSpaceReport`), because the conversation may take it:
 // the screen shows as many whole turns as fit into the conversation's box plus this room
-// (app/practice/[id].tsx). A form in the answer shell gets it there, between its answer and
-// "Prüfen" (`AnswerShell`, issue #310); the forms not moved into the shell yet get it from the
-// screen.
+// (app/practice/[id].tsx). The answer shell places it, above the answer (`AnswerShell`, issues
+// #310, #386).
 
 import { createContext, useContext } from 'react';
 import { View } from 'react-native';

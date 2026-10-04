@@ -9,7 +9,7 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { bottomStack, partHeight, PHONES, settle, shot, SHOTS } from './fit';
+import { answerPlace, bottomStack, partHeight, PHONES, settle, shot, SHOTS } from './fit';
 import { recordPerf } from './perf';
 
 /** The button inside the sheet that is open (the thread behind it may show the same words). */
@@ -782,6 +782,16 @@ test('a table to fill in: Enter walks the gaps, each cell checked on its own (is
   // The last one wrong, and still focused: the math keys stand right under the table (#310).
   await page.keyboard.type('17');
   await expect(page.getByRole('toolbar')).toBeVisible();
+  // With the keyboard up on the small phone (the window shrinks by its height, as Android's
+  // adjustResize does): the table and its keys still stand on "Prüfen", no free room under them
+  // (#386).
+  await page.setViewportSize({ width: 360, height: 740 - 300 });
+  await settle(page);
+  await page.screenshot({ path: join(SHOTS, '60c-table-kb.png') });
+  const tableKb = await answerPlace(page);
+  expect(tableKb?.spacerAbove, 'table @kb: the free room above the table').toBe(true);
+  expect(tableKb?.actionLowest, 'table @kb: "Prüfen" lowest').toBe(true);
+  await page.setViewportSize(PHONES[0]);
   await shot(page, '60-table-filled');
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '60b-table-filled-night');
