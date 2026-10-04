@@ -6,7 +6,10 @@
 //   [keys]       optional: a row of keys for what she is typing (the math keys), directly under
 //                the answer — a keyboard accessory, not furniture (issue #16).
 //   [free room]  what nobody needs collects here, under the answer (`FreeSpace`, issue #286).
-//   [action]     "Prüfen" (`CheckBar`), pinned at the bottom, the same for every form.
+//   [action]     "Prüfen" (`CheckBar`), pinned at the bottom, the same for every form — or, where
+//                there is nothing to check, what stands in its place: options answered by a tap
+//                (with the voice slot in voice mode), "Weiter" once the question is closed, the
+//                pronunciation recorder. The free room is above it in every case.
 //
 // A form fills the slots and decides nothing about where they stand, how far apart they are or
 // how its action looks: before this every form brought its own bar and its own spacer, and which
@@ -27,8 +30,8 @@ import { CheckBar, type CheckAction } from './CheckBar.js';
 import { FreeSpace } from './FreeSpace.js';
 
 type Props = {
-  /** The form: what she taps, places or types in. */
-  answer: ReactNode;
+  /** The form: what she taps, places or types in (none: a closed question, a spoken one). */
+  answer?: ReactNode;
   /** Keys for what she is typing, while she types (null: none). */
   keys?: ReactNode;
   /** "Prüfen": when the answer may go and how. */
@@ -40,25 +43,38 @@ type Props = {
    * types into; the conversation above gives way instead (`threadRoom`).
    */
   keeps?: number | 'whole';
+  /**
+   * Tiles stand flush under the Tipp row: its touch height already sets them apart, and 8 pt more
+   * cost the second row of picture options its place on 360×740 (issue #288).
+   */
+  flush?: boolean;
 };
 
-export function AnswerShell({ answer, keys = null, action, keeps = 0 }: Props) {
+export function AnswerShell({
+  answer = null,
+  keys = null,
+  action,
+  keeps = 0,
+  flush = false,
+}: Props) {
   return (
     <>
-      <View
-        testID="answer-slot"
-        style={{
-          // It gives way when the room runs out (the conversation's reply, the keyboard); the
-          // form inside scrolls then, "Prüfen" stays.
-          flexGrow: 0,
-          flexShrink: keeps === 'whole' ? 0 : 1,
-          minHeight: keeps === 'whole' ? undefined : keeps,
-          paddingHorizontal: SPACE.lg,
-          paddingTop: SPACE.sm,
-        }}
-      >
-        {answer}
-      </View>
+      {answer === null ? null : (
+        <View
+          testID="answer-slot"
+          style={{
+            // It gives way when the room runs out (the conversation's reply, the keyboard); the
+            // form inside scrolls then, "Prüfen" stays.
+            flexGrow: 0,
+            flexShrink: keeps === 'whole' ? 0 : 1,
+            minHeight: keeps === 'whole' ? undefined : keeps,
+            paddingHorizontal: SPACE.lg,
+            paddingTop: flush ? 0 : SPACE.sm,
+          }}
+        >
+          {answer}
+        </View>
+      )}
       {keys ? (
         <View testID="answer-keys" style={{ paddingHorizontal: SPACE.lg, paddingTop: SPACE.sm }}>
           {keys}

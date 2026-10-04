@@ -34,7 +34,7 @@ export function QuestionTools({
 }: Props) {
   const { t } = useTranslation('common');
   const tools = [
-    // With options the voice bar carries it (SpokenChoiceBar).
+    // With options the voice slot carries it (SpokenChoice, in the answer shell's bar).
     readAgain ? (
       <Btn key="read" size="sm" variant="soft" pill icon="speak" onPress={readAgain}>
         {t('voice.read_again')}

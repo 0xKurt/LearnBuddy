@@ -4,8 +4,8 @@
 // explanation to read again. Test tooling only.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
-import type { ScriptedGateway } from '../fakes.js';
 import { scriptGenerations } from './generations.js';
+import { inTurn, pronounceRules, readingRules } from './rules.js';
 import { says, scriptTurns } from './turns.js';
 
 const remember = (statement: string, quote: string) => ({
@@ -13,7 +13,87 @@ const remember = (statement: string, quote: string) => ({
   args: { about: 'everyday', kind: 'fact', statement, quote, until: null },
 });
 
-export function scriptTour(llm: ScriptedGateway): void {
+// What the tour's sheets read as.
+const UNREADABLE = {
+  is_learning_material: true,
+  readable: false,
+  title: null,
+  subject: null,
+  extracted_text: '',
+  items: [],
+};
+
+const NOMEN_UND_VERBEN = {
+  is_learning_material: true,
+  readable: true,
+  title: 'Nomen und Verben',
+  subject: { name: 'Deutsch', kind: 'german' },
+  extracted_text: 'Nomen schreibt man groß. Verben sagen, was jemand tut.',
+  items: [
+    {
+      kind: 'short',
+      prompt: 'Wie schreibt man Nomen?',
+      answer: 'groß',
+      accepted_answers: [],
+      unit: null,
+      choices: null,
+      correct_choice: null,
+      topic: 'Nomen',
+      difficulty: 1,
+      source_excerpt: null,
+    },
+  ],
+};
+
+const HOMEWORK_SQUARE = {
+  is_learning_material: true,
+  readable: true,
+  pages: [
+    { page: 1, read: 'all', problem: null },
+    { page: 2, read: 'part', problem: 'cut_off' },
+  ],
+  title: 'Hausaufgabe Quadrat',
+  subject: { name: 'Mathe', kind: 'math' },
+  extracted_text: 'Ein Quadrat hat 4 cm Seitenlänge. Berechne den Umfang.',
+  items: [
+    {
+      kind: 'numeric',
+      prompt: 'Ein Quadrat hat 4 cm Seitenlänge. Berechne den Umfang.',
+      answer: '16',
+      accepted_answers: [],
+      unit: 'cm',
+      choices: null,
+      correct_choice: null,
+      topic: 'Umfang',
+      difficulty: 1,
+      source_excerpt: null,
+    },
+  ],
+};
+
+const HOMEWORK_RECTANGLE = {
+  is_learning_material: true,
+  readable: true,
+  title: 'Hausaufgabe Rechteck',
+  subject: { name: 'Mathe', kind: 'math' },
+  extracted_text: 'Ein Rechteck ist 6 cm lang und 3 cm breit. Berechne den Flächeninhalt.',
+  items: [
+    {
+      kind: 'numeric',
+      prompt: 'Ein Rechteck ist 6 cm lang und 3 cm breit. Berechne den Flächeninhalt.',
+      answer: '18',
+      accepted_answers: [],
+      unit: 'cm²',
+      choices: null,
+      correct_choice: null,
+      topic: 'Flächeninhalt',
+      difficulty: 2,
+      source_excerpt: null,
+    },
+  ],
+};
+
+export function scriptTour(): void {
   // By what she wrote, not by order (issue #81).
   scriptTurns(
     {
@@ -91,8 +171,10 @@ export function scriptTour(llm: ScriptedGateway): void {
       ],
     }),
   });
-  llm.script('pronounce', {
-    json: {
+  // By the sentence she says, not as the next judgement anyone asks for (#350).
+  pronounceRules.add({
+    when: /The weather is nice today/,
+    answer: () => ({
       audible: true,
       expected_ipa: 'ðə ˈwɛðər ɪz naɪs təˈdeɪ',
       heard_ipa: 'de ˈvɛtər ɪs naɪs təˈdeɪ',
@@ -106,94 +188,28 @@ export function scriptTour(llm: ScriptedGateway): void {
         { text: 'today', ok: true, tip: null },
       ],
       reply: 'Schon gut verständlich! Übe noch das ‹th› in „weather“.',
-    },
+    }),
   });
   // A sheet that could not be read, read again with success; then homework of two
   // pages whose second is cut off, and that page photographed again.
-  llm.script(
-    'extraction',
+  // A sheet that could not be read, read again with success; then homework of two pages whose
+  // second is cut off, and that page photographed again. By what is read — the sample sheet
+  // (800 × 1080) as material or as homework, one page or two — not by queue (#350).
+  readingRules.add(
     {
-      json: {
-        is_learning_material: true,
-        readable: false,
-        title: null,
-        subject: null,
-        extracted_text: '',
-        items: [],
-      },
+      when: /Photo 1 of 1:\n\[user\] <image 800x1080>/,
+      system: /learner's study material/,
+      answer: inTurn(UNREADABLE, NOMEN_UND_VERBEN),
     },
     {
-      json: {
-        is_learning_material: true,
-        readable: true,
-        title: 'Nomen und Verben',
-        subject: { name: 'Deutsch', kind: 'german' },
-        extracted_text: 'Nomen schreibt man groß. Verben sagen, was jemand tut.',
-        items: [
-          {
-            kind: 'short',
-            prompt: 'Wie schreibt man Nomen?',
-            answer: 'groß',
-            accepted_answers: [],
-            unit: null,
-            choices: null,
-            correct_choice: null,
-            topic: 'Nomen',
-            difficulty: 1,
-            source_excerpt: null,
-          },
-        ],
-      },
+      when: /Photo 2 of 2:\n\[user\] <image 800x1080>/,
+      system: /learner's homework/,
+      answer: () => HOMEWORK_SQUARE,
     },
     {
-      json: {
-        is_learning_material: true,
-        readable: true,
-        pages: [
-          { page: 1, read: 'all', problem: null },
-          { page: 2, read: 'part', problem: 'cut_off' },
-        ],
-        title: 'Hausaufgabe Quadrat',
-        subject: { name: 'Mathe', kind: 'math' },
-        extracted_text: 'Ein Quadrat hat 4 cm Seitenlänge. Berechne den Umfang.',
-        items: [
-          {
-            kind: 'numeric',
-            prompt: 'Ein Quadrat hat 4 cm Seitenlänge. Berechne den Umfang.',
-            answer: '16',
-            accepted_answers: [],
-            unit: 'cm',
-            choices: null,
-            correct_choice: null,
-            topic: 'Umfang',
-            difficulty: 1,
-            source_excerpt: null,
-          },
-        ],
-      },
-    },
-    {
-      json: {
-        is_learning_material: true,
-        readable: true,
-        title: 'Hausaufgabe Rechteck',
-        subject: { name: 'Mathe', kind: 'math' },
-        extracted_text: 'Ein Rechteck ist 6 cm lang und 3 cm breit. Berechne den Flächeninhalt.',
-        items: [
-          {
-            kind: 'numeric',
-            prompt: 'Ein Rechteck ist 6 cm lang und 3 cm breit. Berechne den Flächeninhalt.',
-            answer: '18',
-            accepted_answers: [],
-            unit: 'cm²',
-            choices: null,
-            correct_choice: null,
-            topic: 'Flächeninhalt',
-            difficulty: 2,
-            source_excerpt: null,
-          },
-        ],
-      },
+      when: /Photo 1 of 1:\n\[user\] <image 800x1080>/,
+      system: /learner's homework/,
+      answer: () => HOMEWORK_RECTANGLE,
     },
   );
   // No check is scripted for the tour: its sheet's practice comes from the check's fixed

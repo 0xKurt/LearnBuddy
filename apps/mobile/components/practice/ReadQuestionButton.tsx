@@ -6,8 +6,8 @@
 // row costs a whole line (54 pt) on every question, and inside the card the icon took width from
 // the topic line or the prompt and added a line there — either way a structured question's parts
 // were pushed off a 360×740 phone (rule 16). The progress row is 44 pt tall anyway. The speaker is
-// the app's one sign for "read aloud" (the voice-mode switch, every "Anhören"), and a screen
-// reader hears "Frage vorlesen" — never the icon alone.
+// the app's one sign for "read this aloud" (every "Anhören"; the voice-mode switch carries the
+// headphones, issue #310), and a screen reader hears "Frage vorlesen" — never the icon alone.
 //
 // One tap reads, a second tap stops (the icon turns into the stop square and the label into
 // "Anhalten": the state is never colour alone). Going away mid-sentence — the next question,
@@ -35,7 +35,7 @@ export function ReadQuestionButton({ text, lang }: Props) {
 
   return (
     <CircleBtn
-      // Plain, without the ring: the ringed speaker in the header is the voice-mode switch, and
+      // Plain, without the ring: the ringed circle in the header is the voice-mode switch, and
       // two equal circles one above the other read as the same control twice.
       plain
       icon={playing ? 'stop' : 'speak'}

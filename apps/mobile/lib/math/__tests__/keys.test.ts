@@ -3,15 +3,8 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  cellKeys,
-  keysFor,
-  pagesOf,
-  slotsIn,
-  slotsOf,
-  typedUnder,
-  type KeyContext,
-} from '../keys.js';
+import { pagesOf } from '../../keyRow.js';
+import { cellKeys, keysFor, slotsOf, typedUnder, type KeyContext } from '../keys.js';
 
 const ask = (over: Partial<KeyContext>): KeyContext => ({
   kind: 'numeric',
@@ -79,21 +72,11 @@ describe('keysFor: what the question needs, chosen from the question', () => {
   });
 });
 
-describe('one line, never sideways', () => {
-  it('fits six places on a 360 phone and seven on a 390 phone', () => {
-    expect(slotsIn(328)).toBe(6);
-    expect(slotsIn(358)).toBe(7);
-  });
-
-  it('puts everything on one page when it fits', () => {
-    expect(pagesOf(['sub', 'charge', 'plus'], 6)).toEqual([['sub', 'charge', 'plus']]);
-    expect(pagesOf([], 6)).toEqual([]);
-  });
-
-  it('keeps every page within the line, with one place for "…"', () => {
+describe('the math keys on one line (lib/keyRow.ts)', () => {
+  it('pages a long row so every page keeps one place for "…"', () => {
     const keys = keysFor(ask({ kind: 'formula', subjectKind: 'math', prompt: '$x^{2}$' }));
     for (const slots of [6, 7]) {
-      const pages = pagesOf(keys, slots);
+      const pages = pagesOf(keys, slots, slotsOf);
       expect(pages.length).toBeGreaterThan(1);
       expect(pages.flat()).toEqual(keys);
       for (const page of pages)

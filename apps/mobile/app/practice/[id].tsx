@@ -54,7 +54,7 @@ import { AnswerComposer } from '../../components/practice/AnswerComposer.js';
 import { CardPass } from '../../components/practice/CardPass.js';
 import { DrillRound } from '../../components/practice/DrillRound.js';
 import { BottomBar } from '../../components/practice/BottomBar.js';
-import { ChoiceList, SpokenChoiceBar } from '../../components/practice/ChoiceList.js';
+import { ChoiceList, SpokenChoice } from '../../components/practice/ChoiceList.js';
 import {
   canDisputeVerdict,
   DisputeVerdictSheet,
@@ -70,13 +70,10 @@ import { QuestionTools } from '../../components/practice/QuestionTools.js';
 import {
   emptyStaffAnswer,
   readStaffDraft,
-  STAFF_ANSWER_MIN,
-  StaffAnswer,
-  staffComplete,
-  staffLineOf,
   type StaffDraft,
 } from '../../components/practice/StaffAnswer.js';
-import { FreeSpace, FreeSpaceReport } from '../../components/practice/FreeSpace.js';
+import { StaffWriting } from '../../components/practice/StaffWriting.js';
+import { FreeSpaceReport } from '../../components/practice/FreeSpace.js';
 import { AnswerShell } from '../../components/practice/AnswerShell.js';
 import { StructuredAnswer } from '../../components/practice/StructuredAnswer.js';
 import { TopEdgeFade, topEdgeMask, topEdgeMaskFrom } from '../../components/lb/EdgeFade.js';
@@ -124,8 +121,8 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
-import { reacted, tapped } from '../../lib/perf.js';
-import { bottomRoom, SPACE } from '../../lib/theme/space.js';
+import { reacted } from '../../lib/perf.js';
+import { SPACE } from '../../lib/theme/space.js';
 
 /**
  * What she sent, and how (issue #163). `via` is not decoration: since #147 a tapped word
@@ -1170,37 +1167,42 @@ export default function PracticeScreen() {
                 {threadHolds && (scrolledUp || threadClipped) ? <TopEdgeFade /> : null}
               </View>
             </View>
-            {open && choices ? (
-              // No room of its own above the options (issue #288): the hint row's touch height
-              // already sets them apart, and 8 pt more was a gap and cost the second row of
-              // pictures its place on 360×740.
-              <View
-                style={{
-                  paddingHorizontal: 16,
-                  paddingBottom: voiceOn ? 0 : bottomRoom(insets.bottom, SPACE.md),
+            {/* Options she taps (issue #288), in the answer shell like every form (issue #310): flush
+            under the Tipp row, the free room below, and in voice mode the spoken answer where
+            "Prüfen" stands for the others. Tapped words go as if she had typed them: same
+            grading, same key (issue #147). */}
+            {open && (choices || tapChoices) ? (
+              <AnswerShell
+                keeps="whole"
+                flush
+                answer={
+                  <ChoiceList
+                    choices={choices ?? tapChoices ?? []}
+                    figures={choices ? item.choice_figures : null}
+                    tried={tried}
+                    disabled={locked}
+                    onChoose={(index, choice) =>
+                      void answer(
+                        item.id,
+                        choices ? { choice: index } : { text: choice, via: 'tapped' },
+                        choice,
+                      )
+                    }
+                  />
+                }
+                action={{
+                  tap: true,
+                  voice:
+                    choices && voiceOn ? (
+                      <SpokenChoice
+                        prompt={item.prompt}
+                        disabled={locked}
+                        onText={(said) => void answer(item.id, { text: said, via: 'spoken' }, said)}
+                        {...(item.read_aloud ? { onReadAgain: () => readQuestion(item) } : {})}
+                      />
+                    ) : undefined,
                 }}
-              >
-                <ChoiceList
-                  choices={choices}
-                  figures={item.choice_figures}
-                  tried={tried}
-                  disabled={locked}
-                  onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}
-                />
-              </View>
-            ) : null}
-            {open && tapChoices ? (
-              <View style={{ paddingHorizontal: 16 }}>
-                <ChoiceList
-                  choices={tapChoices}
-                  tried={tried}
-                  disabled={locked}
-                  // The word goes as if she had typed it: same grading, same key (issue #147).
-                  onChoose={(_index, choice) =>
-                    void answer(item.id, { text: choice, via: 'tapped' }, choice)
-                  }
-                />
-              </View>
+              />
             ) : null}
             {/* A structured item's parts (issues #228–#230): one form per kind in the answer
             shell (answer, free room, "Prüfen" — `AnswerShell`, issue #310), its arrangement in a
@@ -1220,54 +1222,21 @@ export default function PracticeScreen() {
                 />
               </View>
             ) : null}
-            {/* Die Notenzeile, auf die sie schreibt (issue #226), in der Antworthülle wie jede
-            andere Form (issue #310): direkt unter der Frage, darunter der freie Platz, unten
-            „Prüfen“ in derselben Leiste wie bei Tabelle, Ordnen und Zuordnen. Kein ScrollView
-            (issue #275): die Zeile nimmt ihre Höhe aus dem Platz, der da ist (`StaffAnswer`),
-            die Tasten darunter sind fest — und nie weniger als die engste Zeile mit beiden
-            Tastenreihen (`keeps`): fehlt der Platz, sagt es der Walkthrough (`fit.ts`), statt
-            dass die Tasten still unter „Prüfen" rutschen. */}
+            {/* Die Notenzeile, auf die sie schreibt (issue #226), in der Antworthülle (#310). */}
             {staff ? (
-              <AnswerShell
-                keeps={STAFF_ANSWER_MIN + SPACE.sm}
-                answer={
-                  <View
-                    testID="answer-staff"
-                    style={{ flexShrink: 1, minHeight: STAFF_ANSWER_MIN }}
-                  >
-                    <StaffAnswer
-                      key={item.id}
-                      surface={staff}
-                      answer={staffAnswer}
-                      disabled={locked}
-                      onChange={(next) => setWritten({ itemId: item.id, answer: next })}
-                    />
-                  </View>
-                }
-                action={{
-                  // Nichts zu prüfen, solange ein Takt noch leer ist: eine halb geschriebene
-                  // Zeile wäre eine Antwort, die noch nicht gegeben wurde.
-                  ready: staffComplete(staffAnswer),
-                  disabled: locked,
-                  waitsHint: t('practice:staff.check_waits'),
-                  onPress: () => {
-                    tapped('check');
-                    const line = staffLineOf(staffAnswer);
-                    // Kein `via: 'tapped'`, obwohl sie getippt hat: `via` unterscheidet
-                    // WIEDERERKENNEN von PRODUZIEREN (issue #163), und hier ist nichts
-                    // wiedererkannt. Ein Wort aus vier eigenen anzutippen ist leichter, als es zu
-                    // schreiben; eine Notenzeile selbst zu setzen ist genau das, was die
-                    // Klassenarbeit verlangt — mit einem Stift statt mit dem Finger. Dasselbe
-                    // Argument, das `summary.ts` für die mehrteiligen Antworten führt.
-                    void answer(item.id, { text: line }, line);
-                  },
-                }}
+              <StaffWriting
+                key={item.id}
+                surface={staff}
+                answer={staffAnswer}
+                disabled={locked}
+                onChange={(next) => setWritten({ itemId: item.id, answer: next })}
+                // Kein `via: 'tapped'`, obwohl sie getippt hat: `via` unterscheidet WIEDERERKENNEN
+                // von PRODUZIEREN (issue #163), und hier ist nichts wiedererkannt. Eine Notenzeile
+                // selbst zu setzen ist genau das, was die Klassenarbeit verlangt — mit einem Stift
+                // statt mit dem Finger (dasselbe Argument wie `summary.ts` für mehrteilige Antworten).
+                onCheck={(line) => void answer(item.id, { text: line }, line)}
               />
             ) : null}
-            {/* The free room (issue #286) for the forms not in the answer shell yet — the options,
-            the pronunciation panel, "Weiter": below the way to answer, above what is pinned. A
-            form in the shell carries its own, between its answer and "Prüfen" (`AnswerShell`). */}
-            {(open && item.task_view) || staff || typed ? null : <FreeSpace />}
             {typed ? (
               <AnswerComposer
                 kind={item.kind}
@@ -1302,36 +1271,42 @@ export default function PracticeScreen() {
                 }
               />
             ) : null}
-            {open && choices && voiceOn ? (
-              <SpokenChoiceBar
-                prompt={item.prompt}
-                disabled={locked}
-                onText={(said) => void answer(item.id, { text: said, via: 'spoken' }, said)}
-                {...(item.read_aloud ? { onReadAgain: () => readQuestion(item) } : {})}
-              />
-            ) : null}
+            {/* The pronunciation recorder and "Weiter" stand where "Prüfen" does, under the free
+            room (`AnswerShell`): nothing to answer in a slot, only the bar. */}
             {open && speaking ? (
-              <SpeakPanel
-                item={item}
-                sessionId={id}
-                hasFeedback={latestPronunciation(turns) !== null}
-                disabled={locked}
-                onResult={(res) => spoke(item.id, res)}
-                onProgress={setSpeakLive}
-                onOutdated={() =>
-                  void queryClient.invalidateQueries({ queryKey: keys.session(id) })
-                }
-                onSkip={canReveal ? () => void reveal(item.id) : undefined}
+              <AnswerShell
+                action={{
+                  bar: (
+                    <SpeakPanel
+                      item={item}
+                      sessionId={id}
+                      hasFeedback={latestPronunciation(turns) !== null}
+                      disabled={locked}
+                      onResult={(res) => spoke(item.id, res)}
+                      onProgress={setSpeakLive}
+                      onOutdated={() =>
+                        void queryClient.invalidateQueries({ queryKey: keys.session(id) })
+                      }
+                      onSkip={canReveal ? () => void reveal(item.id) : undefined}
+                    />
+                  ),
+                }}
               />
             ) : null}
             {open ? null : (
-              <BottomBar>
-                <Appear delay={120}>
-                  <Btn size="lg" pill full onPress={next}>
-                    {t('practice:next')}
-                  </Btn>
-                </Appear>
-              </BottomBar>
+              <AnswerShell
+                action={{
+                  bar: (
+                    <BottomBar>
+                      <Appear delay={120}>
+                        <Btn size="lg" pill full onPress={next}>
+                          {t('practice:next')}
+                        </Btn>
+                      </Appear>
+                    </BottomBar>
+                  ),
+                }}
+              />
             )}
             <View
               style={{ height: 0 }}

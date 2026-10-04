@@ -6,8 +6,9 @@
 //   · **„Höher" und „tiefer"** schieben die Note, die sie gerade gesetzt hat, um eine Stelle —
 //     jede Stelle klingt. Die gesetzte Note steht violett und mit einem Ring da, bis die nächste
 //     kommt: so sieht sie, WAS sich bewegt.
-//   · Darüber wählt sie den **Wert** (gezeichnete Notenzeichen statt Wörtern) und den **Punkt**;
-//     darunter **Kreuz**, **Pause**, **Anhören** und **Zurück**.
+//   · Die Tasten dazu — höher, tiefer, Kreuz, Pause, Anhören, Zurück, der **Wert** (gezeichnete
+//     Notenzeichen statt Wörtern) und der **Punkt** — stehen nicht hier, sondern in der einen
+//     Tastenreihe unter der Zeile (`StaffKeys.tsx`, im `keys`-Platz der Antworthülle, issue #310).
 //
 // Geprüft wird mit „Prüfen" wie bei allem anderen; der Server vergleicht Tonnamen, Dauern und
 // Taktfüllung und nennt die Stelle (`modules/practice/staff.ts`).
@@ -48,10 +49,8 @@
 import {
   BARS_MAX,
   ELEMENTS_PER_BAR_MAX,
-  NOTE_VALUES,
   STAFF_STEP_MAX,
   barTicks,
-  dottedRestOk,
   pitchAtStep,
   renderStaffLine,
   staffStep,
@@ -60,20 +59,16 @@ import {
   StaffElement,
   type StaffWriteSurface,
 } from '@learnbuddy/shared-types/contracts';
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState } from 'react';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View, type GestureResponderEvent } from 'react-native';
 
 import { announce } from '../../lib/announce.js';
 import { playPitch } from '../../lib/music/play.js';
-import { barsWords, elementWord, stepWord, valueWord } from '../../lib/music/words.js';
-import { SPACE, TOUCH } from '../../lib/theme/space.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { Btn } from '../lb/Btn.js';
-import { Icon, type IconName } from '../lb/Icon.js';
+import { barsWords, elementWord, stepWord } from '../../lib/music/words.js';
 import { toast } from '../lb/Toast.js';
-import { Staff, ValueGlyph } from '../math/StaffLine.js';
+import { Staff } from '../math/StaffLine.js';
 import {
   SPACE_UNITS,
   TAIL_UNITS,
@@ -81,7 +76,6 @@ import {
   stepAtWriteY,
   writeHeight,
 } from '../math/staff/geometry.js';
-import { StaffPlayButton } from './StaffPlayButton.js';
 
 /**
  * Der engste und der weiteste Linienabstand der Schreibfläche. Die Zeile nimmt so viel Höhe, wie
@@ -100,13 +94,14 @@ const GAP_MAX = 26;
 const WIDTH_IN_GAPS = (bars: number) => (headUnits(true) + TAIL_UNITS) / SPACE_UNITS + bars * 7;
 
 /**
- * Die kleinste Höhe der ganzen Fläche: die engste Zeile, zwei Tastenreihen à 44 pt und die
- * Abstände dazwischen. Der Übungsbildschirm hält sie frei (`app/practice/[id].tsx`).
+ * Die kleinste Höhe der Zeile: die engste, die sich noch ablesen lässt. Der Übungsbildschirm hält
+ * sie frei (`app/practice/[id].tsx`, `keeps`); die Tasten darunter sind fest (`StaffKeys`).
  */
-export const STAFF_ANSWER_MIN = writeHeight(GAP_MIN) + 2 * TOUCH + 2 * SPACE.sm;
+export const STAFF_ANSWER_MIN = writeHeight(GAP_MIN);
 
 /** Die Stellen, die es gibt: eine Hilfslinie über und unter den fünf Linien. */
-const clampStep = (step: number) => Math.max(-STAFF_STEP_MAX, Math.min(STAFF_STEP_MAX, step));
+export const clampStep = (step: number) =>
+  Math.max(-STAFF_STEP_MAX, Math.min(STAFF_STEP_MAX, step));
 
 /** Was sie bisher geschrieben hat, und womit sie gerade schreibt. */
 export type StaffAnswerState = {
@@ -186,6 +181,46 @@ export function lastNote(answer: StaffAnswerState): { bar: number; index: number
   return null;
 }
 
+/** Der Takt, der als Nächstes gefüllt wird — und der, in den eine Pause kommt. */
+export function activeBar(answer: StaffAnswerState, surface: StaffWriteSurface): number {
+  const capacity = barTicks(surface.time);
+  const ticksIn = (bar: readonly StaffElement[]) =>
+    bar.reduce((sum, el) => sum + ticksOf(el.value, el.dotted), 0);
+  const unfilled = answer.bars.findIndex((bar) => ticksIn(bar) < capacity);
+  return unfilled === -1 ? answer.bars.length - 1 : unfilled;
+}
+
+/**
+ * Ein Zeichen in einen Takt setzen — vom Tipp auf die Zeile (eine Note) und von der Taste
+ * „Pause" (`StaffKeys`). Gesagt wird auch, WO es liegt: wer die Linien nicht sieht, schreibt mit
+ * diesem Satz. Ist der Takt voll, wird das gesagt statt gesetzt.
+ */
+export function usePut(
+  surface: StaffWriteSurface,
+  answer: StaffAnswerState,
+  onChange: (next: StaffAnswerState) => void,
+): (bar: number, element: StaffElement) => void {
+  const { t } = useTranslation('practice');
+  const { t: tm } = useTranslation('math');
+  return (bar, element) => {
+    const target = answer.bars[bar] ?? [];
+    if (target.length >= ELEMENTS_PER_BAR_MAX) {
+      toast.show(t('staff.bar_crowded', { n: bar + 1 }), 'info');
+      return;
+    }
+    onChange({ ...answer, bars: answer.bars.map((b, i) => (i === bar ? [...b, element] : b)) });
+    announce(
+      element.el === 'note'
+        ? t('staff.placed', {
+            what: elementWord(tm, element),
+            where: stepWord(tm, staffStep(element.pitch, surface.clef)),
+            bar: bar + 1,
+          })
+        : t('staff.rest_placed', { what: elementWord(tm, element), bar: bar + 1 }),
+    );
+  };
+}
+
 type Props = {
   surface: StaffWriteSurface;
   answer: StaffAnswerState;
@@ -194,7 +229,6 @@ type Props = {
 };
 
 export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
-  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const { t: tm } = useTranslation('math');
   const [box, setBox] = useState({ width: 0, height: 0 });
@@ -214,41 +248,13 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
   /** Die Zeile steht senkrecht mittig in ihrem Feld; so weit liegt ihr oberer Rand darunter. */
   const top = Math.max(0, (box.height - height) / 2);
 
-  const capacity = barTicks(surface.time);
-  const ticksIn = (bar: readonly StaffElement[]) =>
-    bar.reduce((sum, el) => sum + ticksOf(el.value, el.dotted), 0);
-  /** Der Takt, der als Nächstes gefüllt wird — und der, in den eine Pause kommt. */
-  const unfilled = answer.bars.findIndex((bar) => ticksIn(bar) < capacity);
-  const active = unfilled === -1 ? answer.bars.length - 1 : unfilled;
+  const active = activeBar(answer, surface);
   const moving = lastNote(answer);
-  const movingStep = (() => {
-    if (moving === null) return null;
-    const el = answer.bars[moving.bar]?.[moving.index];
-    return el?.el === 'note' ? staffStep(el.pitch, surface.clef) : null;
-  })();
   const selected =
     moving === null
       ? null
       : answer.bars.slice(0, moving.bar).reduce((n, bar) => n + bar.length, 0) + moving.index;
-
-  function put(bar: number, element: StaffElement): void {
-    const target = answer.bars[bar] ?? [];
-    if (target.length >= ELEMENTS_PER_BAR_MAX) {
-      toast.show(t('staff.bar_crowded', { n: bar + 1 }), 'info');
-      return;
-    }
-    onChange({ ...answer, bars: answer.bars.map((b, i) => (i === bar ? [...b, element] : b)) });
-    // Gesagt wird auch, WO sie liegt: wer die Linien nicht sieht, schreibt mit diesem Satz.
-    announce(
-      element.el === 'note'
-        ? t('staff.placed', {
-            what: elementWord(tm, element),
-            where: stepWord(tm, staffStep(element.pitch, surface.clef)),
-            bar: bar + 1,
-          })
-        : t('staff.rest_placed', { what: elementWord(tm, element), bar: bar + 1 }),
-    );
-  }
+  const put = usePut(surface, answer, onChange);
 
   /** Was auf dieser Stelle landet — mit Kreuz, wo es eines gibt (sonst ohne, siehe `canSharp`). */
   const pitchAt = (step: number) => pitchAtStep(step, surface.clef, answer.sharp);
@@ -269,49 +275,12 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
     put(bar, { el: 'note', pitch, value: answer.value, dotted: answer.dotted });
   }
 
-  function nudge(by: 1 | -1): void {
-    if (moving === null || movingStep === null) return;
-    const step = clampStep(movingStep + by);
-    if (step === movingStep) return;
-    const el = answer.bars[moving.bar]?.[moving.index];
-    if (el?.el !== 'note') return;
-    const pitch = pitchAt(step);
-    playPitch(pitch);
-    const moved: StaffElement = { ...el, pitch };
-    onChange({
-      ...answer,
-      bars: answer.bars.map((b, i) =>
-        i === moving.bar ? b.map((x, k) => (k === moving.index ? moved : x)) : b,
-      ),
-    });
-    announce(t('staff.moved', { what: elementWord(tm, moved), where: stepWord(tm, step) }));
-  }
-
-  function addRest(): void {
-    // Eine punktierte ganze oder halbe Pause gibt es nicht (`dottedRestOk`): der Punkt fällt weg,
-    // und der Screenreader sagt, was wirklich gesetzt wurde.
-    put(active, {
-      el: 'rest',
-      value: answer.value,
-      dotted: answer.dotted && dottedRestOk(answer.value),
-    });
-  }
-
-  function undo(): void {
-    for (let i = answer.bars.length - 1; i >= 0; i--) {
-      if ((answer.bars[i] as StaffElement[]).length === 0) continue;
-      onChange({ ...answer, bars: answer.bars.map((b, k) => (k === i ? b.slice(0, -1) : b)) });
-      return;
-    }
-  }
-
-  const empty = answer.bars.every((bar) => bar.length === 0);
   /** Wo der erste Takt beginnt und wie viel hinter dem letzten frei bleibt — wie gestochen. */
   const startX = (headUnits(true) * gap) / SPACE_UNITS;
   const tailX = (TAIL_UNITS * gap) / SPACE_UNITS;
 
   return (
-    <View style={{ flexShrink: 1, minHeight: 0, gap: SPACE.sm }}>
+    <View style={{ flexShrink: 1, minHeight: 0 }}>
       {/* Die Zeile. So hoch, wie ihre Breite es erlaubt, und kleiner, wenn der Bildschirm unter
           der Frage weniger hergibt; die Takte darüber sind die Tippziele. */}
       <View
@@ -374,122 +343,6 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
         </View>
       </View>
 
-      {/* Direkt unter der Zeile, was die gesetzte Note bewegt: höher und tiefer, vorn und
-          gefüllt; dann was eine Note verändert oder ersetzt, dann Hören und Zurück. Alle gleich
-          breit, alle ≥ 44 pt. */}
-      <View style={{ flexDirection: 'row', gap: SPACE.sm }}>
-        <View style={{ flex: 1 }}>
-          <IconBtn
-            icon="up"
-            label={t('staff.higher')}
-            variant="soft"
-            disabled={disabled || movingStep === null || movingStep >= STAFF_STEP_MAX}
-            onPress={() => nudge(1)}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <IconBtn
-            icon="down"
-            label={t('staff.lower')}
-            variant="soft"
-            disabled={disabled || movingStep === null || movingStep <= -STAFF_STEP_MAX}
-            onPress={() => nudge(-1)}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Tool
-            label={t('staff.sharp')}
-            on={answer.sharp}
-            disabled={disabled}
-            onPress={() => onChange({ ...answer, sharp: !answer.sharp })}
-            glyph={<SharpGlyph color={answer.sharp ? palette.paper : palette.ink} />}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Btn
-            size="sm"
-            pill
-            full
-            compact
-            variant="outline"
-            disabled={disabled}
-            onPress={addRest}
-            accessibilityLabel={t('staff.rest_of', {
-              value: valueWord(tm, answer.value, false, true),
-            })}
-            label={
-              <ValueGlyph
-                value={answer.value}
-                rest
-                size={32}
-                color={disabled ? palette.ink2 : palette.ink}
-              />
-            }
-          >
-            {t('staff.rest')}
-          </Btn>
-        </View>
-        <View style={{ flex: 1 }}>
-          <StaffPlayButton
-            iconOnly
-            bars={answer.bars.filter((bar) => bar.length > 0)}
-            tempo={surface.tempo}
-            disabled={disabled || empty}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <IconBtn
-            icon="undo"
-            label={t('staff.undo')}
-            variant="ghost"
-            disabled={disabled || empty}
-            onPress={undo}
-          />
-        </View>
-      </View>
-      {/* Wert und Punkt: womit die nächste Note geschrieben wird — unten, nah am Daumen. Die
-          Tasten zeigen das Zeichen, das sie setzen; der Name steht im Label. */}
-      <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', gap: SPACE.sm }}>
-        {NOTE_VALUES.map((value) => {
-          const on = value === answer.value;
-          return (
-            <View key={value} style={{ flex: 1 }}>
-              <Btn
-                size="sm"
-                pill
-                full
-                compact
-                variant={on ? 'primary' : 'outline'}
-                selected={on}
-                disabled={disabled}
-                onPress={() => onChange({ ...answer, value })}
-                accessibilityLabel={valueWord(tm, value, false, false)}
-                label={
-                  <ValueGlyph
-                    value={value}
-                    size={32}
-                    color={on ? palette.paper : disabled ? palette.ink2 : palette.ink}
-                  />
-                }
-              >
-                {valueWord(tm, value, false, false)}
-              </Btn>
-            </View>
-          );
-        })}
-        <View style={{ flex: 1 }}>
-          {/* Der Punkt ist ein SCHALTER, keine Wahl aus mehreren: sein Zustand steht im Namen
-              und nicht in `selected` (das machte aus ihm ein einzelnes Radio). */}
-          <Tool
-            label={t('staff.dot')}
-            on={answer.dotted}
-            disabled={disabled}
-            onPress={() => onChange({ ...answer, dotted: !answer.dotted })}
-            glyph={<DotGlyph color={answer.dotted ? palette.paper : palette.ink} />}
-          />
-        </View>
-      </View>
-
       {/* Die ganze Zeile in Worten, für den Screenreader: er hört sie hier am Stück. Sichtbar
           steht sie nicht da — die Zeile IST die Antwort, und eine Beschriftung daneben nähme ihr
           das Ablesen ab (siehe oben). */}
@@ -504,89 +357,3 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
 }
 
 const ABSOLUTE_FILL = { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 } as const;
-
-/** Eine Taste nur mit Zeichen; der Name steht im Label. */
-function IconBtn({
-  icon,
-  label,
-  variant,
-  disabled,
-  onPress,
-}: {
-  icon: IconName;
-  label: string;
-  variant: 'soft' | 'ghost' | 'outline';
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  const { palette } = useTheme();
-  const color = disabled
-    ? palette.placeholder
-    : variant === 'soft'
-      ? palette.primaryDk
-      : palette.ink;
-  return (
-    <Btn
-      size="sm"
-      pill
-      full
-      compact
-      variant={variant}
-      disabled={disabled}
-      onPress={onPress}
-      accessibilityLabel={label}
-      label={
-        <View style={{ alignItems: 'center' }}>
-          <Icon name={icon} size={24} color={color} />
-        </View>
-      }
-    >
-      {label}
-    </Btn>
-  );
-}
-
-/**
- * Ein Schalter als Taste: eingeschaltet gefüllt UND anders benannt („Punkt, ist an"). Die Farbe
- * ist nie das einzige Signal, und ein Screenreader hört den Zustand im Namen.
- */
-function Tool({
-  label,
-  on,
-  disabled,
-  onPress,
-  glyph,
-}: {
-  label: string;
-  on: boolean;
-  disabled: boolean;
-  onPress: () => void;
-  glyph: ReactNode;
-}) {
-  const { t } = useTranslation('practice');
-  return (
-    <Btn
-      size="sm"
-      pill
-      full
-      compact
-      variant={on ? 'primary' : 'outline'}
-      disabled={disabled}
-      onPress={onPress}
-      accessibilityLabel={on ? t('staff.toggle_on', { label }) : label}
-      label={<View style={{ alignItems: 'center' }}>{glyph}</View>}
-    >
-      {label}
-    </Btn>
-  );
-}
-
-/** Der Punkt hinter einer Note — als Punkt, nicht als Wort. */
-function DotGlyph({ color }: { color: string }) {
-  return <View style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: color }} />;
-}
-
-/** Das Kreuz ♯ in der Schrift der App, groß genug, um es als Zeichen zu lesen. */
-function SharpGlyph({ color }: { color: string }) {
-  return <Text style={{ color, fontSize: 22, lineHeight: 26, fontWeight: '700' }}>♯</Text>;
-}
