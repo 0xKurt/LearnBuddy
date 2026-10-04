@@ -50,10 +50,10 @@ import { Screen } from '../../components/lb/Screen.js';
 import { Sheet } from '../../components/lb/Sheet.js';
 import { toast } from '../../components/lb/Toast.js';
 import { useSpokenWords } from '../../components/math/useSpokenMath.js';
-import { AnswerComposer } from '../../components/practice/AnswerComposer.js';
+import { TypedAnswer } from '../../components/practice/TypedAnswer.js';
 import { CardPass } from '../../components/practice/CardPass.js';
 import { DrillRound } from '../../components/practice/DrillRound.js';
-import { BottomBar } from '../../components/practice/BottomBar.js';
+import { BottomBar } from '../../components/lb/BottomBar.js';
 import { ChoiceList, SpokenChoice } from '../../components/practice/ChoiceList.js';
 import {
   canDisputeVerdict,
@@ -1239,7 +1239,7 @@ export default function PracticeScreen() {
               />
             ) : null}
             {typed ? (
-              <AnswerComposer
+              <TypedAnswer
                 kind={item.kind}
                 prompt={item.prompt}
                 unit={item.unit}
@@ -1249,9 +1249,9 @@ export default function PracticeScreen() {
                 disabled={locked}
                 onChange={setText}
                 onCheck={check}
-                // The fraction bar she works with (issue #162). It stands right above the field
-                // and writes into that very field, so "Prüfen", the math keys and typing stay
-                // exactly what they were. A picked bar goes out at once, like a choice.
+                // The fraction bar she works with (issue #162). It stands under the question like
+                // every board and writes into the input bar at the bottom, so "Prüfen", the math
+                // keys and typing stay exactly what they were. A picked bar goes out at once.
                 surface={
                   barSurface ? (
                     <View testID="answer-surface">

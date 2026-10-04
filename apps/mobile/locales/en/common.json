@@ -26,6 +26,11 @@
     "save": "Save",
     "undo": "Undo"
   },
+  "field": {
+    "full": "The field is full — send this part first.",
+    "remaining_one": "One character left",
+    "remaining_other": "{{count}} characters left"
+  },
   "loading": "One moment …",
   "offline": "No connection – I'll try again shortly.",
   "voice": {

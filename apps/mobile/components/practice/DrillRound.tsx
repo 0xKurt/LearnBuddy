@@ -34,7 +34,7 @@ import { Icon } from '../lb/Icon.js';
 import { Screen } from '../lb/Screen.js';
 import { toast } from '../lb/Toast.js';
 import { MathText } from '../math/MathText.js';
-import { BottomBar } from './BottomBar.js';
+import { BottomBar } from '../lb/BottomBar.js';
 import { PassEnd } from './PassEnd.js';
 import { ProgressRow } from './Question.js';
 

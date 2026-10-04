@@ -152,6 +152,12 @@ export default tseslint.config(
     rules: { 'lb/no-early-script-report': 'error' },
   },
   {
+    // One text field (issue #365): React Native's TextInput only inside the field itself.
+    files: ['apps/mobile/**/*.{ts,tsx}'],
+    ignores: ['apps/mobile/components/lb/LbTextInput.tsx'],
+    rules: { 'lb/one-text-field': 'error' },
+  },
+  {
     files: ['apps/mobile/app/**/*.{ts,tsx}', 'apps/mobile/components/**/*.{ts,tsx}'],
     rules: { 'lb/no-window-height': 'error' },
   },

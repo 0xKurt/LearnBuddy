@@ -64,9 +64,6 @@
   },
   "composer": {
     "placeholder": "Scrivi a Buddy…",
-    "remaining_one": "Ancora un carattere",
-    "remaining_other": "Ancora {{count}} caratteri",
-    "full": "Il campo è pieno: manda prima questo.",
     "send": "Invia",
     "photo": "Fotografa una scheda",
     "keyboard": "Tastiera",

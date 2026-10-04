@@ -26,6 +26,11 @@
     "save": "Guardar",
     "undo": "Deshacer"
   },
+  "field": {
+    "full": "El campo está lleno: envía esto primero.",
+    "remaining_one": "Queda un carácter",
+    "remaining_other": "Quedan {{count}} caracteres"
+  },
   "loading": "Un momento…",
   "offline": "Sin conexión. Vuelvo a intentarlo enseguida.",
   "voice": {

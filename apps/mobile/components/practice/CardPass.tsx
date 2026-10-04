@@ -41,7 +41,7 @@ import { Card } from '../lb/Card.js';
 import { Rise } from '../lb/Motion.js';
 import { Screen } from '../lb/Screen.js';
 import { toast } from '../lb/Toast.js';
-import { BottomBar } from './BottomBar.js';
+import { BottomBar } from '../lb/BottomBar.js';
 import { PassEnd } from './PassEnd.js';
 import { ListenButton } from './ListenButton.js';
 import { ProgressRow } from './Question.js';

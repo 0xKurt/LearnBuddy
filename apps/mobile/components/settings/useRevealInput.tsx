@@ -7,7 +7,9 @@
 // and onFocus={() => reveal(inputRef.current)} on each input.
 
 import { useCallback, useRef } from 'react';
-import type { ScrollView, TextInput, View } from 'react-native';
+import type { ScrollView, View } from 'react-native';
+
+import type { LbTextInputRef } from '../lb/LbTextInput.js';
 
 const AFTER_KEYBOARD_MS = 280;
 const SPACE_ABOVE = 96;
@@ -16,7 +18,7 @@ export function useRevealInput() {
   const scroll = useRef<ScrollView>(null);
   const content = useRef<View>(null);
 
-  const reveal = useCallback((input: TextInput | null) => {
+  const reveal = useCallback((input: LbTextInputRef | null) => {
     setTimeout(() => {
       const inner = content.current;
       if (!input || !inner) return;

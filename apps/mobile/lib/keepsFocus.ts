@@ -1,6 +1,6 @@
 // A control beside the answer field that must not take the focus away from it (issue #271).
 //
-// `components/practice/AnswerComposer.tsx` shows the math keys only while the field has focus
+// `components/practice/TypedAnswer.tsx` shows the math keys only while the field has focus
 // (issue #16: the row may not take room on a small phone before she types). In the browser a
 // mouse-down on a key takes the focus out of the field, `onBlur` hides the row — and that happens
 // BETWEEN mousedown and mouseup, so the click never completes: nothing is inserted and the key

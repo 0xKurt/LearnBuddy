@@ -22,7 +22,7 @@ import {
 } from '@learnbuddy/shared-types/contracts';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, TextInput, View, type KeyboardTypeOptions } from 'react-native';
+import { Platform, ScrollView, View, type KeyboardTypeOptions } from 'react-native';
 
 import { useDraft } from '../../lib/drafts.js';
 import { speakMathText } from '../../lib/math/speak.js';
@@ -34,6 +34,7 @@ import { cellKeys } from '../../lib/math/keys.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
+import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
 
@@ -94,7 +95,7 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const complete = gaps.every((g) => (cells[g.id] ?? '').trim() !== '');
   const [width, setWidth] = useState(0);
   const [focused, setFocused] = useState<string | null>(null);
-  const inputs = useRef(new Map<string, TextInput>());
+  const inputs = useRef(new Map<string, LbTextInputRef>());
   // Where the cursor stands in the focused cell (reported by the field), and once after a
   // math key where it has to go.
   const selection = useRef<Selection | null>(null);
@@ -151,9 +152,9 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: Props) {
     // iOS number pads lack minus, comma and letters; this one has them all.
     const keyboardType: KeyboardTypeOptions =
       math && Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default';
-    const on = focused === cell.id;
     return (
-      <TextInput
+      <LbTextInput
+        variant="cell"
         ref={(input) => {
           if (input) inputs.current.set(cell.id, input);
           else inputs.current.delete(cell.id);
@@ -185,20 +186,6 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: Props) {
         autoCapitalize="none"
         keyboardType={keyboardType}
         maxLength={TABLE_ANSWER_MAX}
-        style={{
-          minHeight: TOUCH,
-          minWidth: 0,
-          width: '100%',
-          paddingHorizontal: SPACE.xs,
-          borderRadius: RADIUS.cell,
-          borderWidth: on ? 2 : 1.5,
-          borderColor: on ? palette.primary : palette.field,
-          backgroundColor: palette.paper,
-          color: palette.ink,
-          fontSize: 16,
-          textAlign: 'center',
-          outlineWidth: 0,
-        }}
       />
     );
   };

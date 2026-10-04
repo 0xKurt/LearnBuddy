@@ -11,18 +11,19 @@
 import { CurriculumRegion, type AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, ScrollView, Text, View, type TextInput } from 'react-native';
+import { Platform, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BuddyOrb } from '../components/lb/BuddyOrb.js';
+import { BirthDateFields, type DateParts } from '../components/auth/BirthDateFields.js';
 import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Card } from '../components/lb/Card.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
 import { Icon } from '../components/lb/Icon.js';
 import { LanguageFlags } from '../components/lb/LanguageFlags.js';
-import { LbTextInput } from '../components/lb/LbTextInput.js';
+import { LbTextInput, type LbTextInputRef } from '../components/lb/LbTextInput.js';
 import { PickerField, picked } from '../components/lb/PickerField.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Segmented } from '../components/lb/Segmented.js';
@@ -61,9 +62,7 @@ export default function Profile() {
   const compact = formDensity(view.window, view.overlap) !== 'roomy';
   const [relation, setRelation] = useState<'self' | 'child' | null>(null);
   const [name, setName] = useState('');
-  const [day, setDay] = useState('');
-  const [month, setMonth] = useState('');
-  const [year, setYear] = useState('');
+  const [date, setDate] = useState<DateParts>({ day: '', month: '', year: '' });
   const [locale, setLocale] = useState<AppLocale>(currentLocale());
   /**
    * The Bundesland her school is in — a required field at registration (owner 2026-10-02,
@@ -108,9 +107,7 @@ export default function Profile() {
     const d = form.draft;
     if (d.relation === 'self' || d.relation === 'child') setRelation(d.relation);
     if (d.name) setName(d.name);
-    if (d.day) setDay(d.day);
-    if (d.month) setMonth(d.month);
-    if (d.year) setYear(d.year);
+    setDate({ day: d.day, month: d.month, year: d.year });
     if (d.locale) setLocale(d.locale as AppLocale);
     // A kept draft is device data, not a trusted value: anything that is not one of the
     // sixteen keys (an older draft, a changed list) is dropped and asked again.
@@ -119,13 +116,11 @@ export default function Profile() {
   }, [form.ready, form.draft]);
   useEffect(() => {
     if (!form.ready) return;
-    form.keep({ relation: relation ?? '', name, day, month, year, locale, region: region ?? '' });
+    form.keep({ relation: relation ?? '', name, ...date, locale, region: region ?? '' });
     // `form` is stable per key; keeping it out of the list avoids a write per render.
-  }, [form.ready, relation, name, day, month, year, locale, region]);
+  }, [form.ready, relation, name, date, locale, region]);
   // The number pad has no return key: a filled field hands focus to the next one.
-  const monthRef = useRef<TextInput>(null);
-  const yearRef = useRef<TextInput>(null);
-  const pinRepeatRef = useRef<TextInput>(null);
+  const pinRepeatRef = useRef<LbTextInputRef>(null);
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
   // For a child two short steps, each fitting the screen: the child, then the parents —
@@ -138,8 +133,8 @@ export default function Profile() {
   // missing (issue #97). Counted, so every further tap announces it again.
   const [whyWait, setWhyWait] = useState(0);
 
-  const birthDate = birthDateOf(day, month, year);
-  const dateComplete = day.length > 0 && month.length > 0 && year.length === 4;
+  const birthDate = birthDateOf(date.day, date.month, date.year);
+  const dateComplete = date.day.length > 0 && date.month.length > 0 && date.year.length === 4;
   const minor = birthDate !== null && ageOf(birthDate) < 16;
   const tooYoungSelf = relation === 'self' && minor;
   const pinOk = /^\d{4}$/.test(pin) && pin === pinRepeat;
@@ -369,51 +364,7 @@ export default function Profile() {
                 <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>
                   {t('profile.birth_date')}
                 </Text>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <FieldLabel>{t('profile.day_label')}</FieldLabel>
-                    <LbTextInput
-                      value={day}
-                      onChangeText={(v) => {
-                        const d = onlyDigits(v);
-                        setDay(d);
-                        if (d.length === 2) monthRef.current?.focus();
-                      }}
-                      placeholder={t('profile.day')}
-                      accessibilityLabel={t('profile.day_label')}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                    />
-                  </View>
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <FieldLabel>{t('profile.month_label')}</FieldLabel>
-                    <LbTextInput
-                      ref={monthRef}
-                      value={month}
-                      onChangeText={(v) => {
-                        const m = onlyDigits(v);
-                        setMonth(m);
-                        if (m.length === 2) yearRef.current?.focus();
-                      }}
-                      placeholder={t('profile.month')}
-                      accessibilityLabel={t('profile.month_label')}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                    />
-                  </View>
-                  <View style={{ flex: 1.6, gap: 4 }}>
-                    <FieldLabel>{t('profile.year_label')}</FieldLabel>
-                    <LbTextInput
-                      ref={yearRef}
-                      value={year}
-                      onChangeText={(v) => setYear(onlyDigits(v))}
-                      placeholder={t('profile.year')}
-                      accessibilityLabel={t('profile.year_label')}
-                      keyboardType="number-pad"
-                      maxLength={4}
-                    />
-                  </View>
-                </View>
+                <BirthDateFields value={date} onChange={setDate} />
                 {dateComplete && !birthDate ? (
                   <Text
                     accessibilityLiveRegion="polite"
@@ -485,9 +436,9 @@ export default function Profile() {
                 <Text style={[TYPE.small, { color: palette.ink }]}>{t('profile.pin_body')}</Text>
                 {/* Visible labels: the second field is the repetition (user feedback #20). */}
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <FieldLabel>{t('profile.pin_label')}</FieldLabel>
+                  <View style={{ flex: 1 }}>
                     <LbTextInput
+                      label={t('profile.pin_label')}
                       value={pin}
                       onChangeText={(v) => {
                         const p = onlyDigits(v);
@@ -507,14 +458,13 @@ export default function Profile() {
                       )}
                     />
                   </View>
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <FieldLabel>{t('profile.pin_repeat')}</FieldLabel>
+                  <View style={{ flex: 1 }}>
                     <LbTextInput
+                      label={t('profile.pin_repeat')}
                       ref={pinRepeatRef}
                       value={pinRepeat}
                       onChangeText={(v) => setPinRepeat(onlyDigits(v))}
                       placeholder="••••"
-                      accessibilityLabel={t('profile.pin_repeat')}
                       keyboardType="number-pad"
                       maxLength={4}
                       // One switch for both fields: they are one decision, and a second
@@ -587,20 +537,6 @@ export default function Profile() {
         </View>
       </KeyboardSafe>
     </Screen>
-  );
-}
-
-/** A visible label above a field (the field carries it for screen readers too). */
-function FieldLabel({ children }: { children: string }) {
-  const { palette } = useTheme();
-  return (
-    <Text
-      accessibilityElementsHidden
-      importantForAccessibility="no"
-      style={[TYPE.small, { color: palette.ink2, paddingHorizontal: 4 }]}
-    >
-      {children}
-    </Text>
   );
 }
 

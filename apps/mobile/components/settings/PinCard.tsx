@@ -7,7 +7,7 @@
 // Supabase Auth.
 
 import { type ReactNode, useRef, useState } from 'react';
-import { Text, View, type TextInput } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
@@ -20,7 +20,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
-import { LbTextInput } from '../lb/LbTextInput.js';
+import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 import { toast } from '../lb/Toast.js';
 import { Row } from './Row.js';
 
@@ -50,7 +50,7 @@ type Props = {
   pinSet: boolean;
   /** The account's e-mail from the stored session ('' when unknown). */
   email: string;
-  onInputFocus: (input: TextInput | null) => void;
+  onInputFocus: (input: LbTextInputRef | null) => void;
 };
 
 export function PinCard({ pinSet, email, onInputFocus }: Props) {
@@ -66,10 +66,10 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
-  const currentRef = useRef<TextInput>(null);
-  const pinRef = useRef<TextInput>(null);
-  const repeatRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
+  const currentRef = useRef<LbTextInputRef>(null);
+  const pinRef = useRef<LbTextInputRef>(null);
+  const repeatRef = useRef<LbTextInputRef>(null);
+  const passwordRef = useRef<LbTextInputRef>(null);
 
   const pinOk = /^\d{4}$/.test(pin) && pin === repeat;
   const currentOk = current === '' || /^\d{4,8}$/.test(current);
@@ -126,8 +126,6 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
     }
   }
 
-  const inputStyle = { fontSize: 16 };
-
   return (
     <Card padding={18}>
       <Row
@@ -158,7 +156,6 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
                   placeholder="••••"
                   accessibilityLabel={t('settings:adult.pin.current')}
                   editable={!busy}
-                  style={inputStyle}
                 />
               </Labeled>
             ) : null}
@@ -180,7 +177,6 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
                 placeholder="••••"
                 accessibilityLabel={t('settings:adult.pin.new')}
                 editable={!busy}
-                style={inputStyle}
               />
             </Labeled>
             <Labeled label={t('settings:adult.pin.repeat')}>
@@ -197,7 +193,6 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
                 accessibilityLabel={t('settings:adult.pin.repeat')}
                 editable={!busy}
                 error={repeat.length === 4 && pin !== repeat}
-                style={inputStyle}
               />
             </Labeled>
             {repeat.length === 4 && pin !== repeat ? (
@@ -236,7 +231,6 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
                       textContentType="password"
                       accessibilityLabel={t('settings:adult.pin.password')}
                       editable={!busy}
-                      style={inputStyle}
                     />
                   </Labeled>
                 ) : (

@@ -26,6 +26,11 @@
     "save": "Enregistrer",
     "undo": "Annuler"
   },
+  "field": {
+    "full": "Le champ est plein — envoie déjà ça.",
+    "remaining_one": "Encore un caractère",
+    "remaining_other": "Encore {{count}} caractères"
+  },
   "loading": "Un instant…",
   "offline": "Pas de connexion – je réessaie dans un instant.",
   "voice": {
