@@ -8,9 +8,15 @@
 // allows are measured against this bar on 360×740, and 6 pt more pushed a match and an order with
 // Buddy's reply into scrolling (walkthrough 38-order-feedback, 39e-match-feedback, #310).
 //
-// A typed answer's input bar stands in this bar too, right above "Prüfen" (issue #365): the same
-// bar as the chat's, at the bottom, never floating under the question. While she types, "Prüfen"
-// moves into that bar, where the chat has "Senden" (`CheckInBar`).
+// The bar is the app's one input bar (`InputBar`, issue #395, report #388 §9), with "Prüfen" in
+// its action slot, as the chat has "Senden" there:
+//   · a typed answer brings its own input bar, with the field (issue #365): the same bar as the
+//     chat's, at the bottom, never floating under the question. While she types, "Prüfen" stands
+//     in it at the pill's end (`CheckInBar`); otherwise across the bar under the pill;
+//   · a board (order, match, table, cloze, mark, select-all, the note line) has nothing to type
+//     yet, so its input bar comes without the field (`field={false}`), and "Prüfen" stands alone
+//     across it — exactly where and how it stood in the bar of its own it had before #395. The
+//     field ("Frag zur Aufgabe …") joins it with the question route (#388 step 6).
 //
 // In voice mode the spoken answer is the main control (the big mic, issue #310 §3.1 "voice slot"):
 // it stands in this bar above the input bar, and "Prüfen" steps back to the soft skin — the
@@ -37,6 +43,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bottomRoom, SPACE } from '../../lib/theme/space.js';
 import { Btn } from '../lb/Btn.js';
 import { BottomBar } from '../lb/BottomBar.js';
+import { InputBar } from '../lb/InputBar.js';
 
 /** "Prüfen": what a form hands to the bar — when its answer may go, how it goes, and why it waits. */
 type Check = {
@@ -92,48 +99,48 @@ function VoiceSlot({ voice, bar = false }: { voice: ReactNode; bar?: boolean }) 
   return bar ? <BottomBar>{slot}</BottomBar> : slot;
 }
 
-function CheckButton({ ready, disabled, onPress, waitsHint, voice, input, typing }: Check) {
-  const { t } = useTranslation('practice');
+function CheckButton(check: Check) {
+  const { voice, input, typing, ready } = check;
+  const across = <CheckBtn {...check} across />;
   return (
     <BottomBar>
       {voice ? <VoiceSlot voice={voice} /> : null}
-      {input?.(
-        typing && ready ? (
-          <CheckInBar ready={ready} disabled={disabled} onPress={onPress} waitsHint={waitsHint} />
-        ) : null,
-      )}
-      {typing ? null : (
-        <View testID="answer-action">
-          <Btn
-            size="md"
-            variant={voice ? 'soft' : 'primary'}
-            pill
-            full
-            disabled={disabled || !ready}
-            onPress={onPress}
-            accessibilityHint={ready ? undefined : waitsHint}
-          >
-            {t('check')}
-          </Btn>
-        </View>
+      {input ? (
+        <>
+          {input(typing && ready ? <CheckBtn {...check} /> : null)}
+          {typing ? null : across}
+        </>
+      ) : (
+        // A board: the input bar without its field, "Prüfen" its action (#395).
+        <InputBar field={false} action={across} />
       )}
     </BottomBar>
   );
 }
 
 /**
- * "Prüfen" inside the input bar while she types (issue #365), in the place the chat's "Senden"
- * has: small, at the bar's end, and it keeps the focus in the field, so a tap never closes the
- * keyboard under her finger before it lands.
+ * "Prüfen" itself, in one of two places. `across`: over the bar's full width (md, the boards'
+ * size), the soft skin in voice mode. Otherwise inside the input bar while she types (issue
+ * #365), where the chat's "Senden" is: small, at the pill's end, and it keeps the focus in the
+ * field, so a tap never closes the keyboard under her finger before it lands.
  */
-function CheckInBar({ ready, disabled, onPress, waitsHint }: Check) {
+function CheckBtn({
+  ready,
+  disabled,
+  onPress,
+  waitsHint,
+  voice,
+  across = false,
+}: Check & { across?: boolean }) {
   const { t } = useTranslation('practice');
   return (
     <View testID="answer-action">
       <Btn
-        size="sm"
+        size={across ? 'md' : 'sm'}
+        variant={across && voice ? 'soft' : 'primary'}
         pill
-        keepsFocus
+        full={across}
+        keepsFocus={!across}
         disabled={disabled || !ready}
         onPress={onPress}
         accessibilityHint={ready ? undefined : waitsHint}
