@@ -226,7 +226,7 @@
     "same_value": "Il valore è giusto – l’hai solo scritto in un altro modo. Guarda in quale forma l’esercizio vuole il risultato.",
     "step_broke": "Fino alla riga {{line}} va tutto bene. Qualcosa si perde passando alla riga successiva: guarda ancora quel passaggio.",
     "step_broke_last": "Il tuo procedimento regge fino alla fine – solo l’ultimo passaggio no. Guarda ancora l’ultima riga.",
-    "test_no_hints": "Nel test non ci sono suggerimenti: scrivi quello che pensi o salta la domanda.",
+    "test_no_hints": "Nel test non ci sono suggerimenti: scrivi quello che pensi o salta la domanda. Dopo il test ti spiego tutto.",
     "test_noted": "Annotato – andiamo avanti.",
     "try_again": "Non ancora del tutto – riprova. Con «Indizio» ti do un aiuto.",
     "typo": "Quasi – si scrive {{answer}}. Scrivilo ancora una volta.",
@@ -377,7 +377,8 @@
       "revise": "Rivedi questi passaggi e mandami la nuova versione.",
       "closing": "Questa era l'ultima versione per stavolta. Porta questi punti nel tuo prossimo testo.",
       "unavailable": "Ora non riesco a leggere il tuo testo. Non è perso: rimandalo tra un momento."
-    }
+    },
+    "ask_unavailable": "Ora non riesco a rispondere alla tua domanda. Riprova tra un momento."
   },
   "contact": {
     "less_often": "Va bene: d'ora in poi ti scrivo sul telefono solo quando è davvero importante. Tutto il resto ti aspetta qui. Puoi cambiarlo nelle impostazioni."

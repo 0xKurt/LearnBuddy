@@ -28,7 +28,9 @@ import { RubricClaim, type AskedElement } from './rubric.js';
 // v10: the rubric schema says what was written for `verbs`, dropped before by `toJsonSchema`
 // (#282).
 // v11: `concern` — distress in an answer field gets the app's fixed help answer (#389).
-export const TUTOR_PROMPT_VERSION = 'tutor.v11';
+// v12: a QUESTION line instead of the rule check when she asks through the question route (#391).
+// The system prompt is unchanged.
+export const TUTOR_PROMPT_VERSION = 'tutor.v12';
 
 export const TutorDecision = z.object({
   intent: z
@@ -188,6 +190,11 @@ export function tutorContext(input: {
    * for a form.
    */
   formNote?: FormNote | null;
+  /**
+   * She wrote this in the question field (`POST …/ask`, issue #391): the route says it is a
+   * question, so there is nothing for the rules or the model to judge.
+   */
+  question?: boolean;
 }): string {
   const i = input.item;
   const lines = [
@@ -199,7 +206,9 @@ export function tutorContext(input: {
     `SOLUTION: ${i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null ? `[${i.correct_choice}] ${i.choices[i.correct_choice]}` : i.answer}${i.unit ? ` ${i.unit}` : ''}`,
     ...(i.accepted_answers.length ? [`ALSO ACCEPTED: ${i.accepted_answers.join(' | ')}`] : []),
     `HINTS GIVEN: ${input.hintsGiven} · ATTEMPTS SO FAR: ${input.attempts}`,
-    `RULE CHECK: ${RULE_TEXT[input.ruleVerdict]}`,
+    input.question
+      ? 'ASKED: her message comes from the question field — a question about this task, never an answer to judge (verdict not_an_attempt). Answer what she asks without giving the solution; if it has nothing to do with the task, steer back in one kind sentence (intent off_topic) — the app offers to keep her question for after the practice.'
+      : `RULE CHECK: ${RULE_TEXT[input.ruleVerdict]}`,
     ...(input.formNote
       ? [`FORM CHECK (read by code, not judged): ${formText(input.formNote)}`]
       : []),

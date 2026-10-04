@@ -178,6 +178,13 @@ sweep records when it ran and how many rows it removed — counts only, never co
   conversation, in her export, and are deleted with it — this decides only what a model is
   told.
 
+- **A question she keeps „für nachher" during practice** (issue #391) is not copied anywhere: it
+  is her own turn in `practice_turns`, and the tutor turn after it carries `later = 'kept'` with
+  the time of her tap. Only with that tap, and only once the practice is over, does Buddy's
+  context show her question — her words, never the tutor's reply — for a day. It is part of her
+  export and deleted with the session and the account like every practice turn. Distress is never
+  offered „für nachher": it gets the fixed help answer.
+
 - **Deleting something of hers needs her own tap**, never the model's reading of a sentence
   (`buddy_pending_actions`, issue #151). Buddy can propose; the app shows her what would go and
   she decides. Her answer, and what was proposed, are part of her export and are deleted with

@@ -178,6 +178,10 @@ export function blockData(
       // Three sessions, and only their shaky topics: that is what context.ts prints of a
       // session — the secure ones travel in the material block, not here.
       ...state.sessions.slice(0, 3).flatMap((s) => s.shaky_topics),
+      // Her questions kept for after practice (issue #391), as context.ts prints them.
+      ...state.later
+        .filter((n) => n.recall_block === null)
+        .flatMap((n) => [n.text, n.session_title]),
     ]),
     waiting: keep([...state.standing.map((o) => o.text), ...prepared.map((s) => s.title)]),
     now: [],

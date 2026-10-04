@@ -86,11 +86,13 @@ export async function sessionView(
     verdict: PracticeTurnView['verdict'];
     pronunciation: PracticeTurnView['pronunciation'];
     reexplain: PracticeTurnView['reexplain'];
+    /** „Merk ich mir für nachher" on a tutor turn (#391, migration 0090). */
+    later: PracticeTurnView['later'];
     /** A long text's feedback as stored (#258): read through the contract, never trusted. */
     essay: unknown;
     created_at: Date;
   }>(
-    `select id, item_id, role, text, verdict, pronunciation, reexplain, essay_feedback as essay, created_at
+    `select id, item_id, role, text, verdict, pronunciation, reexplain, later, essay_feedback as essay, created_at
        from practice_turns
       where session_id = $1 order by seq`,
     [sessionId],

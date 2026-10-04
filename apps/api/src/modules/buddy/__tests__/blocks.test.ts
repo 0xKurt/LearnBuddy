@@ -167,6 +167,15 @@ const state: BuddyState = {
       created_at: new Date('2026-09-28T07:30:00Z'),
     },
   ],
+  later: [
+    {
+      role: 'learner',
+      text: 'Warum ist der Himmel blau?',
+      recall_block: null,
+      session_title: 'Brüche',
+      ended_at: new Date('2026-09-27T14:20:00Z'),
+    },
+  ],
   outreach: [],
   totals: { activeGoals: 1, openSteps: 1, memories: 2, items: 12, materials: 1 },
 };

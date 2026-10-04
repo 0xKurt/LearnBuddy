@@ -42,6 +42,7 @@ import {
 } from './staff.js';
 import { takeParts } from './partsAnswer.js';
 import { givesHints, learnsFsrs } from './modeRules.js';
+import { asTestTurn, ladderDone, REVEAL_AFTER_MISSES, workedReply } from './ladder.js';
 import { lockActiveSession } from './sessionRow.js';
 import { settleTestClock, timeUpError } from './testClock.js';
 import {
@@ -115,69 +116,9 @@ export const TUTOR_SCHEMA = toJsonSchema(TutorDecision);
 export const RUBRIC_SCHEMA = toJsonSchema(RubricDecision);
 const MATERIAL_CHARS = 4000;
 
-/**
- * After this many wrong tries the solution is explained (docs/buddy/03-fahrplan.md §2):
- * the old app withheld it forever, which frustrated; research on bottom-out hints and
- * worked examples supports a bounded ladder.
- */
-const REVEAL_AFTER_MISSES = 3;
-
-/**
- * Asked for help again, the solution is explained only once she has seen this many hints and
- * every prepared one (live finding 1: the first "Tipp" after a miss showed the solution).
- */
-const HINTS_BEFORE_SOLUTION = 2;
-
-/** Whether a (further) request for help shows the solution: the end of the hint ladder. */
-function ladderDone(i: { hints: string[]; hints_used: number; prepared_hints_used: number }) {
-  return (
-    i.prepared_hints_used >= i.hints.length &&
-    i.hints_used >= Math.max(i.hints.length, HINTS_BEFORE_SOLUTION)
-  );
-}
-
-/**
- * The worked solution when prepared, otherwise the plain solution.
- *
- * For a free text neither is "the solution" (issue #197): a prepared way is introduced as ONE
- * way, and where none was prepared the app says plainly that there is no single right answer
- * here — instead of reading out the 600-character key as if it were one.
- */
-function workedReply(
-  locale: string,
-  i: Pick<ItemRow, 'kind' | 'answer' | 'choices' | 'correct_choice' | 'unit' | 'worked_solution'>,
-): string {
-  const free = noSingleSolution(i);
-  if (i.worked_solution) {
-    return `${t(locale, free ? 'practice.one_way_intro' : 'practice.worked_intro')} ${i.worked_solution}`;
-  }
-  if (free) return t(locale, 'practice.no_single_solution');
-  // A Diktat's word stands in the solution card right under this line (issue #242): said here
-  // too, it would be the same word twice (#286). The line says what to do with it instead.
-  if (i.kind === 'spelling_dictation') return t(locale, 'practice.dictation.shown');
-  return t(locale, 'practice.solution_is', { answer: shownSolution(i) });
-}
-
 function outcomeOf(si: { status: string; first_try_correct: boolean | null }): ItemOutcome {
   if (si.status === 'correct') return si.first_try_correct ? 'first_try' : 'with_help';
   return 'revealed';
-}
-
-/**
- * A test: one neutral acknowledgement per answer, never a hint or the
- * solution (whatever the model wrote); what was right comes at the end.
- */
-function asTestTurn<
-  J extends {
-    verdict: AnswerResponse['verdict'];
-    reply: string;
-    gaveHint: boolean;
-    revealed: boolean;
-  },
->(j: J, locale: string): J {
-  if (j.verdict === null) return { ...j, gaveHint: false, revealed: false };
-  const key = j.verdict === 'not_an_attempt' ? 'practice.test_no_hints' : 'practice.test_noted';
-  return { ...j, reply: t(locale, key), gaveHint: false, revealed: false };
 }
 
 export async function answerItem(
@@ -185,10 +126,18 @@ export async function answerItem(
   learner: PracticeLearner,
   sessionId: string,
   input: AnswerRequest,
-  /** "Tipp" with no prepared hint left: a request for help, never an answer to grade. */
-  opts: { hintRequest?: boolean } = {},
+  opts: {
+    /** "Tipp" with no prepared hint left: a request for help, never an answer to grade. */
+    hintRequest?: boolean;
+    /**
+     * Her question through `POST …/ask` (issue #391, `routes.ts`): help like "Tipp" — never graded,
+     * never a try — but on every form, never the end of the ladder, and a hint only if one came.
+     */
+    question?: boolean;
+  } = {},
 ): Promise<AnswerResponse> {
-  const hintRequest = opts.hintRequest === true;
+  const question = opts.question === true;
+  const hintRequest = opts.hintRequest === true || question;
   const first = await replayOrLoad(deps, learner.id, sessionId, input.client_turn_id);
   if ('replayed' in first) return first.replayed;
   const { session } = first;
@@ -202,7 +151,7 @@ export async function answerItem(
   // One path per session (issue #147): a flashcard pass is turned over, never answered,
   // hinted at or revealed. The pass was decided when it started, so the server refuses the
   // other way in rather than letting two kinds of evidence meet on one question.
-  if (session.pass === CARD_PASS) {
+  if (session.pass === CARD_PASS && !question) {
     throw new AppError('conflict', 'These are cards: you say yourself whether you knew it', {
       reason: 'use_cards',
     });
@@ -228,14 +177,14 @@ export async function answerItem(
   if (!item) throw new AppError('not_found', 'Question not in this session');
   if (item.status !== 'open') throw new AppError('conflict', 'This question is already closed');
 
-  if (item.kind === 'speak') {
+  if (item.kind === 'speak' && !question) {
     throw new AppError('conflict', 'This question is answered by speaking', {
       reason: 'use_speak',
     });
   }
   // A Diktat has no written hint (issue #242): a hint about a word she is to spell would spell it,
   // and writing one would be a model call. The help is hearing it again, slower — on the card.
-  if (hintRequest && item.kind === 'spelling_dictation') {
+  if (hintRequest && !question && item.kind === 'spelling_dictation') {
     throw new AppError('conflict', 'The help here is hearing it again', { reason: 'no_hints' });
   }
   // Only a long text takes up to 12 000 characters, and it is never a test question (#258).
@@ -381,6 +330,8 @@ export async function answerItem(
     revealed: boolean;
     /** The feedback on a version of her long text, stored with the tutor turn (#258). */
     essay?: EssayFeedback | null;
+    /** Her question had nothing to do with the task: the reply offers "für nachher" (#391). */
+    offersLater?: boolean;
   };
   let judged: Judged;
   // Distress in the answer field, or the provider's safety filter (issue #389): the reply is
@@ -397,9 +348,19 @@ export async function answerItem(
       revealed: false,
     };
   };
-  if (essay) {
+  if (question && session.mode === 'test') {
+    // A question in a practice test (#391): the test's fixed line at once — a model would only
+    // write words the test replaces (`asTestTurn`), so none is asked.
+    judged = {
+      verdict: 'not_an_attempt',
+      evaluatedBy: 'rule',
+      reply: t(learner.locale, 'practice.test_no_hints'),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (essay) {
     judged = await judgeEssay(deps, learner, item, text);
-  } else if (hintRequest && givesHints(session.mode) && ladderDone(item)) {
+  } else if (hintRequest && !question && givesHints(session.mode) && ladderDone(item)) {
     // Asked again at the end of the ladder: the solution explained, at once, no model.
     judged = {
       verdict: 'not_an_attempt',
@@ -625,6 +586,7 @@ export async function answerItem(
                 // The value is right and only the form differs: what code read off the two
                 // syntax trees, so the tutor decides about the question, not the algebra (#235).
                 formNote: rule === 'other_form' ? formNoteFor(item, text) : null,
+                question,
               }),
             },
           ],
@@ -732,15 +694,17 @@ export async function answerItem(
       }
       judged = d.concern
         ? safeguard('concern')
-        : hintRequest
+        : hintRequest && !(question && d.intent === 'wants_to_stop')
           ? {
               // "Tipp": whatever the model called it, this is help, shown as a hint — never a
-              // graded answer, and its own gentle hint is kept (live finding 1).
+              // graded answer, and its own gentle hint is kept (live finding 1). A question
+              // counts a hint only when the tutor gave one (#391).
               verdict: 'not_an_attempt',
               evaluatedBy: 'model',
               reply: d.reply,
-              gaveHint: !d.revealed_answer,
+              gaveHint: !d.revealed_answer && (!question || d.gave_hint),
               revealed: d.revealed_answer,
+              offersLater: question && d.intent === 'off_topic',
             }
           : d.intent === 'wants_to_stop'
             ? {
@@ -771,10 +735,14 @@ export async function answerItem(
           ? safeguard('blocked')
           : hintRequest
             ? {
-                // "Tipp" without a model: a general first step, honestly no judgement.
+                // "Tipp" without a model: a general first step, honestly no judgement. A question
+                // cannot be answered without one, and the reply says exactly that (#391).
                 verdict: 'not_an_attempt',
                 evaluatedBy: 'rule',
-                reply: t(learner.locale, 'practice.help_step'),
+                reply: t(
+                  learner.locale,
+                  question ? 'practice.ask_unavailable' : 'practice.help_step',
+                ),
                 gaveHint: false,
                 revealed: false,
               }
@@ -850,23 +818,25 @@ export async function answerItem(
       !essay &&
       !partsCheck &&
       judged.verdict !== 'correct' &&
-      item.hints_used < 2 &&
+      // A question never reveals (#391): the solution comes by the ladder, "Tipp" and a try.
+      (question || item.hints_used < 2) &&
       (judged.revealed || leaks(judged.reply))
     ) {
       judged = {
         ...judged,
         reply:
           nextHint ?? t(learner.locale, hintRequest ? 'practice.help_step' : 'practice.try_again'),
-        gaveHint: nextHint !== null || hintRequest,
+        gaveHint: nextHint !== null || (hintRequest && !question),
         usedPrepared: nextHint !== null,
         revealed: false,
+        offersLater: false,
       };
     }
     // Never withheld forever: after the third wrong try, or when she asks again at the end of
     // the hint ladder, the solution is explained and the question comes back soon (FSRS).
     const attempted = judged.verdict !== null && judged.verdict !== 'not_an_attempt';
     const misses = item.attempts + (attempted ? 1 : 0);
-    const askedAfterLastHint = judged.verdict === 'not_an_attempt' && ladderDone(item);
+    const askedAfterLastHint = !question && judged.verdict === 'not_an_attempt' && ladderDone(item);
     if (
       !judged.revealed &&
       !essay &&
@@ -922,8 +892,8 @@ export async function answerItem(
           ],
         );
         await tx.query(
-          `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, gave_hint, revealed, essay_feedback)
-         values ($1, $2, $3, $4, 'tutor', $5, $6, $7, $8)`,
+          `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, gave_hint, revealed, essay_feedback, later)
+         values ($1, $2, $3, $4, 'tutor', $5, $6, $7, $8, $9)`,
           [
             sessionId,
             learner.id,
@@ -933,6 +903,7 @@ export async function answerItem(
             judged.gaveHint,
             judged.revealed,
             judged.essay ? JSON.stringify(judged.essay) : null,
+            judged.offersLater ? 'offered' : null,
           ],
         );
         // The key learns: an answer the model judged right that the rules did not know

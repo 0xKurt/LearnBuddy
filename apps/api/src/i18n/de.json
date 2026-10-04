@@ -226,7 +226,7 @@
     "same_value": "Der Wert stimmt – du hast es nur anders geschrieben. Schau noch, in welcher Form die Aufgabe das Ergebnis haben möchte.",
     "step_broke": "Bis Zeile {{line}} stimmt alles. Von dort zur nächsten Zeile geht etwas verloren – schau dir diesen Schritt nochmal an.",
     "step_broke_last": "Dein Weg stimmt bis zum Schluss – nur der letzte Schritt nicht. Schau nochmal auf die letzte Zeile.",
-    "test_no_hints": "Im Test gibt es keine Tipps – schreib einfach, was du denkst, oder überspring die Frage.",
+    "test_no_hints": "Im Test gibt es keine Tipps – schreib einfach, was du denkst, oder überspring die Frage. Nach dem Test erklär ich dir alles.",
     "test_noted": "Notiert – weiter geht's.",
     "try_again": "Noch nicht ganz – probier's nochmal. Mit „Tipp“ bekommst du einen Hinweis.",
     "typo": "Fast – so schreibt man es: {{answer}}. Tipp es nochmal.",
@@ -377,7 +377,8 @@
       "revise": "Überarbeite diese Stellen und schick mir die neue Fassung.",
       "closing": "Das war deine letzte Fassung für diesmal. Nimm die Punkte mit in den nächsten Text.",
       "unavailable": "Ich kann deinen Text gerade nicht lesen. Er ist nicht verloren – schick ihn gleich noch einmal."
-    }
+    },
+    "ask_unavailable": "Deine Frage kann ich gerade nicht beantworten. Versuch es gleich noch einmal."
   },
   "contact": {
     "less_often": "Alles klar – aufs Handy schreibe ich dir ab jetzt nur noch, wenn's wirklich wichtig ist. Alles andere findest du hier. Ändern kannst du das in den Einstellungen."
