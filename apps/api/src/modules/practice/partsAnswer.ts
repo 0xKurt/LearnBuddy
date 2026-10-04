@@ -1,4 +1,4 @@
-// A STRUCTURED answer, taken in (issues #228–#232): the step of `answerItem` (service.ts) that
+// A STRUCTURED answer, taken in (issues #228–#232): the step of `answerItem` (answer.ts) that
 // reads the stored task, refuses the wrong shape and judges the parts. docs/architecture.md
 // §Practice ("Structured items").
 //

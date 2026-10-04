@@ -10,7 +10,8 @@ import type { SessionView } from '@learnbuddy/shared-types/contracts';
 import type { Deps } from '../../deps.js';
 import { isUniqueViolation, type Db } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
-import { sessionView, touchRun, type PracticeLearner } from './service.js';
+import { touchRun, type PracticeLearner } from './service.js';
+import { sessionView } from './sessionView.js';
 import { lockActiveSession, type SessionRow } from './sessionRow.js';
 
 /** Has this very tap already been recorded? (Idempotency, like an answer: issue #163.) */

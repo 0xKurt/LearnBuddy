@@ -1,5 +1,5 @@
 // The part of a session view only a Kopfrechnen round has (issue #243). Kept apart from
-// `drillRound.ts` because `service.ts` builds every session view and must not import the
+// `drillRound.ts` because `sessionView.ts` builds every session view and must not import the
 // module that imports it.
 
 import { DrillSpec, type DrillView } from '@learnbuddy/shared-types/contracts';

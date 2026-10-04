@@ -1,6 +1,6 @@
 // She contests something about a question (docs/architecture.md §Practice): "Frage passt nicht"
 // takes the question out (`flagItem`), and "Das war doch richtig" disputes a verdict
-// (`disputeVerdict`). Both are use cases of their own, kept apart from answering (service.ts).
+// (`disputeVerdict`). Both are use cases of their own, kept apart from answering (answer.ts).
 
 import type { SessionView } from '@learnbuddy/shared-types/contracts';
 
@@ -10,7 +10,8 @@ import { AppError } from '../../lib/errors.js';
 import { bumpContext } from '../buddy/plan.js';
 import { CARD_PASS } from './cards.js';
 import { DRILL_PASS } from './drill.js';
-import { sessionView, touchRun, type ItemRow, type SessionItemRow } from './service.js';
+import { touchRun, type ItemRow, type SessionItemRow } from './service.js';
+import { sessionView } from './sessionView.js';
 import { changeSession } from './sessionRow.js';
 
 /**

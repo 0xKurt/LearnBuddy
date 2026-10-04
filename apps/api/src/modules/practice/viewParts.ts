@@ -1,5 +1,5 @@
 // The parts of a session's question view that are computed rather than read (`sessionView` in
-// `service.ts`): the signed concept image, the learning surface, a structured task's parts.
+// `sessionView.ts`): the signed concept image, the learning surface, a structured task's parts.
 // Their own file so `service.ts` stays within its size (docs/engineering-guards.md, rule 4).
 
 import { isStructuredKind, SubjectKind, type ItemView } from '@learnbuddy/shared-types/contracts';

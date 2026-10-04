@@ -1,6 +1,6 @@
 // "Tipp" (docs/architecture.md §Practice): the next prepared hint for an open question, at once and
 // without a model; with none prepared, the tutor writes one. A use case of its own, beside answering
-// (service.ts), which it reuses for the tutor's hint.
+// (answer.ts), which it reuses for the tutor's hint.
 
 import { type AnswerResponse, type HintRequest } from '@learnbuddy/shared-types/contracts';
 
@@ -11,11 +11,11 @@ import { t } from '../../i18n/index.js';
 import { lockActiveSession } from './sessionRow.js';
 import { CARD_PASS } from './cards.js';
 import { DRILL_PASS } from './drill.js';
+import { offersHintButton } from './modeRules.js';
 import { mentionsSolution } from './tutor.js';
+import { answerItem } from './answer.js';
 import {
-  answerItem,
   nextSeq,
-  offersHintButton,
   replayOrLoad,
   replayTurn,
   solutionsOf,

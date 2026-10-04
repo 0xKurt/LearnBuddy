@@ -25,7 +25,7 @@
 //     spelling. The flag comes from this question having a spoken text, so it cannot leak
 //     anywhere else.
 //   · No hint ladder. The help for a listening question is hearing it again, and slower —
-//     which is what the form offers anyway (`service.ts`, `hint_available`). A hint written
+//     which is what the form offers anyway (`sessionView.ts`, `hint_available`). A hint written
 //     about a text she is supposed to be listening to is a worse version of the replay, and
 //     it costs a model call.
 

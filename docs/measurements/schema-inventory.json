@@ -18241,7 +18241,7 @@
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
    "promptVersion": "tutor.v8",
-   "where": "practice/service.ts — asked.length ? RUBRIC_SCHEMA : TUTOR_SCHEMA",
+   "where": "practice/answer.ts — asked.length ? RUBRIC_SCHEMA : TUTOR_SCHEMA",
    "system": {
     "chars": 7124,
     "sha256": "b5bd66f2557675146f72037c019cafa69a08695e9e28330ddfaf5ed8cb429a12",
@@ -18334,7 +18334,7 @@
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
    "promptVersion": "tutor.v8",
-   "where": "practice/service.ts",
+   "where": "practice/answer.ts",
    "system": {
     "chars": 7124,
     "sha256": "b5bd66f2557675146f72037c019cafa69a08695e9e28330ddfaf5ed8cb429a12",

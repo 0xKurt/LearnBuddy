@@ -17,7 +17,7 @@
 // Adding a kind (#229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark): its draft
 // schema, a
 // builder from draft to task, a `problem` check, a view, a checker and a reply — each one more
-// `case` in the switches below. The answer flow in `service.ts` only ever calls the exported
+// `case` in the switches below. The answer flow in `answer.ts` only ever calls the exported
 // functions.
 
 import {

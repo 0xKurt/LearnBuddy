@@ -1609,7 +1609,7 @@ eine Frage betrifft — ein Schlüssel aus geschlossener zod-Enum, gespeichert i
 1. **Aufgaben schreiben.** `practice/generate.ts` (ein Thema) und `materials/service.ts` (ein
    fotografiertes Blatt) bekommen den Block `CURRICULUM` mit den Stellen ihres Jahrgangs und der
    Regel ihres Landes, damit der Schlüssel in ihrer Terminologie steht.
-2. **Beurteilen.** `practice/service.ts` → `tutorContext` stellt genau die eine Regel vor das
+2. **Beurteilen.** `practice/answer.ts` → `tutorContext` stellt genau die eine Regel vor das
    Urteil (`curriculumLine`).
 3. **Übungstest.** Code lässt eine Frage weg, die ihr Land in ihrem Jahrgang nicht unterrichtet
    (`offCurriculum`) — **nur** im `test`-Modus und **nur** ohne eigene Blätter: in freier Übung
@@ -1630,8 +1630,10 @@ zwei Urteile; `null`, `other` und `he` erzeugen denselben Prompt Wort für Wort)
 
 ## Practice
 
-Where it lives (`modules/practice/`, one use case per file, #313): `service.ts` answers a
-question and builds the session view; beside it `hint.ts` („Tipp“), `setAside.ts` („Lösung
+Where it lives (`modules/practice/`, one use case per file, #313): `service.ts` starts and
+finishes a run, `answer.ts` answers a question, `sessionView.ts` builds the session view and
+`modeRules.ts` says what a run's mode allows (FSRS, the hint ladder, „Tipp“, „Lösung zeigen“);
+beside them `hint.ts` („Tipp“), `setAside.ts` („Lösung
 zeigen“, „Später“), `contest.ts` („Frage passt nicht“, „Bewertung stimmt nicht“),
 `partsAnswer.ts` (a structured answer taken in), `passTurn.ts` (one turn of a card pass or a
 Kopfrechnen round), `sessionRow.ts` (the session row and the one way to lock it), `finish.ts`
