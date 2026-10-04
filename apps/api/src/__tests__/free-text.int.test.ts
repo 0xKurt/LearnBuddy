@@ -173,7 +173,7 @@ describe.skipIf(!dbReady)('a free text claims nothing it did not measure', () =>
       item({ kind: 'numeric', prompt: 'Was ist 7 · 4?', answer: '28' }),
     ]);
     const id = s.items[0]!.item.id;
-    // The rules alone answer the first wrong number and the third (service.ts): only the
+    // The rules alone answer the first wrong number and the third (answer.ts): only the
     // SECOND miss goes to the tutor. Scripting more would leave one pending and fail.
     await answer(l, s, id, '21');
     env.llm.script('tutor', judges('incorrect', 'Schau nochmal auf die Reihe.'));

@@ -9,7 +9,7 @@
 //
 // Sechs Pflichtelemente sind nicht sechs Aufrufe. Alles steckt in demselben Tutor-Aufruf, den
 // eine Antwort schon immer gekostet hat (`RubricDecision` erweitert `TutorDecision` um ein Feld;
-// `service.ts` schickt dasselbe eine Mal). Der Integrationstest beweist das, indem er genau
+// `answer.ts` schickt dasselbe eine Mal). Der Integrationstest beweist das, indem er genau
 // einen Aufruf skriptet: ein zweiter wäre `unexpected`, ein ausbleibender wäre `pending`, und
 // beides lässt den Test fallen (`writing-rubric.int.test.ts`).
 //
@@ -47,7 +47,7 @@
 //      Thema zu drei Vierteln — eine Zahl, die niemand gemessen hat. Hier muss dafür nichts
 //      gebaut werden: eine teilweise erfüllte Rubrik schließt die Frage nicht, schreibt also
 //      keine Wiederholung, und ein freier Text bekommt seit #197 ohnehin nur dann eine
-//      Bewertung, wenn er richtig war (`service.ts`, `rateable`).
+//      Bewertung, wenn er richtig war (`answer.ts`, `rateable`).
 //   3. **Der Satz nennt EINEN nächsten Schritt, keine Abarbeitungsliste.** Dieselbe
 //      Entscheidung, die `chemistry.ts` bei mehreren unausgeglichenen Elementen trifft und
 //      begründet: „alle auf einmal zu nennen ist eine Liste statt eines nächsten Schritts."

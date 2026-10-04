@@ -17,7 +17,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DEFAULT_TIMEZONE, learnerTimezone, learnerZoneSql } from '../lib/zone.js';
 import { scheduleStepReminder } from '../modules/buddy/plan.js';
-import { answerItem, type PracticeLearner } from '../modules/practice/service.js';
+import { answerItem } from '../modules/practice/answer.js';
+import { type PracticeLearner } from '../modules/practice/service.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import {
   createTestEnv,

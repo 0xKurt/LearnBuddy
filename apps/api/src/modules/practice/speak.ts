@@ -15,7 +15,6 @@ import type {
 import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
-import { isUniqueViolation } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { learnerDay } from '../../lib/zone.js';
 import { t } from '../../i18n/index.js';
@@ -25,7 +24,7 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { partialArray, partialString } from '../../llm/partial.js';
 import { ageOn } from '../identity/model.js';
 import { reviewItem } from './fsrs.js';
-import { answerWithReply, replayTurn, touchRun, type PracticeLearner } from './service.js';
+import { settleTurn, replayTurn, touchRun, type PracticeLearner } from './service.js';
 
 export const PRONOUNCE_PROMPT_VERSION = 'pronounce.v2.3';
 
@@ -263,8 +262,8 @@ export async function speakItem(
   const closes = overall !== 'retry';
   const reply = judged.audible ? judged.reply : t(learner.locale, 'practice.heard_retry');
 
-  try {
-    await deps.db.tx(async (tx) => {
+  return settleTurn(deps, learner.id, sessionId, item.id, input.client_turn_id, verdict, () =>
+    deps.db.tx(async (tx) => {
       // The model call took seconds: "Beenden" may have finished the session meanwhile. The
       // session row is locked first (the same order as finishSession), so the judgement
       // commits into an active session or not at all (audit M-34 speak-commits-after-finish).
@@ -323,15 +322,8 @@ export async function speakItem(
         );
       }
       await touchRun(tx, learner.id, sessionId, now);
-    });
-  } catch (err) {
-    if (isUniqueViolation(err)) {
-      const r = await replayTurn(deps, learner.id, sessionId, input.client_turn_id);
-      if (r) return r;
-    }
-    throw err;
-  }
-  return answerWithReply(deps, learner.id, sessionId, item.id, verdict);
+    }),
+  );
 }
 
 // ─────────────── one word, on its own (issue #83) ───────────────

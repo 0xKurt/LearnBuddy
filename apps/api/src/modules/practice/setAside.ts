@@ -1,6 +1,6 @@
 // A question closed or set aside without an answer (docs/architecture.md §Practice): "Lösung
 // zeigen" closes it as not known (`revealItem`), and in homework "Später" puts a task aside for
-// now (`deferItem`). Use cases of their own, beside answering (service.ts).
+// now (`deferItem`). Use cases of their own, beside answering (answer.ts).
 
 import { type SessionView } from '@learnbuddy/shared-types/contracts';
 
@@ -11,14 +11,9 @@ import { changeSession } from './sessionRow.js';
 import { reviewItem } from './fsrs.js';
 import { CARD_PASS } from './cards.js';
 import { DRILL_PASS } from './drill.js';
-import {
-  learnsFsrs,
-  revealReady,
-  sessionView,
-  touchRun,
-  type ItemRow,
-  type SessionItemRow,
-} from './service.js';
+import { learnsFsrs, revealReady } from './modeRules.js';
+import { touchRun, type ItemRow, type SessionItemRow } from './service.js';
+import { sessionView } from './sessionView.js';
 import { settleTestClock, timeUpError } from './testClock.js';
 
 /**
