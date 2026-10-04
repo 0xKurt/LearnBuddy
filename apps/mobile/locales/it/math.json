@@ -331,6 +331,7 @@
   },
   "figure": {
     "label": "Figura",
+    "show": "Vedi",
     "fraction_circle": "Cerchio diviso in {{parts}} parti uguali, {{filled}} colorate",
     "fraction_bar": "Striscia divisa in {{parts}} parti uguali, {{filled}} colorate",
     "number_line": "Retta numerica da {{min}} a {{max}}, passo {{step}}",

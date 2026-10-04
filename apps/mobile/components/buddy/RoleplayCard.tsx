@@ -20,8 +20,8 @@ import { messageFor } from '../../lib/errors.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
+import { EndButton } from '../lb/EndButton.js';
 import { Icon } from '../lb/Icon.js';
 import { toast } from '../lb/Toast.js';
 
@@ -49,7 +49,8 @@ function useEndRoleplay(roleplayId: string): { busy: boolean; end: () => Promise
  * The way out, pinned above the conversation while a roleplay runs. The card scrolls away
  * with the scene after a few lines (the walkthrough found its button gone behind "Ältere
  * Nachrichten"); the way out must never be something she has to scroll back for. One line:
- * what is running, and the one button.
+ * what is running, and the one button — the round ✕ every practice header ends with
+ * (`EndButton`), so the scene's name keeps the line's width at 360 (issue #334.3).
  */
 export function RoleplayStrip({ roleplay }: { roleplay: RoleplayNow }) {
   const { palette } = useTheme();
@@ -67,17 +68,12 @@ export function RoleplayStrip({ roleplay }: { roleplay: RoleplayNow }) {
       <Text numberOfLines={1} style={[TYPE.small, { color: palette.ink2, flex: 1 }]}>
         {what}
       </Text>
-      <Btn
-        size="sm"
-        variant="outline"
-        pill
+      <EndButton
         busy={busy}
         onPress={() => void end()}
-        accessibilityLabel={t('buddy:roleplay.end')}
-        accessibilityHint={t('buddy:roleplay.end_hint')}
-      >
-        {t('buddy:roleplay.end_short')}
-      </Btn>
+        label={t('buddy:roleplay.end')}
+        hint={t('buddy:roleplay.end_hint')}
+      />
     </View>
   );
 }

@@ -1,5 +1,6 @@
 // The head of a practice test she asked to sit with time (issue #241): the usual progress row
-// with the time left in a small chip at its end, and one quiet line under it.
+// with the time left in a small chip in the row's fixed clock slot (issue #334.2: it never pushes
+// the bar out), and one quiet line under it.
 //
 // Calm on purpose (lib/practice/testClock.ts): whole minutes, no red, no seconds ticking. The
 // line under the row says the test's rule ("Eine Antwort pro Frage, keine Tipps.") and changes
@@ -10,11 +11,10 @@
 import type { TestTimer } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 import { announce } from '../../lib/announce.js';
 import { clockLine, leftNow } from '../../lib/practice/testClock.js';
-import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Chip } from '../lb/Chip.js';
@@ -34,7 +34,7 @@ export function TestClockHeader({
   receivedAt: number;
   /** Once, when the time is up: the screen hands the test in. */
   onTimeUp: () => void;
-  /** The progress row as every run shows it; the clock stands at its end, after its controls. */
+  /** The progress row as every run shows it; the clock takes the row's clock slot. */
   progress: ComponentProps<typeof ProgressRow>;
 }) {
   const { palette } = useTheme();
@@ -71,20 +71,14 @@ export function TestClockHeader({
     <>
       <ProgressRow
         {...progress}
-        right={
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-            {progress.right}
-            {/* Its own box: a Chip aligns itself to the top, the row centres its parts. */}
-            <View>
-              <Chip
-                tone="primary"
-                icon="clock"
-                accessibilityLabel={line ? t('timer.left', { count: line.count }) : t('timer.up')}
-              >
-                {line ? t('timer.chip', { count: line.count }) : t('timer.chip', { count: 0 })}
-              </Chip>
-            </View>
-          </View>
+        clock={
+          <Chip
+            tone="primary"
+            icon="clock"
+            accessibilityLabel={line ? t('timer.left', { count: line.count }) : t('timer.up')}
+          >
+            {t('timer.chip', { count: line?.count ?? 0 })}
+          </Chip>
         }
       />
       <Text

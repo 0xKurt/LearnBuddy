@@ -3129,7 +3129,8 @@ word list, so it stays a prompt rule.
   test ends in the same transaction; the scheduler's session sweep ends one she never came back
   to (`lifecycle.ts`). `SessionView.timer` = `{ minutes, remaining_ms, ran_out }`; the app counts
   down from the moment the view arrived (never its wall clock against a deadline), shows whole
-  minutes in a small chip at the end of the progress row ("noch 10 Min." — no red, no seconds),
+  minutes in a small chip in the progress row's own clock slot right after the bar ("noch 10
+  Min." — no red, no seconds; the bar keeps its least width beside it, issue #334.2),
   the test's one rule on the line under it, and at five minutes that line turns into one quiet
   sentence ("Schau in Ruhe, was du noch schaffst."), announced once (`TestClock.tsx`,
   `lib/practice/testClock.ts`). The offer card carries a clock and the minutes. At zero the app
@@ -3219,7 +3220,8 @@ word list, so it stays a prompt rule.
   was all right; otherwise `again`, said as where to go on ("Bei den 7ern bleiben wir dran").
   The app words it ("Die 7er sitzen jetzt besser."), and offers "Noch eine Runde" and the way
   back. _Screen_ (`components/practice/DrillRound.tsx`, on the practice route), designed against
-  #286/#287: the round's name on ONE line; one lavender card that takes all the room between the
+  #286/#287: the practice header every question has (the round's name on ONE line, the round ✕
+  `EndButton`, issue #334.1) and the same progress row; one lavender card that takes all the room between the
   progress and the pad (no dead gap), the task as big as fits a 360 pt line (56/44/34 pt) and
   the typed answer under it; the task she answered last as one pill at the card's foot
   ("✓ Richtig: 6 · 7 = 42" on mint / "Das war: 7 · 8 = 56", words and a mark, never colour
@@ -3634,12 +3636,13 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   waveform — issue #310). The home reads a late reply only while it is on screen. Pronunciation
   recordings stay tap by tap. Buddy's chat replies stream on screen and are read once stored
   (§Speed). A realtime audio API (speech in, speech out) is not built.
-- **"Vorlesen" at every question, also without voice mode** (issue #238): a round speaker in the
-  question's progress row, right above the card (`components/practice/ReadQuestionButton.tsx`,
-  `CircleBtn`), for a screen reader "Frage vorlesen". That row is 44 pt tall anyway, so it costs
-  no height: a pill row under the card cost 54 pt on every question, and the icon inside the card
-  took width from the topic line or the prompt and added a line — both pushed a structured
-  question's parts off a 360×740 phone (rule 16). It says exactly what voice mode says (`questionReadText`: math,
+- **"Vorlesen" at every question, also without voice mode** (issue #238): one small speaker at
+  the end of the question card's meta row ("Frage von Buddy · Thema"), the one place for it
+  (issue #310, decision of 04.10.; `components/practice/ReadQuestionButton.tsx`, the icon-only
+  `<Btn>`), for a screen reader "Frage vorlesen". It lays out at 24 pt inside the 26 pt row with a
+  44 pt touch target, so it costs no height; in the progress row it squeezed the bar and, with a
+  test's clock, pushed it out (#334.2). The header's voice-mode switch carries the headphones,
+  never the speaker. It says exactly what voice mode says (`questionReadText`: math,
   fractions and chemical formulas in words — "H 2 O", not "H Index 2 O" —, choices as
   "A: …, B: …") in the question's language, through the same natural voice (`POST /voice/speech`,
   cached per learner for 24 h) at her own speed step, with the phone's own voice as fallback;
@@ -3765,7 +3768,9 @@ the role; code holds the frame (CLAUDE.md rule 1).
   it shrinks to a quiet line. The way out is **not** on the card: after a few lines the card has
   scrolled away with the scene (the first walkthrough found its button behind "Ältere
   Nachrichten"), so while it runs one strip above the conversation (`RoleplayStrip`, in the slot
-  of the focus line, from `BuddyHome.roleplay`) names it and carries the one "Beenden" button.
+  of the focus line, from `BuddyHome.roleplay`) names it and carries the one way out: the round ✕
+  every practice header ends with (`components/lb/EndButton.tsx`, "Beenden – wie lief's?" for a
+  screen reader), so the scene's name keeps its line at 360 (issue #334.3).
   No count of turns, no progress bar (rule 6).
 - **While it runs, her message is a line in the scene, not a Buddy turn.** `decideTurn` sees the
   running roleplay and answers through `roleplayRound` (`turn.ts`) — same claim, fence, takeover,
@@ -4214,8 +4219,13 @@ window, ~567 visible; #289). `formDensity()` turns the visible height into `room
 `compact` (a 360×740 phone) or `tight` (< 600: every phone while she types). The welcome screen in
 `tight` keeps only the form — the choice of signing up or in, the fields, their errors — and the
 flags, Buddy, the intro and the under-16 note come back when the keyboard goes; the practice screen takes its
-figure and photo caps from the visible height, so the card no longer grows into the room Buddy's
-newest turn needs. A lint rule (`eslint.config.mjs`, `no-restricted-syntax`) refuses the window's
+figure and photo caps from the visible height (`lib/practice/visuals.ts`, the figure table), so the
+card no longer grows into the room Buddy's newest turn needs; in `tight` the reading text steps
+down to its smaller share and a question's drawing folds to one line that still opens it large
+(`ZoomableFigure` `folded`, issue #379) — a box diagram does not shrink at all, and a drawing at
+its legible minimum left the field under the keyboard. The conversation under the card fades at
+its top edge whenever that edge lies inside a turn (`components/practice/ThreadBox.tsx`): with the
+keyboard up Buddy's reply ran under the card at a hard edge (#365). A lint rule (`eslint.config.mjs`, `no-restricted-syntax`) refuses the window's
 height in `app/` and `components/`; the one exception is the sheet's slide-out offset
 (`components/lb/Sheet.tsx`), which should ignore the keyboard. **Tests:** the numbers in
 `lib/__tests__/keyboard.test.ts`; the layout in `tests/web/visible.spec.ts` at the room a keyboard

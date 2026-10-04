@@ -12,8 +12,8 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
-import { ZoomableFigure } from '../math/ZoomableFigure.js';
 import { MathText } from '../math/MathText.js';
+import { QuestionFigure } from '../practice/QuestionFigure.js';
 
 const RESULT_TONE: Record<ItemResult, 'success' | 'primary' | 'gray'> = {
   first_try: 'success',
@@ -43,7 +43,7 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
           <Chip tone={RESULT_TONE[item.result]}>{t(`items.result.${item.result}`)}</Chip>
         </View>
         <MathText text={item.prompt} style={TYPE.body} />
-        {item.figure ? <ZoomableFigure figure={item.figure} /> : null}
+        {item.figure ? <QuestionFigure figure={item.figure} /> : null}
         {choices ? (
           <View style={{ gap: 6 }}>
             <Text style={TYPE.label}>{t('items.choices')}</Text>
