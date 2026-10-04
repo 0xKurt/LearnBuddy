@@ -327,6 +327,13 @@
     "solid": {
       "net_yes": "Sì, è uno sviluppo del cubo",
       "net_no": "No, non è uno sviluppo del cubo"
+    },
+    "explain": {
+      "point_met": "✓ {{name}}",
+      "point_open": "{{name}}: manca ancora",
+      "start": "Comincia da un punto: {{ask}}",
+      "all": "C'è tutto – è proprio così che si spiega.",
+      "closing": "Il resto lo vediamo insieme la prossima volta."
     }
   },
   "contact": {

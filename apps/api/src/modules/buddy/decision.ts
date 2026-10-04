@@ -660,9 +660,18 @@ const offerLearning = z.object({
   tool: z.literal('offer_learning'),
   args: z.object({
     kind: z
-      .enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test', 'spelling_dictation'])
+      .enum([
+        'practice',
+        'vocab',
+        'speak',
+        'listen',
+        'help',
+        'test',
+        'spelling_dictation',
+        'teach_back',
+      ])
       .describe(
-        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end) · spelling_dictation: a dictation: the app reads words or sentences aloud and she types them (when she asks for a dictation or to practise writing/spelling her word list)',
+        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end) · spelling_dictation: a dictation: the app reads words or sentences aloud and she types them (when she asks for a dictation or to practise writing/spelling her word list) · teach_back: open questions SHE answers by explaining in her own words, by voice or in writing, checked point by point (when she asks to be quizzed or questioned on a topic or sheet, or asks to explain something to you)',
       ),
     text: z
       .string()
@@ -682,7 +691,7 @@ const offerLearning = z.object({
     sheet: MaterialRef.nullable()
       .optional()
       .describe(
-        'spelling_dictation only: the sheet (sh1) whose words she wants dictated — a word list she photographed. The words are then taken from that sheet, and "text" names it. null for every other kind, and when she typed or named the words.',
+        'spelling_dictation: the sheet (sh1) whose words she wants dictated — a word list she photographed; the words are then taken from that sheet, and "text" names it. teach_back: the sheet (sh1) she wants to be questioned on. null for every other kind, and when she typed or named the words or the topic.',
       ),
     // Optional in parsing (older scripted answers have neither); the model sees both. Issue #113.
     difficulty: DifficultyWishSchema.nullable()

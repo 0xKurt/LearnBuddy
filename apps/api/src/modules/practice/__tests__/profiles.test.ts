@@ -177,6 +177,18 @@ const LISTEN = {
   ],
 };
 
+/** One explanation question with its key points („Erklär mal", #236). */
+const TEACH_BACK = {
+  prompt: 'Erklär mir, wie man zwei Brüche addiert.',
+  topic: 'Brüche addieren',
+  difficulty: 2,
+  points: [
+    { name: 'Nenner', point: 'erst gleichnamig machen', ask: 'Was machst du zuerst?', exact: [] },
+    { name: 'Zähler', point: 'dann die Zähler addieren', ask: 'Und dann?', exact: [] },
+    { name: 'Kürzen', point: 'am Ende kürzen', ask: 'Was machst du am Schluss?', exact: [] },
+  ],
+};
+
 /** A valid answer of a run of this kind: every form its profile allows, in schema order. */
 /**
  * The structured forms of a profile, `MAX_STRUCTURED_ITEMS` at a time: a set holds no more than
@@ -200,6 +212,7 @@ function validAnswer(kind: Kind, chunk = 0): Record<string, unknown> {
     ...(p.staffs ? { staffs: [STAFF] } : {}),
     ...(structured.length > 0 ? { structured: structured.map((t) => STRUCTURED[t]) } : {}),
     ...(p.dictation ? { dictation: DICTATION } : {}),
+    ...(p.teachBack ? { teach_back: [TEACH_BACK] } : {}),
   };
 }
 
@@ -225,6 +238,7 @@ function outsiders(kind: Kind): { what: string; add: (a: Record<string, unknown>
   if (!p.staffs) out.push({ what: 'staffs', add: (a) => list(a, 'staffs', STAFF) });
   if (!p.listen) out.push({ what: 'listen', add: (a) => void (a.listen = LISTEN) });
   if (!p.dictation) out.push({ what: 'dictation', add: (a) => void (a.dictation = DICTATION) });
+  if (!p.teachBack) out.push({ what: 'teach_back', add: (a) => list(a, 'teach_back', TEACH_BACK) });
   return out;
 }
 
@@ -239,13 +253,16 @@ function kept(kind: Kind, answer: unknown) {
     structured: set.structured.map((s) => s.type),
     listen: set.listen === null ? 0 : 1,
     dictation: set.dictation?.entries.length ?? 0,
+    teachBack: set.teach_back.length,
   };
 }
 
 describe('the fallback', () => {
   it('is the pre-D2 global schema byte for byte', () => {
     expect(JSON.stringify(GENERATED_SCHEMA)).toBe(
-      JSON.stringify(toJsonSchema(GeneratedSet.omit({ listen: true, dictation: true }))),
+      JSON.stringify(
+        toJsonSchema(GeneratedSet.omit({ listen: true, dictation: true, teach_back: true })),
+      ),
     );
     expect(JSON.stringify(toJsonSchema(setSchemaForModel(null, null)))).toBe(
       JSON.stringify(GENERATED_SCHEMA),
@@ -283,6 +300,7 @@ describe.each(KINDS)('the profile of a %s run', (kind) => {
         structured: [...structuredChunk(kind, chunk)],
         listen: p.listen ? 1 : 0,
         dictation: p.dictation ? DICTATION.entries.length : 0,
+        teachBack: p.teachBack ? 1 : 0,
       });
     }
   });

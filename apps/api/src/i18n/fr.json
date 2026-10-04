@@ -327,6 +327,13 @@
     "solid": {
       "net_yes": "Oui, c'est un patron de cube",
       "net_no": "Non, ce n'est pas un patron de cube"
+    },
+    "explain": {
+      "point_met": "✓ {{name}}",
+      "point_open": "{{name}} : il manque encore",
+      "start": "Commence par un point : {{ask}}",
+      "all": "Tout y est – c'est exactement comme ça qu'on l'explique.",
+      "closing": "On regardera le reste ensemble la prochaine fois."
     }
   },
   "contact": {

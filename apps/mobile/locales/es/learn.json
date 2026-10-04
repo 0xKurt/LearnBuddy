@@ -6,7 +6,8 @@
     "vocab": "Repasar vocabulario",
     "speak": "Practicar pronunciación",
     "listen": "Comprensión oral",
-    "spelling_dictation": "Practicar dictado"
+    "spelling_dictation": "Practicar dictado",
+    "teach_back": "Explícamelo"
   },
   "homework": {
     "title": "Ayuda con los deberes",

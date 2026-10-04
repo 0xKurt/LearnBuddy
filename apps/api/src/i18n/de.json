@@ -327,6 +327,13 @@
     "solid": {
       "net_yes": "Ja, das ist ein Würfelnetz",
       "net_no": "Nein, das ist kein Würfelnetz"
+    },
+    "explain": {
+      "point_met": "✓ {{name}}",
+      "point_open": "{{name}} fehlt noch",
+      "start": "Fang mit einem Punkt an: {{ask}}",
+      "all": "Alles drin – genau so erklärt man das.",
+      "closing": "Den Rest schauen wir uns beim nächsten Mal zusammen an."
     }
   },
   "contact": {

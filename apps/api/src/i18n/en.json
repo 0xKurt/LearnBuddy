@@ -327,6 +327,13 @@
     "solid": {
       "net_yes": "Yes, it is a cube net",
       "net_no": "No, it is not a cube net"
+    },
+    "explain": {
+      "point_met": "✓ {{name}}",
+      "point_open": "{{name}} still missing",
+      "start": "Start with one point: {{ask}}",
+      "all": "It's all there – that's exactly how to explain it.",
+      "closing": "We'll look at the rest together next time."
     }
   },
   "contact": {

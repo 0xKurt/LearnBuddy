@@ -6,7 +6,8 @@
     "vocab": "Vokabeln abfragen",
     "speak": "Aussprache üben",
     "listen": "Hörverstehen üben",
-    "spelling_dictation": "Diktat üben"
+    "spelling_dictation": "Diktat üben",
+    "teach_back": "Erklär mal"
   },
   "homework": {
     "title": "Hilfe bei Hausaufgaben",

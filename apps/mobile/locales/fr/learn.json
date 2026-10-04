@@ -6,7 +6,8 @@
     "vocab": "Réviser le vocabulaire",
     "speak": "Travailler la prononciation",
     "listen": "Compréhension orale",
-    "spelling_dictation": "S'entraîner à la dictée"
+    "spelling_dictation": "S'entraîner à la dictée",
+    "teach_back": "Explique-moi"
   },
   "homework": {
     "title": "Aide aux devoirs",
