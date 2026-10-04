@@ -34,6 +34,7 @@ import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.
 import { StorageError } from '../../storage/gateway.js';
 import { insertItems, samePrompt, usableItems } from '../practice/items.js';
 import { SHEET_STRUCTURED, structuredItems } from '../practice/structured.js';
+import { readingItems } from '../practice/reading.js';
 import { createSession } from '../practice/service.js';
 import {
   clarifiedRules,
@@ -966,10 +967,15 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   const x = result.data;
   if (!x.is_learning_material) return fail(deps, job, materialId, 'not_learning_material');
   // The ordinary questions, and after them the structured ones that pass Regel 0 (#228–#230):
-  // an order, a table or links to make, each checked by code before it is stored.
+  // an order, a table or links to make, each checked by code before it is stored. Then each
+  // reading text's group (#233), checked against the text and the transcription of the sheet —
+  // not in homework, which is helped task by task as printed (its schema has no reading).
   const items = [
     ...usableItems(x.items),
     ...structuredItems(x.structured, SHEET_STRUCTURED, x.structured.length),
+    ...(homework ? [] : x.reading).flatMap((r) =>
+      readingItems(r, { locale: learner.locale, transcript: x.extracted_text }),
+    ),
   ];
   const pageProblems = pageProblemsOf(x.pages, m.photo_count);
   // "Not readable" with questions and a page that was read: one bad page must not
@@ -988,13 +994,9 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     });
   // Questions were written but none passed validation: the reading went wrong, not the
   // photo — no lighting advice for a fine photo (empty-after-validation-says-unreadable).
+  const written = x.items.length + x.structured.length + x.reading.length;
   if (items.length === 0)
-    return fail(
-      deps,
-      job,
-      materialId,
-      x.items.length + x.structured.length > 0 ? 'model_error' : 'unreadable',
-    );
+    return fail(deps, job, materialId, written > 0 ? 'model_error' : 'unreadable');
 
   // The sheet this run's questions went onto (the merge target, else this material);
   // null when another run finished first or the sheet was deleted meanwhile.

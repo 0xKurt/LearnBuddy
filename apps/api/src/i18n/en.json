@@ -293,6 +293,12 @@
       "accepted": "Yes, it is accepted",
       "rejected": "No, it is not accepted"
     },
+    "reading": {
+      "true": "True",
+      "false": "False",
+      "look_line": "Read line {{from}} again.",
+      "look": "Read lines {{from}} to {{to}} again."
+    },
     "periodic": {
       "metal": "metal",
       "metalloid": "metalloid",

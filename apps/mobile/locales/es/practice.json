@@ -291,6 +291,17 @@
     "soon": "Mira con calma qué más puedes hacer.",
     "up": "Se acabó el tiempo: enseguida llega tu resultado."
   },
+  "reading": {
+    "label": "Texto de lectura",
+    "show": "Mostrar texto",
+    "hide": "Plegar",
+    "show_hint": "Muestra el texto de esta pregunta.",
+    "hide_hint": "Pliega el texto para que la pregunta tenga más espacio.",
+    "scroll_hint": "El texto se desplaza solo; la pregunta se queda en su sitio.",
+    "line": "Línea {{n}}",
+    "evidence_one": "Respuesta en la línea {{from}}",
+    "evidence": "Respuesta en las líneas {{from}}–{{to}}"
+  },
   "select": {
     "several": "Hay varias correctas: tócalas todas.",
     "check_waits": "Cuando hayas marcado al menos una."

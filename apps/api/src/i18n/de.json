@@ -293,6 +293,12 @@
       "accepted": "Ja, es wird akzeptiert",
       "rejected": "Nein, es wird nicht akzeptiert"
     },
+    "reading": {
+      "true": "Richtig",
+      "false": "Falsch",
+      "look_line": "Lies nochmal Zeile {{from}}.",
+      "look": "Lies nochmal die Zeilen {{from}} bis {{to}}."
+    },
     "periodic": {
       "metal": "Metall",
       "metalloid": "Halbmetall",

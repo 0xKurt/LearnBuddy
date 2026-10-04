@@ -95,6 +95,12 @@ export type ItemForCheck = {
    */
   listening?: boolean;
   /**
+   * The text the question is about, as stored (`items.read_passage`, Leseverständnis, issue
+   * #233). Like a listening task, only the CONTENT is judged: in reading comprehension the
+   * curriculum does not mark language either (§7.3, issue #197). Read only for whether it is set.
+   */
+  read_passage?: unknown;
+  /**
    * The question's figure as stored (issue #254). Read only for a clock that declares it asks
    * the time (`ask: 'time'`): then the answer IS a time, and code compares it as one
    * (`clockVerdict`). Anything else in it is not looked at here.
@@ -261,14 +267,14 @@ export function noSingleSolution(item: { kind: string }): boolean {
 
 /** Decision D-2: set per item; by default strict for vocabulary and language subjects. */
 export function spellingOf(
-  item: Pick<ItemForCheck, 'kind' | 'spelling' | 'subject_kind' | 'listening'>,
+  item: Pick<ItemForCheck, 'kind' | 'spelling' | 'subject_kind' | 'listening' | 'read_passage'>,
 ): 'strict' | 'gentle' {
   if (item.spelling) return item.spelling;
-  // Listening: how she spells a word she HEARD is not what the question asks, and marking it
-  // is what §7.3 of the curriculum report forbids (issue #210, #197). Before the per-item
-  // mark could be trusted here, because the default for a language subject — which every
-  // listening task is — goes the other way.
-  if (item.listening === true) return 'gentle';
+  // Listening and reading: how she spells a word she HEARD or found in the text is not what the
+  // question asks, and marking it is what §7.3 of the curriculum report forbids (issues #210,
+  // #233, #197). Before the per-item mark could be trusted here, because the default for a
+  // language subject — which every such task is — goes the other way.
+  if (aboutAText(item)) return 'gentle';
   // A free text is never rebuked for its form: in a text of several sentences a comma is not
   // what is being asked, and in reading or listening comprehension marking language is
   // expressly forbidden (`docs/lehrplan-und-uebungsformen.md` §7, issue #197).
@@ -692,7 +698,15 @@ export function ruleCheck(
   // Listening (issue #210): she heard it, and what she understood is the whole question — so a
   // slip of the pen is not a near miss to fix, it is the right answer. Last, because it softens
   // whatever verdict the comparison arrived at, including one the value decided.
-  return item.listening === true ? contentOnly(verdict) : verdict;
+  return aboutAText(item) ? contentOnly(verdict) : verdict;
+}
+
+/**
+ * The question is answered from a text she heard (#210) or read (#233): only what she understood
+ * counts, never how she wrote it. Read off the stored question, never off a subject or a guess.
+ */
+function aboutAText(item: Pick<ItemForCheck, 'listening' | 'read_passage'>): boolean {
+  return item.listening === true || (item.read_passage !== null && item.read_passage !== undefined);
 }
 
 /**

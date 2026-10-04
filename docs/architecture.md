@@ -2606,6 +2606,41 @@ that states an open task's answer (`mentionsSolution`, any notation) gets one re
 is stored (503 `reexplain_unavailable`). A model outage stores nothing (503 `model_unavailable`).
 Also after the last question closed and the session finished.
 
+### Lesetexte (issue #233, migration `0086_reading_passages.sql`)
+
+Several questions about ONE text she reads, the text visible while she answers. Today only from a
+photographed sheet (`materials/extract.ts`, `reading` in the reading's answer; not in homework,
+which is helped task by task as printed): the printed questions, or Buddy's own where the sheet
+prints none.
+
+- **Stored per question.** `items.read_passage` = `{title, lines, lang}` (`ReadPassage`,
+  `contracts/reading.ts`) on every question of the group, for the reason `listen_task` is: spaced
+  repetition brings one question back alone. A question has at most one text as stimulus
+  (`items_one_text`: never `read_passage` and `listen_task` together).
+- **Line by line, as print counts.** The lines as printed; an empty line between paragraphs is kept
+  for the layout but not counted (`lineNumbers`, one count for server and app). "Z. 12" is the
+  twelfth line of text.
+- **Regel 0 (`practice/reading.ts`, reject — never repair):** the text stands, word for word, in
+  the reading's own transcription (`extracted_text`); a line a question names (read by format:
+  "Z.", "Zeile", "line", "ligne", "línea", "riga" + number) exists, and the answer's evidence touches
+  it; every short / MC / true-false question quotes its evidence, which must stand in the text; a
+  short answer's key words occur in it; a true/false statement may not copy the text, and its two
+  options are written by code (`practice.reading.true/false`, in the text's language); an order
+  (#228) is checked like every order. Fewer than two questions left → no group, nothing stored.
+- **Grading:** MC, true/false and order exact by rules; a short answer by the usual rules, content
+  only (`aboutAText` in `evaluate.ts`: a form near miss is right, as for listening, #197). The one
+  prepared hint is code's: "Lies nochmal die Zeilen 5 bis 6." — no model call.
+- **View:** `ItemView.passage` (`PassageView`): the lines, an alias `t1`… shared by the group,
+  `named` (the lines the question itself names, so the text opens there) and `evidence` (where the
+  answer stands — only once the solution may be sent). The app shows it at the top of the question
+  card (`components/practice/PassagePanel.tsx`): its heading is the fold button, line numbers on
+  every fifth line, the named and the answer's lines; a fixed box of 26 % of the visible height
+  (15 % above an answer board or with the keyboard up) that scrolls in itself — `scroll-text`, the
+  one scrolling surface allowed besides a conversation and a browsed list (`tests/web/fit.ts`).
+  Folded or not, and where she scrolled, carries over to the next question of the same text.
+- **Not yet:** a reading text Buddy writes on request (a `read` run beside `listen`) — it needs a
+  run kind in `practice/generate.ts`, which is at its size limit; and marking in the text (#234).
+
 ### Charts (issues #245, #246)
 
 Line and climate charts, pies, box plots, histograms, scatter plots and population pyramids next to

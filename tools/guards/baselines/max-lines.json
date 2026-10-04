@@ -11,7 +11,7 @@
     "apps/api/src/modules/buddy/tools.ts": 1509,
     "apps/api/src/modules/materials/service.ts": 1599,
     "apps/api/src/modules/practice/__tests__/evaluate.test.ts": 825,
-    "apps/api/src/modules/practice/service.ts": 1343,
+    "apps/api/src/modules/practice/service.ts": 1339,
     "apps/mobile/app/buddy.tsx": 1223,
     "apps/mobile/app/practice/[id].tsx": 1039,
     "apps/mobile/app/profile.tsx": 644,

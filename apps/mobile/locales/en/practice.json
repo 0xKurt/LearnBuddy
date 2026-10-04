@@ -291,6 +291,17 @@
     "soon": "Calmly see what else you can do.",
     "up": "Time is up – your result is on its way."
   },
+  "reading": {
+    "label": "Reading text",
+    "show": "Show text",
+    "hide": "Fold away",
+    "show_hint": "Shows the text for this question.",
+    "hide_hint": "Folds the text away so the question has more room.",
+    "scroll_hint": "The text scrolls on its own; the question stays where it is.",
+    "line": "Line {{n}}",
+    "evidence_one": "Answer in line {{from}}",
+    "evidence": "Answer in lines {{from}}–{{to}}"
+  },
   "select": {
     "several": "More than one is right – tap all of them.",
     "check_waits": "Once you've ticked at least one."

@@ -33,6 +33,7 @@ import { cautiousAt, curriculumLine, pointOf } from '../curriculum/state.js';
 import { bumpContext } from '../buddy/plan.js';
 import { pickAnswers, taskOf, untriedPicks } from './bars.js';
 import { listenRefs, listenTaskOf } from './listen.js';
+import { passageViews } from './reading.js';
 import { checkDictation, dictationReply, nearlyRight, type DictationCheck } from './dictation.js';
 import {
   differentNumber,
@@ -203,6 +204,14 @@ export type ItemRow = {
    * question has at most one computed source (migration 0078). Read through `staffTaskOf`.
    */
   staff_task: unknown;
+  /**
+   * The text this question is about (Leseverständnis, issue #233), or null. Read through
+   * `passageOf` (`practice/reading.ts`), never trusted as it stands. Optional: only the session
+   * view and the answer path load it.
+   */
+  read_passage?: unknown;
+  /** A reading question's evidence: the words of its text the answer stands in (#233). */
+  source_excerpt?: string | null;
 };
 
 export type SessionItemRow = {
@@ -739,7 +748,7 @@ export async function sessionView(
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
             i.bar_task, i.task, i.listen_task, i.staff_task, i.spelling, i.archived_at,
-            i.choice_figures,
+            i.choice_figures, i.read_passage, i.source_excerpt,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label, sub.kind as subject_kind
        from session_items si join items i on i.id = si.item_id
@@ -797,6 +806,8 @@ export async function sessionView(
    */
   const solutionShown = (i: { status: string; kind: string }): boolean =>
     cardPass || !((i.status === 'open' && !testOver) || !revealAllowed || noSingleSolution(i));
+  // The text of each reading question (issue #233); where its answer stands, once that is shown.
+  const reading = passageViews(items, solutionShown);
   return {
     id: s.id,
     mode: s.mode,
@@ -842,6 +853,8 @@ export async function sessionView(
         // It stays while the question is closed: hearing the text again next to the words of
         // it is exactly what a listening task is reviewed with.
         listen: hearing.has(i.id) ? { ref: hearing.get(i.id)! } : null,
+        // The text she reads it from, above the question while she answers (issue #233).
+        passage: reading.get(i.id) ?? null,
         // The "Vorlesen" button (issue #238): code decides, from what the question is, whether
         // hearing it would hand over the solution. A card is read by its own "Anhören".
         read_aloud: !cardPass && readAloudAllowed(i),
@@ -885,16 +898,7 @@ export async function sessionView(
           ? (listenTaskOf(i.listen_task)?.text ?? null)
           : null,
     })),
-    turns: turns.map((tr) => ({
-      id: tr.id,
-      item_id: tr.item_id,
-      role: tr.role,
-      text: tr.text,
-      verdict: tr.verdict,
-      pronunciation: tr.pronunciation,
-      reexplain: tr.reexplain,
-      created_at: tr.created_at.toISOString(),
-    })),
+    turns: turns.map(({ created_at, ...tr }) => ({ ...tr, created_at: created_at.toISOString() })),
     current_item_id: active ? (current?.id ?? null) : null,
     summary: s.status === 'finished' ? summarize(items) : null,
     card_pass: cardPass,

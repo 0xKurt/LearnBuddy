@@ -4,7 +4,7 @@
 // ___ Mutter.") shows as a gap, read out as "Lücke"; while she types a short
 // answer it stands in the gap, so she sees the whole sentence.
 
-import type { Figure, ItemImage } from '@learnbuddy/shared-types/contracts';
+import type { Figure, ItemImage, PassageView } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { fillableAnswer } from '../../lib/math/prompt.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
@@ -24,6 +25,7 @@ import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
 import { ZoomableFigure } from '../math/ZoomableFigure.js';
 import { MathText } from '../math/MathText.js';
+import { PassagePanel } from './PassagePanel.js';
 import { StaffPlayButton } from './StaffPlayButton.js';
 import { StimulusImage } from './StimulusImage.js';
 
@@ -142,7 +144,31 @@ type QuestionProps = {
    * prompt left no room for the staff, its keys AND Buddy's reply on 360×740.
    */
   dense?: boolean;
+  /**
+   * The text this question is about (Leseverständnis, issue #233): above the question, with its
+   * line numbers, scrolling in itself so the question under it never moves.
+   */
+  passage?: PassageView | null;
+  /**
+   * The answer is a board under the card (an order to put, issue #228): it needs the height, so
+   * the reading text keeps the smaller box it has while she types.
+   */
+  answerBoard?: boolean;
 };
+
+/**
+ * How tall a reading text may stand before it scrolls in itself: a good quarter of what she sees —
+ * eight lines on 360×740, with the question, the answer and "Prüfen" still on screen (rule 16).
+ */
+const PASSAGE_SHARE = 0.26;
+/**
+ * The same above an answer board, and in a short window — while she types, the keyboard takes up to half of what she sees
+ * (on Android the window itself shrinks, adjustResize), and the field must stay above it: two
+ * or three lines of the text, which scrolls on, and folds away with one tap.
+ */
+const PASSAGE_SHARE_SHORT = 0.15;
+/** A window shorter than this is one with the keyboard up: no phone is this short without it. */
+const SHORT_WINDOW = 600;
 
 export function QuestionCard({
   prompt,
@@ -156,8 +182,16 @@ export function QuestionCard({
   imageMaxHeight = 180,
   minHeight,
   dense = false,
+  passage = null,
+  answerBoard = false,
 }: QuestionProps) {
   const { palette } = useTheme();
+  // What she can see, keyboard or not: while she types, the text gives way to the field.
+  const viewHeight = useVisibleHeight().visible;
+  const passageShare =
+    answerBoard || viewHeight < SHORT_WINDOW ? PASSAGE_SHARE_SHORT : PASSAGE_SHARE;
+  // A reading question's topic is its text: the text's heading already names it.
+  const shownTopic = passage ? null : topic;
   const { t } = useTranslation('practice');
   // What the header row and the prompt keep for themselves; the rest is the figure's.
   const [headHeight, setHeadHeight] = useState(0);
@@ -180,8 +214,11 @@ export function QuestionCard({
   return (
     <Card tone="lavender" padding={18} radius={24} style={grown ? { minHeight } : null}>
       <View style={grown ? { flexGrow: 1 } : null}>
+        {passage ? (
+          <PassagePanel passage={passage} maxHeight={Math.round(viewHeight * passageShare)} />
+        ) : null}
         <View onLayout={(e) => setHeadHeight(Math.round(e.nativeEvent.layout.height))}>
-          {fromBuddy || topic ? (
+          {fromBuddy || shownTopic ? (
             // Where it comes from and what it is about share one line.
             <View
               style={{
@@ -194,11 +231,11 @@ export function QuestionCard({
               }}
             >
               {fromBuddy ? <FromBuddyTag label={t('origin_buddy')} /> : null}
-              {topic ? (
+              {shownTopic ? (
                 <Text
                   style={[TYPE.small, { color: palette.ink2, fontWeight: '600', flexShrink: 1 }]}
                 >
-                  {topic}
+                  {shownTopic}
                 </Text>
               ) : null}
             </View>

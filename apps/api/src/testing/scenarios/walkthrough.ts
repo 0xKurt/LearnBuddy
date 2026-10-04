@@ -16,6 +16,7 @@ import { installGenerations } from './generations.js';
 import { scriptLearningModes } from './learning-modes.js';
 import { scriptPeriodic } from './periodic.js';
 import { scriptPrimary } from './primary.js';
+import { scriptReading } from './reading.js';
 import { scriptRoleplay } from './roleplay.js';
 import { pronounceRules, readingRules, tutorRules } from './rules.js';
 import { scriptSelectAll } from './selectAll.js';
@@ -36,6 +37,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptCoreLoop();
   // Before the learning modes: their "probetest" sentence would answer this one too (#241).
   scriptTimedTest();
+  // Before the tour: both read the same photo fixture; hers is keyed by her age (#233).
+  scriptReading();
   scriptLearningModes(scripted);
   scriptTour();
   scriptFigures();
