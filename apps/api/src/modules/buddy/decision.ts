@@ -85,9 +85,7 @@ export const Quote = z
   .string()
   .min(1)
   .max(300)
-  .describe(
-    "the learner's exact words, whole words as written (what they wrote since your last answer)",
-  );
+  .describe("the learner's exact words since your last answer, whole words as written");
 
 // Days and durations as the learner described them; the server computes the date
 // (hard rule 2). The model sees ONE flat object per spec — a kind plus the fields
@@ -428,7 +426,7 @@ const preparePractice = z.object({
       .boolean()
       .optional()
       .describe(
-        'true only when the learner asks for the questions that did not sit the last time they were asked. Then only those are chosen — never one that has not been asked yet — and there may be fewer of them than the minutes suggest.',
+        'true only when she asks for the questions that did not sit the last time they were asked. Then only those are chosen, never one not asked yet, and there may be fewer than the minutes suggest.',
       ),
     difficulty: DifficultyWishSchema.nullable()
       .optional()
@@ -445,7 +443,7 @@ const preparePractice = z.object({
     sheet: MaterialRef.nullable()
       .optional()
       .describe(
-        'the one sheet the questions must come from, when she pointed at a sheet. STATE lists her sheets with their aliases. null when she named no sheet.',
+        'the one sheet the questions must come from, when she pointed at a sheet; null when she named no sheet.',
       ),
     vocabulary_only: z
       .boolean()
@@ -469,7 +467,7 @@ const preparePractice = z.object({
       .boolean()
       .optional()
       .describe(
-        'true when she asked for everything there is (a whole word list, the whole sheet). Then the minutes do not limit it. Do not put a number in your reply: you cannot know it yet, and the card says how many it became.',
+        'true when she asked for everything there is (a whole word list, the whole sheet); then the minutes do not limit it. Put no number in your reply: you cannot know it yet, the card says how many it became.',
       ),
   }),
 });
@@ -515,7 +513,7 @@ const planStep = z.object({
     subject: SubjectRef.nullable()
       .optional()
       .describe(
-        'kind practice without a goal: the subject (f1) she wants to practise; null if it has no material yet',
+        'kind practice without a goal: the subject she wants to practise; null if it has no material yet',
       ),
     focus_topics: z
       .array(z.string().trim().min(1).max(60))
@@ -556,7 +554,7 @@ const requestMaterial = z.object({
      */
     material: MaterialRef.nullable()
       .optional()
-      .describe('the sheet (sh1) this page belongs to, when it completes one she already sent'),
+      .describe('the sheet this page belongs to, when it completes one she already sent'),
   }),
 });
 
@@ -588,7 +586,7 @@ const setContact = z.object({
       'Evening start of the quiet hours: no messages at all from this time until the morning; only earlier than it is now',
     ),
     quiet_end: LocalTimeSchema.nullable().describe(
-      'Morning end of the quiet hours: nothing before this time. Only later than it is now — asking for quiet until later is less contact, and you may do that (issue #114)',
+      'Morning end of the quiet hours: nothing before this time. Only later than it is now — asking for quiet until later is less contact, and you may do that',
     ),
     avoid_weekdays: z
       .array(z.number().int().min(1).max(7))
@@ -671,7 +669,7 @@ const offerLearning = z.object({
         'teach_back',
       ])
       .describe(
-        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end) · spelling_dictation: a dictation: the app reads words or sentences aloud and she types them (when she asks for a dictation or to practise writing/spelling her word list) · teach_back: open questions SHE answers by explaining in her own words, by voice or in writing, checked point by point (when she asks to be quizzed or questioned on a topic or sheet, or asks to explain something to you)',
+        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end) · spelling_dictation: the app reads words or sentences aloud and she types them (when she asks for a dictation or to practise writing/spelling her word list) · teach_back: open questions SHE answers by explaining in her own words, by voice or in writing, checked point by point (when she asks to be quizzed or questioned on a topic or sheet, or asks to explain something to you)',
       ),
     text: z
       .string()
@@ -684,14 +682,14 @@ const offerLearning = z.object({
     goal: GoalRef.nullable()
       .default(null)
       .describe(
-        'practice or test for a planned test in STATE: its alias (g1) — the questions then stay within the sheets she photographed for it; otherwise null',
+        'practice or test for a planned test: the questions then stay within the sheets she photographed for it; otherwise null',
       ),
     // A Diktat of the words on one of her sheets (issue #242). Optional in parsing like the two
     // below: older scripted answers have none.
     sheet: MaterialRef.nullable()
       .optional()
       .describe(
-        'spelling_dictation: the sheet (sh1) whose words she wants dictated — a word list she photographed; the words are then taken from that sheet, and "text" names it. teach_back: the sheet (sh1) she wants to be questioned on. null for every other kind, and when she typed or named the words or the topic.',
+        'spelling_dictation: the sheet whose words she wants dictated — a word list she photographed; the words are then taken from that sheet, and "text" names it. teach_back: the sheet she wants to be questioned on. null for every other kind, and when she typed or named the words or the topic.',
       ),
     // Optional in parsing (older scripted answers have neither); the model sees both. Issue #113.
     difficulty: DifficultyWishSchema.nullable()
@@ -784,7 +782,7 @@ const startRoleplay = z.object({
       .min(3)
       .max(5)
       .describe(
-        "the role card: 3 to 5 things she has to manage in the conversation (to greet, to ask for the price…), each a short phrase in the learner's own language. From her photographed role card when she has one. The feedback afterwards is given on exactly these.",
+        "the role card: the things she has to manage in the conversation (to greet, to ask for the price…), each a short phrase in the learner's own language. From her photographed role card when she has one. The feedback afterwards is given on exactly these.",
       ),
     quote: Quote.describe('her words asking for the roleplay'),
   }),
