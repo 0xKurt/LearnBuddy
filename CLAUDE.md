@@ -124,6 +124,59 @@ Ausnahmelisten (`tools/guards/baselines/`) wachsen nie still: CI vergleicht sie 
 braucht im Commit die Zeile `Ausnahmeliste-Zuwachs: #<issue> <Grund>`. Nach einem Refactor zieht
 `pnpm guards:shrink` die Listen nach unten.
 
+## Verbindliche Entwicklungsanweisung (Owner, 04.10.)
+
+Best Practices, saubere Architektur und hohe Codequalität sind zwingende Anforderungen, keine
+optionale Verbesserung. Der Owner erwartet production-ready Code: sauber, modular,
+wiederverwendbar, konsistent, verständlich, testbar und langfristig wartbar. Funktionierender Code
+allein reicht nicht.
+
+Für jede Implementierung:
+
+- Redundanten oder duplizierten Code konsequent vermeiden. Wiederverwendung hat Vorrang vor Copy-Paste.
+- Vor neuer Logik prüfen, ob vorhandener Code wiederverwendet oder sinnvoll erweitert werden kann:
+  Komponenten, Hooks, Utilities, Services, Typen, Funktionen.
+- Komponenten klein, modular, klar abgegrenzt und wiederverwendbar bauen; eine klar definierte
+  Verantwortung je Komponente, Funktion oder Modul.
+- Große monolithische Komponenten in Unterkomponenten, Hooks, Services oder Utilities zerlegen.
+- Gemeinsame Logik genau einmal implementieren, in einer passenden wiederverwendbaren Abstraktion.
+  **Gleiches UI-Element = eine Komponente in der ganzen App**, z. B. genau ein Texteingabefeld
+  (#365). Keine nachgebaute Kopie, die nur gleich aussieht.
+- Keine unnötigen Abstraktionen, kein Overengineering, keine Wrapper ohne echten Mehrwert.
+- APIs, Props, Interfaces und Abhängigkeiten klein und eindeutig halten.
+- Bestehende Architektur- und Projektkonventionen nutzen, keine parallelen neuen Muster.
+- Veralteten, ungenutzten oder durch die Änderung redundant gewordenen Code im selben Change entfernen.
+- Klare Benennung, gute Typisierung, nachvollziehbare Datenflüsse, wartbare Ordnerstruktur.
+- Fehlerfälle, Edge Cases, Ladezustände und leere Zustände immer mitdenken.
+- Keine kurzfristigen Hacks, wenn eine saubere, nachhaltige Lösung möglich ist. Bei mehreren
+  Lösungen gilt die mit der saubersten Architektur und dem wenigsten unnötigen Code.
+
+**Vor jeder Implementierung prüfen:**
+
+1. Gibt es bereits eine Komponente oder Funktion, die ich verwenden kann?
+2. Gibt es ähnliche Logik, die zentralisiert werden sollte?
+3. Erzeuge ich durch meine Änderung Duplikate?
+4. Ist die neue Komponente klein genug und klar verantwortlich?
+5. Gehören Teile der Logik in einen Hook, Service, Utility oder ein eigenes Modul?
+6. Passt die Lösung zur bestehenden Architektur?
+7. Geht es einfacher, ohne Qualität oder Erweiterbarkeit zu verlieren?
+
+**Vor dem Abschluss** wird der eigene Code noch einmal ausdrücklich geprüft auf:
+
+- Duplikate
+- unnötige Komplexität
+- zu große Komponenten
+- wiederholte Logik
+- ungenutzten Code
+- inkonsistente Patterns
+- fehlende Wiederverwendung vorhandener Komponenten
+
+Was dabei auffällt, wird vor dem Abschluss behoben.
+
+DRY, Separation of Concerns, Single Responsibility und Wiederverwendbarkeit sind Standard für jede
+Änderung. Jeder PR nennt im Text, welche vorhandenen Bausteine er wiederverwendet und was er
+entfernt hat.
+
 ## Required quality gates
 
 Run after every change (the pre-commit hook enforces them — never `--no-verify`):
