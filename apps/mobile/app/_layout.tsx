@@ -20,6 +20,7 @@ import { toast, ToastHost } from '../components/lb/Toast.js';
 import { clearAdminToken, installAdminAutoClear } from '../lib/admin.js';
 import { ApiError } from '../lib/api/client.js';
 import { postAnswer } from '../lib/api/endpoints.js';
+import { refreshSettings } from '../lib/api/homeCache.js';
 import { flushOutbox } from '../lib/api/outboxSync.js';
 import { forgetCache, keepCache, restoreCache } from '../lib/api/persist.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
@@ -79,6 +80,8 @@ function sendOpenedReports(): void {
   void flushOpened(setHome).catch(() => undefined);
   void flushActions((e, res) => {
     void queryClient.invalidateQueries({ queryKey: keys.home });
+    // "Seltener" on a notification switches the settings to only important ones (#398).
+    refreshSettings(queryClient);
     if (e.action === 'practice_now' && practiceWanted.delete(e.id)) {
       showPractice(practiceRoute(res.session_id));
     }

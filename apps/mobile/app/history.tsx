@@ -18,7 +18,7 @@ import { Screen } from '../components/lb/Screen.js';
 import { toast } from '../components/lb/Toast.js';
 import { ApiError } from '../lib/api/client.js';
 import { getThread, undoAction } from '../lib/api/endpoints.js';
-import { keys, queryClient, useHome } from '../lib/api/queries.js';
+import { setHome, useHome } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
 import { dayGroups } from '../lib/dayGroups.js';
 import { SPACE } from '../lib/theme/space.js';
@@ -97,7 +97,8 @@ export default function History() {
     setUndoing(true);
     try {
       const next = await undoAction(actionId);
-      queryClient.setQueryData(keys.home, next);
+      // The same rule as every fresh home: an undone settings change reaches the settings (#398).
+      setHome(next);
       setSeen((s) =>
         s.map((m) => ({
           ...m,

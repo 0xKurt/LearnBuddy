@@ -1,6 +1,6 @@
-import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
+import type { BuddyHome, BuddySettingsView } from '@learnbuddy/shared-types/contracts';
 import { QueryClient } from '@tanstack/react-query';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { writeHome } from '../homeCache.js';
 import { keys } from '../keys.js';
@@ -36,5 +36,24 @@ describe('writing a fresh home into the cache', () => {
     expect(client.getQueryState(keys.memory)?.isInvalidated).toBe(false);
     writeHome(client, home('after turn'));
     expect(client.getQueryState(keys.memory)?.isInvalidated).toBe(true);
+  });
+
+  it('a settings view in the cache is fetched again at once, not shown stale (#398)', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { staleTime: 15_000 } } });
+    // The server's settings: the opt-in in the chat switches contact on.
+    let server = { contact_enabled: false } as BuddySettingsView;
+    await client.fetchQuery({ queryKey: keys.settings, queryFn: () => server });
+    server = { contact_enabled: true } as BuddySettingsView;
+
+    writeHome(client, home('after opt-in'));
+    await vi.waitFor(() =>
+      expect(client.getQueryData<BuddySettingsView>(keys.settings)?.contact_enabled).toBe(true),
+    );
+  });
+
+  it('settings never loaded are not fetched by a home write', () => {
+    const client = new QueryClient();
+    writeHome(client, home('after turn'));
+    expect(client.getQueryState(keys.settings)).toBeUndefined();
   });
 });
