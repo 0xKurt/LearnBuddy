@@ -24,6 +24,7 @@
 import type { DifficultyWish, VocabDirection } from '@learnbuddy/shared-types/contracts';
 
 import type { Db } from '../../lib/db.js';
+import { FREE_TEXT_KINDS } from './itemFields.js';
 
 export type PracticeScope = {
   goalId?: string | null;
@@ -71,7 +72,8 @@ export type HowMany = number | 'all';
  * which kinds of question may be in the set:
  *   practice — the ordinary written run: everything except a spoken sentence;
  *   test     — the same, minus a free text: it would get one try, be judged against a key and
- *              close as "missed" without anything having been measured (issue #197);
+ *              close as "missed" without anything having been measured (issue #197) — and minus
+ *              a long text, which gets feedback and never a grade (issue #258);
  *   speak    — nothing BUT spoken sentences. The sentences on her own sheet, read aloud: a
  *              speaking run is asked for, never mixed into a written one (the microphone in the
  *              middle of typing is what the exclusion below has always guarded against).
@@ -142,8 +144,9 @@ export async function selectPracticeItems(
           -- the one failure the form must not have. Its own run is the one that holds them,
           -- and it is prepared with its text (practice/listen.ts), not selected.
           and i.listen_task is null
-          -- A free text is not a test question (issue #197).
-          and ($12::text <> 'test' or i.kind <> 'long')
+          -- A free text is not a test question (issue #197), and a long text never is: it gets
+          -- feedback per key point, never a grade (issue #258).
+          and ($12::text <> 'test' or i.kind <> all($13::text[]))
           and ($2::uuid is null or m.goal_id = $2)
           and ($3::uuid is null or i.subject_id = $3)
           and ($4::uuid is null or i.material_id = $4)
@@ -197,6 +200,7 @@ export async function selectPracticeItems(
       wish.vocabularyOnly === true,
       count === 'all' ? null : Math.max(200, count),
       run,
+      FREE_TEXT_KINDS,
     ],
   );
   if (candidates.length === 0) return [];

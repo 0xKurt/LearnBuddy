@@ -160,6 +160,12 @@ export async function reexplain(
   if (status === 'open') {
     throw new AppError('conflict', 'Its solution is not shown yet', { reason: 'try_first' });
   }
+  // A long text has no solution to explain again, only her own text and its feedback (#258).
+  if (item.kind === 'essay') {
+    throw new AppError('conflict', 'A long text has no solution to explain', {
+      reason: 'reexplain_not_allowed',
+    });
+  }
   // Homework: only what she solved herself (every other task stays hers to solve).
   if (homework && status !== 'correct') {
     throw new AppError('conflict', 'Homework help never shows the solution', {

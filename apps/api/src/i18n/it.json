@@ -334,6 +334,49 @@
       "start": "Comincia da un punto: {{ask}}",
       "all": "C'è tutto – è proprio così che si spiega.",
       "closing": "Il resto lo vediamo insieme la prossima volta."
+    },
+    "essay": {
+      "form": {
+        "argue_linear": "Commento",
+        "argue_dialectic": "Testo argomentativo",
+        "analyse": "Analisi del testo"
+      },
+      "point": {
+        "intro": {
+          "name": "Introduzione",
+          "missing": "Nell'introduzione indica il tema e la tua tesi."
+        },
+        "arguments": {
+          "name": "Argomenti ed esempi",
+          "missing": "Sostieni ogni argomento con un esempio."
+        },
+        "counter": {
+          "name": "Controargomento",
+          "missing": "Riprendi un controargomento e confrontalo con la tua posizione."
+        },
+        "conclusion": {
+          "name": "Conclusione e posizione",
+          "missing": "Nella conclusione di’ come la pensi – e perché."
+        },
+        "analysis": {
+          "name": "Analisi del testo",
+          "missing": "Mostra come funziona il testo: lingua, struttura, figure – e il loro effetto."
+        },
+        "quotes": {
+          "name": "Citazioni con riga",
+          "missing": "Sostieni la tua interpretazione con una citazione e la riga, ad es. (r. 12)."
+        },
+        "tense": {
+          "name": "Presente",
+          "missing": "Scrivi l'analisi al presente."
+        }
+      },
+      "intro": "{{form}} – a che punto è il tuo testo:",
+      "places": "Qui puoi ancora migliorare:",
+      "place": "«{{quote}}» – {{better}}",
+      "revise": "Rivedi questi passaggi e mandami la nuova versione.",
+      "closing": "Questa era l'ultima versione per stavolta. Porta questi punti nel tuo prossimo testo.",
+      "unavailable": "Ora non riesco a leggere il tuo testo. Non è perso: rimandalo tra un momento."
     }
   },
   "contact": {

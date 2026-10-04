@@ -1923,6 +1923,48 @@ die sie kennt, mit Mikro (Sprachmodus, freihändige Schleife) oder Tastatur.
 das Modellurteil „sagt dieses Zitat den Punkt?" ist ungemessen. Es kann keinen Punkt ohne ihre
 eigenen Worte bestätigen und keine exakte Angabe überstimmen.
 
+**„Lange Texte": Aufsatz, Erörterung, Interpretation — Rückmeldung je Kernpunkt, keine Note**
+(Issue #258, Migration 0089, `practice/essay.ts`, `contracts/essay.ts`). Eine Frageart `essay`: bis
+`ESSAY_TEXT_MAX` = 12 000 Zeichen (≈ 1800 Wörter); jede andere Antwort bleibt bei
+`ANSWER_TEXT_MAX` = 2000 (der Vertrag lässt 12 000 durch, der Server kennt die Art und antwortet
+422). Dieselbe Maschine wie #211 und #236, keine zweite:
+
+- **Kernpunkte setzt Code, nicht das Modell.** Die Textsorte (`EssayType`: `argue_linear` —
+  Stellungnahme, Kommentar; `argue_dialectic` — dialektische Erörterung; `analyse` — Textanalyse
+  und Interpretation) wählt die Punkte aus `ESSAY_POINTS`: Einleitung mit Thema/These, Argumente
+  mit Beispiel, Gegenargument (dialektisch), Schluss mit eigener Position, Deutung am Text, Zitate
+  mit Zeilenangabe, Präsens. Gespeichert als `StoredRubric` mit der Prüfart `essay_point` (`part`:
+  erster Absatz / irgendwo / letzter Absatz; `lines`: das Zitat nennt Zeilen) und `tense`. Namen und
+  nächste Schritte kommen aus den Sprachdateien der API; die nächsten Schritte der ersten drei Punkte
+  sind die vorbereiteten Tipps. Keine Musterlösung. Ein Text, um den es geht, steht als
+  `read_passage` an der Frage (#233) und wird mit Zeilennummern gezeigt.
+- **Prüfen: ein Modellaufruf je Fassung** (`essay.v1`, Zweck `tutor`, Schema `EssayDecision`, mit
+  zod geprüft). Das Modell urteilt je Kernpunkt mit einem Zitat aus ihrem Text und nennt GENAU drei
+  Stellen zum Verbessern, jede als Zitat plus ein Satz. Code (`checkRubric`, `says`): ein Punkt gilt
+  nur, wenn sein Zitat in ihrem Text steht — gefaltet (Groß/klein, Leerraum, Anführungszeichen) —,
+  und zwar an seinem Platz (eine Einleitung im ersten Absatz, ein Schluss im letzten); ein Zitat mit
+  Zeilenangabe nennt nur Zeilen, die es im Text gibt (`lineRefs`/`lineCount` aus #233); die
+  Zeitform prüft `tense` wie bei #211. Eine Stelle, deren Zitat nicht in ihrem Text steht, fällt weg.
+- **Antworten.** Die Rückmeldung reist zweifach: als Struktur `PracticeTurnView.essay`
+  (`EssayFeedback`: jeder Punkt `met` mit ihrem Zitat oder `open` mit dem nächsten Schritt, bis zu
+  drei Stellen, `last`) in `practice_turns.essay_feedback`, und als Satz für Vorlesen und ältere
+  Builds („Textanalyse – so steht dein Text: ✓ Einleitung · Präsens fehlt noch", die Stellen, „Überarbeite
+  …"). Keine Zahl, keine Note, kein richtig/falsch: der Turn trägt `not_an_attempt` (nichts benotet),
+  jede Fassung zählt trotzdem als Versuch. Die dritte Fassung (`ESSAY_VERSIONS_MAX`) schließt die
+  Frage (`revealed`, wie der letzte Versuch einer Erklärung); FSRS und die Themen der Zusammenfassung
+  bekommen nichts (`FREE_TEXT_KINDS`). „Anders erklären" und „Das stimmt nicht" gibt es dazu nicht (409).
+- **Nie im Probetest**: die Auswahl lässt `essay` aus (`selection.ts`), und eine Antwort auf einen
+  Aufsatz in einem Test wird abgelehnt (409, `admitText`).
+- **Ausfall.** Kein Modell, kaputte Ausgabe oder Tageslimit: kein Urteil (`verdict` null), kein
+  Versuch, der ehrliche Satz „Ich kann deinen Text gerade nicht lesen. Er ist nicht verloren …".
+- **Noch nicht verdrahtet (Schritt 2, mit der App):** woher eine Aufsatzfrage kommt (Buddys Angebot
+  und/oder eine `long_text`-Aufgabe auf ihrem Blatt, die heute noch `NotPracticable` ist), das
+  Antwortfeld bis 12 000 Zeichen mit lokalem Entwurf, die Darstellung je Punkt und Stelle.
+
+**Offen**: Eval-Satz (≥ 20 Texte je Textsorte, Übereinstimmung mit einer Lehrkraft) vor dem
+Live-Gang — wie bei #211 gibt es keinen Korpus. Ein Modellurteil kann keinen Punkt ohne ihre eigenen
+Worte am richtigen Platz bestätigen und keine Note erzeugen.
+
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
 focus topics; one sheet or vocabulary only when she asked for that, issue #144). Answers are checked by rules where exactness is decidable (multiple choice,
 written numbers, exact matches, and near misses on written answers — missing

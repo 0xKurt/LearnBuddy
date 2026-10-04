@@ -153,7 +153,8 @@ export function usableRubric(rubric: Rubric | null | undefined, kind: string): R
 export type AskedElement = { ref: string; name: string; check: StoredRubricElement['check'] };
 
 /**
- * Die Elemente, über die das Modell befragt wird: `tense` und `judged`. Und nur die.
+ * Die Elemente, über die das Modell befragt wird: `tense`, `judged` und die Kernpunkte einer
+ * Erklärung (`key_point`, #236) oder einer Textsorte (`essay_point`, #258). Und nur die.
  *
  * Eine Wortzahl und eine Pflichtangabe stehen hier bewusst nicht drin. Sie werden gezählt und
  * verglichen, also wird das Modell dazu nicht gefragt — es erfährt nicht einmal, dass sie zur
@@ -170,7 +171,7 @@ export function askedElements(
 ): AskedElement[] {
   return rubric.elements
     .map((e, i) => ({ ref: refOf(i), name: e.name, check: e.check }))
-    .filter((e) => e.check.by === 'tense' || e.check.by === 'judged' || e.check.by === 'key_point')
+    .filter((e) => e.check.by !== 'word_count' && e.check.by !== 'mentions')
     .filter((e) => !settled.includes(e.ref));
 }
 
@@ -276,6 +277,27 @@ export function opening(text: string): string {
   return text.slice(0, Math.max(sentence.length, OPENING_CHARS));
 }
 
+/** Das Ende ihres Textes: der letzte Satz, mindestens aber `OPENING_CHARS` Zeichen. */
+function ending(text: string): string {
+  const body = text.trimEnd();
+  const sentence = /[^.!?]*[.!?]?$/.exec(body)?.[0] ?? '';
+  return body.slice(-Math.max(sentence.length, OPENING_CHARS));
+}
+
+/**
+ * Der Teil eines Aufsatzes, in dem ein Kernpunkt stehen muss (#258): die Einleitung im ersten
+ * Absatz, der Schluss im letzten. Großzügig in derselben einen Richtung wie `opening`: es gilt das
+ * Längere aus Absatz und Satzspanne — eine Überschrift als erster Absatz lässt die Einleitung
+ * nicht „fehlen".
+ */
+function partOf(text: string, part: 'opening' | 'body' | 'closing'): string {
+  if (part === 'body') return text;
+  const paragraphs = text.split(/\n+/).filter((p) => p.trim() !== '');
+  const paragraph = (part === 'opening' ? paragraphs[0] : paragraphs.at(-1)) ?? '';
+  const span = part === 'opening' ? opening(text) : ending(text);
+  return paragraph.length >= span.length ? paragraph : span;
+}
+
 type Decided = { state: 'met' | 'open' | 'unknown'; verb: string | null };
 
 /**
@@ -286,6 +308,7 @@ function decide(
   element: StoredRubricElement,
   text: string,
   claim: RubricClaim | undefined,
+  cites: (quote: string) => boolean,
 ): Decided {
   const check = element.check;
   switch (check.by) {
@@ -322,6 +345,16 @@ function decide(
       const held = claim.met && says(text, claim.quote) && check.exact.every((x) => says(text, x));
       return { state: held ? 'met' : 'open', verb: null };
     }
+    case 'essay_point': {
+      if (claim === undefined) return { state: 'unknown', verb: null };
+      // Wie `judged`, und das Zitat steht an seinem Platz (die Einleitung vorn, der Schluss hinten);
+      // ein Zitat mit Zeilenangabe nennt Zeilen, die es gibt — beides prüft Code (#258).
+      const held =
+        claim.met &&
+        says(partOf(text, check.part), claim.quote) &&
+        (!check.lines || cites(claim.quote));
+      return { state: held ? 'met' : 'open', verb: null };
+    }
   }
 }
 
@@ -339,14 +372,19 @@ export function checkRubric(
   claims: readonly RubricClaim[],
   /** Kernpunkte, die in diesem Lauf schon belegt sind (#236): sie bleiben belegt. */
   settled: readonly string[] = [],
+  /** Ob ein Zitat Zeilen nennt, die es im Text gibt (#258, `essay.ts`); ohne Text nie. */
+  cites: (quote: string) => boolean = () => false,
 ): RubricOutcome {
   const byRef = new Map<string, RubricClaim>();
   for (const c of claims) if (!byRef.has(c.element)) byRef.set(c.element, c);
   const decided = rubric.elements.map((element, i) => {
     const ref = refOf(i);
-    const counted = element.check.by !== 'judged' && element.check.by !== 'key_point';
+    // Gezählt heißt: Code hat es gemessen. Was ein Zitat aus ihrem Text braucht, ist beurteilt.
+    const counted = !['judged', 'key_point', 'essay_point'].includes(element.check.by);
     const was = element.check.by === 'key_point' && settled.includes(ref);
-    const now: Decided = was ? { state: 'met', verb: null } : decide(element, text, byRef.get(ref));
+    const now: Decided = was
+      ? { state: 'met', verb: null }
+      : decide(element, text, byRef.get(ref), cites);
     return { ref, element, counted, ...now };
   });
   const first = decided.find((d) => d.state === 'open');
@@ -446,16 +484,7 @@ export function rubricReply(
  * gemessen (das Modell blieb aus), bleibt Buddys eigener Satz stehen.
  */
 function explainReply(locale: string, o: RubricOutcome, fallback: string, last: boolean): string {
-  const line = o.elements
-    .filter((e) => e.state !== 'unknown')
-    .map((e) =>
-      t(locale, e.state === 'met' ? 'practice.explain.point_met' : 'practice.explain.point_open', {
-        name: e.name,
-      })
-        // One point never breaks across two lines („Ort / fehlt noch" reads as two things).
-        .replace(/ /g, NBSP),
-    )
-    .join(' · ');
+  const line = pointLine(locale, o.elements);
   // The follow-up is its own paragraph: it is what she answers next, not part of the list.
   const then = (s: string) => (line === '' ? s : `${line}\n\n${s}`);
   if (o.all) return then(t(locale, 'practice.explain.all'));
@@ -466,6 +495,23 @@ function explainReply(locale: string, o: RubricOutcome, fallback: string, last: 
     return o.some ? then(closing) : closing;
   }
   return o.some ? then(step.missing) : t(locale, 'practice.explain.start', { ask: step.missing });
+}
+
+/**
+ * Die Kernpunkte in einer Zeile: „✓ Licht · Ort fehlt noch" (#236, #258). Ein Punkt ohne Urteil
+ * (`unknown`) steht nicht darin: über ihn hat niemand etwas gemessen.
+ */
+export function pointLine(locale: string, elements: readonly RubricElementState[]): string {
+  return elements
+    .filter((e) => e.state !== 'unknown')
+    .map((e) =>
+      t(locale, e.state === 'met' ? 'practice.explain.point_met' : 'practice.explain.point_open', {
+        name: e.name,
+      })
+        // One point never breaks across two lines („Ort / fehlt noch" reads as two things).
+        .replace(/ /g, NBSP),
+    )
+    .join(' · ');
 }
 
 /** A space that does not break a line. */

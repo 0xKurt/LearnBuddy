@@ -296,7 +296,7 @@ export function passageFrom(
 }
 
 /** The passage a stored row carries, or null (an unreadable column is no text). */
-function passageOf(stored: unknown): ReadPassage | null {
+export function passageOf(stored: unknown): ReadPassage | null {
   if (stored === null || stored === undefined) return null;
   const parsed = ReadPassage.safeParse(stored);
   return parsed.success ? parsed.data : null;

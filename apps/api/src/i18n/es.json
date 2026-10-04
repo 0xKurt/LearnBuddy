@@ -334,6 +334,49 @@
       "start": "Empieza por un punto: {{ask}}",
       "all": "Está todo – así es exactamente como se explica.",
       "closing": "El resto lo vemos juntos la próxima vez."
+    },
+    "essay": {
+      "form": {
+        "argue_linear": "Comentario",
+        "argue_dialectic": "Disertación",
+        "analyse": "Análisis de texto"
+      },
+      "point": {
+        "intro": {
+          "name": "Introducción",
+          "missing": "Nombra en la introducción el tema y tu tesis."
+        },
+        "arguments": {
+          "name": "Argumentos y ejemplos",
+          "missing": "Apoya cada argumento con un ejemplo."
+        },
+        "counter": {
+          "name": "Contraargumento",
+          "missing": "Recoge un contraargumento y sopésalo frente a tu postura."
+        },
+        "conclusion": {
+          "name": "Conclusión y postura",
+          "missing": "Di en la conclusión qué opinas tú – y por qué."
+        },
+        "analysis": {
+          "name": "Análisis del texto",
+          "missing": "Muestra cómo funciona el texto: lenguaje, estructura, recursos – y su efecto."
+        },
+        "quotes": {
+          "name": "Citas con línea",
+          "missing": "Apoya tu interpretación con una cita y su línea, p. ej. (l. 12)."
+        },
+        "tense": {
+          "name": "Presente",
+          "missing": "Escribe el análisis en presente."
+        }
+      },
+      "intro": "{{form}} – así está tu texto:",
+      "places": "Aquí aún puedes afinar:",
+      "place": "«{{quote}}» – {{better}}",
+      "revise": "Revisa estos pasajes y mándame la nueva versión.",
+      "closing": "Esa fue tu última versión por esta vez. Llévate estos puntos a tu próximo texto.",
+      "unavailable": "Ahora no puedo leer tu texto. No se ha perdido: envíalo de nuevo en un momento."
     }
   },
   "contact": {

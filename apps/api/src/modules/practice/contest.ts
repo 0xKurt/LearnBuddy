@@ -139,10 +139,11 @@ export async function disputeVerdict(
       /** False when nothing was ever recorded; true also for jsonb `null` (see above). */
       reviewed: boolean;
       origin: ItemRow['origin'];
+      kind: ItemRow['kind'];
       archived_at: Date | null;
     }>(
       `select si.status, si.flagged_at, si.disputed_at, si.state_before,
-              si.state_before is not null as reviewed, i.origin, i.archived_at
+              si.state_before is not null as reviewed, i.origin, i.kind, i.archived_at
          from session_items si
          join items i on i.id = si.item_id
         where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
@@ -166,6 +167,12 @@ export async function disputeVerdict(
     // Her homework is helped with, never graded, so there is no verdict to dispute.
     if (si.origin === 'homework') {
       throw new AppError('conflict', 'Homework tasks are not judged', {
+        reason: 'dispute_not_allowed',
+      });
+    }
+    // A long text gets feedback, never a verdict (#258): there is nothing to disagree with.
+    if (si.kind === 'essay') {
+      throw new AppError('conflict', 'A long text is not judged', {
         reason: 'dispute_not_allowed',
       });
     }

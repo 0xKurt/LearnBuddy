@@ -2,7 +2,7 @@
 // key she may not see yet, the thread, and what is offered around each question. Read after
 // every change a request makes (`service.ts`, `setAside.ts`, `contest.ts`, the routes).
 
-import { type PracticeTurnView, type SessionView } from '@learnbuddy/shared-types/contracts';
+import { PracticeTurnView, type SessionView } from '@learnbuddy/shared-types/contracts';
 
 import type { Db } from '../../lib/db.js';
 import type { StorageGateway } from '../../storage/gateway.js';
@@ -86,9 +86,12 @@ export async function sessionView(
     verdict: PracticeTurnView['verdict'];
     pronunciation: PracticeTurnView['pronunciation'];
     reexplain: PracticeTurnView['reexplain'];
+    /** A long text's feedback as stored (#258): read through the contract, never trusted. */
+    essay: unknown;
     created_at: Date;
   }>(
-    `select id, item_id, role, text, verdict, pronunciation, reexplain, created_at from practice_turns
+    `select id, item_id, role, text, verdict, pronunciation, reexplain, essay_feedback as essay, created_at
+       from practice_turns
       where session_id = $1 order by seq`,
     [sessionId],
   );
@@ -218,7 +221,11 @@ export async function sessionView(
           ? (listenTaskOf(i.listen_task)?.text ?? null)
           : null,
     })),
-    turns: turns.map(({ created_at, ...tr }) => ({ ...tr, created_at: created_at.toISOString() })),
+    turns: turns.map(({ created_at, essay, ...tr }) => ({
+      ...tr,
+      essay: PracticeTurnView.shape.essay.parse(essay),
+      created_at: created_at.toISOString(),
+    })),
     current_item_id: active ? (current?.id ?? null) : null,
     summary: s.status === 'finished' ? summarize(items) : null,
     card_pass: cardPass,

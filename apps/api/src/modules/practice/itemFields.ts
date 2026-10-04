@@ -12,6 +12,13 @@
 /** A free-text answer's required elements (issue #211): only a long answer has any. */
 export const RUBRIC_KINDS = ['long'] as const;
 
+/**
+ * A free text: no single right answer, so no solution is claimed or shown, a miss measures nothing
+ * (issue #197), and it is no question for a practice test. A long answer, and a long text with
+ * feedback per key point (`essay`, issue #258), whose key points code builds (`essay.ts`).
+ */
+export const FREE_TEXT_KINDS = ['long', 'essay'] as const;
+
 /** The ± a rounded or measured number may be off (only a number has one). */
 export const TOLERANCE_KINDS = ['numeric'] as const;
 
