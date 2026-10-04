@@ -13,34 +13,24 @@
 // Test tooling only.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
-import type { LlmRequest } from '../../llm/gateway.js';
-import { ScriptedGateway } from '../fakes.js';
+import type { ScriptedGateway } from '../fakes.js';
+import { RuleBook, type Rule } from './rules.js';
 
-export type GenerationRule = {
-  /** What the generation request must contain (matched case-insensitively over its text). */
-  when: RegExp;
-  /** The prepared set; a function sees the whole request. */
-  answer: (req: LlmRequest) => unknown;
-};
+export type GenerationRule = Rule;
 
-const rules: GenerationRule[] = [];
+// Loud on purpose: a spec that asks for something nobody scripted must fail with what it
+// asked for, not with a set of questions meant for another spec.
+const book = new RuleBook('explain', (_req, text) => {
+  const asked = /LEARNER'S TEXT:\n([^\n]+)/.exec(text)?.[1] ?? text.slice(0, 120);
+  throw new Error(`no scripted practice for: "${asked}"`);
+});
 
 /** Scenarios add their rules; the order only decides which of two matching rules wins. */
 export function scriptGenerations(...added: GenerationRule[]): void {
-  rules.push(...added);
+  book.add(...added);
 }
 
 /** Installs the dispatcher; call it once, after every scenario has added its rules. */
 export function installGenerations(llm: ScriptedGateway): void {
-  llm.byDefault('explain', (req: LlmRequest) => {
-    const text = ScriptedGateway.textOf(req);
-    const rule = rules.find((r) => r.when.test(text));
-    if (!rule) {
-      // Loud on purpose: a spec that asks for something nobody scripted must fail with what
-      // it asked for, not with a set of questions meant for another spec.
-      const asked = /LEARNER'S TEXT:\n([^\n]+)/.exec(text)?.[1] ?? text.slice(0, 120);
-      throw new Error(`no scripted practice for: "${asked}"`);
-    }
-    return rule.answer(req);
-  });
+  book.install(llm);
 }

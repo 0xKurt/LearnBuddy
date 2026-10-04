@@ -8,6 +8,7 @@
 import type { LlmRequest } from '../../llm/gateway.js';
 import { ScriptedGateway } from '../fakes.js';
 import { scriptGenerations } from './generations.js';
+import { tutorRules } from './rules.js';
 import { says, scriptTurns } from './turns.js';
 
 /** The fields of a generated question that most scripted questions leave at their default. */
@@ -836,8 +837,9 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
     };
   };
   // By rule, not by count: how many hints a run asks for depends on timing, and a queue
-  // that runs dry fails the *next* spec instead of this one (issue #81).
-  llm.byDefault('tutor', hint);
+  // that runs dry fails the *next* spec instead of this one (issue #81). Every question
+  // without a rule of its own (the core loop has one, #350) gets these hints.
+  tutorRules.otherwise(hint);
 
   // tests/web/offline.spec.ts: asked in the chat, then two short questions answered offline.
   // tests/web/offline.spec.ts: two short questions, both answered offline.

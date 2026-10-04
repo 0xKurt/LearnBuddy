@@ -89,6 +89,25 @@ function cutAfter(text: string, key: string, n: number): number {
 }
 
 /**
+ * " WxH" of a base64 JPEG (its first frame header), or "" for anything else. Enough for a scripted
+ * model to tell two photos apart; the bytes themselves change with every re-encoding.
+ */
+function sizeOf(base64: string): string {
+  const b = Buffer.from(base64, 'base64');
+  if (b[0] !== 0xff || b[1] !== 0xd8) return '';
+  let i = 2;
+  while (i + 9 < b.length && b[i] === 0xff) {
+    const marker = b[i + 1]!;
+    // SOF0–SOF15 carry the size; C4 (huffman), C8 (reserved) and CC (arithmetic) do not.
+    if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+      return ` ${b.readUInt16BE(i + 7)}x${b.readUInt16BE(i + 5)}`;
+    }
+    i += 2 + b.readUInt16BE(i + 2);
+  }
+  return '';
+}
+
+/**
  * The model in tests. Every call must be scripted: an unscripted call is
  * recorded in `unexpected` and fails like an unavailable model, so tests see
  * both the honest degradation and the unexpected call.
@@ -131,11 +150,17 @@ export class ScriptedGateway implements LlmGateway {
     return this.calls.filter((c) => c.purpose === purpose);
   }
 
-  /** All text the model saw in a request (state block, dialogue, triggers). */
+  /**
+   * All text the model saw in a request (state block, dialogue, triggers). A photo shows as its
+   * size (`<image 800x1080>`): what she photographed is her input like what she wrote, so a
+   * walkthrough rule can tell one spec's sheet from another's (issue #350).
+   */
   static textOf(req: LlmRequest): string {
     return req.contents
       .flatMap((m) =>
-        m.parts.map((p) => ('text' in p ? `[${m.role}] ${p.text}` : `[${m.role}] <image>`)),
+        m.parts.map((p) =>
+          'text' in p ? `[${m.role}] ${p.text}` : `[${m.role}] <image${sizeOf(p.inlineData.data)}>`,
+        ),
       )
       .join('\n');
   }

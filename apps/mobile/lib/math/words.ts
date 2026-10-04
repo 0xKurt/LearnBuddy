@@ -73,6 +73,7 @@ export const KEEP_PLACEHOLDERS = {
   entries: '{{entries}}',
   rows: '{{rows}}',
   label: '{{label}}',
+  letter: '{{letter}}',
 } as const;
 
 /** Looks up one key under the "math" namespace ("spoken.frac", "blank.label"). */
@@ -136,5 +137,7 @@ export function spokenWordsFrom(t: Lookup): SpokenWords {
     column_vector: raw('column_vector'),
     matrix: raw('matrix'),
     arrow_label: raw('arrow_label'),
+    allele_upper: raw('allele_upper'),
+    allele_lower: raw('allele_lower'),
   };
 }
