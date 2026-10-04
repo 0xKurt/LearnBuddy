@@ -204,7 +204,9 @@
     "moved": "{{what}} {{where}}",
     "rest_placed": "{{what}}, compás {{bar}}",
     "rest_of": "Poner: {{value}}",
-    "check_waits": "Solo cuando cada compás tenga algo."
+    "check_waits": "Solo cuando cada compás tenga algo.",
+    "keys_label": "Teclas del pentagrama",
+    "values_label": "Valor de la nota"
   },
   "summary": {
     "title": "¡Lo has conseguido!",

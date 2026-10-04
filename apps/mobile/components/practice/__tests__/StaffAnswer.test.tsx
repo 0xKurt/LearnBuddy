@@ -43,6 +43,7 @@ vi.mock('../../../lib/music/play.js', () => ({
 
 const { emptyStaffAnswer, StaffAnswer, staffComplete, staffLineOf } =
   await import('../StaffAnswer.js');
+const { StaffKeys } = await import('../StaffKeys.js');
 const { renderInApp } = await import('../../../testing/render.js');
 
 const SURFACE: StaffWriteSurface = {
@@ -53,14 +54,20 @@ const SURFACE: StaffWriteSurface = {
   tempo: 80,
 };
 
-/** Die Fläche mit ihrer Zeile, wie der Übungsbildschirm sie hält (State pro Frage). */
+/**
+ * Die Fläche mit ihrer Zeile und ihren Tasten, wie der Übungsbildschirm sie hält (State pro Frage;
+ * die Tasten stehen dort im `keys`-Platz der Antworthülle, issue #310).
+ */
 function show(surface: StaffWriteSurface = SURFACE, disabled = false) {
   const seen = { answer: emptyStaffAnswer(surface.bars) };
   function Harness() {
     const [answer, setAnswer] = useState(emptyStaffAnswer(surface.bars));
     seen.answer = answer;
     return (
-      <StaffAnswer surface={surface} answer={answer} disabled={disabled} onChange={setAnswer} />
+      <>
+        <StaffAnswer surface={surface} answer={answer} disabled={disabled} onChange={setAnswer} />
+        <StaffKeys surface={surface} answer={answer} disabled={disabled} onChange={setAnswer} />
+      </>
     );
   }
   renderInApp(<Harness />);

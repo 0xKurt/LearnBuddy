@@ -204,7 +204,9 @@
     "moved": "{{what}} {{where}}",
     "rest_placed": "{{what}}, battuta {{bar}}",
     "rest_of": "Metti: {{value}}",
-    "check_waits": "Solo quando ogni battuta ha qualcosa."
+    "check_waits": "Solo quando ogni battuta ha qualcosa.",
+    "keys_label": "Tasti del pentagramma",
+    "values_label": "Valore della nota"
   },
   "summary": {
     "title": "Ce l'hai fatta!",

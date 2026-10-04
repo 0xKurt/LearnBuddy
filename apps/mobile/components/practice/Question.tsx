@@ -232,7 +232,7 @@ export function QuestionCard({
                   <ZoomableFigure figure={figure} maxHeight={figureMax} />
                 </View>
                 <View style={{ width: TOUCH + SPACE.sm }}>
-                  <StaffPlayButton iconOnly bars={figure.bars} tempo={figure.tempo} />
+                  <StaffPlayButton bars={figure.bars} tempo={figure.tempo} />
                 </View>
               </View>
             ) : (

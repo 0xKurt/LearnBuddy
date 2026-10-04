@@ -204,7 +204,9 @@
     "moved": "{{what}} {{where}}",
     "rest_placed": "{{what}}, bar {{bar}}",
     "rest_of": "Place a {{value}}",
-    "check_waits": "Only once every bar has something in it."
+    "check_waits": "Only once every bar has something in it.",
+    "keys_label": "Note line keys",
+    "values_label": "Note value"
   },
   "summary": {
     "title": "Done!",
