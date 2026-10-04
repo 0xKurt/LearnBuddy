@@ -1972,9 +1972,10 @@ them yet, so today they come from a topic she named.
 
 **Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`,
 `practice/table.ts`, migration `0079_structured_items.sql`;
-issues #228 order, #229 match, #230 table_fill, #232 cloze, from the analysis #224). Some answers
-are not a sentence but an arrangement: an order, pairs, groups, table cells, the gaps of a text.
-They are their own item kinds (`order`, `match`, `table_fill`, `cloze`), and #224's "Regel 0"
+issues #228 order, #229 match, #230 table_fill, #232 cloze, #240 select_all, from the analysis
+#224). Some answers are not a sentence but an arrangement: an order, pairs, groups, table cells,
+the gaps of a text, a set of ticked options. They are their own item kinds (`order`, `match`,
+`table_fill`, `cloze`, `select_all`), and #224's "Regel 0"
 holds in both directions: code validates what the model wrote, and code judges what she answers —
 never a model, except a cloze gap no rule can decide (below: only that gap, only its verdict).
 
@@ -2331,6 +2332,58 @@ way); the focused gap is scrolled to, also after the keyboard shrank the window.
 topic's practice and practice test, and read from a sheet (its printed word box as the bank;
 generate.v1.18, extract.v8.2, hints.v5).
 
+**Select all — several right answers** (`practice/selectAll.ts`, `SelectAllAnswer.tsx`, issue
+#240, migration `0085_select_all_items.sql`). "Kreuze alle richtigen an": the cycling test of year
+4, Latin forms ("which cases can _rosae_ be?"), true statements in any subject. Before, a question
+with several right answers could only be bent into "which ONE is right?" or dropped, because
+`correct_choice` is one index. It is a structured kind and not a second meaning of
+`multiple_choice` on purpose: a single choice is tapped and judged at once, a set is collected
+and sent with "Prüfen" as `parts` — exactly the path the structured kinds have, with the key that
+never leaves the server. The task holds the options (ids `a`, `b`, … by display position) and the
+key as a set of ids (the issue's `correct_choices`, as ids rather than indices); the view only
+the options; the answer `chosen`, each option at most once, at least one (else 422
+`parts_mismatch`). The migration adds no column: it extends the two kind checks from the
+definition that is live (`pg_get_constraintdef`), so a parallel migration that allows another
+kind is not silently undone by the order they are applied in.
+
+The model writes the options and marks each `correct` (`SELECT_RULES`, no example sentence).
+Code rejects — stores nothing, repairs nothing — fewer than two right or every option right
+(`right_count`: one right answer is ordinary multiple choice, all right is no question), fewer
+than 3 or more options than fit (`count`), two options alike as written or **by value** ("0,5"
+and "1/2" — `sameOption`, the same check multiple choice runs, `duplicate`), and an option or a
+question over its cap (`too_long`); `selectProblem` re-checks a stored task (a key id twice or
+unknown → `not_mapping`). The display is a deterministic shuffle that never puts every right
+option first. A prepared hint is dropped when it names an option: the whole option (`secretsOf`,
+also for hints written later), or a word of at least four letters that stands in this option
+alone and not in the question ("Klingel" for "Eine helltönende Klingel"; "Singular", shared by
+several, names none). Checking is set equality, no model: the reply counts what she found and
+what does not belong, never which right one is missing ("2 von 4 richtigen hast du schon. Eine
+passt aber nicht dazu."); from the second miss on it names one option she ticked that does not
+belong (a rung of the hint ladder, `structuredNamesPart`), and the third miss shows the solution.
+Nothing tells her how many are right before she checks. A wrong set is `incorrect`, not
+`partially_correct`: the count is the feedback, and the question stays open for her to change it.
+
+App: `SelectAllAnswer.tsx` in the answer shell (`AnswerShell`, "Prüfen" from `CheckBar`). The
+options are the tiles of a single choice (`ChoiceList` with `ticked`, `AnswerTile`): each one a
+`checkbox` (`Btn checked`, `aria-checked`), a square box in the letter's column instead of the
+letter, the tile in the accent's light tint while ticked and the box filled with a check mark
+(colour is never the only signal). A tap ticks, a second tap unticks (undo over confirmation);
+the ticks live in the draft, so a theme switch keeps them. One quiet line above the tiles says
+"Mehrere sind richtig – tippe alle an." (the issue's "mehrere möglich"; in the same form as the
+one line of instruction a match has); after the first "Prüfen" it steps aside, because Buddy's
+reply says it then and needs the room on 360×740. "Prüfen" waits for one tick. In the shell the
+form stands like a single choice (`keeps="whole"`, flush under the Tipp row, nothing in it
+scrolls): when room runs out, the conversation above gives way. Voice mode reads the options like
+options to choose.
+
+**Its maxima are a measurement** (`SELECT_*` in `contracts/structured.ts`, the walkthrough
+`tests/web/select-all.spec.ts`, shots 45a–45e). Short options stand two by two by the grid
+arithmetic of #203 — ONE line of half a 360-pt phone, `GRID_CHARS_MAX` 9 characters (7 for an
+option that is only math); a unit test holds `SELECT_SHORT_CHARS` to it — and then six fit in
+three rows. One longer option sends them all full width, and four is the most then; an option has
+at most 28 characters, the question at most 60 (two lines of the card). Generated in a topic's
+practice and practice test, and read from a sheet (generate.v1.21, extract.v8.4).
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:
@@ -2679,15 +2732,15 @@ discard by: a rubric (and its `RubricCheck` union) without a long answer, a tole
 number, a spelling mode without a typed word, pictures as options (`choice_figures`, an array of the
 `ModelFigure` union, #231) without a multiple choice. The subject is never a rule.
 
-| kind               | items                                                 | structured                      | bars | staffs | listen | dictation |
-| ------------------ | ----------------------------------------------------- | ------------------------------- | ---- | ------ | ------ | --------- |
-| practice           | short, long, numeric, multiple_choice, formula, vocab | order, table_fill, match, cloze | ✓    | ✓      | —      | —         |
-| test               | short, numeric, multiple_choice, formula, vocab       | order, table_fill, match, cloze | —    | ✓      | —      | —         |
-| vocab              | vocab                                                 | —                               | —    | —      | —      | —         |
-| speak              | speak                                                 | —                               | —    | —      | —      | —         |
-| help               | short, long, numeric, multiple_choice, formula        | —                               | —    | —      | —      | —         |
-| listen             | —                                                     | —                               | —    | —      | ✓      | —         |
-| spelling_dictation | —                                                     | —                               | —    | —      | —      | ✓         |
+| kind               | items                                                 | structured                                  | bars | staffs | listen | dictation |
+| ------------------ | ----------------------------------------------------- | ------------------------------------------- | ---- | ------ | ------ | --------- |
+| practice           | short, long, numeric, multiple_choice, formula, vocab | order, table_fill, match, cloze, select_all | ✓    | ✓      | —      | —         |
+| test               | short, numeric, multiple_choice, formula, vocab       | order, table_fill, match, cloze, select_all | —    | ✓      | —      | —         |
+| vocab              | vocab                                                 | —                                           | —    | —      | —      | —         |
+| speak              | speak                                                 | —                                           | —    | —      | —      | —         |
+| help               | short, long, numeric, multiple_choice, formula        | —                                           | —    | —      | —      | —         |
+| listen             | —                                                     | —                                           | —    | —      | ✓      | —         |
+| spelling_dictation | —                                                     | —                                           | —    | —      | —      | ✓         |
 
 A sheet-bound run (a practice or test for a planned test) is the same profile with the sheets'
 topics as the item `topic` enum. With no kind known (`setSchemaForModel(null, …)`), the fallback is

@@ -290,5 +290,9 @@
     "note": "One answer per question, no hints.",
     "soon": "Calmly see what else you can do.",
     "up": "Time is up – your result is on its way."
+  },
+  "select": {
+    "several": "More than one is right – tap all of them.",
+    "check_waits": "Once you've ticked at least one."
   }
 }

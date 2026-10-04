@@ -86,6 +86,7 @@ import {
   structuredItems,
   type StructuredItem,
 } from './structured.js';
+import { SELECT_RULES } from './selectAll.js';
 import { TABLE_RULES } from './table.js';
 
 // v1.16: car 2's structured rules (v1.15) and #253/#257's figures (v1.14) together.
@@ -93,7 +94,8 @@ import { TABLE_RULES } from './table.js';
 // v1.18: cloze, a text with several gaps (#232).
 // v1.19: a Diktat run (spelling_dictation, #242) with its own task and entries.
 // v1.20: primary-school figures — clock, money, dot field, base-ten blocks (#254).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.20';
+// v1.21: select_all, a question with several right options to tick (#240).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.21';
 
 const SUBJECT_KINDS = [
   'math',
@@ -204,6 +206,7 @@ const STRUCTURED_FORMS = [
   'table_fill',
   'match',
   'cloze',
+  'select_all',
 ] as const satisfies StructuredKind[];
 
 /** A profile with these item kinds and no list of its own. */
@@ -514,7 +517,7 @@ export const GENERATE_SYSTEM = `You prepare learning in the LearnBuddy app for t
 Rules:
 - Pitch everything at the learner's age and grade. Instructions and explanations in the app language (LEARNER); foreign-language content in that language.
 - Only well-established knowledge at their level (school topics for a school student; study or professional topics for a university or adult learner); if unsure about a fact, leave it out. If the request is not about learning something (for example a request to chat, to write something for them, or nothing to learn), set usable = false and items = [].
-- Everything is answered in the app by typing, choosing, tapping things into an order or into groups, or filling a table (or speaking for speak items): no tasks to draw, build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
+- Everything is answered in the app by typing, choosing (one answer or all right ones), tapping things into an order or into groups, or filling a table (or speaking for speak items): no tasks to draw, build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
 - Start with questions that make them think about the topic, not trivia or definitions of everyday words.
 - Items: prefer short answers and numbers; multiple_choice with 2–6 choices where it makes sense (correct_choice = index).
 - ${NUMERIC_KEY_RULES}
@@ -528,6 +531,7 @@ Rules:
 - ${TABLE_RULES}
 - ${MATCH_RULES}
 - ${CLOZE_RULES}
+- ${SELECT_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${CURRICULUM_RULES}
 - ${LANGUAGE_RULES}

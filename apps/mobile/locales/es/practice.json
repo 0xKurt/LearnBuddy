@@ -290,5 +290,9 @@
     "note": "Una respuesta por pregunta, sin pistas.",
     "soon": "Mira con calma qué más puedes hacer.",
     "up": "Se acabó el tiempo: enseguida llega tu resultado."
+  },
+  "select": {
+    "several": "Hay varias correctas: tócalas todas.",
+    "check_waits": "Cuando hayas marcado al menos una."
   }
 }

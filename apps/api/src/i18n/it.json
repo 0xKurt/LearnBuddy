@@ -292,6 +292,15 @@
       "mode_xr": "recessivo legato all’X",
       "accepted": "Sì, viene accettata",
       "rejected": "No, non viene accettata"
+    },
+    "select": {
+      "found_some": "Hai già {{count}} delle {{total}} giuste.",
+      "found_some_one": "Hai già 1 delle {{total}} giuste.",
+      "all_found": "Hai già tutte quelle giuste.",
+      "none": "Non c'è ancora nessuna di quelle giuste – riguardale tutte con calma.",
+      "extra": "Però {{count}} non c'entrano.",
+      "extra_one": "Però una non c'entra.",
+      "look_at": "Riguarda «{{text}}»."
     }
   },
   "contact": {
