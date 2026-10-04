@@ -13,16 +13,15 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   await signUpMia(page, email);
   await planTest(page);
   await allowPush(page);
-  // The old single spec reached the settings after a reload too. Without one, settings opened
-  // within 15 s of the voice step shows the cached "Nein": the chat's opt-in does not refresh
-  // the cached settings (found while splitting, issue #381) — a finding of its own, not this
-  // scenario's subject.
-  await page.reload();
-  await expect(page.getByText('LearnBuddy')).toBeVisible();
   const openMenu = (item: string) => openMenuOf(page, item);
 
+  // Straight from the chat's opt-in, no reload: the settings loaded in the voice step are
+  // fetched again with the opt-in's answer, so they say "Ja" at once — never the cached "Nein"
+  // for the 15 s the view would count as fresh (issue #398, rule 5).
   await openMenu('Einstellungen');
   await expect(page.getByText('Benachrichtigungen', { exact: true })).toBeVisible();
+  await expect(page.getByText('Nein – nur hier in der App.')).toHaveCount(0);
+  await expect(page.getByText(/^Ja – nie nach/)).toBeVisible({ timeout: 1_000 });
   await expect(page.getByText('Für Eltern')).toBeVisible();
   await shot(page, '15-settings');
   // Every group is closed with what is set now; one tap opens it.
