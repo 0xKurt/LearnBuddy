@@ -3990,7 +3990,7 @@ sheet being read
 (ReadingBar, the real stages inline) — under a size contract: one line, the one action as
 a compact button, **~60 pt collapsed**; a bar with more to say (the stage names, which test,
 "Heute nicht", what Buddy will do with the photo) opens on a tap, and the walkthrough measures
-the bound (`tests/web/core-loop.spec.ts`, `partHeight`). **A name may take a second line rather
+the bound (`tests/web/core-loop-plan.spec.ts`, `partHeight`). **A name may take a second line rather
 than end in "…"** (issue #204): "Vokabelliste E…" and "Arbeitsbla…" hid the one thing she has to
 recognise — which sheet this is about — so the bar grows by that one line, and only on a phone
 narrow enough to need it. The capture bar carries no mark for the same reason: the violet "Foto

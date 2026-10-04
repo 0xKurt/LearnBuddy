@@ -48,7 +48,7 @@ const sheet = (system: string, width: number, height: number, page = 1, of = 1) 
 
 // One request per spec that used to take a queued answer, as the server sends it.
 const SAMPLES = {
-  // core-loop.spec.ts: its long question, answered wrong.
+  // core-loop-*.spec.ts: its long question, answered wrong.
   coreLoopTutor: request('tutor', 'tutor', {
     text: '{"item":{"prompt":"Warum multipliziert man beim Erweitern Zähler und Nenner mit derselben Zahl?"}}\nweiß nicht',
   }),
@@ -56,7 +56,7 @@ const SAMPLES = {
   modesTutor: request('tutor', 'tutor', {
     text: '{"item":{"prompt":"Ein Rechteck ist 7 cm lang und 4 cm breit. Berechne den Flächeninhalt."}}\nkeine Ahnung',
   }),
-  // core-loop.spec.ts: the drawn worksheet (1600 px on the long side after the app's resize).
+  // core-loop-*.spec.ts: the drawn worksheet (1600 px on the long side after the app's resize).
   coreLoopSheet: sheet(EXTRACT_SYSTEM, 1280, 1600),
   // tour.spec.ts: homework of two pages, then the cut-off page again.
   tourHomework: request(
