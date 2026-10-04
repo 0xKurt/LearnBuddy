@@ -291,6 +291,78 @@ export const PyramidFigure = z.object({
   u: Unit,
 });
 
+// ─── primary-school figures (issue #254) ───
+//
+// Uhr, Geld, Zwanzigerfeld/Hunderterfeld, Zehnersystem-Material: the model writes the DATA (a
+// time, the pieces of money, how many dots, how many plates, rods and cubes), the app draws it.
+// What a question reads off them — the time, the span, the amount, the count — is COMPUTED by
+// code (`primaryKey` in @learnbuddy/shared-math), and a key that disagrees costs the question
+// (`apps/api/src/modules/practice/figureCheck.ts`). Short field names and no nullable field
+// ("none" instead of null), for the same reason as the charts above (issue #281).
+
+/** The coins and notes of the euro, the only pieces an amount is laid with (`MONEY_CENTS`). */
+export const MONEY_PIECES = [
+  '1ct',
+  '2ct',
+  '5ct',
+  '10ct',
+  '20ct',
+  '50ct',
+  '1€',
+  '2€',
+  '5€',
+  '10€',
+  '20€',
+  '50€',
+  '100€',
+  '200€',
+] as const;
+
+/** An analog clock face — or two, for a span from the first time to the second. */
+export const ClockFigure = z.object({
+  type: z.literal('clock'),
+  c: z
+    .array(z.object({ h: z.number().int().min(0).max(23), m: z.number().int().min(0).max(59) }))
+    .min(1)
+    .max(2)
+    .describe('one time; two for a span from the first to the second'),
+  h24: z.boolean().describe('true only when the task asks for the 24-hour time'),
+  ask: z
+    .enum(['time', 'span', 'none'])
+    .describe('the key is this computed value: time "7:45", span in min or h'),
+});
+
+/** Coins and notes, drawn as a schematic (never a picture of a real banknote). */
+export const MoneyFigure = z.object({
+  type: z.literal('money'),
+  p: z
+    .array(z.object({ d: z.enum(MONEY_PIECES), n: z.number().int().min(1).max(9) }))
+    .min(1)
+    .max(8)
+    .describe('each piece once, n = how many'),
+  ask: z.enum(['sum', 'none']).describe('the key is the amount, unit € or ct'),
+});
+
+/** A Zwanzigerfeld (2 × 10) or Hunderterfeld (10 × 10), filled row by row, one or two colours. */
+export const DotFieldFigure = z.object({
+  type: z.literal('dot_field'),
+  field: z.enum(['twenty', 'hundred']),
+  n: z.array(z.number().int().min(0).max(100)).min(1).max(2).describe('filled dots per colour'),
+  ask: z.enum(['count', 'none']).describe('the key is the number of filled dots'),
+});
+
+/** Base-ten blocks: hundred plates, ten rods, unit cubes (more than 9 to practise bundling). */
+export const BaseTenFigure = z.object({
+  type: z.literal('base_ten'),
+  h: z.number().int().min(0).max(9),
+  t: z.number().int().min(0).max(19),
+  o: z.number().int().min(0).max(19),
+  ask: z.enum(['count', 'none']).describe('the key is the number shown'),
+});
+
+/** The primary-school figures: their key is computed from their data (`primaryKey`). */
+export const PRIMARY_TYPES = ['clock', 'money', 'dot_field', 'base_ten'] as const;
+
 /**
  * What a question READS OFF its chart (`ItemDraft.read`), so code can compute the key and
  * reject one that disagrees (Rule 0). `s` = series (climate: 0 °C, 1 mm · pyramid: 0 men,
@@ -346,7 +418,8 @@ export const CHART_TYPES = [
  * `apps/api/src/modules/practice/staff.ts`, which computes the question, the drawing and the
  * key from one reviewed task.
  */
-export const ModelFigure = z.discriminatedUnion('type', [
+/** The figures the model may write — one list, shared with `Figure` below. */
+const MODEL_FIGURES = [
   FractionFigure,
   NumberLineFigure,
   FunctionPlotFigure,
@@ -361,38 +434,23 @@ export const ModelFigure = z.discriminatedUnion('type', [
   HistogramFigure,
   ScatterPlotFigure,
   PyramidFigure,
+  ClockFigure,
+  MoneyFigure,
+  DotFieldFigure,
+  BaseTenFigure,
   TreeFigure,
   PedigreeFigure,
   AutomatonFigure,
   SolidFigure,
   CubeNetFigure,
   Axes3dFigure,
-]);
+] as const;
+
+export const ModelFigure = z.discriminatedUnion('type', [...MODEL_FIGURES]);
 export type ModelFigure = z.infer<typeof ModelFigure>;
 
 /** Every figure a question can SHOW (`ItemView.figure`) — the model's figures and the note line. */
-export const Figure = z.discriminatedUnion('type', [
-  FractionFigure,
-  NumberLineFigure,
-  FunctionPlotFigure,
-  BarChartFigure,
-  GeometryFigure,
-  TableFigure,
-  MoleculeFigure,
-  LineChartFigure,
-  ClimateChartFigure,
-  PieChartFigure,
-  BoxPlotFigure,
-  HistogramFigure,
-  ScatterPlotFigure,
-  PyramidFigure,
-  TreeFigure,
-  PedigreeFigure,
-  AutomatonFigure,
-  SolidFigure,
-  CubeNetFigure,
-  Axes3dFigure,
-  StaffFigure,
-]);
+export const Figure = z.discriminatedUnion('type', [...MODEL_FIGURES, StaffFigure]);
 export type ChartFigure = Extract<Figure, { type: (typeof CHART_TYPES)[number] }>;
+export type PrimaryFigure = Extract<Figure, { type: (typeof PRIMARY_TYPES)[number] }>;
 export type Figure = z.infer<typeof Figure>;

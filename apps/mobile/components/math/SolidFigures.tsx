@@ -17,6 +17,9 @@ import {
   type SolidXY,
 } from '../../../../packages/shared-math/src/solids.js';
 import { axesRange, spaceProject } from '../../../../packages/shared-math/src/space.js';
+
+// The guard FigureView dispatches with, from here so it needs one import for this file.
+export { isSpaceFigure } from '../../../../packages/shared-math/src/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FONT, formatNumber, HaloText, SMALL } from './figureText.js';
 import { arrowHead } from './TreeFigures.js';

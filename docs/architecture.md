@@ -1742,6 +1742,10 @@ Fragetext —, nie aus dem Schlüssel (`apps/mobile/lib/math/keys.ts`):
   mehr), bekommt nur das Minus; die Ziffern der Tastatur schreiben den Rest (eine
   Android-Buchstabentastatur zeigt kein „−").
 
+Die Reihe ist die eine Tastenreihe des Übungsbildschirms (`components/lb/KeyRow.tsx`,
+`lib/keyRow.ts`, Issue #310 Schritt 4), dieselbe wie unter der Notenzeile: eine Zeile, nie
+seitwärts, gleich breite Plätze ≥ 44 pt, bei mehr Tasten als Platz „…" auf dem letzten Platz.
+
 Hochzahl, Tiefstellen und Ladung sind Schalter: Die nächsten Ziffern, die sie auf der Tastatur des
 Handys tippt, werden hoch- oder tiefgestellt (`typedUnder`), bei der Ladung auch das Vorzeichen,
 das sie abschließt. Alles, was der Schalter nicht nimmt — ein Buchstabe, ein Leerzeichen, ein
@@ -2207,7 +2211,9 @@ Tastatur) landet die Note auf der mittleren Linie und wird mit denselben Tasten 
 Screenreader hört Ton und Ort („E auf der 1. Linie, Takt 1"). Sichtbar steht der Tonname NICHT da,
 sonst übte die Fläche „schieben, bis E dasteht" statt Notenlesen. Die Zeile nimmt ihren
 Linienabstand aus Breite und verfügbarer Höhe (16–26 pt) und bleibt mit Hilfslinien ganz zu sehen;
-Werte stehen als gezeichnete Notenzeichen auf den Tasten. Der Walkthrough misst jede Taste der
+Werte stehen als gezeichnete Notenzeichen auf den Tasten. Die Tasten sind zwei Reihen der einen
+Tastenreihe (`components/lb/KeyRow.tsx`, `StaffKeys.tsx`, Issue #310 Schritt 4) im `keys`-Platz der
+Antworthülle, dieselben Tasten wie die Mathe-Zeichen. Der Walkthrough misst jede Taste der
 Fläche auf 360×740 und 390×844 (`tests/web/modes.spec.ts`, „note lines"). Ihre Zeile reist als kompakte Maschinenform in
 `AnswerRequest.text` (`renderStaffLine`: `E4q G4q B4h`, Takte durch `|` getrennt) — die App soll
 nichts Deutsches zusammenbauen und der Server nichts raten; im Gesprächsfaden steht sie in Worten.
@@ -3062,10 +3068,12 @@ word list, so it stays a prompt rule.
   compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
   when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
   may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table,
-  molecule, the charts of §Charts, the trees of §Trees and the solids of §Solids) as data (`contracts/figure.ts`); the server drops
+  molecule, the charts of §Charts, the trees of §Trees, the solids of §Solids and the
+  primary-school figures clock, money, dot field and base-ten blocks) as data
+  (`contracts/figure.ts`); the server drops
   figures it cannot draw (e.g. an expression that does not compile with `@learnbuddy/shared-math`
-  `compileExpression`) without dropping the question — except a chart or a tree, which costs its
-  question (§Charts, §Trees), and a geometry or molecule figure that contradicts its numbers (below).
+  `compileExpression`) without dropping the question — except a chart, a primary-school figure, a
+  tree or a solid, which costs its question (§Charts, §Trees, §Solids), and a geometry or molecule figure that contradicts its numbers (below).
   A figure is drawn to be READ. What she can work with is a `surface` — today the Bruchbalken
   (§Practice above, issue #162), whose question, picture and key are computed from one reviewed
   task instead of written by the model.
@@ -3155,6 +3163,50 @@ word list, so it stays a prompt rule.
     Both figures describe themselves in words for a screen reader (angles with sizes, sides,
     forces, rays; every bond and the lone pairs). `figureCheck.test.ts`, `molecule.test.ts`,
     `figures-to-scale.int.test.ts`, walkthrough `tests/web/figures.spec.ts`.
+- **Primary-school figures (issue #254)** — Anschauung for Grundschule maths, drawn by code from
+  data (`ClockFigure`, `MoneyFigure`, `DotFieldFigure`, `BaseTenFigure`; short field names under
+  the schema pressure of #281). No migration: the figure is the item's `figure` (jsonb).
+  - `clock`: one analog face `{h, m}`, or two for a span from the first to the second; `h24` only
+    when the task asks for the 24-hour time. `money`: euro coins and notes, each piece once with
+    its count (`MONEY_PIECES` — 1 ct … 200 €; a piece that is not a euro denomination does not
+    parse), at most 12 pieces; drawn as a schematic (round coins with their value in copper,
+    brass and the bimetal of 1 € / 2 €, notes as tinted paper with their value) — never a picture
+    of a real banknote. `dot_field`: Zwanzigerfeld (2 × 10) or Hunderterfeld (10 × 10), filled
+    row by row in one or two colours, with the gap after five ("Kraft der Fünf"). `base_ten`:
+    hundred plates, ten rods (up to 19, for bundling) and unit cubes in stacks of five.
+  - **Rules** (`primaryProblem`, `packages/shared-math/src/primary.ts`): a time is read off one
+    clock, a span needs two that differ, each money piece once, no more dots than the field has
+    and no empty second colour, at least one and at most 30 blocks. A figure that breaks one —
+    or does not parse (a 3-ct coin, 25 o'clock) — costs its QUESTION (`figureIsRejectedPrimary`
+    in `clipDraft`): "Wie spät ist es?" without its clock is no question.
+  - **What a question reads off** (`ask`, `"none"` for nothing; `primaryKey`): `time` (the key is written "7:45", the
+    item is `short` — as a number "7:45" would be 7 ÷ 45), `span` (minutes forward from the first
+    clock to the second, the key a number in min or h), `sum` (the coins' amount, the key in € or
+    ct, exact to the cent — an amount euro pieces cannot lay, 3,455 €, is no key), `count` (dots,
+    or 100·plates + 10·rods + cubes). A key that is not the computed value drops the question
+    (`primaryHolds` in `practice/figureCheck.ts`); pictures as options (#231) are held to it too:
+    an option whose clock declares `ask` must be written as the time it shows (`figure_text`).
+  - **Grading without a model**: next to a clock that asks the time, an answer in digits is read
+    as a time (`clockVerdict` in `practice/evaluate.ts`, before the ratio check) — "7:45", "7.45"
+    and "19:45" are right for the same hands (unless `h24`), any other time is certainly wrong.
+    The figure, not a guess, says the characters are a time; without a clock "14:30" stays as
+    undecided as issue #175 left it. An answer in words ("Viertel vor acht") is language and goes
+    to the tutor with the key — reading it in code would need a word list (rule 3). Next to coins
+    that ask the sum, the amount in another unit (845 ct for 8,45 €) is right by rule.
+  - **Drawing** (`apps/mobile/components/math/PrimaryFigures.tsx`, react-native-svg; library check
+    in `tools/guards/drawing-registry.json`): the hands come from `handAngles`, the same arithmetic
+    the key is computed with (and `timeFromHands` reads hands back, for setting a clock by touch
+    later). The two hands differ in length and width, every coin and note carries its value, and
+    the screen-reader text (`describePrimary`) says what is drawn — where the hands stand, which
+    pieces lie there, how many dots per colour, plates, rods and cubes — never the time, sum or
+    number asked. Theme token `figure.coins` (copper, brass, silver), notes use `figure.slices`.
+  - **Not built here**: setting a clock by touch ("Stell die Uhr auf 7:45") and laying an amount
+    by tapping coins ("Leg 3,45 €") — both are answer forms, not figures, and wait for the
+    answer-area rebuild (#310). Zahlenmauer and Stellenwerttafel are structured tables (#230).
+  - Prompts: generate.v1.20, extract.v8.3 (`FIGURE_RULES`).
+  - Tests: `primary.test.ts` (hands ↔ time incl. quarter and half, amounts, counts, refusals),
+    `primaryFigures.test.ts`, `PrimaryFigures.test.tsx`, `primary-figures.int.test.ts`; walkthrough
+    `tests/web/primary-figures.spec.ts` (scenario `testing/scenarios/primary.ts`).
 
 ## Voice
 
@@ -3228,9 +3280,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   screen locking while it checks), Buddy starting to speak or the next question cancels a
   running mic and drops its late text. Questions carry the language they are written in
   (`prompt_lang`, also for ordinary questions): voice mode reads them and listens in that
-  language, not the app's. The switch sits in the practice header and on Buddy's home (speaker
-  icon; the headphones open conversation mode). The home reads a late reply only while it is
-  on screen. Pronunciation
+  language, not the app's. The switch sits in the practice header (headphones: Buddy reads and
+  listens; the speaker is reserved for "read this aloud", and conversation mode carries the
+  waveform — issue #310). The home reads a late reply only while it is on screen. Pronunciation
   recordings stay tap by tap. Buddy's chat replies stream on screen and are read once stored
   (§Speed). A realtime audio API (speech in, speech out) is not built.
 - **"Vorlesen" at every question, also without voice mode** (issue #238): a round speaker in the
@@ -3559,7 +3611,12 @@ field and every alert must stay in the window (`keyboardPass` in `tests/web/fit.
 "Prüfen" lies under the keyboard is recorded — with a tall card it does (up to 78 pt with chemistry
 keys), the return key sends a one-liner there, and the big mic of voice mode steps aside while she
 types. The
-options, the pronunciation panel and the voice bar under the options follow (#310 steps 4–5). A tile that answers by a tap is
+options are in it too, flush under the Tipp row with nothing to check (`action: { tap }`); in
+voice mode their spoken answer (mic, "Nochmal vorlesen") stands in the same voice slot as the
+typed field's mic. The pronunciation recorder and "Weiter" take the action's place under the free
+room (`action: { bar }`), so the free room has one owner, the shell. Whatever fills the keys slot
+is the one key row (`components/lb/KeyRow.tsx`: the math keys and the note line's two rows, #310
+step 4). A tile that answers by a tap is
 `components/lb/AnswerTile.tsx`; corners come from `lib/theme/radius.ts`. Guarded twice: a source
 test (`apps/mobile/lib/__tests__/answerShell.test.ts`) fails when a form brings its own bar,
 spacer, "Prüfen", keyboard handling or shadowed tile (the forms not moved yet are listed with the
@@ -4005,9 +4062,14 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   on its own worksheet being ready and waits only after its own test's practice; every other
   check stays unscripted and gets the check's fixed fallback — because every spec that finishes
   a practice wakes Buddy, and `charts.spec.ts`, running first, once took the core loop's queued
-  "prepare a practice" (PR #303). The remaining purposes (tutor, hints,
-  reading a photographed sheet) answer by rule or from a queue, so the walkthrough is still run
-  **as a whole** — a single spec on its own gets the answers meant for the run (issue #81).
+  "prepare a practice" (PR #303). **No purpose answers from a queue any more** (issue #350):
+  the tutor by the question (`scenarios/rules.ts`; run alone, `modes.spec.ts` once took the core
+  loop's queued tutor reply), a photographed sheet by the photo and whether it is homework (the
+  fake model sees a photo as its size, `<image 800x1080>`), a spoken sentence by the sentence.
+  So every spec runs alone as well as in the whole run. The cheap guard is
+  `src/testing/__tests__/walkthrough.test.ts` (the walkthrough's model holds no queued answer,
+  and a set of each spec's requests gets the same answers forwards and backwards); running every
+  test alone on its own stack is `scripts/web-walkthrough-each.sh`, local only.
   A run started right after another waits for the previous run's ports to be free
   (`scripts/web-walkthrough.sh`): Playwright reuses whatever already listens, and the dying
   servers of the run before gave a white screen after a reload — a failure that looks like a

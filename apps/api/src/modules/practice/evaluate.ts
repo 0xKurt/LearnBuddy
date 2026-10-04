@@ -21,7 +21,12 @@
 // point, a list) are compared one by one (issue #263, `systems.ts`), a nuclear equation is
 // counted (`nuclear.ts`).
 
-import { isStructuredKind, type ItemKind } from '@learnbuddy/shared-types/contracts';
+import {
+  ClockFigure,
+  isStructuredKind,
+  MoneyFigure,
+  type ItemKind,
+} from '@learnbuddy/shared-types/contracts';
 
 import {
   checkEquation,
@@ -42,8 +47,11 @@ import {
   isMathText,
   normalizeShortAnswer,
   parseCanonicalKey,
+  parseClockAnswer,
   parseNumericInput,
   plainMath,
+  primaryKey,
+  sameTime,
   sameWrittenForm,
   type ValueComparison,
 } from '@learnbuddy/shared-math';
@@ -86,6 +94,12 @@ export type ItemForCheck = {
    * with a slip of the pen is right, and `contentOnly` below is where that is said once.
    */
   listening?: boolean;
+  /**
+   * The question's figure as stored (issue #254). Read only for a clock that declares it asks
+   * the time (`ask: 'time'`): then the answer IS a time, and code compares it as one
+   * (`clockVerdict`). Anything else in it is not looked at here.
+   */
+  figure?: unknown;
 };
 
 /**
@@ -468,7 +482,12 @@ function numericVerdict(item: ItemForCheck, text: string): RuleVerdict {
     // question ("in cm") is the tutor's, like any other form (D-3). Never 'correct' by rule.
     const converted =
       c === 'unknown' ? compareNumbers(given, key, { ...options, convertUnits: true }) : c;
-    if (c === 'unknown' && converted === 'equal') equalInOtherForm = true;
+    if (c === 'unknown' && converted === 'equal') {
+      // "Wie viel Geld ist das?" next to coins (issue #254) asks for the amount, and 845 ct is
+      // that amount as surely as 8,45 € — the figure, not a guess, says no unit was asked for.
+      if (MoneyFigure.safeParse(item.figure).data?.ask === 'sum') return 'correct';
+      equalInOtherForm = true;
+    }
     if (converted !== 'different') allDifferent = false;
   }
   // Decision D-3 stands: whether the FORM matters ("4/8" for "1/2" may still be unreduced) is
@@ -636,6 +655,11 @@ export function ruleCheck(
 
   if (item.kind === 'numeric') return numericVerdict(item, text);
 
+  // "Wie spät ist es?" next to a clock (issue #254). It comes before the ratio check below on
+  // purpose: "7:45" is a ratio there and would be compared reduced.
+  const clock = clockVerdict(item.figure, text);
+  if (clock !== null) return clock;
+
   // A single chemical formula, counted instead of compared as text (issue #227, finding 6):
   // "H₂SO₄" and "H2SO4" are the same substance, "H2SO3" is certainly another one. Only when
   // BOTH sides are unmistakably a formula — a name or a single capital letter is not.
@@ -721,4 +745,22 @@ export function valuesIn(text: string): number[] {
     }
   }
   return out;
+}
+
+/**
+ * A time read off a clock (issue #254): the question's own figure says the answer IS a time, so
+ * the characters are read as one — unlike a bare "14:30" anywhere else, which may be a ratio
+ * (`dates.ts`, issue #175). Written with digits ("7:45", "7.45", "7"), it is right when it is
+ * the time the hands show — 19:45 for 7:45 too, unless the task asks for 24 hours — and
+ * certainly wrong otherwise. Null when the figure asks no time or the answer is words: "Viertel
+ * vor acht" is language, and the tutor judges it against the key (CLAUDE.md rule 3).
+ */
+export function clockVerdict(figure: unknown, text: string): RuleVerdict | null {
+  const fig = ClockFigure.safeParse(figure);
+  if (!fig.success) return null;
+  const key = primaryKey(fig.data);
+  if (key?.kind !== 'time') return null;
+  const said = parseClockAnswer(text);
+  if (said === null) return null;
+  return sameTime(said, key.time, key.h24) ? 'correct' : 'incorrect';
 }

@@ -15,6 +15,9 @@
 //     other words, or a letter, cannot be told from an off-by-one and is not guessed at;
 //   - options with figures (#231): every option has one, they fit the 2×2 grid, no two are
 //     the same drawing;
+//   - primary-school pictures (#254): an option whose picture declares what it shows (a clock
+//     with `ask`) is exactly that reading — "8:15" under a clock at 7:45 would make the
+//     index lie;
 //   - function graphs (#231): every graph is visible in its window, no two LOOK alike there,
 //     the key is a function, exactly one graph IS that function, it is the one
 //     `correct_choice` points at — and when the question itself defines the function
@@ -31,11 +34,13 @@ import {
   compareNumbers,
   compileExpression,
   isMathText,
+  isPrimary,
   parseNumericInput,
   plainMath,
   type CompiledFunction,
 } from '@learnbuddy/shared-math';
 
+import { primaryHolds } from './figureCheck.js';
 import { netChoiceHolds } from './solidCheck.js';
 
 /** Why a multiple-choice draft does not hold together; null when it does. */
@@ -47,6 +52,7 @@ export type ChoiceProblem =
   | 'key_not_option'
   | 'figure_count'
   | 'figure_duplicate'
+  | 'figure_text'
   | 'net_choice'
   | 'graph_shape'
   | 'graph_invisible'
@@ -100,6 +106,9 @@ export function choiceProblem(it: ChoiceDraft): ChoiceProblem | null {
     }
     const drawn = figures.map(stableJson);
     if (new Set(drawn).size !== drawn.length) return 'figure_duplicate';
+    if (figures.some((f, i) => isPrimary(f) && !primaryHolds(f, choices[i]!, false, null))) {
+      return 'figure_text';
+    }
     // Cube nets (issue #255): the right option is the one odd net out (`solidCheck.ts`).
     if (figures.some((f) => f.type === 'cube_net') && !netChoiceHolds(figures, correct))
       return 'net_choice';

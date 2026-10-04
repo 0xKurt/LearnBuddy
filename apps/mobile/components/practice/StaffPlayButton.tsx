@@ -26,18 +26,18 @@ type Props = {
   /** Viertel pro Minute — das Tempo steht in den Daten der Zeile. */
   tempo: number;
   disabled?: boolean;
-  /**
-   * Nur der Lautsprecher, in voller Breite ihrer Zelle: auf der Schreibfläche steht der Knopf in
-   * einer Reihe aus sechs gleich breiten Tasten (issue #275), und „Anhören" passt auf ein Sechstel
-   * von 328 pt nicht. Dieselbe Pille, dieselbe Farbe, dasselbe Zeichen — nur ohne das Wort, das
-   * der Screenreader weiter hört.
-   */
-  iconOnly?: boolean;
 };
 
-export function StaffPlayButton({ bars, tempo, disabled = false, iconOnly = false }: Props) {
+/**
+ * Eine Notenzeile spielen und anhalten (issue #226): geteilt von dieser Pille in der Karte und der
+ * Taste „Anhören" in der Tastenreihe unter der Zeile, die sie schreibt (`StaffKeys`, issue #310) —
+ * dasselbe Spielen, dasselbe Anhalten beim Verlassen, derselbe Satz, wenn kein Ton kommt.
+ */
+export function useStaffPlay(
+  bars: StaffBars,
+  tempo: number,
+): { playing: boolean; press: () => void } {
   const { t } = useTranslation('practice');
-  const { palette } = useTheme();
   const [playing, setPlaying] = useState(false);
   const mounted = useRef(true);
 
@@ -72,6 +72,18 @@ export function StaffPlayButton({ bars, tempo, disabled = false, iconOnly = fals
       if (why === 'error') toast.show(t('staff.no_sound'), 'info');
     });
   }
+  return { playing, press };
+}
+
+/**
+ * Die Pille in der Karte, rechts neben der gelesenen Zeile (issue #275): nur der Lautsprecher, in
+ * voller Breite ihrer Spalte — dieselbe Pille, dieselbe Farbe, dasselbe Zeichen wie „Anhören",
+ * ohne das Wort, das der Screenreader weiter hört.
+ */
+export function StaffPlayButton({ bars, tempo, disabled = false }: Props) {
+  const { t } = useTranslation('practice');
+  const { palette } = useTheme();
+  const { playing, press } = useStaffPlay(bars, tempo);
 
   const off = disabled || bars.length === 0;
   // Was draufsteht, ist auch der Zustand: niemals die Farbe allein.
@@ -84,21 +96,17 @@ export function StaffPlayButton({ bars, tempo, disabled = false, iconOnly = fals
         size="sm"
         pill
         variant="soft"
-        {...(iconOnly
-          ? {
-              full: true,
-              compact: true,
-              label: (
-                <View style={{ alignItems: 'center' }}>
-                  <Icon
-                    name={playing ? 'stop' : 'speak'}
-                    size={24}
-                    color={off ? palette.ink2 : palette.primaryDk}
-                  />
-                </View>
-              ),
-            }
-          : { icon: playing ? 'stop' : 'speak' })}
+        full
+        compact
+        label={
+          <View style={{ alignItems: 'center' }}>
+            <Icon
+              name={playing ? 'stop' : 'speak'}
+              size={24}
+              color={off ? palette.ink2 : palette.primaryDk}
+            />
+          </View>
+        }
         onPress={press}
         disabled={off}
         accessibilityLabel={label}

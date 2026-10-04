@@ -6,7 +6,6 @@
     "apps/mobile/components/buddy/Conversation.tsx",
     "apps/mobile/components/buddy/Header.tsx",
     "apps/mobile/components/buddy/SlimBar.tsx",
-    "apps/mobile/components/math/MathKeys.tsx",
     "apps/mobile/components/practice/FractionBarAnswer.tsx",
     "apps/mobile/components/practice/StaffAnswer.tsx",
     "apps/mobile/components/voice/MicButton.tsx",

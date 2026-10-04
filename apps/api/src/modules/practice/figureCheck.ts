@@ -21,12 +21,28 @@
 //     - a marked group is a functional group of this molecule;
 //     - a key the figure declares it computes (`ask`) is the computed one: formula, lone
 //       pairs, molar mass.
+//   clock, money, dot field, base-ten blocks (issue #254)
+//     - the figure keeps its own rules (`primaryProblem`, shared-math `primary.ts`);
+//     - a key it declares (`ask`) is the computed one: the time the hands show ("7:45", and
+//       19:45 for the same hands unless the task asks for 24 hours), the span between two
+//       clocks in min or h, the amount of the coins in € or ct (whole cents — an amount that
+//       cannot be laid with euro pieces is no key), the number of dots or blocks.
 //
 // The older parts of a geometry figure (segments, polygons and circles naming a point that
 // does not exist) keep their pre-#257 handling in `items.ts`: dropped, the question stays.
 
-import type { ModelFigure } from '@learnbuddy/shared-types/contracts';
-import { checkMolecule, parseCanonicalKey } from '@learnbuddy/shared-math';
+import { ModelFigure, PRIMARY_TYPES } from '@learnbuddy/shared-types/contracts';
+import {
+  canonicalizeUnit,
+  checkMolecule,
+  isPrimary,
+  parseCanonicalKey,
+  primaryKey,
+  primaryProblem,
+  sameTime,
+  unitFactor,
+  type Primary,
+} from '@learnbuddy/shared-math';
 
 import { parseFormula } from './chemistry.js';
 
@@ -271,18 +287,84 @@ function checkMoleculeFigure(f: Molecule, solution: string): boolean {
   }
 }
 
+/** A key's time, in the one notation a key writes it in ("7:45", "19:05"). */
+const CLOCK_KEY = /^\s*(\d{1,2}):([0-5]\d)\s*$/;
+
+/** The key's number in `to` (min, ct), from its own unit or the item's; null without one. */
+function inUnit(solution: string, unit: string | null, to: string): number | null {
+  const key = parseCanonicalKey(solution);
+  const from = canonicalizeUnit(unit) ?? key.unit;
+  if (key.value === null || from === null) return null;
+  const factor = unitFactor(from, to);
+  return factor === null ? null : (key.value * Number(factor.num)) / Number(factor.den);
+}
+
+const same = (a: number, b: number) => Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b));
+
+/**
+ * A primary-school figure (issue #254) holds by its own rules, and a key it declares is the one
+ * code computes from it. A time is never a number question: "7:45" as a number is 7 ÷ 45.
+ */
+export function primaryHolds(
+  f: Primary,
+  solution: string,
+  numeric: boolean,
+  unit: string | null,
+): boolean {
+  if (primaryProblem(f) !== null) return false;
+  const key = primaryKey(f);
+  if (key === null) return true;
+  switch (key.kind) {
+    case 'time': {
+      const m = CLOCK_KEY.exec(solution);
+      if (numeric || !m || Number(m[1]) > 23) return false;
+      return sameTime({ h: Number(m[1]), m: Number(m[2]) }, key.time, key.h24);
+    }
+    case 'span': {
+      const minutes = inUnit(solution, unit, 'min');
+      return minutes !== null && same(minutes, key.minutes);
+    }
+    case 'amount': {
+      // Exactly the coins' sum: 3,455 € cannot be laid with euro pieces, and is not 3,45 €.
+      const cents = inUnit(solution, unit, 'ct');
+      return cents !== null && same(cents, key.cents);
+    }
+    case 'count': {
+      const v = leadingNumber(solution);
+      return v !== null && v === key.n;
+    }
+  }
+}
+
+/**
+ * Whether a raw figure is a primary-school figure that may not be shown: its shape does not
+ * parse (a coin of 3 ct, a clock at 25:00) or it breaks a rule of its own. Read before the item
+ * is parsed, because the item's parse catches a broken figure to null and would leave "Wie spät
+ * ist es?" without its clock (`items.ts` `clipDraft`) — like a chart, it costs the question.
+ */
+export function figureIsRejectedPrimary(raw: unknown): boolean {
+  if (typeof raw !== 'object' || raw === null) return false;
+  const type = (raw as { type?: unknown }).type;
+  if (!(PRIMARY_TYPES as readonly unknown[]).includes(type)) return false;
+  const parsed = ModelFigure.safeParse(raw);
+  return !parsed.success || !isPrimary(parsed.data) || primaryProblem(parsed.data) !== null;
+}
+
 /**
  * Does a question's figure hold, together with its key? `solution` is the key as the learner
  * would see it (for multiple choice the text of the right option); `numeric` says whether the
- * key must be a number. True for every figure this module has nothing to check on.
+ * key must be a number; `unit` is the item's own unit, when the key does not carry one. True
+ * for every figure this module has nothing to check on.
  */
 export function figureHolds(
   figure: ModelFigure | null,
   solution: string,
   numeric: boolean,
+  unit: string | null = null,
 ): boolean {
   if (!figure) return true;
   if (figure.type === 'molecule') return checkMoleculeFigure(figure, solution);
+  if (isPrimary(figure)) return primaryHolds(figure, solution, numeric, unit);
   if (figure.type !== 'geometry') return true;
   const g = checkGeometry(figure);
   if (!g.ok) return false;
