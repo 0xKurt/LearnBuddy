@@ -17,7 +17,7 @@ import { learnerTimezone } from '../../lib/zone.js';
 import { t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
-import { ageOn } from '../identity/model.js';
+import { ageOn, isMinor } from '../identity/model.js';
 import { cautiousAt, curriculumLine, pointOf } from '../curriculum/state.js';
 import { pickAnswers, taskOf, untriedPicks } from './bars.js';
 import { listenTaskOf } from './listen.js';
@@ -90,7 +90,8 @@ import {
   tutorContext,
   type TutorDecision as TutorDecisionT,
 } from './tutor.js';
-import type { LlmMessage } from '../../llm/gateway.js';
+import { LlmError, type LlmMessage } from '../../llm/gateway.js';
+import { safeguardingText } from '../../i18n/safeguarding.js';
 import {
   settleTurn,
   nextSeq,
@@ -382,6 +383,20 @@ export async function answerItem(
     essay?: EssayFeedback | null;
   };
   let judged: Judged;
+  // Distress in the answer field, or the provider's safety filter (issue #389): the reply is
+  // the app's fixed help answer, the same as in the chat — never the model's words, never a
+  // hint, a solution or the test's neutral line on top of it, and never a try.
+  let safeguarded = false;
+  const safeguard = (kind: 'concern' | 'blocked'): Judged => {
+    safeguarded = true;
+    return {
+      verdict: 'not_an_attempt',
+      evaluatedBy: 'rule',
+      reply: safeguardingText(learner.locale, isMinor(learner, now), kind),
+      gaveHint: false,
+      revealed: false,
+    };
+  };
   if (essay) {
     judged = await judgeEssay(deps, learner, item, text);
   } else if (hintRequest && givesHints(session.mode) && ladderDone(item)) {
@@ -689,7 +704,7 @@ export async function answerItem(
       const leaks = (x: TutorDecisionT) =>
         session.mode === 'help' && givesAwayHomework(x, solutionsOf(item), item.prompt);
       let d = solvedByHer(await askTutor(tutorContents));
-      if (leaks(d)) {
+      if (!d.concern && leaks(d)) {
         // Homework: the solution must not be given. One repair with the reason, then a safe hint.
         d = solvedByHer(
           await askTutor([
@@ -715,71 +730,77 @@ export async function answerItem(
           };
         }
       }
-      judged = hintRequest
-        ? {
-            // "Tipp": whatever the model called it, this is help, shown as a hint — never a
-            // graded answer, and its own gentle hint is kept (live finding 1).
-            verdict: 'not_an_attempt',
-            evaluatedBy: 'model',
-            reply: d.reply,
-            gaveHint: !d.revealed_answer,
-            revealed: d.revealed_answer,
-          }
-        : d.intent === 'wants_to_stop'
+      judged = d.concern
+        ? safeguard('concern')
+        : hintRequest
           ? {
-              // She has had enough (issue #161). The words here are the app's, not the
-              // model's: this is the moment where a cheerful "du bist schon so nah dran"
-              // is both untrue and pressure, and the external audit caught exactly that.
-              // What she gets is a real choice — stop for today, or one small example —
-              // and the way out is already on screen ("Übung beenden").
+              // "Tipp": whatever the model called it, this is help, shown as a hint — never a
+              // graded answer, and its own gentle hint is kept (live finding 1).
               verdict: 'not_an_attempt',
-              evaluatedBy: 'rule',
-              reply: t(learner.locale, 'practice.had_enough'),
-              gaveHint: false,
-              revealed: false,
-            }
-          : {
-              verdict: d.verdict,
               evaluatedBy: 'model',
               reply: d.reply,
-              gaveHint: d.gave_hint,
+              gaveHint: !d.revealed_answer,
               revealed: d.revealed_answer,
-            };
-    } catch (err) {
-      if (isAppError(err) && err.code !== 'budget_exhausted') throw err;
-      // No model: say what the rules know, never pretend to have judged.
-      judged = hintRequest
-        ? {
-            // "Tipp" without a model: a general first step, honestly no judgement.
-            verdict: 'not_an_attempt',
-            evaluatedBy: 'rule',
-            reply: t(learner.locale, 'practice.help_step'),
-            gaveHint: false,
-            revealed: false,
-          }
-        : rule === 'close' || rule === 'spelling'
-          ? {
-              verdict: 'partially_correct',
-              evaluatedBy: 'rule',
-              reply: t(learner.locale, NEAR_MISS_REPLY[rule] ?? 'practice.accents'),
-              gaveHint: false,
-              revealed: false,
             }
-          : rule === 'incorrect'
+          : d.intent === 'wants_to_stop'
             ? {
-                verdict: 'incorrect',
+                // She has had enough (issue #161). The words here are the app's, not the
+                // model's: this is the moment where a cheerful "du bist schon so nah dran"
+                // is both untrue and pressure, and the external audit caught exactly that.
+                // What she gets is a real choice — stop for today, or one small example —
+                // and the way out is already on screen ("Übung beenden").
+                verdict: 'not_an_attempt',
                 evaluatedBy: 'rule',
-                reply: t(learner.locale, 'practice.not_quite'),
+                reply: t(learner.locale, 'practice.had_enough'),
                 gaveHint: false,
                 revealed: false,
               }
             : {
-                verdict: null,
-                evaluatedBy: null,
-                reply: t(learner.locale, 'practice.cannot_check'),
+                verdict: d.verdict,
+                evaluatedBy: 'model',
+                reply: d.reply,
+                gaveHint: d.gave_hint,
+                revealed: d.revealed_answer,
+              };
+    } catch (err) {
+      if (isAppError(err) && err.code !== 'budget_exhausted') throw err;
+      // The safety filter held the answer back: the fixed help answer, as in the chat (#389).
+      // No model: say what the rules know, never pretend to have judged.
+      judged =
+        err instanceof LlmError && err.kind === 'blocked'
+          ? safeguard('blocked')
+          : hintRequest
+            ? {
+                // "Tipp" without a model: a general first step, honestly no judgement.
+                verdict: 'not_an_attempt',
+                evaluatedBy: 'rule',
+                reply: t(learner.locale, 'practice.help_step'),
                 gaveHint: false,
                 revealed: false,
-              };
+              }
+            : rule === 'close' || rule === 'spelling'
+              ? {
+                  verdict: 'partially_correct',
+                  evaluatedBy: 'rule',
+                  reply: t(learner.locale, NEAR_MISS_REPLY[rule] ?? 'practice.accents'),
+                  gaveHint: false,
+                  revealed: false,
+                }
+              : rule === 'incorrect'
+                ? {
+                    verdict: 'incorrect',
+                    evaluatedBy: 'rule',
+                    reply: t(learner.locale, 'practice.not_quite'),
+                    gaveHint: false,
+                    revealed: false,
+                  }
+                : {
+                    verdict: null,
+                    evaluatedBy: null,
+                    reply: t(learner.locale, 'practice.cannot_check'),
+                    gaveHint: false,
+                    revealed: false,
+                  };
     }
   }
 
@@ -813,7 +834,7 @@ export async function answerItem(
     };
   }
 
-  if (givesHints(session.mode)) {
+  if (givesHints(session.mode) && !safeguarded) {
     // Never the solution before the second hint — whatever the model wrote. The prepared
     // hint (or a neutral line) takes its place, without a second model call.
     // A cloze reply quotes HER words and is code's, even where the model judged a gap
@@ -864,7 +885,7 @@ export async function answerItem(
     }
   }
 
-  if (session.mode === 'test') judged = asTestTurn(judged, learner.locale);
+  if (session.mode === 'test' && !safeguarded) judged = asTestTurn(judged, learner.locale);
 
   // A concurrent duplicate of the same answer that won gets its result back (`settleTurn`).
   return settleTurn(

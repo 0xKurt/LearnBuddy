@@ -9,6 +9,7 @@ import {
 
 const reply = (text: string, revealed = false): TutorDecision => ({
   intent: 'no_answer',
+  concern: false,
   verdict: 'not_an_attempt',
   reply: text,
   gave_hint: true,
@@ -111,6 +112,7 @@ describe('homeworkSolved', () => {
 describe('givesAwayHomework on the final verdict (H-9, M-28)', () => {
   const reply = (text: string, verdict: TutorDecision['verdict']): TutorDecision => ({
     intent: 'answer',
+    concern: false,
     verdict,
     reply: text,
     gave_hint: false,

@@ -22,6 +22,10 @@ import { isUniqueViolation } from '../../lib/db.js';
 import { isAppError } from '../../lib/errors.js';
 import { localParts, weekdayName } from '../../lib/time.js';
 import { t } from '../../i18n/index.js';
+import {
+  safeguardingText as sharedSafeguardingText,
+  type SafeguardingKind,
+} from '../../i18n/safeguarding.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
@@ -713,11 +717,8 @@ async function homeworkLeak(
     : [];
 }
 
-function safeguardingText(
-  learner: TurnLearner,
-  kind: 'blocked' | 'concern' | 'also_asked',
-): string {
-  return t(learner.locale, learner.isMinor ? `safeguarding.${kind}` : `safeguarding.${kind}_adult`);
+function safeguardingText(learner: TurnLearner, kind: SafeguardingKind): string {
+  return sharedSafeguardingText(learner.locale, learner.isMinor, kind);
 }
 
 /**

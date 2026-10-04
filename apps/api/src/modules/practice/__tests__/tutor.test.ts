@@ -10,6 +10,7 @@ import {
 
 const d = (over: Partial<TutorDecision>): TutorDecision => ({
   intent: 'answer',
+  concern: false,
   verdict: 'incorrect',
   reply: 'Fast!',
   gave_hint: true,
