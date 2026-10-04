@@ -383,6 +383,29 @@ Abschrift komplett neu schreiben („extracted_text: the same faithful transcrip
 before"). Bei einer 50er-Vokabelliste sind das vier Abschriften statt einer — echte,
 messbare Verschwendung, und etwas anderes als das, was #219 vorschlägt.
 
+### #281 E1 — Schlüsselreihenfolge in verschachtelten, getaggten Zweigen
+
+Konsens #279, Schritt E1: erst die vorhandenen Rohdaten auswerten, dann nur die Lücke messen.
+
+- **Vorhanden (#219, oben):** belegt die Schreibreihenfolge nur für die Schlüssel der
+  **obersten Ebene** (`Object.keys` der geparsten `extraction`-Antwort folgte der Umdrehung der
+  Deklaration). Über die Schlüssel **innerhalb** eines getaggten Union-Zweigs (ein Element von
+  `structured[]`, `actions[]`, eine Figur) sagt das nichts.
+- **Deklariert (ohne Modell):** das Schema-Inventar (`docs/measurements/schema-inventory.md`,
+  §Tag position) zeigt den Tag in jedem Zweig jeder Union an Position 0. Das ist die Reihenfolge,
+  die das Modell **sieht**, nicht die, in der es schreibt.
+- **Gemessen (Live-Smoke, 02.10.2026, Vertex `eu`, `gemini-3.6-flash`, berichtet im
+  Issue-Kommentar zu #281):** ein Array aus zwei getaggten Objekten, je drei Läufe pro Aufbau. Die
+  verschachtelten Schlüssel kamen 9 von 9 Mal in Deklarationsreihenfolge. `propertyOrdering` je
+  Zweig wird angenommen (kein 400) und setzt sich gegen die Deklaration durch; die Prompt-Token
+  sind mit und ohne gleich.
+
+**Folge:** keine Codeänderung. Die Reihenfolge ist auf unserem Pfad belegt, mit kleiner
+Stichprobe; `propertyOrdering` wird nicht emittiert (`llm/json-schema.ts`) und steht als
+Absicherung bereit, falls ein Prefix-Parser (`llm/partial.ts`) je auf einen früh geschriebenen Tag
+angewiesen ist. Die Messung ist nicht in diesem Repo wiederholbar (ihr Skript lag nicht im Repo);
+eine Wiederholung gehört zu den Live-Prüfungen in #367.
+
 ### #220 — Übung starten: 6,45 s → 3,90 s (median, am Endpoint)
 
 | Lauf                   | min        | median     | max        | Fragen in der Antwort |
