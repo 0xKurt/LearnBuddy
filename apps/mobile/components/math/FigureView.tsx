@@ -25,6 +25,8 @@ import Svg, {
 // of @learnbuddy/shared-math (its index also pulls in mathjs).
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
 import { niceStep } from '../../../../packages/shared-math/src/charts.js';
+import { isSpaceFigure } from '../../../../packages/shared-math/src/space.js';
+import { isTreeFigure } from '../../../../packages/shared-math/src/trees.js';
 import {
   BARE_FIGURE_CHROME,
   BARE_FIGURE_PAD,
@@ -46,6 +48,7 @@ import { MathText } from './MathText.js';
 import { StaffLine } from './StaffLine.js';
 import { FAMILY, FONT, formatNumber, HaloText, SMALL } from './figureText.js';
 import { describeMolecule, MoleculeView } from './MoleculeView.js';
+import { describeSpace, SpaceBody } from './SolidFigures.js';
 import { describeTree, TreeBody } from './TreeFigures.js';
 import { useSpokenWords } from './useSpokenMath.js';
 
@@ -141,6 +144,10 @@ export function FigureView({
 }
 
 function FigureBody({ figure, width, bare }: { figure: Figure; width: number; bare: boolean }) {
+  // Trees, pedigrees, automata (#256) and solids, nets, points in space (#255) are drawn in
+  // their own files.
+  if (isTreeFigure(figure)) return <TreeBody figure={figure} width={width} />;
+  if (isSpaceFigure(figure)) return <SpaceBody figure={figure} width={width} />;
   switch (figure.type) {
     case 'fraction':
       return <FractionPicture fig={figure} width={width} />;
@@ -169,11 +176,6 @@ function FigureBody({ figure, width, bare }: { figure: Figure; width: number; ba
     case 'scatter_plot':
     case 'pyramid':
       return <ChartBody figure={figure} width={width} />;
-    // Trees, pedigrees and automata (issue #256) are drawn in TreeFigures.tsx.
-    case 'tree':
-    case 'pedigree':
-    case 'automaton':
-      return <TreeBody figure={figure} width={width} />;
   }
 }
 
@@ -1167,6 +1169,8 @@ export function describeFigure(
   { formulas = true }: { formulas?: boolean } = {},
 ): string {
   const list = (items: string[]) => items.join(', ');
+  if (isTreeFigure(figure)) return describeTree(figure, t);
+  if (isSpaceFigure(figure)) return describeSpace(figure, t);
   switch (figure.type) {
     case 'fraction':
       return figure.fractions
@@ -1307,9 +1311,5 @@ export function describeFigure(
     case 'scatter_plot':
     case 'pyramid':
       return describeChart(figure, t);
-    case 'tree':
-    case 'pedigree':
-    case 'automaton':
-      return describeTree(figure, t);
   }
 }

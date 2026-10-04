@@ -292,6 +292,10 @@
       "mode_xr": "X-chromosomal-rezessiv",
       "accepted": "Ja, es wird akzeptiert",
       "rejected": "Nein, es wird nicht akzeptiert"
+    },
+    "solid": {
+      "net_yes": "Ja, das ist ein Würfelnetz",
+      "net_no": "Nein, das ist kein Würfelnetz"
     }
   },
   "contact": {

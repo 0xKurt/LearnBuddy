@@ -292,6 +292,10 @@
       "mode_xr": "recesivo ligado al X",
       "accepted": "Sí, se acepta",
       "rejected": "No, no se acepta"
+    },
+    "solid": {
+      "net_yes": "Sí, es un desarrollo del cubo",
+      "net_no": "No, no es un desarrollo del cubo"
     }
   },
   "contact": {

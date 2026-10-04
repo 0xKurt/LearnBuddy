@@ -10,3 +10,5 @@ export * from './charts.js';
 export * from './molecule.js';
 export * from './trees.js';
 export * from './pedigree.js';
+export * from './solids.js';
+export * from './space.js';

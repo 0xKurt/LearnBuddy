@@ -2651,6 +2651,62 @@ the key.** No migration: the figure is an item's `figure` (jsonb), like the char
   another word than `w` is caught only where the numbers then disagree. A screen reader reads
   `$AA$` and `$aa$` alike (case is not spoken).
 
+### Solids, cube nets and points in space (issue #255)
+
+Körper (Schrägbild), Würfelnetze and the 3D coordinate system next to a question. **The model
+writes the kind and the measures, the squares, the points; code checks them, draws them and
+computes the key.** No migration: the figure is an item's `figure` (jsonb), like the trees.
+
+- **Contract** (`contracts/solid.ts`): three `ModelFigure` branches with short names and no
+  nullable field (the generate item schema grew from 29,416 to 33,304 characters, 0 new
+  `anyOf`). `solid`: `k` = cube, cuboid, prism, pyramid (base a regular n-gon, `n` 3–8, side
+  `a`), cylinder, cone, sphere; `a` length, `b` depth (cuboid), `h` height, `r` radius — exactly
+  the measures the kind uses, every other one 0; `u` = mm/cm/dm/m; `ask` = vertices / edges /
+  faces / volume / surface / none. `cube_net`: six squares `{x, y}` on a 5 × 5 grid, `ask` =
+  fold / opposite / none with `at`. `axes3d`: up to six points (one capital letter, whole
+  coordinates −4 … 6), up to four arrows between them, `ask` = point / vector / distance / none
+  with `i`, `j`.
+- **Checked, then rejected — never repaired** (`spaceProblem`, `packages/shared-math/src/solids.ts`
+  and `space.ts`): a solid has exactly its measures, a proportion a phone can draw (longest :
+  shortest ≤ 8, a cone at least half as high as wide) and no vertex/edge/face question on a
+  round solid (no single schoolbook answer). A net is six different squares inside the grid that
+  hang together edge to edge; whether it is a cube net is decided by **folding** it — each square
+  carries the frame of the cube face it lands on and is rolled over its shared edges; a net folds
+  when the six squares land on six different faces, and the face opposite a square comes out of
+  the same fold (all 11 nets fold, the other 24 hexominoes do not: `solids.test.ts` enumerates the
+  35). Points have distinct names and never sit on one spot of the drawing (the oblique view maps
+  (2|1|1) onto the origin). Any of these that breaks a rule costs its **question** (`clipDraft`).
+- **The key** (`apps/api/src/modules/practice/solidCheck.ts`): vertices, edges, faces (from the
+  kind: a prism 2n / 3n / n + 2, a pyramid n + 1 / 2n / n + 1 — Euler holds for each, tested) and
+  the number of the opposite square are whole numbers without a unit, exactly. Volume and surface
+  area are computed from the measures (regular base: area n·a·ρ/2, a pyramid's side faces by
+  their slant height, a cone's by its slant line) and are number questions **with** a unit: the
+  key's unit (its own or the item's) must be a volume or an area — converted exactly (30 cm³ =
+  0,03 l) — and the number the computed one, exact or rounded at the precision it is written in
+  (`numberKeyTolerance`). "Ist das ein Würfelnetz?" is multiple choice whose options code writes
+  (`practice.solid.*`); the model's `correct_choice` must be what folding says. A point's
+  coordinates and a vector are a point "(2|3|1)" compared value by value (`samePoint`), a distance
+  a number without a unit. A number asked about such a figure that declares no key is dropped.
+  Cube nets as the **options** of a multiple choice hold only when one of them is the odd one out
+  (the only one that folds, or the only one that does not) and `correct_choice` points at it —
+  the one answer both "Welches ist ein Würfelnetz?" and "Welches ist keins?" have (`choiceCheck`).
+- **Drawing** (`apps/mobile/components/math/SolidFigures.tsx`, projection and visibility from
+  shared-math imported by path): a solid in cavalier projection (depth at 45°, halved), every
+  edge whose two faces turn away dashed, a cylinder's and a cone's outline from the true
+  silhouette, a sphere as circle with its equator; the measures in the accent colour beside their
+  edges — left out when edges are counted. A net on squared paper, numbered 1–6 only when the
+  question names squares. The 3D system as in the schoolbook (x to the front left, half a box
+  diagonal per unit; y right; z up) with ticks, each point's dashed path from the origin along x,
+  y, z (without it a drawn point is every point on a line) and arrows for vectors. The
+  screen-reader text (`describeSpace`) says the kind and measures, every square, every point's
+  path and every arrow — never a computed key. Walkthrough: `tests/web/solids.spec.ts` at
+  390 × 844 and 360 × 740, light and dark. Library check: `tools/guards/drawing-registry.json`.
+- **Not checked by code**: the prompt's words. "Welches Quadrat liegt gegenüber von Quadrat 2?"
+  with `at` = 3 is caught only where the number then disagrees; naming a solid ("Wie heißt dieser
+  Körper?") is an ordinary question with the model's options, not computed from the figure. Not
+  built: prisms on a non-regular base (a right triangle with its legs), Würfelgebäude and their
+  views, nets of other solids.
+
 ### Explain profiles (issue #281, D2)
 
 Every explain call is sent only the forms its run can use — the schema is derived from the kind
@@ -3006,7 +3062,7 @@ word list, so it stays a prompt rule.
   compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
   when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
   may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table,
-  molecule, the charts of §Charts and the trees of §Trees) as data (`contracts/figure.ts`); the server drops
+  molecule, the charts of §Charts, the trees of §Trees and the solids of §Solids) as data (`contracts/figure.ts`); the server drops
   figures it cannot draw (e.g. an expression that does not compile with `@learnbuddy/shared-math`
   `compileExpression`) without dropping the question — except a chart or a tree, which costs its
   question (§Charts, §Trees), and a geometry or molecule figure that contradicts its numbers (below).

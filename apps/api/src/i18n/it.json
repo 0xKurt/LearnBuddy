@@ -292,6 +292,10 @@
       "mode_xr": "recessivo legato all’X",
       "accepted": "Sì, viene accettata",
       "rejected": "No, non viene accettata"
+    },
+    "solid": {
+      "net_yes": "Sì, è uno sviluppo del cubo",
+      "net_no": "No, non è uno sviluppo del cubo"
     }
   },
   "contact": {

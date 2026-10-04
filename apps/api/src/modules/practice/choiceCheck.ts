@@ -36,6 +36,8 @@ import {
   type CompiledFunction,
 } from '@learnbuddy/shared-math';
 
+import { netChoiceHolds } from './solidCheck.js';
+
 /** Why a multiple-choice draft does not hold together; null when it does. */
 export type ChoiceProblem =
   | 'too_few'
@@ -45,6 +47,7 @@ export type ChoiceProblem =
   | 'key_not_option'
   | 'figure_count'
   | 'figure_duplicate'
+  | 'net_choice'
   | 'graph_shape'
   | 'graph_invisible'
   | 'graph_alike'
@@ -97,6 +100,9 @@ export function choiceProblem(it: ChoiceDraft): ChoiceProblem | null {
     }
     const drawn = figures.map(stableJson);
     if (new Set(drawn).size !== drawn.length) return 'figure_duplicate';
+    // Cube nets (issue #255): the right option is the one odd net out (`solidCheck.ts`).
+    if (figures.some((f) => f.type === 'cube_net') && !netChoiceHolds(figures, correct))
+      return 'net_choice';
     // Graphs: the key is a FUNCTION, and the graph check holds it against every drawing — the
     // option texts only describe the pictures (they are neither shown nor read aloud).
     if (figures.some((f) => f.type === 'function_plot')) return graphProblem(it, correct);

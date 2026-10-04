@@ -92,7 +92,8 @@ import { TABLE_RULES } from './table.js';
 // v1.17: pictures as the options of a multiple choice (choice_figures, #231).
 // v1.18: cloze, a text with several gaps (#232).
 // v1.19: a Diktat run (spelling_dictation, #242) with its own task and entries.
-export const GENERATE_PROMPT_VERSION = 'generate.v1.19';
+// v1.21: solids, cube nets and points in space (#255).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.21';
 
 const SUBJECT_KINDS = [
   'math',

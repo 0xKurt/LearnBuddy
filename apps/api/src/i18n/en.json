@@ -292,6 +292,10 @@
       "mode_xr": "X-linked recessive",
       "accepted": "Yes, it is accepted",
       "rejected": "No, it is not accepted"
+    },
+    "solid": {
+      "net_yes": "Yes, it is a cube net",
+      "net_no": "No, it is not a cube net"
     }
   },
   "contact": {

@@ -292,6 +292,10 @@
       "mode_xr": "récessif lié à l’X",
       "accepted": "Oui, il est accepté",
       "rejected": "Non, il n’est pas accepté"
+    },
+    "solid": {
+      "net_yes": "Oui, c'est un patron de cube",
+      "net_no": "Non, ce n'est pas un patron de cube"
     }
   },
   "contact": {
