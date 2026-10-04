@@ -10,13 +10,16 @@
 //     are a date and nothing else, so a different day is certainly a different date — and
 //     "14.7.1789" for "14.07.1789" is the same date written shorter, which is a question of
 //     FORM, never of value (decision D-3, issue #227 finding 1).
-//   - A CLOCK TIME is only decided where it is the SAME time: "14.30" is how German writes
-//     "14:30". That a different time is wrong is NOT decided here. "14:30" against "14:50" is
-//     exactly the ambiguity issue #175 closed on — the same characters are a ratio, a division
-//     the way German schools write it, and a time, and the meaning is not in the characters —
-//     and the grading truth table keeps that case undecided (H-4). What IS structural is that
-//     the dot and the colon are interchangeable in one reading only, and a two-digit minute
-//     below 60 behind an hour below 24 is that reading.
+//   - A CLOCK TIME: "14.30" is how German writes "14:30", the same time — the dot and the
+//     colon are interchangeable in one reading only, and a two-digit minute below 60 behind an
+//     hour below 24 is that reading. A DIFFERENT answer is harder, because "14:30" is also a
+//     ratio and a division the way German schools write it, and which one is meant is not in
+//     the characters (issue #175). That ambiguity is not resolved here — it is not needed:
+//     "14:50" is wrong only when it is wrong in EVERY reading at once (another time even on a
+//     twelve-hour clock, another ratio, another quotient, and for a dot also another decimal
+//     and another product). Where any one reading agrees ("7:15" is 14:30 as a ratio, "2:30"
+//     is 14:30 on a twelve-hour clock, "14.50" is 14:30 in decimal hours, "0.40" is 12:30 as
+//     a division), nothing is decided.
 //   - A YEAR inside a sentence is read only when the sentence states exactly ONE four-digit
 //     number and the key is one too. Four digits is the gate because that is what a year looks
 //     like: a one- to three-digit number in a sentence is far more often something incidental
@@ -81,17 +84,32 @@ export function sameDate(key: string, answer: string): 'same' | 'different' | nu
 /** The key's notation for a time: a colon, an hour below 24, two minute digits below 60. */
 const CLOCK_KEY = /^(\d{1,2}):([0-5]\d)$/;
 /** The learner's: the same, or with the dot German writes a time with. */
-const CLOCK_ANSWER = /^(\d{1,2})[.:]([0-5]\d)$/;
+const CLOCK_ANSWER = /^(\d{1,2})([.:])([0-5]\d)$/;
 
 /**
- * Whether the answer states the key's time in the other notation ("14.30" for "14:30"): the
- * same hour, the same minute, only the separator different. False for everything else — a
- * different time is NOT called wrong here (see the header: issue #175).
+ * A clock-time key against an answer written like one. 'same' when the answer states the key's
+ * time with only the separator changed ("14.30" for "14:30"); 'different' only when it differs
+ * in every reading the characters allow (see the header, issue #175); null for everything else
+ * — a key or an answer in another notation, or an answer some reading still agrees with.
  */
-export function sameClockTime(key: string, answer: string): boolean {
+export function clockTime(key: string, answer: string): 'same' | 'different' | null {
   const k = CLOCK_KEY.exec(key.trim());
   const a = CLOCK_ANSWER.exec(answer.trim());
-  if (k === null || a === null) return false;
-  if (Number(k[1]) > 23) return false;
-  return Number(k[1]) === Number(a[1]) && Number(k[2]) === Number(a[2]);
+  if (k === null || a === null) return null;
+  const [kh, km] = [Number(k[1]), Number(k[2])];
+  const [ah, dot, am] = [Number(a[1]), a[2] === '.', Number(a[3])];
+  if (kh > 23) return null;
+  if (kh === ah && km === am) return 'same';
+  const agrees = [
+    // A time, on a 24- or a 12-hour clock: 2:30 may be what 14:30 is in the afternoon.
+    kh % 12 === ah % 12 && km === am,
+    // A ratio or a division, the key's way and the answer's way (cross-multiplied, exact).
+    kh * am === ah * km,
+    // With a dot, the answer may also be a decimal: hours (14.50 h is 14:30), or a number to
+    // set against the key read as a division — and a dot is a product too (14·50).
+    dot && (ah * 100 + am) * 60 === (kh * 60 + km) * 100,
+    dot && (ah * 100 + am) * km === 100 * kh,
+    dot && ah * am * km === kh,
+  ];
+  return agrees.some(Boolean) ? null : 'different';
 }
