@@ -3,9 +3,9 @@
 //
 //   - `usableItems` / `usableRubric` throw the field away on every other kind (Rule 0: the value
 //     cannot be checked or used there, so it is not kept);
-//   - the generator's profiles (`setProfiles.ts`, `setSchemaForModel`) leave the field out of the
-//     schema the model is shown when the run allows none of these kinds — a field that code would
-//     discard anyway is only tokens and decoder states.
+//   - the generator's profiles (`setProfiles.ts`, `setSchemaForModel`) and the listening question
+//     (`listen.ts`) leave the field out of the schema the model is shown when none of their kinds
+//     keeps it (`unusedItemFields`) — a field code would discard is only tokens and decoder states.
 //
 // No imports on purpose: `items.ts`, `rubric.ts` and `setProfiles.ts` all read it.
 
@@ -24,4 +24,23 @@ export const CHOICE_FIGURE_KINDS = ['multiple_choice'] as const;
 /** Whether `kind` is one of `kinds` — typed for the plain strings the item kinds are. */
 export function kindIn(kinds: readonly string[], kind: string): boolean {
   return kinds.includes(kind);
+}
+
+/**
+ * The fields none of `kinds` keeps, as a zod `omit` mask: what a schema whose items can only be
+ * these kinds leaves out (a run's profile, `setProfiles.ts`; a listening question, `listen.ts`).
+ */
+export function unusedItemFields(kinds: readonly string[]): {
+  rubric?: true;
+  tolerance?: true;
+  spelling?: true;
+  choice_figures?: true;
+} {
+  const none = (some: readonly string[]) => !kinds.some((k) => kindIn(some, k));
+  return {
+    ...(none(RUBRIC_KINDS) ? { rubric: true } : {}),
+    ...(none(TOLERANCE_KINDS) ? { tolerance: true } : {}),
+    ...(none(SPELLING_KINDS) ? { spelling: true } : {}),
+    ...(none(CHOICE_FIGURE_KINDS) ? { choice_figures: true } : {}),
+  };
 }
