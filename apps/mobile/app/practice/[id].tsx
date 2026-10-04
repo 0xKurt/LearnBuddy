@@ -236,7 +236,7 @@ export default function PracticeScreen() {
   const [again, setAgain] = useState<{ itemId: string; way: ReexplainWay } | null>(null);
   // Measured: what the conversation's content really needs and what the question takes, so the
   // conversation can show whole turns in the room there is (issue #286, `threadCap`).
-  /** The conversation's box and the free room under the answer (issue #286, `threadCap`). */
+  /** The conversation's box and the free room above the answer (issue #286, `threadCap`). */
   const [threadBox, setThreadBox] = useState(0);
   const [freeSpace, setFreeSpace] = useState(0);
   const [turnTops, setTurnTops] = useState<Readonly<Record<string, number>>>({});
@@ -867,9 +867,9 @@ export default function PracticeScreen() {
           >
             <View
               style={{
-                // The question and the conversation take what they need, no more: the way to answer
-                // stands right under them, and the free room collects below it (`FreeSpace`, issue
-                // #286). The question never shrinks; the conversation does, by whole turns
+                // The question and the conversation take what they need, no more: the free room
+                // collects under them and the way to answer stands at the bottom (`AnswerShell`,
+                // issues #286, #386). The question never shrinks; the conversation does, by whole turns
                 // (`threadCap`).
                 flexGrow: 0,
                 flexShrink: 1,
@@ -1049,8 +1049,8 @@ export default function PracticeScreen() {
                 ) : null}
               </ThreadBox>
             </View>
-            {/* Options she taps (issue #288), in the answer shell like every form (issue #310): flush
-            under the Tipp row, the free room below, and in voice mode the spoken answer where
+            {/* Options she taps (issue #288), in the answer shell like every form (issue #310): at the
+            bottom, the free room above (#386), and in voice mode the spoken answer where
             "Prüfen" stands for the others. Tapped words go as if she had typed them: same
             grading, same key (issue #147). */}
             {open && (choices || tapChoices) ? (
@@ -1130,8 +1130,8 @@ export default function PracticeScreen() {
                 disabled={locked}
                 onChange={setText}
                 onCheck={check}
-                // The fraction bar she works with (issue #162). It stands under the question like
-                // every board and writes into the input bar at the bottom, so "Prüfen", the math
+                // The fraction bar she works with (issue #162). It stands right above the input bar
+                // like every board (#386) and writes into it, so "Prüfen", the math
                 // keys and typing stay exactly what they were. A picked bar goes out at once.
                 surface={
                   barSurface ? (

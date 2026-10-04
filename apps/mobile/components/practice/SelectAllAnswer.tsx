@@ -13,7 +13,7 @@
 // Entwurf (`lib/drafts.ts`): sie überstehen den Wechsel hell/dunkel und einen Neustart.
 //
 // In der Hülle steht die Fläche wie die Auswahl mit einer Antwort (`keeps="whole"`, `flush`):
-// dieselben Kacheln am selben Platz, bündig unter der Tipp-Zeile, und nichts darin rollt — die
+// dieselben Kacheln am selben Platz, unten direkt über „Prüfen“ (#386), und nichts darin rollt — die
 // Obergrenzen im Vertrag sind so gemessen, dass das Größte passt (SELECT_*).
 
 import type { SelectAllTaskView, StructuredAnswer } from '@learnbuddy/shared-types/contracts';

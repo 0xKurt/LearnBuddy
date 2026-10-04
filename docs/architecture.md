@@ -2182,9 +2182,9 @@ tiles, four to a row; a tap puts a tile on the next free place.
 **Room on a small phone** (rule 16; `components/practice/PartsArea.tsx`). The question card never
 shrinks and 44 pt per touch target is the floor, so the largest task the contract allows has to fit
 the smallest phone as it is — the maxima of a match are measured, not chosen (below). While a
-structured surface is shown, the parts stand right under the question and the conversation; the
-newest turn (Buddy's reply after a check) always stays visible, and the free room collects between
-the parts and "Prüfen" (`FreeSpace` in the answer shell, #286, #310 — see below).
+structured surface is shown, the parts stand at the bottom, directly above "Prüfen"; the newest
+turn (Buddy's reply after a check) always stays visible, and the free room collects between the
+conversation and the parts (`FreeSpace` in the answer shell, #286, #310, #386 — see below).
 The parts stand in a scroll view only as the floor under a mistake: its testID `scroll-parts` is
 not one `tests/web/fit.ts` allows, so a walkthrough shot fails the moment the parts would have to
 be scrolled. (Before the floor, a tall arrangement was drawn over the question — found in the shots
@@ -4015,14 +4015,17 @@ account's e-mail (DESIGN-BRIEF §Onboarding); there is no age check beyond the b
 Once the profile exists, one last short step for everyone (after the hand-over for a child, so
 she picks it herself): "Wie soll Buddy klingen?" — four voices, a tap plays a sample and picks
 it, "Warm" is already chosen so "Weiter" is always possible (ADR 0008 §Amendment).
-The practice screen (issue #286) stands the question (with its drawing scaled to fit), the
-conversation about it and the way to answer together at the top, in that order; the free room
-collects BELOW the way to answer (`components/practice/FreeSpace.tsx`), above what is pinned
-("Prüfen", "Weiter"). Before, the conversation took all free room and the way
-to answer sat at the bottom, which left a hole under the card with a lonely "Tipp" in it.
+The practice screen (issues #286, #386) stands the question (with its drawing scaled to fit) and
+the conversation about it at the top, and the way to answer at the bottom, directly above its
+action; the free room collects BETWEEN them (`components/practice/FreeSpace.tsx`). Before #286 the
+conversation took all free room, which left a hole under the card with a lonely "Tipp" in it; from
+#310 option B (03.10.) to #386 (04.10.) boards and options stood right under the question with the
+free room below them, while typed text sat at the bottom — two rules, and on a tall phone the
+answer floated in the middle of the screen. **#386 replaces owner decision B of 03.10. for every
+form: every answer sits at the bottom.**
 **The answer shell** (issue #310, `components/practice/AnswerShell.tsx`) holds an answer and its
-action in fixed slots: the answer right under the question, optional keys for what she types
-directly under it, the free room, and "Prüfen" (`CheckBar.tsx`: one full-width pill in the pinned bar,
+action in fixed slots: the free room, the answer, optional keys for what she types directly under
+it, and "Prüfen" (`CheckBar.tsx`: one full-width pill in the pinned bar,
 waiting until the form says its answer is complete). A form fills the slots and decides nothing
 about place, spacing or the look of its action. Order, match, table, cloze, the note line and the
 typed answer are in it. **Free text is typed at the bottom, like in the chat** (issue #365, owner
@@ -4032,14 +4035,14 @@ written in the app's one input bar (`components/lb/InputBar.tsx`, the same compo
 composer), pinned in the bar at the bottom right above "Prüfen" (`action.input` of `CheckBar`),
 inside the screen's `KeyboardSafe`. The question, Buddy's reply and the follow-up stand above it
 like a conversation; nothing floats under the question with an empty band down to "Prüfen". The
-math keys stand right under the input bar, on top of the keyboard, while she types, the fraction bar it writes from stays
-under the question in the answer slot like every board, the mic sits at the bar's end (a soft
+math keys stand right under the input bar, on top of the keyboard, while she types, the fraction bar it writes from stands
+in the answer slot right above the input bar like every board, the mic sits at the bar's end (a soft
 circle, as in the chat), the return key still sends a one-liner, and "Prüfen"
 waits until something is in the field. While she types, "Prüfen" stands in the bar itself, where the chat has
 "Senden" (`typing` in `CheckBar`), and the full-width one steps aside — with the keyboard up on a
 small phone it would push the bar she types in under the keyboard. In voice mode the big mic stands in the pinned bar above
 the input bar, and "Prüfen" steps back to the soft skin. Structured forms (table, order, match,
-mark, select-all, cloze) keep their board under the question; their cells and gaps are the same
+mark, select-all, cloze) have their board at the bottom, directly above "Prüfen" (#386); their cells and gaps are the same
 one text field (`LbTextInput`, variant `cell`). A form that cannot scroll says what the slot keeps
 when the room runs out (`keeps`: options and the fraction bar all of it, the note line its
 tightest staff). The walkthrough shoots every stop with a typed answer once more at 360×440 (the
@@ -4047,18 +4050,21 @@ keyboard up): the field and every alert must stay in the window (`keyboardPass` 
 `tests/web/fit.ts`), and the field must stand in the pinned bar with "Prüfen" (`fieldInBar`); how
 far "Prüfen" lies under the keyboard is recorded, and the big mic of voice mode steps aside while
 she types. The
-options are in it too, flush under the Tipp row with nothing to check (`action: { tap }`); in
+options are in it too, at the bottom edge with nothing to check — the tile is the action
+(`action: { tap }`); in
 voice mode their spoken answer (mic, "Nochmal vorlesen") stands in the same voice slot as the
-typed field's mic. The pronunciation recorder and "Weiter" take the action's place under the free
-room (`action: { bar }`), so the free room has one owner, the shell. Whatever fills the keys slot
+typed field's mic. The pronunciation recorder and "Weiter" take the action's place at the bottom
+(`action: { bar }`), so the free room has one owner, the shell. Whatever fills the keys slot
 is the one key row (`components/lb/KeyRow.tsx`: the math keys and the note line's two rows, #310
 step 4). A tile that answers by a tap is
 `components/lb/AnswerTile.tsx`; corners come from `lib/theme/radius.ts`. Guarded twice: a source
 test (`apps/mobile/lib/__tests__/answerShell.test.ts`) fails when a form brings its own bar,
 spacer, "Prüfen", keyboard handling or shadowed tile (the forms not moved yet are listed with the
 step that moves them, and the list only shrinks), and the walkthrough measures at every shot with
-an answer slot that at most one Tipp row (44 pt) stands empty above it, the free room lies under
-it and "Prüfen" is lowest (`answerPlace` in `tests/web/fit.ts`). The
+an answer slot that at most 24 pt stand empty between the answer and what is below it ("Prüfen",
+the voice slot, the input bar, or the window's bottom edge), the free room lies above it and
+"Prüfen" is lowest (`answerPlace` in `tests/web/fit.ts`, #386; the source test also fails when the
+shell puts the spacer under the answer). The
 conversation shows WHOLE turns only (`threadRoom` in `lib/practice/threadRoom.ts`): everything when it
 fits into its box plus the free room, otherwise from the earliest turn whose rest still fits,
 so at rest the top edge lies in the gap above a whole turn and nothing is cut under the card.

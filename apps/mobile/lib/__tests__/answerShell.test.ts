@@ -59,7 +59,7 @@ const BAR: Record<string, string> = {
 
 /** Who places the free room. */
 const SPACER: Record<string, string> = {
-  'AnswerShell.tsx': 'between the answer and "Prüfen" (or what stands in its place)',
+  'AnswerShell.tsx': 'above the answer, between the conversation and the answer (#386)',
 };
 
 /** Who writes "Prüfen" (the key `check`) on a button. */
@@ -106,6 +106,20 @@ describe('the answer shell is the only place for an answer and its action (#310)
     expect(holders((s) => s.name !== 'FreeSpace.tsx' && placesRoom(s.text))).toEqual(
       Object.keys(SPACER).sort(),
     );
+  });
+
+  it('puts every answer at the bottom: the free room above the answer slot, never under it (#386)', () => {
+    const { text } = sources.find((s) => s.name === 'AnswerShell.tsx')!;
+    const body = text.slice(text.indexOf('export function AnswerShell'));
+    const room = body.indexOf('<FreeSpace />');
+    const slot = body.indexOf('testID="answer-slot"');
+    const keysAt = body.indexOf('testID="answer-keys"');
+    const action = body.indexOf('<CheckBar');
+    expect(room, 'the shell places the free room').toBeGreaterThan(-1);
+    expect(body.indexOf('<FreeSpace />', room + 1), 'one free room').toBe(-1);
+    expect(room, 'free room above the answer').toBeLessThan(slot);
+    expect(slot, 'the answer above its keys').toBeLessThan(keysAt);
+    expect(keysAt, 'the keys directly above the action').toBeLessThan(action);
   });
 
   it('writes "Prüfen" only through its listed owners', () => {

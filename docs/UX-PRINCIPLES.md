@@ -1106,8 +1106,11 @@
     Diktat) use the same input bar, pinned at the bottom — in practice right
     above "Prüfen". The question, Buddy's reply and the follow-up stand above
     it like a conversation; a field never floats under the question with an
-    empty band below it. Boards (table, order, match, cloze …) are the answer
-    themselves and stay under the question. There is one text field in the
+    empty band below it. Every other answer sits at the bottom too (issue
+    #386): options she taps, boards (table, order, match, cloze …), the
+    fraction bar and the note line stand directly above "Prüfen" or at the
+    bottom edge, and the free room collects above them, between the
+    conversation and the answer. There is one text field in the
     whole app: a form field, the bar, a table's cell and a cloze's gap look
     and behave the same (components/lb/LbTextInput.tsx).
 

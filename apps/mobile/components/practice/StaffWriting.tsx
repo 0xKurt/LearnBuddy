@@ -1,7 +1,7 @@
 // Die Notenzeile, auf die sie schreibt (issue #226), in der Antworthülle wie jede andere Form
-// (issue #310): die Zeile direkt unter der Frage, ihre Tasten im `keys`-Platz darunter (die eine
-// Tastenreihe, `StaffKeys`), dann der freie Platz, unten „Prüfen" in derselben Leiste wie bei
-// Tabelle, Ordnen und Zuordnen. Kein ScrollView (issue #275): die Zeile nimmt ihre Höhe aus dem
+// (issue #310): oben der freie Platz, dann die Zeile, ihre Tasten im `keys`-Platz darunter (die
+// eine Tastenreihe, `StaffKeys`), direkt darunter „Prüfen" in derselben Leiste wie bei Tabelle,
+// Ordnen und Zuordnen — unten, wie jede Antwort (#386). Kein ScrollView (issue #275): die Zeile nimmt ihre Höhe aus dem
 // Platz, der da ist (`StaffAnswer`), die Tasten darunter sind fest — und nie weniger als die
 // engste Zeile (`keeps`): fehlt der Platz, sagt es der Walkthrough (`fit.ts`), statt dass die
 // Tasten still unter „Prüfen" rutschen.

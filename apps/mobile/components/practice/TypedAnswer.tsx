@@ -16,8 +16,8 @@
 //     stands above the bar (`CheckBar`); after her first tap the loop listens again by itself
 //     (useHandsFreeMic). A Diktat (issue #242) has no mic: the recogniser would spell for her;
 //   · under the text a live preview of typed math ("3/4" as a fraction, TypedMathPreview);
-//   · a surface that writes into the field — the fraction bar (issue #162) — stands under the
-//     question in the answer slot, like every board.
+//   · a surface that writes into the field — the fraction bar (issue #162) — stands in the answer
+//     slot directly above the input bar, at the bottom like every board (#386).
 // Autocorrect is off so the phone never "fixes" what the learner actually wrote.
 
 import type { ItemKind, SubjectKind } from '@learnbuddy/shared-types/contracts';
