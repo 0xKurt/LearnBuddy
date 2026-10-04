@@ -444,7 +444,14 @@
     "net_square": "quadrato {{n}} nella riga {{row}}, colonna {{col}}",
     "axes3d": "Sistema di coordinate nello spazio con gli assi x, y e z",
     "axes3d_point": "Punto {{l}}: {{x}} lungo x, {{y}} lungo y, {{z}} lungo z",
-    "axes3d_arrow": "Freccia da {{a}} a {{b}}"
+    "arrow_to": "Freccia da {{a}} a {{b}}",
+    "arrow_to_label": "Freccia da {{a}} a {{b}}: {{label}}",
+    "diagram": "{{kind}} con {{n}} caselle",
+    "diagram_chain": "Catena",
+    "diagram_cycle": "Ciclo",
+    "diagram_tree": "Schema ad albero",
+    "diagram_free": "Schema",
+    "diagram_gap": "spazio vuoto {{letter}}"
   },
   "keys": {
     "row": "Simboli matematici",

@@ -444,7 +444,14 @@
     "net_square": "square {{n}} in row {{row}}, column {{col}}",
     "axes3d": "3D coordinate system with x, y and z axes",
     "axes3d_point": "Point {{l}}: {{x}} along x, {{y}} along y, {{z}} along z",
-    "axes3d_arrow": "Arrow from {{a}} to {{b}}"
+    "arrow_to": "Arrow from {{a}} to {{b}}",
+    "arrow_to_label": "Arrow from {{a}} to {{b}}: {{label}}",
+    "diagram": "{{kind}} with {{n}} boxes",
+    "diagram_chain": "Chain",
+    "diagram_cycle": "Cycle",
+    "diagram_tree": "Tree diagram",
+    "diagram_free": "Diagram",
+    "diagram_gap": "gap {{letter}}"
   },
   "keys": {
     "row": "Math symbols",

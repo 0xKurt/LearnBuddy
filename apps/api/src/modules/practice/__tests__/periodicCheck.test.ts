@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PERIODIC_ITEMS, table } from '../../../testing/scenarios/periodic.js';
 import { ItemDraft, itemsOneByOne, usableItems } from '../items.js';
-import { figureIsRejectedPeriodic } from '../periodicCheck.js';
+import { figureIsRejected } from '../wholeFigure.js';
 
 const [neutrons, , cls, en, radius, protons] = PERIODIC_ITEMS as [
   (typeof PERIODIC_ITEMS)[number],
@@ -67,11 +67,11 @@ describe('periodic-table questions are held to the key code computes', () => {
   });
 
   it('drops a question whose table does not hold, and only a periodic table', () => {
-    expect(figureIsRejectedPeriodic(table('main', ['Fe'], 'protons', 'Fe'))).toBe(true);
-    expect(figureIsRejectedPeriodic(table('full', ['Xy']))).toBe(true);
-    expect(figureIsRejectedPeriodic({ ...table('full', []), v: 'all' })).toBe(true);
-    expect(figureIsRejectedPeriodic(table('full', ['Fe'], 'protons', 'Fe'))).toBe(false);
-    expect(figureIsRejectedPeriodic({ type: 'table', header: ['a'], rows: [['b']] })).toBe(false);
+    expect(figureIsRejected(table('main', ['Fe'], 'protons', 'Fe'))).toBe(true);
+    expect(figureIsRejected(table('full', ['Xy']))).toBe(true);
+    expect(figureIsRejected({ ...table('full', []), v: 'all' })).toBe(true);
+    expect(figureIsRejected(table('full', ['Fe'], 'protons', 'Fe'))).toBe(false);
+    expect(figureIsRejected({ type: 'table', header: ['a'], rows: [['b']] })).toBe(false);
     expect(kept({ ...protons, figure: table('main', ['Fe'], 'protons', 'Fe') })).toHaveLength(0);
   });
 

@@ -21,7 +21,6 @@
 // thing #157 ended for plain arithmetic.
 
 import {
-  CHART_TYPE_NAMES,
   canonicalText,
   chartProblem,
   isChart,
@@ -30,7 +29,6 @@ import {
   readChart,
   type Chart,
 } from '@learnbuddy/shared-math';
-import { ModelFigure } from '@learnbuddy/shared-types/contracts';
 
 import { t, type Locale } from '../../i18n/index.js';
 import type { ItemDraft } from './items.js';
@@ -52,22 +50,6 @@ const OPTION_KEYS = {
 
 function isOption(o: string): o is keyof typeof OPTION_KEYS {
   return o in OPTION_KEYS;
-}
-
-/**
- * Whether a raw figure is a chart that may not be shown: a chart type whose shape does not
- * parse, or one that breaks a rule `chartProblem` knows. Read before the item is parsed, because
- * the item's own parse catches a broken figure to null and would hide it (`clipDraft`).
- */
-export function figureIsRejectedChart(raw: unknown): boolean {
-  if (typeof raw !== 'object' || raw === null) return false;
-  const type = (raw as { type?: unknown }).type;
-  if (typeof type !== 'string' || !(CHART_TYPE_NAMES as readonly string[]).includes(type)) {
-    return false;
-  }
-  const parsed = ModelFigure.safeParse(raw);
-  if (!parsed.success) return true;
-  return isChart(parsed.data) && chartProblem(parsed.data) !== null;
 }
 
 function chartOf(f: ItemDraft['figure']): Chart | null {

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { evenOnes, recessivePedigree, TREE_ITEMS, urn } from '../../../testing/scenarios/trees.js';
 import { ItemDraft, itemsOneByOne, usableItems } from '../items.js';
-import { figureIsRejectedTree } from '../treeCheck.js';
+import { figureIsRejected } from '../wholeFigure.js';
 
 const [path, edge, mode, genotype, automaton] = TREE_ITEMS as [
   (typeof TREE_ITEMS)[number],
@@ -59,11 +59,11 @@ describe('tree questions are held to the key code computes', () => {
       ...urn('path', [3]),
       n: urn().n.map((x, i) => (i === 1 ? { ...x, e: '4/5' } : x)),
     };
-    expect(figureIsRejectedTree(broken)).toBe(true);
+    expect(figureIsRejected(broken)).toBe(true);
     expect(kept({ ...path, figure: broken })).toHaveLength(0);
     // A figure that does not even parse is rejected the same way.
-    expect(figureIsRejectedTree({ type: 'pedigree', p: [] })).toBe(true);
-    expect(figureIsRejectedTree({ type: 'line_chart' })).toBe(false);
+    expect(figureIsRejected({ type: 'pedigree', p: [] })).toBe(true);
+    expect(figureIsRejected({ type: 'fraction' })).toBe(false);
   });
 
   it('drops a number asked about a tree that declares no key', () => {

@@ -444,7 +444,14 @@
     "net_square": "carré {{n}} en ligne {{row}}, colonne {{col}}",
     "axes3d": "Repère de l'espace avec les axes x, y et z",
     "axes3d_point": "Point {{l}} : {{x}} selon x, {{y}} selon y, {{z}} selon z",
-    "axes3d_arrow": "Flèche de {{a}} à {{b}}"
+    "arrow_to": "Flèche de {{a}} à {{b}}",
+    "arrow_to_label": "Flèche de {{a}} à {{b}} : {{label}}",
+    "diagram": "{{kind}} à {{n}} cases",
+    "diagram_chain": "Chaîne",
+    "diagram_cycle": "Cycle",
+    "diagram_tree": "Arborescence",
+    "diagram_free": "Schéma",
+    "diagram_gap": "case vide {{letter}}"
   },
   "keys": {
     "row": "Symboles mathématiques",

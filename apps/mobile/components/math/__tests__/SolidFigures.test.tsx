@@ -87,7 +87,7 @@ describe('describeSpace', () => {
   it('reads every point’s path and every arrow, not the vector', () => {
     const said = describeSpace(FIGURES[9]!, t);
     expect(said).toContain('figure.axes3d_point {"l":"A","x":"2","y":"3","z":"2"}');
-    expect(said).toContain('figure.axes3d_arrow {"a":"A","b":"B"}');
+    expect(said).toContain('figure.arrow_to {"a":"A","b":"B"}');
     expect(said).not.toContain('-1');
   });
 });
