@@ -143,6 +143,21 @@ const STRUCTURED: Record<string, Record<string, unknown>> = {
     difficulty: 2,
     prompt_lang: 'de',
   },
+  mark: {
+    type: 'mark',
+    prompt: 'Markiere alle Nomen.',
+    mode: 'words',
+    text: 'der hund bellt laut im garten.',
+    targets: [
+      { word: 'hund', occurrence: null, category: null },
+      { word: 'garten', occurrence: null, category: null },
+    ],
+    categories: null,
+    corrected: null,
+    topic: 'Brüche addieren',
+    difficulty: 1,
+    prompt_lang: 'de',
+  },
 };
 const DICTATION = { from: 'list', lang: 'de', topic: 'Lernwörter', entries: ['Biene', 'Straße'] };
 const LISTEN = {

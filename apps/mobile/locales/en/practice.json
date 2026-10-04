@@ -302,6 +302,17 @@
     "evidence_one": "Answer in line {{from}}",
     "evidence": "Answer in lines {{from}}–{{to}}"
   },
+  "mark": {
+    "how_words": "Tap the words – tap again to take it back.",
+    "how_gaps": "Tap the word a comma belongs after.",
+    "how_syllables": "Tap the letter a syllable ends with.",
+    "marked": "Marked – {{list}}",
+    "split": "Split: {{list}}",
+    "check_waits": "Only once you have marked at least one place.",
+    "word_in": "{{word}}, marked as {{name}}",
+    "gap": "Comma after “{{word}}”",
+    "cut": "Syllable ends after “{{before}}” in {{word}}"
+  },
   "select": {
     "several": "More than one is right – tap all of them.",
     "check_waits": "Once you've ticked at least one."

@@ -1973,10 +1973,10 @@ them yet, so today they come from a topic she named.
 **Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`
 dispatching to one file per kind — `table.ts`, `match.ts`, `cloze.ts`, `selectAll.ts` —, migration
 `0079_structured_items.sql`;
-issues #228 order, #229 match, #230 table_fill, #232 cloze, #240 select_all, from the analysis
+issues #228 order, #229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark, from the analysis
 #224). Some answers are not a sentence but an arrangement: an order, pairs, groups, table cells,
 the gaps of a text, a set of ticked options. They are their own item kinds (`order`, `match`,
-`table_fill`, `cloze`, `select_all`), and #224's "Regel 0"
+`table_fill`, `cloze`, `select_all`, `mark`), and #224's "Regel 0"
 holds in both directions: code validates what the model wrote, and code judges what she answers —
 never a model, except a cloze gap no rule can decide (below: only that gap, only its verdict).
 
@@ -2386,6 +2386,51 @@ three rows. One longer option sends them all full width, and four is the most th
 at most 28 characters, the question at most 60 (two lines of the card). Generated in a topic's
 practice and practice test, and read from a sheet (generate.v1.21, extract.v8.4).
 
+**Mark — tapping places in a text** (`practice/mark.ts`, `MarkAnswer.tsx`, issue #234, migration
+`0087_mark_items.sql`). Nouns in a text written all in lower case, parts of speech, sentence parts,
+the wrong words of an error text, signal words, the commas to set, the syllables of a word — 28
+task types of the analysis #224 (building block `MARK`). Before, they could only be asked as "which
+word is the subject?" with a typed answer. Three modes, one shape (`MarkTask`): `words` (she taps
+words; with 2–3 categories she chooses one first, then the words), `gaps` (she taps the word a
+comma belongs after; the gap behind it gets the comma) and `syllables` (she taps the letter a
+syllable ends with). The migration adds no column; like 0085 it extends the two kind checks from
+the live definition.
+
+Regel 0, all code. **Code splits the text into words, never the model** (`splitWords`: whitespace
+separates, letters and digits make the word, punctuation before and after is shown with it and
+never tapped). The model only NAMES the words to mark; code finds them, and a word that stands in
+the text twice needs its `occurrence` or the task is `ambiguous`; a named word that is not there
+(or not that often) is `not_in_text`. For commas the model writes the sentence WITH them and code
+finds the gaps (and shows the sentence without them); for syllables it writes the words with
+hyphens and code finds the cuts (letters only, `not_letters`). An error text carries `corrected`,
+and the corrected version must differ from the text at EXACTLY the marked words (`correction`) —
+the corrections are kept server-side for the solution ("Hunt → Hund"). Categories: every target
+names one, every one is used (`empty_group`), at most 8 words then. The ids say where a target
+stands (`w3` a word, `g3` the gap after it, `w3_2` the cut after its second letter), never whether
+it is one. A prepared hint is dropped when it names a word to mark, the word a comma belongs after,
+a word cut into its syllables or the whole solution (`markSecrets`): the text she reads holds every
+target, so "visible" cannot excuse one.
+
+Checking is a set comparison, no model call: the reply counts and never names a place —
+"Noch nicht ganz: 2 richtig, 1 fehlt noch, 1 zu viel." (with categories also "1 mit der falschen
+Kategorie"). A wrong set is `incorrect`; the third miss shows the solution. What she marked stands in
+the conversation in words, one implementation for app and server (`markedText` in the contract):
+"Subjekt: die Oma; Prädikat: liest, vor", the sentence with her commas, "Re-gen-bo-gen".
+
+App: `MarkAnswer.tsx` in the answer shell. Every place is a `<Btn>` of the small size with `checked`
+(a checkbox to a screen reader, 44 pt high and never narrower than 44 pt); words flow like text and
+wrap. Marked is the accent's light tint AND an underline AND, with categories, the category's
+digit ①②③ (the same as on its button in the `Segmented` row above) — and a line under the text
+says in words what is marked ("Markiert – Subjekt: …"); a set comma is a comma, a cut a hyphen.
+Colour is never the only signal. A second tap takes a mark back. One quiet line says how to mark
+until the first mark. Marks and the chosen category live in the draft.
+
+**Its maxima are a measurement** (`MARK_*` in `contracts/structured.ts`, `tests/web/mark.spec.ts`,
+shots 46a–46g at 360×740 and 390×844, light and dark): 24 words to tap, 8 when sorted into three
+categories, a category name of 16 characters, three words of at most 12 letters to split.
+Generated in a topic's practice and practice test, read from a sheet and inside a reading text
+(generate.v1.24, extract.v8.8).
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:
@@ -2641,7 +2686,13 @@ prints none.
   one scrolling surface allowed besides a conversation and a browsed list (`tests/web/fit.ts`).
   Folded or not, and where she scrolled, carries over to the next question of the same text.
 - **Not yet:** a reading text Buddy writes on request (a `read` run beside `listen`) — it needs a
-  run kind (`practice/setProfiles.ts`, `practice/generate.ts`); and marking in the text (#234).
+  run kind (`practice/setProfiles.ts`, `practice/generate.ts`); and a "Belegstelle" that is a
+  stretch of the WHOLE text to tap (a marking task holds one or two sentences, `MARK_WORDS_MAX`).
+- **Marking in the text (#234):** a reading question of kind `mark` marks words or sets the commas
+  in ONE sentence of the text (`practice/reading.ts`, `markIn`): it is a marking task like every
+  other (below), and its words must stand in the text in order (`linesOf`; the commas she sets do
+  not count). Syllables and an error text are refused there — neither is a sentence of the text.
+  The sentence is its evidence: the one hint names its lines, and once closed she is shown them.
 
 ### Charts (issues #245, #246)
 
@@ -2828,15 +2879,15 @@ discard by: a rubric (and its `RubricCheck` union) without a long answer, a tole
 number, a spelling mode without a typed word, pictures as options (`choice_figures`, an array of the
 `ModelFigure` union, #231) without a multiple choice. The subject is never a rule.
 
-| kind               | items                                                 | structured                                  | bars | staffs | listen | dictation |
-| ------------------ | ----------------------------------------------------- | ------------------------------------------- | ---- | ------ | ------ | --------- |
-| practice           | short, long, numeric, multiple_choice, formula, vocab | order, table_fill, match, cloze, select_all | ✓    | ✓      | —      | —         |
-| test               | short, numeric, multiple_choice, formula, vocab       | order, table_fill, match, cloze, select_all | —    | ✓      | —      | —         |
-| vocab              | vocab                                                 | —                                           | —    | —      | —      | —         |
-| speak              | speak                                                 | —                                           | —    | —      | —      | —         |
-| help               | short, long, numeric, multiple_choice, formula        | —                                           | —    | —      | —      | —         |
-| listen             | —                                                     | —                                           | —    | —      | ✓      | —         |
-| spelling_dictation | —                                                     | —                                           | —    | —      | —      | ✓         |
+| kind               | items                                                 | structured                                        | bars | staffs | listen | dictation |
+| ------------------ | ----------------------------------------------------- | ------------------------------------------------- | ---- | ------ | ------ | --------- |
+| practice           | short, long, numeric, multiple_choice, formula, vocab | order, table_fill, match, cloze, select_all, mark | ✓    | ✓      | —      | —         |
+| test               | short, numeric, multiple_choice, formula, vocab       | order, table_fill, match, cloze, select_all, mark | —    | ✓      | —      | —         |
+| vocab              | vocab                                                 | —                                                 | —    | —      | —      | —         |
+| speak              | speak                                                 | —                                                 | —    | —      | —      | —         |
+| help               | short, long, numeric, multiple_choice, formula        | —                                                 | —    | —      | —      | —         |
+| listen             | —                                                     | —                                                 | —    | —      | ✓      | —         |
+| spelling_dictation | —                                                     | —                                                 | —    | —      | —      | ✓         |
 
 A sheet-bound run (a practice or test for a planned test) is the same profile with the sheets'
 topics as the item `topic` enum. With no kind known (`setSchemaForModel(null, …)`), the fallback is

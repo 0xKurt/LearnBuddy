@@ -313,6 +313,17 @@
       "extra_one": "Eine passt aber nicht dazu.",
       "look_at": "Schau dir „{{text}}“ nochmal an."
     },
+    "mark": {
+      "right": "{{count}} richtig",
+      "right_one": "1 richtig",
+      "misfiled": "{{count}} mit der falschen Kategorie",
+      "misfiled_one": "1 mit der falschen Kategorie",
+      "missing": "{{count}} fehlen noch",
+      "missing_one": "1 fehlt noch",
+      "extra": "{{count}} zu viel",
+      "extra_one": "1 zu viel",
+      "reply": "Noch nicht ganz: {{parts}}."
+    },
     "solid": {
       "net_yes": "Ja, das ist ein Würfelnetz",
       "net_no": "Nein, das ist kein Würfelnetz"

@@ -302,6 +302,17 @@
     "evidence_one": "Réponse à la ligne {{from}}",
     "evidence": "Réponse aux lignes {{from}}–{{to}}"
   },
+  "mark": {
+    "how_words": "Touche les mots – touche encore pour annuler.",
+    "how_gaps": "Touche le mot après lequel il faut une virgule.",
+    "how_syllables": "Touche la lettre qui termine une syllabe.",
+    "marked": "Marqué – {{list}}",
+    "split": "Découpé : {{list}}",
+    "check_waits": "Seulement quand tu as marqué au moins un endroit.",
+    "word_in": "{{word}}, marqué comme {{name}}",
+    "gap": "Virgule après « {{word}} »",
+    "cut": "La syllabe finit après « {{before}} » dans {{word}}"
+  },
   "select": {
     "several": "Plusieurs sont justes – touche-les toutes.",
     "check_waits": "Dès que tu en as coché au moins une."
