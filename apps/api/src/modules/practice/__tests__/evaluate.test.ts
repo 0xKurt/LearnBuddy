@@ -355,10 +355,11 @@ const TABLE: Row[] = [
   },
   // H-4: a different number is no typo.
   { id: 'H-4', item: { answer: '14:35 Uhr' }, text: '15:35 Uhr', locale: 'de', expect: 'unknown' },
-  // Still undecided, and deliberately so: the same characters are a ratio, a division the way
-  // German schools write it and a clock time, and the meaning is not in the characters
-  // (issue #175). Only the NOTATION of the same time is decided (#227 finding 8, the row below).
-  { id: 'H-4', item: { answer: '14:30' }, text: '14:50', locale: 'de', expect: 'unknown' },
+  // The same characters are a ratio, a division the way German schools write it and a clock
+  // time, and the meaning is not in the characters (issue #175). It need not be: "14:50" is
+  // wrong in EVERY reading at once, so it is wrong (#227, `clockTime`). Where one reading
+  // agrees ("7:15" as a ratio, "2:30" on a twelve-hour clock) it stays undecided (dates.test).
+  { id: 'H-4', item: { answer: '14:30' }, text: '14:50', locale: 'de', expect: 'incorrect' },
   { id: 'H-4', item: { answer: '14:30' }, text: '14.30', locale: 'de', expect: 'other_form' },
   { id: 'H-4', item: { answer: '1250 m' }, text: '1350 m', locale: 'de', expect: 'unknown' },
   { id: 'H-4', item: { answer: '24 cm²' }, text: '42 cm²', locale: 'de', expect: 'unknown' },
@@ -663,13 +664,13 @@ describe('a year, a date and a clock time (#227 finding 8)', () => {
     expect(check(date, 'Am 15.07.1789')).toBe('unknown');
   });
 
-  it('accepts the dot German writes a time with, and still judges no other time', () => {
+  it('accepts the dot German writes a time with, and judges another time only when certain', () => {
     const time = item({ answer: '14:30' });
     expect(check(time, '14.30')).toBe('other_form');
     expect(check(item({ answer: '9:05' }), '9.05')).toBe('other_form');
-    // A different time is NOT decided: "14:30" is also a ratio and a division, and the meaning
-    // is not in the characters (issue #175, truth table H-4).
-    expect(check(time, '14:50')).toBe('unknown');
+    // "14:30" is also a ratio and a division (issue #175): another time is wrong only when it
+    // is wrong in every reading (truth table H-4) — "2.30" may be 14:30 on a 12-hour clock.
+    expect(check(time, '14:50')).toBe('incorrect');
     expect(check(time, '2.30')).toBe('unknown');
     expect(check(item({ answer: '14:35 Uhr' }), '15:35 Uhr')).toBe('unknown');
   });

@@ -1931,7 +1931,11 @@ dropped before the question is ever asked (`practice/keyCheck.ts`, issue #157): 
 audit put `8` on `6 + 4` and watched the right answer `10` be rejected by a rule check that
 sounds certain, leaving a child to argue with it. Only what arithmetic makes decidable is
 decided — a prompt that is nothing but a constant expression — because claiming to check a
-worded task would be the same mistake one level up (rule 5). Since issues #235, #263 and #227
+worded task would be the same mistake one level up (rule 5). Inside a sentence ("Berechne
+$6 + 4$.") code does not look for the calculation itself — "Erweitere $\frac{2}{5}$ mit 3" holds a
+fraction that is not what is asked (#227 finding 4) — the model marks it in `computes`, and code
+computes the mark when it really stands in the question (`markedArithmetic`; a mark that does not
+proves nothing and is ignored; generate.v1.26, extract.v8.9). Since issues #235, #263 and #227
 (B4–B6, B10) the same holds for what the question PRINTS in its maths: a linear system is solved
 and compared with a key of named values (and a key claiming one solution for a system without
 exactly one is dropped); a single equation in one variable must be satisfied by the key's value
@@ -1953,7 +1957,9 @@ The tutor eval measures that something moved between the two, not only that the 
 stayed locked.
 
 Answers the model judges right that the rules did not know are added to the item's
-accepted answers, so the rules know them next time; otherwise the tutor model judges with a
+accepted answers, so the rules know them next time — never in a test, never past
+`MAX_ACCEPTED`, and never an answer that is the key of another question beside it (same material,
+or same session; issue #227, finding 3); otherwise the tutor model judges with a
 structured decision, and the server enforces invariants (a non-attempt is never graded, a
 revealed answer never counts as right, a rule-checked wrong answer stays wrong). Without a model,
 nothing is graded ("kann ich gerade nicht prüfen"). Each question feeds spaced repetition (FSRS,
@@ -2612,9 +2618,13 @@ so the rules only say it when it is certain; everything else goes to the tutor (
   tutor's, the value may never be called wrong). A key solved for its variable states that value,
   so "-5" for "x = 5" is wrong and "5" is `other_form`. **A date** as day.month.year
   (`dates.ts`): another day is wrong, "14.7.1789" for "14.07.1789" is the same date written
-  shorter. **A clock time** only where it IS the same time ("14.30" for "14:30"), never a
-  different one — the same characters are also a ratio and a division, and that meaning is not in
-  the characters (#175, truth table H-4). **A year inside a sentence** only when the key is a
+  shorter. **A clock time** (`clockTime`): "14.30" for "14:30" is the same time; a different
+  one is wrong only when it is wrong in EVERY reading the characters allow — another time even on
+  a twelve-hour clock, another ratio, another quotient, and for a dot another decimal (hours, or
+  against the key as a division) and another product. Which reading is meant is not in the
+  characters (#175), and it need not be: "14:50" for 14:30 is wrong in all of them, while "7:15"
+  (the same ratio), "2:30" (twelve-hour clock) and "14.50" (decimal hours) stay the tutor's
+  (truth table H-4). **A year inside a sentence** only when the key is a
   four-digit number and the sentence states exactly one: "1788" for 1789 is wrong; two numbers in
   the sentence, or the right year in it, stay the tutor's (a number guessed out of a sentence is
   what finding 4 of the same issue was reverted for). A unit that happens to be a single letter
