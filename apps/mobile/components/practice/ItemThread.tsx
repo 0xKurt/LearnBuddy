@@ -7,13 +7,17 @@
 // What arrives while the screen is open moves a little (Buddy's reply rises in, a right
 // answer is celebrated softly, a "not yet" nudges her answer; Verdict.tsx); what was
 // there when the question opened just stands.
+// A long text (issue #258) stands as one line per version ("Fassung 1 · 412 Wörter") — the text
+// itself is in the field — and Buddy's reply to it holds the feedback per key point
+// (`EssayFeedback`) inside the same bubble.
 
 import type { PracticeTurnView } from '@learnbuddy/shared-types/contracts';
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { moonForReply, type MoonState } from '../../lib/buddy/moon.js';
+import { versionsOf, wordCount } from '../../lib/practice/essay.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -21,6 +25,7 @@ import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenMath } from '../math/useSpokenMath.js';
+import { EssayFeedback } from './EssayFeedback.js';
 import { PronunciationNote } from './SpeakPanel.js';
 import { Thinking } from './Thinking.js';
 import { Nudge, VerdictTag, type VerdictKey } from './Verdict.js';
@@ -60,6 +65,8 @@ type Props = {
    * a bubble half under the question card is clutter, not context.
    */
   onTurnTops?: (tops: Readonly<Record<string, number>>) => void;
+  /** A long text (issue #258): her versions as one line each, not as the whole text. */
+  essay?: boolean;
 };
 
 export function ItemThread({
@@ -70,8 +77,19 @@ export function ItemThread({
   pronunciation = false,
   echoAnswers = true,
   onTurnTops,
+  essay = false,
 }: Props) {
   const { t } = useTranslation('practice');
+  const versions = essay ? versionsOf(turns) : null;
+  /** What her answer bubble says: the answer, or for a long text which version it is. */
+  const shown = (text: string, id: string | null) => {
+    if (!versions) return text;
+    const version = id === null ? undefined : versions.get(id);
+    const words = wordCount(text);
+    return version === undefined
+      ? t('essay.text', { count: words })
+      : t('essay.version', { n: version, count: words });
+  };
   // What was there when the screen opened stands still; what arrives now moves.
   const initial = useRef<ReadonlySet<string> | null>(null);
   if (initial.current === null) initial.current = new Set(turns.map((turn) => turn.id));
@@ -105,12 +123,14 @@ export function ItemThread({
         const bubble = (
           <Bubble
             mine={mine}
-            text={turn.text}
+            text={mine ? shown(turn.text, turn.id) : turn.text}
             speaker={mine ? t('thread.you') : t('thread.buddy')}
             orb={moonForReply({ fresh, afterCorrect })}
             // Only the newest reply's orb moves, and none while Buddy is looking again.
             alive={turn.id === latestReplyId && pending === null}
-          />
+          >
+            {!mine && turn.essay ? <EssayFeedback feedback={turn.essay} /> : null}
+          </Bubble>
         );
         return (
           <Rise
@@ -147,7 +167,7 @@ export function ItemThread({
           {echoAnswers ? (
             <Rise style={{ alignItems: 'flex-end' }}>
               <View style={{ maxWidth: '86%' }}>
-                <Bubble mine faded text={pending} speaker={t('thread.you')} />
+                <Bubble mine faded text={shown(pending, null)} speaker={t('thread.you')} />
               </View>
             </Rise>
           ) : null}
@@ -165,13 +185,17 @@ function Bubble({
   faded = false,
   orb = 'idle',
   alive = false,
+  children = null,
 }: {
   mine: boolean;
+  /** What it says — and, with `children`, what a screen reader hears for them. */
   text: string;
   speaker: string;
   faded?: boolean;
   orb?: MoonState;
   alive?: boolean;
+  /** Shown in place of the text (a long text's feedback, issue #258). */
+  children?: ReactNode;
 }) {
   const { palette } = useTheme();
   const spoken = useSpokenMath(text);
@@ -193,11 +217,13 @@ function Bubble({
         mine ? null : SHADOW.soft,
       ]}
     >
-      <MathText
-        text={text}
-        accessible={false}
-        style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
-      />
+      {children ?? (
+        <MathText
+          text={text}
+          accessible={false}
+          style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
+        />
+      )}
     </View>
   );
   if (mine) return bubble;

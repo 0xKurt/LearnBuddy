@@ -75,6 +75,9 @@ export function ThreadBox({
       <ScrollView
         ref={scroll}
         testID="scroll-thread"
+        // Reachable by keyboard, so a long reply that holds no control (a long text's feedback,
+        // #258) can still be scrolled without a pointer (axe: scrollable-region-focusable).
+        focusable
         style={[
           { flexGrow: 0, flexShrink: 1 },
           fadeFull ? topEdgeMask : holds || cut ? topEdgeMaskFrom(0, SPACE.sm) : null,

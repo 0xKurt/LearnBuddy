@@ -250,6 +250,24 @@ describe.skipIf(!dbReady)('long texts: feedback per key point, no grade (#258)',
     expect(JSON.stringify(res.body)).not.toContain('Metaphern');
   });
 
+  it('stores and judges a text of well over 4000 characters (migration 0090)', async () => {
+    const { s, essayId } = await practise();
+    // Until 0090 the turn's text was held at 4000 characters: an essay of ~600 words and more
+    // failed when it was stored (found by the browser walkthrough, tests/web/essay.spec.ts).
+    const long = ESSAY.replace(FILLER, FILLER.repeat(5));
+    expect(long.length).toBeGreaterThan(10_000);
+    expect(long.length).toBeLessThan(12_000);
+    env.llm.script('tutor', judged(ALL_MET, PLACES));
+    const res = await answer(s, essayId, long);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.reply.essay?.places).toHaveLength(3);
+    const stored = await env.db.one<{ n: number }>(
+      `select length(text)::int as n from practice_turns where session_id = $1 and role = 'learner'`,
+      [s.id],
+    );
+    expect(stored.n).toBe(long.length);
+  });
+
   it('takes 12 000 characters for an essay and 2000 for anything else (422 beyond)', async () => {
     const { s, essayId, shortId } = await practise();
     const tooLong = await answer(s, essayId, 'Wort '.repeat(2401));

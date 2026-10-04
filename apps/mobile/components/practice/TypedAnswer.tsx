@@ -17,7 +17,9 @@
 //     (useHandsFreeMic). A Diktat (issue #242) has no mic: the recogniser would spell for her;
 //   · under the text a live preview of typed math ("3/4" as a fraction, TypedMathPreview);
 //   · a surface that writes into the field — the fraction bar (issue #162) — stands under the
-//     question in the answer slot, like every board.
+//     question in the answer slot, like every board;
+//   · a long text (issue #258) gets the tall bar and up to 12 000 characters
+//     (`lib/practice/essay.ts`); it is prose, so it is dictated in parts like a long answer.
 // Autocorrect is off so the phone never "fixes" what the learner actually wrote.
 
 import type { ItemKind, SubjectKind } from '@learnbuddy/shared-types/contracts';
@@ -36,6 +38,9 @@ import {
   previewLine,
   returnKey,
 } from '../../lib/practice/pathEntry.js';
+import { formDensity } from '../../lib/keyboard.js';
+import { answerMax } from '../../lib/practice/essay.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { tapped } from '../../lib/perf.js';
 import { InputBar } from '../lb/InputBar.js';
 import type { LbTextInputRef } from '../lb/LbTextInput.js';
@@ -46,8 +51,6 @@ import { useHandsFreeMic } from '../voice/useHandsFreeMic.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { AnswerShell } from './AnswerShell.js';
 
-/** AnswerRequest.text allows at most 2000 characters. */
-const MAX_ANSWER_LENGTH = 2000;
 /** The web field's rows for a path: five lines fill the field's tallest. */
 const PATH_ROWS = 5;
 
@@ -84,7 +87,9 @@ export function TypedAnswer({
 }: Props) {
   const { t } = useTranslation(['practice', 'common']);
   const voiceMode = useVoiceMode((s) => s.on);
-  const long = kind === 'long';
+  // Prose: dictated in parts, no math preview, the return key takes the line (issue #258).
+  const long = kind === 'long' || kind === 'essay';
+  const max = answerMax(kind);
   const exact = kind === 'numeric' || kind === 'formula';
   // A Diktat is spelling practice: no mic (it would write the word the way the recogniser spells
   // it), and the keyboard does not capitalise for her — the capital letter is what she practises.
@@ -97,6 +102,8 @@ export function TypedAnswer({
   const selection = useRef<Selection | null>(null);
   const [forced, setForced] = useState<Selection | undefined>(undefined);
   const [focused, setFocused] = useState(false);
+  const seen = useVisibleHeight();
+  const dense = formDensity(seen.window, seen.overlap) === 'tight';
   // The cursor's place for the preview, which draws the line she is on (null: not reported yet).
   const [caret, setCaret] = useState<number | null>(null);
   // Keyboard accessory, not furniture (issue #16): the math row stands under the bar while she
@@ -112,7 +119,7 @@ export function TypedAnswer({
     // Another key ends a raise/lower mode: "x⁴ = " must not raise what comes after the "=".
     setMode(null);
     const next = insertAtCursor(value, selection.current, insertion);
-    if (next.value.length > MAX_ANSWER_LENGTH) return;
+    if (next.value.length > max) return;
     // A key is typing too: it ends the hands-free loop like the keyboard does.
     useHandsFree.getState().disarm();
     selection.current = next.selection;
@@ -138,7 +145,7 @@ export function TypedAnswer({
         latest.current.value,
         said,
         long ? 'append' : inPath ? 'line' : 'replace',
-        MAX_ANSWER_LENGTH,
+        max,
       );
       onChange(next);
       if (useVoiceMode.getState().on && !latest.current.disabled && !inPath) onCheck(next.trim());
@@ -168,7 +175,8 @@ export function TypedAnswer({
       // The walkthrough finds the field by this (tests/web/fit.ts).
       testID="answer-field"
       value={value}
-      maxLength={MAX_ANSWER_LENGTH}
+      maxLength={max}
+      tall={kind === 'essay' ? (focused ? 'writing' : 'resting') : null}
       onChangeText={(typed) => {
         // Typing ends the hands-free loop: she answers with the keyboard now.
         useHandsFree.getState().disarm();
@@ -243,7 +251,10 @@ export function TypedAnswer({
         disabled,
         onPress: check,
         waitsHint: t('answer.check_waits'),
-        typing: focused,
+        // A long text keeps "Prüfen" under the bar while there is room: inside it, the button
+        // took a column of the whole tall field, and her text ran down a narrow strip beside it
+        // (#258). With the keyboard up on a small phone it rides in the bar like every answer.
+        typing: focused && (kind !== 'essay' || dense),
         input: (checkInBar) => (
           <>
             {bar(checkInBar)}

@@ -27,9 +27,7 @@
 import {
   type AnswerResponse,
   type ItemView,
-  type PracticeTurnView,
   type ReexplainWay,
-  type SessionItemView,
   type SessionView,
   type SpeakStreamEvent,
   type StructuredAnswer as StructuredParts,
@@ -108,6 +106,8 @@ import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { questionParts } from '../../lib/practice/questionParts.js';
 import { answerForm } from '../../lib/practice/answerForm.js';
+import { freeText, keepsSentText } from '../../lib/practice/essay.js';
+import { foreign, questionOnScreen, verdictWordKey } from '../../lib/practice/onScreen.js';
 import { useFinishWhenDone } from '../../lib/practice/finishWhenDone.js';
 import { useHeardTexts } from '../../lib/practice/heardTexts.js';
 import { boardKeeps, threadRoom } from '../../lib/practice/threadRoom.js';
@@ -116,7 +116,6 @@ import { announce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
 import { speakInOrder, stop as stopListening } from '../../lib/speech/listen.js';
 import { feedbackReadText, spokenText } from '../../lib/speech/spoken.js';
-import { baseLanguage } from '../../lib/speech/voice.js';
 import { afterFeedback, useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -149,35 +148,10 @@ type SentAnswer = {
   parts: string | null;
 };
 
-/** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
-function foreign(lang: string | null): lang is string {
-  const base = baseLanguage(lang);
-  return base !== null && base !== currentLocale();
-}
-
-/** The verdict word read before Buddy's reply (as ItemThread shows it); none for "not an attempt". */
-function verdictWordKey(verdict: PracticeTurnView['verdict']): string | null {
-  if (verdict === 'not_an_attempt') return null;
-  return `practice:verdict.${verdict ?? 'unchecked'}`;
-}
-
 function backToBuddy(): void {
   // Pops back to Buddy when it is below in the stack, otherwise replaces this
   // screen with it (router.replace would leave a second Buddy on the stack).
   router.dismissTo('/buddy');
-}
-
-/**
- * The question on screen: the one the learner works on or has just closed
- * (it stays until "Weiter"), otherwise the first open one; none when nothing is left.
- */
-function questionOnScreen(session: SessionView, pinnedId: string | null): SessionItemView | null {
-  const pinned = pinnedId ? session.items.find((i) => i.item.id === pinnedId) : undefined;
-  const id = pinned?.item.id ?? session.current_item_id;
-  const shown = id ? session.items.find((i) => i.item.id === id) : undefined;
-  // An open question of a session that has ended can't be answered any more.
-  if (!shown || (shown.status === 'open' && session.status !== 'active')) return null;
-  return shown;
 }
 
 export default function PracticeScreen() {
@@ -454,10 +428,11 @@ export default function PracticeScreen() {
           await store(res.session);
           // Tap on "Prüfen" → the verdict on screen (issue #66).
           reacted('check');
-          if (answerText !== null)
+          const after = res.session.items.find((i) => i.item.id === itemId);
+          // A long text stays in the field: her next version starts from it (#258).
+          if (answerText !== null && !(after && keepsSentText(after.item.kind)))
             setText((current) => (current.trim() === answerText ? '' : current));
-          if (res.session.items.find((i) => i.item.id === itemId)?.status !== 'open')
-            Keyboard.dismiss();
+          if (after?.status !== 'open') Keyboard.dismiss();
           readFeedback(res, itemId);
         } finally {
           setPending(null);
@@ -674,7 +649,7 @@ export default function PracticeScreen() {
   // A free text has no solution to show, so the way past it is named for what it does
   // (issue #197) — "Lösung zeigen" would promise something the server does not send.
   const skipLabel =
-    testing || shown.item.kind === 'long'
+    testing || freeText(shown.item.kind)
       ? t('practice:skip')
       : canPostpone && !shown.reveal_available
         ? t('practice:later')
@@ -836,6 +811,7 @@ export default function PracticeScreen() {
         testing,
         mode: session.mode,
         origin: item.origin,
+        kind: item.kind,
       })}
       disabled={locked}
       onFlag={() => {
@@ -1000,6 +976,8 @@ export default function PracticeScreen() {
                   // bubble stays: there it is the only place she sees what was heard.
                   echoAnswers={!((structured || ((choices || tapChoices) && !voiceOn)) && open)}
                   onTurnTops={setTurnTops}
+                  essay={item.kind === 'essay'}
+                  thinkingLabel={item.kind === 'essay' ? t('practice:essay.thinking') : undefined}
                 />
                 {session.mode === 'help' && shown.status === 'correct' ? (
                   <Rise delay={180}>

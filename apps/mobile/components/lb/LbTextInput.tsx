@@ -46,8 +46,8 @@ export type LbTextInputRef = TextInput;
 const LINE = 22;
 /** A form field's height (design brief): a touch target and a little air. */
 const FIELD_HEIGHT = 52;
-/** The tallest a growing field gets before it scrolls inside itself: five lines. */
-const MAX_GROW = 5 * LINE + 2 * SPACE.md;
+/** How many lines a growing field shows before it scrolls inside itself, unless told otherwise. */
+const MAX_ROWS = 5;
 
 export type LbTextInputProps = Omit<TextInputProps, 'style'> & {
   /** field (default), bar (the input bar's pill) or cell (a gap, a table's cell). */
@@ -60,6 +60,8 @@ export type LbTextInputProps = Omit<TextInputProps, 'style'> & {
   under?: ReactNode;
   /** A multiline field's lines before it grows (a list of words wants a few). */
   rows?: number;
+  /** The most lines it grows to before it scrolls inside itself (a long text wants more). */
+  maxRows?: number;
   /**
    * A visible name above the field ("Tag", "PIN"). The field says it to a screen reader itself
    * (its `accessibilityLabel`, unless one is given), so the line above is hidden from it.
@@ -106,6 +108,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
     end = null,
     under = null,
     rows = 1,
+    maxRows = MAX_ROWS,
     label,
     clearable,
     showToggle,
@@ -230,7 +233,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
                 flex: 1,
                 minWidth: 0,
                 minHeight: top ? rows * LINE + 2 * SPACE.md : inner,
-                maxHeight: lines ? MAX_GROW : undefined,
+                maxHeight: lines ? Math.max(rows, maxRows) * LINE + 2 * SPACE.md : undefined,
                 paddingHorizontal: bar || cell ? SPACE.xs : SPACE.lg,
                 // A bar without a control before the text keeps the screen's gutter inside it.
                 paddingLeft: bar && start === null ? SPACE.md : undefined,

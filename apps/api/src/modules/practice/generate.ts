@@ -7,6 +7,7 @@
 //   spelling_dictation — a Diktat: words or sentences read aloud that she types (issue #242)
 //   help     — a homework task they typed: hints only, never the solution
 //   teach_back — „Erklär mal": open questions SHE explains, checked against key points (issue #236)
+//   essay    — a long text she writes, feedback per key point of its text type (issue #258)
 // Buddy explaining something is the chat's answer, never a mode (owner decision 28.09., issue #70).
 // One structured model call; items are validated like extracted ones.
 // Idempotent per client_request_id.
@@ -25,6 +26,7 @@ import { ageOn } from '../identity/model.js';
 import { CURRICULUM_RULES, curriculumBlock, offCurriculum, pointOf } from '../curriculum/state.js';
 import { BAR_RULES, barItems } from './bars.js';
 import { DICTATION_RULES, dictationItems, type DictationItem } from './dictation.js';
+import { ESSAY_RULES, essayItems } from './essayTask.js';
 import { prepareHints } from './hints.js';
 import { LISTEN_RULES, listenItems, noVoiceToReadIt } from './listen.js';
 import {
@@ -76,7 +78,9 @@ import { structuredItems, type StructuredItem } from './structured.js';
 // v1.30: no figure on a vocab or speak card, and a listening option's picture only a clock, coins,
 //        a dot field or base-ten blocks (#375: the vocab, speak and listen schemas lose most of
 //        `ModelFigure`; every other kind is sent the same bytes).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.30';
+// v1.31: an essay run (Lange Texte, #258) with its one writing task; every other kind is sent the
+//        same bytes.
+export const GENERATE_PROMPT_VERSION = 'generate.v1.31';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;
@@ -207,6 +211,7 @@ const TASK: Record<StartTopicRequest['kind'], string> = {
   listen: LISTEN_RULES,
   spelling_dictation: DICTATION_RULES,
   teach_back: TEACH_BACK_RULES,
+  essay: ESSAY_RULES,
   speak: `The learner wants to PRACTISE SPEAKING. If they typed words or sentences in a foreign language, make one "speak" item per sentence or word as typed; if they named a topic or unit, write 5–8 short, useful sentences for their level. lang = the language to speak. prompt = what to say (answer = the same). topic = 2–4 words.`,
   test: `Write a PRACTICE TEST of 8–12 questions on the topic the learner named, like a real class test at their grade: the important points, easy to harder, mixing kinds; answerable in one try (no multi-step long answers).`,
   help: `The learner TYPED A HOMEWORK TASK and wants help to solve it THEMSELVES. One item per task/sub-task, prompt = the task in the learner's own words (copy it), answer = the correct final answer, which the learner never sees — it guides hints. Never add tasks or intermediate questions of your own.`,
@@ -248,6 +253,8 @@ const MODE: Record<StartTopicRequest['kind'], 'practice' | 'help' | 'test'> = {
   spelling_dictation: 'practice',
   // „Erklär mal" is practice too: the same card, hints, voice mode and spaced repetition (#236).
   teach_back: 'practice',
+  // A long text is practice too — never a test (`selection.ts`, `admitText`), #258.
+  essay: 'practice',
   help: 'help',
 };
 
@@ -262,6 +269,8 @@ const ORIGIN: Record<StartTopicRequest['kind'], 'buddy' | 'typed' | 'homework'> 
   spelling_dictation: 'typed',
   // Buddy wrote the questions and their key points, also when they are about her sheet.
   teach_back: 'buddy',
+  // Buddy wrote the task down, also when it is copied from her sheet.
+  essay: 'buddy',
   help: 'homework',
 };
 
@@ -281,6 +290,13 @@ function dictationOrigin(set: GeneratedSet, source: DictationSource | null): 'ty
  * it, and an exact term of a key point must stand on it.
  */
 type DictationSource = { text: string; fromSheet: boolean };
+
+/** What her sheet's text is for, as the generator is told — only the kinds that take a sheet. */
+const SHEET_USE: Partial<Record<StartTopicRequest['kind'], string>> = {
+  spelling_dictation: 'her photographed list; copy entries only from here',
+  teach_back: 'her photographed sheet; ask only about what it covers',
+  essay: 'her photographed sheet; take the writing task and its text from here',
+};
 
 /** Most words of a task (≥ 60 %) occur in what the learner typed. */
 export function fromLearnerText(task: string, typed: string): boolean {
@@ -427,9 +443,7 @@ async function generateSet(
                   ? `SHE JUST WORKED ON THESE (write more of exactly this kind — same topics, same level, other numbers or words; never something her class has not had):${pattern.topics.length > 0 ? `\nTOPICS: ${pattern.topics.join(' | ')}` : ''}\nQUESTIONS:\n${pattern.prompts.map((p) => `- ${p}`).join('\n')}`
                   : null,
                 dictation?.fromSheet
-                  ? input.kind === 'teach_back'
-                    ? `SHEET TEXT (her photographed sheet; ask only about what it covers):\n${dictation.text}`
-                    : `SHEET TEXT (her photographed list; copy entries only from here):\n${dictation.text}`
+                  ? `SHEET TEXT (${SHEET_USE[input.kind]}):\n${dictation.text}`
                   : null,
                 `LEARNER'S TEXT:\n${input.text}`,
               ]
@@ -477,6 +491,8 @@ type Prepared = {
   dictation: DictationItem[];
   /** Explanation questions, each with key points code checked (issue #236). */
   teachBack: StoredItem[];
+  /** A long-text task, its key points set by code from its text type (issue #258). */
+  essays: StoredItem[];
 };
 
 /**
@@ -581,6 +597,13 @@ function preparedFrom(
     teachBack: profile.teachBack
       ? teachBackItems(set.teach_back, dictationSource?.fromSheet ? dictationSource.text : null)
       : [],
+    essays: profile.essay
+      ? essayItems(
+          set.essay,
+          dictationSource?.fromSheet ? dictationSource.text : null,
+          learner.locale,
+        )
+      : [],
   };
 }
 
@@ -611,7 +634,8 @@ async function prepareTopic(
     input.kind === 'listen' || input.kind === 'spelling_dictation' ? noVoiceToReadIt(deps) : null;
   if (noVoice) throw noVoice;
   const dictation =
-    input.kind === 'spelling_dictation' || (input.kind === 'teach_back' && input.material_id)
+    input.kind === 'spelling_dictation' ||
+    ((input.kind === 'teach_back' || input.kind === 'essay') && input.material_id)
       ? await dictationSourceOf(deps, learner.id, input)
       : null;
 
@@ -707,6 +731,7 @@ async function prepareTopic(
       structured: [],
       dictation: [],
       teachBack: [],
+      essays: [],
     },
     {
       now,
@@ -762,7 +787,8 @@ async function store(
       prepared.staffs.length +
       prepared.structured.length +
       prepared.dictation.length +
-      prepared.teachBack.length ===
+      prepared.teachBack.length +
+      prepared.essays.length ===
       0
   ) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
@@ -789,6 +815,7 @@ async function store(
           ...prepared.staffs,
           ...prepared.dictation,
           ...prepared.teachBack,
+          ...prepared.essays,
         ],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,

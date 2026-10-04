@@ -317,5 +317,20 @@
   "select": {
     "several": "Plusieurs sont justes – touche-les toutes.",
     "check_waits": "Dès que tu en as coché au moins une."
+  },
+  "essay": {
+    "intro": "{{form}} – où en est ton texte",
+    "met": "réussi",
+    "open": "encore à faire",
+    "places": "Ici, tu peux encore affiner",
+    "revise": "Retravaille ces passages – ton texte est toujours dans le champ. Puis envoie-moi la nouvelle version.",
+    "last": "C’était ta dernière version pour cette fois. Garde ces points pour ton prochain texte.",
+    "quote": "« {{text}} »",
+    "her_words": "Tes mots",
+    "version_one": "Version {{n}} · 1 mot",
+    "version_other": "Version {{n}} · {{count}} mots",
+    "text_one": "Ton texte · 1 mot",
+    "text_other": "Ton texte · {{count}} mots",
+    "thinking": "Buddy lit ton texte …"
   }
 }

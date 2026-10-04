@@ -118,4 +118,20 @@ describe('the keys over the answer field (issue #239)', () => {
     fireEvent.focus(field());
     expect(screen.queryByRole('toolbar')).toBeNull();
   });
+
+  it('takes a long text of up to 12 000 characters in a taller bar (#258)', () => {
+    show('essay', 'Erörtere: Sollte es an Schulen ein Handyverbot geben?', 'german');
+    expect(field().getAttribute('maxlength')).toBe('12000');
+    // Prose: no math row to type it with.
+    fireEvent.focus(field());
+    expect(screen.queryByRole('toolbar')).toBeNull();
+    // A page to write on: three lines from the start, where every other answer has one.
+    expect(field().getAttribute('rows')).toBe('3');
+  });
+
+  it('keeps every other answer at 2000 characters in the one-line bar', () => {
+    show('long', 'Erklär mir, warum der Mond Phasen hat.', null);
+    expect(field().getAttribute('maxlength')).toBe('2000');
+    expect(field().getAttribute('rows')).toBe('1');
+  });
 });

@@ -1957,9 +1957,34 @@ eigenen Worte bestätigen und keine exakte Angabe überstimmen.
   Aufsatz in einem Test wird abgelehnt (409, `admitText`).
 - **Ausfall.** Kein Modell, kaputte Ausgabe oder Tageslimit: kein Urteil (`verdict` null), kein
   Versuch, der ehrliche Satz „Ich kann deinen Text gerade nicht lesen. Er ist nicht verloren …".
-- **Noch nicht verdrahtet (Schritt 2, mit der App):** woher eine Aufsatzfrage kommt (Buddys Angebot
-  und/oder eine `long_text`-Aufgabe auf ihrem Blatt, die heute noch `NotPracticable` ist), das
-  Antwortfeld bis 12 000 Zeichen mit lokalem Entwurf, die Darstellung je Punkt und Stelle.
+- **Woher eine Aufsatzfrage kommt (Schritt 2):** aus Buddys Angebot, `offer_learning` mit der
+  Art `essay` (Prompt `buddy.61`) — über ein Thema, das sie nennt, oder die Schreibaufgabe auf
+  einem ihrer Blätter (`sheet`, wie bei „Erklär mal"). Kein Wähler und kein neuer Screen: sie
+  bittet im Chat, Buddy wählt die Form, der Knopf „Aufsatz schreiben" startet sie. Der Generator
+  (`generate.v1.31`) füllt eine eigene Liste `essay` mit genau einer Aufgabe: Wortlaut, Textsorte
+  (`EssayType`) und — für eine Analyse — der Text, um den es geht (`practice/essayTask.ts`). Code
+  setzt die Kernpunkte aus der Textsorte (`essayItem`), nie das Modell; eine Analyse ohne Text
+  fällt weg, ein Text muss passen wie ein Lesetext (`passageFrom`) und, vom Blatt, wörtlich auf
+  ihrem Blatt stehen (`onTheSheet`). Ohne Blatt ist der Text einer Analyse Buddys eigener kurzer
+  Text, nie ein veröffentlichter aus dem Gedächtnis. Was übrig bleibt, ist ein Übungslauf mit
+  einer Frage. Ein `long_text` auf einem fotografierten Blatt bleibt in der Lesung
+  `NotPracticable` (die Übung des Blatts kann ihn nicht stellen); Buddy kann ihn von dort als
+  `essay` anbieten. Migration 0090 hebt die Grenze von `practice_turns.text` von 4000 auf 12 000
+  Zeichen — ein Aufsatz über etwa 600 Wörtern scheiterte vorher beim Speichern.
+- **In der App (Schritt 2):** dieselbe Übungsseite, dieselbe Eingabeleiste (`InputBar`), kein
+  zweites Feld. Für `essay` (`lib/practice/essay.ts`) nimmt die Leiste 12 000 Zeichen, steht
+  `tall` — drei Zeilen, beim Schreiben wächst sie bis zehn (mit Tastatur auf dem kleinen Telefon
+  bis vier, `formDensity`), in Ruhe bleibt sie bei drei, damit die Rückmeldung darüber Platz hat —,
+  und „Prüfen" bleibt unter der Leiste, solange Platz ist. Die Zeichenzahl erscheint erst in den
+  letzten 200 Zeichen. Ihr Text ist ein Entwurf je Lauf (`useDraft`), übersteht also das
+  Verlassen und einen App-Neustart, und bleibt nach dem Abschicken im Feld: die nächste Fassung
+  beginnt bei ihrer letzten. Im Gespräch steht eine Fassung als eine Zeile („Fassung 1 · 1 712
+  Wörter"), Buddys Antwort trägt die Rückmeldung in seiner Blase (`EssayFeedback`): je Kernpunkt
+  Zeichen und Wort („geschafft" / „noch offen", nie nur Farbe, nie „falsch"), bei „geschafft" ihre
+  eigenen Worte — violett wie ihre Blasen, in Anführungszeichen, mit Strich, für den Screenreader
+  „Deine Worte" —, bei „noch offen" der nächste Schritt; dann die Stellen zum Verbessern und der
+  nächste Schritt („Überarbeite …" oder „letzte Fassung"). Keine Zahl, keine Note. Der Weg an der
+  Frage vorbei heißt „Überspringen" (keine Lösung), „Die Bewertung stimmt nicht" gibt es nicht.
 
 **Offen**: Eval-Satz (≥ 20 Texte je Textsorte, Übereinstimmung mit einer Lehrkraft) vor dem
 Live-Gang — wie bei #211 gibt es keinen Korpus. Ein Modellurteil kann keinen Punkt ohne ihre eigenen

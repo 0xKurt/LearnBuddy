@@ -317,5 +317,20 @@
   "select": {
     "several": "Più di una è giusta: toccale tutte.",
     "check_waits": "Quando ne hai spuntata almeno una."
+  },
+  "essay": {
+    "intro": "{{form}} – a che punto è il tuo testo",
+    "met": "fatto",
+    "open": "ancora da fare",
+    "places": "Qui puoi ancora migliorarlo",
+    "revise": "Rivedi questi passaggi: il tuo testo è ancora nel campo. Poi mandami la nuova versione.",
+    "last": "Questa era la tua ultima versione per ora. Porta questi punti nel tuo prossimo testo.",
+    "quote": "«{{text}}»",
+    "her_words": "Le tue parole",
+    "version_one": "Versione {{n}} · 1 parola",
+    "version_other": "Versione {{n}} · {{count}} parole",
+    "text_one": "Il tuo testo · 1 parola",
+    "text_other": "Il tuo testo · {{count}} parole",
+    "thinking": "Buddy sta leggendo il tuo testo …"
   }
 }

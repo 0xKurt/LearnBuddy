@@ -667,9 +667,10 @@ const offerLearning = z.object({
         'test',
         'spelling_dictation',
         'teach_back',
+        'essay',
       ])
       .describe(
-        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end) · spelling_dictation: the app reads words or sentences aloud and she types them (when she asks for a dictation or to practise writing/spelling her word list) · teach_back: open questions SHE answers by explaining in her own words, by voice or in writing, checked point by point (when she asks to be quizzed or questioned on a topic or sheet, or asks to explain something to you)',
+        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end) · spelling_dictation: the app reads words or sentences aloud and she types them (when she asks for a dictation or to practise writing/spelling her word list) · teach_back: open questions SHE answers by explaining in her own words, by voice or in writing, checked point by point (when she asks to be quizzed or questioned on a topic or sheet, or asks to explain something to you) · essay: she writes one long text — an essay, a discussion, a comment, an analysis or interpretation — and gets feedback per key point of its text type, never a grade (when she wants to practise writing such a text)',
       ),
     text: z
       .string()
@@ -689,7 +690,7 @@ const offerLearning = z.object({
     sheet: MaterialRef.nullable()
       .optional()
       .describe(
-        'spelling_dictation: the sheet whose words she wants dictated — a word list she photographed; the words are then taken from that sheet, and "text" names it. teach_back: the sheet she wants to be questioned on. null for every other kind, and when she typed or named the words or the topic.',
+        'spelling_dictation: the sheet whose words she wants dictated — a word list she photographed; the words are then taken from that sheet, and "text" names it. teach_back: the sheet she wants to be questioned on. essay: the sheet with the writing task she wants to practise. null for every other kind, and when she typed or named the words or the topic.',
       ),
     // Optional in parsing (older scripted answers have neither); the model sees both. Issue #113.
     difficulty: DifficultyWishSchema.nullable()
