@@ -35,7 +35,7 @@ import {
   sameRatio,
   sameSubstance,
 } from './chemistry.js';
-import { isYear, sameClockTime, sameDate, yearIn } from './dates.js';
+import { clockTime, isYear, sameDate, yearIn } from './dates.js';
 import { type FormNote, judgeAlgebra, typedBack } from './form.js';
 import { checkNuclear, looksNuclear, type NuclearImbalance } from './nuclear.js';
 import { checkPath, lastValue, solvedValue } from './steps.js';
@@ -567,7 +567,8 @@ function byValueAgainst(item: ItemForCheck, key: string, text: string): ByValue 
   }
   const date = sameDate(key, text);
   if (date !== null) return date;
-  if (sameClockTime(key, text)) return 'same';
+  const time = clockTime(key, text);
+  if (time !== null) return time;
   // A year inside a sentence: only a DIFFERENT one is decided. A sentence that names the right
   // year can still be missing everything else the question asked for, and code cannot read that.
   if (isYear(key)) {

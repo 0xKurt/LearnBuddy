@@ -1,6 +1,6 @@
 // Answers code can decide although comparing the characters says nothing (issue #227,
-// findings 5 and 8): algebra, a date, a year inside a sentence — and a clock time, where only
-// the NOTATION is decided and never the time itself.
+// findings 5 and 8): algebra, a date, a year inside a sentence — and a clock time, where the
+// NOTATION is decided, and another time only when it is wrong in every reading (#175).
 //
 // The proof that matters is the one #209 and #212 use: nothing is scripted for the tutor, and the
 // harness fails loudly on an unscripted model call. A verdict that arrives with zero tutor calls
@@ -57,7 +57,7 @@ describe.skipIf(!dbReady)('what code decides by value, without a model', () => {
   });
   afterEach(() => env.closeChecked());
 
-  it('calls algebra, a date and the wrong year in a sentence wrong, with no tutor call', async () => {
+  it('calls algebra, a date, a time and a wrong year in a sentence wrong, without a tutor', async () => {
     env.llm.script('explain', {
       json: {
         usable: true,
@@ -81,6 +81,7 @@ describe.skipIf(!dbReady)('what code decides by value, without a model', () => {
             answer: '14.07.1789',
             topic: 'Revolution',
           }),
+          item({ prompt: 'Wann beginnt der Film?', answer: '14:30', topic: 'Uhrzeit' }),
         ],
       },
     });
@@ -91,7 +92,8 @@ describe.skipIf(!dbReady)('what code decides by value, without a model', () => {
         text: 'Gemischt',
       })
     ).body;
-    const [term, equation, year, date] = s.items.map((i) => i.item.id) as [
+    const [term, equation, year, date, time] = s.items.map((i) => i.item.id) as [
+      string,
       string,
       string,
       string,
@@ -106,6 +108,8 @@ describe.skipIf(!dbReady)('what code decides by value, without a model', () => {
       (await answer(l, s, year, 'Die Französische Revolution begann 1788.')).body.verdict,
     ).toBe('incorrect');
     expect((await answer(l, s, date, '15.07.1789')).body.verdict).toBe('incorrect');
+    // Another time, wrong as a time, a ratio and a division at once (#227, `clockTime`).
+    expect((await answer(l, s, time, '14:50')).body.verdict).toBe('incorrect');
 
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
     const stored = await env.db.query<{ verdict: string; evaluated_by: string }>(
@@ -114,6 +118,7 @@ describe.skipIf(!dbReady)('what code decides by value, without a model', () => {
       [s.id],
     );
     expect(stored).toEqual([
+      { verdict: 'incorrect', evaluated_by: 'rule' },
       { verdict: 'incorrect', evaluated_by: 'rule' },
       { verdict: 'incorrect', evaluated_by: 'rule' },
       { verdict: 'incorrect', evaluated_by: 'rule' },
