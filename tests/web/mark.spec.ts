@@ -117,24 +117,44 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
     'aria-checked',
     'true',
   );
-  for (const w of ['Die', 'Oma']) await word(w).click();
+  await word('Oma').click();
   await page.getByRole('radio', { name: '② Prädikat' }).click();
   await word('liest').click();
   await word('den').click();
   await both(page, '46c-mark-categories');
   await targetsAreLarge(page);
   await check.click();
-  await expect(page.getByText('Noch nicht ganz: 3 richtig', { exact: false })).toBeInViewport();
+  await expect(page.getByText('Noch nicht ganz: 2 richtig', { exact: false })).toBeInViewport();
   await both(page, '46d-mark-categories-feedback');
   await page.getByRole('checkbox', { name: 'den, markiert als Prädikat' }).click();
   await word('vor').click();
-  await page.getByRole('radio', { name: '③ Objekt' }).click();
+  await page.getByRole('radio', { name: '③ Akkusativobjekt' }).click();
   for (const w of ['eine', 'Geschichte']) await word(w).click();
   // Everything marked: the longest line saying what is marked, under Buddy's reply.
   await expect(page.getByTestId('mark-summary')).toHaveText(
-    'Subjekt: Die Oma; Prädikat: liest, vor; Objekt: eine Geschichte',
+    'Subjekt: Oma; Prädikat: liest, vor; Akkusativobjekt: eine Geschichte',
   );
   await both(page, '46e-mark-categories-all');
+  await finish(page);
+
+  // ── the worst case of sorting: three long terms on two rows, the most words, the reply ──
+  await start(page, 'Lass uns Objekte unterscheiden', 'drei Arten von Objekten', 'Markiere Dativ');
+  for (const w of ['den', 'Enkeln', 'erzählt']) await word(w).click();
+  await check.click();
+  const worst = 'Noch nicht ganz: 2 richtig, 3 fehlen noch, 1 zu viel.';
+  await expect(page.getByText(worst)).toBeInViewport();
+  await page.getByRole('checkbox', { name: 'erzählt, markiert als Dativobjekt' }).click();
+  await page.getByRole('radio', { name: '② Präpositionalobjekt' }).click();
+  for (const w of ['von', 'Abenteuern']) await word(w).click();
+  await page.getByRole('radio', { name: '③ Subjekt' }).click();
+  await word('Großvater').click();
+  await expect(page.getByTestId('mark-summary')).toHaveText(
+    'Dativobjekt: den Enkeln; Präpositionalobjekt: von Abenteuern; Subjekt: Großvater',
+  );
+  // Everything marked, the longest terms on two rows of buttons, Buddy's reply still in view.
+  await expect(page.getByText(worst)).toBeInViewport();
+  await both(page, '46h-mark-categories-worst');
+  await targetsAreLarge(page);
   await finish(page);
 
   // ── a sentence of 16 words with two commas to set ──

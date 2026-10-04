@@ -445,27 +445,45 @@ export const MARK_WORD_MAX = 20;
 export const MARK_SYLLABLE_WORDS_MAX = 4;
 export const MARK_SYLLABLE_LETTERS_MAX = 10;
 /**
- * Words of a text whose marks are sorted into categories: the row of categories takes a line of
- * its own, and the line saying what is marked runs longer ("Subjekt: …; Prädikat: …"). Eight, measured
- * on 360×740 with all three categories used (tests/web/mark.spec.ts, 46e): twelve were 60 pt too many, ten still 12.
+ * A text whose marks are sorted into categories: the category buttons take up to two rows of their
+ * own, and the line saying what is marked runs longer ("Subjekt: …; Prädikat: …"). So the text may
+ * take two rows of word tiles at most — counted in words AND in characters, because long words fill
+ * a row sooner. Measured on 360×740 in the worst case — three long names on two rows, a three-line
+ * instruction, every word marked, Buddy's reply above (tests/web/mark.spec.ts, 46h): a sentence of
+ * 59 characters took three rows of tiles and was 62 pt too much.
  */
-export const MARK_SORTED_WORDS_MAX = 8;
+export const MARK_SORTED_WORDS_MAX = 7;
+export const MARK_SORTED_CHARS_MAX = 45;
+
+/** Does a text to sort into categories stay within its measured size? */
+export function sortedTextFits(
+  words: ReadonlyArray<{ lead: string; text: string; tail: string }>,
+): boolean {
+  const chars = [...words.map((w) => `${w.lead}${w.text}${w.tail}`).join(' ')].length;
+  return words.length <= MARK_SORTED_WORDS_MAX && chars <= MARK_SORTED_CHARS_MAX;
+}
 export const MARK_CATEGORIES_MIN = 2;
 export const MARK_CATEGORIES_MAX = 3;
-/** A category's name ("Subjekt", "Signalwort"): one button in a row of three. */
-export const MARK_CATEGORY_MAX = 16;
 /**
- * The categories' buttons stand in ONE row on a 360-pt phone: their names together at most this
- * many characters, by how many there are. Measured (tests/web/mark.spec.ts, 46e): "Subjekt",
- * "Prädikat", "Akkusativobjekt" (30) took a second row, and with it the sentence's last row did
- * not fit 360×740 any more; "Subjekt", "Prädikat", "Objekt" (21) stand in one.
+ * A category's name — the grammar term as school uses it: "Akkusativobjekt" (15),
+ * "Präpositionalobjekt" (19). The content decides, never the layout (owner review of #234).
  */
-export const MARK_CATEGORY_ROW_CHARS: Readonly<Record<number, number>> = { 2: 28, 3: 21 };
+export const MARK_CATEGORY_MAX = 20;
+/**
+ * Two category names stand side by side as buttons on a 360-pt phone when together they have at
+ * most this many characters (a button is about 52 pt plus 7.4 pt a character, 328 pt of row).
+ */
+export const MARK_CATEGORY_PAIR_CHARS = 28;
 
-/** Do these category names fit one row of buttons? */
-export function categoryRowFits(names: readonly string[]): boolean {
-  const max = MARK_CATEGORY_ROW_CHARS[names.length];
-  return max !== undefined && names.reduce((n, c) => n + [...c].length, 0) <= max;
+/**
+ * Do the category buttons wrap to at most two rows? They flow in order: two or fewer always do;
+ * three do when the first two, or the last two, share a row.
+ */
+export function categoriesInTwoRows(names: readonly string[]): boolean {
+  if (names.length < 3) return true;
+  const len = names.map((n) => [...n].length);
+  const pair = (i: number) => len[i]! + len[i + 1]! <= MARK_CATEGORY_PAIR_CHARS;
+  return pair(0) || pair(1);
 }
 /** Punctuation that stands before or after a word ("„Hund,“"): shown, never tapped. */
 export const MARK_AFFIX_MAX = 6;

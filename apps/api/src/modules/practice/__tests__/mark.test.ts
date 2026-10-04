@@ -2,7 +2,7 @@
 // The acceptance list of the issue: tokenisation, a word that stands twice, comma gaps,
 // syllables, the error text's correction — each rejection by its name.
 
-import { markTargets } from '@learnbuddy/shared-types/contracts';
+import { MARK_SORTED_WORDS_MAX, markTargets } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -159,7 +159,7 @@ describe('marking words: the model names them, code finds them', () => {
     );
   });
 
-  it('a text sorted into categories has at most 8 words — the chips take a line of their own', () => {
+  it('a text sorted into categories has a measured maximum of words — the buttons take rows of their own', () => {
     const many = (n: number) =>
       ['Der', 'Hund', 'bellt', ...Array.from({ length: n - 3 }, (_, i) => `laut${i}`)].join(' ');
     const sorted = (text: string) =>
@@ -171,15 +171,19 @@ describe('marking words: the model names them, code finds them', () => {
         ],
         { categories: ['Subjekt', 'Prädikat'] },
       );
-    expect(markDraftProblem(sorted(many(8)))).toBeNull();
-    expect(markDraftProblem(sorted(many(9)))).toBe('count');
+    expect(markDraftProblem(sorted(many(MARK_SORTED_WORDS_MAX)))).toBeNull();
+    expect(markDraftProblem(sorted(many(MARK_SORTED_WORDS_MAX + 1)))).toBe('count');
+    // Long words fill a row sooner: the characters are counted too.
+    expect(
+      markDraftProblem(sorted('Der Hund bellt ausgesprochen ausdauernd ununterbrochen.')),
+    ).toBe('count');
     // Without categories the same 13 words are a task.
     expect(
       markDraftProblem(words(many(13), [{ word: 'Hund', occurrence: null, category: null }])),
     ).toBeNull();
   });
 
-  it('the category buttons stand in one row: their names together have a measured cap', () => {
+  it('category names are the school terms; their buttons wrap to two rows at most', () => {
     const three = (names: string[]) =>
       words(
         'Die Oma liest den Kindern vor.',
@@ -190,8 +194,17 @@ describe('marking words: the model names them, code finds them', () => {
         ],
         { categories: names },
       );
-    expect(markDraftProblem(three(['Subjekt', 'Prädikat', 'Objekt']))).toBeNull();
-    expect(markDraftProblem(three(['Subjekt', 'Prädikat', 'Dativobjekt']))).toBe('too_long');
+    expect(markDraftProblem(three(['Subjekt', 'Prädikat', 'Akkusativobjekt']))).toBeNull();
+    expect(
+      markDraftProblem(three(['Akkusativobjekt', 'Dativobjekt', 'Präpositionalobjekt'])),
+    ).toBeNull();
+    // Over 20 characters is no school term; three long ones would take three rows.
+    expect(markDraftProblem(three(['Subjekt', 'Prädikat', 'Präpositionalobjektiv']))).toBe(
+      'too_long',
+    );
+    expect(
+      markDraftProblem(three(['Präpositionalobjekt', 'Adverbialbestimmung', 'Akkusativobjekt'])),
+    ).toBe('too_long');
   });
 
   it('too few or too many words, no target, or a long prompt is no task', () => {

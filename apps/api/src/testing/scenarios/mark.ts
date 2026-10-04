@@ -6,7 +6,8 @@
 // The model writes the text and NAMES the words to mark (or writes the commas and hyphens); code
 // splits, finds and keeps the places (Regel 0). Each case is the LARGEST its mode may be
 // (contracts/structured.ts, MARK_*), so the shots measure the worst case on 360×740 (rule 16):
-// 24 words to tap, 8 words sorted into three categories whose names fill their one row, a
+// 24 words to tap, 7 words sorted into three categories (twice: a usual set, and three long school terms on two
+// rows of buttons), a
 // sentence of 16 words with two commas to set, four words of up to 10 letters to split.
 
 import { scriptGenerations } from './generations.js';
@@ -46,16 +47,36 @@ const CASES: Case[] = [
     ask: 'Satzglieder bestimmen',
     title: 'Satzglieder',
     task: {
-      prompt: 'Markiere Subjekt, Prädikat und Objekt.',
+      prompt: 'Markiere Subjekt, Prädikat und Akkusativobjekt.',
       mode: 'words',
-      text: 'Die Oma liest den Kindern eine Geschichte vor.',
+      text: 'Oma liest den Kindern eine Geschichte vor.',
       targets: [
-        { word: 'Die Oma', occurrence: null, category: 'Subjekt' },
+        { word: 'Oma', occurrence: null, category: 'Subjekt' },
         { word: 'liest', occurrence: null, category: 'Prädikat' },
         { word: 'vor', occurrence: null, category: 'Prädikat' },
-        { word: 'eine Geschichte', occurrence: null, category: 'Objekt' },
+        { word: 'eine Geschichte', occurrence: null, category: 'Akkusativobjekt' },
       ],
-      categories: ['Subjekt', 'Prädikat', 'Objekt'],
+      categories: ['Subjekt', 'Prädikat', 'Akkusativobjekt'],
+      corrected: null,
+    },
+  },
+  {
+    // The worst case of sorting: three long school terms on two rows of buttons, the most words.
+    when: /objekte unterscheiden/i,
+    reply: 'Gern – drei Arten von Objekten, erst die Art wählen.',
+    ask: 'Objekte unterscheiden',
+    title: 'Objekte',
+    task: {
+      prompt: 'Markiere Dativobjekt, Präpositionalobjekt und Subjekt.',
+      mode: 'words',
+      // Long words up to the measured characters: two rows of tiles under two rows of buttons.
+      text: 'Großvater erzählt den Enkeln von Abenteuern.',
+      targets: [
+        { word: 'den Enkeln', occurrence: null, category: 'Dativobjekt' },
+        { word: 'von Abenteuern', occurrence: null, category: 'Präpositionalobjekt' },
+        { word: 'Großvater', occurrence: null, category: 'Subjekt' },
+      ],
+      categories: ['Dativobjekt', 'Präpositionalobjekt', 'Subjekt'],
       corrected: null,
     },
   },

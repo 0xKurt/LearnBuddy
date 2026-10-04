@@ -2405,7 +2405,7 @@ finds the gaps (and shows the sentence without them); for syllables it writes th
 hyphens and code finds the cuts (letters only, `not_letters`). An error text carries `corrected`,
 and the corrected version must differ from the text at EXACTLY the marked words (`correction`) —
 the corrections are kept server-side for the solution ("Hunt → Hund"). Categories: every target
-names one, every one is used (`empty_group`), at most 8 words then. The ids say where a target
+names one, every one is used (`empty_group`), at most 7 words and 45 characters then. The ids say where a target
 stands (`w3` a word, `g3` the gap after it, `w3_2` the cut after its second letter), never whether
 it is one. A prepared hint is dropped when it names a word to mark, the word a comma belongs after,
 a word cut into its syllables or the whole solution (`markSecrets`): the text she reads holds every
@@ -2431,9 +2431,12 @@ does, for every kind of marking (`practice.mark.how_*`), until the first "Prüfe
 reply needs the room. Marks and the chosen category live in the draft.
 
 **Its maxima are a measurement** (`MARK_*` in `contracts/structured.ts`, `tests/web/mark.spec.ts`,
-shots 46a–46g at 360×740 and 390×844, light and dark): 24 words to tap, 8 when sorted into three
-categories, a category name of 16 characters and all names together in one row of buttons
-(`categoryRowFits`: 21 characters for three, 28 for two), four words of at most 10 letters to split — each
+shots 46a–46h at 360×740 and 390×844, light and dark): 24 words to tap; 7 words and 45 characters (`sortedTextFits`: long words fill a row sooner) when sorted into
+categories, measured in the worst case (46h: three long names on two rows of buttons, every word
+marked, Buddy's reply above). A category name is the grammar term as school uses it, up to 20
+characters ("Präpositionalobjekt"): the content decides, the layout gives way — the buttons wrap to
+two rows at most (`categoriesInTwoRows`: with three, two neighbours share a row), and the word
+count is what was lowered. Syllables: four words of at most 10 letters to split — each
 word in ONE row of 30-pt letter cells, never wrapped, so it still reads as a word.
 Generated in a topic's practice and practice test, read from a sheet and inside a reading text
 (generate.v1.24, extract.v8.8).
