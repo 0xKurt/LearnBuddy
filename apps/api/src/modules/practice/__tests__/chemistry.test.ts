@@ -206,9 +206,12 @@ describe('what the rule check now decides without a model', () => {
     expect(check(cross, '1:3:3:9')).toBe('incorrect');
   });
 
-  it('leaves a clock time and a two-part ratio to the tutor', () => {
+  it('leaves a two-part ratio to the tutor, and a clock time unless every reading disagrees', () => {
     const time = item({ kind: 'short', answer: '14:30', subject_kind: 'math' });
-    expect(check(time, '14:50')).toBe('unknown');
+    // Wrong as a time, a ratio and a division at once (`clockTime`, #227); "7:15" is the same
+    // ratio and stays for the tutor.
+    expect(check(time, '14:50')).toBe('incorrect');
+    expect(check(time, '7:15')).toBe('unknown');
     const mono = item({ kind: 'short', answer: '3:1', subject_kind: 'biology' });
     expect(check(mono, '1:3')).toBe('unknown');
   });

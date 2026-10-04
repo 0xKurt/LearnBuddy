@@ -556,6 +556,21 @@ describe.skipIf(!dbReady)('the questions of a material', () => {
             answer: '16',
             topic: 'Prozente',
           }),
+          // Inside a sentence only the calculation the model marked is computed (#227 finding 4).
+          item({
+            kind: 'numeric',
+            prompt: 'Berechne $9 + 4$.',
+            answer: '12',
+            computes: '9 + 4',
+            topic: 'Addition',
+          }),
+          item({
+            kind: 'numeric',
+            prompt: 'Berechne $3 + 4$.',
+            answer: '7',
+            computes: '3 + 4',
+            topic: 'Addition',
+          }),
         ],
         more_items: false,
         pages: [{ page: 1, read: 'all', problem: null }],
@@ -577,6 +592,10 @@ describe.skipIf(!dbReady)('the questions of a material', () => {
     const view = await lena.api.get<MaterialItemsView>(
       `/materials/${created.body.material.id}/items`,
     );
-    expect(view.body.items.map((i) => i.prompt)).toEqual(['7 + 5', 'Wie viel sind 20 % von 80?']);
+    expect(view.body.items.map((i) => i.prompt)).toEqual([
+      '7 + 5',
+      'Wie viel sind 20 % von 80?',
+      'Berechne $3 + 4$.',
+    ]);
   });
 });

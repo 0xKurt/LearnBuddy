@@ -192,6 +192,10 @@ Browser walkthrough of the real app against the real API (scripted model):
 four in order — the pre-commit hook stays fast (without the walkthrough), but nothing reaches
 the owner without one green run (issue #74).
 
+Push sparsam (#321): erst lokal vollständig prüfen, dann **ein** Push pro PR-Runde. Zwischenstände
+werden nicht gepusht. Vercel baut für `claude/**`-Branches keine Previews
+(`apps/api/vercel.json` → `git.deploymentEnabled`); Production entsteht nur aus `main`.
+
 ## Kritik wird erst ein Issue, dann Arbeit (Owner-Regel 28.09.)
 
 Jede Kritik, jeder Fehlerbericht und jede Produktidee des Owners bekommt **zuerst ein

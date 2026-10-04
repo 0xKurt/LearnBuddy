@@ -124,6 +124,31 @@ describe.skipIf(!dbReady)('what the key may learn from the model', () => {
     expect(key.accepted_answers).toEqual(full);
   });
 
+  it('never learns the key of another question beside it', async () => {
+    // "the teacher" judged right for "der Schüler" would make the two questions
+    // interchangeable from then on — a model mistake turned into a rule (issue #227, finding 3).
+    env.llm.script('explain', {
+      json: {
+        usable: true,
+        title: 'Schule',
+        subject: null,
+        items: [vocab(), vocab({ prompt: 'der Lehrer', answer: 'the teacher' })],
+      },
+    });
+    const res = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'practice',
+      text: 'Schule',
+    });
+    await env.flushBackground();
+    const s = (await l.api.get<SessionView>(`/practice/sessions/${res.body.id}`)).body;
+    const pupil = s.items.find((i) => i.item.prompt === 'der Schüler')!.item.id;
+
+    env.llm.script('tutor', tutorSays('correct'));
+    expect((await answer(l, s, pupil, 'The Teacher')).body.verdict).toBe('correct');
+    expect((await acceptedOf(env, pupil)).accepted_answers).toEqual([]);
+  });
+
   it('still learns while there is room', async () => {
     const s = await start(env, l, 'practice');
     const id = s.items[0]!.item.id;

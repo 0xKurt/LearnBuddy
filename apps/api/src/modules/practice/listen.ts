@@ -42,7 +42,8 @@ import { z } from 'zod';
 import type { Deps } from '../../deps.js';
 import { AppError } from '../../lib/errors.js';
 import { synthesizeSpeech } from '../voice/speech.js';
-import { ItemDraft } from './items.js';
+import { unusedItemFields } from './itemFields.js';
+import { ItemDraft, usableItems } from './items.js';
 
 /**
  * How many listening texts one prepared set may hold: one. A listening exercise IS a text
@@ -61,15 +62,17 @@ export const LISTEN_KINDS = ['multiple_choice', 'short'] as const;
 /**
  * One question about the spoken text, as the model writes it. Everything that has nothing to
  * do with a listening question is left out of the schema rather than validated away: a figure
- * (there is nothing to draw), a unit, a tolerance, a spelling mark (spelling is expressly not
- * marked here), the languages (the text's own language covers it), a source excerpt, hints and
- * a worked solution (see the file header).
+ * (there is nothing to draw), a unit, a spelling mark (spelling is expressly not marked here),
+ * the languages (the text's own language covers it), a source excerpt, hints and a worked
+ * solution (see the file header) — and every field neither of `LISTEN_KINDS` keeps
+ * (`unusedItemFields`, issue #281 D2): a tolerance and a rubric, which belong to a number and a
+ * long answer.
  */
 export const ListenQuestion = ItemDraft.omit({
+  ...unusedItemFields(LISTEN_KINDS),
   figure: true,
   read: true,
   unit: true,
-  tolerance: true,
   spelling: true,
   lang: true,
   prompt_lang: true,
@@ -154,11 +157,13 @@ export function answerIsInText(answer: string, text: string): boolean {
 /**
  * The questions of one listening task, as items — or nothing.
  *
- * Every question is checked on its own and dropped on its own (the shape of `usableItems`):
- * the answer has to stand in the text (Rule 0), and for a tapped question it is the chosen
- * option that has to. A task whose every question falls away leaves no items at all, and a
- * run with no items is refused by the caller — never a listening exercise with nothing to
- * hear, never a question about a text that does not say the answer.
+ * Every question is checked on its own and dropped on its own: the answer has to stand in the
+ * text (Rule 0), and for a tapped question it is the chosen option that has to. What is left
+ * then goes through `usableItems`, the checks every other question gets (issue #374) — the
+ * options and their pictures (`choiceProblem`, the figure bounds), the key against a marked
+ * calculation (`computes`, #227). A task whose every question falls away leaves no items at
+ * all, and a run with no items is refused by the caller — never a listening exercise with
+ * nothing to hear, never a question about a text that does not say the answer.
  *
  * `locale` is what the speech gateway can really read this language in; a language it cannot
  * read yields nothing, because the text would never be heard (`localeFor`, issue #210's
@@ -172,7 +177,7 @@ export function listenItems(
   if (!speech.available || speech.localeFor(draft.lang) === null) return [];
   const task = ListenTask.safeParse({ text: draft.text, lang: draft.lang });
   if (!task.success) return [];
-  const out: ListenItem[] = [];
+  const heard: ItemDraft[] = [];
   for (const q of draft.questions.slice(0, MAX_LISTEN_QUESTIONS)) {
     const choices = q.kind === 'multiple_choice' ? q.choices : null;
     const correct = q.kind === 'multiple_choice' ? q.correct_choice : null;
@@ -180,7 +185,7 @@ export function listenItems(
     // the one that must come out of the text is the one she can actually tap.
     const said = choices && correct !== null ? (choices[correct] ?? null) : q.answer;
     if (said === null || !answerIsInText(said, task.data.text)) continue;
-    out.push({
+    heard.push({
       ...q,
       choices,
       correct_choice: correct,
@@ -192,16 +197,17 @@ export function listenItems(
       figure: null,
       read: null,
       tolerance: null,
+      // No listening question is a long answer, so none has a rubric (`itemFields.ts`).
+      rubric: null,
       // Never 'strict': what she wrote is judged on what she understood, not on how she spells
       // it (issue #197). `evaluate.ts` enforces it as well, from the stored text.
       spelling: 'gentle',
       source_excerpt: null,
       hints: [],
       worked_solution: null,
-      listen_task: task.data,
     });
   }
-  return out;
+  return usableItems(heard).map((it) => ({ ...it, listen_task: task.data }));
 }
 
 /** The listening text a stored row carries, or null (an unreadable column is no text). */
