@@ -823,25 +823,46 @@ read (`evals/tts` also needs `SPEECH_BACKEND=google`: it measures a whole voice-
 when each sentence is written, what it costs to synthesise and how long it plays). A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
 
-**Structured output stays on `responseJsonSchema` for now** (issue #283, checked 02.10. and
-again 03.10.2026). The live Vertex discovery documents — v1 and, since revision 20260930 (read
-03.10.), also v1beta1, the version the SDK sends to — mark `GenerationConfig.responseSchema`,
+**Structured output stays on `responseJsonSchema` for now** (issue #283, checked 02.10., 03.10.
+and 04.10.2026). The live Vertex discovery documents — v1 and v1beta1, both revision 20260930
+(read 04.10.); v1beta1 is the version the SDK sends to — mark `GenerationConfig.responseSchema`,
 `responseJsonSchema` and `responseMimeType` deprecated: "Use `response_format` instead". The new
-field is a list of `ResponseFormat` (`text: { mimeType, schema }`, plus audio, image, video); the
-document names no schema keyword list and no shutdown date. We cannot follow it from our side
-yet: `@google/genai` 2.25.0 (ours) and 2.27.0 (newest, published 02.10.2026) declare
-`ResponseFormat` and a `responseFormat` on the raw `GenerationConfig`, but only the
-`countTokens` and Live converters forward it — `GenerateContentConfig` has no such field, and
-the Vertex converter of `models.generateContent` copies only the fields it knows, so a
-`responseFormat` passed in is dropped without an error. So the code is
-unchanged: `paramsFor` in `llm/vertex.ts` builds the one request, and
-`llm/__tests__/vertex-request.test.ts` hands it to the real SDK with only `fetch` replaced. It
-pins that our zod-derived schema arrives byte for byte as `responseJsonSchema` (turn,
-extraction and a small schema), and it carries a **canary**: the day an SDK upgrade starts
-forwarding `responseFormat`, that test fails — that is when #283 is looked at again, with the
-questions still open: which schema subset Vertex EU accepts in `response_format` for
-`gemini-3.6-flash`, whether streaming (`partial.ts`) is unchanged, and whether there is a
-shutdown date (none is published; none is claimed here). Those need a live call.
+field is a list of `ResponseFormat` (`text: { mimeType: APPLICATION_JSON | TEXT_PLAIN, schema }`,
+plus audio, image, video). The four questions of #283, as of 04.10.2026:
+
+1. **SDK support — no.** `@google/genai` 2.25.0 (ours) and 2.27.0 (newest on npm, 02.10.2026)
+   declare `ResponseFormat` and a `responseFormat` on the raw `GenerationConfig`, but only the
+   `countTokens` and Live converters forward it. `GenerateContentConfig` has no such field, the
+   Vertex converter of `models.generateContent` copies only the fields it knows, and a
+   `responseFormat` passed in is dropped without an error. Unreleased `main` of
+   googleapis/js-genai (`src/types.ts`, `src/converters/_models_converters.ts`, read 04.10.) is
+   the same, and the changelog up to 2.27.0 names no such change. The only way to send it today
+   is `httpOptions.extraBody` with a raw `generationConfig.responseFormat`: checked offline, the
+   SDK then puts it on the wire for both `:generateContent` and `:streamGenerateContent` (v1beta1).
+   That bypasses the SDK's types and converter, so it is not a migration we take without proof.
+2. **Schema subset — undocumented.** `TextResponseFormat.schema` is described only as "The JSON
+   schema that the output should conform to"; no keyword list, no limits. Whether our emitted
+   keywords (`type`, `description`, `enum`, `items`, `anyOf`, `properties`,
+   `additionalProperties`, `required`) and our largest schemas are accepted there needs a live
+   call on `eu/gemini-3.6-flash`.
+3. **Streaming — unchanged while the code is unchanged.** `llm/partial.ts`, `buddy/stream.ts` and
+   the streamed path in `vertex.ts` read only the answer text (`chunk.text`), never the request
+   field, so they do not
+   depend on which field carries the schema. Whether Vertex streams a `response_format` answer
+   the same way is unproven (live).
+4. **Shutdown date — none found.** Neither discovery document names a date, nor does the SDK
+   changelog. None is claimed here.
+
+No live probe was possible on 04.10.: the environment had no Vertex credentials, and the Google
+docs hosts were blocked by the egress proxy. So the code is unchanged: `paramsFor` in
+`llm/vertex.ts` builds the one request, and `llm/__tests__/vertex-request.test.ts` hands it to
+the real SDK with only `fetch` replaced. It pins that our zod-derived schema arrives byte for
+byte as `responseJsonSchema` (turn, extraction and a small schema), and it carries a **canary**:
+the day an SDK upgrade starts forwarding `responseFormat`, that test fails. **Re-check #283 at
+the first of:** that canary failing; Google publishing a shutdown date; or **04.11.2026** at the
+latest. A re-check runs one live call each way (`responseJsonSchema` and `response_format`, same
+schema, unary and streamed, the turn and the largest practice schema) and compares acceptance,
+the parsed answer and `usageMetadata`; only with that evidence does the request change.
 
 **What a request carries once** (issue #284, from Recherche 2 of #279). Measured on the request
 by `evals/requests/measure.ts` (real app and Postgres, scripted model; `--tokens` adds a text
