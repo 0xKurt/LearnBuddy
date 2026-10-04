@@ -444,7 +444,14 @@
     "net_square": "cuadrado {{n}} en la fila {{row}}, columna {{col}}",
     "axes3d": "Sistema de coordenadas en el espacio con los ejes x, y y z",
     "axes3d_point": "Punto {{l}}: {{x}} en dirección x, {{y}} en dirección y, {{z}} en dirección z",
-    "axes3d_arrow": "Flecha de {{a}} a {{b}}"
+    "arrow_to": "Flecha de {{a}} a {{b}}",
+    "arrow_to_label": "Flecha de {{a}} a {{b}}: {{label}}",
+    "diagram": "{{kind}} con {{n}} casillas",
+    "diagram_chain": "Cadena",
+    "diagram_cycle": "Ciclo",
+    "diagram_tree": "Esquema en árbol",
+    "diagram_free": "Esquema",
+    "diagram_gap": "hueco {{letter}}"
   },
   "keys": {
     "row": "Símbolos matemáticos",

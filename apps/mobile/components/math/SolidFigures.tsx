@@ -380,7 +380,7 @@ export function describeSpace(fig: SpaceFig, t: T): string {
             z: formatNumber(q.z),
           }),
         ),
-        ...fig.v.map((a) => t('figure.axes3d_arrow', { a: name(a.a), b: name(a.b) })),
+        ...fig.v.map((a) => t('figure.arrow_to', { a: name(a.a), b: name(a.b) })),
       ];
       return parts.join('. ');
     }

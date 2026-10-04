@@ -28,34 +28,16 @@ import {
   isSpaceFigure,
   netKey,
   parseCanonicalKey,
-  SPACE_TYPE_NAMES,
   solidKey,
   spaceProblem,
   unitFactor,
 } from '@learnbuddy/shared-math';
-import { ModelFigure, type Figure } from '@learnbuddy/shared-types/contracts';
+import type { Figure } from '@learnbuddy/shared-types/contracts';
 
 import { t } from '../../i18n/index.js';
 import { asLocale, numberKeyTolerance } from './chartRead.js';
 import type { ItemDraft } from './items.js';
 import { samePoint } from './systems.js';
-
-/**
- * Whether a raw figure is a solid, a net or a coordinate system that may not be shown: its
- * shape does not parse, or it breaks a rule `spaceProblem` knows. Read before the item is
- * parsed, because the item's own parse catches a broken figure to null (`clipDraft`): "Wie viele
- * Kanten hat dieser Körper?" without its solid is no question.
- */
-export function figureIsRejectedSpace(raw: unknown): boolean {
-  if (typeof raw !== 'object' || raw === null) return false;
-  const type = (raw as { type?: unknown }).type;
-  if (typeof type !== 'string' || !(SPACE_TYPE_NAMES as readonly string[]).includes(type)) {
-    return false;
-  }
-  const parsed = ModelFigure.safeParse(raw);
-  if (!parsed.success) return true;
-  return isSpaceFigure(parsed.data) && spaceProblem(parsed.data) !== null;
-}
 
 /** A whole-number key without a unit that is exactly `n`. */
 function exactCount<T extends ItemDraft>(it: T, n: number): T | null {

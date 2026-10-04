@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { net, NET_OPTIONS, solid, SOLID_ITEMS, space } from '../../../testing/scenarios/solids.js';
 import { ItemDraft, itemsOneByOne, usableItems } from '../items.js';
-import { figureIsRejectedSpace } from '../solidCheck.js';
+import { figureIsRejected } from '../wholeFigure.js';
 
 type Item = (typeof SOLID_ITEMS)[number];
 const byPrompt = (start: string) => SOLID_ITEMS.find((i) => i.prompt.startsWith(start)) as Item;
@@ -79,12 +79,12 @@ describe('questions on solids are held to the key code computes', () => {
 
   it('a solid that breaks a rule costs its question, not just the drawing', () => {
     const bad = { ...solid('cuboid', { a: 5, b: 3, h: 2 }, 'volume'), r: 1 };
-    expect(figureIsRejectedSpace(bad)).toBe(true);
+    expect(figureIsRejected(bad)).toBe(true);
     expect(kept({ ...cuboid, figure: bad })).toHaveLength(0);
-    expect(figureIsRejectedSpace(solid('cylinder', { r: 3, h: 5 }, 'edges'))).toBe(true);
-    expect(figureIsRejectedSpace({ ...solid('cube', { a: 2 }, 'none'), u: 'km' })).toBe(true);
-    expect(figureIsRejectedSpace(solid('cube', { a: 2 }, 'none'))).toBe(false);
-    expect(figureIsRejectedSpace({ type: 'fraction' })).toBe(false);
+    expect(figureIsRejected(solid('cylinder', { r: 3, h: 5 }, 'edges'))).toBe(true);
+    expect(figureIsRejected({ ...solid('cube', { a: 2 }, 'none'), u: 'km' })).toBe(true);
+    expect(figureIsRejected(solid('cube', { a: 2 }, 'none'))).toBe(false);
+    expect(figureIsRejected({ type: 'fraction' })).toBe(false);
   });
 });
 
@@ -154,7 +154,7 @@ describe('points in space', () => {
         { l: 'P', x: 2, y: 1, z: 1 },
       ],
     };
-    expect(figureIsRejectedSpace(overlap)).toBe(true);
+    expect(figureIsRejected(overlap)).toBe(true);
     expect(kept({ ...point, answer: '(0|0|0)', figure: overlap })).toHaveLength(0);
   });
 });

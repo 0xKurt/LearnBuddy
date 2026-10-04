@@ -24,25 +24,11 @@ import {
   periodicKey,
   periodicProblem,
 } from '@learnbuddy/shared-math';
-import { ModelFigure } from '@learnbuddy/shared-types/contracts';
 
 import { t } from '../../i18n/index.js';
 import { asLocale, numberKeyTolerance } from './chartRead.js';
 import type { ItemDraft } from './items.js';
 import { fixedChoice } from './treeCheck.js';
-
-/**
- * Whether a raw figure is a periodic table that may not be shown. Read before the item is parsed,
- * because the item's own parse catches a broken figure to null and would hide it: "Wie viele
- * Neutronen hat das markierte Element?" without its table is no question.
- */
-export function figureIsRejectedPeriodic(raw: unknown): boolean {
-  if (typeof raw !== 'object' || raw === null) return false;
-  if ((raw as { type?: unknown }).type !== 'periodic_table') return false;
-  const parsed = ModelFigure.safeParse(raw);
-  if (!parsed.success) return true;
-  return isPeriodicTable(parsed.data) && periodicProblem(parsed.data) !== null;
-}
 
 /**
  * The item with its periodic-table question checked, the item unchanged when it asks nothing code
