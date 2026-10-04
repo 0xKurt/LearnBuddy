@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { isYear, sameClockTime, sameDate, yearIn } from '../dates.js';
+import { clockTime, isYear, sameDate, yearIn } from '../dates.js';
 
 describe('a key that is a year', () => {
   it('is four digits and nothing else', () => {
@@ -73,23 +73,43 @@ describe('two dates', () => {
 
 describe('a clock time', () => {
   it('is the same time when only the separator differs', () => {
-    expect(sameClockTime('14:30', '14.30')).toBe(true);
-    expect(sameClockTime('14:30', '14:30')).toBe(true);
-    expect(sameClockTime('9:05', '9.05')).toBe(true);
-    expect(sameClockTime('9:05', '09.05')).toBe(true);
+    expect(clockTime('14:30', '14.30')).toBe('same');
+    expect(clockTime('14:30', '14:30')).toBe('same');
+    expect(clockTime('9:05', '9.05')).toBe('same');
+    expect(clockTime('9:05', '09.05')).toBe('same');
   });
 
-  it('never calls another time wrong — that meaning is not in the characters (#175)', () => {
-    expect(sameClockTime('14:30', '14:50')).toBe(false);
-    expect(sameClockTime('14:30', '2.30')).toBe(false);
+  it('is a different time only when every reading of the characters disagrees (#175)', () => {
+    // Another time, another ratio, another quotient, another decimal, another product.
+    expect(clockTime('14:30', '14:50')).toBe('different');
+    expect(clockTime('14:30', '15.30')).toBe('different');
+    expect(clockTime('9:05', '9:15')).toBe('different');
+  });
+
+  it('decides nothing where one reading still agrees', () => {
+    // 14:30 on a twelve-hour clock.
+    expect(clockTime('14:30', '2.30')).toBeNull();
+    expect(clockTime('14:30', '02:30')).toBeNull();
+    // The same ratio, reduced.
+    expect(clockTime('14:30', '7:15')).toBeNull();
+    // 14.50 hours is 14:30.
+    expect(clockTime('14:30', '14.50')).toBeNull();
+    // 12:30 as a division is 0.40.
+    expect(clockTime('12:30', '0.40')).toBeNull();
+    // A full hour: as a division the key has no value, so nothing compares against it.
+    expect(clockTime('14:00', '7:00')).toBeNull();
+  });
+
+  it('reads only the colon key and a time-shaped answer', () => {
     // Not a time: an hour past 23, minutes past 59, a single minute digit (that is a division
     // the way German schools write it), anything with a word in it.
-    expect(sameClockTime('25:30', '25.30')).toBe(false);
-    expect(sameClockTime('14:60', '14.60')).toBe(false);
-    expect(sameClockTime('3:4', '3.4')).toBe(false);
-    expect(sameClockTime('14:35 Uhr', '14.35 Uhr')).toBe(false);
+    expect(clockTime('25:30', '25.30')).toBeNull();
+    expect(clockTime('14:60', '14.60')).toBeNull();
+    expect(clockTime('3:4', '3.4')).toBeNull();
+    expect(clockTime('14:35 Uhr', '14.35 Uhr')).toBeNull();
+    expect(clockTime('14:30', 'halb drei')).toBeNull();
     // The key's notation is the colon: a key written with a dot is a number, and reading it as
     // a time would be the guess this module refuses.
-    expect(sameClockTime('14.30', '14:30')).toBe(false);
+    expect(clockTime('14.30', '14:30')).toBeNull();
   });
 });

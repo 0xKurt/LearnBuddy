@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { askedArithmetic, keyAgreesWithPrompt } from '../keyCheck.js';
+import { askedArithmetic, keyAgreesWithPrompt, markedArithmetic } from '../keyCheck.js';
 
 const item = (over: Partial<Parameters<typeof keyAgreesWithPrompt>[0]>) =>
   keyAgreesWithPrompt({ kind: 'numeric', prompt: '6 + 4', answer: '10', unit: null, ...over });
@@ -101,5 +101,38 @@ describe('a key its own maths proves wrong', () => {
     expect(item({ prompt: 'Wie viel?', answer: '12', accepted_answers: ['13'] })).toBe(false);
     expect(item({ prompt: 'Wie lang?', answer: '12 cm', unit: 'cm' })).toBe(true);
     expect(item({ prompt: 'Wie lang?', answer: '12 mm', unit: 'cm' })).toBe(false);
+  });
+});
+
+// ── A calculation inside a sentence, marked by the model (issue #227, finding 4) ─────────────
+describe('the calculation the model marked in a sentence', () => {
+  const sentence = 'Berechne $6 + 4$.';
+
+  it('drops the #157 key on a sentence once the calculation is marked', () => {
+    // Without the marker, a sentence is not read at all — finding 4 showed why guessing fails.
+    expect(item({ prompt: sentence, answer: '8' })).toBe(true);
+    expect(item({ prompt: sentence, answer: '8', computes: '6 + 4' })).toBe(false);
+    expect(item({ prompt: sentence, answer: '10', computes: '6+4' })).toBe(true);
+    // The option the index points at is the key a choice is judged by (#227 Nr. 2).
+    const choice = { kind: 'multiple_choice', prompt: sentence, answer: '8', choices: ['8', '10'] };
+    expect(item({ ...choice, correct_choice: 0, computes: '6 + 4' })).toBe(false);
+    expect(item({ ...choice, correct_choice: 1, computes: '6 + 4' })).toBe(true);
+  });
+
+  it('computes only a marker that really stands in the question', () => {
+    expect(markedArithmetic('Wie viel ist $17 \\cdot 23$?', '17 · 23')).toBe(391);
+    expect(markedArithmetic('$\\frac{1}{2} + \\frac{1}{4}$ ergibt?', '1/2 + 1/4')).toBeCloseTo(
+      0.75,
+    );
+    // Not in the question: no proof against the key, and nothing is claimed.
+    expect(markedArithmetic(sentence, '6 + 5')).toBeNull();
+    // Only as a calculation of its own: not the tail of a number, not half of a longer term.
+    expect(markedArithmetic('Berechne $16 + 4$.', '6 + 4')).toBeNull();
+    expect(markedArithmetic('Berechne $6 + 4 \\cdot 2$.', '6 + 4')).toBeNull();
+    expect(markedArithmetic('Berechne $6 + 4 = $ ?', '6 + 4')).toBe(10);
+    expect(item({ prompt: sentence, answer: '8', computes: '6 + 5' })).toBe(true);
+    // A marker that is no calculation computes nothing.
+    expect(markedArithmetic('Erweitere den Bruch mit 3.', '3')).toBeNull();
+    expect(markedArithmetic(sentence, null)).toBeNull();
   });
 });

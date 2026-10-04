@@ -823,25 +823,46 @@ read (`evals/tts` also needs `SPEECH_BACKEND=google`: it measures a whole voice-
 when each sentence is written, what it costs to synthesise and how long it plays). A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
 
-**Structured output stays on `responseJsonSchema` for now** (issue #283, checked 02.10. and
-again 03.10.2026). The live Vertex discovery documents — v1 and, since revision 20260930 (read
-03.10.), also v1beta1, the version the SDK sends to — mark `GenerationConfig.responseSchema`,
+**Structured output stays on `responseJsonSchema` for now** (issue #283, checked 02.10., 03.10.
+and 04.10.2026). The live Vertex discovery documents — v1 and v1beta1, both revision 20260930
+(read 04.10.); v1beta1 is the version the SDK sends to — mark `GenerationConfig.responseSchema`,
 `responseJsonSchema` and `responseMimeType` deprecated: "Use `response_format` instead". The new
-field is a list of `ResponseFormat` (`text: { mimeType, schema }`, plus audio, image, video); the
-document names no schema keyword list and no shutdown date. We cannot follow it from our side
-yet: `@google/genai` 2.25.0 (ours) and 2.27.0 (newest, published 02.10.2026) declare
-`ResponseFormat` and a `responseFormat` on the raw `GenerationConfig`, but only the
-`countTokens` and Live converters forward it — `GenerateContentConfig` has no such field, and
-the Vertex converter of `models.generateContent` copies only the fields it knows, so a
-`responseFormat` passed in is dropped without an error. So the code is
-unchanged: `paramsFor` in `llm/vertex.ts` builds the one request, and
-`llm/__tests__/vertex-request.test.ts` hands it to the real SDK with only `fetch` replaced. It
-pins that our zod-derived schema arrives byte for byte as `responseJsonSchema` (turn,
-extraction and a small schema), and it carries a **canary**: the day an SDK upgrade starts
-forwarding `responseFormat`, that test fails — that is when #283 is looked at again, with the
-questions still open: which schema subset Vertex EU accepts in `response_format` for
-`gemini-3.6-flash`, whether streaming (`partial.ts`) is unchanged, and whether there is a
-shutdown date (none is published; none is claimed here). Those need a live call.
+field is a list of `ResponseFormat` (`text: { mimeType: APPLICATION_JSON | TEXT_PLAIN, schema }`,
+plus audio, image, video). The four questions of #283, as of 04.10.2026:
+
+1. **SDK support — no.** `@google/genai` 2.25.0 (ours) and 2.27.0 (newest on npm, 02.10.2026)
+   declare `ResponseFormat` and a `responseFormat` on the raw `GenerationConfig`, but only the
+   `countTokens` and Live converters forward it. `GenerateContentConfig` has no such field, the
+   Vertex converter of `models.generateContent` copies only the fields it knows, and a
+   `responseFormat` passed in is dropped without an error. Unreleased `main` of
+   googleapis/js-genai (`src/types.ts`, `src/converters/_models_converters.ts`, read 04.10.) is
+   the same, and the changelog up to 2.27.0 names no such change. The only way to send it today
+   is `httpOptions.extraBody` with a raw `generationConfig.responseFormat`: checked offline, the
+   SDK then puts it on the wire for both `:generateContent` and `:streamGenerateContent` (v1beta1).
+   That bypasses the SDK's types and converter, so it is not a migration we take without proof.
+2. **Schema subset — undocumented.** `TextResponseFormat.schema` is described only as "The JSON
+   schema that the output should conform to"; no keyword list, no limits. Whether our emitted
+   keywords (`type`, `description`, `enum`, `items`, `anyOf`, `properties`,
+   `additionalProperties`, `required`) and our largest schemas are accepted there needs a live
+   call on `eu/gemini-3.6-flash`.
+3. **Streaming — unchanged while the code is unchanged.** `llm/partial.ts`, `buddy/stream.ts` and
+   the streamed path in `vertex.ts` read only the answer text (`chunk.text`), never the request
+   field, so they do not
+   depend on which field carries the schema. Whether Vertex streams a `response_format` answer
+   the same way is unproven (live).
+4. **Shutdown date — none found.** Neither discovery document names a date, nor does the SDK
+   changelog. None is claimed here.
+
+No live probe was possible on 04.10.: the environment had no Vertex credentials, and the Google
+docs hosts were blocked by the egress proxy. So the code is unchanged: `paramsFor` in
+`llm/vertex.ts` builds the one request, and `llm/__tests__/vertex-request.test.ts` hands it to
+the real SDK with only `fetch` replaced. It pins that our zod-derived schema arrives byte for
+byte as `responseJsonSchema` (turn, extraction and a small schema), and it carries a **canary**:
+the day an SDK upgrade starts forwarding `responseFormat`, that test fails. **Re-check #283 at
+the first of:** that canary failing; Google publishing a shutdown date; or **04.11.2026** at the
+latest. A re-check runs one live call each way (`responseJsonSchema` and `response_format`, same
+schema, unary and streamed, the turn and the largest practice schema) and compares acceptance,
+the parsed answer and `usageMetadata`; only with that evidence does the request change.
 
 **What a request carries once** (issue #284, from Recherche 2 of #279). Measured on the request
 by `evals/requests/measure.ts` (real app and Postgres, scripted model; `--tokens` adds a text
@@ -1910,7 +1931,11 @@ dropped before the question is ever asked (`practice/keyCheck.ts`, issue #157): 
 audit put `8` on `6 + 4` and watched the right answer `10` be rejected by a rule check that
 sounds certain, leaving a child to argue with it. Only what arithmetic makes decidable is
 decided — a prompt that is nothing but a constant expression — because claiming to check a
-worded task would be the same mistake one level up (rule 5). Since issues #235, #263 and #227
+worded task would be the same mistake one level up (rule 5). Inside a sentence ("Berechne
+$6 + 4$.") code does not look for the calculation itself — "Erweitere $\frac{2}{5}$ mit 3" holds a
+fraction that is not what is asked (#227 finding 4) — the model marks it in `computes`, and code
+computes the mark when it really stands in the question (`markedArithmetic`; a mark that does not
+proves nothing and is ignored; generate.v1.26, extract.v8.9). Since issues #235, #263 and #227
 (B4–B6, B10) the same holds for what the question PRINTS in its maths: a linear system is solved
 and compared with a key of named values (and a key claiming one solution for a system without
 exactly one is dropped); a single equation in one variable must be satisfied by the key's value
@@ -1932,7 +1957,9 @@ The tutor eval measures that something moved between the two, not only that the 
 stayed locked.
 
 Answers the model judges right that the rules did not know are added to the item's
-accepted answers, so the rules know them next time; otherwise the tutor model judges with a
+accepted answers, so the rules know them next time — never in a test, never past
+`MAX_ACCEPTED`, and never an answer that is the key of another question beside it (same material,
+or same session; issue #227, finding 3); otherwise the tutor model judges with a
 structured decision, and the server enforces invariants (a non-attempt is never graded, a
 revealed answer never counts as right, a rule-checked wrong answer stays wrong). Without a model,
 nothing is graded ("kann ich gerade nicht prüfen"). Each question feeds spaced repetition (FSRS,
@@ -2591,9 +2618,13 @@ so the rules only say it when it is certain; everything else goes to the tutor (
   tutor's, the value may never be called wrong). A key solved for its variable states that value,
   so "-5" for "x = 5" is wrong and "5" is `other_form`. **A date** as day.month.year
   (`dates.ts`): another day is wrong, "14.7.1789" for "14.07.1789" is the same date written
-  shorter. **A clock time** only where it IS the same time ("14.30" for "14:30"), never a
-  different one — the same characters are also a ratio and a division, and that meaning is not in
-  the characters (#175, truth table H-4). **A year inside a sentence** only when the key is a
+  shorter. **A clock time** (`clockTime`): "14.30" for "14:30" is the same time; a different
+  one is wrong only when it is wrong in EVERY reading the characters allow — another time even on
+  a twelve-hour clock, another ratio, another quotient, and for a dot another decimal (hours, or
+  against the key as a division) and another product. Which reading is meant is not in the
+  characters (#175), and it need not be: "14:50" for 14:30 is wrong in all of them, while "7:15"
+  (the same ratio), "2:30" (twelve-hour clock) and "14.50" (decimal hours) stay the tutor's
+  (truth table H-4). **A year inside a sentence** only when the key is a
   four-digit number and the sentence states exactly one: "1788" for 1789 is wrong; two numbers in
   the sentence, or the right year in it, stay the tutor's (a number guessed out of a sentence is
   what finding 4 of the same issue was reverted for). A unit that happens to be a single letter
@@ -2923,7 +2954,7 @@ number, a spelling mode without a typed word, pictures as options (`choice_figur
 `unusedItemFields(kinds)` in `itemFields.ts`, and the listening question uses it too
 (`listen.ts`, `ListenQuestion`): its two kinds (`multiple_choice`, `short`) keep no rubric and no
 tolerance, so neither is in its schema, and `listenItems` stores `rubric: null` (before
-`generate.v1.26` a rubric the model wrote on a listening question was stored as it came).
+`generate.v1.27` a rubric the model wrote on a listening question was stored as it came).
 
 | kind               | items                                                 | structured                                        | bars | staffs | listen | dictation | teach_back |
 | ------------------ | ----------------------------------------------------- | ------------------------------------------------- | ---- | ------ | ------ | --------- | ---------- |
@@ -2943,7 +2974,7 @@ run without sheets was sent before D2; today every call knows its kind, so it is
 narrowed, because code cannot prove a form unusable there: `ModelFigure` (all 25 figure types stay
 in every profile with items, also vocab and speak, and as the options of a listening multiple
 choice — `usableItems` and `listenItems` keep a figure on every kind, so leaving it out needs a
-product rule first, not a profile; at `generate.v1.26` it is 82–84 % of the vocab, speak and listen
+product rule first, not a profile; at `generate.v1.27` it is 82–84 % of the vocab, speak and listen
 schemas and appears twice in every item schema, as `figure` and `choice_figures[]`), the
 extraction schemas (a sheet is read before anyone knows what is on it) and the Buddy turn's
 `actions` (tool growth, D3 deferred by the #279 consensus). Proven by

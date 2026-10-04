@@ -155,6 +155,23 @@ export const ItemDraft = z.object({
    * unchecked key on a chart question is what this field exists to end.
    */
   read: ChartRead.nullable().default(null),
+  /**
+   * The one calculation inside a sentence whose value the key is (issue #227, finding 4): "6 + 4"
+   * for "Berechne $6 + 4$.". Code cannot find it there itself — "Erweitere $\frac{2}{5}$ mit 3"
+   * holds a fraction that is not what is asked — so the model marks it, and code computes it and
+   * drops the question when the key disagrees (`keyCheck.ts`). A marker that is not in the
+   * question proves nothing and is ignored. Optional like `choice_figures`: the drafts code
+   * builds itself compute their keys and need not say so.
+   */
+  computes: z
+    .string()
+    .trim()
+    .max(120)
+    .nullish()
+    .catch(null)
+    .describe(
+      'numeric/short/formula/multiple_choice: when the answer IS the value of one calculation written in the question, that calculation copied exactly as it stands there ("6 + 4" for "Berechne $6 + 4$."); null for anything else — a word problem, an equation, a fraction to expand or reduce',
+    ),
   tolerance: z
     .number()
     .positive()

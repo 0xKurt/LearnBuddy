@@ -9,8 +9,9 @@
 //
 // Where arithmetic makes it decidable, it is decided here — before the question is ever
 // asked. That is a small set on purpose: a question whose prompt is nothing but a constant
-// expression; a system or a single equation the question prints in its maths, solved and
-// compared with the key (#263, #227 B4); a derivative against the function the question
+// expression, or one the model marked inside its sentence (`computes`, #227 finding 4); a
+// system or a single equation the question prints in its maths, solved and compared with the
+// key (#263, #227 B4); a derivative against the function the question
 // defines (#235); a reaction whose key does not balance (#227 B6, #263); a number key whose
 // accepted answers or unit say something else (#227 B5, B10). Everything else needs subject
 // knowledge, and claiming to check it would be the same mistake one level up (CLAUDE.md
@@ -60,12 +61,56 @@ export function askedArithmetic(prompt: string): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
+/** Without spaces, the way `plainMath` writes it: "$6 + 4$" and "6+4" are one calculation. */
+const tight = (s: string) => plainMath(s).replace(/\s+/g, '');
+
+/** What may not touch a marked calculation: it would make it part of a longer number or term. */
+const CONTINUES = /[\d+\-*/·×÷:^(){}\\]/;
+
+/**
+ * Whether `part` stands in `whole` as a calculation of its own: "6+4" in "16+4" or "6+4·2" does
+ * not. A point or a comma continues it only as a decimal separator, between digits; after the
+ * calculation it is usually the end of the sentence.
+ */
+function standsIn(whole: string, part: string): boolean {
+  const decimal = (sep: string, digit: string) => /[.,]/.test(sep) && /\d/.test(digit);
+  for (let at = whole.indexOf(part); at >= 0; at = whole.indexOf(part, at + 1)) {
+    const end = at + part.length;
+    const before = whole[at - 1] ?? '';
+    const after = whole[end] ?? '';
+    if (CONTINUES.test(before) || decimal(before, whole[at - 2] ?? '')) continue;
+    if (CONTINUES.test(after) || decimal(after, whole[end + 1] ?? '')) continue;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * The calculation the model marked inside a sentence (issue #227, finding 4), computed — when it
+ * really stands in the question. Finding it there is not code's to guess (the fraction in
+ * "Erweitere 2/5 mit 3" is not what is asked), but checking a marked one is: a marker the
+ * question does not contain as a calculation of its own proves nothing, and the value is
+ * computed by the same rules as a bare calculation.
+ */
+export function markedArithmetic(
+  prompt: string,
+  computes: string | null | undefined,
+): number | null {
+  if (!computes || !standsIn(tight(prompt), tight(computes))) return null;
+  return askedArithmetic(computes);
+}
+
 /**
  * False only when the question's own arithmetic contradicts the key. Unknown questions and
  * unparseable keys answer true: this says "no proof against it", never "proven right".
  */
-function arithmeticAgrees(item: { prompt: string; answer: string; unit: string | null }): boolean {
-  const asked = askedArithmetic(item.prompt);
+function arithmeticAgrees(item: {
+  prompt: string;
+  answer: string;
+  unit: string | null;
+  computes?: string | null;
+}): boolean {
+  const asked = askedArithmetic(item.prompt) ?? markedArithmetic(item.prompt, item.computes);
   if (asked === null) return true;
   const key = parseCanonicalKey(item.answer);
   if (key.value === null) return true;
@@ -187,7 +232,8 @@ function unitDisagrees(item: { answer: string; unit: string | null }): boolean {
  * then dropped, never repaired (Regel 0, generated content). Every check here can only say
  * "certainly not": a question it cannot read, a key it cannot parse, a system it cannot solve
  * all answer true. What is checked:
- *   - the arithmetic a bare calculation asks for (#157);
+ *   - the arithmetic a bare calculation asks for (#157), or the one the model marked inside a
+ *     sentence (`computes`, #227 finding 4);
  *   - a system of linear equations printed in the question, solved, against a key of named
  *     values — and that it has exactly one solution (#263);
  *   - a single equation in one variable, against the value the key gives it (#227 B4);
@@ -204,6 +250,7 @@ export function keyAgreesWithPrompt(item: {
   accepted_answers?: readonly string[];
   choices?: readonly string[] | null;
   correct_choice?: number | null;
+  computes?: string | null;
 }): boolean {
   // Multiple choice: the option the index points at is the key the learner is judged by
   // (#227 Nr. 2) — "$6 + 4$" with the options 8, 10, 12 and the index on 8 is the #157 case.
@@ -217,6 +264,7 @@ export function keyAgreesWithPrompt(item: {
           prompt: item.prompt,
           answer: chosen,
           unit: item.unit,
+          computes: item.computes,
         });
   }
   if (item.kind !== 'numeric' && item.kind !== 'short' && item.kind !== 'formula') return true;

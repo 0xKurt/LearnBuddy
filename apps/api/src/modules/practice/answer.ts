@@ -903,6 +903,10 @@ export async function answerItem(
         //     list grows without end, every entry widens what counts as right, and a key that
         //     accepts everything accepts a wrong answer too. Postgres does the counting, so two
         //     answers arriving at once cannot both slip past a check done in code.
+        //   - never an answer that is the key of another question beside it — of the same
+        //     material, or of this session where a question has no material (a topic, Buddy):
+        //     "the teacher" judged right for "der Schüler" would otherwise become a rule that
+        //     makes the two questions interchangeable, and that is a model mistake, not a synonym.
         if (
           judged.evaluatedBy === 'model' &&
           judged.verdict === 'correct' &&
@@ -915,8 +919,15 @@ export async function answerItem(
           await tx.query(
             `update items set accepted_answers = array_append(accepted_answers, $3)
             where id = $1 and learner_id = $2 and not ($3 = any(accepted_answers))
-              and coalesce(array_length(accepted_answers, 1), 0) < $4`,
-            [item.id, learner.id, text.trim(), MAX_ACCEPTED],
+              and coalesce(array_length(accepted_answers, 1), 0) < $4
+              and not exists (
+                select 1 from items other
+                 where other.learner_id = $2 and other.id <> items.id
+                   and (other.material_id = items.material_id
+                        or other.id in (select item_id from session_items where session_id = $5))
+                   and lower($3) in (select lower(btrim(k))
+                                       from unnest(array_prepend(other.answer, other.accepted_answers)) k))`,
+            [item.id, learner.id, text.trim(), MAX_ACCEPTED, sessionId],
           );
         }
         const attempted = judged.verdict !== null && judged.verdict !== 'not_an_attempt';
