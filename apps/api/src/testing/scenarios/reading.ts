@@ -2,12 +2,12 @@
 // issue #233): a photographed page with a story of 20 lines and six questions about it — short,
 // multiple choice, true/false and an order — of which code keeps five (one names a line the text
 // does not have). Its own learner: the reading is keyed by her age (11, nobody else's in the
-// walkthrough), so no other spec's queued sheet can be read as hers, nor hers as theirs (#313).
+// walkthrough), so no other spec's sheet can be read as hers, nor hers as theirs (#313, #350).
 // Test tooling only; every answer the walkthrough gives is decided by the rules.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
-import { type ScriptedGateway } from '../fakes.js';
 import { scriptChecks } from './checks.js';
+import { readingRules } from './rules.js';
 
 /** The story as printed: 20 lines of text in five paragraphs, so it scrolls in its box on every phone. */
 const READING_LINES = [
@@ -39,9 +39,12 @@ const READING_LINES = [
 
 const TRANSCRIPT = `# Der Schulweg\n\n${READING_LINES.join('\n')}`;
 
-export function scriptReading(llm: ScriptedGateway): void {
-  llm.whenAsked('extraction', /LEARNER: 11 years/, {
-    json: {
+export function scriptReading(): void {
+  // Before the tour's rules: its photo is the same fixture, and the first matching rule wins.
+  readingRules.add({
+    when: /LEARNER: 11 years/,
+    system: /learner's study material/,
+    answer: () => ({
       is_learning_material: true,
       readable: true,
       title: 'Der Schulweg',
@@ -110,7 +113,7 @@ export function scriptReading(llm: ScriptedGateway): void {
           ],
         },
       ],
-    },
+    }),
   });
   // Buddy acts on the read page: a practice from it, ready on the home (`practice_ready`).
   scriptChecks({

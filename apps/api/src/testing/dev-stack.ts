@@ -22,21 +22,7 @@ import { runTick } from '../modules/scheduler/tick.js';
 import { createTestDatabase, testDatabaseAvailable } from './database.js';
 import { createDevApp, DevAuth, DevStorage } from './dev-app.js';
 import { FakeEmbeddings, FakeSpeech, ScriptedGateway } from './fakes.js';
-import { scriptCloze } from './scenarios/cloze.js';
-import { scriptCoreLoop } from './scenarios/core-loop.js';
-import { scriptDictation } from './scenarios/dictation.js';
-import { scriptDrill } from './scenarios/drill.js';
-import { scriptFigures } from './scenarios/figures.js';
-import { scriptLearningModes } from './scenarios/learning-modes.js';
-import { scriptPrimary } from './scenarios/primary.js';
-import { scriptReading } from './scenarios/reading.js';
-import { scriptTimedTest } from './scenarios/timedTest.js';
-import { scriptRoleplay } from './scenarios/roleplay.js';
-import { scriptTour } from './scenarios/tour.js';
-import { scriptTrees } from './scenarios/trees.js';
-import { installChecks } from './scenarios/checks.js';
-import { installGenerations } from './scenarios/generations.js';
-import { installTurns } from './scenarios/turns.js';
+import { scriptWalkthrough } from './scenarios/walkthrough.js';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const BASE = `http://localhost:${PORT}`;
@@ -60,36 +46,7 @@ async function main(): Promise<void> {
   const storage = new DevStorage(BASE);
   const scripted = new ScriptedGateway();
   const model = process.env.LB_DEV_MODEL === 'disabled' ? new DisabledGateway() : scripted;
-  if (model === scripted) {
-    // First: its generation rule is keyed on her list, and a broader rule registered earlier
-    // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
-    scriptDictation();
-    // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
-    scriptPrimary();
-    scriptCoreLoop(scripted);
-    // Before the learning modes: their "probetest" sentence would answer this one too (#241).
-    scriptTimedTest();
-    scriptLearningModes(scripted);
-    scriptTour(scripted);
-    scriptFigures();
-    scriptTrees();
-    scriptCloze();
-    scriptDrill();
-    scriptRoleplay(scripted);
-    // Keyed by her age, so it never takes another spec's queued sheet (issue #233).
-    scriptReading(scripted);
-    // Chat answers are matched by what the learner wrote and prepared practice by what was
-    // asked for, so one spec cannot shift the answers of the next (issue #81). Installed
-    // after every scenario added its rules.
-    installTurns(scripted);
-    installGenerations(scripted);
-    installChecks(scripted);
-    // A conversation that came to rest is summarised by the scheduler (issue #22); in the
-    // walkthrough nobody asks for those sentences, so one answer for all of them is enough.
-    scripted.byDefault('summary', {
-      json: { summary: 'Sie hat mit Buddy geübt und Fragen gestellt.', topics: ['Üben'] },
-    });
-  }
+  if (model === scripted) scriptWalkthrough(scripted);
   const deps: Deps = {
     config,
     db,

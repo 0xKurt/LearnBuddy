@@ -89,6 +89,25 @@ function cutAfter(text: string, key: string, n: number): number {
 }
 
 /**
+ * " WxH" of a base64 JPEG (its first frame header), or "" for anything else. Enough for a scripted
+ * model to tell two photos apart; the bytes themselves change with every re-encoding.
+ */
+function sizeOf(base64: string): string {
+  const b = Buffer.from(base64, 'base64');
+  if (b[0] !== 0xff || b[1] !== 0xd8) return '';
+  let i = 2;
+  while (i + 9 < b.length && b[i] === 0xff) {
+    const marker = b[i + 1]!;
+    // SOF0–SOF15 carry the size; C4 (huffman), C8 (reserved) and CC (arithmetic) do not.
+    if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+      return ` ${b.readUInt16BE(i + 7)}x${b.readUInt16BE(i + 5)}`;
+    }
+    i += 2 + b.readUInt16BE(i + 2);
+  }
+  return '';
+}
+
+/**
  * The model in tests. Every call must be scripted: an unscripted call is
  * recorded in `unexpected` and fails like an unavailable model, so tests see
  * both the honest degradation and the unexpected call.
@@ -102,26 +121,10 @@ export class ScriptedGateway implements LlmGateway {
   private readonly queues = new Map<LlmPurpose, ScriptedAnswer[]>();
   /** Answers for purposes a test does not care about (scripted answers still come first). */
   private readonly defaults = new Map<LlmPurpose, ScriptedAnswer>();
-  /** Answers for the calls a spec recognises as its own; they come before any queue. */
-  private readonly keyed: Array<{
-    purpose: LlmPurpose;
-    when: RegExp;
-    answer: ScriptedAnswer;
-  }> = [];
 
   /** Answer every unscripted call of this purpose with the same answer. */
   byDefault(purpose: LlmPurpose, answer: ScriptedAnswer): this {
     this.defaults.set(purpose, answer);
-    return this;
-  }
-
-  /**
-   * Answer every call of this purpose whose text (`textOf`) matches `when` — before the queue,
-   * so a spec's own photo is read as its own sheet whichever spec queued a reading first (the
-   * walkthrough runs every spec against one model, issue #81).
-   */
-  whenAsked(purpose: LlmPurpose, when: RegExp, answer: ScriptedAnswer): this {
-    this.keyed.push({ purpose, when, answer });
     return this;
   }
 
@@ -133,7 +136,6 @@ export class ScriptedGateway implements LlmGateway {
   /** Forget scripted answers, calls and errors (between tests sharing one environment). */
   reset(): void {
     this.queues.clear();
-    this.keyed.length = 0;
     this.calls.length = 0;
     this.unexpected.length = 0;
     this.scriptErrors.length = 0;
@@ -148,22 +150,24 @@ export class ScriptedGateway implements LlmGateway {
     return this.calls.filter((c) => c.purpose === purpose);
   }
 
-  /** All text the model saw in a request (state block, dialogue, triggers). */
+  /**
+   * All text the model saw in a request (state block, dialogue, triggers). A photo shows as its
+   * size (`<image 800x1080>`): what she photographed is her input like what she wrote, so a
+   * walkthrough rule can tell one spec's sheet from another's (issue #350).
+   */
   static textOf(req: LlmRequest): string {
     return req.contents
       .flatMap((m) =>
-        m.parts.map((p) => ('text' in p ? `[${m.role}] ${p.text}` : `[${m.role}] <image>`)),
+        m.parts.map((p) =>
+          'text' in p ? `[${m.role}] ${p.text}` : `[${m.role}] <image${sizeOf(p.inlineData.data)}>`,
+        ),
       )
       .join('\n');
   }
 
   async generate(req: LlmRequest): Promise<LlmResult> {
     this.calls.push(req);
-    const own = this.keyed.find(
-      (k) => k.purpose === req.purpose && k.when.test(ScriptedGateway.textOf(req)),
-    );
-    const answer =
-      own?.answer ?? this.queues.get(req.purpose)?.shift() ?? this.defaults.get(req.purpose);
+    const answer = this.queues.get(req.purpose)?.shift() ?? this.defaults.get(req.purpose);
     if (!answer) {
       this.unexpected.push(req);
       throw new LlmError('unavailable', `unscripted model call (${req.purpose})`);
