@@ -111,21 +111,19 @@ describe('the questions of one listening task', () => {
   });
 
   it('checks the option she can tap, not the key beside it', () => {
-    const tapped = (choices: string[], correct: number) =>
+    const tapped = (choices: string[], correct: number, answer = choices[correct]!) =>
       listenItems(
         draft({
           questions: [
-            question({
-              kind: 'multiple_choice',
-              answer: 'whatever the model wrote here',
-              choices,
-              correct_choice: correct,
-            }),
+            question({ kind: 'multiple_choice', answer, choices, correct_choice: correct }),
           ],
         }),
         speech,
       );
     expect(tapped(['a book about horses', 'a doll'], 0)).toHaveLength(1);
+    // A key that is not the option the index points at is two answers to one question: dropped
+    // by the check every multiple choice gets (`choiceProblem`, #227), here too (#374).
+    expect(tapped(['a book about horses', 'a doll'], 0, 'a small blue candle')).toHaveLength(0);
     // The right option is a paraphrase: nothing she heard says it in those words.
     expect(tapped(['a horse book', 'a doll'], 0)).toHaveLength(0);
     // A distractor that happens to use the text's words is perfectly fine — only the

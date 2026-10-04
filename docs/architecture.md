@@ -3212,7 +3212,10 @@ word list, so it stays a prompt rule.
   _What code enforces_ (`practice/listen.ts`): every answer must stand WORD FOR WORD in the spoken
   text (`answerIsInText`, "Regel 0") — a question whose answer the model would have to phrase
   itself is never created, and for a tapped question it is the option she can tap that is checked.
-  Only the content is judged: a slip of the pen on something she understood is right and her
+  What passes then goes through `usableItems`, the checks every other question gets (issue #374):
+  options and their pictures (`choiceProblem`, the figure bounds) and the key against a marked
+  calculation (`computes`, #227) — a listening question is never stored less checked than a
+  written one. Only the content is judged: a slip of the pen on something she understood is right and her
   spelling is never marked (`contentOnly` in `practice/evaluate.ts`, read off the stored text —
   NRW: "sprachliche Verstöße werden nicht gewertet", `lehrplan-und-uebungsformen.md` §7.3, issue
   #197). There is no hint ladder: the help is hearing it again, slower.

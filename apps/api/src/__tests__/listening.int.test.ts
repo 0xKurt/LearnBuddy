@@ -33,6 +33,9 @@ type Q = {
   answer: string;
   choices: string[] | null;
   correct_choice: number | null;
+  /** Pictures as the options and a marked calculation, as any other question may carry (#374). */
+  choice_figures?: unknown[];
+  computes?: string;
 };
 
 const QUESTIONS: Q[] = [
@@ -70,12 +73,8 @@ function script(env: TestEnv, questions: Q[] = QUESTIONS, text = TEXT): void {
         text,
         lang: 'en',
         questions: questions.map((q) => ({
-          kind: q.kind,
-          prompt: q.prompt,
-          answer: q.answer,
+          ...q,
           accepted_answers: [],
-          choices: q.choices,
-          correct_choice: q.correct_choice,
           topic: 'Tom’s Saturday',
           difficulty: 2,
         })),
@@ -96,8 +95,8 @@ describe.skipIf(!dbReady)('Hörverstehen', () => {
     await env?.close();
   });
 
-  const start = () =>
-    lena.api.post<SessionView>('/practice/topic', {
+  const start = <T = SessionView>() =>
+    lena.api.post<T>('/practice/topic', {
       client_request_id: uuid(),
       kind: 'listen',
       text: 'Hörverstehen Englisch üben',
@@ -241,6 +240,70 @@ describe.skipIf(!dbReady)('Hörverstehen', () => {
     // than putting a question about an unheard text in front of her.
     expect(res.status).toBe(404);
     expect(res.body.error.details?.reason).toBe('no_questions');
+  });
+
+  // ── the checks every other question gets (issue #374) ────────────────────────────────────
+
+  const stored = async () =>
+    env.db.query<{ prompt: string; choice_figures: unknown }>(
+      `select prompt, choice_figures from items where learner_id = $1 order by prompt`,
+      [lena.learnerId],
+    );
+  /** A small table as an option's picture: one per option, each different (#231). */
+  const table = (cell: string) => ({ type: 'table', header: ['Weg'], rows: [[cell]] });
+  const BY_BUS = QUESTIONS[1]!;
+  /** A text with a number in it, so a question can mark a calculation whose value is said. */
+  const MONEY_TEXT = `${TEXT} After shopping he counted his money: 13 euros were left in his wallet.`;
+  const LEFT_OVER = (computes: string): Q => ({
+    kind: 'short',
+    prompt: `How many euros were left after ${computes}?`,
+    answer: '13',
+    choices: null,
+    correct_choice: null,
+    computes,
+  });
+
+  it('drops a listening question whose picture options do not hold together', async () => {
+    // Three options, three times the same picture: `choiceProblem` says 'figure_duplicate'.
+    const same = table('Bus');
+    script(env, [QUESTIONS[0]!, { ...BY_BUS, choice_figures: [same, same, same] }]);
+    expect((await start()).status).toBe(201);
+    expect((await stored()).map((r) => r.prompt)).toEqual([QUESTIONS[0]!.prompt]);
+  });
+
+  it('drops a listening question whose key disagrees with the calculation it marks', async () => {
+    // "20 - 8" is 12; the key says 13 (which the text does say, so Rule 0 alone lets it pass).
+    script(env, [QUESTIONS[0]!, LEFT_OVER('20 - 8')], MONEY_TEXT);
+    expect((await start()).status).toBe(201);
+    expect((await stored()).map((r) => r.prompt)).toEqual([QUESTIONS[0]!.prompt]);
+  });
+
+  it('keeps a listening question whose pictures and marked calculation hold', async () => {
+    const pictures = [table('Bus'), table('Fahrrad'), table('Zug')];
+    script(env, [{ ...BY_BUS, choice_figures: pictures }, LEFT_OVER('20 - 7')], MONEY_TEXT);
+    expect((await start()).status).toBe(201);
+    expect(await stored()).toEqual([
+      { prompt: BY_BUS.prompt, choice_figures: pictures },
+      { prompt: 'How many euros were left after 20 - 7?', choice_figures: null },
+    ]);
+  });
+
+  it('refuses the run, honestly, when every listening question fails the checks', async () => {
+    const same = table('Bus');
+    script(
+      env,
+      [{ ...BY_BUS, choice_figures: [same, same, same] }, LEFT_OVER('20 - 8')],
+      MONEY_TEXT,
+    );
+    const res = await start<ErrorBody>();
+    expect(res.status).toBe(422);
+    expect(res.body.error.details?.reason).toBe('not_usable');
+    // No empty run and nothing half-stored.
+    expect(await stored()).toEqual([]);
+    const sessions = await env.db.query(`select 1 from practice_sessions where learner_id = $1`, [
+      lena.learnerId,
+    ]);
+    expect(sessions).toEqual([]);
   });
 
   it('answers another learner’s session and a question without a text with an error', async () => {
