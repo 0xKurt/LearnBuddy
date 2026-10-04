@@ -334,6 +334,49 @@
       "start": "Start with one point: {{ask}}",
       "all": "It's all there – that's exactly how to explain it.",
       "closing": "We'll look at the rest together next time."
+    },
+    "essay": {
+      "form": {
+        "argue_linear": "Comment",
+        "argue_dialectic": "Discussion",
+        "analyse": "Text analysis"
+      },
+      "point": {
+        "intro": {
+          "name": "Introduction",
+          "missing": "Name the topic and your thesis in the introduction."
+        },
+        "arguments": {
+          "name": "Arguments with examples",
+          "missing": "Back up each argument with an example."
+        },
+        "counter": {
+          "name": "Counter-argument",
+          "missing": "Take up a counter-argument and weigh it against your side."
+        },
+        "conclusion": {
+          "name": "Conclusion with your view",
+          "missing": "Say in the conclusion where you stand – and why."
+        },
+        "analysis": {
+          "name": "Analysis of the text",
+          "missing": "Show how the text works: language, structure, devices – and their effect."
+        },
+        "quotes": {
+          "name": "Quotes with lines",
+          "missing": "Back up your reading with a quote and its line, e.g. (l. 12)."
+        },
+        "tense": {
+          "name": "Present tense",
+          "missing": "Write the analysis in the present tense."
+        }
+      },
+      "intro": "{{form}} – where your text stands:",
+      "places": "Here you can still sharpen it:",
+      "place": "“{{quote}}” – {{better}}",
+      "revise": "Rework these places and send me the new version.",
+      "closing": "That was your last version for now. Take these points into your next text.",
+      "unavailable": "I can't read your text right now. It isn't lost – send it again in a moment."
     }
   },
   "contact": {
