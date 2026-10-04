@@ -33,7 +33,7 @@ export type Automaton = {
 };
 export type TreeFigureData = ProbTree | Pedigree | Automaton;
 
-export const TREE_TYPE_NAMES: readonly TreeFigureData['type'][] = ['tree', 'pedigree', 'automaton'];
+const TREE_TYPE_NAMES: readonly TreeFigureData['type'][] = ['tree', 'pedigree', 'automaton'];
 
 export function isTreeFigure(f: { type: string }): f is TreeFigureData {
   return (TREE_TYPE_NAMES as readonly string[]).includes(f.type);
@@ -296,31 +296,43 @@ export const TREE_ROW = 36;
 export const TREE_LEVEL = 56;
 
 /**
- * Where each node of a tree stands: leaves one slot apart in the order they are listed, every
- * other node centred over its first and last child. A probability tree grows to the right (as in
+ * Where each node of a tree stands, in slots across and levels down: leaves one slot apart in the
+ * order they are listed, every other node centred over its first and last child. Shared by the
+ * trees and the diagrams' `tree` layout (issue #247). `kids` must describe a tree from `root`.
+ */
+export function treeSlots(
+  kids: readonly (readonly number[])[],
+  root = 0,
+): { slot: number[]; depth: number[]; leaves: number } {
+  const slot: number[] = [];
+  const depth: number[] = [];
+  let next = 0;
+  // Leaves take slots in the order they are listed; a parent sits between its outer children.
+  const walk = (i: number, d: number): number => {
+    depth[i] = d;
+    const k = kids[i] ?? [];
+    if (k.length === 0) {
+      slot[i] = next++;
+      return slot[i] as number;
+    }
+    const pos = k.map((c) => walk(c, d + 1));
+    slot[i] = ((pos[0] as number) + (pos[pos.length - 1] as number)) / 2;
+    return slot[i] as number;
+  };
+  walk(root, 0);
+  return { slot, depth, leaves: next };
+}
+
+/**
+ * Where each node of a tree stands (`treeSlots`). A probability tree grows to the right (as in
  * the schoolbook, the leaves stacked), a plain tree downwards. Units are pixels at `width`.
  */
 export function treeLayout(
   t: ProbTree,
   width: number,
 ): { at: XY[]; width: number; height: number } {
-  const kids = children(t);
-  const depth = depths(t);
-  const slot: number[] = [];
-  let next = 0;
-  // Leaves take slots in the order they are listed; a parent sits between its outer children.
-  const walk = (i: number): number => {
-    const k = kids[i] ?? [];
-    if (k.length === 0) {
-      slot[i] = next++;
-      return slot[i] as number;
-    }
-    const pos = k.map(walk);
-    slot[i] = ((pos[0] as number) + (pos[pos.length - 1] as number)) / 2;
-    return slot[i] as number;
-  };
-  walk(0);
-  const leaves = Math.max(1, next);
+  const { slot, depth, leaves: count } = treeSlots(children(t));
+  const leaves = Math.max(1, count);
   const levels = Math.max(1, ...depth);
   if (t.pr) {
     // Root at the left edge; the rest share the width, the leaf labels inside the last column.

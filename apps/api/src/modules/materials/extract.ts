@@ -40,10 +40,11 @@ import { TABLE_RULES } from '../practice/table.js';
 // v8.8: a task to mark words, set commas or split syllables becomes one mark task (#234); a
 //       reading group may ask to mark in a sentence of its text.
 // v8.9: a question marks the calculation inside its sentence that the key is (`computes`, #227).
-// v8.10: the schema says what was written for `hints`, a table gap's `also` and the bounds of
+// v8.10: diagrams — boxes with arrows, chains, cycles, trees, grids, gaps lettered A–C (#247).
+// v8.11: the schema says what was written for `hints`, a table gap's `also` and the bounds of
 //        `pages`, `unclear` and `not_practicable`, dropped before by `toJsonSchema` (#282); a
 //        page number and the readings no longer say their bounds twice (#282 D5).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.10';
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.11';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

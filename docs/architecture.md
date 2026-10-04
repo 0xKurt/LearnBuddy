@@ -2943,6 +2943,59 @@ computes the key.** No migration: the figure is an item's `figure` (jsonb), like
   built: prisms on a non-regular base (a right triangle with its legs), Würfelgebäude and their
   views, nets of other solids.
 
+### Diagrams (issue #247)
+
+Boxes with arrows next to a question: chains (Nahrungskette, Kausalkette), cycles
+(Wasserkreislauf, Stoffkreislauf), trees (Gewaltenteilung) and boxes on a small grid (Regelkreis,
+Wirkungsgefüge). **The model writes the boxes and the arrows; code checks them, lays them out and
+holds a gap question to them.** No migration: the figure is an item's `figure` (jsonb).
+
+- **Contract** (`contracts/diagram.ts`): one `ModelFigure` branch `diagram`, short names, no
+  nullable field (the generate item schema grew from 38,698 to 40,782 characters, 0 new
+  `anyOf`). `k` = chain / cycle / tree / free; `n` = 2–8 box texts (`"?"` = a gap); `e` = arrows
+  `{a, b, l}` between box indices with an optional label (≤ 14 characters); `g` = one grid cell
+  `{c 0–2, r 0–3}` per box, for `free` only, else `[]`. No coordinate, size or colour.
+- **Checked, then rejected — never repaired** (`diagramProblem`, `packages/shared-math/src/
+diagram.ts`): every arrow between two boxes that exist, no arrow to itself, at most one arrow
+  each way between two boxes, no box without an arrow, one piece, no box text twice. A chain is
+  one path without a cycle, a cycle one closed ring through every box, a tree one root with every
+  other box reached by one arrow, a free diagram one distinct cell per box. At most three gaps
+  (lettered A, B, C in box order by code), and a gap is a box, never an arrow label. The layout is
+  computed at the narrowest phone (`TREE_WIDTH`, 266 px of drawing): every text must wrap between
+  words into at most three lines of its box (`textWidth`, 12 px: an upper bound by character class,
+  held against DejaVu Sans as Chromium draws it), the drawing at most 300 px tall, no arrow
+  through another box, no label over a box, another label or another arrow. A diagram that
+  breaks a rule costs its
+  **question** (`wholeFigure.ts`, `clipDraft`).
+- **The gap** (`apps/api/src/modules/practice/diagramCheck.ts`): a diagram with a gap is a gap
+  question — `short` or `multiple_choice` (a word bank) — and its key (the answer, every accepted
+  answer, the right option) may stand nowhere else in the picture, as a whole word in a box or on
+  an arrow (`diagramShows`). Which gap the prompt names is language and is not checked (rule 3).
+  A diagram without a gap may ask anything about it. Graded like any short answer or option.
+- **One gate for the figures that are their question** (`practice/wholeFigure.ts`): charts,
+  primary-school figures, trees, the periodic table, solids and diagrams are asked through one
+  `wholeFigureProblem` / `figureIsRejected` — five near-identical `figureIsRejected*` functions
+  were folded into it with this change.
+- **Layout** (`diagramLayout`, the same code on server and app): a chain is a snake — as many
+  boxes a row as fit on two lines each (at most four), the next row back; a cycle a ring in two
+  columns, clockwise from the top left (an odd count starts top centre); a tree top down through
+  `treeSlots` (shared with the trees of #256), a parent box as wide as its row allows; a free
+  diagram on its grid, empty rows left out. A labelled level arrow widens its column gap to its
+  label; a way back runs 6 px beside the way there; a label stands above a level arrow or beside
+  an upright or slanted one, on the first side where it covers no box.
+- **Drawing** (`apps/mobile/components/math/DiagramFigures.tsx`, reached through
+  `schoolFigures.tsx`): rounded boxes, arrows with heads, labels in the small figure size; a gap
+  is a dashed box in the accent colour with its letter. The screen-reader text (`describeDiagram`)
+  says the kind, every arrow with its label and each gap by its letter — never what belongs in
+  it. Walkthrough: `tests/web/diagrams.spec.ts` (Wasserkreislauf with two gaps, word bank,
+  Gewaltenteilung, Regelkreis) at 390 × 844 and 360 × 740, light and dark. The steps every figure
+  walkthrough shares live once in `tests/web/figureWalk.ts`. Library check:
+  `tools/guards/drawing-registry.json`.
+- **Not built yet** (open in #247): boxes to put in order (#228) and arrow labels to match
+  (#229) on a diagram; an arrow label as a gap; several arrows between the same two boxes
+  (Wirtschaftskreislauf with goods and money both ways); a Struktogramm (nested blocks, not
+  boxes and arrows).
+
 ### Explain profiles (issue #281, D2)
 
 Every explain call is sent only the forms its run can use — the schema is derived from the kind

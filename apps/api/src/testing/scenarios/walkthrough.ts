@@ -9,6 +9,7 @@ import type { ScriptedGateway } from '../fakes.js';
 import { installChecks } from './checks.js';
 import { scriptCloze } from './cloze.js';
 import { scriptCoreLoop } from './core-loop.js';
+import { scriptDiagrams } from './diagrams.js';
 import { scriptDictation } from './dictation.js';
 import { scriptDrill } from './drill.js';
 import { scriptFigures } from './figures.js';
@@ -39,6 +40,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptMark();
   // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
   scriptPrimary();
+  // Also before the core loop: "Kreislauf" and "Kette" are everyday words its rules may know (#247).
+  scriptDiagrams();
   // Before the core loop: "Fotosynthese" is a topic an older, broader rule may know (#236).
   scriptTeachBack();
   scriptCoreLoop();

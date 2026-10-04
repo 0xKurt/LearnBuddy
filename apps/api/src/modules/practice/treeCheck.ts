@@ -26,32 +26,13 @@ import {
   accepts,
   possibleGenotypes,
   ratioValue,
-  TREE_TYPE_NAMES,
   treeKey,
   treeProblem,
 } from '@learnbuddy/shared-math';
-import { ModelFigure } from '@learnbuddy/shared-types/contracts';
 
 import { t } from '../../i18n/index.js';
 import { asLocale, numberKeyTolerance } from './chartRead.js';
 import type { ItemDraft } from './items.js';
-
-/**
- * Whether a raw figure is a tree figure that may not be shown: one whose shape does not parse or
- * that breaks a rule `treeProblem` knows. Read before the item is parsed, because the item's own
- * parse catches a broken figure to null and would hide it (`clipDraft`): "Welcher Erbgang liegt
- * vor?" without its pedigree is no question.
- */
-export function figureIsRejectedTree(raw: unknown): boolean {
-  if (typeof raw !== 'object' || raw === null) return false;
-  const type = (raw as { type?: unknown }).type;
-  if (typeof type !== 'string' || !(TREE_TYPE_NAMES as readonly string[]).includes(type)) {
-    return false;
-  }
-  const parsed = ModelFigure.safeParse(raw);
-  if (!parsed.success) return true;
-  return isTreeFigure(parsed.data) && treeProblem(parsed.data) !== null;
-}
 
 /** The item with its options and key as code wrote them, if `correct` is the model's choice. */
 export function fixedChoice<T extends ItemDraft>(
