@@ -305,11 +305,26 @@ describe.skipIf(!dbReady)('Hörverstehen', () => {
       `select prompt, choice_figures from items where learner_id = $1 order by prompt`,
       [lena.learnerId],
     );
-  /** A small table as an option's picture: one per option, each different (#231). */
-  const table = (cell: string) => ({ type: 'table', header: ['Weg'], rows: [[cell]] });
-  const BY_BUS = QUESTIONS[1]!;
-  /** A text with a number in it, so a question can mark a calculation whose value is said. */
-  const MONEY_TEXT = `${TEXT} After shopping he counted his money: 13 euros were left in his wallet.`;
+  /**
+   * A clock as an option's picture: one of the pictures a listening option may be, held to its
+   * option's text (#375, `listen.ts` `HeardOptionFigure`).
+   */
+  const clock = (h: number, m: number, ask = 'time') => ({
+    type: 'clock',
+    c: [{ h, m }],
+    h24: false,
+    ask,
+  });
+  /** A text with a time and a number in it, so a question can show clocks or mark a calculation. */
+  const MONEY_TEXT = `${TEXT} His bus home left at 7:45. After shopping he counted his money: 13 euros were left in his wallet.`;
+  const BUS_HOME: Q = {
+    kind: 'multiple_choice',
+    prompt: 'When did his bus home leave?',
+    answer: '7:45',
+    choices: ['7:45', '8:15', '9:30'],
+    correct_choice: 0,
+  };
+  const CLOCKS = [clock(7, 45), clock(8, 15), clock(9, 30)];
   const LEFT_OVER = (computes: string): Q => ({
     kind: 'short',
     prompt: `How many euros were left after ${computes}?`,
@@ -320,9 +335,9 @@ describe.skipIf(!dbReady)('Hörverstehen', () => {
   });
 
   it('drops a listening question whose picture options do not hold together', async () => {
-    // Three options, three times the same picture: `choiceProblem` says 'figure_duplicate'.
-    const same = table('Bus');
-    script(env, [QUESTIONS[0]!, { ...BY_BUS, choice_figures: [same, same, same] }]);
+    // Three options, three times the same clock: `choiceProblem` says 'figure_duplicate'.
+    const same = clock(7, 45);
+    script(env, [QUESTIONS[0]!, { ...BUS_HOME, choice_figures: [same, same, same] }], MONEY_TEXT);
     expect((await start()).status).toBe(201);
     expect((await stored()).map((r) => r.prompt)).toEqual([QUESTIONS[0]!.prompt]);
   });
@@ -335,20 +350,47 @@ describe.skipIf(!dbReady)('Hörverstehen', () => {
   });
 
   it('keeps a listening question whose pictures and marked calculation hold', async () => {
-    const pictures = [table('Bus'), table('Fahrrad'), table('Zug')];
-    script(env, [{ ...BY_BUS, choice_figures: pictures }, LEFT_OVER('20 - 7')], MONEY_TEXT);
+    script(env, [{ ...BUS_HOME, choice_figures: CLOCKS }, LEFT_OVER('20 - 7')], MONEY_TEXT);
     expect((await start()).status).toBe(201);
     expect(await stored()).toEqual([
-      { prompt: BY_BUS.prompt, choice_figures: pictures },
       { prompt: 'How many euros were left after 20 - 7?', choice_figures: null },
+      { prompt: BUS_HOME.prompt, choice_figures: CLOCKS },
+    ]);
+  });
+
+  it('refuses a picture option outside the listening subset, and one that says nothing (#375)', async () => {
+    // Three distinct tables would pass `choiceProblem` in a practice run — but no table is held to
+    // its option's text, so a listening question with them does not parse. A clock with ask
+    // "none" is no reading of the time either. Only the question with real clocks stays.
+    const table = (cell: string) => ({ type: 'table', header: ['Abfahrt'], rows: [[cell]] });
+    script(
+      env,
+      [
+        { ...BUS_HOME, choice_figures: [table('7:45'), table('8:15'), table('9:30')] },
+        {
+          ...BUS_HOME,
+          prompt: 'At what time did the bus home leave?',
+          choice_figures: [clock(7, 45, 'none'), clock(8, 15, 'none'), clock(9, 30, 'none')],
+        },
+        {
+          ...BUS_HOME,
+          prompt: 'Which clock shows when his bus home left?',
+          choice_figures: CLOCKS,
+        },
+      ],
+      MONEY_TEXT,
+    );
+    expect((await start()).status).toBe(201);
+    expect(await stored()).toEqual([
+      { prompt: 'Which clock shows when his bus home left?', choice_figures: CLOCKS },
     ]);
   });
 
   it('refuses the run, honestly, when every listening question fails the checks', async () => {
-    const same = table('Bus');
+    const same = clock(7, 45);
     script(
       env,
-      [{ ...BY_BUS, choice_figures: [same, same, same] }, LEFT_OVER('20 - 8')],
+      [{ ...BUS_HOME, choice_figures: [same, same, same] }, LEFT_OVER('20 - 8')],
       MONEY_TEXT,
     );
     const res = await start<ErrorBody>();
