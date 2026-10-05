@@ -50,18 +50,3 @@ export function useA11ySettings(): A11ySettings {
   }, []);
   return value;
 }
-
-/** The font weight to use when the OS asks for bold text: one step up, never two. */
-export function boldedWeight(weight: string | undefined, boldText: boolean): string | undefined {
-  if (!boldText) return weight;
-  const up: Record<string, string> = {
-    '300': '500',
-    '400': '600',
-    normal: '600',
-    '500': '700',
-    '600': '800',
-    '700': '800',
-    bold: '800',
-  };
-  return up[weight ?? '400'] ?? weight;
-}
