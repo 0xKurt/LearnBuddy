@@ -44,6 +44,7 @@ import { takeParts } from './partsAnswer.js';
 import { givesHints, learnsFsrs } from './modeRules.js';
 import { asTestTurn, ladderDone, REVEAL_AFTER_MISSES, workedReply } from './ladder.js';
 import { lockActiveSession } from './sessionRow.js';
+import { followWithSimilar } from './similar.js';
 import { settleTestClock, timeUpError } from './testClock.js';
 import {
   answerTextOf,
@@ -855,7 +856,7 @@ export async function answerItem(
     }
   }
 
-  if (session.mode === 'test' && !safeguarded) judged = asTestTurn(judged, learner.locale);
+  if (session.mode === 'test' && !safeguarded) judged = asTestTurn(judged, learner.locale, item);
 
   // A concurrent duplicate of the same answer that won gets its result back (`settleTurn`).
   return settleTurn(
@@ -989,6 +990,10 @@ export async function answerItem(
           ],
         );
         await recordExplained(tx, sessionId, item.id, explained);
+        // The solution shown: a similar task comes right after it (#388, `similar.ts`).
+        if (status === 'revealed' && givesHints(session.mode)) {
+          await followWithSimilar(tx, learner.id, sessionId, item.id);
+        }
         // A free text she did not get right produces NO review: `Again` is a statement about
         // memory, and nothing here was measured (issue #197). Got right, it counts like any
         // other question. The cost is that such a question does not come back on a schedule —

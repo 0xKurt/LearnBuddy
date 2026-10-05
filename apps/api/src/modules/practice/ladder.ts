@@ -8,6 +8,7 @@ import type { AnswerResponse } from '@learnbuddy/shared-types/contracts';
 import { t } from '../../i18n/index.js';
 import { noSingleSolution } from './evaluate.js';
 import { shownSolution, type ItemRow } from './service.js';
+import { answersOnScreen } from './viewParts.js';
 
 /**
  * After this many wrong tries the solution is explained (docs/buddy/03-fahrplan.md §2):
@@ -21,6 +22,18 @@ export const REVEAL_AFTER_MISSES = 3;
  * every prepared one (live finding 1: the first "Tipp" after a miss showed the solution).
  */
 const HINTS_BEFORE_SOLUTION = 2;
+
+/**
+ * After this many misses "Tipp" stands out, once (report #388 §5.5): help avoidance hurts weaker
+ * children, so one quiet offer on the chip she already has — never a pushed hint, never a coach.
+ * One below `REVEAL_AFTER_MISSES`: the offer comes before the solution would.
+ */
+const OFFER_HINT_AFTER_MISSES = REVEAL_AFTER_MISSES - 1;
+
+/** Whether "Tipp" stands out for a question where "Tipp" works: missed twice, no hint taken yet. */
+export function hintOffered(si: { attempts: number; hints_used: number }): boolean {
+  return si.attempts >= OFFER_HINT_AFTER_MISSES && si.hints_used === 0;
+}
 
 /** Whether a (further) request for help shows the solution: the end of the hint ladder. */
 export function ladderDone(i: {
@@ -59,6 +72,10 @@ export function workedReply(
 /**
  * A test: one neutral acknowledgement per answer, never a hint or the
  * solution (whatever the model wrote); what was right comes at the end.
+ *
+ * Asked for help, she gets the test's one line, worded for the form in front of her (issue #388):
+ * "schreib, was du denkst" only where she writes her answer — on options or a board there is
+ * nothing to write, and the line says "antworte" instead.
  */
 export function asTestTurn<
   J extends {
@@ -67,8 +84,13 @@ export function asTestTurn<
     gaveHint: boolean;
     revealed: boolean;
   },
->(j: J, locale: string): J {
+>(j: J, locale: string, item: Parameters<typeof answersOnScreen>[0]): J {
   if (j.verdict === null) return { ...j, gaveHint: false, revealed: false };
-  const key = j.verdict === 'not_an_attempt' ? 'practice.test_no_hints' : 'practice.test_noted';
+  const key =
+    j.verdict !== 'not_an_attempt'
+      ? 'practice.test_noted'
+      : answersOnScreen(item)
+        ? 'practice.test_no_hints_on_screen'
+        : 'practice.test_no_hints';
   return { ...j, reply: t(locale, key), gaveHint: false, revealed: false };
 }

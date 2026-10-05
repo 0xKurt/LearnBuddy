@@ -101,7 +101,7 @@ import {
   flagItem,
   hintItem,
   keepForLater,
-  reexplainItem,
+  explainItem,
   revealItem,
   startCardPass,
 } from '../../lib/api/endpoints.js';
@@ -507,13 +507,13 @@ export default function PracticeScreen() {
     });
   }
 
-  /** "Anders erklären": a new explanation of a shown solution. */
-  function explainAgain(itemId: string, way: ReexplainWay): Promise<void> {
+  /** "Anders erklären", or with `choice` the reason she tapped (#388): Buddy's answer under it. */
+  function explainAgain(itemId: string, way: ReexplainWay, choice?: number): Promise<void> {
     return act(async () => {
       haptic.tap();
       setAgain({ itemId, way });
       try {
-        const res = await reexplainItem(id, itemId, way);
+        const res = await explainItem(id, itemId, way, choice);
         await store(res.session);
         // Heard like every reply of Buddy's: read aloud in voice mode, else told to a screen reader.
         const said = spokenText(res.reply.text, words);
@@ -972,12 +972,14 @@ export default function PracticeScreen() {
                       pending={again?.itemId === item.id ? again.way : null}
                       disabled={locked}
                       delay={1000}
-                      onAsk={(way) => void explainAgain(item.id, way)}
+                      onAsk={(way, choice) => void explainAgain(item.id, way, choice)}
+                      why={shown.why}
                     />
                   ) : null}
                   {open ? (
                     <HelpChips
                       onHint={hint}
+                      hintOffered={shown.hint_offered}
                       // A spoken sentence has no solution to show — it stands in the card, and
                       // the bar under it already offers the one way past it ("Diesmal
                       // überspringen", which is this very `reveal` call). Two names in two

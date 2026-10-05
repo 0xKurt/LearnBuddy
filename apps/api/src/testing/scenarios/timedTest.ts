@@ -19,6 +19,7 @@ export function scriptTimedTest(): void {
         args: {
           kind: 'test',
           text: 'Photosynthese',
+          asked: 'Mach einen Probetest',
           time_limit: { minutes: '10', quote: 'mit Zeit, wie in der Arbeit' },
         },
       },
