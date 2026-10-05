@@ -68,6 +68,65 @@ export const VIEW_OPTIONS = [
   cubes([[2, 2, 2]], 'front'),
 ];
 
+/** Side views as options: B is the building's (2 high in front, 3 behind). */
+const SIDE_OPTIONS = [
+  cubes([[3], [2]], 'side'),
+  cubes([[2], [3]], 'side'),
+  cubes([[1], [1]], 'side'),
+  cubes([[3], [3]], 'side'),
+];
+
+/** Top views as options: C is the building's (the front row's right column empty). */
+const TOP_OPTIONS = [
+  cubes(
+    [
+      [1, 1, 1],
+      [1, 1, 0],
+    ],
+    'top',
+  ),
+  cubes(
+    [
+      [1, 1, 1],
+      [1, 1, 1],
+    ],
+    'top',
+  ),
+  cubes(
+    [
+      [1, 1, 0],
+      [1, 1, 1],
+    ],
+    'top',
+  ),
+  cubes(
+    [
+      [0, 1, 1],
+      [1, 1, 1],
+    ],
+    'top',
+  ),
+];
+
+/** An L standing on its foot (4 × 1) with its arm (1 × 3) on the left: 6 cm² (#418). */
+const L_BASE: Array<[number, number]> = [
+  [0, 0],
+  [4, 0],
+  [4, 1],
+  [1, 1],
+  [1, 3],
+  [0, 3],
+];
+
+/** A house 8 wide, walls 3 high, the ridge at 6: roof sides 5, 36 cm² (#418). */
+const HOUSE_BASE: Array<[number, number]> = [
+  [0, 0],
+  [8, 0],
+  [8, 3],
+  [4, 6],
+  [0, 3],
+];
+
 /** Six squares drawn as text rows ("#" = a square), in reading order. */
 export const net = (rows: string[], ask: 'none' | 'fold' | 'opposite' = 'none', at = 0) => ({
   type: 'cube_net',
@@ -240,6 +299,24 @@ export const MORE_SOLID_ITEMS = [
   },
   {
     ...base,
+    kind: 'numeric',
+    prompt: 'Berechne das Volumen des Prismas mit L-förmiger Grundfläche.',
+    answer: '30',
+    unit: 'cm³',
+    topic: 'Körper',
+    figure: lying(L_BASE, 5, 'volume'),
+  },
+  {
+    ...base,
+    kind: 'numeric',
+    prompt: 'Wie groß ist die Oberfläche des Prismas mit hausförmiger Grundfläche?',
+    answer: '168',
+    unit: 'cm²',
+    topic: 'Körper',
+    figure: lying(HOUSE_BASE, 4, 'surface'),
+  },
+  {
+    ...base,
     kind: 'multiple_choice',
     prompt: 'Welcher Körper entsteht, wenn man dieses Netz faltet?',
     answer: 'Quader',
@@ -247,6 +324,17 @@ export const MORE_SOLID_ITEMS = [
     correct_choice: 0,
     topic: 'Netze',
     figure: solid('cuboid', { a: 5, b: 3, h: 2 }, 'kind', { w: 'net' }),
+  },
+  {
+    ...base,
+    kind: 'multiple_choice',
+    prompt: 'Zu welchem Körper lässt sich dieses Netz falten?',
+    answer: 'Kegel',
+    // Code writes the options and marks the right one; the model only names the solid (#418).
+    choices: ['Prisma', 'Pyramide', 'Zylinder', 'Kegel'],
+    correct_choice: 0,
+    topic: 'Netze',
+    figure: solid('cone', { r: 3, h: 4 }, 'kind', { w: 'net' }),
   },
   {
     ...base,
@@ -291,6 +379,28 @@ export const MORE_SOLID_ITEMS = [
     choice_figures: VIEW_OPTIONS,
     topic: 'Würfelgebäude',
     figure: cubes(STAIRS, 'oblique', 'front'),
+  },
+  {
+    ...base,
+    kind: 'multiple_choice',
+    prompt: 'Welche Ansicht von links gehört zu dem Gebäude?',
+    answer: 'Ansicht B',
+    choices: ['Ansicht A', 'Ansicht B', 'Ansicht C', 'Ansicht D'],
+    correct_choice: 1,
+    choice_figures: SIDE_OPTIONS,
+    topic: 'Würfelgebäude',
+    figure: cubes(STAIRS, 'oblique', 'side'),
+  },
+  {
+    ...base,
+    kind: 'multiple_choice',
+    prompt: 'Welche Ansicht von oben gehört zu dem Gebäude?',
+    answer: 'Ansicht C',
+    choices: ['Ansicht A', 'Ansicht B', 'Ansicht C', 'Ansicht D'],
+    correct_choice: 2,
+    choice_figures: TOP_OPTIONS,
+    topic: 'Würfelgebäude',
+    figure: cubes(STAIRS, 'oblique', 'top'),
   },
 ];
 

@@ -2761,8 +2761,8 @@ phone's number pad is all she needs. A division is shown step by step (issue #41
 is at in full, the steps she has worked on above it shrunk to half-high lines she reads but no longer
 writes in, the steps she has not reached not yet there; the step follows the cell she writes in, a
 quotient digit opens its step again, and every cell still goes to the check. Printed rows are one number to a screen reader ("+1389"), every
-cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.39)
-and read from a sheet (extract.v8.19; a homework sheet: written arithmetic only, its own error is no
+cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.44)
+and read from a sheet (extract.v8.22; a homework sheet: written arithmetic only, its own error is no
 Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86m, 360×740 and
 390×844, light and dark, the keyboard up): four long lines with Buddy's longest reply above fit (six
 were 106 pt too tall, `FIND_ERROR_LINES_MAX`), and five rows of
@@ -3298,15 +3298,25 @@ computes the key.** No migration: the figure is an item's `figure` (jsonb), like
   flat, `n` = its corners, `a` 0. Every side that is a whole number or has one decimal is written
   beside it; a slanted side brings the base's height, dashed from the top corner (`isNice`,
   `lyingPrism`). Volume = shoelace area × length; a surface only when every side of the base is
-  such a number. Not built: L shapes and house shapes (five corners). (2) **nets of solids**: `w`
+  such a number. Since #418 also a **house** (five corners: two upright walls of one height, the
+  ridge above them; its whole height dashed) and an **L** (six corners, every side horizontal or
+  vertical, the inner corner opening to the top right as the letter is written — then no part of
+  the lying prism hides another, and each side face is seen exactly when its outward normal points
+  right or up). Written are the sides `writtenSides` names: not an L's two sides at its inner
+  corner, not a symmetric house's right wall and roof side (they equal the left ones); the
+  screen-reader text says the same sides and the drawn base height (`baseHeight`). (2) **nets of solids**: `w`
   = net draws cube, cuboid, prism (regular or `g`), pyramid, cylinder, cone unfolded, faces filled
   (`packages/shared-math/src/solidNets.ts`: a cuboid's cross, a prism's strip with its two bases,
   a pyramid's base with a triangle on every edge and its face height, a cylinder's rectangle and
   two circles, a cone's sector with its side line); a sphere has none. Every key of the solid holds
   on its net; `ask` = kind ("Welcher Körper entsteht?") is multiple choice whose four options code
-  writes (`NET_KINDS`: cuboid, prism, pyramid, cylinder — six tiles under a net were 3 pt too many on
-  360 × 740; `practice.solid.kind_*`), the model's index held to the net's own kind; the
-  screen-reader text never names the solid there. (3) **Würfelgebäude** (`cubes`,
+  writes (six tiles under a net were 3 pt too many on 360 × 740; `practice.solid.kind_*`). Since
+  #418 it is asked of every net: `NET_KINDS` = cube, cuboid, prism, pyramid, cylinder, cone, and
+  `kindOptions` picks four — the net's own solid among its nearest neighbours there (a cube next
+  to a cuboid, a cone next to a cylinder and a pyramid) — and code marks the right one (the model
+  names the solid in `k`; it cannot know where it stands). A net that would be two options at once
+  is not asked: a cuboid with three equal edges (a cube), a prism on a square or a rectangle (a
+  cuboid). The screen-reader text never names the solid there. (3) **Würfelgebäude** (`cubes`,
   `packages/shared-math/src/cubes.ts`, `components/math/CubeBuildings.tsx`): heights 0–4 on up
   to 4 × 4 columns, row 0 in front; `v` = oblique (Schrägbild, painted back to front with opaque
   faces), plan (Bauplan with the heights), or a view front / side (from the left) / top as an
@@ -3314,8 +3324,19 @@ computes the key.** No migration: the figure is an item's `figure` (jsonb), like
   taller one in its own or the right-hand column, `allSeen` — else it could be any height), or a
   view: multiple choice whose options are views of that direction, exactly one of them the
   building's and `correct_choice` that one (`viewChoiceHolds`, held in `choiceCheck` with the
-  question's own figure). generate.v1.36, extract.v8.16. Walkthrough 99-… in
-  `tests/web/solids.spec.ts`.
+  question's own figure). generate.v1.36, extract.v8.16; the house, the L and "which solid?" of
+  every net generate.v1.41, extract.v8.21 (#418). Walkthrough 99-… in `tests/web/solids.spec.ts`,
+  with the side and the top view of a building since #418.
+- **Where the measures stand (#418):** no measure on a line — drawn or dashed — and none on another
+  measure. `packages/shared-math/src/labelBoxes.ts` `placeLabels` places every label of a solid and
+  a net (the diagrams check their arrow labels with the same boxes, `textWidth`, `crosses`): the
+  drawing says on which side a measure would rather stand, the line it measures (`on`, along which
+  it may move) and the face it belongs inside (`in`, a height inside its solid); the nearest clear
+  place wins, a side whose face runs into the depth is written inside the base. The app's
+  `lib/math/solidLayout.ts` scales the drawing to its width — a Schrägbild at most 0.72 of it high,
+  a net 0.85 (the cylinder's net stood a third of the card wide at a fixed 160 pt) — so a drawing
+  the card shrinks gets lower too; `lib/math/__tests__/solidLayout.test.ts` holds every
+  walkthrough figure clear at the widths of a 360 and a 390 phone.
 
 ### Diagrams (issue #247)
 

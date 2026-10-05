@@ -32,10 +32,13 @@ export const SolidFigure = z.object({
   r: Length,
   u: z.enum(['mm', 'cm', 'dm', 'm']),
   ask: z.enum(['none', 'vertices', 'edges', 'faces', 'volume', 'surface', 'kind']),
-  /** A prism's non-regular base, its front face corner by corner (whole units); else empty. */
+  /**
+   * A prism's non-regular base, its front face corner by corner (whole units; up to six since
+   * #418: a house, an L); else empty.
+   */
   g: z
     .array(z.object({ x: z.number().int().min(0).max(20), y: z.number().int().min(0).max(20) }))
-    .max(4)
+    .max(6)
     .default([]),
   /** "oblique": the Schrägbild; "net": the solid unfolded. */
   w: z.enum(['oblique', 'net']).default('oblique'),

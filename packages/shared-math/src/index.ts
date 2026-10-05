@@ -18,6 +18,7 @@ export * from './space.js';
 export * from './cubes.js';
 export * from './solidNets.js';
 export * from './diagram.js';
+export * from './labelBoxes.js';
 export * from './tap.js';
 export * from './circuit.js';
 export * from './logic.js';
