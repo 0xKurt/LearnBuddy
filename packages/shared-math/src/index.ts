@@ -14,4 +14,6 @@ export * from './pedigree.js';
 export * from './periodic.js';
 export * from './solids.js';
 export * from './space.js';
+export * from './cubes.js';
+export * from './solidNets.js';
 export * from './diagram.js';

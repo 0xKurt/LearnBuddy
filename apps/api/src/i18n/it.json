@@ -327,7 +327,13 @@
     },
     "solid": {
       "net_yes": "Sì, è uno sviluppo del cubo",
-      "net_no": "No, non è uno sviluppo del cubo"
+      "net_no": "No, non è uno sviluppo del cubo",
+      "kind_cube": "cubo",
+      "kind_cuboid": "parallelepipedo",
+      "kind_prism": "prisma",
+      "kind_pyramid": "piramide",
+      "kind_cylinder": "cilindro",
+      "kind_cone": "cono"
     },
     "explain": {
       "point_met": "✓ {{name}}",

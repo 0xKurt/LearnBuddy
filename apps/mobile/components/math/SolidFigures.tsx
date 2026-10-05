@@ -4,27 +4,34 @@
 // decides anything — the projection, which edges are hidden and every key come from
 // packages/shared-math/src/solids.ts and space.ts, the same code that checked the figure on the
 // server. Each figure also says in words what it shows (`describeSpace`).
+//
+// Since #368: a prism with a non-regular base (drawn lying, its base in true shape), any solid but
+// a sphere as its net (`solidNets.ts`, faces filled), and Würfelgebäude (`CubeBuildings.tsx`).
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import type { ReactNode } from 'react';
 import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 
 // Imported by path, like trees.js in TreeFigures: dependency-free, no mathjs in the bundle.
+import { solidNet } from '../../../../packages/shared-math/src/solidNets.js';
 import {
   drawingBox,
+  edgeLength,
+  isNice,
   solidDrawing,
   SOLID_MEASURES,
   type SolidXY,
 } from '../../../../packages/shared-math/src/solids.js';
 import { axesRange, spaceProject } from '../../../../packages/shared-math/src/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { CubesBody, describeCubes, type CubesFig } from './CubeBuildings.js';
 import { FONT, formatNumber, HaloText, SMALL } from './figureText.js';
 import { arrowHead } from './TreeFigures.js';
 
 type SolidFig = Extract<Figure, { type: 'solid' }>;
 type NetFig = Extract<Figure, { type: 'cube_net' }>;
 type AxesFig = Extract<Figure, { type: 'axes3d' }>;
-export type SpaceFig = SolidFig | NetFig | AxesFig;
+export type SpaceFig = SolidFig | NetFig | AxesFig | CubesFig;
 type T = (key: string, values?: Record<string, string | number>) => string;
 
 /** The tallest a solid or a net is drawn, so the answer stays on a small screen. */
@@ -39,6 +46,8 @@ export function SpaceBody({ figure, width }: { figure: SpaceFig; width: number }
       return <NetView fig={figure} width={width} />;
     case 'axes3d':
       return <AxesView fig={figure} width={width} />;
+    case 'cubes':
+      return <CubesBody fig={figure} width={width} />;
   }
 }
 
@@ -52,7 +61,8 @@ const countAsked = (ask: SolidFig['ask']) =>
 
 function SolidView({ fig, width }: { fig: SolidFig; width: number }) {
   const { figure: ink } = useTheme();
-  const drawing = solidDrawing(fig);
+  // Its net, or (a sphere has none, and the server refuses one) its Schrägbild.
+  const drawing = (fig.w === 'net' ? solidNet(fig) : null) ?? solidDrawing(fig);
   const box = drawingBox(drawing);
   // A count is read off the edges alone; the measures would only be in the way.
   const labels = countAsked(fig.ask) ? [] : drawing.labels;
@@ -75,6 +85,9 @@ function SolidView({ fig, width }: { fig: SolidFig; width: number }) {
   const strokes = [...drawing.strokes].sort((a, b) => Number(b.hidden) - Number(a.hidden));
   return (
     <Svg width={width} height={height}>
+      {(drawing.faces ?? []).map((face, i) => (
+        <Path key={`f${i}`} d={`${pathOf(face.map(at))} Z`} fill={ink.fillSoft} stroke="none" />
+      ))}
       {strokes.map((st, i) => (
         <Path
           key={`s${i}`}
@@ -101,7 +114,7 @@ function SolidView({ fig, width }: { fig: SolidFig; width: number }) {
             x={q.x + l.dx * 8}
             y={q.y + dy}
             anchor={anchor}
-            text={`${formatNumber(fig[l.m])} ${fig.u}`}
+            text={`${formatNumber(l.v)} ${fig.u}`}
             color={ink.point}
           />
         );
@@ -339,12 +352,33 @@ export function describeSpace(fig: SpaceFig, t: T): string {
   switch (fig.type) {
     case 'solid': {
       const kind = t(`figure.solid_${fig.k}`, { n: fig.n });
-      if (countAsked(fig.ask)) return t('figure.solid', { kind });
-      const measures = SOLID_MEASURES[fig.k].map((m) =>
-        t(`figure.solid_${m}`, { v: `${formatNumber(fig[m])} ${fig.u}` }),
-      );
-      return `${t('figure.solid', { kind })}. ${measures.join(', ')}`;
+      // A net never names its solid where that is the question, nor its faces where they are.
+      const title =
+        fig.w !== 'net'
+          ? t('figure.solid', { kind })
+          : fig.ask === 'kind' || countAsked(fig.ask)
+            ? t('figure.solid_net_any')
+            : t('figure.solid_net', { kind });
+      if (countAsked(fig.ask)) return title;
+      const v = (x: number) => `${formatNumber(x)} ${fig.u}`;
+      const base = fig.g ?? [];
+      const measures =
+        base.length > 0
+          ? [
+              t('figure.solid_base', {
+                sides: base
+                  .map((p, i) => edgeLength(p, base[(i + 1) % base.length]!))
+                  .filter(isNice)
+                  .map(v)
+                  .join(', '),
+              }),
+              t('figure.solid_h', { v: v(fig.h) }),
+            ]
+          : SOLID_MEASURES[fig.k].map((m) => t(`figure.solid_${m}`, { v: v(fig[m]) }));
+      return `${title}. ${measures.join(', ')}`;
     }
+    case 'cubes':
+      return describeCubes(fig, t);
     case 'cube_net': {
       const x0 = Math.min(...fig.c.map((c) => c.x));
       const y0 = Math.min(...fig.c.map((c) => c.y));

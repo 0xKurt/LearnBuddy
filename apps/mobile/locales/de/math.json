@@ -452,7 +452,16 @@
     "diagram_cycle": "Kreislauf",
     "diagram_tree": "Baumschema",
     "diagram_free": "Schema",
-    "diagram_gap": "Lücke {{letter}}"
+    "diagram_gap": "Lücke {{letter}}",
+    "solid_net_any": "Netz eines Körpers",
+    "solid_net": "Netz: {{kind}}",
+    "solid_base": "Grundfläche mit den Seiten {{sides}}",
+    "cubes": "Würfelgebäude, Reihen von vorn nach hinten: {{rows}}",
+    "cubes_plan": "Bauplan, Reihen von vorn nach hinten: {{rows}}",
+    "cubes_row": "Reihe {{n}}: {{h}} Würfel hoch",
+    "cubes_front": "Ansicht von vorn: {{rows}}",
+    "cubes_side": "Ansicht von links: {{rows}}",
+    "cubes_top": "Ansicht von oben: {{rows}}"
   },
   "keys": {
     "row": "Mathe-Zeichen",

@@ -452,7 +452,16 @@
     "diagram_cycle": "Ciclo",
     "diagram_tree": "Esquema en árbol",
     "diagram_free": "Esquema",
-    "diagram_gap": "hueco {{letter}}"
+    "diagram_gap": "hueco {{letter}}",
+    "solid_net_any": "Desarrollo de un cuerpo",
+    "solid_net": "Desarrollo: {{kind}}",
+    "solid_base": "base de lados {{sides}}",
+    "cubes": "Construcción de cubos, filas de delante hacia atrás: {{rows}}",
+    "cubes_plan": "Plano de construcción, filas de delante hacia atrás: {{rows}}",
+    "cubes_row": "fila {{n}}: {{h}} cubos de alto",
+    "cubes_front": "Vista de frente: {{rows}}",
+    "cubes_side": "Vista desde la izquierda: {{rows}}",
+    "cubes_top": "Vista desde arriba: {{rows}}"
   },
   "keys": {
     "row": "Símbolos matemáticos",

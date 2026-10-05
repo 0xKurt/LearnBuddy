@@ -81,7 +81,8 @@ import { structuredItems, type StructuredItem } from './structured.js';
 // v1.31: a marking text sorted into categories may have 12 words and 72 characters (#368).
 // v1.32: a reading run (read): Buddy's own reading text with its questions (#368), and a reading
 //        question may ask for its Belegstelle (`evidence`).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.32';
+// v1.33: a prism's non-regular base, nets of solids ("which solid?") and Würfelgebäude (#368).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.33';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

@@ -3100,9 +3100,32 @@ computes the key.** No migration: the figure is an item's `figure` (jsonb), like
   390 × 844 and 360 × 740, light and dark. Library check: `tools/guards/drawing-registry.json`.
 - **Not checked by code**: the prompt's words. "Welches Quadrat liegt gegenüber von Quadrat 2?"
   with `at` = 3 is caught only where the number then disagrees; naming a solid ("Wie heißt dieser
-  Körper?") is an ordinary question with the model's options, not computed from the figure. Not
-  built: prisms on a non-regular base (a right triangle with its legs), Würfelgebäude and their
-  views, nets of other solids.
+  Körper?") is an ordinary question with the model's options, not computed from the figure.
+- **The rest (#368):** (1) **a prism with a non-regular base**: `g` = its front face corner by
+  corner (whole units 0–20), drawn as a LYING prism — the base in true shape in front, the length
+  `h` into the depth. Only bases whose area follows from what is drawn: a triangle on a horizontal
+  base line, or a quadrilateral with a horizontal top too (trapezoid, parallelogram); convex, not
+  flat, `n` = its corners, `a` 0. Every side that is a whole number or has one decimal is written
+  beside it; a slanted side brings the base's height, dashed from the top corner (`isNice`,
+  `lyingPrism`). Volume = shoelace area × length; a surface only when every side of the base is
+  such a number. Not built: L shapes and house shapes (five corners). (2) **nets of solids**: `w`
+  = net draws cube, cuboid, prism (regular or `g`), pyramid, cylinder, cone unfolded, faces filled
+  (`packages/shared-math/src/solidNets.ts`: a cuboid's cross, a prism's strip with its two bases,
+  a pyramid's base with a triangle on every edge and its face height, a cylinder's rectangle and
+  two circles, a cone's sector with its side line); a sphere has none. Every key of the solid holds
+  on its net; `ask` = kind ("Welcher Körper entsteht?") is multiple choice whose four options code
+  writes (`NET_KINDS`: cuboid, prism, pyramid, cylinder — six tiles under a net were 3 pt too many on
+  360 × 740; `practice.solid.kind_*`), the model's index held to the net's own kind; the
+  screen-reader text never names the solid there. (3) **Würfelgebäude** (`cubes`,
+  `packages/shared-math/src/cubes.ts`, `components/math/CubeBuildings.tsx`): heights 0–4 on up
+  to 4 × 4 columns, row 0 in front; `v` = oblique (Schrägbild, painted back to front with opaque
+  faces), plan (Bauplan with the heights), or a view front / side (from the left) / top as an
+  option's picture. `ask` = count (the sum; from a Schrägbild only when no column stands behind a
+  taller one in its own or the right-hand column, `allSeen` — else it could be any height), or a
+  view: multiple choice whose options are views of that direction, exactly one of them the
+  building's and `correct_choice` that one (`viewChoiceHolds`, held in `choiceCheck` with the
+  question's own figure). generate.v1.33, extract.v8.14. Walkthrough 99-… in
+  `tests/web/solids.spec.ts`.
 
 ### Diagrams (issue #247)
 
