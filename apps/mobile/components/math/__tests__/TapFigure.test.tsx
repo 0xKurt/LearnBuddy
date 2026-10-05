@@ -30,6 +30,7 @@ const plane: Tappable & Figure = {
 };
 const line: Tappable & Figure = { type: 'number_line', min: 0, max: 5, step: 0.5, points: [] };
 const clock: Tappable & Figure = { type: 'clock', c: [], h24: false, ask: 'none' };
+const map: Tappable & Figure = { type: 'map', v: 'de', hl: [] };
 
 function render(figure: Tappable & Figure, value: string) {
   return renderInApp(<TapFigure figure={figure} value={value} onChange={noop} disabled={false} />);
@@ -64,6 +65,17 @@ describe('her place in words', () => {
     render(plane, '(2|-1)');
     const slider = screen.getByRole('slider', { name: 'Deine Stelle in der Abbildung' });
     expect(slider.getAttribute('aria-valuetext')).toBe('Punkt (2 | −1)');
+  });
+
+  // Issue #251: on a stumme Karte the name of the region she tapped would be the answer itself.
+  it('on a map: that she chose a region; its name only for a screen reader', () => {
+    render(map, '');
+    expect(screen.getByTestId('tap-words').textContent).toBe('Tippe auf das Gebiet in der Karte.');
+    render(map, 'Bayern');
+    expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Gebiet gewählt');
+    const sliders = screen.getAllByRole('slider', { name: 'Deine Stelle in der Abbildung' });
+    expect(sliders[1]?.getAttribute('aria-valuetext')).toBe('Gebiet: Bayern');
+    expect(screen.getAllByTestId('tap-words')[1]?.textContent).not.toContain('Bayern');
   });
 
   it('on a clock: where the hands stand, never the time they make', () => {

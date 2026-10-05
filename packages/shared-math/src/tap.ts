@@ -1,7 +1,7 @@
 // Tapping inside a figure (issue #248, analysis #224 `HOTSPOT_FIG`): a place on a number line, a
-// point of a coordinate system, a column of a bar chart, the time on a clock face. One mechanism
-// for every figure that can be answered by a tap — maps (#251) and labelled pictures (#252) add
-// their figure here, not a second mechanism.
+// point of a coordinate system, a column of a bar chart, the time on a clock face, a region of a
+// map (#251). One mechanism for every figure that can be answered by a tap — labelled pictures
+// (#252) add their figure here, not a second mechanism.
 //
 // What a figure offers to tap is a GRID: one or more axes, each a list of values in drawing
 // order. A tap picks one index per axis (`TapPick`); the answer is that pick written as text, the
@@ -18,10 +18,11 @@
 //     wrong place is wrong; it never reaches a model (CLAUDE.md rule 1).
 //
 // Dependency-free on purpose: the app imports it by path, like `primary.ts`. The shapes below are
-// those of `NumberLineFigure`, `FunctionPlotFigure`, `BarChartFigure` and `ClockFigure`
+// those of `NumberLineFigure`, `FunctionPlotFigure`, `BarChartFigure`, `ClockFigure` and `MapFigure`
 // (packages/shared-types/src/contracts/figure.ts); the API passes the zod-inferred figures in, so
 // a drift between the two fails the typecheck.
 
+import { isMap, mapMarked, mapRegion, mapRegions, type MapFig } from './maps.js';
 import { parseClockAnswer, type Clock } from './primary.js';
 
 export type TapNumberLine = {
@@ -40,10 +41,10 @@ export type TapPlane = {
   points: ReadonlyArray<{ x: number; y: number; label: string | null }>;
 };
 export type TapBars = { type: 'bar_chart'; bars: ReadonlyArray<{ label: string; value: number }> };
-export type Tappable = TapNumberLine | TapPlane | TapBars | Clock;
+export type Tappable = TapNumberLine | TapPlane | TapBars | Clock | MapFig;
 
 /** The figures a question may be answered on by a tap. */
-export const TAP_FIGURES = ['number_line', 'function_plot', 'bar_chart', 'clock'] as const;
+export const TAP_FIGURES = ['number_line', 'function_plot', 'bar_chart', 'clock', 'map'] as const;
 export type TapFigureType = (typeof TAP_FIGURES)[number];
 
 export function isTappable(f: { type: string }): f is Tappable {
@@ -63,7 +64,7 @@ export const TAP_MAX_UNITS = 12;
 export const TAP_MINUTE_STEP = 5;
 
 /** What an axis stands for: the app names it ("x: 2", "Stunde: 7") and draws it accordingly. */
-export type TapAxisName = 'value' | 'x' | 'y' | 'bar' | 'hour' | 'minute';
+export type TapAxisName = 'value' | 'x' | 'y' | 'bar' | 'hour' | 'minute' | 'region';
 export type TapAxis = { name: TapAxisName; values: readonly number[] };
 /** One index per axis of the grid, in the order of `tapAxes`. */
 export type TapPick = readonly number[];
@@ -99,7 +100,8 @@ const key = (label: string) => label.trim().toLocaleLowerCase();
  * The grid a figure offers to tap, or null when it offers none: a figure of another type, a
  * number line or coordinate system too dense for a finger, two columns with one name (a tap
  * could not say which), a clock that already shows a time or counts 24 hours (a dial cannot
- * tell 7:45 from 19:45).
+ * tell 7:45 from 19:45). A map offers its regions — however small, each is tapped by its label
+ * (`regionAt`, maps.ts).
  */
 export function tapAxes(f: Tappable): TapAxis[] | null {
   switch (f.type) {
@@ -128,6 +130,8 @@ export function tapAxes(f: Tappable): TapAxis[] | null {
         { name: 'minute', values: Array.from({ length: 60 / TAP_MINUTE_STEP }, (_, i) => i * 5) },
       ];
     }
+    case 'map':
+      return [{ name: 'region', values: mapRegions(f.v).map((_, i) => i) }];
   }
 }
 
@@ -137,7 +141,8 @@ function written(n: number): string {
 }
 
 /**
- * The answer a pick stands for, written as a key is ("2.5", "(2|-1)", "Mai", "7:45"); null when
+ * The answer a pick stands for, written as a key is ("2.5", "(2|-1)", "Mai", "7:45", "Bayern" —
+ * a region by its German name, as the data writes it); null when
  * the pick is not one of the grid's.
  */
 export function tapText(f: Tappable, pick: TapPick): string | null {
@@ -155,6 +160,8 @@ export function tapText(f: Tappable, pick: TapPick): string | null {
       return f.bars[a]?.label ?? null;
     case 'clock':
       return `${a}:${String(b).padStart(2, '0')}`;
+    case 'map':
+      return mapRegions(f.v)[a]?.de ?? null;
   }
 }
 
@@ -188,7 +195,8 @@ function pointOf(text: string): [number, number] | null {
 /**
  * Where an answer stands on the figure's grid, or null when it stands on none of its places: a
  * value between two of them, a point off the lattice, a name no column has, a time off the
- * five-minute marks. The inverse of `tapText` — and what a key must survive to be tapped at all.
+ * five-minute marks, a name no region of the map has (any of its names in five languages is
+ * one). The inverse of `tapText` — and what a key must survive to be tapped at all.
  */
 export function tapPick(f: Tappable, text: string): TapPick | null {
   const axes = tapAxes(f);
@@ -218,6 +226,10 @@ export function tapPick(f: Tappable, text: string): TapPick | null {
       // 1 … 12 stand at 0 … 11; 0:30 and 12:30 are both on the 12.
       return [(t.h + 11) % 12, t.m / TAP_MINUTE_STEP];
     }
+    case 'map': {
+      const i = mapRegion(f.v, text);
+      return i === null ? null : [i];
+    }
   }
 }
 
@@ -243,7 +255,9 @@ export function tapProblem(f: { type: string }, kind: string, answer: string): s
       ? f.points.some((p) => Math.abs(p.value - (plainNumber(answer) ?? NaN)) <= EPS)
       : f.type === 'function_plot'
         ? f.points.some((p) => tapPick(f, `(${p.x}|${p.y})`)?.join() === pick.join())
-        : false;
+        : isMap(f)
+          ? mapMarked(f).includes(pick[0] ?? -1)
+          : false;
   return shown ? 'the figure already marks the key' : null;
 }
 

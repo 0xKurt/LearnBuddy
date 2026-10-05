@@ -500,7 +500,11 @@
     "cubes_row": "row {{n}}: {{h}} cubes high",
     "cubes_front": "View from the front: {{rows}}",
     "cubes_side": "View from the left: {{rows}}",
-    "cubes_top": "View from above: {{rows}}"
+    "cubes_top": "View from above: {{rows}}",
+    "map_de": "Blank map: Germany with its {{count}} states.",
+    "map_europe": "Blank map: the countries of Europe.",
+    "map_world": "Blank map: the world with its {{count}} continents.",
+    "map_marked": "Marked: {{names}}."
   },
   "keys": {
     "row": "Math symbols",
@@ -553,11 +557,14 @@
     "how_function_plot": "Tap the point in the coordinate system.",
     "how_bar_chart": "Tap a bar.",
     "how_clock": "Tap the clock face where the hand should point.",
+    "how_map": "Tap the region on the map.",
     "value": "Place: {{value}}",
     "point": "Point ({{x}} | {{y}})",
     "bar": "Bar: {{label}}",
+    "region": "Region: {{name}}",
     "chosen_number_line": "Place chosen",
     "chosen_function_plot": "Point set",
+    "chosen_map": "Region chosen",
     "label": "Your place in the figure",
     "up": "up",
     "down": "down",

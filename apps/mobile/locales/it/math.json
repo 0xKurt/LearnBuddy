@@ -500,7 +500,11 @@
     "cubes_row": "fila {{n}}: {{h}} cubi di altezza",
     "cubes_front": "Vista di fronte: {{rows}}",
     "cubes_side": "Vista da sinistra: {{rows}}",
-    "cubes_top": "Vista dall’alto: {{rows}}"
+    "cubes_top": "Vista dall’alto: {{rows}}",
+    "map_de": "Carta muta: la Germania con i suoi {{count}} Länder.",
+    "map_europe": "Carta muta: i paesi d’Europa.",
+    "map_world": "Carta muta: il mondo con i suoi {{count}} continenti.",
+    "map_marked": "Evidenziato: {{names}}."
   },
   "keys": {
     "row": "Simboli matematici",
@@ -553,11 +557,14 @@
     "how_function_plot": "Tocca il punto nel sistema di coordinate.",
     "how_bar_chart": "Tocca una barra.",
     "how_clock": "Tocca il quadrante dove deve puntare la lancetta.",
+    "how_map": "Tocca la regione sulla carta.",
     "value": "Posizione: {{value}}",
     "point": "Punto ({{x}} | {{y}})",
     "bar": "Barra: {{label}}",
+    "region": "Regione: {{name}}",
     "chosen_number_line": "Posizione scelta",
     "chosen_function_plot": "Punto segnato",
+    "chosen_map": "Regione scelta",
     "label": "La tua posizione nella figura",
     "up": "in alto",
     "down": "in basso",

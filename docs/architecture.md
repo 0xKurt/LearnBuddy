@@ -3466,9 +3466,68 @@ pictures (#252) add their figure to it rather than building a second one.
   `tap-figures.int.test.ts` (stored or dropped, exact verdicts without a model, replay, a row
   that no longer holds, another learner); walkthrough `tests/web/tap-figures.spec.ts` (scenario
   `testing/scenarios/tap.ts`).
+- **Maps (#251)** are one figure on this mechanism: §Maps.
 - **Not built here:** laying an amount with coins ("Leg 3,45 €", #254) — a sum of several taps,
   not one place; tapping a cell of the periodic table (#250) or a month of a line or climate chart
   (#245) — each is one `case` on this mechanism.
+
+### Maps (issue #251)
+
+A stumme Karte as a figure: Germany's 16 Länder, the countries of Europe or the seven continents,
+as an atlas prints them — no names on it. Buddy asks to name the marked region ("Wie heißt das
+markierte Bundesland?") or to tap one ("Tippe auf Bayern", the tap mechanism above).
+
+- **Contract** (`packages/shared-types/src/contracts/map.ts`, in `ModelFigure`): `{ type: 'map',
+v: 'de' | 'europe' | 'world', hl: string[] }` — which map, and the marked regions by name. Never
+  a coordinate, never a shape. Prompts: generate.v1.40 / extract.v8.20, together with #418 generate.v1.45 / extract.v8.23 (`FIGURE_RULES`).
+- **Data** (Natural Earth 5.1.2, public domain — decision in #224): `packages/shared-math/scripts/
+maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a school map's frame,
+  the land around it as untappable context) and admin-0 1:110m (the continents; Russia split at
+  the Ural, 60° E), projects (equirectangular at 51° N; Lambert azimuthal equal-area at 10° E
+  52° N; the Natural Earth projection), simplifies (Douglas–Peucker) and writes two files:
+  `maps.data.ts` — every region's id and its names in the five languages plus other names
+  (8 KB, used by the server) — and `mapShapes.data.ts` — the outlines in a frame 1000 wide, each
+  labelled at its pole of inaccessibility (92 KB, used only by the app). The generated files are
+  in `.prettierignore` and checked byte for byte (`maps.mjs <dir> --check`); node ≥ 22.18 runs the
+  script, which imports `regions.ts` itself.
+- **One geometry for named regions** (`packages/shared-math/src/regions.ts`, dependency-free,
+  shared with the labelled pictures of #252): a name resolved in any language, ignoring case and
+  dashes (`regionNamed`); a point inside a region by winding number (outlines one way round,
+  holes the other — Berlin is a hole in Brandenburg); `regionPole`, the largest circle inside a
+  region, for its label and for how wide a finger may be; `regionAt`, which region a finger
+  means — a region narrower than a finger whose label it is near (its catch radius at most half
+  the way to the next label, so no label is caught by another), else the topmost region under
+  it, else the nearest: a tap never misses.
+- **Rule 0, generation** (`apps/api/src/modules/practice/mapCheck.ts`, in `usableItems` before
+  the tap check): every marked name must be a region of the map (stored as its id — "France" →
+  "FR"); a typed question must be short with exactly one region marked and that region as the
+  key; a tap question's key must be a region the map does not mark (the tap check, `tapProblem`)
+  and big enough for a finger on the narrowest phone — a 24 pt target inside it or around its
+  label when the map is drawn in 320 × 330 pt (`regionTappable`, `REGION_TAP_BOX`; WCAG 2.2,
+  2.5.8). That room is real: the figure she answers in is capped at 45 % of what she sees
+  (`boardCap`, lib/practice/visuals.ts — 333 pt on 360 × 740), so Germany, taller than
+  wide, is drawn 244 pt wide there. Every Land and every continent is tappable; on the
+  map of Europe only the larger countries are (Luxembourg, Belgium, the Balkans are named, not
+  tapped). A capital, a river, a neighbour as the key: dropped, the data does not hold them.
+- **Rule 0, grading:** a tapped region exactly (`tapVerdict`, as every tap); a typed name of the
+  marked region by the data (`mapRuleVerdict`): "Bavaria" and "Bayern" are one region, another
+  region of the map is wrong — never the tutor's.
+- **Screen:** `components/math/MapFigures.tsx` draws it (Länder and countries with their borders,
+  a continent as one outline — the outline under all fills, so no inner border shows); the shapes
+  come with the first map (`lib/math/useMapShapes.ts` on `lib/lazyModule.ts`, the same loader as
+  VexFlow's), until then the map keeps its height (`MAP_HEIGHTS`). Tapping is `TapFigure` with a
+  `case` in `tapLayout` (`regionAt` at the drawn width, the region filled as her mark with a dot on
+  its label). The line under the map says only "Gebiet gewählt"; the region's name in her
+  language is the screen reader's (`aria-valuetext`, #409).
+- Tests: `packages/shared-math/src/__tests__/maps.test.ts` (data invariants, names DE/EN/FR and
+  every name unique per map, regions to tap, every Land and continent at its label, Berlin inside
+  Brandenburg), `lib/math/__tests__/tapLayout.test.ts`, `TapFigure.test.tsx`,
+  `map-figures.int.test.ts` (stored or dropped, ids stored, exact verdicts without a model, another
+  learner); walkthrough `tests/web/tap-figures.spec.ts` (all 16 Länder tapped at 360 × 740,
+  scenario `testing/scenarios/map.ts`).
+- **Not built here:** the Gradnetz and "Welche Koordinaten hat der Punkt?"; capitals, rivers,
+  mountains as points; zoom (it would let the small countries of Europe be tapped); the Bundesland
+  of her own profile as a default map.
 
 ### Circuits, logic gates and the colour wheel (issue #261)
 
