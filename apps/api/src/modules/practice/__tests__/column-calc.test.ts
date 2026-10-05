@@ -19,6 +19,7 @@ import {
   columnProblem,
   columnReply,
   columnSolution,
+  columnStepOf,
   columnTaskFrom,
   type ColumnCheck,
 } from '../columnCalc.js';
@@ -211,6 +212,16 @@ describe('column_calc: what the model wrote (Regel 0)', () => {
     expect(columnReply('de', checked(div, { [at(0, 8)]: '5' }))).toBe(
       'Noch nicht ganz – die 3. Ziffer des Ergebnisses stimmt noch nicht.',
     );
+  });
+
+  it('knows the division step of the first cell not right yet, for the app to open (#420)', () => {
+    const div = task('div', '672', '3');
+    expect(columnStepOf(checked(div, { [at(5, 2)]: '3' }))).toBe(3);
+    expect(columnStepOf(checked(div, { [at(2, 1)]: '' }))).toBe(1);
+    // A quotient digit opens its own step: the second digit, the second step.
+    expect(columnStepOf(checked(div, { [at(0, 7)]: '9' }))).toBe(2);
+    expect(columnStepOf(checked(div))).toBeNull();
+    expect(columnStepOf(checked(task('add', '47', '38'), { [at(3, 3)]: '9' }))).toBeNull();
   });
 
   it('rejects a grid that would not fit a 360×740 phone: four division steps are too many rows', () => {

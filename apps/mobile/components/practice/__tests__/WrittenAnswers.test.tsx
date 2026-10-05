@@ -10,6 +10,8 @@
 //   · Schriftlich teilen (#413): die Treppe zeigt den Schritt, an dem sie ist, und darüber die
 //     bearbeiteten, auf halbe Zeilen geschrumpft und nicht mehr beschreibbar; die Ziffer des
 //     Ergebnisses öffnet ihren Schritt wieder. Geschickt wird trotzdem jedes Feld.
+//   · Wieder öffnen (#420): ein bearbeiteter Schritt ist ein Knopf „Schritt 2 bearbeiten“, und den
+//     Schritt, den Buddys Antwort nennt, öffnet die App selbst — mit dem Finger in seiner ersten Zelle.
 //
 // Ob das Größte samt Buddys Antwort auf 360×740 passt, misst der Walkthrough
 // (tests/web/written.spec.ts), nicht diese Schicht.
@@ -19,7 +21,7 @@ import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
-import { ColumnAnswer, digitOf } from '../ColumnAnswer.js';
+import { ColumnAnswer, digitOf, type StepOpen } from '../ColumnAnswer.js';
 import { FindErrorAnswer } from '../FindErrorAnswer.js';
 
 const PATH: FindErrorTaskView = {
@@ -155,13 +157,14 @@ describe('Fehlerdetektiv', () => {
 });
 
 describe('schriftlich rechnen', () => {
-  function show(onSubmit = vi.fn(), view = SUM) {
+  function show(onSubmit = vi.fn(), view = SUM, opens: StepOpen | null = null) {
     renderInApp(
       <ColumnAnswer
         view={view}
         draftKey={`col.${Math.random()}`}
         disabled={false}
         onSubmit={onSubmit}
+        opens={opens}
       />,
     );
     return onSubmit;
@@ -250,5 +253,23 @@ describe('schriftlich rechnen', () => {
       },
       '24',
     );
+  });
+
+  it('opens a finished step again by a tap or a screen reader, her finger in its first cell (#420)', () => {
+    show(vi.fn(), DIV);
+    fireEvent.change(screen.getByTestId('column-r0c5'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('column-r0c6'), { target: { value: '4' } });
+    fireEvent.focus(screen.getByTestId('column-r0c6'));
+    // The first step, finished, is one button by its name.
+    fireEvent.click(screen.getByRole('button', { name: 'Schritt 1 bearbeiten' }));
+    expect(screen.getByTestId('column-r1c0').tagName).toBe('INPUT');
+    expect(document.activeElement).toBe(screen.getByTestId('column-r1c0'));
+    expect(screen.getByRole('button', { name: 'Schritt 2 bearbeiten' })).toBeDefined();
+  });
+
+  it('opens the step Buddy’s reply names, though she has not written in it yet (#420)', () => {
+    show(vi.fn(), DIV, { step: 2, turn: 't1' });
+    expect(screen.getByTestId('column-r3c0').tagName).toBe('INPUT');
+    expect(document.activeElement).toBe(screen.getByTestId('column-r3c0'));
   });
 });

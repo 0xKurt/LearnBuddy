@@ -537,6 +537,18 @@ export function columnReply(locale: string, check: ColumnCheck): string {
   }
 }
 
+/**
+ * The division step the first cell that is not right yet belongs to (issue #420): its product or
+ * difference, or the quotient digit that opens it — 1 the first. Null outside a staircase (a
+ * carry, a digit of a sum) and when every cell is right.
+ */
+export function columnStepOf(check: ColumnCheck): number | null {
+  const first = check.first;
+  if (first === null) return null;
+  if (first.part === 'product' || first.part === 'difference') return first.step;
+  return first.part === 'quotient' ? quotientDigits(check) - first.place : null;
+}
+
 /** How many digits the quotient has: one per division step. */
 function quotientDigits(check: ColumnCheck): number {
   return check.parts.filter((p) => /^r0c/.test(p.id)).length;

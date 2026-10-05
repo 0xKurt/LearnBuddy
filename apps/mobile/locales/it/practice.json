@@ -369,6 +369,7 @@
     "task": "Esercizio"
   },
   "column": {
+    "reopen": "Modifica il passo {{step}}",
     "check_waits": "Quando hai scritto una cifra.",
     "carry": "Riporto, {{place}}",
     "result": "Risultato, {{place}}",

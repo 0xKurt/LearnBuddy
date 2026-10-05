@@ -369,6 +369,7 @@
     "task": "Énoncé"
   },
   "column": {
+    "reopen": "Modifier l'étape {{step}}",
     "check_waits": "Dès que tu as écrit un chiffre.",
     "carry": "Retenue, {{place}}",
     "result": "Résultat, {{place}}",
