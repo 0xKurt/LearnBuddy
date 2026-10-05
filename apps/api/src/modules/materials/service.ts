@@ -9,14 +9,17 @@
 // ready | failed(reason). Nothing claims "in the background" unless a job
 // exists for it.
 
-import type {
-  ClarifyUnclearRequest,
-  CreateMaterialRequest,
-  CurriculumRegion,
-  LibraryView,
-  MaterialView,
-  NotPracticable,
-  PageProblem,
+import {
+  FINAL_FAILURES,
+  PHOTOS_GONE_AT_ONCE,
+  type ClarifyUnclearRequest,
+  type CreateMaterialRequest,
+  type CurriculumRegion,
+  type LibraryView,
+  type MaterialSource,
+  type MaterialView,
+  type NotPracticable,
+  type PageProblem,
 } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
@@ -40,11 +43,9 @@ import {
   clarifiedRules,
   EXTRACT_PROMPT_VERSION,
   EXTRACT_SYSTEM,
-  ExtractionParse,
   MOST_READINGS,
   MOST_UNCLEAR_SPOTS,
   moreRules,
-  ExtractionResult,
   type PageReport,
   type UnclearReport,
   HOMEWORK_SYSTEM,
@@ -52,20 +53,22 @@ import {
   LEAN_RULES,
 } from './extract.js';
 import { emitEvent } from '../buddy/events.js';
-import {
-  filesWhollyIn,
-  MAX_PAGES,
-  MAX_PDF_BYTES,
-  PDF_MIME,
-  pageRanges,
-  pdfPageCount,
-} from './pdf.js';
+import { filesWhollyIn, MAX_PAGES, MAX_PDF_BYTES, PDF_MIME, pdfPageCount } from './pdf.js';
 import { attachConceptImages } from './images.js';
+import { loadPhotos } from './photos.js';
 import { indexMaterialPassages } from './passages.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
+import {
+  applySource,
+  photoRetentionMs,
+  ReadingParse,
+  SOURCE_RULES,
+  SOURCES_PROMPT_VERSION,
+  StudyExtraction,
+} from './sources.js';
 
 // Both exported for the schema inventory (`evals/schema`, issue #281); nothing else reads them.
-export const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
+export const EXTRACTION_SCHEMA = toJsonSchema(StudyExtraction);
 export const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
 const ABANDON_UPLOAD_MS = 24 * 3_600_000;
 const MAX_EXTRACTION_ATTEMPTS = 3;
@@ -90,6 +93,7 @@ type MaterialRow = {
   failure_reason: MaterialView['failure_reason'];
   photo_count: number;
   purpose: 'study' | 'homework';
+  source: MaterialSource;
   page_problems: PageProblem[];
   /** The sheet holds more questions than were read into items (issue #150). */
   items_incomplete: boolean;
@@ -160,6 +164,7 @@ function toView(
     item_count: m.item_count,
     speak_count: m.speak_count,
     purpose: m.purpose,
+    source: m.source,
     session_id: m.session_id,
     session_status: m.session_status,
     page_problems: m.pages_resolved_at ? [] : m.page_problems,
@@ -529,14 +534,9 @@ export async function retryMaterial(
     if (!m) throw new AppError('not_found', 'Material not found');
     if (m.status !== 'failed')
       throw new AppError('conflict', 'Only failed material can be retried');
-    if (
-      m.failure_reason === 'not_learning_material' ||
-      m.failure_reason === 'blocked' ||
-      // The sheet was read perfectly well: every task on it is an exercise form Buddy has
-      // no exercise for (issue #198). A second reading finds the same tasks — nothing about
-      // the photo or the reading is what went wrong, so there is nothing to try again.
-      m.failure_reason === 'form_not_practicable'
-    ) {
+    // Not learning material, refused by the filter, every task a form Buddy has no exercise
+    // for (#198), a corrected test with nothing marked (#259): a second reading gives the same.
+    if (m.failure_reason && FINAL_FAILURES.has(m.failure_reason)) {
       throw new AppError('conflict', 'Reading this again would give the same answer', {
         reason: m.failure_reason,
       });
@@ -618,10 +618,8 @@ export async function markMaterialFailed(
   // `form_not_practicable` is deliberately NOT one of them (issue #198): that sheet is
   // valid school material, read without trouble — she may well want to look at it, so its
   // photos keep the normal retention like any other sheet's.
-  const keepMs =
-    reason === 'not_learning_material' || reason === 'blocked'
-      ? 0
-      : PHOTO_RETENTION_DAYS * 86_400_000;
+  // A corrected test with nothing marked shows a grade: its photos go at once too (#259).
+  const keepMs = PHOTOS_GONE_AT_ONCE.has(reason) ? 0 : PHOTO_RETENTION_DAYS * 86_400_000;
   await enqueueJob(tx, {
     learnerId: m.learner_id,
     kind: 'purge_photos',
@@ -697,53 +695,6 @@ async function retryTransient(
   return fail(deps, job, materialId, 'model_error', { uncounted: true });
 }
 
-type PhotoRow = {
-  position: number;
-  storage_path: string;
-  mime: 'image/jpeg' | 'image/png' | 'application/pdf';
-  page_count: number | null;
-};
-
-async function photosOf(db: Db, materialId: string): Promise<PhotoRow[]> {
-  return db.query<PhotoRow>(
-    `select position, storage_path, mime, page_count from material_photos
-      where material_id = $1 order by position`,
-    [materialId],
-  );
-}
-
-/**
- * The photos of one material as a reading request sees them. Each is labelled, so a page number
- * in the answer names this photo and not the model's count of unlabelled images
- * (p2-model-page-numbers-unlabeled-images); a PDF brings its pages in one file, and its label
- * says which page numbers they are.
- *
- * `missing` is the position of the first photo Storage does not have — nothing can be read then.
- * A Storage OUTAGE is not a missing photo and is thrown as such (`StorageError`), so a caller
- * never reports "photos missing" for a provider that was simply unreachable.
- */
-async function photoPartsOf(
-  deps: Deps,
-  photos: PhotoRow[],
-): Promise<{ parts: LlmPart[]; missing: number | null }> {
-  const ranges = pageRanges(photos);
-  const pageTotal = ranges.at(-1)?.last ?? 0;
-  const parts: LlmPart[] = [];
-  for (const [i, p] of photos.entries()) {
-    const bytes = await deps.storage.download(p.storage_path);
-    if (!bytes) return { parts, missing: p.position };
-    const range = ranges[i]!;
-    parts.push({
-      text:
-        p.mime === PDF_MIME
-          ? `PDF with pages ${range.first}–${range.last} of ${pageTotal} (one page report per PDF page):`
-          : `Photo ${range.first} of ${pageTotal}:`,
-    });
-    parts.push({ inlineData: { mimeType: p.mime, data: Buffer.from(bytes).toString('base64') } });
-  }
-  return { parts, missing: null };
-}
-
 type ReadingLearner = {
   id: string;
   locale: string;
@@ -786,8 +737,9 @@ async function sheetReader(
     callModel(deps, learner.id, localParts(opts.now, tz).date, {
       purpose: 'extraction',
       tier: 'smart',
-      promptVersion: EXTRACT_PROMPT_VERSION,
-      system: `${opts.homework ? HOMEWORK_SYSTEM : EXTRACT_SYSTEM}${
+      promptVersion: `${EXTRACT_PROMPT_VERSION}${opts.homework ? '' : `+${SOURCES_PROMPT_VERSION}`}`,
+      // A study reading also says what kind of page it is (issue #259); homework never does.
+      system: `${opts.homework ? HOMEWORK_SYSTEM : `${EXTRACT_SYSTEM}\n\n${SOURCE_RULES}`}${
         lean ? `\n\n${LEAN_RULES}` : ''
       }${extra ? `\n\n${extra}` : ''}`,
       contents: [
@@ -851,16 +803,16 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   );
   if (started.length === 0) return; // the lease went to another run
 
-  const photos = await photosOf(deps.db, materialId);
   let loaded;
   try {
-    loaded = await photoPartsOf(deps, photos);
+    loaded = await loadPhotos(deps, materialId);
   } catch (err) {
     // An outage is not a missing photo (storage-errors-reported-as-missing-photos).
     if (err instanceof StorageError) return retryTransient(deps, job, materialId, 'storage');
     throw err;
   }
   if (loaded.missing !== null) return fail(deps, job, materialId, 'photos_missing');
+  const { photos } = loaded;
   const now = deps.now();
   const homework = m.purpose === 'homework';
   const {
@@ -898,12 +850,13 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       lean = true;
       res = await read(lean);
     }
-    result = ExtractionParse.safeParse(res.json);
+    result = ReadingParse.safeParse(res.json);
     // The sheet has more than one answer could hold: read it again for the rest (#150).
     // A word list with fifty pairs is fifty questions — "das kunstlich deckeln ist der
     // falsche weg" (owner, 30.09.). Homework is a short list by design and is never
     // continued; a reading that had to go lean is already at the model's limit.
-    if (!homework && result.success) {
+    // A corrected test and a notebook entry are short by design and never continued (#259).
+    if (!homework && result.success && result.data.source === 'sheet') {
       for (let pass = 1; pass < MOST_READINGS && result.data.more_items; pass++) {
         const seen = [...result.data.items, ...result.data.structured].map((it) => it.prompt);
         let next;
@@ -915,7 +868,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           if (err instanceof LlmError && (err.retryable || err.truncated)) break;
           throw err;
         }
-        const parsed = ExtractionParse.safeParse(next.json);
+        const parsed = ReadingParse.safeParse(next.json);
         if (!parsed.success) break;
         const known = new Set(seen.map(samePrompt));
         const fresh = parsed.data.items.filter((it) => !known.has(samePrompt(it.prompt)));
@@ -964,8 +917,11 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     return fail(deps, job, materialId, 'model_error');
   }
   if (!result.success) return fail(deps, job, materialId, 'model_error');
-  const x = result.data;
-  if (!x.is_learning_material) return fail(deps, job, materialId, 'not_learning_material');
+  if (!result.data.is_learning_material)
+    return fail(deps, job, materialId, 'not_learning_material');
+  // What kind of page it is decides what is kept of the reading (issue #259, sources.ts).
+  const sourced = applySource(result.data, m.photo_count);
+  const x = sourced.reading;
   // The ordinary questions, and after them the structured ones that pass Regel 0 (#228–#230):
   // an order, a table or links to make, each checked by code before it is stored. Then each
   // reading text's group (#233), checked against the text and the transcription of the sheet —
@@ -983,6 +939,8 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // page report tells Lena what is missing.
   const somePageRead = x.pages.some((p) => p.page <= m.photo_count && p.read !== 'none');
   if (!x.readable && !somePageRead) return fail(deps, job, materialId, 'unreadable');
+  // A corrected test with nothing marked wrong: nothing to practise, nothing kept (#259).
+  if (sourced.nothingMarked) return fail(deps, job, materialId, 'nothing_marked');
   // Read without trouble, and nothing on it is an exercise form Buddy can practise
   // (issue #198): its own reason, before the two that blame the reading or the photo. A
   // reading that NAMED the tasks it refused has said why there is nothing to practise, and
@@ -1023,13 +981,15 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       learnerId: learner.id,
       timezone,
     });
-    await attachConceptImages(deps, {
-      materialId,
-      sheetId: sheetForImages,
-      learnerId: learner.id,
-      locale: learner.locale,
-      timezone,
-    });
+    // A corrected test's photos are gone already (sources.ts): nothing to crop, and nothing of it should be.
+    if (x.source !== 'corrected_test')
+      await attachConceptImages(deps, {
+        materialId,
+        sheetId: sheetForImages,
+        learnerId: learner.id,
+        locale: learner.locale,
+        timezone,
+      });
   }
 
   async function readyTx(tx: Db): Promise<'ready' | 'deleted'> {
@@ -1101,7 +1061,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       await tx.query(
         `update materials set status = 'ready', failure_reason = null, title = $2, subject_id = $3,
                               ready_at = $4, page_problems = $5, merged_into = $6,
-                              items_incomplete = $7, not_practicable = $8
+                              items_incomplete = $7, not_practicable = $8, source = $9
           where id = $1`,
         [
           materialId,
@@ -1112,6 +1072,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           target.id,
           x.more_items,
           notPracticable,
+          x.source,
         ],
       );
       await tx.query(
@@ -1134,7 +1095,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       await tx.query(
         `update materials set status = 'ready', failure_reason = null, title = coalesce(title, $2),
                               extracted_text = $3, subject_id = $4, ready_at = $5, page_problems = $6,
-                              items_incomplete = $7, not_practicable = $8
+                              items_incomplete = $7, not_practicable = $8, source = $9
           where id = $1`,
         [
           materialId,
@@ -1147,6 +1108,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           // instead of letting a half-read sheet pass for a whole one.
           x.more_items,
           notPracticable,
+          x.source,
         ],
       );
     }
@@ -1205,25 +1167,24 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     await enqueueJob(tx, {
       learnerId: current.learner_id,
       kind: 'purge_photos',
-      runAt: new Date(now.getTime() + PHOTO_RETENTION_DAYS * 86_400_000),
+      // A corrected test's photos (a grade on them) go right after the reading (#259).
+      runAt: new Date(now.getTime() + photoRetentionMs(x.source)),
       dedupeKey: `purge:${materialId}`,
       payload: { material_id: materialId },
     });
     // A photo of something else among the pages (a letter, a recipe) is not kept at all,
     // like a whole sheet that is not learning material (docs/privacy.md).
     const foreign = pageProblems.filter((p) => p.problem === 'not_material' && p.read === 'none');
-    if (filesWhollyIn(photos, new Set(foreign.map((p) => p.page))).length > 0) {
+    // Only whole files: a PDF with one foreign page among the sheet's pages is kept for its
+    // retention like the rest.
+    const foreignFiles = filesWhollyIn(photos, new Set(foreign.map((p) => p.page)));
+    if (foreignFiles.length > 0) {
       await enqueueJob(tx, {
         learnerId: current.learner_id,
         kind: 'purge_photos',
         runAt: now,
         dedupeKey: `purge:${materialId}:not_material`,
-        payload: {
-          material_id: materialId,
-          // Only whole files: a PDF with one foreign page among the sheet's pages is kept
-          // for its retention like the rest.
-          positions: filesWhollyIn(photos, new Set(foreign.map((p) => p.page))),
-        },
+        payload: { material_id: materialId, positions: foreignFiles },
       });
     }
     await bumpContext(tx, current.learner_id);
@@ -1509,10 +1470,9 @@ async function runClarifiedReading(deps: Deps, job: JobRow, spotId: string): Pro
     return;
   }
 
-  const photos = await photosOf(deps.db, spot.material_id);
   let loaded;
   try {
-    loaded = await photoPartsOf(deps, photos);
+    loaded = await loadPhotos(deps, spot.material_id);
   } catch (err) {
     if (err instanceof StorageError) return retryClarification(deps, job, spot, 'storage');
     throw err;
@@ -1545,7 +1505,7 @@ async function runClarifiedReading(deps: Deps, job: JobRow, spotId: string): Pro
         answer: spot.answer,
       })}`,
     );
-    parsed = ExtractionParse.safeParse(res.json);
+    parsed = ReadingParse.safeParse(res.json);
   } catch (err) {
     // An outage, a budget that is used up for today, an answer cut off: try again while this
     // job has a run left. After that the question stays unwritten and says so.

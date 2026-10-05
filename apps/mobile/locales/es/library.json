@@ -37,7 +37,12 @@
     "photos_missing": "No han llegado todas las fotos.",
     "budget_exhausted": "Por hoy ya no puedo leer más fichas. Mañana vuelve a funcionar.",
     "blocked": "El filtro de seguridad no deja pasar esta ficha. Volver a leerla no servirá: escribe las preguntas.",
-    "form_not_practicable": "He podido leer la ficha sin problema: solo que este tipo de ejercicio no lo puedo practicar contigo. Pregúntame y te explico los pasos."
+    "form_not_practicable": "He podido leer la ficha sin problema: solo que este tipo de ejercicio no lo puedo practicar contigo. Pregúntame y te explico los pasos.",
+    "nothing_marked": "No he encontrado nada marcado como incorrecto en el examen, así que no hay nada que repasar. Si al final hay algo marcado en rojo, vuelve a hacerle una foto."
+  },
+  "source": {
+    "corrected_test": "De tu examen corregido: ejercicios nuevos sobre lo que estaba marcado, con otros números y otras palabras.",
+    "notebook_entry": "De tu cuaderno: unas preguntas cortas sobre la última clase, perfectas para mañana por la mañana."
   },
   "incomplete_hint": "Las fotos no han llegado completas. Elimina la ficha y vuelve a hacerle una foto.",
   "not_practicable_one": "He dejado un ejercicio fuera: «{{tasks}}». Ese no lo puedo practicar contigo, pero te explico con gusto cómo se hace.",

@@ -1277,6 +1277,52 @@ her answer disappear (rule 5). STATE carries all three states (asked / answered 
 with the task as printed, so Buddy can ask it in his own words — and is told never to pick a
 reading himself.
 
+**A corrected class test and the notebook entry of the day** (issue #259, #224 Baustein QUELLE,
+`materials/sources.ts`, migration `0093_material_sources.sql`). Two pages a learner brings that are
+not worksheets: the test the teacher handed back with red marks — the best list of what she cannot
+do yet — and the notebook entry of today's lesson, which is what an unannounced short test the
+next day asks about (in Bavaria the Stegreifaufgabe, "Ex", and the Ausfrage). Neither needed a new
+route, button or form (rule 16): she photographs the page in the chat as always, and the study
+reading says which of three it is (`source`: `sheet` · `corrected_test` · `notebook_entry`, the
+contract's `MaterialSource`; `SOURCE_RULES` is appended to `EXTRACT_SYSTEM`, homework never
+asks). The model only names it; what follows is code (rule 1), in `applySource`:
+
+- **Corrected test.** The reading names every task marked wrong (`marked`: page, the task as
+  printed, and the prompts of the 1–3 NEW questions it wrote for it, word for word). Code keeps a
+  question only when a marked task on a page the test really has lists it, and only when it is not
+  that task again (`differsFromOriginal`: with numbers in the task the numbers must differ, in
+  any order; without, at least one of its words must be gone — mechanical, no word list). A
+  question for an unmarked task, for a page the test does not have, or the original reworded, is
+  dropped. The grade, the points and the teacher's remarks have **no field** in the schema; the
+  stored transcript is built by code from the marked tasks alone, never the model's faithful
+  transcript (which holds them); no unclear spot is kept and no figure is cut; the photos are
+  purged right after the reading (`photoRetentionMs`), not after a week. A test is never read
+  again for "more". A test with nothing marked wrong fails as `nothing_marked`: final like
+  `form_not_practicable` (`FINAL_FAILURES`, one list read by `retryMaterial`, the home card and the
+  library card), its photos gone at once (`PHOTOS_GONE_AT_ONCE`), and the words say she can send a
+  new photo if something is marked after all — never "well done" on a reading that may have
+  missed the red. A blurry test stays `unreadable` (the source is decided only for a readable
+  page) and can be read again; an outage is retried like any reading.
+- **Notebook entry.** At most `NOTEBOOK_QUESTIONS` (5) short questions, never read on. STATE
+  calls it "her notebook entry of the lesson on <day>" and tells Buddy its questions are meant
+  for a short run the next morning; his background check prepares it with the tools it already
+  has (`prepare_practice`, `schedule_check`), and a message to her phone stays inside her contact
+  settings (rule 6). When she only TELLS him what the lesson was about, the turn prompt says to
+  practise from her words — no photo needed.
+- **What she sees.** The sheet's screen says once, quietly, where its questions came from ("Aus
+  deiner korrigierten Arbeit: neue Aufgaben zu dem, was angestrichen war …", "Aus deinem
+  Hefteintrag: …"); the grade is never shown back, and nothing is counted (rule 6). STATE names a
+  corrected test so Buddy never quizzes it as a worksheet and never asks for the grade.
+
+`material-sources.int.test.ts` holds both sources and the failure paths (nothing marked, blurry,
+outage, another learner, a worksheet unchanged) and scans every stored row of the test for the
+grade; `sources.test.ts` the checks; `tests/web/sources.spec.ts` the two screens. **Not verified:**
+how the Vertex model recognises a real corrected test and real red marks — the Abnahme of #259
+asks for an eval with five real, anonymised tests, which needs those photos (owed, see the issue).
+The home's failed card still titles `nothing_marked` like every failure ("… konnte ich nicht
+lesen", as it does for `form_not_practicable`); its detail says what happened. Changing the
+title is a change to `app/buddy.tsx`, left to a follow-up because that file was in parallel work.
+
 **Photo check on the phone** (`apps/mobile/lib/photo/quality.ts`, `check.ts`; the old app's most
 common failure was an unreadable photo): right after a photo is taken or picked, a small copy is
 decoded on the device (jpeg-js, the same on phone and web) and measured — too dark (mean

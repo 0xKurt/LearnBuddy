@@ -189,6 +189,7 @@
     "failed_budget_exhausted": "Für heute kann ich keine Blätter mehr lesen. Morgen geht's wieder.",
     "failed_blocked": "Dieses Blatt darf ich leider nicht lesen – der Schutzfilter lässt es nicht durch. Nochmal lesen hilft da nicht. Tipp die Aufgaben, die du brauchst, einfach ab.",
     "failed_form_not_practicable": "Dein Blatt konnte ich gut lesen. Diese Art Aufgabe kann ich aber nicht mit dir üben – frag mich einfach, dann erkläre ich dir die Schritte.",
+    "failed_nothing_marked": "Ich habe auf deiner Arbeit nichts gefunden, was als falsch angestrichen ist – also gibt es nichts nachzuüben. Ist doch etwas rot markiert, mach ein neues Foto.",
     "failed_retry": "Nochmal lesen",
     "failed_new_photo": "Neues Foto",
     "result_title": "Geschafft!",

@@ -189,6 +189,7 @@
     "failed_budget_exhausted": "I can't read any more sheets today. Tomorrow it works again.",
     "failed_blocked": "I'm not allowed to read this sheet – the safety filter won't let it through. Reading it again won't help. Just type the questions you need.",
     "failed_form_not_practicable": "I could read your sheet just fine. But I can't practise this kind of task with you – just ask me and I'll explain the steps.",
+    "failed_nothing_marked": "I found nothing on your test marked as wrong – so there's nothing to practise. If something is marked in red after all, take a new photo.",
     "failed_retry": "Read again",
     "failed_new_photo": "New photo",
     "result_title": "Done!",
