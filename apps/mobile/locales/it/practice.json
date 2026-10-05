@@ -329,5 +329,29 @@
   },
   "tap": {
     "check_waits": "Solo dopo aver toccato la figura."
+  },
+  "find_error": {
+    "waits": "Prima tocca la riga sbagliata.",
+    "fix": "Scrivi la riga giusta …",
+    "line": "Riga {{n}}",
+    "task": "Esercizio"
+  },
+  "column": {
+    "check_waits": "Quando hai scritto una cifra.",
+    "carry": "Riporto, {{place}}",
+    "result": "Risultato, {{place}}",
+    "partial": "Riga {{step}}, {{place}}",
+    "quotient": "Risultato, cifra {{n}}",
+    "product": "Passo {{step}}, moltiplicazione, {{place}}",
+    "difference": "Passo {{step}}, resto, {{place}}",
+    "places": [
+      "unità",
+      "decine",
+      "centinaia",
+      "migliaia",
+      "decine di migliaia",
+      "centinaia di migliaia",
+      "milioni"
+    ]
   }
 }

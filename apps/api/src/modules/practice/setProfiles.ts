@@ -23,6 +23,8 @@ import { DictationDraft, DictationDraftParsed } from './dictation.js';
 import { unusedItemFields } from './itemFields.js';
 import { ItemDraft, itemsOneByOne } from './items.js';
 import { ListenDraft, ListenQuestion } from './listen.js';
+import { COLUMN_RULES } from './columnCalc.js';
+import { FIND_ERROR_RULES } from './findError.js';
 import { MARK_RULES } from './mark.js';
 import { MATCH_RULES } from './match.js';
 import { SELECT_RULES } from './selectAll.js';
@@ -150,6 +152,8 @@ const STRUCTURED_FORMS = [
   'cloze',
   'select_all',
   'mark',
+  'find_error',
+  'column_calc',
 ] as const satisfies StructuredKind[];
 
 /**
@@ -163,6 +167,8 @@ export const STRUCTURED_RULES = [
   CLOZE_RULES,
   SELECT_RULES,
   MARK_RULES,
+  FIND_ERROR_RULES,
+  COLUMN_RULES,
 ]
   .map((rule) => `- ${rule}`)
   .join('\n');

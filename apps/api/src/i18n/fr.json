@@ -378,7 +378,31 @@
       "closing": "C'était ta dernière version pour cette fois. Garde ces points pour ton prochain texte.",
       "unavailable": "Je ne peux pas lire ton texte pour l'instant. Il n'est pas perdu – renvoie-le dans un moment."
     },
-    "ask_unavailable": "Je ne peux pas répondre à ta question pour le moment. Réessaie dans un instant."
+    "ask_unavailable": "Je ne peux pas répondre à ta question pour le moment. Réessaie dans un instant.",
+    "find_error": {
+      "later": "Jusqu'à cette ligne, tout est juste – l'erreur vient plus bas.",
+      "earlier": "L'erreur se trouve plus haut.",
+      "fix_different": "Tu as trouvé la ligne ! Mais ta correction ne découle pas encore de la ligne précédente.",
+      "fix_unreadable": "Tu as trouvé la ligne ! Je ne peux pas lire ta correction comme un calcul – écris-la comme les autres lignes.",
+      "fix_repeat": "Tu as trouvé la ligne ! Écris-la maintenant comme elle doit être – pas encore une fois la ligne d'avant."
+    },
+    "column": {
+      "carry_missing": "Presque – {{at}}, il manque encore la retenue.",
+      "carry_wrong": "Presque – {{at}}, la retenue n'est pas encore juste.",
+      "digit_missing": "Presque – {{at}}, il manque encore un chiffre du résultat.",
+      "digit_wrong": "Presque – {{at}}, le chiffre du résultat n'est pas encore juste.",
+      "partial": "Presque – à la ligne {{step}}, quelque chose {{at}} n'est pas encore juste.",
+      "quotient": "Presque – le chiffre n° {{n}} du résultat n'est pas encore juste.",
+      "product": "Presque – à l'étape {{step}}, la multiplication n'est pas encore juste.",
+      "difference": "Presque – à l'étape {{step}}, le nombre sous le trait n'est pas encore juste.",
+      "place_0": "dans les unités",
+      "place_1": "dans les dizaines",
+      "place_2": "dans les centaines",
+      "place_3": "dans les milliers",
+      "place_4": "dans les dizaines de mille",
+      "place_5": "dans les centaines de mille",
+      "place_6": "dans les millions"
+    }
   },
   "contact": {
     "less_often": "C'est noté – désormais, je ne t'écris sur ton téléphone que si c'est vraiment important. Le reste t'attend ici. Tu peux changer ça dans les réglages."

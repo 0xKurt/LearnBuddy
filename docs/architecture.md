@@ -2214,12 +2214,14 @@ representation), and bar tasks from a photographed sheet — the extraction prom
 them yet, so today they come from a topic she named.
 
 **Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`
-dispatching to one file per kind — `table.ts`, `match.ts`, `cloze.ts`, `selectAll.ts` —, migration
-`0079_structured_items.sql`;
-issues #228 order, #229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark, from the analysis
-#224). Some answers are not a sentence but an arrangement: an order, pairs, groups, table cells,
-the gaps of a text, a set of ticked options. They are their own item kinds (`order`, `match`,
-`table_fill`, `cloze`, `select_all`, `mark`), and #224's "Regel 0"
+dispatching to one file per kind — `table.ts`, `match.ts`, `cloze.ts`, `selectAll.ts`, `mark.ts`,
+`findError.ts`, `columnCalc.ts` —, migration `0079_structured_items.sql`;
+issues #228 order, #229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark, #260
+find_error and column_calc, from the analysis #224). Some answers are not a sentence but an
+arrangement: an order, pairs, groups, table cells, the gaps of a text, a set of ticked options, a
+line picked and written right, the digits of a calculation in columns. They are their own item kinds
+(`order`, `match`, `table_fill`, `cloze`, `select_all`, `mark`, `find_error`, `column_calc`), and
+#224's "Regel 0"
 holds in both directions: code validates what the model wrote, and code judges what she answers —
 never a model, except a cloze gap no rule can decide (below: only that gap, only its verdict).
 
@@ -2683,6 +2685,72 @@ count is what was lowered. Syllables: four words of at most 10 letters to split 
 word in ONE row of 30-pt letter cells, never wrapped, so it still reads as a word.
 Generated in a topic's practice and practice test, read from a sheet and inside a reading text
 (generate.v1.24, extract.v8.8).
+
+**Find the error — Fehlerdetektiv** (`practice/findError.ts`, `FindErrorAnswer.tsx`, issue #260,
+migration `0094_find_error_column_calc.sql`). A worked solution, line by line, with ONE wrong line:
+she taps the line where it goes wrong and writes it right (building block `FEHLER_ZEILE` of #224:
+"Fehler in einer vorgerechneten Lösung finden", Mathe from Unterstufe on; a sum split halbschriftlich
+in the Grundschule). Regel 0, all code: the model writes the solution **correct** (3–4 lines, the
+first is the task); code checks that every line follows from the one before (`checkPath`, §written
+path #209) — a path it cannot read, or one already broken, is `not_sound` and gives no question.
+Then **code builds the error in**: a bracket dissolved the classic wrong way where a line dissolves
+one (3(x+2) → 3x+2; −(x−2) → −x−2, preferred), otherwise a turned operator sign or a number off by
+one (and by ten from 20 on). A candidate is kept only when exactly that line is no longer equivalent
+to the task, every other line still is, and `checkPath` reports the break there first
+(`breaksExactly`); which one is chosen from the content (`hash`), so the same solution always gives
+the same card. The task stores the lines as shown, the key (the wrong line's id, `l2`) and the line
+as the model wrote it (`right`, the solution "② 3x + 6 = 21"); the view has the lines only. The
+first line is never a target and never made wrong. Her answer is the line and her correction:
+another line is `incorrect` with where to look ("Der Fehler steckt schon weiter oben." / "Bis zu
+dieser Zeile stimmt alles – der Fehler kommt erst weiter unten."), never which; the right line is
+compared with the line BEFORE it by `sameStep` — any equivalent line is right ("6 + 3x = 21"); a
+correction that is not equivalent, unreadable as maths (said so, never called wrong, rule 5) or the
+line before copied is `partially_correct`. No model call per answer. Hints that state the right line
+are dropped; the model writes no worked solution with the draft (the solution is code's). Its
+feedback is not a hint (`structuredNamesPart` false), like an order's place. App: the lines are the
+tiles of the choice list (`ChoiceList` with `picked`: a radio group, the line's number ①②③ in the
+letter's column, the task above as a numbered line that is no tile); tapping a line copies it into
+the one input bar (`TypedAnswer` with a `board`, the math keys of a formula), "Prüfen" waits until a
+line is picked. Only for mathematics a code can read (equations, inequalities, terms, number terms);
+a Fehlerdetektiv in other subjects stays open (#224 A7).
+
+**Written arithmetic — schriftlich rechnen** (`practice/columnCalc.ts`, `ColumnAnswer.tsx`, issue
+#260, migration 0094). Addition (2–3 numbers), subtraction, multiplication (by one or two digits)
+and division (by one digit) in columns, every digit a cell (building block `SCHRIFTL`, Mathe GS 3–4).
+The model names ONLY the operation and the numbers (`ColumnCalcTask`: `op`, `operands`); **code
+computes the procedure** — column by column with its carries, the partial products, the steps of a
+division — lays it out and keeps every digit as the key, recomputed whenever the task is read
+(nothing of the layout is stored). Notation as German primary schools write it: carries small in a
+row above the line under the last number; subtraction by Ergänzen or Abziehen mit Erweitern (they
+write the same digits in the same places); partial products from the first digit of the second
+factor on, each ending under its digit, then their sum with its carries; a division as a staircase
+under the dividend — times, then the difference with the next digit brought down. **Entbündeln is not
+laid out**: nothing in code says which Bundesland teaches it (`curriculum/points.ts` has no such
+place), so it is not guessed. A carry is written into every place with digits above it, never into
+the ones; an empty cell is right where nothing belongs (no carry, a leading zero). Rejected
+(`operands`): a number with a leading zero or over six digits, a subtrahend not smaller, a factor
+with a 0 digit or 1, a divisor of two digits; (`too_long`): a grid wider than a 360-pt phone with
+every digit column at 32 pt (`columnsFit`), more than `COLUMN_ROWS_MAX` (5) rows — a division of
+three steps — or more than 40 cells. Her answer is every cell once (a digit or empty); the check
+compares each digit **and each carry**, and the reply names the first place that is not right yet
+in the order she writes: "Noch nicht ganz – bei den Zehnern fehlt noch der Übertrag.", "… in der 2. Zeile stimmt bei den Hundertern noch etwas nicht.", "… im 2. Schritt stimmt das Malnehmen noch
+nicht." — never the digit; it is the form's feedback, not a hint. Her result stands in the
+conversation (`columnResultText`, one implementation for app and server). App: the grid on paper in
+the answer shell, each cell the table's cell (`LbTextInput` cell), the columns as wide as the phone
+allows up to square, a drawn line above the sum and every difference; a digit typed moves on to the
+next cell in the server's writing order (`order`: right to left, the carry before the digit), the
+phone's number pad is all she needs. Printed rows are one number to a screen reader ("+1389"), every
+cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.32)
+and read from a sheet (extract.v8.13; a homework sheet: written arithmetic only, its own error is no
+Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86j, 360×740 and
+390×844, light and dark, the keyboard up): four long lines with Buddy's longest reply above fit (six
+were 106 pt too tall, `FIND_ERROR_LINES_MAX`), and five rows of
+cells with Buddy's reply above (two partial products and their sum, a division of two steps). A
+division of three steps — seven rows, 672 : 3 — was 78 pt too tall there under the reply, and a
+cell cannot be lower than a touch target: it is rejected (`too_long`) until the owner decides how
+a longer division is to fit. While she writes her line with the keyboard up on a small phone, the
+Fehlerdetektiv's lines fold away like a board under her question (`answerFolds`, #402), so the bar
+and "Prüfen" stay above the keyboard.
 
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and

@@ -31,6 +31,7 @@ import { scriptTour } from './tour.js';
 import { scriptTeachBack } from './teachBack.js';
 import { scriptTrees } from './trees.js';
 import { installTurns } from './turns.js';
+import { scriptWritten } from './written.js';
 
 /** Adds every scenario's rules and installs the dispatchers. Call it once per process. */
 export function scriptWalkthrough(scripted: ScriptedGateway): void {
@@ -46,6 +47,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptSelectAll();
   // Also first: "Nomen", "Kommas" and "Silben" are words an older rule may know (#234).
   scriptMark();
+  // Also first: "schriftlich" and "Rechenweg" are words an older rule may know (#260).
+  scriptWritten();
   // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
   scriptPrimary();
   // Also before the core loop: "Kreislauf" and "Kette" are everyday words its rules may know (#247).
