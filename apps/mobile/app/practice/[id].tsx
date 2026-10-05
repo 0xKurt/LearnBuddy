@@ -738,27 +738,19 @@ export default function PracticeScreen() {
       : null;
 
   // How the conversation and the card share the room (issues #96, #286, #232): `threadRoom`.
-  const {
-    threadCap,
-    threadFloor,
-    threadClipped,
-    threadHolds,
-    cardGrowTo,
-    caps,
-    cardNatural,
-    ...room
-  } = measured.layout({
-    // A figure she taps stands in the answer, not in the card (`FigureTapAnswer`).
-    item: tapFigure ? { ...item, figure: null } : item,
-    open,
-    speaking,
-    threadTurns,
-    quiet: turns.length === 0,
-    dictationCompact,
-    viewHeight,
-    windowWidth,
-    safeBottom: insets.bottom,
-  });
+  const { threadCap, threadFloor, threadHolds, cardGrowTo, caps, cardNatural, ...room } =
+    measured.layout({
+      // A figure she taps stands in the answer, not in the card (`FigureTapAnswer`).
+      item: tapFigure ? { ...item, figure: null } : item,
+      open,
+      speaking,
+      threadTurns,
+      quiet: turns.length === 0,
+      dictationCompact,
+      viewHeight,
+      windowWidth,
+      safeBottom: insets.bottom,
+    });
 
   // Where she is — the server's word, never the app's guess: while it says more questions are
   // coming, the total is not the number it will be (issue #220).
@@ -925,11 +917,11 @@ export default function PracticeScreen() {
                   cap={threadCap}
                   floor={threadFloor}
                   holds={threadHolds}
-                  clipped={threadClipped}
                   tops={room.tops}
                   followEnd={followEnd}
                   onBox={measured.setThreadBox}
                   onNeed={measured.setThreadNeed}
+                  onParts={measured.setPartTops}
                 >
                   <ItemThread
                     turns={threadTurns}

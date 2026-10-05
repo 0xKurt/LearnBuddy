@@ -303,6 +303,7 @@ async function keyboardPass(page: Page, name: string, testId: string): Promise<v
   // each is whole in the room above the bar, or not drawn (the slot folds away).
   if (testId === 'ask-field')
     expect(await cutTiles(page), `${name} @kb: answer tiles cut while she asks`).toEqual([]);
+  expect.soft(await halfTurns(page), `${name} @kb: half shown in the conversation`).toEqual([]);
   for (const alert of await alerts.all()) {
     await expect(alert, `${name} @kb: what is said as an alert`).toBeInViewport();
   }
@@ -322,6 +323,45 @@ async function cutTiles(page: Page): Promise<string[]> {
         .filter(({ box }) => box.top < -0.5 || box.bottom > floor + 0.5)
         .map(({ tile }) => tile.getAttribute('aria-label') ?? tile.textContent ?? '?'),
     );
+  });
+}
+
+/**
+ * The practice conversation shows whole things only (issues #286, #403, rule 17): a turn, the help
+ * chips or a card under the question card is either whole below the card's edge and its fade, or
+ * not drawn there at all — never its lower half under the fade, the edge of a reply or a sliver of
+ * an orb. The units are the conversation column's parts, its turns one by one. The fade line is
+ * read from the box's own mask (`topEdgeMaskFrom`): at rest only the gap above a whole turn fades.
+ * Returns what is half shown, with its place relative to the box's top.
+ */
+export async function halfTurns(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    if (!location.pathname.startsWith('/practice')) return [];
+    // The last one drawn: the home under this screen keeps its own thread mounted (expo-router).
+    const thread = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-testid="scroll-thread"]'),
+    ).pop();
+    const column = thread?.firstElementChild?.firstElementChild;
+    if (!thread || !column) return [];
+    const box = thread.getBoundingClientRect();
+    // `linear-gradient(transparent Apx, black Bpx)`: hidden above A, faded down to B.
+    const mask = getComputedStyle(thread).getPropertyValue('mask-image') || '';
+    const stops = Array.from(mask.matchAll(/(-?[\d.]+)px/g)).map((m) => Number(m[1]));
+    const hidden = box.top + (stops[0] ?? 0);
+    const line = box.top + (stops[stops.length - 1] ?? 0);
+    const units = (el: Element): Element[] =>
+      el.querySelector('[data-testid="thread-turn"]')
+        ? Array.from(el.children).flatMap(units)
+        : [el];
+    return Array.from(column.children)
+      .flatMap(units)
+      .map((el) => ({ el, r: el.getBoundingClientRect() }))
+      .filter(({ r }) => r.height > 0 && r.bottom > hidden + 1 && r.top < box.bottom - 1)
+      .filter(({ r }) => r.top < line - 1 || r.bottom > box.bottom + 1)
+      .map(
+        ({ el, r }) =>
+          `${(el.textContent ?? '').trim().slice(0, 24) || el.tagName} ${Math.round(r.top - box.top)}..${Math.round(r.bottom - box.top)} of ${Math.round(box.height)} (fade ${Math.round(line - box.top)})`,
+      );
   });
 }
 
@@ -379,6 +419,9 @@ export async function shot(
     );
     // One bar per screen (issue #395): the input bar, never a second one under or above it.
     if (space) expect(space.bars, `${name} @${phone.width}: one pinned bar`).toBeLessThanOrEqual(1);
+    expect
+      .soft(await halfTurns(page), `${name} @${phone.width}: half shown in the conversation`)
+      .toEqual([]);
     if (place) {
       // One rule for every form in the answer shell (issue #386): the answer at the bottom.
       expect(

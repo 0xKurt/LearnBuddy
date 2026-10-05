@@ -9,7 +9,16 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { answerPlace, bottomStack, partHeight, PHONES, settle, shot, SHOTS } from './fit';
+import {
+  answerPlace,
+  bottomStack,
+  halfTurns,
+  partHeight,
+  PHONES,
+  settle,
+  shot,
+  SHOTS,
+} from './fit';
 import { recordPerf } from './perf';
 
 /** The button inside the sheet that is open (the thread behind it may show the same words). */
@@ -97,6 +106,10 @@ async function onboardChild(page: Page): Promise<void> {
 test('learning modes: explain, homework help without the solution, practice with math', async ({
   page,
 }) => {
+  // About 30 stops, each shot at three sizes: it ran at 2.9–3.0 min on main against the 3 min of
+  // playwright.config.ts and timed out there too. Each settle waits its full 1.6 s on a practice
+  // screen, because the orb in "Frage von Buddy" never stops moving (measured, #403).
+  test.setTimeout(240_000);
   await onboardChild(page);
   // No tiles or lists: Buddy, his name, and one way into everything else (issue #174).
   await expect(page.getByText('Was willst du machen?')).toHaveCount(0);
@@ -278,18 +291,10 @@ test('learning modes: explain, homework help without the solution, practice with
   for (const phone of PHONES) {
     await page.setViewportSize(phone);
     await settle(page);
-    const cut = await page
-      .getByTestId('scroll-thread')
-      .last()
-      .evaluate((el) => {
-        const box = el.getBoundingClientRect();
-        return Array.from(el.querySelectorAll('[data-testid="thread-turn"]'))
-          .map((turn) => turn.getBoundingClientRect())
-          .filter((r) => r.bottom > box.top + 1 && r.top < box.bottom - 1)
-          .filter((r) => r.top < box.top - 1 || r.bottom > box.bottom + 1)
-          .map((r) => `${Math.round(r.top - box.top)}..${Math.round(r.bottom - box.top)}`);
-      });
-    expect(cut, `turns cut at the conversation's edge on ${phone.width} px`).toEqual([]);
+    expect(
+      await halfTurns(page),
+      `turns cut at the conversation's edge on ${phone.width} px`,
+    ).toEqual([]);
   }
   await page.setViewportSize(PHONES[0]!);
   // The conversation is sized again for this window (`threadRoom`) before its edge is read.

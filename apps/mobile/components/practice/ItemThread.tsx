@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { moonForReply, type MoonState } from '../../lib/buddy/moon.js';
+import { useStackTops } from '../../lib/practice/useStackTops.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -33,6 +34,8 @@ import { Nudge, VerdictTag, type VerdictKey } from './Verdict.js';
 
 /** Buddy's orb beside his bubble; what hangs under a reply starts where the bubble does. */
 const ORB = 26;
+/** The step between turns. */
+const GAP = SPACE.md;
 
 /** null verdict = the answer could not be judged (no model), nothing was graded. */
 function verdictKey(verdict: PracticeTurnView['verdict']): VerdictKey | null {
@@ -95,7 +98,16 @@ export function ItemThread({
   const initial = useRef<ReadonlySet<string> | null>(null);
   if (initial.current === null) initial.current = new Set(turns.map((turn) => turn.id));
   const known = initial.current;
-  const tops = useRef<Record<string, number>>({});
+  // Not echoed: neither the bubble nor its tag — the reply below says it in words.
+  const shown = turns.filter(
+    (turn) => turn.role !== 'learner' || echoAnswers || turn.verdict === 'not_an_attempt',
+  );
+  // Each turn's top, from the turns' heights (`useStackTops`, issue #403).
+  const { onHeight } = useStackTops(
+    GAP,
+    shown.map((turn) => turn.id),
+    onTurnTops && ((pieces) => onTurnTops(Object.fromEntries(pieces.map((p) => [p.key, p.top])))),
+  );
   if (turns.length === 0 && pending === null) return null;
 
   let latestAnswerId: string | null = null;
@@ -106,11 +118,10 @@ export function ItemThread({
   }
 
   return (
-    <View style={{ gap: 12 }}>
-      {turns.map((turn, index) => {
+    <View style={{ gap: GAP }}>
+      {shown.map((turn) => {
         const mine = turn.role === 'learner';
-        // Not echoed: neither the bubble nor its tag — the reply below says it in words.
-        if (mine && !echoAnswers && turn.verdict !== 'not_an_attempt') return null;
+        const index = turns.indexOf(turn);
         const fresh = !known.has(turn.id);
         // Buddy's reply to a right answer that arrives now: his moon celebrates (happy).
         const before = index > 0 ? turns[index - 1] : undefined;
@@ -140,10 +151,7 @@ export function ItemThread({
             animate={fresh && !mine}
             delay={60}
             style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 6 }}
-            onLayout={(e) => {
-              tops.current = { ...tops.current, [turn.id]: Math.round(e.nativeEvent.layout.y) };
-              onTurnTops?.(tops.current);
-            }}
+            onLayout={onHeight(turn.id)}
           >
             {mine ? (
               <Nudge active={fresh && (verdict === 'partially_correct' || verdict === 'incorrect')}>
