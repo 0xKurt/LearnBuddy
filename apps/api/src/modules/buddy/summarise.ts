@@ -21,8 +21,7 @@ import { DEFAULT_TIMEZONE, learnerTimezone, learnerZoneSql } from '../../lib/zon
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { enqueueJob, finishJob, type JobRow } from '../scheduler/jobs.js';
-
-export const SUMMARY_PROMPT_VERSION = 'summary.v1';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 /** Nothing said for this long ends a conversation (the app draws its session line here too). */
 export const SESSION_GAP_MS = 4 * 3_600_000;
@@ -318,3 +317,6 @@ export async function skipSession(deps: Deps, job: JobRow): Promise<void> {
     [learnerId, localParts(row.created_at, tz).date, row.created_at, until],
   );
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const SUMMARY_PROMPT_VERSION = promptVersion('summary', SYSTEM, SCHEMA);

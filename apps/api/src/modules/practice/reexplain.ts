@@ -41,8 +41,7 @@ import {
 import { cleanPunctuation, cutToWords, REEXPLAIN_MAX_WORDS } from './brief.js';
 import { CARD_PASS } from './cards.js';
 import { mentionsSolution } from './tutor.js';
-
-export const REEXPLAIN_PROMPT_VERSION = 'reexplain.v4';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 export const Reexplanation = z.object({
   explanation: z
@@ -317,3 +316,6 @@ export async function reexplain(
   if (!done) throw new AppError('internal', 'explanation missing');
   return done;
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const REEXPLAIN_PROMPT_VERSION = promptVersion('reexplain', REEXPLAIN_SYSTEM, SCHEMA);

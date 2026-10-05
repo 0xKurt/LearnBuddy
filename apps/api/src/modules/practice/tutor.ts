@@ -18,20 +18,6 @@ import { compareWithKeys, NEAR_MISS, valuesIn, type RuleVerdict } from './evalua
 import { type FormNote, mathRunsOf, orderFreeLine } from './form.js';
 import { RubricClaim, type AskedElement } from './rubric.js';
 
-// v6: drei Änderungen auf einmal — die Regel ihres Bundeslandes (#214), die Pflichtelemente einer
-// Schreibaufgabe (#211) und das Gehörte (#210). Drei Agenten hatten unabhängig voneinander erhöht
-// (v4, v4.0, v3.10); gemessen wird aber DIESER Prompt, und den gab es vorher nicht.
-// v7: der Kontext trägt eine FORM-CHECK-Zeile (was Code an den beiden Syntaxbäumen gelesen hat)
-// und kennt das Regelurteil `not_transformed` (#235). Der Systemprompt ist unverändert.
-// v8: the notation line is generated from contracts/notation.ts (#239).
-// v9: KEY POINTS of an explanation she gives over several answers („Erklär mal", #236).
-// v10: the rubric schema says what was written for `verbs`, dropped before by `toJsonSchema`
-// (#282).
-// v11: `concern` — distress in an answer field gets the app's fixed help answer (#389).
-// v12: a QUESTION line instead of the rule check when she asks through the question route (#391).
-// The system prompt is unchanged.
-export const TUTOR_PROMPT_VERSION = 'tutor.v12';
-
 export const TutorDecision = z.object({
   intent: z
     .enum(['answer', 'help_request', 'no_answer', 'question', 'off_topic', 'wants_to_stop'])

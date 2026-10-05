@@ -81,7 +81,6 @@ import {
 } from './rubric.js';
 import {
   RubricDecision,
-  TUTOR_PROMPT_VERSION,
   TUTOR_SYSTEM,
   TutorDecision,
   enforceTutorInvariants,
@@ -105,6 +104,7 @@ import {
   type PracticeLearner,
   type SessionItemRow,
 } from './service.js';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 // Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
 export const TUTOR_SCHEMA = toJsonSchema(TutorDecision);
@@ -1012,3 +1012,11 @@ export async function answerItem(
       }),
   );
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const TUTOR_PROMPT_VERSION = promptVersion(
+  'tutor',
+  TUTOR_SYSTEM,
+  TUTOR_SCHEMA,
+  RUBRIC_SCHEMA,
+);

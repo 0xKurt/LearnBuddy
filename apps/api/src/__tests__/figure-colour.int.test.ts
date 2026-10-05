@@ -22,6 +22,7 @@ import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { FIGURES_PROMPT_VERSION } from '../modules/materials/images.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
@@ -251,6 +252,6 @@ describe.skipIf(!dbReady)('a crop whose colour is the content (issue #223 point 
     // One fact about the picture — the model never names a filter, a parameter or an order.
     expect(call.system).toContain('colour_carries_meaning');
     expect(call.system).not.toMatch(/greyscale|sharpen|crop in colour/i);
-    expect(call.promptVersion).toBe('figures-v2');
+    expect(call.promptVersion).toBe(FIGURES_PROMPT_VERSION);
   });
 });
