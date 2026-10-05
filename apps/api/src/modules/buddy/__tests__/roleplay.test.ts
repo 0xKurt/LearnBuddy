@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { quoted } from '../../practice/rubric.js';
 import {
   checkFeedback,
   feedbackText,
@@ -30,6 +31,20 @@ describe('roleplay feedback is checked against her own lines (issue #244)', () =
     );
     expect(fb.points.map((p) => p.met)).toEqual([true, false, false]);
     expect(fb.points[1]!.quote).toBeNull();
+  });
+
+  it('judges a point on the one path every key point takes (practice/rubric.ts, #296)', () => {
+    // Her line carries a comma the model's copy dropped: a writing task's key point counts it
+    // (`quoted` folds punctuation), so the roleplay must too — one rule, not two.
+    const lines = ['Ich möchte einen Tee, bitte.'];
+    const claim = { met: true, quote: 'einen Tee bitte' };
+    expect(quoted(claim, lines.join('\n'))).toBe('met');
+    const fb = checkFeedback(
+      ['Etwas bestellen'],
+      { points: [{ point: 'k1', ...claim }], better: [] },
+      lines,
+    );
+    expect(fb.points).toEqual([{ name: 'Etwas bestellen', met: true, quote: 'einen Tee bitte' }]);
   });
 
   it('a point the model left out is not managed, and a word fragment is no quote', () => {

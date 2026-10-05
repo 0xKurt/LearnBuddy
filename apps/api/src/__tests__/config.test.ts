@@ -86,6 +86,17 @@ describe('database region', () => {
     expect(bootWarnings(on)).toEqual([]);
   });
 
+  it('reads the forms switched off, and refuses a name that is no form (#296)', () => {
+    const config = { ...base, DATABASE_URL: FRANKFURT };
+    expect([...loadConfig(config).FORMS_OFF]).toEqual([]);
+    expect([...loadConfig({ ...config, FORMS_OFF: ' grid_draw, find_error ' }).FORMS_OFF]).toEqual([
+      'grid_draw',
+      'find_error',
+    ]);
+    // A typo would switch nothing off while the operator believes it did: boot stops instead.
+    expect(() => loadConfig({ ...config, FORMS_OFF: 'grid_drwa' })).toThrow(/FORMS_OFF/);
+  });
+
   it('points at the missing CA certificate for a remote database', () => {
     const without = loadConfig({ ...base, DATABASE_URL: FRANKFURT });
     expect(bootWarnings(without)).toEqual([expect.stringMatching(/DATABASE_CA_CERT/)]);

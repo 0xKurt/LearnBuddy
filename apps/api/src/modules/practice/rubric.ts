@@ -301,6 +301,21 @@ function partOf(text: string, part: 'opening' | 'body' | 'closing'): string {
 type Decided = { state: 'met' | 'open' | 'unknown'; verb: string | null };
 
 /**
+ * Whether a point the model judged holds — Rule 0 from #224, and the ONE place it is decided for
+ * every key point in the app: a rubric's `judged`, `key_point` and `essay_point` here, and the key
+ * points of a roleplay (`buddy/roleplay.ts`, issue #296). The model said "met" AND its quote
+ * stands in her text, folded (`says`); otherwise the point is open. Without a claim nothing was
+ * measured, and that is `unknown`, never "missing".
+ */
+export function quoted(
+  claim: { met: boolean; quote: string } | undefined,
+  text: string,
+): Decided['state'] {
+  if (claim === undefined) return 'unknown';
+  return claim.met && says(text, claim.quote) ? 'met' : 'open';
+}
+
+/**
  * Ein Element gegen ihren Text. Die drei zählbaren Prüfungen kennen kein Modell; `judged`
  * verlangt ein Zitat, das in ihrem Text steht.
  */
@@ -331,29 +346,23 @@ function decide(
       const broken = claim.verbs.find((v) => says(text, v)) ?? null;
       return broken === null ? { state: 'met', verb: null } : { state: 'open', verb: broken };
     }
-    case 'judged': {
-      if (claim === undefined) return { state: 'unknown', verb: null };
+    case 'judged':
       // Der Beleg trägt, oder das Element gilt als nicht erfüllt — auch wenn das Modell
       // „erfüllt" gesagt hat. Ein Zitat, das nicht in ihrem Text steht, ist kein Beleg.
-      if (claim.met && says(text, claim.quote)) return { state: 'met', verb: null };
-      return { state: 'open', verb: null };
-    }
+      return { state: quoted(claim, text), verb: null };
     case 'key_point': {
-      if (claim === undefined) return { state: 'unknown', verb: null };
       // Wie `judged`, und dazu gehört jede exakte Angabe des Punktes (eine Zahl, eine Formel, ein
       // Fachwort) wörtlich in ihre Erklärung — das prüft Code, nicht das Modell (#236).
-      const held = claim.met && says(text, claim.quote) && check.exact.every((x) => says(text, x));
-      return { state: held ? 'met' : 'open', verb: null };
+      const state = quoted(claim, text);
+      const exact = check.exact.every((x) => says(text, x));
+      return { state: state === 'met' && !exact ? 'open' : state, verb: null };
     }
     case 'essay_point': {
-      if (claim === undefined) return { state: 'unknown', verb: null };
       // Wie `judged`, und das Zitat steht an seinem Platz (die Einleitung vorn, der Schluss hinten);
       // ein Zitat mit Zeilenangabe nennt Zeilen, die es gibt — beides prüft Code (#258).
-      const held =
-        claim.met &&
-        says(partOf(text, check.part), claim.quote) &&
-        (!check.lines || cites(claim.quote));
-      return { state: held ? 'met' : 'open', verb: null };
+      const state = quoted(claim, partOf(text, check.part));
+      const lines = !check.lines || (claim !== undefined && cites(claim.quote));
+      return { state: state === 'met' && !lines ? 'open' : state, verb: null };
     }
   }
 }
