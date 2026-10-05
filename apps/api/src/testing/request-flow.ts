@@ -1,7 +1,7 @@
 // One scripted journey that touches every model call a photographed sheet causes (issue #284):
 // read the sheet (extraction + figures + the background check), a practice test for the planned
-// test it belongs to (explain, sheet-bound), four prose answers to its questions (tutor) and one
-// message to Buddy (buddy_turn). The model is scripted; everything else — routes, database, the
+// test it belongs to (explain, sheet-bound, then its ladder: hints), four prose answers to its
+// questions (tutor) and one message to Buddy (buddy_turn). The model is scripted; everything else — routes, database, the
 // request builders — is the real app, so what `env.llm.calls` holds afterwards is exactly what
 // would have gone to Vertex.
 //
@@ -145,6 +145,8 @@ export async function playSheetJourney(env: TestEnv, l: Learner): Promise<Journe
     goal_id: goal.id,
   });
   expectStatus('practice test', test.status, 201);
+  // Its ladder is written in the background (hints, #388: the review explains with it).
+  await env.flushBackground();
 
   // 3. Practice from the sheet, every question answered in prose: one tutor call each.
   const session = await l.api.post<SessionView>('/practice/sessions', {

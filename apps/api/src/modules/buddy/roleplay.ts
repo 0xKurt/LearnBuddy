@@ -35,6 +35,7 @@ import { t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
+import { quoted } from '../practice/rubric.js';
 import { mergeRoles } from './context.js';
 import { bumpContext, lockContext } from './plan.js';
 import { recallText } from './recall.js';
@@ -335,8 +336,9 @@ function herLines(rows: readonly TranscriptRow[], locale: string): string[] {
 
 /**
  * The model's feedback against her own lines. A point counts as managed only with a quote that
- * stands in what she wrote — "met" without one, or with words she never wrote, is not managed
- * (rule 0 from #224; the same rule as `judged` in practice/rubric.ts). A point the model left
+ * stands in what she wrote — "met" without one, or with words she never wrote, is not managed.
+ * That is decided where every key point of the app is decided (`quoted` in practice/rubric.ts,
+ * rule 0 from #224; one path since #296), over her lines of the scene. A point the model left
  * out is not managed either: nothing showed it. A better line whose "said" is not hers is
  * dropped, never rewritten.
  */
@@ -347,10 +349,11 @@ export function checkFeedback(
 ): RoleplayFeedback {
   const byRef = new Map<string, RoleplayFeedbackRaw['points'][number]>();
   for (const c of raw.points) if (!byRef.has(c.point)) byRef.set(c.point, c);
+  const text = hers.join('\n');
   const states = points.map((name, i): RoleplayFeedback['points'][number] => {
     const c = byRef.get(`k${i + 1}`);
-    const quote = c?.met && c.quote ? c.quote : null;
-    return quote && quoteOccursIn(quote, hers)
+    const quote = c?.quote ?? '';
+    return c && quoted({ met: c.met, quote }, text) === 'met'
       ? { name, met: true, quote }
       : { name, met: false, quote: null };
   });

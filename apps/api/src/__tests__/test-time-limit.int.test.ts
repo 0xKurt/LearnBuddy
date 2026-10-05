@@ -124,6 +124,7 @@ describe.skipIf(!dbReady)('a practice test with time (issue #241)', () => {
               kind: 'test',
               text: 'Brüche',
               goal: null,
+              asked: 'Mach mit mir einen Probetest',
               time_limit: { minutes: '45', quote: 'mit Zeit, wie in der Arbeit' },
             },
           },
@@ -187,6 +188,7 @@ describe.skipIf(!dbReady)('a practice test with time (issue #241)', () => {
                 kind: 'test',
                 text: 'Brüche',
                 goal: null,
+                asked: 'Mach mit mir einen Probetest',
                 time_limit: { minutes: '30', quote: 'wie in der Arbeit' },
               },
             },
@@ -196,7 +198,17 @@ describe.skipIf(!dbReady)('a practice test with time (issue #241)', () => {
       (req) => {
         refused(req);
         return turn({
-          actions: [{ tool: 'offer_learning', args: { kind: 'test', text: 'Brüche', goal: null } }],
+          actions: [
+            {
+              tool: 'offer_learning',
+              args: {
+                kind: 'test',
+                text: 'Brüche',
+                goal: null,
+                asked: 'Mach mit mir einen Probetest',
+              },
+            },
+          ],
           reply: 'Dein Probetest ist bereit.',
         });
       },

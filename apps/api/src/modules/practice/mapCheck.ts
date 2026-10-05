@@ -20,11 +20,9 @@ import {
   mapMarked,
   mapProblem,
   mapRegion,
-  mapRegionName,
   regionTappable,
-  tapVerdict,
 } from '@learnbuddy/shared-math';
-import { Figure as FigureSchema, type Figure } from '@learnbuddy/shared-types/contracts';
+import type { Figure } from '@learnbuddy/shared-types/contracts';
 
 type Mapped = { kind: string; answer: string; figure: Figure | null; tap?: boolean | null };
 
@@ -55,36 +53,4 @@ export function checkedMap<T extends Mapped>(it: T | null): T | null {
   if (!it || mapItemProblem(it) !== null) return null;
   const f = it.figure;
   return f && isMap(f) ? { ...it, figure: mapCanonical(f) } : it;
-}
-
-/**
- * Her typed name of the marked region judged exactly (issue #251): 'correct' for the region's
- * name in any of the five languages or another name it goes by ("Bavaria", "Bayern"), 'incorrect'
- * for another region of the map. Null where the question is no map question, and for an answer
- * that names no region of the map — the other rules judge that (a typo goes on to them).
- */
-export function mapRuleVerdict(
-  item: { answer: string; figure?: unknown },
-  text: string,
-): 'correct' | 'incorrect' | null {
-  const figure = FigureSchema.safeParse(item.figure);
-  if (!figure.success || !isMap(figure.data)) return null;
-  return tapVerdict(figure.data, item.answer, text);
-}
-
-/**
- * Her tapped region as it stands in the thread: in her language ("Bavaria" for an English
- * learner), where the app sent the data's German name. Null for anything that is no tap on a map,
- * or no region of it — then her text stands as it came, like every typed answer.
- */
-export function mapAnswerText(
-  item: { figure?: unknown; tap?: boolean },
-  text: string,
-  locale: string,
-): string | null {
-  if (item.tap !== true) return null;
-  const figure = FigureSchema.safeParse(item.figure);
-  if (!figure.success || !isMap(figure.data)) return null;
-  const region = mapRegion(figure.data.v, text);
-  return region === null ? null : mapRegionName(figure.data.v, region, locale);
 }

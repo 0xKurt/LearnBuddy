@@ -227,6 +227,11 @@
     "step_broke": "Fino alla riga {{line}} va tutto bene. Qualcosa si perde passando alla riga successiva: guarda ancora quel passaggio.",
     "step_broke_last": "Il tuo procedimento regge fino alla fine – solo l’ultimo passaggio no. Guarda ancora l’ultima riga.",
     "test_no_hints": "Nel test non ci sono suggerimenti: scrivi quello che pensi o salta la domanda. Dopo il test ti spiego tutto.",
+    "test_no_hints_on_screen": "Nel test non ci sono suggerimenti: rispondi come pensi o salta la domanda. Dopo il test ti spiego tutto.",
+    "why": {
+      "right": "Esatto: {{reason}}",
+      "not_quite": "Non proprio. Il motivo è: {{reason}}"
+    },
     "test_noted": "Annotato – andiamo avanti.",
     "try_again": "Non ancora del tutto – riprova. Con «Indizio» ti do un aiuto.",
     "typo": "Quasi – si scrive {{answer}}. Scrivilo ancora una volta.",

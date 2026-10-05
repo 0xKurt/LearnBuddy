@@ -132,6 +132,11 @@
     "thinking": "Buddy lo explica de otra forma …",
     "title": "Explicado de otra forma"
   },
+  "why": {
+    "ask": "¿Por qué es correcto?",
+    "label": "¿Qué motivo es el correcto?",
+    "hint": "Muestra tres motivos: toca el que es correcto."
+  },
   "self_solved": {
     "title": "¡Resuelto por ti!",
     "body": "Lo has descubierto por tu cuenta."
@@ -363,6 +368,7 @@
     "task": "Ejercicio"
   },
   "column": {
+    "reopen": "Editar el paso {{step}}",
     "check_waits": "Cuando hayas escrito una cifra.",
     "carry": "Llevada, {{place}}",
     "result": "Resultado, {{place}}",

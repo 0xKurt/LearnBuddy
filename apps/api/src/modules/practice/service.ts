@@ -118,6 +118,8 @@ export type ItemRow = {
    * path load it.
    */
   tap?: boolean;
+  /** „Warum stimmt das?" (#388, migration 0098), read through `whyOf`. Only the view loads it. */
+  why?: unknown;
 };
 
 export type SessionItemRow = {
