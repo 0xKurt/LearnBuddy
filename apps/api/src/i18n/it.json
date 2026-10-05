@@ -325,6 +325,14 @@
       "reply": "Non ancora del tutto: {{parts}}.",
       "lines": "r. {{list}}"
     },
+    "grid": {
+      "wrong_points": "Non ancora del tutto: {{list}} non sono ancora al posto giusto.",
+      "wrong_points_one": "Non ancora del tutto: {{list}} non è ancora al posto giusto.",
+      "wrong_graph": "Non ancora del tutto: {{list}} non sono sul grafico.",
+      "wrong_graph_one": "Non ancora del tutto: {{list}} non è sul grafico.",
+      "wrong_bars": "Non ancora del tutto: le barre di {{list}} non sono ancora giuste.",
+      "wrong_bars_one": "Non ancora del tutto: la barra di {{list}} non è ancora giusta."
+    },
     "solid": {
       "net_yes": "Sì, è uno sviluppo del cubo",
       "net_no": "No, non è uno sviluppo del cubo",

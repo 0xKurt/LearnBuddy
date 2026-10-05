@@ -518,6 +518,8 @@
     "value": "Place: {{value}}",
     "point": "Point ({{x}} | {{y}})",
     "bar": "Bar: {{label}}",
+    "chosen_number_line": "Place chosen",
+    "chosen_function_plot": "Point set",
     "label": "Your place in the figure",
     "up": "up",
     "down": "down",

@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { labelWidth, plotFrame, yLabelsClearOf, Y_LABEL_GAP } from '../plotLayout.js';
+import {
+  labelWidth,
+  plotFrame,
+  plotGeometry,
+  plotValueAt,
+  plotX,
+  plotY,
+  yLabelsClearOf,
+  Y_LABEL_GAP,
+} from '../plotLayout.js';
 
 const FONT = 12;
 
@@ -90,5 +99,89 @@ describe('yLabelsClearOf (issue #326)', () => {
 
   it('keeps every y label when there are no x labels', () => {
     expect(yLabelsClearOf([], [yLabel(-2), yLabel(2)], FONT)).toHaveLength(2);
+  });
+});
+
+describe('plotGeometry: one coordinate system for the graph she reads and the grid she draws on (#249)', () => {
+  const label = (v: number) => String(v);
+
+  it('lays a function plot out as before: axes through 0, ticks by the room', () => {
+    const g = plotGeometry({
+      width: 320,
+      height: 256,
+      x0: -4,
+      x1: 4,
+      y0: -3,
+      y1: 5,
+      fontSize: FONT,
+      label,
+    });
+    expect(plotX(g, 0)).toBeCloseTo(g.axisY);
+    expect(plotY(g, 0)).toBeCloseTo(g.axisX);
+    expect(g.xTicks).toContain(0);
+    expect(g.origin).toBe(true);
+    // The x labels stand under the x-axis, the y labels left of the y-axis.
+    for (const l of g.xLabels) expect(l.y).toBeCloseTo(g.axisX + 15);
+    for (const l of g.yLabels) expect(l.x).toBeCloseTo(g.axisY - Y_LABEL_GAP);
+  });
+
+  it('draws the grid with a line at every unit and square units, never larger than asked', () => {
+    const g = plotGeometry({
+      width: 328,
+      height: 10_000,
+      x0: -4,
+      x1: 4,
+      y0: -4,
+      y1: 4,
+      fontSize: FONT,
+      label,
+      steps: { x: 1, y: 1 },
+      square: true,
+      maxUnit: 36,
+    });
+    expect(g.xTicks).toEqual([-4, -3, -2, -1, 0, 1, 2, 3, 4]);
+    expect(g.pw / 8).toBeCloseTo(36);
+    expect(g.ph / 8).toBeCloseTo(36);
+    // The y-axis stays at 0 when the plot narrows to square units.
+    expect(g.axisY).toBeCloseTo(plotX(g, 0));
+  });
+
+  it('finds the value under a finger, the other way round', () => {
+    const g = plotGeometry({
+      width: 300,
+      height: 300,
+      x0: 0,
+      x1: 8,
+      y0: 0,
+      y1: 8,
+      fontSize: FONT,
+      label,
+      steps: { x: 1, y: 1 },
+      square: true,
+      bottom: 22,
+    });
+    const at = plotValueAt(g, { x: plotX(g, 3), y: plotY(g, 5) });
+    expect(at.x).toBeCloseTo(3);
+    expect(at.y).toBeCloseTo(5);
+    // With room under the plot, a first quadrant's x labels stand below its bottom edge.
+    for (const l of g.xLabels) expect(l.y).toBeGreaterThan(g.top + g.ph);
+  });
+
+  it('leaves out the labels a caller has none for (the bars name their columns apart)', () => {
+    const g = plotGeometry({
+      width: 300,
+      height: 240,
+      x0: 0,
+      x1: 3,
+      y0: 0,
+      y1: 6,
+      fontSize: FONT,
+      label,
+      steps: { x: 1, y: 1 },
+      xLabel: () => null,
+      yLabel: (v) => String(v * 10),
+    });
+    expect(g.xLabels).toEqual([]);
+    expect(g.yLabels.map((l) => l.text)).toEqual(['10', '20', '30', '40', '50', '60']);
   });
 });

@@ -59,14 +59,15 @@ import {
   StaffElement,
   type StaffWriteSurface,
 } from '@learnbuddy/shared-types/contracts';
-import { useRef, useState } from 'react';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View, type GestureResponderEvent } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { announce } from '../../lib/announce.js';
 import { playPitch } from '../../lib/music/play.js';
+import { useBox } from '../../lib/useBox.js';
 import { barsWords, elementWord, stepWord } from '../../lib/music/words.js';
+import { TapSurface } from '../lb/TapSurface.js';
 import { toast } from '../lb/Toast.js';
 import { Staff } from '../math/StaffLine.js';
 import {
@@ -231,9 +232,7 @@ type Props = {
 export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
   const { t } = useTranslation('practice');
   const { t: tm } = useTranslation('math');
-  const [box, setBox] = useState({ width: 0, height: 0 });
-  /** Wo der Finger den Takt berührt hat (aus `onPressIn`), bis `onPress` ihn verbraucht. */
-  const touchY = useRef<number | null>(null);
+  const { box, onLayout } = useBox();
 
   const bars = answer.bars.length;
   /**
@@ -259,14 +258,8 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
   /** Was auf dieser Stelle landet — mit Kreuz, wo es eines gibt (sonst ohne, siehe `canSharp`). */
   const pitchAt = (step: number) => pitchAtStep(step, surface.clef, answer.sharp);
 
-  function pressIn(e: GestureResponderEvent): void {
-    const y = e.nativeEvent.locationY;
-    touchY.current = Number.isFinite(y) ? y : null;
-  }
-
-  function tapBar(bar: number): void {
-    const y = touchY.current;
-    touchY.current = null;
+  /** Ein Tipp in Takt `bar`, `y` die Höhe des Fingers in der Zeile (null: ohne Finger). */
+  function tapBar(bar: number, y: number | null): void {
     // Ohne Fingerposition — oder bevor die Zeile vermessen ist — die mittlere Linie.
     const step = y === null || box.height === 0 ? 0 : clampStep(stepAtWriteY(y - top, gap));
     const pitch = pitchAt(step);
@@ -289,11 +282,7 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
           flexShrink: 1,
           minHeight: writeHeight(GAP_MIN),
         }}
-        onLayout={(e) => {
-          const w = Math.round(e.nativeEvent.layout.width);
-          const h = Math.round(e.nativeEvent.layout.height);
-          if (w !== box.width || h !== box.height) setBox({ width: w, height: h });
-        }}
+        onLayout={onLayout}
       >
         {box.width > 0 ? (
           <View style={{ position: 'absolute', left: 0, right: 0, top }}>
@@ -317,12 +306,11 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
           {/* Vor dem ersten Takt stehen Schlüssel und Taktart; dort wird nicht geschrieben. */}
           <View style={{ width: startX }} />
           {answer.bars.map((bar, b) => (
-            // Kein `Btn`: das ist kein CTA, sondern die Zeichenfläche selbst — wie ein Teil des
-            // Bruchbalkens (Regel 13). Und niemals eine Hintergrundfarbe darauf.
-            <Pressable
+            // Kein `Btn`: das ist kein CTA, sondern die Zeichenfläche selbst, in die sie tippt —
+            // die Höhe des Fingers ist die Tonhöhe (`TapSurface`, wie das Raster aus #249).
+            <TapSurface
               key={b}
               testID={`staff-bar-${b + 1}`}
-              accessibilityRole="button"
               // Der Name sagt, was schon im Takt steht — der Screenreader hört die Zeile hier, wo
               // sie geschrieben wird —, der Hinweis, was ein Tipp tut.
               accessibilityLabel={tm('staff.bar_list', {
@@ -334,8 +322,7 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
               })}
               accessibilityHint={t('staff.bar_hint')}
               disabled={disabled}
-              onPressIn={pressIn}
-              onPress={() => tapBar(b)}
+              onTap={(at) => tapBar(b, at?.y ?? null)}
               style={{ flex: 1 }}
             />
           ))}

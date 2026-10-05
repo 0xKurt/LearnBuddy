@@ -518,6 +518,8 @@
     "value": "Lugar: {{value}}",
     "point": "Punto ({{x}} | {{y}})",
     "bar": "Barra: {{label}}",
+    "chosen_number_line": "Lugar elegido",
+    "chosen_function_plot": "Punto marcado",
     "label": "Tu lugar en la figura",
     "up": "hacia arriba",
     "down": "hacia abajo",

@@ -518,6 +518,8 @@
     "value": "Posizione: {{value}}",
     "point": "Punto ({{x}} | {{y}})",
     "bar": "Barra: {{label}}",
+    "chosen_number_line": "Posizione scelta",
+    "chosen_function_plot": "Punto segnato",
     "label": "La tua posizione nella figura",
     "up": "in alto",
     "down": "in basso",

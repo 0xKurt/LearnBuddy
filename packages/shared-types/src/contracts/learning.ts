@@ -101,6 +101,11 @@ export const NotPracticableForm = z.enum([
    * (`modules/practice/staff.ts`). It is the second drawing to leave it, after the fraction
    * bar — which is the measure of what each of these costs: one representation, one input
    * surface, one checker.
+   *
+   * **Drawing on a grid left it in part** (issue #249): plotting points, setting points on a line
+   * or a parabola, mirroring a figure on squared paper and drawing a bar chart are the structured
+   * kind `grid_draw`, checked exactly by code. Only in a run Buddy prepares: a photographed sheet's
+   * drawing task still lands here, because the paper would have to be read off the photo.
    */
   'drawing',
   /**
@@ -369,6 +374,8 @@ export const ItemKind = z.enum([
   'find_error',
   /** Written arithmetic in columns, digit by digit, with its carries (#260). */
   'column_calc',
+  /** Draw on a grid: plot points, set points on a graph, mirror a figure, pull bars (#249). */
+  'grid_draw',
   /**
    * A long text — Aufsatz, Erörterung, Interpretation (issue #258, contracts/essay.ts): up to
    * `ESSAY_TEXT_MAX` characters, feedback per key point of its text type and three places to

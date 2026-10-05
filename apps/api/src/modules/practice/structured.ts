@@ -15,7 +15,7 @@
 // (`items.task`) carries the key; the view (`ItemView.task_view`) never does.
 //
 // Adding a kind (#229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark, #260
-// find_error and column_calc): its draft schema, a
+// find_error and column_calc, #249 grid_draw): its draft schema, a
 // builder from draft to task, a `problem` check, a view, a checker and a reply — each one more
 // `case` in the switches below. The answer flow in `answer.ts` only ever calls the exported
 // functions.
@@ -82,6 +82,19 @@ import {
   type FindErrorCheck,
   type FindErrorProblem,
 } from './findError.js';
+import {
+  checkGrid,
+  gridAnswerText,
+  GridDraftBase,
+  gridProblem,
+  gridReply,
+  gridSecrets,
+  gridSolution,
+  gridTaskFrom,
+  gridView,
+  type GridCheck,
+  type GridProblem,
+} from './grid.js';
 import { ItemDraft } from './items.js';
 import {
   checkMark,
@@ -140,11 +153,16 @@ import {
 import { mentionsSolution } from './tutor.js';
 
 /**
- * The structured kinds a photographed sheet may give: every one — an order, a table, links, gaps
- * (#228–#232), options to tick (#240), words to mark (#234), a solution with a mistake to find and
- * a calculation in columns (#260) are all printed on worksheets.
+ * The structured kinds a photographed sheet may give: an order, a table, links, gaps (#228–#232),
+ * options to tick (#240), words to mark (#234), a solution with a mistake to find and a calculation
+ * in columns (#260) are all printed on worksheets. Not a drawing on a grid (#249): its paper would
+ * have to be read off the photo, and a point read one square off would be a key that disagrees with
+ * the sheet — the reason a note line is not read off a photo either (#226). The photo reading is not
+ * offered the kind at all (`StructuredDraft` below).
  */
-export const SHEET_STRUCTURED: ReadonlySet<string> = new Set(STRUCTURED_KINDS);
+export const SHEET_STRUCTURED: ReadonlySet<string> = new Set(
+  STRUCTURED_KINDS.filter((k) => k !== 'grid_draw'),
+);
 
 /** At most this many structured questions in one prepared set (a set is not a puzzle book). */
 export const MAX_STRUCTURED_ITEMS = 4;
@@ -225,7 +243,11 @@ export const StructuredDraftHomework = z.discriminatedUnion('type', [
 ]);
 export type StructuredDraftHomework = z.infer<typeof StructuredDraftHomework>;
 
-/** The same without hints and worked solution (a topic: help is written in the background). */
+/**
+ * The same without hints and worked solution (a topic: help is written in the background). The
+ * only union with a drawing on a grid (#249): Buddy prepares one for a topic, a photo never gives
+ * one (`SHEET_STRUCTURED`).
+ */
 export const StructuredDraftNoHelp = z.discriminatedUnion('type', [
   OrderDraftBase,
   TableDraftBase,
@@ -235,6 +257,7 @@ export const StructuredDraftNoHelp = z.discriminatedUnion('type', [
   MarkDraftBase,
   FindErrorDraftBase,
   ColumnDraftBase,
+  GridDraftBase,
 ]);
 export type StructuredDraftNoHelp = z.infer<typeof StructuredDraftNoHelp>;
 
@@ -276,7 +299,9 @@ export type TaskProblem =
   /** A find-the-error task that fails Regel 0 (#260, `findError.ts`). */
   | FindErrorProblem
   /** A written-arithmetic task that fails Regel 0 (#260, `columnCalc.ts`). */
-  | ColumnProblem;
+  | ColumnProblem
+  /** A grid task that fails Regel 0 (#249, `grid.ts`). */
+  | GridProblem;
 
 type Exact = { num: bigint; den: bigint };
 
@@ -343,6 +368,8 @@ export function taskProblem(task: StructuredTask): TaskProblem | null {
       return findErrorProblem(task);
     case 'column_calc':
       return columnProblem(task);
+    case 'grid_draw':
+      return gridProblem(task);
   }
 }
 
@@ -389,6 +416,8 @@ export function solutionOf(task: StructuredTask): string {
       return findErrorSolution(task);
     case 'column_calc':
       return columnSolution(task);
+    case 'grid_draw':
+      return gridSolution(task);
   }
 }
 
@@ -537,6 +566,20 @@ export function structuredItem(
       const help = ownHelp('hints' in draft ? draft.hints : [], task, prompt);
       return asItem(draft, { kind: 'column_calc', task, prompt, ...help });
     }
+    case 'grid_draw': {
+      // The prompt is the model's instruction with the task's data after it, written by code.
+      // Help is written later, in the background, against the solution (`hints.ts`).
+      const built = gridTaskFrom(draft);
+      if (!built) return null;
+      const { task, prompt } = built;
+      return asItem(draft, {
+        kind: 'grid_draw',
+        task,
+        prompt,
+        answer: solutionOf(task),
+        hints: [],
+      });
+    }
   }
 }
 
@@ -622,6 +665,8 @@ export function viewOf(task: StructuredTask): StructuredTaskView {
     case 'column_calc':
       // A stored task passed Regel 0 when it was read (`structuredTaskOf`), so it has a layout.
       return columnLayout(task)!.view;
+    case 'grid_draw':
+      return gridView(task);
   }
 }
 
@@ -651,6 +696,8 @@ export function secretsOf(
       return { secrets: findErrorSecrets(task), visible: findErrorVisible(task, prompt) };
     case 'column_calc':
       return { secrets: columnSecrets(task), visible: `${prompt} ${task.operands.join(' ')}` };
+    case 'grid_draw':
+      return { secrets: gridSecrets(task), visible: prompt };
   }
 }
 
@@ -671,7 +718,8 @@ export type StructuredCheck =
   | SelectCheck
   | MarkCheck
   | FindErrorCheck
-  | ColumnCheck;
+  | ColumnCheck
+  | GridCheck;
 
 export type OrderCheck = {
   type: 'order';
@@ -725,6 +773,8 @@ export function checkStructured(
       return answer.type === 'find_error' ? checkFindError(task, answer) : null;
     case 'column_calc':
       return answer.type === 'column_calc' ? checkColumns(task, answer) : null;
+    case 'grid_draw':
+      return answer.type === 'grid_draw' ? checkGrid(task, answer) : null;
   }
 }
 
@@ -743,6 +793,7 @@ export function structuredVerdict(
     case 'select_all':
     case 'mark':
     case 'column_calc':
+    case 'grid_draw':
       return check.correct ? 'correct' : 'incorrect';
     case 'cloze':
       return clozeVerdict(check);
@@ -767,6 +818,9 @@ export function partsVia(task: StructuredTask): 'tapped' | 'typed' {
     case 'column_calc':
     case 'find_error': // the line is tapped, but what is judged last is the line she wrote
       return 'typed';
+    // A drawing is produced, not recognised (#163): she sets every point herself, as a note line.
+    case 'grid_draw':
+      return 'typed';
     case 'cloze':
       return task.bank === null ? 'typed' : 'tapped';
   }
@@ -782,6 +836,7 @@ export function structuredDecidedBy(check: StructuredCheck): 'rule' | 'model' {
     case 'mark':
     case 'find_error':
     case 'column_calc':
+    case 'grid_draw':
       return 'rule';
     case 'cloze':
       return clozeDecidedBy(check);
@@ -814,6 +869,8 @@ export function answerTextOf(
       return answer.type === 'find_error' ? findErrorAnswerText(task, answer) : '';
     case 'column_calc':
       return answer.type === 'column_calc' ? (checkColumns(task, answer)?.text ?? '') : '';
+    case 'grid_draw':
+      return answer.type === 'grid_draw' ? gridAnswerText(task, answer) : '';
   }
 }
 
@@ -848,6 +905,8 @@ export function structuredReply(
       return findErrorReply(locale, check);
     case 'column_calc':
       return columnReply(locale, check);
+    case 'grid_draw':
+      return gridReply(locale, check);
   }
 }
 
@@ -855,7 +914,8 @@ export function structuredReply(
  * Does the reply to this wrong answer point at the part that is wrong? Then it is help given
  * (a hint), like a spelled-out typo (#207). An order always names its place (#228) and that
  * is its feedback, not a hint; a table names its cells on every try (#230), the same;
- * a match names its wrong link from the second miss on (#229).
+ * a match names its wrong link from the second miss on (#229); a drawing names its wrong point or
+ * bar on every try (#249) — the same as an order's place, its feedback and not a hint.
  */
 export function structuredNamesPart(check: StructuredCheck, priorMisses: number): boolean {
   switch (check.type) {
@@ -865,6 +925,7 @@ export function structuredNamesPart(check: StructuredCheck, priorMisses: number)
     case 'mark':
     case 'find_error': // where to look (#260) is its feedback, as an order's place is (#228)
     case 'column_calc':
+    case 'grid_draw':
       return false;
     case 'match':
       return matchNamesPart(check, priorMisses);

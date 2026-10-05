@@ -325,6 +325,14 @@
       "reply": "Pas encore tout à fait : {{parts}}.",
       "lines": "l. {{list}}"
     },
+    "grid": {
+      "wrong_points": "Pas encore tout à fait : {{list}} ne sont pas encore à la bonne place.",
+      "wrong_points_one": "Pas encore tout à fait : {{list}} n’est pas encore à la bonne place.",
+      "wrong_graph": "Pas encore tout à fait : {{list}} ne sont pas sur la courbe.",
+      "wrong_graph_one": "Pas encore tout à fait : {{list}} n’est pas sur la courbe.",
+      "wrong_bars": "Pas encore tout à fait : les barres pour {{list}} ne sont pas encore justes.",
+      "wrong_bars_one": "Pas encore tout à fait : la barre pour {{list}} n’est pas encore juste."
+    },
     "solid": {
       "net_yes": "Oui, c'est un patron de cube",
       "net_no": "Non, ce n'est pas un patron de cube",
