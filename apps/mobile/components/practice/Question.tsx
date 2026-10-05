@@ -206,6 +206,10 @@ export function QuestionCard({
   const seen = useVisibleHeight();
   const viewHeight = seen.visible;
   const typing = formDensity(seen.window, seen.overlap) === 'tight';
+  // While she types the card's padding steps down to the field's: on 360×440 a three-line prompt,
+  // its folded drawing and the bar with its math keys ran 7 pt past the window and the keys stood
+  // cut (issue #419, `cutControls`).
+  const pad = typing ? SPACE.md : CARD_PAD;
   const passageShare = answerBoard || typing ? PASSAGE_SHARE_SHORT : PASSAGE_SHARE;
   // A reading question's topic is its text: the text's heading already names it.
   const shownTopic = passage ? null : topic;
@@ -227,12 +231,10 @@ export function QuestionCard({
   // drawing's own frame (FigureView's padding and border) all come off first, so the card
   // never outgrows what the screen granted it. Never below the old fixed cap.
   const figureRoom =
-    grown && headHeight > 0
-      ? minHeight - 2 * CARD_PAD - headHeight - FIGURE_GAP - FIGURE_CHROME
-      : 0;
+    grown && headHeight > 0 ? minHeight - 2 * pad - headHeight - FIGURE_GAP - FIGURE_CHROME : 0;
   const figureMax = figureRoom > (figureMaxHeight ?? 0) ? figureRoom : figureMaxHeight;
   return (
-    <Card tone="lavender" padding={CARD_PAD} radius={24} style={grown ? { minHeight } : null}>
+    <Card tone="lavender" padding={pad} radius={24} style={grown ? { minHeight } : null}>
       <View style={grown ? { flexGrow: 1 } : null}>
         {passage ? (
           <PassagePanel passage={passage} maxHeight={Math.round(viewHeight * passageShare)} />
