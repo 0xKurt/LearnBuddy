@@ -60,7 +60,9 @@ import { TABLE_RULES } from '../practice/table.js';
 //        v8.19 and v8.20 left to the parallel work that holds generate v1.39 and v1.40).
 // v8.23: v8.21 with the stumme Karte of v8.20 (#251) — the two met in one prompt (v8.22 is
 //        reserved for parallel work).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.23';
+// v8.24: labelled pictures — a drawing of the library with numbered parts, to label, to name a
+//        part or to tap one (`schematic`, #252).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.24';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

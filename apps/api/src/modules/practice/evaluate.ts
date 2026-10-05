@@ -41,8 +41,7 @@ import { type FormNote, judgeAlgebra, typedBack } from './form.js';
 import { checkNuclear, looksNuclear, type NuclearImbalance } from './nuclear.js';
 import { checkPath, lastValue, solvedValue } from './steps.js';
 import { sameAssignments, sameList, samePoint } from './systems.js';
-import { mapRuleVerdict } from './mapCheck.js';
-import { tapRuleVerdict } from './tapCheck.js';
+import { namedRuleVerdict, tapRuleVerdict } from './tapCheck.js';
 import {
   canonicalMath,
   canonicalText,
@@ -658,9 +657,9 @@ export function ruleCheck(
   // tutor's. Before everything else, because "7:45" or "(2|-1)" mean the place here, nothing else.
   const tapped = tapRuleVerdict(item, written);
   if (tapped !== null) return tapped;
-  // A region of a stumme Karte named (issue #251): any of its names in the five languages, or
-  // another region of the map — exactly, by the map's data.
-  const named = mapRuleVerdict(item, written);
+  // A region of a map or a part of a picture named (issues #251, #252): any of its names in the
+  // five languages, or another place of the figure — exactly, by the figure's data.
+  const named = namedRuleVerdict(item, written);
   if (named !== null) return named;
 
   // A written path, checked step by step (issue #209). Only where a calculation is plausible:

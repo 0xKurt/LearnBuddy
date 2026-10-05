@@ -1,0 +1,52 @@
+// A labelled picture next to a question (issue #252): every drawing of the library draws, the
+// numbers stand on the parts asked for and never their names, and what a screen reader hears is
+// the drawing and how many parts are numbered — naming them is the task.
+//
+// Parts, names and which part a finger means are
+// packages/shared-math/src/__tests__/schematics.test.ts; the drawing at 360 and 390 pt, light and
+// dark, is tests/web/tap-figures.spec.ts.
+
+import { waitFor } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+
+import { SCHEMATIC_IDS } from '../../../../../packages/shared-math/src/schematics.js';
+import { renderInApp } from '../../../testing/render.js';
+import { describeSchematic, SchematicBody, type SchematicFigure } from '../SchematicFigures.js';
+
+const t = (key: string, values: Record<string, string | number> = {}) =>
+  `${key}${Object.keys(values).length ? ` ${JSON.stringify(values)}` : ''}`;
+
+const labelled: SchematicFigure = {
+  type: 'schematic',
+  d: 'plant_cell',
+  n: ['nucleus', 'vacuole', 'chloroplast'],
+  ask: 2,
+};
+
+describe('SchematicBody', () => {
+  it.each(SCHEMATIC_IDS.map((d) => [d] as const))(
+    'draws %s once its shapes are loaded',
+    async (d) => {
+      const { container } = renderInApp(
+        <SchematicBody figure={{ type: 'schematic', d, n: [], ask: 0 }} width={300} />,
+      );
+      await waitFor(() => expect(container.querySelectorAll('path').length).toBeGreaterThan(4));
+    },
+  );
+
+  it('writes the numbers 1, 2, 3 on the parts, never a name', async () => {
+    const { container } = renderInApp(<SchematicBody figure={labelled} width={300} />);
+    await waitFor(() => expect(container.textContent ?? '').toBe('123'));
+  });
+});
+
+describe('describeSchematic', () => {
+  it('says the drawing and how many parts carry numbers, not which', () => {
+    expect(describeSchematic(labelled, t)).toBe(
+      'figure.schematic_numbered {"name":"Pflanzenzelle","count":3}',
+    );
+    expect(describeSchematic({ ...labelled, n: [], ask: 0 }, t)).toBe(
+      'figure.schematic {"name":"Pflanzenzelle"}',
+    );
+  });
+});

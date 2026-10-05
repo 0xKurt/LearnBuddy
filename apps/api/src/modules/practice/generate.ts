@@ -94,7 +94,9 @@ import { structuredItems, type StructuredItem } from './structured.js';
 //        options code picks and marks (#418; v1.39 and v1.40 are reserved for parallel work).
 // v1.45: v1.41 with the stumme Karte of v1.40 (#251) — the two met in one prompt (v1.42–v1.44 are
 //        reserved for #388, #424 and #413).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.45';
+// v1.46: labelled pictures — a drawing of the library with numbered parts, to label, to name a
+//        part or to tap one (`schematic`, #252).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.46';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

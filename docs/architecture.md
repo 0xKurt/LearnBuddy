@@ -3466,7 +3466,8 @@ pictures (#252) add their figure to it rather than building a second one.
   `tap-figures.int.test.ts` (stored or dropped, exact verdicts without a model, replay, a row
   that no longer holds, another learner); walkthrough `tests/web/tap-figures.spec.ts` (scenario
   `testing/scenarios/tap.ts`).
-- **Maps (#251)** are one figure on this mechanism: §Maps.
+- **Maps (#251)** and **labelled pictures (#252)** are figures on this mechanism: §Maps,
+  §Labelled pictures.
 - **Not built here:** laying an amount with coins ("Leg 3,45 €", #254) — a sum of several taps,
   not one place; tapping a cell of the periodic table (#250) or a month of a line or climate chart
   (#245) — each is one `case` on this mechanism.
@@ -3528,6 +3529,60 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
 - **Not built here:** the Gradnetz and "Welche Koordinaten hat der Punkt?"; capitals, rivers,
   mountains as points; zoom (it would let the small countries of Europe be tapped); the Bundesland
   of her own profile as a default map.
+
+### Labelled pictures (issue #252)
+
+A drawing of the picture library — plant cell, animal cell, flower (section), plant, eye
+(section), tooth (section), insect, bicycle — with numbers on chosen parts. Buddy asks to label it
+("Beschrifte die Pflanzenzelle"), to name one numbered part ("Wie heißt Teil 3?") or to tap a part
+("Tippe auf den Zellkern", the tap mechanism above). Decided in #224: drawn by us, nothing
+licensed.
+
+- **Contract** (`packages/shared-types/src/contracts/schematic.ts`, in `ModelFigure`):
+  `{ type: 'schematic', d, n: string[], ask }` — which drawing, the parts that carry the numbers
+  1, 2, 3 … by name, the number asked (0: none). Never a shape. `FIGURE_RULES` lists every drawing
+  with its parts, generated from the library (`SCHEMATIC_PARTS`). Prompts: generate.v1.46,
+  extract.v8.24.
+- **Library** (code, in two files like the maps): `packages/shared-math/src/schematics.data.ts`
+  names every drawing and part — id, the five languages, other names a teacher accepts
+  ("Nukleus"); small and static, the server and the tap mechanism resolve names with it.
+  `schematicShapes.data.ts` draws them, part by part in the same order: ellipses, rounded boxes,
+  polygons and strokes (`drawShapes.ts`, every outline one way round, a hole the other) in the
+  frame 1000 wide, each part's pastel tone (`figure.slices`) and the point its number points at
+  (`at`, set by hand). The app loads it with the first picture (`useSchematicShapes`, on
+  `lib/lazyModule.ts`) — the start bundle had 8 KB of its gzip budget left, the drawings would
+  have taken more. A part is a region like a Land (`regions.ts`, §Maps):
+  names, winding number, which part a finger means — the topmost under it, or a small one by its
+  point —, what is tappable. Parts too small for a finger on 360 × 740 (pupil, an insect's eye,
+  the handlebar, the bell) can be named, not tapped.
+- **Rule 0, generation** (`apps/api/src/modules/practice/schematicCheck.ts`): a labelling draft
+  (two or more numbers, none asked, no tap) becomes one question per number, written by code —
+  "Pflanzenzelle: Wie heißt Teil 2?" in the question's language, the library's name as the key
+  (`labelQuestions`, before the checks). Then, in `FIGURE_CHECKS`: every numbered part must be one
+  of the drawing (stored as its id), each once; a typed question is short and its key is the part
+  carrying the number asked; a tap asks no number and its key is a part a finger can hit
+  (`regionTappable`). Anything else — what a part does, a part the drawing does not have — is
+  dropped.
+- **Rule 0, grading:** a tapped part exactly (`tapVerdict`); a typed name by the library
+  (`namedRuleVerdict` in `tapCheck.ts`, shared with the map): "nucleus", "Nukleus" and
+  "Zellkern" are one part. A tapped part stands in the thread in her language
+  (`tappedAnswerText`, answer.ts — the same path as the map's regions).
+- **Screen:** `components/math/SchematicFigures.tsx` draws each part outline-under-fill (the tubes
+  of a frame show no line inside the part) and a numbered badge off each numbered part with a
+  leader line. Tapping is `TapFigure` with the map's `case` in `tapLayout` (`TapShapes`: the
+  maps' and the pictures' shapes, each once loaded).
+  The line under it says "Teil gewählt"; the part's name is only in `aria-valuetext` (#409).
+  `describeSchematic` says the drawing and how many parts are numbered, never which.
+- Tests: `packages/shared-math/src/__tests__/schematics.test.ts` (names in five languages, every
+  name unique per drawing, every part reached at its point, tappability, tap round trip),
+  `lib/math/__tests__/tapLayout.test.ts`, `TapFigure.test.tsx`, `SchematicFigures.test.tsx`,
+  `schematic-figures.int.test.ts` ("Zelle beschriften" gives five questions without a word from
+  the model; stored or dropped; verdicts without a model; the thread in her language; another
+  learner); walkthrough `tests/web/tap-figures.spec.ts` (the cell labelled, every part of it
+  tapped, the bicycle's frame; scenario `testing/scenarios/schematic.ts`).
+- **Not built here:** the other drawings of the plan (microscope, skeleton, heart, ear, lab
+  equipment, traffic signs …: eight of the first fifteen are done); matching numbers to names
+  (#229); tapping the labels of a photographed sheet (`HOTSPOT_BILD`, extraction of label regions).
 
 ### Circuits, logic gates and the colour wheel (issue #261)
 

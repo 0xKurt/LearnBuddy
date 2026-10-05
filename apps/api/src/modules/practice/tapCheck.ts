@@ -8,7 +8,14 @@
 // And the other way round: a clock face WITHOUT hands is only a figure to set. On a question that
 // is not answered by tapping it would be an empty face beside a question about a time — dropped.
 
-import { isTappable, tapProblem, tapVerdict } from '@learnbuddy/shared-math';
+import {
+  isTappable,
+  namedPlaces,
+  regionName,
+  regionNamed,
+  tapProblem,
+  tapVerdict,
+} from '@learnbuddy/shared-math';
 import { Figure as FigureSchema, type Figure } from '@learnbuddy/shared-types/contracts';
 
 import { kindIn, TAP_KINDS } from './itemFields.js';
@@ -49,4 +56,38 @@ export function tapRuleVerdict(
   const figure = FigureSchema.safeParse(item.figure);
   if (!figure.success || !isTappable(figure.data)) return null;
   return tapVerdict(figure.data, item.answer, text);
+}
+
+/**
+ * Her typed name of a place judged exactly (issues #251, #252): on a map or a labelled picture,
+ * 'correct' for the place's name in any of the five languages or another name it goes by
+ * ("Bavaria" and "Bayern", "Nukleus" and "Zellkern"), 'incorrect' for another place of the figure.
+ * Null where the figure's places have no names, and for an answer that names none of them — the
+ * other rules judge that (a typo goes on to them).
+ */
+export function namedRuleVerdict(
+  item: { answer: string; figure?: unknown },
+  text: string,
+): 'correct' | 'incorrect' | null {
+  const figure = FigureSchema.safeParse(item.figure);
+  if (!figure.success || !isTappable(figure.data) || namedPlaces(figure.data) === null) return null;
+  return tapVerdict(figure.data, item.answer, text);
+}
+
+/**
+ * Her tapped place as it stands in the thread: in her language ("Bavaria", "nucleus" for an
+ * English learner), where the app sent the German name. Null for anything that is no tap on a
+ * figure of named places, or names none of them — then her text stands as it came.
+ */
+export function tappedAnswerText(
+  item: { figure?: unknown; tap?: boolean },
+  text: string,
+  locale: string,
+): string | null {
+  if (item.tap !== true) return null;
+  const figure = FigureSchema.safeParse(item.figure);
+  const places = figure.success ? namedPlaces(figure.data) : null;
+  if (!places) return null;
+  const i = regionNamed(places, text);
+  return i === null ? null : regionName(places, i, locale);
 }
