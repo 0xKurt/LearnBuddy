@@ -5,7 +5,7 @@
 //   · the places are the figure's grid (`tapAxes`, @learnbuddy/shared-math `tap.ts`) — the grid
 //     the server checked the key lies on;
 //   · where they stand is the drawers' own geometry (`lib/math/tapLayout.ts`); the figure is drawn
-//     by `FigureView` as everywhere, with the tap layer over it (`TapPad` + the mark);
+//     by `FigureView` as everywhere, with the tap layer over it (`TapSurface` dragged + the mark);
 //   · a tap snaps to the nearest place and writes it as text — exactly as a key is written, so it
 //     is judged exactly by code (`tapVerdict`);
 //   · the place stands in words under the figure (never colour or position alone), and that line
@@ -43,7 +43,7 @@ import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Segmented } from '../lb/Segmented.js';
-import { TapPad } from '../lb/TapPad.js';
+import { TapSurface } from '../lb/TapSurface.js';
 import { formatNumber, SMALL } from './figureText.js';
 import { FigureView } from './FigureView.js';
 import { describeClock } from './PrimaryFigures.js';
@@ -243,7 +243,9 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
                   ))}
                   <Mark mark={pick ? layout.markOf(pick) : null} />
                 </Svg>
-                <TapPad
+                <TapSurface
+                  drag
+                  testID="tap-pad"
                   disabled={disabled}
                   onPoint={(x, y) => write(layout.pickAt(x, y, pick, active))}
                   onRelease={clock && active === 0 ? () => setActive(1) : undefined}

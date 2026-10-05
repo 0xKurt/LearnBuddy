@@ -30,7 +30,6 @@ import { z } from 'zod';
 import { loadConfig } from '../../src/config.js';
 import type { JsonSchema, LlmRequest } from '../../src/llm/gateway.js';
 import { ensureCredentialsFile, modelFor, splitModelSpec } from '../../src/llm/vertex.js';
-import * as buddyCheck from '../../src/modules/buddy/check.js';
 import * as consolidate from '../../src/modules/buddy/consolidate.js';
 import * as decision from '../../src/modules/buddy/decision.js';
 import * as lookups from '../../src/modules/buddy/lookups.js';
@@ -38,10 +37,9 @@ import * as prompts from '../../src/modules/buddy/prompts.js';
 import * as registry from '../../src/modules/buddy/registry.js';
 import * as roleplay from '../../src/modules/buddy/roleplay.js';
 import * as summarise from '../../src/modules/buddy/summarise.js';
-import * as turn from '../../src/modules/buddy/turn.js';
 import * as extract from '../../src/modules/materials/extract.js';
 import * as images from '../../src/modules/materials/images.js';
-import * as materials from '../../src/modules/materials/service.js';
+import * as sheetSources from '../../src/modules/materials/sources.js';
 import * as cloze from '../../src/modules/practice/cloze.js';
 import * as essay from '../../src/modules/practice/essay.js';
 import * as generate from '../../src/modules/practice/generate.js';
@@ -121,8 +119,8 @@ function variants(): Variant[] {
       tier: 'smart',
       promptVersion: buddy,
       system: prompts.TURN_SYSTEM,
-      schema: turn.TURN_STEP_SCHEMA,
-      where: 'buddy/turn.ts — final ? TURN_SCHEMA : TURN_STEP_SCHEMA',
+      schema: prompts.TURN_STEP_SCHEMA,
+      where: 'buddy/prompts.ts, sent by turn.ts — final ? TURN_SCHEMA : TURN_STEP_SCHEMA',
     },
     {
       purpose: 'buddy_turn',
@@ -130,7 +128,7 @@ function variants(): Variant[] {
       tier: 'smart',
       promptVersion: buddy,
       system: prompts.TURN_SYSTEM,
-      schema: turn.TURN_SCHEMA,
+      schema: prompts.TURN_SCHEMA,
       where: 'buddy/turn.ts',
     },
     {
@@ -157,7 +155,7 @@ function variants(): Variant[] {
       tier: 'smart',
       promptVersion: buddy,
       system: prompts.CHECK_SYSTEM,
-      schema: buddyCheck.CHECK_STEP_SCHEMA,
+      schema: prompts.CHECK_STEP_SCHEMA,
       where: 'buddy/check.ts — final ? CHECK_SCHEMA : CHECK_STEP_SCHEMA',
     },
     {
@@ -166,7 +164,7 @@ function variants(): Variant[] {
       tier: 'smart',
       promptVersion: buddy,
       system: prompts.CHECK_SYSTEM,
-      schema: buddyCheck.CHECK_SCHEMA,
+      schema: prompts.CHECK_SCHEMA,
       where: 'buddy/check.ts',
     },
     {
@@ -195,43 +193,43 @@ function variants(): Variant[] {
       purpose: 'extraction',
       profile: 'study',
       tier: 'smart',
-      promptVersion: extract.EXTRACT_PROMPT_VERSION,
+      promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: extract.EXTRACT_SYSTEM,
-      schema: materials.EXTRACTION_SCHEMA,
+      schema: sheetSources.EXTRACTION_SCHEMA,
       where: 'materials/service.ts — homework ? HOMEWORK_* : EXTRACT_*',
     },
     {
       purpose: 'extraction',
       profile: 'study + LEAN_RULES (after a cut-off answer)',
       tier: 'smart',
-      promptVersion: extract.EXTRACT_PROMPT_VERSION,
+      promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: leanOf(extract.EXTRACT_SYSTEM),
-      schema: materials.EXTRACTION_SCHEMA,
+      schema: sheetSources.EXTRACTION_SCHEMA,
       where: 'materials/service.ts — lean',
     },
     {
       purpose: 'extraction',
       profile: 'homework',
       tier: 'smart',
-      promptVersion: extract.EXTRACT_PROMPT_VERSION,
+      promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: extract.HOMEWORK_SYSTEM,
-      schema: materials.HOMEWORK_SCHEMA,
+      schema: sheetSources.HOMEWORK_SCHEMA,
       where: 'materials/service.ts',
     },
     {
       purpose: 'extraction',
       profile: 'homework + LEAN_RULES',
       tier: 'smart',
-      promptVersion: extract.EXTRACT_PROMPT_VERSION,
+      promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: leanOf(extract.HOMEWORK_SYSTEM),
-      schema: materials.HOMEWORK_SCHEMA,
+      schema: sheetSources.HOMEWORK_SCHEMA,
       where: 'materials/service.ts — lean',
     },
     {
       purpose: 'tutor',
       profile: 'tutor',
       tier: 'smart',
-      promptVersion: tutor.TUTOR_PROMPT_VERSION,
+      promptVersion: practice.TUTOR_PROMPT_VERSION,
       system: tutor.TUTOR_SYSTEM,
       schema: practice.TUTOR_SCHEMA,
       where: 'practice/answer.ts — asked.length ? RUBRIC_SCHEMA : TUTOR_SCHEMA',
@@ -240,7 +238,7 @@ function variants(): Variant[] {
       purpose: 'tutor',
       profile: 'rubric (#211)',
       tier: 'smart',
-      promptVersion: tutor.TUTOR_PROMPT_VERSION,
+      promptVersion: practice.TUTOR_PROMPT_VERSION,
       system: tutor.TUTOR_SYSTEM,
       schema: practice.RUBRIC_SCHEMA,
       where: 'practice/answer.ts',

@@ -50,6 +50,7 @@ import {
 } from './evaluate.js';
 import { ItemDraft } from './items.js';
 import { mentionsSolution } from './tutor.js';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 /** How a gap is written in the model's text. Nothing else marks one. */
 const GAP_MARK = /_{3,}/g;
@@ -407,8 +408,6 @@ export function clozeReply(locale: string, check: ClozeCheck): string {
 
 // ─────────────── the gaps no rule decided: the model judges them, and only them ───────────────
 
-export const CLOZE_JUDGE_PROMPT_VERSION = 'cloze-gaps.v1';
-
 const GapJudgement = z.object({
   gaps: z
     .array(
@@ -513,3 +512,6 @@ export async function judgeOpenGaps(deps: Deps, input: JudgeInput): Promise<Cloz
 export function clozeDecidedBy(check: ClozeCheck): 'rule' | 'model' {
   return check.gaps.some((g) => g.by === 'model') ? 'model' : 'rule';
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const CLOZE_JUDGE_PROMPT_VERSION = promptVersion('cloze-gaps', JUDGE_SYSTEM, GAP_SCHEMA);
