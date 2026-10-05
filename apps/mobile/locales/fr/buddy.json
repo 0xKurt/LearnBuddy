@@ -385,6 +385,12 @@
       "fr": "français",
       "es": "espagnol",
       "it": "italien"
+    },
+    "result": {
+      "met": "Réussi",
+      "open": "Pas encore",
+      "better": "Ça sonne encore mieux comme ça",
+      "quote": "« {{quote}} »"
     }
   }
 }

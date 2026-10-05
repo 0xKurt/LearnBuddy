@@ -34,6 +34,7 @@ import { SHADOW } from '../../lib/theme/shadow.js';
 import { AreaCard } from './AreaCard.js';
 import { ConfirmCard } from './ConfirmCard.js';
 import { RoleplayCard } from './RoleplayCard.js';
+import { RoleplayResult } from './RoleplayResult.js';
 import { deliveryText, describeAction, onlyInApp } from './describe.js';
 import { UndoSheet } from './UndoSheet.js';
 import { i18n } from '../../lib/i18n/index.js';
@@ -59,6 +60,21 @@ export const BUBBLE = {
   paddingHorizontal: SPACE.lg,
   paddingVertical: 11,
 } as const;
+
+/** The card one of Buddy's actions brings into the chat; null where a receipt says it. */
+function actionCard(a: MessageView['actions'][number], spoken: boolean): ReactNode {
+  const s = a.summary;
+  // Buddy's offers to start something: always shown, one tap starts it.
+  if (s.tool === 'offer_learning') return <OfferCard actionId={a.id} offer={s} spoken={spoken} />;
+  // A Kopfrechnen round (issue #243): the same card, code writes the tasks.
+  if (s.tool === 'offer_drill') return <DrillOfferCard actionId={a.id} offer={s} />;
+  if (s.tool === 'open_area') return <AreaCard area={s.area} />;
+  // Nothing is deleted until she answers this (issue #151).
+  if (s.tool === 'confirm_delete') return <ConfirmCard confirm={s} />;
+  // The role card: the scene, her tasks and the way out (issue #244).
+  if (s.tool === 'start_roleplay') return <RoleplayCard roleplay={s} />;
+  return null;
+}
 
 /** One empty set for "nothing is carried on top": a fresh one each render is a new prop. */
 const EMPTY_IDS: ReadonlySet<string> = new Set();
@@ -291,72 +307,83 @@ export function Conversation({
             style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: SPACE.xs }}
           >
             {day ? <DayLine day={day} /> : null}
-            <Animated.View
-              entering={enterOf(m, 0)}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'flex-end',
-                gap: SPACE.sm,
-                maxWidth: '92%',
-              }}
-            >
-              <Pressable
-                accessibilityRole="text"
-                accessibilityLabel={spoken}
-                accessibilityHint={t('thread.message_hint')}
-                accessibilityActions={[
-                  { name: 'copy', label: t('message.copy') },
-                  ...(mine ? [] : [{ name: 'speak', label: t('message.speak') }]),
-                ]}
-                onAccessibilityAction={(e) => {
-                  if (e.nativeEvent.actionName === 'copy' || e.nativeEvent.actionName === 'speak')
-                    setMenu({ text: m.text, role: m.role });
+            {m.roleplay_feedback ? (
+              // The feedback after a roleplay: the "So lief's" list the Probetest ends with,
+              // in place of its text (issue #384). The text stays for reading aloud.
+              <Animated.View entering={enterOf(m, 0)} style={{ width: '86%' }}>
+                <RoleplayResult feedback={m.roleplay_feedback} />
+              </Animated.View>
+            ) : (
+              <Animated.View
+                entering={enterOf(m, 0)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-end',
+                  gap: SPACE.sm,
+                  maxWidth: '92%',
                 }}
-                onLongPress={() => {
-                  haptic.tap();
-                  setMenu({ text: m.text, role: m.role });
-                }}
-                delayLongPress={350}
-                style={{ flexShrink: 1 }}
               >
-                {({ pressed }) => (
-                  <View
-                    style={[
-                      BUBBLE,
-                      {
-                        backgroundColor: mine ? palette.primary : palette.paper,
-                        borderBottomRightRadius: mine ? 6 : BUBBLE.borderRadius,
-                        borderBottomLeftRadius: mine ? BUBBLE.borderRadius : 6,
-                        opacity: pressed ? 0.85 : 1,
-                        transform: [{ scale: pressed ? 0.98 : 1 }],
-                      },
-                      mine ? null : SHADOW.soft,
-                    ]}
-                  >
-                    {m.outreach ? (
-                      <Text style={[TYPE.label, { marginBottom: 2 }]}>{m.outreach.title}</Text>
-                    ) : null}
-                    {!mine && spokenMode && m === lastBuddy ? (
-                      <ReadAlongBubble text={m.text} style={[TYPE.body, { color: palette.ink }]} />
-                    ) : (
-                      <RichText
-                        text={m.text}
-                        style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
-                      />
-                    )}
-                  </View>
-                )}
-              </Pressable>
-            </Animated.View>
+                <Pressable
+                  accessibilityRole="text"
+                  accessibilityLabel={spoken}
+                  accessibilityHint={t('thread.message_hint')}
+                  accessibilityActions={[
+                    { name: 'copy', label: t('message.copy') },
+                    ...(mine ? [] : [{ name: 'speak', label: t('message.speak') }]),
+                  ]}
+                  onAccessibilityAction={(e) => {
+                    if (e.nativeEvent.actionName === 'copy' || e.nativeEvent.actionName === 'speak')
+                      setMenu({ text: m.text, role: m.role });
+                  }}
+                  onLongPress={() => {
+                    haptic.tap();
+                    setMenu({ text: m.text, role: m.role });
+                  }}
+                  delayLongPress={350}
+                  style={{ flexShrink: 1 }}
+                >
+                  {({ pressed }) => (
+                    <View
+                      style={[
+                        BUBBLE,
+                        {
+                          backgroundColor: mine ? palette.primary : palette.paper,
+                          borderBottomRightRadius: mine ? 6 : BUBBLE.borderRadius,
+                          borderBottomLeftRadius: mine ? BUBBLE.borderRadius : 6,
+                          opacity: pressed ? 0.85 : 1,
+                          transform: [{ scale: pressed ? 0.98 : 1 }],
+                        },
+                        mine ? null : SHADOW.soft,
+                      ]}
+                    >
+                      {m.outreach ? (
+                        <Text style={[TYPE.label, { marginBottom: 2 }]}>{m.outreach.title}</Text>
+                      ) : null}
+                      {!mine && spokenMode && m === lastBuddy ? (
+                        <ReadAlongBubble
+                          text={m.text}
+                          style={[TYPE.body, { color: palette.ink }]}
+                        />
+                      ) : (
+                        <RichText
+                          text={m.text}
+                          style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
+                        />
+                      )}
+                    </View>
+                  )}
+                </Pressable>
+              </Animated.View>
+            )}
             {/* What really happened to a message Buddy also sent outside the app. "Nur hier
                 in der App" is the one state that is the same for every one of them, so it is
                 said once — under the newest (issue #204); it used to stand under every card. */}
             {m.outreach && (m.id === inAppDelivery || !saysOnlyInApp(m)) ? (
               <Text style={[TYPE.small, { fontSize: 12 }]}>{deliveryText(m.outreach)}</Text>
             ) : null}
-            {m.actions.map((a) =>
-              // Buddy's offers to start something: always shown, one tap starts it.
-              a.summary.tool === 'offer_learning' ? (
+            {m.actions.map((a) => {
+              const card = actionCard(a, spokenMode);
+              return card ? (
                 <Animated.View
                   key={a.id}
                   entering={riseIn(1)}
@@ -364,45 +391,10 @@ export function Conversation({
                   // a card glued to its sentence was the complaint (owner 28.09., issue #51).
                   style={{ width: '86%', marginTop: SPACE.xs }}
                 >
-                  <OfferCard actionId={a.id} offer={a.summary} spoken={spokenMode} />
+                  {card}
                 </Animated.View>
-              ) : a.summary.tool === 'offer_drill' ? (
-                // A Kopfrechnen round (issue #243): the same card, code writes the tasks.
-                <Animated.View
-                  key={a.id}
-                  entering={riseIn(1)}
-                  style={{ width: '86%', marginTop: SPACE.xs }}
-                >
-                  <DrillOfferCard actionId={a.id} offer={a.summary} />
-                </Animated.View>
-              ) : a.summary.tool === 'open_area' ? (
-                <Animated.View
-                  key={a.id}
-                  entering={riseIn(1)}
-                  style={{ width: '86%', marginTop: SPACE.xs }}
-                >
-                  <AreaCard area={a.summary.area} />
-                </Animated.View>
-              ) : a.summary.tool === 'confirm_delete' ? (
-                // Nothing is deleted until she answers this (issue #151).
-                <Animated.View
-                  key={a.id}
-                  entering={riseIn(1)}
-                  style={{ width: '86%', marginTop: SPACE.xs }}
-                >
-                  <ConfirmCard confirm={a.summary} />
-                </Animated.View>
-              ) : a.summary.tool === 'start_roleplay' ? (
-                // The role card: the scene, her tasks and the way out (issue #244).
-                <Animated.View
-                  key={a.id}
-                  entering={riseIn(1)}
-                  style={{ width: '86%', marginTop: SPACE.xs }}
-                >
-                  <RoleplayCard roleplay={a.summary} />
-                </Animated.View>
-              ) : null,
-            )}
+              ) : null;
+            })}
             {showActions && done.length > 0 ? (
               <Animated.View
                 entering={riseIn(1)}

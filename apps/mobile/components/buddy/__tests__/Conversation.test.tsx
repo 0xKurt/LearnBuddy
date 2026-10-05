@@ -49,6 +49,7 @@ function buddySaid(actions: ActionView[]): MessageView {
     reply_to_id: null,
     outreach: null,
     actions,
+    roleplay_feedback: null,
     created_at: '2026-10-01T18:00:00.000Z',
   };
 }
@@ -510,5 +511,40 @@ describe('what was agreed says where it will appear — once (issue #204)', () =
       />,
     );
     expect(screen.queryByText(/erscheint hier in der App/)).toBeNull();
+  });
+});
+
+describe("the feedback after a roleplay is the Probetest's result list (issue #384)", () => {
+  const ended: MessageView = {
+    ...buddySaid([]),
+    id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+    text: 'Das Rollenspiel ist vorbei – so lief es:\n✓ Begrüßen: geschafft – „Hello“',
+    roleplay_feedback: {
+      points: [
+        { name: 'Begrüßen', met: true, quote: 'Hello' },
+        { name: 'Nach dem Preis fragen', met: false, quote: null },
+      ],
+      better: [{ said: 'How much it costs?', better: 'How much does it cost?' }],
+    },
+  };
+
+  it('shows each task with its state, her own words and the better line — not the text', () => {
+    renderInApp(<Conversation messages={[ended]} pending={null} busy={false} />);
+    expect(screen.getByRole('heading', { name: "So lief's" })).toBeTruthy();
+    expect(screen.getByText('Geschafft')).toBeTruthy();
+    expect(screen.getByText('Begrüßen')).toBeTruthy();
+    expect(screen.getByText('„Hello“')).toBeTruthy();
+    expect(screen.getByText('Noch nicht dabei')).toBeTruthy();
+    expect(screen.getByText('Nach dem Preis fragen')).toBeTruthy();
+    expect(screen.getByText('So klingt es noch besser')).toBeTruthy();
+    expect(screen.getByText('„How much it costs?“')).toBeTruthy();
+    expect(screen.getByText('„How much does it cost?“')).toBeTruthy();
+    // The card takes the text's place: never parsed out of it, and never shown twice.
+    expect(screen.queryByText(/Das Rollenspiel ist vorbei/)).toBeNull();
+  });
+
+  it('keeps an ordinary message a bubble', () => {
+    renderInApp(<Conversation messages={[buddySaid([])]} pending={null} busy={false} />);
+    expect(screen.queryByRole('heading', { name: "So lief's" })).toBeNull();
   });
 });

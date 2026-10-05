@@ -109,9 +109,16 @@ test('roleplay: in the chat, in the role, by voice, and feedback per key point',
   await shot(page, '43b-roleplay-strip-dark');
   // The card has scrolled away by now; the strip carries the way out.
   await page.getByTestId('roleplay-strip').getByRole('button').click();
-  await expect(page.getByText(/Begrüßen: geschafft – „Hello“/)).toBeVisible();
-  await expect(page.getByText(/Nach dem Preis fragen: noch nicht dabei/)).toBeVisible();
-  await expect(page.getByText(/„How much it costs\?“ → „How much does it cost\?“/)).toBeVisible();
+  // The Probetest's "So lief's" list (issue #384), from the structured feedback — not the text.
+  await expect(page.getByRole('heading', { name: "So lief's" })).toBeVisible();
+  await expect(page.getByText('„Hello“', { exact: true })).toBeVisible();
+  await expect(page.getByText('Nach dem Preis fragen', { exact: true }).last()).toBeVisible();
+  await expect(page.getByText('Noch nicht dabei', { exact: true })).toBeVisible();
+  await expect(page.getByText('„How much it costs?“', { exact: true })).toBeVisible();
+  await expect(page.getByText('„How much does it cost?“', { exact: true })).toBeVisible();
+  // The invented quote is not shown, and the text is not shown beside the card.
+  await expect(page.getByText(/What is the price/)).toHaveCount(0);
+  await expect(page.getByText(/so lief es:/)).toHaveCount(0);
   // Over: the strip with the way out is gone (the card above has scrolled away with the scene).
   await expect(page.getByTestId('roleplay-strip')).toHaveCount(0);
   await expect(page.getByRole('button', { name: "Beenden – wie lief's?" })).toHaveCount(0);

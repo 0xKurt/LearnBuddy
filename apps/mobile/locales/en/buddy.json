@@ -385,6 +385,12 @@
       "fr": "French",
       "es": "Spanish",
       "it": "Italian"
+    },
+    "result": {
+      "met": "Done",
+      "open": "Not yet",
+      "better": "This sounds even better",
+      "quote": "“{{quote}}”"
     }
   }
 }

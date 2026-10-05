@@ -7,6 +7,8 @@
 //   * after twelve turns it ends, in the same transaction, with feedback whose invented quote
 //     is discarded (the issue's acceptance criterion);
 //   * leaving by saying so, ending with the card's button, a second tap, another learner's id;
+//   * the checked feedback reaches the app as structured data on the closing message (issue
+//     #384, `MessageView.roleplay_feedback`) — only there, only hers, never for a concern;
 //   * a stale context, and an interrupted turn taken over by the scheduler, count a turn once.
 // requires live verification in Claude Code session (needs a running Postgres; the model is scripted)
 
@@ -242,6 +244,23 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
     expect(fb).not.toContain('cake');
     // No grade, no score, no count.
     expect(fb).not.toMatch(/\d\s*(\/|von|of)\s*\d/);
+    // The same checked feedback, structured, on the closing message only (issue #384): the
+    // app shows it as the result card and never parses the text. The invented quote and the
+    // line she never wrote are not in it.
+    const checked = {
+      points: [
+        { name: 'Begrüßen', met: true, quote: 'Hello' },
+        { name: 'Etwas bestellen', met: false, quote: null },
+        { name: 'Nach dem Preis fragen', met: true, quote: 'How much is it?' },
+      ],
+      better: [{ said: 'I want a tea number 3', better: 'Could I have a tea, please?' }],
+    };
+    expect(tail[1]!.roleplay_feedback).toEqual(checked);
+    expect(tail[0]!.roleplay_feedback).toBeNull();
+    expect(twelfth.body.home.thread.filter((m) => m.roleplay_feedback !== null)).toHaveLength(1);
+    // Read again later, it is still there: from the one stored version, not from this response.
+    const reread = (await l.api.get<BuddyHome>('/buddy')).body.thread;
+    expect(reread.find((m) => m.id === tail[1]!.id)?.roleplay_feedback).toEqual(checked);
     expect(twelfth.body.home.roleplay).toBeNull();
     expect(roleplayCard(twelfth.body.home)?.status).toBe('ended');
 
@@ -271,6 +290,39 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
     expect(res.body.home.thread.at(-1)!.text).toBe(
       'Okay, wir hören mit dem Rollenspiel auf. Sag Bescheid, wenn du nochmal willst.',
     );
+    // Nothing was played, so there is nothing to show as a result card (issue #384).
+    expect(res.body.home.thread.every((m) => m.roleplay_feedback === null)).toBe(true);
+  });
+
+  it('ends when she says so after a line; the feedback comes as the result card (issue #384)', async () => {
+    const { l, id } = await started('Paula');
+    env.llm.script('buddy_turn', { json: line('Hi! What would you like?') });
+    await say(l, 'Hello, I am hungry.');
+    env.llm.script(
+      'buddy_turn',
+      { json: line('', { leave: true }) },
+      {
+        json: {
+          points: [
+            { point: 'k1', met: true, quote: 'Hello' },
+            // Her words of the leaving line are not a line in the scene: not quotable.
+            { point: 'k2', met: true, quote: 'I want to stop' },
+          ],
+          better: [{ said: 'I am hungry', better: 'I would like something to eat.' }],
+        },
+      },
+    );
+    const res = await say(l, 'I want to stop now');
+    expect(res.body.status).toBe('done');
+    expect(await turnsOf(id)).toEqual({ turns: 1, status: 'ended', ended_reason: 'her' });
+    expect(res.body.home.thread.at(-1)!.roleplay_feedback).toEqual({
+      points: [
+        { name: 'Begrüßen', met: true, quote: 'Hello' },
+        { name: 'Etwas bestellen', met: false, quote: null },
+        { name: 'Nach dem Preis fragen', met: false, quote: null },
+      ],
+      better: [{ said: 'I am hungry', better: 'I would like something to eat.' }],
+    });
   });
 
   it('a concern ends the scene with the fixed caring reply and no feedback', async () => {
@@ -280,6 +332,13 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
     expect(res.body.status).toBe('done');
     expect(await turnsOf(id)).toMatchObject({ status: 'ended', ended_reason: 'concern' });
     expect(res.body.home.thread.at(-1)!.text).toContain('116 111');
+    // The fixed caring text stays as it is: no result card, no feedback stored (issue #384).
+    expect(res.body.home.thread.every((m) => m.roleplay_feedback === null)).toBe(true);
+    const stored = await env.db.one<{ feedback: unknown }>(
+      `select feedback from buddy_roleplays where id = $1`,
+      [id],
+    );
+    expect(stored.feedback).toBeNull();
   });
 
   it('ends with her tap: feedback once, a second tap is refused, another learner gets 404', async () => {
@@ -303,9 +362,29 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
     // The two points the model said nothing about are not managed: nothing showed them.
     expect(ended.body.home.thread.at(-1)!.text).toContain('Etwas bestellen: noch nicht dabei');
     expect(await turnsOf(id)).toEqual({ turns: 1, status: 'ended', ended_reason: 'her' });
+    const closing = ended.body.home.thread.at(-1)!;
+    expect(closing.roleplay_feedback).toEqual({
+      points: [
+        { name: 'Begrüßen', met: true, quote: 'Good afternoon!' },
+        { name: 'Etwas bestellen', met: false, quote: null },
+        { name: 'Nach dem Preis fragen', met: false, quote: null },
+      ],
+      better: [],
+    });
 
     const again = await l.api.post(`/buddy/roleplays/${id}/end`, {});
     expect(again.status).toBe(409);
+
+    // Her feedback is hers only: a message of another learner pointing at her roleplay (as
+    // nothing in the app can write, but the lookup must not trust it) shows no card.
+    await env.db.query(
+      `insert into buddy_messages (learner_id, role, text, roleplay_id, created_at)
+       values ($1, 'buddy', 'Fremd', $2, $3)`,
+      [other.learnerId, id, env.clock.now()],
+    );
+    const theirs = (await other.api.get<BuddyHome>('/buddy')).body.thread;
+    expect(theirs.find((m) => m.text === 'Fremd')?.roleplay_feedback).toBeNull();
+    expect(theirs.every((m) => m.roleplay_feedback === null)).toBe(true);
   });
 
   it('a stale context during an in-role turn applies it once, after a fresh look', async () => {
