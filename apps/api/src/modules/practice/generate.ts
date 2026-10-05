@@ -81,7 +81,8 @@ import { structuredItems, type StructuredItem } from './structured.js';
 // v1.32: find_error (a worked solution with one wrong line, the error built in by code) and
 //        column_calc (written arithmetic in columns, every digit and carry computed by code) (#260).
 // v1.33: grid_draw, drawing on a grid — points, a line or parabola, a mirror image, bars (#249).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.33';
+// v1.34: circuits, logic gates and Itten's colour wheel, their keys computed by code (#261).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.34';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

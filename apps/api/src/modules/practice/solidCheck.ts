@@ -23,45 +23,19 @@
 
 import {
   axesKey,
-  canonicalizeUnit,
   isCubeNet,
   isSpaceFigure,
   netKey,
-  parseCanonicalKey,
   solidKey,
   spaceProblem,
-  unitFactor,
 } from '@learnbuddy/shared-math';
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 
 import { t } from '../../i18n/index.js';
-import { asLocale, numberKeyTolerance } from './chartRead.js';
+import { asLocale } from './chartRead.js';
+import { exactCount, measured } from './figureKey.js';
 import type { ItemDraft } from './items.js';
 import { samePoint } from './systems.js';
-
-/** A whole-number key without a unit that is exactly `n`. */
-function exactCount<T extends ItemDraft>(it: T, n: number): T | null {
-  if (it.kind !== 'numeric' || it.unit !== null) return null;
-  const key = parseCanonicalKey(it.answer);
-  return key.value === n && !key.unit ? { ...it, tolerance: null } : null;
-}
-
-/** A number key that agrees with `value`, given in `from` (null: no unit at all). */
-function measured<T extends ItemDraft>(it: T, value: number, from: string | null): T | null {
-  if (it.kind !== 'numeric') return null;
-  const key = parseCanonicalKey(it.answer);
-  const to = canonicalizeUnit(it.unit) ?? key.unit ?? null;
-  let inUnit = value;
-  if (from === null) {
-    if (to !== null) return null;
-  } else {
-    const factor = to === null ? null : unitFactor(from, to);
-    if (factor === null) return null;
-    inUnit = (value * Number(factor.num)) / Number(factor.den);
-  }
-  const tolerance = numberKeyTolerance(it.answer, inUnit, 0);
-  return tolerance === undefined ? null : { ...it, tolerance };
-}
 
 /**
  * The item with its solid, net or point question checked, the item unchanged when it asks

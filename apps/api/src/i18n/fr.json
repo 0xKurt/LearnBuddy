@@ -336,6 +336,29 @@
       "net_yes": "Oui, c'est un patron de cube",
       "net_no": "Non, ce n'est pas un patron de cube"
     },
+    "circuit": {
+      "lit": "Oui, {{lamp}} s’allume",
+      "unlit": "Non, {{lamp}} ne s’allume pas",
+      "series": "Circuit en série",
+      "parallel": "Circuit en parallèle"
+    },
+    "color": {
+      "yellow": "Jaune",
+      "yellow_orange": "Jaune-orangé",
+      "orange": "Orange",
+      "red_orange": "Rouge-orangé",
+      "red": "Rouge",
+      "red_violet": "Rouge-violet",
+      "violet": "Violet",
+      "blue_violet": "Bleu-violet",
+      "blue": "Bleu",
+      "blue_green": "Bleu-vert",
+      "green": "Vert",
+      "yellow_green": "Jaune-vert",
+      "primary": "Couleur primaire",
+      "secondary": "Couleur secondaire",
+      "tertiary": "Couleur tertiaire"
+    },
     "explain": {
       "point_met": "✓ {{name}}",
       "point_open": "{{name}} : il manque encore",

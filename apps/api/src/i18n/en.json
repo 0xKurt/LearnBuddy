@@ -336,6 +336,29 @@
       "net_yes": "Yes, it is a cube net",
       "net_no": "No, it is not a cube net"
     },
+    "circuit": {
+      "lit": "Yes, {{lamp}} lights up",
+      "unlit": "No, {{lamp}} does not light up",
+      "series": "Series circuit",
+      "parallel": "Parallel circuit"
+    },
+    "color": {
+      "yellow": "Yellow",
+      "yellow_orange": "Yellow-orange",
+      "orange": "Orange",
+      "red_orange": "Red-orange",
+      "red": "Red",
+      "red_violet": "Red-violet",
+      "violet": "Violet",
+      "blue_violet": "Blue-violet",
+      "blue": "Blue",
+      "blue_green": "Blue-green",
+      "green": "Green",
+      "yellow_green": "Yellow-green",
+      "primary": "Primary colour",
+      "secondary": "Secondary colour",
+      "tertiary": "Tertiary colour"
+    },
     "explain": {
       "point_met": "✓ {{name}}",
       "point_open": "{{name}} still missing",

@@ -15,7 +15,6 @@ import {
   accepts,
   automatonLayout,
   parseProbability,
-  ratioValue,
   TREE_WIDTH,
   treeKey,
   treeLayout,
@@ -23,6 +22,7 @@ import {
   type Automaton,
   type ProbTree,
 } from '../trees.js';
+import { ratioValue } from '../ratio.js';
 
 const n = (p: number, l: string, e: string) => ({ p, l, e });
 

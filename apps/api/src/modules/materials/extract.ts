@@ -50,7 +50,8 @@ import { TABLE_RULES } from '../practice/table.js';
 //        by tapping the figure (`tap`, #248).
 // v8.13: a worked solution to check for its mistake becomes one find_error task (the solution
 //        written correct), a calculation to do in columns one column_calc task (#260).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.13';
+// v8.14: circuits, logic gates and Itten's colour wheel, their keys computed by code (#261).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.14';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
