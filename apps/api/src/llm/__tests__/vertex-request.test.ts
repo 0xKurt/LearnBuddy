@@ -22,7 +22,7 @@ import { GoogleGenAI } from '@google/genai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-import { TURN_STEP_SCHEMA } from '../../modules/buddy/turn.js';
+import { TURN_STEP_SCHEMA } from '../../modules/buddy/prompts.js';
 import { ExtractionResult } from '../../modules/materials/extract.js';
 import type { JsonSchema, LlmRequest } from '../gateway.js';
 import { toJsonSchema } from '../json-schema.js';

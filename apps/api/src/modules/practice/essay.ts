@@ -56,9 +56,7 @@ import {
 } from './rubric.js';
 import type { ItemRow, PracticeLearner, SessionItemRow } from './service.js';
 import { requiredElements } from './tutor.js';
-
-// v1: the first prompt (#258).
-export const ESSAY_PROMPT_VERSION = 'essay.v1';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 // ─────────────── die Kernpunkte je Textsorte: Code, nicht Prompt ───────────────
 
@@ -407,3 +405,6 @@ export async function judgeEssay(
     essay,
   };
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const ESSAY_PROMPT_VERSION = promptVersion('essay', ESSAY_SYSTEM, ESSAY_SCHEMA);

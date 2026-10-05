@@ -25,8 +25,7 @@ import { partialArray, partialString } from '../../llm/partial.js';
 import { ageOn } from '../identity/model.js';
 import { reviewItem } from './fsrs.js';
 import { settleTurn, replayTurn, touchRun, type PracticeLearner } from './service.js';
-
-export const PRONOUNCE_PROMPT_VERSION = 'pronounce.v2.3';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 const Judgement = z.object({
   audible: z.boolean().describe('false if there is no clear speech (silence, noise, too quiet)'),
@@ -439,3 +438,12 @@ export async function speakWord(
     throw new AppError('model_unavailable', 'Could not listen right now');
   }
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const PRONOUNCE_PROMPT_VERSION = promptVersion(
+  'pronounce',
+  SYSTEM,
+  JUDGEMENT_SCHEMA,
+  WORD_SYSTEM,
+  WORD_SCHEMA,
+);
