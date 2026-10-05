@@ -2872,10 +2872,10 @@ Also after the last question closed and the session finished.
 
 ### Lesetexte (issue #233, migration `0086_reading_passages.sql`)
 
-Several questions about ONE text she reads, the text visible while she answers. Today only from a
+Several questions about ONE text she reads, the text visible while she answers. From a
 photographed sheet (`materials/extract.ts`, `reading` in the reading's answer; not in homework,
 which is helped task by task as printed): the printed questions, or Buddy's own where the sheet
-prints none.
+prints none — or from a text Buddy writes himself (a `read` run, #368, below).
 
 - **Stored per question.** `items.read_passage` = `{title, lines, lang}` (`ReadPassage`,
   `contracts/reading.ts`) on every question of the group, for the reason `listen_task` is: spaced
@@ -2902,8 +2902,21 @@ prints none.
   (15 % above an answer board or with the keyboard up) that scrolls in itself — `scroll-text`, the
   one scrolling surface allowed besides a conversation and a browsed list (`tests/web/fit.ts`).
   Folded or not, and where she scrolled, carries over to the next question of the same text.
-- **Not yet:** a reading text Buddy writes on request (a `read` run beside `listen`) — it needs a
-  run kind (`practice/setProfiles.ts`, `practice/generate.ts`).
+- **Buddy's own text (#368):** a `read` run (`offer_learning` kind `read`, `StartTopicRequest`
+  kind `read`, profile `reading` only in that run — `practice/setProfiles.ts`). The model writes
+  `reading`: title, 1–8 paragraphs of prose, lang, topic and the questions (the reading-question
+  union, never naming a line). Code (`practice/readText.ts`, reject — never repair) holds it to her
+  STAGE (`READ_BANDS` by grade 1–2 / 3–4 / 5–6 / 7–9 / 10+ and adults, one step for "easier" /
+  "harder": characters, average and longest sentence in words, sentences cut at their end marks —
+  a format, rule 3), her LANGUAGE (the subject's taught language, else the app's — `textLangFor`;
+  every letter in that language's alphabet, `inAlphabet`, a character set and no word list; a
+  language without one gets no text), and every question to the text: the photo rules
+  (`readingItems` with `transcript` null), a question naming a line is dropped (code sets the lines,
+  `printedLines`, 52 characters), and a right multiple-choice option needs its key words in its
+  evidence. Fewer than three questions → nothing stored (422 `not_usable`). The items are
+  `origin` buddy ("Frage von Buddy") and behave like a photographed text's. generate.v1.32,
+  buddy.61. What code cannot check — whether the text is true and good to read — stays the
+  model's.
 - **Belegstelle (#368):** a reading question of kind `evidence` names a statement in the model's own
   words and quotes its evidence; code finds the lines the evidence stands on (`linesOf`) and stores
   a marking task in **lines mode** (`markLinesTask`): the text's lines in the task, the key the

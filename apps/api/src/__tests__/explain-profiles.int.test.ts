@@ -141,6 +141,46 @@ const LISTEN_TEXT =
   'On Saturday Tom took the bus to the city centre. He bought a book about horses for his sister, because her birthday is on Sunday.';
 
 /** Every form there is, whatever was asked. */
+/** A reading text Buddy writes (#368): about 1000 characters, at the stage of grade 5 to adult. */
+const READING = {
+  title: 'Der Igel im Winter',
+  paragraphs: [
+    'Im Herbst frisst sich der Igel ein dickes Fettpolster an. Er sucht Käfer, Würmer und Schnecken unter dem Laub. Je schwerer er wird, desto besser übersteht er die kalte Zeit.',
+    'Wenn die Tage kürzer werden, baut er sich ein Nest aus Blättern und Moos. Oft liegt es unter einer Hecke oder in einem Reisighaufen. Dort rollt er sich zu einer Kugel zusammen.',
+    'Im Winterschlaf schlägt sein Herz nur noch wenige Male in der Minute. Seine Körpertemperatur sinkt auf etwa fünf Grad. So verbraucht er kaum Energie und lebt von seinem Fett.',
+    'Im Frühling wacht der Igel wieder auf. Dann ist er sehr hungrig und hat fast ein Drittel seines Gewichts verloren. Gärten mit wilden Ecken helfen ihm, schnell wieder Futter zu finden.',
+    'Igel sind vor allem in der Nacht unterwegs. Am Tag schlafen sie gut versteckt unter Büschen. Ihre Stacheln schützen sie vor Füchsen und anderen Feinden.',
+    'Wer Igeln helfen will, lässt im Herbst einen Laubhaufen liegen. Ein flaches Schälchen mit Wasser hilft ihnen an heißen Tagen.',
+  ],
+  lang: 'de',
+  topic: 'Igel im Winter',
+  questions: [
+    {
+      kind: 'short',
+      prompt: 'Wovon lebt der Igel im Winterschlaf?',
+      answer: 'von seinem Fett',
+      accepted_answers: [],
+      evidence: 'So verbraucht er kaum Energie und lebt von seinem Fett',
+      difficulty: 1,
+    },
+    {
+      kind: 'multiple_choice',
+      prompt: 'Wo liegt das Nest des Igels oft?',
+      choices: ['unter einer Hecke', 'auf einem Baum'],
+      correct_choice: 0,
+      evidence: 'Oft liegt es unter einer Hecke oder in einem Reisighaufen',
+      difficulty: 1,
+    },
+    {
+      kind: 'true_false',
+      statement: 'Im Winterschlaf bleibt der Igel so warm wie im Sommer.',
+      is_true: false,
+      evidence: 'Seine Körpertemperatur sinkt auf etwa fünf Grad',
+      difficulty: 2,
+    },
+  ],
+};
+
 const EVERYTHING = {
   usable: true,
   title: 'Alles',
@@ -166,6 +206,8 @@ const EVERYTHING = {
   staffs: [{ task: 'name_note', clef: 'treble', pitch: { name: 'E', octave: 4 } }],
   structured: STRUCTURED,
   dictation: { from: 'list', lang: 'de', topic: 'Lernwörter', entries: DICTATION_WORDS },
+  // A reading run's own text and questions (#368).
+  reading: READING,
   // „Erklär mal" (#236): an open question with its key points.
   teach_back: [
     {
@@ -256,6 +298,14 @@ const BEFORE_D2: Record<
   // A new kind (#236), not a pre-D2 rule: only its explanation questions, stored as `long` with
   // key points in the rubric column.
   teach_back: { kinds: ['long'], rubric: true, bar: false, staff: false, listen: false },
+  // A new kind (#368), not a pre-D2 rule: only the questions about Buddy's reading text.
+  read: {
+    kinds: ['multiple_choice', 'short'],
+    rubric: false,
+    bar: false,
+    staff: false,
+    listen: false,
+  },
 };
 
 describe.skipIf(!dbReady)('explain profiles (#281 D2)', () => {
@@ -326,6 +376,7 @@ describe.skipIf(!dbReady)('explain profiles (#281 D2)', () => {
         listen: _listen,
         dictation: _dictation,
         teach_back: _teachBack,
+        reading: _reading,
         ...withoutOwnRuns
       } = EVERYTHING;
       expect(schemaErrors(GENERATED_SCHEMA, withoutOwnRuns)).toEqual([]);

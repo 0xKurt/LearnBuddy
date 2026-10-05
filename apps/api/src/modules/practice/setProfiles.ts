@@ -29,6 +29,7 @@ import { SELECT_RULES } from './selectAll.js';
 import { MAX_STAFF_ITEMS } from './staff.js';
 import { MAX_STRUCTURED_ITEMS, ORDER_RULES, StructuredDraftNoHelp } from './structured.js';
 import { TABLE_RULES } from './table.js';
+import { BuddyReadingDraft, BuddyReadingDraftParse } from './readText.js';
 import { MAX_TEACH_BACK, TeachBackDraft } from './teachBack.js';
 
 const SUBJECT_KINDS = [
@@ -108,6 +109,13 @@ export const GeneratedSet = z.object({
    * before a question is stored (`practice/teachBack.ts`). In the schema only for that run.
    */
   teach_back: z.array(TeachBackDraft).max(MAX_TEACH_BACK).default([]),
+  /**
+   * The one reading text of a reading run (#368): Buddy's own text and the questions about it. A
+   * separate list for the reason `listen` is one — its questions become items only once code has
+   * checked the text's level and language and each question against it (`practice/readText.ts`).
+   * In the schema the model sees only for that run.
+   */
+  reading: BuddyReadingDraft.nullable().default(null),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
@@ -141,6 +149,8 @@ export type SetProfile = {
   dictation: boolean;
   /** Explanation questions with key points (#236): only in a teach_back run. */
   teachBack: boolean;
+  /** Buddy's reading text and its questions (#368): only in a reading run. */
+  reading: boolean;
 };
 
 const STRUCTURED_FORMS = [
@@ -177,6 +187,7 @@ function onlyItems(items: readonly ModelItemKind[]): SetProfile {
     listen: false,
     dictation: false,
     teachBack: false,
+    reading: false,
   };
 }
 
@@ -189,6 +200,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     listen: false,
     dictation: false,
     teachBack: false,
+    reading: false,
   },
   // One try per question: no long answer, and no bar — a test is not a place to try a surface.
   test: {
@@ -199,6 +211,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     listen: false,
     dictation: false,
     teachBack: false,
+    reading: false,
   },
   vocab: onlyItems(['vocab']),
   speak: onlyItems(['speak']),
@@ -210,6 +223,9 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
   // „Erklär mal" (#236): nothing in `items` — its questions come out of `teach_back`, each with key
   // points code checked first.
   teach_back: { ...onlyItems([]), teachBack: true },
+  // Leseverständnis without a photo (#368): nothing in `items` — the questions come out of
+  // `reading`, each held to Buddy's text after its level and language were checked.
+  read: { ...onlyItems([]), reading: true },
   // Homework is the task she typed: no form of the app's own around it.
   help: onlyItems(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
 };
@@ -228,6 +244,7 @@ export const FALLBACK_PROFILE: SetProfile = {
   listen: false,
   dictation: false,
   teachBack: false,
+  reading: false,
 };
 
 /**
@@ -286,6 +303,7 @@ export function setSchemaForModel(
     ...(profile.listen ? {} : { listen: true }),
     ...(profile.dictation ? {} : { dictation: true }),
     ...(profile.teachBack ? {} : { teach_back: true }),
+    ...(profile.reading ? {} : { reading: true }),
   });
 }
 
@@ -319,6 +337,10 @@ export function parseSetFor(kind: StartTopicRequest['kind'], topics: [string, ..
       : z.null().catch(null),
     // Read one by one: a question whose points do not fit costs only itself.
     teach_back: itemsOneByOne(profile.teachBack ? TeachBackDraft : NOTHING, MAX_TEACH_BACK),
+    // A text that does not fit its schema is no text: the run then has nothing (`not_usable`).
+    reading: profile.reading
+      ? BuddyReadingDraftParse.nullable().default(null).catch(null)
+      : z.null().catch(null),
   });
 }
 

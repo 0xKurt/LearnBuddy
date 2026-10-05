@@ -156,6 +156,7 @@ export const ActionSummary = z.discriminatedUnion('tool', [
       'test',
       'spelling_dictation',
       'teach_back',
+      'read',
     ]),
     /**
      * spelling_dictation: the sheet the words come from (issue #242); teach_back: the sheet the

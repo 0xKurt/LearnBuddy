@@ -180,6 +180,28 @@ test('a reading text: one text above every question, scrolling alone, folding aw
   expect(seen.size).toBe(6);
 });
 
+test('a text Buddy writes himself: at her stage, read like a photographed one (#368)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Ich möchte einen Lesetext über Igel');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('einen Text über den Igel', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  // Four questions: the fifth named a line, and the lines are code's.
+  const first = 'Wo liegt das Nest des Igels oft?';
+  await expect(page.getByText(first)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Der Igel im Winter' }).first()).toBeVisible();
+  await textAndQuestion(page, first);
+  // Buddy's own text: the card says whose question it is.
+  await expect(page.getByText('Frage von Buddy').first()).toBeVisible();
+  await bothRooms(page, '98-reading-buddy');
+  await page.getByRole('button', { name: 'unter einer Hecke' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 6–7');
+  await shot(page, '98-reading-buddy-closed');
+});
+
 /**
  * A Belegstelle (#368): the statement on the card, the text as the board at the bottom — not a
  * second time above — and she taps its lines anywhere in it; code counts like every marking.

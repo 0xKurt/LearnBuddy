@@ -2,7 +2,8 @@
 // she answers. docs/architecture.md §Practice ("Lesetexte").
 //
 // The photo reading writes the text line by line, as printed, and the questions — the printed
-// ones, or its own where the sheet prints none. Code decides what may be asked, before anything
+// ones, or its own where the sheet prints none. A text Buddy writes himself (#368) goes through
+// the same rules once `readText.ts` has checked its level and language (`transcript` null). Code decides what may be asked, before anything
 // is stored (#224 "Regel 0", reject — never repair):
 //
 //   · The text is the photo's: its words stand, in order, in the reading's own transcription of
@@ -170,6 +171,18 @@ function wordsOf(text: string): string[] {
   return fold(text)
     .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean);
+}
+
+/**
+ * The sentences of a text as lists of words, cut after an end mark (. ! ? …) — read by its format,
+ * like a line reference (CLAUDE.md rule 3). An abbreviation counts as an end: that only makes a
+ * sentence shorter.
+ */
+export function sentencesOf(text: string): string[][] {
+  return text
+    .split(/(?<=[.!?…])\s+/u)
+    .map(wordsOf)
+    .filter((words) => words.length > 0);
 }
 
 /**
@@ -360,14 +373,16 @@ function lookHint(locale: string, at: PassageLines): string {
  * READING_QUESTIONS_MIN questions left is no group, and nothing of it is stored. `locale` is the
  * learner's app language: the hint is in it, and true/false options are written in the text's
  * language where the server has words for it, else in hers. `transcript` is the reading's own
- * transcription of the sheet, which the text has to stand in.
+ * transcription of the sheet, which the text has to stand in — or null for a text Buddy wrote,
+ * which `readText.ts` held to her level and language instead (#368).
  */
 export function readingItems(
   draft: ReadingDraft,
-  opts: { locale: string; transcript: string },
+  opts: { locale: string; transcript: string | null },
 ): ReadingItem[] {
   const passage = passageFrom(draft);
-  if (!passage || !onTheSheet(passage.lines, opts.transcript)) return [];
+  if (!passage) return [];
+  if (opts.transcript !== null && !onTheSheet(passage.lines, opts.transcript)) return [];
   const lines = passage.lines;
   const topic = draft.topic;
   const optionsLocale = asLocale(passage.lang) ?? opts.locale;
