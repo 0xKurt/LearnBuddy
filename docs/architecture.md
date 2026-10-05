@@ -3427,6 +3427,87 @@ pictures (#252) add their figure to it rather than building a second one.
   not one place; tapping a cell of the periodic table (#250) or a month of a line or climate chart
   (#245) — each is one `case` on this mechanism.
 
+### Circuits, logic gates and the colour wheel (issue #261)
+
+Schaltpläne (Physik, Sachunterricht), Schaltnetze (Informatik) and Itten's Farbkreis (Kunst)
+next to a question. **The model writes the parts, the gates, the marked fields and what the
+question asks; code checks the figure, computes every key, writes the options it fixes, lays the
+figure out and draws it.** No migration: the figure is an item's `figure` (jsonb).
+
+- **Contract** (`contracts/circuit.ts`): three `ModelFigure` branches, short names, no nullable
+  field. `circuit`: `u` = battery voltage in V (0 = not given); `b` = 1–4 blocks along the top
+  wire, a block = 1–3 branches (2–3 = a parallel connection), a branch = 1–3 parts
+  `{k lamp | resistor | switch, r Ω (0 = not given), o open}`; `m` = none / ammeter / voltmeter
+  with `mt` = the part it belongs to (`""` = main wire / battery); `ask` and `at` (the lamp
+  asked about). `logic`: `g` = 1–3 gates `{o and | or | not | nand | nor | xor | xnor, a, b}` on
+  the inputs A–C or an earlier gate G1/G2 — the last gate is Q, every other one takes only
+  inputs and feeds it; `ask` out (with `v`, the inputs) or ones. `color_wheel`: `hl` = the
+  marked fields, `ask` complement / mix / class with `at` = the colour(s) asked about. No
+  coordinate, no name, no key. The parts are named by code in reading order — L1, L2 …, R1 …,
+  S1 … — and the question uses exactly these names.
+- **Not as an option's picture**: `choice_figures` takes every model figure but these three
+  (`OptionFigure`, `practice/items.ts`) — nothing would hold such a picture to its option's key,
+  and each would cost the schema its size twice. The generate schema grows by ≈ 2,700
+  characters (56.8k → 59.5k, `GENERATED_SCHEMA`); with option pictures it would have been 5,400.
+- **The network, exactly** (`packages/shared-math/src/circuit.ts`): ideal parts — a closed
+  switch and an ammeter are wire, an open switch and a voltmeter a gap — reduced block by block
+  in exact fractions (`ratio.ts`, extracted from `trees.ts` for it): series adds, parallel adds
+  conductances, a wire beside anything shorts it, a gap drops out. That gives the equivalent
+  resistance, every branch current (`I · R_block / R_branch`), whether each lamp lights (its
+  branch carries current — a lamp bridged by a closed switch does not), an ammeter's reading
+  and a voltmeter's (current × resistance; across an open switch the whole voltage of its block,
+  since nothing else in its branch drops any). School circuits are series-parallel; a bridge
+  cannot be written in this shape and needs no node analysis. A lamp or resistor without a value
+  counts as 1 Ω for "does it light" (the answer does not depend on it); a number asks for every
+  value and `u`. The battery short-circuited by wire alone is rejected.
+- **Keys** (`practice/circuitCheck.ts`, `colorCheck.ts`; Regel 0, rejected — never repaired):
+  "Leuchtet L2?" and "Reihen- oder Parallelschaltung?" are multiple choice with options code
+  writes in the question's language (`practice.circuit.*`), the model's `correct_choice` must
+  point at the computed one, and series/parallel is only asked of a circuit that plainly is one
+  (every consumer in a row, or each alone in its own branch of the one parallel block). The
+  lamp count and the truth table's count of Q = 1 are exact whole numbers; resistance, current
+  and voltage are numbers with a unit (Ω/kΩ, A/mA, V/mV — new exact units in `units.ts`, symbols
+  case-sensitive like N), held by the shared `figureKey.ts` (`exactCount`, `measured`, moved out
+  of `solidCheck.ts` for their second use). Q for given inputs is typed, or one of the options
+  "0"/"1". A complement or a mixture is typed — the key must be the field's name in the
+  question's language (case, spaces and hyphens aside) and no accepted answer may name another
+  field — or one of the marked fields, whose names code writes as the options in their order;
+  primary / secondary / tertiary are three options code writes. Itten, not a colour space: red's
+  complement is green (opposite), not RGB's cyan; a mixture exists only for two primaries or a
+  primary and its neighbouring secondary. A figure that breaks a rule costs its question
+  (`wholeFigure.ts`); a number about one that declares no key is dropped.
+- **One list of figure checks** (`FIGURE_CHECKS`, `practice/items.ts`): tree, periodic table,
+  space, diagram, circuit, colour wheel and last the tap check (#248) run in order on what the
+  one before kept — the nested call chain it replaces grew with every figure.
+- **Layout** (`circuitLayout`, `logicLayout`, the same code on server and app; fit at
+  `TREE_WIDTH`): a circuit is the schoolbook loop — blocks on the top wire, the branches of a
+  block stacked between two rails with junction dots, the battery in the middle of the bottom
+  wire with its voltage above it, a voltmeter hanging in a loop under its part. Cells are 46 px,
+  a value must stand within its cell (four digits). A net draws the inputs as rails with taps
+  (dots), the first gates in one column, the last gate between them so that no tap runs through a
+  gate, Q at the end. The wheel lays its twelve names round the ring at the largest radius that
+  keeps every name — in every language — inside the width; a compound name breaks after its
+  hyphen.
+- **Drawing** (`apps/mobile/components/math/CircuitFigures.tsx`, `ColorWheel.tsx`, reached
+  through `schoolFigures.tsx`): DIN EN 60617 symbols (lamp = circle with a cross, resistor = box,
+  switch = lever between contacts, meters = circle with A or V, battery = long and short plate);
+  IEC gate boxes (&, ≥1, =1, 1 with a negation circle). Where the card is wider than a schematic
+  needs, the whole drawing is magnified (up to 1.3×, the server's layout unchanged). A lamp is
+  drawn the same whether it lights or not. The wheel: twelve ring fields from yellow at the top, Itten's star in the middle,
+  every field named in words (never colour alone), marked fields with a heavy outline and a bold
+  name. The twelve tones are theme tokens (`figure.hues`) with their own dark set; neighbours
+  differ by ΔE > 20 in every palette (`ColorWheel.test.tsx`). The names the wheel shows are the
+  API's `practice.color.*` word for word (same test) — the word she reads is the word code
+  grades. Screen readers hear every part with its name, value and switch state, every gate with
+  its inputs, every field and the marked ones — never whether a lamp lights or what a meter
+  reads. Walkthrough: `tests/web/circuits.spec.ts`. Library check: #261 and
+  `tools/guards/drawing-registry.json`.
+- **Not built yet** (open in #261): a net with two outputs (Halbaddierer); filling a truth table
+  next to a net (a `table_fill` item carries no figure, #230); tapping a field of the wheel or a
+  part of a circuit (#248); the direction of the current; a short circuit as a question; values
+  of 10 kΩ and more. Case alone in a typed colour ("grün") goes to the tutor, like every short
+  answer whose spelling is not the point (D-2).
+
 ### Explain profiles (issue #281, D2)
 
 Every explain call is sent only the forms its run can use — the schema is derived from the kind

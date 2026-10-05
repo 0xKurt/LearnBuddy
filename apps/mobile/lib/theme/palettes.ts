@@ -91,6 +91,12 @@ export type Palette = {
      * only signal.
      */
     coins: readonly [string, string, string];
+    /**
+     * Itten's twelve hues (issue #261), clockwise from yellow. The subject IS the colour here,
+     * so these are the one place a figure shows strong colour; every field also carries its name
+     * in words. The dark set is lighter where a deep tone would sink into the dark card.
+     */
+    hues: readonly string[];
   };
 };
 
@@ -166,6 +172,20 @@ const pastellSoft: Palette = {
       '#9fd6d6',
     ],
     coins: ['#e2ab86', '#ecd081', '#d9dce3'],
+    hues: [
+      '#f6d53a',
+      '#f6ad2a',
+      '#ee8128',
+      '#e5562a',
+      '#c92a3c',
+      '#b02c74',
+      '#82399c',
+      '#4e4bb6',
+      '#2a6cc0',
+      '#178f8c',
+      '#3a9e48',
+      '#9cc43a',
+    ],
   },
 };
 
@@ -245,6 +265,20 @@ const night: Palette = {
       '#3f8a8a',
     ],
     coins: ['#8f5d40', '#9a8236', '#7c818c'],
+    hues: [
+      '#f2d24a',
+      '#f2aa3a',
+      '#ef8740',
+      '#ec5f3e',
+      '#d43a52',
+      '#cf5596',
+      '#a965cc',
+      '#7d7fe0',
+      '#4f97e0',
+      '#36b2aa',
+      '#55b866',
+      '#aacb50',
+    ],
   },
 };
 
@@ -479,6 +513,8 @@ export type Figure = {
   slices: string[];
   /** Euro coins: copper, brass, silver (issue #254). */
   coins: readonly [string, string, string];
+  /** Itten's colour wheel, clockwise from yellow (issue #261). */
+  hues: readonly string[];
 };
 
 export function toneBgOf(p: Palette): Record<SubjectTone, string> {
@@ -523,5 +559,6 @@ export function figureOf(p: Palette): Figure {
     wetDeep: p.figure.wetDeep,
     slices: [...p.figure.slices],
     coins: p.figure.coins,
+    hues: p.figure.hues,
   };
 }

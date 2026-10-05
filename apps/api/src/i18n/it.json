@@ -341,6 +341,29 @@
       "kind_pyramid": "piramide",
       "kind_cylinder": "cilindro"
     },
+    "circuit": {
+      "lit": "Sì, {{lamp}} si accende",
+      "unlit": "No, {{lamp}} non si accende",
+      "series": "Circuito in serie",
+      "parallel": "Circuito in parallelo"
+    },
+    "color": {
+      "yellow": "Giallo",
+      "yellow_orange": "Giallo-arancio",
+      "orange": "Arancio",
+      "red_orange": "Rosso-arancio",
+      "red": "Rosso",
+      "red_violet": "Rosso-viola",
+      "violet": "Viola",
+      "blue_violet": "Blu-viola",
+      "blue": "Blu",
+      "blue_green": "Blu-verde",
+      "green": "Verde",
+      "yellow_green": "Giallo-verde",
+      "primary": "Colore primario",
+      "secondary": "Colore secondario",
+      "tertiary": "Colore terziario"
+    },
     "explain": {
       "point_met": "✓ {{name}}",
       "point_open": "{{name}}: manca ancora",

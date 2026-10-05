@@ -10,6 +10,7 @@ import { StaffFigure } from './staff.js';
 import { AutomatonFigure, PedigreeFigure, TreeFigure } from './tree.js';
 import { Axes3dFigure, CubeNetFigure, CubesFigure, SolidFigure } from './solid.js';
 import { DiagramFigure } from './diagram.js';
+import { CircuitFigure, ColorWheelFigure, LogicFigure } from './circuit.js';
 
 const Label = z.string().trim().min(1).max(40);
 const Num = z.number().finite();
@@ -451,6 +452,9 @@ const MODEL_FIGURES = [
   Axes3dFigure,
   CubesFigure,
   DiagramFigure,
+  CircuitFigure,
+  LogicFigure,
+  ColorWheelFigure,
 ] as const;
 
 export const ModelFigure = z.discriminatedUnion('type', [...MODEL_FIGURES]);
