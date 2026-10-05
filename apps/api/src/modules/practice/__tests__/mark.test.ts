@@ -159,7 +159,7 @@ describe('marking words: the model names them, code finds them', () => {
     );
   });
 
-  it('a text sorted into categories has a measured maximum of words — the buttons take rows of their own', () => {
+  it('a text sorted into categories has a measured maximum of words and rows — the buttons take rows of their own', () => {
     const many = (n: number) =>
       ['Der', 'Hund', 'bellt', ...Array.from({ length: n - 3 }, (_, i) => `laut${i}`)].join(' ');
     const sorted = (text: string) =>
@@ -173,10 +173,26 @@ describe('marking words: the model names them, code finds them', () => {
       );
     expect(markDraftProblem(sorted(many(MARK_SORTED_WORDS_MAX)))).toBeNull();
     expect(markDraftProblem(sorted(many(MARK_SORTED_WORDS_MAX + 1)))).toBe('count');
-    // Long words fill a row sooner: the characters are counted too.
+    // Long words fill a row sooner: the rows are counted with each tile's width (`markRows`) —
+    // 11 words and 66 characters, but the long ones wrap to a third row.
     expect(
-      markDraftProblem(sorted('Der Hund bellt ausgesprochen ausdauernd ununterbrochen.')),
+      markDraftProblem(sorted('Der Hund bellt ausgesprochen ausdauernd ununterbrochen hinterher.')),
     ).toBe('count');
+    // A real Satzglieder sentence of grades 5–7 (#368): ten words, 65 characters, two rows of
+    // touching tiles. Refused before #368 (at most 7 words and 45 characters).
+    expect(
+      markDraftProblem(
+        words(
+          'Am Wochenende schenkt der Vater seiner Tochter ein neues Fahrrad.',
+          [
+            { word: 'der Vater', occurrence: null, category: 'Subjekt' },
+            { word: 'seiner Tochter', occurrence: null, category: 'Dativobjekt' },
+            { word: 'ein neues Fahrrad', occurrence: null, category: 'Akkusativobjekt' },
+          ],
+          { categories: ['Dativobjekt', 'Akkusativobjekt', 'Subjekt'] },
+        ),
+      ),
+    ).toBeNull();
     // Without categories the same 13 words are a task.
     expect(
       markDraftProblem(words(many(13), [{ word: 'Hund', occurrence: null, category: null }])),

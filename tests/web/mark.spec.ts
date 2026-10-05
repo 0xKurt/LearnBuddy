@@ -157,6 +157,41 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   await targetsAreLarge(page);
   await finish(page);
 
+  // ── a long Satzglieder sentence (#368): ten words in two rows, every word marked, the reply ──
+  await start(page, 'Satzglieder im langen Satz', 'ein langer Satz', 'Markiere Dativobjekt');
+  for (const w of ['seiner', 'Tochter']) await word(w).click();
+  await page.getByRole('radio', { name: '② Akkusativobjekt' }).click();
+  for (const w of ['ein', 'neues', 'Fahrrad', 'Am']) await word(w).click();
+  await check.click();
+  const long = 'Noch nicht ganz: 5 richtig, 2 fehlen noch, 1 zu viel.';
+  await expect(page.getByText(long)).toBeInViewport();
+  await page.getByRole('checkbox', { name: 'Am, markiert als Akkusativobjekt' }).click();
+  await page.getByRole('radio', { name: '③ Subjekt' }).click();
+  for (const w of ['der', 'Vater']) await word(w).click();
+  await expect(page.getByTestId('mark-summary')).toHaveText(
+    'Dativobjekt: seiner Tochter; Akkusativobjekt: ein neues Fahrrad; Subjekt: der Vater',
+  );
+  // Everything marked, Buddy's reply still in view, the ten words in two rows of tiles — the
+  // digit stands under its word, so a mark never pushes a word into a third row.
+  await expect(page.getByText(long)).toBeInViewport();
+  await both(page, '46i-mark-categories-long');
+  await targetsAreLarge(page);
+  const tileRows = () =>
+    page.evaluate(
+      () =>
+        new Set(
+          [...document.querySelectorAll('[data-testid="mark-text"] [role="checkbox"]')].map((e) =>
+            Math.round(e.getBoundingClientRect().y),
+          ),
+        ).size,
+    );
+  for (const phone of PHONES) {
+    await page.setViewportSize(phone);
+    await expect.poll(tileRows).toBe(2);
+  }
+  await page.setViewportSize(PHONES[0]);
+  await finish(page);
+
   // ── a sentence of 16 words with two commas to set ──
   await start(page, 'Lass uns Kommas setzen', 'hinter das ein Komma gehört', 'Setze die fehlenden');
   await expect(page.getByRole('checkbox')).toHaveCount(15);

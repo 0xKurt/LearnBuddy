@@ -12,9 +12,13 @@
 // `checked` — ein Screenreader hört „Hund, markiert" bzw. „Komma nach „ankamen"", angekreuzt.
 //
 // Platz (Regel 16, 360×740): jedes Ziel ist ein Btn der kleinen Größe, also 44 pt hoch, und nie
-// schmaler als 44 pt. Wörter fließen wie Text und brechen um; Silben: jeder Buchstabe eine
-// 44-pt-Kachel, ein Wort in einer ruhigen Fläche, die in sich umbricht. Die Grenzen im Vertrag
-// (MARK_*) sind so gewählt, dass das Größte ohne Scrollen passt — gemessen in tests/web/mark.spec.ts.
+// schmaler als 44 pt. Wörter stehen wie Text auf einer ruhigen Fläche — dieselbe wie ein Wort zum
+// Trennen —, ihre Kacheln berühren sich ohne Rahmen und Lücke, so liest sich der Satz als Satz und
+// jeder Punkt der Zeile ist ein Ziel. Die Ziffer einer Kategorie steht UNTER dem Wort, nicht
+// daneben: eine Markierung macht eine Kachel nie breiter, die Zeilen stehen, bevor sie tippt, und
+// ein Satzglieder-Satz von 12 Wörtern passt in zwei Zeilen (#368; vorher sieben Wörter). Die Grenzen
+// im Vertrag (MARK_*, `markRows`) sind so gewählt, dass das Größte ohne Scrollen passt — gemessen in
+// tests/web/mark.spec.ts.
 // Ihr Stand liegt im Entwurf (`lib/drafts.ts`): er übersteht hell/dunkel und einen Neustart.
 
 import {
@@ -41,11 +45,13 @@ import { Segmented } from '../lb/Segmented.js';
 import { AnswerShell } from './AnswerShell.js';
 
 /**
- * A word's tile: its own padding (`Btn bare`), one step tighter than a compact button — a sentence
- * of eight words sorted into categories, each with its digit, then stays in two rows on 360×740 —
- * and never narrower than a touch target.
+ * A word's tile: its own padding (`Btn bare`), the smallest step — the tiles touch, so this is the
+ * air between two words of the sentence (`markRows` in the contract counts with it) — and never
+ * narrower than a touch target.
  */
-const WORD_PAD = SPACE.sm;
+const WORD_PAD = SPACE.xs;
+/** The calm surface the words of a text, or the letters of a word, stand on. */
+const SURFACE = { paddingHorizontal: SPACE.sm, borderRadius: RADIUS.frame } as const;
 /**
  * One letter of a word to split: the longest word (MARK_SYLLABLE_LETTERS_MAX) fills a 360-pt
  * phone in one row with these cells — narrower than 44 pt, but the cells touch, so every point of
@@ -189,14 +195,16 @@ type Own = {
   tap: (at: string) => void;
 };
 
-/** Words and commas: every word a tile, flowing like text. */
+/** Words and commas: every word a tile, the tiles touching, flowing like text. */
 function Words({ view, marks, categories, disabled, tap }: Own & { view: MarkTaskView }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const gaps = view.mode === 'gaps';
+  const sorted = categories.length > 0;
   return (
     <View
       testID="mark-text"
-      style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: SPACE.xs }}
+      style={[SURFACE, { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: palette.canvas }]}
     >
       {view.words.map((w, i) => {
         if (gaps && i === view.words.length - 1) {
@@ -214,7 +222,7 @@ function Words({ view, marks, categories, disabled, tap }: Own & { view: MarkTas
             key={w.id}
             size="sm"
             bare
-            variant={mark ? 'soft' : 'outline'}
+            variant={mark ? 'soft' : 'ghost'}
             checked={mark !== undefined}
             disabled={disabled}
             onPress={() => tap(at)}
@@ -226,7 +234,12 @@ function Words({ view, marks, categories, disabled, tap }: Own & { view: MarkTas
                   : w.text
             }
             label={
-              <WordLabel word={w} marked={!gaps && !!mark} comma={gaps && !!mark} digit={digit} />
+              <WordLabel
+                word={w}
+                marked={!gaps && !!mark}
+                comma={gaps && !!mark}
+                digit={sorted ? (digit ?? '') : null}
+              />
             }
           >
             {w.text}
@@ -237,7 +250,12 @@ function Words({ view, marks, categories, disabled, tap }: Own & { view: MarkTas
   );
 }
 
-/** A word in its tile: the punctuation around it shown, underlined when marked. */
+/**
+ * A word in its tile: the punctuation around it shown, underlined when marked. With categories the
+ * category's digit stands under the word — in the meta text's size and full ink (in a corner,
+ * smaller and tinted, it could hardly be read, dark mode above all) — and its row is there on every
+ * tile, marked or not, so the words stand still while she marks them. `digit` null: no categories.
+ */
 function WordLabel({
   word,
   marked,
@@ -252,49 +270,40 @@ function WordLabel({
   const { palette } = useTheme();
   const ink = marked || comma ? palette.primaryDk : palette.ink;
   return (
-    <View
-      style={{
-        minWidth: TOUCH,
-        paddingHorizontal: WORD_PAD,
-        flexDirection: 'row',
-        alignItems: 'baseline',
-        justifyContent: 'center',
-      }}
-    >
-      {word.lead ? <Text style={[TYPE.body, { color: palette.ink }]}>{word.lead}</Text> : null}
-      <View>
-        <Text style={[TYPE.body, { color: ink, fontWeight: marked ? '700' : '400' }]}>
-          {word.text}
-        </Text>
-        <View
-          style={{
-            height: UNDERLINE,
-            borderRadius: UNDERLINE,
-            backgroundColor: marked ? palette.primary : 'transparent',
-          }}
-        />
+    <View style={{ minWidth: TOUCH, paddingHorizontal: WORD_PAD, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+        {word.lead ? <Text style={[TYPE.body, { color: palette.ink }]}>{word.lead}</Text> : null}
+        <View>
+          {/* Never bold when marked: a bolder word is a wider tile, and the rows would move. */}
+          <Text style={[TYPE.body, { color: ink }]}>{word.text}</Text>
+          <View
+            style={{
+              height: UNDERLINE,
+              borderRadius: UNDERLINE,
+              backgroundColor: marked ? palette.primary : 'transparent',
+            }}
+          />
+        </View>
+        {comma ? (
+          <Text style={[TYPE.body, { color: palette.primaryDk, fontWeight: '800' }]}>,</Text>
+        ) : null}
+        {word.tail ? <Text style={[TYPE.body, { color: palette.ink }]}>{word.tail}</Text> : null}
       </View>
-      {comma ? (
-        <Text style={[TYPE.body, { color: palette.primaryDk, fontWeight: '800' }]}>,</Text>
-      ) : null}
-      {word.tail ? <Text style={[TYPE.body, { color: palette.ink }]}>{word.tail}</Text> : null}
-      {/* The category's digit, beside the word in the meta text's size and full ink: in
-          the corner, smaller and tinted, it could hardly be read (dark mode above all). */}
-      {digit ? (
-        <Text style={[TYPE.small, { color: palette.ink, fontWeight: '700' }]}>{` ${digit}`}</Text>
-      ) : null}
+      {digit === null ? null : (
+        // A no-break space keeps the row on an unmarked tile: an empty text has no height.
+        <Text style={[TYPE.label, { color: palette.ink, fontWeight: '700' }]}>
+          {digit || '\u00A0'}
+        </Text>
+      )}
     </View>
   );
 }
 
-/** The last word of a comma sentence: read with the rest, never a target. */
+/** The last word of a comma sentence (no categories there): read with the rest, never a target. */
 function PlainWord({ word }: { word: MarkWord }) {
-  const { palette } = useTheme();
   return (
-    <View style={{ minHeight: TOUCH, justifyContent: 'center', paddingHorizontal: WORD_PAD }}>
-      <Text
-        style={[TYPE.body, { color: palette.ink }]}
-      >{`${word.lead}${word.text}${word.tail}`}</Text>
+    <View style={{ minHeight: TOUCH, justifyContent: 'center' }}>
+      <WordLabel word={word} marked={false} comma={false} digit={null} />
     </View>
   );
 }
@@ -314,13 +323,10 @@ function Syllables({ words, marks, disabled, tap }: Own & { words: readonly Mark
         return (
           <View
             key={w.id}
-            style={{
-              flexDirection: 'row',
-              alignSelf: 'flex-start',
-              paddingHorizontal: SPACE.sm,
-              borderRadius: RADIUS.frame,
-              backgroundColor: palette.canvas,
-            }}
+            style={[
+              SURFACE,
+              { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: palette.canvas },
+            ]}
           >
             {letters.map((ch, li) => {
               const at = cutId(wi, li + 1);

@@ -447,20 +447,59 @@ export const MARK_SYLLABLE_LETTERS_MAX = 10;
 /**
  * A text whose marks are sorted into categories: the category buttons take up to two rows of their
  * own, and the line saying what is marked runs longer ("Subjekt: …; Prädikat: …"). So the text may
- * take two rows of word tiles at most — counted in words AND in characters, because long words fill
- * a row sooner. Measured on 360×740 in the worst case — three long names on two rows, a three-line
- * instruction, every word marked, Buddy's reply above (tests/web/mark.spec.ts, 46h): a sentence of
- * 59 characters took three rows of tiles and was 62 pt too much.
+ * take two rows of word tiles at most (`MARK_SORTED_ROWS`). Until #368 a tile was a framed button
+ * with the category's digit beside the word: a sentence of 59 characters took three rows and was
+ * 62 pt too much on 360×740, so real Satzglieder sentences of grades 5–7 were refused. The tiles now
+ * touch and carry the digit UNDER the word (`MarkAnswer.tsx`): a mark never widens a tile, the rows
+ * stand before she taps, and a sentence of 12 words and 72 characters fits two rows. Measured on
+ * 360×740 in the worst case — three long names on two rows, a three-line instruction, every word
+ * marked, Buddy's reply above (tests/web/mark.spec.ts, 46h and 46i).
  */
-export const MARK_SORTED_WORDS_MAX = 7;
-export const MARK_SORTED_CHARS_MAX = 45;
+export const MARK_SORTED_WORDS_MAX = 12;
+export const MARK_SORTED_CHARS_MAX = 72;
+/** Rows of word tiles a text to sort may take on the narrowest phone (360 pt). */
+export const MARK_SORTED_ROWS = 2;
+
+/**
+ * The width model of a word tile on a 360-pt phone (`MarkAnswer.tsx`), so the server knows BEFORE
+ * storing a task how many rows its words wrap to — a count alone missed long words. Like
+ * `MARK_CATEGORY_PAIR_CHARS`, measured and rounded towards more rows: the row is the answer slot's
+ * 328 pt less the text surface's padding; a tile is its text (body type, 8.6 pt a character at the
+ * widest) plus 4 pt on each side, and never narrower than a 44-pt touch target.
+ */
+const MARK_ROW_PT = 312;
+const MARK_TILE_PAD_PT = 8;
+const MARK_CHAR_PT = 8.6;
+const MARK_TILE_MIN_PT = 44;
+
+/** How many rows these words wrap to as tiles on a 360-pt phone (greedy, as flex-wrap does). */
+export function markRows(
+  words: ReadonlyArray<{ lead: string; text: string; tail: string }>,
+): number {
+  let rows = 0;
+  let left = 0;
+  for (const w of words) {
+    const chars = [...`${w.lead}${w.text}${w.tail}`].length;
+    const width = Math.max(MARK_TILE_MIN_PT, MARK_TILE_PAD_PT + chars * MARK_CHAR_PT);
+    if (rows === 0 || width > left) {
+      rows++;
+      left = MARK_ROW_PT;
+    }
+    left -= width;
+  }
+  return rows;
+}
 
 /** Does a text to sort into categories stay within its measured size? */
 export function sortedTextFits(
   words: ReadonlyArray<{ lead: string; text: string; tail: string }>,
 ): boolean {
   const chars = [...words.map((w) => `${w.lead}${w.text}${w.tail}`).join(' ')].length;
-  return words.length <= MARK_SORTED_WORDS_MAX && chars <= MARK_SORTED_CHARS_MAX;
+  return (
+    words.length <= MARK_SORTED_WORDS_MAX &&
+    chars <= MARK_SORTED_CHARS_MAX &&
+    markRows(words) <= MARK_SORTED_ROWS
+  );
 }
 export const MARK_CATEGORIES_MIN = 2;
 export const MARK_CATEGORIES_MAX = 3;

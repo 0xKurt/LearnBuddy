@@ -44,7 +44,8 @@ import { TABLE_RULES } from '../practice/table.js';
 // v8.11: the schema says what was written for `hints`, a table gap's `also` and the bounds of
 //        `pages`, `unclear` and `not_practicable`, dropped before by `toJsonSchema` (#282); a
 //        page number and the readings no longer say their bounds twice (#282 D5).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.11';
+// v8.12: a marking text sorted into categories may have 12 words and 72 characters (#368).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.12';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
