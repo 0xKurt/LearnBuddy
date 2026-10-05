@@ -234,6 +234,23 @@ test('schriftlich rechnen: every digit and every carry, judged by code (issue #2
   ).toBeInViewport();
   await both(page, '86l-column-div3-feedback');
   await cellWithKeyboard(page, 'r5c2', '86m-column-div3-cell-kb');
+  // A finished step opens again by a tap (#420); a slip there, and she is back in the third step.
+  const reopen = (step: number) =>
+    page.getByRole('button', { name: `Schritt ${step} bearbeiten` }).click();
+  await reopen(1);
+  await expect(page.getByTestId('column-r1c0')).toBeFocused();
+  await write(page, { r1c0: '9' });
+  await reopen(3);
+  await expect(page.getByTestId('column-r5c1')).toBeFocused();
+  await check.click();
+  // Buddy names the first step, and the app opens it with her finger in its first cell.
+  await expect(
+    page.getByText('Noch nicht ganz – im 1. Schritt stimmt das Malnehmen noch nicht.'),
+  ).toBeInViewport();
+  await expect(page.getByTestId('column-r1c0')).toBeFocused();
+  await both(page, '86n-column-div3-reopened');
+  await write(page, { r1c0: '6' });
+  await reopen(3);
   await write(page, { r5c2: '2' });
   await checkRight(page);
 });

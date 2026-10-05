@@ -2767,10 +2767,15 @@ next cell in the server's writing order (`order`: right to left, the carry befor
 phone's number pad is all she needs. A division is shown step by step (issue #413): the step she
 is at in full, the steps she has worked on above it shrunk to half-high lines she reads but no longer
 writes in, the steps she has not reached not yet there; the step follows the cell she writes in, a
-quotient digit opens its step again, and every cell still goes to the check. Printed rows are one number to a screen reader ("+1389"), every
+quotient digit opens its step again, and every cell still goes to the check. A finished step is one
+target (its two half rows, one touch high, `TapSurface`): a tap opens it again, a screen reader hears
+"Schritt 2 bearbeiten" (issue #420). After a check that is not right yet the answer carries the step
+the reply names (`AnswerResponse.column_step`, `columnStepOf`: the step of the first wrong cell, a
+quotient digit's own step) and the app opens it, her finger in its first cell — never in a test and
+never once the solution is shown. Printed rows are one number to a screen reader ("+1389"), every
 cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.44, now v1.46)
 and read from a sheet (extract.v8.22, now v8.24; a homework sheet: written arithmetic only, its own error is no
-Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86m, 360×740 and
+Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86n, 360×740 and
 390×844, light and dark, the keyboard up): four long lines with Buddy's longest reply above fit (six
 were 106 pt too tall, `FIND_ERROR_LINES_MAX`), and five rows of
 cells with Buddy's reply above (two partial products and their sum, a division of two steps). A

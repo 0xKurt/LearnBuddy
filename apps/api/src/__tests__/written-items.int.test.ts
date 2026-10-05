@@ -66,6 +66,23 @@ const RIGHT_SUM: Record<string, string> = {
   r3c1: '',
 };
 
+/** 672 : 3 = 224 as she writes it, step by step (#413): quotient digit, times, difference. */
+const RIGHT_DIV: Record<string, string> = {
+  r0c6: '2',
+  r1c0: '6',
+  r2c0: '',
+  r2c1: '7',
+  r0c7: '2',
+  r3c0: '',
+  r3c1: '6',
+  r4c1: '1',
+  r4c2: '2',
+  r0c8: '4',
+  r5c1: '1',
+  r5c2: '2',
+  r6c2: '0',
+};
+
 describe.skipIf(!dbReady)('find-the-error and written-arithmetic items (#260)', () => {
   let env: TestEnv;
   let l: Learner;
@@ -173,6 +190,37 @@ describe.skipIf(!dbReady)('find-the-error and written-arithmetic items (#260)', 
     const third = await grid(session, id, { r3c2: '5' });
     expect(third.body.session.items[0]?.status).toBe('revealed');
     expect(third.body.session.items[0]?.answer).toBe('4721 + 1389 = 6110');
+  });
+
+  it('names the division step for the app to open, never in a test or with the solution (#420)', async () => {
+    const DIV = { ...SUM, op: 'div', operands: ['672', '3'], topic: 'Schriftliche Division' };
+    const session = await prepare([DIV, SUM]);
+    const [div, sum] = session.items.map((i) => i.item.id);
+    const cellsOf = (change: Record<string, string>) => ({
+      type: 'column_calc',
+      cells: Object.entries({ ...RIGHT_DIV, ...change }).map(([id, digit]) => ({ id, digit })),
+    });
+    // The times of the third step: the reply says the step, the response opens it.
+    const first = await send(session, div!, cellsOf({ r5c2: '3' }));
+    expect(first.body.reply.text).toBe(
+      'Noch nicht ganz – im 3. Schritt stimmt das Malnehmen noch nicht.',
+    );
+    expect(first.body.column_step).toBe(3);
+    // The second digit of the quotient opens the second step.
+    const second = await send(session, div!, cellsOf({ r0c7: '3' }));
+    expect(second.body.column_step).toBe(2);
+    // The third miss shows the solution: nothing left to open.
+    const third = await send(session, div!, cellsOf({ r0c7: '3' }));
+    expect(third.body.session.items[0]?.status).toBe('revealed');
+    expect(third.body.column_step ?? null).toBeNull();
+    // A sum has no steps.
+    const added = await grid(session, sum!, { r2c4: '' });
+    expect(added.body.column_step ?? null).toBeNull();
+
+    const test = await prepare([DIV, SUM], 'test');
+    const noted = await send(test, test.items[0]!.item.id, cellsOf({ r5c2: '3' }));
+    expect(noted.body.reply.text).toBe("Notiert – weiter geht's.");
+    expect(noted.body.column_step ?? null).toBeNull();
   });
 
   it('records one answer per client_turn_id and refuses grids that do not fit, uncounted', async () => {
