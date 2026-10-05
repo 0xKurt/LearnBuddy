@@ -20,6 +20,7 @@ import {
   mapMarked,
   mapProblem,
   mapRegion,
+  mapRegionName,
   regionTappable,
   tapVerdict,
 } from '@learnbuddy/shared-math';
@@ -69,4 +70,21 @@ export function mapRuleVerdict(
   const figure = FigureSchema.safeParse(item.figure);
   if (!figure.success || !isMap(figure.data)) return null;
   return tapVerdict(figure.data, item.answer, text);
+}
+
+/**
+ * Her tapped region as it stands in the thread: in her language ("Bavaria" for an English
+ * learner), where the app sent the data's German name. Null for anything that is no tap on a map,
+ * or no region of it — then her text stands as it came, like every typed answer.
+ */
+export function mapAnswerText(
+  item: { figure?: unknown; tap?: boolean },
+  text: string,
+  locale: string,
+): string | null {
+  if (item.tap !== true) return null;
+  const figure = FigureSchema.safeParse(item.figure);
+  if (!figure.success || !isMap(figure.data)) return null;
+  const region = mapRegion(figure.data.v, text);
+  return region === null ? null : mapRegionName(figure.data.v, region, locale);
 }

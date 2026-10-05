@@ -84,6 +84,25 @@ describe.skipIf(!dbReady)('a question on a stumme Karte', () => {
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 
+  it('a tapped region stands in the thread in her language, a typed answer as she typed it', async () => {
+    const en = await onboard(env, {
+      relation: 'child',
+      name: 'Emma',
+      birthDate: '2015-03-01',
+      locale: 'en',
+    });
+    const s = await start(env, en, MAP_ITEMS);
+    const [land, country] = s.items.map((i) => i.item.id) as string[];
+    // The app writes a tap as the data's German name; the server writes it as she reads it.
+    expect((await answer(en, s, land!, 'Bayern')).body.verdict).toBe('correct');
+    expect((await answer(en, s, country!, 'Frankreich')).body.verdict).toBe('correct');
+    const view = (await en.api.get<SessionView>(`/practice/sessions/${s.id}`)).body;
+    const mine = (id: string) => view.turns.find((t) => t.item_id === id && t.role === 'learner');
+    expect(mine(land!)?.text).toBe('Bavaria');
+    // Not tapped: her own words stay hers.
+    expect(mine(country!)?.text).toBe('Frankreich');
+  });
+
   it('another learner cannot answer her map question', async () => {
     const s = await start(env, l, MAP_ITEMS);
     const other = await onboard(env, { relation: 'child', name: 'Ben', birthDate: '2015-02-01' });
