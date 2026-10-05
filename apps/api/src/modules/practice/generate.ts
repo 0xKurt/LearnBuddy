@@ -94,7 +94,10 @@ import { structuredItems, type StructuredItem } from './structured.js';
 //        options code picks and marks (#418; v1.39 and v1.40 are reserved for parallel work).
 // v1.45: v1.41 with the stumme Karte of v1.40 (#251) — the two met in one prompt (v1.42–v1.44 are
 //        reserved for #388, #424 and #413).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.45';
+// v1.44: a written division's quotient may have three digits (672 : 3), shown step by step
+//        (#413, on top of v1.41).
+// v1.46: v1.45 with the three-digit division of v1.44 (#413).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.46';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

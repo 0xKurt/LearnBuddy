@@ -66,6 +66,16 @@ export const PHOTOS_GONE_AT_ONCE: ReadonlySet<MaterialFailure> = new Set<Materia
 ]);
 
 /**
+ * Failures where the sheet WAS read, it only gives nothing to practise: every task is a form
+ * Buddy has no exercise for (#198), or a corrected test has nothing marked (#259). No card may
+ * say "konnte ich nicht lesen" for them (rule 5, issue #411); the library calls them "ohne Übungen".
+ */
+export const READ_WITHOUT_EXERCISES: ReadonlySet<MaterialFailure> = new Set<MaterialFailure>([
+  'form_not_practicable',
+  'nothing_marked',
+]);
+
+/**
  * What kind of page the reading recognised (issue #259) — the model says it, code decides what
  * follows from it:
  * - `sheet`: a worksheet, a textbook page, a vocabulary list — read as always.
