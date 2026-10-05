@@ -324,6 +324,14 @@
       "extra_one": "1 too many",
       "reply": "Not quite yet: {{parts}}."
     },
+    "grid": {
+      "wrong_points": "Not quite yet: {{list}} are not in the right place yet.",
+      "wrong_points_one": "Not quite yet: {{list}} is not in the right place yet.",
+      "wrong_graph": "Not quite yet: {{list}} are not on the graph.",
+      "wrong_graph_one": "Not quite yet: {{list}} is not on the graph.",
+      "wrong_bars": "Not quite yet: the bars for {{list}} are not right yet.",
+      "wrong_bars_one": "Not quite yet: the bar for {{list}} is not right yet."
+    },
     "solid": {
       "net_yes": "Yes, it is a cube net",
       "net_no": "No, it is not a cube net"

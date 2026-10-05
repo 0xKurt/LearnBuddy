@@ -176,6 +176,23 @@ const STRUCTURED: Record<string, Record<string, unknown>> = {
     difficulty: 2,
     prompt_lang: 'de',
   },
+  grid_draw: {
+    type: 'grid_draw',
+    prompt: 'Trage die Punkte ins Koordinatensystem ein.',
+    task: 'points',
+    points: [
+      { x: 2, y: 3 },
+      { x: -1, y: 2 },
+    ],
+    fn: null,
+    count: null,
+    axis: null,
+    axis_at: null,
+    bars: null,
+    topic: 'Brüche addieren',
+    difficulty: 1,
+    prompt_lang: 'de',
+  },
 };
 const DICTATION = { from: 'list', lang: 'de', topic: 'Lernwörter', entries: ['Biene', 'Straße'] };
 const LISTEN = {

@@ -80,7 +80,8 @@ import { structuredItems, type StructuredItem } from './structured.js';
 //        a clock face to set (`tap`, #248).
 // v1.32: find_error (a worked solution with one wrong line, the error built in by code) and
 //        column_calc (written arithmetic in columns, every digit and carry computed by code) (#260).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.32';
+// v1.33: grid_draw, drawing on a grid — points, a line or parabola, a mirror image, bars (#249).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.33';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;
@@ -221,7 +222,7 @@ export const GENERATE_SYSTEM = `You prepare learning in the LearnBuddy app for t
 Rules:
 - Pitch everything at the learner's age and grade. Instructions and explanations in the app language (LEARNER); foreign-language content in that language.
 - Only well-established knowledge at their level (school topics for a school student; study or professional topics for a university or adult learner); if unsure about a fact, leave it out. If the request is not about learning something (for example a request to chat, to write something for them, or nothing to learn), set usable = false and items = [].
-- Everything is answered in the app by typing, choosing (one answer or all right ones), tapping things into an order or into groups, tapping words or places in a text, or filling a table (or speaking for speak items): no tasks to draw, build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
+- Everything is answered in the app by typing, choosing (one answer or all right ones), tapping things into an order or into groups, tapping words or places in a text, filling a table, or drawing on a grid (points, a graph, a mirror image, bars — grid_draw) (or speaking for speak items): no other tasks to draw, and none to build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
 - Start with questions that make them think about the topic, not trivia or definitions of everyday words.
 - Items: prefer short answers and numbers; multiple_choice with 2–6 choices where it makes sense (correct_choice = index).
 - ${NUMERIC_KEY_RULES}
