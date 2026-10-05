@@ -133,6 +133,11 @@
     "thinking": "Buddy l'explique autrement …",
     "title": "Expliqué autrement"
   },
+  "why": {
+    "ask": "Pourquoi c'est juste ?",
+    "label": "Quelle raison est la bonne ?",
+    "hint": "Montre trois raisons – touche celle qui est juste."
+  },
   "self_solved": {
     "title": "Trouvé sans aide !",
     "body": "Tu l'as trouvé par toi-même."
@@ -364,6 +369,7 @@
     "task": "Énoncé"
   },
   "column": {
+    "reopen": "Modifier l'étape {{step}}",
     "check_waits": "Dès que tu as écrit un chiffre.",
     "carry": "Retenue, {{place}}",
     "result": "Résultat, {{place}}",

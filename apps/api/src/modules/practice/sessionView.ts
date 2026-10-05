@@ -12,6 +12,7 @@ import { drillViewOf } from './drillView.js';
 import { noSingleSolution } from './evaluate.js';
 import { storedChoiceFigures, storedFigure } from './items.js';
 import { listenRefs, listenTaskOf } from './listen.js';
+import { hintOffered } from './ladder.js';
 import { givesHints, offersHintButton, revealReady } from './modeRules.js';
 import { passageViews } from './reading.js';
 import { taskPartViews } from './taskParts.js';
@@ -19,15 +20,16 @@ import { readAloudAllowed } from './readAloud.js';
 import type { ItemRow, SessionItemRow } from './service.js';
 import { loadSession, stillPreparing } from './sessionRow.js';
 import { summarize } from './summary.js';
-import { tapItemProblem } from './tapCheck.js';
 import { tapChoicesFor } from './tapChoices.js';
 import { timerOf } from './testClock.js';
+import { whyOf } from './why.js';
 import {
   imageOf,
   signImageUrls,
   subjectKindOf,
   surfaceFor,
   taskViewFor,
+  tapsFigure,
   textIsBoard,
   type ItemImageRow,
 } from './viewParts.js';
@@ -71,7 +73,7 @@ export async function sessionView(
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
             i.bar_task, i.task, i.listen_task, i.staff_task, i.spelling, i.archived_at,
-            i.choice_figures, i.read_passage, i.source_excerpt, i.tap, i.task_part,
+            i.choice_figures, i.read_passage, i.source_excerpt, i.tap, i.why, i.task_part,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label, sub.kind as subject_kind
        from session_items si join items i on i.id = si.item_id
@@ -107,6 +109,10 @@ export async function sessionView(
     [sessionId],
   );
   const current = currentOpen(items);
+  /** The questions she already tapped a reason for (`why.ts`): one tap each. */
+  const whyAsked = new Set(
+    turns.filter((tr) => tr.reexplain === 'why' && tr.role === 'learner').map((tr) => tr.item_id),
+  );
   const active = s.status === 'active';
   // A flashcard pass (issue #147): nothing in it is checked, so it offers no hint and no
   // "Lösung zeigen", nothing to tap, and every card carries its own back — see cards.ts.
@@ -144,6 +150,17 @@ export async function sessionView(
    * would be a control with nothing left to do, and her answer and the solution both stand in the
    * thread.
    */
+  /** "Tipp" works for this question now: a prepared hint at once, else the tutor writes one. */
+  const hintWorks = (i: (typeof items)[number]) =>
+    i.status === 'open' &&
+    active &&
+    !cardPass &&
+    offersHintButton(s.mode) &&
+    i.kind !== 'speak' &&
+    // Listening: the help is hearing it again, and slower — which the card offers anyway
+    // (issue #210). A written hint about a text she is supposed to be listening to is a
+    // worse version of the replay, and it would be one more model call.
+    !hearing.has(i.id);
   const boardOf = (i: (typeof items)[number]) =>
     i.status === 'open' && active ? taskViewFor(i) : null;
   return {
@@ -184,12 +201,7 @@ export async function sessionView(
         surface: i.status === 'open' && active ? surfaceFor(i.bar_task, i.staff_task) : null,
         // A figure she taps a place in (issue #248), for the same span as the bar: read back
         // through the check it was written under, or typed like any other question.
-        tap:
-          i.status === 'open' &&
-          active &&
-          !cardPass &&
-          i.tap === true &&
-          tapItemProblem({ ...i, figure: storedFigure(i.figure) }) === null,
+        tap: i.status === 'open' && active && !cardPass && tapsFigure(i),
         // The parts of a structured question, while it is open (`boardOf`).
         task_view: boardOf(i),
         // The spoken stimulus, as the alias of its recording and nothing more (issue #210).
@@ -211,16 +223,9 @@ export async function sessionView(
         i.status === 'open' && active && !cardPass && givesHints(s.mode)
           ? Math.max(0, i.hints.length - i.prepared_hints_used)
           : 0,
-      hint_available:
-        i.status === 'open' &&
-        active &&
-        !cardPass &&
-        offersHintButton(s.mode) &&
-        i.kind !== 'speak' &&
-        // Listening: the help is hearing it again, and slower — which the card offers anyway
-        // (issue #210). A written hint about a text she is supposed to be listening to is a
-        // worse version of the replay, and it would be one more model call.
-        !hearing.has(i.id),
+      hint_available: hintWorks(i),
+      // Only where "Tipp" works, and only in practice: homework has no ladder (#388 §5.5).
+      hint_offered: hintWorks(i) && givesHints(s.mode) && hintOffered(i),
       reveal_available: i.status === 'open' && active && !cardPass && revealReady(s.mode, i),
       deferred: i.status === 'open' && s.mode === 'help' && Boolean(i.deferred_at),
       // Never leak the solution of an open question, nor ever in help mode (homework) — and
@@ -241,6 +246,14 @@ export async function sessionView(
       listen_transcript:
         solutionShown(i) && i.kind !== 'spelling_dictation'
           ? (listenTaskOf(i.listen_task)?.text ?? null)
+          : null,
+      // The worked solution, under the same condition (#388 §3.2: the test's review explains).
+      explanation: solutionShown(i) ? i.worked_solution : null,
+      // „Warum stimmt das?" (#388): once closed with its solution out, until she tapped a reason.
+      // The index of the true one stays here: code judges her tap (`why.ts`).
+      why:
+        i.status !== 'open' && solutionShown(i) && !whyAsked.has(i.id)
+          ? (whyOf(i.why)?.reasons ?? null)
           : null,
     })),
     turns: turns.map(({ created_at, essay, ...tr }) => ({

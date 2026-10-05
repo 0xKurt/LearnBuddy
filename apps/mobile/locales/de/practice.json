@@ -133,6 +133,11 @@
     "thinking": "Buddy erklärt es nochmal anders …",
     "title": "Nochmal anders erklärt"
   },
+  "why": {
+    "ask": "Warum stimmt das?",
+    "label": "Welcher Grund stimmt?",
+    "hint": "Zeigt drei Gründe – tipp den an, der stimmt."
+  },
   "self_solved": {
     "title": "Selbst gelöst!",
     "body": "Das hast du allein herausgefunden."
@@ -364,6 +369,7 @@
     "task": "Aufgabe"
   },
   "column": {
+    "reopen": "Schritt {{step}} bearbeiten",
     "check_waits": "Erst wenn du eine Ziffer geschrieben hast.",
     "carry": "Übertrag, {{place}}",
     "result": "Ergebnis, {{place}}",

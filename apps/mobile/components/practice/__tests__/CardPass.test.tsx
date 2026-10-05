@@ -56,11 +56,14 @@ const card = (over: Partial<SessionItemView['item']> = {}): SessionItemView => (
   hints_used: 0,
   hints_left: 0,
   hint_available: false,
+  hint_offered: false,
   reveal_available: false,
   deferred: false,
   // The back of the card: a pass sends it while the card is still open.
   answer: 'das Fahrrad',
   listen_transcript: null,
+  explanation: null,
+  why: null,
 });
 
 const pass = (over: Partial<SessionView> = {}): SessionView => ({

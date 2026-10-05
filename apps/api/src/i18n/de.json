@@ -227,6 +227,11 @@
     "step_broke": "Bis Zeile {{line}} stimmt alles. Von dort zur nächsten Zeile geht etwas verloren – schau dir diesen Schritt nochmal an.",
     "step_broke_last": "Dein Weg stimmt bis zum Schluss – nur der letzte Schritt nicht. Schau nochmal auf die letzte Zeile.",
     "test_no_hints": "Im Test gibt es keine Tipps – schreib einfach, was du denkst, oder überspring die Frage. Nach dem Test erklär ich dir alles.",
+    "test_no_hints_on_screen": "Im Test gibt es keine Tipps – antworte einfach so, wie du denkst, oder überspring die Frage. Nach dem Test erklär ich dir alles.",
+    "why": {
+      "right": "Genau – {{reason}}",
+      "not_quite": "Nicht ganz. Der Grund ist: {{reason}}"
+    },
     "test_noted": "Notiert – weiter geht's.",
     "try_again": "Noch nicht ganz – probier's nochmal. Mit „Tipp“ bekommst du einen Hinweis.",
     "typo": "Fast – so schreibt man es: {{answer}}. Tipp es nochmal.",

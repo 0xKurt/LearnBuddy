@@ -133,6 +133,11 @@
     "thinking": "Buddy lo spiega in un altro modo …",
     "title": "Spiegato in un altro modo"
   },
+  "why": {
+    "ask": "Perché è giusto?",
+    "label": "Quale motivo è giusto?",
+    "hint": "Mostra tre motivi: tocca quello giusto."
+  },
   "self_solved": {
     "title": "Risolto da te!",
     "body": "L'hai scoperto da te."
@@ -364,6 +369,7 @@
     "task": "Esercizio"
   },
   "column": {
+    "reopen": "Modifica il passo {{step}}",
     "check_waits": "Quando hai scritto una cifra.",
     "carry": "Riporto, {{place}}",
     "result": "Risultato, {{place}}",

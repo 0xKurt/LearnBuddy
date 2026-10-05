@@ -227,6 +227,11 @@
     "step_broke": "Tout tient jusqu'à la ligne {{line}}. Quelque chose se perd en passant à la ligne suivante – regarde encore cette étape.",
     "step_broke_last": "Ton raisonnement tient jusqu'au bout – seule la dernière étape ne va pas. Regarde encore la dernière ligne.",
     "test_no_hints": "Pas d'indices pendant le test – écris simplement ce que tu penses, ou passe la question. Après le test, je t'explique tout.",
+    "test_no_hints_on_screen": "Pas d'indices pendant le test – réponds simplement comme tu penses, ou passe la question. Après le test, je t'explique tout.",
+    "why": {
+      "right": "Exactement – {{reason}}",
+      "not_quite": "Pas tout à fait. La raison, c'est : {{reason}}"
+    },
     "test_noted": "Noté – on continue.",
     "try_again": "Pas encore tout à fait – réessaie. Avec « Indice », tu as un coup de pouce.",
     "typo": "Presque – ça s'écrit {{answer}}. Tape-le encore une fois.",

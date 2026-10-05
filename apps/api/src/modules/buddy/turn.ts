@@ -15,7 +15,6 @@
 import { randomUUID } from 'node:crypto';
 
 import type { RoleplayFeedback } from '@learnbuddy/shared-types/contracts';
-import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
 import type { LearnerContext } from '../../http/context.js';
@@ -29,18 +28,23 @@ import {
 } from '../../i18n/safeguarding.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
-import { toJsonSchema } from '../../llm/json-schema.js';
 import { homeworkSolved, mentionsSolution } from '../practice/tutor.js';
 import { applyDecision, recordUnapplied, type DecisionMeta } from './apply.js';
 import { preInjectedPassages } from './connectors/material.js';
 import { buildContents, buildContext } from './context.js';
 import { prepareOffered } from '../practice/prepare.js';
-import { askedButActed, emptyReply, TurnDecision, TurnDecisionForModel } from './registry.js';
+import { askedButActed, emptyReply, TurnDecision } from './registry.js';
 import { recallText } from './recall.js';
 import { bumpContext } from './plan.js';
 import { replyProgress, type ReplyProgress } from './stream.js';
-import { BUDDY_PROMPT_VERSION, TURN_SYSTEM, repairMessage } from './prompts.js';
-import { lookupsField, withLookups } from './lookups.js';
+import {
+  BUDDY_PROMPT_VERSION,
+  TURN_SCHEMA,
+  TURN_STEP_SCHEMA,
+  TURN_SYSTEM,
+  repairMessage,
+} from './prompts.js';
+import { withLookups } from './lookups.js';
 import { loadBuddyState, type MessageRow, TURN_STALL_MS } from './state.js';
 import {
   activeRoleplay,
@@ -59,20 +63,6 @@ import {
   type RoleplayStep,
 } from './roleplay.js';
 
-// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
-export const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
-/**
- * A step that may still ask for lookups first (ADR 0005 §The agent loop).
- *
- * Exported for one reason: `stream.ts` decides whether a half-written reply may be shown
- * by reading the fields that come BEFORE `reply`, so the order here is a contract, not a
- * detail. `__tests__/stream.test.ts` reads it from this schema instead of assuming it —
- * a reorder tried on 01.10. (to make the prefix cache hit) silently switched that guard
- * off while every test stayed green.
- */
-export const TURN_STEP_SCHEMA = toJsonSchema(
-  z.object({ lookups: lookupsField }).extend(TurnDecisionForModel.shape),
-);
 const MAX_ROUNDS = 4;
 export { TURN_STALL_MS };
 

@@ -89,6 +89,7 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
   '0093_material_sources',
   '0094_find_error_column_calc',
   '0095_grid_items',
+  '0098_item_why',
   '0100_task_parts',
 ];
 

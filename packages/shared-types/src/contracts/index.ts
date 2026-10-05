@@ -10,6 +10,7 @@ export * from './solid.js';
 export * from './diagram.js';
 export * from './circuit.js';
 export * from './map.js';
+export * from './schematic.js';
 export * from './figure.js';
 export * from './bars.js';
 export * from './grid.js';

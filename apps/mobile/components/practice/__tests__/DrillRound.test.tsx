@@ -54,10 +54,13 @@ const task = (
   hints_used: 0,
   hints_left: 0,
   hint_available: false,
+  hint_offered: false,
   reveal_available: false,
   deferred: false,
   answer: null,
   listen_transcript: null,
+  explanation: null,
+  why: null,
   ...over,
 });
 

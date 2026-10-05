@@ -133,6 +133,11 @@
     "thinking": "Buddy is explaining it another way …",
     "title": "Explained another way"
   },
+  "why": {
+    "ask": "Why is that right?",
+    "label": "Which reason is right?",
+    "hint": "Shows three reasons – tap the one that's right."
+  },
   "self_solved": {
     "title": "Solved it yourself!",
     "body": "You worked that out on your own."
@@ -364,6 +369,7 @@
     "task": "Task"
   },
   "column": {
+    "reopen": "Edit step {{step}}",
     "check_waits": "Once you have written a digit.",
     "carry": "Carry, {{place}}",
     "result": "Result, {{place}}",

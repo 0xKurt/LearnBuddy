@@ -27,6 +27,7 @@ import {
   parseSetFor,
   setSchemaForModel,
 } from '../setProfiles.js';
+import { formsOn } from '../items.js';
 import { MAX_STRUCTURED_ITEMS } from '../structured.js';
 
 type Kind = keyof typeof SET_PROFILES;
@@ -478,5 +479,48 @@ describe('the nested unions', () => {
     expect(parseSetFor('test', TOPICS).parse(off).items).toHaveLength(
       SET_PROFILES.test.items.length - 1,
     );
+  });
+});
+
+describe('a form switched off (#296, config.FORMS_OFF)', () => {
+  const OFF = new Set(['short', 'order', 'spelling_dictation'] as const);
+  const kindsIn = (schema: unknown) =>
+    (
+      (schema as { properties: Record<string, unknown> }).properties.items as {
+        items: { properties: { kind: { enum: string[] } } };
+      }
+    ).items.properties.kind.enum;
+
+  it('is not in the schema the model is shown', () => {
+    const on = explainSchemaFor('practice', null);
+    const off = explainSchemaFor('practice', null, OFF);
+    expect(kindsIn(on)).toContain('short');
+    expect(kindsIn(off)).not.toContain('short');
+    // The order branch is gone from the structured union: the decoder could not write one.
+    const order = { ...validAnswer('practice'), structured: [STRUCTURED.order] };
+    expect(schemaErrors(on, order)).toEqual([]);
+    expect(schemaErrors(off, order)).not.toEqual([]);
+    // A Diktat with its form off has no list to fill at all.
+    const dictation = explainSchemaFor('spelling_dictation', null, OFF).properties ?? {};
+    expect(Object.keys(dictation)).not.toContain('dictation');
+  });
+
+  it('is not kept, whatever the model wrote', () => {
+    const answer = { ...validAnswer('practice'), structured: [STRUCTURED.order] };
+    const set = parseSetFor('practice', null, OFF).parse(answer);
+    expect(set.items.map((i) => i.kind)).not.toContain('short');
+    expect(set.items).toHaveLength(SET_PROFILES.practice.items.length - 1);
+    expect(set.structured).toEqual([]);
+    expect(parseSetFor('practice', null).parse(answer).structured).toHaveLength(1);
+  });
+
+  it('leaves a photographed sheet only the questions of forms that are on', () => {
+    const items = [
+      { kind: 'short' as const },
+      { kind: 'numeric' as const },
+      { kind: 'order' as const },
+    ];
+    expect(formsOn(items, OFF)).toEqual([{ kind: 'numeric' }]);
+    expect(formsOn(items, new Set())).toEqual(items);
   });
 });

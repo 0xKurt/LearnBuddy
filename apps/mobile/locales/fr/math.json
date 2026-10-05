@@ -504,7 +504,9 @@
     "map_de": "Carte muette : l’Allemagne et ses {{count}} Länder.",
     "map_europe": "Carte muette : les pays d’Europe.",
     "map_world": "Carte muette : le monde et ses {{count}} continents.",
-    "map_marked": "En couleur : {{names}}."
+    "map_marked": "En couleur : {{names}}.",
+    "schematic": "Image : {{name}}.",
+    "schematic_numbered": "Image : {{name}}, {{count}} parties numérotées."
   },
   "keys": {
     "row": "Symboles mathématiques",
@@ -558,13 +560,16 @@
     "how_bar_chart": "Touche une barre.",
     "how_clock": "Touche le cadran là où l’aiguille doit pointer.",
     "how_map": "Touche la région sur la carte.",
+    "how_schematic": "Touche la partie dans l’image.",
     "value": "Endroit : {{value}}",
     "point": "Point ({{x}} | {{y}})",
     "bar": "Barre : {{label}}",
     "region": "Région : {{name}}",
+    "part": "Partie : {{name}}",
     "chosen_number_line": "Endroit choisi",
     "chosen_function_plot": "Point placé",
     "chosen_map": "Région choisie",
+    "chosen_schematic": "Partie choisie",
     "label": "Ton endroit dans la figure",
     "up": "vers le haut",
     "down": "vers le bas",

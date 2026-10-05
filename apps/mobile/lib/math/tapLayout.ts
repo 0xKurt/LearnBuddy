@@ -8,12 +8,16 @@
 // nearest of the twelve marks of the clock), so the whole figure is one big target and the
 // precision comes from the snap and the place written out under it, not from aiming.
 //
-// A map (#251) is one `case` like the rest: the region under the finger (`regionAt` in
+// A map (#251) and a labelled picture (#252) share one `case`: the region under the finger (`regionAt` in
 // shared-math `maps.ts`, a point-in-polygon test on the Natural Earth shapes), or the small one
 // whose label it is near. Its shapes are loaded with the first map (`useMapShapes`) and handed in.
 // Labelled pictures (#252) add their figure here too: one `case`, the same contract.
 
 import type { MapShapes } from '../../../../packages/shared-math/src/maps.js';
+import {
+  schematicRegions,
+  type SchematicShapes,
+} from '../../../../packages/shared-math/src/schematics.js';
 import {
   REGION_FRAME,
   regionAt,
@@ -74,17 +78,20 @@ function markAt(dx: number, dy: number): number {
   return Math.round(deg / 30) % 12;
 }
 
+/** The shapes of the figures that load them (`useMapShapes`, `useSchematicShapes`). */
+export type TapShapes = { maps?: MapShapes | null; pictures?: SchematicShapes | null };
+
 /**
  * The places of `fig` on a drawing `width` wide, or null when the figure offers none. `format`
- * writes a tick label as the plot draws it (its length moves the plot's left margin). A map needs
- * its `shapes`; before they are loaded it offers nothing to tap yet.
+ * writes a tick label as the plot draws it (its length moves the plot's left margin). A map and a
+ * picture need their `shapes`; before they are loaded they offer nothing to tap yet.
  */
 export function tapLayout(
   fig: Tappable,
   width: number,
   format: (n: number) => string,
   fontSize: number,
-  shapes: MapShapes | null = null,
+  shapes: TapShapes = {},
 ): TapLayout | null {
   const axes = tapAxes(fig);
   const [first, second] = axes ?? [];
@@ -152,8 +159,16 @@ export function tapLayout(
         guides: [],
       };
     }
-    case 'map': {
-      const view = shapes?.[fig.v];
+    case 'map':
+    case 'schematic': {
+      // A map's regions and a picture's parts come with their shapes (each loaded with the first
+      // of its kind); a picture's parts are drawn with their border.
+      const view =
+        fig.type === 'map'
+          ? shapes.maps?.[fig.v]
+          : shapes.pictures
+            ? { ...schematicRegions(shapes.pictures, fig.d), borders: true }
+            : undefined;
       if (!view) return null;
       const k = width / REGION_FRAME;
       const reach = regionReach(width);

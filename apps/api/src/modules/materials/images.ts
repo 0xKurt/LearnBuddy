@@ -37,9 +37,8 @@ import { callModel } from '../../llm/call.js';
 import type { LlmPart } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { itemsOneByOne } from '../practice/items.js';
+import { promptVersion } from '../../llm/promptVersion.js';
 
-// v2 (issue #223 point 1): one field more per figure — whether its colours carry meaning.
-export const FIGURES_PROMPT_VERSION = 'figures-v2';
 /** At most this many crops per sheet (pages added later fill up to it, never past it). */
 export const MAX_IMAGES_PER_MATERIAL = 6;
 /** Generous symmetric padding so a tight model box never clips the figure. */
@@ -393,3 +392,6 @@ async function enhance(buf: Buffer, keepColour: boolean): Promise<Buffer> {
     .toBuffer()
     .catch(() => buf);
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const FIGURES_PROMPT_VERSION = promptVersion('figures', FIGURES_SYSTEM, FIGURES_SCHEMA);

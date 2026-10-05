@@ -4,21 +4,15 @@
 // wish. Versioned so decisions can be traced to the prompt that produced them.
 
 import { MATH_NOTATION_SHORT, NotPracticableForm } from '@learnbuddy/shared-types/contracts';
+import { z } from 'zod';
 
 import { MAX_PAGES, MAX_PDF_BYTES } from '../materials/pdf.js';
 import { PHOTO_RETENTION_DAYS } from '../materials/purge.js';
-import { lookupsPrompt } from './lookups.js';
-import { actToolsPrompt } from './registry.js';
 
-// buddy.55: offer_learning kind spelling_dictation with a sheet (Diktat, #242), on top of 54.
-// buddy.56: offer_drill, a Kopfrechnen round code writes and checks (#243), on top of 55.
-// buddy.57: offer_learning may carry a test's time_limit, on her wish only (#241), on top of 56.
-// buddy.58: start_roleplay and the roleplay turn (#244), on top of 57.
-// buddy.59: offer_learning kind teach_back, „Erklär mal" (#236), on top of 58.
-// buddy.60: the schema says what was written for six sheet/subject/goal/topic fields, dropped
-//           before (#282), and the act-tool texts are denser with the same meaning (#282 D5).
-// buddy.61: offer_learning kind read, a reading text Buddy writes with questions (#368), on top of 60.
-export const BUDDY_PROMPT_VERSION = 'buddy.61';
+import { toJsonSchema } from '../../llm/json-schema.js';
+import { promptVersion } from '../../llm/promptVersion.js';
+import { lookupsField, lookupsPrompt } from './lookups.js';
+import { actToolsPrompt, CheckDecision, TurnDecisionForModel } from './registry.js';
 
 // No example in here is a phrase in one language that the model is meant to WRITE. An English
 // learner was told "I've planned your maths test for am Freitag" in 2 of 3 live runs (issue
@@ -97,7 +91,7 @@ const TOOLS = `What to do when:
 - "Did it already", "not today" for a step → mark_step_done / update_step.
 - You want to look again later (e.g. after the learner has time) → schedule_check.
 - Before you make anything for her to tap, read what STATE lists as already waiting for her: an offer of yours she has not started, a practice you prepared. While one of those stands for what she is asking about, a second one gives her nothing new — say where the one she has is, add the next step, and move the conversation on. Only something genuinely different from what stands gets its own.
-- The learner asks for a specific thing to learn now — practise a named topic, quiz vocabulary they typed, practise speaking, practise LISTENING (kind listen: she asks to train understanding a spoken text; you write a short text, the app reads it aloud and she answers questions about it), practise SPELLING with a Diktat (kind spelling_dictation: the app reads words or sentences aloud and she types them; text = the words she typed, or the spelling topic she named; for a word list on one of her sheets in STATE, sheet = its alias and text names it), practise READING comprehension without a sheet (kind read: you write a text at her level, she reads it and answers questions about it; text = the topic in her words), to be QUIZZED or to EXPLAIN something herself (kind teach_back: she asks you to question her on a topic or a sheet, or asks whether she may explain something to you; the app asks open questions and checks what she explains point by point; text = the topic in her words, and for one of her sheets in STATE, sheet = its alias), help with a homework task they wrote down, or a practice test (she asks to be tested, or to rehearse the whole thing shortly before an exam) → offer_learning with the kind and what to learn in their words. Asked to EXPLAIN something, you explain it in the chat (see above) — no offer; after the explanation you may offer practice on it (for homework: the task as they wrote it); practice or a practice test for a planned test in STATE names that test in goal (g1), so its questions stay within the sheets she photographed for it. The app shows a button that starts it; your reply says in one sentence what you prepare. Don't explain at length or solve anything in the chat. A task they wrote into the message is clear enough — offer help with it right away. An offer needs a concrete topic or task in the learner's words; a bare call for help, or that she needs to learn something, names none — then ask what it is about (no offer). A subject name alone is also not concrete enough when STATE shows no material for it, no school level and no topic you know for that subject: questions invented without any of that would not fit the learner. Then don't offer — ask one question for the most useful missing piece (their school year, or what they are currently doing in that subject), or suggest photographing the current worksheet. Offer once you know any one of these. A test with a day is planned with plan_exam as above, not offered.
+- The learner asks for a specific thing to learn now — practise a named topic, quiz vocabulary they typed, practise speaking, practise LISTENING (kind listen: she asks to train understanding a spoken text; you write a short text, the app reads it aloud and she answers questions about it), practise SPELLING with a Diktat (kind spelling_dictation: the app reads words or sentences aloud and she types them; text = the words she typed, or the spelling topic she named; for a word list on one of her sheets in STATE, sheet = its alias and text names it), practise READING comprehension without a sheet (kind read: you write a text at her level, she reads it and answers questions about it; text = the topic in her words), to be QUIZZED or to EXPLAIN something herself (kind teach_back: she asks you to question her on a topic or a sheet, or asks whether she may explain something to you; the app asks open questions and checks what she explains point by point; text = the topic in her words, and for one of her sheets in STATE, sheet = its alias), help with a homework task they wrote down, or a practice test (she asks to be tested, or to rehearse the whole thing shortly before an exam; her words asking for it go in asked) → offer_learning with the kind and what to learn in their words. Asked to EXPLAIN something, you explain it in the chat (see above) — no offer; after the explanation you may offer practice on it (for homework: the task as they wrote it); practice or a practice test for a planned test in STATE names that test in goal (g1), so its questions stay within the sheets she photographed for it. The app shows a button that starts it; your reply says in one sentence what you prepare. Don't explain at length or solve anything in the chat. A task they wrote into the message is clear enough — offer help with it right away. An offer needs a concrete topic or task in the learner's words; a bare call for help, or that she needs to learn something, names none — then ask what it is about (no offer). A subject name alone is also not concrete enough when STATE shows no material for it, no school level and no topic you know for that subject: questions invented without any of that would not fit the learner. Then don't offer — ask one question for the most useful missing piece (their school year, or what they are currently doing in that subject), or suggest photographing the current worksheet. Offer once you know any one of these. A test with a day is planned with plan_exam as above, not offered.
 - She wants to drill mental arithmetic quickly — the times tables (all of them or the rows she names), plus/minus within 10, 20 or 100, adding simple fractions, percentages of a number → offer_drill with the range (and the rows or carry she named), never offer_learning: code writes every task and checks every answer, so you write no task, no number and no solution yourself. Your reply says in one sentence that the round is ready.
 - The learner wants to see or change something in the app — her sheets or their questions, what you know about her, settings (messages to the phone, language, parents' area), earlier messages, or take a photo → open_area right away (it only shows a button, she decides — never ask whether to show it). Changes you can make yourself (less contact, a pause, remembering or forgetting something) you make with your tools instead.
 - A learner you know nothing about yet (STATE shows no memories, no goals, no materials): getting to know them is the most useful step. Learn their school year and what they are working on before preparing anything — through the one-question rule, over a few turns, not as a questionnaire.
@@ -208,3 +202,44 @@ export function repairMessage(errors: string[]): string {
       '\n',
     )}\nAnswer again with a corrected JSON object. If you cannot do what was asked, say so in the reply and leave actions empty.`;
 }
+
+// ─────────────── the schemas that go out with these prompts ───────────────
+
+// Sent by `turn.ts`, hashed into the version below, and read by the schema inventory
+// (`evals/schema`, issue #281).
+export const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
+/**
+ * A step that may still ask for lookups first (ADR 0005 §The agent loop).
+ *
+ * Exported for one reason: `stream.ts` decides whether a half-written reply may be shown
+ * by reading the fields that come BEFORE `reply`, so the order here is a contract, not a
+ * detail. `__tests__/stream.test.ts` reads it from this schema instead of assuming it —
+ * a reorder tried on 01.10. (to make the prefix cache hit) silently switched that guard
+ * off while every test stayed green.
+ */
+export const TURN_STEP_SCHEMA = toJsonSchema(
+  z.object({ lookups: lookupsField }).extend(TurnDecisionForModel.shape),
+);
+
+// Sent by `check.ts`, hashed into the version below, and read by the schema inventory.
+export const CHECK_SCHEMA = toJsonSchema(CheckDecision);
+/** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
+// Lookups first, as in a turn: the model chooses what to read before it writes a decision
+// (p2-check-step-schema-lookups-last).
+// Exported only so the prompt test can scan the exact bytes this module sends (issue #213):
+// `CheckDecision` and `lookupsField` are each scanned on their own, but the COMPOSITION is what
+// goes out, and a description can only hide in what no test holds.
+export const CHECK_STEP_SCHEMA = toJsonSchema(
+  z.object({ lookups: lookupsField }).extend(CheckDecision.shape),
+);
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const BUDDY_PROMPT_VERSION = promptVersion(
+  'buddy',
+  TURN_SYSTEM,
+  CHECK_SYSTEM,
+  TURN_SCHEMA,
+  TURN_STEP_SCHEMA,
+  CHECK_SCHEMA,
+  CHECK_STEP_SCHEMA,
+);

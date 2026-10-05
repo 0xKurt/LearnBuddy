@@ -227,6 +227,11 @@
     "step_broke": "Hasta la línea {{line}} todo cuadra. Algo se pierde al pasar a la línea siguiente: mira otra vez ese paso.",
     "step_broke_last": "Tu camino está bien hasta el final; solo el último paso no. Mira otra vez la última línea.",
     "test_no_hints": "En el examen no hay pistas: escribe lo que pienses o salta la pregunta. Después del examen te lo explico todo.",
+    "test_no_hints_on_screen": "En el examen no hay pistas: responde como creas o salta la pregunta. Después del examen te lo explico todo.",
+    "why": {
+      "right": "Exacto: {{reason}}",
+      "not_quite": "No del todo. El motivo es: {{reason}}"
+    },
     "test_noted": "Anotado – seguimos.",
     "try_again": "Todavía no del todo – inténtalo otra vez. Con «Pista» te doy una ayuda.",
     "typo": "Casi – se escribe {{answer}}. Escríbelo otra vez.",

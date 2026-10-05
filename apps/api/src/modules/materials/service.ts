@@ -29,19 +29,17 @@ import { localParts } from '../../lib/time.js';
 import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmPart, type LlmResult } from '../../llm/gateway.js';
-import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { curriculumBlock } from '../curriculum/state.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { StorageError } from '../../storage/gateway.js';
-import { insertItems, samePrompt, usableItems } from '../practice/items.js';
+import { formsOn, insertItems, samePrompt, usableItems } from '../practice/items.js';
 import { SHEET_STRUCTURED, structuredItems } from '../practice/structured.js';
 import { readingItems } from '../practice/reading.js';
 import { createSession } from '../practice/service.js';
 import {
   clarifiedRules,
-  EXTRACT_PROMPT_VERSION,
   EXTRACT_SYSTEM,
   MOST_READINGS,
   MOST_UNCLEAR_SPOTS,
@@ -49,7 +47,6 @@ import {
   type PageReport,
   type UnclearReport,
   HOMEWORK_SYSTEM,
-  HomeworkExtraction,
   LEAN_RULES,
 } from './extract.js';
 import { emitEvent } from '../buddy/events.js';
@@ -64,12 +61,11 @@ import {
   ReadingParse,
   SOURCE_RULES,
   SOURCES_PROMPT_VERSION,
-  StudyExtraction,
+  EXTRACTION_SCHEMA,
+  EXTRACT_PROMPT_VERSION,
+  HOMEWORK_SCHEMA,
 } from './sources.js';
 
-// Both exported for the schema inventory (`evals/schema`, issue #281); nothing else reads them.
-export const EXTRACTION_SCHEMA = toJsonSchema(StudyExtraction);
-export const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
 const ABANDON_UPLOAD_MS = 24 * 3_600_000;
 const MAX_EXTRACTION_ATTEMPTS = 3;
 /**
@@ -926,13 +922,15 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // an order, a table or links to make, each checked by code before it is stored. Then each
   // reading text's group (#233), checked against the text and the transcription of the sheet —
   // not in homework, which is helped task by task as printed (its schema has no reading).
-  const items = [
+  const checked = [
     ...usableItems(x.items),
     ...structuredItems(x.structured, SHEET_STRUCTURED, x.structured.length),
     ...(homework ? [] : x.reading).flatMap((r) =>
       readingItems(r, { locale: learner.locale, transcript: x.extracted_text }),
     ),
   ];
+  // A form switched off in this environment is not stored (#296, `config.FORMS_OFF`).
+  const items = formsOn(checked, deps.config.FORMS_OFF);
   const pageProblems = pageProblemsOf(x.pages, m.photo_count);
   // "Not readable" with questions and a page that was read: one bad page must not
   // cost the whole sheet (the model says so for a cut-off page at times); the
@@ -946,7 +944,9 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // reading that NAMED the tasks it refused has said why there is nothing to practise, and
   // that is worth more to her than "something went wrong" — it also means no "Nochmal
   // lesen", because a second reading finds the same tasks (retryMaterial refuses it).
-  if (items.length === 0 && x.not_practicable.length > 0)
+  // Read fine, and every task on it is of a form that is switched off: nothing to practise
+  // now, and nothing about the reading went wrong (rule 5) — the same honest reason.
+  if (items.length === 0 && (x.not_practicable.length > 0 || checked.length > 0))
     return fail(deps, job, materialId, 'form_not_practicable', {
       notPracticable: x.not_practicable,
     });
@@ -1515,7 +1515,9 @@ async function runClarifiedReading(deps: Deps, job: JobRow, spotId: string): Pro
     throw err;
   }
   const fresh = parsed.success
-    ? usableItems(parsed.data.items).filter((it) => !known.has(samePrompt(it.prompt)))
+    ? formsOn(usableItems(parsed.data.items), deps.config.FORMS_OFF).filter(
+        (it) => !known.has(samePrompt(it.prompt)),
+      )
     : [];
 
   await deps.db.tx(async (tx) => {

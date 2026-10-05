@@ -9,6 +9,7 @@
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
 
 import { loadConfig } from '../../src/config.js';
+import { t, type MessageKey } from '../../src/i18n/index.js';
 import type { LlmGateway, LlmRequest } from '../../src/llm/gateway.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import { mathNorm } from '../../src/modules/practice/tutor.js';
@@ -77,10 +78,17 @@ type Step = {
    * the reply offers „Merk ich mir für nachher“ (`reply.later` = offered); false — it must not.
    */
   offersLater?: boolean;
+  /** Issue #388: the reply must be exactly this fixed line of the app (a test's, by its form). */
+  fixedLine?: MessageKey;
 };
 type Case = {
   id: string;
-  kind: 'practice' | 'help';
+  kind: 'practice' | 'help' | 'test';
+  /**
+   * Issue #388: the background hints call (live here too) must leave three reasons for „Warum
+   * stimmt das?" that survived code's check (`checkedWhy`): a question with a rule behind it.
+   */
+  reasons?: true;
   item: Record<string, unknown>;
   /** For homework: what she typed (the task must be in it). */
   text?: string;
@@ -338,6 +346,37 @@ const CASES: Case[] = [
       },
     ],
   },
+  {
+    // Issue #388: the hint ladder and „Warum stimmt das?" — a question with a rule behind it gets
+    // three reasons with its hints, and none of them gives the key away (code drops those).
+    id: 'reasons_for_a_rule',
+    kind: 'practice',
+    reasons: true,
+    item: q({ kind: 'numeric', prompt: 'Berechne $\\frac{1}{2} + \\frac{1}{4}$', answer: '3/4' }),
+    steps: [{ say: '2/6', ok: wrong, noSolution: true }],
+  },
+  {
+    // Issue #388: asked in a Probetest on a tap form, the fixed line says "antworte", never
+    // "schreib" — and nothing of the model's words reaches her.
+    id: 'test_line_fits_a_tap_form',
+    kind: 'test',
+    item: q({
+      kind: 'multiple_choice',
+      prompt: 'Welcher Bruch ist größer?',
+      choices: ['$\\frac{2}{3}$', '$\\frac{3}{5}$'],
+      correct_choice: 0,
+      answer: '$\\frac{2}{3}$',
+    }),
+    steps: [
+      {
+        say: 'wie vergleicht man brüche?',
+        ok: help,
+        noSolution: true,
+        ask: true,
+        fixedLine: 'practice.test_no_hints_on_screen',
+      },
+    ],
+  },
 ];
 
 /**
@@ -447,10 +486,21 @@ for (const c of CASES) {
           ? `"${step.say}": off-topic without „Merk ich mir für nachher“`
           : `"${step.say}": offered to keep a question about the task for later`,
       );
+    if (step.fixedLine && reply !== t('de', step.fixedLine))
+      problems.push(`"${step.say}": not the app's fixed line ${step.fixedLine}`);
     if (step.noPush && claimsCloseness(reply))
       problems.push(`"${step.say}": claims she is close, which nothing measured`);
     lastReply = reply;
     if (r.body.session.items[0]?.status !== 'open') break;
+  }
+  if (c.reasons) {
+    // The hints are written in the background, live: wait for them, then read what was kept.
+    await env.flushBackground();
+    const kept = await env.db.one<{ why: unknown }>(`select why from items where id = $1`, [
+      itemId,
+    ]);
+    if (kept.why === null) problems.push('no reasons for „Warum stimmt das?" survived the check');
+    else log.push(`    reasons: ${JSON.stringify(kept.why)}`);
   }
   if (problems.length) failed++;
   console.log(

@@ -25,9 +25,10 @@ import { useTranslation } from 'react-i18next';
 import { Text, View, type AccessibilityActionEvent } from 'react-native';
 import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg';
 
-import { mapRegionName } from '../../../../packages/shared-math/src/maps.js';
+import { regionName } from '../../../../packages/shared-math/src/regions.js';
 import { parseClockAnswer } from '../../../../packages/shared-math/src/primary.js';
 import {
+  namedPlaces,
   tapAxes,
   tapPick,
   tapText,
@@ -37,6 +38,7 @@ import {
 import { currentLocale } from '../../lib/i18n/index.js';
 import { tapLayout, type TapMark } from '../../lib/math/tapLayout.js';
 import { useMapShapes } from '../../lib/math/useMapShapes.js';
+import { useSchematicShapes } from '../../lib/math/useSchematicShapes.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -82,21 +84,25 @@ function placeWords(figure: Tappable, pick: TapPick | null, t: T): string {
     case 'clock':
       return t('figure.clock', { hands: describeClock({ h: at(0, i), m: at(1, j) }, t) });
     case 'map':
-      return t('tap.region', { name: mapRegionName(figure.v, i, currentLocale()) });
+    case 'schematic':
+      // A Land or a part, named in her language (`regions.ts`).
+      return t(`tap.${figure.type === 'map' ? 'region' : 'part'}`, {
+        name: regionName(namedPlaces(figure) ?? [], i, currentLocale()),
+      });
   }
 }
 
 /**
- * The same line as she sees it: on a number line, a coordinate system and a map only that she
- * chose ("Stelle gewählt", "Punkt gesetzt", "Gebiet gewählt") — reading the place off the figure,
- * finding the region on a stumme Karte, is the task (#409, #251). A column's name and the hands'
- * positions are kept: the figure shows them anyway.
+ * The same line as she sees it: on a number line, a coordinate system, a map and a picture only
+ * that she chose ("Stelle gewählt", "Punkt gesetzt", "Gebiet gewählt", "Teil gewählt") — reading
+ * the place off the figure, finding the region or the part, is the task (#409, #251, #252). A
+ * column's name and the hands' positions are kept: the figure shows them anyway.
  */
 function shownWords(figure: Tappable, pick: TapPick | null, t: T, spoken: string): string {
   if (!pick) return spoken;
-  return figure.type === 'number_line' || figure.type === 'function_plot' || figure.type === 'map'
-    ? t(`tap.chosen_${figure.type}`)
-    : spoken;
+  return figure.type === 'clock' || figure.type === 'bar_chart'
+    ? spoken
+    : t(`tap.chosen_${figure.type}`);
 }
 
 /** The mark on her place: a ring with a dot, or a frame around the column. */
@@ -115,7 +121,7 @@ function Mark({ mark }: { mark: TapMark }) {
             d={mark.d}
             fill="none"
             stroke={palette.primary}
-            strokeWidth={2}
+            strokeWidth={3}
             strokeLinejoin="round"
           />
         ) : null}
@@ -166,8 +172,11 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
   const { t } = useTranslation('math');
   const pick = value === '' ? null : tapPick(figure, value);
   const clock = figure.type === 'clock';
-  // The shapes of a map, loaded with the first one; nothing else loads them.
-  const shapes = useMapShapes(figure.type === 'map')?.MAP_SHAPES ?? null;
+  // The shapes of a map or a picture, loaded with the first of its kind; nothing else loads them.
+  const shapes = {
+    maps: useMapShapes(figure.type === 'map')?.MAP_SHAPES,
+    pictures: useSchematicShapes(figure.type === 'schematic')?.SCHEMATIC_SHAPES,
+  };
   // The hand a tap on the clock moves: the small one first (axis 0), then the large one.
   const [active, setActive] = useState(0);
   const write = (next: TapPick) => {
