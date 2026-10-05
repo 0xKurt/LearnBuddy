@@ -372,7 +372,9 @@ async function generateSet(
   opts: { onFirstItems?: (set: GeneratedSet) => void } = {},
 ): Promise<GeneratedSet> {
   const { level, timezone, sheets, pattern, dictation } = ground;
-  const parseSet = parseSetFor(input.kind, sheets?.topics ?? null);
+  // The forms switched off in this environment are neither shown nor kept (#296).
+  const off = deps.config.FORMS_OFF;
+  const parseSet = parseSetFor(input.kind, sheets?.topics ?? null, off);
   let handedOver = false;
   const onPartial = opts.onFirstItems
     ? (rawSoFar: string) => {
@@ -427,7 +429,7 @@ async function generateSet(
           ],
         },
       ],
-      schema: explainSchemaFor(input.kind, sheets?.topics ?? null),
+      schema: explainSchemaFor(input.kind, sheets?.topics ?? null, off),
       maxOutputTokens: 10_000,
       temperature: 0.4,
       // A streamed run must be finished inside the window the run waits for it, or it would

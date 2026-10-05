@@ -3728,6 +3728,14 @@ dropped, whatever the model wrote (Rule 0). Every row was a rule in `preparedFro
 a row, so a profile leaves out only what code already threw away: item kinds (`KINDS`), structured
 kinds (`STRUCTURED`), bars only in practice (#162), note lines in practice and tests (#226), the
 listening task only in a listening run (#210), a Diktat's entries only in a Diktat run (#242).
+**A form switched off** (#296): `FORMS_OFF` (comma-separated `ItemKind` values per environment; an
+unknown name stops the boot) takes the form out of the profile (`profileFor`) — out of the schema
+the model is shown and out of what code keeps — and out of what a photographed sheet stores
+(`formsOn` in `practice/items.ts`, used by `materials/service.ts`; a sheet left with nothing is `form_not_practicable`, never
+"unreadable"). Nothing on the answer path reads it, so a question of that form already stored stays
+answerable. A new form stays off in production until it was tested with the real model and the
+owner has seen it; switching is the environment variable, not a release. Figure types (a map, a
+solid) are not covered by it: they are not a form of their own but a drawing inside one.
 Inside an item, the fields no allowed kind keeps are
 left out too, from `practice/itemFields.ts` — the same constants `usableItems` and `usableRubric`
 discard by: a rubric (and its `RubricCheck` union) without a long answer, a tolerance without a
@@ -4533,8 +4541,10 @@ the role; code holds the frame (CLAUDE.md rule 1).
 - **The feedback is checked, not believed** (rule 0 from #224, the same rule as #211's `judged`).
   One model call (`ROLEPLAY_FEEDBACK_SYSTEM`, `RoleplayFeedbackForModel`, zod): per key point
   `met` and a quote, plus 2–3 lines of hers with a better version. `checkFeedback` counts a point
-  as managed **only** when the quote stands in her own lines (`quoteOccursIn`, whole words); an
-  invented quote, a fragment or a point the model left out is "noch nicht dabei". A better line
+  as managed **only** when the quote stands in her own lines, decided on the one path every key
+  point in the app takes (`quoted` in `practice/rubric.ts`, folded like a writing task's
+  `judged`, #296); an invented quote, a fragment or a point the model left out is "noch nicht
+  dabei". A better line
   whose `said` is not hers is dropped, never rewritten. The text she reads and hears is the
   app's (`i18n roleplay.*`): each point in words, a managed one with her own words as the proof —
   no score, no grade, no count. Stored as checked in `buddy_roleplays.feedback` (her export).

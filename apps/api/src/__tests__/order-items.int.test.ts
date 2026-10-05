@@ -15,6 +15,7 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { explainSchemaFor } from '../modules/practice/setProfiles.js';
 import { ORDER_JOIN } from '../modules/practice/structured.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
@@ -340,6 +341,78 @@ describe.skipIf(!dbReady)('order items', () => {
       [l.learnerId],
     );
     expect(states.n).toBe(0);
+  });
+
+  it('switched off (#296): never offered or stored again, and one already stored stays answerable', async () => {
+    const before = await prepare([order(KEIMUNG)]);
+    const si = before.items[0]!;
+    // The operator switches the form off (config.FORMS_OFF), with this question already open.
+    const off = new Set(['order'] as const);
+    env.deps.config.FORMS_OFF = off;
+
+    // What she already has keeps working: nothing on the answer path reads the switch.
+    const res = await answer(before, si.item.id, idsFor(si, KEIMUNG));
+    expect(res.body.verdict).toBe('correct');
+
+    // A new run is not shown the form, and an order the model writes anyway is not stored.
+    env.llm.script('explain', () => ({
+      usable: true,
+      title: 'Keimung',
+      subject: { name: 'Biologie', kind: 'biology' },
+      items: [
+        {
+          kind: 'short',
+          prompt: 'Was nimmt der Samen zuerst auf?',
+          answer: 'Wasser',
+          accepted_answers: [],
+          unit: null,
+          choices: null,
+          correct_choice: null,
+          topic: 'Keimung',
+          difficulty: 1,
+          source_excerpt: null,
+        },
+      ],
+      structured: [order(KEIMUNG)],
+    }));
+    const run = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'test',
+      text: 'Keimung',
+    });
+    expect(run.status, JSON.stringify(run.body)).toBe(201);
+    expect(env.llm.callsFor('explain').at(-1)?.schema).toEqual(explainSchemaFor('test', null, off));
+    expect(run.body.items.map((i) => i.item.kind)).toEqual(['short']);
+
+    // A sheet whose only task is an order: read fine, nothing to practise now — never "unreadable".
+    env.llm.script('extraction', {
+      json: {
+        is_learning_material: true,
+        readable: true,
+        title: 'Keimung',
+        subject: { name: 'Biologie', kind: 'biology' },
+        extracted_text: 'Ordne die Schritte der Keimung.',
+        items: [],
+        structured: [order(KEIMUNG, { prompt: 'Ordne die Schritte der Keimung.' })],
+      },
+    });
+    env.llm.script('buddy_check', {
+      json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null },
+    });
+    const created = await l.api.post<{ material: MaterialView; uploads: Array<{ path: string }> }>(
+      '/materials',
+      { client_request_id: randomUUID(), photo_mimes: ['image/jpeg'], purpose: 'study' },
+    );
+    for (const u of created.body.uploads) env.storage.put(u.path);
+    expect((await l.api.post(`/materials/${created.body.material.id}/submit`)).status).toBe(202);
+    await env.flushBackground();
+    const sheet = await env.db.one<{ status: string; failure_reason: string | null; n: number }>(
+      `select m.status, m.failure_reason,
+              (select count(*)::int from items i where i.material_id = m.id) as n
+         from materials m where m.id = $1`,
+      [created.body.material.id],
+    );
+    expect(sheet).toEqual({ status: 'failed', failure_reason: 'form_not_practicable', n: 0 });
   });
 
   it('reads an order task from a photographed sheet', async () => {

@@ -143,7 +143,8 @@ ist.
 
 1. **Doppelbau-Durchgang** (#296 Plan 2, Regel 3): Vor dem Merge eines Features, das einen
    Mechanismus berührt, den es schon gibt, die fünf Stellen aus #296 vergleichen — Tippen in
-   Figuren, Kernpunkte/Rubrik (`practice/rubric.ts`), Antwortflächen (`AnswerShell`), Prüfer
+   Figuren (eine Fläche: `components/lb/TapSurface`, #416), Kernpunkte/Rubrik
+   (`practice/rubric.ts`, `quoted` entscheidet jeden Kernpunkt, auch den eines Rollenspiels), Antwortflächen (`AnswerShell`), Prüfer
    (`practice/*Check.ts`), Prompt-Bausteine (`STRUCTURED_RULES`, `setProfiles.ts`). Doppeltes wird
    auf die bessere Fassung zusammengelegt, das Schwächere gelöscht. _Warum kein Wächter:_ jscpd
    findet nur wörtliche Kopien; zwei Implementierungen derselben Idee mit anderen Namen sieht kein
@@ -208,8 +209,9 @@ ist.
   4 und 5). Ein PR ohne Vorlage ist rot, bis die Zeilen dastehen. Damit der Workflow einen Merge
   sperrt, muss „PR text“ in den Branch-Regeln von `main` als Pflicht-Check stehen (Owner, GitHub
   Settings → Branches) — das kann kein Commit einstellen.
-- Der Schalter für neue Formen (#296 Plan 4: serverseitige Erlaubnisliste je Umgebung) ist ein
-  Feature, kein Wächter, und noch nicht gebaut; bis dahin entscheidet allein `SET_PROFILES`
-  (`apps/api/src/modules/practice/setProfiles.ts`), welche Form ein Lauf erzeugen kann.
+- Der Schalter für neue Formen (#296 Plan 4) ist ein Feature, kein Wächter: `FORMS_OFF` je
+  Umgebung (`apps/api/src/config.ts`) nimmt eine Form aus dem Profil (`profileFor` in
+  `apps/api/src/modules/practice/setProfiles.ts`) und aus dem, was ein Blatt speichert
+  (`formsOn`); docs/architecture.md §Explain profiles.
 - Zusätzliche CI-Zeit: etwa 20 s im Lint-Schritt (jscpd etwa 13 s, knip und Tests parallel) und
   unter 1 s für das Bundle-Budget.
