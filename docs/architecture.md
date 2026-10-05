@@ -2762,6 +2762,67 @@ cell cannot be lower than a touch target: it is rejected (`too_long`) until the 
 a longer division is to fit. While she writes her line with the keyboard up on a small phone, the
 Fehlerdetektiv's lines fold away like a board under her question (`answerFolds`, #402), so the bar
 and "Prüfen" stay above the keyboard.
+**Grid — drawing on squared paper** (`practice/grid.ts`, `GridAnswer.tsx`, issue #249, migration
+`0095_grid_items.sql`). Plotting points, drawing the graph of a line or a parabola, mirroring a
+figure on squared paper, drawing a bar chart — 16 task types of the analysis #224 (building block
+`RASTER`), decided there: a grid only, no freehand and no compasses, because only a grid can be
+checked exactly. Four modes, one paper (`GridDrawTask` in `contracts/grid.ts`): `points` (she sets
+the given points A, B, C …), `graph` (she sets `count` points on the graph — two for a line, which
+the app then draws across the paper; three to five for a parabola), `mirror` (a figure ABC … and a
+vertical or horizontal axis; she sets A′, B′, C′ …) and `bars` (she pulls each bar to its height).
+The migration adds no column; like 0087 it extends the two kind checks from the live definition.
+
+Regel 0, all code. The model chooses the mode and its data and writes an instruction WITHOUT A
+DIGIT (`form`): the numbers she works with come from the task, never from a second author. Code
+names the points, fits the paper around the data with a unit of air on every side (none below 0
+when nothing is negative), mirrors the figure, picks the bar chart's scale (the smallest of 1, 2, 5,
+10, 20, 25, 50, 100 every value is a whole number of) and appends the data to the instruction in
+the one notation `A(2|−3)` (`gridPointText`, no space inside, so a line never breaks within a point; the vertical bar
+in every language, because a comma reads as a decimal comma in four of five). A function is held to
+what a grid can show: code reads it back as the polynomial through three of its own values and
+checks it everywhere else, at whole and broken x (a cube, a root or a step is `not_a_function`),
+then writes it itself (`$y = \frac{1}{2}x^{2} - 2$`) — the formula she reads is the one she is
+judged by. What is not a task on the paper is never stored: a key point off a crossing or off the
+paper (`off_grid`), data wider than the paper (`too_big`), fewer crossings on the graph than she is
+to set (`too_few_on_grid`), a figure on one line or on both sides of the axis (`degenerate`), values
+no scale fits (`scale`). The stored task is checked again when it is read back. Only in a run Buddy
+prepares: a drawing task on a photographed sheet stays `not_practicable` (`SHEET_STRUCTURED` leaves
+the kind out, the photo reading is not offered it), because the paper would have to be read off the
+photo — the reason a note line is not read off a photo either (#226). Help is the background hint
+call's, against the solution; a hint that gives a mirror image point away is dropped (`gridSecrets`).
+
+Checking is exact, no model call: a point with its key point by name, a graph's point by being one
+of the crossings the function passes (so ANY two right points of y = 2x − 1 are right, the acceptance
+of #249), a bar with its value. The reply names what to look at again, never the answer: "B liegt
+noch nicht richtig", "(1|2) liegt nicht auf dem Graphen", "Die Säule für Birne stimmt noch
+nicht" — her own point or bar, so it is feedback, not a hint (`structuredNamesPart` false, as an
+order's place). A drawing is produced, not recognised: `answered_by` is `typed` (#163).
+
+App: `GridAnswer.tsx` in the answer shell; the paper is `GridSheet.tsx` on `PlotAxes.tsx`, the SAME
+coordinate system `FunctionPlot` draws for a graph she reads (lifted out of `FigureView.tsx`,
+laid out by `plotGeometry` in `lib/math/plotLayout.ts`) — one renderer for reading and drawing.
+Operated like the note line (#275): the paper is ONE target (`components/lb/TapSurface.tsx`, which
+the note line now uses too); a tap takes the crossing nearest the finger, so the whole square around
+a crossing is its target; a tap on her own point takes it away and the next tap puts that point
+back; the arrows of the one key row (`KeyRow`) move the point she set last one crossing (on a bar
+chart ← → choose a bar, ↑ ↓ pull it a step) and "Zurück" undoes the last step
+(`lib/practice/gridDraw.ts`). Without a finger — a screen reader, a keyboard — a point lands in the
+middle and is moved with the arrows. Never colour alone: points carry their names, the one the
+arrows move a ring, the mirror axis is dashed, the figure filled and her image only drawn, the
+chosen bar's name bold, and one line under the paper says in words what is drawn and which point
+comes next ("A(3|2) · B(−2|1) · als Nächstes C"), also to a screen reader after every step. A bar chart has no such line: its values stand in the question and on its scale, and the line
+was the 37 pt too many on 360×740; the paper says them to a screen reader. Its rows may shrink to 20 pt.
+
+**Its maxima are a measurement** (`GRID_*` in `contracts/grid.ts`, `tests/web/grid.spec.ts`, shots
+249a–249k at 360×740 and 390×844, light and dark, and with the keyboard up for her question): the
+paper is at most 8 units across and 6 up — up is the scarce direction, eight rows were 118 pt too
+tall on 360×740 under a three-line question and Buddy's reply —, a square between 22 and 44 pt
+(under the 44-pt rule, as the note line's staff positions are: the squares touch, the nearest
+crossing is taken, a miss costs one arrow tap); four points to plot (their coordinates stand in the
+question, which keeps to three lines); a graph on x from −4 to 4 and y from −3 to 3; a mirror
+figure and its image within 8 × 6 squares; two to six bars, the tallest five steps, a label of at
+most 8 characters under four columns and 6 under five or six. Generated in a topic's practice and
+practice test (generate.v1.33); not read from a sheet.
 
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
@@ -3299,11 +3360,16 @@ pictures (#252) add their figure to it rather than building a second one.
   The whole figure is the touch target; the places of a dense grid are no 44 pt each (a number
   line has ~15 pt between 21 places at 360 pt), the snap and her place in words carry the
   precision, as on a slider.
-- **In words, and for a screen reader:** under the figure, "Stelle: 2,5", "Punkt (2 | −1)",
-  "Säule: Apr" — on a clock where the hands stand ("der kleine Zeiger zwischen 7 und 8, der
-  große Zeiger auf der 9", `describeClock`), never the time they make, which is what she
-  practises reading. That line is one `adjustable` element: increment/decrement move along the
-  place (the chosen hand on a clock), "nach oben" / "nach unten" move the point's y.
+- **In words, and for a screen reader:** under the figure, "Säule: Apr" — on a clock where the
+  hands stand ("der kleine Zeiger zwischen 7 und 8, der große Zeiger auf der 9",
+  `describeClock`), never the time they make, which is what she practises reading. On a number
+  line and a coordinate system the line only says THAT she chose ("Stelle gewählt", "Punkt
+  gesetzt", issue #409): the exact value in plain sight would let her move the point until the
+  words match the question — comparing text instead of reading the figure. The value ("Stelle:
+  2,5", "Punkt (2 | −1)") is the screen reader's alone, in `aria-valuetext`; without it a blind
+  learner could not answer. After "Prüfen" her answer stands in the thread. That line is one
+  `adjustable` element: increment/decrement move along the place (the chosen hand on a clock),
+  "nach oben" / "nach unten" move the point's y.
 - **Adding a figure (#251, #252):** a shape and a `case` in `tapAxes` / `tapText` / `tapPick`
   (and what "already marks the key" means for it in `tapProblem`), a `case` in `tapLayout` built
   on the drawer's geometry, words in `placeWords`. Nothing on the server or the screen changes.

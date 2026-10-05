@@ -324,6 +324,14 @@
       "extra_one": "1 zu viel",
       "reply": "Noch nicht ganz: {{parts}}."
     },
+    "grid": {
+      "wrong_points": "Noch nicht ganz: {{list}} liegen noch nicht richtig.",
+      "wrong_points_one": "Noch nicht ganz: {{list}} liegt noch nicht richtig.",
+      "wrong_graph": "Noch nicht ganz: {{list}} liegen nicht auf dem Graphen.",
+      "wrong_graph_one": "Noch nicht ganz: {{list}} liegt nicht auf dem Graphen.",
+      "wrong_bars": "Noch nicht ganz: Die Säulen für {{list}} stimmen noch nicht.",
+      "wrong_bars_one": "Noch nicht ganz: Die Säule für {{list}} stimmt noch nicht."
+    },
     "solid": {
       "net_yes": "Ja, das ist ein Würfelnetz",
       "net_no": "Nein, das ist kein Würfelnetz"

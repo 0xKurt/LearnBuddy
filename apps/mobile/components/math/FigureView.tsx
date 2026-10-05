@@ -35,7 +35,7 @@ import {
   naturalFigureHeight,
   newFigureWidth,
 } from '../../lib/math/figureScale.js';
-import { plotGeometry, yLabelsClearOf, Y_LABEL_GAP } from '../../lib/math/plotLayout.js';
+import { functionPlotGeometry } from '../../lib/math/plotLayout.js';
 import { pointsOnGraph, prettyExpr, tracePath } from '../../lib/math/plotMath.js';
 import { speakMathText } from '../../lib/math/speak.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -45,6 +45,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { describeStaff } from '../../lib/music/words.js';
 import { ChartBody, describeChart } from './ChartFigures.js';
 import { MathText } from './MathText.js';
+import { PlotAxes } from './PlotAxes.js';
 import { StaffLine } from './StaffLine.js';
 import { FAMILY, FONT, formatNumber, HaloText, SMALL } from './figureText.js';
 import { describeMolecule, MoleculeView } from './MoleculeView.js';
@@ -354,48 +355,27 @@ const DASHES: ReadonlyArray<string | undefined> = [undefined, '8 5', '2 4'];
 
 function FunctionPlot({ fig, width, bare }: { fig: PlotFig; width: number; bare: boolean }) {
   const { palette, figure: ink } = useTheme();
-  const {
-    x0,
-    x1,
-    y0,
-    y1,
-    height: h,
-    X,
-    Y,
-    ...g
-  } = plotGeometry(fig, width, {
+  // The frame is the one the tap layer reads too (#248); the axes are `PlotAxes` (#249).
+  const g = functionPlotGeometry(fig, width, {
     bare,
     format: formatNumber,
     fontSize: SMALL,
   });
-  const { left, top, pw, ph, axisY, axisX, xStep, xTicks, yStep, yTicks } = g;
+  const { x0, x1, y0, y1, left, top, pw, ph, X, Y, height: h } = g;
 
   const graphs = useMemo(
     () =>
       fig.functions
         .map((f, i) => ({ ...f, i, fn: compileExpression(f.expr) }))
-        .filter((g) => g.fn !== null)
-        .map((g) => ({
-          ...g,
-          d: tracePath(g.fn as (x: number) => number, x0, x1, y0, y1, X, Y, pw),
+        .filter((fn) => fn.fn !== null)
+        .map((fn) => ({
+          ...fn,
+          d: tracePath(fn.fn as (x: number) => number, x0, x1, y0, y1, X, Y, pw),
         })),
     // X and Y only depend on the ranges and size listed here.
     [fig.functions, x0, x1, y0, y1, pw, ph],
   );
 
-  // Every tick label where it is drawn, so a y label that would sit on an x label can give
-  // way (issue #326: "−2" and "−2" on each other next to the origin of a small option graph).
-  const yLabelled = (v: number) => Math.abs(v) > yStep / 2 || axisX !== Y(0);
-  const xLabels = xTicks
-    .filter((v) => Math.abs(v) > xStep / 2 || axisY !== X(0))
-    .map((v) => ({ v, x: X(v), y: Math.min(axisX + 15, top + ph - 2), text: formatNumber(v) }));
-  const yLabels = yLabelsClearOf(
-    xLabels,
-    yTicks
-      .filter(yLabelled)
-      .map((v) => ({ v, x: axisY - Y_LABEL_GAP, y: Y(v) + 4, text: formatNumber(v) })),
-    SMALL,
-  );
   // One id per drawing: on the web `url(#…)` finds the FIRST element with that id in the
   // document, so with four option graphs and the viewer's large one on the same page a shared
   // id clipped the large curve to the first small graph's box — and it vanished (issue #231).
@@ -408,133 +388,16 @@ function FunctionPlot({ fig, width, bare }: { fig: PlotFig; width: number; bare:
             <Rect x={left} y={top} width={pw} height={ph} />
           </ClipPath>
         </Defs>
-        {xTicks.map((v) => (
-          <Line
-            key={`gx${v}`}
-            x1={X(v)}
-            y1={top}
-            x2={X(v)}
-            y2={top + ph}
-            stroke={ink.grid}
-            strokeWidth={1}
-          />
-        ))}
-        {yTicks.map((v) => (
-          <Line
-            key={`gy${v}`}
-            x1={left}
-            y1={Y(v)}
-            x2={left + pw}
-            y2={Y(v)}
-            stroke={ink.grid}
-            strokeWidth={1}
-          />
-        ))}
-        {/* axes with arrows */}
-        <Line
-          x1={left}
-          y1={axisX}
-          x2={left + pw + 6}
-          y2={axisX}
-          stroke={ink.axis}
-          strokeWidth={1.5}
-        />
-        <Path
-          d={`M ${left + pw} ${axisX - 4} L ${left + pw + 7} ${axisX} L ${left + pw} ${axisX + 4}`}
-          stroke={ink.axis}
-          strokeWidth={1.5}
-          fill="none"
-        />
-        <Line
-          x1={axisY}
-          y1={top + ph}
-          x2={axisY}
-          y2={top - 6}
-          stroke={ink.axis}
-          strokeWidth={1.5}
-        />
-        <Path
-          d={`M ${axisY - 4} ${top} L ${axisY} ${top - 7} L ${axisY + 4} ${top}`}
-          stroke={ink.axis}
-          strokeWidth={1.5}
-          fill="none"
-        />
-        <SvgText
-          fontFamily={FAMILY}
-          x={left + pw - 2}
-          y={axisX - 8}
-          fontSize={FONT}
-          fontStyle="italic"
-          fill={ink.label}
-          textAnchor="end"
-        >
-          x
-        </SvgText>
-        <SvgText
-          fontFamily={FAMILY}
-          x={axisY + 8}
-          y={top + 6}
-          fontSize={FONT}
-          fontStyle="italic"
-          fill={ink.label}
-        >
-          y
-        </SvgText>
-        {xLabels.map((l) => (
-          <G key={`tx${l.v}`}>
-            <Line
-              x1={l.x}
-              y1={axisX - 3}
-              x2={l.x}
-              y2={axisX + 3}
-              stroke={ink.axis}
-              strokeWidth={1}
-            />
-            <HaloText {...l} size={SMALL} weight="400" color={ink.label} anchor="middle" />
-          </G>
-        ))}
-        {yTicks.filter(yLabelled).map((v) => (
-          <Line
-            key={`ty${v}`}
-            x1={axisY - 3}
-            y1={Y(v)}
-            x2={axisY + 3}
-            y2={Y(v)}
-            stroke={ink.axis}
-            strokeWidth={1}
-          />
-        ))}
-        {yLabels.map((l) => (
-          <HaloText
-            key={`yl${l.v}`}
-            {...l}
-            size={SMALL}
-            weight="400"
-            color={ink.label}
-            anchor="end"
-          />
-        ))}
         {/* On a small option picture the origin's 0 would sit on the −2 below it (issue #231). */}
-        {!bare && x0 <= 0 && x1 >= 0 && y0 <= 0 && y1 >= 0 ? (
-          <SvgText
-            fontFamily={FAMILY}
-            x={axisY - 6}
-            y={axisX + 15}
-            fontSize={SMALL}
-            fill={ink.label}
-            textAnchor="end"
-          >
-            0
-          </SvgText>
-        ) : null}
+        <PlotAxes g={g} zero={!bare} />
         <G clipPath={`url(#${clipId})`}>
-          {graphs.map((g) => (
+          {graphs.map((fn) => (
             <Path
-              key={g.i}
-              d={g.d}
-              stroke={ink.series[g.i % ink.series.length]}
+              key={fn.i}
+              d={fn.d}
+              stroke={ink.series[fn.i % ink.series.length]}
               strokeWidth={2.5}
-              strokeDasharray={DASHES[g.i % DASHES.length]}
+              strokeDasharray={DASHES[fn.i % DASHES.length]}
               strokeLinecap="round"
               strokeLinejoin="round"
               fill="none"
@@ -567,22 +430,22 @@ function FunctionPlot({ fig, width, bare }: { fig: PlotFig; width: number; bare:
       </Svg>
       {graphs.length > 0 && !bare ? (
         <View style={{ gap: 4 }}>
-          {graphs.map((g) => (
-            <View key={g.i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {graphs.map((fn) => (
+            <View key={fn.i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Svg width={28} height={10}>
                 <Line
                   x1={2}
                   y1={5}
                   x2={26}
                   y2={5}
-                  stroke={ink.series[g.i % ink.series.length]}
+                  stroke={ink.series[fn.i % ink.series.length]}
                   strokeWidth={2.5}
-                  strokeDasharray={DASHES[g.i % DASHES.length]}
+                  strokeDasharray={DASHES[fn.i % DASHES.length]}
                   strokeLinecap="round"
                 />
               </Svg>
               <Text style={[TYPE.small, { color: palette.ink }]}>
-                {g.label ? `${g.label}: ` : ''}y = {prettyExpr(g.expr)}
+                {fn.label ? `${fn.label}: ` : ''}y = {prettyExpr(fn.expr)}
               </Text>
             </View>
           ))}

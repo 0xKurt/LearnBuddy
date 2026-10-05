@@ -20,6 +20,7 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { MAX_BAR_ITEMS } from './bars.js';
 import { CLOZE_RULES } from './cloze.js';
 import { DictationDraft, DictationDraftParsed } from './dictation.js';
+import { GRID_RULES } from './grid.js';
 import { unusedItemFields } from './itemFields.js';
 import { ItemDraft, itemsOneByOne } from './items.js';
 import { ListenDraft, ListenQuestion } from './listen.js';
@@ -154,6 +155,7 @@ const STRUCTURED_FORMS = [
   'mark',
   'find_error',
   'column_calc',
+  'grid_draw',
 ] as const satisfies StructuredKind[];
 
 /**
@@ -169,6 +171,7 @@ export const STRUCTURED_RULES = [
   MARK_RULES,
   FIND_ERROR_RULES,
   COLUMN_RULES,
+  GRID_RULES,
 ]
   .map((rule) => `- ${rule}`)
   .join('\n');

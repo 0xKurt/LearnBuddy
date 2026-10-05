@@ -2,7 +2,7 @@
 // (x, y) means, and where the chosen place is marked. The places themselves — the grid, the answer
 // a place stands for — are @learnbuddy/shared-math `tap.ts`, the same code the server checked the
 // key with; the positions come from the very geometry the drawers paint with
-// (`figureGeometry.ts`, `plotGeometry`). Pure, so a tap can be tested without a screen.
+// (`figureGeometry.ts`, `functionPlotGeometry`). Pure, so a tap can be tested without a screen.
 //
 // A tap never misses: it snaps to the nearest place (the nearest tick, grid point, column, or the
 // nearest of the twelve marks of the clock), so the whole figure is one big target and the
@@ -17,7 +17,7 @@ import {
   type TapPick,
 } from '../../../../packages/shared-math/src/tap.js';
 import { barChartGeometry, clockGeometry, numberLineGeometry, type Box } from './figureGeometry.js';
-import { plotGeometry } from './plotLayout.js';
+import { functionPlotGeometry } from './plotLayout.js';
 
 /** How the chosen place is shown: a dot on it, a frame around its column, or the clock's hands. */
 export type TapMark = { kind: 'dot'; x: number; y: number } | { kind: 'box'; box: Box } | null;
@@ -80,7 +80,7 @@ export function tapLayout(
       };
     }
     case 'function_plot': {
-      const g = plotGeometry(fig, width, { bare: false, format, fontSize });
+      const g = functionPlotGeometry(fig, width, { bare: false, format, fontSize });
       const ys = second?.values ?? [];
       const bottom = g.top + g.ph;
       const right = g.left + g.pw;

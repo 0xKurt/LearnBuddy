@@ -324,6 +324,14 @@
       "extra_one": "1 de más",
       "reply": "Todavía no del todo: {{parts}}."
     },
+    "grid": {
+      "wrong_points": "Todavía no del todo: {{list}} aún no están en su sitio.",
+      "wrong_points_one": "Todavía no del todo: {{list}} aún no está en su sitio.",
+      "wrong_graph": "Todavía no del todo: {{list}} no están en la gráfica.",
+      "wrong_graph_one": "Todavía no del todo: {{list}} no está en la gráfica.",
+      "wrong_bars": "Todavía no del todo: las barras de {{list}} aún no están bien.",
+      "wrong_bars_one": "Todavía no del todo: la barra de {{list}} aún no está bien."
+    },
     "solid": {
       "net_yes": "Sí, es un desarrollo del cubo",
       "net_no": "No, no es un desarrollo del cubo"

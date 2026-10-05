@@ -1,12 +1,12 @@
 // Where a tap lands on a figure (issue #248): a finger anywhere on the drawing snaps to the nearest
 // place, every place is reached by a tap on its own mark, and the marks stand where the drawers
-// paint — because both read the same geometry (`figureGeometry.ts`, `plotGeometry`).
+// paint — because both read the same geometry (`figureGeometry.ts`, `functionPlotGeometry`).
 
 import { describe, expect, it } from 'vitest';
 
 import { tapAxes, type Tappable } from '../../../../../packages/shared-math/src/tap.js';
 import { barChartGeometry, clockGeometry, numberLineGeometry } from '../figureGeometry.js';
-import { plotGeometry } from '../plotLayout.js';
+import { functionPlotGeometry } from '../plotLayout.js';
 import { tapLayout } from '../tapLayout.js';
 
 const format = (n: number) => String(n);
@@ -68,13 +68,13 @@ describe('the marks stand where the drawers paint', () => {
   });
 
   it('a grid point where the plot puts that value', () => {
-    const g = plotGeometry(plane, 328, { bare: false, format, fontSize: 12 });
+    const g = functionPlotGeometry(plane, 328, { bare: false, format, fontSize: 12 });
     // (2 | −1): x index 6 of −4…4, y index 3.
     expect(layoutOf(plane).markOf([6, 3])).toEqual({ kind: 'dot', x: g.X(2), y: g.Y(-1) });
   });
 
   it('every whole number of the plot has a line, also where its own grid skips one', () => {
-    const g = plotGeometry(plane, 328, { bare: false, format, fontSize: 12 });
+    const g = functionPlotGeometry(plane, 328, { bare: false, format, fontSize: 12 });
     const guides = layoutOf(plane).guides;
     const drawn = new Set([...g.xTicks.map(g.X), ...g.yTicks.map(g.Y)].map(Math.round));
     const xs = guides.filter((l) => l.x1 === l.x2).map((l) => Math.round(l.x1));
@@ -110,7 +110,7 @@ describe('a finger between places snaps to the nearest one', () => {
   });
 
   it('in the coordinate system, each axis on its own', () => {
-    const g = plotGeometry(plane, 328, { bare: false, format, fontSize: 12 });
+    const g = functionPlotGeometry(plane, 328, { bare: false, format, fontSize: 12 });
     const l = layoutOf(plane);
     expect(l.pickAt(g.X(1.8), g.Y(-1.3), null, 0)).toEqual([6, 3]);
   });

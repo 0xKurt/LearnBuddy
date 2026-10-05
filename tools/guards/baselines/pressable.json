@@ -7,7 +7,6 @@
     "apps/mobile/components/buddy/Header.tsx",
     "apps/mobile/components/buddy/SlimBar.tsx",
     "apps/mobile/components/practice/FractionBarAnswer.tsx",
-    "apps/mobile/components/practice/StaffAnswer.tsx",
     "apps/mobile/components/voice/MicButton.tsx",
     "apps/mobile/components/voice/TalkButton.tsx",
     "apps/mobile/components/voice/TalkOrb.tsx",

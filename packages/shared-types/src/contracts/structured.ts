@@ -10,6 +10,8 @@
 //   mark        — tap words, comma gaps or syllable breaks in a text (#234, migration 0087)
 //   find_error  — tap the wrong line of a worked solution and write it right (#260)
 //   column_calc — written arithmetic in columns, digit by digit, with its carries (#260)
+//   grid_draw   — draw on a grid: points, a graph, a mirror image, bars (#249, `grid.ts`,
+//                 migration 0095)
 //
 // Three shapes per kind, and the difference between them is the whole design:
 //
@@ -32,6 +34,8 @@
 
 import { z } from 'zod';
 
+import { GridDrawAnswer, GridDrawTask, GridDrawTaskView } from './grid.js';
+
 /** The item kinds whose answer is structured. Each has a task, a view and an answer shape. */
 export const STRUCTURED_KINDS = [
   'order',
@@ -42,6 +46,7 @@ export const STRUCTURED_KINDS = [
   'mark',
   'find_error',
   'column_calc',
+  'grid_draw',
 ] as const;
 export const StructuredKind = z.enum(STRUCTURED_KINDS);
 export type StructuredKind = z.infer<typeof StructuredKind>;
@@ -860,6 +865,7 @@ export const StructuredTask = z.discriminatedUnion('type', [
   MarkTask,
   FindErrorTask,
   ColumnCalcTask,
+  GridDrawTask,
 ]);
 export type StructuredTask = z.infer<typeof StructuredTask>;
 
@@ -873,6 +879,7 @@ export const StructuredTaskView = z.discriminatedUnion('type', [
   MarkTaskView,
   FindErrorTaskView,
   ColumnCalcTaskView,
+  GridDrawTaskView,
 ]);
 export type StructuredTaskView = z.infer<typeof StructuredTaskView>;
 
@@ -886,5 +893,6 @@ export const StructuredAnswer = z.discriminatedUnion('type', [
   MarkAnswer,
   FindErrorAnswer,
   ColumnCalcAnswer,
+  GridDrawAnswer,
 ]);
 export type StructuredAnswer = z.infer<typeof StructuredAnswer>;
