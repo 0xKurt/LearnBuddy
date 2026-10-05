@@ -20,6 +20,8 @@
 // Since #418: the base may also be a house or an L (`baseProblem`), "which solid?" is asked of
 // every net with four options code picks (`kindOptions`), and each measure says the line it
 // measures and the face it belongs in, so the app places it clear of every line (`placeLabels`).
+// Since #424 a height says it is one: with no room inside its solid it stands at a dimension line
+// outside it, never beside a slant it would read as.
 //
 // Dependency-free on purpose: the app imports this file by path (like `trees.ts`), so what the
 // server checked is exactly what the app draws.
@@ -403,6 +405,8 @@ export type SolidLabel = {
   v: number;
   on?: readonly [SolidXY, SolidXY];
   in?: readonly SolidXY[];
+  /** A height: with no room inside `in`, it stands at a dimension line outside (#424). */
+  height?: true;
 };
 /** `faces`: the filled faces of a net (`solidNets.ts`); a Schrägbild has none. */
 export type SolidDrawing = {
@@ -597,6 +601,7 @@ export function solidDrawing(s: Solid): SolidDrawing {
           v: h,
           on: heightLine(h),
           in: [v[0]!, v[1]!, v[n]!].map(projectSolid),
+          height: true,
         });
       }
       return { strokes, labels, dots: s.k === 'pyramid' ? [projectSolid([0, 0, 0])] : [] };
@@ -644,6 +649,7 @@ export function solidDrawing(s: Solid): SolidDrawing {
           v: h,
           on: heightLine(h),
           in: [apex, base(t1), base(t2)],
+          height: true,
         },
       ];
       return { strokes, labels, dots: [projectSolid([0, 0, 0])] };
@@ -762,7 +768,15 @@ function lyingPrism(g: readonly BasePoint[], len: number): SolidDrawing {
     const foot = front({ x: height.apex.x, y: 0 });
     const line: [SolidXY, SolidXY] = [front(height.apex), foot];
     strokes.push({ pts: line, hidden: true });
-    labels.push({ at: mid(...line), dx: 1, dy: 0, v: height.v, on: line, in: g.map(front) });
+    labels.push({
+      at: mid(...line),
+      dx: 1,
+      dy: 0,
+      v: height.v,
+      on: line,
+      in: g.map(front),
+      height: true,
+    });
   }
   // The length: on the depth edge from the right corner of the base line.
   const right = g.reduce((best, p) => (p.y === 0 && p.x > best.x ? p : best), { x: -1, y: 0 });

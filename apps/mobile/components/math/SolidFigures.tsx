@@ -69,7 +69,7 @@ function SolidView({ fig, width }: { fig: SolidFig; width: number }) {
   // A count is read off the edges alone; the measures would only be in the way.
   const labels = countAsked(fig.ask) ? [] : drawing.labels;
   const text = (v: number) => `${formatNumber(v)} ${fig.u}`;
-  const { at, height, spots } = solidLayout(drawing, labels, text, width, LABEL_SIZE);
+  const { at, height, spots, dimensions } = solidLayout(drawing, labels, text, width, LABEL_SIZE);
   const strokes = [...drawing.strokes].sort((a, b) => Number(b.hidden) - Number(a.hidden));
   return (
     <Svg width={width} height={height}>
@@ -92,6 +92,24 @@ function SolidView({ fig, width }: { fig: SolidFig; width: number }) {
         const q = at(p);
         return <Circle key={`d${i}`} cx={q.x} cy={q.y} r={2.5} fill={ink.stroke} />;
       })}
+      {dimensions.flatMap((d, i) =>
+        d === null
+          ? []
+          : [
+              ...d.lines.map((line, j) => (
+                <Path
+                  key={`m${i}-${j}`}
+                  d={pathOf(line)}
+                  stroke={ink.axis}
+                  strokeWidth={1.2}
+                  fill="none"
+                />
+              )),
+              ...d.arrows.map(([from, tip], j) => (
+                <Path key={`a${i}-${j}`} d={arrowHead(from, tip, 6)} fill={ink.axis} />
+              )),
+            ],
+      )}
       {labels.map((l, i) => (
         <HaloText
           key={`l${i}`}

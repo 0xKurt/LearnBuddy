@@ -3328,7 +3328,11 @@ computes the key.** No migration: the figure is an item's `figure` (jsonb), like
   a net (the diagrams check their arrow labels with the same boxes, `textWidth`, `crosses`): the
   drawing says on which side a measure would rather stand, the line it measures (`on`, along which
   it may move) and the face it belongs inside (`in`, a height inside its solid); the nearest clear
-  place wins, a side whose face runs into the depth is written inside the base. The app's
+  place wins, a side whose face runs into the depth is written inside the base. A height
+  (`height`) with no clear place inside its solid stands at a dimension line (Maßlinie, #424)
+  outside it — two extension lines from its ends, a double arrow, the number beside it, on the
+  side that needs the shorter extension lines, placed by the same `placeLabels` — never beside a
+  slant, where a cone's "8 cm" read as the slant's length. The app's
   `lib/math/solidLayout.ts` scales the drawing to its width — a Schrägbild at most 0.72 of it high,
   a net 0.85 (the cylinder's net stood a third of the card wide at a fixed 160 pt) — so a drawing
   the card shrinks gets lower too; `lib/math/__tests__/solidLayout.test.ts` holds every

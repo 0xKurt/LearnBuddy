@@ -5,6 +5,7 @@
 import {
   placeLabels,
   textWidth,
+  type Dimension,
   type Rect,
 } from '../../../../packages/shared-math/src/labelBoxes.js';
 import {
@@ -22,6 +23,8 @@ export type SolidLayout = {
   height: number;
   /** Each label's place, in the order of `labels`. */
   spots: SolidLabelSpot[];
+  /** Each label's dimension line, when it stands at one (a slim solid's height, #424). */
+  dimensions: (Dimension | null)[];
 };
 
 /**
@@ -45,7 +48,8 @@ function union(points: readonly SolidXY[], boxes: readonly Rect[]) {
 }
 
 /**
- * The drawing and every one of `labels` (written as `text` gives it, at `size` px), each label
+ * The drawing and every one of `labels` — a slim solid's height at a dimension line outside it
+ * where it has no room inside (#424) — (written as `text` gives it, at `size` px), each label
  * clear of every line and of each other (`placeLabels`), scaled as large as they fit together
  * into `width` and the height that follows from it. Labels take only the room they use: a side
  * no label stands on gives the drawing its width.
@@ -67,7 +71,7 @@ export function solidLayout(
       x: (p.x - box.x0) * scale,
       y: (p.y - box.y0) * scale,
     });
-    const boxes = placeLabels(
+    const placed = placeLabels(
       labels.map((l) => ({
         at: at(l.at),
         dx: l.dx,
@@ -76,14 +80,19 @@ export function solidLayout(
         h: 0.8 * size,
         along: l.on ? ([at(l.on[0]), at(l.on[1])] as const) : undefined,
         within: l.in?.map(at),
+        dimension: l.height,
       })),
       drawing.strokes.map((st) => st.pts.map(at)),
     );
+    const dimensions = placed.map((p) => p.dimension);
     const all = union(
-      drawing.strokes.flatMap((st) => st.pts.map(at)),
-      boxes,
+      [
+        ...drawing.strokes.flatMap((st) => st.pts.map(at)),
+        ...dimensions.flatMap((d) => d?.lines.flat() ?? []),
+      ],
+      placed.map((p) => p.box),
     );
-    return { at, boxes, all };
+    return { at, placed, dimensions, all };
   };
   let scale = Math.min(room.w / bw, room.h / bh);
   let laid = lay(scale);
@@ -97,17 +106,23 @@ export function solidLayout(
     scale *= fit * 0.98;
     laid = lay(scale);
   }
-  const { at, boxes, all } = laid;
+  const { at, placed, dimensions, all } = laid;
   // Centred across, from the top: the drawing and its labels together.
   const dx = (width - (all.x1 - all.x0)) / 2 - all.x0;
   const dy = PAD - all.y0;
+  const shift = (q: SolidXY): SolidXY => ({ x: q.x + dx, y: q.y + dy });
   return {
-    at: (p) => {
-      const q = at(p);
-      return { x: q.x + dx, y: q.y + dy };
-    },
+    at: (p) => shift(at(p)),
     height: all.y1 - all.y0 + 2 * PAD,
     // The text's baseline: its box runs from the cap height (0.75 em above) to just below it.
-    spots: boxes.map((b) => ({ x: b.x + b.w / 2 + dx, y: b.y + dy + 0.75 * size })),
+    spots: placed.map(({ box: b }) => ({ x: b.x + b.w / 2 + dx, y: b.y + dy + 0.75 * size })),
+    dimensions: dimensions.map((d) =>
+      d === null
+        ? null
+        : {
+            lines: d.lines.map((line) => line.map(shift)),
+            arrows: d.arrows.map(([from, tip]) => [shift(from), shift(tip)] as [SolidXY, SolidXY]),
+          },
+    ),
   };
 }
