@@ -1812,6 +1812,13 @@ its own route, so nothing she asks is ever misread as an answer:
   moved under a rewrapped reply kept a stale top, which left an orb's sliver under the card at 390.
   Guarded in `fit.ts` (`halfTurns`) at every practice stop, at 390, 360 and 360×440 with the
   keyboard: nothing in the conversation is partly visible between the card's edge and the fade.
+  **Every control is whole where it is drawn** (#419): `cutControls` in `fit.ts` checks each
+  button, chip and field of the practice screen against every box that clips it and the window
+  (the answer's own board excepted: it scrolls inside itself). Found with it: a circuit or logic
+  net laid out at the width FigureView had already shrunk did not fit and vanished, so the card's
+  room went wrong and the "Tipp" row stood cut — switching figures are now drawn at FigureView's
+  `scale` (`FittedSvg`, like trees), and `MAX_ZOOM` is back at 1.5. While she types, the card's
+  padding steps down to SPACE.md, and a board's keys fold with the board while she asks.
 
 **Eine Übung darf anfangen, bevor alle ihre Fragen geschrieben sind** (Issue #220, Migration
 0073). Gemessen 02.10.: „üben wir Brüche" kostete 6,45 s am Endpoint, davon 6,42 s der

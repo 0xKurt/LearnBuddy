@@ -63,14 +63,18 @@ export function SchoolFigureBody({
 }: {
   figure: SchoolFigure;
   width: number;
-  /** How far FigureView shrinks the drawing; only a tree needs it, the rest follow the width. */
+  /**
+   * How far FigureView shrinks the drawing. A tree, a circuit and a logic net need it (their height
+   * does not follow their width, #419); the rest follow the width.
+   */
   scale: number;
 }) {
   if (isPrimary(figure)) return <PrimaryBody figure={figure} width={width} />;
   if (isTreeFigure(figure)) return <TreeBody figure={figure} width={width} scale={scale} />;
   if (isPeriodicTable(figure)) return <PeriodicBody figure={figure} width={width} />;
   if (isDiagram(figure)) return <DiagramBody figure={figure} width={width} />;
-  if (isCircuit(figure) || isLogic(figure)) return <SwitchingBody figure={figure} width={width} />;
+  if (isCircuit(figure) || isLogic(figure))
+    return <SwitchingBody figure={figure} width={width} scale={scale} />;
   if (isColorWheel(figure)) return <ColorWheelBody figure={figure} width={width} />;
   return <SpaceBody figure={figure} width={width} />;
 }
