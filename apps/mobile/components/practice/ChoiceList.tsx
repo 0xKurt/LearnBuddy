@@ -10,6 +10,11 @@
 // she ticks and unticks — a square box in the letter's column instead of the letter, the tile
 // tinted while ticked (the box's check mark says it too, never colour alone). Up to six short
 // options stand two by two; "Prüfen" sends the set.
+// The lines of a worked solution whose wrong line she taps (Fehlerdetektiv, issue #260,
+// `FindErrorAnswer`): the same tiles, one under the other, each with its line's number in the
+// letter's column; the one she picks stays picked (a radio, the tile tinted) while she writes it
+// right below. The task itself stands above them, numbered the same, but no tile: it is not one to
+// pick.
 // In voice mode `SpokenChoice` puts the mic in the answer shell's voice slot, pinned at the
 // bottom where "Prüfen" stands for every other form (`CheckBar`, issue #310): what she says is
 // sent as a text answer (the server matches it to a choice by its text).
@@ -95,11 +100,31 @@ type Props = {
    * every option is a checkbox and a tap ticks or unticks it; unset, a tap answers.
    */
   ticked?: ReadonlySet<number>;
+  /**
+   * One option picked and kept picked (a line to correct, issue #260): every option is a radio,
+   * the picked one tinted, and they stand one under the other. Unset, a tap answers.
+   */
+  picked?: number | null;
+  /**
+   * What stands in the letter's column instead of A, B, C (a line's number, #260), and how a
+   * screen reader names it ("Zeile 2").
+   */
+  marks?: ReadonlyArray<{ mark: string; label: string }>;
+  /** A line above the options, numbered like them but not one to tap (the task, #260). */
+  lead?: { mark: string; text: string; label: string } | null;
   disabled: boolean;
   onChoose: (index: number, choice: string) => void;
 };
 
-export function ChoiceList({ choices, figures, tried, ticked, disabled, onChoose }: Props) {
+export function ChoiceList({
+  choices,
+  figures,
+  tried,
+  ticked,
+  disabled,
+  onChoose,
+  ...line
+}: Props) {
   if (figures && figures.length === choices.length && choices.length > 0) {
     return (
       <FigureChoices
@@ -116,13 +141,23 @@ export function ChoiceList({ choices, figures, tried, ticked, disabled, onChoose
       choices={choices}
       tried={tried}
       {...(ticked ? { ticked } : {})}
+      {...line}
       disabled={disabled}
       onChoose={onChoose}
     />
   );
 }
 
-function TextChoices({ choices, tried, ticked, disabled, onChoose }: Props) {
+function TextChoices({
+  choices,
+  tried,
+  ticked,
+  picked,
+  marks,
+  lead = null,
+  disabled,
+  onChoose,
+}: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const words = useSpokenWords();
@@ -130,17 +165,35 @@ function TextChoices({ choices, tried, ticked, disabled, onChoose }: Props) {
   // them fits one line of half a screen, so the tiles of the grid are equally tall (issue #288).
   // What fits is arithmetic, not a feeling (see "what fits half a line" below). Options to tick
   // may be six: three rows of short ones (contracts/structured.ts, SELECT_MAX).
-  const grid = twoColumnChoices(choices, ticked ? SELECT_MAX : CHOICE_GRID_MAX);
+  // Lines to pick from are read top to bottom: never two by two, never set large and centred.
+  const lines = picked !== undefined;
+  const grid = !lines && twoColumnChoices(choices, ticked ? SELECT_MAX : CHOICE_GRID_MAX);
   return (
     <View
       style={grid ? { flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP } : { gap: CARD_GAP }}
     >
+      {lead ? (
+        <View
+          testID="choice-lead"
+          accessible
+          accessibilityLabel={`${lead.label}: ${speakMathText(lead.text, words)}`}
+          style={{ flexDirection: 'row', gap: LETTER_GAP, paddingHorizontal: BTN_PAD_COMPACT }}
+        >
+          <LetterMark letter={lead.mark} tried={false} />
+          <MathText
+            text={lead.text}
+            accessible={false}
+            style={{ color: palette.ink, fontSize: CHOICE_FONT, lineHeight: CHOICE_LINE }}
+          />
+        </View>
+      ) : null}
       {choices.map((choice, index) => {
         const wasTried = tried.has(choice);
-        const on = ticked?.has(index) ?? false;
+        const on = (ticked?.has(index) ?? false) || picked === index;
         // A fraction or a term on its own is the thing to look at: set large and centred, at
         // least as large as the question's own line (issue #288, finding 4).
-        const big = mathOnly(choice);
+        const big = !lines && mathOnly(choice);
+        const mark = marks?.[index];
         return (
           <AnswerTile
             key={`${index}:${choice}`}
@@ -159,6 +212,7 @@ function TextChoices({ choices, tried, ticked, disabled, onChoose }: Props) {
               disabled={disabled || wasTried}
               onPress={() => onChoose(index, choice)}
               {...(ticked ? { checked: on } : {})}
+              {...(lines ? { selected: on } : {})}
               accessibilityHint={wasTried ? t('choice_tried') : undefined}
               // Math in a choice is set properly; a screen reader hears it in words.
               label={
@@ -172,7 +226,7 @@ function TextChoices({ choices, tried, ticked, disabled, onChoose }: Props) {
                   {ticked ? (
                     <TickBox on={on} />
                   ) : (
-                    <LetterMark letter={letterFor(index)} tried={wasTried} />
+                    <LetterMark letter={mark?.mark ?? letterFor(index)} tried={wasTried} />
                   )}
                   <View style={{ flex: 1, gap: 2, alignItems: big ? 'center' : 'flex-start' }}>
                     <MathText
@@ -197,7 +251,9 @@ function TextChoices({ choices, tried, ticked, disabled, onChoose }: Props) {
                 </View>
               }
             >
-              {speakMathText(choice, words)}
+              {mark
+                ? `${mark.label}: ${speakMathText(choice, words)}`
+                : speakMathText(choice, words)}
             </Btn>
           </AnswerTile>
         );

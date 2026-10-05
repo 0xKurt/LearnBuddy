@@ -19,6 +19,8 @@ import {
 import { ORDER_RULES, StructuredDraft, StructuredDraftHomework } from '../practice/structured.js';
 import { MATCH_RULES } from '../practice/match.js';
 import { MARK_RULES } from '../practice/mark.js';
+import { COLUMN_RULES } from '../practice/columnCalc.js';
+import { FIND_ERROR_RULES } from '../practice/findError.js';
 import { SELECT_RULES } from '../practice/selectAll.js';
 import { CLOZE_RULES } from '../practice/cloze.js';
 import {
@@ -46,7 +48,9 @@ import { TABLE_RULES } from '../practice/table.js';
 //        page number and the readings no longer say their bounds twice (#282 D5).
 // v8.12: a task to mark a place on a number line, a point, a column or to set a clock is answered
 //        by tapping the figure (`tap`, #248).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.12';
+// v8.13: a worked solution to check for its mistake becomes one find_error task (the solution
+//        written correct), a calculation to do in columns one column_calc task (#260).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.13';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -368,6 +372,8 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${CLOZE_RULES} A text on the sheet with several gaps to fill becomes one such task in "structured" (its word box, if printed, as word_bank), never one question per gap in items.
    - ${SELECT_RULES} A question on the sheet that asks to tick all right answers becomes one such task in "structured", never a multiple_choice item.
    - ${MARK_RULES} A task on the sheet that asks to underline or mark words, to set the missing commas or to split words into syllables becomes one such task in "structured", never questions in items.
+   - ${FIND_ERROR_RULES} A worked solution on the sheet in which the mistake is to be found becomes one such task in "structured", its lines written CORRECT.
+   - ${COLUMN_RULES} A calculation on the sheet that is to be done in columns ("schriftlich") becomes one such task in "structured", never a numeric item.
    - ${READING_RULES} A text on the sheet with questions about it, or a text to read and understand, becomes one entry in "reading": its lines exactly as printed and its questions — never the same questions again in items.
    - Otherwise 8–15 questions — and none at all for a sheet whose every task went into not_practicable. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
@@ -403,6 +409,7 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
    - ${CLOZE_RULES} A text with several gaps to fill goes into "structured" instead of items (its word box, if printed, as word_bank).
    - ${SELECT_RULES} A task that asks to tick all right answers goes into "structured" instead of items (its prompt as printed).
    - ${MARK_RULES} A task that asks to mark words, set commas or split syllables goes into "structured" instead of items (its prompt as printed).
+   - ${COLUMN_RULES} A calculation to be done in columns ("schriftlich") goes into "structured" instead of items (its prompt as printed).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}

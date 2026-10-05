@@ -378,7 +378,31 @@
       "closing": "Esa fue tu última versión por esta vez. Llévate estos puntos a tu próximo texto.",
       "unavailable": "Ahora no puedo leer tu texto. No se ha perdido: envíalo de nuevo en un momento."
     },
-    "ask_unavailable": "Ahora mismo no puedo responder a tu pregunta. Vuelve a intentarlo en un momento."
+    "ask_unavailable": "Ahora mismo no puedo responder a tu pregunta. Vuelve a intentarlo en un momento.",
+    "find_error": {
+      "later": "Hasta esta línea todo está bien – el error viene más abajo.",
+      "earlier": "El error está más arriba.",
+      "fix_different": "¡Has encontrado la línea! Pero tu corrección todavía no se sigue de la línea anterior.",
+      "fix_unreadable": "¡Has encontrado la línea! No puedo leer tu corrección como un cálculo – escríbela como las otras líneas.",
+      "fix_repeat": "¡Has encontrado la línea! Ahora escríbela como debe ser – no otra vez la línea anterior."
+    },
+    "column": {
+      "carry_missing": "Casi – {{at}} todavía falta la llevada.",
+      "carry_wrong": "Casi – {{at}} la llevada todavía no está bien.",
+      "digit_missing": "Casi – {{at}} todavía falta una cifra del resultado.",
+      "digit_wrong": "Casi – {{at}} la cifra del resultado todavía no está bien.",
+      "partial": "Casi – en la fila {{step}}, algo {{at}} todavía no está bien.",
+      "quotient": "Casi – la cifra n.º {{n}} del resultado todavía no está bien.",
+      "product": "Casi – en el paso {{step}}, la multiplicación todavía no está bien.",
+      "difference": "Casi – en el paso {{step}}, el número bajo la raya todavía no está bien.",
+      "place_0": "en las unidades",
+      "place_1": "en las decenas",
+      "place_2": "en las centenas",
+      "place_3": "en las unidades de millar",
+      "place_4": "en las decenas de millar",
+      "place_5": "en las centenas de millar",
+      "place_6": "en los millones"
+    }
   },
   "contact": {
     "less_often": "Entendido: a partir de ahora solo te escribiré al móvil cuando sea realmente importante. Todo lo demás te espera aquí. Puedes cambiarlo en los ajustes."

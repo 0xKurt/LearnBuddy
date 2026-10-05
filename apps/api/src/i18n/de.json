@@ -378,7 +378,31 @@
       "closing": "Das war deine letzte Fassung für diesmal. Nimm die Punkte mit in den nächsten Text.",
       "unavailable": "Ich kann deinen Text gerade nicht lesen. Er ist nicht verloren – schick ihn gleich noch einmal."
     },
-    "ask_unavailable": "Deine Frage kann ich gerade nicht beantworten. Versuch es gleich noch einmal."
+    "ask_unavailable": "Deine Frage kann ich gerade nicht beantworten. Versuch es gleich noch einmal.",
+    "find_error": {
+      "later": "Bis zu dieser Zeile stimmt alles – der Fehler kommt erst weiter unten.",
+      "earlier": "Der Fehler steckt schon weiter oben.",
+      "fix_different": "Die Zeile hast du gefunden! Deine Verbesserung passt aber noch nicht zur Zeile davor.",
+      "fix_unreadable": "Die Zeile hast du gefunden! Deine Verbesserung kann ich so nicht als Rechnung lesen – schreib sie wie die anderen Zeilen.",
+      "fix_repeat": "Die Zeile hast du gefunden! Schreib sie jetzt so, wie sie richtig heißt – nicht die Zeile davor noch einmal."
+    },
+    "column": {
+      "carry_missing": "Noch nicht ganz – {{at}} fehlt noch der Übertrag.",
+      "carry_wrong": "Noch nicht ganz – {{at}} stimmt der Übertrag noch nicht.",
+      "digit_missing": "Noch nicht ganz – {{at}} fehlt im Ergebnis noch eine Ziffer.",
+      "digit_wrong": "Noch nicht ganz – {{at}} stimmt die Ziffer im Ergebnis noch nicht.",
+      "partial": "Noch nicht ganz – in der {{step}}. Zeile stimmt {{at}} noch etwas nicht.",
+      "quotient": "Noch nicht ganz – die {{n}}. Ziffer des Ergebnisses stimmt noch nicht.",
+      "product": "Noch nicht ganz – im {{step}}. Schritt stimmt das Malnehmen noch nicht.",
+      "difference": "Noch nicht ganz – im {{step}}. Schritt stimmt die Zahl unter dem Strich noch nicht.",
+      "place_0": "bei den Einern",
+      "place_1": "bei den Zehnern",
+      "place_2": "bei den Hundertern",
+      "place_3": "bei den Tausendern",
+      "place_4": "bei den Zehntausendern",
+      "place_5": "bei den Hunderttausendern",
+      "place_6": "bei den Millionen"
+    }
   },
   "contact": {
     "less_often": "Alles klar – aufs Handy schreibe ich dir ab jetzt nur noch, wenn's wirklich wichtig ist. Alles andere findest du hier. Ändern kannst du das in den Einstellungen."

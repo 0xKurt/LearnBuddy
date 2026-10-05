@@ -365,6 +365,10 @@ export const ItemKind = z.enum([
   'select_all',
   /** Tap words, comma gaps or syllable breaks in a sentence or text (#234). */
   'mark',
+  /** Fehlerdetektiv: tap the wrong line of a worked solution and write it right (#260). */
+  'find_error',
+  /** Written arithmetic in columns, digit by digit, with its carries (#260). */
+  'column_calc',
   /**
    * A long text — Aufsatz, Erörterung, Interpretation (issue #258, contracts/essay.ts): up to
    * `ESSAY_TEXT_MAX` characters, feedback per key point of its text type and three places to

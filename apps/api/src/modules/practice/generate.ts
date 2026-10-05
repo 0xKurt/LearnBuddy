@@ -78,7 +78,9 @@ import { structuredItems, type StructuredItem } from './structured.js';
 //        `ModelFigure`; every other kind is sent the same bytes).
 // v1.31: a question answered by tapping a place in its figure — a number line, a point, a column,
 //        a clock face to set (`tap`, #248).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.31';
+// v1.32: find_error (a worked solution with one wrong line, the error built in by code) and
+//        column_calc (written arithmetic in columns, every digit and carry computed by code) (#260).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.32';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

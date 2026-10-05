@@ -27,7 +27,7 @@
 // walkthrough (`tests/web/fit.ts`, `answerPlace`) measures at every stop that the answer stands
 // directly above its action or the bottom edge, the free room above it, and "Prüfen" lowest.
 
-import { useContext, type ReactNode } from 'react';
+import { useContext, useEffect, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { answerFolds } from '../../lib/keyboard.js';
@@ -61,9 +61,22 @@ type Props = {
 // drawing folds (`answerFolds`, issue #402): a row cut at the slot's edge read as broken (rule
 // 17). Not drawn, still mounted — back unchanged when the keyboard goes. The question card above
 // stays; a typed answer or a board's own field is not her question.
+// A board above a typed answer's bar (the Fehlerdetektiv's lines, issue #260) folds the same way
+// while she types in that bar: she has picked her line, the bar holds it, and with the keyboard up
+// on a small phone the lines would push the bar under the keyboard. Reported through the same
+// route, so the screen's room (`screenRoom`, `boardGives`) knows the board holds nothing then.
 export function AnswerShell({ answer = null, keys = null, action, keeps = 0 }: Props) {
   const seen = useVisibleHeight();
-  const folded = answerFolds(useContext(AskRoute).focused, seen.window, seen.overlap);
+  const ask = useContext(AskRoute);
+  const typedUnderBoard = answer !== null && 'input' in action && action.input !== undefined;
+  const typing = typedUnderBoard && action.typing === true;
+  const { onFocused } = ask;
+  useEffect(() => {
+    if (!typedUnderBoard) return;
+    onFocused(typing);
+    return () => onFocused(false);
+  }, [typedUnderBoard, typing, onFocused]);
+  const folded = answerFolds(ask.focused, seen.window, seen.overlap);
   return (
     <>
       <FreeSpace />

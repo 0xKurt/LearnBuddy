@@ -329,5 +329,29 @@
   },
   "tap": {
     "check_waits": "Solo cuando hayas tocado la figura."
+  },
+  "find_error": {
+    "waits": "Primero toca la línea equivocada.",
+    "fix": "Escribe la línea bien …",
+    "line": "Línea {{n}}",
+    "task": "Ejercicio"
+  },
+  "column": {
+    "check_waits": "Cuando hayas escrito una cifra.",
+    "carry": "Llevada, {{place}}",
+    "result": "Resultado, {{place}}",
+    "partial": "Fila {{step}}, {{place}}",
+    "quotient": "Resultado, cifra {{n}}",
+    "product": "Paso {{step}}, multiplicar, {{place}}",
+    "difference": "Paso {{step}}, resto, {{place}}",
+    "places": [
+      "unidades",
+      "decenas",
+      "centenas",
+      "unidades de millar",
+      "decenas de millar",
+      "centenas de millar",
+      "millones"
+    ]
   }
 }

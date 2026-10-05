@@ -159,6 +159,23 @@ const STRUCTURED: Record<string, Record<string, unknown>> = {
     difficulty: 1,
     prompt_lang: 'de',
   },
+  find_error: {
+    type: 'find_error',
+    prompt: 'Finde die falsche Zeile und verbessere sie.',
+    lines: ['3(x+2) = 21', '3x + 6 = 21', '3x = 15', 'x = 5'],
+    topic: 'Brüche addieren',
+    difficulty: 3,
+    prompt_lang: 'de',
+  },
+  column_calc: {
+    type: 'column_calc',
+    prompt: 'Rechne schriftlich.',
+    op: 'add',
+    operands: ['4721', '1389'],
+    topic: 'Brüche addieren',
+    difficulty: 2,
+    prompt_lang: 'de',
+  },
 };
 const DICTATION = { from: 'list', lang: 'de', topic: 'Lernwörter', entries: ['Biene', 'Straße'] };
 const LISTEN = {
