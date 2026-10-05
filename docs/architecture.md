@@ -3468,7 +3468,7 @@ markierte Bundesland?") or to tap one ("Tippe auf Bayern", the tap mechanism abo
 
 - **Contract** (`packages/shared-types/src/contracts/map.ts`, in `ModelFigure`): `{ type: 'map',
 v: 'de' | 'europe' | 'world', hl: string[] }` — which map, and the marked regions by name. Never
-  a coordinate, never a shape. Prompts: generate.v1.40, extract.v8.20 (`FIGURE_RULES`).
+  a coordinate, never a shape. Prompts: generate.v1.40 / extract.v8.20, together with #418 generate.v1.45 / extract.v8.23 (`FIGURE_RULES`).
 - **Data** (Natural Earth 5.1.2, public domain — decision in #224): `packages/shared-math/scripts/
 maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a school map's frame,
   the land around it as untappable context) and admin-0 1:110m (the continents; Russia split at
