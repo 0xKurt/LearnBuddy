@@ -7,6 +7,7 @@ import { DrillSpec, TEST_MINUTES, TestMinutes } from '@learnbuddy/shared-types/c
 
 import { titleOf } from '../practice/drill.js';
 import { fromLearnerText } from '../practice/generate.js';
+import { practiceGoesWell } from '../practice/readiness.js';
 import { type ActionOf } from './decision.js';
 import { loadStandingOffers } from './state.js';
 import { holdsWordPairs, normalizeForMatch } from './text.js';
@@ -65,6 +66,23 @@ export async function runOfferLearning(
     throw new ToolRejection(
       `a help offer works on the task the learner wrote, so "text" must be their own words from this message — "${a.text}" names it instead, and hints cannot be made from a name. Without the task in the message, ask her to type or photograph it (no offer).`,
     );
+  }
+  // A Probetest only once practice on it goes well (issue #388, report §3.5: Pan & Rickard) —
+  // decided by code from her practice runs, never by the model. Her own wish is the other door:
+  // her words asking for it, checked like the clock's below. Asked or not, the button is the
+  // same; what is refused is a test that is only Buddy's idea and would come too early.
+  if (a.asked && a.kind !== 'test') {
+    throw new ToolRejection('"asked" only goes with a practice test (kind "test") — leave it null');
+  }
+  if (a.kind === 'test') {
+    if (a.asked) requireQuote(ctx, a.asked);
+    else if (
+      !(await practiceGoesWell(ctx.db, ctx.learnerId, { goalId: goal?.id ?? null, text: a.text }))
+    ) {
+      throw new ToolRejection(
+        'a practice test is offered only once her practice on it is going well, and it is not yet (or she has hardly practised it). Unless she asked for a test herself (then put her words in "asked"), offer practice on it instead (kind "practice") and say a test makes sense once that sits.',
+      );
+    }
   }
   // One answer, one thing to tap. `prepare_practice` earlier in this same decision already made
   // the card she asked for; an offer beside it is a second button for the same wish — at best

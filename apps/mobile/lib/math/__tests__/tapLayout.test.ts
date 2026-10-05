@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { MAP_SHAPES } from '../../../../../packages/shared-math/src/mapShapes.data.js';
+import { SCHEMATIC_SHAPES } from '../../../../../packages/shared-math/src/schematicShapes.data.js';
 import { mapRegion } from '../../../../../packages/shared-math/src/maps.js';
 import { tapAxes, type Tappable } from '../../../../../packages/shared-math/src/tap.js';
 import { barChartGeometry, clockGeometry, numberLineGeometry } from '../figureGeometry.js';
@@ -69,7 +70,7 @@ describe('a map (#251): every Land and every continent by its label', () => {
     ['the continents', { type: 'map', v: 'world', hl: [] } as const],
   ])('%s, at 328 and 260 pt', (_, f) => {
     for (const width of [328, 260]) {
-      const l = tapLayout(f, width, format, 12, MAP_SHAPES);
+      const l = tapLayout(f, width, format, 12, { maps: MAP_SHAPES });
       if (!l) throw new Error('no layout');
       for (const pick of everyPick(f)) {
         const mark = l.markOf(pick);
@@ -82,12 +83,26 @@ describe('a map (#251): every Land and every continent by its label', () => {
   it('marks the whole region, drawn at the width of the map', () => {
     const de = { type: 'map', v: 'de', hl: [] } as const;
     const by = mapRegion('de', 'Bayern') ?? -1;
-    const mark = tapLayout(de, 300, format, 12, MAP_SHAPES)?.markOf([by]);
+    const mark = tapLayout(de, 300, format, 12, { maps: MAP_SHAPES })?.markOf([by]);
     expect(mark?.kind).toBe('region');
     if (mark?.kind !== 'region') return;
     const xs = [...mark.d.matchAll(/[ML](-?[\d.]+) /g)].map((m) => Number(m[1]));
     expect(Math.max(...xs)).toBeLessThanOrEqual(300);
     expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(100);
+  });
+
+  it('a labelled picture (#252): every part by its own point, no shapes to load', () => {
+    for (const d of ['plant_cell', 'eye', 'bicycle'] as const) {
+      const f = { type: 'schematic', d, n: [], ask: 0 } as const;
+      const l = tapLayout(f, 300, format, 12, { pictures: SCHEMATIC_SHAPES });
+      if (!l) throw new Error('no layout');
+      for (const pick of everyPick(f)) {
+        const mark = l.markOf(pick);
+        if (mark?.kind !== 'region') throw new Error('a part');
+        expect(mark.outline).toBe(true);
+        expect(l.pickAt(mark.x, mark.y, null, 0)).toEqual(pick);
+      }
+    }
   });
 
   it('offers nothing to tap until the shapes are loaded', () => {

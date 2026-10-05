@@ -127,6 +127,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `POST /practice/sessions/:id/cards`, `POST …/card`                                                   | Lernkarten: a pass over the words that did not sit, each card judged by her (#147)                                    |
 | `POST /practice/drills`, `POST /practice/sessions/:id/drill`                                         | Kopfrechnen: a round of tasks code wrote, one answer checked by code (#243)                                           |
 | `POST /practice/sessions/:id/ask`, `POST …/later`                                                    | a question to the tutor, never graded; „Merk ich mir für nachher" for an off-topic one (#391)                         |
+| `POST /practice/sessions/:id/why`                                                                    | „Warum stimmt das?": the reason she tapped after a closed question, judged by code (#388)                             |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
 ## Buddy decisions
@@ -1726,7 +1727,52 @@ zeigen“, „Später“), `contest.ts` („Frage passt nicht“, „Bewertung s
 Kopfrechnen round), `sessionRow.ts` (the session row and the one way to lock it), `finish.ts`
 (the end of a run) and `testClock.ts` (a practice test with time, #241). `ladder.ts` says where
 the hint ladder ends and what a test says instead; `later.ts` keeps an off-topic question for
-after the practice (#391).
+after the practice (#391); `similar.ts` puts a similar task after a shown solution, `why.ts`
+answers „Warum stimmt das?" and `readiness.ts` says when practice goes well enough for a Probetest
+(#388).
+
+**Hilfe an der Frage** (issue #388, report „Hilfe und Fragen beim Üben" §3, §5, §8). Code decides
+each of these from what is recorded; the model only writes words that code checks:
+
+- **„Tipp" after two misses** (§5.5): `SessionItemView.hint_offered` is true while the question is
+  open, „Tipp" works, the run is practice, she missed `OFFER_HINT_AFTER_MISSES` (2) times and took
+  no hint (`ladder.ts` `hintOffered`). The app shows the same chip in the soft skin
+  (`HelpChips` `hintOffered`). Nothing opens and nothing is said. There is no help coach (§5.6).
+- **A similar task after a shown solution** (§5.2, Baker's „Scooter", Shih's worked example): when
+  a practice question closes with its solution shown (the third miss or the ladder's end in
+  `answer.ts`, „Lösung zeigen" in `setAside.ts`), `followWithSimilar` runs in the same transaction.
+  If the next question is not already of the same topic and form, one further down the run is
+  brought forward. Otherwise one of her own questions of that topic, form and subject that is not
+  in the run joins it right behind: never another learner's, homework, a Kopfrechnen fact, a
+  listening question or an archived one, the most due first. When there is none, the run stays
+  as it is. Never in a test, homework or a card pass. The worked solution itself is the existing
+  end of the ladder (`workedReply`).
+- **„Warum stimmt das?"** (§5.3, self-explanation): three reasons per question, one of them the
+  rule behind the solution. They are written in the background hints call that already exists
+  (`hints.ts` `SYSTEM`; its version is the hash) and kept in `items.why` (`{reasons, correct}`, migration `0098_item_why.sql`).
+  `checkedWhy` keeps them only when they are exactly three different reasons and none states the
+  key. The view sends the reasons (never `correct`) once the question is closed and its solution
+  is out, until she tapped one. `POST …/why` (`WhyRequest`: `client_turn_id`, `item_id`,
+  `choice` 0–2) judges the tap by code, with no model call, and answers with a fixed line
+  (`practice.why.right` / `practice.why.not_quite` naming the true reason). Both turns carry
+  `reexplain = 'why'`. It is idempotent per `client_turn_id`, allowed once per question (409
+  `why_answered`), 409 on an open question, one without reasons or a running test, and 404 for
+  someone else's. Not graded, no FSRS effect. In the app the "why" chip of `Reexplain` asks her
+  where reasons exist; elsewhere it stays „Warum ist das so?". Questions from a photo get their
+  hints in the reading call, which writes no reasons yet, so they keep „Warum ist das so?".
+- **The Probetest** (§3): its review after handing in is the default and now explains.
+  `SessionItemView.explanation` is the worked solution, under exactly the condition `answer` is
+  sent, shown under the solution of every question she did not get right (`ResultList` `note`).
+  Buddy offers a test (`offer_learning` kind `test`, its `asked` field) only when
+  `practiceGoesWell` holds, or when she asked for one: `asked` must be her own words from this
+  message (`requireQuote`). `practiceGoesWell` holds when, of her last 10 closed practice
+  questions on the goal's sheets (or on the topic in her words), at least 5 are closed and 70 %
+  of them are right. Otherwise the offer is refused with the reason, and Buddy offers practice.
+  Starting a test herself in the app is never held back.
+- **The test's fixed line fits the form**: `practice.test_no_hints` says „schreib einfach, was du
+  denkst" only where she writes her answer. On options, a board, the fraction bar, the staff or a
+  tap in the figure it is `practice.test_no_hints_on_screen` („antworte einfach so, wie du
+  denkst"), decided by `answersOnScreen` (`viewParts.ts`), from the same parts the view sends.
 
 **Fragen beim Üben** (issue #391, report „Hilfe und Fragen beim Üben" §1, §3, §4). The first help
 stays the buttons („Tipp", „Warum?", „Erklär's anders"); free text is the second path, through
@@ -3501,7 +3547,8 @@ pictures (#252) add their figure to it rather than building a second one.
   `tap-figures.int.test.ts` (stored or dropped, exact verdicts without a model, replay, a row
   that no longer holds, another learner); walkthrough `tests/web/tap-figures.spec.ts` (scenario
   `testing/scenarios/tap.ts`).
-- **Maps (#251)** are one figure on this mechanism: §Maps.
+- **Maps (#251)** and **labelled pictures (#252)** are figures on this mechanism: §Maps,
+  §Labelled pictures.
 - **Not built here:** laying an amount with coins ("Leg 3,45 €", #254) — a sum of several taps,
   not one place; tapping a cell of the periodic table (#250) or a month of a line or climate chart
   (#245) — each is one `case` on this mechanism.
@@ -3563,6 +3610,60 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
 - **Not built here:** the Gradnetz and "Welche Koordinaten hat der Punkt?"; capitals, rivers,
   mountains as points; zoom (it would let the small countries of Europe be tapped); the Bundesland
   of her own profile as a default map.
+
+### Labelled pictures (issue #252)
+
+A drawing of the picture library — plant cell, animal cell, flower (section), plant, eye
+(section), tooth (section), insect, bicycle — with numbers on chosen parts. Buddy asks to label it
+("Beschrifte die Pflanzenzelle"), to name one numbered part ("Wie heißt Teil 3?") or to tap a part
+("Tippe auf den Zellkern", the tap mechanism above). Decided in #224: drawn by us, nothing
+licensed.
+
+- **Contract** (`packages/shared-types/src/contracts/schematic.ts`, in `ModelFigure`):
+  `{ type: 'schematic', d, n: string[], ask }` — which drawing, the parts that carry the numbers
+  1, 2, 3 … by name, the number asked (0: none). Never a shape. `FIGURE_RULES` lists every drawing
+  with its parts, generated from the library (`SCHEMATIC_PARTS`); the prompt versions are hashes
+  of what is sent (#425), so the rules change them themselves.
+- **Library** (code, in two files like the maps): `packages/shared-math/src/schematics.data.ts`
+  names every drawing and part — id, the five languages, other names a teacher accepts
+  ("Nukleus"); small and static, the server and the tap mechanism resolve names with it.
+  `schematicShapes.data.ts` draws them, part by part in the same order: ellipses, rounded boxes,
+  polygons and strokes (`drawShapes.ts`, every outline one way round, a hole the other) in the
+  frame 1000 wide, each part's pastel tone (`figure.slices`) and the point its number points at
+  (`at`, set by hand). The app loads it with the first picture (`useSchematicShapes`, on
+  `lib/lazyModule.ts`) — the start bundle had 8 KB of its gzip budget left, the drawings would
+  have taken more. A part is a region like a Land (`regions.ts`, §Maps):
+  names, winding number, which part a finger means — the topmost under it, or a small one by its
+  point —, what is tappable. Parts too small for a finger on 360 × 740 (pupil, an insect's eye,
+  the handlebar, the bell) can be named, not tapped.
+- **Rule 0, generation** (`apps/api/src/modules/practice/schematicCheck.ts`): a labelling draft
+  (two or more numbers, none asked, no tap) becomes one question per number, written by code —
+  "Pflanzenzelle: Wie heißt Teil 2?" in the question's language, the library's name as the key
+  (`labelQuestions`, before the checks). Then, in `FIGURE_CHECKS`: every numbered part must be one
+  of the drawing (stored as its id), each once; a typed question is short and its key is the part
+  carrying the number asked; a tap asks no number and its key is a part a finger can hit
+  (`regionTappable`). Anything else — what a part does, a part the drawing does not have — is
+  dropped.
+- **Rule 0, grading:** a tapped part exactly (`tapVerdict`); a typed name by the library
+  (`namedRuleVerdict` in `tapCheck.ts`, shared with the map): "nucleus", "Nukleus" and
+  "Zellkern" are one part. A tapped part stands in the thread in her language
+  (`tappedAnswerText`, answer.ts — the same path as the map's regions).
+- **Screen:** `components/math/SchematicFigures.tsx` draws each part outline-under-fill (the tubes
+  of a frame show no line inside the part) and a numbered badge off each numbered part with a
+  leader line. Tapping is `TapFigure` with the map's `case` in `tapLayout` (`TapShapes`: the
+  maps' and the pictures' shapes, each once loaded).
+  The line under it says "Teil gewählt"; the part's name is only in `aria-valuetext` (#409).
+  `describeSchematic` says the drawing and how many parts are numbered, never which.
+- Tests: `packages/shared-math/src/__tests__/schematics.test.ts` (names in five languages, every
+  name unique per drawing, every part reached at its point, tappability, tap round trip),
+  `lib/math/__tests__/tapLayout.test.ts`, `TapFigure.test.tsx`, `SchematicFigures.test.tsx`,
+  `schematic-figures.int.test.ts` ("Zelle beschriften" gives five questions without a word from
+  the model; stored or dropped; verdicts without a model; the thread in her language; another
+  learner); walkthrough `tests/web/tap-figures.spec.ts` (the cell labelled, every part of it
+  tapped, the bicycle's frame; scenario `testing/scenarios/schematic.ts`).
+- **Not built here:** the other drawings of the plan (microscope, skeleton, heart, ear, lab
+  equipment, traffic signs …: eight of the first fifteen are done); matching numbers to names
+  (#229); tapping the labels of a photographed sheet (`HOTSPOT_BILD`, extraction of label regions).
 
 ### Circuits, logic gates and the colour wheel (issue #261)
 

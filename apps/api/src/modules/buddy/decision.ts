@@ -704,6 +704,13 @@ const offerLearning = z.object({
       .describe(
         'vocab only, and only what she asked for: "recognise" asks what the foreign word means, "produce" shows it in her own language and asks for the foreign word. null asks both directions, as usual.',
       ),
+    // Issue #388: a practice test is offered once practice on it goes well (code decides,
+    // `practice/readiness.ts`) — or when she asks for one, in her words, checked by code.
+    asked: Quote.nullable()
+      .optional()
+      .describe(
+        'test only: her words asking for a practice test, when she asked for one. null when the test is your idea — then the app offers it only once her practice on it is going well.',
+      ),
     // Issue #241: a clock only on her wish. The minutes are a value from a fixed list, never a
     // number of the model's own (rule 2), and her words asking for it are checked by code.
     time_limit: z

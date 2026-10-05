@@ -31,6 +31,7 @@ const plane: Tappable & Figure = {
 const line: Tappable & Figure = { type: 'number_line', min: 0, max: 5, step: 0.5, points: [] };
 const clock: Tappable & Figure = { type: 'clock', c: [], h24: false, ask: 'none' };
 const map: Tappable & Figure = { type: 'map', v: 'de', hl: [] };
+const cell: Tappable & Figure = { type: 'schematic', d: 'plant_cell', n: [], ask: 0 };
 
 function render(figure: Tappable & Figure, value: string) {
   return renderInApp(<TapFigure figure={figure} value={value} onChange={noop} disabled={false} />);
@@ -76,6 +77,18 @@ describe('her place in words', () => {
     const sliders = screen.getAllByRole('slider', { name: 'Deine Stelle in der Abbildung' });
     expect(sliders[1]?.getAttribute('aria-valuetext')).toBe('Gebiet: Bayern');
     expect(screen.getAllByTestId('tap-words')[1]?.textContent).not.toContain('Bayern');
+  });
+
+  // Issue #252: in a picture, the name of the part she tapped would be the answer itself.
+  it('in a picture: that she chose a part; its name only for a screen reader', () => {
+    render(cell, '');
+    expect(screen.getByTestId('tap-words').textContent).toBe(
+      'Tippe auf das Teil in der Abbildung.',
+    );
+    render(cell, 'Zellkern');
+    expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Teil gewählt');
+    const sliders = screen.getAllByRole('slider', { name: 'Deine Stelle in der Abbildung' });
+    expect(sliders[1]?.getAttribute('aria-valuetext')).toBe('Teil: Zellkern');
   });
 
   it('on a clock: where the hands stand, never the time they make', () => {

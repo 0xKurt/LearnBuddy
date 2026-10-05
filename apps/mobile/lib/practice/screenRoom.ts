@@ -10,7 +10,7 @@ import type { ItemView, PracticeTurnView } from '@learnbuddy/shared-types/contra
 import { useEffect, useRef, useState } from 'react';
 import type { View } from 'react-native';
 
-import { answerFolds } from '../keyboard.js';
+import { answerFolds, formDensity } from '../keyboard.js';
 import { useVisibleHeight } from '../useVisibleHeight.js';
 import { boardKeeps, threadRoom, type Room } from './threadRoom.js';
 import { visualCaps, visualGrows } from './visuals.js';
@@ -136,7 +136,10 @@ export function useScreenRoom() {
       cardNatural,
       cardDelta,
       visual: cardNatural > 0 && Boolean(item.figure || item.image) && !q.speaking,
-      growable: visualGrows(item.figure),
+      // While she types the drawing folds to one row (`Question`, `formDensity` tight): growing
+      // the card then only made an empty band under that row and squeezed the conversation — a
+      // short question beside a map or picture left "Tipp" half shown at 360×440 (#252).
+      growable: visualGrows(item.figure) && formDensity(seen.window, seen.overlap) !== 'tight',
       // A Diktat card before her first answer holds only the way to hear the word (issue #242):
       // it takes all the room the conversation does not use, so no empty band is left under it.
       fills: cardNatural > 0 && item.kind === 'spelling_dictation' && !q.dictationCompact,

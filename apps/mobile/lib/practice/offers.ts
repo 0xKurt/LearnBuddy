@@ -69,8 +69,9 @@ export function questionOffers(session: SessionView, shown: SessionItemView): Of
       (shown.answer !== null ||
         (session.mode === 'help' && shown.status === 'correct') ||
         // A free text sends no answer (issue #197) — but asking about her own text again is
-        // exactly where it helps most, so the offer stays.
-        freeText(item.kind)),
+        // exactly where it helps most, so the offer stays. Not after a long text's feedback:
+        // there is nothing to explain again, the server answers 409 (#258).
+        item.kind === 'long'),
     // Only a question from a photo or from Buddy; never homework, never during a test.
     flaggable:
       open &&

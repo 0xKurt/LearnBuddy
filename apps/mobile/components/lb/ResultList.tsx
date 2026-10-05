@@ -26,6 +26,8 @@ export type ResultRow = {
   text: string;
   /** What to take from it, in bold: the solution, her own words, a better line. */
   detail: string | null;
+  /** Why, under it in plain type: the Probetest's worked solution (issue #388 §3.2). */
+  note?: string | null;
 };
 
 type Props = {
@@ -78,6 +80,7 @@ function ResultCard({ row }: { row: ResultRow }) {
       {row.detail !== null ? (
         <MathText text={row.detail} style={[TYPE.body, { fontWeight: '600' }]} />
       ) : null}
+      {row.note ? <MathText text={row.note} style={[TYPE.body, { color: palette.ink2 }]} /> : null}
     </Card>
   );
 }

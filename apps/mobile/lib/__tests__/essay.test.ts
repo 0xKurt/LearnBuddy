@@ -1,10 +1,15 @@
 // What a long text (issue #258) changes on the practice screen, decided by code from the kind:
 // the field's length, that her text stays for the next version, and how a version is named.
 
-import type { PracticeTurnView } from '@learnbuddy/shared-types/contracts';
+import type {
+  PracticeTurnView,
+  SessionItemView,
+  SessionView,
+} from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { answerMax, freeText, leftAfterSend, versionsOf, wordCount } from '../practice/essay.js';
+import { questionOffers } from '../practice/offers.js';
 import { returnKey } from '../practice/pathEntry.js';
 
 const turn = (id: string, role: 'learner' | 'tutor', essay = false): PracticeTurnView => ({
@@ -61,5 +66,26 @@ describe('a long text on the practice screen (#258)', () => {
     expect(versions.get('a2')).toBe(1);
     expect(versions.get('a3')).toBe(2);
     expect(versions.has('r2')).toBe(false);
+  });
+
+  it('offers "Überspringen", and no "Anders erklären" after its feedback (the server says 409)', () => {
+    // Only what `questionOffers` reads: a closed question of a running practice.
+    const closed = (kind: 'essay' | 'long') =>
+      ({
+        status: 'revealed',
+        attempts: 3,
+        hints_used: 0,
+        reveal_available: false,
+        answer: null,
+        item: { kind, origin: 'buddy' },
+      }) as unknown as SessionItemView;
+    const session = (shown: SessionItemView) =>
+      ({ mode: 'practice', status: 'active', items: [shown] }) as unknown as SessionView;
+    const essay = closed('essay');
+    const long = closed('long');
+    expect(questionOffers(session(essay), essay).explainAgain).toBe(false);
+    expect(questionOffers(session(long), long).explainAgain).toBe(true);
+    const open = { ...essay, status: 'open' } as SessionItemView;
+    expect(questionOffers(session(open), open).skipLabel).toBe('skip');
   });
 });

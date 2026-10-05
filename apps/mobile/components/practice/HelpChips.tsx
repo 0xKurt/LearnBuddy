@@ -13,6 +13,11 @@ import { Rise } from '../lb/Motion.js';
 type Props = {
   /** Ask for the next prepared hint. */
   onHint?: (() => void) | undefined;
+  /**
+   * "Tipp" stands out: she missed twice and took no hint yet (`hint_offered`, report #388 §5.5).
+   * The one quiet offer — the same chip in the soft skin, nothing pushed, nothing said.
+   */
+  hintOffered?: boolean;
   /** Show the solution, skip a test question or set a homework task aside. */
   onReveal?: (() => void) | undefined;
   /** What that second chip says, when it isn't "Lösung zeigen". */
@@ -22,7 +27,14 @@ type Props = {
 };
 
 /** The help chips under the conversation; nothing at all when there is no help to offer. */
-export function HelpChips({ onHint, onReveal, revealLabel, revealHint, disabled }: Props) {
+export function HelpChips({
+  onHint,
+  hintOffered = false,
+  onReveal,
+  revealLabel,
+  revealHint,
+  disabled,
+}: Props) {
   const { t } = useTranslation('practice');
   if (!onHint && !onReveal) return null;
 
@@ -31,7 +43,7 @@ export function HelpChips({ onHint, onReveal, revealLabel, revealHint, disabled 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.xs }}>
         {onHint ? (
           <Btn
-            variant="ghost"
+            variant={hintOffered ? 'soft' : 'ghost'}
             size="sm"
             pill
             onPress={onHint}
