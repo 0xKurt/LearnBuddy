@@ -76,7 +76,7 @@ type OwnBar = { bar: ReactNode };
 export type CheckAction = Check | Tap | OwnBar;
 
 /** Her question to the tutor about the question on screen (issue #402): the bar's field. */
-export type Ask = {
+type Ask = {
   value: string;
   onChange: (text: string) => void;
   /** Sends what she typed (the screen: `POST …/ask`). */
@@ -85,15 +85,21 @@ export type Ask = {
   disabled: boolean;
 };
 
+/** Her question, and whether its field has the focus (the answer folds then, `answerFolds`). */
+type AskState = Ask & { focused: boolean; onFocused: (focused: boolean) => void };
+
 /**
- * Where the bar finds her question; the practice screen provides it, like `FreeSpaceReport`.
- * Without it (a form rendered on its own, in a component test) the field is there and inert.
+ * Where the bar finds her question; the practice screen provides it, like `FreeSpaceReport` (the
+ * focus with its room, `useScreenRoom`). Without it (a form rendered on its own, in a component
+ * test) the field is there and inert.
  */
-export const AskRoute = createContext<Ask>({
+export const AskRoute = createContext<AskState>({
   value: '',
   onChange: () => undefined,
   onSend: () => undefined,
   disabled: true,
+  focused: false,
+  onFocused: () => undefined,
 });
 
 export function CheckBar(action: CheckAction) {
@@ -165,6 +171,8 @@ function useAskField(check: ReactNode): ComponentProps<typeof InputBar> {
     submitBehavior: 'submit',
     returnKeyType: 'send',
     onSubmitEditing: send,
+    onFocus: () => ask.onFocused(true),
+    onBlur: () => ask.onFocused(false),
     disabled: ask.disabled,
     action: asking ? (
       <Btn pill size="sm" onPress={send} disabled={ask.disabled}>

@@ -1746,12 +1746,15 @@ its own route, so nothing she asks is ever misread as an answer:
   drawing gives what the column still runs short (`short` in `threadRoom`, up to `CARD_GIVES`),
   also before any reply — before #402 it gave only for a reply. For that a tree figure
   (probability tree, pedigree, automaton) now shrinks as a whole at FigureView's scale (`TreeBody`
-  `scale`: its height follows its levels, so narrowing it gave nothing). Known web-only lag: the
-  column's end mark reports through a size observer there, so after the walkthrough switches the
-  window from 390 to 360 a drawing may give more than it must (the pedigree at 360 stands at ~70 %
-  with free room under it; a phone reports the mark's move). The picture-tile cap stays
-  12 % (picture options keep 48 pt free at 360×740). While she types her question the tiles wait
-  under the bar (`AnswerShell`: with `formDensity` `tight` they give way like a board).
+  `scale`: its height follows its levels, so narrowing it gave nothing). The column's end is read
+  after every render (`useScreenRoom`): on the web the end mark's layout event fires only on a
+  change of size, and a mark that moved left a stale overrun. The picture-tile cap stays 12 %
+  (picture options keep 48 pt free at 360×740). **While she types her question with the keyboard
+  up, the answer folds away whole** (`answerFolds`, lib/keyboard.ts; `display: none` in
+  `AnswerShell`, still mounted, back unchanged when the keyboard goes), the way the drawing folds:
+  a row of tiles cut at the slot's edge read as broken (CLAUDE.md rule 17). A folded board gives
+  no room (`boardGives` false). Guarded in `fit.ts` (`cutTiles`): with her question focused no
+  tile is drawn cut. A typed answer or a board's own cell being edited does not fold.
 
 **Eine Übung darf anfangen, bevor alle ihre Fragen geschrieben sind** (Issue #220, Migration
 0073). Gemessen 02.10.: „üben wir Brüche" kostete 6,45 s am Endpoint, davon 6,42 s der

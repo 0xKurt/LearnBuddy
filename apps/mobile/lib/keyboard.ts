@@ -57,3 +57,12 @@ export function formDensity(windowHeight: number, overlap: number): FormDensity 
   if (visible < TIGHT_BELOW) return 'tight';
   return visible < COMPACT_BELOW ? 'compact' : 'roomy';
 }
+
+/**
+ * While she types her question with the keyboard up, the answer folds away whole (issue #402):
+ * not drawn, so no row of tiles stands cut at the slot's edge (rule 17), and a board gives no
+ * room it no longer holds. Back unchanged when the keyboard goes.
+ */
+export function answerFolds(asking: boolean, windowHeight: number, overlap: number): boolean {
+  return asking && formDensity(windowHeight, overlap) === 'tight';
+}

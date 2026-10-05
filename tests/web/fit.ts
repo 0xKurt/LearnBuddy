@@ -299,10 +299,30 @@ async function keyboardPass(page: Page, name: string, testId: string): Promise<v
   };
   appendFileSync(REPORT, `${JSON.stringify(record)}\n`);
   await expect(field, `${name} @kb: the field above the keyboard`).toBeInViewport({ ratio: 1 });
+  // Her question with the keyboard up (issue #402, rule 17): no tile of the answer stands cut —
+  // each is whole in the room above the bar, or not drawn (the slot folds away).
+  if (testId === 'ask-field')
+    expect(await cutTiles(page), `${name} @kb: answer tiles cut while she asks`).toEqual([]);
   for (const alert of await alerts.all()) {
     await expect(alert, `${name} @kb: what is said as an alert`).toBeInViewport();
   }
   if (!wasFocused) await field.blur();
+}
+
+/** The answer's tiles (buttons, checkboxes) that are drawn but not whole above the pinned bar. */
+async function cutTiles(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const bars = Array.from(document.querySelectorAll('[data-testid="bottom-bar"]'));
+    const floor = Math.min(innerHeight, ...bars.map((b) => b.getBoundingClientRect().top));
+    const slots = Array.from(document.querySelectorAll('[data-testid="answer-slot"]'));
+    return slots.flatMap((slot) =>
+      Array.from(slot.querySelectorAll('[role="button"], [role="checkbox"], [role="radio"]'))
+        .map((tile) => ({ tile, box: tile.getBoundingClientRect() }))
+        .filter(({ box }) => box.width > 0 && box.height > 0)
+        .filter(({ box }) => box.top < -0.5 || box.bottom > floor + 0.5)
+        .map(({ tile }) => tile.getAttribute('aria-label') ?? tile.textContent ?? '?'),
+    );
+  });
 }
 
 /**

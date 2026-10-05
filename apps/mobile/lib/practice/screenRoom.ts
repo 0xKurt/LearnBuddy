@@ -7,9 +7,11 @@
 // within its size (docs/engineering-guards.md, rule 4) — the rules themselves are unchanged.
 
 import type { ItemView, PracticeTurnView } from '@learnbuddy/shared-types/contracts';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { View } from 'react-native';
 
+import { answerFolds } from '../keyboard.js';
+import { useVisibleHeight } from '../useVisibleHeight.js';
 import { boardKeeps, threadRoom, type Room } from './threadRoom.js';
 import { visualCaps, visualGrows } from './visuals.js';
 
@@ -31,6 +33,9 @@ type Question = {
 };
 
 export function useScreenRoom() {
+  /** Her question's field has the focus (`AskRoute`): with the keyboard up the answer folds. */
+  const [asking, setAsking] = useState(false);
+  const seen = useVisibleHeight();
   /** The conversation's box and the free room above the answer (issue #286, `threadCap`). */
   const [threadBox, setThreadBox] = useState(0);
   const [freeSpace, setFreeSpace] = useState(0);
@@ -47,6 +52,21 @@ export function useScreenRoom() {
   const [columnEnd, setColumnEnd] = useState(0);
   const [columnTop, setColumnTop] = useState(0);
   const columnRef = useRef<View>(null);
+  /** The column's end mark: where its content ends, below the bar. */
+  const endRef = useRef<View>(null);
+  // Where the content ends, read after every render (issue #402). The mark's own layout event
+  // missed it on the web, which reports a change of SIZE only (a ResizeObserver): a mark of height
+  // 0 that moved up when the answer folded away left a stale overrun, and the conversation, given
+  // no room, took its whole height past the window. The same value twice changes nothing.
+  useEffect(() => {
+    const column = columnRef.current;
+    if (column)
+      endRef.current?.measureLayout(
+        column,
+        (_x, y) => setColumnEnd(Math.round(y)),
+        () => undefined,
+      );
+  });
 
   function layout(q: Question): Room & {
     caps: { figure: number; image: number };
@@ -75,7 +95,13 @@ export function useScreenRoom() {
     const left = threadBox + freeSpace + cardDelta - overrun;
     const room = Math.max(0, left);
     // An open structured board gives way under Buddy's reply, down to what it keeps (#232).
-    const boardGives = open && item.task_view !== null && item.task_view !== undefined;
+    // Not while it is folded away (`answerFolds`): it holds nothing to give, and the reply's floor
+    // pushed the bar past the window.
+    const boardGives =
+      open &&
+      item.task_view !== null &&
+      item.task_view !== undefined &&
+      !answerFolds(asking, seen.window, seen.overlap);
     // The tops are in ItemThread's coordinates; it starts after the thread's padding.
     const tops = q.threadTurns
       .map((turn) => turnTops[turn.id])
@@ -125,8 +151,10 @@ export function useScreenRoom() {
     setFreeSpace,
     setTurnTops,
     setSurfaceHeight,
-    setColumnEnd,
     columnRef,
+    endRef,
+    asking,
+    setAsking,
     /** The column laid out: its height, and where it starts in the window. */
     onColumn: (height: number) => {
       setColumn(height);

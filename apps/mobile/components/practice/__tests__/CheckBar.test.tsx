@@ -37,7 +37,16 @@ function Asking({
 }) {
   const [value, setValue] = useState(start);
   return (
-    <AskRoute.Provider value={{ value, onChange: setValue, onSend: () => onSend(value), disabled }}>
+    <AskRoute.Provider
+      value={{
+        value,
+        onChange: setValue,
+        onSend: () => onSend(value),
+        disabled,
+        focused: false,
+        onFocused: () => undefined,
+      }}
+    >
       <CheckBar {...action} />
     </AskRoute.Provider>
   );

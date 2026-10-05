@@ -806,6 +806,8 @@ export default function PracticeScreen() {
               onChange: question.setText,
               onSend: () => void ask(item.id, question.text.trim()),
               disabled: locked,
+              focused: measured.asking,
+              onFocused: measured.setAsking,
             }}
           >
             {/* The column, measured: its end mark (below) says how far its content runs past it. */}
@@ -1148,10 +1150,7 @@ export default function PracticeScreen() {
                   }}
                 />
               )}
-              <View
-                style={{ height: 0 }}
-                onLayout={(e) => measured.setColumnEnd(Math.round(e.nativeEvent.layout.y))}
-              />
+              <View style={{ height: 0 }} ref={measured.endRef} />
             </View>
           </AskRoute.Provider>
         </FreeSpaceReport.Provider>
