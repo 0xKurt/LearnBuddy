@@ -45,6 +45,7 @@ const IN_SHELL = [
   'SelectAllAnswer.tsx',
   'MarkAnswer.tsx',
   'ColumnAnswer.tsx',
+  'GridAnswer.tsx',
   'TypedAnswer.tsx',
   'StaffWriting.tsx',
   'FractionBarAnswer.tsx',
@@ -69,7 +70,7 @@ const SHADOWED: Record<string, string> = {
 };
 
 /** What fills the shell's `keys` slot: each is the one key row with its own keys (step 4). */
-const KEY_ROWS = ['MathKeys.tsx', 'StaffKeys.tsx'];
+const KEY_ROWS = ['MathKeys.tsx', 'StaffKeys.tsx', 'GridAnswer.tsx'];
 
 function holders(test: (s: { name: string; text: string }) => boolean): string[] {
   return sources

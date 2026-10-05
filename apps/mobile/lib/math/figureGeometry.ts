@@ -1,5 +1,5 @@
 // Where a figure puts things at a given width: the number line, the bar chart and the clock face of
-// components/math (the function plot's frame is `plotGeometry` in plotLayout.ts). Pure and in one
+// components/math (the function plot's frame is `functionPlotGeometry` in plotLayout.ts). Pure and in one
 // place for two readers that must never disagree (issue #248): the drawer that paints the figure,
 // and the tap layer that turns a finger's position into a place of the figure (`tapLayout.ts`). A
 // copy of these numbers in each would let a tap land one place off the drawing it was aimed at.
