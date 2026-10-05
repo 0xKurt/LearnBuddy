@@ -1801,6 +1801,17 @@ its own route, so nothing she asks is ever misread as an answer:
   a row of tiles cut at the slot's edge read as broken (CLAUDE.md rule 17). A folded board gives
   no room (`boardGives` false). Guarded in `fit.ts` (`cutTiles`): with her question focused no
   tile is drawn cut. A typed answer or a board's own cell being edited does not fold.
+  **The conversation shows whole parts only** (#403, after #63/#286): a turn, the help chips or a
+  card under the replies is drawn whole below the question card, or not at all there — never the
+  lower half of "Tipp · Lösung zeigen" under the fade, the edge of a reply or a sliver of an orb.
+  `threadRoom` begins the box above any part (`parts`, the tops of `ThreadBox`'s slots, besides
+  the turns' `tops`); where even the newest turn does not fit whole — with the keyboard up, or a
+  board that cannot spare more — it is not drawn, only the parts after it that fit, and the
+  newest turn is back once there is room. Every top is summed from the pieces' heights
+  (`useStackTops`): on the web a layout event fires only on a change of size, and a turn that
+  moved under a rewrapped reply kept a stale top, which left an orb's sliver under the card at 390.
+  Guarded in `fit.ts` (`halfTurns`) at every practice stop, at 390, 360 and 360×440 with the
+  keyboard: nothing in the conversation is partly visible between the card's edge and the fade.
 
 **Eine Übung darf anfangen, bevor alle ihre Fragen geschrieben sind** (Issue #220, Migration
 0073). Gemessen 02.10.: „üben wir Brüche" kostete 6,45 s am Endpoint, davon 6,42 s der

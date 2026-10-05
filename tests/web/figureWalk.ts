@@ -36,18 +36,23 @@ export async function onboardChild(page: Page, tag: string): Promise<void> {
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
-/** She writes `message`; Buddy offers a practice run with `offer` in it, and she starts it. */
+/**
+ * She writes `message`; Buddy offers a practice run with `offer` in his words, and she starts THAT
+ * offer. The thread keeps every earlier offer card, and the new card enters a moment AFTER Buddy's
+ * words, invisible while its entrance runs (issue #267, see modes.spec.ts `offerStart`). Waiting
+ * for the words and then taking "the innermost block with these words and a start button" took the
+ * thread itself: with several earlier cards a strict-mode error, with one earlier card a click on
+ * that card — the previous practice, already finished, opened on "Geschafft!" (#403, written.spec).
+ * Counting the buttons before she sends raced the other way: the home was still filling in its
+ * thread. So the start button is the first one AFTER Buddy's words in the thread — earlier cards
+ * stand above them — and the click waits until that card has entered and shows it.
+ */
 export async function startOffer(page: Page, message: string, offer: string): Promise<void> {
   await page.getByLabel('Schreib Buddy …').fill(message);
   await page.getByRole('button', { name: 'Senden' }).click();
-  await expect(page.getByText(offer, { exact: false })).toBeVisible();
-  await page
-    .locator('div')
-    .filter({ has: page.getByRole('button', { name: "Los geht's" }) })
-    .filter({ hasText: offer })
-    .last()
-    .getByRole('button', { name: "Los geht's" })
-    .click();
+  const words = page.getByText(offer, { exact: false }).last();
+  await expect(words).toBeVisible();
+  await words.locator(`xpath=following::*[@role="button"][@aria-label="Los geht's"][1]`).click();
 }
 
 /** The question with its figure, at both phone sizes, in the light and the dark room. */
