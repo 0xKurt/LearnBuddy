@@ -8,6 +8,7 @@
 import {
   FINAL_FAILURES,
   PHOTOS_GONE_AT_ONCE,
+  READ_WITHOUT_EXERCISES,
   type MaterialView,
 } from '@learnbuddy/shared-types/contracts';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -57,7 +58,7 @@ function statusOf(m: MaterialView): Status | null {
       // "nicht lesbar" only when that is what the reading found — and a sheet whose tasks
       // are exercise forms Buddy cannot practise WAS read (issue #198), as was a corrected test
       // with nothing marked (#259): it has no exercises, and that is no warning about her photo.
-      if (m.failure_reason === 'form_not_practicable' || m.failure_reason === 'nothing_marked')
+      if (m.failure_reason && READ_WITHOUT_EXERCISES.has(m.failure_reason))
         return { key: 'no_exercises', tone: 'gray' };
       return {
         key: m.failure_reason === 'unreadable' ? 'unreadable' : 'not_read',

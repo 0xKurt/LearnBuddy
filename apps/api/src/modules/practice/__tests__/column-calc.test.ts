@@ -4,8 +4,10 @@
 // yet, in the order she writes ("bei den Zehnern fehlt noch der Übertrag"), never its digit.
 
 import {
+  columnRowsShown,
   columnsFit,
   ColumnCalcTaskView,
+  COLUMN_ROWS_MAX,
   type ColumnCalcTask,
   type ColumnOp,
 } from '@learnbuddy/shared-types/contracts';
@@ -187,11 +189,47 @@ describe('column_calc: what the model wrote (Regel 0)', () => {
     }
   });
 
-  it('rejects a grid that would not fit a 360×740 phone: three division steps are too many rows', () => {
-    expect(columnProblem({ type: 'column_calc', op: 'div', operands: ['672', '3'] })).toBe(
+  it('lays out a three-digit quotient (672 : 3, issue #413) and checks every one of its digits', () => {
+    const div = task('div', '672', '3');
+    expect(drawn(div)).toEqual([
+      '  672:3=224',
+      '  6........',
+      '— _7.......',
+      '  _6.......',
+      '— .12......',
+      '  .12......',
+      '— ..0......',
+    ]);
+    // Seven rows, but the board shows the first, one per finished step and the step she is at.
+    expect(columnRowsShown(columnLayout(div)!.view.rows)).toBe(COLUMN_ROWS_MAX);
+    expect(columnSolution(div)).toBe('672 : 3 = 224');
+    expect(checked(div).correct).toBe(true);
+    // Every digit of every step still counts, the last one too.
+    expect(columnReply('de', checked(div, { [at(5, 2)]: '3' }))).toBe(
+      'Noch nicht ganz – im 3. Schritt stimmt das Malnehmen noch nicht.',
+    );
+    expect(columnReply('de', checked(div, { [at(0, 8)]: '5' }))).toBe(
+      'Noch nicht ganz – die 3. Ziffer des Ergebnisses stimmt noch nicht.',
+    );
+  });
+
+  it('rejects a grid that would not fit a 360×740 phone: four division steps are too many rows', () => {
+    expect(columnProblem({ type: 'column_calc', op: 'div', operands: ['9876', '3'] })).toBe(
       'too_long',
     );
+    expect(columnProblem({ type: 'column_calc', op: 'div', operands: ['1234', '5'] })).toBeNull();
     expect(columnProblem({ type: 'column_calc', op: 'div', operands: ['174', '5'] })).toBeNull();
+  });
+
+  it('counts the rows the board shows: outside a staircase every row, in it one per finished step', () => {
+    for (const [t, shown] of [
+      [task('add', '999999', '999999', '999999'), 5],
+      [task('mul', '789', '56'), 5],
+      [task('div', '96', '4'), 4],
+      [task('div', '1234', '5'), 5],
+    ] as const) {
+      expect(columnRowsShown(columnLayout(t)!.view.rows)).toBe(shown);
+    }
   });
 
   it('keeps the widest allowed grids within the contract’s width', () => {

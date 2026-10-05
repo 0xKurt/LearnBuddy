@@ -60,7 +60,10 @@ import { TABLE_RULES } from '../practice/table.js';
 //        v8.19 and v8.20 left to the parallel work that holds generate v1.39 and v1.40).
 // v8.23: v8.21 with the stumme Karte of v8.20 (#251) — the two met in one prompt (v8.22 is
 //        reserved for parallel work).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.23';
+// v8.22: a written division's quotient may have three digits (672 : 3), shown step by step
+//        (#413, on top of v8.21).
+// v8.24: v8.23 with the three-digit division of v8.22 (#413).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.24';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
