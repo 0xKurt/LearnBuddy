@@ -22,6 +22,7 @@ import { scriptPrimary } from './primary.js';
 import { scriptReading } from './reading.js';
 import { scriptRoleplay } from './roleplay.js';
 import { scriptSolids } from './solids.js';
+import { scriptSources } from './sources.js';
 import { scriptTap } from './tap.js';
 import { pronounceRules, readingRules, tutorRules } from './rules.js';
 import { scriptSelectAll } from './selectAll.js';
@@ -56,6 +57,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptTimedTest();
   // Before the tour: both read the same photo fixture; hers is keyed by her age (#233).
   scriptReading();
+  // Keyed by the ages 14 and 15, nobody else's; before the tour, which reads the same photo (#259).
+  scriptSources();
   scriptLearningModes(scripted);
   scriptTour();
   scriptFigures();

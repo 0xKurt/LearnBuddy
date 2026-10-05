@@ -35,8 +35,48 @@ export const MaterialFailure = z.enum([
    * photos stay, because the sheet is valid and she may want to look at it (issue #198).
    */
   'form_not_practicable',
+  /**
+   * A corrected class test on which the teacher marked nothing wrong (issue #259): the source
+   * of practice there is exactly the marked tasks, so there is nothing to practise. Final like
+   * the one above, and its photos go at once — they show a grade.
+   */
+  'nothing_marked',
 ]);
 export type MaterialFailure = z.infer<typeof MaterialFailure>;
+
+/**
+ * Failures a second reading of the same photos cannot change: `retryMaterial` refuses it and no
+ * card offers "Nochmal lesen" (issues #198, #259). One list, read by the API and the app alike.
+ */
+export const FINAL_FAILURES: ReadonlySet<MaterialFailure> = new Set<MaterialFailure>([
+  'not_learning_material',
+  'blocked',
+  'form_not_practicable',
+  'nothing_marked',
+]);
+
+/**
+ * Failures whose photos are deleted at once instead of after the retention period: a photo of
+ * something else, one the safety filter refused, and a corrected test (it shows a grade).
+ */
+export const PHOTOS_GONE_AT_ONCE: ReadonlySet<MaterialFailure> = new Set<MaterialFailure>([
+  'not_learning_material',
+  'blocked',
+  'nothing_marked',
+]);
+
+/**
+ * What kind of page the reading recognised (issue #259) — the model says it, code decides what
+ * follows from it:
+ * - `sheet`: a worksheet, a textbook page, a vocabulary list — read as always.
+ * - `corrected_test`: a class test the teacher has marked. Only the marked tasks become
+ *   practice, as NEW tasks of the same kind; the grade and points have no field anywhere, the
+ *   transcript holds only the marked tasks, and the photos are deleted right after the reading.
+ * - `notebook_entry`: her notebook entry of a lesson (Hefteintrag) — a handful of short
+ *   questions, the stuff an unannounced test about the last lesson asks about.
+ */
+export const MaterialSource = z.enum(['sheet', 'corrected_test', 'notebook_entry']);
+export type MaterialSource = z.infer<typeof MaterialSource>;
 
 /**
  * Exercise forms Buddy has no exercise for, by what the task's PRODUCT is
@@ -212,6 +252,8 @@ export const MaterialView = z.object({
   subject_name: z.string().nullable(),
   goal_id: Uuid.nullable(),
   purpose: z.enum(['study', 'homework']),
+  /** What kind of page the reading recognised (issue #259); `sheet` until it is read. */
+  source: MaterialSource.default('sheet'),
   /** homework: the help session, once the tasks are read. */
   session_id: Uuid.nullable(),
   /**

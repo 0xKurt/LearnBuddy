@@ -3,18 +3,19 @@
 // docs/architecture.md §Home. Everything is derived from stored state —
 // no card claims more than the data shows.
 
-import type {
-  ActionSummary,
-  ActionView,
-  BuddyHome,
-  Decision,
-  GoalBrief,
-  MessageView,
-  HomeNotice,
-  NowCard,
-  OutreachView,
-  PreparedPractice,
-  UpcomingItem,
+import {
+  FINAL_FAILURES,
+  type ActionSummary,
+  type ActionView,
+  type BuddyHome,
+  type Decision,
+  type GoalBrief,
+  type MessageView,
+  type HomeNotice,
+  type NowCard,
+  type OutreachView,
+  type PreparedPractice,
+  type UpcomingItem,
 } from '@learnbuddy/shared-types/contracts';
 
 import { DAILY_LIMITS } from '../../config.js';
@@ -304,14 +305,10 @@ async function failedCard(
     // "Nochmal lesen" is only offered where a second reading can actually work: not for a
     // verdict that would repeat, not when the photos never arrived or are already gone
     // (retryMaterial refuses all three — the card must not promise what the API declines).
+    // A verdict a second reading would repeat (FINAL_FAILURES: #198, #259) offers none.
     retryable:
-      failed.failure_reason !== 'not_learning_material' &&
-      failed.failure_reason !== 'blocked' &&
+      !(failed.failure_reason && FINAL_FAILURES.has(failed.failure_reason)) &&
       failed.failure_reason !== 'photos_missing' &&
-      // Read perfectly well: the tasks on it are forms Buddy has no exercise for (issue
-      // #198). A second reading would find the same tasks, so the card says what he can do
-      // instead and never offers one.
-      failed.failure_reason !== 'form_not_practicable' &&
       !(row?.photos_deleted ?? false) &&
       (row?.n ?? 0) < 3,
     purpose: row?.purpose ?? 'study',

@@ -189,6 +189,7 @@
     "failed_budget_exhausted": "Je ne peux plus lire de fiches pour aujourd'hui. Ça remarchera demain.",
     "failed_blocked": "Je n'ai pas le droit de lire cette fiche – le filtre de sécurité la bloque. La relire n'y changera rien. Tape simplement les questions dont tu as besoin.",
     "failed_form_not_practicable": "J'ai bien pu lire ta fiche. Mais ce type d'exercice, je ne peux pas m'entraîner avec toi – demande-moi, je t'explique les étapes.",
+    "failed_nothing_marked": "Je n'ai rien trouvé de marqué comme faux sur ton contrôle – donc rien à retravailler. Si quelque chose est quand même marqué en rouge, prends une nouvelle photo.",
     "failed_retry": "Relire",
     "failed_new_photo": "Nouvelle photo",
     "result_title": "C'est fait !",

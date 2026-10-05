@@ -117,6 +117,8 @@ const state: BuddyState = {
       goal_id: 'g-1',
       item_count: 12,
       photo_count: 2,
+      source: 'sheet',
+      ready_at: new Date('2026-09-26T10:01:00Z'),
       page_problems: [],
       unclear: [],
       items_incomplete: false,

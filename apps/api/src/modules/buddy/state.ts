@@ -5,6 +5,8 @@
 import type {
   ActionSummary,
   DifficultyWish,
+  MaterialFailure,
+  MaterialSource,
   NotPracticable,
   PageProblem,
   TestMinutes,
@@ -189,7 +191,11 @@ export type MaterialBrief = {
   id: string;
   title: string | null;
   status: 'awaiting_upload' | 'queued' | 'processing' | 'ready' | 'failed';
-  failure_reason: string | null;
+  failure_reason: MaterialFailure | null;
+  /** What kind of page it is (issue #259): a corrected test and a notebook entry are said. */
+  source: MaterialSource;
+  /** When it was read; a notebook entry is "the lesson of that day". */
+  ready_at: Date | null;
   subject_id: string | null;
   goal_id: string | null;
   item_count: number;
@@ -565,7 +571,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
 
   const materialRows = await db.query<Omit<MaterialBrief, 'unclear'>>(
     `select m.id, m.title, m.status, m.failure_reason, m.subject_id, m.goal_id, m.created_at,
-            m.failed_at, m.photo_count,
+            m.failed_at, m.photo_count, m.source, m.ready_at,
             -- Pages not read: while unanswered, and for a day after the reading (the sheet is
             -- still at hand) — the home notice and Buddy's context see the same window.
             case when m.pages_resolved_at is null and m.ready_at > $3::timestamptz - interval '24 hours'

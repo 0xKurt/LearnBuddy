@@ -51,7 +51,8 @@ die Einwilligung).
 `docs/privacy.md` §What is stored): Name oder Spitzname, Geburtsdatum, Schulstufe, Bundesland
 der Schule (`learners.curriculum_region`, für den Lehrplan; Issue #199) ·
 Chat-Nachrichten · Zusammenfassungen beendeter Gespräche (zwei bis vier Sätze, vom Modell
-geschrieben, `buddy_session_summaries`) · Fotos von Arbeitsblättern und der daraus gelesene Text
+geschrieben, `buddy_session_summaries`) · Fotos von Arbeitsblättern und der daraus gelesene Text — auch einer korrigierten
+Klassenarbeit, von der nur die angestrichenen Aufgaben bleiben, nie Note oder Punkte (Issue #259)
 · daraus abgeleitet: Suchabschnitte des Textes samt Einbettungsvektoren (`material_passages`,
 Issue #23), kleine echte Bildausschnitte von Abbildungen des Blattes (`material_images`, Issue
 #50) und Stellen, die das Lesen nicht entscheiden konnte, samt der Lesart, die sie gewählt hat
@@ -200,6 +201,7 @@ Bewertet aus der Sicht der betroffenen Person — des Kindes.
 | R10 | **Injection**: Text auf einem fotografierten Blatt steuert Buddy                                                     | Kind         | mittel   | gering       |
 | R11 | **Zwischenspeicher beim Anbieter** hält Name, Alter und Prompt-Anfang bis zu 24 h außerhalb unserer Löschung         | Kind         | mittel   | offen (§7)   |
 | R12 | **Abgeleitetes überdauert die Quelle**: Bildausschnitte, Suchabschnitte, Zusammenfassungen leben länger als das Foto | Kind         | gering   | mittel       |
+| R13 | **Noten und Bemerkungen** einer fotografierten, korrigierten Klassenarbeit werden gespeichert oder gezeigt           | Kind         | mittel   | gering       |
 
 ---
 
@@ -225,6 +227,7 @@ Bewertet aus der Sicht der betroffenen Person — des Kindes.
 | R10    | Blatt-Text, Nachschlage-Ergebnisse und STATE sind im Prompt ausdrücklich **Daten, keine Anweisungen**; die harte Garantie ist Code: jedes Werkzeug ist validiert, arbeitet nur auf den Aliassen dieser lernenden Person, hinter dem Kontext-Zaun                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Prompt buddy.23+; `apps/api/evals/buddy` Fall `de_sheet_instruction_is_not_an_order`; `tools.ts`, `policy.ts`; `docs/architecture.md` §Injected text                                                                                        |
 | R11    | Kein expliziter Cache; der Anbieter-Zwischenspeicher ist nach seiner Angabe flüchtig und projektgebunden; das Geburtsdatum geht nie hinaus (nur Alter in Jahren). **Offen:** Bestätigung beim Anbieter, wo der Zwischenspeicher liegt, und die Entscheidung, ob er projektweit abgeschaltet wird — das kostet die gemessene Ersparnis (§7 Punkt 14)                                                                                                                                                                                                                                                                                                                                                                  | `modules/buddy/context.ts` (`ageGroup`, Reihenfolge der Abschnitte); `llm/vertex.ts` (`cachedContentTokenCount`); Issue #279                                                                                                                |
 | R12    | Bewusst entschieden und benannt: Ausschnitte, Suchabschnitte und unklare Stellen sind Lernmaterial und gehen **mit dem Blatt**; Zusammenfassungen gehen mit dem Konto; ein Notlagen-Zug erscheint in keiner Zusammenfassung (eine Regel für alles, was ein Modell über frühere Nachrichten erfährt)                                                                                                                                                                                                                                                                                                                                                                                                                  | `modules/materials/purge.ts` (`purgeContent`); `modules/buddy/recall.ts` (Issue #149); `docs/privacy.md` §What is stored                                                                                                                    |
+| R13    | Das Lese-Schema hat **kein Feld** für Note oder Punkte; Code baut den gespeicherten Text nur aus den angestrichenen Aufgaben, behält nur neue Aufgaben dazu, keine unklaren Stellen und keine Ausschnitte; die Fotos gehen direkt nach dem Lesen. Titel und Thema bleiben Freitext des Modells mit Prompt-Verbot — gemessen erst mit der Eval aus #259 (`docs/privacy.md` §What is stored)                                                                                                                                                                                                                                                                                                                           |
 
 **Organisatorisch.** Ein Modell- oder Regionswechsel ist eine Codeänderung und wird erst
 übernommen, wenn die Evals der betroffenen Aufgabe auf ihm bestehen (`docs/architecture.md`
@@ -336,6 +339,11 @@ Restrisiko wird als **vertretbar** eingestuft.
 16. **Age-Assurance-Proportionalität (§6) juristisch bestätigen:** die Abwägung in §6 ist von
     der Entwicklungsseite begründet; ob sie den Erwartungen der zuständigen Aufsichtsbehörde
     genügt, ist eine Rechtsfrage und hier **nicht** abschließend beurteilt.
+17. **Korrigierte Klassenarbeit live messen** (R13, Issue #259): fünf echte, anonymisierte
+    korrigierte Arbeiten durch das Lesen schicken und prüfen, dass Titel und Themen keine Note,
+    keine Punkte und keinen Namen tragen und nur angestrichene Aufgaben Übungen werden. Im Code
+    ist das Schema ohne Notenfeld und der gespeicherte Text aus den Aufgaben gebaut; die zwei
+    Freitextfelder hängen am Prompt.
 
 ---
 

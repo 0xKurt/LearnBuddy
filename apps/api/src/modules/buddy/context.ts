@@ -120,6 +120,8 @@ function failureNote(reason: string | null): string {
       return 'was refused by the safety filter; reading it again is not possible';
     case 'form_not_practicable':
       return 'was read without any trouble, and every task on it is an exercise form Buddy has no exercise for (something drawn, free speaking, a long text, a real experiment, a piece of work over weeks, a practical or a heard task), so there is nothing on it to practise: say that plainly, offer to explain it or go through the steps with her instead, and do not offer a second reading — it would find the same tasks';
+    case 'nothing_marked':
+      return 'is a corrected test on which nothing is marked wrong, so there is nothing to practise from it; its photos are deleted and reading it again is not possible. Never ask for or mention a grade or points';
     case 'budget_exhausted':
       return 'could not be read: no more sheets could be read today (tomorrow it works again)';
     case 'unreadable':
@@ -418,6 +420,19 @@ export function buildContext(
         );
       }
     }
+  }
+  // What kind of page a ready sheet is (issue #259): the reading said it, code kept only what
+  // follows from it — he must know, or he quizzes a test's tasks as if they were a worksheet.
+  for (const m of state.materials.filter((x) => x.status === 'ready' && x.source !== 'sheet')) {
+    const sheet = `"${m.title ?? 'sheet'}"`;
+    if (m.source === 'corrected_test')
+      materialBlock.push(
+        `- ${sheet} is her corrected class test: its questions are NEW tasks of the kind the teacher marked as wrong, never the original tasks and nothing that was right. Nothing about the grade or points was kept and its photos are deleted: never ask for or mention a grade or points`,
+      );
+    else
+      materialBlock.push(
+        `- ${sheet} is her notebook entry of the lesson on ${m.ready_at ? localParts(m.ready_at, tz).date : 'an earlier day'}: what an unannounced short test about the last lesson asks (some schools write one without notice). Its few questions are meant for a short run the next morning before school — prepare that and say so; any message to her phone stays within her contact settings`,
+      );
   }
   for (const m of state.materials.filter((x) => x.status === 'ready' && x.page_problems.length))
     materialBlock.push(

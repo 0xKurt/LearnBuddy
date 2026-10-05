@@ -5,7 +5,11 @@
 // Looks: a white card on a soft shadow, the subject's pastel as a round mark,
 // the main action first as a violet pill, quieter ones after it.
 
-import type { MaterialView } from '@learnbuddy/shared-types/contracts';
+import {
+  FINAL_FAILURES,
+  PHOTOS_GONE_AT_ONCE,
+  type MaterialView,
+} from '@learnbuddy/shared-types/contracts';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -51,9 +55,10 @@ function statusOf(m: MaterialView): Status | null {
       return { key: 'incomplete', tone: 'gray' };
     case 'failed':
       // "nicht lesbar" only when that is what the reading found — and a sheet whose tasks
-      // are exercise forms Buddy cannot practise WAS read (issue #198), so it never says
-      // "nicht gelesen": it has no exercises, and that is not a warning about her photo.
-      if (m.failure_reason === 'form_not_practicable') return { key: 'no_exercises', tone: 'gray' };
+      // are exercise forms Buddy cannot practise WAS read (issue #198), as was a corrected test
+      // with nothing marked (#259): it has no exercises, and that is no warning about her photo.
+      if (m.failure_reason === 'form_not_practicable' || m.failure_reason === 'nothing_marked')
+        return { key: 'no_exercises', tone: 'gray' };
       return {
         key: m.failure_reason === 'unreadable' ? 'unreadable' : 'not_read',
         tone: 'warning',
@@ -79,11 +84,11 @@ export function MaterialCard({
   const meta = m.status === 'ready' ? `${date} · ${t('questions', { count: m.item_count })}` : date;
   const status = statusOf(m);
   // The photos are gone (7 days after reading): reading again is not possible, only a new photo.
+  // Where they go at once by design, the reason says more than their absence does.
   const note =
     m.status === 'failed' &&
     m.photos_deleted &&
-    m.failure_reason !== 'not_learning_material' &&
-    m.failure_reason !== 'blocked'
+    !(m.failure_reason && PHOTOS_GONE_AT_ONCE.has(m.failure_reason))
       ? t('photos_deleted')
       : m.status === 'failed'
         ? t(`failure.${m.failure_reason ?? 'model_error'}`)
@@ -117,12 +122,10 @@ export function MaterialCard({
       : m.session_status === 'finished'
         ? 'homework_view'
         : 'homework_continue';
+  // Reading it again would give the same answer: the API refuses it (FINAL_FAILURES).
   const retryable =
     m.status === 'failed' &&
-    m.failure_reason !== 'not_learning_material' &&
-    m.failure_reason !== 'blocked' &&
-    // Reading it again would find the same tasks; the API refuses it (issue #198).
-    m.failure_reason !== 'form_not_practicable' &&
+    !(m.failure_reason && FINAL_FAILURES.has(m.failure_reason)) &&
     !m.photos_deleted;
 
   return (
