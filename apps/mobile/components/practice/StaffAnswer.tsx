@@ -311,6 +311,7 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
             <TapSurface
               key={b}
               testID={`staff-bar-${b + 1}`}
+              accessibilityRole="button"
               // Der Name sagt, was schon im Takt steht — der Screenreader hört die Zeile hier, wo
               // sie geschrieben wird —, der Hinweis, was ein Tipp tut.
               accessibilityLabel={tm('staff.bar_list', {
