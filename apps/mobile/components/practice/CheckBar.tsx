@@ -16,9 +16,11 @@
 //     "Prüfen" comes back when the question is sent. The pill is 54 pt where "Prüfen" across was
 //     48 (+6 pt on a board); under options it is the whole bar (the tile is the answer).
 //
-// In voice mode the spoken answer is the main control (the big mic, issue #310 §3.1 "voice slot"):
-// it stands in this bar above the input bar, and "Prüfen" steps back to the soft skin — the
-// field is still there for typing, but the mic is what voice mode is for.
+// Gespräch (issue #386): where an answer can be said — a typed answer, options with letters — the
+// waveform stands at the end of the input bar, as in the chat (`TalkButton`). Tapped, the bar
+// becomes the conversation row (`Talk`, `VoiceRow`): "Tastatur" · the big mic · "Nochmal
+// vorlesen", the same row as the conversation screen's (`app/talk.tsx`), mic in the middle. What
+// she says is checked right away; "Tastatur" brings the input bar back.
 //
 // It waits until the answer is complete. While it waits it says why to a screen reader (the
 // form's own hint: "Leg erst alle an ihren Platz"), and a tap on it does nothing — the button
@@ -27,9 +29,8 @@
 // Two other actions stand in the same place, so nothing about where the bottom of the screen is
 // depends on the form (issue #310, the notes of step 3):
 //   · `tap` — options answered by a tap on the tile (multiple choice, tapped words). There is no
-//     "Prüfen": the bar holds only her question. In voice mode the spoken answer has its place
-//     here instead (the voice slot: the mic and "Nochmal vorlesen") — asking by voice comes with
-//     the voice row (#386 part 2);
+//     "Prüfen": the bar holds only her question (and the waveform where the options can be said);
+//   · `talk` — the conversation row, in a conversation, for a form whose answer can be said;
 //   · `bar` — the question's own pinned bar: "Weiter" once it is closed, the pronunciation
 //     recorder. The shell places it like "Prüfen", at the bottom.
 
@@ -41,6 +42,12 @@ import { View } from 'react-native';
 import { Btn } from '../lb/Btn.js';
 import { BottomBar } from '../lb/BottomBar.js';
 import { InputBar } from '../lb/InputBar.js';
+import { MicButton, MicStatus } from '../voice/MicButton.js';
+import { TalkButton } from '../voice/TalkButton.js';
+import { useConversation } from '../voice/useConversation.js';
+import { useHandsFreeMic } from '../voice/useHandsFreeMic.js';
+import { useVoiceInput } from '../voice/useVoiceInput.js';
+import { VoiceRow } from '../voice/VoiceRow.js';
 
 /** "Prüfen": what a form hands to the bar — when its answer may go, how it goes, and why it waits. */
 type Check = {
@@ -51,8 +58,6 @@ type Check = {
   onPress: () => void;
   /** Said while it waits: what is still missing. */
   waitsHint: string;
-  /** Voice mode: the big mic, above "Prüfen" (undefined: none). */
-  voice?: ReactNode;
   /**
    * The input bar a typed answer is written in (`InputBar`, issue #365), with the keys she types
    * with: right above "Prüfen", in the same pinned bar, like the chat's. Handed what stands at the
@@ -67,13 +72,30 @@ type Check = {
   typing?: boolean;
 };
 
-/** The tile is the action; in voice mode the spoken answer has the voice slot. */
-type Tap = { tap: true; voice?: ReactNode };
+/** The tile is the action; `canTalk`: the options can be said, so the waveform stands in the bar. */
+type Tap = { tap: true; canTalk?: boolean };
+
+/** A spoken answer in a conversation (issue #386): what the conversation row's mic needs. */
+type Spoken = {
+  /** The question (sent as context, so a short spoken answer is heard right). */
+  prompt: string;
+  /** The language she answers in; null: the app's. */
+  lang: string | null;
+  /** The question is locked (sending, or answered). */
+  disabled: boolean;
+  /** What she said: checked right away. */
+  onText: (said: string) => void;
+  /** Hearing the question again ("Nochmal vorlesen"); none where it must not be heard. */
+  onReadAgain?: () => void;
+};
+
+/** Gespräch: the conversation row in the bar's place. */
+type Talk = { talk: Spoken };
 
 /** The question's own pinned bar ("Weiter", the recorder), in the action's place. */
 type OwnBar = { bar: ReactNode };
 
-export type CheckAction = Check | Tap | OwnBar;
+export type CheckAction = Check | Tap | OwnBar | Talk;
 
 /** Her question to the tutor about the question on screen (issue #402): the bar's field. */
 type Ask = {
@@ -104,36 +126,74 @@ export const AskRoute = createContext<AskState>({
 
 export function CheckBar(action: CheckAction) {
   if ('bar' in action) return <>{action.bar}</>;
-  if ('tap' in action) return action.voice ? <VoiceSlot voice={action.voice} bar /> : <TapBar />;
+  if ('talk' in action) return <TalkRow {...action.talk} />;
+  if ('tap' in action) return <TapBar canTalk={action.canTalk === true} />;
   return <CheckButton {...action} />;
 }
 
-/** Options she taps: the tile is the answer, the bar holds only her question. */
-function TapBar() {
+/** Options she taps: the tile is the answer, the bar holds her question — and the waveform. */
+function TapBar({ canTalk }: { canTalk: boolean }) {
   const field = useAskField(null);
+  const conversation = useConversation();
   return (
     <BottomBar>
-      <InputBar {...field} />
+      <InputBar {...field} after={canTalk ? <TalkButton onPress={conversation.start} /> : null} />
     </BottomBar>
   );
 }
 
-/** The spoken answer, centred above "Prüfen" — or alone in its bar, for options. */
-function VoiceSlot({ voice, bar = false }: { voice: ReactNode; bar?: boolean }) {
-  const slot = (
-    <View testID="answer-voice" style={{ alignItems: 'center' }}>
-      {voice}
-    </View>
+/**
+ * Gespräch (issue #386): the conversation screen's row in the bar — "Tastatur" (back to the input
+ * bar) · the big mic · "Nochmal vorlesen". Her first tap on the mic starts the hands-free loop
+ * (`useHandsFreeMic`); listening ends by itself when she pauses (on the phone).
+ */
+function TalkRow({ prompt, lang, disabled, onText, onReadAgain }: Spoken) {
+  const { t } = useTranslation(['common', 'buddy']);
+  const conversation = useConversation();
+  const voice = useVoiceInput({
+    purpose: 'answer',
+    lang,
+    context: prompt,
+    onText,
+    untilPause: true,
+  });
+  useHandsFreeMic(voice, disabled, prompt);
+  return (
+    <BottomBar>
+      <MicStatus voice={voice} />
+      <VoiceRow
+        left={{
+          icon: 'keyboard',
+          label: t('buddy:composer.keyboard'),
+          onPress: () => {
+            voice.cancel();
+            conversation.stop();
+          },
+        }}
+        mic={
+          <MicButton
+            voice={voice}
+            size="lg"
+            filled
+            label={t('common:voice.answer')}
+            disabled={disabled}
+          />
+        }
+        right={
+          onReadAgain
+            ? { icon: 'speak', label: t('common:voice.read_again'), onPress: onReadAgain }
+            : null
+        }
+      />
+    </BottomBar>
   );
-  return bar ? <BottomBar>{slot}</BottomBar> : slot;
 }
 
 function CheckButton(check: Check) {
-  const { voice, input, typing, ready } = check;
+  const { input, typing, ready } = check;
   const field = useAskField(<CheckBtn {...check} />);
   return (
     <BottomBar>
-      {voice ? <VoiceSlot voice={voice} /> : null}
       {input ? (
         <>
           {input(typing && ready ? <CheckBtn {...check} /> : null)}
@@ -186,7 +246,7 @@ function useAskField(check: ReactNode): ComponentProps<typeof InputBar> {
 
 /**
  * "Prüfen" itself, in one of two places. `across`: over the bar's full width (md, the boards'
- * size), the soft skin in voice mode — under a typed answer's field. Otherwise inside the input
+ * size) — under a typed answer's field. Otherwise inside the input
  * bar (issues #365, #402), where the chat's "Senden" is: small, at the pill's end, and it keeps
  * the focus in the field, so a tap never closes the keyboard under her finger before it lands.
  */
@@ -195,7 +255,6 @@ function CheckBtn({
   disabled,
   onPress,
   waitsHint,
-  voice,
   across = false,
 }: Check & { across?: boolean }) {
   const { t } = useTranslation('practice');
@@ -203,7 +262,6 @@ function CheckBtn({
     <View testID="answer-action">
       <Btn
         size={across ? 'md' : 'sm'}
-        variant={across && voice ? 'soft' : 'primary'}
         pill
         full={across}
         keepsFocus={!across}

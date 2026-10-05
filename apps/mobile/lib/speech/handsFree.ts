@@ -1,9 +1,9 @@
-// Hands-free practice (voice mode, docs/architecture.md §Voice): once she has
-// tapped a mic on the practice screen herself, the loop goes on by itself —
+// Hands-free practice (Gespräch, docs/architecture.md §Voice): once she has
+// tapped the conversation row's mic on the practice screen herself, the loop goes on by itself —
 // the question is read, the mic listens, her answer is checked, Buddy's
 // feedback is read, the mic listens again (or the next question comes). The
-// microphone never starts before her first tap; leaving the screen, switching
-// voice mode off or typing ends it.
+// microphone never starts before her first tap; leaving the screen, going back
+// to the keyboard or switching reading aloud off ends it.
 
 import { create } from 'zustand';
 

@@ -125,7 +125,7 @@ export async function overflows(page: Page): Promise<Overflow[]> {
 export type AnswerPlace = {
   /**
    * The empty band under the answer (and its keys): from its lowest edge to the first thing drawn
-   * below it — "Prüfen", the voice slot, the input bar — or to the window's bottom edge where the
+   * below it — "Prüfen", the conversation row, the input bar — or to the window's bottom edge where the
    * answer itself is the action (options she taps). 0: no slot.
    */
   gap: number;
@@ -143,7 +143,7 @@ export type AnswerPlace = {
 
 /**
  * The one rule of the answer shell, measured (issues #310 §3.4, #386): every answer stands at the
- * bottom — directly above its action ("Prüfen", the voice slot, the input bar it writes into), or
+ * bottom — directly above its action ("Prüfen", the conversation row, the input bar it writes into), or
  * at the window's bottom edge where the tap on it is the action. The free room collects above it,
  * between the conversation and the answer, never under it; "Prüfen" is lowest. A typed answer is
  * written in the input bar right above "Prüfen" (issue #365). Null where neither an answer slot
@@ -444,7 +444,7 @@ export async function shot(
   const counts = await Promise.all(typedIn.map((id) => page.getByTestId(id).count()));
   const fieldId = typedIn.find((_, i) => counts[i]! > 0);
   if (fieldId) await keyboardPass(page, name, fieldId);
-  // Any other answer (voice mode's options): its room in the same window, so every form has a
+  // Any other answer (options in a conversation): its room in the same window, so every form has a
   // keyboard column in the measurement (issue #395).
   else if ((await page.getByTestId('answer-slot').count()) > 0) {
     await page.setViewportSize(KEYBOARD_ROOM);

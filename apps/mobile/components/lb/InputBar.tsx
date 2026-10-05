@@ -12,7 +12,7 @@
 // mic is doing, and the count shows only when the end of the field is near (#133 position 17).
 //
 // What the bar sends and how is its screen's: the chat sends, practice checks with "Prüfen"
-// (`CheckBar`). Voice mode's big mic is the screen's as well.
+// (`CheckBar`). A conversation's big mic is not in the bar: it replaces it (`VoiceRow`).
 //
 // Every practice form holds this bar (issue #395, report #388 §9: one bar, the same in every
 // task). A typed answer is written in its field; on every other form — options, a board, the
@@ -39,7 +39,7 @@ type Controls = {
   voice?: VoiceInput;
   /** The mic's name for a screen reader ("Nachricht sprechen", "Antwort sagen"). */
   micLabel?: string;
-  /** False: no mic in the pill (a Diktat; voice mode, where the big mic is the screen's). */
+  /** False: no mic in the pill (a Diktat: the recogniser would spell for her). */
   mic?: boolean;
   /** Takes the mic's place while the mic is idle ("Senden", "Stopp", "Prüfen"); null: the mic stays. */
   action?: ReactNode;

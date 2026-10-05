@@ -18,11 +18,12 @@
 // takes over. Keeping it here means every way into a session — Buddy's home card, the result
 // screen's offer, a link — lands in the right place without knowing which pass it is.
 //
-// Voice mode ("Sprachmodus", the headphones switch in the header): each new
+// Vorlesen (the speaker switch in the header, the chat's, issue #386): each new
 // question is read aloud (choices as "A: …, B: …", a vocab prompt in its own
 // language), and so is Buddy's reply with the verdict word after every answer.
-// The mic is the main control; reading stops when she starts speaking or
-// leaves. The microphone itself only ever starts with her tap.
+// Gespräch (the waveform in the input bar) reads aloud too, and the bar becomes the
+// conversation row with the mic in the middle (`CheckBar`); reading stops when she
+// starts speaking or leaves. The microphone itself only ever starts with her tap.
 
 import {
   type AnswerResponse,
@@ -52,7 +53,7 @@ import { TypedAnswer } from '../../components/practice/TypedAnswer.js';
 import { CardPass } from '../../components/practice/CardPass.js';
 import { DrillRound } from '../../components/practice/DrillRound.js';
 import { BottomBar } from '../../components/lb/BottomBar.js';
-import { ChoiceList, SpokenChoice } from '../../components/practice/ChoiceList.js';
+import { ChoiceList } from '../../components/practice/ChoiceList.js';
 import {
   canDisputeVerdict,
   DisputeVerdictSheet,
@@ -66,7 +67,6 @@ import { ItemThread } from '../../components/practice/ItemThread.js';
 import { PracticeStuck } from '../../components/practice/PracticeStuck.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
 import { QuestionCorner } from '../../components/practice/QuestionCorner.js';
-import { ReadQuestionButton } from '../../components/practice/ReadQuestionButton.js';
 import { QuestionTools } from '../../components/practice/QuestionTools.js';
 import {
   emptyStaffAnswer,
@@ -89,7 +89,7 @@ import {
   SpeakCard,
   SpeakPanel,
 } from '../../components/practice/SpeakPanel.js';
-import { VoiceModeToggle } from '../../components/voice/VoiceModeToggle.js';
+import { ReadAloudSwitch } from '../../components/lb/ReadAloudSwitch.js';
 import { isOutdated, isRetryable } from '../../lib/api/apiError.js';
 import { newId } from '../../lib/api/client.js';
 import {
@@ -127,7 +127,7 @@ import { speakInOrder, stop as stopListening } from '../../lib/speech/listen.js'
 import { feedbackReadText, spokenText } from '../../lib/speech/spoken.js';
 import { baseLanguage } from '../../lib/speech/voice.js';
 import { afterFeedback, useHandsFree } from '../../lib/speech/handsFree.js';
-import { useVoiceMode } from '../../lib/speech/voiceMode.js';
+import { readsAloud, useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
@@ -238,17 +238,17 @@ export default function PracticeScreen() {
   // The session ran here while the screen was open: its end is a moment (SessionSummary).
   const sawActive = useRef(false);
   if (session?.status === 'active') sawActive.current = true;
-  const voiceOn = useVoiceMode((s) => s.on);
+  const voiceOn = useVoiceMode(readsAloud);
+  const conversation = useVoiceMode((s) => s.conversation);
   const words = useSpokenWords();
 
-  // Voice mode: a question is read aloud once when it appears (or when voice mode is switched on).
+  // Vorlesen: a question is read aloud once when it appears (or when reading is switched on).
   const onScreen = session ? questionOnScreen(session, pinnedId) : null;
   // A flashcard pass is not read aloud and never arms the mic: there is no answer to listen
   // for (issue #147). The card itself offers "Anhören" for the word, which is the control
   // that makes sense there.
   // Nor a question the server says must not be heard (issue #238, `read_aloud`): a spelling
-  // task, a vocabulary prompt that holds its own answer. Voice mode obeys the same rule as the
-  // "Vorlesen" button — hearing it would hand over the solution either way.
+  // task, a vocabulary prompt that holds its own answer — hearing it would hand over the solution.
   const toRead =
     onScreen &&
     onScreen.status === 'open' &&
@@ -265,7 +265,7 @@ export default function PracticeScreen() {
     });
   useEffect(() => {
     if (voiceOn && toRead) readQuestion(toRead);
-    // Only a new question (or switching voice mode on) reads again; "Nochmal vorlesen" repeats it.
+    // Only a new question (or switching reading on) reads again; "Nochmal vorlesen" repeats it.
   }, [voiceOn, toRead?.id]);
 
   // Leaving the screen ends whatever is being read, and the hands-free loop.
@@ -279,8 +279,8 @@ export default function PracticeScreen() {
     }, []),
   );
   useEffect(() => {
-    if (!voiceOn) useHandsFree.getState().disarm();
-  }, [voiceOn]);
+    if (!conversation) useHandsFree.getState().disarm();
+  }, [conversation]);
 
   /** Buddy's reaction after an answer or a hint, with the verdict word first and math in words. */
   function feedbackText(res: AnswerResponse): string {
@@ -298,13 +298,13 @@ export default function PracticeScreen() {
   }
 
   /**
-   * Voice mode reads the feedback aloud; otherwise a screen reader hears the same words —
+   * Vorlesen reads the feedback aloud; otherwise a screen reader hears the same words —
    * the verdict too, never raw LaTeX (audit M-82).
    */
   function readFeedback(res: AnswerResponse, itemId: string): void {
     feel(res);
     const text = feedbackText(res);
-    if (!useVoiceMode.getState().on) {
+    if (!readsAloud(useVoiceMode.getState())) {
       announce(text);
       return;
     }
@@ -515,9 +515,10 @@ export default function PracticeScreen() {
       try {
         const res = await reexplainItem(id, itemId, way);
         await store(res.session);
-        // Heard like every reply of Buddy's: read aloud in voice mode, else told to a screen reader.
+        // Heard like every reply of Buddy's: read aloud with Vorlesen, else told to a screen reader.
         const said = spokenText(res.reply.text, words);
-        if (useVoiceMode.getState().on) speakInOrder([{ text: said, lang: currentLocale() }]);
+        if (readsAloud(useVoiceMode.getState()))
+          speakInOrder([{ text: said, lang: currentLocale() }]);
         else announce(said);
       } finally {
         setAgain(null);
@@ -675,7 +676,7 @@ export default function PracticeScreen() {
     // Stays while a question is on screen, also once the session was finished in the
     // background (finishing again is a no-op) – the header must not jump under the reader.
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-      <VoiceModeToggle />
+      <ReadAloudSwitch />
       <EndButton
         onPress={() => void close()}
         disabled={closing}
@@ -708,7 +709,8 @@ export default function PracticeScreen() {
     answerForm(item, open);
   // Her short answer appears in the gap of a fill-in sentence while she types.
   const filling = typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined;
-  const reRead = voiceOn && open && !choices && item.read_aloud ? () => readQuestion(item) : null;
+  // "Nochmal vorlesen" in the conversation row — only where the server allows hearing it.
+  const readAgain = item.read_aloud ? { onReadAgain: () => readQuestion(item) } : {};
   /** Ihre Notenzeile zu DIESER Frage; eine andere Frage beginnt mit einer leeren Zeile. */
   const staffAnswer =
     written?.itemId === item.id ? written.answer : emptyStaffAnswer(staff?.bars ?? 1);
@@ -727,16 +729,6 @@ export default function PracticeScreen() {
   // A foreign vocabulary word has its own "Anhören" (its pronunciation is the point); that IS
   // its read-aloud button, so it never gets a second one.
   const hearWord = item.kind === 'vocab' && foreign(item.prompt_lang);
-  // "Frage vorlesen" (issue #238) in the card's meta row (`ReadQuestionButton`, issue #310). Only
-  // where the server allows it (`read_aloud`), only while the question is open, and not where
-  // another control already reads it — voice mode's "Nochmal vorlesen", the pronunciation card's
-  // "Anhören", the foreign word's "Anhören". It says what voice mode says (math in words, choices
-  // as "A: …, B: …"). Keyed by the question: a new one never inherits a running reading.
-  const readOut =
-    !voiceOn && open && item.read_aloud && !speaking && !hearWord
-      ? (questionParts(item, words, t)[0] ?? null)
-      : null;
-
   // How the conversation and the card share the room (issues #96, #286, #232): `threadRoom`.
   const { threadCap, threadFloor, threadHolds, cardGrowTo, caps, cardNatural, ...room } =
     measured.layout({
@@ -885,15 +877,6 @@ export default function PracticeScreen() {
                         imageKey={item.id}
                         imageMaxHeight={caps.image}
                         fromBuddy={item.origin === 'buddy'}
-                        read={
-                          readOut ? (
-                            <ReadQuestionButton
-                              key={`read-${item.id}`}
-                              text={readOut.text}
-                              lang={readOut.lang}
-                            />
-                          ) : null
-                        }
                         minHeight={cardGrowTo > 0 ? cardNatural + cardGrowTo : undefined}
                         dense={staff !== null}
                         answer={filling}
@@ -906,7 +889,6 @@ export default function PracticeScreen() {
                   <QuestionTools
                     item={item}
                     sessionId={session.id}
-                    readAgain={reRead}
                     hearWord={hearWord}
                     heard={heard}
                     markHeard={markHeard}
@@ -937,9 +919,11 @@ export default function PracticeScreen() {
                     // the bubble with its verdict shows what she did, like any other answer.
                     // The same for tapped options (issue #288): a tried tile says "Schon
                     // ausprobiert" itself, and a bubble repeating it was a duplicate — for a
-                    // picture option even the formula behind the drawing. In voice mode the
+                    // picture option even the formula behind the drawing. In a conversation the
                     // bubble stays: there it is the only place she sees what was heard.
-                    echoAnswers={!((structured || ((choices || tapChoices) && !voiceOn)) && open)}
+                    echoAnswers={
+                      !((structured || ((choices || tapChoices) && !conversation)) && open)
+                    }
                     onTurnTops={measured.setTurnTops}
                   />
                   {session.mode === 'help' && shown.status === 'correct' ? (
@@ -993,7 +977,7 @@ export default function PracticeScreen() {
                 </ThreadBox>
               </View>
               {/* Options she taps (issue #288), in the answer shell like every form (issue #310): at the
-            bottom, the free room above (#386), and in voice mode the spoken answer where
+            bottom, the free room above (#386), and in a conversation the conversation row where
             "Prüfen" stands for the others. Tapped words go as if she had typed them: same
             grading, same key (issue #147). */}
               {open && (choices || tapChoices) ? (
@@ -1014,20 +998,20 @@ export default function PracticeScreen() {
                       }
                     />
                   }
-                  action={{
-                    tap: true,
-                    voice:
-                      choices && voiceOn ? (
-                        <SpokenChoice
-                          prompt={item.prompt}
-                          disabled={locked}
-                          onText={(said) =>
-                            void answer(item.id, { text: said, via: 'spoken' }, said)
-                          }
-                          {...(item.read_aloud ? { onReadAgain: () => readQuestion(item) } : {})}
-                        />
-                      ) : undefined,
-                  }}
+                  action={
+                    choices && conversation
+                      ? {
+                          talk: {
+                            prompt: item.prompt,
+                            lang: null,
+                            disabled: locked,
+                            onText: (said) =>
+                              void answer(item.id, { text: said, via: 'spoken' }, said),
+                            ...readAgain,
+                          },
+                        }
+                      : { tap: true, canTalk: choices !== null }
+                  }
                 />
               ) : null}
               {/* A structured item's parts (issues #228–#230): one form per kind in the answer
@@ -1076,6 +1060,7 @@ export default function PracticeScreen() {
                   disabled={locked}
                   onChange={setText}
                   onCheck={check}
+                  {...readAgain}
                 />
               ) : null}
               {/* The fraction bar she works with (issue #162), a board like the others (report #388

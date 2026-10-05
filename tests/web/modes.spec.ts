@@ -151,6 +151,12 @@ test('learning modes: explain, homework help without the solution, practice with
     await page.getByLabel('Deine Antwort').evaluate((el) => getComputedStyle(el).outlineWidth),
   ).toBe('0px');
   await shot(page, '22-fill-blank');
+  // The same at night: the bar with the speaker and the waveform (#386).
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '22n-fill-blank-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  // The theme switch rebuilt the tree; her answer is a draft and still there.
+  await expect(page.getByLabel('Deine Antwort')).toHaveValue('der');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -336,31 +342,31 @@ test('learning modes: explain, homework help without the solution, practice with
   await shot(page, '25b-practice-fractions-night');
   await page.emulateMedia({ colorScheme: 'light' });
 
-  // ── "Vorlesen" at the question, without voice mode (issue #238) ──
-  // The small speaker at the end of the card's meta row (issue #310), the one place for it. One
-  // tap reads the question in Buddy's voice — what is sent is the SPOKEN text, math in words,
-  // never LaTeX — a second tap stops it.
-  const readQuestion = page.getByRole('button', { name: 'Frage vorlesen' });
-  await expect(readQuestion).toHaveCount(1);
-  await expect(
-    page.getByTestId('question-meta').getByRole('button', { name: 'Frage vorlesen' }),
-  ).toBeVisible();
+  // ── Vorlesen: the speaker in the practice head, the chat's own switch (issue #386) ──
+  // One tap reads the question in Buddy's voice — what is sent is the SPOKEN text, math in words,
+  // never LaTeX (issue #238). No speaker in the card any more ("Frage vorlesen", owner 04.10.):
+  // one switch per screen, in the same place as in the chat. .last(): the home under this screen
+  // keeps its own head mounted (expo-router).
+  await expect(page.getByRole('button', { name: 'Frage vorlesen' })).toHaveCount(0);
+  const readOff = page.getByRole('switch', { name: 'Vorlesen', exact: true }).last();
+  const readOn = page.getByRole('switch', { name: 'Vorlesen ist an' }).last();
+  await expect(readOff).toHaveAttribute('aria-checked', 'false');
   const spokenRequest = page.waitForRequest(
     (r) => r.url().includes('/voice/speech') && r.method() === 'POST',
   );
-  await readQuestion.click();
+  await readOff.click();
   const sent = (await spokenRequest).postDataJSON() as { text: string; locale: string };
   expect(sent.locale).toBe('de-DE');
   expect(sent.text, 'read in words, never as LaTeX').not.toMatch(/[$\\{}]/);
-  const stopReading = page.getByRole('button', { name: 'Anhalten' });
-  await expect(stopReading).toBeVisible();
+  await expect(readOn).toHaveAttribute('aria-checked', 'true');
+  // Reading aloud is not listening: the bar stays the input bar, no mic of its own.
+  await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
   await shot(page, '25b-practice-reading');
-  await stopReading.click();
-  await expect(readQuestion).toBeVisible();
-  await expect(stopReading).toHaveCount(0);
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '25c-practice-read-dark');
   await page.emulateMedia({ colorScheme: 'light' });
+  await readOn.click();
+  await expect(readOff).toHaveAttribute('aria-checked', 'false');
 
   // ── Her question under the options (issue #402, report #388 §1) ──
   // The tile is the answer; the bar's field is the way to ask the tutor about the task. Asking
@@ -381,50 +387,60 @@ test('learning modes: explain, homework help without the solution, practice with
   await shot(page, '25e-practice-asked-night');
   await page.emulateMedia({ colorScheme: 'light' });
 
-  // ── Voice mode: switched on in the practice header, still on at Buddy ──
+  // ── Gespräch: the waveform in the bar, as in the chat; the bar becomes the talk row (#386) ──
   // (Recording can't run in headless Chromium; this checks the controls and the layout.)
-  const voiceSwitch = page.getByRole('switch', { name: 'Sprachmodus' }).last();
-  await expect(voiceSwitch).toHaveAttribute('aria-checked', 'false');
-  // Multiple choice: the mic only joins the options in voice mode.
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
-  await voiceSwitch.click();
-  await expect(voiceSwitch).toHaveAttribute('aria-checked', 'true');
+  // .last(): the chat's waveform stays mounted under this screen.
+  await page.getByRole('button', { name: 'Mit Buddy sprechen' }).last().click();
   const explained = page.getByText('Ich lese dir vor. Tipp einmal aufs Mikro', { exact: false });
   await expect(explained).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Nochmal vorlesen' })).toBeVisible();
-  // One way to have it read, never two: voice mode's own button replaces "Vorlesen".
-  await expect(page.getByRole('button', { name: 'Frage vorlesen' })).toHaveCount(0);
+  // The conversation screen's row: "Tastatur" · the big mic · "Nochmal vorlesen" — no field.
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Nochmal vorlesen' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tastatur' }).last()).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toHaveCount(0);
+  // A conversation reads aloud too: the speaker says so.
+  await expect(readOn).toHaveAttribute('aria-checked', 'true');
+  // The mic stands in the middle of the screen, like on the conversation screen.
+  const mic = await page.getByRole('button', { name: 'Antwort sagen' }).boundingBox();
+  const width = page.viewportSize()!.width;
+  expect(Math.abs(mic!.x + mic!.width / 2 - width / 2), 'the mic is centred').toBeLessThan(2);
   await expect(explained).toBeHidden({ timeout: 8000 });
   await shot(page, '27-practice-voice-mode');
-  // The same moment at night: the voice bar, the reply and the drawing share the room (#286).
+  // The same moment at night: the row, the reply and the drawing share the room (#286).
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '27b-practice-voice-mode-night');
   await page.emulateMedia({ colorScheme: 'light' });
+  // "Tastatur": back to the input bar, and silent again — she never switched Vorlesen on.
+  await page.getByRole('button', { name: 'Tastatur' }).last().click();
+  await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toBeVisible();
+  await expect(readOff).toHaveAttribute('aria-checked', 'false');
+  // Vorlesen on in practice, still on at Buddy: one setting, one switch, two heads.
+  await readOff.click();
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
-  // Still in voice mode at Buddy: the bar is voice-first (keyboard · big mic · photo).
-  await expect(page.getByRole('button', { name: 'Tastatur' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
-  await shot(page, '26-buddy-voice-mode');
-  // The speaker is back in the head (issue #181), and this time it says which way it is:
-  // a switch with a state, not the bare symbol #52 took out. Its name IS its state.
   const readAloudOn = page.getByRole('switch', { name: 'Vorlesen ist an' });
-  const readAloudOff = page.getByRole('switch', { name: 'Antworten vorlesen' });
+  const readAloudOff = page.getByRole('switch', { name: 'Vorlesen', exact: true });
   await expect(readAloudOn).toHaveAttribute('aria-checked', 'true');
+  // The chat keeps its one input bar: no voice-first bar beside it (#386).
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tastatur' })).toHaveCount(0);
+  await shot(page, '26-buddy-voice-mode');
+  // The same at night: the bar with the speaker and the waveform (#386).
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '26b-buddy-night');
+  await page.emulateMedia({ colorScheme: 'light' });
   // And it is no longer a second place to look.
   await page.getByRole('button', { name: 'Mehr' }).click();
   await expect(page.getByRole('button', { name: 'Vorlesen ist an' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Schließen' }).click();
-  // "Tastatur" goes back to typing — and it is the SAME state, so the head follows it.
-  await page.getByRole('button', { name: 'Tastatur' }).click();
-  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
-  await expect(readAloudOff).toHaveAttribute('aria-checked', 'false');
-  // On and off again from the head itself, one tap each way.
-  await readAloudOff.click();
-  await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
+  // Off and on again from the head itself, one tap each way.
   await readAloudOn.click();
-  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+  await expect(readAloudOff).toHaveAttribute('aria-checked', 'false');
+  await readAloudOff.click();
+  await expect(readAloudOn).toHaveAttribute('aria-checked', 'true');
+  await readAloudOn.click();
+  await expect(readAloudOff).toHaveAttribute('aria-checked', 'false');
   // Off again: "Ich lese dir vor …" no longer holds, so it does not stay on screen.
   await expect(explained).toHaveCount(0);
 
@@ -555,6 +571,10 @@ test('learning modes: explain, homework help without the solution, practice with
     page.getByText('Diese Woche steht noch nichts an – magst du etwas üben?').last(),
   ).toBeVisible();
   await shot(page, '33-talk-answer');
+  // The same at night: the bar with the speaker and the waveform (#386).
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '33b-talk-answer-night');
+  await page.emulateMedia({ colorScheme: 'light' });
   await page.getByRole('button', { name: 'Beenden' }).last().click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   // The same conversation: what was said by voice is in the chat.

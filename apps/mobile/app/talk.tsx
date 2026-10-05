@@ -36,6 +36,7 @@ import { Glow } from '../components/lb/Glow.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
 import { MicButton, MIC_RING_ROOM } from '../components/voice/MicButton.js';
 import { TalkOrb, type OrbMode } from '../components/voice/TalkOrb.js';
+import { VoiceRow } from '../components/voice/VoiceRow.js';
 import { talkMode } from '../lib/buddy/moon.js';
 import { useBuddyVoice } from '../lib/speech/useBuddyVoice.js';
 import { useVoiceInput } from '../components/voice/useVoiceInput.js';
@@ -545,13 +546,10 @@ export default function TalkScreen() {
         </View>
       </View>
 
-      {/* Voice first: keyboard · big mic · camera, like the chat's voice bar ("Beenden" is the
-          close button on top). */}
+      {/* Voice first: keyboard · big mic · camera — the conversation's one row (`VoiceRow`),
+          the same in practice (issue #386). "Beenden" is the close button on top. */}
       <View
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-around',
           paddingHorizontal: SPACE.lg,
           // Room for the mic's pulsing ring, which is drawn absolute and scaled and so
           // reaches past its button (MIC_RING_ROOM, 17 pt) — with SPACE.md it stuck four
@@ -562,34 +560,29 @@ export default function TalkScreen() {
           paddingTop: SPACE.sm,
         }}
       >
-        <View style={{ alignItems: 'center', gap: 4, width: 96 }}>
-          <CircleBtn
-            icon="keyboard"
-            onPress={leave}
-            accessibilityLabel={t('buddy:composer.keyboard')}
-          />
-          <Text style={[TYPE.label, { color: palette.ink2 }]}>{t('buddy:composer.keyboard')}</Text>
-        </View>
-        <MicButton
-          voice={voice}
-          size="lg"
-          filled
-          label={phase === 'speaking' ? t('buddy:talk.interrupt') : t('buddy:talk.speak')}
-          disabled={phase === 'thinking'}
-          onPress={onMic}
-        />
-        <View style={{ alignItems: 'center', gap: 4, width: 96 }}>
-          <CircleBtn
-            icon="camera"
-            onPress={() => {
+        <VoiceRow
+          left={{ icon: 'keyboard', label: t('buddy:composer.keyboard'), onPress: leave }}
+          mic={
+            <MicButton
+              voice={voice}
+              size="lg"
+              filled
+              label={phase === 'speaking' ? t('buddy:talk.interrupt') : t('buddy:talk.speak')}
+              disabled={phase === 'thinking'}
+              onPress={onMic}
+            />
+          }
+          right={{
+            icon: 'camera',
+            label: t('buddy:talk.photo'),
+            accessibilityLabel: t('buddy:talk.photo_label'),
+            onPress: () => {
               haptic.tap();
               // The photo goes into the same conversation; capture brings her back here.
               router.push({ pathname: '/capture', params: { from: 'talk' } });
-            }}
-            accessibilityLabel={t('buddy:talk.photo_label')}
-          />
-          <Text style={[TYPE.label, { color: palette.ink2 }]}>{t('buddy:talk.photo')}</Text>
-        </View>
+            },
+          }}
+        />
       </View>
     </SafeAreaView>
   );

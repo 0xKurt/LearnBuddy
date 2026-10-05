@@ -1,8 +1,8 @@
 // The right end of a question's progress row: the one quiet action on the question — "Frage
 // passt nicht" for a question from a photo or from Buddy, else "Das stimmt doch" for a judgement
 // she may disagree with (issue #164). Only one of the two ever stands there; the flag wins.
-// "Frage vorlesen" is not here: it lives in the question card's meta row (`ReadQuestionButton`,
-// issue #310), so this row keeps its room for the progress bar and a test's clock (#334.2).
+// Nothing else stands here, so this row keeps its room for the progress bar and a test's clock
+// (#334.2). Hearing the question is the header's speaker (Vorlesen, issue #386).
 
 import { useTranslation } from 'react-i18next';
 

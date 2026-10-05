@@ -1,4 +1,4 @@
-// What voice mode reads aloud and how a transcript lands in a field. Pure
+// What Buddy reads aloud (Vorlesen, Gespräch) and how a transcript lands in a field. Pure
 // logic (no React Native), unit-tested: the words for math come from the
 // locale (useSpokenWords), **bold** markers are never read, and a question
 // with choices is read as "…? A: …, B: …".

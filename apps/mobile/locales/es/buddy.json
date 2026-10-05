@@ -65,9 +65,7 @@
   "composer": {
     "placeholder": "Escribe a Buddy…",
     "send": "Enviar",
-    "photo": "Fotografiar una ficha",
     "keyboard": "Teclado",
-    "photo_short": "Foto",
     "attach": {
       "title": "¿Qué quieres adjuntar?",
       "camera": "Hacer una foto",
@@ -145,9 +143,7 @@
     "memory": "Lo que Buddy sabe de ti",
     "library": "Tu material",
     "settings": "Ajustes",
-    "short": "Más",
-    "read_aloud_on": "La lectura está activada",
-    "read_aloud_off": "Leer las respuestas en voz alta"
+    "short": "Más"
   },
   "message": {
     "title_buddy": "Mensaje de Buddy",

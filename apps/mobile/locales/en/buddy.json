@@ -65,9 +65,7 @@
   "composer": {
     "placeholder": "Write to Buddy …",
     "send": "Send",
-    "photo": "Photograph a worksheet",
     "keyboard": "Keyboard",
-    "photo_short": "Photo",
     "attach": {
       "title": "What do you want to attach?",
       "camera": "Take a photo",
@@ -145,9 +143,7 @@
     "memory": "What Buddy knows about you",
     "library": "Your material",
     "settings": "Settings",
-    "short": "More",
-    "read_aloud_on": "Reading aloud is on",
-    "read_aloud_off": "Read answers aloud"
+    "short": "More"
   },
   "message": {
     "title_buddy": "Buddy's message",
