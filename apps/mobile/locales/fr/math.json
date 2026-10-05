@@ -500,7 +500,11 @@
     "cubes_row": "rangée {{n}} : {{h}} cubes de haut",
     "cubes_front": "Vue de face : {{rows}}",
     "cubes_side": "Vue de gauche : {{rows}}",
-    "cubes_top": "Vue de dessus : {{rows}}"
+    "cubes_top": "Vue de dessus : {{rows}}",
+    "map_de": "Carte muette : l’Allemagne et ses {{count}} Länder.",
+    "map_europe": "Carte muette : les pays d’Europe.",
+    "map_world": "Carte muette : le monde et ses {{count}} continents.",
+    "map_marked": "En couleur : {{names}}."
   },
   "keys": {
     "row": "Symboles mathématiques",
@@ -553,11 +557,14 @@
     "how_function_plot": "Touche le point dans le repère.",
     "how_bar_chart": "Touche une barre.",
     "how_clock": "Touche le cadran là où l’aiguille doit pointer.",
+    "how_map": "Touche la région sur la carte.",
     "value": "Endroit : {{value}}",
     "point": "Point ({{x}} | {{y}})",
     "bar": "Barre : {{label}}",
+    "region": "Région : {{name}}",
     "chosen_number_line": "Endroit choisi",
     "chosen_function_plot": "Point placé",
+    "chosen_map": "Région choisie",
     "label": "Ton endroit dans la figure",
     "up": "vers le haut",
     "down": "vers le bas",

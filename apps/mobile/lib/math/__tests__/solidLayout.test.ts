@@ -112,9 +112,13 @@ function clashes(s: Solid, width: number): string[] {
   const texts = drawing.labels.map((l) => text(l.v));
   const boxes = layout.spots.map((spot, i) => grow(textBox(spot, texts[i]!), 1));
   const out: string[] = [];
+  // The drawing's lines and the dimension lines a height may have got (#424).
+  const lines = [
+    ...drawing.strokes.map((st) => st.pts.map(layout.at)),
+    ...layout.dimensions.flatMap((d) => (d === null ? [] : d.lines)),
+  ];
   boxes.forEach((box, i) => {
-    drawing.strokes.forEach((st, j) => {
-      const pts = st.pts.map(layout.at);
+    lines.forEach((pts, j) => {
       if (pts.some((p, k) => k > 0 && crosses(pts[k - 1]!, p, box)))
         out.push(`"${texts[i]}" on line ${j}`);
     });
@@ -126,6 +130,84 @@ function clashes(s: Solid, width: number): string[] {
   });
   return out;
 }
+
+/** Is the point inside the polygon (even-odd)? */
+function inside(p: { x: number; y: number }, poly: readonly { x: number; y: number }[]): boolean {
+  let hit = false;
+  poly.forEach((a, i) => {
+    const b = poly[(i + 1) % poly.length]!;
+    if (a.y > p.y !== b.y > p.y && p.x < a.x + ((p.y - a.y) * (b.x - a.x)) / (b.y - a.y))
+      hit = !hit;
+  });
+  return hit;
+}
+
+/** Slim solids whose height has no room inside at a small size (#424). */
+const SLIM: Array<[string, Solid]> = [
+  ['cone', solid('cone', { r: 3, h: 8 })],
+  ['slim cone', solid('cone', { r: 2, h: 9 })],
+  ['pyramid', solid('pyramid', { n: 4, a: 6, h: 4 })],
+  ['slim pyramid', solid('pyramid', { n: 4, a: 3, h: 8 })],
+  [
+    'isosceles prism',
+    lying(
+      [
+        [0, 0],
+        [4, 0],
+        [2, 3],
+      ],
+      5,
+    ),
+  ],
+  [
+    'slim prism',
+    lying(
+      [
+        [0, 0],
+        [2, 0],
+        [1, 6],
+      ],
+      3,
+    ),
+  ],
+];
+
+describe('the height of a slim solid (#424)', () => {
+  it.each(SLIM)(
+    'stands inside the %s, or at a dimension line outside it — never beside a slant',
+    (_, s) => {
+      for (const width of WIDTHS) {
+        const drawing = solidDrawing(s);
+        const text = (v: number) => `${v} ${s.u}`;
+        const layout = solidLayout(drawing, drawing.labels, text, width, SIZE);
+        drawing.labels.forEach((l, i) => {
+          if (!l.height || !l.in) return;
+          const spot = layout.spots[i]!;
+          const middle = { x: spot.x, y: spot.y - 0.35 * SIZE };
+          const placed = inside(middle, l.in.map(layout.at)) || layout.dimensions[i] !== null;
+          expect(placed, `${text(l.v)} at ${width}`).toBe(true);
+        });
+        expect(clashes(s, width), `at ${width}`).toEqual([]);
+      }
+    },
+  );
+
+  it('draws the dimension line as the schoolbook does: two extension lines and a double arrow', () => {
+    const s = solid('cone', { r: 3, h: 8 });
+    const drawing = solidDrawing(s);
+    const layout = solidLayout(drawing, drawing.labels, (v) => `${v} cm`, 160, SIZE);
+    const i = drawing.labels.findIndex((l) => l.height);
+    const d = layout.dimensions[i]!;
+    expect(d).not.toBeNull();
+    // Two extension lines, the dimension line itself, an arrow at each end.
+    expect(d.lines).toHaveLength(3);
+    expect(d.arrows).toHaveLength(2);
+    // Outside the cone: the dimension line beside the whole drawing, on one side or the other.
+    const xs = drawing.strokes.flatMap((st) => st.pts.map((p) => layout.at(p).x));
+    const line = d.lines[2]!.map((p) => p.x);
+    expect(Math.min(...line) > Math.max(...xs) || Math.max(...line) < Math.min(...xs)).toBe(true);
+  });
+});
 
 describe('solidLayout (#418)', () => {
   it.each(FIGURES)('writes every measure of the %s clear of lines and labels', (_, s) => {

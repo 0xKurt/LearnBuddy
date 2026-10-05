@@ -88,11 +88,16 @@ import { structuredItems, type StructuredItem } from './structured.js';
 //        question may ask for its Belegstelle (`evidence`).
 // v1.36: a prism's non-regular base, nets of solids ("which solid?") and Würfelgebäude (#368).
 // v1.38: circuits, logic gates and Itten's colour wheel, their keys computed by code (#261).
+// v1.40: a stumme Karte — Länder, countries of Europe, continents — to name a marked region or to
+//        tap one (`map`, #251).
 // v1.41: a house- or L-shaped base, and "which solid?" of a cube's and a cone's net with four
 //        options code picks and marks (#418; v1.39 and v1.40 are reserved for parallel work).
+// v1.45: v1.41 with the stumme Karte of v1.40 (#251) — the two met in one prompt (v1.42–v1.44 are
+//        reserved for #388, #424 and #413).
 // v1.44: a written division's quotient may have three digits (672 : 3), shown step by step
 //        (#413, on top of v1.41).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.44';
+// v1.46: v1.45 with the three-digit division of v1.44 (#413).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.46';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

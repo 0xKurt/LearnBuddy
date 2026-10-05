@@ -304,6 +304,7 @@ async function keyboardPass(page: Page, name: string, testId: string): Promise<v
   if (testId === 'ask-field')
     expect(await cutTiles(page), `${name} @kb: answer tiles cut while she asks`).toEqual([]);
   expect.soft(await halfTurns(page), `${name} @kb: half shown in the conversation`).toEqual([]);
+  expect.soft(await cutControls(page), `${name} @kb: controls cut`).toEqual([]);
   for (const alert of await alerts.all()) {
     await expect(alert, `${name} @kb: what is said as an alert`).toBeInViewport();
   }
@@ -323,6 +324,53 @@ async function cutTiles(page: Page): Promise<string[]> {
         .filter(({ box }) => box.top < -0.5 || box.bottom > floor + 0.5)
         .map(({ tile }) => tile.getAttribute('aria-label') ?? tile.textContent ?? '?'),
     );
+  });
+}
+
+/**
+ * Every control of a practice screen is whole where it is drawn (issue #419, rule 17): a button,
+ * a chip, a checkbox or a field is either inside every box that clips it and inside the window,
+ * or not visible at all — never the "Tipp" row half cut by the conversation's box, a control half
+ * under the question card or past the screen's edge. Not the answer's own board: it scrolls inside
+ * itself on purpose (`threadRoom`, `boardGives`), and `cutTiles` judges its tiles while she asks.
+ * Returns what is cut, with how much of it shows.
+ */
+export async function cutControls(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    if (!location.pathname.startsWith('/practice')) return [];
+    // The practice screen, up to (not into) the stack that also holds the home under it.
+    let screen = Array.from(document.querySelectorAll('[data-testid="scroll-question"]')).pop();
+    if (!screen) return [];
+    while (
+      screen.parentElement &&
+      !screen.parentElement.querySelector('[data-testid="home-header"]')
+    )
+      screen = screen.parentElement;
+    const controls = Array.from(
+      screen.querySelectorAll<HTMLElement>(
+        '[role="button"], [role="checkbox"], [role="radio"], [role="switch"], input, textarea',
+      ),
+    ).filter((el) => !el.closest('[data-testid="answer-slot"]'));
+    return controls.flatMap((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) return [];
+      const style = getComputedStyle(el);
+      if (style.visibility === 'hidden' || style.opacity === '0') return [];
+      let top = 0;
+      let bottom = innerHeight;
+      for (let p = el.parentElement; p; p = p.parentElement) {
+        if (!['auto', 'scroll', 'hidden'].includes(getComputedStyle(p).overflowY)) continue;
+        const clip = p.getBoundingClientRect();
+        top = Math.max(top, clip.top);
+        bottom = Math.min(bottom, clip.bottom);
+      }
+      const shown = Math.min(r.bottom, bottom) - Math.max(r.top, top);
+      if (shown <= 1 || shown >= r.height - 1) return [];
+      const name = el.getAttribute('aria-label') ?? (el.textContent ?? '').trim();
+      return [
+        `${name.slice(0, 24) || el.tagName}: ${Math.round(shown)} of ${Math.round(r.height)} pt`,
+      ];
+    });
   });
 }
 
@@ -422,6 +470,7 @@ export async function shot(
     expect
       .soft(await halfTurns(page), `${name} @${phone.width}: half shown in the conversation`)
       .toEqual([]);
+    expect.soft(await cutControls(page), `${name} @${phone.width}: controls cut`).toEqual([]);
     if (place) {
       // One rule for every form in the answer shell (issue #386): the answer at the bottom.
       expect(

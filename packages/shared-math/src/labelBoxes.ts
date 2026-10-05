@@ -78,6 +78,8 @@ export type LabelWish = {
   h: number;
   along?: readonly [XY, XY];
   within?: readonly XY[];
+  /** A height (#424): with no clear place inside `within`, it stands at a dimension line along `along`. */
+  dimension?: boolean;
 };
 
 /** How far a label stands from its point, nearest first: past that it reads as another line's. */
@@ -146,36 +148,155 @@ function candidates(wish: LabelWish): Rect[] {
 }
 
 /**
- * Where each label stands (its box): the nearest place, on its wished side if it can, whose box —
- * `clear` px larger all round — crosses none of the `lines` (polylines, drawn or dashed), covers
- * no label placed before it and, if it can, stands inside its `within`. Where no place is clear,
- * the one that covers the fewest (the app's layout test holds every drawing it makes to never
- * needing that). The caller fits the drawing and the boxes into its room together.
+ * A dimension line (Maßlinie, #424) for a measure that has no room on its line: an extension line
+ * from each end of the measured line, the dimension line between them outside the drawing, and an
+ * arrowhead at each of its ends — `arrows` as [from, tip] pairs.
+ */
+export type Dimension = { lines: XY[][]; arrows: [XY, XY][] };
+
+/** A placed label: its box, and its dimension line when it stands at one. */
+export type PlacedLabel = { box: Rect; dimension: Dimension | null };
+
+type Segment = readonly [XY, XY];
+
+/** How far an extension line starts from the drawing, how far past the dimension line it runs. */
+const EXT_GAP = 3;
+const EXT_OVER = 4;
+/** How far the dimension line stands from everything drawn and written before it. */
+const DIM_GAP = 10;
+
+const dotXY = (p: XY, q: XY) => p.x * q.x + p.y * q.y;
+const step = (p: XY, n: XY, t: number): XY => ({ x: p.x + n.x * t, y: p.y + n.y * t });
+
+/** How far the ray from `p` in the direction `n` runs before it has left every segment behind. */
+function lastHit(p: XY, n: XY, segments: readonly Segment[]): number {
+  let last = 0;
+  for (const [a, b] of segments) {
+    const ex = b.x - a.x;
+    const ey = b.y - a.y;
+    const det = n.x * -ey - n.y * -ex;
+    if (Math.abs(det) < 1e-12) continue;
+    const rx = a.x - p.x;
+    const ry = a.y - p.y;
+    const t = (rx * -ey - ry * -ex) / det;
+    const v = (n.x * ry - n.y * rx) / det;
+    if (t > 1e-6 && v >= -1e-9 && v <= 1 + 1e-9) last = Math.max(last, t);
+  }
+  return last;
+}
+
+/**
+ * The dimension line of the measured line `ab` on the side `n` (a unit normal), clear of every
+ * segment and every placed box, and how much extension line it needs (the shorter, the better).
+ */
+function dimensionOn(
+  ab: readonly [XY, XY],
+  n: XY,
+  segments: readonly Segment[],
+  placed: readonly Rect[],
+): { dimension: Dimension; reach: number } {
+  const [a, b] = ab;
+  const corners = placed.flatMap((r) => [
+    { x: r.x, y: r.y },
+    { x: r.x + r.w, y: r.y + r.h },
+    { x: r.x + r.w, y: r.y },
+    { x: r.x, y: r.y + r.h },
+  ]);
+  const points = [...segments.flatMap(([p, q]) => [p, q]), ...corners];
+  const offset =
+    Math.max(0, ...points.map((q) => dotXY({ x: q.x - a.x, y: q.y - a.y }, n))) + DIM_GAP;
+  const starts = [a, b].map((p) => lastHit(p, n, segments) + EXT_GAP);
+  const ends = [step(a, n, offset), step(b, n, offset)] as [XY, XY];
+  return {
+    dimension: {
+      lines: [
+        [step(a, n, starts[0]!), step(a, n, offset + EXT_OVER)],
+        [step(b, n, starts[1]!), step(b, n, offset + EXT_OVER)],
+        [ends[0], ends[1]],
+      ],
+      arrows: [
+        [ends[1], ends[0]],
+        [ends[0], ends[1]],
+      ],
+    },
+    reach: 2 * offset - starts[0]! - starts[1]!,
+  };
+}
+
+/** The dimension line of the measured line `ab`, on the side that needs the shorter extension lines. */
+function dimensionFor(
+  ab: readonly [XY, XY],
+  segments: readonly Segment[],
+  placed: readonly Rect[],
+): Dimension {
+  const [a, b] = ab;
+  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  const n = { x: -(b.y - a.y) / len, y: (b.x - a.x) / len };
+  const sides = [n, { x: -n.x, y: -n.y }].map((side) => dimensionOn(ab, side, segments, placed));
+  return sides.reduce((best, side) => (side.reach < best.reach ? side : best)).dimension;
+}
+
+/**
+ * Where each label stands: the nearest place, on its wished side if it can, whose box — `clear` px
+ * larger all round — crosses none of the `lines` (polylines, drawn or dashed), covers no label
+ * placed before it and, if it can, stands inside its `within`. A height (`dimension`) that finds
+ * no clear place inside gets a dimension line outside the drawing instead
+ * (#424) — written beside a slant, a cone's height reads as the slant's length — and stands at
+ * that line. Where no place is clear at all, the one that covers the fewest (the app's layout test
+ * holds every drawing it makes to never needing that). The caller fits the drawing, the boxes and
+ * the dimension lines into its room together.
  */
 export function placeLabels(
   wishes: readonly LabelWish[],
   lines: readonly (readonly XY[])[],
   clear = 3,
-): Rect[] {
-  const segments = lines.flatMap((pts) => pts.slice(1).map((p, i) => [pts[i]!, p] as const));
-  const placed: Rect[] = [];
-  for (const wish of wishes) {
+): PlacedLabel[] {
+  const segments: Segment[] = lines.flatMap((pts) =>
+    pts.slice(1).map((p, i) => [pts[i]!, p] as const),
+  );
+  const out: PlacedLabel[] = [];
+  const boxes = () => out.map((p) => p.box);
+  const best = (wish: LabelWish) => {
     const covers = (box: Rect) => {
       const r = grow(box, clear);
       const middle = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
       return (
         (wish.within && !inside(middle, wish.within) ? 0.5 : 0) +
-        placed.filter((other) => overlaps(r, other)).length * 10 +
+        boxes().filter((other) => overlaps(r, other)).length * 10 +
         segments.filter(([a, b]) => crosses(a, b, r)).length
       );
     };
-    let best: { box: Rect; n: number } | null = null;
+    let found: { box: Rect; n: number } | null = null;
     for (const box of candidates(wish)) {
       const n = covers(box);
-      if (best === null || n < best.n) best = { box, n };
+      if (found === null || n < found.n) found = { box, n };
       if (n === 0) break;
     }
-    placed.push(best!.box);
+    return found!;
+  };
+  for (const wish of wishes) {
+    const found = best(wish);
+    if (found.n === 0 || !wish.dimension || !wish.along) {
+      out.push({ box: found.box, dimension: null });
+      continue;
+    }
+    const dimension = dimensionFor(wish.along, segments, boxes());
+    segments.push(...dimension.lines.flatMap((pts) => [[pts[0]!, pts[1]!] as const]));
+    const [from, to] = dimension.lines[2]!;
+    const len = Math.hypot(to!.x - from!.x, to!.y - from!.y) || 1;
+    // Beside the dimension line, away from the drawing: its normal pointing out.
+    const ext = dimension.lines[0]!;
+    const away = { x: ext[1]!.x - ext[0]!.x, y: ext[1]!.y - ext[0]!.y };
+    const awayLen = Math.hypot(away.x, away.y) || 1;
+    const placed = best({
+      at: { x: (from!.x + to!.x) / 2, y: (from!.y + to!.y) / 2 },
+      dx: away.x / awayLen,
+      dy: away.y / awayLen,
+      w: wish.w,
+      h: wish.h,
+      along: len > 0 ? [from!, to!] : undefined,
+    });
+    out.push({ box: placed.box, dimension });
   }
-  return placed;
+  return out;
 }
