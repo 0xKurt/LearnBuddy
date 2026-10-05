@@ -28,6 +28,8 @@ import plugin from './eslint-plugin.mjs';
 import { MAX_AGE_HOURS, staleHours } from './fresh-base.mjs';
 import { mergeBaselines } from './merge-baseline.mjs';
 import { growth, TRAILER } from './no-growth.mjs';
+import { prBodyProblems } from './pr-body.mjs';
+import { fileOf, isWeak, SOURCE_LISTS, sourceList } from './source-lists.mjs';
 import {
   MAX_LINES,
   REPO_ROOT,
@@ -430,5 +432,81 @@ describe('lb/no-early-script-report: a test reads the model report only after ba
     });
     const hits = (result?.messages ?? []).filter((m) => m.ruleId === 'lb/no-early-script-report');
     assert.equal(hits.length, 0);
+  });
+});
+
+describe('source lists: the Ausnahmelisten a source test keeps are compared with main too (#296)', () => {
+  it('reads every registered list today, and none is empty while it is registered', () => {
+    for (const [list, entries] of Object.entries(SOURCE_LISTS)) {
+      const found = entries(readFileSync(join(REPO_ROOT, fileOf(list)), 'utf8'));
+      assert.ok(
+        Object.keys(found).length > 0,
+        `${list} ist leer — die Schuld ist abgebaut: Liste und Eintrag in source-lists.mjs streichen`,
+      );
+    }
+  });
+
+  it('reads counts, keys in any spelling, and only the WEAK routes', () => {
+    const src = [
+      'const OTHER = { a: 1 };',
+      'export const LIST: Record<string, { count: number; why: string }> = {',
+      "  'A.tsx': { count: 2, why: 'x' },",
+      '  B: { why: "y", count: 1 },',
+      "  '[id].tsx': 'plain',",
+      '};',
+      'const ROUTES = {',
+      "  home: 'the chat itself, a real reason',",
+      "  extra: 'WEAK: the chat could carry this',",
+      '  more: `WEAK: as a template`,',
+      '} as const;',
+    ].join('\n');
+    assert.deepEqual(sourceList(src, 'LIST'), { 'A.tsx': 2, B: 1, '[id].tsx': 1 });
+    assert.deepEqual(sourceList(src, 'ROUTES', isWeak), { extra: 1, more: 1 });
+  });
+
+  it('throws when a list is gone or not a literal, instead of reading it as empty', () => {
+    assert.throws(() => sourceList('const OWN = {};', 'OWN_BAR'), /nicht gefunden/);
+    assert.throws(() => sourceList('const OWN_BAR = make();', 'OWN_BAR'), /kein Objekt-Literal/);
+    assert.throws(() => sourceList('const OWN_BAR = { ...rest };', 'OWN_BAR'), /einfache/);
+  });
+
+  it('turns a new entry or a larger count into growth', () => {
+    const before = sourceList("const L = { 'A.tsx': { count: 1 } };", 'L');
+    const after = sourceList("const L = { 'A.tsx': { count: 2 }, 'B.tsx': { count: 1 } };", 'L');
+    assert.deepEqual(growth(before, after), ['größer: A.tsx (1 → 2)', 'neu: B.tsx (1)']);
+  });
+});
+
+describe('PR text: USP point, library check, reuse (CLAUDE.md rule 16, #296)', () => {
+  const filled = [
+    '**Dient USP-Punkt:** 4 Ein ruhiger Screen',
+    '**Wiederverwendet / entfernt:** InputBar, AnswerShell; entfernt: eigene Leiste in X',
+    '- [x] **Bibliotheks-Check:** keiner',
+  ].join('\n');
+
+  it('the untouched template is red on all three lines', () => {
+    const template = readFileSync(join(REPO_ROOT, '.github', 'pull_request_template.md'), 'utf8');
+    assert.equal(prBodyProblems(template).length, 3);
+  });
+
+  it('a filled text is green', () => {
+    assert.deepEqual(prBodyProblems(filled), []);
+    assert.deepEqual(
+      prBodyProblems(
+        filled.replace(
+          '4 Ein ruhiger Screen',
+          'keiner — reine Wartung der Wächter, kein Verhalten',
+        ),
+      ),
+      [],
+    );
+  });
+
+  it('is red without a USP point, with a bare „keiner“, or with a missing line', () => {
+    assert.equal(prBodyProblems(filled.replace('4 Ein ruhiger Screen', 'wichtig')).length, 1);
+    assert.equal(prBodyProblems(filled.replace('4 Ein ruhiger Screen', 'keiner')).length, 1);
+    assert.equal(prBodyProblems(filled.replace('4 Ein ruhiger Screen', '7')).length, 1);
+    assert.equal(prBodyProblems(filled.replace(/^.*Wiederverwendet.*$/m, '')).length, 1);
+    assert.equal(prBodyProblems(null).length, 3);
   });
 });

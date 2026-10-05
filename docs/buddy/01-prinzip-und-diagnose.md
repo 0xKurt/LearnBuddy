@@ -54,7 +54,9 @@ Issue #296):
 
 **So wird geprüft.** Jede PR-Beschreibung nennt, welchem Punkt die Änderung dient
 (`.github/pull_request_template.md`, Zeile „Dient USP-Punkt"). Bei „keinem" braucht der PR eine
-Begründung – oder er entfällt. Punkt 4 ist zusätzlich Code: Jede Route der App steht mit
+Begründung – oder er entfällt. Dass die Zeile einen Punkt 1–5 (oder „keiner“ mit Begründung)
+nennt, prüft `tools/guards/pr-body.mjs` an jedem PR; ob der Punkt stimmt, der Reviewer
+(`docs/engineering-guards.md` §Review-Schritte). Punkt 4 ist zusätzlich Code: Jede Route der App steht mit
 Begründung, warum der Chat sie nicht tragen kann, in der Erlaubnisliste
 (`apps/mobile/lib/__tests__/minimalism.test.ts`); eine neue Route ohne Eintrag lässt die Gates
 rot werden. Übungsformen bekommen keine eigene Auswahl: Kein Screen und keine Komponente zählt
