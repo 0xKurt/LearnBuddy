@@ -440,6 +440,9 @@
       "place_4": "en las decenas de millar",
       "place_5": "en las centenas de millar",
       "place_6": "en los millones"
+    },
+    "parts": {
+      "follow_on": "Bien seguido – con tu resultado de {{part}}. Ese no era correcto, pero tu cálculo aquí encaja con él. Esto cuenta como correcto."
     }
   },
   "contact": {

@@ -380,5 +380,9 @@
       "Hunderttausender",
       "Millionen"
     ]
+  },
+  "parts": {
+    "step": "Teilaufgabe {{part}} von {{all}}",
+    "stem": "Aufgabe"
   }
 }

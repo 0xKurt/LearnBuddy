@@ -380,5 +380,9 @@
       "hundred thousands",
       "millions"
     ]
+  },
+  "parts": {
+    "step": "Part {{part}} of {{all}}",
+    "stem": "Task"
   }
 }

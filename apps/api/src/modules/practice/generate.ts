@@ -58,6 +58,7 @@ import {
 } from './setProfiles.js';
 import { STAFF_RULES, staffItems } from './staff.js';
 import { TEACH_BACK_RULES, teachBackItems } from './teachBack.js';
+import { PART_TASK_RULES, partTaskItems } from './taskParts.js';
 import { structuredItems, type StructuredItem } from './structured.js';
 
 // v1.16: car 2's structured rules (v1.15) and #253/#257's figures (v1.14) together.
@@ -250,6 +251,7 @@ Rules:
 - ${BAR_RULES}
 - ${STAFF_RULES}
 ${STRUCTURED_RULES}
+- ${PART_TASK_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${CURRICULUM_RULES}
 - ${LANGUAGE_RULES}
@@ -505,6 +507,8 @@ type Prepared = {
   teachBack: StoredItem[];
   /** The questions about Buddy's reading text, after its level and language (#368). */
   reading: StoredItem[];
+  /** The parts of the tasks in parts, in order, each task checked whole (#297). */
+  partTasks: StoredItem[];
 };
 
 /**
@@ -596,6 +600,13 @@ function preparedFrom(
   const structured = structuredItems(set.structured, new Set(profile.structured)).filter(
     (it) => sheetTopics === null || (it.topic !== null && sheetTopics.includes(it.topic)),
   );
+  // Tasks in parts (#297): every part checked and every formula between them recomputed; a task
+  // that does not hold costs only itself. From her sheets, its topic is one of theirs.
+  const partTasks = profile.partTasks
+    ? set.part_tasks
+        .filter((p) => sheetTopics === null || (p.topic !== null && sheetTopics.includes(p.topic)))
+        .flatMap((p) => partTaskItems(p, { locale: learner.locale }))
+    : [];
   return {
     items,
     bars,
@@ -618,6 +629,7 @@ function preparedFrom(
           subjectKind: set.subject?.kind ?? null,
         })
       : [],
+    partTasks,
   };
 }
 
@@ -745,6 +757,7 @@ async function prepareTopic(
       dictation: [],
       teachBack: [],
       reading: [],
+      partTasks: [],
     },
     {
       now,
@@ -801,7 +814,8 @@ async function store(
       prepared.structured.length +
       prepared.dictation.length +
       prepared.teachBack.length +
-      prepared.reading.length ===
+      prepared.reading.length +
+      prepared.partTasks.length ===
       0
   ) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
@@ -823,6 +837,7 @@ async function store(
         [
           ...prepared.items,
           ...prepared.structured,
+          ...prepared.partTasks,
           ...prepared.bars,
           ...prepared.listening,
           ...prepared.staffs,
@@ -913,7 +928,13 @@ async function addTheRest(
   // note-line or bar prompt is written by code and may be the same words for two questions that
   // differ in their figure (issue #277: the note lines and listening questions of a run that
   // started early were dropped here altogether).
-  rest.push(...prepared.structured, ...prepared.bars, ...prepared.listening, ...prepared.staffs);
+  rest.push(
+    ...prepared.structured,
+    ...prepared.partTasks,
+    ...prepared.bars,
+    ...prepared.listening,
+    ...prepared.staffs,
+  );
   if (rest.length === 0) {
     await givenUpOnPreparing(deps.db, learner.id, sessionId);
     return;

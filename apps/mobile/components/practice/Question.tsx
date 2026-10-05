@@ -4,7 +4,7 @@
 // ___ Mutter.") shows as a gap, read out as "Lücke"; while she types a short
 // answer it stands in the gap, so she sees the whole sentence.
 
-import type { Figure, ItemImage, PassageView } from '@learnbuddy/shared-types/contracts';
+import type { Figure, ItemImage, ItemView, TaskPartView } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -26,6 +26,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
 import { MathText } from '../math/MathText.js';
+import { PartStem } from './PartStem.js';
 import { PassagePanel } from './PassagePanel.js';
 import { QuestionFigure } from './QuestionFigure.js';
 import { StimulusImage } from './StimulusImage.js';
@@ -159,10 +160,13 @@ type QuestionProps = {
    */
   dense?: boolean;
   /**
-   * The text this question is about (Leseverständnis, issue #233): above the question, with its
-   * line numbers, scrolling in itself so the question under it never moves.
+   * What stands above the question and is answered FROM: the text this question is about
+   * (Leseverständnis, issue #233) — with its line numbers, scrolling in itself so the question under
+   * it never moves — or the situation of a task in parts (issue #297), with the part's letter before
+   * the question and the task's letters where the topic stands. At most one of the two (migration
+   * 0100).
    */
-  passage?: PassageView | null;
+  stimulus?: Pick<ItemView, 'passage' | 'task_part'>;
   /**
    * The answer is a board under the card (an order to put, issue #228): it needs the height, so
    * the reading text keeps the smaller box it has while she types.
@@ -198,9 +202,11 @@ export function QuestionCard({
   imageMaxHeight = 180,
   minHeight,
   dense = false,
-  passage = null,
+  stimulus,
   answerBoard = false,
 }: QuestionProps) {
+  const passage = stimulus?.passage ?? null;
+  const part = stimulus?.task_part ?? null;
   const { palette } = useTheme();
   // What she can see, keyboard or not: while she types (`tight`), the text gives way to the field.
   const seen = useVisibleHeight();
@@ -212,8 +218,9 @@ export function QuestionCard({
   const pad = typing ? SPACE.md : CARD_PAD;
   const passageShare = answerBoard || typing ? PASSAGE_SHARE_SHORT : PASSAGE_SHARE;
   // A reading question's topic is its text: the text's heading already names it.
-  const shownTopic = passage ? null : topic;
-  const meta = fromBuddy || Boolean(shownTopic);
+  // A part of a task names its place in the task where the topic stands: the same for all parts.
+  const shownTopic = passage || part ? null : topic;
+  const meta = fromBuddy || Boolean(shownTopic) || part !== null;
   const { t } = useTranslation('practice');
   // What the header row and the prompt keep for themselves; the rest is the figure's.
   const [headHeight, setHeadHeight] = useState(0);
@@ -254,7 +261,12 @@ export function QuestionCard({
               {fromBuddy ? <FromBuddyTag label={t('origin_buddy')} /> : null}
               {/* One line, never a second (it would cost the card a line, issue #310): a long
                   topic ends in "…" — the header's title names the run, a screen reader the rest. */}
-              {shownTopic ? (
+              {part ? (
+                <PartSteps
+                  part={part}
+                  label={t('parts.step', { part: part.part, all: part.letters.join(', ') })}
+                />
+              ) : shownTopic ? (
                 <Text
                   numberOfLines={1}
                   style={[
@@ -270,12 +282,14 @@ export function QuestionCard({
               {read}
             </View>
           ) : null}
+          {/* The situation of a task in parts, the same above each of its parts (issue #297). */}
+          {part ? <PartStem stem={part.stem} typing={typing} /> : null}
           {/* No meta line (a reading question names its text above): "Frage vorlesen" ends the
               prompt's first line instead — a line of its own would cost the card a row. */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.sm }}>
             <View style={{ flex: 1 }}>
               <MathText
-                text={prompt}
+                text={part ? `${part.part}) ${prompt}` : prompt}
                 blanks={{ filled }}
                 // A fraction in the question sits in its sentence (issue #288).
                 inlineFractions
@@ -309,6 +323,29 @@ export function QuestionCard({
         ) : null}
       </View>
     </Card>
+  );
+}
+
+/**
+ * The letters of a task in parts, the current one in the accent: where she is, never how many are
+ * left to do (rule 6). One line, like the topic it stands in for.
+ */
+function PartSteps({ part, label }: { part: TaskPartView; label: string }) {
+  const { palette } = useTheme();
+  return (
+    <Text
+      testID="task-part-steps"
+      accessibilityLabel={label}
+      numberOfLines={1}
+      style={[TYPE.small, { flex: 1, minWidth: 0, color: palette.ink3, fontWeight: '600' }]}
+    >
+      {part.letters.map((letter, i) => (
+        <Text key={letter} style={letter === part.part ? { color: palette.primaryDk } : null}>
+          {i > 0 ? ' · ' : ''}
+          {letter})
+        </Text>
+      ))}
+    </Text>
   );
 }
 

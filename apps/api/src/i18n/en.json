@@ -440,6 +440,9 @@
       "place_4": "in the ten thousands",
       "place_5": "in the hundred thousands",
       "place_6": "in the millions"
+    },
+    "parts": {
+      "follow_on": "Carried on correctly – with your result from {{part}}. That one was not right, but your working here fits it. This counts as right."
     }
   },
   "contact": {

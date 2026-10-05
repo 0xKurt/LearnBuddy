@@ -20,6 +20,7 @@ import {
   type ItemKind,
   type ListenTask,
   type ReadPassage,
+  type TaskPart,
   type StaffTask,
   type StructuredTask,
   type VocabDirection,
@@ -604,6 +605,11 @@ export type StoredItem = Omit<ItemDraft, 'figure' | 'kind' | 'rubric'> & {
    * `practice/reading.ts`, which checked the question against exactly these lines.
    */
   read_passage?: ReadPassage | null;
+  /**
+   * The task in parts this question is a part of (issue #297): set only by `practice/taskParts.ts`,
+   * which lettered the parts and recomputed every formula between them against their keys.
+   */
+  task_part?: TaskPart | null;
 };
 
 /**
@@ -628,8 +634,9 @@ export async function insertItems(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
                           hints, worked_solution, tolerance, spelling, bar_task, task,
-                          curriculum_point, rubric, listen_task, staff_task, choice_figures, read_passage, tap)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30) returning id`,
+                          curriculum_point, rubric, listen_task, staff_task, choice_figures, read_passage, tap,
+                          task_part)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -661,6 +668,7 @@ export async function insertItems(
         it.choice_figures ? JSON.stringify(it.choice_figures) : null,
         it.read_passage ? JSON.stringify(it.read_passage) : null,
         it.tap === true,
+        it.task_part ? JSON.stringify(it.task_part) : null,
       ],
     );
     if (asked) ids.push(row.id);

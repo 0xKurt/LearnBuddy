@@ -14,6 +14,7 @@ import { storedChoiceFigures, storedFigure } from './items.js';
 import { listenRefs, listenTaskOf } from './listen.js';
 import { givesHints, offersHintButton, revealReady } from './modeRules.js';
 import { passageViews } from './reading.js';
+import { taskPartViews } from './taskParts.js';
 import { readAloudAllowed } from './readAloud.js';
 import type { ItemRow, SessionItemRow } from './service.js';
 import { loadSession, stillPreparing } from './sessionRow.js';
@@ -70,7 +71,7 @@ export async function sessionView(
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
             i.bar_task, i.task, i.listen_task, i.staff_task, i.spelling, i.archived_at,
-            i.choice_figures, i.read_passage, i.source_excerpt, i.tap,
+            i.choice_figures, i.read_passage, i.source_excerpt, i.tap, i.task_part,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label, sub.kind as subject_kind
        from session_items si join items i on i.id = si.item_id
@@ -135,6 +136,8 @@ export async function sessionView(
     cardPass || !((i.status === 'open' && !testOver) || !revealAllowed || noSingleSolution(i));
   // The text of each reading question (issue #233); where its answer stands, once that is shown.
   const reading = passageViews(items, solutionShown);
+  // The situation and letter of each part of a task in parts (issue #297).
+  const parts = taskPartViews(items);
   /**
    * The parts of a structured question (issues #228–#230), without the key, for as long as the
    * question is open — like the fraction bar, and for the same reason: once it is closed the parts
@@ -196,6 +199,7 @@ export async function sessionView(
         // The text she reads it from, above the question while she answers (issue #233) — except
         // where she answers IN the text, a Belegstelle (#368): its board is the text, once.
         passage: textIsBoard(boardOf(i)) ? null : (reading.get(i.id) ?? null),
+        task_part: parts.get(i.id) ?? null,
         // The "Vorlesen" button (issue #238): code decides, from what the question is, whether
         // hearing it would hand over the solution. A card is read by its own "Anhören".
         read_aloud: !cardPass && readAloudAllowed(i),

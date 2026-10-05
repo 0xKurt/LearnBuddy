@@ -30,6 +30,7 @@ import { scriptTap } from './tap.js';
 import { pronounceRules, readingRules, tutorRules } from './rules.js';
 import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
+import { scriptTaskParts } from './taskParts.js';
 import { scriptTour } from './tour.js';
 import { scriptTeachBack } from './teachBack.js';
 import { scriptTrees } from './trees.js';
@@ -44,6 +45,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   // Early too: "Zahlenstrahl" and "Uhr" are words an older, broader rule may know (#248).
   scriptTap();
   scriptMap();
+  // Early: "Klassenarbeit", "Handy" and "Rad" are words an older, broader rule may know (#297).
+  scriptTaskParts();
   // First: its generation rule is keyed on her list, and a broader rule registered earlier
   // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
   scriptDictation();

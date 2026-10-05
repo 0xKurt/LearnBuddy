@@ -440,6 +440,9 @@
       "place_4": "bei den Zehntausendern",
       "place_5": "bei den Hunderttausendern",
       "place_6": "bei den Millionen"
+    },
+    "parts": {
+      "follow_on": "Richtig weitergerechnet – mit deinem Ergebnis aus {{part}}. Das stimmte zwar nicht, aber dein Weg hier passt. Das zählt als richtig."
     }
   },
   "contact": {

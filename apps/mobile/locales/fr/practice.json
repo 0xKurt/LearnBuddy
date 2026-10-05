@@ -380,5 +380,9 @@
       "centaines de mille",
       "millions"
     ]
+  },
+  "parts": {
+    "step": "Partie {{part}} sur {{all}}",
+    "stem": "Énoncé"
   }
 }

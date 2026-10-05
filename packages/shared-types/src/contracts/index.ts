@@ -18,6 +18,7 @@ export * from './rubric.js';
 export * from './essay.js';
 export * from './listen.js';
 export * from './reading.js';
+export * from './taskParts.js';
 export * from './notation.js';
 export * from './dictation.js';
 export * from './drill.js';
