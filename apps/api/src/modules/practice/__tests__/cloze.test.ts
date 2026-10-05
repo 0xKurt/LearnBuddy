@@ -276,7 +276,7 @@ describe('cloze: her answer, gap by gap (Regel 0)', () => {
     expect(check?.correct).toBe(true);
     expect(check && structuredVerdict(check)).toBe('correct');
     expect(check?.type === 'cloze' && check.gaps.every((g) => g.by === 'rule')).toBe(true);
-    expect(answerTextOf(typed, fill(PERFEKT.keys))).toBe(
+    expect(answerTextOf(typed, fill(PERFEKT.keys), 'de')).toBe(
       'sind · haben · gegessen · sind · schöner',
     );
   });

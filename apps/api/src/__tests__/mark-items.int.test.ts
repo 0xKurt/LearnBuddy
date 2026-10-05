@@ -204,6 +204,50 @@ describe.skipIf(!dbReady)('marking items', () => {
     expect(right.body.verdict).toBe('correct');
   });
 
+  it('sorts a long Satzglieder sentence of grades 5–7; one that wraps to a third row is not stored (#368)', async () => {
+    const long = (text: string, prompt: string) =>
+      draft({
+        prompt,
+        text,
+        categories: ['Dativobjekt', 'Akkusativobjekt', 'Subjekt'],
+        targets: [
+          { word: 'der Vater', occurrence: null, category: 'Subjekt' },
+          { word: 'seiner Tochter', occurrence: null, category: 'Dativobjekt' },
+          { word: 'ein neues Fahrrad', occurrence: null, category: 'Akkusativobjekt' },
+        ],
+      });
+    const session = await prepare([
+      // Ten words, 65 characters: two rows of tiles on 360 pt. Before #368 at most seven words.
+      long(
+        'Am Wochenende schenkt der Vater seiner Tochter ein neues Fahrrad.',
+        'Markiere Dativobjekt, Akkusativobjekt und Subjekt.',
+      ),
+      // Ten words and 66 characters, within both counts — but its words wrap to a third row of
+      // tiles (`markRows`): refused.
+      long(
+        'Nun schenkt der Vater seiner Tochter unerwartet ein neues Fahrrad.',
+        'Markiere die Satzglieder.',
+      ),
+    ]);
+    expect(session.items.map((i) => i.item.prompt)).toEqual([
+      'Markiere Dativobjekt, Akkusativobjekt und Subjekt.',
+    ]);
+    const si = session.items[0]!;
+    expect(viewOf(si).words).toHaveLength(10);
+    const [dat, akk, subj] = viewOf(si).categories.map((c) => c.id);
+    const wrong = await answer(session, si.item.id, [
+      ...on(si, ['seiner', 'Tochter'], dat!),
+      ...on(si, ['ein', 'neues', 'Fahrrad', 'Am'], akk!),
+    ]);
+    expect(wrong.body.reply.text).toBe('Noch nicht ganz: 5 richtig, 2 fehlen noch, 1 zu viel.');
+    const right = await answer(session, si.item.id, [
+      ...on(si, ['seiner', 'Tochter'], dat!),
+      ...on(si, ['ein', 'neues', 'Fahrrad'], akk!),
+      ...on(si, ['der', 'Vater'], subj!),
+    ]);
+    expect(right.body.verdict).toBe('correct');
+  });
+
   it('commas and syllables: the places come from the sentence and the hyphens the model wrote', async () => {
     const session = await prepare([
       draft({

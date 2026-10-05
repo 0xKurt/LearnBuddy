@@ -12,6 +12,11 @@
 // A figure that breaks a rule is rejected, never repaired (`solidProblem`). Cube nets and points
 // in space are in `space.ts`.
 //
+// Since #368: a prism may have a non-regular base (`g`: its front face as points, a lying prism
+// — a triangle or a trapezoid with a horizontal base, whose area its drawn measures give), and any
+// solid but a sphere may be drawn as its NET (`w` "net", `solidNets.ts`) and asked which solid
+// the net folds into (`ask` "kind").
+//
 // Dependency-free on purpose: the app imports this file by path (like `trees.ts`), so what the
 // server checked is exactly what the app draws.
 
@@ -27,7 +32,9 @@ export const SOLID_KINDS: readonly SolidKind[] = [
 ];
 export type LengthUnit = 'mm' | 'cm' | 'dm' | 'm';
 export const LENGTH_UNITS: readonly LengthUnit[] = ['mm', 'cm', 'dm', 'm'];
-export type SolidAsk = 'none' | 'vertices' | 'edges' | 'faces' | 'volume' | 'surface';
+export type SolidAsk = 'none' | 'vertices' | 'edges' | 'faces' | 'volume' | 'surface' | 'kind';
+/** A point of a prism's non-regular base (its front face), in the unit `u`. */
+export type BasePoint = { x: number; y: number };
 
 /**
  * A solid. `n` = the corners of a prism's or a pyramid's base (a regular n-gon with side `a`);
@@ -44,6 +51,13 @@ export type Solid = {
   r: number;
   u: LengthUnit;
   ask: SolidAsk;
+  /**
+   * A prism's non-regular base (#368): its front face, corner by corner — then `n` is their
+   * number, `a` 0 and `h` the prism's length. Empty (or absent in older figures): a regular base.
+   */
+  g?: readonly BasePoint[];
+  /** Drawn as a Schrägbild ("oblique", the default) or as its net (#368). */
+  w?: 'oblique' | 'net';
 };
 
 export type Measure = 'a' | 'b' | 'h' | 'r';
@@ -67,8 +81,72 @@ export type SolidProblem =
   /** Vertices, edges or faces of a solid with a curved surface: not one schoolbook answer. */
   | 'ask';
 
+/**
+ * The solids "Welcher Körper entsteht?" names, in the order code writes them as options (#368):
+ * four, the most option tiles that stand under a net on a 360 × 740 phone (six were 3 pt too many,
+ * walkthrough 99-net-cuboid). A cube's and a cone's net are drawn, but not asked about this way.
+ */
+export const NET_KINDS = [
+  'cuboid',
+  'prism',
+  'pyramid',
+  'cylinder',
+] as const satisfies readonly SolidKind[];
+
+/** Is this a solid "Welcher Körper entsteht?" may name? */
+export const isNetKind = (k: SolidKind): k is (typeof NET_KINDS)[number] =>
+  (NET_KINDS as readonly SolidKind[]).includes(k);
+
 /** Longest : shortest measure a phone still draws readably. */
 const MAX_RATIO = 8;
+/** The largest coordinate of a non-regular base, in its unit. */
+const BASE_MAX = 20;
+
+/** A length a learner reads off a drawing and computes with: whole or with one decimal. */
+export function isNice(v: number): boolean {
+  return Math.abs(v * 10 - Math.round(v * 10)) < 1e-9;
+}
+
+export const edgeLength = (p: BasePoint, q: BasePoint) => Math.hypot(q.x - p.x, q.y - p.y);
+
+/** Twice the signed area of a polygon (counter-clockwise positive, y up). */
+const twiceArea = (g: readonly BasePoint[]) =>
+  g.reduce((t, p, i) => {
+    const q = g[(i + 1) % g.length]!;
+    return t + p.x * q.y - q.x * p.y;
+  }, 0);
+
+/**
+ * Why a non-regular base is none a learner can work with, or null: whole coordinates in the grid,
+ * convex and not flat, standing on a horizontal base line (y = 0) — a triangle (its height drawn)
+ * or a quadrilateral whose top is horizontal too (a trapezoid, a parallelogram, a rectangle).
+ * Then its area follows from what is drawn. Other shapes are left out (an L or a house shape).
+ */
+function baseProblem(g: readonly BasePoint[]): 'measures' | null {
+  if (g.length !== 3 && g.length !== 4) return 'measures';
+  const inGrid = (v: number) => Number.isInteger(v) && v >= 0 && v <= BASE_MAX;
+  if (!g.every((p) => inGrid(p.x) && inGrid(p.y))) return 'measures';
+  const area = twiceArea(g);
+  if (Math.abs(area) < 1e-9) return 'measures';
+  // Convex: every turn the same way.
+  const turns = g.map((p, i) => {
+    const q = g[(i + 1) % g.length]!;
+    const o = g[(i + 2) % g.length]!;
+    return Math.sign((q.x - p.x) * (o.y - q.y) - (q.y - p.y) * (o.x - q.x));
+  });
+  if (turns.some((t) => t !== turns[0])) return 'measures';
+  const top = Math.max(...g.map((p) => p.y));
+  const onBase = g.filter((p) => p.y === 0).length;
+  const onTop = g.filter((p) => p.y === top).length;
+  if (onBase !== 2) return 'measures';
+  if (g.length === 4 && onTop !== 2) return 'measures';
+  return null;
+}
+
+/** The measures a solid is drawn with and computed from. */
+function usedMeasures(s: Solid): readonly Measure[] {
+  return s.k === 'prism' && (s.g?.length ?? 0) > 0 ? ['h'] : SOLID_MEASURES[s.k];
+}
 
 const hasBase = (k: SolidKind) => k === 'prism' || k === 'pyramid';
 export const isPolyhedron = (k: SolidKind) =>
@@ -76,18 +154,37 @@ export const isPolyhedron = (k: SolidKind) =>
 
 /** The first rule this solid breaks, or null. */
 export function solidProblem(s: Solid): SolidProblem | null {
-  const used = SOLID_MEASURES[s.k];
+  const g = s.g ?? [];
+  if (g.length > 0) {
+    if (s.k !== 'prism' || s.n !== g.length || baseProblem(g) !== null) return 'measures';
+  }
+  const used = usedMeasures(s);
   for (const m of ['a', 'b', 'h', 'r'] as const) {
     const v = s[m];
     if (!Number.isFinite(v) || v < 0) return 'measures';
     if (used.includes(m) !== v > 0) return 'measures';
   }
   if (hasBase(s.k) ? !Number.isInteger(s.n) || s.n < 3 || s.n > 8 : s.n !== 0) return 'measures';
-  const lengths = used.map((m) => s[m]);
+  const lengths = [
+    ...used.map((m) => s[m]),
+    ...(g.length > 0
+      ? [
+          Math.max(...g.map((p) => p.x)) - Math.min(...g.map((p) => p.x)),
+          Math.max(...g.map((p) => p.y)),
+        ]
+      : []),
+  ];
   if (Math.max(...lengths) > MAX_RATIO * Math.min(...lengths)) return 'proportion';
   // A cone flatter than this has its tip inside the drawn base: no outline to draw.
   if (s.k === 'cone' && s.h < s.r / 2) return 'proportion';
   if ((s.ask === 'vertices' || s.ask === 'edges' || s.ask === 'faces') && !isPolyhedron(s.k)) {
+    return 'ask';
+  }
+  // A sphere has no net; which solid a net folds into is asked of a net only.
+  if (s.w === 'net' && s.k === 'sphere') return 'ask';
+  if (s.ask === 'kind' && (s.w !== 'net' || !isNetKind(s.k))) return 'ask';
+  // A surface needs every side of the base as a number she can read off the drawing.
+  if (s.ask === 'surface' && g.some((p, i) => !isNice(edgeLength(p, g[(i + 1) % g.length]!)))) {
     return 'ask';
   }
   return null;
@@ -120,6 +217,12 @@ export function solidMeasures(s: Solid): { volume: number; surface: number } {
     case 'cuboid':
       return { volume: a * b * h, surface: 2 * (a * b + a * h + b * h) };
     case 'prism': {
+      const base = s.g ?? [];
+      if (base.length > 0) {
+        const area = Math.abs(twiceArea(base)) / 2;
+        const around = base.reduce((t, p, i) => t + edgeLength(p, base[(i + 1) % base.length]!), 0);
+        return { volume: area * h, surface: 2 * area + around * h };
+      }
       const g = regularBase(n, a).area;
       return { volume: g * h, surface: 2 * g + n * a * h };
     }
@@ -139,18 +242,31 @@ export function solidMeasures(s: Solid): { volume: number; surface: number } {
 
 export type SolidKey =
   | { kind: 'count'; n: number }
+  | { kind: 'kind'; k: SolidKind }
   | { kind: 'volume'; value: number; unit: string }
   | { kind: 'area'; value: number; unit: string };
 
 /** The key a solid declares it computes (`ask`); null when it declares none or does not hold. */
 export function solidKey(s: Solid): SolidKey | null {
   if (s.ask === 'none' || solidProblem(s) !== null) return null;
+  if (s.ask === 'kind') return { kind: 'kind', k: s.k };
   if (s.ask === 'volume')
     return { kind: 'volume', value: solidMeasures(s).volume, unit: `${s.u}³` };
   if (s.ask === 'surface')
     return { kind: 'area', value: solidMeasures(s).surface, unit: `${s.u}²` };
   const c = solidCounts(s.k, s.n);
   return c === null ? null : { kind: 'count', n: c[s.ask] };
+}
+
+/** The corners of a prism's or pyramid's base in the plane (y up): its points, or the n-gon. */
+export function basePolygon2d(s: Solid): BasePoint[] {
+  if ((s.g?.length ?? 0) > 0) return [...s.g!];
+  return basePolygon(s.n, s.a, 0).map(([x, , z]) => ({ x, y: z }));
+}
+
+/** The height of a pyramid's side face, from the middle of a base edge to the apex. */
+export function slantHeight(s: Solid): number {
+  return Math.hypot(s.h, regularBase(s.n, s.a).inradius);
 }
 
 // ─────────────── the drawing (Schrägbild) ───────────────
@@ -168,9 +284,15 @@ export const projectSolid = ([x, y, z]: V3): SolidXY => ({ x: x + DEPTH * z, y: 
 const VIEW: V3 = [DEPTH, DEPTH, -1];
 
 export type Stroke = { pts: SolidXY[]; hidden: boolean };
-/** A measure written next to a line: where, on which side (`dx`, `dy` = −1 … 1), which one. */
-export type SolidLabel = { at: SolidXY; dx: number; dy: number; m: Measure };
-export type SolidDrawing = { strokes: Stroke[]; labels: SolidLabel[]; dots: SolidXY[] };
+/** A measure written next to a line: where, on which side (`dx`, `dy` = −1 … 1), its value. */
+export type SolidLabel = { at: SolidXY; dx: number; dy: number; v: number };
+/** `faces`: the filled faces of a net (`solidNets.ts`); a Schrägbild has none. */
+export type SolidDrawing = {
+  strokes: Stroke[];
+  labels: SolidLabel[];
+  dots: SolidXY[];
+  faces?: SolidXY[][];
+};
 
 const sub = (p: V3, q: V3): V3 => [p[0] - q[0], p[1] - q[1], p[2] - q[2]];
 const dot = (p: V3, q: V3) => p[0] * q[0] + p[1] * q[1] + p[2] * q[2];
@@ -218,7 +340,14 @@ function basePolygon(n: number, a: number, y: number): V3[] {
   });
 }
 
-const mid = (p: SolidXY, q: SolidXY): SolidXY => ({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
+export const mid = (p: SolidXY, q: SolidXY): SolidXY => ({
+  x: (p.x + q.x) / 2,
+  y: (p.y + q.y) / 2,
+});
+
+/** A cube's or a cuboid's width, depth and height. */
+export const boxSides = (s: Solid): [number, number, number] =>
+  s.k === 'cube' ? [s.a, s.a, s.a] : [s.a, s.b, s.h];
 
 /**
  * The base circle of radius r at height y, as a function of the angle — drawn as the schoolbook
@@ -230,7 +359,7 @@ const circle = (r: number, y: number) => (t: number) => ({
   y: -(y + DEPTH * r * Math.sin(t)),
 });
 
-function arc(f: (t: number) => SolidXY, from: number, to: number, hidden: boolean): Stroke {
+export function arc(f: (t: number) => SolidXY, from: number, to: number, hidden: boolean): Stroke {
   const steps = Math.max(8, Math.ceil(Math.abs(to - from) / (Math.PI / 36)));
   return {
     pts: Array.from({ length: steps + 1 }, (_, i) => f(from + ((to - from) * i) / steps)),
@@ -267,7 +396,7 @@ export function solidDrawing(s: Solid): SolidDrawing {
   switch (s.k) {
     case 'cube':
     case 'cuboid': {
-      const [w, d, t] = s.k === 'cube' ? [a, a, a] : [a, b, h];
+      const [w, d, t] = boxSides(s);
       const v: V3[] = [
         [0, 0, 0],
         [w, 0, 0],
@@ -287,16 +416,17 @@ export function solidDrawing(s: Solid): SolidDrawing {
         [1, 2, 6, 5],
       ];
       const labels: SolidLabel[] = [
-        { at: mid(projectSolid(v[0]!), projectSolid(v[1]!)), dx: 0, dy: 1, m: 'a' },
+        { at: mid(projectSolid(v[0]!), projectSolid(v[1]!)), dx: 0, dy: 1, v: w },
       ];
       if (s.k === 'cuboid') {
-        labels.push({ at: mid(projectSolid(v[1]!), projectSolid(v[2]!)), dx: 1, dy: 0.6, m: 'b' });
-        labels.push({ at: mid(projectSolid(v[0]!), projectSolid(v[4]!)), dx: -1, dy: 0, m: 'h' });
+        labels.push({ at: mid(projectSolid(v[1]!), projectSolid(v[2]!)), dx: 1, dy: 0.6, v: b });
+        labels.push({ at: mid(projectSolid(v[0]!), projectSolid(v[4]!)), dx: -1, dy: 0, v: h });
       }
       return { strokes: polyhedronStrokes(v, faces), labels, dots: [] };
     }
     case 'prism':
     case 'pyramid': {
+      if (s.k === 'prism' && (s.g?.length ?? 0) > 0) return lyingPrism(s.g!, h);
       const base = basePolygon(n, a, 0);
       const v: V3[] = [...base];
       const faces: number[][] = [base.map((_, i) => i)];
@@ -310,7 +440,7 @@ export function solidDrawing(s: Solid): SolidDrawing {
       }
       const strokes = polyhedronStrokes(v, faces);
       const labels: SolidLabel[] = [
-        { at: mid(projectSolid(v[0]!), projectSolid(v[1]!)), dx: 0, dy: 1, m: 'a' },
+        { at: mid(projectSolid(v[0]!), projectSolid(v[1]!)), dx: 0, dy: 1, v: a },
       ];
       if (s.k === 'prism') {
         // The height on the leftmost vertical edge, outside the solid.
@@ -322,11 +452,11 @@ export function solidDrawing(s: Solid): SolidDrawing {
           at: mid(projectSolid(v[left]!), projectSolid(v[n + left]!)),
           dx: -1,
           dy: 0,
-          m: 'h',
+          v: h,
         });
       } else {
         strokes.push({ pts: [projectSolid([0, 0, 0]), projectSolid([0, h, 0])], hidden: true });
-        labels.push({ at: projectSolid([0, h * 0.6, 0]), dx: 1, dy: 0, m: 'h' });
+        labels.push({ at: projectSolid([0, h * 0.6, 0]), dx: 1, dy: 0, v: h });
       }
       return { strokes, labels, dots: s.k === 'pyramid' ? [projectSolid([0, 0, 0])] : [] };
     }
@@ -344,8 +474,8 @@ export function solidDrawing(s: Solid): SolidDrawing {
       ];
       const labels: SolidLabel[] = [
         // Beside the rim, where no line runs: the radius ends there.
-        { at: top(0), dx: 1, dy: 0, m: 'r' },
-        { at: mid(bottom(right), top(right)), dx: 1, dy: 0, m: 'h' },
+        { at: top(0), dx: 1, dy: 0, v: r },
+        { at: mid(bottom(right), top(right)), dx: 1, dy: 0, v: h },
       ];
       return { strokes, labels, dots: [projectSolid([0, h, 0])] };
     }
@@ -365,8 +495,8 @@ export function solidDrawing(s: Solid): SolidDrawing {
       ];
       const labels: SolidLabel[] = [
         // Below the base and beside the upper height: apart however small the cone is drawn.
-        { at: { x: r / 2, y: DEPTH * r }, dx: 0, dy: 1, m: 'r' },
-        { at: projectSolid([0, h * 0.6, 0]), dx: 1, dy: 0, m: 'h' },
+        { at: { x: r / 2, y: DEPTH * r }, dx: 0, dy: 1, v: r },
+        { at: projectSolid([0, h * 0.6, 0]), dx: 1, dy: 0, v: h },
       ];
       return { strokes, labels, dots: [projectSolid([0, 0, 0])] };
     }
@@ -389,11 +519,68 @@ export function solidDrawing(s: Solid): SolidDrawing {
       ];
       return {
         strokes,
-        labels: [{ at: { x: r, y: 0 }, dx: 1, dy: 0, m: 'r' }],
+        labels: [{ at: { x: r, y: 0 }, dx: 1, dy: 0, v: r }],
         dots: [{ x: 0, y: 0 }],
       };
     }
   }
+}
+
+/**
+ * A prism with a non-regular base, lying as the schoolbook draws it: the base is the front face, in
+ * its true shape, and the prism runs `len` into the depth. Every side of the base that is a plain
+ * number is written beside it; a slanted side brings the base's height, dashed from its top
+ * corner down to the base line — together they give the base's area.
+ */
+function lyingPrism(g: readonly BasePoint[], len: number): SolidDrawing {
+  const v: V3[] = [...g.map((p) => [p.x, p.y, 0] as V3), ...g.map((p) => [p.x, p.y, len] as V3)];
+  const n = g.length;
+  const faces: number[][] = [g.map((_, i) => i), g.map((_, i) => n + i)];
+  for (let i = 0; i < n; i++) faces.push([i, (i + 1) % n, n + ((i + 1) % n), n + i]);
+  const strokes = polyhedronStrokes(v, faces);
+  const cx = g.reduce((t, p) => t + p.x, 0) / n;
+  const labels: SolidLabel[] = [];
+  g.forEach((p, i) => {
+    const q = g[(i + 1) % n]!;
+    const length = edgeLength(p, q);
+    if (!isNice(length)) return;
+    const m = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+    // A horizontal side: the base line's below it, the top's just under it (above it the top face
+    // of the solid runs into the depth). Any other side: beside it, away from the face's middle.
+    const flat = p.y === q.y;
+    labels.push({
+      at: projectSolid([m.x, m.y, 0]),
+      dx: flat ? 0 : Math.sign(m.x - cx) || -1,
+      dy: flat ? 1 : 0,
+      v: length,
+    });
+  });
+  const top = Math.max(...g.map((p) => p.y));
+  const apex = g.find((p) => p.y === top)!;
+  const slanted = g.some((p, i) => {
+    const q = g[(i + 1) % n]!;
+    return p.x !== q.x && p.y !== q.y;
+  });
+  const standsUpright = g.some((p, i) => {
+    const q = g[(i + 1) % n]!;
+    return p.x === q.x && p.x === apex.x && Math.min(p.y, q.y) === 0;
+  });
+  if (slanted && !standsUpright) {
+    strokes.push({
+      pts: [projectSolid([apex.x, top, 0]), projectSolid([apex.x, 0, 0])],
+      hidden: true,
+    });
+    labels.push({ at: projectSolid([apex.x, top / 2, 0]), dx: 1, dy: 0, v: top });
+  }
+  // The length: on the depth edge from the right corner of the base line.
+  const right = g.reduce((best, p) => (p.y === 0 && p.x > best.x ? p : best), { x: -1, y: 0 });
+  labels.push({
+    at: mid(projectSolid([right.x, 0, 0]), projectSolid([right.x, 0, len])),
+    dx: 1,
+    dy: 0.6,
+    v: len,
+  });
+  return { strokes, labels, dots: [] };
 }
 
 /** The smallest box around every stroke of a drawing. */

@@ -308,10 +308,14 @@ describe('select_all: her answer (Regel 0)', () => {
 
   it('writes what she ticked into the conversation, in the order she sees the options', () => {
     const chosen = ['Dativ', 'Genitiv'];
-    const text = answerTextOf(task, {
-      type: 'select_all',
-      chosen: chosen.map((t) => idOf(task, t)),
-    });
+    const text = answerTextOf(
+      task,
+      {
+        type: 'select_all',
+        chosen: chosen.map((t) => idOf(task, t)),
+      },
+      'de',
+    );
     const shown = task.options.map((o) => o.text).filter((t) => chosen.includes(t));
     expect(text).toBe(shown.join('; '));
   });

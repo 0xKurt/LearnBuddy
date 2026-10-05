@@ -2,7 +2,9 @@
 // becomes one group of questions that share the text. The text stands above every question of
 // the group with its line numbers, scrolls in its own box (`scroll-text`, the one exception of
 // rule 16), folds away and stays folded for the next question; a closed question shows where its
-// answer stood. Scripted answers in apps/api/src/testing/scenarios/reading.ts; every verdict below
+// answer stood. A Belegstelle (#368) is answered IN the text: she taps the lines that back a
+// statement, anywhere in it, and the text is then the board at the bottom instead of standing above
+// the question. Scripted answers in apps/api/src/testing/scenarios/reading.ts; every verdict below
 // is code's. Every state is shot at both phone sizes, light and dark (test-results/web/shots, 97-…).
 
 import { join } from 'node:path';
@@ -81,6 +83,7 @@ const TRUE_FALSE = 'Mia kam an diesem Tag eine Stunde zu spät in die Schule.';
 // A no-break space after "Z.": the reference stays on one line of the screen.
 const LATER = 'Was macht Mia seit dem Unfall, wenn der Weg vereist ist (Z.\u00A017–19)?';
 const ORDER = 'Bring die Ereignisse in die Reihenfolge der Geschichte.';
+const EVIDENCE = 'Mia ist dem Bauern dankbar.';
 const EVENTS = [
   'Mia stürzt an der Brücke.',
   'Der Bauer bringt sie zur Schule.',
@@ -100,18 +103,18 @@ test('a reading text: one text above every question, scrolling alone, folding aw
   await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByRole('button', { name: 'Jetzt üben' })).toBeVisible({ timeout: 30_000 });
-  // Five questions: the sixth named line 31 of a 20-line text and was never created.
-  await expect(page.getByText(/^5 Aufgaben · ca\. \d+ Min\.$/)).toBeVisible();
+  // Six questions: the seventh named line 31 of a 20-line text and was never created.
+  await expect(page.getByText(/^6 Aufgaben · ca\. \d+ Min\.$/)).toBeVisible();
   await page.getByRole('button', { name: 'Jetzt üben' }).click();
   await expect(page.getByRole('button', { name: 'Der Schulweg' }).first()).toBeVisible();
 
   const seen = new Set<string>();
-  for (let n = 0; n < 5; n++) {
+  for (let n = 0; n < 6; n++) {
     const on = async (prompt: string) =>
       (await page.getByText(prompt, { exact: true }).count()) > 0 && !seen.has(prompt);
     // The next question has arrived: one not seen yet is on screen.
     await expect(async () => {
-      const here = await Promise.all([SHORT, CHOICE, TRUE_FALSE, LATER, ORDER].map(on));
+      const here = await Promise.all([SHORT, CHOICE, TRUE_FALSE, LATER, ORDER, EVIDENCE].map(on));
       expect(here.some(Boolean)).toBe(true);
     }).toPass();
     if (await on(SHORT)) {
@@ -165,11 +168,67 @@ test('a reading text: one text above every question, scrolling alone, folding aw
       }
       await page.getByRole('button', { name: 'Prüfen' }).click();
       await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+    } else if (await on(EVIDENCE)) {
+      seen.add(EVIDENCE);
+      await belegstelle(page);
     } else {
-      throw new Error(`question ${n + 1}: none of the five reading questions is on screen`);
+      throw new Error(`question ${n + 1}: none of the six reading questions is on screen`);
     }
-    if (n < 4 && (await page.getByRole('button', { name: 'Weiter' }).count()) > 0)
+    if (n < 5 && (await page.getByRole('button', { name: 'Weiter' }).count()) > 0)
       await page.getByRole('button', { name: 'Weiter' }).click();
   }
-  expect(seen.size).toBe(5);
+  expect(seen.size).toBe(6);
 });
+
+test('a text Buddy writes himself: at her stage, read like a photographed one (#368)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Ich möchte einen Lesetext über Igel');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('einen Text über den Igel', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  // Four questions: the fifth named a line, and the lines are code's.
+  const first = 'Wo liegt das Nest des Igels oft?';
+  await expect(page.getByText(first)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Der Igel im Winter' }).first()).toBeVisible();
+  await textAndQuestion(page, first);
+  // Buddy's own text: the card says whose question it is.
+  await expect(page.getByText('Frage von Buddy').first()).toBeVisible();
+  await bothRooms(page, '98-reading-buddy');
+  await page.getByRole('button', { name: 'unter einer Hecke' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 9–11');
+  await shot(page, '98-reading-buddy-closed');
+});
+
+/**
+ * A Belegstelle (#368): the statement on the card, the text as the board at the bottom — not a
+ * second time above — and she taps its lines anywhere in it; code counts like every marking.
+ */
+async function belegstelle(page: Page): Promise<void> {
+  const line = (n: number) => page.getByRole('checkbox', { name: new RegExp(`^Zeile ${n}:`) });
+  await expect(page.getByText(EVIDENCE)).toBeInViewport();
+  await expect(page.getByTestId('passage')).toHaveCount(0);
+  await expect(page.getByTestId('mark-how')).toHaveText('Tippe die Zeilen an, in denen das steht.');
+  // Lines 15–16 stand far down the text: the box scrolls to them, the screen does not.
+  await line(9).click();
+  await line(15).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  const counted = 'Noch nicht ganz: 1 richtig, 1 fehlt noch, 1 zu viel.';
+  await expect(page.getByText(counted)).toBeVisible();
+  await line(9).click();
+  await line(16).click();
+  await expect(line(16)).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByTestId('mark-summary')).toHaveText('Markiert – Z. 15–16');
+  await expect(line(16)).toBeInViewport();
+  await shot(page, '97-reading-evidence');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '97-reading-evidence-dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  // Closed: the text is back above, the lines that back it tinted and said in words.
+  await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 15–16');
+  await shot(page, '97-reading-evidence-closed');
+}

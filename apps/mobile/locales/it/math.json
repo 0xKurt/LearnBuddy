@@ -490,7 +490,16 @@
     "hue_blue": "Blu",
     "hue_blue_green": "Blu-verde",
     "hue_green": "Verde",
-    "hue_yellow_green": "Giallo-verde"
+    "hue_yellow_green": "Giallo-verde",
+    "solid_net_any": "Sviluppo di un solido",
+    "solid_net": "Sviluppo: {{kind}}",
+    "solid_base": "base con lati {{sides}}",
+    "cubes": "Costruzione di cubi, file dal davanti al retro: {{rows}}",
+    "cubes_plan": "Pianta di costruzione, file dal davanti al retro: {{rows}}",
+    "cubes_row": "fila {{n}}: {{h}} cubi di altezza",
+    "cubes_front": "Vista di fronte: {{rows}}",
+    "cubes_side": "Vista da sinistra: {{rows}}",
+    "cubes_top": "Vista dall’alto: {{rows}}"
   },
   "keys": {
     "row": "Simboli matematici",

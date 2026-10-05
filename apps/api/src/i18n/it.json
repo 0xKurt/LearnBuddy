@@ -322,7 +322,8 @@
       "missing_one": "ne manca ancora 1",
       "extra": "{{count}} di troppo",
       "extra_one": "1 di troppo",
-      "reply": "Non ancora del tutto: {{parts}}."
+      "reply": "Non ancora del tutto: {{parts}}.",
+      "lines": "r. {{list}}"
     },
     "grid": {
       "wrong_points": "Non ancora del tutto: {{list}} non sono ancora al posto giusto.",
@@ -334,7 +335,11 @@
     },
     "solid": {
       "net_yes": "Sì, è uno sviluppo del cubo",
-      "net_no": "No, non è uno sviluppo del cubo"
+      "net_no": "No, non è uno sviluppo del cubo",
+      "kind_cuboid": "parallelepipedo",
+      "kind_prism": "prisma",
+      "kind_pyramid": "piramide",
+      "kind_cylinder": "cilindro"
     },
     "circuit": {
       "lit": "Sì, {{lamp}} si accende",

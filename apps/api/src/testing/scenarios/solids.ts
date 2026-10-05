@@ -19,14 +19,54 @@ const base = {
   source_excerpt: null,
 };
 
-type Ask = 'none' | 'vertices' | 'edges' | 'faces' | 'volume' | 'surface';
+type Ask = 'none' | 'vertices' | 'edges' | 'faces' | 'volume' | 'surface' | 'kind';
 
-/** A solid in cm; every measure it does not use is 0. */
+/** A solid in cm; every measure it does not use is 0. `more`: its base or its net (#368). */
 export const solid = (
   k: string,
   m: { n?: number; a?: number; b?: number; h?: number; r?: number },
   ask: Ask,
-) => ({ type: 'solid', k, n: 0, a: 0, b: 0, h: 0, r: 0, u: 'cm', ...m, ask });
+  more: { g?: Array<{ x: number; y: number }>; w?: 'oblique' | 'net' } = {},
+) => ({
+  type: 'solid',
+  k,
+  n: 0,
+  a: 0,
+  b: 0,
+  h: 0,
+  r: 0,
+  u: 'cm',
+  g: [],
+  w: 'oblique',
+  ...m,
+  ask,
+  ...more,
+});
+
+/** A lying prism with this base (its front face, in cm) and this length. */
+export const lying = (g: Array<[number, number]>, h: number, ask: Ask) =>
+  solid('prism', { n: g.length, h }, ask, { g: g.map(([x, y]) => ({ x, y })) });
+
+/** A Würfelgebäude: heights row by row from the front (#368). */
+export const cubes = (
+  g: number[][],
+  v: 'oblique' | 'plan' | 'front' | 'side' | 'top',
+  ask: 'none' | 'count' | 'front' | 'side' | 'top' = 'none',
+) => ({ type: 'cubes', g, v, ask });
+
+/** The building of the view question: 2 1 0 in front, 3 2 1 behind. */
+export const STAIRS = [
+  [2, 1, 0],
+  [3, 2, 1],
+];
+
+/** Front views as options: B is the building's (3, 2, 1 high from the left). */
+export const VIEW_OPTIONS = [
+  cubes([[1, 1, 1]], 'front'),
+  cubes([[3, 2, 1]], 'front'),
+  cubes([[1, 2, 3]], 'front'),
+  cubes([[2, 2, 2]], 'front'),
+];
 
 /** Six squares drawn as text rows ("#" = a square), in reading order. */
 export const net = (rows: string[], ask: 'none' | 'fold' | 'opposite' = 'none', at = 0) => ({
@@ -158,7 +198,121 @@ export const SOLID_ITEMS = [
   },
 ];
 
+/**
+ * The rest of #255 (#368): a prism with a non-regular base, nets of other solids, Würfelgebäude
+ * and their views — in the order the walkthrough answers them.
+ */
+export const MORE_SOLID_ITEMS = [
+  {
+    ...base,
+    kind: 'numeric',
+    prompt: 'Berechne das Volumen des Prismas mit trapezförmiger Grundfläche.',
+    answer: '60',
+    unit: 'cm³',
+    topic: 'Körper',
+    figure: lying(
+      [
+        [0, 0],
+        [6, 0],
+        [4, 3],
+        [2, 3],
+      ],
+      5,
+      'volume',
+    ),
+  },
+  {
+    ...base,
+    kind: 'numeric',
+    prompt: 'Wie groß ist die Oberfläche des Dreiecksprismas?',
+    answer: '132',
+    unit: 'cm²',
+    topic: 'Körper',
+    figure: lying(
+      [
+        [0, 0],
+        [4, 0],
+        [0, 3],
+      ],
+      10,
+      'surface',
+    ),
+  },
+  {
+    ...base,
+    kind: 'multiple_choice',
+    prompt: 'Welcher Körper entsteht, wenn man dieses Netz faltet?',
+    answer: 'Quader',
+    choices: ['Quader', 'Prisma', 'Pyramide', 'Zylinder'],
+    correct_choice: 0,
+    topic: 'Netze',
+    figure: solid('cuboid', { a: 5, b: 3, h: 2 }, 'kind', { w: 'net' }),
+  },
+  {
+    ...base,
+    kind: 'numeric',
+    prompt:
+      'Berechne die Oberfläche des Zylinders aus seinem Netz. Runde auf zwei Nachkommastellen.',
+    answer: '87,96',
+    unit: 'cm²',
+    topic: 'Netze',
+    figure: solid('cylinder', { r: 2, h: 5 }, 'surface', { w: 'net' }),
+  },
+  {
+    ...base,
+    kind: 'numeric',
+    prompt: 'Aus wie vielen Würfeln besteht das Gebäude?',
+    answer: '9',
+    topic: 'Würfelgebäude',
+    figure: cubes(STAIRS, 'oblique', 'count'),
+  },
+  {
+    ...base,
+    kind: 'numeric',
+    prompt: 'Wie viele Würfel braucht man für diesen Bauplan?',
+    answer: '8',
+    topic: 'Würfelgebäude',
+    figure: cubes(
+      [
+        [1, 2, 0],
+        [3, 0, 2],
+      ],
+      'plan',
+      'count',
+    ),
+  },
+  {
+    ...base,
+    kind: 'multiple_choice',
+    prompt: 'Welche Ansicht von vorn gehört zu dem Gebäude?',
+    answer: 'Ansicht B',
+    choices: ['Ansicht A', 'Ansicht B', 'Ansicht C', 'Ansicht D'],
+    correct_choice: 1,
+    choice_figures: VIEW_OPTIONS,
+    topic: 'Würfelgebäude',
+    figure: cubes(STAIRS, 'oblique', 'front'),
+  },
+];
+
 export function scriptSolids(): void {
+  scriptGenerations({
+    when: /Prismen, Körpernetze und Würfelgebäude/i,
+    answer: () => ({
+      usable: true,
+      title: 'Netze und Würfelgebäude',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: MORE_SOLID_ITEMS,
+    }),
+  });
+  scriptTurns({
+    when: /netze und würfelgebäude üben/i,
+    answer: says('Gern – Prismen, Netze und Würfelgebäude.', [
+      {
+        tool: 'offer_learning',
+        args: { kind: 'practice', text: 'Prismen, Körpernetze und Würfelgebäude' },
+      },
+    ]),
+  });
   scriptGenerations({
     when: /Körper, Würfelnetze und Raumgeometrie/i,
     answer: () => ({

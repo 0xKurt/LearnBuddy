@@ -322,7 +322,8 @@
       "missing_one": "1 fehlt noch",
       "extra": "{{count}} zu viel",
       "extra_one": "1 zu viel",
-      "reply": "Noch nicht ganz: {{parts}}."
+      "reply": "Noch nicht ganz: {{parts}}.",
+      "lines": "Z. {{list}}"
     },
     "grid": {
       "wrong_points": "Noch nicht ganz: {{list}} liegen noch nicht richtig.",
@@ -334,7 +335,11 @@
     },
     "solid": {
       "net_yes": "Ja, das ist ein Würfelnetz",
-      "net_no": "Nein, das ist kein Würfelnetz"
+      "net_no": "Nein, das ist kein Würfelnetz",
+      "kind_cuboid": "Quader",
+      "kind_prism": "Prisma",
+      "kind_pyramid": "Pyramide",
+      "kind_cylinder": "Zylinder"
     },
     "circuit": {
       "lit": "Ja, {{lamp}} leuchtet",

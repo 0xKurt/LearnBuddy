@@ -912,7 +912,9 @@ export const StartTopicRequest = z.object({
    * end) · spelling_dictation: a Diktat — words or sentences read aloud that she types
    * (issue #242; refused before any model call when there is no voice, like listen) ·
    * teach_back: „Erklär mal" (issue #236) — open questions she answers by explaining, by voice or
-   * in writing, checked against 3–6 key points. Buddy explaining something stays the chat's
+   * in writing, checked against 3–6 key points. read: Leseverständnis without a photo (#368) —
+   * Buddy writes a reading text at her level and questions about it, held to the rules of a
+   * photographed text (`practice/readText.ts`). Buddy explaining something stays the chat's
    * answer, never a mode (owner decision 28.09., issue #70); here SHE explains.
    */
   kind: z.enum([
@@ -924,6 +926,7 @@ export const StartTopicRequest = z.object({
     'test',
     'spelling_dictation',
     'teach_back',
+    'read',
   ]),
   text: z.string().trim().min(2).max(3000),
   /**

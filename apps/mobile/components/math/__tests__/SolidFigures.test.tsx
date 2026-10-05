@@ -2,6 +2,8 @@
 // without crashing, a count question shows no measures, and what a screen reader hears is the
 // figure in words — the kind and its measures, the squares, each point's path — and never the
 // key code computed (no volume, no edge count, no "folds", no vector).
+// Since #368 also a prism with a non-regular base, nets of solids and Würfelgebäude: a net that
+// asks which solid it is never names it, a building is read row by row, a view square by square.
 //
 // Geometry (fit at 360 and 390 px, light and dark) is tests/web/solids.spec.ts.
 
@@ -14,7 +16,22 @@ const solid = (
   k: 'cube' | 'cuboid' | 'prism' | 'pyramid' | 'cylinder' | 'cone' | 'sphere',
   m: Partial<Record<'n' | 'a' | 'b' | 'h' | 'r', number>>,
   ask: 'none' | 'edges' | 'volume' = 'volume',
-): SpaceFig => ({ type: 'solid', k, n: 0, a: 0, b: 0, h: 0, r: 0, u: 'cm', ask, ...m });
+  more: { g?: Array<{ x: number; y: number }>; w?: 'oblique' | 'net'; ask?: 'kind' } = {},
+): SpaceFig => ({
+  type: 'solid',
+  k,
+  n: 0,
+  a: 0,
+  b: 0,
+  h: 0,
+  r: 0,
+  u: 'cm',
+  ask,
+  g: [],
+  w: 'oblique',
+  ...m,
+  ...more,
+});
 
 const cells = (rows: string[]) =>
   rows.flatMap((row, y) => [...row].flatMap((ch, x) => (ch === '#' ? [{ x, y }] : [])));
@@ -40,6 +57,39 @@ const FIGURES: SpaceFig[] = [
     i: 0,
     j: 1,
   },
+  // #368: a lying trapezoid prism, nets of five solids, a building, its plan and a view.
+  solid('prism', { n: 4, h: 5 }, 'volume', {
+    g: [
+      { x: 0, y: 0 },
+      { x: 6, y: 0 },
+      { x: 4, y: 3 },
+      { x: 2, y: 3 },
+    ],
+  }),
+  solid('cuboid', { a: 5, b: 3, h: 2 }, 'none', { w: 'net', ask: 'kind' }),
+  solid('prism', { n: 3, a: 3, h: 5 }, 'none', { w: 'net' }),
+  solid('pyramid', { n: 4, a: 6, h: 4 }, 'none', { w: 'net' }),
+  solid('cylinder', { r: 2, h: 5 }, 'none', { w: 'net' }),
+  solid('cone', { r: 3, h: 4 }, 'none', { w: 'net' }),
+  {
+    type: 'cubes',
+    g: [
+      [2, 1, 0],
+      [3, 2, 1],
+    ],
+    v: 'oblique',
+    ask: 'count',
+  },
+  {
+    type: 'cubes',
+    g: [
+      [1, 0],
+      [2, 3],
+    ],
+    v: 'plan',
+    ask: 'count',
+  },
+  { type: 'cubes', g: [[3, 2, 1]], v: 'front', ask: 'none' },
 ];
 
 const t = (key: string, values: Record<string, string | number> = {}) =>
@@ -89,5 +139,33 @@ describe('describeSpace', () => {
     expect(said).toContain('figure.axes3d_point {"l":"A","x":"2","y":"3","z":"2"}');
     expect(said).toContain('figure.arrow_to {"a":"A","b":"B"}');
     expect(said).not.toContain('-1');
+  });
+});
+
+describe('the rest of #255 (#368)', () => {
+  const plain = (f: SpaceFig) => describeSpace(f, t).replace(/\\"/g, '"');
+
+  it('writes the base’s plain sides, its height and the length on a lying prism', () => {
+    const { container } = renderInApp(<SpaceBody figure={FIGURES[10]!} width={266} />);
+    for (const v of ['6 cm', '2 cm', '3 cm', '5 cm']) expect(container.textContent).toContain(v);
+    expect(plain(FIGURES[10]!)).toContain('figure.solid_base {"sides":"6 cm, 2 cm"}');
+  });
+
+  it('fills the faces of a net, and never names the solid it asks about', () => {
+    const { container } = renderInApp(<SpaceBody figure={FIGURES[11]!} width={266} />);
+    const filled = container.querySelectorAll('path[fill]:not([fill="none"])');
+    expect(filled.length).toBeGreaterThanOrEqual(6);
+    expect(describeSpace(FIGURES[11]!, t)).toContain('figure.solid_net_any');
+    expect(describeSpace(FIGURES[11]!, t)).not.toContain('cuboid');
+    expect(describeSpace(FIGURES[12]!, t)).toContain('figure.solid_net {');
+  });
+
+  it('reads a building row by row from the front, a view square by square', () => {
+    expect(plain(FIGURES[16]!)).toContain('figure.cubes_row {"n":2,"h":"3, 2, 1"}');
+    expect(plain(FIGURES[17]!)).toContain('figure.cubes_plan');
+    expect(plain(FIGURES[18]!)).toBe('figure.cubes_front {"rows":"■□□ / ■■□ / ■■■"}');
+    // The plan writes each column's height in its square (each text twice: halo and ink).
+    const plan = renderInApp(<SpaceBody figure={FIGURES[17]!} width={266} />);
+    expect(plan.container.textContent).toBe('112233');
   });
 });

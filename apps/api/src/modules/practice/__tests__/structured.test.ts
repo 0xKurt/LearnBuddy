@@ -264,6 +264,6 @@ describe('order: her answer (Regel 0)', () => {
 
   it('writes her answer into the conversation in her order', () => {
     const mine = [STEPS[1]!, STEPS[0]!, STEPS[2]!, STEPS[3]!];
-    expect(answerTextOf(task, answerFor(task, mine))).toBe(mine.join(ORDER_JOIN));
+    expect(answerTextOf(task, answerFor(task, mine), 'de')).toBe(mine.join(ORDER_JOIN));
   });
 });

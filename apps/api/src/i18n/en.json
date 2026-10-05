@@ -322,7 +322,8 @@
       "missing_one": "1 still missing",
       "extra": "{{count}} too many",
       "extra_one": "1 too many",
-      "reply": "Not quite yet: {{parts}}."
+      "reply": "Not quite yet: {{parts}}.",
+      "lines": "l. {{list}}"
     },
     "grid": {
       "wrong_points": "Not quite yet: {{list}} are not in the right place yet.",
@@ -334,7 +335,11 @@
     },
     "solid": {
       "net_yes": "Yes, it is a cube net",
-      "net_no": "No, it is not a cube net"
+      "net_no": "No, it is not a cube net",
+      "kind_cuboid": "cuboid",
+      "kind_prism": "prism",
+      "kind_pyramid": "pyramid",
+      "kind_cylinder": "cylinder"
     },
     "circuit": {
       "lit": "Yes, {{lamp}} lights up",

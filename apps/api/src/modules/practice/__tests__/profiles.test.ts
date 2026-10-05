@@ -296,7 +296,9 @@ describe('the fallback', () => {
   it('is the pre-D2 global schema byte for byte', () => {
     expect(JSON.stringify(GENERATED_SCHEMA)).toBe(
       JSON.stringify(
-        toJsonSchema(GeneratedSet.omit({ listen: true, dictation: true, teach_back: true })),
+        toJsonSchema(
+          GeneratedSet.omit({ listen: true, dictation: true, teach_back: true, reading: true }),
+        ),
       ),
     );
     expect(JSON.stringify(toJsonSchema(setSchemaForModel(null, null)))).toBe(

@@ -35,6 +35,67 @@ export function numbered(n: number): boolean {
   return n === 1 || n % 5 === 0;
 }
 
+/**
+ * One printed line: the gutter with its number — on every fifth line, and wherever `numberShown`
+ * — and the line's text. `lit`: the line belongs to the answer (the passage once a question is
+ * closed) or she marked it (a Belegstelle, `MarkAnswer`): tinted by the caller, and here a bar in
+ * the gutter and the number in the accent, so it is never colour alone. One implementation for
+ * the text she reads and the text she marks in (#368).
+ */
+export function LineText({
+  n,
+  line,
+  lit,
+  numberShown,
+}: {
+  n: number;
+  line: string;
+  lit: boolean;
+  numberShown: boolean;
+}) {
+  const { palette } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', flexShrink: 1 }}>
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={{ width: GUTTER, paddingRight: SPACE.sm, flexDirection: 'row' }}
+      >
+        <View
+          style={{
+            width: BAR,
+            borderRadius: BAR,
+            marginVertical: SPACE.xs / 2, // token-exempt: half the smallest step, as the line's air
+            backgroundColor: lit ? palette.primary : 'transparent',
+          }}
+        />
+        <Text
+          style={[
+            TYPE.label,
+            {
+              flex: 1,
+              textAlign: 'right',
+              lineHeight: TYPE.small.lineHeight,
+              fontVariant: ['tabular-nums'],
+              color: lit ? palette.primaryDk : palette.ink2,
+            },
+          ]}
+        >
+          {numbered(n) || numberShown ? n : ''}
+        </Text>
+      </View>
+      <Text style={[TYPE.small, { flex: 1, paddingRight: SPACE.md, color: palette.ink }]}>
+        {line}
+      </Text>
+    </View>
+  );
+}
+
+/** The gutter of a printed line: room for a two-digit number and the bar of a marked line. */
+const GUTTER = SPACE.xl + SPACE.sm;
+/** The bar beside a line of the answer or a marked line: a stroke, like a marked word's underline. */
+const BAR = 3; // token-exempt: a stroke, not a gap — the same as MarkAnswer's UNDERLINE
+
 /** How she left a text: folded or open, and how far down she had read. */
 type Kept = { open: boolean; y: number };
 const kept = new Map<string, Kept>();
@@ -169,36 +230,13 @@ export function PassagePanel({ passage, maxHeight }: Props) {
                     if (i === passage.lines.length - 1) setLaidOut(true);
                   }}
                   style={{
-                    flexDirection: 'row',
                     // A printed line that wraps on the phone stays one block: the air is between
                     // printed lines, so a numbered line and its continuation read as one.
                     paddingVertical: SPACE.xs / 2, // token-exempt: half the smallest step, per side
                     backgroundColor: lit ? palette.primaryLt : 'transparent',
                   }}
                 >
-                  {/* The gutter: the line number on every fifth line, and on the answer's lines. */}
-                  <Text
-                    accessibilityElementsHidden
-                    importantForAccessibility="no"
-                    style={[
-                      TYPE.label,
-                      {
-                        width: SPACE.xl + SPACE.sm,
-                        paddingRight: SPACE.sm,
-                        textAlign: 'right',
-                        lineHeight: TYPE.small.lineHeight,
-                        fontVariant: ['tabular-nums'],
-                        color: lit ? palette.primaryDk : palette.ink2,
-                      },
-                    ]}
-                  >
-                    {numbered(n) || lit || named ? n : ''}
-                  </Text>
-                  <Text
-                    style={[TYPE.small, { flex: 1, paddingRight: SPACE.md, color: palette.ink }]}
-                  >
-                    {line}
-                  </Text>
+                  <LineText n={n} line={line} lit={lit} numberShown={lit || named} />
                 </View>
               );
             })}

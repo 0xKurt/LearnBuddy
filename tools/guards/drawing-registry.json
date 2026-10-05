@@ -106,6 +106,10 @@
     "apps/mobile/components/math/ColorWheel.tsx": {
       "issue": "#261",
       "libraryCheck": "Farbkreis nach Itten (12 Felder, Ittens Stern in der Mitte) mit react-native-svg; Komplement, Mischung und Klasse aus packages/shared-math/src/itten.ts, die der Server prüft. Bibliotheks-Check 05.10. (https://github.com/0xKurt/LearnBuddy/issues/261#issuecomment-5989699313): react-native-wheel-color-picker 1.3.1 (MIT, 2024), reanimated-color-picker 5.1.3 (MIT, 3,9 MB entpackt) und react-native-color-wheel 0.1.7 (2022) sind HSV-Farbwähler mit stufenlosem Kreis, kein 12-teiliger Kreis mit Namen; chroma-js 3.2 rechnet Farbräume — Ittens Komplement von Rot ist Grün, im RGB-Raum Cyan, also für den Schlüssel unbrauchbar. Eigenbau: zwölf Ringsektoren und sechs Polygone. A11y: jedes Feld trägt seinen Namen in Worten (nie Farbe als einziges Signal), markierte Felder dazu fette Umrandung und fetter Name; describeColorWheel sagt alle Felder, den Stern und die markierten Felder; die zwölf Töne sind Theme-Tokens mit eigener Dunkel-Variante (ΔE ≥ 20 zwischen Nachbarn in beiden Modi, ColorWheel.test.tsx)."
+    },
+    "apps/mobile/components/math/CubeBuildings.tsx": {
+      "issue": "#368",
+      "libraryCheck": "Würfelgebäude als Schrägbild, Bauplan und Ansicht mit react-native-svg, wie die Körper in SolidFigures.tsx; Ansichten, Sichtbarkeit der Säulen und jeder Schlüssel aus packages/shared-math/src/cubes.ts, die der Server prüft. Es gilt der Bibliotheks-Check von #255 (SolidFigures.tsx, 03.10.): zdog, isomer, three und JSXGraph zeichnen nur in Canvas, WebGL oder einem DOM, also unter React Native nur per WebView, und keine kennt Kavalierperspektive; isomer zeichnet Würfel nur isometrisch. Nachgeprüft 05.10. (npm-Suche „cube building“, „voxel svg“, „isometric blocks“): voxel-Pakete (z. B. voxel-engine, isomer-react) sind DOM/Canvas-gebunden oder seit Jahren ungepflegt; für Baupläne und Ansichten gibt es kein Paket. Eigenbau begründet: drei Flächen je Würfel, von hinten nach vorn gemalt, sind rund 40 Zeilen; die Rechnung braucht der Server ohnehin. A11y: describeCubes sagt jede Reihe mit ihren Höhen, eine Ansicht Quadrat für Quadrat."
     }
   }
 }

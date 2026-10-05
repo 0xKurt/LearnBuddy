@@ -490,7 +490,16 @@
     "hue_blue": "Bleu",
     "hue_blue_green": "Bleu-vert",
     "hue_green": "Vert",
-    "hue_yellow_green": "Jaune-vert"
+    "hue_yellow_green": "Jaune-vert",
+    "solid_net_any": "Patron d’un solide",
+    "solid_net": "Patron : {{kind}}",
+    "solid_base": "base de côtés {{sides}}",
+    "cubes": "Assemblage de cubes, rangées de l’avant vers l’arrière : {{rows}}",
+    "cubes_plan": "Plan de construction, rangées de l’avant vers l’arrière : {{rows}}",
+    "cubes_row": "rangée {{n}} : {{h}} cubes de haut",
+    "cubes_front": "Vue de face : {{rows}}",
+    "cubes_side": "Vue de gauche : {{rows}}",
+    "cubes_top": "Vue de dessus : {{rows}}"
   },
   "keys": {
     "row": "Symboles mathématiques",

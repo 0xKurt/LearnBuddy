@@ -667,9 +667,10 @@ const offerLearning = z.object({
         'test',
         'spelling_dictation',
         'teach_back',
+        'read',
       ])
       .describe(
-        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end) · spelling_dictation: the app reads words or sentences aloud and she types them (when she asks for a dictation or to practise writing/spelling her word list) · teach_back: open questions SHE answers by explaining in her own words, by voice or in writing, checked point by point (when she asks to be quizzed or questioned on a topic or sheet, or asks to explain something to you)',
+        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end) · spelling_dictation: the app reads words or sentences aloud and she types them (when she asks for a dictation or to practise writing/spelling her word list) · teach_back: open questions SHE answers by explaining in her own words, by voice or in writing, checked point by point (when she asks to be quizzed or questioned on a topic or sheet, or asks to explain something to you) · read: reading comprehension — you write a text at her level and questions about it (when she asks to practise reading or understanding texts and names no sheet of hers)',
       ),
     text: z
       .string()

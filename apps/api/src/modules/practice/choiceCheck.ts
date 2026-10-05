@@ -41,7 +41,7 @@ import {
 } from '@learnbuddy/shared-math';
 
 import { primaryHolds } from './figureCheck.js';
-import { netChoiceHolds } from './solidCheck.js';
+import { netChoiceHolds, viewsHold } from './solidCheck.js';
 
 /** Why a multiple-choice draft does not hold together; null when it does. */
 export type ChoiceProblem =
@@ -61,7 +61,9 @@ export type ChoiceProblem =
   | 'key_matches_none'
   | 'key_matches_several'
   | 'key_not_correct'
-  | 'prompt_function_differs';
+  | 'prompt_function_differs'
+  /** Views as options, not exactly one of them the building's (#368). */
+  | 'view_choice';
 
 export type ChoiceDraft = {
   prompt: string;
@@ -69,6 +71,8 @@ export type ChoiceDraft = {
   choices: readonly string[] | null;
   correct_choice: number | null;
   choice_figures: readonly Figure[] | null;
+  /** The question's own figure: a Würfelgebäude whose views are the options (#368). */
+  figure?: Figure | null;
 };
 
 /** The most options a figure grid holds: two by two (apps/mobile/components/practice/ChoiceList.tsx). */
@@ -112,6 +116,9 @@ export function choiceProblem(it: ChoiceDraft): ChoiceProblem | null {
     // Cube nets (issue #255): the right option is the one odd net out (`solidCheck.ts`).
     if (figures.some((f) => f.type === 'cube_net') && !netChoiceHolds(figures, correct))
       return 'net_choice';
+    // Views of a Würfelgebäude (#368): exactly one is the building's (`solidCheck.ts`).
+    if (figures.some((f) => f.type === 'cubes') && !viewsHold(it.figure, figures, correct))
+      return 'view_choice';
     // Graphs: the key is a FUNCTION, and the graph check holds it against every drawing — the
     // option texts only describe the pictures (they are neither shown nor read aloud).
     if (figures.some((f) => f.type === 'function_plot')) return graphProblem(it, correct);

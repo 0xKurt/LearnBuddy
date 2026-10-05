@@ -490,7 +490,16 @@
     "hue_blue": "Blue",
     "hue_blue_green": "Blue-green",
     "hue_green": "Green",
-    "hue_yellow_green": "Yellow-green"
+    "hue_yellow_green": "Yellow-green",
+    "solid_net_any": "Net of a solid",
+    "solid_net": "Net: {{kind}}",
+    "solid_base": "base with sides {{sides}}",
+    "cubes": "Cube building, rows from front to back: {{rows}}",
+    "cubes_plan": "Building plan, rows from front to back: {{rows}}",
+    "cubes_row": "row {{n}}: {{h}} cubes high",
+    "cubes_front": "View from the front: {{rows}}",
+    "cubes_side": "View from the left: {{rows}}",
+    "cubes_top": "View from above: {{rows}}"
   },
   "keys": {
     "row": "Math symbols",

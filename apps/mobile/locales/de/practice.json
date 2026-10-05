@@ -314,7 +314,9 @@
     "word_in": "{{word}}, markiert als {{name}}",
     "gap": "Komma nach „{{word}}“",
     "cut": "Silbe endet nach „{{before}}“ in {{word}}",
-    "how_sorted": "Erst oben die Art wählen, dann die Wörter antippen."
+    "how_sorted": "Erst oben die Art wählen, dann die Wörter antippen.",
+    "how_lines": "Tippe die Zeilen an, in denen das steht.",
+    "lines": "Z. {{list}}"
   },
   "select": {
     "several": "Mehrere sind richtig – tippe alle an.",

@@ -13,6 +13,7 @@
 //
 // Dependency-free on purpose: the app imports this file by path.
 
+import { cubesProblem, type Cubes } from './cubes.js';
 import { solidProblem, type Solid } from './solids.js';
 
 // ─────────────── cube nets ───────────────
@@ -191,14 +192,19 @@ export function axesRange(f: Axes3d): Record<'x' | 'y' | 'z', [number, number]> 
 
 // ─────────────── all three ───────────────
 
-export type SpaceFigureData = Solid | CubeNet | Axes3d;
-const SPACE_TYPE_NAMES: readonly SpaceFigureData['type'][] = ['solid', 'cube_net', 'axes3d'];
+export type SpaceFigureData = Solid | CubeNet | Axes3d | Cubes;
+const SPACE_TYPE_NAMES: readonly SpaceFigureData['type'][] = [
+  'solid',
+  'cube_net',
+  'axes3d',
+  'cubes',
+];
 
 export function isSpaceFigure(f: { type: string }): f is SpaceFigureData {
   return (SPACE_TYPE_NAMES as readonly string[]).includes(f.type);
 }
 
-/** The first rule a solid, a net or a coordinate system breaks, or null. */
+/** The first rule a solid, a net, a coordinate system or a cube building breaks, or null. */
 export function spaceProblem(f: SpaceFigureData): string | null {
   switch (f.type) {
     case 'solid':
@@ -207,5 +213,7 @@ export function spaceProblem(f: SpaceFigureData): string | null {
       return netProblem(f);
     case 'axes3d':
       return axesProblem(f);
+    case 'cubes':
+      return cubesProblem(f);
   }
 }
