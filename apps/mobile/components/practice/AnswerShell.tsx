@@ -27,11 +27,13 @@
 // walkthrough (`tests/web/fit.ts`, `answerPlace`) measures at every stop that the answer stands
 // directly above its action or the bottom edge, the free room above it, and "Prüfen" lowest.
 
-import type { ReactNode } from 'react';
+import { useContext, type ReactNode } from 'react';
 import { View } from 'react-native';
 
+import { answerFolds } from '../../lib/keyboard.js';
 import { SPACE } from '../../lib/theme/space.js';
-import { CheckBar, type CheckAction } from './CheckBar.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
+import { AskRoute, CheckBar, type CheckAction } from './CheckBar.js';
 import { FreeSpace } from './FreeSpace.js';
 
 type Props = {
@@ -48,21 +50,20 @@ type Props = {
    * shades never shrink; the conversation above gives way instead (`threadRoom`).
    */
   keeps?: number | 'whole';
-  /**
-   * Tiles need no gap above them: when the free room is used up they meet the Tipp row, whose
-   * touch height already sets them apart, and 8 pt more cost the second row of picture options
-   * its place on 360×740 (issue #288).
-   */
-  flush?: boolean;
 };
 
-export function AnswerShell({
-  answer = null,
-  keys = null,
-  action,
-  keeps = 0,
-  flush = false,
-}: Props) {
+// No answer has a gap of its own above it: when the free room is used up it meets the Tipp row,
+// whose touch height already sets them apart. Tiles were the first (8 pt more cost the second
+// row of picture options its place on 360×740, issue #288); since the bar's field (#402, +6 pt
+// on a board) every form is, and an order with Buddy's reply on 360×740 keeps its last step.
+
+// While she types her question with the keyboard up the answer folds away whole, the way the
+// drawing folds (`answerFolds`, issue #402): a row cut at the slot's edge read as broken (rule
+// 17). Not drawn, still mounted — back unchanged when the keyboard goes. The question card above
+// stays; a typed answer or a board's own field is not her question.
+export function AnswerShell({ answer = null, keys = null, action, keeps = 0 }: Props) {
+  const seen = useVisibleHeight();
+  const folded = answerFolds(useContext(AskRoute).focused, seen.window, seen.overlap);
   return (
     <>
       <FreeSpace />
@@ -72,11 +73,11 @@ export function AnswerShell({
           style={{
             // It gives way when the room runs out (the conversation's reply, the keyboard); the
             // form inside scrolls then, "Prüfen" stays.
+            display: folded ? 'none' : 'flex',
             flexGrow: 0,
             flexShrink: keeps === 'whole' ? 0 : 1,
             minHeight: keeps === 'whole' ? undefined : keeps,
             paddingHorizontal: SPACE.lg,
-            paddingTop: flush ? 0 : SPACE.sm,
           }}
         >
           {answer}

@@ -24,7 +24,8 @@
     "shaded": "{{filled}} parts sur {{total}} coloriées",
     "part": "Part {{n}} sur {{total}}",
     "pick_how": "Touche la barre qui est la plus grande.",
-    "pick_option": "Choisir {{fraction}}"
+    "pick_option": "Choisir {{fraction}}",
+    "check_waits": "Seulement quand une partie est coloriée."
   },
   "cards": {
     "progress": "Carte {{current}} sur {{total}}",
@@ -242,7 +243,8 @@
   "thread": {
     "you": "Toi",
     "buddy": "Buddy",
-    "thinking": "Buddy regarde ta réponse…"
+    "thinking": "Buddy regarde ta réponse…",
+    "thinking_question": "Buddy réfléchit à ta question…"
   },
   "title_fallback": "Entraînement",
   "verdict": {
@@ -317,5 +319,12 @@
   "select": {
     "several": "Plusieurs sont justes – touche-les toutes.",
     "check_waits": "Dès que tu en as coché au moins une."
+  },
+  "ask": {
+    "placeholder": "Pose ta question…",
+    "label": "Ta question sur l'exercice",
+    "later": "Je le garde pour plus tard",
+    "later_hint": "Buddy y revient après l'entraînement.",
+    "kept": "Noté"
   }
 }

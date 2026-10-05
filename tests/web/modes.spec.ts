@@ -292,6 +292,8 @@ test('learning modes: explain, homework help without the solution, practice with
     expect(cut, `turns cut at the conversation's edge on ${phone.width} px`).toEqual([]);
   }
   await page.setViewportSize(PHONES[0]!);
+  // The conversation is sized again for this window (`threadRoom`) before its edge is read.
+  await settle(page);
   // What scrolls up out of the conversation fades away instead of being cut hard under the
   // question card, where half a line stood readable and looked like a rendering fault
   // (owner 28.09., issue #63). Since #286 the conversation shows whole turns, so the fade is
@@ -353,6 +355,25 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(stopReading).toHaveCount(0);
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '25c-practice-read-dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+
+  // ── Her question under the options (issue #402, report #388 §1) ──
+  // The tile is the answer; the bar's field is the way to ask the tutor about the task. Asking
+  // is not answering: the reply joins the conversation, and the options stay as they were.
+  const askField = page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' });
+  await expect(askField).toHaveAttribute('placeholder', 'Frag zur Aufgabe …');
+  // Filled until it holds: the switch back to light may still remount the field (see the order).
+  await expect(async () => {
+    await askField.fill('Was bedeutet der Strich im Bruch?');
+    await expect(askField).toHaveValue('Was bedeutet der Strich im Bruch?', { timeout: 1000 });
+  }).toPass();
+  await page.getByRole('button', { name: 'Senden' }).last().click();
+  await expect(page.getByText('Der Strich heißt Bruchstrich', { exact: false })).toBeVisible();
+  await expect(askField).toHaveValue('');
+  await expect(page.getByText('Schon ausprobiert')).toHaveCount(0);
+  await shot(page, '25d-practice-asked');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '25e-practice-asked-night');
   await page.emulateMedia({ colorScheme: 'light' });
 
   // ── Voice mode: switched on in the practice header, still on at Buddy ──
@@ -422,9 +443,10 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Teil 2 von 4' }).click();
   await expect(page.getByText('2 von 4 Teilen gefärbt')).toBeVisible();
   await shot(page, '34-fraction-bar-shade');
-  // What she shaded stands in the answer field, so "Prüfen" is the same one way to a
-  // verdict as everywhere else — and typing is still right there next to it.
-  await expect(page.getByLabel('Deine Antwort')).toHaveValue('2/4');
+  // What she shaded is her answer, and "Prüfen" is the same one way to a verdict as everywhere
+  // else. The bar's field is her question, like on every board (issue #402, report #388 §9).
+  await expect(page.getByLabel('Deine Antwort')).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toBeVisible();
   await page.getByRole('button', { name: 'Prüfen' }).click();
   // 2/4 for a question that named 1/2: the same amount, and a rule says so without a model.
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
@@ -468,6 +490,15 @@ test('learning modes: explain, homework help without the solution, practice with
     page.getByText('Probetest – eine Antwort pro Frage, keine Tipps.', { exact: false }),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
+  // The same bar in the Probetest (issue #402, report #388 §3): she may ask, but the test gives no
+  // help — the reply is its fixed line, and asking costs no try (the options stay).
+  await page
+    .getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })
+    .fill('War Augustus nicht ein Monat?');
+  await page.getByRole('button', { name: 'Senden' }).last().click();
+  await expect(page.getByText('Im Test gibt es keine Tipps', { exact: false })).toBeVisible();
+  await expect(page.getByText('Ja, der August')).toHaveCount(0);
+  await shot(page, '27b-test-asked');
   await page.getByRole('button', { name: 'Augustus', exact: true }).click();
   await expect(page.getByText("Notiert – weiter geht's.")).toBeVisible();
   await expect(page.getByText('Richtig', { exact: true })).toHaveCount(0);
@@ -744,6 +775,30 @@ test('an order: tap in order, tap again to take back (issue #228)', async ({ pag
   await shot(page, '39-order-eight');
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '39b-order-eight-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  // ── Her question beside the board (issue #402, report #388 §4) ──
+  // "Prüfen" stands in the bar's pill; once she has typed a question "Senden" takes its place.
+  // Off the task, the tutor steers back and offers to keep it: one tap, and Buddy brings it up
+  // after the practice.
+  // Right after the switch back from the dark room the field can render once more (ThemeProvider
+  // remounts the tree): fill until the value holds instead of typing into the copy that is about
+  // to go (the full walkthrough of 04.10. lost the words that way; figureWalk.ts `typed`).
+  const askField = page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' });
+  await expect(async () => {
+    await askField.fill('Hast du eigentlich ein Haustier?');
+    await expect(askField).toHaveValue('Hast du eigentlich ein Haustier?', { timeout: 1000 });
+  }).toPass();
+  await expect(check).toHaveCount(0);
+  await page.getByRole('button', { name: 'Senden' }).last().click();
+  await expect(page.getByText('Erzähl ich dir nach dem Üben', { exact: false })).toBeVisible();
+  await expect(askField).toHaveValue('');
+  await expect(check).toBeVisible();
+  await shot(page, '39j-order-eight-offered');
+  await page.getByRole('button', { name: 'Merk ich mir für nachher' }).click();
+  await expect(page.getByText('Gemerkt')).toBeVisible();
+  await shot(page, '39k-order-eight-asked');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '39l-order-eight-asked-night');
   await page.emulateMedia({ colorScheme: 'light' });
   await check.click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();

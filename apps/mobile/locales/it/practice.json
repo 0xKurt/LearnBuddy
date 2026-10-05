@@ -24,7 +24,8 @@
     "shaded": "{{filled}} parti su {{total}} colorate",
     "part": "Parte {{n}} di {{total}}",
     "pick_how": "Tocca la barra che è maggiore.",
-    "pick_option": "Scegli {{fraction}}"
+    "pick_option": "Scegli {{fraction}}",
+    "check_waits": "Solo quando una parte è colorata."
   },
   "cards": {
     "progress": "Carta {{current}} di {{total}}",
@@ -242,7 +243,8 @@
   "thread": {
     "you": "Tu",
     "buddy": "Buddy",
-    "thinking": "Buddy sta guardando la tua risposta…"
+    "thinking": "Buddy sta guardando la tua risposta…",
+    "thinking_question": "Buddy pensa alla tua domanda…"
   },
   "title_fallback": "Esercizi",
   "verdict": {
@@ -317,5 +319,12 @@
   "select": {
     "several": "Più di una è giusta: toccale tutte.",
     "check_waits": "Quando ne hai spuntata almeno una."
+  },
+  "ask": {
+    "placeholder": "Chiedi su questo…",
+    "label": "La tua domanda sull'esercizio",
+    "later": "Me lo segno per dopo",
+    "later_hint": "Buddy ne riparla dopo l'esercizio.",
+    "kept": "Segnato"
   }
 }

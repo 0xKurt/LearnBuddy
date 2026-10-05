@@ -74,8 +74,9 @@ describe('one bar per practice screen, and it is the input bar (#395)', () => {
 
   it('gives "Prüfen" to the input bar: the shell’s action renders it as the bar’s action', () => {
     const { text } = sources.find((s) => s.name === 'CheckBar.tsx')!;
-    // The bar of a form with a check action: the input bar, with "Prüfen" in its action slot.
-    expect(text).toMatch(/<InputBar[^>]*\baction=\{/);
+    // The bar of a form with a check action: the input bar with her question's field (#402), and
+    // "Prüfen" in its action slot.
+    expect(text).toMatch(/useAskField\(\s*<CheckBtn\b/);
     // The shell renders its action once.
     const shell = sources.find((s) => s.name === 'AnswerShell.tsx')!.text;
     expect(shell.match(/<CheckBar\b/g)?.length ?? 0).toBe(1);

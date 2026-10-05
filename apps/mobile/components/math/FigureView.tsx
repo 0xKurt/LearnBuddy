@@ -89,6 +89,7 @@ export function FigureView({
   // are in lib/math/figureScale.ts, where they are tested).
   const [fullHeight, setFullHeight] = useState(0);
   const scale = figureScale(fullHeight, maxHeight);
+  const bodyWidth = figureBodyWidth(width, scale, bare ? BARE_FIGURE_CHROME : undefined);
   const words = useSpokenWords();
   const description = useMemo(
     () => describeFigure(figure, t, (s) => speakMathText(s, words), { formulas: !bare }),
@@ -130,20 +131,20 @@ export function FigureView({
             if (h !== null) setFullHeight(h);
           }}
         >
-          <FigureBody
-            figure={figure}
-            width={figureBodyWidth(width, scale, bare ? BARE_FIGURE_CHROME : undefined)}
-            bare={bare}
-          />
+          <FigureBody figure={figure} width={bodyWidth} scale={scale} bare={bare} />
         </View>
       ) : null}
     </View>
   );
 }
 
-function FigureBody({ figure, width, bare }: { figure: Figure; width: number; bare: boolean }) {
+/** `width` is already shrunk by `scale`; only a tree, whose height follows its levels, needs both. */
+type BodyProps = { figure: Figure; width: number; scale: number; bare: boolean };
+
+function FigureBody({ figure, width, scale, bare }: BodyProps) {
   // Clock, money, trees, the periodic table, solids … are drawn in their own files.
-  if (isSchoolFigure(figure)) return <SchoolFigureBody figure={figure} width={width} />;
+  if (isSchoolFigure(figure))
+    return <SchoolFigureBody figure={figure} width={width} scale={scale} />;
   switch (figure.type) {
     case 'fraction':
       return <FractionPicture fig={figure} width={width} />;

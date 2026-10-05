@@ -3,8 +3,9 @@
 //
 //   · shade — ein leerer Balken aus gleich großen Teilen. Ein Tipp auf ein Teil färbt den
 //     Balken bis dorthin; ein Tipp auf das letzte gefärbte Teil nimmt eines zurück. Was
-//     gefärbt ist, schreibt sich als Bruch ins Antwortfeld — geprüft wird mit „Prüfen",
-//     wie bei allem anderen, und Tippen bleibt daneben erreichbar (#162, Abnahme 2).
+//     gefärbt ist, ist ihre Antwort, als Bruch — geprüft wird mit „Prüfen", wie bei jeder
+//     Tafel. Seit #402 (Bericht #388 §9) ist das Feld der Leiste ihre Frage an den Tutor, nicht
+//     mehr ein zweiter Weg, den Bruch zu tippen (#162, Abnahme 2, ist damit abgelöst).
 //   · pick — zwei Balken gleicher Länge, jeder in seine eigenen Teile geteilt. Ein Tipp auf
 //     einen Balken IST die Antwort (wie eine Auswahl) und geht gleich raus.
 //
@@ -39,9 +40,9 @@ const FRACTION = /^(\d+)\s*\/\s*(\d+)$/;
 const WHOLE = /^\d+$/;
 
 /**
- * How many of `parts` the answer field currently describes, or null when it describes
- * something else. A fraction counts however it is written, so a typed `1/2` shades two of
- * four and she SEES that they are the same amount — which is the whole point of the bar.
+ * How many of `parts` her answer so far describes (the screen keeps it as a draft), or null
+ * when it describes something else. A fraction counts however it is written, so `1/2` shades
+ * two of four.
  * Anything that is not a whole number of parts (a decimal, half a part, a word) leaves the
  * bar alone rather than guessing at what she meant.
  */
@@ -117,7 +118,7 @@ function Segments({
         // A part of the bar is not a CTA but a piece of the drawing she adjusts — like a
         // character she types, not like "Prüfen". A `Btn` here would bring its own padding,
         // radius and minimum height and the bar would stop being one bar; the CTA for this
-        // answer is the composer's "Prüfen" (rule 13).
+        // answer is the bar's "Prüfen" (rule 13).
         onPressPart && partLabel ? (
           <Pressable
             key={i}
@@ -146,10 +147,10 @@ type Props = {
    * zwischen „dieser Zeichner kennt alle seine Fälle" und „er überspringt stumm einen dritten".
    */
   surface: Exclude<AnswerSurface, { mode: 'notes' }>;
-  /** What stands in the answer field now, so the bar and the typed answer agree. */
+  /** Her answer so far, as a fraction (`shadedText`); a draft's `1/2` shades two of four. */
   value: string;
   disabled: boolean;
-  /** Shading writes the fraction into the answer field; she checks it with "Prüfen". */
+  /** Shading writes the fraction as her answer; she checks it with "Prüfen". */
   onChange: (text: string) => void;
   /** Picking one of two bars IS the answer, like a choice: it goes out at once. */
   onPick: (text: string) => void;

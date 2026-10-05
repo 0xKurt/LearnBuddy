@@ -7,6 +7,9 @@
 // What arrives while the screen is open moves a little (Buddy's reply rises in, a right
 // answer is celebrated softly, a "not yet" nudges her answer; Verdict.tsx); what was
 // there when the question opened just stands.
+// Her question to the tutor (issue #402) stands here like any of her turns, on every form, and an
+// answer Buddy offers to keep for later carries the chip "Merk ich mir für nachher" under it — the
+// help chips' pattern (`HelpChips`); once tapped it says "Gemerkt".
 
 import type { PracticeTurnView } from '@learnbuddy/shared-types/contracts';
 import { useRef } from 'react';
@@ -16,14 +19,20 @@ import { View } from 'react-native';
 import { moonForReply, type MoonState } from '../../lib/buddy/moon.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
+import { Btn } from '../lb/Btn.js';
+import { Chip } from '../lb/Chip.js';
 import { Rise } from '../lb/Motion.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenMath } from '../math/useSpokenMath.js';
 import { PronunciationNote } from './SpeakPanel.js';
 import { Thinking } from './Thinking.js';
 import { Nudge, VerdictTag, type VerdictKey } from './Verdict.js';
+
+/** Buddy's orb beside his bubble; what hangs under a reply starts where the bubble does. */
+const ORB = 26;
 
 /** null verdict = the answer could not be judged (no model), nothing was graded. */
 function verdictKey(verdict: PracticeTurnView['verdict']): VerdictKey | null {
@@ -41,12 +50,20 @@ type Props = {
   pronunciation?: boolean;
   /** The answer being sent right now, shown until the server has it. */
   pending: string | null;
+  /**
+   * `pending` is her question to the tutor (issue #402), not an answer: it stands in the thread on
+   * every form, and Buddy thinks about a question.
+   */
+  asking?: boolean;
+  /** „Merk ich mir für nachher" tapped on a reply that offers it (`later: 'offered'`, #402). */
+  later?: { onKeep: (turnId: string) => void; disabled: boolean };
   /** A running test: no verdicts until the end. */
   hideVerdicts?: boolean;
   /** What Buddy is doing while `pending` is on its way (default: looking at her answer). */
   thinkingLabel?: string;
   /**
-   * Whether her own answers stand in the thread (default). Not for a structured answer while its
+   * Whether her own answers stand in the thread (default). Her words that are no answer — a
+   * question, "Tipp, bitte" — always do. Not for a structured answer while its
    * question is open (issues #228–#230): her arrangement stands on the board itself, which is the
    * state, and Buddy's reply
    * says the verdict in words ("2 von 4 Paaren stimmen schon"). Echoed, four pairs became a
@@ -65,6 +82,8 @@ type Props = {
 export function ItemThread({
   turns,
   pending,
+  asking = false,
+  later,
   hideVerdicts = false,
   thinkingLabel,
   pronunciation = false,
@@ -91,7 +110,7 @@ export function ItemThread({
       {turns.map((turn, index) => {
         const mine = turn.role === 'learner';
         // Not echoed: neither the bubble nor its tag — the reply below says it in words.
-        if (mine && !echoAnswers) return null;
+        if (mine && !echoAnswers && turn.verdict !== 'not_an_attempt') return null;
         const fresh = !known.has(turn.id);
         // Buddy's reply to a right answer that arrives now: his moon celebrates (happy).
         const before = index > 0 ? turns[index - 1] : undefined;
@@ -139,19 +158,42 @@ export function ItemThread({
             {pronunciation && !mine && turn.pronunciation ? (
               <PronunciationNote feedback={turn.pronunciation} />
             ) : null}
+            {/* Under the reply's bubble, not under Buddy's orb. */}
+            {turn.later === 'kept' ? (
+              <View style={{ marginLeft: ORB + SPACE.sm }}>
+                <Chip tone="primary" icon="check">
+                  {t('ask.kept')}
+                </Chip>
+              </View>
+            ) : turn.later === 'offered' && later ? (
+              <View style={{ marginLeft: ORB + SPACE.sm }}>
+                <Btn
+                  variant="ghost"
+                  size="sm"
+                  pill
+                  disabled={later.disabled}
+                  onPress={() => later.onKeep(turn.id)}
+                  accessibilityHint={t('ask.later_hint')}
+                >
+                  {t('ask.later')}
+                </Btn>
+              </View>
+            ) : null}
           </Rise>
         );
       })}
       {pending !== null ? (
         <>
-          {echoAnswers ? (
+          {echoAnswers || asking ? (
             <Rise style={{ alignItems: 'flex-end' }}>
               <View style={{ maxWidth: '86%' }}>
                 <Bubble mine faded text={pending} speaker={t('thread.you')} />
               </View>
             </Rise>
           ) : null}
-          <Thinking label={thinkingLabel ?? t('thread.thinking')} />
+          <Thinking
+            label={thinkingLabel ?? t(asking ? 'thread.thinking_question' : 'thread.thinking')}
+          />
         </>
       ) : null}
     </View>
@@ -202,8 +244,8 @@ function Bubble({
   );
   if (mine) return bubble;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}>
-      <BuddyOrb size={26} state={orb} breathe={alive} />
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm, maxWidth: '92%' }}>
+      <BuddyOrb size={ORB} state={orb} breathe={alive} />
       {bubble}
     </View>
   );

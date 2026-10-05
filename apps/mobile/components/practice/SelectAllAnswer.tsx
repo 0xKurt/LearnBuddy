@@ -12,7 +12,7 @@
 // nirgends: das zu finden ist die Aufgabe. Ihre Kreuze (und ob sie schon geprüft hat) stehen im
 // Entwurf (`lib/drafts.ts`): sie überstehen den Wechsel hell/dunkel und einen Neustart.
 //
-// In der Hülle steht die Fläche wie die Auswahl mit einer Antwort (`keeps="whole"`, `flush`):
+// In der Hülle steht die Fläche wie die Auswahl mit einer Antwort (`keeps="whole"`):
 // dieselben Kacheln am selben Platz, unten direkt über „Prüfen“ (#386), und nichts darin rollt — die
 // Obergrenzen im Vertrag sind so gemessen, dass das Größte passt (SELECT_*).
 
@@ -60,7 +60,6 @@ export function SelectAllAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   return (
     <AnswerShell
       keeps="whole"
-      flush
       answer={
         <View style={{ gap: SPACE.sm }}>
           {checkedOnce ? null : (

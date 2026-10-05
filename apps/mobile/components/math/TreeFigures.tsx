@@ -33,25 +33,52 @@ type T = (key: string, values?: Record<string, string | number>) => string;
 
 const isAsked = (text: string) => text.trim() === '?';
 
+/**
+ * A tree's height follows its levels, not its width: narrowing it (how FigureView shrinks a
+ * drawing to its `maxHeight`, lib/math/figureScale.ts) left it as tall as before, so a card that
+ * had to give room could not (issue #402: a pedigree over four options and the input bar ran
+ * 20 pt past 360×740). So it is laid out at its full width and drawn at `scale`, every part
+ * alike, like every other drawing that shrinks.
+ */
 export function TreeBody({
   figure,
   width,
+  scale = 1,
 }: {
   figure: TreeFig | PedigreeFig | AutomatonFig;
+  /** The width FigureView gives the drawing, already shrunk by `scale`. */
   width: number;
+  scale?: number;
 }) {
+  const fit = { width: width / scale, scale };
   switch (figure.type) {
     case 'tree':
-      return figure.pr ? (
-        <ProbTree fig={figure} width={width} />
-      ) : (
-        <PlainTree fig={figure} width={width} />
-      );
+      return figure.pr ? <ProbTree fig={figure} {...fit} /> : <PlainTree fig={figure} {...fit} />;
     case 'pedigree':
-      return <PedigreeView fig={figure} width={width} />;
+      return <PedigreeView fig={figure} {...fit} />;
     case 'automaton':
-      return <AutomatonView fig={figure} width={width} />;
+      return <AutomatonView fig={figure} {...fit} />;
   }
+}
+
+type Fit = { width: number; scale: number };
+
+/** The drawing's Svg: laid out `width` wide and `height` tall, drawn at `scale`. */
+function FittedSvg({
+  width,
+  height,
+  scale,
+  children,
+}: Fit & { height: number; children: ReactNode }) {
+  return (
+    <Svg
+      width={Math.round(width * scale)}
+      height={Math.round(height * scale)}
+      viewBox={`0 0 ${width} ${height}`}
+    >
+      {children}
+    </Svg>
+  );
 }
 
 /** A small filled triangle at `tip`, pointing along `from → tip` (also SolidFigures). */
@@ -67,7 +94,7 @@ export function arrowHead(from: XY, tip: XY, size = 7): string {
 
 // ─────────────── probability tree ───────────────
 
-function ProbTree({ fig, width }: { fig: TreeFig; width: number }) {
+function ProbTree({ fig, width, scale }: { fig: TreeFig } & Fit) {
   const { figure: ink } = useTheme();
   const { at, height } = treeLayout(fig, width);
   const nodes: ReactNode[] = [];
@@ -125,9 +152,9 @@ function ProbTree({ fig, width }: { fig: TreeFig; width: number }) {
     );
   });
   return (
-    <Svg width={width} height={height + 8}>
+    <FittedSvg width={width} height={height + 8} scale={scale}>
       <G y={4}>{nodes}</G>
-    </Svg>
+    </FittedSvg>
   );
 }
 
@@ -135,7 +162,7 @@ function ProbTree({ fig, width }: { fig: TreeFig; width: number }) {
 
 const NODE_R = 16;
 
-function PlainTree({ fig, width }: { fig: TreeFig; width: number }) {
+function PlainTree({ fig, width, scale }: { fig: TreeFig } & Fit) {
   const { figure: ink } = useTheme();
   const { at, height } = treeLayout(fig, width);
   const nodes: ReactNode[] = [];
@@ -190,9 +217,9 @@ function PlainTree({ fig, width }: { fig: TreeFig; width: number }) {
     );
   });
   return (
-    <Svg width={width} height={height}>
+    <FittedSvg width={width} height={height} scale={scale}>
       {nodes}
-    </Svg>
+    </FittedSvg>
   );
 }
 
@@ -202,7 +229,7 @@ const ROMAN = ['I', 'II', 'III', 'IV'];
 /** Room left of the symbols for the generation numerals. */
 const NUMERAL_ROOM = 26;
 
-function PedigreeView({ fig, width }: { fig: PedigreeFig; width: number }) {
+function PedigreeView({ fig, width, scale }: { fig: PedigreeFig } & Fit) {
   const { figure: ink } = useTheme();
   const layout = pedigreeLayout(fig, width, NUMERAL_ROOM);
   // The server never stores a pedigree it could not lay out.
@@ -283,9 +310,9 @@ function PedigreeView({ fig, width }: { fig: PedigreeFig; width: number }) {
     );
   }
   return (
-    <Svg width={width} height={layout.height}>
+    <FittedSvg width={width} height={layout.height} scale={scale}>
       {nodes}
-    </Svg>
+    </FittedSvg>
   );
 }
 
@@ -293,7 +320,7 @@ function PedigreeView({ fig, width }: { fig: PedigreeFig; width: number }) {
 
 const STATE_R = 18;
 
-function AutomatonView({ fig, width }: { fig: AutomatonFig; width: number }) {
+function AutomatonView({ fig, width, scale }: { fig: AutomatonFig } & Fit) {
   const { figure: ink } = useTheme();
   const { at, height } = automatonLayout(fig, width, STATE_R);
   const centre = { x: width / 2, y: height / 2 };
@@ -406,9 +433,9 @@ function AutomatonView({ fig, width }: { fig: AutomatonFig; width: number }) {
     );
   });
   return (
-    <Svg width={width} height={height}>
+    <FittedSvg width={width} height={height} scale={scale}>
       {nodes}
-    </Svg>
+    </FittedSvg>
   );
 }
 

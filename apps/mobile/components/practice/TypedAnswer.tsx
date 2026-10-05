@@ -15,9 +15,9 @@
 //     so she can check it. In voice mode the spoken answer is checked right away and the big mic
 //     stands above the bar (`CheckBar`); after her first tap the loop listens again by itself
 //     (useHandsFreeMic). A Diktat (issue #242) has no mic: the recogniser would spell for her;
-//   · under the text a live preview of typed math ("3/4" as a fraction, TypedMathPreview);
-//   · a surface that writes into the field — the fraction bar (issue #162) — stands in the answer
-//     slot directly above the input bar, at the bottom like every board (#386).
+//   · under the text a live preview of typed math ("3/4" as a fraction, TypedMathPreview).
+// The fraction bar wrote into this field until #402; it is a board of its own now (report #388
+// §9), whose bar holds her question.
 // Autocorrect is off so the phone never "fixes" what the learner actually wrote.
 
 import type { ItemKind, SubjectKind } from '@learnbuddy/shared-types/contracts';
@@ -66,8 +66,6 @@ type Props = {
   onChange: (text: string) => void;
   /** Checks this answer (the field's text, or what she just said in voice mode). */
   onCheck: (value: string) => void;
-  /** What she works with that writes into the field: the fraction bar (issue #162). */
-  surface?: ReactNode;
 };
 
 export function TypedAnswer({
@@ -80,7 +78,6 @@ export function TypedAnswer({
   disabled,
   onChange,
   onCheck,
-  surface = null,
 }: Props) {
   const { t } = useTranslation(['practice', 'common']);
   const voiceMode = useVoiceMode((s) => s.on);
@@ -236,8 +233,6 @@ export function TypedAnswer({
 
   return (
     <AnswerShell
-      keeps="whole"
-      answer={surface}
       action={{
         ready: value.trim().length > 0,
         disabled,

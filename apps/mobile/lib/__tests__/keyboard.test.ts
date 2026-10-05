@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  answerFolds,
   COMPACT_BELOW,
   TIGHT_BELOW,
   formDensity,
@@ -83,5 +84,13 @@ describe('how dense a form screen lays itself out', () => {
   it('never makes a negative height of a keyboard taller than the window', () => {
     expect(visibleHeight(400, 900)).toBe(0);
     expect(visibleHeight(400, -20)).toBe(400);
+  });
+});
+
+describe('the answer while she asks (issue #402)', () => {
+  it('folds only while her question has the focus and the keyboard leaves a tight screen', () => {
+    expect(answerFolds(true, 740, 300)).toBe(true);
+    expect(answerFolds(false, 740, 300)).toBe(false);
+    expect(answerFolds(true, 740, 0)).toBe(false);
   });
 });

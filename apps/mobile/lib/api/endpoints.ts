@@ -9,6 +9,7 @@ import {
   CreateMaterialResponse,
   DeletionResponse,
   EndRoleplayResponse,
+  KeepForLaterResponse,
   LearnerView,
   LibraryView,
   ListenAudioResponse,
@@ -350,6 +351,28 @@ export const hintItem = (id: string, itemId: string) =>
       schema: AnswerResponse,
     }),
   );
+/** A question whose answer was lost is sent again as the same turn (lib/api/turnIds.ts). */
+const askTurns = turnIds(newId, noConnection);
+/**
+ * Her question to the tutor about the question on screen (issue #402, report #388 §1): never
+ * graded, never a try. Not through the outbox, unlike an answer: a question is help in the moment,
+ * not learning state, and replayed after an app kill its reply would land on a screen nobody looks
+ * at — or on a question already closed. What she typed is kept on the device instead (the screen's
+ * draft), so asking again after a kill is one tap; a lost reply is asked again as the same turn.
+ */
+export const askItem = (id: string, itemId: string, text: string) =>
+  askTurns.run(`${id}:${itemId}:${text}`, (clientTurnId) =>
+    request('POST', `/practice/sessions/${id}/ask`, {
+      body: { client_turn_id: clientTurnId, item_id: itemId, text },
+      schema: AnswerResponse,
+    }),
+  );
+/** „Merk ich mir für nachher" (issue #402): the tutor turn that offered it, now kept. */
+export const keepForLater = (id: string, turnId: string) =>
+  request('POST', `/practice/sessions/${id}/later`, {
+    body: { turn_id: turnId },
+    schema: KeepForLaterResponse,
+  });
 /** An "Anders erklären" tap whose answer was lost is sent again as the same turn. */
 const reexplainTurns = turnIds(newId, noConnection);
 /** "Anders erklären": a new explanation, the way she tapped, of a closed question's solution. */

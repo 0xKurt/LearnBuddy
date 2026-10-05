@@ -1724,6 +1724,37 @@ its own route, so nothing she asks is ever misread as an answer:
   Without the tap nothing reaches the chat; while the practice runs nothing does either.
 - Eval cases (`evals/tutor`): `ask_content_question`, `ask_off_topic_offers_later`,
   `ask_coax_no_giveaway` — the live run is still open.
+- **The app (issue #402, report #388 §9).** Every form without a typed answer — tap options,
+  picture options, select-all, order, match, table, cloze, mark, the note line and the fraction
+  bar — gets the field of the one `InputBar` as her question: „Frag zur Aufgabe …"
+  (`useAskField` in `components/practice/CheckBar.tsx`, the screen provides it through
+  `AskRoute`). Beside it stands the form's „Prüfen" (none under options: the tile is the
+  answer); once she has typed, „Senden" takes its place, as in the chat. The placeholder stays
+  beside „Prüfen" (`keepPlaceholder`): it is the one thing that says what the field is for. The
+  question is kept as a draft (`session.<id>.ask`), sent with `askItem` (not through the outbox:
+  help in the moment, not learning state), and stands in the thread like any of her words — her
+  answers on a board are not echoed, words with `not_an_attempt` (a question, „Tipp, bitte")
+  are. A reply with `later = 'offered'` carries the chip „Merk ich mir für nachher" (the help
+  chips' ghost pill), `keepForLater` → „Gemerkt". The Probetest uses the same bar. Typed answers
+  keep their one field (answer and question). The fraction bar, which wrote its fraction into a
+  typed field before, is a board now (the shaded bar is the answer). Not yet: Kopfrechnen,
+  pronunciation and flash cards (#388 step 6b).
+  **Room** (measured by `room` in `tests/web/fit.ts`): on a board the pill costs +6 pt, paid by
+  the answer slot's own top gap (gone for every form, as it already was for tiles, #288).
+  Under options the bar is new (74 pt where 12 pt of edge room stood); it is paid for by the
+  existing mechanisms only: the conversation shows fewer whole turns (`threadRoom`), and the card's
+  drawing gives what the column still runs short (`short` in `threadRoom`, up to `CARD_GIVES`),
+  also before any reply — before #402 it gave only for a reply. For that a tree figure
+  (probability tree, pedigree, automaton) now shrinks as a whole at FigureView's scale (`TreeBody`
+  `scale`: its height follows its levels, so narrowing it gave nothing). The column's end is read
+  after every render (`useScreenRoom`): on the web the end mark's layout event fires only on a
+  change of size, and a mark that moved left a stale overrun. The picture-tile cap stays 12 %
+  (picture options keep 48 pt free at 360×740). **While she types her question with the keyboard
+  up, the answer folds away whole** (`answerFolds`, lib/keyboard.ts; `display: none` in
+  `AnswerShell`, still mounted, back unchanged when the keyboard goes), the way the drawing folds:
+  a row of tiles cut at the slot's edge read as broken (CLAUDE.md rule 17). A folded board gives
+  no room (`boardGives` false). Guarded in `fit.ts` (`cutTiles`): with her question focused no
+  tile is drawn cut. A typed answer or a board's own cell being edited does not fold.
 
 **Eine Übung darf anfangen, bevor alle ihre Fragen geschrieben sind** (Issue #220, Migration
 0073). Gemessen 02.10.: „üben wir Brüche" kostete 6,45 s am Endpoint, davon 6,42 s der
@@ -4075,9 +4106,11 @@ it, and "Prüfen" (`CheckBar.tsx`: one full-width pill in the pinned bar,
 waiting until the form says its answer is complete). **One bar per practice screen, and it is the
 input bar** (issue #395, report #388 §9): "Prüfen" is the action of the app's one `InputBar`, as
 "Senden" is the chat's. A board (order, match, table, cloze, mark, select-all, the note line) has
-nothing to type yet, so its bar is the input bar without its field (`field={false}`) and "Prüfen"
-stands alone across it — measured at every walkthrough stop, it costs 0 pt against the bar of its
-own it had before; the field ("Frag zur Aufgabe …") joins it in #388 step 6. Guarded by the source
+no answer to type, so the bar's field is her question to the tutor ("Frag zur Aufgabe …", issue
+#402, §Practice „Fragen beim Üben") with "Prüfen" at the pill's end — the pill is 54 pt where
+"Prüfen" across was 48 (+6 pt), paid by dropping the answer slot's own top gap; under options the
+bar holds only the field, paid for by the card giving room (`CARD_GIVES`) and the conversation
+(`threadRoom`). Guarded by the source
 test `apps/mobile/lib/__tests__/oneBar.test.ts` (every `BottomBar` in practice code holds one
 `InputBar`, none inside another; the bars not moved yet — tap options in voice mode, "Weiter",
 pronunciation, flash cards, Kopfrechnen, a round's end — are listed with their step, and the list
@@ -4092,8 +4125,7 @@ written in the app's one input bar (`components/lb/InputBar.tsx`, the same compo
 composer), pinned in the bar at the bottom right above "Prüfen" (`action.input` of `CheckBar`),
 inside the screen's `KeyboardSafe`. The question, Buddy's reply and the follow-up stand above it
 like a conversation; nothing floats under the question with an empty band down to "Prüfen". The
-math keys stand right under the input bar, on top of the keyboard, while she types, the fraction bar it writes from stands
-in the answer slot right above the input bar like every board, the mic sits at the bar's end (a soft
+math keys stand right under the input bar, on top of the keyboard, while she types, the mic sits at the bar's end (a soft
 circle, as in the chat), the return key still sends a one-liner, and "Prüfen"
 waits until something is in the field. While she types, "Prüfen" stands in the bar itself, where the chat has
 "Senden" (`typing` in `CheckBar`), and the full-width one steps aside — with the keyboard up on a

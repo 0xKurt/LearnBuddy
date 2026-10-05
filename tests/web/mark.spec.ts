@@ -177,10 +177,17 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   await expect(page.getByTestId('syllable-cut')).toHaveCount(2);
   await both(page, '46g-mark-syllables');
   await targetsAreLarge(page, 30);
-  // One word, one row: every letter of "Regenbogen" stands on the same line.
-  const tops = new Set<number>();
-  for (const box of await page.getByRole('checkbox', { name: /in Regenbogen$/ }).all()) {
-    tops.add(Math.round((await box.boundingBox())?.y ?? -1));
-  }
-  expect(tops.size).toBe(1);
+  // One word, one row: every letter of "Regenbogen" stands on the same line. Read in one snapshot
+  // of the page, like `targetsAreLarge`: read one by one, a box the theme switch's remount had just
+  // replaced came back without a box (-1), a second "row" (full walkthrough 05.10.).
+  const rows = () =>
+    page.evaluate(() => {
+      const boxes = [...document.querySelectorAll('[role="checkbox"]')].filter((e) =>
+        /in Regenbogen$/.test(e.getAttribute('aria-label') ?? ''),
+      );
+      return boxes.length === 0
+        ? 0
+        : new Set(boxes.map((e) => Math.round(e.getBoundingClientRect().y))).size;
+    });
+  await expect.poll(rows).toBe(1);
 });

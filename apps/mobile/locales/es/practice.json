@@ -24,7 +24,8 @@
     "shaded": "{{filled}} de {{total}} partes coloreadas",
     "part": "Parte {{n}} de {{total}}",
     "pick_how": "Toca la barra que es mayor.",
-    "pick_option": "Elegir {{fraction}}"
+    "pick_option": "Elegir {{fraction}}",
+    "check_waits": "Solo cuando una parte esté coloreada."
   },
   "cards": {
     "progress": "Tarjeta {{current}} de {{total}}",
@@ -242,7 +243,8 @@
   "thread": {
     "you": "Tú",
     "buddy": "Buddy",
-    "thinking": "Buddy está mirando tu respuesta…"
+    "thinking": "Buddy está mirando tu respuesta…",
+    "thinking_question": "Buddy piensa en tu pregunta…"
   },
   "title_fallback": "Práctica",
   "verdict": {
@@ -317,5 +319,12 @@
   "select": {
     "several": "Hay varias correctas: tócalas todas.",
     "check_waits": "Cuando hayas marcado al menos una."
+  },
+  "ask": {
+    "placeholder": "Pregunta sobre esto…",
+    "label": "Tu pregunta sobre la tarea",
+    "later": "Lo guardo para después",
+    "later_hint": "Buddy vuelve a ello después de practicar.",
+    "kept": "Guardado"
   }
 }

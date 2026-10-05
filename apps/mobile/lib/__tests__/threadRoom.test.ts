@@ -48,6 +48,16 @@ describe('threadRoom (issues #286, #232)', () => {
     );
   });
 
+  it('lets the drawing give what the column runs short, also without a reply (#402)', () => {
+    // A quiet question with a drawing, and the bar under its options 20 pt too tall.
+    const quiet = { ...base, quiet: true, tops: [], threadNeed: 40, room: 0, cardNatural: 300 };
+    expect(threadRoom({ ...quiet, visual: true }).cardGrowTo).toBe(0);
+    expect(threadRoom({ ...quiet, visual: true, short: 20 }).cardGrowTo).toBe(-20);
+    // Never more than the drawing may give; a card without one gives nothing.
+    expect(threadRoom({ ...quiet, visual: true, short: 90 }).cardGrowTo).toBe(-48);
+    expect(threadRoom({ ...quiet, short: 20 }).cardGrowTo).toBe(0);
+  });
+
   it('keeps two lines of parts and the bar', () => {
     expect(boardKeeps(0)).toBeGreaterThan(2 * 44 + 48);
   });
