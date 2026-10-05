@@ -80,6 +80,8 @@ export async function materialItems(
       // Same for the fraction bar (issue #162): a surface is something she works WITH on
       // an open question, not a control in a list of what the sheet holds.
       surface: null,
+      // Listed, not answered: the figure is only read here (issue #248).
+      tap: false,
       // And for a structured item's parts (issues #228–#230): the list says what the sheet
       // asks, and arranging it belongs to the session where the answer counts.
       task_view: null,

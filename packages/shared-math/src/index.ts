@@ -15,3 +15,4 @@ export * from './periodic.js';
 export * from './solids.js';
 export * from './space.js';
 export * from './diagram.js';
+export * from './tap.js';

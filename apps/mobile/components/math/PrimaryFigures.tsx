@@ -28,6 +28,7 @@ import {
   type ClockFace,
   type MoneyPiece,
 } from '../../../../packages/shared-math/src/primary.js';
+import { clockGeometry } from '../../lib/math/figureGeometry.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY, FONT, HaloText, SMALL } from './figureText.js';
@@ -89,20 +90,21 @@ function flow(boxes: Box[], width: number, rowGap: number): { at: Placed[]; heig
 
 const rad = (deg: number) => ((deg - 90) * Math.PI) / 180;
 
+/** One face; `time` null: a face without hands, to be set by tapping (issue #248). */
 function ClockFaceView({
   time,
   cx,
   cy,
   d,
 }: {
-  time: ClockFace;
+  time: ClockFace | null;
   cx: number;
   cy: number;
   d: number;
 }) {
   const { figure: ink } = useTheme();
   const r = d / 2 - 2;
-  const { hour, minute } = handAngles(time);
+  const { hour, minute } = handAngles(time ?? { h: 0, m: 0 });
   const at = (deg: number, len: number) => ({
     x: cx + len * Math.cos(rad(deg)),
     y: cy + len * Math.sin(rad(deg)),
@@ -133,24 +135,28 @@ function ClockFaceView({
           />
         );
       })}
-      <Line
-        x1={cx}
-        y1={cy}
-        x2={hourTip.x}
-        y2={hourTip.y}
-        stroke={ink.stroke}
-        strokeWidth={Math.max(4, d * 0.04)}
-        strokeLinecap="round"
-      />
-      <Line
-        x1={cx}
-        y1={cy}
-        x2={minuteTip.x}
-        y2={minuteTip.y}
-        stroke={ink.point}
-        strokeWidth={Math.max(2.5, d * 0.022)}
-        strokeLinecap="round"
-      />
+      {time ? (
+        <G>
+          <Line
+            x1={cx}
+            y1={cy}
+            x2={hourTip.x}
+            y2={hourTip.y}
+            stroke={ink.stroke}
+            strokeWidth={Math.max(4, d * 0.04)}
+            strokeLinecap="round"
+          />
+          <Line
+            x1={cx}
+            y1={cy}
+            x2={minuteTip.x}
+            y2={minuteTip.y}
+            stroke={ink.point}
+            strokeWidth={Math.max(2.5, d * 0.022)}
+            strokeLinecap="round"
+          />
+        </G>
+      ) : null}
       {/* The numbers over the hands, on a paper halo: a hand never hides the 9 it points at. */}
       {numerals.map((n) => {
         const p = at(n * 30, r * 0.7);
@@ -173,18 +179,15 @@ function ClockFaceView({
 
 function Clocks({ fig, width }: { fig: ClockFig; width: number }) {
   const { figure: ink } = useTheme();
-  if (fig.c.length === 1) {
-    const d = Math.min(width, 184);
+  const { d, arrow, width: w } = clockGeometry(fig.c.length, width);
+  if (fig.c.length < 2) {
     return (
       <Svg width={d} height={d}>
-        <ClockFaceView time={fig.c[0] as ClockFace} cx={d / 2} cy={d / 2} d={d} />
+        <ClockFaceView time={fig.c[0] ?? null} cx={d / 2} cy={d / 2} d={d} />
       </Svg>
     );
   }
   // Two clocks for a span: from the left one to the right one, an arrow between them.
-  const arrow = 28;
-  const d = Math.min((width - arrow) / 2, 150);
-  const w = 2 * d + arrow;
   const y = d / 2;
   return (
     <Svg width={w} height={d}>
@@ -470,6 +473,7 @@ export function describePrimary(fig: PrimaryFigure, t: T): string {
   switch (fig.type) {
     case 'clock': {
       const faces = fig.c.map((c) => describeClock(c, t));
+      if (faces.length === 0) return t('figure.clock_blank');
       if (faces.length === 1) return t('figure.clock', { hands: faces[0] ?? '' });
       return t('figure.clock_span', { from: faces[0] ?? '', to: faces[1] ?? '' });
     }
@@ -505,7 +509,7 @@ export function describePrimary(fig: PrimaryFigure, t: T): string {
 }
 
 /** "der kleine Zeiger zwischen 7 und 8, der große auf der 9". */
-function describeClock(time: ClockFace, t: T): string {
+export function describeClock(time: ClockFace, t: T): string {
   const dial = (n: number) => ((n + 11) % 12) + 1;
   const h = time.h % 12;
   const hour =

@@ -41,6 +41,7 @@ import { type FormNote, judgeAlgebra, typedBack } from './form.js';
 import { checkNuclear, looksNuclear, type NuclearImbalance } from './nuclear.js';
 import { checkPath, lastValue, solvedValue } from './steps.js';
 import { sameAssignments, sameList, samePoint } from './systems.js';
+import { tapRuleVerdict } from './tapCheck.js';
 import {
   canonicalMath,
   canonicalText,
@@ -107,6 +108,8 @@ export type ItemForCheck = {
    * (`clockVerdict`). Anything else in it is not looked at here.
    */
   figure?: unknown;
+  /** She answers by tapping a place in the figure (issue #248): judged by `tapRuleVerdict`. */
+  tap?: boolean;
 };
 
 /**
@@ -649,6 +652,11 @@ export function ruleCheck(
 
   const written = (answer.text ?? '').trim();
   if (!written) return 'unknown';
+
+  // A place she tapped in the figure (issue #248): the key's place or wrong, exactly — never the
+  // tutor's. Before everything else, because "7:45" or "(2|-1)" mean the place here, nothing else.
+  const tapped = tapRuleVerdict(item, written);
+  if (tapped !== null) return tapped;
 
   // A written path, checked step by step (issue #209). Only where a calculation is plausible:
   // a free text is many lines of prose, and `checkPath` leaves that alone anyway, but saying so

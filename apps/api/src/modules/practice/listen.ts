@@ -87,6 +87,7 @@ export const ListenQuestion = ItemDraft.omit({
   ...unusedItemFields(LISTEN_KINDS),
   figure: true,
   read: true,
+  tap: true,
   unit: true,
   spelling: true,
   lang: true,

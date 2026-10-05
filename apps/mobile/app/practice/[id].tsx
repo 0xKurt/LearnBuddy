@@ -57,7 +57,8 @@ import {
   canDisputeVerdict,
   DisputeVerdictSheet,
 } from '../../components/practice/DisputeVerdict.js';
-import { FractionBarAnswer } from '../../components/practice/FractionBarAnswer.js';
+import { FigureTapAnswer } from '../../components/practice/FigureTapAnswer.js';
+import { FractionBarBoard } from '../../components/practice/FractionBarAnswer.js';
 import { DictationCard } from '../../components/practice/DictationCard.js';
 import { HeardTextCard } from '../../components/practice/HearText.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
@@ -703,10 +704,8 @@ export default function PracticeScreen() {
   // Once there is a conversation the Diktat card is one row (DictationCard `compact`).
   const dictationCompact = itemTurns.length > 0 || pendingText !== null;
   // Which way she answers — exactly one (`answerForm`).
-  const { choices, tapChoices, speaking, structured, staff, barSurface, typed } = answerForm(
-    item,
-    open,
-  );
+  const { choices, tapChoices, speaking, structured, staff, barSurface, tapFigure, typed } =
+    answerForm(item, open);
   // Her short answer appears in the gap of a fill-in sentence while she types.
   const filling = typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined;
   const reRead = voiceOn && open && !choices && item.read_aloud ? () => readQuestion(item) : null;
@@ -749,7 +748,8 @@ export default function PracticeScreen() {
     cardNatural,
     ...room
   } = measured.layout({
-    item,
+    // A figure she taps stands in the answer, not in the card (`FigureTapAnswer`).
+    item: tapFigure ? { ...item, figure: null } : item,
     open,
     speaking,
     threadTurns,
@@ -887,7 +887,7 @@ export default function PracticeScreen() {
                         prompt={item.prompt}
                         // Not twice: a topic the header's title already names stays out of the card.
                         topic={item.topic && title.includes(item.topic) ? null : item.topic}
-                        figure={item.figure}
+                        figure={tapFigure ? null : item.figure}
                         figureMaxHeight={caps.figure}
                         image={item.image}
                         imageKey={item.id}
@@ -1090,27 +1090,24 @@ export default function PracticeScreen() {
             §9, issue #402): the shaded bar is the answer, "Prüfen" checks it, and the bar's field
             is her question. A picked bar goes out at once, like a tile. */}
               {barSurface ? (
-                <AnswerShell
-                  keeps="whole"
-                  answer={
-                    <FractionBarAnswer
-                      surface={barSurface}
-                      value={text}
-                      disabled={locked}
-                      onChange={setText}
-                      onPick={(picked) => check(picked, 'tapped')}
-                    />
-                  }
-                  action={
-                    barSurface.mode === 'pick'
-                      ? { tap: true }
-                      : {
-                          ready: text.trim() !== '',
-                          disabled: locked,
-                          onPress: () => check(text.trim(), 'tapped'),
-                          waitsHint: t('practice:bar.check_waits'),
-                        }
-                  }
+                <FractionBarBoard
+                  surface={barSurface}
+                  value={text}
+                  disabled={locked}
+                  onChange={setText}
+                  onCheck={(value) => check(value, 'tapped')}
+                />
+              ) : null}
+              {/* A figure she taps a place in (issue #248), a board like the bar. Not `via: 'tapped'`:
+            nothing is offered to recognise — marking the place IS what the class test asks for. */}
+              {tapFigure ? (
+                <FigureTapAnswer
+                  key={item.id}
+                  figure={tapFigure}
+                  value={text}
+                  disabled={locked}
+                  onChange={setText}
+                  onCheck={check}
                 />
               ) : null}
               {/* The pronunciation recorder and "Weiter" stand where "Prüfen" does, under the free

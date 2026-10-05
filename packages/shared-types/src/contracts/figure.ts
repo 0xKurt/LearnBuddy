@@ -320,14 +320,16 @@ export const MONEY_PIECES = [
   '200€',
 ] as const;
 
-/** An analog clock face — or two, for a span from the first time to the second. */
+/**
+ * An analog clock face — or two, for a span from the first time to the second, or a face without
+ * hands that she sets herself by tapping (issue #248, `ItemDraft.tap`).
+ */
 export const ClockFigure = z.object({
   type: z.literal('clock'),
   c: z
     .array(z.object({ h: z.number().int().min(0).max(23), m: z.number().int().min(0).max(59) }))
-    .min(1)
     .max(2)
-    .describe('one time; two for a span from the first to the second'),
+    .describe('one time; two for a span from the first to the second; none: a face to set (tap)'),
   h24: z.boolean().describe('true only when the task asks for the 24-hour time'),
   ask: z
     .enum(['time', 'span', 'none'])

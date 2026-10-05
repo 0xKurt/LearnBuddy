@@ -410,6 +410,14 @@ export const ItemView = z.object({
    */
   surface: AnswerSurface.nullable().default(null),
   /**
+   * She answers by tapping a place IN the figure (issue #248): a number on the number line, a point
+   * of the coordinate system, a column of the bar chart, the hands of a clock face. The places are
+   * the figure's own grid (`tapAxes`, @learnbuddy/shared-math `tap.ts`), which the server checked
+   * the key lies on; a tap writes that place as text, judged exactly by code. True only while the
+   * question is open — closed, the figure is only read again.
+   */
+  tap: z.boolean().default(false),
+  /**
    * A structured item's task as she works with it (issues #228–#230): for `order` the
    * elements, shuffled, with server-given ids that say nothing about the right place. Never
    * the key — that stays in `items.task` on the server. Set for every structured kind while

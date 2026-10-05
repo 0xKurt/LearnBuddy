@@ -326,5 +326,8 @@
     "later": "I'll remember it for later",
     "later_hint": "Buddy comes back to it after practice.",
     "kept": "Saved"
+  },
+  "tap": {
+    "check_waits": "Only once you have tapped the figure."
   }
 }

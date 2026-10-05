@@ -326,5 +326,8 @@
     "later": "Merk ich mir für nachher",
     "later_hint": "Buddy kommt nach dem Üben darauf zurück.",
     "kept": "Gemerkt"
+  },
+  "tap": {
+    "check_waits": "Erst wenn du in die Abbildung getippt hast."
   }
 }

@@ -9,7 +9,7 @@
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Svg, {
   Circle,
   ClipPath,
@@ -25,7 +25,8 @@ import Svg, {
 // Imported by path: the mobile bundle takes only this small, dependency-free module
 // of @learnbuddy/shared-math (its index also pulls in mathjs).
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
-import { isChart, niceStep } from '../../../../packages/shared-math/src/charts.js';
+import { isChart } from '../../../../packages/shared-math/src/charts.js';
+import { barChartGeometry, numberLineGeometry } from '../../lib/math/figureGeometry.js';
 import {
   BARE_FIGURE_CHROME,
   BARE_FIGURE_PAD,
@@ -34,7 +35,7 @@ import {
   naturalFigureHeight,
   newFigureWidth,
 } from '../../lib/math/figureScale.js';
-import { plotFrame, ticksFor, yLabelsClearOf, Y_LABEL_GAP } from '../../lib/math/plotLayout.js';
+import { plotGeometry, yLabelsClearOf, Y_LABEL_GAP } from '../../lib/math/plotLayout.js';
 import { pointsOnGraph, prettyExpr, tracePath } from '../../lib/math/plotMath.js';
 import { speakMathText } from '../../lib/math/speak.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -71,15 +72,20 @@ type Speak = (text: string) => string;
  * it draws no frame of its own (the option card is the frame), its height follows its width
  * alone so four fit a phone, and it is not a screen-reader element of its own: the option
  * that holds it says what it shows.
+ *
+ * `layer`: drawn over the figure in the drawing's own coordinates, at the width the drawing got —
+ * what she taps and the place she chose (issue #248, `TapFigure`).
  */
 export function FigureView({
   figure,
   maxHeight,
   bare = false,
+  layer,
 }: {
   figure: Figure;
   maxHeight?: number;
   bare?: boolean;
+  layer?: (width: number) => ReactNode;
 }) {
   const { palette, figure: ink } = useTheme();
   const { t } = useTranslation('math');
@@ -131,7 +137,14 @@ export function FigureView({
             if (h !== null) setFullHeight(h);
           }}
         >
-          <FigureBody figure={figure} width={bodyWidth} scale={scale} bare={bare} />
+          {layer ? (
+            <View style={{ width: bodyWidth, alignItems: 'center' }}>
+              <FigureBody figure={figure} width={bodyWidth} scale={scale} bare={bare} />
+              <View style={StyleSheet.absoluteFill}>{layer(bodyWidth)}</View>
+            </View>
+          ) : (
+            <FigureBody figure={figure} width={bodyWidth} scale={scale} bare={bare} />
+          )}
         </View>
       ) : null}
     </View>
@@ -267,17 +280,7 @@ function FractionPicture({ fig, width }: { fig: FractionFig; width: number }) {
 
 function NumberLine({ fig, width }: { fig: NumberLineFig; width: number }) {
   const { figure: ink } = useTheme();
-  const lo = Math.min(fig.min, fig.max);
-  const hi = Math.max(fig.min, fig.max);
-  const span = hi - lo || 1;
-  const pad = 18;
-  const x = (v: number) => pad + ((v - lo) / span) * (width - 2 * pad - 10);
-  const count = Math.floor(span / fig.step + 1e-9);
-  const ticks = count <= 200 ? Array.from({ length: count + 1 }, (_, i) => lo + i * fig.step) : [];
-  const every = Math.max(1, Math.ceil(ticks.length / Math.max(2, Math.floor(width / 44))));
-  const hasLabels = fig.points.some((p) => p.label);
-  const axisY = hasLabels ? 46 : 26;
-  const h = axisY + 34;
+  const { lo, hi, pad, x, ticks, every, axisY, height: h } = numberLineGeometry(fig, width);
   return (
     <Svg width={width} height={h}>
       <Line x1={pad - 8} y1={axisY} x2={width - 6} y2={axisY} stroke={ink.axis} strokeWidth={1.5} />
@@ -351,35 +354,21 @@ const DASHES: ReadonlyArray<string | undefined> = [undefined, '8 5', '2 4'];
 
 function FunctionPlot({ fig, width, bare }: { fig: PlotFig; width: number; bare: boolean }) {
   const { palette, figure: ink } = useTheme();
-  const x0 = Math.min(fig.x_min, fig.x_max);
-  const x1 = Math.max(fig.x_min, fig.x_max);
-  const y0 = Math.min(fig.y_min, fig.y_max);
-  const y1 = Math.max(fig.y_min, fig.y_max);
-  const xs = x1 - x0 || 1;
-  const ys = y1 - y0 || 1;
-  // An option's graph is small by design: four of them share a phone (issue #231).
-  const h = bare
-    ? Math.round(Math.max(width * 0.8, 60))
-    : Math.round(Math.min(Math.max(width * 0.8, 220), 380));
-  const ph0 = h - 12 - 8;
-  const yStep = niceStep(ys, Math.max(4, Math.min(10, Math.floor(ph0 / 32))));
-  const yTicks = ticksFor(y0, y1, yStep);
-  // The left margin makes room for the y labels when the y-axis runs along the left edge.
-  const { left, top, pw, ph, axisY } = plotFrame({
-    width,
-    height: h,
+  const {
     x0,
     x1,
-    yLabels: [...yTicks.map(formatNumber), '0'],
+    y0,
+    y1,
+    height: h,
+    X,
+    Y,
+    ...g
+  } = plotGeometry(fig, width, {
+    bare,
+    format: formatNumber,
     fontSize: SMALL,
   });
-  const X = (v: number) => left + ((v - x0) / xs) * pw;
-  const Y = (v: number) => top + (1 - (v - y0) / ys) * ph;
-
-  const xStep = niceStep(xs, Math.max(4, Math.min(10, Math.floor(pw / 40))));
-  const xTicks = ticksFor(x0, x1, xStep);
-  // Axes through 0 when 0 is in range, else along the edge.
-  const axisX = Y(y0 <= 0 && y1 >= 0 ? 0 : y0);
+  const { left, top, pw, ph, axisY, axisX, xStep, xTicks, yStep, yTicks } = g;
 
   const graphs = useMemo(
     () =>
@@ -608,21 +597,10 @@ function FunctionPlot({ fig, width, bare }: { fig: PlotFig; width: number; bare:
 function BarChart({ fig, width }: { fig: BarFig; width: number }) {
   const { palette, figure: ink } = useTheme();
   const unit = fig.unit ? ` ${fig.unit}` : '';
-  const values = fig.bars.map((b) => b.value);
-  const vmin = Math.min(0, ...values);
-  const vmax = Math.max(0, ...values);
-  const span = vmax - vmin || 1;
-  const longest = Math.max(...fig.bars.map((b) => b.label.length));
-  const horizontal = fig.bars.length > 6 || longest * 7 > width / fig.bars.length - 6;
+  const geo = barChartGeometry(fig, width);
 
-  if (horizontal) {
-    const rowH = 30;
-    const labelW = Math.min(width * 0.38, longest * 7.2 + 8);
-    const valueW = 64;
-    const pw = width - labelW - valueW;
-    const X = (v: number) => labelW + ((v - vmin) / span) * pw;
-    const h = fig.bars.length * rowH + 4;
-    const maxChars = Math.max(4, Math.floor((labelW - 8) / 7.2));
+  if (geo.horizontal) {
+    const { rowH, labelW, X, height: h, maxChars } = geo;
     return (
       <Svg width={width} height={h}>
         {fig.bars.map((b, i) => {
@@ -667,17 +645,11 @@ function BarChart({ fig, width }: { fig: BarFig; width: number }) {
     );
   }
 
-  const top = 22;
-  const bottom = 26;
-  const h = 220;
-  const ph = h - top - bottom;
-  const Y = (v: number) => top + (1 - (v - vmin) / span) * ph;
-  const slot = width / fig.bars.length;
-  const bw = Math.min(56, slot * 0.62);
+  const { height: h, Y, bw } = geo;
   return (
     <Svg width={width} height={h}>
       {fig.bars.map((b, i) => {
-        const cx = slot * i + slot / 2;
+        const cx = geo.cx(i);
         const ya = Y(Math.max(0, b.value));
         const yb = Y(Math.min(0, b.value));
         return (

@@ -112,6 +112,12 @@ export type ItemRow = {
   read_passage?: unknown;
   /** A reading question's evidence: the words of its text the answer stands in (#233). */
   source_excerpt?: string | null;
+  /**
+   * She answers by tapping a place in the figure (issue #248, migration 0092): her tap is judged
+   * exactly against the key's place (`tapVerdict`). Optional: only the session view and the answer
+   * path load it.
+   */
+  tap?: boolean;
 };
 
 export type SessionItemRow = {
