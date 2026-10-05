@@ -28,6 +28,15 @@ describe('failed card title (issue #411)', () => {
     }
   });
 
+  it('says a photo of something else is no sheet, not that it was unreadable', () => {
+    // Its "title" is whatever the reading called the photo, so the card never names it.
+    for (const title of [null, 'Katze']) {
+      expect(text('de', failedTitleKey({ reason: 'not_learning_material', title }))).toBe(
+        'Auf dem Foto habe ich kein Lernblatt gefunden',
+      );
+    }
+  });
+
   it('still says so where the sheet was not read', () => {
     for (const reason of ['unreadable', 'model_error', 'blocked', null]) {
       expect(text('de', failedTitleKey({ reason, title: null }))).toMatch(/nicht lesen/);
@@ -37,8 +46,10 @@ describe('failed card title (issue #411)', () => {
   it('has a title in every language, with the name where there is one', () => {
     for (const locale of Object.keys(LOCALES) as Locale[]) {
       for (const reason of [...MaterialFailure.options, null, 'not_a_reason']) {
+        const named = text(locale, failedTitleKey({ reason, title: 'X' }));
         expect(text(locale, failedTitleKey({ reason, title: null }))).not.toContain('{{');
-        expect(text(locale, failedTitleKey({ reason, title: 'X' }))).toContain('{{title}}');
+        if (reason === 'not_learning_material') expect(named).not.toContain('{{');
+        else expect(named).toContain('{{title}}');
       }
     }
   });

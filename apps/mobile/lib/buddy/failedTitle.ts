@@ -13,6 +13,9 @@ type Failed = Pick<Extract<NowCard, { type: 'material_failed' }>, 'reason' | 'ti
 /** The i18n key (namespace buddy) of the card's title. */
 export function failedTitleKey(card: Failed): string {
   const reason = MaterialFailure.safeParse(card.reason);
+  // A photo of something else was looked at, not unreadable: said so, never with its "title"
+  // (whatever the reading called the photo is no sheet's name).
+  if (reason.success && reason.data === 'not_learning_material') return 'now.failed_title_no_sheet';
   const read = reason.success && READ_WITHOUT_EXERCISES.has(reason.data);
   const base = read ? 'now.failed_title_read' : 'now.failed_title';
   return card.title ? `${base}_named` : base;
