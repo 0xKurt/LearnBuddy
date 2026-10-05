@@ -45,8 +45,12 @@ import {
   type ReadingItem,
 } from './reading.js';
 
-/** A printed line of Buddy's text: a schoolbook's measure, so "Z. 12" reads like on paper. */
-export const READ_LINE_CHARS = 52;
+/**
+ * A printed line of Buddy's text: as long as one line of the text box on a 360-pt phone (about 32
+ * characters at the reading size), so a printed line never wraps in the middle and "Z. 12" is one
+ * line she sees. 52 and 38 broke lines in two (walkthrough 98-reading-buddy, #368).
+ */
+export const READ_LINE_CHARS = 32;
 /** The fewest questions a text of Buddy's carries: he writes them himself, so a text is worth it. */
 const READ_QUESTIONS_MIN = 3;
 
@@ -54,7 +58,8 @@ const READ_QUESTIONS_MIN = 3;
  * Length and sentence length by stage (#368): grades 1–2, 3–4, 5–6, 7–9, from 10 on (and a
  * university or adult learner). Characters of the text; the average sentence and the longest one
  * in words. Set from the ranges school readers use per stage, not from one book — the model is
- * held to them, never shown a text to copy.
+ * held to them, never shown a text to copy. The longest text, 1400 characters, sets into about
+ * 50 lines of READ_LINE_CHARS — inside PASSAGE_LINES_MAX with its paragraph breaks.
  */
 const READ_BANDS: ReadonlyArray<{
   chars: readonly [number, number];
@@ -63,9 +68,9 @@ const READ_BANDS: ReadonlyArray<{
 }> = [
   { chars: [150, 500], average: 9, longest: 14 },
   { chars: [300, 900], average: 11, longest: 18 },
-  { chars: [500, 1400], average: 14, longest: 22 },
-  { chars: [700, 1800], average: 17, longest: 26 },
-  { chars: [900, 2200], average: 20, longest: 32 },
+  { chars: [500, 1200], average: 14, longest: 22 },
+  { chars: [700, 1300], average: 17, longest: 26 },
+  { chars: [900, 1400], average: 20, longest: 32 },
 ];
 
 /** Her stage (an index into READ_BANDS), one up or down when she asked for harder or easier. */

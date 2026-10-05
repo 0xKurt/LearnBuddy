@@ -2912,7 +2912,7 @@ prints none — or from a text Buddy writes himself (a `read` run, #368, below).
   every letter in that language's alphabet, `inAlphabet`, a character set and no word list; a
   language without one gets no text), and every question to the text: the photo rules
   (`readingItems` with `transcript` null), a question naming a line is dropped (code sets the lines,
-  `printedLines`, 52 characters), and a right multiple-choice option needs its key words in its
+  `printedLines`, 32 characters — one line of the text box on a 360-pt phone), and a right multiple-choice option needs its key words in its
   evidence. Fewer than three questions → nothing stored (422 `not_usable`). The items are
   `origin` buddy ("Frage von Buddy") and behave like a photographed text's. generate.v1.32,
   buddy.61. What code cannot check — whether the text is true and good to read — stays the

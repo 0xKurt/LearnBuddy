@@ -198,7 +198,7 @@ test('a text Buddy writes himself: at her stage, read like a photographed one (#
   await bothRooms(page, '98-reading-buddy');
   await page.getByRole('button', { name: 'unter einer Hecke' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
-  await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 6–7');
+  await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 9–11');
   await shot(page, '98-reading-buddy-closed');
 });
 
