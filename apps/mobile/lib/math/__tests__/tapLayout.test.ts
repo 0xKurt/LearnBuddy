@@ -4,6 +4,8 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { MAP_SHAPES } from '../../../../../packages/shared-math/src/mapShapes.data.js';
+import { mapRegion } from '../../../../../packages/shared-math/src/maps.js';
 import { tapAxes, type Tappable } from '../../../../../packages/shared-math/src/tap.js';
 import { barChartGeometry, clockGeometry, numberLineGeometry } from '../figureGeometry.js';
 import { functionPlotGeometry } from '../plotLayout.js';
@@ -52,12 +54,44 @@ describe('a tap on the mark of a place picks that place', () => {
         const mark = l.markOf(pick);
         if (!mark) throw new Error('a mark');
         const at =
-          mark.kind === 'dot'
-            ? mark
-            : { x: mark.box.x + mark.box.w / 2, y: mark.box.y + mark.box.h / 2 };
+          mark.kind === 'box'
+            ? { x: mark.box.x + mark.box.w / 2, y: mark.box.y + mark.box.h / 2 }
+            : mark;
         expect(l.pickAt(at.x, at.y, null, 0)).toEqual(pick);
       }
     }
+  });
+});
+
+describe('a map (#251): every Land and every continent by its label', () => {
+  it.each([
+    ['the 16 Länder', { type: 'map', v: 'de', hl: [] } as const],
+    ['the continents', { type: 'map', v: 'world', hl: [] } as const],
+  ])('%s, at 328 and 260 pt', (_, f) => {
+    for (const width of [328, 260]) {
+      const l = tapLayout(f, width, format, 12, MAP_SHAPES);
+      if (!l) throw new Error('no layout');
+      for (const pick of everyPick(f)) {
+        const mark = l.markOf(pick);
+        if (mark?.kind !== 'region') throw new Error('a region');
+        expect(l.pickAt(mark.x, mark.y, null, 0)).toEqual(pick);
+      }
+    }
+  });
+
+  it('marks the whole region, drawn at the width of the map', () => {
+    const de = { type: 'map', v: 'de', hl: [] } as const;
+    const by = mapRegion('de', 'Bayern') ?? -1;
+    const mark = tapLayout(de, 300, format, 12, MAP_SHAPES)?.markOf([by]);
+    expect(mark?.kind).toBe('region');
+    if (mark?.kind !== 'region') return;
+    const xs = [...mark.d.matchAll(/[ML](-?[\d.]+) /g)].map((m) => Number(m[1]));
+    expect(Math.max(...xs)).toBeLessThanOrEqual(300);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(100);
+  });
+
+  it('offers nothing to tap until the shapes are loaded', () => {
+    expect(tapLayout({ type: 'map', v: 'de', hl: [] }, 300, format, 12)).toBeNull();
   });
 });
 
