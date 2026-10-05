@@ -29,7 +29,6 @@ import { localParts } from '../../lib/time.js';
 import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmPart, type LlmResult } from '../../llm/gateway.js';
-import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { curriculumBlock } from '../curriculum/state.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
@@ -41,7 +40,6 @@ import { readingItems } from '../practice/reading.js';
 import { createSession } from '../practice/service.js';
 import {
   clarifiedRules,
-  EXTRACT_PROMPT_VERSION,
   EXTRACT_SYSTEM,
   MOST_READINGS,
   MOST_UNCLEAR_SPOTS,
@@ -49,7 +47,6 @@ import {
   type PageReport,
   type UnclearReport,
   HOMEWORK_SYSTEM,
-  HomeworkExtraction,
   LEAN_RULES,
 } from './extract.js';
 import { emitEvent } from '../buddy/events.js';
@@ -64,12 +61,11 @@ import {
   ReadingParse,
   SOURCE_RULES,
   SOURCES_PROMPT_VERSION,
-  StudyExtraction,
+  EXTRACTION_SCHEMA,
+  EXTRACT_PROMPT_VERSION,
+  HOMEWORK_SCHEMA,
 } from './sources.js';
 
-// Both exported for the schema inventory (`evals/schema`, issue #281); nothing else reads them.
-export const EXTRACTION_SCHEMA = toJsonSchema(StudyExtraction);
-export const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
 const ABANDON_UPLOAD_MS = 24 * 3_600_000;
 const MAX_EXTRACTION_ATTEMPTS = 3;
 /**

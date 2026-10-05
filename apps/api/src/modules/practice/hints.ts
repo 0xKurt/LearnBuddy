@@ -20,10 +20,7 @@ import { ItemDraft, LANGUAGE_RULES } from './items.js';
 import type { PracticeLearner } from './service.js';
 import { secretsOf, structuredTaskOf } from './structured.js';
 import { mentionsSolution } from './tutor.js';
-
-// v5: a structured item's question is its visible text, its secrets every gap key (cloze, #232).
-// v6: the schema says what was written for `hints`, dropped before by `toJsonSchema` (#282).
-export const HINTS_PROMPT_VERSION = 'hints.v6';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 const HintSet = z.object({
   items: z
@@ -152,3 +149,6 @@ export async function prepareHints(
   }
   return written;
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const HINTS_PROMPT_VERSION = promptVersion('hints', SYSTEM, HINTS_SCHEMA);

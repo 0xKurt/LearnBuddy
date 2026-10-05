@@ -43,8 +43,7 @@ import type { MessageRow } from './state.js';
 import { normalizeForMatch, quoteOccursIn } from './text.js';
 import type { ActionOf } from './decision.js';
 import { requireQuote, ToolRejection, type ToolContext, type ToolOutcome } from './toolKit.js';
-
-export const ROLEPLAY_PROMPT_VERSION = 'roleplay.1';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 /** After this long without a turn she has left the scene: the roleplay is over, without feedback. */
 const ROLEPLAY_IDLE_MS = 30 * 60_000;
@@ -642,3 +641,12 @@ export async function runStartRoleplay(
     undo: null,
   };
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const ROLEPLAY_PROMPT_VERSION = promptVersion(
+  'roleplay',
+  ROLEPLAY_SYSTEM,
+  ROLEPLAY_TURN_SCHEMA,
+  ROLEPLAY_FEEDBACK_SYSTEM,
+  FEEDBACK_SCHEMA,
+);

@@ -17,15 +17,12 @@
 
 import { randomUUID } from 'node:crypto';
 
-import { z } from 'zod';
-
 import type { Deps } from '../../deps.js';
 import { isAppError } from '../../lib/errors.js';
 import { addDays, daysBetween, localParts, weekdayOf, zonedToInstant } from '../../lib/time.js';
 import { dayLabel, t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError } from '../../llm/gateway.js';
-import { toJsonSchema } from '../../llm/json-schema.js';
 import { isMinor, type LearnerRow } from '../identity/model.js';
 import { questionCountFor, selectPracticeItems } from '../practice/selection.js';
 import { claimJobs, enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
@@ -34,7 +31,7 @@ import { buildContents, buildContext, canonicalTopicKey } from './context.js';
 import { CheckDecision } from './registry.js';
 import { planOutreach, type BodyTemplate } from './delivery.js';
 import { markHandled } from './events.js';
-import { lookupsField, withLookups } from './lookups.js';
+import { withLookups } from './lookups.js';
 import {
   describeLookBack,
   findLookBack,
@@ -43,21 +40,16 @@ import {
   type LookBackFact,
 } from './lookback.js';
 import { bumpContext, rollRepeatingStep } from './plan.js';
-import { BUDDY_PROMPT_VERSION, CHECK_SYSTEM, repairMessage } from './prompts.js';
+import {
+  BUDDY_PROMPT_VERSION,
+  CHECK_SCHEMA,
+  CHECK_STEP_SCHEMA,
+  CHECK_SYSTEM,
+  repairMessage,
+} from './prompts.js';
 import { loadBuddyState, type BuddyState, type SettingsRow } from './state.js';
 import { claimMessage, processTurn, pushAvailable, TURN_STALL_MS } from './turn.js';
 
-// Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
-export const CHECK_SCHEMA = toJsonSchema(CheckDecision);
-/** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
-// Lookups first, as in a turn: the model chooses what to read before it writes a decision
-// (p2-check-step-schema-lookups-last).
-// Exported only so the prompt test can scan the exact bytes this module sends (issue #213):
-// `CheckDecision` and `lookupsField` are each scanned on their own, but the COMPOSITION is what
-// goes out, and a description can only hide in what no test holds.
-export const CHECK_STEP_SCHEMA = toJsonSchema(
-  z.object({ lookups: lookupsField }).extend(CheckDecision.shape),
-);
 const LEASE_SECONDS = 150;
 const IN_APP_DEFER_MS = 20 * 60_000;
 const IN_APP_WINDOW_MS = 3 * 60_000;

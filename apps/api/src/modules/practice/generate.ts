@@ -59,45 +59,7 @@ import {
 import { STAFF_RULES, staffItems } from './staff.js';
 import { TEACH_BACK_RULES, teachBackItems } from './teachBack.js';
 import { structuredItems, type StructuredItem } from './structured.js';
-
-// v1.16: car 2's structured rules (v1.15) and #253/#257's figures (v1.14) together.
-// v1.17: pictures as the options of a multiple choice (choice_figures, #231).
-// v1.18: cloze, a text with several gaps (#232).
-// v1.19: a Diktat run (spelling_dictation, #242) with its own task and entries.
-// v1.20: primary-school figures — clock, money, dot field, base-ten blocks (#254).
-// v1.21: select_all, a question with several right options to tick (#240).
-// v1.22: the periodic table as a figure (#250).
-// v1.23: solids, cube nets and points in space (#255).
-// v1.24: mark, tapping words, comma places or syllable breaks in a text (#234).
-// v1.25: a teach_back run („Erklär mal", #236) with its own task and key points.
-// v1.26: a question marks the calculation inside its sentence that the key is (`computes`, #227).
-// v1.27: a listening question's schema without `rubric` (#281 D2: no listening kind keeps one).
-// v1.28: diagrams — boxes with arrows, chains, cycles, trees, grids, gaps lettered A–C (#247).
-// v1.29: the schema says what was written for a table gap's `also` and a teach_back point's
-//        `exact`, dropped before by `toJsonSchema` (#282).
-// v1.30: no figure on a vocab or speak card, and a listening option's picture only a clock, coins,
-//        a dot field or base-ten blocks (#375: the vocab, speak and listen schemas lose most of
-//        `ModelFigure`; every other kind is sent the same bytes).
-// v1.31: a question answered by tapping a place in its figure — a number line, a point, a column,
-//        a clock face to set (`tap`, #248).
-// v1.32: find_error (a worked solution with one wrong line, the error built in by code) and
-//        column_calc (written arithmetic in columns, every digit and carry computed by code) (#260).
-// v1.33: grid_draw, drawing on a grid — points, a line or parabola, a mirror image, bars (#249).
-// v1.34: a marking text sorted into categories may have 12 words and 72 characters (#368).
-// v1.35: a reading run (read): Buddy's own reading text with its questions (#368), and a reading
-//        question may ask for its Belegstelle (`evidence`).
-// v1.36: a prism's non-regular base, nets of solids ("which solid?") and Würfelgebäude (#368).
-// v1.38: circuits, logic gates and Itten's colour wheel, their keys computed by code (#261).
-// v1.40: a stumme Karte — Länder, countries of Europe, continents — to name a marked region or to
-//        tap one (`map`, #251).
-// v1.41: a house- or L-shaped base, and "which solid?" of a cube's and a cone's net with four
-//        options code picks and marks (#418; v1.39 and v1.40 are reserved for parallel work).
-// v1.45: v1.41 with the stumme Karte of v1.40 (#251) — the two met in one prompt (v1.42–v1.44 are
-//        reserved for #388, #424 and #413).
-// v1.44: a written division's quotient may have three digits (672 : 3), shown step by step
-//        (#413, on top of v1.41).
-// v1.46: v1.45 with the three-digit division of v1.44 (#413).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.46';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;
@@ -949,3 +911,12 @@ async function addTheRest(
   // questions' (hints.ts). Best effort, like the call the route makes for the first ones.
   if (added > 0) await prepareHints(deps, learner, sessionId).catch(() => 0);
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const GENERATE_PROMPT_VERSION = promptVersion(
+  'generate',
+  GENERATE_SYSTEM,
+  TASK,
+  LEVEL,
+  (Object.keys(TASK) as StartTopicRequest['kind'][]).map((kind) => explainSchemaFor(kind, null)),
+);

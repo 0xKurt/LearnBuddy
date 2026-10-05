@@ -150,6 +150,7 @@ export function GridAnswer({ view, draftKey, disabled, onSubmit }: Props) {
             <View style={{ alignItems: 'center' }}>
               <TapSurface
                 testID="grid-paper"
+                accessibilityRole="button"
                 style={box.width > 0 ? size : { alignSelf: 'stretch' }}
                 accessibilityLabel={`${t(`grid.paper_${view.sheet.mode}`)}: ${line}`}
                 accessibilityHint={t(bars ? 'grid.tap_hint_bars' : 'grid.tap_hint')}
