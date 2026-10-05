@@ -40,6 +40,8 @@ export function useScreenRoom() {
   const [threadBox, setThreadBox] = useState(0);
   const [freeSpace, setFreeSpace] = useState(0);
   const [turnTops, setTurnTops] = useState<Readonly<Record<string, number>>>({});
+  /** Where the conversation's parts start — the help chips, a card under the replies (#403). */
+  const [partTops, setPartTops] = useState<readonly number[]>([]);
   const [threadNeed, setThreadNeed] = useState(0);
   const [questionContentHeight, setQuestionContentHeight] = useState(0);
   /** The question card as laid out, and its own height before it grew (issue #96). */
@@ -54,6 +56,8 @@ export function useScreenRoom() {
   const columnRef = useRef<View>(null);
   /** The column's end mark: where its content ends, below the bar. */
   const endRef = useRef<View>(null);
+  /** The growth the card was given in the last layout (its minHeight now). */
+  const granted = useRef(0);
   // Where the content ends, read after every render (issue #402). The mark's own layout event
   // missed it on the web, which reports a change of SIZE only (a ResizeObserver): a mark of height
   // 0 that moved up when the answer folded away left a stale overrun, and the conversation, given
@@ -80,7 +84,13 @@ export function useScreenRoom() {
     // the drawing a smaller cap, so its own height measured on another size is wrong here.
     const naturalKey = `${item.id}:${q.windowWidth}x${viewHeight}`;
     const cardNatural = natural?.key === naturalKey ? natural.height : 0;
-    const cardDelta = cardNatural > 0 ? cardHeight - cardNatural : 0;
+    // What the card grew is room it gives back — but only growth it was GIVEN (issue #403): a grown
+    // card that stands taller than its minHeight stands at its content (the prompt rewrapped, the
+    // drawing came in), and counting that as growth promised the conversation room it never got;
+    // squeezed below its cap, it showed a sliver of the orb before under the card at 390.
+    const given = granted.current > 0 ? cardNatural + granted.current : 0;
+    const cardDelta =
+      cardNatural > 0 && !(given > 0 && cardHeight > given + 1) ? cardHeight - cardNatural : 0;
     // When something below grows (the voice bar, the keyboard's room) and the column runs past
     // its end, that overrun comes off the room too — a grown card gives it back first.
     // Two ways to see it: past the column's own end (phones, where a flex child may shrink below
@@ -111,6 +121,7 @@ export function useScreenRoom() {
       short: Math.max(0, -left),
       threadNeed,
       tops,
+      parts: partTops,
       quiet: q.quiet,
       boardGives,
       boardSpare:
@@ -126,11 +137,13 @@ export function useScreenRoom() {
       fills: cardNatural > 0 && item.kind === 'spelling_dictation' && !q.dictationCompact,
       viewHeight,
     });
+    granted.current = shared.cardGrowTo;
     return {
       ...shared,
       caps: visualCaps(viewHeight, shared.cardGrowTo),
       cardNatural,
-      tops,
+      // ThreadBox rests its edge on any of them.
+      tops: [...tops, ...partTops],
       onCard: (h) => {
         setCardHeight(h);
         // Its own height before it grows: measured only while it has no minHeight. (While it
@@ -150,6 +163,7 @@ export function useScreenRoom() {
     setThreadNeed,
     setFreeSpace,
     setTurnTops,
+    setPartTops,
     setSurfaceHeight,
     columnRef,
     endRef,
