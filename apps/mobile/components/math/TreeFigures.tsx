@@ -63,8 +63,12 @@ export function TreeBody({
 
 type Fit = { width: number; scale: number };
 
-/** The drawing's Svg: laid out `width` wide and `height` tall, drawn at `scale`. */
-function FittedSvg({
+/**
+ * The drawing's Svg: laid out `width` wide and `height` tall, drawn at `scale` — FigureView's, so
+ * a drawing whose height does not follow its width still shrinks as a whole (trees, #402; circuits
+ * and logic nets, #419).
+ */
+export function FittedSvg({
   width,
   height,
   scale,

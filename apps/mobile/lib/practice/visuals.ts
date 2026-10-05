@@ -17,6 +17,13 @@ const FIGURE_SHARE = 0.14;
 /** A photo's cap: a share of what she sees, never taller than 180 pt (the 360×740 fit rule). */
 const IMAGE_SHARE = 0.2;
 const IMAGE_MAX = 180;
+/**
+ * A figure she answers IN (`FigureTapAnswer`, issues #248, #251): a share of what she sees, so a tall
+ * one — the map of Germany — is drawn narrower rather than push "Prüfen" off a 360×740 phone. There
+ * it is 330 pt, the room in which the server decides what a finger can tap
+ * (`REGION_TAP_BOX` in packages/shared-math/src/regions.ts).
+ */
+const BOARD_SHARE = 0.45;
 
 /** The figure types that never grow; every other one may. */
 const KEEPS_ITS_SIZE: ReadonlySet<Figure['type']> = new Set(['staff']);
@@ -39,4 +46,12 @@ export function visualCaps(
     figure: Math.round(viewHeight * FIGURE_SHARE) + gives,
     image: Math.min(IMAGE_MAX, Math.round(viewHeight * IMAGE_SHARE)) + gives,
   };
+}
+
+/**
+ * The tallest a figure she answers in may stand (`FigureTapAnswer`): it stands in the answer
+ * instead of the card and gives nothing back to the conversation.
+ */
+export function boardCap(viewHeight: number): number {
+  return Math.round(viewHeight * BOARD_SHARE);
 }

@@ -336,10 +336,12 @@
     "solid": {
       "net_yes": "Yes, it is a cube net",
       "net_no": "No, it is not a cube net",
+      "kind_cube": "cube",
       "kind_cuboid": "cuboid",
       "kind_prism": "prism",
       "kind_pyramid": "pyramid",
-      "kind_cylinder": "cylinder"
+      "kind_cylinder": "cylinder",
+      "kind_cone": "cone"
     },
     "circuit": {
       "lit": "Yes, {{lamp}} lights up",

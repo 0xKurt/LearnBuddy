@@ -15,14 +15,15 @@ import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 // Imported by path, like trees.js in TreeFigures: dependency-free, no mathjs in the bundle.
 import { solidNet } from '../../../../packages/shared-math/src/solidNets.js';
 import {
-  drawingBox,
+  baseHeight,
   edgeLength,
-  isNice,
   solidDrawing,
   SOLID_MEASURES,
+  writtenSides,
   type SolidXY,
 } from '../../../../packages/shared-math/src/solids.js';
 import { axesRange, spaceProject } from '../../../../packages/shared-math/src/space.js';
+import { solidLayout } from '../../lib/math/solidLayout.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { CubesBody, describeCubes, type CubesFig } from './CubeBuildings.js';
 import { FONT, formatNumber, HaloText, SMALL } from './figureText.js';
@@ -37,6 +38,8 @@ type T = (key: string, values?: Record<string, string | number>) => string;
 /** The tallest a solid or a net is drawn, so the answer stays on a small screen. */
 const MAX_HEIGHT = 160;
 const DASH = '5 4';
+/** A measure's size on a solid or a net. */
+const LABEL_SIZE = FONT + 1;
 
 export function SpaceBody({ figure, width }: { figure: SpaceFig; width: number }) {
   switch (figure.type) {
@@ -63,25 +66,10 @@ function SolidView({ fig, width }: { fig: SolidFig; width: number }) {
   const { figure: ink } = useTheme();
   // Its net, or (a sphere has none, and the server refuses one) its Schrägbild.
   const drawing = (fig.w === 'net' ? solidNet(fig) : null) ?? solidDrawing(fig);
-  const box = drawingBox(drawing);
   // A count is read off the edges alone; the measures would only be in the way.
   const labels = countAsked(fig.ask) ? [] : drawing.labels;
-  const room = (side: (l: (typeof labels)[number]) => boolean, gap: number, base: number) =>
-    labels.some(side) ? gap : base;
-  const left = room((l) => l.dx < 0, 64, 12);
-  const right = room((l) => l.dx > 0, 64, 12);
-  const top = room((l) => l.dy < 0, 22, 8);
-  const bottom = room((l) => l.dy > 0, 26, 8);
-  const bw = Math.max(box.x1 - box.x0, 1e-6);
-  const bh = Math.max(box.y1 - box.y0, 1e-6);
-  const scale = Math.min((width - left - right) / bw, (MAX_HEIGHT - top - bottom) / bh);
-  const used = bw * scale + left + right;
-  const ox = (width - used) / 2 + left;
-  const at = (p: SolidXY): SolidXY => ({
-    x: ox + (p.x - box.x0) * scale,
-    y: top + (p.y - box.y0) * scale,
-  });
-  const height = bh * scale + top + bottom;
+  const text = (v: number) => `${formatNumber(v)} ${fig.u}`;
+  const { at, height, spots, dimensions } = solidLayout(drawing, labels, text, width, LABEL_SIZE);
   const strokes = [...drawing.strokes].sort((a, b) => Number(b.hidden) - Number(a.hidden));
   return (
     <Svg width={width} height={height}>
@@ -104,21 +92,35 @@ function SolidView({ fig, width }: { fig: SolidFig; width: number }) {
         const q = at(p);
         return <Circle key={`d${i}`} cx={q.x} cy={q.y} r={2.5} fill={ink.stroke} />;
       })}
-      {labels.map((l, i) => {
-        const q = at(l.at);
-        const anchor = l.dx < 0 ? 'end' : l.dx > 0 ? 'start' : 'middle';
-        const dy = l.dy > 0 ? FONT + 4 : l.dy < 0 ? -7 : FONT * 0.36;
-        return (
-          <HaloText
-            key={`l${i}`}
-            x={q.x + l.dx * 8}
-            y={q.y + dy}
-            anchor={anchor}
-            text={`${formatNumber(l.v)} ${fig.u}`}
-            color={ink.point}
-          />
-        );
-      })}
+      {dimensions.flatMap((d, i) =>
+        d === null
+          ? []
+          : [
+              ...d.lines.map((line, j) => (
+                <Path
+                  key={`m${i}-${j}`}
+                  d={pathOf(line)}
+                  stroke={ink.axis}
+                  strokeWidth={1.2}
+                  fill="none"
+                />
+              )),
+              ...d.arrows.map(([from, tip], j) => (
+                <Path key={`a${i}-${j}`} d={arrowHead(from, tip, 6)} fill={ink.axis} />
+              )),
+            ],
+      )}
+      {labels.map((l, i) => (
+        <HaloText
+          key={`l${i}`}
+          x={spots[i]!.x}
+          y={spots[i]!.y}
+          anchor="middle"
+          size={LABEL_SIZE}
+          text={text(l.v)}
+          color={ink.point}
+        />
+      ))}
     </Svg>
   );
 }
@@ -362,16 +364,17 @@ export function describeSpace(fig: SpaceFig, t: T): string {
       if (countAsked(fig.ask)) return title;
       const v = (x: number) => `${formatNumber(x)} ${fig.u}`;
       const base = fig.g ?? [];
+      const height = base.length > 0 ? baseHeight(base) : null;
       const measures =
         base.length > 0
           ? [
               t('figure.solid_base', {
-                sides: base
-                  .map((p, i) => edgeLength(p, base[(i + 1) % base.length]!))
-                  .filter(isNice)
-                  .map(v)
+                sides: writtenSides(base)
+                  .map((i) => v(edgeLength(base[i]!, base[(i + 1) % base.length]!)))
                   .join(', '),
               }),
+              // The base's height where it is drawn: with its sides it gives the base's area.
+              ...(height === null ? [] : [t('figure.solid_base_h', { v: v(height.v) })]),
               t('figure.solid_h', { v: v(fig.h) }),
             ]
           : SOLID_MEASURES[fig.k].map((m) => t(`figure.solid_${m}`, { v: v(fig[m]) }));

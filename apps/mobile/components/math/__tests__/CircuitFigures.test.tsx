@@ -68,6 +68,22 @@ describe('SwitchingBody', () => {
     expect(container.querySelector('svg')).not.toBeNull();
   });
 
+  it.each([
+    ['parallel lamps', parallel],
+    ['a logic net', net],
+  ] as const)('shrinks %s as a whole at FigureView’s scale (#419)', (_, figure) => {
+    // FigureView hands over a width already shrunk by its scale. Laid out at that narrower width
+    // the drawing did not fit at all and vanished, and the card's room went wrong around it.
+    const full = renderInApp(<SwitchingBody figure={figure} width={266} />);
+    const half = renderInApp(<SwitchingBody figure={figure} width={133} scale={0.5} />);
+    const size = (c: HTMLElement) => {
+      const svg = c.querySelector('svg');
+      return { w: Number(svg?.getAttribute('width')), h: Number(svg?.getAttribute('height')) };
+    };
+    expect(size(half.container).w).toBeCloseTo(size(full.container).w / 2, -0.5);
+    expect(size(half.container).h).toBeCloseTo(size(full.container).h / 2, -0.5);
+  });
+
   it('names every part and writes values with the decimal mark', () => {
     const { container } = renderInApp(<SwitchingBody figure={parallel} width={266} />);
     const text = container.textContent ?? '';

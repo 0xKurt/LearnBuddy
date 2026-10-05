@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 
 import type { Tappable } from '../../../../packages/shared-math/src/tap.js';
 import { TapFigure } from '../math/TapFigure.js';
+import { boardCap } from '../../lib/practice/visuals.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { AnswerShell } from './AnswerShell.js';
 
 type Props = {
@@ -23,10 +25,20 @@ type Props = {
 
 export function FigureTapAnswer({ figure, value, disabled, onChange, onCheck }: Props) {
   const { t } = useTranslation('practice');
+  // A tall figure — the map of Germany — is drawn narrower rather than push "Prüfen" away.
+  const maxHeight = boardCap(useVisibleHeight().visible);
   return (
     <AnswerShell
       keeps="whole"
-      answer={<TapFigure figure={figure} value={value} disabled={disabled} onChange={onChange} />}
+      answer={
+        <TapFigure
+          figure={figure}
+          value={value}
+          disabled={disabled}
+          onChange={onChange}
+          maxHeight={maxHeight}
+        />
+      }
       action={{
         ready: value !== '',
         disabled,

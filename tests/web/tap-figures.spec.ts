@@ -1,7 +1,9 @@
 // Browser walkthrough of tapping inside a figure (issue #248): a place on a number line, a point
 // of a coordinate system (dragged there), a column of a bar chart and a clock face set hand by
 // hand. On the line and the coordinate system the words under the figure only say THAT she chose;
-// the value is the screen reader's (`aria-valuetext`, issue #409). Scripted answers in apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
+// the value is the screen reader's (`aria-valuetext`, issue #409). A second walk taps a stumme
+// Karte (issue #251): every one of the 16 Länder, a continent, and names a marked country —
+// scripted in apps/api/src/testing/scenarios/map.ts, shot at 93–95. Scripted answers in apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
 // no tutor is scripted for any. Every question is shot at both phone sizes, light and dark, with
 // the keyboard up for her question (test-results/web/shots, 96-…).
 //
@@ -12,8 +14,11 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { clockGeometry } from '../../apps/mobile/lib/math/figureGeometry';
 import { tapLayout } from '../../apps/mobile/lib/math/tapLayout';
+import { MAP_SHAPES } from '../../packages/shared-math/src/mapShapes.data';
+import { mapRegion, mapRegions, type MapView } from '../../packages/shared-math/src/maps';
+import { REGION_FRAME } from '../../packages/shared-math/src/regions';
 import type { Tappable } from '../../packages/shared-math/src/tap';
-import { onboardChild, startOffer } from './figureWalk';
+import { onboardChild, startOffer, typed } from './figureWalk';
 import { shot } from './fit';
 
 const LINE: Tappable = { type: 'number_line', min: 0, max: 5, step: 0.5, points: [] };
@@ -139,6 +144,60 @@ test('tapping inside a figure: a place, a point, a column, a clock — graded by
     'Uhr: der kleine Zeiger zwischen 7 und 8, der große Zeiger auf der 9',
   );
   await bothRooms(page, '99-tap-clock');
+  await checkRight(page);
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+});
+
+/** Where the label of region `name` stands on the pad of a map, in the pad's own coordinates. */
+async function labelOn(page: Page, view: MapView, name: string) {
+  const box = await page.getByTestId('tap-pad').boundingBox();
+  if (!box) throw new Error('no tap pad');
+  const at = MAP_SHAPES[view].regions[mapRegion(view, name) ?? -1]?.at;
+  if (!at) throw new Error(`no region ${name}`);
+  const k = box.width / REGION_FRAME;
+  return { x: at[0] * k, y: at[1] * k };
+}
+
+async function tapRegion(page: Page, view: MapView, name: string): Promise<void> {
+  await page.getByTestId('tap-pad').click({ position: await labelOn(page, view, name) });
+}
+
+test('a stumme Karte: every Land tapped, a marked country named, a continent tapped (#251)', async ({
+  page,
+}) => {
+  await onboardChild(page, 'map');
+  await startOffer(page, 'Lass uns Karten üben', 'auf der Karte');
+
+  // Germany: the map in the answer; every one of the 16 Länder can be tapped, the city states
+  // smaller than a finger at their label, and the line under the map never names it (#409).
+  await expect(page.getByText('Tippe auf Bayern.')).toBeVisible();
+  await expect(words(page)).toHaveText('Tippe auf das Gebiet in der Karte.');
+  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
+  await shot(page, '93-map-de-empty');
+  for (const land of mapRegions('de')) {
+    await tapRegion(page, 'de', land.de);
+    await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Gebiet: ${land.de}`);
+  }
+  await expect(words(page)).toHaveText('Gebiet gewählt');
+  await tapRegion(page, 'de', 'Bayern');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Gebiet: Bayern');
+  await bothRooms(page, '93-map-de');
+  await checkRight(page);
+
+  // Europe: the marked country stands in the card; she names it.
+  await expect(page.getByText('Wie heißt das markierte Land?')).toBeVisible();
+  await expect(page.getByTestId('question-figure')).toBeVisible();
+  await shot(page, '94-map-europe');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '94-map-europe-dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await typed(page, 'Frankreich');
+
+  // The world: a continent.
+  await expect(page.getByText('Tippe auf Südamerika.')).toBeVisible();
+  await tapRegion(page, 'world', 'Südamerika');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Gebiet: Südamerika');
+  await bothRooms(page, '95-map-world');
   await checkRight(page);
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });
