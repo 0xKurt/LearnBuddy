@@ -3437,8 +3437,9 @@ pictures (#252) add their figure to it rather than building a second one.
   fraction bar, `FractionBarBoard`): the figure stands at the bottom INSTEAD of in the card,
   "Prüfen" checks her place, the bar's field is her question (#402). `components/math/TapFigure`
   draws the figure through `FigureView` with a layer over it (`layer` prop: the drawing's own
-  coordinates at the width it got): the gesture surface `components/lb/TapPad` (react-native-
-  gesture-handler; a tap and a drag are one gesture, the mark follows the finger) and her mark —
+  coordinates at the width it got): the one tap surface `components/lb/TapSurface` with `drag`
+  (react-native-gesture-handler; a tap and a drag are one gesture, the mark follows the finger;
+  the note line and the grid use the same component tapped, #416) and her mark —
   a ring on a point, a frame around a column; on the clock her hands ARE the mark. A clock is set
   one hand at a time: `Segmented` chooses the hand, the small one first, then the large one is
   next on its own.
