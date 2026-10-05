@@ -114,7 +114,7 @@ import {
 } from '../../lib/api/queries.js';
 import { useDraft } from '../../lib/drafts.js';
 import { messageFor } from '../../lib/errors.js';
-import { currentLocale } from '../../lib/i18n/index.js';
+import { currentLocale, isForeign } from '../../lib/i18n/index.js';
 import { questionParts } from '../../lib/practice/questionParts.js';
 import { answerForm } from '../../lib/practice/answerForm.js';
 import { questionOffers, questionOnScreen } from '../../lib/practice/offers.js';
@@ -125,7 +125,6 @@ import { announce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
 import { speakInOrder, stop as stopListening } from '../../lib/speech/listen.js';
 import { feedbackReadText, spokenText } from '../../lib/speech/spoken.js';
-import { baseLanguage } from '../../lib/speech/voice.js';
 import { afterFeedback, useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -157,12 +156,6 @@ type SentAnswer = {
    */
   parts: string | null;
 };
-
-/** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
-function foreign(lang: string | null): lang is string {
-  const base = baseLanguage(lang);
-  return base !== null && base !== currentLocale();
-}
 
 /** The verdict word read before Buddy's reply (as ItemThread shows it); none for "not an attempt". */
 function verdictWordKey(verdict: PracticeTurnView['verdict']): string | null {
@@ -499,6 +492,16 @@ export default function PracticeScreen() {
     });
   }
 
+  /** Her question about the question or card on screen: the bar's field (`AskRoute`, #402, #384). */
+  const askRoute = (itemId: string) => ({
+    value: question.text,
+    onChange: question.setText,
+    onSend: () => void ask(itemId, question.text.trim()),
+    disabled: busy || closing,
+    focused: measured.asking,
+    onFocused: measured.setAsking,
+  });
+
   /** "Merk ich mir für nachher" (issue #402): Buddy brings her question up after the practice. */
   function keep(turnId: string): Promise<void> {
     return act(async () => {
@@ -606,7 +609,13 @@ export default function PracticeScreen() {
   // ─────────────── a flashcard pass ───────────────
 
   if (session.card_pass) {
-    return <CardPass session={session} title={title} onChange={store} onClose={close} />;
+    const card = session.current_item_id ?? '';
+    const asked = { pending: pending?.itemId === card ? pending.text : null, onKeep: keep };
+    return (
+      <AskRoute.Provider value={askRoute(card)}>
+        <CardPass session={session} title={title} onChange={store} onClose={close} asked={asked} />
+      </AskRoute.Provider>
+    );
   }
 
   // ─────────────── a Kopfrechnen round (issue #243) ───────────────
@@ -639,17 +648,12 @@ export default function PracticeScreen() {
     // She answered the questions the run started with and the rest is still being written
     // (issue #220). Not a result and not an error — the next questions are on their way, and the
     // screen asks for them until they are there (`usePracticeSession`).
-    if (active && session.preparing && !timeUp) {
+    const coming = active && session.preparing && !timeUp;
+    if (coming || (active && !finishFailed)) {
+      const waitsFor = coming ? 'more_coming' : timeUp ? 'timer.up' : 'finishing';
       return (
         <Screen title={title}>
-          <LoadingState label={t('practice:more_coming')} />
-        </Screen>
-      );
-    }
-    if (active && !finishFailed) {
-      return (
-        <Screen title={title}>
-          <LoadingState label={t(timeUp ? 'practice:timer.up' : 'practice:finishing')} />
+          <LoadingState label={t(`practice:${waitsFor}`)} />
         </Screen>
       );
     }
@@ -726,7 +730,7 @@ export default function PracticeScreen() {
 
   // A foreign vocabulary word has its own "Anhören" (its pronunciation is the point); that IS
   // its read-aloud button, so it never gets a second one.
-  const hearWord = item.kind === 'vocab' && foreign(item.prompt_lang);
+  const hearWord = item.kind === 'vocab' && isForeign(item.prompt_lang);
   // "Frage vorlesen" (issue #238) in the card's meta row (`ReadQuestionButton`, issue #310). Only
   // where the server allows it (`read_aloud`), only while the question is open, and not where
   // another control already reads it — voice mode's "Nochmal vorlesen", the pronunciation card's
@@ -792,16 +796,7 @@ export default function PracticeScreen() {
       <KeyboardSafe style={{ flex: 1 }}>
         <FreeSpaceReport.Provider value={measured.setFreeSpace}>
           {/* Her question (issue #402): the field of the bar on every form without a typed answer. */}
-          <AskRoute.Provider
-            value={{
-              value: question.text,
-              onChange: question.setText,
-              onSend: () => void ask(item.id, question.text.trim()),
-              disabled: locked,
-              focused: measured.asking,
-              onFocused: measured.setAsking,
-            }}
-          >
+          <AskRoute.Provider value={askRoute(item.id)}>
             {/* The column, measured: its end mark (below) says how far its content runs past it. */}
             <View
               style={{ flex: 1, minHeight: 0 }}
@@ -956,7 +951,10 @@ export default function PracticeScreen() {
                       <SolutionCard answer={shown.answer} numeric={item.kind === 'numeric'} />
                     </Rise>
                   ) : null}
-                  {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (
+                  {item.kind === 'vocab' &&
+                  !open &&
+                  shown.answer !== null &&
+                  isForeign(item.lang) ? (
                     <ListenButton text={shown.answer} lang={item.lang} />
                   ) : null}
                   {/* What the Hörtext said, once the question is closed (issue #210). The server

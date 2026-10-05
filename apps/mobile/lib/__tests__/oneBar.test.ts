@@ -47,7 +47,7 @@ const OWN_BAR: Record<string, { count: number; why: string }> = {
   },
   '[id].tsx': { count: 1, why: '"Weiter" once a question is closed — #388 step 6' },
   'SpeakPanel.tsx': { count: 1, why: 'pronunciation: the recorder — #388 step 6' },
-  'CardPass.tsx': { count: 2, why: 'flash cards: Umdrehen, Wusste ich / Noch nicht — #388 step 6' },
+  'CardPass.tsx': { count: 1, why: 'the end of a pass: "Zurück zu Buddy", not an answer (#384)' },
   'DrillRound.tsx': { count: 2, why: 'Kopfrechnen: its own digit pad and "Prüfen" — #388 step 6' },
   'RunResult.tsx': { count: 1, why: 'the end of a round: "Weiter", not an answer' },
 };

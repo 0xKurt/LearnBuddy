@@ -1,12 +1,14 @@
 // Lernkarten (issue #147, Stufe 2): one word at a time, the card turns over, and SHE says
 // whether she knew it.
 //
-// The whole screen is three things, in the same places the practice screen puts them: where
-// she is (the progress row), the one thing in front of her (the card), and the way on (the
-// bar at the bottom). Nothing else — no answer field, no "Tipp", no "Lösung zeigen", no
-// conversation. There is nothing to grade here, so there is nothing to ask Buddy about, and
-// anything more would be a second product next to the practice screen rather than the same
-// app doing something simpler.
+// The screen is built like every practice screen, in the same places (issue #384, report #388
+// §9 "the bar per form"): the header with the round ✕ (`EndButton`), where she is (the progress
+// row), the one thing in front of her (the card), the conversation under it once she asks, and
+// the one input bar at the bottom (`CheckBar` `own`). Its field is her question to the tutor
+// ("Frag zur Aufgabe …", `POST …/ask`: never graded, never a rating); its action is the card's:
+// "Umdrehen" where "Prüfen" stands on a board, then "Noch nicht" / "Wusste ich" across under the
+// pill, where a typed answer's "Prüfen" stands. No answer field, no "Tipp", no "Lösung zeigen":
+// there is nothing to grade here.
 //
 // Two decisions that are deliberate and would be easy to undo by accident:
 //
@@ -17,6 +19,8 @@
 //     it. For the same reason neither carries a tick or a cross: nothing here was right.
 //   · The card is turned over by the `<Btn>` in the bar, not by tapping the card. One way to
 //     do it, at the thumb, where every other action of the app lives (CLAUDE.md rule 13).
+//   · A question she asks is about the card in front of her; its reply stands under the card,
+//     and the next card starts without it (the conversation is the card's, like a question's).
 //
 // The end of a pass says what happened and nothing more: she went through her words. No count
 // of how many she knew — that number would be her own estimate dressed up as a result
@@ -25,23 +29,26 @@
 import type { CardRecall, SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { announce } from '../../lib/announce.js';
 import { recordCard } from '../../lib/api/endpoints.js';
+import { useDraft } from '../../lib/drafts.js';
 import { haptic } from '../../lib/haptics.js';
 import { messageFor } from '../../lib/errors.js';
-import { baseLanguage } from '../../lib/speech/voice.js';
-import { currentLocale } from '../../lib/i18n/index.js';
+import { isForeign } from '../../lib/i18n/index.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
+import { EndButton } from '../lb/EndButton.js';
 import { Rise } from '../lb/Motion.js';
 import { Screen } from '../lb/Screen.js';
 import { toast } from '../lb/Toast.js';
 import { BottomBar } from '../lb/BottomBar.js';
+import { CheckBar } from './CheckBar.js';
+import { ItemThread } from './ItemThread.js';
 import { PassEnd } from './PassEnd.js';
 import { ListenButton } from './ListenButton.js';
 import { ProgressRow } from './Question.js';
@@ -51,15 +58,14 @@ type Props = {
   title: string;
   /** The pass as the server now holds it (the screen keeps no state of its own about it). */
   onChange: (next: SessionView) => Promise<void>;
-  /** "Beenden": back to Buddy; the cards she has done stay done. */
+  /** The round ✕: back to Buddy; the cards she has done stay done. */
   onClose: () => void;
+  /**
+   * Her question about the card on its way (`pending`), and "Merk ich mir für nachher" for an
+   * off-topic one — the practice screen's, which sends it (`AskRoute`).
+   */
+  asked: { pending: string | null; onKeep: (turnId: string) => Promise<void> };
 };
-
-/** A language other than the app's: worth offering to hear (the foreign side of a pair). */
-function foreign(lang: string | null): lang is string {
-  const base = baseLanguage(lang);
-  return base !== null && base !== currentLocale();
-}
 
 /**
  * How large a word stands on the card. A single word gets the headline size; a phrase steps
@@ -71,11 +77,17 @@ function faceStyle(text: string) {
   return TYPE.body;
 }
 
-export function CardPass({ session, title, onChange, onClose }: Props) {
+export function CardPass({ session, title, onChange, onClose, asked }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
-  /** Which card is showing its back. Keyed on the card, so the next one starts face up. */
-  const [turned, setTurned] = useState<string | null>(null);
+  /**
+   * Which card is showing its back. Keyed on the card, so the next one starts face up; kept like
+   * a draft (`useDraft`), because the theme switch rebuilds the screen and a turned card stood
+   * face up again, its answer gone (walkthrough of #384).
+   */
+  const turnedDraft = useDraft(`session.${session.id}.turned`);
+  const turned = turnedDraft.text || null;
+  const setTurned = (itemId: string | null) => turnedDraft.setText(itemId ?? '');
   const [busy, setBusy] = useState(false);
   const working = useRef(false);
 
@@ -134,21 +146,36 @@ export function CardPass({ session, title, onChange, onClose }: Props) {
   // turn over, so the card stays face up rather than showing an empty side.
   const back = current.answer;
   const faceUp = turned !== current.item.id || back === null;
+  // Her questions about this card and the tutor's replies; the next card starts without them.
+  const turns = session.turns.filter((turn) => turn.item_id === current.item.id);
+  const talking = turns.length > 0 || asked.pending !== null;
+
+  const rating = (recall: CardRecall, label: string, hint: string) => (
+    <View style={{ flex: 1 }}>
+      <Btn
+        size="md"
+        variant="soft"
+        pill
+        full
+        busy={busy}
+        onPress={() => void rate(current.item.id, recall)}
+        accessibilityHint={hint}
+      >
+        {label}
+      </Btn>
+    </View>
+  );
 
   return (
+    // The practice screens' header (issue #334.1, #384): the run's name on one line and the round ✕.
     <Screen
       title={title}
       right={
-        <Btn
-          variant="outline"
-          size="sm"
-          pill
+        <EndButton
           onPress={onClose}
-          accessibilityLabel={t('practice:cards.end_label')}
-          accessibilityHint={t('practice:cards.end_hint')}
-        >
-          {t('practice:end')}
-        </Btn>
+          label={t('practice:cards.end_label')}
+          hint={t('practice:cards.end_hint')}
+        />
       }
     >
       <View style={{ flex: 1, paddingHorizontal: SPACE.lg, gap: SPACE.md }}>
@@ -165,7 +192,11 @@ export function CardPass({ session, title, onChange, onClose }: Props) {
         <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
           {t('practice:cards.note')}
         </Text>
-        <View style={{ flex: 1, justifyContent: 'center' }} testID="card">
+        {/* The card in the middle while it is alone; at the top once a conversation follows it. */}
+        <View
+          style={{ flexGrow: talking ? 0 : 1, flexShrink: 0, justifyContent: 'center' }}
+          testID="card"
+        >
           <Card tone="lavender" padding={SPACE.xl} radius={24}>
             <View style={{ gap: SPACE.lg, alignItems: 'center' }}>
               <Text
@@ -175,7 +206,7 @@ export function CardPass({ session, title, onChange, onClose }: Props) {
               >
                 {front}
               </Text>
-              {current.item.prompt_lang && foreign(current.item.prompt_lang) ? (
+              {isForeign(current.item.prompt_lang) ? (
                 // A `<Btn>` sits at the start of its line unless it is `full` or `center`;
                 // under a centred word that reads as a stray. The wrapper centres it without
                 // changing the button (CLAUDE.md rule 13: it stays the shared component).
@@ -200,7 +231,7 @@ export function CardPass({ session, title, onChange, onClose }: Props) {
                   >
                     {back}
                   </Text>
-                  {current.item.lang && foreign(current.item.lang) ? (
+                  {isForeign(current.item.lang) ? (
                     <View style={{ alignSelf: 'center' }}>
                       <ListenButton text={back} lang={current.item.lang} disabled={busy} />
                     </View>
@@ -210,54 +241,56 @@ export function CardPass({ session, title, onChange, onClose }: Props) {
             </View>
           </Card>
         </View>
+        {talking ? (
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: SPACE.sm }}>
+            <ItemThread
+              turns={turns}
+              pending={asked.pending}
+              asking
+              later={{ onKeep: (turnId) => void asked.onKeep(turnId), disabled: busy }}
+            />
+          </ScrollView>
+        ) : null}
       </View>
-      <BottomBar>
-        {faceUp ? (
-          <Btn
-            size="lg"
-            pill
-            full
-            disabled={busy || back === null}
-            onPress={() => {
-              haptic.select();
-              setTurned(current.item.id);
-            }}
-            accessibilityHint={t('practice:cards.turn_hint')}
-          >
-            {t('practice:cards.turn')}
-          </Btn>
-        ) : (
-          // Equal weight on purpose: the screen must not make one answer the easy one.
-          <View style={{ flexDirection: 'row', gap: SPACE.sm }}>
-            <View style={{ flex: 1 }}>
-              <Btn
-                size="lg"
-                variant="soft"
-                pill
-                full
-                busy={busy}
-                onPress={() => void rate(current.item.id, 'not_yet')}
-                accessibilityHint={t('practice:cards.not_yet_hint')}
-              >
-                {t('practice:cards.not_yet')}
-              </Btn>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Btn
-                size="lg"
-                variant="soft"
-                pill
-                full
-                busy={busy}
-                onPress={() => void rate(current.item.id, 'knew_it')}
-                accessibilityHint={t('practice:cards.knew_hint')}
-              >
-                {t('practice:cards.knew')}
-              </Btn>
-            </View>
-          </View>
-        )}
-      </BottomBar>
+      {/* The one input bar (#384): her question in the field, the card's action where "Prüfen"
+          stands. Equal weight for the two answers on purpose: the screen must not make one of
+          them the easy one. */}
+      <CheckBar
+        own={
+          faceUp
+            ? {
+                inBar: (
+                  <Btn
+                    size="sm"
+                    pill
+                    keepsFocus
+                    disabled={busy || back === null}
+                    onPress={() => {
+                      haptic.select();
+                      setTurned(current.item.id);
+                    }}
+                    accessibilityHint={t('practice:cards.turn_hint')}
+                  >
+                    {t('practice:cards.turn')}
+                  </Btn>
+                ),
+                across: null,
+              }
+            : {
+                inBar: null,
+                across: (
+                  <View style={{ flexDirection: 'row', gap: SPACE.sm }}>
+                    {rating(
+                      'not_yet',
+                      t('practice:cards.not_yet'),
+                      t('practice:cards.not_yet_hint'),
+                    )}
+                    {rating('knew_it', t('practice:cards.knew'), t('practice:cards.knew_hint'))}
+                  </View>
+                ),
+              }
+        }
+      />
     </Screen>
   );
 }
