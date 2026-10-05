@@ -500,7 +500,11 @@
     "cubes_row": "fila {{n}}: {{h}} cubos de alto",
     "cubes_front": "Vista de frente: {{rows}}",
     "cubes_side": "Vista desde la izquierda: {{rows}}",
-    "cubes_top": "Vista desde arriba: {{rows}}"
+    "cubes_top": "Vista desde arriba: {{rows}}",
+    "map_de": "Mapa mudo: Alemania con sus {{count}} estados federados.",
+    "map_europe": "Mapa mudo: los países de Europa.",
+    "map_world": "Mapa mudo: el mundo con sus {{count}} continentes.",
+    "map_marked": "Marcado: {{names}}."
   },
   "keys": {
     "row": "Símbolos matemáticos",
@@ -553,11 +557,14 @@
     "how_function_plot": "Toca el punto en el sistema de coordenadas.",
     "how_bar_chart": "Toca una barra.",
     "how_clock": "Toca la esfera donde debe apuntar la aguja.",
+    "how_map": "Toca la región en el mapa.",
     "value": "Lugar: {{value}}",
     "point": "Punto ({{x}} | {{y}})",
     "bar": "Barra: {{label}}",
+    "region": "Región: {{name}}",
     "chosen_number_line": "Lugar elegido",
     "chosen_function_plot": "Punto marcado",
+    "chosen_map": "Región elegida",
     "label": "Tu lugar en la figura",
     "up": "hacia arriba",
     "down": "hacia abajo",

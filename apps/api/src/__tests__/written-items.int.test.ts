@@ -262,9 +262,10 @@ describe.skipIf(!dbReady)('find-the-error and written-arithmetic items (#260)', 
       { ...PATH, lines: ['2x + 3 = 11', '2x = 9', 'x = 4.5'] },
       // A subtrahend larger than the minuend.
       { ...SUM, op: 'sub', operands: ['1389', '4721'] },
-      // Three division steps: more rows than a phone holds under Buddy's reply.
-      { ...SUM, op: 'div', operands: ['672', '3'] },
-      { ...SUM, op: 'div', operands: ['174', '5'], prompt: 'Teile schriftlich.' },
+      // Four division steps: more rows than a phone shows at once, finished steps shrunk (#413).
+      { ...SUM, op: 'div', operands: ['9876', '3'] },
+      // Three steps fit: a three-digit quotient (#413).
+      { ...SUM, op: 'div', operands: ['672', '3'], prompt: 'Teile schriftlich.' },
     ]);
     expect(session.items.map((i) => i.item.prompt)).toEqual(['Teile schriftlich.']);
     const stored = await env.db.one<{ n: number }>(

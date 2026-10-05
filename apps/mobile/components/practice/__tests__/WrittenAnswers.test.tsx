@@ -7,6 +7,9 @@
 //   · Schriftlich: jede Ziffer ein Feld mit Namen („Übertrag, Zehner“), eine Ziffer springt zum
 //     nächsten Feld in Schreibreihenfolge, eine neue Ziffer ersetzt die alte, „Prüfen“ wartet auf
 //     die erste Ziffer und schickt jedes Feld, leer oder nicht.
+//   · Schriftlich teilen (#413): die Treppe zeigt den Schritt, an dem sie ist, und darüber die
+//     bearbeiteten, auf halbe Zeilen geschrumpft und nicht mehr beschreibbar; die Ziffer des
+//     Ergebnisses öffnet ihren Schritt wieder. Geschickt wird trotzdem jedes Feld.
 //
 // Ob das Größte samt Buddys Antwort auf 360×740 passt, misst der Walkthrough
 // (tests/web/written.spec.ts), nicht diese Schicht.
@@ -27,6 +30,42 @@ const PATH: FindErrorTaskView = {
     { id: 'l3', text: '3x = 15' },
     { id: 'l4', text: 'x = 5' },
   ],
+};
+
+// 96 : 4: the first row, then two steps of the staircase (as columnCalc.ts lays it out).
+const gap = (id: string, part: 'product' | 'difference', place: number, step: number) => ({
+  id,
+  part,
+  place,
+  step,
+});
+/** The empty cells to the right of a step, so every row is as wide as the grid. */
+const air = Array.from({ length: 5 }, () => ({ text: '' }));
+const DIV: ColumnCalcTaskView = {
+  type: 'column_calc',
+  op: 'div',
+  rows: [
+    {
+      rule: false,
+      cells: [
+        { text: '9' },
+        { text: '6' },
+        { text: ':' },
+        { text: '4' },
+        { text: '=' },
+        { id: 'r0c5', part: 'quotient', place: 1, step: 0 },
+        { id: 'r0c6', part: 'quotient', place: 0, step: 0 },
+      ],
+    },
+    { rule: false, cells: [gap('r1c0', 'product', 0, 1), { text: '' }, ...air] },
+    {
+      rule: true,
+      cells: [gap('r2c0', 'difference', 1, 1), gap('r2c1', 'difference', 0, 1), ...air],
+    },
+    { rule: false, cells: [gap('r3c0', 'product', 1, 2), gap('r3c1', 'product', 0, 2), ...air] },
+    { rule: true, cells: [{ text: '' }, gap('r4c1', 'difference', 0, 2), ...air] },
+  ],
+  order: ['r0c5', 'r1c0', 'r2c0', 'r2c1', 'r0c6', 'r3c0', 'r3c1', 'r4c1'],
 };
 
 // 47 + 38: the numbers, the carry row and the sum under the line (as columnCalc.ts lays it out).
@@ -116,10 +155,10 @@ describe('Fehlerdetektiv', () => {
 });
 
 describe('schriftlich rechnen', () => {
-  function show(onSubmit = vi.fn()) {
+  function show(onSubmit = vi.fn(), view = SUM) {
     renderInApp(
       <ColumnAnswer
-        view={SUM}
+        view={view}
         draftKey={`col.${Math.random()}`}
         disabled={false}
         onSubmit={onSubmit}
@@ -165,6 +204,51 @@ describe('schriftlich rechnen', () => {
         ],
       },
       '85',
+    );
+  });
+
+  it('shows a division step by step: the finished steps shrunk, the next ones not yet (#413)', () => {
+    const onSubmit = show(vi.fn(), DIV);
+    const typeIn = (id: string, digit: string) =>
+      fireEvent.change(screen.getByTestId(`column-${id}`), { target: { value: digit } });
+    // A cell she can still write in, or (a finished step) only read.
+    const writable = (id: string) => screen.getByTestId(`column-${id}`).tagName === 'INPUT';
+    // At the start only the first step is there to write in.
+    expect(screen.queryByTestId('column-r3c1')).toBeNull();
+    typeIn('r0c5', '2');
+    typeIn('r1c0', '8');
+    typeIn('r2c0', '1');
+    typeIn('r2c1', '6');
+    // On to the next digit of the quotient: it opens the second step, the first shrinks to what
+    // she wrote.
+    fireEvent.focus(screen.getByTestId('column-r0c6'));
+    expect(writable('r1c0')).toBe(false);
+    expect(screen.getAllByTestId('column-done')).toHaveLength(2);
+    expect(screen.getByLabelText('16')).toBeDefined();
+    typeIn('r0c6', '4');
+    typeIn('r3c1', '6');
+    // Its quotient digit opens the first step again; the second, worked on, shrinks.
+    fireEvent.focus(screen.getByTestId('column-r0c5'));
+    expect(writable('r1c0')).toBe(true);
+    expect(writable('r3c1')).toBe(false);
+    expect(screen.getAllByTestId('column-done')).toHaveLength(2);
+    // Every cell goes to the check, shrunk or not.
+    fireEvent.click(screen.getByRole('button', { name: 'Prüfen' }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      {
+        type: 'column_calc',
+        cells: [
+          { id: 'r0c5', digit: '2' },
+          { id: 'r1c0', digit: '8' },
+          { id: 'r2c0', digit: '1' },
+          { id: 'r2c1', digit: '6' },
+          { id: 'r0c6', digit: '4' },
+          { id: 'r3c0', digit: '' },
+          { id: 'r3c1', digit: '6' },
+          { id: 'r4c1', digit: '' },
+        ],
+      },
+      '24',
     );
   });
 });

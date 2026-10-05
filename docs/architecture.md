@@ -1812,6 +1812,13 @@ its own route, so nothing she asks is ever misread as an answer:
   moved under a rewrapped reply kept a stale top, which left an orb's sliver under the card at 390.
   Guarded in `fit.ts` (`halfTurns`) at every practice stop, at 390, 360 and 360×440 with the
   keyboard: nothing in the conversation is partly visible between the card's edge and the fade.
+  **Every control is whole where it is drawn** (#419): `cutControls` in `fit.ts` checks each
+  button, chip and field of the practice screen against every box that clips it and the window
+  (the answer's own board excepted: it scrolls inside itself). Found with it: a circuit or logic
+  net laid out at the width FigureView had already shrunk did not fit and vanished, so the card's
+  room went wrong and the "Tipp" row stood cut — switching figures are now drawn at FigureView's
+  `scale` (`FittedSvg`, like trees), and `MAX_ZOOM` is back at 1.5. While she types, the card's
+  padding steps down to SPACE.md, and a board's keys fold with the board while she asks.
 
 **Eine Übung darf anfangen, bevor alle ihre Fragen geschrieben sind** (Issue #220, Migration
 0073). Gemessen 02.10.: „üben wir Brüche" kostete 6,45 s am Endpoint, davon 6,42 s der
@@ -2747,8 +2754,9 @@ place), so it is not guessed. A carry is written into every place with digits ab
 the ones; an empty cell is right where nothing belongs (no carry, a leading zero). Rejected
 (`operands`): a number with a leading zero or over six digits, a subtrahend not smaller, a factor
 with a 0 digit or 1, a divisor of two digits; (`too_long`): a grid wider than a 360-pt phone with
-every digit column at 32 pt (`columnsFit`), more than `COLUMN_ROWS_MAX` (5) rows — a division of
-three steps — or more than 40 cells. Her answer is every cell once (a digit or empty); the check
+every digit column at 32 pt (`columnsFit`), more than `COLUMN_ROWS_MAX` (5) rows shown at once
+(`columnRowsShown`: a division's finished steps count one row each) — a division of four steps — or
+more than 40 cells. Her answer is every cell once (a digit or empty); the check
 compares each digit **and each carry**, and the reply names the first place that is not right yet
 in the order she writes: "Noch nicht ganz – bei den Zehnern fehlt noch der Übertrag.", "… in der 2. Zeile stimmt bei den Hundertern noch etwas nicht.", "… im 2. Schritt stimmt das Malnehmen noch
 nicht." — never the digit; it is the form's feedback, not a hint. Her result stands in the
@@ -2756,16 +2764,19 @@ conversation (`columnResultText`, one implementation for app and server). App: t
 the answer shell, each cell the table's cell (`LbTextInput` cell), the columns as wide as the phone
 allows up to square, a drawn line above the sum and every difference; a digit typed moves on to the
 next cell in the server's writing order (`order`: right to left, the carry before the digit), the
-phone's number pad is all she needs. Printed rows are one number to a screen reader ("+1389"), every
-cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.32)
-and read from a sheet (extract.v8.13; a homework sheet: written arithmetic only, its own error is no
-Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86j, 360×740 and
+phone's number pad is all she needs. A division is shown step by step (issue #413): the step she
+is at in full, the steps she has worked on above it shrunk to half-high lines she reads but no longer
+writes in, the steps she has not reached not yet there; the step follows the cell she writes in, a
+quotient digit opens its step again, and every cell still goes to the check. Printed rows are one number to a screen reader ("+1389"), every
+cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.44, now v1.46)
+and read from a sheet (extract.v8.22, now v8.24; a homework sheet: written arithmetic only, its own error is no
+Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86m, 360×740 and
 390×844, light and dark, the keyboard up): four long lines with Buddy's longest reply above fit (six
 were 106 pt too tall, `FIND_ERROR_LINES_MAX`), and five rows of
 cells with Buddy's reply above (two partial products and their sum, a division of two steps). A
-division of three steps — seven rows, 672 : 3 — was 78 pt too tall there under the reply, and a
-cell cannot be lower than a touch target: it is rejected (`too_long`) until the owner decides how
-a longer division is to fit. While she writes her line with the keyboard up on a small phone, the
+division of three steps — seven rows, 672 : 3 — was 78 pt too tall there under the reply in full,
+and a cell cannot be lower than a touch target; shown step by step, its two finished steps take one
+row each, and it fits with the keyboard up (86k–86m, #413). While she writes her line with the keyboard up on a small phone, the
 Fehlerdetektiv's lines fold away like a board under her question (`answerFolds`, #402), so the bar
 and "Prüfen" stay above the keyboard.
 **Grid — drawing on squared paper** (`practice/grid.ts`, `GridAnswer.tsx`, issue #249, migration
@@ -3328,7 +3339,11 @@ computes the key.** No migration: the figure is an item's `figure` (jsonb), like
   a net (the diagrams check their arrow labels with the same boxes, `textWidth`, `crosses`): the
   drawing says on which side a measure would rather stand, the line it measures (`on`, along which
   it may move) and the face it belongs inside (`in`, a height inside its solid); the nearest clear
-  place wins, a side whose face runs into the depth is written inside the base. The app's
+  place wins, a side whose face runs into the depth is written inside the base. A height
+  (`height`) with no clear place inside its solid stands at a dimension line (Maßlinie, #424)
+  outside it — two extension lines from its ends, a double arrow, the number beside it, on the
+  side that needs the shorter extension lines, placed by the same `placeLabels` — never beside a
+  slant, where a cone's "8 cm" read as the slant's length. The app's
   `lib/math/solidLayout.ts` scales the drawing to its width — a Schrägbild at most 0.72 of it high,
   a net 0.85 (the cylinder's net stood a third of the card wide at a fixed 160 pt) — so a drawing
   the card shrinks gets lower too; `lib/math/__tests__/solidLayout.test.ts` holds every
@@ -3455,9 +3470,68 @@ pictures (#252) add their figure to it rather than building a second one.
   `tap-figures.int.test.ts` (stored or dropped, exact verdicts without a model, replay, a row
   that no longer holds, another learner); walkthrough `tests/web/tap-figures.spec.ts` (scenario
   `testing/scenarios/tap.ts`).
+- **Maps (#251)** are one figure on this mechanism: §Maps.
 - **Not built here:** laying an amount with coins ("Leg 3,45 €", #254) — a sum of several taps,
   not one place; tapping a cell of the periodic table (#250) or a month of a line or climate chart
   (#245) — each is one `case` on this mechanism.
+
+### Maps (issue #251)
+
+A stumme Karte as a figure: Germany's 16 Länder, the countries of Europe or the seven continents,
+as an atlas prints them — no names on it. Buddy asks to name the marked region ("Wie heißt das
+markierte Bundesland?") or to tap one ("Tippe auf Bayern", the tap mechanism above).
+
+- **Contract** (`packages/shared-types/src/contracts/map.ts`, in `ModelFigure`): `{ type: 'map',
+v: 'de' | 'europe' | 'world', hl: string[] }` — which map, and the marked regions by name. Never
+  a coordinate, never a shape. Prompts: generate.v1.40 / extract.v8.20, together with #418 generate.v1.45 / extract.v8.23 (`FIGURE_RULES`).
+- **Data** (Natural Earth 5.1.2, public domain — decision in #224): `packages/shared-math/scripts/
+maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a school map's frame,
+  the land around it as untappable context) and admin-0 1:110m (the continents; Russia split at
+  the Ural, 60° E), projects (equirectangular at 51° N; Lambert azimuthal equal-area at 10° E
+  52° N; the Natural Earth projection), simplifies (Douglas–Peucker) and writes two files:
+  `maps.data.ts` — every region's id and its names in the five languages plus other names
+  (8 KB, used by the server) — and `mapShapes.data.ts` — the outlines in a frame 1000 wide, each
+  labelled at its pole of inaccessibility (92 KB, used only by the app). The generated files are
+  in `.prettierignore` and checked byte for byte (`maps.mjs <dir> --check`); node ≥ 22.18 runs the
+  script, which imports `regions.ts` itself.
+- **One geometry for named regions** (`packages/shared-math/src/regions.ts`, dependency-free,
+  shared with the labelled pictures of #252): a name resolved in any language, ignoring case and
+  dashes (`regionNamed`); a point inside a region by winding number (outlines one way round,
+  holes the other — Berlin is a hole in Brandenburg); `regionPole`, the largest circle inside a
+  region, for its label and for how wide a finger may be; `regionAt`, which region a finger
+  means — a region narrower than a finger whose label it is near (its catch radius at most half
+  the way to the next label, so no label is caught by another), else the topmost region under
+  it, else the nearest: a tap never misses.
+- **Rule 0, generation** (`apps/api/src/modules/practice/mapCheck.ts`, in `usableItems` before
+  the tap check): every marked name must be a region of the map (stored as its id — "France" →
+  "FR"); a typed question must be short with exactly one region marked and that region as the
+  key; a tap question's key must be a region the map does not mark (the tap check, `tapProblem`)
+  and big enough for a finger on the narrowest phone — a 24 pt target inside it or around its
+  label when the map is drawn in 320 × 330 pt (`regionTappable`, `REGION_TAP_BOX`; WCAG 2.2,
+  2.5.8). That room is real: the figure she answers in is capped at 45 % of what she sees
+  (`boardCap`, lib/practice/visuals.ts — 333 pt on 360 × 740), so Germany, taller than
+  wide, is drawn 244 pt wide there. Every Land and every continent is tappable; on the
+  map of Europe only the larger countries are (Luxembourg, Belgium, the Balkans are named, not
+  tapped). A capital, a river, a neighbour as the key: dropped, the data does not hold them.
+- **Rule 0, grading:** a tapped region exactly (`tapVerdict`, as every tap); a typed name of the
+  marked region by the data (`mapRuleVerdict`): "Bavaria" and "Bayern" are one region, another
+  region of the map is wrong — never the tutor's.
+- **Screen:** `components/math/MapFigures.tsx` draws it (Länder and countries with their borders,
+  a continent as one outline — the outline under all fills, so no inner border shows); the shapes
+  come with the first map (`lib/math/useMapShapes.ts` on `lib/lazyModule.ts`, the same loader as
+  VexFlow's), until then the map keeps its height (`MAP_HEIGHTS`). Tapping is `TapFigure` with a
+  `case` in `tapLayout` (`regionAt` at the drawn width, the region filled as her mark with a dot on
+  its label). The line under the map says only "Gebiet gewählt"; the region's name in her
+  language is the screen reader's (`aria-valuetext`, #409).
+- Tests: `packages/shared-math/src/__tests__/maps.test.ts` (data invariants, names DE/EN/FR and
+  every name unique per map, regions to tap, every Land and continent at its label, Berlin inside
+  Brandenburg), `lib/math/__tests__/tapLayout.test.ts`, `TapFigure.test.tsx`,
+  `map-figures.int.test.ts` (stored or dropped, ids stored, exact verdicts without a model, another
+  learner); walkthrough `tests/web/tap-figures.spec.ts` (all 16 Länder tapped at 360 × 740,
+  scenario `testing/scenarios/map.ts`).
+- **Not built here:** the Gradnetz and "Welche Koordinaten hat der Punkt?"; capitals, rivers,
+  mountains as points; zoom (it would let the small countries of Europe be tapped); the Bundesland
+  of her own profile as a default map.
 
 ### Circuits, logic gates and the colour wheel (issue #261)
 
@@ -4876,7 +4950,7 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   telemetry (`llm_calls`, `buddy_decisions`) and the evals only record and compare them, so the
   switch needed no migration. **What changed when** is the git log of the file that holds the
   prompt (`git log -p -- apps/api/src/modules/practice/generate.ts`); the counter's history
-  ended at generate.v1.41, extract.v8.21, buddy.61, tutor.v12, hints.v6, reexplain.v4,
+  ended at generate.v1.46, extract.v8.24, buddy.61, tutor.v12, hints.v6, reexplain.v4,
   pronounce.v2.3, transcribe.v1.2, roleplay.1, figures-v2, essay.v1, cloze-gaps.v1, sources.v1,
   summary.v1, consolidate.v1. Text a function assembles at call time from the learner's data
   (`tutorContext`, the STATE of a turn) is not in the hash; a fixed instruction belongs in a named

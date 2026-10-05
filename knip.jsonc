@@ -15,6 +15,11 @@
       "entry": ["api/index.ts", "src/server.ts", "evals/**/*.ts", "scripts/*.{ts,mjs}"],
       "project": ["**/*.ts"],
     },
+    "packages/shared-math": {
+      // Data generators run by hand (scripts/maps.mjs reads Natural Earth, which is not in the
+      // repository, issue #251).
+      "entry": ["scripts/*.mjs"],
+    },
     "apps/mobile": {
       // Platform twins (`*.web.ts`) are picked by Metro's resolver, not by an import path;
       // the component-test project is listed in vitest.workspace.ts. Expo config plugins

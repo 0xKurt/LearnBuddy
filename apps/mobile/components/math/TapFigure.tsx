@@ -1,6 +1,6 @@
 // A figure she answers IN (issue #248): she taps — or drags to — a place on the number line, a
-// point of the coordinate system, a column of the bar chart, the hands of a clock face. One
-// mechanism for every tappable figure, built for maps (#251) and labelled pictures (#252) too:
+// point of the coordinate system, a column of the bar chart, the hands of a clock face, a region
+// of a map (#251). One mechanism for every tappable figure, built for labelled pictures (#252) too:
 //
 //   · the places are the figure's grid (`tapAxes`, @learnbuddy/shared-math `tap.ts`) — the grid
 //     the server checked the key lies on;
@@ -23,8 +23,9 @@ import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View, type AccessibilityActionEvent } from 'react-native';
-import Svg, { Circle, Line, Rect } from 'react-native-svg';
+import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg';
 
+import { mapRegionName } from '../../../../packages/shared-math/src/maps.js';
 import { parseClockAnswer } from '../../../../packages/shared-math/src/primary.js';
 import {
   tapAxes,
@@ -33,7 +34,9 @@ import {
   type Tappable,
   type TapPick,
 } from '../../../../packages/shared-math/src/tap.js';
+import { currentLocale } from '../../lib/i18n/index.js';
 import { tapLayout, type TapMark } from '../../lib/math/tapLayout.js';
+import { useMapShapes } from '../../lib/math/useMapShapes.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -63,7 +66,7 @@ function shownFigure(figure: Tappable & Figure, value: string): Figure {
 
 /**
  * Her place in words for a screen reader: "Stelle: 2,5", "Punkt (2 | −1)", "Säule: Apr", where
- * the hands stand.
+ * the hands stand, "Gebiet: Bayern" (in her language).
  */
 function placeWords(figure: Tappable, pick: TapPick | null, t: T): string {
   const [i = 0, j = 0] = pick ?? [];
@@ -78,17 +81,20 @@ function placeWords(figure: Tappable, pick: TapPick | null, t: T): string {
       return t('tap.bar', { label: figure.bars[i]?.label ?? '' });
     case 'clock':
       return t('figure.clock', { hands: describeClock({ h: at(0, i), m: at(1, j) }, t) });
+    case 'map':
+      return t('tap.region', { name: mapRegionName(figure.v, i, currentLocale()) });
   }
 }
 
 /**
- * The same line as she sees it: on a number line and a coordinate system only that she chose
- * ("Stelle gewählt", "Punkt gesetzt") — reading the place off the figure is the task (#409). A
- * column's name and the hands' positions are kept: the figure shows them anyway.
+ * The same line as she sees it: on a number line, a coordinate system and a map only that she
+ * chose ("Stelle gewählt", "Punkt gesetzt", "Gebiet gewählt") — reading the place off the figure,
+ * finding the region on a stumme Karte, is the task (#409, #251). A column's name and the hands'
+ * positions are kept: the figure shows them anyway.
  */
 function shownWords(figure: Tappable, pick: TapPick | null, t: T, spoken: string): string {
   if (!pick) return spoken;
-  return figure.type === 'number_line' || figure.type === 'function_plot'
+  return figure.type === 'number_line' || figure.type === 'function_plot' || figure.type === 'map'
     ? t(`tap.chosen_${figure.type}`)
     : spoken;
 }
@@ -97,6 +103,33 @@ function shownWords(figure: Tappable, pick: TapPick | null, t: T, spoken: string
 function Mark({ mark }: { mark: TapMark }) {
   const { palette } = useTheme();
   if (!mark) return null;
+  if (mark.kind === 'region') {
+    return (
+      <>
+        {/* One tinted layer: the seams between a continent's countries do not darken. */}
+        <G opacity={0.35}>
+          <Path d={mark.d} fill={palette.primary} stroke={palette.primary} strokeWidth={1.5} />
+        </G>
+        {mark.outline ? (
+          <Path
+            d={mark.d}
+            fill="none"
+            stroke={palette.primary}
+            strokeWidth={2}
+            strokeLinejoin="round"
+          />
+        ) : null}
+        <Circle
+          cx={mark.x}
+          cy={mark.y}
+          r={5}
+          fill={palette.primary}
+          stroke={palette.paper}
+          strokeWidth={2}
+        />
+      </>
+    );
+  }
   if (mark.kind === 'box') {
     const { x, y, w, h } = mark.box;
     return (
@@ -133,6 +166,8 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
   const { t } = useTranslation('math');
   const pick = value === '' ? null : tapPick(figure, value);
   const clock = figure.type === 'clock';
+  // The shapes of a map, loaded with the first one; nothing else loads them.
+  const shapes = useMapShapes(figure.type === 'map')?.MAP_SHAPES ?? null;
   // The hand a tap on the clock moves: the small one first (axis 0), then the large one.
   const [active, setActive] = useState(0);
   const write = (next: TapPick) => {
@@ -189,7 +224,7 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
           figure={shownFigure(figure, value)}
           maxHeight={maxHeight}
           layer={(width) => {
-            const layout = tapLayout(figure, width, formatNumber, SMALL);
+            const layout = tapLayout(figure, width, formatNumber, SMALL, shapes);
             if (!layout) return null;
             return (
               <>
