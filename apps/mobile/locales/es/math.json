@@ -494,6 +494,7 @@
     "solid_net_any": "Desarrollo de un cuerpo",
     "solid_net": "Desarrollo: {{kind}}",
     "solid_base": "base de lados {{sides}}",
+    "solid_base_h": "altura de la base {{v}}",
     "cubes": "Construcción de cubos, filas de delante hacia atrás: {{rows}}",
     "cubes_plan": "Plano de construcción, filas de delante hacia atrás: {{rows}}",
     "cubes_row": "fila {{n}}: {{h}} cubos de alto",

@@ -13,9 +13,10 @@ import {
   basePolygon2d,
   boxSides,
   edgeLength,
-  isNice,
   mid,
   slantHeight,
+  writtenSides,
+  type BasePoint,
   type Solid,
   type SolidDrawing,
   type SolidLabel,
@@ -68,6 +69,17 @@ function attach(poly: readonly SolidXY[], y0: number, side: 1 | -1): SolidXY[] {
   return turned.map((p) => ({ x: p.x, y: y0 + flip * p.y }));
 }
 
+/**
+ * The base's corners from its base line on: its first side then lies on the strip of side faces,
+ * and the base, which lies wholly on one side of that line, stands clear of the strip — an L's
+ * inner corner never comes first (#418).
+ */
+function fromBaseLine(g: readonly BasePoint[]): BasePoint[] {
+  const low = Math.min(...g.map((p) => p.y));
+  const i = g.findIndex((p, k) => p.y === low && g[(k + 1) % g.length]!.y === low);
+  return [...g.slice(i), ...g.slice(0, i)];
+}
+
 /** The net of a solid that holds (`solidProblem`), in its own units. A sphere has none. */
 export function solidNet(s: Solid): SolidDrawing | null {
   const { a, h, r } = s;
@@ -91,8 +103,10 @@ export function solidNet(s: Solid): SolidDrawing | null {
       return drawing(faces, labels);
     }
     case 'prism': {
-      const base = basePolygon2d(s);
+      const base = fromBaseLine(basePolygon2d(s));
       const edges = base.map((p, i) => edgeLength(p, base[(i + 1) % base.length]!));
+      // A regular base names its side once; an irregular one the sides its Schrägbild writes.
+      const written = (s.g?.length ?? 0) > 0 ? writtenSides(base) : [0];
       const top = attach(base, 0, -1);
       const above = -Math.min(...top.map((p) => p.y));
       const lifted = top.map((p) => ({ x: p.x, y: p.y + above }));
@@ -101,9 +115,17 @@ export function solidNet(s: Solid): SolidDrawing | null {
       const labels: SolidLabel[] = [];
       edges.forEach((e, i) => {
         faces.push(rect(x, above, e, h));
-        // A regular base names its side once; an irregular one every side that is a plain number.
-        if ((s.g?.length ?? 0) > 0 ? isNice(e) : i === 0)
-          labels.push({ at: { x: x + e / 2, y: above + h }, dx: 0, dy: 1, v: e });
+        if (written.includes(i))
+          labels.push({
+            at: { x: x + e / 2, y: above + h },
+            dx: 0,
+            dy: 1,
+            v: e,
+            on: [
+              { x, y: above + h },
+              { x: x + e, y: above + h },
+            ],
+          });
         x += e;
       });
       faces.push(lifted.map((p) => ({ x: p.x, y: 2 * above + h - p.y })));
@@ -128,7 +150,7 @@ export function solidNet(s: Solid): SolidDrawing | null {
       const m0 = mid(base[0]!, base[1]!);
       const labels: SolidLabel[] = [
         { at: m0, dx: 0, dy: -1, v: a },
-        { at: mid(m0, apex0), dx: 1, dy: 0, v: hs },
+        { at: mid(m0, apex0), dx: 1, dy: 0, v: hs, on: [m0, apex0] },
       ];
       return drawing(faces, labels, [[m0, apex0]]);
     }
@@ -158,7 +180,7 @@ export function solidNet(s: Solid): SolidDrawing | null {
       const sector = [{ x: 0, y: 0 }, ...arc];
       const faces = [sector, circlePts(0, side + r, r)];
       const labels: SolidLabel[] = [
-        { at: mid({ x: 0, y: 0 }, arc[0]!), dx: 1, dy: 0, v: side },
+        { at: mid({ x: 0, y: 0 }, arc[0]!), dx: 1, dy: 0, v: side, on: [{ x: 0, y: 0 }, arc[0]!] },
         { at: { x: r / 2, y: side + r }, dx: 0, dy: -1, v: r },
       ];
       return drawing(faces, labels, [

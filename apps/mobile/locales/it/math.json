@@ -494,6 +494,7 @@
     "solid_net_any": "Sviluppo di un solido",
     "solid_net": "Sviluppo: {{kind}}",
     "solid_base": "base con lati {{sides}}",
+    "solid_base_h": "altezza della base {{v}}",
     "cubes": "Costruzione di cubi, file dal davanti al retro: {{rows}}",
     "cubes_plan": "Pianta di costruzione, file dal davanti al retro: {{rows}}",
     "cubes_row": "fila {{n}}: {{h}} cubi di altezza",

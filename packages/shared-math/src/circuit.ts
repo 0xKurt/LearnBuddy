@@ -18,7 +18,7 @@
 // exactly what the app draws.
 
 import { TICK_FONT } from './charts.js';
-import { textWidth } from './diagram.js';
+import { textWidth } from './labelBoxes.js';
 import {
   ratioAdd,
   ratioDiv,

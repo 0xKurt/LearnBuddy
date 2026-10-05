@@ -14,11 +14,16 @@ import {
 } from '../cubes.js';
 import { solidNet } from '../solidNets.js';
 import {
+  baseHeight,
+  innerCorner,
+  kindOptions,
+  NET_KINDS,
   solidCounts,
   solidDrawing,
   solidKey,
   solidMeasures,
   solidProblem,
+  writtenSides,
   type Solid,
 } from '../solids.js';
 
@@ -116,14 +121,14 @@ describe('a prism with a non-regular base (#368)', () => {
         [0, 3],
       ]),
     ).toBe('measures');
-    // A house shape (five corners) is left out.
+    // A house whose walls differ is no house (#418; a proper one holds, below).
     expect(
       bad([
         [0, 0],
         [4, 0],
         [4, 2],
         [2, 4],
-        [0, 2],
+        [0, 3],
       ]),
     ).toBe('measures');
     // Flat, or off the grid.
@@ -194,6 +199,166 @@ describe('a prism with a non-regular base (#368)', () => {
     expect(solidProblem(prism(g, 5, 'volume'))).toBeNull();
     expect(solidMeasures(prism(g, 5)).volume).toBe(30);
     expect(solidProblem(prism(g, 5, 'surface'))).toBe('ask');
+  });
+});
+
+describe('house- and L-shaped bases (#418)', () => {
+  const L: Array<[number, number]> = [
+    [0, 0],
+    [4, 0],
+    [4, 1],
+    [1, 1],
+    [1, 3],
+    [0, 3],
+  ];
+  const HOUSE: Array<[number, number]> = [
+    [0, 0],
+    [6, 0],
+    [6, 3],
+    [3, 7],
+    [0, 3],
+  ];
+  const pts = (g: Array<[number, number]>) => g.map(([x, y]) => ({ x, y }));
+
+  it('computes an L’s and a house’s volume and surface from what is drawn', () => {
+    expect(solidProblem(prism(L, 5, 'surface'))).toBeNull();
+    // 4 × 1 + 1 × 2 = 6; around 4 + 1 + 3 + 2 + 1 + 3 = 14.
+    expect(solidMeasures(prism(L, 5))).toEqual({ volume: 30, surface: 2 * 6 + 14 * 5 });
+    expect(solidProblem(prism(HOUSE, 5, 'surface'))).toBeNull();
+    // 6 × 3 + 6 × 4 / 2 = 30; around 6 + 3 + 5 + 5 + 3 = 22.
+    expect(solidMeasures(prism(HOUSE, 5))).toEqual({ volume: 150, surface: 170 });
+    expect(solidCounts('prism', 6)).toEqual({ vertices: 12, edges: 18, faces: 8 });
+  });
+
+  it('writes an L’s outer sides and a symmetric house’s left side once', () => {
+    expect(innerCorner(pts(L))).toBe(3);
+    // Not the two sides at the inner corner (4,1)-(1,1) and (1,1)-(1,3): they follow.
+    expect(writtenSides(pts(L))).toEqual([0, 1, 4, 5]);
+    // The base, the left roof side and the left wall: the right ones equal them.
+    expect(writtenSides(pts(HOUSE))).toEqual([0, 3, 4]);
+    // The whole height is drawn for a house, none for an L.
+    expect(baseHeight(pts(HOUSE))).toEqual({ apex: { x: 3, y: 7 }, v: 7 });
+    expect(baseHeight(pts(L))).toBeNull();
+  });
+
+  it('draws the L lying: the edges at its inner corner seen, the hidden ones dashed', () => {
+    const d = solidDrawing(prism(L, 5));
+    // 18 edges, the dashed ones behind the back and left and bottom faces only.
+    expect(d.strokes).toHaveLength(18);
+    const at = (x: number, y: number) => ({
+      x: x + 0.5 * Math.SQRT1_2 * 5,
+      y: -(y + 0.5 * Math.SQRT1_2 * 5),
+    });
+    const backInner = d.strokes.find((s) =>
+      s.pts.some((p) => Math.abs(p.x - at(1, 1).x) < 1e-9 && Math.abs(p.y - at(1, 1).y) < 1e-9),
+    );
+    expect(backInner?.hidden).toBe(false);
+    expect(d.strokes.filter((s) => s.hidden)).toHaveLength(3);
+    // The length and the four outer sides, no base height.
+    expect(d.labels.map((l) => l.v)).toEqual([4, 1, 1, 3, 5]);
+  });
+
+  it('rejects an L that would hide part of itself, and shapes that are no L or house', () => {
+    const bad = (g: Array<[number, number]>) => solidProblem(prism(g, 5));
+    // The inner corner opens to the top left.
+    expect(
+      bad([
+        [0, 0],
+        [4, 0],
+        [4, 3],
+        [3, 3],
+        [3, 1],
+        [0, 1],
+      ]),
+    ).toBe('measures');
+    // A slanted side in a six-cornered base.
+    expect(
+      bad([
+        [0, 0],
+        [4, 0],
+        [4, 1],
+        [1, 1],
+        [2, 3],
+        [0, 3],
+      ]),
+    ).toBe('measures');
+    // Sides that cross.
+    expect(
+      bad([
+        [0, 0],
+        [4, 0],
+        [4, 3],
+        [2, 3],
+        [2, 0],
+        [0, 3],
+      ]),
+    ).toBe('measures');
+    // A pentagon whose ridge does not stand above its walls.
+    expect(
+      bad([
+        [0, 0],
+        [6, 0],
+        [7, 3],
+        [3, 7],
+        [0, 3],
+      ]),
+    ).toBe('measures');
+  });
+});
+
+describe('"which solid?" of every net (#418)', () => {
+  it('writes four options, the net’s own among its neighbours', () => {
+    expect(kindOptions('cube')).toEqual(['cube', 'cuboid', 'prism', 'pyramid']);
+    expect(kindOptions('cuboid')).toEqual(['cube', 'cuboid', 'prism', 'pyramid']);
+    expect(kindOptions('prism')).toEqual(['cuboid', 'prism', 'pyramid', 'cylinder']);
+    expect(kindOptions('cone')).toEqual(['prism', 'pyramid', 'cylinder', 'cone']);
+    for (const k of NET_KINDS) {
+      expect(kindOptions(k)).toHaveLength(4);
+      expect(kindOptions(k)).toContain(k);
+    }
+  });
+
+  it('asks it of a cube’s and a cone’s net, never where two options would be right', () => {
+    const net = (over: Partial<Solid>) => solid({ w: 'net', ask: 'kind', ...over });
+    expect(solidProblem(net({ k: 'cube', a: 3, b: 0, h: 0 }))).toBeNull();
+    expect(solidKey(net({ k: 'cone', a: 0, b: 0, r: 3, h: 4 }))).toEqual({
+      kind: 'kind',
+      k: 'cone',
+    });
+    // A cuboid with three equal edges is a cube; a prism on a square or a rectangle a cuboid.
+    expect(solidProblem(net({ a: 3, b: 3, h: 3 }))).toBe('ask');
+    expect(solidProblem(net({ k: 'prism', n: 4, a: 3, b: 0, h: 5 }))).toBe('ask');
+    expect(
+      solidProblem({
+        ...prism(
+          [
+            [0, 0],
+            [4, 0],
+            [4, 2],
+            [0, 2],
+          ],
+          5,
+          'kind',
+        ),
+        w: 'net',
+      }),
+    ).toBe('ask');
+    // A trapezoid's prism is no cuboid.
+    expect(
+      solidProblem({
+        ...prism(
+          [
+            [0, 0],
+            [6, 0],
+            [4, 3],
+            [2, 3],
+          ],
+          5,
+          'kind',
+        ),
+        w: 'net',
+      }),
+    ).toBeNull();
   });
 });
 

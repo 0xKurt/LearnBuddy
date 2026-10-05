@@ -336,10 +336,12 @@
     "solid": {
       "net_yes": "Sí, es un desarrollo del cubo",
       "net_no": "No, no es un desarrollo del cubo",
+      "kind_cube": "cubo",
       "kind_cuboid": "ortoedro",
       "kind_prism": "prisma",
       "kind_pyramid": "pirámide",
-      "kind_cylinder": "cilindro"
+      "kind_cylinder": "cilindro",
+      "kind_cone": "cono"
     },
     "circuit": {
       "lit": "Sí, {{lamp}} se enciende",
