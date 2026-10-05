@@ -4,7 +4,8 @@
 // digit, carries included. Code judges both, and Buddy's reply names the place — the line above,
 // the column — never the solution. Every `shot` measures at 390×844 and 360×740 that nothing has
 // to be scrolled (tests/web/fit.ts), with the keyboard up too; the largest cases (four long lines, the
-// five-row grids) are shot with Buddy's reply above them.
+// five-row grids, a division of three steps shown step by step — #413) are shot with Buddy's reply
+// above them.
 
 import { expect, test, type Page } from '@playwright/test';
 
@@ -19,13 +20,18 @@ async function both(page: Page, name: string): Promise<void> {
   await page.emulateMedia({ colorScheme: 'light' });
 }
 
-/** Writes digits into the cells of the grid by id ('' empties a cell). */
+/**
+ * Writes digits into the cells of the grid by id ('' empties a cell). The last digit of a division
+ * step moves her on, and the step shrinks to the digits she wrote (#413): the cell is read then.
+ */
 async function write(page: Page, cells: Record<string, string>): Promise<void> {
   for (const [id, digit] of Object.entries(cells)) {
     const cell = page.getByTestId(`column-${id}`);
+    const shown = () =>
+      cell.evaluate((e) => (e instanceof HTMLInputElement ? e.value : (e.textContent ?? '')));
     await expect(async () => {
-      await cell.fill(digit);
-      await expect(cell).toHaveValue(digit, { timeout: 1000 });
+      if (await cell.evaluate((e) => e instanceof HTMLInputElement)) await cell.fill(digit);
+      await expect.poll(shown, { timeout: 1000 }).toBe(digit);
     }).toPass();
   }
 }
@@ -98,6 +104,24 @@ const DIV = {
   r3c1: '2',
   r3c2: '0',
   r4c2: '4',
+};
+
+// 672 : 3 = 224 (issue #413), step by step: the quotient digit, times, the difference with the
+// next digit brought down.
+const DIV3 = {
+  r0c6: '2',
+  r1c0: '6',
+  r2c0: '',
+  r2c1: '7',
+  r0c7: '2',
+  r3c0: '',
+  r3c1: '6',
+  r4c1: '1',
+  r4c2: '2',
+  r0c8: '4',
+  r5c1: '1',
+  r5c2: '2',
+  r6c2: '0',
 };
 
 test('Fehlerdetektiv: tap the wrong line, write it right, judged by code (issue #260)', async ({
@@ -194,5 +218,22 @@ test('schriftlich rechnen: every digit and every carry, judged by code (issue #2
   ).toBeInViewport();
   await both(page, '86j-column-div-feedback');
   await write(page, { r3c2: '0' });
+  await checkRight(page);
+
+  // ── 672 : 3 = 224: three steps, the finished ones shrunk, with Buddy's reply above (#413) ──
+  await startOffer(page, 'Ich will dreistellig teilen', 'drei Schritte');
+  // Only the first step is there to write in; the others come when she gets there.
+  await expect(page.getByTestId('column-r1c0')).toBeVisible();
+  await expect(page.getByTestId('column-r5c2')).toHaveCount(0);
+  await both(page, '86k-column-div3-start');
+  await write(page, { ...DIV3, r5c2: '3' });
+  await expect(page.getByTestId('column-done')).toHaveCount(4);
+  await check.click();
+  await expect(
+    page.getByText('Noch nicht ganz – im 3. Schritt stimmt das Malnehmen noch nicht.'),
+  ).toBeInViewport();
+  await both(page, '86l-column-div3-feedback');
+  await cellWithKeyboard(page, 'r5c2', '86m-column-div3-cell-kb');
+  await write(page, { r5c2: '2' });
   await checkRight(page);
 });

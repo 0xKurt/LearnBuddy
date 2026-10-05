@@ -13,9 +13,16 @@
 // The columns are as wide as the phone allows, up to square cells; the contract keeps a task to
 // what fits a 360-pt phone with every digit column at its narrowest (`columnsFit`), and to rows a
 // 360×740 phone holds (COLUMN_ROWS_MAX) — the board never has to scroll.
+//
+// A division is written step by step, as in her exercise book (issue #413): the staircase shows the
+// step she is at in full and the steps she has worked on above it, each shrunk to half-high lines
+// she reads but no longer writes in; the steps she has not reached are not there yet. The step she
+// is at follows the cell she writes in — a digit of the quotient opens its step again — so the
+// server's writing order still leads her through, and every cell still goes to the check.
 
 import {
   columnResultText,
+  columnRowStep,
   COLUMN_DIGIT_MIN,
   COLUMN_SIGN,
   signColumn,
@@ -40,6 +47,8 @@ import { cellsFrom } from './TableAnswer.js';
 
 /** A row of the grid: a cell she types in, one touch high, and a little air around its frame. */
 const ROW = TOUCH + SPACE.xs;
+/** A line of a finished division step: two of them take one row (`columnRowsShown`). */
+const HALF_ROW = ROW / 2;
 /** The line under the numbers: drawn, not a hairline — it is what the sum stands under. */
 const RULE = 2; // token-exempt: a stroke's width, not spacing
 
@@ -50,6 +59,26 @@ function isGap(cell: ColumnCalcTaskView['rows'][number]['cells'][number]): cell 
 /** The last digit she typed into a cell, or nothing: one digit per cell, a new one replaces it. */
 export function digitOf(typed: string): string {
   return typed.replace(/[^0-9]/g, '').slice(-1);
+}
+
+/** The division step a cell is written in (its quotient digit opens it), or 0 outside one. */
+function stepOf(gap: ColumnGap, quotientDigits: number): number {
+  if (gap.part === 'quotient') return quotientDigits - gap.place;
+  return gap.part === 'product' || gap.part === 'difference' ? gap.step : 0;
+}
+
+/**
+ * How a row of the grid is drawn while she is at a division step: in full, shrunk (a step she has
+ * worked on), or not yet (a step she has not reached). Outside a staircase every row is in full.
+ */
+function rowMode(
+  row: ColumnCalcTaskView['rows'][number],
+  at: number,
+  worked: ReadonlySet<number>,
+): 'full' | 'done' | 'hidden' {
+  const step = columnRowStep(row);
+  if (step === 0 || step === at) return 'full';
+  return step < at || worked.has(step) ? 'done' : 'hidden';
 }
 
 type Props = {
@@ -70,9 +99,15 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const [width, setWidth] = useState(0);
   const inputs = useRef(new Map<string, LbTextInputRef>());
   const places = t('column.places', { returnObjects: true }) as unknown as string[];
-  const quotientDigits = view.rows.flatMap((r) =>
-    r.cells.filter((c) => isGap(c) && c.part === 'quotient'),
-  ).length;
+  const gaps = view.rows.flatMap((r) => r.cells.filter(isGap));
+  const quotientDigits = gaps.filter((c) => c.part === 'quotient').length;
+  // The steps she has written in. She is at the step of the cell she last went to, or — until
+  // then, and when her kept digits come back — at the last step she wrote in.
+  const worked = new Set(
+    gaps.filter((g) => (digits[g.id] ?? '') !== '').map((g) => stepOf(g, quotientDigits)),
+  );
+  const [went, setAt] = useState<number | null>(null);
+  const at = went ?? Math.max(1, ...worked);
 
   const cols = Math.max(...view.rows.map((r) => r.cells.length));
   const signs = Array.from({ length: cols }, (_, c) => signColumn(view.rows, c));
@@ -140,6 +175,10 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit }: Props) {
       inputMode="numeric"
       returnKeyType="done"
       onSubmitEditing={submit}
+      onFocus={() => {
+        const step = stepOf(gap, quotientDigits);
+        if (step > 0) setAt(step);
+      }}
       selectTextOnFocus={Platform.OS !== 'web'}
       accessibilityLabel={labelOf(gap)}
       autoCorrect={false}
@@ -151,11 +190,14 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const grid = (
     <View style={{ alignSelf: 'center', width: gridWidth }}>
       {view.rows.map((row, r) => {
-        const printed = row.cells.every((c) => !isGap(c));
-        // A row she only reads is one thing to a screen reader: "4721", "+ 1389".
+        const mode = rowMode(row, at, worked);
+        if (mode === 'hidden') return null;
+        const done = mode === 'done';
+        const printed = done || row.cells.every((c) => !isGap(c));
+        // A row she only reads is one thing to a screen reader: "4721", "+ 1389", "12".
         const said = printed
           ? row.cells
-              .map((c) => (isGap(c) ? '' : c.text))
+              .map((c) => (isGap(c) ? (digits[c.id] ?? '') : c.text))
               .join('')
               .trim()
           : undefined;
@@ -168,7 +210,8 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit }: Props) {
               />
             ) : null}
             <View
-              style={{ flexDirection: 'row', height: ROW }}
+              testID={done ? 'column-done' : undefined}
+              style={{ flexDirection: 'row', height: done ? HALF_ROW : ROW }}
               accessible={printed}
               {...(said ? { accessibilityLabel: said } : {})}
             >
@@ -181,17 +224,22 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit }: Props) {
                     justifyContent: 'center',
                     // The air between two cells she types in: their frames never touch.
                     // token-exempt: hairline of air between frames, not a step of the scale
-                    paddingHorizontal: isGap(c) ? 1 : 0,
+                    paddingHorizontal: isGap(c) && !done ? 1 : 0,
                   }}
                 >
-                  {isGap(c) ? (
+                  {isGap(c) && !done ? (
                     cell(c)
                   ) : (
                     <Text
+                      // A cell of a finished step is still that cell, only read now.
+                      testID={isGap(c) ? `column-${c.id}` : undefined}
                       accessible={!printed}
-                      style={[TYPE.body, { color: signs[col] ? palette.ink2 : palette.ink }]}
+                      style={[
+                        done ? TYPE.small : TYPE.body,
+                        { color: signs[col] ? palette.ink2 : palette.ink },
+                      ]}
                     >
-                      {c.text}
+                      {isGap(c) ? (digits[c.id] ?? '') : c.text}
                     </Text>
                   )}
                 </View>

@@ -4,23 +4,15 @@
 // wish. Versioned so decisions can be traced to the prompt that produced them.
 
 import { MATH_NOTATION_SHORT, NotPracticableForm } from '@learnbuddy/shared-types/contracts';
+import { z } from 'zod';
 
 import { MAX_PAGES, MAX_PDF_BYTES } from '../materials/pdf.js';
 import { PHOTO_RETENTION_DAYS } from '../materials/purge.js';
-import { lookupsPrompt } from './lookups.js';
-import { actToolsPrompt } from './registry.js';
 
-// buddy.55: offer_learning kind spelling_dictation with a sheet (Diktat, #242), on top of 54.
-// buddy.56: offer_drill, a Kopfrechnen round code writes and checks (#243), on top of 55.
-// buddy.57: offer_learning may carry a test's time_limit, on her wish only (#241), on top of 56.
-// buddy.58: start_roleplay and the roleplay turn (#244), on top of 57.
-// buddy.59: offer_learning kind teach_back, „Erklär mal" (#236), on top of 58.
-// buddy.60: the schema says what was written for six sheet/subject/goal/topic fields, dropped
-//           before (#282), and the act-tool texts are denser with the same meaning (#282 D5).
-// buddy.61: offer_learning kind read, a reading text Buddy writes with questions (#368), on top of 60.
-// buddy.63: offer_learning kind test carries her words asking for it (`asked`); without them the
-//           app offers a test only once her practice on it goes well (#388), on top of 61.
-export const BUDDY_PROMPT_VERSION = 'buddy.63';
+import { toJsonSchema } from '../../llm/json-schema.js';
+import { promptVersion } from '../../llm/promptVersion.js';
+import { lookupsField, lookupsPrompt } from './lookups.js';
+import { actToolsPrompt, CheckDecision, TurnDecisionForModel } from './registry.js';
 
 // No example in here is a phrase in one language that the model is meant to WRITE. An English
 // learner was told "I've planned your maths test for am Freitag" in 2 of 3 live runs (issue
@@ -210,3 +202,44 @@ export function repairMessage(errors: string[]): string {
       '\n',
     )}\nAnswer again with a corrected JSON object. If you cannot do what was asked, say so in the reply and leave actions empty.`;
 }
+
+// ─────────────── the schemas that go out with these prompts ───────────────
+
+// Sent by `turn.ts`, hashed into the version below, and read by the schema inventory
+// (`evals/schema`, issue #281).
+export const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
+/**
+ * A step that may still ask for lookups first (ADR 0005 §The agent loop).
+ *
+ * Exported for one reason: `stream.ts` decides whether a half-written reply may be shown
+ * by reading the fields that come BEFORE `reply`, so the order here is a contract, not a
+ * detail. `__tests__/stream.test.ts` reads it from this schema instead of assuming it —
+ * a reorder tried on 01.10. (to make the prefix cache hit) silently switched that guard
+ * off while every test stayed green.
+ */
+export const TURN_STEP_SCHEMA = toJsonSchema(
+  z.object({ lookups: lookupsField }).extend(TurnDecisionForModel.shape),
+);
+
+// Sent by `check.ts`, hashed into the version below, and read by the schema inventory.
+export const CHECK_SCHEMA = toJsonSchema(CheckDecision);
+/** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
+// Lookups first, as in a turn: the model chooses what to read before it writes a decision
+// (p2-check-step-schema-lookups-last).
+// Exported only so the prompt test can scan the exact bytes this module sends (issue #213):
+// `CheckDecision` and `lookupsField` are each scanned on their own, but the COMPOSITION is what
+// goes out, and a description can only hide in what no test holds.
+export const CHECK_STEP_SCHEMA = toJsonSchema(
+  z.object({ lookups: lookupsField }).extend(CheckDecision.shape),
+);
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const BUDDY_PROMPT_VERSION = promptVersion(
+  'buddy',
+  TURN_SYSTEM,
+  CHECK_SYSTEM,
+  TURN_SCHEMA,
+  TURN_STEP_SCHEMA,
+  CHECK_SCHEMA,
+  CHECK_STEP_SCHEMA,
+);

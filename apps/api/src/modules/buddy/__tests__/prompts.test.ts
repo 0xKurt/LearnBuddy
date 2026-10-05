@@ -31,10 +31,8 @@ import { describe, expect, it } from 'vitest';
 import { toJsonSchema } from '../../../llm/json-schema.js';
 import { SchoolYear } from '../decision.js';
 import { lookupsField } from '../lookups.js';
-import { CHECK_SYSTEM, TURN_SYSTEM } from '../prompts.js';
+import { CHECK_STEP_SCHEMA, CHECK_SYSTEM, TURN_STEP_SCHEMA, TURN_SYSTEM } from '../prompts.js';
 import { CheckDecision, TurnDecisionForModel } from '../registry.js';
-import { CHECK_STEP_SCHEMA } from '../check.js';
-import { TURN_STEP_SCHEMA } from '../turn.js';
 
 /**
  * The one German phrase that is deliberate: the five school systems side by side, so the prompt

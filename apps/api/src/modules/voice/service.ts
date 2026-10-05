@@ -12,8 +12,7 @@ import { callModel } from '../../llm/call.js';
 import type { AudioMime } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { partialString } from '../../llm/partial.js';
-
-export const TRANSCRIBE_PROMPT_VERSION = 'transcribe.v1.2';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 const Transcript = z.object({
   heard_speech: z.boolean().describe('false if there is no understandable speech'),
@@ -109,3 +108,6 @@ export async function transcribe(
     throw new AppError('model_unavailable', 'Could not listen right now');
   }
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const TRANSCRIBE_PROMPT_VERSION = promptVersion('transcribe', SYSTEM, SCHEMA);

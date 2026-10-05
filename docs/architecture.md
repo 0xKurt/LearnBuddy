@@ -1749,7 +1749,7 @@ each of these from what is recorded; the model only writes words that code check
   end of the ladder (`workedReply`).
 - **„Warum stimmt das?"** (§5.3, self-explanation): three reasons per question, one of them the
   rule behind the solution. They are written in the background hints call that already exists
-  (`hints.v7`) and kept in `items.why` (`{reasons, correct}`, migration `0098_item_why.sql`).
+  (`hints.ts` `SYSTEM`; its version is the hash) and kept in `items.why` (`{reasons, correct}`, migration `0098_item_why.sql`).
   `checkedWhy` keeps them only when they are exactly three different reasons and none states the
   key. The view sends the reasons (never `correct`) once the question is closed and its solution
   is out, until she tapped one. `POST …/why` (`WhyRequest`: `client_turn_id`, `item_id`,
@@ -1763,7 +1763,7 @@ each of these from what is recorded; the model only writes words that code check
 - **The Probetest** (§3): its review after handing in is the default and now explains.
   `SessionItemView.explanation` is the worked solution, under exactly the condition `answer` is
   sent, shown under the solution of every question she did not get right (`ResultList` `note`).
-  Buddy offers a test (`offer_learning` kind `test`, `buddy.63`) only when
+  Buddy offers a test (`offer_learning` kind `test`, its `asked` field) only when
   `practiceGoesWell` holds, or when she asked for one: `asked` must be her own words from this
   message (`requireQuote`). `practiceGoesWell` holds when, of her last 10 closed practice
   questions on the goal's sheets (or on the topic in her words), at least 5 are closed and 70 %
@@ -2800,8 +2800,9 @@ place), so it is not guessed. A carry is written into every place with digits ab
 the ones; an empty cell is right where nothing belongs (no carry, a leading zero). Rejected
 (`operands`): a number with a leading zero or over six digits, a subtrahend not smaller, a factor
 with a 0 digit or 1, a divisor of two digits; (`too_long`): a grid wider than a 360-pt phone with
-every digit column at 32 pt (`columnsFit`), more than `COLUMN_ROWS_MAX` (5) rows — a division of
-three steps — or more than 40 cells. Her answer is every cell once (a digit or empty); the check
+every digit column at 32 pt (`columnsFit`), more than `COLUMN_ROWS_MAX` (5) rows shown at once
+(`columnRowsShown`: a division's finished steps count one row each) — a division of four steps — or
+more than 40 cells. Her answer is every cell once (a digit or empty); the check
 compares each digit **and each carry**, and the reply names the first place that is not right yet
 in the order she writes: "Noch nicht ganz – bei den Zehnern fehlt noch der Übertrag.", "… in der 2. Zeile stimmt bei den Hundertern noch etwas nicht.", "… im 2. Schritt stimmt das Malnehmen noch
 nicht." — never the digit; it is the form's feedback, not a hint. Her result stands in the
@@ -2809,16 +2810,19 @@ conversation (`columnResultText`, one implementation for app and server). App: t
 the answer shell, each cell the table's cell (`LbTextInput` cell), the columns as wide as the phone
 allows up to square, a drawn line above the sum and every difference; a digit typed moves on to the
 next cell in the server's writing order (`order`: right to left, the carry before the digit), the
-phone's number pad is all she needs. Printed rows are one number to a screen reader ("+1389"), every
-cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.32)
-and read from a sheet (extract.v8.13; a homework sheet: written arithmetic only, its own error is no
-Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86j, 360×740 and
+phone's number pad is all she needs. A division is shown step by step (issue #413): the step she
+is at in full, the steps she has worked on above it shrunk to half-high lines she reads but no longer
+writes in, the steps she has not reached not yet there; the step follows the cell she writes in, a
+quotient digit opens its step again, and every cell still goes to the check. Printed rows are one number to a screen reader ("+1389"), every
+cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.44, now v1.46)
+and read from a sheet (extract.v8.22, now v8.24; a homework sheet: written arithmetic only, its own error is no
+Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86m, 360×740 and
 390×844, light and dark, the keyboard up): four long lines with Buddy's longest reply above fit (six
 were 106 pt too tall, `FIND_ERROR_LINES_MAX`), and five rows of
 cells with Buddy's reply above (two partial products and their sum, a division of two steps). A
-division of three steps — seven rows, 672 : 3 — was 78 pt too tall there under the reply, and a
-cell cannot be lower than a touch target: it is rejected (`too_long`) until the owner decides how
-a longer division is to fit. While she writes her line with the keyboard up on a small phone, the
+division of three steps — seven rows, 672 : 3 — was 78 pt too tall there under the reply in full,
+and a cell cannot be lower than a touch target; shown step by step, its two finished steps take one
+row each, and it fits with the keyboard up (86k–86m, #413). While she writes her line with the keyboard up on a small phone, the
 Fehlerdetektiv's lines fold away like a board under her question (`answerFolds`, #402), so the bar
 and "Prüfen" stay above the keyboard.
 **Grid — drawing on squared paper** (`practice/grid.ts`, `GridAnswer.tsx`, issue #249, migration
@@ -3479,8 +3483,9 @@ pictures (#252) add their figure to it rather than building a second one.
   fraction bar, `FractionBarBoard`): the figure stands at the bottom INSTEAD of in the card,
   "Prüfen" checks her place, the bar's field is her question (#402). `components/math/TapFigure`
   draws the figure through `FigureView` with a layer over it (`layer` prop: the drawing's own
-  coordinates at the width it got): the gesture surface `components/lb/TapPad` (react-native-
-  gesture-handler; a tap and a drag are one gesture, the mark follows the finger) and her mark —
+  coordinates at the width it got): the one tap surface `components/lb/TapSurface` with `drag`
+  (react-native-gesture-handler; a tap and a drag are one gesture, the mark follows the finger;
+  the note line and the grid use the same component tapped, #416) and her mark —
   a ring on a point, a frame around a column; on the clock her hands ARE the mark. A clock is set
   one hand at a time: `Segmented` chooses the hand, the small one first, then the large one is
   next on its own.
@@ -4454,7 +4459,7 @@ the role; code holds the frame (CLAUDE.md rule 1).
   No count of turns, no progress bar (rule 6).
 - **While it runs, her message is a line in the scene, not a Buddy turn.** `decideTurn` sees the
   running roleplay and answers through `roleplayRound` (`turn.ts`) — same claim, fence, takeover,
-  failure codes and audit (`buddy_decisions`, prompt version `roleplay.N`) as every turn, but a
+  failure codes and audit (`buddy_decisions`, prompt version `roleplay.<hash>`) as every turn, but a
   different request: `ROLEPLAY_SYSTEM`, the frame **rendered from the row** (`roleplayFrame`: the
   language, scene, role, `k1…k5`, her level, the turns left) and the scene's own messages since
   the one that started it. No STATE, no memories, not her name: nothing personal can reach a scene
@@ -4979,13 +4984,32 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   `evals/speak` and `evals/voice` additionally need `espeak-ng` on the machine (they speak the
   test sentences themselves). Without it they stop with `spawnSync espeak-ng ENOENT` — that is
   a missing tool, not a broken eval.
+- **Prompt versions** (issue #425): a prompt's version is derived from what it sends —
+  `generate.3f9a2c1d`, its name and the first 8 hex digits of a SHA-256 over its fixed parts
+  (`llm/promptVersion.ts`): the system text, the response schemas in their field order, and the
+  fixed text around what the learner wrote where that is a named constant (`TASK`, `LEVEL`).
+  The same bytes give the same version, any other byte another. Each module declares its version
+  next to what it hashes (`BUDDY_PROMPT_VERSION` in `buddy/prompts.ts` with the turn and check
+  schemas, `EXTRACT_PROMPT_VERSION` in `materials/sources.ts` with the extraction schemas,
+  `TUTOR_PROMPT_VERSION` in `practice/answer.ts`). Before, every prompt change bumped a counter
+  in one line (`generate.v1.41`, `buddy.61`); two branches that both changed a prompt collided
+  there every time, and after a merge one number named two prompts. Nothing orders versions —
+  telemetry (`llm_calls`, `buddy_decisions`) and the evals only record and compare them, so the
+  switch needed no migration. **What changed when** is the git log of the file that holds the
+  prompt (`git log -p -- apps/api/src/modules/practice/generate.ts`); the counter's history
+  ended at generate.v1.46, extract.v8.24, buddy.61, tutor.v12, hints.v6, reexplain.v4,
+  pronounce.v2.3, transcribe.v1.2, roleplay.1, figures-v2, essay.v1, cloze-gaps.v1, sources.v1,
+  summary.v1, consolidate.v1. Text a function assembles at call time from the learner's data
+  (`tutorContext`, the STATE of a turn) is not in the hash; a fixed instruction belongs in a named
+  constant that is. `llm/__tests__/promptVersion.test.ts` holds the rule, and fails on a
+  hand-counted version anywhere in `src`.
 - **Regression comparison between prompt versions** (issue #80): "36/36" alone cannot show an
   answer that got worse while still passing. `BUDDY_EVAL_OUT=a.json npx tsx evals/buddy/run.ts`
   writes a transcript of the run — prompt version, model, time, every case's answer, options,
   tools and cost — and `npx tsx evals/buddy/compare.ts a.json b.json` reads two such transcripts
   side by side: regressions (passed → fails) first with the new problems, then fixed cases,
   changed behaviour (tools/options), and rewordings with both answers to read; cost is shown
-  per run and per changed case. Exit 1 on a regression, so it can gate a prompt bump; cases
+  per run and per changed case. Exit 1 on a regression, so it can gate a prompt change; cases
   present in only one file are listed, not guessed about, so partial runs (`run.ts case-id …`)
   compare too. The comparison itself is pure and unit-tested
   (`evals/buddy/__tests__/compare.test.ts`); only producing the transcripts costs money.

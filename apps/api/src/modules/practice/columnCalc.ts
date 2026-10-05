@@ -23,6 +23,7 @@
 import {
   ColumnCalcTask,
   columnResultText,
+  columnRowsShown,
   columnsFit,
   COLUMN_ADDENDS_MAX,
   COLUMN_DIGITS_MAX,
@@ -44,12 +45,17 @@ import { ItemDraft } from './items.js';
 
 /** The instruction above the grid: two lines of the question card at most. */
 const COLUMN_PROMPT_MAX = 60;
+/**
+ * A quotient digit per division step; the board shows the first row, a row per finished step and
+ * the two rows of the step she is at (`columnRowsShown`), so 672 : 3 = 224 fits (issue #413).
+ */
+const COLUMN_QUOTIENT_DIGITS_MAX = COLUMN_ROWS_MAX - 2;
 
 /**
  * What the generator and the photo reading are told about written arithmetic. Exact and minimal,
  * and deliberately without an example: models copy examples (repo convention).
  */
-export const COLUMN_RULES = `Written arithmetic tasks ("structured", type "column_calc"): only when the learner is to calculate on paper in columns ("schriftlich rechnen"). op "add": ${2}–${COLUMN_ADDENDS_MAX} numbers; "sub": two numbers, the first the larger; "mul": two numbers, the second of 1–${COLUMN_FACTOR_DIGITS_MAX} digits, none of them 0, and not 1; "div": two numbers, the second a single digit 2–9, the quotient of at most two digits. operands: the numbers as digit strings, whole and positive, at most ${COLUMN_DIGITS_MAX} digits, the longest at least two. Never the result: the app computes every digit and carry itself. prompt: the instruction, at most ${COLUMN_PROMPT_MAX} characters; it never states the result.`;
+export const COLUMN_RULES = `Written arithmetic tasks ("structured", type "column_calc"): only when the learner is to calculate on paper in columns ("schriftlich rechnen"). op "add": ${2}–${COLUMN_ADDENDS_MAX} numbers; "sub": two numbers, the first the larger; "mul": two numbers, the second of 1–${COLUMN_FACTOR_DIGITS_MAX} digits, none of them 0, and not 1; "div": two numbers, the second a single digit 2–9, the quotient of at most ${COLUMN_QUOTIENT_DIGITS_MAX} digits. operands: the numbers as digit strings, whole and positive, at most ${COLUMN_DIGITS_MAX} digits, the longest at least two. Never the result: the app computes every digit and carry itself. prompt: the instruction, at most ${COLUMN_PROMPT_MAX} characters; it never states the result.`;
 
 /** The model's task: the operation and its numbers, nothing else. */
 export const ColumnDraftBase = z.object({
@@ -392,7 +398,7 @@ export function columnLayout(task: ColumnCalcTask): ColumnLayout | null {
     }),
   }));
   const order = g.order.map(([r, c]) => `r${r}c${c}`);
-  if (rows.length > COLUMN_ROWS_MAX || keys.size > COLUMN_GAPS_MAX || !columnsFit(rows)) {
+  if (columnRowsShown(rows) > COLUMN_ROWS_MAX || keys.size > COLUMN_GAPS_MAX || !columnsFit(rows)) {
     return null;
   }
   const [a, b] = ops.map(Number) as [number, number];

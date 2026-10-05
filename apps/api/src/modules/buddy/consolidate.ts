@@ -38,8 +38,7 @@ import { consentCurrentSql, enqueueJob, finishJob, type JobRow } from '../schedu
 import { bumpContext } from './plan.js';
 import { unsupportedSpecifics } from './text.js';
 import { MAX_ACTIVE_MEMORIES } from './toolKit.js';
-
-export const CONSOLIDATE_PROMPT_VERSION = 'consolidate.v1';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 /** From here a run is worth its model calls; `remember` refuses at 60 (tools.ts). */
 export const CONSOLIDATE_AT = 45;
@@ -412,3 +411,6 @@ export async function runConsolidation(deps: Deps, job: JobRow): Promise<void> {
   }
   await finishJob(deps.db, job, deps.now(), { status: 'done', result: { ...result } });
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const CONSOLIDATE_PROMPT_VERSION = promptVersion('consolidate', SYSTEM, SCHEMA);
