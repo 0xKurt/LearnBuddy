@@ -509,6 +509,8 @@
     "value": "Endroit : {{value}}",
     "point": "Point ({{x}} | {{y}})",
     "bar": "Barre : {{label}}",
+    "chosen_number_line": "Endroit choisi",
+    "chosen_function_plot": "Point placé",
     "label": "Ton endroit dans la figure",
     "up": "vers le haut",
     "down": "vers le bas",
