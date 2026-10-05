@@ -90,7 +90,9 @@ import { structuredItems, type StructuredItem } from './structured.js';
 // v1.38: circuits, logic gates and Itten's colour wheel, their keys computed by code (#261).
 // v1.40: a stumme Karte — Länder, countries of Europe, continents — to name a marked region or to
 //        tap one (`map`, #251).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.40';
+// v1.41: a house- or L-shaped base, and "which solid?" of a cube's and a cone's net with four
+//        options code picks and marks (#418; v1.39 and v1.40 are reserved for parallel work).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.41';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

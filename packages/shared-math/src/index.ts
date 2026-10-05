@@ -23,6 +23,7 @@ export * from './maps.js';
 // The shapes of the maps: the server decides with them what can be tapped. The app never imports
 // this index; it loads them when a map is on the screen (`useMapShapes`).
 export { MAP_SHAPES } from './mapShapes.data.js';
+export * from './labelBoxes.js';
 export * from './tap.js';
 export * from './circuit.js';
 export * from './logic.js';

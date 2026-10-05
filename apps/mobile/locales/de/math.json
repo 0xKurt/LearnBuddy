@@ -494,6 +494,7 @@
     "solid_net_any": "Netz eines Körpers",
     "solid_net": "Netz: {{kind}}",
     "solid_base": "Grundfläche mit den Seiten {{sides}}",
+    "solid_base_h": "Höhe der Grundfläche {{v}}",
     "cubes": "Würfelgebäude, Reihen von vorn nach hinten: {{rows}}",
     "cubes_plan": "Bauplan, Reihen von vorn nach hinten: {{rows}}",
     "cubes_row": "Reihe {{n}}: {{h}} Würfel hoch",

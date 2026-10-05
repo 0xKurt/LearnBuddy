@@ -56,7 +56,9 @@ import { TABLE_RULES } from '../practice/table.js';
 // v8.18: circuits, logic gates and Itten's colour wheel, their keys computed by code (#261).
 // v8.20: a stumme Karte — Länder, countries of Europe, continents — to name a marked region or to
 //        tap one (`map`, #251).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.20';
+// v8.21: a house- or L-shaped base, and "which solid?" of a cube's and a cone's net (#418;
+//        v8.19 and v8.20 left to the parallel work that holds generate v1.39 and v1.40).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.21';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

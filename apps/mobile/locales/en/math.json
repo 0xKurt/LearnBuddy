@@ -494,6 +494,7 @@
     "solid_net_any": "Net of a solid",
     "solid_net": "Net: {{kind}}",
     "solid_base": "base with sides {{sides}}",
+    "solid_base_h": "height of the base {{v}}",
     "cubes": "Cube building, rows from front to back: {{rows}}",
     "cubes_plan": "Building plan, rows from front to back: {{rows}}",
     "cubes_row": "row {{n}}: {{h}} cubes high",

@@ -336,10 +336,12 @@
     "solid": {
       "net_yes": "Ja, das ist ein Würfelnetz",
       "net_no": "Nein, das ist kein Würfelnetz",
+      "kind_cube": "Würfel",
       "kind_cuboid": "Quader",
       "kind_prism": "Prisma",
       "kind_pyramid": "Pyramide",
-      "kind_cylinder": "Zylinder"
+      "kind_cylinder": "Zylinder",
+      "kind_cone": "Kegel"
     },
     "circuit": {
       "lit": "Ja, {{lamp}} leuchtet",
