@@ -236,6 +236,16 @@ const EVERYTHING = {
       ],
     },
   ],
+  // Lange Texte (#258): one writing task; its key points are code's.
+  essay: [
+    {
+      prompt: 'Nimm Stellung: Sollten Hausaufgaben in Mathe abgeschafft werden?',
+      type: 'argue_linear',
+      topic: 'Brüche',
+      difficulty: 3,
+      passage: null,
+    },
+  ],
 };
 
 /** What a run of each kind kept of EVERYTHING before D2 — the pre-D2 rules, written out. */
@@ -306,6 +316,8 @@ const BEFORE_D2: Record<
     staff: false,
     listen: false,
   },
+  // A new kind (#258): only its writing task, with the key points of its text type.
+  essay: { kinds: ['essay'], rubric: true, bar: false, staff: false, listen: false },
 };
 
 describe.skipIf(!dbReady)('explain profiles (#281 D2)', () => {
@@ -377,6 +389,7 @@ describe.skipIf(!dbReady)('explain profiles (#281 D2)', () => {
         dictation: _dictation,
         teach_back: _teachBack,
         reading: _reading,
+        essay: _essay,
         ...withoutOwnRuns
       } = EVERYTHING;
       expect(schemaErrors(GENERATED_SCHEMA, withoutOwnRuns)).toEqual([]);

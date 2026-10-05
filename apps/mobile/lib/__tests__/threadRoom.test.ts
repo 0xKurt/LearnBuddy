@@ -67,6 +67,15 @@ describe('threadRoom (issues #286, #232, #403)', () => {
     expect(threadRoom({ ...quiet, short: 20 }).cardGrowTo).toBe(0);
   });
 
+  it('gives a reply she reads through all the room, from its top, where it is taller (#258)', () => {
+    // Buddy's feedback on her long text is taller than the room at rest: hidden, it was nowhere.
+    const r = threadRoom({ ...base, reads: true });
+    expect(r.threadCap).toBe(60);
+    expect(r.threadHolds).toBe(true);
+    // Where it fits whole, nothing changes.
+    expect(threadRoom({ ...base, room: 200, reads: true }).threadCap).toBe(newest);
+  });
+
   it('keeps two lines of parts and the bar', () => {
     expect(boardKeeps(0)).toBeGreaterThan(2 * 44 + 48);
   });
