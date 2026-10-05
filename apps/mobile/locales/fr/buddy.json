@@ -223,6 +223,8 @@
     "unclear_writing": "Merci – « {{reading}} ». J'ajoute l'exercice maintenant.",
     "unclear_reading_label": "C'est « {{reading}} »",
     "failed_title_named": "Je n’ai pas pu lire « {{title}} »",
+    "failed_title_read": "Je n’ai pas d’exercices pour cette fiche",
+    "failed_title_read_named": "Je n’ai pas d’exercices pour « {{title}} »",
     "processing_body_practice": "Ensuite, j'en fais tout de suite des exercices. Tu peux fermer l'appli en attendant.",
     "waiting_title": "Je lis ta feuille dans un instant …",
     "reading_title_one": "Je lis ta feuille …",
