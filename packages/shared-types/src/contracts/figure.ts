@@ -12,6 +12,7 @@ import { Axes3dFigure, CubeNetFigure, CubesFigure, SolidFigure } from './solid.j
 import { DiagramFigure } from './diagram.js';
 import { CircuitFigure, ColorWheelFigure, LogicFigure } from './circuit.js';
 import { MapFigure } from './map.js';
+import { SchematicFigure } from './schematic.js';
 
 const Label = z.string().trim().min(1).max(40);
 const Num = z.number().finite();
@@ -457,6 +458,7 @@ const MODEL_FIGURES = [
   LogicFigure,
   ColorWheelFigure,
   MapFigure,
+  SchematicFigure,
 ] as const;
 
 export const ModelFigure = z.discriminatedUnion('type', [...MODEL_FIGURES]);

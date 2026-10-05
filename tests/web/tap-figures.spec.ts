@@ -3,7 +3,8 @@
 // hand. On the line and the coordinate system the words under the figure only say THAT she chose;
 // the value is the screen reader's (`aria-valuetext`, issue #409). A second walk taps a stumme
 // Karte (issue #251): every one of the 16 Länder, a continent, and names a marked country —
-// scripted in apps/api/src/testing/scenarios/map.ts, shot at 93–95. Scripted answers in apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
+// scripted in apps/api/src/testing/scenarios/map.ts, shot at 93–95. A third labels a picture and
+// taps its parts (issue #252, scenarios/schematic.ts, shot at 90–92). Scripted answers in apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
 // no tutor is scripted for any. Every question is shot at both phone sizes, light and dark, with
 // the keyboard up for her question (test-results/web/shots, 96-…).
 //
@@ -17,6 +18,8 @@ import { tapLayout } from '../../apps/mobile/lib/math/tapLayout';
 import { MAP_SHAPES } from '../../packages/shared-math/src/mapShapes.data';
 import { mapRegion, mapRegions, type MapView } from '../../packages/shared-math/src/maps';
 import { REGION_FRAME } from '../../packages/shared-math/src/regions';
+import { SCHEMATIC_SHAPES } from '../../packages/shared-math/src/schematicShapes.data';
+import { schematic, type SchematicId } from '../../packages/shared-math/src/schematics';
 import type { Tappable } from '../../packages/shared-math/src/tap';
 import { onboardChild, startOffer, typed } from './figureWalk';
 import { shot } from './fit';
@@ -198,6 +201,57 @@ test('a stumme Karte: every Land tapped, a marked country named, a continent tap
   await tapRegion(page, 'world', 'Südamerika');
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Gebiet: Südamerika');
   await bothRooms(page, '95-map-world');
+  await checkRight(page);
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+});
+
+/** Tap the part `name` of drawing `d` at its own point, in the pad's coordinates. */
+async function tapPart(page: Page, d: SchematicId, id: string): Promise<void> {
+  const box = await page.getByTestId('tap-pad').boundingBox();
+  if (!box) throw new Error('no tap pad');
+  const part = SCHEMATIC_SHAPES[d].parts.find((p) => p.id === id);
+  if (!part) throw new Error(`no part ${id}`);
+  const k = box.width / REGION_FRAME;
+  await page.getByTestId('tap-pad').click({ position: { x: part.at[0] * k, y: part.at[1] * k } });
+}
+
+test('a labelled picture: the cell labelled number by number, every part tapped (#252)', async ({
+  page,
+}) => {
+  await onboardChild(page, 'picture');
+  await startOffer(page, 'Lass uns Bilder beschriften', 'beschriftest du');
+
+  // The labelling task as code wrote it: one question per number, the numbers on the drawing.
+  await expect(page.getByText('Pflanzenzelle: Wie heißt Teil 1?')).toBeVisible();
+  await expect(page.getByTestId('question-figure')).toBeVisible();
+  await shot(page, '90-picture-label');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '90-picture-label-dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await typed(page, 'Zellkern');
+  await expect(page.getByText('Pflanzenzelle: Wie heißt Teil 2?')).toBeVisible();
+  // Any of a part's names counts: the English one too.
+  await typed(page, 'vacuole');
+  await expect(page.getByText('Pflanzenzelle: Wie heißt Teil 3?')).toBeVisible();
+  await typed(page, 'Chloroplast');
+
+  // Every part of the cell is reached at its own point; the line names none of them.
+  await expect(page.getByText('Tippe auf den Zellkern.')).toBeVisible();
+  await expect(words(page)).toHaveText('Tippe auf das Teil in der Abbildung.');
+  for (const part of schematic('plant_cell').parts) {
+    await tapPart(page, 'plant_cell', part.id);
+    await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
+  }
+  await expect(words(page)).toHaveText('Teil gewählt');
+  await tapPart(page, 'plant_cell', 'nucleus');
+  await bothRooms(page, '91-picture-cell');
+  await checkRight(page);
+
+  // The bicycle's frame: many strokes, one part.
+  await expect(page.getByText('Tippe auf den Rahmen.')).toBeVisible();
+  await tapPart(page, 'bicycle', 'frame');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Teil: Rahmen');
+  await bothRooms(page, '92-picture-bike');
   await checkRight(page);
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });

@@ -69,7 +69,7 @@ import { DRILL_PASS } from './drill.js';
 import { MAX_ACCEPTED } from './items.js';
 import { explanationSoFar, NOTHING_EXPLAINED, recordExplained } from './teachBack.js';
 import { admitText, judgeEssay } from './essay.js';
-import { mapAnswerText } from './mapCheck.js';
+import { tappedAnswerText } from './tapCheck.js';
 import {
   askedElements,
   checkRubric,
@@ -218,10 +218,10 @@ export async function answerItem(
   /** Ihre Zeile in Worten, damit der Gesprächsfaden lesbar bleibt (wie `answerTextOf`). */
   const staffWritten =
     staffCheck !== null ? writtenStaffLine(learner.locale, input.text ?? '') : null;
-  // A region she tapped on a map (issue #251): the app sends the data's German name; in the thread
-  // it stands in her language, like every answer written here.
+  // A region of a map or a part of a picture she tapped (issues #251, #252): the app sends the
+  // German name; in the thread it stands in her language, like every answer written here.
   const regionWritten =
-    hintRequest || input.text == null ? null : mapAnswerText(item, input.text, learner.locale);
+    hintRequest || input.text == null ? null : tappedAnswerText(item, input.text, learner.locale);
   const text =
     structured && input.parts && partsCheck
       ? // Her arrangement in one line, so the thread, the tutor history and a disputed judgement

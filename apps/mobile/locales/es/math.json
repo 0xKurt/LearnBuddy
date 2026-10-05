@@ -504,7 +504,9 @@
     "map_de": "Mapa mudo: Alemania con sus {{count}} estados federados.",
     "map_europe": "Mapa mudo: los países de Europa.",
     "map_world": "Mapa mudo: el mundo con sus {{count}} continentes.",
-    "map_marked": "Marcado: {{names}}."
+    "map_marked": "Marcado: {{names}}.",
+    "schematic": "Imagen: {{name}}.",
+    "schematic_numbered": "Imagen: {{name}}, {{count}} partes numeradas."
   },
   "keys": {
     "row": "Símbolos matemáticos",
@@ -558,13 +560,16 @@
     "how_bar_chart": "Toca una barra.",
     "how_clock": "Toca la esfera donde debe apuntar la aguja.",
     "how_map": "Toca la región en el mapa.",
+    "how_schematic": "Toca la parte en la imagen.",
     "value": "Lugar: {{value}}",
     "point": "Punto ({{x}} | {{y}})",
     "bar": "Barra: {{label}}",
     "region": "Región: {{name}}",
+    "part": "Parte: {{name}}",
     "chosen_number_line": "Lugar elegido",
     "chosen_function_plot": "Punto marcado",
     "chosen_map": "Región elegida",
+    "chosen_schematic": "Parte elegida",
     "label": "Tu lugar en la figura",
     "up": "hacia arriba",
     "down": "hacia abajo",
