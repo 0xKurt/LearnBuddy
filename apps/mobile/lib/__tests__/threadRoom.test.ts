@@ -18,12 +18,21 @@ const base: RoomInput = {
 };
 const newest = 260 - (12 + 128) + 8;
 
-describe('threadRoom (issues #286, #232)', () => {
-  it('cuts the newest turn to the room when nothing below can give way', () => {
+describe('threadRoom (issues #286, #232, #403)', () => {
+  it('draws nothing of a turn that does not fit whole when nothing below can give way', () => {
     const r = threadRoom(base);
-    expect(r.threadCap).toBe(60);
+    expect(r.threadCap).toBe(0);
     expect(r.threadFloor).toBe(0);
-    expect(r.threadClipped).toBe(true);
+    expect(r.threadHolds).toBe(true);
+  });
+
+  it('keeps the help chips under a reply that does not fit, whole or not at all (#403)', () => {
+    // The chips start at 196: with the gap above them and the padding below, 60 pt to the end.
+    const chips = { ...base, parts: [0, 196] };
+    expect(threadRoom(chips).threadCap).toBe(60);
+    expect(threadRoom({ ...chips, room: 59 }).threadCap).toBe(0);
+    // With room for the reply, the box starts above the reply, never above half the turn before.
+    expect(threadRoom({ ...chips, room: 200 }).threadCap).toBe(newest);
   });
 
   it('keeps the newest turn whole where a board gives way and has room to spare', () => {
@@ -33,11 +42,11 @@ describe('threadRoom (issues #286, #232)', () => {
   });
 
   it('never takes more of a board than it can spare above its parts and its bar (#232)', () => {
-    // The cloze with the keyboard up: the board can give only 20 pt more.
+    // The cloze with the keyboard up: the board can give only 20 pt more — not enough for the
+    // reply, so it is not drawn, and the board keeps its room (#403).
     const r = threadRoom({ ...base, boardGives: true, boardSpare: 20 });
-    expect(r.threadCap).toBe(80);
-    expect(r.threadFloor).toBe(80);
-    expect(r.threadClipped).toBe(true);
+    expect(r.threadCap).toBe(0);
+    expect(r.threadFloor).toBe(0);
     expect(r.threadHolds).toBe(true);
   });
 
