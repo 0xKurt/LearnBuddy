@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import { parseConfig } from '../config.js';
 import { createBuddy, type CreateReport, isCopied } from '../create.js';
@@ -20,7 +20,6 @@ describe('create-buddy on this repository', () => {
       config: config(),
     });
   });
-  afterAll(() => undefined);
 
   it('copies the tracked files but no history, no foreign credentials, no store identity', () => {
     expect(report.copied).toBeGreaterThan(500);
