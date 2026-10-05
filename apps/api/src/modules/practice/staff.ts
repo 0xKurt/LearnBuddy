@@ -52,7 +52,6 @@ import {
   intervalBetween,
   onStaff,
   parseStaffLine,
-  renderStaffLine,
   staffStep,
   ticksOf,
   type Clef,
@@ -809,9 +808,4 @@ export function staffAgain(locale: string, task: StaffTask): string {
     case 'write_line':
       return text(locale, 'again_write');
   }
-}
-
-/** The canonical line of the task — what a test derives again and compares (issue #226). */
-export function solutionLine(task: StaffTask): string | null {
-  return task.task === 'write_line' ? renderStaffLine(task.bars) : null;
 }
