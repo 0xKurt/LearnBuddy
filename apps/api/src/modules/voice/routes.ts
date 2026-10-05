@@ -2,7 +2,6 @@
 
 import { SpeechRequest, TranscribeRequest } from '@learnbuddy/shared-types/contracts';
 import { Hono } from 'hono';
-import { streamSSE } from 'hono/streaming';
 
 import {
   depsOf,
@@ -11,8 +10,8 @@ import {
   requireUser,
   type AppEnv,
 } from '../../http/context.js';
+import { streamed, wantsStream } from '../../http/stream.js';
 import { readBody } from '../../http/validate.js';
-import { isAppError } from '../../lib/errors.js';
 import { transcribe } from './service.js';
 import { synthesizeSpeech } from './speech.js';
 
@@ -26,24 +25,8 @@ voiceRoutes.post('/transcribe', async (c) => {
   const input = await readBody(c, TranscribeRequest);
   const deps = depsOf(c);
   const learner = c.get('learner');
-  if (!(c.req.header('accept') ?? '').includes('text/event-stream'))
-    return c.json(await transcribe(deps, learner, input));
-  return streamSSE(c, async (stream) => {
-    // Errors are answered here, as a code only: nothing internal reaches the app.
-    try {
-      let sent = Promise.resolve();
-      const answer = await transcribe(deps, learner, input, (event) => {
-        sent = sent.then(() => stream.writeSSE({ event: 'progress', data: JSON.stringify(event) }));
-      });
-      await sent;
-      await stream.writeSSE({ event: 'done', data: JSON.stringify(answer) });
-    } catch (err) {
-      await stream.writeSSE({
-        event: 'error',
-        data: JSON.stringify({ code: isAppError(err) ? err.code : 'internal' }),
-      });
-    }
-  });
+  if (!wantsStream(c)) return c.json(await transcribe(deps, learner, input));
+  return streamed(c, 'progress', (emit) => transcribe(deps, learner, input, emit));
 });
 
 /** Buddy's natural voice: one sentence → audio (ADR 0008). */
