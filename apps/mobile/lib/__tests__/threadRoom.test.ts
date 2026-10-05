@@ -30,9 +30,19 @@ describe('threadRoom (issues #286, #232, #403)', () => {
     // The chips start at 196: with the gap above them and the padding below, 60 pt to the end.
     const chips = { ...base, parts: [0, 196] };
     expect(threadRoom(chips).threadCap).toBe(60);
-    expect(threadRoom({ ...chips, room: 59 }).threadCap).toBe(0);
+    expect(threadRoom({ ...chips, room: 58 }).threadCap).toBe(0);
     // With room for the reply, the box starts above the reply, never above half the turn before.
     expect(threadRoom({ ...chips, room: 200 }).threadCap).toBe(newest);
+  });
+
+  it('does not flip on a rounded point: a part one point over the room still counts whole (#386)', () => {
+    // The voice row on 360×740: the box and the free room, each rounded, summed to 189 in one pass
+    // and 190 in the next, and the 190 pt reply was drawn, hidden, drawn …
+    const chips = { ...base, parts: [0, 196] };
+    expect(threadRoom({ ...chips, room: newest - 1 }).threadCap).toBe(newest);
+    expect(threadRoom({ ...chips, room: newest }).threadCap).toBe(newest);
+    // Two points is no rounding: then the reply does not fit and only the chips stand.
+    expect(threadRoom({ ...chips, room: newest - 2 }).threadCap).toBe(60);
   });
 
   it('keeps the newest turn whole where a board gives way and has room to spare', () => {

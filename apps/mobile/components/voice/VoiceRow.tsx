@@ -10,7 +10,9 @@
 // the 56 pt mic, the same row.
 //
 // Each side takes half of what the mic leaves, so the mic stays centred whatever the words are
-// (and also when a side is empty); a word that would wrap at 96 pt ("Nochmal vorlesen") has room.
+// (and also when a side is empty). The word stands beside its circle, not under it: under it the
+// row was 8 pt taller than the 56 pt mic, and on 360×740 that, too, hid Buddy's reply (#386);
+// beside it the row is the mic's height, and "Nochmal vorlesen" takes two short lines.
 
 import { Text, View } from 'react-native';
 
@@ -71,14 +73,26 @@ export function VoiceRow({
 function SideAction({ side }: { side: Side }) {
   const { palette } = useTheme();
   return (
-    <View style={{ flex: 1, alignItems: 'center', gap: SPACE.xs }}>
+    <View
+      style={{
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: SPACE.sm,
+      }}
+    >
       <CircleBtn
         icon={side.icon}
         onPress={side.onPress}
         accessibilityLabel={side.accessibilityLabel ?? side.label}
       />
       {/* The button carries the name; the word is for the eyes. */}
-      <Text aria-hidden numberOfLines={1} style={[TYPE.label, { color: palette.ink2 }]}>
+      <Text
+        aria-hidden
+        numberOfLines={2}
+        style={[TYPE.label, { flexShrink: 1, color: palette.ink2 }]}
+      >
         {side.label}
       </Text>
     </View>

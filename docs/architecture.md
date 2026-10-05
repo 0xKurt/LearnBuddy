@@ -4285,7 +4285,15 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   takes the 72 pt mic; on a practice question the row shares the screen with the question, its
   conversation and the options, and there the 72 pt mic cost the 16 pt that hid Buddy's newest
   reply on 360×740 behind a 124 pt empty band (#403's whole-turn rule) — the worse flaw (CLAUDE.md
-  rule 17). So practice takes the 56 pt mic (`VoiceRow size="md"`). The waveform stands
+  rule 17). So practice takes the 56 pt mic (`VoiceRow size="md"`); in both the word stands
+  beside its circle, not under it (under it the row stood 8 pt above the mic), and in practice no
+  status line appears while she speaks — the mic's ring and stop square say it, a problem (no
+  mic, nothing understood) still gets its line. The row is then exactly as tall as the old voice
+  slot. A second cause of the same band was a 1 pt flip: the conversation's room is a sum of
+  measurements each rounded on its own, and a reply needing 190 pt in a room of 189 was hidden,
+  drawn, hidden — `threadRoom` now counts a part one point over as whole (`ROUNDING`); a shot taken
+  mid-flip was the soft `halfTurns` failure seen once at `27b-practice-voice-mode-night @360`. The
+  waveform stands
   where a spoken answer can be the whole answer: a typed answer (not a Diktat, not a path written
   line by line, not a line that belongs to a board) and options with letters. Boards, the note
   line, the fraction bar, tapped words, Kopfrechnen and flash cards have no spoken answer and no

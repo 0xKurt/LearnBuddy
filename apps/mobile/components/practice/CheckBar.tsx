@@ -161,7 +161,10 @@ function TalkRow({ prompt, lang, disabled, onText, onReadAgain }: Spoken) {
   useHandsFreeMic(voice, disabled, prompt);
   return (
     <BottomBar>
-      <MicStatus voice={voice} />
+      {/* Only what went wrong (no mic, nothing understood). Listening and writing it down are the
+          mic's own (the ring, the stop square, the spinner; its screen-reader value): a status
+          line while she speaks grew the bar by a line and hid Buddy's reply on 360×740 (#386). */}
+      {voice.state === 'idle' ? <MicStatus voice={voice} /> : null}
       <VoiceRow
         left={{
           icon: 'keyboard',

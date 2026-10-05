@@ -352,6 +352,11 @@ test('learning modes: explain, homework help without the solution, practice with
   const readOff = page.getByRole('switch', { name: 'Vorlesen', exact: true }).last();
   const readOn = page.getByRole('switch', { name: 'Vorlesen ist an' }).last();
   await expect(readOff).toHaveAttribute('aria-checked', 'false');
+  // Buddy's voice as a short silence, so a reading really ends (the Gespräch below listens
+  // then). Set before the first reading: the dev stack has no voice, and a "no" from the server
+  // sends the app to the browser's own voice for a while (lib/speech/readAloud.ts), whose end
+  // headless Chromium never reports. The fake microphone (playwright.config.ts) records.
+  await voiceAsSilence(page, 600);
   const spokenRequest = page.waitForRequest(
     (r) => r.url().includes('/voice/speech') && r.method() === 'POST',
   );
@@ -389,9 +394,6 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.emulateMedia({ colorScheme: 'light' });
 
   // ── Gespräch: the waveform in the bar, as in the chat; the bar becomes the talk row (#386) ──
-  // Buddy's voice as a short silence, so reading the question really ends; the browser's fake
-  // microphone (playwright.config.ts) then records.
-  await voiceAsSilence(page, 600);
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
   // .last(): the chat's waveform stays mounted under this screen.
   await page.getByRole('button', { name: 'Mit Buddy sprechen' }).last().click();
