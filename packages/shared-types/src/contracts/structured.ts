@@ -719,10 +719,12 @@ export const COLUMN_WIDTH_MAX = 328;
 export const COLUMN_DIGIT_MIN = 32;
 export const COLUMN_SIGN = 20;
 /**
- * Rows of the grid, every one a touch high: three numbers, their carries and the sum; two partial
- * products, their carries and the sum; a division of two steps under its first row. Measured on
- * 360×740 with Buddy's reply above (tests/web/written.spec.ts, 86h, 86j): a division of three steps
- * (seven rows) was 78 pt too tall there, and a cell cannot be lower than a touch target.
+ * Rows the board shows at once, every one a touch high: three numbers, their carries and the sum;
+ * two partial products, their carries and the sum; a division's first row, its finished steps and
+ * the step she is at (`columnRowsShown`). Measured on 360×740 with Buddy's reply above
+ * (tests/web/written.spec.ts, 86h, 86j, 86k): seven full rows were 78 pt too tall there, and a
+ * cell cannot be lower than a touch target — so a finished division step shrinks to one row
+ * (issue #413) and the next ones appear only when she gets there.
  */
 export const COLUMN_ROWS_MAX = 5;
 
@@ -788,7 +790,10 @@ export type ColumnCalcTask = z.infer<typeof ColumnCalcTask>;
 export const ColumnCalcTaskView = z.object({
   type: z.literal('column_calc'),
   op: ColumnOp,
-  rows: z.array(ColumnRow).min(2).max(COLUMN_ROWS_MAX),
+  rows: z
+    .array(ColumnRow)
+    .min(2)
+    .refine((rows) => columnRowsShown(rows) <= COLUMN_ROWS_MAX),
   /** The cells in the order they are written — right to left, carry before digit, step by step. */
   order: z.array(PartId).min(1).max(COLUMN_GAPS_MAX),
 });
@@ -810,6 +815,31 @@ export function signColumn(rows: readonly ColumnRow[], col: number): boolean {
     const cell = r.cells[col];
     return cell === undefined || (!('id' in cell) && !/[0-9]/.test(cell.text));
   });
+}
+
+/** The division step a row of the staircase belongs to (its product, its difference), or 0. */
+export function columnRowStep(row: ColumnRow): number {
+  for (const c of row.cells) {
+    if ('id' in c && (c.part === 'product' || c.part === 'difference')) return c.step;
+  }
+  return 0;
+}
+
+/**
+ * The most rows the board shows at once (issue #413): every row outside a division's staircase,
+ * the step she is at in full, and every finished step as one row — its two lines, no longer
+ * written in, at half a row each, as in her exercise book. Steps she has not reached are not shown.
+ */
+export function columnRowsShown(rows: readonly ColumnRow[]): number {
+  const perStep = new Map<number, number>();
+  for (const r of rows) {
+    const step = columnRowStep(r);
+    perStep.set(step, (perStep.get(step) ?? 0) + 1);
+  }
+  const outside = perStep.get(0) ?? 0;
+  perStep.delete(0);
+  if (perStep.size === 0) return outside;
+  return outside + perStep.size - 1 + Math.max(...perStep.values());
 }
 
 /** Does the grid fit a 360-pt phone with every digit column at its narrowest? */
