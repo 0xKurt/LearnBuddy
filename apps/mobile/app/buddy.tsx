@@ -45,6 +45,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { Glow } from '../components/lb/Glow.js';
 import { Icon } from '../components/lb/Icon.js';
+import { failedTitleKey } from '../lib/buddy/failedTitle.js';
 import { headState } from '../lib/buddy/headState.js';
 import { Header } from '../components/buddy/Header.js';
 import { MenuSheet } from '../components/buddy/MenuSheet.js';
@@ -835,11 +836,7 @@ export default function BuddyScreen() {
     failedNow ? (
       <NoticeBubble
         key="failed"
-        text={
-          failedNow.title
-            ? t('buddy:now.failed_title_named', { title: failedNow.title })
-            : t('buddy:now.failed_title')
-        }
+        text={t(`buddy:${failedTitleKey(failedNow)}`, { title: failedNow.title })}
         detail={t(`buddy:now.failed_${failedNow.reason ?? 'model_error'}`)}
         thumb={failedThumb}
       >
