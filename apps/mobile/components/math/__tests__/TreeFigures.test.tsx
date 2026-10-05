@@ -66,6 +66,20 @@ describe('TreeBody', () => {
     const { container } = renderInApp(<TreeBody figure={figure} width={266} />);
     expect(container.querySelector('svg')).not.toBeNull();
   });
+
+  // Its height follows its levels, not its width: narrowed alone it stayed as tall, and a card that
+  // had to give room on 360×740 could not (#402). Shrunk, it is drawn smaller, every part alike.
+  it.each(FIGURES.map((f, i) => [`${f.type} ${i}`, f] as const))(
+    'shrinks a %s as a whole, laid out at its full width',
+    (_, figure) => {
+      const full = renderInApp(<TreeBody figure={figure} width={266} />).container;
+      const height = Number(full.querySelector('svg')?.getAttribute('height'));
+      const half = renderInApp(<TreeBody figure={figure} width={133} scale={0.5} />).container;
+      const svg = half.querySelector('svg');
+      expect(Number(svg?.getAttribute('height'))).toBe(Math.round(height / 2));
+      expect(svg?.getAttribute('viewBox')).toBe(`0 0 266 ${height}`);
+    },
+  );
 });
 
 describe('describeTree', () => {

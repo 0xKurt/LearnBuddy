@@ -2,10 +2,9 @@
 // ist genau das, was zwischen „ein Bild" und „etwas, womit sie arbeiten kann" liegt:
 //
 //   · jedes Teil des Balkens ist ein echter Button mit Namen — bedienbar auch ohne Augen;
-//   · ein Tipp schreibt den Bruch ins ANTWORTFELD, also bleibt Tippen daneben erreichbar
-//     (Abnahmekriterium von #162) und „Prüfen" ist weiter der eine Weg zum Urteil;
-//   · ein getipptes gleichwertiges `1/2` färbt zwei von vier Teilen — sie SIEHT, dass das
-//     dasselbe ist;
+//   · ein Tipp schreibt den Bruch als ihre Antwort, und „Prüfen" ist der eine Weg zum Urteil
+//     (seit #402 ist das Feld der Leiste ihre Frage, Bericht #388 §9);
+//   · ein gespeichertes gleichwertiges `1/2` färbt zwei von vier Teilen;
 //   · wie viel gefärbt ist, steht in Worten da: Farbe ist nie das einzige Signal.
 //
 // Was diese Schicht nicht sehen kann: Geometrie. Dass ein Teil 49 pt breit ist, misst der
@@ -44,7 +43,7 @@ describe('a bar she shades', () => {
     expect(screen.getByText('0 von 4 Teilen gefärbt')).toBeDefined();
   });
 
-  it('writes what is shaded into the answer field, so "Prüfen" and typing stay the way in', () => {
+  it('writes what is shaded as her answer, so "Prüfen" checks it', () => {
     const onChange = vi.fn();
     renderInApp(
       <FractionBarAnswer
@@ -180,7 +179,7 @@ describe('two bars she compares', () => {
   });
 });
 
-describe('reading the answer field back onto the bar', () => {
+describe('reading her answer back onto the bar', () => {
   it('counts a fraction however it is written, and leaves the bar alone otherwise', () => {
     expect(shadedFromText('', 4)).toBe(0);
     expect(shadedFromText('3/4', 4)).toBe(3);

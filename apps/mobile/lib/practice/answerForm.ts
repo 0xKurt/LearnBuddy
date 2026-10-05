@@ -22,10 +22,17 @@ export function answerForm(item: ItemView, open: boolean) {
   const structured = isStructuredKind(item.kind);
   // Die leere Notenzeile, auf die sie schreibt (issue #226). Wie eine Anordnung ist sie der GANZE
   // Weg zu antworten: ein Antwortfeld gibt es daneben nicht, und das eine „Prüfen“ steht darunter.
-  // Der Bruchbalken bleibt der andere Fall derselben Fläche — er schreibt ins Feld, sie nicht.
   const staff = open && item.surface?.mode === 'notes' ? item.surface : null;
+  // The fraction bar (issue #162) is the other case of the same surface, and since #402 a board
+  // like the others (report #388 §9): the shaded bar is the answer, the bar's field her question.
   const barSurface = open && item.surface && item.surface.mode !== 'notes' ? item.surface : null;
   const typed =
-    open && choices === null && tapChoices === null && !structured && staff === null && !speaking;
+    open &&
+    choices === null &&
+    tapChoices === null &&
+    !structured &&
+    staff === null &&
+    barSurface === null &&
+    !speaking;
   return { choices, tapChoices, speaking, structured, staff, barSurface, typed };
 }

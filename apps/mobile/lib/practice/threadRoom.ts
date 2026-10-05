@@ -26,17 +26,24 @@ const CARD_GIVES = 48;
 const THREAD_PAD = 12;
 
 /**
- * What a structured board keeps while it gives way under a reply: the answer slot's top padding
- * and two lines of gaps or cells (2 × TOUCH and the step between them), then "Prüfen"
- * (`CheckBar.tsx` in `BottomBar.tsx`: its top padding, the md `<Btn>`, the room under it).
+ * What a structured board keeps while it gives way under a reply: two lines of gaps or cells (2 × TOUCH and the step between them), then the bar with
+ * "Prüfen" (`CheckBar.tsx` in `BottomBar.tsx`: its top padding, the input bar's pill — TOUCH,
+ * its padding and hairline, 54 pt like a lg control, with "Prüfen" in it since #402 — and the
+ * room under it).
  */
 export function boardKeeps(safeBottom: number): number {
-  return SPACE.sm + 2 * TOUCH + SPACE.xs + SPACE.sm + CONTROL.md + bottomRoom(safeBottom, SPACE.md);
+  return 2 * TOUCH + SPACE.xs + SPACE.sm + CONTROL.lg + bottomRoom(safeBottom, SPACE.md);
 }
 
 export type RoomInput = {
   /** What the conversation would have next to the card at its own height. */
   room: number;
+  /**
+   * How far the column still runs past its end with the conversation and the free room at 0 —
+   * the bar under options (issue #402) where a quiet question had only a few pt to spare. The
+   * drawing gives it first, like room for a reply (`CARD_GIVES`). 0 when it fits.
+   */
+  short?: number;
   /** The conversation's whole content. */
   threadNeed: number;
   /** Each turn's top in the conversation's coordinates, oldest first. */
@@ -119,7 +126,10 @@ export function threadRoom(m: RoomInput): Room {
     : m.visual && m.growable
       ? Math.max(
           -CARD_GIVES,
-          Math.min(room - threadWants, Math.round(m.viewHeight * 0.5) - m.cardNatural),
+          Math.min(
+            room - (m.short ?? 0) - threadWants,
+            Math.round(m.viewHeight * 0.5) - m.cardNatural,
+          ),
         )
       : 0;
   if (cardGrowTo < 0 && threadCap !== undefined && !boardGives) {

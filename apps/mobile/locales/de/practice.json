@@ -24,7 +24,8 @@
     "shaded": "{{filled}} von {{total}} Teilen gefärbt",
     "part": "Teil {{n}} von {{total}}",
     "pick_how": "Tippe den Balken an, der mehr ist.",
-    "pick_option": "{{fraction}} wählen"
+    "pick_option": "{{fraction}} wählen",
+    "check_waits": "Erst wenn ein Teil gefärbt ist."
   },
   "cards": {
     "progress": "Karte {{current}} von {{total}}",
@@ -242,7 +243,8 @@
   "thread": {
     "you": "Du",
     "buddy": "Buddy",
-    "thinking": "Buddy schaut sich deine Antwort an …"
+    "thinking": "Buddy schaut sich deine Antwort an …",
+    "thinking_question": "Buddy denkt über deine Frage nach …"
   },
   "title_fallback": "Üben",
   "verdict": {
@@ -317,5 +319,12 @@
   "select": {
     "several": "Mehrere sind richtig – tippe alle an.",
     "check_waits": "Erst wenn du mindestens eine angetippt hast."
+  },
+  "ask": {
+    "placeholder": "Frag zur Aufgabe …",
+    "label": "Deine Frage zur Aufgabe",
+    "later": "Merk ich mir für nachher",
+    "later_hint": "Buddy kommt nach dem Üben darauf zurück.",
+    "kept": "Gemerkt"
   }
 }

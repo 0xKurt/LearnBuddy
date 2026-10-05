@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { tapped } from '../../lib/perf.js';
-import { SPACE } from '../../lib/theme/space.js';
 import { AnswerShell } from './AnswerShell.js';
 import {
   STAFF_ANSWER_MIN,
@@ -36,7 +35,7 @@ export function StaffWriting({ surface, answer, disabled, onChange, onCheck }: P
   const parts = { surface, answer, disabled, onChange };
   return (
     <AnswerShell
-      keeps={STAFF_ANSWER_MIN + SPACE.sm}
+      keeps={STAFF_ANSWER_MIN}
       answer={
         <View testID="answer-staff" style={{ flexShrink: 1, minHeight: STAFF_ANSWER_MIN }}>
           <StaffAnswer {...parts} />

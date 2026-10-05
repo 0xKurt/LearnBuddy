@@ -24,7 +24,8 @@
     "shaded": "{{filled}} of {{total}} parts shaded",
     "part": "Part {{n}} of {{total}}",
     "pick_how": "Tap the bar that is more.",
-    "pick_option": "Choose {{fraction}}"
+    "pick_option": "Choose {{fraction}}",
+    "check_waits": "Only once a part is shaded."
   },
   "cards": {
     "progress": "Card {{current}} of {{total}}",
@@ -242,7 +243,8 @@
   "thread": {
     "you": "You",
     "buddy": "Buddy",
-    "thinking": "Buddy is looking at your answer …"
+    "thinking": "Buddy is looking at your answer …",
+    "thinking_question": "Buddy is thinking about your question …"
   },
   "title_fallback": "Practice",
   "verdict": {
@@ -317,5 +319,12 @@
   "select": {
     "several": "More than one is right – tap all of them.",
     "check_waits": "Once you've ticked at least one."
+  },
+  "ask": {
+    "placeholder": "Ask about this task …",
+    "label": "Your question about the task",
+    "later": "I'll remember it for later",
+    "later_hint": "Buddy comes back to it after practice.",
+    "kept": "Saved"
   }
 }

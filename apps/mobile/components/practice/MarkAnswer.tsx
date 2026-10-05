@@ -127,7 +127,6 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   return (
     <AnswerShell
       keeps="whole"
-      flush
       answer={
         <View style={{ gap: SPACE.sm }}>
           {/* What a tap does, one line in the same place for every kind of marking — until the

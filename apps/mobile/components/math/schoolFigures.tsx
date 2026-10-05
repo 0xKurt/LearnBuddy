@@ -28,9 +28,18 @@ export function isSchoolFigure(f: Figure): f is SchoolFigure {
   return isPrimary(f) || isTreeFigure(f) || isPeriodicTable(f) || isSpaceFigure(f) || isDiagram(f);
 }
 
-export function SchoolFigureBody({ figure, width }: { figure: SchoolFigure; width: number }) {
+export function SchoolFigureBody({
+  figure,
+  width,
+  scale,
+}: {
+  figure: SchoolFigure;
+  width: number;
+  /** How far FigureView shrinks the drawing; only a tree needs it, the rest follow the width. */
+  scale: number;
+}) {
   if (isPrimary(figure)) return <PrimaryBody figure={figure} width={width} />;
-  if (isTreeFigure(figure)) return <TreeBody figure={figure} width={width} />;
+  if (isTreeFigure(figure)) return <TreeBody figure={figure} width={width} scale={scale} />;
   if (isPeriodicTable(figure)) return <PeriodicBody figure={figure} width={width} />;
   if (isDiagram(figure)) return <DiagramBody figure={figure} width={width} />;
   return <SpaceBody figure={figure} width={width} />;

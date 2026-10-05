@@ -2,7 +2,12 @@
 // feeds back into: mutations that return a fresh home write it into the
 // cache instead of refetching.
 
-import type { BuddyHome, NowCard, SessionView } from '@learnbuddy/shared-types/contracts';
+import type {
+  BuddyHome,
+  NowCard,
+  PracticeTurnView,
+  SessionView,
+} from '@learnbuddy/shared-types/contracts';
 import NetInfo from '@react-native-community/netinfo';
 import { focusManager, onlineManager, QueryClient, useQuery } from '@tanstack/react-query';
 import { useEffect, useSyncExternalStore } from 'react';
@@ -158,6 +163,13 @@ export const usePracticeSession = (id: string) =>
 /** A session the server just started (and returned): its first question shows at once. */
 export function seedSession(view: SessionView): void {
   queryClient.setQueryData(keys.session(view.id), view);
+}
+
+/** One turn of a practice run changed on the server (a kept „für nachher", issue #402). */
+export function storeTurn(sessionId: string, turn: PracticeTurnView): void {
+  queryClient.setQueryData<SessionView>(keys.session(sessionId), (view) =>
+    view ? { ...view, turns: view.turns.map((t) => (t.id === turn.id ? turn : t)) } : view,
+  );
 }
 
 /**

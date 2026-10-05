@@ -743,7 +743,7 @@ export const HintRequest = z.object({ client_turn_id: Uuid, item_id: Uuid });
 export type HintRequest = z.infer<typeof HintRequest>;
 
 /** How long a question to the tutor may be: a sentence or three, typed or spoken. */
-const ASK_TEXT_MAX = 600;
+export const ASK_TEXT_MAX = 600;
 
 /**
  * POST /practice/sessions/:id/ask — a free question to the tutor about the question in front of

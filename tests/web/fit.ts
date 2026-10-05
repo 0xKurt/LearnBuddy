@@ -134,8 +134,9 @@ export type AnswerPlace = {
   /** "Prüfen" is the lowest of answer, keys, free room and action. */
   actionLowest: boolean;
   /**
-   * A typed answer's field is in the pinned bar, right above "Prüfen" (or with it inside while she
-   * types), at the bottom like the chat's (issue #365).
+   * The field is in the pinned bar: a typed answer's, right above "Prüfen" (or with it inside while
+   * she types), at the bottom like the chat's (issue #365) — or her question's, beside "Prüfen" or
+   * under options (issue #402).
    */
   fieldInBar: boolean;
 };
@@ -155,7 +156,9 @@ export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
       return box !== undefined && box.height > 0 && box.width > 0;
     };
     const slotEl = document.querySelector<HTMLElement>('[data-testid="answer-slot"]');
-    const field = document.querySelector<HTMLElement>('[data-testid="answer-field"]');
+    const field = document.querySelector<HTMLElement>(
+      '[data-testid="answer-field"], [data-testid="ask-field"]',
+    );
     const slot = visible(slotEl) ? slotEl : null;
     if (!slot && !visible(field)) return null;
     const bars = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="bottom-bar"]'));
@@ -261,13 +264,13 @@ export async function room(page: Page): Promise<Room | null> {
 const KEYBOARD_ROOM = { width: 360, height: 740 - 300 } as const;
 
 /**
- * Where a typed answer stands, the keyboard pass: the field has the focus (so the math keys show,
- * as while she types), and the field, "Prüfen" under it and anything said as an alert (a toast,
- * the mic's problem) are all inside the window — the bar at the bottom rides on the keyboard, as
- * the chat's does (issue #365).
+ * The bar's field with the keyboard up: the field has the focus (so the math keys show, as while
+ * she types), and the field, "Prüfen" and anything said as an alert (a toast, the mic's problem)
+ * are all inside the window — the bar at the bottom rides on the keyboard, as the chat's does
+ * (issue #365). The field is a typed answer's or, on every other form, her question's (#402).
  */
-async function keyboardPass(page: Page, name: string): Promise<void> {
-  const field = page.locator('[data-testid="answer-field"]').last();
+async function keyboardPass(page: Page, name: string, testId: string): Promise<void> {
+  const field = page.locator(`[data-testid="${testId}"]`).last();
   const wasFocused = await field.evaluate((el) => el === document.activeElement);
   await page.setViewportSize(KEYBOARD_ROOM);
   await field.focus();
@@ -372,11 +375,14 @@ export async function shot(
       path: join(SHOTS, phone.width === 390 ? `${name}.png` : `${name}-${phone.width}.png`),
     });
   }
-  // A typed answer: once more with the keyboard up.
-  if ((await page.locator('[data-testid="answer-field"]').count()) > 0)
-    await keyboardPass(page, name);
-  // Any other answer (a board, options): its room in the same window, so every form has a keyboard
-  // column in the measurement (issue #395) — a board's cell or gap brings the keyboard up too.
+  // The bar's field — a typed answer, or her question on any other form (#402): once more with the
+  // keyboard up.
+  const typedIn = ['answer-field', 'ask-field'];
+  const counts = await Promise.all(typedIn.map((id) => page.getByTestId(id).count()));
+  const fieldId = typedIn.find((_, i) => counts[i]! > 0);
+  if (fieldId) await keyboardPass(page, name, fieldId);
+  // Any other answer (voice mode's options): its room in the same window, so every form has a
+  // keyboard column in the measurement (issue #395).
   else if ((await page.getByTestId('answer-slot').count()) > 0) {
     await page.setViewportSize(KEYBOARD_ROOM);
     await settle(page);

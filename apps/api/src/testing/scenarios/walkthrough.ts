@@ -6,6 +6,7 @@
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import type { ScriptedGateway } from '../fakes.js';
+import { scriptAsk } from './ask.js';
 import { installChecks } from './checks.js';
 import { scriptCloze } from './cloze.js';
 import { scriptCoreLoop } from './core-loop.js';
@@ -31,6 +32,9 @@ import { installTurns } from './turns.js';
 
 /** Adds every scenario's rules and installs the dispatchers. Call it once per process. */
 export function scriptWalkthrough(scripted: ScriptedGateway): void {
+  // First of all: her questions in practice (#402) stand in requests about the pie chart and the
+  // order, whose own words an older, broader rule may know.
+  scriptAsk();
   // First: its generation rule is keyed on her list, and a broader rule registered earlier
   // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
   scriptDictation();
