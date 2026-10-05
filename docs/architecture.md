@@ -4338,7 +4338,7 @@ the role; code holds the frame (CLAUDE.md rule 1).
   No count of turns, no progress bar (rule 6).
 - **While it runs, her message is a line in the scene, not a Buddy turn.** `decideTurn` sees the
   running roleplay and answers through `roleplayRound` (`turn.ts`) — same claim, fence, takeover,
-  failure codes and audit (`buddy_decisions`, prompt version `roleplay.N`) as every turn, but a
+  failure codes and audit (`buddy_decisions`, prompt version `roleplay.<hash>`) as every turn, but a
   different request: `ROLEPLAY_SYSTEM`, the frame **rendered from the row** (`roleplayFrame`: the
   language, scene, role, `k1…k5`, her level, the turns left) and the scene's own messages since
   the one that started it. No STATE, no memories, not her name: nothing personal can reach a scene
@@ -4863,13 +4863,32 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   `evals/speak` and `evals/voice` additionally need `espeak-ng` on the machine (they speak the
   test sentences themselves). Without it they stop with `spawnSync espeak-ng ENOENT` — that is
   a missing tool, not a broken eval.
+- **Prompt versions** (issue #425): a prompt's version is derived from what it sends —
+  `generate.3f9a2c1d`, its name and the first 8 hex digits of a SHA-256 over its fixed parts
+  (`llm/promptVersion.ts`): the system text, the response schemas in their field order, and the
+  fixed text around what the learner wrote where that is a named constant (`TASK`, `LEVEL`).
+  The same bytes give the same version, any other byte another. Each module declares its version
+  next to what it hashes (`BUDDY_PROMPT_VERSION` in `buddy/prompts.ts` with the turn and check
+  schemas, `EXTRACT_PROMPT_VERSION` in `materials/sources.ts` with the extraction schemas,
+  `TUTOR_PROMPT_VERSION` in `practice/answer.ts`). Before, every prompt change bumped a counter
+  in one line (`generate.v1.41`, `buddy.61`); two branches that both changed a prompt collided
+  there every time, and after a merge one number named two prompts. Nothing orders versions —
+  telemetry (`llm_calls`, `buddy_decisions`) and the evals only record and compare them, so the
+  switch needed no migration. **What changed when** is the git log of the file that holds the
+  prompt (`git log -p -- apps/api/src/modules/practice/generate.ts`); the counter's history
+  ended at generate.v1.41, extract.v8.21, buddy.61, tutor.v12, hints.v6, reexplain.v4,
+  pronounce.v2.3, transcribe.v1.2, roleplay.1, figures-v2, essay.v1, cloze-gaps.v1, sources.v1,
+  summary.v1, consolidate.v1. Text a function assembles at call time from the learner's data
+  (`tutorContext`, the STATE of a turn) is not in the hash; a fixed instruction belongs in a named
+  constant that is. `llm/__tests__/promptVersion.test.ts` holds the rule, and fails on a
+  hand-counted version anywhere in `src`.
 - **Regression comparison between prompt versions** (issue #80): "36/36" alone cannot show an
   answer that got worse while still passing. `BUDDY_EVAL_OUT=a.json npx tsx evals/buddy/run.ts`
   writes a transcript of the run — prompt version, model, time, every case's answer, options,
   tools and cost — and `npx tsx evals/buddy/compare.ts a.json b.json` reads two such transcripts
   side by side: regressions (passed → fails) first with the new problems, then fixed cases,
   changed behaviour (tools/options), and rewordings with both answers to read; cost is shown
-  per run and per changed case. Exit 1 on a regression, so it can gate a prompt bump; cases
+  per run and per changed case. Exit 1 on a regression, so it can gate a prompt change; cases
   present in only one file are listed, not guessed about, so partial runs (`run.ts case-id …`)
   compare too. The comparison itself is pure and unit-tested
   (`evals/buddy/__tests__/compare.test.ts`); only producing the transcripts costs money.

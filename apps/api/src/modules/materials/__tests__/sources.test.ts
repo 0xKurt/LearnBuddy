@@ -3,8 +3,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { EXTRACTION_SCHEMA } from '../service.js';
-import { applySource, differsFromOriginal, ReadingParse } from '../sources.js';
+import { applySource, differsFromOriginal, EXTRACTION_SCHEMA, ReadingParse } from '../sources.js';
 
 const reading = (over: Record<string, unknown>) =>
   ReadingParse.parse({

@@ -11,10 +11,17 @@ import { MaterialSource } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import { samePrompt } from '../practice/items.js';
-import { ExtractionParse, ExtractionResult } from './extract.js';
+import { toJsonSchema } from '../../llm/json-schema.js';
+import {
+  ExtractionParse,
+  ExtractionResult,
+  EXTRACT_SYSTEM,
+  HOMEWORK_SYSTEM,
+  HomeworkExtraction,
+  LEAN_RULES,
+} from './extract.js';
 import { PHOTO_RETENTION_DAYS } from './purge.js';
-
-export const SOURCES_PROMPT_VERSION = 'sources.v1';
+import { promptVersion } from '../../llm/promptVersion.js';
 
 /** The most questions a notebook entry gives: a short run the next morning, not a sheet. */
 const NOTEBOOK_QUESTIONS = 5;
@@ -57,7 +64,7 @@ const SOURCE_FIELDS = {
 };
 
 /** The study reading's schema: the sheet's fields plus what kind of page it is. */
-export const StudyExtraction = ExtractionResult.extend(SOURCE_FIELDS);
+const StudyExtraction = ExtractionResult.extend(SOURCE_FIELDS);
 /** How every reading is parsed; homework has no source fields and parses as a sheet. */
 export const ReadingParse = ExtractionParse.extend(SOURCE_FIELDS);
 type Reading = z.infer<typeof ReadingParse>;
@@ -159,3 +166,21 @@ export function applySource(
 export function photoRetentionMs(source: MaterialSource): number {
   return source === 'corrected_test' ? 0 : PHOTO_RETENTION_DAYS * 86_400_000;
 }
+
+/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const SOURCES_PROMPT_VERSION = promptVersion('sources', SOURCE_RULES);
+
+// The schemas a reading of a sheet goes out with, here beside the study reading's own fields: one
+// place for what the extraction sends, and the version it makes (#425). Exported for the schema
+// inventory (`evals/schema`, issue #281) too.
+export const EXTRACTION_SCHEMA = toJsonSchema(StudyExtraction);
+export const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
+/** The extraction prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+export const EXTRACT_PROMPT_VERSION = promptVersion(
+  'extract',
+  EXTRACT_SYSTEM,
+  HOMEWORK_SYSTEM,
+  LEAN_RULES,
+  EXTRACTION_SCHEMA,
+  HOMEWORK_SCHEMA,
+);

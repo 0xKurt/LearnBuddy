@@ -31,33 +31,6 @@ import {
 } from '../practice/reading.js';
 import { TABLE_RULES } from '../practice/table.js';
 
-// v8: car 2's structured rules (v7.1) and #253/#257's figures (v7) together.
-// v8.1: pictures as the options of a multiple choice (choice_figures, #231).
-// v8.2: a text with several gaps becomes one cloze task (#232).
-// v8.3: primary-school figures — clock, money, dot field, base-ten blocks (#254).
-// v8.4: a question to tick every right answer becomes one select_all task (#240).
-// v8.5: the periodic table as a figure (#250).
-// v8.6: a reading text with its questions becomes one entry in "reading" (#233).
-// v8.7: solids, cube nets and points in space (#255).
-// v8.8: a task to mark words, set commas or split syllables becomes one mark task (#234); a
-//       reading group may ask to mark in a sentence of its text.
-// v8.9: a question marks the calculation inside its sentence that the key is (`computes`, #227).
-// v8.10: diagrams — boxes with arrows, chains, cycles, trees, grids, gaps lettered A–C (#247).
-// v8.11: the schema says what was written for `hints`, a table gap's `also` and the bounds of
-//        `pages`, `unclear` and `not_practicable`, dropped before by `toJsonSchema` (#282); a
-//        page number and the readings no longer say their bounds twice (#282 D5).
-// v8.12: a task to mark a place on a number line, a point, a column or to set a clock is answered
-//        by tapping the figure (`tap`, #248).
-// v8.13: a worked solution to check for its mistake becomes one find_error task (the solution
-//        written correct), a calculation to do in columns one column_calc task (#260).
-// v8.14: a marking text sorted into categories may have 12 words and 72 characters (#368).
-// v8.15: a reading question may ask for its Belegstelle (`evidence`): she taps the lines (#368).
-// v8.16: a prism's non-regular base, nets of solids ("which solid?") and Würfelgebäude (#368).
-// v8.18: circuits, logic gates and Itten's colour wheel, their keys computed by code (#261).
-// v8.21: a house- or L-shaped base, and "which solid?" of a cube's and a cone's net (#418;
-//        v8.19 and v8.20 left to the parallel work that holds generate v1.39 and v1.40).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.21';
-
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
  * with more says so (`more_items`) and is read again for the rest, until it is covered.

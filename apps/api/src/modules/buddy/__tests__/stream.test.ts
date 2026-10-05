@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { replyProgress } from '../stream.js';
-import { TURN_STEP_SCHEMA } from '../turn.js';
+import { TURN_STEP_SCHEMA } from '../prompts.js';
 
 /**
  * The order the model really writes its fields in, taken from the schema itself.
