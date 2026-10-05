@@ -3,7 +3,8 @@
 // server computes, so a topic is never in both lists (user feedback #1, #3). No hit rate, no
 // zero, no scores, no streaks, nothing about what is still "due". After a practice test,
 // every question with its solution (the first time she sees them); questions she never got
-// to are marked as such, not as wrong (audit M-36).
+// to are marked as such, not as wrong (audit M-36) — in the one result list the roleplay's
+// feedback uses too (lb/ResultList.tsx, issue #384).
 //
 // A warm, calm moment: Buddy's orb, the headline, the sentences on a white card – no
 // confetti, nothing that counts what is left. They arrive one after the other: the orb
@@ -16,6 +17,7 @@ import type {
   SessionMode,
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useState } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import Animated, {
@@ -38,8 +40,7 @@ import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
 import { summaryLines } from '../../lib/practice/summaryLine.js';
 import { timeUpLines } from '../../lib/practice/testClock.js';
-import { Icon } from '../lb/Icon.js';
-import { MathText } from '../math/MathText.js';
+import { ResultList, type ResultRow } from '../lb/ResultList.js';
 
 type Props = {
   summary: PracticeSummary;
@@ -122,18 +123,12 @@ export function SessionSummary({
         </Rise>
       ) : null}
       {review && review.length > 0 ? (
-        <View style={{ gap: 12, marginTop: 4 }}>
-          <Rise delay={AT.review}>
-            <Text accessibilityRole="header" style={TYPE.title}>
-              {t('summary_test.review')}
-            </Text>
-          </Rise>
-          {review.map((r, n) => (
-            // Only the first few are staggered; the rest are below the fold anyway.
-            <Rise key={r.item.id} index={Math.min(n, 5)} delay={AT.review + 60}>
-              <ReviewRow number={n + 1} row={r} ranOut={ranOut} />
-            </Rise>
-          ))}
+        <View style={{ marginTop: 4 }}>
+          <ResultList
+            title={t('summary_test.review')}
+            rows={review.map((r, n) => reviewRow(r, n + 1, ranOut, t))}
+            delay={AT.review}
+          />
         </View>
       ) : null}
     </View>
@@ -197,17 +192,8 @@ function OrbArrival({ celebrate }: { celebrate: boolean }) {
   );
 }
 
-function ReviewRow({
-  number,
-  row,
-  ranOut,
-}: {
-  number: number;
-  row: SessionItemView;
-  ranOut: boolean;
-}) {
-  const { palette } = useTheme();
-  const { t } = useTranslation('practice');
+/** One question of a practice test as a row of the result list: its state and its solution. */
+function reviewRow(row: SessionItemView, number: number, ranOut: boolean, t: TFunction): ResultRow {
   const right = row.status === 'correct';
   const status = right
     ? t('summary_test.right')
@@ -223,35 +209,13 @@ function ReviewRow({
       : row.item.kind === 'numeric'
         ? localDecimal(row.answer, currentLocale())
         : row.answer;
-  return (
-    <View
-      style={[
-        softCard(palette),
-        { padding: 16, gap: 6 },
-        right ? { backgroundColor: palette.mint } : null,
-      ]}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Icon
-            name={right ? 'check' : 'arrow'}
-            size={18}
-            color={right ? palette.successText : palette.ink2}
-          />
-        </View>
-        <Text style={[TYPE.label, { color: right ? palette.successText : palette.ink2 }]}>
-          {`${number} · ${status}`}
-        </Text>
-      </View>
-      <MathText text={row.item.prompt} style={TYPE.body} />
-      {answer !== null && !right ? (
-        <MathText
-          text={t('summary_test.solution', { answer })}
-          style={[TYPE.body, { fontWeight: '600' }]}
-        />
-      ) : null}
-    </View>
-  );
+  return {
+    key: row.item.id,
+    right,
+    label: `${number} · ${status}`,
+    text: row.item.prompt,
+    detail: answer !== null && !right ? t('summary_test.solution', { answer }) : null,
+  };
 }
 
 /** A white card on a soft shadow (no hairline box). From the palette in use (issue #84). */

@@ -20,7 +20,11 @@
 //     managed ONLY with a quote that stands in her own lines (`checkFeedback`) — an invented
 //     quote is discarded, never repaired (rule 0 from #224, the same rule as #211's rubric).
 
-import { ROLEPLAY_MAX_TURNS, type RoleplayLanguage } from '@learnbuddy/shared-types/contracts';
+import {
+  ROLEPLAY_MAX_TURNS,
+  RoleplayFeedback,
+  type RoleplayLanguage,
+} from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
@@ -110,6 +114,30 @@ export async function roleplayStatuses(
       r.id,
       r.status === 'active' && r.last_at.getTime() > cutoff ? 'active' : 'ended',
     ]),
+  );
+}
+
+/**
+ * The checked feedback carried by each closing message on a page of the thread (issue #384):
+ * read from the one stored version (`buddy_roleplays.feedback`), never parsed back out of the
+ * message's text. Only her own roleplays; a row that does not read as the contract shows none.
+ */
+export async function roleplayFeedbacks(
+  db: Db,
+  learnerId: string,
+  ids: readonly string[],
+): Promise<Map<string, RoleplayFeedback>> {
+  if (ids.length === 0) return new Map();
+  const rows = await db.query<{ id: string; feedback: unknown }>(
+    `select id, feedback from buddy_roleplays
+      where learner_id = $1 and id = any($2::uuid[]) and feedback is not null`,
+    [learnerId, ids],
+  );
+  return new Map(
+    rows.flatMap((r) => {
+      const fb = RoleplayFeedback.safeParse(r.feedback);
+      return fb.success ? [[r.id, fb.data] as const] : [];
+    }),
   );
 }
 
@@ -306,12 +334,6 @@ function herLines(rows: readonly TranscriptRow[], locale: string): string[] {
 
 // ─────────────── the feedback ───────────────
 
-type PointState = { name: string; met: boolean; quote: string | null };
-export type RoleplayFeedback = {
-  points: PointState[];
-  better: Array<{ said: string; better: string }>;
-};
-
 /**
  * The model's feedback against her own lines. A point counts as managed only with a quote that
  * stands in what she wrote — "met" without one, or with words she never wrote, is not managed
@@ -326,7 +348,7 @@ export function checkFeedback(
 ): RoleplayFeedback {
   const byRef = new Map<string, RoleplayFeedbackRaw['points'][number]>();
   for (const c of raw.points) if (!byRef.has(c.point)) byRef.set(c.point, c);
-  const states = points.map((name, i): PointState => {
+  const states = points.map((name, i): RoleplayFeedback['points'][number] => {
     const c = byRef.get(`k${i + 1}`);
     const quote = c?.met && c.quote ? c.quote : null;
     return quote && quoteOccursIn(quote, hers)
@@ -528,9 +550,11 @@ export async function endRoleplayByTap(
         where id = $1 and learner_id = $2`,
       [play.id, learner.id, now, feedback ? JSON.stringify(feedback) : null],
     );
+    // The closing message points at the roleplay whose feedback it carries (issue #384).
     await tx.query(
-      `insert into buddy_messages (learner_id, role, text, created_at) values ($1, 'buddy', $2, $3)`,
-      [learner.id, text, now],
+      `insert into buddy_messages (learner_id, role, text, roleplay_id, created_at)
+       values ($1, 'buddy', $2, $3, $4)`,
+      [learner.id, text, feedback ? play.id : null, now],
     );
     // A message she may be waiting on was decided inside the roleplay: it is stale now.
     await bumpContext(tx, learner.id);

@@ -31,6 +31,27 @@ export const RoleplayNow = z.object({
 });
 export type RoleplayNow = z.infer<typeof RoleplayNow>;
 
+/**
+ * The checked feedback after a roleplay (issue #384): each key point of her role card, managed
+ * only with a quote that stands in her own lines, and up to three of her lines said better. No
+ * grade, no score, no count. Code checked it (`checkFeedback`, modules/buddy/roleplay.ts); the
+ * app shows it as the result card and never parses it out of the message's text.
+ */
+export const RoleplayFeedback = z.object({
+  points: z.array(
+    z.object({
+      /** The key point, in her app language, as the role card named it. */
+      name: z.string(),
+      met: z.boolean(),
+      /** Her own words that show it; null when not met. */
+      quote: z.string().nullable(),
+    }),
+  ),
+  /** Her line as she wrote it, and how she could say it more naturally, in the roleplay language. */
+  better: z.array(z.object({ said: z.string(), better: z.string() })),
+});
+export type RoleplayFeedback = z.infer<typeof RoleplayFeedback>;
+
 // ─────────────── what Buddy did (rendered as cards, not prose) ───────────────
 
 export const ActionSummary = z.discriminatedUnion('tool', [
@@ -284,6 +305,12 @@ export const MessageView = z.object({
   /** A delivery state this build does not know reads as "no delivery line" (M-69). */
   outreach: OutreachView.nullable().catch(null),
   actions: tolerantArray(ActionView),
+  /**
+   * Buddy's closing message after a roleplay with feedback (issue #384): the feedback itself,
+   * shown as the result card in place of `text` (which stays for reading aloud and copying).
+   * Null on every other message, and from an older server.
+   */
+  roleplay_feedback: RoleplayFeedback.nullable().catch(null),
   created_at: IsoDateTime,
 });
 export type MessageView = z.infer<typeof MessageView>;

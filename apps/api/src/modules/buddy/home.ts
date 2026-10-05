@@ -23,7 +23,7 @@ import { daysBetween, localParts, startOfLocalDay } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
 import type { UndoSpec } from './toolKit.js';
 import { undoApplies, undoLoosensContact } from './tools.js';
-import { activeRoleplay, roleplayStatuses } from './roleplay.js';
+import { activeRoleplay, roleplayFeedbacks, roleplayStatuses } from './roleplay.js';
 import { loadBuddyState, loadSettings } from './state.js';
 import { resumable } from '../practice/lifecycle.js';
 
@@ -705,10 +705,11 @@ async function threadOf(
     reply_to_id: string | null;
     outreach_id: string | null;
     decision_id: string | null;
+    roleplay_id: string | null;
     created_at: Date;
   }>(
     `select id, role, text, status, failure_code, client_message_id, ask, reply_to_id, outreach_id,
-            decision_id, created_at
+            decision_id, roleplay_id, created_at
        from buddy_messages
       where learner_id = $1
         and ($2::uuid is null or seq < (select seq from buddy_messages where id = $2 and learner_id = $1))
@@ -790,6 +791,12 @@ async function threadOf(
     actions.flatMap((a) => (a.result.tool === 'start_roleplay' ? [a.result.roleplay_id] : [])),
     now,
   );
+  // The feedback after a roleplay, for the result card (issue #384).
+  const feedbacks = await roleplayFeedbacks(
+    deps.db,
+    learnerId,
+    page.flatMap((m) => (m.roleplay_id ? [m.roleplay_id] : [])),
+  );
   const messages: MessageView[] = page.map((m) => {
     const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
     return {
@@ -826,6 +833,7 @@ async function threadOf(
           summary: servedSummary(a.result, pending, cannotStart, a.id, roleplays),
           created_at: a.created_at.toISOString(),
         })),
+      roleplay_feedback: m.roleplay_id ? (feedbacks.get(m.roleplay_id) ?? null) : null,
       created_at: m.created_at.toISOString(),
     };
   });

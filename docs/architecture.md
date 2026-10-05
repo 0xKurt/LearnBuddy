@@ -3947,6 +3947,17 @@ the role; code holds the frame (CLAUDE.md rule 1).
   whose `said` is not hers is dropped, never rewritten. The text she reads and hears is the
   app's (`i18n roleplay.*`): each point in words, a managed one with her own words as the proof —
   no score, no grade, no count. Stored as checked in `buddy_roleplays.feedback` (her export).
+- **The feedback as the result card** (issue #384, migration `0091_roleplay_feedback_message.sql`).
+  The closing message that carries feedback points at its roleplay (`buddy_messages.roleplay_id`,
+  set in the same transaction that ends it — `apply.ts` for the twelfth line and for "leave",
+  `endRoleplayByTap` for the tap). The thread serves the checked feedback from the one stored
+  version as `MessageView.roleplay_feedback` (`RoleplayFeedback` in the contract, read by
+  `roleplayFeedbacks`, scoped to her and validated against the contract; null everywhere else):
+  never copied, never parsed out of the text. The app shows it in place of the text as the
+  Probetest's "So lief's" list (`components/lb/ResultList.tsx`, the one result card both use;
+  `components/buddy/RoleplayResult.tsx` maps points and better lines onto it). The text stays for
+  reading aloud and copying. No card where nothing was played, for a concern (its fixed caring
+  text stays as it is), or for a scene she left.
 - **Her tap on "end"** in the strip (`POST /buddy/roleplays/:id/end`): with lines played, one feedback call,
   then under the settings lock the row must still be running with the same count (else 409 — a
   turn landed meanwhile; the tap can be repeated); with none, it simply ends. Another learner's
@@ -3974,8 +3985,11 @@ the role; code holds the frame (CLAUDE.md rule 1).
 - Tests: `roleplay.int.test.ts` (start on her words and never in her own language; the frame and
   nothing personal in the request; the hint; twelve turns, then the feedback with an invented
   quote discarded; leaving; a concern; the tap, a second tap, another learner's id; a stale
-  context; an interrupted turn taken over once; a scene left for half an hour),
-  `buddy/__tests__/roleplay.test.ts`, walkthrough `tests/web/roleplay.spec.ts` (scripted in
+  context; an interrupted turn taken over once; a scene left for half an hour; the structured
+  feedback on the closing message only, after twelve lines, "leave" and the tap, none for a
+  concern or an empty scene, none through another learner's message),
+  `buddy/__tests__/roleplay.test.ts`, `components/buddy/__tests__/Conversation.test.tsx` (the
+  card in place of the text), walkthrough `tests/web/roleplay.spec.ts` (scripted in
   `src/testing/scenarios/roleplay.ts`).
 
 ## Home

@@ -385,6 +385,12 @@
       "fr": "francese",
       "es": "spagnolo",
       "it": "italiano"
+    },
+    "result": {
+      "met": "Fatto",
+      "open": "Non ancora",
+      "better": "Così suona ancora meglio",
+      "quote": "«{{quote}}»"
     }
   }
 }

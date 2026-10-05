@@ -210,10 +210,20 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
       }
       if (input.roleplay?.closing) {
         // After the reply: the role's last line first, then what the app says about the scene.
+        // With feedback, the message points at its roleplay: the app shows it as the result
+        // card (issue #384).
         await tx.query(
-          `insert into buddy_messages (learner_id, role, text, reply_to_id, decision_id, created_at)
-           values ($1, 'buddy', $2, $3, $4, $5)`,
-          [input.learnerId, input.roleplay.closing, input.triggerMessageId, decision.id, input.now],
+          `insert into buddy_messages
+             (learner_id, role, text, reply_to_id, decision_id, roleplay_id, created_at)
+           values ($1, 'buddy', $2, $3, $4, $5, $6)`,
+          [
+            input.learnerId,
+            input.roleplay.closing,
+            input.triggerMessageId,
+            decision.id,
+            input.roleplay.feedback ? input.roleplay.id : null,
+            input.now,
+          ],
         );
       }
       if (input.lookBack) {
