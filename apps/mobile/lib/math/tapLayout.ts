@@ -8,8 +8,18 @@
 // nearest of the twelve marks of the clock), so the whole figure is one big target and the
 // precision comes from the snap and the place written out under it, not from aiming.
 //
-// Maps (#251) and labelled pictures (#252) add their figure here: one `case`, the same contract.
+// A map (#251) is one `case` like the rest: the region under the finger (`regionAt` in
+// shared-math `maps.ts`, a point-in-polygon test on the Natural Earth shapes), or the small one
+// whose label it is near. Its shapes are loaded with the first map (`useMapShapes`) and handed in.
+// Labelled pictures (#252) add their figure here too: one `case`, the same contract.
 
+import type { MapShapes } from '../../../../packages/shared-math/src/maps.js';
+import {
+  REGION_FRAME,
+  regionAt,
+  regionPath,
+  regionReach,
+} from '../../../../packages/shared-math/src/regions.js';
 import {
   tapAxes,
   type TapAxis,
@@ -19,8 +29,16 @@ import {
 import { barChartGeometry, clockGeometry, numberLineGeometry, type Box } from './figureGeometry.js';
 import { functionPlotGeometry } from './plotLayout.js';
 
-/** How the chosen place is shown: a dot on it, a frame around its column, or the clock's hands. */
-export type TapMark = { kind: 'dot'; x: number; y: number } | { kind: 'box'; box: Box } | null;
+/**
+ * How the chosen place is shown: a dot on it, a frame around its column, a region filled with a dot
+ * on its label (so a region as small as Bremen still shows), or the clock's hands.
+ */
+export type TapMark =
+  | { kind: 'dot'; x: number; y: number }
+  | { kind: 'box'; box: Box }
+  /** `outline`: the region's border is drawn (a Land); a continent of many countries has none. */
+  | { kind: 'region'; d: string; x: number; y: number; outline: boolean }
+  | null;
 
 export type TapLayout = {
   axes: TapAxis[];
@@ -58,13 +76,15 @@ function markAt(dx: number, dy: number): number {
 
 /**
  * The places of `fig` on a drawing `width` wide, or null when the figure offers none. `format`
- * writes a tick label as the plot draws it (its length moves the plot's left margin).
+ * writes a tick label as the plot draws it (its length moves the plot's left margin). A map needs
+ * its `shapes`; before they are loaded it offers nothing to tap yet.
  */
 export function tapLayout(
   fig: Tappable,
   width: number,
   format: (n: number) => string,
   fontSize: number,
+  shapes: MapShapes | null = null,
 ): TapLayout | null {
   const axes = tapAxes(fig);
   const [first, second] = axes ?? [];
@@ -129,6 +149,28 @@ export function tapLayout(
           return active === 0 ? [(mark + 11) % 12, minute] : [hour, mark];
         },
         markOf: () => null,
+        guides: [],
+      };
+    }
+    case 'map': {
+      const view = shapes?.[fig.v];
+      if (!view) return null;
+      const k = width / REGION_FRAME;
+      const reach = regionReach(width);
+      return {
+        axes,
+        pickAt: (x, y) => [regionAt(view, x / k, y / k, reach)],
+        markOf: ([i = 0]) => {
+          const shape = view.regions[i];
+          if (!shape) return null;
+          return {
+            kind: 'region',
+            outline: view.borders,
+            d: regionPath(shape.rings, k),
+            x: shape.at[0] * k,
+            y: shape.at[1] * k,
+          };
+        },
         guides: [],
       };
     }

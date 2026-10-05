@@ -10,3 +10,7 @@ LearnBuddy/
 design-examples/
 # Generated measurements (issue #281): written by a script, compared byte for byte between runs.
 docs/measurements/
+# Generated map data (issue #251): written by packages/shared-math/scripts/maps.mjs, compared
+# byte for byte with --check.
+packages/shared-math/src/maps.data.ts
+packages/shared-math/src/mapShapes.data.ts

@@ -10,13 +10,13 @@ import {
   diagramProblem,
   diagramShows,
   BOX_FONT,
-  textWidth,
   gapLetters,
   wrapWords,
   type Diagram,
   type DiagramBox,
   type DiagramLayout,
 } from '../diagram.js';
+import { textWidth } from '../labelBoxes.js';
 import { TREE_WIDTH } from '../trees.js';
 
 const arrow = (a: number, b: number, l = '') => ({ a, b, l });

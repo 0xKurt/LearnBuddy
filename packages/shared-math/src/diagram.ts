@@ -14,6 +14,7 @@
 // server checked is exactly what the app draws.
 
 import { TICK_FONT } from './charts.js';
+import { crosses, grow, overlaps, textWidth, type Rect } from './labelBoxes.js';
 import { TREE_WIDTH, treeSlots, type XY } from './trees.js';
 
 export type DiagramKind = 'chain' | 'cycle' | 'tree' | 'free';
@@ -170,25 +171,6 @@ function shapeProblem(d: Diagram, l: Links): DiagramProblem | null {
 
 /** A box's place: column (fractional between two) and row. */
 type Cell = { col: number; row: number };
-
-/** Character classes and their width in em, widest last (regular weight). */
-const NARROW = /[ijlftrI.,:;'!|()[\]\s-]/u;
-const WIDE = /[mwMW]/u;
-const TALL = /[\p{Lu}\p{N}]/u;
-
-/**
- * An upper bound for a text's width at `size` px in the app's sans-serif, regular weight: i, l,
- * f, t, r and punctuation at 0.35 em, m and w at 1 em, other capitals and digits at 0.75 em, every
- * other character at 0.62 em. Held in the unit test against DejaVu Sans as the walkthrough's
- * Chromium draws it (a wide font; San Francisco and Roboto are narrower — not measured here).
- */
-export function textWidth(text: string, size: number): number {
-  let em = 0;
-  for (const ch of text) {
-    em += NARROW.test(ch) ? 0.35 : WIDE.test(ch) ? 1 : TALL.test(ch) ? 0.75 : 0.62;
-  }
-  return em * size;
-}
 
 /**
  * A text in lines no wider than `width` at the box font, broken between words; null when a word
@@ -394,43 +376,6 @@ export function diagramLayout(d: Diagram, width: number): DiagramLayout | null {
 }
 
 // ─────────────── does it fit? ───────────────
-
-type Rect = { x: number; y: number; w: number; h: number };
-
-const grow = (r: Rect, m: number): Rect => ({
-  x: r.x - m,
-  y: r.y - m,
-  w: r.w + 2 * m,
-  h: r.h + 2 * m,
-});
-
-const overlaps = (p: Rect, q: Rect) =>
-  p.x < q.x + q.w && q.x < p.x + p.w && p.y < q.y + q.h && q.y < p.y + p.h;
-
-/** Whether the segment from `a` to `b` runs through the rectangle (Liang–Barsky). */
-function crosses(a: XY, b: XY, r: Rect): boolean {
-  let t0 = 0;
-  let t1 = 1;
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const sides: [number, number][] = [
-    [-dx, a.x - r.x],
-    [dx, r.x + r.w - a.x],
-    [-dy, a.y - r.y],
-    [dy, r.y + r.h - a.y],
-  ];
-  for (const [p, q] of sides) {
-    if (p === 0) {
-      if (q < 0) return false;
-      continue;
-    }
-    const t = q / p;
-    if (p < 0) t0 = Math.max(t0, t);
-    else t1 = Math.min(t1, t);
-    if (t0 > t1) return false;
-  }
-  return true;
-}
 
 function labelRect(text: string, at: DiagramLabel): Rect {
   const w = labelWidth(text);

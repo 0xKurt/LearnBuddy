@@ -8,7 +8,7 @@
 // whether it lights or not. Each figure also says in words what it shows.
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
-import Svg, { Circle, G, Line, Rect, Text as SvgText } from 'react-native-svg';
+import { Circle, G, Line, Rect, Text as SvgText } from 'react-native-svg';
 
 // Imported by path, like trees.js in TreeFigures: dependency-free, the server's own layout.
 import { TICK_FONT } from '../../../../packages/shared-math/src/charts.js';
@@ -33,6 +33,7 @@ import {
 import type { XY } from '../../../../packages/shared-math/src/trees.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY, FONT, formatNumber } from './figureText.js';
+import { FittedSvg } from './TreeFigures.js';
 
 export type CircuitFig = Extract<Figure, { type: 'circuit' }>;
 export type LogicFig = Extract<Figure, { type: 'logic' }>;
@@ -45,11 +46,12 @@ const DOT = 2.6;
 const RING = 10;
 const CONTACT = 10;
 /**
- * A schematic is drawn up to this much larger when the card is wider than it needs. At 1.5 two
- * parallel branches stood so tall at 360 × 740 that, with two long options under the card, the
- * hint row was cut (issue #261 walkthrough); 1.3 still fills the card's width.
+ * A schematic is drawn up to this much larger when the card is wider than it needs. Where the
+ * room is short FigureView shrinks it as a whole (`scale`, issue #419): at 1.5 it once stood so
+ * tall at 360 × 740 that the hint row was cut, because a drawing laid out at the shrunk width did
+ * not fit and vanished — #261 held it at 1.3 until then.
  */
-const MAX_ZOOM = 1.3;
+const MAX_ZOOM = 1.5;
 
 /**
  * The largest zoom (1 to MAX_ZOOM, in tenths) at which `lay` still fits `width`, and the layout
@@ -185,19 +187,18 @@ function PartSymbol({ part, ink }: { part: DrawnPart; ink: Ink }) {
   );
 }
 
-function CircuitBody({ figure, width }: { figure: CircuitFig; width: number }) {
+/** The width FigureView gives the drawing, already shrunk by its `scale` (#419). */
+type BodyProps<F> = { figure: F; width: number; scale: number };
+
+function CircuitBody({ figure, width, scale }: BodyProps<CircuitFig>) {
   const { figure: ink } = useTheme();
   // The server never stores a circuit it could not lay out at the narrowest phone.
-  const fit = zoomed((w) => circuitLayout(figure, w), width);
+  const fit = zoomed((w) => circuitLayout(figure, w), width / scale);
   if (!fit) return null;
   const { zoom, layout } = fit;
   const { x, y } = layout.battery;
   return (
-    <Svg
-      width={width}
-      height={layout.height * zoom}
-      viewBox={`0 0 ${layout.width} ${layout.height}`}
-    >
+    <FittedSvg width={layout.width} height={layout.height} scale={zoom * scale}>
       <Wires wires={layout.wires} dots={layout.dots} ink={ink} />
       {layout.parts.map((part, k) => (
         <PartSymbol key={k} part={part} ink={ink} />
@@ -215,22 +216,18 @@ function CircuitBody({ figure, width }: { figure: CircuitFig; width: number }) {
       {figure.u > 0 ? (
         <Label x={x} y={y - PLATE - 4} text={`${formatNumber(figure.u)} V`} ink={ink} bold />
       ) : null}
-    </Svg>
+    </FittedSvg>
   );
 }
 
-function LogicBody({ figure, width }: { figure: LogicFig; width: number }) {
+function LogicBody({ figure, width, scale }: BodyProps<LogicFig>) {
   const { figure: ink } = useTheme();
-  const fit = zoomed((w) => logicLayout(figure, w), width);
+  const fit = zoomed((w) => logicLayout(figure, w), width / scale);
   if (!fit) return null;
   const { zoom, layout } = fit;
   const line = { stroke: ink.stroke, strokeWidth: STROKE };
   return (
-    <Svg
-      width={width}
-      height={layout.height * zoom}
-      viewBox={`0 0 ${layout.width} ${layout.height}`}
-    >
+    <FittedSvg width={layout.width} height={layout.height} scale={zoom * scale}>
       {layout.rails.map((r) => (
         <G key={r.name}>
           <SvgText
@@ -295,15 +292,19 @@ function LogicBody({ figure, width }: { figure: LogicFig; width: number }) {
       >
         Q
       </SvgText>
-    </Svg>
+    </FittedSvg>
   );
 }
 
-export function SwitchingBody({ figure, width }: { figure: CircuitFig | LogicFig; width: number }) {
+export function SwitchingBody({
+  figure,
+  width,
+  scale = 1,
+}: Omit<BodyProps<CircuitFig | LogicFig>, 'scale'> & { scale?: number }) {
   return figure.type === 'circuit' ? (
-    <CircuitBody figure={figure} width={width} />
+    <CircuitBody figure={figure} width={width} scale={scale} />
   ) : (
-    <LogicBody figure={figure} width={width} />
+    <LogicBody figure={figure} width={width} scale={scale} />
   );
 }
 
