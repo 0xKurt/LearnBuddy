@@ -10,6 +10,9 @@
 //
 // (issue #313 step 3: PRs that were finished before the guards may still land, with their
 // entries on the list — visibly, never silently).
+//
+// Compared: the JSON lists in tools/guards/baselines/ and the drawing registry's `bestand`
+// (LISTS below), and the lists that source tests keep themselves (SOURCE_LISTS, issue #296).
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -17,6 +20,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { REPO_ROOT } from './measure.mjs';
+import { fileOf, SOURCE_LISTS } from './source-lists.mjs';
 
 /**
  * A list as `entry → size`: a larger size or a new entry is growth.
@@ -85,6 +89,21 @@ function main() {
     }
     const after = entries(JSON.parse(readFileSync(join(REPO_ROOT, file), 'utf8')));
     for (const g of growth(before, after)) grown.push(`${file}: ${g}`);
+  }
+  // The lists a source test keeps (tools/guards/source-lists.mjs): the same comparison.
+  for (const [list, entries] of Object.entries(SOURCE_LISTS)) {
+    const file = fileOf(list);
+    let before = {};
+    try {
+      before = entries(git(['show', `${base}:${file}`]));
+    } catch {
+      // Not on the base yet (this PR adds the list): nothing to grow from.
+      continue;
+    }
+    // Outside any try: a list this reader cannot find today (renamed, turned into something
+    // else) throws instead of passing as empty — the guard never goes blind quietly.
+    const after = entries(readFileSync(join(REPO_ROOT, file), 'utf8'));
+    for (const g of growth(before, after)) grown.push(`${list}: ${g}`);
   }
   if (grown.length === 0) {
     console.log(`✓ Ausnahmelisten gegenüber ${base}: nicht gewachsen`);

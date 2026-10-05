@@ -4,6 +4,10 @@
 
 **Dient USP-Punkt:** <!-- 1 Proaktiv · 2 Ihr Material ist die Quelle · 3 Verlässliche Prüfung · 4 Ein ruhiger Screen · 5 EU und für Kinder gebaut — siehe docs/buddy/01-prinzip-und-diagnose.md §1.1. Bei „keinem": Begründung, oder der PR entfällt. -->
 
+**Wiederverwendet / entfernt:** <!-- Welche vorhandenen Bausteine (Komponenten, Hooks, Services, Typen) nutzt der PR, und was hat er entfernt, das durch ihn überflüssig wurde? (CLAUDE.md, Verbindliche Entwicklungsanweisung 04.10.) -->
+
+<!-- Diese drei Zeilen (USP-Punkt, Wiederverwendet / entfernt, Bibliotheks-Check) prüft tools/guards/pr-body.mjs: leer oder fehlend ist der PR rot. -->
+
 ## Nachweis
 
 - [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test` grün
