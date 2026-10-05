@@ -1,6 +1,7 @@
 // Browser walkthrough of tapping inside a figure (issue #248): a place on a number line, a point
 // of a coordinate system (dragged there), a column of a bar chart and a clock face set hand by
-// hand. Scripted answers in apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
+// hand. On the line and the coordinate system the words under the figure only say THAT she chose;
+// the value is the screen reader's (`aria-valuetext`, issue #409). Scripted answers in apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
 // no tutor is scripted for any. Every question is shot at both phone sizes, light and dark, with
 // the keyboard up for her question (test-results/web/shots, 96-…).
 //
@@ -73,6 +74,8 @@ async function checkRight(page: Page): Promise<void> {
 }
 
 const words = (page: Page) => page.getByTestId('tap-words');
+/** The value of her place as a screen reader hears it — never as visible text (issue #409). */
+const spoken = (page: Page) => page.getByRole('slider', { name: 'Deine Stelle in der Abbildung' });
 
 test('tapping inside a figure: a place, a point, a column, a clock — graded by code', async ({
   page,
@@ -90,7 +93,9 @@ test('tapping inside a figure: a place, a point, a column, a clock — graded by
   await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
   await shot(page, '96-tap-line-empty');
   await tapPlace(page, LINE, [5]);
-  await expect(words(page)).toHaveText('Stelle: 2,5');
+  // Only that she chose: the value in plain sight would let her tap until it matches (#409).
+  await expect(words(page)).toHaveText('Stelle gewählt');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Stelle: 2,5');
   await bothRooms(page, '96-tap-line');
   await checkRight(page);
 
@@ -100,10 +105,11 @@ test('tapping inside a figure: a place, a point, a column, a clock — graded by
   const to = await markOn(page, PLANE, [6, 3]);
   await page.mouse.move(from.box.x + from.x, from.box.y + from.y);
   await page.mouse.down();
-  await expect(words(page)).toHaveText('Punkt (−1 | 2)');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Punkt (−1 | 2)');
   await page.mouse.move(to.box.x + to.x, to.box.y + to.y, { steps: 8 });
   await page.mouse.up();
-  await expect(words(page)).toHaveText('Punkt (2 | −1)');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Punkt (2 | −1)');
+  await expect(words(page)).toHaveText('Punkt gesetzt');
   await bothRooms(page, '97-tap-point');
   await checkRight(page);
 

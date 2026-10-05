@@ -509,6 +509,8 @@
     "value": "Stelle: {{value}}",
     "point": "Punkt ({{x}} | {{y}})",
     "bar": "Säule: {{label}}",
+    "chosen_number_line": "Stelle gewählt",
+    "chosen_function_plot": "Punkt gesetzt",
     "label": "Deine Stelle in der Abbildung",
     "up": "nach oben",
     "down": "nach unten",

@@ -9,7 +9,11 @@
 //   · a tap snaps to the nearest place and writes it as text — exactly as a key is written, so it
 //     is judged exactly by code (`tapVerdict`);
 //   · the place stands in words under the figure (never colour or position alone), and that line
-//     is also the control a screen reader adjusts, place by place.
+//     is also the control a screen reader adjusts, place by place. On a number line and a
+//     coordinate system the line only says THAT she chose: the exact value in plain sight would let
+//     her move the point until the words match the question — comparing text instead of reading
+//     the figure (issue #409). Its value is the screen reader's alone (`aria-valuetext`); without
+//     it a blind learner could not answer at all. After "Prüfen" her answer stands in the thread.
 //
 // A clock face is set one hand at a time: a tap moves the hand chosen above it, and after the
 // small hand the large one is next. What the line says is where the hands stand, never the time
@@ -57,7 +61,10 @@ function shownFigure(figure: Tappable & Figure, value: string): Figure {
   return figure.type === 'clock' && time ? { ...figure, c: [time] } : figure;
 }
 
-/** Her place in words: "Stelle: 2,5", "Punkt (2 | −1)", "Säule: Apr", where the hands stand. */
+/**
+ * Her place in words for a screen reader: "Stelle: 2,5", "Punkt (2 | −1)", "Säule: Apr", where
+ * the hands stand.
+ */
 function placeWords(figure: Tappable, pick: TapPick | null, t: T): string {
   const [i = 0, j = 0] = pick ?? [];
   const at = (axis: number, index: number) => tapAxes(figure)?.[axis]?.values[index] ?? 0;
@@ -72,6 +79,18 @@ function placeWords(figure: Tappable, pick: TapPick | null, t: T): string {
     case 'clock':
       return t('figure.clock', { hands: describeClock({ h: at(0, i), m: at(1, j) }, t) });
   }
+}
+
+/**
+ * The same line as she sees it: on a number line and a coordinate system only that she chose
+ * ("Stelle gewählt", "Punkt gesetzt") — reading the place off the figure is the task (#409). A
+ * column's name and the hands' positions are kept: the figure shows them anyway.
+ */
+function shownWords(figure: Tappable, pick: TapPick | null, t: T, spoken: string): string {
+  if (!pick) return spoken;
+  return figure.type === 'number_line' || figure.type === 'function_plot'
+    ? t(`tap.chosen_${figure.type}`)
+    : spoken;
 }
 
 /** The mark on her place: a ring with a dot, or a frame around the column. */
@@ -150,6 +169,7 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
     else if (name === 'down') step(1, -1);
   };
   const words = placeWords(figure, pick, t);
+  const shown = shownWords(figure, pick, t, words);
 
   return (
     <View style={{ gap: SPACE.sm }}>
@@ -203,7 +223,7 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
           testID="tap-words"
           style={[TYPE.small, { color: pick ? palette.ink : palette.ink2, textAlign: 'center' }]}
         >
-          {words}
+          {shown}
         </Text>
       </View>
     </View>

@@ -3174,11 +3174,16 @@ pictures (#252) add their figure to it rather than building a second one.
   The whole figure is the touch target; the places of a dense grid are no 44 pt each (a number
   line has ~15 pt between 21 places at 360 pt), the snap and her place in words carry the
   precision, as on a slider.
-- **In words, and for a screen reader:** under the figure, "Stelle: 2,5", "Punkt (2 | −1)",
-  "Säule: Apr" — on a clock where the hands stand ("der kleine Zeiger zwischen 7 und 8, der
-  große Zeiger auf der 9", `describeClock`), never the time they make, which is what she
-  practises reading. That line is one `adjustable` element: increment/decrement move along the
-  place (the chosen hand on a clock), "nach oben" / "nach unten" move the point's y.
+- **In words, and for a screen reader:** under the figure, "Säule: Apr" — on a clock where the
+  hands stand ("der kleine Zeiger zwischen 7 und 8, der große Zeiger auf der 9",
+  `describeClock`), never the time they make, which is what she practises reading. On a number
+  line and a coordinate system the line only says THAT she chose ("Stelle gewählt", "Punkt
+  gesetzt", issue #409): the exact value in plain sight would let her move the point until the
+  words match the question — comparing text instead of reading the figure. The value ("Stelle:
+  2,5", "Punkt (2 | −1)") is the screen reader's alone, in `aria-valuetext`; without it a blind
+  learner could not answer. After "Prüfen" her answer stands in the thread. That line is one
+  `adjustable` element: increment/decrement move along the place (the chosen hand on a clock),
+  "nach oben" / "nach unten" move the point's y.
 - **Adding a figure (#251, #252):** a shape and a `case` in `tapAxes` / `tapText` / `tapPick`
   (and what "already marks the key" means for it in `tapProblem`), a `case` in `tapLayout` built
   on the drawer's geometry, words in `placeWords`. Nothing on the server or the screen changes.

@@ -1,5 +1,7 @@
 // A figure she answers in (issue #248): her place stands in words under the figure — the signal
-// that is not colour or position — and that line is the control a screen reader adjusts. A clock
+// that is not colour or position — and that line is the control a screen reader adjusts. On a
+// number line and a coordinate system the line only says THAT she chose; the exact value is the
+// screen reader's alone (issue #409). A clock
 // face says where her hands stand, never the time they make (that is what she practises reading),
 // and offers the choice of hand.
 //
@@ -41,15 +43,27 @@ describe('her place in words', () => {
     );
   });
 
-  it('names the point and the place with the decimal comma and a real minus', () => {
+  // Issue #409: the exact value in plain sight would let her move the point until the line
+  // matches the question — a text comparison instead of reading the figure. The line only says
+  // that she chose; the value is for a screen reader, which cannot see the mark.
+  it('on a number line or a coordinate system: that she chose, never the value', () => {
     render(plane, '(2|-1)');
-    expect(screen.getByTestId('tap-words').textContent).toBe('Punkt (2 | −1)');
+    expect(screen.getByTestId('tap-words').textContent).toBe('Punkt gesetzt');
+    render(line, '2.5');
+    expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Stelle gewählt');
+    expect(document.body.textContent).not.toMatch(/2,5|2 \| −1/);
   });
 
-  it('is the one control a screen reader adjusts', () => {
+  it('is the one control a screen reader adjusts — and it alone names the value', () => {
     render(line, '2.5');
     const slider = screen.getByRole('slider', { name: 'Deine Stelle in der Abbildung' });
     expect(slider.getAttribute('aria-valuetext')).toBe('Stelle: 2,5');
+  });
+
+  it('names the point to a screen reader with the decimal comma and a real minus', () => {
+    render(plane, '(2|-1)');
+    const slider = screen.getByRole('slider', { name: 'Deine Stelle in der Abbildung' });
+    expect(slider.getAttribute('aria-valuetext')).toBe('Punkt (2 | −1)');
   });
 
   it('on a clock: where the hands stand, never the time they make', () => {
