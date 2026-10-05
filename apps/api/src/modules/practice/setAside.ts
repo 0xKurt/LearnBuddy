@@ -11,7 +11,8 @@ import { changeSession } from './sessionRow.js';
 import { reviewItem } from './fsrs.js';
 import { CARD_PASS } from './cards.js';
 import { DRILL_PASS } from './drill.js';
-import { learnsFsrs, revealReady } from './modeRules.js';
+import { givesHints, learnsFsrs, revealReady } from './modeRules.js';
+import { followWithSimilar } from './similar.js';
 import { touchRun, type ItemRow, type SessionItemRow } from './service.js';
 import { sessionView } from './sessionView.js';
 import { settleTestClock, timeUpError } from './testClock.js';
@@ -73,6 +74,8 @@ export async function revealItem(
     if (learnsFsrs(s.mode) && !noSingleSolution(si)) {
       await reviewItem(tx, learnerId, sessionId, itemId, 'revealed', now);
     }
+    // The solution shown: a similar task comes right after it (#388, `similar.ts`).
+    if (givesHints(s.mode)) await followWithSimilar(tx, learnerId, sessionId, itemId);
     await touchRun(tx, learnerId, sessionId, now);
   });
   return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());

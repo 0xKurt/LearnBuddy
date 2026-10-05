@@ -1,6 +1,6 @@
 // Tapping inside a figure (issue #248, analysis #224 `HOTSPOT_FIG`): a place on a number line, a
 // point of a coordinate system, a column of a bar chart, the time on a clock face, a region of a
-// map (#251). One mechanism for every figure that can be answered by a tap — labelled pictures
+// map (#251), a part of a labelled picture (#252). One mechanism for every figure that can be answered by a tap — labelled pictures
 // (#252) add their figure here, not a second mechanism.
 //
 // What a figure offers to tap is a GRID: one or more axes, each a list of values in drawing
@@ -22,7 +22,9 @@
 // (packages/shared-types/src/contracts/figure.ts); the API passes the zod-inferred figures in, so
 // a drift between the two fails the typecheck.
 
-import { isMap, mapMarked, mapRegion, mapRegions, type MapFig } from './maps.js';
+import { isMap, mapMarked, mapRegions, type MapFig } from './maps.js';
+import { regionNamed, type RegionName } from './regions.js';
+import { schematic, type SchematicFig } from './schematics.js';
 import { parseClockAnswer, type Clock } from './primary.js';
 
 export type TapNumberLine = {
@@ -41,11 +43,29 @@ export type TapPlane = {
   points: ReadonlyArray<{ x: number; y: number; label: string | null }>;
 };
 export type TapBars = { type: 'bar_chart'; bars: ReadonlyArray<{ label: string; value: number }> };
-export type Tappable = TapNumberLine | TapPlane | TapBars | Clock | MapFig;
+export type Tappable = TapNumberLine | TapPlane | TapBars | Clock | MapFig | SchematicFig;
 
 /** The figures a question may be answered on by a tap. */
-export const TAP_FIGURES = ['number_line', 'function_plot', 'bar_chart', 'clock', 'map'] as const;
+export const TAP_FIGURES = [
+  'number_line',
+  'function_plot',
+  'bar_chart',
+  'clock',
+  'map',
+  'schematic',
+] as const;
 export type TapFigureType = (typeof TAP_FIGURES)[number];
+
+/**
+ * The named places of a figure whose places have names — the regions of a map (#251), the parts of
+ * a labelled picture (#252) — or null for every other figure. Typed or tapped, an answer on such a
+ * figure is a name of one of them (`regions.ts`).
+ */
+export function namedPlaces(f: { type: string }): readonly RegionName[] | null {
+  if (isMap(f)) return mapRegions(f.v);
+  if (f.type === 'schematic') return schematic((f as SchematicFig).d).parts;
+  return null;
+}
 
 export function isTappable(f: { type: string }): f is Tappable {
   return (TAP_FIGURES as readonly string[]).includes(f.type);
@@ -131,7 +151,8 @@ export function tapAxes(f: Tappable): TapAxis[] | null {
       ];
     }
     case 'map':
-      return [{ name: 'region', values: mapRegions(f.v).map((_, i) => i) }];
+    case 'schematic':
+      return [{ name: 'region', values: (namedPlaces(f) ?? []).map((_, i) => i) }];
   }
 }
 
@@ -161,7 +182,8 @@ export function tapText(f: Tappable, pick: TapPick): string | null {
     case 'clock':
       return `${a}:${String(b).padStart(2, '0')}`;
     case 'map':
-      return mapRegions(f.v)[a]?.de ?? null;
+    case 'schematic':
+      return namedPlaces(f)?.[a]?.de ?? null;
   }
 }
 
@@ -226,8 +248,9 @@ export function tapPick(f: Tappable, text: string): TapPick | null {
       // 1 … 12 stand at 0 … 11; 0:30 and 12:30 are both on the 12.
       return [(t.h + 11) % 12, t.m / TAP_MINUTE_STEP];
     }
-    case 'map': {
-      const i = mapRegion(f.v, text);
+    case 'map':
+    case 'schematic': {
+      const i = regionNamed(namedPlaces(f) ?? [], text);
       return i === null ? null : [i];
     }
   }

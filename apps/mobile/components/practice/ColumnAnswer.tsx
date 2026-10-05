@@ -19,6 +19,9 @@
 // she reads but no longer writes in; the steps she has not reached are not there yet. The step she
 // is at follows the cell she writes in — a digit of the quotient opens its step again — so the
 // server's writing order still leads her through, and every cell still goes to the check.
+// A finished step is one target (two half rows, one touch high): a tap opens it again, a screen
+// reader hears "Schritt 2 bearbeiten" (issue #420). After "Prüfen" the step Buddy's reply names
+// opens by itself, her finger in its first cell — the reply has already said which step it is.
 
 import {
   columnResultText,
@@ -30,7 +33,7 @@ import {
   type ColumnGap,
   type StructuredAnswer,
 } from '@learnbuddy/shared-types/contracts';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 
@@ -40,6 +43,7 @@ import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
+import { TapSurface } from '../lb/TapSurface.js';
 import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
 // The same reading of a kept object of cells as a table's: known ids only, texts only.
@@ -81,6 +85,9 @@ function rowMode(
   return step < at || worked.has(step) ? 'done' : 'hidden';
 }
 
+/** The step Buddy's reply names (`AnswerResponse.column_step`), keyed by that reply's turn. */
+export type StepOpen = { step: number; turn: string };
+
 type Props = {
   view: ColumnCalcTaskView;
   /** Where her digits are kept (`lib/drafts.ts`), per question. */
@@ -88,9 +95,11 @@ type Props = {
   disabled: boolean;
   /** "Prüfen": every cell goes, empty or not; `shown` is her result, for the thread. */
   onSubmit: (parts: StructuredAnswer, shown: string) => void;
+  /** The step to open after a check that was not right yet (#420); a new reply opens it again. */
+  opens?: StepOpen | null;
 };
 
-export function ColumnAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+export function ColumnAnswer({ view, draftKey, disabled, onSubmit, opens = null }: Props) {
   const { palette, figure: ink } = useTheme();
   const { t } = useTranslation('practice');
   const { text: kept, setText: keep } = useDraft(draftKey);
@@ -102,12 +111,34 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const gaps = view.rows.flatMap((r) => r.cells.filter(isGap));
   const quotientDigits = gaps.filter((c) => c.part === 'quotient').length;
   // The steps she has written in. She is at the step of the cell she last went to, or — until
-  // then, and when her kept digits come back — at the last step she wrote in.
+  // then — at the last step she wrote in. The step is kept beside her digits, so a remount (a
+  // theme switch) leaves her where she was, the step Buddy opened included (#420).
   const worked = new Set(
     gaps.filter((g) => (digits[g.id] ?? '') !== '').map((g) => stepOf(g, quotientDigits)),
   );
-  const [went, setAt] = useState<number | null>(null);
+  const { text: wentKept, setText: keepWent } = useDraft(`${draftKey}.step`);
+  const went = Number(wentKept) || null;
+  const setAt = (step: number) => keepWent(String(step));
   const at = went ?? Math.max(1, ...worked);
+  // A step opened by a tap or by Buddy's reply: her finger goes into its first cell once drawn.
+  const focusIn = useRef<number | null>(null);
+  const openStep = (step: number) => {
+    setAt(step);
+    focusIn.current = step;
+  };
+  useEffect(() => {
+    if (opens) openStep(opens.step);
+  }, [opens]);
+  useEffect(() => {
+    const step = focusIn.current;
+    if (step === null) return;
+    const first = gaps.find((g) => g.part !== 'quotient' && stepOf(g, quotientDigits) === step);
+    const input = first ? inputs.current.get(first.id) : undefined;
+    // Not drawn yet (the step opens in this very commit): the next render puts her there.
+    if (!input) return;
+    focusIn.current = null;
+    input.focus();
+  });
 
   const cols = Math.max(...view.rows.map((r) => r.cells.length));
   const signs = Array.from({ length: cols }, (_, c) => signColumn(view.rows, c));
@@ -187,69 +218,89 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit }: Props) {
     />
   );
 
-  const grid = (
-    <View style={{ alignSelf: 'center', width: gridWidth }}>
-      {view.rows.map((row, r) => {
-        const mode = rowMode(row, at, worked);
-        if (mode === 'hidden') return null;
-        const done = mode === 'done';
-        const printed = done || row.cells.every((c) => !isGap(c));
-        // A row she only reads is one thing to a screen reader: "4721", "+ 1389", "12".
-        const said = printed
-          ? row.cells
-              .map((c) => (isGap(c) ? (digits[c.id] ?? '') : c.text))
-              .join('')
-              .trim()
-          : undefined;
-        return (
-          <View key={`r${r}`}>
-            {row.rule ? (
-              <View
-                testID="column-rule"
-                style={{ height: RULE, backgroundColor: ink.stroke, borderRadius: RULE }}
-              />
-            ) : null}
+  // Each row drawn, with the division step it shows shrunk (0: drawn in full).
+  const drawn = view.rows.flatMap((row, r) => {
+    const mode = rowMode(row, at, worked);
+    if (mode === 'hidden') return [];
+    const done = mode === 'done';
+    const printed = done || row.cells.every((c) => !isGap(c));
+    // A row she only reads is one thing to a screen reader: "4721", "+ 1389", "12".
+    const said = printed
+      ? row.cells
+          .map((c) => (isGap(c) ? (digits[c.id] ?? '') : c.text))
+          .join('')
+          .trim()
+      : undefined;
+    const el = (
+      <View key={`r${r}`}>
+        {row.rule ? (
+          <View
+            testID="column-rule"
+            style={{ height: RULE, backgroundColor: ink.stroke, borderRadius: RULE }}
+          />
+        ) : null}
+        <View
+          testID={done ? 'column-done' : undefined}
+          style={{ flexDirection: 'row', height: done ? HALF_ROW : ROW }}
+          accessible={printed}
+          {...(said ? { accessibilityLabel: said } : {})}
+        >
+          {row.cells.map((c, col) => (
             <View
-              testID={done ? 'column-done' : undefined}
-              style={{ flexDirection: 'row', height: done ? HALF_ROW : ROW }}
-              accessible={printed}
-              {...(said ? { accessibilityLabel: said } : {})}
+              key={`c${col}`}
+              style={{
+                width: colWidth(col),
+                alignItems: 'center',
+                justifyContent: 'center',
+                // The air between two cells she types in: their frames never touch.
+                // token-exempt: hairline of air between frames, not a step of the scale
+                paddingHorizontal: isGap(c) && !done ? 1 : 0,
+              }}
             >
-              {row.cells.map((c, col) => (
-                <View
-                  key={`c${col}`}
-                  style={{
-                    width: colWidth(col),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    // The air between two cells she types in: their frames never touch.
-                    // token-exempt: hairline of air between frames, not a step of the scale
-                    paddingHorizontal: isGap(c) && !done ? 1 : 0,
-                  }}
+              {isGap(c) && !done ? (
+                cell(c)
+              ) : (
+                <Text
+                  // A cell of a finished step is still that cell, only read now.
+                  testID={isGap(c) ? `column-${c.id}` : undefined}
+                  accessible={!printed}
+                  style={[
+                    done ? TYPE.small : TYPE.body,
+                    { color: signs[col] ? palette.ink2 : palette.ink },
+                  ]}
                 >
-                  {isGap(c) && !done ? (
-                    cell(c)
-                  ) : (
-                    <Text
-                      // A cell of a finished step is still that cell, only read now.
-                      testID={isGap(c) ? `column-${c.id}` : undefined}
-                      accessible={!printed}
-                      style={[
-                        done ? TYPE.small : TYPE.body,
-                        { color: signs[col] ? palette.ink2 : palette.ink },
-                      ]}
-                    >
-                      {isGap(c) ? (digits[c.id] ?? '') : c.text}
-                    </Text>
-                  )}
-                </View>
-              ))}
+                  {isGap(c) ? (digits[c.id] ?? '') : c.text}
+                </Text>
+              )}
             </View>
-          </View>
-        );
-      })}
-    </View>
-  );
+          ))}
+        </View>
+      </View>
+    );
+    return [{ step: done ? columnRowStep(row) : 0, el }];
+  });
+
+  // A finished step's lines together are one target to open it again (#420).
+  const pieces: ReactNode[] = drawn.map(({ step, el }, i) => {
+    if (step === 0) return el;
+    if (drawn[i - 1]?.step === step) return null;
+    return (
+      <TapSurface
+        key={`s${step}`}
+        testID={`column-step-${step}`}
+        onTap={() => openStep(step)}
+        accessibilityRole="button"
+        accessibilityLabel={t('column.reopen', { step })}
+        disabled={disabled}
+        // In the flow of the rows, not over them: the step's own lines give it its height.
+        style={{ alignSelf: 'stretch' }}
+      >
+        {drawn.filter((d) => d.step === step).map((d) => d.el)}
+      </TapSurface>
+    );
+  });
+
+  const grid = <View style={{ alignSelf: 'center', width: gridWidth }}>{pieces}</View>;
 
   return (
     <AnswerShell

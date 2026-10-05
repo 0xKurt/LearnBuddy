@@ -6,9 +6,11 @@ import { isStructuredKind, SubjectKind, type ItemView } from '@learnbuddy/shared
 
 import type { StorageGateway } from '../../storage/gateway.js';
 import { surfaceOf, taskOf } from './bars.js';
+import { storedFigure } from './items.js';
 import { staffSurfaceOf, staffTaskOf } from './staff.js';
 import { structuredTaskOf, viewOf } from './structured.js';
 import type { ItemRow } from './service.js';
+import { tapItemProblem } from './tapCheck.js';
 
 /** How long a signed concept-image URL lives; every session fetch signs afresh (issue #50). */
 const IMAGE_URL_TTL_SECONDS = 1800;
@@ -62,6 +64,35 @@ export function taskViewFor(row: Pick<ItemRow, 'kind' | 'task'>): ItemView['task
   if (!isStructuredKind(row.kind)) return null;
   const task = structuredTaskOf(row.task, row.kind);
   return task ? viewOf(task) : null;
+}
+
+/**
+ * She answers by tapping a place in the figure (issue #248): read back through the check it was
+ * written under, or the question is typed like any other.
+ */
+export function tapsFigure(row: Pick<ItemRow, 'kind' | 'answer' | 'figure' | 'tap'>): boolean {
+  return row.tap === true && tapItemProblem({ ...row, figure: storedFigure(row.figure) }) === null;
+}
+
+/**
+ * Whether she gives her answer ON THE SCREEN — an option, a board, the fraction bar or the staff, a
+ * place in the figure — instead of writing it into the bar (issue #388, report §9 "the bar per
+ * form"). The same parts the view sends (`sessionView`), so what a line tells her to do matches the
+ * form in front of her. Tapped words (`tap_choices`) are not counted: they are offered only in
+ * practice, beside a field she can still type in.
+ */
+export function answersOnScreen(
+  row: Pick<
+    ItemRow,
+    'kind' | 'answer' | 'choices' | 'task' | 'bar_task' | 'staff_task' | 'figure' | 'tap'
+  >,
+): boolean {
+  return (
+    (row.kind === 'multiple_choice' && row.choices !== null) ||
+    taskViewFor(row) !== null ||
+    surfaceFor(row.bar_task, row.staff_task) !== null ||
+    tapsFigure(row)
+  );
 }
 
 /** A Belegstelle's board (#368): she answers in the reading text itself, so it shows the text. */

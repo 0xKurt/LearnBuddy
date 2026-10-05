@@ -286,7 +286,9 @@ describe.skipIf(!dbReady)('hint ladder', () => {
 
   it('gives no hints in a test or for homework, and none for another learner', async () => {
     const test = await start(env, l, [item({ prompt: 'Kürze 2/4', answer: '1/2' })], 'test');
-    expect(env.llm.callsFor('hints')).toHaveLength(0); // no hints for a test
+    // The ladder is written for a test too — its review explains with the worked solution
+    // (#388 §3.2) — but the test itself offers no hint.
+    expect(env.llm.callsFor('hints')).toHaveLength(1);
     expect(test.items[0]!.hints_left).toBe(0);
     expect((await hint(l, test, test.items[0]!.item.id)).status).toBe(409);
 

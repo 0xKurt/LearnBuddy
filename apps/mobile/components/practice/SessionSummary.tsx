@@ -215,6 +215,9 @@ function reviewRow(row: SessionItemView, number: number, ranOut: boolean, t: TFu
     label: `${number} · ${status}`,
     text: row.item.prompt,
     detail: answer !== null && !right ? t('summary_test.solution', { answer }) : null,
+    // The review explains, not only lists (report #388 §3.2): the worked way where one was
+    // prepared, under the solution of a question she did not get right.
+    note: right ? null : row.explanation,
   };
 }
 

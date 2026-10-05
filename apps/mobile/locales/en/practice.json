@@ -133,6 +133,11 @@
     "thinking": "Buddy is explaining it another way …",
     "title": "Explained another way"
   },
+  "why": {
+    "ask": "Why is that right?",
+    "label": "Which reason is right?",
+    "hint": "Shows three reasons – tap the one that's right."
+  },
   "self_solved": {
     "title": "Solved it yourself!",
     "body": "You worked that out on your own."
@@ -362,6 +367,7 @@
     "task": "Task"
   },
   "column": {
+    "reopen": "Edit step {{step}}",
     "check_waits": "Once you have written a digit.",
     "carry": "Carry, {{place}}",
     "result": "Result, {{place}}",
@@ -378,5 +384,20 @@
       "hundred thousands",
       "millions"
     ]
+  },
+  "essay": {
+    "intro": "{{form}} – where your text stands",
+    "met": "done",
+    "open": "still open",
+    "places": "Here you can sharpen it",
+    "revise": "Rework these places – your text is still in the field. Then send me the new version.",
+    "last": "That was your last version for now. Take these points into your next text.",
+    "quote": "“{{text}}”",
+    "her_words": "Your words",
+    "version_one": "Version {{n}} · 1 word",
+    "version_other": "Version {{n}} · {{count}} words",
+    "text_one": "Your text · 1 word",
+    "text_other": "Your text · {{count}} words",
+    "thinking": "Buddy is reading your text …"
   }
 }

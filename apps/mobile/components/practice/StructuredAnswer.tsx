@@ -14,7 +14,7 @@ import type {
   StructuredTaskView,
 } from '@learnbuddy/shared-types/contracts';
 
-import { ColumnAnswer } from './ColumnAnswer.js';
+import { ColumnAnswer, type StepOpen } from './ColumnAnswer.js';
 import { FindErrorAnswer } from './FindErrorAnswer.js';
 import { GridAnswer } from './GridAnswer.js';
 import { MarkAnswer } from './MarkAnswer.js';
@@ -31,9 +31,11 @@ type Props = {
   disabled: boolean;
   /** Her answer as it goes to the server (`via` only where she could type OR tap), and its text. */
   onSubmit: (answer: { parts: Parts; via?: 'typed' | 'tapped' }, shown: string) => void;
+  /** The division step Buddy's last reply names (#420): only written arithmetic opens it. */
+  opens?: StepOpen | null;
 };
 
-export function StructuredAnswer({ view, draftKey, disabled, onSubmit: send }: Props) {
+export function StructuredAnswer({ view, draftKey, disabled, onSubmit: send, opens }: Props) {
   const onSubmit = (parts: Parts, shown: string, via?: 'typed' | 'tapped') =>
     send(via ? { parts, via } : { parts }, shown);
   // What every form takes besides its own view.
@@ -54,7 +56,7 @@ export function StructuredAnswer({ view, draftKey, disabled, onSubmit: send }: P
     case 'find_error':
       return <FindErrorAnswer view={view} {...own} />;
     case 'column_calc':
-      return <ColumnAnswer view={view} {...own} />;
+      return <ColumnAnswer view={view} opens={opens ?? null} {...own} />;
     case 'grid_draw':
       return <GridAnswer view={view} {...own} />;
   }

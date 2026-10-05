@@ -127,6 +127,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `POST /practice/sessions/:id/cards`, `POST …/card`                                                   | Lernkarten: a pass over the words that did not sit, each card judged by her (#147)                                    |
 | `POST /practice/drills`, `POST /practice/sessions/:id/drill`                                         | Kopfrechnen: a round of tasks code wrote, one answer checked by code (#243)                                           |
 | `POST /practice/sessions/:id/ask`, `POST …/later`                                                    | a question to the tutor, never graded; „Merk ich mir für nachher" for an off-topic one (#391)                         |
+| `POST /practice/sessions/:id/why`                                                                    | „Warum stimmt das?": the reason she tapped after a closed question, judged by code (#388)                             |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
 ## Buddy decisions
@@ -1726,7 +1727,52 @@ zeigen“, „Später“), `contest.ts` („Frage passt nicht“, „Bewertung s
 Kopfrechnen round), `sessionRow.ts` (the session row and the one way to lock it), `finish.ts`
 (the end of a run) and `testClock.ts` (a practice test with time, #241). `ladder.ts` says where
 the hint ladder ends and what a test says instead; `later.ts` keeps an off-topic question for
-after the practice (#391).
+after the practice (#391); `similar.ts` puts a similar task after a shown solution, `why.ts`
+answers „Warum stimmt das?" and `readiness.ts` says when practice goes well enough for a Probetest
+(#388).
+
+**Hilfe an der Frage** (issue #388, report „Hilfe und Fragen beim Üben" §3, §5, §8). Code decides
+each of these from what is recorded; the model only writes words that code checks:
+
+- **„Tipp" after two misses** (§5.5): `SessionItemView.hint_offered` is true while the question is
+  open, „Tipp" works, the run is practice, she missed `OFFER_HINT_AFTER_MISSES` (2) times and took
+  no hint (`ladder.ts` `hintOffered`). The app shows the same chip in the soft skin
+  (`HelpChips` `hintOffered`). Nothing opens and nothing is said. There is no help coach (§5.6).
+- **A similar task after a shown solution** (§5.2, Baker's „Scooter", Shih's worked example): when
+  a practice question closes with its solution shown (the third miss or the ladder's end in
+  `answer.ts`, „Lösung zeigen" in `setAside.ts`), `followWithSimilar` runs in the same transaction.
+  If the next question is not already of the same topic and form, one further down the run is
+  brought forward. Otherwise one of her own questions of that topic, form and subject that is not
+  in the run joins it right behind: never another learner's, homework, a Kopfrechnen fact, a
+  listening question or an archived one, the most due first. When there is none, the run stays
+  as it is. Never in a test, homework or a card pass. The worked solution itself is the existing
+  end of the ladder (`workedReply`).
+- **„Warum stimmt das?"** (§5.3, self-explanation): three reasons per question, one of them the
+  rule behind the solution. They are written in the background hints call that already exists
+  (`hints.ts` `SYSTEM`; its version is the hash) and kept in `items.why` (`{reasons, correct}`, migration `0098_item_why.sql`).
+  `checkedWhy` keeps them only when they are exactly three different reasons and none states the
+  key. The view sends the reasons (never `correct`) once the question is closed and its solution
+  is out, until she tapped one. `POST …/why` (`WhyRequest`: `client_turn_id`, `item_id`,
+  `choice` 0–2) judges the tap by code, with no model call, and answers with a fixed line
+  (`practice.why.right` / `practice.why.not_quite` naming the true reason). Both turns carry
+  `reexplain = 'why'`. It is idempotent per `client_turn_id`, allowed once per question (409
+  `why_answered`), 409 on an open question, one without reasons or a running test, and 404 for
+  someone else's. Not graded, no FSRS effect. In the app the "why" chip of `Reexplain` asks her
+  where reasons exist; elsewhere it stays „Warum ist das so?". Questions from a photo get their
+  hints in the reading call, which writes no reasons yet, so they keep „Warum ist das so?".
+- **The Probetest** (§3): its review after handing in is the default and now explains.
+  `SessionItemView.explanation` is the worked solution, under exactly the condition `answer` is
+  sent, shown under the solution of every question she did not get right (`ResultList` `note`).
+  Buddy offers a test (`offer_learning` kind `test`, its `asked` field) only when
+  `practiceGoesWell` holds, or when she asked for one: `asked` must be her own words from this
+  message (`requireQuote`). `practiceGoesWell` holds when, of her last 10 closed practice
+  questions on the goal's sheets (or on the topic in her words), at least 5 are closed and 70 %
+  of them are right. Otherwise the offer is refused with the reason, and Buddy offers practice.
+  Starting a test herself in the app is never held back.
+- **The test's fixed line fits the form**: `practice.test_no_hints` says „schreib einfach, was du
+  denkst" only where she writes her answer. On options, a board, the fraction bar, the staff or a
+  tap in the figure it is `practice.test_no_hints_on_screen` („antworte einfach so, wie du
+  denkst"), decided by `answersOnScreen` (`viewParts.ts`), from the same parts the view sends.
 
 **Fragen beim Üben** (issue #391, report „Hilfe und Fragen beim Üben" §1, §3, §4). The first help
 stays the buttons („Tipp", „Warum?", „Erklär's anders"); free text is the second path, through
@@ -2108,9 +2154,39 @@ eigenen Worte bestätigen und keine exakte Angabe überstimmen.
   Aufsatz in einem Test wird abgelehnt (409, `admitText`).
 - **Ausfall.** Kein Modell, kaputte Ausgabe oder Tageslimit: kein Urteil (`verdict` null), kein
   Versuch, der ehrliche Satz „Ich kann deinen Text gerade nicht lesen. Er ist nicht verloren …".
-- **Noch nicht verdrahtet (Schritt 2, mit der App):** woher eine Aufsatzfrage kommt (Buddys Angebot
-  und/oder eine `long_text`-Aufgabe auf ihrem Blatt, die heute noch `NotPracticable` ist), das
-  Antwortfeld bis 12 000 Zeichen mit lokalem Entwurf, die Darstellung je Punkt und Stelle.
+- **Woher eine Aufsatzfrage kommt (Schritt 2):** aus Buddys Angebot, `offer_learning` mit der
+  Art `essay` — über ein Thema, das sie nennt, oder die Schreibaufgabe auf
+  einem ihrer Blätter (`sheet`, wie bei „Erklär mal"). Kein Wähler und kein neuer Screen: sie
+  bittet im Chat, Buddy wählt die Form, der Knopf „Aufsatz schreiben" startet sie. Der Generator
+  füllt eine eigene Liste `essay` mit genau einer Aufgabe: Wortlaut, Textsorte
+  (`EssayType`) und — für eine Analyse — der Text, um den es geht (`practice/essayTask.ts`). Code
+  setzt die Kernpunkte aus der Textsorte (`essayItem`), nie das Modell; eine Analyse ohne Text
+  fällt weg, ein Text muss passen wie ein Lesetext (`passageFrom`) und, vom Blatt, wörtlich auf
+  ihrem Blatt stehen (`onTheSheet`). Ohne Blatt ist der Text einer Analyse Buddys eigener kurzer
+  Text, nie ein veröffentlichter aus dem Gedächtnis. Was übrig bleibt, ist ein Übungslauf mit
+  einer Frage. Ein `long_text` auf einem fotografierten Blatt bleibt in der Lesung
+  `NotPracticable` (die Übung des Blatts kann ihn nicht stellen); Buddy kann ihn von dort als
+  `essay` anbieten. Migration 0099 hebt die Grenze von `practice_turns.text` von 4000 auf 12 000
+  Zeichen — ein Aufsatz über etwa 600 Wörtern scheiterte vorher beim Speichern.
+- **In der App (Schritt 2):** dieselbe Übungsseite, dieselbe Eingabeleiste (`InputBar`), kein
+  zweites Feld. Für `essay` (`lib/practice/essay.ts`) nimmt die Leiste 12 000 Zeichen, steht
+  `tall` — drei Zeilen, beim Schreiben wächst sie bis zehn (mit Tastatur auf dem kleinen Telefon
+  bis vier, `formDensity`), in Ruhe bleibt sie bei drei, damit die Rückmeldung darüber Platz hat —,
+  und „Prüfen" bleibt unter der Leiste, solange Platz ist. Die Zeichenzahl erscheint erst in den
+  letzten 200 Zeichen. Ihr Text ist ein Entwurf je Lauf (`useDraft`), übersteht also das
+  Verlassen und einen App-Neustart, und bleibt nach dem Abschicken im Feld: die nächste Fassung
+  beginnt bei ihrer letzten. Im Gespräch steht eine Fassung als eine Zeile („Fassung 1 · 1 712
+  Wörter"), Buddys Antwort trägt die Rückmeldung in seiner Blase (`EssayFeedback`): je Kernpunkt
+  Zeichen und Wort („geschafft" / „noch offen", nie nur Farbe, nie „falsch"), bei „geschafft" ihre
+  eigenen Worte — violett wie ihre Blasen, in Anführungszeichen, mit Strich, für den Screenreader
+  „Deine Worte" —, bei „noch offen" der nächste Schritt; dann die Stellen zum Verbessern und der
+  nächste Schritt („Überarbeite …" oder „letzte Fassung"). Keine Zahl, keine Note. Der Weg an der
+  Frage vorbei heißt „Überspringen" (keine Lösung), „Die Bewertung stimmt nicht" gibt es nicht.
+  Die Rückmeldung ist höher als der Platz zwischen Frage und Leiste. Das Gespräch zeigt sonst nur
+  ganze Teile (#286, #403) und hätte sie ganz versteckt; als Antwort, die sie durchliest
+  (`threadRoom` `reads`), nimmt sie den ganzen Platz, steht ab ihrer ersten Zeile (`ThreadBox`
+  `readFrom`) und wird nach unten gescrollt. Ihre Frage zur Aufgabe (#402) steht im Gespräch
+  wörtlich, nicht als „Fassung".
 
 **Offen**: Eval-Satz (≥ 20 Texte je Textsorte, Übereinstimmung mit einer Lehrkraft) vor dem
 Live-Gang — wie bei #211 gibt es keinen Korpus. Ein Modellurteil kann keinen Punkt ohne ihre eigenen
@@ -2767,10 +2843,15 @@ next cell in the server's writing order (`order`: right to left, the carry befor
 phone's number pad is all she needs. A division is shown step by step (issue #413): the step she
 is at in full, the steps she has worked on above it shrunk to half-high lines she reads but no longer
 writes in, the steps she has not reached not yet there; the step follows the cell she writes in, a
-quotient digit opens its step again, and every cell still goes to the check. Printed rows are one number to a screen reader ("+1389"), every
+quotient digit opens its step again, and every cell still goes to the check. A finished step is one
+target (its two half rows, one touch high, `TapSurface`): a tap opens it again, a screen reader hears
+"Schritt 2 bearbeiten" (issue #420). After a check that is not right yet the answer carries the step
+the reply names (`AnswerResponse.column_step`, `columnStepOf`: the step of the first wrong cell, a
+quotient digit's own step) and the app opens it, her finger in its first cell — never in a test and
+never once the solution is shown. Printed rows are one number to a screen reader ("+1389"), every
 cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.44, now v1.46)
 and read from a sheet (extract.v8.22, now v8.24; a homework sheet: written arithmetic only, its own error is no
-Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86m, 360×740 and
+Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86n, 360×740 and
 390×844, light and dark, the keyboard up): four long lines with Buddy's longest reply above fit (six
 were 106 pt too tall, `FIND_ERROR_LINES_MAX`), and five rows of
 cells with Buddy's reply above (two partial products and their sum, a division of two steps). A
@@ -3471,7 +3552,8 @@ pictures (#252) add their figure to it rather than building a second one.
   `tap-figures.int.test.ts` (stored or dropped, exact verdicts without a model, replay, a row
   that no longer holds, another learner); walkthrough `tests/web/tap-figures.spec.ts` (scenario
   `testing/scenarios/tap.ts`).
-- **Maps (#251)** are one figure on this mechanism: §Maps.
+- **Maps (#251)** and **labelled pictures (#252)** are figures on this mechanism: §Maps,
+  §Labelled pictures.
 - **Not built here:** laying an amount with coins ("Leg 3,45 €", #254) — a sum of several taps,
   not one place; tapping a cell of the periodic table (#250) or a month of a line or climate chart
   (#245) — each is one `case` on this mechanism.
@@ -3533,6 +3615,60 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
 - **Not built here:** the Gradnetz and "Welche Koordinaten hat der Punkt?"; capitals, rivers,
   mountains as points; zoom (it would let the small countries of Europe be tapped); the Bundesland
   of her own profile as a default map.
+
+### Labelled pictures (issue #252)
+
+A drawing of the picture library — plant cell, animal cell, flower (section), plant, eye
+(section), tooth (section), insect, bicycle — with numbers on chosen parts. Buddy asks to label it
+("Beschrifte die Pflanzenzelle"), to name one numbered part ("Wie heißt Teil 3?") or to tap a part
+("Tippe auf den Zellkern", the tap mechanism above). Decided in #224: drawn by us, nothing
+licensed.
+
+- **Contract** (`packages/shared-types/src/contracts/schematic.ts`, in `ModelFigure`):
+  `{ type: 'schematic', d, n: string[], ask }` — which drawing, the parts that carry the numbers
+  1, 2, 3 … by name, the number asked (0: none). Never a shape. `FIGURE_RULES` lists every drawing
+  with its parts, generated from the library (`SCHEMATIC_PARTS`); the prompt versions are hashes
+  of what is sent (#425), so the rules change them themselves.
+- **Library** (code, in two files like the maps): `packages/shared-math/src/schematics.data.ts`
+  names every drawing and part — id, the five languages, other names a teacher accepts
+  ("Nukleus"); small and static, the server and the tap mechanism resolve names with it.
+  `schematicShapes.data.ts` draws them, part by part in the same order: ellipses, rounded boxes,
+  polygons and strokes (`drawShapes.ts`, every outline one way round, a hole the other) in the
+  frame 1000 wide, each part's pastel tone (`figure.slices`) and the point its number points at
+  (`at`, set by hand). The app loads it with the first picture (`useSchematicShapes`, on
+  `lib/lazyModule.ts`) — the start bundle had 8 KB of its gzip budget left, the drawings would
+  have taken more. A part is a region like a Land (`regions.ts`, §Maps):
+  names, winding number, which part a finger means — the topmost under it, or a small one by its
+  point —, what is tappable. Parts too small for a finger on 360 × 740 (pupil, an insect's eye,
+  the handlebar, the bell) can be named, not tapped.
+- **Rule 0, generation** (`apps/api/src/modules/practice/schematicCheck.ts`): a labelling draft
+  (two or more numbers, none asked, no tap) becomes one question per number, written by code —
+  "Pflanzenzelle: Wie heißt Teil 2?" in the question's language, the library's name as the key
+  (`labelQuestions`, before the checks). Then, in `FIGURE_CHECKS`: every numbered part must be one
+  of the drawing (stored as its id), each once; a typed question is short and its key is the part
+  carrying the number asked; a tap asks no number and its key is a part a finger can hit
+  (`regionTappable`). Anything else — what a part does, a part the drawing does not have — is
+  dropped.
+- **Rule 0, grading:** a tapped part exactly (`tapVerdict`); a typed name by the library
+  (`namedRuleVerdict` in `tapCheck.ts`, shared with the map): "nucleus", "Nukleus" and
+  "Zellkern" are one part. A tapped part stands in the thread in her language
+  (`tappedAnswerText`, answer.ts — the same path as the map's regions).
+- **Screen:** `components/math/SchematicFigures.tsx` draws each part outline-under-fill (the tubes
+  of a frame show no line inside the part) and a numbered badge off each numbered part with a
+  leader line. Tapping is `TapFigure` with the map's `case` in `tapLayout` (`TapShapes`: the
+  maps' and the pictures' shapes, each once loaded).
+  The line under it says "Teil gewählt"; the part's name is only in `aria-valuetext` (#409).
+  `describeSchematic` says the drawing and how many parts are numbered, never which.
+- Tests: `packages/shared-math/src/__tests__/schematics.test.ts` (names in five languages, every
+  name unique per drawing, every part reached at its point, tappability, tap round trip),
+  `lib/math/__tests__/tapLayout.test.ts`, `TapFigure.test.tsx`, `SchematicFigures.test.tsx`,
+  `schematic-figures.int.test.ts` ("Zelle beschriften" gives five questions without a word from
+  the model; stored or dropped; verdicts without a model; the thread in her language; another
+  learner); walkthrough `tests/web/tap-figures.spec.ts` (the cell labelled, every part of it
+  tapped, the bicycle's frame; scenario `testing/scenarios/schematic.ts`).
+- **Not built here:** the other drawings of the plan (microscope, skeleton, heart, ear, lab
+  equipment, traffic signs …: eight of the first fifteen are done); matching numbers to names
+  (#229); tapping the labels of a photographed sheet (`HOTSPOT_BILD`, extraction of label regions).
 
 ### Circuits, logic gates and the colour wheel (issue #261)
 
@@ -3627,6 +3763,14 @@ dropped, whatever the model wrote (Rule 0). Every row was a rule in `preparedFro
 a row, so a profile leaves out only what code already threw away: item kinds (`KINDS`), structured
 kinds (`STRUCTURED`), bars only in practice (#162), note lines in practice and tests (#226), the
 listening task only in a listening run (#210), a Diktat's entries only in a Diktat run (#242).
+**A form switched off** (#296): `FORMS_OFF` (comma-separated `ItemKind` values per environment; an
+unknown name stops the boot) takes the form out of the profile (`profileFor`) — out of the schema
+the model is shown and out of what code keeps — and out of what a photographed sheet stores
+(`formsOn` in `practice/items.ts`, used by `materials/service.ts`; a sheet left with nothing is `form_not_practicable`, never
+"unreadable"). Nothing on the answer path reads it, so a question of that form already stored stays
+answerable. A new form stays off in production until it was tested with the real model and the
+owner has seen it; switching is the environment variable, not a release. Figure types (a map, a
+solid) are not covered by it: they are not a form of their own but a drawing inside one.
 Inside an item, the fields no allowed kind keeps are
 left out too, from `practice/itemFields.ts` — the same constants `usableItems` and `usableRubric`
 discard by: a rubric (and its `RubricCheck` union) without a long answer, a tolerance without a
@@ -4456,8 +4600,10 @@ the role; code holds the frame (CLAUDE.md rule 1).
 - **The feedback is checked, not believed** (rule 0 from #224, the same rule as #211's `judged`).
   One model call (`ROLEPLAY_FEEDBACK_SYSTEM`, `RoleplayFeedbackForModel`, zod): per key point
   `met` and a quote, plus 2–3 lines of hers with a better version. `checkFeedback` counts a point
-  as managed **only** when the quote stands in her own lines (`quoteOccursIn`, whole words); an
-  invented quote, a fragment or a point the model left out is "noch nicht dabei". A better line
+  as managed **only** when the quote stands in her own lines, decided on the one path every key
+  point in the app takes (`quoted` in `practice/rubric.ts`, folded like a writing task's
+  `judged`, #296); an invented quote, a fragment or a point the model left out is "noch nicht
+  dabei". A better line
   whose `said` is not hers is dropped, never rewritten. The text she reads and hears is the
   app's (`i18n roleplay.*`): each point in words, a managed one with her own words as the proof —
   no score, no grade, no count. Stored as checked in `buddy_roleplays.feedback` (her export).

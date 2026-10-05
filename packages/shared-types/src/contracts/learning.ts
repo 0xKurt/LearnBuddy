@@ -561,6 +561,9 @@ export const ClarifyUnclearRequest = z.object({
 });
 export type ClarifyUnclearRequest = z.infer<typeof ClarifyUnclearRequest>;
 
+/** How many reasons „Warum stimmt das?" offers (issue #388): one right, two plausible. */
+export const WHY_REASONS = 3;
+
 export const SessionItemView = z.object({
   item: ItemView,
   /** missed: answered wrong in a test (one try, closed). */
@@ -571,6 +574,11 @@ export const SessionItemView = z.object({
   hints_left: z.number().int().min(0).default(0),
   /** "Tipp" works for this question now: a prepared hint at once, else the tutor writes one. */
   hint_available: z.boolean().default(false),
+  /**
+   * "Tipp" stands out now (issue #388, report §5.5): she missed twice and took no hint yet. One
+   * quiet offer on the existing chip — nothing opens, nothing is said; code decides it from her tries.
+   */
+  hint_offered: z.boolean().default(false),
   /**
    * "Lösung zeigen" works now: only after a real try or a hint (never from the first second),
    * never in homework help and never while a test runs (a test has "Überspringen").
@@ -594,6 +602,19 @@ export const SessionItemView = z.object({
    * question that is not a listening one.
    */
   listen_transcript: z.string().nullable().default(null),
+  /**
+   * The question's worked solution, step by step (issue #388, report §3.2): the explanation the
+   * Probetest's review shows per question once it is handed in. Under exactly the condition
+   * `answer` carries the solution; null where none was prepared — nothing is made up for it.
+   */
+  explanation: z.string().nullable().default(null),
+  /**
+   * „Warum stimmt das?" (issue #388, report §5.3): three reasons to tap, one of them the rule that
+   * makes the solution right. Only once the question is closed and its solution is out, only where
+   * reasons were written with its hints, and only until she tapped one (`WhyRequest`). Which one
+   * is right is never sent: code judges her tap.
+   */
+  why: z.array(z.string()).length(WHY_REASONS).nullable().default(null),
 });
 export type SessionItemView = z.infer<typeof SessionItemView>;
 
@@ -875,6 +896,21 @@ export type CardRequest = z.infer<typeof CardRequest>;
  * the explanation become turns. Never in a running test; in homework help only for a task she
  * solved herself.
  */
+/**
+ * „Warum stimmt das?" (issue #388): the reason she tapped, by its place in `SessionItemView.why`.
+ * Once per question; judged by code against the question's key, never by a model.
+ */
+export const WhyRequest = z.object({
+  client_turn_id: Uuid,
+  item_id: Uuid,
+  choice: z
+    .number()
+    .int()
+    .min(0)
+    .max(WHY_REASONS - 1),
+});
+export type WhyRequest = z.infer<typeof WhyRequest>;
+
 export const ReexplainRequest = z.object({
   client_turn_id: Uuid,
   item_id: Uuid,
@@ -925,7 +961,9 @@ export const StartTopicRequest = z.object({
    * in writing, checked against 3–6 key points. read: Leseverständnis without a photo (#368) —
    * Buddy writes a reading text at her level and questions about it, held to the rules of a
    * photographed text (`practice/readText.ts`). Buddy explaining something stays the chat's
-   * answer, never a mode (owner decision 28.09., issue #70); here SHE explains.
+   * answer, never a mode (owner decision 28.09., issue #70); here SHE explains ·
+   * essay: a long text she writes — Aufsatz, Erörterung, Interpretation (issue #258) — one task
+   * of the `essay` kind whose key points code sets from its text type (`practice/essay.ts`).
    */
   kind: z.enum([
     'practice',
@@ -937,13 +975,15 @@ export const StartTopicRequest = z.object({
     'spelling_dictation',
     'teach_back',
     'read',
+    'essay',
   ]),
   text: z.string().trim().min(2).max(3000),
   /**
    * spelling_dictation: the photographed sheet the words come from (a Lernwörter list,
    * issue #242). The words are then taken from that sheet's text and every one must stand in it
    * (`practice/dictation.ts`). teach_back: the sheet the questions are asked about (issue #236);
-   * an exact term of a key point must stand in it. Any other kind ignores it. Another learner's
+   * an exact term of a key point must stand in it. essay: the sheet whose writing task she wants
+   * to practise (issue #258); a text the task is about must stand on it. Any other kind ignores it. Another learner's
    * sheet is a 404.
    */
   material_id: Uuid.nullable().optional(),
@@ -1134,6 +1174,12 @@ export const AnswerResponse = z.object({
   verdict: AnswerVerdict.nullable(),
   /** The tutor turn created for this answer. */
   reply: PracticeTurnView,
+  /**
+   * A written division not right yet (issue #420): the step of its staircase that the reply names,
+   * 1 the first — the app opens it and puts her in its first cell. Only where the reply names a
+   * place (never in a test, never with the solution shown); absent or null everywhere else.
+   */
+  column_step: z.number().int().min(1).nullable().optional(),
 });
 export type AnswerResponse = z.infer<typeof AnswerResponse>;
 

@@ -20,6 +20,10 @@ export * from './solidNets.js';
 export * from './diagram.js';
 export * from './regions.js';
 export * from './maps.js';
+export * from './schematics.js';
+// The drawings' shapes: the server decides with them what can be tapped; the app loads them with
+// the first picture (`useSchematicShapes`).
+export { SCHEMATIC_SHAPES } from './schematicShapes.data.js';
 // The shapes of the maps: the server decides with them what can be tapped. The app never imports
 // this index; it loads them when a map is on the screen (`useMapShapes`).
 export { MAP_SHAPES } from './mapShapes.data.js';

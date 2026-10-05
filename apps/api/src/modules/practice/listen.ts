@@ -47,12 +47,9 @@ import { synthesizeSpeech } from '../voice/speech.js';
 import { unusedItemFields } from './itemFields.js';
 import { ItemDraft, optionPictures, usableItems } from './items.js';
 
-/**
- * How many listening texts one prepared set may hold: one. A listening exercise IS a text
- * with its questions; a second text in the same run would be a catalogue of exercises
- * (CLAUDE.md rule 16) and a second synthesis call for something she has not asked for yet.
- */
-export const LISTEN_TEXTS_PER_SET = 1;
+// One listening text per prepared set: a listening exercise IS a text with its questions; a
+// second text in the same run would be a catalogue of exercises (CLAUDE.md rule 16) and a second
+// synthesis call for something she has not asked for yet. The task schema holds exactly one.
 
 /**
  * The answer forms a listening question may take. Both are decided by the rules in

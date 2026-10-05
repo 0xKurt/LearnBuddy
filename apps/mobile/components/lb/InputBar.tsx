@@ -18,11 +18,18 @@
 // task). A typed answer is written in its field; on every other form — options, a board, the
 // note line, the fraction bar — the field is her question to the tutor ("Frag zur Aufgabe …",
 // issue #402), with the form's "Prüfen" in the action slot until she types one.
+//
+// A long text (issue #258) is typed into the same bar, `tall`: a small page of three lines. While
+// she writes it grows further before it scrolls in itself — less far while the keyboard is up
+// (`formDensity` tight), so the question above it stays on screen; at rest it keeps its three
+// lines, so Buddy's feedback above it has the room.
 
 import { forwardRef, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { formDensity } from '../../lib/keyboard.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -32,6 +39,14 @@ import { LbTextInput, type LbTextInputProps, type LbTextInputRef } from './LbTex
 
 /** The count appears this close to the end, not before: a permanent 0/2000 is noise. */
 const COUNT_WITHIN = 200;
+/** A long text's bar: the lines it starts with, and how far it grows with and without keyboard. */
+const TALL = { rows: 3, roomy: 10, tight: 4 } as const;
+
+/** Grows only while she writes; dense: the keyboard is up. */
+function tallRows(tall: 'writing' | 'resting', dense: boolean): number {
+  if (tall === 'resting') return TALL.rows;
+  return dense ? TALL.tight : TALL.roomy;
+}
 
 /** What stands in the bar around her text: the same with and without the field. */
 type Controls = {
@@ -48,6 +63,8 @@ type Controls = {
   /** Above the pill: what goes with the text (the pages she attached). */
   above?: ReactNode;
   disabled?: boolean;
+  /** A long text (issue #258): a taller pill that, while she writes, grows further. */
+  tall?: 'writing' | 'resting' | null;
 };
 
 type Props = Controls &
@@ -72,8 +89,11 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
     after = null,
     above = null,
     disabled = false,
+    tall = null,
   } = props;
   const { palette } = useTheme();
+  const seen = useVisibleHeight();
+  const typing = formDensity(seen.window, seen.overlap) === 'tight';
   const { t } = useTranslation('common');
   const idle = voice === undefined || voice.state === 'idle';
   const control =
@@ -94,6 +114,7 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
     after: _after,
     above: _above,
     disabled: _disabled,
+    tall: _tall,
     ...field
   } = props;
   return (
@@ -134,6 +155,7 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
         value={value}
         maxLength={maxLength}
         multiline
+        {...(tall ? { rows: TALL.rows, maxRows: tallRows(tall, typing) } : {})}
         end={
           <>
             {unit ? (

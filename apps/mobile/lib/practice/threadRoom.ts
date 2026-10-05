@@ -16,7 +16,9 @@
 // 360×740 the reply took a cloze's whole surface, and the gap she was fixing vanished under it
 // (issue #232). Where the newest turn still does not fit whole it is not drawn (`newestHidden`)
 // until there is room again — the keyboard closes, the card is done — and only the parts after it
-// that fit whole stand there.
+// that fit whole stand there. Except a reply she reads through (`reads`, Buddy's feedback on her
+// long text, #258): taller than the room even at rest, it would never stand — so it takes all the
+// room, from its top (`ThreadBox` `readFrom`), and scrolls inside the conversation.
 
 import { bottomRoom, CONTROL, SPACE, TOUCH } from '../theme/space.js';
 
@@ -82,6 +84,8 @@ export type RoomInput = {
   growable: boolean;
   /** The card takes ALL the room the conversation leaves (a Diktat before her answer, #242). */
   fills?: boolean;
+  /** The newest turn is read through, not glanced at: never hidden for its height (#258). */
+  reads?: boolean;
   viewHeight: number;
 };
 
@@ -114,6 +118,7 @@ export function threadRoom(m: RoomInput): Room {
   const most = boardGives ? Math.max(room, Math.min(newestNeed, replyMost)) : room;
   // A quiet thread decides even at room 0 — else the row would come back half and flicker.
   let threadCap = (room > 0 || quiet) && threadNeed > 0 ? whole(most) : undefined;
+  if (m.reads && threadCap !== undefined && threadCap < newestNeed) threadCap = most;
   const newestHidden = threadCap !== undefined && !quiet && threadCap < newestNeed;
   const threadFloor = boardGives ? whole(Math.min(newestNeed, replyMost)) : 0;
 

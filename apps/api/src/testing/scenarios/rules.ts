@@ -76,6 +76,11 @@ export function inTurn(...answers: unknown[]): () => unknown {
 
 /** Prepared hints and judgements in practice (practice/service.ts). */
 export const tutorRules = new RuleBook('tutor');
+/**
+ * The ladder written in the background after a run starts (practice/hints.ts): hints, the worked
+ * solution and the reasons of „Warum stimmt das?" (#388). A question no rule is about gets none.
+ */
+export const hintRules = new RuleBook('hints', () => ({ items: [] }));
 /** Reading a photographed sheet or homework (materials/service.ts). */
 export const readingRules = new RuleBook('extraction');
 /** Judging a spoken sentence (practice/speak.ts). */

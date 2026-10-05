@@ -10,7 +10,7 @@ import type { ItemView, PracticeTurnView } from '@learnbuddy/shared-types/contra
 import { useEffect, useRef, useState } from 'react';
 import type { View } from 'react-native';
 
-import { answerFolds } from '../keyboard.js';
+import { answerFolds, formDensity } from '../keyboard.js';
 import { useVisibleHeight } from '../useVisibleHeight.js';
 import { boardKeeps, threadRoom, type Room } from './threadRoom.js';
 import { visualCaps, visualGrows } from './visuals.js';
@@ -76,6 +76,8 @@ export function useScreenRoom() {
     caps: { figure: number; image: number };
     cardNatural: number;
     tops: number[];
+    /** Where the conversation rests: the top of a reply she reads through (`ThreadBox`, #258). */
+    readFrom: number | undefined;
     /** The card laid out at height `h`. */
     onCard: (h: number) => void;
   } {
@@ -116,6 +118,9 @@ export function useScreenRoom() {
     const tops = q.threadTurns
       .map((turn) => turnTops[turn.id])
       .filter((y): y is number => y !== undefined);
+    // Buddy's feedback on her long text is read through, from its top (#258, `threadRoom`).
+    const newest = q.threadTurns[q.threadTurns.length - 1];
+    const reads = item.kind === 'essay' && Boolean(newest?.essay);
     const shared = threadRoom({
       room,
       short: Math.max(0, -left),
@@ -131,11 +136,15 @@ export function useScreenRoom() {
       cardNatural,
       cardDelta,
       visual: cardNatural > 0 && Boolean(item.figure || item.image) && !q.speaking,
-      growable: visualGrows(item.figure),
+      // While she types the drawing folds to one row (`Question`, `formDensity` tight): growing
+      // the card then only made an empty band under that row and squeezed the conversation — a
+      // short question beside a map or picture left "Tipp" half shown at 360×440 (#252).
+      growable: visualGrows(item.figure) && formDensity(seen.window, seen.overlap) !== 'tight',
       // A Diktat card before her first answer holds only the way to hear the word (issue #242):
       // it takes all the room the conversation does not use, so no empty band is left under it.
       fills: cardNatural > 0 && item.kind === 'spelling_dictation' && !q.dictationCompact,
       viewHeight,
+      reads,
     });
     granted.current = shared.cardGrowTo;
     return {
@@ -144,6 +153,7 @@ export function useScreenRoom() {
       cardNatural,
       // ThreadBox rests its edge on any of them.
       tops: [...tops, ...partTops],
+      readFrom: reads ? tops[tops.length - 1] : undefined,
       onCard: (h) => {
         setCardHeight(h);
         // Its own height before it grows: measured only while it has no minHeight. (While it

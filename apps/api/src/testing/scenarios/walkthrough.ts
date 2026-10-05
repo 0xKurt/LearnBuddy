@@ -14,9 +14,11 @@ import { scriptCoreLoop } from './core-loop.js';
 import { scriptDiagrams } from './diagrams.js';
 import { scriptDictation } from './dictation.js';
 import { scriptDrill } from './drill.js';
+import { scriptEssay } from './essay.js';
 import { scriptFigures } from './figures.js';
 import { installGenerations } from './generations.js';
 import { scriptGrid } from './grid.js';
+import { scriptHelp } from './help.js';
 import { scriptLearningModes } from './learning-modes.js';
 import { scriptMark } from './mark.js';
 import { scriptPeriodic } from './periodic.js';
@@ -26,8 +28,9 @@ import { scriptRoleplay } from './roleplay.js';
 import { scriptSolids } from './solids.js';
 import { scriptSources } from './sources.js';
 import { scriptMap } from './map.js';
+import { scriptSchematic } from './schematic.js';
 import { scriptTap } from './tap.js';
-import { pronounceRules, readingRules, tutorRules } from './rules.js';
+import { hintRules, pronounceRules, readingRules, tutorRules } from './rules.js';
 import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
 import { scriptTour } from './tour.js';
@@ -44,6 +47,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   // Early too: "Zahlenstrahl" and "Uhr" are words an older, broader rule may know (#248).
   scriptTap();
   scriptMap();
+  scriptSchematic();
   // First: its generation rule is keyed on her list, and a broader rule registered earlier
   // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
   scriptDictation();
@@ -55,6 +59,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptWritten();
   // Also first: "Punkte", "Gerade" and "Säulen" are words an older rule may know (#249).
   scriptGrid();
+  // Also first: "Malnehmen" and "Probetest" are words an older rule may know (#388).
+  scriptHelp();
   // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
   scriptPrimary();
   // Also before the core loop: "Kreislauf" and "Kette" are everyday words its rules may know (#247).
@@ -63,6 +69,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptCircuits();
   // Before the core loop: "Fotosynthese" is a topic an older, broader rule may know (#236).
   scriptTeachBack();
+  // Before the core loop too: "Schule" and "Handy" are everyday words its rules may know (#258).
+  scriptEssay();
   scriptCoreLoop();
   // Before the learning modes: their "probetest" sentence would answer this one too (#241).
   scriptTimedTest();
@@ -86,6 +94,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   installGenerations(scripted);
   installChecks(scripted);
   tutorRules.install(scripted);
+  hintRules.install(scripted);
   readingRules.install(scripted);
   pronounceRules.install(scripted);
   // A conversation that came to rest is summarised by the scheduler (issue #22); in the

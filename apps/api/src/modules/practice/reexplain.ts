@@ -22,17 +22,15 @@ import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
 import { t } from '../../i18n/index.js';
-import { isUniqueViolation } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { learnerDay } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
+import { storeExchange } from './exchange.js';
 import {
-  nextSeq,
   replayOrLoad,
-  replayTurn,
   shownSolution,
   solutionsOf,
   type ItemRow,
@@ -267,54 +265,17 @@ export async function reexplain(
     throw err;
   }
 
-  try {
-    await deps.db.tx(async (tx) => {
-      // The session row first (one order everywhere), whatever its status: the last
-      // question's solution may still be on screen after the session finished.
-      const locked = await tx.maybeOne<{ status: string }>(
-        `select status from practice_sessions where id = $1 and learner_id = $2 for update`,
-        [sessionId, learner.id],
-      );
-      if (!locked) throw new AppError('not_found', 'Session not found');
-      if (locked.status === 'abandoned') throw new AppError('conflict', 'Session has ended');
-      const seq = await nextSeq(tx, sessionId);
-      await tx.query(
-        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, verdict, evaluated_by, client_turn_id, reexplain, created_at)
-         values ($1, $2, $3, $4, 'learner', $5, 'not_an_attempt', 'rule', $6, $8, $7)`,
-        [
-          sessionId,
-          learner.id,
-          input.item_id,
-          seq,
-          t(learner.locale, `practice.reexplain.${input.way}`),
-          input.client_turn_id,
-          now,
-          input.way,
-        ],
-      );
-      await tx.query(
-        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, reexplain, created_at)
-         values ($1, $2, $3, $4, 'tutor', $5, $6, $7)`,
-        [sessionId, learner.id, input.item_id, seq + 1, explanation, input.way, now],
-      );
-      if (locked.status === 'active') {
-        await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-          sessionId,
-          now,
-        ]);
-      }
-    });
-  } catch (err) {
-    // A concurrent duplicate of the same tap won: return its result.
-    if (isUniqueViolation(err)) {
-      const r = await replayTurn(deps, learner.id, sessionId, input.client_turn_id);
-      if (r) return r;
-    }
-    throw err;
-  }
-  const done = await replayTurn(deps, learner.id, sessionId, input.client_turn_id);
-  if (!done) throw new AppError('internal', 'explanation missing');
-  return done;
+  return storeExchange(
+    deps,
+    learner.id,
+    sessionId,
+    { clientTurnId: input.client_turn_id, itemId: input.item_id, way: input.way },
+    () =>
+      Promise.resolve({
+        asked: t(learner.locale, `practice.reexplain.${input.way}`),
+        reply: explanation,
+      }),
+  );
 }
 
 /** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */

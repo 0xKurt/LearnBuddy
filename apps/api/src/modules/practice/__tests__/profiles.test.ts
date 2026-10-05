@@ -27,6 +27,7 @@ import {
   parseSetFor,
   setSchemaForModel,
 } from '../setProfiles.js';
+import { formsOn } from '../items.js';
 import { MAX_STRUCTURED_ITEMS } from '../structured.js';
 
 type Kind = keyof typeof SET_PROFILES;
@@ -213,6 +214,13 @@ const LISTEN = {
 };
 
 /** One explanation question with its key points („Erklär mal", #236). */
+const ESSAY = {
+  prompt: 'Nimm Stellung: Sollte es an Schulen ein Handyverbot geben?',
+  type: 'argue_linear',
+  topic: 'Handyverbot',
+  difficulty: 3,
+  passage: null,
+};
 const TEACH_BACK = {
   prompt: 'Erklär mir, wie man zwei Brüche addiert.',
   topic: 'Brüche addieren',
@@ -248,6 +256,7 @@ function validAnswer(kind: Kind, chunk = 0): Record<string, unknown> {
     ...(structured.length > 0 ? { structured: structured.map((t) => STRUCTURED[t]) } : {}),
     ...(p.dictation ? { dictation: DICTATION } : {}),
     ...(p.teachBack ? { teach_back: [TEACH_BACK] } : {}),
+    ...(p.essay ? { essay: [ESSAY] } : {}),
   };
 }
 
@@ -274,6 +283,7 @@ function outsiders(kind: Kind): { what: string; add: (a: Record<string, unknown>
   if (!p.listen) out.push({ what: 'listen', add: (a) => void (a.listen = LISTEN) });
   if (!p.dictation) out.push({ what: 'dictation', add: (a) => void (a.dictation = DICTATION) });
   if (!p.teachBack) out.push({ what: 'teach_back', add: (a) => list(a, 'teach_back', TEACH_BACK) });
+  if (!p.essay) out.push({ what: 'essay', add: (a) => list(a, 'essay', ESSAY) });
   return out;
 }
 
@@ -289,6 +299,7 @@ function kept(kind: Kind, answer: unknown) {
     listen: set.listen === null ? 0 : 1,
     dictation: set.dictation?.entries.length ?? 0,
     teachBack: set.teach_back.length,
+    essay: set.essay.length,
   };
 }
 
@@ -297,7 +308,13 @@ describe('the fallback', () => {
     expect(JSON.stringify(GENERATED_SCHEMA)).toBe(
       JSON.stringify(
         toJsonSchema(
-          GeneratedSet.omit({ listen: true, dictation: true, teach_back: true, reading: true }),
+          GeneratedSet.omit({
+            listen: true,
+            dictation: true,
+            teach_back: true,
+            reading: true,
+            essay: true,
+          }),
         ),
       ),
     );
@@ -338,6 +355,7 @@ describe.each(KINDS)('the profile of a %s run', (kind) => {
         listen: p.listen ? 1 : 0,
         dictation: p.dictation ? DICTATION.entries.length : 0,
         teachBack: p.teachBack ? 1 : 0,
+        essay: p.essay ? 1 : 0,
       });
     }
   });
@@ -442,5 +460,48 @@ describe('the nested unions', () => {
     expect(parseSetFor('test', TOPICS).parse(off).items).toHaveLength(
       SET_PROFILES.test.items.length - 1,
     );
+  });
+});
+
+describe('a form switched off (#296, config.FORMS_OFF)', () => {
+  const OFF = new Set(['short', 'order', 'spelling_dictation'] as const);
+  const kindsIn = (schema: unknown) =>
+    (
+      (schema as { properties: Record<string, unknown> }).properties.items as {
+        items: { properties: { kind: { enum: string[] } } };
+      }
+    ).items.properties.kind.enum;
+
+  it('is not in the schema the model is shown', () => {
+    const on = explainSchemaFor('practice', null);
+    const off = explainSchemaFor('practice', null, OFF);
+    expect(kindsIn(on)).toContain('short');
+    expect(kindsIn(off)).not.toContain('short');
+    // The order branch is gone from the structured union: the decoder could not write one.
+    const order = { ...validAnswer('practice'), structured: [STRUCTURED.order] };
+    expect(schemaErrors(on, order)).toEqual([]);
+    expect(schemaErrors(off, order)).not.toEqual([]);
+    // A Diktat with its form off has no list to fill at all.
+    const dictation = explainSchemaFor('spelling_dictation', null, OFF).properties ?? {};
+    expect(Object.keys(dictation)).not.toContain('dictation');
+  });
+
+  it('is not kept, whatever the model wrote', () => {
+    const answer = { ...validAnswer('practice'), structured: [STRUCTURED.order] };
+    const set = parseSetFor('practice', null, OFF).parse(answer);
+    expect(set.items.map((i) => i.kind)).not.toContain('short');
+    expect(set.items).toHaveLength(SET_PROFILES.practice.items.length - 1);
+    expect(set.structured).toEqual([]);
+    expect(parseSetFor('practice', null).parse(answer).structured).toHaveLength(1);
+  });
+
+  it('leaves a photographed sheet only the questions of forms that are on', () => {
+    const items = [
+      { kind: 'short' as const },
+      { kind: 'numeric' as const },
+      { kind: 'order' as const },
+    ];
+    expect(formsOn(items, OFF)).toEqual([{ kind: 'numeric' }]);
+    expect(formsOn(items, new Set())).toEqual(items);
   });
 });

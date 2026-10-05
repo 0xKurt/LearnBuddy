@@ -8,6 +8,7 @@
 
 import {
   BarTask,
+  type ItemKind,
   MAX_LISTEN_QUESTIONS,
   StaffTask,
   type StartTopicRequest,
@@ -21,6 +22,7 @@ import { MAX_BAR_ITEMS } from './bars.js';
 import { CLOZE_RULES } from './cloze.js';
 import { DictationDraft, DictationDraftParsed } from './dictation.js';
 import { GRID_RULES } from './grid.js';
+import { EssayDraft, MAX_ESSAYS } from './essayTask.js';
 import { unusedItemFields } from './itemFields.js';
 import { ItemDraft, itemsOneByOne } from './items.js';
 import { ListenDraft, ListenQuestion } from './listen.js';
@@ -119,6 +121,12 @@ export const GeneratedSet = z.object({
    * In the schema the model sees only for that run.
    */
   reading: BuddyReadingDraft.nullable().default(null),
+  /**
+   * The writing task of an essay run (issue #258): its wording, its text type and the text it is
+   * about. A separate list for the reason `teach_back` is one: code sets the key points from the
+   * type and holds the text to her sheet (`practice/essayTask.ts`). In the schema only for that run.
+   */
+  essay: z.array(EssayDraft).max(MAX_ESSAYS).default([]),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
@@ -154,6 +162,8 @@ export type SetProfile = {
   teachBack: boolean;
   /** Buddy's reading text and its questions (#368): only in a reading run. */
   reading: boolean;
+  /** A long-text task (#258): only in an essay run, where it is all there is. */
+  essay: boolean;
 };
 
 const STRUCTURED_FORMS = [
@@ -197,6 +207,7 @@ function onlyItems(items: readonly ModelItemKind[]): SetProfile {
     dictation: false,
     teachBack: false,
     reading: false,
+    essay: false,
   };
 }
 
@@ -210,6 +221,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     dictation: false,
     teachBack: false,
     reading: false,
+    essay: false,
   },
   // One try per question: no long answer, and no bar — a test is not a place to try a surface.
   test: {
@@ -221,6 +233,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     dictation: false,
     teachBack: false,
     reading: false,
+    essay: false,
   },
   vocab: onlyItems(['vocab']),
   speak: onlyItems(['speak']),
@@ -235,6 +248,8 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
   // Leseverständnis without a photo (#368): nothing in `items` — the questions come out of
   // `reading`, each held to Buddy's text after its level and language were checked.
   read: { ...onlyItems([]), reading: true },
+  // Lange Texte (#258): nothing in `items` — the one task comes out of `essay`.
+  essay: { ...onlyItems([]), essay: true },
   // Homework is the task she typed: no form of the app's own around it.
   help: onlyItems(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
 };
@@ -254,7 +269,31 @@ export const FALLBACK_PROFILE: SetProfile = {
   dictation: false,
   teachBack: false,
   reading: false,
+  essay: false,
 };
+
+/** No form switched off: what a caller without a configuration gets. */
+const ALL_ON: ReadonlySet<ItemKind> = new Set();
+
+/**
+ * A profile with the forms switched off in this environment taken out (issue #296,
+ * `config.FORMS_OFF`): an item kind, a structured kind, a Diktat. Out of the profile means out of
+ * the schema the model is shown AND out of what code keeps — the profile is the one table both
+ * are derived from. A run left with nothing says so like any run without questions.
+ */
+function profileFor(
+  kind: StartTopicRequest['kind'] | null,
+  off: ReadonlySet<ItemKind> = ALL_ON,
+): SetProfile {
+  const profile = kind === null ? FALLBACK_PROFILE : SET_PROFILES[kind];
+  if (off.size === 0) return profile;
+  return {
+    ...profile,
+    items: profile.items.filter((k) => !off.has(k)),
+    structured: profile.structured.filter((k) => !off.has(k)),
+    dictation: profile.dictation && !off.has('spelling_dictation'),
+  };
+}
 
 /**
  * The item a run asks for. Built from her sheets: every question's topic is one of theirs — the
@@ -284,6 +323,20 @@ function structuredSchemaFor(profile: SetProfile) {
   return first === undefined ? null : z.discriminatedUnion('type', [first, ...rest]);
 }
 
+/** The profile of a run with this environment's switch, and its two narrowed unions. */
+function narrowed(
+  kind: StartTopicRequest['kind'] | null,
+  topics: [string, ...string[]] | null,
+  off: ReadonlySet<ItemKind>,
+) {
+  const profile = profileFor(kind, off);
+  return {
+    profile,
+    item: itemSchemaFor(profile, topics),
+    structured: structuredSchemaFor(profile),
+  };
+}
+
 /** A disabled list: whatever the model wrote there is dropped, and it reads as empty. */
 const NOTHING = z.never();
 
@@ -294,10 +347,9 @@ const NOTHING = z.never();
 export function setSchemaForModel(
   kind: StartTopicRequest['kind'] | null,
   topics: [string, ...string[]] | null,
+  off: ReadonlySet<ItemKind> = ALL_ON,
 ) {
-  const profile = kind === null ? FALLBACK_PROFILE : SET_PROFILES[kind];
-  const item = itemSchemaFor(profile, topics);
-  const structured = structuredSchemaFor(profile);
+  const { profile, item, structured } = narrowed(kind, topics, off);
   return GeneratedSet.extend({
     items: z.array(item ? item.omit(unusedItemFields(profile.items)) : DraftItem).max(25),
     structured: z
@@ -313,6 +365,7 @@ export function setSchemaForModel(
     ...(profile.dictation ? {} : { dictation: true }),
     ...(profile.teachBack ? {} : { teach_back: true }),
     ...(profile.reading ? {} : { reading: true }),
+    ...(profile.essay ? {} : { essay: true }),
   });
 }
 
@@ -321,10 +374,12 @@ export function setSchemaForModel(
  * one (one unusable task costs itself, audit H-14/H-15), and a form outside the profile dropped
  * — the model was not shown it, so one that arrives anyway is not repaired into the run.
  */
-export function parseSetFor(kind: StartTopicRequest['kind'], topics: [string, ...string[]] | null) {
-  const profile = SET_PROFILES[kind];
-  const item = itemSchemaFor(profile, topics);
-  const structured = structuredSchemaFor(profile);
+export function parseSetFor(
+  kind: StartTopicRequest['kind'],
+  topics: [string, ...string[]] | null,
+  off: ReadonlySet<ItemKind> = ALL_ON,
+) {
+  const { item, structured, profile } = narrowed(kind, topics, off);
   return GeneratedSet.extend({
     items: itemsOneByOne(item ?? NOTHING, 25),
     bars: itemsOneByOne(profile.bars ? BarTask : NOTHING, MAX_BAR_ITEMS),
@@ -350,6 +405,7 @@ export function parseSetFor(kind: StartTopicRequest['kind'], topics: [string, ..
     reading: profile.reading
       ? BuddyReadingDraftParse.nullable().default(null).catch(null)
       : z.null().catch(null),
+    essay: itemsOneByOne(profile.essay ? EssayDraft : NOTHING, MAX_ESSAYS),
   });
 }
 
@@ -365,6 +421,7 @@ export const GENERATED_SCHEMA = toJsonSchema(setSchemaForModel(null, null));
 export function explainSchemaFor(
   kind: StartTopicRequest['kind'],
   topics: [string, ...string[]] | null,
+  off: ReadonlySet<ItemKind> = ALL_ON,
 ): JsonSchema {
-  return toJsonSchema(setSchemaForModel(kind, topics));
+  return toJsonSchema(setSchemaForModel(kind, topics, off));
 }

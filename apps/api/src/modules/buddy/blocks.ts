@@ -90,10 +90,6 @@ export function setStateAudit(fn: StateAudit | null): void {
   audit = fn;
 }
 
-export function stateAudited(): boolean {
-  return audit !== null;
-}
-
 /**
  * Hand the audit one model context. The sample is built by the callback, so with no audit
  * registered not a single string is copied — the measurement costs nothing when it is off.

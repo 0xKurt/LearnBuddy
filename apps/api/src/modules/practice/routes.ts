@@ -16,9 +16,9 @@ import {
   StartPracticeRequest,
   StartTopicRequest,
   Uuid,
+  WhyRequest,
 } from '@learnbuddy/shared-types/contracts';
 import { Hono } from 'hono';
-import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 
 import {
@@ -29,7 +29,7 @@ import {
   type AppEnv,
 } from '../../http/context.js';
 import { check, readBody } from '../../http/validate.js';
-import { isAppError } from '../../lib/errors.js';
+import { streamed, wantsStream } from '../../http/stream.js';
 import { runLearnerJobs } from '../buddy/check.js';
 import { recordCard, startCardPass } from './cardPass.js';
 import { answerDrill, startDrill } from './drillRound.js';
@@ -46,6 +46,7 @@ import { hintItem } from './hint.js';
 import { keepForLater } from './later.js';
 import { disputeVerdict, flagItem } from './contest.js';
 import { speakItem, speakWord } from './speak.js';
+import { answerWhy } from './why.js';
 
 export const practiceRoutes = new Hono<AppEnv>();
 practiceRoutes.use('*', requireUser, requireAccount, requireLearner);
@@ -114,6 +115,13 @@ practiceRoutes.post('/sessions/:id/reexplain', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const input = await readBody(c, ReexplainRequest);
   return c.json(await reexplain(depsOf(c), c.get('learner'), sessionId, input));
+});
+
+/** „Warum stimmt das?": the reason she tapped after a closed question, judged by code (#388). */
+practiceRoutes.post('/sessions/:id/why', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, WhyRequest);
+  return c.json(await answerWhy(depsOf(c), c.get('learner'), sessionId, input));
 });
 
 practiceRoutes.post('/sessions/:id/reveal', async (c) => {
@@ -235,8 +243,9 @@ practiceRoutes.post('/topic', async (c) => {
   // Her tap opens it: a test she asked to sit with time starts its clock now (issue #241).
   await settleTestClock(deps.db, learner.id, id, deps.now());
   // Hints for the new questions, while she reads the first one. Best effort: if this
-  // never runs, the tutor model helps as before (hints.ts).
-  if (input.kind === 'practice') {
+  // never runs, the tutor model helps as before (hints.ts). A test shows no hints, but the same
+  // call writes each question's worked solution, which its review explains with (#388 §3.2).
+  if (input.kind === 'practice' || input.kind === 'test') {
     deps.background(async () => {
       await prepareHints(deps, learner, id).catch(() => 0);
     });
@@ -262,22 +271,6 @@ practiceRoutes.post('/sessions/:id/speak', async (c) => {
   const input = await readBody(c, SpeakRequest);
   const learner = c.get('learner');
   const deps = depsOf(c);
-  if (!(c.req.header('accept') ?? '').includes('text/event-stream'))
-    return c.json(await speakItem(deps, learner, sessionId, input));
-  return streamSSE(c, async (stream) => {
-    // Errors are answered here, as a code only: nothing internal reaches the app.
-    try {
-      let sent = Promise.resolve();
-      const answer = await speakItem(deps, learner, sessionId, input, (event) => {
-        sent = sent.then(() => stream.writeSSE({ event: 'progress', data: JSON.stringify(event) }));
-      });
-      await sent;
-      await stream.writeSSE({ event: 'done', data: JSON.stringify(answer) });
-    } catch (err) {
-      await stream.writeSSE({
-        event: 'error',
-        data: JSON.stringify({ code: isAppError(err) ? err.code : 'internal' }),
-      });
-    }
-  });
+  if (!wantsStream(c)) return c.json(await speakItem(deps, learner, sessionId, input));
+  return streamed(c, 'progress', (emit) => speakItem(deps, learner, sessionId, input, emit));
 });

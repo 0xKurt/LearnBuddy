@@ -133,6 +133,11 @@
     "thinking": "Buddy lo explica de otra forma …",
     "title": "Explicado de otra forma"
   },
+  "why": {
+    "ask": "¿Por qué es correcto?",
+    "label": "¿Qué motivo es el correcto?",
+    "hint": "Muestra tres motivos: toca el que es correcto."
+  },
   "self_solved": {
     "title": "¡Resuelto por ti!",
     "body": "Lo has descubierto por tu cuenta."
@@ -362,6 +367,7 @@
     "task": "Ejercicio"
   },
   "column": {
+    "reopen": "Editar el paso {{step}}",
     "check_waits": "Cuando hayas escrito una cifra.",
     "carry": "Llevada, {{place}}",
     "result": "Resultado, {{place}}",
@@ -378,5 +384,20 @@
       "centenas de millar",
       "millones"
     ]
+  },
+  "essay": {
+    "intro": "{{form}}: así va tu texto",
+    "met": "logrado",
+    "open": "aún pendiente",
+    "places": "Aquí puedes afinarlo",
+    "revise": "Revisa estos pasajes: tu texto sigue en el campo. Luego mándame la nueva versión.",
+    "last": "Esa fue tu última versión por esta vez. Llévate estos puntos a tu próximo texto.",
+    "quote": "«{{text}}»",
+    "her_words": "Tus palabras",
+    "version_one": "Versión {{n}} · 1 palabra",
+    "version_other": "Versión {{n}} · {{count}} palabras",
+    "text_one": "Tu texto · 1 palabra",
+    "text_other": "Tu texto · {{count}} palabras",
+    "thinking": "Buddy está leyendo tu texto …"
   }
 }
