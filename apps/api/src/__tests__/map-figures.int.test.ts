@@ -1,6 +1,7 @@
 // Questions on a stumme Karte end to end (issue #251): a Land to tap, a marked country to name, a
-// continent to tap — what the model writes, what code drops, what is stored, what the app gets
-// back and how an answer is graded, on a real Postgres.
+// continent to tap; since #429 a small country on the closer Ausschnitt code picks, a river to tap
+// and one to name, a capital to tap — what the model writes, what code drops, what is stored, what
+// the app gets back and how an answer is graded, on a real Postgres.
 //
 // Model calls are scripted; every answer graded below is graded by code, so the harness's failure
 // on an unscripted call proves no tutor was asked.
@@ -56,30 +57,50 @@ describe.skipIf(!dbReady)('a question on a stumme Karte', () => {
     );
     const stored = MAP_ITEMS.map((i) => rows.find((r) => r.prompt === i.prompt));
     expect(rows).toHaveLength(MAP_ITEMS.length);
-    expect(stored.map((r) => r?.tap)).toEqual([true, false, true]);
+    const taps = [true, false, true, true, false, true, false, true];
+    expect(stored.map((r) => r?.tap)).toEqual(taps);
     // "France" as the model wrote it is stored as the data's id.
-    expect(stored[1]?.figure).toEqual({ type: 'map', v: 'europe', hl: ['FR'] });
+    expect(stored[1]?.figure).toEqual({ type: 'map', v: 'europe', hl: ['FR'], l: 'regions' });
+    // Luxembourg is too small on the whole of Europe: code stores the closer view she taps on (#429).
+    expect(stored[2]?.figure).toEqual({ type: 'map', v: 'eu_central', hl: [], l: 'regions' });
+    // A marked river by its id, on its layer.
+    expect(stored[4]?.figure).toEqual({ type: 'map', v: 'de', hl: ['elbe'], l: 'rivers' });
     // The app is told which questions to tap.
-    expect(s.items.map((i) => i.item.tap)).toEqual([true, false, true]);
+    expect(s.items.map((i) => i.item.tap)).toEqual(taps);
   });
 
   it('grades a tapped region and a typed name by code, in any of the five languages', async () => {
     const s = await start(env, l, MAP_ITEMS);
-    const [land, country, continent] = s.items.map((i) => i.item.id) as string[];
-    // What the app writes after the tap: the region's German name.
+    const [land, country, small, river, marked, city, range, continent] = s.items.map(
+      (i) => i.item.id,
+    ) as string[];
+    // What the app writes after the tap: the place's German name.
     expect((await answer(l, s, land!, 'Bayern')).body.verdict).toBe('correct');
     // Typed in English, the marked country is still France.
     expect((await answer(l, s, country!, 'France')).body.verdict).toBe('correct');
+    expect((await answer(l, s, small!, 'Luxemburg')).body.verdict).toBe('correct');
+    expect((await answer(l, s, river!, 'Rhein')).body.verdict).toBe('correct');
+    expect((await answer(l, s, marked!, 'Elbe')).body.verdict).toBe('correct');
+    expect((await answer(l, s, city!, 'München')).body.verdict).toBe('correct');
+    expect((await answer(l, s, range!, 'Harz')).body.verdict).toBe('correct');
     expect((await answer(l, s, continent!, 'Südamerika')).body.verdict).toBe('correct');
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 
   it('another region is wrong for code, never the tutor’s to judge', async () => {
     const s = await start(env, l, MAP_ITEMS);
-    const [land, country, continent] = s.items.map((i) => i.item.id) as string[];
+    const [land, country, small, river, marked, city, range, continent] = s.items.map(
+      (i) => i.item.id,
+    ) as string[];
     // Baden-Württemberg beside Bayern: a neighbour, and certainly not the Land asked for.
     expect((await answer(l, s, land!, 'Baden-Württemberg')).body.verdict).toBe('incorrect');
     expect((await answer(l, s, country!, 'Spanien')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, small!, 'Belgien')).body.verdict).toBe('incorrect');
+    // The Main flows into the Rhein: close, and still another river.
+    expect((await answer(l, s, river!, 'Main')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, marked!, 'Oder')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, city!, 'Stuttgart')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, range!, 'Erzgebirge')).body.verdict).toBe('incorrect');
     expect((await answer(l, s, continent!, 'Nordamerika')).body.verdict).toBe('incorrect');
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
@@ -92,13 +113,16 @@ describe.skipIf(!dbReady)('a question on a stumme Karte', () => {
       locale: 'en',
     });
     const s = await start(env, en, MAP_ITEMS);
-    const [land, country] = s.items.map((i) => i.item.id) as string[];
+    const [land, country, , river] = s.items.map((i) => i.item.id) as string[];
     // The app writes a tap as the data's German name; the server writes it as she reads it.
     expect((await answer(en, s, land!, 'Bayern')).body.verdict).toBe('correct');
     expect((await answer(en, s, country!, 'Frankreich')).body.verdict).toBe('correct');
+    expect((await answer(en, s, river!, 'Rhein')).body.verdict).toBe('correct');
     const view = (await en.api.get<SessionView>(`/practice/sessions/${s.id}`)).body;
     const mine = (id: string) => view.turns.find((t) => t.item_id === id && t.role === 'learner');
     expect(mine(land!)?.text).toBe('Bavaria');
+    // A tapped river too (#429).
+    expect(mine(river!)?.text).toBe('Rhine');
     // Not tapped: her own words stay hers.
     expect(mine(country!)?.text).toBe('Frankreich');
   });

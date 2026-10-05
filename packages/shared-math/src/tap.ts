@@ -22,7 +22,7 @@
 // (packages/shared-types/src/contracts/figure.ts); the API passes the zod-inferred figures in, so
 // a drift between the two fails the typecheck.
 
-import { isMap, mapMarked, mapRegions, type MapFig } from './maps.js';
+import { isMap, mapMarked, mapPlaces, type MapFig } from './maps.js';
 import { regionNamed, type RegionName } from './regions.js';
 import { schematic, type SchematicFig } from './schematics.js';
 import { parseClockAnswer, type Clock } from './primary.js';
@@ -57,12 +57,13 @@ export const TAP_FIGURES = [
 export type TapFigureType = (typeof TAP_FIGURES)[number];
 
 /**
- * The named places of a figure whose places have names — the regions of a map (#251), the parts of
+ * The named places of a figure whose places have names — the regions of a map (#251) or its
+ * capitals, rivers or mountain ranges (#429), the parts of
  * a labelled picture (#252) — or null for every other figure. Typed or tapped, an answer on such a
  * figure is a name of one of them (`regions.ts`).
  */
 export function namedPlaces(f: { type: string }): readonly RegionName[] | null {
-  if (isMap(f)) return mapRegions(f.v);
+  if (isMap(f)) return mapPlaces(f);
   if (f.type === 'schematic') return schematic((f as SchematicFig).d).parts;
   return null;
 }

@@ -57,8 +57,17 @@ export function regionName(regions: readonly RegionName[], index: number, lang: 
 /** The width of the frame every region is drawn in. */
 export const REGION_FRAME = 1000;
 
-/** A region's shape: where it is labelled, and its rings as "x y x y …" in the frame. */
-export type RegionShape = { at: readonly [number, number]; rings: readonly string[] };
+/**
+ * A region's shape: where it is labelled, and its rings as "x y x y …" in the frame. `line`: a
+ * river (#429) — its rings run there and back, enclose nothing, and it is tapped anywhere along
+ * it, never by its label. A ring of one point is a point (a capital). No rings: the place lies
+ * outside the frame (a closer Ausschnitt of Europe) and cannot be tapped there.
+ */
+export type RegionShape = {
+  at: readonly [number, number];
+  rings: readonly string[];
+  line?: boolean;
+};
 /** The regions of one drawing, bottom to top. */
 export type RegionSet = { regions: readonly RegionShape[] };
 
@@ -215,6 +224,8 @@ export function regionAt(set: RegionSet, x: number, y: number, reach: number): n
   let near = -1;
   let nearD = Infinity;
   set.regions.forEach((s, i) => {
+    // A line is the nearest line where a finger lands, never the one whose label is near.
+    if (s.line) return;
     const d = Math.hypot(s.at[0] - x, s.at[1] - y);
     // Cheap first: only a label within reach is measured at all.
     if (d <= reach && d < nearD && d <= catchRadius(set, i, reach) && regionSmall(s, reach)) {
@@ -262,15 +273,32 @@ export function regionTapWidth(height: number): number {
 }
 
 /**
+ * Whether a line has a stretch a finger can take for it: a point of it at least `least` from every
+ * other place of the set (a river where no other runs close by — not only where the Mosel joins the
+ * Rhine).
+ */
+function lineClear(set: RegionSet, i: number, least: number): boolean {
+  const others = set.regions.filter((s, j) => j !== i && s.rings.length > 0).map(ringsOf);
+  return ringsOf(set.regions[i]!).some((r) => {
+    for (let k = 0; k + 1 < r.length; k += 2) {
+      const [x, y] = [r[k]!, r[k + 1]!];
+      if (others.every((o) => distance(o, x, y) >= least)) return true;
+    }
+    return false;
+  });
+}
+
+/**
  * Whether region `i` of a drawing `height` high can be asked for by a tap: in the smallest room a
  * 24 pt target fits inside it, or it catches one around its label. Luxembourg on the map of Europe
  * does neither — a question to tap it is dropped; naming it stays possible.
  */
 export function regionTappable(set: RegionSet, i: number, height: number): boolean {
   const shape = set.regions[i];
-  if (!shape) return false;
+  if (!shape || shape.rings.length === 0) return false;
   const width = regionTapWidth(height);
   const least = units(MIN_REACH_PT, width);
+  if (shape.line) return lineClear(set, i, least);
   // A region narrower than that is small, so its label catches; wider ones are hit directly.
   return inscribed(shape) >= least || catchRadius(set, i, regionReach(width)) >= least;
 }

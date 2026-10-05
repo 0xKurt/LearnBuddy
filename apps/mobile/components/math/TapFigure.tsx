@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View, type AccessibilityActionEvent } from 'react-native';
 import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg';
 
+import { isMap, mapLayer } from '../../../../packages/shared-math/src/maps.js';
 import { regionName } from '../../../../packages/shared-math/src/regions.js';
 import { parseClockAnswer } from '../../../../packages/shared-math/src/primary.js';
 import {
@@ -66,6 +67,18 @@ function shownFigure(figure: Tappable & Figure, value: string): Figure {
   return figure.type === 'clock' && time ? { ...figure, c: [time] } : figure;
 }
 
+/** What a figure's places are called in the tap lines: its type, or a map's layer of places (#429). */
+function placeKind(figure: Tappable): string {
+  return isMap(figure) && mapLayer(figure) !== 'regions' ? mapLayer(figure) : figure.type;
+}
+
+/** The line her place is named in: "Gebiet: Bayern", "Fluss: Rhein" (#429), "Teil: Rahmen". */
+function placeWord(figure: Tappable): string {
+  if (!isMap(figure)) return 'part';
+  const layer = mapLayer(figure);
+  return layer === 'regions' ? 'region' : `place_${layer}`;
+}
+
 /**
  * Her place in words for a screen reader: "Stelle: 2,5", "Punkt (2 | −1)", "Säule: Apr", where
  * the hands stand, "Gebiet: Bayern" (in her language).
@@ -73,7 +86,7 @@ function shownFigure(figure: Tappable & Figure, value: string): Figure {
 function placeWords(figure: Tappable, pick: TapPick | null, t: T): string {
   const [i = 0, j = 0] = pick ?? [];
   const at = (axis: number, index: number) => tapAxes(figure)?.[axis]?.values[index] ?? 0;
-  if (!pick) return t(`tap.how_${figure.type}`);
+  if (!pick) return t(`tap.how_${placeKind(figure)}`);
   switch (figure.type) {
     case 'number_line':
       return t('tap.value', { value: formatNumber(at(0, i)) });
@@ -86,7 +99,7 @@ function placeWords(figure: Tappable, pick: TapPick | null, t: T): string {
     case 'map':
     case 'schematic':
       // A Land or a part, named in her language (`regions.ts`).
-      return t(`tap.${figure.type === 'map' ? 'region' : 'part'}`, {
+      return t(`tap.${placeWord(figure)}`, {
         name: regionName(namedPlaces(figure) ?? [], i, currentLocale()),
       });
   }
@@ -102,7 +115,7 @@ function shownWords(figure: Tappable, pick: TapPick | null, t: T, spoken: string
   if (!pick) return spoken;
   return figure.type === 'clock' || figure.type === 'bar_chart'
     ? spoken
-    : t(`tap.chosen_${figure.type}`);
+    : t(`tap.chosen_${placeKind(figure)}`);
 }
 
 /** The mark on her place: a ring with a dot, or a frame around the column. */

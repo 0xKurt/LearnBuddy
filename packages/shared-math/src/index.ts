@@ -27,6 +27,7 @@ export { SCHEMATIC_SHAPES } from './schematicShapes.data.js';
 // The shapes of the maps: the server decides with them what can be tapped. The app never imports
 // this index; it loads them when a map is on the screen (`useMapShapes`).
 export { MAP_SHAPES } from './mapShapes.data.js';
+export { mapZoom } from './mapZoom.js';
 export * from './labelBoxes.js';
 export * from './tap.js';
 export * from './circuit.js';

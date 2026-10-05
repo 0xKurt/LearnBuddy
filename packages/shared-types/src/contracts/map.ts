@@ -6,6 +6,11 @@
 // (`apps/api/src/modules/practice/mapCheck.ts`), and what is stored names each region by its id.
 // Rejected, never repaired.
 //
+// Since #429 a map of Germany or Europe can be about its capitals, rivers or mountain ranges
+// (`l`), Natural Earth too; and code may store a map of Europe as one of its closer Ausschnitte
+// (`eu_*`), where the place to tap is big enough for a finger (shared-math `mapZoom.ts`). A map
+// stored before reads as it always did (`l` defaults to the regions).
+//
 // Short property names and no nullable field, like the charts and trees (schema size, #281).
 
 import { z } from 'zod';
@@ -13,10 +18,18 @@ import { z } from 'zod';
 export const MapFigure = z.object({
   type: z.literal('map'),
   v: z
-    .enum(['de', 'europe', 'world'])
-    .describe('de: the 16 Bundesländer · europe: the countries of Europe · world: the continents'),
+    .enum(['de', 'europe', 'world', 'eu_central', 'eu_southeast', 'eu_north'])
+    .describe(
+      'de: the 16 Bundesländer · europe: the countries of Europe · world: the continents; eu_*: closer views code picks',
+    ),
   hl: z
     .array(z.string().trim().min(1).max(40))
     .max(4)
-    .describe('names of the marked regions as an atlas writes them ("Bayern"); [] for none'),
+    .describe(
+      'names of the marked places as an atlas writes them ("Bayern", "Rhein"); [] for none',
+    ),
+  l: z
+    .enum(['regions', 'cities', 'rivers', 'mountains'])
+    .default('regions')
+    .describe('what the question is about: the regions, or the capitals, rivers or ranges on them'),
 });

@@ -30,7 +30,7 @@ const plane: Tappable & Figure = {
 };
 const line: Tappable & Figure = { type: 'number_line', min: 0, max: 5, step: 0.5, points: [] };
 const clock: Tappable & Figure = { type: 'clock', c: [], h24: false, ask: 'none' };
-const map: Tappable & Figure = { type: 'map', v: 'de', hl: [] };
+const map: Tappable & Figure = { type: 'map', v: 'de', hl: [], l: 'regions' as const };
 const cell: Tappable & Figure = { type: 'schematic', d: 'plant_cell', n: [], ask: 0 };
 
 function render(figure: Tappable & Figure, value: string) {

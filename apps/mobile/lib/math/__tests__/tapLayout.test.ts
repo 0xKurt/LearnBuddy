@@ -105,6 +105,20 @@ describe('a map (#251): every Land and every continent by its label', () => {
     }
   });
 
+  it('every river (#429) is tapped at its mark on its own line, marked as the line', () => {
+    const f = { type: 'map', v: 'de', hl: [], l: 'rivers' } as const;
+    for (const width of [328, 260]) {
+      const l = tapLayout(f, width, format, 12, { maps: MAP_SHAPES });
+      if (!l) throw new Error('no layout');
+      for (const pick of everyPick(f)) {
+        const mark = l.markOf(pick);
+        if (mark?.kind !== 'region') throw new Error('a river');
+        expect(mark.outline).toBe(true);
+        expect(l.pickAt(mark.x, mark.y, null, 0)).toEqual(pick);
+      }
+    }
+  });
+
   it('offers nothing to tap until the shapes are loaded', () => {
     expect(tapLayout({ type: 'map', v: 'de', hl: [] }, 300, format, 12)).toBeNull();
   });
