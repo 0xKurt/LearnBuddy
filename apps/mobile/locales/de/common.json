@@ -40,7 +40,6 @@
     "hint": "Tipp, sprich und tipp nochmal – so lange du willst.",
     "live": "Bisher verstanden: {{text}}",
     "message": "Nachricht sprechen",
-    "conversation_on": "Ich lese dir vor. Tipp einmal aufs Mikro – danach höre ich von selbst wieder zu.",
     "open_settings": "Einstellungen öffnen",
     "problem": {
       "empty": "Ich hab dich nicht verstanden – nochmal?",

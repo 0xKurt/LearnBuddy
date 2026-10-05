@@ -40,7 +40,6 @@
     "hint": "Toca, habla y vuelve a tocar, todo el tiempo que quieras.",
     "live": "Entendido hasta ahora: {{text}}",
     "message": "Dictar un mensaje",
-    "conversation_on": "Te leo en voz alta. Toca el micro una vez – luego vuelvo a escuchar solo.",
     "open_settings": "Abrir Ajustes",
     "problem": {
       "empty": "No te he entendido – ¿otra vez?",

@@ -25,7 +25,7 @@ import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AccessibilityInfo, Linking, Platform, ScrollView, Text, View } from 'react-native';
+import { Linking, Platform, ScrollView, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,7 +34,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Glow } from '../components/lb/Glow.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
-import { MicButton, MIC_RING_ROOM } from '../components/voice/MicButton.js';
+import { MIC_RING_ROOM } from '../components/voice/MicButton.js';
 import { TalkOrb, type OrbMode } from '../components/voice/TalkOrb.js';
 import { VoiceRow } from '../components/voice/VoiceRow.js';
 import { talkMode } from '../lib/buddy/moon.js';
@@ -44,6 +44,7 @@ import { newId } from '../lib/api/client.js';
 import { sendMessageStreamed } from '../lib/api/endpoints.js';
 import { setHome, useHome } from '../lib/api/queries.js';
 import { useAnnounce } from '../lib/announce.js';
+import { useScreenReader } from '../lib/useScreenReader.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
 import { haptic } from '../lib/haptics.js';
 import { playCue } from '../lib/speech/cues.js';
@@ -250,32 +251,15 @@ export default function TalkScreen() {
 
   // Start listening once when the screen opens (she opened it to talk) — not with a screen
   // reader on (audit M-85): the phone would hear VoiceOver itself.
+  const screenReaderOn = useScreenReader();
   const screenReader = useRef<boolean | null>(null);
+  screenReader.current = screenReaderOn;
+  const started = useRef(false);
   useEffect(() => {
-    let alive = true;
-    // The browser cannot tell (react-native-web always answers true): no screen reader assumed.
-    const known: Promise<boolean> =
-      Platform.OS === 'web' ? Promise.resolve(false) : AccessibilityInfo.isScreenReaderEnabled();
-    known
-      .then((on) => {
-        if (!alive) return;
-        screenReader.current = on;
-        if (talkListensByItself(on)) listen();
-      })
-      .catch(() => {
-        screenReader.current = null;
-      });
-    const sub =
-      Platform.OS === 'web'
-        ? null
-        : AccessibilityInfo.addEventListener('screenReaderChanged', (on) => {
-            screenReader.current = on;
-          });
-    return () => {
-      alive = false;
-      sub?.remove();
-    };
-  }, []);
+    if (started.current || screenReaderOn === null) return;
+    started.current = true;
+    if (talkListensByItself(screenReaderOn)) listen();
+  }, [screenReaderOn]);
 
   // The first listen must not wait on the system (issue #41): the recogniser's answers
   // (Android service, installed languages, the permission) are fetched once now, while
@@ -562,16 +546,13 @@ export default function TalkScreen() {
       >
         <VoiceRow
           left={{ icon: 'keyboard', label: t('buddy:composer.keyboard'), onPress: leave }}
-          mic={
-            <MicButton
-              voice={voice}
-              size="lg"
-              filled
-              label={phase === 'speaking' ? t('buddy:talk.interrupt') : t('buddy:talk.speak')}
-              disabled={phase === 'thinking'}
-              onPress={onMic}
-            />
-          }
+          size="lg"
+          mic={{
+            voice,
+            label: phase === 'speaking' ? t('buddy:talk.interrupt') : t('buddy:talk.speak'),
+            disabled: phase === 'thinking',
+            onPress: onMic,
+          }}
           right={{
             icon: 'camera',
             label: t('buddy:talk.photo'),

@@ -14,8 +14,8 @@
 //   · what she says goes into the field (numbers and fractions as such: "drei Viertel" → "3/4"),
 //     so she can check it. A Diktat (issue #242) has no mic: the recogniser would spell for her;
 //   · Gespräch (issue #386): the waveform at the bar's end, as in the chat. Tapped, the bar becomes
-//     the conversation row (`CheckBar`, `Talk`): what she says is checked right away, and after
-//     her first tap on the mic the loop listens again by itself. Not where a spoken answer cannot
+//     the conversation row (`CheckBar`, `Talk`): what she says is checked right away, and the mic
+//     listens by itself once Buddy has read, as on /talk. Not where a spoken answer cannot
 //     stand alone: a Diktat, a path she is writing line by line, a line that belongs to a board;
 //   · under the text a live preview of typed math ("3/4" as a fraction, TypedMathPreview).
 // The fraction bar wrote into this field until #402; it is a board of its own now (report #388

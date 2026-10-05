@@ -1,6 +1,7 @@
 // Connects the conversation row's mic on the practice screen (`CheckBar`, issue #386) to the
-// hands-free loop (lib/speech/handsFree.ts):
-// her own tap arms it; when the loop asks, an idle mic starts listening. One listening
+// hands-free loop (lib/speech/handsFree.ts): the screen arms it in a conversation
+// (`useQuestionVoice`), her own tap does with a screen reader on; when the loop asks, an idle mic
+// starts listening. One listening
 // belongs to one turn: when she answers another way (the screen locks while it checks),
 // when Buddy starts speaking or when the question changes, a running mic is cancelled and
 // its text dropped (audit M-78 handsfree-recording-outlives-turn).

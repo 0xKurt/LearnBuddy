@@ -22,20 +22,20 @@
 // question is read aloud (choices as "A: …, B: …", a vocab prompt in its own
 // language), and so is Buddy's reply with the verdict word after every answer.
 // Gespräch (the waveform in the input bar) reads aloud too, and the bar becomes the
-// conversation row with the mic in the middle (`CheckBar`); reading stops when she
-// starts speaking or leaves. The microphone itself only ever starts with her tap.
+// conversation row with the mic in the middle (`CheckBar`), and as on /talk the mic
+// listens by itself once the question has been read; reading stops when she starts
+// speaking or leaves.
 
 import {
   type AnswerResponse,
-  type ItemView,
   type PracticeTurnView,
   type ReexplainWay,
   type SessionView,
   type SpeakStreamEvent,
   type StructuredAnswer as StructuredParts,
 } from '@learnbuddy/shared-types/contracts';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -68,6 +68,7 @@ import { PracticeStuck } from '../../components/practice/PracticeStuck.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
 import { QuestionCorner } from '../../components/practice/QuestionCorner.js';
 import { QuestionTools } from '../../components/practice/QuestionTools.js';
+import { useQuestionVoice } from '../../components/practice/useQuestionVoice.js';
 import {
   emptyStaffAnswer,
   readStaffDraft,
@@ -115,7 +116,6 @@ import {
 import { useDraft } from '../../lib/drafts.js';
 import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
-import { questionParts } from '../../lib/practice/questionParts.js';
 import { answerForm } from '../../lib/practice/answerForm.js';
 import { questionOffers, questionOnScreen } from '../../lib/practice/offers.js';
 import { useFinishWhenDone } from '../../lib/practice/finishWhenDone.js';
@@ -123,7 +123,7 @@ import { useHeardTexts } from '../../lib/practice/heardTexts.js';
 import { useScreenRoom } from '../../lib/practice/screenRoom.js';
 import { announce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
-import { speakInOrder, stop as stopListening } from '../../lib/speech/listen.js';
+import { speakInOrder } from '../../lib/speech/listen.js';
 import { feedbackReadText, spokenText } from '../../lib/speech/spoken.js';
 import { baseLanguage } from '../../lib/speech/voice.js';
 import { afterFeedback, useHandsFree } from '../../lib/speech/handsFree.js';
@@ -238,7 +238,6 @@ export default function PracticeScreen() {
   // The session ran here while the screen was open: its end is a moment (SessionSummary).
   const sawActive = useRef(false);
   if (session?.status === 'active') sawActive.current = true;
-  const voiceOn = useVoiceMode(readsAloud);
   const conversation = useVoiceMode((s) => s.conversation);
   const words = useSpokenWords();
 
@@ -257,30 +256,8 @@ export default function PracticeScreen() {
     onScreen.item.read_aloud
       ? onScreen.item
       : null;
-  // Hands-free (lib/speech/handsFree.ts): once she started a mic here herself, reading
-  // to the end lets the mic listen again, and a closed question moves on by itself.
-  const readQuestion = (item: ItemView) =>
-    speakInOrder(questionParts(item, words, t), (why) => {
-      if (why === 'done') useHandsFree.getState().listenNow();
-    });
-  useEffect(() => {
-    if (voiceOn && toRead) readQuestion(toRead);
-    // Only a new question (or switching reading on) reads again; "Nochmal vorlesen" repeats it.
-  }, [voiceOn, toRead?.id]);
-
-  // Leaving the screen ends whatever is being read, and the hands-free loop.
-  useFocusEffect(
-    useCallback(() => {
-      useHandsFree.getState().disarm();
-      return () => {
-        useHandsFree.getState().disarm();
-        stopListening();
-      };
-    }, []),
-  );
-  useEffect(() => {
-    if (!conversation) useHandsFree.getState().disarm();
-  }, [conversation]);
+  // Read when it appears, and in a conversation the mic listens once it is read (`useQuestionVoice`).
+  const readQuestion = useQuestionVoice(toRead, words, t);
 
   /** Buddy's reaction after an answer or a hint, with the verdict word first and math in words. */
   function feedbackText(res: AnswerResponse): string {

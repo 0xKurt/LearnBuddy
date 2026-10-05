@@ -40,7 +40,6 @@
     "hint": "Tocca, parla e tocca di nuovo – per tutto il tempo che vuoi.",
     "live": "Capito finora: {{text}}",
     "message": "Detta un messaggio",
-    "conversation_on": "Ti leggo ad alta voce. Tocca il microfono una volta – poi ascolto di nuovo da solo.",
     "open_settings": "Apri Impostazioni",
     "problem": {
       "empty": "Non ti ho capito – di nuovo?",

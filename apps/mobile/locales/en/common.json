@@ -40,7 +40,6 @@
     "hint": "Tap, speak, then tap again – for as long as you like.",
     "live": "Heard so far: {{text}}",
     "message": "Speak a message",
-    "conversation_on": "I'll read aloud to you. Tap the mic once – then I'll listen again by myself.",
     "open_settings": "Open Settings",
     "problem": {
       "empty": "I didn't catch that – try again?",

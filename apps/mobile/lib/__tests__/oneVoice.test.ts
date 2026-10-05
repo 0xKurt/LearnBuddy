@@ -71,11 +71,19 @@ describe('Gespräch: one way in, one row of controls (#386)', () => {
 
   it('has one row: the big mic in the middle, the same on the conversation screen and in practice', () => {
     expect(holders(/<VoiceRow\b/)).toEqual(['app/talk.tsx', 'components/practice/CheckBar.tsx']);
-    // The big mic stands nowhere else (the chat's voice-first bar and the practice voice slot).
-    expect(holders(/<MicButton\b[^>]*size="lg"/)).toEqual([
-      'app/talk.tsx',
-      'components/practice/CheckBar.tsx',
+    // The round mic stands in the row, the input bar and the topic sheet — no second big mic
+    // (the chat's voice-first bar, the practice voice slot).
+    expect(holders(/<MicButton\b/)).toEqual([
+      'components/lb/InputBar.tsx',
+      'components/learn/TopicSheet.tsx',
+      'components/voice/VoiceRow.tsx',
     ]);
+    // One row, one size prop: the whole screen on /talk, the 56 pt mic in practice (#386).
+    // (Up to the row's own end: its props hold arrows, so `[^>]` would stop early.)
+    const row = (size: string) =>
+      new RegExp(`<VoiceRow\\b(?:(?!\\n\\s*/>)[\\s\\S])*size="${size}"`);
+    expect(holders(row('lg'))).toEqual(['app/talk.tsx']);
+    expect(holders(row('md'))).toEqual(['components/practice/CheckBar.tsx']);
   });
 });
 

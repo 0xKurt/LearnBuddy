@@ -20,6 +20,7 @@ import {
   SHOTS,
 } from './fit';
 import { recordPerf } from './perf';
+import { voiceAsSilence } from './talk';
 
 /** The button inside the sheet that is open (the thread behind it may show the same words). */
 function inSheet(page: Page) {
@@ -388,24 +389,26 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.emulateMedia({ colorScheme: 'light' });
 
   // ── Gespräch: the waveform in the bar, as in the chat; the bar becomes the talk row (#386) ──
-  // (Recording can't run in headless Chromium; this checks the controls and the layout.)
+  // Buddy's voice as a short silence, so reading the question really ends; the browser's fake
+  // microphone (playwright.config.ts) then records.
+  await voiceAsSilence(page, 600);
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
   // .last(): the chat's waveform stays mounted under this screen.
   await page.getByRole('button', { name: 'Mit Buddy sprechen' }).last().click();
-  const explained = page.getByText('Ich lese dir vor. Tipp einmal aufs Mikro', { exact: false });
-  await expect(explained).toBeVisible();
-  // The conversation screen's row: "Tastatur" · the big mic · "Nochmal vorlesen" — no field.
-  await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(1);
+  // The conversation screen's row: "Tastatur" · the mic · "Nochmal vorlesen" — no field.
   await expect(page.getByRole('button', { name: 'Nochmal vorlesen' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Tastatur' }).last()).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toHaveCount(0);
   // A conversation reads aloud too: the speaker says so.
   await expect(readOn).toHaveAttribute('aria-checked', 'true');
+  // Gespräch means the same as on /talk: once the question has been read, the mic listens by
+  // itself — no first tap (#386).
+  const listening = page.getByRole('button', { name: 'Aufnahme stoppen' });
+  await expect(listening).toBeVisible();
   // The mic stands in the middle of the screen, like on the conversation screen.
-  const mic = await page.getByRole('button', { name: 'Antwort sagen' }).boundingBox();
+  const mic = await listening.boundingBox();
   const width = page.viewportSize()!.width;
   expect(Math.abs(mic!.x + mic!.width / 2 - width / 2), 'the mic is centred').toBeLessThan(2);
-  await expect(explained).toBeHidden({ timeout: 8000 });
   await shot(page, '27-practice-voice-mode');
   // The same moment at night: the row, the reply and the drawing share the room (#286).
   await page.emulateMedia({ colorScheme: 'dark' });
@@ -413,6 +416,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.emulateMedia({ colorScheme: 'light' });
   // "Tastatur": back to the input bar, and silent again — she never switched Vorlesen on.
   await page.getByRole('button', { name: 'Tastatur' }).last().click();
+  await page.unroute('**/v1/voice/speech');
   await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toBeVisible();
   await expect(readOff).toHaveAttribute('aria-checked', 'false');
   // Vorlesen on in practice, still on at Buddy: one setting, one switch, two heads.
@@ -441,8 +445,6 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(readAloudOn).toHaveAttribute('aria-checked', 'true');
   await readAloudOn.click();
   await expect(readAloudOff).toHaveAttribute('aria-checked', 'false');
-  // Off again: "Ich lese dir vor …" no longer holds, so it does not stay on screen.
-  await expect(explained).toHaveCount(0);
 
   // ── Bruchbalken: a surface she WORKS with, not one more sentence (issue #162) ──
   // The scripted model said only three tasks and their whole numbers (there is no field in

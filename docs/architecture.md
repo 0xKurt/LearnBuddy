@@ -4266,23 +4266,30 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   | What happens | Buddy reads aloud, does not listen | hands-free: Buddy reads and listens |
   | Control | the speaker switch in the header (`components/lb/ReadAloudSwitch.tsx`) — the chat's head and the practice head | the waveform at the end of the input bar (`TalkButton`) |
   | In the chat | replies are read aloud | opens the conversation screen (`app/talk.tsx`) |
-  | In practice | the question when it appears, the feedback, "Anders erklären" | the bar becomes the conversation row in place: "Tastatur" · big mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row) |
+  | In practice | the question when it appears, the feedback, "Anders erklären" | the bar becomes the conversation row in place: "Tastatur" · mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row, with the 56 pt mic) |
   | Kept | on the device (`lb.voiceMode`, the old single flag's key) | not kept: she starts it |
   A conversation includes reading aloud (`readsAloud`); switching the speaker off ends it, and
   "Tastatur" ends it without touching her Vorlesen choice. Before #386 one flag did both, set by
   three controls (the chat's speaker, the practice headphones `VoiceModeToggle`, the chat's
   voice-first bar keyboard · big mic · camera); the headphones, that bar, "Frage vorlesen" in the
-  card and the "Nochmal vorlesen" pill are gone. **Practice is hands-free in a conversation** after
-  her first tap on the row's mic (`lib/speech/handsFree.ts`): question read → the mic listens (ends
-  by itself when she pauses, on the phone) → her answer is checked → the feedback is read → the mic
-  listens again, or, once the question is closed, the next one comes. "Tastatur", switching the
-  speaker off or leaving ends the loop; the microphone never starts before her own tap on that
-  screen (on `/talk` it listens on arrival — the screen she opened to talk). The waveform stands
+  card and the "Nochmal vorlesen" pill are gone. **Gespräch means the same everywhere** (owner decision on
+  #386): as on `/talk`, practice in a conversation is hands-free from the waveform on, without a
+  first tap on the mic (`components/practice/useQuestionVoice.ts`, `lib/speech/handsFree.ts`):
+  question read → the mic listens (ends by itself when she pauses, on the phone) → her answer is
+  checked → the feedback is read → the mic listens again, or, once the question is closed, the next
+  one comes; a question that must not be heard is not read, and the mic listens at once. With a
+  screen reader on, neither screen opens the mic by itself (it would record the screen reader,
+  audit M-85, `lib/useScreenReader.ts`): her tap on the mic starts the loop. "Tastatur", switching
+  the speaker off or leaving ends it. **One row, one size prop:** `/talk` has the whole screen and
+  takes the 72 pt mic; on a practice question the row shares the screen with the question, its
+  conversation and the options, and there the 72 pt mic cost the 16 pt that hid Buddy's newest
+  reply on 360×740 behind a 124 pt empty band (#403's whole-turn rule) — the worse flaw (CLAUDE.md
+  rule 17). So practice takes the 56 pt mic (`VoiceRow size="md"`). The waveform stands
   where a spoken answer can be the whole answer: a typed answer (not a Diktat, not a path written
   line by line, not a line that belongs to a board) and options with letters. Boards, the note
   line, the fraction bar, tapped words, Kopfrechnen and flash cards have no spoken answer and no
   waveform; the speaker stands in the question screen's head only (`app/practice/[id].tsx`), not in
-  Kopfrechnen's or the flash cards', which read nothing aloud today (open, #386). One listening
+  Kopfrechnen's or the flash cards', which read nothing aloud today (open, #434). One listening
   belongs to one turn (`lib/speech/turnGuard.ts`): answering another way (a tap, the screen locking
   while it checks), Buddy starting to speak or the next question cancels a running mic and drops
   its late text. Questions carry the language they are written in (`prompt_lang`, also for

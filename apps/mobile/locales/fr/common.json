@@ -40,7 +40,6 @@
     "hint": "Touche, parle, puis touche encore – aussi longtemps que tu veux.",
     "live": "Compris jusqu'ici : {{text}}",
     "message": "Dicter un message",
-    "conversation_on": "Je te lis tout. Touche le micro une fois – ensuite j’écoute à nouveau tout seul.",
     "open_settings": "Ouvrir les réglages",
     "problem": {
       "empty": "Je ne t'ai pas compris – encore une fois ?",

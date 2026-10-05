@@ -13,7 +13,8 @@
 //     reading aloud (`readsAloud`), and it is not kept across app starts: it is something she
 //     starts, not a setting.
 //
-// The microphone is never started by either: she always taps it first (lib/speech/handsFree.ts).
+// Vorlesen never opens the microphone. Gespräch does once Buddy has read, as on /talk — not with a
+// screen reader on (lib/speech/handsFree.ts, `useQuestionVoice`).
 
 import { create } from 'zustand';
 

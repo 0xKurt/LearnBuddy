@@ -18,7 +18,7 @@
 //
 // Gespräch (issue #386): where an answer can be said — a typed answer, options with letters — the
 // waveform stands at the end of the input bar, as in the chat (`TalkButton`). Tapped, the bar
-// becomes the conversation row (`Talk`, `VoiceRow`): "Tastatur" · the big mic · "Nochmal
+// becomes the conversation row (`Talk`, `VoiceRow`): "Tastatur" · the mic · "Nochmal
 // vorlesen", the same row as the conversation screen's (`app/talk.tsx`), mic in the middle. What
 // she says is checked right away; "Tastatur" brings the input bar back.
 //
@@ -42,7 +42,7 @@ import { View } from 'react-native';
 import { Btn } from '../lb/Btn.js';
 import { BottomBar } from '../lb/BottomBar.js';
 import { InputBar } from '../lb/InputBar.js';
-import { MicButton, MicStatus } from '../voice/MicButton.js';
+import { MicStatus } from '../voice/MicButton.js';
 import { TalkButton } from '../voice/TalkButton.js';
 import { useConversation } from '../voice/useConversation.js';
 import { useHandsFreeMic } from '../voice/useHandsFreeMic.js';
@@ -144,8 +144,9 @@ function TapBar({ canTalk }: { canTalk: boolean }) {
 
 /**
  * Gespräch (issue #386): the conversation screen's row in the bar — "Tastatur" (back to the input
- * bar) · the big mic · "Nochmal vorlesen". Her first tap on the mic starts the hands-free loop
- * (`useHandsFreeMic`); listening ends by itself when she pauses (on the phone).
+ * bar) · the mic · "Nochmal vorlesen". As on /talk the mic listens by itself once the question has
+ * been read (the hands-free loop, `useHandsFreeMic`; the screen arms it); listening ends by itself
+ * when she pauses (on the phone).
  */
 function TalkRow({ prompt, lang, disabled, onText, onReadAgain }: Spoken) {
   const { t } = useTranslation(['common', 'buddy']);
@@ -170,15 +171,9 @@ function TalkRow({ prompt, lang, disabled, onText, onReadAgain }: Spoken) {
             conversation.stop();
           },
         }}
-        mic={
-          <MicButton
-            voice={voice}
-            size="lg"
-            filled
-            label={t('common:voice.answer')}
-            disabled={disabled}
-          />
-        }
+        // The 56 pt mic: the row shares the screen with the question and its conversation (#386).
+        size="md"
+        mic={{ voice, label: t('common:voice.answer'), disabled }}
         right={
           onReadAgain
             ? { icon: 'speak', label: t('common:voice.read_again'), onPress: onReadAgain }
