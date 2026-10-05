@@ -8,7 +8,8 @@
     "listen": "Comprensione orale",
     "spelling_dictation": "Esercitarsi con il dettato",
     "teach_back": "Spiegamelo",
-    "read": "Comprensione del testo"
+    "read": "Comprensione del testo",
+    "essay": "Scrivere un tema"
   },
   "homework": {
     "title": "Aiuto con i compiti",

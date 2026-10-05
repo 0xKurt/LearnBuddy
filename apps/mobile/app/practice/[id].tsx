@@ -27,7 +27,6 @@
 import {
   type AnswerResponse,
   type ItemView,
-  type PracticeTurnView,
   type ReexplainWay,
   type SessionView,
   type SpeakStreamEvent,
@@ -118,6 +117,8 @@ import { currentLocale } from '../../lib/i18n/index.js';
 import { questionParts } from '../../lib/practice/questionParts.js';
 import { answerForm } from '../../lib/practice/answerForm.js';
 import { questionOffers, questionOnScreen } from '../../lib/practice/offers.js';
+import { leftAfterSend } from '../../lib/practice/essay.js';
+import { foreign, verdictWordKey } from '../../lib/practice/onScreen.js';
 import { useFinishWhenDone } from '../../lib/practice/finishWhenDone.js';
 import { useHeardTexts } from '../../lib/practice/heardTexts.js';
 import { useScreenRoom } from '../../lib/practice/screenRoom.js';
@@ -125,7 +126,6 @@ import { announce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
 import { speakInOrder, stop as stopListening } from '../../lib/speech/listen.js';
 import { feedbackReadText, spokenText } from '../../lib/speech/spoken.js';
-import { baseLanguage } from '../../lib/speech/voice.js';
 import { afterFeedback, useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -157,18 +157,6 @@ type SentAnswer = {
    */
   parts: string | null;
 };
-
-/** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
-function foreign(lang: string | null): lang is string {
-  const base = baseLanguage(lang);
-  return base !== null && base !== currentLocale();
-}
-
-/** The verdict word read before Buddy's reply (as ItemThread shows it); none for "not an attempt". */
-function verdictWordKey(verdict: PracticeTurnView['verdict']): string | null {
-  if (verdict === 'not_an_attempt') return null;
-  return `practice:verdict.${verdict ?? 'unchecked'}`;
-}
 
 function backToBuddy(): void {
   // Pops back to Buddy when it is below in the stack, otherwise replaces this
@@ -433,10 +421,10 @@ export default function PracticeScreen() {
           await store(res.session);
           // Tap on "Prüfen" → the verdict on screen (issue #66).
           reacted('check');
-          if (answerText !== null)
-            setText((current) => (current.trim() === answerText ? '' : current));
-          if (res.session.items.find((i) => i.item.id === itemId)?.status !== 'open')
-            Keyboard.dismiss();
+          const after = res.session.items.find((i) => i.item.id === itemId);
+          // A long text stays in the field: her next version starts from it (#258).
+          if (answerText !== null) setText((c) => leftAfterSend(c, answerText, after?.item.kind));
+          if (after?.status !== 'open') Keyboard.dismiss();
           readFeedback(res, itemId);
         } finally {
           setPending(null);
@@ -771,6 +759,7 @@ export default function PracticeScreen() {
         testing,
         mode: session.mode,
         origin: item.origin,
+        kind: item.kind,
       })}
       disabled={locked}
       onFlag={() => {
@@ -919,6 +908,7 @@ export default function PracticeScreen() {
                   holds={threadHolds}
                   tops={room.tops}
                   followEnd={followEnd}
+                  readFrom={pendingText === null ? room.readFrom : undefined}
                   onBox={measured.setThreadBox}
                   onNeed={measured.setThreadNeed}
                   onParts={measured.setPartTops}
@@ -941,6 +931,7 @@ export default function PracticeScreen() {
                     // bubble stays: there it is the only place she sees what was heard.
                     echoAnswers={!((structured || ((choices || tapChoices) && !voiceOn)) && open)}
                     onTurnTops={measured.setTurnTops}
+                    essay={item.kind === 'essay'}
                   />
                   {session.mode === 'help' && shown.status === 'correct' ? (
                     <Rise delay={180}>

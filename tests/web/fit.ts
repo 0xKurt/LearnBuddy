@@ -378,8 +378,10 @@ export async function cutControls(page: Page): Promise<string[]> {
  * The practice conversation shows whole things only (issues #286, #403, rule 17): a turn, the help
  * chips or a card under the question card is either whole below the card's edge and its fade, or
  * not drawn there at all — never its lower half under the fade, the edge of a reply or a sliver of
- * an orb. The units are the conversation column's parts, its turns one by one. The fade line is
- * read from the box's own mask (`topEdgeMaskFrom`): at rest only the gap above a whole turn fades.
+ * an orb. One exception: a part taller than the box cannot be whole anywhere, so it stands from
+ * its first line (a long text's feedback, #258). The units are the conversation column's parts,
+ * its turns one by one. The fade line is read from the box's own mask (`topEdgeMaskFrom`): at rest
+ * only the gap above a whole turn fades.
  * Returns what is half shown, with its place relative to the box's top.
  */
 export async function halfTurns(page: Page): Promise<string[]> {
@@ -392,24 +394,30 @@ export async function halfTurns(page: Page): Promise<string[]> {
     const column = thread?.firstElementChild?.firstElementChild;
     if (!thread || !column) return [];
     const box = thread.getBoundingClientRect();
-    // `linear-gradient(transparent Apx, black Bpx)`: hidden above A, faded down to B.
+    // `linear-gradient(transparent Apx, black Bpx …)`: hidden above A, faded down to B (a fade at
+    // the bottom edge may follow, #258).
     const mask = getComputedStyle(thread).getPropertyValue('mask-image') || '';
     const stops = Array.from(mask.matchAll(/(-?[\d.]+)px/g)).map((m) => Number(m[1]));
     const hidden = box.top + (stops[0] ?? 0);
-    const line = box.top + (stops[stops.length - 1] ?? 0);
+    const line = box.top + (stops[1] ?? stops[0] ?? 0);
     const units = (el: Element): Element[] =>
       el.querySelector('[data-testid="thread-turn"]')
         ? Array.from(el.children).flatMap(units)
         : [el];
-    return Array.from(column.children)
-      .flatMap(units)
-      .map((el) => ({ el, r: el.getBoundingClientRect() }))
-      .filter(({ r }) => r.height > 0 && r.bottom > hidden + 1 && r.top < box.bottom - 1)
-      .filter(({ r }) => r.top < line - 1 || r.bottom > box.bottom + 1)
-      .map(
-        ({ el, r }) =>
-          `${(el.textContent ?? '').trim().slice(0, 24) || el.tagName} ${Math.round(r.top - box.top)}..${Math.round(r.bottom - box.top)} of ${Math.round(box.height)} (fade ${Math.round(line - box.top)})`,
-      );
+    return (
+      Array.from(column.children)
+        .flatMap(units)
+        .map((el) => ({ el, r: el.getBoundingClientRect() }))
+        .filter(({ r }) => r.height > 0 && r.bottom > hidden + 1 && r.top < box.bottom - 1)
+        .filter(({ r }) => r.top < line - 1 || r.bottom > box.bottom + 1)
+        // A part taller than the whole box can never stand whole: it stands from its first line
+        // (Buddy's feedback on a long text, #258, `threadRoom` `reads`) and scrolls.
+        .filter(({ r }) => !(r.top >= line - 1 && r.height > box.bottom - line))
+        .map(
+          ({ el, r }) =>
+            `${(el.textContent ?? '').trim().slice(0, 24) || el.tagName} ${Math.round(r.top - box.top)}..${Math.round(r.bottom - box.top)} of ${Math.round(box.height)} (fade ${Math.round(line - box.top)})`,
+        )
+    );
   });
 }
 
