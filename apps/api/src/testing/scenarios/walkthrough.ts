@@ -7,6 +7,7 @@
 
 import type { ScriptedGateway } from '../fakes.js';
 import { scriptAsk } from './ask.js';
+import { scriptCircuits } from './circuits.js';
 import { installChecks } from './checks.js';
 import { scriptCloze } from './cloze.js';
 import { scriptCoreLoop } from './core-loop.js';
@@ -58,6 +59,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptPrimary();
   // Also before the core loop: "Kreislauf" and "Kette" are everyday words its rules may know (#247).
   scriptDiagrams();
+  // Also before the core loop: "Farbe" and "Strom" are everyday words its rules may know (#261).
+  scriptCircuits();
   // Before the core loop: "Fotosynthese" is a topic an older, broader rule may know (#236).
   scriptTeachBack();
   scriptCoreLoop();

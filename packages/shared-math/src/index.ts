@@ -9,6 +9,7 @@ export * from './answer.js';
 export * from './charts.js';
 export * from './molecule.js';
 export * from './primary.js';
+export * from './ratio.js';
 export * from './trees.js';
 export * from './pedigree.js';
 export * from './periodic.js';
@@ -23,3 +24,6 @@ export * from './maps.js';
 // this index; it loads them when a map is on the screen (`useMapShapes`).
 export { MAP_SHAPES } from './mapShapes.data.js';
 export * from './tap.js';
+export * from './circuit.js';
+export * from './logic.js';
+export * from './itten.js';

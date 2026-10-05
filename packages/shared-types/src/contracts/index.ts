@@ -8,6 +8,7 @@ export * from './tree.js';
 export * from './periodic.js';
 export * from './solid.js';
 export * from './diagram.js';
+export * from './circuit.js';
 export * from './map.js';
 export * from './figure.js';
 export * from './bars.js';

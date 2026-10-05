@@ -1,19 +1,30 @@
 // The school figures that live in files of their own: clock, money, dot field, base-ten blocks
 // (#254, PrimaryFigures.tsx), trees, pedigrees, automata (#256, TreeFigures.tsx), the periodic
 // table (#250, PeriodicTable.tsx), solids, cube nets, points in space (#255, SolidFigures.tsx),
-// diagrams of boxes and arrows (#247, DiagramFigures.tsx) and maps (#251, MapFigures.tsx). FigureView asks this file once
+// diagrams of boxes and arrows (#247, DiagramFigures.tsx), circuits and logic nets (#261,
+// CircuitFigures.tsx), Itten's colour wheel (#261, ColorWheel.tsx) and maps (#251, MapFigures.tsx). FigureView asks this file once
 // for the drawing and once for the words, so a new figure of this kind is added here —
 // FigureView is never touched for it again.
 
 import type { Figure, PrimaryFigure } from '@learnbuddy/shared-types/contracts';
 
 // Imported by path, like every figure file: the guards are dependency-free.
+import { isCircuit } from '../../../../packages/shared-math/src/circuit.js';
 import { isDiagram } from '../../../../packages/shared-math/src/diagram.js';
+import { isColorWheel } from '../../../../packages/shared-math/src/itten.js';
+import { isLogic } from '../../../../packages/shared-math/src/logic.js';
 import { isMap } from '../../../../packages/shared-math/src/maps.js';
 import { isPeriodicTable } from '../../../../packages/shared-math/src/periodic.js';
 import { isPrimary } from '../../../../packages/shared-math/src/primary.js';
 import { isSpaceFigure } from '../../../../packages/shared-math/src/space.js';
 import { isTreeFigure } from '../../../../packages/shared-math/src/trees.js';
+import {
+  describeSwitching,
+  SwitchingBody,
+  type CircuitFig,
+  type LogicFig,
+} from './CircuitFigures.js';
+import { ColorWheelBody, describeColorWheel, type ColorWheelFig } from './ColorWheel.js';
 import { DiagramBody, describeDiagram, type DiagramFig } from './DiagramFigures.js';
 import { describeMap, MapBody, type MapFigure } from './MapFigures.js';
 import { describePeriodic, PeriodicBody } from './PeriodicTable.js';
@@ -29,6 +40,9 @@ export type SchoolFigure =
   | PeriodicFig
   | SpaceFig
   | DiagramFig
+  | CircuitFig
+  | LogicFig
+  | ColorWheelFig
   | MapFigure;
 type T = (key: string, values?: Record<string, string | number>) => string;
 
@@ -39,6 +53,9 @@ export function isSchoolFigure(f: Figure): f is SchoolFigure {
     isPeriodicTable(f) ||
     isSpaceFigure(f) ||
     isDiagram(f) ||
+    isCircuit(f) ||
+    isLogic(f) ||
+    isColorWheel(f) ||
     isMap(f)
   );
 }
@@ -57,6 +74,8 @@ export function SchoolFigureBody({
   if (isTreeFigure(figure)) return <TreeBody figure={figure} width={width} scale={scale} />;
   if (isPeriodicTable(figure)) return <PeriodicBody figure={figure} width={width} />;
   if (isDiagram(figure)) return <DiagramBody figure={figure} width={width} />;
+  if (isCircuit(figure) || isLogic(figure)) return <SwitchingBody figure={figure} width={width} />;
+  if (isColorWheel(figure)) return <ColorWheelBody figure={figure} width={width} />;
   if (isMap(figure)) return <MapBody figure={figure} width={width} />;
   return <SpaceBody figure={figure} width={width} />;
 }
@@ -67,6 +86,8 @@ export function describeSchoolFigure(figure: SchoolFigure, t: T): string {
   if (isTreeFigure(figure)) return describeTree(figure, t);
   if (isPeriodicTable(figure)) return describePeriodic(figure, t);
   if (isDiagram(figure)) return describeDiagram(figure, t);
+  if (isCircuit(figure) || isLogic(figure)) return describeSwitching(figure, t);
+  if (isColorWheel(figure)) return describeColorWheel(figure, t);
   if (isMap(figure)) return describeMap(figure, t);
   return describeSpace(figure, t);
 }

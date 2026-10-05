@@ -230,6 +230,27 @@ describe('compareNumbers — exact, or within the key’s own rounding (D-1, C-2
     expect(parseNumericInput('2 n').value).toBeNull();
   });
 
+  it('reads volt, ampere and ohm, and converts within each (#261)', () => {
+    expect(parseNumericInput('0,04 A')).toMatchObject({ value: 0.04, unit: 'A' });
+    expect(parseNumericInput('40 mA')).toMatchObject({ value: 40, unit: 'mA' });
+    expect(parseNumericInput('4,5 V')).toMatchObject({ value: 4.5, unit: 'V' });
+    expect(parseNumericInput('200 Ω')).toMatchObject({ value: 200, unit: 'Ω' });
+    expect(parseNumericInput('2,2 kΩ')).toMatchObject({ value: 2.2, unit: 'kΩ' });
+    expect(parseNumericInput('200 Ohm')).toMatchObject({ value: 200, unit: 'Ω' });
+    const other = (key: string, given: string) =>
+      compareNumbers(parseNumericInput(given), parseCanonicalKey(key), {
+        unit: null,
+        tolerance: null,
+        convertUnits: true,
+      });
+    expect(other('0.04 A', '40 mA')).toBe('equal');
+    expect(other('2200 Ω', '2,2 kΩ')).toBe('equal');
+    // A small v or a is a variable, never volt or ampere; a voltage is not a current.
+    expect(parseNumericInput('2 v').value).toBeNull();
+    expect(parseNumericInput('2a').value).toBeNull();
+    expect(other('5 V', '5 A')).not.toBe('equal');
+  });
+
   it('leaves calculations and ambiguous numbers to the tutor', () => {
     expect(cmp('391', '17·23')).toBe('unknown');
     expect(cmp('1000', '1.000')).toBe('unknown');
