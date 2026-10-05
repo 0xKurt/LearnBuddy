@@ -282,7 +282,7 @@ describe('table_fill: her answer, cell by cell', () => {
     const task = built(VERBS);
     const check = checkStructured(task, answer({ r0c2: 'ging', r1c1: 'gehst', r1c2: 'gingst' }));
     expect(check).toMatchObject({ type: 'table_fill', correct: true, right: 3, total: 3 });
-    expect(answerTextOf(task, answer({ r0c2: 'ging', r1c1: 'gehst', r1c2: 'gingst' }))).toBe(
+    expect(answerTextOf(task, answer({ r0c2: 'ging', r1c1: 'gehst', r1c2: 'gingst' }), 'de')).toBe(
       'ging · gehst · gingst',
     );
   });

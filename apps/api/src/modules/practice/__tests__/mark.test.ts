@@ -378,13 +378,17 @@ describe('her marks against the key (no model)', () => {
     expect(check).toMatchObject({ correct: false, right: 2, missing: 1, extra: 1, misfiled: 0 });
     expect(markReply('de', check!)).toBe('Noch nicht ganz: 2 richtig, 1 fehlt noch, 1 zu viel.');
     expect(
-      markAnswerText(task, {
-        type: 'mark',
-        marks: [
-          { at: 'w2', category: null },
-          { at: 'w3', category: null },
-        ],
-      }),
+      markAnswerText(
+        task,
+        {
+          type: 'mark',
+          marks: [
+            { at: 'w2', category: null },
+            { at: 'w3', category: null },
+          ],
+        },
+        'de',
+      ),
     ).toBe('Hund, bellt');
   });
 

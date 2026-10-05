@@ -314,7 +314,9 @@
     "word_in": "{{word}}, marcado como {{name}}",
     "gap": "Coma después de «{{word}}»",
     "cut": "La sílaba termina después de «{{before}}» en {{word}}",
-    "how_sorted": "Elige arriba el tipo y luego toca las palabras."
+    "how_sorted": "Elige arriba el tipo y luego toca las palabras.",
+    "how_lines": "Toca las líneas donde lo dice el texto.",
+    "lines": "l. {{list}}"
   },
   "select": {
     "several": "Hay varias correctas: tócalas todas.",

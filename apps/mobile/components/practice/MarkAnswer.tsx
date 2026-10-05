@@ -20,10 +20,18 @@
 // im Vertrag (MARK_*, `markRows`) sind so gewählt, dass das Größte ohne Scrollen passt — gemessen in
 // tests/web/mark.spec.ts.
 // Ihr Stand liegt im Entwurf (`lib/drafts.ts`): er übersteht hell/dunkel und einen Neustart.
+//
+// Belegstelle (Zeilen, #368): sie tippt die Zeilen eines langen Lesetexts an, in denen eine Aussage
+// steht — irgendwo im Text. Der Text ist hier die Antwortfläche: er steht in seinem eigenen
+// Kasten, der als einziges scrollt („nur ein Text scrollt", `scroll-text`), mit denselben Zeilen
+// wie über einer Lesefrage (`LineText` aus PassagePanel), jede Zeile ein Btn. Über der Frage
+// steht er dann nicht noch einmal (der Server schickt ihn dort erst, wenn die Frage zu ist).
 
 import {
   cutId,
   gapId,
+  lineId,
+  lineNumbers,
   markedText,
   markTargets,
   type MarkCategory,
@@ -33,7 +41,7 @@ import {
   type StructuredAnswer,
 } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { useDraft } from '../../lib/drafts.js';
 import { RADIUS } from '../../lib/theme/radius.js';
@@ -43,6 +51,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Segmented } from '../lb/Segmented.js';
 import { AnswerShell } from './AnswerShell.js';
+import { LineText } from './PassagePanel.js';
 
 /**
  * A word's tile: its own padding (`Btn bare`), the smallest step — the tiles touch, so this is the
@@ -60,6 +69,11 @@ const SURFACE = { paddingHorizontal: SPACE.sm, borderRadius: RADIUS.frame } as c
 const LETTER_CELL = 30; // token-exempt: a letter's width, measured against MARK_SYLLABLE_LETTERS_MAX
 /** The underline under a marked word: a bar, so it reads the same on every platform. */
 const UNDERLINE = 3; // token-exempt: a stroke, not a gap — thick enough to see at arm's length
+/**
+ * A Belegstelle's text never shrinks below four lines' targets: it scrolls in its box, and the
+ * conversation above gives way first (the answer shell's `keeps`).
+ */
+const LINES_KEEP = TOUCH * 4;
 /** The digit a category carries, on its button and on every word marked with it. */
 const DIGITS = ['①', '②', '③'];
 
@@ -129,12 +143,15 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const tap = (at: string) =>
     keep((now) => JSON.stringify(toggleMark(marksFrom(now, view), at, chosen)));
   const own = { marks, categories, disabled, tap };
+  const lines = view.mode === 'lines';
+  // What is marked, in words — the lines as "Z. 15–16" in her language.
+  const said = lines ? t('mark.lines', { list: markedText(view, marks) }) : markedText(view, marks);
 
   return (
     <AnswerShell
-      keeps="whole"
+      keeps={lines ? LINES_KEEP : 'whole'}
       answer={
-        <View style={{ gap: SPACE.sm }}>
+        <View style={{ gap: SPACE.sm, flexShrink: 1, minHeight: 0 }}>
           {/* What a tap does, one line in the same place for every kind of marking — until the
               first "Prüfen": then Buddy's reply says how it went, and on 360×740 it needs the
               room (the same as the one line of a select-all task, #240). */}
@@ -154,6 +171,8 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
           ) : null}
           {view.mode === 'syllables' ? (
             <Syllables words={view.words} {...own} />
+          ) : lines ? (
+            <Lines lines={view.lines} {...own} />
           ) : (
             <Words view={view} {...own} />
           )}
@@ -167,10 +186,8 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
               style={[TYPE.small, { color: palette.ink2 }]}
             >
               {categories.length > 0
-                ? markedText(view, marks)
-                : t(view.mode === 'syllables' ? 'mark.split' : 'mark.marked', {
-                    list: markedText(view, marks),
-                  })}
+                ? said
+                : t(view.mode === 'syllables' ? 'mark.split' : 'mark.marked', { list: said })}
             </Text>
           ) : null}
         </View>
@@ -180,7 +197,7 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
         disabled,
         onPress: () => {
           markChecked('1');
-          onSubmit({ type: 'mark', marks }, markedText(view, marks));
+          onSubmit({ type: 'mark', marks }, said);
         },
         waitsHint: t('mark.check_waits'),
       }}
@@ -305,6 +322,57 @@ function PlainWord({ word }: { word: MarkWord }) {
     <View style={{ minHeight: TOUCH, justifyContent: 'center' }}>
       <WordLabel word={word} marked={false} comma={false} digit={null} />
     </View>
+  );
+}
+
+/**
+ * A Belegstelle: the reading text in its own box, every printed line a target the width of the
+ * box and at least 44 pt high; a paragraph break is a little air, as above a reading question.
+ */
+function Lines({ lines, marks, disabled, tap }: Own & { lines: readonly string[] }) {
+  const { palette } = useTheme();
+  const { t } = useTranslation('practice');
+  const numbers = lineNumbers(lines);
+  return (
+    <ScrollView
+      testID="scroll-text"
+      nestedScrollEnabled
+      // Reachable by keyboard, like the text above a reading question (axe
+      // `scrollable-region-focusable`).
+      focusable
+      accessibilityLabel={t('reading.label')}
+      accessibilityHint={t('reading.scroll_hint')}
+      style={{
+        flexGrow: 0,
+        flexShrink: 1,
+        borderRadius: RADIUS.frame,
+        backgroundColor: palette.paper,
+      }}
+      contentContainerStyle={{ paddingVertical: SPACE.xs }}
+    >
+      {lines.map((line, i) => {
+        const n = numbers[i] ?? null;
+        if (n === null) return <View key={i} style={{ height: SPACE.sm }} />;
+        const at = lineId(n);
+        const marked = marks.some((m) => m.at === at);
+        return (
+          <Btn
+            key={i}
+            size="sm"
+            bare
+            full
+            variant={marked ? 'soft' : 'ghost'}
+            checked={marked}
+            disabled={disabled}
+            onPress={() => tap(at)}
+            accessibilityLabel={`${t('reading.line', { n })}: ${line}`}
+            label={<LineText n={n} line={line} lit={marked} numberShown={marked} />}
+          >
+            {line}
+          </Btn>
+        );
+      })}
+    </ScrollView>
   );
 }
 

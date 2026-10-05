@@ -1,7 +1,7 @@
 // Scripted model answers for the browser walkthrough of a reading text (tests/web/reading.spec.ts,
-// issue #233): a photographed page with a story of 20 lines and six questions about it — short,
-// multiple choice, true/false and an order — of which code keeps five (one names a line the text
-// does not have). Its own learner: the reading is keyed by her age (11, nobody else's in the
+// issue #233): a photographed page with a story of 20 lines and seven questions about it — short,
+// multiple choice, true/false, an order and a Belegstelle (#368: she taps the lines that back a
+// statement) — of which code keeps six (one names a line the text does not have). Its own learner: the reading is keyed by her age (11, nobody else's in the
 // walkthrough), so no other spec's sheet can be read as hers, nor hers as theirs (#313, #350).
 // Test tooling only; every answer the walkthrough gives is decided by the rules.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
@@ -108,6 +108,14 @@ export function scriptReading(): void {
                 'Der Vater holt das Fahrrad ab.',
                 'Mia malt ein Bild für den Bauern.',
               ],
+              difficulty: 2,
+            },
+            // A Belegstelle late in the text, over a paragraph break: lines 15–16 (#368).
+            {
+              kind: 'evidence',
+              statement: 'Mia ist dem Bauern dankbar.',
+              evidence:
+                'Mia malte ihm zum Dank ein Bild von seinem roten Traktor. Seitdem winkt Mia dem Bauern jeden Morgen zu',
               difficulty: 2,
             },
           ],

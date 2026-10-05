@@ -2903,8 +2903,21 @@ prints none.
   one scrolling surface allowed besides a conversation and a browsed list (`tests/web/fit.ts`).
   Folded or not, and where she scrolled, carries over to the next question of the same text.
 - **Not yet:** a reading text Buddy writes on request (a `read` run beside `listen`) — it needs a
-  run kind (`practice/setProfiles.ts`, `practice/generate.ts`); and a "Belegstelle" that is a
-  stretch of the WHOLE text to tap (a marking task holds one or two sentences, `MARK_WORDS_MAX`).
+  run kind (`practice/setProfiles.ts`, `practice/generate.ts`).
+- **Belegstelle (#368):** a reading question of kind `evidence` names a statement in the model's own
+  words and quotes its evidence; code finds the lines the evidence stands on (`linesOf`) and stores
+  a marking task in **lines mode** (`markLinesTask`): the text's lines in the task, the key the
+  lines `l6`, `l7` … of the evidence. She taps those lines ANYWHERE in the text — the text is the
+  board at the bottom (`MarkAnswer`, `Lines`: every text line a full-width `<Btn>` 44 pt high in a
+  box that scrolls in itself, `scroll-text`; the gutter and line rendering is `LineText`, shared
+  with `PassagePanel`, a marked line carrying the accent bar and its number), and while it is open
+  the server does not send the text above the question a second time (`textIsBoard` in
+  `sessionView.ts`); once closed the text is back above it with the lines lit. Regel 0: the
+  statement names no line (that is the answer) and does not stand in the text word for word
+  (searching, not reading), the evidence stands in the text and spans at most
+  `MARK_LINES_KEY_MAX` = 6 lines; no hint names a line (none is prepared). Checking is the marking
+  set comparison ("1 richtig, 1 fehlt noch, 1 zu viel"); her answer stands as "Z. 6–7" in her
+  language (`practice.mark.lines`). Prompt extract.v8.13.
 - **Marking in the text (#234):** a reading question of kind `mark` marks words or sets the commas
   in ONE sentence of the text (`practice/reading.ts`, `markIn`): it is a marking task like every
   other (below), and its words must stand in the text in order (`linesOf`; the commas she sets do

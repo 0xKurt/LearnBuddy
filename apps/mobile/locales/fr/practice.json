@@ -314,7 +314,9 @@
     "word_in": "{{word}}, marqué comme {{name}}",
     "gap": "Virgule après « {{word}} »",
     "cut": "La syllabe finit après « {{before}} » dans {{word}}",
-    "how_sorted": "Choisis d’abord le type en haut, puis touche les mots."
+    "how_sorted": "Choisis d’abord le type en haut, puis touche les mots.",
+    "how_lines": "Touche les lignes où le texte le dit.",
+    "lines": "l. {{list}}"
   },
   "select": {
     "several": "Plusieurs sont justes – touche-les toutes.",

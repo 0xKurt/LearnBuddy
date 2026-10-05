@@ -314,7 +314,9 @@
     "word_in": "{{word}}, marked as {{name}}",
     "gap": "Comma after “{{word}}”",
     "cut": "Syllable ends after “{{before}}” in {{word}}",
-    "how_sorted": "Choose the kind above, then tap the words."
+    "how_sorted": "Choose the kind above, then tap the words.",
+    "how_lines": "Tap the lines where the text says so.",
+    "lines": "l. {{list}}"
   },
   "select": {
     "several": "More than one is right – tap all of them.",

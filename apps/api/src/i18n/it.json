@@ -322,7 +322,8 @@
       "missing_one": "ne manca ancora 1",
       "extra": "{{count}} di troppo",
       "extra_one": "1 di troppo",
-      "reply": "Non ancora del tutto: {{parts}}."
+      "reply": "Non ancora del tutto: {{parts}}.",
+      "lines": "r. {{list}}"
     },
     "solid": {
       "net_yes": "Sì, è uno sviluppo del cubo",

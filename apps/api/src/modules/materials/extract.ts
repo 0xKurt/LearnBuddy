@@ -45,7 +45,8 @@ import { TABLE_RULES } from '../practice/table.js';
 //        `pages`, `unclear` and `not_practicable`, dropped before by `toJsonSchema` (#282); a
 //        page number and the readings no longer say their bounds twice (#282 D5).
 // v8.12: a marking text sorted into categories may have 12 words and 72 characters (#368).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.12';
+// v8.13: a reading question may ask for its Belegstelle (`evidence`): she taps the lines (#368).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.13';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
