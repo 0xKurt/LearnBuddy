@@ -120,6 +120,8 @@ export type ItemRow = {
   tap?: boolean;
   /** „Warum stimmt das?" (#388, migration 0098), read through `whyOf`. Only the view loads it. */
   why?: unknown;
+  /** A proven way, step by step (#298, migration 0101), read through `stepsOf`. */
+  worked_steps?: unknown;
 };
 
 export type SessionItemRow = {

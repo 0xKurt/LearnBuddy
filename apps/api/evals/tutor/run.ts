@@ -89,6 +89,11 @@ type Case = {
    * stimmt das?" that survived code's check (`checkedWhy`): a question with a rule behind it.
    */
   reasons?: true;
+  /**
+   * Issue #298: the live hints call must leave a way code proved (`checkedSteps`): every line
+   * following from the one before, starting at the question's equation, ending on the key.
+   */
+  way?: true;
   item: Record<string, unknown>;
   /** For homework: what she typed (the task must be in it). */
   text?: string;
@@ -356,6 +361,14 @@ const CASES: Case[] = [
     steps: [{ say: '2/6', ok: wrong, noSolution: true }],
   },
   {
+    // Issue #298: a grade-10 equation gets a proven way, step by step — the guided example.
+    id: 'way_for_an_equation',
+    kind: 'practice',
+    way: true,
+    item: q({ kind: 'numeric', prompt: 'Löse die Gleichung 3(2x − 4) = 2x + 8.', answer: '5' }),
+    steps: [{ say: '4', ok: wrong, noSolution: true }],
+  },
+  {
     // Issue #388: asked in a Probetest on a tap form, the fixed line says "antworte", never
     // "schreib" — and nothing of the model's words reaches her.
     id: 'test_line_fits_a_tap_form',
@@ -492,6 +505,15 @@ for (const c of CASES) {
       problems.push(`"${step.say}": claims she is close, which nothing measured`);
     lastReply = reply;
     if (r.body.session.items[0]?.status !== 'open') break;
+  }
+  if (c.way) {
+    await env.flushBackground();
+    const kept = await env.db.one<{ worked_steps: unknown }>(
+      `select worked_steps from items where id = $1`,
+      [itemId],
+    );
+    if (kept.worked_steps === null) problems.push('no way survived the proof (checkedSteps)');
+    else log.push(`    way: ${JSON.stringify(kept.worked_steps)}`);
   }
   if (c.reasons) {
     // The hints are written in the background, live: wait for them, then read what was kept.

@@ -90,6 +90,7 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
   '0094_find_error_column_calc',
   '0095_grid_items',
   '0098_item_why',
+  '0101_worked_steps',
 ];
 
 /**

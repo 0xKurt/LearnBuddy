@@ -45,6 +45,7 @@ import { givesHints, learnsFsrs } from './modeRules.js';
 import { asTestTurn, ladderDone, REVEAL_AFTER_MISSES, workedReply } from './ladder.js';
 import { lockActiveSession } from './sessionRow.js';
 import { followWithSimilar } from './similar.js';
+import { guidedStep } from './workedSteps.js';
 import { settleTestClock, timeUpError } from './testClock.js';
 import {
   answerTextOf,
@@ -300,6 +301,11 @@ export async function answerItem(
       ? 'incorrect'
       : byRules;
   const nextHint = givesHints(session.mode) ? (item.hints[item.prepared_hints_used] ?? null) : null;
+  // Mitmachen (#298, `workedSteps.ts`): her line once a step of a proven way was shown.
+  const guided =
+    hintRequest || !givesHints(session.mode)
+      ? null
+      : guidedStep({ ...item, form_free: barTask !== null }, item.prepared_hints_used, text);
   // Two options and one was wrong: tapping the other one is no knowledge. A wrong choice that
   // leaves a single untried option closes the question with the solution explained — shown,
   // never right (user feedback #9).
@@ -369,7 +375,8 @@ export async function answerItem(
       gaveHint: false,
       revealed: true,
     };
-  } else if (rule === 'correct') {
+  } else if (rule === 'correct' || guided === 'solved') {
+    // Right — or, in a guided example (#298), the way's last line with the key's value.
     judged = {
       verdict: 'correct',
       // A cloze gap the model judged (issue #232) makes it the model's verdict, honestly.
@@ -378,6 +385,15 @@ export async function answerItem(
         learner.locale,
         session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
       ),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (guided === 'step') {
+    // A step of hers that follows from the task (#298): no try, no model — on to the next one.
+    judged = {
+      verdict: 'not_an_attempt',
+      evaluatedBy: 'rule',
+      reply: t(learner.locale, 'practice.step_ok'),
       gaveHint: false,
       revealed: false,
     };
@@ -455,6 +471,15 @@ export async function answerItem(
       reply: workedReply(learner.locale, item),
       gaveHint: false,
       revealed: true,
+    };
+  } else if (guided === 'wrong') {
+    // A step that does not follow from the task (#298): a miss, and code says where.
+    judged = {
+      verdict: 'incorrect',
+      evaluatedBy: 'rule',
+      reply: t(learner.locale, 'practice.step_wrong'),
+      gaveHint: false,
+      revealed: false,
     };
   } else if (
     givesHints(session.mode) &&

@@ -1769,6 +1769,30 @@ each of these from what is recorded; the model only writes words that code check
   questions on the goal's sheets (or on the topic in her words), at least 5 are closed and 70 %
   of them are right. Otherwise the offer is refused with the reason, and Buddy offers practice.
   Starting a test herself in the app is never held back.
+- **A guided worked example** (#298, Vormachen → Mitmachen → Selbermachen; faded worked
+  examples, Renkl & Atkinson 2003): for a question solved by transforming an equation or a term,
+  the background hints call also writes the way (`steps`: one line of maths and a short note per
+  step).
+  - `checkedSteps` (`workedSteps.ts`) keeps it only when code proves it, in `items.worked_steps`
+    (`[{line, note}]`, at least 3, migration `0101_worked_steps.sql`):
+    - every line follows from the one before (`checkPath`);
+    - the first line stands in the question;
+    - the path ends on the key (`ruleCheck`);
+    - no earlier line already is the answer.
+  - A way that fails is never stored, and the text hints stay.
+  - **Vormachen:** the middle steps ARE the hint ladder ("note: $line$"), so „Tipp" shows one step
+    at a time and the result only comes at the ladder's end.
+  - **Mitmachen:** once a step was shown, her one-line answer is read by `guidedStep`, against the
+    task's line (`sameStep`):
+    - a line that follows and is her own: `practice.step_ok` („Der Schritt stimmt – und weiter?"),
+      verdict `not_an_attempt`, no try, no model;
+    - a line that does not follow: `practice.step_wrong`, a miss;
+    - the result in the way's form („x = 4" for a key of 4): right;
+    - a copied step, several lines or an unreadable line go to the rules as before.
+  - Never in a test or homework.
+  - **Selbermachen** is the similar task after the shown solution (above).
+  - Measured in `practice-steps.int.test.ts`; the live hints call is the eval case
+    `way_for_an_equation`, not yet run.
 - **The test's fixed line fits the form**: `practice.test_no_hints` says „schreib einfach, was du
   denkst" only where she writes her answer. On options, a board, the fraction bar, the staff or a
   tap in the figure it is `practice.test_no_hints_on_screen` („antworte einfach so, wie du

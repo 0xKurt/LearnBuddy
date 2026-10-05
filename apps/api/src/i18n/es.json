@@ -226,6 +226,8 @@
     "same_value": "El valor es correcto – solo lo has escrito de otra forma. Mira en qué forma quiere la tarea el resultado.",
     "step_broke": "Hasta la línea {{line}} todo cuadra. Algo se pierde al pasar a la línea siguiente: mira otra vez ese paso.",
     "step_broke_last": "Tu camino está bien hasta el final; solo el último paso no. Mira otra vez la última línea.",
+    "step_ok": "Ese paso es correcto. ¿Y ahora?",
+    "step_wrong": "Este paso no se deduce de la ecuación anterior. Revisa tu última transformación.",
     "test_no_hints": "En el examen no hay pistas: escribe lo que pienses o salta la pregunta. Después del examen te lo explico todo.",
     "test_no_hints_on_screen": "En el examen no hay pistas: responde como creas o salta la pregunta. Después del examen te lo explico todo.",
     "why": {
