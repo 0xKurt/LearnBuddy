@@ -64,6 +64,11 @@ export function taskViewFor(row: Pick<ItemRow, 'kind' | 'task'>): ItemView['task
   return task ? viewOf(task) : null;
 }
 
+/** A Belegstelle's board (#368): she answers in the reading text itself, so it shows the text. */
+export function textIsBoard(view: ItemView['task_view']): boolean {
+  return view?.type === 'mark' && view.mode === 'lines';
+}
+
 /** `subjects.kind` as the contract names it; a value the contract does not know is no kind. */
 export function subjectKindOf(kind: string | null): SubjectKind | null {
   const parsed = SubjectKind.safeParse(kind);

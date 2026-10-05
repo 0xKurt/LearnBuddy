@@ -1,13 +1,15 @@
 // Scripted model answers for the browser walkthrough of a reading text (tests/web/reading.spec.ts,
-// issue #233): a photographed page with a story of 20 lines and six questions about it — short,
-// multiple choice, true/false and an order — of which code keeps five (one names a line the text
-// does not have). Its own learner: the reading is keyed by her age (11, nobody else's in the
+// issue #233): a photographed page with a story of 20 lines and seven questions about it — short,
+// multiple choice, true/false, an order and a Belegstelle (#368: she taps the lines that back a
+// statement) — of which code keeps six (one names a line the text does not have). Its own learner: the reading is keyed by her age (11, nobody else's in the
 // walkthrough), so no other spec's sheet can be read as hers, nor hers as theirs (#313, #350).
 // Test tooling only; every answer the walkthrough gives is decided by the rules.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import { scriptChecks } from './checks.js';
+import { scriptGenerations } from './generations.js';
 import { readingRules } from './rules.js';
+import { says, scriptTurns } from './turns.js';
 
 /** The story as printed: 20 lines of text in five paragraphs, so it scrolls in its box on every phone. */
 const READING_LINES = [
@@ -39,7 +41,86 @@ const READING_LINES = [
 
 const TRANSCRIPT = `# Der Schulweg\n\n${READING_LINES.join('\n')}`;
 
+/**
+ * A text Buddy writes himself (#368): she asks for reading practice in the chat, Buddy offers a
+ * reading run, the generator writes a text of about 1000 characters (it fits grade 5 up to an adult)
+ * and five questions, of which code keeps four (one names a line — the lines are code's).
+ */
+const IGEL = [
+  'Im Herbst frisst sich der Igel ein dickes Fettpolster an. Er sucht Käfer, Würmer und Schnecken unter dem Laub. Je schwerer er wird, desto besser übersteht er die kalte Zeit.',
+  'Wenn die Tage kürzer werden, baut er sich ein Nest aus Blättern und Moos. Oft liegt es unter einer Hecke oder in einem Reisighaufen. Dort rollt er sich zu einer Kugel zusammen.',
+  'Im Winterschlaf schlägt sein Herz nur noch wenige Male in der Minute. Seine Körpertemperatur sinkt auf etwa fünf Grad. So verbraucht er kaum Energie und lebt von seinem Fett.',
+  'Im Frühling wacht der Igel wieder auf. Dann ist er sehr hungrig und hat fast ein Drittel seines Gewichts verloren. Gärten mit wilden Ecken helfen ihm, schnell wieder Futter zu finden.',
+  'Igel sind vor allem in der Nacht unterwegs. Am Tag schlafen sie gut versteckt unter Büschen. Ihre Stacheln schützen sie vor Füchsen und anderen Feinden.',
+  'Wer Igeln helfen will, lässt im Herbst einen Laubhaufen liegen. Ein flaches Schälchen mit Wasser hilft ihnen an heißen Tagen.',
+];
+
+function scriptBuddyReading(): void {
+  scriptTurns({
+    when: /lesetext über igel/i,
+    answer: says('Gern – ich schreibe dir einen Text über den Igel im Winter.', [
+      { tool: 'offer_learning', args: { kind: 'read', text: 'Igel im Winter' } },
+    ]),
+  });
+  scriptGenerations({
+    when: /LEARNER'S TEXT:\nIgel im Winter/,
+    answer: () => ({
+      usable: true,
+      title: 'Der Igel im Winter',
+      subject: { name: 'Biologie', kind: 'biology' },
+      items: [],
+      reading: {
+        title: 'Der Igel im Winter',
+        paragraphs: IGEL,
+        lang: 'de',
+        topic: 'Igel im Winter',
+        questions: [
+          {
+            kind: 'multiple_choice',
+            prompt: 'Wo liegt das Nest des Igels oft?',
+            choices: ['unter einer Hecke', 'auf einem Baum', 'in einem Teich'],
+            correct_choice: 0,
+            evidence: 'Oft liegt es unter einer Hecke oder in einem Reisighaufen',
+            difficulty: 1,
+          },
+          {
+            kind: 'short',
+            prompt: 'Wovon lebt der Igel im Winterschlaf?',
+            answer: 'von seinem Fett',
+            accepted_answers: [],
+            evidence: 'So verbraucht er kaum Energie und lebt von seinem Fett',
+            difficulty: 1,
+          },
+          // Dropped by code: the lines are code's, the model cannot know line 3.
+          {
+            kind: 'short',
+            prompt: 'Was frisst der Igel laut Z. 3?',
+            answer: 'Käfer',
+            accepted_answers: [],
+            evidence: 'Er sucht Käfer, Würmer und Schnecken unter dem Laub',
+            difficulty: 1,
+          },
+          {
+            kind: 'true_false',
+            statement: 'Im Winterschlaf bleibt der Igel so warm wie im Sommer.',
+            is_true: false,
+            evidence: 'Seine Körpertemperatur sinkt auf etwa fünf Grad',
+            difficulty: 2,
+          },
+          {
+            kind: 'evidence',
+            statement: 'Nach dem Winter braucht der Igel schnell Nahrung.',
+            evidence: 'Dann ist er sehr hungrig und hat fast ein Drittel seines Gewichts verloren',
+            difficulty: 2,
+          },
+        ],
+      },
+    }),
+  });
+}
+
 export function scriptReading(): void {
+  scriptBuddyReading();
   // Before the tour's rules: its photo is the same fixture, and the first matching rule wins.
   readingRules.add({
     when: /LEARNER: 11 years/,
@@ -108,6 +189,14 @@ export function scriptReading(): void {
                 'Der Vater holt das Fahrrad ab.',
                 'Mia malt ein Bild für den Bauern.',
               ],
+              difficulty: 2,
+            },
+            // A Belegstelle late in the text, over a paragraph break: lines 15–16 (#368).
+            {
+              kind: 'evidence',
+              statement: 'Mia ist dem Bauern dankbar.',
+              evidence:
+                'Mia malte ihm zum Dank ein Bild von seinem roten Traktor. Seitdem winkt Mia dem Bauern jeden Morgen zu',
               difficulty: 2,
             },
           ],

@@ -344,8 +344,8 @@ describe('column_calc: her cells, checked', () => {
 
   it('keeps her result in the conversation, typed in, judged by code', () => {
     const answer = filled(sum, { [at(3, 3)]: '' });
-    expect(answerTextOf(sum, answer)).toBe('6_10');
-    expect(answerTextOf(sum, filled(sum))).toBe('6110');
+    expect(answerTextOf(sum, answer, 'de')).toBe('6_10');
+    expect(answerTextOf(sum, filled(sum), 'de')).toBe('6110');
     expect(partsVia(sum)).toBe('typed');
   });
 });

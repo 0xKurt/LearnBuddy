@@ -6,8 +6,8 @@
 // The model writes the text and NAMES the words to mark (or writes the commas and hyphens); code
 // splits, finds and keeps the places (Regel 0). Each case is the LARGEST its mode may be
 // (contracts/structured.ts, MARK_*), so the shots measure the worst case on 360×740 (rule 16):
-// 24 words to tap, 7 words sorted into three categories (twice: a usual set, and three long school terms on two
-// rows of buttons), a
+// 24 words to tap, a sentence sorted into three categories (three times: a usual set, three long
+// school terms on two rows of buttons, and a long Satzglieder sentence of ten words, #368), a
 // sentence of 16 words with two commas to set, four words of up to 10 letters to split.
 
 import { scriptGenerations } from './generations.js';
@@ -77,6 +77,26 @@ const CASES: Case[] = [
         { word: 'Großvater', occurrence: null, category: 'Subjekt' },
       ],
       categories: ['Dativobjekt', 'Präpositionalobjekt', 'Subjekt'],
+      corrected: null,
+    },
+  },
+  {
+    // A real Satzglieder sentence of grades 5–7 (#368): ten words, 65 characters, three long
+    // school terms on two rows of buttons. Before #368 it was refused (at most seven words).
+    when: /satzglieder im langen satz/i,
+    reply: 'Gern – ein langer Satz, erst die Art wählen.',
+    ask: 'Satzglieder im langen Satz',
+    title: 'Satzglieder im langen Satz',
+    task: {
+      prompt: 'Markiere Dativobjekt, Akkusativobjekt und Subjekt.',
+      mode: 'words',
+      text: 'Am Wochenende schenkt der Vater seiner Tochter ein neues Fahrrad.',
+      targets: [
+        { word: 'seiner Tochter', occurrence: null, category: 'Dativobjekt' },
+        { word: 'ein neues Fahrrad', occurrence: null, category: 'Akkusativobjekt' },
+        { word: 'der Vater', occurrence: null, category: 'Subjekt' },
+      ],
+      categories: ['Dativobjekt', 'Akkusativobjekt', 'Subjekt'],
       corrected: null,
     },
   },

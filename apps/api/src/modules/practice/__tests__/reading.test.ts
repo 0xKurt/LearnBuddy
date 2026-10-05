@@ -274,3 +274,73 @@ describe('the questions of a reading text', () => {
     ]);
   });
 });
+
+describe('a Belegstelle: she taps the lines that back a statement (#368)', () => {
+  const beleg = (
+    statement: string,
+    evidence: string,
+  ): Extract<ReadingQuestion, { kind: 'evidence' }> => ({
+    kind: 'evidence',
+    statement,
+    evidence,
+    difficulty: 2,
+  });
+
+  it('finds the lines in code — across a paragraph break — and keys exactly those', () => {
+    const items = readingItems(
+      draft([
+        WHERE,
+        beleg(
+          'Mia hat einen weiten Schulweg.',
+          'die drei Kilometer entfernt im Nachbarort liegt. An einem Dienstag',
+        ),
+      ]),
+      OPTS,
+    );
+    expect(items).toHaveLength(2);
+    const it = items[1]!;
+    expect(it.kind).toBe('mark');
+    const task = it.task;
+    expect(task?.type === 'mark' && task.mode).toBe('lines');
+    // Lines 2–4 of text (the empty line is not counted): the evidence stands on 2, 3 and 4.
+    expect(task?.type === 'mark' ? task.key.map((k) => k.at) : []).toEqual(['l2', 'l3', 'l4']);
+    expect(task?.type === 'mark' ? task.lines : []).toEqual(LINES);
+    // The words are the solution; no hint may point at the lines.
+    expect(it.answer).toContain('drei Kilometer');
+    expect(it.source_excerpt).toContain('drei Kilometer');
+    expect(it.hints).toEqual([]);
+  });
+
+  it('drops a statement naming a line, one copied from the text, evidence not in it or too long', () => {
+    const items = readingItems(
+      draft([
+        WHERE,
+        // Naming the line would be the answer.
+        beleg('In Z. 5 steht, dass der Weg glatt war.', 'war der Weg vereist'),
+        // Copied from the text: searching, not reading.
+        beleg('Jeden Morgen fährt sie mit dem Fahrrad zur Schule.', 'Jeden Morgen fährt sie'),
+        // Not in the text.
+        beleg('Mia mag Katzen.', 'Mia streichelt ihre Katze'),
+      ]),
+      OPTS,
+    );
+    expect(items).toHaveLength(0);
+  });
+
+  it('a Belegstelle spans at most six lines', () => {
+    const short = ['Eins zwei drei.', 'Vier fünf sechs.', 'Sieben acht neun.', 'Zehn elf zwölf.'];
+    const lines = [...short, ...short.map((l) => l.toUpperCase()), 'Ende der Liste hier.'];
+    const text = (n: number) => lines.slice(0, n).join(' ');
+    const opts = { locale: 'de', transcript: lines.join('\n') };
+    const asked = (n: number) =>
+      readingItems(
+        draft(
+          [beleg('Es wird gezählt.', text(n)), beleg('Die Liste hört auf.', 'Ende der Liste hier')],
+          lines,
+        ),
+        opts,
+      );
+    expect(asked(6)).toHaveLength(2);
+    expect(asked(7)).toHaveLength(0);
+  });
+});

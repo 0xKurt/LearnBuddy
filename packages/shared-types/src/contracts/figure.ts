@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { PeriodicTableFigure } from './periodic.js';
 import { StaffFigure } from './staff.js';
 import { AutomatonFigure, PedigreeFigure, TreeFigure } from './tree.js';
-import { Axes3dFigure, CubeNetFigure, SolidFigure } from './solid.js';
+import { Axes3dFigure, CubeNetFigure, CubesFigure, SolidFigure } from './solid.js';
 import { DiagramFigure } from './diagram.js';
 
 const Label = z.string().trim().min(1).max(40);
@@ -449,6 +449,7 @@ const MODEL_FIGURES = [
   SolidFigure,
   CubeNetFigure,
   Axes3dFigure,
+  CubesFigure,
   DiagramFigure,
 ] as const;
 

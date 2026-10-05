@@ -463,7 +463,7 @@ describe('match: what she answers (Regel 0)', () => {
     expect(check.total).toBe(7);
     expect(structuredReply('de', check)).toBe('5 von 7 sind schon richtig einsortiert.');
     // Several in one group is what a grouping is.
-    expect(answerTextOf(g, answerFor(g, allGroups))).toBe(solutionOf(g));
+    expect(answerTextOf(g, answerFor(g, allGroups), 'de')).toBe(solutionOf(g));
   });
 
   it('refuses an answer that does not fit the task (not graded)', () => {

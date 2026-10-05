@@ -17,15 +17,22 @@
 // What code cannot check, and does not pretend to: whether the model's syllables are the right
 // ones and whether a word really is the subject. Those are the model's knowledge; code checks
 // that what it wrote is one unambiguous task about this very text.
+//
+// A Belegstelle (lines mode, #368) is no task the model writes as such: a reading question
+// quotes its evidence, and code finds the lines it stands on (`reading.ts`); `markLinesTask`
+// builds the task from those lines.
 
 import {
   cutId,
   gapId,
+  lineId,
+  lineNumbers,
   MARK_AFFIX_MAX,
   MARK_CATEGORIES_MAX,
   MARK_CATEGORIES_MIN,
   MARK_CATEGORY_MAX,
   MARK_CATEGORY_PAIR_CHARS,
+  MARK_LINES_KEY_MAX,
   categoriesInTwoRows,
   MARK_PROMPT_MAX,
   MARK_SORTED_CHARS_MAX,
@@ -45,6 +52,7 @@ import {
   type MarkTaskView,
   type MarkWord,
   type PartId,
+  type PassageLines,
 } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
@@ -94,7 +102,8 @@ export const MarkDraftBase = z.object({
     .min(1)
     .max(600)
     .describe('The instruction: what to mark; never the answer'),
-  mode: MarkMode,
+  // A Belegstelle's lines are found by code in a reading text, never written as a task (#368).
+  mode: MarkMode.exclude(['lines']),
   text: z
     .string()
     .trim()
@@ -405,8 +414,38 @@ export function markTaskFrom(draft: MarkDraft): MarkTask | null {
   return markProblem(parsed.data) === null ? parsed.data : null;
 }
 
+/**
+ * A Belegstelle (#368): the reading text's lines, and the lines `at` its evidence stands on —
+ * every text line of them is a place to mark. Null when it is no task (too many lines, none).
+ */
+export function markLinesTask(lines: readonly string[], at: PassageLines): MarkTask | null {
+  const key = lineNumbers(lines).flatMap((n) =>
+    n !== null && n >= at.from && n <= at.to ? [{ at: lineId(n), category: null }] : [],
+  );
+  const parsed = StructuredTask.safeParse({
+    type: 'mark',
+    mode: 'lines',
+    words: [],
+    categories: [],
+    lines,
+    key,
+    corrections: [],
+  });
+  if (!parsed.success || parsed.data.type !== 'mark') return null;
+  return markProblem(parsed.data) === null ? parsed.data : null;
+}
+
 /** What is wrong with the size and form of a stored task, before its key is looked at. */
 function shapeProblem(task: MarkTask): MarkProblem | null {
+  if (task.mode === 'lines') {
+    // The text and the lines it backs; nothing of the word modes.
+    if (task.words.length > 0 || task.categories.length > 0 || task.corrections.length > 0) {
+      return 'form';
+    }
+    if (lineNumbers(task.lines).every((n) => n === null)) return 'count';
+    return task.key.length > MARK_LINES_KEY_MAX ? 'count' : null;
+  }
+  if (task.lines.length > 0) return 'form';
   const n = task.words.length;
   if (task.mode === 'syllables') {
     if (n < 1 || n > MARK_SYLLABLE_WORDS_MAX) return 'count';
@@ -459,7 +498,13 @@ export function markProblem(task: MarkTask): MarkProblem | null {
 
 /** What the app shows: the words and the categories — never the key or the corrections. */
 export function markView(task: MarkTask): MarkTaskView {
-  return { type: 'mark', mode: task.mode, words: task.words, categories: task.categories };
+  return {
+    type: 'mark',
+    mode: task.mode,
+    words: task.words,
+    categories: task.categories,
+    lines: task.lines,
+  };
 }
 
 // ─────────────── the task and her marks as text ───────────────
@@ -471,9 +516,10 @@ export function markSolution(task: MarkTask): string {
   return task.corrections.map((c) => `${byId.get(c.at) ?? ''} → ${c.text}`).join(', ');
 }
 
-/** Her marks as they stand in the conversation. */
-export function markAnswerText(task: MarkTask, answer: MarkAnswer): string {
-  return markedText(task, answer.marks);
+/** Her marks as they stand in the conversation; lines as "Z. 15–16" in her language. */
+export function markAnswerText(task: MarkTask, answer: MarkAnswer, locale: string): string {
+  const text = markedText(task, answer.marks);
+  return task.mode === 'lines' ? t(locale, 'practice.mark.lines', { list: text }) : text;
 }
 
 /** The words of the task as one plain text (to find it in a reading text, #233). */
@@ -489,12 +535,15 @@ export function markPlainText(task: MarkTask): string {
  */
 export function markSecrets(task: MarkTask): string[] {
   const byId = new Map(task.words.map((w) => [w.id, w.text]));
+  // A Belegstelle's secret is its line numbers — the solution itself ("15–16").
   const own =
     task.mode === 'words'
       ? task.key.map((k) => byId.get(k.at) ?? '')
       : task.mode === 'gaps'
         ? task.key.map((k) => task.words[Number(k.at.slice(1)) - 1]?.text ?? '')
-        : markedText(task, task.key).split(' ');
+        : task.mode === 'syllables'
+          ? markedText(task, task.key).split(' ')
+          : [];
   return [markSolution(task), ...own.filter((s) => s !== '')];
 }
 

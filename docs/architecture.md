@@ -2650,7 +2650,7 @@ finds the gaps (and shows the sentence without them); for syllables it writes th
 hyphens and code finds the cuts (letters only, `not_letters`). An error text carries `corrected`,
 and the corrected version must differ from the text at EXACTLY the marked words (`correction`) —
 the corrections are kept server-side for the solution ("Hunt → Hund"). Categories: every target
-names one, every one is used (`empty_group`), at most 7 words and 45 characters then. The ids say where a target
+names one, every one is used (`empty_group`), at most 12 words, 72 characters and two rows of tiles then (#368). The ids say where a target
 stands (`w3` a word, `g3` the gap after it, `w3_2` the cut after its second letter), never whether
 it is one. A prepared hint is dropped when it names a word to mark, the word a comma belongs after,
 a word cut into its syllables or the whole solution (`markSecrets`): the text she reads holds every
@@ -2663,10 +2663,14 @@ the conversation in words, one implementation for app and server (`markedText` i
 "Subjekt: die Oma; Prädikat: liest, vor", the sentence with her commas, "Re-gen-bo-gen".
 
 App: `MarkAnswer.tsx` in the answer shell. Every place is a `<Btn>` with `checked` (a checkbox to
-a screen reader, 44 pt high). Words and commas: a word is a tile of the small size, never narrower
-than 44 pt; words flow like text and wrap. Marked is the accent's light tint AND an underline AND,
-with categories, the category's digit ①②③ beside the word, in the meta text's size and full ink
-(the same digit as on its button in the `Segmented` row above) — and a line under the text says in
+a screen reader, 44 pt high). Words and commas: the words stand on one calm surface (the same as a
+word to split), each a frameless tile of the small size, never narrower than 44 pt; the tiles touch,
+so the sentence reads as a sentence and every point of a row is a target (#368: before, framed
+tiles with gaps took a third row from 59 characters on). Marked is the accent's light tint AND an
+underline AND, with categories, the category's digit ①②③ UNDER the word, in the meta text's size
+and full ink (the same digit as on its button in the `Segmented` row above) — its row is on every
+tile and a marked word is never set bold, so a mark never widens a tile and the rows stand before
+she taps — and a line under the text says in
 words what is marked ("Subjekt: die Oma; …"); a set comma is a comma after the word. Syllables:
 one word per row, never wrapped, its letters set as text in 30-pt cells (`Btn bare`, no padding,
 so the letters stay together); each letter but the last is a target 44 pt high and one cell wide,
@@ -2676,15 +2680,17 @@ does, for every kind of marking (`practice.mark.how_*`), until the first "Prüfe
 reply needs the room. Marks and the chosen category live in the draft.
 
 **Its maxima are a measurement** (`MARK_*` in `contracts/structured.ts`, `tests/web/mark.spec.ts`,
-shots 46a–46h at 360×740 and 390×844, light and dark): 24 words to tap; 7 words and 45 characters (`sortedTextFits`: long words fill a row sooner) when sorted into
-categories, measured in the worst case (46h: three long names on two rows of buttons, every word
-marked, Buddy's reply above). A category name is the grammar term as school uses it, up to 20
+shots 46a–46i at 360×740 and 390×844, light and dark): 24 words to tap; when sorted into
+categories 12 words, 72 characters and two rows of tiles (`sortedTextFits` with `markRows`, the
+tile's width model, because long words fill a row sooner) — measured in the worst case (46h and 46i:
+three long names on two rows of buttons, every word marked, Buddy's reply above; 46i a real
+Satzglieder sentence of ten words, refused before #368). A category name is the grammar term as school uses it, up to 20
 characters ("Präpositionalobjekt"): the content decides, the layout gives way — the buttons wrap to
 two rows at most (`categoriesInTwoRows`: with three, two neighbours share a row), and the word
 count is what was lowered. Syllables: four words of at most 10 letters to split — each
 word in ONE row of 30-pt letter cells, never wrapped, so it still reads as a word.
 Generated in a topic's practice and practice test, read from a sheet and inside a reading text
-(generate.v1.24, extract.v8.8).
+(generate.v1.24, extract.v8.8; the longer sorted sentences generate.v1.34, extract.v8.14).
 
 **Find the error — Fehlerdetektiv** (`practice/findError.ts`, `FindErrorAnswer.tsx`, issue #260,
 migration `0094_find_error_column_calc.sql`). A worked solution, line by line, with ONE wrong line:
@@ -2744,8 +2750,8 @@ phone's number pad is all she needs. A division is shown step by step (issue #41
 is at in full, the steps she has worked on above it shrunk to half-high lines she reads but no longer
 writes in, the steps she has not reached not yet there; the step follows the cell she writes in, a
 quotient digit opens its step again, and every cell still goes to the check. Printed rows are one number to a screen reader ("+1389"), every
-cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.34)
-and read from a sheet (extract.v8.14; a homework sheet: written arithmetic only, its own error is no
+cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.37)
+and read from a sheet (extract.v8.17; a homework sheet: written arithmetic only, its own error is no
 Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86m, 360×740 and
 390×844, light and dark, the keyboard up): four long lines with Buddy's longest reply above fit (six
 were 106 pt too tall, `FIND_ERROR_LINES_MAX`), and five rows of
@@ -3045,10 +3051,10 @@ Also after the last question closed and the session finished.
 
 ### Lesetexte (issue #233, migration `0086_reading_passages.sql`)
 
-Several questions about ONE text she reads, the text visible while she answers. Today only from a
+Several questions about ONE text she reads, the text visible while she answers. From a
 photographed sheet (`materials/extract.ts`, `reading` in the reading's answer; not in homework,
 which is helped task by task as printed): the printed questions, or Buddy's own where the sheet
-prints none.
+prints none — or from a text Buddy writes himself (a `read` run, #368, below).
 
 - **Stored per question.** `items.read_passage` = `{title, lines, lang}` (`ReadPassage`,
   `contracts/reading.ts`) on every question of the group, for the reason `listen_task` is: spaced
@@ -3075,9 +3081,35 @@ prints none.
   (15 % above an answer board or with the keyboard up) that scrolls in itself — `scroll-text`, the
   one scrolling surface allowed besides a conversation and a browsed list (`tests/web/fit.ts`).
   Folded or not, and where she scrolled, carries over to the next question of the same text.
-- **Not yet:** a reading text Buddy writes on request (a `read` run beside `listen`) — it needs a
-  run kind (`practice/setProfiles.ts`, `practice/generate.ts`); and a "Belegstelle" that is a
-  stretch of the WHOLE text to tap (a marking task holds one or two sentences, `MARK_WORDS_MAX`).
+- **Buddy's own text (#368):** a `read` run (`offer_learning` kind `read`, `StartTopicRequest`
+  kind `read`, profile `reading` only in that run — `practice/setProfiles.ts`). The model writes
+  `reading`: title, 1–8 paragraphs of prose, lang, topic and the questions (the reading-question
+  union, never naming a line). Code (`practice/readText.ts`, reject — never repair) holds it to her
+  STAGE (`READ_BANDS` by grade 1–2 / 3–4 / 5–6 / 7–9 / 10+ and adults, one step for "easier" /
+  "harder": characters, average and longest sentence in words, sentences cut at their end marks —
+  a format, rule 3), her LANGUAGE (the subject's taught language, else the app's — `textLangFor`;
+  every letter in that language's alphabet, `inAlphabet`, a character set and no word list; a
+  language without one gets no text), and every question to the text: the photo rules
+  (`readingItems` with `transcript` null), a question naming a line is dropped (code sets the lines,
+  `printedLines`, 32 characters — one line of the text box on a 360-pt phone), and a right multiple-choice option needs its key words in its
+  evidence. Fewer than three questions → nothing stored (422 `not_usable`). The items are
+  `origin` buddy ("Frage von Buddy") and behave like a photographed text's. generate.v1.35,
+  buddy.61. What code cannot check — whether the text is true and good to read — stays the
+  model's.
+- **Belegstelle (#368):** a reading question of kind `evidence` names a statement in the model's own
+  words and quotes its evidence; code finds the lines the evidence stands on (`linesOf`) and stores
+  a marking task in **lines mode** (`markLinesTask`): the text's lines in the task, the key the
+  lines `l6`, `l7` … of the evidence. She taps those lines ANYWHERE in the text — the text is the
+  board at the bottom (`MarkAnswer`, `Lines`: every text line a full-width `<Btn>` 44 pt high in a
+  box that scrolls in itself, `scroll-text`; the gutter and line rendering is `LineText`, shared
+  with `PassagePanel`, a marked line carrying the accent bar and its number), and while it is open
+  the server does not send the text above the question a second time (`textIsBoard` in
+  `sessionView.ts`); once closed the text is back above it with the lines lit. Regel 0: the
+  statement names no line (that is the answer) and does not stand in the text word for word
+  (searching, not reading), the evidence stands in the text and spans at most
+  `MARK_LINES_KEY_MAX` = 6 lines; no hint names a line (none is prepared). Checking is the marking
+  set comparison ("1 richtig, 1 fehlt noch, 1 zu viel"); her answer stands as "Z. 6–7" in her
+  language (`practice.mark.lines`). Prompt extract.v8.15.
 - **Marking in the text (#234):** a reading question of kind `mark` marks words or sets the commas
   in ONE sentence of the text (`practice/reading.ts`, `markIn`): it is a marking task like every
   other (below), and its words must stand in the text in order (`linesOf`; the commas she sets do
@@ -3247,9 +3279,32 @@ computes the key.** No migration: the figure is an item's `figure` (jsonb), like
   390 × 844 and 360 × 740, light and dark. Library check: `tools/guards/drawing-registry.json`.
 - **Not checked by code**: the prompt's words. "Welches Quadrat liegt gegenüber von Quadrat 2?"
   with `at` = 3 is caught only where the number then disagrees; naming a solid ("Wie heißt dieser
-  Körper?") is an ordinary question with the model's options, not computed from the figure. Not
-  built: prisms on a non-regular base (a right triangle with its legs), Würfelgebäude and their
-  views, nets of other solids.
+  Körper?") is an ordinary question with the model's options, not computed from the figure.
+- **The rest (#368):** (1) **a prism with a non-regular base**: `g` = its front face corner by
+  corner (whole units 0–20), drawn as a LYING prism — the base in true shape in front, the length
+  `h` into the depth. Only bases whose area follows from what is drawn: a triangle on a horizontal
+  base line, or a quadrilateral with a horizontal top too (trapezoid, parallelogram); convex, not
+  flat, `n` = its corners, `a` 0. Every side that is a whole number or has one decimal is written
+  beside it; a slanted side brings the base's height, dashed from the top corner (`isNice`,
+  `lyingPrism`). Volume = shoelace area × length; a surface only when every side of the base is
+  such a number. Not built: L shapes and house shapes (five corners). (2) **nets of solids**: `w`
+  = net draws cube, cuboid, prism (regular or `g`), pyramid, cylinder, cone unfolded, faces filled
+  (`packages/shared-math/src/solidNets.ts`: a cuboid's cross, a prism's strip with its two bases,
+  a pyramid's base with a triangle on every edge and its face height, a cylinder's rectangle and
+  two circles, a cone's sector with its side line); a sphere has none. Every key of the solid holds
+  on its net; `ask` = kind ("Welcher Körper entsteht?") is multiple choice whose four options code
+  writes (`NET_KINDS`: cuboid, prism, pyramid, cylinder — six tiles under a net were 3 pt too many on
+  360 × 740; `practice.solid.kind_*`), the model's index held to the net's own kind; the
+  screen-reader text never names the solid there. (3) **Würfelgebäude** (`cubes`,
+  `packages/shared-math/src/cubes.ts`, `components/math/CubeBuildings.tsx`): heights 0–4 on up
+  to 4 × 4 columns, row 0 in front; `v` = oblique (Schrägbild, painted back to front with opaque
+  faces), plan (Bauplan with the heights), or a view front / side (from the left) / top as an
+  option's picture. `ask` = count (the sum; from a Schrägbild only when no column stands behind a
+  taller one in its own or the right-hand column, `allSeen` — else it could be any height), or a
+  view: multiple choice whose options are views of that direction, exactly one of them the
+  building's and `correct_choice` that one (`viewChoiceHolds`, held in `choiceCheck` with the
+  question's own figure). generate.v1.36, extract.v8.16. Walkthrough 99-… in
+  `tests/web/solids.spec.ts`.
 
 ### Diagrams (issue #247)
 

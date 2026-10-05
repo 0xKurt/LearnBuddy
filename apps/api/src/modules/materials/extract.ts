@@ -50,8 +50,11 @@ import { TABLE_RULES } from '../practice/table.js';
 //        by tapping the figure (`tap`, #248).
 // v8.13: a worked solution to check for its mistake becomes one find_error task (the solution
 //        written correct), a calculation to do in columns one column_calc task (#260).
-// v8.14: a written division's quotient may have three digits (672 : 3), shown step by step (#413).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.14';
+// v8.14: a marking text sorted into categories may have 12 words and 72 characters (#368).
+// v8.15: a reading question may ask for its Belegstelle (`evidence`): she taps the lines (#368).
+// v8.16: a prism's non-regular base, nets of solids ("which solid?") and Würfelgebäude (#368).
+// v8.17: a written division's quotient may have three digits (672 : 3), shown step by step (#413).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.17';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

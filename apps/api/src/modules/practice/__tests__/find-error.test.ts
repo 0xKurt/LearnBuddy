@@ -187,7 +187,7 @@ describe('find_error: her answer, checked by code', () => {
   });
 
   it('keeps her answer in the conversation with the line’s number', () => {
-    expect(answerTextOf(task, { type: 'find_error', line: 'l2', fix: '3x + 6 = 21' })).toBe(
+    expect(answerTextOf(task, { type: 'find_error', line: 'l2', fix: '3x + 6 = 21' }, 'de')).toBe(
       '② 3x + 6 = 21',
     );
   });

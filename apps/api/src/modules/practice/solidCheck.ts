@@ -20,17 +20,28 @@
 // Four cube nets as the OPTIONS of a multiple choice ("Welches ist ein Würfelnetz?") hold only
 // when exactly one of them is the odd one out — the only one that folds, or the only one that
 // does not — and `correct_choice` points at it (`netChoiceHolds`).
+//
+// Since #368: "Welcher Körper entsteht aus diesem Netz?" is multiple choice whose options code
+// WRITES (the four solids of `NET_KINDS`, in that order, in the question's language) and
+// the model's `correct_choice` must point at the net's own kind. A Würfelgebäude's cube count is
+// a whole number like a vertex count; "Welche Ansicht …?" is multiple choice whose OPTIONS are
+// views, exactly one of them the building's (`viewsHold`).
 
 import {
   axesKey,
   canonicalizeUnit,
+  cubesKey,
   isCubeNet,
+  isNetKind,
   isSpaceFigure,
+  NET_KINDS,
   netKey,
   parseCanonicalKey,
   solidKey,
   spaceProblem,
   unitFactor,
+  viewChoiceHolds,
+  type SolidKind,
 } from '@learnbuddy/shared-math';
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 
@@ -78,7 +89,15 @@ export function checkedSpace<T extends ItemDraft>(it: T, locale: string | null):
       const key = solidKey(f);
       if (key === null) return null;
       if (key.kind === 'count') return exactCount(it, key.n);
+      if (key.kind === 'kind') return whichSolid(it, key.k, locale);
       return measured(it, key.value, key.unit);
+    }
+    case 'cubes': {
+      const key = cubesKey(f);
+      if (key === null) return null;
+      if (key.kind === 'count') return exactCount(it, key.n);
+      // A view: the options are its pictures, held by `choiceProblem` (`viewsHold`).
+      return it.kind === 'multiple_choice' && (it.choice_figures?.length ?? 0) > 0 ? it : null;
     }
     case 'cube_net': {
       const key = netKey(f);
@@ -100,6 +119,38 @@ export function checkedSpace<T extends ItemDraft>(it: T, locale: string | null):
       return same === 'correct' || same === 'other_form' ? it : null;
     }
   }
+}
+
+/** "Welcher Körper entsteht?": the options written here, the model's index held to the net's kind. */
+function whichSolid<T extends ItemDraft>(it: T, k: SolidKind, locale: string | null): T | null {
+  const lang = asLocale(it.prompt_lang) ?? asLocale(locale);
+  if (!isNetKind(k)) return null;
+  const correct = NET_KINDS.indexOf(k);
+  if (lang === null || it.kind !== 'multiple_choice' || it.correct_choice !== correct) return null;
+  const choices = NET_KINDS.map((kind) => t(lang, `practice.solid.kind_${kind}`));
+  return {
+    ...it,
+    choices,
+    answer: choices[correct]!,
+    accepted_answers: [],
+    tolerance: null,
+    choice_figures: null,
+  };
+}
+
+/**
+ * Views as the options of a multiple choice about a Würfelgebäude (#368): the question's own
+ * figure is the building, every option a view, exactly one of them the building's in the asked
+ * direction, and the right option that one (`viewChoiceHolds`).
+ */
+export function viewsHold(
+  building: Figure | null | undefined,
+  figures: readonly Figure[],
+  correct: number,
+): boolean {
+  if (!building || building.type !== 'cubes') return false;
+  const views = figures.flatMap((f) => (f.type === 'cubes' ? [f] : []));
+  return views.length === figures.length && viewChoiceHolds(building, views, correct);
 }
 
 /**

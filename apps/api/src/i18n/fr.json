@@ -322,7 +322,8 @@
       "missing_one": "il en manque encore 1",
       "extra": "{{count}} en trop",
       "extra_one": "1 en trop",
-      "reply": "Pas encore tout à fait : {{parts}}."
+      "reply": "Pas encore tout à fait : {{parts}}.",
+      "lines": "l. {{list}}"
     },
     "grid": {
       "wrong_points": "Pas encore tout à fait : {{list}} ne sont pas encore à la bonne place.",
@@ -334,7 +335,11 @@
     },
     "solid": {
       "net_yes": "Oui, c'est un patron de cube",
-      "net_no": "Non, ce n'est pas un patron de cube"
+      "net_no": "Non, ce n'est pas un patron de cube",
+      "kind_cuboid": "pavé droit",
+      "kind_prism": "prisme",
+      "kind_pyramid": "pyramide",
+      "kind_cylinder": "cylindre"
     },
     "explain": {
       "point_met": "✓ {{name}}",
