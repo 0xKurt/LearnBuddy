@@ -87,8 +87,9 @@ import { structuredItems, type StructuredItem } from './structured.js';
 // v1.35: a reading run (read): Buddy's own reading text with its questions (#368), and a reading
 //        question may ask for its Belegstelle (`evidence`).
 // v1.36: a prism's non-regular base, nets of solids ("which solid?") and Würfelgebäude (#368).
-// v1.37: a written division's quotient may have three digits (672 : 3), shown step by step (#413).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.37';
+// v1.38: circuits, logic gates and Itten's colour wheel, their keys computed by code (#261).
+// v1.39: a written division's quotient may have three digits (672 : 3), shown step by step (#413).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.39';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

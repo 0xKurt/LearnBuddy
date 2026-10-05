@@ -341,6 +341,29 @@
       "kind_pyramid": "Pyramide",
       "kind_cylinder": "Zylinder"
     },
+    "circuit": {
+      "lit": "Ja, {{lamp}} leuchtet",
+      "unlit": "Nein, {{lamp}} leuchtet nicht",
+      "series": "Reihenschaltung",
+      "parallel": "Parallelschaltung"
+    },
+    "color": {
+      "yellow": "Gelb",
+      "yellow_orange": "Gelborange",
+      "orange": "Orange",
+      "red_orange": "Rotorange",
+      "red": "Rot",
+      "red_violet": "Rotviolett",
+      "violet": "Violett",
+      "blue_violet": "Blauviolett",
+      "blue": "Blau",
+      "blue_green": "Blaugrün",
+      "green": "Grün",
+      "yellow_green": "Gelbgrün",
+      "primary": "Primärfarbe",
+      "secondary": "Sekundärfarbe",
+      "tertiary": "Tertiärfarbe"
+    },
     "explain": {
       "point_met": "✓ {{name}}",
       "point_open": "{{name}} fehlt noch",

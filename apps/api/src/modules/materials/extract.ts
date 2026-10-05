@@ -53,8 +53,9 @@ import { TABLE_RULES } from '../practice/table.js';
 // v8.14: a marking text sorted into categories may have 12 words and 72 characters (#368).
 // v8.15: a reading question may ask for its Belegstelle (`evidence`): she taps the lines (#368).
 // v8.16: a prism's non-regular base, nets of solids ("which solid?") and Würfelgebäude (#368).
-// v8.17: a written division's quotient may have three digits (672 : 3), shown step by step (#413).
-export const EXTRACT_PROMPT_VERSION = 'extract.v8.17';
+// v8.18: circuits, logic gates and Itten's colour wheel, their keys computed by code (#261).
+// v8.19: a written division's quotient may have three digits (672 : 3), shown step by step (#413).
+export const EXTRACT_PROMPT_VERSION = 'extract.v8.19';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

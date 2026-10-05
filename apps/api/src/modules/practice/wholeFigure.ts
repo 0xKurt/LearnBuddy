@@ -1,6 +1,7 @@
 // The figures that ARE their question (docs/architecture.md §Practice): a chart (#245, #246), a
 // clock, coins, a dot field, base-ten blocks (#254), a tree, a pedigree, an automaton (#256), a
-// periodic table (#250), a solid, a cube net, a point in space (#255) and a diagram (#247).
+// periodic table (#250), a solid, a cube net, a point in space (#255), a diagram (#247), and a
+// circuit, a logic net and Itten's colour wheel (#261).
 // "Werte das Klimadiagramm aus", "Wie spät ist es?" or "Was gehört in Lücke A?" without its
 // figure is no question, so a figure of this kind that does not hold costs the question — unlike
 // a fraction picture or a number line, which is dropped alone (audit H-15). Each family keeps its
@@ -8,9 +9,15 @@
 
 import {
   chartProblem,
+  circuitProblem,
+  colorWheelProblem,
   diagramProblem,
   isChart,
+  isCircuit,
+  isColorWheel,
   isDiagram,
+  isLogic,
+  logicProblem,
   isPeriodicTable,
   isPrimary,
   isSpaceFigure,
@@ -22,7 +29,17 @@ import {
 } from '@learnbuddy/shared-math';
 import { ModelFigure } from '@learnbuddy/shared-types/contracts';
 
-const WHOLE = [isChart, isPrimary, isTreeFigure, isPeriodicTable, isSpaceFigure, isDiagram];
+const WHOLE = [
+  isChart,
+  isPrimary,
+  isTreeFigure,
+  isPeriodicTable,
+  isSpaceFigure,
+  isDiagram,
+  isCircuit,
+  isLogic,
+  isColorWheel,
+];
 
 /** The first rule a figure of this kind breaks; null when it holds or is of another kind. */
 export function wholeFigureProblem(f: ModelFigure): string | null {
@@ -32,6 +49,9 @@ export function wholeFigureProblem(f: ModelFigure): string | null {
   if (isPeriodicTable(f)) return periodicProblem(f);
   if (isSpaceFigure(f)) return spaceProblem(f);
   if (isDiagram(f)) return diagramProblem(f);
+  if (isCircuit(f)) return circuitProblem(f);
+  if (isLogic(f)) return logicProblem(f);
+  if (isColorWheel(f)) return colorWheelProblem(f);
   return null;
 }
 

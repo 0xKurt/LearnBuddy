@@ -15,6 +15,7 @@
 // the server checked is exactly what the app draws.
 
 import { pedigreeProblem, type Pedigree } from './pedigree.js';
+import { ratioAdd, ratioIsOne, ratioMul, ratioOf, type Ratio } from './ratio.js';
 
 export type TreeNode = { p: number; l: string; e: string };
 export type ProbTree = {
@@ -74,22 +75,10 @@ const LIMITS = {
   plain: { leaves: 8, depth: 4, node: 3, edge: 2 },
 } as const;
 
-// ─────────────── exact fractions ───────────────
-
-export type Ratio = { n: bigint; d: bigint };
+// ─────────────── probabilities, as exact fractions (`ratio.ts`) ───────────────
 
 const ZERO = BigInt(0);
 const ONE = BigInt(1);
-const gcd = (a: bigint, b: bigint): bigint => (b === ZERO ? (a < ZERO ? -a : a) : gcd(b, a % b));
-
-function ratio(n: bigint, d: bigint): Ratio {
-  const g = gcd(n, d) || ONE;
-  return { n: n / g, d: d / g };
-}
-
-const add = (x: Ratio, y: Ratio) => ratio(x.n * y.d + y.n * x.d, x.d * y.d);
-const mul = (x: Ratio, y: Ratio) => ratio(x.n * y.n, x.d * y.d);
-const isOne = (x: Ratio) => x.n === x.d;
 
 /** A branch's probability as written: "1/3", "0.4", "0,25", "1". Null when it is none. */
 export function parseProbability(text: string): Ratio | null {
@@ -99,18 +88,16 @@ export function parseProbability(text: string): Ratio | null {
   if (frac) {
     const d = BigInt(frac[2] ?? '0');
     if (d === ZERO) return null;
-    r = ratio(BigInt(frac[1] ?? '0'), d);
+    r = ratioOf(BigInt(frac[1] ?? '0'), d);
   } else {
     const dec = /^(\d)(?:[.,](\d{1,4}))?$/.exec(s);
     if (!dec) return null;
     const places = dec[2] ?? '';
     const d = BigInt(10 ** places.length);
-    r = ratio(BigInt(dec[1] ?? '0') * d + BigInt(places || '0'), d);
+    r = ratioOf(BigInt(dec[1] ?? '0') * d + BigInt(places || '0'), d);
   }
   return r.n <= r.d ? r : null;
 }
-
-export const ratioValue = (r: Ratio) => Number(r.n) / Number(r.d);
 
 // ─────────────── trees ───────────────
 
@@ -150,23 +137,23 @@ export function branchProbabilities(
     const open = kids.filter((k) => p[k] === null);
     const known = kids
       .filter((k) => p[k] !== null)
-      .reduce((s, k) => add(s, p[k] as Ratio), ratio(ZERO, ONE));
+      .reduce((s, k) => ratioAdd(s, p[k] as Ratio), ratioOf(ZERO, ONE));
     if (open.length === 0) {
-      if (!isOne(known)) return { problem: 'branch_sum' };
+      if (!ratioIsOne(known)) return { problem: 'branch_sum' };
       continue;
     }
     // The "?" is what its siblings leave: it must be a probability, and not zero (a branch
     // drawn with probability 0 is no outcome).
     if (known.n >= known.d) return { problem: 'branch_sum' };
-    p[open[0] as number] = ratio(known.d - known.n, known.d);
+    p[open[0] as number] = ratioOf(known.d - known.n, known.d);
   }
   return { p, problem: null };
 }
 
 /** The probability of the path from the root to node `i` (product of its branches). */
 function pathProbability(t: ProbTree, p: (Ratio | null)[], i: number): Ratio {
-  let r = ratio(ONE, ONE);
-  for (let k = i; k > 0; k = t.n[k]?.p ?? 0) r = mul(r, p[k] ?? ratio(ZERO, ONE));
+  let r = ratioOf(ONE, ONE);
+  for (let k = i; k > 0; k = t.n[k]?.p ?? 0) r = ratioMul(r, p[k] ?? ratioOf(ZERO, ONE));
   return r;
 }
 
@@ -182,7 +169,7 @@ export function treeKey(t: ProbTree): Ratio | null {
     const i = t.n.findIndex((node, k) => k > 0 && isAsked(node.e));
     return i > 0 ? (b.p[i] ?? null) : null;
   }
-  return t.at.reduce((s, i) => add(s, pathProbability(t, b.p, i)), ratio(ZERO, ONE));
+  return t.at.reduce((s, i) => ratioAdd(s, pathProbability(t, b.p, i)), ratioOf(ZERO, ONE));
 }
 
 function treeShapeProblem(t: ProbTree): TreeProblem | null {

@@ -115,6 +115,14 @@ export const UNIT_ALIASES: Record<string, string> = {
   // force: only the unit's name here — "N" is a capital letter, see CASE_SENSITIVE_UNITS.
   newton: 'N',
   kilonewton: 'kN',
+  // electricity (issue #261): the names only — V, A and Ω are capitals (CASE_SENSITIVE_UNITS).
+  volt: 'V',
+  millivolt: 'mV',
+  kilovolt: 'kV',
+  ampere: 'A',
+  milliampere: 'mA',
+  ohm: 'Ω',
+  kiloohm: 'kΩ',
 
   // percent and per mille: a unit, never "÷ 100" (audit C-4). The unit's names as they are
   // said, so a dictated "25 Prozent" is read like "25 %".
@@ -150,6 +158,14 @@ export const UNIT_ALIASES: Record<string, string> = {
 export const CASE_SENSITIVE_UNITS: Record<string, string> = {
   N: 'N',
   kN: 'kN',
+  // "5 V" is five volt, "5 v" a variable; "2 A" two ampere, "2 a" two years or a variable.
+  V: 'V',
+  mV: 'mV',
+  kV: 'kV',
+  A: 'A',
+  mA: 'mA',
+  Ω: 'Ω',
+  kΩ: 'kΩ',
 };
 
 export function canonicalizeUnit(raw: string | null | undefined): string | null {
@@ -209,6 +225,14 @@ const SCALES: Record<string, Scale> = {
   // force, in newton
   N: { quantity: 'force', ratio: r(1n) },
   kN: { quantity: 'force', ratio: r(1000n) },
+  // voltage in volt, current in ampere, resistance in ohm (issue #261)
+  mV: { quantity: 'voltage', ratio: r(1n, 1000n) },
+  V: { quantity: 'voltage', ratio: r(1n) },
+  kV: { quantity: 'voltage', ratio: r(1000n) },
+  mA: { quantity: 'current', ratio: r(1n, 1000n) },
+  A: { quantity: 'current', ratio: r(1n) },
+  Ω: { quantity: 'resistance', ratio: r(1n) },
+  kΩ: { quantity: 'resistance', ratio: r(1000n) },
   // money in euro, in cents — cents of another currency are another quantity
   ct: { quantity: 'euro', ratio: r(1n) },
   EUR: { quantity: 'euro', ratio: r(100n) },
