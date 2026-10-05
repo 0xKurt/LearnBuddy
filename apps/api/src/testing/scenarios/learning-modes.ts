@@ -8,7 +8,7 @@
 import type { LlmRequest } from '../../llm/gateway.js';
 import { ScriptedGateway } from '../fakes.js';
 import { scriptGenerations } from './generations.js';
-import { tutorRules } from './rules.js';
+import { hintRules, tutorRules } from './rules.js';
 import { says, scriptTurns } from './turns.js';
 
 /** The fields of a generated question that most scripted questions leave at their default. */
@@ -488,22 +488,21 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
   );
   // Hints are written in the background after each topic session starts (hints.ts);
   // the fractions question gets two, everything else none (tests/web/modes.spec.ts taps "Tipp").
-  llm.byDefault('hints', (req) =>
-    ScriptedGateway.textOf(req).includes('Welcher Bruch ist größer')
-      ? {
-          items: [
-            {
-              n: 1,
-              hints: [
-                'Schau auf die Kreise: Welcher ist mehr gefüllt?',
-                'Bring beide Brüche auf den Nenner 15.',
-              ],
-              worked_solution: null,
-            },
+  hintRules.add({
+    when: /Welcher Bruch ist größer/,
+    answer: () => ({
+      items: [
+        {
+          n: 1,
+          hints: [
+            'Schau auf die Kreise: Welcher ist mehr gefüllt?',
+            'Bring beide Brüche auf den Nenner 15.',
           ],
-        }
-      : { items: [] },
-  );
+          worked_solution: null,
+        },
+      ],
+    }),
+  });
   // Fraction bars (issue #162): the model chooses the task and its numbers — there is no
   // field for a question, an answer or a figure, so this is ALL it can say. The question
   // the walkthrough then reads on screen was written by the server.
@@ -782,7 +781,10 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
     {
       when: /probetest|die römer/i,
       answer: says('Klar – ein Probetest über die Römer, wie in der Arbeit.', [
-        { tool: 'offer_learning', args: { kind: 'test', text: 'Die Römer' } },
+        {
+          tool: 'offer_learning',
+          args: { kind: 'test', text: 'Die Römer', asked: 'Mach einen Probetest' },
+        },
       ]),
     },
     {

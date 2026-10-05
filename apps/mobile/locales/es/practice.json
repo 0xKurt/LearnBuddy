@@ -133,6 +133,11 @@
     "thinking": "Buddy lo explica de otra forma …",
     "title": "Explicado de otra forma"
   },
+  "why": {
+    "ask": "¿Por qué es correcto?",
+    "label": "¿Qué motivo es el correcto?",
+    "hint": "Muestra tres motivos: toca el que es correcto."
+  },
   "self_solved": {
     "title": "¡Resuelto por ti!",
     "body": "Lo has descubierto por tu cuenta."

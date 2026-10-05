@@ -127,6 +127,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `POST /practice/sessions/:id/cards`, `POST …/card`                                                   | Lernkarten: a pass over the words that did not sit, each card judged by her (#147)                                    |
 | `POST /practice/drills`, `POST /practice/sessions/:id/drill`                                         | Kopfrechnen: a round of tasks code wrote, one answer checked by code (#243)                                           |
 | `POST /practice/sessions/:id/ask`, `POST …/later`                                                    | a question to the tutor, never graded; „Merk ich mir für nachher" for an off-topic one (#391)                         |
+| `POST /practice/sessions/:id/why`                                                                    | „Warum stimmt das?": the reason she tapped after a closed question, judged by code (#388)                             |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
 ## Buddy decisions
@@ -1726,7 +1727,52 @@ zeigen“, „Später“), `contest.ts` („Frage passt nicht“, „Bewertung s
 Kopfrechnen round), `sessionRow.ts` (the session row and the one way to lock it), `finish.ts`
 (the end of a run) and `testClock.ts` (a practice test with time, #241). `ladder.ts` says where
 the hint ladder ends and what a test says instead; `later.ts` keeps an off-topic question for
-after the practice (#391).
+after the practice (#391); `similar.ts` puts a similar task after a shown solution, `why.ts`
+answers „Warum stimmt das?" and `readiness.ts` says when practice goes well enough for a Probetest
+(#388).
+
+**Hilfe an der Frage** (issue #388, report „Hilfe und Fragen beim Üben" §3, §5, §8). Code decides
+each of these from what is recorded; the model only writes words that code checks:
+
+- **„Tipp" after two misses** (§5.5): `SessionItemView.hint_offered` is true while the question is
+  open, „Tipp" works, the run is practice, she missed `OFFER_HINT_AFTER_MISSES` (2) times and took
+  no hint (`ladder.ts` `hintOffered`). The app shows the same chip in the soft skin
+  (`HelpChips` `hintOffered`). Nothing opens and nothing is said. There is no help coach (§5.6).
+- **A similar task after a shown solution** (§5.2, Baker's „Scooter", Shih's worked example): when
+  a practice question closes with its solution shown (the third miss or the ladder's end in
+  `answer.ts`, „Lösung zeigen" in `setAside.ts`), `followWithSimilar` runs in the same transaction.
+  If the next question is not already of the same topic and form, one further down the run is
+  brought forward. Otherwise one of her own questions of that topic, form and subject that is not
+  in the run joins it right behind: never another learner's, homework, a Kopfrechnen fact, a
+  listening question or an archived one, the most due first. When there is none, the run stays
+  as it is. Never in a test, homework or a card pass. The worked solution itself is the existing
+  end of the ladder (`workedReply`).
+- **„Warum stimmt das?"** (§5.3, self-explanation): three reasons per question, one of them the
+  rule behind the solution. They are written in the background hints call that already exists
+  (`hints.ts` `SYSTEM`; its version is the hash) and kept in `items.why` (`{reasons, correct}`, migration `0098_item_why.sql`).
+  `checkedWhy` keeps them only when they are exactly three different reasons and none states the
+  key. The view sends the reasons (never `correct`) once the question is closed and its solution
+  is out, until she tapped one. `POST …/why` (`WhyRequest`: `client_turn_id`, `item_id`,
+  `choice` 0–2) judges the tap by code, with no model call, and answers with a fixed line
+  (`practice.why.right` / `practice.why.not_quite` naming the true reason). Both turns carry
+  `reexplain = 'why'`. It is idempotent per `client_turn_id`, allowed once per question (409
+  `why_answered`), 409 on an open question, one without reasons or a running test, and 404 for
+  someone else's. Not graded, no FSRS effect. In the app the "why" chip of `Reexplain` asks her
+  where reasons exist; elsewhere it stays „Warum ist das so?". Questions from a photo get their
+  hints in the reading call, which writes no reasons yet, so they keep „Warum ist das so?".
+- **The Probetest** (§3): its review after handing in is the default and now explains.
+  `SessionItemView.explanation` is the worked solution, under exactly the condition `answer` is
+  sent, shown under the solution of every question she did not get right (`ResultList` `note`).
+  Buddy offers a test (`offer_learning` kind `test`, its `asked` field) only when
+  `practiceGoesWell` holds, or when she asked for one: `asked` must be her own words from this
+  message (`requireQuote`). `practiceGoesWell` holds when, of her last 10 closed practice
+  questions on the goal's sheets (or on the topic in her words), at least 5 are closed and 70 %
+  of them are right. Otherwise the offer is refused with the reason, and Buddy offers practice.
+  Starting a test herself in the app is never held back.
+- **The test's fixed line fits the form**: `practice.test_no_hints` says „schreib einfach, was du
+  denkst" only where she writes her answer. On options, a board, the fraction bar, the staff or a
+  tap in the figure it is `practice.test_no_hints_on_screen` („antworte einfach so, wie du
+  denkst"), decided by `answersOnScreen` (`viewParts.ts`), from the same parts the view sends.
 
 **Fragen beim Üben** (issue #391, report „Hilfe und Fragen beim Üben" §1, §3, §4). The first help
 stays the buttons („Tipp", „Warum?", „Erklär's anders"); free text is the second path, through

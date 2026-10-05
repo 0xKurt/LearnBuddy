@@ -376,13 +376,29 @@ export const keepForLater = (id: string, turnId: string) =>
 /** An "Anders erklären" tap whose answer was lost is sent again as the same turn. */
 const reexplainTurns = turnIds(newId, noConnection);
 /** "Anders erklären": a new explanation, the way she tapped, of a closed question's solution. */
-export const reexplainItem = (id: string, itemId: string, way: ReexplainWay) =>
+const reexplainItem = (id: string, itemId: string, way: ReexplainWay) =>
   reexplainTurns.run(`${id}:${itemId}:${way}`, (clientTurnId) =>
     request('POST', `/practice/sessions/${id}/reexplain`, {
       body: { client_turn_id: clientTurnId, item_id: itemId, way },
       schema: AnswerResponse,
     }),
   );
+/** A „Warum stimmt das?" tap whose answer was lost is sent again as the same turn. */
+const whyTurns = turnIds(newId, noConnection);
+/** „Warum stimmt das?" (issue #388): the reason she tapped, judged by the server. */
+const whyItem = (id: string, itemId: string, choice: number) =>
+  whyTurns.run(`${id}:${itemId}:${choice}`, (clientTurnId) =>
+    request('POST', `/practice/sessions/${id}/why`, {
+      body: { client_turn_id: clientTurnId, item_id: itemId, choice },
+      schema: AnswerResponse,
+    }),
+  );
+/**
+ * The chips under a shown solution (`Reexplain`): a new explanation the way she tapped — or, with
+ * `choice`, her pick among the reasons of „Warum stimmt das?" (#388). Both answer under it.
+ */
+export const explainItem = (id: string, itemId: string, way: ReexplainWay, choice?: number) =>
+  choice === undefined ? reexplainItem(id, itemId, way) : whyItem(id, itemId, choice);
 /**
  * "Die Bewertung stimmt nicht" (issue #164): the question leaves this result and future
  * practice, and its spaced-repetition effect goes back to what it was before.

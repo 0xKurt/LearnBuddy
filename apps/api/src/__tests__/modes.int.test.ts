@@ -889,12 +889,14 @@ describe.skipIf(!dbReady)('learning modes', () => {
         [l.learnerId, sheet.id, prompt, topic],
       );
     }
-    // Buddy offers the test by its title (the model named no goal): it is that test's.
+    // Buddy offers the test by its title (the model named no goal): it is that test's. She asked
+    // for it in her words (#388: Buddy's own idea needs practice that goes well).
+    const args = { kind: 'test', text: 'Mathearbeit Brüche', asked: 'einen Probetest' };
     env.llm.script('buddy_turn', {
       json: {
         reply: 'Hier ist dein Probetest.',
         options: null,
-        actions: [{ tool: 'offer_learning', args: { kind: 'test', text: 'Mathearbeit Brüche' } }],
+        actions: [{ tool: 'offer_learning', args }],
       },
     });
     // Scripted before the message: Buddy starts preparing the offer at once (issue #48).
