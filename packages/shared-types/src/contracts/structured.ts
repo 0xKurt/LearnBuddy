@@ -8,6 +8,8 @@
 //   cloze       — fill several gaps in one text (#232); its kind is allowed since migration 0079
 //   select_all  — tick every right answer among several options (#240, migration 0085)
 //   mark        — tap words, comma gaps or syllable breaks in a text (#234, migration 0087)
+//   find_error  — tap the wrong line of a worked solution and write it right (#260)
+//   column_calc — written arithmetic in columns, digit by digit, with its carries (#260)
 //
 // Three shapes per kind, and the difference between them is the whole design:
 //
@@ -40,6 +42,8 @@ export const STRUCTURED_KINDS = [
   'cloze',
   'select_all',
   'mark',
+  'find_error',
+  'column_calc',
 ] as const;
 export const StructuredKind = z.enum(STRUCTURED_KINDS);
 export type StructuredKind = z.infer<typeof StructuredKind>;
@@ -687,6 +691,231 @@ export function markedText(view: Omit<MarkTaskView, 'type'>, marks: readonly Mar
   }
 }
 
+// ─────────────── find_error (#260) ───────────────
+//
+// Fehlerdetektiv: a worked solution, line by line, with ONE wrong line in it. She taps the line
+// where it goes wrong and writes it right. The model writes the solution CORRECTLY; code checks
+// that every line follows from the one before (`steps.ts`, #209), then builds the error into one
+// line itself — a sign, a number, a bracket dissolved the wrong way — and checks that exactly that
+// line breaks (`apps/api/src/modules/practice/findError.ts`). The first line is the task; it is
+// shown, never a target. Her correction is compared with the line before by the same equivalence
+// (`sameStep`), never by a model.
+
+/**
+ * The task and at least two steps. Four lines is what fits a 360×740 phone as tiles under Buddy's
+ * longest reply, with the bar she writes in (rule 16, tests/web/written.spec.ts 86c): six were
+ * 106 pt too tall there.
+ */
+export const FIND_ERROR_LINES_MIN = 3;
+export const FIND_ERROR_LINES_MAX = 4;
+/** One line is one step of a calculation: it stands on one line of a tile. */
+export const FIND_ERROR_LINE_MAX = 40;
+/** Her corrected line: a step, never a paragraph. */
+export const FIND_ERROR_FIX_MAX = 120;
+
+export const FindErrorLine = z.object({
+  /** `l1` … by position: the lines are shown in their order, so the id says nothing more. */
+  id: PartId,
+  /** Plain text, math between dollar signs like everywhere else. */
+  text: z.string().trim().min(1).max(FIND_ERROR_LINE_MAX),
+});
+export type FindErrorLine = z.infer<typeof FindErrorLine>;
+
+export const FindErrorTaskView = z.object({
+  type: z.literal('find_error'),
+  /** In order, the wrong one among them. The first is the task. Never which one is wrong. */
+  lines: z.array(FindErrorLine).min(FIND_ERROR_LINES_MIN).max(FIND_ERROR_LINES_MAX),
+});
+export type FindErrorTaskView = z.infer<typeof FindErrorTaskView>;
+
+/** The stored task: the view plus the key (server only). */
+export const FindErrorTask = FindErrorTaskView.extend({
+  /** The id of the line code made wrong — never the first. */
+  key: PartId,
+  /** That line as the model wrote it, before the error went in: the solution. */
+  right: z.string().trim().min(1).max(FIND_ERROR_LINE_MAX),
+});
+export type FindErrorTask = z.infer<typeof FindErrorTask>;
+
+export const FindErrorAnswer = z.object({
+  type: z.literal('find_error'),
+  /** The line she tapped as the wrong one. */
+  line: PartId,
+  /** That line as she wrote it right. */
+  fix: z.string().trim().min(1).max(FIND_ERROR_FIX_MAX),
+});
+export type FindErrorAnswer = z.infer<typeof FindErrorAnswer>;
+
+// ─────────────── column_calc (#260) ───────────────
+//
+// Schriftlich rechnen: the numbers stand in columns like on squared paper, and every digit she
+// writes — of the result, of each carry, of every step — is a cell of its own. The model only
+// names the operation and the numbers; code computes the whole procedure, column by column with
+// its carries, lays it out and keeps every digit as the key
+// (`apps/api/src/modules/practice/columnCalc.ts`). Nothing about the layout is the model's.
+//
+// The notation is the one German primary schools write: the carries in a small row above the
+// line, under the last number (addition; subtraction by Ergänzen or Abziehen mit Erweitern — both
+// write the same digits in the same places); the partial products from the first digit of the
+// second factor on, each ending under its digit, and their sum with its carries; a division by a
+// one-digit number as a staircase under the dividend — times, then the difference with the next
+// digit brought down. Entbündeln (the minuend's digits crossed out) is not laid out: nothing in
+// code knows which Bundesland teaches it (`curriculum/points.ts` has no such place).
+
+export const ColumnOp = z.enum(['add', 'sub', 'mul', 'div']);
+export type ColumnOp = z.infer<typeof ColumnOp>;
+
+/** A number she reads is at most six digits (Hunderttausender, year 4). */
+export const COLUMN_DIGITS_MAX = 6;
+/** Two or three numbers added; one subtrahend; a factor of one or two digits; a divisor of one. */
+export const COLUMN_ADDENDS_MAX = 3;
+export const COLUMN_FACTOR_DIGITS_MAX = 2;
+/** The most cells one task may hold: what a phone fits, never what a sheet could. */
+export const COLUMN_GAPS_MAX = 40;
+/**
+ * The width a 360-pt phone gives the grid (360 minus the answer slot's 16 pt on each side), and
+ * what a column needs there at least: a digit column is a cell she taps (as narrow as a letter
+ * cell of syllable marking, 30 pt, with two to spare), a column of signs (+ − · : =) is narrow.
+ * The app makes the columns wider when there is room, up to square cells.
+ */
+export const COLUMN_WIDTH_MAX = 328;
+export const COLUMN_DIGIT_MIN = 32;
+export const COLUMN_SIGN = 20;
+/**
+ * Rows of the grid, every one a touch high: three numbers, their carries and the sum; two partial
+ * products, their carries and the sum; a division of two steps under its first row. Measured on
+ * 360×740 with Buddy's reply above (tests/web/written.spec.ts, 86h, 86j): a division of three steps
+ * (seven rows) was 78 pt too tall there, and a cell cannot be lower than a touch target.
+ */
+export const COLUMN_ROWS_MAX = 5;
+
+/** What a cell to fill is part of: it names the cell to a screen reader and in Buddy's reply. */
+export const ColumnPart = z.enum([
+  /** A carry, written small above the line. */
+  'carry',
+  /** A digit of the result under the line. */
+  'result',
+  /** A partial product of a multiplication by a two-digit number. */
+  'partial',
+  /** A digit of a division's quotient. */
+  'quotient',
+  /** A division step: the divisor times the quotient digit, under the dividend. */
+  'product',
+  /** A division step: the difference, with the next digit brought down. */
+  'difference',
+]);
+export type ColumnPart = z.infer<typeof ColumnPart>;
+
+/** A cell she fills: where it is, never what belongs in it. */
+export const ColumnGap = z.object({
+  id: PartId,
+  part: ColumnPart,
+  /** 0 the ones, 1 the tens …: of the number this cell belongs to. */
+  place: z
+    .number()
+    .int()
+    .min(0)
+    .max(COLUMN_DIGITS_MAX + 1),
+  /** The partial product (1, 2) or the division step (1 …) it belongs to; 0 for none. */
+  step: z.number().int().min(0).max(COLUMN_DIGITS_MAX),
+});
+export type ColumnGap = z.infer<typeof ColumnGap>;
+
+/** A cell she reads: a digit, a sign (+ − · : =) or nothing. */
+export const ColumnShown = z.object({ text: z.string().max(1) });
+export type ColumnShown = z.infer<typeof ColumnShown>;
+
+export const ColumnCell = z.union([ColumnGap, ColumnShown]);
+export type ColumnCell = z.infer<typeof ColumnCell>;
+
+export const ColumnRow = z.object({
+  /** One cell per column, every row as wide as the grid. */
+  cells: z.array(ColumnCell).min(1),
+  /** A line is drawn above this row: the line under a sum, under a step. */
+  rule: z.boolean(),
+});
+export type ColumnRow = z.infer<typeof ColumnRow>;
+
+/** The stored task: only what the model named. Code computes the rest every time it is read. */
+export const ColumnCalcTask = z.object({
+  type: z.literal('column_calc'),
+  op: ColumnOp,
+  /** The numbers as written, digits only, no leading zero. */
+  operands: z
+    .array(z.string().regex(/^[1-9][0-9]*$/))
+    .min(2)
+    .max(COLUMN_ADDENDS_MAX),
+});
+export type ColumnCalcTask = z.infer<typeof ColumnCalcTask>;
+
+export const ColumnCalcTaskView = z.object({
+  type: z.literal('column_calc'),
+  op: ColumnOp,
+  rows: z.array(ColumnRow).min(2).max(COLUMN_ROWS_MAX),
+  /** The cells in the order they are written — right to left, carry before digit, step by step. */
+  order: z.array(PartId).min(1).max(COLUMN_GAPS_MAX),
+});
+export type ColumnCalcTaskView = z.infer<typeof ColumnCalcTaskView>;
+
+export const ColumnCalcAnswer = z.object({
+  type: z.literal('column_calc'),
+  /** Every cell once: a digit, or empty (no carry; no leading zero). */
+  cells: z
+    .array(z.object({ id: PartId, digit: z.string().regex(/^[0-9]?$/) }))
+    .min(1)
+    .max(COLUMN_GAPS_MAX),
+});
+export type ColumnCalcAnswer = z.infer<typeof ColumnCalcAnswer>;
+
+/** A column of signs: nothing in it to type, no digit in it to read. */
+export function signColumn(rows: readonly ColumnRow[], col: number): boolean {
+  return rows.every((r) => {
+    const cell = r.cells[col];
+    return cell === undefined || (!('id' in cell) && !/[0-9]/.test(cell.text));
+  });
+}
+
+/** Does the grid fit a 360-pt phone with every digit column at its narrowest? */
+export function columnsFit(rows: readonly ColumnRow[]): boolean {
+  const cols = Math.max(...rows.map((r) => r.cells.length));
+  let width = 0;
+  for (let c = 0; c < cols; c++) width += signColumn(rows, c) ? COLUMN_SIGN : COLUMN_DIGIT_MIN;
+  return width <= COLUMN_WIDTH_MAX;
+}
+
+/**
+ * Her result as it stands in the conversation — the digits of the result (or the quotient) left
+ * to right, an empty cell inside it as "_", "?" when there is none yet. One implementation for the
+ * app (while the server checks) and the server (the thread it keeps).
+ */
+export function columnResultText(
+  view: Pick<ColumnCalcTaskView, 'rows'>,
+  digits: Readonly<Record<string, string>>,
+): string {
+  const cells = view.rows.flatMap((r) =>
+    r.cells.filter(
+      (c): c is ColumnGap => 'id' in c && (c.part === 'result' || c.part === 'quotient'),
+    ),
+  );
+  const text = cells
+    .map((c) => digits[c.id] || ' ')
+    .join('')
+    .trim()
+    .replace(/ /g, '_');
+  return text === '' ? '?' : text;
+}
+
+/** A line's number as she sees it beside the line: ① ② … */
+export function lineMark(index: number): string {
+  return String.fromCodePoint(0x2460 + index);
+}
+
+/** Her answer to a find-the-error task in the conversation: "② 3x + 6 = 21". */
+export function findErrorText(view: Pick<FindErrorTaskView, 'lines'>, line: string, fix: string) {
+  const at = view.lines.findIndex((l) => l.id === line);
+  return at < 0 ? fix : `${lineMark(at)} ${fix}`;
+}
+
 // ─────────────── the unions (one member per kind that exists) ───────────────
 
 /** The stored definition including the key (`items.task`). Server only. */
@@ -697,6 +926,8 @@ export const StructuredTask = z.discriminatedUnion('type', [
   ClozeTask,
   SelectAllTask,
   MarkTask,
+  FindErrorTask,
+  ColumnCalcTask,
 ]);
 export type StructuredTask = z.infer<typeof StructuredTask>;
 
@@ -708,6 +939,8 @@ export const StructuredTaskView = z.discriminatedUnion('type', [
   ClozeTaskView,
   SelectAllTaskView,
   MarkTaskView,
+  FindErrorTaskView,
+  ColumnCalcTaskView,
 ]);
 export type StructuredTaskView = z.infer<typeof StructuredTaskView>;
 
@@ -719,6 +952,8 @@ export const StructuredAnswer = z.discriminatedUnion('type', [
   ClozeAnswer,
   SelectAllAnswer,
   MarkAnswer,
+  FindErrorAnswer,
+  ColumnCalcAnswer,
 ]);
 export type StructuredAnswer = z.infer<typeof StructuredAnswer>;
 

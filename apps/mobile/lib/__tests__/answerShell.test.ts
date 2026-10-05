@@ -44,8 +44,11 @@ const IN_SHELL = [
   'ClozeAnswer.tsx',
   'SelectAllAnswer.tsx',
   'MarkAnswer.tsx',
+  'ColumnAnswer.tsx',
   'TypedAnswer.tsx',
   'StaffWriting.tsx',
+  'FractionBarAnswer.tsx',
+  'FigureTapAnswer.tsx',
 ];
 
 /** Who places the free room. */

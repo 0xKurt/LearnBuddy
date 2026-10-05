@@ -40,6 +40,8 @@ const material = (over: Partial<MaterialBrief>): MaterialBrief => ({
   goal_id: null,
   item_count: 0,
   photo_count: 2,
+  source: 'sheet',
+  ready_at: null,
   page_problems: [],
   created_at: new Date('2026-09-28T16:05:00Z'),
   failed_at: null,
@@ -113,5 +115,41 @@ describe('the state block names sheets that are not ready', () => {
   it('a sheet on its way is not counted as "being read" for its goal either', () => {
     const text = block([material({ status: 'awaiting_upload' })]);
     expect(text).not.toContain('are being read right now');
+  });
+});
+
+describe('the state block says what kind of page a sheet is (issue #259)', () => {
+  const read = new Date('2026-09-28T16:06:00Z');
+
+  it('a corrected test: new tasks for what was marked, and never a word about the grade', () => {
+    const text = block([
+      material({ source: 'corrected_test', title: 'Brüche', item_count: 4, ready_at: read }),
+    ]);
+    expect(text).toContain('"Brüche" is her corrected class test');
+    expect(text).toContain('NEW tasks of the kind the teacher marked');
+    expect(text).toContain('never ask for or mention a grade or points');
+  });
+
+  it('a notebook entry: the lesson of the day it was read, for a short run the next morning', () => {
+    const text = block([
+      material({ source: 'notebook_entry', title: 'Photosynthese', item_count: 5, ready_at: read }),
+    ]);
+    expect(text).toContain('"Photosynthese" is her notebook entry of the lesson on 2026-09-28');
+    expect(text).toContain('unannounced short test');
+    expect(text).toContain('next morning');
+  });
+
+  it('a corrected test with nothing marked has nothing to practise and no second reading', () => {
+    const text = block([
+      material({ status: 'failed', failure_reason: 'nothing_marked', title: 'Probe' }),
+    ]);
+    expect(text).toContain('"Probe" is a corrected test on which nothing is marked wrong');
+    expect(text).toContain('reading it again is not possible');
+  });
+
+  it('an ordinary sheet says nothing of the kind', () => {
+    const text = block([material({ title: 'Blatt', item_count: 3, ready_at: read })]);
+    expect(text).not.toContain('corrected class test');
+    expect(text).not.toContain('notebook entry');
   });
 });

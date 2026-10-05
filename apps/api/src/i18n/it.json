@@ -328,12 +328,10 @@
     "solid": {
       "net_yes": "Sì, è uno sviluppo del cubo",
       "net_no": "No, non è uno sviluppo del cubo",
-      "kind_cube": "cubo",
       "kind_cuboid": "parallelepipedo",
       "kind_prism": "prisma",
       "kind_pyramid": "piramide",
-      "kind_cylinder": "cilindro",
-      "kind_cone": "cono"
+      "kind_cylinder": "cilindro"
     },
     "explain": {
       "point_met": "✓ {{name}}",
@@ -385,7 +383,31 @@
       "closing": "Questa era l'ultima versione per stavolta. Porta questi punti nel tuo prossimo testo.",
       "unavailable": "Ora non riesco a leggere il tuo testo. Non è perso: rimandalo tra un momento."
     },
-    "ask_unavailable": "Ora non riesco a rispondere alla tua domanda. Riprova tra un momento."
+    "ask_unavailable": "Ora non riesco a rispondere alla tua domanda. Riprova tra un momento.",
+    "find_error": {
+      "later": "Fino a questa riga è tutto giusto – l'errore viene più in basso.",
+      "earlier": "L'errore è più in alto.",
+      "fix_different": "Hai trovato la riga! Ma la tua correzione non segue ancora dalla riga precedente.",
+      "fix_unreadable": "Hai trovato la riga! Non riesco a leggere la tua correzione come un calcolo – scrivila come le altre righe.",
+      "fix_repeat": "Hai trovato la riga! Ora scrivila come deve essere – non di nuovo la riga precedente."
+    },
+    "column": {
+      "carry_missing": "Quasi – {{at}} manca ancora il riporto.",
+      "carry_wrong": "Quasi – {{at}} il riporto non è ancora giusto.",
+      "digit_missing": "Quasi – {{at}} manca ancora una cifra del risultato.",
+      "digit_wrong": "Quasi – {{at}} la cifra del risultato non è ancora giusta.",
+      "partial": "Quasi – nella riga {{step}}, qualcosa {{at}} non è ancora giusto.",
+      "quotient": "Quasi – la cifra n. {{n}} del risultato non è ancora giusta.",
+      "product": "Quasi – al passo {{step}}, la moltiplicazione non è ancora giusta.",
+      "difference": "Quasi – al passo {{step}}, il numero sotto la linea non è ancora giusto.",
+      "place_0": "nelle unità",
+      "place_1": "nelle decine",
+      "place_2": "nelle centinaia",
+      "place_3": "nelle migliaia",
+      "place_4": "nelle decine di migliaia",
+      "place_5": "nelle centinaia di migliaia",
+      "place_6": "nei milioni"
+    }
   },
   "contact": {
     "less_often": "Va bene: d'ora in poi ti scrivo sul telefono solo quando è davvero importante. Tutto il resto ti aspetta qui. Puoi cambiarlo nelle impostazioni."

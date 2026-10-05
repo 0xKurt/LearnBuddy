@@ -29,6 +29,7 @@ const sheet = (over: Partial<MaterialView> = {}): MaterialView => ({
   subject_name: 'Französisch',
   goal_id: null,
   purpose: 'study',
+  source: 'sheet',
   session_id: null,
   session_status: null,
   page_problems: [],
@@ -92,5 +93,24 @@ describe('eine Blattkarte und die Sätze zum Vorlesen (Issue #223 Punkt 2)', () 
     show(sheet({ purpose: 'homework', speak_count: 2, session_status: null }));
     expect(screen.getByText('Weiter mit der Hausaufgabe')).toBeTruthy();
     expect(screen.queryByText('Sätze laut lesen')).toBeNull();
+  });
+});
+
+describe('eine korrigierte Arbeit ohne Angestrichenes (Issue #259)', () => {
+  it('sagt, warum es nichts zu üben gibt, ohne Nochmal-lesen und ohne Warnung zum Foto', () => {
+    show(
+      sheet({
+        source: 'corrected_test',
+        status: 'failed',
+        failure_reason: 'nothing_marked',
+        item_count: 0,
+        // Die Fotos sind sofort weg (eine Note steht darauf): das ist kein "nicht mehr gespeichert".
+        photos_deleted: true,
+      }),
+    );
+    expect(screen.getByText('ohne Übungen')).toBeTruthy();
+    expect(screen.getByText(/nichts gefunden, was als falsch angestrichen ist/)).toBeTruthy();
+    expect(screen.queryByText('Nochmal lesen')).toBeNull();
+    expect(screen.queryByText(/nicht mehr gespeichert/)).toBeNull();
   });
 });

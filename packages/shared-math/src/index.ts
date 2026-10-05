@@ -17,3 +17,4 @@ export * from './space.js';
 export * from './cubes.js';
 export * from './solidNets.js';
 export * from './diagram.js';
+export * from './tap.js';

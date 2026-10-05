@@ -43,6 +43,7 @@ const card = (over: Partial<SessionItemView['item']> = {}): SessionItemView => (
     image: null,
     tap_choices: null,
     surface: null,
+    tap: false,
     task_view: null,
     listen: null,
     passage: null,

@@ -37,7 +37,12 @@
     "photos_missing": "Non sono arrivate tutte le foto.",
     "budget_exhausted": "Per oggi non posso leggere altre schede. Domani si riparte.",
     "blocked": "Il filtro di sicurezza blocca questa scheda. Rileggerla non servirà: scrivi semplicemente le domande.",
-    "form_not_practicable": "La scheda l’ho letta bene: è solo questo tipo di esercizio che non posso fare con te. Chiedimi: ti spiego i passaggi."
+    "form_not_practicable": "La scheda l’ho letta bene: è solo questo tipo di esercizio che non posso fare con te. Chiedimi: ti spiego i passaggi.",
+    "nothing_marked": "Nella verifica non ho trovato niente segnato come sbagliato, quindi non c’è niente da ripassare. Se invece c’è qualcosa segnato in rosso, rifalle una foto."
+  },
+  "source": {
+    "corrected_test": "Dalla tua verifica corretta: esercizi nuovi su ciò che era segnato, con altri numeri e altre parole.",
+    "notebook_entry": "Dal tuo quaderno: qualche domanda breve sull’ultima lezione, perfetta per domani mattina."
   },
   "incomplete_hint": "Le foto non sono arrivate complete. Elimina la scheda e fotografala di nuovo.",
   "not_practicable_one": "Un esercizio l’ho lasciato fuori: «{{tasks}}». Quello non posso esercitarlo con te, ma ti spiego volentieri come si affronta.",

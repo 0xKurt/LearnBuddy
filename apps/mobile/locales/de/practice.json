@@ -328,5 +328,32 @@
     "later": "Merk ich mir für nachher",
     "later_hint": "Buddy kommt nach dem Üben darauf zurück.",
     "kept": "Gemerkt"
+  },
+  "tap": {
+    "check_waits": "Erst wenn du in die Abbildung getippt hast."
+  },
+  "find_error": {
+    "waits": "Tippe erst die falsche Zeile an.",
+    "fix": "Schreib die Zeile richtig …",
+    "line": "Zeile {{n}}",
+    "task": "Aufgabe"
+  },
+  "column": {
+    "check_waits": "Erst wenn du eine Ziffer geschrieben hast.",
+    "carry": "Übertrag, {{place}}",
+    "result": "Ergebnis, {{place}}",
+    "partial": "Zeile {{step}}, {{place}}",
+    "quotient": "Ergebnis, {{n}}. Ziffer",
+    "product": "Schritt {{step}}, Malnehmen, {{place}}",
+    "difference": "Schritt {{step}}, Rest, {{place}}",
+    "places": [
+      "Einer",
+      "Zehner",
+      "Hunderter",
+      "Tausender",
+      "Zehntausender",
+      "Hunderttausender",
+      "Millionen"
+    ]
   }
 }

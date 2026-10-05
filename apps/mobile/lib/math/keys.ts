@@ -87,7 +87,9 @@ const CHEMISTRY: readonly KeyId[] = ['sub', 'charge', 'plus', 'reacts', 'equilib
 
 /** The keys of a question that is answered with a single typed value — or none at all. */
 export function keysFor(ctx: KeyContext): KeyId[] {
-  const { kind, subjectKind } = ctx;
+  const { subjectKind } = ctx;
+  // A line of a worked solution she writes right (Fehlerdetektiv, #260) is typed like a formula.
+  const kind = ctx.kind === 'find_error' ? 'formula' : ctx.kind;
   if (kind !== 'numeric' && kind !== 'formula' && kind !== 'short') return [];
   const math = mathOf(ctx.prompt);
   const reaction = REACTION.test(math);

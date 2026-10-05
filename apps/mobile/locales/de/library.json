@@ -37,7 +37,12 @@
     "photos_missing": "Nicht alle Fotos sind angekommen.",
     "budget_exhausted": "Für heute kann ich keine Blätter mehr lesen. Morgen geht es wieder.",
     "blocked": "Der Schutzfilter lässt dieses Blatt nicht durch. Nochmal lesen hilft nicht – tipp die Aufgaben einfach ab.",
-    "form_not_practicable": "Das Blatt konnte ich gut lesen – nur diese Art Aufgabe kann ich nicht mit dir üben. Frag mich danach: Ich erkläre dir die Schritte."
+    "form_not_practicable": "Das Blatt konnte ich gut lesen – nur diese Art Aufgabe kann ich nicht mit dir üben. Frag mich danach: Ich erkläre dir die Schritte.",
+    "nothing_marked": "Auf der Arbeit habe ich nichts gefunden, was als falsch angestrichen ist – also nichts nachzuüben. Ist doch etwas rot markiert, fotografier sie nochmal."
+  },
+  "source": {
+    "corrected_test": "Aus deiner korrigierten Arbeit: neue Aufgaben zu dem, was angestrichen war – mit anderen Zahlen und Wörtern.",
+    "notebook_entry": "Aus deinem Hefteintrag: ein paar kurze Fragen zur letzten Stunde – gut für morgen früh."
   },
   "incomplete_hint": "Die Fotos sind nicht ganz angekommen. Lösch das Blatt und fotografier es neu.",
   "not_practicable_one": "Eine Aufgabe habe ich weggelassen: „{{tasks}}“. Die kann ich nicht mit dir üben – aber ich erkläre dir gern, wie man sie angeht.",

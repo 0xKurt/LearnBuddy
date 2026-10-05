@@ -328,12 +328,10 @@
     "solid": {
       "net_yes": "Yes, it is a cube net",
       "net_no": "No, it is not a cube net",
-      "kind_cube": "cube",
       "kind_cuboid": "cuboid",
       "kind_prism": "prism",
       "kind_pyramid": "pyramid",
-      "kind_cylinder": "cylinder",
-      "kind_cone": "cone"
+      "kind_cylinder": "cylinder"
     },
     "explain": {
       "point_met": "✓ {{name}}",
@@ -385,7 +383,31 @@
       "closing": "That was your last version for now. Take these points into your next text.",
       "unavailable": "I can't read your text right now. It isn't lost – send it again in a moment."
     },
-    "ask_unavailable": "I can't answer your question right now. Try again in a moment."
+    "ask_unavailable": "I can't answer your question right now. Try again in a moment.",
+    "find_error": {
+      "later": "Up to this line everything is right – the mistake comes further down.",
+      "earlier": "The mistake is further up.",
+      "fix_different": "You found the line! Your correction doesn't follow from the line before it yet.",
+      "fix_unreadable": "You found the line! I can't read your correction as a calculation – write it like the other lines.",
+      "fix_repeat": "You found the line! Now write it the way it should read – not the line before it again."
+    },
+    "column": {
+      "carry_missing": "Not quite yet – {{at}}, the carry is still missing.",
+      "carry_wrong": "Not quite yet – {{at}}, the carry isn't right yet.",
+      "digit_missing": "Not quite yet – {{at}}, a digit of the result is still missing.",
+      "digit_wrong": "Not quite yet – {{at}}, the digit of the result isn't right yet.",
+      "partial": "Not quite yet – in line {{step}}, something {{at}} isn't right yet.",
+      "quotient": "Not quite yet – digit {{n}} of the result isn't right yet.",
+      "product": "Not quite yet – in step {{step}}, the multiplication isn't right yet.",
+      "difference": "Not quite yet – in step {{step}}, the number under the line isn't right yet.",
+      "place_0": "in the ones",
+      "place_1": "in the tens",
+      "place_2": "in the hundreds",
+      "place_3": "in the thousands",
+      "place_4": "in the ten thousands",
+      "place_5": "in the hundred thousands",
+      "place_6": "in the millions"
+    }
   },
   "contact": {
     "less_often": "Got it – from now on I'll only message your phone when it really matters. Everything else waits here. You can change this in settings."

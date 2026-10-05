@@ -3,18 +3,19 @@
 // docs/architecture.md §Home. Everything is derived from stored state —
 // no card claims more than the data shows.
 
-import type {
-  ActionSummary,
-  ActionView,
-  BuddyHome,
-  Decision,
-  GoalBrief,
-  MessageView,
-  HomeNotice,
-  NowCard,
-  OutreachView,
-  PreparedPractice,
-  UpcomingItem,
+import {
+  FINAL_FAILURES,
+  type ActionSummary,
+  type ActionView,
+  type BuddyHome,
+  type Decision,
+  type GoalBrief,
+  type MessageView,
+  type HomeNotice,
+  type NowCard,
+  type OutreachView,
+  type PreparedPractice,
+  type UpcomingItem,
 } from '@learnbuddy/shared-types/contracts';
 
 import { DAILY_LIMITS } from '../../config.js';
@@ -23,7 +24,7 @@ import { daysBetween, localParts, startOfLocalDay } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
 import type { UndoSpec } from './toolKit.js';
 import { undoApplies, undoLoosensContact } from './tools.js';
-import { activeRoleplay, roleplayStatuses } from './roleplay.js';
+import { activeRoleplay, roleplayFeedbacks, roleplayStatuses } from './roleplay.js';
 import { loadBuddyState, loadSettings } from './state.js';
 import { resumable } from '../practice/lifecycle.js';
 
@@ -304,14 +305,10 @@ async function failedCard(
     // "Nochmal lesen" is only offered where a second reading can actually work: not for a
     // verdict that would repeat, not when the photos never arrived or are already gone
     // (retryMaterial refuses all three — the card must not promise what the API declines).
+    // A verdict a second reading would repeat (FINAL_FAILURES: #198, #259) offers none.
     retryable:
-      failed.failure_reason !== 'not_learning_material' &&
-      failed.failure_reason !== 'blocked' &&
+      !(failed.failure_reason && FINAL_FAILURES.has(failed.failure_reason)) &&
       failed.failure_reason !== 'photos_missing' &&
-      // Read perfectly well: the tasks on it are forms Buddy has no exercise for (issue
-      // #198). A second reading would find the same tasks, so the card says what he can do
-      // instead and never offers one.
-      failed.failure_reason !== 'form_not_practicable' &&
       !(row?.photos_deleted ?? false) &&
       (row?.n ?? 0) < 3,
     purpose: row?.purpose ?? 'study',
@@ -705,10 +702,11 @@ async function threadOf(
     reply_to_id: string | null;
     outreach_id: string | null;
     decision_id: string | null;
+    roleplay_id: string | null;
     created_at: Date;
   }>(
     `select id, role, text, status, failure_code, client_message_id, ask, reply_to_id, outreach_id,
-            decision_id, created_at
+            decision_id, roleplay_id, created_at
        from buddy_messages
       where learner_id = $1
         and ($2::uuid is null or seq < (select seq from buddy_messages where id = $2 and learner_id = $1))
@@ -790,6 +788,12 @@ async function threadOf(
     actions.flatMap((a) => (a.result.tool === 'start_roleplay' ? [a.result.roleplay_id] : [])),
     now,
   );
+  // The feedback after a roleplay, for the result card (issue #384).
+  const feedbacks = await roleplayFeedbacks(
+    deps.db,
+    learnerId,
+    page.flatMap((m) => (m.roleplay_id ? [m.roleplay_id] : [])),
+  );
   const messages: MessageView[] = page.map((m) => {
     const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
     return {
@@ -826,6 +830,7 @@ async function threadOf(
           summary: servedSummary(a.result, pending, cannotStart, a.id, roleplays),
           created_at: a.created_at.toISOString(),
         })),
+      roleplay_feedback: m.roleplay_id ? (feedbacks.get(m.roleplay_id) ?? null) : null,
       created_at: m.created_at.toISOString(),
     };
   });

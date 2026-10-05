@@ -189,6 +189,7 @@
     "failed_budget_exhausted": "Per oggi non posso leggere altre schede. Domani si riparte.",
     "failed_blocked": "Non posso leggere questa scheda: il filtro di sicurezza non la lascia passare. Rileggerla non servirà. Scrivi semplicemente le domande che ti servono.",
     "failed_form_not_practicable": "Il tuo foglio l’ho letto bene. Ma questo tipo di esercizio non posso esercitarlo con te: chiedimi e ti spiego i passaggi.",
+    "failed_nothing_marked": "Nella tua verifica non ho trovato niente segnato come sbagliato, quindi non c’è niente da ripassare. Se invece c’è qualcosa segnato in rosso, fai una nuova foto.",
     "failed_retry": "Rileggi",
     "failed_new_photo": "Nuova foto",
     "result_title": "Ce l'hai fatta!",
@@ -385,6 +386,12 @@
       "fr": "francese",
       "es": "spagnolo",
       "it": "italiano"
+    },
+    "result": {
+      "met": "Fatto",
+      "open": "Non ancora",
+      "better": "Così suona ancora meglio",
+      "quote": "«{{quote}}»"
     }
   }
 }

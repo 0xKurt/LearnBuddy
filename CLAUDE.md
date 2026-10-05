@@ -1,249 +1,209 @@
-# LearnBuddy — instructions for Claude (Cowork / Claude Code)
+# LearnBuddy — instructions for Claude
 
-> This file is loaded automatically. It encodes the rules that keep the codebase honest.
-> **Read it before you touch any code.**
+> Loaded automatically. Read it before you touch any code. Each rule appears once; details live
+> in the linked docs and are enforced by the guards in `docs/engineering-guards.md`.
 
 ## What this is
 
-LearnBuddy is a proactive learning companion ("Buddy"): it gets to know the learner, keeps
-context, prepares practice, thinks ahead and reaches out at sensible moments — while the learner
-sees one calm screen. Minimal surface in front, explicit modules behind; the system carries the
-complexity.
+LearnBuddy is a proactive learning companion ("Buddy") for school children: it gets to know the
+learner, keeps context, prepares practice from her own material, thinks ahead and reaches out at
+sensible moments — while she sees one calm screen. Minimal surface in front, explicit modules
+behind; the system carries the complexity.
 
 ## Sources of truth
 
-Cite the relevant section in commit messages and PR bodies (e.g. `docs/architecture.md §Delivery`).
+Cite the relevant section in commits and PRs (e.g. `docs/architecture.md §Delivery`). A change
+that diverges from these docs updates the doc in the same change, or comes with an ADR.
 
-- `docs/buddy/01-prinzip-und-diagnose.md` — the Buddy principle, needs vs. grown complexity, why the rebuild
-- `docs/adr/0004-proactive-buddy.md` — the decision (modular monolith, fresh start)
-- `docs/architecture.md` — modules, API, decisions, tools, proactivity, delivery, limits, testing
-- `docs/privacy.md` — data, retention, minors, export/deletion, processors
-- `docs/dpia.md` — Datenschutz-Folgenabschätzung (Art. 35): Risiken, Maßnahmen, offene Punkte
-- `docs/DESIGN-BRIEF.md` — how the product must feel (still valid)
-- `docs/UX-PRINCIPLES.md` — hide system complexity, keep understanding and control (intent → result; examples, not feature catalogs; progressive disclosure; undo over confirmation)
-- `docs/SETUP-VERTEX.md` — model setup
-- `docs/engineering-guards.md` — the CI guards behind the Engineering-Regeln (#313) and their Ausnahmelisten
-- `docs/legacy/` — the previous app's specs and audits: history, **not** requirements
+| Doc                                             | What it decides                                                                   |
+| ----------------------------------------------- | --------------------------------------------------------------------------------- |
+| `docs/buddy/01-prinzip-und-diagnose.md`         | the Buddy principle; §1.1 the five USP points every PR names                      |
+| `docs/adr/`                                     | decisions (0004: modular monolith, fresh start)                                   |
+| `docs/architecture.md`                          | modules, API, tools, proactivity, delivery, limits, testing                       |
+| `docs/privacy.md`, `docs/dpia.md`               | data, retention, minors, export/deletion; risks and measures                      |
+| `docs/DESIGN-BRIEF.md`, `docs/UX-PRINCIPLES.md` | how it must feel; intent → result, progressive disclosure, undo over confirmation |
+| `docs/engineering-guards.md`                    | every CI guard, what it catches, its Ausnahmeliste                                |
+| `docs/SETUP-VERTEX.md`                          | model setup                                                                       |
+| `docs/legacy/`                                  | the previous app — history, **not** requirements                                  |
 
-If a change diverges from these docs, update the doc in the same change or write an ADR.
+## How we work
+
+1. **Owner feedback becomes an issue first** (owner rule 28.09.). Every critique, bug report or
+   idea gets a GitHub issue in `0xKurt/LearnBuddy` with the quote and date, the verified cause, a
+   plan and acceptance criteria — before any work. Done work is documented on the issue with
+   proof, then closed. A one-liner fixed and proven in the same minute may go first, but still
+   gets its issue.
+2. **Decide, don't ask, where evidence can decide** (owner 04.10.: "Frage nicht was ich will,
+   sondern was das beste für die App, den Lernerfolg und für die Kinder ist"). Research, weigh,
+   recommend. Ask only for what is genuinely the owner's call (cost, legal, product direction),
+   with the question tool.
+3. **Branch from `main`, merge as soon as CI is green** (Engineering-Regel 8). No stacked
+   branches, no collecting finished PRs.
+4. **One push per PR round** (#321): check locally, then push. Vercel builds no previews for
+   `claude/**`; production comes only from `main`.
+5. **Migrations reach production before the code that needs them.** Apply the new numbered
+   migration to the production database, merge, then check `/v1/health` (`migrations.missing` is
+   empty). Take the next free number on `main` right before committing.
+6. **When you genuinely don't know: stop, ask, document.** Never fabricate. Say plainly what is
+   verified and what is not.
+
+## Testing
+
+- **Test what you built, not everything** (owner 05.10.). Per change: the hooks plus the specs of
+  the screens you changed (for the before/after images).
+- **The whole app is tested once, at the end** (owner 05.10., #387): when everything is built, the
+  full browser walkthrough runs back to front, with the screenshot folder.
+- **Hooks are never skipped** (`--no-verify` is forbidden). Pre-commit: typecheck, lint, guards,
+  tests, bundle smoke. Pre-push: the full suite.
+- Integration tests run on a real Postgres (`LB_TEST_DATABASE_URL`, hard rule 8); specs are
+  order-independent and nothing is "flake" before its cause is proven (Engineering-Regel 7).
+- **Show red before green.** A fix or guard comes with a test that fails without it.
+
+```bash
+pnpm typecheck && pnpm lint && pnpm test   # what the hooks run
+scripts/web-walkthrough.sh <specs>          # browser walkthrough (real app, real API, scripted model)
+pnpm verify                                 # all four — the final full run
+```
 
 ## Hard rules
 
+Numbers are stable: code and docs cite them ("CLAUDE.md rule 16"). New rules are appended.
+
+**Model, data, time**
+
 1. **The model interprets and plans; code enforces.** Permissions, tenant isolation, time rules,
    versions, contact rules and limits live in code (`modules/buddy/tools.ts`, `policy.ts`,
-   `apply.ts`), never only in a prompt.
-2. **The model never writes ids, dates or instants.** Aliases (`g1`, `st2`, `m3`, `f1`) and
+   `apply.ts`), never only in a prompt. Grading a practice answer is code wherever code can be exact.
+2. **The model never writes ids, dates or instants.** Aliases (`g1`, `st2`, `m3`) and
    DaySpec/UntilSpec, resolved server-side in the learner's zone. Clock-change ambiguities are
    rejected, not guessed.
 3. **No word lists or hardwired answers as fake language understanding**, no test-data special
    cases. Decisions come from structured model output validated with zod, or from explicit taps.
 4. **Every model decision is applied atomically behind the context fence** (`context_version`).
    Anything a decision depends on bumps it (`bumpContext`) in the same transaction.
-5. **Never claim what isn't proven.** Delivery status only from provider tickets/receipts; "opened"
-   only from the app; an uncertain external result is never repeated blindly. The UI shows
-   planned / prepared / done / confirmed as different states.
-6. **Contact is opt-in; Buddy can only reduce it.** Under 16, loosening needs the adult's PIN
-   (server-side admin token). Never show counts of due items or missed days to learners.
+5. **Never claim what isn't proven.** Delivery only from provider receipts; "opened" only from the
+   app; an uncertain external result is never repeated blindly. The UI keeps planned / prepared /
+   done / confirmed apart and never shows a state that is no longer true.
+6. **Contact is opt-in; Buddy can only reduce it.** Under 16, loosening needs the adult's PIN.
+   Never show learners counts of due items or missed days.
 7. **One clock.** Code uses `deps.now()`; SQL never decides "due" with `now()`; rows whose
    timestamps drive behaviour get `created_at` from the app clock.
 8. **Never mock the database.** Integration tests run on a real Postgres (`apps/api/src/testing/`);
    only the outside world (model, push, auth, storage) is replaced. A file that injects fakes
-   carries the banner `// requires live verification in Claude Code session`.
+   carries `// requires live verification in Claude Code session`.
 9. **Never use `any`.** TypeScript strict.
-10. **Migrations are immutable once merged.** The baseline is `infra/supabase/migrations/0001_baseline.sql`
-    (fresh start, ADR 0004); every change after it is a new numbered migration.
+10. **Migrations are immutable once merged.** Baseline `0001_baseline.sql`; every change is a new
+    numbered migration.
 11. **No demo data in production code paths.** Fixtures and scripted scenarios live in `src/testing/`.
-12. **Never leave a stub** (`notImplemented`, "kommt später" copy, buttons without a handler). Finish it or don't ship it.
-13. **CTAs are `<Btn>`** from `apps/mobile/components/lb/`; never a raw `<Pressable>` CTA and never
-    `backgroundColor` on a `Pressable` (put it on an inner `View`).
-14. **Every modal is closable by an obvious in-sheet `<Btn>`** (see `components/lb/Sheet.tsx`).
-15. **Screens with a form pin the CTA outside the `ScrollView`, inside `<KeyboardSafe>`**
-    (`components/lb/KeyboardSafe.tsx`) — `app/welcome.tsx` is the reference. Nie direkt eine
-    `KeyboardAvoidingView`: Android verkleinert das Fenster selbst (`resize`), ein zusätzliches
-    `behavior="height"` schrumpft ein zweites Mal und hinterlässt das leere Band unter der
-    Leiste (Issue #46). Die Plattformregel steht genau an dieser einen Stelle.
+12. **Never leave a stub** — no `notImplemented`, no "kommt später" copy, no button without a handler.
 
-16. **Simplicity is the first rule.** Buddy is the interface: the learner talks, taps a suggestion
-    or takes a photo — no dashboards, tile grids, lists or forms to learn. Anything complex is
-    handled behind Buddy (tools, defaults, the conversation). A new feature first asks "can Buddy
-    do this in the chat?"; a new screen, menu or setting needs a reason it cannot. Parents' and
-    rare settings stay closed until opened. Check new UI against `docs/UX-PRINCIPLES.md` §31–32.
-    **No scrolling to find what matters:** every screen fits a 390×844 and a 360×740 phone; only a
-    conversation or a browsed list scrolls (`tests/web/fit.ts` fails the walkthrough otherwise).
-    **Every route is on an allowlist** with a one-line reason the chat cannot carry it
-    (`ROUTES` in `apps/mobile/lib/__tests__/minimalism.test.ts`): a new file under `apps/mobile/app/`
-    without an entry fails `pnpm test`. Practice forms (`ItemKind`) never get a picker of their own —
-    no screen or component lists two or more side by side, no request carries one
-    (`packages/shared-types/src/contracts/__tests__/forms.test.ts`); Buddy or code picks the form.
-    Every PR names the USP point it serves (`docs/buddy/01-prinzip-und-diagnose.md` §1.1).
+**The screen**
 
-17. **Look at your own screenshots like a designer before you submit UI** (issue #287). Passing
-    gates is not the bar; looking good is. Whoever builds or changes a screen runs the
-    walkthrough, looks at every affected shot at 360×740 and 390×844, light and dark, and
-    critiques it honestly: empty voids, a title on two lines, clipped or doubled elements,
-    a new card style or accent where an existing one would do, small grey noise, a hard edge
-    where something scrolls under a bar. Then revise and shoot again. The PR carries a
-    before/after image (same screen, old next to new) — no UI change is handed to the owner
-    without one. Screen titles in a header stay on one line (`components/lb/Screen.tsx`).
+13. **CTAs are `<Btn>`** from `components/lb/`; never a raw `Pressable` outside `components/lb`,
+    never `backgroundColor` on a `Pressable` (put it on an inner `View`).
+14. **Every modal closes with an obvious in-sheet `<Btn>`** (`components/lb/Sheet.tsx`).
+15. **Forms pin the CTA outside the `ScrollView`, inside `<KeyboardSafe>`** (`app/welcome.tsx` is
+    the reference). Never a direct `KeyboardAvoidingView`: Android resizes the window itself, and a
+    second `behavior="height"` leaves an empty band under the bar (#46).
+16. **Simplicity is the first rule.**
+    - Buddy is the interface: she talks, taps a suggestion or takes a photo — no dashboards, tile
+      grids, lists or forms to learn. A new feature first asks "can Buddy do this in the chat?";
+      a new screen, menu or setting needs a reason it cannot. Parents' and rare settings stay
+      closed until opened (`docs/UX-PRINCIPLES.md` §31–32).
+    - **No scrolling to find what matters:** every screen fits 390×844 and 360×740; only a
+      conversation or a browsed list scrolls (`tests/web/fit.ts`). Nothing is shown half — an
+      element is whole or not drawn.
+    - **Every route is on an allowlist** with a one-line reason the chat cannot carry it (`ROUTES`
+      in `apps/mobile/lib/__tests__/minimalism.test.ts`).
+    - **Practice forms never get a picker:** no screen lists two or more side by side, no request
+      carries an `ItemKind` (`contracts/__tests__/forms.test.ts`). Buddy or code picks the form.
+    - Every PR names the USP point it serves (`docs/buddy/01-prinzip-und-diagnose.md` §1.1).
+17. **Look at your own screenshots like a designer** (#287). Shoot every changed screen at
+    360×740 and 390×844, light and dark; critique empty voids, two-line titles, clipped or doubled
+    elements, a new card style or accent where an existing one would do, grey noise, hard edges.
+    Revise and shoot again. The PR carries a before/after image and the screen next to related
+    ones — no UI change reaches the owner without one. Header titles stay on one line.
+
+**Added later**
+
+18. **Safeguarding is a code path wherever she writes free text** (chat, practice tutor, roleplay):
+    distress gets the fixed help answer by age (`i18n/safeguarding.ts`), never model words (#389).
+19. **Same function → same component, same place, everywhere** (owner 04.10.). One text input in
+    the whole app (`InputBar`, #365). In practice the answer sits at the bottom, directly above the
+    bar, and "Prüfen" is the bar's action (#386, #395; `answerShell`/`oneBar`/`oneInput` tests).
+    One control per function, in the same place in chat and practice. No new icon, toggle or
+    pattern where one exists.
 
 ## Engineering-Regeln (#313)
 
-Verbindlich, gleichrangig mit den Hard rules. Die Verantwortung für die Codequalität trägt der
-Entwickler (Claude), nicht der Owner. Was mechanisch prüfbar ist, prüfen die Wächter
-(`docs/engineering-guards.md`); der heutige Bestand steht auf Ausnahmelisten, die nur schrumpfen.
+Production-ready is the bar (owner 04.10.): clean, modular, reusable, consistent, testable,
+maintainable. The developer (Claude) owns code quality, not the owner. Mechanical checks are
+guards (`docs/engineering-guards.md`); today's debt sits on Ausnahmelisten that only shrink.
+Numbers are stable, as above.
 
-1. **Erst Bibliothek, dann Eigenbau.** Vor jedem neuen Darstellungs-, Interaktions- oder
-   Infrastruktur-Baustein steht ein Bibliotheks-Check im Issue: Lizenz, React-Native-Weg, Größe,
-   Pflege, A11y. Eigenbau nur mit Begründung. Neue Zeichenkomponenten brauchen einen Eintrag in
-   `tools/guards/drawing-registry.json`.
-2. **Erst Fundament, dann Feature.** Ein Feature nutzt die gemeinsamen Bausteine (Hülle, Kachel,
-   Hörknopf, Karte mit Figur, `<Btn>`, Tokens). Fehlt einer, wird er zuerst gebaut. Kein rohes
-   `Pressable` außerhalb `components/lb`.
-3. **Keine Kopien.** Gleiches Verhalten hat genau eine Implementierung; wer etwas zum zweiten Mal
-   braucht, extrahiert es (jscpd).
-4. **Kleine Einheiten.** Höchstens 600 Zeilen pro Datei in der App, 800 im Backend (ohne Leer- und
-   Kommentarzeilen); eine Aufgabe pro Datei oder Modul.
-5. **Nur Tokens.** Abstände, Schrift, Radien und Farben nur aus `lib/theme`. Eine Ausnahme trägt
-   `// token-exempt: <Grund>`.
-6. **Design im Vergleich.** Jede sichtbare Änderung zeigt den Screen neben verwandten Screens;
-   Gleiches muss gleich aussehen.
-7. **Tests unabhängig von der Reihenfolge.** Jeder Spec bringt seine Szenarien selbst mit. Ein
-   Fehler ist nie „Flake“ oder „Last“, bevor die Ursache belegt ist.
-8. **Kurze Branches, sofort mergen.** Jeder Branch geht von main ab, ist klein und wird gemergt,
-   sobald die CI grün ist — am selben Tag. Keine Merge-Züge, keine gestapelten Branches, kein
-   Sammeln fertiger PRs (Issue #328: ein Tag Konflikte, weil fünf fertige Features ~100 Commits
-   hinter main warteten). CI macht einen PR rot, dem ein main-Commit fehlt, der älter als 24 h
-   ist (`tools/guards/fresh-base.mjs`). Parallele Aufträge teilen keine Datei auf, die ein anderer
-   auch anfasst — Aufteilen ist ein eigener, vorgezogener Schritt (#313).
-9. **Belegt heißt belegt.** Live- und Geräte-Lücken stehen im PR und als Issue, bis sie geschlossen
-   sind.
-10. **Integrationsverantwortung.** Bei paralleler Arbeit prüft der Orchestrator vor jedem Merge die
-    Kohärenz mit dem Rest der App, nicht nur das einzelne Feature.
+1. **Library before own build.** A new display, interaction or infrastructure building block
+   starts with a library check in the issue (licence, React Native path, size, maintenance, a11y).
+   New drawing components need an entry in `tools/guards/drawing-registry.json`.
+2. **Foundation before feature.** Use the shared building blocks (shell, tile, listen button, card
+   with figure, `<Btn>`, tokens). If one is missing, build it first.
+3. **No copies.** Same behaviour, one implementation; the second use extracts it (jscpd). No
+   wrapper without real value, no parallel pattern next to an existing convention.
+4. **Small units.** At most 600 lines per app file, 800 in the backend (without blanks and
+   comments); one job per file, component, function or module.
+5. **Only tokens.** Spacing, type, radii and colours from `lib/theme`; an exception carries
+   `// token-exempt: <reason>`.
+6. **Design in comparison.** Every visible change is shown next to related screens; the same thing
+   must look the same.
+7. **Tests are order-independent.** Every spec brings its own scenario. A failure is never "flake"
+   or "load" before its cause is proven.
+8. **Short branches, merged the same day** (#328, `tools/guards/fresh-base.mjs`). Parallel jobs
+   never touch the same file; splitting it is its own step first.
+9. **Proven means proven.** Live and device gaps stay in the PR and as an issue until closed.
+10. **Integration responsibility.** With parallel work the orchestrator checks coherence with the
+    rest of the app before every merge.
 
-Ausnahmelisten (`tools/guards/baselines/`) wachsen nie still: CI vergleicht sie mit main, Zuwachs
-braucht im Commit die Zeile `Ausnahmeliste-Zuwachs: #<issue> <Grund>`. Nach einem Refactor zieht
-`pnpm guards:shrink` die Listen nach unten.
+**Before you build:** Is there a component, hook or function to reuse? Logic to centralise? Will
+this duplicate something? Is it small and single-purpose? Does it fit the architecture? Is there a
+simpler way without losing quality? Think through errors, edge cases, loading and empty states.
 
-## Verbindliche Entwicklungsanweisung (Owner, 04.10.)
+**Before you finish:** review your own diff for duplicates, needless complexity, oversized
+components, repeated logic, dead or now-obsolete code, inconsistent patterns and missed reuse —
+and fix them in the same change.
 
-Best Practices, saubere Architektur und hohe Codequalität sind zwingende Anforderungen, keine
-optionale Verbesserung. Der Owner erwartet production-ready Code: sauber, modular,
-wiederverwendbar, konsistent, verständlich, testbar und langfristig wartbar. Funktionierender Code
-allein reicht nicht.
+**Every PR names** the USP point, what it reused and what it removed, and the library check
+(`tools/guards/pr-body.mjs`). Ausnahmelisten (`tools/guards/baselines/` and the lists inside the
+guard tests) never grow silently: growth needs `Ausnahmeliste-Zuwachs: #<issue> <reason>` in the
+commit; after a refactor `pnpm guards:shrink` pulls them down.
 
-Für jede Implementierung:
-
-- Redundanten oder duplizierten Code konsequent vermeiden. Wiederverwendung hat Vorrang vor Copy-Paste.
-- Vor neuer Logik prüfen, ob vorhandener Code wiederverwendet oder sinnvoll erweitert werden kann:
-  Komponenten, Hooks, Utilities, Services, Typen, Funktionen.
-- Komponenten klein, modular, klar abgegrenzt und wiederverwendbar bauen; eine klar definierte
-  Verantwortung je Komponente, Funktion oder Modul.
-- Große monolithische Komponenten in Unterkomponenten, Hooks, Services oder Utilities zerlegen.
-- Gemeinsame Logik genau einmal implementieren, in einer passenden wiederverwendbaren Abstraktion.
-  **Gleiches UI-Element = eine Komponente in der ganzen App**, z. B. genau ein Texteingabefeld
-  (#365). Keine nachgebaute Kopie, die nur gleich aussieht.
-- Keine unnötigen Abstraktionen, kein Overengineering, keine Wrapper ohne echten Mehrwert.
-- APIs, Props, Interfaces und Abhängigkeiten klein und eindeutig halten.
-- Bestehende Architektur- und Projektkonventionen nutzen, keine parallelen neuen Muster.
-- Veralteten, ungenutzten oder durch die Änderung redundant gewordenen Code im selben Change entfernen.
-- Klare Benennung, gute Typisierung, nachvollziehbare Datenflüsse, wartbare Ordnerstruktur.
-- Fehlerfälle, Edge Cases, Ladezustände und leere Zustände immer mitdenken.
-- Keine kurzfristigen Hacks, wenn eine saubere, nachhaltige Lösung möglich ist. Bei mehreren
-  Lösungen gilt die mit der saubersten Architektur und dem wenigsten unnötigen Code.
-
-**Vor jeder Implementierung prüfen:**
-
-1. Gibt es bereits eine Komponente oder Funktion, die ich verwenden kann?
-2. Gibt es ähnliche Logik, die zentralisiert werden sollte?
-3. Erzeuge ich durch meine Änderung Duplikate?
-4. Ist die neue Komponente klein genug und klar verantwortlich?
-5. Gehören Teile der Logik in einen Hook, Service, Utility oder ein eigenes Modul?
-6. Passt die Lösung zur bestehenden Architektur?
-7. Geht es einfacher, ohne Qualität oder Erweiterbarkeit zu verlieren?
-
-**Vor dem Abschluss** wird der eigene Code noch einmal ausdrücklich geprüft auf:
-
-- Duplikate
-- unnötige Komplexität
-- zu große Komponenten
-- wiederholte Logik
-- ungenutzten Code
-- inkonsistente Patterns
-- fehlende Wiederverwendung vorhandener Komponenten
-
-Was dabei auffällt, wird vor dem Abschluss behoben.
-
-DRY, Separation of Concerns, Single Responsibility und Wiederverwendbarkeit sind Standard für jede
-Änderung. Jeder PR nennt im Text, welche vorhandenen Bausteine er wiederverwendet und was er
-entfernt hat.
-
-## Required quality gates
-
-Run after every change (the pre-commit hook enforces them — never `--no-verify`):
-
-```bash
-pnpm typecheck
-pnpm lint
-pnpm test        # API integration tests need a local Postgres 16 (LB_TEST_DATABASE_URL)
-```
-
-Browser walkthrough of the real app against the real API (scripted model):
-`scripts/web-walkthrough.sh` (see `docs/architecture.md` §Testing). **`pnpm verify`** runs all
-four in order — the pre-commit hook stays fast (without the walkthrough), but nothing reaches
-the owner without one green run (issue #74).
-
-Push sparsam (#321): erst lokal vollständig prüfen, dann **ein** Push pro PR-Runde. Zwischenstände
-werden nicht gepusht. Vercel baut für `claude/**`-Branches keine Previews
-(`apps/api/vercel.json` → `git.deploymentEnabled`); Production entsteht nur aus `main`.
-
-## Kritik wird erst ein Issue, dann Arbeit (Owner-Regel 28.09.)
-
-Jede Kritik, jeder Fehlerbericht und jede Produktidee des Owners bekommt **zuerst ein
-GitHub-Issue** (`gh issue create`, Repo `0xKurt/LearnBuddy`) — mit Quelle (Zitat + Datum),
-geprüfter Ursache, Umsetzungsplan und Abnahmekriterien. Gearbeitet wird daran erst, wenn
-Kapazität da ist und die Priorität es hergibt. Kein stilles Wegarbeiten, kein Verlassen auf
-den Chatverlauf: der Owner liest den Stand in den Issues.
-
-Ausnahme: ein Einzeiler, der in derselben Minute erledigt und belegt ist, darf direkt gefixt
-werden — bekommt aber trotzdem ein Issue mit dem Beleg, damit die Spur bleibt.
-
-Erledigtes wird am Issue dokumentiert (`gh issue comment` mit Nachweis, dann schließen).
-
-## Work pattern
-
-Build vertical and finish: contract (`packages/shared-types/src/contracts/`) → migration (if
-needed) → module code → integration test incl. failure paths (duplicates, stale context,
-interruption, outage, other learner's ids) → screen wired to the endpoint → doc updated.
+**Work pattern:** contract (`packages/shared-types/src/contracts/`) → migration → module code →
+integration test incl. failure paths (duplicates, stale context, interruption, outage, other
+learner's ids) → screen wired to the endpoint → doc updated.
 
 ## Design system
 
-Light, friendly, calm — not childish, not clinical (`docs/DESIGN-BRIEF.md`). "Pastell Soft":
-pastel pink · lilac · blue light (`components/lb/Glow.tsx`), a violet accent, Buddy as a soft orb
-(`components/lb/BuddyOrb.tsx`). Colours live in `apps/mobile/lib/theme/palettes.ts` and reach a
-screen only through `useTheme()` (`lib/theme/ThemeProvider.tsx`) — importing `lib/theme/colors.ts`
-in `app/` or `components/` is a lint error (issue #29). Further tokens in `type.ts` (one bold
-sans headline per screen), `shadow.ts` and `space.ts` (the one spacing scale, issue #64:
-xs 4 · sm 8 · md 12 · lg 16 · xl 24 — any other number needs a reason in a comment);
-extend them instead of ad-hoc hex values. Same action → same component. Touch targets ≥ 44 pt
-(`TOUCH` in `space.ts`), labels and roles on everything interactive, never color as the only
-signal.
+Light, friendly, calm — not childish, not clinical. "Pastell Soft": pastel pink · lilac · blue
+light (`components/lb/Glow.tsx`), a violet accent, Buddy as a soft orb (`BuddyOrb.tsx`). Colours
+live in `lib/theme/palettes.ts` and reach a screen only through `useTheme()` — importing
+`lib/theme/colors.ts` in `app/` or `components/` is a lint error (#29). One bold sans headline per
+screen (`type.ts`); one spacing scale (`space.ts`: xs 4 · sm 8 · md 12 · lg 16 · xl 24, #64).
+Touch targets ≥ 44 pt (`TOUCH`), labels and roles on everything interactive, never colour as the
+only signal.
 
 ## Tone & copy
 
-- German default; English, French, Spanish, Italian for every key (`apps/mobile/lib/i18n/__tests__/parity.test.ts`).
-- Never harsh: "Fast richtig — fehlt nur noch …" beats "Falsch!".
+- German default; English, French, Spanish, Italian for every key (`lib/i18n/__tests__/parity.test.ts`).
+- Never harsh: "Fast richtig — fehlt nur noch …" beats "Falsch!". Feedback is about the task,
+  never the person.
 - Lock-screen texts carry no scores or personal details.
 
 ## Folder conventions
 
 - `apps/api/src/modules/<module>/` — `identity`, `buddy`, `materials`, `practice`, `scheduler`
-  (routes.ts + services); `src/llm/` model seam; `src/lib/` db, time, errors; `src/testing/` test harness, fakes, dev stack.
-- `apps/api/src/__tests__/*.int.test.ts` — integration tests on real Postgres; unit tests next to the code in `__tests__/`.
-- `apps/mobile/app/` — expo-router screens; `components/lb/` design system; `components/<area>/` screen parts;
-  `lib/api/` typed endpoints + queries; `lib/auth/` session and Supabase Auth; `locales/<lang>/<namespace>.json`.
+  (routes.ts + services); `src/llm/` model seam; `src/lib/` db, time, errors; `src/testing/`
+  harness, fakes, dev stack.
+- `apps/api/src/__tests__/*.int.test.ts` — integration tests on real Postgres; unit tests next to
+  the code in `__tests__/`.
+- `apps/mobile/app/` — expo-router screens; `components/lb/` design system; `components/<area>/`
+  screen parts; `lib/api/` typed endpoints and queries; `lib/auth/` session; `locales/<lang>/`.
 - `infra/supabase/migrations/NNNN_*.sql` — numbered, monotonic.
-
-## When you genuinely don't know
-
-Stop, ask, document. Don't fabricate. The user has been burned by tools that confidently ship
-half-built things; say plainly what is verified and what is not.
+- `tests/web/` — browser walkthrough specs; `tools/guards/` — CI guards.

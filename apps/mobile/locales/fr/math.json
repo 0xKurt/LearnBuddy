@@ -453,6 +453,7 @@
     "diagram_tree": "Arborescence",
     "diagram_free": "Schéma",
     "diagram_gap": "case vide {{letter}}",
+    "clock_blank": "Horloge sans aiguilles",
     "solid_net_any": "Patron d’un solide",
     "solid_net": "Patron : {{kind}}",
     "solid_base": "base de côtés {{sides}}",
@@ -508,5 +509,19 @@
   "preview": {
     "label": "Aperçu",
     "a11y": "Aperçu de ta réponse : {{math}}"
+  },
+  "tap": {
+    "how_number_line": "Touche l’endroit sur la droite graduée.",
+    "how_function_plot": "Touche le point dans le repère.",
+    "how_bar_chart": "Touche une barre.",
+    "how_clock": "Touche le cadran là où l’aiguille doit pointer.",
+    "value": "Endroit : {{value}}",
+    "point": "Point ({{x}} | {{y}})",
+    "bar": "Barre : {{label}}",
+    "label": "Ton endroit dans la figure",
+    "up": "vers le haut",
+    "down": "vers le bas",
+    "hour_hand": "Petite aiguille",
+    "minute_hand": "Grande aiguille"
   }
 }

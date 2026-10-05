@@ -223,6 +223,13 @@ export default function MaterialScreen() {
               .filter(Boolean)
               .join(' · ')}
           </Text>
+          {material.source !== 'sheet' ? (
+            // Where these questions came from (issue #259): a corrected test's are NEW tasks for
+            // what was marked, a notebook entry's a few for the next morning — said once, quietly.
+            <Text style={[TYPE.body, { color: palette.ink2 }]}>
+              {t(`library:source.${material.source}`)}
+            </Text>
+          ) : null}
           {missed !== null && empty?.body !== missed ? (
             <Text style={[TYPE.body, { color: palette.ink2 }]}>{missed}</Text>
           ) : null}

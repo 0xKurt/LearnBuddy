@@ -14,8 +14,8 @@
 // for display and records the key as a sequence of ids (CLAUDE.md rule 2). The stored task
 // (`items.task`) carries the key; the view (`ItemView.task_view`) never does.
 //
-// Adding a kind (#229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark): its draft
-// schema, a
+// Adding a kind (#229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark, #260
+// find_error and column_calc): its draft schema, a
 // builder from draft to task, a `problem` check, a view, a checker and a reply — each one more
 // `case` in the switches below. The answer flow in `answer.ts` only ever calls the exported
 // functions.
@@ -55,7 +55,33 @@ import {
   type ClozeProblem,
 } from './cloze.js';
 import { displayOrder, idAt, sameness } from './arrange.js';
+import {
+  checkColumns,
+  ColumnDraftBase,
+  columnLayout,
+  columnProblem,
+  columnReply,
+  columnSecrets,
+  columnSolution,
+  columnTaskFrom,
+  type ColumnCheck,
+  type ColumnProblem,
+} from './columnCalc.js';
 import { dollarMathRuns } from './dollarMath.js';
+import {
+  checkFindError,
+  FindErrorDraftBase,
+  findErrorAnswerText,
+  findErrorProblem,
+  findErrorReply,
+  findErrorSecrets,
+  findErrorSolution,
+  findErrorTaskFrom,
+  findErrorVerdict,
+  findErrorVisible,
+  type FindErrorCheck,
+  type FindErrorProblem,
+} from './findError.js';
 import { ItemDraft } from './items.js';
 import {
   checkMark,
@@ -115,7 +141,8 @@ import { mentionsSolution } from './tutor.js';
 
 /**
  * The structured kinds a photographed sheet may give: every one — an order, a table, links, gaps
- * (#228–#232), options to tick (#240) and words to mark (#234) are all printed on worksheets.
+ * (#228–#232), options to tick (#240), words to mark (#234), a solution with a mistake to find and
+ * a calculation in columns (#260) are all printed on worksheets.
  */
 export const SHEET_STRUCTURED: ReadonlySet<string> = new Set(STRUCTURED_KINDS);
 
@@ -179,6 +206,9 @@ export const StructuredDraft = z.discriminatedUnion('type', [
     hints: ItemDraft.shape.hints,
     worked_solution: ItemDraft.shape.worked_solution,
   }),
+  // The solution is code's (#260): a worked solution by the model would explain another one.
+  FindErrorDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  ColumnDraftBase.extend({ hints: ItemDraft.shape.hints }),
 ]);
 export type StructuredDraft = z.infer<typeof StructuredDraft>;
 
@@ -190,6 +220,8 @@ export const StructuredDraftHomework = z.discriminatedUnion('type', [
   ClozeDraftBase.extend({ hints: ItemDraft.shape.hints }),
   SelectDraftBase.extend({ hints: ItemDraft.shape.hints }),
   MarkDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  FindErrorDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  ColumnDraftBase.extend({ hints: ItemDraft.shape.hints }),
 ]);
 export type StructuredDraftHomework = z.infer<typeof StructuredDraftHomework>;
 
@@ -201,6 +233,8 @@ export const StructuredDraftNoHelp = z.discriminatedUnion('type', [
   ClozeDraftBase,
   SelectDraftBase,
   MarkDraftBase,
+  FindErrorDraftBase,
+  ColumnDraftBase,
 ]);
 export type StructuredDraftNoHelp = z.infer<typeof StructuredDraftNoHelp>;
 
@@ -238,7 +272,11 @@ export type TaskProblem =
   /** A select-all task that fails Regel 0 (#240, `selectAll.ts`). */
   | SelectProblem
   /** A marking task that fails Regel 0 (#234, `mark.ts`). */
-  | MarkProblem;
+  | MarkProblem
+  /** A find-the-error task that fails Regel 0 (#260, `findError.ts`). */
+  | FindErrorProblem
+  /** A written-arithmetic task that fails Regel 0 (#260, `columnCalc.ts`). */
+  | ColumnProblem;
 
 type Exact = { num: bigint; den: bigint };
 
@@ -301,6 +339,10 @@ export function taskProblem(task: StructuredTask): TaskProblem | null {
       return selectProblem(task);
     case 'mark':
       return markProblem(task);
+    case 'find_error':
+      return findErrorProblem(task);
+    case 'column_calc':
+      return columnProblem(task);
   }
 }
 
@@ -343,6 +385,10 @@ export function solutionOf(task: StructuredTask): string {
       return selectText(task, task.key);
     case 'mark':
       return markSolution(task);
+    case 'find_error':
+      return findErrorSolution(task);
+    case 'column_calc':
+      return columnSolution(task);
   }
 }
 
@@ -355,7 +401,7 @@ export function solutionOf(task: StructuredTask): string {
 function asItem(
   draft: StructuredDraft | StructuredDraftHomework | StructuredDraftNoHelp,
   own: Pick<StructuredItem, 'kind' | 'task' | 'prompt' | 'answer' | 'hints'> &
-    Partial<Pick<StructuredItem, 'spelling'>>,
+    Partial<Pick<StructuredItem, 'spelling' | 'worked_solution'>>,
 ): StructuredItem {
   return {
     accepted_answers: [],
@@ -477,7 +523,39 @@ export function structuredItem(
       );
       return asItem(draft, { kind: 'mark', task, prompt, answer: solutionOf(task), hints });
     }
+    case 'find_error': {
+      const prompt = dollarMathRuns(draft.prompt);
+      const task = findErrorTaskFrom(draft);
+      if (!task) return null;
+      const help = ownHelp('hints' in draft ? draft.hints : [], task, prompt);
+      return asItem(draft, { kind: 'find_error', task, prompt, ...help });
+    }
+    case 'column_calc': {
+      const prompt = dollarMathRuns(draft.prompt);
+      const task = columnTaskFrom(draft);
+      if (!task) return null;
+      const help = ownHelp('hints' in draft ? draft.hints : [], task, prompt);
+      return asItem(draft, { kind: 'column_calc', task, prompt, ...help });
+    }
   }
+}
+
+/**
+ * The solution and help of a kind whose solution code computes (#260): the answer is code's, no
+ * worked solution by the model (it would explain another way, or another number), and no hint
+ * that says what is secret.
+ */
+function ownHelp(
+  hints: readonly string[],
+  task: StructuredTask,
+  prompt: string,
+): Pick<StructuredItem, 'answer' | 'hints' | 'worked_solution'> {
+  const { secrets, visible } = secretsOf(task, prompt);
+  return {
+    answer: solutionOf(task),
+    hints: hints.filter((h) => !secrets.some((s) => mentionsSolution(h, s, visible))),
+    worked_solution: null,
+  };
 }
 
 /** Every string in a value: a structured task is nested data, and each of its texts is shown. */
@@ -539,6 +617,11 @@ export function viewOf(task: StructuredTask): StructuredTaskView {
       return { type: 'select_all', options: task.options };
     case 'mark':
       return markView(task);
+    case 'find_error':
+      return { type: 'find_error', lines: task.lines };
+    case 'column_calc':
+      // A stored task passed Regel 0 when it was read (`structuredTaskOf`), so it has a layout.
+      return columnLayout(task)!.view;
   }
 }
 
@@ -564,6 +647,10 @@ export function secretsOf(
       return { secrets: task.options.map((o) => o.text), visible: prompt };
     case 'mark':
       return { secrets: markSecrets(task), visible: prompt };
+    case 'find_error':
+      return { secrets: findErrorSecrets(task), visible: findErrorVisible(task, prompt) };
+    case 'column_calc':
+      return { secrets: columnSecrets(task), visible: `${prompt} ${task.operands.join(' ')}` };
   }
 }
 
@@ -582,7 +669,9 @@ export type StructuredCheck =
   | MatchCheck
   | ClozeCheck
   | SelectCheck
-  | MarkCheck;
+  | MarkCheck
+  | FindErrorCheck
+  | ColumnCheck;
 
 export type OrderCheck = {
   type: 'order';
@@ -632,6 +721,10 @@ export function checkStructured(
       return answer.type === 'select_all' ? checkSelect(task, answer) : null;
     case 'mark':
       return answer.type === 'mark' ? checkMark(task, answer) : null;
+    case 'find_error':
+      return answer.type === 'find_error' ? checkFindError(task, answer) : null;
+    case 'column_calc':
+      return answer.type === 'column_calc' ? checkColumns(task, answer) : null;
   }
 }
 
@@ -649,9 +742,12 @@ export function structuredVerdict(
     case 'match':
     case 'select_all':
     case 'mark':
+    case 'column_calc':
       return check.correct ? 'correct' : 'incorrect';
     case 'cloze':
       return clozeVerdict(check);
+    case 'find_error':
+      return findErrorVerdict(check);
   }
 }
 
@@ -668,6 +764,8 @@ export function partsVia(task: StructuredTask): 'tapped' | 'typed' {
     case 'mark':
       return 'tapped';
     case 'table_fill':
+    case 'column_calc':
+    case 'find_error': // the line is tapped, but what is judged last is the line she wrote
       return 'typed';
     case 'cloze':
       return task.bank === null ? 'typed' : 'tapped';
@@ -682,6 +780,8 @@ export function structuredDecidedBy(check: StructuredCheck): 'rule' | 'model' {
     case 'match':
     case 'select_all':
     case 'mark':
+    case 'find_error':
+    case 'column_calc':
       return 'rule';
     case 'cloze':
       return clozeDecidedBy(check);
@@ -710,6 +810,10 @@ export function answerTextOf(
       return answer.type === 'select_all' ? selectText(task, answer.chosen) : '';
     case 'mark':
       return answer.type === 'mark' ? markAnswerText(task, answer, locale) : '';
+    case 'find_error':
+      return answer.type === 'find_error' ? findErrorAnswerText(task, answer) : '';
+    case 'column_calc':
+      return answer.type === 'column_calc' ? (checkColumns(task, answer)?.text ?? '') : '';
   }
 }
 
@@ -740,6 +844,10 @@ export function structuredReply(
       return selectReply(locale, check, priorMisses);
     case 'mark':
       return markReply(locale, check);
+    case 'find_error':
+      return findErrorReply(locale, check);
+    case 'column_calc':
+      return columnReply(locale, check);
   }
 }
 
@@ -755,6 +863,8 @@ export function structuredNamesPart(check: StructuredCheck, priorMisses: number)
     case 'table_fill':
     case 'cloze':
     case 'mark':
+    case 'find_error': // where to look (#260) is its feedback, as an order's place is (#228)
+    case 'column_calc':
       return false;
     case 'match':
       return matchNamesPart(check, priorMisses);

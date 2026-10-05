@@ -1277,6 +1277,52 @@ her answer disappear (rule 5). STATE carries all three states (asked / answered 
 with the task as printed, so Buddy can ask it in his own words — and is told never to pick a
 reading himself.
 
+**A corrected class test and the notebook entry of the day** (issue #259, #224 Baustein QUELLE,
+`materials/sources.ts`, migration `0093_material_sources.sql`). Two pages a learner brings that are
+not worksheets: the test the teacher handed back with red marks — the best list of what she cannot
+do yet — and the notebook entry of today's lesson, which is what an unannounced short test the
+next day asks about (in Bavaria the Stegreifaufgabe, "Ex", and the Ausfrage). Neither needed a new
+route, button or form (rule 16): she photographs the page in the chat as always, and the study
+reading says which of three it is (`source`: `sheet` · `corrected_test` · `notebook_entry`, the
+contract's `MaterialSource`; `SOURCE_RULES` is appended to `EXTRACT_SYSTEM`, homework never
+asks). The model only names it; what follows is code (rule 1), in `applySource`:
+
+- **Corrected test.** The reading names every task marked wrong (`marked`: page, the task as
+  printed, and the prompts of the 1–3 NEW questions it wrote for it, word for word). Code keeps a
+  question only when a marked task on a page the test really has lists it, and only when it is not
+  that task again (`differsFromOriginal`: with numbers in the task the numbers must differ, in
+  any order; without, at least one of its words must be gone — mechanical, no word list). A
+  question for an unmarked task, for a page the test does not have, or the original reworded, is
+  dropped. The grade, the points and the teacher's remarks have **no field** in the schema; the
+  stored transcript is built by code from the marked tasks alone, never the model's faithful
+  transcript (which holds them); no unclear spot is kept and no figure is cut; the photos are
+  purged right after the reading (`photoRetentionMs`), not after a week. A test is never read
+  again for "more". A test with nothing marked wrong fails as `nothing_marked`: final like
+  `form_not_practicable` (`FINAL_FAILURES`, one list read by `retryMaterial`, the home card and the
+  library card), its photos gone at once (`PHOTOS_GONE_AT_ONCE`), and the words say she can send a
+  new photo if something is marked after all — never "well done" on a reading that may have
+  missed the red. A blurry test stays `unreadable` (the source is decided only for a readable
+  page) and can be read again; an outage is retried like any reading.
+- **Notebook entry.** At most `NOTEBOOK_QUESTIONS` (5) short questions, never read on. STATE
+  calls it "her notebook entry of the lesson on <day>" and tells Buddy its questions are meant
+  for a short run the next morning; his background check prepares it with the tools it already
+  has (`prepare_practice`, `schedule_check`), and a message to her phone stays inside her contact
+  settings (rule 6). When she only TELLS him what the lesson was about, the turn prompt says to
+  practise from her words — no photo needed.
+- **What she sees.** The sheet's screen says once, quietly, where its questions came from ("Aus
+  deiner korrigierten Arbeit: neue Aufgaben zu dem, was angestrichen war …", "Aus deinem
+  Hefteintrag: …"); the grade is never shown back, and nothing is counted (rule 6). STATE names a
+  corrected test so Buddy never quizzes it as a worksheet and never asks for the grade.
+
+`material-sources.int.test.ts` holds both sources and the failure paths (nothing marked, blurry,
+outage, another learner, a worksheet unchanged) and scans every stored row of the test for the
+grade; `sources.test.ts` the checks; `tests/web/sources.spec.ts` the two screens. **Not verified:**
+how the Vertex model recognises a real corrected test and real red marks — the Abnahme of #259
+asks for an eval with five real, anonymised tests, which needs those photos (owed, see the issue).
+The home's failed card still titles `nothing_marked` like every failure ("… konnte ich nicht
+lesen", as it does for `form_not_practicable`); its detail says what happened. Changing the
+title is a change to `app/buddy.tsx`, left to a follow-up because that file was in parallel work.
+
 **Photo check on the phone** (`apps/mobile/lib/photo/quality.ts`, `check.ts`; the old app's most
 common failure was an unreadable photo): right after a photo is taken or picked, a small copy is
 decoded on the device (jpeg-js, the same on phone and web) and measured — too dark (mean
@@ -2168,12 +2214,14 @@ representation), and bar tasks from a photographed sheet — the extraction prom
 them yet, so today they come from a topic she named.
 
 **Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`
-dispatching to one file per kind — `table.ts`, `match.ts`, `cloze.ts`, `selectAll.ts` —, migration
-`0079_structured_items.sql`;
-issues #228 order, #229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark, from the analysis
-#224). Some answers are not a sentence but an arrangement: an order, pairs, groups, table cells,
-the gaps of a text, a set of ticked options. They are their own item kinds (`order`, `match`,
-`table_fill`, `cloze`, `select_all`, `mark`), and #224's "Regel 0"
+dispatching to one file per kind — `table.ts`, `match.ts`, `cloze.ts`, `selectAll.ts`, `mark.ts`,
+`findError.ts`, `columnCalc.ts` —, migration `0079_structured_items.sql`;
+issues #228 order, #229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark, #260
+find_error and column_calc, from the analysis #224). Some answers are not a sentence but an
+arrangement: an order, pairs, groups, table cells, the gaps of a text, a set of ticked options, a
+line picked and written right, the digits of a calculation in columns. They are their own item kinds
+(`order`, `match`, `table_fill`, `cloze`, `select_all`, `mark`, `find_error`, `column_calc`), and
+#224's "Regel 0"
 holds in both directions: code validates what the model wrote, and code judges what she answers —
 never a model, except a cloze gap no rule can decide (below: only that gap, only its verdict).
 
@@ -2642,7 +2690,73 @@ two rows at most (`categoriesInTwoRows`: with three, two neighbours share a row)
 count is what was lowered. Syllables: four words of at most 10 letters to split — each
 word in ONE row of 30-pt letter cells, never wrapped, so it still reads as a word.
 Generated in a topic's practice and practice test, read from a sheet and inside a reading text
-(generate.v1.24, extract.v8.8; the longer sorted sentences generate.v1.31, extract.v8.12).
+(generate.v1.24, extract.v8.8; the longer sorted sentences generate.v1.33, extract.v8.14).
+
+**Find the error — Fehlerdetektiv** (`practice/findError.ts`, `FindErrorAnswer.tsx`, issue #260,
+migration `0094_find_error_column_calc.sql`). A worked solution, line by line, with ONE wrong line:
+she taps the line where it goes wrong and writes it right (building block `FEHLER_ZEILE` of #224:
+"Fehler in einer vorgerechneten Lösung finden", Mathe from Unterstufe on; a sum split halbschriftlich
+in the Grundschule). Regel 0, all code: the model writes the solution **correct** (3–4 lines, the
+first is the task); code checks that every line follows from the one before (`checkPath`, §written
+path #209) — a path it cannot read, or one already broken, is `not_sound` and gives no question.
+Then **code builds the error in**: a bracket dissolved the classic wrong way where a line dissolves
+one (3(x+2) → 3x+2; −(x−2) → −x−2, preferred), otherwise a turned operator sign or a number off by
+one (and by ten from 20 on). A candidate is kept only when exactly that line is no longer equivalent
+to the task, every other line still is, and `checkPath` reports the break there first
+(`breaksExactly`); which one is chosen from the content (`hash`), so the same solution always gives
+the same card. The task stores the lines as shown, the key (the wrong line's id, `l2`) and the line
+as the model wrote it (`right`, the solution "② 3x + 6 = 21"); the view has the lines only. The
+first line is never a target and never made wrong. Her answer is the line and her correction:
+another line is `incorrect` with where to look ("Der Fehler steckt schon weiter oben." / "Bis zu
+dieser Zeile stimmt alles – der Fehler kommt erst weiter unten."), never which; the right line is
+compared with the line BEFORE it by `sameStep` — any equivalent line is right ("6 + 3x = 21"); a
+correction that is not equivalent, unreadable as maths (said so, never called wrong, rule 5) or the
+line before copied is `partially_correct`. No model call per answer. Hints that state the right line
+are dropped; the model writes no worked solution with the draft (the solution is code's). Its
+feedback is not a hint (`structuredNamesPart` false), like an order's place. App: the lines are the
+tiles of the choice list (`ChoiceList` with `picked`: a radio group, the line's number ①②③ in the
+letter's column, the task above as a numbered line that is no tile); tapping a line copies it into
+the one input bar (`TypedAnswer` with a `board`, the math keys of a formula), "Prüfen" waits until a
+line is picked. Only for mathematics a code can read (equations, inequalities, terms, number terms);
+a Fehlerdetektiv in other subjects stays open (#224 A7).
+
+**Written arithmetic — schriftlich rechnen** (`practice/columnCalc.ts`, `ColumnAnswer.tsx`, issue
+#260, migration 0094). Addition (2–3 numbers), subtraction, multiplication (by one or two digits)
+and division (by one digit) in columns, every digit a cell (building block `SCHRIFTL`, Mathe GS 3–4).
+The model names ONLY the operation and the numbers (`ColumnCalcTask`: `op`, `operands`); **code
+computes the procedure** — column by column with its carries, the partial products, the steps of a
+division — lays it out and keeps every digit as the key, recomputed whenever the task is read
+(nothing of the layout is stored). Notation as German primary schools write it: carries small in a
+row above the line under the last number; subtraction by Ergänzen or Abziehen mit Erweitern (they
+write the same digits in the same places); partial products from the first digit of the second
+factor on, each ending under its digit, then their sum with its carries; a division as a staircase
+under the dividend — times, then the difference with the next digit brought down. **Entbündeln is not
+laid out**: nothing in code says which Bundesland teaches it (`curriculum/points.ts` has no such
+place), so it is not guessed. A carry is written into every place with digits above it, never into
+the ones; an empty cell is right where nothing belongs (no carry, a leading zero). Rejected
+(`operands`): a number with a leading zero or over six digits, a subtrahend not smaller, a factor
+with a 0 digit or 1, a divisor of two digits; (`too_long`): a grid wider than a 360-pt phone with
+every digit column at 32 pt (`columnsFit`), more than `COLUMN_ROWS_MAX` (5) rows — a division of
+three steps — or more than 40 cells. Her answer is every cell once (a digit or empty); the check
+compares each digit **and each carry**, and the reply names the first place that is not right yet
+in the order she writes: "Noch nicht ganz – bei den Zehnern fehlt noch der Übertrag.", "… in der 2. Zeile stimmt bei den Hundertern noch etwas nicht.", "… im 2. Schritt stimmt das Malnehmen noch
+nicht." — never the digit; it is the form's feedback, not a hint. Her result stands in the
+conversation (`columnResultText`, one implementation for app and server). App: the grid on paper in
+the answer shell, each cell the table's cell (`LbTextInput` cell), the columns as wide as the phone
+allows up to square, a drawn line above the sum and every difference; a digit typed moves on to the
+next cell in the server's writing order (`order`: right to left, the carry before the digit), the
+phone's number pad is all she needs. Printed rows are one number to a screen reader ("+1389"), every
+cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.32)
+and read from a sheet (extract.v8.13; a homework sheet: written arithmetic only, its own error is no
+Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86j, 360×740 and
+390×844, light and dark, the keyboard up): four long lines with Buddy's longest reply above fit (six
+were 106 pt too tall, `FIND_ERROR_LINES_MAX`), and five rows of
+cells with Buddy's reply above (two partial products and their sum, a division of two steps). A
+division of three steps — seven rows, 672 : 3 — was 78 pt too tall there under the reply, and a
+cell cannot be lower than a touch target: it is rejected (`too_long`) until the owner decides how
+a longer division is to fit. While she writes her line with the keyboard up on a small phone, the
+Fehlerdetektiv's lines fold away like a board under her question (`answerFolds`, #402), so the bar
+and "Prüfen" stay above the keyboard.
 
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
@@ -2914,7 +3028,7 @@ prints none — or from a text Buddy writes himself (a `read` run, #368, below).
   (`readingItems` with `transcript` null), a question naming a line is dropped (code sets the lines,
   `printedLines`, 32 characters — one line of the text box on a 360-pt phone), and a right multiple-choice option needs its key words in its
   evidence. Fewer than three questions → nothing stored (422 `not_usable`). The items are
-  `origin` buddy ("Frage von Buddy") and behave like a photographed text's. generate.v1.32,
+  `origin` buddy ("Frage von Buddy") and behave like a photographed text's. generate.v1.34,
   buddy.61. What code cannot check — whether the text is true and good to read — stays the
   model's.
 - **Belegstelle (#368):** a reading question of kind `evidence` names a statement in the model's own
@@ -2930,7 +3044,7 @@ prints none — or from a text Buddy writes himself (a `read` run, #368, below).
   (searching, not reading), the evidence stands in the text and spans at most
   `MARK_LINES_KEY_MAX` = 6 lines; no hint names a line (none is prepared). Checking is the marking
   set comparison ("1 richtig, 1 fehlt noch, 1 zu viel"); her answer stands as "Z. 6–7" in her
-  language (`practice.mark.lines`). Prompt extract.v8.13.
+  language (`practice.mark.lines`). Prompt extract.v8.15.
 - **Marking in the text (#234):** a reading question of kind `mark` marks words or sets the commas
   in ONE sentence of the text (`practice/reading.ts`, `markIn`): it is a marking task like every
   other (below), and its words must stand in the text in order (`linesOf`; the commas she sets do
@@ -3124,7 +3238,7 @@ computes the key.** No migration: the figure is an item's `figure` (jsonb), like
   taller one in its own or the right-hand column, `allSeen` — else it could be any height), or a
   view: multiple choice whose options are views of that direction, exactly one of them the
   building's and `correct_choice` that one (`viewChoiceHolds`, held in `choiceCheck` with the
-  question's own figure). generate.v1.33, extract.v8.14. Walkthrough 99-… in
+  question's own figure). generate.v1.35, extract.v8.16. Walkthrough 99-… in
   `tests/web/solids.spec.ts`.
 
 ### Diagrams (issue #247)
@@ -3179,6 +3293,73 @@ diagram.ts`): every arrow between two boxes that exist, no arrow to itself, at m
   (#229) on a diagram; an arrow label as a gap; several arrows between the same two boxes
   (Wirtschaftskreislauf with goods and money both ways); a Struktogramm (nested blocks, not
   boxes and arrows).
+
+### Tapping inside a figure (issue #248, migration `0092_tap_items.sql`)
+
+She answers by tapping — or dragging to — a place IN the figure: a number on a number line, a
+point of a coordinate system, a column of a bar chart, the hands of a clock face ("Stell die Uhr
+auf Viertel vor acht"). **One mechanism for every tappable figure**; maps (#251) and labelled
+pictures (#252) add their figure to it rather than building a second one.
+
+- **Contract.** `ItemDraft.tap` (optional boolean; the model omits it for every other question)
+  and `ItemView.tap` (true only while the question is open). Stored in `items.tap` (migration
+  0092, check: no tap without a figure). `ClockFigure.c` may be empty: a face without hands, the
+  face she sets. Prompts: generate.v1.31, extract.v8.12 (`FIGURE_RULES`).
+- **The grid** (`packages/shared-math/src/tap.ts`, dependency-free, the app imports it by path):
+  `tapAxes(figure)` is what a figure offers to tap — one or more axes, each a list of values. A
+  number line: min, min + step … max (at most 21 places). A coordinate system: the whole numbers
+  of each axis (at most 12 units per axis). A bar chart: one place per column (two columns with
+  one name offer none). A clock face: the hours 1–12 and the twelve five-minute marks (no face
+  that already shows a time, none that counts 24 hours). A tap is a `TapPick` (one index per
+  axis); `tapText` writes it exactly as a key is written ("2.5", "(2|-1)", "Apr", "7:45") and
+  `tapPick` reads a written answer back onto the grid.
+- **Rule 0, generation** (`apps/api/src/modules/practice/tapCheck.ts`, in `usableItems`): a tap
+  question is `numeric` on a number line and `short` everywhere else; its key must stand on a
+  place of the grid (`tapProblem`: 2,25 on half steps, a point outside the window, a column
+  nobody drew, 7:43 are dropped — nobody could tap them) and the figure must not already mark it
+  (a point or a hand on the key would only be copied). A face without hands on a question that is
+  not tapped is dropped too. Rejected, never moved onto the grid. The session view reads a stored
+  row back through the same check (`tapItemProblem`): a row that no longer holds is typed.
+- **Rule 0, grading** (`tapRuleVerdict` in `ruleCheck`, before every other rule): her place
+  against the key's place, exactly — `correct` or `incorrect`, never the tutor's. 19:45 and 7:45
+  are one place on a dial. An answer that is no place of the figure goes on to the other rules.
+  Not `via: 'tapped'`: marking the place is what the class test asks for (producing, not
+  recognising, as for a written note line, #226).
+- **Screen** (`components/practice/FigureTapAnswer.tsx`, a board in the answer shell like the
+  fraction bar, `FractionBarBoard`): the figure stands at the bottom INSTEAD of in the card,
+  "Prüfen" checks her place, the bar's field is her question (#402). `components/math/TapFigure`
+  draws the figure through `FigureView` with a layer over it (`layer` prop: the drawing's own
+  coordinates at the width it got): the gesture surface `components/lb/TapPad` (react-native-
+  gesture-handler; a tap and a drag are one gesture, the mark follows the finger) and her mark —
+  a ring on a point, a frame around a column; on the clock her hands ARE the mark. A clock is set
+  one hand at a time: `Segmented` chooses the hand, the small one first, then the large one is
+  next on its own.
+- **Where a place stands** (`apps/mobile/lib/math/tapLayout.ts`): `pickAt(x, y)` snaps a finger
+  to the nearest place (tick, grid point, column, or the nearest of the twelve marks by its
+  direction from the centre), `markOf(pick)` says where it is marked. Both read the geometry the
+  drawers paint with — `numberLineGeometry`, `barChartGeometry`, `clockGeometry`
+  (`lib/math/figureGeometry.ts`) and `plotGeometry` (`lib/math/plotLayout.ts`), pulled out of
+  `FigureView` / `PrimaryFigures` for this — so a tap cannot land a place off the drawing.
+  The whole figure is the touch target; the places of a dense grid are no 44 pt each (a number
+  line has ~15 pt between 21 places at 360 pt), the snap and her place in words carry the
+  precision, as on a slider.
+- **In words, and for a screen reader:** under the figure, "Stelle: 2,5", "Punkt (2 | −1)",
+  "Säule: Apr" — on a clock where the hands stand ("der kleine Zeiger zwischen 7 und 8, der
+  große Zeiger auf der 9", `describeClock`), never the time they make, which is what she
+  practises reading. That line is one `adjustable` element: increment/decrement move along the
+  place (the chosen hand on a clock), "nach oben" / "nach unten" move the point's y.
+- **Adding a figure (#251, #252):** a shape and a `case` in `tapAxes` / `tapText` / `tapPick`
+  (and what "already marks the key" means for it in `tapProblem`), a `case` in `tapLayout` built
+  on the drawer's geometry, words in `placeWords`. Nothing on the server or the screen changes.
+- Tests: `packages/shared-math/src/__tests__/tap.test.ts` (grids, snapping round trip, refusals,
+  verdicts), `apps/mobile/lib/math/__tests__/tapLayout.test.ts` (a tap on a mark picks its
+  place, marks where the drawers paint, the clock hand by hand), `TapFigure.test.tsx`,
+  `tap-figures.int.test.ts` (stored or dropped, exact verdicts without a model, replay, a row
+  that no longer holds, another learner); walkthrough `tests/web/tap-figures.spec.ts` (scenario
+  `testing/scenarios/tap.ts`).
+- **Not built here:** laying an amount with coins ("Leg 3,45 €", #254) — a sum of several taps,
+  not one place; tapping a cell of the periodic table (#250) or a month of a line or climate chart
+  (#245) — each is one `case` on this mechanism.
 
 ### Explain profiles (issue #281, D2)
 
@@ -3705,9 +3886,9 @@ word list, so it stays a prompt rule.
     the screen-reader text (`describePrimary`) says what is drawn — where the hands stand, which
     pieces lie there, how many dots per colour, plates, rods and cubes — never the time, sum or
     number asked. Theme token `figure.coins` (copper, brass, silver), notes use `figure.slices`.
-  - **Not built here**: setting a clock by touch ("Stell die Uhr auf 7:45") and laying an amount
-    by tapping coins ("Leg 3,45 €") — both are answer forms, not figures, and wait for the
-    answer-area rebuild (#310). Zahlenmauer and Stellenwerttafel are structured tables (#230).
+  - **Not built here**: laying an amount by tapping coins ("Leg 3,45 €") — an answer form, not a
+    figure. Setting a clock by touch ("Stell die Uhr auf 7:45") is built on a face without hands
+    (§Tapping inside a figure, #248). Zahlenmauer and Stellenwerttafel are structured tables (#230).
   - Prompts: generate.v1.20, extract.v8.3 (`FIGURE_RULES`).
   - Tests: `primary.test.ts` (hands ↔ time incl. quarter and half, amounts, counts, refusals),
     `primaryFigures.test.ts`, `PrimaryFigures.test.tsx`, `primary-figures.int.test.ts`; walkthrough
@@ -4002,6 +4183,17 @@ the role; code holds the frame (CLAUDE.md rule 1).
   whose `said` is not hers is dropped, never rewritten. The text she reads and hears is the
   app's (`i18n roleplay.*`): each point in words, a managed one with her own words as the proof —
   no score, no grade, no count. Stored as checked in `buddy_roleplays.feedback` (her export).
+- **The feedback as the result card** (issue #384, migration `0091_roleplay_feedback_message.sql`).
+  The closing message that carries feedback points at its roleplay (`buddy_messages.roleplay_id`,
+  set in the same transaction that ends it — `apply.ts` for the twelfth line and for "leave",
+  `endRoleplayByTap` for the tap). The thread serves the checked feedback from the one stored
+  version as `MessageView.roleplay_feedback` (`RoleplayFeedback` in the contract, read by
+  `roleplayFeedbacks`, scoped to her and validated against the contract; null everywhere else):
+  never copied, never parsed out of the text. The app shows it in place of the text as the
+  Probetest's "So lief's" list (`components/lb/ResultList.tsx`, the one result card both use;
+  `components/buddy/RoleplayResult.tsx` maps points and better lines onto it). The text stays for
+  reading aloud and copying. No card where nothing was played, for a concern (its fixed caring
+  text stays as it is), or for a scene she left.
 - **Her tap on "end"** in the strip (`POST /buddy/roleplays/:id/end`): with lines played, one feedback call,
   then under the settings lock the row must still be running with the same count (else 409 — a
   turn landed meanwhile; the tap can be repeated); with none, it simply ends. Another learner's
@@ -4029,8 +4221,11 @@ the role; code holds the frame (CLAUDE.md rule 1).
 - Tests: `roleplay.int.test.ts` (start on her words and never in her own language; the frame and
   nothing personal in the request; the hint; twelve turns, then the feedback with an invented
   quote discarded; leaving; a concern; the tap, a second tap, another learner's id; a stale
-  context; an interrupted turn taken over once; a scene left for half an hour),
-  `buddy/__tests__/roleplay.test.ts`, walkthrough `tests/web/roleplay.spec.ts` (scripted in
+  context; an interrupted turn taken over once; a scene left for half an hour; the structured
+  feedback on the closing message only, after twelve lines, "leave" and the tap, none for a
+  concern or an empty scene, none through another learner's message),
+  `buddy/__tests__/roleplay.test.ts`, `components/buddy/__tests__/Conversation.test.tsx` (the
+  card in place of the text), walkthrough `tests/web/roleplay.spec.ts` (scripted in
   `src/testing/scenarios/roleplay.ts`).
 
 ## Home

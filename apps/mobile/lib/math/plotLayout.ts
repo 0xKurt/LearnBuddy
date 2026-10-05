@@ -4,6 +4,10 @@
 // functions) the left margin must be as wide as the widest label, or every value is drawn
 // outside the SVG and clipped (audit H-36 p2-function-plot-y-labels-offscreen).
 
+// Imported by path: the mobile bundle takes only this small, dependency-free module of
+// @learnbuddy/shared-math (its index also pulls in mathjs).
+import { niceStep } from '../../../../packages/shared-math/src/charts.js';
+
 /** Gap between the y-axis and the right end of its labels. */
 export const Y_LABEL_GAP = 6;
 const MIN_LEFT = 8;
@@ -56,7 +60,7 @@ export function plotFrame(opts: {
 }
 
 /** The multiples of `step` in [lo, hi], at most 60. */
-export function ticksFor(lo: number, hi: number, step: number): number[] {
+function ticksFor(lo: number, hi: number, step: number): number[] {
   const out: number[] = [];
   const start = Math.ceil(lo / step - 1e-9) * step;
   for (let v = start; v <= hi + 1e-9 && out.length < 60; v += step)
@@ -93,4 +97,58 @@ export function yLabelsClearOf(
     const b = boxOf(l, 'end', fontSize);
     return !taken.some((a) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1);
   });
+}
+
+/**
+ * The whole frame of a function plot at `width` (components/math/FigureView.tsx): its height, the
+ * ticks of both axes, the plot area and the screen position of a value. One function for the
+ * drawer and for the tap layer that finds the grid point under a finger (issue #248,
+ * `tapLayout.ts`), so the two cannot drift by a pixel. `format` writes a tick label as it is drawn
+ * (only its length moves the left margin).
+ */
+export function plotGeometry(
+  fig: { x_min: number; x_max: number; y_min: number; y_max: number },
+  width: number,
+  opts: { bare: boolean; format: (n: number) => string; fontSize: number },
+) {
+  const x0 = Math.min(fig.x_min, fig.x_max);
+  const x1 = Math.max(fig.x_min, fig.x_max);
+  const y0 = Math.min(fig.y_min, fig.y_max);
+  const y1 = Math.max(fig.y_min, fig.y_max);
+  const xs = x1 - x0 || 1;
+  const ys = y1 - y0 || 1;
+  // An option's graph is small by design: four of them share a phone (issue #231).
+  const height = opts.bare
+    ? Math.round(Math.max(width * 0.8, 60))
+    : Math.round(Math.min(Math.max(width * 0.8, 220), 380));
+  const yStep = niceStep(ys, Math.max(4, Math.min(10, Math.floor((height - TOP - BOTTOM) / 32))));
+  const yTicks = ticksFor(y0, y1, yStep);
+  // The left margin makes room for the y labels when the y-axis runs along the left edge.
+  const frame = plotFrame({
+    width,
+    height,
+    x0,
+    x1,
+    yLabels: [...yTicks.map(opts.format), '0'],
+    fontSize: opts.fontSize,
+  });
+  const X = (v: number) => frame.left + ((v - x0) / xs) * frame.pw;
+  const Y = (v: number) => frame.top + (1 - (v - y0) / ys) * frame.ph;
+  const xStep = niceStep(xs, Math.max(4, Math.min(10, Math.floor(frame.pw / 40))));
+  return {
+    ...frame,
+    x0,
+    x1,
+    y0,
+    y1,
+    height,
+    X,
+    Y,
+    yStep,
+    yTicks,
+    xStep,
+    xTicks: ticksFor(x0, x1, xStep),
+    // Axes through 0 when 0 is in range, else along the edge.
+    axisX: Y(y0 <= 0 && y1 >= 0 ? 0 : y0),
+  };
 }

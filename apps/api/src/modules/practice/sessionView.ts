@@ -18,6 +18,7 @@ import { readAloudAllowed } from './readAloud.js';
 import type { ItemRow, SessionItemRow } from './service.js';
 import { loadSession, stillPreparing } from './sessionRow.js';
 import { summarize } from './summary.js';
+import { tapItemProblem } from './tapCheck.js';
 import { tapChoicesFor } from './tapChoices.js';
 import { timerOf } from './testClock.js';
 import {
@@ -69,7 +70,7 @@ export async function sessionView(
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
             i.bar_task, i.task, i.listen_task, i.staff_task, i.spelling, i.archived_at,
-            i.choice_figures, i.read_passage, i.source_excerpt,
+            i.choice_figures, i.read_passage, i.source_excerpt, i.tap,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label, sub.kind as subject_kind
        from session_items si join items i on i.id = si.item_id
@@ -178,6 +179,14 @@ export async function sessionView(
         // from (issue #162). Only while the question is open: once it is closed the bars
         // would be a control without a purpose, and the solution stands in the thread.
         surface: i.status === 'open' && active ? surfaceFor(i.bar_task, i.staff_task) : null,
+        // A figure she taps a place in (issue #248), for the same span as the bar: read back
+        // through the check it was written under, or typed like any other question.
+        tap:
+          i.status === 'open' &&
+          active &&
+          !cardPass &&
+          i.tap === true &&
+          tapItemProblem({ ...i, figure: storedFigure(i.figure) }) === null,
         // The parts of a structured question, while it is open (`boardOf`).
         task_view: boardOf(i),
         // The spoken stimulus, as the alias of its recording and nothing more (issue #210).

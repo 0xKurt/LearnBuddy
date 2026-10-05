@@ -453,6 +453,7 @@
     "diagram_tree": "Schema ad albero",
     "diagram_free": "Schema",
     "diagram_gap": "spazio vuoto {{letter}}",
+    "clock_blank": "Orologio senza lancette",
     "solid_net_any": "Sviluppo di un solido",
     "solid_net": "Sviluppo: {{kind}}",
     "solid_base": "base con lati {{sides}}",
@@ -508,5 +509,19 @@
   "preview": {
     "label": "Anteprima",
     "a11y": "Anteprima della tua risposta: {{math}}"
+  },
+  "tap": {
+    "how_number_line": "Tocca il punto sulla retta dei numeri.",
+    "how_function_plot": "Tocca il punto nel sistema di coordinate.",
+    "how_bar_chart": "Tocca una barra.",
+    "how_clock": "Tocca il quadrante dove deve puntare la lancetta.",
+    "value": "Posizione: {{value}}",
+    "point": "Punto ({{x}} | {{y}})",
+    "bar": "Barra: {{label}}",
+    "label": "La tua posizione nella figura",
+    "up": "in alto",
+    "down": "in basso",
+    "hour_hand": "Lancetta corta",
+    "minute_hand": "Lancetta lunga"
   }
 }

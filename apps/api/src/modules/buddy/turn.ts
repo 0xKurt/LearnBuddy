@@ -14,6 +14,7 @@
 
 import { randomUUID } from 'node:crypto';
 
+import type { RoleplayFeedback } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
@@ -54,7 +55,6 @@ import {
   roleplayMessages,
   RoleplayTurnForModel,
   writeFeedback,
-  type RoleplayFeedback,
   type RoleplayRow,
   type RoleplayStep,
 } from './roleplay.js';

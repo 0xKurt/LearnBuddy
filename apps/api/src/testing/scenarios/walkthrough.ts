@@ -22,6 +22,8 @@ import { scriptPrimary } from './primary.js';
 import { scriptReading } from './reading.js';
 import { scriptRoleplay } from './roleplay.js';
 import { scriptSolids } from './solids.js';
+import { scriptSources } from './sources.js';
+import { scriptTap } from './tap.js';
 import { pronounceRules, readingRules, tutorRules } from './rules.js';
 import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
@@ -29,12 +31,15 @@ import { scriptTour } from './tour.js';
 import { scriptTeachBack } from './teachBack.js';
 import { scriptTrees } from './trees.js';
 import { installTurns } from './turns.js';
+import { scriptWritten } from './written.js';
 
 /** Adds every scenario's rules and installs the dispatchers. Call it once per process. */
 export function scriptWalkthrough(scripted: ScriptedGateway): void {
   // First of all: her questions in practice (#402) stand in requests about the pie chart and the
   // order, whose own words an older, broader rule may know.
   scriptAsk();
+  // Early too: "Zahlenstrahl" and "Uhr" are words an older, broader rule may know (#248).
+  scriptTap();
   // First: its generation rule is keyed on her list, and a broader rule registered earlier
   // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
   scriptDictation();
@@ -42,6 +47,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptSelectAll();
   // Also first: "Nomen", "Kommas" and "Silben" are words an older rule may know (#234).
   scriptMark();
+  // Also first: "schriftlich" and "Rechenweg" are words an older rule may know (#260).
+  scriptWritten();
   // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
   scriptPrimary();
   // Also before the core loop: "Kreislauf" and "Kette" are everyday words its rules may know (#247).
@@ -53,6 +60,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptTimedTest();
   // Before the tour: both read the same photo fixture; hers is keyed by her age (#233).
   scriptReading();
+  // Keyed by the ages 14 and 15, nobody else's; before the tour, which reads the same photo (#259).
+  scriptSources();
   scriptLearningModes(scripted);
   scriptTour();
   scriptFigures();

@@ -1,0 +1,29 @@
+name: PR text
+
+# Every PR names its USP point, its library check and what it reuses and removed (CLAUDE.md rule 16,
+# Engineering-Regel 1, issue #296; tools/guards/pr-body.mjs). Its own workflow because it has to
+# run again when only the text is edited — that must not start the whole CI.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, reopened, synchronize]
+
+concurrency:
+  group: pr-text-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-text:
+    name: PR text (USP, library check, reuse)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The guard has no dependencies: no install, only the one file.
+          sparse-checkout: tools/guards/pr-body.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/guards/pr-body.mjs

@@ -78,11 +78,15 @@ import { structuredItems, type StructuredItem } from './structured.js';
 // v1.30: no figure on a vocab or speak card, and a listening option's picture only a clock, coins,
 //        a dot field or base-ten blocks (#375: the vocab, speak and listen schemas lose most of
 //        `ModelFigure`; every other kind is sent the same bytes).
-// v1.31: a marking text sorted into categories may have 12 words and 72 characters (#368).
-// v1.32: a reading run (read): Buddy's own reading text with its questions (#368), and a reading
+// v1.31: a question answered by tapping a place in its figure — a number line, a point, a column,
+//        a clock face to set (`tap`, #248).
+// v1.32: find_error (a worked solution with one wrong line, the error built in by code) and
+//        column_calc (written arithmetic in columns, every digit and carry computed by code) (#260).
+// v1.33: a marking text sorted into categories may have 12 words and 72 characters (#368).
+// v1.34: a reading run (read): Buddy's own reading text with its questions (#368), and a reading
 //        question may ask for its Belegstelle (`evidence`).
-// v1.33: a prism's non-regular base, nets of solids ("which solid?") and Würfelgebäude (#368).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.33';
+// v1.35: a prism's non-regular base, nets of solids ("which solid?") and Würfelgebäude (#368).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.35';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

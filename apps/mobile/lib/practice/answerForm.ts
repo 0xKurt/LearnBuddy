@@ -3,6 +3,8 @@
 
 import { isStructuredKind, type ItemView } from '@learnbuddy/shared-types/contracts';
 
+import { isTappable } from '../../../../packages/shared-math/src/tap.js';
+
 export function answerForm(item: ItemView, open: boolean) {
   const choices =
     item.kind === 'multiple_choice' && item.choices && item.choices.length > 0
@@ -26,6 +28,9 @@ export function answerForm(item: ItemView, open: boolean) {
   // The fraction bar (issue #162) is the other case of the same surface, and since #402 a board
   // like the others (report #388 §9): the shaded bar is the answer, the bar's field her question.
   const barSurface = open && item.surface && item.surface.mode !== 'notes' ? item.surface : null;
+  // A figure she taps a place in (issue #248): a board like the bar — the place is the answer, and
+  // the figure stands there, at the bottom, instead of in the question card.
+  const tapFigure = open && item.tap && item.figure && isTappable(item.figure) ? item.figure : null;
   const typed =
     open &&
     choices === null &&
@@ -33,6 +38,7 @@ export function answerForm(item: ItemView, open: boolean) {
     !structured &&
     staff === null &&
     barSurface === null &&
+    tapFigure === null &&
     !speaking;
-  return { choices, tapChoices, speaking, structured, staff, barSurface, typed };
+  return { choices, tapChoices, speaking, structured, staff, barSurface, tapFigure, typed };
 }

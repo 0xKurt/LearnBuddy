@@ -1,6 +1,7 @@
 // The place in the practice card where a structured item is answered (issues #228–#230).
 // One component per `task_view.type`; this switch is the only thing the screen knows about
-// them. A new kind (#229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark) adds its component and one
+// them. A new kind (#229 match, #230 table_fill, #232 cloze, #240 select_all, #234 mark, #260
+// find_error and column_calc) adds its component and one
 // `case` here — the screen (`app/practice/[id].tsx`), the outbox and the answer flow stay as
 // they are, because every kind answers with the same `parts`.
 //
@@ -13,6 +14,8 @@ import type {
   StructuredTaskView,
 } from '@learnbuddy/shared-types/contracts';
 
+import { ColumnAnswer } from './ColumnAnswer.js';
+import { FindErrorAnswer } from './FindErrorAnswer.js';
 import { MarkAnswer } from './MarkAnswer.js';
 import { MatchAnswer } from './MatchAnswer.js';
 import { ClozeAnswer } from './ClozeAnswer.js';
@@ -47,5 +50,9 @@ export function StructuredAnswer({ view, draftKey, disabled, onSubmit: send }: P
       return <SelectAllAnswer view={view} {...own} />;
     case 'mark':
       return <MarkAnswer view={view} {...own} />;
+    case 'find_error':
+      return <FindErrorAnswer view={view} {...own} />;
+    case 'column_calc':
+      return <ColumnAnswer view={view} {...own} />;
   }
 }

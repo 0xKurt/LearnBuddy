@@ -18,6 +18,9 @@
 //   · under the text a live preview of typed math ("3/4" as a fraction, TypedMathPreview).
 // The fraction bar wrote into this field until #402; it is a board of its own now (report #388
 // §9), whose bar holds her question.
+// A board may stand above the bar when the typed line belongs to it (issue #260, Fehlerdetektiv:
+// she taps the wrong line of a worked solution, then writes it right here) — the board in the
+// shell's answer slot, the line in this bar, one "Prüfen" for both.
 // Autocorrect is off so the phone never "fixes" what the learner actually wrote.
 
 import type { ItemKind, SubjectKind } from '@learnbuddy/shared-types/contracts';
@@ -66,6 +69,11 @@ type Props = {
   onChange: (text: string) => void;
   /** Checks this answer (the field's text, or what she just said in voice mode). */
   onCheck: (value: string) => void;
+  /**
+   * A board above the bar this line belongs to (#260): what she taps first, and — until she has —
+   * why "Prüfen" waits and what the empty field says.
+   */
+  board?: { node: ReactNode; waits: string | null; placeholder: string } | null;
 };
 
 export function TypedAnswer({
@@ -78,11 +86,12 @@ export function TypedAnswer({
   disabled,
   onChange,
   onCheck,
+  board = null,
 }: Props) {
   const { t } = useTranslation(['practice', 'common']);
   const voiceMode = useVoiceMode((s) => s.on);
   const long = kind === 'long';
-  const exact = kind === 'numeric' || kind === 'formula';
+  const exact = kind === 'numeric' || kind === 'formula' || kind === 'find_error';
   // A Diktat is spelling practice: no mic (it would write the word the way the recogniser spells
   // it), and the keyboard does not capitalise for her — the capital letter is what she practises.
   const micOff = kind === 'spelling_dictation';
@@ -196,7 +205,9 @@ export function TypedAnswer({
       }}
       // A Diktat says in the field itself that the mic is off (issue #242): one line where
       // she looks anyway, gone as soon as she types — not a second line of grey text.
-      placeholder={t(micOff ? 'answer.placeholder_dictation' : 'answer.placeholder')}
+      placeholder={
+        board?.placeholder ?? t(micOff ? 'answer.placeholder_dictation' : 'answer.placeholder')
+      }
       accessibilityLabel={t('answer.label')}
       accessibilityHint={
         micOff ? t('answer.mic_off') : unit ? t('answer.unit_hint', { unit }) : undefined
@@ -233,11 +244,12 @@ export function TypedAnswer({
 
   return (
     <AnswerShell
+      answer={board?.node ?? null}
       action={{
-        ready: value.trim().length > 0,
+        ready: value.trim().length > 0 && !board?.waits,
         disabled,
         onPress: check,
-        waitsHint: t('answer.check_waits'),
+        waitsHint: board?.waits ?? t('answer.check_waits'),
         typing: focused,
         input: (checkInBar) => (
           <>

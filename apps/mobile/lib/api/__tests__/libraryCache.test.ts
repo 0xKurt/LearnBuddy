@@ -16,6 +16,7 @@ const material = (over: Partial<MaterialView> = {}): MaterialView => ({
   subject_name: null,
   goal_id: null,
   purpose: 'study',
+  source: 'sheet',
   session_id: null,
   session_status: null,
   page_problems: [],

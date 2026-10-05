@@ -453,6 +453,7 @@
     "diagram_tree": "Esquema en árbol",
     "diagram_free": "Esquema",
     "diagram_gap": "hueco {{letter}}",
+    "clock_blank": "Reloj sin agujas",
     "solid_net_any": "Desarrollo de un cuerpo",
     "solid_net": "Desarrollo: {{kind}}",
     "solid_base": "base de lados {{sides}}",
@@ -508,5 +509,19 @@
   "preview": {
     "label": "Vista previa",
     "a11y": "Vista previa de tu respuesta: {{math}}"
+  },
+  "tap": {
+    "how_number_line": "Toca el lugar en la recta numérica.",
+    "how_function_plot": "Toca el punto en el sistema de coordenadas.",
+    "how_bar_chart": "Toca una barra.",
+    "how_clock": "Toca la esfera donde debe apuntar la aguja.",
+    "value": "Lugar: {{value}}",
+    "point": "Punto ({{x}} | {{y}})",
+    "bar": "Barra: {{label}}",
+    "label": "Tu lugar en la figura",
+    "up": "hacia arriba",
+    "down": "hacia abajo",
+    "hour_hand": "Aguja pequeña",
+    "minute_hand": "Aguja grande"
   }
 }

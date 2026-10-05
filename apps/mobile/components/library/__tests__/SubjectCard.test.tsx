@@ -33,6 +33,7 @@ const sheet = (title: string | null, created_at: string): MaterialView => ({
   subject_name: 'Französisch',
   goal_id: null,
   purpose: 'study',
+  source: 'sheet',
   session_id: null,
   session_status: null,
   page_problems: [],

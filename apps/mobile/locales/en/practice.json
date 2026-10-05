@@ -328,5 +328,32 @@
     "later": "I'll remember it for later",
     "later_hint": "Buddy comes back to it after practice.",
     "kept": "Saved"
+  },
+  "tap": {
+    "check_waits": "Only once you have tapped the figure."
+  },
+  "find_error": {
+    "waits": "First tap the wrong line.",
+    "fix": "Write the line correctly …",
+    "line": "Line {{n}}",
+    "task": "Task"
+  },
+  "column": {
+    "check_waits": "Once you have written a digit.",
+    "carry": "Carry, {{place}}",
+    "result": "Result, {{place}}",
+    "partial": "Line {{step}}, {{place}}",
+    "quotient": "Result, digit {{n}}",
+    "product": "Step {{step}}, multiplying, {{place}}",
+    "difference": "Step {{step}}, remainder, {{place}}",
+    "places": [
+      "ones",
+      "tens",
+      "hundreds",
+      "thousands",
+      "ten thousands",
+      "hundred thousands",
+      "millions"
+    ]
   }
 }
