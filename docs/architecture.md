@@ -2754,8 +2754,9 @@ place), so it is not guessed. A carry is written into every place with digits ab
 the ones; an empty cell is right where nothing belongs (no carry, a leading zero). Rejected
 (`operands`): a number with a leading zero or over six digits, a subtrahend not smaller, a factor
 with a 0 digit or 1, a divisor of two digits; (`too_long`): a grid wider than a 360-pt phone with
-every digit column at 32 pt (`columnsFit`), more than `COLUMN_ROWS_MAX` (5) rows — a division of
-three steps — or more than 40 cells. Her answer is every cell once (a digit or empty); the check
+every digit column at 32 pt (`columnsFit`), more than `COLUMN_ROWS_MAX` (5) rows shown at once
+(`columnRowsShown`: a division's finished steps count one row each) — a division of four steps — or
+more than 40 cells. Her answer is every cell once (a digit or empty); the check
 compares each digit **and each carry**, and the reply names the first place that is not right yet
 in the order she writes: "Noch nicht ganz – bei den Zehnern fehlt noch der Übertrag.", "… in der 2. Zeile stimmt bei den Hundertern noch etwas nicht.", "… im 2. Schritt stimmt das Malnehmen noch
 nicht." — never the digit; it is the form's feedback, not a hint. Her result stands in the
@@ -2763,16 +2764,19 @@ conversation (`columnResultText`, one implementation for app and server). App: t
 the answer shell, each cell the table's cell (`LbTextInput` cell), the columns as wide as the phone
 allows up to square, a drawn line above the sum and every difference; a digit typed moves on to the
 next cell in the server's writing order (`order`: right to left, the carry before the digit), the
-phone's number pad is all she needs. Printed rows are one number to a screen reader ("+1389"), every
-cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.32)
-and read from a sheet (extract.v8.13; a homework sheet: written arithmetic only, its own error is no
-Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86j, 360×740 and
+phone's number pad is all she needs. A division is shown step by step (issue #413): the step she
+is at in full, the steps she has worked on above it shrunk to half-high lines she reads but no longer
+writes in, the steps she has not reached not yet there; the step follows the cell she writes in, a
+quotient digit opens its step again, and every cell still goes to the check. Printed rows are one number to a screen reader ("+1389"), every
+cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.44, now v1.46)
+and read from a sheet (extract.v8.22, now v8.24; a homework sheet: written arithmetic only, its own error is no
+Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86m, 360×740 and
 390×844, light and dark, the keyboard up): four long lines with Buddy's longest reply above fit (six
 were 106 pt too tall, `FIND_ERROR_LINES_MAX`), and five rows of
 cells with Buddy's reply above (two partial products and their sum, a division of two steps). A
-division of three steps — seven rows, 672 : 3 — was 78 pt too tall there under the reply, and a
-cell cannot be lower than a touch target: it is rejected (`too_long`) until the owner decides how
-a longer division is to fit. While she writes her line with the keyboard up on a small phone, the
+division of three steps — seven rows, 672 : 3 — was 78 pt too tall there under the reply in full,
+and a cell cannot be lower than a touch target; shown step by step, its two finished steps take one
+row each, and it fits with the keyboard up (86k–86m, #413). While she writes her line with the keyboard up on a small phone, the
 Fehlerdetektiv's lines fold away like a board under her question (`answerFolds`, #402), so the bar
 and "Prüfen" stay above the keyboard.
 **Grid — drawing on squared paper** (`practice/grid.ts`, `GridAnswer.tsx`, issue #249, migration

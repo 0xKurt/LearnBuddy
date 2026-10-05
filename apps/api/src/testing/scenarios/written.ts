@@ -6,8 +6,8 @@
 // The model writes a CORRECT worked solution, or names an operation and its numbers; code builds
 // the error into one line and computes every digit and carry (Regel 0). The cases are the largest
 // the contract allows where it matters for rule 16: four long lines to pick from, and the tallest grids
-// (five rows: two partial products and their sum, a division of two steps) under Buddy's reply on
-// 360×740.
+// (five rows: two partial products and their sum; a division of three steps, two of them finished and
+// shrunk, issue #413) under Buddy's reply on 360×740.
 
 import { scriptGenerations } from './generations.js';
 import { says, scriptTurns } from './turns.js';
@@ -87,6 +87,19 @@ const CASES: Case[] = [
       prompt: 'Rechne schriftlich.',
       op: 'div',
       operands: ['174', '5'],
+    },
+  },
+  {
+    // A three-digit quotient (issue #413): the tallest staircase the board shows step by step.
+    when: /dreistellig teilen/i,
+    reply: 'Gern – drei Schritte, einer nach dem anderen.',
+    ask: 'Dreistellig teilen',
+    title: 'Schriftliche Division',
+    task: {
+      type: 'column_calc',
+      prompt: 'Rechne schriftlich.',
+      op: 'div',
+      operands: ['672', '3'],
     },
   },
 ];
