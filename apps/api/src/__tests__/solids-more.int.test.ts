@@ -29,6 +29,9 @@ const byPrompt = (start: string) =>
 const trapezoid = byPrompt('Berechne das Volumen des Prismas');
 const triangle = byPrompt('Wie groß ist die Oberfläche des Dreiecksprismas');
 const kind = byPrompt('Welcher Körper entsteht');
+const coneKind = byPrompt('Zu welchem Körper');
+const lPrism = byPrompt('Berechne das Volumen des Prismas mit L');
+const house = byPrompt('Wie groß ist die Oberfläche des Prismas mit haus');
 const cylinderNet = byPrompt('Berechne die Oberfläche des Zylinders');
 const count = byPrompt('Aus wie vielen Würfeln');
 const plan = byPrompt('Wie viele Würfel braucht');
@@ -68,14 +71,53 @@ const BROKEN = [
       'surface',
     ),
   },
-  // The net folds into a cuboid; the model points at the cube.
-  { ...kind, prompt: 'Netz, falscher Körper?', correct_choice: 1, answer: 'Prisma' },
-  // A cone's net is drawn, but "which solid?" is asked of the four only.
+  // A "cuboid" with three equal edges is a cube: two of the options at once (#418).
   {
     ...kind,
-    prompt: 'Welcher Körper, Kegelnetz?',
-    figure: solid('cone', { r: 3, h: 4 }, 'kind', { w: 'net' }),
+    prompt: 'Quadernetz eines Würfels?',
+    figure: solid('cuboid', { a: 3, b: 3, h: 3 }, 'kind', { w: 'net' }),
   },
+  // A prism on a square is a cuboid: two of the options at once (#418).
+  {
+    ...kind,
+    prompt: 'Prisma auf einem Quadrat?',
+    figure: solid('prism', { n: 4, a: 3, h: 5 }, 'kind', { w: 'net' }),
+  },
+  // An L whose inner corner opens to the top left: the lying prism would hide part of itself.
+  {
+    ...lPrism,
+    prompt: 'Gespiegeltes L?',
+    figure: lying(
+      [
+        [0, 0],
+        [4, 0],
+        [4, 3],
+        [3, 3],
+        [3, 1],
+        [0, 1],
+      ],
+      5,
+      'volume',
+    ),
+  },
+  // A house whose walls differ: no house.
+  {
+    ...house,
+    prompt: 'Schiefes Haus?',
+    figure: lying(
+      [
+        [0, 0],
+        [6, 0],
+        [6, 2],
+        [3, 7],
+        [0, 3],
+      ],
+      5,
+      'surface',
+    ),
+  },
+  // The L's volume is 30, not 36 (its notch taken for filled).
+  { ...lPrism, prompt: 'L als Rechteck gerechnet?', answer: '36' },
   // "Which solid?" asked of a Schrägbild: there is nothing to fold.
   {
     ...kind,
@@ -167,15 +209,19 @@ describe.skipIf(!dbReady)('the rest of #255: irregular prisms, nets, Würfelgeb�
     expect(at(trapezoid.prompt).figure).toMatchObject({ type: 'solid', k: 'prism', n: 4 });
     expect(at(view.prompt).figure).toMatchObject({ type: 'cubes', g: STAIRS, v: 'oblique' });
     expect(at(view.prompt).choice_figures).toHaveLength(4);
-    // The options of "which solid?" are code's, in her language, never the model's.
-    expect(at(kind.prompt).choices).toEqual(['Quader', 'Prisma', 'Pyramide', 'Zylinder']);
+    // The options of "which solid?" are code's, in her language, never the model's: four, the
+    // net's own among its neighbours, and code marks the right one (#418).
+    expect(at(kind.prompt).choices).toEqual(['Würfel', 'Quader', 'Prisma', 'Pyramide']);
+    expect(at(coneKind.prompt).choices).toEqual(['Prisma', 'Pyramide', 'Zylinder', 'Kegel']);
+    expect(at(lPrism.prompt).figure).toMatchObject({ type: 'solid', k: 'prism', n: 6 });
+    expect(at(house.prompt).figure).toMatchObject({ type: 'solid', k: 'prism', n: 5 });
   });
 
   it('writes the options of "which solid?" in the question’s language', async () => {
     const s = await start(env, l, [
       { ...kind, prompt: 'Which solid does this net fold into?', prompt_lang: 'en' },
     ]);
-    expect(s.items[0]?.item.choices).toEqual(['cuboid', 'prism', 'pyramid', 'cylinder']);
+    expect(s.items[0]?.item.choices).toEqual(['cube', 'cuboid', 'prism', 'pyramid']);
   });
 
   it('grades every answer by code, no tutor', async () => {
@@ -192,12 +238,23 @@ describe.skipIf(!dbReady)('the rest of #255: irregular prisms, nets, Würfelgeb�
     expect(await verdict(trapezoid.prompt, { text: '60' })).toBe('correct');
     expect(await verdict(triangle.prompt, { text: '120' })).toBe('incorrect');
     expect(await verdict(triangle.prompt, { text: '132' })).toBe('correct');
-    expect(await verdict(kind.prompt, { choice: 0 })).toBe('correct');
+    expect(await verdict(kind.prompt, { choice: 0 })).toBe('incorrect');
+    expect(await verdict(kind.prompt, { choice: 1 })).toBe('correct');
+    // The model said 0; the cone stands fourth among its options, and that is the key.
+    expect(await verdict(coneKind.prompt, { choice: 3 })).toBe('correct');
+    expect(await verdict(lPrism.prompt, { text: '30' })).toBe('correct');
+    expect(await verdict(house.prompt, { text: '168' })).toBe('correct');
     expect(await verdict(cylinderNet.prompt, { text: '87,96' })).toBe('correct');
     expect(await verdict(count.prompt, { text: '9' })).toBe('correct');
     expect(await verdict(plan.prompt, { text: '7' })).toBe('incorrect');
     expect(await verdict(plan.prompt, { text: '8' })).toBe('correct');
     expect(await verdict(view.prompt, { choice: 1 })).toBe('correct');
+    expect(await verdict(byPrompt('Welche Ansicht von links').prompt, { choice: 1 })).toBe(
+      'correct',
+    );
+    expect(await verdict(byPrompt('Welche Ansicht von oben').prompt, { choice: 2 })).toBe(
+      'correct',
+    );
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 });

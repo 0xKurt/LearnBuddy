@@ -22,8 +22,9 @@
 // does not — and `correct_choice` points at it (`netChoiceHolds`).
 //
 // Since #368: "Welcher Körper entsteht aus diesem Netz?" is multiple choice whose options code
-// WRITES (the four solids of `NET_KINDS`, in that order, in the question's language) and
-// the model's `correct_choice` must point at the net's own kind. A Würfelgebäude's cube count is
+// WRITES in the question's language — since #418 four of `NET_KINDS`, the net's own solid among
+// its nearest neighbours (`kindOptions`), so a cube's and a cone's net can be asked too — and
+// code marks the right one: the model names the solid (`k`), it cannot know where it stands. A Würfelgebäude's cube count is
 // a whole number like a vertex count; "Welche Ansicht …?" is multiple choice whose OPTIONS are
 // views, exactly one of them the building's (`viewsHold`).
 
@@ -32,8 +33,8 @@ import {
   cubesKey,
   isCubeNet,
   isNetKind,
+  kindOptions,
   isSpaceFigure,
-  NET_KINDS,
   netKey,
   solidKey,
   spaceProblem,
@@ -95,16 +96,17 @@ export function checkedSpace<T extends ItemDraft>(it: T, locale: string | null):
   }
 }
 
-/** "Welcher Körper entsteht?": the options written here, the model's index held to the net's kind. */
+/** "Welcher Körper entsteht?": the options and the right one written here, from the net's kind. */
 function whichSolid<T extends ItemDraft>(it: T, k: SolidKind, locale: string | null): T | null {
   const lang = asLocale(it.prompt_lang) ?? asLocale(locale);
-  if (!isNetKind(k)) return null;
-  const correct = NET_KINDS.indexOf(k);
-  if (lang === null || it.kind !== 'multiple_choice' || it.correct_choice !== correct) return null;
-  const choices = NET_KINDS.map((kind) => t(lang, `practice.solid.kind_${kind}`));
+  if (!isNetKind(k) || lang === null || it.kind !== 'multiple_choice') return null;
+  const options = kindOptions(k);
+  const correct = options.indexOf(k);
+  const choices = options.map((kind) => t(lang, `practice.solid.kind_${kind}`));
   return {
     ...it,
     choices,
+    correct_choice: correct,
     answer: choices[correct]!,
     accepted_answers: [],
     tolerance: null,

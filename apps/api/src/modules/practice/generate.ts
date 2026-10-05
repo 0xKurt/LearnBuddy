@@ -88,7 +88,9 @@ import { structuredItems, type StructuredItem } from './structured.js';
 //        question may ask for its Belegstelle (`evidence`).
 // v1.36: a prism's non-regular base, nets of solids ("which solid?") and Würfelgebäude (#368).
 // v1.38: circuits, logic gates and Itten's colour wheel, their keys computed by code (#261).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.38';
+// v1.41: a house- or L-shaped base, and "which solid?" of a cube's and a cone's net with four
+//        options code picks and marks (#418; v1.39 and v1.40 are reserved for parallel work).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.41';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

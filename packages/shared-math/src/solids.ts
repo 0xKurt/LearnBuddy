@@ -17,6 +17,10 @@
 // solid but a sphere may be drawn as its NET (`w` "net", `solidNets.ts`) and asked which solid
 // the net folds into (`ask` "kind").
 //
+// Since #418: the base may also be a house or an L (`baseProblem`), "which solid?" is asked of
+// every net with four options code picks (`kindOptions`), and each measure says the line it
+// measures and the face it belongs in, so the app places it clear of every line (`placeLabels`).
+//
 // Dependency-free on purpose: the app imports this file by path (like `trees.ts`), so what the
 // server checked is exactly what the app draws.
 
@@ -82,20 +86,58 @@ export type SolidProblem =
   | 'ask';
 
 /**
- * The solids "Welcher Körper entsteht?" names, in the order code writes them as options (#368):
- * four, the most option tiles that stand under a net on a 360 × 740 phone (six were 3 pt too many,
- * walkthrough 99-net-cuboid). A cube's and a cone's net are drawn, but not asked about this way.
+ * The solids "Welcher Körper entsteht?" may be asked of (#368, #418), in the order code writes
+ * them as options: every solid with a net, neighbours alike (a cube next to a cuboid, a cylinder
+ * next to a cone).
  */
 export const NET_KINDS = [
+  'cube',
   'cuboid',
   'prism',
   'pyramid',
   'cylinder',
+  'cone',
 ] as const satisfies readonly SolidKind[];
 
 /** Is this a solid "Welcher Körper entsteht?" may name? */
 export const isNetKind = (k: SolidKind): k is (typeof NET_KINDS)[number] =>
   (NET_KINDS as readonly SolidKind[]).includes(k);
+
+/**
+ * How many options "Welcher Körper entsteht?" shows: four, the most option tiles that stand under
+ * a net on a 360 × 740 phone (six were 3 pt too many, walkthrough 99-net-cuboid).
+ */
+export const KIND_OPTIONS = 4;
+
+/**
+ * The options code writes for "Welcher Körper entsteht?" (#418): the net's own solid among its
+ * nearest neighbours in `NET_KINDS`, four in that order — so a cube's net is asked next to a
+ * cuboid, a cone's next to a cylinder and a pyramid.
+ */
+export function kindOptions(k: (typeof NET_KINDS)[number]): (typeof NET_KINDS)[number][] {
+  const at = NET_KINDS.indexOf(k);
+  const from = Math.min(Math.max(at - 1, 0), NET_KINDS.length - KIND_OPTIONS);
+  return NET_KINDS.slice(from, from + KIND_OPTIONS);
+}
+
+/**
+ * Would the net's solid be two of its options at once? A cuboid with three equal measures is a
+ * cube; a prism whose base is a rectangle (a square's regular base, or four corners at right
+ * angles) is a cuboid — "which solid?" then has no one answer.
+ */
+function kindAmbiguous(s: Solid): boolean {
+  if (s.k === 'cuboid') return s.a === s.b && s.b === s.h;
+  if (s.k !== 'prism') return false;
+  const g = s.g ?? [];
+  if (g.length === 0) return s.n === 4;
+  return (
+    g.length === 4 &&
+    g.every((p, i) => {
+      const q = g[(i + 1) % 4]!;
+      return p.x === q.x || p.y === q.y;
+    })
+  );
+}
 
 /** Longest : shortest measure a phone still draws readably. */
 const MAX_RATIO = 8;
@@ -116,30 +158,94 @@ const twiceArea = (g: readonly BasePoint[]) =>
     return t + p.x * q.y - q.x * p.y;
   }, 0);
 
-/**
- * Why a non-regular base is none a learner can work with, or null: whole coordinates in the grid,
- * convex and not flat, standing on a horizontal base line (y = 0) — a triangle (its height drawn)
- * or a quadrilateral whose top is horizontal too (a trapezoid, a parallelogram, a rectangle).
- * Then its area follows from what is drawn. Other shapes are left out (an L or a house shape).
- */
-function baseProblem(g: readonly BasePoint[]): 'measures' | null {
-  if (g.length !== 3 && g.length !== 4) return 'measures';
-  const inGrid = (v: number) => Number.isInteger(v) && v >= 0 && v <= BASE_MAX;
-  if (!g.every((p) => inGrid(p.x) && inGrid(p.y))) return 'measures';
-  const area = twiceArea(g);
-  if (Math.abs(area) < 1e-9) return 'measures';
-  // Convex: every turn the same way.
-  const turns = g.map((p, i) => {
+/** The turn at the corner after side i, as the sign of the cross product (y up). */
+function cornerTurns(g: readonly BasePoint[]): number[] {
+  return g.map((p, i) => {
     const q = g[(i + 1) % g.length]!;
     const o = g[(i + 2) % g.length]!;
     return Math.sign((q.x - p.x) * (o.y - q.y) - (q.y - p.y) * (o.x - q.x));
   });
-  if (turns.some((t) => t !== turns[0])) return 'measures';
+}
+
+/** Do two sides cross or touch? (Two sides of a simple polygon that share no corner never do.) */
+function sidesMeet(p: BasePoint, q: BasePoint, r: BasePoint, t: BasePoint): boolean {
+  const side = (a: BasePoint, b: BasePoint, c: BasePoint) =>
+    Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
+  const within = (a: BasePoint, b: BasePoint, c: BasePoint) =>
+    Math.min(a.x, b.x) <= c.x &&
+    c.x <= Math.max(a.x, b.x) &&
+    Math.min(a.y, b.y) <= c.y &&
+    c.y <= Math.max(a.y, b.y);
+  const d1 = side(r, t, p);
+  const d2 = side(r, t, q);
+  const d3 = side(p, q, r);
+  const d4 = side(p, q, t);
+  if (d1 * d2 < 0 && d3 * d4 < 0) return true;
+  return (
+    (d1 === 0 && within(r, t, p)) ||
+    (d2 === 0 && within(r, t, q)) ||
+    (d3 === 0 && within(p, q, r)) ||
+    (d4 === 0 && within(p, q, t))
+  );
+}
+
+/**
+ * The inner corner of an L-shaped base (#418): the one corner where it turns the other way; -1
+ * for a convex base.
+ */
+export function innerCorner(g: readonly BasePoint[]): number {
+  const way = Math.sign(twiceArea(g));
+  const i = cornerTurns(g).findIndex((t) => t !== way);
+  return i < 0 ? -1 : (i + 1) % g.length;
+}
+
+/**
+ * Why a non-regular base is none a learner can work with, or null: whole coordinates in the grid,
+ * not flat, no side crossing another, standing on a horizontal base line (y = 0, two corners on
+ * it), and one of
+ *   - a triangle (its height drawn) or a convex quadrilateral whose top is horizontal too (a
+ *     trapezoid, a parallelogram, a rectangle);
+ *   - a house (#418): a rectangle with a roof, five corners: two upright walls of one height from
+ *     the base line, the ridge above them (the whole height drawn);
+ *   - an L (#418): six corners, every side horizontal or vertical, the inner corner opening to the
+ *     top right as the letter is written — then no part of the lying prism hides another.
+ * Then its area follows from what is drawn.
+ */
+function baseProblem(g: readonly BasePoint[]): 'measures' | null {
+  const n = g.length;
+  if (n < 3 || n > 6) return 'measures';
+  const inGrid = (v: number) => Number.isInteger(v) && v >= 0 && v <= BASE_MAX;
+  if (!g.every((p) => inGrid(p.x) && inGrid(p.y))) return 'measures';
+  const way = Math.sign(twiceArea(g));
+  const turns = cornerTurns(g);
+  if (way === 0 || turns.includes(0)) return 'measures';
+  const at = (i: number) => g[(i + n) % n]!;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 2; j < n && !(i === 0 && j === n - 1); j++) {
+      if (sidesMeet(at(i), at(i + 1), at(j), at(j + 1))) return 'measures';
+    }
+  }
+  const base = g.flatMap((p, i) => (p.y === 0 ? [i] : []));
+  if (base.length !== 2) return 'measures';
+  if (n === 6) {
+    const upright = g.every((p, i) => p.x === at(i + 1).x || p.y === at(i + 1).y);
+    if (!upright || turns.filter((t) => t !== way).length !== 1) return 'measures';
+    const inner = innerCorner(g);
+    const c = at(inner);
+    const next = [at(inner - 1), at(inner + 1)];
+    const opensTopRight =
+      next.some((p) => p.y === c.y && p.x > c.x) && next.some((p) => p.x === c.x && p.y > c.y);
+    return opensTopRight ? null : 'measures';
+  }
+  if (turns.some((t) => t !== way)) return 'measures';
   const top = Math.max(...g.map((p) => p.y));
-  const onBase = g.filter((p) => p.y === 0).length;
-  const onTop = g.filter((p) => p.y === top).length;
-  if (onBase !== 2) return 'measures';
-  if (g.length === 4 && onTop !== 2) return 'measures';
+  if (n === 4 && g.filter((p) => p.y === top).length !== 2) return 'measures';
+  if (n === 5) {
+    // Each base corner's other neighbour stands right above it, both at the eaves' height.
+    const walls = base.map((i) => [at(i - 1), at(i + 1)].find((p) => p.y > 0)!);
+    const upright = walls.every((p, k) => p.x === g[base[k]!]!.x);
+    if (!upright || walls[0]!.y !== walls[1]!.y) return 'measures';
+  }
   return null;
 }
 
@@ -182,7 +288,7 @@ export function solidProblem(s: Solid): SolidProblem | null {
   }
   // A sphere has no net; which solid a net folds into is asked of a net only.
   if (s.w === 'net' && s.k === 'sphere') return 'ask';
-  if (s.ask === 'kind' && (s.w !== 'net' || !isNetKind(s.k))) return 'ask';
+  if (s.ask === 'kind' && (s.w !== 'net' || !isNetKind(s.k) || kindAmbiguous(s))) return 'ask';
   // A surface needs every side of the base as a number she can read off the drawing.
   if (s.ask === 'surface' && g.some((p, i) => !isNice(edgeLength(p, g[(i + 1) % g.length]!)))) {
     return 'ask';
@@ -284,8 +390,20 @@ export const projectSolid = ([x, y, z]: V3): SolidXY => ({ x: x + DEPTH * z, y: 
 const VIEW: V3 = [DEPTH, DEPTH, -1];
 
 export type Stroke = { pts: SolidXY[]; hidden: boolean };
-/** A measure written next to a line: where, on which side (`dx`, `dy` = −1 … 1), its value. */
-export type SolidLabel = { at: SolidXY; dx: number; dy: number; v: number };
+/**
+ * A measure written next to a line: where, on which side it would rather stand (`dx`, `dy` =
+ * −1 … 1, y downwards), its value — `on`, the line it measures, along which the app may move it
+ * to stand clear of every other line, and `in`, the face it belongs inside when it would read as
+ * another line's outside it (`placeLabels`, #418).
+ */
+export type SolidLabel = {
+  at: SolidXY;
+  dx: number;
+  dy: number;
+  v: number;
+  on?: readonly [SolidXY, SolidXY];
+  in?: readonly SolidXY[];
+};
 /** `faces`: the filled faces of a net (`solidNets.ts`); a Schrägbild has none. */
 export type SolidDrawing = {
   strokes: Stroke[];
@@ -316,6 +434,15 @@ function polyhedronStrokes(v: readonly V3[], faces: readonly number[][]): Stroke
     if (dot(nrm, sub(p0, centre)) < 0) nrm = [-nrm[0], -nrm[1], -nrm[2]];
     return dot(nrm, VIEW) > 1e-9;
   });
+  return edgeStrokes(v, faces, seen);
+}
+
+/** The edges of a solid's faces, each dashed when no face it bounds is `seen`. */
+function edgeStrokes(
+  v: readonly V3[],
+  faces: readonly number[][],
+  seen: readonly boolean[],
+): Stroke[] {
   const edges = new Map<string, boolean>();
   faces.forEach((f, fi) => {
     f.forEach((a, i) => {
@@ -344,6 +471,12 @@ export const mid = (p: SolidXY, q: SolidXY): SolidXY => ({
   x: (p.x + q.x) / 2,
   y: (p.y + q.y) / 2,
 });
+
+/** The height of a pyramid or a cone, from the middle of its base up to its apex. */
+const heightLine = (h: number): [SolidXY, SolidXY] => [
+  projectSolid([0, 0, 0]),
+  projectSolid([0, h, 0]),
+];
 
 /** A cube's or a cuboid's width, depth and height. */
 export const boxSides = (s: Solid): [number, number, number] =>
@@ -456,7 +589,15 @@ export function solidDrawing(s: Solid): SolidDrawing {
         });
       } else {
         strokes.push({ pts: [projectSolid([0, 0, 0]), projectSolid([0, h, 0])], hidden: true });
-        labels.push({ at: projectSolid([0, h * 0.6, 0]), dx: 1, dy: 0, v: h });
+        // Inside the front face: the height runs behind it.
+        labels.push({
+          at: projectSolid([0, h * 0.6, 0]),
+          dx: 1,
+          dy: 0,
+          v: h,
+          on: heightLine(h),
+          in: [v[0]!, v[1]!, v[n]!].map(projectSolid),
+        });
       }
       return { strokes, labels, dots: s.k === 'pyramid' ? [projectSolid([0, 0, 0])] : [] };
     }
@@ -496,7 +637,14 @@ export function solidDrawing(s: Solid): SolidDrawing {
       const labels: SolidLabel[] = [
         // Below the base and beside the upper height: apart however small the cone is drawn.
         { at: { x: r / 2, y: DEPTH * r }, dx: 0, dy: 1, v: r },
-        { at: projectSolid([0, h * 0.6, 0]), dx: 1, dy: 0, v: h },
+        {
+          at: projectSolid([0, h * 0.6, 0]),
+          dx: 1,
+          dy: 0,
+          v: h,
+          on: heightLine(h),
+          in: [apex, base(t1), base(t2)],
+        },
       ];
       return { strokes, labels, dots: [projectSolid([0, 0, 0])] };
     }
@@ -527,34 +675,36 @@ export function solidDrawing(s: Solid): SolidDrawing {
 }
 
 /**
- * A prism with a non-regular base, lying as the schoolbook draws it: the base is the front face, in
- * its true shape, and the prism runs `len` into the depth. Every side of the base that is a plain
- * number is written beside it; a slanted side brings the base's height, dashed from its top
- * corner down to the base line — together they give the base's area.
+ * The sides of a non-regular base whose length is written (on its Schrägbild, its net and in
+ * words): every side that is a plain number — but an L's two sides at its inner corner, which
+ * follow from the others, and a symmetric house's right wall and roof side, which equal its left
+ * ones (#418).
  */
-function lyingPrism(g: readonly BasePoint[], len: number): SolidDrawing {
-  const v: V3[] = [...g.map((p) => [p.x, p.y, 0] as V3), ...g.map((p) => [p.x, p.y, len] as V3)];
-  const n = g.length;
-  const faces: number[][] = [g.map((_, i) => i), g.map((_, i) => n + i)];
-  for (let i = 0; i < n; i++) faces.push([i, (i + 1) % n, n + ((i + 1) % n), n + i]);
-  const strokes = polyhedronStrokes(v, faces);
-  const cx = g.reduce((t, p) => t + p.x, 0) / n;
-  const labels: SolidLabel[] = [];
-  g.forEach((p, i) => {
-    const q = g[(i + 1) % n]!;
-    const length = edgeLength(p, q);
-    if (!isNice(length)) return;
-    const m = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
-    // A horizontal side: the base line's below it, the top's just under it (above it the top face
-    // of the solid runs into the depth). Any other side: beside it, away from the face's middle.
-    const flat = p.y === q.y;
-    labels.push({
-      at: projectSolid([m.x, m.y, 0]),
-      dx: flat ? 0 : Math.sign(m.x - cx) || -1,
-      dy: flat ? 1 : 0,
-      v: length,
+export function writtenSides(g: readonly BasePoint[]): number[] {
+  const inner = innerCorner(g);
+  const skip = inner < 0 ? [] : [(inner + g.length - 1) % g.length, inner];
+  // A house whose ridge stands in the middle: each wall and each roof side once, on the left.
+  const xs = g.map((p) => p.x);
+  const centre = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const ridge = g.reduce((top, p) => (p.y > top.y ? p : top), g[0]!);
+  if (g.length === 5 && ridge.x === centre) {
+    g.forEach((p, i) => {
+      const q = g[(i + 1) % g.length]!;
+      if (p.y !== q.y && (p.x + q.x) / 2 > centre) skip.push(i);
     });
-  });
+  }
+  return g.flatMap((p, i) =>
+    isNice(edgeLength(p, g[(i + 1) % g.length]!)) && !skip.includes(i) ? [i] : [],
+  );
+}
+
+/**
+ * The base's height as its drawing shows it, dashed from its top corner down to the base line:
+ * drawn when a side is slanted (a triangle, a trapezoid, a house's roof) and no upright side
+ * already runs there; null otherwise (a rectangle, an L, a right triangle standing on its leg).
+ */
+export function baseHeight(g: readonly BasePoint[]): { apex: BasePoint; v: number } | null {
+  const n = g.length;
   const top = Math.max(...g.map((p) => p.y));
   const apex = g.find((p) => p.y === top)!;
   const slanted = g.some((p, i) => {
@@ -565,21 +715,60 @@ function lyingPrism(g: readonly BasePoint[], len: number): SolidDrawing {
     const q = g[(i + 1) % n]!;
     return p.x === q.x && p.x === apex.x && Math.min(p.y, q.y) === 0;
   });
-  if (slanted && !standsUpright) {
-    strokes.push({
-      pts: [projectSolid([apex.x, top, 0]), projectSolid([apex.x, 0, 0])],
-      hidden: true,
-    });
-    labels.push({ at: projectSolid([apex.x, top / 2, 0]), dx: 1, dy: 0, v: top });
+  return slanted && !standsUpright ? { apex, v: top } : null;
+}
+
+/**
+ * A prism with a non-regular base, lying as the schoolbook draws it: the base is the front face, in
+ * its true shape, and the prism runs `len` into the depth. Its written sides stand beside them —
+ * inside the front face where the side's face runs into the depth (it is seen there), outside
+ * where it does not. A slanted side brings the base's height, dashed from its top corner down to
+ * the base line — together they give the base's area (a house's: its walls, its width and the
+ * whole height).
+ */
+function lyingPrism(g: readonly BasePoint[], len: number): SolidDrawing {
+  const v: V3[] = [...g.map((p) => [p.x, p.y, 0] as V3), ...g.map((p) => [p.x, p.y, len] as V3)];
+  const n = g.length;
+  const faces: number[][] = [g.map((_, i) => i), g.map((_, i) => n + i)];
+  for (let i = 0; i < n; i++) faces.push([i, (i + 1) % n, n + ((i + 1) % n), n + i]);
+  // Each side's outward normal in the plane (y up). Its face is seen when it points right or up;
+  // an L's inner corner opens to the top right, so no part hides another (`baseProblem`).
+  const way = Math.sign(twiceArea(g));
+  const normal = (i: number) => {
+    const p = g[i]!;
+    const q = g[(i + 1) % n]!;
+    const l = edgeLength(p, q);
+    return { x: (way * (q.y - p.y)) / l, y: (way * (p.x - q.x)) / l };
+  };
+  const seen = [true, false, ...g.map((_, i) => normal(i).x + normal(i).y > 1e-9)];
+  const strokes = edgeStrokes(v, faces, seen);
+  const front = (p: BasePoint) => projectSolid([p.x, p.y, 0]);
+  const labels: SolidLabel[] = writtenSides(g).map((i) => {
+    const p = g[i]!;
+    const q = g[(i + 1) % n]!;
+    const out = normal(i);
+    const side = seen[i + 2] ? -1 : 1;
+    return {
+      at: mid(front(p), front(q)),
+      dx: side * out.x,
+      dy: -side * out.y,
+      v: edgeLength(p, q),
+      on: [front(p), front(q)],
+      in: side < 0 ? g.map(front) : undefined,
+    };
+  });
+  const height = baseHeight(g);
+  if (height !== null) {
+    const foot = front({ x: height.apex.x, y: 0 });
+    const line: [SolidXY, SolidXY] = [front(height.apex), foot];
+    strokes.push({ pts: line, hidden: true });
+    labels.push({ at: mid(...line), dx: 1, dy: 0, v: height.v, on: line, in: g.map(front) });
   }
   // The length: on the depth edge from the right corner of the base line.
   const right = g.reduce((best, p) => (p.y === 0 && p.x > best.x ? p : best), { x: -1, y: 0 });
-  labels.push({
-    at: mid(projectSolid([right.x, 0, 0]), projectSolid([right.x, 0, len])),
-    dx: 1,
-    dy: 0.6,
-    v: len,
-  });
+  const near = projectSolid([right.x, 0, 0]);
+  const far = projectSolid([right.x, 0, len]);
+  labels.push({ at: mid(near, far), dx: 1, dy: 0.6, v: len, on: [near, far] });
   return { strokes, labels, dots: [] };
 }
 

@@ -12,7 +12,7 @@ import Svg, { G, Path, Text as SvgText } from 'react-native-svg';
 
 // Imported by path, like every figure file: dependency-free, the server's own rules.
 import { TICK_FONT } from '../../../../packages/shared-math/src/charts.js';
-import { textWidth } from '../../../../packages/shared-math/src/diagram.js';
+import { textWidth } from '../../../../packages/shared-math/src/labelBoxes.js';
 import { ITTEN_HUES, type Hue } from '../../../../packages/shared-math/src/itten.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY } from './figureText.js';
