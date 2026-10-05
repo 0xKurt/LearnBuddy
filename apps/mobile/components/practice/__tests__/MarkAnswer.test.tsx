@@ -7,7 +7,9 @@
 //   · mit Kategorien wählt sie zuerst die Kategorie (die erste ist gewählt), und ein Wort trägt
 //     dann deren Namen — ein zweiter Tipp in einer anderen Kategorie verschiebt es;
 //   · „Prüfen“ wartet auf eine Markierung und schickt `parts` mit den Ids, nie den Text;
-//   · ein alter Entwurf mit fremden Stellen wird nicht übernommen.
+//   · ein alter Entwurf mit fremden Stellen wird nicht übernommen;
+//   · eine Belegstelle (#368): jede Textzeile des Lesetexts ist ein Kästchen, eine Leerzeile
+//     keins, und markiert steht als „Z. 3–4“ darunter.
 //
 // Ob 24 Wörter samt Buddys Antwort auf 360×740 passen, misst tests/web/mark.spec.ts.
 
@@ -25,6 +27,7 @@ const NOUNS: MarkTaskView = {
   mode: 'words',
   words: [word('w1', 'der'), word('w2', 'hund'), word('w3', 'bellt', '.')],
   categories: [],
+  lines: [],
 };
 
 const PARTS: MarkTaskView = {
@@ -41,6 +44,7 @@ const COMMAS: MarkTaskView = {
   mode: 'gaps',
   words: [word('w1', 'Ich'), word('w2', 'glaube'), word('w3', 'dass'), word('w4', 'es', '.')],
   categories: [],
+  lines: [],
 };
 
 const SYLLABLES: MarkTaskView = {
@@ -48,6 +52,7 @@ const SYLLABLES: MarkTaskView = {
   mode: 'syllables',
   words: [word('w1', 'Hase')],
   categories: [],
+  lines: [],
 };
 
 function show(view: MarkTaskView, onSubmit: () => void = () => undefined, disabled = false) {
@@ -182,5 +187,39 @@ describe('commas and syllables', () => {
     expect(screen.getByTestId('mark-how')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Prüfen' }));
     expect(screen.queryByTestId('mark-how')).toBeNull();
+  });
+});
+
+describe('a Belegstelle: lines of a reading text (#368)', () => {
+  const TEXT: MarkTaskView = {
+    type: 'mark',
+    mode: 'lines',
+    words: [],
+    categories: [],
+    lines: ['Mia wohnt am Wald.', 'Sie fährt Rad.', '', 'Der Bauer hilft ihr.', 'Sie dankt ihm.'],
+  };
+
+  it('makes every text line a target, numbered as print counts them, and sends the lines', () => {
+    const onSubmit = vi.fn();
+    show(TEXT, onSubmit);
+    expect(screen.getByTestId('mark-how').textContent).toBe(
+      'Tippe die Zeilen an, in denen das steht.',
+    );
+    // Four lines of text; the empty one between paragraphs is air, not a target.
+    expect(screen.getAllByRole('checkbox')).toHaveLength(4);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Zeile 3: Der Bauer hilft ihr.' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Zeile 4: Sie dankt ihm.' }));
+    expect(screen.getByTestId('mark-summary').textContent).toBe('Markiert – Z. 3–4');
+    fireEvent.click(screen.getByRole('button', { name: 'Prüfen' }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      {
+        type: 'mark',
+        marks: [
+          { at: 'l3', category: null },
+          { at: 'l4', category: null },
+        ],
+      },
+      'Z. 3–4',
+    );
   });
 });

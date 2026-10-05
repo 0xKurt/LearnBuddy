@@ -35,6 +35,7 @@
 import { z } from 'zod';
 
 import { GridDrawAnswer, GridDrawTask, GridDrawTaskView } from './grid.js';
+import { lineNumbers, PASSAGE_LINE_MAX, PASSAGE_LINES_MAX } from './reading.js';
 
 /** The item kinds whose answer is structured. Each has a task, a view and an answer shape. */
 export const STRUCTURED_KINDS = [
@@ -429,7 +430,11 @@ export type SelectAllAnswer = z.infer<typeof SelectAllAnswer>;
 //               words of an error text, signal words — or, with 2–3 categories she picks first,
 //               Subjekt / Prädikat / Objekt);
 //   gaps      — she taps the word after which a comma belongs: the gap behind it gets the comma;
-//   syllables — she taps the letter after which a syllable ends.
+//   syllables — she taps the letter after which a syllable ends;
+//   lines     — she taps the LINES of a reading text where a statement is backed — the
+//               Belegstelle, anywhere in a long text (#368, the rest of #234 with #233). The text
+//               is the reading group's, line by line as printed; she answers in it, so the board
+//               shows it and the text above the question is not sent twice (`sessionView.ts`).
 //
 // Code splits the text into words (`apps/api/src/modules/practice/mark.ts`), never the model: the
 // model names the words, code finds where they stand, and a word that stands there twice needs
@@ -456,20 +461,59 @@ export const MARK_SYLLABLE_LETTERS_MAX = 10;
 /**
  * A text whose marks are sorted into categories: the category buttons take up to two rows of their
  * own, and the line saying what is marked runs longer ("Subjekt: …; Prädikat: …"). So the text may
- * take two rows of word tiles at most — counted in words AND in characters, because long words fill
- * a row sooner. Measured on 360×740 in the worst case — three long names on two rows, a three-line
- * instruction, every word marked, Buddy's reply above (tests/web/mark.spec.ts, 46h): a sentence of
- * 59 characters took three rows of tiles and was 62 pt too much.
+ * take two rows of word tiles at most (`MARK_SORTED_ROWS`). Until #368 a tile was a framed button
+ * with the category's digit beside the word: a sentence of 59 characters took three rows and was
+ * 62 pt too much on 360×740, so real Satzglieder sentences of grades 5–7 were refused. The tiles now
+ * touch and carry the digit UNDER the word (`MarkAnswer.tsx`): a mark never widens a tile, the rows
+ * stand before she taps, and a sentence of 12 words and 72 characters fits two rows. Measured on
+ * 360×740 in the worst case — three long names on two rows, a three-line instruction, every word
+ * marked, Buddy's reply above (tests/web/mark.spec.ts, 46h and 46i).
  */
-export const MARK_SORTED_WORDS_MAX = 7;
-export const MARK_SORTED_CHARS_MAX = 45;
+export const MARK_SORTED_WORDS_MAX = 12;
+export const MARK_SORTED_CHARS_MAX = 72;
+/** Rows of word tiles a text to sort may take on the narrowest phone (360 pt). */
+export const MARK_SORTED_ROWS = 2;
+
+/**
+ * The width model of a word tile on a 360-pt phone (`MarkAnswer.tsx`), so the server knows BEFORE
+ * storing a task how many rows its words wrap to — a count alone missed long words. Like
+ * `MARK_CATEGORY_PAIR_CHARS`, measured and rounded towards more rows: the row is the answer slot's
+ * 328 pt less the text surface's padding; a tile is its text (body type, 8.6 pt a character at the
+ * widest) plus 4 pt on each side, and never narrower than a 44-pt touch target.
+ */
+const MARK_ROW_PT = 312;
+const MARK_TILE_PAD_PT = 8;
+const MARK_CHAR_PT = 8.6;
+const MARK_TILE_MIN_PT = 44;
+
+/** How many rows these words wrap to as tiles on a 360-pt phone (greedy, as flex-wrap does). */
+export function markRows(
+  words: ReadonlyArray<{ lead: string; text: string; tail: string }>,
+): number {
+  let rows = 0;
+  let left = 0;
+  for (const w of words) {
+    const chars = [...`${w.lead}${w.text}${w.tail}`].length;
+    const width = Math.max(MARK_TILE_MIN_PT, MARK_TILE_PAD_PT + chars * MARK_CHAR_PT);
+    if (rows === 0 || width > left) {
+      rows++;
+      left = MARK_ROW_PT;
+    }
+    left -= width;
+  }
+  return rows;
+}
 
 /** Does a text to sort into categories stay within its measured size? */
 export function sortedTextFits(
   words: ReadonlyArray<{ lead: string; text: string; tail: string }>,
 ): boolean {
   const chars = [...words.map((w) => `${w.lead}${w.text}${w.tail}`).join(' ')].length;
-  return words.length <= MARK_SORTED_WORDS_MAX && chars <= MARK_SORTED_CHARS_MAX;
+  return (
+    words.length <= MARK_SORTED_WORDS_MAX &&
+    chars <= MARK_SORTED_CHARS_MAX &&
+    markRows(words) <= MARK_SORTED_ROWS
+  );
 }
 export const MARK_CATEGORIES_MIN = 2;
 export const MARK_CATEGORIES_MAX = 3;
@@ -499,7 +543,7 @@ export const MARK_AFFIX_MAX = 6;
 /** The instruction above a marking text: two lines of the question card at most. */
 export const MARK_PROMPT_MAX = 60;
 
-export const MarkMode = z.enum(['words', 'gaps', 'syllables']);
+export const MarkMode = z.enum(['words', 'gaps', 'syllables', 'lines']);
 export type MarkMode = z.infer<typeof MarkMode>;
 
 /** A word of the text, as code split it: what she reads, and the marks around it. */
@@ -525,14 +569,25 @@ export type MarkPick = z.infer<typeof MarkPick>;
 
 /** The most marks one answer may carry: every word, or every gap, of the longest text. */
 export const MARK_PICKS_MAX = 60;
+/**
+ * The lines a Belegstelle may span (lines mode): a sentence or two of the text — the evidence a
+ * reading question quotes is at most 300 characters, about five printed lines.
+ */
+export const MARK_LINES_KEY_MAX = 6;
 
 /** What the app shows: the words as code split them, and the categories. Never the key. */
 export const MarkTaskView = z.object({
   type: z.literal('mark'),
   mode: MarkMode,
-  words: z.array(MarkWord).min(1).max(MARK_WORDS_MAX),
+  /** The words of the text (words, gaps, syllables); none in lines mode. */
+  words: z.array(MarkWord).max(MARK_WORDS_MAX),
   /** Empty: plain marking. Two or three: she picks a category, then the words. */
   categories: z.array(MarkCategory).max(MARK_CATEGORIES_MAX),
+  /**
+   * lines mode: the reading text line by line as printed (an empty line between paragraphs is
+   * kept and not counted, `lineNumbers`). Empty in every other mode. Absent in older rows.
+   */
+  lines: z.array(z.string().max(PASSAGE_LINE_MAX)).max(PASSAGE_LINES_MAX).default([]),
 });
 export type MarkTaskView = z.infer<typeof MarkTaskView>;
 
@@ -565,9 +620,16 @@ export function cutId(wordIndex: number, letter: number): PartId {
   return `w${wordIndex + 1}_${letter}`;
 }
 
+/** The id of printed text line `n` (1-based, as `lineNumbers` counts; lines mode). */
+export function lineId(n: number): PartId {
+  return `l${n}`;
+}
+
 /** Every place she can tap in this task, in reading order. */
-export function markTargets(task: Pick<MarkTaskView, 'mode' | 'words'>): PartId[] {
+export function markTargets(task: Pick<MarkTaskView, 'mode' | 'words' | 'lines'>): PartId[] {
   switch (task.mode) {
+    case 'lines':
+      return lineNumbers(task.lines).flatMap((n) => (n === null ? [] : [lineId(n)]));
     case 'words':
       return task.words.map((w) => w.id);
     case 'gaps':
@@ -600,6 +662,11 @@ function markRuns(words: readonly MarkWord[], ids: ReadonlySet<string>): string 
 export function markedText(view: Omit<MarkTaskView, 'type'>, marks: readonly MarkPick[]): string {
   const at = new Set(marks.map((m) => m.at));
   switch (view.mode) {
+    case 'lines':
+      // The marked line numbers as ranges, "15–16, 19": the caller says "Z." in her language.
+      return lineRanges(
+        lineNumbers(view.lines).filter((n): n is number => n !== null && at.has(lineId(n))),
+      );
     case 'gaps':
       return view.words
         .map((w, i) => `${w.lead}${w.text}${at.has(gapId(i)) ? ',' : ''}${w.tail}`)
@@ -896,3 +963,14 @@ export const StructuredAnswer = z.discriminatedUnion('type', [
   GridDrawAnswer,
 ]);
 export type StructuredAnswer = z.infer<typeof StructuredAnswer>;
+
+/** Ascending line numbers as ranges: [15, 16, 19] → "15–16, 19". */
+function lineRanges(numbers: readonly number[]): string {
+  const runs: Array<[number, number]> = [];
+  for (const n of numbers) {
+    const last = runs[runs.length - 1];
+    if (last && n === last[1] + 1) last[1] = n;
+    else runs.push([n, n]);
+  }
+  return runs.map(([a, b]) => (a === b ? `${a}` : `${a}–${b}`)).join(', ');
+}

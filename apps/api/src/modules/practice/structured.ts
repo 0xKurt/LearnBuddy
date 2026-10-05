@@ -844,7 +844,11 @@ export function structuredDecidedBy(check: StructuredCheck): 'rule' | 'model' {
 }
 
 /** Her answer as it stands in the conversation ("B → A → C"). */
-export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): string {
+export function answerTextOf(
+  task: StructuredTask,
+  answer: StructuredAnswer,
+  locale: string,
+): string {
   switch (task.type) {
     case 'order': {
       if (answer.type !== 'order') return '';
@@ -860,7 +864,7 @@ export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): st
     case 'select_all':
       return answer.type === 'select_all' ? selectText(task, answer.chosen) : '';
     case 'mark':
-      return answer.type === 'mark' ? markAnswerText(task, answer) : '';
+      return answer.type === 'mark' ? markAnswerText(task, answer, locale) : '';
     case 'find_error':
       return answer.type === 'find_error' ? findErrorAnswerText(task, answer) : '';
     case 'column_calc':

@@ -314,7 +314,9 @@
     "word_in": "{{word}}, segnato come {{name}}",
     "gap": "Virgola dopo «{{word}}»",
     "cut": "La sillaba finisce dopo «{{before}}» in {{word}}",
-    "how_sorted": "Scegli prima il tipo in alto, poi tocca le parole."
+    "how_sorted": "Scegli prima il tipo in alto, poi tocca le parole.",
+    "how_lines": "Tocca le righe in cui il testo lo dice.",
+    "lines": "r. {{list}}"
   },
   "select": {
     "several": "Più di una è giusta: toccale tutte.",

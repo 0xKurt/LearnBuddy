@@ -2,7 +2,8 @@
 // she answers. docs/architecture.md §Practice ("Lesetexte").
 //
 // The photo reading writes the text line by line, as printed, and the questions — the printed
-// ones, or its own where the sheet prints none. Code decides what may be asked, before anything
+// ones, or its own where the sheet prints none. A text Buddy writes himself (#368) goes through
+// the same rules once `readText.ts` has checked its level and language (`transcript` null). Code decides what may be asked, before anything
 // is stored (#224 "Regel 0", reject — never repair):
 //
 //   · The text is the photo's: its words stand, in order, in the reading's own transcription of
@@ -25,6 +26,12 @@
 //     the text, in order (the commas she has to set are not shown, so they do not count). Words or
 //     commas only — syllables are a word exercise, and an error text is no sentence of the text.
 //     The sentence is its evidence: once the question is closed she is shown where it stands.
+//   · A Belegstelle (#368) — "find where the text says so" — names a statement and quotes its
+//     evidence; code finds the lines the evidence stands on, and she taps exactly those lines,
+//     anywhere in the text (`markLinesTask`, lines mode). The statement may not name a line (that
+//     would be the answer) nor repeat the text word for word (that is searching, not reading),
+//     and the evidence spans at most MARK_LINES_KEY_MAX lines. Its hint is not "look at line …":
+//     that, too, would be the answer.
 //   · Fewer than two questions left is no reading group: nothing of it is stored.
 //
 // Language is not marked in a reading task (#197, `docs/lehrplan-und-uebungsformen.md` §7.3):
@@ -34,6 +41,7 @@
 // 2): lines are counted by code, the group's alias is given by the view.
 
 import {
+  MARK_LINES_KEY_MAX,
   PASSAGE_CHARS_MAX,
   PASSAGE_CHARS_MIN,
   PASSAGE_LINE_MAX,
@@ -50,7 +58,7 @@ import { z } from 'zod';
 import { t } from '../../i18n/index.js';
 import { asLocale } from './chartRead.js';
 import { ItemDraft, itemsOneByOne, MAX_ACCEPTED, usableItems, type StoredItem } from './items.js';
-import { MarkDraftBase, markPlainText } from './mark.js';
+import { MarkDraftBase, markLinesTask, markPlainText } from './mark.js';
 import { structuredItem } from './structured.js';
 
 /** The evidence a question quotes: a sentence or two of the text, never a paragraph. */
@@ -63,7 +71,7 @@ export const READINGS_PER_READING = 2;
  * What the photo reading is told about a reading text. Principles and bans, never an example
  * sentence (models copy examples — standing owner rule).
  */
-export const READING_RULES = `Reading texts ("reading"): a text on the sheet with questions about it (a reading text, a factual text, a source, a story) — the app shows the text with its line numbers above each question. lines: the text line by line EXACTLY as printed, every line as it stands on the page (an empty string for an empty line between paragraphs — it is not counted, as in print —, a hyphen at a line's end kept), without the line numbers printed in the margin; ${PASSAGE_CHARS_MIN}–${PASSAGE_CHARS_MAX} characters, at most ${PASSAGE_LINES_MAX} lines of at most ${PASSAGE_LINE_MAX} characters. title: its heading as printed, or null. lang: the language the text is written in. topic: 2–4 words, what the text is about. questions: the questions printed about it, in their order; when none are printed, ${READING_QUESTIONS_MIN + 2}–${READING_QUESTIONS_MAX} of your own about what the text SAYS, in the order of the text. Each is kind "short" (the answer short, in the text's words where possible), "multiple_choice" (2–4 options), "true_false" (a statement that is true or false by the text, in your own words — never a sentence copied from it) "order" (3–6 events of the text to put in order, written in the CORRECT order) or "mark" (one sentence of the text copied EXACTLY as text, in which she marks words — mode "words", targets as in marking tasks — or sets the commas — mode "gaps"; corrected null). short, multiple_choice and true_false give evidence: the words of the text the answer stands in, copied EXACTLY (at most ${EVIDENCE_MAX} characters). A question may name a line ("Z. 12") only when that line holds what it asks about; count only the lines with text, as the sheet numbers them. A question you cannot back with words of the text is left out. Questions in the language the text is taught in (a German or Latin text: German; an English, French or Spanish text: that language).`;
+export const READING_RULES = `Reading texts ("reading"): a text on the sheet with questions about it (a reading text, a factual text, a source, a story) — the app shows the text with its line numbers above each question. lines: the text line by line EXACTLY as printed, every line as it stands on the page (an empty string for an empty line between paragraphs — it is not counted, as in print —, a hyphen at a line's end kept), without the line numbers printed in the margin; ${PASSAGE_CHARS_MIN}–${PASSAGE_CHARS_MAX} characters, at most ${PASSAGE_LINES_MAX} lines of at most ${PASSAGE_LINE_MAX} characters. title: its heading as printed, or null. lang: the language the text is written in. topic: 2–4 words, what the text is about. questions: the questions printed about it, in their order; when none are printed, ${READING_QUESTIONS_MIN + 2}–${READING_QUESTIONS_MAX} of your own about what the text SAYS, in the order of the text. Each is kind "short" (the answer short, in the text's words where possible), "multiple_choice" (2–4 options), "true_false" (a statement that is true or false by the text, in your own words — never a sentence copied from it) "order" (3–6 events of the text to put in order, written in the CORRECT order), "mark" (one sentence of the text copied EXACTLY as text, in which she marks words — mode "words", targets as in marking tasks — or sets the commas — mode "gaps"; corrected null) or "evidence" (a statement about the text in your own words — never copied from it and never naming a line — whose proof she finds by tapping the lines it stands in; at most ${MARK_LINES_KEY_MAX} lines). short, multiple_choice, true_false and evidence give evidence: the words of the text the answer stands in, copied EXACTLY (at most ${EVIDENCE_MAX} characters). A question may name a line ("Z. 12") only when that line holds what it asks about; count only the lines with text, as the sheet numbers them. A question you cannot back with words of the text is left out. Questions in the language the text is taught in (a German or Latin text: German; an English, French or Spanish text: that language).`;
 
 const Evidence = z
   .string()
@@ -113,6 +121,14 @@ export const ReadingQuestion = z.discriminatedUnion('kind', [
     kind: z.literal('mark'),
     difficulty: Difficulty,
   }),
+  z.object({
+    kind: z.literal('evidence'),
+    statement: Prompt.describe(
+      'What the text says, in your own words — never copied from it, never naming a line',
+    ),
+    evidence: Evidence,
+    difficulty: Difficulty,
+  }),
 ]);
 export type ReadingQuestion = z.infer<typeof ReadingQuestion>;
 
@@ -155,6 +171,18 @@ function wordsOf(text: string): string[] {
   return fold(text)
     .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean);
+}
+
+/**
+ * The sentences of a text as lists of words, cut after an end mark (. ! ? …) — read by its format,
+ * like a line reference (CLAUDE.md rule 3). An abbreviation counts as an end: that only makes a
+ * sentence shorter.
+ */
+export function sentencesOf(text: string): string[][] {
+  return text
+    .split(/(?<=[.!?…])\s+/u)
+    .map(wordsOf)
+    .filter((words) => words.length > 0);
 }
 
 /**
@@ -345,14 +373,16 @@ function lookHint(locale: string, at: PassageLines): string {
  * READING_QUESTIONS_MIN questions left is no group, and nothing of it is stored. `locale` is the
  * learner's app language: the hint is in it, and true/false options are written in the text's
  * language where the server has words for it, else in hers. `transcript` is the reading's own
- * transcription of the sheet, which the text has to stand in.
+ * transcription of the sheet, which the text has to stand in — or null for a text Buddy wrote,
+ * which `readText.ts` held to her level and language instead (#368).
  */
 export function readingItems(
   draft: ReadingDraft,
-  opts: { locale: string; transcript: string },
+  opts: { locale: string; transcript: string | null },
 ): ReadingItem[] {
   const passage = passageFrom(draft);
-  if (!passage || !onTheSheet(passage.lines, opts.transcript)) return [];
+  if (!passage) return [];
+  if (opts.transcript !== null && !onTheSheet(passage.lines, opts.transcript)) return [];
   const lines = passage.lines;
   const topic = draft.topic;
   const optionsLocale = asLocale(passage.lang) ?? opts.locale;
@@ -471,7 +501,47 @@ export function readingItems(
       }
       case 'mark':
         return markIn(q);
+      case 'evidence':
+        return beleg(q);
     }
+  }
+
+  /**
+   * A Belegstelle (#368): she taps the lines the statement stands in. The lines come from the
+   * evidence, found by code; the statement names none and does not copy the text.
+   */
+  function beleg(q: Extract<ReadingQuestion, { kind: 'evidence' }>): StoredItem | null {
+    const at = linesOf(lines, q.evidence);
+    if (!at || at.to - at.from + 1 > MARK_LINES_KEY_MAX) return null;
+    if (lineRefs(q.statement).length > 0 || standsInText(lines, q.statement)) return null;
+    const task = markLinesTask(lines, at);
+    if (!task) return null;
+    return {
+      kind: 'mark',
+      task,
+      prompt: q.statement,
+      // The solution in words: the evidence itself. Once the question is closed the text shows
+      // where it stands (`PassageView.evidence`, from `source_excerpt`).
+      answer: q.evidence,
+      accepted_answers: [],
+      unit: null,
+      choices: null,
+      correct_choice: null,
+      topic,
+      difficulty: q.difficulty,
+      prompt_lang: passage!.lang,
+      lang: null,
+      figure: null,
+      read: null,
+      tolerance: null,
+      spelling: null,
+      source_excerpt: q.evidence,
+      curriculum_point: null,
+      rubric: null,
+      // No "look again at line …" — the lines are the answer.
+      hints: [],
+      worked_solution: null,
+    };
   }
 
   /** A marking in a sentence OF the text (#234 with #233): words or commas, never syllables. */

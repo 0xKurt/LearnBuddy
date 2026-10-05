@@ -27,6 +27,7 @@ import {
   subjectKindOf,
   surfaceFor,
   taskViewFor,
+  textIsBoard,
   type ItemImageRow,
 } from './viewParts.js';
 
@@ -134,6 +135,14 @@ export async function sessionView(
     cardPass || !((i.status === 'open' && !testOver) || !revealAllowed || noSingleSolution(i));
   // The text of each reading question (issue #233); where its answer stands, once that is shown.
   const reading = passageViews(items, solutionShown);
+  /**
+   * The parts of a structured question (issues #228–#230), without the key, for as long as the
+   * question is open — like the fraction bar, and for the same reason: once it is closed the parts
+   * would be a control with nothing left to do, and her answer and the solution both stand in the
+   * thread.
+   */
+  const boardOf = (i: (typeof items)[number]) =>
+    i.status === 'open' && active ? taskViewFor(i) : null;
   return {
     id: s.id,
     mode: s.mode,
@@ -178,17 +187,15 @@ export async function sessionView(
           !cardPass &&
           i.tap === true &&
           tapItemProblem({ ...i, figure: storedFigure(i.figure) }) === null,
-        // The parts of a structured question (issues #228–#230), without the key, for as long as
-        // the question is open — like the fraction bar above, and for the same reason: once it
-        // is closed the parts would be a control with nothing left to do, and her answer and the
-        // solution both stand in the thread.
-        task_view: i.status === 'open' && active ? taskViewFor(i) : null,
+        // The parts of a structured question, while it is open (`boardOf`).
+        task_view: boardOf(i),
         // The spoken stimulus, as the alias of its recording and nothing more (issue #210).
         // It stays while the question is closed: hearing the text again next to the words of
         // it is exactly what a listening task is reviewed with.
         listen: hearing.has(i.id) ? { ref: hearing.get(i.id)! } : null,
-        // The text she reads it from, above the question while she answers (issue #233).
-        passage: reading.get(i.id) ?? null,
+        // The text she reads it from, above the question while she answers (issue #233) — except
+        // where she answers IN the text, a Belegstelle (#368): its board is the text, once.
+        passage: textIsBoard(boardOf(i)) ? null : (reading.get(i.id) ?? null),
         // The "Vorlesen" button (issue #238): code decides, from what the question is, whether
         // hearing it would hand over the solution. A card is read by its own "Anhören".
         read_aloud: !cardPass && readAloudAllowed(i),

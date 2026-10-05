@@ -453,7 +453,16 @@
     "diagram_tree": "Schema ad albero",
     "diagram_free": "Schema",
     "diagram_gap": "spazio vuoto {{letter}}",
-    "clock_blank": "Orologio senza lancette"
+    "clock_blank": "Orologio senza lancette",
+    "solid_net_any": "Sviluppo di un solido",
+    "solid_net": "Sviluppo: {{kind}}",
+    "solid_base": "base con lati {{sides}}",
+    "cubes": "Costruzione di cubi, file dal davanti al retro: {{rows}}",
+    "cubes_plan": "Pianta di costruzione, file dal davanti al retro: {{rows}}",
+    "cubes_row": "fila {{n}}: {{h}} cubi di altezza",
+    "cubes_front": "Vista di fronte: {{rows}}",
+    "cubes_side": "Vista da sinistra: {{rows}}",
+    "cubes_top": "Vista dall’alto: {{rows}}"
   },
   "keys": {
     "row": "Simboli matematici",

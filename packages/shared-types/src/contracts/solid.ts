@@ -12,6 +12,11 @@
 //
 // Short property names and no nullable field, like the charts and the trees: these branches sit
 // in every item of every generated set (the schema-size pressure of issue #281).
+//
+// Since #368: a prism's non-regular base (`g`), a solid drawn as its net (`w`) and asked which
+// solid the net folds into (`ask` "kind"), and Würfelgebäude (`cubes`: heights on a grid, drawn as
+// a Schrägbild, a Bauplan or one view; packages/shared-math/src/cubes.ts). Both new solid fields
+// default, so a figure stored before reads as it always did.
 
 import { z } from 'zod';
 
@@ -26,7 +31,14 @@ export const SolidFigure = z.object({
   h: Length,
   r: Length,
   u: z.enum(['mm', 'cm', 'dm', 'm']),
-  ask: z.enum(['none', 'vertices', 'edges', 'faces', 'volume', 'surface']),
+  ask: z.enum(['none', 'vertices', 'edges', 'faces', 'volume', 'surface', 'kind']),
+  /** A prism's non-regular base, its front face corner by corner (whole units); else empty. */
+  g: z
+    .array(z.object({ x: z.number().int().min(0).max(20), y: z.number().int().min(0).max(20) }))
+    .max(4)
+    .default([]),
+  /** "oblique": the Schrägbild; "net": the solid unfolded. */
+  w: z.enum(['oblique', 'net']).default('oblique'),
 });
 
 export const CubeNetFigure = z.object({
@@ -40,6 +52,17 @@ export const CubeNetFigure = z.object({
 });
 
 const Coord = z.number().int().min(-4).max(6);
+
+/** A building of unit cubes: heights row by row from the front, each row from the left. */
+export const CubesFigure = z.object({
+  type: z.literal('cubes'),
+  g: z
+    .array(z.array(z.number().int().min(0).max(4)).min(1).max(4))
+    .min(1)
+    .max(4),
+  v: z.enum(['oblique', 'plan', 'front', 'side', 'top']),
+  ask: z.enum(['none', 'count', 'front', 'side', 'top']),
+});
 
 export const Axes3dFigure = z.object({
   type: z.literal('axes3d'),

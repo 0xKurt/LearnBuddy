@@ -7,6 +7,7 @@
 //   spelling_dictation — a Diktat: words or sentences read aloud that she types (issue #242)
 //   help     — a homework task they typed: hints only, never the solution
 //   teach_back — „Erklär mal": open questions SHE explains, checked against key points (issue #236)
+//   read     — a text Buddy writes at her level, with questions about it (Leseverständnis, #368)
 // Buddy explaining something is the chat's answer, never a mode (owner decision 28.09., issue #70).
 // One structured model call; items are validated like extracted ones.
 // Idempotent per client_request_id.
@@ -26,6 +27,7 @@ import { CURRICULUM_RULES, curriculumBlock, offCurriculum, pointOf } from '../cu
 import { BAR_RULES, barItems } from './bars.js';
 import { DICTATION_RULES, dictationItems, type DictationItem } from './dictation.js';
 import { prepareHints } from './hints.js';
+import { buddyReadingItems, READ_TEXT_RULES } from './readText.js';
 import { LISTEN_RULES, listenItems, noVoiceToReadIt } from './listen.js';
 import {
   FIGURE_RULES,
@@ -81,7 +83,11 @@ import { structuredItems, type StructuredItem } from './structured.js';
 // v1.32: find_error (a worked solution with one wrong line, the error built in by code) and
 //        column_calc (written arithmetic in columns, every digit and carry computed by code) (#260).
 // v1.33: grid_draw, drawing on a grid — points, a line or parabola, a mirror image, bars (#249).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.33';
+// v1.34: a marking text sorted into categories may have 12 words and 72 characters (#368).
+// v1.35: a reading run (read): Buddy's own reading text with its questions (#368), and a reading
+//        question may ask for its Belegstelle (`evidence`).
+// v1.36: a prism's non-regular base, nets of solids ("which solid?") and Würfelgebäude (#368).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.36';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;
@@ -212,6 +218,7 @@ const TASK: Record<StartTopicRequest['kind'], string> = {
   listen: LISTEN_RULES,
   spelling_dictation: DICTATION_RULES,
   teach_back: TEACH_BACK_RULES,
+  read: READ_TEXT_RULES,
   speak: `The learner wants to PRACTISE SPEAKING. If they typed words or sentences in a foreign language, make one "speak" item per sentence or word as typed; if they named a topic or unit, write 5–8 short, useful sentences for their level. lang = the language to speak. prompt = what to say (answer = the same). topic = 2–4 words.`,
   test: `Write a PRACTICE TEST of 8–12 questions on the topic the learner named, like a real class test at their grade: the important points, easy to harder, mixing kinds; answerable in one try (no multi-step long answers).`,
   help: `The learner TYPED A HOMEWORK TASK and wants help to solve it THEMSELVES. One item per task/sub-task, prompt = the task in the learner's own words (copy it), answer = the correct final answer, which the learner never sees — it guides hints. Never add tasks or intermediate questions of your own.`,
@@ -253,6 +260,8 @@ const MODE: Record<StartTopicRequest['kind'], 'practice' | 'help' | 'test'> = {
   spelling_dictation: 'practice',
   // „Erklär mal" is practice too: the same card, hints, voice mode and spaced repetition (#236).
   teach_back: 'practice',
+  // A reading text of Buddy's is practice too: the same card as a photographed one (#368).
+  read: 'practice',
   help: 'help',
 };
 
@@ -267,6 +276,8 @@ const ORIGIN: Record<StartTopicRequest['kind'], 'buddy' | 'typed' | 'homework'> 
   spelling_dictation: 'typed',
   // Buddy wrote the questions and their key points, also when they are about her sheet.
   teach_back: 'buddy',
+  // Buddy wrote the text and the questions ("Frage von Buddy").
+  read: 'buddy',
   help: 'homework',
 };
 
@@ -482,6 +493,8 @@ type Prepared = {
   dictation: DictationItem[];
   /** Explanation questions, each with key points code checked (issue #236). */
   teachBack: StoredItem[];
+  /** The questions about Buddy's reading text, after its level and language (#368). */
+  reading: StoredItem[];
 };
 
 /**
@@ -585,6 +598,15 @@ function preparedFrom(
         : [],
     teachBack: profile.teachBack
       ? teachBackItems(set.teach_back, dictationSource?.fromSheet ? dictationSource.text : null)
+      : [],
+    reading: profile.reading
+      ? buddyReadingItems(set.reading, {
+          locale: learner.locale,
+          level: learner.level,
+          grade: learner.grade,
+          wish: input.difficulty ?? null,
+          subjectKind: set.subject?.kind ?? null,
+        })
       : [],
   };
 }
@@ -712,6 +734,7 @@ async function prepareTopic(
       structured: [],
       dictation: [],
       teachBack: [],
+      reading: [],
     },
     {
       now,
@@ -767,7 +790,8 @@ async function store(
       prepared.staffs.length +
       prepared.structured.length +
       prepared.dictation.length +
-      prepared.teachBack.length ===
+      prepared.teachBack.length +
+      prepared.reading.length ===
       0
   ) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
@@ -794,6 +818,7 @@ async function store(
           ...prepared.staffs,
           ...prepared.dictation,
           ...prepared.teachBack,
+          ...prepared.reading,
         ],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,

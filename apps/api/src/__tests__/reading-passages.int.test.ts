@@ -284,6 +284,95 @@ describe.skipIf(!dbReady)('reading texts', () => {
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 
+  it('a Belegstelle: she taps the lines of the text, the text is her board, code counts (#368)', async () => {
+    const m = await photograph(
+      sheet({
+        reading: [
+          reading({
+            questions: [
+              QUESTIONS[0],
+              {
+                kind: 'evidence',
+                statement: 'Mia ist dem Bauern dankbar.',
+                // Lines 6–7: the empty line between the paragraphs is not counted.
+                evidence:
+                  'half ihr auf und brachte sie zur Schule. Seitdem grüßt Mia ihn jeden Morgen',
+                difficulty: 2,
+              },
+              // Dropped: it names the line, which is the answer.
+              {
+                kind: 'evidence',
+                statement: 'In Z. 4 steht, dass der Weg vereist war.',
+                evidence: 'war der Weg vereist',
+                difficulty: 2,
+              },
+              // Dropped: the evidence is not in the text.
+              {
+                kind: 'evidence',
+                statement: 'Mia hat einen Hund.',
+                evidence: 'Mia geht mit ihrem Hund spazieren',
+                difficulty: 2,
+              },
+            ],
+          }),
+        ],
+      }),
+    );
+    const s = await practise(m);
+    expect(s.items.map((i) => i.item.prompt)).toEqual([
+      'Womit fährt Mia zur Schule?',
+      'Mia ist dem Bauern dankbar.',
+    ]);
+    const beleg = s.items[1]!;
+    const view = beleg.item.task_view;
+    expect(view).toMatchObject({ type: 'mark', mode: 'lines', words: [], lines: LINES });
+    // The text is her board: not sent a second time above the question while it is open.
+    expect(beleg.item.passage).toBeNull();
+    expect(s.items[0]!.item.passage).not.toBeNull();
+    // No hint names the line: the lines are the answer.
+    expect(beleg.hints_left).toBe(0);
+
+    const wrong = await answer(s, beleg, {
+      parts: {
+        type: 'mark',
+        marks: [
+          { at: 'l6', category: null },
+          { at: 'l1', category: null },
+        ],
+      },
+    });
+    expect(wrong.status, JSON.stringify(wrong.body)).toBe(200);
+    expect(wrong.body.verdict).toBe('incorrect');
+    expect(wrong.body.reply.text).toBe('Noch nicht ganz: 1 richtig, 1 fehlt noch, 1 zu viel.');
+    // A line that is not one of the text is refused, not graded.
+    const nowhere = await answer(s, beleg, {
+      parts: { type: 'mark', marks: [{ at: 'l99', category: null }] },
+    });
+    expect(nowhere.status).toBe(422);
+    const right = await answer(s, beleg, {
+      parts: {
+        type: 'mark',
+        marks: [
+          { at: 'l7', category: null },
+          { at: 'l6', category: null },
+        ],
+      },
+    });
+    expect(right.body.verdict).toBe('correct');
+    // Closed: the text is back above it, with the lines that back the statement.
+    const closed = right.body.session.items[1]!;
+    expect(closed.item.task_view).toBeNull();
+    expect(closed.item.passage).toMatchObject({ ref: 't1', evidence: { from: 6, to: 7 } });
+    // Her answer in the conversation, in her language.
+    const said = await env.db.query<{ text: string }>(
+      `select text from practice_turns where session_id = $1 and item_id = $2 and role = 'learner'
+        order by created_at`,
+      [s.id, beleg.item.id],
+    );
+    expect(said.map((x) => x.text)).toEqual(['Z. 1, 6', 'Z. 6–7']);
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
+  });
+
   it('answering twice with one turn id counts once; another learner sees nothing of it', async () => {
     const s = await practise(await photograph(sheet()));
     const si = s.items[1]!;

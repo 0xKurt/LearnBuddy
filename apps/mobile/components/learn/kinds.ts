@@ -17,6 +17,8 @@ export const KIND_ICON: Record<TopicKind, IconName> = {
   // „Erklär mal" (issue #236): she explains an idea in her own words — the bulb, not the mic,
   // because she may just as well type it.
   teach_back: 'bulb',
+  // Leseverständnis (#368): the book a reading text above a question carries (`PassagePanel`).
+  read: 'book',
   help: 'pencil',
 };
 
@@ -29,6 +31,7 @@ export const KIND_LABEL: Record<TopicKind, string> = {
   listen: 'start.listen',
   spelling_dictation: 'start.spelling_dictation',
   teach_back: 'start.teach_back',
+  read: 'start.read',
   help: 'start.homework',
 };
 
@@ -45,5 +48,7 @@ export const KIND_EXAMPLES: Record<TopicKind, number> = {
   spelling_dictation: 0,
   // Asked for in the chat ("Frag mich ab", "Darf ich's dir erklären?"), about a topic or her sheet.
   teach_back: 0,
+  // Asked for in the chat ("Lass uns Lesen üben"); Buddy writes the text on the topic she names.
+  read: 0,
   help: 0,
 };
