@@ -29,6 +29,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
+import { AnswerShell } from './AnswerShell.js';
 
 /** The bar is a row of touch targets, so it is at least as tall as one (`TOUCH`). */
 const BAR_HEIGHT = TOUCH + 12;
@@ -221,5 +222,33 @@ export function FractionBarAnswer({ surface, value, disabled, onChange, onPick }
         {t('bar.shaded', { filled: shaded, total: parts })}
       </Text>
     </View>
+  );
+}
+
+/**
+ * The bar as a board in the answer shell (report #388 §9, issue #402): the shaded bar is the
+ * answer and "Prüfen" checks it; a picked bar goes out at once, like a tile. Both are taps (#163).
+ */
+export function FractionBarBoard({
+  onCheck,
+  ...bar
+}: Omit<Props, 'onPick'> & { onCheck: (text: string) => void }) {
+  const { t } = useTranslation('practice');
+  const ready = bar.value.trim();
+  return (
+    <AnswerShell
+      keeps="whole"
+      answer={<FractionBarAnswer {...bar} onPick={onCheck} />}
+      action={
+        bar.surface.mode === 'pick'
+          ? { tap: true }
+          : {
+              ready: ready !== '',
+              disabled: bar.disabled,
+              onPress: () => onCheck(ready),
+              waitsHint: t('bar.check_waits'),
+            }
+      }
+    />
   );
 }

@@ -452,7 +452,8 @@
     "diagram_cycle": "Kreislauf",
     "diagram_tree": "Baumschema",
     "diagram_free": "Schema",
-    "diagram_gap": "Lücke {{letter}}"
+    "diagram_gap": "Lücke {{letter}}",
+    "clock_blank": "Uhr ohne Zeiger"
   },
   "keys": {
     "row": "Mathe-Zeichen",
@@ -499,5 +500,19 @@
   "preview": {
     "label": "Vorschau",
     "a11y": "Vorschau deiner Antwort: {{math}}"
+  },
+  "tap": {
+    "how_number_line": "Tippe auf die Stelle am Zahlenstrahl.",
+    "how_function_plot": "Tippe auf den Punkt im Koordinatensystem.",
+    "how_bar_chart": "Tippe auf eine Säule.",
+    "how_clock": "Tippe dahin, wohin der Zeiger zeigen soll.",
+    "value": "Stelle: {{value}}",
+    "point": "Punkt ({{x}} | {{y}})",
+    "bar": "Säule: {{label}}",
+    "label": "Deine Stelle in der Abbildung",
+    "up": "nach oben",
+    "down": "nach unten",
+    "hour_hand": "Kleiner Zeiger",
+    "minute_hand": "Großer Zeiger"
   }
 }

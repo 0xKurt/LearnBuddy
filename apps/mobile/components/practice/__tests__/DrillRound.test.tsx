@@ -40,6 +40,7 @@ const task = (
     image: null,
     tap_choices: null,
     surface: null,
+    tap: false,
     task_view: null,
     listen: null,
     passage: null,

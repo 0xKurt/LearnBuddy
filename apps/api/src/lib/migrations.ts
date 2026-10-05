@@ -85,6 +85,7 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
   '0089_essay_feedback',
   '0090_practice_later',
   '0091_roleplay_feedback_message',
+  '0092_tap_items',
 ];
 
 /**

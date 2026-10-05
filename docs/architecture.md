@@ -3125,6 +3125,73 @@ diagram.ts`): every arrow between two boxes that exist, no arrow to itself, at m
   (Wirtschaftskreislauf with goods and money both ways); a Struktogramm (nested blocks, not
   boxes and arrows).
 
+### Tapping inside a figure (issue #248, migration `0092_tap_items.sql`)
+
+She answers by tapping — or dragging to — a place IN the figure: a number on a number line, a
+point of a coordinate system, a column of a bar chart, the hands of a clock face ("Stell die Uhr
+auf Viertel vor acht"). **One mechanism for every tappable figure**; maps (#251) and labelled
+pictures (#252) add their figure to it rather than building a second one.
+
+- **Contract.** `ItemDraft.tap` (optional boolean; the model omits it for every other question)
+  and `ItemView.tap` (true only while the question is open). Stored in `items.tap` (migration
+  0092, check: no tap without a figure). `ClockFigure.c` may be empty: a face without hands, the
+  face she sets. Prompts: generate.v1.31, extract.v8.12 (`FIGURE_RULES`).
+- **The grid** (`packages/shared-math/src/tap.ts`, dependency-free, the app imports it by path):
+  `tapAxes(figure)` is what a figure offers to tap — one or more axes, each a list of values. A
+  number line: min, min + step … max (at most 21 places). A coordinate system: the whole numbers
+  of each axis (at most 12 units per axis). A bar chart: one place per column (two columns with
+  one name offer none). A clock face: the hours 1–12 and the twelve five-minute marks (no face
+  that already shows a time, none that counts 24 hours). A tap is a `TapPick` (one index per
+  axis); `tapText` writes it exactly as a key is written ("2.5", "(2|-1)", "Apr", "7:45") and
+  `tapPick` reads a written answer back onto the grid.
+- **Rule 0, generation** (`apps/api/src/modules/practice/tapCheck.ts`, in `usableItems`): a tap
+  question is `numeric` on a number line and `short` everywhere else; its key must stand on a
+  place of the grid (`tapProblem`: 2,25 on half steps, a point outside the window, a column
+  nobody drew, 7:43 are dropped — nobody could tap them) and the figure must not already mark it
+  (a point or a hand on the key would only be copied). A face without hands on a question that is
+  not tapped is dropped too. Rejected, never moved onto the grid. The session view reads a stored
+  row back through the same check (`tapItemProblem`): a row that no longer holds is typed.
+- **Rule 0, grading** (`tapRuleVerdict` in `ruleCheck`, before every other rule): her place
+  against the key's place, exactly — `correct` or `incorrect`, never the tutor's. 19:45 and 7:45
+  are one place on a dial. An answer that is no place of the figure goes on to the other rules.
+  Not `via: 'tapped'`: marking the place is what the class test asks for (producing, not
+  recognising, as for a written note line, #226).
+- **Screen** (`components/practice/FigureTapAnswer.tsx`, a board in the answer shell like the
+  fraction bar, `FractionBarBoard`): the figure stands at the bottom INSTEAD of in the card,
+  "Prüfen" checks her place, the bar's field is her question (#402). `components/math/TapFigure`
+  draws the figure through `FigureView` with a layer over it (`layer` prop: the drawing's own
+  coordinates at the width it got): the gesture surface `components/lb/TapPad` (react-native-
+  gesture-handler; a tap and a drag are one gesture, the mark follows the finger) and her mark —
+  a ring on a point, a frame around a column; on the clock her hands ARE the mark. A clock is set
+  one hand at a time: `Segmented` chooses the hand, the small one first, then the large one is
+  next on its own.
+- **Where a place stands** (`apps/mobile/lib/math/tapLayout.ts`): `pickAt(x, y)` snaps a finger
+  to the nearest place (tick, grid point, column, or the nearest of the twelve marks by its
+  direction from the centre), `markOf(pick)` says where it is marked. Both read the geometry the
+  drawers paint with — `numberLineGeometry`, `barChartGeometry`, `clockGeometry`
+  (`lib/math/figureGeometry.ts`) and `plotGeometry` (`lib/math/plotLayout.ts`), pulled out of
+  `FigureView` / `PrimaryFigures` for this — so a tap cannot land a place off the drawing.
+  The whole figure is the touch target; the places of a dense grid are no 44 pt each (a number
+  line has ~15 pt between 21 places at 360 pt), the snap and her place in words carry the
+  precision, as on a slider.
+- **In words, and for a screen reader:** under the figure, "Stelle: 2,5", "Punkt (2 | −1)",
+  "Säule: Apr" — on a clock where the hands stand ("der kleine Zeiger zwischen 7 und 8, der
+  große Zeiger auf der 9", `describeClock`), never the time they make, which is what she
+  practises reading. That line is one `adjustable` element: increment/decrement move along the
+  place (the chosen hand on a clock), "nach oben" / "nach unten" move the point's y.
+- **Adding a figure (#251, #252):** a shape and a `case` in `tapAxes` / `tapText` / `tapPick`
+  (and what "already marks the key" means for it in `tapProblem`), a `case` in `tapLayout` built
+  on the drawer's geometry, words in `placeWords`. Nothing on the server or the screen changes.
+- Tests: `packages/shared-math/src/__tests__/tap.test.ts` (grids, snapping round trip, refusals,
+  verdicts), `apps/mobile/lib/math/__tests__/tapLayout.test.ts` (a tap on a mark picks its
+  place, marks where the drawers paint, the clock hand by hand), `TapFigure.test.tsx`,
+  `tap-figures.int.test.ts` (stored or dropped, exact verdicts without a model, replay, a row
+  that no longer holds, another learner); walkthrough `tests/web/tap-figures.spec.ts` (scenario
+  `testing/scenarios/tap.ts`).
+- **Not built here:** laying an amount with coins ("Leg 3,45 €", #254) — a sum of several taps,
+  not one place; tapping a cell of the periodic table (#250) or a month of a line or climate chart
+  (#245) — each is one `case` on this mechanism.
+
 ### Explain profiles (issue #281, D2)
 
 Every explain call is sent only the forms its run can use — the schema is derived from the kind
@@ -3650,9 +3717,9 @@ word list, so it stays a prompt rule.
     the screen-reader text (`describePrimary`) says what is drawn — where the hands stand, which
     pieces lie there, how many dots per colour, plates, rods and cubes — never the time, sum or
     number asked. Theme token `figure.coins` (copper, brass, silver), notes use `figure.slices`.
-  - **Not built here**: setting a clock by touch ("Stell die Uhr auf 7:45") and laying an amount
-    by tapping coins ("Leg 3,45 €") — both are answer forms, not figures, and wait for the
-    answer-area rebuild (#310). Zahlenmauer and Stellenwerttafel are structured tables (#230).
+  - **Not built here**: laying an amount by tapping coins ("Leg 3,45 €") — an answer form, not a
+    figure. Setting a clock by touch ("Stell die Uhr auf 7:45") is built on a face without hands
+    (§Tapping inside a figure, #248). Zahlenmauer and Stellenwerttafel are structured tables (#230).
   - Prompts: generate.v1.20, extract.v8.3 (`FIGURE_RULES`).
   - Tests: `primary.test.ts` (hands ↔ time incl. quarter and half, amounts, counts, refusals),
     `primaryFigures.test.ts`, `PrimaryFigures.test.tsx`, `primary-figures.int.test.ts`; walkthrough

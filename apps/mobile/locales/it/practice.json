@@ -326,5 +326,8 @@
     "later": "Me lo segno per dopo",
     "later_hint": "Buddy ne riparla dopo l'esercizio.",
     "kept": "Segnato"
+  },
+  "tap": {
+    "check_waits": "Solo dopo aver toccato la figura."
   }
 }

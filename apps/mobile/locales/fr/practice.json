@@ -326,5 +326,8 @@
     "later": "Je le garde pour plus tard",
     "later_hint": "Buddy y revient après l'entraînement.",
     "kept": "Noté"
+  },
+  "tap": {
+    "check_waits": "Seulement quand tu as touché la figure."
   }
 }

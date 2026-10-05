@@ -452,7 +452,8 @@
     "diagram_cycle": "Cycle",
     "diagram_tree": "Tree diagram",
     "diagram_free": "Diagram",
-    "diagram_gap": "gap {{letter}}"
+    "diagram_gap": "gap {{letter}}",
+    "clock_blank": "Clock without hands"
   },
   "keys": {
     "row": "Math symbols",
@@ -499,5 +500,19 @@
   "preview": {
     "label": "Preview",
     "a11y": "Preview of your answer: {{math}}"
+  },
+  "tap": {
+    "how_number_line": "Tap the place on the number line.",
+    "how_function_plot": "Tap the point in the coordinate system.",
+    "how_bar_chart": "Tap a bar.",
+    "how_clock": "Tap the clock face where the hand should point.",
+    "value": "Place: {{value}}",
+    "point": "Point ({{x}} | {{y}})",
+    "bar": "Bar: {{label}}",
+    "label": "Your place in the figure",
+    "up": "up",
+    "down": "down",
+    "hour_hand": "Hour hand",
+    "minute_hand": "Minute hand"
   }
 }

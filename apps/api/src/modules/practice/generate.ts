@@ -76,7 +76,9 @@ import { structuredItems, type StructuredItem } from './structured.js';
 // v1.30: no figure on a vocab or speak card, and a listening option's picture only a clock, coins,
 //        a dot field or base-ten blocks (#375: the vocab, speak and listen schemas lose most of
 //        `ModelFigure`; every other kind is sent the same bytes).
-export const GENERATE_PROMPT_VERSION = 'generate.v1.30';
+// v1.31: a question answered by tapping a place in its figure — a number line, a point, a column,
+//        a clock face to set (`tap`, #248).
+export const GENERATE_PROMPT_VERSION = 'generate.v1.31';
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;

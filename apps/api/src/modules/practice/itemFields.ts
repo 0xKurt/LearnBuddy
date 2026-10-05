@@ -34,6 +34,12 @@ export const CHOICE_FIGURE_KINDS = ['multiple_choice'] as const;
  */
 export const FIGURE_KINDS = ['short', 'long', 'numeric', 'multiple_choice', 'formula'] as const;
 
+/**
+ * Answered by tapping a place in the figure (issue #248, `tapCheck.ts`): a number on a number line,
+ * a point, a column or a time — a number or a short text, never an option or a free text.
+ */
+export const TAP_KINDS = ['short', 'numeric'] as const;
+
 /** Whether `kind` is one of `kinds` — typed for the plain strings the item kinds are. */
 export function kindIn(kinds: readonly string[], kind: string): boolean {
   return kinds.includes(kind);
@@ -50,6 +56,7 @@ export function unusedItemFields(kinds: readonly string[]): {
   choice_figures?: true;
   figure?: true;
   read?: true;
+  tap?: true;
 } {
   const none = (some: readonly string[]) => !kinds.some((k) => kindIn(some, k));
   return {
@@ -58,5 +65,6 @@ export function unusedItemFields(kinds: readonly string[]): {
     ...(none(SPELLING_KINDS) ? { spelling: true } : {}),
     ...(none(CHOICE_FIGURE_KINDS) ? { choice_figures: true } : {}),
     ...(none(FIGURE_KINDS) ? { figure: true, read: true } : {}),
+    ...(none(TAP_KINDS) ? { tap: true } : {}),
   };
 }

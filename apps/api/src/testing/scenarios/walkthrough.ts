@@ -22,6 +22,7 @@ import { scriptPrimary } from './primary.js';
 import { scriptReading } from './reading.js';
 import { scriptRoleplay } from './roleplay.js';
 import { scriptSolids } from './solids.js';
+import { scriptTap } from './tap.js';
 import { pronounceRules, readingRules, tutorRules } from './rules.js';
 import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
@@ -35,6 +36,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   // First of all: her questions in practice (#402) stand in requests about the pie chart and the
   // order, whose own words an older, broader rule may know.
   scriptAsk();
+  // Early too: "Zahlenstrahl" and "Uhr" are words an older, broader rule may know (#248).
+  scriptTap();
   // First: its generation rule is keyed on her list, and a broader rule registered earlier
   // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
   scriptDictation();
