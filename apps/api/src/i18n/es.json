@@ -38,7 +38,9 @@
   },
   "material": {
     "ready": "Tus preguntas de «{{title}}» están listas ({{count}}).",
-    "ready_untitled": "Tus preguntas están listas ({{count}})."
+    "ready_untitled": "Tus preguntas están listas ({{count}}).",
+    "review": "¿Repasamos «{{title}}» un momento? Hay unas preguntas listas: después de una noche se queda mejor.",
+    "review_untitled": "¿Repasamos tu ficha un momento? Hay unas preguntas listas: después de una noche se queda mejor."
   },
   "practice": {
     "accents": "Casi – revisa otra vez los acentos.",

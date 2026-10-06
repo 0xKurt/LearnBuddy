@@ -155,8 +155,6 @@
     "listen_slow_short": "Lentamente",
     "listen_stop": "Ferma",
     "listen_hint": "Te lo legge ad alta voce.",
-    "read_question_label": "Leggi la domanda ad alta voce",
-    "read_question_hint": "Ti legge la domanda. Tocca ancora per fermare.",
     "no_voice": "La lettura ad alta voce ora non funziona su questo dispositivo – forse manca la voce per questa lingua.",
     "record": "Parla",
     "record_again": "Ridillo",

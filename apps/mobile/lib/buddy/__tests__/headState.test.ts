@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { headState, type HeadFacts } from '../headState.js';
 
-const quiet: HeadFacts = { sending: false, working: false, streaming: false, voiceMode: false };
+const quiet: HeadFacts = { sending: false, working: false, streaming: false };
 
 describe('what the head says Buddy is doing', () => {
   it('never shows idle while an answer is being written', () => {
@@ -23,10 +23,13 @@ describe('what the head says Buddy is doing', () => {
     expect(headState({ ...quiet, working: true, streaming: true })).toBe('speak');
   });
 
-  it('listens in voice mode while nothing is in flight', () => {
-    expect(headState({ ...quiet, voiceMode: true })).toBe('listen');
-    // …but not while he is busy: that would claim a microphone is open.
-    expect(headState({ ...quiet, voiceMode: true, working: true })).toBe('think');
+  it('never claims to listen: the chat has no open microphone (#386, reading aloud is not listening)', () => {
+    const all = [false, true].flatMap((sending) =>
+      [false, true].flatMap((working) =>
+        [false, true].map((streaming) => headState({ sending, working, streaming })),
+      ),
+    );
+    expect(all).not.toContain('listen');
   });
 
   it('is idle when nothing is happening', () => {

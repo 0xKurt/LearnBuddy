@@ -1,21 +1,17 @@
-// A small row of quiet tools under the question (never a second headline): reading the question
-// again in voice mode, hearing a foreign word, hearing a listening text (issue #210). Nothing at
-// all when none applies. A Diktat carries its play control in its card (`DictationCard`, #242).
+// A small row of quiet tools under the question (never a second headline): hearing a foreign word,
+// hearing a listening text (issue #210). Nothing at all when none applies. Hearing the question
+// again is the conversation row's ("Nochmal vorlesen", `CheckBar`, issue #386), not a pill here. A Diktat carries its play control in its card (`DictationCard`, #242).
 
 import type { ItemView } from '@learnbuddy/shared-types/contracts';
-import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { SPACE } from '../../lib/theme/space.js';
-import { Btn } from '../lb/Btn.js';
 import { HearText } from './HearText.js';
 import { ListenButton } from './ListenButton.js';
 
 type Props = {
   item: ItemView;
   sessionId: string;
-  /** Voice mode is on and the question is open without options: "Nochmal vorlesen". */
-  readAgain: (() => void) | null;
   /** A foreign vocabulary word: its own "Anhören" (its pronunciation is the point). */
   hearWord: boolean;
   heard: (ref: string | undefined) => boolean;
@@ -23,23 +19,8 @@ type Props = {
   disabled: boolean;
 };
 
-export function QuestionTools({
-  item,
-  sessionId,
-  readAgain,
-  hearWord,
-  heard,
-  markHeard,
-  disabled,
-}: Props) {
-  const { t } = useTranslation('common');
+export function QuestionTools({ item, sessionId, hearWord, heard, markHeard, disabled }: Props) {
   const tools = [
-    // With options the voice slot carries it (SpokenChoice, in the answer shell's bar).
-    readAgain ? (
-      <Btn key="read" size="sm" variant="soft" pill icon="speak" onPress={readAgain}>
-        {t('voice.read_again')}
-      </Btn>
-    ) : null,
     hearWord && item.read_aloud && item.prompt_lang ? (
       <ListenButton key={`listen-${item.id}`} text={item.prompt} lang={item.prompt_lang} />
     ) : null,
