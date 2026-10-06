@@ -19,7 +19,6 @@ import {
   WhyRequest,
 } from '@learnbuddy/shared-types/contracts';
 import { Hono } from 'hono';
-import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 
 import {
@@ -30,7 +29,7 @@ import {
   type AppEnv,
 } from '../../http/context.js';
 import { check, readBody } from '../../http/validate.js';
-import { isAppError } from '../../lib/errors.js';
+import { streamed, wantsStream } from '../../http/stream.js';
 import { runLearnerJobs } from '../buddy/check.js';
 import { recordCard, startCardPass } from './cardPass.js';
 import { answerDrill, startDrill } from './drillRound.js';
@@ -272,22 +271,6 @@ practiceRoutes.post('/sessions/:id/speak', async (c) => {
   const input = await readBody(c, SpeakRequest);
   const learner = c.get('learner');
   const deps = depsOf(c);
-  if (!(c.req.header('accept') ?? '').includes('text/event-stream'))
-    return c.json(await speakItem(deps, learner, sessionId, input));
-  return streamSSE(c, async (stream) => {
-    // Errors are answered here, as a code only: nothing internal reaches the app.
-    try {
-      let sent = Promise.resolve();
-      const answer = await speakItem(deps, learner, sessionId, input, (event) => {
-        sent = sent.then(() => stream.writeSSE({ event: 'progress', data: JSON.stringify(event) }));
-      });
-      await sent;
-      await stream.writeSSE({ event: 'done', data: JSON.stringify(answer) });
-    } catch (err) {
-      await stream.writeSSE({
-        event: 'error',
-        data: JSON.stringify({ code: isAppError(err) ? err.code : 'internal' }),
-      });
-    }
-  });
+  if (!wantsStream(c)) return c.json(await speakItem(deps, learner, sessionId, input));
+  return streamed(c, 'progress', (emit) => speakItem(deps, learner, sessionId, input, emit));
 });
