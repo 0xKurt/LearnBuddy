@@ -41,6 +41,7 @@ import {
   type StaffCheck,
 } from './staff.js';
 import { takeParts } from './partsAnswer.js';
+import { columnStepOf } from './columnCalc.js';
 import { givesHints, learnsFsrs } from './modeRules.js';
 import { asTestTurn, ladderDone, REVEAL_AFTER_MISSES, workedReply } from './ladder.js';
 import { lockActiveSession } from './sessionRow.js';
@@ -339,6 +340,8 @@ export async function answerItem(
     essay?: EssayFeedback | null;
     /** Her question had nothing to do with the task: the reply offers "für nachher" (#391). */
     offersLater?: boolean;
+    /** The division step the reply names, for the app to open (#420). */
+    columnStep?: number | null;
   };
   let judged: Judged;
   // Distress in the answer field, or the provider's safety filter (issue #389): the reply is
@@ -498,6 +501,7 @@ export async function answerItem(
       // A match names its wrong link from the second miss on: that is a hint (#229).
       gaveHint: structuredNamesPart(partsCheck, item.attempts),
       revealed: false,
+      columnStep: partsCheck.type === 'column_calc' ? columnStepOf(partsCheck) : null,
     };
   } else if (dictationCheck !== null && !dictationCheck.correct && rule === 'incorrect') {
     // A Diktat she did not get right yet (issue #242): code names the place — "Doppel-m fehlt",
@@ -858,8 +862,12 @@ export async function answerItem(
 
   if (session.mode === 'test' && !safeguarded) judged = asTestTurn(judged, learner.locale, item);
 
+  // The step the reply names opens in the app (#420) — not in a test, which names no place, and
+  // not once the solution is shown.
+  const columnStep =
+    session.mode === 'test' || judged.revealed ? null : (judged.columnStep ?? null);
   // A concurrent duplicate of the same answer that won gets its result back (`settleTurn`).
-  return settleTurn(
+  const settled = await settleTurn(
     deps,
     learner.id,
     sessionId,
@@ -1016,6 +1024,7 @@ export async function answerItem(
         await touchRun(tx, learner.id, sessionId, now);
       }),
   );
+  return columnStep === null ? settled : { ...settled, column_step: columnStep };
 }
 
 /** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */

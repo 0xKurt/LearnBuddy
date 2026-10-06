@@ -5,6 +5,8 @@
 
 import type { SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
 
+import { freeText } from './essay.js';
+
 /**
  * The question on screen: the one the learner works on or has just closed
  * (it stays until "Weiter"), otherwise the first open one; none when nothing is left.
@@ -54,7 +56,7 @@ export function questionOffers(session: SessionView, shown: SessionItemView): Of
     // A free text has no solution to show, so the way past it is named for what it does
     // (issue #197) — "Lösung zeigen" would promise something the server does not send.
     skipLabel:
-      testing || item.kind === 'long'
+      testing || freeText(item.kind)
         ? 'skip'
         : canPostpone && !shown.reveal_available
           ? 'later'
@@ -67,7 +69,8 @@ export function questionOffers(session: SessionView, shown: SessionItemView): Of
       (shown.answer !== null ||
         (session.mode === 'help' && shown.status === 'correct') ||
         // A free text sends no answer (issue #197) — but asking about her own text again is
-        // exactly where it helps most, so the offer stays.
+        // exactly where it helps most, so the offer stays. Not after a long text's feedback:
+        // there is nothing to explain again, the server answers 409 (#258).
         item.kind === 'long'),
     // Only a question from a photo or from Buddy; never homework, never during a test.
     flaggable:

@@ -474,6 +474,19 @@ const FIGURE_CHECKS: readonly (<T extends ItemDraft>(it: T, locale: string | nul
     checkedTap,
   ];
 
+/**
+ * The questions of forms that are on (issue #296, `config.FORMS_OFF`) — the switch for what a
+ * photographed sheet gives, which is read with its own schema (`materials/extract.ts`; a topic
+ * run's profile drops the form already, `profileFor`). A question of a form that is off is not
+ * stored. One already stored stays answerable: nothing on the answer path reads this.
+ */
+export function formsOn<T extends { kind: ItemKind }>(
+  items: readonly T[],
+  off: ReadonlySet<ItemKind>,
+): T[] {
+  return items.filter((it) => !off.has(it.kind));
+}
+
 /** Keep only items whose shape is consistent; returns them normalised. */
 export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}): ItemDraft[] {
   const out: ItemDraft[] = [];

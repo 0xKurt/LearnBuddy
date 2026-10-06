@@ -2154,9 +2154,39 @@ eigenen Worte bestätigen und keine exakte Angabe überstimmen.
   Aufsatz in einem Test wird abgelehnt (409, `admitText`).
 - **Ausfall.** Kein Modell, kaputte Ausgabe oder Tageslimit: kein Urteil (`verdict` null), kein
   Versuch, der ehrliche Satz „Ich kann deinen Text gerade nicht lesen. Er ist nicht verloren …".
-- **Noch nicht verdrahtet (Schritt 2, mit der App):** woher eine Aufsatzfrage kommt (Buddys Angebot
-  und/oder eine `long_text`-Aufgabe auf ihrem Blatt, die heute noch `NotPracticable` ist), das
-  Antwortfeld bis 12 000 Zeichen mit lokalem Entwurf, die Darstellung je Punkt und Stelle.
+- **Woher eine Aufsatzfrage kommt (Schritt 2):** aus Buddys Angebot, `offer_learning` mit der
+  Art `essay` — über ein Thema, das sie nennt, oder die Schreibaufgabe auf
+  einem ihrer Blätter (`sheet`, wie bei „Erklär mal"). Kein Wähler und kein neuer Screen: sie
+  bittet im Chat, Buddy wählt die Form, der Knopf „Aufsatz schreiben" startet sie. Der Generator
+  füllt eine eigene Liste `essay` mit genau einer Aufgabe: Wortlaut, Textsorte
+  (`EssayType`) und — für eine Analyse — der Text, um den es geht (`practice/essayTask.ts`). Code
+  setzt die Kernpunkte aus der Textsorte (`essayItem`), nie das Modell; eine Analyse ohne Text
+  fällt weg, ein Text muss passen wie ein Lesetext (`passageFrom`) und, vom Blatt, wörtlich auf
+  ihrem Blatt stehen (`onTheSheet`). Ohne Blatt ist der Text einer Analyse Buddys eigener kurzer
+  Text, nie ein veröffentlichter aus dem Gedächtnis. Was übrig bleibt, ist ein Übungslauf mit
+  einer Frage. Ein `long_text` auf einem fotografierten Blatt bleibt in der Lesung
+  `NotPracticable` (die Übung des Blatts kann ihn nicht stellen); Buddy kann ihn von dort als
+  `essay` anbieten. Migration 0099 hebt die Grenze von `practice_turns.text` von 4000 auf 12 000
+  Zeichen — ein Aufsatz über etwa 600 Wörtern scheiterte vorher beim Speichern.
+- **In der App (Schritt 2):** dieselbe Übungsseite, dieselbe Eingabeleiste (`InputBar`), kein
+  zweites Feld. Für `essay` (`lib/practice/essay.ts`) nimmt die Leiste 12 000 Zeichen, steht
+  `tall` — drei Zeilen, beim Schreiben wächst sie bis zehn (mit Tastatur auf dem kleinen Telefon
+  bis vier, `formDensity`), in Ruhe bleibt sie bei drei, damit die Rückmeldung darüber Platz hat —,
+  und „Prüfen" bleibt unter der Leiste, solange Platz ist. Die Zeichenzahl erscheint erst in den
+  letzten 200 Zeichen. Ihr Text ist ein Entwurf je Lauf (`useDraft`), übersteht also das
+  Verlassen und einen App-Neustart, und bleibt nach dem Abschicken im Feld: die nächste Fassung
+  beginnt bei ihrer letzten. Im Gespräch steht eine Fassung als eine Zeile („Fassung 1 · 1 712
+  Wörter"), Buddys Antwort trägt die Rückmeldung in seiner Blase (`EssayFeedback`): je Kernpunkt
+  Zeichen und Wort („geschafft" / „noch offen", nie nur Farbe, nie „falsch"), bei „geschafft" ihre
+  eigenen Worte — violett wie ihre Blasen, in Anführungszeichen, mit Strich, für den Screenreader
+  „Deine Worte" —, bei „noch offen" der nächste Schritt; dann die Stellen zum Verbessern und der
+  nächste Schritt („Überarbeite …" oder „letzte Fassung"). Keine Zahl, keine Note. Der Weg an der
+  Frage vorbei heißt „Überspringen" (keine Lösung), „Die Bewertung stimmt nicht" gibt es nicht.
+  Die Rückmeldung ist höher als der Platz zwischen Frage und Leiste. Das Gespräch zeigt sonst nur
+  ganze Teile (#286, #403) und hätte sie ganz versteckt; als Antwort, die sie durchliest
+  (`threadRoom` `reads`), nimmt sie den ganzen Platz, steht ab ihrer ersten Zeile (`ThreadBox`
+  `readFrom`) und wird nach unten gescrollt. Ihre Frage zur Aufgabe (#402) steht im Gespräch
+  wörtlich, nicht als „Fassung".
 
 **Offen**: Eval-Satz (≥ 20 Texte je Textsorte, Übereinstimmung mit einer Lehrkraft) vor dem
 Live-Gang — wie bei #211 gibt es keinen Korpus. Ein Modellurteil kann keinen Punkt ohne ihre eigenen
@@ -2813,10 +2843,15 @@ next cell in the server's writing order (`order`: right to left, the carry befor
 phone's number pad is all she needs. A division is shown step by step (issue #413): the step she
 is at in full, the steps she has worked on above it shrunk to half-high lines she reads but no longer
 writes in, the steps she has not reached not yet there; the step follows the cell she writes in, a
-quotient digit opens its step again, and every cell still goes to the check. Printed rows are one number to a screen reader ("+1389"), every
+quotient digit opens its step again, and every cell still goes to the check. A finished step is one
+target (its two half rows, one touch high, `TapSurface`): a tap opens it again, a screen reader hears
+"Schritt 2 bearbeiten" (issue #420). After a check that is not right yet the answer carries the step
+the reply names (`AnswerResponse.column_step`, `columnStepOf`: the step of the first wrong cell, a
+quotient digit's own step) and the app opens it, her finger in its first cell — never in a test and
+never once the solution is shown. Printed rows are one number to a screen reader ("+1389"), every
 cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.44, now v1.46)
 and read from a sheet (extract.v8.22, now v8.24; a homework sheet: written arithmetic only, its own error is no
-Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86m, 360×740 and
+Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86n, 360×740 and
 390×844, light and dark, the keyboard up): four long lines with Buddy's longest reply above fit (six
 were 106 pt too tall, `FIND_ERROR_LINES_MAX`), and five rows of
 cells with Buddy's reply above (two partial products and their sum, a division of two steps). A
@@ -3753,6 +3788,14 @@ dropped, whatever the model wrote (Rule 0). Every row was a rule in `preparedFro
 a row, so a profile leaves out only what code already threw away: item kinds (`KINDS`), structured
 kinds (`STRUCTURED`), bars only in practice (#162), note lines in practice and tests (#226), the
 listening task only in a listening run (#210), a Diktat's entries only in a Diktat run (#242).
+**A form switched off** (#296): `FORMS_OFF` (comma-separated `ItemKind` values per environment; an
+unknown name stops the boot) takes the form out of the profile (`profileFor`) — out of the schema
+the model is shown and out of what code keeps — and out of what a photographed sheet stores
+(`formsOn` in `practice/items.ts`, used by `materials/service.ts`; a sheet left with nothing is `form_not_practicable`, never
+"unreadable"). Nothing on the answer path reads it, so a question of that form already stored stays
+answerable. A new form stays off in production until it was tested with the real model and the
+owner has seen it; switching is the environment variable, not a release. Figure types (a map, a
+solid) are not covered by it: they are not a form of their own but a drawing inside one.
 Inside an item, the fields no allowed kind keeps are
 left out too, from `practice/itemFields.ts` — the same constants `usableItems` and `usableRubric`
 discard by: a rubric (and its `RubricCheck` union) without a long answer, a tolerance without a
@@ -4558,8 +4601,10 @@ the role; code holds the frame (CLAUDE.md rule 1).
 - **The feedback is checked, not believed** (rule 0 from #224, the same rule as #211's `judged`).
   One model call (`ROLEPLAY_FEEDBACK_SYSTEM`, `RoleplayFeedbackForModel`, zod): per key point
   `met` and a quote, plus 2–3 lines of hers with a better version. `checkFeedback` counts a point
-  as managed **only** when the quote stands in her own lines (`quoteOccursIn`, whole words); an
-  invented quote, a fragment or a point the model left out is "noch nicht dabei". A better line
+  as managed **only** when the quote stands in her own lines, decided on the one path every key
+  point in the app takes (`quoted` in `practice/rubric.ts`, folded like a writing task's
+  `judged`, #296); an invented quote, a fragment or a point the model left out is "noch nicht
+  dabei". A better line
   whose `said` is not hers is dropped, never rewritten. The text she reads and hears is the
   app's (`i18n roleplay.*`): each point in words, a managed one with her own words as the proof —
   no score, no grade, no count. Stored as checked in `buddy_roleplays.feedback` (her export).

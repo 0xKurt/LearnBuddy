@@ -14,6 +14,7 @@ import {
   requireAccount,
   requireLearner,
   requireUser,
+  type AppContext,
   type AppEnv,
 } from '../../http/context.js';
 import { check, readBody } from '../../http/validate.js';
@@ -70,30 +71,25 @@ materialRoutes.delete('/:materialId/items/:itemId', async (c) => {
   return c.body(null, 204);
 });
 
-/** Photos are uploaded: verify, queue the reading, and start it right away. */
-materialRoutes.post('/:id/submit', async (c) => {
+/**
+ * Queue a reading with `queue` and start it right away. The answer is the state this request
+ * left (queued), read before the reading starts: otherwise it depends on how far the background
+ * work got (flaky 'processing').
+ */
+async function queueReading(c: AppContext, queue: typeof submitMaterial): Promise<Response> {
   const materialId = check(Uuid, c.req.param('id'));
   const deps = depsOf(c);
   const learnerId = c.get('learner').id;
-  const { jobId } = await submitMaterial(deps, learnerId, materialId);
-  // The answer is the state this request left (queued), read before the reading starts:
-  // otherwise it depends on how far the background work got (flaky 'processing').
+  const { jobId } = await queue(deps, learnerId, materialId);
   const view = await materialView(deps.db, learnerId, materialId);
   if (jobId) deps.background(() => runQueuedExtraction(deps, learnerId));
   return c.json(view, 202);
-});
+}
 
-materialRoutes.post('/:id/retry', async (c) => {
-  const materialId = check(Uuid, c.req.param('id'));
-  const deps = depsOf(c);
-  const learnerId = c.get('learner').id;
-  const { jobId } = await retryMaterial(deps, learnerId, materialId);
-  // The answer is the state this request left (queued), read before the reading starts:
-  // otherwise it depends on how far the background work got (flaky 'processing').
-  const view = await materialView(deps.db, learnerId, materialId);
-  if (jobId) deps.background(() => runQueuedExtraction(deps, learnerId));
-  return c.json(view, 202);
-});
+/** Photos are uploaded: verify, queue the reading, and start it right away. */
+materialRoutes.post('/:id/submit', (c) => queueReading(c, submitMaterial));
+
+materialRoutes.post('/:id/retry', (c) => queueReading(c, retryMaterial));
 
 /** "Passt so": the pages Buddy could not read are fine as they are. */
 materialRoutes.post('/:id/pages-ok', async (c) => {

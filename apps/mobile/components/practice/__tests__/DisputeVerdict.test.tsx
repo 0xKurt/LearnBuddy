@@ -63,6 +63,11 @@ describe('ob es etwas zu bestreiten gibt', () => {
   it('bietet ihn in einer beendeten Sitzung nicht an', () => {
     expect(canDisputeVerdict({ ...judged, sessionStatus: 'finished' })).toBe(false);
   });
+
+  it('bietet ihn bei einem langen Text nicht an: der wird nie bewertet (#258)', () => {
+    expect(canDisputeVerdict({ ...judged, kind: 'essay' })).toBe(false);
+    expect(canDisputeVerdict({ ...judged, kind: 'long' })).toBe(true);
+  });
 });
 
 describe('der Knopf am Urteil', () => {
