@@ -334,7 +334,9 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     expect(home.working).toBeNull();
     expect(home.now).toMatchObject({ type: 'practice_ready', question_count: 3 });
     const job = await env.db.one<{ status: string; result: { outcome: string } }>(
-      `select status, result from jobs where learner_id = $1 and kind = 'buddy_check'`,
+      // Buddy's look at the photos (the review the day after is a wake-up of its own, #446).
+      `select status, result from jobs where learner_id = $1 and kind = 'buddy_check'
+          and payload ->> 'reason' = 'material_ready'`,
       [l.learnerId],
     );
     expect(job).toMatchObject({ status: 'done', result: { outcome: 'fallback_act' } });

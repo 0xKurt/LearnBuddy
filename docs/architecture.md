@@ -602,6 +602,18 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
    again as an honest in-app line). A check that answers her own action falls back also after
    three stale rounds, so she is never left without an answer.
 
+**The day after a sheet** (issue #446, `modules/buddy/review.ts`): decided by code alone, never the
+model. A sheet whose reading is done (`material_ready`, not homework) schedules one wake-up for the
+start of her preferred window the next day (`review_next_day`, one per sheet). When it runs, code
+checks that the sheet is still hers, read and not deleted; that she has not answered any of its
+questions today and no open practice holds them (that practice is the review); and that the wake-up
+runs on its own day (a late one is dropped, never shown days later). It then prepares a short practice from that sheet and says one sentence without a
+count ("Magst du „…“ kurz nochmal durchgehen? …"). The sentence is Buddy's own initiative
+(`origin: 'buddy'`, relevance 0.7), so the contact policy applies as for every other message: without
+consent it waits in the app, and after "Seltener schreiben" it never goes to the phone. While she is
+in the app it waits 20 minutes, like every unasked look (`inApp.ts`). A wake-up that runs twice says
+it once.
+
 A background check never replaces practice she asked for in the chat, and the message it posts
 carries its decision, so what Buddy did in the background appears in the thread with its cards
 and undo. "Heute nicht" on a prepared practice moves it (and an agreed reminder) to tomorrow; it
