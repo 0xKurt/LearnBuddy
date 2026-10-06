@@ -705,6 +705,7 @@ export default function PracticeScreen() {
   // A foreign vocabulary word has its own "Anhören" (its pronunciation is the point); that IS
   // its read-aloud button, so it never gets a second one.
   const hearWord = item.kind === 'vocab' && isForeign(item.prompt_lang);
+  const hearAnswer = item.kind === 'vocab' && !open && isForeign(item.lang);
   // How the conversation and the card share the room (issues #96, #286, #232): `threadRoom`.
   const { threadCap, threadFloor, threadHolds, cardGrowTo, caps, cardNatural, ...room } =
     measured.layout({
@@ -910,10 +911,7 @@ export default function PracticeScreen() {
                       <SolutionCard answer={shown.answer} numeric={item.kind === 'numeric'} />
                     </Rise>
                   ) : null}
-                  {item.kind === 'vocab' &&
-                  !open &&
-                  shown.answer !== null &&
-                  isForeign(item.lang) ? (
+                  {hearAnswer && shown.answer !== null && item.lang !== null ? (
                     <ListenButton text={shown.answer} lang={item.lang} />
                   ) : null}
                   {/* What the Hörtext said, once the question is closed (issue #210). The server
