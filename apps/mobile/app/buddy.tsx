@@ -105,7 +105,7 @@ import { registerDeviceForPush } from '../lib/push.js';
 import { speakInOrder, stop as stopListening } from '../lib/speech/listen.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
-import { useVoiceMode } from '../lib/speech/voiceMode.js';
+import { readsAloud, useVoiceMode } from '../lib/speech/voiceMode.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { SPACE } from '../lib/theme/space.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -261,17 +261,17 @@ export default function BuddyScreen() {
   const [failedThumb, setFailedThumb] = useState<string | null>(null);
   // After sending, follow the conversation to its end once the new content has rendered.
   const followEnd = useRef(false);
-  const voiceOn = useVoiceMode((s) => s.on);
-  const setVoiceOn = useVoiceMode((s) => s.setOn);
+  // Vorlesen (the speaker in the head, issue #386): Buddy's replies are read aloud.
+  const voiceOn = useVoiceMode(readsAloud);
   const words = useSpokenWords();
-  /** The message she sent last whose reply hasn't been read aloud yet (voice mode). */
+  /** The message she sent last whose reply hasn't been read aloud yet (Vorlesen). */
   const awaitingReply = useRef<string | null>(null);
 
   /** The home is the screen she sees (a reply is never read over practice or talk, M-79). */
   const focused = useRef(true);
 
   // Buddy's reply to what she just sent, once it is there (right with the answer, or later
-  // when a slow turn finishes): read aloud in voice mode, otherwise announced to a screen
+  // when a slow turn finishes): read aloud with Vorlesen on, otherwise announced to a screen
   // reader (audit M-81) — only while the home is on screen.
   const thread = home.data?.thread;
   // At the end of the conversation she sees Buddy's newest reply (no "↓ Neue Antwort" for it).
@@ -380,7 +380,7 @@ export default function BuddyScreen() {
     const controller = new AbortController();
     sending.current = { id: clientMessageId, controller };
     // Buddy's reply appears while it is written when the answer changes nothing
-    // (docs/architecture.md §Speed) — and with voice mode on it is read along from the
+    // (docs/architecture.md §Speed) — and with Vorlesen on it is read along from the
     // first finished sentence (owner decision 28.09., issue #65). `speakable` is the
     // server's word that this answer changes nothing and carries no safeguarding; anything
     // else is read only once it is stored (audit M-52), by the effect above.
@@ -1140,10 +1140,7 @@ export default function BuddyScreen() {
             sending: pending !== null,
             working: h.thread.some((m) => m.role === 'learner' && m.status === 'processing'),
             streaming: live !== null,
-            voiceMode: voiceOn,
           })}
-          readAloud={voiceOn}
-          onReadAloud={() => setVoiceOn(!voiceOn)}
           onMenu={() => setMenuOpen(true)}
         />
         <View style={{ flex: 1 }}>

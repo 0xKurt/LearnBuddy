@@ -1,4 +1,4 @@
-// Where the voice-mode switch is kept in a browser: localStorage (absent or
+// Where the read-aloud switch (lib/speech/voiceMode.ts) is kept in a browser: localStorage (absent or
 // blocked in some private windows; callers catch).
 
 export function readVoiceMode(key: string): Promise<string | null> {

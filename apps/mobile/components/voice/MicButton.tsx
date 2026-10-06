@@ -1,5 +1,5 @@
-// The round mic button (56 pt; 72 pt when it is the main control in voice
-// mode; 48 pt in the composer bar) and the one status line that goes with it. Built like
+// The round mic button (56 pt; 72 pt when it is the main control of a conversation,
+// `VoiceRow`; 48 pt in the input bar) and the one status line that goes with it. Built like
 // CircleBtn: Pressable outside, the background on the inner View. Tap to start,
 // tap to stop. While recording, a ring pulses (still for reduced motion), the
 // icon turns into a stop square and the timer runs; while the words are being
@@ -87,7 +87,7 @@ type Props = {
   voice: VoiceInput;
   /** What tapping does when idle ("Nachricht sprechen", "Antwort sagen"). */
   label: string;
-  /** lg: the main control in voice mode. */
+  /** lg: the main control of a conversation (`VoiceRow`). */
   size?: 'sm' | 'md' | 'lg';
   /** Filled even when idle (the composer's main control while the field is empty). */
   filled?: boolean;

@@ -1,5 +1,7 @@
-// Connects a mic on the practice screen to the hands-free loop (lib/speech/handsFree.ts):
-// her own tap arms it; when the loop asks, an idle mic starts listening. One listening
+// Connects the conversation row's mic on the practice screen (`CheckBar`, issue #386) to the
+// hands-free loop (lib/speech/handsFree.ts): the screen arms it in a conversation
+// (`useQuestionVoice`), her own tap does with a screen reader on; when the loop asks, an idle mic
+// starts listening. One listening
 // belongs to one turn: when she answers another way (the screen locks while it checks),
 // when Buddy starts speaking or when the question changes, a running mic is cancelled and
 // its text dropped (audit M-78 handsfree-recording-outlives-turn).
@@ -13,13 +15,13 @@ import type { VoiceInput } from './useVoiceInput.js';
 const listening = (v: VoiceInput) => v.state === 'starting' || v.state === 'recording';
 
 export function useHandsFreeMic(voice: VoiceInput, disabled: boolean, turn?: string): void {
-  const voiceMode = useVoiceMode((s) => s.on);
+  const voiceMode = useVoiceMode((s) => s.conversation);
   const ask = useHandsFree((s) => s.ask);
   const seen = useRef(ask);
   const current = useRef({ voice, disabled, voiceMode });
   current.current = { voice, disabled, voiceMode };
 
-  // She started listening (her tap, or the loop): in voice mode that arms the loop.
+  // She started listening (her tap, or the loop): in a conversation that arms the loop.
   useEffect(() => {
     if (voiceMode && (voice.state === 'starting' || voice.state === 'recording'))
       useHandsFree.getState().arm();

@@ -2,8 +2,8 @@
 // homework task: one sheet, a title and hint per kind, one field, a few
 // one-tap examples and "Los geht's". The CTA is pinned under the field, above
 // the keyboard (Sheet footer). On success the sheet closes and the session opens.
-// The mic next to the field: saying it instead of typing; in voice mode what she
-// said starts it right away (as in the chat composer).
+// The mic next to the field: saying it instead of typing. What she said lands in the field and
+// she starts it herself, as in the chat composer (issue #386: no voice-first path beside it).
 
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -11,7 +11,6 @@ import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { mergeTranscript } from '../../lib/speech/spoken.js';
-import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
@@ -55,17 +54,14 @@ export function TopicSheet({ kind, onClose }: Props) {
     t(`learn:topic.${k}.ex_${i + 1}`),
   );
 
-  const latest = useRef({ text, preparing });
-  latest.current = { text, preparing };
+  const latest = useRef(text);
+  latest.current = text;
   const voice = useVoiceInput({
     purpose: 'message',
     lang: null,
     onText: (said) => {
-      const next = mergeTranscript(latest.current.text, said, 'append', MAX_TEXT);
-      setText(next);
+      setText(mergeTranscript(latest.current, said, 'append', MAX_TEXT));
       reset();
-      if (useVoiceMode.getState().on && !latest.current.preparing && next.trim().length >= 2)
-        void submit(next);
     },
   });
 

@@ -10,9 +10,9 @@
 //   [action]     "Prüfen" (`CheckBar`), pinned at the bottom, the same for every form — with a
 //                typed answer's input bar right above it (`InputBar`, issue #365) — or, where
 //                there is nothing to check, what stands in its place: options answered by a tap
-//                (with the voice slot in voice mode; without it only the screen edge's room, the
-//                tile being the action), "Weiter" once the question is closed, the pronunciation
-//                recorder.
+//                (the bar holds her question, the tile being the action), the conversation row
+//                in a conversation (issue #386), "Weiter" once the question is closed, the
+//                pronunciation recorder.
 //
 // Before #386 a board, a table and tap options stood right under the question with the free room
 // below them (#310 option B, 03.10.), while typed text sat at the bottom (#365): two rules in one
