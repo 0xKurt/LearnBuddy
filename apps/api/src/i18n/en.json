@@ -38,7 +38,9 @@
   },
   "material": {
     "ready": "Your questions for “{{title}}” are ready ({{count}}).",
-    "ready_untitled": "Your questions are ready ({{count}})."
+    "ready_untitled": "Your questions are ready ({{count}}).",
+    "review": "Want to go over “{{title}}” again for a moment? A few questions are ready – after a night's sleep it sticks better.",
+    "review_untitled": "Want to go over your sheet again for a moment? A few questions are ready – after a night's sleep it sticks better."
   },
   "practice": {
     "accents": "Almost – check the accents again.",

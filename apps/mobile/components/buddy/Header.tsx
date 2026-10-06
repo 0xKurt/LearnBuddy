@@ -22,6 +22,7 @@ import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { MAX_FONT_SCALE } from '../lb/Btn.js';
 import { BuddyOrb, type MoonState } from '../lb/BuddyOrb.js';
 import { Icon } from '../lb/Icon.js';
+import { ReadAloudSwitch } from '../lb/ReadAloudSwitch.js';
 
 /** Below this width the name takes the smaller step (phones are not one size). */
 const NARROW = 360;
@@ -33,15 +34,10 @@ export const HEADER_HEIGHT = ORB + 2 * SPACE.sm;
 
 export function Header({
   state = 'idle',
-  readAloud,
-  onReadAloud,
   onMenu,
 }: {
   /** What Buddy is doing right now; the orb shows it. */
   state?: MoonState;
-  /** Whether Buddy reads his answers out. */
-  readAloud: boolean;
-  onReadAloud: () => void;
   onMenu: () => void;
 }) {
   const { palette } = useTheme();
@@ -86,35 +82,8 @@ export function Header({
       >
         LearnBuddy
       </Text>
-      {/* Reading aloud, back in the head (issue #181). A speaker stood here before and
-          was taken out (#52) — rightly: it was a symbol with no state, so the owner's
-          "wozu ist der eigentlich da" had no answer. This one answers it. The SHAPE says
-          which way it is (struck through when off), never the colour alone, and it is a
-          switch so a screen reader says it too. It is the one setting a child changes in
-          the middle of working, so it costs one tap, not three. */}
-      <Pressable
-        onPress={onReadAloud}
-        accessibilityRole="switch"
-        accessibilityState={{ checked: readAloud }}
-        aria-checked={readAloud}
-        accessibilityLabel={t(readAloud ? 'menu.read_aloud_on' : 'menu.read_aloud_off')}
-        hitSlop={SPACE.sm}
-        style={{
-          width: TOUCH,
-          height: TOUCH,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: TOUCH / 2,
-        }}
-      >
-        {({ pressed }) => (
-          <Icon
-            name={readAloud ? 'speak' : 'speak-off'}
-            size={22}
-            color={readAloud ? palette.primaryDk : pressed ? palette.ink : palette.ink3}
-          />
-        )}
-      </Pressable>
+      {/* Reading aloud (issues #181, #386): the same switch as in every practice head. */}
+      <ReadAloudSwitch />
       <Pressable
         onPress={onMenu}
         accessibilityRole="button"

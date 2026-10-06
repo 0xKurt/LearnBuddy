@@ -1,4 +1,4 @@
-// What voice mode reads when a question appears (docs/architecture.md §Voice): the
+// What Buddy reads when a question appears (Vorlesen, Gespräch) (docs/architecture.md §Voice): the
 // instruction and the prompt in their languages, the options only when they are words. Its own
 // file so the practice screen stays within its size (docs/engineering-guards.md, rule 4).
 
@@ -10,7 +10,7 @@ import type { SpokenWords } from '../math/speak.js';
 import type { SpokenPart } from '../speech/listen.js';
 import { questionReadText, spokenText } from '../speech/spoken.js';
 
-/** What voice mode reads when a question appears (never the topic). */
+/** What Buddy reads when a question appears (never the topic). */
 export function questionParts(item: ItemView, words: SpokenWords, t: TFunction): SpokenPart[] {
   const app = currentLocale();
   switch (item.kind) {

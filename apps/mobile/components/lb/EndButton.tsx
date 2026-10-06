@@ -1,5 +1,5 @@
 // "Beenden" wherever something she is doing can be ended from a header or a pinned strip: a round
-// ✕, 44 pt, like the voice-mode switch beside it on a practice screen (issue #334.1). A line next
+// ✕, 44 pt, like the speaker switch beside it on a practice screen (issue #334.1). A line next
 // to it stays on one line (components/lb/Screen.tsx, issue #287) — a worded pill took ~125 pt at
 // 360 wide, and the practice topic came out as "Flächeninhalt Rec…" (issue #286), the roleplay's
 // scene as "Rollenspiel · Im Café in Lo…" (#334.3). The words stay with a screen reader (`label`,
@@ -28,7 +28,7 @@ export function EndButton({ onPress, label, hint, disabled = false, busy = false
       variant="outline"
       size="sm"
       pill
-      // compact (12 each side) + the 20 pt icon = 44: a circle, like the voice-mode switch.
+      // compact (12 each side) + the 20 pt icon = 44: a circle, like the speaker switch.
       compact
       label={<Icon name="close" size={20} color={disabled ? palette.ink2 : palette.ink} />}
       onPress={onPress}

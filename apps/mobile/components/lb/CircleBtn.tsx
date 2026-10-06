@@ -4,16 +4,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon } from './Icon.js';
 
 const LABEL_KEY: Record<
-  | 'back'
-  | 'close'
-  | 'more'
-  | 'plus'
-  | 'mic'
-  | 'speak'
-  | 'stop'
-  | 'camera'
-  | 'keyboard'
-  | 'headphones',
+  'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak' | 'stop' | 'camera' | 'keyboard',
   string
 > = {
   back: 'a11y.back',
@@ -25,7 +16,6 @@ const LABEL_KEY: Record<
   stop: 'a11y.stop',
   camera: 'a11y.camera',
   keyboard: 'a11y.keyboard',
-  headphones: 'a11y.talk',
 };
 
 export function CircleBtn({
@@ -35,17 +25,7 @@ export function CircleBtn({
   accessibilityHint,
   plain = false,
 }: {
-  icon:
-    | 'back'
-    | 'close'
-    | 'more'
-    | 'plus'
-    | 'mic'
-    | 'speak'
-    | 'stop'
-    | 'camera'
-    | 'keyboard'
-    | 'headphones';
+  icon: 'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak' | 'stop' | 'camera' | 'keyboard';
   onPress?: () => void;
   accessibilityLabel?: string;
   accessibilityHint?: string;
