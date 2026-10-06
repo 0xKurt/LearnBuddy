@@ -33,9 +33,13 @@
 //     einzeln vor ihrer Note — so, wie eine Notennamen-Aufgabe sie zeigt. Tonleitern und
 //     Quintenzirkel warten darauf.
 //   · **eine Stimme**. Mehrstimmigkeit, Akkorde als Klang und Partitur bleiben draußen
-//     (#224 hat das so entschieden), und Notendiktat nach Gehör ebenfalls: dort ist der
-//     STIMULUS der Ton und die Notenzeile die Antwort, hier ist die Notenzeile gezeichnet
-//     und der Ton eine Hilfe.
+//     (#224 hat das so entschieden), und Notendiktat nach Gehör ebenfalls: dort wäre die
+//     Notenzeile die Antwort auf einen gehörten Ton.
+//
+// Gehörbildung (issue #445) ist die eine Ausnahme vom „gezeichnet": `hear_interval` zeichnet
+// nichts, die zwei Töne SIND die Frage (`HeardTones`), und benannt wird angetippt wie beim
+// gelesenen Intervall. Den Ton erzeugt die App aus genau diesen Tonhöhen (`lib/music/tone.ts`),
+// den Schlüssel rechnet der Server aus denselben — beides aus einem Objekt.
 
 import { z } from 'zod';
 
@@ -232,6 +236,18 @@ export const StaffFigure = z.object({
   labels: StaffLabels,
 });
 export type StaffFigure = z.infer<typeof StaffFigure>;
+
+/**
+ * Was eine Hör-Aufgabe spielt (`ItemView.tones`, issue #445): die Töne als Zeile und ihr Tempo —
+ * dieselben Daten, aus denen „Anhören" eine gezeichnete Zeile spielt, nur ohne Zeichnung. Die
+ * Tonhöhen sind damit im Gerät, wie bei jeder gezeichneten Notenfrage; sie stehen nirgends als
+ * Text auf dem Bildschirm.
+ */
+export const HeardTones = z.object({
+  bars: StaffBars,
+  tempo: z.number().int().min(TEMPO_MIN).max(TEMPO_MAX),
+});
+export type HeardTones = z.infer<typeof HeardTones>;
 
 // ─────────────── Linien und Zwischenräume ───────────────
 
@@ -485,9 +501,9 @@ export function parseStaffLine(text: string): StaffBars | null {
 // ─────────────── die geprüfte Aufgabe ───────────────
 
 /**
- * Eine der fünf geprüften Notenaufgaben. Der Server schreibt daraus die Frage, zeichnet die
- * Zeile und rechnet die Lösung aus (`practice/staff.ts`) — es gibt hier kein Feld für
- * irgendetwas davon.
+ * Eine der sechs geprüften Notenaufgaben. Der Server schreibt daraus die Frage, zeichnet die
+ * Zeile (oder lässt sie hören, `hear_interval`) und rechnet die Lösung aus
+ * (`practice/staff.ts`) — es gibt hier kein Feld für irgendetwas davon.
  */
 export const StaffTask = z.discriminatedUnion('task', [
   z
@@ -515,6 +531,11 @@ export const StaffTask = z.discriminatedUnion('task', [
       'Name this interval: two notes are drawn one after the other and the learner names the interval. `upper` must be ABOVE `lower` and within an octave of it, and the interval must be a perfect, major or minor one — a diminished or augmented one gets no question.',
     ),
   z
+    .object({ task: z.literal('hear_interval'), lower: Pitch, upper: Pitch })
+    .describe(
+      'Hear this interval (ear training): the app PLAYS two notes one after the other, nothing is drawn, and the learner names the interval. Same rules as "interval": `upper` ABOVE `lower`, within an octave, a perfect, major or minor one; both notes between E2 and A5.',
+    ),
+  z
     .object({
       task: z.literal('time_signature'),
       clef: Clef,
@@ -537,5 +558,5 @@ export const StaffTask = z.discriminatedUnion('task', [
 ]);
 export type StaffTask = z.infer<typeof StaffTask>;
 
-/** Welche der fünf Aufgaben es ist. */
+/** Welche der sechs Aufgaben es ist. */
 export type StaffTaskName = StaffTask['task'];

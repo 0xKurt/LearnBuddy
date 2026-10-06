@@ -223,7 +223,13 @@
       "fault_pitch": "Le signe numéro {{index}} de la mesure {{bar}} n'est pas encore sur la bonne ligne.",
       "fault_value": "Le signe numéro {{index}} de la mesure {{bar}} n'a pas encore la bonne valeur.",
       "fault_rest_here": "À la place numéro {{index}} de la mesure {{bar}}, il faut un silence.",
-      "fault_note_here": "À la place numéro {{index}} de la mesure {{bar}}, il faut une note."
+      "fault_note_here": "À la place numéro {{index}} de la mesure {{bar}}, il faut une note.",
+      "hear_prompt": "Quel intervalle entends-tu ?",
+      "topic_hearing": "Reconnaître les intervalles",
+      "hint_hear_sing": "Chante doucement les deux notes et compte les degrés du bas vers le haut – la note du bas est le 1.",
+      "hint_hear_quality": "Est-ce que ça sonne clair et ouvert, ou doux et sombre ? Majeur sonne plus clair que mineur.",
+      "worked_hear": "Tu as entendu {{lower}} puis {{upper}} : {{steps}} degrés. Avec les demi-tons entre les deux, cela donne {{answer}}.",
+      "again_hear": "Pas encore tout à fait. Réécoute et chante doucement."
     },
     "same_value": "La valeur est juste – tu l'as seulement écrite autrement. Regarde sous quelle forme l'exercice veut le résultat.",
     "step_broke": "Tout tient jusqu'à la ligne {{line}}. Quelque chose se perd en passant à la ligne suivante – regarde encore cette étape.",

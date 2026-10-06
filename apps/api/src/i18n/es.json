@@ -223,7 +223,13 @@
       "fault_pitch": "El signo número {{index}} del compás {{bar}} todavía no está en la línea correcta.",
       "fault_value": "El signo número {{index}} del compás {{bar}} todavía tiene el valor equivocado.",
       "fault_rest_here": "En la posición número {{index}} del compás {{bar}} va un silencio.",
-      "fault_note_here": "En la posición número {{index}} del compás {{bar}} va una nota."
+      "fault_note_here": "En la posición número {{index}} del compás {{bar}} va una nota.",
+      "hear_prompt": "¿Qué intervalo oyes?",
+      "topic_hearing": "Reconocer intervalos",
+      "hint_hear_sing": "Canta en voz baja las dos notas y cuenta los grados de abajo arriba: la nota de abajo es el 1.",
+      "hint_hear_quality": "¿Suena claro y abierto, o suave y oscuro? Mayor suena más claro que menor.",
+      "worked_hear": "Oíste {{lower}} y luego {{upper}}: {{steps}} grados. Con los semitonos del medio, eso da {{answer}}.",
+      "again_hear": "Todavía no del todo. Escucha otra vez y canta bajito."
     },
     "same_value": "El valor es correcto – solo lo has escrito de otra forma. Mira en qué forma quiere la tarea el resultado.",
     "step_broke": "Hasta la línea {{line}} todo cuadra. Algo se pierde al pasar a la línea siguiente: mira otra vez ese paso.",

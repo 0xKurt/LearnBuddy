@@ -2530,6 +2530,7 @@ _Das Modell wählt, Code rechnet_ — dieselbe Bauweise wie der Bruchbalken und 
 | `name_note`      | Schlüssel, Tonhöhe                 | „Wie heißt diese Note?" — vier Optionen aus den Nachbartönen      |
 | `name_value`     | Schlüssel, Wert, Punkt, Note/Pause | „Welcher Notenwert ist das?"                                      |
 | `interval`       | Schlüssel, unterer und oberer Ton  | „Welches Intervall …?" — Stufe und Halbtöne gerechnet             |
+| `hear_interval`  | unterer und oberer Ton             | „Welches Intervall hörst du?" — nichts gezeichnet, gehört (#445)  |
 | `time_signature` | Schlüssel, Taktart, Takte          | „In welcher Taktart steht diese Zeile?" — ohne Taktart gezeichnet |
 | `write_line`     | Schlüssel, Taktart, Takte          | „Schreibe diese Zeile …" — sie schreibt sie auf eine leere Zeile  |
 
@@ -2553,6 +2554,22 @@ als `unknown` beim Tutor an — **der die gezeichnete Zeile nicht sehen kann** (
 Sprachen schreiben Tonnamen verschieden (`B` ist auf Deutsch das **H**, auf Französisch **Si**).
 Deshalb hat auch die falsche Antwort ihre eigene feste, freundliche Zeile von Code (`staffAgain`)
 statt den Tutor zu rufen; die dritte Fehlprobe erklärt die Lösung, wie überall.
+
+**Gehörbildung: Intervalle hören** (Issue #445). `hear_interval` zeichnet nichts — die zwei Töne
+SIND die Frage. Der Server rechnet aus derselben Aufgabe Schlüssel, Optionen (dieselben vier wie beim
+gelesenen Intervall, `intervalOptions`) und die Töne (`tonesOf`: zwei halbe Noten nacheinander im
+Übungstempo), die als `ItemView.tones` (`HeardTones`) ankommen, auch nach dem Schließen zum
+Nachhören. Hörbar ist, was ein Schlüssel dieser App zeichnen kann (E2 bis A5, `audible`). Die App
+spielt sie mit ihrer eigenen Synthese (`lib/music/tone.ts`, Dreieck mit Hüllkurve, als WAV durch
+`expo-audio` — derselbe Player wie Buddys Stimme) über den **einen** Hör-Hook
+(`components/practice/useListenToggle.ts`): „Anhören" in der Werkzeugreihe unter der Frage
+(`QuestionTools`, `ListenButton` mit `tones`). Derselbe Hook spielt jetzt auch die gezeichnete
+Zeile (`StaffPlayButton`, die Taste in `StaffKeys`); die Kopie `useStaffPlay` ist weg
+(`lib/__tests__/oneListen.test.ts`). Der Bibliotheks-Check (#445): Tone.js hat keinen
+React-Native-Weg, Web-Audio-Synthese bräuchte auf dem Handy `react-native-audio-api` als zweite
+Strecke, die der Browser-Walkthrough nicht prüfen kann; die eigene Synthese kostet keine neue
+Abhängigkeit und ist im Node-Test nachgemessen. Offen: Rhythmus nachklopfen (Timing mit Toleranz,
+von Code geprüft) und der Gerätetest des Tons.
 
 **Geschrieben wird wirklich geschrieben.** `write_line` gibt ihr eine leere Notenzeile
 (`ItemView.surface`, `mode: 'notes'` — dieselbe Fläche wie der Bruchbalken, eine dritte Form).

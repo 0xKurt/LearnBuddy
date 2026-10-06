@@ -223,7 +223,13 @@
       "fault_pitch": "Il segno numero {{index}} della battuta {{bar}} non è ancora sulla linea giusta.",
       "fault_value": "Il segno numero {{index}} della battuta {{bar}} ha ancora il valore sbagliato.",
       "fault_rest_here": "Al posto numero {{index}} della battuta {{bar}} va una pausa.",
-      "fault_note_here": "Al posto numero {{index}} della battuta {{bar}} va una nota."
+      "fault_note_here": "Al posto numero {{index}} della battuta {{bar}} va una nota.",
+      "hear_prompt": "Che intervallo senti?",
+      "topic_hearing": "Riconoscere gli intervalli",
+      "hint_hear_sing": "Canticchia le due note e conta i gradi dal basso verso l’alto: la nota più bassa è l’1.",
+      "hint_hear_quality": "Suona chiaro e aperto o morbido e scuro? Maggiore suona più chiaro di minore.",
+      "worked_hear": "Hai sentito {{lower}} e poi {{upper}}: {{steps}} gradi. Con i semitoni in mezzo viene {{answer}}.",
+      "again_hear": "Non ancora del tutto. Riascolta e canticchia piano."
     },
     "same_value": "Il valore è giusto – l’hai solo scritto in un altro modo. Guarda in quale forma l’esercizio vuole il risultato.",
     "step_broke": "Fino alla riga {{line}} va tutto bene. Qualcosa si perde passando alla riga successiva: guarda ancora quel passaggio.",

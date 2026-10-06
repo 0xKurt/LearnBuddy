@@ -104,6 +104,7 @@ const ITEM: ItemView = {
   tap: false,
   task_view: null,
   listen: null,
+  tones: null,
   passage: null,
   read_aloud: true,
 };

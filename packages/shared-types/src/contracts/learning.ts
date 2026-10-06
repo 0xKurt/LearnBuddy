@@ -7,6 +7,7 @@ import { ESSAY_TEXT_MAX, EssayFeedback } from './essay.js';
 import { Figure } from './figure.js';
 import { ListenRef } from './listen.js';
 import { PassageView } from './reading.js';
+import { HeardTones } from './staff.js';
 import { StructuredAnswer, StructuredTaskView } from './structured.js';
 
 // ─────────────── material (photographed worksheets) ───────────────
@@ -500,6 +501,14 @@ export const ItemView = z.object({
    * (`SessionItemView.listen_transcript`). Questions about one text share the `ref`.
    */
   listen: ListenRef.nullable().default(null),
+  /**
+   * The question is answered from HEARING tones the app makes itself (ear training, issue #445,
+   * `contracts/staff.ts` `HeardTones`): two notes of an interval, played by the app's one
+   * listening control — nothing drawn, nothing fetched. Computed by the server from the reviewed
+   * task; null for every other question. A shape this build cannot read shows the question
+   * without it (`.catch`) rather than failing the session.
+   */
+  tones: HeardTones.nullable().default(null).catch(null),
   /**
    * The text this question is about (Leseverständnis, issue #233, `contracts/reading.ts`): its
    * lines as printed, shown above the question while she answers — unlike a listening text it is

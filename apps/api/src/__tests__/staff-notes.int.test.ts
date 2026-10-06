@@ -177,6 +177,43 @@ describe.skipIf(!dbReady)('die Notenzeile', () => {
     expect(interval?.answer).toBe('reine Quinte');
   });
 
+  it('lässt ein Intervall hören statt lesen und prüft es selbst (#445)', async () => {
+    const heard: StaffTask = {
+      task: 'hear_interval',
+      lower: { name: 'E', octave: 4 },
+      upper: { name: 'G', octave: 4 },
+    };
+    const session = await prepare([heard]);
+    const item = session.items[0]?.item;
+    const want = staffItem(heard, 'de');
+    expect(item?.kind).toBe('multiple_choice');
+    expect(item?.choices).toEqual(want?.choices);
+    // Nichts gezeichnet, und die Töne kommen aus der gespeicherten Aufgabe, nicht vom Modell.
+    expect(item?.figure).toBeNull();
+    expect(item?.tones).toEqual({
+      bars: [
+        [
+          { el: 'note', pitch: heard.lower, value: 'half', dotted: false },
+          { el: 'note', pitch: heard.upper, value: 'half', dotted: false },
+        ],
+      ],
+      tempo: 80,
+    });
+    expect(session.items[0]?.answer).toBeNull();
+
+    const right = want?.correct_choice as number;
+    const wrong = await answer(session.id, item?.id as string, {
+      choice: (right + 1) % (item?.choices?.length ?? 2),
+    });
+    expect(wrong.body.verdict).toBe('incorrect');
+    expect(wrong.body.reply.text).toBe(staffAgain('de', heard));
+    const ok = await answer(session.id, item?.id as string, { choice: right });
+    expect(ok.body.verdict).toBe('correct');
+    expect(want?.answer).toBe('kleine Terz');
+    // Geschlossen bleiben die Töne: zum Nachhören neben der Lösung.
+    expect(ok.body.session.items[0]?.item.tones).not.toBeNull();
+  });
+
   it('gibt einer Schreibaufgabe eine leere Zeile und prüft sie Zeichen für Zeichen', async () => {
     const session = await prepare([WRITE]);
     const item = session.items[0]?.item;

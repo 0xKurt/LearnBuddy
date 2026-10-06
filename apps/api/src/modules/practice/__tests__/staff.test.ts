@@ -47,6 +47,7 @@ import {
   staffLineReply,
   staffLabels,
   staffSurfaceOf,
+  tonesOf,
   usableStaffTask,
   visibleLabels,
   writtenStaffLine,
@@ -322,6 +323,7 @@ describe('die Frage, die eine Aufgabe wird', () => {
     { task: 'name_value', clef: 'treble', value: 'quarter', dotted: false, rest: true },
     { task: 'interval', clef: 'treble', lower: p('C', 5), upper: p('G', 5) },
     { task: 'interval', clef: 'bass', lower: p('A', 2), upper: p('C', 3) },
+    { task: 'hear_interval', lower: p('E', 4), upper: p('G', 4) },
     {
       task: 'time_signature',
       clef: 'treble',
@@ -669,5 +671,69 @@ describe('die feste Antwort auf eine falsche Notenantwort', () => {
       expect(line.length, task.task).toBeGreaterThan(10);
       expect(item && mentionsSolution(line, item.answer, item.prompt), task.task).toBe(false);
     }
+  });
+});
+
+// Gehörbildung (issue #445): die zwei Töne SIND die Frage. Code setzt den Schlüssel aus denselben
+// Tonhöhen, aus denen die App den Ton macht — gezeichnet wird nichts.
+describe('ein Intervall hören', () => {
+  const minorThird: StaffTask = { task: 'hear_interval', lower: p('E', 4), upper: p('G', 4) };
+
+  it('spielt genau die zwei Töne nacheinander, aus denen der Schlüssel gerechnet ist', () => {
+    const item = staffItem(minorThird, 'de');
+    expect(item?.answer).toBe('kleine Terz');
+    expect(item?.kind).toBe('multiple_choice');
+    // Nichts gezeichnet: eine Zeile mit E und G verriete, was sie hören soll.
+    expect(item?.figure).toBeNull();
+    expect(tonesOf(minorThird)).toEqual({
+      bars: [
+        [
+          { el: 'note', pitch: p('E', 4), value: 'half', dotted: false },
+          { el: 'note', pitch: p('G', 4), value: 'half', dotted: false },
+        ],
+      ],
+      tempo: 80,
+    });
+    // Dieselben vier Optionen wie beim gelesenen Intervall derselben Töne.
+    const read = staffItem({ ...minorThird, task: 'interval', clef: 'treble' }, 'de');
+    expect(item?.choices).toEqual(read?.choices);
+    expect(item?.correct_choice).toBe(read?.correct_choice);
+  });
+
+  it('hat keine Töne für eine Aufgabe, die gelesen wird', () => {
+    expect(tonesOf({ task: 'interval', clef: 'treble', lower: p('C', 4), upper: p('E', 4) })).toBe(
+      null,
+    );
+    expect(tonesOf({ task: 'name_note', clef: 'treble', pitch: p('C', 4) })).toBeNull();
+  });
+
+  it('fragt nur, was einen Namen hat und was die App spielen kann', () => {
+    // Abwärts, verminderte Quinte, mehr als eine Oktave: kein Name, keine Frage.
+    expect(
+      usableStaffTask({ task: 'hear_interval', lower: p('G', 4), upper: p('E', 4) }),
+    ).toBeNull();
+    expect(
+      usableStaffTask({ task: 'hear_interval', lower: p('B', 3), upper: p('F', 4) }),
+    ).toBeNull();
+    expect(
+      usableStaffTask({ task: 'hear_interval', lower: p('C', 4), upper: p('D', 5) }),
+    ).toBeNull();
+    // Unter E2 und über A5 zeichnet und spielt die App nichts.
+    expect(
+      usableStaffTask({ task: 'hear_interval', lower: p('C', 2), upper: p('E', 2) }),
+    ).toBeNull();
+    expect(
+      usableStaffTask({ task: 'hear_interval', lower: p('A', 5), upper: p('C', 6) }),
+    ).toBeNull();
+    // Im Bassbereich hörbar, auch ohne gewählten Schlüssel.
+    expect(
+      usableStaffTask({ task: 'hear_interval', lower: p('G', 2), upper: p('D', 3) }),
+    ).not.toBeNull();
+  });
+
+  it('sagt auf eine falsche Antwort, was sie tun kann, nicht was richtig ist', () => {
+    const again = staffAgain('de', minorThird);
+    expect(again).toContain('nochmal hin');
+    expect(mentionsSolution(again, 'kleine Terz', '')).toBe(false);
   });
 });

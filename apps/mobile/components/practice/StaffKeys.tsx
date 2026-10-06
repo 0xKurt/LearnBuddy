@@ -32,7 +32,7 @@ import { Icon } from '../lb/Icon.js';
 import { KeyRow, type Key } from '../lb/KeyRow.js';
 import { ValueGlyph } from '../math/StaffLine.js';
 import { activeBar, clampStep, lastNote, usePut, type StaffAnswerState } from './StaffAnswer.js';
-import { useStaffPlay } from './StaffPlayButton.js';
+import { useListenToggle } from './useListenToggle.js';
 
 type Props = {
   surface: StaffWriteSurface;
@@ -49,7 +49,7 @@ export function StaffKeys({ surface, answer, disabled, onChange }: Props) {
   const { t: tm } = useTranslation('math');
   const written = answer.bars.filter((bar) => bar.length > 0);
   const empty = written.length === 0;
-  const play = useStaffPlay(written, surface.tempo);
+  const play = useListenToggle({ tones: { bars: written, tempo: surface.tempo } });
   const put = usePut(surface, answer, onChange);
 
   const moving = lastNote(answer);

@@ -56,6 +56,7 @@ import {
   ticksOf,
   type Clef,
   type Figure,
+  type HeardTones,
   type Interval,
   type NoteName,
   type NoteValue,
@@ -110,7 +111,7 @@ const WRITE_STEP_MAX = 5;
  * ausgeschriebenes Beispiel (die stehende Regel: ein Satz im Prompt kommt als Lesart ihres
  * eigenen Blattes zurück).
  */
-export const STAFF_RULES = `Note lines ("staffs"): a small music staff the learner reads, hears and writes on. You choose only the task and its musical parameters; the app writes the question, draws the staff, offers the options and computes the solution, so never write a question text, an answer, options or a figure for one, and never put a note line in "figure". Use them for note reading in the treble or bass clef, note and rest values, intervals within an octave, time signatures read off the note values, and writing a short line yourself — and only for a learner who has music as a subject. One voice only: no key signature at the start of the line (write an accidental on the note that needs it), no chords, no second part, and nothing that has to be recognised by ear. At most ${MAX_STAFF_ITEMS}, and an empty list wherever a staff would only be decoration. The ordinary questions in "items" are unaffected.`;
+export const STAFF_RULES = `Note lines ("staffs"): a small music staff the learner reads, hears and writes on. You choose only the task and its musical parameters; the app writes the question, draws the staff, offers the options and computes the solution, so never write a question text, an answer, options or a figure for one, and never put a note line in "figure". Use them for note reading in the treble or bass clef, note and rest values, intervals within an octave — read off the staff, or heard (the app plays the two notes, nothing is drawn) —, time signatures read off the note values, and writing a short line yourself — and only for a learner who has music as a subject. One voice only: no key signature at the start of the line (write an accidental on the note that needs it), no chords, no second part, and nothing else that has to be recognised by ear. At most ${MAX_STAFF_ITEMS}, and an empty list wherever a staff would only be decoration. The ordinary questions in "items" are unaffected.`;
 
 /** An item whose every field was computed from `staff_task`; `insertItems` stores both. */
 export type StaffItem = Omit<ItemDraft, 'figure'> & {
@@ -239,6 +240,10 @@ export function usableStaffTask(task: StaffTask): StaffTask | null {
       // and two notes in the wrong order are no interval to read upwards.
       return intervalBetween(task.lower, task.upper) === null ? null : task;
     }
+    case 'hear_interval':
+      // What the app can play is what a staff of this app can draw (E2 to A5, `tone.ts`).
+      if (![task.lower, task.upper].every(audible)) return null;
+      return intervalBetween(task.lower, task.upper) === null ? null : task;
     case 'time_signature': {
       if (!TIME_READABLE.includes(task.time)) return null;
       if (!notesOf(task.bars).every((p) => onStaff(p, task.clef))) return null;
@@ -256,6 +261,28 @@ export function usableStaffTask(task: StaffTask): StaffTask | null {
       return barsExactlyFull(task.bars, task.time) ? task : null;
     }
   }
+}
+
+/** A pitch the app plays: one that the treble or the bass staff of this app can draw. */
+function audible(pitch: Pitch): boolean {
+  return onStaff(pitch, 'treble') || onStaff(pitch, 'bass');
+}
+
+/**
+ * Was eine Hör-Aufgabe spielt (issue #445), oder null für jede andere: die zwei Töne nacheinander,
+ * je eine halbe Note im Übungstempo — lang genug, um jeden für sich zu hören und ihn mitzusingen.
+ * Aus derselben Aufgabe wie Frage und Schlüssel, also können Ton und Schlüssel nicht auseinander
+ * laufen.
+ */
+export function tonesOf(task: StaffTask): HeardTones | null {
+  if (task.task !== 'hear_interval') return null;
+  const half = (pitch: Pitch): StaffElement => ({
+    el: 'note',
+    pitch,
+    value: 'half',
+    dotted: false,
+  });
+  return { bars: [[half(task.lower), half(task.upper)]], tempo: TEMPO_DEFAULT };
 }
 
 /** The task a stored row carries, or null (an unreadable column is no task, never a guess). */
@@ -319,6 +346,8 @@ const NAMED: Record<StaffTask['task'], boolean> = {
   name_note: false,
   name_value: false,
   interval: true,
+  // Nichts gezeichnet: was sie hört, ist die Frage.
+  hear_interval: false,
   time_signature: true,
   write_line: false,
 };
@@ -408,6 +437,31 @@ function intervalNeighbours(interval: Interval): Interval[] {
         : 'major') as Interval['quality'],
     }));
   return [...other, ...around];
+}
+
+/**
+ * The options of an interval question — read or heard, the same four (issue #445): the right one
+ * and its neighbours, in the order of the steps — and what its worked solution says.
+ */
+function intervalOptions(locale: string, lower: Pitch, upper: Pitch) {
+  const interval = intervalBetween(lower, upper);
+  if (interval === null) return null;
+  const options = optionsAround(
+    interval,
+    intervalNeighbours(interval),
+    (a, b) => a.step === b.step && a.quality === b.quality,
+  );
+  if (options === null) return null;
+  const sorted = [...options].sort((a, b) => a.step - b.step || a.quality.localeCompare(b.quality));
+  const picked = multi(sorted, interval, (i) => intervalWord(locale, i));
+  if (picked === null) return null;
+  const worked = {
+    lower: noteWord(locale, lower.name),
+    upper: noteWord(locale, upper.name),
+    steps: diatonicOf(upper) - diatonicOf(lower) + 1,
+    answer: picked.answer,
+  };
+  return { interval, picked, worked };
 }
 
 // ─────────────── die Frage, die daraus wird ───────────────
@@ -532,41 +586,42 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
       };
     }
     case 'interval': {
-      const interval = intervalBetween(task.lower, task.upper);
-      if (interval === null) return null;
+      const named = intervalOptions(locale, task.lower, task.upper);
+      if (named === null) return null;
       const bars: StaffBars = [
         [
           { el: 'note', pitch: task.lower, value: 'quarter', dotted: false },
           { el: 'note', pitch: task.upper, value: 'quarter', dotted: false },
         ],
       ];
-      const options = optionsAround(
-        interval,
-        intervalNeighbours(interval),
-        (a, b) => a.step === b.step && a.quality === b.quality,
-      );
-      if (options === null) return null;
-      const sorted = [...options].sort(
-        (a, b) => a.step - b.step || a.quality.localeCompare(b.quality),
-      );
-      const picked = multi(sorted, interval, (i) => intervalWord(locale, i));
-      if (picked === null) return null;
       return {
         ...common,
         kind: 'multiple_choice',
         prompt: text(locale, 'interval_prompt'),
-        ...picked,
+        ...named.picked,
         topic: text(locale, 'topic_intervals'),
         // Telling a major from a minor third needs the semitones, not just the steps.
-        difficulty: interval.quality === 'perfect' ? 3 : 4,
+        difficulty: named.interval.quality === 'perfect' ? 3 : 4,
         figure: staffFigure(task, task.clef, null, bars),
         hints: [text(locale, 'hint_interval_count'), text(locale, 'hint_interval_quality')],
-        worked_solution: text(locale, 'worked_interval', {
-          lower: noteWord(locale, task.lower.name),
-          upper: noteWord(locale, task.upper.name),
-          steps: diatonicOf(task.upper) - diatonicOf(task.lower) + 1,
-          answer: picked.answer,
-        }),
+        worked_solution: text(locale, 'worked_interval', named.worked),
+      };
+    }
+    case 'hear_interval': {
+      // Dieselben Optionen wie beim gelesenen Intervall; gezeichnet wird nichts (`tonesOf`).
+      const named = intervalOptions(locale, task.lower, task.upper);
+      if (named === null) return null;
+      return {
+        ...common,
+        kind: 'multiple_choice',
+        prompt: text(locale, 'hear_prompt'),
+        ...named.picked,
+        topic: text(locale, 'topic_hearing'),
+        // By ear a step is harder than on paper: there is nothing to count off.
+        difficulty: named.interval.quality === 'perfect' ? 4 : 5,
+        figure: null,
+        hints: [text(locale, 'hint_hear_sing'), text(locale, 'hint_hear_quality')],
+        worked_solution: text(locale, 'worked_hear', named.worked),
       };
     }
     case 'time_signature': {
@@ -803,6 +858,8 @@ export function staffAgain(locale: string, task: StaffTask): string {
       return text(locale, 'again_value');
     case 'interval':
       return text(locale, 'again_interval');
+    case 'hear_interval':
+      return text(locale, 'again_hear');
     case 'time_signature':
       return text(locale, 'again_time');
     case 'write_line':

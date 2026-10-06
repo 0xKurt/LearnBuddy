@@ -223,7 +223,13 @@
       "fault_pitch": "Das {{index}}. Zeichen in Takt {{bar}} liegt noch nicht auf der richtigen Linie.",
       "fault_value": "Das {{index}}. Zeichen in Takt {{bar}} hat noch den falschen Wert.",
       "fault_rest_here": "An der {{index}}. Stelle in Takt {{bar}} gehört eine Pause hin.",
-      "fault_note_here": "An der {{index}}. Stelle in Takt {{bar}} gehört eine Note hin."
+      "fault_note_here": "An der {{index}}. Stelle in Takt {{bar}} gehört eine Note hin.",
+      "hear_prompt": "Welches Intervall hörst du?",
+      "topic_hearing": "Intervalle hören",
+      "hint_hear_sing": "Sing beide Töne leise nach und zähl die Stufen von unten nach oben – der untere Ton ist die 1.",
+      "hint_hear_quality": "Klingt es eher hell und offen oder eher weich und dunkel? Groß klingt heller als klein.",
+      "worked_hear": "Du hast {{lower}} und dann {{upper}} gehört: {{steps}} Stufen. Mit den Halbtonschritten dazwischen ist das eine {{answer}}.",
+      "again_hear": "Noch nicht ganz. Hör nochmal hin und sing leise mit."
     },
     "same_value": "Der Wert stimmt – du hast es nur anders geschrieben. Schau noch, in welcher Form die Aufgabe das Ergebnis haben möchte.",
     "step_broke": "Bis Zeile {{line}} stimmt alles. Von dort zur nächsten Zeile geht etwas verloren – schau dir diesen Schritt nochmal an.",

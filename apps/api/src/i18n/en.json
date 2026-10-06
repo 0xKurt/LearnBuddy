@@ -223,7 +223,13 @@
       "fault_pitch": "Symbol number {{index}} in bar {{bar}} isn't on the right line yet.",
       "fault_value": "Symbol number {{index}} in bar {{bar}} still has the wrong value.",
       "fault_rest_here": "Position number {{index}} in bar {{bar}} needs a rest.",
-      "fault_note_here": "Position number {{index}} in bar {{bar}} needs a note."
+      "fault_note_here": "Position number {{index}} in bar {{bar}} needs a note.",
+      "hear_prompt": "Which interval do you hear?",
+      "topic_hearing": "Hearing intervals",
+      "hint_hear_sing": "Hum both notes quietly and count the steps from the lower one up – the lower note is 1.",
+      "hint_hear_quality": "Does it sound bright and open or soft and dark? Major sounds brighter than minor.",
+      "worked_hear": "You heard {{lower}} and then {{upper}}: {{steps}} steps. With the semitones in between, that makes {{answer}}.",
+      "again_hear": "Not quite yet. Listen again and hum along."
     },
     "same_value": "The value is right – you've just written it differently. Check which form the task wants the result in.",
     "step_broke": "Everything holds up to line {{line}}. Something gets lost on the way to the next line – take another look at that step.",
