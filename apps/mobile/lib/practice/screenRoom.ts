@@ -76,6 +76,8 @@ export function useScreenRoom() {
     caps: { figure: number; image: number };
     cardNatural: number;
     tops: number[];
+    /** Where the conversation rests: the top of a reply she reads through (`ThreadBox`, #258). */
+    readFrom: number | undefined;
     /** The card laid out at height `h`. */
     onCard: (h: number) => void;
   } {
@@ -116,6 +118,9 @@ export function useScreenRoom() {
     const tops = q.threadTurns
       .map((turn) => turnTops[turn.id])
       .filter((y): y is number => y !== undefined);
+    // Buddy's feedback on her long text is read through, from its top (#258, `threadRoom`).
+    const newest = q.threadTurns[q.threadTurns.length - 1];
+    const reads = item.kind === 'essay' && Boolean(newest?.essay);
     const shared = threadRoom({
       room,
       short: Math.max(0, -left),
@@ -139,6 +144,7 @@ export function useScreenRoom() {
       // it takes all the room the conversation does not use, so no empty band is left under it.
       fills: cardNatural > 0 && item.kind === 'spelling_dictation' && !q.dictationCompact,
       viewHeight,
+      reads,
     });
     granted.current = shared.cardGrowTo;
     return {
@@ -147,6 +153,7 @@ export function useScreenRoom() {
       cardNatural,
       // ThreadBox rests its edge on any of them.
       tops: [...tops, ...partTops],
+      readFrom: reads ? tops[tops.length - 1] : undefined,
       onCard: (h) => {
         setCardHeight(h);
         // Its own height before it grows: measured only while it has no minHeight. (While it

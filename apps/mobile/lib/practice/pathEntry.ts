@@ -53,11 +53,11 @@ export function hasPath(kind: ItemKind, value: string): boolean {
 }
 
 /**
- * What the return key does: send the answer, or add a line. `long` is prose and always takes the
- * line (that rule is older than this one and unchanged).
+ * What the return key does: send the answer, or add a line. `long` and `essay` are prose and
+ * always take the line (that rule is older than this one and unchanged; a long text, #258).
  */
 export function returnKey(kind: ItemKind, value: string): 'send' | 'newline' {
-  if (kind === 'long') return 'newline';
+  if (kind === 'long' || kind === 'essay') return 'newline';
   return hasPath(kind, value) ? 'newline' : 'send';
 }
 

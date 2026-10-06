@@ -19,6 +19,8 @@ export const KIND_ICON: Record<TopicKind, IconName> = {
   teach_back: 'bulb',
   // Leseverständnis (#368): the book a reading text above a question carries (`PassagePanel`).
   read: 'book',
+  // Lange Texte (issue #258): a page she writes — the file, not the pencil of homework help.
+  essay: 'file',
   help: 'pencil',
 };
 
@@ -32,6 +34,7 @@ export const KIND_LABEL: Record<TopicKind, string> = {
   spelling_dictation: 'start.spelling_dictation',
   teach_back: 'start.teach_back',
   read: 'start.read',
+  essay: 'start.essay',
   help: 'start.homework',
 };
 
@@ -50,5 +53,7 @@ export const KIND_EXAMPLES: Record<TopicKind, number> = {
   teach_back: 0,
   // Asked for in the chat ("Lass uns Lesen üben"); Buddy writes the text on the topic she names.
   read: 0,
+  // Asked for in the chat, about a topic she names or the writing task on her sheet.
+  essay: 0,
   help: 0,
 };
