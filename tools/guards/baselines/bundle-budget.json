@@ -1,6 +1,6 @@
 {
-  "$comment": "Budget des Web-Bundles (Issue #313): das JavaScript, das index.html nach `expo export --platform web` lädt, roh und gzip (Stufe 9), in Bytes. Mehr als tolerancePercent darüber macht den Walkthrough rot. Gemessen auf claude/mark-234 a2199ca; angehoben für die Item-Art mark (#234), keine neue Bibliothek. Ein höheres Budget nur mit Begründung im PR; ein kleineres Bundle senkt es (`node tools/guards/bundle-budget.mjs --shrink`). Siehe docs/engineering-guards.md.",
+  "$comment": "Budget des Web-Bundles (Issue #313): das JavaScript, das index.html nach `expo export --platform web` lädt, roh und gzip (Stufe 9), in Bytes. Mehr als tolerancePercent darüber macht den Walkthrough rot. Gemessen auf claude/longtext-258 (main mit #388 und #252); angehoben für Lange Texte in der App (#258: EssayFeedback, lib/practice/essay.ts, Texte in 5 Sprachen) auf dem seit #234 gewachsenen main, keine neue Bibliothek. Ein höheres Budget nur mit Begründung im PR; ein kleineres Bundle senkt es (`node tools/guards/bundle-budget.mjs --shrink`). Siehe docs/engineering-guards.md.",
   "tolerancePercent": 5,
-  "bytes": 4264928,
-  "gzip": 1109767
+  "bytes": 4438713,
+  "gzip": 1168048
 }

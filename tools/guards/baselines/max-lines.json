@@ -12,7 +12,7 @@
     "apps/api/src/modules/materials/service.ts": 1566,
     "apps/api/src/modules/practice/__tests__/evaluate.test.ts": 825,
     "apps/mobile/app/buddy.tsx": 1220,
-    "apps/mobile/app/practice/[id].tsx": 913,
+    "apps/mobile/app/practice/[id].tsx": 912,
     "apps/mobile/components/lb/BuddyOrb.tsx": 612,
     "apps/mobile/components/math/ChartFigures.tsx": 983,
     "apps/mobile/components/math/FigureView.tsx": 1027

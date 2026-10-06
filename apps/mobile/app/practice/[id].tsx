@@ -27,7 +27,6 @@
 import {
   type AnswerResponse,
   type ItemView,
-  type PracticeTurnView,
   type ReexplainWay,
   type SessionView,
   type SpeakStreamEvent,
@@ -118,6 +117,8 @@ import { currentLocale, isForeign } from '../../lib/i18n/index.js';
 import { questionParts } from '../../lib/practice/questionParts.js';
 import { answerForm } from '../../lib/practice/answerForm.js';
 import { questionOffers, questionOnScreen } from '../../lib/practice/offers.js';
+import { leftAfterSend } from '../../lib/practice/essay.js';
+import { verdictWordKey } from '../../lib/practice/onScreen.js';
 import { useFinishWhenDone } from '../../lib/practice/finishWhenDone.js';
 import { useHeardTexts } from '../../lib/practice/heardTexts.js';
 import { useScreenRoom } from '../../lib/practice/screenRoom.js';
@@ -156,12 +157,6 @@ type SentAnswer = {
    */
   parts: string | null;
 };
-
-/** The verdict word read before Buddy's reply (as ItemThread shows it); none for "not an attempt". */
-function verdictWordKey(verdict: PracticeTurnView['verdict']): string | null {
-  if (verdict === 'not_an_attempt') return null;
-  return `practice:verdict.${verdict ?? 'unchecked'}`;
-}
 
 function backToBuddy(): void {
   // Pops back to Buddy when it is below in the stack, otherwise replaces this
@@ -426,10 +421,10 @@ export default function PracticeScreen() {
           await store(res.session);
           // Tap on "Prüfen" → the verdict on screen (issue #66).
           reacted('check');
-          if (answerText !== null)
-            setText((current) => (current.trim() === answerText ? '' : current));
-          if (res.session.items.find((i) => i.item.id === itemId)?.status !== 'open')
-            Keyboard.dismiss();
+          const after = res.session.items.find((i) => i.item.id === itemId);
+          // A long text stays in the field: her next version starts from it (#258).
+          if (answerText !== null) setText((c) => leftAfterSend(c, answerText, after?.item.kind));
+          if (after?.status !== 'open') Keyboard.dismiss();
           readFeedback(res, itemId);
         } finally {
           setPending(null);
@@ -775,6 +770,7 @@ export default function PracticeScreen() {
         testing,
         mode: session.mode,
         origin: item.origin,
+        kind: item.kind,
       })}
       disabled={locked}
       onFlag={() => {
@@ -914,6 +910,7 @@ export default function PracticeScreen() {
                   holds={threadHolds}
                   tops={room.tops}
                   followEnd={followEnd}
+                  readFrom={pendingText === null ? room.readFrom : undefined}
                   onBox={measured.setThreadBox}
                   onNeed={measured.setThreadNeed}
                   onParts={measured.setPartTops}
@@ -936,6 +933,7 @@ export default function PracticeScreen() {
                     // bubble stays: there it is the only place she sees what was heard.
                     echoAnswers={!((structured || ((choices || tapChoices) && !voiceOn)) && open)}
                     onTurnTops={measured.setTurnTops}
+                    essay={item.kind === 'essay'}
                   />
                   {session.mode === 'help' && shown.status === 'correct' ? (
                     <Rise delay={180}>

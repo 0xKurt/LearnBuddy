@@ -42,6 +42,3 @@ export function recallText(
   if (!forDialogue) return null;
   return m.role === 'learner' ? t(locale, 'safeguarding.held_back') : m.text;
 }
-
-/** SQL for "only what a model may be told", to sit in a WHERE clause. */
-export const RECALLABLE_SQL = 'recall_block is null';

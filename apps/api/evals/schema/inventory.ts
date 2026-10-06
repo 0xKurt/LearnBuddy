@@ -88,6 +88,7 @@ const EXPLAIN_RUNS: { kind: StartTopicRequest['kind']; sheets: boolean }[] = [
   { kind: 'spelling_dictation', sheets: false },
   { kind: 'teach_back', sheets: false },
   { kind: 'read', sheets: false },
+  { kind: 'essay', sheets: false },
   { kind: 'practice', sheets: true },
   { kind: 'test', sheets: true },
 ];

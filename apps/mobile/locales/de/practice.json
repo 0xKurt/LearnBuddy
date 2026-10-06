@@ -385,5 +385,20 @@
       "Hunderttausender",
       "Millionen"
     ]
+  },
+  "essay": {
+    "intro": "{{form}} – so steht dein Text",
+    "met": "geschafft",
+    "open": "noch offen",
+    "places": "Hier kannst du noch nachschärfen",
+    "revise": "Überarbeite diese Stellen – dein Text steht noch im Feld. Dann schick mir die neue Fassung.",
+    "last": "Das war deine letzte Fassung für diesmal. Nimm die Punkte mit in deinen nächsten Text.",
+    "quote": "„{{text}}“",
+    "her_words": "Deine Worte",
+    "version_one": "Fassung {{n}} · 1 Wort",
+    "version_other": "Fassung {{n}} · {{count}} Wörter",
+    "text_one": "Dein Text · 1 Wort",
+    "text_other": "Dein Text · {{count}} Wörter",
+    "thinking": "Buddy liest deinen Text …"
   }
 }

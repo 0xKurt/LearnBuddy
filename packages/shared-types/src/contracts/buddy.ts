@@ -178,11 +178,13 @@ export const ActionSummary = z.discriminatedUnion('tool', [
       'spelling_dictation',
       'teach_back',
       'read',
+      'essay',
     ]),
     /**
      * spelling_dictation: the sheet the words come from (issue #242); teach_back: the sheet the
-     * questions are about (issue #236) — the button hands it to `POST /practice/topic` as
-     * `material_id`. Null for every other kind and in older records.
+     * questions are about (issue #236); essay: the sheet with the writing task (issue #258) — the
+     * button hands it to `POST /practice/topic` as `material_id`. Null for every other kind and in
+     * older records.
      */
     material_id: Uuid.nullable().default(null),
     text: z.string(),

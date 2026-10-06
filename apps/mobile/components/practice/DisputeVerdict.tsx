@@ -14,6 +14,7 @@
 // Er sagt, was der Server wirklich tut — die Frage zählt nicht mehr, sie kommt nicht wieder,
 // der Lernstand geht auf den Stand von vorher zurück (`disputeVerdict`, practice/service.ts).
 
+import type { ItemKind } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 
@@ -33,6 +34,8 @@ export type VerdictState = {
   mode: string;
   /** Woher die Frage kommt (`items.origin`); Hausaufgaben werden nicht bewertet. */
   origin: string;
+  /** Die Art der Frage: ein langer Text bekommt Rückmeldung, nie ein Urteil (#258). */
+  kind?: ItemKind;
 };
 
 /**
@@ -40,7 +43,8 @@ export type VerdictState = {
  * 409 `dispute_not_allowed`); hier entscheidet sie nur, ob der Knopf zu sehen ist.
  *
  * Offen heißt: noch kein Urteil — dafür gibt es „Frage passt nicht". Im Probetest kommen die
- * Ergebnisse am Ende, und Hausaufgaben werden geholfen statt bewertet.
+ * Ergebnisse am Ende, und Hausaufgaben werden geholfen statt bewertet. Ein langer Text wird nie
+ * bewertet (`not_an_attempt`, #258): auch dort gibt es nichts zu bestreiten.
  */
 export function canDisputeVerdict(q: VerdictState): boolean {
   return (
@@ -48,7 +52,8 @@ export function canDisputeVerdict(q: VerdictState): boolean {
     q.sessionStatus === 'active' &&
     q.mode !== 'help' &&
     !q.testing &&
-    q.origin !== 'homework'
+    q.origin !== 'homework' &&
+    q.kind !== 'essay'
   );
 }
 
