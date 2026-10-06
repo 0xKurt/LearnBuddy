@@ -8,6 +8,7 @@
 
 import type { Db } from '../../lib/db.js';
 import { enqueueJob } from '../scheduler/jobs.js';
+import { scheduleNextDayReview } from './review.js';
 
 export type BuddyEvent =
   /**
@@ -47,9 +48,15 @@ const wakeBuddy: Subscriber = async (db, learnerId, eventId, e, at) => {
   });
 };
 
+/** The day after a sheet was read, Buddy offers to go over it once more (review.ts, #446). */
+const reviewNextDay: Subscriber = async (db, learnerId, _eventId, e, at) => {
+  if (e.type === 'material_ready')
+    await scheduleNextDayReview(db, learnerId, e.rootId ?? e.materialId, at);
+};
+
 /** Who reacts to what. An event without subscribers is only recorded. */
 export const SUBSCRIBERS: { [T in EventType]: readonly Subscriber[] } = {
-  material_ready: [wakeBuddy],
+  material_ready: [wakeBuddy, reviewNextDay],
   session_finished: [wakeBuddy],
   // Homework help starts right away in the app; no background look is needed.
   homework_ready: [],

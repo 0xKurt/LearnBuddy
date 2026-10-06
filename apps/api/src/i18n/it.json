@@ -38,7 +38,9 @@
   },
   "material": {
     "ready": "Le tue domande su «{{title}}» sono pronte ({{count}}).",
-    "ready_untitled": "Le tue domande sono pronte ({{count}})."
+    "ready_untitled": "Le tue domande sono pronte ({{count}}).",
+    "review": "Ti va di ripassare «{{title}}» un momento? Ci sono alcune domande pronte: dopo una notte resta meglio.",
+    "review_untitled": "Ti va di ripassare la tua scheda un momento? Ci sono alcune domande pronte: dopo una notte resta meglio."
   },
   "practice": {
     "accents": "Quasi – controlla di nuovo gli accenti.",
