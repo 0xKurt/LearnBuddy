@@ -1,5 +1,5 @@
 // Scripted model answers for labelled pictures (issue #252): a plant cell to label (code writes
-// one question per number), the plant cell's nucleus and a bicycle's frame to tap. Shared by the
+// one question per number), the plant cell's nucleus, a bicycle's frame and a traffic sign to tap. Shared by the
 // integration test (`__tests__/schematic-figures.int.test.ts`) and the browser walkthrough
 // (tests/web/tap-figures.spec.ts). Every name is a part of its drawing and passes the server's own
 // check (`modules/practice/schematicCheck.ts`). Test tooling only; answers are keyed by the
@@ -48,6 +48,14 @@ export const SCHEMATIC_ITEMS = [
     tap: true,
     figure: { type: 'schematic', d: 'bicycle', n: [], ask: 0 },
   },
+  {
+    ...base,
+    prompt: 'Tippe auf das Schild für den Radweg.',
+    answer: 'Radweg',
+    topic: 'Verkehr',
+    tap: true,
+    figure: { type: 'schematic', d: 'signs', n: [], ask: 0 },
+  },
 ];
 
 /** The questions as stored and shown, in order: the label task as code writes it, then the taps. */
@@ -57,6 +65,7 @@ export const SCHEMATIC_PROMPTS = [
   'Pflanzenzelle: Wie heißt Teil 3?',
   'Tippe auf den Zellkern.',
   'Tippe auf den Rahmen.',
+  'Tippe auf das Schild für den Radweg.',
 ];
 
 /** Picture questions that cannot be asked as written: none of them may reach the database. */
@@ -65,6 +74,12 @@ export const BROKEN_SCHEMATIC_ITEMS = [
   { ...SCHEMATIC_ITEMS[0]!, prompt: 'Beschrifte die Zelle.', figure: cell(['Zellkern', 'Linse']) },
   // A tap that asks a number.
   { ...SCHEMATIC_ITEMS[1]!, prompt: 'Tippe auf Teil 1.', figure: cell(['Zellkern'], 1) },
+  // A tap on a picture with numbers: they stand beside the drawing and shrink it.
+  {
+    ...SCHEMATIC_ITEMS[1]!,
+    prompt: 'Tippe auf den Zellkern, Teil 1.',
+    figure: cell(['Zellkern', 'Vakuole']),
+  },
   // A part too small for a finger on a phone: the bell is named, never tapped.
   {
     ...SCHEMATIC_ITEMS[2]!,

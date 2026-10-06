@@ -22,6 +22,15 @@ export const SCHEMATIC_DRAWINGS = [
   'tooth',
   'insect',
   'bicycle',
+  'microscope',
+  'lab',
+  'heart',
+  'ear',
+  'skeleton',
+  'organs',
+  'signs',
+  'instruments',
+  'anlaut',
 ] as const;
 
 export const SchematicFigure = z.object({

@@ -28,9 +28,12 @@ function pointsOf(ring: string): Pt[] {
   return pts;
 }
 
-/** A shape with a hole: a cell wall, a tyre, a membrane — `outer` without `inner`. */
-export function band(outer: string, inner: string): string[] {
-  return [outer, ringOf(pointsOf(inner), true)];
+/**
+ * A shape with holes: a cell wall, a tyre, a membrane, a sign's white symbol — `outer` without the
+ * `inner` rings (which must not overlap each other: two holes over one point fill it again).
+ */
+export function band(outer: string, ...inner: string[]): string[] {
+  return [outer, ...inner.map((ring) => ringOf(pointsOf(ring), true))];
 }
 
 /** The part of a ring between the radii r0 and r1 from angle `from` to `to` (degrees, y down). */
@@ -148,4 +151,24 @@ export function stroke(width: number, ...xy: number[]): string {
       return [p[0] + (sign * half * nx) / len, p[1] + (sign * half * ny) / len] as [number, number];
     });
   return ringOf([...side(1), ...side(-1).reverse()]);
+}
+
+/**
+ * A crescent moon around (cx, cy), opening to the right: the outer circle's arc on the left and an
+ * inner arc of a circle shifted right, as one outline (a hole would leave the shifted circle's
+ * outside filled).
+ */
+export function moon(cx: number, cy: number, r: number): string {
+  const pts: Pt[] = [];
+  for (let k = 0; k <= 24; k++) {
+    const a = ((60 + (k * 240) / 24) * Math.PI) / 180;
+    pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
+  }
+  // Back through the inside, on a circle of the same radius shifted right by r · 0.55.
+  const ix = cx + r * 0.55;
+  for (let k = 24; k >= 0; k--) {
+    const a = ((95 + (k * 170) / 24) * Math.PI) / 180;
+    pts.push([ix + r * 0.86 * Math.cos(a), cy + r * 0.86 * Math.sin(a)]);
+  }
+  return ringOf(pts);
 }

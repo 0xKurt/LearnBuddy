@@ -77,11 +77,13 @@ function ringsOf(shape: RegionShape): Ring[] {
   return rings;
 }
 
-/** An SVG path of `rings` drawn `k` times the frame's size. */
-export function regionPath(rings: readonly string[], k: number): string {
+/** An SVG path of `rings` drawn `k` times the frame's size, the frame's (0, 0) at (x0, y0). */
+export function regionPath(rings: readonly string[], k: number, x0 = 0, y0 = 0): string {
   return rings
     .map((r) => {
-      const n = r.split(' ').map((v) => Math.round(Number(v) * k * 10) / 10);
+      const n = r
+        .split(' ')
+        .map((v, j) => Math.round((Number(v) * k + (j % 2 === 0 ? x0 : y0)) * 10) / 10);
       let d = '';
       for (let i = 0; i + 1 < n.length; i += 2) d += `${i === 0 ? 'M' : 'L'}${n[i]} ${n[i + 1]}`;
       return `${d}Z`;

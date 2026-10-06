@@ -4,7 +4,7 @@
 // the value is the screen reader's (`aria-valuetext`, issue #409). A second walk taps a stumme
 // Karte (issue #251): every one of the 16 Länder, a continent, and names a marked country —
 // scripted in apps/api/src/testing/scenarios/map.ts, shot at 93–95. A third labels a picture and
-// taps its parts (issue #252, scenarios/schematic.ts, shot at 90–92). Scripted answers in apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
+// taps its parts (issue #252, scenarios/schematic.ts, shot at 90–92b). Scripted answers in apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
 // no tutor is scripted for any. Every question is shot at both phone sizes, light and dark, with
 // the keyboard up for her question (test-results/web/shots, 96-…).
 //
@@ -252,6 +252,16 @@ test('a labelled picture: the cell labelled number by number, every part tapped 
   await tapPart(page, 'bicycle', 'frame');
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Teil: Rahmen');
   await bothRooms(page, '92-picture-bike');
+  await checkRight(page);
+
+  // A drawing of #252's second part: every traffic sign reached at its own point.
+  await expect(page.getByText('Tippe auf das Schild für den Radweg.')).toBeVisible();
+  for (const part of schematic('signs').parts) {
+    await tapPart(page, 'signs', part.id);
+    await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
+  }
+  await tapPart(page, 'signs', 'cycle_path');
+  await bothRooms(page, '92b-picture-signs');
   await checkRight(page);
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });

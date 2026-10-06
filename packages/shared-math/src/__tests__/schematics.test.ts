@@ -22,7 +22,7 @@ const cell: SchematicFig = { type: 'schematic', d: 'plant_cell', n: [], ask: 0 }
 
 describe('the library', () => {
   it('has the drawings, each with parts named in all five languages', () => {
-    expect(SCHEMATIC_IDS).toHaveLength(8);
+    expect(SCHEMATIC_IDS).toHaveLength(17);
     for (const d of SCHEMATIC_IDS) {
       const parts = schematic(d).parts;
       expect(parts.length, d).toBeGreaterThanOrEqual(4);
@@ -76,6 +76,18 @@ describe('the library', () => {
     expect(tappable('eye', 'Linse')).toBe(true);
     expect(tappable('bicycle', 'Rahmen')).toBe(true);
     expect(tappable('insect', 'Kopf')).toBe(true);
+    // The drawings of #252's second part.
+    expect(tappable('microscope', 'Okular')).toBe(true);
+    expect(tappable('lab', 'Becherglas')).toBe(true);
+    expect(tappable('heart', 'linke Kammer')).toBe(true);
+    expect(tappable('ear', 'Schnecke')).toBe(true);
+    expect(tappable('skeleton', 'Schädel')).toBe(true);
+    expect(tappable('organs', 'Lunge')).toBe(true);
+    expect(tappable('signs', 'Radweg')).toBe(true);
+    expect(tappable('instruments', 'Trommel')).toBe(true);
+    expect(tappable('anlaut', 'Mond')).toBe(true);
+    // The safety check's small parts are named, never tapped (like the bell).
+    expect(tappable('bicycle', 'Speichenreflektor')).toBe(false);
   });
 });
 

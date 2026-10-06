@@ -8,7 +8,7 @@
 //     question per number, "Wie heißt Teil 1?" …, each with the library's name as its key
 //     (`labelQuestions`) — the labelling task of a worksheet, no word of it from the model;
 //   · "Wie heißt Teil 3?" — typed (kind short): the number asked is on a part, that part the key;
-//   · "Tippe auf den Zellkern" — answered by tapping (`ItemDraft.tap`, no number asked); the tap
+//   · "Tippe auf den Zellkern" — answered by tapping (`ItemDraft.tap`, no number on it); the tap
 //     check (`tapCheck.ts`, the one mechanism of every tappable figure) holds the key to a part,
 //     and here: a part big enough for a finger on a phone.
 // Anything else about a picture — what a part does, how many there are — is no fact of the
@@ -43,6 +43,9 @@ function schematicItemProblem(it: Pictured): string | null {
   const key = schematicPart(f.d, it.answer);
   if (it.tap === true) {
     if (f.ask !== 0) return 'a tap question asks no number';
+    // Numbers stand beside the drawing (the app's schematicLayout.ts) and shrink it: a finger needs
+    // all of it, and a number would name nothing she is asked for.
+    if (f.n.length > 0) return 'a tap question numbers no part';
     // On a part of the picture: the tap check. Here only what it cannot know: the finger.
     return key === null ||
       regionTappable(schematicRegions(SCHEMATIC_SHAPES, f.d), key, schematic(f.d).height)

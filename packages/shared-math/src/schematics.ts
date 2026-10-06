@@ -52,6 +52,15 @@ export const SCHEMATIC_IDS = [
   'tooth',
   'insect',
   'bicycle',
+  'microscope',
+  'lab',
+  'heart',
+  'ear',
+  'skeleton',
+  'organs',
+  'signs',
+  'instruments',
+  'anlaut',
 ] as const;
 export type SchematicId = (typeof SCHEMATIC_IDS)[number];
 export type SchematicNames = Readonly<Record<SchematicId, Schematic>>;

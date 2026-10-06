@@ -300,3 +300,69 @@ export function placeLabels(
   }
   return out;
 }
+
+/**
+ * Numbers as a schoolbook prints them (#252): in a column left and right of a drawing, each joined
+ * to its point by a leader line. `placeLabels` puts a label right beside its point, which on a
+ * picture covers the very parts being labelled; here no number stands on the drawing at all.
+ *
+ * Each point goes to the column on its own side — while that column has room, else the points
+ * nearest the middle cross over — and stands as near its own height as the numbers above and
+ * below it allow (`pitch` apart, between `top` and `bottom`). Two leader lines of a column that
+ * cross trade their places, until none does.
+ */
+export type Columns = { left: number; right: number; top: number; bottom: number; pitch: number };
+
+export function columnLabels(points: readonly XY[], c: Columns): XY[] {
+  const middle = (c.left + c.right) / 2;
+  const room = Math.max(1, Math.floor((c.bottom - c.top) / c.pitch) + 1);
+  const left = points.map((p) => p.x < middle);
+  for (const side of [true, false]) {
+    // Too many on one side: the ones nearest the middle cross over.
+    const mine = points
+      .map((p, i) => ({ i, d: Math.abs(p.x - middle) }))
+      .filter(({ i }) => left[i] === side)
+      .sort((a, b) => a.d - b.d);
+    let other = left.filter((s) => s !== side).length;
+    for (const { i } of mine.slice(0, Math.max(0, mine.length - room))) {
+      if (other >= room) break;
+      left[i] = !side;
+      other += 1;
+    }
+  }
+  const out: XY[] = points.map((p, i) => ({ x: left[i] ? c.left : c.right, y: p.y }));
+  for (const x of [c.left, c.right]) {
+    const column = out
+      .map((s, i) => ({ s, p: points[i]! }))
+      .filter(({ s }) => s.x === x)
+      .sort((a, b) => a.s.y - b.s.y);
+    // Down from the top, then back up from the bottom: each as near its point as its neighbours allow.
+    column.forEach(({ s }, k) => {
+      s.y = Math.max(s.y, c.top, k > 0 ? column[k - 1]!.s.y + c.pitch : c.top);
+    });
+    for (let k = column.length - 1; k >= 0; k--) {
+      const below = k < column.length - 1 ? column[k + 1]!.s.y - c.pitch : c.bottom;
+      const s = column[k]!.s;
+      s.y = Math.max(c.top + k * c.pitch, Math.min(s.y, below, c.bottom));
+    }
+    // Crossing leaders trade places: each trade shortens the two, so it ends.
+    for (let swapped = true, rounds = 0; swapped && rounds < 50; rounds++) {
+      swapped = false;
+      for (const a of column) {
+        for (const b of column) {
+          if (a === b || !segmentsCross(a.p, a.s, b.p, b.s)) continue;
+          [a.s.y, b.s.y] = [b.s.y, a.s.y];
+          swapped = true;
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/** Whether the segments p→s and q→t cross (touching ends do not). */
+function segmentsCross(p: XY, s: XY, q: XY, t: XY): boolean {
+  const side = (a: XY, b: XY, r: XY) =>
+    Math.sign((b.x - a.x) * (r.y - a.y) - (b.y - a.y) * (r.x - a.x));
+  return side(p, s, q) * side(p, s, t) < 0 && side(q, t, p) * side(q, t, s) < 0;
+}

@@ -83,16 +83,18 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
   it('stores only questions about parts the drawing has, a tap only on a part a finger can hit', async () => {
     const s = await start(env, l, [...SCHEMATIC_ITEMS, ...BROKEN_SCHEMATIC_ITEMS]);
     expect(s.items.map((i) => i.item.prompt)).toEqual(SCHEMATIC_PROMPTS);
-    expect(s.items.map((i) => i.item.tap)).toEqual([false, false, false, true, true]);
+    expect(s.items.map((i) => i.item.tap)).toEqual([false, false, false, true, true, true]);
   });
 
   it('grades a named part in any language and a tapped part by code, never the tutor', async () => {
     const s = await start(env, l, SCHEMATIC_ITEMS);
-    const [one, two, , nucleus, frame] = s.items.map((i) => i.item.id) as string[];
+    const [one, two, , nucleus, frame, sign] = s.items.map((i) => i.item.id) as string[];
     expect((await answer(l, s, one!, 'Nukleus')).body.verdict).toBe('correct');
     expect((await answer(l, s, two!, 'vacuole')).body.verdict).toBe('correct');
     expect((await answer(l, s, nucleus!, 'Vakuole')).body.verdict).toBe('incorrect');
     expect((await answer(l, s, frame!, 'Rahmen')).body.verdict).toBe('correct');
+    // A drawing of #252's second part: the traffic signs, the stop sign tapped for the cycle path.
+    expect((await answer(l, s, sign!, 'Stoppschild')).body.verdict).toBe('incorrect');
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 
