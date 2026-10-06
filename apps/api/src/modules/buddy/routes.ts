@@ -20,7 +20,6 @@ import {
   type SendMessageResponse,
 } from '@learnbuddy/shared-types/contracts';
 import { Hono } from 'hono';
-import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 
 import {
@@ -35,6 +34,7 @@ import {
   type AppContext,
   type AppEnv,
 } from '../../http/context.js';
+import { streamed, wantsStream } from '../../http/stream.js';
 import { check, readBody } from '../../http/validate.js';
 import type { Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
@@ -71,6 +71,23 @@ const home = (c: AppContext) => {
   return buildHome(depsOf(c), { id: l.id, display_name: l.display_name, isMinor: l.isMinor });
 };
 
+/**
+ * A change under the learner's context lock (one lock order everywhere, CLAUDE.md rule 4): the
+ * transaction, her id and the app clock's now, read once before it starts.
+ */
+function underContext<T>(
+  c: AppContext,
+  work: (tx: Db, learnerId: string, now: Date) => Promise<T>,
+): Promise<T> {
+  const deps = depsOf(c);
+  const learnerId = c.get('learner').id;
+  const now = deps.now();
+  return deps.db.tx(async (tx) => {
+    await lockContext(tx, learnerId);
+    return work(tx, learnerId, now);
+  });
+}
+
 buddyRoutes.get('/', async (c) => c.json(await home(c)));
 
 buddyRoutes.get('/thread', async (c) => {
@@ -104,28 +121,19 @@ buddyRoutes.post('/messages', async (c) => {
     home: await home(c),
   });
 
-  if (!(c.req.header('accept') ?? '').includes('text/event-stream')) {
+  if (!wantsStream(c)) {
     const outcome = await run();
     return c.json(await result(outcome), outcome.status === 'processing' ? 202 : 200);
   }
   // Streamed: Buddy's reply while it is written, then the same result as above.
-  return streamSSE(c, async (stream) => {
-    // Errors are answered here, as a code only: nothing internal reaches the app.
-    try {
-      let sent = Promise.resolve();
-      const outcome = await run((round, p) => {
+  return streamed(c, 'reply', async (emit) =>
+    result(
+      await run((round, p) => {
         const event: ReplyStreamEvent = { round, ...p };
-        sent = sent.then(() => stream.writeSSE({ event: 'reply', data: JSON.stringify(event) }));
-      });
-      await sent;
-      await stream.writeSSE({ event: 'done', data: JSON.stringify(await result(outcome)) });
-    } catch (err) {
-      await stream.writeSSE({
-        event: 'error',
-        data: JSON.stringify({ code: isAppError(err) ? err.code : 'internal' }),
-      });
-    }
-  });
+        emit(event);
+      }),
+    ),
+  );
 });
 
 // "Stopp": she ends Buddy's reply while it is written (docs/architecture.md §Turns). The
@@ -215,11 +223,7 @@ async function stepAsideUntilTomorrow(
 
 buddyRoutes.post('/steps/:id/skip', async (c) => {
   const stepId = check(Uuid, c.req.param('id'));
-  const deps = depsOf(c);
-  const learnerId = c.get('learner').id;
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    await lockContext(tx, learnerId);
+  await underContext(c, async (tx, learnerId, now) => {
     const settings = await loadSettings(tx, learnerId);
     await stepAsideUntilTomorrow(tx, learnerId, stepId, settings, now);
     await bumpContext(tx, learnerId);
@@ -229,12 +233,8 @@ buddyRoutes.post('/steps/:id/skip', async (c) => {
 
 buddyRoutes.post('/actions/:id/undo', async (c) => {
   const actionId = check(Uuid, c.req.param('id'));
-  const deps = depsOf(c);
-  const learnerId = c.get('learner').id;
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    // Same lock as decisions: an undo never interleaves with applying a decision.
-    await lockContext(tx, learnerId);
+  // Same lock as decisions: an undo never interleaves with applying a decision.
+  await underContext(c, async (tx, learnerId, now) => {
     const action = await tx.maybeOne<{
       id: string;
       status: string;
@@ -278,11 +278,7 @@ buddyRoutes.post('/actions/:id/undo', async (c) => {
 buddyRoutes.post('/confirmations/:id', async (c) => {
   const pendingId = check(Uuid, c.req.param('id'));
   const input = check(AnswerConfirmationRequest, await c.req.json());
-  const deps = depsOf(c);
-  const learnerId = c.get('learner').id;
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    await lockContext(tx, learnerId);
+  await underContext(c, async (tx, learnerId, now) => {
     const pending = await tx.maybeOne<{
       id: string;
       operation: 'delete_material' | 'delete_item';
@@ -334,9 +330,7 @@ buddyRoutes.post('/goals/:id/outcome', async (c) => {
   const goalId = check(Uuid, c.req.param('id'));
   const { outcome } = await readBody(c, z.object({ outcome: z.enum(['good', 'ok', 'hard']) }));
   const deps = depsOf(c);
-  const learnerId = c.get('learner').id;
-  await deps.db.tx(async (tx) => {
-    await lockContext(tx, learnerId);
+  await underContext(c, async (tx, learnerId) => {
     const goal = await tx.maybeOne<{ status: string }>(
       `select status from buddy_goals where id = $1 and learner_id = $2 for update`,
       [goalId, learnerId],
@@ -386,11 +380,7 @@ buddyRoutes.post('/contact/opt-in', async (c) => {
 buddyRoutes.post('/outreach/:id/opened', async (c) => {
   const outreachId = check(Uuid, c.req.param('id'));
   const { response } = await readBody(c, OutreachOpenedRequest);
-  const deps = depsOf(c);
-  const learnerId = c.get('learner').id;
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    await lockContext(tx, learnerId);
+  await underContext(c, async (tx, learnerId, now) => {
     const r = await tx.query(
       `update buddy_outreach
           set opened_at = coalesce(opened_at, $3),
@@ -518,12 +508,8 @@ buddyRoutes.get('/memory', async (c) => {
 buddyRoutes.patch('/memory/:id', async (c) => {
   const memoryId = check(Uuid, c.req.param('id'));
   const input = await readBody(c, UpdateMemoryRequest);
-  const deps = depsOf(c);
-  const learnerId = c.get('learner').id;
   const editor = actorOf(c) === 'account_holder' ? 'account_holder' : 'learner_edited';
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    await lockContext(tx, learnerId);
+  await underContext(c, async (tx, learnerId, now) => {
     // The undo reaches for the entry it just removed, every other change for a live one.
     const wanted = 'unretract' in input ? 'retracted' : 'active';
     const current = await tx.maybeOne<{

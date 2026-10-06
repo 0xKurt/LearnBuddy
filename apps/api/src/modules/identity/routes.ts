@@ -75,6 +75,16 @@ function signedInJustNow(c: AppContext): boolean {
 }
 
 /** The age and relation rules for a birth date (creation and correction alike). */
+/** Agreeing is only to the privacy text in force: an older one is answered with the current. */
+function requireCurrentConsent(deps: Deps, version: string): void {
+  if (version !== deps.config.CONSENT_VERSION) {
+    throw new AppError('conflict', 'The privacy text has changed; please review it again', {
+      reason: 'consent_outdated',
+      current: deps.config.CONSENT_VERSION,
+    });
+  }
+}
+
 function checkBirthDate(relation: 'self' | 'child', birthDate: string, now: Date): void {
   const age = ageOn(birthDate, now);
   if (age < 4 || age > 110)
@@ -157,12 +167,7 @@ identityRoutes.get('/me', requireUser, async (c) => {
 identityRoutes.post('/account', requireUser, async (c) => {
   const deps = depsOf(c);
   const input = await readBody(c, CreateAccountRequest);
-  if (input.consent_version !== deps.config.CONSENT_VERSION) {
-    throw new AppError('conflict', 'The privacy text has changed; please review it again', {
-      reason: 'consent_outdated',
-      current: deps.config.CONSENT_VERSION,
-    });
-  }
+  requireCurrentConsent(deps, input.consent_version);
   const now = deps.now();
   const existing = await findAccountByUser(deps.db, c.get('user').userId);
   const learner = existing ? await findLearner(deps.db, existing.id) : null;
@@ -212,12 +217,7 @@ identityRoutes.post('/account', requireUser, async (c) => {
 identityRoutes.post('/learner/consent', requireUser, requireAccount, requireLearner, async (c) => {
   const deps = depsOf(c);
   const input = await readBody(c, SelfConsentRequest);
-  if (input.consent_version !== deps.config.CONSENT_VERSION) {
-    throw new AppError('conflict', 'The privacy text has changed; please review it again', {
-      reason: 'consent_outdated',
-      current: deps.config.CONSENT_VERSION,
-    });
-  }
+  requireCurrentConsent(deps, input.consent_version);
   const now = deps.now();
   const learner = c.get('learner');
   if (isMinor(learner, now)) {
