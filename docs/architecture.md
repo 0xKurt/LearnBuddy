@@ -4423,7 +4423,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   | What happens | Buddy reads aloud, does not listen | hands-free: Buddy reads and listens |
   | Control | the speaker switch in the header (`components/lb/ReadAloudSwitch.tsx`) — the chat's head and the practice head | the waveform at the end of the input bar (`TalkButton`) |
   | In the chat | replies are read aloud | opens the conversation screen (`app/talk.tsx`) |
-  | In practice | the question when it appears, the feedback, "Anders erklären" | the bar becomes the conversation row in place: "Tastatur" · mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row, with the 56 pt mic) |
+  | In practice | the question when it appears, the feedback, "Anders erklären"; also a Kopfrechnen task (as math in words) and a card's front, never its back (#434). The switch stands in every practice head (`components/practice/HeadActions.tsx`), and a tap on the question itself reads it again (`components/lb/ReadAgain.tsx`, "Nochmal vorlesen" for a screen reader) | the bar becomes the conversation row in place: "Tastatur" · mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row, with the 56 pt mic) |
   | Kept | on the device (`lb.voiceMode`, the old single flag's key) | not kept: she starts it |
   A conversation includes reading aloud (`readsAloud`); switching the speaker off ends it, and
   "Tastatur" ends it without touching her Vorlesen choice. Before #386 one flag did both, set by

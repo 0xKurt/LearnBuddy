@@ -38,13 +38,17 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
+import { ReadAgain } from '../lb/ReadAgain.js';
 import { Rise } from '../lb/Motion.js';
 import { Screen } from '../lb/Screen.js';
 import { toast } from '../lb/Toast.js';
 import { BottomBar } from '../lb/BottomBar.js';
+import { useSpokenWords } from '../math/useSpokenMath.js';
+import { HeadActions } from './HeadActions.js';
 import { PassEnd } from './PassEnd.js';
 import { ListenButton } from './ListenButton.js';
 import { ProgressRow } from './Question.js';
+import { useQuestionVoice } from './useQuestionVoice.js';
 
 type Props = {
   session: SessionView;
@@ -83,6 +87,13 @@ export function CardPass({ session, title, onChange, onClose }: Props) {
   const current: SessionItemView | undefined =
     session.items.find((i) => i.item.id === session.current_item_id) ?? open[0];
   const done = session.items.length - open.length;
+
+  // Vorlesen (#434): the front of a card is read when it comes up, a tap on it reads it again;
+  // nothing listens (she rates herself, there is no spoken answer). The back is never read
+  // unasked — it is what she tries to remember.
+  const words = useSpokenWords();
+  const facing = current && turned !== current.item.id ? current.item : null;
+  const readFront = useQuestionVoice(facing, words, t, { listens: false });
 
   // The back of a card is a change on screen a screen reader must hear, not see.
   const showing = current && turned === current.item.id ? current.answer : null;
@@ -139,16 +150,18 @@ export function CardPass({ session, title, onChange, onClose }: Props) {
     <Screen
       title={title}
       right={
-        <Btn
-          variant="outline"
-          size="sm"
-          pill
-          onPress={onClose}
-          accessibilityLabel={t('practice:cards.end_label')}
-          accessibilityHint={t('practice:cards.end_hint')}
-        >
-          {t('practice:end')}
-        </Btn>
+        <HeadActions>
+          <Btn
+            variant="outline"
+            size="sm"
+            pill
+            onPress={onClose}
+            accessibilityLabel={t('practice:cards.end_label')}
+            accessibilityHint={t('practice:cards.end_hint')}
+          >
+            {t('practice:end')}
+          </Btn>
+        </HeadActions>
       }
     >
       <View style={{ flex: 1, paddingHorizontal: SPACE.lg, gap: SPACE.md }}>
@@ -168,13 +181,15 @@ export function CardPass({ session, title, onChange, onClose }: Props) {
         <View style={{ flex: 1, justifyContent: 'center' }} testID="card">
           <Card tone="lavender" padding={SPACE.xl} radius={24}>
             <View style={{ gap: SPACE.lg, alignItems: 'center' }}>
-              <Text
-                accessibilityRole="header"
-                numberOfLines={3}
-                style={[faceStyle(front), { textAlign: 'center' }]}
-              >
-                {front}
-              </Text>
+              <ReadAgain onRead={() => readFront(current.item)}>
+                <Text
+                  accessibilityRole="header"
+                  numberOfLines={3}
+                  style={[faceStyle(front), { textAlign: 'center' }]}
+                >
+                  {front}
+                </Text>
+              </ReadAgain>
               {current.item.prompt_lang && foreign(current.item.prompt_lang) ? (
                 // A `<Btn>` sits at the start of its line unless it is `full` or `center`;
                 // under a centred word that reads as a stray. The wrapper centres it without

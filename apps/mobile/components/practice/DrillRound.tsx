@@ -35,9 +35,13 @@ import { Icon } from '../lb/Icon.js';
 import { Screen } from '../lb/Screen.js';
 import { toast } from '../lb/Toast.js';
 import { MathText } from '../math/MathText.js';
+import { useSpokenWords } from '../math/useSpokenMath.js';
+import { ReadAgain } from '../lb/ReadAgain.js';
 import { BottomBar } from '../lb/BottomBar.js';
+import { HeadActions } from './HeadActions.js';
 import { PassEnd } from './PassEnd.js';
 import { ProgressRow } from './Question.js';
+import { useQuestionVoice } from './useQuestionVoice.js';
 
 type Props = {
   session: SessionView;
@@ -68,6 +72,15 @@ function typedWith(typed: string, key: Key): string {
   return `${typed}${key}`;
 }
 
+/**
+ * A task as it is read aloud: it is math through and through ("7 · 8", "56 : 7"), so it is read as
+ * math — "sieben mal acht", never the dot as a symbol (#434). A task already written with $…$
+ * (a fraction) reads as it is.
+ */
+function asMath(item: SessionItemView['item']): SessionItemView['item'] {
+  return item.prompt.includes('$') ? item : { ...item, prompt: `$${item.prompt}$` };
+}
+
 export function DrillRound({ session, title, onChange, onClose }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
@@ -80,6 +93,11 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
 
   const open = session.items.filter((i) => i.status === 'open' && !pending.has(i.item.id));
   const current: SessionItemView | undefined = open[0];
+  // Vorlesen (#434): the task is read when it appears, a tap on it reads it again; a round has no
+  // spoken answer, so nothing listens.
+  const words = useSpokenWords();
+  const spoken = current ? asMath(current.item) : null;
+  const readTask = useQuestionVoice(spoken, words, t, { listens: false });
   // What she typed for THIS task is a draft: a theme switch rebuilds the screen, and the digits
   // must still be there afterwards (the review of #228–#230 found exactly that loss).
   const draft = useDraft(`drill.${session.id}.${current?.item.id ?? 'none'}`);
@@ -246,11 +264,13 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
     <Screen
       title={title}
       right={
-        <EndButton
-          onPress={onClose}
-          label={t('practice:end_label')}
-          hint={t('practice:drill.end_hint')}
-        />
+        <HeadActions>
+          <EndButton
+            onPress={onClose}
+            label={t('practice:end_label')}
+            hint={t('practice:drill.end_hint')}
+          />
+        </HeadActions>
       }
     >
       <View style={{ flex: 1, paddingHorizontal: SPACE.lg, gap: SPACE.md }}>
@@ -273,15 +293,17 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
         >
           <View style={{ flex: 1 }} />
           <View style={{ alignItems: 'center', gap: SPACE.lg }} testID="drill-task">
-            <MathText
-              text={prompt}
-              accessibilityRole="header"
-              style={[
-                TYPE.display,
-                // token-exempt: the line follows the task's own size (`taskSize`), 1.2 of it
-                { fontSize: size, lineHeight: Math.round(size * 1.2), textAlign: 'center' },
-              ]}
-            />
+            <ReadAgain {...(spoken ? { onRead: () => readTask(spoken) } : {})}>
+              <MathText
+                text={prompt}
+                accessibilityRole="header"
+                style={[
+                  TYPE.display,
+                  // token-exempt: the line follows the task's own size (`taskSize`), 1.2 of it
+                  { fontSize: size, lineHeight: Math.round(size * 1.2), textAlign: 'center' },
+                ]}
+              />
+            </ReadAgain>
             <View
               accessible
               accessibilityLabel={t('practice:drill.typed', { value: typed || '–' })}

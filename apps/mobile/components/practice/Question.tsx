@@ -25,6 +25,7 @@ import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
+import { ReadAgain } from '../lb/ReadAgain.js';
 import { MathText } from '../math/MathText.js';
 import { PassagePanel } from './PassagePanel.js';
 import { QuestionFigure } from './QuestionFigure.js';
@@ -163,6 +164,8 @@ type QuestionProps = {
    * the reading text keeps the smaller box it has while she types.
    */
   answerBoard?: boolean;
+  /** While Vorlesen is on, a tap on the question reads it again (#434); absent when it must not be heard. */
+  onReadAgain?: () => void;
 };
 
 /**
@@ -194,6 +197,7 @@ export function QuestionCard({
   dense = false,
   passage = null,
   answerBoard = false,
+  onReadAgain,
 }: QuestionProps) {
   const { palette } = useTheme();
   // What she can see, keyboard or not: while she types (`tight`), the text gives way to the field.
@@ -261,18 +265,20 @@ export function QuestionCard({
               ) : null}
             </View>
           ) : null}
-          <MathText
-            text={prompt}
-            blanks={{ filled }}
-            // A fraction in the question sits in its sentence (issue #288).
-            inlineFractions
-            accessibilityRole="header"
-            style={
-              dense
-                ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
-                : TYPE.question
-            }
-          />
+          <ReadAgain {...(onReadAgain ? { onRead: onReadAgain } : {})}>
+            <MathText
+              text={prompt}
+              blanks={{ filled }}
+              // A fraction in the question sits in its sentence (issue #288).
+              inlineFractions
+              accessibilityRole="header"
+              style={
+                dense
+                  ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
+                  : TYPE.question
+              }
+            />
+          </ReadAgain>
         </View>
         {figure ? (
           <View

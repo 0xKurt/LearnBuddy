@@ -367,6 +367,12 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(readOn).toHaveAttribute('aria-checked', 'true');
   // Reading aloud is not listening: the bar stays the input bar, no mic of its own.
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
+  // A tap on the question itself reads it again — no button of its own (#434).
+  const again = page.waitForRequest(
+    (r) => r.url().includes('/voice/speech') && r.method() === 'POST',
+  );
+  await page.getByRole('button', { name: 'Nochmal vorlesen' }).click();
+  expect((await again).postDataJSON()).toMatchObject({ text: sent.text });
   await shot(page, '25b-practice-reading');
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '25c-practice-read-dark');
@@ -398,7 +404,8 @@ test('learning modes: explain, homework help without the solution, practice with
   // .last(): the chat's waveform stays mounted under this screen.
   await page.getByRole('button', { name: 'Mit Buddy sprechen' }).last().click();
   // The conversation screen's row: "Tastatur" · the mic · "Nochmal vorlesen" — no field.
-  await expect(page.getByRole('button', { name: 'Nochmal vorlesen' })).toBeVisible();
+  // .last(): the question above it reads again on a tap too (#434).
+  await expect(page.getByRole('button', { name: 'Nochmal vorlesen' }).last()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Tastatur' }).last()).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toHaveCount(0);
   // A conversation reads aloud too: the speaker says so.
@@ -1575,6 +1582,24 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '40b-drill-task-night');
   await page.emulateMedia({ colorScheme: 'light' });
+  // Vorlesen in the round's head too (#434): the task is read in words, and a tap on it reads it
+  // again. Buddy's voice as a short silence (the dev stack has none).
+  await voiceAsSilence(page, 300);
+  const spoken = () =>
+    page.waitForRequest((r) => r.url().includes('/voice/speech') && r.method() === 'POST');
+  const firstRead = spoken();
+  await page.getByRole('switch', { name: 'Vorlesen', exact: true }).last().click();
+  const said = ((await firstRead).postDataJSON() as { text: string }).text;
+  expect(said, 'the task in words, never as a symbol').not.toMatch(/[·$\\]/);
+  const reread = spoken();
+  await taskCard.getByRole('button', { name: 'Nochmal vorlesen' }).click();
+  expect(((await reread).postDataJSON() as { text: string }).text).toBe(said);
+  await shot(page, '40c-drill-read-aloud');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '40d-drill-read-aloud-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('switch', { name: 'Vorlesen ist an' }).last().click();
+  await page.unroute('**/v1/voice/speech');
 
   const check = page.getByRole('button', { name: 'Prüfen' });
   /** The task on the card, solved the way a child would: read it, multiply. */
