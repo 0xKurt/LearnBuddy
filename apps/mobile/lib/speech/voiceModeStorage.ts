@@ -1,4 +1,4 @@
-// Where the voice-mode switch is kept on a phone: AsyncStorage. (The web
+// Where the read-aloud switch (lib/speech/voiceMode.ts) is kept on a phone: AsyncStorage. (The web
 // build uses voiceModeStorage.web.ts: AsyncStorage's web module fails to load
 // under Metro's web bundle.) Both may fail; callers catch.
 

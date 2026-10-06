@@ -43,7 +43,7 @@ function bars(text: string): string[] {
 const OWN_BAR: Record<string, { count: number; why: string }> = {
   'CheckBar.tsx': {
     count: 1,
-    why: 'options she taps, in voice mode: the spoken answer’s slot — #386 part 2 builds the voice row',
+    why: 'Gespräch: the conversation row (`VoiceRow`, #386) takes the bar’s place, as on /talk',
   },
   '[id].tsx': { count: 1, why: '"Weiter" once a question is closed — #388 step 6' },
   'SpeakPanel.tsx': { count: 1, why: 'pronunciation: the recorder — #388 step 6' },

@@ -11,7 +11,6 @@
     "pin_progress": "Chiffres saisis : {{count}} sur 4",
     "camera": "Prendre une photo",
     "keyboard": "Clavier",
-    "talk": "Parler avec Buddy",
     "language": "Choisir la langue"
   },
   "actions": {
@@ -41,12 +40,7 @@
     "hint": "Touche, parle, puis touche encore – aussi longtemps que tu veux.",
     "live": "Compris jusqu'ici : {{text}}",
     "message": "Dicter un message",
-    "mode": "Mode vocal",
-    "mode_hint": "Buddy te lit les textes, et tu réponds avec le micro.",
-    "mode_off": "Je ne lis plus à voix haute.",
-    "mode_on": "Je te lis tout. Touche le micro une fois – ensuite j’écoute à nouveau tout seul.",
     "open_settings": "Ouvrir les réglages",
-    "or_say": "Ou dis ta réponse.",
     "problem": {
       "empty": "Je ne t'ai pas compris – encore une fois ?",
       "too_short": "C'était très court. Touche le micro, parle tranquillement, puis touche encore.",
@@ -55,6 +49,8 @@
       "part_lost": "Un morceau de ton enregistrement s'est perdu – le reste est déjà là."
     },
     "read_again": "Relire",
+    "read_aloud_on": "La lecture est activée",
+    "read_aloud_off": "Lecture à voix haute",
     "recording": "Je t'écoute … {{time}} / {{max}}",
     "recording_open": "Je t'écoute … {{time}}",
     "recording_open_value": "Enregistrement en cours, {{time}}",

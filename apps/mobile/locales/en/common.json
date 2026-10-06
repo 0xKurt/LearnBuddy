@@ -11,7 +11,6 @@
     "pin_progress": "{{count}} of 4 digits entered",
     "camera": "Take a photo",
     "keyboard": "Keyboard",
-    "talk": "Talk with Buddy",
     "language": "Choose language"
   },
   "actions": {
@@ -41,12 +40,7 @@
     "hint": "Tap, speak, then tap again – for as long as you like.",
     "live": "Heard so far: {{text}}",
     "message": "Speak a message",
-    "mode": "Voice mode",
-    "mode_hint": "Buddy reads aloud to you, and you answer with the mic.",
-    "mode_off": "I'll stop reading aloud.",
-    "mode_on": "I'll read aloud to you. Tap the mic once – then I'll listen again by myself.",
     "open_settings": "Open Settings",
-    "or_say": "Or say your answer.",
     "problem": {
       "empty": "I didn't catch that – try again?",
       "too_short": "That was very short. Tap the mic, take your time speaking, then tap again.",
@@ -55,6 +49,8 @@
       "part_lost": "A bit of your recording got lost – the rest is already there."
     },
     "read_again": "Read it again",
+    "read_aloud_on": "Reading aloud is on",
+    "read_aloud_off": "Read aloud",
     "recording": "I'm listening … {{time}} / {{max}}",
     "recording_open": "I'm listening … {{time}}",
     "recording_open_value": "Recording, {{time}}",

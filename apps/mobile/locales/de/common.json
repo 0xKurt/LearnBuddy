@@ -11,7 +11,6 @@
     "pin_progress": "{{count}} von 4 Ziffern eingegeben",
     "camera": "Foto machen",
     "keyboard": "Tastatur",
-    "talk": "Mit Buddy sprechen",
     "language": "Sprache wählen"
   },
   "actions": {
@@ -41,12 +40,7 @@
     "hint": "Tipp, sprich und tipp nochmal – so lange du willst.",
     "live": "Bisher verstanden: {{text}}",
     "message": "Nachricht sprechen",
-    "mode": "Sprachmodus",
-    "mode_hint": "Buddy liest dir vor, und du antwortest mit dem Mikro.",
-    "mode_off": "Ich lese nicht mehr vor.",
-    "mode_on": "Ich lese dir vor. Tipp einmal aufs Mikro – danach höre ich von selbst wieder zu.",
     "open_settings": "Einstellungen öffnen",
-    "or_say": "Oder sag deine Antwort.",
     "problem": {
       "empty": "Ich hab dich nicht verstanden – nochmal?",
       "too_short": "Das war ganz kurz. Tipp aufs Mikro, sprich in Ruhe und tipp dann nochmal.",
@@ -55,6 +49,8 @@
       "part_lost": "Ein Stück deiner Aufnahme ist verloren gegangen – der Rest steht schon da."
     },
     "read_again": "Nochmal vorlesen",
+    "read_aloud_on": "Vorlesen ist an",
+    "read_aloud_off": "Vorlesen",
     "recording": "Ich höre zu … {{time}} / {{max}}",
     "recording_open": "Ich höre zu … {{time}}",
     "recording_open_value": "Aufnahme läuft, {{time}}",
