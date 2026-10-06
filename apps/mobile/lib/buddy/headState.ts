@@ -17,8 +17,6 @@ export type HeadFacts = {
   working: boolean;
   /** An answer is arriving word by word. */
   streaming: boolean;
-  /** Voice mode: Buddy reads out and listens for her answer. */
-  voiceMode: boolean;
 };
 
 /**
@@ -28,7 +26,7 @@ export type HeadFacts = {
 export function headState(f: HeadFacts): MoonState {
   if (f.streaming) return 'speak';
   if (f.sending || f.working) return 'think';
-  // Voice mode with nothing in flight: he is waiting for her to say something.
-  if (f.voiceMode) return 'listen';
+  // Never 'listen' here: the chat's head has no open microphone to claim. Reading aloud is not
+  // listening (issue #386 split the two); listening is the conversation screen's (app/talk.tsx).
   return 'idle';
 }

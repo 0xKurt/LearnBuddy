@@ -38,7 +38,9 @@
   },
   "material": {
     "ready": "Tes questions pour « {{title}} » sont prêtes ({{count}}).",
-    "ready_untitled": "Tes questions sont prêtes ({{count}})."
+    "ready_untitled": "Tes questions sont prêtes ({{count}}).",
+    "review": "Tu veux revoir « {{title}} » un petit moment ? Quelques questions sont prêtes – après une nuit, ça reste mieux.",
+    "review_untitled": "Tu veux revoir ta fiche un petit moment ? Quelques questions sont prêtes – après une nuit, ça reste mieux."
   },
   "practice": {
     "accents": "Presque – vérifie encore les accents.",
