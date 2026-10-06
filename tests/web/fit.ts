@@ -426,6 +426,29 @@ export async function halfTurns(page: Page): Promise<string[]> {
  * finished, so a shot never keeps an element caught half-faded mid-animation. What moves
  * forever (Buddy's breathing orb, typing dots) never settles and only costs the wait.
  */
+/**
+ * Switches the phone's colour scheme and waits until the app has taken it (issue #443).
+ *
+ * A switch remounts the whole tree (ThemeProvider `key`, issues #84/#148), but not when
+ * `emulateMedia` returns: the palette is applied in an effect after the scheme change, and the
+ * remount follows that — later still on a loaded machine. Typing right after the switch can
+ * land in the gap: Playwright's `fill` focuses the field, then inserts the text; when the field
+ * is replaced in between, the text goes into a field that is gone. In modes.spec the "16" of
+ * the sum question was lost that way and "Prüfen" stayed off. So this waits until an element
+ * of the old tree is gone (every `testID` lives under the theme), then until the page is still.
+ */
+export async function setScheme(page: Page, scheme: 'light' | 'dark'): Promise<void> {
+  const changes = await page.evaluate((want) => {
+    if (matchMedia(`(prefers-color-scheme: ${want})`).matches) return false;
+    const old = document.querySelector('[data-testid]');
+    old?.setAttribute('data-before-scheme', want);
+    return old !== null;
+  }, scheme);
+  await page.emulateMedia({ colorScheme: scheme });
+  if (changes) await expect(page.locator('[data-before-scheme]')).toHaveCount(0);
+  await settle(page);
+}
+
 export async function settle(page: Page, maxMs = 1600): Promise<void> {
   await page.waitForTimeout(150);
   const until = Date.now() + maxMs;

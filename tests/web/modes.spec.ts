@@ -15,6 +15,7 @@ import {
   halfTurns,
   partHeight,
   PHONES,
+  setScheme,
   settle,
   shot,
   SHOTS,
@@ -713,8 +714,8 @@ async function keyRowShots(page: Page, name: string): Promise<void> {
   // The switch back to light remounts the whole tree (ThemeProvider). Let it land before she
   // types on: keys pressed into the field that is being replaced go nowhere — in CI the
   // remount landed after the first keystrokes ("2 H" lost). Since #239 a draft survives the
-  // remount itself (lib/drafts.ts); a keystroke into a field that is gone cannot.
-  await page.emulateMedia({ colorScheme: 'light' });
+  // remount itself (lib/drafts.ts); a keystroke into a field that is gone cannot (`setScheme`).
+  await setScheme(page, 'light');
   await page.setViewportSize(PHONES[0]);
   await settle(page);
   await field.focus();
@@ -1183,13 +1184,17 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   await both('78-staff-write-right');
 });
 
-/** One state at both phone sizes, light and dark (fit and contrast checked by `shot`). */
+/**
+ * One state at both phone sizes, light and dark (fit and contrast checked by `shot`). Back in
+ * light only once the switch has landed (`setScheme`): the "16" typed right after it into the
+ * sum question went into the field being replaced, and "Prüfen" stayed off (issue #443).
+ */
 async function bothSchemes(page: Page, name: string): Promise<void> {
   for (const scheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme: scheme });
+    await setScheme(page, scheme);
     await shot(page, `${name}-${scheme}`);
   }
-  await page.emulateMedia({ colorScheme: 'light' });
+  await setScheme(page, 'light');
 }
 
 /**
