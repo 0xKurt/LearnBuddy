@@ -22,6 +22,7 @@ import { MAX_BAR_ITEMS } from './bars.js';
 import { CLOZE_RULES } from './cloze.js';
 import { DictationDraft, DictationDraftParsed } from './dictation.js';
 import { GRID_RULES } from './grid.js';
+import { EssayDraft, MAX_ESSAYS } from './essayTask.js';
 import { unusedItemFields } from './itemFields.js';
 import { ItemDraft, itemsOneByOne } from './items.js';
 import { ListenDraft, ListenQuestion } from './listen.js';
@@ -127,6 +128,12 @@ export const GeneratedSet = z.object({
    * them and recomputed every formula between them (`practice/taskParts.ts`).
    */
   part_tasks: z.array(PartTaskDraft).max(MAX_PART_TASKS).default([]),
+  /**
+   * The writing task of an essay run (issue #258): its wording, its text type and the text it is
+   * about. A separate list for the reason `teach_back` is one: code sets the key points from the
+   * type and holds the text to her sheet (`practice/essayTask.ts`). In the schema only for that run.
+   */
+  essay: z.array(EssayDraft).max(MAX_ESSAYS).default([]),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
@@ -164,6 +171,8 @@ export type SetProfile = {
   reading: boolean;
   /** Tasks in parts (#297): in practice and tests, where a class test's tasks belong. */
   partTasks: boolean;
+  /** A long-text task (#258): only in an essay run, where it is all there is. */
+  essay: boolean;
 };
 
 const STRUCTURED_FORMS = [
@@ -208,6 +217,7 @@ function onlyItems(items: readonly ModelItemKind[]): SetProfile {
     teachBack: false,
     reading: false,
     partTasks: false,
+    essay: false,
   };
 }
 
@@ -222,6 +232,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     teachBack: false,
     reading: false,
     partTasks: true,
+    essay: false,
   },
   // One try per question: no long answer, and no bar — a test is not a place to try a surface.
   test: {
@@ -234,6 +245,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     teachBack: false,
     reading: false,
     partTasks: true,
+    essay: false,
   },
   vocab: onlyItems(['vocab']),
   speak: onlyItems(['speak']),
@@ -248,6 +260,8 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
   // Leseverständnis without a photo (#368): nothing in `items` — the questions come out of
   // `reading`, each held to Buddy's text after its level and language were checked.
   read: { ...onlyItems([]), reading: true },
+  // Lange Texte (#258): nothing in `items` — the one task comes out of `essay`.
+  essay: { ...onlyItems([]), essay: true },
   // Homework is the task she typed: no form of the app's own around it.
   help: onlyItems(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
 };
@@ -268,6 +282,7 @@ export const FALLBACK_PROFILE: SetProfile = {
   teachBack: false,
   reading: false,
   partTasks: true,
+  essay: false,
 };
 
 /** No form switched off: what a caller without a configuration gets. */
@@ -364,6 +379,7 @@ export function setSchemaForModel(
     ...(profile.teachBack ? {} : { teach_back: true }),
     ...(profile.reading ? {} : { reading: true }),
     ...(profile.partTasks ? {} : { part_tasks: true }),
+    ...(profile.essay ? {} : { essay: true }),
   });
 }
 
@@ -405,6 +421,7 @@ export function parseSetFor(
       : z.null().catch(null),
     // Read one by one: a task whose shape does not fit costs only itself.
     part_tasks: itemsOneByOne(profile.partTasks ? PartTaskDraft : NOTHING, MAX_PART_TASKS),
+    essay: itemsOneByOne(profile.essay ? EssayDraft : NOTHING, MAX_ESSAYS),
   });
 }
 

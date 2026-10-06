@@ -125,7 +125,7 @@ export async function overflows(page: Page): Promise<Overflow[]> {
 export type AnswerPlace = {
   /**
    * The empty band under the answer (and its keys): from its lowest edge to the first thing drawn
-   * below it — "Prüfen", the voice slot, the input bar — or to the window's bottom edge where the
+   * below it — "Prüfen", the conversation row, the input bar — or to the window's bottom edge where the
    * answer itself is the action (options she taps). 0: no slot.
    */
   gap: number;
@@ -143,7 +143,7 @@ export type AnswerPlace = {
 
 /**
  * The one rule of the answer shell, measured (issues #310 §3.4, #386): every answer stands at the
- * bottom — directly above its action ("Prüfen", the voice slot, the input bar it writes into), or
+ * bottom — directly above its action ("Prüfen", the conversation row, the input bar it writes into), or
  * at the window's bottom edge where the tap on it is the action. The free room collects above it,
  * between the conversation and the answer, never under it; "Prüfen" is lowest. A typed answer is
  * written in the input bar right above "Prüfen" (issue #365). Null where neither an answer slot
@@ -378,8 +378,10 @@ export async function cutControls(page: Page): Promise<string[]> {
  * The practice conversation shows whole things only (issues #286, #403, rule 17): a turn, the help
  * chips or a card under the question card is either whole below the card's edge and its fade, or
  * not drawn there at all — never its lower half under the fade, the edge of a reply or a sliver of
- * an orb. The units are the conversation column's parts, its turns one by one. The fade line is
- * read from the box's own mask (`topEdgeMaskFrom`): at rest only the gap above a whole turn fades.
+ * an orb. One exception: a part taller than the box cannot be whole anywhere, so it stands from
+ * its first line (a long text's feedback, #258). The units are the conversation column's parts,
+ * its turns one by one. The fade line is read from the box's own mask (`topEdgeMaskFrom`): at rest
+ * only the gap above a whole turn fades.
  * Returns what is half shown, with its place relative to the box's top.
  */
 export async function halfTurns(page: Page): Promise<string[]> {
@@ -392,24 +394,30 @@ export async function halfTurns(page: Page): Promise<string[]> {
     const column = thread?.firstElementChild?.firstElementChild;
     if (!thread || !column) return [];
     const box = thread.getBoundingClientRect();
-    // `linear-gradient(transparent Apx, black Bpx)`: hidden above A, faded down to B.
+    // `linear-gradient(transparent Apx, black Bpx …)`: hidden above A, faded down to B (a fade at
+    // the bottom edge may follow, #258).
     const mask = getComputedStyle(thread).getPropertyValue('mask-image') || '';
     const stops = Array.from(mask.matchAll(/(-?[\d.]+)px/g)).map((m) => Number(m[1]));
     const hidden = box.top + (stops[0] ?? 0);
-    const line = box.top + (stops[stops.length - 1] ?? 0);
+    const line = box.top + (stops[1] ?? stops[0] ?? 0);
     const units = (el: Element): Element[] =>
       el.querySelector('[data-testid="thread-turn"]')
         ? Array.from(el.children).flatMap(units)
         : [el];
-    return Array.from(column.children)
-      .flatMap(units)
-      .map((el) => ({ el, r: el.getBoundingClientRect() }))
-      .filter(({ r }) => r.height > 0 && r.bottom > hidden + 1 && r.top < box.bottom - 1)
-      .filter(({ r }) => r.top < line - 1 || r.bottom > box.bottom + 1)
-      .map(
-        ({ el, r }) =>
-          `${(el.textContent ?? '').trim().slice(0, 24) || el.tagName} ${Math.round(r.top - box.top)}..${Math.round(r.bottom - box.top)} of ${Math.round(box.height)} (fade ${Math.round(line - box.top)})`,
-      );
+    return (
+      Array.from(column.children)
+        .flatMap(units)
+        .map((el) => ({ el, r: el.getBoundingClientRect() }))
+        .filter(({ r }) => r.height > 0 && r.bottom > hidden + 1 && r.top < box.bottom - 1)
+        .filter(({ r }) => r.top < line - 1 || r.bottom > box.bottom + 1)
+        // A part taller than the whole box can never stand whole: it stands from its first line
+        // (Buddy's feedback on a long text, #258, `threadRoom` `reads`) and scrolls.
+        .filter(({ r }) => !(r.top >= line - 1 && r.height > box.bottom - line))
+        .map(
+          ({ el, r }) =>
+            `${(el.textContent ?? '').trim().slice(0, 24) || el.tagName} ${Math.round(r.top - box.top)}..${Math.round(r.bottom - box.top)} of ${Math.round(box.height)} (fade ${Math.round(line - box.top)})`,
+        )
+    );
   });
 }
 
@@ -493,7 +501,7 @@ export async function shot(
   const counts = await Promise.all(typedIn.map((id) => page.getByTestId(id).count()));
   const fieldId = typedIn.find((_, i) => counts[i]! > 0);
   if (fieldId) await keyboardPass(page, name, fieldId);
-  // Any other answer (voice mode's options): its room in the same window, so every form has a
+  // Any other answer (options in a conversation): its room in the same window, so every form has a
   // keyboard column in the measurement (issue #395).
   else if ((await page.getByTestId('answer-slot').count()) > 0) {
     await page.setViewportSize(KEYBOARD_ROOM);

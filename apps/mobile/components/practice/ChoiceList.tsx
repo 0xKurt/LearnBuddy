@@ -15,9 +15,8 @@
 // letter's column; the one she picks stays picked (a radio, the tile tinted) while she writes it
 // right below. The task itself stands above them, numbered the same, but no tile: it is not one to
 // pick.
-// In voice mode `SpokenChoice` puts the mic in the answer shell's voice slot, pinned at the
-// bottom where "Prüfen" stands for every other form (`CheckBar`, issue #310): what she says is
-// sent as a text answer (the server matches it to a choice by its text).
+// In a conversation (issue #386) the bar is the conversation row (`CheckBar`, `Talk`): what she
+// says is sent as a text answer (the server matches it to a choice by its text).
 
 import { SELECT_MAX, type Figure } from '@learnbuddy/shared-types/contracts';
 import { useMemo, useState } from 'react';
@@ -36,55 +35,6 @@ import { ZoomViewer } from '../lb/ZoomViewer.js';
 import { describeFigure, FigureView } from '../math/FigureView.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
-import { MicButton, MicStatus } from '../voice/MicButton.js';
-import { useHandsFreeMic } from '../voice/useHandsFreeMic.js';
-import { useVoiceInput } from '../voice/useVoiceInput.js';
-
-type SpokenChoiceProps = {
-  /** The question (sent as context, so a short spoken answer is heard right). */
-  prompt: string;
-  disabled: boolean;
-  onText: (text: string) => void;
-  /** Read the question again (next to the mic: the voice controls together). */
-  onReadAgain?: () => void;
-};
-
-/** Voice mode: the spoken way to answer options — say it instead of tapping it. */
-export function SpokenChoice({ prompt, disabled, onText, onReadAgain }: SpokenChoiceProps) {
-  const { t } = useTranslation('common');
-  // Hands-free: listening ends when she pauses (on the phone), and starts again by itself.
-  const voice = useVoiceInput({
-    purpose: 'answer',
-    lang: null,
-    context: prompt,
-    onText,
-    untilPause: true,
-  });
-  useHandsFreeMic(voice, disabled, prompt);
-  return (
-    <View style={{ gap: SPACE.sm, alignItems: 'center' }}>
-      <MicStatus voice={voice} />
-      {/* One row next to the options' actions: the options stay on screen. */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: SPACE.md,
-        }}
-      >
-        {onReadAgain ? (
-          <Btn size="sm" variant="soft" pill icon="speak" onPress={onReadAgain}>
-            {t('voice.read_again')}
-          </Btn>
-        ) : (
-          <Text style={[TYPE.small, { flexShrink: 1 }]}>{t('voice.or_say')}</Text>
-        )}
-        <MicButton voice={voice} filled label={t('voice.answer')} disabled={disabled} />
-      </View>
-    </View>
-  );
-}
 
 type Props = {
   choices: string[];

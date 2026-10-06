@@ -1,6 +1,6 @@
 {
-  "$comment": "Budget des Web-Bundles (Issue #313): das JavaScript, das index.html nach `expo export --platform web` lädt, roh und gzip (Stufe 9), in Bytes. Mehr als tolerancePercent darüber macht den Walkthrough rot. Gemessen auf claude/complex-297 nach dem Merge von main bf951b9: angehoben für Aufgaben mit Teilaufgaben (#297, Lage und Teilaufgaben-Anzeiger in der Fragekarte), keine neue Bibliothek — main stand mit #251, #260, #261, #388, #420 schon an der Grenze, #297 kam 1,4 KB gzip darüber. Ein höheres Budget nur mit Begründung im PR; ein kleineres Bundle senkt es (`node tools/guards/bundle-budget.mjs --shrink`). Siehe docs/engineering-guards.md.",
+  "$comment": "Budget des Web-Bundles (Issue #313): das JavaScript, das index.html nach `expo export --platform web` lädt, roh und gzip (Stufe 9), in Bytes. Mehr als tolerancePercent darüber macht den Walkthrough rot. Gemessen auf claude/longtext-258 (main mit #388 und #252); angehoben für Lange Texte in der App (#258: EssayFeedback, lib/practice/essay.ts, Texte in 5 Sprachen) auf dem seit #234 gewachsenen main, keine neue Bibliothek. Ein höheres Budget nur mit Begründung im PR; ein kleineres Bundle senkt es (`node tools/guards/bundle-budget.mjs --shrink`). Siehe docs/engineering-guards.md.",
   "tolerancePercent": 5,
-  "bytes": 4435115,
-  "gzip": 1166698
+  "bytes": 4438713,
+  "gzip": 1168048
 }

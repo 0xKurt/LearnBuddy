@@ -132,11 +132,6 @@ type QuestionProps = {
   /** Buddy wrote this question (origin 'buddy'), it is not from the learner's own material. */
   fromBuddy?: boolean;
   /**
-   * A small control at the end of the meta row ("Frage von Buddy · Thema"): "Frage vorlesen"
-   * (`ReadQuestionButton`, issue #310). It lays out no taller than the row, so it costs no height.
-   */
-  read?: ReactNode;
-  /**
    * The short answer she is typing: shown inside the blank when the question
    * has exactly one (lib/math/prompt.ts fillableAnswer). Leave it out for
    * choices, long answers and once the question is closed.
@@ -196,7 +191,6 @@ export function QuestionCard({
   image = null,
   imageKey,
   fromBuddy = false,
-  read = null,
   answer,
   figureMaxHeight,
   imageMaxHeight = 180,
@@ -248,7 +242,7 @@ export function QuestionCard({
         ) : null}
         <View onLayout={(e) => setHeadHeight(Math.round(e.nativeEvent.layout.height))}>
           {meta ? (
-            // Where it comes from and what it is about share one line; "Frage vorlesen" ends it.
+            // Where it comes from and what it is about share one line.
             <View
               testID="question-meta"
               style={{
@@ -276,33 +270,23 @@ export function QuestionCard({
                 >
                   {shownTopic}
                 </Text>
-              ) : (
-                <View style={{ flex: 1 }} />
-              )}
-              {read}
+              ) : null}
             </View>
           ) : null}
           {/* The situation of a task in parts, the same above each of its parts (issue #297). */}
           {part ? <PartStem stem={part.stem} typing={typing} /> : null}
-          {/* No meta line (a reading question names its text above): "Frage vorlesen" ends the
-              prompt's first line instead — a line of its own would cost the card a row. */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.sm }}>
-            <View style={{ flex: 1 }}>
-              <MathText
-                text={part ? `${part.part}) ${prompt}` : prompt}
-                blanks={{ filled }}
-                // A fraction in the question sits in its sentence (issue #288).
-                inlineFractions
-                accessibilityRole="header"
-                style={
-                  dense
-                    ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
-                    : TYPE.question
-                }
-              />
-            </View>
-            {meta ? null : read}
-          </View>
+          <MathText
+            text={part ? `${part.part}) ${prompt}` : prompt}
+            blanks={{ filled }}
+            // A fraction in the question sits in its sentence (issue #288).
+            inlineFractions
+            accessibilityRole="header"
+            style={
+              dense
+                ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
+                : TYPE.question
+            }
+          />
         </View>
         {figure ? (
           <View

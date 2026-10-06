@@ -14,6 +14,7 @@ import { scriptCoreLoop } from './core-loop.js';
 import { scriptDiagrams } from './diagrams.js';
 import { scriptDictation } from './dictation.js';
 import { scriptDrill } from './drill.js';
+import { scriptEssay } from './essay.js';
 import { scriptFigures } from './figures.js';
 import { installGenerations } from './generations.js';
 import { scriptGrid } from './grid.js';
@@ -71,6 +72,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptCircuits();
   // Before the core loop: "Fotosynthese" is a topic an older, broader rule may know (#236).
   scriptTeachBack();
+  // Before the core loop too: "Schule" and "Handy" are everyday words its rules may know (#258).
+  scriptEssay();
   scriptCoreLoop();
   // Before the learning modes: their "probetest" sentence would answer this one too (#241).
   scriptTimedTest();

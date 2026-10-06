@@ -155,8 +155,6 @@
     "listen_slow_short": "Lentement",
     "listen_stop": "Arrêter",
     "listen_hint": "Te le lit à voix haute.",
-    "read_question_label": "Lire la question à voix haute",
-    "read_question_hint": "Te lit la question. Touche encore pour arrêter.",
     "no_voice": "La lecture à voix haute ne marche pas sur cet appareil pour le moment – la voix de cette langue manque peut-être.",
     "record": "Parler",
     "record_again": "Redis-le",
@@ -390,5 +388,20 @@
   "parts": {
     "step": "Partie {{part}} sur {{all}}",
     "stem": "Énoncé"
+  },
+  "essay": {
+    "intro": "{{form}} – où en est ton texte",
+    "met": "réussi",
+    "open": "encore à faire",
+    "places": "Ici, tu peux encore affiner",
+    "revise": "Retravaille ces passages – ton texte est toujours dans le champ. Puis envoie-moi la nouvelle version.",
+    "last": "C’était ta dernière version pour cette fois. Garde ces points pour ton prochain texte.",
+    "quote": "« {{text}} »",
+    "her_words": "Tes mots",
+    "version_one": "Version {{n}} · 1 mot",
+    "version_other": "Version {{n}} · {{count}} mots",
+    "text_one": "Ton texte · 1 mot",
+    "text_other": "Ton texte · {{count}} mots",
+    "thinking": "Buddy lit ton texte …"
   }
 }

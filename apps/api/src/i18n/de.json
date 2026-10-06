@@ -38,7 +38,9 @@
   },
   "material": {
     "ready": "Deine Fragen zu „{{title}}“ sind fertig ({{count}} Stück).",
-    "ready_untitled": "Deine Fragen sind fertig ({{count}} Stück)."
+    "ready_untitled": "Deine Fragen sind fertig ({{count}} Stück).",
+    "review": "Magst du „{{title}}“ kurz nochmal durchgehen? Ein paar Fragen liegen bereit – nach einer Nacht sitzt es dann besser.",
+    "review_untitled": "Magst du dein Blatt kurz nochmal durchgehen? Ein paar Fragen liegen bereit – nach einer Nacht sitzt es dann besser."
   },
   "practice": {
     "accents": "Fast – schau nochmal auf die Akzente.",

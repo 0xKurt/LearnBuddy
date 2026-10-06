@@ -16,7 +16,9 @@
 // 360×740 the reply took a cloze's whole surface, and the gap she was fixing vanished under it
 // (issue #232). Where the newest turn still does not fit whole it is not drawn (`newestHidden`)
 // until there is room again — the keyboard closes, the card is done — and only the parts after it
-// that fit whole stand there.
+// that fit whole stand there. Except a reply she reads through (`reads`, Buddy's feedback on her
+// long text, #258): taller than the room even at rest, it would never stand — so it takes all the
+// room, from its top (`ThreadBox` `readFrom`), and scrolls inside the conversation.
 
 import { bottomRoom, CONTROL, SPACE, TOUCH } from '../theme/space.js';
 
@@ -28,6 +30,16 @@ const CARD_GIVES = 48;
 
 /** The conversation's padding above its first part (its content container's paddingVertical). */
 const THREAD_PAD = 12;
+
+/**
+ * What a part may stand past the room and still count as whole: one point. The room is a sum of
+ * measurements each rounded on its own (the box, the free room, what the card gave), so the same
+ * screen reads 189 one pass and 190 the next. A reply that needs 190 was then drawn, hidden, drawn
+ * … — a box that flipped every pass, and a shot taken mid-flip showed it half (#386, the voice row
+ * on 360×740). The point comes off the gap above the part (`fromTop` counts SPACE.sm of it), never
+ * off the part itself.
+ */
+const ROUNDING = 1;
 
 /**
  * What a structured board keeps while it gives way under a reply: two lines of gaps or cells (2 × TOUCH and the step between them), then the bar with
@@ -72,6 +84,8 @@ export type RoomInput = {
   growable: boolean;
   /** The card takes ALL the room the conversation leaves (a Diktat before her answer, #242). */
   fills?: boolean;
+  /** The newest turn is read through, not glanced at: never hidden for its height (#258). */
+  reads?: boolean;
   viewHeight: number;
 };
 
@@ -94,7 +108,9 @@ export function threadRoom(m: RoomInput): Room {
   const fromPart = [...fromTurn, ...(m.parts ?? []).map(fromTop)].filter((h) => h < threadNeed);
   /** The most of the conversation's end that fits whole in `most`: everything, a tail, or 0. */
   const whole = (most: number) =>
-    threadNeed <= most ? threadNeed : Math.max(0, ...fromPart.filter((h) => h <= most));
+    threadNeed <= most + ROUNDING
+      ? threadNeed
+      : Math.max(0, ...fromPart.filter((h) => h <= most + ROUNDING));
   const newestNeed = fromTurn.length > 0 ? Math.min(...fromTurn) : quiet ? 0 : threadNeed;
   // The most the newest turn may take where a board gives way under it.
   const replyMost = room + m.boardSpare;
@@ -102,6 +118,7 @@ export function threadRoom(m: RoomInput): Room {
   const most = boardGives ? Math.max(room, Math.min(newestNeed, replyMost)) : room;
   // A quiet thread decides even at room 0 — else the row would come back half and flicker.
   let threadCap = (room > 0 || quiet) && threadNeed > 0 ? whole(most) : undefined;
+  if (m.reads && threadCap !== undefined && threadCap < newestNeed) threadCap = most;
   const newestHidden = threadCap !== undefined && !quiet && threadCap < newestNeed;
   const threadFloor = boardGives ? whole(Math.min(newestNeed, replyMost)) : 0;
 

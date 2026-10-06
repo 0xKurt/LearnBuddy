@@ -26,7 +26,6 @@ export type IconName =
   | 'bulb'
   | 'book'
   | 'keyboard'
-  | 'headphones'
   | 'speak-off'
   | 'voice'
   | 'stop'
@@ -248,14 +247,6 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
           <Path d="M6.5 10h1M10.5 10h1M14.5 10h1M17 10h.5M6.5 14h11" {...common} />
         </Svg>
       );
-    case 'headphones':
-      return (
-        <Svg width={size} height={size} viewBox="0 0 24 24">
-          <Path d="M4 15v-3a8 8 0 0116 0v3" {...common} />
-          <Rect x={3} y={14} width={4.5} height={6.5} rx={1.8} {...common} />
-          <Rect x={16.5} y={14} width={4.5} height={6.5} rx={1.8} {...common} />
-        </Svg>
-      );
     case 'file':
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -264,7 +255,7 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
         </Svg>
       );
     case 'voice':
-      // Three soft bars, symmetric around the middle — the voice-mode mark users know
+      // Three soft bars, symmetric around the middle — the conversation mark users know
       // from assistants. Thicker than the outline icons: it sits on a filled button.
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">

@@ -968,7 +968,9 @@ export const StartTopicRequest = z.object({
    * in writing, checked against 3–6 key points. read: Leseverständnis without a photo (#368) —
    * Buddy writes a reading text at her level and questions about it, held to the rules of a
    * photographed text (`practice/readText.ts`). Buddy explaining something stays the chat's
-   * answer, never a mode (owner decision 28.09., issue #70); here SHE explains.
+   * answer, never a mode (owner decision 28.09., issue #70); here SHE explains ·
+   * essay: a long text she writes — Aufsatz, Erörterung, Interpretation (issue #258) — one task
+   * of the `essay` kind whose key points code sets from its text type (`practice/essay.ts`).
    */
   kind: z.enum([
     'practice',
@@ -980,13 +982,15 @@ export const StartTopicRequest = z.object({
     'spelling_dictation',
     'teach_back',
     'read',
+    'essay',
   ]),
   text: z.string().trim().min(2).max(3000),
   /**
    * spelling_dictation: the photographed sheet the words come from (a Lernwörter list,
    * issue #242). The words are then taken from that sheet's text and every one must stand in it
    * (`practice/dictation.ts`). teach_back: the sheet the questions are asked about (issue #236);
-   * an exact term of a key point must stand in it. Any other kind ignores it. Another learner's
+   * an exact term of a key point must stand in it. essay: the sheet whose writing task she wants
+   * to practise (issue #258); a text the task is about must stand on it. Any other kind ignores it. Another learner's
    * sheet is a 404.
    */
   material_id: Uuid.nullable().optional(),

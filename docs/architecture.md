@@ -602,6 +602,18 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
    again as an honest in-app line). A check that answers her own action falls back also after
    three stale rounds, so she is never left without an answer.
 
+**The day after a sheet** (issue #446, `modules/buddy/review.ts`): decided by code alone, never the
+model. A sheet whose reading is done (`material_ready`, not homework) schedules one wake-up for the
+start of her preferred window the next day (`review_next_day`, one per sheet). When it runs, code
+checks that the sheet is still hers, read and not deleted; that she has not answered any of its
+questions today and no open practice holds them (that practice is the review); and that the wake-up
+runs on its own day (a late one is dropped, never shown days later). It then prepares a short practice from that sheet and says one sentence without a
+count ("Magst du „…“ kurz nochmal durchgehen? …"). The sentence is Buddy's own initiative
+(`origin: 'buddy'`, relevance 0.7), so the contact policy applies as for every other message: without
+consent it waits in the app, and after "Seltener schreiben" it never goes to the phone. While she is
+in the app it waits 20 minutes, like every unasked look (`inApp.ts`). A wake-up that runs twice says
+it once.
+
 A background check never replaces practice she asked for in the chat, and the message it posts
 carries its decision, so what Buddy did in the background appears in the thread with its cards
 and undo. "Heute nicht" on a prepared practice moves it (and an agreed reminder) to tomorrow; it
@@ -1071,7 +1083,7 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   rejected or repaired answer starts a new `round` whose text replaces the last. **Spoken as it is
   written, where it is safe** (issue #65, owner decision 2026-09-28): a reply the server marked
   `speakable` is read along from its first finished sentence (`lib/speech/streamSpeaker.ts`) — in
-  conversation mode and with voice mode on. Everything else waits for the stored answer as before
+  conversation mode and with Vorlesen on. Everything else waits for the stored answer as before
   (audit M-52, repro-28): a safeguarding answer never streams speakable (`concern` is written
   first), an answer that changes something is spoken once applied, and a repair round, a failure
   or a provider block stops the voice mid-sentence so the stored text takes over. What was read
@@ -2154,9 +2166,39 @@ eigenen Worte bestätigen und keine exakte Angabe überstimmen.
   Aufsatz in einem Test wird abgelehnt (409, `admitText`).
 - **Ausfall.** Kein Modell, kaputte Ausgabe oder Tageslimit: kein Urteil (`verdict` null), kein
   Versuch, der ehrliche Satz „Ich kann deinen Text gerade nicht lesen. Er ist nicht verloren …".
-- **Noch nicht verdrahtet (Schritt 2, mit der App):** woher eine Aufsatzfrage kommt (Buddys Angebot
-  und/oder eine `long_text`-Aufgabe auf ihrem Blatt, die heute noch `NotPracticable` ist), das
-  Antwortfeld bis 12 000 Zeichen mit lokalem Entwurf, die Darstellung je Punkt und Stelle.
+- **Woher eine Aufsatzfrage kommt (Schritt 2):** aus Buddys Angebot, `offer_learning` mit der
+  Art `essay` — über ein Thema, das sie nennt, oder die Schreibaufgabe auf
+  einem ihrer Blätter (`sheet`, wie bei „Erklär mal"). Kein Wähler und kein neuer Screen: sie
+  bittet im Chat, Buddy wählt die Form, der Knopf „Aufsatz schreiben" startet sie. Der Generator
+  füllt eine eigene Liste `essay` mit genau einer Aufgabe: Wortlaut, Textsorte
+  (`EssayType`) und — für eine Analyse — der Text, um den es geht (`practice/essayTask.ts`). Code
+  setzt die Kernpunkte aus der Textsorte (`essayItem`), nie das Modell; eine Analyse ohne Text
+  fällt weg, ein Text muss passen wie ein Lesetext (`passageFrom`) und, vom Blatt, wörtlich auf
+  ihrem Blatt stehen (`onTheSheet`). Ohne Blatt ist der Text einer Analyse Buddys eigener kurzer
+  Text, nie ein veröffentlichter aus dem Gedächtnis. Was übrig bleibt, ist ein Übungslauf mit
+  einer Frage. Ein `long_text` auf einem fotografierten Blatt bleibt in der Lesung
+  `NotPracticable` (die Übung des Blatts kann ihn nicht stellen); Buddy kann ihn von dort als
+  `essay` anbieten. Migration 0099 hebt die Grenze von `practice_turns.text` von 4000 auf 12 000
+  Zeichen — ein Aufsatz über etwa 600 Wörtern scheiterte vorher beim Speichern.
+- **In der App (Schritt 2):** dieselbe Übungsseite, dieselbe Eingabeleiste (`InputBar`), kein
+  zweites Feld. Für `essay` (`lib/practice/essay.ts`) nimmt die Leiste 12 000 Zeichen, steht
+  `tall` — drei Zeilen, beim Schreiben wächst sie bis zehn (mit Tastatur auf dem kleinen Telefon
+  bis vier, `formDensity`), in Ruhe bleibt sie bei drei, damit die Rückmeldung darüber Platz hat —,
+  und „Prüfen" bleibt unter der Leiste, solange Platz ist. Die Zeichenzahl erscheint erst in den
+  letzten 200 Zeichen. Ihr Text ist ein Entwurf je Lauf (`useDraft`), übersteht also das
+  Verlassen und einen App-Neustart, und bleibt nach dem Abschicken im Feld: die nächste Fassung
+  beginnt bei ihrer letzten. Im Gespräch steht eine Fassung als eine Zeile („Fassung 1 · 1 712
+  Wörter"), Buddys Antwort trägt die Rückmeldung in seiner Blase (`EssayFeedback`): je Kernpunkt
+  Zeichen und Wort („geschafft" / „noch offen", nie nur Farbe, nie „falsch"), bei „geschafft" ihre
+  eigenen Worte — violett wie ihre Blasen, in Anführungszeichen, mit Strich, für den Screenreader
+  „Deine Worte" —, bei „noch offen" der nächste Schritt; dann die Stellen zum Verbessern und der
+  nächste Schritt („Überarbeite …" oder „letzte Fassung"). Keine Zahl, keine Note. Der Weg an der
+  Frage vorbei heißt „Überspringen" (keine Lösung), „Die Bewertung stimmt nicht" gibt es nicht.
+  Die Rückmeldung ist höher als der Platz zwischen Frage und Leiste. Das Gespräch zeigt sonst nur
+  ganze Teile (#286, #403) und hätte sie ganz versteckt; als Antwort, die sie durchliest
+  (`threadRoom` `reads`), nimmt sie den ganzen Platz, steht ab ihrer ersten Zeile (`ThreadBox`
+  `readFrom`) und wird nach unten gescrollt. Ihre Frage zur Aufgabe (#402) steht im Gespräch
+  wörtlich, nicht als „Fassung".
 
 **Offen**: Eval-Satz (≥ 20 Texte je Textsorte, Übereinstimmung mit einer Lehrkraft) vor dem
 Live-Gang — wie bei #211 gibt es keinen Korpus. Ein Modellurteil kann keinen Punkt ohne ihre eigenen
@@ -2684,7 +2726,7 @@ the ticks live in the draft, so a theme switch keeps them. One quiet line above 
 one line of instruction a match has); after the first "Prüfen" it steps aside, because Buddy's
 reply says it then and needs the room on 360×740. "Prüfen" waits for one tick. In the shell the
 form stands like a single choice (`keeps="whole"`, flush under the Tipp row, nothing in it
-scrolls): when room runs out, the conversation above gives way. Voice mode reads the options like
+scrolls): when room runs out, the conversation above gives way. Vorlesen reads the options like
 options to choose.
 
 **Its maxima are a measurement** (`SELECT_*` in `contracts/structured.ts`, the walkthrough
@@ -4215,8 +4257,8 @@ word list, so it stays a prompt rule.
   centred; a fraction inside the question's sentence is set flat (`MathText inlineFractions`) so it
   does not tear the line. The options stand directly under the hint row (no padding of their own above, #286). A picture option is at most 12 % of the window high (`FIGURE_CHOICE_SCREEN_SHARE`), so after a wrong try — Buddy's reply and "Lösung zeigen" above the tiles — both rows still fit 360×740.
   While a tapped question is open her answer is not echoed as a bubble (`ItemThread echoAnswers`,
-  as for structured items): the tried tile says it — except in voice mode, where the bubble is the
-  only place she sees what was heard.
+  as for structured items): the tried tile says it — except in a conversation, where the bubble is
+  the only place she sees what was heard.
 - **Figures that state numbers (issues #253, #257)** — two figures carry measures, and code
   checks them in both directions before a question is stored (`practice/figureCheck.ts`, called
   from `usableItems`); a figure that contradicts its numbers or its key costs the QUESTION, not
@@ -4412,43 +4454,67 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   need the words. Without a configured provider the exercise is refused instead
   (`practice/listen.ts` `noVoiceToReadIt`).
   Dev stack: `LB_DEV_SPEECH=fake` answers with silent WAV audio of the sentence's length.
-- **Voice mode** (app): Buddy's replies, questions, an explanation and feedback are read aloud
-  (natural voice above, else the device's voices); she answers with the mic — in the chat, in every
-  practice mode, and in the sheet where she names a topic (`TopicSheet`, which starts at once in
-  voice mode). **Practice is hands-free** after her first tap on a mic there
-  (`lib/speech/handsFree.ts`): question read → the mic listens (ends by itself when she pauses, on
-  the phone) → her answer or question is checked → the feedback is read → the mic listens again,
-  or, once the question is closed, the next one comes. Typing, switching voice mode off or leaving
-  ends the loop; the microphone never starts before her own tap on that screen. One listening
-  belongs to one turn (`lib/speech/turnGuard.ts`): answering another way (a tap, typing, the
-  screen locking while it checks), Buddy starting to speak or the next question cancels a
-  running mic and drops its late text. Questions carry the language they are written in
-  (`prompt_lang`, also for ordinary questions): voice mode reads them and listens in that
-  language, not the app's. The switch sits in the practice header (headphones: Buddy reads and
-  listens; the speaker is reserved for "read this aloud", and conversation mode carries the
-  waveform — issue #310). The home reads a late reply only while it is on screen. Pronunciation
-  recordings stay tap by tap. Buddy's chat replies stream on screen and are read once stored
-  (§Speed). A realtime audio API (speech in, speech out) is not built.
-- **"Vorlesen" at every question, also without voice mode** (issue #238): one small speaker at
-  the end of the question card's meta row ("Frage von Buddy · Thema"), the one place for it
-  (issue #310, decision of 04.10.; `components/practice/ReadQuestionButton.tsx`, the icon-only
-  `<Btn>`), for a screen reader "Frage vorlesen". It lays out at 24 pt inside the 26 pt row with a
-  44 pt touch target, so it costs no height; in the progress row it squeezed the bar and, with a
-  test's clock, pushed it out (#334.2). The header's voice-mode switch carries the headphones,
-  never the speaker. It says exactly what voice mode says (`questionReadText`: math,
-  fractions and chemical formulas in words — "H 2 O", not "H Index 2 O" —, choices as
+- **Vorlesen and Gespräch** (app, issue #386, owner 04.10.: "Es gibt aber weiterhin einen
+  Unterschied zwischen vorlese Modus und interaktiver conversation"): two settings
+  (`lib/speech/voiceMode.ts`), each with one control in one place, the same in the chat and on every
+  practice screen (CLAUDE.md rule 19, guarded by `apps/mobile/lib/__tests__/oneVoice.test.ts`).
+  | | Vorlesen (`readAloud`) | Gespräch (`conversation`) |
+  |---|---|---|
+  | What happens | Buddy reads aloud, does not listen | hands-free: Buddy reads and listens |
+  | Control | the speaker switch in the header (`components/lb/ReadAloudSwitch.tsx`) — the chat's head and the practice head | the waveform at the end of the input bar (`TalkButton`) |
+  | In the chat | replies are read aloud | opens the conversation screen (`app/talk.tsx`) |
+  | In practice | the question when it appears, the feedback, "Anders erklären" | the bar becomes the conversation row in place: "Tastatur" · mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row, with the 56 pt mic) |
+  | Kept | on the device (`lb.voiceMode`, the old single flag's key) | not kept: she starts it |
+  A conversation includes reading aloud (`readsAloud`); switching the speaker off ends it, and
+  "Tastatur" ends it without touching her Vorlesen choice. Before #386 one flag did both, set by
+  three controls (the chat's speaker, the practice headphones `VoiceModeToggle`, the chat's
+  voice-first bar keyboard · big mic · camera); the headphones, that bar, "Frage vorlesen" in the
+  card and the "Nochmal vorlesen" pill are gone. **Gespräch means the same everywhere** (owner decision on
+  #386): as on `/talk`, practice in a conversation is hands-free from the waveform on, without a
+  first tap on the mic (`components/practice/useQuestionVoice.ts`, `lib/speech/handsFree.ts`):
+  question read → the mic listens (ends by itself when she pauses, on the phone) → her answer is
+  checked → the feedback is read → the mic listens again, or, once the question is closed, the next
+  one comes; a question that must not be heard is not read, and the mic listens at once. With a
+  screen reader on, neither screen opens the mic by itself (it would record the screen reader,
+  audit M-85, `lib/useScreenReader.ts`): her tap on the mic starts the loop. "Tastatur", switching
+  the speaker off or leaving ends it. **One row, one size prop:** `/talk` has the whole screen and
+  takes the 72 pt mic; on a practice question the row shares the screen with the question, its
+  conversation and the options, and there the 72 pt mic cost the 16 pt that hid Buddy's newest
+  reply on 360×740 behind a 124 pt empty band (#403's whole-turn rule) — the worse flaw (CLAUDE.md
+  rule 17). So practice takes the 56 pt mic (`VoiceRow size="md"`); in both the word stands
+  beside its circle, not under it (under it the row stood 8 pt above the mic), and in practice no
+  status line appears while she speaks — the mic's ring and stop square say it, a problem (no
+  mic, nothing understood) still gets its line. The row is then exactly as tall as the old voice
+  slot. A second cause of the same band was a 1 pt flip: the conversation's room is a sum of
+  measurements each rounded on its own, and a reply needing 190 pt in a room of 189 was hidden,
+  drawn, hidden — `threadRoom` now counts a part one point over as whole (`ROUNDING`); a shot taken
+  mid-flip was the soft `halfTurns` failure seen once at `27b-practice-voice-mode-night @360`. The
+  waveform stands
+  where a spoken answer can be the whole answer: a typed answer (not a Diktat, not a path written
+  line by line, not a line that belongs to a board) and options with letters. Boards, the note
+  line, the fraction bar, tapped words, Kopfrechnen and flash cards have no spoken answer and no
+  waveform; the speaker stands in the question screen's head only (`app/practice/[id].tsx`), not in
+  Kopfrechnen's or the flash cards', which read nothing aloud today (open, #434). One listening
+  belongs to one turn (`lib/speech/turnGuard.ts`): answering another way (a tap, the screen locking
+  while it checks), Buddy starting to speak or the next question cancels a running mic and drops
+  its late text. Questions carry the language they are written in (`prompt_lang`, also for
+  ordinary questions): Buddy reads them and listens in that language, not the app's. A spoken
+  topic in `TopicSheet` lands in its field like the chat's mic text; she starts it herself. The
+  home reads a late reply only while it is on screen. Pronunciation recordings stay tap by tap.
+  Buddy's chat replies stream on screen and are read once stored (§Speed). A realtime audio API
+  (speech in, speech out) is not built.
+- **What is read when a question appears** (issue #238): exactly what `questionReadText` says
+  (math, fractions and chemical formulas in words — "H 2 O", not "H Index 2 O" —, choices as
   "A: …, B: …") in the question's language, through the same natural voice (`POST /voice/speech`,
   cached per learner for 24 h) at her own speed step, with the phone's own voice as fallback;
   offline that fallback reads, and where the phone has no voice for the language she is told so
-  instead of being left in silence. A second tap, the next question (the button is keyed by the
-  question), leaving the screen and the app going to the background all stop it. **Whether a
+  instead of being left in silence. The next question and leaving the screen stop it. **Whether a
   question may be heard is decided by code on the server** (`ItemView.read_aloud`,
   `apps/api/src/modules/practice/readAloud.ts`): never a task that practises spelling
-  (`spelling: 'strict'`), never a vocabulary prompt that already contains its answer — and voice
-  mode follows the same flag. Not offered where another control already reads it: voice mode's
-  "Nochmal vorlesen", the pronunciation card, a foreign vocabulary word's own "Anhören", a
-  flashcard pass.
-- **Conversation mode** (`app/talk.tsx`, headphones on the home): hands-free, in the same
+  (`spelling: 'strict'`), never a vocabulary prompt that already contains its answer — Vorlesen,
+  Gespräch and "Nochmal vorlesen" follow the flag. A foreign vocabulary word keeps its own
+  "Anhören" (its pronunciation is the point); a flashcard pass reads nothing.
+- **Conversation mode** (`app/talk.tsx`, the waveform in the chat's input bar): hands-free, in the same
   conversation as the chat. She speaks → written down → Buddy answers (a normal turn) → the answer
   is read aloud → Buddy listens again. The screen is a camera angle on that one thread, not a
   second rendering of it (issue #18): the newest messages stand as the chat's own bubbles
@@ -4537,7 +4603,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   connection with "Neu aufnehmen" / "Diesmal überspringen" available, which cancel the wait.
 - **Screen readers** — `lib/announce.ts`: Android reads live regions by itself, iOS has none,
   so toasts, capture and dictation status, what the mic understood, the PIN error (again after
-  each attempt), Buddy's reply ("Buddy: …", when voice mode is off), practice feedback with its
+  each attempt), Buddy's reply ("Buddy: …", when Vorlesen is off), practice feedback with its
   verdict word and math in words, the revealed solution and the conversation phases are
   announced explicitly (`announcePlan` decides, unit-tested). Button labels follow the system
   text size up to 1.6× (`Btn` grows with `minHeight` instead of clipping), "Prüfen" wraps onto
@@ -4738,8 +4804,8 @@ newest it applies to: "nur hier in der App" (a message that only ever existed he
 what was agreed can only reach her here while messages to the phone are off. No tiles, no
 lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says
 (Buddy answers with an `offer_learning` button). The composer is one floating bar: camera,
-field, mic ("Senden" once there is text); in voice mode it is voice-first — keyboard · big mic ·
-camera. Settings for the learner are closed groups, each with what is set now, one open at a
+field, mic ("Senden" once there is text), and the waveform into a conversation; there is no
+voice-first bar beside it (#386). Settings for the learner are closed groups, each with what is set now, one open at a
 time (`components/settings/Group.tsx`): contact (on/off, a one-line summary, "Zeiten anpassen"
 for the rare loosening), the language, about; the parents' area is closed until opened, and
 for a minor's profile it opens only with the parents' PIN ("PIN vergessen?" opens just the PIN
@@ -4772,7 +4838,7 @@ no answer to type, so the bar's field is her question to the tutor ("Frag zur Au
 bar holds only the field, paid for by the card giving room (`CARD_GIVES`) and the conversation
 (`threadRoom`). Guarded by the source
 test `apps/mobile/lib/__tests__/oneBar.test.ts` (every `BottomBar` in practice code holds one
-`InputBar`, none inside another; the bars not moved yet — tap options in voice mode, "Weiter",
+`InputBar`, none inside another; the bars that are not the input bar — the conversation row (#386), "Weiter",
 pronunciation, flash cards, Kopfrechnen, a round's end — are listed with their step, and the list
 only shrinks) and by the walkthrough (`room` in `tests/web/fit.ts`: at most one pinned bar at every
 stop, and the free room, bar and answer slot of every practice stop recorded in `fit.jsonl`,
@@ -4789,20 +4855,19 @@ math keys stand right under the input bar, on top of the keyboard, while she typ
 circle, as in the chat), the return key still sends a one-liner, and "Prüfen"
 waits until something is in the field. While she types, "Prüfen" stands in the bar itself, where the chat has
 "Senden" (`typing` in `CheckBar`), and the full-width one steps aside — with the keyboard up on a
-small phone it would push the bar she types in under the keyboard. In voice mode the big mic stands in the pinned bar above
-the input bar, and "Prüfen" steps back to the soft skin. Structured forms (table, order, match,
+small phone it would push the bar she types in under the keyboard. In a conversation the
+conversation row takes the bar's place (#386). Structured forms (table, order, match,
 mark, select-all, cloze) have their board at the bottom, directly above "Prüfen" (#386); their cells and gaps are the same
 one text field (`LbTextInput`, variant `cell`). A form that cannot scroll says what the slot keeps
 when the room runs out (`keeps`: options and the fraction bar all of it, the note line its
 tightest staff). The walkthrough shoots every stop with a typed answer once more at 360×440 (the
 keyboard up): the field and every alert must stay in the window (`keyboardPass` in
 `tests/web/fit.ts`), and the field must stand in the pinned bar with "Prüfen" (`fieldInBar`); how
-far "Prüfen" lies under the keyboard is recorded, and the big mic of voice mode steps aside while
-she types. The
+far "Prüfen" lies under the keyboard is recorded. The
 options are in it too, at the bottom edge with nothing to check — the tile is the action
 (`action: { tap }`); in
-voice mode their spoken answer (mic, "Nochmal vorlesen") stands in the same voice slot as the
-typed field's mic. The pronunciation recorder and "Weiter" take the action's place at the bottom
+a conversation the conversation row takes the bar's place (`action: { talk }`, #386), as for a
+typed answer. The pronunciation recorder and "Weiter" take the action's place at the bottom
 (`action: { bar }`), so the free room has one owner, the shell. Whatever fills the keys slot
 is the one key row (`components/lb/KeyRow.tsx`: the math keys and the note line's two rows, #310
 step 4). A tile that answers by a tap is
@@ -4811,7 +4876,7 @@ test (`apps/mobile/lib/__tests__/answerShell.test.ts`) fails when a form brings 
 spacer, "Prüfen", keyboard handling or shadowed tile (the forms not moved yet are listed with the
 step that moves them, and the list only shrinks), and the walkthrough measures at every shot with
 an answer slot that at most 24 pt stand empty between the answer and what is below it ("Prüfen",
-the voice slot, the input bar, or the window's bottom edge), the free room lies above it and
+the conversation row, the input bar, or the window's bottom edge), the free room lies above it and
 "Prüfen" is lowest (`answerPlace` in `tests/web/fit.ts`, #386; the source test also fails when the
 shell puts the spacer under the answer). The
 conversation shows WHOLE turns only (`threadRoom` in `lib/practice/threadRoom.ts`): everything when it
