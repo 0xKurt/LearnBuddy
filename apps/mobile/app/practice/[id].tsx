@@ -190,6 +190,10 @@ export default function PracticeScreen() {
   const viewHeight = useVisibleHeight().visible;
 
   const [pinnedId, setPinnedId] = useState<string | null>(null);
+  // The division step Buddy's reply names, opened on the board (#420), keyed by that reply.
+  const [stepOpen, setStepOpen] = useState<{ itemId: string; step: number; turn: string } | null>(
+    null,
+  );
   // Kept on the device: a half-typed answer survives Android killing the app.
   const { text, setText } = useDraft(`session.${id}`);
   /** Her question to the tutor (issue #402), kept like her answer: an app kill does not lose it. */
@@ -303,6 +307,7 @@ export default function PracticeScreen() {
    */
   function readFeedback(res: AnswerResponse, itemId: string): void {
     feel(res);
+    setStepOpen(res.column_step ? { itemId, step: res.column_step, turn: res.reply.id } : null);
     const text = feedbackText(res);
     if (!useVoiceMode.getState().on) {
       announce(text);
@@ -327,12 +332,7 @@ export default function PracticeScreen() {
   });
 
   // Buddy's home shows this session (questions left, the result): refresh it on the way out.
-  useEffect(
-    () => () => {
-      void queryClient.invalidateQueries({ queryKey: keys.home });
-    },
-    [],
-  );
+  useEffect(() => () => void queryClient.invalidateQueries({ queryKey: keys.home }), []);
 
   async function store(next: SessionView): Promise<void> {
     // A refetch that started before this change must not overwrite it.
@@ -1049,6 +1049,7 @@ export default function PracticeScreen() {
                     draftKey={`session.${id}.${item.id}`}
                     disabled={locked}
                     onSubmit={(body, shownText) => void answer(item.id, body, shownText)}
+                    opens={stepOpen?.itemId === item.id ? stepOpen : null}
                   />
                 </View>
               ) : null}

@@ -1,6 +1,7 @@
 // Typed configuration. Fails fast at boot on anything missing or malformed;
 // there is no silent fallback to fake services in any environment.
 
+import { ItemKind } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import { isLocalDatabaseHost } from './lib/db.js';
@@ -127,6 +128,33 @@ const Config = z
     SPEECH_ENDPOINT: z
       .enum(['eu-texttospeech.googleapis.com'])
       .default('eu-texttospeech.googleapis.com'),
+    /**
+     * Practice forms switched off in this environment (issue #296), comma-separated `ItemKind`
+     * values, e.g. "grid_draw,find_error". A form that is off is not in the schema the model is
+     * sent, and nothing new of it is stored — from a topic run or a photographed sheet
+     * (`practice/setProfiles.ts` `profileFor`, `practice/items.ts` `formsOn`). Questions of it
+     * that are already stored stay answerable. A new form stays off in production until it was
+     * tested with the real model and the owner has seen it; switching it on or off is this
+     * variable, not a release. An unknown name stops the boot rather than switching nothing.
+     */
+    FORMS_OFF: z
+      .string()
+      .optional()
+      .transform((raw, ctx): ReadonlySet<ItemKind> => {
+        const names = (raw ?? '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter((s) => s !== '');
+        const kinds = z.array(ItemKind).safeParse(names);
+        if (!kinds.success) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `FORMS_OFF: unknown form in "${raw}" (expected ${ItemKind.options.join(', ')})`,
+          });
+          return z.NEVER;
+        }
+        return new Set(kinds.data);
+      }),
     /** Push via Expo is off until legal review (ADR 0004 §4). */
     PUSH_BACKEND: z.enum(['expo', 'disabled']).default('disabled'),
     EXPO_ACCESS_TOKEN: z.string().optional(),

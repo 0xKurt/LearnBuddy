@@ -41,11 +41,12 @@ import {
   type StaffCheck,
 } from './staff.js';
 import { takeParts } from './partsAnswer.js';
+import { columnStepOf } from './columnCalc.js';
 import { givesHints, learnsFsrs } from './modeRules.js';
 import { asTestTurn, ladderDone, REVEAL_AFTER_MISSES, workedReply } from './ladder.js';
 import { lockActiveSession } from './sessionRow.js';
 import { followWithSimilar } from './similar.js';
-import { guidedStep } from './workedSteps.js';
+import { guidedStep, guidedTurn } from './workedSteps.js';
 import { settleTestClock, timeUpError } from './testClock.js';
 import {
   answerTextOf,
@@ -70,7 +71,7 @@ import { DRILL_PASS } from './drill.js';
 import { MAX_ACCEPTED } from './items.js';
 import { explanationSoFar, NOTHING_EXPLAINED, recordExplained } from './teachBack.js';
 import { admitText, judgeEssay } from './essay.js';
-import { mapAnswerText } from './mapCheck.js';
+import { tappedAnswerText } from './tapCheck.js';
 import {
   askedElements,
   checkRubric,
@@ -219,10 +220,10 @@ export async function answerItem(
   /** Ihre Zeile in Worten, damit der Gesprächsfaden lesbar bleibt (wie `answerTextOf`). */
   const staffWritten =
     staffCheck !== null ? writtenStaffLine(learner.locale, input.text ?? '') : null;
-  // A region she tapped on a map (issue #251): the app sends the data's German name; in the thread
-  // it stands in her language, like every answer written here.
+  // A region of a map or a part of a picture she tapped (issues #251, #252): the app sends the
+  // German name; in the thread it stands in her language, like every answer written here.
   const regionWritten =
-    hintRequest || input.text == null ? null : mapAnswerText(item, input.text, learner.locale);
+    hintRequest || input.text == null ? null : tappedAnswerText(item, input.text, learner.locale);
   const text =
     structured && input.parts && partsCheck
       ? // Her arrangement in one line, so the thread, the tutor history and a disputed judgement
@@ -345,6 +346,8 @@ export async function answerItem(
     essay?: EssayFeedback | null;
     /** Her question had nothing to do with the task: the reply offers "für nachher" (#391). */
     offersLater?: boolean;
+    /** The division step the reply names, for the app to open (#420). */
+    columnStep?: number | null;
   };
   let judged: Judged;
   // Distress in the answer field, or the provider's safety filter (issue #389): the reply is
@@ -388,15 +391,9 @@ export async function answerItem(
       gaveHint: false,
       revealed: false,
     };
-  } else if (guided === 'step') {
-    // A step of hers that follows from the task (#298): no try, no model — on to the next one.
-    judged = {
-      verdict: 'not_an_attempt',
-      evaluatedBy: 'rule',
-      reply: t(learner.locale, 'practice.step_ok'),
-      gaveHint: false,
-      revealed: false,
-    };
+  } else if (guided === 'step' || guided === 'wrong') {
+    // Her step in a guided example, judged by code (#298); a third miss still ends the ladder below.
+    judged = { ...guidedTurn(learner.locale, guided), evaluatedBy: 'rule', gaveHint: false };
   } else if (rule === 'parts_left' && staffCheck !== null) {
     // Eine Notenzeile, von der ein Stück hält (issue #226) — dasselbe Urteil, eine Form weiter.
     // Die Frage bleibt offen, nichts wird zurückgesetzt, und sie bekommt EINE Stelle: wie viele
@@ -472,15 +469,6 @@ export async function answerItem(
       gaveHint: false,
       revealed: true,
     };
-  } else if (guided === 'wrong') {
-    // A step that does not follow from the task (#298): a miss, and code says where.
-    judged = {
-      verdict: 'incorrect',
-      evaluatedBy: 'rule',
-      reply: t(learner.locale, 'practice.step_wrong'),
-      gaveHint: false,
-      revealed: false,
-    };
   } else if (
     givesHints(session.mode) &&
     rule === 'incorrect' &&
@@ -523,6 +511,7 @@ export async function answerItem(
       // A match names its wrong link from the second miss on: that is a hint (#229).
       gaveHint: structuredNamesPart(partsCheck, item.attempts),
       revealed: false,
+      columnStep: partsCheck.type === 'column_calc' ? columnStepOf(partsCheck) : null,
     };
   } else if (dictationCheck !== null && !dictationCheck.correct && rule === 'incorrect') {
     // A Diktat she did not get right yet (issue #242): code names the place — "Doppel-m fehlt",
@@ -883,8 +872,12 @@ export async function answerItem(
 
   if (session.mode === 'test' && !safeguarded) judged = asTestTurn(judged, learner.locale, item);
 
+  // The step the reply names opens in the app (#420) — not in a test, which names no place, and
+  // not once the solution is shown.
+  const columnStep =
+    session.mode === 'test' || judged.revealed ? null : (judged.columnStep ?? null);
   // A concurrent duplicate of the same answer that won gets its result back (`settleTurn`).
-  return settleTurn(
+  const settled = await settleTurn(
     deps,
     learner.id,
     sessionId,
@@ -1041,6 +1034,7 @@ export async function answerItem(
         await touchRun(tx, learner.id, sessionId, now);
       }),
   );
+  return columnStep === null ? settled : { ...settled, column_step: columnStep };
 }
 
 /** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */

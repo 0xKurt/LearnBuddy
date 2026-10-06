@@ -8,6 +8,7 @@
 
 import {
   BarTask,
+  type ItemKind,
   MAX_LISTEN_QUESTIONS,
   StaffTask,
   type StartTopicRequest,
@@ -256,6 +257,29 @@ export const FALLBACK_PROFILE: SetProfile = {
   reading: false,
 };
 
+/** No form switched off: what a caller without a configuration gets. */
+const ALL_ON: ReadonlySet<ItemKind> = new Set();
+
+/**
+ * A profile with the forms switched off in this environment taken out (issue #296,
+ * `config.FORMS_OFF`): an item kind, a structured kind, a Diktat. Out of the profile means out of
+ * the schema the model is shown AND out of what code keeps — the profile is the one table both
+ * are derived from. A run left with nothing says so like any run without questions.
+ */
+function profileFor(
+  kind: StartTopicRequest['kind'] | null,
+  off: ReadonlySet<ItemKind> = ALL_ON,
+): SetProfile {
+  const profile = kind === null ? FALLBACK_PROFILE : SET_PROFILES[kind];
+  if (off.size === 0) return profile;
+  return {
+    ...profile,
+    items: profile.items.filter((k) => !off.has(k)),
+    structured: profile.structured.filter((k) => !off.has(k)),
+    dictation: profile.dictation && !off.has('spelling_dictation'),
+  };
+}
+
 /**
  * The item a run asks for. Built from her sheets: every question's topic is one of theirs — the
  * schema offers only those, and a question on anything else is dropped (live finding 6). Its kind
@@ -284,6 +308,20 @@ function structuredSchemaFor(profile: SetProfile) {
   return first === undefined ? null : z.discriminatedUnion('type', [first, ...rest]);
 }
 
+/** The profile of a run with this environment's switch, and its two narrowed unions. */
+function narrowed(
+  kind: StartTopicRequest['kind'] | null,
+  topics: [string, ...string[]] | null,
+  off: ReadonlySet<ItemKind>,
+) {
+  const profile = profileFor(kind, off);
+  return {
+    profile,
+    item: itemSchemaFor(profile, topics),
+    structured: structuredSchemaFor(profile),
+  };
+}
+
 /** A disabled list: whatever the model wrote there is dropped, and it reads as empty. */
 const NOTHING = z.never();
 
@@ -294,10 +332,9 @@ const NOTHING = z.never();
 export function setSchemaForModel(
   kind: StartTopicRequest['kind'] | null,
   topics: [string, ...string[]] | null,
+  off: ReadonlySet<ItemKind> = ALL_ON,
 ) {
-  const profile = kind === null ? FALLBACK_PROFILE : SET_PROFILES[kind];
-  const item = itemSchemaFor(profile, topics);
-  const structured = structuredSchemaFor(profile);
+  const { profile, item, structured } = narrowed(kind, topics, off);
   return GeneratedSet.extend({
     items: z.array(item ? item.omit(unusedItemFields(profile.items)) : DraftItem).max(25),
     structured: z
@@ -321,10 +358,12 @@ export function setSchemaForModel(
  * one (one unusable task costs itself, audit H-14/H-15), and a form outside the profile dropped
  * — the model was not shown it, so one that arrives anyway is not repaired into the run.
  */
-export function parseSetFor(kind: StartTopicRequest['kind'], topics: [string, ...string[]] | null) {
-  const profile = SET_PROFILES[kind];
-  const item = itemSchemaFor(profile, topics);
-  const structured = structuredSchemaFor(profile);
+export function parseSetFor(
+  kind: StartTopicRequest['kind'],
+  topics: [string, ...string[]] | null,
+  off: ReadonlySet<ItemKind> = ALL_ON,
+) {
+  const { item, structured, profile } = narrowed(kind, topics, off);
   return GeneratedSet.extend({
     items: itemsOneByOne(item ?? NOTHING, 25),
     bars: itemsOneByOne(profile.bars ? BarTask : NOTHING, MAX_BAR_ITEMS),
@@ -365,6 +404,7 @@ export const GENERATED_SCHEMA = toJsonSchema(setSchemaForModel(null, null));
 export function explainSchemaFor(
   kind: StartTopicRequest['kind'],
   topics: [string, ...string[]] | null,
+  off: ReadonlySet<ItemKind> = ALL_ON,
 ): JsonSchema {
-  return toJsonSchema(setSchemaForModel(kind, topics));
+  return toJsonSchema(setSchemaForModel(kind, topics, off));
 }

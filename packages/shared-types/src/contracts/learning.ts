@@ -1170,6 +1170,12 @@ export const AnswerResponse = z.object({
   verdict: AnswerVerdict.nullable(),
   /** The tutor turn created for this answer. */
   reply: PracticeTurnView,
+  /**
+   * A written division not right yet (issue #420): the step of its staircase that the reply names,
+   * 1 the first — the app opens it and puts her in its first cell. Only where the reply names a
+   * place (never in a test, never with the solution shown); absent or null everywhere else.
+   */
+  column_step: z.number().int().min(1).nullable().optional(),
 });
 export type AnswerResponse = z.infer<typeof AnswerResponse>;
 

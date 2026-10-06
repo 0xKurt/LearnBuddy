@@ -369,6 +369,7 @@
     "task": "Task"
   },
   "column": {
+    "reopen": "Edit step {{step}}",
     "check_waits": "Once you have written a digit.",
     "carry": "Carry, {{place}}",
     "result": "Result, {{place}}",

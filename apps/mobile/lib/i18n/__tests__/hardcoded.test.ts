@@ -43,10 +43,6 @@ const EXEMPT: ReadonlyArray<{ file: string; why: string }> = [
     file: 'components/lb/DevHostNote.tsx',
     why: 'diagnostic marker for developers; renders only in dev builds, never in a release',
   },
-  {
-    file: 'components/lb/Wordmark.tsx',
-    why: 'the product name, which is the same word in every language — translating "LearnBuddy" would be translating the brand (issue #135)',
-  },
 ];
 
 function sourceFiles(dir: string): string[] {

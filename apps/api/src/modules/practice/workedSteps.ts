@@ -18,6 +18,7 @@
 
 import { z } from 'zod';
 
+import { t } from '../../i18n/index.js';
 import { ruleCheck, type ItemForCheck } from './evaluate.js';
 import { checkPath, parseLine, pathLines, sameStep, solvedValue } from './steps.js';
 
@@ -114,4 +115,17 @@ export function guidedStep(
   if (seen.includes(flat(written[0]!))) return null;
   const verdict = sameStep(task, mine);
   return verdict === 'same' ? 'step' : verdict === 'different' ? 'wrong' : null;
+}
+
+/**
+ * What a guided step gets (Mitmachen): a step of hers that follows is no try and goes on — „Der
+ * Schritt stimmt – und weiter?"; one that does not follow is a miss, and code says where.
+ */
+export function guidedTurn(
+  locale: string,
+  guided: 'step' | 'wrong',
+): { verdict: 'not_an_attempt' | 'incorrect'; reply: string; revealed: false } {
+  return guided === 'step'
+    ? { verdict: 'not_an_attempt', reply: t(locale, 'practice.step_ok'), revealed: false }
+    : { verdict: 'incorrect', reply: t(locale, 'practice.step_wrong'), revealed: false };
 }

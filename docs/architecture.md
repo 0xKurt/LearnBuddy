@@ -2837,10 +2837,15 @@ next cell in the server's writing order (`order`: right to left, the carry befor
 phone's number pad is all she needs. A division is shown step by step (issue #413): the step she
 is at in full, the steps she has worked on above it shrunk to half-high lines she reads but no longer
 writes in, the steps she has not reached not yet there; the step follows the cell she writes in, a
-quotient digit opens its step again, and every cell still goes to the check. Printed rows are one number to a screen reader ("+1389"), every
+quotient digit opens its step again, and every cell still goes to the check. A finished step is one
+target (its two half rows, one touch high, `TapSurface`): a tap opens it again, a screen reader hears
+"Schritt 2 bearbeiten" (issue #420). After a check that is not right yet the answer carries the step
+the reply names (`AnswerResponse.column_step`, `columnStepOf`: the step of the first wrong cell, a
+quotient digit's own step) and the app opens it, her finger in its first cell — never in a test and
+never once the solution is shown. Printed rows are one number to a screen reader ("+1389"), every
 cell has a name ("Übertrag, Zehner"). Generated in a topic's practice and practice test (generate.v1.44, now v1.46)
 and read from a sheet (extract.v8.22, now v8.24; a homework sheet: written arithmetic only, its own error is no
-Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86m, 360×740 and
+Fehlerdetektiv of code's making). Measured in `tests/web/written.spec.ts` (shots 86a–86n, 360×740 and
 390×844, light and dark, the keyboard up): four long lines with Buddy's longest reply above fit (six
 were 106 pt too tall, `FIND_ERROR_LINES_MAX`), and five rows of
 cells with Buddy's reply above (two partial products and their sum, a division of two steps). A
@@ -3541,7 +3546,8 @@ pictures (#252) add their figure to it rather than building a second one.
   `tap-figures.int.test.ts` (stored or dropped, exact verdicts without a model, replay, a row
   that no longer holds, another learner); walkthrough `tests/web/tap-figures.spec.ts` (scenario
   `testing/scenarios/tap.ts`).
-- **Maps (#251)** are one figure on this mechanism: §Maps.
+- **Maps (#251)** and **labelled pictures (#252)** are figures on this mechanism: §Maps,
+  §Labelled pictures.
 - **Not built here:** laying an amount with coins ("Leg 3,45 €", #254) — a sum of several taps,
   not one place; tapping a cell of the periodic table (#250) or a month of a line or climate chart
   (#245) — each is one `case` on this mechanism.
@@ -3603,6 +3609,60 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
 - **Not built here:** the Gradnetz and "Welche Koordinaten hat der Punkt?"; capitals, rivers,
   mountains as points; zoom (it would let the small countries of Europe be tapped); the Bundesland
   of her own profile as a default map.
+
+### Labelled pictures (issue #252)
+
+A drawing of the picture library — plant cell, animal cell, flower (section), plant, eye
+(section), tooth (section), insect, bicycle — with numbers on chosen parts. Buddy asks to label it
+("Beschrifte die Pflanzenzelle"), to name one numbered part ("Wie heißt Teil 3?") or to tap a part
+("Tippe auf den Zellkern", the tap mechanism above). Decided in #224: drawn by us, nothing
+licensed.
+
+- **Contract** (`packages/shared-types/src/contracts/schematic.ts`, in `ModelFigure`):
+  `{ type: 'schematic', d, n: string[], ask }` — which drawing, the parts that carry the numbers
+  1, 2, 3 … by name, the number asked (0: none). Never a shape. `FIGURE_RULES` lists every drawing
+  with its parts, generated from the library (`SCHEMATIC_PARTS`); the prompt versions are hashes
+  of what is sent (#425), so the rules change them themselves.
+- **Library** (code, in two files like the maps): `packages/shared-math/src/schematics.data.ts`
+  names every drawing and part — id, the five languages, other names a teacher accepts
+  ("Nukleus"); small and static, the server and the tap mechanism resolve names with it.
+  `schematicShapes.data.ts` draws them, part by part in the same order: ellipses, rounded boxes,
+  polygons and strokes (`drawShapes.ts`, every outline one way round, a hole the other) in the
+  frame 1000 wide, each part's pastel tone (`figure.slices`) and the point its number points at
+  (`at`, set by hand). The app loads it with the first picture (`useSchematicShapes`, on
+  `lib/lazyModule.ts`) — the start bundle had 8 KB of its gzip budget left, the drawings would
+  have taken more. A part is a region like a Land (`regions.ts`, §Maps):
+  names, winding number, which part a finger means — the topmost under it, or a small one by its
+  point —, what is tappable. Parts too small for a finger on 360 × 740 (pupil, an insect's eye,
+  the handlebar, the bell) can be named, not tapped.
+- **Rule 0, generation** (`apps/api/src/modules/practice/schematicCheck.ts`): a labelling draft
+  (two or more numbers, none asked, no tap) becomes one question per number, written by code —
+  "Pflanzenzelle: Wie heißt Teil 2?" in the question's language, the library's name as the key
+  (`labelQuestions`, before the checks). Then, in `FIGURE_CHECKS`: every numbered part must be one
+  of the drawing (stored as its id), each once; a typed question is short and its key is the part
+  carrying the number asked; a tap asks no number and its key is a part a finger can hit
+  (`regionTappable`). Anything else — what a part does, a part the drawing does not have — is
+  dropped.
+- **Rule 0, grading:** a tapped part exactly (`tapVerdict`); a typed name by the library
+  (`namedRuleVerdict` in `tapCheck.ts`, shared with the map): "nucleus", "Nukleus" and
+  "Zellkern" are one part. A tapped part stands in the thread in her language
+  (`tappedAnswerText`, answer.ts — the same path as the map's regions).
+- **Screen:** `components/math/SchematicFigures.tsx` draws each part outline-under-fill (the tubes
+  of a frame show no line inside the part) and a numbered badge off each numbered part with a
+  leader line. Tapping is `TapFigure` with the map's `case` in `tapLayout` (`TapShapes`: the
+  maps' and the pictures' shapes, each once loaded).
+  The line under it says "Teil gewählt"; the part's name is only in `aria-valuetext` (#409).
+  `describeSchematic` says the drawing and how many parts are numbered, never which.
+- Tests: `packages/shared-math/src/__tests__/schematics.test.ts` (names in five languages, every
+  name unique per drawing, every part reached at its point, tappability, tap round trip),
+  `lib/math/__tests__/tapLayout.test.ts`, `TapFigure.test.tsx`, `SchematicFigures.test.tsx`,
+  `schematic-figures.int.test.ts` ("Zelle beschriften" gives five questions without a word from
+  the model; stored or dropped; verdicts without a model; the thread in her language; another
+  learner); walkthrough `tests/web/tap-figures.spec.ts` (the cell labelled, every part of it
+  tapped, the bicycle's frame; scenario `testing/scenarios/schematic.ts`).
+- **Not built here:** the other drawings of the plan (microscope, skeleton, heart, ear, lab
+  equipment, traffic signs …: eight of the first fifteen are done); matching numbers to names
+  (#229); tapping the labels of a photographed sheet (`HOTSPOT_BILD`, extraction of label regions).
 
 ### Circuits, logic gates and the colour wheel (issue #261)
 
@@ -3697,6 +3757,14 @@ dropped, whatever the model wrote (Rule 0). Every row was a rule in `preparedFro
 a row, so a profile leaves out only what code already threw away: item kinds (`KINDS`), structured
 kinds (`STRUCTURED`), bars only in practice (#162), note lines in practice and tests (#226), the
 listening task only in a listening run (#210), a Diktat's entries only in a Diktat run (#242).
+**A form switched off** (#296): `FORMS_OFF` (comma-separated `ItemKind` values per environment; an
+unknown name stops the boot) takes the form out of the profile (`profileFor`) — out of the schema
+the model is shown and out of what code keeps — and out of what a photographed sheet stores
+(`formsOn` in `practice/items.ts`, used by `materials/service.ts`; a sheet left with nothing is `form_not_practicable`, never
+"unreadable"). Nothing on the answer path reads it, so a question of that form already stored stays
+answerable. A new form stays off in production until it was tested with the real model and the
+owner has seen it; switching is the environment variable, not a release. Figure types (a map, a
+solid) are not covered by it: they are not a form of their own but a drawing inside one.
 Inside an item, the fields no allowed kind keeps are
 left out too, from `practice/itemFields.ts` — the same constants `usableItems` and `usableRubric`
 discard by: a rubric (and its `RubricCheck` union) without a long answer, a tolerance without a
@@ -4502,8 +4570,10 @@ the role; code holds the frame (CLAUDE.md rule 1).
 - **The feedback is checked, not believed** (rule 0 from #224, the same rule as #211's `judged`).
   One model call (`ROLEPLAY_FEEDBACK_SYSTEM`, `RoleplayFeedbackForModel`, zod): per key point
   `met` and a quote, plus 2–3 lines of hers with a better version. `checkFeedback` counts a point
-  as managed **only** when the quote stands in her own lines (`quoteOccursIn`, whole words); an
-  invented quote, a fragment or a point the model left out is "noch nicht dabei". A better line
+  as managed **only** when the quote stands in her own lines, decided on the one path every key
+  point in the app takes (`quoted` in `practice/rubric.ts`, folded like a writing task's
+  `judged`, #296); an invented quote, a fragment or a point the model left out is "noch nicht
+  dabei". A better line
   whose `said` is not hers is dropped, never rewritten. The text she reads and hears is the
   app's (`i18n roleplay.*`): each point in words, a managed one with her own words as the proof —
   no score, no grade, no count. Stored as checked in `buddy_roleplays.feedback` (her export).
