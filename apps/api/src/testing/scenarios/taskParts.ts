@@ -41,9 +41,12 @@ export function tariffTask(bFrom = 'a + 12') {
   };
 }
 
-/** Physics, Klasse 7/8: a distance, and the time for it at another speed. */
+/**
+ * Physics, Klasse 7/8: a distance, and the time for it at another speed. At 360 pt the stem's
+ * first line ends at "18" — where "km/h" broke away before issue #467; the shots keep it in view.
+ */
 const RIDE_TASK = {
-  stem: 'Ein Radfahrer fährt 2,5 Stunden lang mit gleichbleibend 18 km/h.',
+  stem: 'Ein Radfahrer fährt 2,5 Stunden mit 18 km/h.',
   topic: 'Gleichförmige Bewegung',
   difficulty: 2,
   prompt_lang: 'de',

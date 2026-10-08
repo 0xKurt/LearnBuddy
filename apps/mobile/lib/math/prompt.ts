@@ -6,6 +6,7 @@
 // Pure logic without React Native imports, so it runs in the unit tests.
 
 import { mathSpans, parseMath, type MathAtom } from './parse.js';
+import { bindUnits } from './quantity.js';
 
 /** Italic is only set when true, so runs without it compare as before. */
 type Slant = { italic?: true };
@@ -115,14 +116,24 @@ function scan(text: string, options: PromptOptions): RawRun[] {
   return out;
 }
 
-/** The runs to draw. An escaped \$ in the text shows as $. */
+/** Whether a run ends in a digit: "$15$" or "**15**" before " km/h". */
+function endsInNumber(run: RawRun | undefined): boolean {
+  if (run?.type === 'plain') return /\p{N}$/u.test(run.raw);
+  return run?.type === 'math' && /\p{N}$/u.test(run.inner.trim());
+}
+
+/**
+ * The runs to draw. An escaped \$ in the text shows as $; a number and its unit are bound by a
+ * no-break space (quantity.ts), also when the number stands in the run before.
+ */
 export function parsePrompt(text: string, options: PromptOptions): PromptRun[] {
-  return scan(text, options).map((r): PromptRun => {
+  const raw = scan(text, options);
+  return raw.map((r, i): PromptRun => {
     switch (r.type) {
       case 'plain':
         return {
           type: 'plain',
-          text: r.raw.replace(/\\\$/g, '$'),
+          text: bindUnits(r.raw.replace(/\\\$/g, '$'), { afterNumber: endsInNumber(raw[i - 1]) }),
           bold: r.bold,
           ...(r.italic ? { italic: true as const } : {}),
         };

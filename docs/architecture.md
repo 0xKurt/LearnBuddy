@@ -4330,6 +4330,15 @@ word list, so it stays a prompt rule.
   While a tapped question is open her answer is not echoed as a bubble (`ItemThread echoAnswers`,
   as for structured items): the tried tile says it — except in a conversation, where the bubble is
   the only place she sees what was heard.
+- **A number and its unit stay on one line** (issue #467). `MathText` — the one text component for
+  questions, situations, solutions and Buddy's replies — binds a number to the unit right after it
+  with a narrow no-break space (U+202F, DIN 1338): "15 km/h", "3,5 m²", "20 %", "90 °C" never
+  break apart at 360 pt, "15 Kinder" still may. What counts as a unit is the grading's unit
+  table (`shared-math/src/units.ts`, capital symbols like N, V, A case-sensitive), applied by
+  `lib/math/quantity.ts` inside `parsePrompt`; also when the number stands in math or bold before
+  it ("$15$ km/h"). The line breaking with math (`lib/math/lineBreak.ts`) never breaks at a
+  no-break space. Display only: the screen reader and read-aloud are built from the text as
+  written, so they say exactly what they said before.
 - **Figures that state numbers (issues #253, #257)** — two figures carry measures, and code
   checks them in both directions before a question is stored (`practice/figureCheck.ts`, called
   from `usableItems`); a figure that contradicts its numbers or its key costs the QUESTION, not
