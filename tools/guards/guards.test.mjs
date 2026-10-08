@@ -6,18 +6,7 @@
 // better, because main's measurement IS the list (issue #452). Both are tested here.
 
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  realpathSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
@@ -29,38 +18,20 @@ import plugin from './eslint-plugin.mjs';
 import { MAX_AGE_HOURS, staleHours } from './fresh-base.mjs';
 import { growth, LISTS, TRAILER } from './no-growth.mjs';
 import { prBodyProblems } from './pr-body.mjs';
+import { scratchRepo } from './scratch-repo.mjs';
 import { fileOf, isWeak, SOURCE_LISTS, sourceList } from './source-lists.mjs';
 import { REPO_ROOT, UI_DIRS, sourceFiles } from './measure.mjs';
 
 const exists = (/** @type {string} */ f) => existsSync(join(REPO_ROOT, f));
 
-/**
- * A throwaway repository with `main` (inside the pre-commit hook git exports GIT_DIR,
- * GIT_INDEX_FILE … — inherited, they point a throwaway repository's commands at the REAL one;
- * it happened: commits and config written into the project's .git). So: none of the hook's
- * GIT_* variables, no global or system config, every setting passed with -c.
- */
+/** A throwaway repository (scratch-repo.mjs) on `main`, and a way to write files into it. */
 function playground() {
-  const repo = mkdtempSync(join(tmpdir(), 'lb-guards-'));
-  const env = Object.fromEntries(
-    Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_')),
-  );
-  Object.assign(env, { GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' });
-  const git = (/** @type {string[]} */ ...args) =>
-    execFileSync('git', ['-c', 'user.email=t@example.test', '-c', 'user.name=t', ...args], {
-      cwd: repo,
-      env,
-      encoding: 'utf8',
-      stdio: 'pipe',
-    });
+  const { dir, git, remove } = scratchRepo('lb-guards-');
   const write = (/** @type {string} */ file, /** @type {string} */ text) => {
-    mkdirSync(join(repo, file, '..'), { recursive: true });
-    writeFileSync(join(repo, file), text);
+    mkdirSync(join(dir, file, '..'), { recursive: true });
+    writeFileSync(join(dir, file), text);
   };
-  git('init', '-q', '-b', 'main');
-  // The guard against the leak itself: this must be the throwaway repository.
-  assert.equal(git('rev-parse', '--show-toplevel').trim(), realpathSync(repo));
-  return { repo, git, write, done: () => rmSync(repo, { recursive: true, force: true }) };
+  return { repo: dir, git, write, done: remove };
 }
 
 RuleTester.describe = describe;

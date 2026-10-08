@@ -32,6 +32,7 @@ import {
 } from '../../../../packages/shared-math/src/tap.js';
 import { barChartGeometry, clockGeometry, numberLineGeometry, type Box } from './figureGeometry.js';
 import { functionPlotGeometry } from './plotLayout.js';
+import { schematicLayout } from './schematicLayout.js';
 
 /**
  * How the chosen place is shown: a dot on it, a frame around its column, a region filled with a dot
@@ -170,20 +171,24 @@ export function tapLayout(
             ? { ...schematicRegions(shapes.pictures, fig.d), borders: true }
             : undefined;
       if (!view) return null;
-      const k = width / REGION_FRAME;
-      const reach = regionReach(width);
+      // A picture stands where its drawing does (`schematicLayout`); a map fills the width.
+      const { k, x0, y0 } =
+        fig.type === 'map'
+          ? { k: width / REGION_FRAME, x0: 0, y0: 0 }
+          : schematicLayout(fig, width, null);
+      const reach = regionReach(k * REGION_FRAME);
       return {
         axes,
-        pickAt: (x, y) => [regionAt(view, x / k, y / k, reach)],
+        pickAt: (x, y) => [regionAt(view, (x - x0) / k, (y - y0) / k, reach)],
         markOf: ([i = 0]) => {
           const shape = view.regions[i];
           if (!shape) return null;
           return {
             kind: 'region',
             outline: view.borders,
-            d: regionPath(shape.rings, k),
-            x: shape.at[0] * k,
-            y: shape.at[1] * k,
+            d: regionPath(shape.rings, k, x0, y0),
+            x: x0 + shape.at[0] * k,
+            y: y0 + shape.at[1] * k,
           };
         },
         guides: [],
