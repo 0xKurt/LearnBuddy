@@ -54,7 +54,9 @@ that diverges from these docs updates the doc in the same change, or comes with 
 - **The whole app is tested once, at the end** (owner 05.10., #387): when everything is built, the
   full browser walkthrough runs back to front, with the screenshot folder.
 - **Hooks are never skipped** (`--no-verify` is forbidden). Pre-commit: typecheck, lint, guards,
-  tests, bundle smoke. Pre-push: the full suite.
+  tests, bundle smoke. Pre-push: the full suite, not repeated only when the tree of every pushed
+  commit already passed that same full run in this worktree (#455,
+  `docs/engineering-guards.md` §Pre-Push); anything unclear runs it.
 - Integration tests run on a real Postgres (`LB_TEST_DATABASE_URL`, hard rule 8); specs are
   order-independent and nothing is "flake" before its cause is proven (Engineering-Regel 7).
 - **Show red before green.** A fix or guard comes with a test that fails without it.

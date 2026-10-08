@@ -1,9 +1,10 @@
 // `pnpm guards` (issue #313, docs/engineering-guards.md): the guards that look at the whole
 // repository rather than one file — copies (jscpd), dead code (knip), and the guards' own tests
-// with the ratchet that keeps the Ausnahmelisten shrinking. The per-file guards (file size,
-// tokens only, no raw Pressable) are ESLint rules and run with `eslint`.
+// with the ratchet that keeps the Ausnahmelisten shrinking, plus the tests of the pre-push
+// stamp (#455). The per-file guards (file size, tokens only, no raw Pressable) are ESLint rules
+// and run with `eslint`.
 //
-// The three run in parallel; each prints its own result. Part of `pnpm lint` (CI) and of the
+// All four run in parallel; each prints its own result. Part of `pnpm lint` (CI) and of the
 // pre-commit hook.
 
 import { spawn } from 'node:child_process';
@@ -15,6 +16,10 @@ const GUARDS = [
   [
     'Wächter-Tests + Ratsche',
     ['--test', '--test-reporter=dot', join('tools', 'guards', 'guards.test.mjs')],
+  ],
+  [
+    'Pre-Push-Stempel (#455)',
+    ['--test', '--test-reporter=dot', join('tools', 'guards', 'green-tree.test.mjs')],
   ],
   ['Kopien (jscpd)', [join('tools', 'guards', 'clones.mjs')]],
   ['Toter Code (knip)', [join('tools', 'guards', 'knip.mjs')]],
