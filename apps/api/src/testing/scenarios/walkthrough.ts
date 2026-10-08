@@ -7,6 +7,7 @@
 
 import type { ScriptedGateway } from '../fakes.js';
 import { scriptAsk } from './ask.js';
+import { scriptCards } from './cards.js';
 import { scriptCircuits } from './circuits.js';
 import { installChecks } from './checks.js';
 import { scriptCloze } from './cloze.js';
@@ -44,6 +45,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   // First of all: her questions in practice (#402) stand in requests about the pie chart and the
   // order, whose own words an older, broader rule may know.
   scriptAsk();
+  // Keyed by her own words ("Frosch", "Kröte"): the flashcards and her question on a card (#384).
+  scriptCards();
   // Early too: "Zahlenstrahl" and "Uhr" are words an older, broader rule may know (#248).
   scriptTap();
   scriptMap();

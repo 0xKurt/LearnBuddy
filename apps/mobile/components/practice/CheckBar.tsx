@@ -32,7 +32,11 @@
 //     "Prüfen": the bar holds only her question (and the waveform where the options can be said);
 //   · `talk` — the conversation row, in a conversation, for a form whose answer can be said;
 //   · `bar` — the question's own pinned bar: "Weiter" once it is closed, the pronunciation
-//     recorder. The shell places it like "Prüfen", at the bottom.
+//     recorder. The shell places it like "Prüfen", at the bottom;
+//   · `own` — a pass that is not answered, the flashcards (issue #384): its action where
+//     "Prüfen" stands. "Umdrehen" at the pill's end, as "Prüfen" on a board; "Noch nicht" and
+//     "Wusste ich" across under the pill, as a typed answer's "Prüfen" — two of them, so they
+//     need the width. The field is her question to the tutor, as on every form.
 
 import { ASK_TEXT_MAX } from '@learnbuddy/shared-types/contracts';
 import { createContext, useContext, type ComponentProps, type ReactNode } from 'react';
@@ -95,7 +99,10 @@ type Talk = { talk: Spoken };
 /** The question's own pinned bar ("Weiter", the recorder), in the action's place. */
 type OwnBar = { bar: ReactNode };
 
-export type CheckAction = Check | Tap | OwnBar | Talk;
+/** A pass's own action (the flashcards, #384): at the pill's end, or across under the pill. */
+type Own = { own: { inBar: ReactNode | null; across: ReactNode | null } };
+
+export type CheckAction = Check | Tap | OwnBar | Own | Talk;
 
 /** Her question to the tutor about the question on screen (issue #402): the bar's field. */
 type Ask = {
@@ -126,6 +133,7 @@ export const AskRoute = createContext<AskState>({
 
 export function CheckBar(action: CheckAction) {
   if ('bar' in action) return <>{action.bar}</>;
+  if ('own' in action) return <OwnAction {...action.own} />;
   if ('talk' in action) return <TalkRow {...action.talk} />;
   if ('tap' in action) return <TapBar canTalk={action.canTalk === true} />;
   return <CheckButton {...action} />;
@@ -138,6 +146,17 @@ function TapBar({ canTalk }: { canTalk: boolean }) {
   return (
     <BottomBar>
       <InputBar {...field} after={canTalk ? <TalkButton onPress={conversation.start} /> : null} />
+    </BottomBar>
+  );
+}
+
+/** A pass's own action: her question in the field, the action where "Prüfen" stands. */
+function OwnAction({ inBar, across }: Own['own']) {
+  const field = useAskField(inBar);
+  return (
+    <BottomBar>
+      <InputBar {...field} />
+      {across}
     </BottomBar>
   );
 }
