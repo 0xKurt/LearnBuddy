@@ -203,8 +203,9 @@ export function measureFiles(sha, cwd = REPO_ROOT) {
 /**
  * Runs `measure` on the whole tree of `sha` (jscpd and knip look at the repository, not at one
  * file): the commit unpacked into a temporary directory, this checkout's node_modules linked in
- * — knip resolves imports through them. Outside node_modules on purpose: both tools skip
- * whatever lies below a node_modules folder.
+ * — knip resolves imports through them. In the temp directory, not under node_modules/.cache:
+ * knip run in a tree below a node_modules folder fails to load its plugins' files (.husky/*,
+ * tried for #452).
  * @template T
  * @param {string} sha @param {(root: string) => T} measure @returns {T}
  */
