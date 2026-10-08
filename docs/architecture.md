@@ -3256,6 +3256,46 @@ prints none — or from a text Buddy writes himself (a `read` run, #368, below).
   not count). Syllables and an error text are refused there — neither is a sentence of the text.
   The sentence is its evidence: the one hint names its lines, and once closed she is shown them.
 
+### Aufgaben mit Teilaufgaben (issue #297, migration `0100_task_parts.sql`)
+
+A class test from grade 8 on asks **one situation and several subtasks** a), b), c) on it, the
+later ones building on the earlier results. The first step of #297 brings exactly that, for parts
+code can compute, with the **Folgefehler** German schools mark: a wrong a) carried on correctly in
+b) makes b) right.
+
+- **Every part is an ordinary question** (`numeric`, `short`, `multiple_choice`) with its own key
+  and its own check — nothing is checked twice or in a second way (#296). What is new is one column,
+  `items.task_part` (`TaskPart`, `contracts/taskParts.ts`): the task's id (made by code), the part's
+  letter, how many parts the task has, the situation (`stem`) and, for a part that goes on from
+  earlier ones, `from` — arithmetic over their letters (`a * 0,15 + 12`). It is stored on **every**
+  part, as a reading text is (#233): a review brings one part back alone, with its situation.
+- **Regel 0 when writing** (`practice/taskParts.ts` `partTaskItems`): every part goes through
+  `usableItems`; one that does not hold costs the whole task (b without a is no task, its letters
+  would lie). Every `from` is recomputed with the earlier keys (the expression parser in `letters`
+  mode, `shared-math/expression.ts`) and must give its own key at the key's precision (D-1); a formula
+  that does not, names a later part, itself, no part, a part that is no number, or nothing earlier at
+  all, drops the task. The model never writes an id or a letter into a stored field (rule 2): parts
+  are lettered here in the order they come, the app gets an alias (`TaskPartView.ref`, `p1`, …).
+- **Folgefehler when answering** (`answer.ts` → `followsOn`): a part is first judged against its key
+  like any question. Only when that is not right, and only when an earlier part it builds on was
+  answered **wrong in this run**, code recomputes `from` with HER latest answers (a written path is
+  read at its last line, `9 + 3 = 12` at its last `=`) and compares again at the key's precision.
+  Then the part is `correct`, by rule, and the reply says what happened ("Richtig weitergerechnet –
+  mit deinem Ergebnis aus a) …"). Her a) stays wrong. A part answered before a), or brought back
+  alone by a review, has nothing of hers to follow: its key decides.
+- **On screen** (`QuestionCard` `stimulus`, `PartStem`): the situation above the question, the part's
+  letter before it, and the task's letters `a) · b) · c)` where the topic stands — where she is, never
+  a count of what is left (rule 6). While she types the situation keeps two lines and scrolls in
+  itself (the one text that may, rule 16) instead of folding away like a drawing: she types from its
+  numbers. No new route.
+- **In the generator**: `part_tasks` in practice and test runs (`SET_PROFILES.partTasks`), at most
+  two per run, after the structured forms, each part a stored question in order. The material is text
+  only in this step: a second figure union in the explain schema would grow it by a third (20 kB of
+  65 kB, measured 05.10.); figures, tables and data as material come after the schema budget is
+  measured with Vertex (#281).
+- **Next** (#297 plan): open parts (begründe, deute, beurteile) through key points (#258), operators
+  deciding the check; tasks in parts read from the photo; subjects beyond maths and physics.
+
 ### Charts (issues #245, #246)
 
 Line and climate charts, pies, box plots, histograms, scatter plots and population pyramids next to

@@ -57,12 +57,16 @@ die Schuld abgebaut — dann fliegen Liste und Eintrag in `SOURCE_LISTS` im selb
 
 Die Wächter in `tools/guards/` haben je einen Test in `guards.test.mjs`, der sie an einem
 absichtlichen Regelbruch rot sieht (Ratsche, Regeln, Merge-Treiber, `fresh-base`, `no-growth`,
-die Quelltext-Listen, der PR-Text).
+die Quelltext-Listen, der PR-Text). Der Pre-Push-Stempel hat seine eigenen Tests in
+`green-tree.test.mjs` (§Pre-Push). Tests mit einem Wegwerf-Repository nehmen
+`tools/guards/scratch-repo.mjs`: ohne die `GIT_*`-Variablen des Hooks, sonst schreiben sie in das
+echte Repository.
 
 Die per-Datei-Wächter (Größe, Tokens, Pressable) sind ESLint-Regeln und laufen deshalb auch auf den
 gestagten Dateien im pre-commit (lint-staged). `pnpm guards` (`tools/guards/run.mjs`) prüft das
 ganze Repository: jscpd, knip und die Wächter-Tests mit der Ratsche
-(`tools/guards/guards.test.mjs`). Es ist Teil von `pnpm lint` und des pre-commit-Hooks.
+(`tools/guards/guards.test.mjs`), dazu die Tests des Pre-Push-Stempels
+(`tools/guards/green-tree.test.mjs`). Es ist Teil von `pnpm lint` und des pre-commit-Hooks.
 
 Verbotene Code-Formen sind je eine eigene Regel in `tools/guards/syntax-rules.mjs`:
 `lb/no-context-bump` und `lb/no-default-zone` (#315), `lb/no-public-secret` (#290) und
@@ -95,6 +99,40 @@ Konflikte in den Ausnahmelisten löst der Merge-Treiber `tools/guards/merge-base
 (`.gitattributes`, eingerichtet von `pnpm install`): je Eintrag die größere Zahl, Listen
 vereinigt. Danach zieht `pnpm guards:shrink` auf den echten Stand herunter, `no-growth.mjs`
 hält die Grenze gegen main.
+
+## Pre-Push: die volle Suite einmal je Baum (#455)
+
+Der pre-commit-Hook lässt die volle Suite laufen, sobald gemeinsamer Grund gestagt ist
+(Testharness, Migrationen, `packages/`, Manifeste, Lockfile, `.husky/`, `tools/`), sonst nur die
+Tests zu den gestagten Dateien. Der pre-push-Hook ließ danach immer die volle Suite laufen, also
+oft ein zweites Mal auf genau demselben Baum. Bei vielen parallelen Branches auf 4 Kernen hat das
+den langsamsten Schritt verdoppelt. Beide Hooks nehmen jetzt dieselbe volle Suite
+(`full_suite` in `.husky/full-suite.sh`):
+
+- **Stempel nach einem grünen vollen Lauf:** `tools/guards/green-tree.mjs` schreibt den Baum-Hash
+  in die Git-Ablage des Worktrees (`git rev-parse --git-path lb-green-trees`, nie versioniert, je
+  Worktree eine eigene Datei). Dazu kommt ein Schlüssel über Befehl, Node-Version,
+  `LB_REQUIRE_TEST_DB`, `LB_TEST_DATABASE_URL` und die installierten Pakete
+  (`node_modules/.pnpm/lock.yaml`). Gestempelt wird nur, wenn die Dateien auf der Platte vor und
+  nach dem Lauf genau dieser Baum waren, also nichts ungestagt und nichts ungetrackt. Ein Lauf nur
+  mit den betroffenen Tests stempelt nichts.
+- **Pre-Push** nimmt aus den Zeilen, die git dem Hook gibt, die Bäume **aller** Commits, die der
+  Push neu bringt: erreichbar vom gepushten Stand, nicht von dem, was der Remote schon hat. Die
+  Suite entfällt nur, wenn jeder dieser Bäume mit demselben Schlüssel gestempelt ist.
+- **Sonst läuft sie wie bisher:** kein Stempel, eine unlesbare Datei, ein Merge-Commit ohne
+  vollen Lauf (`git merge` ohne Konflikt ruft den pre-commit nicht auf), ein Amend, das den Baum
+  ändert, ungestagte oder ungetrackte Dateien beim Commit, ein anderer Befehl, eine andere
+  Node-Version, eine andere Test-Datenbank, andere installierte Pakete, ein anderer Worktree, ein
+  Push ohne neuen Commit, ein Fehler im Helfer, ein Branch von vor #455 ohne den Helfer. Auch der
+  pre-push stempelt nach seinem grünen Lauf den Baum auf der Platte; ein späterer Push, der nur
+  diesen Baum neu bringt, läuft dann nicht noch einmal.
+- **Keine Lockerung:** Übersprungen wird nur, was auf demselben Baum unter denselben Bedingungen
+  schon voll grün war. `--no-verify` bleibt verboten, und die CI prüft jeden PR noch einmal.
+- **Grenze:** Ignorierte Dateien (`.env.local`, Build-Ausgaben) gehören zu keinem Baum. Ändert sich
+  zwischen Commit und Push nur so etwas, sieht der Stempel es nicht.
+- **Tests:** `tools/guards/green-tree.test.mjs` (Teil von `pnpm guards`) prüft die Entscheidung
+  allein und den ganzen Weg in einem Wegwerf-Repository: Stempel, Push, Merge, Amend, Dateien
+  außerhalb des Index, ein anderer Lauf, eine kaputte Datei und ein zweiter Worktree.
 
 ## Wenn ein Wächter rot ist
 
