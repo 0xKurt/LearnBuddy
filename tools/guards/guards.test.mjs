@@ -1,10 +1,9 @@
-// The guards' own tests, and the ratchet that keeps every Ausnahmeliste honest (issue #313,
-// docs/engineering-guards.md). Run by `pnpm guards` (part of `pnpm lint` and the pre-commit
-// hook) with node's own test runner.
+// The guards' own tests (issue #313, docs/engineering-guards.md). Run by `pnpm guards` (part of
+// `pnpm lint` and the pre-commit hook) with node's own test runner.
 //
-// "Only shrinks" has two halves: the code may not get worse than the list (the lint rules,
-// clones.mjs, knip.mjs), and the list may not stay worse than the code — an entry that was
-// fixed has to go, or the debt could come back unnoticed. The second half is here.
+// "Only shrinks" has two halves: the code may not get worse than main (the lint rules,
+// clones.mjs, knip.mjs — all against main's measurement, base.mjs), and what got better stays
+// better, because main's measurement IS the list (issue #452). Both are tested here.
 
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -12,6 +11,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   realpathSync,
   rmSync,
@@ -24,25 +24,44 @@ import { describe, it } from 'node:test';
 import { ESLint, RuleTester } from 'eslint';
 import tseslint from 'typescript-eslint';
 
+import { activeGrants, baseSha, GROWTH_DIR, measureFiles, withGrants } from './base.mjs';
 import plugin from './eslint-plugin.mjs';
 import { MAX_AGE_HOURS, staleHours } from './fresh-base.mjs';
-import { mergeBaselines } from './merge-baseline.mjs';
-import { growth, TRAILER } from './no-growth.mjs';
+import { growth, LISTS, TRAILER } from './no-growth.mjs';
 import { prBodyProblems } from './pr-body.mjs';
 import { fileOf, isWeak, SOURCE_LISTS, sourceList } from './source-lists.mjs';
-import {
-  MAX_LINES,
-  REPO_ROOT,
-  UI_DIRS,
-  countedLines,
-  importsRawPressable,
-  readBaseline,
-  sourceFiles,
-} from './measure.mjs';
+import { REPO_ROOT, UI_DIRS, sourceFiles } from './measure.mjs';
 
 const exists = (/** @type {string} */ f) => existsSync(join(REPO_ROOT, f));
-const sum = (/** @type {Record<string, number>} */ o) =>
-  Object.values(o).reduce((a, b) => a + b, 0);
+
+/**
+ * A throwaway repository with `main` (inside the pre-commit hook git exports GIT_DIR,
+ * GIT_INDEX_FILE … — inherited, they point a throwaway repository's commands at the REAL one;
+ * it happened: commits and config written into the project's .git). So: none of the hook's
+ * GIT_* variables, no global or system config, every setting passed with -c.
+ */
+function playground() {
+  const repo = mkdtempSync(join(tmpdir(), 'lb-guards-'));
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_')),
+  );
+  Object.assign(env, { GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' });
+  const git = (/** @type {string[]} */ ...args) =>
+    execFileSync('git', ['-c', 'user.email=t@example.test', '-c', 'user.name=t', ...args], {
+      cwd: repo,
+      env,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    });
+  const write = (/** @type {string} */ file, /** @type {string} */ text) => {
+    mkdirSync(join(repo, file, '..'), { recursive: true });
+    writeFileSync(join(repo, file), text);
+  };
+  git('init', '-q', '-b', 'main');
+  // The guard against the leak itself: this must be the throwaway repository.
+  assert.equal(git('rev-parse', '--show-toplevel').trim(), realpathSync(repo));
+  return { repo, git, write, done: () => rmSync(repo, { recursive: true, force: true }) };
+}
 
 RuleTester.describe = describe;
 RuleTester.it = it;
@@ -56,10 +75,10 @@ describe('lb/no-raw-style-number (rule 5: tokens only)', () => {
     },
   });
   const fresh = join(REPO_ROOT, 'apps/mobile/components/new/Fresh.tsx');
-  const style = /** @type {{ files: Record<string, number> }} */ (
-    readBaseline('style-numbers.json')
-  );
-  const [listed, allowed] = Object.entries(style.files).sort((a, b) => a[1] - b[1])[0] ?? ['', 0];
+  // A file with free numbers on main keeps their count there (option `allowed`, base.mjs).
+  const listed = 'apps/mobile/components/old/Listed.tsx';
+  const allowed = 3;
+  const onMain = [{ allowed: { [listed]: allowed } }];
   const numbers = (/** @type {number} */ n) =>
     `const s = {\n${Array.from({ length: n }, (_, i) => `  m${i}: { padding: ${i + 1} },`).join('\n')}\n};`;
 
@@ -76,8 +95,10 @@ describe('lb/no-raw-style-number (rule 5: tokens only)', () => {
         code: 'const s = {\n  // token-exempt: hairline under the tab bar\n  borderRadius: 1,\n};',
       },
       { filename: fresh, code: '<Svg width={24} height={24} />' },
-      // A file on the Ausnahmeliste may keep exactly its count.
-      { filename: join(REPO_ROOT, listed), code: numbers(allowed) },
+      // A file may keep what it has on main …
+      { filename: join(REPO_ROOT, listed), code: numbers(allowed), options: onMain },
+      // … and have fewer: once on main, that is its new count — no list to follow (#452).
+      { filename: join(REPO_ROOT, listed), code: numbers(allowed - 1), options: onMain },
     ],
     invalid: [
       {
@@ -114,86 +135,155 @@ describe('lb/no-raw-style-number (rule 5: tokens only)', () => {
         code: 'const s = { padding: 8 }; // token-exempt:',
         errors: [{ messageId: 'raw' }],
       },
-      // One more than the list allows: all of the file's numbers are shown.
+      // One more than main has: all of the file's numbers are shown.
       {
         filename: join(REPO_ROOT, listed),
         code: numbers(allowed + 1),
+        options: onMain,
         errors: Array.from({ length: allowed + 1 }, () => ({ messageId: 'raw' })),
-      },
-      // Fewer than the list allows: the list has to come down with the code.
-      {
-        filename: join(REPO_ROOT, listed),
-        code: numbers(allowed - 1),
-        errors: [{ messageId: 'stale' }],
       },
     ],
   });
 });
 
-describe('Ausnahmelisten only shrink: no entry may stay worse than the code', () => {
-  it('style numbers: every listed file exists, sits in app/ or components/, and the total adds up', () => {
-    const style = /** @type {{ total: number, files: Record<string, number> }} */ (
-      readBaseline('style-numbers.json')
-    );
-    for (const [file, count] of Object.entries(style.files)) {
-      assert.ok(
-        exists(file),
-        `${file} gibt es nicht mehr — Eintrag streichen (pnpm guards:shrink)`,
-      );
-      assert.ok(
-        UI_DIRS.some((d) => file.startsWith(`${d}/`)),
-        `${file} liegt nicht unter ${UI_DIRS.join(', ')}`,
-      );
-      assert.ok(Number.isInteger(count) && count > 0, `${file}: ${count}`);
+describe('Ausnahmelisten are measured on main, not kept in files (issue #452)', () => {
+  const BIG = 'apps/api/src/big.ts';
+  const HUGE = 'apps/api/src/huge.ts';
+  const CARD = 'apps/mobile/components/x/Card.tsx';
+  // Umlauts first: main's files are read as bytes, one file after the other — a size counted in
+  // characters would shift every file after this one.
+  const lines = (/** @type {number} */ n) =>
+    '// Größe, Übung, Schlüssel\n' +
+    Array.from({ length: n }, (_, i) => `export const v${i} = ${i};`).join('\n') +
+    '\n';
+  const card = (/** @type {number} */ n) =>
+    `export const s = {\n${Array.from({ length: n }, (_, i) => `  m${i}: { padding: ${i + 1} },`).join('\n')}\n};\n`;
+
+  it('two branches that shrink entries of the same list merge without a conflict, and main measures both', () => {
+    const { repo, git, write, done } = playground();
+    try {
+      write(BIG, lines(820));
+      write(HUGE, lines(900));
+      write(CARD, card(4));
+      git('add', '-A');
+      git('commit', '-qm', 'main: two files over the limit, a card with free numbers');
+      assert.deepEqual(measureFiles(baseSha(repo, 'main'), repo), {
+        maxLines: { [BIG]: 820, [HUGE]: 900 },
+        styleNumbers: { [CARD]: 4 },
+        pressable: [],
+      });
+
+      // Two parallel branches shrink two entries of the same list. Before #452 both wrote
+      // max-lines.json, and GitHub, which runs no merge driver, saw a conflict and ran no CI.
+      git('checkout', '-qb', 'a');
+      write(BIG, lines(810));
+      git('commit', '-qam', 'a: shrinks big.ts');
+      git('checkout', '-q', 'main');
+      git('checkout', '-qb', 'b');
+      write(HUGE, lines(850));
+      write(CARD, card(2));
+      git('commit', '-qam', 'b: shrinks huge.ts and the card');
+      // Each touched only its code: no list file in either diff, nothing to meet in.
+      assert.equal(git('diff', '--name-only', 'main', 'a'), `${BIG}\n`);
+      assert.equal(git('diff', '--name-only', 'main', 'b'), `${HUGE}\n${CARD}\n`);
+
+      git('checkout', '-q', 'main');
+      git('merge', '-q', '--no-edit', 'a');
+      git('merge', '-q', '--no-edit', 'b');
+      // On main the shrinks ARE the measure — nobody wrote them down.
+      const after = measureFiles(baseSha(repo, 'main'), repo);
+      assert.deepEqual(after.maxLines, { [BIG]: 810, [HUGE]: 850 });
+      assert.deepEqual(after.styleNumbers, { [CARD]: 2 });
+
+      // A branch from there stands on the new main: growing back is more than main has.
+      git('checkout', '-qb', 'c');
+      write(CARD, card(3));
+      git('commit', '-qam', 'c: one free number more');
+      assert.equal(baseSha(repo, 'main'), git('rev-parse', 'main').trim());
+      assert.equal(measureFiles('HEAD', repo).styleNumbers[CARD], 3);
+    } finally {
+      done();
     }
-    assert.equal(style.total, sum(style.files), 'total ist die Summe der Einträge');
   });
 
-  it('max-lines: every listed file is still over the limit, and exactly at its listed size', () => {
-    const lines = /** @type {{ files: Record<string, number> }} */ (readBaseline('max-lines.json'));
-    for (const [file, limit] of Object.entries(lines.files)) {
-      assert.ok(
-        exists(file),
-        `${file} gibt es nicht mehr — Eintrag streichen (pnpm guards:shrink)`,
-      );
-      const dir = Object.entries(MAX_LINES).find(([d]) => file.startsWith(`${d}/`));
-      assert.ok(dir !== undefined, `${file}: keine Zeilengrenze für diesen Ort`);
-      assert.ok(limit > dir[1], `${file}: ${limit} liegt nicht über ${dir[1]} — Eintrag streichen`);
-      const now = countedLines(file);
-      assert.ok(
-        now >= limit,
-        `${file} hat jetzt ${now} Zeilen, die Liste erlaubt ${limit} — die Grenze sinkt mit (pnpm guards:shrink)`,
-      );
+  it('while main is merged in, main is the base — its own growth is not this branch’s', () => {
+    const { repo, git, write, done } = playground();
+    try {
+      write(BIG, lines(810));
+      git('add', '-A');
+      git('commit', '-qm', 'main');
+      git('checkout', '-qb', 'feature');
+      write(CARD, card(1));
+      git('add', '-A');
+      git('commit', '-qm', 'feature');
+      git('checkout', '-q', 'main');
+      write(BIG, lines(815));
+      git('commit', '-qam', 'main grows, with its own reason');
+      git('checkout', '-q', 'feature');
+      git('merge', '-q', '--no-commit', 'main');
+      assert.equal(baseSha(repo, 'main'), git('rev-parse', 'main').trim());
+      git('merge', '--abort');
+      assert.equal(baseSha(repo, 'main'), git('merge-base', 'HEAD', 'main').trim());
+    } finally {
+      done();
     }
   });
 
-  it('Pressable: every listed file still imports a raw pressable, none is in components/lb', () => {
-    const pressable = /** @type {{ files: string[] }} */ (readBaseline('pressable.json'));
+  it('a grant counts on the branch that adds it, and no more once it is on main', () => {
+    const { repo, git, write, done } = playground();
+    const grant = `${GROWTH_DIR}/297-big.json`;
+    try {
+      write(BIG, lines(810));
+      git('add', '-A');
+      git('commit', '-qm', 'main');
+      git('checkout', '-qb', 'feature');
+      write(
+        grant,
+        JSON.stringify({ issue: '#297', reason: 'Owner-Entscheid', maxLines: { [BIG]: 830 } }),
+      );
+      assert.deepEqual(
+        activeGrants(baseSha(repo, 'main'), repo).map((g) => g.issue),
+        ['#297'],
+      );
+      git('add', '-A');
+      git('commit', '-qm', 'feature: grant');
+      git('checkout', '-q', 'main');
+      git('merge', '-q', '--no-edit', 'feature');
+      assert.deepEqual(activeGrants(baseSha(repo, 'main'), repo), [], 'auf main: im Maß');
+      write(grant, JSON.stringify({ issue: '#297', reason: 'Owner-Entscheid', maxLine: {} }));
+      assert.throws(() => activeGrants(baseSha(repo, 'main'), repo), /maxLine/);
+      write(grant, JSON.stringify({ reason: 'ohne Issue' }));
+      assert.throws(() => activeGrants(baseSha(repo, 'main'), repo), /issue/);
+    } finally {
+      done();
+    }
+  });
+
+  it('a grant adds to the measure: the larger number per entry, the union of entries', () => {
+    const base = {
+      maxLines: { a: 900 },
+      styleNumbers: { c: 2 },
+      pressable: ['p'],
+      clones: { 'x <-> y': 10 },
+      knip: ['exports: f: g'],
+    };
     assert.deepEqual(
-      pressable.files,
-      [...new Set(pressable.files)].sort(),
-      'sortiert, ohne Doppel',
+      withGrants(base, [
+        { issue: '#1', reason: 'r', maxLines: { a: 880, b: 820 }, knip: ['exports: f: h'] },
+      ]),
+      { ...base, maxLines: { a: 900, b: 820 }, knip: ['exports: f: g', 'exports: f: h'] },
     );
-    for (const file of pressable.files) {
-      assert.ok(
-        !file.startsWith('apps/mobile/components/lb/'),
-        `${file}: components/lb darf das ohnehin`,
-      );
-      assert.ok(
-        exists(file) && importsRawPressable(file),
-        `${file} importiert kein rohes Pressable mehr — Eintrag streichen (pnpm guards:shrink)`,
-      );
-    }
+    assert.deepEqual(base.maxLines, { a: 900 }, 'the measure itself stays untouched');
   });
 
-  it('clones and knip: the headline numbers match the entries', () => {
-    const clones = /** @type {{ lines: number, pairs: Record<string, number> }} */ (
-      readBaseline('clones.json')
-    );
-    assert.equal(clones.lines, sum(clones.pairs));
-    const knip = /** @type {{ total: number, findings: string[] }} */ (readBaseline('knip.json'));
-    assert.equal(knip.total, knip.findings.length);
-    assert.deepEqual(knip.findings, [...new Set(knip.findings)].sort(), 'sortiert, ohne Doppel');
+  it('no list is kept in a file a parallel shrink would have to edit', () => {
+    // What is left in baselines/ is kept by hand and compared by no-growth.mjs.
+    assert.deepEqual(readdirSync(join(REPO_ROOT, 'tools', 'guards', 'baselines')), [
+      'bundle-budget.json',
+    ]);
+    for (const file of readdirSync(join(REPO_ROOT, 'tools', 'guards', 'baselines'))) {
+      assert.ok(`tools/guards/baselines/${file}` in LISTS, `${file}: no-growth.mjs vergleicht sie`);
+    }
   });
 });
 
@@ -327,72 +417,6 @@ describe('lb/one-text-field: the app has one text field (issue #365)', () => {
 
   it('stays quiet in the one field itself', async () => {
     assert.equal(await hits('apps/mobile/components/lb/LbTextInput.tsx'), 0);
-  });
-});
-
-describe('merge driver: an Ausnahmeliste conflict resolves itself (issue #328)', () => {
-  it('takes the larger number per entry and the union of lists', () => {
-    const ours = { $comment: 'c', total: 5, files: { a: 3, b: 9 }, findings: ['x', 'y'] };
-    const theirs = { $comment: 'c', total: 7, files: { a: 4, c: 1 }, findings: ['y', 'z'] };
-    assert.deepEqual(mergeBaselines(ours, theirs), {
-      $comment: 'c',
-      total: 7,
-      files: { a: 4, b: 9, c: 1 },
-      findings: ['x', 'y', 'z'],
-    });
-  });
-
-  it('resolves a real git conflict in max-lines.json without a hand', () => {
-    const repo = mkdtempSync(join(tmpdir(), 'lb-merge-'));
-    const driver = join(REPO_ROOT, 'tools', 'guards', 'merge-baseline.mjs');
-    // Inside the pre-commit hook git exports GIT_DIR, GIT_INDEX_FILE … — inherited, they point
-    // this throwaway repo's commands at the REAL repository (it happened: commits and config
-    // written into the project's .git). So: none of the hook's GIT_* variables, no global or
-    // system config, and every setting passed with -c, never written anywhere.
-    const env = Object.fromEntries(
-      Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_')),
-    );
-    Object.assign(env, { GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' });
-    const git = (/** @type {string[]} */ ...args) =>
-      execFileSync(
-        'git',
-        [
-          '-c',
-          'user.email=t@example.test',
-          '-c',
-          'user.name=t',
-          '-c',
-          `merge.lb-baseline.driver=node ${driver} %O %A %B`,
-          ...args,
-        ],
-        { cwd: repo, env, encoding: 'utf8', stdio: 'pipe' },
-      );
-    const list = 'tools/guards/baselines/max-lines.json';
-    const write = (/** @type {Record<string, number>} */ files) => {
-      mkdirSync(join(repo, 'tools', 'guards', 'baselines'), { recursive: true });
-      writeFileSync(join(repo, list), `${JSON.stringify({ files }, null, 2)}\n`);
-    };
-    try {
-      git('init', '-q', '-b', 'main');
-      // The guard against the leak itself: this must be the throwaway repository.
-      assert.equal(git('rev-parse', '--show-toplevel').trim(), realpathSync(repo));
-      writeFileSync(join(repo, '.gitattributes'), readFileSync(join(REPO_ROOT, '.gitattributes')));
-      write({ 'a.ts': 900, 'b.ts': 850 });
-      git('add', '-A');
-      git('commit', '-qm', 'base');
-      git('checkout', '-qb', 'feature');
-      write({ 'a.ts': 880, 'b.ts': 850 });
-      git('commit', '-qam', 'feature shrinks a');
-      git('checkout', '-q', 'main');
-      write({ 'a.ts': 900, 'b.ts': 820 });
-      git('commit', '-qam', 'main shrinks b');
-      git('merge', '-q', '--no-edit', 'feature');
-      const merged = JSON.parse(readFileSync(join(repo, list), 'utf8'));
-      // The larger side per entry: safe for lint; `pnpm guards:shrink` then tightens it.
-      assert.deepEqual(merged.files, { 'a.ts': 900, 'b.ts': 850 });
-    } finally {
-      rmSync(repo, { recursive: true, force: true });
-    }
   });
 });
 

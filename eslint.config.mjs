@@ -2,10 +2,13 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
+import { fileAllowance } from './tools/guards/base.mjs';
 import lb from './tools/guards/eslint-plugin.mjs';
 import { MAX_LINES, pressableRestriction } from './tools/guards/measure.mjs';
-import maxLinesBaseline from './tools/guards/baselines/max-lines.json' with { type: 'json' };
-import pressableBaseline from './tools/guards/baselines/pressable.json' with { type: 'json' };
+
+// What a file may still have of the debt the guards below count: what it has on main (issue
+// #452, tools/guards/base.mjs), plus what this branch grants itself in tools/guards/growth/.
+const onMain = fileAllowance();
 
 // The colour rule below (issue #29) and the Pressable guard (issue #313) are both options of
 // `no-restricted-imports`; a later block replaces the option of an earlier one, so the pattern
@@ -104,13 +107,13 @@ export default tseslint.config(
     },
   },
   // ── Engineering guards (issue #313, docs/engineering-guards.md) ──────────────────────────
-  // Each has an Ausnahmeliste in tools/guards/baselines/ that may only shrink: a file on it may
-  // not get worse, and once it is better the list has to follow (tools/guards/guards.test.mjs).
+  // A file that breaks one today may keep what it has on main and never get worse; what it fixes
+  // stays fixed once it is on main, because main is measured anew (`onMain` above).
   {
     // Rule 2 / CLAUDE.md rule 13: actions are <Btn>/<IconBtn> from components/lb. A raw
     // Pressable or Touchable* is the design system's business only.
     files: [...UI_FILES, 'apps/mobile/lib/**/*.ts', 'apps/mobile/lib/**/*.tsx'],
-    ignores: ['apps/mobile/components/lb/**', ...pressableBaseline.files.map(literal)],
+    ignores: ['apps/mobile/components/lb/**', ...onMain.pressable.map(literal)],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -182,15 +185,15 @@ export default tseslint.config(
     files: UI_FILES,
     ignores: ['**/__tests__/**'],
     plugins: { lb },
-    rules: { 'lb/no-raw-style-number': 'error' },
+    rules: { 'lb/no-raw-style-number': ['error', { allowed: onMain.styleNumbers }] },
   },
   // Rule 4: small units — 600 lines per file in the app, 800 in the API, blank lines and
-  // comments not counted. The files above it today keep their own size as their limit.
+  // comments not counted. A file above it on main keeps its size there as its limit.
   ...Object.entries(MAX_LINES).map(([dir, max]) => ({
     files: [`${dir}/**/*.{ts,tsx,js,mjs}`],
     rules: { 'max-lines': ['error', { max, skipBlankLines: true, skipComments: true }] },
   })),
-  ...Object.entries(maxLinesBaseline.files).map(([file, max]) => ({
+  ...Object.entries(onMain.maxLines).map(([file, max]) => ({
     files: [literal(file)],
     rules: { 'max-lines': ['error', { max, skipBlankLines: true, skipComments: true }] },
   })),
