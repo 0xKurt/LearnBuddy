@@ -733,7 +733,7 @@ export default function PracticeScreen() {
     <QuestionCorner
       flaggable={offers.flaggable}
       // A judgement she has been given and may disagree with (issue #164). The
-      // rule and the copy live in components/practice/DisputeVerdict.tsx.
+      // rule and the sheet live in components/practice/DisputeVerdict.tsx.
       canDispute={canDisputeVerdict({
         open,
         sessionStatus: session.status,

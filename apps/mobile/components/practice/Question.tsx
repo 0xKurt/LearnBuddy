@@ -19,7 +19,7 @@ import { FIGURE_CHROME } from '../../lib/math/figureScale.js';
 import { fillableAnswer } from '../../lib/math/prompt.js';
 import { formDensity } from '../../lib/keyboard.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -37,7 +37,7 @@ type ProgressProps = {
   total: number;
   /** Questions already closed (answered right, or solution shown). */
   closed: number;
-  /** A quiet action at the end of the row ("Frage passt nicht"). */
+  /** A quiet action at the end of the row: one short word ("Passt nicht", `QuestionCorner`). */
   right?: ReactNode;
   /**
    * The time left in a test she sits with time (issue #241): its own fixed place right after the
@@ -57,9 +57,6 @@ type ProgressProps = {
    */
   preparing?: boolean;
 };
-
-/** The narrowest the progress bar gets: whatever stands beside it, it keeps this. */
-const MIN_BAR = 40;
 
 export function ProgressRow({
   position,
@@ -83,8 +80,19 @@ export function ProgressRow({
   }, [share, reduced, width]);
   const fill = useAnimatedStyle(() => ({ width: `${width.value * 100}%` }));
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <Text style={[TYPE.label, { color: palette.ink2, fontSize: 14 }]}>
+    <View
+      testID="progress-row"
+      style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}
+    >
+      {/* One line, always (issue #459), like the screen's title (#287): beside the full sentence
+          "Bewertung stimmt nicht" the label broke onto two lines at 360 and the bar shrank to a
+          stub. The action at the end is one short word now and the bar keeps its least width;
+          what still does not fit — "ich schreibe noch mehr" beside an action — ends in "…". */}
+      <Text
+        testID="progress-label"
+        numberOfLines={1}
+        style={[TYPE.label, { color: palette.ink2, fontSize: 14, flexShrink: 1, minWidth: 0 }]}
+      >
         {label ??
           (preparing
             ? t('progress_more_coming', { current: position })
@@ -101,7 +109,7 @@ export function ProgressRow({
           importantForAccessibility="no-hide-descendants"
           style={{
             flex: 1,
-            minWidth: MIN_BAR,
+            minWidth: PROGRESS_BAR_MIN,
             height: 8,
             borderRadius: 4,
             backgroundColor: palette.lavender,

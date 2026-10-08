@@ -1906,6 +1906,15 @@ its own route, so nothing she asks is ever misread as an answer:
   room went wrong and the "Tipp" row stood cut — switching figures are now drawn at FigureView's
   `scale` (`FittedSvg`, like trees), and `MAX_ZOOM` is back at 1.5. While she types, the card's
   padding steps down to SPACE.md, and a board's keys fold with the board while she asks.
+  **The head of a question is one line** (#459): the progress row is "Frage 2 von 5", the bar and
+  one quiet action at its end (`QuestionCorner`). The action shows one short word ("Passt nicht",
+  "Einspruch"; at most twelve characters in every language, `QuestionCorner.test.tsx`) and gives
+  the whole action as its accessible name, with the word in it (WCAG 2.5.3); the sheet behind it
+  still says the full sentence. The label never wraps (`numberOfLines` 1 — what still does not fit
+  ends in "…", like the screen's title), and the bar keeps `PROGRESS_BAR_MIN` (48 pt,
+  `lib/theme/space.ts`). At 360 the full sentence "Bewertung stimmt nicht" had put the label on two
+  lines and the bar down to 40 pt. Guarded in `fit.ts` (`progressHead`) at every stop: the label
+  one line and whole, the bar at least `PROGRESS_BAR_MIN`, the action whole inside the row.
 
 **Eine Übung darf anfangen, bevor alle ihre Fragen geschrieben sind** (Issue #220, Migration
 0073). Gemessen 02.10.: „üben wir Brüche" kostete 6,45 s am Endpoint, davon 6,42 s der
@@ -3036,8 +3045,10 @@ session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
   and clearing it would be a guess (rule 5). Different from "Frage passt nicht", which takes an
   unfit question out while it is still **open**; this is about a judgement already given. Not
   during a test (the results come at the end) and not for homework, which is helped with rather
-  than judged. The control and that rule live in `components/practice/DisputeVerdict.tsx` (one
-  tap at the verdict, one sentence saying what will happen, no field to justify anything — rule 16) and are pinned by `components/practice/__tests__/DisputeVerdict.test.tsx`.
+  than judged. The rule and the sheet live in `components/practice/DisputeVerdict.tsx`, the tap in
+  the question's corner (`QuestionCorner.tsx`: "Einspruch", named "Einspruch gegen die Bewertung"
+  for a screen reader, issue #459) — one tap at the verdict, one sentence saying what will happen,
+  no field to justify anything (rule 16) — pinned by `components/practice/__tests__/DisputeVerdict.test.tsx` and `QuestionCorner.test.tsx`.
   **Still open from #164:** the first half — showing the cut-out of an unreadable spot and
   asking about it ("ist das 12 oder 17?") instead of losing the question. It needs coordinates
   out of the extraction and a crop view, and belongs with #162.
