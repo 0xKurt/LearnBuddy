@@ -222,7 +222,7 @@ export const TURN_STEP_SCHEMA = toJsonSchema(
   z.object({ lookups: lookupsField }).extend(TurnDecisionForModel.shape),
 );
 
-// Sent by `check.ts`, hashed into the version below, and read by the schema inventory.
+// Sent by `checkDecide.ts`, hashed into the version below, and read by the schema inventory.
 export const CHECK_SCHEMA = toJsonSchema(CheckDecision);
 /** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
 // Lookups first, as in a turn: the model chooses what to read before it writes a decision

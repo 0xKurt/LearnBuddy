@@ -17,7 +17,7 @@
 // items (`evaluate.ts` `form_free`): 2/4, 1/2 and 0,5 are the same answer. For a question
 // the model wrote, the same licence would be a guess, and decision D-3 still holds there.
 
-import { BarTask, type AnswerSurface, type Figure } from '@learnbuddy/shared-types/contracts';
+import { BarTask, type BarSurface, type Figure } from '@learnbuddy/shared-types/contracts';
 import { compareValue } from '@learnbuddy/shared-math';
 
 import { t, type MessageKey } from '../../i18n/index.js';
@@ -79,12 +79,9 @@ function isMore(a: Frac, b: Frac): boolean {
  * The surface the app shows for a stored task, or null when the question is answered the
  * ordinary way. Never carries the solution: `shade` says only how fine the empty bar is,
  * `pick` only what the two bars look like — which the question text already says.
- *
- * The return type names the two modes a BAR can be, not every mode a surface can be: since the
- * note line joined the union (issue #226) that is the difference between a caller that handles
- * both cases and a caller that silently skips a third it will never see.
+ * The return type names the two modes a BAR can be (`BarSurface`), not every mode a surface can be.
  */
-export function surfaceOf(task: BarTask): Exclude<AnswerSurface, { mode: 'notes' }> {
+export function surfaceOf(task: BarTask): BarSurface {
   switch (task.task) {
     case 'shade':
     case 'add':

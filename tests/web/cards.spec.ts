@@ -9,6 +9,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { onboardChild, startOffer } from './figureWalk';
 import { shot } from './fit';
+import { voiceAsSilence } from './talk';
 
 /** This stop at both phone sizes, in the light and the dark room. */
 async function rooms(page: Page, name: string): Promise<void> {
@@ -66,6 +67,26 @@ test('flashcards: the one bar with her question, the card’s action, the round 
   // The one input bar: her question in the field, "Umdrehen" where "Prüfen" stands.
   await expect(page.getByTestId('ask-field')).toBeVisible();
   await rooms(page, '101-cards-front');
+
+  // Vorlesen in the pass's head too, the same switch as every practice (#434): the front is read
+  // in its own language when it comes up, and a tap on it reads it again — no button of its own.
+  // Buddy's voice as a short silence (the dev stack has none). .last(): the chat's head stays
+  // mounted under this screen.
+  await voiceAsSilence(page, 300);
+  const spoken = () =>
+    page.waitForRequest((r) => r.url().includes('/voice/speech') && r.method() === 'POST');
+  const firstRead = spoken();
+  await page.getByRole('switch', { name: 'Vorlesen', exact: true }).last().click();
+  expect((await firstRead).postDataJSON()).toMatchObject({
+    text: 'la grenouille',
+    locale: 'fr-FR',
+  });
+  const reread = spoken();
+  await page.getByTestId('card').getByRole('button', { name: 'Nochmal vorlesen' }).click();
+  expect((await reread).postDataJSON()).toMatchObject({ text: 'la grenouille' });
+  await rooms(page, '101-cards-read-aloud');
+  await page.getByRole('switch', { name: 'Vorlesen ist an' }).last().click();
+  await page.unroute('**/v1/voice/speech');
 
   // Her question about the card: the tutor's reply under it, nothing rated.
   // Right after the switch back from the dark room the bar can render once more (figureWalk

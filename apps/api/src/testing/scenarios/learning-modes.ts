@@ -805,9 +805,6 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       answer: says('Diese Woche steht noch nichts an – magst du etwas üben?'),
     },
   );
-  llm.byDefault('transcribe', {
-    json: { heard_speech: true, text: 'Was steht diese Woche an?' },
-  });
   // Tutor: hints for homework (never the solution).
   const hint = (req: LlmRequest) => {
     const text = lastText(req).toLowerCase();

@@ -209,7 +209,12 @@
     "rest_of": "{{value}} setzen",
     "check_waits": "Erst wenn jeder Takt etwas hat.",
     "keys_label": "Tasten zur Notenzeile",
-    "values_label": "Notenwert"
+    "values_label": "Notenwert",
+    "taps_pad": "Hier klopfen",
+    "taps_again": "Neu klopfen",
+    "taps_waits": "Klopf erst den Rhythmus, den du gehört hast.",
+    "tapped_one": "{{count}} Schlag geklopft",
+    "tapped_other": "{{count}} Schläge geklopft"
   },
   "summary": {
     "title": "Geschafft!",
@@ -402,5 +407,18 @@
     "text_one": "Dein Text · 1 Wort",
     "text_other": "Dein Text · {{count}} Wörter",
     "thinking": "Buddy liest deinen Text …"
+  },
+  "work": {
+    "take": "Foto von deinem Rechenweg",
+    "reading": "Ich lese deinen Rechenweg …",
+    "read": "Von deinem Foto abgeschrieben. Stimmt jede Zeile mit deinem Heft?",
+    "unread_one": "Zeile {{lines}} konnte ich nicht lesen. Schreib sie selbst hinein.",
+    "unread_other": "Die Zeilen {{lines}} konnte ich nicht lesen. Schreib sie selbst hinein.",
+    "unreadable": "Dein Foto kann ich nicht sicher lesen. Mach es nochmal – hell und gerade von oben – oder tipp deinen Weg ein.",
+    "no_working": "Auf dem Foto finde ich keinen Rechenweg zu dieser Aufgabe. Fotografier deinen eigenen Weg – oder tipp ihn ein.",
+    "too_long": "Das ist mehr, als in eine Antwort passt. Fotografier nur deinen Weg zu dieser Aufgabe.",
+    "down": "Ich kann dein Foto gerade nicht lesen. Tipp deinen Weg ein oder versuch es gleich nochmal.",
+    "camera_blocked": "LearnBuddy darf die Kamera noch nicht benutzen. Du kannst das in den Einstellungen erlauben – oder deinen Weg eintippen.",
+    "camera_failed": "Die Kamera ging gerade nicht auf. Versuch es nochmal oder tipp deinen Weg ein."
   }
 }

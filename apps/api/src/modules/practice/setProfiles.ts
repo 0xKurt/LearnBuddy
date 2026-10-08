@@ -13,6 +13,8 @@ import {
   StaffTask,
   type StartTopicRequest,
   type StructuredKind,
+  TASK_PARTS_MAX,
+  TASK_PARTS_MIN,
 } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
@@ -36,7 +38,7 @@ import { MAX_STRUCTURED_ITEMS, ORDER_RULES, StructuredDraftNoHelp } from './stru
 import { TABLE_RULES } from './table.js';
 import { BuddyReadingDraft, BuddyReadingDraftParse } from './readText.js';
 import { MAX_TEACH_BACK, TeachBackDraft } from './teachBack.js';
-import { MAX_PART_TASKS, PartTaskDraft } from './taskParts.js';
+import { MAX_PART_TASKS, PART_KINDS, PartDraft, PartTaskDraft } from './taskParts.js';
 
 const SUBJECT_KINDS = [
   'math',
@@ -169,7 +171,10 @@ export type SetProfile = {
   teachBack: boolean;
   /** Buddy's reading text and its questions (#368): only in a reading run. */
   reading: boolean;
-  /** Tasks in parts (#297): in practice and tests, where a class test's tasks belong. */
+  /**
+   * Tasks in parts (#297): in practice and tests, where a class test's tasks belong. Their parts
+   * take the item kinds of `items` (`partTaskSchemaFor`): an open part only where a long answer is.
+   */
   partTasks: boolean;
   /** A long-text task (#258): only in an essay run, where it is all there is. */
   essay: boolean;
@@ -336,7 +341,25 @@ function structuredSchemaFor(profile: SetProfile) {
   return first === undefined ? null : z.discriminatedUnion('type', [first, ...rest]);
 }
 
-/** The profile of a run with this environment's switch, and its two narrowed unions. */
+/** A task in parts whose parts are `part`. */
+function withParts<P extends z.ZodTypeAny>(part: P) {
+  return PartTaskDraft.extend({ parts: z.array(part).min(TASK_PARTS_MIN).max(TASK_PARTS_MAX) });
+}
+
+/**
+ * The tasks in parts a run asks for (#297), or null when it has none: each part's kind one of
+ * `PART_KINDS` the profile's items allow, in the enum's own order (so an unnarrowed enum stays
+ * byte-equal) — an open part (`long`) only where a long answer is. This is the PARSE side: every
+ * field stays, with its default, like `itemSchemaFor`.
+ */
+function partTaskSchemaFor(profile: SetProfile) {
+  if (!profile.partTasks) return null;
+  const [first, ...rest] = PART_KINDS.filter((k) => profile.items.includes(k));
+  if (first === undefined) return null;
+  return withParts(PartDraft.extend({ kind: PartDraft.shape.kind.extract([first, ...rest]) }));
+}
+
+/** The profile of a run with this environment's switch, and its narrowed unions. */
 function narrowed(
   kind: StartTopicRequest['kind'] | null,
   topics: [string, ...string[]] | null,
@@ -347,6 +370,7 @@ function narrowed(
     profile,
     item: itemSchemaFor(profile, topics),
     structured: structuredSchemaFor(profile),
+    partTask: partTaskSchemaFor(profile),
   };
 }
 
@@ -362,12 +386,21 @@ export function setSchemaForModel(
   topics: [string, ...string[]] | null,
   off: ReadonlySet<ItemKind> = ALL_ON,
 ) {
-  const { profile, item, structured } = narrowed(kind, topics, off);
+  const { profile, item, structured, partTask } = narrowed(kind, topics, off);
+  // Without an open part (a test has no long answer) the model is not shown key points either.
+  const shownPartTask =
+    partTask && !profile.items.includes('long')
+      ? withParts(partTask.shape.parts.element.omit({ points: true }))
+      : partTask;
   return GeneratedSet.extend({
     items: z.array(item ? item.omit(unusedItemFields(profile.items)) : DraftItem).max(25),
     structured: z
       .array(structured ?? StructuredDraftNoHelp)
       .max(MAX_STRUCTURED_ITEMS)
+      .default([]),
+    part_tasks: z
+      .array(shownPartTask ?? PartTaskDraft)
+      .max(MAX_PART_TASKS)
       .default([]),
   }).omit({
     ...(item ? {} : { items: true }),
@@ -378,7 +411,7 @@ export function setSchemaForModel(
     ...(profile.dictation ? {} : { dictation: true }),
     ...(profile.teachBack ? {} : { teach_back: true }),
     ...(profile.reading ? {} : { reading: true }),
-    ...(profile.partTasks ? {} : { part_tasks: true }),
+    ...(partTask ? {} : { part_tasks: true }),
     ...(profile.essay ? {} : { essay: true }),
   });
 }
@@ -393,7 +426,7 @@ export function parseSetFor(
   topics: [string, ...string[]] | null,
   off: ReadonlySet<ItemKind> = ALL_ON,
 ) {
-  const { item, structured, profile } = narrowed(kind, topics, off);
+  const { item, structured, partTask, profile } = narrowed(kind, topics, off);
   return GeneratedSet.extend({
     items: itemsOneByOne(item ?? NOTHING, 25),
     bars: itemsOneByOne(profile.bars ? BarTask : NOTHING, MAX_BAR_ITEMS),
@@ -420,7 +453,7 @@ export function parseSetFor(
       ? BuddyReadingDraftParse.nullable().default(null).catch(null)
       : z.null().catch(null),
     // Read one by one: a task whose shape does not fit costs only itself.
-    part_tasks: itemsOneByOne(profile.partTasks ? PartTaskDraft : NOTHING, MAX_PART_TASKS),
+    part_tasks: itemsOneByOne(partTask ?? NOTHING, MAX_PART_TASKS),
     essay: itemsOneByOne(profile.essay ? EssayDraft : NOTHING, MAX_ESSAYS),
   });
 }

@@ -124,24 +124,20 @@ export function emptyStaffAnswer(bars: number): StaffAnswerState {
 }
 
 /**
- * Ihre halb geschriebene Zeile, wie sie im Entwurf liegt (`lib/drafts.ts`): zu welcher Frage und
- * was darin steht. Ein Farbwechsel baut den Bildschirm neu auf, und Android beendet eine App im
+ * Ihre halb geschriebene Zeile, wie sie im Entwurf ihrer Frage liegt (`lib/drafts.ts`,
+ * `StaffWriting`). Ein Farbwechsel baut den Bildschirm neu auf, und Android beendet eine App im
  * Hintergrund ohne Vorwarnung — beides darf ihre Zeile nicht löschen (issue #275, im Walkthrough
  * gefunden: nach dem Wechsel auf dunkel war die Zeile leer).
  */
 const StaffDraft = z.object({
-  itemId: z.string(),
-  answer: z.object({
-    bars: z.array(z.array(StaffElement).max(ELEMENTS_PER_BAR_MAX)).min(1).max(BARS_MAX),
-    value: NoteValue,
-    dotted: z.boolean(),
-    sharp: z.boolean(),
-  }),
+  bars: z.array(z.array(StaffElement).max(ELEMENTS_PER_BAR_MAX)).min(1).max(BARS_MAX),
+  value: NoteValue,
+  dotted: z.boolean(),
+  sharp: z.boolean(),
 });
-export type StaffDraft = { itemId: string; answer: StaffAnswerState };
 
 /** Der Entwurf zurück — oder null, wenn er fehlt oder nicht lesbar ist (nie geraten). */
-export function readStaffDraft(text: string): StaffDraft | null {
+export function readStaffDraft(text: string): StaffAnswerState | null {
   if (text.trim() === '') return null;
   try {
     const parsed = StaffDraft.safeParse(JSON.parse(text));

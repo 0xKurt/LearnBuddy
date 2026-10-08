@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import { followsOn, formulaHolds, partTaskItems, type PartTaskDraft } from '../taskParts.js';
+import { rubricOf } from '../rubric.js';
+import {
+  followsOn,
+  formulaHolds,
+  openPartProblem,
+  partTaskItems,
+  type PartTaskDraft,
+} from '../taskParts.js';
 
-function part(answer: string, from: string | null = null, kind = 'numeric') {
+type Part = PartTaskDraft['parts'][number];
+
+function part(answer: string, from: string | null = null, kind: Part['kind'] = 'numeric'): Part {
   return {
-    kind: kind as 'numeric',
+    kind,
     prompt: `Berechne den Wert (${answer}).`,
     answer,
     accepted_answers: [],
@@ -13,10 +22,33 @@ function part(answer: string, from: string | null = null, kind = 'numeric') {
     correct_choice: null,
     tolerance: null,
     from,
+    points: [],
   };
 }
 
-function task(...parts: ReturnType<typeof part>[]): PartTaskDraft {
+const point = (name: string, statement: string, ask: string, exact: string[] = []) => ({
+  name,
+  point: statement,
+  ask,
+  exact,
+});
+
+/** An open part („Begründe …", step 2 of #297) with its key points. */
+function open(prompt: string, points = FENCE_POINTS): Part {
+  return { ...part('', null, 'long'), prompt, answer: 'Rand und Länge', unit: null, points };
+}
+
+const FENCE_POINTS = [
+  point('Rand', 'der Zaun steht am Rand des Rechtecks', 'Wo genau steht ein Zaun?'),
+  point(
+    'Länge',
+    'man misst eine Länge in Metern, keine Fläche',
+    'In welcher Einheit misst du ihn?',
+  ),
+];
+const WHY_PERIMETER = 'Begründe, warum man für den Zaun den Umfang braucht.';
+
+function task(...parts: Part[]): PartTaskDraft {
   return {
     stem: 'Ein Rechteck ist 4 m lang und 2,5 m breit. Ein Zaun soll es umgeben.',
     topic: 'Umfang',
@@ -56,6 +88,106 @@ describe('tasks in parts (#297): writing', () => {
     expect(partTaskItems(task(part('Rechteck', null, 'short'), part('13', 'a + 3')))).toEqual([]);
     // A formula on a part that is no number.
     expect(partTaskItems(task(part('10'), { ...part('mehr', 'a + 3', 'short') }))).toEqual([]);
+  });
+});
+
+describe('tasks in parts (#297): open parts, checked against key points', () => {
+  it('mixes computed and open parts: the open one is stored as an explanation question', () => {
+    // What the model wrote beside the points is no key: no wording of hers is right by rule.
+    const why = { ...open(WHY_PERIMETER), accepted_answers: ['wegen dem Rand'], unit: 'm' };
+    const items = partTaskItems(task(part('13'), part('104', 'a * 8'), why));
+    expect(items.map((i) => [i.task_part?.part, i.kind])).toEqual([
+      ['a', 'numeric'],
+      ['b', 'numeric'],
+      ['c', 'long'],
+    ]);
+    const c = items[2]!;
+    expect(c.task_part?.from).toBeNull();
+    // The points are its key and its rubric, their follow-ups its hints; no model answer.
+    expect(c.answer).toBe(FENCE_POINTS.map((p) => p.point).join('; '));
+    expect(c.accepted_answers).toEqual([]);
+    expect(c.unit).toBeNull();
+    expect(rubricOf(c.rubric)?.elements.map((e) => [e.name, e.check.by])).toEqual([
+      ['Rand', 'key_point'],
+      ['Länge', 'key_point'],
+    ]);
+    expect(c.hints).toEqual(FENCE_POINTS.map((p) => p.ask));
+    expect(c.worked_solution).toBeNull();
+    expect(c.spelling).toBe('gentle');
+    // The computed parts carry no rubric.
+    expect(items[0]!.rubric).toBeNull();
+  });
+
+  it.each([
+    ['too few key points', open(WHY_PERIMETER, FENCE_POINTS.slice(0, 1))],
+    [
+      'point stated in the question',
+      open('Begründe: der Zaun steht am Rand des Rechtecks. Warum also der Umfang?'),
+    ],
+    [
+      'follow-up gives the point away',
+      open(WHY_PERIMETER, [
+        FENCE_POINTS[0]!,
+        { ...FENCE_POINTS[1]!, ask: 'Stimmt es: man misst eine Länge in Metern, keine Fläche?' },
+      ]),
+    ],
+    [
+      'point hangs on an earlier result',
+      open('Begründe, ob 100 € für den Zaun reichen.', [
+        point('Kosten', 'der Zaun kostet mehr als 100 €', 'Was kostet der Zaun?', ['104 €']),
+        point('Vergleich', 'das Geld reicht also nicht', 'Reicht das Geld?'),
+      ]),
+    ],
+    [
+      'point hangs on an earlier result',
+      open('Begründe, ob 100 € für den Zaun reichen.', [
+        point('Kosten', 'der Zaun kostet 104 €, mehr als 100 €', 'Was kostet der Zaun?'),
+        point('Vergleich', 'das Geld reicht also nicht', 'Reicht das Geld?'),
+      ]),
+    ],
+  ])('%s → the whole task is dropped', (why, c) => {
+    const d = task(part('13'), part('104', 'a * 8'), c);
+    expect(openPartProblem(d, 2)).toBe(why);
+    expect(partTaskItems(d)).toEqual([]);
+  });
+
+  it('a point stated in the situation counts as stated', () => {
+    const d = {
+      ...task(part('13'), open(WHY_PERIMETER)),
+      stem: 'Ein Rechteck ist 4 m lang und 2,5 m breit. Der Zaun steht am Rand des Rechtecks.',
+    };
+    expect(openPartProblem(d, 1)).toBe('point stated in the question');
+  });
+
+  it('a number the situation states is hers to use, even when it is an earlier key', () => {
+    const d = {
+      ...task(
+        part('13'),
+        open('Begründe, ob der Zaun des Nachbarn reicht.', [
+          point('Länge', 'sein Zaun ist 13 m lang, so lang wie der Umfang', 'Wie lang ist er?'),
+          point('Ergebnis', 'er reicht genau', 'Reicht er also?'),
+        ]),
+      ),
+      stem: 'Ein Rechteck ist 4 m lang und 2,5 m breit. Der Nachbar hat 13 m Zaun übrig.',
+    };
+    expect(openPartProblem(d, 1)).toBeNull();
+    expect(partTaskItems(d)).toHaveLength(2);
+  });
+
+  it('a closed part carries no key points, an open part no formula', () => {
+    const pointed = { ...part('13'), points: FENCE_POINTS };
+    expect(openPartProblem(task(pointed, open(WHY_PERIMETER)), 0)).toBe(
+      'key points on a closed part',
+    );
+    expect(partTaskItems(task(pointed, open(WHY_PERIMETER)))).toEqual([]);
+    expect(partTaskItems(task(part('13'), { ...open(WHY_PERIMETER), from: 'a' }))).toEqual([]);
+  });
+
+  it('an open part never follows on: it has no formula to recompute', () => {
+    const [, c] = partTaskItems(task(part('13'), open(WHY_PERIMETER)));
+    expect(
+      followsOn(c!.task_part!, c!, 'am Rand', [{ part: 'a', answer: '13', text: '12' }]),
+    ).toBeNull();
   });
 });
 

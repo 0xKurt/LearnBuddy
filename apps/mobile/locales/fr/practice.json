@@ -209,7 +209,12 @@
     "rest_of": "Placer : {{value}}",
     "check_waits": "Seulement quand chaque mesure contient quelque chose.",
     "keys_label": "Touches de la portée",
-    "values_label": "Valeur de note"
+    "values_label": "Valeur de note",
+    "taps_pad": "Tape ici",
+    "taps_again": "Recommencer",
+    "taps_waits": "Tape d'abord le rythme que tu as entendu.",
+    "tapped_one": "{{count}} coup tapé",
+    "tapped_other": "{{count}} coups tapés"
   },
   "summary": {
     "title": "C'est fait !",
@@ -402,5 +407,18 @@
     "text_one": "Ton texte · 1 mot",
     "text_other": "Ton texte · {{count}} mots",
     "thinking": "Buddy lit ton texte …"
+  },
+  "work": {
+    "take": "Photo de ton calcul",
+    "reading": "Je lis ton calcul …",
+    "read": "Recopié de ta photo. Chaque ligne correspond-elle à ton cahier ?",
+    "unread_one": "Je n'ai pas pu lire la ligne {{lines}}. Écris-la toi-même.",
+    "unread_other": "Je n'ai pas pu lire les lignes {{lines}}. Écris-les toi-même.",
+    "unreadable": "Je ne peux pas lire ta photo avec certitude. Reprends-la – bien éclairée et droite, prise d'en haut – ou tape ton calcul.",
+    "no_working": "Je ne trouve pas ton calcul pour cet exercice sur la photo. Photographie ton propre calcul – ou tape-le.",
+    "too_long": "C'est plus que ce qui tient dans une réponse. Photographie seulement ton calcul pour cet exercice.",
+    "down": "Je ne peux pas lire ta photo pour l'instant. Tape ton calcul ou réessaie dans un instant.",
+    "camera_blocked": "LearnBuddy n'a pas encore le droit d'utiliser l'appareil photo. Tu peux l'autoriser dans les réglages – ou taper ton calcul.",
+    "camera_failed": "L'appareil photo ne s'est pas ouvert. Réessaie ou tape ton calcul."
   }
 }

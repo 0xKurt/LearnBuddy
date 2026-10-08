@@ -209,7 +209,12 @@
     "rest_of": "Metti: {{value}}",
     "check_waits": "Solo quando ogni battuta ha qualcosa.",
     "keys_label": "Tasti del pentagramma",
-    "values_label": "Valore della nota"
+    "values_label": "Valore della nota",
+    "taps_pad": "Batti qui",
+    "taps_again": "Ricomincia",
+    "taps_waits": "Prima batti il ritmo che hai sentito.",
+    "tapped_one": "{{count}} colpo battuto",
+    "tapped_other": "{{count}} colpi battuti"
   },
   "summary": {
     "title": "Ce l'hai fatta!",
@@ -402,5 +407,18 @@
     "text_one": "Il tuo testo · 1 parola",
     "text_other": "Il tuo testo · {{count}} parole",
     "thinking": "Buddy sta leggendo il tuo testo …"
+  },
+  "work": {
+    "take": "Foto del tuo procedimento",
+    "reading": "Sto leggendo il tuo procedimento …",
+    "read": "Copiato dalla tua foto. Ogni riga corrisponde al tuo quaderno?",
+    "unread_one": "Non sono riuscito a leggere la riga {{lines}}. Scrivila tu.",
+    "unread_other": "Non sono riuscito a leggere le righe {{lines}}. Scrivile tu.",
+    "unreadable": "Non riesco a leggere bene la tua foto. Rifalla – con luce e dritta dall'alto – oppure scrivi il tuo procedimento.",
+    "no_working": "Nella foto non trovo il tuo procedimento per questo esercizio. Fotografa il tuo procedimento – oppure scrivilo.",
+    "too_long": "È più di quanto stia in una risposta. Fotografa solo il procedimento di questo esercizio.",
+    "down": "Adesso non riesco a leggere la tua foto. Scrivi il tuo procedimento o riprova tra un momento.",
+    "camera_blocked": "LearnBuddy non può ancora usare la fotocamera. Puoi permetterlo nelle Impostazioni – oppure scrivere il tuo procedimento.",
+    "camera_failed": "La fotocamera non si è aperta. Riprova o scrivi il tuo procedimento."
   }
 }

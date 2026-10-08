@@ -57,8 +57,17 @@ export function regionName(regions: readonly RegionName[], index: number, lang: 
 /** The width of the frame every region is drawn in. */
 export const REGION_FRAME = 1000;
 
-/** A region's shape: where it is labelled, and its rings as "x y x y …" in the frame. */
-export type RegionShape = { at: readonly [number, number]; rings: readonly string[] };
+/**
+ * A region's shape: where it is labelled, and its rings as "x y x y …" in the frame. `line`: a
+ * river (#429) — its rings run there and back, enclose nothing, and it is tapped anywhere along
+ * it, never by its label. A ring of one point is a point (a capital). No rings: the place lies
+ * outside the frame (a closer Ausschnitt of Europe) and cannot be tapped there.
+ */
+export type RegionShape = {
+  at: readonly [number, number];
+  rings: readonly string[];
+  line?: boolean;
+};
 /** The regions of one drawing, bottom to top. */
 export type RegionSet = { regions: readonly RegionShape[] };
 
@@ -77,18 +86,37 @@ function ringsOf(shape: RegionShape): Ring[] {
   return rings;
 }
 
-/** An SVG path of `rings` drawn `k` times the frame's size, the frame's (0, 0) at (x0, y0). */
-export function regionPath(rings: readonly string[], k: number, x0 = 0, y0 = 0): string {
-  return rings
+/**
+ * An SVG path of `lines` ("x y x y …") drawn `k` times the frame's size, the frame's (0, 0) at
+ * (x0, y0), each closed or open.
+ */
+function pathOf(
+  lines: readonly string[],
+  k: number,
+  x0: number,
+  y0: number,
+  closed: boolean,
+): string {
+  return lines
     .map((r) => {
       const n = r
         .split(' ')
         .map((v, j) => Math.round((Number(v) * k + (j % 2 === 0 ? x0 : y0)) * 10) / 10);
       let d = '';
       for (let i = 0; i + 1 < n.length; i += 2) d += `${i === 0 ? 'M' : 'L'}${n[i]} ${n[i + 1]}`;
-      return `${d}Z`;
+      return closed ? `${d}Z` : d;
     })
     .join('');
+}
+
+/** An SVG path of `rings` drawn `k` times the frame's size, the frame's (0, 0) at (x0, y0). */
+export function regionPath(rings: readonly string[], k: number, x0 = 0, y0 = 0): string {
+  return pathOf(rings, k, x0, y0, true);
+}
+
+/** An SVG path of open lines — the meridians and parallels of a map (#429) — like `regionPath`. */
+export function linePath(lines: readonly string[], k: number): string {
+  return pathOf(lines, k, 0, 0, false);
 }
 
 /**
@@ -217,6 +245,8 @@ export function regionAt(set: RegionSet, x: number, y: number, reach: number): n
   let near = -1;
   let nearD = Infinity;
   set.regions.forEach((s, i) => {
+    // A line is the nearest line where a finger lands, never the one whose label is near.
+    if (s.line) return;
     const d = Math.hypot(s.at[0] - x, s.at[1] - y);
     // Cheap first: only a label within reach is measured at all.
     if (d <= reach && d < nearD && d <= catchRadius(set, i, reach) && regionSmall(s, reach)) {
@@ -269,6 +299,30 @@ export function regionTapWidth(height: number): number {
 }
 
 /**
+ * A target `half` pt from its middle (`TAP_TARGET`) on a drawing `height` high, in the frame's
+ * units, in the smallest room: how much room a place to tap must have around it.
+ */
+export function regionTapLeast(height: number, half: number): number {
+  return units(half, regionTapWidth(height));
+}
+
+/**
+ * Whether a line has a stretch a finger can take for it: a point of it at least `least` from every
+ * other place of the set (a river where no other runs close by — not only where the Mosel joins the
+ * Rhine).
+ */
+function lineClear(set: RegionSet, i: number, least: number): boolean {
+  const others = set.regions.filter((s, j) => j !== i && s.rings.length > 0).map(ringsOf);
+  return ringsOf(set.regions[i]!).some((r) => {
+    for (let k = 0; k + 1 < r.length; k += 2) {
+      const [x, y] = [r[k]!, r[k + 1]!];
+      if (others.every((o) => distance(o, x, y) >= least)) return true;
+    }
+    return false;
+  });
+}
+
+/**
  * Whether region `i` of a drawing `height` high can be asked for by a tap: in the smallest room a
  * target `half` pt from its middle (`TAP_TARGET`) fits inside it, or it catches one around its
  * label. Luxembourg on the map of Europe does neither, nor does the pupil of an eye — a question to
@@ -276,9 +330,10 @@ export function regionTapWidth(height: number): number {
  */
 export function regionTappable(set: RegionSet, i: number, height: number, half: number): boolean {
   const shape = set.regions[i];
-  if (!shape) return false;
+  if (!shape || shape.rings.length === 0) return false;
   const width = regionTapWidth(height);
-  const least = units(half, width);
+  const least = regionTapLeast(height, half);
+  if (shape.line) return lineClear(set, i, least);
   // A region narrower than that is small, so its label catches; wider ones are hit directly.
   return inscribed(shape) >= least || catchRadius(set, i, regionReach(width)) >= least;
 }

@@ -113,7 +113,7 @@ describe.skipIf(!dbReady)('scale', () => {
       ['00000000-0000-4000-8000-000000000001'],
     );
     expect(retry.filter((s) => s === 'Seq Scan jobs')).toEqual([]);
-    // buddy/check.ts queueStalledTurns.
+    // buddy/turnRecovery.ts queueStalledTurns.
     const stalled = await plan(
       `select id, learner_id, claim_token from buddy_messages
         where role = 'learner' and status = 'processing' and (claimed_at is null or claimed_at < $1)

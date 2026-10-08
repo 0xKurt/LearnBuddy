@@ -25,6 +25,7 @@ import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
+import { ReadAgain } from '../lb/ReadAgain.js';
 import { MathText } from '../math/MathText.js';
 import { PartStem } from './PartStem.js';
 import { PassagePanel } from './PassagePanel.js';
@@ -167,6 +168,8 @@ type QuestionProps = {
    * the reading text keeps the smaller box it has while she types.
    */
   answerBoard?: boolean;
+  /** While Vorlesen is on, a tap on the question reads it again (#434); absent when it must not be heard. */
+  onReadAgain?: () => void;
 };
 
 /**
@@ -198,6 +201,7 @@ export function QuestionCard({
   dense = false,
   stimulus,
   answerBoard = false,
+  onReadAgain,
 }: QuestionProps) {
   const passage = stimulus?.passage ?? null;
   const part = stimulus?.task_part ?? null;
@@ -275,18 +279,20 @@ export function QuestionCard({
           ) : null}
           {/* The situation of a task in parts, the same above each of its parts (issue #297). */}
           {part ? <PartStem stem={part.stem} typing={typing} /> : null}
-          <MathText
-            text={part ? `${part.part}) ${prompt}` : prompt}
-            blanks={{ filled }}
-            // A fraction in the question sits in its sentence (issue #288).
-            inlineFractions
-            accessibilityRole="header"
-            style={
-              dense
-                ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
-                : TYPE.question
-            }
-          />
+          <ReadAgain {...(onReadAgain ? { onRead: onReadAgain } : {})}>
+            <MathText
+              text={part ? `${part.part}) ${prompt}` : prompt}
+              blanks={{ filled }}
+              // A fraction in the question sits in its sentence (issue #288).
+              inlineFractions
+              accessibilityRole="header"
+              style={
+                dense
+                  ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
+                  : TYPE.question
+              }
+            />
+          </ReadAgain>
         </View>
         {figure ? (
           <View

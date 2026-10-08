@@ -16,8 +16,16 @@
 //   3. The model never writes an id (CLAUDE.md rule 2): parts are lettered by code in the order
 //      they come, an earlier part is named by its letter in a formula ("a * 0,15 + 12"), the group
 //      is an id code makes, and the app gets an alias for it (`TaskPartView.ref`: 'p1', 'p2' …).
+//   4. An OPEN part — "begründe", "erkläre", "beschreibe", "deute" — is a free text (`long`) checked
+//      against key points, through the one path every key point in the app goes through („Erklär
+//      mal", #236; the quote check of #258): a point counts only with her words the server finds,
+//      and she gets a ✓ per point and one follow-up, never a grade. It has no `from`: it is her
+//      reasoning, not a number to recompute — and none of its points may hang on an earlier part's
+//      result, so a wrong a) carried on consistently is never marked again here either.
 
 import { z } from 'zod';
+
+import { RUBRIC_MIN } from './rubric.js';
 
 /** The letters of a task's parts, in order; a class test task rarely has more than four. */
 export const TASK_PART_LETTERS = ['a', 'b', 'c', 'd'] as const;
@@ -32,6 +40,13 @@ export const TASK_STEM_MIN = 20;
 export const TASK_STEM_MAX = 300;
 /** A formula over earlier parts: one line of arithmetic. */
 export const TASK_FORMULA_MAX = 120;
+/**
+ * The key points of an open part: what a class test gives marks for in one "Begründe" — at least
+ * the two a rubric needs, and fewer than a whole explanation („Erklär mal" has 3–6): the situation
+ * and the parts before it carry the rest.
+ */
+export const TASK_OPEN_POINTS_MIN = RUBRIC_MIN;
+export const TASK_OPEN_POINTS_MAX = 4;
 
 /** A part of a task, as stored on each of its questions (`items.task_part`). */
 export const TaskPart = z.object({
@@ -44,7 +59,8 @@ export const TaskPart = z.object({
   stem: z.string().trim().min(TASK_STEM_MIN).max(TASK_STEM_MAX),
   /**
    * How this part's result follows from earlier parts' results, in their letters ("a * 0,15 +
-   * 12"), checked against the keys before it was stored; null for a part that stands on its own.
+   * 12"), checked against the keys before it was stored; null for a part that stands on its own
+   * and for every open part.
    */
   from: z.string().trim().min(1).max(TASK_FORMULA_MAX).nullable(),
 });

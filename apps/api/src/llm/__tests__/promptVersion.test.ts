@@ -18,6 +18,7 @@ import { GENERATE_PROMPT_VERSION } from '../../modules/practice/generate.js';
 import { HINTS_PROMPT_VERSION } from '../../modules/practice/hints.js';
 import { REEXPLAIN_PROMPT_VERSION } from '../../modules/practice/reexplain.js';
 import { PRONOUNCE_PROMPT_VERSION } from '../../modules/practice/speak.js';
+import { WORK_PROMPT_VERSION } from '../../modules/practice/workPhoto.js';
 import { TRANSCRIBE_PROMPT_VERSION } from '../../modules/voice/service.js';
 import { promptVersion } from '../promptVersion.js';
 
@@ -79,6 +80,7 @@ describe('promptVersion (#425)', () => {
       reexplain: REEXPLAIN_PROMPT_VERSION,
       pronounce: PRONOUNCE_PROMPT_VERSION,
       transcribe: TRANSCRIBE_PROMPT_VERSION,
+      work: WORK_PROMPT_VERSION,
     };
     for (const [name, version] of Object.entries(versions)) {
       expect(version, name).toMatch(new RegExp(`^${name}\\.[0-9a-f]{8}$`));

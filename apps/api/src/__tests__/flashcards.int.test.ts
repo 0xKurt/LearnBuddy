@@ -159,6 +159,9 @@ describe.skipIf(!dbReady)('flashcards', () => {
       expect(row.hint_available).toBe(false);
       expect(row.reveal_available).toBe(false);
       expect(row.hints_left).toBe(0);
+      // Vorlesen reads the front by the rule every question follows (#434): an ordinary word
+      // may be heard. The back is the client's to keep quiet.
+      expect(row.item.read_aloud).toBe(true);
     }
     expect(pass.current_item_id).toBe(pass.items[0]!.item.id);
   });
