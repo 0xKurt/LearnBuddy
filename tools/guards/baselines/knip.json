@@ -1,6 +1,6 @@
 {
   "$comment": "Ausnahmeliste toter Code (knip, Issue #313): heutige ungenutzte Dateien, Exporte, Typen und Pakete. Darf nur schrumpfen — ein neuer Fund macht `pnpm lint` rot, ein behobener verlangt `pnpm guards:shrink`. Siehe docs/engineering-guards.md.",
-  "total": 182,
+  "total": 180,
   "findings": [
     "devDependencies: apps/mobile/package.json: babel-plugin-module-resolver",
     "devDependencies: package.json: @typescript-eslint/eslint-plugin",
@@ -27,7 +27,6 @@
     "exports: apps/api/src/modules/buddy/decision.ts: StepRef",
     "exports: apps/api/src/modules/buddy/decision.ts: StepTarget",
     "exports: apps/api/src/modules/buddy/decision.ts: SubjectRef",
-    "exports: apps/api/src/modules/buddy/delivery.ts: contactHistory",
     "exports: apps/api/src/modules/buddy/delivery.ts: renderBody",
     "exports: apps/api/src/modules/buddy/events.ts: SUBSCRIBERS",
     "exports: apps/api/src/modules/buddy/lookback.ts: LOOK_BACK",
@@ -38,7 +37,6 @@
     "exports: apps/api/src/modules/buddy/lookups.ts: lookupResultsMessage",
     "exports: apps/api/src/modules/buddy/lookups.ts: runLookups",
     "exports: apps/api/src/modules/buddy/policy.ts: IMPORTANT_RELEVANCE",
-    "exports: apps/api/src/modules/buddy/policy.ts: MIN_RELEVANCE",
     "exports: apps/api/src/modules/buddy/policy.ts: TOPIC_DEDUPE_HOURS",
     "exports: apps/api/src/modules/buddy/registry.ts: removesSomething",
     "exports: apps/api/src/modules/buddy/state.ts: STANDING_WINDOW_MS",
