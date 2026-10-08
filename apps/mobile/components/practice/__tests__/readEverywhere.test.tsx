@@ -9,6 +9,7 @@ import { act, fireEvent, screen } from '@testing-library/react';
 import type { SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { clearDrafts } from '../../../lib/drafts.js';
 import { renderInApp } from '../../../testing/render.js';
 
 const spoken = vi.fn();
@@ -110,13 +111,21 @@ const showDrill = () =>
   );
 const showCards = () =>
   renderInApp(
-    <CardPass session={cards()} title="Runde" onChange={noop} onClose={() => undefined} />,
+    <CardPass
+      session={cards()}
+      title="Runde"
+      onChange={noop}
+      onClose={() => undefined}
+      asked={{ pending: null, onKeep: noop }}
+    />,
   );
 
 const texts = () => spoken.mock.calls.map((c) => (c[0] as Array<{ text: string }>)[0]!.text);
 
 beforeEach(() => {
   spoken.mockReset();
+  // A turned card is kept like a draft (it survives a remount): every test starts face up.
+  clearDrafts();
   useVoiceMode.setState({ readAloud: true, conversation: false });
 });
 afterEach(() => useVoiceMode.setState({ readAloud: false, conversation: false }));
