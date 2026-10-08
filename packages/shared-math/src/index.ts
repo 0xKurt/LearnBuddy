@@ -20,6 +20,7 @@ export * from './solidNets.js';
 export * from './diagram.js';
 export * from './regions.js';
 export * from './maps.js';
+export * from './mapGrid.js';
 export * from './schematics.js';
 // The drawings' shapes: the server decides with them what can be tapped; the app loads them with
 // the first picture (`useSchematicShapes`).

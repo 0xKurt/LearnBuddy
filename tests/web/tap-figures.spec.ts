@@ -4,7 +4,9 @@
 // the value is the screen reader's (`aria-valuetext`, issue #409). A second walk taps a stumme
 // Karte (issue #251): every one of the 16 Länder, a continent, and names a marked country; since
 // #429 Luxembourg on the closer Ausschnitt code picks, every river of Germany, a marked river to
-// name, a capital and a marked range to name — scripted in apps/api/src/testing/scenarios/map.ts, shot at 93–95. A third labels a picture and
+// name, a capital and a marked range to name, and on the Gradnetz the crossings along 50° N and
+// 10° O of Germany, one of Europe and the coordinates of a marked one of the world (a walk of its
+// own) — scripted in apps/api/src/testing/scenarios/map.ts, shot at 93–95. A third labels a picture and
 // taps its parts (issue #252, scenarios/schematic.ts, shot at 90–92). Scripted answers in apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
 // no tutor is scripted for any. Every question is shot at both phone sizes, light and dark, with
 // the keyboard up for her question (test-results/web/shots, 96-…).
@@ -16,6 +18,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { clockGeometry } from '../../apps/mobile/lib/math/figureGeometry';
 import { tapLayout } from '../../apps/mobile/lib/math/tapLayout';
+import { mapGrid } from '../../packages/shared-math/src/mapGrid';
 import { MAP_SHAPES } from '../../packages/shared-math/src/mapShapes.data';
 import {
   mapPlace,
@@ -166,6 +169,16 @@ async function tapOnMap(page: Page, v: MapView, name: string, l: MapLayer = 'reg
   await tapPlace(page, figure, [i]);
 }
 
+/** A tap on the crossing at `lat`, `lon` of view `v`'s Gradnetz, at its dot. */
+async function tapCrossing(page: Page, v: MapView, lat: number, lon: number) {
+  const grid = mapGrid(v);
+  if (!grid) throw new Error(`no grid on ${v}`);
+  await tapPlace(page, { type: 'map', v, hl: [], l: 'grid' }, [
+    grid.lon.indexOf(lon),
+    grid.lat.indexOf(lat),
+  ]);
+}
+
 test('a stumme Karte: every Land, Luxembourg, every river, a capital tapped (#251, #429)', async ({
   page,
 }) => {
@@ -248,6 +261,50 @@ test('a stumme Karte: every Land, Luxembourg, every river, a capital tapped (#25
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Gebiet: Südamerika');
   await bothRooms(page, '95-map-world');
   await checkRight(page);
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+});
+
+test('the Gradnetz: crossings tapped on Germany and Europe, coordinates typed (#429)', async ({
+  page,
+}) => {
+  await onboardChild(page, 'grid');
+  await startOffer(page, 'Lass uns das Gradnetz üben', 'Punkte im Gradnetz');
+
+  // Germany, every degree: a crossing tapped like a point of a coordinate system. Every
+  // crossing along 50° N and along 10° O at its dot; the line under the map only says that she
+  // chose, the coordinates are the screen reader's.
+  await expect(page.getByText('Tippe auf den Punkt 50° N, 10° O.')).toBeVisible();
+  await expect(words(page)).toHaveText('Tippe auf den Punkt im Gradnetz.');
+  const de = mapGrid('de')!;
+  for (const lon of de.lon) {
+    await tapCrossing(page, 'de', 50, lon);
+    await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Punkt: 50° N, ${lon}° O`);
+  }
+  for (const lat of de.lat) {
+    await tapCrossing(page, 'de', lat, 10);
+    await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Punkt: ${lat}° N, 10° O`);
+  }
+  await expect(words(page)).toHaveText('Punkt gewählt');
+  await tapCrossing(page, 'de', 50, 10);
+  await bothRooms(page, '95-map-grid-de');
+  await checkRight(page);
+
+  // Europe: every ten degrees, the lines curved as its projection draws them.
+  await expect(page.getByText('Tippe auf den Punkt 60° N, 10° O.')).toBeVisible();
+  await tapCrossing(page, 'europe', 50, -10);
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Punkt: 50° N, 10° W');
+  await tapCrossing(page, 'europe', 60, 10);
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Punkt: 60° N, 10° O');
+  await bothRooms(page, '95-map-grid-europe');
+  await checkRight(page);
+
+  // The world: the coordinates of the marked crossing, typed in her notation.
+  await expect(page.getByText('Welche Koordinaten hat der markierte Punkt?')).toBeVisible();
+  await shot(page, '95-map-grid-world');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '95-map-grid-world-dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await typed(page, '30°S 60°W');
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });
 

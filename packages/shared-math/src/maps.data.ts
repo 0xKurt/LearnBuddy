@@ -2,6 +2,7 @@
 // Do not edit: run the script. Issue #251. Natural Earth: "All versions of Natural Earth raster +
 // vector map data found on this website are in the public domain." Made with Natural Earth.
 
+import type { MapGrids } from './mapGrid.js';
 import type { MapNames, MapPlaceNames, MapView } from './maps.js';
 
 /** The regions of each view in drawing order, with their names in the five languages. */
@@ -191,6 +192,13 @@ export const MAP_PLACE_NAMES: MapPlaceNames = {
       { id: 'scandinavian-mountains', de: 'Skanden', en: 'Scandinavian Mountains', fr: 'Alpes scandinaves', es: 'Alpes escandinavos', it: 'Alpi scandinave', alt: [] },
     ],
   },
+};
+
+/** The degrees of the meridians and parallels of each view's Gradnetz, west to east and south to north (#429). */
+export const MAP_GRIDS: MapGrids = {
+  de: { lon: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15], lat: [48, 49, 50, 51, 52, 53, 54, 55] },
+  europe: { lon: [-20, -10, 0, 10, 20, 30, 40, 50], lat: [40, 50, 60, 70] },
+  world: { lon: [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150], lat: [-60, -30, 0, 30, 60] },
 };
 
 /** How high each view stands in a frame 1000 wide: the drawing keeps its room while it loads. */

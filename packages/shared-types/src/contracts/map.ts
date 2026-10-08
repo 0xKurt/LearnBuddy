@@ -9,7 +9,10 @@
 // Since #429 a map of Germany or Europe can be about its capitals, rivers or mountain ranges
 // (`l`), Natural Earth too; and code may store a map of Europe as one of its closer Ausschnitte
 // (`eu_*`), where the place to tap is big enough for a finger (shared-math `mapZoom.ts`). A map
-// stored before reads as it always did (`l` defaults to the regions).
+// stored before reads as it always did (`l` defaults to the regions). And a map of Germany,
+// Europe or the world can be about its Gradnetz (`grid`): its places are the crossings of its
+// lines, marked and asked for by their coordinates ("50° N, 10° O") — a point where two drawn
+// lines meet, never a fact about the world (shared-math `mapGrid.ts`).
 //
 // Short property names and no nullable field, like the charts and trees (schema size, #281).
 
@@ -26,10 +29,12 @@ export const MapFigure = z.object({
     .array(z.string().trim().min(1).max(40))
     .max(4)
     .describe(
-      'names of the marked places as an atlas writes them ("Bayern", "Rhein"); [] for none',
+      'names of the marked places as an atlas writes them ("Bayern", "Rhein"; on the grid "50° N, 10° O"); [] for none',
     ),
   l: z
-    .enum(['regions', 'cities', 'rivers', 'mountains'])
+    .enum(['regions', 'cities', 'rivers', 'mountains', 'grid'])
     .default('regions')
-    .describe('what the question is about: the regions, or the capitals, rivers or ranges on them'),
+    .describe(
+      'what the question is about: the regions, the capitals, rivers or ranges on them, or the crossings of the Gradnetz',
+    ),
 });

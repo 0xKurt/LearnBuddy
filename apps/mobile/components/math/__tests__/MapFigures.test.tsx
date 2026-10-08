@@ -46,6 +46,20 @@ describe('MapBody with a layer of places (#429)', () => {
   });
 });
 
+describe('MapBody with its Gradnetz (#429)', () => {
+  it('draws the meridians and parallels, their degrees at the edge, the marked crossing as a dot', async () => {
+    const f: MapFigure = { type: 'map', v: 'world', hl: ['30° S, 60° W'], l: 'grid' };
+    const { container } = renderInApp(<MapBody figure={f} width={320} />);
+    await waitFor(() => expect(container.querySelectorAll('circle')).toHaveLength(1));
+    expect(container.querySelector('circle')?.getAttribute('r')).toBe('5.5');
+    // Each label twice: its paper halo, then the text.
+    const labels = Array.from(container.querySelectorAll('text')).map((n) => n.textContent);
+    expect(labels).toContain('0°');
+    expect(labels).toContain('30° S');
+    expect(labels).toContain('90° W');
+  });
+});
+
 describe('describeMap', () => {
   it('names the map and the marked region — by its id or any of its names', () => {
     expect(describeMap(de, t)).toBe(
@@ -60,6 +74,12 @@ describe('describeMap', () => {
   it('says which layer of places the map shows (#429) and names the marked one', () => {
     expect(describeMap({ ...de, l: 'rivers', hl: ['Rhine'] }, t)).toBe(
       'figure.map_de {"count":16} figure.map_rivers figure.map_marked {"names":"Rhein"}',
+    );
+  });
+
+  it('says how far apart the lines of the Gradnetz are, and where the marked crossing is (#429)', () => {
+    expect(describeMap({ type: 'map', v: 'world', hl: ['30° S, 60° W'], l: 'grid' }, t)).toBe(
+      'figure.map_world {"count":7} figure.map_grid {"step":30} figure.map_marked {"names":"30° S, 60° W"}',
     );
   });
 });

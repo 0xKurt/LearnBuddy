@@ -21,9 +21,20 @@
 // never tapped. And Europe has three closer Ausschnitte (`eu_central`, `eu_southeast`,
 // `eu_north`): the same countries and places, cut closer, where its small countries are big enough
 // for a finger. The model writes `europe`; code zooms in where the key needs it (`mapZoom.ts`).
+// And a map of Germany, Europe or the world can be about its Gradnetz (`grid`, `mapGrid.ts`): its
+// places are the crossings of its lines, written "50° N, 10° O" where a region writes its name.
 //
 // Dependency-free on purpose: the app imports it by path, like `tap.ts`.
 
+import {
+  gridCellIndex,
+  gridCrossing,
+  gridIndex,
+  gridParse,
+  gridText,
+  mapGrid,
+  type MapGridShape,
+} from './mapGrid.js';
 import { MAP_HEIGHTS, MAP_NAMES, MAP_PLACE_NAMES } from './maps.data.js';
 import { regionName, regionNamed, type RegionName, type RegionSet } from './regions.js';
 
@@ -34,10 +45,14 @@ export type MapBaseView = (typeof MAP_BASE_VIEWS)[number];
 export const EUROPE_CLOSER_VIEWS = ['eu_central', 'eu_southeast', 'eu_north'] as const;
 export const MAP_VIEWS = [...MAP_BASE_VIEWS, ...EUROPE_CLOSER_VIEWS] as const;
 export type MapView = (typeof MAP_VIEWS)[number];
-/** What a map question is about: its regions, or a layer of places on them (#429). */
-export const MAP_LAYERS = ['regions', 'cities', 'rivers', 'mountains'] as const;
+/**
+ * What a map question is about: its regions, a layer of places on them, or the crossings of its
+ * Gradnetz (#429).
+ */
+export const MAP_LAYERS = ['regions', 'cities', 'rivers', 'mountains', 'grid'] as const;
 export type MapLayer = (typeof MAP_LAYERS)[number];
-export type MapPlaceLayer = Exclude<MapLayer, 'regions'>;
+/** The layers of named places: the capitals, rivers and ranges. */
+export type MapPlaceLayer = Exclude<MapLayer, 'regions' | 'grid'>;
 /** The views with places: Germany and Europe (the continents have none). */
 export type MapPlaceView = Exclude<MapBaseView, 'world'>;
 
@@ -57,6 +72,8 @@ export type MapViewShape = RegionSet & {
    * closer Ausschnitt has no rings.
    */
   places?: Readonly<Record<MapPlaceLayer, RegionSet['regions']>>;
+  /** Its Gradnetz (#429), on Germany, Europe and the world. */
+  grid?: MapGridShape;
 };
 export type MapShapes = Readonly<Record<MapView, MapViewShape>>;
 
@@ -82,24 +99,38 @@ export function mapLayer(f: Pick<MapFig, 'l'>): MapLayer {
   return f.l ?? 'regions';
 }
 
+/** Whether a question on the map is about its Gradnetz (#429): its places are crossings. */
+export function isGridMap(f: Pick<MapFig, 'l'>): boolean {
+  return mapLayer(f) === 'grid';
+}
+
 /**
  * The named places a question on the map is about, in drawing order: its regions, or its
- * capitals, rivers or ranges (#429) — none on a map of the continents.
+ * capitals, rivers or ranges (#429) — none on a map of the continents, and none on the Gradnetz
+ * (its crossings have coordinates, not names).
  */
 export function mapPlaces(f: Pick<MapFig, 'v' | 'l'>): readonly RegionName[] {
   const layer = mapLayer(f);
   if (layer === 'regions') return mapRegions(f.v);
   const base = mapBase(f.v);
-  return base === 'world' ? [] : MAP_PLACE_NAMES[base][layer];
+  return base === 'world' || layer === 'grid' ? [] : MAP_PLACE_NAMES[base][layer];
+}
+
+/** How many places a question on the map can be about: its named places, or its crossings. */
+function placeCount(f: Pick<MapFig, 'v' | 'l'>): number {
+  const grid = isGridMap(f) ? mapGrid(f.v) : null;
+  return grid ? grid.lon.length * grid.lat.length : mapPlaces(f).length;
 }
 
 /**
  * The shapes a question on the map is tapped on — its regions, or the layer of places — from the
- * view's shapes (loaded with the first map in the app). Null where the view has no such layer.
+ * view's shapes (loaded with the first map in the app). Null where the view has no such layer,
+ * and for the Gradnetz, which is tapped at its crossings (`mapGrid.ts`).
  */
 export function mapTapSet(shape: MapViewShape, f: Pick<MapFig, 'l'>): RegionSet | null {
   const layer = mapLayer(f);
   if (layer === 'regions') return shape;
+  if (layer === 'grid') return null;
   const places = shape.places?.[layer];
   return places ? { regions: places } : null;
 }
@@ -111,10 +142,19 @@ export function mapHeight(v: MapView): number {
 
 /**
  * The index of the place `name` names on the map — "Bayern", "Bavaria", "BY", "München",
- * "Rhine" (`regionNamed`) — among its regions or its layer of places, or null when none has it.
+ * "Rhine" (`regionNamed`) — among its regions or its layer of places, or the crossing of its
+ * Gradnetz written as code writes it ("50° N, 10° O", `gridParse`); null when none has it.
  */
 export function mapPlace(f: Pick<MapFig, 'v' | 'l'>, name: string): number | null {
-  return regionNamed(mapPlaces(f), name);
+  if (!isGridMap(f)) return regionNamed(mapPlaces(f), name);
+  const p = gridParse(name, 'de');
+  return p ? gridIndex(f.v, p) : null;
+}
+
+/** The index of the place a tap picks (`tap.ts`): the region or place, or the crossing. */
+export function mapPickIndex(f: Pick<MapFig, 'v' | 'l'>, pick: readonly number[]): number {
+  const [i = -1, j = -1] = pick;
+  return isGridMap(f) ? gridCellIndex(f.v, i, j) : i;
 }
 
 /** The index of the region `name` names on view `v`, or null (the regions only). */
@@ -122,9 +162,14 @@ export function mapRegion(v: MapView, name: string): number | null {
   return regionNamed(mapRegions(v), name);
 }
 
-/** The place's name in `lang` (German where the app's language is none of the five). */
+/**
+ * The place's name in `lang` (German where the app's language is none of the five); a crossing's
+ * coordinates as code writes them there ("50° N, 10° E").
+ */
 export function mapPlaceName(f: Pick<MapFig, 'v' | 'l'>, index: number, lang: string): string {
-  return regionName(mapPlaces(f), index, lang);
+  if (!isGridMap(f)) return regionName(mapPlaces(f), index, lang);
+  const p = gridCrossing(f.v, index);
+  return p ? gridText(p, lang) : '';
 }
 
 /**
@@ -132,7 +177,7 @@ export function mapPlaceName(f: Pick<MapFig, 'v' | 'l'>, index: number, lang: st
  * continents have no places), a marked place it does not have, or one marked twice.
  */
 export function mapProblem(f: MapFig): string | null {
-  if (mapPlaces(f).length === 0) return `the map ${f.v} has no ${mapLayer(f)}`;
+  if (placeCount(f) === 0) return `the map ${f.v} has no ${mapLayer(f)}`;
   const marked = f.hl.map((n) => mapPlace(f, n));
   const unknown = f.hl.find((_, i) => marked[i] === null);
   if (unknown !== undefined) return `no ${mapLayer(f)} "${unknown}" on the map ${f.v}`;
@@ -140,9 +185,14 @@ export function mapProblem(f: MapFig): string | null {
   return null;
 }
 
-/** The map with every marked place written as its id ("Bavaria" → "BY"): what is stored. */
+/**
+ * The map with every marked place written as its id ("Bavaria" → "BY"), a crossing as German
+ * writes it ("50° N, 10° O"): what is stored.
+ */
 export function mapCanonical<F extends MapFig>(f: F): F {
-  return { ...f, hl: f.hl.map((n) => mapPlaces(f)[mapPlace(f, n) ?? -1]?.id ?? n) };
+  const id = (i: number | null) =>
+    i === null ? null : isGridMap(f) ? mapPlaceName(f, i, 'de') : (mapPlaces(f)[i]?.id ?? null);
+  return { ...f, hl: f.hl.map((n) => id(mapPlace(f, n)) ?? n) };
 }
 
 /** The indices of the marked places (a name no place has marks nothing). */

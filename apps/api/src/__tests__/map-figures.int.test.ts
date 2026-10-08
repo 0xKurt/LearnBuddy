@@ -1,7 +1,9 @@
 // Questions on a stumme Karte end to end (issue #251): a Land to tap, a marked country to name, a
 // continent to tap; since #429 a small country on the closer Ausschnitt code picks, a river to tap
-// and one to name, a capital to tap — what the model writes, what code drops, what is stored, what
-// the app gets back and how an answer is graded, on a real Postgres.
+// and one to name, a capital to tap, and on the Gradnetz a crossing to tap and the coordinates of
+// a marked one to type — in her language, where "60° O" is west in French — what the model
+// writes, what code drops, what is stored, what the app gets back and how an answer is graded, on
+// a real Postgres.
 //
 // Model calls are scripted; every answer graded below is graded by code, so the harness's failure
 // on an unscripted call proves no tutor was asked.
@@ -14,7 +16,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
-import { BROKEN_MAP_ITEMS, MAP_ITEMS } from '../testing/scenarios/map.js';
+import {
+  BROKEN_MAP_ITEMS,
+  FRENCH_GRID_ITEM,
+  GRID_ITEMS,
+  MAP_ITEMS,
+} from '../testing/scenarios/map.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -49,15 +56,16 @@ describe.skipIf(!dbReady)('a question on a stumme Karte', () => {
   afterEach(() => env.closeChecked());
 
   it('stores only questions whose regions the map has, the marked ones by id', async () => {
-    const s = await start(env, l, [...MAP_ITEMS, ...BROKEN_MAP_ITEMS]);
-    expect(s.items.map((i) => i.item.prompt)).toEqual(MAP_ITEMS.map((i) => i.prompt));
+    const good = [...MAP_ITEMS, ...GRID_ITEMS];
+    const s = await start(env, l, [...good, ...BROKEN_MAP_ITEMS]);
+    expect(s.items.map((i) => i.item.prompt)).toEqual(good.map((i) => i.prompt));
     const rows = await env.db.query<{ prompt: string; tap: boolean; figure: unknown }>(
       `select prompt, tap, figure from items where learner_id = $1`,
       [l.learnerId],
     );
-    const stored = MAP_ITEMS.map((i) => rows.find((r) => r.prompt === i.prompt));
-    expect(rows).toHaveLength(MAP_ITEMS.length);
-    const taps = [true, false, true, true, false, true, false, true];
+    const stored = good.map((i) => rows.find((r) => r.prompt === i.prompt));
+    expect(rows).toHaveLength(good.length);
+    const taps = [true, false, true, true, false, true, false, true, true, true, false];
     expect(stored.map((r) => r?.tap)).toEqual(taps);
     // "France" as the model wrote it is stored as the data's id.
     expect(stored[1]?.figure).toEqual({ type: 'map', v: 'europe', hl: ['FR'], l: 'regions' });
@@ -67,6 +75,70 @@ describe.skipIf(!dbReady)('a question on a stumme Karte', () => {
     expect(stored[4]?.figure).toEqual({ type: 'map', v: 'de', hl: ['elbe'], l: 'rivers' });
     // The app is told which questions to tap.
     expect(s.items.map((i) => i.item.tap)).toEqual(taps);
+  });
+
+  it('stores a crossing of the Gradnetz as code writes it, never zoomed (#429)', async () => {
+    const s = await start(env, l, GRID_ITEMS);
+    const rows = await env.db.query<{ prompt: string; answer: string; figure: unknown }>(
+      `select prompt, answer, figure from items where learner_id = $1`,
+      [l.learnerId],
+    );
+    const stored = (i: number) => rows.find((r) => r.prompt === GRID_ITEMS[i]!.prompt);
+    expect(stored(0)?.figure).toEqual({ type: 'map', v: 'de', hl: [], l: 'grid' });
+    // "60°N 10°O" as the model wrote it: stored as code writes it, on the whole of Europe.
+    expect(stored(1)?.answer).toBe('60° N, 10° O');
+    expect(stored(1)?.figure).toEqual({ type: 'map', v: 'europe', hl: [], l: 'grid' });
+    expect(stored(2)?.figure).toEqual({
+      type: 'map',
+      v: 'world',
+      hl: ['30° S, 60° W'],
+      l: 'grid',
+    });
+    expect(s.items.map((i) => i.item.tap)).toEqual([true, true, false]);
+  });
+
+  it('grades a tapped crossing and typed coordinates by code (#429)', async () => {
+    const s = await start(env, l, GRID_ITEMS);
+    const [de, europe, world] = s.items.map((i) => i.item.id) as string[];
+    // What the app writes after the tap: the crossing as German writes it.
+    expect((await answer(l, s, de!, '51° N, 10° O')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, de!, '50° N, 10° O')).body.verdict).toBe('correct');
+    expect((await answer(l, s, europe!, '60° N, 10° O')).body.verdict).toBe('correct');
+    // Typed in her own notation; east where the key is west is wrong.
+    expect((await answer(l, s, world!, '30° S, 60° O')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, world!, '30°S 60°W')).body.verdict).toBe('correct');
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
+  });
+
+  it('reads "O" as her language means it: west for a French learner (#429)', async () => {
+    const fr = await onboard(env, {
+      relation: 'child',
+      name: 'Léa',
+      birthDate: '2015-05-01',
+      locale: 'fr',
+    });
+    const tap = {
+      ...GRID_ITEMS[0]!,
+      prompt: 'Touche le point 50° N, 10° E.',
+      answer: '50° N, 10° E',
+    };
+    const s = await start(env, fr, [tap, FRENCH_GRID_ITEM]);
+    const rows = await env.db.query<{ answer: string; figure: unknown }>(
+      `select answer, figure from items where learner_id = $1 and prompt = $2`,
+      [fr.learnerId, FRENCH_GRID_ITEM.prompt],
+    );
+    // "60° O" as the French model wrote it is west: stored as code writes it, W in every language.
+    expect(rows[0]?.answer).toBe('30° S, 60° W');
+    expect(rows[0]?.figure).toEqual({ type: 'map', v: 'world', hl: ['30° S, 60° W'], l: 'grid' });
+    const [tapped, typed] = s.items.map((i) => i.item.id) as string[];
+    expect((await answer(fr, s, typed!, '30° S, 60° E')).body.verdict).toBe('incorrect');
+    expect((await answer(fr, s, typed!, '30° S, 60° O')).body.verdict).toBe('correct');
+    // A tap stands in the thread as she reads it: east is E in French.
+    expect((await answer(fr, s, tapped!, '50° N, 10° O')).body.verdict).toBe('correct');
+    const view = (await fr.api.get<SessionView>(`/practice/sessions/${s.id}`)).body;
+    const mine = view.turns.find((t) => t.item_id === tapped && t.role === 'learner');
+    expect(mine?.text).toBe('50° N, 10° E');
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 
   it('grades a tapped region and a typed name by code, in any of the five languages', async () => {

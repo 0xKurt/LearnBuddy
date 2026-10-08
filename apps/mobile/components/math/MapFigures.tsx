@@ -1,8 +1,9 @@
 // A stumme Karte (issue #251): Germany's 16 Länder, the countries of Europe or the continents, as
 // an atlas prints them — no names on it, the marked regions filled. Since #429 a map can show a
 // layer of places on its land instead — the capitals as dots, the rivers as blue lines, the
-// mountain ranges in the atlas brown, cut to the land — the marked ones in the figure's accent; and
-// a closer Ausschnitt of Europe is drawn like any view. Nothing here decides anything:
+// mountain ranges in the atlas brown, cut to the land — the marked ones in the figure's accent; or
+// its Gradnetz with the degrees at the frame's edge and the marked crossings as dots; and a
+// closer Ausschnitt of Europe is drawn like any view. Nothing here decides anything:
 // every region and its shape is Natural Earth data in packages/shared-math (`maps.ts`), the names
 // the server checked the question against. The shapes load with the first map
 // (`lib/math/useMapShapes.ts`); until then the map keeps its room. `describeMap` says in words
@@ -10,8 +11,14 @@
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { View } from 'react-native';
-import Svg, { Circle, ClipPath, Defs, G, Path } from 'react-native-svg';
+import Svg, { Circle, ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
 
+import {
+  gridAt,
+  gridStep,
+  mapGrid,
+  type MapGridShape,
+} from '../../../../packages/shared-math/src/mapGrid.js';
 import {
   mapHeight,
   mapLayer,
@@ -21,11 +28,17 @@ import {
   type MapPlaceLayer,
   type MapViewShape,
 } from '../../../../packages/shared-math/src/maps.js';
-import { REGION_FRAME, regionPath } from '../../../../packages/shared-math/src/regions.js';
+import {
+  linePath,
+  REGION_FRAME,
+  regionPath,
+} from '../../../../packages/shared-math/src/regions.js';
 import { currentLocale } from '../../lib/i18n/index.js';
+import { gridLabels } from '../../lib/math/mapGridLabels.js';
 import { useMapShapes } from '../../lib/math/useMapShapes.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { HaloText, SMALL } from './figureText.js';
 
 export type MapFigure = Extract<Figure, { type: 'map' }>;
 type T = (key: string, values?: Record<string, string | number>) => string;
@@ -92,7 +105,9 @@ export function MapBody({ figure, width }: { figure: MapFigure; width: number })
             />
           ))
         : null}
-      {layer === 'regions' ? null : (
+      {layer === 'grid' ? (
+        <Graticule figure={figure} grid={shapes.grid} width={width} height={height} />
+      ) : layer === 'regions' ? null : (
         <Places
           shapes={shapes}
           layer={layer}
@@ -102,6 +117,75 @@ export function MapBody({ figure, width }: { figure: MapFigure; width: number })
         />
       )}
     </Svg>
+  );
+}
+
+/**
+ * The Gradnetz (#429): its meridians and parallels in the atlas blue — never the grey of a
+ * border —, each degree on a paper chip where its line leaves the frame (`gridLabels`), the marked
+ * crossings as dots in the accent.
+ */
+function Graticule({
+  figure,
+  grid,
+  width,
+  height,
+}: {
+  figure: MapFigure;
+  grid: MapGridShape | undefined;
+  width: number;
+  height: number;
+}) {
+  const { figure: ink, palette } = useTheme();
+  const values = mapGrid(figure.v);
+  if (!grid || !values) return null;
+  const k = width / REGION_FRAME;
+  const lines = [...grid.lon, ...grid.lat].flatMap((l) => l.lines);
+  return (
+    <>
+      <Path
+        d={linePath(lines, k)}
+        fill="none"
+        stroke={ink.wetDeep}
+        strokeOpacity={0.7}
+        strokeWidth={0.8}
+      />
+      {gridLabels(values, grid, width, height, SMALL, currentLocale()).map((l, i) => (
+        <G key={i}>
+          {/* A paper chip: the label interrupts its line, as in an atlas. */}
+          <Rect
+            x={l.box.x0}
+            y={l.box.y0}
+            width={l.box.x1 - l.box.x0}
+            height={l.box.y1 - l.box.y0}
+            fill={ink.paper}
+          />
+          <HaloText
+            x={l.x}
+            y={l.y}
+            anchor={l.anchor}
+            text={l.text}
+            size={SMALL}
+            weight="400"
+            color={ink.label}
+          />
+        </G>
+      ))}
+      {mapMarked(figure).map((c) => {
+        const p = gridAt(figure.v, grid, c);
+        return p ? (
+          <Circle
+            key={c}
+            cx={p[0] * k}
+            cy={p[1] * k}
+            r={5.5}
+            fill={ink.point}
+            stroke={palette.paper}
+            strokeWidth={2}
+          />
+        ) : null;
+      })}
+    </>
   );
 }
 
@@ -185,16 +269,17 @@ function Places({
 
 /**
  * "Karte: Deutschland mit den 16 Bundesländern, ohne Namen. Markiert: Bayern." — with its layer
- * of places (#429): "… Die großen Flüsse sind Linien. Markiert: Rhein."
+ * of places (#429): "… Die großen Flüsse sind Linien. Markiert: Rhein."; with its Gradnetz: "…
+ * Mit Gradnetz, Linien alle 10°. Markiert: 50° N, 10° O."
  */
 export function describeMap(figure: MapFigure, t: T): string {
   const lang = currentLocale();
   const count = mapRegions(figure.v).length;
   const layer = mapLayer(figure);
-  const parts = [
-    t(`figure.map_${figure.v}`, { count }),
-    ...(layer === 'regions' ? [] : [t(`figure.map_${layer}`)]),
-  ];
+  const grid = layer === 'grid' ? mapGrid(figure.v) : null;
+  const parts = [t(`figure.map_${figure.v}`, { count })];
+  if (grid) parts.push(t('figure.map_grid', { step: gridStep(grid) }));
+  else if (layer !== 'regions') parts.push(t(`figure.map_${layer}`));
   const marked = mapMarked(figure).map((i) => mapPlaceName(figure, i, lang));
   if (marked.length > 0) parts.push(t('figure.map_marked', { names: marked.join(', ') }));
   return parts.join(' ');

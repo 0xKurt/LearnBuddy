@@ -86,16 +86,26 @@ function ringsOf(shape: RegionShape): Ring[] {
   return rings;
 }
 
-/** An SVG path of `rings` drawn `k` times the frame's size. */
-export function regionPath(rings: readonly string[], k: number): string {
-  return rings
+/** An SVG path of `lines` ("x y x y …") drawn `k` times the frame's size, each closed or open. */
+function pathOf(lines: readonly string[], k: number, closed: boolean): string {
+  return lines
     .map((r) => {
       const n = r.split(' ').map((v) => Math.round(Number(v) * k * 10) / 10);
       let d = '';
       for (let i = 0; i + 1 < n.length; i += 2) d += `${i === 0 ? 'M' : 'L'}${n[i]} ${n[i + 1]}`;
-      return `${d}Z`;
+      return closed ? `${d}Z` : d;
     })
     .join('');
+}
+
+/** An SVG path of `rings` drawn `k` times the frame's size. */
+export function regionPath(rings: readonly string[], k: number): string {
+  return pathOf(rings, k, true);
+}
+
+/** An SVG path of open lines — the meridians and parallels of a map (#429) — like `regionPath`. */
+export function linePath(lines: readonly string[], k: number): string {
+  return pathOf(lines, k, false);
 }
 
 /**
@@ -273,6 +283,14 @@ export function regionTapWidth(height: number): number {
 }
 
 /**
+ * Half the smallest target a tap may need (24 pt) on a drawing `height` high, in the frame's
+ * units, in the smallest room: how much room a place to tap must have around it.
+ */
+export function regionTapLeast(height: number): number {
+  return units(MIN_REACH_PT, regionTapWidth(height));
+}
+
+/**
  * Whether a line has a stretch a finger can take for it: a point of it at least `least` from every
  * other place of the set (a river where no other runs close by — not only where the Mosel joins the
  * Rhine).
@@ -297,7 +315,7 @@ export function regionTappable(set: RegionSet, i: number, height: number): boole
   const shape = set.regions[i];
   if (!shape || shape.rings.length === 0) return false;
   const width = regionTapWidth(height);
-  const least = units(MIN_REACH_PT, width);
+  const least = regionTapLeast(height);
   if (shape.line) return lineClear(set, i, least);
   // A region narrower than that is small, so its label catches; wider ones are hit directly.
   return inscribed(shape) >= least || catchRadius(set, i, regionReach(width)) >= least;

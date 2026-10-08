@@ -119,8 +119,26 @@ describe('a map (#251): every Land and every continent by its label', () => {
     }
   });
 
+  it('every crossing of the Gradnetz (#429) on the map is tapped at its dot', () => {
+    for (const v of ['de', 'europe', 'world'] as const) {
+      const f = { type: 'map', v, hl: [], l: 'grid' } as const;
+      const l = tapLayout(f, 320, format, 12, { maps: MAP_SHAPES });
+      if (!l) throw new Error('no layout');
+      expect(l.axes.map((a) => a.name)).toEqual(['lon', 'lat']);
+      const onMap = everyPick(f).filter((pick) => l.markOf(pick) !== null);
+      expect(onMap.length, v).toBeGreaterThan(v === 'europe' ? 20 : 50);
+      for (const pick of onMap) {
+        const mark = l.markOf(pick);
+        if (mark?.kind !== 'dot') throw new Error('a dot');
+        // A finger a little off the crossing still means it: the nearest crossing.
+        expect(l.pickAt(mark.x + 4, mark.y - 4, null, 0), `${v} ${pick.join()}`).toEqual(pick);
+      }
+    }
+  });
+
   it('offers nothing to tap until the shapes are loaded', () => {
     expect(tapLayout({ type: 'map', v: 'de', hl: [] }, 300, format, 12)).toBeNull();
+    expect(tapLayout({ type: 'map', v: 'de', hl: [], l: 'grid' }, 300, format, 12)).toBeNull();
   });
 });
 

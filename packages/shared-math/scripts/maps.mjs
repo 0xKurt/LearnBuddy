@@ -591,6 +591,135 @@ function halfway(line) {
 /** Where a place outside the frame is labelled: far from every finger. */
 const NOWHERE = [-100000, -100000];
 
+// ── the Gradnetz (#429) ─────────────────────────────────────────────────────
+
+/**
+ * The step of each view's Gradnetz in degrees, as a school atlas draws it: every degree on
+ * Germany, every ten on Europe, every thirty on the world (the 180th meridian is the world map's
+ * own edge). Its crossings are what a question on the grid is about (`mapGrid.ts`); a closer
+ * Ausschnitt of Europe has none.
+ */
+const GRID_STEP = { de: 1, europe: 10, world: 30 };
+
+/** The part of the segment a–b inside [0, w] × [0, h], or null (Liang–Barsky). */
+function clipSegment([x0, y0], [x1, y1], w, h) {
+  let [t0, t1] = [0, 1];
+  const [dx, dy] = [x1 - x0, y1 - y0];
+  for (const [p, q] of [
+    [-dx, x0],
+    [dx, w - x0],
+    [-dy, y0],
+    [dy, h - y0],
+  ]) {
+    if (p === 0) {
+      if (q < 0) return null;
+      continue;
+    }
+    const t = q / p;
+    if (p < 0) t0 = Math.max(t0, t);
+    else t1 = Math.min(t1, t);
+    if (t0 > t1) return null;
+  }
+  return [
+    [x0 + t0 * dx, y0 + t0 * dy],
+    [x0 + t1 * dx, y0 + t1 * dy],
+  ];
+}
+
+/** The runs of a line inside [0, w] × [0, h]; a point that does not project ends a run. */
+function clipLine(line, w, h) {
+  const runs = [];
+  let run = [];
+  const end = () => {
+    if (run.length > 1) runs.push(run);
+    run = [];
+  };
+  for (let i = 1; i < line.length; i++) {
+    const [a, b] = [line[i - 1], line[i]];
+    const seg = [...a, ...b].every(Number.isFinite) ? clipSegment(a, b, w, h) : null;
+    if (!seg) {
+      end();
+      continue;
+    }
+    const last = run[run.length - 1];
+    if (last && Math.hypot(last[0] - seg[0][0], last[1] - seg[0][1]) > 1e-6) end();
+    if (run.length === 0) run.push(seg[0]);
+    run.push(seg[1]);
+  }
+  end();
+  return runs;
+}
+
+/** step, 2·step … up to `limit` and as far below zero: the values of one family of lines. */
+const multiples = (step, limit) =>
+  Array.from(
+    { length: 2 * Math.floor(limit / step) + 1 },
+    (_, i) => (i - Math.floor(limit / step)) * step,
+  );
+
+/**
+ * The Gradnetz of a view, fitted to its frame: every meridian and parallel that crosses it, each
+ * as its runs in the frame and the end where its degree is written — a meridian's at the bottom
+ * edge (else the top), a parallel's at the left edge (else the right; on the world map, where the
+ * parallels end at the map's own outline, its western end) —, and where each crossing stands
+ * (null outside the frame).
+ */
+function graticule(spec, fit, height) {
+  const step = GRID_STEP[spec.view];
+  if (!step || spec.closerOf) return null;
+  const fine = step / 20;
+  const sample = (from, to, f) =>
+    Array.from({ length: Math.round((to - from) / fine) + 1 }, (_, i) => fit(f(from + i * fine)));
+  const lines = (points) =>
+    clipLine(points, FRAME, height)
+      .map((run) => simplifyLine(run, 0.5).map(([x, y]) => [Math.round(x), Math.round(y)]))
+      .filter((run) => lengthOf(run) >= 8);
+  /** The first end of a run that `where` accepts, tried in order; null where none does. */
+  const labelled = (runs, ...where) => {
+    const ends = runs.flatMap((r) => [r[0], r[r.length - 1]]);
+    for (const w of where) {
+      const end = ends.find(w);
+      if (end) return end;
+    }
+    return null;
+  };
+  const family = (values, along, ...where) =>
+    values
+      .map((value) => ({ value, runs: lines(along(value)) }))
+      .filter((l) => l.runs.length > 0)
+      .map(({ value, runs }) => ({ value, runs, label: labelled(runs, ...where) }));
+  const [bottom, top] = [([, y]) => y >= height - 1, ([, y]) => y <= 1];
+  const [left, right] = [([x]) => x <= 1, ([x]) => x >= FRAME - 1];
+  // ±180 is one meridian, on both edges of the world: the frame, never a line of the grid.
+  const lon = family(
+    multiples(step, 180).filter((v) => Math.abs(v) < 180),
+    (v) => sample(-90, 90, (lat) => spec.project(v, lat)),
+    bottom,
+    top,
+  );
+  const lat = family(
+    multiples(step, 90).filter((v) => Math.abs(v) < 90),
+    (v) => sample(-180, 180, (l) => spec.project(l, v)),
+    left,
+    right,
+    // The world map's parallels end at its outline: the western end, never one on the frame.
+    (p) => !top(p) && !bottom(p) && p[0] < FRAME / 2,
+  );
+  const inFrame = ([x, y]) => x >= 0 && x <= FRAME && y >= 0 && y <= height;
+  const crossing = (m, p) => {
+    const c = fit(spec.project(m.value, p.value));
+    return inFrame(c) ? c.map(Math.round) : null;
+  };
+  // A line no other crosses on the map — a corner of Europe's frame — is no line of its grid.
+  const meridians = lon.filter((m) => lat.some((p) => crossing(m, p)));
+  const parallels = lat.filter((p) => meridians.some((m) => crossing(m, p)));
+  return {
+    lon: meridians,
+    lat: parallels,
+    at: parallels.map((p) => meridians.map((m) => crossing(m, p))),
+  };
+}
+
 // ── output ──────────────────────────────────────────────────────────────────
 
 function build(spec) {
@@ -645,6 +774,7 @@ function build(spec) {
     context: shape(context, false, spec.tol * 2),
     closerOf: spec.closerOf ?? null,
     features: spec.features ? features(spec, fit, height, regions, shape, labelled) : null,
+    grid: graticule(spec, fit, height),
   };
 }
 
@@ -721,6 +851,7 @@ function renderNames(views) {
   return [
     ...HEADER,
     '',
+    "import type { MapGrids } from './mapGrid.js';",
     "import type { MapNames, MapPlaceNames, MapView } from './maps.js';",
     '',
     '/** The regions of each view in drawing order, with their names in the five languages. */',
@@ -741,6 +872,16 @@ function renderNames(views) {
         ]),
         '  },',
       ]),
+    '};',
+    '',
+    "/** The degrees of the meridians and parallels of each view's Gradnetz, west to east and south to north (#429). */",
+    'export const MAP_GRIDS: MapGrids = {',
+    ...base
+      .filter((v) => v.grid)
+      .map(
+        (v) =>
+          `  ${v.view}: { lon: [${v.grid.lon.map((l) => l.value).join(', ')}], lat: [${v.grid.lat.map((l) => l.value).join(', ')}] },`,
+      ),
     '};',
     '',
     '/** How high each view stands in a frame 1000 wide: the drawing keeps its room while it loads. */',
@@ -788,11 +929,30 @@ function renderShapes(views) {
             '    },',
           ]
         : []),
+      ...(v.grid ? renderGrid(v.grid) : []),
       '  },',
     ]),
     '};',
     '',
   ].join('\n');
+}
+
+/** A view's Gradnetz: its lines with where each is labelled, and where its crossings stand. */
+function renderGrid(grid) {
+  const point = (p) => (p ? `[${p.join(', ')}]` : 'null');
+  const line = (l) =>
+    `        { lines: [${l.runs.map((r) => q(r.flat().join(' '))).join(', ')}], label: ${point(l.label)} },`;
+  return [
+    '    grid: {',
+    '      lon: [',
+    ...grid.lon.map(line),
+    '      ],',
+    '      lat: [',
+    ...grid.lat.map(line),
+    '      ],',
+    `      at: [${grid.at.map((row) => `[${row.map(point).join(', ')}]`).join(', ')}],`,
+    '    },',
+  ];
 }
 
 /** The layers of places a view may show (#429), in the order `maps.ts` names them. */

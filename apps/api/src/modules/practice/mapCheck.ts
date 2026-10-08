@@ -16,8 +16,17 @@
 // finger on a 360 phone. On Europe code zooms in where it is not (`mapZoom`: Luxembourg on
 // Mitteleuropa); where no Ausschnitt carries it, the question is dropped. Rejected, never
 // repaired. What is stored names each marked place by its id, on the view code chose.
+//
+// On the Gradnetz (#429) a place is a crossing of its lines, written "50° N, 10° O": "Welche
+// Koordinaten hat der markierte Punkt?" or "Tippe auf 50° N, 10° O". The model writes it in the
+// question's language, where "20° O" is west in French; code reads it so (`gridWritten`) and
+// stores it as `mapGrid.ts` writes it — a point where no two lines cross is no place, as a name
+// no region has.
 
 import {
+  gridParse,
+  gridText,
+  isGridMap,
   isMap,
   mapCanonical,
   mapMarked,
@@ -56,9 +65,30 @@ function mapItemView(it: Mapped): { view: MapView } | { problem: string } | null
   return view ? { view } : { problem: `the marked place is too small on the map ${f.v}` };
 }
 
-/** The question on the view code chose, its places written as ids, or null when it cannot be asked. */
-export function checkedMap<T extends Mapped>(it: T | null): T | null {
-  if (!it) return null;
+/**
+ * A question on the Gradnetz with its crossings as code writes them: each marked one in German
+ * (what is stored), the key in `lang` (what she is shown) — both read back alike. A text that is
+ * no coordinate stays as the model wrote it, and costs the question in `mapItemView`.
+ */
+function gridWritten<T extends Mapped>(it: T, lang: string): T {
+  const f = it.figure;
+  if (!f || !isMap(f) || !isGridMap(f)) return it;
+  const read = (text: string) => gridParse(text, lang);
+  const hl = f.hl.map((n) => {
+    const p = read(n);
+    return p ? gridText(p, 'de') : n;
+  });
+  const key = read(it.answer);
+  return { ...it, answer: key ? gridText(key, lang) : it.answer, figure: { ...f, hl } };
+}
+
+/**
+ * The question on the view code chose, its places written as ids, or null when it cannot be
+ * asked. `locale`: the language the questions are written in — her language, German for a sheet.
+ */
+export function checkedMap<T extends Mapped>(raw: T | null, locale: string | null): T | null {
+  if (!raw) return null;
+  const it = gridWritten(raw, locale ?? 'de');
   const checked = mapItemView(it);
   if (checked === null) return it;
   if ('problem' in checked) return null;
