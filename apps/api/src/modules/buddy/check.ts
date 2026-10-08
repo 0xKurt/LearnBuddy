@@ -27,7 +27,8 @@ import { acquireLease, LEASE_SECONDS, LeaseLost, releaseLease } from './checkLea
 import { sendAgreedReminder } from './checkReminder.js';
 import { triggerOf } from './checkTrigger.js';
 import { markHandled } from './events.js';
-import { REVIEW_NEXT_DAY, runReviews } from './review.js';
+import { testAhead } from './plan.js';
+import { REVIEW_REASONS, runReviews } from './review.js';
 import type { SettingsRow } from './state.js';
 import { resumeTurns } from './turnRecovery.js';
 
@@ -66,10 +67,10 @@ export async function runLearnerJobs(deps: Deps, learnerId: string): Promise<Che
     );
 
     const triggers = jobs.filter((j) => j.kind === 'buddy_check').map(triggerOf);
-    // Decided by code alone: agreed reminders, and the review the day after a sheet (#446).
-    const byCode = new Set(['step_due', REVIEW_NEXT_DAY]);
+    // Decided by code alone: agreed reminders, and Buddy's offers to review (#446).
+    const byCode = new Set(['step_due', ...REVIEW_REASONS]);
     const agreed = triggers.filter((t) => t.reason === 'step_due');
-    const reviews = triggers.filter((t) => t.reason === REVIEW_NEXT_DAY);
+    const reviews = triggers.filter((t) => REVIEW_REASONS.has(t.reason));
     // A check whose worker failed all its attempts comes back once, model-free (terminal.ts).
     const parked = triggers.filter((t) => !byCode.has(t.reason) && t.job.payload.fallback_only);
     const others = triggers.filter((t) => !byCode.has(t.reason) && !t.job.payload.fallback_only);
@@ -119,13 +120,7 @@ async function ensureRoutine(deps: Deps, learnerId: string): Promise<void> {
   ]);
   const tz = s.timezone;
   const today = localParts(now, tz).date;
-  const soon = await deps.db.maybeOne(
-    `select 1 from buddy_goals
-      where learner_id = $1 and status = 'active' and due_date between $2::date and $2::date + 14
-      limit 1`,
-    [learnerId, today],
-  );
-  if (!soon) return;
+  if (!(await testAhead(deps.db, learnerId, today))) return;
   const next = addDays(today, 1);
   await enqueueJob(deps.db, {
     learnerId,

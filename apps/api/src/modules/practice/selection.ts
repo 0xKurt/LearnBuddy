@@ -20,6 +20,9 @@
 // A wish that matches only three questions gives three; one that matches none gives none. The
 // set is never quietly filled up with questions she did not ask for (CLAUDE.md rule 5 — the
 // card would then claim to be what it is not), and the caller says plainly when nothing fits.
+//
+// One narrowing is code's, not hers: only what is due for review (Buddy's review after a break,
+// buddy/review.ts, issue #446) — a set that offers "what is due" holds nothing else.
 
 import type { DifficultyWish, VocabDirection } from '@learnbuddy/shared-types/contracts';
 
@@ -46,6 +49,8 @@ export type PracticeWish = {
   vocabularyOnly?: boolean;
   /** The learner's app language (ISO 639-1), for the direction. */
   ownLanguage?: string | null;
+  /** Only questions due for review (FSRS), never one not practised yet: code's, not hers. */
+  dueOnly?: boolean;
 };
 
 const QUESTIONS_PER_MINUTE = 1.2;
@@ -163,6 +168,8 @@ export async function selectPracticeItems(
                    and not (last.status = 'correct' and coalesce(last.first_try_correct, false))))
           -- Vocabulary and nothing else, whichever side is asked (issue #144).
           and (not $10::boolean or i.kind = 'vocab')
+          -- Due for review by the app's clock ($5), never by the database's now() (rule 7).
+          and (not $14::boolean or st.due <= $5)
           -- One direction of a vocabulary pair; her own language says which side is foreign.
           and ($7::text is null
                or (i.kind = 'vocab'
@@ -206,6 +213,7 @@ export async function selectPracticeItems(
       count === 'all' ? null : Math.max(200, count),
       run,
       FREE_TEXT_KINDS,
+      wish.dueOnly === true,
     ],
   );
   if (candidates.length === 0) return [];

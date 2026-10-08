@@ -7,6 +7,7 @@ import { ESSAY_TEXT_MAX, EssayFeedback } from './essay.js';
 import { Figure } from './figure.js';
 import { ListenRef } from './listen.js';
 import { PassageView } from './reading.js';
+import { TaskPartView } from './taskParts.js';
 import { StructuredAnswer, StructuredTaskView } from './structured.js';
 
 // ─────────────── material (photographed worksheets) ───────────────
@@ -507,6 +508,12 @@ export const ItemView = z.object({
    * build cannot read shows the question without it (`.catch`) rather than failing the session.
    */
   passage: PassageView.nullable().default(null).catch(null),
+  /**
+   * A part of a task in parts (issue #297, `contracts/taskParts.ts`): the situation shown above
+   * the question, its letter and the task's letters. Parts of one task share the `ref`. A part this
+   * build cannot read shows the question without it (`.catch`) rather than failing the session.
+   */
+  task_part: TaskPartView.nullable().default(null).catch(null),
   /**
    * Whether the question may be read aloud by its "Vorlesen" button, also outside voice mode
    * (issue #238). Code decides it (`apps/api/src/modules/practice/readAloud.ts`): not for a task

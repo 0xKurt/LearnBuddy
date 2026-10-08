@@ -42,6 +42,10 @@
     "review": "Magst du „{{title}}“ kurz nochmal durchgehen? Ein paar Fragen liegen bereit – nach einer Nacht sitzt es dann besser.",
     "review_untitled": "Magst du dein Blatt kurz nochmal durchgehen? Ein paar Fragen liegen bereit – nach einer Nacht sitzt es dann besser."
   },
+  "review": {
+    "title": "Kurz auffrischen",
+    "due": "Magst du kurz auffrischen, was du zuletzt geübt hast? Ein paar Fragen liegen bereit – so bleibt es gut im Kopf."
+  },
   "practice": {
     "accents": "Fast – schau nochmal auf die Akzente.",
     "bar": {
@@ -447,6 +451,9 @@
       "place_4": "bei den Zehntausendern",
       "place_5": "bei den Hunderttausendern",
       "place_6": "bei den Millionen"
+    },
+    "parts": {
+      "follow_on": "Richtig weitergerechnet – mit deinem Ergebnis aus {{part}}. Das stimmte zwar nicht, aber dein Weg hier passt. Das zählt als richtig."
     }
   },
   "contact": {
