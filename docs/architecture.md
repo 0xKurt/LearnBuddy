@@ -357,9 +357,12 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
 
 ## Tools
 
-The tools live in `modules/buddy/tools.ts`; what every tool is given and shares — `ToolContext`,
-`ToolOutcome`/`UndoSpec`, `ToolRejection`, the quote and day checks, the alias resolvers — in
-`modules/buddy/toolKit.ts`.
+The tools live in `modules/buddy/`, one file per area (#311): `memoryTools.ts`, `goalTools.ts`,
+`practiceTool.ts`, `stepTools.ts`, `materialTools.ts`, `settingsTools.ts`, `offers.ts`,
+`roleplay.ts`; `tools.ts` keeps the rules every tool keeps and maps each act tool to its handler
+(`ACT_HANDLERS`), and `undo.ts` reverses an applied action. What every tool is given and shares —
+`ToolContext`, `ToolOutcome`/`UndoSpec`, `ToolRejection`, the quote and day checks, the alias
+resolvers — is in `modules/buddy/toolKit.ts`.
 
 `modules/buddy/registry.ts` (ADR 0005 stage 2) registers every act tool once: its call schema
 (`decision.ts`), the surfaces allowed to call it (`turn`, `check`), what it touches, whether it

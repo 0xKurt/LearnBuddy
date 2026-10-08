@@ -8,7 +8,6 @@
     "apps/api/src/__tests__/modes.int.test.ts": 855,
     "apps/api/src/__tests__/session-lifecycle.int.test.ts": 810,
     "apps/api/src/modules/buddy/check.ts": 872,
-    "apps/api/src/modules/buddy/tools.ts": 1509,
     "apps/api/src/modules/materials/service.ts": 1566,
     "apps/api/src/modules/practice/__tests__/evaluate.test.ts": 825,
     "apps/mobile/app/buddy.tsx": 1216,
