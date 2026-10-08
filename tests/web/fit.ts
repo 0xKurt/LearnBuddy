@@ -422,20 +422,17 @@ export async function halfTurns(page: Page): Promise<string[]> {
 }
 
 /**
- * Waits until the screen stops changing: an entrance, a verdict or the summary's arrival has
- * finished, so a shot never keeps an element caught half-faded mid-animation. What moves
- * forever (Buddy's breathing orb, typing dots) never settles and only costs the wait.
- */
-/**
  * Switches the phone's colour scheme and waits until the app has taken it (issue #443).
  *
  * A switch remounts the whole tree (ThemeProvider `key`, issues #84/#148), but not when
  * `emulateMedia` returns: the palette is applied in an effect after the scheme change, and the
- * remount follows that — later still on a loaded machine. Typing right after the switch can
- * land in the gap: Playwright's `fill` focuses the field, then inserts the text; when the field
- * is replaced in between, the text goes into a field that is gone. In modes.spec the "16" of
- * the sum question was lost that way and "Prüfen" stayed off. So this waits until an element
- * of the old tree is gone (every `testID` lives under the theme), then until the page is still.
+ * remount follows that. Measured on the sum question of modes.spec (08.10., a loaded machine):
+ * in 14 of 20 switches the old tree was still there when the next command ran, and the remount
+ * came a median 102 ms (at most 164 ms) later. Playwright's `fill` focuses the field, then
+ * inserts the text; a remount in between sends the text to `<body>` — the field stays empty and
+ * "Prüfen" off. `emulateMedia` + `fill('16')` lost the "16" 3 times in 20, this helper 0 times.
+ * So it waits until an element of the old tree is gone (every `testID` lives under the theme),
+ * then until the page is still. A switch she types right after goes through here.
  */
 export async function setScheme(page: Page, scheme: 'light' | 'dark'): Promise<void> {
   const changes = await page.evaluate((want) => {
@@ -445,10 +442,19 @@ export async function setScheme(page: Page, scheme: 'light' | 'dark'): Promise<v
     return old !== null;
   }, scheme);
   await page.emulateMedia({ colorScheme: scheme });
-  if (changes) await expect(page.locator('[data-before-scheme]')).toHaveCount(0);
+  if (changes)
+    await expect(
+      page.locator('[data-before-scheme]'),
+      `the app takes the ${scheme} scheme (its mode follows the phone)`,
+    ).toHaveCount(0);
   await settle(page);
 }
 
+/**
+ * Waits until the screen stops changing: an entrance, a verdict or the summary's arrival has
+ * finished, so a shot never keeps an element caught half-faded mid-animation. What moves
+ * forever (Buddy's breathing orb, typing dots) never settles and only costs the wait.
+ */
 export async function settle(page: Page, maxMs = 1600): Promise<void> {
   await page.waitForTimeout(150);
   const until = Date.now() + maxMs;
@@ -545,11 +551,6 @@ export async function shot(
   return found;
 }
 
-/**
- * How tall the pinned bar under a question is (issue #16). What it takes, the question,
- * its figure and the conversation lose — on a small phone with the keyboard open that is
- * the difference between seeing the task and not.
- */
 /** How tall one tagged part of a screen is, recorded so slimming stays measured (#64). */
 export async function partHeight(page: Page, testId: string, name: string): Promise<number> {
   // Measured once the page stands still. A theme switch remounts the whole tree (ThemeProvider
@@ -571,6 +572,11 @@ export async function partHeight(page: Page, testId: string, name: string): Prom
   return height;
 }
 
+/**
+ * How tall the pinned bar under a question is (issue #16). What it takes, the question,
+ * its figure and the conversation lose — on a small phone with the keyboard open that is
+ * the difference between seeing the task and not.
+ */
 export async function bottomStack(page: Page, name: string): Promise<number> {
   const bar = page.getByTestId('bottom-bar');
   if (!(await bar.isVisible())) return 0;

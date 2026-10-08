@@ -605,7 +605,7 @@ const KEYBOARD = { 390: 336, 360: 300 } as const;
 async function pathShots(page: Page, name: string): Promise<void> {
   const field = page.getByLabel('Deine Antwort');
   for (const scheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme: scheme });
+    await setScheme(page, scheme);
     await field.focus();
     // Fit and contrast at the full size of both phones (fit.ts), then the keyboard state.
     await shot(page, `${name}-${scheme}`);
@@ -624,7 +624,8 @@ async function pathShots(page: Page, name: string): Promise<void> {
       );
     }
   }
-  await page.emulateMedia({ colorScheme: 'light' });
+  // She writes on right after this: the switch back lands first (`setScheme`, issue #443).
+  await setScheme(page, 'light');
   await page.setViewportSize(PHONES[0]);
 }
 
@@ -677,15 +678,8 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   await pathShots(page, '38-path-broke');
 
   // She writes it again; a sound path is judged on the value it arrives at.
-  // pathShots ends by switching the colour scheme back, and a scheme change rebuilds the
-  // tree: a fill that lands during that rebuild is wiped, "Prüfen" waits for an answer that is
-  // not there, and the click waits until the test times out (CI, 02.10.2026). Fill until
-  // the field holds the path, then check.
   const corrected = '2x + 3 = 7\n2x = 4\nx = 2';
-  await expect(async () => {
-    await field.fill(corrected);
-    await expect(field).toHaveValue(corrected, { timeout: 1000 });
-  }).toPass();
+  await field.fill(corrected);
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -707,7 +701,7 @@ test('a written path: three lines in, the first broken step named (issue #221)',
 async function keyRowShots(page: Page, name: string): Promise<void> {
   const field = page.getByLabel('Deine Antwort');
   for (const scheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme: scheme });
+    await setScheme(page, scheme);
     await field.focus();
     await shot(page, `${name}-${scheme}`);
     for (const phone of PHONES) {
@@ -805,19 +799,15 @@ test('an order: tap in order, tap again to take back (issue #228)', async ({ pag
   await shot(page, '39-order-eight');
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '39b-order-eight-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  // She types next: the switch back lands first (`setScheme`, issue #443 — the full walkthrough
+  // of 04.10. lost her words into the field being replaced).
+  await setScheme(page, 'light');
   // ── Her question beside the board (issue #402, report #388 §4) ──
   // "Prüfen" stands in the bar's pill; once she has typed a question "Senden" takes its place.
   // Off the task, the tutor steers back and offers to keep it: one tap, and Buddy brings it up
   // after the practice.
-  // Right after the switch back from the dark room the field can render once more (ThemeProvider
-  // remounts the tree): fill until the value holds instead of typing into the copy that is about
-  // to go (the full walkthrough of 04.10. lost the words that way; figureWalk.ts `typed`).
   const askField = page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' });
-  await expect(async () => {
-    await askField.fill('Hast du eigentlich ein Haustier?');
-    await expect(askField).toHaveValue('Hast du eigentlich ein Haustier?', { timeout: 1000 });
-  }).toPass();
+  await askField.fill('Hast du eigentlich ein Haustier?');
   await expect(check).toHaveCount(0);
   await page.getByRole('button', { name: 'Senden' }).last().click();
   await expect(page.getByText('Erzähl ich dir nach dem Üben', { exact: false })).toBeVisible();
@@ -1398,10 +1388,7 @@ test('the task typed back and a decay that does not add up, both named by code (
   await bothSchemes(page, '41-typed-back');
 
   // The key's form with its factors written out is right.
-  await expect(async () => {
-    await field.fill('(x+1)(x+1)');
-    await expect(field).toHaveValue('(x+1)(x+1)', { timeout: 1000 });
-  }).toPass();
+  await field.fill('(x+1)(x+1)');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -1424,7 +1411,7 @@ test('the task typed back and a decay that does not add up, both named by code (
 async function clozeShots(page: Page, name: string, gap: string): Promise<void> {
   const field = page.getByLabel(gap, { exact: true });
   for (const scheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme: scheme });
+    await setScheme(page, scheme);
     await field.focus();
     await shot(page, `${name}-${scheme}`);
     for (const phone of PHONES) {
@@ -1438,7 +1425,8 @@ async function clozeShots(page: Page, name: string, gap: string): Promise<void> 
       await expect(page.getByRole('button', { name: 'Prüfen' })).toBeInViewport();
     }
   }
-  await page.emulateMedia({ colorScheme: 'light' });
+  // She types on right after this (the return key in a gap): the switch lands first (#443).
+  await setScheme(page, 'light');
   await page.setViewportSize(PHONES[0]);
 }
 
@@ -1579,7 +1567,8 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   await shot(page, '40-drill-task');
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '40b-drill-task-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  // Her digits are tapped right after the switch back: it lands first (`setScheme`, #443).
+  await setScheme(page, 'light');
 
   const check = page.getByRole('button', { name: 'Prüfen' });
   /** The task on the card, solved the way a child would: read it, multiply. */
@@ -1609,14 +1598,14 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
       await shot(page, '42-drill-was');
       await page.emulateMedia({ colorScheme: 'dark' });
       await shot(page, '42b-drill-was-night');
-      await page.emulateMedia({ colorScheme: 'light' });
+      await setScheme(page, 'light');
     }
     if (n === 2) {
       await expect(page.getByTestId('drill-last')).toContainText('Richtig:');
       await shot(page, '42c-drill-right');
       await page.emulateMedia({ colorScheme: 'dark' });
       await shot(page, '42d-drill-right-night');
-      await page.emulateMedia({ colorScheme: 'light' });
+      await setScheme(page, 'light');
     }
     if (n < 19) {
       // No pause: the next task is on the card (or the same numbers the other way round
