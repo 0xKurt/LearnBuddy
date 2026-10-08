@@ -179,11 +179,11 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   within the 24-message dialogue the model saw.
 - `reply_to_id` is stored only when it names one of her own messages.
 - Stale context → rebuild and ask again (≤ 4 rounds); invalid output → one repair round.
-- Interrupted turn (process died, function frozen) → after 3 minutes without a model call (each
-  call refreshes the claim, so a long live turn is not mistaken for a dead one) the scheduler (or a client
-  retry) takes over with a new claim token; the old runner can no longer publish or fail it.
-  After three takeovers that died too, the message fails (`internal`) instead of being run
-  (and billed) again every few minutes.
+- Interrupted turn (process died, function frozen; `modules/buddy/turnRecovery.ts`) → after 3
+  minutes without a model call (each call refreshes the claim, so a long live turn is not
+  mistaken for a dead one) the scheduler (or a client retry) takes over with a new claim token;
+  the old runner can no longer publish or fail it. After three takeovers that died too, the
+  message fails (`internal`) instead of being run (and billed) again every few minutes.
 - Failure → the message is marked `failed` with a stable code (`model_unavailable`,
   `model_invalid`, `budget_exhausted`, `stale`, `internal` for anything else — a database
   error or a bug never leaves it "processing"); nothing half-applied, no invented reply. The
@@ -576,9 +576,13 @@ everything the injection did not carry.
 
 ## Proactivity
 
-`modules/buddy/check.ts`. Wake-ups are jobs (`reason`: `exam_countdown` 5/3/1 days before at the
-start of the preferred window, `exam_followup` the day after, `material_ready`,
-`session_finished`, `step_due`, `checkin_requested`, `routine`). Gates, cheapest first:
+`modules/buddy/check.ts` runs a learner's due wake-ups through the gates below; the gates with
+more than a few lines have a file each (#311): `checkLease.ts` (1), `checkReminder.ts` (2),
+`checkDecide.ts` (3–8, the model's part), `checkFallback.ts` (the fixed fallbacks);
+`checkTrigger.ts` reads what woke the check. Wake-ups are jobs (`reason`: `exam_countdown` 5/3/1
+days before at the start of the preferred window, `exam_followup` the day after,
+`material_ready`, `session_finished`, `step_due`, `checkin_requested`, `routine`). Gates, cheapest
+first:
 
 1. one worker per learner (lease on `buddy_settings`);
 2. agreed reminders → fixed template (i18n), no model. An agreed reminder never vanishes
