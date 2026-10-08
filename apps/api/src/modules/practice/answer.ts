@@ -33,12 +33,12 @@ import {
   typoShapeFor,
 } from './evaluate.js';
 import {
-  checkStaffLine,
+  checkStaffAnswer,
   staffAgain,
-  staffLineReply,
+  staffAnswerReply,
+  staffSurfaceOf,
   staffTaskOf,
-  writtenStaffLine,
-  type StaffCheck,
+  type StaffAnswerCheck,
 } from './staff.js';
 import { takeParts } from './partsAnswer.js';
 import { columnStepOf } from './columnCalc.js';
@@ -204,23 +204,26 @@ export async function answerItem(
     learnerId: learner.id,
   });
 
-  // ── eine NOTENZEILE, die sie selbst geschrieben hat (issue #226) ──
+  // ── eine NOTENZEILE, die sie selbst geschrieben hat (issue #226), oder ihre SCHLÄGE zu einem
+  //    gehörten Rhythmus (issue #445) ──
   //
   // Dieselbe Trennung wie oben, eine Stufe einfacher: die Zeile reist als eine kompakte
-  // Maschinenform in `text` (`renderStaffLine`), weil die App nichts Deutsches zusammenbauen
-  // soll und der Server nichts raten soll. `checkStaffLine` liest sie zurück und vergleicht
-  // Tonnamen, Dauern und Taktfüllung — kein Modell, in keinem Zweig.
+  // Maschinenform in `text` (`renderStaffLine`), die Schläge als ihre Abstände (`renderTaps`),
+  // weil die App nichts Deutsches zusammenbauen soll und der Server nichts raten soll.
+  // `checkStaffAnswer` liest sie zurück und vergleicht Tonnamen, Dauern und Taktfüllung bzw. die
+  // Abstände in ihrem Tempo (`rhythm.ts`) — kein Modell, in keinem Zweig.
   //
   // Null heißt „hier ist nichts zu vergleichen": jede andere Notenaufgabe (die wird angetippt),
-  // und eine Antwort, die überhaupt keine Notenzeile ist. Dann läuft alles wie immer — gegen den
-  // Schlüssel in Worten, der in `items.answer` steht. Sie für falsch zu erklären wäre ein Urteil
-  // über Noten, von denen keine da waren (Regel 5).
+  // und eine Antwort, die überhaupt keine Zeile oder keine Schläge ist. Dann läuft alles wie
+  // immer — gegen den Schlüssel in Worten, der in `items.answer` steht. Sie für falsch zu erklären
+  // wäre ein Urteil über Noten, von denen keine da waren (Regel 5).
   const staffTask = staffTaskOf(item.staff_task);
-  const staffCheck: StaffCheck | null =
-    hintRequest || staffTask === null ? null : checkStaffLine(staffTask, input.text ?? '');
-  /** Ihre Zeile in Worten, damit der Gesprächsfaden lesbar bleibt (wie `answerTextOf`). */
-  const staffWritten =
-    staffCheck !== null ? writtenStaffLine(learner.locale, input.text ?? '') : null;
+  const staffCheck: StaffAnswerCheck | null =
+    hintRequest || staffTask === null
+      ? null
+      : checkStaffAnswer(learner.locale, staffTask, input.text ?? '');
+  /** Ihre Zeile in Worten bzw. wie oft sie geklopft hat, damit der Gesprächsfaden lesbar bleibt. */
+  const staffWritten = staffCheck?.written ?? null;
   // A region of a map or a part of a picture she tapped (issues #251, #252): the app sends the
   // German name; in the thread it stands in her language, like every answer written here.
   const regionWritten =
@@ -405,14 +408,15 @@ export async function answerItem(
     // Her step in a guided example, judged by code (#298); a third miss still ends the ladder below.
     judged = { ...guidedTurn(learner.locale, guided), evaluatedBy: 'rule', gaveHint: false };
   } else if (rule === 'parts_left' && staffCheck !== null) {
-    // Eine Notenzeile, von der ein Stück hält (issue #226) — dasselbe Urteil, eine Form weiter.
+    // Eine Notenzeile, von der ein Stück hält (issue #226), oder Schläge, von denen die ersten
+    // sitzen (issue #445) — dasselbe Urteil, eine Form weiter.
     // Die Frage bleibt offen, nichts wird zurückgesetzt, und sie bekommt EINE Stelle: wie viele
     // Zeichen von vorne stimmen, und ab dem zweiten Versuch auch, wo es aufhört („in Takt 2 ist
     // mehr, als in den Takt passt“). Das ist genau die Rückmeldung, die issue #226 verlangt.
     judged = {
       verdict: 'partially_correct',
       evaluatedBy: 'rule',
-      reply: staffLineReply(learner.locale, staffCheck, item.attempts),
+      reply: staffAnswerReply(learner.locale, staffCheck, item.attempts),
       gaveHint: false,
       revealed: false,
     };
@@ -483,9 +487,9 @@ export async function answerItem(
     givesHints(session.mode) &&
     rule === 'incorrect' &&
     staffTask !== null &&
-    // Eine Schreibaufgabe nur, wenn wirklich eine Zeile ankam: sonst hat `ruleCheck` sie gegen
-    // den Schlüssel in Worten geprüft, und dafür ist der Satz hier der falsche.
-    (staffTask.task !== 'write_line' || staffCheck !== null)
+    // Eine Aufgabe mit Fläche (Zeile, Schläge) nur, wenn wirklich etwas davon ankam: sonst hat
+    // `ruleCheck` sie gegen den Schlüssel in Worten geprüft, und dafür ist der Satz der falsche.
+    (staffSurfaceOf(staffTask) === null || staffCheck !== null)
   ) {
     // Eine falsche Notenantwort bekommt eine feste, freundliche Zeile von Code — bei jedem
     // Versuch, nicht nur beim ersten, und ohne Modellaufruf.
@@ -495,14 +499,14 @@ export async function answerItem(
     // abgelesen wird — und ein Modell, das über ein Bild schreibt, das es nicht hat, erzeugt
     // genau die sicher klingende Falschaussage, die hier niemand erkennen könnte. Code weiß
     // dagegen, wo sie hinschauen muss, und sagt genau das (`staffAgain`); bei einer selbst
-    // geschriebenen Zeile sogar die Stelle (`staffLineReply`). Die dritte Fehlprobe erklärt
-    // die Lösung, wie überall — der Zweig darüber greift vorher.
+    // geschriebenen Zeile und bei Schlägen sogar die Stelle (`staffAnswerReply`). Die dritte
+    // Fehlprobe erklärt die Lösung, wie überall — der Zweig darüber greift vorher.
     judged = {
       verdict: 'incorrect',
       evaluatedBy: 'rule',
       reply:
         staffCheck !== null
-          ? staffLineReply(learner.locale, staffCheck, item.attempts)
+          ? staffAnswerReply(learner.locale, staffCheck, item.attempts)
           : staffAgain(learner.locale, staffTask),
       gaveHint: false,
       revealed: false,

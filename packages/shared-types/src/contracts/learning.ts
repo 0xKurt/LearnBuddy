@@ -7,6 +7,7 @@ import { ESSAY_TEXT_MAX, EssayFeedback } from './essay.js';
 import { Figure } from './figure.js';
 import { ListenRef } from './listen.js';
 import { PassageView } from './reading.js';
+import { HeardTones } from './staff.js';
 import { TaskPartView } from './taskParts.js';
 import { StructuredAnswer, StructuredTaskView } from './structured.js';
 
@@ -470,9 +471,10 @@ export const ItemView = z.object({
    * from one reviewed task (`BarTask`, `apps/api/src/modules/practice/bars.ts`) — the model
    * picks the task and its numbers, nothing else. Null everywhere else, and the surface
    * never carries the solution. Typing stays the way it always was: a tap writes the
-   * fraction into the same answer field.
+   * fraction into the same answer field. A surface this build does not know (the rhythm pad came
+   * with issue #445) reads as null (`.catch`) rather than failing the whole session.
    */
-  surface: AnswerSurface.nullable().default(null),
+  surface: AnswerSurface.nullable().default(null).catch(null),
   /**
    * She answers by tapping a place IN the figure (issue #248): a number on the number line, a point
    * of the coordinate system, a column of the bar chart, the hands of a clock face. The places are
@@ -501,6 +503,14 @@ export const ItemView = z.object({
    * (`SessionItemView.listen_transcript`). Questions about one text share the `ref`.
    */
   listen: ListenRef.nullable().default(null),
+  /**
+   * The question is answered from HEARING tones the app makes itself (ear training, issue #445,
+   * `contracts/staff.ts` `HeardTones`): two notes of an interval, played by the app's one
+   * listening control — nothing drawn, nothing fetched. Computed by the server from the reviewed
+   * task; null for every other question. A shape this build cannot read shows the question
+   * without it (`.catch`) rather than failing the session.
+   */
+  tones: HeardTones.nullable().default(null).catch(null),
   /**
    * The text this question is about (Leseverständnis, issue #233, `contracts/reading.ts`): its
    * lines as printed, shown above the question while she answers — unlike a listening text it is

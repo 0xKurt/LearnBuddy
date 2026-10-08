@@ -7,7 +7,7 @@ import { isStructuredKind, SubjectKind, type ItemView } from '@learnbuddy/shared
 import type { StorageGateway } from '../../storage/gateway.js';
 import { surfaceOf, taskOf } from './bars.js';
 import { storedFigure } from './items.js';
-import { staffSurfaceOf, staffTaskOf } from './staff.js';
+import { staffSurfaceOf, staffTaskOf, tonesOf } from './staff.js';
 import { structuredTaskOf, viewOf } from './structured.js';
 import type { ItemRow } from './service.js';
 import { tapItemProblem } from './tapCheck.js';
@@ -53,6 +53,12 @@ export function surfaceFor(bar: unknown, staff: unknown): ItemView['surface'] {
   // (migration 0078 `items_one_computed_source`), so the order here settles nothing.
   const staffTask = staffTaskOf(staff);
   return staffTask ? staffSurfaceOf(staffTask) : null;
+}
+
+/** The tones she hears (issue #445), or null; an unreadable column plays nothing. */
+export function tonesFor(staff: unknown): ItemView['tones'] {
+  const task = staffTaskOf(staff);
+  return task ? tonesOf(task) : null;
 }
 
 /**
