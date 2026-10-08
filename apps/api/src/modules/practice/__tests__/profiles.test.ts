@@ -213,7 +213,38 @@ const LISTEN = {
   ],
 };
 
-/** One explanation question with its key points („Erklär mal", #236). */
+/** A task in parts (#297): a situation, two numeric parts, the second built on the first. */
+const PART_TASK = {
+  stem: 'Ein Radfahrer fährt 2,5 Stunden lang mit gleichbleibend 18 km/h.',
+  topic: 'Bewegung',
+  difficulty: 2,
+  prompt_lang: 'de',
+  parts: [
+    {
+      kind: 'numeric',
+      prompt: 'Wie weit fährt er?',
+      answer: '45',
+      accepted_answers: [],
+      unit: 'km',
+      choices: null,
+      correct_choice: null,
+      tolerance: null,
+      from: null,
+    },
+    {
+      kind: 'numeric',
+      prompt: 'Wie lange bräuchte er mit 15 km/h?',
+      answer: '3',
+      accepted_answers: [],
+      unit: 'h',
+      choices: null,
+      correct_choice: null,
+      tolerance: null,
+      from: 'a / 15',
+    },
+  ],
+};
+
 const ESSAY = {
   prompt: 'Nimm Stellung: Sollte es an Schulen ein Handyverbot geben?',
   type: 'argue_linear',
@@ -221,6 +252,8 @@ const ESSAY = {
   difficulty: 3,
   passage: null,
 };
+
+/** One explanation question with its key points („Erklär mal", #236). */
 const TEACH_BACK = {
   prompt: 'Erklär mir, wie man zwei Brüche addiert.',
   topic: 'Brüche addieren',
@@ -256,6 +289,7 @@ function validAnswer(kind: Kind, chunk = 0): Record<string, unknown> {
     ...(structured.length > 0 ? { structured: structured.map((t) => STRUCTURED[t]) } : {}),
     ...(p.dictation ? { dictation: DICTATION } : {}),
     ...(p.teachBack ? { teach_back: [TEACH_BACK] } : {}),
+    ...(p.partTasks ? { part_tasks: [PART_TASK] } : {}),
     ...(p.essay ? { essay: [ESSAY] } : {}),
   };
 }
@@ -283,6 +317,7 @@ function outsiders(kind: Kind): { what: string; add: (a: Record<string, unknown>
   if (!p.listen) out.push({ what: 'listen', add: (a) => void (a.listen = LISTEN) });
   if (!p.dictation) out.push({ what: 'dictation', add: (a) => void (a.dictation = DICTATION) });
   if (!p.teachBack) out.push({ what: 'teach_back', add: (a) => list(a, 'teach_back', TEACH_BACK) });
+  if (!p.partTasks) out.push({ what: 'part_tasks', add: (a) => list(a, 'part_tasks', PART_TASK) });
   if (!p.essay) out.push({ what: 'essay', add: (a) => list(a, 'essay', ESSAY) });
   return out;
 }
@@ -299,6 +334,7 @@ function kept(kind: Kind, answer: unknown) {
     listen: set.listen === null ? 0 : 1,
     dictation: set.dictation?.entries.length ?? 0,
     teachBack: set.teach_back.length,
+    partTasks: set.part_tasks.length,
     essay: set.essay.length,
   };
 }
@@ -355,6 +391,7 @@ describe.each(KINDS)('the profile of a %s run', (kind) => {
         listen: p.listen ? 1 : 0,
         dictation: p.dictation ? DICTATION.entries.length : 0,
         teachBack: p.teachBack ? 1 : 0,
+        partTasks: p.partTasks ? 1 : 0,
         essay: p.essay ? 1 : 0,
       });
     }

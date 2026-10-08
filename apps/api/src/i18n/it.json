@@ -451,6 +451,9 @@
       "place_4": "nelle decine di migliaia",
       "place_5": "nelle centinaia di migliaia",
       "place_6": "nei milioni"
+    },
+    "parts": {
+      "follow_on": "Proseguito bene – con il tuo risultato di {{part}}. Quello non era giusto, ma il tuo calcolo qui ne segue correttamente. Conta come giusto."
     }
   },
   "contact": {

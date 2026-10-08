@@ -384,6 +384,10 @@
       "milioni"
     ]
   },
+  "parts": {
+    "step": "Parte {{part}} di {{all}}",
+    "stem": "Testo"
+  },
   "essay": {
     "intro": "{{form}} – a che punto è il tuo testo",
     "met": "fatto",
