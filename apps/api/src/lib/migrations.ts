@@ -92,6 +92,7 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
   '0098_item_why',
   '0099_essay_turn_text',
   '0100_task_parts',
+  '0101_worked_steps',
 ];
 
 /**

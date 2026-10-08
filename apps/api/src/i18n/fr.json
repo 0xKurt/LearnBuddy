@@ -232,6 +232,8 @@
     "same_value": "La valeur est juste – tu l'as seulement écrite autrement. Regarde sous quelle forme l'exercice veut le résultat.",
     "step_broke": "Tout tient jusqu'à la ligne {{line}}. Quelque chose se perd en passant à la ligne suivante – regarde encore cette étape.",
     "step_broke_last": "Ton raisonnement tient jusqu'au bout – seule la dernière étape ne va pas. Regarde encore la dernière ligne.",
+    "step_ok": "Cette étape est juste – et ensuite ?",
+    "step_wrong": "Cette étape ne découle pas de l'équation précédente. Regarde encore ta dernière transformation.",
     "test_no_hints": "Pas d'indices pendant le test – écris simplement ce que tu penses, ou passe la question. Après le test, je t'explique tout.",
     "test_no_hints_on_screen": "Pas d'indices pendant le test – réponds simplement comme tu penses, ou passe la question. Après le test, je t'explique tout.",
     "why": {

@@ -232,6 +232,8 @@
     "same_value": "Il valore è giusto – l’hai solo scritto in un altro modo. Guarda in quale forma l’esercizio vuole il risultato.",
     "step_broke": "Fino alla riga {{line}} va tutto bene. Qualcosa si perde passando alla riga successiva: guarda ancora quel passaggio.",
     "step_broke_last": "Il tuo procedimento regge fino alla fine – solo l’ultimo passaggio no. Guarda ancora l’ultima riga.",
+    "step_ok": "Il passaggio è giusto – e poi?",
+    "step_wrong": "Questo passaggio non segue dall'equazione precedente. Ricontrolla la tua ultima trasformazione.",
     "test_no_hints": "Nel test non ci sono suggerimenti: scrivi quello che pensi o salta la domanda. Dopo il test ti spiego tutto.",
     "test_no_hints_on_screen": "Nel test non ci sono suggerimenti: rispondi come pensi o salta la domanda. Dopo il test ti spiego tutto.",
     "why": {

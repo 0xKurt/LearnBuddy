@@ -232,6 +232,8 @@
     "same_value": "The value is right – you've just written it differently. Check which form the task wants the result in.",
     "step_broke": "Everything holds up to line {{line}}. Something gets lost on the way to the next line – take another look at that step.",
     "step_broke_last": "Your way is right all the way through – only the last step is not. Take another look at the last line.",
+    "step_ok": "That step is right – and next?",
+    "step_wrong": "This step does not follow from the equation before. Have another look at your last change.",
     "test_no_hints": "There are no hints in a test – just write what you think, or skip the question. After the test I'll explain everything.",
     "test_no_hints_on_screen": "There are no hints in a test – just answer the way you think, or skip the question. After the test I'll explain everything.",
     "why": {

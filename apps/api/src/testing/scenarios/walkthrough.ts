@@ -20,6 +20,7 @@ import { scriptFigures } from './figures.js';
 import { installGenerations } from './generations.js';
 import { scriptGrid } from './grid.js';
 import { scriptHelp } from './help.js';
+import { scriptSteps } from './steps.js';
 import { scriptLearningModes } from './learning-modes.js';
 import { scriptMark } from './mark.js';
 import { scriptPeriodic } from './periodic.js';
@@ -70,6 +71,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptGrid();
   // Also first: "Malnehmen" and "Probetest" are words an older rule may know (#388).
   scriptHelp();
+  // Also first: "Gleichung" is a word an older rule may know (#298).
+  scriptSteps();
   // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
   scriptPrimary();
   // Also before the core loop: "Kreislauf" and "Kette" are everyday words its rules may know (#247).
