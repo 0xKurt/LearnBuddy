@@ -41,6 +41,12 @@ export type SchematicPartShape = RegionShape & {
 export type SchematicShape = {
   lines: readonly string[];
   parts: readonly SchematicPartShape[];
+  /**
+   * What is drawn on the parts without being a part: a sign's white symbol, its black walker, a
+   * fish's eye. White stays white and black stays black in the dark room too — a sign looks the
+   * same at night. A tap on a mark means the part below.
+   */
+  marks?: { white?: readonly string[]; black?: readonly string[] };
 };
 
 export const SCHEMATIC_IDS = [
@@ -52,6 +58,15 @@ export const SCHEMATIC_IDS = [
   'tooth',
   'insect',
   'bicycle',
+  'microscope',
+  'lab',
+  'heart',
+  'ear',
+  'skeleton',
+  'organs',
+  'signs',
+  'instruments',
+  'anlaut',
 ] as const;
 export type SchematicId = (typeof SCHEMATIC_IDS)[number];
 export type SchematicNames = Readonly<Record<SchematicId, Schematic>>;

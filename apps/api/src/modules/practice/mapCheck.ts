@@ -21,6 +21,7 @@ import {
   mapProblem,
   mapRegion,
   regionTappable,
+  TAP_TARGET,
 } from '@learnbuddy/shared-math';
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 
@@ -36,7 +37,7 @@ function mapItemProblem(it: Mapped): string | null {
     // On a region of the map, unmarked: the tap check (`tapCheck.ts`). Here only what it cannot
     // know without the shapes: a region too small for a finger on a phone is never the key.
     const key = mapRegion(f.v, it.answer);
-    return key === null || regionTappable(MAP_SHAPES[f.v], key, mapHeight(f.v))
+    return key === null || regionTappable(MAP_SHAPES[f.v], key, mapHeight(f.v), TAP_TARGET.map)
       ? null
       : `"${it.answer}" is too small to tap on the map ${f.v}`;
   }
