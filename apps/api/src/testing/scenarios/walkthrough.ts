@@ -7,6 +7,7 @@
 
 import type { ScriptedGateway } from '../fakes.js';
 import { scriptAsk } from './ask.js';
+import { scriptCards } from './cards.js';
 import { scriptCircuits } from './circuits.js';
 import { installChecks } from './checks.js';
 import { scriptCloze } from './cloze.js';
@@ -34,6 +35,7 @@ import { scriptTap } from './tap.js';
 import { hintRules, pronounceRules, readingRules, tutorRules } from './rules.js';
 import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
+import { scriptTaskParts } from './taskParts.js';
 import { scriptTour } from './tour.js';
 import { scriptTeachBack } from './teachBack.js';
 import { scriptTrees } from './trees.js';
@@ -45,9 +47,13 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   // First of all: her questions in practice (#402) stand in requests about the pie chart and the
   // order, whose own words an older, broader rule may know.
   scriptAsk();
+  // Keyed by her own words ("Frosch", "Kröte"): the flashcards and her question on a card (#384).
+  scriptCards();
   // Early too: "Zahlenstrahl" and "Uhr" are words an older, broader rule may know (#248).
   scriptTap();
   scriptMap();
+  // Early: "Klassenarbeit", "Handy" and "Rad" are words an older, broader rule may know (#297).
+  scriptTaskParts();
   scriptSchematic();
   // First: its generation rule is keyed on her list, and a broader rule registered earlier
   // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).

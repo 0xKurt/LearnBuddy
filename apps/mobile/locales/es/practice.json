@@ -55,7 +55,6 @@
     "sheet_body": "Entonces quito esta pregunta: no cuenta y no volverá a salir. Tu progreso se queda como estaba.",
     "sheet_title": "¿La corrección no es correcta?"
   },
-  "end": "Terminar",
   "end_hint": "Volver a Buddy. Tus respuestas quedan guardadas: puedes seguir aquí más tarde.",
   "end_hint_test": "Entrega el examen de práctica y te muestra cómo te ha ido.",
   "end_label": "Terminar la práctica",
@@ -389,6 +388,10 @@
       "centenas de millar",
       "millones"
     ]
+  },
+  "parts": {
+    "step": "Apartado {{part}} de {{all}}",
+    "stem": "Enunciado"
   },
   "essay": {
     "intro": "{{form}}: así va tu texto",

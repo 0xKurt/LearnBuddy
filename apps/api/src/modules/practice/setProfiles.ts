@@ -36,6 +36,7 @@ import { MAX_STRUCTURED_ITEMS, ORDER_RULES, StructuredDraftNoHelp } from './stru
 import { TABLE_RULES } from './table.js';
 import { BuddyReadingDraft, BuddyReadingDraftParse } from './readText.js';
 import { MAX_TEACH_BACK, TeachBackDraft } from './teachBack.js';
+import { MAX_PART_TASKS, PartTaskDraft } from './taskParts.js';
 
 const SUBJECT_KINDS = [
   'math',
@@ -122,6 +123,12 @@ export const GeneratedSet = z.object({
    */
   reading: BuddyReadingDraft.nullable().default(null),
   /**
+   * Tasks in parts (#297): a situation and subtasks a), b), c) on it. A separate list for the
+   * reason `reading` is one — its parts become items only once code has checked every one of
+   * them and recomputed every formula between them (`practice/taskParts.ts`).
+   */
+  part_tasks: z.array(PartTaskDraft).max(MAX_PART_TASKS).default([]),
+  /**
    * The writing task of an essay run (issue #258): its wording, its text type and the text it is
    * about. A separate list for the reason `teach_back` is one: code sets the key points from the
    * type and holds the text to her sheet (`practice/essayTask.ts`). In the schema only for that run.
@@ -162,6 +169,8 @@ export type SetProfile = {
   teachBack: boolean;
   /** Buddy's reading text and its questions (#368): only in a reading run. */
   reading: boolean;
+  /** Tasks in parts (#297): in practice and tests, where a class test's tasks belong. */
+  partTasks: boolean;
   /** A long-text task (#258): only in an essay run, where it is all there is. */
   essay: boolean;
 };
@@ -207,6 +216,7 @@ function onlyItems(items: readonly ModelItemKind[]): SetProfile {
     dictation: false,
     teachBack: false,
     reading: false,
+    partTasks: false,
     essay: false,
   };
 }
@@ -221,6 +231,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     dictation: false,
     teachBack: false,
     reading: false,
+    partTasks: true,
     essay: false,
   },
   // One try per question: no long answer, and no bar — a test is not a place to try a surface.
@@ -233,6 +244,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     dictation: false,
     teachBack: false,
     reading: false,
+    partTasks: true,
     essay: false,
   },
   vocab: onlyItems(['vocab']),
@@ -269,6 +281,7 @@ export const FALLBACK_PROFILE: SetProfile = {
   dictation: false,
   teachBack: false,
   reading: false,
+  partTasks: true,
   essay: false,
 };
 
@@ -365,6 +378,7 @@ export function setSchemaForModel(
     ...(profile.dictation ? {} : { dictation: true }),
     ...(profile.teachBack ? {} : { teach_back: true }),
     ...(profile.reading ? {} : { reading: true }),
+    ...(profile.partTasks ? {} : { part_tasks: true }),
     ...(profile.essay ? {} : { essay: true }),
   });
 }
@@ -405,6 +419,8 @@ export function parseSetFor(
     reading: profile.reading
       ? BuddyReadingDraftParse.nullable().default(null).catch(null)
       : z.null().catch(null),
+    // Read one by one: a task whose shape does not fit costs only itself.
+    part_tasks: itemsOneByOne(profile.partTasks ? PartTaskDraft : NOTHING, MAX_PART_TASKS),
     essay: itemsOneByOne(profile.essay ? EssayDraft : NOTHING, MAX_ESSAYS),
   });
 }

@@ -94,6 +94,7 @@ export async function materialItems(
       // A reading text belongs to working on its questions too (issue #233): the list names
       // what the sheet asks, and the text stands above each question in the session.
       passage: null,
+      task_part: null,
       // The options' pictures (issue #231) too: the list names its questions by their text.
       choice_figures: null,
       // Reading a question aloud belongs to the session too (issue #238): the list says what

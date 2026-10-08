@@ -106,6 +106,7 @@ const ITEM: ItemView = {
   listen: null,
   tones: null,
   passage: null,
+  task_part: null,
   read_aloud: true,
 };
 
