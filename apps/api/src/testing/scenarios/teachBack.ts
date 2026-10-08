@@ -104,7 +104,7 @@ export function scriptTeachBack(): void {
  * The tutor for one question: a point is met when her latest words carry it, and the quote is cut
  * out of those very words — only the points the request asks about are answered.
  */
-function judgedBy(question: RegExp, claims: ReadonlyArray<readonly [string, RegExp]>): Rule {
+export function judgedBy(question: RegExp, claims: ReadonlyArray<readonly [string, RegExp]>): Rule {
   return {
     when: question,
     answer: (req) => {
