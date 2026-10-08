@@ -10,6 +10,7 @@ import {
   MAP_VIEWS,
   mapCanonical,
   mapHeight,
+  mapHomeLand,
   mapProblem,
   mapRegion,
   mapPlaceName,
@@ -193,5 +194,41 @@ describe('which region a finger means', () => {
 
   it('a path is the rings at the drawn size', () => {
     expect(regionPath(['0 0 10 0 10 10'], 2)).toBe('M0 0L20 0L20 20Z');
+  });
+});
+
+describe('her Land on the map of Germany (#429)', () => {
+  // The profile's codes (`CurriculumRegion`, shared-types): each of the 16 is a Land of the map.
+  const LAENDER = [
+    'bw',
+    'by',
+    'be',
+    'bb',
+    'hb',
+    'hh',
+    'he',
+    'mv',
+    'ni',
+    'nw',
+    'rp',
+    'sl',
+    'sn',
+    'st',
+    'sh',
+    'th',
+  ];
+
+  it('every Land code of the profile is one region of the map, by id', () => {
+    const ids = LAENDER.map((r) => mapHomeLand(FIGURE_NAMES, r));
+    expect(ids).toEqual(LAENDER.map((r) => r.toUpperCase()));
+    expect(new Set(ids.map((id) => mapRegion(FIGURE_NAMES, 'de', id!)))).toHaveProperty('size', 16);
+  });
+
+  it('no Land, "other" or a value no Land has: none, never a guess', () => {
+    expect(mapHomeLand(FIGURE_NAMES, null)).toBeNull();
+    expect(mapHomeLand(FIGURE_NAMES, 'other')).toBeNull();
+    expect(mapHomeLand(FIGURE_NAMES, 'xx')).toBeNull();
+    // A name is no code: the profile holds codes only.
+    expect(mapHomeLand(FIGURE_NAMES, 'Bayern')).toBeNull();
   });
 });

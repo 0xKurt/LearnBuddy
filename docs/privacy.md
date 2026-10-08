@@ -48,11 +48,14 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   a mistake in her own class test. **Was der Wert heute tatsächlich bewirkt** (Issue #214, seit
   02.10.2026 — und das ist die Liste der Stellen, die ihn lesen, nicht die der geplanten): das
   Fachwissen dazu liegt als Tabelle im Code (`apps/api/src/modules/curriculum/points.ts`) — zwölf
-  Stellen, je Bundesland eine Regel mit Lehrplanquelle. Gelesen wird der Wert an drei Stellen:
+  Stellen, je Bundesland eine Regel mit Lehrplanquelle. Gelesen wird der Wert an vier Stellen:
   (1) beim **Schreiben** von Aufgaben (aus einem Thema und aus einem fotografierten Blatt) steht
   die Regel ihres Landes im Modell-Auftrag; (2) beim **Beurteilen** einer Antwort steht sie vor dem
   Urteil; (3) in einem **Übungstest** lässt der Code eine Frage weg, die ihr Land in ihrem Jahrgang
-  nicht unterrichtet (in freier Übung nie — dort fragt sie, was sie will). Mehr wird mit dem Wert
+  nicht unterrichtet (in freier Übung nie — dort fragt sie, was sie will); (4) seit #429 ist auf
+  einer **Erdkunde-Karte** ihrer Themenübungen Deutschland die Standardansicht und ihr Land
+  umrandet — der Name ihres Landes steht dafür im Modell-Auftrag, gespeichert wird an der Karte
+  nur sein Kürzel („BY") an ihrer eigenen Frage. Mehr wird mit dem Wert
   nicht getan: er steuert keine Inhalte, keine Werbung, keine Zielgruppe, kein Modell-Training.
   **Wenn das Land unbekannt ist** — `other`, kein Wert, oder eines der zehn Länder, für die noch
   kein Lehrplan gelesen wurde — wird **keine** Landesregel angewandt; das Urteil fällt dann

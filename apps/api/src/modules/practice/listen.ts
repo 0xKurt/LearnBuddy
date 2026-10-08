@@ -32,7 +32,7 @@
 import { isPrimary, primaryKey } from '@learnbuddy/shared-math';
 import {
   ListenTask,
-  ModelFigure,
+  DrawnFigure,
   MAX_LISTEN_CHARS,
   MAX_LISTEN_QUESTIONS,
   MIN_LISTEN_CHARS,
@@ -66,7 +66,7 @@ export const LISTEN_KINDS = ['multiple_choice', 'short'] as const;
  * text, and a chart, a tree or a solid against nothing an option says. And only when the picture
  * says what it shows (`ask`, `primaryKey`): `listenItems` drops a question with one that does not.
  */
-const [heardFirst, ...heardRest] = ModelFigure.options.filter((o) =>
+const [heardFirst, ...heardRest] = DrawnFigure.options.filter((o) =>
   isPrimary({ type: o.shape.type.value }),
 );
 const HeardOptionFigure = z.discriminatedUnion('type', [heardFirst!, ...heardRest]);

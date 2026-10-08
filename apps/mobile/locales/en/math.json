@@ -506,6 +506,7 @@
     "map_europe": "Blank map: the countries of Europe.",
     "map_world": "Blank map: the world with its {{count}} continents.",
     "map_marked": "Marked: {{names}}.",
+    "map_home": "Your state: {{name}}.",
     "map_eu_central": "Blank map: Central Europe.",
     "map_eu_southeast": "Blank map: South-eastern Europe.",
     "map_eu_north": "Blank map: the Baltic.",

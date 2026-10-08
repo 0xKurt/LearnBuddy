@@ -15,6 +15,7 @@ import {
   unsupportedMath,
   Rubric,
   type StoredRubric,
+  DrawnFigure,
   type BarTask,
   type Figure,
   type ItemKind,
@@ -50,7 +51,7 @@ import { checkedPeriodic } from './periodicCheck.js';
 import { checkedTree } from './treeCheck.js';
 import { checkedSpace } from './solidCheck.js';
 import { checkedDiagram } from './diagramCheck.js';
-import { checkedMap } from './mapCheck.js';
+import { checkedMap, mapViewed, viewOf, withHome } from './mapCheck.js';
 import { checkedSchematic, labelQuestions, SCHEMATIC_PARTS } from './schematicCheck.js';
 import { checkedTap } from './tapCheck.js';
 import { checkedCircuit } from './circuitCheck.js';
@@ -77,7 +78,7 @@ export const ANSWER_FORM_RULES = `A question asks for exactly the whole answer, 
 /** When case, ß and punctuation decide (decision D-2). */
 export const SPELLING_RULES = `spelling: "strict" when the task practises spelling, capitalisation or punctuation; "gentle" when they don't matter for the answer; null otherwise (the subject decides).`;
 
-export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table, a structural formula, a chart, a tree, a clock, coins and notes, a Zwanziger- or Hunderterfeld, base-ten blocks, boxes with arrows, a stumme Karte, a labelled picture, a circuit, logic gates, Itten's colour wheel) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). A geometry figure is drawn to scale and checked: its coordinates must give every stated angle (deg) and every side length (value, one unit for all), a force arrow's length is proportional to its value, and a resultant arrow is the vector sum of the others; label the one measure the question asks for "?" — the key must be that measure. A molecule is atoms (aliases a1, a2 …, hydrogens counted in h, charge) and bonds; the app computes the lone pairs and checks every shell, so an atom whose octet does not hold costs the question; set "ask" when the key is its formula, its number of lone pairs or its molar mass. Primary school: clock c = one time {h, m} (two for a span from the first to the second), h24 only when the task asks for the 24-hour time, ask "time" (kind short, answer "7:45") or "span" (a number, unit min or h); money p = each euro coin or note once with its count n, at most 12 pieces, ask "sum" (the amount, unit € or ct); dot_field = field twenty or hundred, n = filled dots per colour (two colours for 8 + 6), ask "count"; base_ten = h hundred plates, t ten rods, o unit cubes (more than 9 to practise bundling), ask "count". Set ask whenever the key is read off such a figure, else "none": code computes the key, and one that differs costs the question. A map (stumme Karte): v = de (the 16 Bundesländer), europe (the countries of Europe) or world (the continents); l = what is asked on it: regions (default), or on de and europe a layer of places — cities (the capitals: of the Länder on de, of the countries on europe), rivers (the large ones) or mountains (the large ranges); hl = places of that layer to mark, named as an atlas names them ("Bayern", "Frankreich", "Afrika", "München", "Rhein", "Alpen"); the app has every shape and name and zooms Europe itself — only two questions: "Wie heißt das markierte Bundesland?" / "Wie heißt der markierte Fluss?" (kind short, exactly one place in hl, answer its name) or a tap (below). A place the map's layer does not have, a neighbour or a fact about it (a length, a height) as the key costs the question. l = grid (on de, europe or world): the Gradnetz, whose places are the points where its lines cross — every 1° on de (6–15° E, 48–55° N), every 10° on europe, every 30° on world —, written latitude first in the question's language ("50° N, 10° O", "0°, 30° W"); only "Welche Koordinaten hat der markierte Punkt?" (kind short, that one point in hl, answer it) or a tap; a point where no two lines cross, or what lies at a point, costs the question. A labelled picture (schematic): d = one drawing of the app's library, n = parts that carry the numbers 1, 2, 3 … by name (at most 6), ask = the number asked; the drawings and their parts: ${SCHEMATIC_PARTS}. Three questions only: "Beschrifte die Pflanzenzelle" (kind short, 2–6 parts in n, ask 0 — the app writes one question per number), "Wie heißt Teil 3?" (kind short, ask 3, answer that part's name) or a tap (below). What a part does, how many there are, or a part the drawing does not have as the key costs the question. Otherwise figure is null. Tapping (set "tap": true, else omit it): she answers by tapping a place IN the figure instead of typing — a number_line (kind numeric: "Trage 2,5 am Zahlenstrahl ein"; the key is one of its places min + k·step, at most 21 places), a function_plot as a coordinate system (kind short: "Markiere den Punkt (2|-1)"; the key a point with whole coordinates inside the window, written "(2|-1)", at most 12 units per axis, functions only when the point is on one), a bar_chart (kind short: "Tippe die Säule an, …"; the key is one column's label exactly) a clock face to set (kind short: "Stell die Uhr auf 7:45"; c = [] — no hands —, h24 false, ask "none", the key a time on a five-minute mark), a map (kind short: "Tippe auf Bayern", "Tippe auf den Rhein", "Tippe auf Luxemburg", "Tippe auf den Punkt 50° N, 10° O"; hl [], the key the place's name in the layer l or the point on the grid; a place too small to tap even when the app zooms is dropped) or a labelled picture (kind short: "Tippe auf den Zellkern"; n [], ask 0, the key the part's name; never a part marked * — too small for a finger). The figure never already marks the key; a key between two places or off the figure costs the question. Pictures as the OPTIONS of a multiple_choice ("Welcher Graph passt zu $f(x) = x^{2} - 1$?"): 2–4 choices, "choice_figures" = one figure per choice in the same order, "choices" = what each option shows in words or math (the app shows the pictures, not these texts); for graphs every option is a function_plot with exactly one function, all with the same window, no two alike, and "answer" = the right graph's function, named as in the question ("f(x) = x^2 - 1"; for a derivative "f'(x) = 2*x"); for any other picture "answer" = the right option's text exactly. Otherwise choice_figures is null.
+export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table, a structural formula, a chart, a tree, a clock, coins and notes, a Zwanziger- or Hunderterfeld, base-ten blocks, boxes with arrows, a stumme Karte, a labelled picture, a circuit, logic gates, Itten's colour wheel) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). A geometry figure is drawn to scale and checked: its coordinates must give every stated angle (deg) and every side length (value, one unit for all), a force arrow's length is proportional to its value, and a resultant arrow is the vector sum of the others; label the one measure the question asks for "?" — the key must be that measure. A molecule is atoms (aliases a1, a2 …, hydrogens counted in h, charge) and bonds; the app computes the lone pairs and checks every shell, so an atom whose octet does not hold costs the question; set "ask" when the key is its formula, its number of lone pairs or its molar mass. Primary school: clock c = one time {h, m} (two for a span from the first to the second), h24 only when the task asks for the 24-hour time, ask "time" (kind short, answer "7:45") or "span" (a number, unit min or h); money p = each euro coin or note once with its count n, at most 12 pieces, ask "sum" (the amount, unit € or ct); dot_field = field twenty or hundred, n = filled dots per colour (two colours for 8 + 6), ask "count"; base_ten = h hundred plates, t ten rods, o unit cubes (more than 9 to practise bundling), ask "count". Set ask whenever the key is read off such a figure, else "none": code computes the key, and one that differs costs the question. A map (stumme Karte): v = de (the 16 Bundesländer), europe (the countries of Europe) or world (the continents), left out only where a HOME LAND line says so; l = what is asked on it: regions (default), or on de and europe a layer of places — cities (the capitals: of the Länder on de, of the countries on europe), rivers (the large ones) or mountains (the large ranges); hl = places of that layer to mark, named as an atlas names them ("Bayern", "Frankreich", "Afrika", "München", "Rhein", "Alpen"); the app has every shape and name and zooms Europe itself — only two questions: "Wie heißt das markierte Bundesland?" / "Wie heißt der markierte Fluss?" (kind short, exactly one place in hl, answer its name) or a tap (below). A place the map's layer does not have, a neighbour or a fact about it (a length, a height) as the key costs the question. l = grid (on de, europe or world): the Gradnetz, whose places are the points where its lines cross — every 1° on de (6–15° E, 48–55° N), every 10° on europe, every 30° on world —, written latitude first in the question's language ("50° N, 10° O", "0°, 30° W"); only "Welche Koordinaten hat der markierte Punkt?" (kind short, that one point in hl, answer it) or a tap; a point where no two lines cross, or what lies at a point, costs the question. A labelled picture (schematic): d = one drawing of the app's library, n = parts that carry the numbers 1, 2, 3 … by name (at most 6), ask = the number asked; the drawings and their parts: ${SCHEMATIC_PARTS}. Three questions only: "Beschrifte die Pflanzenzelle" (kind short, 2–6 parts in n, ask 0 — the app writes one question per number), "Wie heißt Teil 3?" (kind short, ask 3, answer that part's name) or a tap (below). What a part does, how many there are, or a part the drawing does not have as the key costs the question. Otherwise figure is null. Tapping (set "tap": true, else omit it): she answers by tapping a place IN the figure instead of typing — a number_line (kind numeric: "Trage 2,5 am Zahlenstrahl ein"; the key is one of its places min + k·step, at most 21 places), a function_plot as a coordinate system (kind short: "Markiere den Punkt (2|-1)"; the key a point with whole coordinates inside the window, written "(2|-1)", at most 12 units per axis, functions only when the point is on one), a bar_chart (kind short: "Tippe die Säule an, …"; the key is one column's label exactly) a clock face to set (kind short: "Stell die Uhr auf 7:45"; c = [] — no hands —, h24 false, ask "none", the key a time on a five-minute mark), a map (kind short: "Tippe auf Bayern", "Tippe auf den Rhein", "Tippe auf Luxemburg", "Tippe auf den Punkt 50° N, 10° O"; hl [], the key the place's name in the layer l or the point on the grid; a place too small to tap even when the app zooms is dropped) or a labelled picture (kind short: "Tippe auf den Zellkern"; n [], ask 0, the key the part's name; never a part marked * — too small for a finger). The figure never already marks the key; a key between two places or off the figure costs the question. Pictures as the OPTIONS of a multiple_choice ("Welcher Graph passt zu $f(x) = x^{2} - 1$?"): 2–4 choices, "choice_figures" = one figure per choice in the same order, "choices" = what each option shows in words or math (the app shows the pictures, not these texts); for graphs every option is a function_plot with exactly one function, all with the same window, no two alike, and "answer" = the right graph's function, named as in the question ("f(x) = x^2 - 1"; for a derivative "f'(x) = 2*x"); for any other picture "answer" = the right option's text exactly. Otherwise choice_figures is null.
 Charts are data only; the app draws axes, scale and colours. line_chart: x = up to 12 labels in order (numbers for a measured x such as time, else categories so short that count × (longest + 1) ≤ 30 characters, so "J"…"D" for 12 months, e.g. "Jan"…"Jun"); s = 1–3 series {n name, u unit, v one value per x label, bar true for columns (one series at most), r true for a right axis — only for a second unit}. climate_chart: place, alt in m, t = 12 monthly means in °C and p = 12 monthly sums in mm, January first. pie_chart: l labels and v shares in % that add up to exactly 100; half for a half circle. box_plot: b = 1–3 boxes {l, v = [min, Q1, median, Q3, max]}, raw = the data list when the task gives one (then one box), else []. histogram: x0 start of the first class, w class width, v heights. scatter_plot: x and y of each point; fit draws the least-squares line. pyramid: a0 first age, w years per group, m men and f women per group from young to old, u unit. A chart that breaks one of these rules is dropped together with its question.
 "read" — for every question whose answer is read off or computed from its chart, so the app can check the key: q = value (s, i) · max, min, sum, mean, range (largest − smallest) of series s · argmax, argmin (answer = the label: month, category or slice) · diff (value at j minus value at i) · angle (centre angle of slice i in degrees) · iqr (box s) · humid, arid (number of humid or arid months) · humid_at (month i; multiple_choice, correct_choice 0 = humid, 1 = arid) · slope, intercept (the fitted line) · type (pyramid; multiple_choice, correct_choice 0 = pyramid, 1 = bell, 2 = urn). s = series (climate 0 = °C, 1 = mm; pyramid 0 = men, 1 = women; box plot: which box), i and j = positions from 0 (box plot value: i 0 = min … 4 = max); unused numbers 0. The app writes the options for humid_at and type. A numeric question about a chart always has "read"; any other question read null.
 Trees are data only; the app lays them out, checks them and computes their keys. tree: n = nodes, root first (p = parent index, -1 for the root; l = label; e = label of the branch from the parent); pr true for a probability tree: every e a probability ("3/5", "0.4"), the branches of each node add up to exactly 1, at most one branch "?". ask = the key: path (probability of the path to node at[0]), sum (of the paths to the leaves in at), edge (the "?" branch), else none; a numeric question on a tree always has an ask. pedigree: p = persons, numbered 1, 2 … in this order, generation by generation (s "m"/"f", a = affected, fa/mo = the father's and mother's index, listed earlier, or -1); md = the mode it shows; ask mode ("Welcher Erbgang?", only when the pedigree rules out the other three; multiple_choice, correct_choice 0 = autosomal dominant, 1 = autosomal recessive, 2 = X-linked dominant, 3 = X-linked recessive) or gt (genotype of person at; multiple_choice, correct_choice 0 = AA, 1 = Aa, 2 = aa; X-linked: a woman XAXA, XAXa, XaXa, a man XAY, XaY; A = the dominant allele), else none. automaton: s = states (l "q0", f = final state), the first is the start; t = transitions from a to b on the symbols in c ("0,1"); w = the word a question asks about: multiple_choice, correct_choice 0 = accepted, 1 = not accepted. The app writes the options of mode, gt and w.
@@ -161,9 +162,14 @@ export const ItemDraft = z.object({
   // A figure over a bound (9 points, 8 columns) is dropped, never the question (audit H-15).
   // `ModelFigure` and not `Figure`: a note line is the one figure the model may not write,
   // because its key is READ OFF the drawing (issue #226, `contracts/figure.ts` says why).
-  figure: ModelFigure.nullable().default(null).catch(null),
+  // A map without a view is read as one on Germany, marked as such until code reads her profile
+  // (#429, `viewOf`, `mapViewed`).
+  figure: ModelFigure.nullable()
+    .default(null)
+    .catch(null)
+    .transform((f) => viewOf(f)),
   choice_figures: optionPictures(
-    OptionFigure,
+    OptionFigure.transform((f) => viewOf(f)),
     'multiple_choice only: one figure per choice, same order as choices, when the options ARE pictures ("Welcher Graph passt zu …?"); else null',
   ),
   /**
@@ -307,7 +313,7 @@ export function storedFigure(raw: unknown): Figure | null {
 }
 
 /** A figure the app can really draw, or null (a broken figure never costs the question). */
-function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
+function usableFigure<F extends DrawnFigure>(f: F | null): F | null {
   if (!f) return null;
   switch (f.type) {
     case 'function_plot': {
@@ -347,9 +353,9 @@ function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
  * Unlike the question's own figure nothing is dropped from a picture either: a graph whose
  * function the app cannot read would be an empty option.
  */
-function optionFigures(raw: ItemDraft): ModelFigure[] | null {
+function optionFigures(raw: ItemDraft): DrawnFigure[] | null {
   if (!kindIn(CHOICE_FIGURE_KINDS, raw.kind) || !raw.choice_figures) return null;
-  const drawn: ModelFigure[] = [];
+  const drawn: DrawnFigure[] = [];
   for (const written of raw.choice_figures) {
     const f = usableFigure(written);
     if (f === null) return [];
@@ -375,7 +381,7 @@ export function storedChoiceFigures(
   row: Omit<ChoiceDraft, 'choice_figures'> & { kind: string; choice_figures: unknown },
 ): Figure[] | null {
   if (row.kind !== 'multiple_choice' || row.choice_figures == null) return null;
-  const read = z.array(ModelFigure).min(2).max(MAX_FIGURE_CHOICES).safeParse(row.choice_figures);
+  const read = z.array(DrawnFigure).min(2).max(MAX_FIGURE_CHOICES).safeParse(row.choice_figures);
   if (!read.success) return null;
   if (!read.data.every((f) => isDeepStrictEqual(usableFigure(f), f))) return null;
   // The question's own figure read back too: the views of a Würfelgebäude are held to it (#368).
@@ -488,11 +494,22 @@ export function formsOn<T extends { kind: ItemKind }>(
   return items.filter((it) => !off.has(it.kind));
 }
 
-/** Keep only items whose shape is consistent; returns them normalised. */
-export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}): ItemDraft[] {
+/**
+ * Keep only items whose shape is consistent; returns them normalised. `land`: her Land's id on the
+ * map of Germany (`mapHomeLand`, #429) where her profile names one — the default view of a map
+ * and the Land marked on it (`mapCheck.ts`).
+ */
+export function usableItems(
+  items: ItemDraft[],
+  opts: { locale?: string; land?: string | null } = {},
+): ItemDraft[] {
   const out: ItemDraft[] = [];
+  const land = opts.land ?? null;
   // A worksheet's labelling task becomes one question per numbered part, written by code (#252).
-  for (const raw of items.flatMap((it) => labelQuestions(it, opts.locale ?? null))) {
+  for (const written of items.flatMap((it) => labelQuestions(it, opts.locale ?? null))) {
+    // A map without a view is the map of Germany where she has a Land, else no question (#429).
+    const raw = mapViewed(written, land);
+    if (!raw) continue;
     // A word to translate or a sentence to say carries no drawing (#375): its figure is dropped
     // before anything reads it, the card stays — like a spelling mode on a number.
     const figure = kindIn(FIGURE_KINDS, raw.kind) ? raw.figure : null;
@@ -518,6 +535,8 @@ export function usableItems(items: ItemDraft[], opts: { locale?: string } = {}):
     // The same for every other figure that is its question (`FIGURE_CHECKS`).
     for (const check of FIGURE_CHECKS) it = it && check(it, opts.locale ?? null);
     if (!it) continue;
+    // Her Land on a map of Germany, where it says nothing about the key (#429, `mapCheck.ts`).
+    it = withHome(it, land);
     // Notation the app cannot draw (issue #239): a learner would read "\\overbrace" in the middle
     // of her question. Dropped, not repaired — the list is `MATH_NOTATION_RULE`, which the model
     // was given, and guessing what an unknown command meant is the model's job, not ours.
