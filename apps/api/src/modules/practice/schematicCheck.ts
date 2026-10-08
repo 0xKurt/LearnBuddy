@@ -27,12 +27,24 @@ import {
   schematicPartName,
   schematicProblem,
   schematicRegions,
+  TAP_TARGET,
+  type SchematicId,
 } from '@learnbuddy/shared-math';
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 
 import type { ItemDraft } from './items.js';
 
 type Pictured = { kind: string; answer: string; figure: Figure | null; tap?: boolean | null };
+
+/** Whether a whole finger (44 pt) can hit part `i` of drawing `d` on the narrowest phone. */
+function fingerFits(d: SchematicId, i: number): boolean {
+  return regionTappable(
+    schematicRegions(SCHEMATIC_SHAPES, d),
+    i,
+    schematic(d).height,
+    TAP_TARGET.picture,
+  );
+}
 
 /** Why this question about a picture cannot be asked, or null when it can (or has no picture). */
 function schematicItemProblem(it: Pictured): string | null {
@@ -46,9 +58,8 @@ function schematicItemProblem(it: Pictured): string | null {
     // Numbers stand beside the drawing (the app's schematicLayout.ts) and shrink it: a finger needs
     // all of it, and a number would name nothing she is asked for.
     if (f.n.length > 0) return 'a tap question numbers no part';
-    // On a part of the picture: the tap check. Here only what it cannot know: the finger.
-    return key === null ||
-      regionTappable(schematicRegions(SCHEMATIC_SHAPES, f.d), key, schematic(f.d).height)
+    // On a part of the picture: the tap check. Here only what it cannot know: a whole finger.
+    return key === null || fingerFits(f.d, key)
       ? null
       : `"${it.answer}" is too small to tap in the drawing ${f.d}`;
   }
@@ -100,10 +111,13 @@ export function labelQuestions(it: ItemDraft, locale: string | null): ItemDraft[
   }));
 }
 
-/** The library as the model is told it: each drawing with the German names of its parts. */
+/**
+ * The library as the model is told it: each drawing with the German names of its parts, a part
+ * too small for a finger marked "*" — it can be named, never tapped.
+ */
 export const SCHEMATIC_PARTS = SCHEMATIC_IDS.map(
   (d) =>
     `${d}: ${schematic(d)
-      .parts.map((p) => p.de)
+      .parts.map((p, i) => (fingerFits(d, i) ? p.de : `${p.de}*`))
       .join(', ')}`,
 ).join('; ');

@@ -245,8 +245,13 @@ export function regionAt(set: RegionSet, x: number, y: number, reach: number): n
 export const REGION_TAP_BOX = { width: 320, height: 330 } as const;
 /** Half a finger: a 44 pt target (`TOUCH`), in pt. */
 const REACH_PT = 22;
-/** Half the smallest target a tap may need: 24 pt (WCAG 2.2, 2.5.8), in pt. */
-const MIN_REACH_PT = 12;
+
+/**
+ * Half the target a region needs before a question may ask to tap it, in pt: a part of a picture a
+ * whole finger (44 pt, `TOUCH` — we draw the pictures, so we draw them big enough, #252); a region
+ * of a map at least the 24 pt of WCAG 2.2 (2.5.8) — its countries are as small as they are.
+ */
+export const TAP_TARGET = { picture: REACH_PT, map: 12 } as const;
 
 /** `pt` on a drawing `width` pt wide, in the frame's units. */
 function units(pt: number, width: number): number {
@@ -265,14 +270,15 @@ export function regionTapWidth(height: number): number {
 
 /**
  * Whether region `i` of a drawing `height` high can be asked for by a tap: in the smallest room a
- * 24 pt target fits inside it, or it catches one around its label. Luxembourg on the map of Europe
- * does neither — a question to tap it is dropped; naming it stays possible.
+ * target `half` pt from its middle (`TAP_TARGET`) fits inside it, or it catches one around its
+ * label. Luxembourg on the map of Europe does neither, nor does the pupil of an eye — a question to
+ * tap it is dropped; naming it stays possible.
  */
-export function regionTappable(set: RegionSet, i: number, height: number): boolean {
+export function regionTappable(set: RegionSet, i: number, height: number, half: number): boolean {
   const shape = set.regions[i];
   if (!shape) return false;
   const width = regionTapWidth(height);
-  const least = units(MIN_REACH_PT, width);
+  const least = units(half, width);
   // A region narrower than that is small, so its label catches; wider ones are hit directly.
   return inscribed(shape) >= least || catchRadius(set, i, regionReach(width)) >= least;
 }

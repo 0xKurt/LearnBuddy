@@ -16,6 +16,7 @@ import { schematic, schematicNumbered } from '../../../../packages/shared-math/s
 import { currentLocale } from '../../lib/i18n/index.js';
 import { BADGE_R, schematicLayout } from '../../lib/math/schematicLayout.js';
 import { useSchematicShapes } from '../../lib/math/useSchematicShapes.js';
+import { isDarkBackground } from '../../lib/theme/luminance.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY, FONT } from './figureText.js';
 
@@ -29,6 +30,8 @@ export function SchematicBody({ figure, width }: { figure: SchematicFigure; widt
   if (!drawing) return <View style={{ width, height }} />;
   const paths = drawing.parts.map((p) => regionPath(p.rings, k));
   const tone = (t: number) => (t < 0 ? ink.stroke : (ink.slices[t] ?? ink.fill));
+  const night = isDarkBackground(ink.paper);
+  const [white, black] = night ? [ink.stroke, ink.paper] : [ink.paper, ink.stroke];
   return (
     <Svg width={width} height={height}>
       <G transform={`translate(${x0} ${y0})`}>
@@ -56,6 +59,10 @@ export function SchematicBody({ figure, width }: { figure: SchematicFigure; widt
             <Path d={paths[i]} fill={tone(p.tone)} fillOpacity={p.tone < 0 ? 0.85 : 1} />
           </G>
         ))}
+        {/* What is drawn on the parts without being one: a sign's white symbol, a fish's eye —
+            white and black in either room, as a sign is at night. */}
+        {drawing.marks?.white ? <Path d={regionPath(drawing.marks.white, k)} fill={white} /> : null}
+        {drawing.marks?.black ? <Path d={regionPath(drawing.marks.black, k)} fill={black} /> : null}
       </G>
       {badges.map(({ from, at }, n) => {
         // The leader ends at the number's ring, not under it.

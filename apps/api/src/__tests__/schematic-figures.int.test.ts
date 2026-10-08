@@ -15,6 +15,7 @@ import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 import {
   BROKEN_SCHEMATIC_ITEMS,
+  LIBRARY_ITEMS,
   SCHEMATIC_ITEMS,
   SCHEMATIC_PROMPTS,
 } from '../testing/scenarios/schematic.js';
@@ -95,6 +96,17 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
     expect((await answer(l, s, frame!, 'Rahmen')).body.verdict).toBe('correct');
     // A drawing of #252's second part: the traffic signs, the stop sign tapped for the cycle path.
     expect((await answer(l, s, sign!, 'Stoppschild')).body.verdict).toBe('incorrect');
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
+  });
+
+  it('every drawing of the second part, numbered and tapped: stored as written, graded by code', async () => {
+    const s = await start(env, l, LIBRARY_ITEMS);
+    expect(s.items.map((i) => i.item.prompt)).toEqual(LIBRARY_ITEMS.map((i) => i.prompt));
+    expect(s.items.map((i) => i.item.tap)).toEqual(LIBRARY_ITEMS.map((i) => 'tap' in i));
+    for (const [k, { item }] of s.items.entries()) {
+      const verdict = (await answer(l, s, item.id, LIBRARY_ITEMS[k]!.answer)).body.verdict;
+      expect(verdict, item.prompt).toBe('correct');
+    }
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 

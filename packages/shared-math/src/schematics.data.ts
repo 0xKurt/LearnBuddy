@@ -233,6 +233,11 @@ export const SCHEMATIC_NAMES: SchematicNames = {
       ]),
       part('chain', ['Kette', 'chain', 'chaîne', 'cadena', 'catena'], ['Fahrradkette']),
       part('frame', ['Rahmen', 'frame', 'cadre', 'cuadro', 'telaio'], ['Fahrradrahmen']),
+      part(
+        'carrier',
+        ['Gepäckträger', 'rack', 'porte-bagages', 'portaequipajes', 'portapacchi'],
+        ['Gepäcktraeger', 'carrier'],
+      ),
       part('pedal', ['Pedal', 'pedal', 'pédale', 'pedal', 'pedale'], ['Tretkurbel', 'Pedale']),
       part('saddle', ['Sattel', 'saddle', 'selle', 'sillín', 'sella']),
       part('handlebar', ['Lenker', 'handlebar', 'guidon', 'manillar', 'manubrio'], ['Lenkstange']),
@@ -263,7 +268,7 @@ export const SCHEMATIC_NAMES: SchematicNames = {
   },
   microscope: {
     names: named(['Mikroskop', 'microscope', 'microscope', 'microscopio', 'microscopio']),
-    height: 900,
+    height: 960,
     parts: [
       part('arm', ['Stativ', 'arm', 'potence', 'brazo', 'braccio'], ['Arm', 'Mikroskoparm']),
       part('foot', ['Fuß', 'base', 'pied', 'pie', 'base'], ['Stativfuß', 'Standfuß']),
@@ -291,15 +296,26 @@ export const SCHEMATIC_NAMES: SchematicNames = {
       ),
       part('eyepiece', ['Okular', 'eyepiece', 'oculaire', 'ocular', 'oculare'], []),
       part(
-        'focus',
+        'coarse_focus',
         [
-          'Triebrad',
-          'focus knob',
-          'vis de mise au point',
-          'tornillo de enfoque',
-          'manopola di messa a fuoco',
+          'Grobtrieb',
+          'coarse focus knob',
+          'vis macrométrique',
+          'tornillo macrométrico',
+          'vite macrometrica',
         ],
-        ['Stellrad', 'Grobtrieb', 'Feintrieb', 'Einstellrad'],
+        ['Grobtriebrad', 'Triebrad', 'Stellrad'],
+      ),
+      part(
+        'fine_focus',
+        [
+          'Feintrieb',
+          'fine focus knob',
+          'vis micrométrique',
+          'tornillo micrométrico',
+          'vite micrometrica',
+        ],
+        ['Feintriebrad'],
       ),
     ],
   },
@@ -311,7 +327,7 @@ export const SCHEMATIC_NAMES: SchematicNames = {
       'material de laboratorio',
       'attrezzatura da laboratorio',
     ]),
-    height: 600,
+    height: 1060,
     parts: [
       part(
         'test_tube',
@@ -345,6 +361,12 @@ export const SCHEMATIC_NAMES: SchematicNames = {
         ['Standzylinder'],
       ),
       part('funnel', ['Trichter', 'funnel', 'entonnoir', 'embudo', 'imbuto'], []),
+      part(
+        'burner',
+        ['Bunsenbrenner', 'Bunsen burner', 'bec Bunsen', 'mechero Bunsen', 'becco Bunsen'],
+        ['Brenner', 'Gasbrenner'],
+      ),
+      part('tripod', ['Dreifuß', 'tripod', 'trépied', 'trípode', 'treppiede'], ['Dreifuss']),
     ],
   },
   heart: {
@@ -352,9 +374,29 @@ export const SCHEMATIC_NAMES: SchematicNames = {
     height: 900,
     parts: [
       part(
+        'myocardium',
+        ['Herzmuskel', 'heart muscle', 'muscle cardiaque', 'músculo cardíaco', 'muscolo cardiaco'],
+        ['Herzmuskulatur', 'Herzwand', 'Myokard', 'myocardium'],
+      ),
+      part(
+        'septum',
+        ['Herzscheidewand', 'septum', 'septum', 'tabique', 'setto'],
+        ['Scheidewand', 'Trennwand'],
+      ),
+      part(
         'vena_cava',
         ['Hohlvene', 'vena cava', 'veine cave', 'vena cava', 'vena cava'],
-        ['obere Hohlvene', 'Vene'],
+        ['obere Hohlvene', 'untere Hohlvene', 'Hohlvenen'],
+      ),
+      part(
+        'pulmonary_vein',
+        ['Lungenvene', 'pulmonary vein', 'veine pulmonaire', 'vena pulmonar', 'vena polmonare'],
+        ['Lungenvenen'],
+      ),
+      part(
+        'aorta',
+        ['Aorta', 'aorta', 'aorte', 'aorta', 'aorta'],
+        ['Hauptschlagader', 'Körperschlagader'],
       ),
       part(
         'pulmonary_artery',
@@ -365,12 +407,7 @@ export const SCHEMATIC_NAMES: SchematicNames = {
           'arteria pulmonar',
           'arteria polmonare',
         ],
-        ['Lungenschlagader'],
-      ),
-      part(
-        'aorta',
-        ['Aorta', 'aorta', 'aorte', 'aorta', 'aorta'],
-        ['Hauptschlagader', 'Körperschlagader'],
+        ['Lungenschlagader', 'Lungenarterien'],
       ),
       part(
         'right_atrium',
@@ -410,7 +447,17 @@ export const SCHEMATIC_NAMES: SchematicNames = {
         ],
         ['linke Herzkammer'],
       ),
-      part('septum', ['Herzscheidewand', 'septum', 'septum', 'tabique', 'setto'], ['Scheidewand']),
+      part(
+        'valve',
+        [
+          'Segelklappe',
+          'atrioventricular valve',
+          'valve auriculo-ventriculaire',
+          'válvula auriculoventricular',
+          'valvola atrioventricolare',
+        ],
+        ['Segelklappen', 'Herzklappe', 'Herzklappen', 'heart valve'],
+      ),
     ],
   },
   ear: {
@@ -433,6 +480,11 @@ export const SCHEMATIC_NAMES: SchematicNames = {
           'tromba di Eustachio',
         ],
         ['eustachische Röhre', 'Tube'],
+      ),
+      part(
+        'middle_ear',
+        ['Paukenhöhle', 'middle ear', 'caisse du tympan', 'caja timpánica', 'cassa timpanica'],
+        ['Mittelohr', 'Mittelohrraum', 'Paukenhöhle'],
       ),
       part(
         'pinna',
@@ -475,69 +527,83 @@ export const SCHEMATIC_NAMES: SchematicNames = {
   },
   skeleton: {
     names: named(['Skelett', 'skeleton', 'squelette', 'esqueleto', 'scheletro']),
-    height: 1000,
+    height: 1030,
     parts: [
-      part(
-        'ribcage',
-        ['Brustkorb', 'ribcage', 'cage thoracique', 'caja torácica', 'gabbia toracica'],
-        ['Rippen'],
-      ),
       part(
         'spine',
         ['Wirbelsäule', 'spine', 'colonne vertébrale', 'columna vertebral', 'colonna vertebrale'],
         ['Wirbel', 'Rückgrat'],
       ),
-      part('skull', ['Schädel', 'skull', 'crâne', 'cráneo', 'cranio'], ['Kopf']),
+      part(
+        'pelvis',
+        ['Becken', 'pelvis', 'bassin', 'pelvis', 'bacino'],
+        ['Hüfte', 'Hüftknochen', 'Beckenknochen'],
+      ),
+      part(
+        'ribcage',
+        ['Brustkorb', 'ribcage', 'cage thoracique', 'caja torácica', 'gabbia toracica'],
+        ['Rippen', 'Rippe'],
+      ),
+      part('sternum', ['Brustbein', 'breastbone', 'sternum', 'esternón', 'sterno'], ['Sternum']),
+      part('skull', ['Schädel', 'skull', 'crâne', 'cráneo', 'cranio'], ['Kopf', 'Schädelknochen']),
       part(
         'collarbone',
         ['Schlüsselbein', 'collarbone', 'clavicule', 'clavícula', 'clavicola'],
         [],
       ),
-      part('pelvis', ['Becken', 'pelvis', 'bassin', 'pelvis', 'bacino'], ['Hüfte', 'Hüftknochen']),
       part(
         'humerus',
         ['Oberarmknochen', 'upper arm bone', 'humérus', 'húmero', 'omero'],
-        ['Oberarm'],
+        ['Oberarm', 'humerus'],
       ),
+      part('radius', ['Speiche', 'radius', 'radius', 'radio', 'radio'], []),
+      part('ulna', ['Elle', 'ulna', 'cubitus', 'cúbito', 'ulna'], []),
       part(
-        'forearm',
-        [
-          'Elle und Speiche',
-          'forearm bones',
-          'radius et cubitus',
-          'cúbito y radio',
-          'radio e ulna',
-        ],
-        ['Unterarm', 'Elle', 'Speiche'],
+        'hand',
+        ['Handknochen', 'hand bones', 'os de la main', 'huesos de la mano', 'ossa della mano'],
+        ['Hand', 'Fingerknochen', 'Handwurzelknochen'],
       ),
       part(
         'femur',
         ['Oberschenkelknochen', 'thigh bone', 'fémur', 'fémur', 'femore'],
-        ['Oberschenkel'],
+        ['Oberschenkel', 'femur'],
       ),
-      part('tibia', ['Schienbein', 'shinbone', 'tibia', 'tibia', 'tibia'], ['Unterschenkel']),
+      part('kneecap', ['Kniescheibe', 'kneecap', 'rotule', 'rótula', 'rotula'], ['Patella']),
+      part('tibia', ['Schienbein', 'shinbone', 'tibia', 'tibia', 'tibia'], []),
+      part('fibula', ['Wadenbein', 'fibula', 'péroné', 'peroné', 'perone'], []),
+      part(
+        'foot',
+        ['Fußknochen', 'foot bones', 'os du pied', 'huesos del pie', 'ossa del piede'],
+        ['Fuß', 'Zehenknochen', 'Fußwurzelknochen'],
+      ),
     ],
   },
   organs: {
     names: named(['Organe', 'organs', 'organes', 'órganos', 'organi']),
     height: 1000,
     parts: [
-      part('brain', ['Gehirn', 'brain', 'cerveau', 'cerebro', 'cervello'], ['Hirn']),
-      part('trachea', ['Luftröhre', 'windpipe', 'trachée', 'tráquea', 'trachea'], []),
+      part('kidneys', ['Nieren', 'kidneys', 'reins', 'riñones', 'reni'], ['Niere']),
+      part(
+        'large_intestine',
+        ['Dickdarm', 'large intestine', 'gros intestin', 'intestino grueso', 'intestino crasso'],
+        ['Darm'],
+      ),
+      part(
+        'small_intestine',
+        ['Dünndarm', 'small intestine', 'intestin grêle', 'intestino delgado', 'intestino tenue'],
+        ['Gedärm'],
+      ),
+      part('bladder', ['Harnblase', 'bladder', 'vessie', 'vejiga', 'vescica'], ['Blase']),
+      part('liver', ['Leber', 'liver', 'foie', 'hígado', 'fegato'], []),
+      part('stomach', ['Magen', 'stomach', 'estomac', 'estómago', 'stomaco'], []),
       part(
         'lungs',
         ['Lunge', 'lungs', 'poumons', 'pulmones', 'polmoni'],
         ['Lungen', 'Lungenflügel'],
       ),
+      part('trachea', ['Luftröhre', 'windpipe', 'trachée', 'tráquea', 'trachea'], ['Bronchien']),
       part('heart', ['Herz', 'heart', 'cœur', 'corazón', 'cuore'], []),
-      part('liver', ['Leber', 'liver', 'foie', 'hígado', 'fegato'], []),
-      part('stomach', ['Magen', 'stomach', 'estomac', 'estómago', 'stomaco'], []),
-      part(
-        'intestine',
-        ['Darm', 'intestine', 'intestin', 'intestino', 'intestino'],
-        ['Dünndarm', 'Dickdarm', 'Gedärm'],
-      ),
-      part('kidneys', ['Nieren', 'kidneys', 'reins', 'riñones', 'reni'], ['Niere']),
+      part('brain', ['Gehirn', 'brain', 'cerveau', 'cerebro', 'cervello'], ['Hirn']),
     ],
   },
   signs: {
@@ -548,7 +614,7 @@ export const SCHEMATIC_NAMES: SchematicNames = {
       'señales de tráfico',
       'segnali stradali',
     ]),
-    height: 600,
+    height: 900,
     parts: [
       part(
         'stop',
@@ -602,17 +668,22 @@ export const SCHEMATIC_NAMES: SchematicNames = {
       'instrumentos musicales',
       'strumenti musicali',
     ]),
-    height: 640,
+    height: 900,
     parts: [
       part('guitar', ['Gitarre', 'guitar', 'guitare', 'guitarra', 'chitarra'], []),
-      part('drum', ['Trommel', 'drum', 'tambour', 'tambor', 'tamburo'], ['Pauke']),
       part(
         'recorder',
         ['Blockflöte', 'recorder', 'flûte à bec', 'flauta dulce', 'flauto dolce'],
         ['Flöte'],
       ),
+      part('drum', ['Trommel', 'drum', 'tambour', 'tambor', 'tamburo'], ['Pauke']),
       part('trumpet', ['Trompete', 'trumpet', 'trompette', 'trompeta', 'tromba'], []),
       part('triangle', ['Triangel', 'triangle', 'triangle', 'triángulo', 'triangolo'], []),
+      part(
+        'xylophone',
+        ['Xylofon', 'xylophone', 'xylophone', 'xilófono', 'xilofono'],
+        ['Xylophon', 'Glockenspiel', 'Metallophon'],
+      ),
     ],
   },
   anlaut: {
@@ -623,7 +694,7 @@ export const SCHEMATIC_NAMES: SchematicNames = {
       'sonidos iniciales',
       'suoni iniziali',
     ]),
-    height: 640,
+    height: 1060,
     parts: [
       part('apple', ['Apfel', 'apple', 'pomme', 'manzana', 'mela'], []),
       part('ball', ['Ball', 'ball', 'ballon', 'pelota', 'palla'], []),
@@ -632,7 +703,7 @@ export const SCHEMATIC_NAMES: SchematicNames = {
       part('moon', ['Mond', 'moon', 'lune', 'luna', 'luna'], []),
       part('fish', ['Fisch', 'fish', 'poisson', 'pez', 'pesce'], []),
       part('ice_cream', ['Eis', 'ice cream', 'glace', 'helado', 'gelato'], ['Eiscreme', 'Eistüte']),
-      part('tree', ['Baum', 'tree', 'arbre', 'árbol', 'albero'], []),
+      part('clock', ['Uhr', 'clock', 'horloge', 'reloj', 'orologio'], ['Wecker']),
     ],
   },
 };

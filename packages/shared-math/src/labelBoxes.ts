@@ -301,42 +301,86 @@ export function placeLabels(
   return out;
 }
 
+/** Where the numbers of a picture may stand: two columns, from `top` to `bottom`, `pitch` apart. */
+export type Columns = { left: number; right: number; top: number; bottom: number; pitch: number };
+
 /**
  * Numbers as a schoolbook prints them (#252): in a column left and right of a drawing, each joined
  * to its point by a leader line. `placeLabels` puts a label right beside its point, which on a
  * picture covers the very parts being labelled; here no number stands on the drawing at all.
  *
- * Each point goes to the column on its own side — while that column has room, else the points
- * nearest the middle cross over — and stands as near its own height as the numbers above and
- * below it allow (`pitch` apart, between `top` and `bottom`). Two leader lines of a column that
- * cross trade their places, until none does.
+ * Each point goes to the side its leader runs freest (`freeSides`) and stands as near its own
+ * height as the numbers above and below it allow (`stack`). A number whose leader still runs over
+ * another point or crosses another leader (`snags`) tries the other side, as long as that leaves
+ * fewer of them.
  */
-export type Columns = { left: number; right: number; top: number; bottom: number; pitch: number };
-
 export function columnLabels(points: readonly XY[], c: Columns): XY[] {
+  let left = freeSides(points, c);
+  let out = stack(points, left, c);
+  let worst = snags(points, out, c);
+  for (let better = true; better && worst > 0; ) {
+    better = false;
+    points.forEach((_, i) => {
+      const flipped = left.map((side, j) => (j === i ? !side : side));
+      if (flipped.filter((side) => side === flipped[i]).length > room(c)) return;
+      const tried = stack(points, flipped, c);
+      const n = snags(points, tried, c);
+      if (n < worst) [left, out, worst, better] = [flipped, tried, n, true];
+    });
+  }
+  return out;
+}
+
+/** How many numbers a column holds. */
+function room(c: Columns): number {
+  return Math.max(1, Math.floor((c.bottom - c.top) / c.pitch) + 1);
+}
+
+/**
+ * Whether each point's number goes left: to the side its leader runs freest and shortest — the
+ * points in its way (within half a row of its height) count the more the nearer they lie to its
+ * line, the way to the column a row per `pitch`. A column that is full sends the points nearest
+ * the middle across.
+ */
+function freeSides(points: readonly XY[], c: Columns): boolean[] {
   const middle = (c.left + c.right) / 2;
-  const room = Math.max(1, Math.floor((c.bottom - c.top) / c.pitch) + 1);
-  const left = points.map((p) => p.x < middle);
+  const blocked = (p: XY, toLeft: boolean) =>
+    points.reduce((sum, q) => {
+      const dy = Math.abs(q.y - p.y);
+      const ahead = q !== p && (toLeft ? q.x < p.x : q.x > p.x);
+      return ahead && dy < c.pitch / 2 ? sum + c.pitch / 2 - dy : sum;
+    }, 0);
+  const left = points.map(
+    (p) =>
+      blocked(p, true) + (p.x - c.left) / c.pitch < blocked(p, false) + (c.right - p.x) / c.pitch,
+  );
   for (const side of [true, false]) {
-    // Too many on one side: the ones nearest the middle cross over.
     const mine = points
       .map((p, i) => ({ i, d: Math.abs(p.x - middle) }))
       .filter(({ i }) => left[i] === side)
       .sort((a, b) => a.d - b.d);
     let other = left.filter((s) => s !== side).length;
-    for (const { i } of mine.slice(0, Math.max(0, mine.length - room))) {
-      if (other >= room) break;
+    for (const { i } of mine.slice(0, Math.max(0, mine.length - room(c)))) {
+      if (other >= room(c)) break;
       left[i] = !side;
       other += 1;
     }
   }
+  return left;
+}
+
+/**
+ * The numbers in their columns: each as near its point's height as its neighbours allow (down from
+ * the top, then back up from the bottom); two leaders of a column that cross trade their places —
+ * each trade shortens the two, so it ends.
+ */
+function stack(points: readonly XY[], left: readonly boolean[], c: Columns): XY[] {
   const out: XY[] = points.map((p, i) => ({ x: left[i] ? c.left : c.right, y: p.y }));
   for (const x of [c.left, c.right]) {
     const column = out
       .map((s, i) => ({ s, p: points[i]! }))
       .filter(({ s }) => s.x === x)
       .sort((a, b) => a.s.y - b.s.y);
-    // Down from the top, then back up from the bottom: each as near its point as its neighbours allow.
     column.forEach(({ s }, k) => {
       s.y = Math.max(s.y, c.top, k > 0 ? column[k - 1]!.s.y + c.pitch : c.top);
     });
@@ -345,7 +389,6 @@ export function columnLabels(points: readonly XY[], c: Columns): XY[] {
       const s = column[k]!.s;
       s.y = Math.max(c.top + k * c.pitch, Math.min(s.y, below, c.bottom));
     }
-    // Crossing leaders trade places: each trade shortens the two, so it ends.
     for (let swapped = true, rounds = 0; swapped && rounds < 50; rounds++) {
       swapped = false;
       for (const a of column) {
@@ -360,9 +403,35 @@ export function columnLabels(points: readonly XY[], c: Columns): XY[] {
   return out;
 }
 
-/** Whether the segments p→s and q→t cross (touching ends do not). */
-function segmentsCross(p: XY, s: XY, q: XY, t: XY): boolean {
-  const side = (a: XY, b: XY, r: XY) =>
-    Math.sign((b.x - a.x) * (r.y - a.y) - (b.y - a.y) * (r.x - a.x));
-  return side(p, s, q) * side(p, s, t) < 0 && side(q, t, p) * side(q, t, s) < 0;
+/** What makes leaders hard to follow: one running over another's point (closer than a third of a row), two that cross. */
+function snags(points: readonly XY[], slots: readonly XY[], c: Columns): number {
+  let n = 0;
+  points.forEach((p, i) => {
+    points.forEach((q, j) => {
+      if (j === i) return;
+      if (pointToSegment(q, p, slots[i]!) < c.pitch / 3) n += 1;
+      if (j > i && segmentsCross(p, slots[i]!, q, slots[j]!)) n += 1;
+    });
+  });
+  return n;
+}
+
+/** The distance from `q` to the segment a→b. */
+export function pointToSegment(q: XY, a: XY, b: XY): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const t = Math.max(
+    0,
+    Math.min(1, ((q.x - a.x) * dx + (q.y - a.y) * dy) / (dx * dx + dy * dy || 1)),
+  );
+  return Math.hypot(q.x - a.x - t * dx, q.y - a.y - t * dy);
+}
+
+/**
+ * Whether the segments a→b and c→d cross — two leaders, two bonds. Touching ends and segments on
+ * one line do not, and neither does the rounding noise of a layout computed with sines.
+ */
+export function segmentsCross(a: XY, b: XY, c: XY, d: XY): boolean {
+  const cross = (o: XY, p: XY, q: XY) => (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
+  return cross(c, d, a) * cross(c, d, b) < -1e-9 && cross(a, b, c) * cross(a, b, d) < -1e-9;
 }
