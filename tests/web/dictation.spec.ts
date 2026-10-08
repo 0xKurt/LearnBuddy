@@ -10,7 +10,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { shot } from './fit';
+import { bothSchemes, setScheme, shot } from './fit';
 
 test.skip(
   process.env.LB_DEV_SPEECH !== 'fake',
@@ -58,24 +58,12 @@ async function onboardChild(page: Page): Promise<void> {
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
-/** One stop of the walk, in daylight and at night, at 390×844 and 360×740 (`shot`). */
-async function both(page: Page, name: string): Promise<void> {
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-night`);
-  await page.emulateMedia({ colorScheme: 'light' });
-}
-
 const listenCall = (page: Page) =>
   page.waitForResponse((r) => r.url().includes('/listen') && r.request().method() === 'POST');
 
 /** One stop in the CURRENT colour scheme, at 390×844 and 360×740 (`shot`). */
 async function one(page: Page, name: string, night: boolean): Promise<void> {
-  await shot(page, night ? `${name}-night` : name);
-}
-
-async function scheme(page: Page, night: boolean): Promise<void> {
-  await page.emulateMedia({ colorScheme: night ? 'dark' : 'light' });
+  await shot(page, night ? `${name}-dark` : name);
 }
 
 test('Diktat: she hears the word, types it, the mic is off (issue #242)', async ({ page }) => {
@@ -98,7 +86,7 @@ test('Diktat: she hears the word, types it, the mic is off (issue #242)', async 
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
   const field = page.getByLabel('Deine Antwort');
   await expect(field).toHaveAttribute('placeholder', 'Schreib, was du hörst – ohne Mikro');
-  await both(page, '60-diktat-question');
+  await bothSchemes(page, '60-diktat-question');
 
   // Playing works: the app asks the server for the recording and plays it; once it sounded, the
   // big button offers to hear it again and steps back.
@@ -112,7 +100,7 @@ test('Diktat: she hears the word, types it, the mic is off (issue #242)', async 
   expect((await heard).status()).toBe(200);
   await field.fill('Schwimen');
   // Open questions survive the switch to the night palette, "heard" included.
-  await both(page, '61-diktat-typed');
+  await bothSchemes(page, '61-diktat-typed');
   await expect(page.getByRole('button', { name: 'Nochmal hören' })).toBeVisible();
 
   // A miss names the place, without a model and without spelling the word out.
@@ -121,21 +109,17 @@ test('Diktat: she hears the word, types it, the mic is off (issue #242)', async 
   await expect(page.getByText('Schwimmen', { exact: true }).filter({ visible: true })).toHaveCount(
     0,
   );
-  await both(page, '62-diktat-feedback');
+  await bothSchemes(page, '62-diktat-feedback');
 
   // Closed states are shot in one scheme each — a switch rebuilds the screen, which then opens
   // on the next open question. Word 1 right and word 2 shown in daylight, 3 and 4 at night.
   for (const night of [false, true]) {
-    await scheme(page, night);
+    // The scheme switch rebuilds the screen: she types once it has landed (`setScheme`).
+    await setScheme(page, night ? 'dark' : 'light');
     const [right, missed, shownWord] = night
       ? (['Straße', 'Farad', 'Fahrrad'] as const)
       : (['Schwimmen', 'bine', 'Biene'] as const);
-    // The scheme switch rebuilds the screen; a fill that lands mid-rebuild is wiped, so it is
-    // repeated until the text stands.
-    await expect(async () => {
-      await field.fill(right);
-      await expect(field).toHaveValue(right, { timeout: 1000 });
-    }).toPass();
+    await field.fill(right);
     await page.getByRole('button', { name: 'Prüfen' }).click();
     await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
     await one(page, '63-diktat-right', night);

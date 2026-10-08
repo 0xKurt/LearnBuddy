@@ -10,15 +10,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { onboardChild, startOffer } from './figureWalk';
-import { PHONES, settle, shot, SHOTS } from './fit';
-
-/** One state at both phone sizes (`shot`), light and then dark. */
-async function both(page: Page, name: string): Promise<void> {
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-night`);
-  await page.emulateMedia({ colorScheme: 'light' });
-}
+import { bothSchemes, PHONES, settle, SHOTS } from './fit';
 
 /**
  * Writes digits into the cells of the grid by id ('' empties a cell). The last digit of a division
@@ -27,12 +19,12 @@ async function both(page: Page, name: string): Promise<void> {
 async function write(page: Page, cells: Record<string, string>): Promise<void> {
   for (const [id, digit] of Object.entries(cells)) {
     const cell = page.getByTestId(`column-${id}`);
-    const shown = () =>
-      cell.evaluate((e) => (e instanceof HTMLInputElement ? e.value : (e.textContent ?? '')));
-    await expect(async () => {
-      if (await cell.evaluate((e) => e instanceof HTMLInputElement)) await cell.fill(digit);
-      await expect.poll(shown, { timeout: 1000 }).toBe(digit);
-    }).toPass();
+    if (await cell.evaluate((e) => e instanceof HTMLInputElement)) await cell.fill(digit);
+    await expect
+      .poll(() =>
+        cell.evaluate((e) => (e instanceof HTMLInputElement ? e.value : (e.textContent ?? ''))),
+      )
+      .toBe(digit);
   }
 }
 
@@ -40,6 +32,10 @@ async function write(page: Page, cells: Record<string, string>): Promise<void> {
 async function cellWithKeyboard(page: Page, id: string, name: string): Promise<void> {
   const size = page.viewportSize();
   await page.setViewportSize({ width: 360, height: 740 - 300 });
+  // The board takes its new height a render after the resize. A focus before that scrolls the
+  // cell into a box that shrinks under it afterwards: 1 of 2 runs left it 83 % shown (#464, once
+  // the scheme switch before it had landed; until then the remount came after the focus).
+  await settle(page);
   const cell = page.getByTestId(`column-${id}`);
   await cell.focus();
   await settle(page);
@@ -55,15 +51,6 @@ async function checkRight(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
-}
-
-/** The bar's field, filled until the value holds (a theme switch remounts the tree). */
-async function writeLine(page: Page, text: string): Promise<void> {
-  const field = page.getByTestId('answer-field');
-  await expect(async () => {
-    await field.fill(text);
-    await expect(field).toHaveValue(text, { timeout: 1000 });
-  }).toPass();
 }
 
 const ADD = {
@@ -128,7 +115,6 @@ test('Fehlerdetektiv: tap the wrong line, write it right, judged by code (issue 
   page,
 }) => {
   await onboardChild(page, 'find-error');
-  await page.emulateMedia({ colorScheme: 'light' });
   await page.setViewportSize(PHONES[0]);
   const check = page.getByRole('button', { name: 'Prüfen' });
 
@@ -137,34 +123,37 @@ test('Fehlerdetektiv: tap the wrong line, write it right, judged by code (issue 
   await expect(page.getByText('Finde die falsche Zeile')).toBeVisible();
   await expect(page.getByRole('radio')).toHaveCount(3);
   await expect(check).toBeDisabled();
-  await both(page, '86a-find-error-start');
+  await bothSchemes(page, '86a-find-error-start');
   // A line below the error: Buddy says to look further up, never which line it is.
   await page.getByRole('radio', { name: /^Zeile 3:/ }).click();
   await check.click();
   await expect(page.getByText('Der Fehler steckt schon weiter oben.')).toBeInViewport();
   await page.getByRole('radio', { name: /^Zeile 2:/ }).click();
   await expect(page.getByTestId('answer-field')).toHaveValue('3x+2 = 21');
-  await both(page, '86b-find-error-picked');
-  await writeLine(page, '3x + 6 = 21');
+  await bothSchemes(page, '86b-find-error-picked');
+  await page.getByTestId('answer-field').fill('3x + 6 = 21');
   await checkRight(page);
 
   // ── four long lines: the most a card holds, with Buddy's longest reply above them ──
   await startOffer(page, 'Ich will einen langen Rechenweg prüfen', 'ein langer Rechenweg');
   await expect(page.getByRole('radio')).toHaveCount(3);
   await page.getByRole('radio', { name: /^Zeile 2:/ }).click();
-  await writeLine(page, '2x + 5 - 4 = 3x - 5');
+  await page.getByTestId('answer-field').fill('2x + 5 - 4 = 3x - 5');
   await check.click();
   await expect(page.getByText('Die Zeile hast du gefunden!', { exact: false })).toBeInViewport();
-  await both(page, '86c-find-error-long-feedback');
-  await writeLine(page, '2x + 6 - 4 = 3x - 5');
+  await bothSchemes(page, '86c-find-error-long-feedback');
+  await page.getByTestId('answer-field').fill('2x + 6 - 4 = 3x - 5');
   await checkRight(page);
 });
 
 test('schriftlich rechnen: every digit and every carry, judged by code (issue #260)', async ({
   page,
 }) => {
+  // Nine stops, each at both sizes, light and dark, and with the keyboard up, and two with the
+  // number pad: 2.9 min of the 3 min default once every switch back to light waited for the app
+  // (`bothSchemes`, issue #464).
+  test.setTimeout(300_000);
   await onboardChild(page, 'column');
-  await page.emulateMedia({ colorScheme: 'light' });
   await page.setViewportSize(PHONES[0]);
   const check = page.getByRole('button', { name: 'Prüfen' });
 
@@ -172,14 +161,14 @@ test('schriftlich rechnen: every digit and every carry, judged by code (issue #2
   await startOffer(page, 'Lass uns schriftlich addieren', 'Ziffer für Ziffer');
   await expect(page.getByTestId('column-paper')).toBeVisible();
   await expect(check).toBeDisabled();
-  await both(page, '86d-column-add-start');
+  await bothSchemes(page, '86d-column-add-start');
   await write(page, { ...ADD, r2c4: '' });
   await cellWithKeyboard(page, 'r2c4', '86e-column-add-cell-kb');
   await check.click();
   await expect(
     page.getByText('Noch nicht ganz – bei den Zehnern fehlt noch der Übertrag.'),
   ).toBeInViewport();
-  await both(page, '86f-column-add-feedback');
+  await bothSchemes(page, '86f-column-add-feedback');
   await write(page, { r2c4: '1' });
   await checkRight(page);
 
@@ -194,7 +183,7 @@ test('schriftlich rechnen: every digit and every carry, judged by code (issue #2
     r2c1: '1',
     r3c1: '3',
   });
-  await both(page, '86g-column-sub-written');
+  await bothSchemes(page, '86g-column-sub-written');
   await checkRight(page);
 
   // ── 789 · 56: two partial products and their sum ──
@@ -204,19 +193,19 @@ test('schriftlich rechnen: every digit and every carry, judged by code (issue #2
   await expect(
     page.getByText('Noch nicht ganz – in der 2. Zeile stimmt bei den Hundertern noch etwas nicht.'),
   ).toBeInViewport();
-  await both(page, '86h-column-mul-feedback');
+  await bothSchemes(page, '86h-column-mul-feedback');
   await write(page, { r2c3: '7' });
   await checkRight(page);
 
   // ── 174 : 5 = 34 R 4: the tallest division, two steps, with Buddy's reply above ──
   await startOffer(page, 'Ich möchte schriftlich teilen', 'Schritt für Schritt');
-  await both(page, '86i-column-div-start');
+  await bothSchemes(page, '86i-column-div-start');
   await write(page, { ...DIV, r3c2: '5' });
   await check.click();
   await expect(
     page.getByText('Noch nicht ganz – im 2. Schritt stimmt das Malnehmen noch nicht.'),
   ).toBeInViewport();
-  await both(page, '86j-column-div-feedback');
+  await bothSchemes(page, '86j-column-div-feedback');
   await write(page, { r3c2: '0' });
   await checkRight(page);
 
@@ -225,14 +214,14 @@ test('schriftlich rechnen: every digit and every carry, judged by code (issue #2
   // Only the first step is there to write in; the others come when she gets there.
   await expect(page.getByTestId('column-r1c0')).toBeVisible();
   await expect(page.getByTestId('column-r5c2')).toHaveCount(0);
-  await both(page, '86k-column-div3-start');
+  await bothSchemes(page, '86k-column-div3-start');
   await write(page, { ...DIV3, r5c2: '3' });
   await expect(page.getByTestId('column-done')).toHaveCount(4);
   await check.click();
   await expect(
     page.getByText('Noch nicht ganz – im 3. Schritt stimmt das Malnehmen noch nicht.'),
   ).toBeInViewport();
-  await both(page, '86l-column-div3-feedback');
+  await bothSchemes(page, '86l-column-div3-feedback');
   await cellWithKeyboard(page, 'r5c2', '86m-column-div3-cell-kb');
   // A finished step opens again by a tap (#420); a slip there, and she is back in the third step.
   const reopen = (step: number) =>
@@ -248,7 +237,7 @@ test('schriftlich rechnen: every digit and every carry, judged by code (issue #2
     page.getByText('Noch nicht ganz – im 1. Schritt stimmt das Malnehmen noch nicht.'),
   ).toBeInViewport();
   await expect(page.getByTestId('column-r1c0')).toBeFocused();
-  await both(page, '86n-column-div3-reopened');
+  await bothSchemes(page, '86n-column-div3-reopened');
   await write(page, { r1c0: '6' });
   await reopen(3);
   await write(page, { r5c2: '2' });

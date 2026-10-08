@@ -9,20 +9,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { onboardChild, startOffer } from './figureWalk';
-import { PHONES, settle, shot } from './fit';
-
-/** One state at both phone sizes (`shot`), light and then dark. */
-async function both(page: Page, name: string): Promise<void> {
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-night`);
-  await page.emulateMedia({ colorScheme: 'light' });
-}
+import { bothSchemes, PHONES } from './fit';
 
 /** Where the paper's grid lines stand on the page: x for each unit across, y for each one down. */
 async function gridLines(page: Page): Promise<{ xs: number[]; ys: number[] }> {
-  // The theme switch in `both` remounts the screen: a tap into the old tree would be lost.
-  await settle(page);
   const paper = page.getByTestId('grid-paper');
   await expect(paper.locator('svg')).toBeVisible();
   return paper.evaluate((el) => {
@@ -107,24 +97,23 @@ test('drawing on a grid: points, a line, a mirror image, bars — checked by cod
   // Eleven states, each at two sizes, light and dark, and with the keyboard up.
   test.setTimeout(600_000);
   await onboardChild(page, 'grid');
-  await page.emulateMedia({ colorScheme: 'light' });
   await page.setViewportSize(PHONES[0]);
 
   // ── four points on a paper of 8 × 6 units ──
   await startOffer(page, 'Ich will Punkte eintragen', 'trag die Punkte');
   await expect(page.getByText('Trage die Punkte ins Koordinatensystem ein:')).toBeVisible();
   await expect(check(page)).toBeDisabled();
-  await both(page, '249a-grid-points-start');
+  await bothSchemes(page, '249a-grid-points-start');
   await tapCrossing(page, -4, -3, 3, 2);
   await tapCrossing(page, -4, -3, -2, 1);
   await tapCrossing(page, -4, -3, -3, -2);
   // D with the wrong sign of x — a classic mistake.
   await tapCrossing(page, -4, -3, -1, -2);
   await expect(words(page)).toHaveText('A(3|2) · B(−2|1) · C(−3|−2) · D(−1|−2)');
-  await both(page, '249b-grid-points-drawn');
+  await bothSchemes(page, '249b-grid-points-drawn');
   await check(page).click();
   await expect(page.getByText('Noch nicht ganz: D liegt noch nicht richtig.')).toBeInViewport();
-  await both(page, '249c-grid-points-feedback');
+  await bothSchemes(page, '249c-grid-points-feedback');
   // A tap on D takes it away; the next tap puts D back.
   await tapCrossing(page, -4, -3, -1, -2);
   await expect(words(page)).toHaveText('A(3|2) · B(−2|1) · C(−3|−2) · als Nächstes D');
@@ -136,35 +125,35 @@ test('drawing on a grid: points, a line, a mirror image, bars — checked by cod
   await startOffer(page, 'Lass uns eine Gerade zeichnen', 'setz zwei Punkte');
   await expect(page.getByText('Setze 2 Punkte, die auf dem Graphen liegen.')).toBeVisible();
   await tapCrossing(page, -4, -3, 0, -1);
-  await both(page, '249d-grid-line-one');
+  await bothSchemes(page, '249d-grid-line-one');
   await tapCrossing(page, -4, -3, 1, 2);
   await check(page).click();
   await expect(
     page.getByText('Noch nicht ganz: (1|2) liegt nicht auf dem Graphen.'),
   ).toBeInViewport();
-  await both(page, '249e-grid-line-feedback');
+  await bothSchemes(page, '249e-grid-line-feedback');
   // The arrow moves the point she set last, one crossing.
   await key(page, 'Nach unten').click();
   await expect(words(page)).toHaveText('(0|−1) · (1|1)');
   await right(page);
-  await both(page, '249f-grid-line-right');
+  await bothSchemes(page, '249f-grid-line-right');
   await finish(page);
 
   // ── a quadrilateral mirrored on squared paper ──
   await startOffer(page, 'Ich möchte eine Figur spiegeln', 'spiegle das Viereck');
-  await both(page, '249g-grid-mirror-start');
+  await bothSchemes(page, '249g-grid-mirror-start');
   await tapCrossing(page, 0, 0, 7, 1);
   await tapCrossing(page, 0, 0, 5, 1);
   await tapCrossing(page, 0, 0, 5, 3);
   await tapCrossing(page, 0, 0, 6, 5);
   await check(page).click();
   await expect(page.getByText('Noch nicht ganz: D′ liegt noch nicht richtig.')).toBeInViewport();
-  await both(page, '249h-grid-mirror-feedback');
+  await bothSchemes(page, '249h-grid-mirror-feedback');
   await key(page, 'Zurück').click();
   await expect(words(page)).toHaveText('A′(7|1) · B′(5|1) · C′(5|3) · als Nächstes D′');
   await tapCrossing(page, 0, 0, 6, 4);
   await right(page);
-  await both(page, '249i-grid-mirror-right');
+  await bothSchemes(page, '249i-grid-mirror-right');
   await finish(page);
 
   // ── six bars on six rows ──
@@ -172,7 +161,7 @@ test('drawing on a grid: points, a line, a mirror image, bars — checked by cod
   await expect(
     page.getByText('Apfel 4, Birne 3, Kiwi 5, Banane 2, Mango 1, Traube 3'),
   ).toBeVisible();
-  await both(page, '249j-grid-bars-start');
+  await bothSchemes(page, '249j-grid-bars-start');
   for (const [i, rows] of [4, 3, 5, 2, 1, 2].entries()) await pullBar(page, i, rows);
   // A bar chart says it on the paper itself: its values stand in the question and on the scale.
   await expect(
@@ -184,7 +173,7 @@ test('drawing on a grid: points, a line, a mirror image, bars — checked by cod
   await expect(
     page.getByText('Noch nicht ganz: Die Säule für Traube stimmt noch nicht.'),
   ).toBeInViewport();
-  await both(page, '249k-grid-bars-feedback');
+  await bothSchemes(page, '249k-grid-bars-feedback');
   await key(page, 'Höher').click();
   await right(page);
   await finish(page);

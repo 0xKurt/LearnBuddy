@@ -9,7 +9,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { photographed } from './coreLoop';
 import { onboardChild, startOffer } from './figureWalk';
-import { shot } from './fit';
+import { setScheme, shot } from './fit';
 
 /** Her exercise book: the working for 2x + 3 = 7, in her hand. */
 const NOTEBOOK = `<body style="margin:0; padding:56px 64px; background:#fdfcf6;
@@ -46,12 +46,13 @@ test('her working, photographed: copied into her field, the unread line hers to 
 
   // Before: the calculation with its bar — and the camera where the chat has its +.
   await shot(page, '444a-question');
-  await page.emulateMedia({ colorScheme: 'dark' });
+  await setScheme(page, 'dark');
   await shot(page, '444a-question-dark');
 
   // The copy, in the dark room first: a theme switch remounts the bar, so each room reads anew.
   for (const room of ['dark', 'light'] as const) {
-    await page.emulateMedia({ colorScheme: room });
+    // She taps the camera once the switch has landed (`setScheme`, issue #443).
+    await setScheme(page, room);
     await photograph(page, photo);
     await expect(field).toHaveValue(COPY);
     await expect(
@@ -65,10 +66,7 @@ test('her working, photographed: copied into her field, the unread line hers to 
 
   // She writes the line from her book; the note asks her to compare the rest.
   const written = '2x + 3 = 7 | −3\n2x = 5 | :2\nx = 2,5';
-  await expect(async () => {
-    await field.fill(written);
-    await expect(field).toHaveValue(written, { timeout: 1000 });
-  }).toPass();
+  await field.fill(written);
   await expect(
     page.getByText('Von deinem Foto abgeschrieben. Stimmt jede Zeile mit deinem Heft?'),
   ).toBeVisible();
@@ -79,6 +77,6 @@ test('her working, photographed: copied into her field, the unread line hers to 
   await expect(page.getByText('Bis Zeile 1 stimmt alles.', { exact: false }).last()).toBeVisible();
   await expect(page.getByTestId('work-photo-note')).toHaveCount(0);
   await shot(page, '444d-checked');
-  await page.emulateMedia({ colorScheme: 'dark' });
+  await setScheme(page, 'dark');
   await shot(page, '444d-checked-dark');
 });
