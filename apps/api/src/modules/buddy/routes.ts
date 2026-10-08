@@ -50,7 +50,7 @@ import { bumpContext, cancelGoalWakeups, lockContext, scheduleStepReminder } fro
 import { loosens } from './policy.js';
 import { loadSettings, type SettingsRow } from './state.js';
 import type { UndoSpec } from './toolKit.js';
-import { runUndo, undoLoosensContact } from './tools.js';
+import { runUndo, undoLoosensContact } from './undo.js';
 import { receiveLearnerMessage, stopTurn, type OnReply, type TurnOutcome } from './turn.js';
 
 export const buddyRoutes = new Hono<AppEnv>();

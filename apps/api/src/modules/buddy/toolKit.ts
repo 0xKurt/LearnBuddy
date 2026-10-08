@@ -283,7 +283,7 @@ async function lockGoal(ctx: ToolContext, id: string, ref: string): Promise<Goal
   return row;
 }
 
-export async function currentGoal(ctx: ToolContext, alias: string): Promise<GoalRow> {
+async function currentGoal(ctx: ToolContext, alias: string): Promise<GoalRow> {
   return lockGoal(ctx, goalOf(ctx, alias).id, alias);
 }
 
@@ -296,6 +296,33 @@ export async function targetGoal(ctx: ToolContext, ref: string): Promise<GoalRow
     );
   }
   return lockGoal(ctx, ctx.created.goalId, 'new');
+}
+
+/** The goal an action names (or "new"), which must still be open; none when it names none. */
+export async function activeGoalOf(
+  ctx: ToolContext,
+  ref: string | null | undefined,
+): Promise<GoalRow | null> {
+  const goal = ref ? await targetGoal(ctx, ref) : null;
+  if (goal && goal.status !== 'active') throw new ToolRejection(`goal ${ref} is not active`);
+  return goal;
+}
+
+/** A goal she changes in her own words: the quote first, then the goal, locked. */
+export async function quotedGoal(
+  ctx: ToolContext,
+  a: { quote: string | null; goal: string },
+): Promise<GoalRow> {
+  requireQuote(ctx, a.quote);
+  return currentGoal(ctx, a.goal);
+}
+
+/** The subject an action names, resolved from her own aliases; none when it names none. */
+export function subjectOf(ctx: ToolContext, alias: string | null | undefined): string | null {
+  if (!alias) return null;
+  const subject = ctx.aliases.subjects.get(alias);
+  if (!subject) throw new ToolRejection(`unknown subject ${alias}`);
+  return subject.id;
 }
 
 export async function currentStep(ctx: ToolContext, alias: string): Promise<StepRow> {

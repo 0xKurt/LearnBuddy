@@ -1,12 +1,11 @@
 {
   "$comment": "Ausnahmeliste zu Regel 3 (Keine Kopien, Issue #313): heutige Kopien (jscpd, ≥ 50 Tokens über ≥ 5 Zeilen) je Dateipaar mit ihren doppelten Zeilen. Darf nur schrumpfen — ein neues Paar oder mehr Zeilen macht `pnpm lint` rot. Siehe docs/engineering-guards.md.",
-  "clones": 29,
-  "lines": 371,
+  "clones": 26,
+  "lines": 344,
   "pairs": {
     "apps/api/src/auth/verifier.ts <-> apps/api/src/storage/gateway.ts": 10,
     "apps/api/src/llm/partial.ts (in sich)": 31,
     "apps/api/src/modules/buddy/check.ts <-> apps/api/src/modules/buddy/turn.ts": 7,
-    "apps/api/src/modules/buddy/tools.ts (in sich)": 27,
     "apps/api/src/modules/practice/speak.ts (in sich)": 14,
     "apps/api/src/modules/practice/structured.ts (in sich)": 7,
     "apps/mobile/app/consent.tsx <-> apps/mobile/app/profile.tsx": 19,
