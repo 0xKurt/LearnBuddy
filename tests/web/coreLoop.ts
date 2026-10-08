@@ -30,10 +30,13 @@ export async function homePositions(page: Page): Promise<number[]> {
   return ys;
 }
 
-/** A photographed "worksheet", rendered by the browser itself; returns its path. */
-export async function worksheetJpeg(page: Page): Promise<string> {
-  const path = join(SHOTS, '..', 'worksheet.jpg');
-  // A phone photo is big: 1600 × 2000 pixels (800 × 1000 at twice the density).
+/**
+ * A page "photographed": the HTML rendered by the browser itself and saved as a JPEG under
+ * `file`; returns its path. A phone photo is big: 1600 × 2000 pixels (800 × 1000 at twice the
+ * density).
+ */
+export async function photographed(page: Page, file: string, html: string): Promise<string> {
+  const path = join(SHOTS, '..', file);
   const sheet = await page
     .context()
     .browser()!
@@ -41,8 +44,18 @@ export async function worksheetJpeg(page: Page): Promise<string> {
       viewport: { width: 800, height: 1000 },
       deviceScaleFactor: 2,
     });
-  await sheet.setContent(`
-    <body style="font-family: Georgia, serif; padding: 48px; background: #fffef8">
+  await sheet.setContent(html);
+  await sheet.screenshot({ path, type: 'jpeg', quality: 80 });
+  await sheet.close();
+  return path;
+}
+
+/** A photographed "worksheet"; returns its path. */
+export function worksheetJpeg(page: Page): Promise<string> {
+  return photographed(
+    page,
+    'worksheet.jpg',
+    `<body style="font-family: Georgia, serif; padding: 48px; background: #fffef8">
       <h1>Brüche – Übungsblatt</h1>
       <ol style="font-size: 26px; line-height: 2">
         <li>Kürze 6/8.</li>
@@ -50,10 +63,8 @@ export async function worksheetJpeg(page: Page): Promise<string> {
         <li>Wie heißt die Zahl unter dem Bruchstrich?</li>
         <li>Warum bleibt der Wert beim Erweitern gleich?</li>
       </ol>
-    </body>`);
-  await sheet.screenshot({ path, type: 'jpeg', quality: 80 });
-  await sheet.close();
-  return path;
+    </body>`,
+  );
 }
 
 /**

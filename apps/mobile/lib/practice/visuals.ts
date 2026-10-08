@@ -14,7 +14,7 @@
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 
-import { schematic } from '../../../../packages/shared-math/src/schematics.js';
+import { schematicBounds } from '../../../../packages/shared-math/src/schematics.js';
 
 /** A drawing's cap: a share of what she sees. */
 const FIGURE_SHARE = 0.14;
@@ -47,7 +47,7 @@ const CARD_REACH = 0.5;
  */
 export function visualReach(figure: Figure | null | undefined): number {
   if (figure?.type !== 'schematic') return CARD_REACH;
-  const [x0, y0, x1, y1] = schematic(figure.d).bounds;
+  const [x0, y0, x1, y1] = schematicBounds(figure.d);
   return y1 - y0 > x1 - x0 ? 1 : CARD_REACH;
 }
 

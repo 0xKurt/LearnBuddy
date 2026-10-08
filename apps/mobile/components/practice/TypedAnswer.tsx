@@ -19,7 +19,11 @@
 //     stand alone: a Diktat, a path she is writing line by line, a line that belongs to a board;
 //   · under the text a live preview of typed math ("3/4" as a fraction, TypedMathPreview);
 //   · a long text (issue #258) gets the tall bar and up to 12 000 characters
-//     (`lib/practice/essay.ts`); it is prose, so it is dictated in parts like a long answer.
+//     (`lib/practice/essay.ts`); it is prose, so it is dictated in parts like a long answer;
+//   · her working, photographed (issue #444): where a path is checked, a camera at the bar's start
+//     (like the chat's +). The copy goes into this field for her to compare with her book; a line
+//     that could not be read stays empty and "Prüfen" waits for it (`useWorkPhoto`,
+//     `lib/practice/workPhoto.ts`).
 // The fraction bar wrote into this field until #402; it is a board of its own now (report #388
 // §9), whose bar holds her question.
 // A board may stand above the bar when the typed line belongs to it (issue #260, Fehlerdetektiv:
@@ -27,7 +31,7 @@
 // shell's answer slot, the line in this bar, one "Prüfen" for both.
 // Autocorrect is off so the phone never "fixes" what the learner actually wrote.
 
-import type { ItemKind, SubjectKind } from '@learnbuddy/shared-types/contracts';
+import { pathPossible, type ItemKind, type SubjectKind } from '@learnbuddy/shared-types/contracts';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, View, type KeyboardTypeOptions } from 'react-native';
@@ -36,17 +40,13 @@ import { keysFor, typedUnder, type ScriptMode } from '../../lib/math/keys.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
-import {
-  hasPath,
-  lineCount,
-  pathPossible,
-  previewLine,
-  returnKey,
-} from '../../lib/practice/pathEntry.js';
+import { hasPath, lineCount, previewLine, returnKey } from '../../lib/practice/pathEntry.js';
 import { formDensity } from '../../lib/keyboard.js';
 import { answerMax } from '../../lib/practice/essay.js';
+import { copyNote, unreadText } from '../../lib/practice/workPhoto.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { tapped } from '../../lib/perf.js';
+import { CircleBtn } from '../lb/CircleBtn.js';
 import { InputBar } from '../lb/InputBar.js';
 import type { LbTextInputRef } from '../lb/LbTextInput.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
@@ -55,6 +55,8 @@ import { TalkButton } from '../voice/TalkButton.js';
 import { useConversation } from '../voice/useConversation.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { AnswerShell } from './AnswerShell.js';
+import { useWorkPhoto, type WorkTarget } from './useWorkPhoto.js';
+import { WorkPhotoNote } from './WorkPhotoNote.js';
 
 /** The web field's rows for a path: five lines fill the field's tallest. */
 const PATH_ROWS = 5;
@@ -81,7 +83,12 @@ type Props = {
    * why "Prüfen" waits and what the empty field says.
    */
   board?: { node: ReactNode; waits: string | null; placeholder: string } | null;
+  /** The question a photo of her working is read for (issue #444); none: no camera here. */
+  work?: WorkTarget | null;
 };
+
+/** No question to read a photo for: the hook still runs, its controls are not shown. */
+const NO_WORK: WorkTarget = { sessionId: '', itemId: '' };
 
 export function TypedAnswer({
   kind,
@@ -95,6 +102,7 @@ export function TypedAnswer({
   onCheck,
   onReadAgain,
   board = null,
+  work = null,
 }: Props) {
   const { t } = useTranslation(['practice', 'common']);
   const conversation = useConversation();
@@ -140,7 +148,13 @@ export function TypedAnswer({
     setForced(next.selection);
     inputRef.current?.focus();
   };
-  const canCheck = !disabled && value.trim().length > 0;
+  // Her working, photographed (issue #444): only where a path is checked and the line is hers alone.
+  const photo = useWorkPhoto(work ?? NO_WORK, onChange);
+  const photoHere = work !== null && pathPossible(kind) && board === null;
+  const copy = photoHere ? copyNote(photo.state, value) : null;
+  /** A line of the copy she still has to write: "Prüfen" waits, and says which. */
+  const unread = copy?.key === 'work.unread' ? unreadText(t, copy.lines) : null;
+  const canCheck = !disabled && value.trim().length > 0 && unread === null;
   const latest = useRef({ value, disabled });
   latest.current = { value, disabled };
 
@@ -167,6 +181,8 @@ export function TypedAnswer({
     // Tap → the verdict on screen (issue #66).
     tapped('check');
     onCheck(value.trim());
+    // The copy of her photo is her answer now.
+    photo.done();
   };
   const bar = (checkInBar: ReactNode) => (
     <InputBar
@@ -241,6 +257,20 @@ export function TypedAnswer({
       under={long ? null : <TypedMathPreview value={previewLine(kind, value, caret)} compact />}
       // Gespräch, at the pill's end like the chat's (issue #386).
       after={canTalk ? <TalkButton onPress={conversation.start} /> : null}
+      // Her working, photographed (issue #444): the camera where the chat has its +.
+      {...(photoHere
+        ? {
+            start: (
+              <CircleBtn
+                icon="camera"
+                plain
+                {...(disabled ? {} : { onPress: photo.take })}
+                accessibilityLabel={t('work.take')}
+              />
+            ),
+            above: <WorkPhotoNote photo={photo} value={value} />,
+          }
+        : {})}
     />
   );
 
@@ -266,10 +296,10 @@ export function TypedAnswer({
     <AnswerShell
       answer={board?.node ?? null}
       action={{
-        ready: value.trim().length > 0 && !board?.waits,
+        ready: value.trim().length > 0 && !board?.waits && unread === null,
         disabled,
         onPress: check,
-        waitsHint: board?.waits ?? t('answer.check_waits'),
+        waitsHint: board?.waits ?? unread ?? t('answer.check_waits'),
         // A long text keeps "Prüfen" under the bar while there is room: inside it, the button
         // took a column of the whole tall field, and her text ran down a narrow strip beside it
         // (#258). With the keyboard up on a small phone it rides in the bar like every answer.

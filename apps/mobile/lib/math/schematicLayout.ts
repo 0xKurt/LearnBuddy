@@ -3,10 +3,12 @@
 // number covers a part. The drawing (SchematicFigures.tsx) and a finger on it (tapLayout.ts) read
 // the same frame here, so a tap means what it shows.
 
+import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
 import { columnLabels } from '../../../../packages/shared-math/src/labelBoxes.js';
 import { REGION_FRAME } from '../../../../packages/shared-math/src/regions.js';
 import {
-  schematic,
+  schematicBounds,
+  schematicHeight,
   schematicNumbered,
   type SchematicFig,
   type SchematicShape,
@@ -36,41 +38,44 @@ export type SchematicLayout = {
   badges: SchematicBadge[];
 };
 
+/** The drawing and the names, once both are loaded (`useSchematicShapes`, `useFigureNames`). */
+type SchematicLoaded = { drawing: SchematicShape; names: FigureNames };
+
 /**
  * The picture `width` pt wide: without numbers the drawing fills the width with the whole frame, as
- * a tap needs it; with them it is cut to its bounds (`Schematic.bounds`) and inset by a column on
- * each side, and the room grows when the numbers need more height than it has. `maxHeight`: a
+ * a tap needs it; with them it is cut to its bounds (`schematicBounds`, #462) and inset by a column
+ * on each side, and the room grows when the numbers need more height than it has. `maxHeight`: a
  * drawing with numbers no taller than that, centred between its columns — the columns keep their
- * size, so a smaller picture is drawn smaller, not narrower (`SchematicBody`).
+ * size, so a smaller picture is drawn smaller, not narrower (`SchematicBody`). The room is known
+ * before the drawing and the names are (the parts the server numbered, `n`); where the numbers
+ * stand only after.
  */
 export function schematicLayout(
   figure: SchematicFig,
   width: number,
-  drawing: SchematicShape | null | undefined,
+  loaded: SchematicLoaded | null,
   maxHeight = Infinity,
 ): SchematicLayout {
-  const numbered = schematicNumbered(figure);
-  const { height: frameHeight, bounds } = schematic(figure.d);
-  const inset = numbered.length > 0 ? COLUMN : 0;
-  const [bx0, by0, bx1, by1] = inset > 0 ? bounds : [0, 0, REGION_FRAME, frameHeight];
+  const inset = figure.n.length > 0 ? COLUMN : 0;
+  const [bx0, by0, bx1, by1] =
+    inset > 0 ? schematicBounds(figure.d) : [0, 0, REGION_FRAME, schematicHeight(figure.d)];
   const free = width - 2 * inset;
   const k = Math.min(free / (bx1 - bx0), inset > 0 ? maxHeight / (by1 - by0) : Infinity);
   const drawn = (by1 - by0) * k;
-  const rows = Math.ceil(numbered.length / 2);
+  const rows = Math.ceil(figure.n.length / 2);
   const height = Math.max(drawn, rows * PITCH);
   // Where the frame's (0, 0) stands: the bounds centred between the columns and in the height.
   const x0 = inset + (free - (bx1 - bx0) * k) / 2 - bx0 * k;
   const y0 = (height - drawn) / 2 - by0 * k;
-  const at = numbered.map((i): [number, number] => {
-    const p = drawing?.parts[i]?.at ?? [0, 0];
+  if (!loaded) return { k, x0, y0, width, height, badges: [] };
+  const at = schematicNumbered(loaded.names, figure).map((i): [number, number] => {
+    const p = loaded.drawing.parts[i]?.at ?? [0, 0];
     return [x0 + p[0] * k, y0 + p[1] * k];
   });
-  const slots = drawing
-    ? columnLabels(
-        at.map(([x, y]) => ({ x, y })),
-        { left: EDGE, right: width - EDGE, top: EDGE, bottom: height - EDGE, pitch: PITCH },
-      )
-    : [];
+  const slots = columnLabels(
+    at.map(([x, y]) => ({ x, y })),
+    { left: EDGE, right: width - EDGE, top: EDGE, bottom: height - EDGE, pitch: PITCH },
+  );
   return {
     k,
     x0,

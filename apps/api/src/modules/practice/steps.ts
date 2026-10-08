@@ -178,18 +178,42 @@ export function parseLine(raw: string): Line | null {
   return line !== null && line.vars.length >= 2 ? line : null;
 }
 
-/** The lines of a written path, in order; empty lines and bullet markers dropped. */
+/** A relation in a line: a step note follows an equation or inequality, never a lone term. */
+const RELATION_SIGN = /[=<>≤≥]/;
+
+/**
+ * A step note: the operation she writes after a vertical bar at the end of a line, as German
+ * schools teach it ("2x + 3 = 7 | −3", "2x = 4 | :2"). It says what she does next and is not
+ * part of the line's maths. Only an OPENING bar is one — with an even number of bars before it —
+ * so the closing bar of an absolute value ("y = |x| · 2") is never taken for a note.
+ */
+function withoutStepNote(line: string): string {
+  const at = line.lastIndexOf('|');
+  if (at < 0) return line;
+  const before = line.slice(0, at);
+  const opening = (before.match(/\|/g) ?? []).length % 2 === 0;
+  const note = /^\s*[-+−–·*×:/÷^√]\s*[^|=<>≤≥]*$/.test(line.slice(at + 1));
+  return opening && note && RELATION_SIGN.test(before) ? before : line;
+}
+
+/**
+ * The lines of a written path, in order; empty lines, bullet markers, a leading "⇔"/"⇒" and step
+ * notes dropped — typed or copied off her photographed working (issue #444).
+ */
 export function pathLines(text: string): string[] {
   return text
     .split(/\r?\n/)
     .map((l) =>
-      l
-        // A learner numbers or bullets her lines; the marker is not part of the maths. A marker is
-        // followed by a space: "-2x > 6" starts with a minus sign and "2.5x = 5" with a decimal,
-        // and stripping either would change the line it is about to check (issue #263).
-        .replace(/^\s*(?:\d+[.)]|[-–•*>])\s+/, '')
-        .replace(/[$]/g, '')
-        .trim(),
+      withoutStepNote(
+        l
+          // A learner numbers or bullets her lines; the marker is not part of the maths. A marker is
+          // followed by a space: "-2x > 6" starts with a minus sign and "2.5x = 5" with a decimal,
+          // and stripping either would change the line it is about to check (issue #263).
+          .replace(/^\s*(?:\d+[.)]|[-–•*>])\s+/, '')
+          // "⇔ 2x = 4": the arrow joins the line to the one before; the next step is checked anyway.
+          .replace(/^\s*(?:⇔|⇒|<=>|=>|→)\s*/, '')
+          .replace(/[$]/g, ''),
+      ).trim(),
     )
     .filter((l) => l !== '');
 }

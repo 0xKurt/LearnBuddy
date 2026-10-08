@@ -5,14 +5,11 @@
 // answers in apps/api/src/testing/scenarios/sources.ts; every cut is code's. Shot at both phone
 // sizes, light and dark (test-results/web/shots, 120-…).
 
-import { join } from 'node:path';
-
 import { expect, test, type Page } from '@playwright/test';
 
 import { openMenu } from './coreLoop';
-import { shot } from './fit';
-
-const FIXTURES = join(__dirname, '../../apps/mobile/lib/photo/__tests__/fixtures');
+import { sendPhoto } from './figureWalk';
+import { bothSchemes } from './fit';
 
 /** A child of the given birth year (14 or 15 today: the age her scripted reading is keyed by). */
 async function onboardChild(page: Page, name: string, year: string): Promise<void> {
@@ -43,31 +40,12 @@ async function onboardChild(page: Page, name: string, year: string): Promise<voi
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
-/** One photo attached in the chat and sent; its reading is done once the practice is ready. */
-async function sendPhoto(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Was möchtest du anhängen?' }).click();
-  const chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Aus der Galerie' }).click();
-  await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
-  await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
-  await page.getByRole('button', { name: 'Senden' }).click();
-  await expect(page.getByRole('button', { name: 'Jetzt üben' })).toBeVisible({ timeout: 30_000 });
-}
-
 /** The sheet's own screen, through "Dein Material" and its subject. */
 async function openSheet(page: Page, subject: string, title: string): Promise<void> {
   await openMenu(page, 'Dein Material');
   await page.getByRole('button', { name: new RegExp(`^${subject}: `) }).click();
   await page.getByRole('button', { name: `Fragen aus „${title}“ ansehen` }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
-}
-
-/** This state at both phone sizes, in the light and the dark room. */
-async function bothRooms(page: Page, name: string): Promise<void> {
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-dark`);
-  await page.emulateMedia({ colorScheme: 'light' });
 }
 
 test('a corrected test: new tasks for what was marked, nothing else, no grade', async ({
@@ -83,7 +61,7 @@ test('a corrected test: new tasks for what was marked, nothing else, no grade', 
   await expect(page.getByText('37 + 48')).toHaveCount(0);
   await expect(page.getByText('2 + 2')).toHaveCount(0);
   await expect(page.getByText(/Note 3|14\/20/)).toHaveCount(0);
-  await bothRooms(page, '120-sources-corrected-test');
+  await bothSchemes(page, '120-sources-corrected-test');
 });
 
 test('a notebook entry: five short questions for the next morning', async ({ page }) => {
@@ -92,5 +70,5 @@ test('a notebook entry: five short questions for the next morning', async ({ pag
   await openSheet(page, 'Biologie', 'Die Photosynthese');
   await expect(page.getByText('Aus deinem Hefteintrag:', { exact: false })).toBeVisible();
   await expect(page.getByText(/^Biologie · 5 Aufgaben$/)).toBeVisible();
-  await bothRooms(page, '121-sources-notebook-entry');
+  await bothSchemes(page, '121-sources-notebook-entry');
 });

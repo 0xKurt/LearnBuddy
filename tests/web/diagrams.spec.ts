@@ -6,7 +6,8 @@
 
 import { expect, test } from '@playwright/test';
 
-import { bothRooms, chosen, onboardChild, startOffer, typed } from './figureWalk';
+import { chosen, onboardChild, startOffer, typed } from './figureWalk';
+import { bothSchemes } from './fit';
 
 test('diagrams: gaps in boxes with arrows, answered, graded by code', async ({ page }) => {
   await onboardChild(page, 'diagrams');
@@ -17,25 +18,25 @@ test('diagrams: gaps in boxes with arrows, answered, graded by code', async ({ p
   await expect(
     page.getByRole('img', { name: /Kreislauf mit 4 Kästchen.*Pfeil von Verdunstung nach Lücke A/ }),
   ).toBeVisible();
-  await bothRooms(page, '74-diagram-cycle');
+  await bothSchemes(page, '74-diagram-cycle', 'question-figure');
   await typed(page, 'Kondensation');
 
   await expect(page.getByText('Wasserkreislauf in Lücke B', { exact: false })).toBeVisible();
   await typed(page, 'Versickerung');
 
   await expect(page.getByText('Lücke A der Nahrungskette', { exact: false })).toBeVisible();
-  await bothRooms(page, '75-diagram-chain');
+  await bothSchemes(page, '75-diagram-chain', 'question-figure');
   await chosen(page, 'Hase');
 
   await expect(page.getByText('Welche Gewalt fehlt', { exact: false })).toBeVisible();
-  await bothRooms(page, '76-diagram-tree');
+  await bothSchemes(page, '76-diagram-tree', 'question-figure');
   await chosen(page, 'Exekutive');
 
   await expect(page.getByText('Regelkreis in Lücke A', { exact: false })).toBeVisible();
   await expect(
     page.getByRole('img', { name: /Pfeil von Messfühler nach Regler: Istwert/ }),
   ).toBeVisible();
-  await bothRooms(page, '77-diagram-grid');
+  await bothSchemes(page, '77-diagram-grid', 'question-figure');
   await typed(page, 'Stellglied');
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });

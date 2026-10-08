@@ -11,8 +11,14 @@ import { describe, expect, it } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
 import { TypedAnswer } from '../TypedAnswer.js';
+import type { WorkTarget } from '../useWorkPhoto.js';
 
-function show(kind: ItemKind, prompt: string, subjectKind: SubjectKind | null) {
+function show(
+  kind: ItemKind,
+  prompt: string,
+  subjectKind: SubjectKind | null,
+  work: WorkTarget | null = null,
+) {
   const seen = { value: '' };
   function Harness() {
     const [value, setValue] = useState('');
@@ -28,6 +34,7 @@ function show(kind: ItemKind, prompt: string, subjectKind: SubjectKind | null) {
         disabled={false}
         onChange={setValue}
         onCheck={() => undefined}
+        work={work}
       />
     );
   }
@@ -133,5 +140,26 @@ describe('the keys over the answer field (issue #239)', () => {
     show('long', 'Erklär mir, warum der Mond Phasen hat.', null);
     expect(field().getAttribute('maxlength')).toBe('2000');
     expect(field().getAttribute('rows')).toBe('1');
+  });
+});
+
+describe('her working, photographed (issue #444)', () => {
+  const work = { sessionId: 's1', itemId: 'i1' };
+  const camera = () => screen.queryByRole('button', { name: 'Foto von deinem Rechenweg' });
+
+  it('offers the camera at the bar where a path is checked', () => {
+    show('numeric', 'Löse die Gleichung 2x + 3 = 7.', 'math', work);
+    expect(camera()).not.toBeNull();
+    expect(screen.getByTestId('bottom-bar').contains(camera())).toBe(true);
+  });
+
+  it('offers none where a line break means nothing (a vocabulary word)', () => {
+    show('vocab', 'der Hund', null, work);
+    expect(camera()).toBeNull();
+  });
+
+  it('offers none without the question it is read for', () => {
+    show('numeric', 'Löse die Gleichung 2x + 3 = 7.', 'math');
+    expect(camera()).toBeNull();
   });
 });

@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { Platform, Text, View, type TextStyle } from 'react-native';
 
 import { speakMathText } from '../../lib/math/speak.js';
+import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -249,6 +250,7 @@ function FigureChoices({
   const { t } = useTranslation('practice');
   const { t: tm } = useTranslation('math');
   const words = useSpokenWords();
+  const names = useFigureNames(...figures);
   const [zoomed, setZoomed] = useState<number | null>(null);
   // What is on screen (issue #289): a tapped question has no keyboard up, so this is the window.
   const { visible: screenHeight } = useVisibleHeight();
@@ -261,9 +263,9 @@ function FigureChoices({
     () =>
       figures.map(
         (f, i) =>
-          `${letterFor(i)}: ${describeFigure(f, tm, (x) => speakMathText(x, words), { formulas: false })}`,
+          `${letterFor(i)}: ${describeFigure(f, tm, names, (x) => speakMathText(x, words), { formulas: false })}`,
       ),
-    [figures, tm, words],
+    [figures, tm, names, words],
   );
   const open = zoomed !== null ? figures[zoomed] : undefined;
   return (

@@ -366,6 +366,19 @@ export const BROKEN_SCHEMATIC_ITEMS = [
     answer: 'Er steuert die Zelle.',
     figure: cell(['Zellkern'], 1),
   },
+  // A part to name on a picture that cannot be read (no such drawing): without its picture
+  // "Wie heißt Teil 3?" is no question (#481).
+  {
+    ...base,
+    prompt: 'Wie heißt Teil 3?',
+    answer: 'Chloroplast',
+    figure: {
+      type: 'schematic',
+      d: 'spaceship',
+      n: ['Zellkern', 'Vakuole', 'Chloroplast'],
+      ask: 3,
+    },
+  },
   // A picture question that is no short answer.
   {
     ...base,

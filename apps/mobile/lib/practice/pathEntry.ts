@@ -26,18 +26,7 @@
 // through react-native-web, where a TextInput's `submitBehavior` is not in the DOM and cannot be
 // asserted — the same reason `lib/theme/modeSwitch.ts` sits where it does.
 
-import type { ItemKind } from '@learnbuddy/shared-types/contracts';
-
-/**
- * The kinds whose answer may carry a worked path. Must stay in step with the condition in
- * `apps/api/src/modules/practice/evaluate.ts` that calls `checkPath` (issue #209).
- */
-const PATH_KINDS: readonly ItemKind[] = ['numeric', 'formula', 'short'];
-
-/** Whether a worked path is checked for this kind — and so whether the ↵ key is offered. */
-export function pathPossible(kind: ItemKind): boolean {
-  return PATH_KINDS.includes(kind);
-}
+import { pathPossible, type ItemKind } from '@learnbuddy/shared-types/contracts';
 
 /** The one separator the field writes and steps.ts splits at (a "\r\n" works there too). */
 export const LINE_BREAK = '\n';

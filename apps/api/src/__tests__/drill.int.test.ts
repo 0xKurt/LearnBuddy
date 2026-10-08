@@ -98,6 +98,8 @@ describe.skipIf(!dbReady)('Kopfrechnen: a round code writes and checks', () => {
     expect(view.items).toHaveLength(20);
     // No key leaves the server while a task is open.
     expect(view.items.every((i) => i.answer === null)).toBe(true);
+    // Every task may be heard: Vorlesen reads it like any question (#434).
+    expect(view.items.every((i) => i.item.read_aloud)).toBe(true);
     const keys = await env.db.query<{ drill_fact: string }>(
       `select i.drill_fact from session_items si join items i on i.id = si.item_id
         where si.session_id = $1 order by si.position`,

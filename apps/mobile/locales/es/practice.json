@@ -48,7 +48,8 @@
   "choice_tried": "Ya la has probado",
   "choice_zoom_hint": "Mantén pulsado para ver la imagen en grande.",
   "dispute": {
-    "button": "La corrección no es correcta",
+    "button": "Reclamar",
+    "label": "Reclamar la corrección",
     "confirm": "Retirar la corrección",
     "done": "Vale, esa no cuenta.",
     "hint": "Retira esta pregunta y su nota.",
@@ -63,7 +64,8 @@
   "finishing": "Un momento: enseguida llega tu resultado.",
   "more_coming": "Enseguida llegan las siguientes preguntas …",
   "flag": {
-    "button": "La pregunta no encaja",
+    "button": "No encaja",
+    "label": "La pregunta no encaja",
     "hint": "Quita esta pregunta; ya no volverá a salir.",
     "sheet_title": "¿La pregunta no encaja?",
     "sheet_body": "Esta pregunta ya no volverá a salir.",
@@ -209,7 +211,12 @@
     "rest_of": "Poner: {{value}}",
     "check_waits": "Solo cuando cada compás tenga algo.",
     "keys_label": "Teclas del pentagrama",
-    "values_label": "Valor de la nota"
+    "values_label": "Valor de la nota",
+    "taps_pad": "Marca aquí",
+    "taps_again": "Otra vez",
+    "taps_waits": "Primero marca el ritmo que oíste.",
+    "tapped_one": "{{count}} golpe",
+    "tapped_other": "{{count}} golpes"
   },
   "summary": {
     "title": "¡Lo has conseguido!",
@@ -402,5 +409,18 @@
     "text_one": "Tu texto · 1 palabra",
     "text_other": "Tu texto · {{count}} palabras",
     "thinking": "Buddy está leyendo tu texto …"
+  },
+  "work": {
+    "take": "Foto de tu procedimiento",
+    "reading": "Estoy leyendo tu procedimiento …",
+    "read": "Copiado de tu foto. ¿Coincide cada línea con tu cuaderno?",
+    "unread_one": "No he podido leer la línea {{lines}}. Escríbela tú.",
+    "unread_other": "No he podido leer las líneas {{lines}}. Escríbelas tú.",
+    "unreadable": "No puedo leer tu foto con seguridad. Hazla otra vez – con luz y recta desde arriba – o escribe tu procedimiento.",
+    "no_working": "No encuentro tu procedimiento para esta tarea en la foto. Fotografía tu propio procedimiento – o escríbelo.",
+    "too_long": "Es más de lo que cabe en una respuesta. Fotografía solo tu procedimiento para esta tarea.",
+    "down": "Ahora mismo no puedo leer tu foto. Escribe tu procedimiento o inténtalo otra vez en un momento.",
+    "camera_blocked": "LearnBuddy todavía no puede usar la cámara. Puedes permitirlo en Ajustes – o escribir tu procedimiento.",
+    "camera_failed": "La cámara no se ha abierto. Inténtalo otra vez o escribe tu procedimiento."
   }
 }

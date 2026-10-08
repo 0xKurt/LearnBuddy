@@ -11,7 +11,7 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { shot } from './fit';
+import { bothSchemes, setScheme, shot } from './fit';
 
 const FIXTURES = join(__dirname, '../../apps/mobile/lib/photo/__tests__/fixtures');
 
@@ -44,15 +44,6 @@ async function onboardChild(page: Page): Promise<void> {
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
-/** This state at both phone sizes, in the light and the dark room. */
-async function bothRooms(page: Page, name: string): Promise<void> {
-  await expect(page.getByTestId('passage')).toBeVisible();
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-dark`);
-  await page.emulateMedia({ colorScheme: 'light' });
-}
-
 /** The text and the question are on screen at once, and only the text scrolls. */
 async function textAndQuestion(page: Page, prompt: string): Promise<void> {
   await expect(page.getByText(prompt)).toBeInViewport();
@@ -66,13 +57,7 @@ async function textAndQuestion(page: Page, prompt: string): Promise<void> {
 
 /** Her answer typed and checked. */
 async function typed(page: Page, text: string): Promise<void> {
-  // Right after the switch back from the dark room the field can render once more; fill until
-  // the value holds instead of typing into the copy that is about to go.
-  const field = page.getByLabel('Deine Antwort');
-  await expect(async () => {
-    await field.fill(text);
-    await expect(field).toHaveValue(text, { timeout: 1000 });
-  }).toPass();
+  await page.getByLabel('Deine Antwort').fill(text);
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
 }
@@ -120,7 +105,7 @@ test('a reading text: one text above every question, scrolling alone, folding aw
     if (await on(SHORT)) {
       seen.add(SHORT);
       await textAndQuestion(page, SHORT);
-      await bothRooms(page, '97-reading-short');
+      await bothSchemes(page, '97-reading-short', 'passage');
       // A slip of the pen: what she understood is right (#197).
       await typed(page, 'mit dem Farrad');
       // Closed: the line the answer stood in, tinted and said in words.
@@ -130,15 +115,15 @@ test('a reading text: one text above every question, scrolling alone, folding aw
     } else if (await on(CHOICE)) {
       seen.add(CHOICE);
       await textAndQuestion(page, CHOICE);
-      await bothRooms(page, '97-reading-choice');
+      await bothSchemes(page, '97-reading-choice', 'passage');
       // Answered in the dark room, and the closed state shot there: switching the room rebuilds
       // the screen, which then shows the next open question.
-      await page.emulateMedia({ colorScheme: 'dark' });
+      await setScheme(page, 'dark');
       await page.getByRole('button', { name: 'ein Bauer mit seinem Traktor' }).click();
       await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
       await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 9–10');
       await shot(page, '97-reading-choice-closed-dark');
-      await page.emulateMedia({ colorScheme: 'light' });
+      await setScheme(page, 'light');
       // The rebuilt screen stands on the next open question: nothing to move on from.
       await expect(page.getByRole('button', { name: 'Weiter' })).toHaveCount(0);
     } else if (await on(TRUE_FALSE)) {
@@ -148,7 +133,7 @@ test('a reading text: one text above every question, scrolling alone, folding aw
       await page.getByRole('button', { name: 'Der Schulweg' }).click();
       await expect(page.getByTestId('scroll-text')).toHaveCount(0);
       await expect(page.getByText('Text zeigen')).toBeVisible();
-      await bothRooms(page, '97-reading-folded');
+      await bothSchemes(page, '97-reading-folded', 'passage');
       // Open again for the questions after it: folded stays folded until she opens it.
       await page.getByRole('button', { name: 'Der Schulweg' }).click();
       await expect(page.getByTestId('scroll-text')).toBeVisible();
@@ -157,12 +142,12 @@ test('a reading text: one text above every question, scrolling alone, folding aw
     } else if (await on(LATER)) {
       seen.add(LATER);
       await expect(page.getByText(LATER)).toBeInViewport();
-      await bothRooms(page, '97-reading-lines');
+      await bothSchemes(page, '97-reading-lines', 'passage');
       await typed(page, 'Sie schiebt ihr Fahrrad über die Brücke');
     } else if (await on(ORDER)) {
       seen.add(ORDER);
       await expect(page.getByText(ORDER)).toBeInViewport();
-      await bothRooms(page, '97-reading-order');
+      await bothSchemes(page, '97-reading-order', 'passage');
       for (const event of EVENTS) {
         await page.getByRole('button', { name: `${event}, noch ohne Platz` }).click();
       }
@@ -195,7 +180,7 @@ test('a text Buddy writes himself: at her stage, read like a photographed one (#
   await textAndQuestion(page, first);
   // Buddy's own text: the card says whose question it is.
   await expect(page.getByText('Frage von Buddy').first()).toBeVisible();
-  await bothRooms(page, '98-reading-buddy');
+  await bothSchemes(page, '98-reading-buddy', 'passage');
   await page.getByRole('button', { name: 'unter einer Hecke' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 9–11');
@@ -222,10 +207,7 @@ async function belegstelle(page: Page): Promise<void> {
   await expect(line(16)).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByTestId('mark-summary')).toHaveText('Markiert – Z. 15–16');
   await expect(line(16)).toBeInViewport();
-  await shot(page, '97-reading-evidence');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '97-reading-evidence-dark');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '97-reading-evidence');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   // Closed: the text is back above, the lines that back it tinted and said in words.

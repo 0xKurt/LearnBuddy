@@ -34,9 +34,9 @@ import { curriculumBlock } from '../curriculum/state.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { StorageError } from '../../storage/gateway.js';
-import { formsOn, insertItems, samePrompt, usableItems } from '../practice/items.js';
-import { SHEET_STRUCTURED, structuredItems } from '../practice/structured.js';
-import { readingItems } from '../practice/reading.js';
+import { formsOn, insertItems, samePrompt } from '../practice/items.js';
+import { partPrompts, unseenTasks } from './partTasks.js';
+import { addedQuestions, sheetQuestions } from './sheetQuestions.js';
 import { createSession } from '../practice/service.js';
 import {
   clarifiedRules,
@@ -854,7 +854,10 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     // A corrected test and a notebook entry are short by design and never continued (#259).
     if (!homework && result.success && result.data.source === 'sheet') {
       for (let pass = 1; pass < MOST_READINGS && result.data.more_items; pass++) {
-        const seen = [...result.data.items, ...result.data.structured].map((it) => it.prompt);
+        const seen = [
+          ...[...result.data.items, ...result.data.structured].map((it) => it.prompt),
+          ...partPrompts(result.data.part_tasks),
+        ];
         let next;
         try {
           next = await read(lean, seen);
@@ -871,8 +874,9 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
         const freshStructured = parsed.data.structured.filter(
           (it) => !known.has(samePrompt(it.prompt)),
         );
+        const freshTasks = unseenTasks(parsed.data.part_tasks, known);
         // No progress: stop rather than ask a fourth time for the same nothing.
-        if (fresh.length === 0 && freshStructured.length === 0) {
+        if (fresh.length === 0 && freshStructured.length === 0 && freshTasks.length === 0) {
           result = { success: true, data: { ...result.data, more_items: false } } as typeof result;
           break;
         }
@@ -886,6 +890,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
             ...result.data,
             items: [...result.data.items, ...fresh],
             structured: [...result.data.structured, ...freshStructured],
+            part_tasks: [...result.data.part_tasks, ...freshTasks],
             more_items: parsed.data.more_items,
             not_practicable: [
               ...result.data.not_practicable,
@@ -918,17 +923,12 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // What kind of page it is decides what is kept of the reading (issue #259, sources.ts).
   const sourced = applySource(result.data, m.photo_count);
   const x = sourced.reading;
-  // The ordinary questions, and after them the structured ones that pass Regel 0 (#228–#230):
-  // an order, a table or links to make, each checked by code before it is stored. Then each
-  // reading text's group (#233), checked against the text and the transcription of the sheet —
-  // not in homework, which is helped task by task as printed (its schema has no reading).
-  const checked = [
-    ...usableItems(x.items),
-    ...structuredItems(x.structured, SHEET_STRUCTURED, x.structured.length),
-    ...(homework ? [] : x.reading).flatMap((r) =>
-      readingItems(r, { locale: learner.locale, transcript: x.extracted_text }),
-    ),
-  ];
+  // Every form held to its own rules by code before anything is stored (`sheetQuestions.ts`).
+  const checked = sheetQuestions(x, {
+    locale: learner.locale,
+    off: deps.config.FORMS_OFF,
+    homework,
+  });
   // A form switched off in this environment is not stored (#296, `config.FORMS_OFF`).
   const items = formsOn(checked, deps.config.FORMS_OFF);
   const pageProblems = pageProblemsOf(x.pages, m.photo_count);
@@ -952,7 +952,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     });
   // Questions were written but none passed validation: the reading went wrong, not the
   // photo — no lighting advice for a fine photo (empty-after-validation-says-unreadable).
-  const written = x.items.length + x.structured.length + x.reading.length;
+  const written = x.items.length + x.structured.length + x.reading.length + x.part_tasks.length;
   if (items.length === 0)
     return fail(deps, job, materialId, written > 0 ? 'model_error' : 'unreadable');
 
@@ -1483,7 +1483,7 @@ async function runClarifiedReading(deps: Deps, job: JobRow, spotId: string): Pro
 
   const now = deps.now();
   const homework = spot.purpose === 'homework';
-  const { read } = await sheetReader(deps, spot.learner_id, {
+  const { learner, read } = await sheetReader(deps, spot.learner_id, {
     homework,
     parts: loaded.parts,
     now,
@@ -1514,11 +1514,8 @@ async function runClarifiedReading(deps: Deps, job: JobRow, spotId: string): Pro
     if (err instanceof LlmError) return retryClarification(deps, job, spot, err.kind);
     throw err;
   }
-  const fresh = parsed.success
-    ? formsOn(usableItems(parsed.data.items), deps.config.FORMS_OFF).filter(
-        (it) => !known.has(samePrompt(it.prompt)),
-      )
-    : [];
+  const forms = { locale: learner.locale, off: deps.config.FORMS_OFF };
+  const fresh = parsed.success ? addedQuestions(parsed.data, known, forms) : [];
 
   await deps.db.tx(async (tx) => {
     // A run past its lease writes nothing (extraction-status-writes-unfenced).

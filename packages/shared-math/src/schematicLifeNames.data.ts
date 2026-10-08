@@ -26,8 +26,6 @@ export const SCHEMATIC_LIFE_NAMES = {
       'flor en corte (grande)',
       'fiore in sezione (grande)',
     ]),
-    height: 910,
-    bounds: [30, 80, 970, 910],
     parts: [
       ...Object.values(FLOWER),
       part(
@@ -45,8 +43,6 @@ export const SCHEMATIC_LIFE_NAMES = {
       'ojo (parte anterior)',
       'occhio (parte anteriore)',
     ]),
-    height: 820,
-    bounds: [250, 20, 1000, 800],
     parts: [
       EYE.vitreous,
       EYE.sclera,
@@ -74,8 +70,6 @@ export const SCHEMATIC_LIFE_NAMES = {
       'cabeza de insecto',
       'testa di insetto',
     ]),
-    height: 900,
-    bounds: [170, 80, 830, 880],
     parts: [
       INSECT.head,
       INSECT.eye,
@@ -100,8 +94,6 @@ export const SCHEMATIC_LIFE_NAMES = {
       'dientes (mandíbula)',
       'denti (mandibola)',
     ]),
-    height: 820,
-    bounds: [50, 50, 950, 720],
     parts: [
       TOOTH.gum,
       part(
@@ -124,8 +116,6 @@ export const SCHEMATIC_LIFE_NAMES = {
   },
   joint: {
     names: named(['Gelenk', 'joint', 'articulation', 'articulación', 'articolazione']),
-    height: 940,
-    bounds: [240, 10, 760, 950],
     parts: [
       part(
         'cavity',
@@ -175,8 +165,6 @@ export const SCHEMATIC_LIFE_NAMES = {
       'órganos respiratorios',
       'organi respiratori',
     ]),
-    height: 1000,
-    bounds: [180, 10, 820, 1000],
     parts: [
       part(
         'nasal_cavity',
@@ -208,8 +196,6 @@ export const SCHEMATIC_LIFE_NAMES = {
       'órganos digestivos',
       'organi digestivi',
     ]),
-    height: 1000,
-    bounds: [150, 0, 820, 1010],
     parts: [
       ORGANS.liver,
       part(
@@ -250,8 +236,6 @@ export const SCHEMATIC_LIFE_NAMES = {
       'corte transversal de hoja',
       'sezione trasversale della foglia',
     ]),
-    height: 640,
-    bounds: [50, 50, 960, 590],
     parts: [
       part(
         'cuticle',
@@ -322,8 +306,6 @@ export const SCHEMATIC_LIFE_NAMES = {
   },
   neuron: {
     names: named(['Nervenzelle', 'nerve cell', 'neurone', 'neurona', 'neurone']),
-    height: 620,
-    bounds: [30, 40, 980, 610],
     parts: [
       part(
         'dendrites',
@@ -363,8 +345,6 @@ export const SCHEMATIC_LIFE_NAMES = {
   },
   mushroom: {
     names: named(['Pilz', 'mushroom', 'champignon', 'seta', 'fungo']),
-    height: 960,
-    bounds: [50, 90, 950, 950],
     parts: [
       part(
         'mycelium',
@@ -385,8 +365,6 @@ export const SCHEMATIC_LIFE_NAMES = {
       'plántula (judía)',
       'plantula (fagiolo)',
     ]),
-    height: 980,
-    bounds: [110, 190, 890, 970],
     parts: [
       part(
         'main_root',

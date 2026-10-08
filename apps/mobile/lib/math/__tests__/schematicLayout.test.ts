@@ -10,11 +10,14 @@ import {
   pointToSegment,
   segmentsCross,
 } from '../../../../../packages/shared-math/src/labelBoxes.js';
+import { FIGURE_NAMES } from '../../../../../packages/shared-math/src/figureNames.data.js';
 import { REGION_FRAME } from '../../../../../packages/shared-math/src/regions.js';
 import { SCHEMATIC_SHAPES } from '../../../../../packages/shared-math/src/schematicShapes.data.js';
 import {
   SCHEMATIC_IDS,
   schematic,
+  schematicBounds,
+  schematicHeight,
   type SchematicFig,
 } from '../../../../../packages/shared-math/src/schematics.js';
 import { BADGE_R, schematicLayout } from '../schematicLayout.js';
@@ -36,13 +39,16 @@ function numberings(ids: readonly string[]): string[][] {
 
 describe('schematicLayout', () => {
   for (const d of SCHEMATIC_IDS) {
-    for (const n of numberings(schematic(d).parts.map((p) => p.id))) {
+    for (const n of numberings(schematic(FIGURE_NAMES, d).parts.map((p) => p.id))) {
       for (const width of WIDTHS) {
         it(`${d} (${n.join(', ')}) at ${width} pt`, () => {
           const fig: SchematicFig = { type: 'schematic', d, n, ask: 0 };
-          const l = schematicLayout(fig, width, SCHEMATIC_SHAPES[d]);
+          const l = schematicLayout(fig, width, {
+            drawing: SCHEMATIC_SHAPES[d],
+            names: FIGURE_NAMES,
+          });
           // The drawing as it is cut to its bounds (#462).
-          const [bx0, , bx1] = schematic(d).bounds;
+          const [bx0, , bx1] = schematicBounds(d);
           const left = l.x0 + bx0 * l.k;
           const right = l.x0 + bx1 * l.k;
           expect(l.badges).toHaveLength(n.length);
@@ -81,7 +87,7 @@ describe('schematicLayout', () => {
       n: ['Schädel', 'Becken'],
       ask: 1,
     };
-    const [bx0, by0, bx1, by1] = schematic('skeleton').bounds;
+    const [bx0, by0, bx1, by1] = schematicBounds('skeleton');
     const full = schematicLayout(fig, 312, null);
     // The narrow skeleton fills the room between the columns: more than twice the frame's scale.
     expect(full.k).toBeCloseTo((312 - 2 * 34) / (bx1 - bx0));
@@ -99,7 +105,7 @@ describe('schematicLayout', () => {
   it('without numbers the drawing fills the width, as a tap needs it', () => {
     const l = schematicLayout({ type: 'schematic', d: 'eye', n: [], ask: 0 }, 312, null);
     expect(l).toMatchObject({ x0: 0, y0: 0, k: 312 / REGION_FRAME, badges: [] });
-    expect(l.height).toBeCloseTo((schematic('eye').height * 312) / REGION_FRAME);
+    expect(l.height).toBeCloseTo((schematicHeight('eye') * 312) / REGION_FRAME);
   });
 });
 

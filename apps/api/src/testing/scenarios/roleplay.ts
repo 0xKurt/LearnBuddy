@@ -7,7 +7,7 @@
 
 import type { LlmRequest } from '../../llm/gateway.js';
 import { ROLEPLAY_FEEDBACK_SYSTEM, ROLEPLAY_SYSTEM } from '../../modules/buddy/roleplay.js';
-import type { ScriptedGateway } from '../fakes.js';
+import { transcribeRules } from './rules.js';
 import { quoteFrom, says, scriptTurns } from './turns.js';
 
 const line =
@@ -20,7 +20,7 @@ const line =
     reply,
   });
 
-export function scriptRoleplay(llm: ScriptedGateway): void {
+export function scriptRoleplay(): void {
   scriptTurns(
     {
       when: /rollenspiel auf englisch/i,
@@ -78,8 +78,8 @@ export function scriptRoleplay(llm: ScriptedGateway): void {
     },
   );
   // The fake microphone's words: in the roleplay's language while one runs (the app asks for
-  // it), otherwise the conversation-mode line of learning-modes.ts.
-  llm.byDefault('transcribe', (req: LlmRequest) => {
+  // it), otherwise the conversation-mode line learning-modes.ts answers.
+  transcribeRules.otherwise((req: LlmRequest) => {
     const all = req.contents
       .flatMap((m) => m.parts.flatMap((p) => ('text' in p ? [p.text] : [])))
       .join('\n');

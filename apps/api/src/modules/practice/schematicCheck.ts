@@ -16,9 +16,11 @@
 // What is stored names each numbered part by its id.
 
 import {
+  FIGURE_NAMES,
   isSchematic,
   regionTappable,
   schematic,
+  schematicHeight,
   SCHEMATIC_IDS,
   SCHEMATIC_SHAPES,
   schematicCanonical,
@@ -41,7 +43,7 @@ function fingerFits(d: SchematicId, i: number): boolean {
   return regionTappable(
     schematicRegions(SCHEMATIC_SHAPES, d),
     i,
-    schematic(d).height,
+    schematicHeight(d),
     TAP_TARGET.picture,
   );
 }
@@ -50,9 +52,9 @@ function fingerFits(d: SchematicId, i: number): boolean {
 function schematicItemProblem(it: Pictured): string | null {
   const f = it.figure;
   if (!f || !isSchematic(f)) return null;
-  const problem = schematicProblem(f);
+  const problem = schematicProblem(FIGURE_NAMES, f);
   if (problem) return problem;
-  const key = schematicPart(f.d, it.answer);
+  const key = schematicPart(FIGURE_NAMES, f.d, it.answer);
   if (it.tap === true) {
     if (f.ask !== 0) return 'a tap question asks no number';
     // Numbers stand beside the drawing (the app's schematicLayout.ts) and shrink it: a finger needs
@@ -66,14 +68,16 @@ function schematicItemProblem(it: Pictured): string | null {
   if (it.kind !== 'short') return `a ${it.kind} question about a picture`;
   if (f.ask === 0) return 'name a part: ask for its number';
   if (key === null) return `no part "${it.answer}" in the drawing ${f.d}`;
-  return key === schematicNumbered(f)[f.ask - 1] ? null : 'the key is not the part asked for';
+  return key === schematicNumbered(FIGURE_NAMES, f)[f.ask - 1]
+    ? null
+    : 'the key is not the part asked for';
 }
 
 /** The question with its numbered parts written as ids, or null when it cannot be asked. */
 export function checkedSchematic<T extends Pictured>(it: T): T | null {
   if (schematicItemProblem(it) !== null) return null;
   const f = it.figure;
-  return f && isSchematic(f) ? { ...it, figure: schematicCanonical(f) } : it;
+  return f && isSchematic(f) ? { ...it, figure: schematicCanonical(FIGURE_NAMES, f) } : it;
 }
 
 /** "Wie heißt Teil 3?" in the five languages; German where the question's language is another. */
@@ -94,16 +98,16 @@ const PART_QUESTION: Readonly<Record<string, (n: number) => string>> = {
 export function labelQuestions(it: ItemDraft, locale: string | null): ItemDraft[] {
   const f = it.figure;
   if (!f || !isSchematic(f) || f.ask !== 0 || it.tap === true || f.n.length < 2) return [it];
-  if (schematicProblem(f) !== null) return [it]; // dropped by the check, as written
+  if (schematicProblem(FIGURE_NAMES, f) !== null) return [it]; // dropped by the check, as written
   const lang = it.prompt_lang ?? locale ?? 'de';
   const ask = PART_QUESTION[lang] ?? PART_QUESTION.de!;
-  const drawing = schematic(f.d).names;
+  const drawing = schematic(FIGURE_NAMES, f.d).names;
   const title = lang in drawing ? drawing[lang as keyof typeof drawing] : drawing.de;
-  return schematicNumbered(f).map((part, i) => ({
+  return schematicNumbered(FIGURE_NAMES, f).map((part, i) => ({
     ...it,
     kind: 'short',
     prompt: `${title}: ${ask(i + 1)}`,
-    answer: schematicPartName(f.d, part, lang),
+    answer: schematicPartName(FIGURE_NAMES, f.d, part, lang),
     accepted_answers: [],
     choices: null,
     correct_choice: null,
@@ -117,7 +121,7 @@ export function labelQuestions(it: ItemDraft, locale: string | null): ItemDraft[
  */
 export const SCHEMATIC_PARTS = SCHEMATIC_IDS.map(
   (d) =>
-    `${d}: ${schematic(d)
+    `${d}: ${schematic(FIGURE_NAMES, d)
       .parts.map((p, i) => (fingerFits(d, i) ? p.de : `${p.de}*`))
       .join(', ')}`,
 ).join('; ');

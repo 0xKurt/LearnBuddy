@@ -12,6 +12,7 @@ import type { Figure, PrimaryFigure } from '@learnbuddy/shared-types/contracts';
 // Imported by path, like every figure file: the guards are dependency-free.
 import { isCircuit } from '../../../../packages/shared-math/src/circuit.js';
 import { isDiagram } from '../../../../packages/shared-math/src/diagram.js';
+import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
 import { isColorWheel } from '../../../../packages/shared-math/src/itten.js';
 import { isLogic } from '../../../../packages/shared-math/src/logic.js';
 import { isMap } from '../../../../packages/shared-math/src/maps.js';
@@ -90,15 +91,23 @@ export function SchoolFigureBody({
   return <SpaceBody figure={figure} width={width} />;
 }
 
-/** The figure in words for a screen reader — each file says what its drawing shows. */
-export function describeSchoolFigure(figure: SchoolFigure, t: T): string {
+/**
+ * The figure in words for a screen reader — each file says what its drawing shows. A map and a
+ * picture are described with their names (`useFigureNames`); until they are loaded, that they are
+ * coming — never a description without them.
+ */
+export function describeSchoolFigure(
+  figure: SchoolFigure,
+  t: T,
+  names: FigureNames | null,
+): string {
   if (isPrimary(figure)) return describePrimary(figure, t);
   if (isTreeFigure(figure)) return describeTree(figure, t);
   if (isPeriodicTable(figure)) return describePeriodic(figure, t);
   if (isDiagram(figure)) return describeDiagram(figure, t);
   if (isCircuit(figure) || isLogic(figure)) return describeSwitching(figure, t);
   if (isColorWheel(figure)) return describeColorWheel(figure, t);
-  if (isMap(figure)) return describeMap(figure, t);
-  if (isSchematic(figure)) return describeSchematic(figure, t);
+  if (isMap(figure)) return names ? describeMap(figure, t, names) : t('figure.loading');
+  if (isSchematic(figure)) return names ? describeSchematic(figure, t, names) : t('figure.loading');
   return describeSpace(figure, t);
 }

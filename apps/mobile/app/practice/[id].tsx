@@ -67,12 +67,9 @@ import { PracticeStuck } from '../../components/practice/PracticeStuck.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
 import { QuestionCorner } from '../../components/practice/QuestionCorner.js';
 import { QuestionTools } from '../../components/practice/QuestionTools.js';
+import { HeadActions } from '../../components/practice/HeadActions.js';
 import { useQuestionVoice } from '../../components/practice/useQuestionVoice.js';
-import {
-  emptyStaffAnswer,
-  readStaffDraft,
-  type StaffDraft,
-} from '../../components/practice/StaffAnswer.js';
+import { RhythmTaps } from '../../components/practice/RhythmTaps.js';
 import { StaffWriting } from '../../components/practice/StaffWriting.js';
 import { FreeSpaceReport } from '../../components/practice/FreeSpace.js';
 import { AnswerShell } from '../../components/practice/AnswerShell.js';
@@ -89,7 +86,6 @@ import {
   SpeakCard,
   SpeakPanel,
 } from '../../components/practice/SpeakPanel.js';
-import { ReadAloudSwitch } from '../../components/lb/ReadAloudSwitch.js';
 import { isOutdated, isRetryable } from '../../lib/api/apiError.js';
 import { newId } from '../../lib/api/client.js';
 import {
@@ -133,7 +129,6 @@ import { TYPE } from '../../lib/theme/type.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { reacted } from '../../lib/perf.js';
-import { SPACE } from '../../lib/theme/space.js';
 
 /**
  * What she sent, and how (issue #163). `via` is not decoration: since #147 a tapped word
@@ -192,16 +187,6 @@ export default function PracticeScreen() {
   );
   /** The recordings she already heard in this run (issues #210, #242). */
   const { heard, markHeard } = useHeardTexts(id);
-  /**
-   * Die Notenzeile, die sie geschrieben hat, und zu welcher Frage (issue #226). Aus demselben
-   * Grund an der Frage festgemacht wie die Anordnung darüber: die nächste Frage beginnt mit einer
-   * leeren Zeile, und nichts Geschriebenes rutscht hinein.
-   */
-  // Im Entwurf und nicht nur im Zustand (issue #275): ein Farbwechsel baut den Bildschirm neu
-  // auf, und ihre halbe Zeile war danach weg.
-  const staffDraft = useDraft(`session.${id}.staff`);
-  const written = readStaffDraft(staffDraft.text);
-  const setWritten = (next: StaffDraft) => staffDraft.setText(JSON.stringify(next));
   /** The pronunciation judgement while the model is still listening (issue #8). */
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -235,21 +220,17 @@ export default function PracticeScreen() {
 
   // Vorlesen: a question is read aloud once when it appears (or when reading is switched on).
   const onScreen = session ? questionOnScreen(session, pinnedId) : null;
-  // A flashcard pass is not read aloud and never arms the mic: there is no answer to listen
-  // for (issue #147). The card itself offers "Anhören" for the word, which is the control
-  // that makes sense there.
+  // A card pass and a Kopfrechnen round read their card or task themselves (`CardPass`,
+  // `DrillRound`, issue #434) and never arm the mic: there is no spoken answer to listen for.
   // Nor a question the server says must not be heard (issue #238, `read_aloud`): a spelling
   // task, a vocabulary prompt that holds its own answer — hearing it would hand over the solution.
+  const listens = !session?.card_pass && !session?.drill;
   const toRead =
-    onScreen &&
-    onScreen.status === 'open' &&
-    !session?.card_pass &&
-    !session?.drill &&
-    onScreen.item.read_aloud
+    onScreen && onScreen.status === 'open' && listens && onScreen.item.read_aloud
       ? onScreen.item
       : null;
   // Read when it appears, and in a conversation the mic listens once it is read (`useQuestionVoice`).
-  const readQuestion = useQuestionVoice(toRead, words, t);
+  const readQuestion = useQuestionVoice(toRead, words, t, { listens });
 
   /** Buddy's reaction after an answer or a hint, with the verdict word first and math in words. */
   function feedbackText(res: AnswerResponse): string {
@@ -651,15 +632,14 @@ export default function PracticeScreen() {
   const endButton = (
     // Stays while a question is on screen, also once the session was finished in the
     // background (finishing again is a no-op) – the header must not jump under the reader.
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-      <ReadAloudSwitch />
+    <HeadActions>
       <EndButton
         onPress={() => void close()}
         disabled={closing}
         label={t('practice:end_label')}
         hint={t(testing ? 'practice:end_hint_test' : 'practice:end_hint')}
       />
-    </View>
+    </HeadActions>
   );
 
   // ─────────────── one question ───────────────
@@ -681,15 +661,12 @@ export default function PracticeScreen() {
   // Once there is a conversation the Diktat card is one row (DictationCard `compact`).
   const dictationCompact = itemTurns.length > 0 || pendingText !== null;
   // Which way she answers — exactly one (`answerForm`).
-  const { choices, tapChoices, speaking, structured, staff, barSurface, tapFigure, typed } =
+  const { choices, tapChoices, speaking, structured, staff, taps, barSurface, tapFigure, typed } =
     answerForm(item, open);
   // Her short answer appears in the gap of a fill-in sentence while she types.
   const filling = typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined;
   // "Nochmal vorlesen" in the conversation row — only where the server allows hearing it.
   const readAgain = item.read_aloud ? { onReadAgain: () => readQuestion(item) } : {};
-  /** Ihre Notenzeile zu DIESER Frage; eine andere Frage beginnt mit einer leeren Zeile. */
-  const staffAnswer =
-    written?.itemId === item.id ? written.answer : emptyStaffAnswer(staff?.bars ?? 1);
   const tried = new Set(
     turns
       .filter((turn) => turn.role === 'learner' && turn.verdict === 'incorrect')
@@ -733,7 +710,7 @@ export default function PracticeScreen() {
     <QuestionCorner
       flaggable={offers.flaggable}
       // A judgement she has been given and may disagree with (issue #164). The
-      // rule and the copy live in components/practice/DisputeVerdict.tsx.
+      // rule and the sheet live in components/practice/DisputeVerdict.tsx.
       canDispute={canDisputeVerdict({
         open,
         sessionStatus: session.status,
@@ -852,6 +829,8 @@ export default function PracticeScreen() {
                         // What she answers from: a reading text (#233), a task's situation (#297).
                         stimulus={item}
                         answerBoard={open && structured}
+                        // While Vorlesen is on, a tap on the question reads it again (#434).
+                        {...readAgain}
                       />
                     )}
                   </SlideIn>
@@ -1008,19 +987,28 @@ export default function PracticeScreen() {
                   />
                 </View>
               ) : null}
-              {/* Die Notenzeile, auf die sie schreibt (issue #226), in der Antworthülle (#310). */}
+              {/* Die Notenzeile, auf die sie schreibt (issue #226), in der Antworthülle (#310), ihre
+            halbe Zeile je Frage im Entwurf (#275). */}
               {staff ? (
                 <StaffWriting
                   key={item.id}
                   surface={staff}
-                  answer={staffAnswer}
+                  draftKey={`session.${id}.${item.id}.staff`}
                   disabled={locked}
-                  onChange={(next) => setWritten({ itemId: item.id, answer: next })}
                   // Kein `via: 'tapped'`, obwohl sie getippt hat: `via` unterscheidet WIEDERERKENNEN
                   // von PRODUZIEREN (issue #163), und hier ist nichts wiedererkannt. Eine Notenzeile
                   // selbst zu setzen ist genau das, was die Klassenarbeit verlangt — mit einem Stift
                   // statt mit dem Finger (dasselbe Argument wie `summary.ts` für mehrteilige Antworten).
                   onCheck={(line) => void answer(item.id, { text: line }, line)}
+                />
+              ) : null}
+              {taps ? (
+                <RhythmTaps
+                  key={item.id}
+                  disabled={locked}
+                  // Ein gehörter Rhythmus, den sie nachklopft (issue #445): ihre Schläge sind die
+                  // Antwort, und auch hier ohne `via: 'tapped'` — nichts ist wiedererkannt.
+                  onCheck={(beats, shown) => void answer(item.id, { text: beats }, shown)}
                 />
               ) : null}
               {typed ? (
@@ -1034,6 +1022,7 @@ export default function PracticeScreen() {
                   disabled={locked}
                   onChange={setText}
                   onCheck={check}
+                  work={{ sessionId: id, itemId: item.id }}
                   {...readAgain}
                 />
               ) : null}

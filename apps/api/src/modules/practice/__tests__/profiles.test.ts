@@ -245,6 +245,39 @@ const PART_TASK = {
   ],
 };
 
+/** A task in parts with an open part („Begründe …", #297 step 2): only where a long answer is. */
+const OPEN_PART_TASK = {
+  ...PART_TASK,
+  parts: [
+    PART_TASK.parts[0],
+    {
+      kind: 'long',
+      prompt: 'Begründe, warum er bei Gegenwind länger braucht.',
+      answer: 'Gegenwind bremst; langsamer heißt länger',
+      accepted_answers: [],
+      unit: null,
+      choices: null,
+      correct_choice: null,
+      tolerance: null,
+      from: null,
+      points: [
+        {
+          name: 'Gegenwind',
+          point: 'der Gegenwind macht ihn langsamer',
+          ask: 'Was macht der Wind mit seinem Tempo?',
+          exact: [],
+        },
+        {
+          name: 'Zeit',
+          point: 'für dieselbe Strecke braucht man langsamer mehr Zeit',
+          ask: 'Was heißt das für die Zeit?',
+          exact: [],
+        },
+      ],
+    },
+  ],
+};
+
 const ESSAY = {
   prompt: 'Nimm Stellung: Sollte es an Schulen ein Handyverbot geben?',
   type: 'argue_linear',
@@ -289,7 +322,9 @@ function validAnswer(kind: Kind, chunk = 0): Record<string, unknown> {
     ...(structured.length > 0 ? { structured: structured.map((t) => STRUCTURED[t]) } : {}),
     ...(p.dictation ? { dictation: DICTATION } : {}),
     ...(p.teachBack ? { teach_back: [TEACH_BACK] } : {}),
-    ...(p.partTasks ? { part_tasks: [PART_TASK] } : {}),
+    ...(p.partTasks
+      ? { part_tasks: [PART_TASK, ...(p.items.includes('long') ? [OPEN_PART_TASK] : [])] }
+      : {}),
     ...(p.essay ? { essay: [ESSAY] } : {}),
   };
 }
@@ -318,6 +353,10 @@ function outsiders(kind: Kind): { what: string; add: (a: Record<string, unknown>
   if (!p.dictation) out.push({ what: 'dictation', add: (a) => void (a.dictation = DICTATION) });
   if (!p.teachBack) out.push({ what: 'teach_back', add: (a) => list(a, 'teach_back', TEACH_BACK) });
   if (!p.partTasks) out.push({ what: 'part_tasks', add: (a) => list(a, 'part_tasks', PART_TASK) });
+  if (p.partTasks && !p.items.includes('long')) {
+    // An open part needs a long answer (#297): a test has none.
+    out.push({ what: 'open part', add: (a) => list(a, 'part_tasks', OPEN_PART_TASK) });
+  }
   if (!p.essay) out.push({ what: 'essay', add: (a) => list(a, 'essay', ESSAY) });
   return out;
 }
@@ -391,7 +430,7 @@ describe.each(KINDS)('the profile of a %s run', (kind) => {
         listen: p.listen ? 1 : 0,
         dictation: p.dictation ? DICTATION.entries.length : 0,
         teachBack: p.teachBack ? 1 : 0,
-        partTasks: p.partTasks ? 1 : 0,
+        partTasks: p.partTasks ? (p.items.includes('long') ? 2 : 1) : 0,
         essay: p.essay ? 1 : 0,
       });
     }
@@ -464,6 +503,21 @@ describe('the nested unions', () => {
     );
   });
 
+  it('a part of a task takes the item kinds of its run: an open part only with a long answer', () => {
+    const partOf = (kind: Kind) => {
+      const props = explainSchemaFor(kind, null).properties as Record<string, unknown>;
+      const task = (props.part_tasks as { items: { properties: Record<string, unknown> } }).items;
+      return (
+        task.properties.parts as { items: { properties: Record<string, { enum?: string[] }> } }
+      ).items.properties;
+    };
+    expect(partOf('practice').kind?.enum).toEqual(['numeric', 'short', 'multiple_choice', 'long']);
+    expect(Object.keys(partOf('practice'))).toContain('points');
+    // A test has no long answer: no open part, and no key points to write.
+    expect(partOf('test').kind?.enum).toEqual(['numeric', 'short', 'multiple_choice']);
+    expect(Object.keys(partOf('test'))).not.toContain('points');
+  });
+
   it('a listening question carries only the fields its two kinds keep', () => {
     const listen = explainSchemaFor('listen', null).properties as Record<string, unknown>;
     const task = (listen.listen as { anyOf: { properties?: Record<string, unknown> }[] }).anyOf
@@ -530,6 +584,18 @@ describe('a form switched off (#296, config.FORMS_OFF)', () => {
     expect(set.items).toHaveLength(SET_PROFILES.practice.items.length - 1);
     expect(set.structured).toEqual([]);
     expect(parseSetFor('practice', null).parse(answer).structured).toHaveLength(1);
+  });
+
+  it('takes the part of a task with it: no open part when the long answer is off (#297)', () => {
+    const answer = validAnswer('practice');
+    const off = new Set(['long'] as const);
+    expect(parseSetFor('practice', null).parse(answer).part_tasks).toHaveLength(2);
+    expect(parseSetFor('practice', null, off).parse(answer).part_tasks).toEqual([
+      expect.objectContaining({ stem: PART_TASK.stem }),
+    ]);
+    expect(
+      schemaErrors(explainSchemaFor('practice', null, off), { ...answer, items: [] }),
+    ).not.toEqual([]);
   });
 
   it('leaves a photographed sheet only the questions of forms that are on', () => {

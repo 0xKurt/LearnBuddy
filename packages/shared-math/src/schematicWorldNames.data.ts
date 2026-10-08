@@ -15,8 +15,6 @@ export const SCHEMATIC_WORLD_NAMES = {
       'destilación (montaje)',
       'distillazione (apparato)',
     ]),
-    height: 840,
-    bounds: [10, 90, 990, 830],
     parts: [
       part(
         'stand',
@@ -96,8 +94,6 @@ export const SCHEMATIC_WORLD_NAMES = {
       'capas de la Tierra',
       'struttura della Terra',
     ]),
-    height: 1000,
-    bounds: [20, 20, 980, 980],
     parts: [
       part(
         'crust',
@@ -125,8 +121,6 @@ export const SCHEMATIC_WORLD_NAMES = {
       'volcán (corte)',
       'vulcano (sezione)',
     ]),
-    height: 990,
-    bounds: [10, 20, 990, 990],
     parts: [
       part(
         'magma_chamber',
@@ -183,8 +177,6 @@ export const SCHEMATIC_WORLD_NAMES = {
       'rosa de los vientos',
       'rosa dei venti',
     ]),
-    height: 1000,
-    bounds: [20, 20, 980, 980],
     parts: [
       part(
         'northeast',
@@ -206,8 +198,6 @@ export const SCHEMATIC_WORLD_NAMES = {
   },
   thermometer: {
     names: named(['Thermometer', 'thermometer', 'thermomètre', 'termómetro', 'termometro']),
-    height: 940,
-    bounds: [320, 20, 680, 940],
     parts: [
       part('scale', ['Skala', 'scale', 'graduation', 'escala', 'scala'], ['Temperaturskala']),
       part(
@@ -235,8 +225,6 @@ export const SCHEMATIC_WORLD_NAMES = {
       'fases de la Luna',
       'fasi lunari',
     ]),
-    height: 1000,
-    bounds: [60, 60, 940, 940],
     parts: [
       part('new_moon', ['Neumond', 'new moon', 'nouvelle lune', 'luna nueva', 'luna nuova']),
       part(
@@ -272,8 +260,6 @@ export const SCHEMATIC_WORLD_NAMES = {
       'circuito eléctrico',
       'circuito elettrico',
     ]),
-    height: 720,
-    bounds: [130, 10, 900, 690],
     parts: [
       part('wire', ['Kabel', 'wire', 'fil', 'cable', 'filo'], ['Leitung', 'Leitungen', 'Draht']),
       part(

@@ -6,11 +6,13 @@
 // packages/shared-math/src/__tests__/schematics.test.ts; the drawing at 360 and 390 pt, light and
 // dark, is tests/web/tap-figures.spec.ts.
 
-import { waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { FIGURE_NAMES } from '../../../../../packages/shared-math/src/figureNames.data.js';
 import { SCHEMATIC_IDS } from '../../../../../packages/shared-math/src/schematics.js';
-import { renderInApp } from '../../../testing/render.js';
+import { useFigureNames } from '../../../lib/math/useFigureNames.js';
+import { useSchematicShapes } from '../../../lib/math/useSchematicShapes.js';
+import { renderInApp, whenLoaded } from '../../../testing/render.js';
 import { describeSchematic, SchematicBody, type SchematicFigure } from '../SchematicFigures.js';
 
 const t = (key: string, values: Record<string, string | number> = {}) =>
@@ -30,7 +32,8 @@ describe('SchematicBody', () => {
       const { container } = renderInApp(
         <SchematicBody figure={{ type: 'schematic', d, n: [], ask: 0 }} width={300} />,
       );
-      await waitFor(() => expect(container.querySelectorAll('path').length).toBeGreaterThan(4));
+      await whenLoaded(useSchematicShapes, useFigureNames);
+      expect(container.querySelectorAll('path').length).toBeGreaterThan(4);
     },
   );
 
@@ -39,7 +42,8 @@ describe('SchematicBody', () => {
       <SchematicBody figure={{ type: 'schematic', d: 'signs', n: [], ask: 0 }} width={300} />,
     );
     // Six signs, each its outline and its fill; then the white marks, then the black ones.
-    await waitFor(() => expect(container.querySelectorAll('path')).toHaveLength(6 * 2 + 2));
+    await whenLoaded(useSchematicShapes, useFigureNames);
+    expect(container.querySelectorAll('path')).toHaveLength(6 * 2 + 2);
   });
 
   it('shrunk by FigureView, a numbered picture keeps its width and gives up only height (#462)', async () => {
@@ -47,7 +51,7 @@ describe('SchematicBody', () => {
       renderInApp(<SchematicBody figure={labelled} width={300 * scale} scale={scale} />).container;
     const full = at(1);
     const shrunk = at(0.6);
-    await waitFor(() => expect(shrunk.querySelectorAll('path').length).toBeGreaterThan(4));
+    await whenLoaded(useSchematicShapes, useFigureNames);
     const size = (c: HTMLElement) => {
       const svg = c.querySelector('svg')!;
       return [Number(svg.getAttribute('width')), Number(svg.getAttribute('height'))];
@@ -60,16 +64,17 @@ describe('SchematicBody', () => {
 
   it('writes the numbers 1, 2, 3 beside the parts, never a name', async () => {
     const { container } = renderInApp(<SchematicBody figure={labelled} width={300} />);
-    await waitFor(() => expect(container.textContent ?? '').toBe('123'));
+    await whenLoaded(useSchematicShapes, useFigureNames);
+    expect(container.textContent ?? '').toBe('123');
   });
 });
 
 describe('describeSchematic', () => {
   it('says the drawing and how many parts carry numbers, not which', () => {
-    expect(describeSchematic(labelled, t)).toBe(
+    expect(describeSchematic(labelled, t, FIGURE_NAMES)).toBe(
       'figure.schematic_numbered {"name":"Pflanzenzelle","count":3}',
     );
-    expect(describeSchematic({ ...labelled, n: [], ask: 0 }, t)).toBe(
+    expect(describeSchematic({ ...labelled, n: [], ask: 0 }, t, FIGURE_NAMES)).toBe(
       'figure.schematic {"name":"Pflanzenzelle"}',
     );
   });

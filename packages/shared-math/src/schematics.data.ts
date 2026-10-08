@@ -1,12 +1,12 @@
 // The picture library by name (issue #252): every drawing and every part with its name in the
-// five languages and the other names a teacher accepts. Small and static: the server checks every
-// question against it and the tap mechanism resolves a name with it (`schematics.ts`). This file
-// names the drawings of #252 and gathers those of #462 (`schematicLifeNames.data.ts`,
-// `schematicWorldNames.data.ts`); a part more than one drawing shows is named once
-// (`schematicParts.data.ts`). Where each part stands is `schematicShapes.data.ts`, loaded by the
-// app with the first picture.
+// five languages and the other names a teacher accepts. The server checks every question against
+// it and the tap mechanism resolves a name with it (`schematics.ts`); the app loads it with the
+// first map or picture (`figureNames.data.ts`, #440). This file names the drawings of #252 and
+// gathers those of #462 (`schematicLifeNames.data.ts`, `schematicWorldNames.data.ts`); a part more
+// than one drawing shows is named once (`schematicParts.data.ts`). Where each part stands is
+// `schematicShapes.data.ts`, loaded by the app with the first picture.
 
-import type { Schematic } from './schematics.js';
+import type { SchematicNames } from './schematics.js';
 import {
   CYTOPLASM,
   EYE,
@@ -25,7 +25,7 @@ import {
 import { SCHEMATIC_LIFE_NAMES } from './schematicLifeNames.data.js';
 import { SCHEMATIC_WORLD_NAMES } from './schematicWorldNames.data.js';
 
-export const SCHEMATIC_NAMES = {
+export const SCHEMATIC_NAMES: SchematicNames = {
   plant_cell: {
     names: named([
       'Pflanzenzelle',
@@ -34,8 +34,6 @@ export const SCHEMATIC_NAMES = {
       'célula vegetal',
       'cellula vegetale',
     ]),
-    height: 720,
-    bounds: [140, 50, 860, 670],
     parts: [
       CYTOPLASM,
       MEMBRANE,
@@ -66,8 +64,6 @@ export const SCHEMATIC_NAMES = {
       'célula animal',
       'cellula animale',
     ]),
-    height: 640,
-    bounds: [140, 20, 880, 600],
     parts: [
       CYTOPLASM,
       MEMBRANE,
@@ -88,14 +84,10 @@ export const SCHEMATIC_NAMES = {
       'flor (corte)',
       'fiore (sezione)',
     ]),
-    height: 820,
-    bounds: [240, 220, 760, 830],
     parts: Object.values(FLOWER),
   },
   plant: {
     names: named(['Pflanze', 'plant', 'plante', 'planta', 'pianta']),
-    height: 880,
-    bounds: [110, 110, 890, 860],
     parts: Object.values(PLANT),
   },
   eye: {
@@ -106,8 +98,6 @@ export const SCHEMATIC_NAMES = {
       'ojo (corte)',
       'occhio (sezione)',
     ]),
-    height: 640,
-    bounds: [280, 70, 940, 570],
     parts: Object.values(EYE),
   },
   tooth: {
@@ -118,20 +108,14 @@ export const SCHEMATIC_NAMES = {
       'diente (corte)',
       'dente (sezione)',
     ]),
-    height: 900,
-    bounds: [180, 70, 820, 890],
     parts: Object.values(TOOTH),
   },
   insect: {
     names: named(['Insekt', 'insect', 'insecte', 'insecto', 'insetto']),
-    height: 820,
-    bounds: [180, 100, 820, 800],
     parts: Object.values(INSECT),
   },
   bicycle: {
     names: named(['Fahrrad', 'bicycle', 'vélo', 'bicicleta', 'bicicletta']),
-    height: 620,
-    bounds: [90, 100, 920, 580],
     parts: [
       part('rear_wheel', [
         'Hinterrad',
@@ -184,8 +168,6 @@ export const SCHEMATIC_NAMES = {
   },
   microscope: {
     names: named(['Mikroskop', 'microscope', 'microscope', 'microscopio', 'microscopio']),
-    height: 960,
-    bounds: [230, 30, 790, 950],
     parts: [
       part('arm', ['Stativ', 'arm', 'potence', 'brazo', 'braccio'], ['Arm', 'Mikroskoparm']),
       part('foot', ['Fuß', 'base', 'pied', 'pie', 'base'], ['Stativfuß', 'Standfuß']),
@@ -244,14 +226,10 @@ export const SCHEMATIC_NAMES = {
       'material de laboratorio',
       'attrezzatura da laboratorio',
     ]),
-    height: 1060,
-    bounds: [140, 10, 890, 1050],
     parts: Object.values(LAB),
   },
   heart: {
     names: named(['Herz', 'heart', 'cœur', 'corazón', 'cuore']),
-    height: 900,
-    bounds: [180, 0, 980, 900],
     parts: [
       part(
         'myocardium',
@@ -348,8 +326,6 @@ export const SCHEMATIC_NAMES = {
       'oído (corte)',
       'orecchio (sezione)',
     ]),
-    height: 700,
-    bounds: [10, 50, 990, 700],
     parts: [
       part(
         'eustachian_tube',
@@ -408,8 +384,6 @@ export const SCHEMATIC_NAMES = {
   },
   skeleton: {
     names: named(['Skelett', 'skeleton', 'squelette', 'esqueleto', 'scheletro']),
-    height: 1030,
-    bounds: [260, 0, 740, 1030],
     parts: [
       part(
         'spine',
@@ -462,8 +436,6 @@ export const SCHEMATIC_NAMES = {
   },
   organs: {
     names: named(['Organe', 'organs', 'organes', 'órganos', 'organi']),
-    height: 1000,
-    bounds: [270, 0, 730, 1000],
     parts: Object.values(ORGANS),
   },
   signs: {
@@ -474,8 +446,6 @@ export const SCHEMATIC_NAMES = {
       'señales de tráfico',
       'segnali stradali',
     ]),
-    height: 900,
-    bounds: [120, 30, 890, 880],
     parts: [
       part(
         'stop',
@@ -529,8 +499,6 @@ export const SCHEMATIC_NAMES = {
       'instrumentos musicales',
       'strumenti musicali',
     ]),
-    height: 900,
-    bounds: [60, 70, 970, 850],
     parts: [
       part('guitar', ['Gitarre', 'guitar', 'guitare', 'guitarra', 'chitarra'], []),
       part(
@@ -556,8 +524,6 @@ export const SCHEMATIC_NAMES = {
       'sonidos iniciales',
       'suoni iniziali',
     ]),
-    height: 1060,
-    bounds: [130, 30, 910, 1040],
     parts: [
       part('apple', ['Apfel', 'apple', 'pomme', 'manzana', 'mela'], []),
       part('ball', ['Ball', 'ball', 'ballon', 'pelota', 'palla'], []),
@@ -571,4 +537,4 @@ export const SCHEMATIC_NAMES = {
   },
   ...SCHEMATIC_LIFE_NAMES,
   ...SCHEMATIC_WORLD_NAMES,
-} satisfies Record<string, Schematic>;
+};
