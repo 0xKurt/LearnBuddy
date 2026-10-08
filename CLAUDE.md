@@ -173,9 +173,12 @@ components, repeated logic, dead or now-obsolete code, inconsistent patterns and
 and fix them in the same change.
 
 **Every PR names** the USP point, what it reused and what it removed, and the library check
-(`tools/guards/pr-body.mjs`). Ausnahmelisten (`tools/guards/baselines/` and the lists inside the
-guard tests) never grow silently: growth needs `Ausnahmeliste-Zuwachs: #<issue> <reason>` in the
-commit; after a refactor `pnpm guards:shrink` pulls them down.
+(`tools/guards/pr-body.mjs`). Ausnahmelisten never grow silently. File size, style numbers, raw
+`Pressable`, copies and dead code are measured on main, not kept in files (#452,
+`tools/guards/base.mjs`): a file may keep what it has on main and never get worse; a fix needs no
+list edit — once merged, it is main's new measure. More than main needs a grant file of its own
+in `tools/guards/growth/` plus `Ausnahmeliste-Zuwachs: #<issue> <reason>` in a commit; the lists
+kept by hand (bundle budget, drawing registry, the lists inside guard tests) need that line too.
 
 **Work pattern:** contract (`packages/shared-types/src/contracts/`) → migration → module code →
 integration test incl. failure paths (duplicates, stale context, interruption, outage, other

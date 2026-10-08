@@ -1,8 +1,9 @@
-// Shared measurements for the guards (issue #313, docs/engineering-guards.md): the ratchet test
-// and `pnpm guards:shrink` both ask these functions, so they can never disagree with each
-// other — and they ask ESLint itself, so they can never disagree with `pnpm lint`.
+// Shared measurements for the guards (issue #313, docs/engineering-guards.md): what main has is
+// measured with these functions (base.mjs, issue #452), and they ask ESLint itself, so the
+// measure can never disagree with `pnpm lint`. They take a file's text, not its path: main's
+// version of a file comes from the object store, not from the checkout.
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { Linter } from 'eslint';
@@ -12,13 +13,14 @@ import { countRawStyleNumbers, REPO_ROOT, repoPath } from './eslint-plugin.mjs';
 
 export { REPO_ROOT, repoPath };
 
-export const BASELINES = join(REPO_ROOT, 'tools', 'guards', 'baselines');
-
 /** Rule 4: lines per file, blank lines and comments not counted. */
 export const MAX_LINES = { 'apps/mobile': 600, 'apps/api': 800 };
 
-/** Where rule 5 (tokens only) and the Pressable rule apply. */
+/** Where rule 5 (tokens only) applies. */
 export const UI_DIRS = ['apps/mobile/app', 'apps/mobile/components'];
+
+/** Where the Pressable rule applies (`components/lb` excepted: it is the design system). */
+export const PRESSABLE_DIRS = [...UI_DIRS, 'apps/mobile/lib'];
 
 const SOURCE = /\.(ts|tsx|mjs|js)$/;
 const SKIP_DIR = new Set(['node_modules', 'dist', 'dist-web', '.expo', 'coverage', 'build']);
@@ -52,19 +54,14 @@ const PARSE = [
   },
 ];
 
-/** @param {string} file repo-relative */
-function read(file) {
-  return readFileSync(join(REPO_ROOT, file), 'utf8');
-}
-
 /**
  * Lines that count for `max-lines` with skipBlankLines + skipComments — read from ESLint's own
  * message, so the number is exactly the one the lint compares against.
- * @param {string} file repo-relative
+ * @param {string} text @param {string} file repo-relative
  */
-export function countedLines(file) {
+export function countedLines(text, file) {
   const messages = linter.verify(
-    read(file),
+    text,
     [
       ...PARSE,
       {
@@ -80,9 +77,9 @@ export function countedLines(file) {
   return Number(match[1]);
 }
 
-/** @param {string} file repo-relative */
-export function styleNumbers(file) {
-  return countRawStyleNumbers(linter, read(file), join(REPO_ROOT, file), PARSE);
+/** Free style numbers (rule 5). @param {string} text @param {string} file repo-relative */
+export function styleNumbers(text, file) {
+  return countRawStyleNumbers(linter, text, join(REPO_ROOT, file), PARSE);
 }
 
 /** The interactive primitives that bypass <Btn> (CLAUDE.md rule 13). */
@@ -108,11 +105,11 @@ export const RAW_PRESSABLES = {
 /**
  * Whether a file imports one of RAW_PRESSABLES — asked through ESLint's own
  * no-restricted-imports, the same rule `pnpm lint` runs.
- * @param {string} file repo-relative
+ * @param {string} text @param {string} file repo-relative
  */
-export function importsRawPressable(file) {
+export function importsRawPressable(text, file) {
   const messages = linter.verify(
-    read(file),
+    text,
     [...PARSE, { rules: { 'no-restricted-imports': ['error', pressableRestriction()] } }],
     join(REPO_ROOT, file),
   );
@@ -129,9 +126,4 @@ export function pressableRestriction() {
         'Aktionen sind <Btn>/<CircleBtn> aus components/lb (CLAUDE.md Regel 13, Issue #313). Fehlt dort ein Baustein, wird er in components/lb gebaut — nicht hier.',
     })),
   };
-}
-
-/** @param {string} name a file in baselines/ @returns {Record<string, unknown>} */
-export function readBaseline(name) {
-  return JSON.parse(readFileSync(join(BASELINES, name), 'utf8'));
 }
