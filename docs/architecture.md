@@ -581,7 +581,8 @@ everything the injection did not carry.
 
 `modules/buddy/check.ts`. Wake-ups are jobs (`reason`: `exam_countdown` 5/3/1 days before at the
 start of the preferred window, `exam_followup` the day after, `material_ready`,
-`session_finished`, `step_due`, `checkin_requested`, `routine`). Gates, cheapest first:
+`session_finished`, `step_due`, `checkin_requested`, `routine`, and Buddy's two review moments
+`review_next_day`, `review_due`). Gates, cheapest first:
 
 1. one worker per learner (lease on `buddy_settings`);
 2. agreed reminders → fixed template (i18n), no model. An agreed reminder never vanishes
@@ -616,6 +617,30 @@ count ("Magst du „…“ kurz nochmal durchgehen? …"). The sentence is Buddy
 consent it waits in the app, and after "Seltener schreiben" it never goes to the phone. While she is
 in the app it waits 20 minutes, like every unasked look (`inApp.ts`). A wake-up that runs twice says
 it once.
+
+**After a break** (issue #446, the second moment, same module and the same way to say it): what has
+fallen due for review is refreshed before it slips away. Every practice that ends
+(`session_finished`) schedules one wake-up (`review_due`) for the start of her preferred window three
+days later, in her zone — one per day she practised. When it runs, code alone decides, in this order,
+and the job's result names the reason:
+
+1. a break: she has not answered a single question since (two whole days off) — `no_break`;
+2. no test (an active goal with a date) today or within 14 days: then the countdown and the daily
+   look prepare for it — `test_ahead` (`plan.ts` `testAhead`, the routine's horizon);
+3. at most once every three days: no review offer of Buddy's (`review:` topics, the day after a sheet
+   included) on this or the two days before, in her zone — `too_soon`; a rerun finds its own offer here;
+4. nothing planned for her today (an agreed step, a practice for a test, a sheet's review) —
+   `planned_today`;
+5. questions of hers due for review (FSRS `due` reached by the app clock; never one not practised
+   yet, never homework) — `nothing_due`. `selectPracticeItems` narrows to them with `dueOnly`.
+
+Then it prepares a short practice of those questions ("Kurz auffrischen", 5 minutes) and says one
+sentence without a count or a day ("Magst du kurz auffrischen, was du zuletzt geübt hast? …"). It is
+Buddy's own initiative at the lowest relevance worth saying (0.6, `MIN_RELEVANCE`): without consent,
+paused or after "Seltener schreiben" it waits in the app and never reaches the phone; it changes no
+setting. Decision row and `bumpContext` are in the same transaction, so a model decision taken before
+it lands is stale. A break that goes on after it brings no second offer; the next practice starts the
+next wake-up.
 
 A background check never replaces practice she asked for in the chat, and the message it posts
 carries its decision, so what Buddy did in the background appears in the thread with its cards
@@ -778,7 +803,8 @@ nothing the server does not report about itself. GitHub disables scheduled workf
 `modules/buddy/events.ts`, table `buddy_events` (`0007_events.sql`). Something that just
 happened — `material_ready`, `homework_ready`, `session_finished` — is written once per (type,
 row), in the same transaction as the change, with the app clock. Its subscribers decide what
-follows: `material_ready` and `session_finished` wake Buddy for a check (the job carries the
+follows: `material_ready` also schedules the review the day after, `session_finished` the look for a
+break three days later (§Proactivity); both wake Buddy for a check (the job carries the
 `event_id`, the check marks the event handled — `handled_at` is an audit field for the export
 and for reading the log; nothing re-reads it to re-drive an event: a wake-up job that dies is
 handled by its job's terminal state, `scheduler/terminal.ts`); `homework_ready` is only recorded
@@ -3229,6 +3255,46 @@ prints none — or from a text Buddy writes himself (a `read` run, #368, below).
   other (below), and its words must stand in the text in order (`linesOf`; the commas she sets do
   not count). Syllables and an error text are refused there — neither is a sentence of the text.
   The sentence is its evidence: the one hint names its lines, and once closed she is shown them.
+
+### Aufgaben mit Teilaufgaben (issue #297, migration `0100_task_parts.sql`)
+
+A class test from grade 8 on asks **one situation and several subtasks** a), b), c) on it, the
+later ones building on the earlier results. The first step of #297 brings exactly that, for parts
+code can compute, with the **Folgefehler** German schools mark: a wrong a) carried on correctly in
+b) makes b) right.
+
+- **Every part is an ordinary question** (`numeric`, `short`, `multiple_choice`) with its own key
+  and its own check — nothing is checked twice or in a second way (#296). What is new is one column,
+  `items.task_part` (`TaskPart`, `contracts/taskParts.ts`): the task's id (made by code), the part's
+  letter, how many parts the task has, the situation (`stem`) and, for a part that goes on from
+  earlier ones, `from` — arithmetic over their letters (`a * 0,15 + 12`). It is stored on **every**
+  part, as a reading text is (#233): a review brings one part back alone, with its situation.
+- **Regel 0 when writing** (`practice/taskParts.ts` `partTaskItems`): every part goes through
+  `usableItems`; one that does not hold costs the whole task (b without a is no task, its letters
+  would lie). Every `from` is recomputed with the earlier keys (the expression parser in `letters`
+  mode, `shared-math/expression.ts`) and must give its own key at the key's precision (D-1); a formula
+  that does not, names a later part, itself, no part, a part that is no number, or nothing earlier at
+  all, drops the task. The model never writes an id or a letter into a stored field (rule 2): parts
+  are lettered here in the order they come, the app gets an alias (`TaskPartView.ref`, `p1`, …).
+- **Folgefehler when answering** (`answer.ts` → `followsOn`): a part is first judged against its key
+  like any question. Only when that is not right, and only when an earlier part it builds on was
+  answered **wrong in this run**, code recomputes `from` with HER latest answers (a written path is
+  read at its last line, `9 + 3 = 12` at its last `=`) and compares again at the key's precision.
+  Then the part is `correct`, by rule, and the reply says what happened ("Richtig weitergerechnet –
+  mit deinem Ergebnis aus a) …"). Her a) stays wrong. A part answered before a), or brought back
+  alone by a review, has nothing of hers to follow: its key decides.
+- **On screen** (`QuestionCard` `stimulus`, `PartStem`): the situation above the question, the part's
+  letter before it, and the task's letters `a) · b) · c)` where the topic stands — where she is, never
+  a count of what is left (rule 6). While she types the situation keeps two lines and scrolls in
+  itself (the one text that may, rule 16) instead of folding away like a drawing: she types from its
+  numbers. No new route.
+- **In the generator**: `part_tasks` in practice and test runs (`SET_PROFILES.partTasks`), at most
+  two per run, after the structured forms, each part a stored question in order. The material is text
+  only in this step: a second figure union in the explain schema would grow it by a third (20 kB of
+  65 kB, measured 05.10.); figures, tables and data as material come after the schema budget is
+  measured with Vertex (#281).
+- **Next** (#297 plan): open parts (begründe, deute, beurteile) through key points (#258), operators
+  deciding the check; tasks in parts read from the photo; subjects beyond maths and physics.
 
 ### Charts (issues #245, #246)
 

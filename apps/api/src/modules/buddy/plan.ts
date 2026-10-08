@@ -61,6 +61,23 @@ export async function findOrCreateSubject(
 }
 
 const COUNTDOWN_DAYS = [5, 3, 1] as const;
+/** How far ahead a test keeps Buddy looking daily (check.ts routine). */
+const TEST_AHEAD_DAYS = 14;
+
+/**
+ * A test (an active goal with a date) today or within the next two weeks, `today` in her zone.
+ * Then Buddy's daily look and the countdown prepare for it (check.ts); a review of his own
+ * would only stand beside that (review.ts).
+ */
+export async function testAhead(db: Db, learnerId: string, today: string): Promise<boolean> {
+  const row = await db.maybeOne(
+    `select 1 from buddy_goals
+      where learner_id = $1 and status = 'active' and due_date between $2::date and $2::date + $3::int
+      limit 1`,
+    [learnerId, today, TEST_AHEAD_DAYS],
+  );
+  return row !== null;
+}
 
 /**
  * Wake-ups for an exam: a few days before (to prepare or ask for material)
