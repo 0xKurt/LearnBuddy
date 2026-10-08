@@ -42,6 +42,10 @@
     "review": "¿Repasamos «{{title}}» un momento? Hay unas preguntas listas: después de una noche se queda mejor.",
     "review_untitled": "¿Repasamos tu ficha un momento? Hay unas preguntas listas: después de una noche se queda mejor."
   },
+  "review": {
+    "title": "Repaso rápido",
+    "due": "¿Repasamos un momento lo que practicaste la última vez? Hay unas preguntas listas: así se te queda mejor."
+  },
   "practice": {
     "accents": "Casi – revisa otra vez los acentos.",
     "bar": {

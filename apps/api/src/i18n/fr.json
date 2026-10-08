@@ -42,6 +42,10 @@
     "review": "Tu veux revoir « {{title}} » un petit moment ? Quelques questions sont prêtes – après une nuit, ça reste mieux.",
     "review_untitled": "Tu veux revoir ta fiche un petit moment ? Quelques questions sont prêtes – après une nuit, ça reste mieux."
   },
+  "review": {
+    "title": "Petite révision",
+    "due": "Tu veux réviser un peu ce que tu as travaillé la dernière fois ? Quelques questions sont prêtes – comme ça, ça reste bien en tête."
+  },
   "practice": {
     "accents": "Presque – vérifie encore les accents.",
     "bar": {
