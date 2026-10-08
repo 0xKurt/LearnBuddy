@@ -114,11 +114,11 @@ import {
 } from '../../lib/api/queries.js';
 import { useDraft } from '../../lib/drafts.js';
 import { messageFor } from '../../lib/errors.js';
-import { currentLocale } from '../../lib/i18n/index.js';
+import { currentLocale, isForeign } from '../../lib/i18n/index.js';
 import { answerForm } from '../../lib/practice/answerForm.js';
 import { questionOffers, questionOnScreen } from '../../lib/practice/offers.js';
 import { leftAfterSend } from '../../lib/practice/essay.js';
-import { foreign, verdictWordKey } from '../../lib/practice/onScreen.js';
+import { verdictWordKey } from '../../lib/practice/onScreen.js';
 import { useFinishWhenDone } from '../../lib/practice/finishWhenDone.js';
 import { useHeardTexts } from '../../lib/practice/heardTexts.js';
 import { useScreenRoom } from '../../lib/practice/screenRoom.js';
@@ -464,6 +464,16 @@ export default function PracticeScreen() {
     });
   }
 
+  /** Her question about the question or card on screen: the bar's field (`AskRoute`, #402, #384). */
+  const askRoute = (itemId: string) => ({
+    value: question.text,
+    onChange: question.setText,
+    onSend: () => void ask(itemId, question.text.trim()),
+    disabled: busy || closing,
+    focused: measured.asking,
+    onFocused: measured.setAsking,
+  });
+
   /** "Merk ich mir für nachher" (issue #402): Buddy brings her question up after the practice. */
   function keep(turnId: string): Promise<void> {
     return act(async () => {
@@ -572,7 +582,13 @@ export default function PracticeScreen() {
   // ─────────────── a flashcard pass ───────────────
 
   if (session.card_pass) {
-    return <CardPass session={session} title={title} onChange={store} onClose={close} />;
+    const card = session.current_item_id ?? '';
+    const asked = { pending: pending?.itemId === card ? pending.text : null, onKeep: keep };
+    return (
+      <AskRoute.Provider value={askRoute(card)}>
+        <CardPass session={session} title={title} onChange={store} onClose={close} asked={asked} />
+      </AskRoute.Provider>
+    );
   }
 
   // ─────────────── a Kopfrechnen round (issue #243) ───────────────
@@ -605,17 +621,12 @@ export default function PracticeScreen() {
     // She answered the questions the run started with and the rest is still being written
     // (issue #220). Not a result and not an error — the next questions are on their way, and the
     // screen asks for them until they are there (`usePracticeSession`).
-    if (active && session.preparing && !timeUp) {
+    const coming = active && session.preparing && !timeUp;
+    if (coming || (active && !finishFailed)) {
+      const waitsFor = coming ? 'more_coming' : timeUp ? 'timer.up' : 'finishing';
       return (
         <Screen title={title}>
-          <LoadingState label={t('practice:more_coming')} />
-        </Screen>
-      );
-    }
-    if (active && !finishFailed) {
-      return (
-        <Screen title={title}>
-          <LoadingState label={t(timeUp ? 'practice:timer.up' : 'practice:finishing')} />
+          <LoadingState label={t(`practice:${waitsFor}`)} />
         </Screen>
       );
     }
@@ -693,7 +704,8 @@ export default function PracticeScreen() {
 
   // A foreign vocabulary word has its own "Anhören" (its pronunciation is the point); that IS
   // its read-aloud button, so it never gets a second one.
-  const hearWord = item.kind === 'vocab' && foreign(item.prompt_lang);
+  const hearWord = item.kind === 'vocab' && isForeign(item.prompt_lang);
+  const hearAnswer = item.kind === 'vocab' && !open && isForeign(item.lang);
   // How the conversation and the card share the room (issues #96, #286, #232): `threadRoom`.
   const { threadCap, threadFloor, threadHolds, cardGrowTo, caps, cardNatural, ...room } =
     measured.layout({
@@ -750,16 +762,7 @@ export default function PracticeScreen() {
       <KeyboardSafe style={{ flex: 1 }}>
         <FreeSpaceReport.Provider value={measured.setFreeSpace}>
           {/* Her question (issue #402): the field of the bar on every form without a typed answer. */}
-          <AskRoute.Provider
-            value={{
-              value: question.text,
-              onChange: question.setText,
-              onSend: () => void ask(item.id, question.text.trim()),
-              disabled: locked,
-              focused: measured.asking,
-              onFocused: measured.setAsking,
-            }}
-          >
+          <AskRoute.Provider value={askRoute(item.id)}>
             {/* The column, measured: its end mark (below) says how far its content runs past it. */}
             <View
               style={{ flex: 1, minHeight: 0 }}
@@ -908,7 +911,7 @@ export default function PracticeScreen() {
                       <SolutionCard answer={shown.answer} numeric={item.kind === 'numeric'} />
                     </Rise>
                   ) : null}
-                  {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (
+                  {hearAnswer && shown.answer !== null && item.lang !== null ? (
                     <ListenButton text={shown.answer} lang={item.lang} />
                   ) : null}
                   {/* What the Hörtext said, once the question is closed (issue #210). The server

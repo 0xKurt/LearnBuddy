@@ -23,7 +23,7 @@ import type { Deps } from '../../deps.js';
 import { daysBetween, localParts, startOfLocalDay } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
 import type { UndoSpec } from './toolKit.js';
-import { undoApplies, undoLoosensContact } from './tools.js';
+import { undoApplies, undoLoosensContact } from './undo.js';
 import { activeRoleplay, roleplayFeedbacks, roleplayStatuses } from './roleplay.js';
 import { loadBuddyState, loadSettings } from './state.js';
 import { resumable } from '../practice/lifecycle.js';
