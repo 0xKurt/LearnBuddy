@@ -303,7 +303,8 @@ export async function answerItem(
       : byRules;
   // A part of a task in parts that goes on correctly from her WRONG earlier result is right
   // (Folgefehler, issue #297): code recomputes it with her numbers (`taskParts.ts`).
-  const part = hintRequest || byKey === 'correct' ? null : taskPartOf(item.task_part);
+  const taskPart = taskPartOf(item.task_part);
+  const part = hintRequest || byKey === 'correct' ? null : taskPart;
   const followed = part
     ? followsOn(part, item, text, await earlierAnswers(deps.db, sessionId, part))
     : null;
@@ -578,12 +579,12 @@ export async function answerItem(
                 learnerAge: ageOn(learner.birth_date, now),
                 language: learner.locale,
                 // For a listening question the material IS the text she heard (issue #210):
-                // without it the tutor would judge an answer about a text it cannot read.
+                // without it the tutor would judge an answer about a text it cannot read. For a
+                // part of a task it is the situation above it (#297): an open part („Begründe …")
+                // is judged on it, and its question alone does not say what it is about.
                 material: listenTask
                   ? listenTask.text
-                  : item.extracted_text
-                    ? item.extracted_text.slice(0, MATERIAL_CHARS)
-                    : null,
+                  : (taskPart?.stem ?? item.extracted_text?.slice(0, MATERIAL_CHARS) ?? null),
                 preferences: preferences.map((p) => p.statement),
                 // What her Bundesland expects at this question's curriculum place — or, when
                 // no state rule applies, that none does and the judgement stays cautious

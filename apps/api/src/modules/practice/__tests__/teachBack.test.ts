@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { checkRubric, newlyExplained, rubricOf, rubricReply } from '../rubric.js';
-import { teachBackItems, teachBackProblem, type TeachBackDraft } from '../teachBack.js';
+import { keyPointsProblem, teachBackItems, type TeachBackDraft } from '../teachBack.js';
 
 const draft = (over: Partial<TeachBackDraft> = {}): TeachBackDraft => ({
   prompt: 'Erklär mir, wie die Fotosynthese funktioniert.',
@@ -30,7 +30,7 @@ const draft = (over: Partial<TeachBackDraft> = {}): TeachBackDraft => ({
 
 describe('the key points a question may carry', () => {
   it('a sound question holds', () => {
-    expect(teachBackProblem(draft(), null)).toBeNull();
+    expect(keyPointsProblem(draft().points, draft().prompt, null)).toBeNull();
   });
 
   it.each([
@@ -71,13 +71,15 @@ describe('the key points a question may carry', () => {
       }),
     ],
   ])('%s → the question is dropped', (why, d) => {
-    expect(teachBackProblem(d, null)).toBe(why);
+    expect(keyPointsProblem(d.points, d.prompt, null)).toBe(why);
     expect(teachBackItems([d], null)).toEqual([]);
   });
 
   it('from her sheet, an exact term must stand on it', () => {
-    expect(teachBackProblem(draft(), 'Licht und Wasser')).toBe('exact term not on her sheet');
-    expect(teachBackProblem(draft(), 'Licht, Wasser und CO2')).toBeNull();
+    expect(keyPointsProblem(draft().points, draft().prompt, 'Licht und Wasser')).toBe(
+      'exact term not on her sheet',
+    );
+    expect(keyPointsProblem(draft().points, draft().prompt, 'Licht, Wasser und CO2')).toBeNull();
   });
 
   it('is stored as a free text with key points, its follow-ups as hints, no solution', () => {

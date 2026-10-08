@@ -12,6 +12,11 @@
 // Not for every form: a word to know (another word is no "similar task", and the same pair the
 // other way round would only repeat the answer just shown — vocabulary has its card pass), a
 // sentence to say, a Diktat (her own runs, each) and a free text (it shows no solution, #197).
+//
+// A task in parts (#297) keeps its order: nothing comes between a part and the next part of its
+// task — b) goes on from the a) whose solution she has just seen — and no part is brought forward
+// out of its task, which would put c) before b) once a task mixes forms (an open part between two
+// numbers).
 
 import type { Db } from '../../lib/db.js';
 import { FREE_TEXT_KINDS } from './itemFields.js';
@@ -22,9 +27,17 @@ type Closed = {
   subject_id: string | null;
   prompt: string;
   position: number;
+  /** The task in parts it is a part of (`items.task_part`, #297), or null. */
+  task: string | null;
 };
 
-type Open = { item_id: string; position: number; topic: string | null; kind: string };
+type Open = {
+  item_id: string;
+  position: number;
+  topic: string | null;
+  kind: string;
+  task: string | null;
+};
 
 const sameTopic = (a: string | null, b: string) => a?.trim().toLowerCase() === b;
 
@@ -42,7 +55,7 @@ export async function followWithSimilar(
   itemId: string,
 ): Promise<string | null> {
   const closed = await tx.maybeOne<Closed>(
-    `select i.topic, i.kind, i.subject_id, i.prompt, si.position
+    `select i.topic, i.kind, i.subject_id, i.prompt, si.position, i.task_part->>'group' as task
        from session_items si join items i on i.id = si.item_id
       where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3`,
     [sessionId, itemId, learnerId],
@@ -50,15 +63,18 @@ export async function followWithSimilar(
   const topic = closed?.topic?.trim().toLowerCase();
   if (!closed || !topic || NO_SIMILAR.includes(closed.kind)) return null;
   const open = await tx.query<Open>(
-    `select si.item_id, si.position, i.topic, i.kind
+    `select si.item_id, si.position, i.topic, i.kind, i.task_part->>'group' as task
        from session_items si join items i on i.id = si.item_id
       where si.session_id = $1 and si.status = 'open' and si.position > $2
       order by si.position`,
     [sessionId, closed.position],
   );
   const similar = (o: Open) => o.kind === closed.kind && sameTopic(o.topic, topic);
-  if (open[0] && similar(open[0])) return null;
-  const later = open.find(similar)?.item_id;
+  const next = open[0];
+  // The next one already is similar, or her task goes on with its next part (#297).
+  if (next && (similar(next) || (closed.task !== null && next.task === closed.task))) return null;
+  // A part stays in its task's order: none is brought forward out of it.
+  const later = open.find((o) => o.task === null && similar(o))?.item_id;
   const chosen = later ?? (await fromHerQuestions(tx, learnerId, sessionId, closed, topic));
   if (!chosen) return null;
   await placeNext(tx, sessionId, closed.position, chosen);

@@ -5,7 +5,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { shot } from './fit';
+import { setScheme, shot } from './fit';
 
 /** The words every offer card's button carries (components/learn/OfferCard.tsx). */
 const START = "Los geht's";
@@ -124,7 +124,8 @@ test('charts: every chart type drawn, read and judged by code', async ({ page })
     await shot(page, q.name);
     await page.emulateMedia({ colorScheme: 'dark' });
     await shot(page, `${q.name}-dark`);
-    await page.emulateMedia({ colorScheme: 'light' });
+    // Measured and answered right after the switch back: it lands first (`setScheme`, #443).
+    await setScheme(page, 'light');
 
     // The drawing fits the narrow phone: no part of it reaches past the card.
     await page.setViewportSize({ width: 360, height: 740 });
