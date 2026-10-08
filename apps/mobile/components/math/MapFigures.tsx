@@ -5,9 +5,9 @@
 // its Gradnetz with the degrees at the frame's edge and the marked crossings as dots; and a
 // closer Ausschnitt of Europe is drawn like any view. Nothing here decides anything:
 // every region and its shape is Natural Earth data in packages/shared-math (`maps.ts`), the names
-// the server checked the question against. The shapes load with the first map
-// (`lib/math/useMapShapes.ts`); until then the map keeps its room. `describeMap` says in words
-// what it shows.
+// the server checked the question against. The shapes and the names load with the first map
+// (`lib/math/useMapShapes.ts`, `useFigureNames.ts`, #440); until both are there the map keeps its
+// room and draws nothing. `describeMap` says in words what it shows.
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { View } from 'react-native';
@@ -33,8 +33,10 @@ import {
   REGION_FRAME,
   regionPath,
 } from '../../../../packages/shared-math/src/regions.js';
+import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { gridLabels } from '../../lib/math/mapGridLabels.js';
+import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { useMapShapes } from '../../lib/math/useMapShapes.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -55,12 +57,14 @@ export function MapBody({ figure, width }: { figure: MapFigure; width: number })
   const { figure: ink } = useTheme();
   const land = useSvgId('land');
   const shapes = useMapShapes()?.MAP_SHAPES[figure.v];
+  const names = useFigureNames(figure);
   const height = mapDrawHeight(figure, width);
-  if (!shapes) return <View style={{ width, height }} />;
+  if (!shapes || !names) return <View style={{ width, height }} />;
   const k = width / REGION_FRAME;
   const layer = mapLayer(figure);
+  const marks = mapMarked(names, figure);
   // The marked places: regions are filled here, a layer of places marks its own (`Places`).
-  const marked = new Set(layer === 'regions' ? mapMarked(figure) : []);
+  const marked = new Set(layer === 'regions' ? marks : []);
   const paths = shapes.regions.map((s) => regionPath(s.rings, k));
   // Länder and countries draw their borders on top, as an atlas does. A continent is many
   // countries: its coast is drawn under the land, and each country is filled with a seam of its
@@ -106,15 +110,15 @@ export function MapBody({ figure, width }: { figure: MapFigure; width: number })
           ))
         : null}
       {layer === 'grid' ? (
-        <Graticule figure={figure} grid={shapes.grid} width={width} height={height} />
-      ) : layer === 'regions' ? null : (
-        <Places
-          shapes={shapes}
-          layer={layer}
-          marked={new Set(mapMarked(figure))}
-          k={k}
-          land={land}
+        <Graticule
+          figure={figure}
+          grid={shapes.grid}
+          marked={marks}
+          width={width}
+          height={height}
         />
+      ) : layer === 'regions' ? null : (
+        <Places shapes={shapes} layer={layer} marked={new Set(marks)} k={k} land={land} />
       )}
     </Svg>
   );
@@ -128,11 +132,13 @@ export function MapBody({ figure, width }: { figure: MapFigure; width: number })
 function Graticule({
   figure,
   grid,
+  marked,
   width,
   height,
 }: {
   figure: MapFigure;
   grid: MapGridShape | undefined;
+  marked: readonly number[];
   width: number;
   height: number;
 }) {
@@ -171,7 +177,7 @@ function Graticule({
           />
         </G>
       ))}
-      {mapMarked(figure).map((c) => {
+      {marked.map((c) => {
         const p = gridAt(figure.v, grid, c);
         return p ? (
           <Circle
@@ -272,15 +278,15 @@ function Places({
  * of places (#429): "… Die großen Flüsse sind Linien. Markiert: Rhein."; with its Gradnetz: "…
  * Mit Gradnetz, Linien alle 10°. Markiert: 50° N, 10° O."
  */
-export function describeMap(figure: MapFigure, t: T): string {
+export function describeMap(figure: MapFigure, t: T, names: FigureNames): string {
   const lang = currentLocale();
-  const count = mapRegions(figure.v).length;
+  const count = mapRegions(names, figure.v).length;
   const layer = mapLayer(figure);
   const grid = layer === 'grid' ? mapGrid(figure.v) : null;
   const parts = [t(`figure.map_${figure.v}`, { count })];
   if (grid) parts.push(t('figure.map_grid', { step: gridStep(grid) }));
   else if (layer !== 'regions') parts.push(t(`figure.map_${layer}`));
-  const marked = mapMarked(figure).map((i) => mapPlaceName(figure, i, lang));
+  const marked = mapMarked(names, figure).map((i) => mapPlaceName(names, figure, i, lang));
   if (marked.length > 0) parts.push(t('figure.map_marked', { names: marked.join(', ') }));
   return parts.join(' ');
 }

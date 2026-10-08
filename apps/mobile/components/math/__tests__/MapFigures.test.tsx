@@ -8,8 +8,10 @@
 import { waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { FIGURE_NAMES } from '../../../../../packages/shared-math/src/figureNames.data.js';
 import { renderInApp } from '../../../testing/render.js';
 import { describeMap, MapBody, mapDrawHeight, type MapFigure } from '../MapFigures.js';
+import { describeSchoolFigure } from '../schoolFigures.js';
 
 const t = (key: string, values: Record<string, string | number> = {}) =>
   `${key}${Object.keys(values).length ? ` ${JSON.stringify(values)}` : ''}`;
@@ -62,24 +64,31 @@ describe('MapBody with its Gradnetz (#429)', () => {
 
 describe('describeMap', () => {
   it('names the map and the marked region — by its id or any of its names', () => {
-    expect(describeMap(de, t)).toBe(
+    expect(describeMap(de, t, FIGURE_NAMES)).toBe(
       'figure.map_de {"count":16} figure.map_marked {"names":"Bayern"}',
     );
-    expect(describeMap({ ...de, hl: ['Bavaria'] }, t)).toContain('"names":"Bayern"');
-    expect(describeMap({ type: 'map', v: 'europe', hl: [], l: 'regions' as const }, t)).toBe(
-      'figure.map_europe {"count":40}',
-    );
+    expect(describeMap({ ...de, hl: ['Bavaria'] }, t, FIGURE_NAMES)).toContain('"names":"Bayern"');
+    expect(
+      describeMap({ type: 'map', v: 'europe', hl: [], l: 'regions' as const }, t, FIGURE_NAMES),
+    ).toBe('figure.map_europe {"count":40}');
   });
 
   it('says which layer of places the map shows (#429) and names the marked one', () => {
-    expect(describeMap({ ...de, l: 'rivers', hl: ['Rhine'] }, t)).toBe(
+    expect(describeMap({ ...de, l: 'rivers', hl: ['Rhine'] }, t, FIGURE_NAMES)).toBe(
       'figure.map_de {"count":16} figure.map_rivers figure.map_marked {"names":"Rhein"}',
     );
   });
 
   it('says how far apart the lines of the Gradnetz are, and where the marked crossing is (#429)', () => {
-    expect(describeMap({ type: 'map', v: 'world', hl: ['30° S, 60° W'], l: 'grid' }, t)).toBe(
+    expect(
+      describeMap({ type: 'map', v: 'world', hl: ['30° S, 60° W'], l: 'grid' }, t, FIGURE_NAMES),
+    ).toBe(
       'figure.map_world {"count":7} figure.map_grid {"step":30} figure.map_marked {"names":"30° S, 60° W"}',
     );
+  });
+
+  it('says the map is coming until its names are loaded (#440), never a part of it', () => {
+    expect(describeSchoolFigure(de, t, null)).toBe('figure.loading');
+    expect(describeSchoolFigure(de, t, FIGURE_NAMES)).toBe(describeMap(de, t, FIGURE_NAMES));
   });
 });

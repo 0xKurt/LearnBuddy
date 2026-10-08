@@ -9,6 +9,7 @@
 // is not answered by tapping it would be an empty face beside a question about a time — dropped.
 
 import {
+  FIGURE_NAMES,
   gridParse,
   gridText,
   gridVerdict,
@@ -35,7 +36,7 @@ export function tapItemProblem(it: Tapped): string | null {
   }
   if (!kindIn(TAP_KINDS, it.kind)) return `a ${it.kind} question is not answered by a tap`;
   if (f === null) return 'nothing to tap';
-  return tapProblem(f, it.kind, it.answer);
+  return tapProblem(FIGURE_NAMES, f, it.kind, it.answer);
 }
 
 /**
@@ -60,7 +61,7 @@ export function tapRuleVerdict(
   if (item.tap !== true) return null;
   const figure = FigureSchema.safeParse(item.figure);
   if (!figure.success || !isTappable(figure.data)) return null;
-  return tapVerdict(figure.data, item.answer, text);
+  return tapVerdict(FIGURE_NAMES, figure.data, item.answer, text);
 }
 
 /**
@@ -75,8 +76,13 @@ export function namedRuleVerdict(
   text: string,
 ): 'correct' | 'incorrect' | null {
   const figure = FigureSchema.safeParse(item.figure);
-  if (!figure.success || !isTappable(figure.data) || namedPlaces(figure.data) === null) return null;
-  return tapVerdict(figure.data, item.answer, text);
+  if (
+    !figure.success ||
+    !isTappable(figure.data) ||
+    namedPlaces(FIGURE_NAMES, figure.data) === null
+  )
+    return null;
+  return tapVerdict(FIGURE_NAMES, figure.data, item.answer, text);
 }
 
 /**
@@ -113,7 +119,7 @@ export function tappedAnswerText(
     const p = gridParse(text, 'de');
     return p ? gridText(p, locale) : null;
   }
-  const places = figure ? namedPlaces(figure) : null;
+  const places = figure ? namedPlaces(FIGURE_NAMES, figure) : null;
   if (!places) return null;
   const i = regionNamed(places, text);
   return i === null ? null : regionName(places, i, locale);

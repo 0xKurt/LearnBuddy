@@ -22,6 +22,10 @@ export * from './regions.js';
 export * from './maps.js';
 export * from './mapGrid.js';
 export * from './schematics.js';
+export * from './figureNames.js';
+// The names of the maps and pictures: the server hands them to every function that resolves a
+// name. The app loads them with the first map or picture (`useFigureNames`, #440).
+export { FIGURE_NAMES } from './figureNames.data.js';
 // The drawings' shapes: the server decides with them what can be tapped; the app loads them with
 // the first picture (`useSchematicShapes`).
 export { SCHEMATIC_SHAPES } from './schematicShapes.data.js';

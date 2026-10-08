@@ -331,6 +331,7 @@
   },
   "figure": {
     "label": "Figure",
+    "loading": "loading …",
     "show": "View",
     "fraction_circle": "Circle divided into {{parts}} equal parts, {{filled}} of them shaded",
     "fraction_bar": "Bar divided into {{parts}} equal parts, {{filled}} of them shaded",

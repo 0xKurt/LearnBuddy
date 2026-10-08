@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { FIGURE_NAMES } from '../figureNames.data.js';
 import {
   gridAt,
   gridCrossing,
@@ -148,7 +149,7 @@ describe('the Gradnetz on the map (#429)', () => {
     ];
     const cities = MAP_SHAPES.de.places!.cities;
     for (const [name, lat, lon] of capitals) {
-      const [x, y] = cities[mapPlace({ v: 'de', l: 'cities' }, name)!]!.at;
+      const [x, y] = cities[mapPlace(FIGURE_NAMES, { v: 'de', l: 'cities' }, name)!]!.at;
       const sw = where('de', { lat: Math.floor(lat), lon: Math.floor(lon) });
       const ne = where('de', { lat: Math.ceil(lat), lon: Math.ceil(lon) });
       expect(x, name).toBeGreaterThan(sw[0]);
@@ -179,7 +180,7 @@ describe('the Gradnetz on the map (#429)', () => {
     for (const [v, p, land] of lands) {
       const [x, y] = where(v, p);
       expect(regionAt(MAP_SHAPES[v], x, y, 0), `${v} ${gridText(p, 'de')}`).toBe(
-        mapRegion(v, land),
+        mapRegion(FIGURE_NAMES, v, land),
       );
     }
   });
@@ -207,41 +208,43 @@ describe('the Gradnetz on the map (#429)', () => {
 describe('a question on the Gradnetz (#429)', () => {
   it('is tapped on two axes, meridians and parallels, written as the key', () => {
     const f = grid('de');
-    expect(tapAxes(f)?.map((a) => a.name)).toEqual(['lon', 'lat']);
-    expect(tapText(f, [4, 2])).toBe('50° N, 10° O');
+    expect(tapAxes(FIGURE_NAMES, f)?.map((a) => a.name)).toEqual(['lon', 'lat']);
+    expect(tapText(FIGURE_NAMES, f, [4, 2])).toBe('50° N, 10° O');
     for (const c of crossings('de')) {
-      expect(mapPlace(f, gridText(gridCrossing('de', c)!, 'de'))).toBe(c);
+      expect(mapPlace(FIGURE_NAMES, f, gridText(gridCrossing('de', c)!, 'de'))).toBe(c);
     }
-    expect(tapPick(f, '50° N, 10° O')).toEqual([4, 2]);
-    expect(tapPick(f, '50° N, 10° E')).toEqual([4, 2]);
-    expect(tapPick(f, '50° N, 16° O')).toBeNull();
-    expect(tapVerdict(f, '50° N, 10° O', '50° N, 10° O')).toBe('correct');
-    expect(tapVerdict(f, '50° N, 10° O', '51° N, 10° O')).toBe('incorrect');
+    expect(tapPick(FIGURE_NAMES, f, '50° N, 10° O')).toEqual([4, 2]);
+    expect(tapPick(FIGURE_NAMES, f, '50° N, 10° E')).toEqual([4, 2]);
+    expect(tapPick(FIGURE_NAMES, f, '50° N, 16° O')).toBeNull();
+    expect(tapVerdict(FIGURE_NAMES, f, '50° N, 10° O', '50° N, 10° O')).toBe('correct');
+    expect(tapVerdict(FIGURE_NAMES, f, '50° N, 10° O', '51° N, 10° O')).toBe('incorrect');
   });
 
   it('marks a crossing, stored as German writes it', () => {
     const f = grid('europe', ['50° N, 10° E']);
-    expect(mapProblem(f)).toBeNull();
-    expect(mapCanonical(f).hl).toEqual(['50° N, 10° O']);
-    expect(tapProblem(f, 'short', '50° N, 10° O')).toBe('the figure already marks the key');
-    expect(tapProblem(f, 'short', '60° N, 10° O')).toBeNull();
+    expect(mapProblem(FIGURE_NAMES, f)).toBeNull();
+    expect(mapCanonical(FIGURE_NAMES, f).hl).toEqual(['50° N, 10° O']);
+    expect(tapProblem(FIGURE_NAMES, f, 'short', '50° N, 10° O')).toBe(
+      'the figure already marks the key',
+    );
+    expect(tapProblem(FIGURE_NAMES, f, 'short', '60° N, 10° O')).toBeNull();
   });
 
   it('is no question where no two lines cross, or on a map without a grid', () => {
-    expect(mapProblem(grid('europe', ['55° N, 10° O']))).toBe(
+    expect(mapProblem(FIGURE_NAMES, grid('europe', ['55° N, 10° O']))).toBe(
       'no grid "55° N, 10° O" on the map europe',
     );
-    expect(mapProblem(grid('de', ['50° N, 10° O', '50° N, 10° E']))).toBe(
+    expect(mapProblem(FIGURE_NAMES, grid('de', ['50° N, 10° O', '50° N, 10° E']))).toBe(
       'a place is marked twice',
     );
-    expect(mapProblem(grid('eu_central'))).toBe('the map eu_central has no grid');
+    expect(mapProblem(FIGURE_NAMES, grid('eu_central'))).toBe('the map eu_central has no grid');
   });
 
   it('stays on its map: never zoomed, dropped where the crossings close in', () => {
     const f = grid('europe');
-    expect(mapZoom(f, mapPlace(f, '50° N, 10° O'))).toBe('europe');
+    expect(mapZoom(FIGURE_NAMES, f, mapPlace(FIGURE_NAMES, f, '50° N, 10° O'))).toBe('europe');
     const w = grid('world');
-    expect(mapZoom(w, mapPlace(w, '30° S, 60° W'))).toBe('world');
-    expect(mapZoom(w, mapPlace(w, '60° N, 90° O'))).toBeNull();
+    expect(mapZoom(FIGURE_NAMES, w, mapPlace(FIGURE_NAMES, w, '30° S, 60° W'))).toBe('world');
+    expect(mapZoom(FIGURE_NAMES, w, mapPlace(FIGURE_NAMES, w, '60° N, 90° O'))).toBeNull();
   });
 });

@@ -9,6 +9,7 @@
 import { waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { FIGURE_NAMES } from '../../../../../packages/shared-math/src/figureNames.data.js';
 import { SCHEMATIC_IDS } from '../../../../../packages/shared-math/src/schematics.js';
 import { renderInApp } from '../../../testing/render.js';
 import { describeSchematic, SchematicBody, type SchematicFigure } from '../SchematicFigures.js';
@@ -50,10 +51,10 @@ describe('SchematicBody', () => {
 
 describe('describeSchematic', () => {
   it('says the drawing and how many parts carry numbers, not which', () => {
-    expect(describeSchematic(labelled, t)).toBe(
+    expect(describeSchematic(labelled, t, FIGURE_NAMES)).toBe(
       'figure.schematic_numbered {"name":"Pflanzenzelle","count":3}',
     );
-    expect(describeSchematic({ ...labelled, n: [], ask: 0 }, t)).toBe(
+    expect(describeSchematic({ ...labelled, n: [], ask: 0 }, t, FIGURE_NAMES)).toBe(
       'figure.schematic {"name":"Pflanzenzelle"}',
     );
   });

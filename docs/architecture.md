@@ -3828,9 +3828,11 @@ v: 'de' | 'europe' | 'world', hl: string[], l }` — which map, the marked place
 maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a school map's frame,
   the land around it as untappable context) and admin-0 1:110m (the continents; Russia split at
   the Ural, 60° E), projects (equirectangular at 51° N; Lambert azimuthal equal-area at 10° E
-  52° N; the Natural Earth projection), simplifies (Douglas–Peucker) and writes two files:
-  `maps.data.ts` — every region's and place's id and its names in the five languages plus other
-  names (19 KB, eager in the app and on the server) — and `mapShapes.data.ts` — the outlines in a
+  52° N; the Natural Earth projection), simplifies (Douglas–Peucker) and writes three files:
+  `mapNames.data.ts` — every region's and place's id and its names in the five languages plus
+  other names (19 KB; the server imports it, the app loads it with the first map or picture, #440,
+  below) — `maps.data.ts` — each view's Gradnetz degrees and height, eager — and
+  `mapShapes.data.ts` — the outlines in a
   frame 1000 wide, each labelled at its pole of inaccessibility, and the places of each layer
   (214 KB, loaded with the first map). Places (#429): the capitals from Natural Earth's populated
   places (`FEATURECLA` capital; on `de` the Admin-1 capitals inside Germany) as a ring of one
@@ -3846,8 +3848,16 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
   (a meridian's at the bottom edge, else the top; a parallel's at the left, else the right, on the
   world map at its western end), and where each crossing stands (null outside the frame). A line
   no other crosses on the map (a corner of Europe's frame) is left out. The degrees of the lines
-  are eager (`MAP_GRIDS` in `maps.data.ts`, for the tap axes), the geometry lazy with the shapes. The eager names cost 5 KB gzip in the start bundle (budget raised in #429; all figure
-  names become lazy with #440). The generated files are
+  are eager (`MAP_GRIDS` in `maps.data.ts`, for the tap axes), the geometry lazy with the shapes.
+  **Names load with the first figure (#440):** the names of the maps and of the pictures
+  (`FigureNames`, `packages/shared-math/src/figureNames.ts`) are handed to every function that
+  resolves a name (`maps.ts`, `schematics.ts`, `tap.ts`, first argument) — the server passes
+  `FIGURE_NAMES` (`figureNames.data.ts`), the app the same object once `useFigureNames` has loaded
+  it (one bundle part, ~10 KB gzip, on `lib/lazyModule.ts`). Until it is there a map or a picture
+  keeps its room and draws nothing, its description for a screen reader says it is coming
+  (`figure.loading`) and a tap waits (`tapAxes` offers no place without the names) — never a
+  figure without its names. `lib/__tests__/startBundle.test.ts` walks the routes' imports and fails
+  when a plain import brings a part that loads later back into the start bundle. The generated files are
   in `.prettierignore` and checked byte for byte (`maps.mjs <dir> --check`); node ≥ 22.18 runs the
   script, which imports `regions.ts` itself.
 - **One geometry for named regions** (`packages/shared-math/src/regions.ts`, dependency-free,
@@ -3966,8 +3976,8 @@ mechanism above). Decided in #224: drawn by us, nothing licensed.
   (`useSchematicShapes`, on `lib/lazyModule.ts`) — the start bundle had 8 KB of its gzip budget
   left, the drawings would have taken more. A part is a region like a Land (`regions.ts`, §Maps):
   names, winding number, which part a finger means — the topmost under it, or a small one by its
-  point. The names stay in the start bundle (the server and the tap's words read them
-  synchronously).
+  point. The names load with the first map or picture as well (`useFigureNames`, #440, §Maps);
+  only each drawing's height is eager (`schematicHeight`, its room while it loads).
 - **A whole finger** (`TAP_TARGET` in `regions.ts`): a part may be asked for by a tap only when, in
   the smallest room (`REGION_TAP_BOX`), a 44 pt target (`TOUCH`) fits inside it or around its
   point, no other part's point nearer than 44 pt. We draw the pictures, so we draw them for a
