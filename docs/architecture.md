@@ -4482,7 +4482,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   `apps/api/src/modules/practice/readAloud.ts`): never a task that practises spelling
   (`spelling: 'strict'`), never a vocabulary prompt that already contains its answer — Vorlesen,
   Gespräch and "Nochmal vorlesen" follow the flag. A foreign vocabulary word keeps its own
-  "Anhören" (its pronunciation is the point); a flashcard pass reads nothing.
+  "Anhören" (its pronunciation is the point). The same flag holds for a card's front and a
+  Kopfrechnen task (issue #434): read when it comes up, again on a tap on it; a card's back is
+  never read unasked, and neither listens — there is no spoken answer to them.
 - **Conversation mode** (`app/talk.tsx`, the waveform in the chat's input bar): hands-free, in the same
   conversation as the chat. She speaks → written down → Buddy answers (a normal turn) → the answer
   is read aloud → Buddy listens again. The screen is a camera angle on that one thread, not a

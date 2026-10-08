@@ -2,13 +2,13 @@
 // whether she knew it.
 //
 // The screen is built like every practice screen, in the same places (issue #384, report #388
-// §9 "the bar per form"): the header with the round ✕ (`EndButton`), where she is (the progress
-// row), the one thing in front of her (the card), the conversation under it once she asks, and
-// the one input bar at the bottom (`CheckBar` `own`). Its field is her question to the tutor
-// ("Frag zur Aufgabe …", `POST …/ask`: never graded, never a rating); its action is the card's:
-// "Umdrehen" where "Prüfen" stands on a board, then "Noch nicht" / "Wusste ich" across under the
-// pill, where a typed answer's "Prüfen" stands. No answer field, no "Tipp", no "Lösung zeigen":
-// there is nothing to grade here.
+// §9 "the bar per form"): the header with the Vorlesen switch and the round ✕ (`HeadActions`,
+// #434), where she is (the progress row), the one thing in front of her (the card), the
+// conversation under it once she asks, and the one input bar at the bottom (`CheckBar` `own`).
+// Its field is her question to the tutor ("Frag zur Aufgabe …", `POST …/ask`: never graded,
+// never a rating); its action is the card's: "Umdrehen" where "Prüfen" stands on a board, then
+// "Noch nicht" / "Wusste ich" across under the pill, where a typed answer's "Prüfen" stands. No
+// answer field, no "Tipp", no "Lösung zeigen": there is nothing to grade here.
 //
 // Two decisions that are deliberate and would be easy to undo by accident:
 //
@@ -18,7 +18,8 @@
 //     guard against (apps/api/src/modules/practice/fsrs.ts RATING). The app must not add to
 //     it. For the same reason neither carries a tick or a cross: nothing here was right.
 //   · The card is turned over by the `<Btn>` in the bar, not by tapping the card. One way to
-//     do it, at the thumb, where every other action of the app lives (CLAUDE.md rule 13).
+//     do it, at the thumb, where every other action of the app lives (CLAUDE.md rule 13). A tap
+//     on the word reads it again while Vorlesen is on (#434), as on every question.
 //   · A question she asks is about the card in front of her; its reply stands under the card,
 //     and the next card starts without it (the conversation is the card's, like a question's).
 //
@@ -100,11 +101,13 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
     session.items.find((i) => i.item.id === session.current_item_id) ?? open[0];
   const done = session.items.length - open.length;
 
-  // Vorlesen (#434): the front of a card is read when it comes up, a tap on it reads it again;
-  // nothing listens (she rates herself, there is no spoken answer). The back is never read
-  // unasked — it is what she tries to remember.
+  // Vorlesen (#434): the front of a card is read when it comes up, a tap on it reads it again —
+  // where the server lets it be heard (`read_aloud`, the rule every question follows). Nothing
+  // listens (she rates herself, there is no spoken answer). The back is never read unasked: it is
+  // what she tries to remember.
   const words = useSpokenWords();
-  const facing = current && turned !== current.item.id ? current.item : null;
+  const heard = current?.item.read_aloud ? current.item : null;
+  const facing = heard && turned !== heard.id ? heard : null;
   const readFront = useQuestionVoice(facing, words, t, { listens: false });
 
   // The back of a card is a change on screen a screen reader must hear, not see.
@@ -212,7 +215,7 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
         >
           <Card tone="lavender" padding={SPACE.xl} radius={24}>
             <View style={{ gap: SPACE.lg, alignItems: 'center' }}>
-              <ReadAgain onRead={() => readFront(current.item)}>
+              <ReadAgain {...(heard ? { onRead: () => readFront(heard) } : {})}>
                 <Text
                   accessibilityRole="header"
                   numberOfLines={3}

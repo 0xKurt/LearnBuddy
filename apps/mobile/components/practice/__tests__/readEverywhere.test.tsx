@@ -2,7 +2,8 @@
 // Übung"). A Kopfrechnen round and a card pass carry the same Vorlesen switch in their header,
 // read the task or the card's front aloud when Vorlesen is on, and read it again on a tap on it —
 // no new button; for a screen reader the target is "Nochmal vorlesen". The back of a card
-// is never read unasked. Off, nothing is read and the text is no target.
+// is never read unasked. Off, or where the server says it must not be heard (`read_aloud`),
+// nothing is read and the text is no target.
 // requires live verification in Claude Code session (the speech output is replaced)
 
 import { act, fireEvent, screen } from '@testing-library/react';
@@ -48,7 +49,8 @@ const item = (
     task_view: null,
     listen: null,
     passage: null,
-    read_aloud: false,
+    // What the server says of an ordinary task and an ordinary card (`readAloud.ts`).
+    read_aloud: true,
     ...over,
   },
   status: 'open',
@@ -85,9 +87,11 @@ const session = (over: Partial<SessionView>): SessionView => ({
   ...over,
 });
 
-const drill = () =>
+type Over = Partial<SessionItemView['item']>;
+
+const drill = (over: Over = {}) =>
   session({
-    items: [item(A, {})],
+    items: [item(A, over)],
     drill: {
       spec: { range: 'times', rows: [7], carry: null },
       input: 'whole',
@@ -96,23 +100,27 @@ const drill = () =>
     },
   });
 
-const cards = () =>
+const cards = (over: Over = {}) =>
   session({
     card_pass: true,
     items: [
-      item(A, { kind: 'vocab', prompt: 'le vélo', prompt_lang: 'fr', lang: 'de' }, 'das Fahrrad'),
+      item(
+        A,
+        { kind: 'vocab', prompt: 'le vélo', prompt_lang: 'fr', lang: 'de', ...over },
+        'das Fahrrad',
+      ),
     ],
   });
 
 const noop = async () => undefined;
-const showDrill = () =>
+const showDrill = (over: Over = {}) =>
   renderInApp(
-    <DrillRound session={drill()} title="Runde" onChange={noop} onClose={() => undefined} />,
+    <DrillRound session={drill(over)} title="Runde" onChange={noop} onClose={() => undefined} />,
   );
-const showCards = () =>
+const showCards = (over: Over = {}) =>
   renderInApp(
     <CardPass
-      session={cards()}
+      session={cards(over)}
       title="Runde"
       onChange={noop}
       onClose={() => undefined}
@@ -156,11 +164,28 @@ describe.each([
     expect(spoken).not.toHaveBeenCalled();
     expect(screen.queryByTestId('read-again')).toBeNull();
   });
+
+  it('reads nothing and offers no tap where the server says it must not be heard', () => {
+    show({ read_aloud: false });
+    expect(screen.getByText(front)).toBeTruthy();
+    expect(spoken).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('read-again')).toBeNull();
+  });
 });
 
 it('reads a Kopfrechnen task as math, in words — never the dot as a symbol', () => {
   showDrill();
   expect(texts()[0]).toMatch(/^7 mal 8\.?$/);
+});
+
+it('reads a percent task in its own words, not as a formula', () => {
+  showDrill({ prompt: '15 % von 80' });
+  expect(texts()[0]).toMatch(/^15 % von 80\.?$/);
+});
+
+it('reads the front of a card in its language', () => {
+  showCards();
+  expect(spoken.mock.calls[0]![0]).toEqual([{ text: 'le vélo', lang: 'fr' }]);
 });
 
 it('never reads the back of a card unasked', () => {
