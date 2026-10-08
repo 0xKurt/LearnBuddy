@@ -6,7 +6,8 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { shot } from './fit';
+import { typed } from './figureWalk';
+import { bothSchemes } from './fit';
 
 async function onboardChild(page: Page): Promise<void> {
   await page.goto('/');
@@ -36,28 +37,6 @@ async function onboardChild(page: Page): Promise<void> {
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
-/** The question with its figure, at both phone sizes, in the light and the dark room. */
-async function bothRooms(page: Page, name: string): Promise<void> {
-  await expect(page.getByTestId('question-figure')).toBeVisible();
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-dark`);
-  await page.emulateMedia({ colorScheme: 'light' });
-}
-
-async function typed(page: Page, text: string): Promise<void> {
-  // Right after the switch back from the dark room the field can render once more; fill until
-  // the value holds instead of typing into the copy that is about to go.
-  const field = page.getByLabel('Deine Antwort');
-  await expect(async () => {
-    await field.fill(text);
-    await expect(field).toHaveValue(text, { timeout: 1000 });
-  }).toPass();
-  await page.getByRole('button', { name: 'Prüfen' }).click();
-  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
-  await page.getByRole('button', { name: 'Weiter' }).click();
-}
-
 test('primary-school figures: read, answered, graded by code', async ({ page }) => {
   await onboardChild(page);
   await page.getByLabel('Schreib Buddy …').fill('Lass uns Uhr und Geld üben');
@@ -77,46 +56,43 @@ test('primary-school figures: read, answered, graded by code', async ({ page }) 
   await expect(
     page.getByRole('img', { name: /kleine Zeiger zwischen 7 und 8, der große Zeiger auf der 9/ }),
   ).toBeVisible();
-  await bothRooms(page, '90-clock');
+  await bothSchemes(page, '90-clock', 'question-figure');
   // The evening reading of the same hands, in the German notation: right, by code.
   await typed(page, '19.45');
 
   await expect(page.getByText('Wie viele Minuten vergehen', { exact: false })).toBeVisible();
   await expect(page.getByRole('img', { name: /Zwei Uhren/ })).toBeVisible();
-  await bothRooms(page, '91-clock-span');
+  await bothSchemes(page, '91-clock-span', 'question-figure');
   await typed(page, '45');
 
   await expect(page.getByText('Wie viel Geld ist das?')).toBeVisible();
   await expect(page.getByRole('img', { name: /1 Schein zu 5 Euro/ })).toBeVisible();
-  await bothRooms(page, '92-money');
+  await bothSchemes(page, '92-money', 'question-figure');
   // The amount in cents is the amount.
   await typed(page, '845 ct');
 
   await expect(page.getByText('Wie viele Plättchen sind es zusammen?')).toBeVisible();
   await expect(page.getByRole('img', { name: /Zwanzigerfeld/ })).toBeVisible();
-  await bothRooms(page, '93-twenty-frame');
+  await bothSchemes(page, '93-twenty-frame', 'question-figure');
   await typed(page, '14');
 
   await expect(page.getByText('Wie viele Punkte sind gefärbt?')).toBeVisible();
   await expect(page.getByRole('img', { name: /Hunderterfeld/ })).toBeVisible();
-  await bothRooms(page, '93b-hundred-frame');
+  await bothSchemes(page, '93b-hundred-frame', 'question-figure');
   await typed(page, '37');
 
   await expect(page.getByText('Welche Zahl ist das?')).toBeVisible();
   await expect(
     page.getByRole('img', { name: /2 Hunderterplatten, 3 Zehnerstangen/ }),
   ).toBeVisible();
-  await bothRooms(page, '94-base-ten');
+  await bothSchemes(page, '94-base-ten', 'question-figure');
   await typed(page, '234');
 
   await expect(page.getByText('Welche Uhr zeigt halb drei?')).toBeVisible();
   const option = (letter: string) =>
     page.getByRole('button', { name: new RegExp(`^${letter}: Uhr`) });
   for (const letter of ['A', 'B', 'C', 'D']) await expect(option(letter)).toBeVisible();
-  await shot(page, '95-clock-choices');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '95-clock-choices-dark');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '95-clock-choices');
   await option('A').click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();

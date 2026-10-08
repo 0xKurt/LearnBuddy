@@ -435,6 +435,12 @@ export async function halfTurns(page: Page): Promise<string[]> {
  * then until the page is still. A switch she types right after goes through here.
  */
 export async function setScheme(page: Page, scheme: 'light' | 'dark'): Promise<void> {
+  await landScheme(page, scheme);
+  await settle(page);
+}
+
+/** The switch of `setScheme` up to the remount, without waiting for the page to be still. */
+async function landScheme(page: Page, scheme: 'light' | 'dark'): Promise<void> {
   const changes = await page.evaluate((want) => {
     if (matchMedia(`(prefers-color-scheme: ${want})`).matches) return false;
     const old = document.querySelector('[data-testid]');
@@ -447,7 +453,22 @@ export async function setScheme(page: Page, scheme: 'light' | 'dark'): Promise<v
       page.locator('[data-before-scheme]'),
       `the app takes the ${scheme} scheme (its mode follows the phone)`,
     ).toHaveCount(0);
-  await settle(page);
+}
+
+/**
+ * One stop of a walkthrough at both phone sizes (`shot`), in the light scheme (`name`) and the
+ * dark one (`name-dark`) — the one helper every spec shoots both schemes with (issue #464). Each
+ * switch waits for the remount; the one back to light also for the page to be still (`setScheme`):
+ * she taps or types right after it. Before the dark shot `shot`'s own settle is the wait — a
+ * second one cost 1.6 s per stop on a practice screen, whose orb never stops moving.
+ * `shows`: the testID of what the stop is about (a figure, the passage), visible before the shots.
+ */
+export async function bothSchemes(page: Page, name: string, shows?: string): Promise<void> {
+  if (shows) await expect(page.getByTestId(shows)).toBeVisible();
+  await shot(page, name);
+  await landScheme(page, 'dark');
+  await shot(page, `${name}-dark`);
+  await setScheme(page, 'light');
 }
 
 /**

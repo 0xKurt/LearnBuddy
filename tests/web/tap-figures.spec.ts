@@ -38,8 +38,8 @@ import {
 } from '../../packages/shared-math/src/schematics';
 import type { Tappable } from '../../packages/shared-math/src/tap';
 import { LIBRARY_ITEMS } from '../../apps/api/src/testing/scenarios/schematic';
-import { bothRooms as cardRooms, onboardChild, startOffer, typed } from './figureWalk';
-import { shot } from './fit';
+import { onboardChild, startOffer, typed } from './figureWalk';
+import { bothSchemes, shot } from './fit';
 
 const LINE: Tappable = { type: 'number_line', min: 0, max: 5, step: 0.5, points: [] };
 const PLANE: Tappable = {
@@ -82,15 +82,6 @@ async function tapDial(page: Page, hour: number): Promise<void> {
   });
 }
 
-/** Light and dark, both phones, the keyboard up for her question. */
-async function bothRooms(page: Page, name: string): Promise<void> {
-  await expect(page.getByTestId('tap-figure')).toBeVisible();
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-dark`);
-  await page.emulateMedia({ colorScheme: 'light' });
-}
-
 /** "Prüfen", code says right, on to the next question. */
 async function checkRight(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Prüfen' }).click();
@@ -121,7 +112,7 @@ test('tapping inside a figure: a place, a point, a column, a clock — graded by
   // Only that she chose: the value in plain sight would let her tap until it matches (#409).
   await expect(words(page)).toHaveText('Stelle gewählt');
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Stelle: 2,5');
-  await bothRooms(page, '96-tap-line');
+  await bothSchemes(page, '96-tap-line', 'tap-figure');
   await checkRight(page);
 
   // The coordinate system: dragged from the wrong place to the right one — the mark follows.
@@ -135,14 +126,14 @@ test('tapping inside a figure: a place, a point, a column, a clock — graded by
   await page.mouse.up();
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Punkt (2 | −1)');
   await expect(words(page)).toHaveText('Punkt gesetzt');
-  await bothRooms(page, '97-tap-point');
+  await bothSchemes(page, '97-tap-point', 'tap-figure');
   await checkRight(page);
 
   // The bar chart: the column she means is framed.
   await expect(page.getByText('am meisten geregnet', { exact: false })).toBeVisible();
   await tapPlace(page, BARS, [3]);
   await expect(words(page)).toHaveText('Säule: Apr');
-  await bothRooms(page, '98-tap-bar');
+  await bothSchemes(page, '98-tap-bar', 'tap-figure');
   await checkRight(page);
 
   // The clock: the small hand to the 7, then — without a step in between — the large one to the 9.
@@ -163,7 +154,7 @@ test('tapping inside a figure: a place, a point, a column, a clock — graded by
   await expect(words(page)).toHaveText(
     'Uhr: der kleine Zeiger zwischen 7 und 8, der große Zeiger auf der 9',
   );
-  await bothRooms(page, '99-tap-clock');
+  await bothSchemes(page, '99-tap-clock', 'tap-figure');
   await checkRight(page);
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });
@@ -205,23 +196,20 @@ test('a stumme Karte: every Land, Luxembourg, every river, a capital tapped (#25
   await expect(words(page)).toHaveText('Gebiet gewählt');
   await tapOnMap(page, 'de', 'Bayern');
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Gebiet: Bayern');
-  await bothRooms(page, '93-map-de');
+  await bothSchemes(page, '93-map-de', 'tap-figure');
   await checkRight(page);
 
   // Europe: the marked country stands in the card; she names it.
   await expect(page.getByText('Wie heißt das markierte Land?')).toBeVisible();
   await expect(page.getByTestId('question-figure')).toBeVisible();
-  await shot(page, '94-map-europe');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '94-map-europe-dark');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '94-map-europe');
   await typed(page, 'Frankreich');
 
   // Luxembourg: too small on the whole of Europe, so code picked the closer Ausschnitt (#429).
   await expect(page.getByText('Tippe auf Luxemburg.')).toBeVisible();
   await tapOnMap(page, 'eu_central', 'Luxemburg');
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Gebiet: Luxemburg');
-  await bothRooms(page, '94-map-luxembourg');
+  await bothSchemes(page, '94-map-luxembourg', 'tap-figure');
   await checkRight(page);
 
   // The rivers of Germany: every one is tapped on its own line (#429).
@@ -234,15 +222,12 @@ test('a stumme Karte: every Land, Luxembourg, every river, a capital tapped (#25
   }
   await expect(words(page)).toHaveText('Fluss gewählt');
   await tapOnMap(page, 'de', 'Rhein', 'rivers');
-  await bothRooms(page, '94-map-rivers');
+  await bothSchemes(page, '94-map-rivers', 'tap-figure');
   await checkRight(page);
 
   // A marked river in the card: she names it.
   await expect(page.getByText('Wie heißt der markierte Fluss?')).toBeVisible();
-  await shot(page, '94-map-river-marked');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '94-map-river-marked-dark');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '94-map-river-marked');
   await typed(page, 'Elbe');
 
   // A capital: the dots of the 16 Landeshauptstädte.
@@ -251,22 +236,19 @@ test('a stumme Karte: every Land, Luxembourg, every river, a capital tapped (#25
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Stadt: Hannover');
   await tapOnMap(page, 'de', 'München', 'cities');
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Stadt: München');
-  await bothRooms(page, '94-map-cities');
+  await bothSchemes(page, '94-map-cities', 'tap-figure');
   await checkRight(page);
 
   // A marked mountain range in the card: she names it.
   await expect(page.getByText('Wie heißt das markierte Gebirge?')).toBeVisible();
-  await shot(page, '94-map-range-marked');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '94-map-range-marked-dark');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '94-map-range-marked');
   await typed(page, 'Harz');
 
   // The world: a continent.
   await expect(page.getByText('Tippe auf Südamerika.')).toBeVisible();
   await tapOnMap(page, 'world', 'Südamerika');
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Gebiet: Südamerika');
-  await bothRooms(page, '95-map-world');
+  await bothSchemes(page, '95-map-world', 'tap-figure');
   await checkRight(page);
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });
@@ -293,7 +275,7 @@ test('the Gradnetz: crossings tapped on Germany and Europe, coordinates typed (#
   }
   await expect(words(page)).toHaveText('Punkt gewählt');
   await tapCrossing(page, 'de', 50, 10);
-  await bothRooms(page, '95-map-grid-de');
+  await bothSchemes(page, '95-map-grid-de', 'tap-figure');
   await checkRight(page);
 
   // Europe: every ten degrees, the lines curved as its projection draws them.
@@ -302,15 +284,12 @@ test('the Gradnetz: crossings tapped on Germany and Europe, coordinates typed (#
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Punkt: 50° N, 10° W');
   await tapCrossing(page, 'europe', 60, 10);
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Punkt: 60° N, 10° O');
-  await bothRooms(page, '95-map-grid-europe');
+  await bothSchemes(page, '95-map-grid-europe', 'tap-figure');
   await checkRight(page);
 
   // The world: the coordinates of the marked crossing, typed in her notation.
   await expect(page.getByText('Welche Koordinaten hat der markierte Punkt?')).toBeVisible();
-  await shot(page, '95-map-grid-world');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '95-map-grid-world-dark');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '95-map-grid-world');
   await typed(page, '30°S 60°W');
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });
@@ -334,10 +313,7 @@ test('a labelled picture: the cell labelled number by number, every part tapped 
   // The labelling task as code wrote it: one question per number, the numbers on the drawing.
   await expect(page.getByText('Pflanzenzelle: Wie heißt Teil 1?')).toBeVisible();
   await expect(page.getByTestId('question-figure')).toBeVisible();
-  await shot(page, '90-picture-label');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '90-picture-label-dark');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '90-picture-label');
   await typed(page, 'Zellkern');
   await expect(page.getByText('Pflanzenzelle: Wie heißt Teil 2?')).toBeVisible();
   // Any of a part's names counts: the English one too.
@@ -354,14 +330,14 @@ test('a labelled picture: the cell labelled number by number, every part tapped 
   }
   await expect(words(page)).toHaveText('Teil gewählt');
   await tapPart(page, 'plant_cell', 'nucleus');
-  await bothRooms(page, '91-picture-cell');
+  await bothSchemes(page, '91-picture-cell', 'tap-figure');
   await checkRight(page);
 
   // The bicycle's frame: many strokes, one part.
   await expect(page.getByText('Tippe auf den Rahmen.')).toBeVisible();
   await tapPart(page, 'bicycle', 'frame');
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Teil: Rahmen');
-  await bothRooms(page, '92-picture-bike');
+  await bothSchemes(page, '92-picture-bike', 'tap-figure');
   await checkRight(page);
 
   // A drawing of #252's second part: every traffic sign reached at its own point.
@@ -371,7 +347,7 @@ test('a labelled picture: the cell labelled number by number, every part tapped 
     await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
   }
   await tapPart(page, 'signs', 'cycle_path');
-  await bothRooms(page, '92b-picture-signs');
+  await bothSchemes(page, '92b-picture-signs', 'tap-figure');
   await checkRight(page);
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });
@@ -393,11 +369,11 @@ test('the drawings of #252’s second part: each numbered beside it, every part 
         await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
       }
       await tapPart(page, d, schematic(d).parts[schematicPart(d, item.answer)!]!.id);
-      await bothRooms(page, `89-library-${d}-tap`);
+      await bothSchemes(page, `89-library-${d}-tap`, 'tap-figure');
       await checkRight(page);
     } else {
       // Six numbers beside the drawing, each joined to its part; she names the first.
-      await cardRooms(page, `89-library-${d}`);
+      await bothSchemes(page, `89-library-${d}`, 'question-figure');
       await typed(page, item.answer);
     }
   }

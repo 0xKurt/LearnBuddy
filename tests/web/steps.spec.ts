@@ -11,31 +11,27 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { onboardChild, startOffer } from './figureWalk';
-import { PHONES, shot } from './fit';
+import { PHONES, setScheme, shot } from './fit';
 
 const TASK = 'Löse 3(2x - 4) = 2x + 8.';
 
-/** Writes a line into the answer field until it holds (a theme switch may remount it). */
+/** Writes a line into the answer field and checks it. */
 async function write(page: Page, text: string): Promise<void> {
-  const field = page.getByLabel('Deine Antwort');
-  await expect(async () => {
-    await field.fill(text);
-    await expect(field).toHaveValue(text, { timeout: 1000 });
-  }).toPass();
+  await page.getByLabel('Deine Antwort').fill(text);
   await page.getByRole('button', { name: 'Prüfen' }).click();
 }
 
 /** The run, walked once per colour scheme: each state is shot in the scheme it was reached in. */
 async function walk(page: Page, scheme: 'light' | 'dark'): Promise<void> {
-  const night = scheme === 'dark' ? '-night' : '';
+  const night = scheme === 'dark' ? '-dark' : '';
   // A new run each time (the first one is only paused by „Übung beenden").
   if (scheme === 'light')
     await startOffer(page, 'Lass uns Klammergleichungen üben', 'ich rechne dir vor');
   else
     await startOffer(page, 'Lass uns Klammergleichungen wiederholen', 'ich rechne dir wieder vor');
   await expect(page.getByText(TASK)).toBeVisible();
-  // The scheme switches once the run is open: a switch remounts the chat's field mid-fill.
-  await page.emulateMedia({ colorScheme: scheme });
+  // The scheme switches once the run is open, and she writes once it has landed (`setScheme`).
+  await setScheme(page, scheme);
   // The ladder is written in the background right after the start.
   await page.waitForTimeout(500);
   await write(page, 'Zeig mir, wie das geht');

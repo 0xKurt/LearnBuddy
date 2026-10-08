@@ -10,7 +10,7 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { a11y, overflows, PHONES, setScheme, settle, shot, SHOTS } from './fit';
+import { a11y, bothSchemes, overflows, PHONES, setScheme, settle, shot, SHOTS } from './fit';
 
 const TASK = 'Erörtere: Sollte es an Schulen ein Handyverbot geben?';
 
@@ -55,17 +55,6 @@ async function onboardChild(page: Page): Promise<void> {
 }
 
 /**
- * One stop of the walk, in daylight and at night, at 390×844 and 360×740 (`shot`). Back in
- * daylight once the switch has landed (`setScheme`): she writes on right after it (#443).
- */
-async function both(page: Page, name: string): Promise<void> {
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-night`);
-  await setScheme(page, 'light');
-}
-
-/**
  * `shot` for a state whose field holds her long text: the same fit, keyboard and accessibility
  * checks, except that the field itself scrolls — 1700 words in a field that shows ten lines of
  * them have to (`fit.ts` names only the conversation, a list and a reading text as scrolling, so
@@ -74,8 +63,8 @@ async function both(page: Page, name: string): Promise<void> {
  */
 async function look(page: Page, name: string): Promise<void> {
   for (const scheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme: scheme });
-    const tag = scheme === 'dark' ? `${name}-night` : name;
+    await setScheme(page, scheme);
+    const tag = scheme === 'dark' ? `${name}-dark` : name;
     for (const phone of PHONES) {
       await page.setViewportSize(phone);
       await settle(page);
@@ -140,14 +129,14 @@ test('Lange Texte: she writes an essay, the draft survives, Buddy answers per ke
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('schreib deine Erörterung', { exact: false })).toBeVisible();
   await expect(offerStart(page, 'Aufsatz schreiben')).toBeVisible();
-  await both(page, '80-essay-offer');
+  await bothSchemes(page, '80-essay-offer');
 
   await offerStart(page, 'Aufsatz schreiben').click();
   await expect(page.getByText(TASK)).toBeVisible();
   const field = page.getByLabel('Deine Antwort');
   // The key points are nowhere on the screen while she writes.
   await expect(page.getByText('Gegenargument', { exact: false })).toHaveCount(0);
-  await both(page, '81-essay-question');
+  await bothSchemes(page, '81-essay-question');
 
   // About 1700 words: more than any other answer may be, less than the 12 000 an essay takes.
   const text = essay();
