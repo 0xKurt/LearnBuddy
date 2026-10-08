@@ -3871,7 +3871,10 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
 - **Rule 0, generation** (`apps/api/src/modules/practice/mapCheck.ts`, in `usableItems` before
   the tap check): every marked name must be a region of the map (stored as its id — "France" →
   "FR"); a typed question must be short with exactly one region marked and that region as the
-  key; a tap question's key must be a region the map does not mark (the tap check, `tapProblem`)
+  key; a map that does not parse costs its question instead of leaving it without its map
+  (`figureIsRejected`, #479); a map as an option's picture (`choice_figures`, #479) is held to
+  the typed question's rules — exactly one place marked, the option's text naming it — and one
+  that fails costs the question; a tap question's key must be a region the map does not mark (the tap check, `tapProblem`)
   and big enough for a finger on the narrowest phone — a 24 pt target inside it or around its
   label when the map is drawn in 320 × 330 pt (`regionTappable` with `TAP_TARGET.map`,
   `REGION_TAP_BOX`; WCAG 2.2, 2.5.8 — a picture asks a whole finger, §Labelled pictures). That room is real: the figure she answers in is capped at 45 % of what she sees
