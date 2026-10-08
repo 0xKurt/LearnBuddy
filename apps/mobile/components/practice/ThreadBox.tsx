@@ -24,6 +24,7 @@
 import { Children, isValidElement, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 
+import type { RoomPart } from '../../lib/practice/screenRoom.js';
 import { useStackTops } from '../../lib/practice/useStackTops.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMaskFrom } from '../lb/EdgeFade.js';
@@ -50,8 +51,8 @@ type Props = {
   followEnd: boolean;
   /** Where a reply she reads through starts (`screenRoom`): the box rests there, not at its end. */
   readFrom?: number;
-  /** The box as laid out, and what its content truly needs (padding included). */
-  onBox: (height: number) => void;
+  /** The box as laid out (`RoomPart`, issue #484), and what its content truly needs (padding included). */
+  box: RoomPart;
   onNeed: (height: number) => void;
   /** Where each of its parts starts (`threadRoom`'s `parts`). */
   onParts: (tops: readonly number[]) => void;
@@ -65,7 +66,7 @@ export function ThreadBox({
   tops,
   followEnd,
   readFrom,
-  onBox,
+  box: measured,
   onNeed,
   onParts,
   children,
@@ -122,11 +123,12 @@ export function ThreadBox({
     // SQUEEZES the question below its own content instead of scrolling itself (issue #96). The
     // conversation is the one that scrolls.
     <View
+      ref={measured.ref}
       style={{ flexShrink: 1, minHeight: floor, maxHeight: cap }}
       onLayout={(e) => {
         const h = Math.round(e.nativeEvent.layout.height);
         setBox(h);
-        onBox(h);
+        measured.onHeight(h);
       }}
     >
       <ScrollView

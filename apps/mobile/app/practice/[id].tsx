@@ -737,7 +737,7 @@ export default function PracticeScreen() {
   return (
     <Screen title={title} right={endButton}>
       <KeyboardSafe style={{ flex: 1 }}>
-        <FreeSpaceReport.Provider value={measured.setFreeSpace}>
+        <FreeSpaceReport.Provider value={measured.free}>
           {/* Her question (issue #402): the field of the bar on every form without a typed answer. */}
           <AskRoute.Provider value={askRoute(item.id)}>
             {/* The column, measured: its end mark (below) says how far its content runs past it. */}
@@ -850,7 +850,7 @@ export default function PracticeScreen() {
                   tops={room.tops}
                   followEnd={followEnd}
                   readFrom={pendingText === null ? room.readFrom : undefined}
-                  onBox={measured.setThreadBox}
+                  box={measured.thread}
                   onNeed={measured.setThreadNeed}
                   onParts={measured.setPartTops}
                 >
