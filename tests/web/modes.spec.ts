@@ -15,6 +15,7 @@ import {
   halfTurns,
   partHeight,
   PHONES,
+  setScheme,
   settle,
   shot,
   SHOTS,
@@ -611,7 +612,7 @@ const KEYBOARD = { 390: 336, 360: 300 } as const;
 async function pathShots(page: Page, name: string): Promise<void> {
   const field = page.getByLabel('Deine Antwort');
   for (const scheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme: scheme });
+    await setScheme(page, scheme);
     await field.focus();
     // Fit and contrast at the full size of both phones (fit.ts), then the keyboard state.
     await shot(page, `${name}-${scheme}`);
@@ -630,7 +631,8 @@ async function pathShots(page: Page, name: string): Promise<void> {
       );
     }
   }
-  await page.emulateMedia({ colorScheme: 'light' });
+  // She writes on right after this: the switch back lands first (`setScheme`, issue #443).
+  await setScheme(page, 'light');
   await page.setViewportSize(PHONES[0]);
 }
 
@@ -683,15 +685,8 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   await pathShots(page, '38-path-broke');
 
   // She writes it again; a sound path is judged on the value it arrives at.
-  // pathShots ends by switching the colour scheme back, and a scheme change rebuilds the
-  // tree: a fill that lands during that rebuild is wiped, "Prüfen" waits for an answer that is
-  // not there, and the click waits until the test times out (CI, 02.10.2026). Fill until
-  // the field holds the path, then check.
   const corrected = '2x + 3 = 7\n2x = 4\nx = 2';
-  await expect(async () => {
-    await field.fill(corrected);
-    await expect(field).toHaveValue(corrected, { timeout: 1000 });
-  }).toPass();
+  await field.fill(corrected);
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -713,7 +708,7 @@ test('a written path: three lines in, the first broken step named (issue #221)',
 async function keyRowShots(page: Page, name: string): Promise<void> {
   const field = page.getByLabel('Deine Antwort');
   for (const scheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme: scheme });
+    await setScheme(page, scheme);
     await field.focus();
     await shot(page, `${name}-${scheme}`);
     for (const phone of PHONES) {
@@ -744,8 +739,8 @@ async function keyRowShots(page: Page, name: string): Promise<void> {
   // The switch back to light remounts the whole tree (ThemeProvider). Let it land before she
   // types on: keys pressed into the field that is being replaced go nowhere — in CI the
   // remount landed after the first keystrokes ("2 H" lost). Since #239 a draft survives the
-  // remount itself (lib/drafts.ts); a keystroke into a field that is gone cannot.
-  await page.emulateMedia({ colorScheme: 'light' });
+  // remount itself (lib/drafts.ts); a keystroke into a field that is gone cannot (`setScheme`).
+  await setScheme(page, 'light');
   await page.setViewportSize(PHONES[0]);
   await settle(page);
   await field.focus();
@@ -811,19 +806,15 @@ test('an order: tap in order, tap again to take back (issue #228)', async ({ pag
   await shot(page, '39-order-eight');
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '39b-order-eight-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  // She types next: the switch back lands first (`setScheme`, issue #443 — the full walkthrough
+  // of 04.10. lost her words into the field being replaced).
+  await setScheme(page, 'light');
   // ── Her question beside the board (issue #402, report #388 §4) ──
   // "Prüfen" stands in the bar's pill; once she has typed a question "Senden" takes its place.
   // Off the task, the tutor steers back and offers to keep it: one tap, and Buddy brings it up
   // after the practice.
-  // Right after the switch back from the dark room the field can render once more (ThemeProvider
-  // remounts the tree): fill until the value holds instead of typing into the copy that is about
-  // to go (the full walkthrough of 04.10. lost the words that way; figureWalk.ts `typed`).
   const askField = page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' });
-  await expect(async () => {
-    await askField.fill('Hast du eigentlich ein Haustier?');
-    await expect(askField).toHaveValue('Hast du eigentlich ein Haustier?', { timeout: 1000 });
-  }).toPass();
+  await askField.fill('Hast du eigentlich ein Haustier?');
   await expect(check).toHaveCount(0);
   await page.getByRole('button', { name: 'Senden' }).last().click();
   await expect(page.getByText('Erzähl ich dir nach dem Üben', { exact: false })).toBeVisible();
@@ -1214,13 +1205,17 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   await both('78-staff-write-right');
 });
 
-/** One state at both phone sizes, light and dark (fit and contrast checked by `shot`). */
+/**
+ * One state at both phone sizes, light and dark (fit and contrast checked by `shot`). Back in
+ * light only once the switch has landed (`setScheme`): the "16" typed right after it into the
+ * sum question went into the field being replaced, and "Prüfen" stayed off (issue #443).
+ */
 async function bothSchemes(page: Page, name: string): Promise<void> {
   for (const scheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme: scheme });
+    await setScheme(page, scheme);
     await shot(page, `${name}-${scheme}`);
   }
-  await page.emulateMedia({ colorScheme: 'light' });
+  await setScheme(page, 'light');
 }
 
 /**
@@ -1400,10 +1395,7 @@ test('the task typed back and a decay that does not add up, both named by code (
   await bothSchemes(page, '41-typed-back');
 
   // The key's form with its factors written out is right.
-  await expect(async () => {
-    await field.fill('(x+1)(x+1)');
-    await expect(field).toHaveValue('(x+1)(x+1)', { timeout: 1000 });
-  }).toPass();
+  await field.fill('(x+1)(x+1)');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -1426,7 +1418,7 @@ test('the task typed back and a decay that does not add up, both named by code (
 async function clozeShots(page: Page, name: string, gap: string): Promise<void> {
   const field = page.getByLabel(gap, { exact: true });
   for (const scheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme: scheme });
+    await setScheme(page, scheme);
     await field.focus();
     await shot(page, `${name}-${scheme}`);
     for (const phone of PHONES) {
@@ -1440,7 +1432,8 @@ async function clozeShots(page: Page, name: string, gap: string): Promise<void> 
       await expect(page.getByRole('button', { name: 'Prüfen' })).toBeInViewport();
     }
   }
-  await page.emulateMedia({ colorScheme: 'light' });
+  // She types on right after this (the return key in a gap): the switch lands first (#443).
+  await setScheme(page, 'light');
   await page.setViewportSize(PHONES[0]);
 }
 
@@ -1581,7 +1574,8 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   await shot(page, '40-drill-task');
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '40b-drill-task-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  // Her digits are tapped right after the switch back: it lands first (`setScheme`, #443).
+  await setScheme(page, 'light');
   // Vorlesen in the round's head too (#434): the task is read in words, and a tap on it reads it
   // again. Buddy's voice as a short silence (the dev stack has none).
   await voiceAsSilence(page, 300);
@@ -1597,7 +1591,7 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   await shot(page, '40c-drill-read-aloud');
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '40d-drill-read-aloud-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await setScheme(page, 'light');
   await page.getByRole('switch', { name: 'Vorlesen ist an' }).last().click();
   await page.unroute('**/v1/voice/speech');
 
@@ -1629,14 +1623,14 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
       await shot(page, '42-drill-was');
       await page.emulateMedia({ colorScheme: 'dark' });
       await shot(page, '42b-drill-was-night');
-      await page.emulateMedia({ colorScheme: 'light' });
+      await setScheme(page, 'light');
     }
     if (n === 2) {
       await expect(page.getByTestId('drill-last')).toContainText('Richtig:');
       await shot(page, '42c-drill-right');
       await page.emulateMedia({ colorScheme: 'dark' });
       await shot(page, '42d-drill-right-night');
-      await page.emulateMedia({ colorScheme: 'light' });
+      await setScheme(page, 'light');
     }
     if (n < 19) {
       // No pause: the next task is on the card (or the same numbers the other way round

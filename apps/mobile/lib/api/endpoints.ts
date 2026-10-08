@@ -29,6 +29,7 @@ import {
   SpeechResponse,
   TranscribeResponse,
   TranscribeStreamEvent,
+  WorkReading,
   type AnswerRequest,
   type AppLocale,
   type CardRecall,
@@ -36,6 +37,7 @@ import {
   type CreateLearnerRequest,
   type CreateMaterialRequest,
   type ListenAudioRequest,
+  type ReadWorkRequest,
   type ReexplainWay,
   type SpeakWordRequest,
   SpeakStreamEvent,
@@ -311,6 +313,13 @@ export const speakItem = (
         : request('POST', `/practice/sessions/${id}/speak`, { body, schema: AnswerResponse }),
     { isConnectionError: noConnection, signal: opts.signal },
   );
+/**
+ * Her working, photographed (issue #444): the lines copied down for her answer field, a line that
+ * could not be read as null. Nothing is stored and nothing counts — she sends the copy herself.
+ */
+export const readWorkPhoto = (sessionId: string, body: ReadWorkRequest) =>
+  request('POST', `/practice/sessions/${sessionId}/work-photo`, { body, schema: WorkReading });
+
 /**
  * One word of a speaking question, said on its own (issue #83). Nothing is stored and
  * nothing counts — the question keeps its attempts and its state.

@@ -23,4 +23,5 @@ export * from './taskParts.js';
 export * from './notation.js';
 export * from './dictation.js';
 export * from './drill.js';
+export * from './workPhoto.js';
 export * from './learning.js';

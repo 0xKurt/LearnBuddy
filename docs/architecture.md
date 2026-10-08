@@ -128,6 +128,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `POST /practice/drills`, `POST /practice/sessions/:id/drill`                                         | Kopfrechnen: a round of tasks code wrote, one answer checked by code (#243)                                           |
 | `POST /practice/sessions/:id/ask`, `POST …/later`                                                    | a question to the tutor, never graded; „Merk ich mir für nachher" for an off-topic one (#391)                         |
 | `POST /practice/sessions/:id/why`                                                                    | „Warum stimmt das?": the reason she tapped after a closed question, judged by code (#388)                             |
+| `POST /practice/sessions/:id/work-photo`                                                             | her working, photographed: the lines copied into her field, an unread one null; nothing stored (#444)                 |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
 ## Buddy decisions
@@ -1218,6 +1219,9 @@ reasons (#159 keeps that promise separate from the internal pilot).
 | Requests per account            | abuse protection only: practice answers (typed, spoken, one word) 600/h, dictation 600/h (each piece of a long dictation counts one), messages to Buddy 120/h (429 + `Retry-After`); account/learner writes 30/h (the first `POST /account` of a fresh user passes uncounted — its volume is the Supabase sign-up's, issue #72) |
 | Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always                                                                                                                                                                                                                                |
 
+A photo of her working (`POST /practice/sessions/:id/work-photo`, issue #444) counts as a practice
+answer (600/h) and as one daily `transcribe` call.
+
 Budgets are rows in `attempt_counters` (migration 0014; `lock_level` dropped in 0033) changed by
 one atomic upsert with the app clock (`lib/limits.ts` `consume`); answers and messages are counted
 by one middleware in front of the routes (`http/limits.ts`). A request budget exists only against
@@ -2041,8 +2045,59 @@ die Zeile des Browsers), und ein Druck auf eine Mathe-Taste nimmt dem Feld nicht
 (`lib/keepsFocus.ts`, #271). Belegt im Walkthrough (`tests/web/modes.spec.ts`): drei Zeilen auf
 360×740 eingetippt und über „Prüfen" geschickt, die erste gebrochene Zeile wird genannt, ein
 Einzeiler geht mit Enter raus. **Nicht belegt:** dass die Regel die Tastatur des Handys erreicht
-— bis zu einem Gerätelauf hängt sie dort an den Unit-Tests (Regel 5). Offen: das Foto vom Heft
-als Antwort (Vorschlag 3 in #221).
+— bis zu einem Gerätelauf hängt sie dort an den Unit-Tests (Regel 5). Das Foto vom Heft als
+Antwort (Vorschlag 3 in #221) steht im nächsten Absatz.
+
+**Fotografiert auch** (Issue #444, `modules/practice/workPhoto.ts`, `contracts/workPhoto.ts`). Sie
+rechnet im Heft und fotografiert ihren Weg, statt ihn abzutippen: wo ein Weg geprüft wird
+(`pathPossible`, jetzt die EINE Liste für `evaluate.ts`, die ↵-Taste und das Foto), steht am Anfang
+der Antwortleiste eine Kamera, wo der Chat sein + hat. Das Modell **schreibt nur ab**
+(`POST /practice/sessions/:id/work-photo`, Zweck `transcribe`); die Abschrift kommt in IHR Feld,
+sie vergleicht sie mit ihrem Heft und schickt sie mit „Prüfen" — über den gewöhnlichen Antwortweg,
+also `checkPath`, den Folgefehler aus #297 und alles andere, was eine getippte Antwort bekommt. Kein
+zweiter Prüfweg (die Korrektur des Owners in #221), und kein Prüfen auf einer Abschrift, die sie
+nicht gesehen hat (Regel 5: gelesen ist nicht geschrieben).
+
+- **Was Code entscheidet.** Ob gelesen wird: ihre Sitzung, laufend, keine Karten- oder
+  Kopfrechenrunde, eine offene Frage mit Weg, ein JPEG — sonst 404/409/422 ohne Modellaufruf.
+  Was sie sieht: eine Zeile, die das Modell nicht sicher lesen konnte (`readable: false`), geht als
+  `null` zu ihr, **auch wenn das Modell einen Text dazu schrieb** — nie geraten; nichts gelesen ist
+  `unreadable`, kein Weg zur Aufgabe `no_working`, mehr als eine Antwort fasst (16 Zeilen à 120
+  Zeichen) `too_long`, nie abgeschnitten. Kommt die Lesung zurück, nachdem die Frage weiter ist
+  („Lösung zeigen", die Zeit eines Tests), antwortet der Server 409 `stale` und gibt nichts heraus.
+- **Was das Modell nicht bekommt:** den Schlüssel. Es sieht das Foto und den Fragetext (um ihren
+  Weg zu dieser Aufgabe auf der Seite zu finden); eine Abschrift, die die richtige Lösung kennt,
+  zöge zu ihr hin. Keine Beispielzeile im Prompt (sie käme als Zeile ihres Hefts zurück).
+- **In der App** (`components/practice/useWorkPhoto.ts`, `WorkPhotoNote.tsx`,
+  `lib/practice/workPhoto.ts`): dieselbe Kamera (`lib/capture/camera.ts`, jetzt auch die des
+  Blatts), dasselbe vorbereitete JPEG und dieselbe Prüfung auf dem Handy (`preparePhoto`,
+  `PhotoCheckCard` mit „Neu fotografieren"/„Trotzdem behalten"). Eine nicht gelesene Zeile steht
+  als **leere Zeile** im Feld, die Zeile darüber sagt welche („Zeile 2 konnte ich nicht lesen.
+  Schreib sie selbst hinein."), und „Prüfen" wartet, bis sie sie geschrieben oder herausgenommen
+  hat — `steps.ts` überspringt leere Zeilen und verglich sonst über das Loch hinweg. Sind alle
+  Zeilen da: „Von deinem Foto abgeschrieben. Stimmt jede Zeile mit deinem Heft?"
+- **Ihr Heft, wie es ist.** Eine Umformung trägt in der Schule ihren Rechenbefehl hinter einem
+  senkrechten Strich („2x + 3 = 7 | −3"), und eine Zeile beginnt oft mit „⇔". Beides machte jede
+  Zeile unlesbar und den ganzen Weg zum Fall für das Modell — getippt wie fotografiert. `pathLines`
+  liest jetzt daran vorbei: ein Strich nach einer Relation, gefolgt nur von einer Rechenoperation,
+  ist eine Notiz, und nur ein ÖFFNENDER Strich (gerade Zahl davor) — der schließende eines Betrags
+  („y = |x| · 2") bleibt.
+- **Gespeichert wird nichts.** Das Foto geht im Request mit (wie eine Aufnahme, ≤ 2 000 000
+  Zeichen Base64, Body-Grenze 3 MB), wird für diesen einen Aufruf gelesen und verworfen, nie in
+  Storage; die Abschrift auch nicht. Nichts an der Frage ändert sich — kein Turn, kein Versuch,
+  keine Wiederholung; ein zweites Foto ist eine zweite Lesung. Gespeichert wird, was sie selbst
+  als Antwort schickt (`docs/privacy.md` §What is stored). Budget: eine Antwort (600/h) und ein
+  `transcribe`-Aufruf (400/Tag) je Foto — `extraction` (12/Tag) ist für Blätter bemessen.
+- **Belegt:** `work-photo.int.test.ts` (echtes Postgres, gescriptetes Modell: Abschrift → Antwort →
+  gebrochene Zeile ohne Tutor; geratene Zeile wird `null`; unlesbar/kein Weg; anderer Lernender
+  404 ohne Modellaufruf; dasselbe Foto zweimal ändert nichts, dieselbe Antwort zählt einmal;
+  Ausfall 503 mit zurückgegebenem Kontingent; `stale`; ohne Weg und kein JPEG vor dem Modell
+  abgelehnt; Folgefehler mit fotografiertem b)), `workPhoto.test.ts` (API und App),
+  `steps.test.ts`, `tests/web/work-photo.spec.ts` (360/390, hell und dunkel).
+  **Nicht belegt:** wie Vertex echte Kinderschrift liest — die Live-Eval mit echten Heftfotos aus
+  der Abnahme von #444 steht aus, ebenso ein Lauf auf einem echten Gerät (Kamera, Berechtigung,
+  Base64 aus `expo-image-manipulator`). Ein handschriftlicher Aufsatz (`essay`, Ziel von #444)
+  hat noch keine Kamera: mehrere Seiten und Absätze sind ein eigener Schritt.
 
 **Was gezählt wird, zählt Code** (Issue #212). Eine Reaktionsgleichung wird nicht mehr als
 Zeichenkette mit dem Schlüssel verglichen, sondern gezählt: `modules/practice/chemistry.ts`
@@ -3261,11 +3316,12 @@ prints none — or from a text Buddy writes himself (a `read` run, #368, below).
 A class test from grade 8 on asks **one situation and several subtasks** a), b), c) on it, the
 later ones building on the earlier results. The first step of #297 brings exactly that, for parts
 code can compute, with the **Folgefehler** German schools mark: a wrong a) carried on correctly in
-b) makes b) right.
+b) makes b) right. The second step adds **open parts** — „Begründe", „Erkläre", „Beschreibe",
+„Deute" — so one task mixes computing and reasoning.
 
-- **Every part is an ordinary question** (`numeric`, `short`, `multiple_choice`) with its own key
-  and its own check — nothing is checked twice or in a second way (#296). What is new is one column,
-  `items.task_part` (`TaskPart`, `contracts/taskParts.ts`): the task's id (made by code), the part's
+- **Every part is an ordinary question** (`numeric`, `short`, `multiple_choice`, and an open part
+  as `long`) with its own key and its own check — nothing is checked twice or in a second way
+  (#296). What is new is one column, `items.task_part` (`TaskPart`, `contracts/taskParts.ts`): the task's id (made by code), the part's
   letter, how many parts the task has, the situation (`stem`) and, for a part that goes on from
   earlier ones, `from` — arithmetic over their letters (`a * 0,15 + 12`). It is stored on **every**
   part, as a reading text is (#233): a review brings one part back alone, with its situation.
@@ -3283,18 +3339,34 @@ b) makes b) right.
   Then the part is `correct`, by rule, and the reply says what happened ("Richtig weitergerechnet –
   mit deinem Ergebnis aus a) …"). Her a) stays wrong. A part answered before a), or brought back
   alone by a review, has nothing of hers to follow: its key decides.
+- **Open parts** (step 2, no migration): an open part is written, held and stored exactly like an
+  „Erklär mal" question (#236, `teachBack.ts`): the model gives it 2–4 key points
+  (`TASK_OPEN_POINTS_MIN/MAX`) with a follow-up each; code holds them to the rules of every key point
+  (`keyPointsProblem`) against everything she reads — the situation and the part's question — and
+  stores them as a `key_point` rubric, the follow-ups as its prepared hints, no worked solution
+  (`keyPointFields`). Answering it is the one key-point path in `answer.ts`: one tutor call, which
+  sees the situation as its material; a point counts only with her words the server finds
+  (`quoted`, #258) and its exact part by code; she gets a ✓ per point and ONE follow-up, never a
+  grade, and her answer to the follow-up adds to what she said. An open part has no `from`, and
+  none of its points may hang on an earlier part's result (a computed key's value in a point or an
+  exact term that the situation does not state): her wrong a) carried on consistently would
+  otherwise be marked again (`openPartProblem`). A task whose open part does not hold is dropped
+  whole. The parts' kinds follow the run's profile (`partTaskSchemaFor`): a practice test has no
+  long answer, so its schema has neither the open part nor its key points. A shown solution never
+  pulls a similar task between the parts of a task, or a part out of its task (`similar.ts`).
 - **On screen** (`QuestionCard` `stimulus`, `PartStem`): the situation above the question, the part's
   letter before it, and the task's letters `a) · b) · c)` where the topic stands — where she is, never
   a count of what is left (rule 6). While she types the situation keeps two lines and scrolls in
   itself (the one text that may, rule 16) instead of folding away like a drawing: she types from its
-  numbers. No new route.
+  numbers. An open part answers in the tall bar every free text has (`TypedAnswer`), pinned under
+  the question inside `KeyboardSafe`. No new route.
 - **In the generator**: `part_tasks` in practice and test runs (`SET_PROFILES.partTasks`), at most
   two per run, after the structured forms, each part a stored question in order. The material is text
   only in this step: a second figure union in the explain schema would grow it by a third (20 kB of
   65 kB, measured 05.10.); figures, tables and data as material come after the schema budget is
   measured with Vertex (#281).
-- **Next** (#297 plan): open parts (begründe, deute, beurteile) through key points (#258), operators
-  deciding the check; tasks in parts read from the photo; subjects beyond maths and physics.
+- **Next** (#297 plan): tasks in parts read from the photo; figures, tables and data as material once
+  the schema budget is measured with Vertex (#281).
 
 ### Charts (issues #245, #246)
 
