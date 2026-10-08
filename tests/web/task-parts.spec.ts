@@ -1,13 +1,14 @@
 // Browser walkthrough of tasks in parts (issue #297): the situation above every part, the part's
 // letter before its question, the task's letters where the topic stands — a Folgefehler: her
 // wrong a) carried on correctly in b) counts as right, and the reply says so — and an open part
-// („Begründe …") checked against key points: a ✓ per point and one follow-up. Scripted answers in
-// apps/api/src/testing/scenarios/taskParts.ts. Every stop is shot at both phone sizes, light and
-// dark, and with the keyboard up (tests/web/fit.ts).
+// („Begründe …") checked against key points: a ✓ per point and one follow-up. The same from a
+// photographed worksheet (step 3): its task with a) b) c) arrives as one task in parts, not as
+// separate questions. Scripted answers in apps/api/src/testing/scenarios/taskParts.ts. Every stop
+// is shot at both phone sizes, light and dark, and with the keyboard up (tests/web/fit.ts).
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { onboardChild, startOffer, typed } from './figureWalk';
+import { onboardChild, sendPhoto, startOffer, typed } from './figureWalk';
 import { shot } from './fit';
 
 async function both(page: Page, name: string): Promise<void> {
@@ -106,4 +107,54 @@ test('a task in parts: the situation stays, a) b) c) in order, and a Folgefehler
   await expect(page.getByText('✓ Strecke', { exact: false })).toBeVisible();
   // Closed: shot in daylight only (a theme switch rebuilds the screen on the next open question).
   await shot(page, '297f-parts-open-done');
+});
+
+test('a photographed worksheet: its a) b) c) is one task in parts, not three questions (#297)', async ({
+  page,
+}) => {
+  test.setTimeout(420_000);
+  // Nine: the age the scripted reading of her worksheet is keyed by (scenarios/taskParts.ts).
+  await onboardChild(page, 'parts-photo', '2017');
+  await sendPhoto(page);
+  // The sheet's own question and the task's three parts.
+  await expect(page.getByText(/^4 Aufgaben · ca\. \d+ Min\.$/)).toBeVisible();
+  await page.getByRole('button', { name: 'Jetzt üben' }).click();
+  await typed(page, '1000');
+
+  // a): the material above, the letters where the topic stands, the question lettered.
+  await expect(page.getByText('a) Wie viel Wasser fehlt noch', { exact: false })).toBeVisible();
+  await expect(page.getByText('Ein Schwimmbecken fasst 450 m³', { exact: false })).toBeVisible();
+  await expect(page.getByTestId('task-part-steps')).toHaveAccessibleName(
+    'Teilaufgabe a von a, b, c',
+  );
+  await both(page, '297g-photo-parts-a');
+
+  // A wrong a), then on to b), where she goes on with HER a): a Folgefehler, decided by code.
+  await send(page, '250');
+  await expect(page.getByText('Noch nicht', { exact: false }).last()).toBeVisible();
+  await page.getByRole('button', { name: 'Lösung zeigen' }).click();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('b) Wie viele Stunden braucht', { exact: false })).toBeVisible();
+  await send(page, '10');
+  await expect(
+    page.getByText('Richtig weitergerechnet – mit deinem Ergebnis aus a).', { exact: false }),
+  ).toBeVisible();
+  // Light only: a theme switch remounts the screen onto the next open question (see above).
+  await shot(page, '297h-photo-parts-follow-on');
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // c) the open part, its material still above it, checked against key points.
+  await expect(
+    page.getByText('c) Begründe, warum zwei gleich starke Pumpen', { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText('Ein Schwimmbecken fasst 450 m³', { exact: false })).toBeVisible();
+  await both(page, '297i-photo-parts-open');
+  await send(page, 'Zusammen pumpen sie doppelt so viel Wasser in der Stunde.');
+  await expect(
+    page.getByText('Was ändert sich an der Wassermenge, die noch fehlt?', { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText('✓ Leistung', { exact: false })).toBeVisible();
+  await send(page, 'Die Menge, die fehlt, bleibt gleich.');
+  await expect(page.getByText('Alles drin', { exact: false })).toBeVisible();
+  await shot(page, '297j-photo-parts-open-done');
 });

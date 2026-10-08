@@ -30,6 +30,13 @@ import {
   READINGS_PER_READING,
 } from '../practice/reading.js';
 import { TABLE_RULES } from '../practice/table.js';
+import {
+  PART_TASKS_PER_READING,
+  SHEET_PART_RULES,
+  SheetPartTask,
+  SheetPartTaskHomework,
+  SheetPartTaskParse,
+} from './partTasks.js';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -196,6 +203,12 @@ export const ExtractionResult = z.object({
    */
   reading: z.array(ReadingDraft).max(READINGS_PER_READING).default([]),
   /**
+   * Tasks in parts (#297): one material and its subtasks a), b), c). Checked by code like a
+   * generated task before anything is stored, and read back as separate questions when they do
+   * not hold (`partTasks.ts`).
+   */
+  part_tasks: z.array(SheetPartTask).max(PART_TASKS_PER_READING).default([]),
+  /**
    * The sheet holds more questions or word pairs than this answer lists (issue #150).
    * Saying so is what lets the rest be read; guessing from a full list would mistake a
    * sheet that happens to have exactly as many for one that was cut off.
@@ -249,6 +262,7 @@ export const ExtractionParse = ExtractionResult.extend({
   items: itemsOneByOne(ItemDraft, ITEMS_PER_READING),
   structured: itemsOneByOne(StructuredDraft, STRUCTURED_PER_READING),
   reading: itemsOneByOne(ReadingDraftParse, READINGS_PER_READING),
+  part_tasks: itemsOneByOne(SheetPartTaskParse, PART_TASKS_PER_READING),
 });
 
 /**
@@ -258,6 +272,7 @@ export const ExtractionParse = ExtractionResult.extend({
 export const HomeworkExtraction = ExtractionResult.extend({
   items: z.array(ItemDraft.omit({ worked_solution: true })).max(12),
   structured: z.array(StructuredDraftHomework).max(STRUCTURED_PER_READING).default([]),
+  part_tasks: z.array(SheetPartTaskHomework).max(PART_TASKS_PER_READING).default([]),
   // Homework is helped task by task, as printed: a reading text there stays the questions she
   // brought (#233 is study material). Not in the schema, so nothing is written there.
 }).omit({ reading: true });
@@ -354,6 +369,7 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${FIND_ERROR_RULES} A worked solution on the sheet in which the mistake is to be found becomes one such task in "structured", its lines written CORRECT.
    - ${COLUMN_RULES} A calculation on the sheet that is to be done in columns ("schriftlich") becomes one such task in "structured", never a numeric item.
    - ${READING_RULES} A text on the sheet with questions about it, or a text to read and understand, becomes one entry in "reading": its lines exactly as printed and its questions — never the same questions again in items.
+   - ${SHEET_PART_RULES}
    - Otherwise 8–15 questions — and none at all for a sheet whose every task went into not_practicable. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
@@ -389,6 +405,7 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
    - ${SELECT_RULES} A task that asks to tick all right answers goes into "structured" instead of items (its prompt as printed).
    - ${MARK_RULES} A task that asks to mark words, set commas or split syllables goes into "structured" instead of items (its prompt as printed).
    - ${COLUMN_RULES} A calculation to be done in columns ("schriftlich") goes into "structured" instead of items (its prompt as printed).
+   - ${SHEET_PART_RULES}
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}

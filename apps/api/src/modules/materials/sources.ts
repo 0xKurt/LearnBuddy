@@ -137,7 +137,15 @@ export function applySource(
   if (x.source === 'notebook_entry') {
     const items = x.items.slice(0, NOTEBOOK_QUESTIONS);
     const structured = x.structured.slice(0, NOTEBOOK_QUESTIONS - items.length);
-    const reading = { ...x, items, structured, reading: [], marked: [], more_items: false };
+    const reading = {
+      ...x,
+      items,
+      structured,
+      reading: [],
+      part_tasks: [],
+      marked: [],
+      more_items: false,
+    };
     return { reading, nothingMarked: false };
   }
   if (x.source !== 'corrected_test') return { reading: { ...x, marked: [] }, nothingMarked: false };
@@ -149,6 +157,7 @@ export function applySource(
       ...practiceOfMistakes(x, marked),
       marked,
       reading: [],
+      part_tasks: [],
       unclear: [],
       more_items: false,
       // Built here, never taken from the model: the faithful transcript of a corrected test

@@ -1,14 +1,22 @@
 // The steps every figure walkthrough shares (trees #256, solids #255, diagrams #247): a parent
 // signs up her child, Buddy offers a practice run, each question is shot with its figure at both
 // phone sizes in the light and the dark room, and answered — typed or tapped.
-// One copy for every spec that walks figures; the specs keep only their own questions.
+// One copy for every spec that walks figures; the specs keep only their own questions. A sheet
+// photographed in the chat is sent the same way by every spec that reads one (`sendPhoto`).
+
+import { join } from 'node:path';
 
 import { expect, type Page } from '@playwright/test';
 
 import { shot } from './fit';
 
-/** A new parent account with a child Lena (born 2014), onboarding done, on Buddy's screen. */
-export async function onboardChild(page: Page, tag: string): Promise<void> {
+const FIXTURES = join(__dirname, '../../apps/mobile/lib/photo/__tests__/fixtures');
+
+/**
+ * A new parent account with a child Lena, onboarding done, on Buddy's screen. Born 2014 unless a
+ * spec's scripted reading is keyed by another age (`year`, #350).
+ */
+export async function onboardChild(page: Page, tag: string, year = '2014'): Promise<void> {
   await page.goto('/');
   await page.getByLabel('E-Mail').fill(`${tag}-${Date.now()}@example.test`);
   await page.getByLabel('Passwort', { exact: true }).fill('geheim-1234');
@@ -22,7 +30,7 @@ export async function onboardChild(page: Page, tag: string): Promise<void> {
   await page.getByRole('radio', { name: 'Niedersachsen' }).click();
   await page.getByLabel('Tag', { exact: true }).fill('10');
   await page.getByLabel('Monat', { exact: true }).fill('02');
-  await page.getByLabel('Jahr', { exact: true }).fill('2014');
+  await page.getByLabel('Jahr', { exact: true }).fill(year);
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill('4826');
@@ -34,6 +42,17 @@ export async function onboardChild(page: Page, tag: string): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
+}
+
+/** One photo attached in the chat and sent; its reading is done once the practice is ready. */
+export async function sendPhoto(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Was möchtest du anhängen?' }).click();
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Aus der Galerie' }).click();
+  await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
+  await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByRole('button', { name: 'Jetzt üben' })).toBeVisible({ timeout: 30_000 });
 }
 
 /**

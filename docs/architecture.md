@@ -3310,8 +3310,29 @@ b) makes b) right. The second step adds **open parts** — „Begründe", „Erk
   only in this step: a second figure union in the explain schema would grow it by a third (20 kB of
   65 kB, measured 05.10.); figures, tables and data as material come after the schema budget is
   measured with Vertex (#281).
-- **Next** (#297 plan): tasks in parts read from the photo; figures, tables and data as material once
-  the schema budget is measured with Vertex (#281).
+- **From the photo** (step 3, no migration, `materials/partTasks.ts`): a worksheet task with one
+  material and lettered subtasks no longer falls apart into separate questions. Both readings (study
+  and homework) get `part_tasks` (`SHEET_PART_RULES`): the material as printed (`stem`), and per
+  subtask its printed letter, its question without the letter, its form, its key, `from` for a
+  computed one, key points for an open one, and its help (hints; a worked solution only when the
+  sheet is studied). The model reports the structure; code decides (rules 1, 3): the printed letters
+  must be exactly `a, b, c …` in order — a subtask that got no question (a drawing in
+  `not_practicable`, an unclear spot) leaves a gap, and a gap is no task —, and the task then goes
+  through the same `partTaskItems` a generated one does (`PartHelp` carries the reading's hints). The
+  letters are only compared, never stored (rule 2). **Nothing is lost**: everything is parsed one
+  subtask at a time and generously (a fifth part, a form no part has, a long material), and whatever
+  does not hold — a gap, a formula that does not give its key, an open part whose points do not hold,
+  a material outside `TASK_STEM_MIN/MAX`, a part of a switched-off form (#296) — comes back as
+  separate questions, each with the material in front of its question (`items.prompt` allows 1000
+  characters; past that the question stands alone) and each checked on its own. The questions of a
+  reading are composed in one place (`sheetQuestions.ts`), for the first reading and for one the
+  learner settled a spot for (#164), where a task is only stored whole (`wholeTasks`). A continued
+  reading (#150) is told the parts' prompts and adds only tasks none of whose parts it has. A
+  corrected test and a notebook entry keep no task in parts (`applySource`). The extraction schema
+  grows by 3.8 kB (study 74.2 kB, homework 67.6 kB, measured 08.10.).
+- **Next** (#297 plan): figures, tables and data as material once the schema budget is measured
+  with Vertex (#281); a longer material than `TASK_STEM_MAX` on the photo; the sheet's question list
+  („Dein Material") names a part with its letter and material.
 
 ### Charts (issues #245, #246)
 
