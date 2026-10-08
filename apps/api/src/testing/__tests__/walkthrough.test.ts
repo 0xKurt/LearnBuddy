@@ -8,6 +8,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { LlmPurpose, LlmRequest } from '../../llm/gateway.js';
 import { EXTRACT_SYSTEM, HOMEWORK_SYSTEM } from '../../modules/materials/extract.js';
+import { WORK_SYSTEM } from '../../modules/practice/workPhoto.js';
+import { SYSTEM as VOICE_SYSTEM } from '../../modules/voice/service.js';
 import { ScriptedGateway } from '../fakes.js';
 import { DEMO_WORKSHEET } from '../scenarios/core-loop.js';
 import { scriptWalkthrough } from '../scenarios/walkthrough.js';
@@ -72,6 +74,15 @@ const SAMPLES = {
   tourPronounce: request('pronounce', 'pronounce', {
     text: 'SENTENCE: The weather is nice today.',
   }),
+  // work-photo.spec.ts: her working for the equation, photographed (#444) — `transcribe` too.
+  workPhoto: request(
+    'transcribe',
+    WORK_SYSTEM,
+    { text: 'QUESTION (context only, never answer it): Löse die Gleichung 2x + 3 = 7.' },
+    { inlineData: { mimeType: 'image/jpeg', data: jpeg(1600, 2000) } },
+  ),
+  // The fake microphone in a conversation, no roleplay running.
+  heard: request('transcribe', VOICE_SYSTEM, { text: 'MODE: MESSAGE\nEXPECTED LANGUAGE: de' }),
 } as const;
 
 async function answer(llm: ScriptedGateway, req: LlmRequest): Promise<unknown> {
@@ -118,6 +129,11 @@ describe('the walkthrough model (spec-order independence, #350)', () => {
       title: 'Hausaufgabe Rechteck',
     });
     expect(await answer(llm, SAMPLES.tourPronounce)).toMatchObject({ overall: 'almost' });
+    expect(await answer(llm, SAMPLES.workPhoto)).toMatchObject({ found: 'working' });
+    expect(await answer(llm, SAMPLES.heard)).toEqual({
+      heard_speech: true,
+      text: 'Was steht diese Woche an?',
+    });
   });
 
   it("reads the tour's sheet as unreadable first and readable when asked again", async () => {

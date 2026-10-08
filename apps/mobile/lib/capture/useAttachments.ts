@@ -38,6 +38,7 @@ import type { CaptureDraft, DraftLink } from './draft.js';
 import { drafts } from './draftStorage.js';
 import { useFileDrop } from './drop.js';
 import { ownCopy, sizeOf } from './fileCopy.js';
+import { openCamera } from './camera.js';
 import { MAX_PDF_MB, sortIncoming, type IncomingFile } from './files.js';
 import { attachedInChat, useLiveAttachments } from './live.js';
 import { takeIncoming } from './incoming.js';
@@ -368,17 +369,14 @@ export function useAttachments({
       let result: ImagePicker.ImagePickerResult;
       try {
         if (source === 'camera') {
-          // Asked only now, when the learner wants to take a photo.
-          const permission = await ImagePicker.requestCameraPermissionsAsync();
-          setCameraBlocked(!permission.granted);
-          if (!permission.granted) return;
           // Android may kill the app meanwhile: note what the photo is for (audit M-22).
-          await markCameraOpen(link);
-          try {
-            result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'] });
-          } finally {
-            void clearCameraOpen();
-          }
+          const shot = await openCamera({
+            opening: () => markCameraOpen(link),
+            closed: () => void clearCameraOpen(),
+          });
+          setCameraBlocked(shot === 'blocked');
+          if (shot === 'blocked') return;
+          result = shot;
         } else {
           // The system photo picker needs no photo-library permission.
           result = await ImagePicker.launchImageLibraryAsync({

@@ -85,3 +85,9 @@ export const hintRules = new RuleBook('hints', () => ({ items: [] }));
 export const readingRules = new RuleBook('extraction');
 /** Judging a spoken sentence (practice/speak.ts). */
 export const pronounceRules = new RuleBook('pronounce');
+/**
+ * Writing down what she said (voice/service.ts) or what she wrote — her photographed working
+ * (practice/workPhoto.ts, issue #444). What no rule is about is the fake microphone's words
+ * (`roleplay.ts`).
+ */
+export const transcribeRules = new RuleBook('transcribe');

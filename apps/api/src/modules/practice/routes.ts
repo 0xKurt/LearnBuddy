@@ -8,6 +8,7 @@ import {
   HintRequest,
   KeepForLaterRequest,
   ListenAudioRequest,
+  ReadWorkRequest,
   ReexplainRequest,
   SpeakRequest,
   SpeakWordRequest,
@@ -47,6 +48,7 @@ import { keepForLater } from './later.js';
 import { disputeVerdict, flagItem } from './contest.js';
 import { speakItem, speakWord } from './speak.js';
 import { answerWhy } from './why.js';
+import { readWork } from './workPhoto.js';
 
 export const practiceRoutes = new Hono<AppEnv>();
 practiceRoutes.use('*', requireUser, requireAccount, requireLearner);
@@ -89,6 +91,17 @@ practiceRoutes.post('/sessions/:id/hint', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const input = await readBody(c, HintRequest);
   return c.json(await hintItem(depsOf(c), c.get('learner'), sessionId, input));
+});
+
+/**
+ * Her working, photographed (issue #444): copied down line by line for her answer field — she
+ * checks the copy and sends it with "Prüfen" like anything she typed. Nothing is stored and
+ * nothing counts; a line that could not be read comes back as null, never guessed.
+ */
+practiceRoutes.post('/sessions/:id/work-photo', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, ReadWorkRequest);
+  return c.json(await readWork(depsOf(c), c.get('learner'), sessionId, input));
 });
 
 /**
