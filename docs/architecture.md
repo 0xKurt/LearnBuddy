@@ -581,7 +581,8 @@ everything the injection did not carry.
 
 `modules/buddy/check.ts`. Wake-ups are jobs (`reason`: `exam_countdown` 5/3/1 days before at the
 start of the preferred window, `exam_followup` the day after, `material_ready`,
-`session_finished`, `step_due`, `checkin_requested`, `routine`). Gates, cheapest first:
+`session_finished`, `step_due`, `checkin_requested`, `routine`, and Buddy's two review moments
+`review_next_day`, `review_due`). Gates, cheapest first:
 
 1. one worker per learner (lease on `buddy_settings`);
 2. agreed reminders → fixed template (i18n), no model. An agreed reminder never vanishes
@@ -616,6 +617,30 @@ count ("Magst du „…“ kurz nochmal durchgehen? …"). The sentence is Buddy
 consent it waits in the app, and after "Seltener schreiben" it never goes to the phone. While she is
 in the app it waits 20 minutes, like every unasked look (`inApp.ts`). A wake-up that runs twice says
 it once.
+
+**After a break** (issue #446, the second moment, same module and the same way to say it): what has
+fallen due for review is refreshed before it slips away. Every practice that ends
+(`session_finished`) schedules one wake-up (`review_due`) for the start of her preferred window three
+days later, in her zone — one per day she practised. When it runs, code alone decides, in this order,
+and the job's result names the reason:
+
+1. a break: she has not answered a single question since (two whole days off) — `no_break`;
+2. no test (an active goal with a date) today or within 14 days: then the countdown and the daily
+   look prepare for it — `test_ahead` (`plan.ts` `testAhead`, the routine's horizon);
+3. at most once every three days: no review offer of Buddy's (`review:` topics, the day after a sheet
+   included) on this or the two days before, in her zone — `too_soon`; a rerun finds its own offer here;
+4. nothing planned for her today (an agreed step, a practice for a test, a sheet's review) —
+   `planned_today`;
+5. questions of hers due for review (FSRS `due` reached by the app clock; never one not practised
+   yet, never homework) — `nothing_due`. `selectPracticeItems` narrows to them with `dueOnly`.
+
+Then it prepares a short practice of those questions ("Kurz auffrischen", 5 minutes) and says one
+sentence without a count or a day ("Magst du kurz auffrischen, was du zuletzt geübt hast? …"). It is
+Buddy's own initiative at the lowest relevance worth saying (0.6, `MIN_RELEVANCE`): without consent,
+paused or after "Seltener schreiben" it waits in the app and never reaches the phone; it changes no
+setting. Decision row and `bumpContext` are in the same transaction, so a model decision taken before
+it lands is stale. A break that goes on after it brings no second offer; the next practice starts the
+next wake-up.
 
 A background check never replaces practice she asked for in the chat, and the message it posts
 carries its decision, so what Buddy did in the background appears in the thread with its cards
@@ -778,7 +803,8 @@ nothing the server does not report about itself. GitHub disables scheduled workf
 `modules/buddy/events.ts`, table `buddy_events` (`0007_events.sql`). Something that just
 happened — `material_ready`, `homework_ready`, `session_finished` — is written once per (type,
 row), in the same transaction as the change, with the app clock. Its subscribers decide what
-follows: `material_ready` and `session_finished` wake Buddy for a check (the job carries the
+follows: `material_ready` also schedules the review the day after, `session_finished` the look for a
+break three days later (§Proactivity); both wake Buddy for a check (the job carries the
 `event_id`, the check marks the event handled — `handled_at` is an audit field for the export
 and for reading the log; nothing re-reads it to re-drive an event: a wake-up job that dies is
 handled by its job's terminal state, `scheduler/terminal.ts`); `homework_ready` is only recorded

@@ -42,6 +42,10 @@
     "review": "Ti va di ripassare «{{title}}» un momento? Ci sono alcune domande pronte: dopo una notte resta meglio.",
     "review_untitled": "Ti va di ripassare la tua scheda un momento? Ci sono alcune domande pronte: dopo una notte resta meglio."
   },
+  "review": {
+    "title": "Ripasso veloce",
+    "due": "Ti va di ripassare un momento quello che hai esercitato l'ultima volta? Ci sono alcune domande pronte: così ti resta meglio in testa."
+  },
   "practice": {
     "accents": "Quasi – controlla di nuovo gli accenti.",
     "bar": {
