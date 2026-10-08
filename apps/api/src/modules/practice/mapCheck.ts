@@ -39,6 +39,11 @@ import {
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 
 type Mapped = { kind: string; answer: string; figure: Figure | null; tap?: boolean | null };
+/** A question whose options may be pictures (`choice_figures`, a multiple choice). */
+type WithOptions = Mapped & {
+  choices?: readonly string[] | null;
+  choice_figures?: readonly Figure[] | null;
+};
 
 /**
  * The view this question about a map is asked on (code may zoom in, `mapZoom`), or why it cannot
@@ -83,12 +88,8 @@ function gridWritten<T extends Mapped>(it: T, lang: string): T {
   return { ...it, answer: key ? gridText(key, lang) : it.answer, figure: { ...f, hl } };
 }
 
-/**
- * The question on the view code chose, its places written as ids, or null when it cannot be
- * asked. `locale`: the language the questions are written in — her language, German for a sheet.
- */
-export function checkedMap<T extends Mapped>(raw: T | null, locale: string | null): T | null {
-  if (!raw) return null;
+/** The question on the view code chose, its own map's places written as ids, or null. */
+function checkedOwnMap<T extends Mapped>(raw: T, locale: string | null): T | null {
   const it = gridWritten(raw, locale ?? 'de');
   const checked = mapItemView(it);
   if (checked === null) return it;
@@ -97,4 +98,27 @@ export function checkedMap<T extends Mapped>(raw: T | null, locale: string | nul
   return f && isMap(f)
     ? { ...it, figure: mapCanonical(FIGURE_NAMES, { ...f, v: checked.view }) }
     : it;
+}
+
+/**
+ * The question on the view code chose, its places written as ids, or null when it cannot be
+ * asked. `locale`: the language the questions are written in — her language, German for a sheet.
+ *
+ * A map as an option's picture (#479) is held to the same rules as the map of "Wie heißt das
+ * markierte …?": it marks exactly one place of the map, and the option's text names it — so no
+ * option shows a region the data does not have, or another one than it says. One that fails
+ * costs the question.
+ */
+export function checkedMap<T extends WithOptions>(raw: T | null, locale: string | null): T | null {
+  if (!raw) return null;
+  const it = checkedOwnMap(raw, locale);
+  const options = it?.choice_figures;
+  if (!it || !options?.some(isMap)) return it;
+  const drawn = options.map((figure, i) =>
+    isMap(figure)
+      ? (checkedOwnMap({ kind: 'short', answer: it.choices?.[i] ?? '', figure, tap: false }, locale)
+          ?.figure ?? null)
+      : figure,
+  );
+  return drawn.every((f) => f !== null) ? { ...it, choice_figures: drawn } : null;
 }
