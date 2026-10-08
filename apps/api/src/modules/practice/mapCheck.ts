@@ -22,6 +22,14 @@
 // question's language, where "20° O" is west in French; code reads it so (`gridWritten`) and
 // stores it as `mapGrid.ts` writes it — a point where no two lines cross is no place, as a name
 // no region has.
+//
+// Her own Land (#429, owner's decision of 08.10.): code reads it from her profile
+// (`curriculum_region`, `mapHomeLand`), never from the model. Where she has one, a map the model
+// wrote without a view is the map of Germany (`mapViewed`); without one such a map costs the
+// question, as a map without a view always did. And on a map of Germany her Land is outlined
+// (`withHome`; never filled, so never read as the marked place) — but only where it says nothing
+// about the key: never on a layer of places (it would say in which Land a capital, a river or a
+// range lies), and never where her Land is itself the place marked or the place to tap.
 
 import {
   FIGURE_NAMES,
@@ -32,18 +40,89 @@ import {
   mapCanonical,
   mapMarked,
   mapPlace,
+  mapLayer,
   mapProblem,
+  mapRegion,
   mapZoom,
+  regionName,
   type MapView,
 } from '@learnbuddy/shared-math';
-import type { Figure } from '@learnbuddy/shared-types/contracts';
+import type { DrawnFigure, ModelFigure } from '@learnbuddy/shared-types/contracts';
 
-type Mapped = { kind: string; answer: string; figure: Figure | null; tap?: boolean | null };
+type Mapped = { kind: string; answer: string; figure: DrawnFigure | null; tap?: boolean | null };
 /** A question whose options may be pictures (`choice_figures`, a multiple choice). */
 type WithOptions = Mapped & {
   choices?: readonly string[] | null;
-  choice_figures?: readonly Figure[] | null;
+  choice_figures?: readonly DrawnFigure[] | null;
 };
+/**
+ * A map the model wrote without a view (#429): read as one on Germany, and marked so until code
+ * reads her profile (`mapViewed`). Never stored.
+ */
+type UnviewedMap = Extract<DrawnFigure, { type: 'map' }> & { unviewed: true };
+
+/**
+ * A figure as a question is parsed with it (`ItemDraft.figure`): a map without a view on Germany,
+ * marked as unviewed. Every other figure as the model wrote it.
+ */
+export function viewOf(f: ModelFigure): DrawnFigure | UnviewedMap;
+export function viewOf(f: ModelFigure | null): DrawnFigure | UnviewedMap | null;
+export function viewOf(f: ModelFigure | null): DrawnFigure | UnviewedMap | null {
+  if (f === null || f.type !== 'map') return f;
+  return f.v === undefined ? { ...f, v: 'de', unviewed: true } : { ...f, v: f.v };
+}
+
+function unviewed(f: DrawnFigure | null): f is UnviewedMap {
+  return f !== null && 'unviewed' in f;
+}
+
+/**
+ * The question with a view on every map it shows (#429): a map the model left without one stays
+ * on Germany where she has a Land (`land`, `mapHomeLand`); without her Land it cannot be drawn,
+ * and the question goes (null). The first thing that reads a map.
+ */
+export function mapViewed<
+  T extends { figure: DrawnFigure | null; choice_figures?: readonly DrawnFigure[] | null },
+>(it: T, land: string | null): T | null {
+  const options = it.choice_figures ?? [];
+  if (!unviewed(it.figure) && !options.some(unviewed)) return it;
+  if (land === null) return null;
+  const seen = <F extends DrawnFigure | null>(f: F): F | DrawnFigure =>
+    unviewed(f) ? { type: 'map', v: f.v, hl: f.hl, l: f.l } : f;
+  return {
+    ...it,
+    figure: seen(it.figure),
+    ...(it.choice_figures ? { choice_figures: it.choice_figures.map(seen) } : {}),
+  };
+}
+
+/**
+ * The line that tells the model it may leave a map's view out (#429), or null where she has no
+ * Land — then nothing changes for it. Code still decides: `mapViewed` reads her Land itself.
+ */
+export function homeLandLine(land: string | null): string | null {
+  const i = land === null ? null : mapRegion(FIGURE_NAMES, 'de', land);
+  if (i === null) return null;
+  return `HOME LAND: ${regionName(FIGURE_NAMES.maps.de, i, 'de')}. A map question that needs no particular map leaves the map's v out: code then shows the map of Germany with her Land. Write v = europe or world where the topic is about them.`;
+}
+
+/**
+ * The question with her Land outlined on its map of Germany (#429) where that says nothing about the
+ * key: the regions or the Gradnetz, her Land neither the marked place nor the place to tap. Read
+ * after `checkedMap`, on the view code chose and the places written as ids.
+ */
+export function withHome<T extends Mapped>(it: T, land: string | null): T {
+  const f = it.figure;
+  if (land === null || !f || !isMap(f) || f.v !== 'de') return it;
+  const layer = mapLayer(f);
+  if (layer !== 'regions' && layer !== 'grid') return it;
+  if (layer === 'regions') {
+    const home = mapRegion(FIGURE_NAMES, 'de', land);
+    const key = it.tap === true ? mapPlace(FIGURE_NAMES, f, it.answer) : null;
+    if (home === null || key === home || mapMarked(FIGURE_NAMES, f).includes(home)) return it;
+  }
+  return { ...it, figure: { ...f, home: land } };
+}
 
 /**
  * The view this question about a map is asked on (code may zoom in, `mapZoom`), or why it cannot

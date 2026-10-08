@@ -11,7 +11,7 @@ import { AutomatonFigure, PedigreeFigure, TreeFigure } from './tree.js';
 import { Axes3dFigure, CubeNetFigure, CubesFigure, SolidFigure } from './solid.js';
 import { DiagramFigure } from './diagram.js';
 import { CircuitFigure, ColorWheelFigure, LogicFigure } from './circuit.js';
-import { MapFigure } from './map.js';
+import { MapFigure, ShownMapFigure } from './map.js';
 import { SchematicFigure } from './schematic.js';
 
 const Label = z.string().trim().min(1).max(40);
@@ -425,8 +425,11 @@ export const CHART_TYPES = [
  * `apps/api/src/modules/practice/staff.ts`, which computes the question, the drawing and the
  * key from one reviewed task.
  */
-/** The figures the model may write — one list, shared with `Figure` below. */
-const MODEL_FIGURES = [
+/**
+ * The figures the model may write, one list shared with `Figure` below: every one is drawn as the
+ * model writes it but the map, whose view code may choose (`ShownMapFigure`, #429).
+ */
+const DRAWN_FIGURES = [
   FractionFigure,
   NumberLineFigure,
   FunctionPlotFigure,
@@ -457,15 +460,23 @@ const MODEL_FIGURES = [
   CircuitFigure,
   LogicFigure,
   ColorWheelFigure,
-  MapFigure,
   SchematicFigure,
 ] as const;
+
+const MODEL_FIGURES = [...DRAWN_FIGURES, MapFigure] as const;
 
 export const ModelFigure = z.discriminatedUnion('type', [...MODEL_FIGURES]);
 export type ModelFigure = z.infer<typeof ModelFigure>;
 
+/**
+ * A model figure as code keeps it once a map's view is chosen (#429, `ShownMapFigure`): what a
+ * question carries from its parse on, and what a stored option's picture is read back as.
+ */
+export const DrawnFigure = z.discriminatedUnion('type', [...DRAWN_FIGURES, ShownMapFigure]);
+export type DrawnFigure = z.infer<typeof DrawnFigure>;
+
 /** Every figure a question can SHOW (`ItemView.figure`) — the model's figures and the note line. */
-export const Figure = z.discriminatedUnion('type', [...MODEL_FIGURES, StaffFigure]);
+export const Figure = z.discriminatedUnion('type', [...DRAWN_FIGURES, ShownMapFigure, StaffFigure]);
 export type ChartFigure = Extract<Figure, { type: (typeof CHART_TYPES)[number] }>;
 export type PrimaryFigure = Extract<Figure, { type: (typeof PRIMARY_TYPES)[number] }>;
 export type Figure = z.infer<typeof Figure>;

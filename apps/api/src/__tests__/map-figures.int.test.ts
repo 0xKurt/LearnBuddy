@@ -102,7 +102,9 @@ describe.skipIf(!dbReady)('a question on a stumme Karte', () => {
       [l.learnerId],
     );
     const stored = (i: number) => rows.find((r) => r.prompt === GRID_ITEMS[i]!.prompt);
-    expect(stored(0)?.figure).toEqual({ type: 'map', v: 'de', hl: [], l: 'grid' });
+    // Mia goes to school in Niedersachsen (the harness's Land): code outlines it (#429, the
+    // default; `map-home.int.test.ts`).
+    expect(stored(0)?.figure).toEqual({ type: 'map', v: 'de', hl: [], l: 'grid', home: 'NI' });
     // "60°N 10°O" as the model wrote it: stored as code writes it, on the whole of Europe.
     expect(stored(1)?.answer).toBe('60° N, 10° O');
     expect(stored(1)?.figure).toEqual({ type: 'map', v: 'europe', hl: [], l: 'grid' });
