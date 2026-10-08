@@ -7,6 +7,7 @@ import {
   parsePrompt,
   promptForSpeech,
 } from '../prompt.js';
+import { NO_BREAK } from '../quantity.js';
 
 const kinds = (text: string, blanks = true) =>
   parsePrompt(text, { blanks }).map((r) =>
@@ -131,6 +132,26 @@ describe('fillableAnswer', () => {
   it('fills nothing for long or multi-line answers', () => {
     expect(fillableAnswer('a ___ b', 'x'.repeat(MAX_FILLED_LENGTH + 1))).toBeNull();
     expect(fillableAnswer('a ___ b', 'x\ny')).toBeNull();
+  });
+});
+
+describe('parsePrompt: a number and its unit stay together (issue #467)', () => {
+  const plain = (text: string) =>
+    parsePrompt(text, { blanks: true }).map((r) =>
+      r.type === 'plain' ? r.text.replaceAll(NO_BREAK, '~') : r.type,
+    );
+  it('binds them in plain text, and after a number in math or in bold', () => {
+    expect(plain('Er fährt 15 km/h, 15 Kinder warten.')).toEqual([
+      'Er fährt 15~km/h, 15 Kinder warten.',
+    ]);
+    expect(plain('Er fährt $15$ km/h.')).toEqual(['Er fährt ', 'math', '~km/h.']);
+    expect(plain('Er fährt **15** km/h.')).toEqual(['Er fährt ', '15', '~km/h.']);
+    expect(plain('$\\frac{1}{2}$ Kinder')).toEqual(['math', ' Kinder']);
+  });
+  it('leaves the spoken form exactly as written', () => {
+    expect(
+      promptForSpeech('Er fährt $15$ km/h und 3,5 m², 20 %.', { blanks: true, blankWord: 'Lücke' }),
+    ).toBe('Er fährt $15$ km/h und 3,5 m², 20 %.');
   });
 });
 

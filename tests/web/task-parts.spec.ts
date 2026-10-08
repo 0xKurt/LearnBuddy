@@ -66,7 +66,8 @@ test('a task in parts: the situation stays, a) b) c) in order, and a Folgefehler
   await shot(page, '297b-parts-follow-on');
   await page.getByRole('button', { name: 'Weiter' }).click();
 
-  // c) with the key, then the second task of another subject: physics.
+  // c) with the key, then the second task of another subject: physics. Its situation ends its
+  // first line at 360 pt with "18 km/h", number and unit together (issue #467).
   await expect(page.getByText('c) Was kostet eine Minute', { exact: false })).toBeVisible();
   await typed(page, '0,3');
   await expect(page.getByText('a) Wie weit fährt er', { exact: false })).toBeVisible();

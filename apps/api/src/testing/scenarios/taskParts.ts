@@ -44,8 +44,11 @@ export function tariffTask(bFrom = 'a + 12') {
   };
 }
 
-/** The situation of the ride task, as she reads it above every part. */
-export const RIDE_STEM = 'Ein Radfahrer fährt 2,5 Stunden lang mit gleichbleibend 18 km/h.';
+/**
+ * The situation of the ride task, as she reads it above every part. At 360 pt its first line ends
+ * at "18" — where "km/h" broke away before issue #467; the shots keep it in view.
+ */
+export const RIDE_STEM = 'Ein Radfahrer fährt 2,5 Stunden mit 18 km/h.';
 
 /** The open part of the ride task (#297, step 2): her reasoning, not a number. */
 export const RIDE_WHY = 'Begründe, warum er mit 15 km/h länger braucht als mit 18 km/h.';
