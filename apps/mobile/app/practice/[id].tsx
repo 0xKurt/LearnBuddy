@@ -67,6 +67,7 @@ import { PracticeStuck } from '../../components/practice/PracticeStuck.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
 import { QuestionCorner } from '../../components/practice/QuestionCorner.js';
 import { QuestionTools } from '../../components/practice/QuestionTools.js';
+import { HeadActions } from '../../components/practice/HeadActions.js';
 import { useQuestionVoice } from '../../components/practice/useQuestionVoice.js';
 import { RhythmTaps } from '../../components/practice/RhythmTaps.js';
 import { StaffWriting } from '../../components/practice/StaffWriting.js';
@@ -85,7 +86,6 @@ import {
   SpeakCard,
   SpeakPanel,
 } from '../../components/practice/SpeakPanel.js';
-import { ReadAloudSwitch } from '../../components/lb/ReadAloudSwitch.js';
 import { isOutdated, isRetryable } from '../../lib/api/apiError.js';
 import { newId } from '../../lib/api/client.js';
 import {
@@ -129,7 +129,6 @@ import { TYPE } from '../../lib/theme/type.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { reacted } from '../../lib/perf.js';
-import { SPACE } from '../../lib/theme/space.js';
 
 /**
  * What she sent, and how (issue #163). `via` is not decoration: since #147 a tapped word
@@ -221,21 +220,17 @@ export default function PracticeScreen() {
 
   // Vorlesen: a question is read aloud once when it appears (or when reading is switched on).
   const onScreen = session ? questionOnScreen(session, pinnedId) : null;
-  // A flashcard pass is not read aloud and never arms the mic: there is no answer to listen
-  // for (issue #147). The card itself offers "Anhören" for the word, which is the control
-  // that makes sense there.
+  // A card pass and a Kopfrechnen round read their card or task themselves (`CardPass`,
+  // `DrillRound`, issue #434) and never arm the mic: there is no spoken answer to listen for.
   // Nor a question the server says must not be heard (issue #238, `read_aloud`): a spelling
   // task, a vocabulary prompt that holds its own answer — hearing it would hand over the solution.
+  const listens = !session?.card_pass && !session?.drill;
   const toRead =
-    onScreen &&
-    onScreen.status === 'open' &&
-    !session?.card_pass &&
-    !session?.drill &&
-    onScreen.item.read_aloud
+    onScreen && onScreen.status === 'open' && listens && onScreen.item.read_aloud
       ? onScreen.item
       : null;
   // Read when it appears, and in a conversation the mic listens once it is read (`useQuestionVoice`).
-  const readQuestion = useQuestionVoice(toRead, words, t);
+  const readQuestion = useQuestionVoice(toRead, words, t, { listens });
 
   /** Buddy's reaction after an answer or a hint, with the verdict word first and math in words. */
   function feedbackText(res: AnswerResponse): string {
@@ -637,15 +632,14 @@ export default function PracticeScreen() {
   const endButton = (
     // Stays while a question is on screen, also once the session was finished in the
     // background (finishing again is a no-op) – the header must not jump under the reader.
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-      <ReadAloudSwitch />
+    <HeadActions>
       <EndButton
         onPress={() => void close()}
         disabled={closing}
         label={t('practice:end_label')}
         hint={t(testing ? 'practice:end_hint_test' : 'practice:end_hint')}
       />
-    </View>
+    </HeadActions>
   );
 
   // ─────────────── one question ───────────────
@@ -835,6 +829,8 @@ export default function PracticeScreen() {
                         // What she answers from: a reading text (#233), a task's situation (#297).
                         stimulus={item}
                         answerBoard={open && structured}
+                        // While Vorlesen is on, a tap on the question reads it again (#434).
+                        {...readAgain}
                       />
                     )}
                   </SlideIn>

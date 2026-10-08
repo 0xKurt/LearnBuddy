@@ -217,9 +217,10 @@ export async function sessionView(
         // where she answers IN the text, a Belegstelle (#368): its board is the text, once.
         passage: textIsBoard(boardOf(i)) ? null : (reading.get(i.id) ?? null),
         task_part: parts.get(i.id) ?? null,
-        // The "Vorlesen" button (issue #238): code decides, from what the question is, whether
-        // hearing it would hand over the solution. A card is read by its own "Anhören".
-        read_aloud: !cardPass && readAloudAllowed(i),
+        // Vorlesen (issue #238): code decides, from what the question is, whether hearing it
+        // would hand over the solution — the same rule for a card's front and a Kopfrechnen task
+        // (issue #434), which are read like any question.
+        read_aloud: readAloudAllowed(i),
       },
       status: i.status,
       attempts: i.attempts,

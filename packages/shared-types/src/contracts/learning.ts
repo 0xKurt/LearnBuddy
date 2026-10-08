@@ -525,11 +525,11 @@ export const ItemView = z.object({
    */
   task_part: TaskPartView.nullable().default(null).catch(null),
   /**
-   * Whether the question may be read aloud by its "Vorlesen" button, also outside voice mode
-   * (issue #238). Code decides it (`apps/api/src/modules/practice/readAloud.ts`): not for a task
-   * that practises spelling, not for vocabulary whose prompt already holds the answer — hearing
-   * it would hand the solution over. False where the server does not say: a question is never
-   * read aloud by default.
+   * Whether the question may be read aloud (issue #238) — by Vorlesen, in a conversation, on a
+   * tap on it; a card's front and a Kopfrechnen task alike (issue #434). Code decides it
+   * (`apps/api/src/modules/practice/readAloud.ts`): not for a task that practises spelling, not
+   * for vocabulary whose prompt already holds the answer — hearing it would hand the solution
+   * over. False where the server does not say: a question is never read aloud by default.
    */
   read_aloud: z.boolean().default(false),
 });

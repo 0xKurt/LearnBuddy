@@ -7,6 +7,9 @@
 // The loop is armed while a conversation runs — not with a screen reader on, whose own speech the
 // mic would record (`talkListensByItself`, audit M-85); then her tap on the mic arms it. Leaving
 // the screen ends whatever is being read, and the loop.
+//
+// A Kopfrechnen round and a card pass (issue #434) are read the same way, but they never listen:
+// there is no spoken answer to them (`listens: false`).
 
 import type { ItemView } from '@learnbuddy/shared-types/contracts';
 import { useFocusEffect } from 'expo-router';
@@ -28,12 +31,13 @@ export function useQuestionVoice(
   toRead: ItemView | null,
   words: SpokenWords,
   t: TFunction,
+  { listens = true }: { listens?: boolean } = {},
 ): (item: ItemView) => void {
   const reads = useVoiceMode(readsAloud);
   const conversation = useVoiceMode((s) => s.conversation);
   const screenReader = useScreenReader();
   const loopOn = useRef(false);
-  loopOn.current = conversation && talkListensByItself(screenReader);
+  loopOn.current = listens && conversation && talkListensByItself(screenReader);
   const syncLoop = () => {
     const hands = useHandsFree.getState();
     if (loopOn.current) hands.arm();
@@ -44,7 +48,7 @@ export function useQuestionVoice(
 
   const readQuestion = (item: ItemView) =>
     speakInOrder(questionParts(item, words, t), (why) => {
-      if (why === 'done') useHandsFree.getState().listenNow();
+      if (why === 'done' && listens) useHandsFree.getState().listenNow();
     });
 
   // A new question, or reading or a conversation starting, reads it; "Nochmal vorlesen" repeats
@@ -56,7 +60,7 @@ export function useQuestionVoice(
     if (ended || !reads) return;
     if (toRead) readQuestion(toRead);
     // Nothing to read (the server says it must not be heard): the mic listens at once.
-    else if (conversation) useHandsFree.getState().listenNow();
+    else if (conversation && listens) useHandsFree.getState().listenNow();
   }, [reads, conversation, toRead?.id]);
 
   useFocusEffect(
