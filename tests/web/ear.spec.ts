@@ -70,9 +70,16 @@ test('ear training: two notes heard, the interval named, graded by code (#445)',
  * timed on the page's own monotonic clock — the clock the pad reads. One click per beat from the
  * test runner would add its round trip to every gap, and on a loaded machine that is more than the
  * tolerance (150 ms at tempo 80). A beat is a press and a release; the pad counts the press.
+ *
+ * Unlike a click, a dispatch does not wait for the element to hold still: after a switch of the
+ * colour scheme the whole tree is mounted anew (`ThemeProvider`'s `key`), and beats sent to the
+ * pad of the old tree reach nothing (seen in the walkthrough: no beat counted). So the screen
+ * settles first, and a pad that left the page during the beats fails here, by name.
  */
 async function beats(page: Page, at: number[]): Promise<void> {
-  await page.getByRole('button', { name: 'Hier klopfen', exact: true }).evaluate((pad, times) => {
+  await settle(page);
+  const pad = page.getByRole('button', { name: 'Hier klopfen', exact: true });
+  const stayed = await pad.evaluate((pad, times) => {
     const box = pad.getBoundingClientRect();
     const where = {
       bubbles: true,
@@ -89,7 +96,9 @@ async function beats(page: Page, at: number[]): Promise<void> {
       pad.dispatchEvent(new MouseEvent('mousedown', where));
       pad.dispatchEvent(new MouseEvent('mouseup', where));
     }
+    return pad.isConnected;
   }, at);
+  expect(stayed, 'the pad stayed on the page while she tapped').toBe(true);
 }
 
 test('ear training: a heard rhythm tapped back, its timing measured by code (#445)', async ({
