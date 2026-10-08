@@ -9,7 +9,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { openMenu } from './coreLoop';
 import { sendPhoto } from './figureWalk';
-import { shot } from './fit';
+import { bothSchemes } from './fit';
 
 /** A child of the given birth year (14 or 15 today: the age her scripted reading is keyed by). */
 async function onboardChild(page: Page, name: string, year: string): Promise<void> {
@@ -48,14 +48,6 @@ async function openSheet(page: Page, subject: string, title: string): Promise<vo
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
 }
 
-/** This state at both phone sizes, in the light and the dark room. */
-async function bothRooms(page: Page, name: string): Promise<void> {
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-dark`);
-  await page.emulateMedia({ colorScheme: 'light' });
-}
-
 test('a corrected test: new tasks for what was marked, nothing else, no grade', async ({
   page,
 }) => {
@@ -69,7 +61,7 @@ test('a corrected test: new tasks for what was marked, nothing else, no grade', 
   await expect(page.getByText('37 + 48')).toHaveCount(0);
   await expect(page.getByText('2 + 2')).toHaveCount(0);
   await expect(page.getByText(/Note 3|14\/20/)).toHaveCount(0);
-  await bothRooms(page, '120-sources-corrected-test');
+  await bothSchemes(page, '120-sources-corrected-test');
 });
 
 test('a notebook entry: five short questions for the next morning', async ({ page }) => {
@@ -78,5 +70,5 @@ test('a notebook entry: five short questions for the next morning', async ({ pag
   await openSheet(page, 'Biologie', 'Die Photosynthese');
   await expect(page.getByText('Aus deinem Hefteintrag:', { exact: false })).toBeVisible();
   await expect(page.getByText(/^Biologie · 5 Aufgaben$/)).toBeVisible();
-  await bothRooms(page, '121-sources-notebook-entry');
+  await bothSchemes(page, '121-sources-notebook-entry');
 });

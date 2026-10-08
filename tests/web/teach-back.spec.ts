@@ -7,7 +7,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { shot } from './fit';
+import { bothSchemes, setScheme, shot } from './fit';
 
 /** The words every offer card's button carries (components/learn/OfferCard.tsx). */
 const START = "Los geht's";
@@ -49,14 +49,6 @@ async function onboardChild(page: Page): Promise<void> {
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
-/** One stop of the walk, in daylight and at night, at 390×844 and 360×740 (`shot`). */
-async function both(page: Page, name: string): Promise<void> {
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-night`);
-  await page.emulateMedia({ colorScheme: 'light' });
-}
-
 test('Erklär mal: she explains, gets a ✓ per point and one follow-up (issue #236)', async ({
   page,
 }) => {
@@ -65,7 +57,7 @@ test('Erklär mal: she explains, gets a ✓ per point and one follow-up (issue #
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('erklär mir die Fotosynthese', { exact: false })).toBeVisible();
   await expect(offerStart(page, 'Erklär mal')).toBeVisible();
-  await both(page, '70-erklaer-offer');
+  await bothSchemes(page, '70-erklaer-offer');
 
   await offerStart(page, 'Erklär mal').click();
   await expect(page.getByText('Erklär mir, wie die Fotosynthese funktioniert.')).toBeVisible();
@@ -77,18 +69,15 @@ test('Erklär mal: she explains, gets a ✓ per point and one follow-up (issue #
   await field.fill(
     'Die Pflanze nimmt Licht als Energie. Aus Wasser und Kohlendioxid macht sie Zucker und Sauerstoff.',
   );
-  await both(page, '71-erklaer-question');
+  await bothSchemes(page, '71-erklaer-question');
 
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Und wo in der Zelle passiert das?', { exact: false })).toBeVisible();
   await expect(page.getByText('✓ Licht', { exact: false }).first()).toBeVisible();
   await expect(page.getByText('Ort fehlt noch', { exact: false })).toBeVisible();
-  await both(page, '72-erklaer-followup');
+  await bothSchemes(page, '72-erklaer-followup');
 
-  await expect(async () => {
-    await field.fill('Das passiert in den Chloroplasten.');
-    await expect(field).toHaveValue('Das passiert in den Chloroplasten.', { timeout: 1000 });
-  }).toPass();
+  await field.fill('Das passiert in den Chloroplasten.');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Alles drin', { exact: false })).toBeVisible();
   await expect(page.getByText('✓ Ort', { exact: false })).toBeVisible();
@@ -100,17 +89,14 @@ test('Erklär mal: she explains, gets a ✓ per point and one follow-up (issue #
     .click({ timeout: 5000 })
     .catch(() => undefined);
   // … the second at night, explained completely in one go.
-  await page.emulateMedia({ colorScheme: 'dark' });
+  await setScheme(page, 'dark');
   await expect(
     page.getByText('Erklär mir, warum Pflanzen ohne Licht nicht wachsen.'),
   ).toBeVisible();
-  await expect(async () => {
-    await field.fill(
-      'Im Dunkeln hat sie keine Energie, dann macht sie keinen Zucker und der fehlt ihr zum Wachsen.',
-    );
-    await expect(field).not.toHaveValue('', { timeout: 1000 });
-  }).toPass();
+  await field.fill(
+    'Im Dunkeln hat sie keine Energie, dann macht sie keinen Zucker und der fehlt ihr zum Wachsen.',
+  );
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Alles drin', { exact: false })).toBeVisible();
-  await shot(page, '73-erklaer-done-night');
+  await shot(page, '73-erklaer-done-dark');
 });

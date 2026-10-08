@@ -1,14 +1,12 @@
 // The steps every figure walkthrough shares (trees #256, solids #255, diagrams #247): a parent
 // signs up her child, Buddy offers a practice run, each question is shot with its figure at both
-// phone sizes in the light and the dark room, and answered — typed or tapped.
+// phone sizes in the light and the dark room (`bothSchemes`, fit.ts), and answered — typed or tapped.
 // One copy for every spec that walks figures; the specs keep only their own questions. A sheet
 // photographed in the chat is sent the same way by every spec that reads one (`sendPhoto`).
 
 import { join } from 'node:path';
 
 import { expect, type Page } from '@playwright/test';
-
-import { shot } from './fit';
 
 const FIXTURES = join(__dirname, '../../apps/mobile/lib/photo/__tests__/fixtures');
 
@@ -74,24 +72,12 @@ export async function startOffer(page: Page, message: string, offer: string): Pr
   await words.locator(`xpath=following::*[@role="button"][@aria-label="Los geht's"][1]`).click();
 }
 
-/** The question with its figure, at both phone sizes, in the light and the dark room. */
-export async function bothRooms(page: Page, name: string): Promise<void> {
-  await expect(page.getByTestId('question-figure')).toBeVisible();
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-dark`);
-  await page.emulateMedia({ colorScheme: 'light' });
-}
-
-/** A typed answer that code grades right, then on to the next question. */
+/**
+ * A typed answer that code grades right, then on to the next question. A scheme switch before it
+ * has landed (`bothSchemes`, issue #464): the field she types in is the one that stays.
+ */
 export async function typed(page: Page, text: string): Promise<void> {
-  // Right after the switch back from the dark room the field can render once more; fill until
-  // the value holds instead of typing into the copy that is about to go.
-  const field = page.getByLabel('Deine Antwort');
-  await expect(async () => {
-    await field.fill(text);
-    await expect(field).toHaveValue(text, { timeout: 1000 });
-  }).toPass();
+  await page.getByLabel('Deine Antwort').fill(text);
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();

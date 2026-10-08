@@ -9,22 +9,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { onboardChild, sendPhoto, startOffer, typed } from './figureWalk';
-import { shot } from './fit';
+import { bothSchemes, shot } from './fit';
 
-async function both(page: Page, name: string): Promise<void> {
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-dark`);
-  await page.emulateMedia({ colorScheme: 'light' });
-}
-
-/** Her answer in the bar, sent; the field filled until the value holds (a theme switch remounts). */
+/** Her answer in the bar, sent. */
 async function send(page: Page, text: string): Promise<void> {
-  const field = page.getByLabel('Deine Antwort');
-  await expect(async () => {
-    await field.fill(text);
-    await expect(field).toHaveValue(text, { timeout: 1000 });
-  }).toPass();
+  await page.getByLabel('Deine Antwort').fill(text);
   await page.getByRole('button', { name: 'Prüfen' }).click();
 }
 
@@ -46,7 +35,7 @@ test('a task in parts: the situation stays, a) b) c) in order, and a Folgefehler
   await expect(page.getByTestId('task-part-steps')).toHaveAccessibleName(
     'Teilaufgabe a von a, b, c',
   );
-  await both(page, '297a-parts-a');
+  await bothSchemes(page, '297a-parts-a');
 
   // A wrong a), then the solution — and on to b), where she goes on with HER a).
   await send(page, '10');
@@ -75,7 +64,7 @@ test('a task in parts: the situation stays, a) b) c) in order, and a Folgefehler
   await expect(page.getByTestId('task-part-steps')).toHaveAccessibleName(
     'Teilaufgabe a von a, b, c',
   );
-  await both(page, '297c-parts-ride');
+  await bothSchemes(page, '297c-parts-ride');
 
   // a) and b) computed, then c) an open part (#297, step 2): her reasoning, checked against key
   // points — the points nowhere on screen, a ✓ per point and ONE follow-up, no grade.
@@ -87,12 +76,8 @@ test('a task in parts: the situation stays, a) b) c) in order, and a Folgefehler
   await expect(page.getByText('Ein Radfahrer fährt 2,5 Stunden', { exact: false })).toBeVisible();
   await expect(page.getByText('weniger Kilometer', { exact: false })).toHaveCount(0);
   const reason = 'Er fährt langsamer, er schafft in jeder Stunde weniger Kilometer.';
-  const field = page.getByLabel('Deine Antwort');
-  await expect(async () => {
-    await field.fill(reason);
-    await expect(field).toHaveValue(reason, { timeout: 1000 });
-  }).toPass();
-  await both(page, '297d-parts-open');
+  await page.getByLabel('Deine Antwort').fill(reason);
+  await bothSchemes(page, '297d-parts-open');
 
   // Filled again: the theme switch above rebuilt the screen.
   await send(page, reason);
@@ -101,7 +86,7 @@ test('a task in parts: the situation stays, a) b) c) in order, and a Folgefehler
   ).toBeVisible();
   await expect(page.getByText('Strecke fehlt noch', { exact: false })).toBeVisible();
   await expect(page.getByText('✓ Tempo', { exact: false })).toBeVisible();
-  await both(page, '297e-parts-open-followup');
+  await bothSchemes(page, '297e-parts-open-followup');
 
   await send(page, 'Die Strecke ist bei beiden gleich lang.');
   await expect(page.getByText('Alles drin', { exact: false })).toBeVisible();
@@ -128,7 +113,7 @@ test('a photographed worksheet: its a) b) c) is one task in parts, not three que
   await expect(page.getByTestId('task-part-steps')).toHaveAccessibleName(
     'Teilaufgabe a von a, b, c',
   );
-  await both(page, '297g-photo-parts-a');
+  await bothSchemes(page, '297g-photo-parts-a');
 
   // A wrong a), then on to b), where she goes on with HER a): a Folgefehler, decided by code.
   await send(page, '250');
@@ -149,7 +134,7 @@ test('a photographed worksheet: its a) b) c) is one task in parts, not three que
     page.getByText('c) Begründe, warum zwei gleich starke Pumpen', { exact: false }),
   ).toBeVisible();
   await expect(page.getByText('Ein Schwimmbecken fasst 450 m³', { exact: false })).toBeVisible();
-  await both(page, '297i-photo-parts-open');
+  await bothSchemes(page, '297i-photo-parts-open');
   await send(page, 'Zusammen pumpen sie doppelt so viel Wasser in der Stunde.');
   await expect(
     page.getByText('Was ändert sich an der Wassermenge, die noch fehlt?', { exact: false }),

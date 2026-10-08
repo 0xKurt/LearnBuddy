@@ -7,7 +7,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { PHONES, shot } from './fit';
+import { bothSchemes, PHONES } from './fit';
 
 async function onboardChild(page: Page): Promise<void> {
   await page.goto('/');
@@ -35,14 +35,6 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
-}
-
-/** One state at both phone sizes (`shot`), light and then dark. */
-async function both(page: Page, name: string): Promise<void> {
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-night`);
-  await page.emulateMedia({ colorScheme: 'light' });
 }
 
 /** Asks Buddy, opens the practice he offers and waits for its question. */
@@ -85,8 +77,10 @@ async function finish(page: Page): Promise<void> {
 test('markieren: words, categories, commas and syllables, counted by code (issue #234)', async ({
   page,
 }) => {
+  // Nine stops, each at both sizes, light and dark, and with the keyboard up: 1.9–2.6 min before
+  // #464, at the 3 min default once every switch back to light waited for the app (`bothSchemes`).
+  test.setTimeout(300_000);
   await onboardChild(page);
-  await page.emulateMedia({ colorScheme: 'light' });
   await page.setViewportSize(PHONES[0]);
   const word = (name: string) => page.getByRole('checkbox', { name, exact: true });
   const check = page.getByRole('button', { name: 'Prüfen' });
@@ -95,7 +89,7 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   await start(page, 'Lass uns Nomen markieren', 'tipp die Nomen an', 'Tippe alle Nomen an.');
   await expect(page.getByRole('checkbox')).toHaveCount(24);
   await expect(check).toBeDisabled();
-  await both(page, '46a-mark-words-start');
+  await bothSchemes(page, '46a-mark-words-start');
   await targetsAreLarge(page);
   for (const w of ['montag', 'familie', 'auto', 'fährt']) await word(w).click();
   await word('fährt').click();
@@ -104,7 +98,7 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   await check.click();
   const counted = 'Noch nicht ganz: 3 richtig, 7 fehlen noch, 1 zu viel.';
   await expect(page.getByText(counted)).toBeInViewport();
-  await both(page, '46b-mark-words-feedback');
+  await bothSchemes(page, '46b-mark-words-feedback');
   await word('fährt').click();
   for (const w of ['meer', 'bruder', 'burg', 'sand', 'schwester', 'muscheln', 'strand']) {
     await word(w).click();
@@ -121,11 +115,11 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   await page.getByRole('radio', { name: '② Prädikat' }).click();
   await word('liest').click();
   await word('den').click();
-  await both(page, '46c-mark-categories');
+  await bothSchemes(page, '46c-mark-categories');
   await targetsAreLarge(page);
   await check.click();
   await expect(page.getByText('Noch nicht ganz: 2 richtig', { exact: false })).toBeInViewport();
-  await both(page, '46d-mark-categories-feedback');
+  await bothSchemes(page, '46d-mark-categories-feedback');
   await page.getByRole('checkbox', { name: 'den, markiert als Prädikat' }).click();
   await word('vor').click();
   await page.getByRole('radio', { name: '③ Akkusativobjekt' }).click();
@@ -134,7 +128,7 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   await expect(page.getByTestId('mark-summary')).toHaveText(
     'Subjekt: Oma; Prädikat: liest, vor; Akkusativobjekt: eine Geschichte',
   );
-  await both(page, '46e-mark-categories-all');
+  await bothSchemes(page, '46e-mark-categories-all');
   await finish(page);
 
   // ── the worst case of sorting: three long terms on two rows, the most words, the reply ──
@@ -153,7 +147,7 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   );
   // Everything marked, the longest terms on two rows of buttons, Buddy's reply still in view.
   await expect(page.getByText(worst)).toBeInViewport();
-  await both(page, '46h-mark-categories-worst');
+  await bothSchemes(page, '46h-mark-categories-worst');
   await targetsAreLarge(page);
   await finish(page);
 
@@ -174,7 +168,7 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   // Everything marked, Buddy's reply still in view, the ten words in two rows of tiles — the
   // digit stands under its word, so a mark never pushes a word into a third row.
   await expect(page.getByText(long)).toBeInViewport();
-  await both(page, '46i-mark-categories-long');
+  await bothSchemes(page, '46i-mark-categories-long');
   await targetsAreLarge(page);
   const tileRows = () =>
     page.evaluate(
@@ -200,7 +194,7 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   await expect(page.getByTestId('mark-how')).toHaveText(
     'Tippe das Wort an, nach dem ein Komma fehlt.',
   );
-  await both(page, '46f-mark-commas');
+  await bothSchemes(page, '46f-mark-commas');
   await targetsAreLarge(page);
   await page.getByRole('checkbox', { name: 'Komma nach „weg“' }).click();
   await finish(page);
@@ -210,7 +204,7 @@ test('markieren: words, categories, commas and syllables, counted by code (issue
   await page.getByRole('checkbox', { name: 'Silbe endet nach „Re“ in Regenbogen' }).click();
   await page.getByRole('checkbox', { name: 'Silbe endet nach „Regen“ in Regenbogen' }).click();
   await expect(page.getByTestId('syllable-cut')).toHaveCount(2);
-  await both(page, '46g-mark-syllables');
+  await bothSchemes(page, '46g-mark-syllables');
   await targetsAreLarge(page, 30);
   // One word, one row: every letter of "Regenbogen" stands on the same line. Read in one snapshot
   // of the page, like `targetsAreLarge`: read one by one, a box the theme switch's remount had just

@@ -11,6 +11,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import {
   answerPlace,
+  bothSchemes,
   bottomStack,
   halfTurns,
   partHeight,
@@ -108,9 +109,9 @@ async function onboardChild(page: Page): Promise<void> {
 test('learning modes: explain, homework help without the solution, practice with math', async ({
   page,
 }) => {
-  // About 30 stops, each shot at three sizes: it ran at 2.9–3.0 min on main against the 3 min of
-  // playwright.config.ts and timed out there too. Each settle waits its full 1.6 s on a practice
-  // screen, because the orb in "Frage von Buddy" never stops moving (measured, #403).
+  // Each settle waits its full 1.6 s on a practice screen, because the orb in "Frage von Buddy"
+  // never stops moving (measured, #403). With reading aloud and the conversation it reached its
+  // 240 s (3.9–4.0 min alone); since they are a test of their own (issue #464) it runs 2.2 min.
   test.setTimeout(240_000);
   await onboardChild(page);
   // No tiles or lists: Buddy, his name, and one way into everything else (issue #174).
@@ -152,11 +153,8 @@ test('learning modes: explain, homework help without the solution, practice with
   expect(
     await page.getByLabel('Deine Antwort').evaluate((el) => getComputedStyle(el).outlineWidth),
   ).toBe('0px');
-  await shot(page, '22-fill-blank');
-  // The same at night: the bar with the speaker and the waveform (#386).
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '22n-fill-blank-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  // Light and at night: the bar with the speaker and the waveform (#386).
+  await bothSchemes(page, '22-fill-blank');
   // The theme switch rebuilt the tree; her answer is a draft and still there.
   await expect(page.getByLabel('Deine Antwort')).toHaveValue('der');
   await page.getByRole('button', { name: 'Prüfen' }).click();
@@ -331,130 +329,15 @@ test('learning modes: explain, homework help without the solution, practice with
   expect(edge.masked, 'the conversation fades out at its top edge exactly when it holds more').toBe(
     edge.holdsMore,
   );
-  await shot(page, '25-practice-fractions');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '25b-practice-fractions-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  // The fraction tiles at night too (issue #288): large digits, the letter column, the shadow.
+  await bothSchemes(page, '25-practice-fractions');
   // The drawing takes the measured room of the grown question card (issue #96) — more
   // than the old fixed 14 % of the window (118 pt inside a ~144 pt frame) ever allowed.
   const fig = await partHeight(page, 'question-figure', '25-practice-fractions');
   expect(fig, `figure ${fig}pt`).toBeGreaterThan(150);
-  // The fraction tiles at night too (issue #288): large digits, the letter column, the shadow.
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '25b-practice-fractions-night');
-  await page.emulateMedia({ colorScheme: 'light' });
 
-  // ── Vorlesen: the speaker in the practice head, the chat's own switch (issue #386) ──
-  // One tap reads the question in Buddy's voice — what is sent is the SPOKEN text, math in words,
-  // never LaTeX (issue #238). No speaker in the card any more ("Frage vorlesen", owner 04.10.):
-  // one switch per screen, in the same place as in the chat. .last(): the home under this screen
-  // keeps its own head mounted (expo-router).
-  await expect(page.getByRole('button', { name: 'Frage vorlesen' })).toHaveCount(0);
-  const readOff = page.getByRole('switch', { name: 'Vorlesen', exact: true }).last();
-  const readOn = page.getByRole('switch', { name: 'Vorlesen ist an' }).last();
-  await expect(readOff).toHaveAttribute('aria-checked', 'false');
-  // Buddy's voice as a short silence, so a reading really ends (the Gespräch below listens
-  // then). Set before the first reading: the dev stack has no voice, and a "no" from the server
-  // sends the app to the browser's own voice for a while (lib/speech/readAloud.ts), whose end
-  // headless Chromium never reports. The fake microphone (playwright.config.ts) records.
-  await voiceAsSilence(page, 600);
-  const spokenRequest = page.waitForRequest(
-    (r) => r.url().includes('/voice/speech') && r.method() === 'POST',
-  );
-  await readOff.click();
-  const sent = (await spokenRequest).postDataJSON() as { text: string; locale: string };
-  expect(sent.locale).toBe('de-DE');
-  expect(sent.text, 'read in words, never as LaTeX').not.toMatch(/[$\\{}]/);
-  await expect(readOn).toHaveAttribute('aria-checked', 'true');
-  // Reading aloud is not listening: the bar stays the input bar, no mic of its own.
-  await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
-  // A tap on the question itself reads it again — no button of its own (#434).
-  const again = page.waitForRequest(
-    (r) => r.url().includes('/voice/speech') && r.method() === 'POST',
-  );
-  await page.getByRole('button', { name: 'Nochmal vorlesen' }).click();
-  expect((await again).postDataJSON()).toMatchObject({ text: sent.text });
-  await shot(page, '25b-practice-reading');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '25c-practice-read-dark');
-  await page.emulateMedia({ colorScheme: 'light' });
-  await readOn.click();
-  await expect(readOff).toHaveAttribute('aria-checked', 'false');
-
-  // ── Her question under the options (issue #402, report #388 §1) ──
-  // The tile is the answer; the bar's field is the way to ask the tutor about the task. Asking
-  // is not answering: the reply joins the conversation, and the options stay as they were.
-  const askField = page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' });
-  await expect(askField).toHaveAttribute('placeholder', 'Frag zur Aufgabe …');
-  // Filled until it holds: the switch back to light may still remount the field (see the order).
-  await expect(async () => {
-    await askField.fill('Was bedeutet der Strich im Bruch?');
-    await expect(askField).toHaveValue('Was bedeutet der Strich im Bruch?', { timeout: 1000 });
-  }).toPass();
-  await page.getByRole('button', { name: 'Senden' }).last().click();
-  await expect(page.getByText('Der Strich heißt Bruchstrich', { exact: false })).toBeVisible();
-  await expect(askField).toHaveValue('');
-  await expect(page.getByText('Schon ausprobiert')).toHaveCount(0);
-  await shot(page, '25d-practice-asked');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '25e-practice-asked-night');
-  await page.emulateMedia({ colorScheme: 'light' });
-
-  // ── Gespräch: the waveform in the bar, as in the chat; the bar becomes the talk row (#386) ──
-  await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
-  // .last(): the chat's waveform stays mounted under this screen.
-  await page.getByRole('button', { name: 'Mit Buddy sprechen' }).last().click();
-  // The conversation screen's row: "Tastatur" · the mic · "Nochmal vorlesen" — no field.
-  // .last(): the question above it reads again on a tap too (#434).
-  await expect(page.getByRole('button', { name: 'Nochmal vorlesen' }).last()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Tastatur' }).last()).toBeVisible();
-  await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toHaveCount(0);
-  // A conversation reads aloud too: the speaker says so.
-  await expect(readOn).toHaveAttribute('aria-checked', 'true');
-  // Gespräch means the same as on /talk: once the question has been read, the mic listens by
-  // itself — no first tap (#386).
-  const listening = page.getByRole('button', { name: 'Aufnahme stoppen' });
-  await expect(listening).toBeVisible();
-  // The mic stands in the middle of the screen, like on the conversation screen.
-  const mic = await listening.boundingBox();
-  const width = page.viewportSize()!.width;
-  expect(Math.abs(mic!.x + mic!.width / 2 - width / 2), 'the mic is centred').toBeLessThan(2);
-  await shot(page, '27-practice-voice-mode');
-  // The same moment at night: the row, the reply and the drawing share the room (#286).
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '27b-practice-voice-mode-night');
-  await page.emulateMedia({ colorScheme: 'light' });
-  // "Tastatur": back to the input bar, and silent again — she never switched Vorlesen on.
-  await page.getByRole('button', { name: 'Tastatur' }).last().click();
-  await page.unroute('**/v1/voice/speech');
-  await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toBeVisible();
-  await expect(readOff).toHaveAttribute('aria-checked', 'false');
-  // Vorlesen on in practice, still on at Buddy: one setting, one switch, two heads.
-  await readOff.click();
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
-  const readAloudOn = page.getByRole('switch', { name: 'Vorlesen ist an' });
-  const readAloudOff = page.getByRole('switch', { name: 'Vorlesen', exact: true });
-  await expect(readAloudOn).toHaveAttribute('aria-checked', 'true');
-  // The chat keeps its one input bar: no voice-first bar beside it (#386).
-  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Tastatur' })).toHaveCount(0);
-  await shot(page, '26-buddy-voice-mode');
-  // The same at night: the bar with the speaker and the waveform (#386).
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '26b-buddy-night');
-  await page.emulateMedia({ colorScheme: 'light' });
-  // And it is no longer a second place to look.
-  await page.getByRole('button', { name: 'Mehr' }).click();
-  await expect(page.getByRole('button', { name: 'Vorlesen ist an' })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Schließen' }).click();
-  // Off and on again from the head itself, one tap each way.
-  await readAloudOn.click();
-  await expect(readAloudOff).toHaveAttribute('aria-checked', 'false');
-  await readAloudOff.click();
-  await expect(readAloudOn).toHaveAttribute('aria-checked', 'true');
-  await readAloudOn.click();
-  await expect(readAloudOff).toHaveAttribute('aria-checked', 'false');
 
   // ── Bruchbalken: a surface she WORKS with, not one more sentence (issue #162) ──
   // The scripted model said only three tasks and their whole numbers (there is no field in
@@ -563,6 +446,126 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByRole('heading', { name: 'Dein Material' })).toBeVisible();
   await page.getByRole('button', { name: 'Zurück' }).click();
 
+  // What the app's own stopwatch measured on the way (issue #66): starting an offered
+  // practice and checking an answer are the two taps the owner called slow.
+  await recordPerf(page, 'modes');
+});
+
+test('learning modes: reading aloud and talking — at a question, with Buddy, on the talk screen (#386)', async ({
+  page,
+}) => {
+  // Cut out of "learning modes" (issue #464): with these stops it ran at its 240 s limit. Alone
+  // this part takes about 1.5 min.
+  await onboardChild(page);
+  // Walked at 390×844 like the rest of the walkthrough, whatever size the run starts at: the
+  // dark switch remounts the screen at the size it stands at, and a practice screen mounted at
+  // 360 and then widened to 390 by `shot` kept the conversation half under the card's edge
+  // (27-practice-voice-mode-dark @390, 2 of 2 runs started at 360×740; a phone never widens).
+  await page.setViewportSize(PHONES[0]);
+  await page.getByLabel('Schreib Buddy …').fill('Ich will Brüche vergleichen üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(
+    page.getByText('ein paar Fragen zu Brüchen vorbereitet', { exact: false }),
+  ).toBeVisible();
+  await offerStart(page, 'Brüche vergleichen').click();
+  await expect(page.getByText('Frage von Buddy')).toBeVisible();
+
+  // ── Vorlesen: the speaker in the practice head, the chat's own switch (issue #386) ──
+  // One tap reads the question in Buddy's voice — what is sent is the SPOKEN text, math in words,
+  // never LaTeX (issue #238). No speaker in the card any more ("Frage vorlesen", owner 04.10.):
+  // one switch per screen, in the same place as in the chat. .last(): the home under this screen
+  // keeps its own head mounted (expo-router).
+  await expect(page.getByRole('button', { name: 'Frage vorlesen' })).toHaveCount(0);
+  const readOff = page.getByRole('switch', { name: 'Vorlesen', exact: true }).last();
+  const readOn = page.getByRole('switch', { name: 'Vorlesen ist an' }).last();
+  await expect(readOff).toHaveAttribute('aria-checked', 'false');
+  // Buddy's voice as a short silence, so a reading really ends (the Gespräch below listens
+  // then). Set before the first reading: the dev stack has no voice, and a "no" from the server
+  // sends the app to the browser's own voice for a while (lib/speech/readAloud.ts), whose end
+  // headless Chromium never reports. The fake microphone (playwright.config.ts) records.
+  await voiceAsSilence(page, 600);
+  const spokenRequest = page.waitForRequest(
+    (r) => r.url().includes('/voice/speech') && r.method() === 'POST',
+  );
+  await readOff.click();
+  const sent = (await spokenRequest).postDataJSON() as { text: string; locale: string };
+  expect(sent.locale).toBe('de-DE');
+  expect(sent.text, 'read in words, never as LaTeX').not.toMatch(/[$\\{}]/);
+  await expect(readOn).toHaveAttribute('aria-checked', 'true');
+  // Reading aloud is not listening: the bar stays the input bar, no mic of its own.
+  await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
+  // A tap on the question itself reads it again — no button of its own (#434).
+  const again = page.waitForRequest(
+    (r) => r.url().includes('/voice/speech') && r.method() === 'POST',
+  );
+  await page.getByRole('button', { name: 'Nochmal vorlesen' }).click();
+  expect((await again).postDataJSON()).toMatchObject({ text: sent.text });
+  await bothSchemes(page, '25b-practice-reading');
+  await readOn.click();
+  await expect(readOff).toHaveAttribute('aria-checked', 'false');
+
+  // ── Her question under the options (issue #402, report #388 §1) ──
+  // The tile is the answer; the bar's field is the way to ask the tutor about the task. Asking
+  // is not answering: the reply joins the conversation, and the options stay as they were.
+  const askField = page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' });
+  await expect(askField).toHaveAttribute('placeholder', 'Frag zur Aufgabe …');
+  await askField.fill('Was bedeutet der Strich im Bruch?');
+  await page.getByRole('button', { name: 'Senden' }).last().click();
+  await expect(page.getByText('Der Strich heißt Bruchstrich', { exact: false })).toBeVisible();
+  await expect(askField).toHaveValue('');
+  await expect(page.getByText('Schon ausprobiert')).toHaveCount(0);
+  await bothSchemes(page, '25d-practice-asked');
+
+  // ── Gespräch: the waveform in the bar, as in the chat; the bar becomes the talk row (#386) ──
+  await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
+  // .last(): the chat's waveform stays mounted under this screen.
+  await page.getByRole('button', { name: 'Mit Buddy sprechen' }).last().click();
+  // The conversation screen's row: "Tastatur" · the mic · "Nochmal vorlesen" — no field.
+  // .last(): the question above it reads again on a tap too (#434).
+  await expect(page.getByRole('button', { name: 'Nochmal vorlesen' }).last()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tastatur' }).last()).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toHaveCount(0);
+  // A conversation reads aloud too: the speaker says so.
+  await expect(readOn).toHaveAttribute('aria-checked', 'true');
+  // Gespräch means the same as on /talk: once the question has been read, the mic listens by
+  // itself — no first tap (#386).
+  const listening = page.getByRole('button', { name: 'Aufnahme stoppen' });
+  await expect(listening).toBeVisible();
+  // The mic stands in the middle of the screen, like on the conversation screen.
+  const mic = await listening.boundingBox();
+  const width = page.viewportSize()!.width;
+  expect(Math.abs(mic!.x + mic!.width / 2 - width / 2), 'the mic is centred').toBeLessThan(2);
+  // Light and at night: the row, the reply and the drawing share the room (#286).
+  await bothSchemes(page, '27-practice-voice-mode');
+  // "Tastatur": back to the input bar, and silent again — she never switched Vorlesen on.
+  await page.getByRole('button', { name: 'Tastatur' }).last().click();
+  await page.unroute('**/v1/voice/speech');
+  await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toBeVisible();
+  await expect(readOff).toHaveAttribute('aria-checked', 'false');
+  // Vorlesen on in practice, still on at Buddy: one setting, one switch, two heads.
+  await readOff.click();
+  await page.getByRole('button', { name: 'Übung beenden' }).click();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
+  const readAloudOn = page.getByRole('switch', { name: 'Vorlesen ist an' });
+  const readAloudOff = page.getByRole('switch', { name: 'Vorlesen', exact: true });
+  await expect(readAloudOn).toHaveAttribute('aria-checked', 'true');
+  // The chat keeps its one input bar: no voice-first bar beside it (#386).
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tastatur' })).toHaveCount(0);
+  // Light and at night: the bar with the speaker and the waveform (#386).
+  await bothSchemes(page, '26-buddy-voice-mode');
+  // And it is no longer a second place to look.
+  await page.getByRole('button', { name: 'Mehr' }).click();
+  await expect(page.getByRole('button', { name: 'Vorlesen ist an' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Schließen' }).click();
+  // Off and on again from the head itself, one tap each way.
+  await readAloudOn.click();
+  await expect(readAloudOff).toHaveAttribute('aria-checked', 'false');
+  await readAloudOff.click();
+  await expect(readAloudOn).toHaveAttribute('aria-checked', 'true');
+  await readAloudOn.click();
+  await expect(readAloudOff).toHaveAttribute('aria-checked', 'false');
+
   // ── Conversation mode: she speaks, Buddy answers aloud, in the same conversation ──
   // (A fake microphone; in the browser there is no pause detection, so she taps when done.)
   await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
@@ -582,19 +585,12 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(
     page.getByText('Diese Woche steht noch nichts an – magst du etwas üben?').last(),
   ).toBeVisible();
-  await shot(page, '33-talk-answer');
-  // The same at night: the bar with the speaker and the waveform (#386).
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '33b-talk-answer-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  // Light and at night: the bar with the speaker and the waveform (#386).
+  await bothSchemes(page, '33-talk-answer');
   await page.getByRole('button', { name: 'Beenden' }).last().click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   // The same conversation: what was said by voice is in the chat.
   await expect(page.getByText('Was steht diese Woche an?')).toBeVisible();
-
-  // What the app's own stopwatch measured on the way (issue #66): starting an offered
-  // practice and checking an answer are the two taps the owner called slow.
-  await recordPerf(page, 'modes');
 });
 
 /**
@@ -782,10 +778,7 @@ test('an order: tap in order, tap again to take back (issue #228)', async ({ pag
   await open(STEP[1]!).click();
   await open(STEP[3]!).click();
   await open(STEP[2]!).click();
-  await shot(page, '37-order-placed');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '37b-order-placed-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '37-order-placed');
   await check.click();
   // Code found the place: the first two are right.
   await expect(page.getByText("Bis Schritt 2 stimmt's", { exact: false })).toBeVisible();
@@ -803,12 +796,9 @@ test('an order: tap in order, tap again to take back (issue #228)', async ({ pag
   for (const n of ['-12', '-3', '0,5', '3 Viertel', '2', '17', '105', '1000']) {
     await page.getByRole('button', { name: `${n}, noch ohne Platz` }).click();
   }
-  await shot(page, '39-order-eight');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '39b-order-eight-night');
-  // She types next: the switch back lands first (`setScheme`, issue #443 — the full walkthrough
+  // She types next: the switch back lands first (`bothSchemes`, issue #443 — the full walkthrough
   // of 04.10. lost her words into the field being replaced).
-  await setScheme(page, 'light');
+  await bothSchemes(page, '39-order-eight');
   // ── Her question beside the board (issue #402, report #388 §4) ──
   // "Prüfen" stands in the bar's pill; once she has typed a question "Senden" takes its place.
   // Off the task, the tutor steers back and offers to keep it: one tap, and Buddy brings it up
@@ -823,10 +813,7 @@ test('an order: tap in order, tap again to take back (issue #228)', async ({ pag
   await shot(page, '39j-order-eight-offered');
   await page.getByRole('button', { name: 'Merk ich mir für nachher' }).click();
   await expect(page.getByText('Gemerkt')).toBeVisible();
-  await shot(page, '39k-order-eight-asked');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '39l-order-eight-asked-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '39k-order-eight-asked');
   await check.click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -874,10 +861,7 @@ test('a table to fill in: Enter walks the gaps, each cell checked on its own (is
   expect(tableKb?.spacerAbove, 'table @kb: the free room above the table').toBe(true);
   expect(tableKb?.actionLowest, 'table @kb: "Prüfen" lowest').toBe(true);
   await page.setViewportSize(PHONES[0]);
-  await shot(page, '60-table-filled');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '60b-table-filled-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '60-table-filled');
   await tableCheck.click();
   await expect(
     page.getByText('3 von 4 Feldern stimmen. Schau nochmal bei „Summe“ / „kein Hund“.'),
@@ -895,10 +879,7 @@ test('a table to fill in: Enter walks the gaps, each cell checked on its own (is
   await cell('Reihe 1, Stein 1').fill('20');
   await cell('Reihe 2, Stein 2').fill('12');
   await cell('Reihe 3, Stein 1').fill('3');
-  await shot(page, '62-table-wall');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '62b-table-wall-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '62-table-wall');
   await tableCheck.click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -915,15 +896,7 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   // every `shot` below fails if the parts would have to be scrolled (`scroll-parts` is not a
   // scroll area fit.ts allows). That is the measurement behind MATCH_* in contracts/structured.ts.
   await onboardChild(page);
-  await page.emulateMedia({ colorScheme: 'light' });
   await page.setViewportSize(PHONES[0]);
-  /** Both colour schemes of the same moment; the switch rebuilds the tree, the draft keeps it. */
-  const both = async (name: string) => {
-    await shot(page, name);
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await shot(page, `${name}-night`);
-    await page.emulateMedia({ colorScheme: 'light' });
-  };
   await page.getByLabel('Schreib Buddy …').fill('Lass uns Verfassungsorgane zuordnen');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('ordne mal zu, wer was macht', { exact: false })).toBeVisible();
@@ -938,7 +911,7 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   };
   const check = page.getByRole('button', { name: 'Prüfen' });
   await expect(check).toBeDisabled();
-  await both('39b-match-pairs-start');
+  await bothSchemes(page, '39b-match-pairs-start');
   await pair('Bundespräsident', 'unterschreibt die neuen Gesetze');
   // The one line of instruction has gone; the pair says itself in words.
   await expect(page.getByText('Tippe links eins an, dann sein Gegenstück rechts.')).toHaveCount(0);
@@ -953,13 +926,13 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   // Two swapped on purpose: Bund and Land.
   await pair('Bundesregierung', 'führt die Gesetze des Landes aus');
   await pair('Landesregierung', 'führt die Gesetze des Bundes aus');
-  await both('39c-match-pairs');
+  await bothSchemes(page, '39c-match-pairs');
   await check.click();
   // Code counted: two of four. Which ones, it says only on a second miss. The reply and the
   // whole board stand on the screen together — that is the case the maxima are measured for.
   await expect(page.getByText('2 von 4 Paaren stimmen schon.')).toBeVisible();
   await expect(page.getByText('2 von 4 Paaren stimmen schon.')).toBeInViewport();
-  await both('39e-match-feedback');
+  await bothSchemes(page, '39e-match-feedback');
   // One tap on a pair dissolves it; she pairs the two again, right this time.
   await page
     .getByRole('button', { name: 'Bundesregierung, Paar 3 mit führt die Gesetze des Landes aus' })
@@ -989,7 +962,7 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   // A group only takes something while she holds it.
   await expect(group('Landesverwaltung')).toBeDisabled();
   // The tallest moment of a grouping: everything still above the group rows.
-  await both('39f0-match-groups-start');
+  await bothSchemes(page, '39f0-match-groups-start');
   // One in, and it stands IN the Stadtverwaltung row; one tap there takes it back out again.
   const sorted = (thing: string, name: string) =>
     row(name).getByRole('button', { name: `${thing}, in ${name}`, exact: true });
@@ -1011,7 +984,7 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
       await expect(sorted(thing, name)).toBeVisible();
     }
   }
-  await both('39f-match-groups');
+  await bothSchemes(page, '39f-match-groups');
   // The theme switch rebuilt the tree; every element still stands in its group (the draft).
   await expect(sorted('Verträge machen', 'Bundesverwaltung')).toBeVisible();
   await check.click();
@@ -1040,10 +1013,7 @@ test('pictures as options: four graphs two by two, a tap answers, holding opens 
     page.getByRole('button', { name: new RegExp(`^${letter}: Graph durch`) });
   for (const letter of ['A', 'B', 'C', 'D']) await expect(graphOption(letter)).toBeVisible();
   await expect(page.getByText('y =', { exact: false })).toHaveCount(0);
-  await shot(page, '40-figure-choices');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '40b-figure-choices-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '40-figure-choices');
   // Held, not tapped: the picture opens large, and nothing is answered.
   await graphOption('B').hover();
   await page.mouse.down();
@@ -1062,10 +1032,7 @@ test('pictures as options: four graphs two by two, a tap answers, holding opens 
   // Her tap is not echoed as a bubble while the question is open (issue #288): the tile says it,
   // and the text behind a picture — its formula — never shows.
   await expect(page.getByText('y =', { exact: false })).toHaveCount(0);
-  await shot(page, '42-figure-choice-tried');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '42b-figure-choice-tried-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '42-figure-choice-tried');
   await graphOption('C').click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -1078,19 +1045,14 @@ test('pictures as options: four graphs two by two, a tap answers, holding opens 
 test('note lines: read four, then write one — set with a tap, move with Höher/Tiefer (#275)', async ({
   page,
 }) => {
+  // Nine stops, each at both sizes, light and dark: 2.4 min before issue #464, 2.7 min of the
+  // 3 min default once every switch back to light waited for the app (`bothSchemes`).
+  test.setTimeout(300_000);
   await onboardChild(page);
   await page.getByLabel('Schreib Buddy …').fill('Lass uns Noten üben');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Noten lesen und zum Schluss', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: "Los geht's" }).last().click();
-
-  /** Both phones in light, then both in the night palette. */
-  const both = async (name: string) => {
-    await shot(page, name);
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await shot(page, `${name}-night`);
-    await page.emulateMedia({ colorScheme: 'light' });
-  };
 
   // ── Lesen: the server wrote question, drawing and options from the task ──
   await expect(page.getByText('Wie heißt diese Note?')).toBeVisible();
@@ -1100,13 +1062,13 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   await expect(page.getByTestId('question-figure').locator('svg').first()).toBeVisible();
   // Ihr Name IST die Antwort: kein Name an der Note (#312, Code erzwingt es).
   await expect(figureNames).toHaveCount(0);
-  await both('70-staff-name-note');
+  await bothSchemes(page, '70-staff-name-note');
   await page.getByRole('button', { name: 'C', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 
   await expect(page.getByText('Welcher Notenwert ist das?')).toBeVisible();
-  await both('71-staff-name-value');
+  await bothSchemes(page, '71-staff-name-value');
   await page.getByRole('button', { name: 'punktierte Achtelnote', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -1114,13 +1076,13 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   await expect(page.getByText('Welches Intervall', { exact: false })).toBeVisible();
   // Beim Intervall sind die Noten gegeben und tragen ihre Namen; gefragt ist der Abstand (#312).
   await expect(figureNames).toHaveText(['E', 'G']);
-  await both('72-staff-interval');
+  await bothSchemes(page, '72-staff-interval');
   await page.getByRole('button', { name: 'kleine Terz', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 
   await expect(page.getByText('In welcher Taktart', { exact: false })).toBeVisible();
-  await both('73-staff-time');
+  await bothSchemes(page, '73-staff-time');
   await page.getByRole('button', { name: '3/4', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -1130,7 +1092,7 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   const surface = page.getByTestId('answer-staff');
   const check = page.getByRole('button', { name: 'Prüfen' });
   await expect(check).toBeDisabled();
-  await both('74-staff-write-empty');
+  await bothSchemes(page, '74-staff-write-empty');
 
   // Every control on the surface is a real touch target: ≥ 44 pt both ways, at both widths
   // (CLAUDE.md §Design system). The 11-pt rows of #226 are gone.
@@ -1166,7 +1128,7 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   // A finger a line too low (F instead of G) is no new attempt: "Höher" moves THAT note.
   await tapAt(1, -3);
   await bar(1, 'E als Viertelnote, F als Viertelnote');
-  await both('75-staff-write-moving');
+  await bothSchemes(page, '75-staff-write-moving');
   await page.getByRole('button', { name: 'Höher' }).click();
   await bar(1, 'E als Viertelnote, G als Viertelnote');
   await page.getByRole('radio', { name: 'halbe Note', exact: true }).click();
@@ -1179,12 +1141,12 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   // On purpose one too high (G instead of F): the check names the place.
   await tapAt(2, 5);
   await bar(2, 'A als Viertelnote, Viertelpause, G als halbe Note');
-  await both('76-staff-write-full');
+  await bothSchemes(page, '76-staff-write-full');
   await check.click();
   await expect(
     page.getByText('Die ersten 5 von 6 Zeichen stimmen', { exact: false }),
   ).toBeVisible();
-  await both('77-staff-write-feedback');
+  await bothSchemes(page, '77-staff-write-feedback');
   // With Buddy's reply in the conversation, the keys still sit above „Prüfen", not under it:
   // the tightest moment of this screen, on the smallest phone.
   await page.setViewportSize({ width: 360, height: 740 });
@@ -1202,21 +1164,8 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   await bar(2, 'A als Viertelnote, Viertelpause, F als halbe Note');
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
-  await both('78-staff-write-right');
+  await bothSchemes(page, '78-staff-write-right');
 });
-
-/**
- * One state at both phone sizes, light and dark (fit and contrast checked by `shot`). Back in
- * light only once the switch has landed (`setScheme`): the "16" typed right after it into the
- * sum question went into the field being replaced, and "Prüfen" stayed off (issue #443).
- */
-async function bothSchemes(page: Page, name: string): Promise<void> {
-  for (const scheme of ['light', 'dark'] as const) {
-    await setScheme(page, scheme);
-    await shot(page, `${name}-${scheme}`);
-  }
-  await setScheme(page, 'light');
-}
 
 /**
  * On to the next question. A right answer at the first try may move on by itself; otherwise
@@ -1514,10 +1463,7 @@ test('a cloze: five gaps typed, a word bank, the longest that fits; each gap che
   await word('fährt').click();
   await expect(bankGap(1, 'isst')).toBeVisible();
   await expect(page.getByRole('button', { name: 'isst, schon eingesetzt' })).toBeDisabled();
-  await shot(page, '42-cloze-bank');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '42b-cloze-bank-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '42-cloze-bank');
   const banked = page.waitForRequest((r) => r.url().endsWith('/answer') && r.method() === 'POST');
   await check.click();
   expect((await banked).postDataJSON()).toMatchObject({ via: 'tapped' });
@@ -1546,10 +1492,7 @@ test('a cloze: five gaps typed, a word bank, the longest that fits; each gap che
     await page.getByLabel(`Lücke ${i + 1} von 8`, { exact: true }).fill(verb);
   }
   await page.getByLabel('Lücke 8 von 8', { exact: true }).blur();
-  await shot(page, '44-cloze-eight');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '44b-cloze-eight-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '44-cloze-eight');
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -1571,11 +1514,8 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   const taskCard = page.getByTestId('drill-task');
   await expect(taskCard).toBeVisible();
   await expect(page.getByText('Aufgabe 1 von 20')).toBeVisible();
-  await shot(page, '40-drill-task');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '40b-drill-task-night');
-  // Her digits are tapped right after the switch back: it lands first (`setScheme`, #443).
-  await setScheme(page, 'light');
+  // Her digits are tapped right after the switch back: it lands first (`bothSchemes`, #443).
+  await bothSchemes(page, '40-drill-task');
   // Vorlesen in the round's head too (#434): the task is read in words, and a tap on it reads it
   // again. Buddy's voice as a short silence (the dev stack has none).
   await voiceAsSilence(page, 300);
@@ -1588,10 +1528,7 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   const reread = spoken();
   await taskCard.getByRole('button', { name: 'Nochmal vorlesen' }).click();
   expect(((await reread).postDataJSON() as { text: string }).text).toBe(said);
-  await shot(page, '40c-drill-read-aloud');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '40d-drill-read-aloud-night');
-  await setScheme(page, 'light');
+  await bothSchemes(page, '40c-drill-read-aloud');
   await page.getByRole('switch', { name: 'Vorlesen ist an' }).last().click();
   await page.unroute('**/v1/voice/speech');
 
@@ -1620,17 +1557,11 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
     if (n === 1) {
       await expect(page.getByTestId('drill-last')).toContainText('Das war:');
       await expect(page.getByTestId('drill-last')).toContainText(`= ${value}`);
-      await shot(page, '42-drill-was');
-      await page.emulateMedia({ colorScheme: 'dark' });
-      await shot(page, '42b-drill-was-night');
-      await setScheme(page, 'light');
+      await bothSchemes(page, '42-drill-was');
     }
     if (n === 2) {
       await expect(page.getByTestId('drill-last')).toContainText('Richtig:');
-      await shot(page, '42c-drill-right');
-      await page.emulateMedia({ colorScheme: 'dark' });
-      await shot(page, '42d-drill-right-night');
-      await setScheme(page, 'light');
+      await bothSchemes(page, '42c-drill-right');
     }
     if (n < 19) {
       // No pause: the next task is on the card (or the same numbers the other way round
@@ -1645,10 +1576,7 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   // One sentence about a row — never a number of mistakes (CLAUDE.md rule 6).
   await expect(line).not.toContainText(/\d+\s*(von|Fehler|falsch)/);
   await expect(line).toContainText(/(sitzt|sitzen|bleiben wir dran)/);
-  await shot(page, '43-drill-done');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '43b-drill-done-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '43-drill-done');
   // "Noch eine Runde": the same range, new tasks, again without a model.
   await page.getByRole('button', { name: 'Noch eine Runde' }).click();
   await expect(page.getByText('Aufgabe 1 von 20')).toBeVisible();
@@ -1665,12 +1593,9 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   await page.getByRole('button', { name: 'Bruchstrich' }).click();
   await type('4');
   await expect(page.getByLabel('Deine Antwort: 3/4')).toBeVisible();
-  await shot(page, '44-drill-fraction');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '44b-drill-fraction-night');
-  // The theme switch rebuilt the screen; what she typed is a draft and still there.
+  await bothSchemes(page, '44-drill-fraction');
+  // The theme switches rebuilt the screen; what she typed is a draft and still there.
   await expect(page.getByLabel('Deine Antwort: 3/4')).toBeVisible();
-  await page.emulateMedia({ colorScheme: 'light' });
   await page.getByRole('button', { name: 'Beenden' }).click();
 
   // The longest name a round has stays on one line, and the longest task fits.
@@ -1729,9 +1654,9 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
     );
   }
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '40b-test-clock-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await setScheme(page, 'dark');
+  await shot(page, '40-test-clock-dark');
+  await setScheme(page, 'light');
   await page.getByRole('button', { name: 'Kohlenstoffdioxid', exact: true }).click();
   await expect(page.getByText("Notiert – weiter geht's.")).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -1741,10 +1666,7 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
   await page.reload();
   await expect(page.getByText('noch 5 Min.', { exact: true })).toBeVisible();
   await expect(page.getByText('Schau in Ruhe, was du noch schaffst.')).toBeVisible();
-  await shot(page, '41-test-clock-five');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '41b-test-clock-five-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '41-test-clock-five');
   await page.getByRole('button', { name: 'In den Chloroplasten', exact: true }).click();
   await expect(page.getByText("Notiert – weiter geht's.")).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -1761,15 +1683,12 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
   await expect(page.getByText('Was offen blieb, zählt nicht als falsch.')).toBeVisible();
   await expect(page.getByText('3 · Nicht beantwortet')).toBeVisible();
   await expect(page.getByText('Lösung: Traubenzucker')).toBeVisible();
-  await shot(page, '42-test-time-up');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '42b-test-time-up-night');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await bothSchemes(page, '42-test-time-up');
   // The end of the review: the question she did not get to, its solution, nothing marked wrong.
   // Shot per phone after a swipe to the end (`shot` re-lays the page out at each size, which
   // puts a list back to its top); the fit itself was checked at 42 above.
   for (const scheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme: scheme });
+    await setScheme(page, scheme);
     for (const phone of PHONES) {
       await page.setViewportSize(phone);
       await page.mouse.move(phone.width / 2, phone.height * 0.6);
@@ -1786,7 +1705,7 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
       });
     }
   }
-  await page.emulateMedia({ colorScheme: 'light' });
+  await setScheme(page, 'light');
   await page.setViewportSize(PHONES[0]);
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
