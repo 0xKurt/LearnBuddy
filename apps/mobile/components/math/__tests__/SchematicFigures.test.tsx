@@ -1,6 +1,6 @@
 // A labelled picture next to a question (issue #252): every drawing of the library draws, the
-// numbers stand on the parts asked for and never their names, and what a screen reader hears is
-// the drawing and how many parts are numbered — naming them is the task.
+// numbers stand beside the parts asked for and never their names, and what a screen reader hears
+// is the drawing and how many parts are numbered — naming them is the task.
 //
 // Parts, names and which part a finger means are
 // packages/shared-math/src/__tests__/schematics.test.ts; the drawing at 360 and 390 pt, light and
@@ -34,7 +34,15 @@ describe('SchematicBody', () => {
     },
   );
 
-  it('writes the numbers 1, 2, 3 on the parts, never a name', async () => {
+  it('draws what stands on a part without being one: the white symbols, the walker', async () => {
+    const { container } = renderInApp(
+      <SchematicBody figure={{ type: 'schematic', d: 'signs', n: [], ask: 0 }} width={300} />,
+    );
+    // Six signs, each its outline and its fill; then the white marks, then the black ones.
+    await waitFor(() => expect(container.querySelectorAll('path')).toHaveLength(6 * 2 + 2));
+  });
+
+  it('writes the numbers 1, 2, 3 beside the parts, never a name', async () => {
     const { container } = renderInApp(<SchematicBody figure={labelled} width={300} />);
     await waitFor(() => expect(container.textContent ?? '').toBe('123'));
   });

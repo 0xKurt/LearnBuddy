@@ -843,8 +843,8 @@ export default function PracticeScreen() {
                         minHeight={cardGrowTo > 0 ? cardNatural + cardGrowTo : undefined}
                         dense={staff !== null}
                         answer={filling}
-                        // The text she reads it from, above the question (Leseverständnis, #233).
-                        passage={item.passage}
+                        // What she answers from: a reading text (#233), a task's situation (#297).
+                        stimulus={item}
                         answerBoard={open && structured}
                         // While Vorlesen is on, a tap on the question reads it again (#434).
                         {...readAgain}

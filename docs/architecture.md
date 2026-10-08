@@ -581,7 +581,8 @@ everything the injection did not carry.
 
 `modules/buddy/check.ts`. Wake-ups are jobs (`reason`: `exam_countdown` 5/3/1 days before at the
 start of the preferred window, `exam_followup` the day after, `material_ready`,
-`session_finished`, `step_due`, `checkin_requested`, `routine`). Gates, cheapest first:
+`session_finished`, `step_due`, `checkin_requested`, `routine`, and Buddy's two review moments
+`review_next_day`, `review_due`). Gates, cheapest first:
 
 1. one worker per learner (lease on `buddy_settings`);
 2. agreed reminders → fixed template (i18n), no model. An agreed reminder never vanishes
@@ -616,6 +617,30 @@ count ("Magst du „…“ kurz nochmal durchgehen? …"). The sentence is Buddy
 consent it waits in the app, and after "Seltener schreiben" it never goes to the phone. While she is
 in the app it waits 20 minutes, like every unasked look (`inApp.ts`). A wake-up that runs twice says
 it once.
+
+**After a break** (issue #446, the second moment, same module and the same way to say it): what has
+fallen due for review is refreshed before it slips away. Every practice that ends
+(`session_finished`) schedules one wake-up (`review_due`) for the start of her preferred window three
+days later, in her zone — one per day she practised. When it runs, code alone decides, in this order,
+and the job's result names the reason:
+
+1. a break: she has not answered a single question since (two whole days off) — `no_break`;
+2. no test (an active goal with a date) today or within 14 days: then the countdown and the daily
+   look prepare for it — `test_ahead` (`plan.ts` `testAhead`, the routine's horizon);
+3. at most once every three days: no review offer of Buddy's (`review:` topics, the day after a sheet
+   included) on this or the two days before, in her zone — `too_soon`; a rerun finds its own offer here;
+4. nothing planned for her today (an agreed step, a practice for a test, a sheet's review) —
+   `planned_today`;
+5. questions of hers due for review (FSRS `due` reached by the app clock; never one not practised
+   yet, never homework) — `nothing_due`. `selectPracticeItems` narrows to them with `dueOnly`.
+
+Then it prepares a short practice of those questions ("Kurz auffrischen", 5 minutes) and says one
+sentence without a count or a day ("Magst du kurz auffrischen, was du zuletzt geübt hast? …"). It is
+Buddy's own initiative at the lowest relevance worth saying (0.6, `MIN_RELEVANCE`): without consent,
+paused or after "Seltener schreiben" it waits in the app and never reaches the phone; it changes no
+setting. Decision row and `bumpContext` are in the same transaction, so a model decision taken before
+it lands is stale. A break that goes on after it brings no second offer; the next practice starts the
+next wake-up.
 
 A background check never replaces practice she asked for in the chat, and the message it posts
 carries its decision, so what Buddy did in the background appears in the thread with its cards
@@ -778,7 +803,8 @@ nothing the server does not report about itself. GitHub disables scheduled workf
 `modules/buddy/events.ts`, table `buddy_events` (`0007_events.sql`). Something that just
 happened — `material_ready`, `homework_ready`, `session_finished` — is written once per (type,
 row), in the same transaction as the change, with the app clock. Its subscribers decide what
-follows: `material_ready` and `session_finished` wake Buddy for a check (the job carries the
+follows: `material_ready` also schedules the review the day after, `session_finished` the look for a
+break three days later (§Proactivity); both wake Buddy for a check (the job carries the
 `event_id`, the check marks the event handled — `handled_at` is an audit field for the export
 and for reading the log; nothing re-reads it to re-drive an event: a wake-up job that dies is
 handled by its job's terminal state, `scheduler/terminal.ts`); `homework_ready` is only recorded
@@ -3230,6 +3256,46 @@ prints none — or from a text Buddy writes himself (a `read` run, #368, below).
   not count). Syllables and an error text are refused there — neither is a sentence of the text.
   The sentence is its evidence: the one hint names its lines, and once closed she is shown them.
 
+### Aufgaben mit Teilaufgaben (issue #297, migration `0100_task_parts.sql`)
+
+A class test from grade 8 on asks **one situation and several subtasks** a), b), c) on it, the
+later ones building on the earlier results. The first step of #297 brings exactly that, for parts
+code can compute, with the **Folgefehler** German schools mark: a wrong a) carried on correctly in
+b) makes b) right.
+
+- **Every part is an ordinary question** (`numeric`, `short`, `multiple_choice`) with its own key
+  and its own check — nothing is checked twice or in a second way (#296). What is new is one column,
+  `items.task_part` (`TaskPart`, `contracts/taskParts.ts`): the task's id (made by code), the part's
+  letter, how many parts the task has, the situation (`stem`) and, for a part that goes on from
+  earlier ones, `from` — arithmetic over their letters (`a * 0,15 + 12`). It is stored on **every**
+  part, as a reading text is (#233): a review brings one part back alone, with its situation.
+- **Regel 0 when writing** (`practice/taskParts.ts` `partTaskItems`): every part goes through
+  `usableItems`; one that does not hold costs the whole task (b without a is no task, its letters
+  would lie). Every `from` is recomputed with the earlier keys (the expression parser in `letters`
+  mode, `shared-math/expression.ts`) and must give its own key at the key's precision (D-1); a formula
+  that does not, names a later part, itself, no part, a part that is no number, or nothing earlier at
+  all, drops the task. The model never writes an id or a letter into a stored field (rule 2): parts
+  are lettered here in the order they come, the app gets an alias (`TaskPartView.ref`, `p1`, …).
+- **Folgefehler when answering** (`answer.ts` → `followsOn`): a part is first judged against its key
+  like any question. Only when that is not right, and only when an earlier part it builds on was
+  answered **wrong in this run**, code recomputes `from` with HER latest answers (a written path is
+  read at its last line, `9 + 3 = 12` at its last `=`) and compares again at the key's precision.
+  Then the part is `correct`, by rule, and the reply says what happened ("Richtig weitergerechnet –
+  mit deinem Ergebnis aus a) …"). Her a) stays wrong. A part answered before a), or brought back
+  alone by a review, has nothing of hers to follow: its key decides.
+- **On screen** (`QuestionCard` `stimulus`, `PartStem`): the situation above the question, the part's
+  letter before it, and the task's letters `a) · b) · c)` where the topic stands — where she is, never
+  a count of what is left (rule 6). While she types the situation keeps two lines and scrolls in
+  itself (the one text that may, rule 16) instead of folding away like a drawing: she types from its
+  numbers. No new route.
+- **In the generator**: `part_tasks` in practice and test runs (`SET_PROFILES.partTasks`), at most
+  two per run, after the structured forms, each part a stored question in order. The material is text
+  only in this step: a second figure union in the explain schema would grow it by a third (20 kB of
+  65 kB, measured 05.10.); figures, tables and data as material come after the schema budget is
+  measured with Vertex (#281).
+- **Next** (#297 plan): open parts (begründe, deute, beurteile) through key points (#258), operators
+  deciding the check; tasks in parts read from the photo; subjects beyond maths and physics.
+
 ### Charts (issues #245, #246)
 
 Line and climate charts, pies, box plots, histograms, scatter plots and population pyramids next to
@@ -3605,8 +3671,8 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
   "FR"); a typed question must be short with exactly one region marked and that region as the
   key; a tap question's key must be a region the map does not mark (the tap check, `tapProblem`)
   and big enough for a finger on the narrowest phone — a 24 pt target inside it or around its
-  label when the map is drawn in 320 × 330 pt (`regionTappable`, `REGION_TAP_BOX`; WCAG 2.2,
-  2.5.8). That room is real: the figure she answers in is capped at 45 % of what she sees
+  label when the map is drawn in 320 × 330 pt (`regionTappable` with `TAP_TARGET.map`,
+  `REGION_TAP_BOX`; WCAG 2.2, 2.5.8 — a picture asks a whole finger, §Labelled pictures). That room is real: the figure she answers in is capped at 45 % of what she sees
   (`boardCap`, lib/practice/visuals.ts — 333 pt on 360 × 740), so Germany, taller than
   wide, is drawn 244 pt wide there. Every Land and every continent is tappable; on the
   map of Europe only the larger countries are (Luxembourg, Belgium, the Balkans are named, not
@@ -3634,56 +3700,92 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
 ### Labelled pictures (issue #252)
 
 A drawing of the picture library — plant cell, animal cell, flower (section), plant, eye
-(section), tooth (section), insect, bicycle — with numbers on chosen parts. Buddy asks to label it
-("Beschrifte die Pflanzenzelle"), to name one numbered part ("Wie heißt Teil 3?") or to tap a part
-("Tippe auf den Zellkern", the tap mechanism above). Decided in #224: drawn by us, nothing
-licensed.
+(section), tooth (section), insect, bicycle (with the parts of the Verkehrssicherheits-Check:
+lights, reflectors, brakes, bell, rack), microscope, lab equipment, heart (section), ear
+(section), skeleton, organs, traffic signs, musical instruments, an Anlaut chart — with numbers
+beside it, joined to chosen parts. Buddy asks to label it ("Beschrifte die Pflanzenzelle"), to
+name one numbered part ("Wie heißt Teil 3?") or to tap a part ("Tippe auf den Zellkern", the tap
+mechanism above). Decided in #224: drawn by us, nothing licensed.
 
 - **Contract** (`packages/shared-types/src/contracts/schematic.ts`, in `ModelFigure`):
   `{ type: 'schematic', d, n: string[], ask }` — which drawing, the parts that carry the numbers
   1, 2, 3 … by name, the number asked (0: none). Never a shape. `FIGURE_RULES` lists every drawing
-  with its parts, generated from the library (`SCHEMATIC_PARTS`); the prompt versions are hashes
-  of what is sent (#425), so the rules change them themselves.
-- **Library** (code, in two files like the maps): `packages/shared-math/src/schematics.data.ts`
+  with its parts, generated from the library (`SCHEMATIC_PARTS`, a part too small for a finger
+  marked "\*": named, never tapped); the prompt versions are hashes of what is sent (#425), so the
+  rules change them themselves.
+- **Library** (code, in two halves like the maps): `packages/shared-math/src/schematics.data.ts`
   names every drawing and part — id, the five languages, other names a teacher accepts
   ("Nukleus"); small and static, the server and the tap mechanism resolve names with it.
-  `schematicShapes.data.ts` draws them, part by part in the same order: ellipses, rounded boxes,
-  polygons and strokes (`drawShapes.ts`, every outline one way round, a hole the other) in the
-  frame 1000 wide, each part's pastel tone (`figure.slices`) and the point its number points at
-  (`at`, set by hand). The app loads it with the first picture (`useSchematicShapes`, on
-  `lib/lazyModule.ts`) — the start bundle had 8 KB of its gzip budget left, the drawings would
-  have taken more. A part is a region like a Land (`regions.ts`, §Maps):
+  `schematicShapes.data.ts` draws them (the first part's drawings, and it gathers the body —
+  heart, ear, skeleton, organs — from `schematicBody.data.ts` and the things — microscope, lab,
+  signs, instruments, Anlaut pictures — from `schematicThings.data.ts`), part by part in the same
+  order: ellipses, rounded boxes, polygons, smooth outlines and strokes (`drawShapes.ts`, every
+  outline one way round, a hole the other; `smooth`/`curve` are Catmull–Rom through hand-set
+  points) in the frame 1000 wide, each part's pastel tone (`TONE`, `figure.slices`) and the point
+  its number points at (`at`, set by hand). Each drawing is as the schoolbook prints it: the heart
+  in section from the front, the right heart blue on the left of the picture, the left heart red,
+  the vessels where they leave and enter, the valves between atrium and chamber, the septum; the
+  ear from the pinna to the nerve, the middle ear drawn larger than life; the skeleton from the
+  front, palms forward (radius on the thumb's side, fibula outside the shin); the organs where they
+  lie (liver under the right lung, stomach under the left, the small intestine coiled in the frame
+  of the large one); the microscope from the side with its light path; a set of things (lab,
+  signs, instruments, Anlaut) in two columns, so every number reaches its thing from the side.
+  What is drawn on a part without being one — a sign's white symbol, the walker of the crossing,
+  a fish's eye — is a **mark** (`SchematicShape.marks`, in the paper's colour or the ink): a tap
+  on it means the part below. The app loads the drawings with the first picture
+  (`useSchematicShapes`, on `lib/lazyModule.ts`) — the start bundle had 8 KB of its gzip budget
+  left, the drawings would have taken more. A part is a region like a Land (`regions.ts`, §Maps):
   names, winding number, which part a finger means — the topmost under it, or a small one by its
-  point —, what is tappable. Parts too small for a finger on 360 × 740 (pupil, an insect's eye,
-  the handlebar, the bell) can be named, not tapped.
+  point. The names stay in the start bundle (the server and the tap's words read them
+  synchronously).
+- **A whole finger** (`TAP_TARGET` in `regions.ts`): a part may be asked for by a tap only when, in
+  the smallest room (`REGION_TAP_BOX`), a 44 pt target (`TOUCH`) fits inside it or around its
+  point, no other part's point nearer than 44 pt. We draw the pictures, so we draw them for a
+  finger; a map keeps WCAG's 24 pt, its countries are as small as they are. What stays below it
+  can be named, not tapped — listed in `schematics.test.ts`: the flower's receptacle, stamen,
+  ovary, style and stigma, the eye's cornea, lens, iris and pupil, an insect's head and eye, the
+  bicycle's rack, handlebar, bell, lights, reflectors and brakes, the skeleton's breastbone,
+  collarbone, shin and fibula.
 - **Rule 0, generation** (`apps/api/src/modules/practice/schematicCheck.ts`): a labelling draft
   (two or more numbers, none asked, no tap) becomes one question per number, written by code —
   "Pflanzenzelle: Wie heißt Teil 2?" in the question's language, the library's name as the key
   (`labelQuestions`, before the checks). Then, in `FIGURE_CHECKS`: every numbered part must be one
   of the drawing (stored as its id), each once; a typed question is short and its key is the part
-  carrying the number asked; a tap asks no number and its key is a part a finger can hit
-  (`regionTappable`). Anything else — what a part does, a part the drawing does not have — is
+  carrying the number asked; a tap carries no numbers and asks none (numbers inset the drawing,
+  below) and its key is a part a whole finger can hit (`regionTappable` with
+  `TAP_TARGET.picture`). Anything else — what a part does, a part the drawing does not have — is
   dropped.
 - **Rule 0, grading:** a tapped part exactly (`tapVerdict`); a typed name by the library
   (`namedRuleVerdict` in `tapCheck.ts`, shared with the map): "nucleus", "Nukleus" and
   "Zellkern" are one part. A tapped part stands in the thread in her language
   (`tappedAnswerText`, answer.ts — the same path as the map's regions).
 - **Screen:** `components/math/SchematicFigures.tsx` draws each part outline-under-fill (the tubes
-  of a frame show no line inside the part) and a numbered badge off each numbered part with a
-  leader line. Tapping is `TapFigure` with the map's `case` in `tapLayout` (`TapShapes`: the
-  maps' and the pictures' shapes, each once loaded).
+  of a frame show no line inside the part), then the marks. The numbers stand as a schoolbook
+  prints them: in a column left and right of the drawing, each joined to its part by a leader
+  line, none on the drawing (`lib/math/schematicLayout.ts` on `columnLabels` in
+  `shared-math/src/labelBoxes.ts`: each to the side its leader runs freest, as near its part's
+  height as its neighbours allow; two leaders of a column that would cross trade places, and a
+  number whose leader still runs over another part's point or crosses another leader tries the
+  other side while that leaves fewer). `placeLabels` (#418) is not used here: it sets a label
+  right beside its point, on the very parts being labelled. With numbers the drawing is inset by
+  a column on each side. Tapping is `TapFigure` with the map's `case` in `tapLayout` (`TapShapes`:
+  the maps' and the pictures' shapes, each once loaded), in the same frame (`schematicLayout`).
   The line under it says "Teil gewählt"; the part's name is only in `aria-valuetext` (#409).
   `describeSchematic` says the drawing and how many parts are numbered, never which.
 - Tests: `packages/shared-math/src/__tests__/schematics.test.ts` (names in five languages, every
-  name unique per drawing, every part reached at its point, tappability, tap round trip),
-  `lib/math/__tests__/tapLayout.test.ts`, `TapFigure.test.tsx`, `SchematicFigures.test.tsx`,
-  `schematic-figures.int.test.ts` ("Zelle beschriften" gives five questions without a word from
-  the model; stored or dropped; verdicts without a model; the thread in her language; another
-  learner); walkthrough `tests/web/tap-figures.spec.ts` (the cell labelled, every part of it
-  tapped, the bicycle's frame; scenario `testing/scenarios/schematic.ts`).
-- **Not built here:** the other drawings of the plan (microscope, skeleton, heart, ear, lab
-  equipment, traffic signs …: eight of the first fifteen are done); matching numbers to names
-  (#229); tapping the labels of a photographed sheet (`HOTSPOT_BILD`, extraction of label regions).
+  name unique per drawing, every part reached at its point, which parts a whole finger fits,
+  marks mean their part, tap round trip), `lib/math/__tests__/schematicLayout.test.ts` (every
+  drawing, every six parts in a row and every other part, 312 and 342 pt: each number beside the
+  drawing, in the room, none on another, no two leaders crossing, none running over another
+  number's point), `lib/math/__tests__/tapLayout.test.ts`, `TapFigure.test.tsx`,
+  `SchematicFigures.test.tsx`, `schematic-figures.int.test.ts` ("Zelle beschriften" gives five
+  questions without a word from the model; stored or dropped; every drawing of the second part
+  numbered and tapped, graded by code; the thread in her language; another learner); walkthrough
+  `tests/web/tap-figures.spec.ts` (the cell labelled, every part of it tapped, the bicycle's
+  frame, every traffic sign tapped; every drawing of the second part numbered and every part of it
+  tapped, shot at 89-library-…; scenario `testing/scenarios/schematic.ts`).
+- **Not built here:** matching numbers to names (#229); tapping the labels of a photographed sheet
+  (`HOTSPOT_BILD`, extraction of label regions).
 
 ### Circuits, logic gates and the colour wheel (issue #261)
 
@@ -4462,8 +4564,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   where a spoken answer can be the whole answer: a typed answer (not a Diktat, not a path written
   line by line, not a line that belongs to a board) and options with letters. Boards, the note
   line, the fraction bar, tapped words, Kopfrechnen and flash cards have no spoken answer and no
-  waveform; the speaker stands in the question screen's head only (`app/practice/[id].tsx`), not in
-  Kopfrechnen's or the flash cards', which read nothing aloud today (open, #434). One listening
+  waveform; the speaker stands in every practice head (`components/practice/HeadActions.tsx`): the
+  question screen's, Kopfrechnen's and the flash cards', which read their task and front too but
+  never listen (#434). One listening
   belongs to one turn (`lib/speech/turnGuard.ts`): answering another way (a tap, the screen locking
   while it checks), Buddy starting to speak or the next question cancels a running mic and drops
   its late text. Questions carry the language they are written in (`prompt_lang`, also for

@@ -1,40 +1,36 @@
-// The Ausnahmelisten only shrink (issue #313, docs/engineering-guards.md). Every guard compares
-// the code with its list — this compares the LISTS with the base branch, so a list cannot be
-// made to grow quietly to let new debt in.
+// The Ausnahmelisten only shrink (issue #313, docs/engineering-guards.md). The lists the guards
+// measure on main (base.mjs, issue #452) cannot grow by themselves — more than main has is red
+// in `pnpm lint` — except through a grant in tools/guards/growth/. This makes every grant, and
+// every list that is still kept by hand, answer for itself against main, so nothing grows
+// quietly.
 //
-//   node tools/guards/no-growth.mjs <base-ref>      e.g. origin/main (CI, pull requests)
+//   node tools/guards/no-growth.mjs <base-branch>      e.g. origin/main (CI, pull requests)
 //
-// Growth is red unless a commit in <base-ref>..HEAD says why, with a line
+// Growth is red unless a commit since the base says why, with a line
 //
 //   Ausnahmeliste-Zuwachs: #<issue> <reason>
 //
 // (issue #313 step 3: PRs that were finished before the guards may still land, with their
-// entries on the list — visibly, never silently).
+// debt — visibly, never silently).
 //
-// Compared: the JSON lists in tools/guards/baselines/ and the drawing registry's `bestand`
-// (LISTS below), and the lists that source tests keep themselves (SOURCE_LISTS, issue #296).
+// Compared: this branch's grants, the lists kept by hand (LISTS below: the bundle budget, the
+// drawing registry's `bestand`) and the lists that source tests keep themselves (SOURCE_LISTS,
+// issue #296).
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { activeGrants, baseSha, GROWTH_DIR } from './base.mjs';
 import { REPO_ROOT } from './measure.mjs';
 import { fileOf, SOURCE_LISTS } from './source-lists.mjs';
 
 /**
- * A list as `entry → size`: a larger size or a new entry is growth.
+ * A list kept by hand, as `entry → size`: a larger size or a new entry is growth.
  * @type {Record<string, (json: Record<string, unknown>) => Record<string, number>>}
  */
 export const LISTS = {
-  'tools/guards/baselines/style-numbers.json': (j) =>
-    /** @type {Record<string, number>} */ (j.files),
-  'tools/guards/baselines/max-lines.json': (j) => /** @type {Record<string, number>} */ (j.files),
-  'tools/guards/baselines/clones.json': (j) => /** @type {Record<string, number>} */ (j.pairs),
-  'tools/guards/baselines/pressable.json': (j) =>
-    Object.fromEntries(/** @type {string[]} */ (j.files).map((f) => [f, 1])),
-  'tools/guards/baselines/knip.json': (j) =>
-    Object.fromEntries(/** @type {string[]} */ (j.findings).map((f) => [f, 1])),
   'tools/guards/baselines/bundle-budget.json': (j) => ({
     bytes: Number(j.bytes),
     gzip: Number(j.gzip),
@@ -72,13 +68,19 @@ function git(args) {
 }
 
 function main() {
-  const base = process.argv[2];
-  if (base === undefined) {
-    console.error('usage: node tools/guards/no-growth.mjs <base-ref>');
+  const branch = process.argv[2];
+  if (branch === undefined) {
+    console.error('usage: node tools/guards/no-growth.mjs <base-branch>');
     process.exit(2);
   }
+  const base = baseSha(REPO_ROOT, branch);
   /** @type {string[]} */
-  const grown = [];
+  const grown = activeGrants(base).map(
+    (g) =>
+      `${GROWTH_DIR}: ${g.issue} ${g.reason} (${Object.keys(g)
+        .filter((k) => k !== 'issue' && k !== 'reason')
+        .join(', ')})`,
+  );
   for (const [file, entries] of Object.entries(LISTS)) {
     let before = {};
     try {
@@ -106,7 +108,7 @@ function main() {
     for (const g of growth(before, after)) grown.push(`${list}: ${g}`);
   }
   if (grown.length === 0) {
-    console.log(`✓ Ausnahmelisten gegenüber ${base}: nicht gewachsen`);
+    console.log(`✓ Ausnahmelisten gegenüber ${branch}: nicht gewachsen`);
     return;
   }
   const messages = git(['log', '--format=%B', `${base}..HEAD`]);
@@ -115,7 +117,7 @@ function main() {
     console.log(`Ausnahmelisten gewachsen, begründet („${reason[0]}“):\n  ${grown.join('\n  ')}`);
     return;
   }
-  console.error(`✗ Ausnahmelisten gegenüber ${base} gewachsen:\n  ${grown.join('\n  ')}`);
+  console.error(`✗ Ausnahmelisten gegenüber ${branch} gewachsen:\n  ${grown.join('\n  ')}`);
   console.error(
     '  Die Listen dürfen nur schrumpfen (Issue #313). Neue Schuld beheben statt eintragen —\n' +
       '  oder, wenn der Owner es so entschieden hat, im Commit begründen:\n' +

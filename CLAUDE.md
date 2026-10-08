@@ -54,7 +54,9 @@ that diverges from these docs updates the doc in the same change, or comes with 
 - **The whole app is tested once, at the end** (owner 05.10., #387): when everything is built, the
   full browser walkthrough runs back to front, with the screenshot folder.
 - **Hooks are never skipped** (`--no-verify` is forbidden). Pre-commit: typecheck, lint, guards,
-  tests, bundle smoke. Pre-push: the full suite.
+  tests, bundle smoke. Pre-push: the full suite, not repeated only when the tree of every pushed
+  commit already passed that same full run in this worktree (#455,
+  `docs/engineering-guards.md` §Pre-Push); anything unclear runs it.
 - Integration tests run on a real Postgres (`LB_TEST_DATABASE_URL`, hard rule 8); specs are
   order-independent and nothing is "flake" before its cause is proven (Engineering-Regel 7).
 - **Show red before green.** A fix or guard comes with a test that fails without it.
@@ -171,9 +173,12 @@ components, repeated logic, dead or now-obsolete code, inconsistent patterns and
 and fix them in the same change.
 
 **Every PR names** the USP point, what it reused and what it removed, and the library check
-(`tools/guards/pr-body.mjs`). Ausnahmelisten (`tools/guards/baselines/` and the lists inside the
-guard tests) never grow silently: growth needs `Ausnahmeliste-Zuwachs: #<issue> <reason>` in the
-commit; after a refactor `pnpm guards:shrink` pulls them down.
+(`tools/guards/pr-body.mjs`). Ausnahmelisten never grow silently. File size, style numbers, raw
+`Pressable`, copies and dead code are measured on main, not kept in files (#452,
+`tools/guards/base.mjs`): a file may keep what it has on main and never get worse; a fix needs no
+list edit — once merged, it is main's new measure. More than main needs a grant file of its own
+in `tools/guards/growth/` plus `Ausnahmeliste-Zuwachs: #<issue> <reason>` in a commit; the lists
+kept by hand (bundle budget, drawing registry, the lists inside guard tests) need that line too.
 
 **Work pattern:** contract (`packages/shared-types/src/contracts/`) → migration → module code →
 integration test incl. failure paths (duplicates, stale context, interruption, outage, other

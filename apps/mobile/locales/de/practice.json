@@ -384,6 +384,10 @@
       "Millionen"
     ]
   },
+  "parts": {
+    "step": "Teilaufgabe {{part}} von {{all}}",
+    "stem": "Aufgabe"
+  },
   "essay": {
     "intro": "{{form}} – so steht dein Text",
     "met": "geschafft",
