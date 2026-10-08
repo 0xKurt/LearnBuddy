@@ -42,6 +42,10 @@
     "review": "¿Repasamos «{{title}}» un momento? Hay unas preguntas listas: después de una noche se queda mejor.",
     "review_untitled": "¿Repasamos tu ficha un momento? Hay unas preguntas listas: después de una noche se queda mejor."
   },
+  "review": {
+    "title": "Repaso rápido",
+    "due": "¿Repasamos un momento lo que practicaste la última vez? Hay unas preguntas listas: así se te queda mejor."
+  },
   "practice": {
     "accents": "Casi – revisa otra vez los acentos.",
     "bar": {
@@ -449,6 +453,9 @@
       "place_4": "en las decenas de millar",
       "place_5": "en las centenas de millar",
       "place_6": "en los millones"
+    },
+    "parts": {
+      "follow_on": "Bien seguido – con tu resultado de {{part}}. Ese no era correcto, pero tu cálculo aquí encaja con él. Esto cuenta como correcto."
     }
   },
   "contact": {

@@ -42,6 +42,10 @@
     "review": "Want to go over “{{title}}” again for a moment? A few questions are ready – after a night's sleep it sticks better.",
     "review_untitled": "Want to go over your sheet again for a moment? A few questions are ready – after a night's sleep it sticks better."
   },
+  "review": {
+    "title": "Quick refresher",
+    "due": "Fancy a quick refresher on what you practised last? A few questions are ready – that way it stays with you."
+  },
   "practice": {
     "accents": "Almost – check the accents again.",
     "bar": {
@@ -449,6 +453,9 @@
       "place_4": "in the ten thousands",
       "place_5": "in the hundred thousands",
       "place_6": "in the millions"
+    },
+    "parts": {
+      "follow_on": "Carried on correctly – with your result from {{part}}. That one was not right, but your working here fits it. This counts as right."
     }
   },
   "contact": {

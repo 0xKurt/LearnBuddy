@@ -71,6 +71,7 @@ import { DRILL_PASS } from './drill.js';
 import { MAX_ACCEPTED } from './items.js';
 import { explanationSoFar, NOTHING_EXPLAINED, recordExplained } from './teachBack.js';
 import { admitText, judgeEssay } from './essay.js';
+import { earlierAnswers, followsOn, taskPartOf } from './taskParts.js';
 import { tappedAnswerText } from './tapCheck.js';
 import {
   askedElements,
@@ -297,10 +298,17 @@ export async function answerItem(
     dictationCheck !== null ? (dictationCheck.correct ? 'correct' : 'incorrect') : byOtherRules;
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
-  const rule: RuleVerdict =
+  const byKey: RuleVerdict =
     byRules === 'unknown' && !hintRequest && session.mode !== 'help' && differentNumber(item, text)
       ? 'incorrect'
       : byRules;
+  // A part of a task in parts that goes on correctly from her WRONG earlier result is right
+  // (Folgefehler, issue #297): code recomputes it with her numbers (`taskParts.ts`).
+  const part = hintRequest || byKey === 'correct' ? null : taskPartOf(item.task_part);
+  const followed = part
+    ? followsOn(part, item, text, await earlierAnswers(deps.db, sessionId, part))
+    : null;
+  const rule: RuleVerdict = followed ? 'correct' : byKey;
   const nextHint = givesHints(session.mode) ? (item.hints[item.prepared_hints_used] ?? null) : null;
   // Mitmachen (#298, `workedSteps.ts`): her line once a step of a proven way was shown.
   const guided =
@@ -386,10 +394,9 @@ export async function answerItem(
       verdict: 'correct',
       // A cloze gap the model judged (issue #232) makes it the model's verdict, honestly.
       evaluatedBy: partsCheck ? structuredDecidedBy(partsCheck) : 'rule',
-      reply: t(
-        learner.locale,
-        session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
-      ),
+      reply: followed
+        ? t(learner.locale, 'practice.parts.follow_on', { part: `${followed})` })
+        : t(learner.locale, session.mode === 'help' ? 'practice.help_solved' : 'practice.correct'),
       gaveHint: false,
       revealed: false,
     };

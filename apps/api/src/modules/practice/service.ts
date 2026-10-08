@@ -110,6 +110,8 @@ export type ItemRow = {
    * view and the answer path load it.
    */
   read_passage?: unknown;
+  /** A part of a task in parts (#297), read through `taskPartOf`. Only the view and the answer path load it. */
+  task_part?: unknown;
   /** A reading question's evidence: the words of its text the answer stands in (#233). */
   source_excerpt?: string | null;
   /**
