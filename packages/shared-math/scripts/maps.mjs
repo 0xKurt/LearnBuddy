@@ -1,4 +1,4 @@
-// Writes src/maps.data.ts (names) and src/mapShapes.data.ts (shapes) from Natural Earth (public domain, naturalearthdata.com), issue #251.
+// Writes src/mapNames.data.ts (names), src/maps.data.ts (grids, heights) and src/mapShapes.data.ts (shapes) from Natural Earth (public domain, naturalearthdata.com), issues #251, #440.
 // The regions a map question is checked against — their names in five languages, their shapes,
 // where each is labelled (`regionPole`) — come from this data, never from a model and never typed in by hand.
 //
@@ -25,8 +25,8 @@
 // wide, rings as "x y x y …" strings. Islands smaller than a finger at that scale are dropped,
 // never a whole region.
 //
-//   node packages/shared-math/scripts/maps.mjs <dir>          write both files from the .geojson in <dir>
-//   node packages/shared-math/scripts/maps.mjs <dir> --check  fail if either file is out of date
+//   node packages/shared-math/scripts/maps.mjs <dir>          write the three files from the .geojson in <dir>
+//   node packages/shared-math/scripts/maps.mjs <dir> --check  fail if one of them is out of date
 //
 // <dir> holds ne_10m_admin_1_states_provinces, ne_50m_admin_0_countries,
 // ne_110m_admin_0_countries, ne_10m_populated_places, ne_10m_rivers_lake_centerlines,
@@ -842,7 +842,11 @@ const HEADER = [
 
 const q = (s) => `'${s.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 
-/** The regions of every view by name: what the server checks a key against (`maps.ts`). */
+/**
+ * The regions and places of every view by name: what the server checks a key against
+ * (`maps.ts`), and what the app loads with the first map or picture (`figureNames.data.ts`,
+ * #440) — no part of the start bundle.
+ */
 function renderNames(views) {
   // A closer Ausschnitt has the regions and places of its view: their names are written once.
   const base = views.filter((v) => !v.closerOf);
@@ -851,8 +855,7 @@ function renderNames(views) {
   return [
     ...HEADER,
     '',
-    "import type { MapGrids } from './mapGrid.js';",
-    "import type { MapNames, MapPlaceNames, MapView } from './maps.js';",
+    "import type { MapNames, MapPlaceNames } from './maps.js';",
     '',
     '/** The regions of each view in drawing order, with their names in the five languages. */',
     'export const MAP_NAMES: MapNames = {',
@@ -873,6 +876,21 @@ function renderNames(views) {
         '  },',
       ]),
     '};',
+    '',
+  ].join('\n');
+}
+
+/**
+ * What a map needs before its names and shapes are loaded (#440): the degrees of its Gradnetz and
+ * the room it keeps. Small; in the start bundle.
+ */
+function renderViews(views) {
+  const base = views.filter((v) => !v.closerOf);
+  return [
+    ...HEADER,
+    '',
+    "import type { MapGrids } from './mapGrid.js';",
+    "import type { MapView } from './maps.js';",
     '',
     "/** The degrees of the meridians and parallels of each view's Gradnetz, west to east and south to north (#429). */",
     'export const MAP_GRIDS: MapGrids = {',
@@ -966,7 +984,11 @@ export function render(dir) {
     world(dir),
     ...Object.keys(EUROPE_CLOSER).map((v) => closer(eu, v)),
   ].map(build);
-  return { 'maps.data.ts': renderNames(views), 'mapShapes.data.ts': renderShapes(views) };
+  return {
+    'mapNames.data.ts': renderNames(views),
+    'maps.data.ts': renderViews(views),
+    'mapShapes.data.ts': renderShapes(views),
+  };
 }
 
 const [dir, flag] = process.argv.slice(2);

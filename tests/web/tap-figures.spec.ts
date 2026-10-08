@@ -20,6 +20,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { clockGeometry } from '../../apps/mobile/lib/math/figureGeometry';
 import { tapLayout } from '../../apps/mobile/lib/math/tapLayout';
+import { FIGURE_NAMES } from '../../packages/shared-math/src/figureNames.data';
 import { mapGrid } from '../../packages/shared-math/src/mapGrid';
 import { MAP_SHAPES } from '../../packages/shared-math/src/mapShapes.data';
 import {
@@ -59,7 +60,9 @@ const BARS: Tappable = {
 async function markOn(page: Page, figure: Tappable, pick: number[]) {
   const box = await page.getByTestId('tap-pad').boundingBox();
   if (!box) throw new Error('no tap pad');
-  const mark = tapLayout(figure, box.width, String, 12, { maps: MAP_SHAPES })?.markOf(pick);
+  const mark = tapLayout(FIGURE_NAMES, figure, box.width, String, 12, { maps: MAP_SHAPES })?.markOf(
+    pick,
+  );
   if (!mark) throw new Error('no mark');
   return mark.kind === 'box'
     ? { x: mark.box.x + mark.box.w / 2, y: mark.box.y + mark.box.h / 2, box }
@@ -171,7 +174,7 @@ test('tapping inside a figure: a place, a point, a column, a clock — graded by
 /** A tap on the place `name` of a map's layer, at its mark (a region's or a river's label). */
 async function tapOnMap(page: Page, v: MapView, name: string, l: MapLayer = 'regions') {
   const figure = { type: 'map', v, hl: [], l } as const;
-  const i = mapPlace(figure, name);
+  const i = mapPlace(FIGURE_NAMES, figure, name);
   if (i === null) throw new Error(`no place ${name}`);
   await tapPlace(page, figure, [i]);
 }
@@ -198,7 +201,7 @@ test('a stumme Karte: every Land, Luxembourg, every river, a capital tapped (#25
   await expect(words(page)).toHaveText('Tippe auf das Gebiet in der Karte.');
   await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
   await shot(page, '93-map-de-empty');
-  for (const land of mapRegions('de')) {
+  for (const land of mapRegions(FIGURE_NAMES, 'de')) {
     await tapOnMap(page, 'de', land.de);
     await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Gebiet: ${land.de}`);
   }
@@ -228,7 +231,7 @@ test('a stumme Karte: every Land, Luxembourg, every river, a capital tapped (#25
   await expect(page.getByText('Tippe auf den Rhein.')).toBeVisible();
   await expect(words(page)).toHaveText('Tippe auf den Fluss in der Karte.');
   const rivers = { type: 'map', v: 'de', hl: [], l: 'rivers' } as const;
-  for (const river of mapPlaces(rivers)) {
+  for (const river of mapPlaces(FIGURE_NAMES, rivers)) {
     await tapOnMap(page, 'de', river.de, 'rivers');
     await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Fluss: ${river.de}`);
   }
@@ -348,7 +351,7 @@ test('a labelled picture: the cell labelled number by number, every part tapped 
   // Every part of the cell is reached at its own point; the line names none of them.
   await expect(page.getByText('Tippe auf den Zellkern.')).toBeVisible();
   await expect(words(page)).toHaveText('Tippe auf das Teil in der Abbildung.');
-  for (const part of schematic('plant_cell').parts) {
+  for (const part of schematic(FIGURE_NAMES, 'plant_cell').parts) {
     await tapPart(page, 'plant_cell', part.id);
     await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
   }
@@ -366,7 +369,7 @@ test('a labelled picture: the cell labelled number by number, every part tapped 
 
   // A drawing of #252's second part: every traffic sign reached at its own point.
   await expect(page.getByText('Tippe auf das Schild für den Radweg.')).toBeVisible();
-  for (const part of schematic('signs').parts) {
+  for (const part of schematic(FIGURE_NAMES, 'signs').parts) {
     await tapPart(page, 'signs', part.id);
     await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
   }
@@ -388,11 +391,15 @@ test('the drawings of #252’s second part: each numbered beside it, every part 
     const d: SchematicId = item.figure.d;
     if ('tap' in item) {
       // Every part is reached at its own point; the key last.
-      for (const part of schematic(d).parts) {
+      for (const part of schematic(FIGURE_NAMES, d).parts) {
         await tapPart(page, d, part.id);
         await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
       }
-      await tapPart(page, d, schematic(d).parts[schematicPart(d, item.answer)!]!.id);
+      await tapPart(
+        page,
+        d,
+        schematic(FIGURE_NAMES, d).parts[schematicPart(FIGURE_NAMES, d, item.answer)!]!.id,
+      );
       await bothRooms(page, `89-library-${d}-tap`);
       await checkRight(page);
     } else {

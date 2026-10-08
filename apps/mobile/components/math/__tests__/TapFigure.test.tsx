@@ -9,7 +9,7 @@
 // its tap layer are not drawn). That a tap lands on its place is `lib/math/__tests__/tapLayout`;
 // tapping in the real app is tests/web/tap-figures.spec.ts.
 
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
@@ -69,24 +69,29 @@ describe('her place in words', () => {
   });
 
   // Issue #251: on a stumme Karte the name of the region she tapped would be the answer itself.
-  it('on a map: that she chose a region; its name only for a screen reader', () => {
+  // Her place is known once the map's names are loaded with it (#440).
+  it('on a map: that she chose a region; its name only for a screen reader', async () => {
     render(map, '');
     expect(screen.getByTestId('tap-words').textContent).toBe('Tippe auf das Gebiet in der Karte.');
     render(map, 'Bayern');
-    expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Gebiet gewählt');
+    await waitFor(() =>
+      expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Gebiet gewählt'),
+    );
     const sliders = screen.getAllByRole('slider', { name: 'Deine Stelle in der Abbildung' });
     expect(sliders[1]?.getAttribute('aria-valuetext')).toBe('Gebiet: Bayern');
     expect(screen.getAllByTestId('tap-words')[1]?.textContent).not.toContain('Bayern');
   });
 
   // Issue #252: in a picture, the name of the part she tapped would be the answer itself.
-  it('in a picture: that she chose a part; its name only for a screen reader', () => {
+  it('in a picture: that she chose a part; its name only for a screen reader', async () => {
     render(cell, '');
     expect(screen.getByTestId('tap-words').textContent).toBe(
       'Tippe auf das Teil in der Abbildung.',
     );
     render(cell, 'Zellkern');
-    expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Teil gewählt');
+    await waitFor(() =>
+      expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Teil gewählt'),
+    );
     const sliders = screen.getAllByRole('slider', { name: 'Deine Stelle in der Abbildung' });
     expect(sliders[1]?.getAttribute('aria-valuetext')).toBe('Teil: Zellkern');
   });

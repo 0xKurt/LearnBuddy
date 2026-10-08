@@ -331,6 +331,7 @@
   },
   "figure": {
     "label": "Abbildung",
+    "loading": "wird geladen …",
     "show": "Ansehen",
     "fraction_circle": "Kreis in {{parts}} gleiche Teile geteilt, {{filled}} davon gefärbt",
     "fraction_bar": "Streifen in {{parts}} gleiche Teile geteilt, {{filled}} davon gefärbt",

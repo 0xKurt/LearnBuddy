@@ -24,6 +24,7 @@
 // no region has.
 
 import {
+  FIGURE_NAMES,
   gridParse,
   gridText,
   isGridMap,
@@ -46,22 +47,22 @@ type Mapped = { kind: string; answer: string; figure: Figure | null; tap?: boole
 function mapItemView(it: Mapped): { view: MapView } | { problem: string } | null {
   const f = it.figure;
   if (!f || !isMap(f)) return null;
-  const problem = mapProblem(f);
+  const problem = mapProblem(FIGURE_NAMES, f);
   if (problem) return { problem };
   if (it.tap === true) {
     // On a place of the map, unmarked: the tap check (`tapCheck.ts`). Here only what it cannot
     // know without the shapes: a place too small for a finger on a phone is never the key.
-    const key = mapPlace(f, it.answer);
-    const view = key === null ? null : mapZoom(f, key);
+    const key = mapPlace(FIGURE_NAMES, f, it.answer);
+    const view = key === null ? null : mapZoom(FIGURE_NAMES, f, key);
     return view ? { view } : { problem: `"${it.answer}" is too small to tap on the map ${f.v}` };
   }
   if (it.kind !== 'short') return { problem: `a ${it.kind} question about a map` };
-  const marked = mapMarked(f);
+  const marked = mapMarked(FIGURE_NAMES, f);
   if (marked.length !== 1) return { problem: 'name the marked place: mark exactly one' };
-  const key = mapPlace(f, it.answer);
+  const key = mapPlace(FIGURE_NAMES, f, it.answer);
   if (key === null) return { problem: `no place "${it.answer}" on the map ${f.v}` };
   if (key !== marked[0]) return { problem: 'the key is not the marked place' };
-  const view = mapZoom(f, null);
+  const view = mapZoom(FIGURE_NAMES, f, null);
   return view ? { view } : { problem: `the marked place is too small on the map ${f.v}` };
 }
 
@@ -93,5 +94,7 @@ export function checkedMap<T extends Mapped>(raw: T | null, locale: string | nul
   if (checked === null) return it;
   if ('problem' in checked) return null;
   const f = it.figure;
-  return f && isMap(f) ? { ...it, figure: mapCanonical({ ...f, v: checked.view }) } : it;
+  return f && isMap(f)
+    ? { ...it, figure: mapCanonical(FIGURE_NAMES, { ...f, v: checked.view }) }
+    : it;
 }

@@ -9,6 +9,7 @@
 //
 // Needs the shapes: the server's (the app draws the view it is given and never chooses one).
 
+import type { FigureNames } from './figureNames.js';
 import { gridTappable } from './mapGrid.js';
 import { MAP_SHAPES } from './mapShapes.data.js';
 import {
@@ -35,8 +36,8 @@ function tappable(f: MapFig, v: MapView, i: number): boolean {
  * enough to see and to tell apart (as big as a place to tap), and so does `key`, the place to tap
  * (null for a question that names a marked place).
  */
-export function mapZoom(f: MapFig, key: number | null): MapView | null {
+export function mapZoom(names: FigureNames, f: MapFig, key: number | null): MapView | null {
   const views: readonly MapView[] = f.v === 'europe' ? ['europe', ...EUROPE_CLOSER_VIEWS] : [f.v];
-  const wanted = [...mapMarked(f), ...(key === null ? [] : [key])];
+  const wanted = [...mapMarked(names, f), ...(key === null ? [] : [key])];
   return views.find((v) => wanted.every((i) => tappable(f, v, i))) ?? null;
 }
