@@ -5,7 +5,7 @@ import type { Deps } from '../../deps.js';
 import { dayLabel, t } from '../../i18n/index.js';
 import { daysBetween, localParts, weekdayOf } from '../../lib/time.js';
 import type { LearnerRow } from '../identity/model.js';
-import { questionCountFor, selectPracticeItems } from '../practice/selection.js';
+import { minutesFor, questionCountFor, selectPracticeItems } from '../practice/selection.js';
 import { finishJob } from '../scheduler/jobs.js';
 import { type CheckLease, LeaseLost } from './checkLease.js';
 import type { Trigger } from './checkTrigger.js';
@@ -71,7 +71,7 @@ export async function fallback(
           now,
         );
         if (items.length === 0) return null;
-        const minutes = Math.max(5, Math.round(items.length / 1.2));
+        const minutes = minutesFor(items.length);
         const step = await tx.one<{ id: string }>(
           `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date, payload, prepared_at)
            values ($1, $2, 'practice', $3, 'prepared', $4, $5, $6) returning id`,

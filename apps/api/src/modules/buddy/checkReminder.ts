@@ -4,7 +4,7 @@
 import type { Deps } from '../../deps.js';
 import { t } from '../../i18n/index.js';
 import type { LearnerRow } from '../identity/model.js';
-import { questionCountFor, selectPracticeItems } from '../practice/selection.js';
+import { minutesFor, questionCountFor, selectPracticeItems } from '../practice/selection.js';
 import { finishJob } from '../scheduler/jobs.js';
 import type { Trigger } from './checkTrigger.js';
 import { planOutreach } from './delivery.js';
@@ -65,7 +65,7 @@ export async function sendAgreedReminder(
       );
       if (items.length > 0) {
         count = items.length;
-        minutes = Math.max(5, Math.round(count / 1.2));
+        minutes = minutesFor(count);
         await tx.query(
           `update buddy_steps set state = 'prepared', prepared_at = $2, payload = payload || $3, version = version + 1
             where id = $1`,
