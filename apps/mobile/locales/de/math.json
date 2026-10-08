@@ -506,6 +506,7 @@
     "map_europe": "Stumme Karte: die Länder Europas.",
     "map_world": "Stumme Karte: die Welt mit ihren {{count}} Kontinenten.",
     "map_marked": "Markiert: {{names}}.",
+    "map_home": "Dein Bundesland: {{name}}.",
     "map_eu_central": "Stumme Karte: Mitteleuropa.",
     "map_eu_southeast": "Stumme Karte: Südosteuropa.",
     "map_eu_north": "Stumme Karte: das Baltikum.",

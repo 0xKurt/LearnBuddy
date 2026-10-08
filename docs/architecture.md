@@ -3817,7 +3817,7 @@ Gradnetz (#429) to read the coordinates of a marked crossing or to tap one ("Tip
 50° N, 10° O").
 
 - **Contract** (`packages/shared-types/src/contracts/map.ts`, in `ModelFigure`): `{ type: 'map',
-v: 'de' | 'europe' | 'world', hl: string[], l }` — which map, the marked places by name, and since
+v?: 'de' | 'europe' | 'world', hl: string[], l }` — which map (left out: her own, see below), the marked places by name, and since
   #429 the layer asked about: `regions` (default), or on `de` and `europe` `cities` (the capitals
   of the Länder / of the countries), `rivers` or `mountains`, or on all three `grid` (the
   Gradnetz: `hl` names crossings, "50° N, 10° O"). Never a shape, and never a coordinate as a
@@ -3935,7 +3935,22 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
   river of Germany tapped, Luxembourg zoomed, a capital, a marked river and range named, the
   crossings along 50° N and 10° O of Germany and one of Europe tapped, a marked crossing of the
   world typed; scenario `testing/scenarios/map.ts`).
-- **Not built yet (#429 rest):** the Bundesland of her own profile as a default map.
+- **Her own Land (#429, owner's decision 08.10.):** code reads it from HER profile
+  (`curriculum_region` → the Land's id, `mapHomeLand`: "by" → "BY"; "other", null or a value no
+  Land has → none), never from the model. The model's map (`MapFigure`) may leave `v` out; the map
+  as stored and drawn (`ShownMapFigure`, in `Figure` and `DrawnFigure`) always has one. A map
+  without a view is parsed as Germany and marked unviewed (`viewOf`); `mapViewed` keeps it where
+  she has a Land and drops the question where she has none — a map without a view never could be
+  drawn. The model learns it may leave `v` out only from the `HOME LAND: …` line of a topic run
+  (`homeLandLine`, generate prompt); sheets and every other prompt name the view as before. On
+  every map of Germany of her topic runs code outlines her Land (`withHome`, field `home`) — but
+  only on the regions and the Gradnetz, and never where her Land is the marked place or the place
+  to tap: on a layer of capitals, rivers or ranges her Land would say where the key lies. Drawn as
+  a dashed outline in the accent (`point`), wider than a border — never filled, so it is never
+  read as the marked one, never solid, so never as her tap's mark; a screen reader hears "Dein Bundesland: …" after the marked places. Tests:
+  `map-home.int.test.ts` (Bayern: the default view, the outline and where it is left out; no Land
+  and "other": nothing changes; another learner's Land is never used), `maps.test.ts` (every Land
+  code to its region), `MapFigures.test.tsx`.
 
 ### Labelled pictures (issue #252)
 

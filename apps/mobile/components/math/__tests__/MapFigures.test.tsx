@@ -38,6 +38,25 @@ describe('MapBody', () => {
   });
 });
 
+describe('MapBody with her own Land (#429)', () => {
+  it('outlines her Land dashed in the accent, wider than a border, never filled', async () => {
+    const f: MapFigure = { ...de, hl: [], home: 'NI' };
+    const { container } = renderInApp(<MapBody figure={f} width={300} />);
+    // The land, the 16 borders and her Land's outline on top.
+    await waitFor(() => expect(container.querySelectorAll('path').length).toBe(33));
+    const outline = Array.from(container.querySelectorAll('path')).at(-1);
+    expect(outline?.getAttribute('fill')).toBe('none');
+    expect(outline?.getAttribute('stroke-width')).toBe('2.2');
+    expect(outline?.getAttribute('stroke-dasharray')).toBe('6 4');
+  });
+
+  it('says it in words after the marked one', () => {
+    expect(describeMap({ ...de, home: 'NI' }, t, FIGURE_NAMES)).toBe(
+      'figure.map_de {"count":16} figure.map_marked {"names":"Bayern"} figure.map_home {"name":"Niedersachsen"}',
+    );
+  });
+});
+
 describe('MapBody with a layer of places (#429)', () => {
   it('draws the capitals as dots on the land, the marked one larger', async () => {
     const f: MapFigure = { ...de, l: 'cities', hl: ['München'] };

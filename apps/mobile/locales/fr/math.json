@@ -506,6 +506,7 @@
     "map_europe": "Carte muette : les pays d’Europe.",
     "map_world": "Carte muette : le monde et ses {{count}} continents.",
     "map_marked": "En couleur : {{names}}.",
+    "map_home": "Ton Land : {{name}}.",
     "map_eu_central": "Carte muette : l’Europe centrale.",
     "map_eu_southeast": "Carte muette : l’Europe du Sud-Est.",
     "map_eu_north": "Carte muette : les pays baltes.",

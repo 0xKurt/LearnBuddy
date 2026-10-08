@@ -506,6 +506,7 @@
     "map_europe": "Mapa mudo: los países de Europa.",
     "map_world": "Mapa mudo: el mundo con sus {{count}} continentes.",
     "map_marked": "Marcado: {{names}}.",
+    "map_home": "Tu estado federado: {{name}}.",
     "map_eu_central": "Mapa mudo: Europa Central.",
     "map_eu_southeast": "Mapa mudo: el sudeste de Europa.",
     "map_eu_north": "Mapa mudo: los países bálticos.",

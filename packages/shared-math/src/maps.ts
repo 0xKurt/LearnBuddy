@@ -80,8 +80,17 @@ export type MapViewShape = RegionSet & {
 };
 export type MapShapes = Readonly<Record<MapView, MapViewShape>>;
 
-/** The shape of `MapFigure` (packages/shared-types/src/contracts/map.ts). */
-export type MapFig = { type: 'map'; v: MapView; hl: readonly string[]; l?: MapLayer };
+/**
+ * The shape of `ShownMapFigure` (packages/shared-types/src/contracts/map.ts). `home`: her Land's
+ * id, where code marks it on a map of Germany (#429, `mapHomeLand`).
+ */
+export type MapFig = {
+  type: 'map';
+  v: MapView;
+  hl: readonly string[];
+  l?: MapLayer;
+  home?: string;
+};
 
 export function isMap(f: { type: string }): f is MapFig {
   return f.type === 'map';
@@ -162,6 +171,17 @@ export function mapPlace(
 export function mapPickIndex(f: Pick<MapFig, 'v' | 'l'>, pick: readonly number[]): number {
   const [i = -1, j = -1] = pick;
   return isGridMap(f) ? gridCellIndex(f.v, i, j) : i;
+}
+
+/**
+ * Her Land on the map of Germany (#429): the region whose id her profile's `curriculum_region`
+ * is ("by" → "BY"), or null — no region, not at a German school ("other"), or a value no Land
+ * has. Only an id, never a name: a profile value is a code, not something to read.
+ */
+export function mapHomeLand(names: FigureNames, region: string | null): string | null {
+  if (region === null) return null;
+  const id = region.toUpperCase();
+  return names.maps.de.some((r) => r.id === id) ? id : null;
 }
 
 /** The index of the region `name` names on view `v`, or null (the regions only). */
