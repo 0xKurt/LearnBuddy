@@ -3,11 +3,13 @@
 // layer of places on its land instead — the capitals as dots, the rivers as blue lines, the
 // mountain ranges in the atlas brown, cut to the land — the marked ones in the figure's accent; or
 // its Gradnetz with the degrees at the frame's edge and the marked crossings as dots; and a
-// closer Ausschnitt of Europe is drawn like any view. Nothing here decides anything:
+// closer Ausschnitt of Europe is drawn like any view. Her own Land (`home`, #429), where code
+// chose to show it, is outlined dashed in the accent — never filled, so it is never read as the
+// marked one, and never solid, so never as her tap. Nothing here decides anything:
 // every region and its shape is Natural Earth data in packages/shared-math (`maps.ts`), the names
-// the server checked the question against. The shapes load with the first map
-// (`lib/math/useMapShapes.ts`); until then the map keeps its room. `describeMap` says in words
-// what it shows.
+// the server checked the question against. The shapes and the names load with the first map
+// (`lib/math/useMapShapes.ts`, `useFigureNames.ts`, #440); until both are there the map keeps its
+// room and draws nothing. `describeMap` says in words what it shows.
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { View } from 'react-native';
@@ -24,6 +26,7 @@ import {
   mapLayer,
   mapMarked,
   mapPlaceName,
+  mapRegion,
   mapRegions,
   type MapPlaceLayer,
   type MapViewShape,
@@ -31,10 +34,13 @@ import {
 import {
   linePath,
   REGION_FRAME,
+  regionName,
   regionPath,
 } from '../../../../packages/shared-math/src/regions.js';
+import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { gridLabels } from '../../lib/math/mapGridLabels.js';
+import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { useMapShapes } from '../../lib/math/useMapShapes.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -45,6 +51,17 @@ type T = (key: string, values?: Record<string, string | number>) => string;
 
 /** How strongly the land is tinted: the marked region stands out in the full figure fill. */
 const LAND = 0.35;
+/**
+ * Her Land's outline (#429): wider than a border and dashed — a solid accent line is her tap's
+ * mark, a fill the marked place — so it reads as neither.
+ */
+const HOME = 2.2;
+const HOME_DASH = '6 4';
+
+/** The index of her Land on the map (#429), or null where code marked none. */
+function mapHome(names: FigureNames, figure: MapFigure): number | null {
+  return figure.home ? mapRegion(names, figure.v, figure.home) : null;
+}
 
 /** The drawing's height at `width`: the view's own proportions. */
 export function mapDrawHeight(figure: MapFigure, width: number): number {
@@ -55,13 +72,16 @@ export function MapBody({ figure, width }: { figure: MapFigure; width: number })
   const { figure: ink } = useTheme();
   const land = useSvgId('land');
   const shapes = useMapShapes()?.MAP_SHAPES[figure.v];
+  const names = useFigureNames(figure);
   const height = mapDrawHeight(figure, width);
-  if (!shapes) return <View style={{ width, height }} />;
+  if (!shapes || !names) return <View style={{ width, height }} />;
   const k = width / REGION_FRAME;
   const layer = mapLayer(figure);
+  const marks = mapMarked(names, figure);
   // The marked places: regions are filled here, a layer of places marks its own (`Places`).
-  const marked = new Set(layer === 'regions' ? mapMarked(figure) : []);
+  const marked = new Set(layer === 'regions' ? marks : []);
   const paths = shapes.regions.map((s) => regionPath(s.rings, k));
+  const home = mapHome(names, figure);
   // Länder and countries draw their borders on top, as an atlas does. A continent is many
   // countries: its coast is drawn under the land, and each country is filled with a seam of its
   // own colour, so neither a border nor the hairline between two simplified neighbours shows.
@@ -105,16 +125,26 @@ export function MapBody({ figure, width }: { figure: MapFigure; width: number })
             />
           ))
         : null}
-      {layer === 'grid' ? (
-        <Graticule figure={figure} grid={shapes.grid} width={width} height={height} />
-      ) : layer === 'regions' ? null : (
-        <Places
-          shapes={shapes}
-          layer={layer}
-          marked={new Set(mapMarked(figure))}
-          k={k}
-          land={land}
+      {home !== null ? (
+        <Path
+          d={paths[home]}
+          fill="none"
+          stroke={ink.point}
+          strokeWidth={HOME}
+          strokeDasharray={HOME_DASH}
+          strokeLinejoin="round"
         />
+      ) : null}
+      {layer === 'grid' ? (
+        <Graticule
+          figure={figure}
+          grid={shapes.grid}
+          marked={marks}
+          width={width}
+          height={height}
+        />
+      ) : layer === 'regions' ? null : (
+        <Places shapes={shapes} layer={layer} marked={new Set(marks)} k={k} land={land} />
       )}
     </Svg>
   );
@@ -128,11 +158,13 @@ export function MapBody({ figure, width }: { figure: MapFigure; width: number })
 function Graticule({
   figure,
   grid,
+  marked,
   width,
   height,
 }: {
   figure: MapFigure;
   grid: MapGridShape | undefined;
+  marked: readonly number[];
   width: number;
   height: number;
 }) {
@@ -171,7 +203,7 @@ function Graticule({
           />
         </G>
       ))}
-      {mapMarked(figure).map((c) => {
+      {marked.map((c) => {
         const p = gridAt(figure.v, grid, c);
         return p ? (
           <Circle
@@ -268,19 +300,24 @@ function Places({
 }
 
 /**
- * "Karte: Deutschland mit den 16 Bundesländern, ohne Namen. Markiert: Bayern." — with its layer
+ * "Karte: Deutschland mit den 16 Bundesländern, ohne Namen. Markiert: Bayern." — and "Dein
+ * Bundesland: Hessen." where code outlined hers (#429); with its layer
  * of places (#429): "… Die großen Flüsse sind Linien. Markiert: Rhein."; with its Gradnetz: "…
  * Mit Gradnetz, Linien alle 10°. Markiert: 50° N, 10° O."
  */
-export function describeMap(figure: MapFigure, t: T): string {
+export function describeMap(figure: MapFigure, t: T, names: FigureNames): string {
   const lang = currentLocale();
-  const count = mapRegions(figure.v).length;
+  const count = mapRegions(names, figure.v).length;
   const layer = mapLayer(figure);
   const grid = layer === 'grid' ? mapGrid(figure.v) : null;
   const parts = [t(`figure.map_${figure.v}`, { count })];
   if (grid) parts.push(t('figure.map_grid', { step: gridStep(grid) }));
   else if (layer !== 'regions') parts.push(t(`figure.map_${layer}`));
-  const marked = mapMarked(figure).map((i) => mapPlaceName(figure, i, lang));
+  const marked = mapMarked(names, figure).map((i) => mapPlaceName(names, figure, i, lang));
   if (marked.length > 0) parts.push(t('figure.map_marked', { names: marked.join(', ') }));
+  const home = mapHome(names, figure);
+  if (home !== null) {
+    parts.push(t('figure.map_home', { name: regionName(mapRegions(names, figure.v), home, lang) }));
+  }
   return parts.join(' ');
 }

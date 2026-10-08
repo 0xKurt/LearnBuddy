@@ -14,6 +14,8 @@ import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 
+import { PROGRESS_BAR_MIN } from '../../apps/mobile/lib/theme/space';
+
 export const SHOTS = join(__dirname, '../../test-results/web/shots');
 const REPORT = join(__dirname, '../../test-results/web/fit.jsonl');
 const A11Y = join(__dirname, '../../test-results/web/a11y.jsonl');
@@ -375,6 +377,45 @@ export async function cutControls(page: Page): Promise<string[]> {
 }
 
 /**
+ * The head of a practice screen (issue #459, rule 17): "Frage 2 von 5" stands on one line and
+ * whole, the bar beside it keeps its least width, and the quiet action at the row's end ("Passt
+ * nicht", "Einspruch") is whole inside the row. At 360 the full sentence "Bewertung stimmt nicht"
+ * once pushed the label onto two lines and the bar down to a 40 pt stub. Every row that counts — a
+ * question, a card, a drill — is the same `ProgressRow`. Returns what is wrong, with its numbers.
+ */
+export async function progressHead(page: Page): Promise<string[]> {
+  return page.evaluate((least) => {
+    const drawn = (el: Element) => el.getBoundingClientRect().width > 0;
+    const cut = (el: Element) => el.scrollWidth > el.clientWidth + 1;
+    const rows = Array.from(document.querySelectorAll('[data-testid="progress-row"]')).filter(
+      drawn,
+    );
+    return rows.flatMap((row) => {
+      const found: string[] = [];
+      const label = row.querySelector('[data-testid="progress-label"]');
+      if (label) {
+        const said = (label.textContent ?? '').trim();
+        const line = parseFloat(getComputedStyle(label).lineHeight);
+        const lines = Math.round(label.getBoundingClientRect().height / line);
+        if (lines > 1) found.push(`"${said}" on ${lines} lines`);
+        if (cut(label)) found.push(`"${said}" cut`);
+      }
+      const bar = row.querySelector('[data-testid="progress-bar"]');
+      const width = bar ? Math.round(bar.getBoundingClientRect().width) : null;
+      if (width !== null && width < least) found.push(`the bar ${width} pt (least ${least})`);
+      const end = row.getBoundingClientRect().right;
+      for (const action of Array.from(row.querySelectorAll('[role="button"]')).filter(drawn)) {
+        const name = action.getAttribute('aria-label') ?? (action.textContent ?? '').trim();
+        if (action.getBoundingClientRect().right > end + 0.5) found.push(`"${name}" past the row`);
+        if ([action, ...Array.from(action.querySelectorAll('*'))].some(cut))
+          found.push(`"${name}" cut`);
+      }
+      return found;
+    });
+  }, PROGRESS_BAR_MIN);
+}
+
+/**
  * The practice conversation shows whole things only (issues #286, #403, rule 17): a turn, the help
  * chips or a card under the question card is either whole below the card's edge and its fade, or
  * not drawn there at all — never its lower half under the fade, the edge of a reply or a sliver of
@@ -529,6 +570,9 @@ export async function shot(
       .soft(await halfTurns(page), `${name} @${phone.width}: half shown in the conversation`)
       .toEqual([]);
     expect.soft(await cutControls(page), `${name} @${phone.width}: controls cut`).toEqual([]);
+    expect
+      .soft(await progressHead(page), `${name} @${phone.width}: the practice head (#459)`)
+      .toEqual([]);
     if (place) {
       // One rule for every form in the answer shell (issue #386): the answer at the bottom.
       expect(

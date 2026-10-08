@@ -228,6 +228,56 @@ export const BROKEN_MAP_ITEMS = [
   },
 ];
 
+/**
+ * Maps as the OPTIONS of a multiple choice (#479): each option marks one Land, its text names it.
+ * Named as the model may write them; code stores each marked Land by its id.
+ */
+export const MAP_OPTION_ITEM = {
+  ...base,
+  kind: 'multiple_choice',
+  prompt: 'Auf welcher Karte ist Bayern markiert?',
+  answer: 'Bayern',
+  topic: 'Bundesländer',
+  choices: ['Bayern', 'Hessen', 'Sachsen'],
+  correct_choice: 0,
+  choice_figures: [
+    { type: 'map', v: 'de', hl: ['Bavaria'] },
+    { type: 'map', v: 'de', hl: ['Hessen'] },
+    { type: 'map', v: 'de', hl: ['Sachsen'] },
+  ],
+};
+
+/** What the map check holds a question to beyond its own map (#479): none may be stored. */
+export const BROKEN_MAP_OPTION_ITEMS = [
+  // An option marks a region the map does not have.
+  {
+    ...MAP_OPTION_ITEM,
+    prompt: 'Welche Karte zeigt Bayern?',
+    choice_figures: [
+      { type: 'map', v: 'de', hl: ['Bayern'] },
+      { type: 'map', v: 'de', hl: ['Atlantis'] },
+      { type: 'map', v: 'de', hl: ['Sachsen'] },
+    ],
+  },
+  // An option marks another Land than its text names: "Hessen" shows Thüringen.
+  {
+    ...MAP_OPTION_ITEM,
+    prompt: 'Wo liegt Bayern?',
+    choice_figures: [
+      { type: 'map', v: 'de', hl: ['Bayern'] },
+      { type: 'map', v: 'de', hl: ['Thüringen'] },
+      { type: 'map', v: 'de', hl: ['Sachsen'] },
+    ],
+  },
+  // The marked country to name on a map that cannot be read (no such view): without its map the
+  // question is none.
+  {
+    ...MAP_ITEMS[1]!,
+    prompt: 'Wie heißt das markierte Land in Europa?',
+    figure: { type: 'map', v: 'mars', hl: ['Frankreich'] },
+  },
+];
+
 export function scriptMap(): void {
   scriptGenerations({
     when: /Karten lesen/i,

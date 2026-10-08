@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View, type AccessibilityActionEvent } from 'react-native';
 import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg';
 
+import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
 import {
   isMap,
   mapLayer,
@@ -45,6 +46,7 @@ import {
 } from '../../../../packages/shared-math/src/tap.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { tapLayout, type TapMark } from '../../lib/math/tapLayout.js';
+import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { useMapShapes } from '../../lib/math/useMapShapes.js';
 import { useSchematicShapes } from '../../lib/math/useSchematicShapes.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -90,12 +92,19 @@ function placeWord(figure: MapFig): string {
 
 /**
  * Her place in words for a screen reader: "Stelle: 2,5", "Punkt (2 | −1)", "Säule: Apr", where
- * the hands stand, "Gebiet: Bayern" (in her language).
+ * the hands stand, "Gebiet: Bayern" (in her language). A map or a picture has a place only with
+ * its names (`tapPick`).
  */
-function placeWords(figure: Tappable, pick: TapPick | null, t: T): string {
+function placeWords(
+  figure: Tappable,
+  pick: TapPick | null,
+  t: T,
+  names: FigureNames | null,
+): string {
   const [i = 0, j = 0] = pick ?? [];
-  const at = (axis: number, index: number) => tapAxes(figure)?.[axis]?.values[index] ?? 0;
-  if (!pick) return t(`tap.how_${placeKind(figure)}`);
+  const at = (axis: number, index: number) => tapAxes(names, figure)?.[axis]?.values[index] ?? 0;
+  const how = t(`tap.how_${placeKind(figure)}`);
+  if (!pick) return how;
   switch (figure.type) {
     case 'number_line':
       return t('tap.value', { value: formatNumber(at(0, i)) });
@@ -107,11 +116,15 @@ function placeWords(figure: Tappable, pick: TapPick | null, t: T): string {
       return t('figure.clock', { hands: describeClock({ h: at(0, i), m: at(1, j) }, t) });
     case 'map':
       // A Land, a river or a crossing (#429), named in her language (`maps.ts`).
-      return t(`tap.${placeWord(figure)}`, {
-        name: mapPlaceName(figure, mapPickIndex(figure, pick), currentLocale()),
-      });
+      return names
+        ? t(`tap.${placeWord(figure)}`, {
+            name: mapPlaceName(names, figure, mapPickIndex(figure, pick), currentLocale()),
+          })
+        : how;
     case 'schematic':
-      return t('tap.part', { name: regionName(namedPlaces(figure) ?? [], i, currentLocale()) });
+      return t('tap.part', {
+        name: regionName(namedPlaces(names, figure) ?? [], i, currentLocale()),
+      });
   }
 }
 
@@ -193,9 +206,11 @@ function Mark({ mark }: { mark: TapMark }) {
 export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Props) {
   const { palette, figure: ink } = useTheme();
   const { t } = useTranslation('math');
-  const pick = value === '' ? null : tapPick(figure, value);
+  // The names and shapes of a map or a picture, loaded with the first of its kind; nothing else
+  // loads them. Until the names are there, such a figure has no place to tap (`tapAxes`).
+  const names = useFigureNames(figure);
+  const pick = value === '' ? null : tapPick(names, figure, value);
   const clock = figure.type === 'clock';
-  // The shapes of a map or a picture, loaded with the first of its kind; nothing else loads them.
   const shapes = {
     maps: useMapShapes(figure.type === 'map')?.MAP_SHAPES,
     pictures: useSchematicShapes(figure.type === 'schematic')?.SCHEMATIC_SHAPES,
@@ -203,13 +218,13 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
   // The hand a tap on the clock moves: the small one first (axis 0), then the large one.
   const [active, setActive] = useState(0);
   const write = (next: TapPick) => {
-    const text = tapText(figure, next);
+    const text = tapText(names, figure, next);
     if (text !== null && text !== value) onChange(text);
   };
 
   // A screen reader moves her place one step at a time, on the axis the action names: around the
   // dial on a clock, to the end and no further anywhere else. The first step starts in the middle.
-  const sizes = (tapAxes(figure) ?? []).map((a) => a.values.length);
+  const sizes = (tapAxes(names, figure) ?? []).map((a) => a.values.length);
   const step = (axis: number, by: number) => {
     const from = pick ?? sizes.map((n) => Math.floor((n - 1) / 2));
     const n = sizes[axis] ?? 1;
@@ -236,7 +251,7 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
     else if (name === 'up') step(1, 1);
     else if (name === 'down') step(1, -1);
   };
-  const words = placeWords(figure, pick, t);
+  const words = placeWords(figure, pick, t, names);
   const shown = shownWords(figure, pick, t, words);
 
   return (
@@ -257,7 +272,7 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
           figure={shownFigure(figure, value)}
           maxHeight={maxHeight}
           layer={(width) => {
-            const layout = tapLayout(figure, width, formatNumber, SMALL, shapes);
+            const layout = tapLayout(names, figure, width, formatNumber, SMALL, shapes);
             if (!layout) return null;
             return (
               <>

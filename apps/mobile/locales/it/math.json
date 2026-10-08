@@ -331,6 +331,7 @@
   },
   "figure": {
     "label": "Figura",
+    "loading": "caricamento …",
     "show": "Vedi",
     "fraction_circle": "Cerchio diviso in {{parts}} parti uguali, {{filled}} colorate",
     "fraction_bar": "Striscia divisa in {{parts}} parti uguali, {{filled}} colorate",
@@ -505,6 +506,7 @@
     "map_europe": "Carta muta: i paesi d’Europa.",
     "map_world": "Carta muta: il mondo con i suoi {{count}} continenti.",
     "map_marked": "Evidenziato: {{names}}.",
+    "map_home": "Il tuo Land: {{name}}.",
     "map_eu_central": "Carta muta: l’Europa centrale.",
     "map_eu_southeast": "Carta muta: l’Europa sudorientale.",
     "map_eu_north": "Carta muta: i paesi baltici.",

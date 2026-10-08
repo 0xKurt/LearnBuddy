@@ -48,7 +48,8 @@
   "choice_tried": "Already tried",
   "choice_zoom_hint": "Press and hold to see the picture large.",
   "dispute": {
-    "button": "This verdict is wrong",
+    "button": "Dispute",
+    "label": "Dispute the verdict",
     "confirm": "Take the verdict back",
     "done": "All right – that one does not count.",
     "hint": "Takes this question and its mark back.",
@@ -63,7 +64,8 @@
   "finishing": "One moment – your result is on its way.",
   "more_coming": "The next questions are on their way …",
   "flag": {
-    "button": "Question doesn't fit",
+    "button": "Doesn't fit",
+    "label": "Question doesn't fit",
     "hint": "Takes this question out; it won't come up again.",
     "sheet_title": "Question doesn't fit?",
     "sheet_body": "This question won't come up again.",

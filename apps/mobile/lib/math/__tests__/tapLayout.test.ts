@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { FIGURE_NAMES } from '../../../../../packages/shared-math/src/figureNames.data.js';
 import { MAP_SHAPES } from '../../../../../packages/shared-math/src/mapShapes.data.js';
 import { SCHEMATIC_SHAPES } from '../../../../../packages/shared-math/src/schematicShapes.data.js';
 import { mapRegion } from '../../../../../packages/shared-math/src/maps.js';
@@ -14,7 +15,7 @@ import { tapLayout } from '../tapLayout.js';
 
 const format = (n: number) => String(n);
 const layoutOf = (f: Tappable, width = 328) => {
-  const l = tapLayout(f, width, format, 12);
+  const l = tapLayout(FIGURE_NAMES, f, width, format, 12);
   if (!l) throw new Error('no layout');
   return l;
 };
@@ -36,7 +37,7 @@ const clock: Tappable = { type: 'clock', c: [], h24: false, ask: 'none' };
 
 /** Every pick of a figure's grid. */
 function everyPick(f: Tappable): number[][] {
-  return (tapAxes(f) ?? []).reduce<number[][]>(
+  return (tapAxes(FIGURE_NAMES, f) ?? []).reduce<number[][]>(
     (acc, axis) => acc.flatMap((p) => axis.values.map((_, i) => [...p, i])),
     [[]],
   );
@@ -70,7 +71,7 @@ describe('a map (#251): every Land and every continent by its label', () => {
     ['the continents', { type: 'map', v: 'world', hl: [] } as const],
   ])('%s, at 328 and 260 pt', (_, f) => {
     for (const width of [328, 260]) {
-      const l = tapLayout(f, width, format, 12, { maps: MAP_SHAPES });
+      const l = tapLayout(FIGURE_NAMES, f, width, format, 12, { maps: MAP_SHAPES });
       if (!l) throw new Error('no layout');
       for (const pick of everyPick(f)) {
         const mark = l.markOf(pick);
@@ -82,8 +83,8 @@ describe('a map (#251): every Land and every continent by its label', () => {
 
   it('marks the whole region, drawn at the width of the map', () => {
     const de = { type: 'map', v: 'de', hl: [] } as const;
-    const by = mapRegion('de', 'Bayern') ?? -1;
-    const mark = tapLayout(de, 300, format, 12, { maps: MAP_SHAPES })?.markOf([by]);
+    const by = mapRegion(FIGURE_NAMES, 'de', 'Bayern') ?? -1;
+    const mark = tapLayout(FIGURE_NAMES, de, 300, format, 12, { maps: MAP_SHAPES })?.markOf([by]);
     expect(mark?.kind).toBe('region');
     if (mark?.kind !== 'region') return;
     const xs = [...mark.d.matchAll(/[ML](-?[\d.]+) /g)].map((m) => Number(m[1]));
@@ -94,7 +95,7 @@ describe('a map (#251): every Land and every continent by its label', () => {
   it('a labelled picture (#252): every part by its own point, no shapes to load', () => {
     for (const d of ['plant_cell', 'eye', 'bicycle'] as const) {
       const f = { type: 'schematic', d, n: [], ask: 0 } as const;
-      const l = tapLayout(f, 300, format, 12, { pictures: SCHEMATIC_SHAPES });
+      const l = tapLayout(FIGURE_NAMES, f, 300, format, 12, { pictures: SCHEMATIC_SHAPES });
       if (!l) throw new Error('no layout');
       for (const pick of everyPick(f)) {
         const mark = l.markOf(pick);
@@ -108,7 +109,7 @@ describe('a map (#251): every Land and every continent by its label', () => {
   it('every river (#429) is tapped at its mark on its own line, marked as the line', () => {
     const f = { type: 'map', v: 'de', hl: [], l: 'rivers' } as const;
     for (const width of [328, 260]) {
-      const l = tapLayout(f, width, format, 12, { maps: MAP_SHAPES });
+      const l = tapLayout(FIGURE_NAMES, f, width, format, 12, { maps: MAP_SHAPES });
       if (!l) throw new Error('no layout');
       for (const pick of everyPick(f)) {
         const mark = l.markOf(pick);
@@ -122,7 +123,7 @@ describe('a map (#251): every Land and every continent by its label', () => {
   it('every crossing of the Gradnetz (#429) on the map is tapped at its dot', () => {
     for (const v of ['de', 'europe', 'world'] as const) {
       const f = { type: 'map', v, hl: [], l: 'grid' } as const;
-      const l = tapLayout(f, 320, format, 12, { maps: MAP_SHAPES });
+      const l = tapLayout(FIGURE_NAMES, f, 320, format, 12, { maps: MAP_SHAPES });
       if (!l) throw new Error('no layout');
       expect(l.axes.map((a) => a.name)).toEqual(['lon', 'lat']);
       const onMap = everyPick(f).filter((pick) => l.markOf(pick) !== null);
@@ -136,9 +137,21 @@ describe('a map (#251): every Land and every continent by its label', () => {
     }
   });
 
-  it('offers nothing to tap until the shapes are loaded', () => {
-    expect(tapLayout({ type: 'map', v: 'de', hl: [] }, 300, format, 12)).toBeNull();
-    expect(tapLayout({ type: 'map', v: 'de', hl: [], l: 'grid' }, 300, format, 12)).toBeNull();
+  it('offers nothing to tap until the shapes and the names are loaded (#440)', () => {
+    const maps = { maps: MAP_SHAPES };
+    const pictures = { pictures: SCHEMATIC_SHAPES };
+    const eye = { type: 'schematic', d: 'eye', n: [], ask: 0 } as const;
+    for (const f of [
+      { type: 'map', v: 'de', hl: [] },
+      { type: 'map', v: 'de', hl: [], l: 'grid' },
+    ] as const) {
+      expect(tapLayout(FIGURE_NAMES, f, 300, format, 12)).toBeNull();
+      expect(tapLayout(null, f, 300, format, 12, maps)).toBeNull();
+    }
+    expect(tapLayout(FIGURE_NAMES, eye, 300, format, 12)).toBeNull();
+    expect(tapLayout(null, eye, 300, format, 12, pictures)).toBeNull();
+    // Every other figure needs no names: nothing is loaded for it.
+    expect(tapLayout(null, line, 300, format, 12)).not.toBeNull();
   });
 });
 
@@ -231,5 +244,5 @@ describe('a clock face is set one hand at a time', () => {
 });
 
 it('a figure that offers no places has no layout', () => {
-  expect(tapLayout({ ...clock, c: [{ h: 7, m: 45 }] }, 328, format, 12)).toBeNull();
+  expect(tapLayout(FIGURE_NAMES, { ...clock, c: [{ h: 7, m: 45 }] }, 328, format, 12)).toBeNull();
 });

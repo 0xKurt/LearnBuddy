@@ -10,10 +10,16 @@
 import { useEffect, useState } from 'react';
 
 /**
+ * The hook, and the one load it waits on: a component test awaits that load (`whenLoaded` in
+ * testing/render.tsx) instead of guessing how long it takes (#481).
+ */
+export type LazyModule<T> = ((wanted?: boolean) => T | null) & { load: () => Promise<T> };
+
+/**
  * A hook that gives the module once it is loaded, and null before. `wanted: false` loads nothing —
  * for a component that needs the module only sometimes (a tappable figure that is no map).
  */
-export function lazyModule<T>(importer: () => Promise<T>): (wanted?: boolean) => T | null {
+export function lazyModule<T>(importer: () => Promise<T>): LazyModule<T> {
   let loaded: T | null = null;
   let loading: Promise<T> | null = null;
 
@@ -33,7 +39,7 @@ export function lazyModule<T>(importer: () => Promise<T>): (wanted?: boolean) =>
     return loading;
   };
 
-  return function useLoaded(wanted = true): T | null {
+  function useLoaded(wanted = true): T | null {
     const [mod, setMod] = useState<T | null>(loaded);
     useEffect(() => {
       if (mod || !wanted) return;
@@ -49,5 +55,6 @@ export function lazyModule<T>(importer: () => Promise<T>): (wanted?: boolean) =>
       };
     }, [mod, wanted]);
     return wanted ? mod : null;
-  };
+  }
+  return Object.assign(useLoaded, { load });
 }

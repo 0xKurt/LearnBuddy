@@ -48,7 +48,8 @@
   "choice_tried": "Già provata",
   "choice_zoom_hint": "Tieni premuto per vedere l'immagine in grande.",
   "dispute": {
-    "button": "La valutazione non torna",
+    "button": "Contesta",
+    "label": "Contesta la valutazione",
     "confirm": "Togli la valutazione",
     "done": "Va bene, quella non conta.",
     "hint": "Toglie questa domanda e il suo voto.",
@@ -63,7 +64,8 @@
   "finishing": "Un attimo – il tuo risultato sta arrivando.",
   "more_coming": "Le prossime domande stanno arrivando …",
   "flag": {
-    "button": "La domanda non va",
+    "button": "Non va",
+    "label": "La domanda non va",
     "hint": "Toglie questa domanda; non uscirà più.",
     "sheet_title": "La domanda non va?",
     "sheet_body": "Questa domanda non uscirà più.",

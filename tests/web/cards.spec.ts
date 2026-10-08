@@ -8,7 +8,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { onboardChild, startOffer } from './figureWalk';
-import { bothSchemes } from './fit';
+import { bothSchemes, shot } from './fit';
 import { voiceAsSilence } from './talk';
 
 /** Her typed answer to the open word, checked. */
@@ -34,6 +34,9 @@ test('flashcards: the one bar with her question, the card’s action, the round 
   await expect(page.getByText('le citron')).toBeVisible();
   await answer(page, 'die Zitrone');
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  // A judged word: the head of the question with its quiet action, the same row as every other
+  // form (issue #459). Light only: switching the room rebuilds the screen on the next open word.
+  await shot(page, '459-vocab-judged');
   await page.getByRole('button', { name: 'Weiter' }).click();
   // Each word the other way round too.
   for (const [prompt, word] of [

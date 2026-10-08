@@ -18,9 +18,11 @@ import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 import {
   BROKEN_MAP_ITEMS,
+  BROKEN_MAP_OPTION_ITEMS,
   FRENCH_GRID_ITEM,
   GRID_ITEMS,
   MAP_ITEMS,
+  MAP_OPTION_ITEM,
 } from '../testing/scenarios/map.js';
 
 const dbReady = await testDatabaseAvailable();
@@ -77,6 +79,22 @@ describe.skipIf(!dbReady)('a question on a stumme Karte', () => {
     expect(s.items.map((i) => i.item.tap)).toEqual(taps);
   });
 
+  it('holds maps as options to the map data and a question to its unreadable map (#479)', async () => {
+    const s = await start(env, l, [MAP_OPTION_ITEM, ...BROKEN_MAP_OPTION_ITEMS]);
+    expect(s.items.map((i) => i.item.prompt)).toEqual([MAP_OPTION_ITEM.prompt]);
+    const rows = await env.db.query<{ choice_figures: unknown }>(
+      `select choice_figures from items where learner_id = $1`,
+      [l.learnerId],
+    );
+    expect(rows).toHaveLength(1);
+    // "Bavaria" as the model wrote it is stored as the data's id, like a map of the question.
+    expect(rows[0]?.choice_figures).toEqual([
+      { type: 'map', v: 'de', hl: ['BY'], l: 'regions' },
+      { type: 'map', v: 'de', hl: ['HE'], l: 'regions' },
+      { type: 'map', v: 'de', hl: ['SN'], l: 'regions' },
+    ]);
+  });
+
   it('stores a crossing of the Gradnetz as code writes it, never zoomed (#429)', async () => {
     const s = await start(env, l, GRID_ITEMS);
     const rows = await env.db.query<{ prompt: string; answer: string; figure: unknown }>(
@@ -84,7 +102,9 @@ describe.skipIf(!dbReady)('a question on a stumme Karte', () => {
       [l.learnerId],
     );
     const stored = (i: number) => rows.find((r) => r.prompt === GRID_ITEMS[i]!.prompt);
-    expect(stored(0)?.figure).toEqual({ type: 'map', v: 'de', hl: [], l: 'grid' });
+    // Mia goes to school in Niedersachsen (the harness's Land): code outlines it (#429, the
+    // default; `map-home.int.test.ts`).
+    expect(stored(0)?.figure).toEqual({ type: 'map', v: 'de', hl: [], l: 'grid', home: 'NI' });
     // "60°N 10°O" as the model wrote it: stored as code writes it, on the whole of Europe.
     expect(stored(1)?.answer).toBe('60° N, 10° O');
     expect(stored(1)?.figure).toEqual({ type: 'map', v: 'europe', hl: [], l: 'grid' });

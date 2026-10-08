@@ -1,0 +1,5 @@
+{
+  "issue": "#440",
+  "reason": "Die Namen der Karten und Bilder laden erst mit der ersten Figur (Start-Bundle). Die Bildschirmleser-Beschreibung einer Karte braucht sie: FigureView lädt sie (useFigureNames) und reicht sie an describeFigure weiter — Import des Hooks, Import des Typs, ein Hook-Aufruf, ein Parameter. Die Beschreibung aus FigureView herauszulösen wäre der kleinere Bestand, ist aber das Aufteilen einer Datei, die parallele Aufträge anfassen (#313: eigener, vorgezogener Schritt).",
+  "maxLines": { "apps/mobile/components/math/FigureView.tsx": 1031 }
+}

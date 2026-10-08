@@ -1953,6 +1953,15 @@ its own route, so nothing she asks is ever misread as an answer:
   room went wrong and the "Tipp" row stood cut — switching figures are now drawn at FigureView's
   `scale` (`FittedSvg`, like trees), and `MAX_ZOOM` is back at 1.5. While she types, the card's
   padding steps down to SPACE.md, and a board's keys fold with the board while she asks.
+  **The head of a question is one line** (#459): the progress row is "Frage 2 von 5", the bar and
+  one quiet action at its end (`QuestionCorner`). The action shows one short word ("Passt nicht",
+  "Einspruch"; at most twelve characters in every language, `QuestionCorner.test.tsx`) and gives
+  the whole action as its accessible name, with the word in it (WCAG 2.5.3); the sheet behind it
+  still says the full sentence. The label never wraps (`numberOfLines` 1 — what still does not fit
+  ends in "…", like the screen's title), and the bar keeps `PROGRESS_BAR_MIN` (48 pt,
+  `lib/theme/space.ts`). At 360 the full sentence "Bewertung stimmt nicht" had put the label on two
+  lines and the bar down to 40 pt. Guarded in `fit.ts` (`progressHead`) at every stop: the label
+  one line and whole, the bar at least `PROGRESS_BAR_MIN`, the action whole inside the row.
 
 **Eine Übung darf anfangen, bevor alle ihre Fragen geschrieben sind** (Issue #220, Migration
 0073). Gemessen 02.10.: „üben wir Brüche" kostete 6,45 s am Endpoint, davon 6,42 s der
@@ -3177,8 +3186,10 @@ session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
   and clearing it would be a guess (rule 5). Different from "Frage passt nicht", which takes an
   unfit question out while it is still **open**; this is about a judgement already given. Not
   during a test (the results come at the end) and not for homework, which is helped with rather
-  than judged. The control and that rule live in `components/practice/DisputeVerdict.tsx` (one
-  tap at the verdict, one sentence saying what will happen, no field to justify anything — rule 16) and are pinned by `components/practice/__tests__/DisputeVerdict.test.tsx`.
+  than judged. The rule and the sheet live in `components/practice/DisputeVerdict.tsx`, the tap in
+  the question's corner (`QuestionCorner.tsx`: "Einspruch", named "Einspruch gegen die Bewertung"
+  for a screen reader, issue #459) — one tap at the verdict, one sentence saying what will happen,
+  no field to justify anything (rule 16) — pinned by `components/practice/__tests__/DisputeVerdict.test.tsx` and `QuestionCorner.test.tsx`.
   **Still open from #164:** the first half — showing the cut-out of an unreadable spot and
   asking about it ("ist das 12 oder 17?") instead of losing the question. It needs coordinates
   out of the extraction and a crop view, and belongs with #162.
@@ -3806,7 +3817,7 @@ Gradnetz (#429) to read the coordinates of a marked crossing or to tap one ("Tip
 50° N, 10° O").
 
 - **Contract** (`packages/shared-types/src/contracts/map.ts`, in `ModelFigure`): `{ type: 'map',
-v: 'de' | 'europe' | 'world', hl: string[], l }` — which map, the marked places by name, and since
+v?: 'de' | 'europe' | 'world', hl: string[], l }` — which map (left out: her own, see below), the marked places by name, and since
   #429 the layer asked about: `regions` (default), or on `de` and `europe` `cities` (the capitals
   of the Länder / of the countries), `rivers` or `mountains`, or on all three `grid` (the
   Gradnetz: `hl` names crossings, "50° N, 10° O"). Never a shape, and never a coordinate as a
@@ -3817,9 +3828,11 @@ v: 'de' | 'europe' | 'world', hl: string[], l }` — which map, the marked place
 maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a school map's frame,
   the land around it as untappable context) and admin-0 1:110m (the continents; Russia split at
   the Ural, 60° E), projects (equirectangular at 51° N; Lambert azimuthal equal-area at 10° E
-  52° N; the Natural Earth projection), simplifies (Douglas–Peucker) and writes two files:
-  `maps.data.ts` — every region's and place's id and its names in the five languages plus other
-  names (19 KB, eager in the app and on the server) — and `mapShapes.data.ts` — the outlines in a
+  52° N; the Natural Earth projection), simplifies (Douglas–Peucker) and writes three files:
+  `mapNames.data.ts` — every region's and place's id and its names in the five languages plus
+  other names (19 KB; the server imports it, the app loads it with the first map or picture, #440,
+  below) — `maps.data.ts` — each view's Gradnetz degrees and height, eager — and
+  `mapShapes.data.ts` — the outlines in a
   frame 1000 wide, each labelled at its pole of inaccessibility, and the places of each layer
   (214 KB, loaded with the first map). Places (#429): the capitals from Natural Earth's populated
   places (`FEATURECLA` capital; on `de` the Admin-1 capitals inside Germany) as a ring of one
@@ -3835,8 +3848,16 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
   (a meridian's at the bottom edge, else the top; a parallel's at the left, else the right, on the
   world map at its western end), and where each crossing stands (null outside the frame). A line
   no other crosses on the map (a corner of Europe's frame) is left out. The degrees of the lines
-  are eager (`MAP_GRIDS` in `maps.data.ts`, for the tap axes), the geometry lazy with the shapes. The eager names cost 5 KB gzip in the start bundle (budget raised in #429; all figure
-  names become lazy with #440). The generated files are
+  are eager (`MAP_GRIDS` in `maps.data.ts`, for the tap axes), the geometry lazy with the shapes.
+  **Names load with the first figure (#440):** the names of the maps and of the pictures
+  (`FigureNames`, `packages/shared-math/src/figureNames.ts`) are handed to every function that
+  resolves a name (`maps.ts`, `schematics.ts`, `tap.ts`, first argument) — the server passes
+  `FIGURE_NAMES` (`figureNames.data.ts`), the app the same object once `useFigureNames` has loaded
+  it (one bundle part, ~10 KB gzip, on `lib/lazyModule.ts`). Until it is there a map or a picture
+  keeps its room and draws nothing, its description for a screen reader says it is coming
+  (`figure.loading`) and a tap waits (`tapAxes` offers no place without the names) — never a
+  figure without its names. `lib/__tests__/startBundle.test.ts` walks the routes' imports and fails
+  when a plain import brings a part that loads later back into the start bundle. The generated files are
   in `.prettierignore` and checked byte for byte (`maps.mjs <dir> --check`); node ≥ 22.18 runs the
   script, which imports `regions.ts` itself.
 - **One geometry for named regions** (`packages/shared-math/src/regions.ts`, dependency-free,
@@ -3850,7 +3871,10 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
 - **Rule 0, generation** (`apps/api/src/modules/practice/mapCheck.ts`, in `usableItems` before
   the tap check): every marked name must be a region of the map (stored as its id — "France" →
   "FR"); a typed question must be short with exactly one region marked and that region as the
-  key; a tap question's key must be a region the map does not mark (the tap check, `tapProblem`)
+  key; a map that does not parse costs its question instead of leaving it without its map
+  (`figureIsRejected`, #479); a map as an option's picture (`choice_figures`, #479) is held to
+  the typed question's rules — exactly one place marked, the option's text naming it — and one
+  that fails costs the question; a tap question's key must be a region the map does not mark (the tap check, `tapProblem`)
   and big enough for a finger on the narrowest phone — a 24 pt target inside it or around its
   label when the map is drawn in 320 × 330 pt (`regionTappable` with `TAP_TARGET.map`,
   `REGION_TAP_BOX`; WCAG 2.2, 2.5.8 — a picture asks a whole finger, §Labelled pictures). That room is real: the figure she answers in is capped at 45 % of what she sees
@@ -3914,7 +3938,22 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
   river of Germany tapped, Luxembourg zoomed, a capital, a marked river and range named, the
   crossings along 50° N and 10° O of Germany and one of Europe tapped, a marked crossing of the
   world typed; scenario `testing/scenarios/map.ts`).
-- **Not built yet (#429 rest):** the Bundesland of her own profile as a default map.
+- **Her own Land (#429, owner's decision 08.10.):** code reads it from HER profile
+  (`curriculum_region` → the Land's id, `mapHomeLand`: "by" → "BY"; "other", null or a value no
+  Land has → none), never from the model. The model's map (`MapFigure`) may leave `v` out; the map
+  as stored and drawn (`ShownMapFigure`, in `Figure` and `DrawnFigure`) always has one. A map
+  without a view is parsed as Germany and marked unviewed (`viewOf`); `mapViewed` keeps it where
+  she has a Land and drops the question where she has none — a map without a view never could be
+  drawn. The model learns it may leave `v` out only from the `HOME LAND: …` line of a topic run
+  (`homeLandLine`, generate prompt); sheets and every other prompt name the view as before. On
+  every map of Germany of her topic runs code outlines her Land (`withHome`, field `home`) — but
+  only on the regions and the Gradnetz, and never where her Land is the marked place or the place
+  to tap: on a layer of capitals, rivers or ranges her Land would say where the key lies. Drawn as
+  a dashed outline in the accent (`point`), wider than a border — never filled, so it is never
+  read as the marked one, never solid, so never as her tap's mark; a screen reader hears "Dein Bundesland: …" after the marked places. Tests:
+  `map-home.int.test.ts` (Bayern: the default view, the outline and where it is left out; no Land
+  and "other": nothing changes; another learner's Land is never used), `maps.test.ts` (every Land
+  code to its region), `MapFigures.test.tsx`.
 
 ### Labelled pictures (issue #252)
 
@@ -3955,8 +3994,8 @@ mechanism above). Decided in #224: drawn by us, nothing licensed.
   (`useSchematicShapes`, on `lib/lazyModule.ts`) — the start bundle had 8 KB of its gzip budget
   left, the drawings would have taken more. A part is a region like a Land (`regions.ts`, §Maps):
   names, winding number, which part a finger means — the topmost under it, or a small one by its
-  point. The names stay in the start bundle (the server and the tap's words read them
-  synchronously).
+  point. The names load with the first map or picture as well (`useFigureNames`, #440, §Maps);
+  only each drawing's height is eager (`schematicHeight`, its room while it loads).
 - **A whole finger** (`TAP_TARGET` in `regions.ts`): a part may be asked for by a tap only when, in
   the smallest room (`REGION_TAP_BOX`), a 44 pt target (`TOUCH`) fits inside it or around its
   point, no other part's point nearer than 44 pt. We draw the pictures, so we draw them for a
@@ -3973,7 +4012,8 @@ mechanism above). Decided in #224: drawn by us, nothing licensed.
   carrying the number asked; a tap carries no numbers and asks none (numbers inset the drawing,
   below) and its key is a part a whole finger can hit (`regionTappable` with
   `TAP_TARGET.picture`). Anything else — what a part does, a part the drawing does not have — is
-  dropped.
+  dropped. A picture that does not parse costs its question instead of leaving "Wie heißt
+  Teil 3?" without its picture (`figureIsRejected`, #481 — as a map's, #479).
 - **Rule 0, grading:** a tapped part exactly (`tapVerdict`); a typed name by the library
   (`namedRuleVerdict` in `tapCheck.ts`, shared with the map): "nucleus", "Nukleus" and
   "Zellkern" are one part. A tapped part stands in the thread in her language

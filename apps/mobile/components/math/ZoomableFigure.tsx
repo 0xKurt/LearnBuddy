@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { speakMathText } from '../../lib/math/speak.js';
+import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -31,9 +32,11 @@ type Props = {
 export function ZoomableFigure({ figure, maxHeight, folded = false }: Props) {
   const { t } = useTranslation('math');
   const words = useSpokenWords();
+  const names = useFigureNames(figure);
   const label = useMemo(
-    () => `${t('figure.label')}: ${describeFigure(figure, t, (s) => speakMathText(s, words))}`,
-    [figure, t, words],
+    () =>
+      `${t('figure.label')}: ${describeFigure(figure, t, names, (s) => speakMathText(s, words))}`,
+    [figure, t, names, words],
   );
   return (
     <Zoomable
