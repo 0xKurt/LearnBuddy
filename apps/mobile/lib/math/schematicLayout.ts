@@ -37,24 +37,33 @@ export type SchematicLayout = {
 };
 
 /**
- * The picture `width` pt wide: without numbers the drawing fills the width; with them it is inset
- * by a column on each side, and the room grows when the numbers need more height than it has.
+ * The picture `width` pt wide: without numbers the drawing fills the width with the whole frame, as
+ * a tap needs it; with them it is cut to its bounds (`Schematic.bounds`) and inset by a column on
+ * each side, and the room grows when the numbers need more height than it has. `maxHeight`: a
+ * drawing with numbers no taller than that, centred between its columns — the columns keep their
+ * size, so a smaller picture is drawn smaller, not narrower (`SchematicBody`).
  */
 export function schematicLayout(
   figure: SchematicFig,
   width: number,
   drawing: SchematicShape | null | undefined,
+  maxHeight = Infinity,
 ): SchematicLayout {
   const numbered = schematicNumbered(figure);
+  const { height: frameHeight, bounds } = schematic(figure.d);
   const inset = numbered.length > 0 ? COLUMN : 0;
-  const k = (width - 2 * inset) / REGION_FRAME;
-  const drawn = schematic(figure.d).height * k;
+  const [bx0, by0, bx1, by1] = inset > 0 ? bounds : [0, 0, REGION_FRAME, frameHeight];
+  const free = width - 2 * inset;
+  const k = Math.min(free / (bx1 - bx0), inset > 0 ? maxHeight / (by1 - by0) : Infinity);
+  const drawn = (by1 - by0) * k;
   const rows = Math.ceil(numbered.length / 2);
   const height = Math.max(drawn, rows * PITCH);
-  const y0 = (height - drawn) / 2;
+  // Where the frame's (0, 0) stands: the bounds centred between the columns and in the height.
+  const x0 = inset + (free - (bx1 - bx0) * k) / 2 - bx0 * k;
+  const y0 = (height - drawn) / 2 - by0 * k;
   const at = numbered.map((i): [number, number] => {
     const p = drawing?.parts[i]?.at ?? [0, 0];
-    return [inset + p[0] * k, y0 + p[1] * k];
+    return [x0 + p[0] * k, y0 + p[1] * k];
   });
   const slots = drawing
     ? columnLabels(
@@ -64,7 +73,7 @@ export function schematicLayout(
     : [];
   return {
     k,
-    x0: inset,
+    x0,
     y0,
     width,
     height,

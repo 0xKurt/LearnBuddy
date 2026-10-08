@@ -12,7 +12,10 @@
 
 import { z } from 'zod';
 
-/** The drawings of the library (`SCHEMATIC_IDS` in shared-math; the API's typecheck ties them). */
+/**
+ * The drawings of the library, for the model: the keys of `SCHEMATIC_NAMES` in shared-math
+ * (`SCHEMATIC_IDS`), held equal by `apps/api/src/modules/practice/__tests__/schematicCheck.test.ts`.
+ */
 export const SCHEMATIC_DRAWINGS = [
   'plant_cell',
   'animal_cell',
@@ -31,6 +34,24 @@ export const SCHEMATIC_DRAWINGS = [
   'signs',
   'instruments',
   'anlaut',
+  'flower_section',
+  'eye_front',
+  'insect_head',
+  'teeth',
+  'joint',
+  'breathing',
+  'digestion',
+  'leaf',
+  'neuron',
+  'mushroom',
+  'seedling',
+  'distillation',
+  'earth',
+  'volcano',
+  'compass',
+  'thermometer',
+  'moon_phases',
+  'circuit',
 ] as const;
 
 export const SchematicFigure = z.object({

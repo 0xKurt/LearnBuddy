@@ -27,6 +27,13 @@ export type Schematic = {
   names: Omit<RegionName, 'id' | 'alt'>;
   /** How high it stands in the frame 1000 wide (`REGION_FRAME`): its room while it loads. */
   height: number;
+  /**
+   * The box of the frame the drawing fills, [x0, y0, x1, y1] (#462): a picture with numbers is cut
+   * to it, so its columns stand beside the drawing rather than beside empty paper — a tall, narrow
+   * skeleton is drawn twice as large. A picture to tap fills the whole frame, as the server
+   * measured its parts (`regionTappable`).
+   */
+  bounds: readonly [number, number, number, number];
   /** Its parts, bottom to top: a part drawn later lies over an earlier one. */
   parts: readonly RegionName[];
 };
@@ -49,27 +56,13 @@ export type SchematicShape = {
   marks?: { white?: readonly string[]; black?: readonly string[] };
 };
 
-export const SCHEMATIC_IDS = [
-  'plant_cell',
-  'animal_cell',
-  'flower',
-  'plant',
-  'eye',
-  'tooth',
-  'insect',
-  'bicycle',
-  'microscope',
-  'lab',
-  'heart',
-  'ear',
-  'skeleton',
-  'organs',
-  'signs',
-  'instruments',
-  'anlaut',
-] as const;
-export type SchematicId = (typeof SCHEMATIC_IDS)[number];
-export type SchematicNames = Readonly<Record<SchematicId, Schematic>>;
+/** A drawing of the library: one of the names `schematics.data.ts` gives. */
+export type SchematicId = keyof typeof SCHEMATIC_NAMES;
+/**
+ * Every drawing, in the order of its names. The contract lists the same ids for the model
+ * (`SCHEMATIC_DRAWINGS`, packages/shared-types); a test in the API holds the two lists equal.
+ */
+export const SCHEMATIC_IDS = Object.keys(SCHEMATIC_NAMES) as SchematicId[];
 export type SchematicShapes = Readonly<Record<SchematicId, SchematicShape>>;
 
 /** The shape of `SchematicFigure` (packages/shared-types/src/contracts/schematic.ts). */

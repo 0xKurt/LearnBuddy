@@ -1,6 +1,8 @@
 // Scripted model answers for labelled pictures (issue #252): a plant cell to label (code writes
 // one question per number), the plant cell's nucleus, a bicycle's frame and a traffic sign to tap;
-// and the drawings of the second part, each with six numbers and one part to tap (`LIBRARY_ITEMS`).
+// the drawings of the second part, each with six numbers and one part to tap (`LIBRARY_ITEMS`); and
+// those of #462 (`LIBRARY_MORE_ITEMS`): the small parts drawn large — lens, pupil, stigma, stamen —
+// tapped, and every further drawing numbered and tapped.
 // Shared by the integration test (`__tests__/schematic-figures.int.test.ts`) and the browser
 // walkthrough (tests/web/tap-figures.spec.ts). Every name is a part of its drawing and passes the server's own
 // check (`modules/practice/schematicCheck.ts`). Test tooling only; answers are keyed by the
@@ -79,7 +81,7 @@ const LIBRARY = [
     d: 'microscope',
     name: 'Mikroskop',
     n: ['Okular', 'Tubus', 'Objektiv', 'Objekttisch', 'Grobtrieb', 'Fuß'],
-    tap: ['Tippe auf den Objekttisch.', 'Objekttisch'],
+    taps: [['Tippe auf den Objekttisch.', 'Objekttisch']],
   },
   {
     d: 'lab',
@@ -92,31 +94,31 @@ const LIBRARY = [
       'Messzylinder',
       'Bunsenbrenner',
     ],
-    tap: ['Tippe auf den Trichter.', 'Trichter'],
+    taps: [['Tippe auf den Trichter.', 'Trichter']],
   },
   {
     d: 'heart',
     name: 'Herz',
     n: ['rechter Vorhof', 'linke Kammer', 'Aorta', 'Hohlvene', 'Herzscheidewand', 'Segelklappe'],
-    tap: ['Tippe auf die linke Kammer.', 'linke Kammer'],
+    taps: [['Tippe auf die linke Kammer.', 'linke Kammer']],
   },
   {
     d: 'ear',
     name: 'Ohr',
     n: ['Ohrmuschel', 'Gehörgang', 'Trommelfell', 'Gehörknöchelchen', 'Schnecke', 'Hörnerv'],
-    tap: ['Tippe auf die Schnecke.', 'Schnecke'],
+    taps: [['Tippe auf die Schnecke.', 'Schnecke']],
   },
   {
     d: 'skeleton',
     name: 'Skelett',
     n: ['Schädel', 'Schlüsselbein', 'Brustkorb', 'Wirbelsäule', 'Becken', 'Oberschenkelknochen'],
-    tap: ['Tippe auf das Becken.', 'Becken'],
+    taps: [['Tippe auf das Becken.', 'Becken']],
   },
   {
     d: 'organs',
     name: 'Organe',
     n: ['Gehirn', 'Lunge', 'Herz', 'Leber', 'Magen', 'Dünndarm'],
-    tap: ['Tippe auf den Magen.', 'Magen'],
+    taps: [['Tippe auf den Magen.', 'Magen']],
   },
   {
     d: 'signs',
@@ -129,46 +131,194 @@ const LIBRARY = [
       'Radweg',
       'Einbahnstraße',
     ],
-    tap: ['Tippe auf das Stoppschild.', 'Stoppschild'],
+    taps: [['Tippe auf das Stoppschild.', 'Stoppschild']],
   },
   {
     d: 'instruments',
     name: 'Musikinstrumente',
     n: ['Gitarre', 'Blockflöte', 'Trommel', 'Trompete', 'Triangel', 'Xylofon'],
-    tap: ['Tippe auf die Trommel.', 'Trommel'],
+    taps: [['Tippe auf die Trommel.', 'Trommel']],
   },
   {
     d: 'anlaut',
     name: 'Anlautbilder',
     n: ['Apfel', 'Ball', 'Haus', 'Sonne', 'Mond', 'Fisch'],
-    tap: ['Tippe auf das Bild, das mit M anfängt.', 'Mond'],
+    taps: [['Tippe auf das Bild, das mit M anfängt.', 'Mond']],
   },
   {
     d: 'bicycle',
     name: 'Fahrrad',
     n: ['Klingel', 'Scheinwerfer', 'Bremse', 'Rücklicht', 'Speichenreflektor', 'Gepäckträger'],
-    tap: ['Tippe auf die Kette.', 'Kette'],
+    taps: [['Tippe auf die Kette.', 'Kette']],
   },
 ] as const;
 
-/** Per drawing: "Mikroskop: Wie heißt Teil 1?" (typed), then a part to tap. */
-export const LIBRARY_ITEMS = LIBRARY.flatMap(({ d, name, n, tap: [prompt, answer] }) => [
+/** A drawing of the library as the scenario asks about it: its numbers, then parts to tap. */
+type LibraryEntry = {
+  d: string;
+  name: string;
+  n: readonly string[];
+  taps: ReadonlyArray<readonly [prompt: string, answer: string]>;
+};
+
+/** Per drawing: "Mikroskop: Wie heißt Teil 1?" (typed), then each part to tap. */
+const libraryItems = (entries: readonly LibraryEntry[]) =>
+  entries.flatMap(({ d, name, n, taps }) => [
+    {
+      ...base,
+      topic: name,
+      prompt: `${name}: Wie heißt Teil 1?`,
+      answer: n[0]!,
+      figure: { type: 'schematic', d, n: [...n], ask: 1 },
+    },
+    ...taps.map(([prompt, answer]) => ({
+      ...base,
+      topic: name,
+      prompt,
+      answer,
+      tap: true,
+      figure: { type: 'schematic', d, n: [], ask: 0 },
+    })),
+  ]);
+
+export const LIBRARY_ITEMS = libraryItems(LIBRARY);
+
+/**
+ * The drawings of #462, in two runs (a run holds 25 questions, `setProfiles.ts`): the small parts
+ * of the flower, the eye and the insect drawn large — the
+ * lens, the pupil, the stigma and the stamen, too small to tap in the whole drawing, tapped here —
+ * and every further drawing with six numbers and one part to tap.
+ */
+const LIBRARY_MORE: readonly LibraryEntry[] = [
   {
-    ...base,
-    topic: name,
-    prompt: `${name}: Wie heißt Teil 1?`,
-    answer: n[0],
-    figure: { type: 'schematic', d, n: [...n], ask: 1 },
+    d: 'eye_front',
+    name: 'Auge',
+    n: ['Hornhaut', 'Linse', 'Regenbogenhaut', 'Ziliarmuskel', 'Linsenbänder', 'Glaskörper'],
+    taps: [
+      ['Tippe auf die Linse.', 'Linse'],
+      ['Tippe auf die Pupille.', 'Pupille'],
+    ],
   },
   {
-    ...base,
-    topic: name,
-    prompt,
-    answer,
-    tap: true,
-    figure: { type: 'schematic', d, n: [], ask: 0 },
+    d: 'flower_section',
+    name: 'Blüte',
+    n: ['Narbe', 'Griffel', 'Fruchtknoten', 'Samenanlage', 'Staubblatt', 'Kronblatt'],
+    taps: [
+      ['Tippe auf die Narbe.', 'Narbe'],
+      ['Tippe auf ein Staubblatt.', 'Staubblatt'],
+    ],
   },
-]);
+  {
+    d: 'insect_head',
+    name: 'Insektenkopf',
+    n: ['Facettenauge', 'Punktaugen', 'Fühler', 'Oberkiefer', 'Kopf'],
+    taps: [['Tippe auf ein Facettenauge.', 'Facettenauge']],
+  },
+  {
+    d: 'distillation',
+    name: 'Destillation',
+    n: ['Rundkolben', 'Thermometer', 'Liebigkühler', 'Kühlwasserzulauf', 'Vorlage', 'Destillat'],
+    taps: [['Tippe auf den Liebigkühler.', 'Liebigkühler']],
+  },
+  {
+    d: 'teeth',
+    name: 'Gebiss',
+    n: ['Schneidezahn', 'Eckzahn', 'Vormahlzahn', 'Mahlzahn', 'Zahnfleisch'],
+    taps: [['Tippe auf einen Eckzahn.', 'Eckzahn']],
+  },
+  {
+    d: 'joint',
+    name: 'Gelenk',
+    n: ['Gelenkkopf', 'Gelenkpfanne', 'Gelenkknorpel', 'Gelenkspalt', 'Gelenkkapsel', 'Knochen'],
+    taps: [['Tippe auf die Gelenkpfanne.', 'Gelenkpfanne']],
+  },
+  {
+    d: 'breathing',
+    name: 'Atmungsorgane',
+    n: ['Nasenhöhle', 'Kehlkopf', 'Luftröhre', 'Bronchien', 'Lunge', 'Zwerchfell'],
+    taps: [['Tippe auf das Zwerchfell.', 'Zwerchfell']],
+  },
+  {
+    d: 'digestion',
+    name: 'Verdauungsorgane',
+    n: ['Speiseröhre', 'Magen', 'Leber', 'Bauchspeicheldrüse', 'Dünndarm', 'Dickdarm'],
+    taps: [['Tippe auf die Gallenblase.', 'Gallenblase']],
+  },
+  {
+    d: 'leaf',
+    name: 'Blattquerschnitt',
+    n: [
+      'Kutikula',
+      'obere Epidermis',
+      'Palisadengewebe',
+      'Schwammgewebe',
+      'Leitbündel',
+      'Spaltöffnung',
+    ],
+    taps: [['Tippe auf eine Spaltöffnung.', 'Spaltöffnung']],
+  },
+];
+
+/** The rest of #462's drawings: a second run, a run holds 25 questions at most. */
+const LIBRARY_REST: readonly LibraryEntry[] = [
+  {
+    d: 'neuron',
+    name: 'Nervenzelle',
+    n: ['Dendriten', 'Zellkörper', 'Zellkern', 'Axon', 'Myelinscheide', 'Endknöpfchen'],
+    taps: [['Tippe auf die Myelinscheide.', 'Myelinscheide']],
+  },
+  {
+    d: 'mushroom',
+    name: 'Pilz',
+    n: ['Hut', 'Lamellen', 'Ring', 'Stiel', 'Myzel'],
+    taps: [['Tippe auf das Myzel.', 'Myzel']],
+  },
+  {
+    d: 'earth',
+    name: 'Schalenbau der Erde',
+    n: ['Erdkruste', 'Erdmantel', 'äußerer Kern', 'innerer Kern'],
+    taps: [['Tippe auf den äußeren Kern.', 'äußerer Kern']],
+  },
+  {
+    d: 'volcano',
+    name: 'Vulkan',
+    n: ['Magmakammer', 'Schlot', 'Krater', 'Lava', 'Aschewolke', 'Nebenschlot'],
+    taps: [['Tippe auf die Magmakammer.', 'Magmakammer']],
+  },
+  {
+    d: 'compass',
+    name: 'Himmelsrichtungen',
+    n: ['Norden', 'Osten', 'Süden', 'Westen', 'Nordosten', 'Südwesten'],
+    taps: [['Tippe auf Osten.', 'Osten']],
+  },
+  {
+    d: 'thermometer',
+    name: 'Thermometer',
+    n: ['Skala', 'Steigröhrchen', 'Thermometerflüssigkeit', 'Vorratsgefäß'],
+    taps: [['Tippe auf das Vorratsgefäß.', 'Vorratsgefäß']],
+  },
+  {
+    d: 'moon_phases',
+    name: 'Mondphasen',
+    n: ['Neumond', 'zunehmender Halbmond', 'Vollmond', 'abnehmender Halbmond'],
+    taps: [['Tippe auf den Vollmond.', 'Vollmond']],
+  },
+  {
+    d: 'seedling',
+    name: 'Keimling',
+    n: ['Hauptwurzel', 'Seitenwurzeln', 'Sprossachse', 'Keimblatt', 'Blatt'],
+    taps: [['Tippe auf ein Keimblatt.', 'Keimblatt']],
+  },
+  {
+    d: 'circuit',
+    name: 'Stromkreis',
+    n: ['Batterie', 'Glühlampe', 'Lampenfassung', 'Schalter', 'Kabel'],
+    taps: [['Tippe auf den Schalter.', 'Schalter']],
+  },
+];
+
+export const LIBRARY_MORE_ITEMS = libraryItems(LIBRARY_MORE);
+export const LIBRARY_REST_ITEMS = libraryItems(LIBRARY_REST);
 
 /** Picture questions that cannot be asked as written: none of them may reach the database. */
 export const BROKEN_SCHEMATIC_ITEMS = [
@@ -229,6 +379,36 @@ export const BROKEN_SCHEMATIC_ITEMS = [
 ];
 
 export function scriptSchematic(): void {
+  scriptGenerations({
+    when: /Neue Bilder/i,
+    answer: () => ({
+      usable: true,
+      title: 'Neue Bilder',
+      subject: { name: 'Biologie', kind: 'biology' },
+      items: LIBRARY_MORE_ITEMS,
+    }),
+  });
+  scriptTurns({
+    when: /lass uns die neuen bilder/i,
+    answer: says('Gern – heute zeige ich dir die neuen Bilder.', [
+      { tool: 'offer_learning', args: { kind: 'practice', text: 'Neue Bilder' } },
+    ]),
+  });
+  scriptGenerations({
+    when: /Noch mehr Bilder/i,
+    answer: () => ({
+      usable: true,
+      title: 'Noch mehr Bilder',
+      subject: { name: 'Sachunterricht', kind: 'other' },
+      items: LIBRARY_REST_ITEMS,
+    }),
+  });
+  scriptTurns({
+    when: /lass uns noch mehr bilder/i,
+    answer: says('Gern – hier sind noch mehr Bilder.', [
+      { tool: 'offer_learning', args: { kind: 'practice', text: 'Noch mehr Bilder' } },
+    ]),
+  });
   scriptGenerations({
     when: /Bildbibliothek/i,
     answer: () => ({

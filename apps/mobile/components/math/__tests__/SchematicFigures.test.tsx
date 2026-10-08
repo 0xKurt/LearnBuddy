@@ -42,6 +42,22 @@ describe('SchematicBody', () => {
     await waitFor(() => expect(container.querySelectorAll('path')).toHaveLength(6 * 2 + 2));
   });
 
+  it('shrunk by FigureView, a numbered picture keeps its width and gives up only height (#462)', async () => {
+    const at = (scale: number) =>
+      renderInApp(<SchematicBody figure={labelled} width={300 * scale} scale={scale} />).container;
+    const full = at(1);
+    const shrunk = at(0.6);
+    await waitFor(() => expect(shrunk.querySelectorAll('path').length).toBeGreaterThan(4));
+    const size = (c: HTMLElement) => {
+      const svg = c.querySelector('svg')!;
+      return [Number(svg.getAttribute('width')), Number(svg.getAttribute('height'))];
+    };
+    const [w1, h1] = size(full);
+    const [w2, h2] = size(shrunk);
+    expect(w2).toBeCloseTo(w1!);
+    expect(h2).toBeCloseTo(h1! * 0.6);
+  });
+
   it('writes the numbers 1, 2, 3 beside the parts, never a name', async () => {
     const { container } = renderInApp(<SchematicBody figure={labelled} width={300} />);
     await waitFor(() => expect(container.textContent ?? '').toBe('123'));

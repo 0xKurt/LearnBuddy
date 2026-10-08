@@ -1,13 +1,23 @@
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { boardCap, visualCaps, visualGrows } from '../practice/visuals.js';
+import { boardCap, visualCaps, visualGrows, visualReach } from '../practice/visuals.js';
 
 describe('the figure table (issue #310, step 5)', () => {
   it('lets every drawing grow but a note line, which only gives (#275)', () => {
     expect(visualGrows({ type: 'staff' } as Figure)).toBe(false);
     expect(visualGrows({ type: 'geometry' } as Figure)).toBe(true);
     expect(visualGrows(null)).toBe(true);
+  });
+
+  it('grows a card to half the window, a labelled picture taller than wide further (#462)', () => {
+    const picture = (d: string) => ({ type: 'schematic', d, n: ['a', 'b'], ask: 1 }) as Figure;
+    expect(visualReach({ type: 'geometry' } as Figure)).toBe(0.5);
+    expect(visualReach(null)).toBe(0.5);
+    expect(visualReach(picture('bicycle'))).toBe(0.5);
+    expect(visualReach(picture('skeleton'))).toBe(1);
+    expect(visualReach(picture('lab'))).toBe(1);
+    expect(visualReach(picture('anlaut'))).toBe(1);
   });
 
   it('caps a drawing at 14 % and a photo at 20 % (≤ 180 pt) of what she sees', () => {

@@ -30,7 +30,7 @@ const cell: SchematicFig = { type: 'schematic', d: 'plant_cell', n: [], ask: 0 }
 
 describe('the library', () => {
   it('has the drawings, each with parts named in all five languages', () => {
-    expect(SCHEMATIC_IDS).toHaveLength(17);
+    expect(SCHEMATIC_IDS).toHaveLength(35);
     for (const d of SCHEMATIC_IDS) {
       const parts = schematic(d).parts;
       expect(parts.length, d).toBeGreaterThanOrEqual(4);
@@ -47,6 +47,27 @@ describe('the library', () => {
         d,
       ).toEqual(schematic(d).parts.map((p) => p.id));
       for (const p of SCHEMATIC_SHAPES[d].parts) expect(p.rings.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('each drawing fills its bounds: nothing drawn outside, little paper inside (#462)', () => {
+    for (const d of SCHEMATIC_IDS) {
+      const s = SCHEMATIC_SHAPES[d];
+      const n = [
+        ...s.parts.flatMap((p) => p.rings),
+        ...s.lines,
+        ...(s.marks?.white ?? []),
+        ...(s.marks?.black ?? []),
+      ].flatMap((r) => r.split(' ').map(Number));
+      const xs = n.filter((_, i) => i % 2 === 0);
+      const ys = n.filter((_, i) => i % 2 === 1);
+      const extent = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+      const [x0, y0, x1, y1] = schematic(d).bounds;
+      // Its outline's stroke stays inside, and at most a margin of paper is left round it.
+      for (const gap of [extent[0]! - x0, extent[1]! - y0, x1 - extent[2]!, y1 - extent[3]!]) {
+        expect(gap, d).toBeGreaterThanOrEqual(4);
+        expect(gap, d).toBeLessThanOrEqual(30);
+      }
     }
   });
 
@@ -95,10 +116,35 @@ describe('the library', () => {
         'rear_light',
       ],
       skeleton: ['sternum', 'collarbone', 'tibia', 'fibula'],
+      distillation: ['boiling_chips'],
     };
     for (const d of SCHEMATIC_IDS) {
       for (const { id } of schematic(d).parts) {
         expect(tappable(d, id), `${d}.${id}`).toBe(!NAMED_ONLY[d]?.includes(id));
+      }
+    }
+  });
+
+  it('the small parts drawn large are tapped again, under the same ids and names (#462)', () => {
+    const tappable = (d: SchematicId, name: string) =>
+      regionTappable(
+        schematicRegions(SCHEMATIC_SHAPES, d),
+        schematicPart(d, name)!,
+        schematic(d).height,
+        TAP_TARGET.picture,
+      );
+    const pairs: Array<[SchematicId, SchematicId, string[]]> = [
+      ['eye', 'eye_front', ['Linse', 'Pupille', 'Hornhaut', 'Regenbogenhaut']],
+      ['flower', 'flower_section', ['Narbe', 'Staubblatt', 'Griffel', 'Fruchtknoten']],
+      ['insect', 'insect_head', ['Kopf', 'Facettenauge']],
+    ];
+    for (const [whole, large, names] of pairs) {
+      for (const name of names) {
+        expect(tappable(whole, name), `${whole}: ${name}`).toBe(false);
+        expect(tappable(large, name), `${large}: ${name}`).toBe(true);
+        // One part, one id: the name means the same part in both drawings.
+        const [a, b] = [whole, large].map((d) => schematic(d).parts[schematicPart(d, name)!]);
+        expect(b, name).toBe(a);
       }
     }
   });
