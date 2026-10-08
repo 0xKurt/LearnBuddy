@@ -1,7 +1,7 @@
 // knip: unused files, exports and dependencies (issue #313, docs/engineering-guards.md).
-// It runs through tools/guards/knip.mjs, which compares its findings with the
-// Ausnahmeliste in tools/guards/baselines/knip.json: a new finding is red, a fixed one must
-// leave the list. Entries below are the ways code is started that knip cannot see itself.
+// It runs through tools/guards/knip.mjs, which compares its findings with what main has
+// (measured there, issue #452): a new finding is red. Entries below are the ways code is
+// started that knip cannot see itself.
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {

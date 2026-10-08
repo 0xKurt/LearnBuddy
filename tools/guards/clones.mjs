@@ -5,10 +5,10 @@
 // components, lib), apps/api/src and packages/*/src. Tests and the test harness are left out —
 // a test may spell its cases out.
 //
-// The Ausnahmeliste (baselines/clones.json) holds today's clones per file pair with their
-// duplicated lines. Keying by the pair, not by line numbers, keeps it stable when code above a
-// clone moves. A new pair, or more duplicated lines in a known pair, is red. A pair that got
-// smaller or disappeared must leave the list too (`pnpm guards:shrink`): it only shrinks.
+// What may stay is what main has: its clones per file pair with their duplicated lines, measured
+// on main's tree (base.mjs, issue #452). Keying by the pair, not by line numbers, keeps it
+// stable when code above a clone moves. A new pair, or more duplicated lines in a known pair, is
+// red. A pair that got smaller is smaller on main once merged — there is no list to edit.
 
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -16,7 +16,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { REPO_ROOT, readBaseline } from './measure.mjs';
+import { treeAllowance } from './base.mjs';
+import { REPO_ROOT } from './measure.mjs';
 
 export const CLONE_ROOTS = [
   'apps/mobile/app',
@@ -55,15 +56,15 @@ const ARGS = [
  * @typedef {{ firstFile: CloneSide, secondFile: CloneSide, lines: number, fragment: string }} Clone
  */
 
-/** @returns {Clone[]} */
-export function findClones() {
+/** @param {string} [root] the tree to look at (base.mjs passes main's) @returns {Clone[]} */
+export function findClones(root = REPO_ROOT) {
   const out = mkdtempSync(join(tmpdir(), 'lb-clones-'));
   try {
     const run = spawnSync(
       join(REPO_ROOT, 'node_modules', '.bin', 'jscpd'),
       [...ARGS, '--output', out],
       {
-        cwd: REPO_ROOT,
+        cwd: root,
         encoding: 'utf8',
       },
     );
@@ -90,16 +91,13 @@ export function byPair(clones) {
   return Object.fromEntries(Object.entries(pairs).sort(([a], [b]) => (a < b ? -1 : 1)));
 }
 
-/** @returns {Record<string, number>} */
-export function clonesBaseline() {
-  return /** @type {Record<string, number>} */ (readBaseline('clones.json').pairs);
-}
-
-/** The guard: returns the problems, empty when green. */
-export function checkClones() {
+/**
+ * The guard: returns the problems, empty when green.
+ * @param {Record<string, number>} allowed duplicated lines per pair on main (base.mjs)
+ */
+export function checkClones(allowed) {
   const clones = findClones();
   const now = byPair(clones);
-  const allowed = clonesBaseline();
   /** @type {string[]} */
   const problems = [];
   for (const [pair, lines] of Object.entries(now)) {
@@ -118,14 +116,6 @@ export function checkClones() {
         : `Kopie WÄCHST: ${pair} — ${lines} statt ${was} Zeilen\n${where}`,
     );
   }
-  for (const [pair, was] of Object.entries(allowed)) {
-    const lines = now[pair] ?? 0;
-    if (lines < was) {
-      problems.push(
-        `Ausnahmeliste veraltet: ${pair} hat jetzt ${lines} statt ${was} Zeilen — \`pnpm guards:shrink\``,
-      );
-    }
-  }
   const total = Object.values(now).reduce((a, b) => a + b, 0);
   return {
     problems,
@@ -134,10 +124,12 @@ export function checkClones() {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { problems, summary } = checkClones();
+  const { problems, summary } = checkClones(
+    treeAllowance('clones', (root) => byPair(findClones(root))),
+  );
   if (problems.length > 0) {
     console.error(`✗ Kopien (jscpd): ${summary}\n\n${problems.join('\n\n')}`);
     process.exit(1);
   }
-  console.log(`✓ Kopien (jscpd): ${summary} — alle auf der Ausnahmeliste`);
+  console.log(`✓ Kopien (jscpd): ${summary} — nicht mehr als auf main`);
 }

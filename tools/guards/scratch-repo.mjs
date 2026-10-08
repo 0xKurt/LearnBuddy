@@ -1,4 +1,4 @@
-// A throwaway git repository for the tools' own tests (merge driver, pre-push stamp).
+// A throwaway git repository for the tools' own tests (measuring main, pre-push stamp).
 //
 // Inside the pre-commit hook git exports GIT_DIR, GIT_INDEX_FILE … — inherited, they point a
 // throwaway repo's commands at the REAL repository (it happened: commits and config written into

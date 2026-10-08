@@ -15,9 +15,9 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
-import { BASELINES, REPO_ROOT } from './measure.mjs';
+import { REPO_ROOT } from './measure.mjs';
 
-const BUDGET = join(BASELINES, 'bundle-budget.json');
+const BUDGET = join(REPO_ROOT, 'tools', 'guards', 'baselines', 'bundle-budget.json');
 
 /** @param {string} dist */
 function measureBundle(dist) {
