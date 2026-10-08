@@ -7,11 +7,10 @@
     "apps/api/src/__tests__/contact.int.test.ts": 806,
     "apps/api/src/__tests__/modes.int.test.ts": 855,
     "apps/api/src/__tests__/session-lifecycle.int.test.ts": 810,
-    "apps/api/src/modules/buddy/tools.ts": 1509,
     "apps/api/src/modules/materials/service.ts": 1566,
     "apps/api/src/modules/practice/__tests__/evaluate.test.ts": 825,
     "apps/mobile/app/buddy.tsx": 1216,
-    "apps/mobile/app/practice/[id].tsx": 879,
+    "apps/mobile/app/practice/[id].tsx": 880,
     "apps/mobile/components/lb/BuddyOrb.tsx": 612,
     "apps/mobile/components/math/ChartFigures.tsx": 983,
     "apps/mobile/components/math/FigureView.tsx": 1027
