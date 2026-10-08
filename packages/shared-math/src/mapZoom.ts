@@ -20,14 +20,14 @@ import {
   type MapFig,
   type MapView,
 } from './maps.js';
-import { regionTappable } from './regions.js';
+import { regionTappable, TAP_TARGET } from './regions.js';
 
 /** Whether place `i` of the question stands big enough on view `v` — a region, a place or a crossing. */
 function tappable(f: MapFig, v: MapView, i: number): boolean {
   const shape = MAP_SHAPES[v];
   if (isGridMap(f)) return shape.grid !== undefined && gridTappable(v, shape.grid, i, mapHeight(v));
   const set = mapTapSet(shape, f);
-  return set !== null && regionTappable(set, i, mapHeight(v));
+  return set !== null && regionTappable(set, i, mapHeight(v), TAP_TARGET.map);
 }
 
 /**

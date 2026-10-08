@@ -55,7 +55,6 @@
     "sheet_body": "Then I take this question out — it does not count and will not come up again. Your progress stays as it was before.",
     "sheet_title": "Is the verdict wrong?"
   },
-  "end": "End",
   "end_hint": "Back to Buddy. Your answers are saved – you can carry on here later.",
   "end_hint_test": "Hands in the practice test and shows you how it went.",
   "end_label": "End practice",
@@ -384,6 +383,10 @@
       "hundred thousands",
       "millions"
     ]
+  },
+  "parts": {
+    "step": "Part {{part}} of {{all}}",
+    "stem": "Task"
   },
   "essay": {
     "intro": "{{form}} – where your text stands",

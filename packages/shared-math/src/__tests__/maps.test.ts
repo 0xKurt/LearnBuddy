@@ -24,6 +24,7 @@ import {
   regionSmall,
   regionTapWidth,
   regionTappable,
+  TAP_TARGET,
 } from '../regions.js';
 import { tapPick, tapProblem, tapText, tapVerdict } from '../tap.js';
 
@@ -166,13 +167,17 @@ describe('which region a finger means', () => {
   it('every Land and every continent can be asked for by a tap; Luxembourg on Europe cannot', () => {
     for (const v of ['de', 'world'] as const) {
       mapRegions(v).forEach((r, i) =>
-        expect(regionTappable(MAP_SHAPES[v], i, mapHeight(v)), r.de).toBe(true),
+        expect(regionTappable(MAP_SHAPES[v], i, mapHeight(v), TAP_TARGET.map), r.de).toBe(true),
       );
     }
     const europe = MAP_SHAPES.europe;
     const h = mapHeight('europe');
-    expect(regionTappable(europe, mapRegion('europe', 'Frankreich')!, h)).toBe(true);
-    expect(regionTappable(europe, mapRegion('europe', 'Luxemburg')!, h)).toBe(false);
+    expect(regionTappable(europe, mapRegion('europe', 'Frankreich')!, h, TAP_TARGET.map)).toBe(
+      true,
+    );
+    expect(regionTappable(europe, mapRegion('europe', 'Luxemburg')!, h, TAP_TARGET.map)).toBe(
+      false,
+    );
     // Germany is drawn narrower than it is wide a room: tall, it must fit 330 pt.
     expect(Math.round(regionTapWidth(mapHeight('de')))).toBe(244);
   });

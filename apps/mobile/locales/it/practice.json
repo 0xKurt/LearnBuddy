@@ -55,7 +55,6 @@
     "sheet_body": "Allora tolgo questa domanda: non conta e non tornerà più. I tuoi progressi restano come prima.",
     "sheet_title": "La valutazione non torna?"
   },
-  "end": "Termina",
   "end_hint": "Torna da Buddy. Le tue risposte restano salvate – puoi continuare qui più tardi.",
   "end_hint_test": "Consegna il test di prova e ti mostra com'è andata.",
   "end_label": "Termina gli esercizi",
@@ -384,6 +383,10 @@
       "centinaia di migliaia",
       "milioni"
     ]
+  },
+  "parts": {
+    "step": "Parte {{part}} di {{all}}",
+    "stem": "Testo"
   },
   "essay": {
     "intro": "{{form}} – a che punto è il tuo testo",

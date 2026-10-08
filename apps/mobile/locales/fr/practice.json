@@ -55,7 +55,6 @@
     "sheet_body": "Alors je retire cette question — elle ne compte pas et ne reviendra plus. Ta progression reste comme avant.",
     "sheet_title": "La correction est fausse ?"
   },
-  "end": "Terminer",
   "end_hint": "Retour à Buddy. Tes réponses sont enregistrées – tu pourras continuer ici plus tard.",
   "end_hint_test": "Rend le test d'entraînement et te montre comment ça s'est passé.",
   "end_label": "Terminer l'entraînement",
@@ -384,6 +383,10 @@
       "centaines de mille",
       "millions"
     ]
+  },
+  "parts": {
+    "step": "Partie {{part}} sur {{all}}",
+    "stem": "Énoncé"
   },
   "essay": {
     "intro": "{{form}} – où en est ton texte",

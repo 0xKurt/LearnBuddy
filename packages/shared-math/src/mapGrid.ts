@@ -19,7 +19,7 @@
 
 import { MAP_GRIDS } from './maps.data.js';
 import type { MapView } from './maps.js';
-import { REGION_LANGS, regionTapLeast, type RegionLang } from './regions.js';
+import { REGION_LANGS, regionTapLeast, TAP_TARGET, type RegionLang } from './regions.js';
 
 /** The degrees of a view's meridians (west to east) and parallels (south to north). */
 export type MapGridValues = { lon: readonly number[]; lat: readonly number[] };
@@ -209,7 +209,7 @@ export function gridTappable(
 ): boolean {
   const p = gridAt(v, shape, index);
   if (!p) return false;
-  const least = 2 * regionTapLeast(height);
+  const least = 2 * regionTapLeast(height, TAP_TARGET.map);
   return shape.at.every((row) =>
     row.every((q) => !q || q === p || Math.hypot(q[0] - p[0], q[1] - p[1]) >= least),
   );

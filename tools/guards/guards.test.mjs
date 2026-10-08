@@ -7,17 +7,7 @@
 // fixed has to go, or the debt could come back unnoticed. The second half is here.
 
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  realpathSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
@@ -29,6 +19,7 @@ import { MAX_AGE_HOURS, staleHours } from './fresh-base.mjs';
 import { mergeBaselines } from './merge-baseline.mjs';
 import { growth, TRAILER } from './no-growth.mjs';
 import { prBodyProblems } from './pr-body.mjs';
+import { scratchRepo } from './scratch-repo.mjs';
 import { fileOf, isWeak, SOURCE_LISTS, sourceList } from './source-lists.mjs';
 import {
   MAX_LINES,
@@ -343,39 +334,18 @@ describe('merge driver: an Ausnahmeliste conflict resolves itself (issue #328)',
   });
 
   it('resolves a real git conflict in max-lines.json without a hand', () => {
-    const repo = mkdtempSync(join(tmpdir(), 'lb-merge-'));
     const driver = join(REPO_ROOT, 'tools', 'guards', 'merge-baseline.mjs');
-    // Inside the pre-commit hook git exports GIT_DIR, GIT_INDEX_FILE … — inherited, they point
-    // this throwaway repo's commands at the REAL repository (it happened: commits and config
-    // written into the project's .git). So: none of the hook's GIT_* variables, no global or
-    // system config, and every setting passed with -c, never written anywhere.
-    const env = Object.fromEntries(
-      Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_')),
-    );
-    Object.assign(env, { GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' });
-    const git = (/** @type {string[]} */ ...args) =>
-      execFileSync(
-        'git',
-        [
-          '-c',
-          'user.email=t@example.test',
-          '-c',
-          'user.name=t',
-          '-c',
-          `merge.lb-baseline.driver=node ${driver} %O %A %B`,
-          ...args,
-        ],
-        { cwd: repo, env, encoding: 'utf8', stdio: 'pipe' },
-      );
+    const {
+      dir: repo,
+      git,
+      remove,
+    } = scratchRepo('lb-merge-', [`merge.lb-baseline.driver=node ${driver} %O %A %B`]);
     const list = 'tools/guards/baselines/max-lines.json';
     const write = (/** @type {Record<string, number>} */ files) => {
       mkdirSync(join(repo, 'tools', 'guards', 'baselines'), { recursive: true });
       writeFileSync(join(repo, list), `${JSON.stringify({ files }, null, 2)}\n`);
     };
     try {
-      git('init', '-q', '-b', 'main');
-      // The guard against the leak itself: this must be the throwaway repository.
-      assert.equal(git('rev-parse', '--show-toplevel').trim(), realpathSync(repo));
       writeFileSync(join(repo, '.gitattributes'), readFileSync(join(REPO_ROOT, '.gitattributes')));
       write({ 'a.ts': 900, 'b.ts': 850 });
       git('add', '-A');
@@ -391,7 +361,7 @@ describe('merge driver: an Ausnahmeliste conflict resolves itself (issue #328)',
       // The larger side per entry: safe for lint; `pnpm guards:shrink` then tightens it.
       assert.deepEqual(merged.files, { 'a.ts': 900, 'b.ts': 850 });
     } finally {
-      rmSync(repo, { recursive: true, force: true });
+      remove();
     }
   });
 });

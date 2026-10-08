@@ -19,7 +19,7 @@ import {
   type MapLayer,
 } from '../maps.js';
 import { mapZoom } from '../mapZoom.js';
-import { REGION_LANGS, regionAt, regionReach, regionTappable } from '../regions.js';
+import { REGION_LANGS, regionAt, regionReach, regionTappable, TAP_TARGET } from '../regions.js';
 import { tapPick, tapProblem, tapText } from '../tap.js';
 
 const fig = (v: MapFig['v'], l: MapLayer, hl: string[] = []): MapFig => ({ type: 'map', v, l, hl });
@@ -60,7 +60,7 @@ describe('the capitals (#429)', () => {
 
   it('asks a capital to be tapped only where a finger can tell it from its neighbour', () => {
     const tappable = (name: string) =>
-      regionTappable(set(cities), mapPlace(cities, name)!, mapHeight('de'));
+      regionTappable(set(cities), mapPlace(cities, name)!, mapHeight('de'), TAP_TARGET.map);
     expect(tappable('Hannover')).toBe(true);
     expect(tappable('München')).toBe(true);
     // Potsdam lies a finger from Berlin, Wiesbaden from Mainz: neither can be asked by a tap.
@@ -105,7 +105,9 @@ describe('the rivers and mountain ranges (#429)', () => {
       ).toBe(i);
     });
     // Every river of Germany can be asked for by a tap: each has a stretch no other runs beside.
-    shapes.forEach((_, i) => expect(regionTappable(set(rivers), i, mapHeight('de'))).toBe(true));
+    shapes.forEach((_, i) =>
+      expect(regionTappable(set(rivers), i, mapHeight('de'), TAP_TARGET.map)).toBe(true),
+    );
   });
 
   it('has the ranges, as areas', () => {
@@ -161,7 +163,13 @@ describe('zoom: the closer Ausschnitte of Europe (#429)', () => {
     const none = mapRegions('europe')
       .filter((_, i) =>
         ['europe', ...EUROPE_CLOSER_VIEWS].every(
-          (v) => !regionTappable(MAP_SHAPES[v as MapFig['v']], i, mapHeight(v as MapFig['v'])),
+          (v) =>
+            !regionTappable(
+              MAP_SHAPES[v as MapFig['v']],
+              i,
+              mapHeight(v as MapFig['v']),
+              TAP_TARGET.map,
+            ),
         ),
       )
       .map((r) => r.de);
