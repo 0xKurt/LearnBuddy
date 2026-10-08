@@ -48,7 +48,8 @@
   "choice_tried": "Schon ausprobiert",
   "choice_zoom_hint": "Gedrückt halten zeigt das Bild groß.",
   "dispute": {
-    "button": "Bewertung stimmt nicht",
+    "button": "Einspruch",
+    "label": "Einspruch gegen die Bewertung",
     "confirm": "Bewertung zurücknehmen",
     "done": "Alles klar – die zählt nicht.",
     "hint": "Nimmt diese Frage und ihre Wertung zurück.",
@@ -63,7 +64,8 @@
   "finishing": "Einen Moment – dein Ergebnis kommt gleich.",
   "more_coming": "Gleich kommen die nächsten Fragen …",
   "flag": {
-    "button": "Frage passt nicht",
+    "button": "Passt nicht",
+    "label": "Frage passt nicht",
     "hint": "Nimmt diese Frage raus, sie kommt nicht mehr dran.",
     "sheet_title": "Frage passt nicht?",
     "sheet_body": "Diese Frage kommt nicht mehr dran.",

@@ -48,7 +48,8 @@
   "choice_tried": "Ya la has probado",
   "choice_zoom_hint": "Mantén pulsado para ver la imagen en grande.",
   "dispute": {
-    "button": "La corrección no es correcta",
+    "button": "Reclamar",
+    "label": "Reclamar la corrección",
     "confirm": "Retirar la corrección",
     "done": "Vale, esa no cuenta.",
     "hint": "Retira esta pregunta y su nota.",
@@ -63,7 +64,8 @@
   "finishing": "Un momento: enseguida llega tu resultado.",
   "more_coming": "Enseguida llegan las siguientes preguntas …",
   "flag": {
-    "button": "La pregunta no encaja",
+    "button": "No encaja",
+    "label": "La pregunta no encaja",
     "hint": "Quita esta pregunta; ya no volverá a salir.",
     "sheet_title": "¿La pregunta no encaja?",
     "sheet_body": "Esta pregunta ya no volverá a salir.",

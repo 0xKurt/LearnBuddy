@@ -23,6 +23,14 @@ export const TOUCH = 44;
 export const CONTROL = { sm: TOUCH, md: 48, lg: 54 } as const;
 
 /**
+ * The narrowest the practice progress bar gets (`ProgressRow`, issue #459): whatever stands beside
+ * it — the question's quiet action, a test's clock — it keeps this, so it still reads as a bar and
+ * not as a stub. Here, like CONTROL, because the walkthrough's fit check reads the real number
+ * (tests/web/fit.ts `progressHead`).
+ */
+export const PROGRESS_BAR_MIN = 48;
+
+/**
  * The bottom padding of a bar or a page that ends at the screen's edge (issue #142).
  *
  * The safe-area inset is what the SYSTEM takes from the edge — a gesture bar, a
