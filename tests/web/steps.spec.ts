@@ -1,8 +1,10 @@
 // Browser walkthrough of a guided worked example (issue #298: Vormachen → Mitmachen →
 // Selbermachen), against the real API with the scripted model
 // (apps/api/src/testing/scenarios/steps.ts):
-//   - „Tipp" shows the next step of a way code proved, with what was done (Vormachen);
+//   - she asks in her own words („Zeig mir, wie das geht"); Buddy shows the first step of a way
+//     code proved, with what was done (Vormachen);
 //   - she writes the next line herself; code says "Der Schritt stimmt – und weiter?" (Mitmachen);
+//   - „Tipp" leads on from her step: the step after hers, never hers again;
 //   - the way's last line is right, and the next task is hers alone (Selbermachen).
 // Every state is shot at 390×844 and 360×740, light and dark (CLAUDE.md rule 17).
 
@@ -11,7 +13,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { onboardChild, startOffer } from './figureWalk';
 import { PHONES, shot } from './fit';
 
-const TASK = 'Löse die Gleichung 2(x + 3) = 14.';
+const TASK = 'Löse 3(2x - 4) = 2x + 8.';
 
 /** Writes a line into the answer field until it holds (a theme switch may remount it). */
 async function write(page: Page, text: string): Promise<void> {
@@ -36,20 +38,23 @@ async function walk(page: Page, scheme: 'light' | 'dark'): Promise<void> {
   await page.emulateMedia({ colorScheme: scheme });
   // The ladder is written in the background right after the start.
   await page.waitForTimeout(500);
-  await page.getByRole('button', { name: 'Einen Tipp bekommen' }).click();
+  await write(page, 'Zeig mir, wie das geht');
   await expect(page.getByText('Klammer auflösen', { exact: false })).toBeVisible();
   await shot(page, `298a-step-shown${night}`);
-  await write(page, '2x = 8');
+  await write(page, '4x - 12 = 8');
   await expect(page.getByText('Der Schritt stimmt – und weiter?')).toBeVisible();
   await shot(page, `298b-step-ok${night}`);
-  await write(page, 'x = 4');
+  await page.getByRole('button', { name: 'Einen Tipp bekommen' }).click();
+  await expect(page.getByText('12 addieren', { exact: false })).toBeVisible();
+  await shot(page, `298c-led-on${night}`);
+  await write(page, 'x = 5');
   await expect(page.getByText('Richtig', { exact: true }).last()).toBeVisible();
-  await shot(page, `298c-solved${night}`);
+  await shot(page, `298d-solved${night}`);
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
-test('a guided worked example: a step shown, hers checked, the way solved (issue #298)', async ({
+test('a guided worked example: a step shown, hers checked, Buddy leads on (issue #298)', async ({
   page,
 }) => {
   test.setTimeout(600_000);

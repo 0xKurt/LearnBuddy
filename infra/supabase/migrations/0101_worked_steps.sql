@@ -16,12 +16,27 @@
 --
 -- One jsonb column of {line, note} objects rather than two arrays: a line and its note can never
 -- drift apart. Null where no way was kept; no backfill.
+--
+-- The check holds the shape the code reads, so nothing else can be stored there: an array of at
+-- least three objects, each with a non-empty text `line` and `note`. The CASE keeps
+-- `jsonb_array_length` away from anything that is not an array (Postgres does not promise to
+-- evaluate AND from left to right). Two paths: the strict one finds an element that is no object
+-- (lax would unwrap a nested array), the lax one an object without both texts (strict would
+-- error on a missing key, and an error counts as no match).
 
 alter table items add column if not exists worked_steps jsonb;
 
 alter table items add constraint items_worked_steps_shape check (
   worked_steps is null
-  or (jsonb_typeof(worked_steps) = 'array' and jsonb_array_length(worked_steps) >= 3)
+  or case
+    when jsonb_typeof(worked_steps) <> 'array' then false
+    else jsonb_array_length(worked_steps) >= 3
+      and not jsonb_path_exists(worked_steps, 'strict $[*] ? (@.type() != "object")')
+      and not jsonb_path_exists(
+        worked_steps,
+        'lax $[*] ? (!(@.line.type() == "string" && @.note.type() == "string" && @.line != "" && @.note != ""))'
+      )
+  end
 );
 
 comment on column items.worked_steps is

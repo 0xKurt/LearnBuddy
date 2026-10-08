@@ -46,7 +46,7 @@ import { givesHints, learnsFsrs } from './modeRules.js';
 import { asTestTurn, ladderDone, REVEAL_AFTER_MISSES, workedReply } from './ladder.js';
 import { lockActiveSession } from './sessionRow.js';
 import { followWithSimilar } from './similar.js';
-import { guidedStep, guidedTurn } from './workedSteps.js';
+import { guidedStep, guidedTurn, stepOnRequest } from './workedSteps.js';
 import { settleTestClock, timeUpError } from './testClock.js';
 import {
   answerTextOf,
@@ -348,6 +348,8 @@ export async function answerItem(
     offersLater?: boolean;
     /** The division step the reply names, for the app to open (#420). */
     columnStep?: number | null;
+    /** Her own step in a guided example (#298): where „Tipp" goes on from. Never help asked for. */
+    ownStep?: number;
   };
   let judged: Judged;
   // Distress in the answer field, or the provider's safety filter (issue #389): the reply is
@@ -378,7 +380,7 @@ export async function answerItem(
       gaveHint: false,
       revealed: true,
     };
-  } else if (rule === 'correct' || guided === 'solved') {
+  } else if (rule === 'correct' || guided?.kind === 'solved') {
     // Right — or, in a guided example (#298), the way's last line with the key's value.
     judged = {
       verdict: 'correct',
@@ -391,7 +393,7 @@ export async function answerItem(
       gaveHint: false,
       revealed: false,
     };
-  } else if (guided === 'step' || guided === 'wrong') {
+  } else if (guided !== null) {
     // Her step in a guided example, judged by code (#298); a third miss still ends the ladder below.
     judged = { ...guidedTurn(learner.locale, guided), evaluatedBy: 'rule', gaveHint: false };
   } else if (rule === 'parts_left' && staffCheck !== null) {
@@ -741,6 +743,8 @@ export async function answerItem(
                 gaveHint: d.gave_hint,
                 revealed: d.revealed_answer,
               };
+      // „Zeig mir wie" on a proven way (#298): the way's next step, exactly as „Tipp" shows it.
+      if (!d.concern) judged = stepOnRequest(item, d.intent, nextHint) ?? judged;
     } catch (err) {
       if (isAppError(err) && err.code !== 'budget_exhausted') throw err;
       // The safety filter held the answer back: the fixed help answer, as in the chat (#389).
@@ -857,6 +861,8 @@ export async function answerItem(
       !essay &&
       judged.verdict !== 'correct' &&
       judged.verdict !== null &&
+      // Her own step in a guided example asks for nothing (#298), however far the ladder is.
+      judged.ownStep === undefined &&
       (misses >= REVEAL_AFTER_MISSES || askedAfterLastHint)
     ) {
       judged = {
@@ -970,7 +976,9 @@ export async function answerItem(
           (judged.verdict !== null && judged.verdict !== 'not_an_attempt') || !!judged.essay;
         const attempts = si.attempts + (attempted ? 1 : 0);
         const hints = si.hints_used + (judged.gaveHint ? 1 : 0);
-        const prepared = si.prepared_hints_used + (judged.usedPrepared ? 1 : 0);
+        const moved = si.prepared_hints_used + (judged.usedPrepared ? 1 : 0);
+        // Past a step of the way she wrote herself (#298): the ladder never goes back.
+        const prepared = Math.max(moved, judged.ownStep ?? 0);
         let status: SessionItemRow['status'] = 'open';
         let firstTry: boolean | null = si.first_try_correct;
         if (judged.verdict === 'correct') {

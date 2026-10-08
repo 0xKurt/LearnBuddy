@@ -10,17 +10,21 @@
 //     already is the answer.
 // Kept, the steps between the first and the last line ARE the hint ladder: „Tipp" shows the next
 // one (Vormachen), the result comes only at the ladder's end (`workedReply`), and the similar task
-// after it (#388, `similar.ts`) is Selbermachen.
+// after it (#388, `similar.ts`) is Selbermachen. „Zeig mir wie" in her own words shows the same
+// next step once the tutor read it as a request for help (`stepOnRequest`).
 //
 // Mitmachen: once a step was shown, a line she writes that follows from the task's line and is
 // not yet the result is a step of hers — „Der Schritt stimmt – und weiter?", no try, no model. A
-// line that does not follow is a miss, and code says which: the last step she wrote.
+// line that does not follow is a miss, and code says which: the last step she wrote. Buddy leads
+// on from her step: a step of the way she wrote herself is never shown to her again.
 
+import { canonicalMath } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import { t } from '../../i18n/index.js';
 import { ruleCheck, type ItemForCheck } from './evaluate.js';
 import { checkPath, parseLine, pathLines, sameStep, solvedValue } from './steps.js';
+import type { TutorDecision } from './tutor.js';
 
 /** The forms a written way is checked for (the ones `ruleCheck` reads a path in). */
 const STEP_KINDS: ReadonlySet<string> = new Set(['numeric', 'formula', 'short']);
@@ -59,8 +63,11 @@ function stepsOf(raw: unknown): WorkedStep[] | null {
   return parsed.success ? parsed.data : null;
 }
 
-/** Spaces, `$` and case do not matter when a line is looked for in the question. */
-const flat = (s: string) => s.replace(/[\s$]/g, '').toLowerCase();
+/**
+ * A line as it is compared: how the same symbol is typed (`canonicalMath`: − and -, LaTeX, `$`),
+ * spaces and case do not matter — the model may print the question with − and write the way with -.
+ */
+const flat = (s: string) => canonicalMath(s).replace(/\s/g, '').toLowerCase();
 
 /** The way, kept only when code proves it solves this question (see the header); else null. */
 export function checkedSteps(
@@ -87,45 +94,99 @@ export function stepHints(steps: readonly WorkedStep[]): string[] {
   return steps.slice(1, -1).map((s) => `${s.note}: $${s.line}$`);
 }
 
+/** Her line once a step was shown (Mitmachen), as code reads it. */
+export type GuidedStep =
+  /** The way's last line in its own form ("x = 4" for a key of 4): right. */
+  | { kind: 'solved' }
+  /**
+   * A line of her own that follows from the task's line. `ladder` is where „Tipp" goes on from:
+   * past a step of the way she wrote herself, so the next step shown is the one after hers.
+   */
+  | { kind: 'step'; ladder: number }
+  /** A line that certainly does not follow: a miss. */
+  | { kind: 'wrong' };
+
 /**
- * Her line once a step was shown (Mitmachen): 'solved' when it is the result in the way's own
- * form ("x = 4" for a key of 4), 'step' when it follows from the task's line and is a line of her
- * own, 'wrong' when it certainly does not follow, null when this is not a guided step at all (no
- * kept way, no step shown, several lines, a line code cannot read — the rules judge those).
+ * Her line once `shown` steps were shown (Mitmachen), or null when this is not a guided step at
+ * all — no kept way, no step shown, several lines, a line code cannot read, the key itself, or a
+ * line she was shown copied back. The rules judge those, as before.
  */
 export function guidedStep(
   item: ItemForCheck & { worked_steps?: unknown },
   shown: number,
   text: string,
-): 'solved' | 'step' | 'wrong' | null {
+): GuidedStep | null {
   const steps = shown > 0 ? stepsOf(item.worked_steps) : null;
   const written = pathLines(text);
   if (!steps || written.length !== 1) return null;
-  const mine = parseLine(written[0]!);
+  const line = written[0]!;
+  const mine = parseLine(line);
   const task = parseLine(steps[0]!.line);
   if (!mine || !task) return null;
-  if (ruleCheck(item, { text: written[0]!, choice: null }) === 'correct') return null;
+  if (ruleCheck(item, { text: line, choice: null }) === 'correct') return null;
   // The variable alone on one side, with the key's value on the other: the way's last line.
-  const value = solvedValue(written[0]!);
+  const value = solvedValue(line);
   if (value !== null && ruleCheck(item, { text: value, choice: null }) === 'correct') {
-    return 'solved';
+    return { kind: 'solved' };
   }
-  // A line she was shown (or the task itself) copied back is no step of hers.
-  const seen = steps.slice(0, shown + 1).map((s) => flat(s.line));
-  if (seen.includes(flat(written[0]!))) return null;
+  // Which line of the way this is, if one: the task and the steps she was shown are no step of
+  // hers when copied back.
+  const at = steps.map((s) => flat(s.line)).lastIndexOf(flat(line));
+  if (at !== -1 && at <= shown) return null;
   const verdict = sameStep(task, mine);
-  return verdict === 'same' ? 'step' : verdict === 'different' ? 'wrong' : null;
+  if (verdict === 'different') return { kind: 'wrong' };
+  return verdict === 'same' ? { kind: 'step', ladder: Math.max(shown, at) } : null;
 }
 
 /**
  * What a guided step gets (Mitmachen): a step of hers that follows is no try and goes on — „Der
- * Schritt stimmt – und weiter?"; one that does not follow is a miss, and code says where.
+ * Schritt stimmt – und weiter?", with the ladder moved past it; one that does not follow is a miss.
  */
 export function guidedTurn(
   locale: string,
-  guided: 'step' | 'wrong',
-): { verdict: 'not_an_attempt' | 'incorrect'; reply: string; revealed: false } {
-  return guided === 'step'
-    ? { verdict: 'not_an_attempt', reply: t(locale, 'practice.step_ok'), revealed: false }
+  guided: Exclude<GuidedStep, { kind: 'solved' }>,
+): {
+  verdict: 'not_an_attempt' | 'incorrect';
+  reply: string;
+  revealed: false;
+  ownStep?: number;
+} {
+  return guided.kind === 'step'
+    ? {
+        verdict: 'not_an_attempt',
+        reply: t(locale, 'practice.step_ok'),
+        revealed: false,
+        ownStep: guided.ladder,
+      }
     : { verdict: 'incorrect', reply: t(locale, 'practice.step_wrong'), revealed: false };
+}
+
+/**
+ * „Zeig mir wie" in her own words (#298): when the tutor read a request for help — or a „weiß
+ * nicht" — on a question with a kept way, the reply is the way's next step, the very line „Tipp"
+ * shows, and the ladder moves on as for „Tipp". Never the model's paraphrase of it: Mitmachen checks
+ * her next line against what she saw. Null when there is no kept way or no step left.
+ */
+export function stepOnRequest(
+  item: { worked_steps?: unknown },
+  intent: TutorDecision['intent'],
+  nextHint: string | null,
+): {
+  verdict: 'not_an_attempt';
+  evaluatedBy: 'model';
+  reply: string;
+  gaveHint: true;
+  usedPrepared: true;
+  revealed: false;
+} | null {
+  const asks = intent === 'help_request' || intent === 'no_answer';
+  if (!asks || nextHint === null || stepsOf(item.worked_steps) === null) return null;
+  return {
+    verdict: 'not_an_attempt',
+    evaluatedBy: 'model',
+    reply: nextHint,
+    gaveHint: true,
+    usedPrepared: true,
+    revealed: false,
+  };
 }
