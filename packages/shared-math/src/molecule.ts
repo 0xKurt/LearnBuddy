@@ -15,6 +15,8 @@
 // Dependency-free on purpose: the app imports this file by path (like `expression.ts`), so
 // what the server checked is exactly what the app draws.
 
+import { segmentsCross } from './labelBoxes.js';
+
 export type MolAtom = { id: string; el: string; h: number; charge: number };
 export type MolBond = { a: string; b: string; order: number };
 export type Molecule = { atoms: readonly MolAtom[]; bonds: readonly MolBond[] };
@@ -630,17 +632,6 @@ function crowded(pos: Pos, edges: MolBond[]): boolean {
   return false;
 }
 
-type XY = { x: number; y: number };
-
-function segmentsCross(a: XY, b: XY, c: XY, d: XY): boolean {
-  const cross = (o: XY, p: XY, q: XY) => (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
-  const d1 = cross(c, d, a);
-  const d2 = cross(c, d, b);
-  const d3 = cross(a, b, c);
-  const d4 = cross(a, b, d);
-  return d1 * d2 < -1e-9 && d3 * d4 < -1e-9;
-}
-
 const SUB = '₀₁₂₃₄₅₆₇₈₉';
 const sub = (n: number) => (n <= 1 ? '' : [...String(n)].map((c) => SUB[Number(c)]).join(''));
 
@@ -652,7 +643,7 @@ function finish(
   pos: Pos,
   style: MolStyle,
 ): MoleculeLayout {
-  const centre = new Map<string, XY>();
+  const centre = new Map<string, { x: number; y: number }>();
   for (const r of rings) {
     const pts = r.map((id) => pos.get(id) ?? { x: 0, y: 0 });
     const c = {

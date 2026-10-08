@@ -3,7 +3,14 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { REGION_LANGS, regionAt, regionReach, regionTappable, regionTapWidth } from '../regions.js';
+import {
+  REGION_LANGS,
+  regionAt,
+  regionReach,
+  regionTappable,
+  regionTapWidth,
+  TAP_TARGET,
+} from '../regions.js';
 import { SCHEMATIC_SHAPES } from '../schematicShapes.data.js';
 import {
   SCHEMATIC_IDS,
@@ -15,6 +22,7 @@ import {
   schematicProblem,
   schematicRegions,
   type SchematicFig,
+  type SchematicId,
 } from '../schematics.js';
 import { namedPlaces, tapPick, tapProblem, tapText, tapVerdict } from '../tap.js';
 
@@ -22,7 +30,7 @@ const cell: SchematicFig = { type: 'schematic', d: 'plant_cell', n: [], ask: 0 }
 
 describe('the library', () => {
   it('has the drawings, each with parts named in all five languages', () => {
-    expect(SCHEMATIC_IDS).toHaveLength(8);
+    expect(SCHEMATIC_IDS).toHaveLength(17);
     for (const d of SCHEMATIC_IDS) {
       const parts = schematic(d).parts;
       expect(parts.length, d).toBeGreaterThanOrEqual(4);
@@ -64,18 +72,52 @@ describe('the library', () => {
     }
   });
 
-  it('the parts school asks to tap are big enough for a finger on a phone', () => {
-    const tappable = (d: SchematicFig['d'], name: string) =>
+  it('a tap asks only for a part a whole finger fits, in the smallest room', () => {
+    const tappable = (d: SchematicId, id: string) =>
       regionTappable(
         schematicRegions(SCHEMATIC_SHAPES, d),
-        schematicPart(d, name)!,
+        schematicPart(d, id)!,
         schematic(d).height,
+        TAP_TARGET.picture,
       );
-    expect(tappable('plant_cell', 'Zellkern')).toBe(true);
-    expect(tappable('plant_cell', 'Vakuole')).toBe(true);
-    expect(tappable('eye', 'Linse')).toBe(true);
-    expect(tappable('bicycle', 'Rahmen')).toBe(true);
-    expect(tappable('insect', 'Kopf')).toBe(true);
+    // Narrower than a finger and too close to their neighbours' numbers: named, never tapped.
+    const NAMED_ONLY: Partial<Record<SchematicId, string[]>> = {
+      flower: ['receptacle', 'stamen', 'ovary', 'style', 'stigma'],
+      eye: ['cornea', 'lens', 'iris', 'pupil'],
+      insect: ['head', 'eye'],
+      bicycle: [
+        'carrier',
+        'handlebar',
+        'bell',
+        'headlight',
+        'spoke_reflector',
+        'brake',
+        'rear_light',
+      ],
+      skeleton: ['sternum', 'collarbone', 'tibia', 'fibula'],
+    };
+    for (const d of SCHEMATIC_IDS) {
+      for (const { id } of schematic(d).parts) {
+        expect(tappable(d, id), `${d}.${id}`).toBe(!NAMED_ONLY[d]?.includes(id));
+      }
+    }
+  });
+
+  it('a whole finger is more than a map asks: the lens is a target for a map, not for a picture', () => {
+    const set = schematicRegions(SCHEMATIC_SHAPES, 'eye');
+    const lens = schematicPart('eye', 'Linse')!;
+    const h = schematic('eye').height;
+    expect(regionTappable(set, lens, h, TAP_TARGET.map)).toBe(true);
+    expect(regionTappable(set, lens, h, TAP_TARGET.picture)).toBe(false);
+  });
+
+  it('marks stand on the parts and are no part: a tap on a sign’s symbol means the sign', () => {
+    const set = schematicRegions(SCHEMATIC_SHAPES, 'signs');
+    const reach = regionReach(regionTapWidth(schematic('signs').height));
+    // The middle of the white O of STOP, the walker's head, the bicycle's front hub.
+    expect(regionAt(set, 272, 151, reach)).toBe(schematicPart('signs', 'stop'));
+    expect(regionAt(set, 744, 406, reach)).toBe(schematicPart('signs', 'crossing'));
+    expect(regionAt(set, 295, 778, reach)).toBe(schematicPart('signs', 'cycle_path'));
   });
 });
 
