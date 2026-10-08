@@ -1,6 +1,6 @@
-// The Ausnahmelisten that live in a test's source instead of tools/guards/baselines/ (issues #296,
-// #310, #395): a list a source test names as "only shrinks" is read here, so `no-growth.mjs` can
-// compare it with the base branch like every JSON list. Without this, a PR could add an entry to
+// The Ausnahmelisten that live in a test's source (issues #296, #310, #395): a list a source test
+// names as "only shrinks" is read here, so `no-growth.mjs` can compare it with the base branch
+// like every list kept by hand. Without this, a PR could add an entry to
 // `OWN_BAR` or `CHECK` in the same change that adds the debt, and both halves of the guard — the
 // test and its list — would agree.
 //

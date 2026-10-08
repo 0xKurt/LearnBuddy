@@ -8,7 +8,7 @@
 //     question per number, "Wie heißt Teil 1?" …, each with the library's name as its key
 //     (`labelQuestions`) — the labelling task of a worksheet, no word of it from the model;
 //   · "Wie heißt Teil 3?" — typed (kind short): the number asked is on a part, that part the key;
-//   · "Tippe auf den Zellkern" — answered by tapping (`ItemDraft.tap`, no number asked); the tap
+//   · "Tippe auf den Zellkern" — answered by tapping (`ItemDraft.tap`, no number on it); the tap
 //     check (`tapCheck.ts`, the one mechanism of every tappable figure) holds the key to a part,
 //     and here: a part big enough for a finger on a phone.
 // Anything else about a picture — what a part does, how many there are — is no fact of the
@@ -27,12 +27,24 @@ import {
   schematicPartName,
   schematicProblem,
   schematicRegions,
+  TAP_TARGET,
+  type SchematicId,
 } from '@learnbuddy/shared-math';
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 
 import type { ItemDraft } from './items.js';
 
 type Pictured = { kind: string; answer: string; figure: Figure | null; tap?: boolean | null };
+
+/** Whether a whole finger (44 pt) can hit part `i` of drawing `d` on the narrowest phone. */
+function fingerFits(d: SchematicId, i: number): boolean {
+  return regionTappable(
+    schematicRegions(SCHEMATIC_SHAPES, d),
+    i,
+    schematic(d).height,
+    TAP_TARGET.picture,
+  );
+}
 
 /** Why this question about a picture cannot be asked, or null when it can (or has no picture). */
 function schematicItemProblem(it: Pictured): string | null {
@@ -43,9 +55,11 @@ function schematicItemProblem(it: Pictured): string | null {
   const key = schematicPart(f.d, it.answer);
   if (it.tap === true) {
     if (f.ask !== 0) return 'a tap question asks no number';
-    // On a part of the picture: the tap check. Here only what it cannot know: the finger.
-    return key === null ||
-      regionTappable(schematicRegions(SCHEMATIC_SHAPES, f.d), key, schematic(f.d).height)
+    // Numbers stand beside the drawing (the app's schematicLayout.ts) and shrink it: a finger needs
+    // all of it, and a number would name nothing she is asked for.
+    if (f.n.length > 0) return 'a tap question numbers no part';
+    // On a part of the picture: the tap check. Here only what it cannot know: a whole finger.
+    return key === null || fingerFits(f.d, key)
       ? null
       : `"${it.answer}" is too small to tap in the drawing ${f.d}`;
   }
@@ -97,10 +111,13 @@ export function labelQuestions(it: ItemDraft, locale: string | null): ItemDraft[
   }));
 }
 
-/** The library as the model is told it: each drawing with the German names of its parts. */
+/**
+ * The library as the model is told it: each drawing with the German names of its parts, a part
+ * too small for a finger marked "*" — it can be named, never tapped.
+ */
 export const SCHEMATIC_PARTS = SCHEMATIC_IDS.map(
   (d) =>
     `${d}: ${schematic(d)
-      .parts.map((p) => p.de)
+      .parts.map((p, i) => (fingerFits(d, i) ? p.de : `${p.de}*`))
       .join(', ')}`,
 ).join('; ');

@@ -37,8 +37,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # The Ausnahmelisten are compared with the base branch, and a growth needs a reason in
-          # one of the PR's commits (tools/guards/no-growth.mjs, issue #313).
+          # The Ausnahmelisten are measured on main (tools/guards/base.mjs, issue #452), and a
+          # growth needs a reason in one of the PR's commits (tools/guards/no-growth.mjs, #313):
+          # both need main's history next to the PR.
           fetch-depth: 0
 
       - name: Setup pnpm
@@ -61,7 +62,7 @@ jobs:
 
       - name: Lint + engineering guards
         # eslint (incl. file size, tokens only, raw Pressable) and `pnpm guards` (copies, dead
-        # code, the Ausnahmelisten' ratchet) — docs/engineering-guards.md.
+        # code, the guards' own tests), each against what main has — docs/engineering-guards.md.
         run: pnpm lint
 
       - name: Ausnahmelisten only shrink
