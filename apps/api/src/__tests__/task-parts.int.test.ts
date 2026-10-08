@@ -4,6 +4,8 @@
 // stored, and keeps the task on every part (`items.task_part`, migration 0100). A later part that
 // goes on correctly from HER wrong earlier result is right, and the reply says so — decided by code,
 // no model call per answer. docs/architecture.md §Practice ("Aufgaben mit Teilaufgaben").
+// Failure paths: the same turn twice, another learner's task, a model outage while writing it,
+// and a b) built on an a) she has since put right (her latest answer counts, never an old one).
 // requires live verification in Claude Code session (needs a running Postgres; scripted model)
 
 import { randomUUID } from 'node:crypto';
@@ -11,11 +13,14 @@ import { randomUUID } from 'node:crypto';
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { LlmError } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 import { TARIFF_STEM as STEM, tariffTask as tariff } from '../testing/scenarios/taskParts.js';
 
 const dbReady = await testDatabaseAvailable();
+
+const TOPIC = 'Lineare Funktionen, Aufgaben wie in der Klassenarbeit';
 
 const PLAIN = {
   kind: 'numeric',
@@ -35,7 +40,11 @@ describe.skipIf(!dbReady)('tasks in parts with Folgefehler (#297)', () => {
   let env: TestEnv;
   let l: Learner;
 
-  async function prepare(partTasks: unknown[], items: unknown[] = []): Promise<SessionView> {
+  async function prepare(
+    partTasks: unknown[],
+    items: unknown[] = [],
+    request = randomUUID(),
+  ): Promise<SessionView> {
     env.llm.script('explain', () => ({
       usable: true,
       title: 'Handytarif',
@@ -52,9 +61,9 @@ describe.skipIf(!dbReady)('tasks in parts with Folgefehler (#297)', () => {
       })),
     }));
     const res = await l.api.post<SessionView>('/practice/topic', {
-      client_request_id: randomUUID(),
+      client_request_id: request,
       kind: 'practice',
-      text: 'Lineare Funktionen, Aufgaben wie in der Klassenarbeit',
+      text: TOPIC,
     });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     await env.flushBackground();
@@ -172,5 +181,41 @@ describe.skipIf(!dbReady)('tasks in parts with Folgefehler (#297)', () => {
       text: '22 €',
     });
     expect(theirs.status).toBe(404);
+  });
+
+  it('her LATEST a) counts: b) built on an a) she has since put right is no Folgefehler', async () => {
+    const s = await prepare([tariff()]);
+    const [a, b] = s.items.map((i) => i.item.id) as [string, string];
+    expect((await answer(s, a, '10 €')).body.verdict).toBe('incorrect');
+    expect((await answer(s, a, '12 €')).body.verdict).toBe('correct');
+    // 22 € follows from the 10 € she has taken back, not from the a) that stands now.
+    const stale = await answer(s, b, '22 €');
+    expect(stale.body.verdict).toBe('incorrect');
+    expect(stale.body.reply.text).not.toContain('weitergerechnet');
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
+  });
+
+  it('a model outage stores no part; her retry with the same request id gets the whole task once', async () => {
+    env.llm.script('explain', { error: new LlmError('unavailable', 'down') });
+    const request = randomUUID();
+    const down = await l.api.post('/practice/topic', {
+      client_request_id: request,
+      kind: 'practice',
+      text: TOPIC,
+    });
+    expect(down.status).toBe(503);
+    const stored = () =>
+      env.db.one<{ items: number; runs: number }>(
+        `select (select count(*)::int from items where learner_id = $1) as items,
+                (select count(*)::int from practice_sessions where learner_id = $1) as runs`,
+        [l.learnerId],
+      );
+    expect(await stored()).toEqual({ items: 0, runs: 0 });
+
+    // Nothing was stored, so nothing is repeated behind her back: her own tap tries again.
+    const s = await prepare([tariff()], [], request);
+    expect(s.items.map((i) => i.item.task_part?.part)).toEqual(['a', 'b', 'c']);
+    expect(await stored()).toEqual({ items: 3, runs: 1 });
+    expect(env.llm.callsFor('explain')).toHaveLength(2);
   });
 });

@@ -3257,7 +3257,7 @@ b) makes b) right.
   Then the part is `correct`, by rule, and the reply says what happened ("Richtig weitergerechnet –
   mit deinem Ergebnis aus a) …"). Her a) stays wrong. A part answered before a), or brought back
   alone by a review, has nothing of hers to follow: its key decides.
-- **On screen** (`QuestionCard` `part`, `PartStem`): the situation above the question, the part's
+- **On screen** (`QuestionCard` `stimulus`, `PartStem`): the situation above the question, the part's
   letter before it, and the task's letters `a) · b) · c)` where the topic stands — where she is, never
   a count of what is left (rule 6). While she types the situation keeps two lines and scrolls in
   itself (the one text that may, rule 16) instead of folding away like a drawing: she types from its
