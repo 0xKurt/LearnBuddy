@@ -33,6 +33,7 @@ import {
   type Learner,
   type TestEnv,
 } from '../testing/harness.js';
+import { gate } from '../testing/sync.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -508,16 +509,17 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
     await withPhone();
     await seedExam(env, l.learnerId, { title: 'Mathearbeit', due: '2026-10-01', questions: 6 });
     env.clock.set('2026-09-28T13:00:00Z');
-    let release!: () => void;
-    const gate = new Promise<void>((r) => (release = r));
+    const model = gate();
     env.llm.script('buddy_check', async () => {
-      await gate; // hold the first run inside the model call while the second starts
+      model.markCalled();
+      await model.wait; // hold the first run inside the model call while the second starts
       return checkAnswer('Übung ist bereit', 'Eine kurze Runde für Donnerstag liegt bereit.').json;
     });
     const first = runTick(env.deps);
-    await new Promise((r) => setTimeout(r, 50));
+    // The second run starts only once the first holds the job inside the model call (#465).
+    await model.called;
     const second = await runTick(env.deps);
-    release();
+    model.release();
     const firstStats = await first;
     expect([...firstStats.errors, ...second.errors]).toEqual([]);
     // The second run could deliver nothing yet; one more run after the first finished.
