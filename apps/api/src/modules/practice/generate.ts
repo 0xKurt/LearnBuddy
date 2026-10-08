@@ -60,6 +60,7 @@ import {
 } from './setProfiles.js';
 import { STAFF_RULES, staffItems } from './staff.js';
 import { TEACH_BACK_RULES, teachBackItems } from './teachBack.js';
+import { PART_TASK_RULES, partTaskItems } from './taskParts.js';
 import { structuredItems, type StructuredItem } from './structured.js';
 import { promptVersion } from '../../llm/promptVersion.js';
 
@@ -215,6 +216,7 @@ Rules:
 - ${BAR_RULES}
 - ${STAFF_RULES}
 ${STRUCTURED_RULES}
+- ${PART_TASK_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${CURRICULUM_RULES}
 - ${LANGUAGE_RULES}
@@ -481,6 +483,8 @@ type Prepared = {
   teachBack: StoredItem[];
   /** The questions about Buddy's reading text, after its level and language (#368). */
   reading: StoredItem[];
+  /** The parts of the tasks in parts, in order, each task checked whole (#297). */
+  partTasks: StoredItem[];
   /** A long-text task, its key points set by code from its text type (issue #258). */
   essays: StoredItem[];
 };
@@ -574,6 +578,13 @@ function preparedFrom(
   const structured = structuredItems(set.structured, new Set(profile.structured)).filter(
     (it) => sheetTopics === null || (it.topic !== null && sheetTopics.includes(it.topic)),
   );
+  // Tasks in parts (#297): every part checked and every formula between them recomputed; a task
+  // that does not hold costs only itself. From her sheets, its topic is one of theirs.
+  const partTasks = profile.partTasks
+    ? set.part_tasks
+        .filter((p) => sheetTopics === null || (p.topic !== null && sheetTopics.includes(p.topic)))
+        .flatMap((p) => partTaskItems(p, { locale: learner.locale }))
+    : [];
   return {
     items,
     bars,
@@ -596,6 +607,7 @@ function preparedFrom(
           subjectKind: set.subject?.kind ?? null,
         })
       : [],
+    partTasks,
     essays: profile.essay
       ? essayItems(
           set.essay,
@@ -731,6 +743,7 @@ async function prepareTopic(
       dictation: [],
       teachBack: [],
       reading: [],
+      partTasks: [],
       essays: [],
     },
     {
@@ -789,6 +802,7 @@ async function store(
       prepared.dictation.length +
       prepared.teachBack.length +
       prepared.reading.length +
+      prepared.partTasks.length +
       prepared.essays.length ===
       0
   ) {
@@ -811,6 +825,7 @@ async function store(
         [
           ...prepared.items,
           ...prepared.structured,
+          ...prepared.partTasks,
           ...prepared.bars,
           ...prepared.listening,
           ...prepared.staffs,
@@ -902,7 +917,13 @@ async function addTheRest(
   // note-line or bar prompt is written by code and may be the same words for two questions that
   // differ in their figure (issue #277: the note lines and listening questions of a run that
   // started early were dropped here altogether).
-  rest.push(...prepared.structured, ...prepared.bars, ...prepared.listening, ...prepared.staffs);
+  rest.push(
+    ...prepared.structured,
+    ...prepared.partTasks,
+    ...prepared.bars,
+    ...prepared.listening,
+    ...prepared.staffs,
+  );
   if (rest.length === 0) {
     await givenUpOnPreparing(deps.db, learner.id, sessionId);
     return;
