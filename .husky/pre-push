@@ -1,15 +1,18 @@
 #!/usr/bin/env sh
-# LearnBuddy pre-push gate (issue #330): the full test suite, once per push. The pre-commit
-# hook only runs the tests related to what is staged; this is where the rest is caught before
-# it reaches a PR. CI runs the same suite again on every PR.
+# LearnBuddy pre-push gate (issues #330, #455): the full test suite, unless every pushed tree
+# already passed it. The pre-commit hook only runs the tests related to what is staged, or the
+# full suite when shared ground changed; this is where the rest is caught before it reaches a PR.
+# A tree the full suite already passed in this worktree is not tested a second time
+# (.husky/full-suite.sh); anything unclear runs the suite. CI runs it again on every PR.
 # Don't bypass with --no-verify.
 
 set -e
-export LB_REQUIRE_TEST_DB=1
+. "$(dirname "$0")/full-suite.sh"
+
+if suite_proven_for_push "$1"; then
+  echo "✓ pre-push gate green (full suite not repeated: every pushed tree already passed it)"
+  exit 0
+fi
 echo "→ pre-push: full test suite"
-pnpm -r --parallel test || {
-  echo "✗ tests failed — fix before pushing. If the API reports 'LB_REQUIRE_TEST_DB=1 but no" >&2
-  echo "  Postgres', start a Postgres 16 (or set LB_TEST_DATABASE_URL) — README.md §Develop." >&2
-  exit 1
-}
+full_suite || tests_failed
 echo "✓ pre-push gate green"
