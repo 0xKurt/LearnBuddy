@@ -11,6 +11,7 @@ import { initReactI18next } from 'react-i18next';
 // AsyncStorage here crashed the whole web bundle (blank screen, found 28.09. in the
 // browser walkthrough — its web build evaluates `merge-options` at module level).
 import { readItem, writeItem } from '../api/outboxStorage.js';
+import { baseLanguage } from '../speech/voice.js';
 import { NAMESPACES, resources, SUPPORTED_LOCALES, type AppLocale } from './resources.js';
 
 /** A language chosen by tapping a flag, kept per device across restarts. */
@@ -62,6 +63,15 @@ export async function restoreChosenLocale(): Promise<void> {
 export function currentLocale(): AppLocale {
   const l = i18n.language as AppLocale;
   return SUPPORTED_LOCALES.includes(l) ? l : 'de';
+}
+
+/**
+ * A language other than the app's: worth hearing read aloud (a vocabulary prompt, a flashcard's
+ * side). One rule for the practice screen and the flashcards (#384).
+ */
+export function isForeign(lang: string | null): lang is string {
+  const base = baseLanguage(lang);
+  return base !== null && base !== currentLocale();
 }
 
 export { i18n };
