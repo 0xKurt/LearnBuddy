@@ -2,7 +2,8 @@
 // Do not edit: run the script. Issue #251. Natural Earth: "All versions of Natural Earth raster +
 // vector map data found on this website are in the public domain." Made with Natural Earth.
 
-import type { MapNames, MapView } from './maps.js';
+import type { MapGrids } from './mapGrid.js';
+import type { MapNames, MapPlaceNames, MapView } from './maps.js';
 
 /** The regions of each view in drawing order, with their names in the five languages. */
 export const MAP_NAMES: MapNames = {
@@ -77,5 +78,128 @@ export const MAP_NAMES: MapNames = {
   ],
 };
 
+/** The capitals, rivers and mountain ranges of a view, in drawing order (#429). */
+export const MAP_PLACE_NAMES: MapPlaceNames = {
+  de: {
+    cities: [
+      { id: 'berlin', de: 'Berlin', en: 'Berlin', fr: 'Berlin', es: 'Berlín', it: 'Berlino', alt: [] },
+      { id: 'bremen', de: 'Bremen', en: 'Bremen', fr: 'Brême', es: 'Bremen', it: 'Brema', alt: [] },
+      { id: 'dresden', de: 'Dresden', en: 'Dresden', fr: 'Dresde', es: 'Dresde', it: 'Dresda', alt: [] },
+      { id: 'dusseldorf', de: 'Düsseldorf', en: 'Düsseldorf', fr: 'Düsseldorf', es: 'Düsseldorf', it: 'Düsseldorf', alt: ['Dusseldorf'] },
+      { id: 'erfurt', de: 'Erfurt', en: 'Erfurt', fr: 'Erfurt', es: 'Érfurt', it: 'Erfurt', alt: [] },
+      { id: 'hamburg', de: 'Hamburg', en: 'Hamburg', fr: 'Hambourg', es: 'Hamburgo', it: 'Amburgo', alt: [] },
+      { id: 'hanover', de: 'Hannover', en: 'Hanover', fr: 'Hanovre', es: 'Hannover', it: 'Hannover', alt: [] },
+      { id: 'kiel', de: 'Kiel', en: 'Kiel', fr: 'Kiel', es: 'Kiel', it: 'Kiel', alt: [] },
+      { id: 'magdeburg', de: 'Magdeburg', en: 'Magdeburg', fr: 'Magdebourg', es: 'Magdeburgo', it: 'Magdeburgo', alt: [] },
+      { id: 'mainz', de: 'Mainz', en: 'Mainz', fr: 'Mayence', es: 'Maguncia', it: 'Magonza', alt: [] },
+      { id: 'munich', de: 'München', en: 'Munich', fr: 'Munich', es: 'Múnich', it: 'Monaco di Baviera', alt: [] },
+      { id: 'potsdam', de: 'Potsdam', en: 'Potsdam', fr: 'Potsdam', es: 'Potsdam', it: 'Potsdam', alt: [] },
+      { id: 'saarbrucken', de: 'Saarbrücken', en: 'Saarbrücken', fr: 'Sarrebruck', es: 'Sarrebruck', it: 'Saarbrücken', alt: ['Saarbrucken'] },
+      { id: 'schwerin', de: 'Schwerin', en: 'Schwerin', fr: 'Schwerin', es: 'Schwerin', it: 'Schwerin', alt: [] },
+      { id: 'stuttgart', de: 'Stuttgart', en: 'Stuttgart', fr: 'Stuttgart', es: 'Stuttgart', it: 'Stoccarda', alt: [] },
+      { id: 'wiesbaden', de: 'Wiesbaden', en: 'Wiesbaden', fr: 'Wiesbaden', es: 'Wiesbaden', it: 'Wiesbaden', alt: [] },
+    ],
+    rivers: [
+      { id: 'donau', de: 'Donau', en: 'Danube', fr: 'Danube', es: 'Danubio', it: 'Danubio', alt: [] },
+      { id: 'elbe', de: 'Elbe', en: 'Elbe', fr: 'Elbe', es: 'Elba', it: 'Elba', alt: [] },
+      { id: 'ems', de: 'Ems', en: 'Ems', fr: 'Ems', es: 'Ems', it: 'Ems', alt: [] },
+      { id: 'inn', de: 'Inn', en: 'Inn', fr: 'Inn', es: 'Eno', it: 'Inn', alt: [] },
+      { id: 'isar', de: 'Isar', en: 'Isar', fr: 'Isar', es: 'Isar', it: 'Isar', alt: [] },
+      { id: 'main', de: 'Main', en: 'Main', fr: 'Main', es: 'Meno', it: 'Meno', alt: [] },
+      { id: 'mosel', de: 'Mosel', en: 'Moselle', fr: 'Moselle', es: 'Mosela', it: 'Mosella', alt: [] },
+      { id: 'neckar', de: 'Neckar', en: 'Neckar', fr: 'Neckar', es: 'Neckar', it: 'Neckar', alt: [] },
+      { id: 'oder', de: 'Oder', en: 'Oder', fr: 'Oder', es: 'Óder', it: 'Oder', alt: [] },
+      { id: 'rhein', de: 'Rhein', en: 'Rhine', fr: 'Rhin', es: 'Rin', it: 'Reno', alt: [] },
+      { id: 'saale', de: 'Saale', en: 'Saale', fr: 'Saale', es: 'Saale', it: 'Saale', alt: [] },
+      { id: 'spree', de: 'Spree', en: 'Spree', fr: 'Spree', es: 'Spree', it: 'Sprea', alt: [] },
+      { id: 'weser', de: 'Weser', en: 'Weser', fr: 'Weser', es: 'Weser', it: 'Weser', alt: [] },
+    ],
+    mountains: [
+      { id: 'alps', de: 'Alpen', en: 'Alps', fr: 'Alpes', es: 'Alpes', it: 'Alpi', alt: [] },
+      { id: 'b-hmerwald', de: 'Böhmerwald', en: 'Böhmerwald', fr: 'Böhmerwald', es: 'Böhmerwald', it: 'Selva Boema', alt: [] },
+      { id: 'ore-mountains', de: 'Erzgebirge', en: 'Ore Mountains', fr: 'Monts Métallifères', es: 'Montes Metálicos', it: 'Monti Metalliferi', alt: [] },
+      { id: 'harz', de: 'Harz', en: 'Harz', fr: 'Harz', es: 'Harz', it: 'Harz', alt: [] },
+    ],
+  },
+  europe: {
+    cities: [
+      { id: 'amsterdam', de: 'Amsterdam', en: 'Amsterdam', fr: 'Amsterdam', es: 'Ámsterdam', it: 'Amsterdam', alt: [] },
+      { id: 'athens', de: 'Athen', en: 'Athens', fr: 'Athènes', es: 'Atenas', it: 'Atene', alt: [] },
+      { id: 'belgrade', de: 'Belgrad', en: 'Belgrade', fr: 'Belgrade', es: 'Belgrado', it: 'Belgrado', alt: [] },
+      { id: 'berlin', de: 'Berlin', en: 'Berlin', fr: 'Berlin', es: 'Berlín', it: 'Berlino', alt: [] },
+      { id: 'bern', de: 'Bern', en: 'Bern', fr: 'Berne', es: 'Berna', it: 'Berna', alt: [] },
+      { id: 'bratislava', de: 'Bratislava', en: 'Bratislava', fr: 'Bratislava', es: 'Bratislava', it: 'Bratislava', alt: [] },
+      { id: 'brussels', de: 'Brüssel', en: 'Brussels', fr: 'Bruxelles', es: 'Bruselas', it: 'Bruxelles', alt: [] },
+      { id: 'budapest', de: 'Budapest', en: 'Budapest', fr: 'Budapest', es: 'Budapest', it: 'Budapest', alt: [] },
+      { id: 'bucharest', de: 'Bukarest', en: 'Bucharest', fr: 'Bucarest', es: 'Bucarest', it: 'Bucarest', alt: [] },
+      { id: 'chisinau', de: 'Chișinău', en: 'Chișinău', fr: 'Chișinău', es: 'Chisináu', it: 'Chișinău', alt: ['Chisinau'] },
+      { id: 'dublin', de: 'Dublin', en: 'Dublin', fr: 'Dublin', es: 'Dublín', it: 'Dublino', alt: [] },
+      { id: 'helsinki', de: 'Helsinki', en: 'Helsinki', fr: 'Helsinki', es: 'Helsinki', it: 'Helsinki', alt: [] },
+      { id: 'kyiv', de: 'Kiew', en: 'Kyiv', fr: 'Kiev', es: 'Kiev', it: 'Kiev', alt: ['Kiev'] },
+      { id: 'copenhagen', de: 'Kopenhagen', en: 'Copenhagen', fr: 'Copenhague', es: 'Copenhague', it: 'Copenaghen', alt: ['København', 'Kobenhavn'] },
+      { id: 'lisbon', de: 'Lissabon', en: 'Lisbon', fr: 'Lisbonne', es: 'Lisboa', it: 'Lisbona', alt: [] },
+      { id: 'ljubljana', de: 'Ljubljana', en: 'Ljubljana', fr: 'Ljubljana', es: 'Liubliana', it: 'Lubiana', alt: [] },
+      { id: 'london', de: 'London', en: 'London', fr: 'Londres', es: 'Londres', it: 'Londra', alt: [] },
+      { id: 'luxembourg', de: 'Luxemburg', en: 'Luxembourg', fr: 'Luxembourg', es: 'Luxemburgo', it: 'Lussemburgo', alt: [] },
+      { id: 'madrid', de: 'Madrid', en: 'Madrid', fr: 'Madrid', es: 'Madrid', it: 'Madrid', alt: [] },
+      { id: 'minsk', de: 'Minsk', en: 'Minsk', fr: 'Minsk', es: 'Minsk', it: 'Minsk', alt: [] },
+      { id: 'moscow', de: 'Moskau', en: 'Moscow', fr: 'Moscou', es: 'Moscú', it: 'Mosca', alt: [] },
+      { id: 'oslo', de: 'Oslo', en: 'Oslo', fr: 'Oslo', es: 'Oslo', it: 'Oslo', alt: [] },
+      { id: 'paris', de: 'Paris', en: 'Paris', fr: 'Paris', es: 'París', it: 'Parigi', alt: [] },
+      { id: 'podgorica', de: 'Podgorica', en: 'Podgorica', fr: 'Podgorica', es: 'Podgorica', it: 'Podgorica', alt: [] },
+      { id: 'prague', de: 'Prag', en: 'Prague', fr: 'Prague', es: 'Praga', it: 'Praga', alt: [] },
+      { id: 'pristina', de: 'Pristina', en: 'Pristina', fr: 'Pristina', es: 'Pristina', it: 'Pristina', alt: [] },
+      { id: 'reykjavik', de: 'Reykjavík', en: 'Reykjavík', fr: 'Reykjavik', es: 'Reikiavik', it: 'Reykjavík', alt: ['Reykjavik'] },
+      { id: 'riga', de: 'Riga', en: 'Riga', fr: 'Riga', es: 'Riga', it: 'Riga', alt: [] },
+      { id: 'rome', de: 'Rom', en: 'Rome', fr: 'Rome', es: 'Roma', it: 'Roma', alt: [] },
+      { id: 'sarajevo', de: 'Sarajevo', en: 'Sarajevo', fr: 'Sarajevo', es: 'Sarajevo', it: 'Sarajevo', alt: [] },
+      { id: 'skopje', de: 'Skopje', en: 'Skopje', fr: 'Skopje', es: 'Skopie', it: 'Skopje', alt: [] },
+      { id: 'sofia', de: 'Sofia', en: 'Sofia', fr: 'Sofia', es: 'Sofía', it: 'Sofia', alt: [] },
+      { id: 'stockholm', de: 'Stockholm', en: 'Stockholm', fr: 'Stockholm', es: 'Estocolmo', it: 'Stoccolma', alt: [] },
+      { id: 'tallinn', de: 'Tallinn', en: 'Tallinn', fr: 'Tallinn', es: 'Tallin', it: 'Tallinn', alt: [] },
+      { id: 'tirana', de: 'Tirana', en: 'Tirana', fr: 'Tirana', es: 'Tirana', it: 'Tirana', alt: [] },
+      { id: 'valletta', de: 'Valletta', en: 'Valletta', fr: 'La Valette', es: 'La Valeta', it: 'La Valletta', alt: [] },
+      { id: 'vilnius', de: 'Vilnius', en: 'Vilnius', fr: 'Vilnius', es: 'Vilna', it: 'Vilnius', alt: [] },
+      { id: 'warsaw', de: 'Warschau', en: 'Warsaw', fr: 'Varsovie', es: 'Varsovia', it: 'Varsavia', alt: [] },
+      { id: 'vienna', de: 'Wien', en: 'Vienna', fr: 'Vienne', es: 'Viena', it: 'Vienna', alt: [] },
+      { id: 'zagreb', de: 'Zagreb', en: 'Zagreb', fr: 'Zagreb', es: 'Zagreb', it: 'Zagabria', alt: [] },
+    ],
+    rivers: [
+      { id: 'dnepr', de: 'Dnepr', en: 'Dnieper', fr: 'Dniepr', es: 'Dniéper', it: 'Dnepr', alt: [] },
+      { id: 'don', de: 'Don', en: 'Don', fr: 'Don', es: 'Don', it: 'Don', alt: [] },
+      { id: 'donau', de: 'Donau', en: 'Danube', fr: 'Danube', es: 'Danubio', it: 'Danubio', alt: [] },
+      { id: 'ebro', de: 'Ebro', en: 'Ebro', fr: 'Èbre', es: 'Ebro', it: 'Ebro', alt: [] },
+      { id: 'elbe', de: 'Elbe', en: 'Elbe', fr: 'Elbe', es: 'Elba', it: 'Elba', alt: [] },
+      { id: 'loire', de: 'Loire', en: 'Loire', fr: 'Loire', es: 'Loira', it: 'Loira', alt: [] },
+      { id: 'oder', de: 'Oder', en: 'Oder', fr: 'Oder', es: 'Óder', it: 'Oder', alt: [] },
+      { id: 'po', de: 'Po', en: 'Po', fr: 'Pô', es: 'Po', it: 'Po', alt: [] },
+      { id: 'rhein', de: 'Rhein', en: 'Rhine', fr: 'Rhin', es: 'Rin', it: 'Reno', alt: [] },
+      { id: 'rhone', de: 'Rhone', en: 'Rhône', fr: 'Rhône', es: 'Ródano', it: 'Rodano', alt: [] },
+      { id: 'seine', de: 'Seine', en: 'Seine', fr: 'Seine', es: 'Sena', it: 'Senna', alt: [] },
+      { id: 'tajo', de: 'Tajo', en: 'Tagus', fr: 'Tage', es: 'Tajo', it: 'Tago', alt: [] },
+      { id: 'themse', de: 'Themse', en: 'Thames', fr: 'Tamise', es: 'Támesis', it: 'Tamigi', alt: [] },
+      { id: 'weichsel', de: 'Weichsel', en: 'Vistula', fr: 'Vistule', es: 'Vístula', it: 'Vistola', alt: [] },
+      { id: 'wolga', de: 'Wolga', en: 'Volga', fr: 'Volga', es: 'Volga', it: 'Volga', alt: [] },
+    ],
+    mountains: [
+      { id: 'alps', de: 'Alpen', en: 'Alps', fr: 'Alpes', es: 'Alpes', it: 'Alpi', alt: [] },
+      { id: 'appennino-ligure', de: 'Apennin', en: 'Apennines', fr: 'Apennins', es: 'Apeninos', it: 'Appennini', alt: [] },
+      { id: 'balkan-mountains', de: 'Balkangebirge', en: 'Balkan Mountains', fr: 'Grand Balkan', es: 'Montes Balcanes', it: 'Monti Balcani', alt: [] },
+      { id: 'dinaric-alps', de: 'Dinarisches Gebirge', en: 'Dinaric Alps', fr: 'Alpes dinariques', es: 'Alpes Dináricos', it: 'Alpi Dinariche', alt: [] },
+      { id: 'carpathian-mountains', de: 'Karpaten', en: 'Carpathian Mountains', fr: 'Carpates', es: 'montes Cárpatos', it: 'Carpazi', alt: [] },
+      { id: 'caucasus-mountains', de: 'Kaukasus', en: 'Caucasus Mountains', fr: 'Caucase', es: 'Cáucaso', it: 'Catena del Caucaso', alt: [] },
+      { id: 'pyrenees', de: 'Pyrenäen', en: 'Pyrenees', fr: 'Pyrénées', es: 'Pirineos', it: 'Pirenei', alt: [] },
+      { id: 'scandinavian-mountains', de: 'Skanden', en: 'Scandinavian Mountains', fr: 'Alpes scandinaves', es: 'Alpes escandinavos', it: 'Alpi scandinave', alt: [] },
+    ],
+  },
+};
+
+/** The degrees of the meridians and parallels of each view's Gradnetz, west to east and south to north (#429). */
+export const MAP_GRIDS: MapGrids = {
+  de: { lon: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15], lat: [48, 49, 50, 51, 52, 53, 54, 55] },
+  europe: { lon: [-20, -10, 0, 10, 20, 30, 40, 50], lat: [40, 50, 60, 70] },
+  world: { lon: [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150], lat: [-60, -30, 0, 30, 60] },
+};
+
 /** How high each view stands in a frame 1000 wide: the drawing keeps its room while it loads. */
-export const MAP_HEIGHTS: Record<MapView, number> = { de: 1351, europe: 998, world: 519 };
+export const MAP_HEIGHTS: Record<MapView, number> = { de: 1351, europe: 998, world: 519, eu_central: 789, eu_southeast: 962, eu_north: 1002 };

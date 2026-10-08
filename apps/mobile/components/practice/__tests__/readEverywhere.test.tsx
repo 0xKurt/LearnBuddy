@@ -50,6 +50,7 @@ const item = (
     listen: null,
     passage: null,
     task_part: null,
+    tones: null,
     // What the server says of an ordinary task and an ordinary card (`readAloud.ts`).
     read_aloud: true,
     ...over,

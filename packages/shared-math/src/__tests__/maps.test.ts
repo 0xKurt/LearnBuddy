@@ -5,12 +5,13 @@ import { describe, expect, it } from 'vitest';
 
 import { MAP_SHAPES } from '../mapShapes.data.js';
 import {
+  MAP_BASE_VIEWS,
   MAP_VIEWS,
   mapCanonical,
   mapHeight,
   mapProblem,
   mapRegion,
-  mapRegionName,
+  mapPlaceName,
   mapRegions,
   type MapFig,
   type MapView,
@@ -47,12 +48,16 @@ describe('the data', () => {
   it('names and shapes line up, region by region', () => {
     for (const v of MAP_VIEWS) {
       expect(MAP_SHAPES[v].regions).toHaveLength(mapRegions(v).length);
+    }
+    // Every region of a whole map has a shape; a closer Ausschnitt of Europe (#429) leaves out
+    // what lies outside its frame.
+    for (const v of MAP_BASE_VIEWS) {
       for (const s of MAP_SHAPES[v].regions) expect(s.rings.length).toBeGreaterThan(0);
     }
   });
 
   it('every name, in every language, means exactly one region of its map', () => {
-    for (const v of MAP_VIEWS) {
+    for (const v of MAP_BASE_VIEWS) {
       mapRegions(v).forEach((r, i) => {
         for (const name of [r.id, ...REGION_LANGS.map((l) => r[l]), ...r.alt]) {
           expect(mapRegion(v, name), `${v}: ${name}`).toBe(i);
@@ -86,9 +91,9 @@ describe('a name resolved against the data', () => {
 
   it('a region is named in the app’s language, in German otherwise', () => {
     const by = mapRegion('de', 'Bayern') ?? -1;
-    expect(mapRegionName('de', by, 'en')).toBe('Bavaria');
-    expect(mapRegionName('de', by, 'it')).toBe('Baviera');
-    expect(mapRegionName('de', by, 'nl')).toBe('Bayern');
+    expect(mapPlaceName({ v: 'de' }, by, 'en')).toBe('Bavaria');
+    expect(mapPlaceName({ v: 'de' }, by, 'it')).toBe('Baviera');
+    expect(mapPlaceName({ v: 'de' }, by, 'nl')).toBe('Bayern');
   });
 
   it('a map marks only regions it has, each once, stored by id', () => {

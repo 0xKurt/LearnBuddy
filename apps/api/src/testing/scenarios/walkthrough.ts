@@ -20,12 +20,14 @@ import { scriptFigures } from './figures.js';
 import { installGenerations } from './generations.js';
 import { scriptGrid } from './grid.js';
 import { scriptHelp } from './help.js';
+import { scriptSteps } from './steps.js';
 import { scriptLearningModes } from './learning-modes.js';
 import { scriptMark } from './mark.js';
 import { scriptPeriodic } from './periodic.js';
 import { scriptPrimary } from './primary.js';
 import { scriptReading } from './reading.js';
 import { scriptRoleplay } from './roleplay.js';
+import { scriptEar } from './ear.js';
 import { scriptSolids } from './solids.js';
 import { scriptSources } from './sources.js';
 import { scriptMap } from './map.js';
@@ -70,6 +72,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptGrid();
   // Also first: "Malnehmen" and "Probetest" are words an older rule may know (#388).
   scriptHelp();
+  // Also first: "Gleichung" is a word an older rule may know (#298).
+  scriptSteps();
   // Also before the core loop: "Geld" and "Uhr" are everyday words its rules may know (#254).
   scriptPrimary();
   // Also before the core loop: "Kreislauf" and "Kette" are everyday words its rules may know (#247).
@@ -93,6 +97,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptTrees();
   scriptPeriodic();
   scriptSolids();
+  scriptEar();
   scriptCloze();
   scriptDrill();
   scriptRoleplay();

@@ -48,6 +48,7 @@ const IN_SHELL = [
   'GridAnswer.tsx',
   'TypedAnswer.tsx',
   'StaffWriting.tsx',
+  'RhythmTaps.tsx',
   'FractionBarAnswer.tsx',
   'FigureTapAnswer.tsx',
 ];

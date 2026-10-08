@@ -209,7 +209,12 @@
     "rest_of": "Metti: {{value}}",
     "check_waits": "Solo quando ogni battuta ha qualcosa.",
     "keys_label": "Tasti del pentagramma",
-    "values_label": "Valore della nota"
+    "values_label": "Valore della nota",
+    "taps_pad": "Batti qui",
+    "taps_again": "Ricomincia",
+    "taps_waits": "Prima batti il ritmo che hai sentito.",
+    "tapped_one": "{{count}} colpo battuto",
+    "tapped_other": "{{count}} colpi battuti"
   },
   "summary": {
     "title": "Ce l'hai fatta!",

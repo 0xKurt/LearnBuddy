@@ -69,11 +69,7 @@ import { QuestionCorner } from '../../components/practice/QuestionCorner.js';
 import { QuestionTools } from '../../components/practice/QuestionTools.js';
 import { HeadActions } from '../../components/practice/HeadActions.js';
 import { useQuestionVoice } from '../../components/practice/useQuestionVoice.js';
-import {
-  emptyStaffAnswer,
-  readStaffDraft,
-  type StaffDraft,
-} from '../../components/practice/StaffAnswer.js';
+import { RhythmTaps } from '../../components/practice/RhythmTaps.js';
 import { StaffWriting } from '../../components/practice/StaffWriting.js';
 import { FreeSpaceReport } from '../../components/practice/FreeSpace.js';
 import { AnswerShell } from '../../components/practice/AnswerShell.js';
@@ -191,16 +187,6 @@ export default function PracticeScreen() {
   );
   /** The recordings she already heard in this run (issues #210, #242). */
   const { heard, markHeard } = useHeardTexts(id);
-  /**
-   * Die Notenzeile, die sie geschrieben hat, und zu welcher Frage (issue #226). Aus demselben
-   * Grund an der Frage festgemacht wie die Anordnung darüber: die nächste Frage beginnt mit einer
-   * leeren Zeile, und nichts Geschriebenes rutscht hinein.
-   */
-  // Im Entwurf und nicht nur im Zustand (issue #275): ein Farbwechsel baut den Bildschirm neu
-  // auf, und ihre halbe Zeile war danach weg.
-  const staffDraft = useDraft(`session.${id}.staff`);
-  const written = readStaffDraft(staffDraft.text);
-  const setWritten = (next: StaffDraft) => staffDraft.setText(JSON.stringify(next));
   /** The pronunciation judgement while the model is still listening (issue #8). */
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -675,15 +661,12 @@ export default function PracticeScreen() {
   // Once there is a conversation the Diktat card is one row (DictationCard `compact`).
   const dictationCompact = itemTurns.length > 0 || pendingText !== null;
   // Which way she answers — exactly one (`answerForm`).
-  const { choices, tapChoices, speaking, structured, staff, barSurface, tapFigure, typed } =
+  const { choices, tapChoices, speaking, structured, staff, taps, barSurface, tapFigure, typed } =
     answerForm(item, open);
   // Her short answer appears in the gap of a fill-in sentence while she types.
   const filling = typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined;
   // "Nochmal vorlesen" in the conversation row — only where the server allows hearing it.
   const readAgain = item.read_aloud ? { onReadAgain: () => readQuestion(item) } : {};
-  /** Ihre Notenzeile zu DIESER Frage; eine andere Frage beginnt mit einer leeren Zeile. */
-  const staffAnswer =
-    written?.itemId === item.id ? written.answer : emptyStaffAnswer(staff?.bars ?? 1);
   const tried = new Set(
     turns
       .filter((turn) => turn.role === 'learner' && turn.verdict === 'incorrect')
@@ -1004,19 +987,28 @@ export default function PracticeScreen() {
                   />
                 </View>
               ) : null}
-              {/* Die Notenzeile, auf die sie schreibt (issue #226), in der Antworthülle (#310). */}
+              {/* Die Notenzeile, auf die sie schreibt (issue #226), in der Antworthülle (#310), ihre
+            halbe Zeile je Frage im Entwurf (#275). */}
               {staff ? (
                 <StaffWriting
                   key={item.id}
                   surface={staff}
-                  answer={staffAnswer}
+                  draftKey={`session.${id}.${item.id}.staff`}
                   disabled={locked}
-                  onChange={(next) => setWritten({ itemId: item.id, answer: next })}
                   // Kein `via: 'tapped'`, obwohl sie getippt hat: `via` unterscheidet WIEDERERKENNEN
                   // von PRODUZIEREN (issue #163), und hier ist nichts wiedererkannt. Eine Notenzeile
                   // selbst zu setzen ist genau das, was die Klassenarbeit verlangt — mit einem Stift
                   // statt mit dem Finger (dasselbe Argument wie `summary.ts` für mehrteilige Antworten).
                   onCheck={(line) => void answer(item.id, { text: line }, line)}
+                />
+              ) : null}
+              {taps ? (
+                <RhythmTaps
+                  key={item.id}
+                  disabled={locked}
+                  // Ein gehörter Rhythmus, den sie nachklopft (issue #445): ihre Schläge sind die
+                  // Antwort, und auch hier ohne `via: 'tapped'` — nichts ist wiedererkannt.
+                  onCheck={(beats, shown) => void answer(item.id, { text: beats }, shown)}
                 />
               ) : null}
               {typed ? (

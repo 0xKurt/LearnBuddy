@@ -31,6 +31,7 @@ import {
   taskViewFor,
   tapsFigure,
   textIsBoard,
+  tonesFor,
   type ItemImageRow,
 } from './viewParts.js';
 
@@ -208,6 +209,10 @@ export async function sessionView(
         // It stays while the question is closed: hearing the text again next to the words of
         // it is exactly what a listening task is reviewed with.
         listen: hearing.has(i.id) ? { ref: hearing.get(i.id)! } : null,
+        // The tones of an ear-training question (issue #445), computed from the reviewed task like
+        // its key. They stay while it is closed, like a listening text: hearing it again next to
+        // the solution is how it is reviewed.
+        tones: tonesFor(i.staff_task),
         // The text she reads it from, above the question while she answers (issue #233) — except
         // where she answers IN the text, a Belegstelle (#368): its board is the text, once.
         passage: textIsBoard(boardOf(i)) ? null : (reading.get(i.id) ?? null),

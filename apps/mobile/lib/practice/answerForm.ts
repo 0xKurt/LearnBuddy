@@ -25,9 +25,12 @@ export function answerForm(item: ItemView, open: boolean) {
   // Die leere Notenzeile, auf die sie schreibt (issue #226). Wie eine Anordnung ist sie der GANZE
   // Weg zu antworten: ein Antwortfeld gibt es daneben nicht, und das eine „Prüfen“ steht darunter.
   const staff = open && item.surface?.mode === 'notes' ? item.surface : null;
+  // Das Feld, auf das sie einen gehörten Rhythmus klopft (issue #445): ihre Schläge sind die Antwort.
+  const taps = open && item.surface?.mode === 'taps';
   // The fraction bar (issue #162) is the other case of the same surface, and since #402 a board
   // like the others (report #388 §9): the shaded bar is the answer, the bar's field her question.
-  const barSurface = open && item.surface && item.surface.mode !== 'notes' ? item.surface : null;
+  const surface = open ? item.surface : null;
+  const barSurface = surface?.mode === 'shade' || surface?.mode === 'pick' ? surface : null;
   // A figure she taps a place in (issue #248): a board like the bar — the place is the answer, and
   // the figure stands there, at the bottom, instead of in the question card.
   const tapFigure = open && item.tap && item.figure && isTappable(item.figure) ? item.figure : null;
@@ -37,8 +40,9 @@ export function answerForm(item: ItemView, open: boolean) {
     tapChoices === null &&
     !structured &&
     staff === null &&
+    !taps &&
     barSurface === null &&
     tapFigure === null &&
     !speaking;
-  return { choices, tapChoices, speaking, structured, staff, barSurface, tapFigure, typed };
+  return { choices, tapChoices, speaking, structured, staff, taps, barSurface, tapFigure, typed };
 }
