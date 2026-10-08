@@ -26,6 +26,7 @@ import Svg, {
 // of @learnbuddy/shared-math (its index also pulls in mathjs).
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
 import { isChart } from '../../../../packages/shared-math/src/charts.js';
+import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
 import { barChartGeometry, numberLineGeometry } from '../../lib/math/figureGeometry.js';
 import {
   BARE_FIGURE_CHROME,
@@ -38,6 +39,7 @@ import {
 import { functionPlotGeometry } from '../../lib/math/plotLayout.js';
 import { pointsOnGraph, prettyExpr, tracePath } from '../../lib/math/plotMath.js';
 import { speakMathText } from '../../lib/math/speak.js';
+import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -98,9 +100,10 @@ export function FigureView({
   const scale = figureScale(fullHeight, maxHeight);
   const bodyWidth = figureBodyWidth(width, scale, bare ? BARE_FIGURE_CHROME : undefined);
   const words = useSpokenWords();
+  const names = useFigureNames(figure);
   const description = useMemo(
-    () => describeFigure(figure, t, (s) => speakMathText(s, words), { formulas: !bare }),
-    [figure, t, words, bare],
+    () => describeFigure(figure, t, names, (s) => speakMathText(s, words), { formulas: !bare }),
+    [figure, t, names, words, bare],
   );
 
   return (
@@ -994,14 +997,16 @@ function Table({ fig }: { fig: TableFig }) {
 
 // ─────────────── description for screen readers ───────────────
 
+/** `names`: a map's or a picture's names once loaded (`useFigureNames`), null before. */
 export function describeFigure(
   figure: Figure,
   t: T,
+  names: FigureNames | null,
   speak: Speak = (s) => s,
   { formulas = true }: { formulas?: boolean } = {},
 ): string {
   const list = (items: string[]) => items.join(', ');
-  if (isSchoolFigure(figure)) return describeSchoolFigure(figure, t);
+  if (isSchoolFigure(figure)) return describeSchoolFigure(figure, t, names);
   if (isChart(figure)) return describeChart(figure, t);
   switch (figure.type) {
     case 'fraction':

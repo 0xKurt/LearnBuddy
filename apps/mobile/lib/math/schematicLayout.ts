@@ -3,10 +3,11 @@
 // number covers a part. The drawing (SchematicFigures.tsx) and a finger on it (tapLayout.ts) read
 // the same frame here, so a tap means what it shows.
 
+import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
 import { columnLabels } from '../../../../packages/shared-math/src/labelBoxes.js';
 import { REGION_FRAME } from '../../../../packages/shared-math/src/regions.js';
 import {
-  schematic,
+  schematicHeight,
   schematicNumbered,
   type SchematicFig,
   type SchematicShape,
@@ -36,32 +37,35 @@ export type SchematicLayout = {
   badges: SchematicBadge[];
 };
 
+/** The drawing and the names, once both are loaded (`useSchematicShapes`, `useFigureNames`). */
+type SchematicLoaded = { drawing: SchematicShape; names: FigureNames };
+
 /**
  * The picture `width` pt wide: without numbers the drawing fills the width; with them it is inset
- * by a column on each side, and the room grows when the numbers need more height than it has.
+ * by a column on each side, and the room grows when the numbers need more height than it has. The
+ * room is known before the drawing and the names are (the parts the server numbered, `n`); where
+ * the numbers stand only after.
  */
 export function schematicLayout(
   figure: SchematicFig,
   width: number,
-  drawing: SchematicShape | null | undefined,
+  loaded: SchematicLoaded | null,
 ): SchematicLayout {
-  const numbered = schematicNumbered(figure);
-  const inset = numbered.length > 0 ? COLUMN : 0;
+  const inset = figure.n.length > 0 ? COLUMN : 0;
   const k = (width - 2 * inset) / REGION_FRAME;
-  const drawn = schematic(figure.d).height * k;
-  const rows = Math.ceil(numbered.length / 2);
+  const drawn = schematicHeight(figure.d) * k;
+  const rows = Math.ceil(figure.n.length / 2);
   const height = Math.max(drawn, rows * PITCH);
   const y0 = (height - drawn) / 2;
-  const at = numbered.map((i): [number, number] => {
-    const p = drawing?.parts[i]?.at ?? [0, 0];
+  if (!loaded) return { k, x0: inset, y0, width, height, badges: [] };
+  const at = schematicNumbered(loaded.names, figure).map((i): [number, number] => {
+    const p = loaded.drawing.parts[i]?.at ?? [0, 0];
     return [inset + p[0] * k, y0 + p[1] * k];
   });
-  const slots = drawing
-    ? columnLabels(
-        at.map(([x, y]) => ({ x, y })),
-        { left: EDGE, right: width - EDGE, top: EDGE, bottom: height - EDGE, pitch: PITCH },
-      )
-    : [];
+  const slots = columnLabels(
+    at.map(([x, y]) => ({ x, y })),
+    { left: EDGE, right: width - EDGE, top: EDGE, bottom: height - EDGE, pitch: PITCH },
+  );
   return {
     k,
     x0: inset,

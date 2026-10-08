@@ -13,10 +13,11 @@ import { authenticate, depsOf, type AppEnv } from './context.js';
 
 const BUDGETED: Array<{ scope: LimitScope; method: string; path: RegExp }> = [
   // speak-word joined the spoken answers (issue #83); it carries the same budget (issue #86).
+  // A photo of her working (issue #444) is read for an answer and parses up to 2 MB: the same.
   {
     scope: 'answers',
     method: 'POST',
-    path: /\/practice\/sessions\/[^/]+\/(answer|speak|speak-word)$/,
+    path: /\/practice\/sessions\/[^/]+\/(answer|speak|speak-word|work-photo)$/,
   },
   { scope: 'messages', method: 'POST', path: /\/buddy\/messages$/ },
   // Dictation parses up to 2 MB per request before the daily model cap answers 429 —

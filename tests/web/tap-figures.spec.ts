@@ -2,11 +2,14 @@
 // of a coordinate system (dragged there), a column of a bar chart and a clock face set hand by
 // hand. On the line and the coordinate system the words under the figure only say THAT she chose;
 // the value is the screen reader's (`aria-valuetext`, issue #409). A second walk taps a stumme
-// Karte (issue #251): every one of the 16 Länder, a continent, and names a marked country —
-// scripted in apps/api/src/testing/scenarios/map.ts, shot at 93–95. A third labels a picture and
-// taps its parts (issue #252, scenarios/schematic.ts, shot at 90–92b); a fourth walks the drawings
-// of #252's second part, each numbered and tapped (shot at 89-library-…). Scripted answers in
-// apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
+// Karte (issue #251): every one of the 16 Länder, a continent, and names a marked country; since
+// #429 Luxembourg on the closer Ausschnitt code picks, every river of Germany, a marked river to
+// name, a capital and a marked range to name, and on the Gradnetz the crossings along 50° N and
+// 10° O of Germany, one of Europe and the coordinates of a marked one of the world (a walk of its
+// own) — scripted in apps/api/src/testing/scenarios/map.ts, shot at 93–95. A third labels a
+// picture and taps its parts (issue #252, scenarios/schematic.ts, shot at 90–92b); a fourth walks
+// the drawings of #252's second part, each numbered and tapped (shot at 89-library-…). Scripted
+// answers in apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
 // no tutor is scripted for any. Every question is shot at both phone sizes, light and dark, with
 // the keyboard up for her question (test-results/web/shots, 96-…).
 //
@@ -17,8 +20,16 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { clockGeometry } from '../../apps/mobile/lib/math/figureGeometry';
 import { tapLayout } from '../../apps/mobile/lib/math/tapLayout';
+import { FIGURE_NAMES } from '../../packages/shared-math/src/figureNames.data';
+import { mapGrid } from '../../packages/shared-math/src/mapGrid';
 import { MAP_SHAPES } from '../../packages/shared-math/src/mapShapes.data';
-import { mapRegion, mapRegions, type MapView } from '../../packages/shared-math/src/maps';
+import {
+  mapPlace,
+  mapPlaces,
+  mapRegions,
+  type MapLayer,
+  type MapView,
+} from '../../packages/shared-math/src/maps';
 import { REGION_FRAME } from '../../packages/shared-math/src/regions';
 import { SCHEMATIC_SHAPES } from '../../packages/shared-math/src/schematicShapes.data';
 import {
@@ -49,11 +60,13 @@ const BARS: Tappable = {
 async function markOn(page: Page, figure: Tappable, pick: number[]) {
   const box = await page.getByTestId('tap-pad').boundingBox();
   if (!box) throw new Error('no tap pad');
-  const mark = tapLayout(figure, box.width, String, 12)?.markOf(pick);
+  const mark = tapLayout(FIGURE_NAMES, figure, box.width, String, 12, { maps: MAP_SHAPES })?.markOf(
+    pick,
+  );
   if (!mark) throw new Error('no mark');
-  return mark.kind === 'dot'
-    ? { x: mark.x, y: mark.y, box }
-    : { x: mark.box.x + mark.box.w / 2, y: mark.box.y + mark.box.h / 2, box };
+  return mark.kind === 'box'
+    ? { x: mark.box.x + mark.box.w / 2, y: mark.box.y + mark.box.h / 2, box }
+    : { x: mark.x, y: mark.y, box };
 }
 
 async function tapPlace(page: Page, figure: Tappable, pick: number[]): Promise<void> {
@@ -158,21 +171,25 @@ test('tapping inside a figure: a place, a point, a column, a clock — graded by
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });
 
-/** Where the label of region `name` stands on the pad of a map, in the pad's own coordinates. */
-async function labelOn(page: Page, view: MapView, name: string) {
-  const box = await page.getByTestId('tap-pad').boundingBox();
-  if (!box) throw new Error('no tap pad');
-  const at = MAP_SHAPES[view].regions[mapRegion(view, name) ?? -1]?.at;
-  if (!at) throw new Error(`no region ${name}`);
-  const k = box.width / REGION_FRAME;
-  return { x: at[0] * k, y: at[1] * k };
+/** A tap on the place `name` of a map's layer, at its mark (a region's or a river's label). */
+async function tapOnMap(page: Page, v: MapView, name: string, l: MapLayer = 'regions') {
+  const figure = { type: 'map', v, hl: [], l } as const;
+  const i = mapPlace(FIGURE_NAMES, figure, name);
+  if (i === null) throw new Error(`no place ${name}`);
+  await tapPlace(page, figure, [i]);
 }
 
-async function tapRegion(page: Page, view: MapView, name: string): Promise<void> {
-  await page.getByTestId('tap-pad').click({ position: await labelOn(page, view, name) });
+/** A tap on the crossing at `lat`, `lon` of view `v`'s Gradnetz, at its dot. */
+async function tapCrossing(page: Page, v: MapView, lat: number, lon: number) {
+  const grid = mapGrid(v);
+  if (!grid) throw new Error(`no grid on ${v}`);
+  await tapPlace(page, { type: 'map', v, hl: [], l: 'grid' }, [
+    grid.lon.indexOf(lon),
+    grid.lat.indexOf(lat),
+  ]);
 }
 
-test('a stumme Karte: every Land tapped, a marked country named, a continent tapped (#251)', async ({
+test('a stumme Karte: every Land, Luxembourg, every river, a capital tapped (#251, #429)', async ({
   page,
 }) => {
   await onboardChild(page, 'map');
@@ -184,12 +201,12 @@ test('a stumme Karte: every Land tapped, a marked country named, a continent tap
   await expect(words(page)).toHaveText('Tippe auf das Gebiet in der Karte.');
   await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
   await shot(page, '93-map-de-empty');
-  for (const land of mapRegions('de')) {
-    await tapRegion(page, 'de', land.de);
+  for (const land of mapRegions(FIGURE_NAMES, 'de')) {
+    await tapOnMap(page, 'de', land.de);
     await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Gebiet: ${land.de}`);
   }
   await expect(words(page)).toHaveText('Gebiet gewählt');
-  await tapRegion(page, 'de', 'Bayern');
+  await tapOnMap(page, 'de', 'Bayern');
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Gebiet: Bayern');
   await bothRooms(page, '93-map-de');
   await checkRight(page);
@@ -203,12 +220,101 @@ test('a stumme Karte: every Land tapped, a marked country named, a continent tap
   await page.emulateMedia({ colorScheme: 'light' });
   await typed(page, 'Frankreich');
 
+  // Luxembourg: too small on the whole of Europe, so code picked the closer Ausschnitt (#429).
+  await expect(page.getByText('Tippe auf Luxemburg.')).toBeVisible();
+  await tapOnMap(page, 'eu_central', 'Luxemburg');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Gebiet: Luxemburg');
+  await bothRooms(page, '94-map-luxembourg');
+  await checkRight(page);
+
+  // The rivers of Germany: every one is tapped on its own line (#429).
+  await expect(page.getByText('Tippe auf den Rhein.')).toBeVisible();
+  await expect(words(page)).toHaveText('Tippe auf den Fluss in der Karte.');
+  const rivers = { type: 'map', v: 'de', hl: [], l: 'rivers' } as const;
+  for (const river of mapPlaces(FIGURE_NAMES, rivers)) {
+    await tapOnMap(page, 'de', river.de, 'rivers');
+    await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Fluss: ${river.de}`);
+  }
+  await expect(words(page)).toHaveText('Fluss gewählt');
+  await tapOnMap(page, 'de', 'Rhein', 'rivers');
+  await bothRooms(page, '94-map-rivers');
+  await checkRight(page);
+
+  // A marked river in the card: she names it.
+  await expect(page.getByText('Wie heißt der markierte Fluss?')).toBeVisible();
+  await shot(page, '94-map-river-marked');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '94-map-river-marked-dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await typed(page, 'Elbe');
+
+  // A capital: the dots of the 16 Landeshauptstädte.
+  await expect(page.getByText('Tippe auf München.')).toBeVisible();
+  await tapOnMap(page, 'de', 'Hannover', 'cities');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Stadt: Hannover');
+  await tapOnMap(page, 'de', 'München', 'cities');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Stadt: München');
+  await bothRooms(page, '94-map-cities');
+  await checkRight(page);
+
+  // A marked mountain range in the card: she names it.
+  await expect(page.getByText('Wie heißt das markierte Gebirge?')).toBeVisible();
+  await shot(page, '94-map-range-marked');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '94-map-range-marked-dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await typed(page, 'Harz');
+
   // The world: a continent.
   await expect(page.getByText('Tippe auf Südamerika.')).toBeVisible();
-  await tapRegion(page, 'world', 'Südamerika');
+  await tapOnMap(page, 'world', 'Südamerika');
   await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Gebiet: Südamerika');
   await bothRooms(page, '95-map-world');
   await checkRight(page);
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+});
+
+test('the Gradnetz: crossings tapped on Germany and Europe, coordinates typed (#429)', async ({
+  page,
+}) => {
+  await onboardChild(page, 'grid');
+  await startOffer(page, 'Lass uns das Gradnetz üben', 'Punkte im Gradnetz');
+
+  // Germany, every degree: a crossing tapped like a point of a coordinate system. Every
+  // crossing along 50° N and along 10° O at its dot; the line under the map only says that she
+  // chose, the coordinates are the screen reader's.
+  await expect(page.getByText('Tippe auf den Punkt 50° N, 10° O.')).toBeVisible();
+  await expect(words(page)).toHaveText('Tippe auf den Punkt im Gradnetz.');
+  const de = mapGrid('de')!;
+  for (const lon of de.lon) {
+    await tapCrossing(page, 'de', 50, lon);
+    await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Punkt: 50° N, ${lon}° O`);
+  }
+  for (const lat of de.lat) {
+    await tapCrossing(page, 'de', lat, 10);
+    await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Punkt: ${lat}° N, 10° O`);
+  }
+  await expect(words(page)).toHaveText('Punkt gewählt');
+  await tapCrossing(page, 'de', 50, 10);
+  await bothRooms(page, '95-map-grid-de');
+  await checkRight(page);
+
+  // Europe: every ten degrees, the lines curved as its projection draws them.
+  await expect(page.getByText('Tippe auf den Punkt 60° N, 10° O.')).toBeVisible();
+  await tapCrossing(page, 'europe', 50, -10);
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Punkt: 50° N, 10° W');
+  await tapCrossing(page, 'europe', 60, 10);
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Punkt: 60° N, 10° O');
+  await bothRooms(page, '95-map-grid-europe');
+  await checkRight(page);
+
+  // The world: the coordinates of the marked crossing, typed in her notation.
+  await expect(page.getByText('Welche Koordinaten hat der markierte Punkt?')).toBeVisible();
+  await shot(page, '95-map-grid-world');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '95-map-grid-world-dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await typed(page, '30°S 60°W');
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });
 
@@ -245,7 +351,7 @@ test('a labelled picture: the cell labelled number by number, every part tapped 
   // Every part of the cell is reached at its own point; the line names none of them.
   await expect(page.getByText('Tippe auf den Zellkern.')).toBeVisible();
   await expect(words(page)).toHaveText('Tippe auf das Teil in der Abbildung.');
-  for (const part of schematic('plant_cell').parts) {
+  for (const part of schematic(FIGURE_NAMES, 'plant_cell').parts) {
     await tapPart(page, 'plant_cell', part.id);
     await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
   }
@@ -263,7 +369,7 @@ test('a labelled picture: the cell labelled number by number, every part tapped 
 
   // A drawing of #252's second part: every traffic sign reached at its own point.
   await expect(page.getByText('Tippe auf das Schild für den Radweg.')).toBeVisible();
-  for (const part of schematic('signs').parts) {
+  for (const part of schematic(FIGURE_NAMES, 'signs').parts) {
     await tapPart(page, 'signs', part.id);
     await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
   }
@@ -285,11 +391,15 @@ test('the drawings of #252’s second part: each numbered beside it, every part 
     const d: SchematicId = item.figure.d;
     if ('tap' in item) {
       // Every part is reached at its own point; the key last.
-      for (const part of schematic(d).parts) {
+      for (const part of schematic(FIGURE_NAMES, d).parts) {
         await tapPart(page, d, part.id);
         await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
       }
-      await tapPart(page, d, schematic(d).parts[schematicPart(d, item.answer)!]!.id);
+      await tapPart(
+        page,
+        d,
+        schematic(FIGURE_NAMES, d).parts[schematicPart(FIGURE_NAMES, d, item.answer)!]!.id,
+      );
       await bothRooms(page, `89-library-${d}-tap`);
       await checkRight(page);
     } else {

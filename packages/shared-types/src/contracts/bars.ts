@@ -14,7 +14,7 @@
 
 import { z } from 'zod';
 
-import { StaffWriteSurface } from './staff.js';
+import { RhythmTapSurface, StaffWriteSurface } from './staff.js';
 
 /**
  * The most equal parts a bar may have. Six, because the bar she taps is one row of
@@ -100,9 +100,10 @@ export type BarShape = z.infer<typeof BarShape>;
 
 /**
  * What she touches (`ItemView.surface`): the fraction bar or the empty staff the question is
- * answered on. It never carries the solution — `shade` says only how fine the empty bar is,
- * `pick` only what the two bars look like, and `notes` only which clef, time signature and how
- * many bars, all of which the question already says in words.
+ * answered on, or the pad she taps a heard rhythm on. It never carries the solution — `shade`
+ * says only how fine the empty bar is, `pick` only what the two bars look like, `notes` only which
+ * clef, time signature and how many bars, all of which the question already says in words, and
+ * `taps` nothing at all (issue #445).
  *
  * A figure (`ItemView.figure`) is what she READS; a surface is what she WORKS with. Both
  * can be on the same question: the sum of two bars is read above and shaded below.
@@ -123,5 +124,13 @@ export const AnswerSurface = z.discriminatedUnion('mode', [
   StaffWriteSurface.describe(
     'An empty staff of `bars` bars; tapping one places a note, and the line she writes is the answer.',
   ),
+  RhythmTapSurface.describe('A pad she taps a heard rhythm on; her taps are the answer.'),
 ]);
 export type AnswerSurface = z.infer<typeof AnswerSurface>;
+
+/**
+ * The two modes a BAR can be (`shade`, `pick`) — not every mode a surface can be. Since the note
+ * line (issue #226) and the rhythm pad (issue #445) joined the union, naming them is the difference
+ * between a caller that handles both cases and one that silently skips a third it never sees.
+ */
+export type BarSurface = Extract<AnswerSurface, { mode: 'shade' | 'pick' }>;

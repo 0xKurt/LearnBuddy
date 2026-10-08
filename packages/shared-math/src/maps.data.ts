@@ -2,80 +2,15 @@
 // Do not edit: run the script. Issue #251. Natural Earth: "All versions of Natural Earth raster +
 // vector map data found on this website are in the public domain." Made with Natural Earth.
 
-import type { MapNames, MapView } from './maps.js';
+import type { MapGrids } from './mapGrid.js';
+import type { MapView } from './maps.js';
 
-/** The regions of each view in drawing order, with their names in the five languages. */
-export const MAP_NAMES: MapNames = {
-  de: [
-    { id: 'BW', de: 'Baden-Württemberg', en: 'Baden-Württemberg', fr: 'Bade-Wurtemberg', es: 'Baden-Wurtemberg', it: 'Baden-Württemberg', alt: [] },
-    { id: 'BY', de: 'Bayern', en: 'Bavaria', fr: 'Bavière', es: 'Baviera', it: 'Baviera', alt: [] },
-    { id: 'BE', de: 'Berlin', en: 'Berlin', fr: 'Berlin', es: 'Berlín', it: 'Berlino', alt: [] },
-    { id: 'BB', de: 'Brandenburg', en: 'Brandenburg', fr: 'Brandebourg', es: 'Brandeburgo', it: 'Brandeburgo', alt: [] },
-    { id: 'HB', de: 'Bremen', en: 'Free Hanseatic Bremen', fr: 'Brême', es: 'Bremen', it: 'Brema', alt: ['Freie Hansestadt Bremen'] },
-    { id: 'HH', de: 'Hamburg', en: 'Hamburg', fr: 'Hambourg', es: 'Hamburgo', it: 'Amburgo', alt: [] },
-    { id: 'HE', de: 'Hessen', en: 'Hesse', fr: 'Hesse', es: 'Hesse', it: 'Assia', alt: [] },
-    { id: 'MV', de: 'Mecklenburg-Vorpommern', en: 'Mecklenburg-Western Pomerania', fr: 'Mecklembourg-Poméranie-Occidentale', es: 'Mecklemburgo-Pomerania Occidental', it: 'Meclemburgo-Pomerania Anteriore', alt: [] },
-    { id: 'NI', de: 'Niedersachsen', en: 'Lower Saxony', fr: 'Basse-Saxe', es: 'Baja Sajonia', it: 'Bassa Sassonia', alt: [] },
-    { id: 'NW', de: 'Nordrhein-Westfalen', en: 'North Rhine-Westphalia', fr: 'Rhénanie-du-Nord-Westphalie', es: 'Renania del Norte-Westfalia', it: 'Renania Settentrionale-Vestfalia', alt: [] },
-    { id: 'RP', de: 'Rheinland-Pfalz', en: 'Rhineland-Palatinate', fr: 'Rhénanie-Palatinat', es: 'Renania-Palatinado', it: 'Renania-Palatinato', alt: [] },
-    { id: 'SL', de: 'Saarland', en: 'Saarland', fr: 'Sarre', es: 'Sarre', it: 'Saarland', alt: [] },
-    { id: 'SN', de: 'Sachsen', en: 'Saxony', fr: 'Saxe', es: 'Sajonia', it: 'Sassonia', alt: [] },
-    { id: 'ST', de: 'Sachsen-Anhalt', en: 'Saxony-Anhalt', fr: 'Saxe-Anhalt', es: 'Sajonia-Anhalt', it: 'Sassonia-Anhalt', alt: [] },
-    { id: 'SH', de: 'Schleswig-Holstein', en: 'Schleswig-Holstein', fr: 'Schleswig-Holstein', es: 'Schleswig-Holstein', it: 'Schleswig-Holstein', alt: [] },
-    { id: 'TH', de: 'Thüringen', en: 'Thuringia', fr: 'Thuringe', es: 'Turingia', it: 'Turingia', alt: [] },
-  ],
-  europe: [
-    { id: 'AL', de: 'Albanien', en: 'Albania', fr: 'Albanie', es: 'Albania', it: 'Albania', alt: [] },
-    { id: 'BY', de: 'Belarus', en: 'Belarus', fr: 'Biélorussie', es: 'Bielorrusia', it: 'Bielorussia', alt: [] },
-    { id: 'BE', de: 'Belgien', en: 'Belgium', fr: 'Belgique', es: 'Bélgica', it: 'Belgio', alt: [] },
-    { id: 'BA', de: 'Bosnien und Herzegowina', en: 'Bosnia and Herzegovina', fr: 'Bosnie-Herzégovine', es: 'Bosnia y Herzegovina', it: 'Bosnia ed Erzegovina', alt: ['Bosnia and Herz.'] },
-    { id: 'BG', de: 'Bulgarien', en: 'Bulgaria', fr: 'Bulgarie', es: 'Bulgaria', it: 'Bulgaria', alt: [] },
-    { id: 'DK', de: 'Dänemark', en: 'Denmark', fr: 'Danemark', es: 'Dinamarca', it: 'Danimarca', alt: [] },
-    { id: 'DE', de: 'Deutschland', en: 'Germany', fr: 'Allemagne', es: 'Alemania', it: 'Germania', alt: [] },
-    { id: 'EE', de: 'Estland', en: 'Estonia', fr: 'Estonie', es: 'Estonia', it: 'Estonia', alt: [] },
-    { id: 'FI', de: 'Finnland', en: 'Finland', fr: 'Finlande', es: 'Finlandia', it: 'Finlandia', alt: [] },
-    { id: 'FR', de: 'Frankreich', en: 'France', fr: 'France', es: 'Francia', it: 'Francia', alt: [] },
-    { id: 'GR', de: 'Griechenland', en: 'Greece', fr: 'Grèce', es: 'Grecia', it: 'Grecia', alt: [] },
-    { id: 'IE', de: 'Irland', en: 'Ireland', fr: 'Irlande', es: 'Irlanda', it: 'Irlanda', alt: [] },
-    { id: 'IS', de: 'Island', en: 'Iceland', fr: 'Islande', es: 'Islandia', it: 'Islanda', alt: [] },
-    { id: 'IT', de: 'Italien', en: 'Italy', fr: 'Italie', es: 'Italia', it: 'Italia', alt: [] },
-    { id: 'XK', de: 'Kosovo', en: 'Kosovo', fr: 'Kosovo', es: 'Kosovo', it: 'Kosovo', alt: [] },
-    { id: 'HR', de: 'Kroatien', en: 'Croatia', fr: 'Croatie', es: 'Croacia', it: 'Croazia', alt: [] },
-    { id: 'LV', de: 'Lettland', en: 'Latvia', fr: 'Lettonie', es: 'Letonia', it: 'Lettonia', alt: [] },
-    { id: 'LT', de: 'Litauen', en: 'Lithuania', fr: 'Lituanie', es: 'Lituania', it: 'Lituania', alt: [] },
-    { id: 'LU', de: 'Luxemburg', en: 'Luxembourg', fr: 'Luxembourg', es: 'Luxemburgo', it: 'Lussemburgo', alt: [] },
-    { id: 'MT', de: 'Malta', en: 'Malta', fr: 'Malte', es: 'Malta', it: 'Malta', alt: [] },
-    { id: 'ME', de: 'Montenegro', en: 'Montenegro', fr: 'Monténégro', es: 'Montenegro', it: 'Montenegro', alt: [] },
-    { id: 'NL', de: 'Niederlande', en: 'Netherlands', fr: 'Pays-Bas', es: 'Países Bajos', it: 'Paesi Bassi', alt: [] },
-    { id: 'MK', de: 'Nordmazedonien', en: 'North Macedonia', fr: 'Macédoine du Nord', es: 'Macedonia del Norte', it: 'Macedonia del Nord', alt: [] },
-    { id: 'NO', de: 'Norwegen', en: 'Norway', fr: 'Norvège', es: 'Noruega', it: 'Norvegia', alt: [] },
-    { id: 'AT', de: 'Österreich', en: 'Austria', fr: 'Autriche', es: 'Austria', it: 'Austria', alt: [] },
-    { id: 'PL', de: 'Polen', en: 'Poland', fr: 'Pologne', es: 'Polonia', it: 'Polonia', alt: [] },
-    { id: 'PT', de: 'Portugal', en: 'Portugal', fr: 'Portugal', es: 'Portugal', it: 'Portogallo', alt: [] },
-    { id: 'MD', de: 'Republik Moldau', en: 'Moldova', fr: 'Moldavie', es: 'Moldavia', it: 'Moldavia', alt: [] },
-    { id: 'RO', de: 'Rumänien', en: 'Romania', fr: 'Roumanie', es: 'Rumania', it: 'Romania', alt: [] },
-    { id: 'RU', de: 'Russland', en: 'Russia', fr: 'Russie', es: 'Rusia', it: 'Russia', alt: ['Russian Federation'] },
-    { id: 'SE', de: 'Schweden', en: 'Sweden', fr: 'Suède', es: 'Suecia', it: 'Svezia', alt: [] },
-    { id: 'CH', de: 'Schweiz', en: 'Switzerland', fr: 'Suisse', es: 'Suiza', it: 'Svizzera', alt: [] },
-    { id: 'RS', de: 'Serbien', en: 'Serbia', fr: 'Serbie', es: 'Serbia', it: 'Serbia', alt: ['Republic of Serbia'] },
-    { id: 'SK', de: 'Slowakei', en: 'Slovakia', fr: 'Slovaquie', es: 'Eslovaquia', it: 'Slovacchia', alt: [] },
-    { id: 'SI', de: 'Slowenien', en: 'Slovenia', fr: 'Slovénie', es: 'Eslovenia', it: 'Slovenia', alt: [] },
-    { id: 'ES', de: 'Spanien', en: 'Spain', fr: 'Espagne', es: 'España', it: 'Spagna', alt: [] },
-    { id: 'CZ', de: 'Tschechien', en: 'Czech Republic', fr: 'Tchéquie', es: 'República Checa', it: 'Repubblica Ceca', alt: ['Czechia'] },
-    { id: 'UA', de: 'Ukraine', en: 'Ukraine', fr: 'Ukraine', es: 'Ucrania', it: 'Ucraina', alt: [] },
-    { id: 'HU', de: 'Ungarn', en: 'Hungary', fr: 'Hongrie', es: 'Hungría', it: 'Ungheria', alt: [] },
-    { id: 'GB', de: 'Vereinigtes Königreich', en: 'United Kingdom', fr: 'Royaume-Uni', es: 'Reino Unido', it: 'Regno Unito', alt: [] },
-  ],
-  world: [
-    { id: 'AF', de: 'Afrika', en: 'Africa', fr: 'Afrique', es: 'África', it: 'Africa', alt: [] },
-    { id: 'AN', de: 'Antarktis', en: 'Antarctica', fr: 'Antarctique', es: 'Antártida', it: 'Antartide', alt: ['Antarktika', 'Antarctique'] },
-    { id: 'AS', de: 'Asien', en: 'Asia', fr: 'Asie', es: 'Asia', it: 'Asia', alt: [] },
-    { id: 'OC', de: 'Australien und Ozeanien', en: 'Australia and Oceania', fr: 'Océanie', es: 'Oceanía', it: 'Oceania', alt: ['Australien', 'Ozeanien', 'Australia', 'Oceania', 'Australie'] },
-    { id: 'EU', de: 'Europa', en: 'Europe', fr: 'Europe', es: 'Europa', it: 'Europa', alt: [] },
-    { id: 'NA', de: 'Nordamerika', en: 'North America', fr: 'Amérique du Nord', es: 'América del Norte', it: 'America del Nord', alt: [] },
-    { id: 'SA', de: 'Südamerika', en: 'South America', fr: 'Amérique du Sud', es: 'América del Sur', it: 'America del Sud', alt: [] },
-  ],
+/** The degrees of the meridians and parallels of each view's Gradnetz, west to east and south to north (#429). */
+export const MAP_GRIDS: MapGrids = {
+  de: { lon: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15], lat: [48, 49, 50, 51, 52, 53, 54, 55] },
+  europe: { lon: [-20, -10, 0, 10, 20, 30, 40, 50], lat: [40, 50, 60, 70] },
+  world: { lon: [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150], lat: [-60, -30, 0, 30, 60] },
 };
 
 /** How high each view stands in a frame 1000 wide: the drawing keeps its room while it loads. */
-export const MAP_HEIGHTS: Record<MapView, number> = { de: 1351, europe: 998, world: 519 };
+export const MAP_HEIGHTS: Record<MapView, number> = { de: 1351, europe: 998, world: 519, eu_central: 789, eu_southeast: 962, eu_north: 1002 };

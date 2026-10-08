@@ -50,6 +50,7 @@ import * as practice from '../../src/modules/practice/answer.js';
 import * as speak from '../../src/modules/practice/speak.js';
 import * as structured from '../../src/modules/practice/structured.js';
 import * as tutor from '../../src/modules/practice/tutor.js';
+import * as workPhoto from '../../src/modules/practice/workPhoto.js';
 import * as voice from '../../src/modules/voice/service.js';
 import {
   serialize,
@@ -306,6 +307,15 @@ function variants(): Variant[] {
       system: voice.SYSTEM,
       schema: voice.SCHEMA,
       where: 'voice/service.ts',
+    },
+    {
+      purpose: 'transcribe',
+      profile: 'her working, photographed (#444)',
+      tier: 'smart',
+      promptVersion: workPhoto.WORK_PROMPT_VERSION,
+      system: workPhoto.WORK_SYSTEM,
+      schema: workPhoto.WORK_SCHEMA,
+      where: 'practice/workPhoto.ts',
     },
     {
       purpose: 'reexplain',

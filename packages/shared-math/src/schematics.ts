@@ -3,9 +3,11 @@
 // §Practice, Labelled pictures.
 //
 // A drawing is code, never a model's output, in two files like the maps (#251): its parts' names
-// (`schematics.data.ts`, small, static — the server checks every question against them) and
-// where each part stands (`schematicShapes.data.ts`, drawn in the app's pastel tones, loaded by
-// the app with the first picture). The model only picks a drawing and names parts; code resolves the names against the
+// (`schematics.data.ts` — the server checks every question against them; the app loads them with
+// the first map or picture, `figureNames.ts`, #440, and every function here that resolves a name
+// is handed them) and where each part stands (`schematicShapes.data.ts`, drawn in the app's pastel
+// tones, loaded by the app with the first picture). Only how high each drawing stands is here: its
+// room while it loads. The model only picks a drawing and names parts; code resolves the names against the
 // library (any of the five languages, other names a part goes by — "Nukleus"), and the key of a
 // question is a part of the drawing or the question is dropped (`apps/api/src/modules/practice/
 // schematicCheck.ts`).
@@ -17,16 +19,14 @@
 //
 // Dependency-free on purpose: the app imports it by path, like `tap.ts`.
 
+import type { FigureNames } from './figureNames.js';
 import type { RegionName, RegionSet, RegionShape } from './regions.js';
 import { regionName, regionNamed } from './regions.js';
-import { SCHEMATIC_NAMES } from './schematics.data.js';
 
 /** A drawing by name: what it and each of its parts are called. */
 export type Schematic = {
   /** The drawing's name in the five languages ("Pflanzenzelle"). */
   names: Omit<RegionName, 'id' | 'alt'>;
-  /** How high it stands in the frame 1000 wide (`REGION_FRAME`): its room while it loads. */
-  height: number;
   /** Its parts, bottom to top: a part drawn later lies over an earlier one. */
   parts: readonly RegionName[];
 };
@@ -69,6 +69,27 @@ export const SCHEMATIC_IDS = [
   'anlaut',
 ] as const;
 export type SchematicId = (typeof SCHEMATIC_IDS)[number];
+
+/** How high each drawing stands in the frame 1000 wide (`REGION_FRAME`): its room while it loads. */
+const SCHEMATIC_HEIGHTS: Readonly<Record<SchematicId, number>> = {
+  plant_cell: 720,
+  animal_cell: 640,
+  flower: 820,
+  plant: 880,
+  eye: 640,
+  tooth: 900,
+  insect: 820,
+  bicycle: 620,
+  microscope: 960,
+  lab: 1060,
+  heart: 900,
+  ear: 700,
+  skeleton: 1030,
+  organs: 1000,
+  signs: 900,
+  instruments: 900,
+  anlaut: 1060,
+};
 export type SchematicNames = Readonly<Record<SchematicId, Schematic>>;
 export type SchematicShapes = Readonly<Record<SchematicId, SchematicShape>>;
 
@@ -87,8 +108,13 @@ export function isSchematic(f: { type: string }): f is SchematicFig {
 }
 
 /** A drawing of the library, by name. */
-export function schematic(d: SchematicId): Schematic {
-  return SCHEMATIC_NAMES[d];
+export function schematic(names: FigureNames, d: SchematicId): Schematic {
+  return names.pictures[d];
+}
+
+/** How high drawing `d` stands in the frame 1000 wide — known before its names and shapes are. */
+export function schematicHeight(d: SchematicId): number {
+  return SCHEMATIC_HEIGHTS[d];
 }
 
 /** The parts of a drawing as regions (`regions.ts`): what a finger can mean. */
@@ -97,26 +123,31 @@ export function schematicRegions(shapes: SchematicShapes, d: SchematicId): Regio
 }
 
 /** The index of the part `name` names in drawing `d` ("Zellkern", "nucleus", "Nukleus"). */
-export function schematicPart(d: SchematicId, name: string): number | null {
-  return regionNamed(SCHEMATIC_NAMES[d].parts, name);
+export function schematicPart(names: FigureNames, d: SchematicId, name: string): number | null {
+  return regionNamed(names.pictures[d].parts, name);
 }
 
 /** A part's name in `lang` (German where the app's language is none of the five). */
-export function schematicPartName(d: SchematicId, index: number, lang: string): string {
-  return regionName(SCHEMATIC_NAMES[d].parts, index, lang);
+export function schematicPartName(
+  names: FigureNames,
+  d: SchematicId,
+  index: number,
+  lang: string,
+): string {
+  return regionName(names.pictures[d].parts, index, lang);
 }
 
 /** The parts that carry the numbers 1, 2, 3 … (a name no part has numbers nothing). */
-export function schematicNumbered(f: SchematicFig): number[] {
-  return f.n.map((name) => schematicPart(f.d, name)).filter((i): i is number => i !== null);
+export function schematicNumbered(names: FigureNames, f: SchematicFig): number[] {
+  return f.n.map((name) => schematicPart(names, f.d, name)).filter((i): i is number => i !== null);
 }
 
 /**
  * The first reason a drawing cannot be shown as written, or null: a numbered part the drawing does
  * not have, a part numbered twice, a number asked that no part carries.
  */
-export function schematicProblem(f: SchematicFig): string | null {
-  const parts = f.n.map((name) => schematicPart(f.d, name));
+export function schematicProblem(names: FigureNames, f: SchematicFig): string | null {
+  const parts = f.n.map((name) => schematicPart(names, f.d, name));
   const unknown = f.n.find((_, i) => parts[i] === null);
   if (unknown !== undefined) return `no part "${unknown}" in the drawing ${f.d}`;
   if (new Set(parts).size !== parts.length) return 'a part is numbered twice';
@@ -125,7 +156,10 @@ export function schematicProblem(f: SchematicFig): string | null {
 }
 
 /** The drawing with every numbered part written as its id ("Nukleus" → "nucleus"): what is stored. */
-export function schematicCanonical<F extends SchematicFig>(f: F): F {
-  const parts = SCHEMATIC_NAMES[f.d].parts;
-  return { ...f, n: f.n.map((name) => parts[schematicPart(f.d, name) ?? -1]?.id ?? name) };
+export function schematicCanonical<F extends SchematicFig>(names: FigureNames, f: F): F {
+  const parts = names.pictures[f.d].parts;
+  return {
+    ...f,
+    n: f.n.map((name) => parts[schematicPart(names, f.d, name) ?? -1]?.id ?? name),
+  };
 }

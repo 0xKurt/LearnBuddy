@@ -128,6 +128,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `POST /practice/drills`, `POST /practice/sessions/:id/drill`                                         | Kopfrechnen: a round of tasks code wrote, one answer checked by code (#243)                                           |
 | `POST /practice/sessions/:id/ask`, `POST …/later`                                                    | a question to the tutor, never graded; „Merk ich mir für nachher" for an off-topic one (#391)                         |
 | `POST /practice/sessions/:id/why`                                                                    | „Warum stimmt das?": the reason she tapped after a closed question, judged by code (#388)                             |
+| `POST /practice/sessions/:id/work-photo`                                                             | her working, photographed: the lines copied into her field, an unread one null; nothing stored (#444)                 |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
 ## Buddy decisions
@@ -179,11 +180,11 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   within the 24-message dialogue the model saw.
 - `reply_to_id` is stored only when it names one of her own messages.
 - Stale context → rebuild and ask again (≤ 4 rounds); invalid output → one repair round.
-- Interrupted turn (process died, function frozen) → after 3 minutes without a model call (each
-  call refreshes the claim, so a long live turn is not mistaken for a dead one) the scheduler (or a client
-  retry) takes over with a new claim token; the old runner can no longer publish or fail it.
-  After three takeovers that died too, the message fails (`internal`) instead of being run
-  (and billed) again every few minutes.
+- Interrupted turn (process died, function frozen; `modules/buddy/turnRecovery.ts`) → after 3
+  minutes without a model call (each call refreshes the claim, so a long live turn is not
+  mistaken for a dead one) the scheduler (or a client retry) takes over with a new claim token;
+  the old runner can no longer publish or fail it. After three takeovers that died too, the
+  message fails (`internal`) instead of being run (and billed) again every few minutes.
 - Failure → the message is marked `failed` with a stable code (`model_unavailable`,
   `model_invalid`, `budget_exhausted`, `stale`, `internal` for anything else — a database
   error or a bug never leaves it "processing"); nothing half-applied, no invented reply. The
@@ -579,10 +580,13 @@ everything the injection did not carry.
 
 ## Proactivity
 
-`modules/buddy/check.ts`. Wake-ups are jobs (`reason`: `exam_countdown` 5/3/1 days before at the
-start of the preferred window, `exam_followup` the day after, `material_ready`,
-`session_finished`, `step_due`, `checkin_requested`, `routine`, and Buddy's two review moments
-`review_next_day`, `review_due`). Gates, cheapest first:
+`modules/buddy/check.ts` runs a learner's due wake-ups through the gates below; the gates with
+more than a few lines have a file each (#311): `checkLease.ts` (1), `checkReminder.ts` (2),
+`checkDecide.ts` (3–8, the model's part), `checkFallback.ts` (the fixed fallbacks);
+`checkTrigger.ts` reads what woke the check. Wake-ups are jobs (`reason`: `exam_countdown` 5/3/1
+days before at the start of the preferred window, `exam_followup` the day after,
+`material_ready`, `session_finished`, `step_due`, `checkin_requested`, `routine`, and Buddy's two
+review moments `review_next_day`, `review_due`). Gates, cheapest first:
 
 1. one worker per learner (lease on `buddy_settings`);
 2. agreed reminders → fixed template (i18n), no model. An agreed reminder never vanishes
@@ -1218,6 +1222,9 @@ reasons (#159 keeps that promise separate from the internal pilot).
 | Requests per account            | abuse protection only: practice answers (typed, spoken, one word) 600/h, dictation 600/h (each piece of a long dictation counts one), messages to Buddy 120/h (429 + `Retry-After`); account/learner writes 30/h (the first `POST /account` of a fresh user passes uncounted — its volume is the Supabase sign-up's, issue #72) |
 | Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always                                                                                                                                                                                                                                |
 
+A photo of her working (`POST /practice/sessions/:id/work-photo`, issue #444) counts as a practice
+answer (600/h) and as one daily `transcribe` call.
+
 Budgets are rows in `attempt_counters` (migration 0014; `lock_level` dropped in 0033) changed by
 one atomic upsert with the app clock (`lib/limits.ts` `consume`); answers and messages are counted
 by one middleware in front of the routes (`http/limits.ts`). A request budget exists only against
@@ -1810,6 +1817,46 @@ each of these from what is recorded; the model only writes words that code check
   questions on the goal's sheets (or on the topic in her words), at least 5 are closed and 70 %
   of them are right. Otherwise the offer is refused with the reason, and Buddy offers practice.
   Starting a test herself in the app is never held back.
+- **A guided worked example** (#298, Vormachen → Mitmachen → Selbermachen; faded worked
+  examples, Renkl & Atkinson 2003): for a question solved by transforming an equation or a term,
+  the background hints call also writes the way (`steps`: one line of maths and a short note per
+  step).
+  - `checkedSteps` (`workedSteps.ts`) keeps it only when code proves it, in `items.worked_steps`
+    (`[{line, note}]`, at least 3, migration `0101_worked_steps.sql`, whose check refuses every
+    other shape):
+    - every line follows from the one before (`checkPath`);
+    - the first line stands in the question (compared through `canonicalMath`, so − and -, LaTeX
+      and spaces do not matter);
+    - the path ends on the key (`ruleCheck`);
+    - no earlier line already is the answer.
+  - A way that fails is never stored, and the text hints stay.
+  - **Vormachen:** the middle steps ARE the hint ladder ("note: $line$"), so „Tipp" shows one step
+    at a time and the result only comes at the ladder's end. It is offered where help already
+    is: „Tipp" stands out after the second miss (`hintOffered`, above). „Zeig mir wie" in her own
+    words shows the same step: when the tutor reads her answer as `help_request` or `no_answer`,
+    code replies with the way's next line exactly as „Tipp" shows it (`stepOnRequest`), never
+    with the model's paraphrase, so Mitmachen checks her next line against what she saw. Without
+    the model nothing is shown and the ladder stays where it was.
+  - **Mitmachen:** once a step was shown, her one-line answer is read by `guidedStep`, against the
+    task's line (`sameStep`):
+    - a line that follows and is her own: `practice.step_ok` („Der Schritt stimmt – und weiter?"),
+      verdict `not_an_attempt`, no try, no model — at the end of the ladder too, where it is
+      never taken for a request for the solution;
+    - **Buddy leads on:** when her line is a step of the way not shown yet, the ladder moves past
+      it (`prepared_hints_used`, never `hints_used`: her own step is no help), so the next „Tipp"
+      is the step after hers, never her line again;
+    - a line that does not follow: `practice.step_wrong`, a miss;
+    - the result in the way's form („x = 4" for a key of 4): right;
+    - a copied step, several lines or an unreadable line go to the rules as before.
+  - **Breaking off:** the third wrong step explains the worked solution, like every third miss;
+    „Lösung zeigen" closes the question; a step sent after the question closed or the run ended
+    is refused (409) and changes nothing.
+  - Never in a test or homework.
+  - **Selbermachen** is the similar task after the shown solution (above).
+  - Measured in `practice-steps.int.test.ts` (real Postgres) and `workedSteps.test.ts`; the live
+    hints call is the eval case `way_for_an_equation`, not yet run (no Vertex access).
+  - Not built yet (#298): the same pattern for text subjects with key points (#258), the live
+    probe on grade-10 material, and an explanation with a figure.
 - **The test's fixed line fits the form**: `practice.test_no_hints` says „schreib einfach, was du
   denkst" only where she writes her answer. On options, a board, the fraction bar, the staff or a
   tap in the figure it is `practice.test_no_hints_on_screen` („antworte einfach so, wie du
@@ -1906,6 +1953,15 @@ its own route, so nothing she asks is ever misread as an answer:
   room went wrong and the "Tipp" row stood cut — switching figures are now drawn at FigureView's
   `scale` (`FittedSvg`, like trees), and `MAX_ZOOM` is back at 1.5. While she types, the card's
   padding steps down to SPACE.md, and a board's keys fold with the board while she asks.
+  **The head of a question is one line** (#459): the progress row is "Frage 2 von 5", the bar and
+  one quiet action at its end (`QuestionCorner`). The action shows one short word ("Passt nicht",
+  "Einspruch"; at most twelve characters in every language, `QuestionCorner.test.tsx`) and gives
+  the whole action as its accessible name, with the word in it (WCAG 2.5.3); the sheet behind it
+  still says the full sentence. The label never wraps (`numberOfLines` 1 — what still does not fit
+  ends in "…", like the screen's title), and the bar keeps `PROGRESS_BAR_MIN` (48 pt,
+  `lib/theme/space.ts`). At 360 the full sentence "Bewertung stimmt nicht" had put the label on two
+  lines and the bar down to 40 pt. Guarded in `fit.ts` (`progressHead`) at every stop: the label
+  one line and whole, the bar at least `PROGRESS_BAR_MIN`, the action whole inside the row.
 
 **Eine Übung darf anfangen, bevor alle ihre Fragen geschrieben sind** (Issue #220, Migration
 0073). Gemessen 02.10.: „üben wir Brüche" kostete 6,45 s am Endpoint, davon 6,42 s der
@@ -2041,8 +2097,59 @@ die Zeile des Browsers), und ein Druck auf eine Mathe-Taste nimmt dem Feld nicht
 (`lib/keepsFocus.ts`, #271). Belegt im Walkthrough (`tests/web/modes.spec.ts`): drei Zeilen auf
 360×740 eingetippt und über „Prüfen" geschickt, die erste gebrochene Zeile wird genannt, ein
 Einzeiler geht mit Enter raus. **Nicht belegt:** dass die Regel die Tastatur des Handys erreicht
-— bis zu einem Gerätelauf hängt sie dort an den Unit-Tests (Regel 5). Offen: das Foto vom Heft
-als Antwort (Vorschlag 3 in #221).
+— bis zu einem Gerätelauf hängt sie dort an den Unit-Tests (Regel 5). Das Foto vom Heft als
+Antwort (Vorschlag 3 in #221) steht im nächsten Absatz.
+
+**Fotografiert auch** (Issue #444, `modules/practice/workPhoto.ts`, `contracts/workPhoto.ts`). Sie
+rechnet im Heft und fotografiert ihren Weg, statt ihn abzutippen: wo ein Weg geprüft wird
+(`pathPossible`, jetzt die EINE Liste für `evaluate.ts`, die ↵-Taste und das Foto), steht am Anfang
+der Antwortleiste eine Kamera, wo der Chat sein + hat. Das Modell **schreibt nur ab**
+(`POST /practice/sessions/:id/work-photo`, Zweck `transcribe`); die Abschrift kommt in IHR Feld,
+sie vergleicht sie mit ihrem Heft und schickt sie mit „Prüfen" — über den gewöhnlichen Antwortweg,
+also `checkPath`, den Folgefehler aus #297 und alles andere, was eine getippte Antwort bekommt. Kein
+zweiter Prüfweg (die Korrektur des Owners in #221), und kein Prüfen auf einer Abschrift, die sie
+nicht gesehen hat (Regel 5: gelesen ist nicht geschrieben).
+
+- **Was Code entscheidet.** Ob gelesen wird: ihre Sitzung, laufend, keine Karten- oder
+  Kopfrechenrunde, eine offene Frage mit Weg, ein JPEG — sonst 404/409/422 ohne Modellaufruf.
+  Was sie sieht: eine Zeile, die das Modell nicht sicher lesen konnte (`readable: false`), geht als
+  `null` zu ihr, **auch wenn das Modell einen Text dazu schrieb** — nie geraten; nichts gelesen ist
+  `unreadable`, kein Weg zur Aufgabe `no_working`, mehr als eine Antwort fasst (16 Zeilen à 120
+  Zeichen) `too_long`, nie abgeschnitten. Kommt die Lesung zurück, nachdem die Frage weiter ist
+  („Lösung zeigen", die Zeit eines Tests), antwortet der Server 409 `stale` und gibt nichts heraus.
+- **Was das Modell nicht bekommt:** den Schlüssel. Es sieht das Foto und den Fragetext (um ihren
+  Weg zu dieser Aufgabe auf der Seite zu finden); eine Abschrift, die die richtige Lösung kennt,
+  zöge zu ihr hin. Keine Beispielzeile im Prompt (sie käme als Zeile ihres Hefts zurück).
+- **In der App** (`components/practice/useWorkPhoto.ts`, `WorkPhotoNote.tsx`,
+  `lib/practice/workPhoto.ts`): dieselbe Kamera (`lib/capture/camera.ts`, jetzt auch die des
+  Blatts), dasselbe vorbereitete JPEG und dieselbe Prüfung auf dem Handy (`preparePhoto`,
+  `PhotoCheckCard` mit „Neu fotografieren"/„Trotzdem behalten"). Eine nicht gelesene Zeile steht
+  als **leere Zeile** im Feld, die Zeile darüber sagt welche („Zeile 2 konnte ich nicht lesen.
+  Schreib sie selbst hinein."), und „Prüfen" wartet, bis sie sie geschrieben oder herausgenommen
+  hat — `steps.ts` überspringt leere Zeilen und verglich sonst über das Loch hinweg. Sind alle
+  Zeilen da: „Von deinem Foto abgeschrieben. Stimmt jede Zeile mit deinem Heft?"
+- **Ihr Heft, wie es ist.** Eine Umformung trägt in der Schule ihren Rechenbefehl hinter einem
+  senkrechten Strich („2x + 3 = 7 | −3"), und eine Zeile beginnt oft mit „⇔". Beides machte jede
+  Zeile unlesbar und den ganzen Weg zum Fall für das Modell — getippt wie fotografiert. `pathLines`
+  liest jetzt daran vorbei: ein Strich nach einer Relation, gefolgt nur von einer Rechenoperation,
+  ist eine Notiz, und nur ein ÖFFNENDER Strich (gerade Zahl davor) — der schließende eines Betrags
+  („y = |x| · 2") bleibt.
+- **Gespeichert wird nichts.** Das Foto geht im Request mit (wie eine Aufnahme, ≤ 2 000 000
+  Zeichen Base64, Body-Grenze 3 MB), wird für diesen einen Aufruf gelesen und verworfen, nie in
+  Storage; die Abschrift auch nicht. Nichts an der Frage ändert sich — kein Turn, kein Versuch,
+  keine Wiederholung; ein zweites Foto ist eine zweite Lesung. Gespeichert wird, was sie selbst
+  als Antwort schickt (`docs/privacy.md` §What is stored). Budget: eine Antwort (600/h) und ein
+  `transcribe`-Aufruf (400/Tag) je Foto — `extraction` (12/Tag) ist für Blätter bemessen.
+- **Belegt:** `work-photo.int.test.ts` (echtes Postgres, gescriptetes Modell: Abschrift → Antwort →
+  gebrochene Zeile ohne Tutor; geratene Zeile wird `null`; unlesbar/kein Weg; anderer Lernender
+  404 ohne Modellaufruf; dasselbe Foto zweimal ändert nichts, dieselbe Antwort zählt einmal;
+  Ausfall 503 mit zurückgegebenem Kontingent; `stale`; ohne Weg und kein JPEG vor dem Modell
+  abgelehnt; Folgefehler mit fotografiertem b)), `workPhoto.test.ts` (API und App),
+  `steps.test.ts`, `tests/web/work-photo.spec.ts` (360/390, hell und dunkel).
+  **Nicht belegt:** wie Vertex echte Kinderschrift liest — die Live-Eval mit echten Heftfotos aus
+  der Abnahme von #444 steht aus, ebenso ein Lauf auf einem echten Gerät (Kamera, Berechtigung,
+  Base64 aus `expo-image-manipulator`). Ein handschriftlicher Aufsatz (`essay`, Ziel von #444)
+  hat noch keine Kamera: mehrere Seiten und Absätze sind ein eigener Schritt.
 
 **Was gezählt wird, zählt Code** (Issue #212). Eine Reaktionsgleichung wird nicht mehr als
 Zeichenkette mit dem Schlüssel verglichen, sondern gezählt: `modules/practice/chemistry.ts`
@@ -2559,8 +2666,10 @@ _Das Modell wählt, Code rechnet_ — dieselbe Bauweise wie der Bruchbalken und 
 | `name_note`      | Schlüssel, Tonhöhe                 | „Wie heißt diese Note?" — vier Optionen aus den Nachbartönen      |
 | `name_value`     | Schlüssel, Wert, Punkt, Note/Pause | „Welcher Notenwert ist das?"                                      |
 | `interval`       | Schlüssel, unterer und oberer Ton  | „Welches Intervall …?" — Stufe und Halbtöne gerechnet             |
+| `hear_interval`  | unterer und oberer Ton             | „Welches Intervall hörst du?" — nichts gezeichnet, gehört (#445)  |
 | `time_signature` | Schlüssel, Taktart, Takte          | „In welcher Taktart steht diese Zeile?" — ohne Taktart gezeichnet |
 | `write_line`     | Schlüssel, Taktart, Takte          | „Schreibe diese Zeile …" — sie schreibt sie auf eine leere Zeile  |
+| `tap_rhythm`     | Taktart, Takte (Werte, keine Töne) | „Klopf den Rhythmus nach." — gehört, nachgeklopft (#445)          |
 
 Der Vertrag hat **kein Feld** für Fragetext, Antwort, Optionen, Figur, Tipp oder Musterlösung, und
 `StaffFigure` steht bewusst nicht in `ModelFigure`: eine Notenzeile schreibt nur Code. Damit kann kein
@@ -2582,6 +2691,47 @@ als `unknown` beim Tutor an — **der die gezeichnete Zeile nicht sehen kann** (
 Sprachen schreiben Tonnamen verschieden (`B` ist auf Deutsch das **H**, auf Französisch **Si**).
 Deshalb hat auch die falsche Antwort ihre eigene feste, freundliche Zeile von Code (`staffAgain`)
 statt den Tutor zu rufen; die dritte Fehlprobe erklärt die Lösung, wie überall.
+
+**Gehörbildung: Intervalle hören** (Issue #445). `hear_interval` zeichnet nichts — die zwei Töne
+SIND die Frage. Der Server rechnet aus derselben Aufgabe Schlüssel, Optionen (dieselben vier wie beim
+gelesenen Intervall, `intervalOptions`) und die Töne (`tonesOf`: zwei halbe Noten nacheinander im
+Übungstempo), die als `ItemView.tones` (`HeardTones`) ankommen, auch nach dem Schließen zum
+Nachhören. Hörbar ist, was ein Schlüssel dieser App zeichnen kann (E2 bis A5, `audible`). Die App
+spielt sie mit ihrer eigenen Synthese (`lib/music/tone.ts`, Dreieck mit Hüllkurve, als WAV durch
+`expo-audio` — derselbe Player wie Buddys Stimme) über den **einen** Hör-Hook
+(`components/practice/useListenToggle.ts`): „Anhören" in der Werkzeugreihe unter der Frage
+(`QuestionTools`, `ListenButton` mit `tones`). Derselbe Hook spielt jetzt auch die gezeichnete
+Zeile (`StaffPlayButton`, die Taste in `StaffKeys`); die Kopie `useStaffPlay` ist weg
+(`lib/__tests__/oneListen.test.ts`). Der Bibliotheks-Check (#445): Tone.js hat keinen
+React-Native-Weg, Web-Audio-Synthese bräuchte auf dem Handy `react-native-audio-api` als zweite
+Strecke, die der Browser-Walkthrough nicht prüfen kann; die eigene Synthese kostet keine neue
+Abhängigkeit und ist im Node-Test nachgemessen. Offen: der Gerätetest des Tons (auf dem Handy
+gehört, nicht nur im Browser).
+
+**Gehörbildung: Rhythmus nachklopfen** (Issue #445). `tap_rhythm` trägt nur Werte und Pausen
+(`RhythmBars`, keine Tonhöhe): Code spielt den Rhythmus auf **einem** Ton (A4) im Übungstempo
+(`tonesOf`, wieder als `ItemView.tones` über „Anhören"), und sie klopft ihn auf ein großes Feld
+(`ItemView.surface`, `mode: 'taps'` — es trägt nichts; `components/practice/RhythmTaps.tsx`, der
+große `PadKey` mit `instant`). Ein Schlag zählt beim **Aufsetzen** des Fingers, gemessen mit der
+monotonen Uhr des Geräts (`performance.now()`); react-native-web hielte `onPressIn` sonst 50 ms
+zurück. Was reist, sind nur die Abstände vom ersten Schlag in ganzen Millisekunden (`renderTaps`,
+`"0 742 1130 …"` in `text`) — kein Zeitpunkt, keine Uhrzeit; der Server misst keine Zeit (Regel 7).
+Gemessen wird in `practice/rhythm.ts` (`checkTaps`), kein Modell in keinem Zweig: verglichen werden
+die **Abstände**, nicht die Zeitpunkte (ein später Schlag macht einen Abstand zu lang und den
+nächsten zu kurz, statt jeden folgenden mitzureißen), in **ihrem** Tempo (Median ihrer Abstände durch
+die gespielten — ein falscher Abstand verschiebt ihn nicht), mit einer **Toleranz von 40 % einer
+Achtel** (150 ms bei Tempo 80). Weil jeder Ton eines solchen Rhythmus auf einer Achtel einsetzt
+(`usableStaffTask`: mit einem Ton beginnen, mindestens vier Töne, keine Sechzehntel, keine
+punktierte Achtel, jeder Takt voll), liegen zwei verschiedene Rhythmen mindestens eine Achtel
+auseinander — die Toleranz bleibt unter der Hälfte davon und verwechselt sie nie. Ihr Tempo darf
+ein Viertel abweichen (64 bis 100 bei Tempo 80); sonst wären vier Achtel dasselbe wie vier Viertel.
+Die Antwort nennt **eine** Stelle, wie bei einer geschriebenen Zeile (`staffAnswerReply`): wie viele
+Schläge von vorne sitzen, ab dem zweiten Versuch der Schlag, der zu früh oder zu spät kommt; sofort
+dagegen, dass mehr oder weniger Töne kamen, und dass nur das Tempo nicht stimmt — beides verrät
+nichts, was sie nicht gehört hat. Im Gespräch steht „5 Schläge geklopft", der Schlüssel in Worten
+(„Viertelnote, Viertelnote, Achtelnote, …") für „Lösung zeigen". Offen: der Gerätetest (wie genau
+ein Finger auf einem echten Telefon trifft; der Walkthrough klopft im Browser mit gesetzten
+Zeitpunkten, `tests/web/ear.spec.ts`).
 
 **Geschrieben wird wirklich geschrieben.** `write_line` gibt ihr eine leere Notenzeile
 (`ItemView.surface`, `mode: 'notes'` — dieselbe Fläche wie der Bruchbalken, eine dritte Form).
@@ -3036,8 +3186,10 @@ session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
   and clearing it would be a guess (rule 5). Different from "Frage passt nicht", which takes an
   unfit question out while it is still **open**; this is about a judgement already given. Not
   during a test (the results come at the end) and not for homework, which is helped with rather
-  than judged. The control and that rule live in `components/practice/DisputeVerdict.tsx` (one
-  tap at the verdict, one sentence saying what will happen, no field to justify anything — rule 16) and are pinned by `components/practice/__tests__/DisputeVerdict.test.tsx`.
+  than judged. The rule and the sheet live in `components/practice/DisputeVerdict.tsx`, the tap in
+  the question's corner (`QuestionCorner.tsx`: "Einspruch", named "Einspruch gegen die Bewertung"
+  for a screen reader, issue #459) — one tap at the verdict, one sentence saying what will happen,
+  no field to justify anything (rule 16) — pinned by `components/practice/__tests__/DisputeVerdict.test.tsx` and `QuestionCorner.test.tsx`.
   **Still open from #164:** the first half — showing the cut-out of an unreadable spot and
   asking about it ("ist das 12 oder 17?") instead of losing the question. It needs coordinates
   out of the extraction and a crop view, and belongs with #162.
@@ -3677,23 +3829,56 @@ pictures (#252) add their figure to it rather than building a second one.
   not one place; tapping a cell of the periodic table (#250) or a month of a line or climate chart
   (#245) — each is one `case` on this mechanism.
 
-### Maps (issue #251)
+### Maps (issues #251, #429)
 
 A stumme Karte as a figure: Germany's 16 Länder, the countries of Europe or the seven continents,
 as an atlas prints them — no names on it. Buddy asks to name the marked region ("Wie heißt das
-markierte Bundesland?") or to tap one ("Tippe auf Bayern", the tap mechanism above).
+markierte Bundesland?") or to tap one ("Tippe auf Bayern", the tap mechanism above); on the
+Gradnetz (#429) to read the coordinates of a marked crossing or to tap one ("Tippe auf den Punkt
+50° N, 10° O").
 
 - **Contract** (`packages/shared-types/src/contracts/map.ts`, in `ModelFigure`): `{ type: 'map',
-v: 'de' | 'europe' | 'world', hl: string[] }` — which map, and the marked regions by name. Never
-  a coordinate, never a shape. Prompts: generate.v1.40 / extract.v8.20, together with #418 generate.v1.45 / extract.v8.23 (`FIGURE_RULES`).
+v?: 'de' | 'europe' | 'world', hl: string[], l }` — which map (left out: her own, see below), the marked places by name, and since
+  #429 the layer asked about: `regions` (default), or on `de` and `europe` `cities` (the capitals
+  of the Länder / of the countries), `rivers` or `mountains`, or on all three `grid` (the
+  Gradnetz: `hl` names crossings, "50° N, 10° O"). Never a shape, and never a coordinate as a
+  fact about the world — a crossing is where two drawn lines meet.
+  The closer views of Europe (`eu_central`, `eu_southeast`, `eu_north`) are in the enum because
+  they are stored — code picks them, the prompt never asks for one. Prompts: generate.v1.40 / extract.v8.20, together with #418 generate.v1.45 / extract.v8.23 (`FIGURE_RULES`).
 - **Data** (Natural Earth 5.1.2, public domain — decision in #224): `packages/shared-math/scripts/
 maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a school map's frame,
   the land around it as untappable context) and admin-0 1:110m (the continents; Russia split at
   the Ural, 60° E), projects (equirectangular at 51° N; Lambert azimuthal equal-area at 10° E
-  52° N; the Natural Earth projection), simplifies (Douglas–Peucker) and writes two files:
-  `maps.data.ts` — every region's id and its names in the five languages plus other names
-  (8 KB, used by the server) — and `mapShapes.data.ts` — the outlines in a frame 1000 wide, each
-  labelled at its pole of inaccessibility (92 KB, used only by the app). The generated files are
+  52° N; the Natural Earth projection), simplifies (Douglas–Peucker) and writes three files:
+  `mapNames.data.ts` — every region's and place's id and its names in the five languages plus
+  other names (19 KB; the server imports it, the app loads it with the first map or picture, #440,
+  below) — `maps.data.ts` — each view's Gradnetz degrees and height, eager — and
+  `mapShapes.data.ts` — the outlines in a
+  frame 1000 wide, each labelled at its pole of inaccessibility, and the places of each layer
+  (214 KB, loaded with the first map). Places (#429): the capitals from Natural Earth's populated
+  places (`FEATURECLA` capital; on `de` the Admin-1 capitals inside Germany) as a ring of one
+  point; a curated list of the rivers taught at school from `rivers_lake_centerlines` and
+  `rivers_europe` (names written in the script where Natural Earth has none, like `CONTINENTS`),
+  each a line — a ring there and back with `line: true`, so it encloses nothing; mountain ranges
+  from `geography_regions_polys` as areas. Rivers and ranges are cut to the map's land when drawn.
+  The closer views of Europe share Europe's regions and places in the same order (a region
+  outside the frame keeps an empty ring list), so an index means the same place on every view of
+  Europe. The Gradnetz (#429) of `de` (every 1°), `europe` (every 10°) and `world` (every 30°; the
+  180th meridian is the map's own edge) comes from each view's own projection: every meridian and
+  parallel sampled, cut to the frame (Liang–Barsky), each with the end where its degree is written
+  (a meridian's at the bottom edge, else the top; a parallel's at the left, else the right, on the
+  world map at its western end), and where each crossing stands (null outside the frame). A line
+  no other crosses on the map (a corner of Europe's frame) is left out. The degrees of the lines
+  are eager (`MAP_GRIDS` in `maps.data.ts`, for the tap axes), the geometry lazy with the shapes.
+  **Names load with the first figure (#440):** the names of the maps and of the pictures
+  (`FigureNames`, `packages/shared-math/src/figureNames.ts`) are handed to every function that
+  resolves a name (`maps.ts`, `schematics.ts`, `tap.ts`, first argument) — the server passes
+  `FIGURE_NAMES` (`figureNames.data.ts`), the app the same object once `useFigureNames` has loaded
+  it (one bundle part, ~10 KB gzip, on `lib/lazyModule.ts`). Until it is there a map or a picture
+  keeps its room and draws nothing, its description for a screen reader says it is coming
+  (`figure.loading`) and a tap waits (`tapAxes` offers no place without the names) — never a
+  figure without its names. `lib/__tests__/startBundle.test.ts` walks the routes' imports and fails
+  when a plain import brings a part that loads later back into the start bundle. The generated files are
   in `.prettierignore` and checked byte for byte (`maps.mjs <dir> --check`); node ≥ 22.18 runs the
   script, which imports `regions.ts` itself.
 - **One geometry for named regions** (`packages/shared-math/src/regions.ts`, dependency-free,
@@ -3707,33 +3892,89 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
 - **Rule 0, generation** (`apps/api/src/modules/practice/mapCheck.ts`, in `usableItems` before
   the tap check): every marked name must be a region of the map (stored as its id — "France" →
   "FR"); a typed question must be short with exactly one region marked and that region as the
-  key; a tap question's key must be a region the map does not mark (the tap check, `tapProblem`)
+  key; a map that does not parse costs its question instead of leaving it without its map
+  (`figureIsRejected`, #479); a map as an option's picture (`choice_figures`, #479) is held to
+  the typed question's rules — exactly one place marked, the option's text naming it — and one
+  that fails costs the question; a tap question's key must be a region the map does not mark (the tap check, `tapProblem`)
   and big enough for a finger on the narrowest phone — a 24 pt target inside it or around its
   label when the map is drawn in 320 × 330 pt (`regionTappable` with `TAP_TARGET.map`,
   `REGION_TAP_BOX`; WCAG 2.2, 2.5.8 — a picture asks a whole finger, §Labelled pictures). That room is real: the figure she answers in is capped at 45 % of what she sees
   (`boardCap`, lib/practice/visuals.ts — 333 pt on 360 × 740), so Germany, taller than
-  wide, is drawn 244 pt wide there. Every Land and every continent is tappable; on the
-  map of Europe only the larger countries are (Luxembourg, Belgium, the Balkans are named, not
-  tapped). A capital, a river, a neighbour as the key: dropped, the data does not hold them.
-- **Rule 0, grading:** a tapped region exactly (`tapVerdict`, as every tap); a typed name of the
-  marked region by the data (`mapRuleVerdict`): "Bavaria" and "Bayern" are one region, another
-  region of the map is wrong — never the tutor's.
+  wide, is drawn 244 pt wide there. Every Land and every continent is tappable. **Zoom by code
+  (#429, `mapZoom.ts`):** on Europe the first of `europe`, `eu_central`, `eu_southeast`,
+  `eu_north` where the key and every marked place are tappable is stored as the figure's view —
+  Luxembourg is tapped on Mitteleuropa, Albania on Südosteuropa, Estonia on the Baltikum; only
+  Kosovo is too small everywhere, and a question whose places need two different views is
+  dropped. A river is tappable where some point of its line lies a finger away from every other
+  place (`lineClear`), and is picked by distance to its line, never by a label catch. On `de`
+  the capitals Berlin, Potsdam, Mainz and Wiesbaden stand too close to another dot and are named,
+  not tapped. A layer the map does not have (rivers on the world map), a place not on the layer
+  (the Volga on `de`), a neighbour or a fact about a place as the key: dropped. **The Gradnetz
+  (#429, `mapGrid.ts`):** its places are the crossings, two tap axes like a coordinate system's
+  (meridians `lon`, parallels `lat`); the key and every marked crossing must be a crossing of the
+  view's grid (55° N on Europe's ten-degree grid is none), on the map, and at least a 24 pt target
+  from every other crossing in the smallest room (`gridTappable` — the world's crossings at 60° N
+  and S are 22 pt apart: drawn, never asked); a grid question is never zoomed. What lies at a point
+  ("Welches Land liegt bei …?") is no fact of the grid: dropped. **Written:** latitude first,
+  "50° N, 10° O", a zero without a letter. The five languages disagree on one letter — German
+  writes east "O", French, Spanish and Italian write WEST "O" — so code writes east "O" only in
+  German and "E" in the others, west "W" in all five: what code wrote reads one way everywhere.
+  The model writes a crossing in the question's language; `mapCheck.ts` reads it so (her locale,
+  German for a sheet) and stores the marked crossings in German, the key in her language.
+- **Rule 0, grading:** a tapped place exactly (`tapVerdict`, as every tap); a typed name of the
+  marked place by the data (`namedRuleVerdict`, `tapCheck.ts`): "Bavaria" and "Bayern" are one region, "Rhine" and
+  "Rhein" one river, another place of the layer is wrong — never the tutor's. Typed coordinates of
+  a crossing (`gridRuleVerdict` → `gridVerdict`, #429) are read in her language (`ruleCheck` gets
+  her locale): "30° S, 60° O" is right for a French learner where the key is 60° W, any other point
+  is wrong, and in German "60° O" for 60° W is wrong; only where her language is not German and
+  her "O" read as the German Ost would be the key — a German school's sheet in a French app —
+  code does not guess and the tutor judges. A tapped crossing stands in the thread in her
+  language ("50° N, 10° E").
 - **Screen:** `components/math/MapFigures.tsx` draws it (Länder and countries with their borders,
   a continent as one outline — the outline under all fills, so no inner border shows); the shapes
   come with the first map (`lib/math/useMapShapes.ts` on `lib/lazyModule.ts`, the same loader as
   VexFlow's), until then the map keeps its height (`MAP_HEIGHTS`). Tapping is `TapFigure` with a
   `case` in `tapLayout` (`regionAt` at the drawn width, the region filled as her mark with a dot on
-  its label). The line under the map says only "Gebiet gewählt"; the region's name in her
-  language is the screen reader's (`aria-valuetext`, #409).
+  its label; on a layer, `mapTapSet` hands the places in and the mark is the place's outline — a
+  river is its line). A layer is drawn by `Places` in `MapFigures.tsx`: capitals as dots, rivers in
+  `wetDeep`, ranges in the figure token `relief`, the marked ones in the accent. The Gradnetz by
+  `Graticule`: thin lines in `wetDeep` (never the grey of a border), the degrees on a paper chip
+  that interrupts the line, where each line leaves the frame (`lib/math/mapGridLabels.ts`: where two would touch, every
+  second or third degree per edge, the round ones kept — she counts the lines between), the marked
+  crossings as dots; tapped, the nearest crossing with the dot of a coordinate system
+  (`gridNearest`), and a screen reader steps along both axes. The line under the
+  map says only "Gebiet / Stadt / Fluss / Gebirge gewählt"; the place's name in her language is the
+  screen reader's (`aria-valuetext`, #409).
 - Tests: `packages/shared-math/src/__tests__/maps.test.ts` (data invariants, names DE/EN/FR and
   every name unique per map, regions to tap, every Land and continent at its label, Berlin inside
-  Brandenburg), `lib/math/__tests__/tapLayout.test.ts`, `TapFigure.test.tsx`,
-  `map-figures.int.test.ts` (stored or dropped, ids stored, exact verdicts without a model, another
-  learner); walkthrough `tests/web/tap-figures.spec.ts` (all 16 Länder tapped at 360 × 740,
-  scenario `testing/scenarios/map.ts`).
-- **Not built here:** the Gradnetz and "Welche Koordinaten hat der Punkt?"; capitals, rivers,
-  mountains as points; zoom (it would let the small countries of Europe be tapped); the Bundesland
-  of her own profile as a default map.
+  Brandenburg), `mapPlaces.test.ts` (#429: the 16 capitals in their Land, rivers as lines and each
+  tappable, every name of every layer unique, the zoom per country), `lib/math/__tests__/tapLayout.test.ts`
+  (every river at its mark; every crossing at its dot), `TapFigure.test.tsx`, `MapFigures.test.tsx`,
+  `mapGrid.test.ts` (#429: written and read in five languages, "O" by her language, the capitals
+  between their lines, crossings in the right land, which crossings can be tapped),
+  `mapGridLabels.test.ts` (inside the drawing, none touching, at 244–358 pt),
+  `map-figures.int.test.ts` (stored or dropped, ids stored, Luxembourg stored on `eu_central`,
+  crossings stored as code writes them, a French learner's "O" as west, exact verdicts without a
+  model, another learner); walkthrough `tests/web/tap-figures.spec.ts` (all 16 Länder and every
+  river of Germany tapped, Luxembourg zoomed, a capital, a marked river and range named, the
+  crossings along 50° N and 10° O of Germany and one of Europe tapped, a marked crossing of the
+  world typed; scenario `testing/scenarios/map.ts`).
+- **Her own Land (#429, owner's decision 08.10.):** code reads it from HER profile
+  (`curriculum_region` → the Land's id, `mapHomeLand`: "by" → "BY"; "other", null or a value no
+  Land has → none), never from the model. The model's map (`MapFigure`) may leave `v` out; the map
+  as stored and drawn (`ShownMapFigure`, in `Figure` and `DrawnFigure`) always has one. A map
+  without a view is parsed as Germany and marked unviewed (`viewOf`); `mapViewed` keeps it where
+  she has a Land and drops the question where she has none — a map without a view never could be
+  drawn. The model learns it may leave `v` out only from the `HOME LAND: …` line of a topic run
+  (`homeLandLine`, generate prompt); sheets and every other prompt name the view as before. On
+  every map of Germany of her topic runs code outlines her Land (`withHome`, field `home`) — but
+  only on the regions and the Gradnetz, and never where her Land is the marked place or the place
+  to tap: on a layer of capitals, rivers or ranges her Land would say where the key lies. Drawn as
+  a dashed outline in the accent (`point`), wider than a border — never filled, so it is never
+  read as the marked one, never solid, so never as her tap's mark; a screen reader hears "Dein Bundesland: …" after the marked places. Tests:
+  `map-home.int.test.ts` (Bayern: the default view, the outline and where it is left out; no Land
+  and "other": nothing changes; another learner's Land is never used), `maps.test.ts` (every Land
+  code to its region), `MapFigures.test.tsx`.
 
 ### Labelled pictures (issue #252)
 
@@ -3774,8 +4015,8 @@ mechanism above). Decided in #224: drawn by us, nothing licensed.
   (`useSchematicShapes`, on `lib/lazyModule.ts`) — the start bundle had 8 KB of its gzip budget
   left, the drawings would have taken more. A part is a region like a Land (`regions.ts`, §Maps):
   names, winding number, which part a finger means — the topmost under it, or a small one by its
-  point. The names stay in the start bundle (the server and the tap's words read them
-  synchronously).
+  point. The names load with the first map or picture as well (`useFigureNames`, #440, §Maps);
+  only each drawing's height is eager (`schematicHeight`, its room while it loads).
 - **A whole finger** (`TAP_TARGET` in `regions.ts`): a part may be asked for by a tap only when, in
   the smallest room (`REGION_TAP_BOX`), a 44 pt target (`TOUCH`) fits inside it or around its
   point, no other part's point nearer than 44 pt. We draw the pictures, so we draw them for a
@@ -3792,7 +4033,8 @@ mechanism above). Decided in #224: drawn by us, nothing licensed.
   carrying the number asked; a tap carries no numbers and asks none (numbers inset the drawing,
   below) and its key is a part a whole finger can hit (`regionTappable` with
   `TAP_TARGET.picture`). Anything else — what a part does, a part the drawing does not have — is
-  dropped.
+  dropped. A picture that does not parse costs its question instead of leaving "Wie heißt
+  Teil 3?" without its picture (`figureIsRejected`, #481 — as a map's, #479).
 - **Rule 0, grading:** a tapped part exactly (`tapVerdict`); a typed name by the library
   (`namedRuleVerdict` in `tapCheck.ts`, shared with the map): "nucleus", "Nukleus" and
   "Zellkern" are one part. A tapped part stands in the thread in her language
@@ -4368,6 +4610,15 @@ word list, so it stays a prompt rule.
   While a tapped question is open her answer is not echoed as a bubble (`ItemThread echoAnswers`,
   as for structured items): the tried tile says it — except in a conversation, where the bubble is
   the only place she sees what was heard.
+- **A number and its unit stay on one line** (issue #467). `MathText` — the one text component for
+  questions, situations, solutions and Buddy's replies — binds a number to the unit right after it
+  with a narrow no-break space (U+202F, DIN 1338): "15 km/h", "3,5 m²", "20 %", "90 °C" never
+  break apart at 360 pt, "15 Kinder" still may. What counts as a unit is the grading's unit
+  table (`shared-math/src/units.ts`, capital symbols like N, V, A case-sensitive), applied by
+  `lib/math/quantity.ts` inside `parsePrompt`; also when the number stands in math or bold before
+  it ("$15$ km/h"). The line breaking with math (`lib/math/lineBreak.ts`) never breaks at a
+  no-break space. Display only: the screen reader and read-aloud are built from the text as
+  written, so they say exactly what they said before.
 - **Figures that state numbers (issues #253, #257)** — two figures carry measures, and code
   checks them in both directions before a question is stored (`practice/figureCheck.ts`, called
   from `usableItems`); a figure that contradicts its numbers or its key costs the QUESTION, not
@@ -4572,7 +4823,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   | What happens | Buddy reads aloud, does not listen | hands-free: Buddy reads and listens |
   | Control | the speaker switch in the header (`components/lb/ReadAloudSwitch.tsx`) — the chat's head and the practice head | the waveform at the end of the input bar (`TalkButton`) |
   | In the chat | replies are read aloud | opens the conversation screen (`app/talk.tsx`) |
-  | In practice | the question when it appears, the feedback, "Anders erklären" | the bar becomes the conversation row in place: "Tastatur" · mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row, with the 56 pt mic) |
+  | In practice | the question when it appears, the feedback, "Anders erklären"; also a Kopfrechnen task (as math in words) and a card's front, never its back (#434). The switch stands in every practice head (`components/practice/HeadActions.tsx`), and a tap on the question itself reads it again (`components/lb/ReadAgain.tsx`, "Nochmal vorlesen" for a screen reader) | the bar becomes the conversation row in place: "Tastatur" · mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row, with the 56 pt mic) |
   | Kept | on the device (`lb.voiceMode`, the old single flag's key) | not kept: she starts it |
   A conversation includes reading aloud (`readsAloud`); switching the speaker off ends it, and
   "Tastatur" ends it without touching her Vorlesen choice. Before #386 one flag did both, set by
@@ -4602,8 +4853,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   where a spoken answer can be the whole answer: a typed answer (not a Diktat, not a path written
   line by line, not a line that belongs to a board) and options with letters. Boards, the note
   line, the fraction bar, tapped words, Kopfrechnen and flash cards have no spoken answer and no
-  waveform; the speaker stands in the question screen's head only (`app/practice/[id].tsx`), not in
-  Kopfrechnen's or the flash cards', which read nothing aloud today (open, #434). One listening
+  waveform; the speaker stands in every practice head (`components/practice/HeadActions.tsx`): the
+  question screen's, Kopfrechnen's and the flash cards', which read their task and front too but
+  never listen (#434). One listening
   belongs to one turn (`lib/speech/turnGuard.ts`): answering another way (a tap, the screen locking
   while it checks), Buddy starting to speak or the next question cancels a running mic and drops
   its late text. Questions carry the language they are written in (`prompt_lang`, also for
@@ -4622,7 +4874,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   `apps/api/src/modules/practice/readAloud.ts`): never a task that practises spelling
   (`spelling: 'strict'`), never a vocabulary prompt that already contains its answer — Vorlesen,
   Gespräch and "Nochmal vorlesen" follow the flag. A foreign vocabulary word keeps its own
-  "Anhören" (its pronunciation is the point); a flashcard pass reads nothing.
+  "Anhören" (its pronunciation is the point). The same flag holds for a card's front and a
+  Kopfrechnen task (issue #434): read when it comes up, again on a tap on it; a card's back is
+  never read unasked, and neither listens — there is no spoken answer to them.
 - **Conversation mode** (`app/talk.tsx`, the waveform in the chat's input bar): hands-free, in the same
   conversation as the chat. She speaks → written down → Buddy answers (a normal turn) → the answer
   is read aloud → Buddy listens again. The screen is a camera angle on that one thread, not a

@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LlmError } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import { gate } from '../testing/sync.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -44,19 +45,6 @@ const SHEET = {
 };
 
 const WAIT = { json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null } };
-
-type Gate = {
-  release: () => void;
-  wait: Promise<void>;
-  called: Promise<void>;
-  markCalled: () => void;
-};
-function gate(): Gate {
-  const g = {} as Gate;
-  g.wait = new Promise<void>((r) => (g.release = r));
-  g.called = new Promise<void>((r) => (g.markCalled = r));
-  return g;
-}
 
 async function create(l: Learner, photos = 2) {
   const created = await l.api.post<{ material: { id: string }; uploads: Array<{ path: string }> }>(

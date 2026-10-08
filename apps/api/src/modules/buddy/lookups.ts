@@ -166,26 +166,32 @@ export function lookupResultsMessage(records: LookupRecord[], more: boolean): Ll
   };
 }
 
-export type LookupStep = { calls: unknown[]; results: Array<{ tool: string; ok: boolean }> };
+type LookupStep = { calls: unknown[]; results: Array<{ tool: string; ok: boolean }> };
 
 /**
  * The bounded agent loop around one model call: while the model asks for
  * lookups (and steps are left), run them and ask again with the results.
  * The last step is asked with the final schema (no lookups offered).
+ *
+ * Returns the final answer (`raw`) and what a turn's or a check's decision record keeps as the
+ * model's output: the answer, and after lookups what was looked up with it (the tools and
+ * whether they worked, not their results).
  */
 export async function withLookups(opts: {
   ctx: LookupContext;
   surface: Surface;
   contents: LlmMessage[];
   call: (contents: LlmMessage[], final: boolean) => Promise<unknown>;
-}): Promise<{ raw: unknown; steps: LookupStep[] }> {
+}): Promise<{ raw: unknown; output: unknown }> {
   const trail: LlmMessage[] = [];
   const steps: LookupStep[] = [];
   for (let step = 0; ; step++) {
     const final = step >= MAX_LOOKUP_STEPS;
     const raw = await opts.call([...opts.contents, ...trail], final);
     const calls = final ? [] : lookupsOf(raw);
-    if (calls.length === 0) return { raw, steps };
+    if (calls.length === 0) {
+      return { raw, output: steps.length > 0 ? { lookups: steps, final: raw } : raw };
+    }
     const records = await runLookups(opts.ctx, opts.surface, calls);
     steps.push({ calls, results: records.map((r) => ({ tool: r.tool, ok: r.ok })) });
     trail.push(

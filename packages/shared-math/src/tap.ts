@@ -1,6 +1,6 @@
 // Tapping inside a figure (issue #248, analysis #224 `HOTSPOT_FIG`): a place on a number line, a
 // point of a coordinate system, a column of a bar chart, the time on a clock face, a region of a
-// map (#251), a part of a labelled picture (#252). One mechanism for every figure that can be answered by a tap — labelled pictures
+// map (#251) or a crossing of its Gradnetz (#429), a part of a labelled picture (#252). One mechanism for every figure that can be answered by a tap — labelled pictures
 // (#252) add their figure here, not a second mechanism.
 //
 // What a figure offers to tap is a GRID: one or more axes, each a list of values in drawing
@@ -17,12 +17,18 @@
 //   · what she TAPS is judged here — `tapVerdict` compares her pick with the key's, exactly. A
 //     wrong place is wrong; it never reaches a model (CLAUDE.md rule 1).
 //
+// The names of a map's places and a picture's parts are handed in (`FigureNames`, #440): the
+// server passes all of them, the app what it has loaded — null before the first map or picture,
+// and then such a figure offers nothing to tap yet. Every other figure needs none.
+//
 // Dependency-free on purpose: the app imports it by path, like `primary.ts`. The shapes below are
 // those of `NumberLineFigure`, `FunctionPlotFigure`, `BarChartFigure`, `ClockFigure` and `MapFigure`
 // (packages/shared-types/src/contracts/figure.ts); the API passes the zod-inferred figures in, so
 // a drift between the two fails the typecheck.
 
-import { isMap, mapMarked, mapRegions, type MapFig } from './maps.js';
+import type { FigureNames } from './figureNames.js';
+import { gridParse, gridText, mapGrid } from './mapGrid.js';
+import { isGridMap, isMap, mapMarked, mapPickIndex, mapPlaces, type MapFig } from './maps.js';
 import { regionNamed, type RegionName } from './regions.js';
 import { schematic, type SchematicFig } from './schematics.js';
 import { parseClockAnswer, type Clock } from './primary.js';
@@ -57,13 +63,19 @@ export const TAP_FIGURES = [
 export type TapFigureType = (typeof TAP_FIGURES)[number];
 
 /**
- * The named places of a figure whose places have names — the regions of a map (#251), the parts of
- * a labelled picture (#252) — or null for every other figure. Typed or tapped, an answer on such a
- * figure is a name of one of them (`regions.ts`).
+ * The named places of a figure whose places have names — the regions of a map (#251) or its
+ * capitals, rivers or mountain ranges (#429), the parts of
+ * a labelled picture (#252) — or null for every other figure, and while the names are not at hand.
+ * Typed or tapped, an answer on such a figure is a name of one of them (`regions.ts`).
  */
-export function namedPlaces(f: { type: string }): readonly RegionName[] | null {
-  if (isMap(f)) return mapRegions(f.v);
-  if (f.type === 'schematic') return schematic((f as SchematicFig).d).parts;
+export function namedPlaces(
+  names: FigureNames | null,
+  f: { type: string },
+): readonly RegionName[] | null {
+  if (!names) return null;
+  // A crossing of the Gradnetz (#429) has coordinates, not a name.
+  if (isMap(f)) return isGridMap(f) ? null : mapPlaces(names, f);
+  if (f.type === 'schematic') return schematic(names, (f as SchematicFig).d).parts;
   return null;
 }
 
@@ -83,8 +95,20 @@ export const TAP_MAX_UNITS = 12;
 /** A clock is set in five-minute steps: the twelve marks with numbers on the face. */
 export const TAP_MINUTE_STEP = 5;
 
-/** What an axis stands for: the app names it ("x: 2", "Stunde: 7") and draws it accordingly. */
-export type TapAxisName = 'value' | 'x' | 'y' | 'bar' | 'hour' | 'minute' | 'region';
+/**
+ * What an axis stands for: the app names it ("x: 2", "Stunde: 7") and draws it accordingly — the
+ * Gradnetz (#429) by its meridians (`lon`) and parallels (`lat`), like a coordinate system.
+ */
+export type TapAxisName =
+  | 'value'
+  | 'x'
+  | 'y'
+  | 'bar'
+  | 'hour'
+  | 'minute'
+  | 'region'
+  | 'lon'
+  | 'lat';
 export type TapAxis = { name: TapAxisName; values: readonly number[] };
 /** One index per axis of the grid, in the order of `tapAxes`. */
 export type TapPick = readonly number[];
@@ -120,10 +144,10 @@ const key = (label: string) => label.trim().toLocaleLowerCase();
  * The grid a figure offers to tap, or null when it offers none: a figure of another type, a
  * number line or coordinate system too dense for a finger, two columns with one name (a tap
  * could not say which), a clock that already shows a time or counts 24 hours (a dial cannot
- * tell 7:45 from 19:45). A map offers its regions — however small, each is tapped by its label
- * (`regionAt`, maps.ts).
+ * tell 7:45 from 19:45), a map or a picture whose names are not at hand. A map offers its
+ * regions — however small, each is tapped by its label (`regionAt`, maps.ts).
  */
-export function tapAxes(f: Tappable): TapAxis[] | null {
+export function tapAxes(names: FigureNames | null, f: Tappable): TapAxis[] | null {
   switch (f.type) {
     case 'number_line': {
       const values = lineValues(f);
@@ -151,8 +175,19 @@ export function tapAxes(f: Tappable): TapAxis[] | null {
       ];
     }
     case 'map':
-    case 'schematic':
-      return [{ name: 'region', values: (namedPlaces(f) ?? []).map((_, i) => i) }];
+    case 'schematic': {
+      if (isMap(f) && isGridMap(f)) {
+        const grid = mapGrid(f.v);
+        return grid
+          ? [
+              { name: 'lon', values: grid.lon },
+              { name: 'lat', values: grid.lat },
+            ]
+          : null;
+      }
+      const places = namedPlaces(names, f);
+      return places ? [{ name: 'region', values: places.map((_, i) => i) }] : null;
+    }
   }
 }
 
@@ -163,11 +198,11 @@ function written(n: number): string {
 
 /**
  * The answer a pick stands for, written as a key is ("2.5", "(2|-1)", "Mai", "7:45", "Bayern" —
- * a region by its German name, as the data writes it); null when
- * the pick is not one of the grid's.
+ * a region by its German name, as the data writes it; "50° N, 10° O" — a crossing as German
+ * writes it, `mapGrid.ts`); null when the pick is not one of the grid's.
  */
-export function tapText(f: Tappable, pick: TapPick): string | null {
-  const axes = tapAxes(f);
+export function tapText(names: FigureNames | null, f: Tappable, pick: TapPick): string | null {
+  const axes = tapAxes(names, f);
   if (!axes || pick.length !== axes.length) return null;
   const vals = axes.map((axis, i) => axis.values[pick[i] ?? -1]);
   if (vals.some((v) => v === undefined)) return null;
@@ -183,7 +218,9 @@ export function tapText(f: Tappable, pick: TapPick): string | null {
       return `${a}:${String(b).padStart(2, '0')}`;
     case 'map':
     case 'schematic':
-      return namedPlaces(f)?.[a]?.de ?? null;
+      return isMap(f) && isGridMap(f)
+        ? gridText({ lon: a, lat: b }, 'de')
+        : (namedPlaces(names, f)?.[a]?.de ?? null);
   }
 }
 
@@ -220,8 +257,8 @@ function pointOf(text: string): [number, number] | null {
  * five-minute marks, a name no region of the map has (any of its names in five languages is
  * one). The inverse of `tapText` — and what a key must survive to be tapped at all.
  */
-export function tapPick(f: Tappable, text: string): TapPick | null {
-  const axes = tapAxes(f);
+export function tapPick(names: FigureNames | null, f: Tappable, text: string): TapPick | null {
+  const axes = tapAxes(names, f);
   if (!axes) return null;
   const [first, second] = axes;
   if (!first) return null;
@@ -250,7 +287,14 @@ export function tapPick(f: Tappable, text: string): TapPick | null {
     }
     case 'map':
     case 'schematic': {
-      const i = regionNamed(namedPlaces(f) ?? [], text);
+      if (isMap(f) && isGridMap(f)) {
+        // As code writes it: the app's tap, the stored key (`mapGrid.ts`).
+        const p = gridParse(text, 'de');
+        const i = p === null ? null : indexOf(first.values, p.lon);
+        const j = p === null || !second ? null : indexOf(second.values, p.lat);
+        return i === null || j === null ? null : [i, j];
+      }
+      const i = regionNamed(namedPlaces(names, f) ?? [], text);
       return i === null ? null : [i];
     }
   }
@@ -267,19 +311,24 @@ export function tapKind(f: Tappable): 'numeric' | 'short' {
  * the grid could not be tapped by anyone, and a figure that already marks the key would only be
  * copied.
  */
-export function tapProblem(f: { type: string }, kind: string, answer: string): string | null {
+export function tapProblem(
+  names: FigureNames,
+  f: { type: string },
+  kind: string,
+  answer: string,
+): string | null {
   if (!isTappable(f)) return 'this figure cannot be tapped';
-  if (!tapAxes(f)) return 'the figure offers no places to tap';
+  if (!tapAxes(names, f)) return 'the figure offers no places to tap';
   if (kind !== tapKind(f)) return `a tap on a ${f.type} answers a ${tapKind(f)} question`;
-  const pick = tapPick(f, answer);
+  const pick = tapPick(names, f, answer);
   if (!pick) return 'the key is no place of the figure';
   const shown =
     f.type === 'number_line'
       ? f.points.some((p) => Math.abs(p.value - (plainNumber(answer) ?? NaN)) <= EPS)
       : f.type === 'function_plot'
-        ? f.points.some((p) => tapPick(f, `(${p.x}|${p.y})`)?.join() === pick.join())
+        ? f.points.some((p) => tapPick(names, f, `(${p.x}|${p.y})`)?.join() === pick.join())
         : isMap(f)
-          ? mapMarked(f).includes(pick[0] ?? -1)
+          ? mapMarked(names, f).includes(mapPickIndex(f, pick))
           : false;
   return shown ? 'the figure already marks the key' : null;
 }
@@ -290,12 +339,13 @@ export function tapProblem(f: { type: string }, kind: string, answer: string): s
  * rules judge it, as for anything typed.
  */
 export function tapVerdict(
+  names: FigureNames,
   f: Tappable,
   answer: string,
   text: string,
 ): 'correct' | 'incorrect' | null {
-  const wanted = tapPick(f, answer);
-  const given = tapPick(f, text);
+  const wanted = tapPick(names, f, answer);
+  const given = tapPick(names, f, text);
   if (!wanted || !given) return null;
   return wanted.join() === given.join() ? 'correct' : 'incorrect';
 }

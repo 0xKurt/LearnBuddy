@@ -1,8 +1,9 @@
 // The return key sent the first line of a calculation path as the whole answer (issue #221).
 
+import { pathPossible } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { hasPath, lineCount, pathPossible, previewLine, returnKey } from '../practice/pathEntry.js';
+import { hasPath, lineCount, previewLine, returnKey } from '../practice/pathEntry.js';
 
 describe('where a worked path may be typed', () => {
   it('is offered exactly where the server checks one', () => {

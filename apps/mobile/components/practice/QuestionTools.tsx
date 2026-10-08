@@ -1,5 +1,6 @@
 // A small row of quiet tools under the question (never a second headline): hearing a foreign word,
-// hearing a listening text (issue #210). Nothing at all when none applies. Hearing the question
+// hearing a listening text (issue #210), hearing the tones of an interval she names by ear
+// (issue #445). Nothing at all when none applies. Hearing the question
 // again is the conversation row's ("Nochmal vorlesen", `CheckBar`, issue #386), not a pill here. A Diktat carries its play control in its card (`DictationCard`, #242).
 
 import type { ItemView } from '@learnbuddy/shared-types/contracts';
@@ -21,6 +22,8 @@ type Props = {
 
 export function QuestionTools({ item, sessionId, hearWord, heard, markHeard, disabled }: Props) {
   const tools = [
+    // Ear training (issue #445): the tones are the question, so their "Anhören" stands first.
+    item.tones ? <ListenButton key={`tones-${item.id}`} tones={item.tones} /> : null,
     hearWord && item.read_aloud && item.prompt_lang ? (
       <ListenButton key={`listen-${item.id}`} text={item.prompt} lang={item.prompt_lang} />
     ) : null,

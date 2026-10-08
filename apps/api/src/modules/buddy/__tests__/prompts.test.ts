@@ -193,8 +193,8 @@ describe('the system prompt is written for no one language', () => {
  * Four schemas go out with the two prompts above. `TURN_STEP_SCHEMA` is imported from the
  * module that sends it, so a change there is scanned without this test being touched; the other
  * three are built here from the same exported zod pieces the senders use, because `turn.ts`
- * keeps its final-round schema and `check.ts` both of its schemas private. The pieces, not the
- * compositions, are what carries description text: a check step schema is `CheckDecision` plus
+ * keeps its final-round schema and `checkDecide.ts` both of its schemas private. The pieces, not
+ * the compositions, are what carries description text: a check step schema is `CheckDecision` plus
  * the `lookups` field, and both are scanned, so a German example cannot hide in the one
  * composition no test holds.
  */
@@ -202,9 +202,9 @@ const SCHEMAS: ReadonlyArray<readonly [string, string]> = [
   ['turn, lookup round (turn.ts TURN_STEP_SCHEMA)', JSON.stringify(TURN_STEP_SCHEMA)],
   ['turn, final round (TurnDecisionForModel)', JSON.stringify(toJsonSchema(TurnDecisionForModel))],
   ['background check (CheckDecision)', JSON.stringify(toJsonSchema(CheckDecision))],
-  // The composition check.ts actually sends, not only its two pieces (issue #213).
+  // The composition checkDecide.ts actually sends, not only its two pieces (issue #213).
   [
-    'background check, lookup round (check.ts CHECK_STEP_SCHEMA)',
+    'background check, lookup round (checkDecide.ts CHECK_STEP_SCHEMA)',
     JSON.stringify(CHECK_STEP_SCHEMA),
   ],
   ['the lookups field each step schema adds', JSON.stringify(toJsonSchema(lookupsField))],

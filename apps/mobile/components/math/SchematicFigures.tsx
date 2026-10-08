@@ -2,8 +2,9 @@
 // bicycle — in the app's pastels, with numbers beside it, each joined to its part by a leader
 // line, as a schoolbook prints them (`schematicLayout.ts`). Nothing here decides anything: every
 // part, its name and its outline are packages/shared-math (`schematics.ts`), the library the
-// server checked the question against. The drawings come with the first picture
-// (`useSchematicShapes`); until then the picture keeps its room. `describeSchematic` says in words
+// server checked the question against. The drawings and the names come with the first picture
+// (`useSchematicShapes`, `useFigureNames`, #440); until both are there the picture keeps its room
+// and draws nothing. `describeSchematic` says in words
 // what it shows — the drawing and how many parts are numbered, never their names (naming them is
 // the task).
 
@@ -11,10 +12,12 @@ import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { View } from 'react-native';
 import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 
+import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
 import { regionPath } from '../../../../packages/shared-math/src/regions.js';
 import { schematic, schematicNumbered } from '../../../../packages/shared-math/src/schematics.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { BADGE_R, schematicLayout } from '../../lib/math/schematicLayout.js';
+import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { useSchematicShapes } from '../../lib/math/useSchematicShapes.js';
 import { isDarkBackground } from '../../lib/theme/luminance.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -25,9 +28,12 @@ type T = (key: string, values?: Record<string, string | number>) => string;
 
 export function SchematicBody({ figure, width }: { figure: SchematicFigure; width: number }) {
   const { figure: ink } = useTheme();
-  const drawing = useSchematicShapes()?.SCHEMATIC_SHAPES[figure.d];
-  const { k, x0, y0, height, badges } = schematicLayout(figure, width, drawing);
-  if (!drawing) return <View style={{ width, height }} />;
+  const shape = useSchematicShapes()?.SCHEMATIC_SHAPES[figure.d];
+  const names = useFigureNames(figure);
+  const loaded = shape && names ? { drawing: shape, names } : null;
+  const { k, x0, y0, height, badges } = schematicLayout(figure, width, loaded);
+  if (!loaded) return <View style={{ width, height }} />;
+  const { drawing } = loaded;
   const paths = drawing.parts.map((p) => regionPath(p.rings, k));
   const tone = (t: number) => (t < 0 ? ink.stroke : (ink.slices[t] ?? ink.fill));
   const night = isDarkBackground(ink.paper);
@@ -105,11 +111,11 @@ export function SchematicBody({ figure, width }: { figure: SchematicFigure; widt
 }
 
 /** "Abbildung: Pflanzenzelle, 4 Teile nummeriert." — never the names of the numbered parts. */
-export function describeSchematic(figure: SchematicFigure, t: T): string {
+export function describeSchematic(figure: SchematicFigure, t: T, names: FigureNames): string {
   const lang = currentLocale();
-  const names = schematic(figure.d).names;
-  const name = lang in names ? names[lang as keyof typeof names] : names.de;
-  const count = schematicNumbered(figure).length;
+  const titles = schematic(names, figure.d).names;
+  const name = lang in titles ? titles[lang as keyof typeof titles] : titles.de;
+  const count = schematicNumbered(names, figure).length;
   return count > 0
     ? t('figure.schematic_numbered', { name, count })
     : t('figure.schematic', { name });

@@ -55,7 +55,7 @@ export type PracticeWish = {
   dueOnly?: boolean;
 };
 
-export const QUESTIONS_PER_MINUTE = 1.2;
+const QUESTIONS_PER_MINUTE = 1.2;
 
 /**
  * How many questions a set holds: a number, or everything there is (issues #145, #49).
@@ -89,6 +89,11 @@ export type PracticeRun = 'practice' | 'test' | 'speak';
 
 export function questionCountFor(minutes: number): number {
   return Math.min(15, Math.max(3, Math.round(minutes * QUESTIONS_PER_MINUTE)));
+}
+
+/** The other way round: about how long `count` questions take, never under five minutes. */
+export function minutesFor(count: number): number {
+  return Math.max(5, Math.round(count / QUESTIONS_PER_MINUTE));
 }
 
 type Candidate = {

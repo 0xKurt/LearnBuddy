@@ -6,9 +6,10 @@
 
 import type { ReactElement, ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, type RenderResult } from '@testing-library/react';
+import { act, render, type RenderResult } from '@testing-library/react';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
+import type { LazyModule } from '../lib/lazyModule.js';
 import { ThemeProvider } from '../lib/theme/ThemeProvider.js';
 // Imported for its side effect: this is where i18next is initialised with locales/**.
 import '../lib/i18n/index.js';
@@ -35,6 +36,17 @@ function Providers({ children }: { children: ReactNode }) {
 
 export function renderInApp(ui: ReactElement): RenderResult {
   return render(ui, { wrapper: Providers });
+}
+
+/**
+ * Waits until these parts loaded with their first screen (`lib/lazyModule.ts`) are there — the
+ * shapes and names of a map or a picture — and the components rendered before have drawn them.
+ * The load itself, not a fixed time: under load it takes as long as it takes (#481).
+ */
+export async function whenLoaded(...modules: ReadonlyArray<Pick<LazyModule<unknown>, 'load'>>) {
+  await act(async () => {
+    await Promise.all(modules.map((m) => m.load()));
+  });
 }
 
 /**

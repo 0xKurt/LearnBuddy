@@ -3,7 +3,8 @@
 // Was diese Schicht festhält, ist genau das, was dem Kind gegenübersteht:
 //
 //   · der Knopf ist AM Urteil erreichbar, nicht irgendwo in Einstellungen — und er ist erst
-//     da, wenn es ein Urteil gibt (vorher gibt es „Frage passt nicht");
+//     da, wenn es ein Urteil gibt (vorher gibt es „Frage passt nicht"). Der Knopf selbst, das
+//     kurze „Einspruch“ in der Ecke der Frage, steht in QuestionCorner.test.tsx (Issue #459);
 //   · im Probetest und bei Hausaufgaben gibt es ihn nicht: dort kommen die Ergebnisse am Ende
 //     bzw. wird geholfen statt bewertet;
 //   · die Lade ist kein Formular (Regel 16): ein Satz, ein Knopf, kein Freitextfeld, keine
@@ -25,12 +26,7 @@ import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
-import {
-  canDisputeVerdict,
-  DisputeVerdictButton,
-  DisputeVerdictSheet,
-  type VerdictState,
-} from '../DisputeVerdict.js';
+import { canDisputeVerdict, DisputeVerdictSheet, type VerdictState } from '../DisputeVerdict.js';
 
 /** Eine beantwortete Frage aus einer laufenden Übung — der Normalfall. */
 const judged: VerdictState = {
@@ -67,29 +63,6 @@ describe('ob es etwas zu bestreiten gibt', () => {
   it('bietet ihn bei einem langen Text nicht an: der wird nie bewertet (#258)', () => {
     expect(canDisputeVerdict({ ...judged, kind: 'essay' })).toBe(false);
     expect(canDisputeVerdict({ ...judged, kind: 'long' })).toBe(true);
-  });
-});
-
-describe('der Knopf am Urteil', () => {
-  it('sagt in ihren Worten, worum es geht — und nennt keine Zahl', () => {
-    const onPress = vi.fn();
-    renderInApp(<DisputeVerdictButton disabled={false} onPress={onPress} />);
-    // Er heißt nach dem, was nicht stimmt — der Bewertung. „Frage passt nicht" ist der andere
-    // Knopf und etwas anderes: der nimmt eine unpassende Frage raus, solange sie offen ist.
-    const button = screen.getByRole('button', { name: 'Bewertung stimmt nicht' });
-    // Nie eine Zahl: kein Zähler von Fälligem, Verpasstem oder Bestrittenem (Regel 6).
-    expect(button.textContent ?? '').not.toMatch(/\d/);
-    fireEvent.click(button);
-    expect(onPress).toHaveBeenCalledTimes(1);
-  });
-
-  it('wartet, während etwas anderes läuft, statt zweimal zu zählen', () => {
-    const onPress = vi.fn();
-    renderInApp(<DisputeVerdictButton disabled onPress={onPress} />);
-    const button = screen.getByRole('button', { name: 'Bewertung stimmt nicht' });
-    expect(button.getAttribute('aria-disabled')).toBe('true');
-    fireEvent.click(button);
-    expect(onPress).not.toHaveBeenCalled();
   });
 });
 

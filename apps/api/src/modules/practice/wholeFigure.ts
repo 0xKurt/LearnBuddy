@@ -1,11 +1,14 @@
 // The figures that ARE their question (docs/architecture.md §Practice): a chart (#245, #246), a
 // clock, coins, a dot field, base-ten blocks (#254), a tree, a pedigree, an automaton (#256), a
-// periodic table (#250), a solid, a cube net, a point in space (#255), a diagram (#247), and a
-// circuit, a logic net and Itten's colour wheel (#261).
+// periodic table (#250), a solid, a cube net, a point in space (#255), a diagram (#247), a
+// circuit, a logic net, Itten's colour wheel (#261), a stumme Karte (#251, #479) and a labelled
+// picture (#252, #481).
 // "Werte das Klimadiagramm aus", "Wie spät ist es?" or "Was gehört in Lücke A?" without its
 // figure is no question, so a figure of this kind that does not hold costs the question — unlike
 // a fraction picture or a number line, which is dropped alone (audit H-15). Each family keeps its
-// own rules in @learnbuddy/shared-math; this file is the one place that asks them.
+// own rules in @learnbuddy/shared-math; this file is the one place that asks them — except a
+// map's and a picture's, which need the question they are asked with: `mapCheck.ts` and
+// `schematicCheck.ts` ask them, here only whether they parse at all.
 
 import {
   chartProblem,
@@ -17,9 +20,11 @@ import {
   isColorWheel,
   isDiagram,
   isLogic,
+  isMap,
   logicProblem,
   isPeriodicTable,
   isPrimary,
+  isSchematic,
   isSpaceFigure,
   isTreeFigure,
   periodicProblem,
@@ -39,6 +44,8 @@ const WHOLE = [
   isCircuit,
   isLogic,
   isColorWheel,
+  isMap,
+  isSchematic,
 ];
 
 /** The first rule a figure of this kind breaks; null when it holds or is of another kind. */

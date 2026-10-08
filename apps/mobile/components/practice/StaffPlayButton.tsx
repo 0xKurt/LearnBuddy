@@ -6,20 +6,19 @@
 // vom design so anders ist"). Es ist deshalb bewusst KEIN eigenes Bedienelement mit eigener Farbe
 // — nur der Inhalt ist anders, ein Ton statt eines Wortes.
 //
-// Ein zweiter Button wäre `ListenButton` selbst mit anderem Text gewesen; daraus wurde nichts,
-// weil der dort hinter `speak()` die Sprachstrecke anspricht (Stimme, Sprache, langsam) und eine
-// Notenzeile keine Sprache hat. Gemeinsam ist das, was man sieht; getrennt ist, was klingt.
+// Gespielt wird über den einen Hör-Hook (`useListenToggle`, #445): dasselbe Spielen, dasselbe
+// Anhalten beim Verlassen, derselbe Satz, wenn kein Ton kommt — wie bei „Anhören" und bei der
+// Taste „Anhören" in der Tastenreihe unter der Zeile, die sie schreibt (`StaffKeys`). Eigen ist
+// hier nur die Form: der Lautsprecher allein, in voller Breite seiner Spalte neben der Zeile.
 
 import type { StaffBars } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { playLine, stopNotes } from '../../lib/music/play.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
-import { toast } from '../lb/Toast.js';
+import { useListenToggle } from './useListenToggle.js';
 
 type Props = {
   bars: StaffBars;
@@ -29,53 +28,6 @@ type Props = {
 };
 
 /**
- * Eine Notenzeile spielen und anhalten (issue #226): geteilt von dieser Pille in der Karte und der
- * Taste „Anhören" in der Tastenreihe unter der Zeile, die sie schreibt (`StaffKeys`, issue #310) —
- * dasselbe Spielen, dasselbe Anhalten beim Verlassen, derselbe Satz, wenn kein Ton kommt.
- */
-export function useStaffPlay(
-  bars: StaffBars,
-  tempo: number,
-): { playing: boolean; press: () => void } {
-  const { t } = useTranslation('practice');
-  const [playing, setPlaying] = useState(false);
-  const mounted = useRef(true);
-
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
-
-  // Beim Verlassen der Frage mitten im Ton: still werden, nicht weiterspielen.
-  const playingRef = useRef(false);
-  playingRef.current = playing;
-  useEffect(
-    () => () => {
-      if (playingRef.current) stopNotes();
-    },
-    [],
-  );
-
-  function press(): void {
-    if (playing) {
-      stopNotes();
-      setPlaying(false);
-      return;
-    }
-    setPlaying(true);
-    playLine(bars, tempo, (why) => {
-      if (!mounted.current) return;
-      setPlaying(false);
-      // Kein Ton zu hören (kein Audio erlaubt, Player blockiert): sagen statt schweigen.
-      if (why === 'error') toast.show(t('staff.no_sound'), 'info');
-    });
-  }
-  return { playing, press };
-}
-
-/**
  * Die Pille in der Karte, rechts neben der gelesenen Zeile (issue #275): nur der Lautsprecher, in
  * voller Breite ihrer Spalte — dieselbe Pille, dieselbe Farbe, dasselbe Zeichen wie „Anhören",
  * ohne das Wort, das der Screenreader weiter hört.
@@ -83,7 +35,7 @@ export function useStaffPlay(
 export function StaffPlayButton({ bars, tempo, disabled = false }: Props) {
   const { t } = useTranslation('practice');
   const { palette } = useTheme();
-  const { playing, press } = useStaffPlay(bars, tempo);
+  const { playing, press } = useListenToggle({ tones: { bars, tempo } });
 
   const off = disabled || bars.length === 0;
   // Was draufsteht, ist auch der Zustand: niemals die Farbe allein.
