@@ -3261,11 +3261,12 @@ prints none — or from a text Buddy writes himself (a `read` run, #368, below).
 A class test from grade 8 on asks **one situation and several subtasks** a), b), c) on it, the
 later ones building on the earlier results. The first step of #297 brings exactly that, for parts
 code can compute, with the **Folgefehler** German schools mark: a wrong a) carried on correctly in
-b) makes b) right.
+b) makes b) right. The second step adds **open parts** — „Begründe", „Erkläre", „Beschreibe",
+„Deute" — so one task mixes computing and reasoning.
 
-- **Every part is an ordinary question** (`numeric`, `short`, `multiple_choice`) with its own key
-  and its own check — nothing is checked twice or in a second way (#296). What is new is one column,
-  `items.task_part` (`TaskPart`, `contracts/taskParts.ts`): the task's id (made by code), the part's
+- **Every part is an ordinary question** (`numeric`, `short`, `multiple_choice`, and an open part
+  as `long`) with its own key and its own check — nothing is checked twice or in a second way
+  (#296). What is new is one column, `items.task_part` (`TaskPart`, `contracts/taskParts.ts`): the task's id (made by code), the part's
   letter, how many parts the task has, the situation (`stem`) and, for a part that goes on from
   earlier ones, `from` — arithmetic over their letters (`a * 0,15 + 12`). It is stored on **every**
   part, as a reading text is (#233): a review brings one part back alone, with its situation.
@@ -3283,18 +3284,34 @@ b) makes b) right.
   Then the part is `correct`, by rule, and the reply says what happened ("Richtig weitergerechnet –
   mit deinem Ergebnis aus a) …"). Her a) stays wrong. A part answered before a), or brought back
   alone by a review, has nothing of hers to follow: its key decides.
+- **Open parts** (step 2, no migration): an open part is written, held and stored exactly like an
+  „Erklär mal" question (#236, `teachBack.ts`): the model gives it 2–4 key points
+  (`TASK_OPEN_POINTS_MIN/MAX`) with a follow-up each; code holds them to the rules of every key point
+  (`keyPointsProblem`) against everything she reads — the situation and the part's question — and
+  stores them as a `key_point` rubric, the follow-ups as its prepared hints, no worked solution
+  (`keyPointFields`). Answering it is the one key-point path in `answer.ts`: one tutor call, which
+  sees the situation as its material; a point counts only with her words the server finds
+  (`quoted`, #258) and its exact part by code; she gets a ✓ per point and ONE follow-up, never a
+  grade, and her answer to the follow-up adds to what she said. An open part has no `from`, and
+  none of its points may hang on an earlier part's result (a computed key's value in a point or an
+  exact term that the situation does not state): her wrong a) carried on consistently would
+  otherwise be marked again (`openPartProblem`). A task whose open part does not hold is dropped
+  whole. The parts' kinds follow the run's profile (`partTaskSchemaFor`): a practice test has no
+  long answer, so its schema has neither the open part nor its key points. A shown solution never
+  pulls a similar task between the parts of a task, or a part out of its task (`similar.ts`).
 - **On screen** (`QuestionCard` `stimulus`, `PartStem`): the situation above the question, the part's
   letter before it, and the task's letters `a) · b) · c)` where the topic stands — where she is, never
   a count of what is left (rule 6). While she types the situation keeps two lines and scrolls in
   itself (the one text that may, rule 16) instead of folding away like a drawing: she types from its
-  numbers. No new route.
+  numbers. An open part answers in the tall bar every free text has (`TypedAnswer`), pinned under
+  the question inside `KeyboardSafe`. No new route.
 - **In the generator**: `part_tasks` in practice and test runs (`SET_PROFILES.partTasks`), at most
   two per run, after the structured forms, each part a stored question in order. The material is text
   only in this step: a second figure union in the explain schema would grow it by a third (20 kB of
   65 kB, measured 05.10.); figures, tables and data as material come after the schema budget is
   measured with Vertex (#281).
-- **Next** (#297 plan): open parts (begründe, deute, beurteile) through key points (#258), operators
-  deciding the check; tasks in parts read from the photo; subjects beyond maths and physics.
+- **Next** (#297 plan): tasks in parts read from the photo; figures, tables and data as material once
+  the schema budget is measured with Vertex (#281).
 
 ### Charts (issues #245, #246)
 
