@@ -47,12 +47,12 @@ import {
   CHECK_SYSTEM,
   repairMessage,
 } from './prompts.js';
+import { deferredWhileInApp } from './inApp.js';
+import { REVIEW_NEXT_DAY, runReviews } from './review.js';
 import { loadBuddyState, type BuddyState, type SettingsRow } from './state.js';
 import { claimMessage, processTurn, pushAvailable, TURN_STALL_MS } from './turn.js';
 
 const LEASE_SECONDS = 150;
-const IN_APP_DEFER_MS = 20 * 60_000;
-const IN_APP_WINDOW_MS = 3 * 60_000;
 /** Wake-ups that follow directly from something the learner did. */
 const LEARNER_TRIGGERED = new Set(['material_ready', 'session_finished']);
 
@@ -190,12 +190,20 @@ export async function runLearnerJobs(deps: Deps, learnerId: string): Promise<Che
     }
 
     const triggers = jobs.filter((j) => j.kind === 'buddy_check').map(triggerOf);
+    // Decided by code alone: agreed reminders, and the review the day after a sheet (#446).
+    const byCode = new Set(['step_due', REVIEW_NEXT_DAY]);
     const agreed = triggers.filter((t) => t.reason === 'step_due');
+    const reviews = triggers.filter((t) => t.reason === REVIEW_NEXT_DAY);
     // A check whose worker failed all its attempts comes back once, model-free (terminal.ts).
-    const parked = triggers.filter((t) => t.reason !== 'step_due' && t.job.payload.fallback_only);
-    const others = triggers.filter((t) => t.reason !== 'step_due' && !t.job.payload.fallback_only);
+    const parked = triggers.filter((t) => !byCode.has(t.reason) && t.job.payload.fallback_only);
+    const others = triggers.filter((t) => !byCode.has(t.reason) && !t.job.payload.fallback_only);
 
     for (const trig of agreed) await sendAgreedReminder(deps, learner, trig);
+    await runReviews(
+      deps,
+      learner,
+      reviews.map((r) => r.job),
+    );
     if (parked.length > 0) {
       try {
         await fallback(deps, learner, parked, 'parked', { learnerId, token, jobs });
@@ -396,29 +404,20 @@ async function decide(
   lease: CheckLease,
 ): Promise<string> {
   const now = deps.now();
-  const settings = await deps.db.one<SettingsRow>(
-    `select * from buddy_settings where learner_id = $1`,
-    [learner.id],
-  );
 
   // The learner is using the app: don't start something unasked, look again
   // later. What follows from their own action (the photos they just sent, the
   // practice they just finished) is what they are waiting for: do it now.
   const answersLearner = triggers.some((t) => LEARNER_TRIGGERED.has(t.reason));
-  const inApp =
-    settings.last_seen_at !== null &&
-    now.getTime() - settings.last_seen_at.getTime() < IN_APP_WINDOW_MS;
-  if (inApp && !answersLearner) {
-    for (const trig of triggers) {
-      await retryJob(deps.db, trig.job, {
-        runAt: new Date(now.getTime() + IN_APP_DEFER_MS),
-        error: 'learner_in_app',
-        countAttempt: false,
-        now,
-      });
-    }
+  if (
+    !answersLearner &&
+    (await deferredWhileInApp(
+      deps,
+      learner.id,
+      triggers.map((t) => t.job),
+    ))
+  )
     return 'deferred_in_app';
-  }
 
   const finishAll = async (result: Record<string, unknown>) => {
     for (const trig of triggers)

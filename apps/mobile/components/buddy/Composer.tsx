@@ -1,8 +1,9 @@
 // Free text to Buddy, typed or spoken, plus the pages she attaches. One floating
-// bar: +, the field, the mic — "Senden" once there is text. The mic writes what she
-// said into the field so she can check it. In voice mode the bar becomes voice-first:
-// keyboard · big mic · camera, and what she says is sent right away.
-// While Buddy writes his answer, the send button (or the big mic) is "Stopp".
+// bar: +, the field, the mic — "Senden" once there is text — and the waveform at its end,
+// the way into a conversation (`app/talk.tsx`). The mic writes what she said into the field
+// so she can check it. While Buddy writes his answer, the send button is "Stopp".
+// There is no second, voice-first bar any more (issue #386, owner 04.10.): the speaker in the
+// head only switches reading aloud, and talking hands-free is the waveform's.
 //
 // Pages are attached here, not on a screen of their own (issue #82): the + asks where
 // they come from, they stand as small squares above the field, and "Senden" sends them
@@ -23,7 +24,6 @@ import { haptic } from '../../lib/haptics.js';
 import { fadeIn } from '../../lib/theme/enter.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
-import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { PhotoCheckCard } from '../capture/PhotoCheckCard.js';
@@ -34,7 +34,6 @@ import { ErrorNote } from '../lb/ErrorNote.js';
 import { InputBar } from '../lb/InputBar.js';
 import { Progress } from '../lb/Progress.js';
 import { AttachStrip } from './AttachStrip.js';
-import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { TalkButton } from '../voice/TalkButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -64,14 +63,12 @@ export function Composer({
 }) {
   const { palette } = useTheme();
   const { t } = useTranslation(['buddy', 'common']);
-  const voiceMode = useVoiceMode((s) => s.on);
-  const setVoiceMode = useVoiceMode((s) => s.setOn);
   // Kept on the device: a half-typed question survives Android killing the app.
   const { text, setText, clear } = useDraft('chat');
   /** The little "where from" menu behind the + (issue #82). */
   const [attach, setAttach] = useState(false);
-  const latest = useRef({ text, disabled });
-  latest.current = { text, disabled };
+  const latest = useRef(text);
+  latest.current = text;
   const trimmed = text.trim();
   /** Sends and empties the field; a message that never arrived comes back into it. */
   const deliver = (message: string) => {
@@ -121,13 +118,8 @@ export function Composer({
     purpose: 'message',
     lang: null,
     onText: (said) => {
-      const next = mergeTranscript(latest.current.text, said, 'append', MAX_MESSAGE_LENGTH);
-      // Voice mode sends at once; otherwise (or while a message is still on its way) she checks it first.
-      if (useVoiceMode.getState().on && !latest.current.disabled) {
-        deliver(next.trim());
-      } else {
-        setText(next);
-      }
+      // Into the field: she checks it and sends it herself.
+      setText(mergeTranscript(latest.current, said, 'append', MAX_MESSAGE_LENGTH));
     },
   });
 
@@ -144,11 +136,11 @@ export function Composer({
     ),
   );
 
-  const stopBtn = (size: 'sm' | 'lg') => (
+  const stopBtn = (
     <Animated.View key="stop" entering={fadeIn(DURATION.quick)}>
       <Btn
         pill
-        size={size}
+        size="sm"
         variant="soft"
         icon="stop"
         onPress={onStop}
@@ -241,64 +233,6 @@ export function Composer({
     </Sheet>
   );
 
-  if (voiceMode) {
-    // Voice first: keyboard · big mic · camera.
-    return (
-      <BottomBar>
-        {attachSheet}
-        <MicStatus voice={voice} />
-        {attachments}
-        {/* Heard while a message was still on its way: shown with its own "Senden", never
-            hidden in a field voice mode does not show (composer-parked-transcript). */}
-        {trimmed || attached ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-            <Text style={[TYPE.body, { flex: 1, color: palette.ink }]} numberOfLines={3}>
-              {trimmed}
-            </Text>
-            <Btn onPress={send} disabled={disabled || pages.busy} pill size="sm">
-              {t('buddy:composer.send')}
-            </Btn>
-          </View>
-        ) : null}
-        <View
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}
-        >
-          <View style={{ alignItems: 'center', gap: SPACE.xs, width: 90 }}>
-            <CircleBtn
-              icon="keyboard"
-              onPress={() => setVoiceMode(false)}
-              accessibilityLabel={t('buddy:composer.keyboard')}
-            />
-            <Text style={[TYPE.label, { color: palette.ink2 }]}>
-              {t('buddy:composer.keyboard')}
-            </Text>
-          </View>
-          {stoppable ? (
-            stopBtn('lg')
-          ) : (
-            <MicButton
-              voice={voice}
-              size="lg"
-              label={t('common:voice.message')}
-              disabled={disabled}
-            />
-          )}
-          <View style={{ alignItems: 'center', gap: SPACE.xs, width: 90 }}>
-            <CircleBtn
-              icon="camera"
-              // The page lands above the field, like in the typing bar (issue #82).
-              onPress={() => void pages.pick('camera')}
-              accessibilityLabel={t('buddy:composer.photo')}
-            />
-            <Text style={[TYPE.label, { color: palette.ink2 }]}>
-              {t('buddy:composer.photo_short')}
-            </Text>
-          </View>
-        </View>
-      </BottomBar>
-    );
-  }
-
   return (
     <BottomBar testID="composer">
       {attachSheet}
@@ -326,7 +260,7 @@ export function Composer({
         // Like a messenger: the mic while there is nothing to send, "Senden" once there is.
         action={
           stoppable ? (
-            stopBtn('sm')
+            stopBtn
           ) : trimmed.length > 0 || attached ? (
             <Btn onPress={send} disabled={disabled || pages.busy} pill size="sm">
               {t('buddy:composer.send')}

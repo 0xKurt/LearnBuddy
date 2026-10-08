@@ -12,9 +12,11 @@
 //     "↵ Neue Zeile". The return key sends a one-line answer; from the second line on it adds one,
 //     so a path cannot be cut off half-way (`lib/practice/pathEntry.ts`);
 //   · what she says goes into the field (numbers and fractions as such: "drei Viertel" → "3/4"),
-//     so she can check it. In voice mode the spoken answer is checked right away and the big mic
-//     stands above the bar (`CheckBar`); after her first tap the loop listens again by itself
-//     (useHandsFreeMic). A Diktat (issue #242) has no mic: the recogniser would spell for her;
+//     so she can check it. A Diktat (issue #242) has no mic: the recogniser would spell for her;
+//   · Gespräch (issue #386): the waveform at the bar's end, as in the chat. Tapped, the bar becomes
+//     the conversation row (`CheckBar`, `Talk`): what she says is checked right away, and the mic
+//     listens by itself once Buddy has read, as on /talk. Not where a spoken answer cannot
+//     stand alone: a Diktat, a path she is writing line by line, a line that belongs to a board;
 //   · under the text a live preview of typed math ("3/4" as a fraction, TypedMathPreview);
 //   · a long text (issue #258) gets the tall bar and up to 12 000 characters
 //     (`lib/practice/essay.ts`); it is prose, so it is dictated in parts like a long answer.
@@ -49,8 +51,8 @@ import { InputBar } from '../lb/InputBar.js';
 import type { LbTextInputRef } from '../lb/LbTextInput.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
 import { TypedMathPreview } from '../math/TypedMathPreview.js';
-import { MicButton, MicStatus } from '../voice/MicButton.js';
-import { useHandsFreeMic } from '../voice/useHandsFreeMic.js';
+import { TalkButton } from '../voice/TalkButton.js';
+import { useConversation } from '../voice/useConversation.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { AnswerShell } from './AnswerShell.js';
 
@@ -70,8 +72,10 @@ type Props = {
   value: string;
   disabled: boolean;
   onChange: (text: string) => void;
-  /** Checks this answer (the field's text, or what she just said in voice mode). */
+  /** Checks this answer (the field's text, or what she just said in a conversation). */
   onCheck: (value: string) => void;
+  /** "Nochmal vorlesen" in the conversation row; none where the question must not be heard. */
+  onReadAgain?: () => void;
   /**
    * A board above the bar this line belongs to (#260): what she taps first, and — until she has —
    * why "Prüfen" waits and what the empty field says.
@@ -89,10 +93,12 @@ export function TypedAnswer({
   disabled,
   onChange,
   onCheck,
+  onReadAgain,
   board = null,
 }: Props) {
   const { t } = useTranslation(['practice', 'common']);
-  const voiceMode = useVoiceMode((s) => s.on);
+  const conversation = useConversation();
+  const inConversation = useVoiceMode((s) => s.conversation);
   // Prose: dictated in parts, no math preview, the return key takes the line (issue #258).
   const long = kind === 'long' || kind === 'essay';
   const max = answerMax(kind);
@@ -138,28 +144,21 @@ export function TypedAnswer({
   const latest = useRef({ value, disabled });
   latest.current = { value, disabled };
 
-  const voice = useVoiceInput({
-    purpose: 'answer',
-    lang,
-    context: prompt,
-    onText: (said) => {
-      // A long answer may be dictated in parts; a short one is replaced by what she said.
-      // In a written path what she says is the next line, and the path is checked with
-      // "Prüfen" once it is complete — not after the first line she spoke (issue #221).
-      const inPath = hasPath(kind, latest.current.value);
-      const next = mergeTranscript(
-        latest.current.value,
-        said,
-        long ? 'append' : inPath ? 'line' : 'replace',
-        max,
-      );
-      onChange(next);
-      if (useVoiceMode.getState().on && !latest.current.disabled && !inPath) onCheck(next.trim());
-    },
-    // Hands-free (voice mode): on the phone listening ends by itself when she pauses.
-    untilPause: voiceMode,
-  });
-  useHandsFreeMic(voice, disabled || micOff, prompt);
+  /** What she said, into the field: a long answer may be dictated in parts, a short one is
+   *  replaced by it, and in a written path it is the next line (issue #221). */
+  const heard = (said: string): string => {
+    const next = mergeTranscript(
+      latest.current.value,
+      said,
+      long ? 'append' : hasPath(kind, latest.current.value) ? 'line' : 'replace',
+      max,
+    );
+    onChange(next);
+    return next;
+  };
+  const voice = useVoiceInput({ purpose: 'answer', lang, context: prompt, onText: heard });
+  // Gespräch: only where what she says is the whole answer (see the top of the file).
+  const canTalk = !micOff && !path && board === null;
   // iOS number pads lack minus, comma and letters (units); this one has them all.
   const keyboardType: KeyboardTypeOptions =
     kind === 'numeric' && Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default';
@@ -169,12 +168,6 @@ export function TypedAnswer({
     tapped('check');
     onCheck(value.trim());
   };
-  // In voice mode the big mic stands above the bar — not while she types: then the keyboard is
-  // up, typing has ended the hands-free loop, and the room above the keyboard is the bar's and
-  // the keys'. A recording still running keeps it, so she can always stop it.
-  const bigMic =
-    voiceMode && !micOff && (!focused || voice.state === 'recording' || voice.state === 'starting');
-
   const bar = (checkInBar: ReactNode) => (
     <InputBar
       ref={inputRef}
@@ -238,17 +231,36 @@ export function TypedAnswer({
       }}
       // While she types, "Prüfen" stands in the bar like the chat's "Senden" (`CheckBar`).
       action={checkInBar}
-      // The big mic has its own status line above the bar.
-      voice={bigMic ? undefined : voice}
+      voice={voice}
       micLabel={t('common:voice.answer')}
-      mic={!voiceMode && !micOff}
+      mic={!micOff}
       disabled={disabled}
       unit={unit}
       // How her math will be read, on a thin line in the bar itself. Long answers are texts;
       // the preview would only repeat them. In a path it draws the line with the cursor.
       under={long ? null : <TypedMathPreview value={previewLine(kind, value, caret)} compact />}
+      // Gespräch, at the pill's end like the chat's (issue #386).
+      after={canTalk ? <TalkButton onPress={conversation.start} /> : null}
     />
   );
+
+  if (canTalk && inConversation)
+    return (
+      <AnswerShell
+        action={{
+          talk: {
+            prompt,
+            lang,
+            disabled,
+            onText: (said) => {
+              const next = heard(said);
+              if (!latest.current.disabled) onCheck(next.trim());
+            },
+            ...(onReadAgain ? { onReadAgain } : {}),
+          },
+        }}
+      />
+    );
 
   return (
     <AnswerShell
@@ -284,17 +296,6 @@ export function TypedAnswer({
             ) : null}
           </>
         ),
-        voice: bigMic ? (
-          <>
-            <MicStatus voice={voice} />
-            <MicButton
-              voice={voice}
-              size="lg"
-              label={t('common:voice.answer')}
-              disabled={disabled}
-            />
-          </>
-        ) : undefined,
       }}
     />
   );

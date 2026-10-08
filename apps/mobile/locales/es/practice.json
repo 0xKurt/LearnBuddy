@@ -55,7 +55,6 @@
     "sheet_body": "Entonces quito esta pregunta: no cuenta y no volverá a salir. Tu progreso se queda como estaba.",
     "sheet_title": "¿La corrección no es correcta?"
   },
-  "end": "Terminar",
   "end_hint": "Volver a Buddy. Tus respuestas quedan guardadas: puedes seguir aquí más tarde.",
   "end_hint_test": "Entrega el examen de práctica y te muestra cómo te ha ido.",
   "end_label": "Terminar la práctica",
@@ -155,8 +154,6 @@
     "listen_slow_short": "Despacio",
     "listen_stop": "Parar",
     "listen_hint": "Te lo lee en voz alta.",
-    "read_question_label": "Leer la pregunta en voz alta",
-    "read_question_hint": "Te lee la pregunta. Toca otra vez para parar.",
     "no_voice": "Leer en voz alta no funciona ahora en este dispositivo – quizá falta la voz para este idioma.",
     "record": "Hablar",
     "record_again": "Dilo otra vez",

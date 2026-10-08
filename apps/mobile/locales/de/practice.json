@@ -55,7 +55,6 @@
     "sheet_body": "Dann nehme ich diese Frage raus — sie zählt nicht und kommt nicht mehr dran. Dein Lernstand bleibt, wie er vorher war.",
     "sheet_title": "Stimmt die Bewertung nicht?"
   },
-  "end": "Beenden",
   "end_hint": "Zurück zu Buddy. Deine Antworten bleiben gespeichert – du kannst später hier weitermachen.",
   "end_hint_test": "Gibt den Probetest ab und zeigt dir, wie es lief.",
   "end_label": "Übung beenden",
@@ -155,8 +154,6 @@
     "listen_slow_short": "Langsam",
     "listen_stop": "Anhalten",
     "listen_hint": "Liest es dir vor.",
-    "read_question_label": "Frage vorlesen",
-    "read_question_hint": "Liest dir die Frage vor. Nochmal tippen hält an.",
     "no_voice": "Vorlesen klappt auf diesem Gerät gerade nicht – vielleicht fehlt die Stimme für diese Sprache.",
     "record": "Sprechen",
     "record_again": "Nochmal sagen",

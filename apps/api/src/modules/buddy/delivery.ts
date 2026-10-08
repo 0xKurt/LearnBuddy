@@ -37,6 +37,7 @@ import {
   type PushMessage,
   type PushTicket,
 } from '../../push/transport.js';
+import { inAppNow } from './inApp.js';
 import { bumpContext } from './plan.js';
 import { decideContact, IN_APP_REASONS, type PastContact } from './policy.js';
 import type { SettingsRow } from './state.js';
@@ -88,9 +89,6 @@ export type OutreachPlan = {
  */
 const SAID = ['scheduled', 'sending', 'accepted', 'provider_accepted', 'send_uncertain', 'in_app'];
 
-/** She counts as in the app when she used it this recently. */
-const IN_APP_WINDOW_MS = 3 * 60_000;
-
 /** A late agreed reminder says so when it is more than this late. */
 const LATE_MS = 15 * 60_000;
 
@@ -129,8 +127,7 @@ export async function planOutreach(db: Db, input: OutreachPlanInput): Promise<Ou
   const hereNow =
     decision.kind === 'schedule' &&
     decision.sendAt.getTime() - input.now.getTime() < 60_000 &&
-    input.settings.last_seen_at !== null &&
-    input.now.getTime() - input.settings.last_seen_at.getTime() < IN_APP_WINDOW_MS;
+    inAppNow(input.settings.last_seen_at, input.now);
   const status = hereNow
     ? 'in_app'
     : decision.kind === 'schedule'
@@ -440,10 +437,7 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
       continue;
     }
     // The learner is in the app right now: show it there instead of pushing.
-    if (
-      settings.last_seen_at &&
-      now.getTime() - settings.last_seen_at.getTime() < IN_APP_WINDOW_MS
-    ) {
+    if (inAppNow(settings.last_seen_at, now)) {
       if (await settleInApp(deps, o, 'in_app', { reason: 'learner_in_app' }, now)) stats.inApp++;
       continue;
     }

@@ -30,8 +30,8 @@ export function OfferCard({
   offer: Offer;
   /**
    * Tapped while talking (app/talk.tsx): the practice must not turn silent because she
-   * started it with her voice (issue #40) — voice mode goes on, so the question is read
-   * to her and the mic waits by itself.
+   * started it with her voice (issue #40) — the conversation goes on there (issue #386), so the
+   * question is read to her and the mic is the main control.
    */
   spoken?: boolean;
 }) {
@@ -76,7 +76,7 @@ export function OfferCard({
       minutes: offer.minutes,
     });
     if (session) {
-      if (spoken) useVoiceMode.getState().setOn(true);
+      if (spoken) useVoiceMode.getState().setConversation(true);
       router.push(`/practice/${session.id}`);
     }
     reacted('start_offer');

@@ -55,7 +55,6 @@
     "sheet_body": "Alors je retire cette question — elle ne compte pas et ne reviendra plus. Ta progression reste comme avant.",
     "sheet_title": "La correction est fausse ?"
   },
-  "end": "Terminer",
   "end_hint": "Retour à Buddy. Tes réponses sont enregistrées – tu pourras continuer ici plus tard.",
   "end_hint_test": "Rend le test d'entraînement et te montre comment ça s'est passé.",
   "end_label": "Terminer l'entraînement",
@@ -155,8 +154,6 @@
     "listen_slow_short": "Lentement",
     "listen_stop": "Arrêter",
     "listen_hint": "Te le lit à voix haute.",
-    "read_question_label": "Lire la question à voix haute",
-    "read_question_hint": "Te lit la question. Touche encore pour arrêter.",
     "no_voice": "La lecture à voix haute ne marche pas sur cet appareil pour le moment – la voix de cette langue manque peut-être.",
     "record": "Parler",
     "record_again": "Redis-le",

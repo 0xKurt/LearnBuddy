@@ -43,11 +43,11 @@ function bars(text: string): string[] {
 const OWN_BAR: Record<string, { count: number; why: string }> = {
   'CheckBar.tsx': {
     count: 1,
-    why: 'options she taps, in voice mode: the spoken answer’s slot — #386 part 2 builds the voice row',
+    why: 'Gespräch: the conversation row (`VoiceRow`, #386) takes the bar’s place, as on /talk',
   },
   '[id].tsx': { count: 1, why: '"Weiter" once a question is closed — #388 step 6' },
   'SpeakPanel.tsx': { count: 1, why: 'pronunciation: the recorder — #388 step 6' },
-  'CardPass.tsx': { count: 2, why: 'flash cards: Umdrehen, Wusste ich / Noch nicht — #388 step 6' },
+  'CardPass.tsx': { count: 1, why: 'the end of a pass: "Zurück zu Buddy", not an answer (#384)' },
   'DrillRound.tsx': { count: 2, why: 'Kopfrechnen: its own digit pad and "Prüfen" — #388 step 6' },
   'RunResult.tsx': { count: 1, why: 'the end of a round: "Weiter", not an answer' },
 };
