@@ -384,6 +384,10 @@
       "millions"
     ]
   },
+  "parts": {
+    "step": "Partie {{part}} sur {{all}}",
+    "stem": "Énoncé"
+  },
   "essay": {
     "intro": "{{form}} – où en est ton texte",
     "met": "réussi",
