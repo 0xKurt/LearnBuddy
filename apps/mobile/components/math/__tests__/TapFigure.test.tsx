@@ -9,13 +9,16 @@
 // its tap layer are not drawn). That a tap lands on its place is `lib/math/__tests__/tapLayout`;
 // tapping in the real app is tests/web/tap-figures.spec.ts.
 
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 
 import type { Tappable } from '../../../../../packages/shared-math/src/tap.js';
-import { renderInApp } from '../../../testing/render.js';
+import { useFigureNames } from '../../../lib/math/useFigureNames.js';
+import { useMapShapes } from '../../../lib/math/useMapShapes.js';
+import { useSchematicShapes } from '../../../lib/math/useSchematicShapes.js';
+import { renderInApp, whenLoaded } from '../../../testing/render.js';
 import { TapFigure } from '../TapFigure.js';
 
 const noop = () => undefined;
@@ -69,14 +72,14 @@ describe('her place in words', () => {
   });
 
   // Issue #251: on a stumme Karte the name of the region she tapped would be the answer itself.
-  // Her place is known once the map's names are loaded with it (#440).
+  // Her place is known once the map's names are loaded with it (#440) — however long that takes
+  // (#481).
   it('on a map: that she chose a region; its name only for a screen reader', async () => {
     render(map, '');
     expect(screen.getByTestId('tap-words').textContent).toBe('Tippe auf das Gebiet in der Karte.');
     render(map, 'Bayern');
-    await waitFor(() =>
-      expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Gebiet gewählt'),
-    );
+    await whenLoaded(useFigureNames, useMapShapes);
+    expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Gebiet gewählt');
     const sliders = screen.getAllByRole('slider', { name: 'Deine Stelle in der Abbildung' });
     expect(sliders[1]?.getAttribute('aria-valuetext')).toBe('Gebiet: Bayern');
     expect(screen.getAllByTestId('tap-words')[1]?.textContent).not.toContain('Bayern');
@@ -89,9 +92,8 @@ describe('her place in words', () => {
       'Tippe auf das Teil in der Abbildung.',
     );
     render(cell, 'Zellkern');
-    await waitFor(() =>
-      expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Teil gewählt'),
-    );
+    await whenLoaded(useFigureNames, useSchematicShapes);
+    expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Teil gewählt');
     const sliders = screen.getAllByRole('slider', { name: 'Deine Stelle in der Abbildung' });
     expect(sliders[1]?.getAttribute('aria-valuetext')).toBe('Teil: Zellkern');
   });

@@ -4012,7 +4012,8 @@ mechanism above). Decided in #224: drawn by us, nothing licensed.
   carrying the number asked; a tap carries no numbers and asks none (numbers inset the drawing,
   below) and its key is a part a whole finger can hit (`regionTappable` with
   `TAP_TARGET.picture`). Anything else — what a part does, a part the drawing does not have — is
-  dropped.
+  dropped. A picture that does not parse costs its question instead of leaving "Wie heißt
+  Teil 3?" without its picture (`figureIsRejected`, #481 — as a map's, #479).
 - **Rule 0, grading:** a tapped part exactly (`tapVerdict`); a typed name by the library
   (`namedRuleVerdict` in `tapCheck.ts`, shared with the map): "nucleus", "Nukleus" and
   "Zellkern" are one part. A tapped part stands in the thread in her language
