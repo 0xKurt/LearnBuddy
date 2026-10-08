@@ -19,8 +19,12 @@ const useNamesModule = lazyModule(
 
 /**
  * The names once they are loaded, null before — and null for figures that need none: nothing is
- * loaded for them. One call for all figures on the screen (the options of a choice).
+ * loaded for them. One call for all figures on the screen (the options of a choice). `load` is
+ * the load it waits on (`lazyModule`).
  */
-export function useFigureNames(...figures: readonly Figure[]): FigureNames | null {
-  return useNamesModule(figures.some(needsFigureNames))?.FIGURE_NAMES ?? null;
-}
+export const useFigureNames = Object.assign(
+  function useFigureNames(...figures: readonly Figure[]): FigureNames | null {
+    return useNamesModule(figures.some(needsFigureNames))?.FIGURE_NAMES ?? null;
+  },
+  { load: useNamesModule.load },
+);
