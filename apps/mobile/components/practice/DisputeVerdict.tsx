@@ -8,7 +8,8 @@
 //
 // Darum steht die Kontrolle hier und nicht in einem Formular (Regel 16): ein Tipp am Urteil,
 // ein Satz, der sagt was passiert, ein Knopf. Kein Freitextfeld, keine Begründungspflicht,
-// keine Zahl (Regel 6).
+// keine Zahl (Regel 6). Der Tipp ist das kurze „Einspruch“ in der Ecke der Frage
+// (`QuestionCorner`, Issue #459); hier stehen die Regel, wann es ihn gibt, und die Rückfrage.
 //
 // Was der Zettel NICHT behauptet: dass jemand die Bewertung geprüft und ihr recht gegeben hat.
 // Er sagt, was der Server wirklich tut — die Frage zählt nicht mehr, sie kommt nicht wieder,
@@ -54,29 +55,6 @@ export function canDisputeVerdict(q: VerdictState): boolean {
     !q.testing &&
     q.origin !== 'homework' &&
     q.kind !== 'essay'
-  );
-}
-
-/** Der stille Knopf am Urteil. */
-export function DisputeVerdictButton({
-  disabled,
-  onPress,
-}: {
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  const { t } = useTranslation('practice');
-  return (
-    <Btn
-      size="sm"
-      variant="ghost"
-      pill
-      disabled={disabled}
-      onPress={onPress}
-      accessibilityHint={t('dispute.hint')}
-    >
-      {t('dispute.button')}
-    </Btn>
   );
 }
 

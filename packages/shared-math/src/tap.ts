@@ -1,6 +1,6 @@
 // Tapping inside a figure (issue #248, analysis #224 `HOTSPOT_FIG`): a place on a number line, a
 // point of a coordinate system, a column of a bar chart, the time on a clock face, a region of a
-// map (#251), a part of a labelled picture (#252). One mechanism for every figure that can be answered by a tap — labelled pictures
+// map (#251) or a crossing of its Gradnetz (#429), a part of a labelled picture (#252). One mechanism for every figure that can be answered by a tap — labelled pictures
 // (#252) add their figure here, not a second mechanism.
 //
 // What a figure offers to tap is a GRID: one or more axes, each a list of values in drawing
@@ -22,7 +22,8 @@
 // (packages/shared-types/src/contracts/figure.ts); the API passes the zod-inferred figures in, so
 // a drift between the two fails the typecheck.
 
-import { isMap, mapMarked, mapRegions, type MapFig } from './maps.js';
+import { gridParse, gridText, mapGrid } from './mapGrid.js';
+import { isGridMap, isMap, mapMarked, mapPickIndex, mapPlaces, type MapFig } from './maps.js';
 import { regionNamed, type RegionName } from './regions.js';
 import { schematic, type SchematicFig } from './schematics.js';
 import { parseClockAnswer, type Clock } from './primary.js';
@@ -57,12 +58,14 @@ export const TAP_FIGURES = [
 export type TapFigureType = (typeof TAP_FIGURES)[number];
 
 /**
- * The named places of a figure whose places have names — the regions of a map (#251), the parts of
+ * The named places of a figure whose places have names — the regions of a map (#251) or its
+ * capitals, rivers or mountain ranges (#429), the parts of
  * a labelled picture (#252) — or null for every other figure. Typed or tapped, an answer on such a
  * figure is a name of one of them (`regions.ts`).
  */
 export function namedPlaces(f: { type: string }): readonly RegionName[] | null {
-  if (isMap(f)) return mapRegions(f.v);
+  // A crossing of the Gradnetz (#429) has coordinates, not a name.
+  if (isMap(f)) return isGridMap(f) ? null : mapPlaces(f);
   if (f.type === 'schematic') return schematic((f as SchematicFig).d).parts;
   return null;
 }
@@ -83,8 +86,20 @@ export const TAP_MAX_UNITS = 12;
 /** A clock is set in five-minute steps: the twelve marks with numbers on the face. */
 export const TAP_MINUTE_STEP = 5;
 
-/** What an axis stands for: the app names it ("x: 2", "Stunde: 7") and draws it accordingly. */
-export type TapAxisName = 'value' | 'x' | 'y' | 'bar' | 'hour' | 'minute' | 'region';
+/**
+ * What an axis stands for: the app names it ("x: 2", "Stunde: 7") and draws it accordingly — the
+ * Gradnetz (#429) by its meridians (`lon`) and parallels (`lat`), like a coordinate system.
+ */
+export type TapAxisName =
+  | 'value'
+  | 'x'
+  | 'y'
+  | 'bar'
+  | 'hour'
+  | 'minute'
+  | 'region'
+  | 'lon'
+  | 'lat';
 export type TapAxis = { name: TapAxisName; values: readonly number[] };
 /** One index per axis of the grid, in the order of `tapAxes`. */
 export type TapPick = readonly number[];
@@ -151,8 +166,18 @@ export function tapAxes(f: Tappable): TapAxis[] | null {
       ];
     }
     case 'map':
-    case 'schematic':
+    case 'schematic': {
+      if (isMap(f) && isGridMap(f)) {
+        const grid = mapGrid(f.v);
+        return grid
+          ? [
+              { name: 'lon', values: grid.lon },
+              { name: 'lat', values: grid.lat },
+            ]
+          : null;
+      }
       return [{ name: 'region', values: (namedPlaces(f) ?? []).map((_, i) => i) }];
+    }
   }
 }
 
@@ -163,8 +188,8 @@ function written(n: number): string {
 
 /**
  * The answer a pick stands for, written as a key is ("2.5", "(2|-1)", "Mai", "7:45", "Bayern" —
- * a region by its German name, as the data writes it); null when
- * the pick is not one of the grid's.
+ * a region by its German name, as the data writes it; "50° N, 10° O" — a crossing as German
+ * writes it, `mapGrid.ts`); null when the pick is not one of the grid's.
  */
 export function tapText(f: Tappable, pick: TapPick): string | null {
   const axes = tapAxes(f);
@@ -183,7 +208,9 @@ export function tapText(f: Tappable, pick: TapPick): string | null {
       return `${a}:${String(b).padStart(2, '0')}`;
     case 'map':
     case 'schematic':
-      return namedPlaces(f)?.[a]?.de ?? null;
+      return isMap(f) && isGridMap(f)
+        ? gridText({ lon: a, lat: b }, 'de')
+        : (namedPlaces(f)?.[a]?.de ?? null);
   }
 }
 
@@ -250,6 +277,13 @@ export function tapPick(f: Tappable, text: string): TapPick | null {
     }
     case 'map':
     case 'schematic': {
+      if (isMap(f) && isGridMap(f)) {
+        // As code writes it: the app's tap, the stored key (`mapGrid.ts`).
+        const p = gridParse(text, 'de');
+        const i = p === null ? null : indexOf(first.values, p.lon);
+        const j = p === null || !second ? null : indexOf(second.values, p.lat);
+        return i === null || j === null ? null : [i, j];
+      }
       const i = regionNamed(namedPlaces(f) ?? [], text);
       return i === null ? null : [i];
     }
@@ -279,7 +313,7 @@ export function tapProblem(f: { type: string }, kind: string, answer: string): s
       : f.type === 'function_plot'
         ? f.points.some((p) => tapPick(f, `(${p.x}|${p.y})`)?.join() === pick.join())
         : isMap(f)
-          ? mapMarked(f).includes(pick[0] ?? -1)
+          ? mapMarked(f).includes(mapPickIndex(f, pick))
           : false;
   return shown ? 'the figure already marks the key' : null;
 }

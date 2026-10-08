@@ -14,7 +14,7 @@ import { describeMap, MapBody, mapDrawHeight, type MapFigure } from '../MapFigur
 const t = (key: string, values: Record<string, string | number> = {}) =>
   `${key}${Object.keys(values).length ? ` ${JSON.stringify(values)}` : ''}`;
 
-const de: MapFigure = { type: 'map', v: 'de', hl: ['BY'] };
+const de: MapFigure = { type: 'map', v: 'de', hl: ['BY'], l: 'regions' as const };
 
 describe('MapBody', () => {
   it('keeps its height while loading, then draws all 16 Länder, the marked one filled', async () => {
@@ -30,9 +30,33 @@ describe('MapBody', () => {
   });
 
   it('draws a continent as one outline: its coast under the land, no border on top', async () => {
-    const world: MapFigure = { type: 'map', v: 'world', hl: [] };
+    const world: MapFigure = { type: 'map', v: 'world', hl: [], l: 'regions' as const };
     const { container } = renderInApp(<MapBody figure={world} width={300} />);
     await waitFor(() => expect(container.querySelectorAll('path').length).toBe(21));
+  });
+});
+
+describe('MapBody with a layer of places (#429)', () => {
+  it('draws the capitals as dots on the land, the marked one larger', async () => {
+    const f: MapFigure = { ...de, l: 'cities', hl: ['München'] };
+    const { container } = renderInApp(<MapBody figure={f} width={300} />);
+    await waitFor(() => expect(container.querySelectorAll('circle').length).toBeGreaterThan(10));
+    const r = Array.from(container.querySelectorAll('circle')).map((c) => c.getAttribute('r'));
+    expect(r.filter((v) => v === '5.5')).toHaveLength(1);
+  });
+});
+
+describe('MapBody with its Gradnetz (#429)', () => {
+  it('draws the meridians and parallels, their degrees at the edge, the marked crossing as a dot', async () => {
+    const f: MapFigure = { type: 'map', v: 'world', hl: ['30° S, 60° W'], l: 'grid' };
+    const { container } = renderInApp(<MapBody figure={f} width={320} />);
+    await waitFor(() => expect(container.querySelectorAll('circle')).toHaveLength(1));
+    expect(container.querySelector('circle')?.getAttribute('r')).toBe('5.5');
+    // Each label twice: its paper halo, then the text.
+    const labels = Array.from(container.querySelectorAll('text')).map((n) => n.textContent);
+    expect(labels).toContain('0°');
+    expect(labels).toContain('30° S');
+    expect(labels).toContain('90° W');
   });
 });
 
@@ -42,8 +66,20 @@ describe('describeMap', () => {
       'figure.map_de {"count":16} figure.map_marked {"names":"Bayern"}',
     );
     expect(describeMap({ ...de, hl: ['Bavaria'] }, t)).toContain('"names":"Bayern"');
-    expect(describeMap({ type: 'map', v: 'europe', hl: [] }, t)).toBe(
+    expect(describeMap({ type: 'map', v: 'europe', hl: [], l: 'regions' as const }, t)).toBe(
       'figure.map_europe {"count":40}',
+    );
+  });
+
+  it('says which layer of places the map shows (#429) and names the marked one', () => {
+    expect(describeMap({ ...de, l: 'rivers', hl: ['Rhine'] }, t)).toBe(
+      'figure.map_de {"count":16} figure.map_rivers figure.map_marked {"names":"Rhein"}',
+    );
+  });
+
+  it('says how far apart the lines of the Gradnetz are, and where the marked crossing is (#429)', () => {
+    expect(describeMap({ type: 'map', v: 'world', hl: ['30° S, 60° W'], l: 'grid' }, t)).toBe(
+      'figure.map_world {"count":7} figure.map_grid {"step":30} figure.map_marked {"names":"30° S, 60° W"}',
     );
   });
 });

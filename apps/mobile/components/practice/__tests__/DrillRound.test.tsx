@@ -43,6 +43,7 @@ const task = (
     tap: false,
     task_view: null,
     listen: null,
+    tones: null,
     passage: null,
     task_part: null,
     subject_kind: null,

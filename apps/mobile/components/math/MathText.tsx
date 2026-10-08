@@ -3,7 +3,8 @@
 // stacked fractions with a rule, raised exponents, lowered indices, a drawn
 // root sign with its bar. Text without math stays one ordinary <Text>.
 // Screen readers get the whole text in words ("3 durch 4"), never the LaTeX.
-// Parsing: lib/math/parse.ts; spoken form: lib/math/speak.ts.
+// Parsing: lib/math/parse.ts; line breaking: lib/math/lineBreak.ts (a number and its unit
+// never part, lib/math/quantity.ts); spoken form: lib/math/speak.ts.
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,8 +18,9 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { breakGroups } from '../../lib/math/lineBreak.js';
 import type { MathAtom } from '../../lib/math/parse.js';
-import { parsePrompt, promptForSpeech, type PromptRun } from '../../lib/math/prompt.js';
+import { parsePrompt, promptForSpeech } from '../../lib/math/prompt.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { useSpokenMath } from './useSpokenMath.js';
@@ -52,7 +54,6 @@ type Metrics = {
   family: string | undefined;
 };
 
-const THIN = ' ';
 /** An empty gap is as wide as a short word, and grows with the text size. */
 const EMPTY_GAP = '\u00A0'.repeat(7);
 const BOLD: TextStyle = { fontWeight: '700' };
@@ -120,7 +121,7 @@ export function MathText({
   };
   const mBold: Metrics = { ...m, weight: '700' };
   const lineHeight = flat.lineHeight ?? Math.round(m.size * 1.4);
-  const units = buildUnits(runs);
+  const groups = breakGroups(runs);
 
   return (
     <FilledBlank.Provider value={withBlanks ? filled : null}>
@@ -136,7 +137,7 @@ export function MathText({
             : { accessible: false })}
           style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', flexShrink: 1 }}
         >
-          {units.map((unit, i) => (
+          {groups.map((group, i) => (
             <View
               key={i}
               style={{
@@ -146,7 +147,7 @@ export function MathText({
                 minHeight: lineHeight,
               }}
             >
-              {unit.map((piece, j) => {
+              {group.map((piece, j) => {
                 switch (piece.kind) {
                   case 'plain':
                     return (
@@ -211,79 +212,6 @@ function Gap({
       </Text>
     </View>
   );
-}
-
-// ─────────────── line breaking ───────────────
-
-type Piece =
-  | { kind: 'plain'; text: string; bold: boolean; italic?: boolean }
-  | { kind: 'atom'; atom: MathAtom; bold: boolean }
-  | { kind: 'blank'; bold: boolean };
-
-/**
- * Groups the text into pieces that never break inside (a word, a term like
- * "x²", a gap with the punctuation after it); the line may break between
- * groups: at spaces in the text and after + − = … inside math.
- */
-function buildUnits(runs: PromptRun[]): Piece[][] {
-  const units: Piece[][] = [];
-  let cur: Piece[] = [];
-  const close = () => {
-    if (cur.length > 0) units.push(cur);
-    cur = [];
-  };
-  for (const run of runs) {
-    if (run.type === 'blank') {
-      cur.push({ kind: 'blank', bold: run.bold });
-      continue;
-    }
-    if (run.type === 'plain') {
-      for (const part of run.text.split(/(\s+)/)) {
-        if (part.length === 0) continue;
-        if (/^\s+$/.test(part)) {
-          appendPlain(cur, ' ', run.bold, run.italic === true);
-          close();
-        } else appendPlain(cur, part, run.bold, run.italic === true);
-      }
-      continue;
-    }
-    for (const atom of run.atoms) {
-      if (atom.type !== 'chars') {
-        cur.push({ kind: 'atom', atom, bold: run.bold });
-        if (atom.type === 'symbol' && atom.char.endsWith(THIN)) close();
-        continue;
-      }
-      // Break after a spaced operator: "x² − 4x + 3" → "x² − " | "4x + " | "3".
-      for (const p of splitAfterOperators(atom.text)) {
-        cur.push({ kind: 'atom', atom: { type: 'chars', text: p }, bold: run.bold });
-        if (p.endsWith(THIN)) close();
-      }
-    }
-  }
-  close();
-  return units;
-}
-
-/** "x − 4x + 3" (operators padded with thin spaces) → ["x − ", "4x + ", "3"]. */
-function splitAfterOperators(text: string): string[] {
-  const out: string[] = [];
-  let start = 0;
-  for (let i = 1; i < text.length; i++) {
-    // A thin space that closes an operator ("␣−␣"): the one after a non-space.
-    if (text[i] === THIN && text[i - 1] !== THIN && i >= 2 && text[i - 2] === THIN) {
-      out.push(text.slice(start, i + 1));
-      start = i + 1;
-    }
-  }
-  if (start < text.length) out.push(text.slice(start));
-  return out;
-}
-
-function appendPlain(cur: Piece[], text: string, bold: boolean, italic: boolean): void {
-  const last = cur[cur.length - 1];
-  if (last?.kind === 'plain' && last.bold === bold && (last.italic ?? false) === italic) {
-    cur[cur.length - 1] = { kind: 'plain', text: last.text + text, bold, italic };
-  } else cur.push({ kind: 'plain', text, bold, italic });
 }
 
 // ─────────────── drawing ───────────────

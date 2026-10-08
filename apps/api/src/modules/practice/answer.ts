@@ -33,12 +33,12 @@ import {
   typoShapeFor,
 } from './evaluate.js';
 import {
-  checkStaffLine,
+  checkStaffAnswer,
   staffAgain,
-  staffLineReply,
+  staffAnswerReply,
+  staffSurfaceOf,
   staffTaskOf,
-  writtenStaffLine,
-  type StaffCheck,
+  type StaffAnswerCheck,
 } from './staff.js';
 import { takeParts } from './partsAnswer.js';
 import { columnStepOf } from './columnCalc.js';
@@ -46,6 +46,7 @@ import { givesHints, learnsFsrs } from './modeRules.js';
 import { asTestTurn, ladderDone, REVEAL_AFTER_MISSES, workedReply } from './ladder.js';
 import { lockActiveSession } from './sessionRow.js';
 import { followWithSimilar } from './similar.js';
+import { guidedStep, guidedTurn, stepOnRequest } from './workedSteps.js';
 import { settleTestClock, timeUpError } from './testClock.js';
 import {
   answerTextOf,
@@ -203,23 +204,26 @@ export async function answerItem(
     learnerId: learner.id,
   });
 
-  // ── eine NOTENZEILE, die sie selbst geschrieben hat (issue #226) ──
+  // ── eine NOTENZEILE, die sie selbst geschrieben hat (issue #226), oder ihre SCHLÄGE zu einem
+  //    gehörten Rhythmus (issue #445) ──
   //
   // Dieselbe Trennung wie oben, eine Stufe einfacher: die Zeile reist als eine kompakte
-  // Maschinenform in `text` (`renderStaffLine`), weil die App nichts Deutsches zusammenbauen
-  // soll und der Server nichts raten soll. `checkStaffLine` liest sie zurück und vergleicht
-  // Tonnamen, Dauern und Taktfüllung — kein Modell, in keinem Zweig.
+  // Maschinenform in `text` (`renderStaffLine`), die Schläge als ihre Abstände (`renderTaps`),
+  // weil die App nichts Deutsches zusammenbauen soll und der Server nichts raten soll.
+  // `checkStaffAnswer` liest sie zurück und vergleicht Tonnamen, Dauern und Taktfüllung bzw. die
+  // Abstände in ihrem Tempo (`rhythm.ts`) — kein Modell, in keinem Zweig.
   //
   // Null heißt „hier ist nichts zu vergleichen": jede andere Notenaufgabe (die wird angetippt),
-  // und eine Antwort, die überhaupt keine Notenzeile ist. Dann läuft alles wie immer — gegen den
-  // Schlüssel in Worten, der in `items.answer` steht. Sie für falsch zu erklären wäre ein Urteil
-  // über Noten, von denen keine da waren (Regel 5).
+  // und eine Antwort, die überhaupt keine Zeile oder keine Schläge ist. Dann läuft alles wie
+  // immer — gegen den Schlüssel in Worten, der in `items.answer` steht. Sie für falsch zu erklären
+  // wäre ein Urteil über Noten, von denen keine da waren (Regel 5).
   const staffTask = staffTaskOf(item.staff_task);
-  const staffCheck: StaffCheck | null =
-    hintRequest || staffTask === null ? null : checkStaffLine(staffTask, input.text ?? '');
-  /** Ihre Zeile in Worten, damit der Gesprächsfaden lesbar bleibt (wie `answerTextOf`). */
-  const staffWritten =
-    staffCheck !== null ? writtenStaffLine(learner.locale, input.text ?? '') : null;
+  const staffCheck: StaffAnswerCheck | null =
+    hintRequest || staffTask === null
+      ? null
+      : checkStaffAnswer(learner.locale, staffTask, input.text ?? '');
+  /** Ihre Zeile in Worten bzw. wie oft sie geklopft hat, damit der Gesprächsfaden lesbar bleibt. */
+  const staffWritten = staffCheck?.written ?? null;
   // A region of a map or a part of a picture she tapped (issues #251, #252): the app sends the
   // German name; in the thread it stands in her language, like every answer written here.
   const regionWritten =
@@ -290,7 +294,7 @@ export async function answerItem(
             // A question code computed asks for an amount, so any form of it is right (#162);
             // a question she HEARD is judged on what she understood, not how she wrote it (#210).
             { ...item, form_free: barTask !== null, listening },
-            { text: input.text ?? null, choice: input.choice ?? null },
+            { text: input.text ?? null, choice: input.choice ?? null, locale: learner.locale },
           );
   // A Diktat is decided by its own exact check (issue #242), never by the key comparison above.
   const byRules: RuleVerdict =
@@ -303,12 +307,18 @@ export async function answerItem(
       : byRules;
   // A part of a task in parts that goes on correctly from her WRONG earlier result is right
   // (Folgefehler, issue #297): code recomputes it with her numbers (`taskParts.ts`).
-  const part = hintRequest || byKey === 'correct' ? null : taskPartOf(item.task_part);
+  const taskPart = taskPartOf(item.task_part);
+  const part = hintRequest || byKey === 'correct' ? null : taskPart;
   const followed = part
     ? followsOn(part, item, text, await earlierAnswers(deps.db, sessionId, part))
     : null;
   const rule: RuleVerdict = followed ? 'correct' : byKey;
   const nextHint = givesHints(session.mode) ? (item.hints[item.prepared_hints_used] ?? null) : null;
+  // Mitmachen (#298, `workedSteps.ts`): her line once a step of a proven way was shown.
+  const guided =
+    hintRequest || !givesHints(session.mode)
+      ? null
+      : guidedStep({ ...item, form_free: barTask !== null }, item.prepared_hints_used, text);
   // Two options and one was wrong: tapping the other one is no knowledge. A wrong choice that
   // leaves a single untried option closes the question with the solution explained — shown,
   // never right (user feedback #9).
@@ -350,6 +360,8 @@ export async function answerItem(
     offersLater?: boolean;
     /** The division step the reply names, for the app to open (#420). */
     columnStep?: number | null;
+    /** Her own step in a guided example (#298): where „Tipp" goes on from. Never help asked for. */
+    ownStep?: number;
   };
   let judged: Judged;
   // Distress in the answer field, or the provider's safety filter (issue #389): the reply is
@@ -380,7 +392,8 @@ export async function answerItem(
       gaveHint: false,
       revealed: true,
     };
-  } else if (rule === 'correct') {
+  } else if (rule === 'correct' || guided?.kind === 'solved') {
+    // Right — or, in a guided example (#298), the way's last line with the key's value.
     judged = {
       verdict: 'correct',
       // A cloze gap the model judged (issue #232) makes it the model's verdict, honestly.
@@ -391,15 +404,19 @@ export async function answerItem(
       gaveHint: false,
       revealed: false,
     };
+  } else if (guided !== null) {
+    // Her step in a guided example, judged by code (#298); a third miss still ends the ladder below.
+    judged = { ...guidedTurn(learner.locale, guided), evaluatedBy: 'rule', gaveHint: false };
   } else if (rule === 'parts_left' && staffCheck !== null) {
-    // Eine Notenzeile, von der ein Stück hält (issue #226) — dasselbe Urteil, eine Form weiter.
+    // Eine Notenzeile, von der ein Stück hält (issue #226), oder Schläge, von denen die ersten
+    // sitzen (issue #445) — dasselbe Urteil, eine Form weiter.
     // Die Frage bleibt offen, nichts wird zurückgesetzt, und sie bekommt EINE Stelle: wie viele
     // Zeichen von vorne stimmen, und ab dem zweiten Versuch auch, wo es aufhört („in Takt 2 ist
     // mehr, als in den Takt passt“). Das ist genau die Rückmeldung, die issue #226 verlangt.
     judged = {
       verdict: 'partially_correct',
       evaluatedBy: 'rule',
-      reply: staffLineReply(learner.locale, staffCheck, item.attempts),
+      reply: staffAnswerReply(learner.locale, staffCheck, item.attempts),
       gaveHint: false,
       revealed: false,
     };
@@ -470,9 +487,9 @@ export async function answerItem(
     givesHints(session.mode) &&
     rule === 'incorrect' &&
     staffTask !== null &&
-    // Eine Schreibaufgabe nur, wenn wirklich eine Zeile ankam: sonst hat `ruleCheck` sie gegen
-    // den Schlüssel in Worten geprüft, und dafür ist der Satz hier der falsche.
-    (staffTask.task !== 'write_line' || staffCheck !== null)
+    // Eine Aufgabe mit Fläche (Zeile, Schläge) nur, wenn wirklich etwas davon ankam: sonst hat
+    // `ruleCheck` sie gegen den Schlüssel in Worten geprüft, und dafür ist der Satz der falsche.
+    (staffSurfaceOf(staffTask) === null || staffCheck !== null)
   ) {
     // Eine falsche Notenantwort bekommt eine feste, freundliche Zeile von Code — bei jedem
     // Versuch, nicht nur beim ersten, und ohne Modellaufruf.
@@ -482,14 +499,14 @@ export async function answerItem(
     // abgelesen wird — und ein Modell, das über ein Bild schreibt, das es nicht hat, erzeugt
     // genau die sicher klingende Falschaussage, die hier niemand erkennen könnte. Code weiß
     // dagegen, wo sie hinschauen muss, und sagt genau das (`staffAgain`); bei einer selbst
-    // geschriebenen Zeile sogar die Stelle (`staffLineReply`). Die dritte Fehlprobe erklärt
-    // die Lösung, wie überall — der Zweig darüber greift vorher.
+    // geschriebenen Zeile und bei Schlägen sogar die Stelle (`staffAnswerReply`). Die dritte
+    // Fehlprobe erklärt die Lösung, wie überall — der Zweig darüber greift vorher.
     judged = {
       verdict: 'incorrect',
       evaluatedBy: 'rule',
       reply:
         staffCheck !== null
-          ? staffLineReply(learner.locale, staffCheck, item.attempts)
+          ? staffAnswerReply(learner.locale, staffCheck, item.attempts)
           : staffAgain(learner.locale, staffTask),
       gaveHint: false,
       revealed: false,
@@ -578,12 +595,12 @@ export async function answerItem(
                 learnerAge: ageOn(learner.birth_date, now),
                 language: learner.locale,
                 // For a listening question the material IS the text she heard (issue #210):
-                // without it the tutor would judge an answer about a text it cannot read.
+                // without it the tutor would judge an answer about a text it cannot read. For a
+                // part of a task it is the situation above it (#297): an open part („Begründe …")
+                // is judged on it, and its question alone does not say what it is about.
                 material: listenTask
                   ? listenTask.text
-                  : item.extracted_text
-                    ? item.extracted_text.slice(0, MATERIAL_CHARS)
-                    : null,
+                  : (taskPart?.stem ?? item.extracted_text?.slice(0, MATERIAL_CHARS) ?? null),
                 preferences: preferences.map((p) => p.statement),
                 // What her Bundesland expects at this question's curriculum place — or, when
                 // no state rule applies, that none does and the judgement stays cautious
@@ -738,6 +755,8 @@ export async function answerItem(
                 gaveHint: d.gave_hint,
                 revealed: d.revealed_answer,
               };
+      // „Zeig mir wie" on a proven way (#298): the way's next step, exactly as „Tipp" shows it.
+      if (!d.concern) judged = stepOnRequest(item, d.intent, nextHint) ?? judged;
     } catch (err) {
       if (isAppError(err) && err.code !== 'budget_exhausted') throw err;
       // The safety filter held the answer back: the fixed help answer, as in the chat (#389).
@@ -854,6 +873,8 @@ export async function answerItem(
       !essay &&
       judged.verdict !== 'correct' &&
       judged.verdict !== null &&
+      // Her own step in a guided example asks for nothing (#298), however far the ladder is.
+      judged.ownStep === undefined &&
       (misses >= REVEAL_AFTER_MISSES || askedAfterLastHint)
     ) {
       judged = {
@@ -967,7 +988,9 @@ export async function answerItem(
           (judged.verdict !== null && judged.verdict !== 'not_an_attempt') || !!judged.essay;
         const attempts = si.attempts + (attempted ? 1 : 0);
         const hints = si.hints_used + (judged.gaveHint ? 1 : 0);
-        const prepared = si.prepared_hints_used + (judged.usedPrepared ? 1 : 0);
+        const moved = si.prepared_hints_used + (judged.usedPrepared ? 1 : 0);
+        // Past a step of the way she wrote herself (#298): the ladder never goes back.
+        const prepared = Math.max(moved, judged.ownStep ?? 0);
         let status: SessionItemRow['status'] = 'open';
         let firstTry: boolean | null = si.first_try_correct;
         if (judged.verdict === 'correct') {

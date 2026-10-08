@@ -18,7 +18,7 @@
 // Die Farbe ist nie das einzige Signal: unter dem Balken steht in Worten, wie viel gefärbt
 // ist, und diese Zeile ist auch, was ein Screenreader beim Tippen hört.
 
-import type { AnswerSurface } from '@learnbuddy/shared-types/contracts';
+import type { BarSurface } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
@@ -143,11 +143,11 @@ function Segments({
 
 type Props = {
   /**
-   * Nur die beiden Balken-Formen. Seit die Notenzeile dieselbe Fläche benutzt (issue #226) ist
-   * `AnswerSurface` eine Vereinigung aus drei, und diese Einschränkung ist der Unterschied
-   * zwischen „dieser Zeichner kennt alle seine Fälle" und „er überspringt stumm einen dritten".
+   * Nur die beiden Balken-Formen (`BarSurface`): `AnswerSurface` kennt auch die Notenzeile (issue
+   * #226) und das Klopffeld (issue #445), und diese Einschränkung ist der Unterschied zwischen
+   * „dieser Zeichner kennt alle seine Fälle" und „er überspringt stumm einen weiteren".
    */
-  surface: Exclude<AnswerSurface, { mode: 'notes' }>;
+  surface: BarSurface;
   /** Her answer so far, as a fraction (`shadedText`); a draft's `1/2` shades two of four. */
   value: string;
   disabled: boolean;

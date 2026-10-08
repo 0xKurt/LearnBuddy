@@ -10,11 +10,14 @@ import type { StaffWriteSurface } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { useDraft } from '../../lib/drafts.js';
 import { tapped } from '../../lib/perf.js';
 import { AnswerShell } from './AnswerShell.js';
 import {
   STAFF_ANSWER_MIN,
   StaffAnswer,
+  emptyStaffAnswer,
+  readStaffDraft,
   staffComplete,
   staffLineOf,
   type StaffAnswerState,
@@ -23,15 +26,21 @@ import { StaffKeys } from './StaffKeys.js';
 
 type Props = {
   surface: StaffWriteSurface;
-  answer: StaffAnswerState;
+  /** Where her half-written line is kept (`lib/drafts.ts`): one draft per question. */
+  draftKey: string;
   disabled: boolean;
-  onChange: (next: StaffAnswerState) => void;
   /** Her line, as it travels (`staffLineOf`). */
   onCheck: (line: string) => void;
 };
 
-export function StaffWriting({ surface, answer, disabled, onChange, onCheck }: Props) {
+export function StaffWriting({ surface, draftKey, disabled, onCheck }: Props) {
   const { t } = useTranslation('practice');
+  // Im Entwurf und nicht nur im Zustand (issue #275): ein Farbwechsel baut den Bildschirm neu auf,
+  // und ihre halbe Zeile war danach weg. Je Frage ein Entwurf, wie bei den Brettern: die nächste
+  // Frage beginnt mit einer leeren Zeile, und nichts Geschriebenes rutscht hinein.
+  const draft = useDraft(draftKey);
+  const answer = readStaffDraft(draft.text) ?? emptyStaffAnswer(surface.bars);
+  const onChange = (next: StaffAnswerState) => draft.setText(JSON.stringify(next));
   const parts = { surface, answer, disabled, onChange };
   return (
     <AnswerShell

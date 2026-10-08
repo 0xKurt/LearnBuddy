@@ -19,6 +19,27 @@ describe('the lines of a path', () => {
     expect(pathLines('$2x = 4$\n\n  x = 2  ')).toEqual(['2x = 4', 'x = 2']);
   });
 
+  it('drops the step note after a bar and the arrow in front, as a notebook has them (#444)', () => {
+    // Was `unknown` before: the note made every line unparseable, so the whole path went to the model.
+    const notebook = path('2x + 3 = 7 | −3', '⇔ 2x = 4 |:2', '⇔ x = 2');
+    expect(pathLines(notebook)).toEqual(['2x + 3 = 7', '2x = 4', 'x = 2']);
+    expect(checkPath(notebook)).toEqual({ kind: 'sound', lines: 3 });
+    expect(checkPath(path('2x + 3 = 7 | −3', '2x = 5 | :2', 'x = 2,5'))).toEqual({
+      kind: 'broke',
+      line: 1,
+      lines: 3,
+    });
+    expect(pathLines('-2x > 6 | :(-2)\n=> x < -3')).toEqual(['-2x > 6', 'x < -3']);
+  });
+
+  it('keeps the bars of an absolute value: only an opening bar after a relation is a note', () => {
+    expect(pathLines('y = |x| · 2')).toEqual(['y = |x| · 2']);
+    expect(pathLines('|x - 3| = 2')).toEqual(['|x - 3| = 2']);
+    expect(pathLines('x = |-3|')).toEqual(['x = |-3|']);
+    // A term has no step to note: the bar stays.
+    expect(pathLines('3x | :3')).toEqual(['3x | :3']);
+  });
+
   it('is not a path below two lines', () => {
     expect(checkPath('x = 2')).toEqual({ kind: 'unknown' });
     expect(lastLine('x = 2')).toBeNull();

@@ -10,7 +10,7 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { a11y, overflows, PHONES, settle, shot, SHOTS } from './fit';
+import { a11y, overflows, PHONES, setScheme, settle, shot, SHOTS } from './fit';
 
 const TASK = 'Erörtere: Sollte es an Schulen ein Handyverbot geben?';
 
@@ -54,12 +54,15 @@ async function onboardChild(page: Page): Promise<void> {
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
-/** One stop of the walk, in daylight and at night, at 390×844 and 360×740 (`shot`). */
+/**
+ * One stop of the walk, in daylight and at night, at 390×844 and 360×740 (`shot`). Back in
+ * daylight once the switch has landed (`setScheme`): she writes on right after it (#443).
+ */
 async function both(page: Page, name: string): Promise<void> {
   await shot(page, name);
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, `${name}-night`);
-  await page.emulateMedia({ colorScheme: 'light' });
+  await setScheme(page, 'light');
 }
 
 /**
@@ -100,7 +103,8 @@ async function look(page: Page, name: string): Promise<void> {
     await page.getByLabel('Deine Antwort').blur();
     expect(await a11y(page, tag), `${tag}: accessibility`).toEqual([]);
   }
-  await page.emulateMedia({ colorScheme: 'light' });
+  // She writes the next version right after this: the switch back lands first (#443).
+  await setScheme(page, 'light');
   await page.setViewportSize({ width: 390, height: 844 });
 }
 

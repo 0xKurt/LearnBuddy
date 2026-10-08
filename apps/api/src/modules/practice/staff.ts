@@ -1,6 +1,6 @@
 // Die Notenzeile: Frage, Zeichnung, Schlüssel und Urteil, alles von Code (issue #226).
 //
-// Das Modell wählt eine von fünf geprüften Aufgaben und ihre Parameter (`StaffTask`,
+// Das Modell wählt eine der geprüften Aufgaben und ihre Parameter (`StaffTask`,
 // `contracts/staff.ts`); alles, was eine Lernende sieht oder woran sie gemessen wird, steht
 // hier. Genau wie bei den Bruchbalken (`bars.ts`, issue #162), und aus demselben Grund: ein
 // Schlüssel, den jemand anders geschrieben hat als die Zeichnung, kann ihr falsch widersprechen,
@@ -32,6 +32,11 @@
 // Taktfüllung und nennt **eine** Stelle — nie die Liste aller Fehler, aus demselben Grund, aus
 // dem `chemistry.ts` bei mehreren unausgeglichenen Elementen genau eines nennt.
 //
+// Gehört wird seit issue #445: ein Intervall (`hear_interval`, angetippt wie ein gelesenes) und
+// ein Rhythmus, den sie nachklopft (`tap_rhythm`). Ihre Schläge misst Code (`rhythm.ts`): die
+// Abstände in ihrem eigenen Tempo, mit einer Toleranz, die zwei verschiedene Rhythmen nie
+// verwechselt — und auch dort nennt die Antwort genau eine Stelle.
+//
 // ─────────────── Was die Oktave hier NICHT entscheidet ───────────────
 //
 // Beim Schreiben vergleicht Code den Tonnamen und die Dauer, nicht die Oktave: die Frage, die
@@ -45,6 +50,7 @@ import {
   BARS_MAX,
   StaffTask,
   TEMPO_DEFAULT,
+  TICKS,
   TIME_SIGNATURES,
   barTicks,
   diatonicOf,
@@ -52,14 +58,18 @@ import {
   intervalBetween,
   onStaff,
   parseStaffLine,
+  parseTaps,
   staffStep,
   ticksOf,
   type Clef,
   type Figure,
+  type HeardTones,
   type Interval,
   type NoteName,
   type NoteValue,
   type Pitch,
+  type RhythmBars,
+  type RhythmTapSurface,
   type StaffBars,
   type StaffElement,
   type StaffFigure,
@@ -69,6 +79,7 @@ import {
 
 import { t, type MessageKey } from '../../i18n/index.js';
 import type { ItemDraft } from './items.js';
+import { checkTaps, onsetsOf, type TapsCheck } from './rhythm.js';
 
 /**
  * Wie viele Notenfragen in einem vorbereiteten Satz stehen dürfen: acht.
@@ -104,13 +115,23 @@ const TIME_READABLE: readonly TimeSignature[] = ['2/4', '3/4', '4/4', '3/8'];
 const WRITE_STEP_MAX = 5;
 
 /**
+ * Die wenigsten Töne eines Rhythmus zum Nachklopfen: vier, also drei Abstände. Aus weniger ließe
+ * sich ihr Tempo nicht verlässlich ablesen (`rhythm.ts`: der Median zweier Abstände ist ihr Mittel,
+ * und ein falscher verschöbe ihn).
+ */
+const RHYTHM_NOTES_MIN = 4;
+
+/** Der eine Ton, auf dem ein Rhythmus klingt: der Kammerton A, hell genug für jeden Lautsprecher. */
+const RHYTHM_PITCH: Pitch = { name: 'A', octave: 4 };
+
+/**
  * Was dem Generator über Notenzeilen gesagt wird. Es sagt, was das Modell WÄHLEN darf, und
  * genauso wichtig, was es nicht schreiben soll — es gibt kein Feld dafür, und dieser Satz ist
  * da, damit das Modell es nicht versucht (CLAUDE.md Regel 1). Kategorien und Verbote, nie ein
  * ausgeschriebenes Beispiel (die stehende Regel: ein Satz im Prompt kommt als Lesart ihres
  * eigenen Blattes zurück).
  */
-export const STAFF_RULES = `Note lines ("staffs"): a small music staff the learner reads, hears and writes on. You choose only the task and its musical parameters; the app writes the question, draws the staff, offers the options and computes the solution, so never write a question text, an answer, options or a figure for one, and never put a note line in "figure". Use them for note reading in the treble or bass clef, note and rest values, intervals within an octave, time signatures read off the note values, and writing a short line yourself — and only for a learner who has music as a subject. One voice only: no key signature at the start of the line (write an accidental on the note that needs it), no chords, no second part, and nothing that has to be recognised by ear. At most ${MAX_STAFF_ITEMS}, and an empty list wherever a staff would only be decoration. The ordinary questions in "items" are unaffected.`;
+export const STAFF_RULES = `Note lines ("staffs"): a small music staff the learner reads, hears and writes on. You choose only the task and its musical parameters; the app writes the question, draws the staff, offers the options and computes the solution, so never write a question text, an answer, options or a figure for one, and never put a note line in "figure". Use them for note reading in the treble or bass clef, note and rest values, intervals within an octave — read off the staff, or heard (the app plays the two notes, nothing is drawn) —, a short rhythm the learner hears and taps back (the app plays it on one tone, nothing is drawn), time signatures read off the note values, and writing a short line yourself — and only for a learner who has music as a subject. One voice only: no key signature at the start of the line (write an accidental on the note that needs it), no chords, no second part, and nothing else that has to be recognised by ear. At most ${MAX_STAFF_ITEMS}, and an empty list wherever a staff would only be decoration. The ordinary questions in "items" are unaffected.`;
 
 /** An item whose every field was computed from `staff_task`; `insertItems` stores both. */
 export type StaffItem = Omit<ItemDraft, 'figure'> & {
@@ -179,6 +200,13 @@ function elementWord(locale: string, el: StaffElement): string {
     : text(locale, 'element_note', { name: noteWord(locale, el.pitch.name), value });
 }
 
+/** A rhythm in words — its key, and what its solution says: "Viertelnote, Achtelpause, …". */
+function rhythmWords(locale: string, bars: RhythmBars): string {
+  return flat(bars)
+    .map((el) => valueWord(locale, el.value, el.dotted, el.el === 'rest'))
+    .join(', ');
+}
+
 /**
  * A whole line in words — what the question of a writing task names, and what the solution
  * shows afterwards. Bar lines are deliberately NOT named: where one bar ends follows from the
@@ -193,8 +221,11 @@ export function lineWords(locale: string, bars: StaffBars): string {
 
 // ─────────────── Aufgaben prüfen, bevor es eine Frage gibt ───────────────
 
+/** What a note line and a rhythm have in common: notes and rests with a value. */
+type Timed = { el: 'note' | 'rest'; value: NoteValue; dotted: boolean };
+
 /** Every element of every bar, in order. */
-function flat(bars: StaffBars): StaffElement[] {
+function flat<T extends Timed>(bars: readonly (readonly T[])[]): T[] {
   return bars.flat();
 }
 
@@ -207,12 +238,12 @@ function notesOf(bars: StaffBars): Pitch[] {
  * Eine punktierte ganze oder halbe Pause wird nicht gezeichnet und nicht benannt
  * (`dottedRestOk` sagt, warum). Eine Aufgabe, die eine verlangt, entsteht nicht.
  */
-function restsWritable(bars: StaffBars): boolean {
+function restsWritable(bars: readonly (readonly Timed[])[]): boolean {
   return flat(bars).every((el) => el.el !== 'rest' || !el.dotted || dottedRestOk(el.value));
 }
 
 /** Does every bar hold exactly as much as this time signature says? */
-function barsExactlyFull(bars: StaffBars, time: TimeSignature): boolean {
+function barsExactlyFull(bars: readonly (readonly Timed[])[], time: TimeSignature): boolean {
   const want = barTicks(time);
   return bars.every(
     (bar) => bar.reduce((sum, el) => sum + ticksOf(el.value, el.dotted), 0) === want,
@@ -239,6 +270,10 @@ export function usableStaffTask(task: StaffTask): StaffTask | null {
       // and two notes in the wrong order are no interval to read upwards.
       return intervalBetween(task.lower, task.upper) === null ? null : task;
     }
+    case 'hear_interval':
+      // What the app can play is what a staff of this app can draw (E2 to A5, `tone.ts`).
+      if (![task.lower, task.upper].every(audible)) return null;
+      return intervalBetween(task.lower, task.upper) === null ? null : task;
     case 'time_signature': {
       if (!TIME_READABLE.includes(task.time)) return null;
       if (!notesOf(task.bars).every((p) => onStaff(p, task.clef))) return null;
@@ -255,7 +290,51 @@ export function usableStaffTask(task: StaffTask): StaffTask | null {
       if (flat(task.bars).length < 2) return null;
       return barsExactlyFull(task.bars, task.time) ? task : null;
     }
+    case 'tap_rhythm': {
+      // A rhythm starts with a tone (a rest before it nobody hears), has tones enough for her tempo
+      // to be measured, and every tone starts on an eighth — otherwise the tolerance no longer
+      // keeps two rhythms apart (`rhythm.ts`).
+      const onsets = onsetsOf(task.bars);
+      if (flat(task.bars)[0]?.el !== 'note' || onsets.length < RHYTHM_NOTES_MIN) return null;
+      if (!onsets.every((at) => at % TICKS.eighth === 0)) return null;
+      if (!restsWritable(task.bars)) return null;
+      return barsExactlyFull(task.bars, task.time) ? task : null;
+    }
   }
+}
+
+/** A pitch the app plays: one that the treble or the bass staff of this app can draw. */
+function audible(pitch: Pitch): boolean {
+  return onStaff(pitch, 'treble') || onStaff(pitch, 'bass');
+}
+
+/**
+ * Was eine Hör-Aufgabe spielt (issue #445), oder null für jede andere: die zwei Töne eines
+ * Intervalls nacheinander, je eine halbe Note im Übungstempo — lang genug, um jeden für sich zu
+ * hören und ihn mitzusingen —, oder ein Rhythmus auf einem Ton, im Tempo, an dem `checkTaps` ihre
+ * Schläge misst. Aus derselben Aufgabe wie Frage und Schlüssel, also können Ton und Schlüssel nicht
+ * auseinander laufen.
+ */
+export function tonesOf(task: StaffTask): HeardTones | null {
+  if (task.task === 'tap_rhythm') return { bars: rhythmLine(task.bars), tempo: TEMPO_DEFAULT };
+  if (task.task !== 'hear_interval') return null;
+  const half = (pitch: Pitch): StaffElement => ({
+    el: 'note',
+    pitch,
+    value: 'half',
+    dotted: false,
+  });
+  return { bars: [[half(task.lower), half(task.upper)]], tempo: TEMPO_DEFAULT };
+}
+
+/** A rhythm as a line the app plays: every note on the one tone (`RHYTHM_PITCH`). */
+function rhythmLine(bars: RhythmBars): StaffBars {
+  return bars.map((bar) =>
+    bar.map(
+      ({ el, value, dotted }): StaffElement =>
+        el === 'note' ? { el, pitch: RHYTHM_PITCH, value, dotted } : { el, value, dotted },
+    ),
+  );
 }
 
 /** The task a stored row carries, or null (an unreadable column is no task, never a guess). */
@@ -266,11 +345,13 @@ export function staffTaskOf(stored: unknown): StaffTask | null {
 }
 
 /**
- * Die leere Notenzeile, auf die sie schreibt — oder null für jede andere Notenaufgabe (die
- * werden angetippt). Sie verrät nichts: Schlüssel, Taktart und Taktzahl stehen schon in der
- * Frage, die Töne dort in Worten.
+ * Die leere Notenzeile, auf die sie schreibt, oder das Feld, auf das sie einen gehörten Rhythmus
+ * klopft (issue #445) — oder null für jede andere Notenaufgabe (die werden angetippt). Beide
+ * verraten nichts: Schlüssel, Taktart und Taktzahl stehen schon in der Frage, die Töne dort in
+ * Worten, und das Klopffeld trägt gar nichts.
  */
-export function staffSurfaceOf(task: StaffTask): StaffWriteSurface | null {
+export function staffSurfaceOf(task: StaffTask): StaffWriteSurface | RhythmTapSurface | null {
+  if (task.task === 'tap_rhythm') return { mode: 'taps' };
   if (task.task !== 'write_line') return null;
   return {
     mode: 'notes',
@@ -319,8 +400,11 @@ const NAMED: Record<StaffTask['task'], boolean> = {
   name_note: false,
   name_value: false,
   interval: true,
+  // Nichts gezeichnet: was sie hört, ist die Frage.
+  hear_interval: false,
   time_signature: true,
   write_line: false,
+  tap_rhythm: false,
 };
 
 /** Die Tonnamen, die die Antwort dieser Aufgabe SIND — sie stehen nie sichtbar auf ihrer Zeile. */
@@ -408,6 +492,31 @@ function intervalNeighbours(interval: Interval): Interval[] {
         : 'major') as Interval['quality'],
     }));
   return [...other, ...around];
+}
+
+/**
+ * The options of an interval question — read or heard, the same four (issue #445): the right one
+ * and its neighbours, in the order of the steps — and what its worked solution says.
+ */
+function intervalOptions(locale: string, lower: Pitch, upper: Pitch) {
+  const interval = intervalBetween(lower, upper);
+  if (interval === null) return null;
+  const options = optionsAround(
+    interval,
+    intervalNeighbours(interval),
+    (a, b) => a.step === b.step && a.quality === b.quality,
+  );
+  if (options === null) return null;
+  const sorted = [...options].sort((a, b) => a.step - b.step || a.quality.localeCompare(b.quality));
+  const picked = multi(sorted, interval, (i) => intervalWord(locale, i));
+  if (picked === null) return null;
+  const worked = {
+    lower: noteWord(locale, lower.name),
+    upper: noteWord(locale, upper.name),
+    steps: diatonicOf(upper) - diatonicOf(lower) + 1,
+    answer: picked.answer,
+  };
+  return { interval, picked, worked };
 }
 
 // ─────────────── die Frage, die daraus wird ───────────────
@@ -532,41 +641,42 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
       };
     }
     case 'interval': {
-      const interval = intervalBetween(task.lower, task.upper);
-      if (interval === null) return null;
+      const named = intervalOptions(locale, task.lower, task.upper);
+      if (named === null) return null;
       const bars: StaffBars = [
         [
           { el: 'note', pitch: task.lower, value: 'quarter', dotted: false },
           { el: 'note', pitch: task.upper, value: 'quarter', dotted: false },
         ],
       ];
-      const options = optionsAround(
-        interval,
-        intervalNeighbours(interval),
-        (a, b) => a.step === b.step && a.quality === b.quality,
-      );
-      if (options === null) return null;
-      const sorted = [...options].sort(
-        (a, b) => a.step - b.step || a.quality.localeCompare(b.quality),
-      );
-      const picked = multi(sorted, interval, (i) => intervalWord(locale, i));
-      if (picked === null) return null;
       return {
         ...common,
         kind: 'multiple_choice',
         prompt: text(locale, 'interval_prompt'),
-        ...picked,
+        ...named.picked,
         topic: text(locale, 'topic_intervals'),
         // Telling a major from a minor third needs the semitones, not just the steps.
-        difficulty: interval.quality === 'perfect' ? 3 : 4,
+        difficulty: named.interval.quality === 'perfect' ? 3 : 4,
         figure: staffFigure(task, task.clef, null, bars),
         hints: [text(locale, 'hint_interval_count'), text(locale, 'hint_interval_quality')],
-        worked_solution: text(locale, 'worked_interval', {
-          lower: noteWord(locale, task.lower.name),
-          upper: noteWord(locale, task.upper.name),
-          steps: diatonicOf(task.upper) - diatonicOf(task.lower) + 1,
-          answer: picked.answer,
-        }),
+        worked_solution: text(locale, 'worked_interval', named.worked),
+      };
+    }
+    case 'hear_interval': {
+      // Dieselben Optionen wie beim gelesenen Intervall; gezeichnet wird nichts (`tonesOf`).
+      const named = intervalOptions(locale, task.lower, task.upper);
+      if (named === null) return null;
+      return {
+        ...common,
+        kind: 'multiple_choice',
+        prompt: text(locale, 'hear_prompt'),
+        ...named.picked,
+        topic: text(locale, 'topic_hearing'),
+        // By ear a step is harder than on paper: there is nothing to count off.
+        difficulty: named.interval.quality === 'perfect' ? 4 : 5,
+        figure: null,
+        hints: [text(locale, 'hint_hear_sing'), text(locale, 'hint_hear_quality')],
+        worked_solution: text(locale, 'worked_hear', named.worked),
       };
     }
     case 'time_signature': {
@@ -623,6 +733,26 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
         }),
       };
     }
+    case 'tap_rhythm': {
+      const rhythm = rhythmWords(locale, task.bars);
+      return {
+        ...common,
+        kind: 'short',
+        prompt: text(locale, 'rhythm_prompt'),
+        // The key in WORDS, as for a written line: "Lösung zeigen", the material list and a
+        // disputed verdict show something readable. What is compared are her taps (`checkTaps`).
+        answer: rhythm,
+        choices: null,
+        correct_choice: null,
+        topic: text(locale, 'topic_rhythm'),
+        // A rest or a dot is harder to tap back than even values.
+        difficulty: flat(task.bars).some((el) => el.el === 'rest' || el.dotted) ? 4 : 3,
+        // Nothing drawn: she HEARS the rhythm (`tonesOf`) and taps it on the pad (`staffSurfaceOf`).
+        figure: null,
+        hints: [text(locale, 'hint_rhythm_count'), text(locale, 'hint_rhythm_long')],
+        worked_solution: text(locale, 'worked_rhythm', { answer: rhythm }),
+      };
+    }
   }
 }
 
@@ -662,6 +792,36 @@ export type StaffCheck = {
   verdict: 'correct' | 'partly' | 'wrong';
   fault: StaffFault | null;
 };
+
+/**
+ * Ihre Antwort auf einer Notenfläche, von Code geprüft: eine Zeile, die sie geschrieben hat
+ * (`checkStaffLine`), oder die Schläge, mit denen sie einen gehörten Rhythmus nachgeklopft hat
+ * (`checkTaps`, issue #445) — dazu, was davon im Gesprächsfaden steht.
+ */
+export type StaffAnswerCheck = ((StaffCheck & { of: 'line' }) | (TapsCheck & { of: 'taps' })) & {
+  written: string;
+};
+
+/**
+ * Ihre Antwort auf der Fläche dieser Aufgabe, oder null — und null heißt wie bei
+ * `checkStaffLine` „hier ist nichts zu vergleichen": keine Aufgabe mit Fläche, oder eine Antwort,
+ * die keine Zeile bzw. keine Schläge ist.
+ */
+export function checkStaffAnswer(
+  locale: string,
+  task: StaffTask,
+  answer: string,
+): StaffAnswerCheck | null {
+  if (task.task === 'tap_rhythm') {
+    const taps = parseTaps(answer);
+    if (taps === null) return null;
+    const check = checkTaps(onsetsOf(task.bars), TEMPO_DEFAULT, taps);
+    return { of: 'taps', ...check, written: text(locale, 'tapped', { count: taps.length }) };
+  }
+  const check = checkStaffLine(task, answer);
+  if (check === null) return null;
+  return { of: 'line', ...check, written: writtenStaffLine(locale, answer) ?? answer };
+}
 
 /** Two elements are the same symbol: the same name, the same value, both note or both rest. */
 function sameElement(a: StaffElement, b: StaffElement): boolean {
@@ -787,6 +947,39 @@ export function staffLineReply(locale: string, check: StaffCheck, attempts: numb
   }
 }
 
+/** Die Rückmeldung auf eine Antwort auf der Fläche, die noch nicht stimmt — Zeile oder Schläge. */
+export function staffAnswerReply(
+  locale: string,
+  check: StaffAnswerCheck,
+  attempts: number,
+): string {
+  return check.of === 'taps'
+    ? tapsReply(locale, check, attempts)
+    : staffLineReply(locale, check, attempts);
+}
+
+/**
+ * Die Rückmeldung auf Schläge, die noch nicht sitzen (issue #445). Dieselbe Hinweisleiter wie bei
+ * einer Zeile: wie viel von vorne sitzt, und ab dem zweiten Versuch der Schlag, der es nicht tut.
+ * Zwei Dinge sagt sie sofort, weil sie keine Stelle verraten, sondern nur, was sie gehört hat: dass
+ * mehr oder weniger Töne kamen, und dass nur das Tempo noch nicht stimmt.
+ */
+function tapsReply(locale: string, check: TapsCheck, attempts: number): string {
+  const { fault } = check;
+  if (fault?.at === 'tempo') return text(locale, fault.slow ? 'taps_slow' : 'taps_fast');
+  const held =
+    check.held >= 2
+      ? text(locale, 'taps_held', { held: check.held })
+      : text(locale, 'taps_held_none');
+  if (fault?.at === 'taps') {
+    return `${held} ${text(locale, fault.given > fault.wanted ? 'taps_too_many' : 'taps_too_few')}`;
+  }
+  if (fault?.at === 'beat' && attempts > 0) {
+    return `${held} ${text(locale, fault.early ? 'taps_early' : 'taps_late', { index: fault.index })}`;
+  }
+  return held;
+}
+
 /**
  * Die feste, freundliche Zeile auf eine falsche Antwort bei einer ANGETIPPTEN Notenfrage. Sie
  * nennt, wo sie hinschauen kann, und sagt nichts, was die Lösung verrät.
@@ -803,9 +996,13 @@ export function staffAgain(locale: string, task: StaffTask): string {
       return text(locale, 'again_value');
     case 'interval':
       return text(locale, 'again_interval');
+    case 'hear_interval':
+      return text(locale, 'again_hear');
     case 'time_signature':
       return text(locale, 'again_time');
     case 'write_line':
       return text(locale, 'again_write');
+    case 'tap_rhythm':
+      return text(locale, 'again_rhythm');
   }
 }

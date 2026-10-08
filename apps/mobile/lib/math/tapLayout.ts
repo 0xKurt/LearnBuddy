@@ -11,9 +11,20 @@
 // A map (#251) and a labelled picture (#252) share one `case`: the region under the finger (`regionAt` in
 // shared-math `maps.ts`, a point-in-polygon test on the Natural Earth shapes), or the small one
 // whose label it is near. Its shapes are loaded with the first map (`useMapShapes`) and handed in.
-// Labelled pictures (#252) add their figure here too: one `case`, the same contract.
+// Labelled pictures (#252) add their figure here too: one `case`, the same contract. On a map's
+// Gradnetz (#429) the places are its crossings: the nearest one, marked with a dot like a point of
+// a coordinate system.
 
-import type { MapShapes } from '../../../../packages/shared-math/src/maps.js';
+import { gridAt, gridNearest } from '../../../../packages/shared-math/src/mapGrid.js';
+import {
+  isGridMap,
+  mapLayer,
+  mapPickIndex,
+  mapTapSet,
+  type MapFig,
+  type MapShapes,
+  type MapViewShape,
+} from '../../../../packages/shared-math/src/maps.js';
 import {
   schematicRegions,
   type SchematicShapes,
@@ -77,6 +88,34 @@ const clampIndex = (i: number, n: number) => Math.max(0, Math.min(n - 1, i));
 function markAt(dx: number, dy: number): number {
   const deg = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;
   return Math.round(deg / 30) % 12;
+}
+
+/** What a map is tapped on: its regions, or its layer of places (#429), each marked with its outline. */
+function mapView(map: MapViewShape | undefined, fig: MapFig) {
+  const places = map ? mapTapSet(map, fig) : null;
+  if (!map || !places) return undefined;
+  return { ...places, borders: mapLayer(fig) === 'regions' ? map.borders : true };
+}
+
+/** The crossings of a map's Gradnetz (#429): the nearest one to a finger, marked with a dot. */
+function gridLayout(
+  fig: MapFig,
+  axes: TapAxis[],
+  width: number,
+  shapes: TapShapes,
+): TapLayout | null {
+  const grid = shapes.maps?.[fig.v]?.grid;
+  if (!grid) return null;
+  const k = width / REGION_FRAME;
+  return {
+    axes,
+    pickAt: (x, y) => gridNearest(grid, x / k, y / k),
+    markOf: (pick) => {
+      const p = gridAt(fig.v, grid, mapPickIndex(fig, pick));
+      return p ? { kind: 'dot', x: p[0] * k, y: p[1] * k } : null;
+    },
+    guides: [],
+  };
 }
 
 /** The shapes of the figures that load them (`useMapShapes`, `useSchematicShapes`). */
@@ -162,11 +201,13 @@ export function tapLayout(
     }
     case 'map':
     case 'schematic': {
-      // A map's regions and a picture's parts come with their shapes (each loaded with the first
-      // of its kind); a picture's parts are drawn with their border.
+      if (fig.type === 'map' && isGridMap(fig)) return gridLayout(fig, axes, width, shapes);
+      // A map's regions or places (#429) and a picture's parts come with their shapes (each loaded
+      // with the first of its kind). A picture's parts and a map's places are marked with their
+      // outline — a river IS its line.
       const view =
         fig.type === 'map'
-          ? shapes.maps?.[fig.v]
+          ? mapView(shapes.maps?.[fig.v], fig)
           : shapes.pictures
             ? { ...schematicRegions(shapes.pictures, fig.d), borders: true }
             : undefined;

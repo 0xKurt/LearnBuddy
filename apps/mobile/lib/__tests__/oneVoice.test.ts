@@ -45,8 +45,25 @@ describe('Vorlesen: one switch, the same in the chat and in practice (#386)', ()
 
   it('stands in the chat’s head and in the practice head', () => {
     expect(holders(/<ReadAloudSwitch\b/)).toEqual([
-      'app/practice/[id].tsx',
       'components/buddy/Header.tsx',
+      // The right end of every practice header (#434).
+      'components/practice/HeadActions.tsx',
+    ]);
+  });
+
+  it('is in the head of every practice: a question, a Kopfrechnen round, a card pass (#434)', () => {
+    expect(holders(/<HeadActions\b/)).toEqual([
+      'app/practice/[id].tsx',
+      'components/practice/CardPass.tsx',
+      'components/practice/DrillRound.tsx',
+    ]);
+  });
+
+  it('reads again with a tap on the question itself, wherever one is read (#434)', () => {
+    expect(holders(/<ReadAgain\b/)).toEqual([
+      'components/practice/CardPass.tsx',
+      'components/practice/DrillRound.tsx',
+      'components/practice/Question.tsx',
     ]);
   });
 });
@@ -97,7 +114,11 @@ describe('what #386 removed stays removed', () => {
       expect(existsSync(join(ROOT, gone)), gone).toBe(false);
   });
 
-  it('reads the question again only from the conversation row, never from a pill', () => {
-    expect(holders(/voice\.read_again/)).toEqual(['components/practice/CheckBar.tsx']);
+  it('reads the question again from the conversation row or the question itself, never from a pill', () => {
+    expect(holders(/voice\.read_again/)).toEqual([
+      // A tap on the question while Vorlesen is on (#434): no control of its own.
+      'components/lb/ReadAgain.tsx',
+      'components/practice/CheckBar.tsx',
+    ]);
   });
 });

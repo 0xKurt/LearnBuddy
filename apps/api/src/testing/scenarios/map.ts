@@ -1,7 +1,9 @@
 // Scripted model answers for questions on a stumme Karte (issue #251): a Land to tap on the map of
-// Germany, a marked country to name on the map of Europe, a continent to tap on the world map.
-// Shared by the integration test (`__tests__/map-figures.int.test.ts`) and the browser walkthrough
-// (tests/web/tap-map.spec.ts). Every name here is a region of its map and passes the server's own
+// Germany, a marked country to name on the map of Europe, a country too small for the whole of
+// Europe that code zooms to (#429), a river to tap and a marked one to name, a capital to tap, a marked range to name, a
+// continent to tap on the world map; and on the Gradnetz (#429) a crossing to tap on Germany and on
+// Europe and the coordinates of a marked one on the world map to type. Shared by the integration test
+// (`__tests__/map-figures.int.test.ts`) and the browser walkthrough (tests/web/tap-figures.spec.ts). Every name here is a region of its map and passes the server's own
 // check (`modules/practice/mapCheck.ts`). Test tooling only; answers are keyed by the learner's
 // text, never guessed.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
@@ -39,6 +41,45 @@ export const MAP_ITEMS = [
     // Named as the model may write it: in English. Code resolves it, and stores the id.
     figure: { type: 'map', v: 'europe', hl: ['France'] },
   },
+  // Too small to tap on the whole of Europe: code shows the closer Ausschnitt (#429).
+  {
+    ...base,
+    prompt: 'Tippe auf Luxemburg.',
+    answer: 'Luxemburg',
+    topic: 'Länder Europas',
+    tap: true,
+    figure: { type: 'map', v: 'europe', hl: [] },
+  },
+  {
+    ...base,
+    prompt: 'Tippe auf den Rhein.',
+    answer: 'Rhein',
+    topic: 'Flüsse',
+    tap: true,
+    figure: { type: 'map', v: 'de', hl: [], l: 'rivers' },
+  },
+  {
+    ...base,
+    prompt: 'Wie heißt der markierte Fluss?',
+    answer: 'Elbe',
+    topic: 'Flüsse',
+    figure: { type: 'map', v: 'de', hl: ['Elbe'], l: 'rivers' },
+  },
+  {
+    ...base,
+    prompt: 'Tippe auf München.',
+    answer: 'München',
+    topic: 'Landeshauptstädte',
+    tap: true,
+    figure: { type: 'map', v: 'de', hl: [], l: 'cities' },
+  },
+  {
+    ...base,
+    prompt: 'Wie heißt das markierte Gebirge?',
+    answer: 'Harz',
+    topic: 'Gebirge',
+    figure: { type: 'map', v: 'de', hl: ['Harz'], l: 'mountains' },
+  },
   {
     ...base,
     prompt: 'Tippe auf Südamerika.',
@@ -48,6 +89,46 @@ export const MAP_ITEMS = [
     figure: { type: 'map', v: 'world', hl: [] },
   },
 ];
+
+/** The Gradnetz (#429): a crossing to tap, every degree on Germany, every ten on Europe… */
+export const GRID_ITEMS = [
+  {
+    ...base,
+    prompt: 'Tippe auf den Punkt 50° N, 10° O.',
+    answer: '50° N, 10° O',
+    topic: 'Gradnetz',
+    tap: true,
+    figure: { type: 'map', v: 'de', hl: [], l: 'grid' },
+  },
+  {
+    ...base,
+    prompt: 'Tippe auf den Punkt 60° N, 10° O.',
+    answer: '60°N 10°O',
+    topic: 'Gradnetz',
+    tap: true,
+    figure: { type: 'map', v: 'europe', hl: [], l: 'grid' },
+  },
+  // …and the coordinates of a marked one to type, on the world map.
+  {
+    ...base,
+    prompt: 'Welche Koordinaten hat der markierte Punkt?',
+    answer: '30° S, 60° W',
+    topic: 'Gradnetz',
+    figure: { type: 'map', v: 'world', hl: ['30° S, 60° W'], l: 'grid' },
+  },
+];
+
+/**
+ * The marked crossing as a French model writes it: "60° O" is WEST in French (ouest). Code reads
+ * it in her language and stores what reads one way everywhere (`mapGrid.ts`).
+ */
+export const FRENCH_GRID_ITEM = {
+  ...GRID_ITEMS[2]!,
+  prompt: 'Quelles sont les coordonnées du point marqué ?',
+  answer: '30° S, 60° O',
+  prompt_lang: 'fr',
+  figure: { type: 'map', v: 'world', hl: ['30° S, 60° O'], l: 'grid' },
+};
 
 /** Map questions that cannot be asked as written: none of them may reach the database. */
 export const BROKEN_MAP_ITEMS = [
@@ -64,15 +145,74 @@ export const BROKEN_MAP_ITEMS = [
     answer: 'Hessen',
     figure: { type: 'map', v: 'de', hl: ['Hessen'] },
   },
-  // A country too small for a finger on a phone: Luxembourg is named, never tapped.
+  // A country too small for a finger even on the closest Ausschnitt: Kosovo is named, never tapped.
   {
     ...MAP_ITEMS[0]!,
-    prompt: 'Tippe auf Luxemburg.',
-    answer: 'Luxemburg',
+    prompt: 'Tippe auf den Kosovo.',
+    answer: 'Kosovo',
     figure: { type: 'map', v: 'europe', hl: [] },
   },
-  // A key that is no region of the map.
-  { ...MAP_ITEMS[0]!, prompt: 'Tippe auf München.', answer: 'München' },
+  // A key that is no region of the map: a city on the layer of regions.
+  { ...MAP_ITEMS[0]!, prompt: 'Tippe auf Stuttgart.', answer: 'Stuttgart' },
+  // A capital too close to another for a finger: Potsdam beside Berlin.
+  {
+    ...MAP_ITEMS[0]!,
+    prompt: 'Tippe auf Potsdam.',
+    answer: 'Potsdam',
+    figure: { type: 'map', v: 'de', hl: [], l: 'cities' },
+  },
+  // A river the map does not have: the Volga does not flow through Germany.
+  {
+    ...MAP_ITEMS[0]!,
+    prompt: 'Tippe auf die Wolga.',
+    answer: 'Wolga',
+    figure: { type: 'map', v: 'de', hl: [], l: 'rivers' },
+  },
+  // A layer the map does not have: the world map shows continents only.
+  {
+    ...MAP_ITEMS[0]!,
+    prompt: 'Tippe auf den Nil.',
+    answer: 'Nil',
+    figure: { type: 'map', v: 'world', hl: [], l: 'rivers' },
+  },
+  // A point where no two lines of the Gradnetz cross: Europe's run every ten degrees.
+  {
+    ...GRID_ITEMS[1]!,
+    prompt: 'Tippe auf den Punkt 55° N, 10° O.',
+    answer: '55° N, 10° O',
+  },
+  // A crossing off the map: 40° N, 40° O lies beyond the frame of Europe.
+  {
+    ...GRID_ITEMS[1]!,
+    prompt: 'Tippe auf den Punkt 40° N, 40° O.',
+    answer: '40° N, 40° O',
+  },
+  // Too close for a finger: towards the poles the world's meridians close in.
+  {
+    ...GRID_ITEMS[0]!,
+    prompt: 'Tippe auf den Punkt 60° N, 90° O.',
+    answer: '60° N, 90° O',
+    figure: { type: 'map', v: 'world', hl: [], l: 'grid' },
+  },
+  // What lies at a point is no fact of the Gradnetz: the key is no crossing.
+  {
+    ...GRID_ITEMS[2]!,
+    prompt: 'Welcher Kontinent liegt am markierten Punkt?',
+    answer: 'Südamerika',
+  },
+  // The typed key is not the marked crossing.
+  {
+    ...GRID_ITEMS[2]!,
+    prompt: 'Welche Koordinaten hat der Punkt östlich davon?',
+    answer: '30° S, 30° W',
+  },
+  // A Gradnetz on a closer Ausschnitt, which has none.
+  {
+    ...GRID_ITEMS[1]!,
+    prompt: 'Tippe in Mitteleuropa auf den Punkt 50° N, 10° O.',
+    answer: '50° N, 10° O',
+    figure: { type: 'map', v: 'eu_central', hl: [], l: 'grid' },
+  },
   // The typed key is not the marked region.
   { ...MAP_ITEMS[1]!, prompt: 'Welches Land liegt westlich davon?', answer: 'Spanien' },
   // A fact the map data does not hold: a capital.
@@ -98,10 +238,25 @@ export function scriptMap(): void {
       items: MAP_ITEMS,
     }),
   });
+  scriptGenerations({
+    when: /Lage im Gradnetz/i,
+    answer: () => ({
+      usable: true,
+      title: 'Lage im Gradnetz',
+      subject: { name: 'Erdkunde', kind: 'geography' },
+      items: GRID_ITEMS,
+    }),
+  });
   scriptTurns({
     when: /lass uns karten üben/i,
     answer: says('Gern – heute zeigst du mir die Orte direkt auf der Karte.', [
       { tool: 'offer_learning', args: { kind: 'practice', text: 'Karten lesen' } },
+    ]),
+  });
+  scriptTurns({
+    when: /lass uns das gradnetz üben/i,
+    answer: says('Gern – heute findest du Punkte im Gradnetz.', [
+      { tool: 'offer_learning', args: { kind: 'practice', text: 'Lage im Gradnetz' } },
     ]),
   });
 }

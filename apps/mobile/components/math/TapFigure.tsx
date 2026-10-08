@@ -1,6 +1,7 @@
 // A figure she answers IN (issue #248): she taps — or drags to — a place on the number line, a
 // point of the coordinate system, a column of the bar chart, the hands of a clock face, a region
-// of a map (#251). One mechanism for every tappable figure, built for labelled pictures (#252) too:
+// of a map (#251) or a crossing of its Gradnetz (#429). One mechanism for every tappable figure,
+// built for labelled pictures (#252) too:
 //
 //   · the places are the figure's grid (`tapAxes`, @learnbuddy/shared-math `tap.ts`) — the grid
 //     the server checked the key lies on;
@@ -25,6 +26,13 @@ import { useTranslation } from 'react-i18next';
 import { Text, View, type AccessibilityActionEvent } from 'react-native';
 import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg';
 
+import {
+  isMap,
+  mapLayer,
+  mapPickIndex,
+  mapPlaceName,
+  type MapFig,
+} from '../../../../packages/shared-math/src/maps.js';
 import { regionName } from '../../../../packages/shared-math/src/regions.js';
 import { parseClockAnswer } from '../../../../packages/shared-math/src/primary.js';
 import {
@@ -66,6 +74,20 @@ function shownFigure(figure: Tappable & Figure, value: string): Figure {
   return figure.type === 'clock' && time ? { ...figure, c: [time] } : figure;
 }
 
+/** What a figure's places are called in the tap lines: its type, or a map's layer of places (#429). */
+function placeKind(figure: Tappable): string {
+  return isMap(figure) && mapLayer(figure) !== 'regions' ? mapLayer(figure) : figure.type;
+}
+
+/**
+ * The line a place of a map is named in: "Gebiet: Bayern", "Fluss: Rhein", "Punkt: 50° N, 10° O"
+ * (#429).
+ */
+function placeWord(figure: MapFig): string {
+  const layer = mapLayer(figure);
+  return layer === 'regions' ? 'region' : `place_${layer}`;
+}
+
 /**
  * Her place in words for a screen reader: "Stelle: 2,5", "Punkt (2 | −1)", "Säule: Apr", where
  * the hands stand, "Gebiet: Bayern" (in her language).
@@ -73,7 +95,7 @@ function shownFigure(figure: Tappable & Figure, value: string): Figure {
 function placeWords(figure: Tappable, pick: TapPick | null, t: T): string {
   const [i = 0, j = 0] = pick ?? [];
   const at = (axis: number, index: number) => tapAxes(figure)?.[axis]?.values[index] ?? 0;
-  if (!pick) return t(`tap.how_${figure.type}`);
+  if (!pick) return t(`tap.how_${placeKind(figure)}`);
   switch (figure.type) {
     case 'number_line':
       return t('tap.value', { value: formatNumber(at(0, i)) });
@@ -84,11 +106,12 @@ function placeWords(figure: Tappable, pick: TapPick | null, t: T): string {
     case 'clock':
       return t('figure.clock', { hands: describeClock({ h: at(0, i), m: at(1, j) }, t) });
     case 'map':
-    case 'schematic':
-      // A Land or a part, named in her language (`regions.ts`).
-      return t(`tap.${figure.type === 'map' ? 'region' : 'part'}`, {
-        name: regionName(namedPlaces(figure) ?? [], i, currentLocale()),
+      // A Land, a river or a crossing (#429), named in her language (`maps.ts`).
+      return t(`tap.${placeWord(figure)}`, {
+        name: mapPlaceName(figure, mapPickIndex(figure, pick), currentLocale()),
       });
+    case 'schematic':
+      return t('tap.part', { name: regionName(namedPlaces(figure) ?? [], i, currentLocale()) });
   }
 }
 
@@ -102,7 +125,7 @@ function shownWords(figure: Tappable, pick: TapPick | null, t: T, spoken: string
   if (!pick) return spoken;
   return figure.type === 'clock' || figure.type === 'bar_chart'
     ? spoken
-    : t(`tap.chosen_${figure.type}`);
+    : t(`tap.chosen_${placeKind(figure)}`);
 }
 
 /** The mark on her place: a ring with a dot, or a frame around the column. */
@@ -193,7 +216,8 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
     const to = clock ? (from[axis]! + by + n) % n : Math.max(0, Math.min(n - 1, from[axis]! + by));
     write(from.map((v, i) => (i === axis ? to : v)));
   };
-  const twoAxes = figure.type === 'function_plot';
+  // A coordinate system and a Gradnetz (#429): left and right, and up and down.
+  const twoAxes = sizes.length === 2 && !clock;
   const along = clock ? active : 0;
   const actions = [
     { name: 'increment' },

@@ -14,6 +14,8 @@ import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 
+import { PROGRESS_BAR_MIN } from '../../apps/mobile/lib/theme/space';
+
 export const SHOTS = join(__dirname, '../../test-results/web/shots');
 const REPORT = join(__dirname, '../../test-results/web/fit.jsonl');
 const A11Y = join(__dirname, '../../test-results/web/a11y.jsonl');
@@ -375,6 +377,45 @@ export async function cutControls(page: Page): Promise<string[]> {
 }
 
 /**
+ * The head of a practice screen (issue #459, rule 17): "Frage 2 von 5" stands on one line and
+ * whole, the bar beside it keeps its least width, and the quiet action at the row's end ("Passt
+ * nicht", "Einspruch") is whole inside the row. At 360 the full sentence "Bewertung stimmt nicht"
+ * once pushed the label onto two lines and the bar down to a 40 pt stub. Every row that counts — a
+ * question, a card, a drill — is the same `ProgressRow`. Returns what is wrong, with its numbers.
+ */
+export async function progressHead(page: Page): Promise<string[]> {
+  return page.evaluate((least) => {
+    const drawn = (el: Element) => el.getBoundingClientRect().width > 0;
+    const cut = (el: Element) => el.scrollWidth > el.clientWidth + 1;
+    const rows = Array.from(document.querySelectorAll('[data-testid="progress-row"]')).filter(
+      drawn,
+    );
+    return rows.flatMap((row) => {
+      const found: string[] = [];
+      const label = row.querySelector('[data-testid="progress-label"]');
+      if (label) {
+        const said = (label.textContent ?? '').trim();
+        const line = parseFloat(getComputedStyle(label).lineHeight);
+        const lines = Math.round(label.getBoundingClientRect().height / line);
+        if (lines > 1) found.push(`"${said}" on ${lines} lines`);
+        if (cut(label)) found.push(`"${said}" cut`);
+      }
+      const bar = row.querySelector('[data-testid="progress-bar"]');
+      const width = bar ? Math.round(bar.getBoundingClientRect().width) : null;
+      if (width !== null && width < least) found.push(`the bar ${width} pt (least ${least})`);
+      const end = row.getBoundingClientRect().right;
+      for (const action of Array.from(row.querySelectorAll('[role="button"]')).filter(drawn)) {
+        const name = action.getAttribute('aria-label') ?? (action.textContent ?? '').trim();
+        if (action.getBoundingClientRect().right > end + 0.5) found.push(`"${name}" past the row`);
+        if ([action, ...Array.from(action.querySelectorAll('*'))].some(cut))
+          found.push(`"${name}" cut`);
+      }
+      return found;
+    });
+  }, PROGRESS_BAR_MIN);
+}
+
+/**
  * The practice conversation shows whole things only (issues #286, #403, rule 17): a turn, the help
  * chips or a card under the question card is either whole below the card's edge and its fade, or
  * not drawn there at all — never its lower half under the fade, the edge of a reply or a sliver of
@@ -419,6 +460,35 @@ export async function halfTurns(page: Page): Promise<string[]> {
         )
     );
   });
+}
+
+/**
+ * Switches the phone's colour scheme and waits until the app has taken it (issue #443).
+ *
+ * A switch remounts the whole tree (ThemeProvider `key`, issues #84/#148), but not when
+ * `emulateMedia` returns: the palette is applied in an effect after the scheme change, and the
+ * remount follows that. Measured on the sum question of modes.spec (08.10., a loaded machine):
+ * in 14 of 20 switches the old tree was still there when the next command ran, and the remount
+ * came a median 102 ms (at most 164 ms) later. Playwright's `fill` focuses the field, then
+ * inserts the text; a remount in between sends the text to `<body>` — the field stays empty and
+ * "Prüfen" off. `emulateMedia` + `fill('16')` lost the "16" 3 times in 20, this helper 0 times.
+ * So it waits until an element of the old tree is gone (every `testID` lives under the theme),
+ * then until the page is still. A switch she types right after goes through here.
+ */
+export async function setScheme(page: Page, scheme: 'light' | 'dark'): Promise<void> {
+  const changes = await page.evaluate((want) => {
+    if (matchMedia(`(prefers-color-scheme: ${want})`).matches) return false;
+    const old = document.querySelector('[data-testid]');
+    old?.setAttribute('data-before-scheme', want);
+    return old !== null;
+  }, scheme);
+  await page.emulateMedia({ colorScheme: scheme });
+  if (changes)
+    await expect(
+      page.locator('[data-before-scheme]'),
+      `the app takes the ${scheme} scheme (its mode follows the phone)`,
+    ).toHaveCount(0);
+  await settle(page);
 }
 
 /**
@@ -479,6 +549,9 @@ export async function shot(
       .soft(await halfTurns(page), `${name} @${phone.width}: half shown in the conversation`)
       .toEqual([]);
     expect.soft(await cutControls(page), `${name} @${phone.width}: controls cut`).toEqual([]);
+    expect
+      .soft(await progressHead(page), `${name} @${phone.width}: the practice head (#459)`)
+      .toEqual([]);
     if (place) {
       // One rule for every form in the answer shell (issue #386): the answer at the bottom.
       expect(
@@ -522,11 +595,6 @@ export async function shot(
   return found;
 }
 
-/**
- * How tall the pinned bar under a question is (issue #16). What it takes, the question,
- * its figure and the conversation lose — on a small phone with the keyboard open that is
- * the difference between seeing the task and not.
- */
 /** How tall one tagged part of a screen is, recorded so slimming stays measured (#64). */
 export async function partHeight(page: Page, testId: string, name: string): Promise<number> {
   // Measured once the page stands still. A theme switch remounts the whole tree (ThemeProvider
@@ -548,6 +616,11 @@ export async function partHeight(page: Page, testId: string, name: string): Prom
   return height;
 }
 
+/**
+ * How tall the pinned bar under a question is (issue #16). What it takes, the question,
+ * its figure and the conversation lose — on a small phone with the keyboard open that is
+ * the difference between seeing the task and not.
+ */
 export async function bottomStack(page: Page, name: string): Promise<number> {
   const bar = page.getByTestId('bottom-bar');
   if (!(await bar.isVisible())) return 0;

@@ -48,7 +48,8 @@
   "choice_tried": "Already tried",
   "choice_zoom_hint": "Press and hold to see the picture large.",
   "dispute": {
-    "button": "This verdict is wrong",
+    "button": "Dispute",
+    "label": "Dispute the verdict",
     "confirm": "Take the verdict back",
     "done": "All right – that one does not count.",
     "hint": "Takes this question and its mark back.",
@@ -63,7 +64,8 @@
   "finishing": "One moment – your result is on its way.",
   "more_coming": "The next questions are on their way …",
   "flag": {
-    "button": "Question doesn't fit",
+    "button": "Doesn't fit",
+    "label": "Question doesn't fit",
     "hint": "Takes this question out; it won't come up again.",
     "sheet_title": "Question doesn't fit?",
     "sheet_body": "This question won't come up again.",
@@ -209,7 +211,12 @@
     "rest_of": "Place a {{value}}",
     "check_waits": "Only once every bar has something in it.",
     "keys_label": "Note line keys",
-    "values_label": "Note value"
+    "values_label": "Note value",
+    "taps_pad": "Tap here",
+    "taps_again": "Tap again",
+    "taps_waits": "First tap the rhythm you heard.",
+    "tapped_one": "Tapped {{count}} time",
+    "tapped_other": "Tapped {{count}} times"
   },
   "summary": {
     "title": "Done!",
@@ -402,5 +409,18 @@
     "text_one": "Your text · 1 word",
     "text_other": "Your text · {{count}} words",
     "thinking": "Buddy is reading your text …"
+  },
+  "work": {
+    "take": "Photo of your working",
+    "reading": "Reading your working …",
+    "read": "Copied from your photo. Does every line match your exercise book?",
+    "unread_one": "I couldn't read line {{lines}}. Write it in yourself.",
+    "unread_other": "I couldn't read lines {{lines}}. Write them in yourself.",
+    "unreadable": "I can't read your photo for sure. Take it again – bright and straight from above – or type your working.",
+    "no_working": "I can't find your working for this task on the photo. Photograph your own working – or type it.",
+    "too_long": "That's more than fits in one answer. Photograph only your working for this task.",
+    "down": "I can't read your photo right now. Type your working or try again in a moment.",
+    "camera_blocked": "LearnBuddy isn't allowed to use the camera yet. You can allow it in Settings – or type your working.",
+    "camera_failed": "The camera didn't open. Try again or type your working."
   }
 }
