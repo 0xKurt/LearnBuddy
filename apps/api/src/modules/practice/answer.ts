@@ -294,7 +294,7 @@ export async function answerItem(
             // A question code computed asks for an amount, so any form of it is right (#162);
             // a question she HEARD is judged on what she understood, not how she wrote it (#210).
             { ...item, form_free: barTask !== null, listening },
-            { text: input.text ?? null, choice: input.choice ?? null },
+            { text: input.text ?? null, choice: input.choice ?? null, locale: learner.locale },
           );
   // A Diktat is decided by its own exact check (issue #242), never by the key comparison above.
   const byRules: RuleVerdict =

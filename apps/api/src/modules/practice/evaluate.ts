@@ -42,7 +42,7 @@ import { type FormNote, judgeAlgebra, typedBack } from './form.js';
 import { checkNuclear, looksNuclear, type NuclearImbalance } from './nuclear.js';
 import { checkPath, lastValue, solvedValue } from './steps.js';
 import { sameAssignments, sameList, samePoint } from './systems.js';
-import { namedRuleVerdict, tapRuleVerdict } from './tapCheck.js';
+import { gridRuleVerdict, namedRuleVerdict, tapRuleVerdict } from './tapCheck.js';
 import {
   canonicalMath,
   canonicalText,
@@ -632,7 +632,8 @@ export function formNoteFor(
 
 export function ruleCheck(
   item: ItemForCheck,
-  answer: { text: string | null; choice: number | null },
+  /** `locale`: her language, where a written answer depends on it (the "O" of a coordinate, #429). */
+  answer: { text: string | null; choice: number | null; locale?: string | null },
 ): RuleVerdict {
   // A structured answer (issues #228–#230) is never one value against one key: `structured.ts`
   // compares every part and this function has nothing to say about it. Saying so here rather
@@ -662,6 +663,9 @@ export function ruleCheck(
   // five languages, or another place of the figure — exactly, by the figure's data.
   const named = namedRuleVerdict(item, written);
   if (named !== null) return named;
+  // The coordinates of a crossing of the Gradnetz (#429), read in her language — exactly.
+  const located = gridRuleVerdict(item, written, answer.locale ?? null);
+  if (located !== null) return located;
 
   // A written path, checked step by step (issue #209). Only where a calculation is plausible
   // (`pathPossible`, the one list the app's ↵ key and her photographed working use too, #444): a

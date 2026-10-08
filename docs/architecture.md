@@ -3794,23 +3794,46 @@ pictures (#252) add their figure to it rather than building a second one.
   not one place; tapping a cell of the periodic table (#250) or a month of a line or climate chart
   (#245) — each is one `case` on this mechanism.
 
-### Maps (issue #251)
+### Maps (issues #251, #429)
 
 A stumme Karte as a figure: Germany's 16 Länder, the countries of Europe or the seven continents,
 as an atlas prints them — no names on it. Buddy asks to name the marked region ("Wie heißt das
-markierte Bundesland?") or to tap one ("Tippe auf Bayern", the tap mechanism above).
+markierte Bundesland?") or to tap one ("Tippe auf Bayern", the tap mechanism above); on the
+Gradnetz (#429) to read the coordinates of a marked crossing or to tap one ("Tippe auf den Punkt
+50° N, 10° O").
 
 - **Contract** (`packages/shared-types/src/contracts/map.ts`, in `ModelFigure`): `{ type: 'map',
-v: 'de' | 'europe' | 'world', hl: string[] }` — which map, and the marked regions by name. Never
-  a coordinate, never a shape. Prompts: generate.v1.40 / extract.v8.20, together with #418 generate.v1.45 / extract.v8.23 (`FIGURE_RULES`).
+v: 'de' | 'europe' | 'world', hl: string[], l }` — which map, the marked places by name, and since
+  #429 the layer asked about: `regions` (default), or on `de` and `europe` `cities` (the capitals
+  of the Länder / of the countries), `rivers` or `mountains`, or on all three `grid` (the
+  Gradnetz: `hl` names crossings, "50° N, 10° O"). Never a shape, and never a coordinate as a
+  fact about the world — a crossing is where two drawn lines meet.
+  The closer views of Europe (`eu_central`, `eu_southeast`, `eu_north`) are in the enum because
+  they are stored — code picks them, the prompt never asks for one. Prompts: generate.v1.40 / extract.v8.20, together with #418 generate.v1.45 / extract.v8.23 (`FIGURE_RULES`).
 - **Data** (Natural Earth 5.1.2, public domain — decision in #224): `packages/shared-math/scripts/
 maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a school map's frame,
   the land around it as untappable context) and admin-0 1:110m (the continents; Russia split at
   the Ural, 60° E), projects (equirectangular at 51° N; Lambert azimuthal equal-area at 10° E
   52° N; the Natural Earth projection), simplifies (Douglas–Peucker) and writes two files:
-  `maps.data.ts` — every region's id and its names in the five languages plus other names
-  (8 KB, used by the server) — and `mapShapes.data.ts` — the outlines in a frame 1000 wide, each
-  labelled at its pole of inaccessibility (92 KB, used only by the app). The generated files are
+  `maps.data.ts` — every region's and place's id and its names in the five languages plus other
+  names (19 KB, eager in the app and on the server) — and `mapShapes.data.ts` — the outlines in a
+  frame 1000 wide, each labelled at its pole of inaccessibility, and the places of each layer
+  (214 KB, loaded with the first map). Places (#429): the capitals from Natural Earth's populated
+  places (`FEATURECLA` capital; on `de` the Admin-1 capitals inside Germany) as a ring of one
+  point; a curated list of the rivers taught at school from `rivers_lake_centerlines` and
+  `rivers_europe` (names written in the script where Natural Earth has none, like `CONTINENTS`),
+  each a line — a ring there and back with `line: true`, so it encloses nothing; mountain ranges
+  from `geography_regions_polys` as areas. Rivers and ranges are cut to the map's land when drawn.
+  The closer views of Europe share Europe's regions and places in the same order (a region
+  outside the frame keeps an empty ring list), so an index means the same place on every view of
+  Europe. The Gradnetz (#429) of `de` (every 1°), `europe` (every 10°) and `world` (every 30°; the
+  180th meridian is the map's own edge) comes from each view's own projection: every meridian and
+  parallel sampled, cut to the frame (Liang–Barsky), each with the end where its degree is written
+  (a meridian's at the bottom edge, else the top; a parallel's at the left, else the right, on the
+  world map at its western end), and where each crossing stands (null outside the frame). A line
+  no other crosses on the map (a corner of Europe's frame) is left out. The degrees of the lines
+  are eager (`MAP_GRIDS` in `maps.data.ts`, for the tap axes), the geometry lazy with the shapes. The eager names cost 5 KB gzip in the start bundle (budget raised in #429; all figure
+  names become lazy with #440). The generated files are
   in `.prettierignore` and checked byte for byte (`maps.mjs <dir> --check`); node ≥ 22.18 runs the
   script, which imports `regions.ts` itself.
 - **One geometry for named regions** (`packages/shared-math/src/regions.ts`, dependency-free,
@@ -3829,28 +3852,66 @@ maps.mjs` reads admin-1 1:10m (the Länder), admin-0 1:50m (Europe, cut to a sch
   label when the map is drawn in 320 × 330 pt (`regionTappable` with `TAP_TARGET.map`,
   `REGION_TAP_BOX`; WCAG 2.2, 2.5.8 — a picture asks a whole finger, §Labelled pictures). That room is real: the figure she answers in is capped at 45 % of what she sees
   (`boardCap`, lib/practice/visuals.ts — 333 pt on 360 × 740), so Germany, taller than
-  wide, is drawn 244 pt wide there. Every Land and every continent is tappable; on the
-  map of Europe only the larger countries are (Luxembourg, Belgium, the Balkans are named, not
-  tapped). A capital, a river, a neighbour as the key: dropped, the data does not hold them.
-- **Rule 0, grading:** a tapped region exactly (`tapVerdict`, as every tap); a typed name of the
-  marked region by the data (`mapRuleVerdict`): "Bavaria" and "Bayern" are one region, another
-  region of the map is wrong — never the tutor's.
+  wide, is drawn 244 pt wide there. Every Land and every continent is tappable. **Zoom by code
+  (#429, `mapZoom.ts`):** on Europe the first of `europe`, `eu_central`, `eu_southeast`,
+  `eu_north` where the key and every marked place are tappable is stored as the figure's view —
+  Luxembourg is tapped on Mitteleuropa, Albania on Südosteuropa, Estonia on the Baltikum; only
+  Kosovo is too small everywhere, and a question whose places need two different views is
+  dropped. A river is tappable where some point of its line lies a finger away from every other
+  place (`lineClear`), and is picked by distance to its line, never by a label catch. On `de`
+  the capitals Berlin, Potsdam, Mainz and Wiesbaden stand too close to another dot and are named,
+  not tapped. A layer the map does not have (rivers on the world map), a place not on the layer
+  (the Volga on `de`), a neighbour or a fact about a place as the key: dropped. **The Gradnetz
+  (#429, `mapGrid.ts`):** its places are the crossings, two tap axes like a coordinate system's
+  (meridians `lon`, parallels `lat`); the key and every marked crossing must be a crossing of the
+  view's grid (55° N on Europe's ten-degree grid is none), on the map, and at least a 24 pt target
+  from every other crossing in the smallest room (`gridTappable` — the world's crossings at 60° N
+  and S are 22 pt apart: drawn, never asked); a grid question is never zoomed. What lies at a point
+  ("Welches Land liegt bei …?") is no fact of the grid: dropped. **Written:** latitude first,
+  "50° N, 10° O", a zero without a letter. The five languages disagree on one letter — German
+  writes east "O", French, Spanish and Italian write WEST "O" — so code writes east "O" only in
+  German and "E" in the others, west "W" in all five: what code wrote reads one way everywhere.
+  The model writes a crossing in the question's language; `mapCheck.ts` reads it so (her locale,
+  German for a sheet) and stores the marked crossings in German, the key in her language.
+- **Rule 0, grading:** a tapped place exactly (`tapVerdict`, as every tap); a typed name of the
+  marked place by the data (`namedRuleVerdict`, `tapCheck.ts`): "Bavaria" and "Bayern" are one region, "Rhine" and
+  "Rhein" one river, another place of the layer is wrong — never the tutor's. Typed coordinates of
+  a crossing (`gridRuleVerdict` → `gridVerdict`, #429) are read in her language (`ruleCheck` gets
+  her locale): "30° S, 60° O" is right for a French learner where the key is 60° W, any other point
+  is wrong, and in German "60° O" for 60° W is wrong; only where her language is not German and
+  her "O" read as the German Ost would be the key — a German school's sheet in a French app —
+  code does not guess and the tutor judges. A tapped crossing stands in the thread in her
+  language ("50° N, 10° E").
 - **Screen:** `components/math/MapFigures.tsx` draws it (Länder and countries with their borders,
   a continent as one outline — the outline under all fills, so no inner border shows); the shapes
   come with the first map (`lib/math/useMapShapes.ts` on `lib/lazyModule.ts`, the same loader as
   VexFlow's), until then the map keeps its height (`MAP_HEIGHTS`). Tapping is `TapFigure` with a
   `case` in `tapLayout` (`regionAt` at the drawn width, the region filled as her mark with a dot on
-  its label). The line under the map says only "Gebiet gewählt"; the region's name in her
-  language is the screen reader's (`aria-valuetext`, #409).
+  its label; on a layer, `mapTapSet` hands the places in and the mark is the place's outline — a
+  river is its line). A layer is drawn by `Places` in `MapFigures.tsx`: capitals as dots, rivers in
+  `wetDeep`, ranges in the figure token `relief`, the marked ones in the accent. The Gradnetz by
+  `Graticule`: thin lines in `wetDeep` (never the grey of a border), the degrees on a paper chip
+  that interrupts the line, where each line leaves the frame (`lib/math/mapGridLabels.ts`: where two would touch, every
+  second or third degree per edge, the round ones kept — she counts the lines between), the marked
+  crossings as dots; tapped, the nearest crossing with the dot of a coordinate system
+  (`gridNearest`), and a screen reader steps along both axes. The line under the
+  map says only "Gebiet / Stadt / Fluss / Gebirge gewählt"; the place's name in her language is the
+  screen reader's (`aria-valuetext`, #409).
 - Tests: `packages/shared-math/src/__tests__/maps.test.ts` (data invariants, names DE/EN/FR and
   every name unique per map, regions to tap, every Land and continent at its label, Berlin inside
-  Brandenburg), `lib/math/__tests__/tapLayout.test.ts`, `TapFigure.test.tsx`,
-  `map-figures.int.test.ts` (stored or dropped, ids stored, exact verdicts without a model, another
-  learner); walkthrough `tests/web/tap-figures.spec.ts` (all 16 Länder tapped at 360 × 740,
-  scenario `testing/scenarios/map.ts`).
-- **Not built here:** the Gradnetz and "Welche Koordinaten hat der Punkt?"; capitals, rivers,
-  mountains as points; zoom (it would let the small countries of Europe be tapped); the Bundesland
-  of her own profile as a default map.
+  Brandenburg), `mapPlaces.test.ts` (#429: the 16 capitals in their Land, rivers as lines and each
+  tappable, every name of every layer unique, the zoom per country), `lib/math/__tests__/tapLayout.test.ts`
+  (every river at its mark; every crossing at its dot), `TapFigure.test.tsx`, `MapFigures.test.tsx`,
+  `mapGrid.test.ts` (#429: written and read in five languages, "O" by her language, the capitals
+  between their lines, crossings in the right land, which crossings can be tapped),
+  `mapGridLabels.test.ts` (inside the drawing, none touching, at 244–358 pt),
+  `map-figures.int.test.ts` (stored or dropped, ids stored, Luxembourg stored on `eu_central`,
+  crossings stored as code writes them, a French learner's "O" as west, exact verdicts without a
+  model, another learner); walkthrough `tests/web/tap-figures.spec.ts` (all 16 Länder and every
+  river of Germany tapped, Luxembourg zoomed, a capital, a marked river and range named, the
+  crossings along 50° N and 10° O of Germany and one of Europe tapped, a marked crossing of the
+  world typed; scenario `testing/scenarios/map.ts`).
+- **Not built yet (#429 rest):** the Bundesland of her own profile as a default map.
 
 ### Labelled pictures (issue #252)
 

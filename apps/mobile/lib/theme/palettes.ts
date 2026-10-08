@@ -84,6 +84,8 @@ export type Palette = {
     warm: string;
     wet: string;
     wetDeep: string;
+    /** A map's mountain ranges (#429), in the atlas brown; rivers take `wetDeep`. */
+    relief: string;
     slices: readonly string[];
     /**
      * Euro coins (issue #254), schematic: copper (1–5 ct), brass (10–50 ct), silver (the
@@ -161,6 +163,7 @@ const pastellSoft: Palette = {
     warm: '#c8473b',
     wet: '#8fb9e8',
     wetDeep: '#3f6fa8',
+    relief: '#d6bf9c',
     slices: [
       '#b9a4f0',
       '#9cc7ec',
@@ -254,6 +257,7 @@ const night: Palette = {
     warm: '#f08a7e',
     wet: '#3d6894',
     wetDeep: '#8fbcef',
+    relief: '#7a6448',
     slices: [
       '#6f5bb8',
       '#3f74a6',
@@ -509,6 +513,8 @@ export type Figure = {
   warm: string;
   wet: string;
   wetDeep: string;
+  /** A map's mountain ranges (#429). */
+  relief: string;
   /** Pie slices and the two halves of a population pyramid; the tints of euro notes. */
   slices: string[];
   /** Euro coins: copper, brass, silver (issue #254). */
@@ -557,6 +563,7 @@ export function figureOf(p: Palette): Figure {
     warm: p.figure.warm,
     wet: p.figure.wet,
     wetDeep: p.figure.wetDeep,
+    relief: p.figure.relief,
     slices: [...p.figure.slices],
     coins: p.figure.coins,
     hues: p.figure.hues,
