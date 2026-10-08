@@ -2533,6 +2533,7 @@ _Das Modell wählt, Code rechnet_ — dieselbe Bauweise wie der Bruchbalken und 
 | `hear_interval`  | unterer und oberer Ton             | „Welches Intervall hörst du?" — nichts gezeichnet, gehört (#445)  |
 | `time_signature` | Schlüssel, Taktart, Takte          | „In welcher Taktart steht diese Zeile?" — ohne Taktart gezeichnet |
 | `write_line`     | Schlüssel, Taktart, Takte          | „Schreibe diese Zeile …" — sie schreibt sie auf eine leere Zeile  |
+| `tap_rhythm`     | Taktart, Takte (Werte, keine Töne) | „Klopf den Rhythmus nach." — gehört, nachgeklopft (#445)          |
 
 Der Vertrag hat **kein Feld** für Fragetext, Antwort, Optionen, Figur, Tipp oder Musterlösung, und
 `StaffFigure` steht bewusst nicht in `ModelFigure`: eine Notenzeile schreibt nur Code. Damit kann kein
@@ -2568,8 +2569,33 @@ Zeile (`StaffPlayButton`, die Taste in `StaffKeys`); die Kopie `useStaffPlay` is
 (`lib/__tests__/oneListen.test.ts`). Der Bibliotheks-Check (#445): Tone.js hat keinen
 React-Native-Weg, Web-Audio-Synthese bräuchte auf dem Handy `react-native-audio-api` als zweite
 Strecke, die der Browser-Walkthrough nicht prüfen kann; die eigene Synthese kostet keine neue
-Abhängigkeit und ist im Node-Test nachgemessen. Offen: Rhythmus nachklopfen (Timing mit Toleranz,
-von Code geprüft) und der Gerätetest des Tons.
+Abhängigkeit und ist im Node-Test nachgemessen. Offen: der Gerätetest des Tons (auf dem Handy
+gehört, nicht nur im Browser).
+
+**Gehörbildung: Rhythmus nachklopfen** (Issue #445). `tap_rhythm` trägt nur Werte und Pausen
+(`RhythmBars`, keine Tonhöhe): Code spielt den Rhythmus auf **einem** Ton (A4) im Übungstempo
+(`tonesOf`, wieder als `ItemView.tones` über „Anhören"), und sie klopft ihn auf ein großes Feld
+(`ItemView.surface`, `mode: 'taps'` — es trägt nichts; `components/practice/RhythmTaps.tsx`, der
+große `PadKey` mit `instant`). Ein Schlag zählt beim **Aufsetzen** des Fingers, gemessen mit der
+monotonen Uhr des Geräts (`performance.now()`); react-native-web hielte `onPressIn` sonst 50 ms
+zurück. Was reist, sind nur die Abstände vom ersten Schlag in ganzen Millisekunden (`renderTaps`,
+`"0 742 1130 …"` in `text`) — kein Zeitpunkt, keine Uhrzeit; der Server misst keine Zeit (Regel 7).
+Gemessen wird in `practice/rhythm.ts` (`checkTaps`), kein Modell in keinem Zweig: verglichen werden
+die **Abstände**, nicht die Zeitpunkte (ein später Schlag macht einen Abstand zu lang und den
+nächsten zu kurz, statt jeden folgenden mitzureißen), in **ihrem** Tempo (Median ihrer Abstände durch
+die gespielten — ein falscher Abstand verschiebt ihn nicht), mit einer **Toleranz von 40 % einer
+Achtel** (150 ms bei Tempo 80). Weil jeder Ton eines solchen Rhythmus auf einer Achtel einsetzt
+(`usableStaffTask`: mit einem Ton beginnen, mindestens vier Töne, keine Sechzehntel, keine
+punktierte Achtel, jeder Takt voll), liegen zwei verschiedene Rhythmen mindestens eine Achtel
+auseinander — die Toleranz bleibt unter der Hälfte davon und verwechselt sie nie. Ihr Tempo darf
+ein Viertel abweichen (64 bis 100 bei Tempo 80); sonst wären vier Achtel dasselbe wie vier Viertel.
+Die Antwort nennt **eine** Stelle, wie bei einer geschriebenen Zeile (`staffAnswerReply`): wie viele
+Schläge von vorne sitzen, ab dem zweiten Versuch der Schlag, der zu früh oder zu spät kommt; sofort
+dagegen, dass mehr oder weniger Töne kamen, und dass nur das Tempo nicht stimmt — beides verrät
+nichts, was sie nicht gehört hat. Im Gespräch steht „5 Schläge geklopft", der Schlüssel in Worten
+(„Viertelnote, Viertelnote, Achtelnote, …") für „Lösung zeigen". Offen: der Gerätetest (wie genau
+ein Finger auf einem echten Telefon trifft; der Walkthrough klopft im Browser mit gesetzten
+Zeitpunkten, `tests/web/ear.spec.ts`).
 
 **Geschrieben wird wirklich geschrieben.** `write_line` gibt ihr eine leere Notenzeile
 (`ItemView.surface`, `mode: 'notes'` — dieselbe Fläche wie der Bruchbalken, eine dritte Form).

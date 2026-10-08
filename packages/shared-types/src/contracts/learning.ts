@@ -470,9 +470,10 @@ export const ItemView = z.object({
    * from one reviewed task (`BarTask`, `apps/api/src/modules/practice/bars.ts`) — the model
    * picks the task and its numbers, nothing else. Null everywhere else, and the surface
    * never carries the solution. Typing stays the way it always was: a tap writes the
-   * fraction into the same answer field.
+   * fraction into the same answer field. A surface this build does not know (the rhythm pad came
+   * with issue #445) reads as null (`.catch`) rather than failing the whole session.
    */
-  surface: AnswerSurface.nullable().default(null),
+  surface: AnswerSurface.nullable().default(null).catch(null),
   /**
    * She answers by tapping a place IN the figure (issue #248): a number on the number line, a point
    * of the coordinate system, a column of the bar chart, the hands of a clock face. The places are

@@ -210,7 +210,12 @@
     "rest_of": "Poner: {{value}}",
     "check_waits": "Solo cuando cada compás tenga algo.",
     "keys_label": "Teclas del pentagrama",
-    "values_label": "Valor de la nota"
+    "values_label": "Valor de la nota",
+    "taps_pad": "Marca aquí",
+    "taps_again": "Otra vez",
+    "taps_waits": "Primero marca el ritmo que oíste.",
+    "tapped_one": "{{count}} golpe",
+    "tapped_other": "{{count}} golpes"
   },
   "summary": {
     "title": "¡Lo has conseguido!",

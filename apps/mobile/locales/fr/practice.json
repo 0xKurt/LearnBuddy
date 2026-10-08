@@ -210,7 +210,12 @@
     "rest_of": "Placer : {{value}}",
     "check_waits": "Seulement quand chaque mesure contient quelque chose.",
     "keys_label": "Touches de la portée",
-    "values_label": "Valeur de note"
+    "values_label": "Valeur de note",
+    "taps_pad": "Tape ici",
+    "taps_again": "Recommencer",
+    "taps_waits": "Tape d'abord le rythme que tu as entendu.",
+    "tapped_one": "{{count}} coup tapé",
+    "tapped_other": "{{count}} coups tapés"
   },
   "summary": {
     "title": "C'est fait !",

@@ -31,6 +31,7 @@ import {
   type Clef,
   type NoteName,
   type Pitch,
+  type RhythmBars,
   type StaffBars,
   type StaffTask,
   type TimeSignature,
@@ -38,10 +39,12 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import {
+  checkStaffAnswer,
   checkStaffLine,
   intervalWord,
   noteWord,
   staffAgain,
+  staffAnswerReply,
   staffItem,
   staffItems,
   staffLineReply,
@@ -325,6 +328,19 @@ describe('die Frage, die eine Aufgabe wird', () => {
     { task: 'interval', clef: 'bass', lower: p('A', 2), upper: p('C', 3) },
     { task: 'hear_interval', lower: p('E', 4), upper: p('G', 4) },
     {
+      task: 'tap_rhythm',
+      time: '4/4',
+      bars: [
+        [
+          { el: 'note', value: 'quarter', dotted: false },
+          { el: 'note', value: 'quarter', dotted: false },
+          { el: 'note', value: 'eighth', dotted: false },
+          { el: 'note', value: 'eighth', dotted: false },
+          { el: 'note', value: 'quarter', dotted: false },
+        ],
+      ],
+    },
+    {
       task: 'time_signature',
       clef: 'treble',
       time: '3/4',
@@ -360,7 +376,8 @@ describe('die Frage, die eine Aufgabe wird', () => {
   });
 
   it('gibt jeder Lesefrage vier verschiedene Optionen und zeigt auf die richtige', () => {
-    for (const task of tasks.filter((x) => x.task !== 'write_line')) {
+    // Was auf einer Fläche beantwortet wird (Zeile, Schläge), hat keine Optionen.
+    for (const task of tasks.filter((x) => staffSurfaceOf(x) === null)) {
       const item = staffItem(task, 'de');
       if (!item) continue;
       expect(item.kind).toBe('multiple_choice');
@@ -735,5 +752,123 @@ describe('ein Intervall hören', () => {
     const again = staffAgain('de', minorThird);
     expect(again).toContain('nochmal hin');
     expect(mentionsSolution(again, 'kleine Terz', '')).toBe(false);
+  });
+});
+
+// Rhythmus nachklopfen (issue #445): der Rhythmus SIND die Töne, die sie hört — auf einem Ton, im
+// Übungstempo —, und ihre Schläge misst Code (`rhythm.ts`). Gezeichnet wird nichts.
+describe('einen Rhythmus nachklopfen', () => {
+  const q = { el: 'note', value: 'quarter', dotted: false } as const;
+  const e = { el: 'note', value: 'eighth', dotted: false } as const;
+  const s = { el: 'note', value: 'sixteenth', dotted: false } as const;
+  const h = { el: 'note', value: 'half', dotted: false } as const;
+  const qr = { el: 'rest', value: 'quarter', dotted: false } as const;
+  const rhythm: StaffTask = { task: 'tap_rhythm', time: '4/4', bars: [[q, q, e, e, q]] };
+  const a4 = (value: 'quarter' | 'eighth') =>
+    ({ el: 'note', pitch: p('A', 4), value, dotted: false }) as const;
+
+  it('spielt den Rhythmus auf einem Ton und gibt ihr ein leeres Klopffeld', () => {
+    expect(tonesOf(rhythm)).toEqual({
+      bars: [[a4('quarter'), a4('quarter'), a4('eighth'), a4('eighth'), a4('quarter')]],
+      tempo: 80,
+    });
+    // Eine Pause bleibt eine Pause: sie klingt nicht.
+    const rested: StaffTask = {
+      task: 'tap_rhythm',
+      time: '4/4',
+      bars: [
+        [q, qr, q, q],
+        [h, h],
+      ],
+    };
+    expect(tonesOf(rested)?.bars[0]?.[1]).toEqual(qr);
+    // Das Feld verrät nichts: weder wie viele Töne kamen noch wie lang sie waren.
+    expect(staffSurfaceOf(rhythm)).toEqual({ mode: 'taps' });
+    const item = staffItem(rhythm, 'de');
+    expect(item?.kind).toBe('short');
+    expect(item?.figure).toBeNull();
+    expect(item?.prompt).toBe('Klopf den Rhythmus nach.');
+    // Der Schlüssel in Worten, für „Lösung zeigen" — verglichen werden ihre Schläge.
+    expect(item?.answer).toBe('Viertelnote, Viertelnote, Achtelnote, Achtelnote, Viertelnote');
+    expect(item?.worked_solution).toContain(item?.answer);
+  });
+
+  it('fragt nur, was sich hören und messen lässt', () => {
+    const usable = (bars: RhythmBars, time: TimeSignature = '4/4') =>
+      usableStaffTask({ task: 'tap_rhythm', time, bars }) !== null;
+    expect(
+      usable([
+        [q, qr, q, q],
+        [h, h],
+      ]),
+    ).toBe(true);
+    // Vorne eine Pause hört niemand.
+    expect(
+      usable([
+        [qr, q, q, q],
+        [h, h],
+      ]),
+    ).toBe(false);
+    // Drei Töne sind zu wenig, um ihr Tempo zu messen.
+    expect(usable([[h, q, q]])).toBe(false);
+    // Eine Sechzehntel setzt den nächsten Ton zwischen zwei Achtel.
+    expect(usable([[q, q, e, s, s, q]])).toBe(false);
+    // Ein Takt, der nicht aufgeht.
+    expect(usable([[q, q, e, e]])).toBe(false);
+    expect(usable([[q, q, q, q]], '3/4')).toBe(false);
+  });
+
+  it('prüft ihre Schläge und schreibt ins Gespräch, wie oft sie geklopft hat', () => {
+    const right = checkStaffAnswer('de', rhythm, '0 750 1500 1875 2250');
+    expect(right).toMatchObject({ of: 'taps', verdict: 'correct', written: '5 Schläge geklopft' });
+    expect(checkStaffAnswer('de', rhythm, '0')?.written).toBe('1 Schlag geklopft');
+    // Kein Klopfen ist nichts zu vergleichen — und eine Zeile ist für ein Klopffeld keine Antwort.
+    expect(checkStaffAnswer('de', rhythm, 'Viertelnote')).toBeNull();
+    expect(checkStaffAnswer('de', rhythm, 'E4q G4q B4h')).toBeNull();
+    // Schläge sind für eine Schreibaufgabe keine Zeile, und eine Lesefrage hat keine Fläche.
+    const write: StaffTask = {
+      task: 'write_line',
+      clef: 'treble',
+      time: '2/4',
+      bars: quarters(p('E', 4), p('G', 4)),
+    };
+    expect(checkStaffAnswer('de', write, '0 750')).toBeNull();
+    expect(checkStaffAnswer('de', write, 'E4q G4q')).toMatchObject({
+      of: 'line',
+      verdict: 'correct',
+      written: 'E als Viertelnote, G als Viertelnote',
+    });
+    const heard: StaffTask = { task: 'hear_interval', lower: p('E', 4), upper: p('G', 4) };
+    expect(checkStaffAnswer('de', heard, '0 750')).toBeNull();
+  });
+
+  it('sagt Zahl und Tempo sofort, den Schlag ab dem zweiten Versuch', () => {
+    const reply = (taps: string, attempts: number) => {
+      const check = checkStaffAnswer('de', rhythm, taps);
+      return check ? staffAnswerReply('de', check, attempts) : null;
+    };
+    expect(reply('0 750 1500 1875', 0)).toBe(
+      'Die ersten 4 Schläge sitzen. Es kamen mehr Töne, als du geklopft hast.',
+    );
+    expect(reply('0 750 1500 1875 2250 2600', 0)).toBe(
+      'Die ersten 5 Schläge sitzen. Du hast öfter geklopft, als Töne kamen.',
+    );
+    expect(reply('0 1050 2100 2625 3150', 0)).toBe(
+      'Die Abstände stimmen – klopf nur etwas schneller, so wie du es gehört hast.',
+    );
+    // Die erste Achtel als Viertel: erst „wie viel sitzt", dann der Schlag.
+    expect(reply('0 750 1500 2250 2625', 0)).toBe('Die ersten 3 Schläge sitzen.');
+    expect(reply('0 750 1500 2250 2625', 1)).toBe(
+      'Die ersten 3 Schläge sitzen. Der 4. Schlag kommt noch zu spät.',
+    );
+    // Sitzt schon der zweite nicht, gibt es nichts zu zählen — nur, worauf sie hören kann.
+    expect(reply('0 375 750 1125 1500', 1)).toBe(
+      'Hör nochmal genau hin, wie lang jeder Ton klingt. Der 2. Schlag kommt noch zu früh.',
+    );
+    // Und nichts davon verrät den Rhythmus selbst.
+    const item = staffItem(rhythm, 'de');
+    for (const line of [reply('0 750 1500 2250 2625', 1), staffAgain('de', rhythm)]) {
+      expect(item && mentionsSolution(line ?? '', item.answer, item.prompt)).toBe(false);
+    }
   });
 });

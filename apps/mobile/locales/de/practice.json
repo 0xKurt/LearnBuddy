@@ -210,7 +210,12 @@
     "rest_of": "{{value}} setzen",
     "check_waits": "Erst wenn jeder Takt etwas hat.",
     "keys_label": "Tasten zur Notenzeile",
-    "values_label": "Notenwert"
+    "values_label": "Notenwert",
+    "taps_pad": "Hier klopfen",
+    "taps_again": "Neu klopfen",
+    "taps_waits": "Klopf erst den Rhythmus, den du gehört hast.",
+    "tapped_one": "{{count}} Schlag geklopft",
+    "tapped_other": "{{count}} Schläge geklopft"
   },
   "summary": {
     "title": "Geschafft!",

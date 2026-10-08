@@ -22,6 +22,7 @@ import type { AnswerResponse, SessionView, StaffTask } from '@learnbuddy/shared-
 import { renderStaffLine } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { LlmError } from '../llm/gateway.js';
 import { staffAgain, staffItem } from '../modules/practice/staff.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
@@ -52,6 +53,21 @@ const WRITE: StaffTask = {
       { el: 'note', pitch: { name: 'E', octave: 4 }, value: 'quarter', dotted: false },
       { el: 'note', pitch: { name: 'G', octave: 4 }, value: 'quarter', dotted: false },
       { el: 'note', pitch: { name: 'B', octave: 4 }, value: 'half', dotted: false },
+    ],
+  ],
+};
+
+/** Viertel, Viertel, zwei Achtel, Viertel: bei Tempo 80 Schläge bei 0, 750, 1500, 1875, 2250 ms. */
+const RHYTHM: StaffTask = {
+  task: 'tap_rhythm',
+  time: '4/4',
+  bars: [
+    [
+      { el: 'note', value: 'quarter', dotted: false },
+      { el: 'note', value: 'quarter', dotted: false },
+      { el: 'note', value: 'eighth', dotted: false },
+      { el: 'note', value: 'eighth', dotted: false },
+      { el: 'note', value: 'quarter', dotted: false },
     ],
   ],
 };
@@ -93,9 +109,10 @@ describe.skipIf(!dbReady)('die Notenzeile', () => {
     sessionId: string,
     itemId: string,
     body: { text?: string; choice?: number },
+    opts: { turn?: string; as?: Learner } = {},
   ) {
-    return l.api.post<AnswerResponse>(`/practice/sessions/${sessionId}/answer`, {
-      client_turn_id: randomUUID(),
+    return (opts.as ?? l).api.post<AnswerResponse>(`/practice/sessions/${sessionId}/answer`, {
+      client_turn_id: opts.turn ?? randomUUID(),
       item_id: itemId,
       ...body,
     });
@@ -212,6 +229,91 @@ describe.skipIf(!dbReady)('die Notenzeile', () => {
     expect(want?.answer).toBe('kleine Terz');
     // Geschlossen bleiben die Töne: zum Nachhören neben der Lösung.
     expect(ok.body.session.items[0]?.item.tones).not.toBeNull();
+  });
+
+  it('lässt einen gehörten Rhythmus nachklopfen und misst die Schläge selbst (#445)', async () => {
+    const session = await prepare([RHYTHM]);
+    const si = session.items[0];
+    const item = si?.item;
+    // Gehört, nicht gelesen: nichts gezeichnet, die Töne auf einem Ton, ein leeres Klopffeld.
+    expect(item?.kind).toBe('short');
+    expect(item?.figure).toBeNull();
+    expect(item?.surface).toEqual({ mode: 'taps' });
+    expect(item?.tones?.tempo).toBe(80);
+    expect(item?.tones?.bars.flat().map((el) => (el.el === 'note' ? el.pitch : null))).toEqual(
+      Array.from({ length: 5 }, () => ({ name: 'A', octave: 4 })),
+    );
+    expect(si?.answer).toBeNull();
+    const id = item?.id as string;
+
+    // Einmal zu wenig geklopft: was sitzt, bleibt offen, und die Zahl wird gleich gesagt.
+    const few = await answer(session.id, id, { text: '0 750 1500 1875' });
+    expect(few.status, JSON.stringify(few.body)).toBe(200);
+    expect(few.body.verdict).toBe('partially_correct');
+    expect(few.body.reply.text).toBe(
+      'Die ersten 4 Schläge sitzen. Es kamen mehr Töne, als du geklopft hast.',
+    );
+    // Im Gespräch steht, wie oft sie geklopft hat — nicht die Maschinenform.
+    const mine = few.body.session.turns.find((tr) => tr.role === 'learner');
+    expect(mine?.text).toBe('4 Schläge geklopft');
+    expect(few.body.session.items[0]?.status).toBe('open');
+
+    // Die erste Achtel als Viertel, beim zweiten Versuch: der Schlag wird genannt.
+    const late = await answer(session.id, id, { text: '0 750 1500 2250 2625' });
+    expect(late.body.reply.text).toBe(
+      'Die ersten 3 Schläge sitzen. Der 4. Schlag kommt noch zu spät.',
+    );
+
+    // Etwas langsamer und wackelig, wie ein Kind auf dem Handy klopft: richtig.
+    const ok = await answer(session.id, id, { text: '0 830 1690 2100 2520' });
+    expect(ok.body.verdict).toBe('correct');
+    const state = await env.db.query<{ last_outcome: string }>(
+      `select last_outcome from item_states where item_id = $1`,
+      [id],
+    );
+    expect(state).toEqual([{ last_outcome: 'with_help' }]);
+    // Die Lösung in Worten, und die Töne bleiben zum Nachhören.
+    expect(ok.body.session.items[0]?.answer).toBe(
+      'Viertelnote, Viertelnote, Achtelnote, Achtelnote, Viertelnote',
+    );
+    expect(ok.body.session.items[0]?.item.tones).not.toBeNull();
+    expect(ok.body.session.items[0]?.item.surface).toBeNull();
+
+    // Geschlossen nimmt die Frage keine Schläge mehr an.
+    const closed = await answer(session.id, id, { text: '0 750 1500 1875 2250' });
+    expect(closed.status).toBe(409);
+  });
+
+  it('zählt Schläge einmal, misst auch ohne Modell und nur für die eigene Frage (#445)', async () => {
+    const session = await prepare([RHYTHM]);
+    const id = session.items[0]?.item.id as string;
+    // Doppelt geschickt (dieselbe client_turn_id): eine Antwort, ein Versuch.
+    const turn = randomUUID();
+    const a = await answer(session.id, id, { text: '0 375 750 1125 1500' }, { turn });
+    const b = await answer(session.id, id, { text: '0 375 750 1125 1500' }, { turn });
+    expect(b.status).toBe(200);
+    expect(b.body.reply.id).toBe(a.body.reply.id);
+    expect(b.body.session.items[0]?.attempts).toBe(1);
+    expect(a.body.verdict).toBe('incorrect');
+    expect(a.body.reply.text).toBe('Hör nochmal genau hin, wie lang jeder Ton klingt.');
+
+    // Ohne Modell geht nichts verloren: gemessen wird von Code, gefragt wird niemand.
+    env.llm.byDefault('tutor', { error: new LlmError('unavailable', 'outage') });
+    const down = await answer(session.id, id, { text: '0 750 1500 1875 2250' });
+    expect(down.body.verdict).toBe('correct');
+
+    // Eine andere Lernende kann ihre Frage weder sehen noch beklopfen.
+    const fresh = await prepare([RHYTHM]);
+    const other = await onboard(env, { relation: 'child', name: 'Mia', birthDate: '2014-05-01' });
+    const foreign = await answer(
+      fresh.id,
+      fresh.items[0]?.item.id as string,
+      { text: '0 750 1500 1875 2250' },
+      { as: other },
+    );
+    expect(foreign.status).toBe(404);
+    const untouched = await l.api.get<SessionView>(`/practice/sessions/${fresh.id}`);
+    expect(untouched.body.items[0]?.attempts).toBe(0);
   });
 
   it('gibt einer Schreibaufgabe eine leere Zeile und prüft sie Zeichen für Zeichen', async () => {

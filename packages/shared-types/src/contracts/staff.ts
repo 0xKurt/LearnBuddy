@@ -36,10 +36,12 @@
 //     (#224 hat das so entschieden), und Notendiktat nach Gehör ebenfalls: dort wäre die
 //     Notenzeile die Antwort auf einen gehörten Ton.
 //
-// Gehörbildung (issue #445) ist die eine Ausnahme vom „gezeichnet": `hear_interval` zeichnet
-// nichts, die zwei Töne SIND die Frage (`HeardTones`), und benannt wird angetippt wie beim
-// gelesenen Intervall. Den Ton erzeugt die App aus genau diesen Tonhöhen (`lib/music/tone.ts`),
-// den Schlüssel rechnet der Server aus denselben — beides aus einem Objekt.
+// Gehörbildung (issue #445) ist die eine Ausnahme vom „gezeichnet": `hear_interval` und
+// `tap_rhythm` zeichnen nichts, die Töne SIND die Frage (`HeardTones`). Ein gehörtes Intervall
+// wird angetippt wie ein gelesenes; ein gehörter Rhythmus wird nachgeklopft, und ihre Schläge
+// reisen als Abstände in Millisekunden (`renderTaps`). Den Ton erzeugt die App aus genau diesen
+// Daten (`lib/music/tone.ts`), den Schlüssel rechnet der Server aus denselben — beides aus einem
+// Objekt.
 
 import { z } from 'zod';
 
@@ -239,9 +241,9 @@ export type StaffFigure = z.infer<typeof StaffFigure>;
 
 /**
  * Was eine Hör-Aufgabe spielt (`ItemView.tones`, issue #445): die Töne als Zeile und ihr Tempo —
- * dieselben Daten, aus denen „Anhören" eine gezeichnete Zeile spielt, nur ohne Zeichnung. Die
- * Tonhöhen sind damit im Gerät, wie bei jeder gezeichneten Notenfrage; sie stehen nirgends als
- * Text auf dem Bildschirm.
+ * die zwei Töne eines Intervalls oder ein Rhythmus auf einem Ton, dieselben Daten, aus denen
+ * „Anhören" eine gezeichnete Zeile spielt, nur ohne Zeichnung. Sie sind damit im Gerät, wie bei
+ * jeder gezeichneten Notenfrage; sie stehen nirgends als Text auf dem Bildschirm.
  */
 export const HeardTones = z.object({
   bars: StaffBars,
@@ -498,11 +500,71 @@ export function parseStaffLine(text: string): StaffBars | null {
   return bars.length >= 1 && bars.length <= BARS_MAX ? bars : null;
 }
 
+// ─────────────── ein Rhythmus zum Nachklopfen (issue #445) ───────────────
+
+/**
+ * Ein Zeichen eines Rhythmus: Note oder Pause und ihr Wert — ohne Tonhöhe. Ein Rhythmus zum
+ * Nachklopfen klingt auf EINEM Ton, und den setzt Code (`practice/staff.ts`): eine Tonhöhe, die
+ * das Modell wählen dürfte, wäre ein Parameter, der nichts entscheidet.
+ */
+export const RhythmElement = z.object({
+  el: z.enum(['note', 'rest']),
+  value: NoteValue,
+  dotted: z.boolean().default(false),
+});
+export type RhythmElement = z.infer<typeof RhythmElement>;
+
+/** Die Takte eines Rhythmus — mit denselben Grenzen wie eine Notenzeile. */
+export const RhythmBars = z
+  .array(z.array(RhythmElement).min(1).max(ELEMENTS_PER_BAR_MAX))
+  .min(1)
+  .max(BARS_MAX);
+export type RhythmBars = z.infer<typeof RhythmBars>;
+
+/**
+ * Die Fläche, auf die sie einen gehörten Rhythmus klopft (`ItemView.surface`, `mode: 'taps'`).
+ * Sie trägt nichts: wie viele Töne kamen und wie lang sie waren, ist genau das, was sie hören soll.
+ */
+export const RhythmTapSurface = z.object({ mode: z.literal('taps') });
+export type RhythmTapSurface = z.infer<typeof RhythmTapSurface>;
+
+/** Die meisten Schläge einer Antwort: doppelt so viele, wie ein Rhythmus Töne haben kann. */
+export const TAPS_MAX = 2 * BARS_MAX * ELEMENTS_PER_BAR_MAX;
+/**
+ * Der späteste Schlag nach dem ersten: eine Minute. Ein Rhythmus hier dauert ein paar Sekunden;
+ * die Grenze hält nur eine Antwort klein, die keiner ist.
+ */
+const TAP_SPAN_MAX_MS = 60_000;
+
+/**
+ * Ihre Schläge, wie sie als Antwort reisen: die Abstände vom ersten Schlag in ganzen
+ * Millisekunden, durch Leerzeichen getrennt („0 742 1130 1497"). Gemessen auf dem Gerät mit
+ * einer monotonen Uhr; ein Zeitpunkt reist nicht, nur wie lang es von Schlag zu Schlag dauerte.
+ */
+export function renderTaps(at: readonly number[]): string {
+  const first = at[0] ?? 0;
+  return at.map((t) => Math.max(0, Math.round(t - first))).join(' ');
+}
+
+/**
+ * Die Schläge zurück — oder null, wenn der Text keine Schläge sind. Null ist kein Urteil über ihr
+ * Klopfen, sondern „hier ist nichts zu vergleichen" (dieselbe Regel wie `parseStaffLine`).
+ */
+export function parseTaps(text: string): number[] | null {
+  const parts = text.trim().split(/\s+/);
+  if (parts.length > TAPS_MAX || !parts.every((p) => /^\d{1,5}$/.test(p))) return null;
+  const taps = parts.map(Number);
+  const ordered = taps.every((t, i) => i === 0 || t >= (taps[i - 1] as number));
+  return taps[0] === 0 && ordered && (taps[taps.length - 1] as number) <= TAP_SPAN_MAX_MS
+    ? taps
+    : null;
+}
+
 // ─────────────── die geprüfte Aufgabe ───────────────
 
 /**
- * Eine der sechs geprüften Notenaufgaben. Der Server schreibt daraus die Frage, zeichnet die
- * Zeile (oder lässt sie hören, `hear_interval`) und rechnet die Lösung aus
+ * Eine der sieben geprüften Notenaufgaben. Der Server schreibt daraus die Frage, zeichnet die
+ * Zeile (oder lässt sie hören, `hear_interval`, `tap_rhythm`) und rechnet die Lösung aus
  * (`practice/staff.ts`) — es gibt hier kein Feld für irgendetwas davon.
  */
 export const StaffTask = z.discriminatedUnion('task', [
@@ -536,6 +598,11 @@ export const StaffTask = z.discriminatedUnion('task', [
       'Hear this interval (ear training): the app PLAYS two notes one after the other, nothing is drawn, and the learner names the interval. Same rules as "interval": `upper` ABOVE `lower`, within an octave, a perfect, major or minor one; both notes between E2 and A5.',
     ),
   z
+    .object({ task: z.literal('tap_rhythm'), time: TimeSignature, bars: RhythmBars })
+    .describe(
+      'Tap this rhythm back (ear training): the app PLAYS the rhythm on one tone, nothing is drawn, and the learner taps it back; the app measures the timing. Every bar must be filled exactly. Start with a note, use at least four notes, and let every note start on an eighth — no sixteenths, no dotted eighths — otherwise no question is written.',
+    ),
+  z
     .object({
       task: z.literal('time_signature'),
       clef: Clef,
@@ -558,5 +625,5 @@ export const StaffTask = z.discriminatedUnion('task', [
 ]);
 export type StaffTask = z.infer<typeof StaffTask>;
 
-/** Welche der sechs Aufgaben es ist. */
+/** Welche der sieben Aufgaben es ist. */
 export type StaffTaskName = StaffTask['task'];

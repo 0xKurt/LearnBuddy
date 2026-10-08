@@ -210,7 +210,12 @@
     "rest_of": "Place a {{value}}",
     "check_waits": "Only once every bar has something in it.",
     "keys_label": "Note line keys",
-    "values_label": "Note value"
+    "values_label": "Note value",
+    "taps_pad": "Tap here",
+    "taps_again": "Tap again",
+    "taps_waits": "First tap the rhythm you heard.",
+    "tapped_one": "Tapped {{count}} time",
+    "tapped_other": "Tapped {{count}} times"
   },
   "summary": {
     "title": "Done!",
