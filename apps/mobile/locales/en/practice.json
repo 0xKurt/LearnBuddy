@@ -402,5 +402,18 @@
     "text_one": "Your text · 1 word",
     "text_other": "Your text · {{count}} words",
     "thinking": "Buddy is reading your text …"
+  },
+  "work": {
+    "take": "Photo of your working",
+    "reading": "Reading your working …",
+    "read": "Copied from your photo. Does every line match your exercise book?",
+    "unread_one": "I couldn't read line {{lines}}. Write it in yourself.",
+    "unread_other": "I couldn't read lines {{lines}}. Write them in yourself.",
+    "unreadable": "I can't read your photo for sure. Take it again – bright and straight from above – or type your working.",
+    "no_working": "I can't find your working for this task on the photo. Photograph your own working – or type it.",
+    "too_long": "That's more than fits in one answer. Photograph only your working for this task.",
+    "down": "I can't read your photo right now. Type your working or try again in a moment.",
+    "camera_blocked": "LearnBuddy isn't allowed to use the camera yet. You can allow it in Settings – or type your working.",
+    "camera_failed": "The camera didn't open. Try again or type your working."
   }
 }

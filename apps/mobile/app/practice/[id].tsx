@@ -1034,6 +1034,7 @@ export default function PracticeScreen() {
                   disabled={locked}
                   onChange={setText}
                   onCheck={check}
+                  work={{ sessionId: id, itemId: item.id }}
                   {...readAgain}
                 />
               ) : null}

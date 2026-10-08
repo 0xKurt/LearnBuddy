@@ -25,6 +25,7 @@ import {
   ClockFigure,
   isStructuredKind,
   MoneyFigure,
+  pathPossible,
   type ItemKind,
 } from '@learnbuddy/shared-types/contracts';
 
@@ -662,12 +663,13 @@ export function ruleCheck(
   const named = namedRuleVerdict(item, written);
   if (named !== null) return named;
 
-  // A written path, checked step by step (issue #209). Only where a calculation is plausible:
-  // a free text is many lines of prose, and `checkPath` leaves that alone anyway, but saying so
+  // A written path, checked step by step (issue #209). Only where a calculation is plausible
+  // (`pathPossible`, the one list the app's ↵ key and her photographed working use too, #444): a
+  // free text is many lines of prose, and `checkPath` leaves that alone anyway, but saying so
   // here keeps the intent readable. A sound path is then judged on its LAST line — the value it
   // arrives at — so a correct way with the right result counts as right.
   let text = written;
-  if (item.kind === 'numeric' || item.kind === 'formula' || item.kind === 'short') {
+  if (pathPossible(item.kind)) {
     const path = checkPath(written);
     if (path.kind === 'broke') return 'step_broke';
     if (path.kind === 'sound') text = lastValue(written) ?? written;

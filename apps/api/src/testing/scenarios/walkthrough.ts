@@ -31,7 +31,7 @@ import { scriptSources } from './sources.js';
 import { scriptMap } from './map.js';
 import { scriptSchematic } from './schematic.js';
 import { scriptTap } from './tap.js';
-import { hintRules, pronounceRules, readingRules, tutorRules } from './rules.js';
+import { hintRules, pronounceRules, readingRules, transcribeRules, tutorRules } from './rules.js';
 import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
 import { scriptTaskParts } from './taskParts.js';
@@ -39,6 +39,7 @@ import { scriptTour } from './tour.js';
 import { scriptTeachBack } from './teachBack.js';
 import { scriptTrees } from './trees.js';
 import { installTurns } from './turns.js';
+import { scriptWorkPhoto } from './workPhoto.js';
 import { scriptWritten } from './written.js';
 
 /** Adds every scenario's rules and installs the dispatchers. Call it once per process. */
@@ -63,6 +64,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptMark();
   // Also first: "schriftlich" and "Rechenweg" are words an older rule may know (#260).
   scriptWritten();
+  // Its own sentence ("aus dem Heft fotografieren") and question; first like #260's (#444).
+  scriptWorkPhoto();
   // Also first: "Punkte", "Gerade" and "Säulen" are words an older rule may know (#249).
   scriptGrid();
   // Also first: "Malnehmen" and "Probetest" are words an older rule may know (#388).
@@ -92,7 +95,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptSolids();
   scriptCloze();
   scriptDrill();
-  scriptRoleplay(scripted);
+  scriptRoleplay();
   // Every answer is matched by what the request says — what the learner wrote, what was asked
   // for, why Buddy checks, which question, which photo — so one spec cannot shift the answers
   // of the next (issues #81, #350). Installed after every scenario added its rules.
@@ -103,6 +106,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   hintRules.install(scripted);
   readingRules.install(scripted);
   pronounceRules.install(scripted);
+  transcribeRules.install(scripted);
   // A conversation that came to rest is summarised by the scheduler (issue #22); in the
   // walkthrough nobody asks for those sentences, so one answer for all of them is enough.
   scripted.byDefault('summary', {
