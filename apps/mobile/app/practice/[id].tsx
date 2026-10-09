@@ -66,6 +66,7 @@ import { isRetryable } from '../../lib/api/apiError.js';
 import { usePracticeSession } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { isForeign } from '../../lib/i18n/index.js';
+import { FigureSizingReport } from '../../lib/math/figureSizing.js';
 import { answerForm } from '../../lib/practice/answerForm.js';
 import { useHeardTexts } from '../../lib/practice/heardTexts.js';
 import { questionOffers, questionOnScreen } from '../../lib/practice/offers.js';
@@ -288,28 +289,33 @@ export default function PracticeScreen() {
                     receivedAt={query.dataUpdatedAt}
                     onTimeUp={end.onTimeUp}
                   />
-                  {/* The next question comes in softly from the side (keyed by the question). */}
-                  <SlideIn
-                    key={item.id}
-                    onLayout={(e) => room.onCard(Math.round(e.nativeEvent.layout.height))}
-                  >
-                    <ItemCard
-                      sessionId={session.id}
-                      shown={shown}
-                      title={title}
-                      view={view}
-                      form={form}
-                      speakLive={speakLive}
-                      heard={heard}
-                      markHeard={markHeard}
-                      disabled={locked}
-                      minHeight={
-                        room.cardGrowTo > 0 ? room.cardNatural + room.cardGrowTo : undefined
-                      }
-                      caps={room.caps}
-                      filling={filling}
-                      readAgain={readAgain}
-                    />
+                  {/* The next question comes in softly from the side (keyed by the question). Its
+                      drawing reports while it sizes itself: the card's own height waits for it. */}
+                  <SlideIn key={item.id}>
+                    <FigureSizingReport.Provider value={measured.figureSizing}>
+                      <View
+                        ref={measured.cardRef}
+                        onLayout={(e) => room.onCard(Math.round(e.nativeEvent.layout.height))}
+                      >
+                        <ItemCard
+                          sessionId={session.id}
+                          shown={shown}
+                          title={title}
+                          view={view}
+                          form={form}
+                          speakLive={speakLive}
+                          heard={heard}
+                          markHeard={markHeard}
+                          disabled={locked}
+                          minHeight={
+                            room.cardGrowTo > 0 ? room.cardNatural + room.cardGrowTo : undefined
+                          }
+                          caps={room.caps}
+                          filling={filling}
+                          readAgain={readAgain}
+                        />
+                      </View>
+                    </FigureSizingReport.Provider>
                   </SlideIn>
                   <QuestionTools
                     item={item}

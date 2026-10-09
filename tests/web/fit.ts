@@ -273,6 +273,17 @@ const KEYBOARD_ROOM = { width: 360, height: 740 - 300 } as const;
  */
 async function keyboardPass(page: Page, name: string, testId: string): Promise<void> {
   const field = page.locator(`[data-testid="${testId}"]`).last();
+  // A field under an open modal (the figure viewer) takes no focus — the modal keeps it — so no
+  // keyboard comes up for it (issue #497). Focused anyway, the browser scrolled the page toward
+  // it: the screen under the viewer, its answer not folded (nobody was asking), moved 81 pt up
+  // and "Frage passt nicht" stood cut, in a state no phone can be in.
+  const shielded = await field.evaluate((el) =>
+    Array.from(document.querySelectorAll('[aria-modal="true"]')).some((m) => !m.contains(el)),
+  );
+  if (shielded) {
+    appendFileSync(REPORT, `${JSON.stringify({ name, phone: 'kb', shielded })}\n`);
+    return;
+  }
   const wasFocused = await field.evaluate((el) => el === document.activeElement);
   await page.setViewportSize(KEYBOARD_ROOM);
   await field.focus();
@@ -518,6 +529,13 @@ export async function bothSchemes(page: Page, name: string, shows?: string): Pro
  * forever (Buddy's breathing orb, typing dots) never settles and only costs the wait.
  */
 export async function settle(page: Page, maxMs = 1600): Promise<void> {
+  // A drawing measures, then scales (`FigureView`): until it has, two frames may look alike and
+  // the shot still be taken mid-way — a dark shot of the Hunderterfeld showed the card grown in
+  // one run and not in the next (issue #501). The mark goes once every drawing has its size.
+  await expect(
+    page.locator('[data-testid="figure-sizing"]:visible'),
+    'every drawing on screen has its size',
+  ).toHaveCount(0);
   await page.waitForTimeout(150);
   const until = Date.now() + maxMs;
   let last = await page.screenshot();

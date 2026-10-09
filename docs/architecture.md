@@ -3576,7 +3576,11 @@ item's ordinary columns before it is stored.
   a box plot in order and — given a data list — equal to its five numbers under one of the three
   schoolbook quartile definitions, a scatter plot with a spread in x, a pyramid within 125 years. A
   chart that breaks one costs its **question**, not only its drawing (`clipDraft`,
-  `chartRead.ts`): "Werte das Klimadiagramm aus" without the diagram is no question.
+  `chartRead.ts`): "Werte das Klimadiagramm aus" without the diagram is no question. Because the
+  label rules hold at those 266 px, a chart read off its axes is never shrunk narrower when the card
+  gives room back (`leastFigureScale` in `lib/math/figureScale.ts`, #501: answered, the climate
+  chart stood at 0.4 and its month initials ran together); a pie is read from its legend and
+  shrinks like any drawing.
 - **What a question reads off** (`ItemDraft.read`, `ChartRead`): the model says which reading its
   question is — `value`, `max`, `min`, `argmax`/`argmin` (a label: a month, a category, a slice),
   `sum`, `mean`, `range`, `diff`, `angle` (a pie's centre angle), `iqr`, `humid`/`arid` (number of
@@ -5330,7 +5334,10 @@ when the room runs out (`keeps`: options and the fraction bar all of it, the not
 tightest staff). The walkthrough shoots every stop with a typed answer once more at 360×440 (the
 keyboard up): the field and every alert must stay in the window (`keyboardPass` in
 `tests/web/fit.ts`), and the field must stand in the pinned bar with "Prüfen" (`fieldInBar`); how
-far "Prüfen" lies under the keyboard is recorded. The
+far "Prüfen" lies under the keyboard is recorded. A field under an open modal (the figure viewer)
+gets no keyboard pass: the modal keeps the focus, so no keyboard comes up for it (#497 — focused
+anyway, the browser scrolled the page under the viewer and cut its head). Before every shot the
+walkthrough also waits until no drawing still sizes itself (`figure-sizing`, `settle`, #501). The
 options are in it too, at the bottom edge with nothing to check — the tile is the action
 (`action: { tap }`); in
 a conversation the conversation row takes the bar's place (`action: { talk }`, #386), as for a
@@ -5360,7 +5367,11 @@ field, the voice bar) a drawing or photo in the card gives room first, its cap l
 is cut from the newest turn under the full fade rather than pushing the bar off the screen. Before the first turn the conversation is only the hint row; at the
 largest board it gives way whole rather than half. A card with a drawing or photo still grows
 into what the conversation leaves (#96, `cardGrowTo`, at most half the window, its own height
-measured per question and window size), and a new reply or a taller bar below (the voice bar)
+measured per question and window size — and only once its drawing has its size: `FigureView`
+measures, then scales, and reports while it does (`lib/math/figureSizing.ts`, #501); the card's
+placeholder height made the growth depend on which measurement landed first; and never taller than
+its drawing at full size, which the same report carries — a drawing is never drawn larger, so more
+was an empty band around it), and a new reply or a taller bar below (the voice bar)
 takes its room back from the card first — the overrun past the column or the window counts. Short options sit two by two.
 Level and grade are learned in the conversation (the profile has no grade field: Buddy asks when
 the level is unknown and it matters for the next step — `context.ts`, `set_level`).
