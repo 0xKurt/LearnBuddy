@@ -448,7 +448,7 @@ export function placeholderQuestion(it: Pick<ItemDraft, 'kind' | 'prompt'>): boo
  * spacing and capitals are not what makes a question a different one.
  *
  * It lives here because both places that ask twice use it and must agree: a sheet read again for
- * the rest of its questions (`materials/service.ts`), and a practice run whose remaining
+ * the rest of its questions (`materials/firstReading.ts`), and a practice run whose remaining
  * questions are written while she works on the first ones (issue #220, `generate.ts`).
  */
 export function samePrompt(prompt: string): string {
