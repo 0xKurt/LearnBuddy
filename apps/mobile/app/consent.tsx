@@ -26,7 +26,7 @@ import { currentLocale } from '../lib/i18n/index.js';
 import { signOutHere } from '../lib/leave.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { GUTTER, pinnedBar, RHYTHM, SPACE } from '../lib/theme/space.js';
+import { CARD_PAD, GUTTER, pinnedBar, RHYTHM, SPACE } from '../lib/theme/space.js';
 
 const POINTS = [
   'point_data',
@@ -141,8 +141,7 @@ export default function Consent() {
       </ScrollView>
       {/* The agreement sits with its button: both always on screen. */}
       <View style={[pinnedBar(insets.bottom), { gap: RHYTHM.parts }]}>
-        {/* token-exempt: 14, a slim card around the one checkbox */}
-        <Card tone="lavender" padding={14}>
+        <Card tone="lavender" padding={CARD_PAD.snug}>
           <Checkbox
             checked={accepted}
             onChange={setAccepted}

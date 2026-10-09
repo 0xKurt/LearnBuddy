@@ -73,7 +73,13 @@ export function MenuSheet({ visible, start, canStart, onGo, onClose }: Props) {
               // "Hausaufgabe" broke in the middle next to its icon. `children` stays the
               // name a screen reader reads; this is only what the eye gets.
               label={
-                <View style={{ alignItems: 'center', gap: 6, paddingVertical: 4 }}>
+                <View
+                  style={{
+                    alignItems: 'center',
+                    gap: 6, // token-exempt: the symbol close over its word, read as one
+                    paddingVertical: SPACE.xs,
+                  }}
+                >
                   <Icon name={item.icon} size={24} color={palette.primaryDk} />
                   <Text
                     numberOfLines={2}

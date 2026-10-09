@@ -613,7 +613,7 @@ function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
           justifyContent: 'center',
           paddingHorizontal: GUTTER,
           paddingVertical: compact ? SPACE.lg : SPACE.xl,
-          gap: compact ? 14 : 18, // token-exempt: the voice step's rhythm, 14 tight, 18 roomy
+          gap: compact ? RHYTHM.stack : RHYTHM.sections, // the voice step's rhythm
         }}
       >
         <View style={{ alignItems: 'center' }}>

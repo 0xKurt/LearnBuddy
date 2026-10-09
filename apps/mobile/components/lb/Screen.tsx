@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { CircleBtn } from './CircleBtn.js';
 import { Glow } from './Glow.js';
 
@@ -29,9 +30,9 @@ export function Screen({ title, back = false, right, children }: Props) {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 12,
-            paddingHorizontal: 16,
-            paddingVertical: 8,
+            gap: SPACE.md,
+            paddingHorizontal: SPACE.lg,
+            paddingVertical: SPACE.sm,
             minHeight: 52,
           }}
         >

@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { Btn } from '../lb/Btn.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
 import { Sheet } from '../lb/Sheet.js';
@@ -100,7 +101,7 @@ export function TopicSheet({ kind, onClose }: Props) {
     >
       <Text style={TYPE.small}>{t(`learn:topic.${k}.hint`)}</Text>
       <MicStatus voice={voice} />
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm }}>
         <View style={{ flex: 1 }}>
           <LbTextInput
             value={text}
@@ -122,9 +123,9 @@ export function TopicSheet({ kind, onClose }: Props) {
         <MicButton voice={voice} label={t('common:voice.topic')} disabled={preparing} />
       </View>
       {examples.length > 0 ? (
-        <View style={{ gap: 8 }}>
+        <View style={{ gap: SPACE.sm }}>
           <Text style={TYPE.label}>{t('learn:topic.examples')}</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
             {examples.map((example) => (
               <Btn
                 key={example}

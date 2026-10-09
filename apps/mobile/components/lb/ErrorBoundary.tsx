@@ -8,6 +8,7 @@ import { i18n } from '../../lib/i18n/index.js';
 import { reportCrash } from '../../lib/observability/sentry.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { Btn } from './Btn.js';
 
 type State = { failed: boolean };
@@ -23,9 +24,9 @@ function FailedScreen({ onRetry }: { onRetry: () => void }) {
       style={{
         flex: 1,
         backgroundColor: palette.bg,
-        padding: 24,
+        padding: SPACE.xl,
         justifyContent: 'center',
-        gap: 16,
+        gap: SPACE.lg,
       }}
     >
       <Text accessibilityRole="header" style={TYPE.display}>

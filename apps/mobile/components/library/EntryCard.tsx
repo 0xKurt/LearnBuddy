@@ -6,17 +6,18 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { circle } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
 import { Icon, type IconName } from '../lb/Icon.js';
+import { IconDisc, type DiscTint } from '../lb/IconDisc.js';
+import { MARK } from './tone.js';
 
 type Props = {
   icon: IconName;
   /** The round tile's fill, and its edge where it has one. */
-  tile: { backgroundColor: string; borderColor?: string };
+  tile: DiscTint;
   title: string;
   onPress: () => void;
   accessibilityLabel: string;
@@ -24,9 +25,6 @@ type Props = {
   /** The lines under the title. */
   children: ReactNode;
 };
-
-/** The round tile with the entry's icon. */
-const DISC = 44;
 
 export function EntryCard({
   icon,
@@ -46,21 +44,7 @@ export function EntryCard({
       accessibilityHint={accessibilityHint}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}>
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={{
-            width: DISC,
-            height: DISC,
-            borderRadius: circle(DISC),
-            backgroundColor: tile.backgroundColor,
-            ...(tile.borderColor ? { borderWidth: 1, borderColor: tile.borderColor } : null),
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Icon name={icon} size={20} color={palette.primaryDk} />
-        </View>
+        <IconDisc name={icon} size={MARK.size} iconSize={MARK.iconSize} tone={tile} />
         <View style={{ flex: 1, gap: SPACE.xs }}>
           <Text style={[TYPE.body, { fontWeight: '600' }]}>{title}</Text>
           {children}

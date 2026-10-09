@@ -239,6 +239,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
                 paddingLeft: bar && start === null ? SPACE.md : undefined,
                 // A single line centres itself. A multiline one starting on one line is centred
                 // by its padding: (height − LINE) / 2 above and below.
+                // token-exempt: half the room the line leaves, so it sits centred (above)
                 paddingVertical: top ? SPACE.md : lines ? (inner - LINE) / 2 : 0,
                 fontSize: TYPE.body.fontSize,
                 lineHeight: LINE,

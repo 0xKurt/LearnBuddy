@@ -5,6 +5,7 @@
 import { View } from 'react-native';
 
 import { Btn } from './Btn.js';
+import { SPACE } from '../../lib/theme/space.js';
 
 export function Segmented<T extends string>({
   options,
@@ -19,7 +20,10 @@ export function Segmented<T extends string>({
   size?: 'sm' | 'md';
 }) {
   return (
-    <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+    <View
+      accessibilityRole="radiogroup"
+      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}
+    >
       {options.map((o) => (
         <Btn
           key={o.value}

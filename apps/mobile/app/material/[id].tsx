@@ -27,7 +27,7 @@ import { deleteMaterialItem, renameMaterial } from '../../lib/api/endpoints.js';
 import { keys, queryClient, useMaterialItems } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { bottomRoom, SPACE } from '../../lib/theme/space.js';
+import { bottomRoom, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 
 const TITLE_MAX = 120;
@@ -202,7 +202,7 @@ export default function MaterialScreen() {
           // Edge-to-edge: the last card must clear the Android navigation bar.
           // token-exempt: room of 32 past the inset, the last card well clear of the edge
           paddingBottom: bottomRoom(insets.bottom, 32),
-          gap: 14, // token-exempt: the questions' cards 14 apart, as they always stood
+          gap: RHYTHM.stack,
           flexGrow: 1,
         }}
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}

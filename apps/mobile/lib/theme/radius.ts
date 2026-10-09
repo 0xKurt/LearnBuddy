@@ -10,6 +10,13 @@ export const RADIUS = {
   tile: 14,
   /** A frame that holds things: a group's row, a drawing's frame. */
   frame: 16,
+  /** A note across the page (`components/lb/Banner.tsx`, `ErrorNote`, the PIN's error). */
+  note: 18,
+  /**
+   * A card among others of its kind, a step softer than `card`: a memory, a settings group's
+   * closed paper, Buddy's way into an area in the chat.
+   */
+  item: 20,
   /** A card on the page (`components/lb/Card.tsx`). */
   card: 22,
   /**

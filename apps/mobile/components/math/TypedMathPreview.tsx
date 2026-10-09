@@ -14,16 +14,20 @@ import { typedMath } from '../../lib/math/typed.js';
 import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { MathText } from './MathText.js';
 import { useSpokenMath } from './useSpokenMath.js';
 
 /** Room for a simple stacked fraction at the preview's size, so it never jumps when one appears. */
 const MIN_HEIGHT = 50;
 // Built from the palette in use: module-scope styles froze the start palette (issue #84).
-const mathStyle = (p: Palette) => ({ fontSize: 18, lineHeight: 26, color: p.ink }) as const;
+const mathStyle = (p: Palette) =>
+  // token-exempt: 18/26, a step above TYPE.body, so a stacked fraction's digits stay readable
+  ({ fontSize: 18, lineHeight: 26, color: p.ink }) as const;
 /** Inside the pill: one quiet line under the field – it may not make the pill grow much. */
 const COMPACT_MIN_HEIGHT = 26;
-const compactMathStyle = (p: Palette) => ({ fontSize: 15, lineHeight: 21, color: p.ink2 }) as const;
+const compactMathStyle = (p: Palette) =>
+  ({ fontSize: TYPE.small.fontSize, lineHeight: TYPE.small.lineHeight, color: p.ink2 }) as const;
 
 export function TypedMathPreview({ value, compact = false }: { value: string; compact?: boolean }) {
   const { palette } = useTheme();
@@ -46,9 +50,9 @@ export function TypedMathPreview({ value, compact = false }: { value: string; co
         flexDirection: 'row',
         flexWrap: 'wrap',
         alignItems: 'center',
-        columnGap: 10,
+        columnGap: RHYTHM.parts,
         minHeight: Math.ceil((compact ? COMPACT_MIN_HEIGHT : MIN_HEIGHT) * fontScale),
-        paddingHorizontal: 4,
+        paddingHorizontal: SPACE.xs,
       }}
     >
       {compact ? null : <Text style={TYPE.label}>{t('preview.label')}</Text>}

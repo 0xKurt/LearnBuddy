@@ -180,6 +180,7 @@ function TextChoices({
                   ) : (
                     <LetterMark letter={mark?.mark ?? letterFor(index)} tried={wasTried} />
                   )}
+                  {/* token-exempt: the choice and its line 2 apart; line heights carry the air */}
                   <View style={{ flex: 1, gap: 2, alignItems: big ? 'center' : 'flex-start' }}>
                     <MathText
                       text={choice}

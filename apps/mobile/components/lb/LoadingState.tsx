@@ -17,6 +17,7 @@ import Animated, {
 
 import { TYPE } from '../../lib/theme/type.js';
 import { EASE } from '../../lib/theme/motion.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { BuddyOrb } from './BuddyOrb.js';
 import { Appear } from './Motion.js';
 
@@ -51,8 +52,8 @@ export function LoadingState({ label }: { label?: string }) {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 28,
-        gap: 16,
+        paddingHorizontal: 28, // token-exempt: the label in a column narrower than the page
+        gap: SPACE.lg,
       }}
     >
       <Animated.View style={orb}>

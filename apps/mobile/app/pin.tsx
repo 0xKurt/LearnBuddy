@@ -21,6 +21,7 @@ import { formatTime } from '../lib/time.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { bottomRoom, GUTTER, RHYTHM, SPACE } from '../lib/theme/space.js';
+import { RADIUS } from '../lib/theme/radius.js';
 
 export default function Pin() {
   const { palette } = useTheme();
@@ -104,7 +105,7 @@ export default function Pin() {
           <View
             style={{
               backgroundColor: palette.blush,
-              borderRadius: 18, // token-exempt: the note rounder than a tile, softer than a card
+              borderRadius: RADIUS.note,
               paddingHorizontal: SPACE.lg,
               paddingVertical: 10, // token-exempt: one or two lines, snug in the note
               maxWidth: 360,

@@ -75,7 +75,7 @@ export function Header({
           flex: 1,
           color: palette.ink,
           fontSize: size,
-          lineHeight: size * 1.2,
+          lineHeight: size * 1.2, // token-exempt: 1.2 em of the name, which grows with the bar
           fontWeight: '700',
           letterSpacing: -0.4,
         }}

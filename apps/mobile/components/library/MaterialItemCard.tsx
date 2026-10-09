@@ -38,8 +38,7 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
   const choices = item.kind === 'multiple_choice' && item.choices ? item.choices : null;
   return (
     <Card>
-      {/* token-exempt: the question's parts 14 apart, as on the sheet's own card */}
-      <View style={{ gap: 14 }}>
+      <View style={{ gap: RHYTHM.stack }}>
         <View
           style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: SPACE.sm }}
         >

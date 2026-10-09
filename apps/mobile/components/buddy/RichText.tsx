@@ -9,20 +9,24 @@ import { Text, View, type StyleProp, type TextStyle } from 'react-native';
 
 import { markdownBlocks } from '../../lib/buddy/markdown.js';
 import { MathText } from '../math/MathText.js';
+import { SPACE } from '../../lib/theme/space.js';
 
 export function RichText({ text, style }: { text: string; style: StyleProp<TextStyle> }) {
   const blocks = useMemo(() => markdownBlocks(text), [text]);
   if (blocks.length === 1 && blocks[0]?.type === 'para')
     return <MathText text={blocks[0].text} accessible={false} style={style} />;
   return (
-    <View accessible={false} style={{ gap: 8, flexShrink: 1 }}>
+    <View accessible={false} style={{ gap: SPACE.sm, flexShrink: 1 }}>
       {blocks.map((b, i) =>
         b.type === 'para' ? (
           <MathText key={i} text={b.text} accessible={false} style={style} />
         ) : (
-          <View key={i} style={{ gap: 4 }}>
+          <View key={i} style={{ gap: SPACE.xs }}>
             {b.items.map((item, j) => (
-              <View key={j} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+              <View
+                key={j}
+                style={{ flexDirection: 'row', gap: SPACE.sm, alignItems: 'flex-start' }}
+              >
                 <Text
                   style={[
                     style,

@@ -11,6 +11,8 @@ import { useAnnounce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { circle } from '../../lib/theme/radius.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { MAX_FONT_SCALE } from './Btn.js';
 
 type Props = {
@@ -34,6 +36,11 @@ const KEYS: Array<{ label: string; value: 'digit' | 'back' | 'none'; digit?: str
   { label: '0', value: 'digit', digit: '0' },
   { label: '⌫', value: 'back' },
 ];
+
+/** One of the four dots that show how far she is. */
+const DOT = 16;
+/** A key: wide enough for a thumb, a pill as tall as a phone's own keypad. */
+const KEY = { width: 80, height: 60 } as const;
 
 export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
   const { palette } = useTheme();
@@ -64,7 +71,7 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
   }
 
   return (
-    <View style={{ alignItems: 'center', gap: 24 }}>
+    <View style={{ alignItems: 'center', gap: SPACE.xl }}>
       <View
         accessible
         // How far she is, as one thing with a name and a value — a bare label on a box is
@@ -73,15 +80,16 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
         accessibilityLiveRegion="polite"
         accessibilityLabel={t('a11y.pin_progress', { count: entered.length })}
         accessibilityValue={{ min: 0, max: 4, now: entered.length }}
-        style={{ flexDirection: 'row', gap: 14 }}
+        // The dots as far apart as the keys' rows below.
+        style={{ flexDirection: 'row', gap: RHYTHM.stack }}
       >
         {[0, 1, 2, 3].map((i) => (
           <View
             key={i}
             style={{
-              width: 16,
-              height: 16,
-              borderRadius: 8,
+              width: DOT,
+              height: DOT,
+              borderRadius: circle(DOT),
               backgroundColor: i < entered.length ? palette.primary : palette.paper,
               borderWidth: 1.5,
               borderColor: i < entered.length ? palette.primary : palette.ink3,
@@ -95,14 +103,14 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
           flexDirection: 'row',
           flexWrap: 'wrap',
           justifyContent: 'space-between',
-          rowGap: 14,
+          rowGap: RHYTHM.stack,
         }}
       >
         {KEYS.map((k, i) =>
           // The empty place in the grid is a gap, not a button without a name
           // (axe: button-name, issue #73).
           k.value === 'none' ? (
-            <View key={`gap-${i}`} style={{ width: 80, height: 60 }} />
+            <View key={`gap-${i}`} style={KEY} />
           ) : (
             <Pressable
               key={`${k.label}-${i}`}
@@ -115,9 +123,8 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
               {({ pressed }) => (
                 <View
                   style={{
-                    width: 80,
-                    height: 60,
-                    borderRadius: 30,
+                    ...KEY,
+                    borderRadius: circle(KEY.height),
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: pressed ? palette.primaryLt : palette.paper,
@@ -127,7 +134,11 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
                   {/* Fixed key boxes: the digit grows with the system text only this far (M-84). */}
                   <Text
                     maxFontSizeMultiplier={MAX_FONT_SCALE}
-                    style={{ fontSize: 22, color: palette.ink, fontWeight: '500' }}
+                    style={{
+                      fontSize: 22, // token-exempt: the digit as large as a phone's keypad has it
+                      color: palette.ink,
+                      fontWeight: '500',
+                    }}
                   >
                     {k.label}
                   </Text>

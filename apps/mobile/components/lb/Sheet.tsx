@@ -25,7 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
-import { SPACE, bottomRoom } from '../../lib/theme/space.js';
+import { bottomRoom, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
 import { dismissedBySwipe } from '../../lib/gestures.js';
@@ -197,7 +197,7 @@ export function Sheet({
                       height: 5,
                       borderRadius: 3, // token-exempt: round ends on the 5 pt handle
                       backgroundColor: palette.ink4,
-                      marginBottom: 14, // token-exempt: the handle 14 above the title
+                      marginBottom: RHYTHM.stack,
                     }}
                   />
                   <Text accessibilityRole="header" style={TYPE.title}>
@@ -210,9 +210,9 @@ export function Sheet({
                 style={{ flexGrow: 0, flexShrink: 1 }}
                 contentContainerStyle={{
                   paddingHorizontal: SIDE,
-                  // token-exempt: the sheet's rhythm, 14 between its parts and under the last
-                  paddingBottom: 14,
-                  gap: 14, // token-exempt: the sheet's rhythm (above)
+                  // The sheet's rhythm: between its parts and under the last.
+                  paddingBottom: RHYTHM.stack,
+                  gap: RHYTHM.stack,
                 }}
                 keyboardShouldPersistTaps="handled"
               >

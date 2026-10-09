@@ -11,6 +11,7 @@ import { View } from 'react-native';
 import { StartStatus } from '../learn/StartStatus.js';
 import { useStartTopic } from '../learn/useStartTopic.js';
 import { Btn } from '../lb/Btn.js';
+import { SPACE } from '../../lib/theme/space.js';
 
 export function AgainButton({
   title,
@@ -46,7 +47,7 @@ export function AgainButton({
   }
 
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: SPACE.sm }}>
       <StartStatus state={state} />
       {state.status === 'not_usable' ? null : (
         <Btn

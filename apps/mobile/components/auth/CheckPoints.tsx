@@ -3,7 +3,7 @@
 
 import { Text, View } from 'react-native';
 
-import { RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { CARD_PAD, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
@@ -16,7 +16,7 @@ const BADGE_RADIUS = BADGE / 2;
 const DENSITY = {
   /** The consent's six points: in German they fit a 360×740 phone (issue #76). */
   compact: {
-    padding: 14, // token-exempt: six points on a 360×740 phone (issue #76)
+    padding: CARD_PAD.snug, // six points on a 360×740 phone (issue #76)
     gap: SPACE.sm,
     // token-exempt: the badge centred on the first line of the 14/20 type
     badge: { marginTop: -1 },

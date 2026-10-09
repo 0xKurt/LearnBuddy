@@ -14,20 +14,19 @@ import {
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import type { SubjectTone } from '../../lib/theme/palettes.js';
-import { circle } from '../../lib/theme/radius.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatDate } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
-import { Icon } from '../lb/Icon.js';
+import { IconDisc } from '../lb/IconDisc.js';
+import { MARK, useMarkTint, type CardTone } from './tone.js';
 
 type Props = {
   material: MaterialView;
-  tone: SubjectTone | 'paper';
+  tone: CardTone;
   /** This card's action is running. */
   busy: boolean;
   /** Some action is running; no second one meanwhile. */
@@ -69,9 +68,6 @@ function statusOf(m: MaterialView): Status | null {
   }
 }
 
-/** The round tile with the sheet's book, tinted in its subject's tone. */
-const DISC = 44;
-
 export function MaterialCard({
   material: m,
   tone,
@@ -83,7 +79,8 @@ export function MaterialCard({
   onRetry,
   onDelete,
 }: Props) {
-  const { palette, tones } = useTheme();
+  const { palette } = useTheme();
+  const tint = useMarkTint(tone);
   const { t, i18n } = useTranslation('library');
   const title = m.title ?? t('untitled');
   const date = formatDate(m.created_at, i18n.language);
@@ -136,25 +133,9 @@ export function MaterialCard({
 
   return (
     <Card padding={SPACE.lg}>
-      {/* token-exempt: the sheet's parts 14 apart, as on its questions' cards */}
-      <View style={{ gap: 14 }}>
+      <View style={{ gap: RHYTHM.stack }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.md }}>
-          <View
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={{
-              width: DISC,
-              height: DISC,
-              borderRadius: circle(DISC),
-              backgroundColor: tone === 'paper' ? palette.canvas : tones.bg[tone],
-              borderWidth: 1,
-              borderColor: tone === 'paper' ? palette.hairline : tones.deep[tone],
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Icon name="book" size={20} color={palette.primaryDk} />
-          </View>
+          <IconDisc name="book" size={MARK.size} iconSize={MARK.iconSize} tone={tint} />
           <View style={{ flex: 1, gap: SPACE.xs }}>
             <Text style={[TYPE.body, { fontWeight: '600' }]}>{title}</Text>
             <Text style={TYPE.small}>{meta}</Text>

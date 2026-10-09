@@ -217,7 +217,7 @@ function ResetPage({
       <View
         style={{
           alignItems: 'center',
-          gap: 14, // token-exempt: the title 14 under Buddy's orb
+          gap: RHYTHM.stack, // the title under Buddy's orb
         }}
       >
         <BuddyOrb size={72} />

@@ -4,6 +4,9 @@
 import { Text, View } from 'react-native';
 import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { RADIUS } from '../../lib/theme/radius.js';
+import { SPACE } from '../../lib/theme/space.js';
+import { TYPE } from '../../lib/theme/type.js';
 
 type Tone = 'gray' | 'warning' | 'info' | 'danger';
 
@@ -23,12 +26,19 @@ export function Banner({ children, tone = 'gray' }: { children: string; tone?: T
     <View
       style={{
         backgroundColor: t.bg,
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 18,
+        paddingVertical: SPACE.md,
+        paddingHorizontal: SPACE.lg,
+        borderRadius: RADIUS.note,
       }}
     >
-      <Text style={{ color: t.color, fontSize: 15, fontWeight: '500', lineHeight: 21 }}>
+      <Text
+        style={{
+          color: t.color,
+          fontSize: TYPE.small.fontSize,
+          fontWeight: '500',
+          lineHeight: TYPE.small.lineHeight,
+        }}
+      >
         {children}
       </Text>
     </View>

@@ -26,19 +26,24 @@ export const GUTTER = 20;
 /**
  * A card's padding (components/lb/Card.tsx, issue #311). `base` is the card's own; `roomy` the
  * calmer one of a card that holds a sentence to read or a setting's question and answers — the
- * settings' cards, the sentence to speak, a text to hear, a solution, the sign-up pages' notes.
- * One value each, so those cards stay alike; each used to write its own 18 or 20.
+ * settings' cards, the sentence to speak, a text to hear, a solution, the sign-up pages' notes;
+ * `snug` the slim one of a card that holds one line or one control — an error note, Buddy's
+ * way into an area, the consent's checkbox and its points. One value each, so those cards stay
+ * alike; each used to write its own 14, 18 or 20.
  */
-export const CARD_PAD = { base: 18, roomy: 20 } as const;
+export const CARD_PAD = { snug: 14, base: 18, roomy: 20 } as const;
 
 /**
- * Two gaps the app has used off the scale since its first screens (issue #311), named so each
+ * Three gaps the app has used off the scale since its first screens (issue #311), named so each
  * stays one value: `parts` 10 between the parts of one card, form or row (its lines, fields and
- * buttons, an icon and its title), `sections` 18 between the sections of a page or of a card
- * (the page's rhythm). Each place used to write its own 10 or 18 with a `token-exempt` beside it.
- * Folding them into SPACE (sm/md, lg/xl) is a visible change and a decision of its own.
+ * buttons, an icon and its title), `stack` 14 between the blocks of a stack (the cards of a
+ * list, a card's blocks, a sheet's parts, a form's fields, the PIN pad's rows, the title under
+ * Buddy's orb, a step's rhythm where it is tight), `sections` 18 between the sections of a page
+ * or of a card (the page's rhythm). Each place used to write its own 10, 14 or 18 with a
+ * `token-exempt` beside it. Folding them into SPACE (sm/md, lg/xl) is a visible change and a
+ * decision of its own.
  */
-export const RHYTHM = { parts: 10, sections: 18 } as const;
+export const RHYTHM = { parts: 10, stack: 14, sections: 18 } as const;
 
 /** The smallest a tappable thing may be (design brief); never trimmed to save space. */
 export const TOUCH = 44;

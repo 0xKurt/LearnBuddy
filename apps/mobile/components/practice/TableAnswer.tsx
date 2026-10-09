@@ -187,7 +187,8 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
       text={text}
       style={[
         TYPE.body,
-        { fontSize: 16, lineHeight: 22, textAlign: 'center', fontWeight: header ? '700' : '400' },
+        // token-exempt: TYPE.body's size on a line one point tighter, so the rows stay compact
+        { lineHeight: 22, textAlign: 'center', fontWeight: header ? '700' : '400' },
       ]}
     />
   );

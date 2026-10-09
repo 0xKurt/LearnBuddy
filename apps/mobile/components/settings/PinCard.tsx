@@ -16,7 +16,7 @@ import { setPin } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { signIn } from '../../lib/auth/supabase.js';
 import { messageFor } from '../../lib/errors.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -140,8 +140,8 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
             {pinSet ? t('settings:adult.pin.change') : t('settings:adult.pin.create')}
           </Btn>
         ) : (
-          // token-exempt: the PIN's fields 14 apart, a field's label clear of the one above
-          <View style={{ gap: 14 }}>
+          // The PIN's fields: a field's label clear of the one above.
+          <View style={{ gap: RHYTHM.stack }}>
             {pinSet ? (
               <Labeled
                 label={t('settings:adult.pin.current')}

@@ -14,6 +14,7 @@ import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area
 import { announce } from '../../lib/announce.js';
 import { useOnline } from '../../lib/api/queries.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { Banner } from './Banner.js';
 
 export function OfflineFrame({ children }: { children: ReactNode }) {
@@ -37,10 +38,10 @@ export function OfflineFrame({ children }: { children: ReactNode }) {
         <View
           accessibilityLiveRegion="polite"
           style={{
-            paddingTop: insets.top + 8,
-            paddingBottom: 8,
-            paddingLeft: insets.left + 16,
-            paddingRight: insets.right + 16,
+            paddingTop: insets.top + SPACE.sm,
+            paddingBottom: SPACE.sm,
+            paddingLeft: insets.left + SPACE.lg,
+            paddingRight: insets.right + SPACE.lg,
             backgroundColor: palette.bg,
           }}
         >
