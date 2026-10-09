@@ -35,6 +35,12 @@ describe('questionReadText', () => {
     expect(questionReadText('Was ist $3 + 4$?', null, WORDS)).toBe('Was ist 3 plus 4?');
   });
 
+  it('reads a quantity as written: the no-break space MathText draws is not spoken (#467)', () => {
+    expect(questionReadText('Er fährt $15$ km/h und 3,5 m², 20 % bei 90 °C.', null, WORDS)).toBe(
+      'Er fährt 15 km/h und 3,5 m², 20 % bei 90 °C.',
+    );
+  });
+
   it('reads the choices as "A: …, B: …" after the question', () => {
     expect(
       questionReadText(

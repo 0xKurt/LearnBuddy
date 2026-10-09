@@ -23,6 +23,8 @@
 //
 // One narrowing is code's, not hers: only what is due for review (Buddy's review after a break,
 // buddy/review.ts, issue #446) — a set that offers "what is due" holds nothing else.
+//
+// And one shape: a task in parts (#297) stays together and whole (`wholeTasksFirst`).
 
 import type { DifficultyWish, VocabDirection } from '@learnbuddy/shared-types/contracts';
 
@@ -53,7 +55,7 @@ export type PracticeWish = {
   dueOnly?: boolean;
 };
 
-export const QUESTIONS_PER_MINUTE = 1.2;
+const QUESTIONS_PER_MINUTE = 1.2;
 
 /**
  * How many questions a set holds: a number, or everything there is (issues #145, #49).
@@ -89,7 +91,50 @@ export function questionCountFor(minutes: number): number {
   return Math.min(15, Math.max(3, Math.round(minutes * QUESTIONS_PER_MINUTE)));
 }
 
-type Candidate = { id: string; topic: string | null; due: Date | null };
+/** The other way round: about how long `count` questions take, never under five minutes. */
+export function minutesFor(count: number): number {
+  return Math.max(5, Math.round(count / QUESTIONS_PER_MINUTE));
+}
+
+type Candidate = {
+  id: string;
+  topic: string | null;
+  due: Date | null;
+  /** The task in parts it is a part of (`items.task_part`, #297), and its letter; else null. */
+  task: string | null;
+  part: string | null;
+};
+
+/**
+ * The parts of a task in parts (#297) stand together, in letter order, where its first part
+ * stands; and a set never ends in the middle of one — b) without c) would leave her letters naming
+ * a part that never comes, so the set takes the rest of that task. Any other question keeps its
+ * place. A part whose task has no other part in the pool (a review) stands alone, as before.
+ * Exported for the unit test.
+ */
+export function wholeTasksFirst<C extends Pick<Candidate, 'task' | 'part'>>(
+  pool: readonly C[],
+  count: HowMany,
+): C[] {
+  const parts = new Map<string, C[]>();
+  for (const c of pool) if (c.task) parts.set(c.task, [...(parts.get(c.task) ?? []), c]);
+  const out = pool.flatMap((c) => {
+    if (!c.task) return [c];
+    const task = parts.get(c.task);
+    parts.delete(c.task);
+    return (task ?? []).sort((a, b) => (a.part ?? '').localeCompare(b.part ?? ''));
+  });
+  if (count === 'all') return out;
+  let end = Math.min(count, out.length);
+  while (
+    end > 0 &&
+    end < out.length &&
+    out[end]!.task !== null &&
+    out[end]!.task === out[end - 1]!.task
+  )
+    end++;
+  return out.slice(0, end);
+}
 
 export async function selectPracticeItems(
   db: Db,
@@ -127,7 +172,8 @@ export async function selectPracticeItems(
     // The wishes narrow the pool before the limit, so nothing she asked for is cut off by
     // 200 rows of something else; the difficulty is measured on what is left (its median).
     `with pool as (
-       select i.id, i.topic, i.difficulty, i.created_at, i.seq, st.due, st.item_id as reviewed
+       select i.id, i.topic, i.difficulty, i.created_at, i.seq, st.due, st.item_id as reviewed,
+              i.task_part->>'group' as task, i.task_part->>'part' as part
          from items i
          left join materials m on m.id = i.material_id
          left join item_states st on st.item_id = i.id
@@ -174,7 +220,7 @@ export async function selectPracticeItems(
        select percentile_cont(0.5) within group (order by difficulty::double precision) as mid
          from pool
      )
-     select p.id, p.topic, p.due
+     select p.id, p.topic, p.due, p.task, p.part
        from pool p, middle
       where $9::text is null
          or ($9 = 'easier' and p.difficulty < middle.mid)
@@ -226,5 +272,5 @@ export async function selectPracticeItems(
       pool = [...focused, ...rest];
     }
   }
-  return (count === 'all' ? pool : pool.slice(0, count)).map((c) => c.id);
+  return wholeTasksFirst(pool, count).map((c) => c.id);
 }

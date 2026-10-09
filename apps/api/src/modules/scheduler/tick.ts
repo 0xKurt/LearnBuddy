@@ -8,7 +8,8 @@
 // never exceeds the function limit; unfinished work stays queued.
 
 import type { Deps } from '../../deps.js';
-import { queueStalledTurns, runLearnerJobs } from '../buddy/check.js';
+import { runLearnerJobs } from '../buddy/check.js';
+import { queueStalledTurns } from '../buddy/turnRecovery.js';
 import { checkReceipts, sendDueOutreach, type DeliveryStats } from '../buddy/delivery.js';
 import { executeAccountDeletion } from '../identity/privacy.js';
 import {

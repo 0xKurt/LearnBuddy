@@ -44,14 +44,21 @@ export type PreparedPhoto = {
   height: number;
   /** What the check on the device found (lib/photo/quality.ts); empty = looks fine. */
   problems: PhotoProblem[];
+  /** The saved JPEG itself, when asked for: a photo of her working goes in the request (#444). */
+  base64: string | null;
 };
 
 /**
  * Downscales a picked photo to a longest side of 1600 px (never upscales) and
  * saves it as JPEG. The size is read from the rendered image, which is already
  * upright, so the longer side is found whatever the camera's orientation was.
+ * `base64`: the JPEG's bytes come back too — for a photo that is read in the request
+ * instead of being uploaded (her working, issue #444).
  */
-export async function preparePhoto(sourceUri: string): Promise<PreparedPhoto> {
+export async function preparePhoto(
+  sourceUri: string,
+  opts: { base64?: boolean } = {},
+): Promise<PreparedPhoto> {
   const context = ImageManipulator.manipulate(sourceUri);
   const rendered: ImageRef[] = [];
   try {
@@ -63,7 +70,11 @@ export async function preparePhoto(sourceUri: string): Promise<PreparedPhoto> {
       image = await context.renderAsync();
       rendered.push(image);
     }
-    const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: JPEG_QUALITY });
+    const saved = await image.saveAsync({
+      format: SaveFormat.JPEG,
+      compress: JPEG_QUALITY,
+      base64: opts.base64 === true,
+    });
     // A small copy for the quality check, measured right here on the device.
     let problems: PhotoProblem[] = [];
     try {
@@ -75,7 +86,13 @@ export async function preparePhoto(sourceUri: string): Promise<PreparedPhoto> {
     } catch {
       // The check is advice: without it the photo is simply taken as it is.
     }
-    return { uri: saved.uri, width: saved.width, height: saved.height, problems };
+    return {
+      uri: saved.uri,
+      width: saved.width,
+      height: saved.height,
+      problems,
+      base64: saved.base64 ?? null,
+    };
   } finally {
     // Full-size bitmaps: free them now rather than whenever the GC runs.
     context.release();

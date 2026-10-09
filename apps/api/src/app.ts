@@ -60,25 +60,27 @@ export function createApp(deps: Deps): Hono<AppEnv> {
   if (origins.length > 0) {
     app.use('*', appCors({ allowOrigin: (origin) => origins.includes(origin) }));
   }
-  // Photos go straight to storage; API bodies are small JSON.
+  // Photos of a sheet go straight to storage; API bodies are small JSON.
   const smallBodies = bodyLimit({
     maxSize: 64 * 1024,
     onError: () => {
       throw new AppError('too_large', 'Request body too large');
     },
   });
-  // Recordings are the one larger body: speaking practice (≤ 15 s) and spoken
-  // messages (≤ ~3 min, TranscribeRequest caps the base64 at 2 000 000 chars —
-  // this leaves room for the JSON around it).
-  const recordings = bodyLimit({
+  // Recordings and a photo of her own working are the larger bodies: speaking practice
+  // (≤ 15 s), spoken messages (≤ ~3 min, TranscribeRequest caps the base64 at 2 000 000
+  // chars — this leaves room for the JSON around it) and the one photo she takes of her
+  // working (issue #444, `WORK_PHOTO_BASE64_MAX`). Like a recording, that photo is read in
+  // this call and never stored, so it does not go through Storage.
+  const media = bodyLimit({
     maxSize: 3 * 1024 * 1024,
     onError: () => {
       throw new AppError('too_large', 'Request body too large');
     },
   });
   app.use('*', (c, next) =>
-    /\/practice\/sessions\/[^/]+\/speak$|\/voice\/transcribe$/.test(c.req.path)
-      ? recordings(c, next)
+    /\/practice\/sessions\/[^/]+\/(speak|work-photo)$|\/voice\/transcribe$/.test(c.req.path)
+      ? media(c, next)
       : smallBodies(c, next),
   );
   app.use('*', async (c, next) => {

@@ -6,37 +6,22 @@
 //
 //     paddingTop: 3, // token-exempt: optical centre of the 17 pt glyph
 //
-// The files that break the rule today are on the Ausnahmeliste
-// tools/guards/baselines/style-numbers.json with their count. A file may never have MORE than
-// its count; when it has fewer, the list has to shrink with it (`pnpm guards:shrink`), so a
-// fixed number cannot quietly come back.
+// A file may keep as many as it has on main (option `allowed`, measured by base.mjs, issue #452)
+// and never get one more. Once it has fewer on main, that is its new count — no list to edit.
 
-import { readFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { syntaxRules } from './syntax-rules.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-/** The repository root: every path on an Ausnahmeliste is relative to it. */
+/** The repository root: every path the guards name is relative to it. */
 export const REPO_ROOT = join(HERE, '..', '..');
-export const STYLE_BASELINE = join(HERE, 'baselines', 'style-numbers.json');
 
 /** padding*, margin*, gap/rowGap/columnGap, fontSize, lineHeight, border*Radius. */
 const GUARDED =
   /^(padding|margin)([A-Z]\w*)?$|^(row|column)?[gG]ap$|^fontSize$|^lineHeight$|^border(\w*)Radius$/;
 const EXEMPT = /token-exempt:\s*\S{3,}/;
-
-/** @type {Record<string, number> | null} */
-let baselineCache = null;
-/** @returns {Record<string, number>} */
-function styleBaseline() {
-  if (baselineCache === null) {
-    const parsed = JSON.parse(readFileSync(STYLE_BASELINE, 'utf8'));
-    baselineCache = /** @type {Record<string, number>} */ (parsed.files ?? {});
-  }
-  return baselineCache;
-}
 
 /** @param {string} filename */
 export function repoPath(filename) {
@@ -96,17 +81,25 @@ const noRawStyleNumber = {
       description:
         'Abstände, Schriftgrößen, Zeilenhöhen und Radien nur aus lib/theme (Regel 5, Issue #313).',
     },
-    schema: [],
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          // File → the free numbers it has on main (base.mjs, issue #452).
+          allowed: { type: 'object', additionalProperties: { type: 'integer', minimum: 0 } },
+        },
+        additionalProperties: false,
+      },
+    ],
     messages: {
       raw: '{{prop}}: {{value}} ist eine freie Zahl. Token aus lib/theme nehmen (SPACE, TYPE …) oder die Ausnahme begründen: `// token-exempt: <Grund>`. {{count}}',
-      stale:
-        'Ausnahmeliste veraltet: diese Datei hat noch {{now}} freie Stilzahlen, die Liste erlaubt {{allowed}}. Die Liste schrumpft mit: `pnpm guards:shrink` (tools/guards/baselines/style-numbers.json).',
     },
   },
   create(context) {
     const source = context.sourceCode;
-    const file = repoPath(context.filename);
-    const allowed = styleBaseline()[file] ?? 0;
+    /** @type {{ allowed?: Record<string, number> }} */
+    const options = context.options[0] ?? {};
+    const allowed = options.allowed?.[repoPath(context.filename)] ?? 0;
     /** @type {{ node: import('eslint').Rule.Node, prop: string }[]} */
     const found = [];
 
@@ -136,25 +129,15 @@ const noRawStyleNumber = {
     return {
       Property: visit,
       JSXAttribute: visit,
-      'Program:exit'(program) {
-        if (found.length > allowed) {
-          const count =
-            allowed > 0
-              ? `(Datei: ${found.length}, Ausnahmeliste erlaubt ${allowed} — eine neue kam dazu.)`
-              : '';
-          for (const { node, prop } of found) {
-            context.report({
-              node,
-              messageId: 'raw',
-              data: { prop, value: source.getText(node), count },
-            });
-          }
-        } else if (found.length < allowed) {
+      'Program:exit'() {
+        if (found.length <= allowed) return;
+        const count =
+          allowed > 0 ? `(Datei: ${found.length}, auf main ${allowed} — eine neue kam dazu.)` : '';
+        for (const { node, prop } of found) {
           context.report({
-            node: program,
-            loc: { line: 1, column: 0 },
-            messageId: 'stale',
-            data: { now: String(found.length), allowed: String(allowed) },
+            node,
+            messageId: 'raw',
+            data: { prop, value: source.getText(node), count },
           });
         }
       },
@@ -163,26 +146,20 @@ const noRawStyleNumber = {
 };
 
 /**
- * The count a file has today — used by `pnpm guards:shrink` to rewrite the list. Exported so
- * the shrink script and the rule can never disagree about what counts.
+ * The count a file has — what base.mjs measures on main. Exported so the measure and the rule
+ * can never disagree about what counts.
  * @param {import('eslint').Linter} linter
  * @param {string} text
  * @param {string} filename
  * @param {import('eslint').Linter.Config[]} baseConfig
  */
 export function countRawStyleNumbers(linter, text, filename, baseConfig) {
-  const saved = baselineCache;
-  baselineCache = {};
-  try {
-    const messages = linter.verify(
-      text,
-      [...baseConfig, { plugins: { lb: plugin }, rules: { 'lb/no-raw-style-number': 'error' } }],
-      filename,
-    );
-    return messages.filter((m) => m.ruleId === 'lb/no-raw-style-number').length;
-  } finally {
-    baselineCache = saved;
-  }
+  const messages = linter.verify(
+    text,
+    [...baseConfig, { plugins: { lb: plugin }, rules: { 'lb/no-raw-style-number': 'error' } }],
+    filename,
+  );
+  return messages.filter((m) => m.ruleId === 'lb/no-raw-style-number').length;
 }
 
 const plugin = {

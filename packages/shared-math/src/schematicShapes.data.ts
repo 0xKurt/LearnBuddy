@@ -5,31 +5,35 @@
 // the part, clear of the others). The parts stand in the order of their names
 // (`schematics.data.ts`, which says what each is called).
 //
-// Only the app draws them, and it loads this file with the first picture (`useSchematicShapes`),
-// so the drawings are no part of the start bundle; the server reads it for what a finger can tap.
+// This file holds the drawings of the first part and gathers the rest: the body
+// (`schematicBody.data.ts`) and things (`schematicThings.data.ts`) of the second, and those of
+// #462 — small things drawn large (`schematicDetail.data.ts`), living things
+// (`schematicLife.data.ts`) and the world (`schematicWorld.data.ts`). Only the app draws them, and it
+// loads this file with the first picture (`useSchematicShapes`), so the drawings are no part of
+// the start bundle; the server reads it for what a finger can tap.
 
-import { arc, band, bloom, box, circle, ellipse, poly, stroke } from './drawShapes.js';
-import type { SchematicPartShape, SchematicShapes } from './schematics.js';
+import {
+  arc,
+  band,
+  bloom,
+  both,
+  box,
+  circle,
+  ellipse,
+  mirror,
+  poly,
+  shape,
+  stroke,
+  TONE,
+} from './drawShapes.js';
+import { SCHEMATIC_BODY } from './schematicBody.data.js';
+import { SCHEMATIC_DETAIL } from './schematicDetail.data.js';
+import { SCHEMATIC_LIFE } from './schematicLife.data.js';
+import { SCHEMATIC_THINGS } from './schematicThings.data.js';
+import { SCHEMATIC_WORLD } from './schematicWorld.data.js';
+import type { SchematicShapes } from './schematics.js';
 
-function shape(
-  id: string,
-  tone: number,
-  at: readonly [number, number],
-  rings: readonly string[],
-): SchematicPartShape {
-  return { id, tone, at, rings };
-}
-
-/** The pastels, by index into `figure.slices`; INK is the figure's ink (a pupil, a tyre). */
-const LILAC = 0;
-const BLUE = 1;
-const GREEN = 2;
-const ORANGE = 3;
-const PINK = 4;
-const YELLOW = 5;
-const SAND = 6;
-const TEAL = 7;
-const INK = -1;
+const { LILAC, BLUE, GREEN, ORANGE, PINK, YELLOW, SAND, TEAL, INK } = TONE;
 
 // ── cells ──────────────────────────────────────────────────────────────────
 
@@ -40,7 +44,7 @@ const plantCell = {
     shape(
       'membrane',
       PINK,
-      [813, 300],
+      [500, 97],
       band(box(178, 88, 644, 544, 40), box(196, 106, 608, 508, 30)),
     ),
     shape('wall', SAND, [164, 420], band(box(150, 60, 700, 600, 60), box(178, 88, 644, 544, 40))),
@@ -49,7 +53,7 @@ const plantCell = {
     shape(
       'chloroplast',
       GREEN,
-      [250, 470],
+      [275, 578],
       [
         ellipse(250, 470, 46, 22, -20),
         ellipse(470, 160, 46, 20, 10),
@@ -61,7 +65,7 @@ const plantCell = {
     shape(
       'mitochondrion',
       ORANGE,
-      [235, 345],
+      [772, 430],
       [ellipse(235, 345, 34, 17, 30), ellipse(772, 430, 17, 34)],
     ),
   ],
@@ -77,8 +81,8 @@ const animalCell = {
       [170, 320],
       band(ellipse(500, 320, 352, 274, 0, 0.05), ellipse(500, 320, 330, 252, 0, 0.05)),
     ),
-    shape('nucleus', LILAC, [392, 340], [circle(440, 300, 95)]),
-    shape('nucleolus', TEAL, [462, 285], [circle(462, 285, 32)]),
+    shape('nucleus', LILAC, [375, 355], [circle(440, 300, 95)]),
+    shape('nucleolus', TEAL, [485, 268], [circle(485, 268, 30)]),
     shape(
       'mitochondrion',
       ORANGE,
@@ -98,14 +102,13 @@ const leftPetal = [
   455, 560, 380, 520, 300, 430, 250, 320, 270, 230, 330, 260, 390, 350, 440, 450, 470, 540,
 ];
 const leftSepal = [470, 585, 400, 600, 320, 560, 290, 520, 360, 535, 430, 560];
-const mirror = (xy: number[]) => xy.map((v, i) => (i % 2 === 0 ? 1000 - v : v));
 
 const flower = {
   lines: [],
   parts: [
     shape('stalk', GREEN, [500, 740], [stroke(34, 500, 815, 500, 600)]),
     shape('sepal', TEAL, [345, 552], [poly(...leftSepal), poly(...mirror(leftSepal))]),
-    shape('petal', PINK, [330, 360], [poly(...leftPetal), poly(...mirror(leftPetal))]),
+    shape('petal', PINK, [290, 330], [poly(...leftPetal), poly(...mirror(leftPetal))]),
     shape('receptacle', SAND, [500, 602], [ellipse(500, 592, 95, 32)]),
     shape(
       'stamen',
@@ -143,7 +146,7 @@ const plant = {
     shape(
       'leaf',
       TEAL,
-      [395, 505],
+      [340, 503],
       [poly(...leftLeaf), poly(...mirror(leftLeaf).map((v, i) => (i % 2 ? v - 90 : v)))],
     ),
     shape('blossom', PINK, [500, 215], [bloom(500, 215, 105, 6)]),
@@ -156,10 +159,10 @@ const eye = {
   lines: [],
   parts: [
     shape('optic_nerve', SAND, [880, 322], [box(780, 292, 150, 60, 12)]),
-    shape('vitreous', YELLOW, [620, 300], [circle(560, 320, 190)]),
+    shape('vitreous', YELLOW, [600, 430], [circle(560, 320, 190)]),
     shape('retina', PINK, [758, 230], [arc(560, 320, 190, 210, -110, 110)]),
     shape('sclera', SAND, [560, 100], [arc(560, 320, 210, 232, -145, 145)]),
-    shape('cornea', BLUE, [300, 320], [arc(560, 320, 232, 266, 148, 212)]),
+    shape('cornea', BLUE, [319, 384], [arc(560, 320, 232, 266, 148, 212)]),
     shape('lens', TEAL, [430, 320], [ellipse(430, 320, 38, 85)]),
     shape('iris', ORANGE, [376, 222], [box(366, 186, 20, 82, 6), box(366, 372, 20, 82, 6)]),
     shape('pupil', INK, [376, 320], [box(368, 272, 16, 96, 4)]),
@@ -282,7 +285,7 @@ const insect = {
       'leg',
       SAND,
       [352, 236],
-      legs.flatMap((l) => [stroke(12, ...l), stroke(12, ...mirror(l))]),
+      legs.flatMap((l) => both(12, ...l)),
     ),
     shape(
       'wing',
@@ -291,13 +294,13 @@ const insect = {
       [ellipse(330, 470, 150, 52, -25), ellipse(670, 470, 150, 52, 25)],
     ),
     shape('abdomen', ORANGE, [500, 640], [ellipse(500, 610, 70, 175)]),
-    shape('thorax', LILAC, [500, 385], [ellipse(500, 385, 56, 66)]),
-    shape('head', YELLOW, [500, 290], [circle(500, 265, 48)]),
-    shape('eye', TEAL, [462, 250], [circle(462, 250, 17), circle(538, 250, 17)]),
+    shape('thorax', LILAC, [500, 440], [ellipse(500, 385, 56, 66)]),
+    shape('head', YELLOW, [500, 298], [circle(500, 265, 48)]),
+    shape('eye', TEAL, [538, 250], [circle(462, 250, 17), circle(538, 250, 17)]),
     shape(
       'antenna',
       SAND,
-      [436, 150],
+      [598, 120],
       [stroke(9, 482, 222, 450, 160, 400, 118), stroke(9, 518, 222, 550, 160, 600, 118)],
     ),
   ],
@@ -320,7 +323,7 @@ const bicycle = {
     shape(
       'rear_wheel',
       INK,
-      [250, 562],
+      [119, 472],
       [...band(circle(250, 420, 150), circle(250, 420, 132)), circle(250, 420, 16)],
     ),
     shape(
@@ -332,8 +335,8 @@ const bicycle = {
     shape(
       'chain',
       SAND,
-      [318, 462],
-      [stroke(8, 250, 446, 382, 468), stroke(8, 250, 394, 382, 372)],
+      [290, 440],
+      [stroke(8, 250, 434, 382, 454), stroke(8, 250, 406, 382, 386)],
     ),
     shape(
       'frame',
@@ -348,12 +351,39 @@ const bicycle = {
         stroke(16, 645, 200, 760, 420),
       ],
     ),
-    shape('pedal', YELLOW, [430, 512], [stroke(10, 382, 420, 425, 505), box(398, 502, 64, 18, 4)]),
+    shape(
+      'carrier',
+      SAND,
+      [200, 254],
+      [stroke(10, 352, 250, 140, 256), stroke(8, 168, 258, 246, 410)],
+    ),
+    shape(
+      'pedal',
+      YELLOW,
+      [430, 512],
+      [
+        ...band(circle(382, 420, 36), circle(382, 420, 24)),
+        stroke(10, 382, 420, 425, 505),
+        box(398, 502, 64, 18, 4),
+      ],
+    ),
     shape('saddle', ORANGE, [338, 200], [poly(286, 196, 390, 188, 404, 204, 334, 216, 292, 210)]),
     shape('handlebar', TEAL, [712, 146], [stroke(14, 648, 205, 660, 150, 712, 140, 744, 162)]),
-    shape('bell', YELLOW, [680, 118], [circle(680, 118, 15)]),
-    shape('headlight', YELLOW, [712, 300], [box(694, 290, 38, 22, 6)]),
-    shape('rear_light', PINK, [276, 300], [box(258, 290, 36, 20, 5)]),
+    shape('bell', YELLOW, [686, 128], [circle(686, 128, 14)]),
+    shape(
+      'headlight',
+      YELLOW,
+      [688, 228],
+      [poly(664, 214, 700, 208, 712, 228, 700, 248, 664, 242)],
+    ),
+    shape(
+      'spoke_reflector',
+      YELLOW,
+      [760, 330],
+      [ellipse(250, 330, 24, 12), ellipse(760, 330, 24, 12)],
+    ),
+    shape('brake', SAND, [692, 286], [box(680, 276, 24, 20, 5), box(306, 276, 24, 20, 5)]),
+    shape('rear_light', PINK, [143, 268], [box(126, 256, 34, 24, 6)]),
   ],
 };
 
@@ -367,4 +397,9 @@ export const SCHEMATIC_SHAPES: SchematicShapes = {
   tooth,
   insect,
   bicycle,
+  ...SCHEMATIC_THINGS,
+  ...SCHEMATIC_BODY,
+  ...SCHEMATIC_DETAIL,
+  ...SCHEMATIC_WORLD,
+  ...SCHEMATIC_LIFE,
 };

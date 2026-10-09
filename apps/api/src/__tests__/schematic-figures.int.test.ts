@@ -15,6 +15,9 @@ import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 import {
   BROKEN_SCHEMATIC_ITEMS,
+  LIBRARY_ITEMS,
+  LIBRARY_MORE_ITEMS,
+  LIBRARY_REST_ITEMS,
   SCHEMATIC_ITEMS,
   SCHEMATIC_PROMPTS,
 } from '../testing/scenarios/schematic.js';
@@ -83,18 +86,89 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
   it('stores only questions about parts the drawing has, a tap only on a part a finger can hit', async () => {
     const s = await start(env, l, [...SCHEMATIC_ITEMS, ...BROKEN_SCHEMATIC_ITEMS]);
     expect(s.items.map((i) => i.item.prompt)).toEqual(SCHEMATIC_PROMPTS);
-    expect(s.items.map((i) => i.item.tap)).toEqual([false, false, false, true, true]);
+    expect(s.items.map((i) => i.item.tap)).toEqual([false, false, false, true, true, true]);
   });
 
   it('grades a named part in any language and a tapped part by code, never the tutor', async () => {
     const s = await start(env, l, SCHEMATIC_ITEMS);
-    const [one, two, , nucleus, frame] = s.items.map((i) => i.item.id) as string[];
+    const [one, two, , nucleus, frame, sign] = s.items.map((i) => i.item.id) as string[];
     expect((await answer(l, s, one!, 'Nukleus')).body.verdict).toBe('correct');
     expect((await answer(l, s, two!, 'vacuole')).body.verdict).toBe('correct');
     expect((await answer(l, s, nucleus!, 'Vakuole')).body.verdict).toBe('incorrect');
     expect((await answer(l, s, frame!, 'Rahmen')).body.verdict).toBe('correct');
+    // A drawing of #252's second part: the traffic signs, the stop sign tapped for the cycle path.
+    expect((await answer(l, s, sign!, 'Stoppschild')).body.verdict).toBe('incorrect');
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
+
+  it('every drawing of the second part, numbered and tapped: stored as written, graded by code', async () => {
+    const s = await start(env, l, LIBRARY_ITEMS);
+    expect(s.items.map((i) => i.item.prompt)).toEqual(LIBRARY_ITEMS.map((i) => i.prompt));
+    expect(s.items.map((i) => i.item.tap)).toEqual(LIBRARY_ITEMS.map((i) => 'tap' in i));
+    for (const [k, { item }] of s.items.entries()) {
+      const verdict = (await answer(l, s, item.id, LIBRARY_ITEMS[k]!.answer)).body.verdict;
+      expect(verdict, item.prompt).toBe('correct');
+    }
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
+  });
+
+  it('the lens, the pupil, the stigma and the stamen drawn large are tapped again (#462)', async () => {
+    // The same parts in the whole drawing: a finger is too wide there, the question is dropped.
+    const whole = (d: string, prompt: string, answer: string) => ({
+      ...SCHEMATIC_ITEMS[2]!,
+      prompt,
+      answer,
+      figure: { type: 'schematic', d, n: [], ask: 0 },
+    });
+    const large = LIBRARY_MORE_ITEMS.filter(
+      (i) => ['Linse', 'Pupille', 'Narbe', 'Staubblatt'].includes(i.answer) && 'tap' in i,
+    );
+    expect(large).toHaveLength(4);
+    const s = await start(env, l, [
+      whole('eye', 'Tippe auf die Pupille im Auge.', 'Pupille'),
+      whole('flower', 'Tippe auf die Narbe der Blüte.', 'Narbe'),
+      ...large,
+    ]);
+    expect(s.items.map((i) => i.item.prompt)).toEqual(large.map((i) => i.prompt));
+    const rows = await env.db.query<{ id: string; answer: string; figure: unknown; tap: boolean }>(
+      `select id, answer, figure, tap from items where learner_id = $1`,
+      [l.learnerId],
+    );
+    // The two taps on the whole drawing were never stored.
+    expect(rows).toHaveLength(4);
+    // In the order of the run.
+    const stored = s.items.map(({ item }) => rows.find((r) => r.id === item.id)!);
+    expect(stored.map((r) => [r.answer, r.tap, (r.figure as { d: string }).d])).toEqual([
+      ['Linse', true, 'eye_front'],
+      ['Pupille', true, 'eye_front'],
+      ['Narbe', true, 'flower_section'],
+      ['Staubblatt', true, 'flower_section'],
+    ]);
+    // Graded by code, by the part's id: any of its names counts, another part does not.
+    const [lens, pupil, stigma, stamen] = s.items.map((i) => i.item.id) as string[];
+    expect((await answer(l, s, lens!, 'Linse')).body.verdict).toBe('correct');
+    expect((await answer(l, s, pupil!, 'Regenbogenhaut')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, stigma!, 'stigma')).body.verdict).toBe('correct');
+    expect((await answer(l, s, stamen!, 'Staubbeutel')).body.verdict).toBe('correct');
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
+  });
+
+  it.each([
+    ['the first run', LIBRARY_MORE_ITEMS],
+    ['the second run', LIBRARY_REST_ITEMS],
+  ])(
+    'every drawing of #462, %s numbered and tapped: stored as written, graded by code',
+    async (_, items) => {
+      const s = await start(env, l, items);
+      expect(s.items.map((i) => i.item.prompt)).toEqual(items.map((i) => i.prompt));
+      expect(s.items.map((i) => i.item.tap)).toEqual(items.map((i) => 'tap' in i));
+      for (const [k, { item }] of s.items.entries()) {
+        const verdict = (await answer(l, s, item.id, items[k]!.answer)).body.verdict;
+        expect(verdict, item.prompt).toBe('correct');
+      }
+      expect(env.llm.callsFor('tutor')).toHaveLength(0);
+    },
+  );
 
   it('a tapped part stands in the thread in her language', async () => {
     const en = await onboard(env, {

@@ -14,6 +14,7 @@ const base: RoomInput = {
   cardDelta: 0,
   visual: false,
   growable: true,
+  reach: 0.5,
   viewHeight: 740,
 };
 const newest = 260 - (12 + 128) + 8;
@@ -75,6 +76,13 @@ describe('threadRoom (issues #286, #232, #403)', () => {
     // Never more than the drawing may give; a card without one gives nothing.
     expect(threadRoom({ ...quiet, visual: true, short: 90 }).cardGrowTo).toBe(-48);
     expect(threadRoom({ ...quiet, short: 20 }).cardGrowTo).toBe(0);
+  });
+
+  it('grows a card to its share of the window: half, a tall picture all the free room (#462)', () => {
+    // A quiet question, its card 250 pt with the drawing, 300 pt free under it but the hint row.
+    const free = { ...base, quiet: true, tops: [], threadNeed: 40, room: 340, cardNatural: 250 };
+    expect(threadRoom({ ...free, visual: true }).cardGrowTo).toBe(370 - 250);
+    expect(threadRoom({ ...free, visual: true, reach: 1 }).cardGrowTo).toBe(340 - 40);
   });
 
   it('gives a reply she reads through all the room, from its top, where it is taller (#258)', () => {

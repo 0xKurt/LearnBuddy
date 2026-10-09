@@ -9,6 +9,12 @@
 // is not answered by tapping it would be an empty face beside a question about a time — dropped.
 
 import {
+  FIGURE_NAMES,
+  gridParse,
+  gridText,
+  gridVerdict,
+  isGridMap,
+  isMap,
   isTappable,
   namedPlaces,
   regionName,
@@ -30,7 +36,7 @@ export function tapItemProblem(it: Tapped): string | null {
   }
   if (!kindIn(TAP_KINDS, it.kind)) return `a ${it.kind} question is not answered by a tap`;
   if (f === null) return 'nothing to tap';
-  return tapProblem(f, it.kind, it.answer);
+  return tapProblem(FIGURE_NAMES, f, it.kind, it.answer);
 }
 
 /**
@@ -55,7 +61,7 @@ export function tapRuleVerdict(
   if (item.tap !== true) return null;
   const figure = FigureSchema.safeParse(item.figure);
   if (!figure.success || !isTappable(figure.data)) return null;
-  return tapVerdict(figure.data, item.answer, text);
+  return tapVerdict(FIGURE_NAMES, figure.data, item.answer, text);
 }
 
 /**
@@ -70,14 +76,36 @@ export function namedRuleVerdict(
   text: string,
 ): 'correct' | 'incorrect' | null {
   const figure = FigureSchema.safeParse(item.figure);
-  if (!figure.success || !isTappable(figure.data) || namedPlaces(figure.data) === null) return null;
-  return tapVerdict(figure.data, item.answer, text);
+  if (
+    !figure.success ||
+    !isTappable(figure.data) ||
+    namedPlaces(FIGURE_NAMES, figure.data) === null
+  )
+    return null;
+  return tapVerdict(FIGURE_NAMES, figure.data, item.answer, text);
+}
+
+/**
+ * Her typed coordinates of a crossing of the Gradnetz judged exactly (#429): read in her language
+ * (`gridVerdict` — "20° O" is west in French), 'correct' for the key's crossing, 'incorrect' for
+ * another point. Null where the figure has no grid, where she wrote no coordinates, and where her
+ * "O" read as the German Ost would be the key outside German — the other rules judge that.
+ */
+export function gridRuleVerdict(
+  item: { answer: string; figure?: unknown },
+  text: string,
+  locale: string | null,
+): 'correct' | 'incorrect' | null {
+  const figure = FigureSchema.safeParse(item.figure);
+  if (!figure.success || !isMap(figure.data) || !isGridMap(figure.data)) return null;
+  return gridVerdict(item.answer, text, locale);
 }
 
 /**
  * Her tapped place as it stands in the thread: in her language ("Bavaria", "nucleus" for an
- * English learner), where the app sent the German name. Null for anything that is no tap on a
- * figure of named places, or names none of them — then her text stands as it came.
+ * English learner; "50° N, 10° E", #429), where the app sent the German name. Null for anything
+ * that is no tap on a figure of named places or a grid, or names none of them — then her text
+ * stands as it came.
  */
 export function tappedAnswerText(
   item: { figure?: unknown; tap?: boolean },
@@ -85,8 +113,13 @@ export function tappedAnswerText(
   locale: string,
 ): string | null {
   if (item.tap !== true) return null;
-  const figure = FigureSchema.safeParse(item.figure);
-  const places = figure.success ? namedPlaces(figure.data) : null;
+  const parsed = FigureSchema.safeParse(item.figure);
+  const figure = parsed.success ? parsed.data : null;
+  if (figure && isMap(figure) && isGridMap(figure)) {
+    const p = gridParse(text, 'de');
+    return p ? gridText(p, locale) : null;
+  }
+  const places = figure ? namedPlaces(FIGURE_NAMES, figure) : null;
   if (!places) return null;
   const i = regionNamed(places, text);
   return i === null ? null : regionName(places, i, locale);

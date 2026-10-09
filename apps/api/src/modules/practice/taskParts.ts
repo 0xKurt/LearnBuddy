@@ -16,6 +16,13 @@
 //     that follows correctly from her wrong a) is right — a Folgefehler, as German schools mark
 //     it — and the reply says so. Her own a) stays wrong; nothing here touches it.
 //
+// An OPEN part („Begründe …", „Deute …", step 2 of #297) is a free text with key points, written,
+// checked and stored exactly as an explanation question is („Erklär mal", `teachBack.ts`): the same
+// rules for its points (against everything she reads — the situation and its question), the same
+// rubric, the same follow-ups as its hints. Answering it is the one key-point path of
+// `answer.ts` (#236, the quote check of #258): no second check, no grade. Its points may not hang
+// on an earlier part's result: she may go on with her own (`openPartProblem`).
+//
 // The model never writes an id or a letter into a stored field (CLAUDE.md rule 2): the parts are
 // lettered here in the order they come, the group id is made here, the app gets an alias.
 
@@ -31,6 +38,8 @@ import {
 } from '@learnbuddy/shared-math';
 import {
   TASK_FORMULA_MAX,
+  TASK_OPEN_POINTS_MAX,
+  TASK_OPEN_POINTS_MIN,
   TASK_PART_LETTERS,
   TASK_PARTS_MAX,
   TASK_PARTS_MIN,
@@ -43,16 +52,22 @@ import {
 import { z } from 'zod';
 
 import type { Db } from '../../lib/db.js';
+import { valuesIn } from './evaluate.js';
 import { ItemDraft, usableItems, type StoredItem } from './items.js';
-import { lastValue } from './steps.js';
+import { close, lastValue } from './steps.js';
+import { KeyPointDraft, keyPointFields, keyPointsProblem } from './teachBack.js';
 
 /** The most tasks in parts one run carries: each is three or four questions already. */
 export const MAX_PART_TASKS = 2;
 
-/** The answer forms a part may have in this first step: a number, a short answer, a choice. */
-const PART_KINDS = ['numeric', 'short', 'multiple_choice'] as const;
+/**
+ * The answer forms a part may have: a number, a short answer, a choice — and an open answer
+ * (`long`), checked against its key points. A run offers only those its profile allows
+ * (`setProfiles.ts`): a test has no long answer, so no open part.
+ */
+export const PART_KINDS = ['numeric', 'short', 'multiple_choice', 'long'] as const;
 
-const PartDraft = ItemDraft.pick({
+export const PartDraft = ItemDraft.pick({
   prompt: true,
   answer: true,
   accepted_answers: true,
@@ -71,6 +86,13 @@ const PartDraft = ItemDraft.pick({
     .default(null)
     .describe(
       'numeric only, and only when this part goes on with the RESULT of earlier parts: how its answer follows from theirs, as arithmetic in their letters (a, b, c) — "a * 0,15 + 12"; null for a part that stands on its own',
+    ),
+  points: z
+    .array(KeyPointDraft)
+    .max(TASK_OPEN_POINTS_MAX)
+    .default([])
+    .describe(
+      `long only: the ${TASK_OPEN_POINTS_MIN}–${TASK_OPEN_POINTS_MAX} key points a complete answer to this open part makes, in the order a teacher expects them; empty for every other part`,
     ),
 });
 
@@ -94,10 +116,19 @@ export const PartTaskDraft = z.object({
 export type PartTaskDraft = z.infer<typeof PartTaskDraft>;
 
 /**
+ * How a computed part says it goes on from earlier ones: the same syntax for a task the generator
+ * writes and one read from a photo (`materials/partTasks.ts`). A syntax, not a task.
+ */
+export const PART_FROM_RULE = `A numeric part that goes on with the result of earlier parts says how in "from": arithmetic over their letters only (a, b, c; numbers, + - * / ^, sqrt, parentheses) that gives exactly its own key from theirs`;
+
+/** What an open part holds, wherever it is written (the generator, a photo reading). */
+export const OPEN_PART_RULE = `An open part (kind long: begründe, erkläre, beschreibe, deute, beurteile) asks for her reasoning about the situation; its answer is its points in a few words, and "points" holds the ${TASK_OPEN_POINTS_MIN}–${TASK_OPEN_POINTS_MAX} key points a complete answer makes. None of them states what the situation or the question already says, and none hangs on an earlier part's result (no number she computed there): she may go on with her own.`;
+
+/**
  * What the generator is told about tasks in parts. Principles, never an example task (models copy
  * examples — standing owner rule); the formula's form is a syntax, not a task.
  */
-export const PART_TASK_RULES = `Tasks in parts ("part_tasks", grade 7 and up, any subject where a situation carries several steps): one situation (stem: a few sentences with every number the parts need — no drawing, chart or table: such a task is not written as one in parts) and ${TASK_PARTS_MIN}–${TASK_PARTS_MAX} parts in the order a class test asks them, from finding a value to using it. Each part is a question of kind numeric, short or multiple_choice with its own key, written WITHOUT its letter (the app letters them a), b), c)). A numeric part that goes on with the result of earlier parts says how in "from": arithmetic over their letters only (a, b, c; numbers, + - * / ^, sqrt, parentheses) that gives exactly its own key from theirs — the app recomputes it, and a task whose formula does not give the key is dropped whole. Never a part that only repeats another, never more parts than the situation carries.`;
+export const PART_TASK_RULES = `Tasks in parts ("part_tasks", grade 7 and up, any subject where a situation carries several steps): one situation (stem: a few sentences with every number and fact the parts need — no drawing, chart or table: such a task is not written as one in parts) and ${TASK_PARTS_MIN}–${TASK_PARTS_MAX} parts in the order a class test asks them, from finding a value to using it and judging it. Each part is a question of kind numeric, short, multiple_choice or — where the schema offers it — long, with its own key, written WITHOUT its letter (the app letters them a), b), c)). ${PART_FROM_RULE} — the app recomputes it, and a task whose formula does not give the key is dropped whole. ${OPEN_PART_RULE} Never a part that only repeats another, never more parts than the situation carries.`;
 
 /** The letters of a task of `n` parts. */
 function lettersOf(n: number): TaskPartLetter[] {
@@ -162,18 +193,79 @@ function isValue(
 }
 
 /**
- * The questions of one task in parts, lettered, each carrying the task — or none.
+ * Why part `index` cannot stand as it is for its key points, or null when it can (Regel 0: the
+ * whole task goes, never a repaired one). Exported for the unit test.
  *
- * Every part goes through `usableItems` like any question; one that does not hold, or a formula
- * that does not, costs the whole task (a task is its parts in order).
+ *   · an open part has `TASK_OPEN_POINTS_MIN`–`TASK_OPEN_POINTS_MAX` key points, held to the
+ *     rules of every key point (`keyPointsProblem`) against everything she reads while she answers
+ *     it: the situation and its question;
+ *   · any other part has none — a point there would be checked by nothing;
+ *   · no point of an open part hangs on an earlier part's RESULT: a computed part's value in its
+ *     statement or an exact term, unless the situation or the question states that number too.
+ *     Her wrong a) carried on consistently would otherwise make the point "missing" — the
+ *     Folgefehler marked a second time.
  */
-export function partTaskItems(draft: PartTaskDraft, opts: { locale?: string } = {}): StoredItem[] {
-  const n = draft.parts.length;
-  const drafts: ItemDraft[] = draft.parts.map(({ from: _from, ...p }) => ({
-    ...p,
-    topic: draft.topic,
-    difficulty: draft.difficulty,
-    prompt_lang: draft.prompt_lang,
+export function openPartProblem(draft: PartTaskDraft, index: number): string | null {
+  const part = draft.parts[index];
+  if (!part) return 'no part';
+  if (part.kind !== 'long') return part.points.length > 0 ? 'key points on a closed part' : null;
+  if (part.points.length < TASK_OPEN_POINTS_MIN) return 'too few key points';
+  const shown = `${draft.stem}\n${part.prompt}`;
+  const problem = keyPointsProblem(part.points, shown, null);
+  if (problem !== null) return problem;
+  const stated = valuesIn(shown);
+  const results = draft.parts
+    .slice(0, index)
+    .flatMap((p) => (p.kind === 'numeric' ? [keyValue(p.answer)] : []))
+    .filter((v): v is number => v !== null && !stated.some((s) => close(s, v)));
+  const hangs = part.points.some((p) =>
+    [p.point, ...p.exact].some((t) => valuesIn(t).some((v) => results.some((r) => close(r, v)))),
+  );
+  return hangs ? 'point hangs on an earlier result' : null;
+}
+
+/**
+ * The help a photo reading writes beside each part, as it does beside every question it reads
+ * (`materials/partTasks.ts`). A generated task has none here: its help comes in its own call
+ * (`hints.ts`). An open part's help is always its follow-ups, whatever is given.
+ */
+export type PartHelp = Pick<ItemDraft, 'hints' | 'worked_solution'>;
+
+/** What one part says of itself: its form, its question, its key and its help. */
+type PartFields = PartHelp &
+  Pick<
+    ItemDraft,
+    | 'kind'
+    | 'prompt'
+    | 'answer'
+    | 'accepted_answers'
+    | 'unit'
+    | 'choices'
+    | 'correct_choice'
+    | 'tolerance'
+  >;
+
+/**
+ * A part as an ordinary question: the task's topic, difficulty and language, nothing drawn, and
+ * nothing else the model wrote beside it. The one shape both a part of a task and a part read
+ * back as a question of its own take (`materials/partTasks.ts`).
+ */
+export function partQuestion(
+  task: Pick<PartTaskDraft, 'topic' | 'difficulty' | 'prompt_lang'>,
+  part: PartFields,
+): ItemDraft {
+  return {
+    kind: part.kind,
+    prompt: part.prompt,
+    answer: part.answer,
+    accepted_answers: part.accepted_answers,
+    unit: part.unit,
+    choices: part.choices,
+    correct_choice: part.correct_choice,
+    tolerance: part.tolerance,
+    topic: task.topic,
+    difficulty: task.difficulty,
+    prompt_lang: task.prompt_lang,
     lang: null,
     figure: null,
     choice_figures: null,
@@ -182,11 +274,37 @@ export function partTaskItems(draft: PartTaskDraft, opts: { locale?: string } = 
     spelling: null,
     source_excerpt: null,
     curriculum_point: null,
-    hints: [],
-    worked_solution: null,
+    hints: part.hints,
+    worked_solution: part.worked_solution,
     rubric: null,
-  }));
-  const usable = usableItems(drafts, opts);
+  };
+}
+
+/**
+ * The questions of one task in parts, lettered, each carrying the task — or none.
+ *
+ * Every part goes through `usableItems` like any question; one that does not hold, a formula that
+ * does not, or an open part whose key points do not, costs the whole task (a task is its parts in
+ * order). An open part is then stored as an explanation question is (`keyPointFields`).
+ */
+export function partTaskItems(
+  draft: PartTaskDraft,
+  opts: { locale?: string; help?: readonly PartHelp[] } = {},
+): StoredItem[] {
+  const n = draft.parts.length;
+  if (draft.parts.some((_, i) => openPartProblem(draft, i) !== null)) return [];
+  const open = draft.parts.map((p) => (p.kind === 'long' ? keyPointFields(p.points) : null));
+  const drafts = draft.parts.map((p, i) => {
+    const o = open[i];
+    return partQuestion(draft, {
+      ...p,
+      // An open part's key is its points, whatever the model wrote beside them.
+      ...(o ? { answer: o.answer, accepted_answers: o.accepted_answers, unit: o.unit } : {}),
+      hints: opts.help?.[i]?.hints ?? [],
+      worked_solution: opts.help?.[i]?.worked_solution ?? null,
+    });
+  });
+  const usable = usableItems(drafts, { locale: opts.locale });
   if (usable.length !== n) return [];
   for (let i = 0; i < n; i++) {
     const from = draft.parts[i]?.from ?? null;
@@ -197,7 +315,8 @@ export function partTaskItems(draft: PartTaskDraft, opts: { locale?: string } = 
   const letters = lettersOf(n);
   return usable.map((it, i) => ({
     ...it,
-    rubric: null,
+    // An open part is judged against its key points, on the path every key point takes (#236).
+    ...(open[i] ?? { rubric: null }),
     task_part: TaskPart.parse({
       group,
       part: letters[i],

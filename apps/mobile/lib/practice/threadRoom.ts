@@ -82,6 +82,8 @@ export type RoomInput = {
   visual: boolean;
   /** It may grow (a note line only gives, issue #275). */
   growable: boolean;
+  /** How far: the share of the window the card may grow to (`visualReach`, #462). */
+  reach: number;
   /** The card takes ALL the room the conversation leaves (a Diktat before her answer, #242). */
   fills?: boolean;
   /** The newest turn is read through, not glanced at: never hidden for its height (#258). */
@@ -124,7 +126,8 @@ export function threadRoom(m: RoomInput): Room {
 
   // The card with a drawing or photo and the conversation share the room (issue #96, #286).
   // What the conversation leaves, the card grows into (`cardGrowTo` > 0: its figure sizes itself
-  // from the measured room, at most to half the window) instead of an empty gap under the answer.
+  // from the measured room, at most to its share of the window, `reach`) instead of an empty gap
+  // under the answer.
   // When Buddy's newest turn would not fit, the drawing gives room first (`cardGrowTo` < 0: a
   // lower cap, down to its legible minimum, lib/math/figureScale.ts). The room is the same sum
   // whatever the card does, so both settle in one pass, and a new reply or a taller bar takes its
@@ -137,7 +140,7 @@ export function threadRoom(m: RoomInput): Room {
           -CARD_GIVES,
           Math.min(
             room - (m.short ?? 0) - threadWants,
-            Math.round(m.viewHeight * 0.5) - m.cardNatural,
+            Math.round(m.viewHeight * m.reach) - m.cardNatural,
           ),
         )
       : 0;

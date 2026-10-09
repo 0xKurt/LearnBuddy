@@ -80,6 +80,11 @@ type Step = {
   offersLater?: boolean;
   /** Issue #388: the reply must be exactly this fixed line of the app (a test's, by its form). */
   fixedLine?: MessageKey;
+  /**
+   * Issue #298: the reply is a step of the way exactly as code keeps it (`stepOnRequest`) — the
+   * tutor read her words as a request for help — never the tutor's own words.
+   */
+  shownStep?: true;
 };
 type Case = {
   id: string;
@@ -89,6 +94,11 @@ type Case = {
    * stimmt das?" that survived code's check (`checkedWhy`): a question with a rule behind it.
    */
   reasons?: true;
+  /**
+   * Issue #298: the live hints call must leave a way code proved (`checkedSteps`): every line
+   * following from the one before, starting at the question's equation, ending on the key.
+   */
+  way?: true;
   item: Record<string, unknown>;
   /** For homework: what she typed (the task must be in it). */
   text?: string;
@@ -356,6 +366,31 @@ const CASES: Case[] = [
     steps: [{ say: '2/6', ok: wrong, noSolution: true }],
   },
   {
+    // Issue #298: a grade-10 equation gets a proven way, step by step — the guided example.
+    id: 'way_for_an_equation',
+    kind: 'practice',
+    way: true,
+    item: q({ kind: 'numeric', prompt: 'Löse die Gleichung 3(2x − 4) = 2x + 8.', answer: '5' }),
+    steps: [{ say: '4', ok: wrong, noSolution: true }],
+  },
+  {
+    // Issue #298: „Zeig mir, wie das geht" — the tutor reads a request for help, code shows the
+    // way's next step, and her own next step is checked by code.
+    id: 'show_me_how',
+    kind: 'practice',
+    way: true,
+    item: q({ kind: 'numeric', prompt: 'Löse die Gleichung 5(x + 2) = 3x + 16.', answer: '3' }),
+    steps: [
+      { say: 'Zeig mir, wie das geht', ok: ['not_an_attempt'], noSolution: true, shownStep: true },
+      {
+        say: '5x + 10 - 3x = 16',
+        ok: ['not_an_attempt'],
+        noSolution: true,
+        fixedLine: 'practice.step_ok',
+      },
+    ],
+  },
+  {
     // Issue #388: asked in a Probetest on a tap form, the fixed line says "antworte", never
     // "schreib" — and nothing of the model's words reaches her.
     id: 'test_line_fits_a_tap_form',
@@ -448,6 +483,8 @@ for (const c of CASES) {
     continue;
   }
   const itemId = s.body.items[0]!.item.id;
+  // A guided example (#298) needs its way: written in the background while she reads the question.
+  if (c.way) await env.flushBackground();
   const problems: string[] = [];
   const log: string[] = [];
   let lastReply = '';
@@ -488,10 +525,25 @@ for (const c of CASES) {
       );
     if (step.fixedLine && reply !== t('de', step.fixedLine))
       problems.push(`"${step.say}": not the app's fixed line ${step.fixedLine}`);
+    if (step.shownStep) {
+      const { hints } = await env.db.one<{ hints: string[] }>(
+        `select hints from items where id = $1`,
+        [itemId],
+      );
+      if (!hints.includes(reply)) problems.push(`"${step.say}": no step of the way shown`);
+    }
     if (step.noPush && claimsCloseness(reply))
       problems.push(`"${step.say}": claims she is close, which nothing measured`);
     lastReply = reply;
     if (r.body.session.items[0]?.status !== 'open') break;
+  }
+  if (c.way) {
+    const kept = await env.db.one<{ worked_steps: unknown }>(
+      `select worked_steps from items where id = $1`,
+      [itemId],
+    );
+    if (kept.worked_steps === null) problems.push('no way survived the proof (checkedSteps)');
+    else log.push(`    way: ${JSON.stringify(kept.worked_steps)}`);
   }
   if (c.reasons) {
     // The hints are written in the background, live: wait for them, then read what was kept.

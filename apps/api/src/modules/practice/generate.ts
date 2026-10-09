@@ -13,6 +13,7 @@
 // One structured model call; items are validated like extracted ones.
 // Idempotent per client_request_id.
 
+import { FIGURE_NAMES, mapHomeLand } from '@learnbuddy/shared-math';
 import { type DifficultyWish, type StartTopicRequest } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
@@ -31,6 +32,7 @@ import { ESSAY_RULES, essayItems } from './essayTask.js';
 import { prepareHints } from './hints.js';
 import { buddyReadingItems, READ_TEXT_RULES } from './readText.js';
 import { LISTEN_RULES, listenItems, noVoiceToReadIt } from './listen.js';
+import { homeLandLine } from './mapCheck.js';
 import {
   FIGURE_RULES,
   ANSWER_FORM_RULES,
@@ -423,6 +425,8 @@ async function generateSet(
                 // school year: the curricula are written per year, and without one there is
                 // nothing to say that would not be a guess.
                 curriculumBlock({ region: learner.curriculum_region, grade: learner.grade }),
+                // Her Land as the map's default (#429): only a permission; code decides (`mapViewed`).
+                homeLandLine(mapHomeLand(FIGURE_NAMES, learner.curriculum_region)),
                 input.subject ? `SUBJECT (as the learner said): ${input.subject}` : null,
                 `TASK: ${TASK[input.kind]}`,
                 input.difficulty ? LEVEL[input.difficulty] : null,
@@ -526,8 +530,9 @@ function preparedFrom(
         .filter((i) => profile.items.includes(i.kind))
         .map((i) => ({ ...i, hints: [], worked_solution: null })),
       // The options code writes for a chart question (humid/arid, pyramid type) speak her
-      // language when the question does not name its own (issues #245, #246).
-      { locale: learner.locale },
+      // language when the question does not name its own (issues #245, #246). Her Land, from
+      // her profile, is a map's default view and marked on it (#429, `mapCheck.ts`).
+      { locale: learner.locale, land: mapHomeLand(FIGURE_NAMES, learner.curriculum_region) },
     ),
     input.difficulty,
   );

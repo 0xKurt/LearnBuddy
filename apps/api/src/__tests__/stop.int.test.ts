@@ -9,6 +9,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import { gate } from '../testing/sync.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -24,20 +25,6 @@ const remember = (statement: string, quote: string) => ({
   options: null,
   asks_permission: false,
 });
-
-/** A model answer that waits until the test lets it go (Buddy is still "writing"). */
-type Gate = {
-  release: () => void;
-  wait: Promise<void>;
-  called: Promise<void>;
-  markCalled: () => void;
-};
-function gate(): Gate {
-  const g = {} as Gate;
-  g.wait = new Promise<void>((r) => (g.release = r));
-  g.called = new Promise<void>((r) => (g.markCalled = r));
-  return g;
-}
 
 async function send(env: TestEnv, l: Learner, id: string, text: string): Promise<Response> {
   return env.app.request('/v1/buddy/messages', {

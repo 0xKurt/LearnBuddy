@@ -7,13 +7,13 @@
 // within its size (docs/engineering-guards.md, rule 4) — the rules themselves are unchanged.
 
 import type { ItemView, PracticeTurnView } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { View } from 'react-native';
 
 import { answerFolds, formDensity } from '../keyboard.js';
 import { useVisibleHeight } from '../useVisibleHeight.js';
 import { boardKeeps, threadRoom, type Room } from './threadRoom.js';
-import { visualCaps, visualGrows } from './visuals.js';
+import { visualCaps, visualGrows, visualReach } from './visuals.js';
 
 /** The question on screen, and the window it is laid out in. */
 type Question = {
@@ -32,6 +32,12 @@ type Question = {
   safeBottom: number;
 };
 
+/**
+ * A part of the room the screen measures — the conversation's box (`ThreadBox`), the free room
+ * (`FreeSpace`): its layout event, and its node, read again after every render (issue #484).
+ */
+export type RoomPart = { ref: RefObject<View | null>; onHeight: (height: number) => void };
+
 export function useScreenRoom() {
   /** Her question's field has the focus (`AskRoute`): with the keyboard up the answer folds. */
   const [asking, setAsking] = useState(false);
@@ -39,6 +45,10 @@ export function useScreenRoom() {
   /** The conversation's box and the free room above the answer (issue #286, `threadCap`). */
   const [threadBox, setThreadBox] = useState(0);
   const [freeSpace, setFreeSpace] = useState(0);
+  const threadRef = useRef<View>(null);
+  const freeRef = useRef<View>(null);
+  const thread = useMemo<RoomPart>(() => ({ ref: threadRef, onHeight: setThreadBox }), []);
+  const free = useMemo<RoomPart>(() => ({ ref: freeRef, onHeight: setFreeSpace }), []);
   const [turnTops, setTurnTops] = useState<Readonly<Record<string, number>>>({});
   /** Where the conversation's parts start — the help chips, a card under the replies (#403). */
   const [partTops, setPartTops] = useState<readonly number[]>([]);
@@ -62,6 +72,13 @@ export function useScreenRoom() {
   // missed it on the web, which reports a change of SIZE only (a ResizeObserver): a mark of height
   // 0 that moved up when the answer folded away left a stale overrun, and the conversation, given
   // no room, took its whole height past the window. The same value twice changes nothing.
+  // The room's two parts — the conversation's box and the free room — are read again the same way
+  // (issue #484): on the web a layout event measures its view a moment AFTER the resize it reports
+  // (react-native-web: a ResizeObserver, then `measure` in a timeout). A render in between gives a
+  // passing size — both read 0 while the window shrank to the keyboard's room — and when the view
+  // returns to the size the observer last saw, no event follows. The room stayed 0, the box took
+  // its height undecided, and the "Tipp" row stood cut (37 of 44 pt) after 3 of 14 resizes to
+  // 360×440; a screen built at that size never showed it (0 of 14).
   useEffect(() => {
     const column = columnRef.current;
     if (column)
@@ -70,6 +87,8 @@ export function useScreenRoom() {
         (_x, y) => setColumnEnd(Math.round(y)),
         () => undefined,
       );
+    threadRef.current?.measure((_x, _y, _w, h) => setThreadBox(Math.round(h)));
+    freeRef.current?.measure((_x, _y, _w, h) => setFreeSpace(Math.round(h)));
   });
 
   function layout(q: Question): Room & {
@@ -140,6 +159,7 @@ export function useScreenRoom() {
       // the card then only made an empty band under that row and squeezed the conversation — a
       // short question beside a map or picture left "Tipp" half shown at 360×440 (#252).
       growable: visualGrows(item.figure) && formDensity(seen.window, seen.overlap) !== 'tight',
+      reach: visualReach(item.figure),
       // A Diktat card before her first answer holds only the way to hear the word (issue #242):
       // it takes all the room the conversation does not use, so no empty band is left under it.
       fills: cardNatural > 0 && item.kind === 'spelling_dictation' && !q.dictationCompact,
@@ -169,9 +189,10 @@ export function useScreenRoom() {
     layout,
     questionContentHeight,
     setQuestionContentHeight,
-    setThreadBox,
+    /** The conversation's box and the free room above the answer (`RoomPart`). */
+    thread,
+    free,
     setThreadNeed,
-    setFreeSpace,
     setTurnTops,
     setPartTops,
     setSurfaceHeight,

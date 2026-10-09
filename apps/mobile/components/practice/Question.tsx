@@ -19,12 +19,13 @@ import { FIGURE_CHROME } from '../../lib/math/figureScale.js';
 import { fillableAnswer } from '../../lib/math/prompt.js';
 import { formDensity } from '../../lib/keyboard.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
+import { ReadAgain } from '../lb/ReadAgain.js';
 import { MathText } from '../math/MathText.js';
 import { PartStem } from './PartStem.js';
 import { PassagePanel } from './PassagePanel.js';
@@ -37,7 +38,7 @@ type ProgressProps = {
   total: number;
   /** Questions already closed (answered right, or solution shown). */
   closed: number;
-  /** A quiet action at the end of the row ("Frage passt nicht"). */
+  /** A quiet action at the end of the row: one short word ("Passt nicht", `QuestionCorner`). */
   right?: ReactNode;
   /**
    * The time left in a test she sits with time (issue #241): its own fixed place right after the
@@ -57,9 +58,6 @@ type ProgressProps = {
    */
   preparing?: boolean;
 };
-
-/** The narrowest the progress bar gets: whatever stands beside it, it keeps this. */
-const MIN_BAR = 40;
 
 export function ProgressRow({
   position,
@@ -83,8 +81,19 @@ export function ProgressRow({
   }, [share, reduced, width]);
   const fill = useAnimatedStyle(() => ({ width: `${width.value * 100}%` }));
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <Text style={[TYPE.label, { color: palette.ink2, fontSize: 14 }]}>
+    <View
+      testID="progress-row"
+      style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}
+    >
+      {/* One line, always (issue #459), like the screen's title (#287): beside the full sentence
+          "Bewertung stimmt nicht" the label broke onto two lines at 360 and the bar shrank to a
+          stub. The action at the end is one short word now and the bar keeps its least width;
+          what still does not fit — "ich schreibe noch mehr" beside an action — ends in "…". */}
+      <Text
+        testID="progress-label"
+        numberOfLines={1}
+        style={[TYPE.label, { color: palette.ink2, fontSize: 14, flexShrink: 1, minWidth: 0 }]}
+      >
         {label ??
           (preparing
             ? t('progress_more_coming', { current: position })
@@ -101,7 +110,7 @@ export function ProgressRow({
           importantForAccessibility="no-hide-descendants"
           style={{
             flex: 1,
-            minWidth: MIN_BAR,
+            minWidth: PROGRESS_BAR_MIN,
             height: 8,
             borderRadius: 4,
             backgroundColor: palette.lavender,
@@ -151,7 +160,8 @@ type QuestionProps = {
   /**
    * A smaller prompt (18 pt instead of 21): for a question whose answer surface needs the
    * height more than the words do — the staff she writes on (issue #275), where a six-line
-   * prompt left no room for the staff, its keys AND Buddy's reply on 360×740.
+   * prompt left no room for the staff, its keys AND Buddy's reply on 360×740. Every prompt takes it
+   * while she types (issue #484).
    */
   dense?: boolean;
   /**
@@ -167,6 +177,8 @@ type QuestionProps = {
    * the reading text keeps the smaller box it has while she types.
    */
   answerBoard?: boolean;
+  /** While Vorlesen is on, a tap on the question reads it again (#434); absent when it must not be heard. */
+  onReadAgain?: () => void;
 };
 
 /**
@@ -198,6 +210,7 @@ export function QuestionCard({
   dense = false,
   stimulus,
   answerBoard = false,
+  onReadAgain,
 }: QuestionProps) {
   const passage = stimulus?.passage ?? null;
   const part = stimulus?.task_part ?? null;
@@ -210,6 +223,11 @@ export function QuestionCard({
   // its folded drawing and the bar with its math keys ran 7 pt past the window and the keys stood
   // cut (issue #419, `cutControls`).
   const pad = typing ? SPACE.md : CARD_PAD;
+  // And the prompt steps down to the smaller size (`dense`), as the drawing folds (issue #484): on
+  // 360×440 a four-line prompt from Buddy over the net of a cylinder, its folded drawing and the bar
+  // with its math keys ran 38 pt past the window — the question never scrolls, so the keys and the
+  // header stood cut. The words stay whole; they are the question.
+  const small = dense || typing;
   const passageShare = answerBoard || typing ? PASSAGE_SHARE_SHORT : PASSAGE_SHARE;
   // A reading question's topic is its text: the text's heading already names it.
   // A part of a task names its place in the task where the topic stands: the same for all parts.
@@ -275,18 +293,20 @@ export function QuestionCard({
           ) : null}
           {/* The situation of a task in parts, the same above each of its parts (issue #297). */}
           {part ? <PartStem stem={part.stem} typing={typing} /> : null}
-          <MathText
-            text={part ? `${part.part}) ${prompt}` : prompt}
-            blanks={{ filled }}
-            // A fraction in the question sits in its sentence (issue #288).
-            inlineFractions
-            accessibilityRole="header"
-            style={
-              dense
-                ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
-                : TYPE.question
-            }
-          />
+          <ReadAgain {...(onReadAgain ? { onRead: onReadAgain } : {})}>
+            <MathText
+              text={part ? `${part.part}) ${prompt}` : prompt}
+              blanks={{ filled }}
+              // A fraction in the question sits in its sentence (issue #288).
+              inlineFractions
+              accessibilityRole="header"
+              style={
+                small
+                  ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
+                  : TYPE.question
+              }
+            />
+          </ReadAgain>
         </View>
         {figure ? (
           <View

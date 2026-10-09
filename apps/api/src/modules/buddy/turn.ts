@@ -376,8 +376,7 @@ async function decideTurn(
         },
       });
       raw = looked.raw;
-      // The audit keeps what was looked up (tools and whether they worked), not the results.
-      if (looked.steps.length > 0) meta.output = { lookups: looked.steps, final: raw };
+      meta.output = looked.output;
     } catch (err) {
       if (err instanceof ClaimLost) return currentOutcome(deps, message.id);
       if (err instanceof LlmError && err.kind === 'blocked') {
@@ -397,7 +396,6 @@ async function decideTurn(
       await record('failed', [code]);
       return failTurn(deps, message, code);
     }
-    if (meta.output === undefined) meta.output = raw;
 
     const parsed = TurnDecision.safeParse(raw);
     if (!parsed.success) {

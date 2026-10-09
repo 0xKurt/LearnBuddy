@@ -14,6 +14,10 @@
 // prepared text chosen by code (the first point still missing), never something the model says in
 // the moment — and it costs no second model call. The same questions are the question's prepared
 // hints ("Tipp"), in the order of the points.
+//
+// The open part of a task in parts („Begründe …", issue #297, `taskParts.ts`) is the same question
+// on a situation: its key points are held to the same rules here (`keyPointsProblem`) and stored
+// the same way (`keyPointFields`), so it is judged by the one path above, not by a second one.
 
 import {
   KEY_POINT_EXACT_MAX,
@@ -31,7 +35,7 @@ import { says } from './rubric.js';
 /** How many explanation questions one run asks: a short oral check, not a test. */
 export const MAX_TEACH_BACK = 5;
 
-const KeyPointDraft = z.object({
+export const KeyPointDraft = z.object({
   name: z
     .string()
     .trim()
@@ -65,6 +69,8 @@ const KeyPointDraft = z.object({
     ),
 });
 
+export type KeyPointDraft = z.infer<typeof KeyPointDraft>;
+
 export const TeachBackDraft = z.object({
   prompt: z
     .string()
@@ -83,29 +89,35 @@ export type TeachBackDraft = z.infer<typeof TeachBackDraft>;
 export const TEACH_BACK_RULES = `ERKLÄR MAL ("teach_back"): the learner wants to EXPLAIN in her own words, by voice or in writing, like an oral check at school — either to be quizzed with open questions on a topic or one of her sheets, or to explain one thing she names. Fill "teach_back" and nothing else: one question when she wants to explain one thing, otherwise 2–${MAX_TEACH_BACK} open questions, easy to harder. Each question gets ${KEY_POINTS_MIN}–${KEY_POINTS_MAX} key points: what a complete explanation at her grade has to contain, each a different idea, in the order a teacher would expect them. A point is never just the question again, and its follow-up question never gives it away. Only well-established knowledge at her level; when SHEET TEXT is given, ask only about what it covers and take every exact term from it. No grade, no model answer: the points are for checking only.`;
 
 /**
- * Why a drafted question cannot be asked, or null when it holds (Regel 0: the whole question goes,
- * never a repaired one — a question with a point taken out would check her against a different
- * explanation than the one it asks for). Every reason is mechanical:
+ * Why drafted key points cannot be asked for, or null when they hold (Regel 0: the whole question
+ * goes, never a repaired one — a question with a point taken out would check her against a
+ * different explanation than the one it asks for). `shown` is everything she reads while she
+ * answers: the question, and for an open part the situation above it (#297). Every reason is
+ * mechanical:
  *
  *   · two points with the same name or the same statement — two ticks for one idea;
- *   · a point the question already states — she would be "explaining" what she was told;
+ *   · a point what she reads already states — she would be "explaining" what she was told;
  *   · a follow-up that is no question (no "?"), or that contains its point or one of its exact
  *     terms — it would hand over what it asks for;
  *   · a name that contains an exact term — the name stands on screen while she answers;
  *   · an exact term that folds to nothing (it would be "found" in any text), or, for a run from her
  *     sheet, one that does not stand on that sheet.
  */
-export function teachBackProblem(d: TeachBackDraft, sheet: string | null): string | null {
+export function keyPointsProblem(
+  drafted: readonly KeyPointDraft[],
+  shown: string,
+  sheet: string | null,
+): string | null {
   const names = new Set<string>();
   const points = new Set<string>();
-  for (const p of d.points) {
+  for (const p of drafted) {
     const name = normalizeShortAnswer(p.name);
     const point = normalizeShortAnswer(p.point);
     if (name === '' || point === '') return 'empty point';
     if (names.has(name) || points.has(point)) return 'duplicate point';
     names.add(name);
     points.add(point);
-    if (says(d.prompt, p.point)) return 'point stated in the question';
+    if (says(shown, p.point)) return 'point stated in the question';
     if (!p.ask.includes('?')) return 'follow-up is no question';
     if (says(p.ask, p.point)) return 'follow-up gives the point away';
     for (const x of p.exact) {
@@ -116,6 +128,37 @@ export function teachBackProblem(d: TeachBackDraft, sheet: string | null): strin
     }
   }
   return null;
+}
+
+/**
+ * What a question checked against key points stores beside its prompt: the points as its rubric,
+ * their follow-ups as its prepared hints — the same for an explanation question and for the open
+ * part of a task in parts (#297).
+ */
+export function keyPointFields(drafted: readonly KeyPointDraft[]) {
+  const rubric: StoredRubric = {
+    form: 'explanation',
+    elements: drafted.map((p) => ({
+      name: p.name,
+      missing: p.ask,
+      check: { by: 'key_point', point: p.point, exact: p.exact },
+    })),
+  };
+  return {
+    // What the tutor is shown as SOLUTION: the points, which it judges against — never shown to
+    // her (a free text sends no solution, `sessionView.ts`, issue #197).
+    answer: drafted.map((p) => p.point).join('; '),
+    // The points are the whole key: no wording of hers is right by rule, past the points.
+    accepted_answers: [],
+    unit: null,
+    // She explains, often by voice: how a word is spelled is not what is asked.
+    spelling: 'gentle' as const,
+    // "Tipp" asks the follow-up questions in order, at once and without a model.
+    hints: drafted.slice(0, 3).map((p) => p.ask),
+    // No worked solution: an explanation shows no model answer (#236).
+    worked_solution: null,
+    rubric,
+  };
 }
 
 /**
@@ -130,24 +173,11 @@ export function teachBackItems(
   const asked = new Set<string>();
   for (const d of drafts) {
     const key = normalizeShortAnswer(d.prompt);
-    if (asked.has(key) || teachBackProblem(d, sheet) !== null) continue;
+    if (asked.has(key) || keyPointsProblem(d.points, d.prompt, sheet) !== null) continue;
     asked.add(key);
-    const rubric: StoredRubric = {
-      form: 'explanation',
-      elements: d.points.map((p) => ({
-        name: p.name,
-        missing: p.ask,
-        check: { by: 'key_point', point: p.point, exact: p.exact },
-      })),
-    };
     out.push({
       kind: 'long',
       prompt: d.prompt,
-      // What the tutor is shown as SOLUTION: the points, which it judges against — never shown to
-      // her (a free text sends no solution, `sessionView.ts`, issue #197).
-      answer: d.points.map((p) => p.point).join('; '),
-      accepted_answers: [],
-      unit: null,
       choices: null,
       correct_choice: null,
       topic: d.topic,
@@ -157,15 +187,9 @@ export function teachBackItems(
       figure: null,
       read: null,
       tolerance: null,
-      // She explains, often by voice: how a word is spelled is not what is asked.
-      spelling: 'gentle',
       source_excerpt: null,
       curriculum_point: null,
-      // "Tipp" asks the follow-up questions in order, at once and without a model.
-      hints: d.points.slice(0, 3).map((p) => p.ask),
-      // No worked solution: an explanation question shows no model answer (#236).
-      worked_solution: null,
-      rubric,
+      ...keyPointFields(d.points),
     });
     if (out.length >= MAX_TEACH_BACK) break;
   }

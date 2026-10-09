@@ -4,6 +4,7 @@
 import { t } from '../../i18n/index.js';
 import {
   type HowMany,
+  minutesFor,
   type PracticeWish,
   questionCountFor,
   selectPracticeItems,
@@ -206,7 +207,7 @@ export async function runPreparePractice(
         and goal_id is not distinct from $2 and (payload ->> 'subject_id') is not distinct from $3`,
     [ctx.learnerId, goal?.id ?? null, subjectId, ctx.now],
   );
-  const minutes = Math.max(5, Math.round(itemIds.length / 1.2));
+  const minutes = minutesFor(itemIds.length);
   const title = goal
     ? goal.title
     : subjectId

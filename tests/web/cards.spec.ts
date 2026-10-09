@@ -8,23 +8,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { onboardChild, startOffer } from './figureWalk';
-import { shot } from './fit';
-
-/** This stop at both phone sizes, in the light and the dark room. */
-async function rooms(page: Page, name: string): Promise<void> {
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-dark`);
-  await page.emulateMedia({ colorScheme: 'light' });
-}
+import { bothSchemes, shot } from './fit';
+import { voiceAsSilence } from './talk';
 
 /** Her typed answer to the open word, checked. */
 async function answer(page: Page, text: string): Promise<void> {
-  const field = page.getByLabel('Deine Antwort');
-  await expect(async () => {
-    await field.fill(text);
-    await expect(field).toHaveValue(text, { timeout: 1000 });
-  }).toPass();
+  await page.getByLabel('Deine Antwort').fill(text);
   await page.getByRole('button', { name: 'Prüfen' }).click();
 }
 
@@ -45,6 +34,9 @@ test('flashcards: the one bar with her question, the card’s action, the round 
   await expect(page.getByText('le citron')).toBeVisible();
   await answer(page, 'die Zitrone');
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  // A judged word: the head of the question with its quiet action, the same row as every other
+  // form (issue #459). Light only: switching the room rebuilds the screen on the next open word.
+  await shot(page, '459-vocab-judged');
   await page.getByRole('button', { name: 'Weiter' }).click();
   // Each word the other way round too.
   for (const [prompt, word] of [
@@ -65,28 +57,42 @@ test('flashcards: the one bar with her question, the card’s action, the round 
   await expect(page.getByText('Beenden', { exact: true })).toHaveCount(0);
   // The one input bar: her question in the field, "Umdrehen" where "Prüfen" stands.
   await expect(page.getByTestId('ask-field')).toBeVisible();
-  await rooms(page, '101-cards-front');
+  await bothSchemes(page, '101-cards-front');
+
+  // Vorlesen in the pass's head too, the same switch as every practice (#434): the front is read
+  // in its own language when it comes up, and a tap on it reads it again — no button of its own.
+  // Buddy's voice as a short silence (the dev stack has none). .last(): the chat's head stays
+  // mounted under this screen.
+  await voiceAsSilence(page, 300);
+  const spoken = () =>
+    page.waitForRequest((r) => r.url().includes('/voice/speech') && r.method() === 'POST');
+  const firstRead = spoken();
+  await page.getByRole('switch', { name: 'Vorlesen', exact: true }).last().click();
+  expect((await firstRead).postDataJSON()).toMatchObject({
+    text: 'la grenouille',
+    locale: 'fr-FR',
+  });
+  const reread = spoken();
+  await page.getByTestId('card').getByRole('button', { name: 'Nochmal vorlesen' }).click();
+  expect((await reread).postDataJSON()).toMatchObject({ text: 'la grenouille' });
+  await bothSchemes(page, '101-cards-read-aloud');
+  await page.getByRole('switch', { name: 'Vorlesen ist an' }).last().click();
+  await page.unroute('**/v1/voice/speech');
 
   // Her question about the card: the tutor's reply under it, nothing rated.
-  // Right after the switch back from the dark room the bar can render once more (figureWalk
-  // `typed`): fill until the text holds instead of typing into the copy that is about to go.
-  const asking = page.getByTestId('ask-field');
-  await expect(async () => {
-    await asking.fill('Ist grenouille weiblich?');
-    await expect(asking).toHaveValue('Ist grenouille weiblich?', { timeout: 1000 });
-  }).toPass();
+  await page.getByTestId('ask-field').fill('Ist grenouille weiblich?');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('das „la“ zeigt es', { exact: false })).toBeVisible();
   await expect(page.getByText('Karte 1 von 1')).toBeVisible();
-  await rooms(page, '101-cards-asked');
+  await bothSchemes(page, '101-cards-asked');
 
   // Turned over: "Noch nicht" / "Wusste ich", side by side, under the field.
   await page.getByRole('button', { name: 'Umdrehen' }).click();
   await expect(page.getByText('der Frosch')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Noch nicht' })).toBeVisible();
-  await rooms(page, '101-cards-back');
+  await bothSchemes(page, '101-cards-back');
 
   await page.getByRole('button', { name: 'Wusste ich' }).click();
   await expect(page.getByText('Durch!')).toBeVisible();
-  await rooms(page, '101-cards-end');
+  await bothSchemes(page, '101-cards-end');
 });

@@ -89,6 +89,8 @@ export async function materialItems(
       // from a photo (issue #210, `practice/listen.ts`). Nothing to play here either way — the
       // recording belongs to a session, like the crop and the bar above.
       listen: null,
+      // Tones she hears (issue #445) come only from a reviewed note task in a practice run.
+      tones: null,
       // A reading text belongs to working on its questions too (issue #233): the list names
       // what the sheet asks, and the text stands above each question in the session.
       passage: null,

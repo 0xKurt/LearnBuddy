@@ -10,16 +10,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { onboardChild, startOffer } from './figureWalk';
-import { PHONES, settle, shot } from './fit';
-
-/** One state at both phone sizes (`shot`), light and then dark. */
-async function both(page: Page, name: string): Promise<void> {
-  await shot(page, name);
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, `${name}-night`);
-  await page.emulateMedia({ colorScheme: 'light' });
-  await settle(page);
-}
+import { bothSchemes, PHONES, setScheme, shot } from './fit';
 
 const ROWS = 'Welche Rechnung passt zu 3 Reihen mit je 4 Punkten?';
 const SIMILAR = 'Welche Rechnung passt zu 5 Reihen mit je 2 Punkten?';
@@ -38,8 +29,9 @@ const fillOf = (page: Page) =>
  * so the run is walked once in each colour scheme, every state shot in the scheme it was reached in.
  */
 async function practise(page: Page, scheme: 'light' | 'dark'): Promise<void> {
-  const night = scheme === 'dark' ? '-night' : '';
-  await page.emulateMedia({ colorScheme: scheme });
+  const night = scheme === 'dark' ? '-dark' : '';
+  // Switched before she writes to Buddy: the switch lands first (`setScheme`, issue #443).
+  await setScheme(page, scheme);
   // A new run each time (the first one is only paused by „Übung beenden").
   if (scheme === 'light')
     await startOffer(page, 'Lass uns Malnehmen üben', 'Aufgaben zum Malnehmen');
@@ -84,22 +76,18 @@ test('help at a question: Tipp offered, similar task, „Warum stimmt das?", the
   await page.setViewportSize(PHONES[0]);
   await practise(page, 'light');
   await practise(page, 'dark');
-  await page.emulateMedia({ colorScheme: 'light' });
+  await setScheme(page, 'light');
 
   // ── the Probetest she asked for: the line fits the options, the review explains ──
   await startOffer(page, 'Mach einen Probetest zum Malnehmen', 'Probetest zum Malnehmen');
   await expect(page.getByText(ROWS)).toBeVisible();
-  const ask = page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' });
-  await expect(async () => {
-    await ask.fill('Wie rechnet man das?');
-    await expect(ask).toHaveValue('Wie rechnet man das?', { timeout: 1000 });
-  }).toPass();
+  await page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' }).fill('Wie rechnet man das?');
   await page.getByRole('button', { name: 'Senden' }).last().click();
   await expect(
     page.getByText('antworte einfach so, wie du denkst', { exact: false }),
   ).toBeVisible();
   await expect(page.getByText('schreib einfach', { exact: false })).toHaveCount(0);
-  await both(page, '388e-test-line');
+  await bothSchemes(page, '388e-test-line');
   await option(page, '3 + 4').click();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await option(page, '12').click();
@@ -108,5 +96,5 @@ test('help at a question: Tipp offered, similar task, „Warum stimmt das?", the
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Probetest geschafft!')).toBeVisible();
   await expect(page.getByText('Drei Reihen mit je vier Punkten', { exact: false })).toBeVisible();
-  await both(page, '388f-test-review');
+  await bothSchemes(page, '388f-test-review');
 });
