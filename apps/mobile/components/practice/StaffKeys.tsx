@@ -32,7 +32,7 @@ import { Icon } from '../lb/Icon.js';
 import { KeyRow, type Key } from '../lb/KeyRow.js';
 import { ValueGlyph } from '../math/StaffLine.js';
 import { activeBar, clampStep, lastNote, usePut, type StaffAnswerState } from './StaffAnswer.js';
-import { useListenToggle } from './useListenToggle.js';
+import { useListen } from './useListen.js';
 
 type Props = {
   surface: StaffWriteSurface;
@@ -49,7 +49,10 @@ export function StaffKeys({ surface, answer, disabled, onChange }: Props) {
   const { t: tm } = useTranslation('math');
   const written = answer.bars.filter((bar) => bar.length > 0);
   const empty = written.length === 0;
-  const play = useListenToggle({ tones: { bars: written, tempo: surface.tempo } });
+  // The same hearing as every "Anhören" (`useListen`); here it is a key of the row it belongs to,
+  // the same size as its neighbours — not a pill among keys.
+  const listen = useListen({ tones: { bars: written, tempo: surface.tempo } });
+  const playing = listen.state('normal') === 'playing';
   const put = usePut(surface, answer, onChange);
 
   const moving = lastNote(answer);
@@ -126,12 +129,12 @@ export function StaffKeys({ surface, answer, disabled, onChange }: Props) {
     },
     {
       id: 'play',
-      face: icon(play.playing ? 'stop' : 'speak'),
+      face: icon(playing ? 'stop' : 'speak'),
       // What it says is its state too: never the colour alone.
-      label: play.playing ? t('staff.play_stop') : t('staff.play'),
-      ...(play.playing ? {} : { hint: t('staff.play_hint') }),
+      label: playing ? t('listen.stop') : t('listen.play'),
+      ...(playing ? {} : { hint: t('listen.hint_tones') }),
       disabled: empty,
-      onPress: play.press,
+      onPress: () => listen.play('normal'),
     },
     {
       id: 'undo',

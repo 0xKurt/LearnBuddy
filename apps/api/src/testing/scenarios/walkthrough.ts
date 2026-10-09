@@ -22,6 +22,7 @@ import { scriptGrid } from './grid.js';
 import { scriptHelp } from './help.js';
 import { scriptSteps } from './steps.js';
 import { scriptLearningModes } from './learning-modes.js';
+import { scriptListening } from './listening.js';
 import { scriptMark } from './mark.js';
 import { scriptPeriodic } from './periodic.js';
 import { scriptPrimary } from './primary.js';
@@ -60,6 +61,8 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   // First: its generation rule is keyed on her list, and a broader rule registered earlier
   // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
   scriptDictation();
+  // Keyed by its own request ("Hörverstehen üben") and topic ("Toms Samstag"), nobody else's (#311).
+  scriptListening();
   // Also first: "Latein" and "Fahrrad" are words an older, broader rule may know (#240).
   scriptSelectAll();
   // Also first: "Nomen", "Kommas" and "Silben" are words an older rule may know (#234).

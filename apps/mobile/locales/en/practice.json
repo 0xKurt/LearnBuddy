@@ -6,8 +6,6 @@
     "harder_topic": "More like this, a bit harder: {{topics}}"
   },
   "dictation": {
-    "play": "Listen",
-    "again": "Listen again",
     "play_hint": "Buddy reads it to you – as often as you like."
   },
   "answer": {
@@ -80,12 +78,18 @@
   "later_done": "All right – that one comes back later.",
   "later_hint": "The task stays open and comes back after the others.",
   "listen": {
-    "play": "Play the text",
+    "play": "Listen",
     "again": "Listen again",
     "stop": "Stop",
     "loading": "Loading …",
+    "slow": "Slowly",
+    "slow_label": "Listen slowly",
     "hint": "Plays the text for you – as often as you like.",
+    "hint_words": "Reads it aloud to you.",
+    "hint_tones": "Plays the notes for you.",
     "failed": "The text cannot be played right now.",
+    "no_voice": "Reading aloud isn't working on this device right now – the voice for this language may be missing.",
+    "no_sound": "No sound is coming out here right now.",
     "transcript_title": "This was the text"
   },
   "loading": "Getting your questions …",
@@ -151,12 +155,6 @@
   },
   "speak": {
     "instruction": "Say it out loud",
-    "listen": "Listen",
-    "listen_slow": "Listen slowly",
-    "listen_slow_short": "Slowly",
-    "listen_stop": "Stop",
-    "listen_hint": "Reads it aloud to you.",
-    "no_voice": "Reading aloud isn't working on this device right now – the voice for this language may be missing.",
     "record": "Speak",
     "record_again": "Say it again",
     "record_stop": "Done",
@@ -191,10 +189,6 @@
     "word_again": "Almost – listen again and try it."
   },
   "staff": {
-    "play": "Listen",
-    "play_stop": "Stop",
-    "play_hint": "Plays the line of notes.",
-    "no_sound": "No sound is coming out here right now.",
     "dot": "Dot",
     "sharp": "Sharp ♯",
     "undo": "Undo",

@@ -7,7 +7,6 @@ import type { ItemView } from '@learnbuddy/shared-types/contracts';
 import { View } from 'react-native';
 
 import { SPACE } from '../../lib/theme/space.js';
-import { HearText } from './HearText.js';
 import { ListenButton } from './ListenButton.js';
 
 type Props = {
@@ -23,20 +22,24 @@ type Props = {
 export function QuestionTools({ item, sessionId, hearWord, heard, markHeard, disabled }: Props) {
   const tools = [
     // Ear training (issue #445): the tones are the question, so their "Anhören" stands first.
-    item.tones ? <ListenButton key={`tones-${item.id}`} tones={item.tones} /> : null,
+    item.tones ? <ListenButton key={`tones-${item.id}`} source={{ tones: item.tones }} /> : null,
     hearWord && item.read_aloud && item.prompt_lang ? (
-      <ListenButton key={`listen-${item.id}`} text={item.prompt} lang={item.prompt_lang} />
+      <ListenButton
+        key={`listen-${item.id}`}
+        source={{ text: item.prompt, lang: item.prompt_lang }}
+      />
     ) : null,
     // Hörverstehen (issue #210): the text is heard, not read, so the way to hear it stands in
     // the same row as every other "read this aloud" — and it stays after the question closes,
     // next to the words of it, because listening again while reading is how it is reviewed.
     item.listen && item.kind !== 'spelling_dictation' ? (
-      <HearText
+      <ListenButton
         key="hear"
-        sessionId={sessionId}
-        itemId={item.id}
+        source={{
+          item: { sessionId, itemId: item.id, onHeard: () => markHeard(item.listen?.ref) },
+        }}
+        slow
         heard={heard(item.listen.ref)}
-        onHeard={() => markHeard(item.listen?.ref)}
         disabled={disabled}
       />
     ) : null,

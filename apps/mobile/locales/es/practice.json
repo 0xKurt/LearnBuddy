@@ -6,8 +6,6 @@
     "harder_topic": "Más de esto, un poco más difícil: {{topics}}"
   },
   "dictation": {
-    "play": "Escuchar",
-    "again": "Escuchar otra vez",
     "play_hint": "Buddy te lo lee – tantas veces como quieras."
   },
   "answer": {
@@ -80,12 +78,18 @@
   "later_done": "Vale, ese vuelve más tarde.",
   "later_hint": "El ejercicio sigue abierto y vuelve después de los demás.",
   "listen": {
-    "play": "Escuchar el texto",
+    "play": "Escuchar",
     "again": "Escuchar otra vez",
     "stop": "Detener",
     "loading": "Cargando …",
+    "slow": "Despacio",
+    "slow_label": "Escuchar despacio",
     "hint": "Te lee el texto en voz alta, tantas veces como quieras.",
+    "hint_words": "Te lo lee en voz alta.",
+    "hint_tones": "Te toca las notas.",
     "failed": "Ahora mismo no se puede escuchar el texto.",
+    "no_voice": "Leer en voz alta no funciona ahora en este dispositivo – quizá falta la voz para este idioma.",
+    "no_sound": "Aquí ahora no sale ningún sonido.",
     "transcript_title": "Este era el texto"
   },
   "loading": "Estoy cargando tus preguntas…",
@@ -151,12 +155,6 @@
   },
   "speak": {
     "instruction": "Dilo en voz alta",
-    "listen": "Escuchar",
-    "listen_slow": "Escuchar despacio",
-    "listen_slow_short": "Despacio",
-    "listen_stop": "Parar",
-    "listen_hint": "Te lo lee en voz alta.",
-    "no_voice": "Leer en voz alta no funciona ahora en este dispositivo – quizá falta la voz para este idioma.",
     "record": "Hablar",
     "record_again": "Dilo otra vez",
     "record_stop": "Listo",
@@ -191,10 +189,6 @@
     "word_again": "Casi: escúchala otra vez y prueba."
   },
   "staff": {
-    "play": "Escuchar",
-    "play_stop": "Parar",
-    "play_hint": "Hace sonar la línea de notas.",
-    "no_sound": "Aquí ahora no sale ningún sonido.",
     "dot": "Puntillo",
     "sharp": "Sostenido ♯",
     "undo": "Deshacer",

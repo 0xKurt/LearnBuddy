@@ -219,7 +219,10 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
                 // under a centred word that reads as a stray. The wrapper centres it without
                 // changing the button (CLAUDE.md rule 13: it stays the shared component).
                 <View style={{ alignSelf: 'center' }}>
-                  <ListenButton text={front} lang={current.item.prompt_lang} disabled={busy} />
+                  <ListenButton
+                    source={{ text: front, lang: current.item.prompt_lang }}
+                    disabled={busy}
+                  />
                 </View>
               ) : null}
               {!faceUp && back !== null ? (
@@ -241,7 +244,10 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
                   </Text>
                   {isForeign(current.item.lang) ? (
                     <View style={{ alignSelf: 'center' }}>
-                      <ListenButton text={back} lang={current.item.lang} disabled={busy} />
+                      <ListenButton
+                        source={{ text: back, lang: current.item.lang }}
+                        disabled={busy}
+                      />
                     </View>
                   ) : null}
                 </Rise>

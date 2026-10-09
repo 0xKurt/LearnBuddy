@@ -6,8 +6,6 @@
     "harder_topic": "Mehr davon, etwas schwerer: {{topics}}"
   },
   "dictation": {
-    "play": "Anhören",
-    "again": "Nochmal hören",
     "play_hint": "Buddy liest es dir vor – so oft du magst."
   },
   "answer": {
@@ -80,12 +78,18 @@
   "later_done": "Alles klar – die kommt später nochmal dran.",
   "later_hint": "Die Aufgabe bleibt offen und kommt nach den anderen nochmal dran.",
   "listen": {
-    "play": "Hörtext abspielen",
+    "play": "Anhören",
     "again": "Nochmal hören",
     "stop": "Anhalten",
     "loading": "Lädt …",
+    "slow": "Langsam",
+    "slow_label": "Langsam anhören",
     "hint": "Spielt dir den Hörtext vor – so oft du magst.",
+    "hint_words": "Liest es dir vor.",
+    "hint_tones": "Spielt dir die Töne vor.",
     "failed": "Der Hörtext lässt sich gerade nicht abspielen.",
+    "no_voice": "Vorlesen klappt auf diesem Gerät gerade nicht – vielleicht fehlt die Stimme für diese Sprache.",
+    "no_sound": "Hier kommt gerade kein Ton heraus.",
     "transcript_title": "Das war der Hörtext"
   },
   "loading": "Ich hole deine Fragen …",
@@ -151,12 +155,6 @@
   },
   "speak": {
     "instruction": "Sag es laut",
-    "listen": "Anhören",
-    "listen_slow": "Langsam anhören",
-    "listen_slow_short": "Langsam",
-    "listen_stop": "Anhalten",
-    "listen_hint": "Liest es dir vor.",
-    "no_voice": "Vorlesen klappt auf diesem Gerät gerade nicht – vielleicht fehlt die Stimme für diese Sprache.",
     "record": "Sprechen",
     "record_again": "Nochmal sagen",
     "record_stop": "Fertig",
@@ -191,10 +189,6 @@
     "word_again": "Fast – hör es dir nochmal an und probier es."
   },
   "staff": {
-    "play": "Anhören",
-    "play_stop": "Anhalten",
-    "play_hint": "Spielt die Notenzeile ab.",
-    "no_sound": "Hier kommt gerade kein Ton heraus.",
     "dot": "Punkt",
     "sharp": "Kreuz ♯",
     "undo": "Zurück",

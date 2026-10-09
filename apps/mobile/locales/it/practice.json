@@ -6,8 +6,6 @@
     "harder_topic": "Ancora, un po’ più difficile: {{topics}}"
   },
   "dictation": {
-    "play": "Ascolta",
-    "again": "Riascolta",
     "play_hint": "Buddy te lo legge – tutte le volte che vuoi."
   },
   "answer": {
@@ -80,12 +78,18 @@
   "later_done": "Va bene – quello torna più tardi.",
   "later_hint": "L'esercizio resta aperto e torna dopo gli altri.",
   "listen": {
-    "play": "Ascolta il testo",
+    "play": "Ascolta",
     "again": "Ascolta di nuovo",
     "stop": "Ferma",
     "loading": "Caricamento …",
+    "slow": "Lentamente",
+    "slow_label": "Ascolta lentamente",
     "hint": "Ti legge il testo ad alta voce, tutte le volte che vuoi.",
+    "hint_words": "Te lo legge ad alta voce.",
+    "hint_tones": "Ti suona le note.",
     "failed": "Il testo non si può ascoltare in questo momento.",
+    "no_voice": "La lettura ad alta voce ora non funziona su questo dispositivo – forse manca la voce per questa lingua.",
+    "no_sound": "Qui ora non esce nessun suono.",
     "transcript_title": "Questo era il testo"
   },
   "loading": "Sto caricando le tue domande…",
@@ -151,12 +155,6 @@
   },
   "speak": {
     "instruction": "Dillo ad alta voce",
-    "listen": "Ascolta",
-    "listen_slow": "Ascolta lentamente",
-    "listen_slow_short": "Lentamente",
-    "listen_stop": "Ferma",
-    "listen_hint": "Te lo legge ad alta voce.",
-    "no_voice": "La lettura ad alta voce ora non funziona su questo dispositivo – forse manca la voce per questa lingua.",
     "record": "Parla",
     "record_again": "Ridillo",
     "record_stop": "Fatto",
@@ -191,10 +189,6 @@
     "word_again": "Quasi: riascoltala e riprova."
   },
   "staff": {
-    "play": "Ascolta",
-    "play_stop": "Ferma",
-    "play_hint": "Suona la riga di note.",
-    "no_sound": "Qui ora non esce nessun suono.",
     "dot": "Punto",
     "sharp": "Diesis ♯",
     "undo": "Annulla",
