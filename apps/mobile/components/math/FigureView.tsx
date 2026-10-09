@@ -6,19 +6,13 @@
 // description for screen readers (describeFigure.ts).
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import {
-  BARE_FIGURE_CHROME,
-  BARE_FIGURE_PAD,
-  figureBodyWidth,
-  figureScale,
-  naturalFigureHeight,
-  newFigureWidth,
-} from '../../lib/math/figureScale.js';
+import { BARE_FIGURE_CHROME, BARE_FIGURE_PAD } from '../../lib/math/figureScale.js';
 import { speakMathText } from '../../lib/math/speak.js';
+import { useFigureFit } from '../../lib/math/useFigureFit.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -62,13 +56,9 @@ export function FigureView({
 }) {
   const { palette, figure: ink } = useTheme();
   const { t } = useTranslation('math');
-  const [width, setWidth] = useState(0);
-  // The drawing's full height at this width, measured once; the scale is then DERIVED
-  // from whatever `maxHeight` is right now (the rules and why they matter for issue #96
-  // are in lib/math/figureScale.ts, where they are tested).
-  const [fullHeight, setFullHeight] = useState(0);
-  const scale = figureScale(fullHeight, maxHeight);
-  const bodyWidth = figureBodyWidth(width, scale, bare ? BARE_FIGURE_CHROME : undefined);
+  // Measure, then scale (`useFigureFit`, figureScale.ts): the size it shows, and how it gets there.
+  const fit = useFigureFit(figure, maxHeight, bare ? BARE_FIGURE_CHROME : undefined);
+  const { scale, bodyWidth } = fit;
   const words = useSpokenWords();
   const names = useFigureNames(figure);
   const description = useMemo(
@@ -78,16 +68,14 @@ export function FigureView({
 
   return (
     <View
+      // Until the drawing has its width and natural height, the size it shows is not the one it
+      // keeps (measure, then scale): the walkthrough waits for this mark to go before a shot
+      // (`settle`, issue #501).
+      testID={fit.sizing ? 'figure-sizing' : undefined}
       accessible={!bare}
       accessibilityRole={bare ? undefined : 'image'}
       accessibilityLabel={bare ? undefined : `${t('figure.label')}: ${description}`}
-      onLayout={(e) => {
-        const w = newFigureWidth(width, e.nativeEvent.layout.width);
-        if (w !== null) {
-          setWidth(w);
-          setFullHeight(0); // a new width means a new natural height: measure again
-        }
-      }}
+      onLayout={fit.onFrame}
       style={{
         alignSelf: 'stretch',
         backgroundColor: ink.paper,
@@ -99,17 +87,13 @@ export function FigureView({
         minHeight: bare ? 0 : 60,
       }}
     >
-      {width > 0 ? (
+      {fit.width > 0 ? (
         <View
+          ref={fit.drawn}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           style={{ alignItems: 'center' }}
-          onLayout={(e) => {
-            // The first layout after a width change renders at scale 1: that is the
-            // drawing's natural height, the one number the derived scale needs.
-            const h = naturalFigureHeight(fullHeight, e.nativeEvent.layout.height);
-            if (h !== null) setFullHeight(h);
-          }}
+          onLayout={fit.onDrawn}
         >
           {layer ? (
             <View style={{ width: bodyWidth, alignItems: 'center' }}>

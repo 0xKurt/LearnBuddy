@@ -5,7 +5,8 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { setScheme, shot } from './fit';
+import { CHART_WIDTH } from '../../packages/shared-math/src/charts';
+import { PHONES, setScheme, settle, shot } from './fit';
 
 /** The words every offer card's button carries (components/learn/OfferCard.tsx). */
 const START = "Los geht's";
@@ -48,6 +49,8 @@ const QUESTIONS: Array<{
   name: string;
   hears: RegExp;
   answer: { type: string } | { tap: string };
+  /** A circle, not drawn across the whole width (`PieChartView`): its width is not measured. */
+  round?: true;
 }> = [
   {
     prompt: 'Wie hoch ist der Jahresniederschlag in Berlin?',
@@ -66,6 +69,7 @@ const QUESTIONS: Array<{
     name: '62-chart-pie',
     hears: /Kreisdiagramm: Bus 40 %/,
     answer: { type: '144' },
+    round: true,
   },
   {
     prompt: 'Wie groß ist der Median der Klasse 7a?',
@@ -140,6 +144,23 @@ test('charts: every chart type drawn, read and judged by code', async ({ page })
       await page.getByRole('button', { name: q.answer.tap, exact: true }).click();
     }
     await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+    // Answered, the card gives room back to the conversation; the chart still keeps the width its
+    // labels are checked at (`CHART_WIDTH`, issue #501) — scaled below it, the climate chart stood
+    // squashed, its twelve month initials on top of each other.
+    for (const phone of q.round ? [] : PHONES) {
+      await page.setViewportSize(phone);
+      await settle(page);
+      const drawn = await figure.evaluate((el) =>
+        Math.max(
+          0,
+          ...Array.from(el.querySelectorAll('svg'), (s) => s.getBoundingClientRect().width),
+        ),
+      );
+      expect(drawn, `${q.name} answered @${phone.width}: the chart's width`).toBeGreaterThanOrEqual(
+        CHART_WIDTH,
+      );
+    }
+    await page.setViewportSize(PHONES[0]);
     if (n === 0) await shot(page, '67-chart-answered');
     if (n < QUESTIONS.length - 1) await page.getByRole('button', { name: 'Weiter' }).click();
   }
