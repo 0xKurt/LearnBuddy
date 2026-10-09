@@ -45,8 +45,7 @@
       "part_lost": "Un trocito de tu grabación se ha perdido; el resto ya está."
     },
     "read_again": "Leer otra vez",
-    "read_aloud_on": "La lectura está activada",
-    "read_aloud_off": "Leer en voz alta",
+    "read_aloud": "Leer en voz alta",
     "recording": "Te escucho … {{time}} / {{max}}",
     "recording_open": "Te escucho … {{time}}",
     "recording_open_value": "Grabando, {{time}}",

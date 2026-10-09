@@ -34,13 +34,9 @@ export function LookSection() {
         <Row question={t('look.question')} current={familyLabel(family)} hint={t('look.hint')}>
           <FamilyChoice />
         </Row>
-        <Row
-          question={t('look.mode_question')}
-          current={modeLabel(mode)}
-          hint={t('look.mode_hint')}
-        >
-          <ModeChoice />
-        </Row>
+        {/* The switch is its own row: its name says what it does and its hint stands under
+            it (#517), so a question above it would only say the same thing twice. */}
+        <ModeChoice />
       </Card>
     </Group>
   );

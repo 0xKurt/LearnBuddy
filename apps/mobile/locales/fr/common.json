@@ -45,8 +45,7 @@
       "part_lost": "Un morceau de ton enregistrement s'est perdu – le reste est déjà là."
     },
     "read_again": "Relire",
-    "read_aloud_on": "La lecture est activée",
-    "read_aloud_off": "Lecture à voix haute",
+    "read_aloud": "Lecture à voix haute",
     "recording": "Je t'écoute … {{time}} / {{max}}",
     "recording_open": "Je t'écoute … {{time}}",
     "recording_open_value": "Enregistrement en cours, {{time}}",

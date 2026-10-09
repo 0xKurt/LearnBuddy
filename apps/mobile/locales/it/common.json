@@ -45,8 +45,7 @@
       "part_lost": "Un pezzetto della tua registrazione è andato perso – il resto c'è già."
     },
     "read_again": "Rileggi",
-    "read_aloud_on": "La lettura è attiva",
-    "read_aloud_off": "Lettura ad alta voce",
+    "read_aloud": "Lettura ad alta voce",
     "recording": "Ti ascolto … {{time}} / {{max}}",
     "recording_open": "Ti ascolto … {{time}}",
     "recording_open_value": "Registrazione in corso, {{time}}",

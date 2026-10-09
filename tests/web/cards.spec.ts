@@ -76,7 +76,7 @@ test('flashcards: the one bar with her question, the card’s action, the round 
   await page.getByTestId('card').getByRole('button', { name: 'Nochmal vorlesen' }).click();
   expect((await reread).postDataJSON()).toMatchObject({ text: 'la grenouille' });
   await bothSchemes(page, '101-cards-read-aloud');
-  await page.getByRole('switch', { name: 'Vorlesen ist an' }).last().click();
+  await page.getByRole('switch', { name: 'Vorlesen', exact: true }).last().click();
   await page.unroute('**/v1/voice/speech');
 
   // Her question about the card: the tutor's reply under it, nothing rated.

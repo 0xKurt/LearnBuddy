@@ -27,6 +27,11 @@ export type Palette = {
   ring: string;
   /** A text field's resting border: ≥ 3:1 on paper (WCAG 1.4.11). */
   field: string;
+  /**
+   * A switch's knob (components/lb/LookChoice.tsx, issue #517): light in both modes, as the
+   * phones draw it — a dark knob on the lit track of a dark palette read as a hole.
+   */
+  knob: string;
   /** The page seen through a hint laid over it (a file dragged over capture). */
   veil: string;
   success: string;
@@ -118,6 +123,7 @@ const pastellSoft: Palette = {
   primaryLt: '#ebe5fc',
   ring: 'rgba(106,72,215,0.22)',
   field: 'rgba(60,40,120,0.45)',
+  knob: '#ffffff',
   veil: 'rgba(250,247,253,0.96)',
   success: '#6b8d6a',
   warning: '#b58a3c',
@@ -208,6 +214,7 @@ const night: Palette = {
   primaryLt: '#332c55',
   ring: 'rgba(157,130,245,0.30)',
   field: 'rgba(220,210,255,0.55)',
+  knob: '#f3f0fb',
   veil: 'rgba(25,22,39,0.96)',
   success: '#7fae7c',
   warning: '#d6a95a',

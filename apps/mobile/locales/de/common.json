@@ -45,8 +45,7 @@
       "part_lost": "Ein Stück deiner Aufnahme ist verloren gegangen – der Rest steht schon da."
     },
     "read_again": "Nochmal vorlesen",
-    "read_aloud_on": "Vorlesen ist an",
-    "read_aloud_off": "Vorlesen",
+    "read_aloud": "Vorlesen",
     "recording": "Ich höre zu … {{time}} / {{max}}",
     "recording_open": "Ich höre zu … {{time}}",
     "recording_open_value": "Aufnahme läuft, {{time}}",

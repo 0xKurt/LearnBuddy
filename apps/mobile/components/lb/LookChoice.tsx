@@ -17,18 +17,22 @@
 // and the switch shows what is actually on screen either way — so it never displays a state
 // the app is not in. Touching it is her decision and pins it.
 //
+// The switch is the platform's own and is named for what it does: "Dunkelmodus", on = dark
+// (issue #517). It used to be drawn here (a track with a ✕/✓ knob) and labelled with the
+// CURRENT state, so an off switch beside "Hell" read as "Hell: aus", exactly the wrong way
+// round ("Der hell switch ist hässlich. Sollte auch invertiert benannt werden", owner 09.10.).
+//
 // Curated colours, no colour picker: the app must stay calm and friendly whatever she takes
 // (docs/DESIGN-BRIEF.md), and every combination is checked for readable contrast
 // (lib/theme/__tests__/contrast.test.ts).
 
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Switch, Text, View } from 'react-native';
 
 import { modeSwitch } from '../../lib/theme/modeSwitch.js';
 import { FAMILIES, paletteOf, themeNameOf, type Family } from '../../lib/theme/palettes.js';
-import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Icon } from './Icon.js';
 
@@ -120,11 +124,7 @@ export function FamilyChoice() {
   );
 }
 
-/** The light/dark switch: its track and its knob. */
-const TRACK = { width: 52, height: 32 } as const;
-const KNOB = 24;
-
-/** Light or dark: one switch, showing what is actually on screen. */
+/** Dark mode: one switch, the platform's own, named for what it does (issue #517). */
 export function ModeChoice() {
   const { t } = useTranslation('settings');
   const { name, palette, mode, choose } = useTheme();
@@ -136,69 +136,46 @@ export function ModeChoice() {
   // tested; this is one line per branch.
   const { pinned, hint, backAction } = modeSwitch(mode);
   const followPhone = () => choose({ mode: 'system' });
+  const setDark = (on: boolean) => choose({ mode: on ? 'dark' : 'light' });
+  const label = t('look.dark_mode');
   return (
-    <Pressable
-      accessibilityRole="switch"
-      accessibilityLabel={t('look.mode_question')}
-      accessibilityHint={t(hint)}
-      accessibilityActions={backAction ? [{ name: backAction, label: t('look.mode.system') }] : []}
-      onAccessibilityAction={(e) => {
-        if (e.nativeEvent.actionName === backAction) followPhone();
-      }}
-      // aria-checked (not accessibilityState) so the web build says it too.
-      aria-checked={dark}
-      onPress={() => choose({ mode: dark ? 'light' : 'dark' })}
-      onLongPress={pinned ? followPhone : undefined}
-      style={{ borderRadius: RADIUS.round }}
-    >
-      {({ pressed }) => (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: SPACE.md,
-            paddingVertical: SPACE.sm,
-            opacity: pressed ? 0.8 : 1,
-          }}
+    <View style={{ gap: SPACE.xs }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}>
+        {/* The words are part of the reach, as in a phone's own settings: a tap switches, a
+            long press goes back to the phone. A screen reader and a keyboard meet the switch
+            alone, which carries the same name, the hint and the way back as an action. */}
+        <Pressable
+          accessible={false}
+          focusable={false}
+          onPress={() => setDark(!dark)}
+          onLongPress={pinned ? followPhone : undefined}
+          style={{ flexGrow: 1, flexShrink: 1, minHeight: TOUCH, justifyContent: 'center' }}
         >
-          <Text style={[TYPE.body, { color: palette.ink, flexShrink: 1 }]}>
-            {t(`look.mode.${dark ? 'dark' : 'light'}` as const)}
-          </Text>
-          {/* The track and its knob: 52 × 32, the knob on the side that is on. */}
-          <View
-            style={{
-              width: TRACK.width,
-              height: TRACK.height,
-              borderRadius: circle(TRACK.height),
-              padding: 3, // token-exempt: the knob 3 inside its track, as a switch draws it
-              backgroundColor: dark ? palette.primary : palette.canvas,
-              borderWidth: 1,
-              borderColor: dark ? palette.primary : palette.hairline,
-              alignItems: dark ? 'flex-end' : 'flex-start',
-              justifyContent: 'center',
-            }}
-          >
-            <View
-              style={{
-                width: KNOB,
-                height: KNOB,
-                borderRadius: circle(KNOB),
-                backgroundColor: palette.paper,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {/* The knob carries the state in a shape as well, never colour alone. */}
-              <Icon
-                name={dark ? 'check' : 'close'}
-                size={14}
-                color={dark ? palette.primaryDk : palette.ink3}
-              />
-            </View>
-          </View>
-        </View>
-      )}
-    </Pressable>
+          <Text style={[TYPE.body, { color: palette.ink }]}>{label}</Text>
+        </Pressable>
+        <Switch
+          value={dark}
+          onValueChange={setDark}
+          accessibilityLabel={label}
+          accessibilityHint={t(hint)}
+          accessibilityActions={
+            backAction ? [{ name: backAction, label: t('look.mode.system') }] : []
+          }
+          onAccessibilityAction={(e) => {
+            if (e.nativeEvent.actionName === backAction) followPhone();
+          }}
+          // Off: a grey that still stands out on the card and the page (≥ 3:1, contrast test);
+          // on: the accent. The knob is light either way, as the phones draw it.
+          trackColor={{ false: palette.ink3, true: palette.primary }}
+          ios_backgroundColor={palette.ink3}
+          thumbColor={palette.knob}
+          // react-native-web paints an ON knob from this prop alone (teal without it).
+          activeThumbColor={palette.knob}
+        />
+      </View>
+      {/* What the switch does besides, in words: it follows the phone until touched, and a long
+          press goes back (#222). */}
+      <Text style={[TYPE.caption, { color: palette.ink2 }]}>{t(hint)}</Text>
+    </View>
   );
 }
