@@ -9,7 +9,14 @@
 
 import { usePathname } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  type LayoutChangeEvent,
+  Pressable,
+  StyleSheet,
+  Text,
+  type TextStyle,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { announce } from '../../lib/announce.js';
@@ -76,6 +83,12 @@ export function ToastHost() {
   );
 }
 
+/**
+ * The toast's words and its offer, light on the dark pill. token-exempt: TYPE.small's 15/21
+ * without its ink and its Bold Text weight, which the toast never had.
+ */
+const WORDS: TextStyle = { fontSize: 15, lineHeight: 21 };
+
 function Pill({
   message,
   tone,
@@ -107,11 +120,12 @@ function Pill({
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 10,
+          gap: 10, // token-exempt: the mark, the words and the offer 10 apart
           backgroundColor: palette.ink,
+          // token-exempt: round at one line (13 + 21 + 13), a soft box at two
           borderRadius: 26,
-          paddingHorizontal: 20,
-          paddingVertical: 13,
+          paddingHorizontal: 20, // token-exempt: the pill's ends need more room than its top
+          paddingVertical: 13, // token-exempt: the pill's height (above)
           maxWidth: 520,
           ...SHADOW.float,
         }}
@@ -125,7 +139,7 @@ function Pill({
               // instead of clipping the "!" in a fixed box (audit M-84, issue #73).
               minWidth: 22,
               minHeight: 22,
-              borderRadius: 999,
+              borderRadius: 999, // token-exempt: fully round, a circle that may grow
               backgroundColor: palette.peachDeep,
               alignItems: 'center',
               justifyContent: 'center',
@@ -133,15 +147,18 @@ function Pill({
           >
             <Text
               maxFontSizeMultiplier={MAX_FONT_SCALE}
-              style={{ color: palette.ink, fontSize: 14, lineHeight: 18, fontWeight: '700' }}
+              style={{
+                color: palette.ink,
+                fontSize: 14, // token-exempt: the "!" fills the 22 pt mark
+                lineHeight: 18, // token-exempt: the mark's line (above)
+                fontWeight: '700',
+              }}
             >
               !
             </Text>
           </View>
         ) : null}
-        <Text style={{ flexShrink: 1, color: palette.paper, fontSize: 15, lineHeight: 21 }}>
-          {message}
-        </Text>
+        <Text style={[WORDS, { flexShrink: 1, color: palette.paper }]}>{message}</Text>
         {action ? (
           <Pressable
             onPress={() => toast.act()}
@@ -155,10 +172,9 @@ function Pill({
               <Text
                 maxFontSizeMultiplier={MAX_FONT_SCALE}
                 style={{
+                  ...WORDS,
                   color: palette.paper,
                   opacity: pressed ? 0.6 : 1,
-                  fontSize: 15,
-                  lineHeight: 21,
                   fontWeight: '700',
                   // Not colour alone: the offer is also the only underlined word here.
                   textDecorationLine: 'underline',

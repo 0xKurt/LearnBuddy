@@ -26,7 +26,7 @@ import { currentLocale } from '../lib/i18n/index.js';
 import { signOutHere } from '../lib/leave.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { bottomRoom } from '../lib/theme/space.js';
+import { GUTTER, SPACE, pinnedBar } from '../lib/theme/space.js';
 
 const POINTS = [
   'point_data',
@@ -101,9 +101,13 @@ export default function Consent() {
           (issue #76 — measured, not guessed). What matters never moves out of sight. */}
       <ScrollView
         testID="scroll-list"
-        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 12, gap: 12 }}
+        contentContainerStyle={{
+          paddingHorizontal: GUTTER,
+          paddingVertical: SPACE.md,
+          gap: SPACE.md,
+        }}
       >
-        <View style={{ gap: 8 }}>
+        <View style={{ gap: SPACE.sm }}>
           <Text accessibilityRole="header" style={TYPE.display}>
             {t(forHerself ? 'consent.own_title' : 'consent.title')}
           </Text>
@@ -128,7 +132,7 @@ export default function Consent() {
             accessibilityRole="alert"
             style={[
               TYPE.small,
-              { color: palette.ink2, textAlign: 'center', paddingHorizontal: 24 },
+              { color: palette.ink2, textAlign: 'center', paddingHorizontal: SPACE.xl },
             ]}
           >
             {t('consent.internal_build')}
@@ -137,13 +141,12 @@ export default function Consent() {
       </ScrollView>
       {/* The agreement sits with its button: both always on screen. */}
       <View
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 8,
-          paddingBottom: bottomRoom(insets.bottom),
-          gap: 10,
-        }}
+        style={[
+          pinnedBar(insets.bottom),
+          { gap: 10 }, // token-exempt: the agreement and its buttons, 10 apart like a form's fields
+        ]}
       >
+        {/* token-exempt: 14, a slim card around the one checkbox */}
         <Card tone="lavender" padding={14}>
           <Checkbox
             checked={accepted}

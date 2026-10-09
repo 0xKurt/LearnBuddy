@@ -14,7 +14,7 @@ import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { Glow } from '../components/lb/Glow.js';
-import { Icon } from '../components/lb/Icon.js';
+import { IconDisc } from '../components/lb/IconDisc.js';
 import { LbTextInput, type LbTextInputRef } from '../components/lb/LbTextInput.js';
 import { Segmented } from '../components/lb/Segmented.js';
 import { LanguageFlags } from '../components/lb/LanguageFlags.js';
@@ -33,7 +33,7 @@ import { chooseDeviceLocale, currentLocale } from '../lib/i18n/index.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
-import { SPACE } from '../lib/theme/space.js';
+import { GUTTER, SPACE, pinnedBar } from '../lib/theme/space.js';
 import { formDensity } from '../lib/keyboard.js';
 import { useVisibleHeight } from '../lib/useVisibleHeight.js';
 
@@ -233,10 +233,10 @@ export default function Welcome() {
       <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{
-            paddingHorizontal: 20,
+            paddingHorizontal: GUTTER,
             // Tight: the form is the first thing, so it gets SPACE.md from the edge, not 4.
-            paddingTop: tight ? SPACE.md : dense ? 4 : 16,
-            paddingBottom: 24,
+            paddingTop: tight ? SPACE.md : dense ? SPACE.xs : SPACE.lg,
+            paddingBottom: SPACE.xl,
             gap,
           }}
           keyboardShouldPersistTaps="handled"
@@ -250,7 +250,7 @@ export default function Welcome() {
               {/* The very first thing: pick your language with one tap on a flag
                   (owner decision 2026-09-28). */}
               <LanguageFlags value={lang} onChange={chooseDeviceLocale} compact={dense} />
-              <View style={{ alignItems: 'center', gap, marginBottom: 4 }}>
+              <View style={{ alignItems: 'center', gap, marginBottom: SPACE.xs }}>
                 {showOrb ? <BuddyOrb size={dense ? 52 : 88} /> : null}
                 <Text
                   accessibilityRole="header"
@@ -276,11 +276,18 @@ export default function Welcome() {
           {confirmSent ? (
             <Card tone="mint">
               <Text style={TYPE.title}>{t('welcome.confirm_title')}</Text>
-              <Text style={[TYPE.body, { marginTop: 4 }]}>
+              <Text style={[TYPE.body, { marginTop: SPACE.xs }]}>
                 {t('welcome.confirm_body', { email: confirmEmail })}
               </Text>
-              <Text style={[TYPE.small, { marginTop: 4 }]}>{t('welcome.confirm_spam')}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+              <Text style={[TYPE.small, { marginTop: SPACE.xs }]}>{t('welcome.confirm_spam')}</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  gap: SPACE.sm,
+                  marginTop: SPACE.sm,
+                }}
+              >
                 <Btn
                   variant="outline"
                   size="sm"
@@ -319,6 +326,7 @@ export default function Welcome() {
               clearFailure();
             }}
           />
+          {/* token-exempt: the fields 10 apart, as on the profile steps */}
           <View style={{ gap: 10 }}>
             <LbTextInput
               value={email}
@@ -410,7 +418,7 @@ export default function Welcome() {
               />
             ) : null}
             {mode === 'signup' && !passwordError && !repeatError ? (
-              <Text style={[TYPE.small, { paddingHorizontal: 4 }]}>
+              <Text style={[TYPE.small, { paddingHorizontal: SPACE.xs }]}>
                 {t('welcome.password_hint')}
               </Text>
             ) : null}
@@ -428,22 +436,9 @@ export default function Welcome() {
           ) : tight ? null : (
             // Read with the keyboard closed; while she types it would only stand half under
             // the scroll edge (issue #289).
-            <Card tone="lavender" padding={dense ? 12 : 16}>
-              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-                <View
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    backgroundColor: palette.paper,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Icon name="shield" size={18} color={palette.primaryDk} />
-                </View>
+            <Card tone="lavender" padding={dense ? SPACE.md : SPACE.lg}>
+              <View style={{ flexDirection: 'row', gap: SPACE.md, alignItems: 'flex-start' }}>
+                <IconDisc name="shield" size={32} iconSize={18} />
                 <Text style={[TYPE.small, { flex: 1, color: palette.ink }]}>
                   {t('welcome.minor_hint')}
                 </Text>
@@ -451,7 +446,8 @@ export default function Welcome() {
             </Card>
           )}
         </ScrollView>
-        <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16, gap: 8 }}>
+        {/* The SafeAreaView keeps the bottom edge: no inset left to clear. */}
+        <View style={[pinnedBar(0), { gap: SPACE.sm }]}>
           {failure ? (
             <>
               <Text

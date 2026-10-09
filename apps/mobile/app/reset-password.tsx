@@ -37,6 +37,7 @@ import {
 import { messageFor } from '../lib/errors.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
+import { GUTTER, SPACE, pinnedBar } from '../lib/theme/space.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 // On the web the page address is the link; kept from load time in case the
@@ -135,14 +136,16 @@ export default function ResetPassword() {
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
         <Glow height={420} />
         <ResetPage title={t('reset.title')}>
+          {/* token-exempt: 20, the roomy card padding of the sign-up pages */}
           <Card tone={phase === 'offline' ? 'sky' : 'butter'} padding={20}>
             <Text style={TYPE.title}>
               {phase === 'offline' ? t('reset.offline_title') : t('reset.invalid_title')}
             </Text>
-            <Text style={[TYPE.body, { marginTop: 4 }]}>
+            <Text style={[TYPE.body, { marginTop: SPACE.xs }]}>
               {phase === 'offline' ? t('reset.offline_body') : t('reset.invalid_body')}
             </Text>
           </Card>
+          {/* token-exempt: the two buttons 10 apart, as the sign-up pages' fields */}
           <View style={{ gap: 10 }}>
             {phase === 'offline' ? (
               <Btn pill full onPress={() => void open(current.current)}>
@@ -179,7 +182,8 @@ export default function ResetPassword() {
             {backLabel}
           </Btn>
         </ResetPage>
-        <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 }}>
+        {/* The SafeAreaView keeps the bottom edge: no inset left to clear. */}
+        <View style={pinnedBar(0)}>
           <Btn size="lg" pill full disabled={!valid || busy} onPress={() => void save()}>
             {busy ? t('reset.saving') : t('reset.cta')}
           </Btn>
@@ -205,14 +209,19 @@ function ResetPage({
   return (
     <ScrollView
       contentContainerStyle={{
-        paddingHorizontal: 20,
-        paddingTop: 28,
-        paddingBottom: 24,
-        gap: 18,
+        paddingHorizontal: GUTTER,
+        paddingTop: 28, // token-exempt: Buddy a little lower than the page's top, as it always sat
+        paddingBottom: SPACE.xl,
+        gap: 18, // token-exempt: the page's rhythm, as on pin and the profile steps
       }}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
     >
-      <View style={{ alignItems: 'center', gap: 14 }}>
+      <View
+        style={{
+          alignItems: 'center',
+          gap: 14, // token-exempt: the title 14 under Buddy's orb
+        }}
+      >
         <BuddyOrb size={72} />
         <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
           {title}

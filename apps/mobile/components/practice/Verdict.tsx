@@ -24,6 +24,8 @@ import Svg, { Path } from 'react-native-svg';
 import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
+import { SPACE } from '../../lib/theme/space.js';
+import { TYPE } from '../../lib/theme/type.js';
 
 export type VerdictKey = 'correct' | 'partially_correct' | 'incorrect' | 'unchecked';
 
@@ -43,6 +45,9 @@ const verdictText = (p: Palette): Record<VerdictKey, string> => ({
 });
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+
+/** The chip and its glow and ring: fully round ends, like Chip. */
+const PILL = 999;
 
 /** The check's path ("M5 12l5 5 9-10") is about 20.5 units long. */
 const CHECK_LENGTH = 21;
@@ -106,12 +111,13 @@ export function VerdictTag({ verdict, label, fresh }: Props) {
           {
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 4,
+            gap: SPACE.xs,
             backgroundColor: verdictBg(palette)[verdict],
-            borderRadius: 999,
+            borderRadius: PILL,
+            // token-exempt: the chip's own snug padding; with the tick in front the left is 10
             paddingLeft: right ? 10 : 14,
-            paddingRight: 14,
-            paddingVertical: 5,
+            paddingRight: 14, // token-exempt: the chip's padding (above)
+            paddingVertical: 5, // token-exempt: the chip's padding (above)
           },
           chip,
         ]}
@@ -133,13 +139,10 @@ export function VerdictTag({ verdict, label, fresh }: Props) {
           </View>
         ) : null}
         <Text
-          style={{
-            color: verdictText(palette)[verdict],
-            fontSize: 14,
-            lineHeight: 19,
-            fontWeight: '600',
-            letterSpacing: 0.1,
-          }}
+          style={[
+            TYPE.caption,
+            { color: verdictText(palette)[verdict], fontWeight: '600', letterSpacing: 0.1 },
+          ]}
         >
           {label}
         </Text>
@@ -179,7 +182,7 @@ function Celebration() {
             bottom: -3,
             left: -6,
             right: -6,
-            borderRadius: 999,
+            borderRadius: PILL,
             backgroundColor: palette.mintDeep,
           },
           glow,
@@ -193,7 +196,7 @@ function Celebration() {
             bottom: 0,
             left: 0,
             right: 0,
-            borderRadius: 999,
+            borderRadius: PILL,
             borderWidth: 1.5,
             borderColor: palette.success,
           },
@@ -215,6 +218,8 @@ function Spark({
   progress,
 }: Spark & { progress: { value: number } }) {
   const rad = (angle * Math.PI) / 180;
+  /** The spark is a circle centred on its point. */
+  const radius = size / 2;
   const style = useAnimatedStyle(() => {
     const p = progress.value;
     return {
@@ -235,9 +240,9 @@ function Spark({
           left: '50%',
           width: size,
           height: size,
-          marginLeft: -size / 2,
-          marginTop: -size / 2,
-          borderRadius: size / 2,
+          marginLeft: -radius,
+          marginTop: -radius,
+          borderRadius: radius,
           backgroundColor: color,
         },
         style,

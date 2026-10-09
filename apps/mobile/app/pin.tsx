@@ -20,6 +20,7 @@ import { messageFor } from '../lib/errors.js';
 import { formatTime } from '../lib/time.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
+import { GUTTER, SPACE, bottomRoom } from '../lib/theme/space.js';
 
 export default function Pin() {
   const { palette } = useTheme();
@@ -81,17 +82,17 @@ export default function Pin() {
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          paddingHorizontal: 20,
-          paddingTop: 24,
+          paddingHorizontal: GUTTER,
+          paddingTop: SPACE.xl,
           // Edge-to-edge: "Abbrechen" must clear the Android navigation bar.
-          paddingBottom: insets.bottom + 24,
-          gap: 18,
+          paddingBottom: bottomRoom(insets.bottom, SPACE.xl),
+          gap: 18, // token-exempt: the page's rhythm, as on reset-password and the profile steps
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
         <BuddyOrb size={64} />
-        <View style={{ gap: 8, alignItems: 'center' }}>
+        <View style={{ gap: SPACE.sm, alignItems: 'center' }}>
           <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
             {t('pin.title')}
           </Text>
@@ -103,16 +104,16 @@ export default function Pin() {
           <View
             style={{
               backgroundColor: palette.blush,
-              borderRadius: 18,
-              paddingHorizontal: 16,
-              paddingVertical: 10,
+              borderRadius: 18, // token-exempt: the note rounder than a tile, softer than a card
+              paddingHorizontal: SPACE.lg,
+              paddingVertical: 10, // token-exempt: one or two lines, snug in the note
               maxWidth: 360,
             }}
           >
             <Text style={[TYPE.body, { color: palette.ink, textAlign: 'center' }]}>{error}</Text>
           </View>
         ) : null}
-        <View style={{ marginTop: 4 }}>
+        <View style={{ marginTop: SPACE.xs }}>
           <PinPad onComplete={(pin) => void submit(pin)} resetKey={attempt} disabled={busy} />
         </View>
         {/* Opening the parents' area: a forgotten PIN is set anew with the account's

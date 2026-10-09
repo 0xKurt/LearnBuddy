@@ -23,7 +23,16 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Animated, Easing, Linking, Platform, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Easing,
+  Linking,
+  Platform,
+  Text,
+  View,
+  type TextStyle,
+} from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { isOutdated, isRetryable } from '../../lib/api/apiError.js';
@@ -58,6 +67,14 @@ export function latestPronunciation(turns: PracticeTurnView[]): PronunciationFee
 
 // ─────────────── the sentence and the feedback ───────────────
 
+/**
+ * The sentence to say: larger than a title and lighter, so it reads as words, not a heading.
+ * token-exempt: 24/32, between TYPE.prompt and TYPE.display — the card's one big line.
+ */
+const SENTENCE: TextStyle = { fontSize: 24, lineHeight: 32, fontWeight: '500' };
+/** Marked: token-exempt: line 36, so the underline under a word to practise has room. */
+const MARKED: TextStyle = { ...SENTENCE, lineHeight: 36 };
+
 function MarkedWords({
   feedback,
   onWord,
@@ -77,8 +94,12 @@ function MarkedWords({
     .filter((s): s is string => s !== null)
     .join(' ');
   return (
-    <View accessible={!onWord} accessibilityLabel={onWord ? undefined : summary} style={{ gap: 6 }}>
-      <Text style={[TYPE.title, { fontSize: 24, lineHeight: 36, fontWeight: '500' }]}>
+    <View
+      accessible={!onWord}
+      accessibilityLabel={onWord ? undefined : summary}
+      style={{ gap: 6 }} // token-exempt: the legend close under its words
+    >
+      <Text style={[TYPE.title, MARKED]}>
         {feedback.words.map((w, i) => (
           // The space before a word stays outside it: the underline marks only the word.
           <Text key={`${i}-${w.text}`}>
@@ -108,7 +129,15 @@ function MarkedWords({
         ))}
       </Text>
       {practise.length > 0 ? (
-        <Text style={[TYPE.small, { fontSize: 14 }]}>{t('speak.legend')}</Text>
+        <Text
+          style={[
+            TYPE.small,
+            // token-exempt: 14, TYPE.small's line at caption size, quiet under the words
+            { fontSize: 14 },
+          ]}
+        >
+          {t('speak.legend')}
+        </Text>
       ) : null}
     </View>
   );
@@ -124,10 +153,7 @@ function LiveWords({ prompt, words }: { prompt: string; words: SpeakStreamEvent[
   const parts = prompt.split(/(\s+)/);
   let at = 0;
   return (
-    <Text
-      accessibilityRole="header"
-      style={[TYPE.title, { fontSize: 24, lineHeight: 32, fontWeight: '500' }]}
-    >
+    <Text accessibilityRole="header" style={[TYPE.title, SENTENCE]}>
       {parts.map((part, i) => {
         if (/^\s+$/.test(part)) return <Text key={i}>{part}</Text>;
         const judged = words[at];
@@ -185,8 +211,9 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
   const [word, setWord] = useState<SpokenWord | null>(null);
 
   return (
-    <Card tone="lavender" padding={20} radius={22}>
-      <View style={{ gap: 12 }}>
+    // token-exempt: padding 20, the sentence card a little roomier than a card's 18
+    <Card tone="lavender" padding={20}>
+      <View style={{ gap: SPACE.md }}>
         {item.topic ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{item.topic}</Text> : null}
         <Text style={TYPE.label}>{t('speak.instruction')}</Text>
         {sessionId && item.lang ? (
@@ -206,10 +233,7 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
         ) : live && live.words.length > 0 ? (
           <LiveWords prompt={item.prompt} words={live.words} />
         ) : (
-          <Text
-            accessibilityRole="header"
-            style={[TYPE.title, { fontSize: 24, lineHeight: 32, fontWeight: '500' }]}
-          >
+          <Text accessibilityRole="header" style={[TYPE.title, SENTENCE]}>
             {item.prompt}
           </Text>
         )}
@@ -229,7 +253,13 @@ export function PronunciationNote({ feedback }: { feedback: PronunciationFeedbac
   // No verdict line here: the words are marked in the card, the chip under her own turn
   // says "Fast", and Buddy's bubble says it in his words. Three times was two too many.
   return (
-    <View style={{ gap: 6, paddingLeft: 4, maxWidth: '86%' }}>
+    <View
+      style={{
+        gap: 6, // token-exempt: the tips close together, one note
+        paddingLeft: SPACE.xs,
+        maxWidth: '86%',
+      }}
+    >
       {tips.map((w, i) => (
         <Text key={`${i}-${w.text}`} style={TYPE.body}>
           {t('speak.tip', { word: w.text, tip: w.tip ?? '' })}
@@ -243,6 +273,9 @@ export function PronunciationNote({ feedback }: { feedback: PronunciationFeedbac
 }
 
 // ─────────────── the pinned controls ───────────────
+
+/** The pulsing dot while she speaks. */
+const REC_DOT = 12;
 
 function RecordingDot() {
   const { palette } = useTheme();
@@ -275,9 +308,9 @@ function RecordingDot() {
   return (
     <Animated.View
       style={{
-        width: 12,
-        height: 12,
-        borderRadius: 6,
+        width: REC_DOT,
+        height: REC_DOT,
+        borderRadius: REC_DOT / 2, // token-exempt: half its size, a circle
         backgroundColor: palette.primary,
         opacity: still ? 1 : pulse,
       }}

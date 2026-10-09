@@ -30,7 +30,7 @@ import { PhotoStrip } from '../components/capture/PhotoStrip.js';
 import { SendBar } from '../components/capture/SendBar.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
-import { Icon } from '../components/lb/Icon.js';
+import { IconDisc } from '../components/lb/IconDisc.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Section } from '../components/lb/Section.js';
 import { toast } from '../components/lb/Toast.js';
@@ -39,6 +39,11 @@ import { MAX_PHOTOS, type MaterialPurpose } from '../lib/capture/upload.js';
 import { useAttachments } from '../lib/capture/useAttachments.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
+import { SPACE } from '../lib/theme/space.js';
+
+/** The camera's and the drop hint's disc, and the glyph in it. */
+const HINT_DISC = 72;
+const HINT_ICON = 32;
 
 /** The purpose param; anything else is study material. */
 function purposeParam(value: string | string[] | undefined): MaterialPurpose {
@@ -133,8 +138,14 @@ export default function CaptureScreen() {
 
   return (
     <Screen back>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 18 }}>
-        <View style={{ gap: 8, paddingHorizontal: 4 }}>
+      <ScrollView
+        contentContainerStyle={{
+          padding: SPACE.lg,
+          paddingBottom: SPACE.xl,
+          gap: 18, // token-exempt: the page's rhythm, between its sections
+        }}
+      >
+        <View style={{ gap: SPACE.sm, paddingHorizontal: SPACE.xs }}>
           <Text accessibilityRole="header" style={TYPE.display}>
             {completes
               ? link.add
@@ -194,7 +205,11 @@ export default function CaptureScreen() {
         {preparing ? (
           <View
             accessibilityLiveRegion="polite"
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10, // token-exempt: the spinner 10 from its line
+            }}
           >
             <ActivityIndicator size="small" color={palette.primary} />
             <Text style={[TYPE.body, { flex: 1 }]}>
@@ -205,8 +220,8 @@ export default function CaptureScreen() {
 
         {cameraBlocked ? (
           <View accessibilityLiveRegion="polite">
-            <Card tone="butter" padding={16}>
-              <View style={{ gap: 12 }}>
+            <Card tone="butter" padding={SPACE.lg}>
+              <View style={{ gap: SPACE.md }}>
                 <Text style={TYPE.body}>{t('capture:permission.camera')}</Text>
                 <Btn size="sm" variant="outline" pill onPress={() => void Linking.openSettings()}>
                   {t('capture:permission.open_settings')}
@@ -217,7 +232,8 @@ export default function CaptureScreen() {
         ) : null}
 
         {leftover && photos.length === 0 ? (
-          <Card tone="butter" padding={16}>
+          <Card tone="butter" padding={SPACE.lg}>
+            {/* token-exempt: the draft's lines and buttons 10 apart, as the camera card's */}
             <View style={{ gap: 10 }}>
               <Text accessibilityRole="header" style={TYPE.title}>
                 {t('capture:draft.title')}
@@ -235,25 +251,17 @@ export default function CaptureScreen() {
           </Card>
         ) : review ? null : room > 0 ? (
           // First the camera is the one main action; once there are photos, sending is.
-          <Card padding={16}>
+          <Card padding={SPACE.lg}>
+            {/* token-exempt: the camera, its button and the two quiet choices 10 apart */}
             <View style={{ gap: 10 }}>
               {photos.length === 0 ? (
-                <View
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                  style={{
-                    alignSelf: 'center',
-                    width: 72,
-                    height: 72,
-                    borderRadius: 36,
-                    marginBottom: 8,
-                    backgroundColor: palette.lavender,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Icon name="camera" size={32} color={palette.primaryDk} />
-                </View>
+                <IconDisc
+                  name="camera"
+                  size={HINT_DISC}
+                  iconSize={HINT_ICON}
+                  tone="lavender"
+                  style={{ alignSelf: 'center', marginBottom: SPACE.sm }}
+                />
               ) : null}
               <Btn
                 size="lg"
@@ -267,7 +275,7 @@ export default function CaptureScreen() {
                 {photos.length === 0 ? t('capture:camera') : t('capture:camera_more')}
               </Btn>
               {/* One row, two quiet choices: a photo from the gallery, or a file (PDF too). */}
-              <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flexDirection: 'row', gap: SPACE.sm }}>
                 <View style={{ flex: 1 }}>
                   <Btn
                     variant="ghost"
@@ -318,33 +326,22 @@ export default function CaptureScreen() {
           accessibilityLiveRegion="polite"
           style={{
             position: 'absolute',
-            top: 12,
-            left: 12,
-            right: 12,
-            bottom: 12,
-            borderRadius: 28,
+            top: SPACE.md,
+            left: SPACE.md,
+            right: SPACE.md,
+            bottom: SPACE.md,
+            borderRadius: 28, // token-exempt: the drop frame, a step rounder than a card
             borderWidth: 2,
             borderStyle: 'dashed',
             borderColor: palette.primary,
             backgroundColor: palette.veil,
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 12,
-            padding: 24,
+            gap: SPACE.md,
+            padding: SPACE.xl,
           }}
         >
-          <View
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: 36,
-              backgroundColor: palette.lavender,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Icon name="file" size={32} color={palette.primaryDk} />
-          </View>
+          <IconDisc name="file" size={HINT_DISC} iconSize={HINT_ICON} tone="lavender" />
           <Text style={[TYPE.title, { textAlign: 'center', maxWidth: 260 }]}>
             {t('capture:files.drop')}
           </Text>

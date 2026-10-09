@@ -28,6 +28,7 @@ import { keys, queryClient, useMemory } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
+import { SPACE } from '../lib/theme/space.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 /** Temporary situations always carry an end; they expire by themselves. */
@@ -169,7 +170,7 @@ export default function MemoryScreen() {
   };
 
   const heading = (text: string) => (
-    <Text accessibilityRole="header" style={[TYPE.title, { paddingHorizontal: 4 }]}>
+    <Text accessibilityRole="header" style={[TYPE.title, { paddingHorizontal: SPACE.xs }]}>
       {text}
     </Text>
   );
@@ -179,7 +180,14 @@ export default function MemoryScreen() {
       case 'intro':
         return (
           <Text
-            style={[TYPE.body, { color: palette.ink2, paddingHorizontal: 4, marginBottom: 28 }]}
+            style={[
+              TYPE.body,
+              {
+                color: palette.ink2,
+                paddingHorizontal: SPACE.xs,
+                marginBottom: 28, // token-exempt: the intro set well apart from the first section
+              },
+            ]}
           >
             {t('memory:intro')}
           </Text>
@@ -188,15 +196,20 @@ export default function MemoryScreen() {
         // The one shared empty state, not a bespoke card (same action → same component).
         return <EmptyState orb title={t('memory:empty_title')} body={t('memory:empty_body')} />;
       case 'lasting':
-        return <View style={{ marginBottom: 12 }}>{heading(t('memory:lasting'))}</View>;
+        return <View style={{ marginBottom: SPACE.md }}>{heading(t('memory:lasting'))}</View>;
       case 'temporary':
         return (
-          <View style={{ marginTop: 16, marginBottom: 12 }}>{heading(t('memory:temporary'))}</View>
+          <View style={{ marginTop: SPACE.lg, marginBottom: SPACE.md }}>
+            {heading(t('memory:temporary'))}
+          </View>
         );
       case 'temporary_hint':
         return (
           <Text
-            style={[TYPE.body, { color: palette.ink2, paddingHorizontal: 4, marginBottom: 12 }]}
+            style={[
+              TYPE.body,
+              { color: palette.ink2, paddingHorizontal: SPACE.xs, marginBottom: SPACE.md },
+            ]}
           >
             {t('memory:temporary_hint')}
           </Text>
@@ -204,7 +217,7 @@ export default function MemoryScreen() {
       case 'memory': {
         const m = row.memory;
         return (
-          <Rise animate={entering(index)} index={index} style={{ marginBottom: 12 }}>
+          <Rise animate={entering(index)} index={index} style={{ marginBottom: SPACE.md }}>
             <MemoryItem
               memory={m}
               temporary={row.temporary}
@@ -244,7 +257,11 @@ export default function MemoryScreen() {
           keyExtractor={(row) => row.key}
           getItemType={(row) => row.type}
           extraData={{ editingId, draft, savingId }}
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 48 }}
+          contentContainerStyle={{
+            padding: SPACE.lg,
+            // token-exempt: room of 48 past the inset, the last memory clear of the edge
+            paddingBottom: insets.bottom + 48,
+          }}
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />

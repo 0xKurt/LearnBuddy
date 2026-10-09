@@ -7,7 +7,7 @@
 import type { Figure, ItemImage, ItemView, TaskPartView } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, View, type TextStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -60,6 +60,10 @@ type ProgressProps = {
   preparing?: boolean;
 };
 
+/** The progress bar: a thin track with round ends. */
+const BAR_HEIGHT = 8;
+const BAR_RADIUS = BAR_HEIGHT / 2;
+
 export function ProgressRow({
   position,
   total,
@@ -93,7 +97,11 @@ export function ProgressRow({
       <Text
         testID="progress-label"
         numberOfLines={1}
-        style={[TYPE.label, { color: palette.ink2, fontSize: 14, flexShrink: 1, minWidth: 0 }]}
+        style={[
+          TYPE.label,
+          // token-exempt: 14, the label a step larger beside the bar, still one line (#459)
+          { color: palette.ink2, fontSize: 14, flexShrink: 1, minWidth: 0 },
+        ]}
       >
         {label ??
           (preparing
@@ -112,14 +120,17 @@ export function ProgressRow({
           style={{
             flex: 1,
             minWidth: PROGRESS_BAR_MIN,
-            height: 8,
-            borderRadius: 4,
+            height: BAR_HEIGHT,
+            borderRadius: BAR_RADIUS,
             backgroundColor: palette.lavender,
             overflow: 'hidden',
           }}
         >
           <Animated.View
-            style={[{ height: '100%', borderRadius: 4, backgroundColor: palette.primary }, fill]}
+            style={[
+              { height: '100%', borderRadius: BAR_RADIUS, backgroundColor: palette.primary },
+              fill,
+            ]}
           />
         </View>
       )}
@@ -196,6 +207,11 @@ const PASSAGE_SHARE_SHORT = 0.15;
 /** The card's padding, and the gap between the prompt and the drawing. */
 const CARD_PAD = 18;
 const FIGURE_GAP = SPACE.md;
+/**
+ * The smaller prompt (`dense`, while she types): a step below TYPE.question, so the board keeps
+ * its room. token-exempt: 18/25, between TYPE.title and TYPE.prompt.
+ */
+const SMALL_QUESTION: TextStyle = { fontSize: 18, lineHeight: 25, fontWeight: '500' };
 
 export function QuestionCard({
   prompt,
@@ -310,11 +326,7 @@ export function QuestionCard({
               // A fraction in the question sits in its sentence (issue #288).
               inlineFractions
               accessibilityRole="header"
-              style={
-                small
-                  ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
-                  : TYPE.question
-              }
+              style={small ? [TYPE.title, SMALL_QUESTION] : TYPE.question}
             />
           </ReadAgain>
         </View>
@@ -374,16 +386,24 @@ function FromBuddyTag({ label }: { label: string }) {
         flexDirection: 'row',
         alignItems: 'center',
         alignSelf: 'flex-start',
-        gap: 6,
+        gap: 6, // token-exempt: the name close beside the orb
         backgroundColor: palette.paper,
-        borderRadius: 999,
-        paddingLeft: 4,
-        paddingRight: 12,
-        paddingVertical: 4,
+        borderRadius: 999, // token-exempt: fully round ends, like Chip
+        paddingLeft: SPACE.xs,
+        paddingRight: SPACE.md,
+        paddingVertical: SPACE.xs,
       }}
     >
       <BuddyOrb size={18} />
-      <Text style={{ color: palette.ink, fontSize: 13, lineHeight: 17, fontWeight: '600' }}>
+      <Text
+        style={{
+          color: palette.ink,
+          // token-exempt: TYPE.label's size on a tighter line, the pill no taller than the orb's 18
+          fontSize: 13,
+          lineHeight: 17, // token-exempt: the tight line (above)
+          fontWeight: '600',
+        }}
+      >
         {label}
       </Text>
     </View>
