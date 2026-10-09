@@ -1,13 +1,16 @@
 // Scripted model answers for tasks in parts (issue #297): one situation, subtasks a), b), c), a
 // later part that goes on with an earlier part's result, and an open part („Begründe …") checked
-// against key points. Shared by the integration tests (`__tests__/task-parts*.int.test.ts`) and the
-// browser walkthrough (tests/web/task-parts.spec.ts). Every formula here gives its part's key from
-// the earlier keys, as the server checks (`modules/practice/taskParts.ts`). Test tooling only;
-// answers are keyed by the learner's text.
+// against key points — written by the generator, and read from a photographed worksheet (step 3:
+// its own learner, keyed by her age, 9, nobody else's in the walkthrough, #350). Shared by the
+// integration tests (`__tests__/task-parts*.int.test.ts`) and the browser walkthrough
+// (tests/web/task-parts.spec.ts). Every formula here gives its part's key from the earlier keys, as
+// the server checks (`modules/practice/taskParts.ts`). Test tooling only; answers are keyed by the
+// learner's text.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
+import { scriptChecks } from './checks.js';
 import { scriptGenerations } from './generations.js';
-import { tutorRules } from './rules.js';
+import { readingRules, tutorRules } from './rules.js';
 import { judgedBy } from './teachBack.js';
 import { says, scriptTurns } from './turns.js';
 
@@ -92,7 +95,151 @@ export function rideTask() {
   };
 }
 
+/** The material of the task on the photographed worksheet, as printed before a). */
+export const POOL_STEM =
+  'Ein Schwimmbecken fasst 450 m³ Wasser. Am Morgen sind schon 150 m³ im Becken. Eine Pumpe füllt pro Stunde 25 m³ nach.';
+
+/** The open subtask of the sheet's task: her reasoning, checked against key points. */
+export const POOL_WHY = 'Begründe, warum zwei gleich starke Pumpen nur halb so lange brauchen.';
+
+/** Its key points: never on screen; their follow-ups are. */
+const POOL_POINTS = [
+  {
+    name: 'Menge',
+    point: 'die fehlende Wassermenge bleibt dieselbe',
+    ask: 'Was ändert sich an der Wassermenge, die noch fehlt?',
+    exact: [],
+  },
+  {
+    name: 'Leistung',
+    point: 'zusammen fördern sie in jeder Stunde doppelt so viel Wasser',
+    ask: 'Wie viel Wasser schaffen beide zusammen in einer Stunde?',
+    exact: [],
+  },
+];
+
+/** One subtask as the reading writes it: its printed letter, its question, its key and its help. */
+function sheetPart(
+  letter: string,
+  prompt: string,
+  answer: string,
+  unit: string,
+  from: string | null,
+) {
+  return {
+    ...part(prompt, answer, unit, from),
+    letter,
+    hints: ['Schau, welche Werte im Text stehen.', 'Welche Rechenart passt dazu?'],
+    worked_solution: null,
+  };
+}
+
+/**
+ * Aufgabe 2 of a worksheet as the reading reports it: the material, a) and b) computed
+ * (b goes on from a), c) open. `letters` and `bFrom` let a test break its structure.
+ */
+export function poolTask(letters = ['a', 'b', 'c'], bFrom = 'a / 25') {
+  return {
+    stem: POOL_STEM,
+    topic: 'Lineare Zusammenhänge',
+    difficulty: 3,
+    prompt_lang: 'de',
+    parts: [
+      sheetPart(
+        letters[0]!,
+        'Wie viel Wasser fehlt noch, bis das Becken voll ist?',
+        '300',
+        'm³',
+        null,
+      ),
+      sheetPart(letters[1]!, 'Wie viele Stunden braucht die Pumpe dafür?', '12', 'h', bFrom),
+      {
+        ...sheetPart(letters[2]!, POOL_WHY, 'Menge gleich, doppelt so viel pro Stunde', '', null),
+        kind: 'long',
+        unit: null,
+        hints: [],
+        points: POOL_POINTS,
+      },
+    ],
+  };
+}
+
+/** The ordinary question beside the task on the same sheet: a question of its own, as before. */
+export const LITRES = {
+  kind: 'numeric',
+  prompt: 'Wie viele Liter sind 1 m³?',
+  answer: '1000',
+  accepted_answers: [],
+  unit: 'l',
+  choices: null,
+  correct_choice: null,
+  topic: 'Einheiten',
+  difficulty: 1,
+  prompt_lang: 'de',
+  lang: null,
+  figure: null,
+  source_excerpt: null,
+  hints: ['Ein Kubikmeter ist ein Würfel mit 10 dm Kante.'],
+};
+
+/** The worksheet as printed, transcribed. */
+const POOL_TRANSCRIPT = [
+  '# Arbeitsblatt',
+  `1. ${LITRES.prompt}`,
+  `2. ${POOL_STEM}`,
+  'a) Wie viel Wasser fehlt noch, bis das Becken voll ist?',
+  'b) Wie viele Stunden braucht die Pumpe dafür?',
+  `c) ${POOL_WHY}`,
+].join('\n');
+
+/** What the reading of the photographed worksheet answers; `task` is its task in parts. */
+export function poolSheet(task: unknown = poolTask()) {
+  return {
+    is_learning_material: true,
+    readable: true,
+    pages: [{ page: 1, read: 'all', problem: null }],
+    title: 'Arbeitsblatt Schwimmbad',
+    subject: { name: 'Mathe', kind: 'math' },
+    extracted_text: POOL_TRANSCRIPT,
+    items: [LITRES],
+    structured: [],
+    reading: [],
+    part_tasks: [task],
+    more_items: false,
+  };
+}
+
+/** The photographed worksheet with its task in parts (step 3), read and prepared for practice. */
+function scriptPhotographedTask(): void {
+  readingRules.add({
+    when: /LEARNER: 9 years/,
+    system: /learner's study material/,
+    answer: () => poolSheet(),
+  });
+  scriptChecks({
+    when: /new material is ready: "Arbeitsblatt Schwimmbad"/,
+    answer: () => ({
+      disposition: 'act',
+      reason: 'A worksheet with a task in parts is ready: prepare it.',
+      actions: [
+        {
+          tool: 'prepare_practice',
+          args: { goal: null, subject: null, minutes: 10, focus_topics: [] },
+        },
+      ],
+      outreach: null,
+    }),
+  });
+  tutorRules.add(
+    judgedBy(/Begründe, warum zwei gleich starke Pumpen/, [
+      ['r1', /Menge[^.]*(gleich|dieselbe)|(gleich|dieselbe)[^.]*Menge/i],
+      ['r2', /doppelt so viel/i],
+    ]),
+  );
+}
+
 export function scriptTaskParts(): void {
+  scriptPhotographedTask();
   scriptGenerations({
     when: /Aufgaben wie in der Klassenarbeit/i,
     answer: () => ({

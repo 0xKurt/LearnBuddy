@@ -116,10 +116,19 @@ export const PartTaskDraft = z.object({
 export type PartTaskDraft = z.infer<typeof PartTaskDraft>;
 
 /**
+ * How a computed part says it goes on from earlier ones: the same syntax for a task the generator
+ * writes and one read from a photo (`materials/partTasks.ts`). A syntax, not a task.
+ */
+export const PART_FROM_RULE = `A numeric part that goes on with the result of earlier parts says how in "from": arithmetic over their letters only (a, b, c; numbers, + - * / ^, sqrt, parentheses) that gives exactly its own key from theirs`;
+
+/** What an open part holds, wherever it is written (the generator, a photo reading). */
+export const OPEN_PART_RULE = `An open part (kind long: begründe, erkläre, beschreibe, deute, beurteile) asks for her reasoning about the situation; its answer is its points in a few words, and "points" holds the ${TASK_OPEN_POINTS_MIN}–${TASK_OPEN_POINTS_MAX} key points a complete answer makes. None of them states what the situation or the question already says, and none hangs on an earlier part's result (no number she computed there): she may go on with her own.`;
+
+/**
  * What the generator is told about tasks in parts. Principles, never an example task (models copy
  * examples — standing owner rule); the formula's form is a syntax, not a task.
  */
-export const PART_TASK_RULES = `Tasks in parts ("part_tasks", grade 7 and up, any subject where a situation carries several steps): one situation (stem: a few sentences with every number and fact the parts need — no drawing, chart or table: such a task is not written as one in parts) and ${TASK_PARTS_MIN}–${TASK_PARTS_MAX} parts in the order a class test asks them, from finding a value to using it and judging it. Each part is a question of kind numeric, short, multiple_choice or — where the schema offers it — long, with its own key, written WITHOUT its letter (the app letters them a), b), c)). A numeric part that goes on with the result of earlier parts says how in "from": arithmetic over their letters only (a, b, c; numbers, + - * / ^, sqrt, parentheses) that gives exactly its own key from theirs — the app recomputes it, and a task whose formula does not give the key is dropped whole. An open part (kind long: begründe, erkläre, beschreibe, deute, beurteile) asks for her reasoning about the situation; its answer is its points in a few words, and "points" holds the ${TASK_OPEN_POINTS_MIN}–${TASK_OPEN_POINTS_MAX} key points a complete answer makes. None of them states what the situation or the question already says, and none hangs on an earlier part's result (no number she computed there): she may go on with her own. Never a part that only repeats another, never more parts than the situation carries.`;
+export const PART_TASK_RULES = `Tasks in parts ("part_tasks", grade 7 and up, any subject where a situation carries several steps): one situation (stem: a few sentences with every number and fact the parts need — no drawing, chart or table: such a task is not written as one in parts) and ${TASK_PARTS_MIN}–${TASK_PARTS_MAX} parts in the order a class test asks them, from finding a value to using it and judging it. Each part is a question of kind numeric, short, multiple_choice or — where the schema offers it — long, with its own key, written WITHOUT its letter (the app letters them a), b), c)). ${PART_FROM_RULE} — the app recomputes it, and a task whose formula does not give the key is dropped whole. ${OPEN_PART_RULE} Never a part that only repeats another, never more parts than the situation carries.`;
 
 /** The letters of a task of `n` parts. */
 function lettersOf(n: number): TaskPartLetter[] {
@@ -216,39 +225,86 @@ export function openPartProblem(draft: PartTaskDraft, index: number): string | n
 }
 
 /**
+ * The help a photo reading writes beside each part, as it does beside every question it reads
+ * (`materials/partTasks.ts`). A generated task has none here: its help comes in its own call
+ * (`hints.ts`). An open part's help is always its follow-ups, whatever is given.
+ */
+export type PartHelp = Pick<ItemDraft, 'hints' | 'worked_solution'>;
+
+/** What one part says of itself: its form, its question, its key and its help. */
+type PartFields = PartHelp &
+  Pick<
+    ItemDraft,
+    | 'kind'
+    | 'prompt'
+    | 'answer'
+    | 'accepted_answers'
+    | 'unit'
+    | 'choices'
+    | 'correct_choice'
+    | 'tolerance'
+  >;
+
+/**
+ * A part as an ordinary question: the task's topic, difficulty and language, nothing drawn, and
+ * nothing else the model wrote beside it. The one shape both a part of a task and a part read
+ * back as a question of its own take (`materials/partTasks.ts`).
+ */
+export function partQuestion(
+  task: Pick<PartTaskDraft, 'topic' | 'difficulty' | 'prompt_lang'>,
+  part: PartFields,
+): ItemDraft {
+  return {
+    kind: part.kind,
+    prompt: part.prompt,
+    answer: part.answer,
+    accepted_answers: part.accepted_answers,
+    unit: part.unit,
+    choices: part.choices,
+    correct_choice: part.correct_choice,
+    tolerance: part.tolerance,
+    topic: task.topic,
+    difficulty: task.difficulty,
+    prompt_lang: task.prompt_lang,
+    lang: null,
+    figure: null,
+    choice_figures: null,
+    read: null,
+    computes: null,
+    spelling: null,
+    source_excerpt: null,
+    curriculum_point: null,
+    hints: part.hints,
+    worked_solution: part.worked_solution,
+    rubric: null,
+  };
+}
+
+/**
  * The questions of one task in parts, lettered, each carrying the task — or none.
  *
  * Every part goes through `usableItems` like any question; one that does not hold, a formula that
  * does not, or an open part whose key points do not, costs the whole task (a task is its parts in
  * order). An open part is then stored as an explanation question is (`keyPointFields`).
  */
-export function partTaskItems(draft: PartTaskDraft, opts: { locale?: string } = {}): StoredItem[] {
+export function partTaskItems(
+  draft: PartTaskDraft,
+  opts: { locale?: string; help?: readonly PartHelp[] } = {},
+): StoredItem[] {
   const n = draft.parts.length;
   if (draft.parts.some((_, i) => openPartProblem(draft, i) !== null)) return [];
   const open = draft.parts.map((p) => (p.kind === 'long' ? keyPointFields(p.points) : null));
-  const drafts: ItemDraft[] = draft.parts.map(({ from: _from, points: _points, ...p }, i) => {
+  const drafts = draft.parts.map((p, i) => {
     const o = open[i];
-    return {
+    return partQuestion(draft, {
       ...p,
       // An open part's key is its points, whatever the model wrote beside them.
       ...(o ? { answer: o.answer, accepted_answers: o.accepted_answers, unit: o.unit } : {}),
-      topic: draft.topic,
-      difficulty: draft.difficulty,
-      prompt_lang: draft.prompt_lang,
-      lang: null,
-      figure: null,
-      choice_figures: null,
-      read: null,
-      computes: null,
-      spelling: null,
-      source_excerpt: null,
-      curriculum_point: null,
-      hints: [],
-      worked_solution: null,
-      rubric: null,
-    };
+      hints: opts.help?.[i]?.hints ?? [],
+      worked_solution: opts.help?.[i]?.worked_solution ?? null,
+    });
   });
-  const usable = usableItems(drafts, opts);
+  const usable = usableItems(drafts, { locale: opts.locale });
   if (usable.length !== n) return [];
   for (let i = 0; i < n; i++) {
     const from = draft.parts[i]?.from ?? null;
