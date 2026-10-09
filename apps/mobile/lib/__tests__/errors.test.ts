@@ -128,7 +128,7 @@ const TRANSLATED_BY_THE_CALLER: Record<string, readonly string[]> = {
   'app/memory.tsx': ['done'],
   // copyMessage(text, said) — `said` is { copied: t(…), failed: t(…) } from the menu.
   'components/buddy/MessageMenu.tsx': ['said.copied', 'said.failed'],
-  // usePlayback(failed) — `failed.text` is t('practice:…') in useListenToggle and useHearText.
+  // usePlayback(failed) — `failed.text` is t('practice:…') in useListen.
   'lib/speech/usePlayback.ts': ['failedRef.current.text'],
   // toastAdultFailure(err, noPin) — every caller passes t('…pin_first') or t('consent.parents_needed').
   'components/settings/adultGate.tsx': ['noPin'],

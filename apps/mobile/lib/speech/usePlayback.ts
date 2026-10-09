@@ -1,6 +1,6 @@
 // The one play/stop state of the app's listen controls (issue #311, slice 6). Every "Anhören" —
-// words in their language, tones the app makes (`useListenToggle`), the Hörtext and the Diktat the
-// server records (`useHearText`) — is a sound that is asked for, may take a moment, sounds, and
+// words in their language, tones the app makes, the Hörtext and the Diktat the server records
+// (`components/practice/useListen.ts`) — is a sound that is asked for, may take a moment, sounds, and
 // ends. What that means for her is the same everywhere, so it lives here once:
 //
 //   · a tap on what is running stops it; a tap on another one (the slower pass) switches;

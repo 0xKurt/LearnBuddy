@@ -6,8 +6,6 @@
     "harder_topic": "Encore, un peu plus difficile : {{topics}}"
   },
   "dictation": {
-    "play": "Écouter",
-    "again": "Réécouter",
     "play_hint": "Buddy te le lit – autant de fois que tu veux."
   },
   "answer": {
@@ -80,12 +78,18 @@
   "later_done": "D'accord – celui-là revient plus tard.",
   "later_hint": "L'exercice reste ouvert et revient après les autres.",
   "listen": {
-    "play": "Écouter le texte",
+    "play": "Écouter",
     "again": "Réécouter",
     "stop": "Arrêter",
     "loading": "Chargement …",
+    "slow": "Lentement",
+    "slow_label": "Écouter lentement",
     "hint": "Te lit le texte à voix haute – autant de fois que tu veux.",
+    "hint_words": "Te le lit à voix haute.",
+    "hint_tones": "Te joue les notes.",
     "failed": "Impossible d’écouter le texte pour le moment.",
+    "no_voice": "La lecture à voix haute ne marche pas sur cet appareil pour le moment – la voix de cette langue manque peut-être.",
+    "no_sound": "Aucun son ne sort ici pour le moment.",
     "transcript_title": "Voici le texte"
   },
   "loading": "Je récupère tes questions…",
@@ -151,12 +155,6 @@
   },
   "speak": {
     "instruction": "Dis-le à voix haute",
-    "listen": "Écouter",
-    "listen_slow": "Écouter lentement",
-    "listen_slow_short": "Lentement",
-    "listen_stop": "Arrêter",
-    "listen_hint": "Te le lit à voix haute.",
-    "no_voice": "La lecture à voix haute ne marche pas sur cet appareil pour le moment – la voix de cette langue manque peut-être.",
     "record": "Parler",
     "record_again": "Redis-le",
     "record_stop": "Terminé",
@@ -191,10 +189,6 @@
     "word_again": "Presque – réécoute-le et réessaie."
   },
   "staff": {
-    "play": "Écouter",
-    "play_stop": "Arrêter",
-    "play_hint": "Joue la ligne de notes.",
-    "no_sound": "Aucun son ne sort ici pour le moment.",
     "dot": "Point",
     "sharp": "Dièse ♯",
     "undo": "Annuler",

@@ -83,8 +83,7 @@ export function WordSheet({ word, sessionId, itemId, lang, onClose }: Props) {
       <View style={{ gap: SPACE.md }}>
         <Text style={TYPE.small}>{t('practice:speak.word_hint')}</Text>
         <View style={{ flexDirection: 'row', gap: SPACE.sm, flexWrap: 'wrap' }}>
-          <ListenButton text={word.text} lang={lang} disabled={recording} />
-          <ListenButton text={word.text} lang={lang} slow disabled={recording} />
+          <ListenButton source={{ text: word.text, lang }} slow disabled={recording} />
         </View>
 
         {tip ? <Text style={TYPE.body}>{tip}</Text> : null}

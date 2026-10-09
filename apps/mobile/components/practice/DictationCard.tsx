@@ -4,20 +4,20 @@
 // card would be one line over an empty middle, with the way to hear the word as a small pill
 // under it (the gap #286 names). Here the one thing she does first stands in the card, large
 // and centred: "Anhören". The slower pass is the quiet pill beside it, as everywhere else
-// (`HearText`). The card takes the room the conversation does not need yet and gives it back as
-// soon as there is a reply to show (`minHeight`, measured by the screen).
+// (`ListenButton`). The card takes the room the conversation does not need yet and gives it back
+// as soon as there is a reply to show (`minHeight`, measured by the screen).
 //
-// The playback is the Hörverstehen chain (`useHearText`): the app asks the server for the audio
-// of this question and plays it; the word itself never reaches the phone before she answered.
+// The playback is the Hörverstehen chain (`useListen` with the question's recording): the app
+// asks the server for the audio of this question and plays it; the word itself never reaches the
+// phone before she answered.
 
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
-import { useHearText } from './HearText.js';
+import { ListenButton } from './ListenButton.js';
 
 type Props = {
   sessionId: string;
@@ -49,50 +49,22 @@ export function DictationCard({
   compact = false,
 }: Props) {
   const { t } = useTranslation('practice');
-  const { playing, play, loading, fetching } = useHearText(sessionId, itemId, onHeard);
   const grown = !compact && minHeight !== undefined && minHeight > 0;
 
-  const mainLabel =
-    playing === 'normal'
-      ? t('listen.stop')
-      : loading('normal')
-        ? t('listen.loading')
-        : heard
-          ? t('dictation.again')
-          : t('dictation.play');
-
   /**
-   * "Anhören" and the quiet "Langsam" beside or under it — one pair in both shapes of the card;
-   * only the main button's size and weight differ.
+   * "Anhören" and the quiet "Langsam" beside or under it — the one listen control
+   * (`ListenButton`) in both shapes of the card; only the main button's size and weight differ.
    */
-  const pair = (size: 'md' | 'lg', variant: 'outline' | 'primary', slowLabel: string) => (
-    <>
-      <Btn
-        size={size}
-        pill
-        variant={variant}
-        icon={playing === 'normal' ? 'stop' : 'speak'}
-        busy={loading('normal')}
-        disabled={disabled || (fetching && !loading('normal'))}
-        onPress={() => play('normal')}
-        accessibilityLabel={mainLabel}
-        {...(playing === 'normal' ? {} : { accessibilityHint: t('dictation.play_hint') })}
-      >
-        {mainLabel}
-      </Btn>
-      <Btn
-        size="sm"
-        pill
-        variant="ghost"
-        {...(playing === 'slow' ? { icon: 'stop' as const } : {})}
-        busy={loading('slow')}
-        disabled={disabled || (fetching && !loading('slow'))}
-        onPress={() => play('slow')}
-        accessibilityLabel={playing === 'slow' ? t('listen.stop') : t('speak.listen_slow')}
-      >
-        {playing === 'slow' ? t('listen.stop') : slowLabel}
-      </Btn>
-    </>
+  const pair = (size: 'md' | 'lg', variant: 'outline' | 'primary') => (
+    <ListenButton
+      source={{ item: { sessionId, itemId, onHeard } }}
+      slow
+      heard={heard}
+      size={size}
+      variant={variant}
+      hint={t('dictation.play_hint')}
+      disabled={disabled}
+    />
   );
 
   if (compact) {
@@ -106,7 +78,7 @@ export function DictationCard({
             gap: SPACE.sm,
           }}
         >
-          {pair('md', 'outline', t('speak.listen_slow_short'))}
+          {pair('md', 'outline')}
         </View>
       </Card>
     );
@@ -135,7 +107,7 @@ export function DictationCard({
             The first thing she does is hear it: the one filled button on the screen until she
             has. After that it steps back to an outline, so "Prüfen" is the strong one. */}
         <View style={{ alignItems: 'center', gap: SPACE.xs }}>
-          {pair('lg', heard ? 'outline' : 'primary', t('speak.listen_slow'))}
+          {pair('lg', heard ? 'outline' : 'primary')}
         </View>
       </View>
     </Card>

@@ -2764,12 +2764,16 @@ gelesenen Intervall, `intervalOptions`) und die Töne (`tonesOf`: zwei halbe Not
 Nachhören. Hörbar ist, was ein Schlüssel dieser App zeichnen kann (E2 bis A5, `audible`). Die App
 spielt sie mit ihrer eigenen Synthese (`lib/music/tone.ts`, Dreieck mit Hüllkurve, als WAV durch
 `expo-audio` — derselbe Player wie Buddys Stimme) über den **einen** Hör-Hook
-(`components/practice/useListenToggle.ts`): „Anhören" in der Werkzeugreihe unter der Frage
-(`QuestionTools`, `ListenButton` mit `tones`). Derselbe Hook spielt jetzt auch die gezeichnete
-Zeile (`StaffPlayButton`, die Taste in `StaffKeys`); die Kopie `useStaffPlay` ist weg
-(`lib/__tests__/oneListen.test.ts`). Den Spielzustand selbst (angefragt / klingt, Anhalten beim
-Verlassen, ein Satz statt Stille) hält seit #311 (Schnitt 6) genau ein Hook,
-`lib/speech/usePlayback.ts` — unter `useListenToggle` und unter dem Hörtext/Diktat (`useHearText`);
+(`components/practice/useListen.ts`): „Anhören" in der Werkzeugreihe unter der Frage
+(`QuestionTools`, `ListenButton` mit `source={{ tones }}`). Derselbe Hook spielt auch die
+gezeichnete Zeile (`ListenButton speakerOnly` neben der Zeile, die Taste in `StaffKeys`), Wörter
+und Sätze und die Aufnahme einer Frage (Hörtext, Diktat); die Kopien `useStaffPlay`,
+`useListenToggle` und `useHearText` sind weg (`lib/__tests__/oneListen.test.ts`). Seit #311
+Schritt 2 gibt es genau **einen Hörknopf**, `ListenButton`: gleiche Pille, gleiche Zustände
+(bereit „Anhören"/„Nochmal hören", lädt „Lädt …", spielt „Anhalten"; ein Fehler wird gesagt, der
+Knopf ist wieder bereit), gleiches Label-Muster, „Langsam" als leiser Zwilling mit geteiltem
+Zustand. Den Spielzustand selbst (angefragt / klingt, Anhalten beim Verlassen, ein Satz statt
+Stille) hält seit #311 (Schnitt 6) genau ein Hook, `lib/speech/usePlayback.ts` — unter `useListen`;
 Buddys eigene Stimme (Nachricht vorlesen, Stimmprobe) bleibt beim `voiceStore`. Der Bibliotheks-Check (#445): Tone.js hat keinen
 React-Native-Weg, Web-Audio-Synthese bräuchte auf dem Handy `react-native-audio-api` als zweite
 Strecke, die der Browser-Walkthrough nicht prüfen kann; die eigene Synthese kostet keine neue
@@ -4622,7 +4626,8 @@ word list, so it stays a prompt rule.
   there is a reply the card collapses to one row ("Nochmal hören" · "Langsam") and the thread
   shows only her latest try and what followed — three tries do not fit under the card on 360×740,
   and an older bubble would sit half cut under its edge. The
-  playback is `useHearText`, the hook the Hörverstehen pills use. The answer field has no
+  playback is `useListen` with the question's recording, under the one `ListenButton` the
+  Hörverstehen pills use too. The answer field has no
   microphone; its placeholder says so ("Schreib, was du hörst – ohne Mikro"), the keyboard does
   not capitalise for her. Without a voice
   there is no Diktat (503 `speech_off` before any model call, the offer stops being a button).

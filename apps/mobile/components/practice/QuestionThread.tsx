@@ -16,7 +16,7 @@ import type { ScreenRoom } from '../../lib/practice/screenRoom.js';
 import type { PracticeActions } from '../../lib/practice/usePracticeActions.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { Rise } from '../lb/Motion.js';
-import { HeardTextCard } from './HearText.js';
+import { HeardTextCard } from './HeardTextCard.js';
 import { HelpChips } from './HelpChips.js';
 import { ItemThread } from './ItemThread.js';
 import { ListenButton } from './ListenButton.js';
@@ -111,7 +111,7 @@ export function QuestionThread({
         </Rise>
       ) : null}
       {hearAnswer && shown.answer !== null && item.lang !== null ? (
-        <ListenButton text={shown.answer} lang={item.lang} />
+        <ListenButton source={{ text: shown.answer, lang: item.lang }} />
       ) : null}
       {/* What the Hörtext said, once the question is closed (issue #210). The server
           sends it under exactly the condition it sends the solution under. */}

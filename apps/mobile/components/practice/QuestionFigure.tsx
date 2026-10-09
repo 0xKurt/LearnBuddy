@@ -13,7 +13,7 @@ import { View } from 'react-native';
 
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { ZoomableFigure } from '../math/ZoomableFigure.js';
-import { StaffPlayButton } from './StaffPlayButton.js';
+import { ListenButton } from './ListenButton.js';
 
 type Props = {
   figure: Figure;
@@ -35,7 +35,7 @@ export function QuestionFigure({ figure, maxHeight, folded = false }: Props) {
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
       {drawing}
       <View style={{ width: TOUCH + SPACE.sm }}>
-        <StaffPlayButton bars={figure.bars} tempo={figure.tempo} />
+        <ListenButton source={{ tones: { bars: figure.bars, tempo: figure.tempo } }} speakerOnly />
       </View>
     </View>
   );

@@ -592,8 +592,7 @@ export function SpeakPanel({
           (SPACE.xs) to read as one control, and the rank is in the pill, the icon and the
           label, never in the colour alone. ListenButton decides that, once. */}
       <View style={{ flexDirection: 'row', gap: SPACE.xs, flexWrap: 'wrap' }}>
-        <ListenButton text={item.prompt} lang={lang} disabled={recording || busy} />
-        <ListenButton text={item.prompt} lang={lang} slow disabled={recording || busy} />
+        <ListenButton source={{ text: item.prompt, lang }} slow disabled={recording || busy} />
       </View>
 
       {/* The one leading action: the only filled thing in the bar, and it always says what
