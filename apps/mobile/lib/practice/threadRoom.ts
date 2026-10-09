@@ -28,8 +28,8 @@ import { bottomRoom, CONTROL, SPACE, TOUCH } from '../theme/space.js';
  */
 const CARD_GIVES = 48;
 
-/** The conversation's padding above its first part (its content container's paddingVertical). */
-const THREAD_PAD = 12;
+/** The conversation's padding above its first part and below its last (`ThreadBox`). */
+export const THREAD_PAD = SPACE.md;
 
 /**
  * What a part may stand past the room and still count as whole: one point. The room is a sum of
@@ -151,4 +151,67 @@ export function threadRoom(m: RoomInput): Room {
   }
   const threadHolds = threadCap !== undefined && threadCap < threadNeed;
   return { threadCap, threadFloor, threadHolds, cardGrowTo };
+}
+
+/** How far the box may stand off where it rests before that counts as scrolled (`threadEdge`). */
+const SCROLL_SLACK = 4;
+
+/**
+ * Where the conversation's box rests. One that follows its end rests there, or at most at the
+ * top of a reply she reads through (`readFrom`, #258). One that does not — the help chips alone,
+ * before her first answer — is never moved: it rests at its top, where it was drawn (#504). Its
+ * end counted as the rest, so the box standing at 0 read as "scrolled up" once it held more than
+ * 4 pt past its end: capped at 64 for 68 pt of chips and padding, laid out one point shorter
+ * (flexShrink, after the rounded point `ROUNDING` lets through), the chips got the full fade over
+ * their upper half (tour 51-homework-photo @kb, modes 74-staff-write-empty @kb).
+ */
+export function threadRest(
+  content: number,
+  view: number,
+  follows: boolean,
+  readFrom?: number,
+): number {
+  if (!follows) return 0;
+  const end = Math.max(0, content - view);
+  return readFrom === undefined ? end : Math.min(end, THREAD_PAD + readFrom - SPACE.sm);
+}
+
+export type EdgeInput = {
+  /** The box as laid out, and its content's height (padding included). */
+  box: number;
+  content: number;
+  /** How far it is scrolled. */
+  offset: number;
+  /** Where each turn and part starts, in the conversation's coordinates. */
+  tops: readonly number[];
+  /** It keeps its newest part in view (`QuestionView.followEnd`). */
+  follows: boolean;
+  /** Where a reply she reads through starts (#258). */
+  readFrom?: number | undefined;
+};
+
+export type Edge = {
+  /** It holds more than it shows. */
+  cut: boolean;
+  /** Its top edge lies inside a part (she scrolled up, or the box shrank under it): the full fade. */
+  fadeFull: boolean;
+  /** A reply read from its top goes on below: its bottom edge fades too. */
+  more: boolean;
+};
+
+/**
+ * How the conversation's edges fade (live finding 8, issues #63, #365): at rest on a whole part
+ * only the gap above it fades; the full fade comes where the edge lies inside a part.
+ */
+export function threadEdge(m: EdgeInput): Edge {
+  const scrolledUp = m.offset < threadRest(m.content, m.box, m.follows, m.readFrom) - SCROLL_SLACK;
+  const cut = m.box > 0 && m.content > m.box + 1;
+  const onTurn =
+    m.offset <= 1 ||
+    m.tops.some((y) => m.offset >= THREAD_PAD + y - SPACE.sm - 1 && m.offset <= THREAD_PAD + y + 1);
+  return {
+    cut,
+    fadeFull: cut && (scrolledUp || !onTurn),
+    more: m.readFrom !== undefined && cut && m.content - (m.offset + m.box) > SCROLL_SLACK,
+  };
 }

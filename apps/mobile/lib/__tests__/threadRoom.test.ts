@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { boardKeeps, threadRoom, type RoomInput } from '../practice/threadRoom.js';
+import { boardKeeps, threadEdge, threadRoom, type RoomInput } from '../practice/threadRoom.js';
 
 // One reply of 120 pt under one earlier turn: the conversation needs 260, the newest turn 120.
 const base: RoomInput = {
@@ -96,5 +96,29 @@ describe('threadRoom (issues #286, #232, #403)', () => {
 
   it('keeps two lines of parts and the bar', () => {
     expect(boardKeeps(0)).toBeGreaterThan(2 * 44 + 48);
+  });
+});
+
+describe('threadEdge (issues #63, #504)', () => {
+  // The help chips alone, before her first answer (44 pt with 12 pt of padding above and below):
+  // `threadRoom` capped the box at 64, flexShrink laid it out at 63 (tour 51-homework-photo @kb).
+  const quiet = { box: 63, content: 68, offset: 0, tops: [0, 0], follows: false };
+
+  it('keeps a box that does not follow its end at rest where it stands: no full fade (#504)', () => {
+    expect(threadEdge(quiet)).toEqual({ cut: true, fadeFull: false, more: false });
+    // At any size the box is laid out at: one point either side of the cap changes nothing.
+    for (const box of [56, 60, 64, 65, 67])
+      expect(threadEdge({ ...quiet, box }).fadeFull).toBe(false);
+  });
+
+  it('fades fully where a box that follows its end stands above it, or inside a part', () => {
+    // Sized by `threadRoom` from the gap above the newest turn: 300 − (12 + 140 − 8) = 156.
+    const turns = { box: 156, content: 300, tops: [0, 140], follows: true };
+    // At its end the edge lies in that gap: only the gap fades.
+    expect(threadEdge({ ...turns, offset: 144 }).fadeFull).toBe(false);
+    // She scrolled up into the earlier turn.
+    expect(threadEdge({ ...turns, offset: 60 }).fadeFull).toBe(true);
+    // A box that does not follow, scrolled into a part by her.
+    expect(threadEdge({ ...turns, follows: false, offset: 60 }).fadeFull).toBe(true);
   });
 });
