@@ -20,13 +20,14 @@
 
 import type { BarSurface } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { speakMathText } from '../../lib/math/speak.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
+import { PressArea } from '../lb/PressArea.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { AnswerShell } from './AnswerShell.js';
@@ -89,7 +90,7 @@ function Segments({
   disabled = false,
 }: SegmentsProps) {
   const { palette, figure: ink } = useTheme();
-  // The colour of a part never sits on the `Pressable` itself: on React Native 0.73+ a
+  // The colour of a part never sits on the press target itself: on React Native 0.73+ a
   // background declared there silently does not paint (CLAUDE.md rule 13). It belongs to
   // this inner View, which is also what carries the pressed tint and the muted state.
   const part = (i: number, pressed: boolean) => (
@@ -121,7 +122,7 @@ function Segments({
         // radius and minimum height and the bar would stop being one bar; the CTA for this
         // answer is the bar's "Prüfen" (rule 13).
         onPressPart && partLabel ? (
-          <Pressable
+          <PressArea
             key={i}
             accessibilityRole="button"
             accessibilityLabel={partLabel(i)}
@@ -129,8 +130,8 @@ function Segments({
             onPress={() => onPressPart(i)}
             style={{ flex: 1 }}
           >
-            {({ pressed }) => part(i, pressed)}
-          </Pressable>
+            {(pressed) => part(i, pressed)}
+          </PressArea>
         ) : (
           <View key={i} style={{ flex: 1 }}>
             {part(i, false)}

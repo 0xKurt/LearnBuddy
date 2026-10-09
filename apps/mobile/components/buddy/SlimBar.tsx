@@ -11,7 +11,7 @@
 import type { NowCard } from '@learnbuddy/shared-types/contracts';
 import { Image } from 'expo-image';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -27,12 +27,15 @@ import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { fadeIn } from '../../lib/theme/enter.js';
 import { EASE } from '../../lib/theme/motion.js';
+import { around } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Icon } from '../lb/Icon.js';
-import { ZoomablePhoto } from '../lb/ZoomViewer.js';
+import { PressArea } from '../lb/PressArea.js';
+import { PhotoThumb, ZoomablePhoto } from '../lb/ZoomViewer.js';
 import { whenText } from './describe.js';
 
 type Processing = Extract<NowCard, { type: 'material_processing' }>;
@@ -42,10 +45,33 @@ type Capture = Extract<NowCard, { type: 'capture_needed' }>;
 
 // Theme values come from the palette the bar renders with, never frozen in module constants.
 function titleStyle(p: Palette) {
-  return { fontSize: 15, lineHeight: 20, fontWeight: '700' as const, color: p.ink };
+  return {
+    fontSize: TYPE.small.fontSize,
+    lineHeight: 20, // token-exempt: the name a line tighter than TYPE.small, two lines fit 60 pt
+    fontWeight: '700' as const,
+    color: p.ink,
+  };
 }
 function lineStyle(p: Palette) {
-  return { fontSize: 13, lineHeight: 18, color: p.ink2 };
+  return { fontSize: TYPE.label.fontSize, lineHeight: TYPE.label.lineHeight, color: p.ink2 };
+}
+
+/** The photo on a reading bar: its corner, and the white frame around it (concentric). */
+const THUMB_CORNER = 5; // token-exempt: the 30 × 38 photo's corner, smaller than RADIUS.cell
+const THUMB_FRAME = 2; // token-exempt: the hairline of paper around the photo
+
+/** The status line's box, tappable or not: at least a finger tall. */
+const TEXT_BOX = {
+  flex: 1,
+  minHeight: TOUCH,
+  justifyContent: 'center',
+  paddingVertical: SPACE.sm,
+} as const;
+
+/** What an opened bar says in a sentence. */
+function Detail({ children }: { children: string }) {
+  // token-exempt: TYPE.caption's 14 on a 20 line, the opened bar's reading size
+  return <Text style={[TYPE.caption, { lineHeight: 20 }]}>{children}</Text>;
 }
 
 /**
@@ -100,6 +126,7 @@ function Bar({
       >
         {title}
       </Animated.Text>
+      {/* token-exempt: one point between the name and its line */}
       <View style={{ marginTop: 1 }}>{line}</View>
     </>
   );
@@ -110,29 +137,25 @@ function Bar({
           flexDirection: 'row',
           alignItems: 'center',
           minHeight: 60,
-          paddingLeft: leading ? 10 : 16,
-          paddingRight: titleInset + 4,
-          gap: 10,
+          paddingLeft: leading ? 10 : SPACE.lg, // token-exempt: tighter beside a photo or mark
+          paddingRight: titleInset + SPACE.xs,
+          gap: 10, // token-exempt: mark, text and action 10 apart in a 60 pt bar
         }}
       >
         {leading ?? null}
         {details ? (
-          <Pressable
+          <PressArea
             onPress={() => setOpen((o) => !o)}
             accessibilityRole="button"
             accessibilityLabel={label}
             accessibilityHint={open ? t('now.less') : t('now.more')}
             accessibilityState={{ expanded: open }}
-            style={{ flex: 1, minHeight: 44, justifyContent: 'center', paddingVertical: 8 }}
+            style={TEXT_BOX}
           >
             {text}
-          </Pressable>
+          </PressArea>
         ) : (
-          <View
-            accessible
-            accessibilityLabel={label}
-            style={{ flex: 1, minHeight: 44, justifyContent: 'center', paddingVertical: 8 }}
-          >
+          <View accessible accessibilityLabel={label} style={TEXT_BOX}>
             {text}
           </View>
         )}
@@ -142,10 +165,10 @@ function Bar({
         <Animated.View
           entering={fadeIn()}
           style={{
-            paddingHorizontal: 14,
-            paddingBottom: 12,
-            paddingTop: 10,
-            gap: 8,
+            paddingHorizontal: 14, // token-exempt: the opened part's inset, 14 inside the bar's 20 corner
+            paddingBottom: SPACE.md,
+            paddingTop: 10, // token-exempt: under the divider, a little less than at the bottom
+            gap: SPACE.sm,
             borderTopWidth: 1,
             borderTopColor: palette.hairline,
           }}
@@ -206,12 +229,19 @@ export function ReadingBar({
             label={t('capture:photo_label', { index: 1, total: pages.length })}
           >
             <View
-              style={[{ borderRadius: 7, backgroundColor: palette.paper, padding: 2 }, SHADOW.soft]}
+              style={[
+                {
+                  borderRadius: around(THUMB_CORNER, THUMB_FRAME),
+                  backgroundColor: palette.paper,
+                  padding: THUMB_FRAME,
+                },
+                SHADOW.soft,
+              ]}
             >
               <Image
                 source={{ uri: thumb }}
                 accessible={false}
-                style={{ width: 30, height: 38, borderRadius: 5 }}
+                style={{ width: 30, height: 38, borderRadius: THUMB_CORNER }}
                 contentFit="cover"
               />
             </View>
@@ -223,7 +253,7 @@ export function ReadingBar({
       line={<Dots view={view} label={activeStep ? t(`now.steps.${activeStep.key}`) : ''} />}
       details={
         <>
-          <Text style={[TYPE.small, { fontSize: 14, lineHeight: 20 }]}>{body}</Text>
+          <Detail>{body}</Detail>
           <StepNames view={view} />
           {/* One page is the thumbnail on the bar already; from two on they belong here. */}
           {pages.length > 1 ? <SentPages uris={pages} /> : null}
@@ -280,10 +310,8 @@ export function ReadyBar({
       }
       details={
         <>
-          {exam ? <Text style={[TYPE.small, { fontSize: 14, lineHeight: 20 }]}>{exam}</Text> : null}
-          {focus ? (
-            <Text style={[TYPE.small, { fontSize: 14, lineHeight: 20 }]}>{focus}</Text>
-          ) : null}
+          {exam ? <Detail>{exam}</Detail> : null}
+          {focus ? <Detail>{focus}</Detail> : null}
           <View style={{ flexDirection: 'row' }}>
             <Btn variant="ghost" size="sm" onPress={() => onSkip(card.step_id)} disabled={busy}>
               {t('now.ready_later')}
@@ -399,7 +427,7 @@ export function CaptureBar({
       }
       details={
         <>
-          <Text style={[TYPE.small, { fontSize: 14, lineHeight: 20 }]}>{why}</Text>
+          <Detail>{why}</Detail>
           {onNoPhoto ? (
             <View style={{ flexDirection: 'row' }}>
               <Btn variant="ghost" size="sm" onPress={onNoPhoto} disabled={busy}>
@@ -425,23 +453,26 @@ function SentPages({ uris }: { uris: readonly string[] }) {
   const { t } = useTranslation(['buddy', 'capture']);
   const [broken, setBroken] = useState<ReadonlySet<string>>(new Set());
   return (
+    // token-exempt: the heading 6 above its pages
     <View style={{ gap: 6 }}>
       <Text style={TYPE.label}>{t('now.reading_pages')}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
+        // token-exempt: room above and below, so the scroller does not cut a page's edge
+        contentContainerStyle={{ gap: SPACE.sm, paddingVertical: 2 }}
       >
         {uris.map((uri, i) => {
           const label = t('capture:photo_label', { index: i + 1, total: uris.length });
           return (
+            // token-exempt: the page's number just under it
             <View key={uri} style={{ alignItems: 'center', gap: 2 }}>
               <View
                 style={{
                   // 44 wide keeps the tap target at the 44 pt rule; 58 is the page's shape.
                   width: 44,
                   height: 58,
-                  borderRadius: 8,
+                  borderRadius: 8, // token-exempt: the page thumbnail's corner
                   overflow: 'hidden',
                   backgroundColor: palette.canvas,
                 }}
@@ -455,25 +486,18 @@ function SentPages({ uris }: { uris: readonly string[] }) {
                     <Icon name="eye-off" size={18} color={palette.ink3} />
                   </View>
                 ) : (
-                  <ZoomablePhoto uri={uri} label={label} fill>
-                    <Image
-                      source={{ uri }}
-                      accessible
-                      accessibilityLabel={label}
-                      contentFit="cover"
-                      transition={120}
-                      recyclingKey={uri}
-                      cachePolicy="memory-disk"
-                      onError={() => setBroken((was) => new Set(was).add(uri))}
-                      style={{ flex: 1 }}
-                    />
-                  </ZoomablePhoto>
+                  <PhotoThumb
+                    uri={uri}
+                    label={label}
+                    onError={() => setBroken((was) => new Set(was).add(uri))}
+                  />
                 )}
               </View>
               <Text
                 accessibilityElementsHidden
                 importantForAccessibility="no-hide-descendants"
                 maxFontSizeMultiplier={MAX_FONT_SCALE}
+                // token-exempt: the page number at 11/14, below the type scale
                 style={{ fontSize: 11, lineHeight: 14, color: palette.ink2 }}
               >
                 {i + 1}
@@ -495,7 +519,7 @@ function Mark({ icon }: { icon: 'file' | 'camera' }) {
       style={{
         width: 36,
         height: 36,
-        borderRadius: 18,
+        borderRadius: 18, // token-exempt: half its size, a circle
         backgroundColor: palette.paper,
         alignItems: 'center',
         justifyContent: 'center',
@@ -514,7 +538,7 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.xs }}
     >
       {view.steps.map((s, i) => [
         <Dot key={s.key} state={s.state} />,
@@ -524,7 +548,7 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
             style={{
               width: 12,
               height: 2,
-              borderRadius: 1,
+              borderRadius: 1, // token-exempt: half its height, a rounded link
               backgroundColor: s.state === 'done' ? palette.primary : palette.ink4,
               opacity: s.state === 'done' ? 0.5 : 0.8,
             }}
@@ -535,6 +559,7 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={MAX_FONT_SCALE}
+          // token-exempt: the stage's name 6 after its dots, beyond their own 4
           style={[lineStyle(palette), { marginLeft: 6, flexShrink: 1 }]}
         >
           {label}
@@ -570,7 +595,7 @@ function Dot({ state }: { state: StepState }) {
               position: 'absolute',
               width: 12,
               height: 12,
-              borderRadius: 6,
+              borderRadius: 6, // token-exempt: half its size, a circle
               backgroundColor: palette.primary,
             },
             halo,
@@ -581,7 +606,7 @@ function Dot({ state }: { state: StepState }) {
         style={{
           width: state === 'active' ? 7 : 9,
           height: state === 'active' ? 7 : 9,
-          borderRadius: 5,
+          borderRadius: 5, // token-exempt: half its size or more, a circle
           backgroundColor: state === 'todo' ? palette.paper : palette.primary,
           borderWidth: state === 'todo' ? 1.5 : 0,
           borderColor: palette.ink4,
@@ -599,9 +624,10 @@ function StepNames({ view }: { view: ReadingView }) {
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}
+      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.md }}
     >
       {view.steps.map((s) => (
+        // token-exempt: the dot 6 from its stage's name
         <View key={s.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Dot state={s.state} />
           <Text

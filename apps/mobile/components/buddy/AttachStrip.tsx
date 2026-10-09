@@ -13,7 +13,7 @@
 
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -21,6 +21,7 @@ import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Icon } from '../lb/Icon.js';
+import { PressArea } from '../lb/PressArea.js';
 import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 
 const THUMB = 72;
@@ -165,7 +166,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                 </View>
               </View>
               {/* Small to look at, 44 pt to hit: the padding around the circle is the target. */}
-              <Pressable
+              <PressArea
                 onPress={() => onRemove(uri)}
                 disabled={disabled}
                 accessibilityRole="button"
@@ -193,7 +194,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                 >
                   <Icon name="close" size={14} color={palette.paper} />
                 </View>
-              </Pressable>
+              </PressArea>
             </View>
           );
         })}

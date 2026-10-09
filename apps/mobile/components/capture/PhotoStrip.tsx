@@ -1,7 +1,6 @@
 // The photos (and PDFs) picked so far, in page order — each one openable large
 // (ZoomViewer), retakeable and removable before anything is sent (issue #57).
 
-import { Image } from 'expo-image';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +10,7 @@ import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
-import { ZoomablePhoto } from '../lb/ZoomViewer.js';
+import { PhotoThumb } from '../lb/ZoomViewer.js';
 
 const THUMB_WIDTH = 112;
 const THUMB_HEIGHT = 148;
@@ -92,23 +91,11 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
                 </View>
               ) : (
                 // A tap shows the photo full screen, to zoom in (gaps.md #1).
-                <ZoomablePhoto
+                <PhotoThumb
                   uri={uri}
                   label={t('photo_label', { index: i + 1, total: uris.length })}
-                  fill
-                >
-                  <Image
-                    source={{ uri }}
-                    accessible
-                    accessibilityLabel={t('photo_label', { index: i + 1, total: uris.length })}
-                    contentFit="cover"
-                    transition={120}
-                    recyclingKey={uri}
-                    cachePolicy="memory-disk"
-                    onError={() => setBroken((was) => new Set(was).add(uri))}
-                    style={{ flex: 1 }}
-                  />
-                </ZoomablePhoto>
+                  onError={() => setBroken((was) => new Set(was).add(uri))}
+                />
               )}
               {/* Page number; the image label already says it for screen readers. */}
               <View

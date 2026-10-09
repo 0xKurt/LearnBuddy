@@ -2,26 +2,27 @@
 // composer pill, right end — the size and mark she knows from the assistants
 // she uses (owner feedback 2026-09-28: waveform, not headphones; inside, not
 // bigger than the rest). Background on the inner View, never on the
-// Pressable (RN drops it silently there).
+// press target (RN drops it silently there).
 
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TOUCH } from '../../lib/theme/space.js';
 import { Icon } from '../lb/Icon.js';
+import { PressArea } from '../lb/PressArea.js';
 
 export function TalkButton({ onPress }: { onPress: () => void }) {
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   return (
-    <Pressable
+    <PressArea
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={t('talk.open')}
       hitSlop={6}
     >
-      {({ pressed }) => (
+      {(pressed) => (
         <View
           style={{
             // TOUCH, like its neighbours in the pill: three sizes in one row put their
@@ -39,6 +40,6 @@ export function TalkButton({ onPress }: { onPress: () => void }) {
           <Icon name="voice" size={24} color={palette.paper} />
         </View>
       )}
-    </Pressable>
+    </PressArea>
   );
 }
