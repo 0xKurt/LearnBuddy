@@ -101,7 +101,7 @@ export default function Onboarding() {
           justifyContent: 'center',
           // token-exempt: the step's words in a column narrower than the footer's GUTTER
           paddingHorizontal: 28,
-          gap: compact ? 14 : 18, // token-exempt: the step's rhythm, 14 tight, 18 roomy
+          gap: compact ? RHYTHM.stack : RHYTHM.sections, // the step's rhythm, tight or roomy
         }}
       >
         <BuddyOrb size={key === 's4' ? 56 : compact ? 72 : 96} state={last ? 'happy' : 'idle'} />

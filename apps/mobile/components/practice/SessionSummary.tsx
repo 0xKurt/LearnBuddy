@@ -104,8 +104,8 @@ export function SessionSummary({
   return (
     <View style={{ gap: RHYTHM.sections }}>
       {/* token-exempt: room above the orb, the celebrating moon flies up to about 0.75 × its
-          size; the title 14 under it */}
-      <View style={{ alignItems: 'center', gap: 14, paddingTop: 36 }}>
+          size */}
+      <View style={{ alignItems: 'center', gap: RHYTHM.stack, paddingTop: 36 }}>
         <OrbArrival celebrate={celebrate} />
         <Rise slow delay={AT.title}>
           <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>

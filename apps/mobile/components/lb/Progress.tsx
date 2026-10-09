@@ -1,5 +1,9 @@
 import { View } from 'react-native';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { circle } from '../../lib/theme/radius.js';
+
+/** The bar's height; its ends are round. */
+const BAR = 6;
 
 export function Progress({ value }: { value: number }) {
   const { palette } = useTheme();
@@ -8,8 +12,8 @@ export function Progress({ value }: { value: number }) {
     <View
       style={{
         flex: 1,
-        height: 6,
-        borderRadius: 3,
+        height: BAR,
+        borderRadius: circle(BAR),
         backgroundColor: palette.primaryLt,
         overflow: 'hidden',
       }}
@@ -19,7 +23,7 @@ export function Progress({ value }: { value: number }) {
           width: `${clamped * 100}%`,
           height: '100%',
           backgroundColor: palette.primary,
-          borderRadius: 3,
+          borderRadius: circle(BAR),
         }}
       />
     </View>

@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { RADIUS } from '../../lib/theme/radius.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { formatLastDay } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
@@ -63,8 +65,8 @@ export function MemoryItem({
       : t(`source.${memory.source}`);
 
   return (
-    <Card tone={temporary ? 'butter' : 'lavender'} padding={18} radius={20}>
-      <View style={{ gap: 8 }}>
+    <Card tone={temporary ? 'butter' : 'lavender'} padding={CARD_PAD.base} radius={RADIUS.item}>
+      <View style={{ gap: SPACE.sm }}>
         {editing ? (
           <LbTextInput
             ref={input}
@@ -86,7 +88,9 @@ export function MemoryItem({
           </Text>
         ) : null}
         <Text style={[TYPE.body, { color: palette.ink2 }]}>{source}</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+        <View
+          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm, marginTop: SPACE.xs }}
+        >
           {editing ? (
             <>
               <Btn size="sm" onPress={onSave} disabled={!canSave}>

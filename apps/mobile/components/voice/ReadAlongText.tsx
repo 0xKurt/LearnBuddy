@@ -22,7 +22,13 @@ export function ReadAlongText({ text, style }: { text: string; style?: StyleProp
   return (
     <Text style={style}>
       <Text style={{ color: palette.ink2 }}>{text.slice(0, span[0])}</Text>
-      <Text style={{ color: palette.ink, backgroundColor: palette.primaryLt, borderRadius: 6 }}>
+      <Text
+        style={{
+          color: palette.ink,
+          backgroundColor: palette.primaryLt,
+          borderRadius: 6, // token-exempt: the marker's soft edge, sized to a line of text
+        }}
+      >
         {text.slice(span[0], span[1])}
       </Text>
       <Text style={{ color: palette.ink2 }}>{text.slice(span[1])}</Text>

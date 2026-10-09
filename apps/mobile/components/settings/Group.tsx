@@ -14,6 +14,7 @@ import { Text, View } from 'react-native';
 import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 import { IconDisc } from '../lb/IconDisc.js';
@@ -71,7 +72,7 @@ export function Group({ title, intro, icon, fold, summary, children }: Props) {
       {foldable ? (
         <View
           style={{
-            borderRadius: 20, // token-exempt: the closed group's paper, softer than a tile
+            borderRadius: RADIUS.item,
             backgroundColor: open ? 'transparent' : palette.paper,
           }}
         >

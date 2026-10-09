@@ -57,7 +57,7 @@ export function Reexplain({ turns, pending, disabled, onAsk, delay = 350, why = 
         ? t(`reexplain.${pending}`)
         : null;
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: SPACE.sm }}>
       <ItemThread turns={turns} pending={pendingText} thinkingLabel={t('reexplain.thinking')} />
       {pending ? null : asksHer && choosing ? (
         <Appear delay={0}>
@@ -83,7 +83,7 @@ export function Reexplain({ turns, pending, disabled, onAsk, delay = 350, why = 
               rendering bug, not as an affordance (user feedback 2026-09-28). */}
           <View
             accessibilityLabel={t('reexplain.label')}
-            style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}
+            style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}
           >
             {WAYS.map((way) => (
               // Ghost, not filled: a shortcut for something she could also type, not three

@@ -14,6 +14,7 @@ import { useReducedMotion } from 'react-native-reanimated';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 
@@ -107,8 +108,8 @@ export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0, 
         // layer at zIndex 10 swallows every tap under it — the walkthrough caught the menu
         // being unclickable while a card was up, which is exactly what this had to fix.
         right: rightInset,
-        paddingHorizontal: 16,
-        paddingTop: 8,
+        paddingHorizontal: SPACE.lg,
+        paddingTop: SPACE.sm,
         zIndex: 10,
         elevation: 12,
         transform: [{ translateY: lift }],
@@ -122,7 +123,12 @@ export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0, 
       <View
         accessibilityLiveRegion="polite"
         // The Pastell-Soft float: one soft shadow, the bar's own tint.
-        style={{ ...SHADOW.float, borderRadius: RADIUS, backgroundColor: palette.bg, gap: 8 }}
+        style={{
+          ...SHADOW.float,
+          borderRadius: RADIUS,
+          backgroundColor: palette.bg,
+          gap: SPACE.sm,
+        }}
       >
         {children}
         <View style={{ position: 'absolute', top: CLOSE_TOP, right: 2 }}>

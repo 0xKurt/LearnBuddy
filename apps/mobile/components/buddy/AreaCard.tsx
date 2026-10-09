@@ -8,6 +8,8 @@ import { Text, View } from 'react-native';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { circle, RADIUS } from '../../lib/theme/radius.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon, type IconName } from '../lb/Icon.js';
 
@@ -29,6 +31,9 @@ const AREA_ICON: Record<Area, IconName> = {
   capture: 'camera',
 };
 
+/** The round mark with the area's icon. */
+const DISC = 40;
+
 export function AreaCard({ area }: { area: Area }) {
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
@@ -42,20 +47,20 @@ export function AreaCard({ area }: { area: Area }) {
       style={[
         {
           backgroundColor: palette.paper,
-          borderRadius: 20,
-          padding: 14,
+          borderRadius: RADIUS.item,
+          padding: CARD_PAD.snug,
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 12,
+          gap: SPACE.md,
         },
         SHADOW.soft,
       ]}
     >
       <View
         style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
+          width: DISC,
+          height: DISC,
+          borderRadius: circle(DISC),
           backgroundColor: palette.lavender,
           alignItems: 'center',
           justifyContent: 'center',

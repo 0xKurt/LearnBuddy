@@ -30,7 +30,7 @@ export function ExerciseCard({
   return (
     <EntryCard
       icon="practice"
-      tile={{ backgroundColor: palette.primaryLt }}
+      tile={{ fill: palette.primaryLt }}
       title={title}
       onPress={onPress}
       accessibilityLabel={title}
@@ -38,6 +38,7 @@ export function ExerciseCard({
     >
       <Text style={TYPE.small}>{formatDate(exercise.started_at, i18n.language)}</Text>
       {open ? (
+        // token-exempt: the chip two points below the date, snug, as on the sheet's card
         <View style={{ marginTop: 2 }}>
           <Chip tone="primary">{t('subject.exercise_still_open')}</Chip>
         </View>

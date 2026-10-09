@@ -189,6 +189,7 @@ export function FractionBarAnswer({ surface, value, disabled, onChange, onPick }
                   <MathText
                     text={math}
                     accessible={false}
+                    // token-exempt: 17/23, the fraction read at a glance in a small bar
                     style={{ color: palette.ink, fontSize: 17, lineHeight: 23, fontWeight: '700' }}
                   />
                   <Segments parts={bar.parts} filled={bar.filled} height={PICK_HEIGHT} />

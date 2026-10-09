@@ -14,7 +14,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { EntryCard } from './EntryCard.js';
 import { glimpseOf } from './subjects.js';
-import { KIND_TONE, type CardTone } from './tone.js';
+import { KIND_TONE, useMarkTint, type CardTone } from './tone.js';
 
 type Props = {
   /** A real subject, or the sheets whose subject is not known yet ("Ohne Fach"). */
@@ -25,9 +25,10 @@ type Props = {
 };
 
 export function SubjectCard({ subject, name, onPress }: Props) {
-  const { palette, tones } = useTheme();
+  const { palette } = useTheme();
   const { t } = useTranslation('library');
   const tone: CardTone = subject ? KIND_TONE[subject.kind] : 'paper';
+  const tile = useMarkTint(tone);
   const glimpse = subject
     ? glimpseOf(subject, { untitled: t('untitled'), exercise: t('subject.exercise_untitled') })
     : { names: [], more: false };
@@ -37,11 +38,7 @@ export function SubjectCard({ subject, name, onPress }: Props) {
   return (
     <EntryCard
       icon="folder"
-      tile={
-        tone === 'paper'
-          ? { backgroundColor: palette.canvas, borderColor: palette.hairline }
-          : { backgroundColor: tones.bg[tone], borderColor: tones.deep[tone] }
-      }
+      tile={tile}
       title={name}
       onPress={onPress}
       accessibilityLabel={`${name}: ${said}`}

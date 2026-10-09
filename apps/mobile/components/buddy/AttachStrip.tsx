@@ -18,16 +18,16 @@ import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { Icon } from '../lb/Icon.js';
 import { PressArea } from '../lb/PressArea.js';
 import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 
 const THUMB = 72;
-// The tile's corner, unchanged from before #294 — shared by the shadow and the clipping view so
-// they stay one shape (no radius token yet, docs/engineering-guards.md, #310).
-const RADIUS = 14;
+/** The ✕'s dark circle; the 44 pt around it is what takes the tap. */
+const CLOSE = 24;
 
 type Props = {
   uris: readonly string[];
@@ -52,7 +52,11 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: SPACE.sm, paddingHorizontal: 2, paddingVertical: 4 }}
+        contentContainerStyle={{
+          gap: SPACE.sm,
+          paddingHorizontal: 2, // token-exempt: room for the tiles' soft shadow at the sides
+          paddingVertical: SPACE.xs,
+        }}
       >
         {uris.map((uri, i) => {
           const label = pdfs[uri]
@@ -66,7 +70,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                 style={{
                   width: THUMB,
                   height: THUMB,
-                  borderRadius: RADIUS,
+                  borderRadius: RADIUS.tile,
                   backgroundColor: palette.canvas,
                   ...SHADOW.soft,
                 }}
@@ -76,7 +80,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                   style={{
                     width: THUMB,
                     height: THUMB,
-                    borderRadius: RADIUS,
+                    borderRadius: RADIUS.tile,
                     overflow: 'hidden',
                     backgroundColor: palette.canvas,
                   }}
@@ -90,8 +94,8 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                         flex: 1,
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 2,
-                        padding: 4,
+                        gap: 2, // token-exempt: the file mark close over its name, in 72 pt
+                        padding: SPACE.xs,
                         backgroundColor: palette.lavender,
                       }}
                     >
@@ -153,12 +157,18 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        paddingVertical: 1,
+                        paddingVertical: 1, // token-exempt: one point of air, the flag stays slim
                         backgroundColor: palette.butter,
                         alignItems: 'center',
                       }}
                     >
-                      <Text style={{ color: palette.warningText, fontSize: 11, fontWeight: '700' }}>
+                      <Text
+                        style={{
+                          color: palette.warningText,
+                          fontSize: 11, // token-exempt: below the scale, a flag on a 72 pt photo
+                          fontWeight: '700',
+                        }}
+                      >
                         {t('quality.flag')}
                       </Text>
                     </View>
@@ -175,17 +185,17 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                   position: 'absolute',
                   top: -14,
                   right: -14,
-                  width: 44,
-                  height: 44,
+                  width: TOUCH,
+                  height: TOUCH,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
                 <View
                   style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 12,
+                    width: CLOSE,
+                    height: CLOSE,
+                    borderRadius: circle(CLOSE),
                     backgroundColor: palette.ink,
                     opacity: disabled ? 0.4 : 0.85,
                     alignItems: 'center',

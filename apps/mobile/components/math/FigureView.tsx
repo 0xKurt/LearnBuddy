@@ -16,6 +16,7 @@ import { useFigureFit } from '../../lib/math/useFigureFit.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { BarChartFigure } from './BarChartFigure.js';
 import { ChartBody } from './ChartFigures.js';
 import { describeFigure } from './describeFigure.js';
@@ -79,11 +80,11 @@ export function FigureView({
       style={{
         alignSelf: 'stretch',
         backgroundColor: ink.paper,
-        borderRadius: bare ? SPACE.md : 16,
+        borderRadius: bare ? SPACE.md : RADIUS.frame,
         borderWidth: bare ? 0 : 1,
         borderColor: palette.hairline,
         // Half the chrome on each side (BARE_FIGURE_CHROME / FIGURE_CHROME minus the border).
-        padding: bare ? BARE_FIGURE_PAD : 12,
+        padding: bare ? BARE_FIGURE_PAD : SPACE.md,
         minHeight: bare ? 0 : 60,
       }}
     >

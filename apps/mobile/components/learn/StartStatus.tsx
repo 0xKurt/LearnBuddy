@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useAnnounce } from '../../lib/announce.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { Banner } from '../lb/Banner.js';
 import type { StartState } from './useStartTopic.js';
 
@@ -31,7 +32,12 @@ export function StartStatus({ state }: { state: StartState }) {
       return (
         <View
           accessibilityLiveRegion="polite"
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 }}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: SPACE.md,
+            paddingVertical: SPACE.xs,
+          }}
         >
           <ActivityIndicator color={palette.primaryDk} />
           <View style={{ flex: 1 }}>

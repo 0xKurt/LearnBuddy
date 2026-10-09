@@ -11,6 +11,8 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { RADIUS } from '../../lib/theme/radius.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { Zoomable } from '../lb/ZoomViewer.js';
 
 type Props = {
@@ -30,7 +32,7 @@ export function StimulusImage({ image, cacheKey, maxHeight = 180 }: Props) {
   const label = image.label.trim() || t('image_fallback');
   const ratio = image.width / image.height;
   return (
-    <View style={{ marginTop: 12 }}>
+    <View style={{ marginTop: SPACE.md }}>
       <Zoomable
         label={label}
         large={
@@ -53,7 +55,7 @@ export function StimulusImage({ image, cacheKey, maxHeight = 180 }: Props) {
             width: '100%',
             aspectRatio: Number.isFinite(ratio) && ratio > 0 ? ratio : 4 / 3,
             maxHeight,
-            borderRadius: 14,
+            borderRadius: RADIUS.tile,
             backgroundColor: palette.paper,
           }}
         />

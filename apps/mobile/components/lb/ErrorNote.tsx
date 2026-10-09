@@ -6,6 +6,8 @@ import { Text, View } from 'react-native';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { RADIUS } from '../../lib/theme/radius.js';
+import { CARD_PAD } from '../../lib/theme/space.js';
 import { Card } from './Card.js';
 
 export function ErrorNote({ text }: { text: string | null }) {
@@ -13,7 +15,7 @@ export function ErrorNote({ text }: { text: string | null }) {
   if (!text) return null;
   return (
     <View accessibilityLiveRegion="polite">
-      <Card tone="blush" padding={14} radius={18}>
+      <Card tone="blush" padding={CARD_PAD.snug} radius={RADIUS.note}>
         <Text style={TYPE.body}>{text}</Text>
       </Card>
     </View>
