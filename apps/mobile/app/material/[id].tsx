@@ -16,6 +16,7 @@ import { Card } from '../../components/lb/Card.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
 import { ErrorNote } from '../../components/lb/ErrorNote.js';
 import { LbTextInput } from '../../components/lb/LbTextInput.js';
+import { LoadFailed } from '../../components/lb/LoadFailed.js';
 import { QuestionsSkeleton } from '../../components/lb/Skeletons.js';
 import { Screen } from '../../components/lb/Screen.js';
 import { Sheet } from '../../components/lb/Sheet.js';
@@ -153,26 +154,16 @@ export default function MaterialScreen() {
   let content: ReactNode;
   if (!data || !material) {
     content = query.isError ? (
-      <View style={{ flex: 1, justifyContent: 'center' }}>
-        <EmptyState
-          title={messageFor(query.error)}
-          action={
-            <View style={{ gap: 10, alignItems: 'center' }}>
-              <Btn pill center busy={query.isFetching} onPress={() => void query.refetch()}>
-                {t('common:actions.retry')}
-              </Btn>
-              <Btn
-                variant="ghost"
-                pill
-                center
-                onPress={() => (router.canGoBack() ? router.back() : router.replace('/library'))}
-              >
-                {t('library:items.back')}
-              </Btn>
-            </View>
-          }
-        />
-      </View>
+      <LoadFailed error={query.error} busy={query.isFetching} onRetry={() => void query.refetch()}>
+        <Btn
+          variant="ghost"
+          pill
+          center
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/library'))}
+        >
+          {t('library:items.back')}
+        </Btn>
+      </LoadFailed>
     ) : (
       <QuestionsSkeleton label={t('library:items.loading')} />
     );

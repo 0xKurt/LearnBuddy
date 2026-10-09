@@ -16,7 +16,6 @@
 import {
   TABLE_ANSWER_MAX,
   TABLE_JOIN,
-  type StructuredAnswer,
   type TableFillTaskView,
   type TableViewCell,
   type TableViewGap,
@@ -38,6 +37,7 @@ import { useSpokenWords } from '../math/useSpokenMath.js';
 import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
+import type { FormProps } from './formProps.js';
 
 function isGap(cell: TableViewCell): cell is TableViewGap {
   return 'id' in cell;
@@ -73,16 +73,8 @@ const MIN_WORD_COL = 76;
 /** A brick of a number wall: wide enough for a three-digit number, never wider. */
 const BRICK = 64;
 
-type Props = {
-  view: TableFillTaskView;
-  /** Where her cells are kept (`lib/drafts.ts`), per question. */
-  draftKey: string;
-  disabled: boolean;
-  /** "Prüfen": every gap filled; `shown` is her cells in reading order, for the thread. */
-  onSubmit: (parts: StructuredAnswer, shown: string) => void;
-};
-
-export function TableAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+/** "Prüfen": every gap filled; `shown` is her cells in reading order, for the thread. */
+export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<TableFillTaskView>) {
   const { palette, figure: ink } = useTheme();
   const { t } = useTranslation('practice');
   const words = useSpokenWords();

@@ -7,7 +7,7 @@
 
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Platform, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -134,20 +134,7 @@ export default function ResetPassword() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
         <Glow height={420} />
-        <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: 20,
-            paddingTop: 28,
-            paddingBottom: 24,
-            gap: 18,
-          }}
-        >
-          <View style={{ alignItems: 'center', gap: 14 }}>
-            <BuddyOrb size={72} />
-            <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
-              {t('reset.title')}
-            </Text>
-          </View>
+        <ResetPage title={t('reset.title')}>
           <Card tone={phase === 'offline' ? 'sky' : 'butter'} padding={20}>
             <Text style={TYPE.title}>
               {phase === 'offline' ? t('reset.offline_title') : t('reset.invalid_title')}
@@ -166,7 +153,7 @@ export default function ResetPassword() {
               {backLabel}
             </Btn>
           </View>
-        </ScrollView>
+        </ResetPage>
       </SafeAreaView>
     );
   }
@@ -175,21 +162,7 @@ export default function ResetPassword() {
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
       <Glow height={420} />
       <KeyboardSafe style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: 20,
-            paddingTop: 28,
-            paddingBottom: 24,
-            gap: 18,
-          }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={{ alignItems: 'center', gap: 14 }}>
-            <BuddyOrb size={72} />
-            <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
-              {t('reset.title')}
-            </Text>
-          </View>
+        <ResetPage title={t('reset.title')} keyboardShouldPersistTaps="handled">
           <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center' }]}>
             {t('reset.body')}
           </Text>
@@ -205,7 +178,7 @@ export default function ResetPassword() {
           <Btn variant="ghost" pill center disabled={busy} onPress={leave}>
             {backLabel}
           </Btn>
-        </ScrollView>
+        </ResetPage>
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 }}>
           <Btn size="lg" pill full disabled={!valid || busy} onPress={() => void save()}>
             {busy ? t('reset.saving') : t('reset.cta')}
@@ -213,5 +186,39 @@ export default function ResetPassword() {
         </View>
       </KeyboardSafe>
     </SafeAreaView>
+  );
+}
+
+/**
+ * The page every phase after the check shares: Buddy and the title on top, what the phase
+ * says below. The form keeps taps while the keyboard is up; the other phases have no field.
+ */
+function ResetPage({
+  title,
+  keyboardShouldPersistTaps,
+  children,
+}: {
+  title: string;
+  keyboardShouldPersistTaps?: 'handled';
+  children: ReactNode;
+}) {
+  return (
+    <ScrollView
+      contentContainerStyle={{
+        paddingHorizontal: 20,
+        paddingTop: 28,
+        paddingBottom: 24,
+        gap: 18,
+      }}
+      keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+    >
+      <View style={{ alignItems: 'center', gap: 14 }}>
+        <BuddyOrb size={72} />
+        <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
+          {title}
+        </Text>
+      </View>
+      {children}
+    </ScrollView>
   );
 }

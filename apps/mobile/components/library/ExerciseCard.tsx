@@ -11,12 +11,10 @@ import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatDate } from '../../lib/time.js';
-import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
-import { Icon } from '../lb/Icon.js';
+import { EntryCard } from './EntryCard.js';
 
 export function ExerciseCard({
   exercise,
@@ -30,40 +28,20 @@ export function ExerciseCard({
   const title = exercise.title?.trim() || t('subject.exercise_untitled');
   const open = exercise.status === 'active';
   return (
-    <Card
+    <EntryCard
+      icon="practice"
+      tile={{ backgroundColor: palette.primaryLt }}
+      title={title}
       onPress={onPress}
-      padding={SPACE.lg}
       accessibilityLabel={title}
       accessibilityHint={t(open ? 'subject.exercise_open_hint' : 'subject.exercise_look_hint')}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}>
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: palette.primaryLt,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Icon name="practice" size={20} color={palette.primaryDk} />
+      <Text style={TYPE.small}>{formatDate(exercise.started_at, i18n.language)}</Text>
+      {open ? (
+        <View style={{ marginTop: 2 }}>
+          <Chip tone="primary">{t('subject.exercise_still_open')}</Chip>
         </View>
-        <View style={{ flex: 1, gap: SPACE.xs }}>
-          <Text style={[TYPE.body, { fontWeight: '600' }]}>{title}</Text>
-          <Text style={TYPE.small}>{formatDate(exercise.started_at, i18n.language)}</Text>
-          {open ? (
-            <View style={{ marginTop: 2 }}>
-              <Chip tone="primary">{t('subject.exercise_still_open')}</Chip>
-            </View>
-          ) : null}
-        </View>
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Icon name="chevron" size={20} color={palette.ink3} />
-        </View>
-      </View>
-    </Card>
+      ) : null}
+    </EntryCard>
   );
 }

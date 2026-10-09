@@ -19,7 +19,7 @@ import { AppError, isAppError } from '../../lib/errors.js';
 import { learnerDay } from '../../lib/zone.js';
 import { t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
-import type { AudioMime } from '../../llm/gateway.js';
+import { recordingPart } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { partialArray, partialString } from '../../llm/partial.js';
 import { ageOn } from '../identity/model.js';
@@ -100,6 +100,40 @@ type SpeakItem = {
 };
 
 /**
+ * The spoken question of her active session, and how that session runs. Refused the same way for
+ * the sentence and for one word of it: no such session of hers, an ended one, a question not in
+ * it, or one that is not spoken.
+ */
+async function spokenItem(
+  deps: Deps,
+  learnerId: string,
+  sessionId: string,
+  itemId: string,
+): Promise<{ mode: string; item: SpeakItem & { lang: string } }> {
+  const session = await deps.db.maybeOne<{ status: string; mode: string }>(
+    `select status, mode from practice_sessions where id = $1 and learner_id = $2`,
+    [sessionId, learnerId],
+  );
+  if (!session) throw new AppError('not_found', 'Session not found');
+  if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
+  const item = await deps.db.maybeOne<SpeakItem>(
+    `select i.id, i.kind, i.prompt, i.lang, si.status, si.attempts, si.hints_used, si.first_try_correct
+       from session_items si join items i on i.id = si.item_id
+      where si.session_id = $1 and si.item_id = $2`,
+    [sessionId, itemId],
+  );
+  if (!item) throw new AppError('not_found', 'Question not in this session');
+  if (item.kind !== 'speak' || !item.lang)
+    throw new AppError('conflict', 'This question is not spoken', { reason: 'not_speak' });
+  return { mode: session.mode, item: { ...item, lang: item.lang } };
+}
+
+/** Who is speaking, for the model: her age and the language its tips are written in. */
+function studentLine(learner: PracticeLearner, now: Date): string {
+  return `STUDENT: ${ageOn(learner.birth_date, now)} years, app language ${learner.locale}`;
+}
+
+/**
  * What the model has written so far, for the app to show while it still listens
  * (issue #8). Only finished words: a judgement that flips two characters later must
  * never have coloured a word green. Nothing here counts as judged — the stored
@@ -177,21 +211,7 @@ export async function speakItem(
   const replayed = await replayTurn(deps, learner.id, sessionId, input.client_turn_id);
   if (replayed) return replayed;
   const now = deps.now();
-  const session = await deps.db.maybeOne<{ status: string; mode: string }>(
-    `select status, mode from practice_sessions where id = $1 and learner_id = $2`,
-    [sessionId, learner.id],
-  );
-  if (!session) throw new AppError('not_found', 'Session not found');
-  if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
-  const item = await deps.db.maybeOne<SpeakItem>(
-    `select i.id, i.kind, i.prompt, i.lang, si.status, si.attempts, si.hints_used, si.first_try_correct
-       from session_items si join items i on i.id = si.item_id
-      where si.session_id = $1 and si.item_id = $2`,
-    [sessionId, input.item_id],
-  );
-  if (!item) throw new AppError('not_found', 'Question not in this session');
-  if (item.kind !== 'speak' || !item.lang)
-    throw new AppError('conflict', 'This question is not spoken', { reason: 'not_speak' });
+  const { mode, item } = await spokenItem(deps, learner.id, sessionId, input.item_id);
   if (item.status !== 'open') throw new AppError('conflict', 'This question is already closed');
 
   const day = await learnerDay(deps.db, learner.id, now);
@@ -208,14 +228,9 @@ export async function speakItem(
           role: 'user',
           parts: [
             {
-              text: `STUDENT: ${ageOn(learner.birth_date, now)} years, app language ${learner.locale}\nTARGET (${item.lang}): ${item.prompt}`,
+              text: `${studentLine(learner, now)}\nTARGET (${item.lang}): ${item.prompt}`,
             },
-            {
-              inlineData: {
-                mimeType: (input.mime === 'audio/m4a' ? 'audio/mp4' : input.mime) as AudioMime,
-                data: input.audio_base64,
-              },
-            },
+            recordingPart(input),
           ],
         },
       ],
@@ -310,7 +325,7 @@ export async function speakItem(
           where session_id = $1 and item_id = $2`,
         [sessionId, item.id, closes, firstTry, now],
       );
-      if (closes && session.mode !== 'test' && session.mode !== 'help') {
+      if (closes && mode !== 'test' && mode !== 'help') {
         await reviewItem(
           tx,
           learner.id,
@@ -372,20 +387,7 @@ export async function speakWord(
   input: SpeakWordRequest,
 ): Promise<SpeakWordResponse> {
   const now = deps.now();
-  const session = await deps.db.maybeOne<{ status: string }>(
-    `select status from practice_sessions where id = $1 and learner_id = $2`,
-    [sessionId, learner.id],
-  );
-  if (!session) throw new AppError('not_found', 'Session not found');
-  if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
-  const item = await deps.db.maybeOne<{ prompt: string; kind: string; lang: string | null }>(
-    `select i.prompt, i.kind, i.lang from session_items si join items i on i.id = si.item_id
-      where si.session_id = $1 and si.item_id = $2`,
-    [sessionId, input.item_id],
-  );
-  if (!item) throw new AppError('not_found', 'Question not in this session');
-  if (item.kind !== 'speak' || !item.lang)
-    throw new AppError('conflict', 'This question is not spoken', { reason: 'not_speak' });
+  const { item } = await spokenItem(deps, learner.id, sessionId, input.item_id);
   // Only a word of this sentence: nothing else is practised here.
   const inSentence = item.prompt
     .split(/[^\p{L}\p{M}'’-]+/u)
@@ -407,14 +409,9 @@ export async function speakWord(
           role: 'user',
           parts: [
             {
-              text: `STUDENT: ${ageOn(learner.birth_date, now)} years, app language ${learner.locale}\nWORD (${item.lang}): ${input.word}\nSENTENCE: ${item.prompt}`,
+              text: `${studentLine(learner, now)}\nWORD (${item.lang}): ${input.word}\nSENTENCE: ${item.prompt}`,
             },
-            {
-              inlineData: {
-                mimeType: (input.mime === 'audio/m4a' ? 'audio/mp4' : input.mime) as AudioMime,
-                data: input.audio_base64,
-              },
-            },
+            recordingPart(input),
           ],
         },
       ],

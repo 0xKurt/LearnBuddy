@@ -21,6 +21,7 @@ import { Btn } from '../../components/lb/Btn.js';
 import { Chip } from '../../components/lb/Chip.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
 import { ErrorNote } from '../../components/lb/ErrorNote.js';
+import { LoadFailed } from '../../components/lb/LoadFailed.js';
 import { Rise, useListEntrance } from '../../components/lb/Motion.js';
 import { Screen } from '../../components/lb/Screen.js';
 import { Section } from '../../components/lb/Section.js';
@@ -181,16 +182,11 @@ export default function SubjectScreen() {
   let content: ReactNode;
   if (!view) {
     content = library.isError ? (
-      <View style={{ flex: 1, justifyContent: 'center' }}>
-        <EmptyState
-          title={messageFor(library.error)}
-          action={
-            <Btn pill center busy={library.isFetching} onPress={() => void library.refetch()}>
-              {t('common:actions.retry')}
-            </Btn>
-          }
-        />
-      </View>
+      <LoadFailed
+        error={library.error}
+        busy={library.isFetching}
+        onRetry={() => void library.refetch()}
+      />
     ) : (
       <LibrarySkeleton label={t('common:loading')} />
     );

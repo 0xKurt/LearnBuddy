@@ -2,11 +2,10 @@
 // passwords: sign-up, sign-in and password reset happen between the app and
 // Supabase Auth. Tests inject a verifier that maps test tokens to users.
 
-import { createClient } from '@supabase/supabase-js';
-
 import type { Config } from '../config.js';
 import { AppError } from '../lib/errors.js';
-import { outcomeOfStatus, type Outcome } from '../lib/outcome.js';
+import { failureOfStatus, type Outcome } from '../lib/outcome.js';
+import { serviceClient } from '../lib/supabase.js';
 
 export type AuthUser = {
   userId: string;
@@ -89,10 +88,7 @@ export function instantOf(value: string | undefined): Date | null {
  * (network error, no answer) is `unknown`.
  */
 export function authOutcomeOf(error: { status?: number | undefined }): Exclude<Outcome, 'ok'> {
-  const status = error.status;
-  if (status === undefined || status < 400) return 'unknown';
-  const outcome = outcomeOfStatus(status);
-  return outcome === 'ok' ? 'unknown' : outcome;
+  return failureOfStatus(error.status);
 }
 
 /**
@@ -109,9 +105,7 @@ export class SupabaseAuthVerifier implements AuthVerifier {
   private readonly client;
 
   constructor(config: Pick<Config, 'SUPABASE_URL' | 'SUPABASE_SERVICE_ROLE_KEY'>) {
-    this.client = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    this.client = serviceClient(config);
   }
 
   async verify(token: string): Promise<AuthUser | null> {

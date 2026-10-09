@@ -16,7 +16,7 @@
 // dieselben Kacheln am selben Platz, unten direkt über „Prüfen“ (#386), und nichts darin rollt — die
 // Obergrenzen im Vertrag sind so gemessen, dass das Größte passt (SELECT_*).
 
-import type { SelectAllTaskView, StructuredAnswer } from '@learnbuddy/shared-types/contracts';
+import type { SelectAllTaskView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -28,6 +28,7 @@ import { AnswerShell } from './AnswerShell.js';
 import { ChoiceList } from './ChoiceList.js';
 // The same reading of a kept list of ids as an order's: known ids only, each once.
 import { placedFrom as chosenFrom } from './OrderAnswer.js';
+import type { FormProps } from './formProps.js';
 
 /** One tap: an option without a tick gets one, a ticked one loses it. */
 export function toggle(chosen: readonly string[], id: string): string[] {
@@ -37,16 +38,13 @@ export function toggle(chosen: readonly string[], id: string): string[] {
 /** Nothing is "tried" here: a wrong set stays on the board for her to change. */
 const NONE_TRIED: ReadonlySet<string> = new Set();
 
-type Props = {
-  view: SelectAllTaskView;
-  /** Where her ticks are kept (`lib/drafts.ts`), per question. */
-  draftKey: string;
-  disabled: boolean;
-  /** "Prüfen": at least one ticked; `shown` is what she ticked in words, for the thread. */
-  onSubmit: (parts: StructuredAnswer, shown: string) => void;
-};
-
-export function SelectAllAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+/** "Prüfen": at least one ticked; `shown` is what she ticked in words, for the thread. */
+export function SelectAllAnswer({
+  view,
+  draftKey,
+  disabled,
+  onSubmit,
+}: FormProps<SelectAllTaskView>) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const { text: kept, setText: keep } = useDraft(draftKey);

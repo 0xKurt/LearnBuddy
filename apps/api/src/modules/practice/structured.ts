@@ -421,6 +421,14 @@ export function solutionOf(task: StructuredTask): string {
   }
 }
 
+/** A structured draft as the model writes it, for practice, for homework or without help. */
+type AnyDraft = StructuredDraft | StructuredDraftHomework | StructuredDraftNoHelp;
+
+/** The help the model wrote with the draft; a draft without help has none. */
+function hintsOf(draft: AnyDraft): readonly string[] {
+  return 'hints' in draft ? draft.hints : [];
+}
+
 /**
  * The question around a stored task: every field but the task, its wording, its solution and
  * its help is fixed. No chart to read (the task is the board, #245/#246), no curriculum place
@@ -428,7 +436,7 @@ export function solutionOf(task: StructuredTask): string {
  * the parts are checked with the subject's spelling rule (a cloze, #232).
  */
 function asItem(
-  draft: StructuredDraft | StructuredDraftHomework | StructuredDraftNoHelp,
+  draft: AnyDraft,
   own: Pick<StructuredItem, 'kind' | 'task' | 'prompt' | 'answer' | 'hints'> &
     Partial<Pick<StructuredItem, 'spelling' | 'worked_solution'>>,
 ): StructuredItem {
@@ -454,26 +462,16 @@ function asItem(
 }
 
 /** A draft from the model as a question, or null when it fails Regel 0. */
-export function structuredItem(
-  draft: StructuredDraft | StructuredDraftHomework | StructuredDraftNoHelp,
-): StructuredItem | null {
+export function structuredItem(draft: AnyDraft): StructuredItem | null {
   switch (draft.type) {
     case 'order': {
+      const prompt = dollarMathRuns(draft.prompt);
       const task = orderTaskFrom(draft.elements, draft.numeric);
       if (!task) return null;
-      const prompt = dollarMathRuns(draft.prompt);
       const answer = solutionOf(task);
       // Help never gives the whole order away (the same check as every prepared hint).
-      const hints = ('hints' in draft ? draft.hints : []).filter(
-        (h) => !mentionsSolution(h, answer, prompt),
-      );
-      return asItem(draft, {
-        kind: 'order',
-        task,
-        prompt,
-        answer,
-        hints,
-      });
+      const hints = hintsOf(draft).filter((h) => !mentionsSolution(h, answer, prompt));
+      return asItem(draft, { kind: 'order', task, prompt, answer, hints });
     }
     case 'table_fill': {
       const task = tableTaskFrom(draft);
@@ -483,33 +481,21 @@ export function structuredItem(
       // already (the same check as every prepared hint, per cell).
       const visible = `${prompt} ${tableShownText(task)}`;
       const keys = tableKeys(task);
-      const hints = ('hints' in draft ? draft.hints : []).filter(
+      const hints = hintsOf(draft).filter(
         (h) => !keys.some((k) => mentionsSolution(h, k, visible)),
       );
-      return asItem(draft, {
-        kind: 'table_fill',
-        task,
-        prompt,
-        answer: solutionOf(task),
-        hints,
-      });
+      return asItem(draft, { kind: 'table_fill', task, prompt, answer: solutionOf(task), hints });
     }
     case 'match': {
+      const prompt = dollarMathRuns(draft.prompt);
       const task = matchTaskFrom(draft);
       if (!task) return null;
-      const prompt = dollarMathRuns(draft.prompt);
       const answer = solutionOf(task);
       // Help never gives a whole link away, nor the whole solution.
-      const hints = ('hints' in draft ? draft.hints : []).filter(
+      const hints = hintsOf(draft).filter(
         (h) => !mentionsSolution(h, answer, prompt) && !namesALink(h, task),
       );
-      return asItem(draft, {
-        kind: 'match',
-        task,
-        prompt,
-        answer,
-        hints,
-      });
+      return asItem(draft, { kind: 'match', task, prompt, answer, hints });
     }
     case 'cloze': {
       const prompt = dollarMathRuns(draft.prompt);
@@ -519,7 +505,7 @@ export function structuredItem(
       // Help never names what belongs in a gap — no key, no accepted form (the same check as
       // every prepared hint, against everything she can read).
       const visible = visibleOf(task, prompt);
-      const hints = ('hints' in draft ? draft.hints : []).filter(
+      const hints = hintsOf(draft).filter(
         (h) => !clozeSecrets(task).some((s) => mentionsSolution(h, s, visible)),
       );
       return asItem(draft, {
@@ -537,9 +523,7 @@ export function structuredItem(
       const task = selectTaskFrom({ options: draft.options, prompt: draft.prompt });
       if (!task) return null;
       // Help never says of an option whether it is right: no hint may name one.
-      const hints = ('hints' in draft ? draft.hints : []).filter(
-        (h) => !namesAnOption(h, task, prompt),
-      );
+      const hints = hintsOf(draft).filter((h) => !namesAnOption(h, task, prompt));
       return asItem(draft, { kind: 'select_all', task, prompt, answer: solutionOf(task), hints });
     }
     case 'mark': {
@@ -547,23 +531,21 @@ export function structuredItem(
       const task = markTaskFrom(draft);
       if (!task) return null;
       // Help never names a place to mark: every target stands in the text she reads.
-      const hints = ('hints' in draft ? draft.hints : []).filter(
-        (h) => !namesAMark(h, task, prompt),
-      );
+      const hints = hintsOf(draft).filter((h) => !namesAMark(h, task, prompt));
       return asItem(draft, { kind: 'mark', task, prompt, answer: solutionOf(task), hints });
     }
     case 'find_error': {
       const prompt = dollarMathRuns(draft.prompt);
       const task = findErrorTaskFrom(draft);
       if (!task) return null;
-      const help = ownHelp('hints' in draft ? draft.hints : [], task, prompt);
+      const help = ownHelp(hintsOf(draft), task, prompt);
       return asItem(draft, { kind: 'find_error', task, prompt, ...help });
     }
     case 'column_calc': {
       const prompt = dollarMathRuns(draft.prompt);
       const task = columnTaskFrom(draft);
       if (!task) return null;
-      const help = ownHelp('hints' in draft ? draft.hints : [], task, prompt);
+      const help = ownHelp(hintsOf(draft), task, prompt);
       return asItem(draft, { kind: 'column_calc', task, prompt, ...help });
     }
     case 'grid_draw': {
@@ -611,7 +593,7 @@ function textsIn(value: unknown): string[] {
 
 /** The drafts of one model answer as questions; one that fails costs only itself. */
 export function structuredItems(
-  drafts: ReadonlyArray<StructuredDraft | StructuredDraftHomework | StructuredDraftNoHelp>,
+  drafts: ReadonlyArray<AnyDraft>,
   allowed: ReadonlySet<string>,
   max: number = MAX_STRUCTURED_ITEMS,
 ): StructuredItem[] {

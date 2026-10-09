@@ -38,7 +38,6 @@ import {
   type MarkPick,
   type MarkTaskView,
   type MarkWord,
-  type StructuredAnswer,
 } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -52,6 +51,7 @@ import { Btn } from '../lb/Btn.js';
 import { Segmented } from '../lb/Segmented.js';
 import { AnswerShell } from './AnswerShell.js';
 import { LineText } from './PassagePanel.js';
+import type { FormProps } from './formProps.js';
 
 /**
  * A word's tile: its own padding (`Btn bare`), the smallest step — the tiles touch, so this is the
@@ -118,16 +118,8 @@ export function marksFrom(kept: string, view: MarkTaskView): MarkPick[] {
   }
 }
 
-type Props = {
-  view: MarkTaskView;
-  /** Where her marks are kept (`lib/drafts.ts`), per question. */
-  draftKey: string;
-  disabled: boolean;
-  /** "Prüfen": at least one mark; `shown` is what she marked in words, for the thread. */
-  onSubmit: (parts: StructuredAnswer, shown: string) => void;
-};
-
-export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+/** "Prüfen": at least one mark; `shown` is what she marked in words, for the thread. */
+export function MarkAnswer({ view, draftKey, disabled, onSubmit }: FormProps<MarkTaskView>) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const { text: kept, setText: keep } = useDraft(draftKey);

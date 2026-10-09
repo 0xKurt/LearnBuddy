@@ -13,7 +13,6 @@ import {
   findErrorText,
   lineMark,
   type FindErrorTaskView,
-  type StructuredAnswer,
 } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +20,7 @@ import { useDraft } from '../../lib/drafts.js';
 import { ChoiceList } from './ChoiceList.js';
 import { PartsArea } from './PartsArea.js';
 import { TypedAnswer } from './TypedAnswer.js';
+import type { FormProps } from './formProps.js';
 
 /** Nothing is "tried" here: a wrong line stays on the board for her to pick again. */
 const NONE_TRIED: ReadonlySet<string> = new Set();
@@ -28,16 +28,13 @@ const NONE_TRIED: ReadonlySet<string> = new Set();
 /** A line as math: the server sends plain lines ("3x + 6 = 21"), set like any formula. */
 const asMath = (text: string) => `$${text}$`;
 
-type Props = {
-  view: FindErrorTaskView;
-  /** Where her line and her correction are kept (`lib/drafts.ts`), per question. */
-  draftKey: string;
-  disabled: boolean;
-  /** "Prüfen": a line picked and written; `shown` is "② 3x + 6 = 21", for the thread. */
-  onSubmit: (parts: StructuredAnswer, shown: string) => void;
-};
-
-export function FindErrorAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+/** "Prüfen": a line picked and written; `shown` is "② 3x + 6 = 21", for the thread. */
+export function FindErrorAnswer({
+  view,
+  draftKey,
+  disabled,
+  onSubmit,
+}: FormProps<FindErrorTaskView>) {
   const { t } = useTranslation('practice');
   const { text: fix, setText: setFix } = useDraft(draftKey);
   const { text: kept, setText: keep } = useDraft(`${draftKey}.line`);

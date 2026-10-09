@@ -5,6 +5,7 @@ import { DrillCarry, DrillRange, DrillRow } from './drill.js';
 import {
   DifficultyWish,
   PageProblem,
+  PracticeSummary,
   SessionView,
   TestMinutes,
   UnclearSpot,
@@ -330,14 +331,6 @@ export const GoalBrief = z.object({
 });
 export type GoalBrief = z.infer<typeof GoalBrief>;
 
-export const PracticeResultBrief = z.object({
-  answered: z.number().int(),
-  first_try: z.number().int(),
-  secure_topics: z.array(z.string()),
-  shaky_topics: z.array(z.string()),
-});
-export type PracticeResultBrief = z.infer<typeof PracticeResultBrief>;
-
 /** Practice Buddy has prepared for today, ready to start. */
 export const PreparedPractice = z.object({
   step_id: Uuid,
@@ -406,7 +399,7 @@ export const NowCard = z.discriminatedUnion('type', [
     session_id: Uuid,
     /** help: homework — solved by herself, no hit rate (docs/UX-PRINCIPLES.md). */
     mode: z.enum(['practice', 'test', 'help']).default('practice'),
-    result: PracticeResultBrief,
+    result: PracticeSummary,
     /**
      * What is ready next, so the result never hides prepared practice (user feedback #2).
      * An unreadable one reads as none.

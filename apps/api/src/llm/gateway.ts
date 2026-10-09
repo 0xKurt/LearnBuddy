@@ -28,6 +28,15 @@ export type AudioMime =
   | 'audio/wav'
   | 'audio/mpeg';
 
+/**
+ * A recording from the app as a part of the model's message (speak, spoken word, dictation). m4a
+ * goes as mp4: the same container, under the name the model knows.
+ */
+export function recordingPart(recording: { mime: AudioMime; audio_base64: string }): LlmPart {
+  const mimeType = recording.mime === 'audio/m4a' ? 'audio/mp4' : recording.mime;
+  return { inlineData: { mimeType, data: recording.audio_base64 } };
+}
+
 export type LlmMessage = { role: 'user' | 'model'; parts: LlmPart[] };
 
 export type LlmPurpose =
