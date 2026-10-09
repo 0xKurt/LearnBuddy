@@ -34,7 +34,7 @@ import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Segmented } from '../lb/Segmented.js';
 import { toast } from '../lb/Toast.js';
-import { AdultCancelled, asAdultIfNeeded, confirmAdult, useAdminUnlocked } from './adultGate.js';
+import { asAdultIfNeeded, confirmAdult, toastAdultFailure, useAdminUnlocked } from './adultGate.js';
 import { Group } from './Group.js';
 import { Divider, Row } from './Row.js';
 
@@ -117,11 +117,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
       void queryClient.invalidateQueries({ queryKey: keys.home });
       return next;
     } catch (err) {
-      if (err instanceof AdultCancelled) {
-        if (err.reason === 'no_pin') toast.show(t('pin_first'));
-        return null;
-      }
-      toast.show(messageFor(err), 'error');
+      toastAdultFailure(err, t('pin_first'));
       if (err instanceof ApiError && err.code === 'stale') {
         await queryClient.invalidateQueries({ queryKey: keys.settings });
       }

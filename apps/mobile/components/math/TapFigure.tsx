@@ -45,6 +45,7 @@ import {
   type TapPick,
 } from '../../../../packages/shared-math/src/tap.js';
 import { currentLocale } from '../../lib/i18n/index.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { tapLayout, type TapMark } from '../../lib/math/tapLayout.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { useMapShapes } from '../../lib/math/useMapShapes.js';
@@ -67,8 +68,6 @@ type Props = {
   /** The tallest the drawing may stand (it is drawn again, narrower, above that). */
   maxHeight?: number;
 };
-
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 /** The clock with her hands on it; every other figure stays as it is and gets a mark. */
 function shownFigure(figure: Tappable & Figure, value: string): Figure {
@@ -98,7 +97,7 @@ function placeWord(figure: MapFig): string {
 function placeWords(
   figure: Tappable,
   pick: TapPick | null,
-  t: T,
+  t: Translate,
   names: FigureNames | null,
 ): string {
   const [i = 0, j = 0] = pick ?? [];
@@ -134,7 +133,7 @@ function placeWords(
  * the place off the figure, finding the region or the part, is the task (#409, #251, #252). A
  * column's name and the hands' positions are kept: the figure shows them anyway.
  */
-function shownWords(figure: Tappable, pick: TapPick | null, t: T, spoken: string): string {
+function shownWords(figure: Tappable, pick: TapPick | null, t: Translate, spoken: string): string {
   if (!pick) return spoken;
   return figure.type === 'clock' || figure.type === 'bar_chart'
     ? spoken

@@ -60,6 +60,7 @@ import {
   parseStaffLine,
   parseTaps,
   staffStep,
+  staffWords,
   ticksOf,
   type Clef,
   type Figure,
@@ -153,20 +154,14 @@ function text(
   return t(locale, `practice.staff.${suffix}`, vars);
 }
 
-/** `C#` → the key `note.Cs`: a sharp cannot be part of a JSON key, so it is spelled out. */
-function noteKey(name: NoteName): StaffMessage {
-  return `note.${name.replace('#', 's')}` as StaffMessage;
+/** Her language's staff words (contracts/staff.ts `staffWords`), under `practice.staff.*`. */
+function words(locale: string) {
+  return staffWords((key, vars) => text(locale, key as StaffMessage, vars));
 }
 
 /** What a note is called in her language: `B` is "H" in German, "Si" in French. */
 export function noteWord(locale: string, name: NoteName): string {
-  return text(locale, noteKey(name));
-}
-
-/** "Viertelnote" / "Viertelpause", and "punktierte Viertelnote" when it carries a dot. */
-function valueWord(locale: string, value: NoteValue, dotted: boolean, rest: boolean): string {
-  const plain = text(locale, `${rest ? 'value_rest' : 'value_note'}.${value}` as StaffMessage);
-  return dotted ? text(locale, rest ? 'dotted_rest' : 'dotted_note', { value: plain }) : plain;
+  return words(locale).note(name);
 }
 
 /** "reine Quinte" — the quality and the step, in the order the language puts them. */
@@ -177,28 +172,10 @@ export function intervalWord(locale: string, interval: Interval): string {
   });
 }
 
-/** "Viervierteltakt" — `4/4` cannot be a JSON key path, so it is written `t4_4`. */
-function timeWord(locale: string, time: TimeSignature): string {
-  return text(locale, `time.t${time.replace('/', '_')}` as StaffMessage);
-}
-
-/** "Violinschlüssel" / "Bassschlüssel". */
-function clefWord(locale: string, clef: Clef): string {
-  return text(locale, `clef.${clef}` as StaffMessage);
-}
-
-/** One element in words: "C als Viertelnote", "Viertelpause". */
-function elementWord(locale: string, el: StaffElement): string {
-  const value = valueWord(locale, el.value, el.dotted, el.el === 'rest');
-  return el.el === 'rest'
-    ? value
-    : text(locale, 'element_note', { name: noteWord(locale, el.pitch.name), value });
-}
-
 /** A rhythm in words — its key, and what its solution says: "Viertelnote, Achtelpause, …". */
 function rhythmWords(locale: string, bars: RhythmBars): string {
   return flat(bars)
-    .map((el) => valueWord(locale, el.value, el.dotted, el.el === 'rest'))
+    .map((el) => words(locale).value(el.value, el.dotted, el.el === 'rest'))
     .join(', ');
 }
 
@@ -210,7 +187,7 @@ function rhythmWords(locale: string, bars: RhythmBars): string {
 function lineWords(locale: string, bars: StaffBars): string {
   return bars
     .flat()
-    .map((el) => elementWord(locale, el))
+    .map((el) => words(locale).element(el))
     .join(', ');
 }
 
@@ -588,11 +565,11 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
         difficulty: Math.abs(staffStep(task.pitch, task.clef)) > 4 ? 3 : 2,
         figure: staffFigure(task, task.clef, null, bars),
         hints: [
-          text(locale, 'hint_note_clef', { clef: clefWord(locale, task.clef) }),
+          text(locale, 'hint_note_clef', { clef: words(locale).clef(task.clef) }),
           text(locale, 'hint_note_step'),
         ],
         worked_solution: text(locale, 'worked_note', {
-          clef: clefWord(locale, task.clef),
+          clef: words(locale).clef(task.clef),
           answer: picked.answer,
         }),
       };
@@ -616,7 +593,7 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
       );
       if (options === null) return null;
       const picked = multi(options, task.value, (v) =>
-        valueWord(locale, v, task.dotted, task.rest),
+        words(locale).value(v, task.dotted, task.rest),
       );
       if (picked === null) return null;
       return {
@@ -695,7 +672,7 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
         // Drawn WITHOUT its time signature: it is what the question asks for.
         figure: staffFigure(task, task.clef, null, task.bars),
         hints: [text(locale, 'hint_time_add'), text(locale, 'hint_time_unit')],
-        worked_solution: text(locale, 'worked_time', { answer: timeWord(locale, task.time) }),
+        worked_solution: text(locale, 'worked_time', { answer: words(locale).time(task.time) }),
       };
     }
     case 'write_line': {
@@ -704,8 +681,8 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
         ...common,
         kind: 'short',
         prompt: text(locale, 'write_prompt', {
-          clef: clefWord(locale, task.clef),
-          time: timeWord(locale, task.time),
+          clef: words(locale).clef(task.clef),
+          time: words(locale).time(task.time),
           line,
         }),
         // The key is the line in WORDS, so "Lösung zeigen", the material list and a disputed
@@ -719,12 +696,12 @@ export function staffItem(raw: StaffTask, locale: string): StaffItem | null {
         // No figure: the staff she writes on IS the surface (`staffSurfaceOf`).
         figure: null,
         hints: [
-          text(locale, 'hint_write_clef', { clef: clefWord(locale, task.clef) }),
+          text(locale, 'hint_write_clef', { clef: words(locale).clef(task.clef) }),
           text(locale, 'hint_write_fill'),
         ],
         worked_solution: text(locale, 'worked_write', {
           answer: line,
-          time: timeWord(locale, task.time),
+          time: words(locale).time(task.time),
         }),
       };
     }
@@ -986,7 +963,7 @@ function tapsReply(locale: string, check: TapsCheck, attempts: number): string {
 export function staffAgain(locale: string, task: StaffTask): string {
   switch (task.task) {
     case 'name_note':
-      return text(locale, 'again_note', { clef: clefWord(locale, task.clef) });
+      return text(locale, 'again_note', { clef: words(locale).clef(task.clef) });
     case 'name_value':
       return text(locale, 'again_value');
     case 'interval':

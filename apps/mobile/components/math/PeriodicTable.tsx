@@ -20,11 +20,11 @@ import {
   type ChemElement,
   type TableVariant,
 } from '../../../../packages/shared-math/src/periodic.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY, formatNumber, SMALL } from './figureText.js';
 
 type PeriodicFig = Extract<Figure, { type: 'periodic_table' }>;
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 /** Room for the period numbers at the left and the group names on top. */
 const SIDE = 14;
@@ -247,7 +247,7 @@ export function PeriodicBody({ figure, width }: { figure: PeriodicFig; width: nu
  * shows — atomic number, mass, group and period. The class of an element is not said: on the
  * drawing it is the side of the staircase, which is what a question about it practises.
  */
-export function describePeriodic(figure: PeriodicFig, t: T): string {
+export function describePeriodic(figure: PeriodicFig, t: Translate): string {
   const parts = [t(figure.v === 'main' ? 'figure.periodic_main' : 'figure.periodic_full')];
   parts.push(t('figure.periodic_stair'));
   for (const sym of figure.hl) {

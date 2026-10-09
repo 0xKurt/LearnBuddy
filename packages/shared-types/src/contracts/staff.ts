@@ -399,6 +399,43 @@ export function intervalBetween(lower: Pitch, upper: Pitch): Interval | null {
   return null;
 }
 
+// ─────────────── in Worten ───────────────
+
+/**
+ * Sagt eine Meldung der Notenzeile: ihr Schlüssel unterhalb des eigenen Präfixes der Seite (die
+ * App liest `staff.*` in `math.json`, der Server `practice.staff.*`), mit Werten.
+ */
+export type StaffSay = (key: string, values?: Record<string, string | number>) => string;
+
+/**
+ * Die Wörter einer Notenzeile, einmal für App und Server (issue #311): welcher Schlüssel zu
+ * einem Namen, einem Wert, einem Schlüssel und einer Taktart gehört. `C#` und `4/4` können
+ * keine JSON-Schlüssel sein, deshalb heißen sie `note.Cs` und `time.t4_4`. Die Wörter selbst
+ * stehen in den Sprachdateien beider Seiten.
+ */
+export function staffWords(say: StaffSay) {
+  /** „Viertelnote" / „Viertelpause", und „punktierte Viertelnote", wenn ein Punkt dahinter steht. */
+  const value = (v: NoteValue, dotted: boolean, rest: boolean): string => {
+    const plain = say(`${rest ? 'value_rest' : 'value_note'}.${v}`);
+    return dotted ? say(rest ? 'dotted_rest' : 'dotted_note', { value: plain }) : plain;
+  };
+  /** Wie ein Ton in ihrer Sprache heißt: `B` ist auf Deutsch „H", auf Französisch „Si". */
+  const note = (name: NoteName): string => say(`note.${name.replace('#', 's')}`);
+  return {
+    note,
+    value,
+    /** „Violinschlüssel" / „Bassschlüssel". */
+    clef: (clef: Clef): string => say(`clef.${clef}`),
+    /** „Viervierteltakt". */
+    time: (time: TimeSignature): string => say(`time.t${time.replace('/', '_')}`),
+    /** Ein Zeichen: „C als Viertelnote", „Viertelpause". */
+    element: (el: StaffElement): string => {
+      const v = value(el.value, el.dotted, el.el === 'rest');
+      return el.el === 'rest' ? v : say('element_note', { name: note(el.pitch.name), value: v });
+    },
+  };
+}
+
 // ─────────────── ihre Zeile, wie sie reist ───────────────
 
 /**

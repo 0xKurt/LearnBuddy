@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { adminToken, clearAdminToken } from '../../lib/admin.js';
+import { clearAdminToken } from '../../lib/admin.js';
 import { useAnnounce } from '../../lib/announce.js';
 import { updateLearner } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
@@ -22,7 +22,7 @@ import { Card } from '../lb/Card.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
 import { Sheet } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
-import { AdultCancelled, afterModalCloses, asAdultIfNeeded, confirmAdult } from './adultGate.js';
+import { AdultCancelled, asAdultIfNeeded, useAdultOpener } from './adultGate.js';
 import { Row } from './Row.js';
 
 type Props = {
@@ -36,12 +36,12 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
   const { palette } = useTheme();
   const { t, i18n } = useTranslation(['settings', 'auth', 'common']);
   const [open, setOpen] = useState(false);
-  const [opening, setOpening] = useState(false);
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState(learner.display_name);
   const [date, setDate] = useState<DateParts>({ day: '', month: '', year: '' });
   const [failure, setFailure] = useState<string | null>(null);
   const minor = learner.is_minor;
+  const { opening, open: openAsAdult } = useAdultOpener(minor, pinSet, 'profile');
   const birthDate = birthDateOf(date.day, date.month, date.year);
   const dateComplete = date.day.length > 0 && date.month.length > 0 && date.year.length === 4;
   // iOS has no live regions: problems in this sheet say themselves (lib/announce.ts).
@@ -52,29 +52,13 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
     (birthDate !== null && birthDate !== learner.birth_date);
   const valid = name.trim().length > 0 && birthDate !== null;
 
-  async function start() {
-    if (opening) return;
-    setOpening(true);
-    try {
-      if (minor) {
-        const prompted = adminToken() === null;
-        await confirmAdult(pinSet, 'profile');
-        if (prompted) await afterModalCloses();
-      }
+  const start = () =>
+    openAsAdult(() => {
       setName(learner.display_name);
       setDate(partsOf(learner.birth_date));
       setFailure(null);
       setOpen(true);
-    } catch (err) {
-      if (err instanceof AdultCancelled) {
-        if (err.reason === 'no_pin') toast.show(t('settings:pin_first'));
-      } else {
-        toast.show(messageFor(err), 'error');
-      }
-    } finally {
-      setOpening(false);
-    }
-  }
+    });
 
   function close() {
     setOpen(false);

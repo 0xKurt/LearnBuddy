@@ -17,7 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { adminToken, clearAdminToken } from '../../lib/admin.js';
+import { clearAdminToken } from '../../lib/admin.js';
 import { requestAdmin, takeForgotPin } from '../../lib/adminFlow.js';
 import { openParents, type ParentsView } from '../../lib/parentsGate.js';
 import {
@@ -32,7 +32,6 @@ import { currentSession } from '../../lib/auth/session.js';
 import { deliverExport } from '../../lib/exportFile.js';
 import { signOutHere } from '../../lib/leave.js';
 import { hasUnsentWork } from '../../lib/localWork.js';
-import { messageFor } from '../../lib/errors.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatDate, formatTime } from '../../lib/time.js';
@@ -42,7 +41,12 @@ import type { LbTextInputRef } from '../lb/LbTextInput.js';
 import { Sheet } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
 import { AccountAccessCard } from './AccountAccessCard.js';
-import { AdultCancelled, afterModalCloses, asAdultIfNeeded, confirmAdult } from './adultGate.js';
+import {
+  afterModalCloses,
+  asAdultIfNeeded,
+  confirmAdultFirst,
+  toastAdultFailure,
+} from './adultGate.js';
 import { Group } from './Group.js';
 import { PinCard } from './PinCard.js';
 import { ProfileFixCard } from './ProfileFixCard.js';
@@ -101,11 +105,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
     try {
       await work();
     } catch (err) {
-      if (err instanceof AdultCancelled) {
-        if (err.reason === 'no_pin') toast.show(t('settings:pin_first'));
-      } else {
-        toast.show(messageFor(err), 'error');
-      }
+      toastAdultFailure(err, t('settings:pin_first'));
     } finally {
       inFlight.current = false;
       setBusy(null);
@@ -138,11 +138,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
   /** For a minor the PIN comes first, then the confirmation (from the adult). */
   const askDeletion = () =>
     run('delete', async () => {
-      if (minor) {
-        const prompted = adminToken() === null;
-        await confirmAdult(pinSet, 'delete');
-        if (prompted) await afterModalCloses();
-      }
+      await confirmAdultFirst(minor, pinSet, 'delete');
       setDeleteOpen(true);
     });
 

@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 
-import { readClosedCard, writeClosedCard } from './homeCardStorage.js';
+import { readItem, writeItem } from './api/outboxStorage.js';
 
 const KEY = 'lb.closedCard';
 
@@ -22,21 +22,15 @@ export const useClosedCard = create<ClosedCardState>((set) => ({
   close: (key) => {
     touched = true;
     set({ closed: key });
-    try {
-      writeClosedCard(KEY, key).catch(() => undefined);
-    } catch {
-      // No storage: closed for this visit only.
-    }
+    // Without storage it is closed for this visit only.
+    void writeItem(KEY, key);
   },
 }));
 
 async function restore(): Promise<void> {
-  try {
-    const stored = await readClosedCard(KEY);
-    if (!touched && stored !== null) useClosedCard.setState({ closed: stored });
-  } catch {
-    // No storage: nothing was closed.
-  }
+  // Without storage nothing was closed (null).
+  const stored = await readItem(KEY);
+  if (!touched && stored !== null) useClosedCard.setState({ closed: stored });
 }
 
 void restore();

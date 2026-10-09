@@ -10,6 +10,7 @@
 import type { Figure, PrimaryFigure } from '@learnbuddy/shared-types/contracts';
 
 // Imported by path, like every figure file: the guards are dependency-free.
+import type { Translate } from '../../lib/i18n/index.js';
 import { isCircuit } from '../../../../packages/shared-math/src/circuit.js';
 import { isDiagram } from '../../../../packages/shared-math/src/diagram.js';
 import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
@@ -49,7 +50,6 @@ export type SchoolFigure =
   | ColorWheelFig
   | MapFigure
   | SchematicFigure;
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 export function isSchoolFigure(f: Figure): f is SchoolFigure {
   return (
@@ -98,7 +98,7 @@ export function SchoolFigureBody({
  */
 export function describeSchoolFigure(
   figure: SchoolFigure,
-  t: T,
+  t: Translate,
   names: FigureNames | null,
 ): string {
   if (isPrimary(figure)) return describePrimary(figure, t);

@@ -29,6 +29,7 @@ import {
   TABLE_ALSO_MAX,
   TABLE_CELL_MAX,
   TABLE_COLS_MAX,
+  TABLE_JOIN,
   TABLE_ROWS_MAX,
   TableFamily,
   TableXIn,
@@ -57,9 +58,6 @@ import { dollarMathRuns } from './dollarMath.js';
 import { compareWithKeys, NEAR_MISS, ruleCheck, type ItemForCheck } from './evaluate.js';
 import { ItemDraft } from './items.js';
 import { checkPath } from './steps.js';
-
-/** How the values of a row stand next to each other when read as one text. */
-const TABLE_JOIN = ' · ';
 
 /** `items.answer` holds at most this much (0001_baseline.sql); a longer solution is no task. */
 const ANSWER_MAX = 1000;

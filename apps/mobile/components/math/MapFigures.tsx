@@ -39,6 +39,7 @@ import {
 } from '../../../../packages/shared-math/src/regions.js';
 import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
 import { currentLocale } from '../../lib/i18n/index.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { gridLabels } from '../../lib/math/mapGridLabels.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { useMapShapes } from '../../lib/math/useMapShapes.js';
@@ -47,7 +48,6 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { HaloText, SMALL } from './figureText.js';
 
 export type MapFigure = Extract<Figure, { type: 'map' }>;
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 /** How strongly the land is tinted: the marked region stands out in the full figure fill. */
 const LAND = 0.35;
@@ -305,7 +305,7 @@ function Places({
  * of places (#429): "… Die großen Flüsse sind Linien. Markiert: Rhein."; with its Gradnetz: "…
  * Mit Gradnetz, Linien alle 10°. Markiert: 50° N, 10° O."
  */
-export function describeMap(figure: MapFigure, t: T, names: FigureNames): string {
+export function describeMap(figure: MapFigure, t: Translate, names: FigureNames): string {
   const lang = currentLocale();
   const count = mapRegions(names, figure.v).length;
   const layer = mapLayer(figure);

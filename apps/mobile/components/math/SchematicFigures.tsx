@@ -16,6 +16,7 @@ import type { FigureNames } from '../../../../packages/shared-math/src/figureNam
 import { regionPath } from '../../../../packages/shared-math/src/regions.js';
 import { schematic, schematicNumbered } from '../../../../packages/shared-math/src/schematics.js';
 import { currentLocale } from '../../lib/i18n/index.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { BADGE_R, schematicLayout } from '../../lib/math/schematicLayout.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { useSchematicShapes } from '../../lib/math/useSchematicShapes.js';
@@ -24,7 +25,6 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY, FONT } from './figureText.js';
 
 export type SchematicFigure = Extract<Figure, { type: 'schematic' }>;
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 export function SchematicBody({
   figure,
@@ -134,7 +134,11 @@ export function SchematicBody({
 }
 
 /** "Abbildung: Pflanzenzelle, 4 Teile nummeriert." — never the names of the numbered parts. */
-export function describeSchematic(figure: SchematicFigure, t: T, names: FigureNames): string {
+export function describeSchematic(
+  figure: SchematicFigure,
+  t: Translate,
+  names: FigureNames,
+): string {
   const lang = currentLocale();
   const titles = schematic(names, figure.d).names;
   const name = lang in titles ? titles[lang as keyof typeof titles] : titles.de;

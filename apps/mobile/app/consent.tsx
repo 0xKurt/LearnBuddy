@@ -9,14 +9,14 @@ import { Linking, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { CheckPoints } from '../components/auth/CheckPoints.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
-import { Icon } from '../components/lb/Icon.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { Screen } from '../components/lb/Screen.js';
 import { toast } from '../components/lb/Toast.js';
-import { AdultCancelled, asAdultIfNeeded } from '../components/settings/adultGate.js';
+import { asAdultIfNeeded, toastAdultFailure } from '../components/settings/adultGate.js';
 import { ApiError } from '../lib/api/client.js';
 import { createAccount, getMe, selfConsent } from '../lib/api/endpoints.js';
 import { keys, queryClient, useMe } from '../lib/api/queries.js';
@@ -75,14 +75,10 @@ export default function Consent() {
       await queryClient.fetchQuery({ queryKey: keys.me, queryFn: getMe, staleTime: 0 });
       router.replace('/');
     } catch (err) {
-      if (err instanceof AdultCancelled) {
-        if (err.reason === 'no_pin') toast.show(t('consent.parents_needed'));
-      } else {
-        toast.show(messageFor(err), 'error');
-        // The text changed meanwhile: load its version, so the next tap agrees to the
-        // current one instead of sending the old one again (p2-consent-outdated-toast-loop).
-        if (err instanceof ApiError && err.reason === 'consent_outdated') void me.refetch();
-      }
+      toastAdultFailure(err, t('consent.parents_needed'));
+      // The text changed meanwhile: load its version, so the next tap agrees to the
+      // current one instead of sending the old one again (p2-consent-outdated-toast-loop).
+      if (err instanceof ApiError && err.reason === 'consent_outdated') void me.refetch();
     } finally {
       setBusy(false);
     }
@@ -116,32 +112,7 @@ export default function Consent() {
           </Text>
         </View>
         {/* Six points; in German they fit a small phone (360×740) without scrolling. */}
-        <Card padding={14}>
-          <View style={{ gap: 8 }}>
-            {POINTS.map((p) => (
-              <View key={p} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-                <View
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                  style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: 13,
-                    marginTop: -1,
-                    backgroundColor: palette.lavender,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Icon name="check" size={15} color={palette.primaryDk} />
-                </View>
-                <Text style={[TYPE.body, { flex: 1, fontSize: 14, lineHeight: 20 }]}>
-                  {t(`consent.${p}`)}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </Card>
+        <CheckPoints compact points={POINTS.map((p) => t(`consent.${p}`))} />
         {ENV.PRIVACY_URL ? (
           <Btn variant="ghost" pill onPress={() => void Linking.openURL(ENV.PRIVACY_URL)}>
             {t('consent.full_policy')}

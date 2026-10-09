@@ -122,6 +122,11 @@ export const TABLE_CELL_MAX = 40;
 export const TABLE_ALSO_MAX = 4;
 /** What she may type into one gap: more than a key, less than a paragraph. */
 export const TABLE_ANSWER_MAX = 60;
+/**
+ * How a table's values stand next to each other when read as one text: her cells in the
+ * conversation (the app writes it, the server stores the same) and the solution row by row.
+ */
+export const TABLE_JOIN = ' · ';
 /** A number wall (Zahlenmauer): three to six rows of bricks, the widest at the bottom. */
 export const WALL_ROWS_MIN = 3;
 export const WALL_ROWS_MAX = 6;

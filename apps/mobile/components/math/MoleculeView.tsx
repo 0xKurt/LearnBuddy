@@ -14,11 +14,11 @@ import {
   layoutMolecule,
   type LaidAtom,
 } from '../../../../packages/shared-math/src/molecule.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY, HaloText } from './figureText.js';
 
 type MoleculeFig = Extract<Figure, { type: 'molecule' }>;
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 /** The element letters: large enough to read a subscript at 360 px. */
 const ATOM_FONT = 17;
@@ -239,7 +239,7 @@ const SUBSCRIPT = '₀₁₂₃₄₅₆₇₈₉';
  * them (– single, = double, ≡ triple) and, where the drawing shows them, the lone pairs. The
  * same content as the drawing, so the question can be answered without seeing it.
  */
-export function describeMolecule(fig: MoleculeFig, t: T): string {
+export function describeMolecule(fig: MoleculeFig, t: Translate): string {
   const sub = (n: number) =>
     n <= 1 ? '' : [...String(n)].map((c) => SUBSCRIPT[Number(c)]).join('');
   const charge = (c: number) =>

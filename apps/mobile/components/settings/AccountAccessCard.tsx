@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { adminToken, clearAdminToken } from '../../lib/admin.js';
+import { clearAdminToken } from '../../lib/admin.js';
 import { useAnnounce } from '../../lib/announce.js';
 import { ApiError } from '../../lib/api/apiError.js';
 import { setPassword as savePasswordOnServer } from '../../lib/api/endpoints.js';
@@ -26,7 +26,7 @@ import { Card } from '../lb/Card.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
 import { Sheet } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
-import { AdultCancelled, afterModalCloses, asAdultIfNeeded, confirmAdult } from './adultGate.js';
+import { asAdultIfNeeded, useAdultOpener } from './adultGate.js';
 import { Divider, Row } from './Row.js';
 
 type Props = {
@@ -44,7 +44,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation(['settings', 'common']);
   const [open, setOpen] = useState<Open>(null);
-  const [opening, setOpening] = useState(false);
+  const { opening, open: openAsAdult } = useAdultOpener(minor, pinSet, 'credentials');
   const [busy, setBusy] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
@@ -60,32 +60,15 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
   const [reauth, setReauth] = useState(false);
   const [current, setCurrent] = useState('');
 
-  async function start(which: Exclude<Open, null>) {
-    if (opening) return;
-    setOpening(true);
-    try {
-      if (minor) {
-        const prompted = adminToken() === null;
-        await confirmAdult(pinSet, 'credentials');
-        // The PIN screen has to be gone before the sheet can open.
-        if (prompted) await afterModalCloses();
-      }
+  const start = (which: Exclude<Open, null>) =>
+    openAsAdult(() => {
       setNewEmail('');
       setPendingEmail(null);
       setPassword('');
       setRepeat('');
       setFailure(null);
       setOpen(which);
-    } catch (err) {
-      if (err instanceof AdultCancelled) {
-        if (err.reason === 'no_pin') toast.show(t('settings:pin_first'));
-      } else {
-        toast.show(messageFor(err), 'error');
-      }
-    } finally {
-      setOpening(false);
-    }
-  }
+    });
 
   function close() {
     setOpen(null);
