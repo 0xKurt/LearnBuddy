@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Btn } from '../components/lb/Btn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
+import { LoadFailed } from '../components/lb/LoadFailed.js';
 import { Rise, useListEntrance } from '../components/lb/Motion.js';
 import { MemorySkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
@@ -150,16 +151,7 @@ export default function MemoryScreen() {
     return (
       <Screen back title={title}>
         {memory.error ? (
-          <View style={{ flex: 1, justifyContent: 'center' }}>
-            <EmptyState
-              title={messageFor(memory.error)}
-              action={
-                <Btn pill center onPress={() => void refresh()}>
-                  {t('common:actions.retry')}
-                </Btn>
-              }
-            />
-          </View>
+          <LoadFailed error={memory.error} onRetry={() => void refresh()} />
         ) : (
           <MemorySkeleton label={t('common:loading')} />
         )}

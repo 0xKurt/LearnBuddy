@@ -20,3 +20,13 @@ export function outcomeOfStatus(status: number): Outcome {
   if (status === 408 || status === 429 || status >= 500) return 'transient';
   return 'refused';
 }
+
+/**
+ * A failed call's HTTP status → outcome, for a provider client that reports failures as errors
+ * (Supabase Auth and Storage). No status, or one that is not a failure, means no answer: `unknown`.
+ */
+export function failureOfStatus(status: number | null | undefined): Exclude<Outcome, 'ok'> {
+  if (status === null || status === undefined || status < 400) return 'unknown';
+  const outcome = outcomeOfStatus(status);
+  return outcome === 'ok' ? 'unknown' : outcome;
+}

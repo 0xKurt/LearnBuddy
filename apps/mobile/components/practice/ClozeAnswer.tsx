@@ -16,7 +16,7 @@
 // Ihr Stand liegt im Entwurf (`lib/drafts.ts`) wie jede getippte Antwort: er übersteht einen
 // Themenwechsel (Remount) und Android, das die App beendet.
 
-import type { ClozeTaskView, StructuredAnswer } from '@learnbuddy/shared-types/contracts';
+import type { ClozeTaskView } from '@learnbuddy/shared-types/contracts';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -30,6 +30,7 @@ import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 import { Slot, slotWidth } from '../lb/Slot.js';
 import { MathText } from '../math/MathText.js';
 import { AnswerShell } from './AnswerShell.js';
+import type { FormProps } from './formProps.js';
 
 /** A piece of the flowing text: words, or the gap with this index. */
 export type Piece = { kind: 'text'; text: string } | { kind: 'gap'; index: number };
@@ -94,16 +95,8 @@ export function nextEmpty(
   return null;
 }
 
-type Props = {
-  view: ClozeTaskView;
-  /** Where her words are kept (`lib/drafts.ts`). */
-  draftKey: string;
-  disabled: boolean;
-  /** "Prüfen": every gap filled; `shown` is her words for the thread. */
-  onSubmit: (parts: StructuredAnswer, shown: string, via: 'typed' | 'tapped') => void;
-};
-
-export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+/** "Prüfen": every gap filled; `shown` is her words for the thread. */
+export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: FormProps<ClozeTaskView>) {
   const { t } = useTranslation('practice');
   const { text: kept, setText: keep } = useDraft(draftKey);
   const ids = view.gaps;

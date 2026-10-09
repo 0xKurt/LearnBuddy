@@ -9,7 +9,7 @@ import type { Deps } from '../../deps.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { learnerDay } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
-import type { AudioMime } from '../../llm/gateway.js';
+import { recordingPart } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { partialString } from '../../llm/partial.js';
 import { promptVersion } from '../../llm/promptVersion.js';
@@ -75,12 +75,7 @@ export async function transcribe(
                 .filter(Boolean)
                 .join('\n'),
             },
-            {
-              inlineData: {
-                mimeType: (input.mime === 'audio/m4a' ? 'audio/mp4' : input.mime) as AudioMime,
-                data: input.audio_base64,
-              },
-            },
+            recordingPart(input),
           ],
         },
       ],

@@ -14,8 +14,7 @@ import { RefreshControl, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { Btn } from '../components/lb/Btn.js';
-import { EmptyState } from '../components/lb/EmptyState.js';
+import { LoadFailed } from '../components/lb/LoadFailed.js';
 import { SettingsSkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
 import { AboutSection } from '../components/settings/AboutSection.js';
@@ -29,7 +28,6 @@ import { useRevealInput } from '../components/settings/useRevealInput.js';
 import { VoiceSection } from '../components/settings/VoiceSection.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { useHome, useMe, useSettings } from '../lib/api/queries.js';
-import { messageFor } from '../lib/errors.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 export default function SettingsScreen() {
@@ -74,16 +72,7 @@ export default function SettingsScreen() {
   if (loadError) {
     return (
       <Screen back title={title}>
-        <View style={{ flex: 1, justifyContent: 'center' }}>
-          <EmptyState
-            title={messageFor(loadError)}
-            action={
-              <Btn pill center onPress={() => void refresh()}>
-                {t('common:actions.retry')}
-              </Btn>
-            }
-          />
-        </View>
+        <LoadFailed error={loadError} onRetry={() => void refresh()} />
       </Screen>
     );
   }

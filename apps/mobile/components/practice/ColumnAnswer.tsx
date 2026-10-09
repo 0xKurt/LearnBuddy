@@ -31,7 +31,6 @@ import {
   signColumn,
   type ColumnCalcTaskView,
   type ColumnGap,
-  type StructuredAnswer,
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +47,7 @@ import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
 // The same reading of a kept object of cells as a table's: known ids only, texts only.
 import { cellsFrom } from './TableAnswer.js';
+import type { FormProps } from './formProps.js';
 
 /** A row of the grid: a cell she types in, one touch high, and a little air around its frame. */
 const ROW = TOUCH + SPACE.xs;
@@ -88,13 +88,8 @@ function rowMode(
 /** The step Buddy's reply names (`AnswerResponse.column_step`), keyed by that reply's turn. */
 export type StepOpen = { step: number; turn: string };
 
-type Props = {
-  view: ColumnCalcTaskView;
-  /** Where her digits are kept (`lib/drafts.ts`), per question. */
-  draftKey: string;
-  disabled: boolean;
-  /** "Prüfen": every cell goes, empty or not; `shown` is her result, for the thread. */
-  onSubmit: (parts: StructuredAnswer, shown: string) => void;
+/** "Prüfen": every cell goes, empty or not; `shown` is her result, for the thread. */
+type Props = FormProps<ColumnCalcTaskView> & {
   /** The step to open after a check that was not right yet (#420); a new reply opens it again. */
   opens?: StepOpen | null;
 };

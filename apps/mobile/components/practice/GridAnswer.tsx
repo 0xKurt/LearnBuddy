@@ -14,11 +14,7 @@
 // nie abgeschnitten — nie unter dem kleinsten Kästchen (`gridMinHeight`, `keeps`). Ihr Stand liegt im Entwurf
 // (`lib/drafts.ts`): er übersteht hell/dunkel und einen Neustart.
 
-import {
-  gridDrawnText,
-  type GridDrawTaskView,
-  type StructuredAnswer,
-} from '@learnbuddy/shared-types/contracts';
+import { gridDrawnText, type GridDrawTaskView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -52,6 +48,7 @@ import {
   GridSheet,
 } from '../math/GridSheet.js';
 import { AnswerShell } from './AnswerShell.js';
+import type { FormProps } from './formProps.js';
 
 /** Height enough for any paper at its natural size: the width decides first. */
 const UNBOUNDED = 10_000;
@@ -73,16 +70,8 @@ function gridAnswerMin(view: GridDrawTaskView): number {
   return gridMinHeight(view) + (hasLine(view) ? wordsRoom() : 0);
 }
 
-type Props = {
-  view: GridDrawTaskView;
-  /** Where her drawing is kept (`lib/drafts.ts`), per question. */
-  draftKey: string;
-  disabled: boolean;
-  /** "Prüfen": every point set (a bar chart: one bar drawn); `shown` is her drawing in words. */
-  onSubmit: (parts: StructuredAnswer, shown: string) => void;
-};
-
-export function GridAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+/** "Prüfen": every point set (a bar chart: one bar drawn); `shown` is her drawing in words. */
+export function GridAnswer({ view, draftKey, disabled, onSubmit }: FormProps<GridDrawTaskView>) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const { text: kept, setText: keep } = useDraft(draftKey);

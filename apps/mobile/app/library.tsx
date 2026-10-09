@@ -21,11 +21,11 @@ import { SubjectCard } from '../components/library/SubjectCard.js';
 import { byActivity, hasSomething } from '../components/library/subjects.js';
 import { Btn } from '../components/lb/Btn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
+import { LoadFailed } from '../components/lb/LoadFailed.js';
 import { Rise, useListEntrance } from '../components/lb/Motion.js';
 import { Screen } from '../components/lb/Screen.js';
 import { LibrarySkeleton } from '../components/lb/Skeletons.js';
 import { useLibrary } from '../lib/api/queries.js';
-import { messageFor } from '../lib/errors.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { bottomRoom, SPACE } from '../lib/theme/space.js';
@@ -69,16 +69,11 @@ export default function LibraryScreen() {
   let content: ReactNode;
   if (!view) {
     content = library.isError ? (
-      <View style={{ flex: 1, justifyContent: 'center' }}>
-        <EmptyState
-          title={messageFor(library.error)}
-          action={
-            <Btn pill center busy={library.isFetching} onPress={() => void library.refetch()}>
-              {t('common:actions.retry')}
-            </Btn>
-          }
-        />
-      </View>
+      <LoadFailed
+        error={library.error}
+        busy={library.isFetching}
+        onRetry={() => void library.refetch()}
+      />
     ) : (
       <LibrarySkeleton label={t('common:loading')} />
     );

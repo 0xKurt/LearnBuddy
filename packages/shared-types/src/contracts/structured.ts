@@ -347,12 +347,8 @@ export const MatchTask = z.object({
 });
 export type MatchTask = z.infer<typeof MatchTask>;
 
-export const MatchTaskView = z.object({
-  type: z.literal('match'),
-  form: MatchForm,
-  left: z.array(MatchElement).min(MATCH_PAIRS_MIN).max(MATCH_GROUPED_MAX),
-  right: z.array(MatchElement).min(MATCH_GROUPS_MIN).max(MATCH_PAIRS_MAX),
-});
+/** The task as she sees it: everything but the key. */
+export const MatchTaskView = MatchTask.omit({ key: true });
 export type MatchTaskView = z.infer<typeof MatchTaskView>;
 
 export const MatchAnswer = z.object({

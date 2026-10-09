@@ -21,7 +21,7 @@
 // 02.10.). Auch was sie gerade hält, steht im Entwurf: ein Themenwechsel baut den Baum neu auf
 // (ThemeProvider).
 
-import type { MatchTaskView, StructuredAnswer } from '@learnbuddy/shared-types/contracts';
+import type { MatchTaskView } from '@learnbuddy/shared-types/contracts';
 import type { SubjectTone } from '../../lib/theme/palettes.js';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -37,6 +37,7 @@ import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
+import type { FormProps } from './formProps.js';
 
 /** One link she made: an element above, the partner or group below, and its number. */
 export type Link = { left: string; right: string; n: number };
@@ -178,16 +179,8 @@ export function leftShare(left: readonly string[], right: readonly string[]): nu
   return Math.min(0.66, Math.max(0.34, l / (l + r)));
 }
 
-type Props = {
-  view: MatchTaskView;
-  /** Where her links are kept (`lib/drafts.ts`), like an order's arrangement. */
-  draftKey: string;
-  disabled: boolean;
-  /** "Prüfen": everything linked; `shown` is her links in words, for the thread. */
-  onSubmit: (parts: StructuredAnswer, shown: string) => void;
-};
-
-export function MatchAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+/** "Prüfen": everything linked; `shown` is her links in words, for the thread. */
+export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<MatchTaskView>) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const words = useSpokenWords();

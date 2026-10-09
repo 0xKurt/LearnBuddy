@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Conversation, DayLine } from '../components/buddy/Conversation.js';
 import { Btn } from '../components/lb/Btn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
+import { LoadFailed } from '../components/lb/LoadFailed.js';
 import { ChatSkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
 import { toast } from '../components/lb/Toast.js';
@@ -45,16 +46,7 @@ export default function History() {
     return (
       <Screen back title={t('thread.title')}>
         {home.error ? (
-          <View style={{ flex: 1, justifyContent: 'center' }}>
-            <EmptyState
-              title={messageFor(home.error)}
-              action={
-                <Btn pill center onPress={() => void home.refetch()}>
-                  {t('common:actions.retry')}
-                </Btn>
-              }
-            />
-          </View>
+          <LoadFailed error={home.error} onRetry={() => void home.refetch()} />
         ) : (
           <ChatSkeleton label={t('common:loading')} rows={6} />
         )}

@@ -2,10 +2,9 @@
 // uploads directly with short-lived signed URLs; the API only signs, reads
 // for extraction and deletes. Tests use testing/fakes.ts MemoryStorage.
 
-import { createClient } from '@supabase/supabase-js';
-
 import type { Config } from '../config.js';
-import { outcomeOfStatus, type Outcome } from '../lib/outcome.js';
+import { failureOfStatus, type Outcome } from '../lib/outcome.js';
+import { serviceClient } from '../lib/supabase.js';
 
 const PHOTO_BUCKET = 'material-photos';
 
@@ -35,15 +34,13 @@ export class StorageError extends Error {
 export function storageOutcomeOf(error: unknown): Exclude<Outcome, 'ok'> {
   const e = (error ?? {}) as { status?: unknown; originalError?: unknown };
   const original = e.originalError as { status?: unknown } | undefined;
-  const status =
+  return failureOfStatus(
     typeof e.status === 'number'
       ? e.status
       : typeof original?.status === 'number'
         ? original.status
-        : null;
-  if (status === null || status < 400) return 'unknown';
-  const outcome = outcomeOfStatus(status);
-  return outcome === 'ok' ? 'unknown' : outcome;
+        : null,
+  );
 }
 
 /** Supabase Storage deletes at most 1000 objects per request. */
@@ -83,9 +80,7 @@ export class SupabaseStorage implements StorageGateway {
   private readonly client;
 
   constructor(config: Pick<Config, 'SUPABASE_URL' | 'SUPABASE_SERVICE_ROLE_KEY'>) {
-    this.client = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    this.client = serviceClient(config);
   }
 
   async createUploadTarget(path: string): Promise<UploadTarget> {

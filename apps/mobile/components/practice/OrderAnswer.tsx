@@ -14,7 +14,7 @@
 // „…, Platz 2" bzw. „…, noch ohne Platz". Regel 16: acht Zahlen und acht Schritte passen auf
 // 360×740 (der Walkthrough misst es).
 
-import type { OrderTaskView, StructuredAnswer } from '@learnbuddy/shared-types/contracts';
+import type { OrderTaskView } from '@learnbuddy/shared-types/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -30,6 +30,7 @@ import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
+import type { FormProps } from './formProps.js';
 
 /**
  * One tap: an element without a place gets the next one; an element with a place goes
@@ -96,19 +97,8 @@ export function isShortList(texts: readonly string[]): boolean {
   return texts.every((x) => plain(x).length <= GRID_TEXT_MAX);
 }
 
-type Props = {
-  view: OrderTaskView;
-  /**
-   * Where her arrangement is kept (`lib/drafts.ts`): it survives a theme change, which
-   * remounts the tree (ThemeProvider), and Android killing the app — like a typed answer.
-   */
-  draftKey: string;
-  disabled: boolean;
-  /** "Prüfen": every element placed; `shown` is her order in words, for the thread. */
-  onSubmit: (parts: StructuredAnswer, shown: string) => void;
-};
-
-export function OrderAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+/** "Prüfen": every element placed; `shown` is her order in words, for the thread. */
+export function OrderAnswer({ view, draftKey, disabled, onSubmit }: FormProps<OrderTaskView>) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const words = useSpokenWords();
