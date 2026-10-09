@@ -19,7 +19,8 @@ import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FoldLabel } from '../lb/FoldLabel.js';
 import { Zoomable } from '../lb/ZoomViewer.js';
-import { describeFigure, FigureView } from './FigureView.js';
+import { describeFigure } from './describeFigure.js';
+import { FigureView } from './FigureView.js';
 import { useSpokenWords } from './useSpokenMath.js';
 
 type Props = {
