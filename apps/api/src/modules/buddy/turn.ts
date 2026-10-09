@@ -45,7 +45,7 @@ import {
   repairMessage,
 } from './prompts.js';
 import { withLookups } from './lookups.js';
-import { loadBuddyState, type MessageRow, TURN_STALL_MS } from './state.js';
+import { loadBuddyState, loadSettings, type MessageRow, TURN_STALL_MS } from './state.js';
 import {
   activeRoleplay,
   endForConcern,
@@ -192,17 +192,42 @@ export async function processTurn(
   message: ClaimedMessage,
   onReply?: OnReply,
 ): Promise<TurnOutcome> {
+  const ahead = passagesAhead(deps, learner.id, message.text);
   try {
-    return await decideTurn(deps, learner, message, onReply);
+    return await decideTurn(deps, learner, message, ahead, onReply);
   } catch (err) {
     return failTurn(deps, message, isAppError(err) ? err.code : 'internal');
+  } finally {
+    // No work of a turn outlives it — also when it never used the look-ahead (superseded).
+    await ahead;
   }
+}
+
+/**
+ * The passages her message points at, looked up the moment the turn begins (issue #447): her
+ * words are known before her state is, and the embedding behind the lookup is the longest wait
+ * before the model starts (0.17–0.40 s in production). It used to start only after the ~20 reads
+ * of her state; now they run side by side. Not during a roleplay — her line is not a question
+ * about her sheets. Undefined when not looked up; it never fails the turn.
+ */
+function passagesAhead(
+  deps: Deps,
+  learnerId: string,
+  text: string,
+): Promise<string | null | undefined> {
+  const now = deps.now();
+  return Promise.all([loadSettings(deps.db, learnerId), activeRoleplay(deps.db, learnerId, now)])
+    .then(([settings, play]) =>
+      play ? undefined : preInjectedPassages(deps, learnerId, settings.timezone, text),
+    )
+    .catch(() => undefined);
 }
 
 async function decideTurn(
   deps: Deps,
   learner: TurnLearner,
   message: ClaimedMessage,
+  ahead: Promise<string | null | undefined>,
   onReply?: OnReply,
 ): Promise<TurnOutcome> {
   let repairErrors: string[] | null = null;
@@ -280,11 +305,17 @@ async function decideTurn(
     // Passages her words clearly point at go into the context up front, so the answer
     // does not depend on the model calling search_material (issue #26). Appended after
     // the volatile end of STATE — the cache order (context.ts) is untouched.
+    // Looked up ahead when this message is all she wrote since Buddy's last answer; otherwise
+    // again, with all her words.
     if (preInjected === undefined) {
+      const words = learnerWords.join('\n');
+      const early = words === message.text ? await ahead : undefined;
       preInjected =
-        learnerWords.length > 0
-          ? await preInjectedPassages(deps, learner.id, tz, learnerWords.join('\n'))
-          : null;
+        early !== undefined
+          ? early
+          : learnerWords.length > 0
+            ? await preInjectedPassages(deps, learner.id, tz, words)
+            : null;
     }
     const contents: LlmMessage[] = buildContents(
       preInjected ? `${ctx.state}\n\n${preInjected}` : ctx.state,

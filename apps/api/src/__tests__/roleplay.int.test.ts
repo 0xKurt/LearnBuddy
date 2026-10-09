@@ -202,6 +202,26 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
     expect((await turnsOf(id)).turns).toBe(1);
   });
 
+  it('looks up none of her sheets for a line in the scene (issue #447)', async () => {
+    // Her sheets are looked up while a turn loads her state — but a line in the scene is no
+    // question about them. A sheet without passages shows it: any lookup indexes it first.
+    const { l } = await started('Ben');
+    const sheet = await env.db.one<{ id: string }>(
+      `insert into materials (learner_id, client_request_id, status, photo_count, title,
+                              extracted_text, ready_at, purpose)
+       values ($1, $2, 'ready', 1, 'Chocolate', 'Hot chocolate is made with milk and cocoa.', $3, 'study')
+       returning id`,
+      [l.learnerId, randomUUID(), env.clock.now()],
+    );
+    env.llm.script('buddy_turn', { json: line('Of course! One hot chocolate.') });
+    expect((await say(l, 'Hello! A hot chocolate with milk, please.')).body.status).toBe('done');
+    const passages = await env.db.one<{ n: number }>(
+      `select count(*)::int as n from material_passages where material_id = $1`,
+      [sheet.id],
+    );
+    expect(passages.n).toBe(0);
+  });
+
   it('ends after twelve turns with feedback per key point — an invented quote is discarded', async () => {
     const { l, id } = await started('Ella');
     for (let i = 1; i <= 11; i++) {
