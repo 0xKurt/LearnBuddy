@@ -17,10 +17,6 @@
     "cancel": "Cancelar",
     "clear_field": "Vaciar el campo",
     "close": "Cerrar",
-    "continue": "Continuar",
-    "delete": "Eliminar",
-    "done": "Listo",
-    "edit": "Cambiar",
     "retry": "Intentar de nuevo",
     "save": "Guardar",
     "undo": "Deshacer"
@@ -55,7 +51,6 @@
     "recording_open": "Te escucho … {{time}}",
     "recording_open_value": "Grabando, {{time}}",
     "recording_value": "Grabando, {{time}} de {{max}}",
-    "say_it": "Toca el micro y dilo sin más.",
     "stop": "Parar la grabación",
     "stop_hint": "Después escribo lo que has dicho.",
     "topic": "Decirlo en vez de escribirlo",

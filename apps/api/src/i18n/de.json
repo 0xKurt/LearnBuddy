@@ -120,9 +120,6 @@
       "start": "Lass uns bei {{name}} anfangen: {{missing}}"
     },
     "solution_is": "Die Lösung ist: {{answer}}",
-    "speak_almost": "Fast! Schau dir die markierten Wörter an.",
-    "speak_good": "Klingt super!",
-    "speak_retry": "Versuch's nochmal – hör es dir vorher an.",
     "spelling": "Fast richtig – schau nochmal genau auf Groß- und Kleinschreibung, ß und Satzzeichen.",
     "staff": {
       "note": {

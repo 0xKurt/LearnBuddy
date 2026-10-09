@@ -12,7 +12,6 @@ import {
   resolveLocalDateTime,
   resolveUntil,
   startOfLocalDay,
-  startOfLocalWeek,
   weekdayOf,
   zonedToInstant,
 } from '../time.js';
@@ -93,10 +92,9 @@ describe('DST handling', () => {
     });
   });
 
-  it('computes local day and week starts on DST days', () => {
+  it('computes the local day start on DST days', () => {
     const inDay = new Date('2026-03-29T10:00:00Z');
     expect(startOfLocalDay(inDay, BERLIN).toISOString()).toBe('2026-03-28T23:00:00.000Z');
-    expect(startOfLocalWeek(inDay, BERLIN).toISOString()).toBe('2026-03-22T23:00:00.000Z');
   });
 });
 

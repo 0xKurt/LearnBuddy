@@ -102,7 +102,7 @@ export function localParts(instant: Date, tz: string): LocalParts {
 }
 
 /** Offset of `tz` from UTC at `instant`, in minutes (Berlin summer = +120). */
-export function offsetMinutes(instant: Date, tz: string): number {
+function offsetMinutes(instant: Date, tz: string): number {
   const r = rawParts(instant, tz);
   const asUtc = Date.UTC(r.year, r.month - 1, r.day, r.hour, r.minute, r.second);
   const truncated = Math.floor(instant.getTime() / 1000) * 1000;
@@ -228,12 +228,6 @@ export function startOfLocalDay(instant: Date, tz: string): Date {
   return zonedToInstant(localParts(instant, tz).date, '00:00', tz);
 }
 
-/** Start of the learner's local ISO week (Monday 00:00) containing `instant`. */
-export function startOfLocalWeek(instant: Date, tz: string): Date {
-  const p = localParts(instant, tz);
-  return zonedToInstant(addDays(p.date, -(p.weekday - 1)), '00:00', tz);
-}
-
 // ─────────────────────────── temporal specs ───────────────────────────
 
 /**
@@ -263,7 +257,7 @@ export type UntilSpec =
   | { kind: 'through'; day: DaySpec }
   | { kind: 'unknown' };
 
-export type TemporalError = 'unresolved_time' | 'invalid_time' | 'out_of_range';
+type TemporalError = 'unresolved_time' | 'invalid_time' | 'out_of_range';
 
 export type DayResult = { ok: true; date: string } | { ok: false; error: TemporalError };
 

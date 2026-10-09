@@ -31,7 +31,7 @@ import type {
 export type Translate = (key: string, values?: Record<string, string | number>) => string;
 
 /** `C#` → der Schlüssel `staff.note.Cs`: ein Kreuz kann kein JSON-Schlüssel sein. */
-export function noteWord(t: Translate, name: NoteName): string {
+function noteWord(t: Translate, name: NoteName): string {
   return t(`staff.note.${name.replace('#', 's')}`);
 }
 
@@ -42,12 +42,12 @@ export function valueWord(t: Translate, value: NoteValue, dotted: boolean, rest:
 }
 
 /** „Violinschlüssel" / „Bassschlüssel". */
-export function clefWord(t: Translate, clef: Clef): string {
+function clefWord(t: Translate, clef: Clef): string {
   return t(`staff.clef.${clef}`);
 }
 
 /** „Viervierteltakt" — `4/4` kann kein Schlüsselpfad sein, also steht dort `t4_4`. */
-export function timeWord(t: Translate, time: TimeSignature): string {
+function timeWord(t: Translate, time: TimeSignature): string {
   return t(`staff.time.t${time.replace('/', '_')}`);
 }
 

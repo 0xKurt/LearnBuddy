@@ -22,14 +22,14 @@ import { consume, limitError } from '../../lib/limits.js';
 import { rateFor, SpeechError } from '../../speech/gateway.js';
 
 /** How long synthesised audio is kept (docs/privacy.md). */
-export const SPEECH_CACHE_MS = 24 * 3_600_000;
+const SPEECH_CACHE_MS = 24 * 3_600_000;
 /**
  * Fixed app texts (voice-picker samples name a voice explicitly) live in a
  * shared cache: the same sentence in the same voice serves every learner, so
  * the picker answers instantly after the first tap anywhere (issue #12).
  * 90 days — a changed sample text changes the key and simply seeds anew.
  */
-export const SHARED_SPEECH_CACHE_MS = 90 * 24 * 3_600_000;
+const SHARED_SPEECH_CACHE_MS = 90 * 24 * 3_600_000;
 const SPEECH_TIMEOUT_MS = 8_000;
 
 /** Whitespace-normalised comparison against the picker's sample sentences. */

@@ -25,7 +25,7 @@
 /** Learned before anything may count: the echo canceller converges and the residue is heard. */
 export const CALIBRATE_MS = 600;
 /** Her voice must stand this far above the loud end of his residue. */
-export const MARGIN_DB = 10;
+const MARGIN_DB = 10;
 /** …and above this in any case: quieter is the room, not someone talking to the phone. */
 export const MIN_DB = -42;
 /** Loud time a candidate needs before it is her (syllables, not a click). */
@@ -33,7 +33,7 @@ export const MIN_SPEECH_MS = 300;
 /** A quieter stretch this long between loud frames still belongs to the same candidate. */
 export const MAX_GAP_MS = 200;
 /** How far back the residue is remembered. */
-export const WINDOW_MS = 3000;
+const WINDOW_MS = 3000;
 /** Frames further apart than this (the app was busy) are not a continuous stretch. */
 const MAX_FRAME_MS = 250;
 

@@ -12,7 +12,7 @@ import { BuddyHome, MeResponse } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 /** Bumped when the stored shape changes: an older copy is simply not used. */
-export const CACHE_VERSION = 1;
+const CACHE_VERSION = 1;
 export const CACHE_PREFIX = 'lb.cache.';
 
 export const cacheKey = (userId: string) => `${CACHE_PREFIX}v${CACHE_VERSION}.${userId}`;

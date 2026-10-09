@@ -7,7 +7,7 @@
 // lib/theme/__tests__/contrast.test.ts — a palette that fails there is not shipped.
 
 /** One of the three soft blobs behind a screen (components/lb/Glow.tsx). */
-export type GlowStop = { color: string; opacity: number };
+type GlowStop = { color: string; opacity: number };
 
 export type Palette = {
   ink: string;
@@ -480,16 +480,7 @@ export function paletteOf(name: ThemeName | null | undefined): Palette {
 // once per palette and hands them out through useTheme() (issue #29, layer 3).
 
 /** The pastel tints a subject can wear (one per kind, never a free colour). */
-export const SUBJECT_TONES = [
-  'lavender',
-  'peach',
-  'mint',
-  'blush',
-  'sky',
-  'butter',
-  'rose',
-] as const;
-export type SubjectTone = (typeof SUBJECT_TONES)[number];
+export type SubjectTone = 'lavender' | 'peach' | 'mint' | 'blush' | 'sky' | 'butter' | 'rose';
 
 /** Figures in questions (components/math/FigureView.tsx): calm, printed-schoolbook look. */
 export type Figure = {

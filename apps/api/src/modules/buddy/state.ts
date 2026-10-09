@@ -58,7 +58,7 @@ export type GoalRow = {
   closed_at: Date | null;
 };
 
-export type StepPayload = {
+type StepPayload = {
   item_ids?: string[];
   est_minutes?: number;
   focus_topics?: string[];
@@ -99,7 +99,7 @@ export type MemoryRow = {
 };
 
 /** Two to four sentences about a conversation that ended (issue #22). */
-export type DaySummaryRow = {
+type DaySummaryRow = {
   day: string;
   summary: string;
   topics: string[];
@@ -129,7 +129,7 @@ export type SubjectRow = {
   material_count: number;
 };
 
-export type TopicProgress = {
+type TopicProgress = {
   subject_id: string | null;
   topic: string;
   total: number;
@@ -143,7 +143,7 @@ export type TopicProgress = {
 };
 
 /** What she is working on, held across turns and restarts (issue #160). */
-export type FocusRow = {
+type FocusRow = {
   material_id: string | null;
   material_title: string | null;
   subject_id: string | null;
@@ -161,7 +161,7 @@ export type FocusRow = {
  * migration 0070). He may ask about it in his own words — the app asks it as a card with the
  * readings to tap, and both say the same thing, as with the pages that could not be read.
  */
-export type UnclearSpotBrief = {
+type UnclearSpotBrief = {
   /** The alias her answer names ('u1'); the server resolves it (CLAUDE.md rule 2). */
   ref: string;
   /**
@@ -222,7 +222,7 @@ export type MaterialBrief = {
   failed_at: Date | null;
 };
 
-export type SessionBrief = {
+type SessionBrief = {
   id: string;
   mode: 'practice' | 'test' | 'help';
   /** Topic and homework sessions carry their own title. */
@@ -241,7 +241,7 @@ export type SessionBrief = {
   shaky_topics: string[];
 };
 
-export type OutreachRow = {
+type OutreachRow = {
   id: string;
   kind: 'idea' | 'reminder' | 'checkin' | 'result';
   origin: 'agreed' | 'buddy';
@@ -361,7 +361,7 @@ export const LIMITS = {
  * How long an offer she has not taken up still counts as standing. Its button never stops
  * working, but a day is as far back as "right there in front of her" reaches honestly.
  */
-export const STANDING_WINDOW_MS = 24 * 3_600_000;
+const STANDING_WINDOW_MS = 24 * 3_600_000;
 
 export async function loadSettings(db: Db, learnerId: string): Promise<SettingsRow> {
   const row = await db.maybeOne<SettingsRow>(`select * from buddy_settings where learner_id = $1`, [

@@ -43,7 +43,7 @@ export type MathAtom =
 export type MathSegment = { type: 'plain'; text: string } | { type: 'math'; atoms: MathAtom[] };
 
 /** Symbol commands → the character shown (the one list, issue #239: contracts/notation.ts). */
-export const SYMBOLS = MATH_SYMBOLS;
+const SYMBOLS = MATH_SYMBOLS;
 
 /** A thin space: the gap around + − = … (narrower than a normal space). */
 export const THIN = '\u2009';

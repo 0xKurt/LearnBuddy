@@ -11,11 +11,11 @@ import { LlmError } from './gateway.js';
 export const EMBED_DIMENSIONS = 768;
 
 /** Passages are stored with one task type, queries with the other (asymmetric retrieval). */
-export type EmbedTask = 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY';
+type EmbedTask = 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY';
 
 export type EmbedRequest = { task: EmbedTask; texts: string[] };
 
-export type EmbedUsage = {
+type EmbedUsage = {
   model: string;
   /** Provider-reported where available; otherwise a conservative estimate (never 0 for real text). */
   inputTokens: number;

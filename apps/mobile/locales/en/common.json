@@ -17,10 +17,6 @@
     "cancel": "Cancel",
     "clear_field": "Clear field",
     "close": "Close",
-    "continue": "Continue",
-    "delete": "Delete",
-    "done": "Done",
-    "edit": "Change",
     "retry": "Try again",
     "save": "Save",
     "undo": "Undo"
@@ -55,7 +51,6 @@
     "recording_open": "I'm listening … {{time}}",
     "recording_open_value": "Recording, {{time}}",
     "recording_value": "Recording, {{time}} of {{max}}",
-    "say_it": "Tap the mic and just say it.",
     "stop": "Stop recording",
     "stop_hint": "Then I'll write down what you said.",
     "topic": "Say it instead of typing",

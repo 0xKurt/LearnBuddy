@@ -4,7 +4,7 @@
 /** Pulled at least this far down (px). */
 export const CLOSE_DISTANCE = 110;
 /** Or flicked down at least this fast (px/s), and moved a little. */
-export const CLOSE_VELOCITY = 900;
+const CLOSE_VELOCITY = 900;
 
 /** A pull on a sheet's top (or on an unzoomed photo) closes it: far enough down, or a flick. */
 export function dismissedBySwipe(translationY: number, velocityY: number): boolean {

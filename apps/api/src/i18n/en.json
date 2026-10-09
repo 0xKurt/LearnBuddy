@@ -120,9 +120,6 @@
       "start": "Let’s start with {{name}}: {{missing}}"
     },
     "solution_is": "The answer is: {{answer}}",
-    "speak_almost": "Almost! Look at the marked words.",
-    "speak_good": "Sounds great!",
-    "speak_retry": "Try again – listen to it first.",
     "spelling": "Almost right – look closely at capital letters and punctuation.",
     "staff": {
       "note": {

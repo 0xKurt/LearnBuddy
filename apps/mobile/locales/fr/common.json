@@ -17,10 +17,6 @@
     "cancel": "Annuler",
     "clear_field": "Vider le champ",
     "close": "Fermer",
-    "continue": "Continuer",
-    "delete": "Supprimer",
-    "done": "Terminé",
-    "edit": "Modifier",
     "retry": "Réessayer",
     "save": "Enregistrer",
     "undo": "Annuler"
@@ -55,7 +51,6 @@
     "recording_open": "Je t'écoute … {{time}}",
     "recording_open_value": "Enregistrement en cours, {{time}}",
     "recording_value": "Enregistrement en cours, {{time}} sur {{max}}",
-    "say_it": "Touche le micro et dis-le simplement.",
     "stop": "Arrêter l'enregistrement",
     "stop_hint": "Ensuite, j'écris ce que tu as dit.",
     "topic": "Le dire au lieu de l’écrire",

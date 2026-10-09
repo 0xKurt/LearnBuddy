@@ -21,7 +21,7 @@
 import { SYMBOL_KEYS, type SpokenWords } from './speak.js';
 
 /** The denominators a language names ("ein Fünftel"); anything else keeps "x durch y". */
-export const NAMED_DENOMINATORS = [
+const NAMED_DENOMINATORS = [
   2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 100, 1000,
 ] as const;
 
@@ -29,12 +29,12 @@ export const NAMED_DENOMINATORS = [
  * The root indices a language has an ordinal word for ("vierte Wurzel"); an index outside
  * this set keeps the plain form ("n. Wurzel aus x") — clumsy, but never invented.
  */
-export const ROOT_ORDINALS = [
+const ROOT_ORDINALS = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
 ] as const;
 
 /** The unit symbols a locale names; anything else is spoken as it is written. */
-export const UNIT_SYMBOLS = [
+const UNIT_SYMBOLS = [
   'mm',
   'cm',
   'dm',
@@ -54,7 +54,7 @@ export const UNIT_SYMBOLS = [
 ] as const;
 
 /** Templates keep their {{placeholders}} (i18next fills each with itself); speak.ts fills them. */
-export const KEEP_PLACEHOLDERS = {
+const KEEP_PLACEHOLDERS = {
   num: '{{num}}',
   den: '{{den}}',
   exp: '{{exp}}',

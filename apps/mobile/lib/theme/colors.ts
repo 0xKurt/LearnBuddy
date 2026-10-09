@@ -33,9 +33,9 @@ const active: { name: ThemeName; palette: Palette } = {
 /** The colours in use. Read at render time; never destructured into a module constant. */
 export const LB: Record<ColorToken, string> = colorsOf(active.palette);
 
-export const TONE_BG: Record<SubjectTone, string> = toneBgOf(active.palette);
-export const TONE_DEEP: Record<SubjectTone, string> = toneDeepOf(active.palette);
-export const FIGURE: Figure = figureOf(active.palette);
+const TONE_BG: Record<SubjectTone, string> = toneBgOf(active.palette);
+const TONE_DEEP: Record<SubjectTone, string> = toneDeepOf(active.palette);
+const FIGURE: Figure = figureOf(active.palette);
 
 /** The colour tokens of a palette (everything but the derived maps). */
 type ColorToken = Exclude<

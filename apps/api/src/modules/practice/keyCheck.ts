@@ -157,7 +157,7 @@ function slopeAt(f: (x: number) => number, p: number): number | null {
  * constant (F(x) = … + C) of the one function the question prints certainly is not one: its
  * values differ from the computed slope at most of the points where the slope can be computed.
  */
-export function calculusContradicts(prompt: string, key: string): boolean {
+function calculusContradicts(prompt: string, key: string): boolean {
   const f = definedFunction(prompt);
   if (f === null) return false;
   const k = labelled(key);

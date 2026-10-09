@@ -12,7 +12,7 @@ import { savedByLostTry, type RecoveryLink } from './recovery.js';
 import { createRefresher, RefreshBackoff } from './refresh.js';
 import { clearSession, currentSession, saveSession, type Session } from './session.js';
 
-export const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_ANON_KEY, {
+const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_ANON_KEY, {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
 });
 
@@ -98,7 +98,7 @@ export async function signUp(email: string, password: string): Promise<boolean> 
  * this site on the web. Every such URL must be listed under "Redirect URLs"
  * in the Supabase project, or Supabase falls back to its Site URL.
  */
-export function authRedirect(path: string): string {
+function authRedirect(path: string): string {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     return `${window.location.origin}/${path}`;
   }

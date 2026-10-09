@@ -120,9 +120,6 @@
       "start": "Empecemos por {{name}}: {{missing}}"
     },
     "solution_is": "La respuesta es: {{answer}}",
-    "speak_almost": "¡Casi! Mira las palabras marcadas.",
-    "speak_good": "¡Suena genial!",
-    "speak_retry": "Inténtalo otra vez – escúchalo antes.",
     "spelling": "Casi bien – fíjate en las mayúsculas y la puntuación.",
     "staff": {
       "note": {

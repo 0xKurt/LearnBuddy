@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  afterSend,
   failureOf,
   OUTBOX_MAX,
   parseOutbox,
@@ -43,13 +42,6 @@ describe('outbox', () => {
     expect(parseOutbox(raw, now).map((e) => e.body.client_turn_id)).toEqual(['ok']);
     expect(parseOutbox('not json', now)).toEqual([]);
     expect(parseOutbox(null, now)).toEqual([]);
-  });
-
-  it('keeps an answer only while there is no connection', () => {
-    expect(afterSend('no_connection')).toBe('keep');
-    expect(afterSend('sent')).toBe('remove');
-    expect(afterSend('refused')).toBe('remove');
-    expect(afterSend('try_later')).toBe('keep');
   });
 
   it('drops an answer only when the API clearly refuses it', () => {

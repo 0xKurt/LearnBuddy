@@ -17,10 +17,6 @@
     "cancel": "Annulla",
     "clear_field": "Svuota il campo",
     "close": "Chiudi",
-    "continue": "Continua",
-    "delete": "Elimina",
-    "done": "Fatto",
-    "edit": "Modifica",
     "retry": "Riprova",
     "save": "Salva",
     "undo": "Annulla"
@@ -55,7 +51,6 @@
     "recording_open": "Ti ascolto … {{time}}",
     "recording_open_value": "Registrazione in corso, {{time}}",
     "recording_value": "Registrazione in corso, {{time}} di {{max}}",
-    "say_it": "Tocca il microfono e dillo e basta.",
     "stop": "Ferma la registrazione",
     "stop_hint": "Poi scrivo quello che hai detto.",
     "topic": "Dillo invece di scriverlo",

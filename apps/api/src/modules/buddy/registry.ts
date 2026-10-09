@@ -17,7 +17,7 @@ import { ToolRejection, type ToolContext, type ToolOutcome } from './toolKit.js'
 import { ACT_HANDLERS } from './tools.js';
 
 /** What an act tool changes (for the catalogue, the audit and privacy review). */
-export type Touches =
+type Touches =
   | 'memory'
   | 'profile'
   | 'goals'
@@ -356,7 +356,7 @@ export function emptyReply(d: { concern: boolean; reply: string }): string[] {
 }
 
 /** Actions that remove something she had (a test, something you knew, a planned step). */
-export function removesSomething(a: AnyAction): boolean {
+function removesSomething(a: AnyAction): boolean {
   switch (a.tool) {
     case 'close_goal':
       return a.args.status === 'dropped';
