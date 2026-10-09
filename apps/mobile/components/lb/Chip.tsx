@@ -1,7 +1,9 @@
 import { Text, View } from 'react-native';
 import type { Palette } from '../../lib/theme/palettes.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { TYPE } from '../../lib/theme/type.js';
 import { Icon, type IconName } from './Icon.js';
 
 type Tone = 'gray' | 'primary' | 'success' | 'warning' | 'dark';
@@ -42,9 +44,9 @@ export function Chip({
         backgroundColor: t.bg,
         borderColor: t.border ?? 'transparent',
         borderWidth: t.border ? 1 : 0,
-        paddingHorizontal: 12,
-        paddingVertical: 5,
-        borderRadius: 999,
+        paddingHorizontal: SPACE.md,
+        paddingVertical: 5, // token-exempt: chip of 27 pt around its 17 pt line
+        borderRadius: RADIUS.round,
         alignSelf: 'flex-start',
         maxWidth: '100%',
       }}
@@ -54,7 +56,10 @@ export function Chip({
           <Icon name={icon} size={14} color={t.color} />
         </View>
       ) : null}
-      <Text style={{ color: t.color, fontSize: 13, lineHeight: 17, fontWeight: '600' }}>
+      <Text
+        // token-exempt: TYPE.label's size on a line one point tighter, so the chip stays slim
+        style={{ color: t.color, fontSize: TYPE.label.fontSize, lineHeight: 17, fontWeight: '600' }}
+      >
         {children}
       </Text>
     </View>

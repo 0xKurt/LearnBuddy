@@ -19,6 +19,7 @@ import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { applyLocale } from '../../lib/i18n/index.js';
 import { SUPPORTED_LOCALES } from '../../lib/i18n/resources.js';
+import { CARD_PAD, RHYTHM } from '../../lib/theme/space.js';
 import { Card } from '../lb/Card.js';
 import { PickerField } from '../lb/PickerField.js';
 import { Segmented } from '../lb/Segmented.js';
@@ -69,8 +70,8 @@ export function ProfileSection({ learner }: { learner: LearnerView }) {
       fold="language"
       summary={t(`profile.language_${learner.locale}`)}
     >
-      <Card padding={20}>
-        <View style={{ gap: 18 }}>
+      <Card padding={CARD_PAD.roomy}>
+        <View style={{ gap: RHYTHM.sections }}>
           <Row
             question={t('profile.language_question')}
             current={t(`profile.language_${learner.locale}`)}
@@ -102,7 +103,7 @@ export function ProfileSection({ learner }: { learner: LearnerView }) {
       fold="region"
       summary={learner.curriculum_region ? tAuth(`region.names.${learner.curriculum_region}`) : ''}
     >
-      <Card padding={20}>
+      <Card padding={CARD_PAD.roomy}>
         <PickerField
           label={tAuth('region.label')}
           placeholder={tAuth('region.choose')}

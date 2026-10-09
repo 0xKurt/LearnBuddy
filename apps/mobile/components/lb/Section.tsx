@@ -4,8 +4,13 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
+import { circle } from '../../lib/theme/radius.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+
+/** The round mark before the title. */
+const DOT = 10;
 
 export function Section({
   title,
@@ -21,22 +26,22 @@ export function Section({
 }) {
   const { palette } = useTheme();
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: RHYTHM.parts }}>
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 10,
-          paddingHorizontal: 4,
+          gap: RHYTHM.parts,
+          paddingHorizontal: SPACE.xs,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm, flex: 1 }}>
           {dot ? (
             <View
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
-              style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: dot }}
+              style={{ width: DOT, height: DOT, borderRadius: circle(DOT), backgroundColor: dot }}
             />
           ) : null}
           <Text

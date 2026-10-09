@@ -32,7 +32,9 @@ import { haptic } from '../../lib/haptics.js';
 import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
+import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { CARD_PAD, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb, type MoonState } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
@@ -58,6 +60,9 @@ type Props = {
 
 /** When each part arrives (ms after the summary appears). */
 const AT = { title: 260, card: 460, line: 140, review: 900 } as const;
+
+/** Buddy's orb as it arrives, and the halo behind it. */
+const ORB = 96;
 
 export function SessionSummary({
   summary,
@@ -97,9 +102,10 @@ export function SessionSummary({
       : []),
   ];
   return (
-    <View style={{ gap: 18 }}>
+    <View style={{ gap: RHYTHM.sections }}>
+      {/* token-exempt: room above the orb, the celebrating moon flies up to about 0.75 × its
+          size; the title 14 under it */}
       <View style={{ alignItems: 'center', gap: 14, paddingTop: 36 }}>
-        {/* Room above the orb: the celebrating moon flies up to about 0.75 × its size. */}
         <OrbArrival celebrate={celebrate} />
         <Rise slow delay={AT.title}>
           <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
@@ -112,7 +118,7 @@ export function SessionSummary({
         </Rise>
       </View>
       {sentences.length > 0 ? (
-        <Rise slow delay={AT.card} style={[softCard(palette), { gap: 8 }]}>
+        <Rise slow delay={AT.card} style={[softCard(palette), { gap: SPACE.sm }]}>
           {sentences.map((line, i) => (
             <Rise key={line.key} slow delay={AT.card + (i + 1) * AT.line}>
               <Text style={[TYPE.body, line.strong ? { fontWeight: '600' } : null]}>
@@ -123,7 +129,7 @@ export function SessionSummary({
         </Rise>
       ) : null}
       {review && review.length > 0 ? (
-        <View style={{ marginTop: 4 }}>
+        <View style={{ marginTop: SPACE.xs }}>
           <ResultList
             title={t('summary_test.review')}
             rows={review.map((r, n) => reviewRow(r, n + 1, ranOut, t))}
@@ -169,7 +175,7 @@ function OrbArrival({ celebrate }: { celebrate: boolean }) {
   }));
   return (
     <View
-      style={{ width: 96, height: 96, alignItems: 'center', justifyContent: 'center' }}
+      style={{ width: ORB, height: ORB, alignItems: 'center', justifyContent: 'center' }}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
@@ -177,16 +183,16 @@ function OrbArrival({ celebrate }: { celebrate: boolean }) {
         style={[
           {
             position: 'absolute',
-            width: 96,
-            height: 96,
-            borderRadius: 48,
+            width: ORB,
+            height: ORB,
+            borderRadius: circle(ORB),
             backgroundColor: palette.lavenderDeep,
           },
           haloStyle,
         ]}
       />
       <Animated.View style={orbStyle}>
-        <BuddyOrb size={96} state={moon} />
+        <BuddyOrb size={ORB} state={moon} />
       </Animated.View>
     </View>
   );
@@ -225,7 +231,7 @@ function reviewRow(row: SessionItemView, number: number, ranOut: boolean, t: TFu
 const softCard = (p: Palette) =>
   ({
     backgroundColor: p.paper,
-    borderRadius: 22,
-    padding: 18,
+    borderRadius: RADIUS.card,
+    padding: CARD_PAD.base,
     ...SHADOW.soft,
   }) as const;

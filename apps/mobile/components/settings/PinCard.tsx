@@ -16,6 +16,7 @@ import { setPin } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { signIn } from '../../lib/auth/supabase.js';
 import { messageFor } from '../../lib/errors.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -32,6 +33,7 @@ const onlyDigits = (text: string, max: number) => text.replace(/\D/g, '').slice(
 function Labeled({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   const { palette } = useTheme();
   return (
+    // token-exempt: label and field 6 apart, snug as one thing
     <View style={{ gap: 6 }}>
       <Text
         accessibilityElementsHidden
@@ -127,7 +129,7 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
   }
 
   return (
-    <Card padding={18}>
+    <Card>
       <Row
         question={t('settings:adult.pin.title')}
         answer={pinSet ? t('settings:adult.pin.is_set') : t('settings:adult.pin.not_set')}
@@ -138,6 +140,7 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
             {pinSet ? t('settings:adult.pin.change') : t('settings:adult.pin.create')}
           </Btn>
         ) : (
+          // token-exempt: the PIN's fields 14 apart, a field's label clear of the one above
           <View style={{ gap: 14 }}>
             {pinSet ? (
               <Labeled
@@ -202,7 +205,7 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
             ) : null}
 
             {reason ? (
-              <View style={{ gap: 8 }}>
+              <View style={{ gap: SPACE.sm }}>
                 <Text accessibilityLiveRegion="polite" style={TYPE.body}>
                   {t(`settings:adult.pin.reason_${reason}`)}
                 </Text>
@@ -247,7 +250,7 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
               </Text>
             ) : null}
 
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
               <Btn pill onPress={() => void save()} busy={busy} disabled={!canSave}>
                 {t('settings:adult.pin.save')}
               </Btn>

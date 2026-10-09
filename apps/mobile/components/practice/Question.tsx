@@ -20,6 +20,7 @@ import { useDrawingNatural } from '../../lib/math/figureSizing.js';
 import { fillableAnswer } from '../../lib/math/prompt.js';
 import { formDensity } from '../../lib/keyboard.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
@@ -388,7 +389,7 @@ function FromBuddyTag({ label }: { label: string }) {
         alignSelf: 'flex-start',
         gap: 6, // token-exempt: the name close beside the orb
         backgroundColor: palette.paper,
-        borderRadius: 999, // token-exempt: fully round ends, like Chip
+        borderRadius: RADIUS.round,
         paddingLeft: SPACE.xs,
         paddingRight: SPACE.md,
         paddingVertical: SPACE.xs,

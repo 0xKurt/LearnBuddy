@@ -8,6 +8,8 @@ import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { LANGUAGES } from '../../lib/i18n/languages.js';
+import { circle } from '../../lib/theme/radius.js';
+import { RHYTHM } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export function LanguageFlags({
@@ -27,7 +29,7 @@ export function LanguageFlags({
     <View
       accessibilityRole="radiogroup"
       accessibilityLabel={t('a11y.language')}
-      style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}
+      style={{ flexDirection: 'row', justifyContent: 'center', gap: RHYTHM.parts }}
     >
       {LANGUAGES.map((l) => {
         const on = l.value === value;
@@ -46,7 +48,7 @@ export function LanguageFlags({
                 style={{
                   width: d,
                   height: d,
-                  borderRadius: d / 2,
+                  borderRadius: circle(d),
                   backgroundColor: on ? palette.primaryLt : palette.paper,
                   borderWidth: on ? 2.5 : 1,
                   borderColor: on ? palette.primary : palette.hairline,
@@ -60,6 +62,7 @@ export function LanguageFlags({
                     (audit M-84, issue #73). */}
                 <Text
                   allowFontScaling={false}
+                  // token-exempt: the flag's picture size in its 44 or 52 pt circle
                   style={{ fontSize: compact ? 22 : 26, lineHeight: compact ? 30 : 34 }}
                 >
                   {l.flag}

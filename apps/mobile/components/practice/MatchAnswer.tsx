@@ -167,6 +167,12 @@ export function pairLook(n: number): { tone: SubjectTone; symbol: string } {
 const SYMBOL = 16;
 
 /**
+ * The words on an element: two lines still fit the 44 pt of one element.
+ * token-exempt: 14/18, a caption's size on a tighter line, so two lines fit TOUCH.
+ */
+const ELEMENT_TEXT = { fontSize: 14, lineHeight: 18 } as const;
+
+/**
  * How wide the left column of a pairing is: as much as its longest word needs next to the
  * right column's longest word, between 34 % and 66 %. Purely the layout: a word cannot be
  * broken, so the longest words decide the split.
@@ -254,8 +260,7 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
                   paddingVertical: SPACE.xs,
                   textAlign: 'center',
                   color: isHeld ? palette.paper : link ? palette.primaryDk : palette.ink,
-                  fontSize: 14,
-                  lineHeight: 18,
+                  ...ELEMENT_TEXT,
                   fontWeight: '600',
                 }}
               />
@@ -326,8 +331,7 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
                 flex: 1,
                 paddingVertical: SPACE.xs,
                 color: isHeld ? palette.paper : link ? palette.ink : palette.primaryDk,
-                fontSize: 14,
-                lineHeight: 18,
+                ...ELEMENT_TEXT,
                 fontWeight: '600',
               }}
             />
@@ -337,8 +341,8 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
               style={{
                 width: SYMBOL,
                 textAlign: 'center',
-                fontSize: 16,
-                lineHeight: 18,
+                fontSize: TYPE.body.fontSize,
+                lineHeight: ELEMENT_TEXT.lineHeight,
                 // The shape carries the pair; it is drawn in ink, not in the pale tint.
                 color: look ? palette.ink2 : 'transparent',
               }}
@@ -394,8 +398,7 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
               style={{
                 paddingVertical: SPACE.xs,
                 color: heldIsLeft && !disabled ? palette.primaryDk : palette.ink2,
-                fontSize: 14,
-                lineHeight: 18,
+                ...ELEMENT_TEXT,
                 fontWeight: '700',
               }}
             />

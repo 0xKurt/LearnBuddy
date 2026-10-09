@@ -16,18 +16,24 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useAnnounce } from '../../lib/announce.js';
+import { TAIL } from '../../lib/theme/bubble.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { EASE } from '../../lib/theme/motion.js';
+import { circle } from '../../lib/theme/radius.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
+
+/** The small bubble around the dots: a pill with a bubble's tail. */
+const PILL = 32;
 
 export function Thinking({ label }: { label: string }) {
   const { palette } = useTheme();
   // iOS has no live regions: the waiting state says itself (lib/announce.ts).
   useAnnounce(label);
   return (
-    <Rise delay={120} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+    <Rise delay={120} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
       <BuddyOrb size={26} state="think" />
       <View
         accessibilityElementsHidden
@@ -35,12 +41,12 @@ export function Thinking({ label }: { label: string }) {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 5,
+          gap: 5, // token-exempt: the dots' drawing, three 6-point dots 5 apart
           backgroundColor: palette.paper,
-          borderRadius: 16,
-          borderBottomLeftRadius: 6,
-          paddingHorizontal: 12,
-          height: 32,
+          borderRadius: circle(PILL),
+          borderBottomLeftRadius: TAIL,
+          paddingHorizontal: SPACE.md,
+          height: PILL,
         }}
       >
         {[0, 1, 2].map((i) => (
@@ -58,6 +64,7 @@ export function Thinking({ label }: { label: string }) {
 }
 
 const STEP_MS = 300;
+const DOT = 6;
 
 function Dot({ index }: { index: number }) {
   const { palette } = useTheme();
@@ -85,7 +92,10 @@ function Dot({ index }: { index: number }) {
   }));
   return (
     <Animated.View
-      style={[{ width: 6, height: 6, borderRadius: 3, backgroundColor: palette.ink3 }, style]}
+      style={[
+        { width: DOT, height: DOT, borderRadius: circle(DOT), backgroundColor: palette.ink3 },
+        style,
+      ]}
     />
   );
 }

@@ -18,6 +18,7 @@ import { setPassword as savePasswordOnServer } from '../../lib/api/endpoints.js'
 import { looksLikeEmail, passwordProblem } from '../../lib/auth/recovery.js';
 import { changeEmail, signIn } from '../../lib/auth/supabase.js';
 import { messageFor } from '../../lib/errors.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { NewPasswordFields } from '../auth/NewPasswordFields.js';
@@ -145,8 +146,8 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
 
   return (
     <>
-      <Card padding={18}>
-        <View style={{ gap: 16 }}>
+      <Card>
+        <View style={{ gap: SPACE.lg }}>
           <Row
             question={t('settings:adult.access.email_title')}
             answer={email || undefined}
@@ -191,7 +192,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
         {pendingEmail ? (
           <Card tone="mint">
             <Text style={TYPE.title}>{t('settings:adult.access.email_pending_title')}</Text>
-            <Text style={[TYPE.body, { marginTop: 4 }]} accessibilityLiveRegion="polite">
+            <Text style={[TYPE.body, { marginTop: SPACE.xs }]} accessibilityLiveRegion="polite">
               {email
                 ? t('settings:adult.access.email_pending_body', {
                     old_email: email,

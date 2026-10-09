@@ -17,6 +17,11 @@ export const RADIUS = {
    * (a touch target and its padding), so it stays a pill on one line and a soft box on five.
    */
   bar: 26,
+  /**
+   * Fully round ends whatever size the thing grows to: a chip, a badge, a letter's circle that
+   * grows with the system text (audit M-84). Where the size is fixed, `circle(size)` says it.
+   */
+  round: 999,
 } as const;
 
 /**
@@ -25,4 +30,13 @@ export const RADIUS = {
  */
 export function around(inner: number, inset: number): number {
   return inner + inset;
+}
+
+/**
+ * The corner that makes a box round at its ends: half its size (issue #311). A square of `size`
+ * becomes a circle (a disc, a dot, a round button), a box `size` high a pill. One helper, so a
+ * circle never needs a free `/ 2` of its own.
+ */
+export function circle(size: number): number {
+  return size / 2;
 }

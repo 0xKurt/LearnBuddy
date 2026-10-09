@@ -15,6 +15,7 @@ import { Pressable } from 'react-native';
 
 import { stop as stopSpeaking } from '../../lib/speech/listen.js';
 import { readsAloud, useVoiceMode } from '../../lib/speech/voiceMode.js';
+import { circle } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { Icon } from './Icon.js';
@@ -41,8 +42,7 @@ export function ReadAloudSwitch() {
         height: TOUCH,
         alignItems: 'center',
         justifyContent: 'center',
-        // token-exempt: circle, half its size
-        borderRadius: TOUCH / 2,
+        borderRadius: circle(TOUCH),
       }}
     >
       {({ pressed }) => (

@@ -7,8 +7,9 @@ import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
 
+import { RADIUS } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Icon } from '../lb/Icon.js';
 import { whenText } from './describe.js';
@@ -32,7 +33,7 @@ export function HomeIntro({ h, refreshing, onRefresh }: Props) {
         flexGrow: 1,
         justifyContent: 'center',
         padding: SPACE.lg,
-        gap: 18, // token-exempt: off the scale since #174; moved unchanged in the split (#311)
+        gap: RHYTHM.sections,
       }}
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -87,7 +88,7 @@ function PracticedToday({ label }: { label: string }) {
         gap: SPACE.xs,
         paddingHorizontal: 9, // token-exempt: the mark is smaller than Chip; one pill is #311 slice 13
         paddingVertical: 3, // token-exempt: the mark is smaller than Chip; one pill is #311 slice 13
-        borderRadius: 999, // token-exempt: fully round ends, like Chip
+        borderRadius: RADIUS.round,
         backgroundColor: palette.mint,
       }}
     >

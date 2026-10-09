@@ -12,8 +12,9 @@ import { useReducedMotion } from 'react-native-reanimated';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { formatClock } from '../../lib/speech/voice.js';
+import { circle } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TOUCH } from '../../lib/theme/space.js';
+import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
@@ -22,6 +23,8 @@ import type { VoiceInput } from './useVoiceInput.js';
 
 /** How far the ring grows past the button at its widest. */
 const PULSE_SCALE = 1.45;
+/** The dot of a running recording, beside its timer. */
+const REC_DOT = 10;
 
 /**
  * The room the pulsing ring needs around the big mic, in points.
@@ -65,7 +68,7 @@ function PulseRing({ size }: { size: number }) {
         position: 'absolute',
         width: size,
         height: size,
-        borderRadius: size / 2,
+        borderRadius: circle(size),
         borderWidth: 3,
         borderColor: palette.primary,
         opacity,
@@ -135,7 +138,7 @@ export function MicButton({
         }
         android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
         style={{
-          borderRadius: d / 2,
+          borderRadius: circle(d),
           overflow: 'hidden',
           opacity: off && !working ? 0.6 : 1,
         }}
@@ -145,7 +148,7 @@ export function MicButton({
             style={{
               width: d,
               height: d,
-              borderRadius: d / 2,
+              borderRadius: circle(d),
               backgroundColor: bg,
               borderWidth: filled ? 0 : 1,
               borderColor: palette.hairline,
@@ -200,6 +203,7 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
     const open = voice.maxMs === null;
     const max = open ? '' : formatClock(voice.maxMs ?? 0);
     return (
+      // token-exempt: the timer and her words 6 apart, read as one line of state
       <View style={{ gap: 6 }}>
         <View
           accessible
@@ -208,10 +212,15 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
               ? t('voice.recording_open_value', { time })
               : t('voice.recording_value', { time, max })
           }
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 22 }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm, minHeight: 22 }}
         >
           <View
-            style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: palette.primary }}
+            style={{
+              width: REC_DOT,
+              height: REC_DOT,
+              borderRadius: circle(REC_DOT),
+              backgroundColor: palette.primary,
+            }}
             importantForAccessibility="no"
           />
           <Text style={[TYPE.body, { fontWeight: '600' }]}>
@@ -256,7 +265,7 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
 
   if (voice.denied) {
     return (
-      <View style={{ gap: 8 }}>
+      <View style={{ gap: SPACE.sm }}>
         <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
           {Platform.OS === 'web' ? t('voice.denied_web') : t('voice.denied')}
         </Text>

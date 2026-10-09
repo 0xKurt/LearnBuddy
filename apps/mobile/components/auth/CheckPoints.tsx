@@ -3,7 +3,7 @@
 
 import { Text, View } from 'react-native';
 
-import { SPACE } from '../../lib/theme/space.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
@@ -25,7 +25,7 @@ const DENSITY = {
   /** A few points with room around them (the hand-over). */
   roomy: {
     padding: SPACE.lg,
-    gap: 10, // token-exempt: three points a little further apart than SPACE.sm
+    gap: RHYTHM.parts,
     badge: null,
     text: null,
   },

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
 import type { PhotoProblem } from '../../lib/photo/quality.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
@@ -25,13 +26,13 @@ export function PhotoCheckCard({ index, problems, disabled, onRetake, onKeep }: 
   useAnnounce(t(`quality.${main}`, { index }));
   return (
     <View accessibilityLiveRegion="polite">
-      <Card tone="butter" padding={16}>
-        <View style={{ gap: 10 }}>
+      <Card tone="butter" padding={SPACE.lg}>
+        <View style={{ gap: RHYTHM.parts }}>
           <Text accessibilityRole="header" style={[TYPE.body, { fontWeight: '700' }]}>
             {t(`quality.${main}`, { index })}
           </Text>
           <Text style={TYPE.small}>{t(`quality.${main}_tip`)}</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
             <Btn size="sm" pill icon="camera" disabled={disabled} onPress={onRetake}>
               {t('quality.retake')}
             </Btn>

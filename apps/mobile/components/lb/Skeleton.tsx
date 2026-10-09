@@ -19,6 +19,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
+import { RADIUS } from '../../lib/theme/radius.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 import { Appear } from './Motion.js';
@@ -159,9 +161,9 @@ export function BoneCard({ children, style }: { children: ReactNode; style?: Vie
       style={[
         {
           backgroundColor: palette.paper,
-          borderRadius: 22,
-          padding: 18,
-          gap: 12,
+          borderRadius: RADIUS.card,
+          padding: CARD_PAD.base,
+          gap: SPACE.md,
           borderWidth: 1,
           borderColor: palette.hairline,
         },

@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 import { aboutLinks, type AboutLink } from '../../lib/about.js';
 import { ENV } from '../../lib/env.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { toast } from '../lb/Toast.js';
@@ -72,8 +73,8 @@ export function AboutSection() {
       fold="about"
       summary={VERSION ? t('about.version', { version: VERSION }) : undefined}
     >
-      <Card padding={18}>
-        <View style={{ gap: 16 }}>
+      <Card>
+        <View style={{ gap: SPACE.lg }}>
           {VERSION ? (
             <Row
               question={t('about.version_question')}
@@ -81,7 +82,7 @@ export function AboutSection() {
             />
           ) : null}
           {LINKS.map((link, i) => (
-            <View key={link.kind} style={{ gap: 16 }}>
+            <View key={link.kind} style={{ gap: SPACE.lg }}>
               {VERSION || i > 0 ? <Divider /> : null}
               {link.kind === 'support' ? (
                 <Row

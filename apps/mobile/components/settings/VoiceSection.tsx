@@ -5,6 +5,7 @@
 import type { BuddySettingsView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 
+import { CARD_PAD } from '../../lib/theme/space.js';
 import { Card } from '../lb/Card.js';
 import { VoicePicker } from '../voice/VoicePicker.js';
 import { Group } from './Group.js';
@@ -15,7 +16,7 @@ export function VoiceSection({ settings }: { settings: BuddySettingsView }) {
   const current = t(`buddy:voice_pick.name.${settings.voice}`);
   return (
     <Group title={t('settings:voice.title')} fold="voice" summary={current}>
-      <Card padding={20}>
+      <Card padding={CARD_PAD.roomy}>
         <Row
           question={t('settings:voice.question')}
           current={current}

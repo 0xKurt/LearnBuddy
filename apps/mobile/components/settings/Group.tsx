@@ -11,10 +11,12 @@
 import { createContext, useContext, type ComponentProps, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
+import { IconDisc } from '../lb/IconDisc.js';
 
 type Folds = { open: string | null; toggle: (key: string) => void };
 
@@ -39,23 +41,9 @@ export function Group({ title, intro, icon, fold, summary, children }: Props) {
   const open = !foldable || folds.open === fold;
 
   const heading = (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      {icon ? (
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: palette.paper,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Icon name={icon} size={19} color={palette.primaryDk} />
-        </View>
-      ) : null}
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: RHYTHM.parts }}>
+      {icon ? <IconDisc name={icon} size={36} iconSize={19} /> : null}
+      {/* token-exempt: title and summary 2 apart, the line heights carry the air */}
       <View style={{ flex: 1, gap: 2 }}>
         <Text accessibilityRole="header" style={TYPE.title}>
           {title}
@@ -79,9 +67,14 @@ export function Group({ title, intro, icon, fold, summary, children }: Props) {
   );
 
   return (
-    <View style={{ gap: 12 }}>
+    <View style={{ gap: SPACE.md }}>
       {foldable ? (
-        <View style={{ borderRadius: 20, backgroundColor: open ? 'transparent' : palette.paper }}>
+        <View
+          style={{
+            borderRadius: 20, // token-exempt: the closed group's paper, softer than a tile
+            backgroundColor: open ? 'transparent' : palette.paper,
+          }}
+        >
           <Btn
             variant="ghost"
             full
@@ -96,12 +89,14 @@ export function Group({ title, intro, icon, fold, summary, children }: Props) {
           </Btn>
         </View>
       ) : (
-        <View style={{ paddingHorizontal: 4 }}>{heading}</View>
+        <View style={{ paddingHorizontal: SPACE.xs }}>{heading}</View>
       )}
       {open ? (
         <>
           {intro ? (
-            <Text style={[TYPE.body, { color: palette.ink2, paddingHorizontal: 4 }]}>{intro}</Text>
+            <Text style={[TYPE.body, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}>
+              {intro}
+            </Text>
           ) : null}
           {children}
         </>

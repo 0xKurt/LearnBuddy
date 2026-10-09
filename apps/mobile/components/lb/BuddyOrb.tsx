@@ -60,6 +60,7 @@ import {
 } from '../../lib/buddy/moon.js';
 import { orbMoves } from '../../lib/buddy/orbRoom.js';
 import { useBurst, useMoon } from '../../lib/buddy/useMoon.js';
+import { circle } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
@@ -445,7 +446,7 @@ function Ghost({ index, side, pose, fade, order, u, size }: LayerProps & { index
   });
   return (
     <Animated.View
-      style={[centered(size, d), { borderRadius: d / 2, backgroundColor: TRAIL }, style]}
+      style={[centered(size, d), { borderRadius: circle(d), backgroundColor: TRAIL }, style]}
     />
   );
 }

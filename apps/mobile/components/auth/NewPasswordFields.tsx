@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { passwordProblem } from '../../lib/auth/recovery.js';
 import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 
 type Props = {
@@ -32,7 +33,7 @@ export function NewPasswordFields({
   const toggleLabel = shown ? t('welcome.hide_password') : t('welcome.show_password');
 
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: RHYTHM.parts }}>
       <LbTextInput
         value={password}
         onChangeText={onChangePassword}
@@ -70,7 +71,9 @@ export function NewPasswordFields({
         errorMessage={mismatch ? t('new_password.mismatch') : undefined}
       />
       {mismatch ? null : (
-        <Text style={[TYPE.small, { paddingHorizontal: 4 }]}>{t('welcome.password_hint')}</Text>
+        <Text style={[TYPE.small, { paddingHorizontal: SPACE.xs }]}>
+          {t('welcome.password_hint')}
+        </Text>
       )}
     </View>
   );

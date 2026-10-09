@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
+import { circle } from '../../lib/theme/radius.js';
+import { TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon } from './Icon.js';
 
@@ -40,9 +42,9 @@ export function CircleBtn({
   const inner = (pressed: boolean) => (
     <View
       style={{
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: TOUCH,
+        height: TOUCH,
+        borderRadius: circle(TOUCH),
         // A filled circle, not paper + hairline: the hairline sits at ~1.2:1 on the page
         // and the button read as a floating icon without a boundary (WCAG 1.4.11).
         backgroundColor: plain ? 'transparent' : palette.canvas,

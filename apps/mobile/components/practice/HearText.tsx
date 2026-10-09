@@ -23,6 +23,7 @@ import { listenToItem } from '../../lib/api/endpoints.js';
 import { audioUri, releaseAudio } from '../../lib/speech/naturalAudio.js';
 import { playAudio } from '../../lib/speech/naturalPlayer.js';
 import { usePlayback } from '../../lib/speech/usePlayback.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -152,11 +153,11 @@ export function HeardTextCard({ text }: { text: string }) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   return (
-    <Card tone="sky" padding={20} radius={24}>
+    <Card tone="sky" padding={CARD_PAD.roomy} radius={24}>
       <Text style={[TYPE.body, { color: palette.ink2, fontWeight: '600' }]}>
         {t('listen.transcript_title')}
       </Text>
-      <Text style={[TYPE.body, { marginTop: 4 }]}>{text}</Text>
+      <Text style={[TYPE.body, { marginTop: SPACE.xs }]}>{text}</Text>
     </Card>
   );
 }

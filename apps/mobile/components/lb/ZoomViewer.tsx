@@ -32,6 +32,8 @@ import {
   rubberBand,
 } from '../../lib/gestures.js';
 import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
+import { bottomRoom, SPACE } from '../../lib/theme/space.js';
+import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
 
 type ViewerProps = {
@@ -184,16 +186,19 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
         </Animated.View>
         <View
           accessibilityViewIsModal
-          style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16 }}
+          style={{
+            flex: 1,
+            paddingTop: insets.top + SPACE.md,
+            paddingBottom: bottomRoom(insets.bottom),
+          }}
         >
           <Animated.Text
             style={[
+              TYPE.caption,
               {
                 color: 'rgba(255,255,255,0.72)',
-                fontSize: 14,
-                lineHeight: 19,
                 textAlign: 'center',
-                paddingHorizontal: 24,
+                paddingHorizontal: SPACE.xl,
               },
               chrome,
             ]}
@@ -202,7 +207,7 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
           </Animated.Text>
           <GestureDetector gesture={gesture}>
             <View
-              style={{ flex: 1, overflow: 'hidden', marginVertical: 12 }}
+              style={{ flex: 1, overflow: 'hidden', marginVertical: SPACE.md }}
               onLayout={(e) => {
                 box.value = {
                   width: e.nativeEvent.layout.width,
@@ -215,7 +220,7 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
                 accessibilityRole="image"
                 accessibilityLabel={label}
                 style={[
-                  { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 12 },
+                  { flex: 1, alignItems: 'center', justifyContent: 'center', padding: SPACE.md },
                   picture,
                 ]}
               >
@@ -223,6 +228,7 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
               </Animated.View>
             </View>
           </GestureDetector>
+          {/* token-exempt: the close pill 22 in, a little narrower than the hint above it */}
           <Animated.View style={[{ paddingHorizontal: 22 }, chrome]}>
             <Btn variant="soft" size="lg" pill full onPress={onClose}>
               {t('actions.close')}

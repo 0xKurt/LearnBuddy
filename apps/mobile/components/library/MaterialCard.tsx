@@ -15,6 +15,8 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { SubjectTone } from '../../lib/theme/palettes.js';
+import { circle } from '../../lib/theme/radius.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatDate } from '../../lib/time.js';
@@ -66,6 +68,9 @@ function statusOf(m: MaterialView): Status | null {
       };
   }
 }
+
+/** The round tile with the sheet's book, tinted in its subject's tone. */
+const DISC = 44;
 
 export function MaterialCard({
   material: m,
@@ -130,16 +135,17 @@ export function MaterialCard({
     !m.photos_deleted;
 
   return (
-    <Card padding={16}>
+    <Card padding={SPACE.lg}>
+      {/* token-exempt: the sheet's parts 14 apart, as on its questions' cards */}
       <View style={{ gap: 14 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.md }}>
           <View
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
+              width: DISC,
+              height: DISC,
+              borderRadius: circle(DISC),
               backgroundColor: tone === 'paper' ? palette.canvas : tones.bg[tone],
               borderWidth: 1,
               borderColor: tone === 'paper' ? palette.hairline : tones.deep[tone],
@@ -149,10 +155,11 @@ export function MaterialCard({
           >
             <Icon name="book" size={20} color={palette.primaryDk} />
           </View>
-          <View style={{ flex: 1, gap: 4 }}>
+          <View style={{ flex: 1, gap: SPACE.xs }}>
             <Text style={[TYPE.body, { fontWeight: '600' }]}>{title}</Text>
             <Text style={TYPE.small}>{meta}</Text>
             {status ? (
+              // token-exempt: the status two points below the meta line, snug
               <View style={{ marginTop: 2 }}>
                 <Chip tone={status.tone}>{t(`status.${status.key}`)}</Chip>
               </View>
@@ -161,7 +168,9 @@ export function MaterialCard({
         </View>
         {note ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{note}</Text> : null}
         {missed ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{missed}</Text> : null}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+        <View
+          style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: SPACE.sm }}
+        >
           {m.status === 'ready' ? (
             <Btn
               size="sm"

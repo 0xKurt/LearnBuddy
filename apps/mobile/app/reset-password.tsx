@@ -37,7 +37,7 @@ import {
 import { messageFor } from '../lib/errors.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { GUTTER, SPACE, pinnedBar } from '../lib/theme/space.js';
+import { CARD_PAD, GUTTER, pinnedBar, RHYTHM, SPACE } from '../lib/theme/space.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 // On the web the page address is the link; kept from load time in case the
@@ -136,8 +136,7 @@ export default function ResetPassword() {
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
         <Glow height={420} />
         <ResetPage title={t('reset.title')}>
-          {/* token-exempt: 20, the roomy card padding of the sign-up pages */}
-          <Card tone={phase === 'offline' ? 'sky' : 'butter'} padding={20}>
+          <Card tone={phase === 'offline' ? 'sky' : 'butter'} padding={CARD_PAD.roomy}>
             <Text style={TYPE.title}>
               {phase === 'offline' ? t('reset.offline_title') : t('reset.invalid_title')}
             </Text>
@@ -145,8 +144,7 @@ export default function ResetPassword() {
               {phase === 'offline' ? t('reset.offline_body') : t('reset.invalid_body')}
             </Text>
           </Card>
-          {/* token-exempt: the two buttons 10 apart, as the sign-up pages' fields */}
-          <View style={{ gap: 10 }}>
+          <View style={{ gap: RHYTHM.parts }}>
             {phase === 'offline' ? (
               <Btn pill full onPress={() => void open(current.current)}>
                 {t('reset.retry')}
@@ -212,7 +210,7 @@ function ResetPage({
         paddingHorizontal: GUTTER,
         paddingTop: 28, // token-exempt: Buddy a little lower than the page's top, as it always sat
         paddingBottom: SPACE.xl,
-        gap: 18, // token-exempt: the page's rhythm, as on pin and the profile steps
+        gap: RHYTHM.sections,
       }}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
     >

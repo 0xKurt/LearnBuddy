@@ -6,6 +6,7 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
+import { circle } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -23,6 +24,9 @@ type Props = {
   /** The lines under the title. */
   children: ReactNode;
 };
+
+/** The round tile with the entry's icon. */
+const DISC = 44;
 
 export function EntryCard({
   icon,
@@ -46,9 +50,9 @@ export function EntryCard({
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 22, // token-exempt: circle, half its size
+            width: DISC,
+            height: DISC,
+            borderRadius: circle(DISC),
             backgroundColor: tile.backgroundColor,
             ...(tile.borderColor ? { borderWidth: 1, borderColor: tile.borderColor } : null),
             alignItems: 'center',

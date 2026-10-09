@@ -1,22 +1,27 @@
 // Nothing here (yet), or something went wrong while loading: a friendly
 // title, an optional sentence and one way on. With `orb`, a small Buddy sits
-// above it; a `glyph` shows in a soft round tile instead.
+// above it.
 
 import { Text, View } from 'react-native';
 
 import { useAnnounce } from '../../lib/announce.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from './BuddyOrb.js';
 
+/**
+ * The title: a step above TYPE.title, the one line the empty screen has to say.
+ * token-exempt: 20/26, between TYPE.title and TYPE.prompt.
+ */
+const TITLE = { fontSize: 20, lineHeight: 26 } as const;
+
 export function EmptyState({
-  glyph,
   orb = false,
   title,
   body,
   action,
 }: {
-  glyph?: string;
   /** A small Buddy above the title (friendly empty states). */
   orb?: boolean;
   title: string;
@@ -31,37 +36,17 @@ export function EmptyState({
       style={{
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 24,
-        paddingVertical: 24,
-        gap: 12,
+        paddingHorizontal: SPACE.xl,
+        paddingVertical: SPACE.xl,
+        gap: SPACE.md,
       }}
     >
       {orb ? (
-        <View style={{ marginBottom: 4 }}>
+        <View style={{ marginBottom: SPACE.xs }}>
           <BuddyOrb size={64} />
         </View>
-      ) : glyph ? (
-        <View
-          style={{
-            width: 76,
-            height: 76,
-            borderRadius: 38,
-            backgroundColor: palette.primaryLt,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {/* The glyph is a picture in a fixed circle: it does not follow the system text
-              size — the title below it does (audit M-84, issue #73). */}
-          <Text allowFontScaling={false} style={{ fontSize: 36 }}>
-            {glyph}
-          </Text>
-        </View>
       ) : null}
-      <Text
-        accessibilityRole="header"
-        style={[TYPE.title, { fontSize: 20, lineHeight: 26, textAlign: 'center' }]}
-      >
+      <Text accessibilityRole="header" style={[TYPE.title, TITLE, { textAlign: 'center' }]}>
         {title}
       </Text>
       {body ? (
@@ -69,6 +54,7 @@ export function EmptyState({
           {body}
         </Text>
       ) : null}
+      {/* token-exempt: the way on set 6 further apart than the lines above it */}
       {action ? <View style={{ marginTop: 6 }}>{action}</View> : null}
     </View>
   );

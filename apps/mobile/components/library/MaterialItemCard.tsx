@@ -7,6 +7,8 @@ import type { ItemResult, MaterialItemView } from '@learnbuddy/shared-types/cont
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import { RADIUS } from '../../lib/theme/radius.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
@@ -35,9 +37,12 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
   const { t } = useTranslation('library');
   const choices = item.kind === 'multiple_choice' && item.choices ? item.choices : null;
   return (
-    <Card padding={18}>
+    <Card>
+      {/* token-exempt: the question's parts 14 apart, as on the sheet's own card */}
       <View style={{ gap: 14 }}>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+        <View
+          style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: SPACE.sm }}
+        >
           <Text style={TYPE.label}>{t('items.question_label', { number })}</Text>
           {item.topic ? <Chip>{item.topic}</Chip> : null}
           <Chip tone={RESULT_TONE[item.result]}>{t(`items.result.${item.result}`)}</Chip>
@@ -45,17 +50,21 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
         <MathText text={item.prompt} style={TYPE.body} />
         {item.figure ? <QuestionFigure figure={item.figure} /> : null}
         {choices ? (
+          // token-exempt: the label snug over its choices, 6 apart
           <View style={{ gap: 6 }}>
             <Text style={TYPE.label}>{t('items.choices')}</Text>
             {choices.map((choice, index) => (
-              <View key={index} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+              <View
+                key={index}
+                style={{ flexDirection: 'row', gap: RHYTHM.parts, alignItems: 'flex-start' }}
+              >
                 <View
                   style={{
                     // min sizes: large system text grows the letter's circle instead of
                     // clipping it in a fixed box (audit M-84, issue #73).
                     minWidth: 24,
                     minHeight: 24,
-                    borderRadius: 999,
+                    borderRadius: RADIUS.round,
                     backgroundColor: palette.lavender,
                     alignItems: 'center',
                     justifyContent: 'center',

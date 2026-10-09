@@ -20,7 +20,7 @@ import { messageFor } from '../lib/errors.js';
 import { formatTime } from '../lib/time.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { GUTTER, SPACE, bottomRoom } from '../lib/theme/space.js';
+import { bottomRoom, GUTTER, RHYTHM, SPACE } from '../lib/theme/space.js';
 
 export default function Pin() {
   const { palette } = useTheme();
@@ -86,7 +86,7 @@ export default function Pin() {
           paddingTop: SPACE.xl,
           // Edge-to-edge: "Abbrechen" must clear the Android navigation bar.
           paddingBottom: bottomRoom(insets.bottom, SPACE.xl),
-          gap: 18, // token-exempt: the page's rhythm, as on reset-password and the profile steps
+          gap: RHYTHM.sections,
           alignItems: 'center',
           justifyContent: 'center',
         }}

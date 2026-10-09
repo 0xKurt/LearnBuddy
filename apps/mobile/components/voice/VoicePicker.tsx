@@ -24,6 +24,7 @@ import { messageFor } from '../../lib/errors.js';
 import { speak, stop } from '../../lib/speech/listen.js';
 import { useBuddyVoice } from '../../lib/speech/useBuddyVoice.js';
 import { voiceStore } from '../../lib/speech/voiceState.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -107,19 +108,19 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
   }
 
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: RHYTHM.parts }}>
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel={t('voice_pick.label')}
-        style={{ gap: 8, opacity: saving ? 0.85 : 1 }}
+        style={{ gap: SPACE.sm, opacity: saving ? 0.85 : 1 }}
       >
         {GROUPS.map((group) => (
-          <View key={group.pitch} style={{ gap: 8 }}>
-            <Text style={[TYPE.label, { color: palette.ink2, paddingHorizontal: 4 }]}>
+          <View key={group.pitch} style={{ gap: SPACE.sm }}>
+            <Text style={[TYPE.label, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}>
               {t(`voice_pick.group.${group.pitch}`)}
             </Text>
             {group.rows.map((row) => (
-              <View key={row.join()} style={{ flexDirection: 'row', gap: 8 }}>
+              <View key={row.join()} style={{ flexDirection: 'row', gap: SPACE.sm }}>
                 {row.map((name) => (
                   <View key={name} style={{ flex: 1 }}>
                     <Btn
@@ -146,12 +147,12 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
       {previewing ? (
         <Text
           accessibilityLiveRegion="polite"
-          style={[TYPE.small, { color: palette.ink2, paddingHorizontal: 4 }]}
+          style={[TYPE.small, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}
         >
           {t('voice_pick.loading')}
         </Text>
       ) : phoneVoice ? (
-        <Text style={[TYPE.small, { color: palette.ink2, paddingHorizontal: 4 }]}>
+        <Text style={[TYPE.small, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}>
           {t('voice_pick.phone_voice')}
         </Text>
       ) : null}

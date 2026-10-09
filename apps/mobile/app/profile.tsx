@@ -47,7 +47,7 @@ import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 import { formDensity } from '../lib/keyboard.js';
 import { useVisibleHeight } from '../lib/useVisibleHeight.js';
-import { GUTTER, SPACE, pinnedBar } from '../lib/theme/space.js';
+import { CARD_PAD, GUTTER, pinnedBar, RHYTHM, SPACE } from '../lib/theme/space.js';
 import { useFormDraft } from '../lib/drafts.js';
 
 /** Android number pads emit "-", "," and spaces too; a date or PIN is digits only. */
@@ -282,8 +282,7 @@ export default function Profile() {
           {parentStep ? (
             // One row for the way back and the headline: the stacked pair overflowed a
             // 360×740 phone by 28 px with the wider Linux fonts CI renders with (#98).
-            // token-exempt: way back 10 from the headline, the 360×740 fit of #98
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: RHYTHM.parts }}>
               <CircleBtn
                 icon="back"
                 onPress={() => setStep('learner')}
@@ -394,8 +393,7 @@ export default function Profile() {
                 {tooYoungSelf ? (
                   // Not a dead end: what applies, and the real next step (user feedback #5).
                   <Card tone="lavender" padding={SPACE.lg}>
-                    {/* token-exempt: the sentence 10 above its button */}
-                    <View style={{ gap: 10 }}>
+                    <View style={{ gap: RHYTHM.parts }}>
                       <Text style={[TYPE.body, { color: palette.ink }]}>
                         {t('profile.too_young_self')}
                       </Text>
@@ -417,8 +415,7 @@ export default function Profile() {
           {parentStep ? (
             // The parents' card carries consent, contact and the PIN: on a small phone it
             // only fits when every step is the tighter one (tests/web/fit.ts).
-            // token-exempt: roomy padding 20, the parents' card at full size
-            <Card tone="lavender" padding={compact ? SPACE.md : 20}>
+            <Card tone="lavender" padding={compact ? SPACE.md : CARD_PAD.roomy}>
               <View style={{ gap: compact ? SPACE.sm : SPACE.md }}>
                 <Checkbox
                   checked={consent}
@@ -434,7 +431,7 @@ export default function Profile() {
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 10, // token-exempt: the badge 10 from its title
+                    gap: RHYTHM.parts,
                     marginTop: 6, // token-exempt: the PIN part set off from the checkboxes
                   }}
                 >
@@ -442,9 +439,8 @@ export default function Profile() {
                   <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>
                 </View>
                 <Text style={[TYPE.small, { color: palette.ink }]}>{t('profile.pin_body')}</Text>
-                {/* Visible labels: the second field is the repetition (user feedback #20).
-                    token-exempt: the two PIN fields 10 apart */}
-                <View style={{ flexDirection: 'row', gap: 10 }}>
+                {/* Visible labels: the second field is the repetition (user feedback #20). */}
+                <View style={{ flexDirection: 'row', gap: RHYTHM.parts }}>
                   <View style={{ flex: 1 }}>
                     <LbTextInput
                       label={t('profile.pin_label')}
@@ -574,7 +570,7 @@ function Handover({
           justifyContent: 'center',
           paddingHorizontal: GUTTER,
           paddingVertical: SPACE.xl,
-          gap: 18, // token-exempt: the hand-over's rhythm, as the roomy form's
+          gap: RHYTHM.sections,
         }}
       >
         <View style={{ alignItems: 'center' }}>

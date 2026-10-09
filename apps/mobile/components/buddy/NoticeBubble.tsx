@@ -7,12 +7,12 @@ import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import { BUBBLE, TAIL } from '../../lib/theme/bubble.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { ZoomablePhoto } from '../lb/ZoomViewer.js';
-import { BUBBLE } from './Conversation.js';
 
 type Props = {
   text: string;
@@ -46,7 +46,7 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
               alignItems: 'center',
               gap: SPACE.sm,
               backgroundColor: palette.paper,
-              borderBottomLeftRadius: 6,
+              borderBottomLeftRadius: TAIL,
             },
             SHADOW.soft,
           ]}
@@ -60,12 +60,13 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
                 // (image-alt, issue #73). expo-image maps this to `alt` on the web.
                 accessible
                 accessibilityLabel={t('common:zoom.photo')}
+                // token-exempt: thumbnail of a page, its corner small like paper's
                 style={{ width: 32, height: 42, borderRadius: 6 }}
                 contentFit="cover"
               />
             </ZoomablePhoto>
           ) : null}
-          {/* 2, off the scale: the line heights carry the air between text and detail. */}
+          {/* token-exempt: two points, the line heights carry the air between text and detail. */}
           <View style={{ flexShrink: 1, gap: 2 }}>
             <Text style={[TYPE.body, { color: palette.ink }]}>{text}</Text>
             {detail ? <Text style={TYPE.small}>{detail}</Text> : null}
