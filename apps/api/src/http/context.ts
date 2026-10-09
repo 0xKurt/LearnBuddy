@@ -19,6 +19,7 @@ import {
   type LearnerRow,
 } from '../modules/identity/model.js';
 import { assertNotDeleting } from '../modules/identity/privacy.js';
+import type { Timeline } from './timing.js';
 
 export type LearnerContext = LearnerRow & { isMinor: boolean; timezone: string };
 
@@ -28,6 +29,8 @@ export type AppEnv = {
     user: AuthUser;
     account: AccountRow;
     learner: LearnerContext;
+    /** The request's milestones since it reached the API (http/timing.ts, issue #447). */
+    timeline: Timeline;
   };
 };
 
@@ -62,6 +65,7 @@ export async function authenticate(c: AppContext): Promise<AuthUser> {
   if (!token) throw new AppError('unauthenticated', 'Missing bearer token');
   const user = await depsOf(c).auth.verify(token);
   if (!user) throw new AppError('unauthenticated', 'Invalid or expired token');
+  c.get('timeline').mark('auth');
   c.set('user', user);
   return user;
 }

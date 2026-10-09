@@ -14,6 +14,7 @@ import type { Deps } from './deps.js';
 import type { AppEnv } from './http/context.js';
 import { appCors } from './http/cors.js';
 import { accountBudgets } from './http/limits.js';
+import { Timeline } from './http/timing.js';
 import { isCheckViolation } from './lib/db.js';
 import { AppError, isAppError, type ErrorCode } from './lib/errors.js';
 import { olderThan } from './lib/version.js';
@@ -46,6 +47,11 @@ function codeForStatus(status: number): ErrorCode {
 
 export function createApp(deps: Deps): Hono<AppEnv> {
   const app = new Hono<AppEnv>();
+  // First of all: the request's stopwatch starts the moment it reaches the API (issue #447).
+  app.use('*', async (c, next) => {
+    c.set('timeline', new Timeline());
+    await next();
+  });
 
   const origins = (deps.config.CORS_ORIGINS ?? '')
     .split(',')
