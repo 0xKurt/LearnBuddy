@@ -10,8 +10,8 @@ import {
 import type { Deps } from '../../deps.js';
 import type { Db } from '../../lib/db.js';
 import { bumpContext } from '../buddy/plan.js';
-import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
-import { PHOTO_RETENTION_DAYS } from './purge.js';
+import { backoffMs, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
+import { enqueuePhotoPurge, PHOTO_RETENTION_DAYS } from './purge.js';
 
 /**
  * The one way a material becomes failed — from the reading job and from the scheduler's
@@ -47,12 +47,10 @@ export async function markMaterialFailed(
   // photos keep the normal retention like any other sheet's.
   // A corrected test with nothing marked shows a grade: its photos go at once too (#259).
   const keepMs = PHOTOS_GONE_AT_ONCE.has(reason) ? 0 : PHOTO_RETENTION_DAYS * 86_400_000;
-  await enqueueJob(tx, {
+  await enqueuePhotoPurge(tx, {
     learnerId: m.learner_id,
-    kind: 'purge_photos',
+    materialId,
     runAt: new Date(now.getTime() + keepMs),
-    dedupeKey: `purge:${materialId}`,
-    payload: { material_id: materialId },
   });
   await bumpContext(tx, m.learner_id);
 }
@@ -107,7 +105,7 @@ export async function retryTransient(
   if (job.attempts < job.max_attempts) {
     await deps.db.tx(async (tx) => {
       const requeued = await retryJob(tx, job, {
-        runAt: new Date(now.getTime() + 60_000 * 2 ** Math.max(0, job.attempts - 1)),
+        runAt: new Date(now.getTime() + backoffMs(job.attempts)),
         error,
         countAttempt: true,
         now,

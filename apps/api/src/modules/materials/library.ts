@@ -7,26 +7,11 @@ import type { Deps } from '../../deps.js';
 import type { Db } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
 import { bumpContext } from '../buddy/plan.js';
-import { materialView, SPEAK_COUNT, toView, type MaterialRow } from './view.js';
+import { materialView, toView, VIEW_SELECT, type MaterialViewRow } from './view.js';
 
 export async function libraryView(db: Db, learnerId: string): Promise<LibraryView> {
-  const materials = await db.query<
-    MaterialRow & {
-      subject_name: string | null;
-      item_count: number;
-      speak_count: number;
-      session_id: string | null;
-      session_status: MaterialView['session_status'];
-    }
-  >(
-    `select m.*, s.name as subject_name,
-            (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count,
-            ${SPEAK_COUNT} as speak_count,
-            (select ps.id from practice_sessions ps where ps.material_id = m.id
-              order by ps.started_at desc, ps.seq desc limit 1) as session_id,
-            (select ps.status from practice_sessions ps where ps.material_id = m.id
-              order by ps.started_at desc, ps.seq desc limit 1) as session_status
-       from materials m left join subjects s on s.id = m.subject_id
+  const materials = await db.query<MaterialViewRow>(
+    `${VIEW_SELECT}
       where m.learner_id = $1 and m.archived_at is null and m.merged_into is null
         -- Pages she is still attaching are not in her library yet (issue #56).
         and (m.status <> 'awaiting_upload' or m.send_requested_at is not null)

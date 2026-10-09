@@ -11,7 +11,7 @@ import { StorageError } from '../../storage/gateway.js';
 import { emitEvent } from '../buddy/events.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { formsOn, insertItems, samePrompt } from '../practice/items.js';
-import { enqueueJob, finishJob, type JobRow } from '../scheduler/jobs.js';
+import { finishJob, type JobRow } from '../scheduler/jobs.js';
 import { MOST_READINGS, MOST_UNCLEAR_SPOTS, moreRules, type PageReport } from './extract.js';
 import { intoHelpSession } from './helpSession.js';
 import { attachConceptImages } from './images.js';
@@ -19,6 +19,7 @@ import { partPrompts, unseenTasks } from './partTasks.js';
 import { indexMaterialPassages } from './passages.js';
 import { filesWhollyIn } from './pdf.js';
 import { loadPhotos } from './photos.js';
+import { enqueuePhotoPurge } from './purge.js';
 import { sheetReader } from './reader.js';
 import { fail, holdsLease, retryTransient } from './readingJob.js';
 import { sheetQuestions } from './sheetQuestions.js';
@@ -412,13 +413,11 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       now,
       { questions: items.length, ...(target ? { root_id: home.id } : {}) },
     );
-    await enqueueJob(tx, {
+    await enqueuePhotoPurge(tx, {
       learnerId: current.learner_id,
-      kind: 'purge_photos',
+      materialId,
       // A corrected test's photos (a grade on them) go right after the reading (#259).
       runAt: new Date(now.getTime() + photoRetentionMs(x.source)),
-      dedupeKey: `purge:${materialId}`,
-      payload: { material_id: materialId },
     });
     // A photo of something else among the pages (a letter, a recipe) is not kept at all,
     // like a whole sheet that is not learning material (docs/privacy.md).
@@ -427,12 +426,12 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     // retention like the rest.
     const foreignFiles = filesWhollyIn(photos, new Set(foreign.map((p) => p.page)));
     if (foreignFiles.length > 0) {
-      await enqueueJob(tx, {
+      await enqueuePhotoPurge(tx, {
         learnerId: current.learner_id,
-        kind: 'purge_photos',
+        materialId,
         runAt: now,
-        dedupeKey: `purge:${materialId}:not_material`,
-        payload: { material_id: materialId, positions: foreignFiles },
+        reason: 'not_material',
+        positions: foreignFiles,
       });
     }
     await bumpContext(tx, current.learner_id);

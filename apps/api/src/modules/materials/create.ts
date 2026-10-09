@@ -9,6 +9,12 @@ import { bumpContext } from '../buddy/plan.js';
 import { PDF_MIME } from './pdf.js';
 import { materialView } from './view.js';
 
+/** Where one uploaded page is stored: under her account, the material and its position. */
+function photoPath(accountId: string, materialId: string, position: number, mime: string): string {
+  const ext = mime === 'image/png' ? 'png' : mime === PDF_MIME ? 'pdf' : 'jpg';
+  return `${accountId}/${materialId}/${position}.${ext}`;
+}
+
 export async function createMaterial(
   deps: Deps,
   learner: { id: string; account_id: string },
@@ -114,10 +120,9 @@ export async function createMaterial(
       await bumpContext(tx, learner.id);
     }
     for (const [position, mime] of input.photo_mimes.entries()) {
-      const ext = mime === 'image/png' ? 'png' : mime === PDF_MIME ? 'pdf' : 'jpg';
       await tx.query(
         `insert into material_photos (material_id, position, storage_path, mime) values ($1, $2, $3, $4)`,
-        [row.id, position, `${learner.account_id}/${row.id}/${position}.${ext}`, mime],
+        [row.id, position, photoPath(learner.account_id, row.id, position, mime), mime],
       );
     }
     return row.id;
@@ -141,11 +146,10 @@ export async function createMaterial(
     if (m.status !== 'awaiting_upload' || input.photo_mimes.length <= m.photo_count) return;
     for (const [position, mime] of input.photo_mimes.entries()) {
       if (position < m.photo_count) continue;
-      const ext = mime === 'image/png' ? 'png' : mime === PDF_MIME ? 'pdf' : 'jpg';
       await tx.query(
         `insert into material_photos (material_id, position, storage_path, mime)
          values ($1, $2, $3, $4) on conflict (material_id, position) do nothing`,
-        [material, position, `${learner.account_id}/${material}/${position}.${ext}`, mime],
+        [material, position, photoPath(learner.account_id, material, position, mime), mime],
       );
     }
     await tx.query(`update materials set photo_count = $2 where id = $1`, [

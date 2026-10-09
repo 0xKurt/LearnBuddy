@@ -9,6 +9,7 @@ import { AppError } from '../../lib/errors.js';
 import { StorageError } from '../../storage/gateway.js';
 import { bumpContext } from '../buddy/plan.js';
 import { enqueueJob } from '../scheduler/jobs.js';
+import { enqueuePhotoPurge } from './purge.js';
 import { MAX_PAGES, MAX_PDF_BYTES, PDF_MIME, pdfPageCount } from './pdf.js';
 import type { MaterialRow } from './view.js';
 
@@ -28,12 +29,11 @@ export async function submitMaterial(
   if (!m) throw new AppError('not_found', 'Material not found');
   if (m.archived_at) {
     // Deleted while the photos were on their way: whatever arrived goes now.
-    await enqueueJob(deps.db, {
+    await enqueuePhotoPurge(deps.db, {
       learnerId,
-      kind: 'purge_photos',
+      materialId,
       runAt: deps.now(),
-      dedupeKey: `purge:${materialId}:submitted:${deps.now().toISOString()}`,
-      payload: { material_id: materialId },
+      reason: `submitted:${deps.now().toISOString()}`,
     });
     throw new AppError('not_found', 'Material not found');
   }
@@ -52,20 +52,10 @@ export async function submitMaterial(
   try {
     present = await deps.storage.existing(photos.map((p) => p.storage_path));
   } catch (err) {
-    // Storage could not say: never tell her the photos did not arrive (rule 5).
-    if (err instanceof StorageError)
-      throw new AppError('unavailable', 'Photo storage is not reachable', {
-        reason: 'storage_unavailable',
-      });
-    throw err;
+    storageDown(err);
   }
   const missing = photos.filter((p) => !present.has(p.storage_path)).map((p) => p.position);
-  if (missing.length > 0) {
-    throw new AppError('invalid_input', 'Some photos did not arrive', {
-      reason: 'photos_missing',
-      missing,
-    });
-  }
+  if (missing.length > 0) throw photosMissing(missing);
   const pages = await countPdfPages(deps, learnerId, materialId);
   const now = deps.now();
   return deps.db.tx(async (tx) => {
@@ -94,6 +84,23 @@ export async function submitMaterial(
   });
 }
 
+/** Storage could not say: never tell her the photos did not arrive (rule 5). */
+function storageDown(err: unknown): never {
+  if (err instanceof StorageError)
+    throw new AppError('unavailable', 'Photo storage is not reachable', {
+      reason: 'storage_unavailable',
+    });
+  throw err;
+}
+
+/** The pages at these positions never reached Storage: she can send them again. */
+function photosMissing(missing: number[]): AppError {
+  return new AppError('invalid_input', 'Some photos did not arrive', {
+    reason: 'photos_missing',
+    missing,
+  });
+}
+
 /**
  * The pages of the uploaded files: a photo is one page, a PDF as many as it has. A file
  * that is not a readable PDF, PDFs too large for the model call, or more than 20 pages
@@ -118,18 +125,9 @@ async function countPdfPages(
     try {
       bytes = await deps.storage.download(f.storage_path);
     } catch (err) {
-      if (err instanceof StorageError)
-        throw new AppError('unavailable', 'Photo storage is not reachable', {
-          reason: 'storage_unavailable',
-        });
-      throw err;
+      storageDown(err);
     }
-    if (!bytes) {
-      throw new AppError('invalid_input', 'Some photos did not arrive', {
-        reason: 'photos_missing',
-        missing: [f.position],
-      });
-    }
+    if (!bytes) throw photosMissing([f.position]);
     bytesTotal += bytes.length;
     if (bytesTotal > MAX_PDF_BYTES) {
       refusal = { reason: 'file_too_large', details: { max_mb: MAX_PDF_BYTES / 1024 / 1024 } };
@@ -154,13 +152,7 @@ async function countPdfPages(
       [materialId, deps.now()],
     );
     if (set.length === 0) return;
-    await enqueueJob(tx, {
-      learnerId,
-      kind: 'purge_photos',
-      runAt: deps.now(),
-      dedupeKey: `purge:${materialId}:refused`,
-      payload: { material_id: materialId },
-    });
+    await enqueuePhotoPurge(tx, { learnerId, materialId, runAt: deps.now(), reason: 'refused' });
   });
   throw new AppError('invalid_input', 'These files cannot be read as one material', {
     reason: refusal.reason,
@@ -267,12 +259,11 @@ export async function abandonStaleUploads(deps: Deps): Promise<number> {
       [now, cutoff],
     );
     for (const m of [...sent, ...neverSent]) {
-      await enqueueJob(tx, {
+      await enqueuePhotoPurge(tx, {
         learnerId: m.learner_id,
-        kind: 'purge_photos',
+        materialId: m.id,
         runAt: now,
-        dedupeKey: `purge:${m.id}:abandoned`,
-        payload: { material_id: m.id },
+        reason: 'abandoned',
       });
     }
     // Only the sheets that stay change what Buddy sees (rule 4).

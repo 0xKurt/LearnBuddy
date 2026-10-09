@@ -42,32 +42,36 @@ export type MaterialRow = {
  * for `run = 'speak'` — so the offer the card makes and what the run then holds can never
  * disagree (the same reason `offersCardPass` lives in one place).
  */
-export const SPEAK_COUNT = `(select count(*) from items i
+const SPEAK_COUNT = `(select count(*) from items i
    where i.material_id = m.id and i.archived_at is null
      and i.kind = 'speak' and i.origin <> 'homework')::int`;
 
-export async function materialView(
-  db: Db,
-  learnerId: string,
-  materialId: string,
-): Promise<MaterialView> {
-  const m = await db.maybeOne<
-    MaterialRow & {
-      subject_name: string | null;
-      item_count: number;
-      speak_count: number;
-      session_id: string | null;
-      session_status: MaterialView['session_status'];
-    }
-  >(
-    `select m.*, s.name as subject_name,
+/** A material row with what its card shows besides: subject, question counts, latest session. */
+export type MaterialViewRow = MaterialRow & {
+  subject_name: string | null;
+  item_count: number;
+  speak_count: number;
+  session_id: string | null;
+  session_status: MaterialView['session_status'];
+};
+
+/** The one query behind every card (`MaterialViewRow`); the caller adds `where` and order. */
+export const VIEW_SELECT = `select m.*, s.name as subject_name,
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count,
             ${SPEAK_COUNT} as speak_count,
             (select ps.id from practice_sessions ps where ps.material_id = m.id
               order by ps.started_at desc, ps.seq desc limit 1) as session_id,
             (select ps.status from practice_sessions ps where ps.material_id = m.id
               order by ps.started_at desc, ps.seq desc limit 1) as session_status
-       from materials m left join subjects s on s.id = m.subject_id
+       from materials m left join subjects s on s.id = m.subject_id`;
+
+export async function materialView(
+  db: Db,
+  learnerId: string,
+  materialId: string,
+): Promise<MaterialView> {
+  const m = await db.maybeOne<MaterialViewRow>(
+    `${VIEW_SELECT}
       where m.id = $1 and m.learner_id = $2 and m.archived_at is null`,
     [materialId, learnerId],
   );
@@ -75,15 +79,7 @@ export async function materialView(
   return toView(m);
 }
 
-export function toView(
-  m: MaterialRow & {
-    subject_name: string | null;
-    item_count: number;
-    speak_count: number;
-    session_id: string | null;
-    session_status: MaterialView['session_status'];
-  },
-): MaterialView {
+export function toView(m: MaterialViewRow): MaterialView {
   return {
     id: m.id,
     title: m.title,

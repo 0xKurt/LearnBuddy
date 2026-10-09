@@ -68,6 +68,26 @@ async function queueImageDeletions(db: Db, paths: string[], now: Date): Promise<
   }
 }
 
+/**
+ * Plans the deletion of a material's photos at `runAt`: all of them, or only `positions`.
+ * `reason` keeps the occasions apart, one job each; without one it is the retention purge
+ * after the reading (or the failure) that every material gets once.
+ */
+export async function enqueuePhotoPurge(
+  db: Db,
+  o: { learnerId: string; materialId: string; runAt: Date; reason?: string; positions?: number[] },
+): Promise<void> {
+  await enqueueJob(db, {
+    learnerId: o.learnerId,
+    kind: 'purge_photos',
+    runAt: o.runAt,
+    dedupeKey: o.reason ? `purge:${o.materialId}:${o.reason}` : `purge:${o.materialId}`,
+    payload: o.positions
+      ? { material_id: o.materialId, positions: o.positions }
+      : { material_id: o.materialId },
+  });
+}
+
 /** Plans the erasure of a deleted material's content (and of its merged pages). */
 export async function enqueueContentPurge(
   db: Db,
@@ -239,12 +259,11 @@ export async function sweepForgottenPhotos(deps: Deps): Promise<number> {
       [retention],
     );
     for (const m of rows) {
-      await enqueueJob(tx, {
+      await enqueuePhotoPurge(tx, {
         learnerId: m.learner_id,
-        kind: 'purge_photos',
+        materialId: m.id,
         runAt: now,
-        dedupeKey: `purge:${m.id}:sweep:${now.toISOString()}`,
-        payload: { material_id: m.id },
+        reason: `sweep:${now.toISOString()}`,
       });
     }
     return rows.length;

@@ -5,8 +5,7 @@ import type { Deps } from '../../deps.js';
 import type { Db } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
 import { bumpContext } from '../buddy/plan.js';
-import { enqueueJob } from '../scheduler/jobs.js';
-import { enqueueContentPurge, UPLOAD_URL_TTL_MS } from './purge.js';
+import { enqueueContentPurge, enqueuePhotoPurge, UPLOAD_URL_TTL_MS } from './purge.js';
 
 /**
  * "Blatt löschen" (D-7): the sheet and the pages added to it are gone for her at once —
@@ -57,19 +56,12 @@ export async function archiveMaterial(
     for (const id of ids) {
       // Deleted by the learner: the photos go now, not after the retention period, and
       // once more when no upload URL can deliver a late photo any more.
-      await enqueueJob(tx, {
+      await enqueuePhotoPurge(tx, { learnerId, materialId: id, runAt: now, reason: 'archived' });
+      await enqueuePhotoPurge(tx, {
         learnerId,
-        kind: 'purge_photos',
-        runAt: now,
-        dedupeKey: `purge:${id}:archived`,
-        payload: { material_id: id },
-      });
-      await enqueueJob(tx, {
-        learnerId,
-        kind: 'purge_photos',
+        materialId: id,
         runAt: new Date(now.getTime() + UPLOAD_URL_TTL_MS),
-        dedupeKey: `purge:${id}:late`,
-        payload: { material_id: id },
+        reason: 'late',
       });
     }
     await enqueueContentPurge(tx, learnerId, { materialId }, now);

@@ -8,7 +8,7 @@ import { LlmError } from '../../llm/gateway.js';
 import { StorageError } from '../../storage/gateway.js';
 import { bumpContext } from '../buddy/plan.js';
 import { insertItems, samePrompt } from '../practice/items.js';
-import { finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
+import { backoffMs, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { clarifiedRules, moreRules } from './extract.js';
 import { intoHelpSession } from './helpSession.js';
 import { loadPhotos } from './photos.js';
@@ -196,7 +196,7 @@ async function retryClarification(
   if (job.attempts < job.max_attempts) {
     await deps.db.tx(async (tx) => {
       await retryJob(tx, job, {
-        runAt: new Date(now.getTime() + 60_000 * 2 ** Math.max(0, job.attempts - 1)),
+        runAt: new Date(now.getTime() + backoffMs(job.attempts)),
         error,
         countAttempt: true,
         now,
