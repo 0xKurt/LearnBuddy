@@ -137,3 +137,15 @@ describe('answerUpTo — the answer as it stands after the first n questions (is
     expect(answerUpTo('{"actions": [{"items": [{"prompt": "x"}]}]}', 'items', 1)).toBeNull();
   });
 });
+
+describe('one scanner for a first-level key (#311)', () => {
+  // The string and the array readers share how they find `"key":`. One difference stays as it
+  // was before they were merged: a bracket outside every object ends the search for an array,
+  // and a string field is still read behind it.
+  it('reads a string behind an outer bracket, never an array', () => {
+    const raw = 'Text [x] {"key": "y", "items": [{"a":1}]}';
+    expect(partialString(raw, 'key')).toEqual({ text: 'y', done: true });
+    expect(partialArray(raw, 'items')).toEqual([]);
+    expect(answerUpTo(raw, 'items', 1)).toBeNull();
+  });
+});

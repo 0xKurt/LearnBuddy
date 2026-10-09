@@ -5,7 +5,6 @@ import {
   choiceNamed,
   compareWithKeys,
   differentNumber,
-  editDistance,
   noSingleSolution,
   ruleCheck,
   typoShape,
@@ -15,6 +14,7 @@ import {
   type ItemForCheck,
   type RuleVerdict,
 } from '../evaluate.js';
+import { editDistance } from '../osa.js';
 
 const base: ItemForCheck = {
   kind: 'short',

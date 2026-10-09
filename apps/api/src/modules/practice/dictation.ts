@@ -34,6 +34,7 @@ import { z } from 'zod';
 
 import { t, type MessageKey } from '../../i18n/index.js';
 import { itemsOneByOne, type StoredItem } from './items.js';
+import { osaTable } from './osa.js';
 
 // ─────────────── generating ───────────────
 
@@ -223,29 +224,15 @@ type Op<T> =
   | { op: 'swap'; i: number; j: number };
 
 /**
- * The edit script from `a` (the key) to `b` (hers), first difference first. Optimal string
- * alignment: insert, delete, replace, and two neighbours swapped. Ties prefer keeping things in
- * place (same/sub), then a deletion — so "Schwimen" for "Schwimmen" reads as one m missing.
+ * The edit script from `a` (the key) to `b` (hers), first difference first, read back out of the
+ * optimal-string-alignment table (`osa.ts`). Ties prefer keeping things in place (same/sub), then
+ * a deletion — so "Schwimen" for "Schwimmen" reads as one m missing.
  */
 function align<T>(a: readonly T[], b: readonly T[], eq: (x: T, y: T) => boolean): Op<T>[] {
-  const n = a.length;
-  const m = b.length;
-  const d: number[][] = Array.from({ length: n + 1 }, (_, i) =>
-    Array.from({ length: m + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
-  );
-  for (let i = 1; i <= n; i++) {
-    for (let j = 1; j <= m; j++) {
-      const cost = eq(a[i - 1]!, b[j - 1]!) ? 0 : 1;
-      let v = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + cost);
-      if (i > 1 && j > 1 && eq(a[i - 1]!, b[j - 2]!) && eq(a[i - 2]!, b[j - 1]!) && cost === 1) {
-        v = Math.min(v, d[i - 2]![j - 2]! + 1);
-      }
-      d[i]![j] = v;
-    }
-  }
+  const d = osaTable(a, b, eq);
   const ops: Op<T>[] = [];
-  let i = n;
-  let j = m;
+  let i = a.length;
+  let j = b.length;
   while (i > 0 || j > 0) {
     const here = d[i]![j]!;
     if (i > 0 && j > 0 && eq(a[i - 1]!, b[j - 1]!) && here === d[i - 1]![j - 1]!) {

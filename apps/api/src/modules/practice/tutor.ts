@@ -37,7 +37,7 @@ export const TutorDecision = z.object({
   revealed_answer: z.boolean().describe('true if the reply states the solution'),
   // The same bit, with the same two-sided description, as the Buddy turn's (registry.ts,
   // #225): one side alone is what went wrong there. Lenient when parsing — older scripted
-  // answers have no such field — and read by code only (answer.ts, issue #389).
+  // answers have no such field — and read by code only (answerTutor.ts, issue #389).
   concern: z
     .boolean()
     .default(false)
@@ -52,7 +52,7 @@ export type TutorDecision = z.infer<typeof TutorDecision>;
  *
  * Es ist DERSELBE Aufruf, nicht ein zweiter: eine Antwort kostet einen Tutor-Aufruf, ob die
  * Aufgabe zwei Pflichtelemente hat oder sechs. Nur das Schema unterscheidet sich, und nur für
- * eine Frage, die eine Rubrik hat (`answer.ts`) — eine gewöhnliche Frage trägt das Feld nicht
+ * eine Frage, die eine Rubrik hat (`answerTutor.ts`) — eine gewöhnliche Frage trägt das Feld nicht
  * und bezahlt es also auch nicht mit Ausgabe-Tokens.
  *
  * `elements` ist hier PFLICHT, nicht voreingestellt: wer nach Elementen gefragt wird, soll sie
