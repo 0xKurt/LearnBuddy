@@ -32,9 +32,10 @@ export function QuestionTools({ item, sessionId, hearWord, heard, markHeard, dis
     // Hörverstehen (issue #210): the text is heard, not read, so the way to hear it stands in
     // the same row as every other "read this aloud" — and it stays after the question closes,
     // next to the words of it, because listening again while reading is how it is reviewed.
+    // Keyed by the question (#513): moving on unmounts it, and that stops a text still playing.
     item.listen && item.kind !== 'spelling_dictation' ? (
       <ListenButton
-        key="hear"
+        key={`hear-${item.id}`}
         source={{
           item: { sessionId, itemId: item.id, onHeard: () => markHeard(item.listen?.ref) },
         }}

@@ -4,7 +4,7 @@
 // not be made is said and leaves it ready again; "Langsam" is the same listening, sharing its state.
 // requires live verification in Claude Code session (the sound itself: expo-audio, the phone's voice and the request are replaced here)
 
-import type { HeardTones } from '@learnbuddy/shared-types/contracts';
+import type { HeardTones, ItemView } from '@learnbuddy/shared-types/contracts';
 import { act, fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -79,6 +79,7 @@ vi.mock('../../../lib/toast.js', async (importOriginal) => ({
 }));
 
 const { ListenButton } = await import('../ListenButton.js');
+const { QuestionTools } = await import('../QuestionTools.js');
 const { renderInApp } = await import('../../../testing/render.js');
 
 const THIRD: HeardTones = {
@@ -277,5 +278,56 @@ describe('ListenButton: a recording (Hörtext #210, Diktat #242)', () => {
     await answer();
     expect(played).toEqual([]);
     expect(released).toEqual(['file://normal']);
+  });
+});
+
+describe('QuestionTools: the Hörtext of one question (#513)', () => {
+  // Three questions about one recording share its ref (`ListenRef`); each is still its own question.
+  const question = (id: string): ItemView => ({
+    id,
+    kind: 'short',
+    prompt: 'Wohin fährt Lea?',
+    choices: null,
+    unit: null,
+    topic: 'Hörverstehen',
+    origin: 'typed',
+    lang: 'de',
+    prompt_lang: 'de',
+    subject_kind: null,
+    figure: null,
+    choice_figures: null,
+    image: null,
+    tap_choices: null,
+    surface: null,
+    tap: false,
+    task_view: null,
+    listen: { ref: 'h1' },
+    tones: null,
+    passage: null,
+    task_part: null,
+    read_aloud: false,
+  });
+  const tools = (id: string) => (
+    <QuestionTools
+      item={question(id)}
+      sessionId="s1"
+      hearWord={false}
+      heard={() => false}
+      markHeard={() => undefined}
+      disabled={false}
+    />
+  );
+
+  it('stops the text when she moves on to the next question', async () => {
+    const view = renderInApp(tools('i1'));
+    tap('Anhören');
+    await act(async () => {
+      asked.at(-1)?.answer(true);
+      await Promise.resolve();
+    });
+    act(() => played[0]?.onStart());
+    view.rerender(tools('i2'));
+    expect(played[0]?.stopped).toBe(1);
+    expect(button('Anhören')).toBeTruthy();
   });
 });
