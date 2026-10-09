@@ -29,6 +29,7 @@ import {
   speakMimeForFile,
   type SpeakMime,
 } from './voice.js';
+import { useMounted } from '../useMounted.js';
 import { levelFromDb } from './level.js';
 import { START_DEADLINE_MS, startTimedOut } from './startDeadline.js';
 
@@ -154,7 +155,7 @@ export function useRecording({ onRecorded, onFailed, onChunk, maxMs = MAX_RECORD
   /** Cancelled while still asking for the mic / preparing: it must not start recording. */
   const cancelled = useRef(false);
   const limit = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mounted = useRef(true);
+  const mounted = useMounted();
   const handlers = useRef<Handlers>({ onRecorded, onFailed, onChunk });
   handlers.current = { onRecorded, onFailed, onChunk };
   const maxRef = useRef(maxMs);
@@ -471,14 +472,13 @@ export function useRecording({ onRecorded, onFailed, onChunk, maxMs = MAX_RECORD
     return () => sub.remove();
   }, [finish]);
 
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
+  useEffect(
+    () => () => {
       cancelled.current = true;
       void finish(false);
-    };
-  }, [finish]);
+    },
+    [finish],
+  );
 
   return {
     phase,

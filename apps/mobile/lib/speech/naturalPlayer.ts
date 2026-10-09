@@ -6,11 +6,8 @@
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 import { Platform } from 'react-native';
 
+import type { ListenEnd, PlayHandle } from './pipeline.js';
 import { playbackProgress } from './readAloud.js';
-
-export type PlayEnd = 'done' | 'stopped' | 'error';
-
-export type PlayHandle = { stop: () => void };
 
 /** No sound after this long: the audio did not start (blocked, broken file). */
 const START_TIMEOUT_MS = 5000;
@@ -24,7 +21,7 @@ export function playAudio(
   on: {
     onStart: () => void;
     onProgress: (progress: number | null) => void;
-    onEnd: (why: PlayEnd) => void;
+    onEnd: (why: ListenEnd) => void;
   },
 ): PlayHandle {
   if (!audioModeSet && Platform.OS !== 'web') {
@@ -45,7 +42,7 @@ export function playAudio(
   let lastMove = Date.now();
   const opened = Date.now();
 
-  const finish = (why: PlayEnd) => {
+  const finish = (why: ListenEnd) => {
     if (over) return;
     over = true;
     clearInterval(timer);

@@ -16,21 +16,16 @@
 
 import { audioUri, releaseAudio } from '../speech/naturalAudio.js';
 import { playAudio } from '../speech/naturalPlayer.js';
+import type { ListenEnd, PlayHandle } from '../speech/pipeline.js';
 import { wavOfLine, wavOfPitch } from './tone.js';
 import type { Pitch, StaffBars } from '@learnbuddy/shared-types/contracts';
-
-/** Was von einem laufenden Ton bleibt: die Möglichkeit, ihn abzubrechen. */
-export type NotePlayback = { stop: () => void };
-
-/** Wie eine Wiedergabe geendet hat — `error` heißt, es war nichts zu hören. */
-export type PlayEnd = 'done' | 'stopped' | 'error';
 
 /**
  * Nur EINE Wiedergabe gleichzeitig, und das ist eine Entscheidung: zwei übereinander gelegte
  * Zeilen sind ein Akkord, und Mehrstimmigkeit ist ausdrücklich draußen (`contracts/staff.ts`).
  * Ein neuer Tipp während eines Tons ersetzt ihn also, statt dazuzukommen.
  */
-let current: { handle: NotePlayback; uri: string } | null = null;
+let current: { handle: PlayHandle; uri: string } | null = null;
 
 function stopCurrent(): void {
   if (current === null) return;
@@ -45,7 +40,7 @@ export function stopNotes(): void {
   stopCurrent();
 }
 
-function play(base64: string, onEnd?: (why: PlayEnd) => void): NotePlayback {
+function play(base64: string, onEnd?: (why: ListenEnd) => void): PlayHandle {
   stopCurrent();
   let uri: string;
   try {
@@ -55,7 +50,7 @@ function play(base64: string, onEnd?: (why: PlayEnd) => void): NotePlayback {
     onEnd?.('error');
     return { stop: () => undefined };
   }
-  const mine = { handle: { stop: () => undefined } as NotePlayback, uri };
+  const mine = { handle: { stop: () => undefined } as PlayHandle, uri };
   const handle = playAudio(uri, {
     onStart: () => undefined,
     onProgress: () => undefined,
@@ -74,8 +69,8 @@ function play(base64: string, onEnd?: (why: PlayEnd) => void): NotePlayback {
 export function playLine(
   bars: StaffBars,
   tempo: number,
-  onEnd?: (why: PlayEnd) => void,
-): NotePlayback {
+  onEnd?: (why: ListenEnd) => void,
+): PlayHandle {
   return play(wavOfLine(bars, tempo), onEnd);
 }
 
@@ -84,6 +79,6 @@ export function playLine(
  * (issue #226: „Bei jedem Tipp spielt die Note sofort"). Sie hört damit, ob die Linie, die sie
  * getroffen hat, die gemeinte ist, bevor irgendjemand ein Urteil fällt.
  */
-export function playPitch(pitch: Pitch): NotePlayback {
+export function playPitch(pitch: Pitch): PlayHandle {
   return play(wavOfPitch(pitch));
 }

@@ -2702,7 +2702,10 @@ spielt sie mit ihrer eigenen Synthese (`lib/music/tone.ts`, Dreieck mit Hüllkur
 (`components/practice/useListenToggle.ts`): „Anhören" in der Werkzeugreihe unter der Frage
 (`QuestionTools`, `ListenButton` mit `tones`). Derselbe Hook spielt jetzt auch die gezeichnete
 Zeile (`StaffPlayButton`, die Taste in `StaffKeys`); die Kopie `useStaffPlay` ist weg
-(`lib/__tests__/oneListen.test.ts`). Der Bibliotheks-Check (#445): Tone.js hat keinen
+(`lib/__tests__/oneListen.test.ts`). Den Spielzustand selbst (angefragt / klingt, Anhalten beim
+Verlassen, ein Satz statt Stille) hält seit #311 (Schnitt 6) genau ein Hook,
+`lib/speech/usePlayback.ts` — unter `useListenToggle` und unter dem Hörtext/Diktat (`useHearText`);
+Buddys eigene Stimme (Nachricht vorlesen, Stimmprobe) bleibt beim `voiceStore`. Der Bibliotheks-Check (#445): Tone.js hat keinen
 React-Native-Weg, Web-Audio-Synthese bräuchte auf dem Handy `react-native-audio-api` als zweite
 Strecke, die der Browser-Walkthrough nicht prüfen kann; die eigene Synthese kostet keine neue
 Abhängigkeit und ist im Node-Test nachgemessen. Offen: der Gerätetest des Tons (auf dem Handy
