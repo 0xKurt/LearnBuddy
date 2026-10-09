@@ -12,6 +12,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { FigureSizingReport } from '../../lib/math/figureSizing.js';
 import { speakMathText } from '../../lib/math/speak.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { RADIUS } from '../../lib/theme/radius.js';
@@ -42,9 +43,12 @@ export function ZoomableFigure({ figure, maxHeight, folded = false }: Props) {
     <Zoomable
       label={label}
       large={
-        <View style={{ alignSelf: 'stretch' }}>
-          <FigureView figure={figure} />
-        </View>
+        // The viewer is not the card: its drawing sizing itself is nothing the card waits for.
+        <FigureSizingReport.Provider value={null}>
+          <View style={{ alignSelf: 'stretch' }}>
+            <FigureView figure={figure} />
+          </View>
+        </FigureSizingReport.Provider>
       }
     >
       {folded ? <FoldedFigure /> : <FigureView figure={figure} maxHeight={maxHeight} />}

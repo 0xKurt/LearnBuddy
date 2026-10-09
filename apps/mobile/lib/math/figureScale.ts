@@ -9,6 +9,8 @@
 // produces is measured again, so more room gives the figure its full size back
 // without a second measurement, and less room shrinks it without one either.
 
+// Imported by path: the mobile bundle takes only this dependency-free module of shared-math.
+import { CHART_WIDTH, isChart } from '../../../../packages/shared-math/src/charts.js';
 import { SPACE } from '../theme/space.js';
 
 /** Never smaller than this: below it the drawing stops being readable. */
@@ -40,12 +42,37 @@ export function naturalFigureHeight(fullHeight: number, measured: number): numbe
 
 /**
  * How much the drawing is shrunk: 1 until the natural height is known, 1 while it
- * fits, and otherwise exactly the share of the room it has — derived, never stored.
+ * fits, and otherwise exactly the share of the room it has — derived, never stored —
+ * but never below `least` (`leastFigureScale`).
  */
-export function figureScale(fullHeight: number, maxHeight: number | undefined): number {
+export function figureScale(
+  fullHeight: number,
+  maxHeight: number | undefined,
+  least = MIN_FIGURE_SCALE,
+): number {
   return fullHeight > 0 && maxHeight && fullHeight > maxHeight + SLACK
-    ? Math.max(MIN_FIGURE_SCALE, maxHeight / fullHeight)
+    ? Math.max(least, maxHeight / fullHeight)
     : 1;
+}
+
+/**
+ * The least a drawing `width` wide (its frame included) may be shrunk to. A chart read off its
+ * axes keeps `CHART_WIDTH`: every label rule the API checks a chart against is measured at that
+ * width (packages/shared-math/src/charts.ts). Below it the labels run into each other — the
+ * climate chart, answered, stood at 0.4, its month initials on top of each other ("JMMJASOND",
+ * issue #501) — and narrower did not even make it shorter: its height has a floor of its own. A
+ * pie is read from its legend, not off an axis: it shrinks like any drawing. The half pixel lets
+ * `figureBodyWidth`'s rounding down land on the width, not one below it. Any other drawing:
+ * `MIN_FIGURE_SCALE`.
+ */
+export function leastFigureScale(
+  figure: { type: string },
+  width: number,
+  chrome = FIGURE_CHROME,
+): number {
+  const room = width - chrome;
+  if (!isChart(figure) || figure.type === 'pie_chart' || room <= 0) return MIN_FIGURE_SCALE;
+  return Math.min(1, Math.max(MIN_FIGURE_SCALE, (CHART_WIDTH + 0.5) / room));
 }
 
 /** The padding on each side of a bare figure (an answer option's picture: the option card is its frame). */

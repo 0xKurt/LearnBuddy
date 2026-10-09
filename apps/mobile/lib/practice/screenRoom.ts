@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { View } from 'react-native';
 
 import { answerFolds, formDensity } from '../keyboard.js';
+import { useFigureSizing } from '../math/figureSizing.js';
 import { useVisibleHeight } from '../useVisibleHeight.js';
 import { boardKeeps, threadRoom, type Room } from './threadRoom.js';
 import { visualCaps, visualGrows, visualReach } from './visuals.js';
@@ -68,6 +69,16 @@ export function useScreenRoom() {
   const endRef = useRef<View>(null);
   /** The growth the card was given in the last layout (its minHeight now). */
   const granted = useRef(0);
+  /**
+   * The card's own drawing still sizes itself (`figureSizing`, issue #501): its height then holds
+   * the drawing's placeholder, not its own. Taken as its own height, the card grew from a number
+   * 200 pt too small, and how far depended on which measurement landed first — a dark shot of
+   * the Hunderterfeld stood grown in one run and not in the next.
+   */
+  const figures = useFigureSizing();
+  /** The card's box, read once its drawing has its size (below); what to do with a height. */
+  const cardRef = useRef<View>(null);
+  const cardMeasured = useRef<{ key: string; onCard: (h: number) => void } | null>(null);
   // Where the content ends, read after every render (issue #402). The mark's own layout event
   // missed it on the web, which reports a change of SIZE only (a ResizeObserver): a mark of height
   // 0 that moved up when the answer folded away left a stale overrun, and the conversation, given
@@ -89,6 +100,10 @@ export function useScreenRoom() {
       );
     threadRef.current?.measure((_x, _y, _w, h) => setThreadBox(Math.round(h)));
     freeRef.current?.measure((_x, _y, _w, h) => setFreeSpace(Math.round(h)));
+    // The card's own height, once more when its drawing stops sizing itself: the drawing may end
+    // at the height its frame already had, and then no layout event of the card follows.
+    if (!figures.sizing && cardMeasured.current && natural?.key !== cardMeasured.current.key)
+      cardRef.current?.measure((_x, _y, _w, h) => cardMeasured.current?.onCard(Math.round(h)));
   });
 
   function layout(q: Question): Room & {
@@ -167,6 +182,19 @@ export function useScreenRoom() {
       reads,
     });
     granted.current = shared.cardGrowTo;
+    const onCard = (h: number) => {
+      setCardHeight(h);
+      // Its own height before it grows: measured only while it has no minHeight. (While it
+      // shrinks back its height lags a render behind; taking that as its own height made it
+      // never give the room back. A picture that loads while it is grown pushes the column
+      // past its end — the overrun takes the growth away, and then it measures itself again.)
+      // Not while its drawing sizes itself: that is the drawing's placeholder (#501).
+      if (shared.cardGrowTo === 0 && !figures.sizing)
+        setNatural((now) =>
+          now?.key === naturalKey && now.height === h ? now : { key: naturalKey, height: h },
+        );
+    };
+    cardMeasured.current = { key: naturalKey, onCard };
     return {
       ...shared,
       caps: visualCaps(viewHeight, shared.cardGrowTo),
@@ -174,19 +202,15 @@ export function useScreenRoom() {
       // ThreadBox rests its edge on any of them.
       tops: [...tops, ...partTops],
       readFrom: reads ? tops[tops.length - 1] : undefined,
-      onCard: (h) => {
-        setCardHeight(h);
-        // Its own height before it grows: measured only while it has no minHeight. (While it
-        // shrinks back its height lags a render behind; taking that as its own height made it
-        // never give the room back. A picture that loads while it is grown pushes the column
-        // past its end — the overrun takes the growth away, and then it measures itself again.)
-        if (shared.cardGrowTo === 0) setNatural({ key: naturalKey, height: h });
-      },
+      onCard,
     };
   }
 
   return {
     layout,
+    /** The card's box (`cardRef`) and where its drawings report their sizing (`figureSizing`). */
+    cardRef,
+    reportSizing: figures.report,
     questionContentHeight,
     setQuestionContentHeight,
     /** The conversation's box and the free room above the answer (`RoomPart`). */
