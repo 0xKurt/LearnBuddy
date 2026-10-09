@@ -26,6 +26,7 @@ import {
 import { deviceEnd } from './deviceEnd.js';
 import NetInfo from '@react-native-community/netinfo';
 
+import { useMounted } from '../useMounted.js';
 import { levelFromRecognizer } from './level.js';
 
 /** Locales that failed on the device during this app run: straight to the EU path next time. */
@@ -194,7 +195,7 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
   const locale = useRef('');
   const startedAt = useRef(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const mounted = useRef(true);
+  const mounted = useMounted();
   const h = useRef(handlers);
   h.current = handlers;
 
@@ -220,7 +221,6 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
   }, [setPhase]);
 
   useEffect(() => {
-    mounted.current = true;
     const sub = AppState.addEventListener('change', (s) => {
       if (s !== 'active' && mine.current) {
         interrupted.current = true;
@@ -228,7 +228,6 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
       }
     });
     return () => {
-      mounted.current = false;
       sub.remove();
       clearTimer();
       if (mine.current) ExpoSpeechRecognitionModule.abort();
