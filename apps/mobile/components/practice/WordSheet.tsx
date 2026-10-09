@@ -107,7 +107,7 @@ export function WordSheet({ word, sessionId, itemId, lang, onClose }: Props) {
           </Text>
         ) : null}
         {tried && !sending ? (
-          <View accessibilityLiveRegion="polite" style={{ gap: 4 }}>
+          <View accessibilityLiveRegion="polite" style={{ gap: SPACE.xs }}>
             <Text
               style={[
                 TYPE.body,
