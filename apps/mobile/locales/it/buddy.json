@@ -25,7 +25,6 @@
     "plan_step_repeat_weekdays": "D’accordo: {{title}} nei giorni di scuola alle {{time}}",
     "plan_step_repeat_weekly": "D’accordo: {{title}} ogni {{weekday}} alle {{time}}",
     "plan_step_repeat_until": " – fino al {{date}}",
-    "update_step_repeat_off": "Non arriva più regolarmente: {{title}}",
     "update_step_moved": "Spostato: {{title}} {{when}}",
     "update_step_skipped": "Saltato: {{title}}",
     "update_step_cancelled": "Annullato: {{title}}",
@@ -131,10 +130,8 @@
   "focus": {
     "label": "Stai lavorando su: {{what}}"
   },
-  "greeting": "Ciao {{name}}",
   "greeting_ask": "Cosa c'è in arrivo?",
   "intro": {
-    "title": "Sono Buddy.",
     "body": "Ti aiuto a prepararti per verifiche ed esami – senza stress. Dimmi cosa ti aspetta o mandami una foto della tua scheda."
   },
   "menu": {
@@ -295,7 +292,6 @@
     "end": "Termina",
     "speak": "Parla",
     "interrupt": "Interrompi e parla",
-    "short": "Parla",
     "photo": "Foto",
     "photo_label": "Mostra una foto",
     "tap_orb": "Tocca Buddy e ti ascolta.",

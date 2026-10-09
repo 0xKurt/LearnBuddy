@@ -25,7 +25,6 @@
     "plan_step_repeat_weekdays": "Agreed: {{title}} on school days at {{time}}",
     "plan_step_repeat_weekly": "Agreed: {{title}} every {{weekday}} at {{time}}",
     "plan_step_repeat_until": " – until {{date}}",
-    "update_step_repeat_off": "No longer a regular one: {{title}}",
     "update_step_moved": "Moved: {{title}} {{when}}",
     "update_step_skipped": "Skipped: {{title}}",
     "update_step_cancelled": "Cancelled: {{title}}",
@@ -131,10 +130,8 @@
   "focus": {
     "label": "You are working on: {{what}}"
   },
-  "greeting": "Hi {{name}}",
   "greeting_ask": "What's coming up?",
   "intro": {
-    "title": "I'm Buddy.",
     "body": "I help you get ready for tests and exams – without stress. Just tell me what's coming up, or send me a photo of your worksheet."
   },
   "menu": {
@@ -295,7 +292,6 @@
     "end": "End",
     "speak": "Speak",
     "interrupt": "Interrupt and speak",
-    "short": "Talk",
     "photo": "Photo",
     "photo_label": "Show a photo",
     "tap_orb": "Tap Buddy and he'll listen to you.",

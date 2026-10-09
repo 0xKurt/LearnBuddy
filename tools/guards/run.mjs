@@ -1,10 +1,11 @@
 // `pnpm guards` (issue #313, docs/engineering-guards.md): the guards that look at the whole
 // repository rather than one file — copies (jscpd) and dead code (knip), each against what main
-// has (base.mjs, issue #452), the guards' own tests, and the tests of the pre-push stamp (#455).
+// has (base.mjs, issue #452), unused texts (i18n-keys.mjs, #322), the guards' own tests, and the
+// tests of the pre-push stamp (#455).
 // The per-file guards (file size, tokens only, no raw Pressable) are ESLint rules and run with
 // `eslint`.
 //
-// All four run in parallel; each prints its own result. Part of `pnpm lint` (CI) and of the
+// All five run in parallel; each prints its own result. Part of `pnpm lint` (CI) and of the
 // pre-commit hook.
 
 import { spawn } from 'node:child_process';
@@ -20,6 +21,7 @@ const GUARDS = [
   ],
   ['Kopien (jscpd)', [join('tools', 'guards', 'clones.mjs')]],
   ['Toter Code (knip)', [join('tools', 'guards', 'knip.mjs')]],
+  ['Ungenutzte Texte (#322)', [join('tools', 'guards', 'i18n-keys.mjs')]],
 ];
 
 const started = Date.now();

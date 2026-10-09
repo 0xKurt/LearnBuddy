@@ -16,6 +16,7 @@ import tseslint from 'typescript-eslint';
 import { activeGrants, baseSha, GROWTH_DIR, measureFiles, withGrants } from './base.mjs';
 import plugin from './eslint-plugin.mjs';
 import { MAX_AGE_HOURS, staleHours } from './fresh-base.mjs';
+import { keysOf, unusedKeys } from './i18n-keys.mjs';
 import { growth, LISTS, TRAILER } from './no-growth.mjs';
 import { prBodyProblems } from './pr-body.mjs';
 import { scratchRepo } from './scratch-repo.mjs';
@@ -503,5 +504,47 @@ describe('PR text: USP point, library check, reuse (CLAUDE.md rule 16, #296)', (
     assert.equal(prBodyProblems(filled.replace('4 Ein ruhiger Screen', '7')).length, 1);
     assert.equal(prBodyProblems(filled.replace(/^.*Wiederverwendet.*$/m, '')).length, 1);
     assert.equal(prBodyProblems(null).length, 3);
+  });
+});
+
+describe('unused texts: every i18n key is named in product source (issue #322)', () => {
+  const app = (/** @type {Record<string, unknown>} */ tree) => keysOf(tree, 'library');
+  const paths = (/** @type {{ path: string }[]} */ keys) => keys.map((k) => k.path);
+
+  it('reports a key no source names, in the app and in the API', () => {
+    const keys = app({ title: 'T', gone: 'G' });
+    assert.deepEqual(paths(unusedKeys(keys, ["t('library:title')"])), ['gone']);
+    const api = keysOf({ push: { due: 'D', old: 'O' } }, null);
+    assert.deepEqual(paths(unusedKeys(api, ["t(locale, 'push.due')"])), ['push.old']);
+  });
+
+  it('counts a key built at run time: a template, a prefix, a suffix, a plural, a parent', () => {
+    const keys = app({
+      staff: { clef: { treble: 'V', bass: 'B' } },
+      kind: { exam: 'E' },
+      practice_label: 'P',
+      pages_one: '1',
+      pages_other: 'n',
+      column: { places: ['E', 'Z'] },
+    });
+    const source = [
+      't(`staff.clef.${clef}`)',
+      "const k = 'kind.' + kind;",
+      't(`${action}_label`)',
+      "t('pages', { count })",
+      "t('column.places', { returnObjects: true })",
+    ];
+    assert.deepEqual(unusedKeys(keys, source), []);
+  });
+
+  it('counts an API message read as a property or indexed as a whole', () => {
+    const api = keysOf({ voice: { sample: 'S' }, weekday: ['Mo', 'Di'] }, null);
+    assert.deepEqual(unusedKeys(api, ['m.voice.sample', 'messages.weekday[i]']), []);
+  });
+
+  it('does not take an id template for a key', () => {
+    // `p${i}` and `${a}:${b}` build ids, not texts: they must not make every key look used.
+    const keys = app({ p1: 'x', a: { b: 'y' } });
+    assert.deepEqual(paths(unusedKeys(keys, ['`p${i}`', '`${a}:${b}`'])), ['p1', 'a.b']);
   });
 });
