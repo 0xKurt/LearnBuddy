@@ -16,19 +16,17 @@
 // practice, and a replay she is refused teaches nothing but panic. The slower pass is the same
 // recording read more slowly, not a second kind of listening — hence the quieter ghost pill.
 
-import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 
 import { listenToItem } from '../../lib/api/endpoints.js';
-import { messageFor } from '../../lib/errors.js';
 import { audioUri, releaseAudio } from '../../lib/speech/naturalAudio.js';
-import { playAudio, type PlayHandle } from '../../lib/speech/naturalPlayer.js';
+import { playAudio } from '../../lib/speech/naturalPlayer.js';
+import { usePlayback } from '../../lib/speech/usePlayback.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
-import { toast } from '../lb/Toast.js';
 
 type Props = {
   sessionId: string;
@@ -50,70 +48,40 @@ export type Pass = 'normal' | 'slow';
  */
 export function useHearText(sessionId: string, itemId: string, onHeard: () => void) {
   const { t } = useTranslation('practice');
-  /** Which pass is being fetched or playing; null = nothing is. */
-  const [busy, setBusy] = useState<Pass | null>(null);
-  const [playing, setPlaying] = useState<Pass | null>(null);
-  const player = useRef<PlayHandle | null>(null);
-  const mounted = useRef(true);
+  // `busy`: which pass is being fetched or playing; `playing`: which one really sounds. Leaving
+  // the question (or the screen) stops the text mid-sentence: the next question's text must not
+  // play over this one, and nothing of hers keeps sounding after she left. A recording that
+  // arrived and still did not play is said (`listen.failed`), instead of leaving her waiting for
+  // a text she is supposed to answer questions about; a failed fetch says why.
+  const { busy, playing, toggle } = usePlayback<Pass>({ text: t('listen.failed'), tone: 'error' });
 
-  // Leaving the question (or the screen) stops the text mid-sentence: the next question's
-  // text must not play over this one, and nothing of hers keeps sounding after she left.
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-      player.current?.stop();
-      player.current = null;
-    };
-  }, []);
-
-  function stop(): void {
-    player.current?.stop();
-    player.current = null;
-    setPlaying(null);
-    setBusy(null);
-  }
-
-  async function play(pass: Pass): Promise<void> {
-    // Tapping the pill that is running means "stop"; tapping the other one switches passes,
-    // so "Langsam" while the normal speed plays does what it says.
-    const running = busy;
-    if (running !== null) stop();
-    if (running === pass) return;
-    setBusy(pass);
-    let uri: string;
-    try {
+  /**
+   * Tapping the pill that is running means "stop"; tapping the other one switches passes, so
+   * "Langsam" while the normal speed plays does what it says.
+   */
+  function play(pass: Pass): void {
+    toggle(pass, async ({ live, started, ended }) => {
       const audio = await listenToItem(sessionId, {
         item_id: itemId,
         ...(pass === 'slow' ? { slow: true } : {}),
       });
-      uri = audioUri(audio.audio_base64, audio.mime);
-    } catch (err) {
-      if (mounted.current) setBusy(null);
-      toast.show(messageFor(err), 'error');
-      return;
-    }
-    if (!mounted.current) {
-      releaseAudio(uri);
-      return;
-    }
-    player.current = playAudio(uri, {
-      onStart: () => {
-        if (!mounted.current) return;
-        setPlaying(pass);
-        onHeard();
-      },
-      onProgress: () => undefined,
-      onEnd: (why) => {
+      const uri = audioUri(audio.audio_base64, audio.mime);
+      if (!live()) {
         releaseAudio(uri);
-        player.current = null;
-        if (!mounted.current) return;
-        setPlaying(null);
-        setBusy(null);
-        // The recording arrived and still did not play: say so instead of leaving her
-        // waiting for a text she is supposed to answer questions about.
-        if (why === 'error') toast.show(t('listen.failed'), 'error');
-      },
+        return null;
+      }
+      return playAudio(uri, {
+        onStart: () => {
+          if (!live()) return;
+          started();
+          onHeard();
+        },
+        onProgress: () => undefined,
+        onEnd: (why) => {
+          releaseAudio(uri);
+          ended(why);
+        },
+      }).stop;
     });
   }
 
@@ -150,7 +118,7 @@ export function HearText({ sessionId, itemId, heard, onHeard, disabled = false }
         {...(playing === 'normal' ? { icon: 'stop' as const } : { icon: 'speak' as const })}
         busy={busy === 'normal' && playing === null}
         disabled={off && busy !== 'normal'}
-        onPress={() => void play('normal')}
+        onPress={() => play('normal')}
         accessibilityLabel={playing === 'normal' ? t('listen.stop') : t('listen.play')}
         {...(playing === 'normal' ? {} : { accessibilityHint: t('listen.hint') })}
       >
@@ -164,7 +132,7 @@ export function HearText({ sessionId, itemId, heard, onHeard, disabled = false }
         {...(playing === 'slow' ? { icon: 'stop' as const } : {})}
         busy={busy === 'slow' && playing === null}
         disabled={off && busy !== 'slow'}
-        onPress={() => void play('slow')}
+        onPress={() => play('slow')}
         accessibilityLabel={playing === 'slow' ? t('listen.stop') : t('speak.listen_slow')}
       >
         {label('slow')}

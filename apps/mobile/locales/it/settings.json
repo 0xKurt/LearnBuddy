@@ -179,6 +179,9 @@
     "support_question": "Domande o un problema?",
     "support_hint": "Scrivici a {{email}}.",
     "support_cta": "Scrivi un'email",
+    "licences": "Licenze",
+    "licences_intro": "LearnBuddy è fatto con software libero. Tocca un pacchetto per leggerne la licenza.",
+    "licences_loading": "Caricamento delle licenze",
     "open_failed": "Non è stato possibile aprire il link. Riprova tra un attimo.",
     "open_mail_failed": "Qui non è configurata nessuna app di posta. Puoi scriverci a {{email}}."
   },

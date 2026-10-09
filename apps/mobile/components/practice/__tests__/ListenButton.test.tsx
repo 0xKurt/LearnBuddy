@@ -25,7 +25,8 @@ vi.mock('../../../lib/music/play.js', () => ({
 
 // What she is told; the toast's own rendering is the toast's test.
 const told: string[] = [];
-vi.mock('../../lb/Toast.js', () => ({
+vi.mock('../../../lib/toast.js', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   toast: { show: (text: string) => told.push(text), dismiss: () => undefined },
 }));
 

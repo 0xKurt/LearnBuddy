@@ -12,18 +12,19 @@
 import { nextReadingParts, READING_START, type ReadingCursor } from './readAloud.js';
 import type { VoiceStore } from './voiceState.js';
 
+/** How any sound the app plays ended — a voice, a recording, tones (one type, #311). */
 export type ListenEnd = 'done' | 'stopped' | 'error';
 
 /** Where the audio of one piece can be played from; null = the phone must read it. */
 export type Clip = { uri: string } | null;
 
-type PlayHandle = { stop: () => void };
+export type PlayHandle = { stop: () => void };
 
 type PlayCallbacks = {
   start: () => void;
   progress: (progress: number | null) => void;
   /** 'error' = the player failed; 'stopped' = it was stopped from outside. */
-  end: (why: 'done' | 'error' | 'stopped') => void;
+  end: (why: ListenEnd) => void;
 };
 
 type DeviceCallbacks = { done: () => void; stopped: () => void; error: () => void };

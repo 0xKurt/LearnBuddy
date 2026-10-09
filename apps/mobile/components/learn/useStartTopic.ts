@@ -16,12 +16,13 @@ import type {
   TestMinutes,
   VocabDirection,
 } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { ApiError, newId } from '../../lib/api/client.js';
 import { startTopic } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
+import { useMounted } from '../../lib/useMounted.js';
 
 export type TopicKind = StartTopicRequest['kind'];
 
@@ -53,14 +54,7 @@ export function useStartTopic() {
   const [state, setState] = useState<StartState>({ status: 'idle' });
   const last = useRef<Attempt | null>(null);
   const running = useRef(false);
-  const mounted = useRef(true);
-
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
+  const mounted = useMounted();
 
   /** Resolves with the session, or null when it could not be started (the state says why). */
   async function start(

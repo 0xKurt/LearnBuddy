@@ -39,6 +39,8 @@
     "knip": "6.39.0",
     "lint-staged": "^15.2.11",
     "prettier": "^3.4.2",
+    "spdx-license-list": "6.12.0",
+    "spdx-satisfies": "6.0.0",
     "tsx": "^4.21.1",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.0"

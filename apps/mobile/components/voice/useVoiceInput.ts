@@ -29,6 +29,7 @@ import { useRecording, type DictationChunk, type Recording } from '../../lib/spe
 import { engineFor, useDeviceRecognition } from '../../lib/speech/recognize.js';
 import { TurnGuard } from '../../lib/speech/turnGuard.js';
 import { transcriptContext, transcriptLang } from '../../lib/speech/spoken.js';
+import { useMounted } from '../../lib/useMounted.js';
 import { DEVICE_DICTATION_MS, MIN_AUDIO_BASE64, voiceLocale } from '../../lib/speech/voice.js';
 import { toast } from '../lb/Toast.js';
 
@@ -96,18 +97,11 @@ export function useVoiceInput({
   const [heard, setHeard] = useState('');
   const [choosing, setChoosing] = useState(false);
   const [hint, setHint] = useState<VoiceHint | null>(null);
-  const mounted = useRef(true);
+  const mounted = useMounted();
   /** cancel() drops text from a listening that began before it (lib/speech/turnGuard.ts). */
   const guard = useRef(new TurnGuard()).current;
   const latest = useRef({ purpose, lang, context, onText });
   latest.current = { purpose, lang, context, onText };
-
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
 
   /** The understood text goes to the screen, and a screen reader hears it (audit M-80). */
   function deliver(text: string): void {

@@ -1,7 +1,9 @@
 // "Über LearnBuddy": the app version (from the build's app config) and the
 // links configured for this build (lib/about.ts, EXPO_PUBLIC_* in lib/env.ts).
-// A link that is not configured has no row — never a placeholder address.
+// A link that is not configured has no row — never a placeholder address. The licences of what
+// the app ships are always there, in a sheet of their own (LicencesSheet.tsx, issue #493).
 
+import { useState } from 'react';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { Linking, View } from 'react-native';
@@ -13,6 +15,7 @@ import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { toast } from '../lb/Toast.js';
 import { Group } from './Group.js';
+import { LicencesSheet } from './LicencesSheet.js';
 import { Divider, Row } from './Row.js';
 
 const VERSION = Constants.expoConfig?.version ?? null;
@@ -41,8 +44,7 @@ const LINKS = aboutLinks({
 
 export function AboutSection() {
   const { t } = useTranslation('settings');
-  // Nothing configured and no version: no empty card.
-  if (!VERSION && LINKS.length === 0) return null;
+  const [licences, setLicences] = useState(false);
 
   async function openLink(link: AboutLink) {
     try {
@@ -97,8 +99,13 @@ export function AboutSection() {
               )}
             </View>
           ))}
+          {VERSION || LINKS.length > 0 ? <Divider /> : null}
+          <Btn pill variant="outline" onPress={() => setLicences(true)}>
+            {t('about.licences')}
+          </Btn>
         </View>
       </Card>
+      <LicencesSheet visible={licences} onClose={() => setLicences(false)} />
     </Group>
   );
 }
