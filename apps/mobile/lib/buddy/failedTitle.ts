@@ -1,4 +1,4 @@
-// The title of the home card for a sheet that failed (app/buddy.tsx). A sheet that was read
+// The title of the home card for a sheet that failed (components/buddy/HomeNotices.tsx). A sheet that was read
 // and only gives nothing to practise is never called unreadable (rule 5, issue #411); which
 // reasons those are is the shared contract's (READ_WITHOUT_EXERCISES), as in MaterialCard.
 
