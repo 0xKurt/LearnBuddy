@@ -43,13 +43,16 @@ fi
 # missing assets, dropped transitive deps under pnpm, plugin chain breakage
 # from an Expo SDK bump) sail through and only surface when `expo start`
 # tries to bundle on a real device. The check below catches the same class
-# of error at commit time — adds ~10s once Metro is warm.
+# of error at commit time. The same export (iOS and Android, with source maps)
+# checks that apps/mobile/lib/licences.json still lists what the app ships and
+# that every licence in it is allowed (tools/guards/licences.mjs, issue #493) —
+# hence the lockfile in the trigger: an updated dependency changes what ships.
 #
 # Skip when no mobile-relevant files are staged so the typical
 # server-only / docs-only commit stays fast.
-mobile_changed=$(git diff --cached --name-only | grep -E '^apps/mobile/|^packages/' || true)
+mobile_changed=$(git diff --cached --name-only | grep -E '^apps/mobile/|^packages/|^pnpm-lock\.yaml$' || true)
 if [ -n "$mobile_changed" ]; then
-  echo "→ mobile bundle smoke (expo export ios)"
+  echo "→ mobile bundle smoke (expo export ios + android, licences)"
   pnpm -F @learnbuddy/mobile bundle:check >/tmp/lb-bundle.log 2>&1 || {
     echo "✗ mobile bundle failed. Last 40 lines:" >&2
     tail -40 /tmp/lb-bundle.log >&2

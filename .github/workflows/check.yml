@@ -65,6 +65,12 @@ jobs:
         # code, the guards' own tests), each against what main has — docs/engineering-guards.md.
         run: pnpm lint
 
+      - name: App bundle + shipped licences
+        # The iOS and Android export: it must bundle, carry no secret, and
+        # apps/mobile/lib/licences.json must list exactly the packages in it, each under an
+        # allowed licence (tools/guards/licences.mjs, issue #493).
+        run: pnpm -F @learnbuddy/mobile bundle:check
+
       - name: Ausnahmelisten only shrink
         if: github.event_name == 'pull_request'
         run: node tools/guards/no-growth.mjs origin/${{ github.base_ref }}

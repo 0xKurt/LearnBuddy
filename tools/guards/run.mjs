@@ -4,7 +4,7 @@
 // The per-file guards (file size, tokens only, no raw Pressable) are ESLint rules and run with
 // `eslint`.
 //
-// All four run in parallel; each prints its own result. Part of `pnpm lint` (CI) and of the
+// All of them run in parallel; each prints its own result. Part of `pnpm lint` (CI) and of the
 // pre-commit hook.
 
 import { spawn } from 'node:child_process';
@@ -20,6 +20,7 @@ const GUARDS = [
   ],
   ['Kopien (jscpd)', [join('tools', 'guards', 'clones.mjs')]],
   ['Toter Code (knip)', [join('tools', 'guards', 'knip.mjs')]],
+  ['Lizenzen (ausgeliefert, #493)', [join('tools', 'guards', 'licences.mjs')]],
 ];
 
 const started = Date.now();
