@@ -26,20 +26,43 @@ import { FAMILY, FONT } from './figureText.js';
 export type SchematicFigure = Extract<Figure, { type: 'schematic' }>;
 type T = (key: string, values?: Record<string, string | number>) => string;
 
-export function SchematicBody({ figure, width }: { figure: SchematicFigure; width: number }) {
+export function SchematicBody({
+  figure,
+  width,
+  scale = 1,
+}: {
+  figure: SchematicFigure;
+  /** The width FigureView gives the drawing, already shrunk by `scale`. */
+  width: number;
+  /**
+   * How far FigureView shrinks it. A picture with numbers keeps its whole width and is drawn
+   * `scale` times its height between its columns: the columns do not shrink with it, so a
+   * narrower picture came out shorter than the room it was shrunk for (#462). One to tap keeps
+   * the width it is given — the tap layer lies over exactly that.
+   */
+  scale?: number;
+}) {
   const { figure: ink } = useTheme();
   const shape = useSchematicShapes()?.SCHEMATIC_SHAPES[figure.d];
   const names = useFigureNames(figure);
   const loaded = shape && names ? { drawing: shape, names } : null;
-  const { k, x0, y0, height, badges } = schematicLayout(figure, width, loaded);
-  if (!loaded) return <View style={{ width, height }} />;
+  const numbered = figure.n.length > 0;
+  const room = numbered ? width / scale : width;
+  const natural = schematicLayout(figure, room, null).height;
+  const { k, x0, y0, height, badges } = schematicLayout(
+    figure,
+    room,
+    loaded,
+    numbered ? natural * scale : Infinity,
+  );
+  if (!loaded) return <View style={{ width: room, height }} />;
   const { drawing } = loaded;
   const paths = drawing.parts.map((p) => regionPath(p.rings, k));
   const tone = (t: number) => (t < 0 ? ink.stroke : (ink.slices[t] ?? ink.fill));
   const night = isDarkBackground(ink.paper);
   const [white, black] = night ? [ink.stroke, ink.paper] : [ink.paper, ink.stroke];
   return (
-    <Svg width={width} height={height}>
+    <Svg width={room} height={height}>
       <G transform={`translate(${x0} ${y0})`}>
         {drawing.lines.map((l, i) => (
           <Path

@@ -8,7 +8,9 @@
 // 10° O of Germany, one of Europe and the coordinates of a marked one of the world (a walk of its
 // own) — scripted in apps/api/src/testing/scenarios/map.ts, shot at 93–95. A third labels a
 // picture and taps its parts (issue #252, scenarios/schematic.ts, shot at 90–92b); a fourth walks
-// the drawings of #252's second part, each numbered and tapped (shot at 89-library-…). Scripted
+// the drawings of #252's second part, each numbered and tapped (shot at 89-library-…), and a fifth
+// and sixth those of #462 — the small parts of the flower, the eye and the insect drawn large and
+// tapped, every further drawing numbered and tapped, in two runs (88-, 87-library-…). Scripted
 // answers in apps/api/src/testing/scenarios/tap.ts; every verdict below is code's —
 // no tutor is scripted for any. Every question is shot at both phone sizes, light and dark, with
 // the keyboard up for her question (test-results/web/shots, 96-…).
@@ -38,7 +40,11 @@ import {
   type SchematicId,
 } from '../../packages/shared-math/src/schematics';
 import type { Tappable } from '../../packages/shared-math/src/tap';
-import { LIBRARY_ITEMS } from '../../apps/api/src/testing/scenarios/schematic';
+import {
+  LIBRARY_ITEMS,
+  LIBRARY_MORE_ITEMS,
+  LIBRARY_REST_ITEMS,
+} from '../../apps/api/src/testing/scenarios/schematic';
 import { onboardChild, startOffer, typed } from './figureWalk';
 import { bothSchemes, shot } from './fit';
 
@@ -355,6 +361,36 @@ test('a labelled picture: the cell labelled number by number, every part tapped 
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });
 
+/**
+ * Each drawing of a library list in turn: numbered beside it, named, shot at both phone sizes in
+ * both rooms; then every part reached at its own point and the asked one tapped and checked.
+ */
+async function walkLibrary(
+  page: Page,
+  items: typeof LIBRARY_ITEMS | typeof LIBRARY_MORE_ITEMS | typeof LIBRARY_REST_ITEMS,
+  prefix: string,
+): Promise<void> {
+  for (const item of items) {
+    await expect(page.getByText(item.prompt)).toBeVisible();
+    const d = item.figure.d as SchematicId;
+    if ('tap' in item) {
+      for (const part of schematic(FIGURE_NAMES, d).parts) {
+        await tapPart(page, d, part.id);
+        await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
+      }
+      const key = schematic(FIGURE_NAMES, d).parts[schematicPart(FIGURE_NAMES, d, item.answer)!]!;
+      await tapPart(page, d, key.id);
+      await bothSchemes(page, `${prefix}-${d}-tap-${key.id}`, 'tap-figure');
+      await checkRight(page);
+    } else {
+      // The numbers beside the drawing, each joined to its part; she names the first.
+      await bothSchemes(page, `${prefix}-${d}`, 'question-figure');
+      await typed(page, item.answer);
+    }
+  }
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+}
+
 test('the drawings of #252’s second part: each numbered beside it, every part tapped', async ({
   page,
 }) => {
@@ -362,27 +398,25 @@ test('the drawings of #252’s second part: each numbered beside it, every part 
   test.setTimeout(600_000);
   await onboardChild(page, 'library');
   await startOffer(page, 'Lass uns die Bildbibliothek ansehen', 'Bilder der Bibliothek');
-  for (const item of LIBRARY_ITEMS) {
-    await expect(page.getByText(item.prompt)).toBeVisible();
-    const d: SchematicId = item.figure.d;
-    if ('tap' in item) {
-      // Every part is reached at its own point; the key last.
-      for (const part of schematic(FIGURE_NAMES, d).parts) {
-        await tapPart(page, d, part.id);
-        await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
-      }
-      await tapPart(
-        page,
-        d,
-        schematic(FIGURE_NAMES, d).parts[schematicPart(FIGURE_NAMES, d, item.answer)!]!.id,
-      );
-      await bothSchemes(page, `89-library-${d}-tap`, 'tap-figure');
-      await checkRight(page);
-    } else {
-      // Six numbers beside the drawing, each joined to its part; she names the first.
-      await bothSchemes(page, `89-library-${d}`, 'question-figure');
-      await typed(page, item.answer);
-    }
-  }
-  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await walkLibrary(page, LIBRARY_ITEMS, '89-library');
+});
+
+test('the drawings of #462: the small parts drawn large, then further drawings numbered and tapped', async ({
+  page,
+}) => {
+  // Nine drawings; the lens, the pupil, the stigma and the stamen tapped where they are large.
+  test.setTimeout(900_000);
+  await onboardChild(page, 'library-more');
+  await startOffer(page, 'Lass uns die neuen Bilder ansehen', 'die neuen Bilder');
+  await walkLibrary(page, LIBRARY_MORE_ITEMS, '88-library');
+});
+
+test('the rest of #462’s drawings: each numbered beside it, every part tapped', async ({
+  page,
+}) => {
+  // Nine drawings, a run of their own: a run holds 25 questions.
+  test.setTimeout(900_000);
+  await onboardChild(page, 'library-rest');
+  await startOffer(page, 'Lass uns noch mehr Bilder ansehen', 'noch mehr Bilder');
+  await walkLibrary(page, LIBRARY_REST_ITEMS, '87-library');
 });

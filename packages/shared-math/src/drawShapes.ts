@@ -239,6 +239,21 @@ export function mirror(xy: readonly number[]): number[] {
   return xy.map((v, i) => (i % 2 === 0 ? REGION_FRAME - v : v));
 }
 
+/** The points x0, y0, x1, y1 … upside down about the height `axis`: the lower iris, the lower jaw. */
+export function flip(xy: readonly number[], axis: number): number[] {
+  return xy.map((v, i) => (i % 2 === 1 ? 2 * axis - v : v));
+}
+
+/** The points x0, y0, x1, y1 … turned by `deg` (clockwise, y down) about (cx, cy): a tipped beaker. */
+export function turn(xy: readonly number[], deg: number, cx: number, cy: number): number[] {
+  const [c, s] = [Math.cos((deg * Math.PI) / 180), Math.sin((deg * Math.PI) / 180)];
+  return xy.map((v, i) =>
+    i % 2 === 0
+      ? cx + (v - cx) * c - (xy[i + 1]! - cy) * s
+      : cy + (xy[i - 1]! - cx) * s + (v - cy) * c,
+  );
+}
+
 /** A stroke on both sides — a leg, a bone: the left one and its mirror image. */
 export function both(width: number, ...xy: number[]): string[] {
   return [stroke(width, ...xy), stroke(width, ...mirror(xy))];

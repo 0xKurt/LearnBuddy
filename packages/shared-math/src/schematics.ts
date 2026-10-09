@@ -49,47 +49,54 @@ export type SchematicShape = {
   marks?: { white?: readonly string[]; black?: readonly string[] };
 };
 
-export const SCHEMATIC_IDS = [
-  'plant_cell',
-  'animal_cell',
-  'flower',
-  'plant',
-  'eye',
-  'tooth',
-  'insect',
-  'bicycle',
-  'microscope',
-  'lab',
-  'heart',
-  'ear',
-  'skeleton',
-  'organs',
-  'signs',
-  'instruments',
-  'anlaut',
-] as const;
-export type SchematicId = (typeof SCHEMATIC_IDS)[number];
-
-/** How high each drawing stands in the frame 1000 wide (`REGION_FRAME`): its room while it loads. */
-const SCHEMATIC_HEIGHTS: Readonly<Record<SchematicId, number>> = {
-  plant_cell: 720,
-  animal_cell: 640,
-  flower: 820,
-  plant: 880,
-  eye: 640,
-  tooth: 900,
-  insect: 820,
-  bicycle: 620,
-  microscope: 960,
-  lab: 1060,
-  heart: 900,
-  ear: 700,
-  skeleton: 1030,
-  organs: 1000,
-  signs: 900,
-  instruments: 900,
-  anlaut: 1060,
-};
+/**
+ * Where each drawing of the library stands in the frame 1000 wide (`REGION_FRAME`), known before
+ * its names and shapes are: how high it is — its room while it loads — and the box it fills,
+ * [x0, y0, x1, y1] (#462): a picture with numbers is cut to that box, so its columns stand beside
+ * the drawing, not beside empty paper. Held to the drawings' outlines in `schematics.test.ts`. The
+ * keys are the library's drawings; the contract lists the same ids for the model
+ * (`SCHEMATIC_DRAWINGS`, packages/shared-types), a test in the API holds the two lists equal.
+ */
+const SCHEMATIC_FRAMES = {
+  plant_cell: { height: 720, bounds: [140, 50, 860, 670] },
+  animal_cell: { height: 640, bounds: [140, 20, 880, 600] },
+  flower: { height: 820, bounds: [240, 220, 760, 830] },
+  plant: { height: 880, bounds: [110, 110, 890, 860] },
+  eye: { height: 640, bounds: [280, 70, 940, 570] },
+  tooth: { height: 900, bounds: [180, 70, 820, 890] },
+  insect: { height: 820, bounds: [180, 100, 820, 800] },
+  bicycle: { height: 620, bounds: [90, 100, 920, 580] },
+  microscope: { height: 960, bounds: [230, 30, 790, 950] },
+  lab: { height: 1060, bounds: [140, 10, 890, 1050] },
+  heart: { height: 900, bounds: [180, 0, 980, 900] },
+  ear: { height: 700, bounds: [10, 50, 990, 700] },
+  skeleton: { height: 1030, bounds: [260, 0, 740, 1030] },
+  organs: { height: 1000, bounds: [270, 0, 730, 1000] },
+  signs: { height: 900, bounds: [120, 30, 890, 880] },
+  instruments: { height: 900, bounds: [60, 70, 970, 850] },
+  anlaut: { height: 1060, bounds: [130, 30, 910, 1040] },
+  flower_section: { height: 910, bounds: [30, 80, 970, 910] },
+  eye_front: { height: 820, bounds: [250, 20, 1000, 800] },
+  insect_head: { height: 900, bounds: [170, 80, 830, 880] },
+  teeth: { height: 820, bounds: [50, 50, 950, 720] },
+  joint: { height: 940, bounds: [240, 10, 760, 950] },
+  breathing: { height: 1000, bounds: [180, 10, 820, 1000] },
+  digestion: { height: 1000, bounds: [150, 0, 820, 1010] },
+  leaf: { height: 640, bounds: [50, 50, 960, 590] },
+  neuron: { height: 620, bounds: [30, 40, 980, 610] },
+  mushroom: { height: 960, bounds: [50, 90, 950, 950] },
+  seedling: { height: 980, bounds: [110, 190, 890, 970] },
+  distillation: { height: 840, bounds: [10, 90, 990, 830] },
+  earth: { height: 1000, bounds: [20, 20, 980, 980] },
+  volcano: { height: 990, bounds: [10, 20, 990, 990] },
+  compass: { height: 1000, bounds: [20, 20, 980, 980] },
+  thermometer: { height: 940, bounds: [320, 20, 680, 940] },
+  moon_phases: { height: 1000, bounds: [60, 60, 940, 940] },
+  circuit: { height: 720, bounds: [130, 10, 900, 690] },
+} as const satisfies Record<string, { height: number; bounds: readonly number[] }>;
+export type SchematicId = keyof typeof SCHEMATIC_FRAMES;
+/** Every drawing of the library, in the order of the frames. */
+export const SCHEMATIC_IDS = Object.keys(SCHEMATIC_FRAMES) as SchematicId[];
 export type SchematicNames = Readonly<Record<SchematicId, Schematic>>;
 export type SchematicShapes = Readonly<Record<SchematicId, SchematicShape>>;
 
@@ -114,7 +121,12 @@ export function schematic(names: FigureNames, d: SchematicId): Schematic {
 
 /** How high drawing `d` stands in the frame 1000 wide — known before its names and shapes are. */
 export function schematicHeight(d: SchematicId): number {
-  return SCHEMATIC_HEIGHTS[d];
+  return SCHEMATIC_FRAMES[d].height;
+}
+
+/** The box drawing `d` fills, [x0, y0, x1, y1] (#462): where a picture with numbers is cut. */
+export function schematicBounds(d: SchematicId): readonly [number, number, number, number] {
+  return SCHEMATIC_FRAMES[d].bounds;
 }
 
 /** The parts of a drawing as regions (`regions.ts`): what a finger can mean. */

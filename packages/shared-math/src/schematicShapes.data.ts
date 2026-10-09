@@ -6,7 +6,9 @@
 // (`schematics.data.ts`, which says what each is called).
 //
 // This file holds the drawings of the first part and gathers the rest: the body
-// (`schematicBody.data.ts`) and things (`schematicThings.data.ts`). Only the app draws them, and it
+// (`schematicBody.data.ts`) and things (`schematicThings.data.ts`) of the second, and those of
+// #462 — small things drawn large (`schematicDetail.data.ts`), living things
+// (`schematicLife.data.ts`) and the world (`schematicWorld.data.ts`). Only the app draws them, and it
 // loads this file with the first picture (`useSchematicShapes`), so the drawings are no part of
 // the start bundle; the server reads it for what a finger can tap.
 
@@ -25,7 +27,10 @@ import {
   TONE,
 } from './drawShapes.js';
 import { SCHEMATIC_BODY } from './schematicBody.data.js';
+import { SCHEMATIC_DETAIL } from './schematicDetail.data.js';
+import { SCHEMATIC_LIFE } from './schematicLife.data.js';
 import { SCHEMATIC_THINGS } from './schematicThings.data.js';
+import { SCHEMATIC_WORLD } from './schematicWorld.data.js';
 import type { SchematicShapes } from './schematics.js';
 
 const { LILAC, BLUE, GREEN, ORANGE, PINK, YELLOW, SAND, TEAL, INK } = TONE;
@@ -394,4 +399,7 @@ export const SCHEMATIC_SHAPES: SchematicShapes = {
   bicycle,
   ...SCHEMATIC_THINGS,
   ...SCHEMATIC_BODY,
+  ...SCHEMATIC_DETAIL,
+  ...SCHEMATIC_WORLD,
+  ...SCHEMATIC_LIFE,
 };

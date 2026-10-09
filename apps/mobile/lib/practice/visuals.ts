@@ -6,11 +6,15 @@
 //   so Buddy's newest turn shows whole (`threadRoom`'s `cardGrowTo` < 0).
 // - Whether it may grow into room the conversation leaves (`visualGrows`): every drawing and
 //   photo may, a note line only gives (issue #275 — it is read left to right at its own size).
+// - How far it may grow (`visualReach`): to half of what she sees; a tall labelled picture as far
+//   as the conversation leaves room (issue #462).
 // - While she types (`formDensity` is `tight`, lib/keyboard.ts) the reading text steps down to
 //   its smaller share and the drawing folds to one line that opens it large (`QuestionCard`,
 //   `ZoomableFigure`, issues #233, #379): no cap fits a box diagram, which does not shrink.
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
+
+import { schematicBounds } from '../../../../packages/shared-math/src/schematics.js';
 
 /** A drawing's cap: a share of what she sees. */
 const FIGURE_SHARE = 0.14;
@@ -30,6 +34,21 @@ const KEEPS_ITS_SIZE: ReadonlySet<Figure['type']> = new Set(['staff']);
 
 export function visualGrows(figure: Figure | null | undefined): boolean {
   return !figure || !KEEPS_ITS_SIZE.has(figure.type);
+}
+
+/** How far a card with a drawing or photo grows into the free room: a share of the window. */
+const CARD_REACH = 0.5;
+
+/**
+ * The share of what she sees a card with this figure may grow to (`threadRoom`): half. A labelled
+ * picture taller than wide — the skeleton, the lab, an Anlaut chart — goes as far as the
+ * conversation leaves room: its width is fixed by the phone, so only height makes it larger, and at
+ * half of 360×740 the skeleton stood a third smaller than the free room allowed (issue #462).
+ */
+export function visualReach(figure: Figure | null | undefined): number {
+  if (figure?.type !== 'schematic') return CARD_REACH;
+  const [x0, y0, x1, y1] = schematicBounds(figure.d);
+  return y1 - y0 > x1 - x0 ? 1 : CARD_REACH;
 }
 
 /**
