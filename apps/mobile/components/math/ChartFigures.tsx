@@ -14,6 +14,7 @@
 import type { ChartFigure } from '@learnbuddy/shared-types/contracts';
 
 // Imported by path, like expression.ts: the mobile bundle takes only this dependency-free module.
+import type { Translate } from '../../lib/i18n/index.js';
 import { ageGroup } from '../../../../packages/shared-math/src/charts.js';
 import { formatNumber } from './figureText.js';
 import { ClimateChartView, LineChartView } from './LineCharts.js';
@@ -24,8 +25,6 @@ import {
   PyramidView,
   ScatterPlotView,
 } from './StatCharts.js';
-
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 export function ChartBody({ figure, width }: { figure: ChartFigure; width: number }) {
   switch (figure.type) {
@@ -53,7 +52,7 @@ export function ChartBody({ figure, width }: { figure: ChartFigure; width: numbe
  * no type: those are what a question asks her to read off, and a screen reader that says them
  * would answer the question for one learner and not for the other.
  */
-export function describeChart(figure: ChartFigure, t: T): string {
+export function describeChart(figure: ChartFigure, t: Translate): string {
   const list = (items: string[]) => items.join(', ');
   const unit = (u: string) => (u ? ` ${u}` : '');
   switch (figure.type) {

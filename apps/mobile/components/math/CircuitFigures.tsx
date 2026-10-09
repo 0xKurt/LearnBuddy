@@ -31,13 +31,13 @@ import {
   RAIL_TOP,
 } from '../../../../packages/shared-math/src/logic.js';
 import type { XY } from '../../../../packages/shared-math/src/trees.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY, FONT, formatNumber } from './figureText.js';
 import { FittedSvg } from './TreeFigures.js';
 
 export type CircuitFig = Extract<Figure, { type: 'circuit' }>;
 export type LogicFig = Extract<Figure, { type: 'logic' }>;
-type T = (key: string, values?: Record<string, string | number>) => string;
 type Ink = ReturnType<typeof useTheme>['figure'];
 
 const STROKE = 1.6;
@@ -309,7 +309,7 @@ export function SwitchingBody({
 }
 
 /** A part in words: its kind, its name, its value, a switch's state. */
-function partWords(p: ReturnType<typeof circuitParts>[number], t: T): string {
+function partWords(p: ReturnType<typeof circuitParts>[number], t: Translate): string {
   if (p.k === 'switch')
     return t(p.o ? 'figure.circuit_switch_open' : 'figure.circuit_switch_closed', { name: p.name });
   const words = t(`figure.circuit_${p.k}`, { name: p.name });
@@ -320,7 +320,7 @@ function partWords(p: ReturnType<typeof circuitParts>[number], t: T): string {
  * The same content as the drawing, in words: the battery, each block along the wire with its
  * branches, every part and the meter. Never whether a lamp lights or what a meter reads.
  */
-function describeCircuit(figure: CircuitFig, t: T): string {
+function describeCircuit(figure: CircuitFig, t: Translate): string {
   const parts = circuitParts(figure);
   const head =
     figure.u > 0
@@ -348,7 +348,7 @@ function describeCircuit(figure: CircuitFig, t: T): string {
 }
 
 /** The net in words: its inputs, every gate with what it takes, and which gate is Q. */
-function describeLogic(figure: LogicFig, t: T): string {
+function describeLogic(figure: LogicFig, t: Translate): string {
   const inputs = ['A', 'B', 'C'].slice(0, logicInputCount(figure)).join(', ');
   const gates = figure.g.map((g, k) => {
     const [a, b] = gateInputs(g);
@@ -359,6 +359,6 @@ function describeLogic(figure: LogicFig, t: T): string {
   return [t('figure.logic', { inputs }), ...gates, out].join('. ');
 }
 
-export function describeSwitching(figure: CircuitFig | LogicFig, t: T): string {
+export function describeSwitching(figure: CircuitFig | LogicFig, t: Translate): string {
   return figure.type === 'circuit' ? describeCircuit(figure, t) : describeLogic(figure, t);
 }

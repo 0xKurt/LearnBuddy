@@ -23,13 +23,13 @@ import {
   PEDIGREE_SYMBOL,
   pedigreeLayout,
 } from '../../../../packages/shared-math/src/pedigree.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FONT, HaloText, SMALL } from './figureText.js';
 
 type TreeFig = Extract<Figure, { type: 'tree' }>;
 type PedigreeFig = Extract<Figure, { type: 'pedigree' }>;
 type AutomatonFig = Extract<Figure, { type: 'automaton' }>;
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 const isAsked = (text: string) => text.trim() === '?';
 
@@ -450,7 +450,7 @@ function AutomatonView({ fig, width, scale }: { fig: AutomatonFig } & Fit) {
  * sex, generation, parents and whether affected, every state and transition. Nothing derived —
  * no path probability, no mode, no genotype — because that is what a question asks for.
  */
-export function describeTree(figure: TreeFig | PedigreeFig | AutomatonFig, t: T): string {
+export function describeTree(figure: TreeFig | PedigreeFig | AutomatonFig, t: Translate): string {
   switch (figure.type) {
     case 'tree': {
       const name = (i: number) =>

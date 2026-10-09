@@ -4,9 +4,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const written: Array<[string, string]> = [];
-vi.mock('../voiceModeStorage.js', () => ({
-  readVoiceMode: () => Promise.resolve(null),
-  writeVoiceMode: (key: string, value: string) => {
+vi.mock('../../api/outboxStorage.js', () => ({
+  readItem: () => Promise.resolve(null),
+  writeItem: (key: string, value: string) => {
     written.push([key, value]);
     return Promise.resolve();
   },

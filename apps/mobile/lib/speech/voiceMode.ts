@@ -5,7 +5,7 @@
 //   · Vorlesen (`readAloud`): Buddy reads his replies, the questions and the feedback aloud and
 //     does not listen. The speaker switch in the header (`ReadAloudSwitch`), the same in the chat
 //     and on every practice screen. A per-device preference, kept in AsyncStorage (localStorage on
-//     the web, see voiceModeStorage*.ts) under the key the old single flag used, so whoever had it
+//     the web, lib/api/outboxStorage*.ts) under the key the old single flag used, so whoever had it
 //     on keeps hearing Buddy; if the storage fails, the switch still works for this visit.
 //   · Gespräch (`conversation`): hands-free — Buddy reads AND listens. The waveform at the end of
 //     the input bar (`TalkButton`): in the chat it opens the conversation screen (`app/talk.tsx`),
@@ -18,7 +18,7 @@
 
 import { create } from 'zustand';
 
-import { readVoiceMode, writeVoiceMode } from './voiceModeStorage.js';
+import { readItem, writeItem } from '../api/outboxStorage.js';
 
 const KEY = 'lb.voiceMode';
 
@@ -45,22 +45,16 @@ export const useVoiceMode = create<VoiceModes>((set) => ({
   setReadAloud: (on) => {
     touched = true;
     set(on ? { readAloud: true } : { readAloud: false, conversation: false });
-    try {
-      writeVoiceMode(KEY, on ? '1' : '0').catch(() => undefined);
-    } catch {
-      // No storage: the switch holds for this visit only.
-    }
+    // Without storage the switch holds for this visit only.
+    void writeItem(KEY, on ? '1' : '0');
   },
   setConversation: (on) => set({ conversation: on }),
 }));
 
 async function restore(): Promise<void> {
-  try {
-    const stored = await readVoiceMode(KEY);
-    if (!touched && stored !== null) useVoiceMode.setState({ readAloud: stored === '1' });
-  } catch {
-    // No storage (private browser window, broken storage): starts off.
-  }
+  // Without storage (a private browser window, broken storage) it starts off: null.
+  const stored = await readItem(KEY);
+  if (!touched && stored !== null) useVoiceMode.setState({ readAloud: stored === '1' });
 }
 
 void restore();

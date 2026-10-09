@@ -28,6 +28,7 @@ import {
   type ClockFace,
   type MoneyPiece,
 } from '../../../../packages/shared-math/src/primary.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { clockGeometry } from '../../lib/math/figureGeometry.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -37,7 +38,6 @@ type ClockFig = Extract<PrimaryFigure, { type: 'clock' }>;
 type MoneyFig = Extract<PrimaryFigure, { type: 'money' }>;
 type DotFig = Extract<PrimaryFigure, { type: 'dot_field' }>;
 type BaseTenFig = Extract<PrimaryFigure, { type: 'base_ten' }>;
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 export function PrimaryBody({ figure, width }: { figure: PrimaryFigure; width: number }) {
   switch (figure.type) {
@@ -469,7 +469,7 @@ function BaseTenView({ fig, width }: { fig: BaseTenFig; width: number }) {
  * of money lie there (not their sum), how many dots and blocks — the same content a sighted child
  * reads off, so the question can be answered without seeing it, and nothing it asks for.
  */
-export function describePrimary(fig: PrimaryFigure, t: T): string {
+export function describePrimary(fig: PrimaryFigure, t: Translate): string {
   switch (fig.type) {
     case 'clock': {
       const faces = fig.c.map((c) => describeClock(c, t));
@@ -509,7 +509,7 @@ export function describePrimary(fig: PrimaryFigure, t: T): string {
 }
 
 /** "der kleine Zeiger zwischen 7 und 8, der große auf der 9". */
-export function describeClock(time: ClockFace, t: T): string {
+export function describeClock(time: ClockFace, t: Translate): string {
   const dial = (n: number) => ((n + 11) % 12) + 1;
   const h = time.h % 12;
   const hour =

@@ -23,6 +23,7 @@ import {
   type SolidXY,
 } from '../../../../packages/shared-math/src/solids.js';
 import { axesRange, spaceProject } from '../../../../packages/shared-math/src/space.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { solidLayout } from '../../lib/math/solidLayout.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { CubesBody, describeCubes, type CubesFig } from './CubeBuildings.js';
@@ -33,7 +34,6 @@ type SolidFig = Extract<Figure, { type: 'solid' }>;
 type NetFig = Extract<Figure, { type: 'cube_net' }>;
 type AxesFig = Extract<Figure, { type: 'axes3d' }>;
 export type SpaceFig = SolidFig | NetFig | AxesFig | CubesFig;
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 /** The tallest a solid or a net is drawn, so the answer stays on a small screen. */
 const MAX_HEIGHT = 160;
@@ -350,7 +350,7 @@ function AxesView({ fig, width }: { fig: AxesFig; width: number }) {
 
 // ─────────────── in words ───────────────
 
-export function describeSpace(fig: SpaceFig, t: T): string {
+export function describeSpace(fig: SpaceFig, t: Translate): string {
   switch (fig.type) {
     case 'solid': {
       const kind = t(`figure.solid_${fig.k}`, { n: fig.n });

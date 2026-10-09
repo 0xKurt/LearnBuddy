@@ -12,51 +12,35 @@
 // (`apps/api/src/i18n/*.json`, `practice.staff.*`), ist kein Versehen: dort schreibt er
 // Fragetexte und Musterlösungen in der Sprache der Lernenden, hier beschriftet die App ihre
 // eigene Fläche — die beiden Sätze werden an verschiedenen Orten gebraucht und dürfen nicht
-// übereinander geschickt werden.
+// übereinander geschickt werden. Welcher Schlüssel zu einem Ton, Wert, Schlüssel oder einer
+// Taktart gehört, steht dagegen nur einmal: `staffWords` in `contracts/staff.ts` (issue #311).
 //
 // Auf Deutsch heißt `B` das **H** und `A#` das **Ais**; auf Französisch **Si** und
 // **La dièse**. Keine dieser Zuordnungen steht im Code: ein Name ist Daten, sein Wort ist
 // Übersetzung (`contracts/staff.ts`).
 
-import type {
-  Clef,
-  NoteName,
-  NoteValue,
-  StaffElement,
-  StaffFigure,
-  TimeSignature,
+import {
+  staffWords,
+  type NoteValue,
+  type StaffElement,
+  type StaffFigure,
 } from '@learnbuddy/shared-types/contracts';
 
-/** Was `useTranslation('math')` zurückgibt, so weit es hier gebraucht wird. */
-export type Translate = (key: string, values?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/index.js';
 
-/** `C#` → der Schlüssel `staff.note.Cs`: ein Kreuz kann kein JSON-Schlüssel sein. */
-function noteWord(t: Translate, name: NoteName): string {
-  return t(`staff.note.${name.replace('#', 's')}`);
+/** Die Wörter der Zeile (`contracts/staff.ts`), hier unter `staff.*` in `math.json`. */
+function words(t: Translate) {
+  return staffWords((key, values) => t(`staff.${key}`, values));
 }
 
 /** „Viertelnote" / „Viertelpause", und „punktierte Viertelnote", wenn ein Punkt dahinter steht. */
 export function valueWord(t: Translate, value: NoteValue, dotted: boolean, rest: boolean): string {
-  const plain = t(`staff.${rest ? 'value_rest' : 'value_note'}.${value}`);
-  return dotted ? t(rest ? 'staff.dotted_rest' : 'staff.dotted_note', { value: plain }) : plain;
-}
-
-/** „Violinschlüssel" / „Bassschlüssel". */
-function clefWord(t: Translate, clef: Clef): string {
-  return t(`staff.clef.${clef}`);
-}
-
-/** „Viervierteltakt" — `4/4` kann kein Schlüsselpfad sein, also steht dort `t4_4`. */
-function timeWord(t: Translate, time: TimeSignature): string {
-  return t(`staff.time.t${time.replace('/', '_')}`);
+  return words(t).value(value, dotted, rest);
 }
 
 /** Ein Zeichen in Worten: „C als Viertelnote", „Viertelpause". */
 export function elementWord(t: Translate, el: StaffElement): string {
-  const value = valueWord(t, el.value, el.dotted, el.el === 'rest');
-  return el.el === 'rest'
-    ? value
-    : t('staff.element_note', { name: noteWord(t, el.pitch.name), value });
+  return words(t).element(el);
 }
 
 /** Die Takte in Worten, jeder mit seiner Nummer — ein leerer Takt sagt, dass er leer ist. */
@@ -92,10 +76,11 @@ export function stepWord(t: Translate, step: number): string {
 
 /** Die ganze gezeichnete Zeile als Satz — was ein Screenreader statt des Bildes hört. */
 export function describeStaff(fig: StaffFigure, t: Translate): string {
+  const say = words(t);
   const head =
     fig.time === null
-      ? clefWord(t, fig.clef)
-      : t('staff.head', { clef: clefWord(t, fig.clef), time: timeWord(t, fig.time) });
+      ? say.clef(fig.clef)
+      : t('staff.head', { clef: say.clef(fig.clef), time: say.time(fig.time) });
   // Eine Zeile ohne Taktart ist ein einzelnes Zeichen oder eine Frage nach dem Takt: dann wäre
   // „Takt 1" eine Behauptung über etwas, was nicht dasteht.
   const body =

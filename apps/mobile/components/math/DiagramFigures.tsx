@@ -17,12 +17,12 @@ import {
   diagramLayout,
   gapLetters,
 } from '../../../../packages/shared-math/src/diagram.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY, FONT, HaloText } from './figureText.js';
 import { arrowHead } from './TreeFigures.js';
 
 export type DiagramFig = Extract<Figure, { type: 'diagram' }>;
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 /** Where a line's baseline sits below the top of its line box (12 px text in a 15 px line). */
 const BASELINE = 11.5;
@@ -112,7 +112,7 @@ export function DiagramBody({ figure, width }: { figure: DiagramFig; width: numb
  * The same content as the drawing, in words: its kind, every arrow with its label, a gap by its
  * letter. Nothing a question asks for — what belongs in a gap is never said.
  */
-export function describeDiagram(figure: DiagramFig, t: T): string {
+export function describeDiagram(figure: DiagramFig, t: Translate): string {
   const letters = gapLetters(figure);
   const name = (i: number) => {
     const letter = letters[i];

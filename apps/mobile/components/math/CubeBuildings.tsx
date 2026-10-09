@@ -13,11 +13,11 @@ import Svg, { Path, Rect } from 'react-native-svg';
 // Imported by path, like every figure file: dependency-free.
 import { cubesView } from '../../../../packages/shared-math/src/cubes.js';
 import { projectSolid, type SolidXY } from '../../../../packages/shared-math/src/solids.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FONT, HaloText } from './figureText.js';
 
 export type CubesFig = Extract<Figure, { type: 'cubes' }>;
-type T = (key: string, values?: Record<string, string | number>) => string;
 
 /** The tallest a building is drawn, so the answer stays on a small screen (as SolidFigures). */
 const MAX_HEIGHT = 160;
@@ -169,7 +169,7 @@ function Squares({ grid, width }: { grid: number[][]; width: number }) {
 }
 
 /** The building in words: each row from the front, its columns' heights from the left. */
-export function describeCubes(fig: CubesFig, t: T): string {
+export function describeCubes(fig: CubesFig, t: Translate): string {
   if (fig.v === 'front' || fig.v === 'side' || fig.v === 'top') {
     const rows = cubesView(fig.g, fig.v).map((row) => row.map((x) => (x ? '■' : '□')).join(''));
     return t(`figure.cubes_${fig.v}`, { rows: rows.join(' / ') });

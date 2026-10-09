@@ -9,6 +9,7 @@ import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
 import { isChart } from '../../../../packages/shared-math/src/charts.js';
 import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { pointsOnGraph, prettyExpr } from '../../lib/math/plotMath.js';
 import { describeStaff } from '../../lib/music/words.js';
 import { describeChart } from './ChartFigures.js';
@@ -16,14 +17,13 @@ import { formatNumber } from './figureText.js';
 import { describeMolecule } from './MoleculeView.js';
 import { describeSchoolFigure, isSchoolFigure } from './schoolFigures.js';
 
-type T = (key: string, values?: Record<string, string | number>) => string;
 /** Reads a cell text with math out in words. */
 type Speak = (text: string) => string;
 
 /** `names`: a map's or a picture's names once loaded (`useFigureNames`), null before. */
 export function describeFigure(
   figure: Figure,
-  t: T,
+  t: Translate,
   names: FigureNames | null,
   speak: Speak = (s) => s,
   { formulas = true }: { formulas?: boolean } = {},

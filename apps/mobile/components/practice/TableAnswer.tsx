@@ -15,6 +15,7 @@
 
 import {
   TABLE_ANSWER_MAX,
+  TABLE_JOIN,
   type StructuredAnswer,
   type TableFillTaskView,
   type TableViewCell,
@@ -37,9 +38,6 @@ import { useSpokenWords } from '../math/useSpokenMath.js';
 import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
-
-/** How her cells stand in the conversation while the server checks them. */
-const TABLE_JOIN = ' · ';
 
 function isGap(cell: TableViewCell): cell is TableViewGap {
   return 'id' in cell;

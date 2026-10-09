@@ -14,11 +14,11 @@ import Svg, { G, Path, Text as SvgText } from 'react-native-svg';
 import { TICK_FONT } from '../../../../packages/shared-math/src/charts.js';
 import { textWidth } from '../../../../packages/shared-math/src/labelBoxes.js';
 import { ITTEN_HUES, type Hue } from '../../../../packages/shared-math/src/itten.js';
+import type { Translate } from '../../lib/i18n/index.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY } from './figureText.js';
 
 export type ColorWheelFig = Extract<Figure, { type: 'color_wheel' }>;
-type T = (key: string, values?: Record<string, string | number>) => string;
 type XY = { x: number; y: number };
 
 /** The wheel's radius at most, its ring's share of it, and its labels' line height and gap. */
@@ -184,7 +184,7 @@ export function ColorWheelBody({ figure, width }: { figure: ColorWheelFig; width
 }
 
 /** The wheel in words: its twelve fields in order, Itten's star, and which fields are marked. */
-export function describeColorWheel(figure: ColorWheelFig, t: T): string {
+export function describeColorWheel(figure: ColorWheelFig, t: Translate): string {
   const name = (h: Hue) => t(`figure.hue_${h}`);
   const parts = [
     t('figure.wheel', { fields: ITTEN_HUES.map(name).join(', ') }),

@@ -76,3 +76,9 @@ export function isForeign(lang: string | null): lang is string {
 
 export { i18n };
 export type { AppLocale };
+
+/**
+ * A `t` as far as code that only puts words together needs it: what `useTranslation(ns)` hands
+ * out, without React. The figures' screen-reader texts and the staff's words take it.
+ */
+export type Translate = (key: string, values?: Record<string, string | number>) => string;

@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { BirthDateFields, type DateParts } from '../components/auth/BirthDateFields.js';
+import { CheckPoints } from '../components/auth/CheckPoints.js';
 import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Card } from '../components/lb/Card.js';
@@ -562,7 +563,6 @@ function Handover({
   busy: boolean;
   onDone: () => void;
 }) {
-  const { palette } = useTheme();
   const { t } = useTranslation('auth');
   const insets = useSafeAreaInsets();
   const points = [
@@ -587,29 +587,7 @@ function Handover({
         <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
           {t('profile.handover_title')}
         </Text>
-        <Card padding={16}>
-          <View style={{ gap: 10 }}>
-            {points.map((p) => (
-              <View key={p} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-                <View
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                  style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: 13,
-                    backgroundColor: palette.lavender,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Icon name="check" size={15} color={palette.primaryDk} />
-                </View>
-                <Text style={[TYPE.body, { flex: 1 }]}>{p}</Text>
-              </View>
-            ))}
-          </View>
-        </Card>
+        <CheckPoints points={points} />
         <Text style={[TYPE.title, { textAlign: 'center' }]}>
           {t('profile.handover_body', { name })}
         </Text>

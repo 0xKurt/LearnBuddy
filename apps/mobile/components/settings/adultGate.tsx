@@ -7,10 +7,13 @@
 // done (or failed) the admin token is dropped (docs/privacy.md §PIN gate).
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { adminToken, clearAdminToken, onAdminChange } from '../../lib/admin.js';
 import { requestAdmin, type AdminPurpose } from '../../lib/adminFlow.js';
 import { ApiError } from '../../lib/api/client.js';
+import { messageFor } from '../../lib/errors.js';
+import { toast } from '../lb/Toast.js';
 
 export class AdultCancelled extends Error {
   constructor(readonly reason: 'cancelled' | 'no_pin') {
@@ -66,6 +69,55 @@ export async function asAdultIfNeeded<T>(call: () => Promise<T>, opts: Options):
  */
 export function afterModalCloses(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 450));
+}
+
+/**
+ * For a minor's profile the parents' PIN comes first: before a sheet opens that only they may
+ * use. The PIN screen has to be gone before that sheet can open.
+ */
+export async function confirmAdultFirst(
+  minor: boolean,
+  pinSet: boolean,
+  purpose: AdminPurpose,
+): Promise<void> {
+  if (!minor) return;
+  const prompted = adminToken() === null;
+  await confirmAdult(pinSet, purpose);
+  if (prompted) await afterModalCloses();
+}
+
+/**
+ * What a gated step that did not happen says: nothing when the adult cancelled, `noPin` when
+ * there is no PIN yet to ask for, otherwise the error.
+ */
+export function toastAdultFailure(err: unknown, noPin: string): void {
+  if (err instanceof AdultCancelled) {
+    if (err.reason === 'no_pin') toast.show(noPin);
+  } else {
+    toast.show(messageFor(err), 'error');
+  }
+}
+
+/**
+ * Opening a sheet in the parents' area: the PIN first for a minor's profile, then `show`.
+ * `opening` holds while the PIN screen is up, so a second tap starts nothing.
+ */
+export function useAdultOpener(minor: boolean, pinSet: boolean, purpose: AdminPurpose) {
+  const { t } = useTranslation('settings');
+  const [opening, setOpening] = useState(false);
+  async function open(show: () => void): Promise<void> {
+    if (opening) return;
+    setOpening(true);
+    try {
+      await confirmAdultFirst(minor, pinSet, purpose);
+      show();
+    } catch (err) {
+      toastAdultFailure(err, t('settings:pin_first'));
+    } finally {
+      setOpening(false);
+    }
+  }
+  return { opening, open };
 }
 
 /** Whether the parents' PIN is unlocked right now (follows lib/admin.ts). */
