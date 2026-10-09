@@ -45,11 +45,51 @@
     },
     "apps/mobile/components/math/ChartFigures.tsx": {
       "issue": "#312",
-      "libraryCheck": "Diagramme bleiben Eigenbau mit react-native-svg. Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): react-native-gifted-charts 1.4.80 (MIT, 80 KB gzip) spart kaum Zeilen, kennt nur kategoriale x-Achsen (gemessene x-Werte falsch platziert, Regel-0-Risiko), lässt das Web-Bundle ohne Shim abstürzen und deckt nur 4 von 7 Diagrammtypen (kein Boxplot, keine Ausgleichsgerade, kein Klimadiagramm); victory-native XL braucht Skia ≥ 2.6 (Expo 54: 2.2.12) und 7 MB CanvasKit-WASM im Web, ohne SVG-Text für Screenreader. A11y: describeChart sagt das Diagramm in Worten. Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+      "libraryCheck": "Verteilt die Diagramme auf LineCharts.tsx und StatCharts.tsx (#311) und sagt sie in Worten (describeChart). Diagramme bleiben Eigenbau mit react-native-svg. Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): react-native-gifted-charts 1.4.80 (MIT, 80 KB gzip) spart kaum Zeilen, kennt nur kategoriale x-Achsen (gemessene x-Werte falsch platziert, Regel-0-Risiko), lässt das Web-Bundle ohne Shim abstürzen und deckt nur 4 von 7 Diagrammtypen (kein Boxplot, keine Ausgleichsgerade, kein Klimadiagramm); victory-native XL braucht Skia ≥ 2.6 (Expo 54: 2.2.12) und 7 MB CanvasKit-WASM im Web, ohne SVG-Text für Screenreader. A11y: describeChart sagt das Diagramm in Worten. Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/LineCharts.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Linien- und Klimadiagramm (Walter–Lieth). Aus ChartFigures.tsx herausgelöst (#311, je Diagrammfamilie eine Datei, die gemeinsamen Teile einmal); folgt dessen Entscheid in #312 (Phase 1, Kommentar vom 03.10.: react-native-gifted-charts kennt nur kategoriale x-Achsen und 4 von 7 Diagrammtypen, victory-native XL braucht Skia ≥ 2.6 und CanvasKit-WASM im Web). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/StatCharts.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Kreisdiagramm, Boxplot, Histogramm, Streudiagramm mit Ausgleichsgerade, Bevölkerungspyramide. Aus ChartFigures.tsx herausgelöst (#311, je Diagrammfamilie eine Datei, die gemeinsamen Teile einmal); folgt dessen Entscheid in #312 (Phase 1, Kommentar vom 03.10.: react-native-gifted-charts kennt nur kategoriale x-Achsen und 4 von 7 Diagrammtypen, victory-native XL braucht Skia ≥ 2.6 und CanvasKit-WASM im Web). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/chartParts.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Die gemeinsamen Teile aller Diagramme: Achsenbeschriftung, Gitter mit Halbschritten, Achsenlinien, Marker, Legende. Aus ChartFigures.tsx herausgelöst (#311, je Diagrammfamilie eine Datei, die gemeinsamen Teile einmal); folgt dessen Entscheid in #312 (Phase 1, Kommentar vom 03.10.: react-native-gifted-charts kennt nur kategoriale x-Achsen und 4 von 7 Diagrammtypen, victory-native XL braucht Skia ≥ 2.6 und CanvasKit-WASM im Web). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
     },
     "apps/mobile/components/math/FigureView.tsx": {
       "issue": "#312",
-      "libraryCheck": "Graphen und Geometrie bleiben Eigenbau mit react-native-svg. Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): JSXGraph 1.13.3 (MIT/LGPL) und function-plot 1.25.4 (MIT) brauchen ein DOM, Mafs 0.21 (MIT) nur react-dom — keiner läuft unter React Native ohne WebView; eine WebView kostete A11y, Theme und Fit (Regel 16). Winkelbögen, Maße, Lichtstrahlen und Resultierende sind kein Bibliotheksstandard. A11y: describeFigure sagt die Figur in Worten. Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+      "libraryCheck": "Zeichnet selbst nichts mehr: der Rahmen um jede Figur (Breite, Maßstab, Höhe) und die Verteilung auf die Zeichnungen in eigenen Dateien (#311). Graphen und Geometrie bleiben Eigenbau mit react-native-svg. Bibliotheks-Check in #312 (Phase 1, Kommentar vom 03.10.): JSXGraph 1.13.3 (MIT/LGPL) und function-plot 1.25.4 (MIT) brauchen ein DOM, Mafs 0.21 (MIT) nur react-dom — keiner läuft unter React Native ohne WebView; eine WebView kostete A11y, Theme und Fit (Regel 16). Winkelbögen, Maße, Lichtstrahlen und Resultierende sind kein Bibliotheksstandard. A11y: describeFigure sagt die Figur in Worten. Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/FractionFigure.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Bruchbild (Balken oder Kreis in gleichen Teilen). Aus FigureView.tsx herausgelöst (#311, eine Datei je Zeichnung); folgt dessen Entscheid in #312 (Phase 1, Kommentar vom 03.10.: JSXGraph, function-plot und Mafs brauchen ein DOM, eine WebView kostete A11y, Theme und Fit). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/NumberLineFigure.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Zahlenstrahl mit Strichen, Zahlen und markierten Punkten. Aus FigureView.tsx herausgelöst (#311, eine Datei je Zeichnung); folgt dessen Entscheid in #312 (Phase 1, Kommentar vom 03.10.: JSXGraph, function-plot und Mafs brauchen ein DOM, eine WebView kostete A11y, Theme und Fit). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/FunctionPlotFigure.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Funktionsgraph auf PlotAxes mit Punkten und Legende. Aus FigureView.tsx herausgelöst (#311, eine Datei je Zeichnung); folgt dessen Entscheid in #312 (Phase 1, Kommentar vom 03.10.: JSXGraph, function-plot und Mafs brauchen ein DOM, eine WebView kostete A11y, Theme und Fit). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/BarChartFigure.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Säulen- und Balkendiagramm. Aus FigureView.tsx herausgelöst (#311, eine Datei je Zeichnung); folgt dessen Entscheid in #312 (Phase 1, Kommentar vom 03.10.: JSXGraph, function-plot und Mafs brauchen ein DOM, eine WebView kostete A11y, Theme und Fit). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/GeometryFigure.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Geometrische Zeichnung: Punkte, Strecken, Vielecke, Kreise, Winkelbögen, Maße, Geraden, Lichtstrahlen, Kraftpfeile. Aus FigureView.tsx herausgelöst (#311, eine Datei je Zeichnung); folgt dessen Entscheid in #312 (Phase 1, Kommentar vom 03.10.: JSXGraph, function-plot und Mafs brauchen ein DOM, eine WebView kostete A11y, Theme und Fit). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/TableFigure.tsx": {
+      "issue": "#312",
+      "libraryCheck": "Tabelle mit MathText in jeder Zelle; zeichnet kein SVG. Aus FigureView.tsx herausgelöst (#311, eine Datei je Zeichnung); folgt dessen Entscheid in #312 (Phase 1, Kommentar vom 03.10.: JSXGraph, function-plot und Mafs brauchen ein DOM, eine WebView kostete A11y, Theme und Fit). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
+    },
+    "apps/mobile/components/math/describeFigure.ts": {
+      "issue": "#312",
+      "libraryCheck": "Die Figur in Worten für Screenreader; zeichnet nichts. Aus FigureView.tsx herausgelöst (#311, eine Datei je Zeichnung); folgt dessen Entscheid in #312 (Phase 1, Kommentar vom 03.10.: JSXGraph, function-plot und Mafs brauchen ein DOM, eine WebView kostete A11y, Theme und Fit). Owner-Entscheidung in #312 vom 03.10. (https://github.com/0xKurt/LearnBuddy/issues/312#issuecomment-5966955765): „Diagramme, Graphen/Geometrie, Moleküle und der Formelsatz bleiben eigene Implementierungen“; nur die Notenzeile ging an VexFlow (#336)."
     },
     "apps/mobile/components/math/MathText.tsx": {
       "issue": "#312",

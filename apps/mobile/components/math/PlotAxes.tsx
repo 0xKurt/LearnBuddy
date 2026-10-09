@@ -1,6 +1,6 @@
 // The coordinate system itself — grid lines, the two axes with their arrows and names, tick marks
 // and labels, the origin's 0 — laid out by `plotGeometry` (lib/math/plotLayout.ts). One drawing
-// for the graph she READS (`FunctionPlot` in FigureView.tsx) and the grid she DRAWS on
+// for the graph she READS (`FunctionPlotFigure.tsx`) and the grid she DRAWS on
 // (`GridSheet.tsx`, issue #249): the same paper in both places, never a second renderer.
 //
 // It draws inside the caller's <Svg>; what stands on the paper (graphs, points, bars) is the

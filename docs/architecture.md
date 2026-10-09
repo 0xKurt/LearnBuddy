@@ -3152,8 +3152,8 @@ nicht" — her own point or bar, so it is feedback, not a hint (`structuredNames
 order's place). A drawing is produced, not recognised: `answered_by` is `typed` (#163).
 
 App: `GridAnswer.tsx` in the answer shell; the paper is `GridSheet.tsx` on `PlotAxes.tsx`, the SAME
-coordinate system `FunctionPlot` draws for a graph she reads (lifted out of `FigureView.tsx`,
-laid out by `plotGeometry` in `lib/math/plotLayout.ts`) — one renderer for reading and drawing.
+coordinate system `FunctionPlotFigure.tsx` draws for a graph she reads (lifted out of
+`FigureView.tsx`, laid out by `plotGeometry` in `lib/math/plotLayout.ts`) — one renderer for reading and drawing.
 Operated like the note line (#275): the paper is ONE target (`components/lb/TapSurface.tsx`, which
 the note line now uses too); a tap takes the crossing nearest the finger, so the whole square around
 a crossing is its target; a tap on her own point takes it away and the next tap puts that point
@@ -3595,8 +3595,10 @@ item's ordinary columns before it is stored.
   (young third ≥ 1.2 × middle third = pyramid, ≤ 0.8 = urn, 0.9–1.1 = bell). Answers are judged by
   the rules, no model call (`charts.int.test.ts`: "Üb mit mir Klimadiagramme" → 5 questions, all
   `evaluated_by = 'rule'`).
-- **Drawing** (`apps/mobile/components/math/ChartFigures.tsx`): react-native-svg with the same axes
-  the API used for the tolerance (`niceAxis`, `climateAxes`, imported by path). Colour is never the
+- **Drawing** (`apps/mobile/components/math/ChartFigures.tsx` dispatches to `LineCharts.tsx` and
+  `StatCharts.tsx`, both drawn from the pieces in `chartParts.tsx` and framed by
+  `lib/math/chartLayout.ts`, #311): react-native-svg with the same axes the API used for the
+  tolerance (`niceAxis`, `climateAxes`, imported by path). Colour is never the
   only signal: series have markers and dash patterns, columns are columns, pie slices are numbered
   and listed with their shares, the halves of a pyramid are named. Theme tokens `figure.warm`,
   `wet`, `wetDeep`, `slices` (light and dark). The screen-reader text (`describeChart`) says every

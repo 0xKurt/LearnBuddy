@@ -33,7 +33,8 @@ import { AnswerTile } from '../lb/AnswerTile.js';
 import { Btn, BTN_PAD_COMPACT } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 import { ZoomViewer } from '../lb/ZoomViewer.js';
-import { describeFigure, FigureView } from '../math/FigureView.js';
+import { describeFigure } from '../math/describeFigure.js';
+import { FigureView } from '../math/FigureView.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 

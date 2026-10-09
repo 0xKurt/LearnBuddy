@@ -7,7 +7,8 @@ import type { Figure } from '@learnbuddy/shared-types/contracts';
 import type { ReactNode } from 'react';
 import Svg, { Circle, G, Line, Path } from 'react-native-svg';
 
-// Imported by path, like expression.js in FigureView: dependency-free, no mathjs in the bundle.
+// Imported by path, like expression.js in FunctionPlotFigure: dependency-free, no mathjs in the
+// bundle.
 import {
   checkMolecule,
   layoutMolecule,
@@ -229,7 +230,7 @@ export function MoleculeView({ fig, width }: { fig: MoleculeFig; width: number }
   );
 }
 
-// ─────────────── description for screen readers (FigureView `describeFigure`) ───────────────
+// ─────────────── description for screen readers (`describeFigure`) ───────────────
 
 const SUBSCRIPT = '₀₁₂₃₄₅₆₇₈₉';
 
