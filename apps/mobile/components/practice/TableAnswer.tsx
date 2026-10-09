@@ -39,7 +39,7 @@ import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
 
 /** How her cells stand in the conversation while the server checks them. */
-export const TABLE_JOIN = ' · ';
+const TABLE_JOIN = ' · ';
 
 function isGap(cell: TableViewCell): cell is TableViewGap {
   return 'id' in cell;

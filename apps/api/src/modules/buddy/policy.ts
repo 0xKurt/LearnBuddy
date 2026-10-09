@@ -84,8 +84,8 @@ export type PolicyDecision =
 
 export const MIN_RELEVANCE = 0.6;
 /** After "Seltener schreiben": what still reaches the phone (time-critical and ready). */
-export const IMPORTANT_RELEVANCE = 0.85;
-export const TOPIC_DEDUPE_HOURS = 72;
+const IMPORTANT_RELEVANCE = 0.85;
+const TOPIC_DEDUPE_HOURS = 72;
 const MAX_LOOKAHEAD_DAYS = 14;
 
 /** Allowed minutes of a day: [start, end) ranges within `window`, outside quiet hours. */

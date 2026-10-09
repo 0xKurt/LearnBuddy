@@ -11,7 +11,7 @@ import { Platform } from 'react-native';
 import { loadSession } from './auth/session.js';
 import { flushActions, keepPress } from './push.js';
 
-export const PUSH_ACTION_TASK = 'lb-push-action';
+const PUSH_ACTION_TASK = 'lb-push-action';
 
 if (Platform.OS !== 'web') {
   TaskManager.defineTask<Notifications.NotificationTaskPayload>(

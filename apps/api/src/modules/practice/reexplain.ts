@@ -41,7 +41,7 @@ import { CARD_PASS } from './cards.js';
 import { mentionsSolution } from './tutor.js';
 import { promptVersion } from '../../llm/promptVersion.js';
 
-export const Reexplanation = z.object({
+const Reexplanation = z.object({
   explanation: z
     .string()
     .trim()
@@ -88,7 +88,7 @@ type TargetItem = Pick<
   | 'worked_solution'
 > & { extracted_text: string | null };
 
-export function reexplainContext(input: {
+function reexplainContext(input: {
   way: ReexplainWay;
   item: TargetItem;
   homework: boolean;

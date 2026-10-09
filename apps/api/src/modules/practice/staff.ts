@@ -164,12 +164,7 @@ export function noteWord(locale: string, name: NoteName): string {
 }
 
 /** "Viertelnote" / "Viertelpause", and "punktierte Viertelnote" when it carries a dot. */
-export function valueWord(
-  locale: string,
-  value: NoteValue,
-  dotted: boolean,
-  rest: boolean,
-): string {
+function valueWord(locale: string, value: NoteValue, dotted: boolean, rest: boolean): string {
   const plain = text(locale, `${rest ? 'value_rest' : 'value_note'}.${value}` as StaffMessage);
   return dotted ? text(locale, rest ? 'dotted_rest' : 'dotted_note', { value: plain }) : plain;
 }
@@ -183,12 +178,12 @@ export function intervalWord(locale: string, interval: Interval): string {
 }
 
 /** "Viervierteltakt" — `4/4` cannot be a JSON key path, so it is written `t4_4`. */
-export function timeWord(locale: string, time: TimeSignature): string {
+function timeWord(locale: string, time: TimeSignature): string {
   return text(locale, `time.t${time.replace('/', '_')}` as StaffMessage);
 }
 
 /** "Violinschlüssel" / "Bassschlüssel". */
-export function clefWord(locale: string, clef: Clef): string {
+function clefWord(locale: string, clef: Clef): string {
   return text(locale, `clef.${clef}` as StaffMessage);
 }
 
@@ -212,7 +207,7 @@ function rhythmWords(locale: string, bars: RhythmBars): string {
  * shows afterwards. Bar lines are deliberately NOT named: where one bar ends follows from the
  * values and the time signature, and finding that out is the exercise.
  */
-export function lineWords(locale: string, bars: StaffBars): string {
+function lineWords(locale: string, bars: StaffBars): string {
   return bars
     .flat()
     .map((el) => elementWord(locale, el))
@@ -772,7 +767,7 @@ export function staffItems(tasks: readonly StaffTask[], locale: string): StaffIt
  * `chemistry.ts`, aus demselben Grund (alles auf einmal zu nennen ist eine Liste
  * zum Abarbeiten statt eines nächsten Schritts).
  */
-export type StaffFault =
+type StaffFault =
   /** Zu viele oder zu wenige Zeichen insgesamt. */
   | { at: 'count'; given: number; wanted: number }
   /** Ein Takt ist voller oder leerer als die Taktart erlaubt (1-basiert, wie sie zählt). */

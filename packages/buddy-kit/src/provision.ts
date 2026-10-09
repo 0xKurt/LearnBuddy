@@ -205,7 +205,7 @@ export function manualSteps(config: BuddyConfig, ids: RecordedIds): ManualStep[]
   ];
 }
 
-export type LocalStep = { id: string; title: string; changed: boolean; note?: string };
+type LocalStep = { id: string; title: string; changed: boolean; note?: string };
 
 export type ProvisionResult = {
   local: LocalStep[];
@@ -345,7 +345,7 @@ export function provision(opts: {
 }
 
 /** Where a rotated secret has to be replaced — the value itself is never shown. */
-export const ROTATION_TARGETS: Record<SecretName, string> = {
+const ROTATION_TARGETS: Record<SecretName, string> = {
   ADMIN_TOKEN_SECRET: 'Vercel env ADMIN_TOKEN_SECRET (production); offene Eltern-Sitzungen enden',
   TICK_SECRET:
     'Vercel env TICK_SECRET und Supabase Vault lb_tick_secret — beide, sonst läuft kein Tick',

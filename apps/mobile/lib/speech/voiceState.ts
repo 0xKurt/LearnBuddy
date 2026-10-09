@@ -6,7 +6,7 @@
 // while it plays; progress is the player's real position in the sentence (null when the
 // phone's own voice reads, which reports no position).
 
-export type VoicePhase = 'idle' | 'loading' | 'speaking';
+type VoicePhase = 'idle' | 'loading' | 'speaking';
 
 export type VoiceSnapshot = {
   phase: VoicePhase;

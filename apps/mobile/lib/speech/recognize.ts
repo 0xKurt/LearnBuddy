@@ -170,7 +170,7 @@ export async function engineFor(locale: string): Promise<SpeechEngine> {
 }
 
 export type DevicePhase = 'idle' | 'starting' | 'listening' | 'stopping';
-export type DeviceFailure = 'empty' | 'failed';
+type DeviceFailure = 'empty' | 'failed';
 
 type Handlers = {
   onText: (text: string) => void;

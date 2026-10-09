@@ -102,7 +102,7 @@ export class SpeechMark {
 }
 
 /** TranscribeRequest.prev_tail allows at most 400 characters. */
-export const MAX_PREV_TAIL = 400;
+const MAX_PREV_TAIL = 400;
 
 /**
  * What the pieces said so far, in order. A piece still being written down or

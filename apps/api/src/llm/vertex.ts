@@ -103,7 +103,7 @@ export function splitModelSpec(spec: string, defaultLocation: string) {
  * - pronounce: 3.1 Flash-Lite judged as strictly as 3.6 Flash (German accent and a wrong
  *   word "retry" 3/3) at ~0.09 instead of ~0.2 cents per sentence (evals/speak, 2026-09-26).
  */
-export const DEFAULT_ROUTES: Partial<Record<LlmRequest['purpose'], string>> = {
+const DEFAULT_ROUTES: Partial<Record<LlmRequest['purpose'], string>> = {
   pronounce: 'eu/gemini-3.1-flash-lite',
 };
 

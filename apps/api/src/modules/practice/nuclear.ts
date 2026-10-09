@@ -91,7 +91,7 @@ function normalised(raw: string): string {
   return s;
 }
 
-export type Nuclide = { a: number; z: number; label: string };
+type Nuclide = { a: number; z: number; label: string };
 
 /**
  * One term: an optional count, then a nuclide or particle. Null for anything not read

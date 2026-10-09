@@ -67,7 +67,7 @@ function pascal(id: string): string {
 }
 
 /** apps/mobile/app.json with the new identity and none of LearnBuddy's project links. */
-export function rewriteAppJson(text: string, config: BuddyConfig): string {
+function rewriteAppJson(text: string, config: BuddyConfig): string {
   const root = JSON.parse(text) as JsonObject;
   const expo = root.expo;
   if (!isObject(expo)) throw new KitError('apps/mobile/app.json has no "expo" object');
@@ -106,7 +106,7 @@ export function rewriteAppJson(text: string, config: BuddyConfig): string {
 }
 
 /** apps/mobile/app.config.ts: the dev variant's name and id. */
-export function rewriteAppConfig(text: string, config: BuddyConfig): string {
+function rewriteAppConfig(text: string, config: BuddyConfig): string {
   return text
     .replaceAll("'LearnBuddy Dev'", `'${config.identity.name.replaceAll("'", "\\'")} Dev'`)
     .replaceAll('com.learnbuddy.app.dev', `${config.identity.bundleId}.dev`);
@@ -116,7 +116,7 @@ export function rewriteAppConfig(text: string, config: BuddyConfig): string {
  * apps/mobile/eas.json without LearnBuddy's API and Supabase URLs: a preview build of the new
  * app must never reach LearnBuddy's backend. `provision` fills them from the new projects.
  */
-export function rewriteEasJson(text: string): string {
+function rewriteEasJson(text: string): string {
   const root = JSON.parse(text) as JsonObject;
   const build = root.build;
   if (isObject(build)) {

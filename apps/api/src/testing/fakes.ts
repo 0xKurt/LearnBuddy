@@ -284,7 +284,7 @@ export class FakeEmbeddings implements EmbeddingGateway {
 }
 
 /** What the real verifier throws when Supabase Auth cannot answer (auth/verifier.ts). */
-export const authOutage = (): AppError =>
+const authOutage = (): AppError =>
   new AppError('unavailable', 'The sign-in service cannot be reached');
 
 export type FakeAuthOp = 'verify' | 'deleteUser';
@@ -547,7 +547,7 @@ export class FakeSpeech implements SpeechGateway {
 }
 
 /** 8 kHz, 8-bit mono PCM silence. */
-export function silentWav(ms: number): Buffer {
+function silentWav(ms: number): Buffer {
   const rate = 8000;
   const samples = Math.round((rate * ms) / 1000);
   const b = Buffer.alloc(44 + samples, 0x80);

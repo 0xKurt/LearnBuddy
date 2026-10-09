@@ -32,17 +32,17 @@ import { transcriptContext, transcriptLang } from '../../lib/speech/spoken.js';
 import { DEVICE_DICTATION_MS, MIN_AUDIO_BASE64, voiceLocale } from '../../lib/speech/voice.js';
 import { toast } from '../lb/Toast.js';
 
-export type VoicePurpose = TranscribeRequest['purpose'];
+type VoicePurpose = TranscribeRequest['purpose'];
 
 /** idle → starting (asking for the mic) → recording → transcribing → idle. */
 /** One definition, shared with what the conversation screen is allowed to claim (#158). */
-export type VoiceInputState = MicState;
+type VoiceInputState = MicState;
 
 /**
  * Why no text came out (nothing understood, only a tap, an unreadable or broken
  * recording) — or, part_lost, why a delivered long dictation may have a gap.
  */
-export type VoiceHint = 'empty' | 'too_short' | 'unsupported' | 'failed' | 'part_lost';
+type VoiceHint = 'empty' | 'too_short' | 'unsupported' | 'failed' | 'part_lost';
 
 type Options = {
   purpose: VoicePurpose;

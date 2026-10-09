@@ -8,7 +8,7 @@ import type { NowCard, ReadingStage } from '@learnbuddy/shared-types/contracts';
 
 type Processing = Extract<NowCard, { type: 'material_processing' }>;
 
-export type StepKey = 'sent' | 'read' | 'build';
+type StepKey = 'sent' | 'read' | 'build';
 export type StepState = 'done' | 'active' | 'todo';
 
 export type ReadingView = {

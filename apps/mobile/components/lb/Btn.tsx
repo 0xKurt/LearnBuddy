@@ -107,7 +107,7 @@ type Props = Common &
  * lays it out as ICON_BTN_SIZE and the target still reaches 44 — on the web too, where
  * `hitSlop` does not exist (issue #295).
  */
-export const ICON_BTN_SIZE = SPACE.xl;
+const ICON_BTN_SIZE = SPACE.xl;
 const ICON_BTN_REACH = (TOUCH - ICON_BTN_SIZE) / 2;
 
 /**

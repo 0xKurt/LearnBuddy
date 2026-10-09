@@ -73,7 +73,7 @@ export function dayPart(hour: number): DayPart {
 }
 
 /** How many wordings each part has (locales must carry exactly these). */
-export const GREETING_VARIANTS = 3;
+const GREETING_VARIANTS = 3;
 
 /**
  * Which wording this opening uses. It was fed the day of the month, so everyone who opened

@@ -1197,7 +1197,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
  * The pages that were not read completely, as the model reported them: only real
  * photo positions, each once. Lena is told about them (docs/architecture.md §Material).
  */
-export function pageProblemsOf(pages: PageReport[], photoCount: number): PageProblem[] {
+function pageProblemsOf(pages: PageReport[], photoCount: number): PageProblem[] {
   const out = new Map<number, PageProblem>();
   for (const p of pages) {
     if (p.read === 'all' || p.page > photoCount || out.has(p.page)) continue;

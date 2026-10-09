@@ -53,7 +53,7 @@ const MAX_GROUPS = 3;
 const KINDS = ['fact', 'preference', 'goal'] as const;
 const LEASE_SECONDS = 120;
 
-export type MemoryItem = {
+type MemoryItem = {
   id: string;
   kind: string;
   statement: string;
@@ -107,7 +107,7 @@ export const SYSTEM = `You tidy up the list of things a learning companion knows
 Answer with the JSON object described by the schema.`;
 
 /** Everything she has told Buddy that counts against the cap, oldest first. */
-export async function activeMemories(db: Db, learnerId: string, now: Date): Promise<MemoryItem[]> {
+async function activeMemories(db: Db, learnerId: string, now: Date): Promise<MemoryItem[]> {
   return db.query<MemoryItem>(
     `select id, kind, statement, version, created_at from buddy_memories
       where learner_id = $1 and status = 'active' and (valid_until is null or valid_until > $2)
@@ -152,7 +152,7 @@ export async function planConsolidations(deps: Deps): Promise<number> {
 }
 
 /** Groups for one run: one per kind, oldest first (the order the model sees them in). */
-export function groupsOf(memories: readonly MemoryItem[]): MemoryItem[][] {
+function groupsOf(memories: readonly MemoryItem[]): MemoryItem[][] {
   const groups: MemoryItem[][] = [];
   for (const kind of KINDS) {
     const rows = memories.filter((m) => m.kind === kind);
@@ -170,7 +170,7 @@ type Checked = { merges: Merge[]; invalid: Invalidation[] };
  * What the model asked for, checked against the group it saw. Every violation rejects the
  * whole group: a consolidation is all or nothing, never a half-applied guess.
  */
-export function checkPlan(
+function checkPlan(
   group: readonly MemoryItem[],
   plan: z.infer<typeof Plan>,
   locale: string,
@@ -305,7 +305,7 @@ async function holdsLease(deps: Deps, job: JobRow): Promise<boolean> {
   return held !== null;
 }
 
-export type ConsolidationResult = {
+type ConsolidationResult = {
   /** Groups the model was asked about. */
   groups: number;
   /** Items merged away into a shorter sentence. */

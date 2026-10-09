@@ -90,7 +90,7 @@ export type RetryWaits = {
   random: () => number;
 };
 
-export const REAL_WAITS: RetryWaits = {
+const REAL_WAITS: RetryWaits = {
   elapsedMs: () => performance.now(),
   sleep: (ms) => new Promise((done) => setTimeout(done, ms)),
   random: Math.random,

@@ -21,7 +21,7 @@ export const TEST_DATABASE_URL =
   process.env.LB_TEST_DATABASE_URL ?? 'postgres://postgres:postgres@127.0.0.1:5432/postgres';
 
 /** CI sets LB_REQUIRE_TEST_DB=1 so a missing database fails instead of skipping. */
-export const TEST_DATABASE_REQUIRED = process.env.LB_REQUIRE_TEST_DB === '1';
+const TEST_DATABASE_REQUIRED = process.env.LB_REQUIRE_TEST_DB === '1';
 
 function urlFor(database: string): string {
   const url = new URL(TEST_DATABASE_URL);

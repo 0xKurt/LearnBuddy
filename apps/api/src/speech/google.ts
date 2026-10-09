@@ -17,7 +17,7 @@ import { ensureCredentialsFile } from '../llm/vertex.js';
 import { SpeechError, type SpeechAudio, type SpeechGateway, type SpeechInput } from './gateway.js';
 
 /** Chirp 3: HD voice per curated name: two female, two male, all calm and clear. */
-export const CHIRP3_VOICES: Record<VoiceName, string> = {
+const CHIRP3_VOICES: Record<VoiceName, string> = {
   warm: 'Sulafat',
   friendly: 'Achird',
   bright: 'Zephyr',

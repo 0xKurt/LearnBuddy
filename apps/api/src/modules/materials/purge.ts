@@ -18,14 +18,14 @@ import { enqueueJob, finishJob, type JobRow } from '../scheduler/jobs.js';
 
 export const PHOTO_RETENTION_DAYS = 7;
 /** Removing or correcting a memory can be undone this long; then its words are erased. */
-export const MEMORY_UNDO_DAYS = 7;
+const MEMORY_UNDO_DAYS = 7;
 /**
  * Signed upload URLs stay valid for 2 hours (Supabase Storage). Photos of a deleted sheet
  * that arrive later are removed by a second purge once no URL can deliver any more.
  */
 export const UPLOAD_URL_TTL_MS = 2 * 3_600_000;
 /** Storage deletions waiting longer than this are reported by /health. */
-export const ERASURE_OVERDUE_MS = 86_400_000;
+const ERASURE_OVERDUE_MS = 86_400_000;
 
 const DAY = 86_400_000;
 
@@ -323,8 +323,8 @@ export async function erasureBacklog(
  * bookkeeping rows go as well (they never held content: tokens, cost, latency).
  * Both are in docs/privacy.md §What is stored.
  */
-export const DECISION_CONTENT_DAYS = 90;
-export const CALL_LOG_DAYS = 180;
+const DECISION_CONTENT_DAYS = 90;
+const CALL_LOG_DAYS = 180;
 
 /** Returns how many rows were changed; runs in small bites, like every other sweep. */
 export async function purgeDecisionContent(deps: Deps): Promise<number> {

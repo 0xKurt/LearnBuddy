@@ -23,7 +23,7 @@ const TAU = Math.PI * 2;
 export const ORB_R = 54;
 
 /** Seconds from the start of "happy" until the moon is back in its orbit. */
-export const HAPPY_SECONDS = 2.1;
+const HAPPY_SECONDS = 2.1;
 /** After this long, a finished "happy" hands over to idle by itself. */
 export const HAPPY_SETTLE = 2.4;
 
@@ -81,7 +81,7 @@ export type MoonPose = {
   burstGate: number;
 };
 
-export function moonIndex(state: MoonState): number {
+function moonIndex(state: MoonState): number {
   'worklet';
   const i = MOON_STATES.indexOf(state);
   return i < 0 ? 0 : i;
@@ -421,9 +421,9 @@ export type MoonDetail = {
 };
 
 /** Below this size (px) the orb has no moon: it would be a speck. */
-export const MOON_MIN_SIZE = 22;
+const MOON_MIN_SIZE = 22;
 /** From this size (px) on, the full moon exactly as the prototype draws it. */
-export const MOON_FULL_SIZE = 56;
+const MOON_FULL_SIZE = 56;
 /** The prototype's trail and burst. */
 export const PROTO_GHOSTS = 12;
 export const PROTO_SPARKLES = 14;

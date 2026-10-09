@@ -17,16 +17,16 @@ export type ListenEnd = 'done' | 'stopped' | 'error';
 /** Where the audio of one piece can be played from; null = the phone must read it. */
 export type Clip = { uri: string } | null;
 
-export type PlayHandle = { stop: () => void };
+type PlayHandle = { stop: () => void };
 
-export type PlayCallbacks = {
+type PlayCallbacks = {
   start: () => void;
   progress: (progress: number | null) => void;
   /** 'error' = the player failed; 'stopped' = it was stopped from outside. */
   end: (why: 'done' | 'error' | 'stopped') => void;
 };
 
-export type DeviceCallbacks = { done: () => void; stopped: () => void; error: () => void };
+type DeviceCallbacks = { done: () => void; stopped: () => void; error: () => void };
 
 /** The outside world of a reading: everything that touches the phone or the network. */
 export type ReadingEffects = {

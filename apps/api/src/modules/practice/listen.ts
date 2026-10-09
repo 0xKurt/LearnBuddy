@@ -56,7 +56,7 @@ import { ItemDraft, optionPictures, usableItems } from './items.js';
  * `evaluate.ts` without a model: a tapped option by its index, a short answer against a key
  * that — by Rule 0 — stands word for word in the text she heard.
  */
-export const LISTEN_KINDS = ['multiple_choice', 'short'] as const;
+const LISTEN_KINDS = ['multiple_choice', 'short'] as const;
 
 /**
  * The pictures a listening option may be (#375): exactly those `choiceProblem` holds to their

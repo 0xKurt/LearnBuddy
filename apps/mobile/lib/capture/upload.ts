@@ -26,13 +26,10 @@ import { putPhoto } from './put.js';
 export {
   MAX_PHOTOS,
   MaterialUpload,
-  PhotoUploadError,
   type MaterialLink,
   type MaterialPurpose,
   type SendProgress,
-  type UploadFailure,
   type UploadFile,
-  type UploadMime,
 } from './materialUpload.js';
 
 const MAX_SIDE = 1600;

@@ -42,7 +42,7 @@ import { bumpContext } from './plan.js';
 import { decideContact, IN_APP_REASONS, type PastContact } from './policy.js';
 import type { SettingsRow } from './state.js';
 
-export type OutreachOrigin = 'agreed' | 'buddy' | 'learner';
+type OutreachOrigin = 'agreed' | 'buddy' | 'learner';
 
 /**
  * A text rendered when it is shown, not when it is planned: `key` with `params` (and the
@@ -210,7 +210,7 @@ type ThreadCopy = Pick<ClaimedOutreach, 'id' | 'learner_id' | 'body' | 'decision
 };
 
 /** The words for the thread, rendered now (relative days, late agreed reminders). */
-export function renderBody(
+function renderBody(
   o: Pick<ThreadCopy, 'body' | 'body_template'>,
   locale: string,
   tz: string,
