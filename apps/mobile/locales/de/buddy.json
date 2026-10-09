@@ -25,7 +25,6 @@
     "plan_step_repeat_weekdays": "Verabredet: {{title}} an Schultagen um {{time}}",
     "plan_step_repeat_weekly": "Verabredet: {{title}} jeden {{weekday}} um {{time}}",
     "plan_step_repeat_until": " – bis {{date}}",
-    "update_step_repeat_off": "Kommt nicht mehr regelmäßig: {{title}}",
     "update_step_moved": "Verschoben: {{title}} {{when}}",
     "update_step_skipped": "Übersprungen: {{title}}",
     "update_step_cancelled": "Abgesagt: {{title}}",
@@ -131,10 +130,8 @@
   "focus": {
     "label": "Du arbeitest gerade an: {{what}}"
   },
-  "greeting": "Hallo {{name}}",
   "greeting_ask": "Was steht an?",
   "intro": {
-    "title": "Ich bin Buddy.",
     "body": "Ich helfe dir, dich auf Arbeiten und Tests vorzubereiten – ohne Stress. Erzähl mir einfach, was ansteht, oder schick mir ein Foto von deinem Arbeitsblatt."
   },
   "menu": {
@@ -295,7 +292,6 @@
     "end": "Beenden",
     "speak": "Sprechen",
     "interrupt": "Unterbrechen und sprechen",
-    "short": "Reden",
     "photo": "Foto",
     "photo_label": "Foto zeigen",
     "tap_orb": "Tipp auf Buddy, dann hört er dir zu.",

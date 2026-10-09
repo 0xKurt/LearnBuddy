@@ -24,7 +24,7 @@ export async function hasUnsentWork(): Promise<boolean> {
 }
 
 /** Deletes the outbox, the drafts (photos and text) and every kept photo. */
-export async function discardLocalWork(): Promise<void> {
+async function discardLocalWork(): Promise<void> {
   await clearOutbox();
   await drafts.clearAll();
   await clearDrafts();

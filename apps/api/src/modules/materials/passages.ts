@@ -20,7 +20,7 @@ export type PassageDeps = Pick<Deps, 'db' | 'embeddings' | 'now'>;
 export const MAX_PASSAGE_CHARS = 700;
 const MIN_PASSAGE_CHARS = 200;
 /** A sheet grown by merged pages stays bounded (position is checked 0–199 in SQL). */
-export const MAX_PASSAGES = 120;
+const MAX_PASSAGES = 120;
 
 /**
  * extracted_text → passages: paragraphs (blank-line separated) greedily packed to

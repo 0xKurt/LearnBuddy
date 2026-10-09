@@ -1455,7 +1455,7 @@ Symbol und ist mit `grep` auffindbar.
 
 **Drei Antwortwege** (`AnswerRequest.via`): `typed` · `tapped` · `spoken`.
 
-**Drei Eingabeflächen auf dem Bildschirm** (`apps/mobile/app/practice/[id].tsx` wählt sie aus):
+**Drei Eingabeflächen auf dem Bildschirm** (`apps/mobile/lib/practice/answerForm.ts` wählt sie aus, `components/practice/AnswerArea.tsx` zeigt sie):
 
 | Fläche        | Datei                                                 | Was sie kann                                                                                                                                                                                                                                                                                                                                                    |
 | ------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

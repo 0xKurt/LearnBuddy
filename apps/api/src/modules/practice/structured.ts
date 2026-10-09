@@ -704,7 +704,7 @@ export function secretsOf(
 // ─────────────── Regel 0: her answer, checked ───────────────
 
 /** One part of her answer: an element at its place, a pair, a cell, a gap. */
-export type PartResult = { id: PartId; ok: boolean };
+type PartResult = { id: PartId; ok: boolean };
 
 /**
  * The verdict on a structured answer, with what is right part by part. Kinds add their own
@@ -721,7 +721,7 @@ export type StructuredCheck =
   | ColumnCheck
   | GridCheck;
 
-export type OrderCheck = {
+type OrderCheck = {
   type: 'order';
   correct: boolean;
   /** In her order: each element she placed, and whether it is at its right place. */

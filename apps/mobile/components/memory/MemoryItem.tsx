@@ -15,7 +15,7 @@ import { Card } from '../lb/Card.js';
 import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 
 /** UpdateMemoryRequest allows 1–300 characters (trimmed). */
-export const STATEMENT_MAX = 300;
+const STATEMENT_MAX = 300;
 
 type Props = {
   memory: MemoryView;

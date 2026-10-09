@@ -9,7 +9,7 @@ import { Btn } from '../lb/Btn.js';
 import type { IconName } from '../lb/Icon.js';
 import { Sheet } from '../lb/Sheet.js';
 
-export type Choice = { label: string; icon: IconName; onPress: () => void };
+type Choice = { label: string; icon: IconName; onPress: () => void };
 
 type Props = {
   visible: boolean;

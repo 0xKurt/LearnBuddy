@@ -40,7 +40,7 @@ import { itemsOneByOne } from '../practice/items.js';
 import { promptVersion } from '../../llm/promptVersion.js';
 
 /** At most this many crops per sheet (pages added later fill up to it, never past it). */
-export const MAX_IMAGES_PER_MATERIAL = 6;
+const MAX_IMAGES_PER_MATERIAL = 6;
 /** Generous symmetric padding so a tight model box never clips the figure. */
 const FIGURE_PAD = 0.012;
 /** A crop smaller than this on either side is noise, not a figure. */

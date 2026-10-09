@@ -49,14 +49,14 @@ import {
  * layer below where it was looked for, and it is why "frag mich alle Vokabeln ab" could
  * not work however well the selection behaved.
  */
-export const ITEMS_PER_READING = 60;
+const ITEMS_PER_READING = 60;
 
 /**
  * The most structured tasks (an order to find #228, a table to fill in #230, links to make #229)
  * ONE reading may return. A sheet rarely has more than a few; like `items`, the rest is read on
  * the next pass.
  */
-export const STRUCTURED_PER_READING = 12;
+const STRUCTURED_PER_READING = 12;
 
 /** How often one sheet may be read for more, before it is called incomplete out loud. */
 export const MOST_READINGS = 4;
@@ -87,7 +87,7 @@ const SUBJECT_KINDS = [
  * (fully) read, so she can photograph exactly that page again; a page nobody
  * mentions is never silently lost (docs/architecture.md §Material).
  */
-export const PAGE_PROBLEMS = [
+const PAGE_PROBLEMS = [
   'cut_off',
   'blurry',
   'dark',
@@ -346,7 +346,7 @@ export const NOT_PRACTICABLE_RULES = `Decide for EVERY task on the sheet whether
  * reading of her sheet (project rule, and the reason NOT_PRACTICABLE_RULES names forms, not
  * sentences).
  */
-export const UNCLEAR_RULES = `A spot you cannot SETTLE, although you can see it and the task around it is readable — a number whose digits could be read in more than one way, a character under a reflection or a crease, a sign that could be one operator or another, a word whose ending is hidden: write NO question for that task, and name it in unclear instead. One entry per spot: its page, the task as printed, what exactly is unsettled (a few words), and the 2-${MOST_UNCLEAR_READINGS} readings it could be, in the order you consider them. NEVER pick one and never write a question with a value you only suspect: the learner is holding the sheet and will be asked which reading it is, and her answer is what the question is then written from.
+const UNCLEAR_RULES = `A spot you cannot SETTLE, although you can see it and the task around it is readable — a number whose digits could be read in more than one way, a character under a reflection or a crease, a sign that could be one operator or another, a word whose ending is hidden: write NO question for that task, and name it in unclear instead. One entry per spot: its page, the task as printed, what exactly is unsettled (a few words), and the 2-${MOST_UNCLEAR_READINGS} readings it could be, in the order you consider them. NEVER pick one and never write a question with a value you only suspect: the learner is holding the sheet and will be asked which reading it is, and her answer is what the question is then written from.
    Only when you can name the readings. A spot where you cannot say what it could be belongs in the page report (read "part") and nowhere else — a made-up alternative would have her confirm something that is not on her sheet.
    Everything else on the sheet gets its questions as usual: one unsettled spot costs its own task and nothing more. Name at most ${MOST_UNCLEAR_SPOTS} spots; a page with more unsettled than that is a page that was not read, and the page report says so.`;
 

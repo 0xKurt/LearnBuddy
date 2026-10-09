@@ -19,7 +19,7 @@ const SOURCES: Record<Cue, number> = { listen: listenStart, done: listenEnd };
 /** Quiet: a hint, not a signal. */
 const VOLUME = 0.35;
 /** How long a cue lasts (the files are 110–180 ms). */
-export const CUE_MS = 200;
+const CUE_MS = 200;
 
 const players = new Map<Cue, AudioPlayer>();
 

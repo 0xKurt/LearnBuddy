@@ -120,9 +120,6 @@
       "start": "Commençons par {{name}} : {{missing}}"
     },
     "solution_is": "La réponse est : {{answer}}",
-    "speak_almost": "Presque ! Regarde les mots marqués.",
-    "speak_good": "C'est super !",
-    "speak_retry": "Réessaie – écoute-le d'abord.",
     "spelling": "Presque juste – regarde bien les majuscules et la ponctuation.",
     "staff": {
       "note": {

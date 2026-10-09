@@ -17,7 +17,7 @@
 //     countable this way; they stay `unknown` rather than being guessed at.
 
 /** How many of each element, and the total charge, one side of an equation holds. */
-export type Atoms = { counts: Map<string, number>; charge: number };
+type Atoms = { counts: Map<string, number>; charge: number };
 
 /** An element symbol: one capital, optionally one or two lower-case letters (Na, Cl, Uus). */
 const ELEMENT = /^[A-Z][a-z]{0,2}/;
@@ -200,7 +200,7 @@ export function parseFormula(raw: string): Parsed {
  * thing on the side, or the next thing after it is the separator itself. "Fe^3+ + 3 OH-" has
  * one of each, "2 H2 + O2" has only a separator, "Na+" only a charge.
  */
-export function termsOf(side: string): string[] {
+function termsOf(side: string): string[] {
   const s = digitsNormalised(cleaned(side));
   const terms: string[] = [];
   let start = 0;

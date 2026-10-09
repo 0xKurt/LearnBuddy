@@ -59,7 +59,7 @@ import { ItemDraft } from './items.js';
 import { checkPath } from './steps.js';
 
 /** How the values of a row stand next to each other when read as one text. */
-export const TABLE_JOIN = ' · ';
+const TABLE_JOIN = ' · ';
 
 /** `items.answer` holds at most this much (0001_baseline.sql); a longer solution is no task. */
 const ANSWER_MAX = 1000;
@@ -161,7 +161,7 @@ function valueText(cell: TableTaskCell): string {
 }
 
 /** The server's id of the gap in row r, column c (0-based): it says where, never what. */
-export function gapId(row: number, col: number): PartId {
+function gapId(row: number, col: number): PartId {
   return `r${row}c${col}`;
 }
 
@@ -333,7 +333,7 @@ function isNumberKey(key: string): boolean {
 }
 
 /** How a gap is typed in, from its key alone: math keys for a number or a term. */
-export function inputFor(key: string): TableInput {
+function inputFor(key: string): TableInput {
   return isNumberKey(key) || isMathText(key) ? 'math' : 'text';
 }
 
@@ -441,7 +441,7 @@ export type CellContext = Pick<ItemForCheck, 'spelling' | 'subject_kind'>;
 export type CellVerdict = 'right' | 'near' | 'wrong';
 
 /** A gap that is not right yet, and what names it in a sentence. */
-export type TableMiss = {
+type TableMiss = {
   id: PartId;
   /** 1-based, as she counts. */
   row: number;

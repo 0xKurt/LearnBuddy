@@ -11,7 +11,7 @@ import { modelThrottle, type ModelThrottle } from './throttle.js';
 import type { RetentionStats } from './tick.js';
 
 /** A tick runs every minute; ten minutes without one means the scheduler is not running. */
-export const SCHEDULER_STALE_MS = 10 * 60_000;
+const SCHEDULER_STALE_MS = 10 * 60_000;
 
 export type SchedulerHealth = {
   ok: boolean;

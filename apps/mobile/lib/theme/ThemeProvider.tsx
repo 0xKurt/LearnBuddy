@@ -95,7 +95,7 @@ const Ctx = createContext<ThemeContext | null>(null);
  * look settings (and, since #36, instead of leaving the system chrome in the default).
  */
 /** What is on this device, with a pre-#140 value read as what it used to show. */
-export async function keptChoice(): Promise<{ family: Family; mode: Mode }> {
+async function keptChoice(): Promise<{ family: Family; mode: Mode }> {
   const [family, mode] = await Promise.all([
     readItem(KEY).catch(() => null),
     readItem(MODE_KEY).catch(() => null),

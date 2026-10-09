@@ -208,7 +208,7 @@ export type RubricClaim = z.infer<typeof RubricClaim>;
 // ─────────────── prüfen ───────────────
 
 /** Der eine nächste Schritt — nie eine Liste davon (siehe den Kopf dieser Datei). */
-export type RubricStep = {
+type RubricStep = {
   name: string;
   missing: string;
   /** Code hat es gemessen (`word_count`, `mentions`, ein bestätigtes Verb) — kein Urteil. */

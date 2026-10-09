@@ -61,10 +61,10 @@ const Sent = z.array(
 export type SentPhotos = z.infer<typeof Sent>;
 
 /** A draft older than this is dropped (the photos are deleted after 7 days on the server too). */
-export const DRAFT_MAX_AGE_MS = 7 * 86_400_000;
+const DRAFT_MAX_AGE_MS = 7 * 86_400_000;
 /** Sent photos are kept this long on the phone for the page notice (it shows for 24 h)
  * and for the preview of the sheet in the chat while that notice or the reading stands. */
-export const SENT_KEEP_MS = 24 * 3_600_000;
+const SENT_KEEP_MS = 24 * 3_600_000;
 
 export type DraftStorage = {
   read(key: string): Promise<string | null>;
@@ -108,7 +108,7 @@ export const CameraOpen = z.object({ link: Link, at: z.string() });
 export type CameraOpen = z.output<typeof CameraOpen>;
 
 /** A camera hand-over older than this is not recovered (she has moved on). */
-export const CAMERA_RECOVERY_MS = 30 * 60_000;
+const CAMERA_RECOVERY_MS = 30 * 60_000;
 
 /** The noted capture, if it is recent enough to recover a photo into. */
 export function cameraOpenOf(raw: string | null, now: Date): CameraOpen | null {

@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Config } from '../config.js';
 import { outcomeOfStatus, type Outcome } from '../lib/outcome.js';
 
-export const PHOTO_BUCKET = 'material-photos';
+const PHOTO_BUCKET = 'material-photos';
 
 export type UploadTarget = { path: string; url: string; token: string };
 

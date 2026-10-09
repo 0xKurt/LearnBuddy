@@ -8,7 +8,7 @@ import { APP_REQUEST_HEADERS } from '@learnbuddy/shared-types/contracts';
 import type { MiddlewareHandler } from 'hono';
 import { cors } from 'hono/cors';
 
-export const CORS_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
+const CORS_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
 
 export function appCors(opts: {
   /** Whether a browser origin may call. */

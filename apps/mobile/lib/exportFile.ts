@@ -12,7 +12,7 @@ import { Platform, Share } from 'react-native';
 
 export type ExportDelivery = 'shared' | 'saved' | 'cancelled';
 
-export const EXPORT_FILE_NAME = 'learnbuddy-export.json';
+const EXPORT_FILE_NAME = 'learnbuddy-export.json';
 
 export async function deliverExport(json: string, title: string): Promise<ExportDelivery> {
   if (Platform.OS === 'android') {

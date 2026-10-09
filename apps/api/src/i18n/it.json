@@ -120,9 +120,6 @@
       "start": "Iniziamo da {{name}}: {{missing}}"
     },
     "solution_is": "La risposta è: {{answer}}",
-    "speak_almost": "Quasi! Guarda le parole segnate.",
-    "speak_good": "Suona benissimo!",
-    "speak_retry": "Riprova – ascoltalo prima.",
     "spelling": "Quasi giusto – guarda bene maiuscole e punteggiatura.",
     "staff": {
       "note": {

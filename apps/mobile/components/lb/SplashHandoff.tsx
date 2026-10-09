@@ -23,7 +23,7 @@ import { BuddyOrb, FILL } from './BuddyOrb.js';
 if (Platform.OS !== 'web') void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 /** The native splash's image width (app.json → expo-splash-screen → imageWidth). */
-export const SPLASH_IMAGE_WIDTH = 200;
+const SPLASH_IMAGE_WIDTH = 200;
 
 export function SplashHandoff({ ready }: { ready: boolean }) {
   const { palette } = useTheme();

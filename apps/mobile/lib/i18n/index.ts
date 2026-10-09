@@ -17,7 +17,7 @@ import { NAMESPACES, resources, SUPPORTED_LOCALES, type AppLocale } from './reso
 /** A language chosen by tapping a flag, kept per device across restarts. */
 const CHOSEN_KEY = 'lb.locale.chosen';
 
-export function deviceLocale(): AppLocale {
+function deviceLocale(): AppLocale {
   for (const l of getLocales()) {
     const code = l.languageCode as AppLocale | null;
     if (code && SUPPORTED_LOCALES.includes(code)) return code;

@@ -24,7 +24,7 @@ import { enqueueJob, finishJob, type JobRow } from '../scheduler/jobs.js';
 import { promptVersion } from '../../llm/promptVersion.js';
 
 /** Nothing said for this long ends a conversation (the app draws its session line here too). */
-export const SESSION_GAP_MS = 4 * 3_600_000;
+const SESSION_GAP_MS = 4 * 3_600_000;
 // How many summaries Buddy's context carries is decided in one place: state.ts LIMITS.summaries.
 /** A conversation shorter than this is not worth a model call. */
 const MIN_MESSAGES = 4;
@@ -106,7 +106,7 @@ type Row = {
  * the last summary to the last message before a gap of SESSION_GAP_MS (or the end).
  * Null when nothing is due — a conversation that is still going is never summarised.
  */
-export async function pendingSession(
+async function pendingSession(
   db: Db,
   learnerId: string,
   now: Date,

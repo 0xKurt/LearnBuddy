@@ -1422,7 +1422,8 @@ how the Vertex model recognises a real corrected test and real red marks — the
 asks for an eval with five real, anonymised tests, which needs those photos (owed, see the issue).
 The home's failed card still titles `nothing_marked` like every failure ("… konnte ich nicht
 lesen", as it does for `form_not_practicable`); its detail says what happened. Changing the
-title is a change to `app/buddy.tsx`, left to a follow-up because that file was in parallel work.
+title is a change to the failed notice (`components/buddy/HomeNotices.tsx`, until #311 in
+`app/buddy.tsx`), left to a follow-up because that file was in parallel work.
 
 **Photo check on the phone** (`apps/mobile/lib/photo/quality.ts`, `check.ts`; the old app's most
 common failure was an unreadable photo): right after a photo is taken or picked, a small copy is
@@ -5185,7 +5186,13 @@ it is read (a page joining the homework session) shows either before or after, n
 card next to "nothing working" — the app polls closely only while something is working
 (`home-snapshot.int.test.ts`).
 
-**The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx`, top to bottom:
+**The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx` puts the screen
+together from parts with one job each (issue #311): what is drawn in `components/buddy/HomeTop`
+(the layer on top), `HomeThread` (the conversation, its fade and "↓ Neue Antwort"), `HomeIntro`
+(before there is a conversation), `HomeNotices` and `StartSheets` (the ⋯ menu and its sheets);
+the state in `lib/buddy/useHomeSend` (sending, Stopp, Vorlesen), `useThreadFollow`,
+`useSessionStart`, `homeThread.ts` (pure: what the thread shows), `useHomePhotos`, `useHomeAct`
+and `useContactOptIn`. Top to bottom:
 on top at most **one slim bar** (issue #17, `components/buddy/SlimBar.tsx`) — the thing to act
 on now: a practice to go on with (ResumeBar), one that is ready (ReadyBar — after a result it
 shows what is prepared next), the photo Buddy waits for (CaptureBar — the ask is said once,
@@ -5275,6 +5282,13 @@ conversation took all free room, which left a hole under the card with a lonely 
 free room below them, while typed text sat at the bottom — two rules, and on a tall phone the
 answer floated in the middle of the screen. **#386 replaces owner decision B of 03.10. for every
 form: every answer sits at the bottom.**
+In code (issue #311) `apps/mobile/app/practice/[id].tsx` only puts the screen together. What she
+does with the question is one hook (`lib/practice/usePracticeActions.ts`: each a server call, one
+at a time through `useOneCall`, which the card pass shares); what she writes, what is heard, how
+the run ends and the corner's sheet are hooks beside it (`usePracticeDrafts`, `usePracticeVoice`,
+`useSessionEnd`, `useCornerConfirm` — one flow for "Frage passt nicht" and "Einspruch"); what the
+question shows is pure (`questionView`). The parts drawn are `QuestionProgress`, `ItemCard`,
+`QuestionThread`, `AnswerArea` and `NoQuestion` in `components/practice/`.
 **The answer shell** (issue #310, `components/practice/AnswerShell.tsx`) holds an answer and its
 action in fixed slots: the free room, the answer, optional keys for what she types directly under
 it, and "Prüfen" (`CheckBar.tsx`: one full-width pill in the pinned bar,

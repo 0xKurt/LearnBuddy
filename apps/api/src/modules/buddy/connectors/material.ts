@@ -357,7 +357,7 @@ export function fuseRrf(fts: Candidate[], trgm: Candidate[], vector: Candidate[]
 }
 
 /** Total size of the pre-injected block (issue #26: a hard context-budget cap). */
-export const MAX_PREINJECT_CHARS = 1200;
+const MAX_PREINJECT_CHARS = 1200;
 /** Passages pre-injected at most, so one sheet never floods the context. */
 const MAX_PREINJECT_SHEETS = 2;
 /**

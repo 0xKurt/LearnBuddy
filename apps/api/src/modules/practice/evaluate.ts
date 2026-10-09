@@ -134,7 +134,7 @@ const FORM_ONLY: ReadonlySet<RuleVerdict> = new Set([
  * This is the one place that licence lives, and it is read off the stored text, never off a
  * subject or a guess: without a spoken text on the question nothing calls it.
  */
-export function contentOnly(verdict: RuleVerdict): RuleVerdict {
+function contentOnly(verdict: RuleVerdict): RuleVerdict {
   return FORM_ONLY.has(verdict) ? 'correct' : verdict;
 }
 

@@ -60,7 +60,3 @@ export function failureOf(code: string, status: number): SendResult {
   const forGood = status >= 400 && status < 500 && ![401, 408, 426, 429].includes(status);
   return forGood ? 'refused' : 'try_later';
 }
-
-export function afterSend(result: SendResult): 'remove' | 'keep' {
-  return result === 'sent' || result === 'refused' ? 'remove' : 'keep';
-}

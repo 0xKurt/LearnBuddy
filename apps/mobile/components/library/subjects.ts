@@ -57,7 +57,7 @@ export function hasSomething(subject: LibrarySubject): boolean {
 }
 
 /** When something last happened in this subject ('' when nothing ever did). */
-export function lastActivityOf(subject: LibrarySubject): string {
+function lastActivityOf(subject: LibrarySubject): string {
   const newest = things(subject, '', '')[0];
   return newest?.at ?? '';
 }

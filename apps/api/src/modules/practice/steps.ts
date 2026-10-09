@@ -99,7 +99,7 @@ function severalVariables(src: string): boolean {
   return runs.every((r) => r.length === 1 || RESERVED.has(r.toLowerCase()));
 }
 
-export type Relation = '=' | '<' | '>' | '≤' | '≥';
+type Relation = '=' | '<' | '>' | '≤' | '≥';
 
 /**
  * One parsed line: a term (`right` null), an equation or an inequality. `vars` are the variable
@@ -236,7 +236,7 @@ export function probeEnvs(vars: readonly string[]): Env[] {
 const at = (e: Expr, env: Env) => evaluateExpression(e, env);
 
 /** Two terms: the same value everywhere it can be checked. */
-export function sameTermOn(a: Expr, b: Expr, envs: readonly Env[]): Compared {
+function sameTermOn(a: Expr, b: Expr, envs: readonly Env[]): Compared {
   let usable = 0;
   for (const env of envs) {
     const va = at(a, env);
@@ -341,7 +341,7 @@ function sameEquation(a: Line, b: Line): Compared {
 type HalfLine = { boundary: number; above: boolean; strict: boolean };
 
 /** The half-line `l` describes, or null when its sides do not differ by a linear term. */
-export function halfLine(l: Line): HalfLine | null {
+function halfLine(l: Line): HalfLine | null {
   if (l.rel === null || l.rel === '=' || l.vars.length > 1) return null;
   const d = difference(l);
   const v = (x: number) => d({ x });
