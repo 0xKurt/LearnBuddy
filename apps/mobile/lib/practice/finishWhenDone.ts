@@ -14,6 +14,15 @@ import { finishSession } from '../api/endpoints.js';
 import { keys, queryClient } from '../api/queries.js';
 import { messageFor } from '../errors.js';
 
+/** Hands the run in: the server finishes it, the screen shows its result, Buddy's home is refreshed. */
+export async function handInRun(
+  id: string,
+  store: (next: SessionView) => Promise<void>,
+): Promise<void> {
+  await store(await finishSession(id));
+  void queryClient.invalidateQueries({ queryKey: keys.home });
+}
+
 export function useFinishWhenDone(
   id: string,
   session: SessionView | undefined,
@@ -32,8 +41,7 @@ export function useFinishWhenDone(
   async function finish(): Promise<void> {
     setFinishFailed(false);
     try {
-      await store(await finishSession(id));
-      void queryClient.invalidateQueries({ queryKey: keys.home });
+      await handInRun(id, store);
     } catch (err) {
       toast.show(messageFor(err), 'error');
       setFinishFailed(true);

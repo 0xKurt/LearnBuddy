@@ -9,19 +9,14 @@
 // Darum steht die Kontrolle hier und nicht in einem Formular (Regel 16): ein Tipp am Urteil,
 // ein Satz, der sagt was passiert, ein Knopf. Kein Freitextfeld, keine Begründungspflicht,
 // keine Zahl (Regel 6). Der Tipp ist das kurze „Einspruch“ in der Ecke der Frage
-// (`QuestionCorner`, Issue #459); hier stehen die Regel, wann es ihn gibt, und die Rückfrage.
+// (`QuestionCorner`, Issue #459), die Rückfrage dort die `CornerSheet`; hier steht die Regel, wann
+// es ihn gibt.
 //
 // Was der Zettel NICHT behauptet: dass jemand die Bewertung geprüft und ihr recht gegeben hat.
 // Er sagt, was der Server wirklich tut — die Frage zählt nicht mehr, sie kommt nicht wieder,
 // der Lernstand geht auf den Stand von vorher zurück (`disputeVerdict`, practice/service.ts).
 
 import type { ItemKind } from '@learnbuddy/shared-types/contracts';
-import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
-
-import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
-import { Sheet } from '../lb/Sheet.js';
 
 /** Was über eine Frage im Blick auf „Gegenrede" bekannt ist. */
 export type VerdictState = {
@@ -55,36 +50,5 @@ export function canDisputeVerdict(q: VerdictState): boolean {
     !q.testing &&
     q.origin !== 'homework' &&
     q.kind !== 'essay'
-  );
-}
-
-/**
- * Die Rückfrage. Sagt in einem Satz, was passiert — und behauptet nichts darüber, wer recht
- * hat. Schließbar über den sichtbaren Knopf in der Lade (Regel 14).
- */
-export function DisputeVerdictSheet({
-  visible,
-  busy,
-  onClose,
-  onConfirm,
-}: {
-  visible: boolean;
-  busy: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-}) {
-  const { t } = useTranslation(['practice', 'common']);
-  return (
-    <Sheet
-      visible={visible}
-      title={t('practice:dispute.sheet_title')}
-      closeLabel={t('common:actions.cancel')}
-      onClose={onClose}
-    >
-      <Text style={TYPE.body}>{t('practice:dispute.sheet_body')}</Text>
-      <Btn full busy={busy} onPress={onConfirm}>
-        {t('practice:dispute.confirm')}
-      </Btn>
-    </Sheet>
   );
 }

@@ -28,7 +28,7 @@
 // (rule 5), and a count of what is still to come is not hers to carry either (rule 6).
 
 import type { CardRecall, SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
@@ -36,8 +36,8 @@ import { announce } from '../../lib/announce.js';
 import { recordCard } from '../../lib/api/endpoints.js';
 import { useDraft } from '../../lib/drafts.js';
 import { haptic } from '../../lib/haptics.js';
-import { messageFor } from '../../lib/errors.js';
 import { isForeign } from '../../lib/i18n/index.js';
+import { useOneCall } from '../../lib/practice/useOneCall.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -47,7 +47,6 @@ import { EndButton } from '../lb/EndButton.js';
 import { ReadAgain } from '../lb/ReadAgain.js';
 import { Rise } from '../lb/Motion.js';
 import { Screen } from '../lb/Screen.js';
-import { toast } from '../lb/Toast.js';
 import { BottomBar } from '../lb/BottomBar.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { CheckBar } from './CheckBar.js';
@@ -93,8 +92,7 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
   const turnedDraft = useDraft(`session.${session.id}.turned`);
   const turned = turnedDraft.text || null;
   const setTurned = (itemId: string | null) => turnedDraft.setText(itemId ?? '');
-  const [busy, setBusy] = useState(false);
-  const working = useRef(false);
+  const { busy, run } = useOneCall();
 
   const open = session.items.filter((i) => i.status === 'open');
   const current: SessionItemView | undefined =
@@ -116,21 +114,13 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
     if (showing) announce(`${t('practice:cards.back_label')}: ${showing}`);
   }, [showing]);
 
-  async function rate(itemId: string, recall: CardRecall): Promise<void> {
-    if (working.current) return;
-    working.current = true;
-    haptic.tap();
-    setBusy(true);
-    try {
+  function rate(itemId: string, recall: CardRecall): Promise<void> {
+    return run(async () => {
+      haptic.tap();
       await onChange(await recordCard(session.id, itemId, recall));
       // The next card starts face up; this one is done either way.
       setTurned(null);
-    } catch (err) {
-      toast.show(messageFor(err), 'error');
-    } finally {
-      working.current = false;
-      setBusy(false);
-    }
+    });
   }
 
   // ─────────────── the end of the pass ───────────────

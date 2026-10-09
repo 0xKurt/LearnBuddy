@@ -5280,6 +5280,13 @@ conversation took all free room, which left a hole under the card with a lonely 
 free room below them, while typed text sat at the bottom — two rules, and on a tall phone the
 answer floated in the middle of the screen. **#386 replaces owner decision B of 03.10. for every
 form: every answer sits at the bottom.**
+In code (issue #311) `apps/mobile/app/practice/[id].tsx` only puts the screen together. What she
+does with the question is one hook (`lib/practice/usePracticeActions.ts`: each a server call, one
+at a time through `useOneCall`, which the card pass shares); what she writes, what is heard, how
+the run ends and the corner's sheet are hooks beside it (`usePracticeDrafts`, `usePracticeVoice`,
+`useSessionEnd`, `useCornerConfirm` — one flow for "Frage passt nicht" and "Einspruch"); what the
+question shows is pure (`questionView`). The parts drawn are `QuestionProgress`, `ItemCard`,
+`QuestionThread`, `AnswerArea` and `NoQuestion` in `components/practice/`.
 **The answer shell** (issue #310, `components/practice/AnswerShell.tsx`) holds an answer and its
 action in fixed slots: the free room, the answer, optional keys for what she types directly under
 it, and "Prüfen" (`CheckBar.tsx`: one full-width pill in the pinned bar,

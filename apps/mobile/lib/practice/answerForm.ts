@@ -46,3 +46,6 @@ export function answerForm(item: ItemView, open: boolean) {
     !speaking;
   return { choices, tapChoices, speaking, structured, staff, taps, barSurface, tapFigure, typed };
 }
+
+/** Which way she answers this question (`answerForm`). */
+export type AnswerForm = ReturnType<typeof answerForm>;

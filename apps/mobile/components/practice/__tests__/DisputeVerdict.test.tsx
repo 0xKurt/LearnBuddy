@@ -26,7 +26,8 @@ import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
-import { canDisputeVerdict, DisputeVerdictSheet, type VerdictState } from '../DisputeVerdict.js';
+import { canDisputeVerdict, type VerdictState } from '../DisputeVerdict.js';
+import { CornerSheet } from '../QuestionCorner.js';
 
 /** Eine beantwortete Frage aus einer laufenden Übung — der Normalfall. */
 const judged: VerdictState = {
@@ -69,7 +70,8 @@ describe('ob es etwas zu bestreiten gibt', () => {
 describe('die Rückfrage', () => {
   function open(over: { busy?: boolean; onConfirm?: () => void; onClose?: () => void } = {}) {
     return renderInApp(
-      <DisputeVerdictSheet
+      <CornerSheet
+        action="dispute"
         visible
         busy={over.busy ?? false}
         onClose={over.onClose ?? (() => undefined)}
@@ -120,5 +122,23 @@ describe('die Rückfrage', () => {
     expect(onConfirm).not.toHaveBeenCalled();
     // Er steht weiter da und sagt weiter, was er tut: nichts verschwindet unter ihr weg.
     expect(confirm.textContent).toBe('Bewertung zurücknehmen');
+  });
+});
+
+describe('dieselbe Lade für „Frage passt nicht“ (#311)', () => {
+  it('sagt dort, was mit der Frage passiert, mit ihrem eigenen Knopf', () => {
+    renderInApp(
+      <CornerSheet
+        action="flag"
+        visible
+        busy={false}
+        onClose={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+    expect(screen.getByText('Frage passt nicht?')).toBeDefined();
+    expect(screen.getByText('Diese Frage kommt nicht mehr dran.')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Rausnehmen' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Abbrechen' })).toBeDefined();
   });
 });

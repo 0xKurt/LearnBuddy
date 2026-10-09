@@ -1,5 +1,0 @@
-{
-  "issue": "#444",
-  "reason": "Die Übungsseite gibt der Antwortleiste die Frage mit, für die ihr fotografierter Rechenweg gelesen wird (eine Prop `work` am TypedAnswer, wie sessionId/itemId an SpeakCard und DictationCard). Ein Kontext oder ein Umbau der Seite nur für eine Zeile wäre die größere Abstraktion; der Abbau der Seite ist eigene Arbeit.",
-  "maxLines": { "apps/mobile/app/practice/[id].tsx": 881 }
-}
