@@ -39,7 +39,7 @@ import { check, readBody } from '../../http/validate.js';
 import type { Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { t } from '../../i18n/index.js';
-import { archiveMaterial, archiveMaterialItem } from '../materials/service.js';
+import { archiveMaterial, archiveMaterialItem } from '../materials/archive.js';
 import { startFromStep } from '../practice/service.js';
 import { sessionView } from '../practice/sessionView.js';
 import { registerPushToken } from '../devices/service.js';

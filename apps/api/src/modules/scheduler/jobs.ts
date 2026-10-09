@@ -30,7 +30,7 @@ export const PERSISTENT_KINDS: readonly JobKind[] = [
 ];
 
 /** Backoff of a persistent job after `attempts` failed runs: 1, 2, 4 … minutes, at most 6 h. */
-function backoffMs(attempts: number): number {
+export function backoffMs(attempts: number): number {
   return Math.min(60_000 * 2 ** Math.max(0, Math.min(attempts - 1, 12)), 6 * 3_600_000);
 }
 

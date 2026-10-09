@@ -1303,7 +1303,7 @@ open (#169).**
 
 ## Material
 
-**A sheet is read to its end, not to a limit** (`materials/extract.ts`, `service.ts`, issue #150).
+**A sheet is read to its end, not to a limit** (`materials/extract.ts`, `firstReading.ts`, issue #150).
 One model answer holds only so many questions — `ITEMS_PER_READING` (60) — so the model says
 whether the sheet has more (`more_items`), and the sheet is read again for the rest with the
 prompts it already wrote listed, up to `MOST_READINGS` (4) readings in all. New questions are
@@ -1422,7 +1422,8 @@ how the Vertex model recognises a real corrected test and real red marks — the
 asks for an eval with five real, anonymised tests, which needs those photos (owed, see the issue).
 The home's failed card still titles `nothing_marked` like every failure ("… konnte ich nicht
 lesen", as it does for `form_not_practicable`); its detail says what happened. Changing the
-title is a change to `app/buddy.tsx`, left to a follow-up because that file was in parallel work.
+title is a change to the failed notice (`components/buddy/HomeNotices.tsx`, until #311 in
+`app/buddy.tsx`), left to a follow-up because that file was in parallel work.
 
 **Photo check on the phone** (`apps/mobile/lib/photo/quality.ts`, `check.ts`; the old app's most
 common failure was an unreadable photo): right after a photo is taken or picked, a small copy is
@@ -1468,6 +1469,15 @@ the photos never all arrived (`photos_missing`) and not when they are already de
 `retryMaterial` refuses (409 `photos_never_arrived` for the missing ones). What Buddy says about it comes from the
 same facts: STATE names each failed sheet with what its reason means for her next step, and names a
 send that is still on its way with the time it started (`context.ts`).
+
+Where it lives (`modules/materials/`, one job per file, #311): `create.ts` reserves a sheet and its
+upload URLs; `submit.ts` checks the photos, queues the reading, reads again after a failure and
+gives up sends that never finished; `reading.ts` is the job, which runs `firstReading.ts` (read to
+the end, stored, Buddy woken) or `clarifiedReading.ts` (one more look for a spot she settled);
+`reader.ts` is the one model call both make, `readingJob.ts` how a run fails or waits after an
+outage (`markMaterialFailed`), `helpSession.ts` puts homework questions into her help session,
+`unclear.ts` keeps the unsettled spots and takes her answer; `view.ts` builds a sheet's card,
+`library.ts` her library and a rename, `archive.ts` deletes a sheet or one question.
 
 **Buddy knows what the app takes in** (issue #115, `prompts.ts` `MATERIAL`, turn prompt only —
 the background check never answers these questions, so it does not pay for them). The children's
@@ -1794,7 +1804,7 @@ eine Frage betrifft — ein Schlüssel aus geschlossener zod-Enum, gespeichert i
 
 **Drei Stellen lesen es** — und nur diese drei:
 
-1. **Aufgaben schreiben.** `practice/generate.ts` (ein Thema) und `materials/service.ts` (ein
+1. **Aufgaben schreiben.** `practice/generate.ts` (ein Thema) und `materials/reader.ts` (ein
    fotografiertes Blatt) bekommen den Block `CURRICULUM` mit den Stellen ihres Jahrgangs und der
    Regel ihres Landes, damit der Schlüssel in ihrer Terminologie steht.
 2. **Beurteilen.** `practice/answer.ts` → `tutorContext` stellt genau die eine Regel vor das
@@ -4238,7 +4248,7 @@ listening task only in a listening run (#210), a Diktat's entries only in a Dikt
 **A form switched off** (#296): `FORMS_OFF` (comma-separated `ItemKind` values per environment; an
 unknown name stops the boot) takes the form out of the profile (`profileFor`) — out of the schema
 the model is shown and out of what code keeps — and out of what a photographed sheet stores
-(`formsOn` in `practice/items.ts`, used by `materials/service.ts`; a sheet left with nothing is `form_not_practicable`, never
+(`formsOn` in `practice/items.ts`, used by `materials/firstReading.ts`; a sheet left with nothing is `form_not_practicable`, never
 "unreadable"). Nothing on the answer path reads it, so a question of that form already stored stays
 answerable. A new form stays off in production until it was tested with the real model and the
 owner has seen it; switching is the environment variable, not a release. Figure types (a map, a
@@ -5174,7 +5184,13 @@ it is read (a page joining the homework session) shows either before or after, n
 card next to "nothing working" — the app polls closely only while something is working
 (`home-snapshot.int.test.ts`).
 
-**The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx`, top to bottom:
+**The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx` puts the screen
+together from parts with one job each (issue #311): what is drawn in `components/buddy/HomeTop`
+(the layer on top), `HomeThread` (the conversation, its fade and "↓ Neue Antwort"), `HomeIntro`
+(before there is a conversation), `HomeNotices` and `StartSheets` (the ⋯ menu and its sheets);
+the state in `lib/buddy/useHomeSend` (sending, Stopp, Vorlesen), `useThreadFollow`,
+`useSessionStart`, `homeThread.ts` (pure: what the thread shows), `useHomePhotos`, `useHomeAct`
+and `useContactOptIn`. Top to bottom:
 on top at most **one slim bar** (issue #17, `components/buddy/SlimBar.tsx`) — the thing to act
 on now: a practice to go on with (ResumeBar), one that is ready (ReadyBar — after a result it
 shows what is prepared next), the photo Buddy waits for (CaptureBar — the ask is said once,

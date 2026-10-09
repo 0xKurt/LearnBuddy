@@ -54,7 +54,7 @@ export function Composer({
   disabled: boolean;
   /** Buddy is answering what she sent: the send button becomes "Stopp". */
   writing?: boolean;
-  /** Ends Buddy's answer (the turn ends stopped; see app/buddy.tsx). */
+  /** Ends Buddy's answer (the turn ends stopped; see lib/buddy/useHomeSend.ts). */
   onStop?: () => void;
   /** Resolves false when the message never reached Buddy: her text comes back (audit M-76). */
   onSend: (text: string) => Promise<boolean>;

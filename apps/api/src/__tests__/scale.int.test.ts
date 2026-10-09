@@ -107,7 +107,7 @@ describe.skipIf(!dbReady)('scale', () => {
       );
       return scans(row!['QUERY PLAN'][0]!.Plan);
     };
-    // materials/service.ts retryMaterial and the tick's recovery of stuck sheets.
+    // materials/submit.ts retryMaterial and the tick's recovery of stuck sheets.
     const retry = await plan(
       `select count(*) from jobs where kind = 'extract_material' and payload ->> 'material_id' = $1`,
       ['00000000-0000-4000-8000-000000000001'],

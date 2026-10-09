@@ -19,18 +19,12 @@ import {
 } from '../../http/context.js';
 import { check, readBody } from '../../http/validate.js';
 import { runQueuedExtraction } from '../scheduler/tick.js';
-import {
-  acceptMissingPages,
-  archiveMaterial,
-  archiveMaterialItem,
-  clarifyUnclearSpot,
-  createMaterial,
-  libraryView,
-  materialView,
-  renameMaterial,
-  retryMaterial,
-  submitMaterial,
-} from './service.js';
+import { archiveMaterial, archiveMaterialItem } from './archive.js';
+import { acceptMissingPages, createMaterial } from './create.js';
+import { libraryView, renameMaterial } from './library.js';
+import { retryMaterial, submitMaterial } from './submit.js';
+import { clarifyUnclearSpot } from './unclear.js';
+import { materialView } from './view.js';
 import { materialItems } from './questions.js';
 
 export const materialRoutes = new Hono<AppEnv>();
