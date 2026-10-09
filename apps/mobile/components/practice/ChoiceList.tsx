@@ -17,6 +17,12 @@
 // pick.
 // In a conversation (issue #386) the bar is the conversation row (`CheckBar`, `Talk`): what she
 // says is sent as a text answer (the server matches it to a choice by its text).
+// Once the question is closed (issue #521) the options stay where they were, read only, so a
+// question that does not name them itself ("Welcher Bruch ist größer?") still reads: hers is
+// tinted and says "Deine Wahl", after a check or a cross where verdicts are shown; the right
+// one, where the server sent it, says "Lösung" after a check; the others step back like a tried
+// one (`choiceMarks`). No letters: they name an option to choose. Words and shapes, never colour
+// alone.
 
 import { SELECT_MAX, type Figure } from '@learnbuddy/shared-types/contracts';
 import { useMemo, useState } from 'react';
@@ -25,6 +31,7 @@ import { Platform, Text, View, type TextStyle } from 'react-native';
 
 import { speakMathText } from '../../lib/math/speak.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
+import type { ChoiceMark } from '../../lib/practice/choiceMarks.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -64,8 +71,14 @@ type Props = {
   marks?: ReadonlyArray<{ mark: string; label: string }>;
   /** A line above the options, numbered like them but not one to tap (the task, #260). */
   lead?: { mark: string; text: string; label: string } | null;
+  /**
+   * The question is closed (issue #521): what each option says now, parallel to `choices`
+   * (`choiceMarks`). Set, nothing is tappable; unset, the options are open.
+   */
+  settled?: readonly ChoiceMark[] | null;
   disabled: boolean;
-  onChoose: (index: number, choice: string) => void;
+  /** A tap on an option; absent where nothing is to be chosen (a closed question, `settled`). */
+  onChoose?: (index: number, choice: string) => void;
 };
 
 export function ChoiceList({
@@ -75,6 +88,7 @@ export function ChoiceList({
   ticked,
   disabled,
   onChoose,
+  settled = null,
   ...line
 }: Props) {
   if (figures && figures.length === choices.length && choices.length > 0) {
@@ -83,6 +97,7 @@ export function ChoiceList({
         choices={choices}
         figures={figures}
         tried={tried}
+        settled={settled}
         disabled={disabled}
         onChoose={onChoose}
       />
@@ -92,6 +107,7 @@ export function ChoiceList({
     <TextChoices
       choices={choices}
       tried={tried}
+      settled={settled}
       {...(ticked ? { ticked } : {})}
       {...line}
       disabled={disabled}
@@ -107,12 +123,13 @@ function TextChoices({
   picked,
   marks,
   lead = null,
+  settled = null,
   disabled,
   onChoose,
 }: Props) {
   const { palette } = useTheme();
-  const { t } = useTranslation('practice');
   const words = useSpokenWords();
+  const said = useMarkWords();
   // Short options (a word, a number, a fraction) sit two by two — but only when EVERY one of
   // them fits one line of half a screen, so the tiles of the grid are equally tall (issue #288).
   // What fits is arithmetic, not a feeling (see "what fits half a line" below). Options to tick
@@ -140,8 +157,10 @@ function TextChoices({
         </View>
       ) : null}
       {choices.map((choice, index) => {
-        const wasTried = tried.has(choice);
+        const state = markOf(choice, index, tried, settled);
+        const { back, mine } = standing(state);
         const on = (ticked?.has(index) ?? false) || picked === index;
+        const note = said(state);
         // A fraction or a term on its own is the thing to look at: set large and centred, at
         // least as large as the question's own line (issue #288, finding 4).
         const big = !lines && mathOnly(choice);
@@ -149,8 +168,8 @@ function TextChoices({
         return (
           <AnswerTile
             key={`${index}:${choice}`}
-            tried={wasTried}
-            ticked={on}
+            tried={back}
+            ticked={on || mine}
             style={grid ? { flexBasis: '45%', flexGrow: 1 } : null}
           >
             <Btn
@@ -161,11 +180,11 @@ function TextChoices({
               // The button fills its card: the tiles of a row are equally tall, and the whole
               // white area is tappable, not just its top.
               grow
-              disabled={disabled || wasTried}
-              onPress={() => onChoose(index, choice)}
+              disabled={disabled || state !== undefined}
+              onPress={() => onChoose?.(index, choice)}
               {...(ticked ? { checked: on } : {})}
               {...(lines ? { selected: on } : {})}
-              accessibilityHint={wasTried ? t('choice_tried') : undefined}
+              accessibilityHint={note?.hint}
               // Math in a choice is set properly; a screen reader hears it in words.
               label={
                 <View
@@ -175,10 +194,12 @@ function TextChoices({
                     gap: LETTER_GAP,
                   }}
                 >
+                  {/* A closed question's options have no letter: it names an option to choose,
+                      and nothing is chosen any more — the words under it get the room (#521). */}
                   {ticked ? (
                     <TickBox on={on} />
-                  ) : (
-                    <LetterMark letter={mark?.mark ?? letterFor(index)} tried={wasTried} />
+                  ) : settled ? null : (
+                    <LetterMark letter={mark?.mark ?? letterFor(index)} tried={state === 'tried'} />
                   )}
                   {/* token-exempt: the choice and its line 2 apart; line heights carry the air */}
                   <View style={{ flex: 1, gap: 2, alignItems: big ? 'center' : 'flex-start' }}>
@@ -187,7 +208,7 @@ function TextChoices({
                       accessible={false}
                       style={[
                         {
-                          color: wasTried ? palette.ink2 : on ? palette.primaryDk : palette.ink,
+                          color: back ? palette.ink2 : on || mine ? palette.primaryDk : palette.ink,
                           fontSize: big ? MATH_CHOICE_FONT : CHOICE_FONT,
                           lineHeight: big ? MATH_CHOICE_LINE : CHOICE_LINE,
                           fontWeight: CHOICE_WEIGHT,
@@ -195,11 +216,7 @@ function TextChoices({
                         wholeWordsFit(choice, grid) ? WHOLE_WORDS : null,
                       ]}
                     />
-                    {wasTried ? (
-                      <Text style={[TYPE.label, { color: palette.ink2, fontWeight: '500' }]}>
-                        {t('choice_tried')}
-                      </Text>
-                    ) : null}
+                    {note ? <MarkWords state={state} text={note.text} /> : null}
                   </View>
                 </View>
               }
@@ -245,12 +262,13 @@ function FigureChoices({
   choices,
   figures,
   tried,
+  settled = null,
   disabled,
   onChoose,
 }: Props & { figures: readonly Figure[] }) {
-  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const { t: tm } = useTranslation('math');
+  const said = useMarkWords();
   const words = useSpokenWords();
   const names = useFigureNames(...figures);
   const [zoomed, setZoomed] = useState<number | null>(null);
@@ -273,14 +291,17 @@ function FigureChoices({
   return (
     <View testID="figure-choices" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP }}>
       {choices.map((choice, index) => {
-        const wasTried = tried.has(choice);
+        const state = markOf(choice, index, tried, settled);
+        const { back, mine } = standing(state);
+        const note = said(state);
         const figure = figures[index]!;
         return (
           // A tried picture keeps its white ground and steps back by its hairline (AnswerTile)
           // and by fading the drawing.
           <AnswerTile
             key={`${index}:${choice}`}
-            tried={wasTried}
+            tried={back}
+            ticked={mine}
             picture
             style={{ flexBasis: '45%', flexGrow: 1 }}
           >
@@ -290,33 +311,31 @@ function FigureChoices({
               wrap
               compact
               grow
-              disabled={disabled || wasTried}
-              onPress={() => onChoose(index, choice)}
+              disabled={disabled || state !== undefined}
+              onPress={() => onChoose?.(index, choice)}
               onLongPress={() => setZoomed(index)}
-              accessibilityHint={wasTried ? t('choice_tried') : t('choice_zoom_hint')}
+              accessibilityHint={note?.hint ?? t('choice_zoom_hint')}
               label={
                 <View style={{ gap: SPACE.xs }}>
-                  {/* The letter's own row. A tried option says so in words there instead — at
-                      360 pt "– Schon ausprobiert" did not fit next to a mark, and the words are
-                      what carries it (never colour alone). */}
+                  {/* The letter's own row. A tried or decided option says so in words there
+                      instead — at 360 pt "– Schon ausprobiert" did not fit next to a mark, and the
+                      words are what carry it (never colour alone); a check or a cross goes
+                      before them. */}
                   <View
-                    style={{ flexDirection: 'row', alignItems: 'center', minHeight: CHOICE_LINE }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: SPACE.xs,
+                      minHeight: CHOICE_LINE,
+                    }}
                   >
-                    {wasTried ? (
-                      <Text
-                        numberOfLines={1}
-                        style={[
-                          TYPE.label,
-                          { flexShrink: 1, color: palette.ink2, fontWeight: '600' },
-                        ]}
-                      >
-                        {t('choice_tried')}
-                      </Text>
-                    ) : (
+                    {note ? (
+                      <MarkWords state={state} text={note.text} />
+                    ) : settled ? null : (
                       <LetterMark letter={letterFor(index)} tried={false} />
                     )}
                   </View>
-                  <View style={{ opacity: wasTried ? 0.45 : 1 }}>
+                  <View style={{ opacity: back ? 0.45 : 1 }}>
                     <FigureView figure={figure} bare maxHeight={pictureMax} />
                   </View>
                 </View>
@@ -553,3 +572,75 @@ function LetterMark({ letter, tried }: { letter: string; tried: boolean }) {
     </Text>
   );
 }
+
+// ─────────────── a closed question's options (issue #521) ───────────────
+
+/** How an option stands: open (`undefined`), tried while open, or what `choiceMarks` says. */
+function markOf(
+  choice: string,
+  index: number,
+  tried: ReadonlySet<string>,
+  settled: readonly ChoiceMark[] | null,
+): ChoiceMark | undefined {
+  if (settled) return settled[index] ?? null;
+  return tried.has(choice) ? 'tried' : undefined;
+}
+
+/** It steps back (tried, or not hers and not the right one), or it is hers (tinted). */
+function standing(state: ChoiceMark | undefined): { back: boolean; mine: boolean } {
+  return {
+    back: state === 'tried' || state === null,
+    mine: state === 'mine' || state === 'mine_right' || state === 'mine_wrong',
+  };
+}
+
+/**
+ * What an option says in words, and what a screen reader hears: "Schon ausprobiert", "Deine Wahl"
+ * (with its verdict where one is shown), "Lösung"; null for an open or plain option.
+ */
+function useMarkWords(): (state: ChoiceMark | undefined) => { text: string; hint: string } | null {
+  const { t } = useTranslation('practice');
+  return (state) => {
+    if (state === undefined || state === null) return null;
+    if (state === 'tried') return { text: t('choice_tried'), hint: t('choice_tried') };
+    // The word the solution card used to say it with (it has none for a multiple choice now).
+    if (state === 'right') return { text: t('solution.title'), hint: t('solution.title') };
+    const text = t('choice_mine');
+    if (state === 'mine') return { text, hint: text };
+    return {
+      text,
+      hint: `${text}, ${t(state === 'mine_right' ? 'verdict.correct' : 'verdict.incorrect')}`,
+    };
+  };
+}
+
+/**
+ * The words under an option (or in a picture's row), after the shape of how it went: a check
+ * (hers and right, or the right one), a cross (hers, not it) — like the verdict chip's check
+ * before "Richtig". Quiet for a tried one, hers in the accent of her tinted tile, the right one in
+ * the "right" green.
+ */
+function MarkWords({ state, text }: { state: ChoiceMark | undefined; text: string }) {
+  const { palette } = useTheme();
+  const color =
+    state === 'right' ? palette.successText : state === 'tried' ? palette.ink2 : palette.primaryDk;
+  const icon =
+    state === 'right' || state === 'mine_right' ? 'check' : state === 'mine_wrong' ? 'close' : null;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.xs, flexShrink: 1 }}>
+      {icon ? <Icon name={icon} size={MARK_ICON} color={color} /> : null}
+      <Text
+        numberOfLines={1}
+        style={[
+          TYPE.label,
+          { flexShrink: 1, color, fontWeight: state === 'tried' ? '500' : '600' },
+        ]}
+      >
+        {text}
+      </Text>
+    </View>
+  );
+}
+
+/** The check or cross: a little larger than the words' line, so its shape reads at a glance. */
+const MARK_ICON = 18; // token-exempt: an icon size, the label's own line height

@@ -45,6 +45,7 @@
   "check": "Check",
   "choice_tried": "Already tried",
   "choice_zoom_hint": "Press and hold to see the picture large.",
+  "choice_mine": "Your choice",
   "dispute": {
     "button": "Dispute",
     "label": "Dispute the verdict",

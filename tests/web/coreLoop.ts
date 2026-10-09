@@ -144,9 +144,10 @@ export async function sendWorksheet(page: Page): Promise<void> {
   ).toBeVisible({ timeout: 30_000 });
 }
 
-const ANSWERS: Array<{ prompt: string; answer: string; choice?: true }> = [
+const ANSWERS: Array<{ prompt: string | RegExp; answer: string; choice?: true }> = [
   { prompt: 'Kürze 6/8 und gib das Ergebnis als Dezimalzahl an.', answer: '0,75' },
-  { prompt: 'Welcher Bruch ist größer?', answer: '2/3', choice: true },
+  // The fractions are set (issue #521): the stem reads on, the option is named as it is heard.
+  { prompt: /^Welcher Bruch ist größer:/, answer: '2 Drittel', choice: true },
   { prompt: 'Wie heißt die Zahl unter dem Bruchstrich?', answer: 'Nenner' },
   {
     prompt: 'Warum multipliziert man beim Erweitern Zähler und Nenner mit derselben Zahl?',
@@ -167,7 +168,7 @@ export async function practise(
     await expect(page.getByText(`Frage ${n} von ${ANSWERS.length}`)).toBeVisible();
     let current: (typeof ANSWERS)[number] | undefined;
     for (const a of ANSWERS)
-      if (await page.getByText(a.prompt, { exact: true }).isVisible()) current = a;
+      if (await page.getByText(a.prompt, { exact: true }).first().isVisible()) current = a;
     if (!current) throw new Error(`no known question on screen (question ${n})`);
     if (current.choice) {
       await page.getByRole('button', { name: current.answer, exact: true }).click();

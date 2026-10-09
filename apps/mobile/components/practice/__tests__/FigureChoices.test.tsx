@@ -97,6 +97,25 @@ describe('Bilder als Antwortoptionen', () => {
     expect(onChoose).not.toHaveBeenCalled();
   });
 
+  it('bleiben nach dem Antworten stehen: ihre Wahl und die Lösung in Worten, keine Buchstaben (#521)', () => {
+    renderInApp(
+      <ChoiceList
+        choices={TEXTS}
+        figures={FIGURES}
+        tried={new Set([TEXTS[0]!])}
+        settled={['mine_wrong', null, 'right', null]}
+        disabled={false}
+      />,
+    );
+    expect(screen.getByTestId('figure-choices')).toBeTruthy();
+    expect(screen.getByText('Deine Wahl')).toBeTruthy();
+    expect(screen.getByText('Lösung')).toBeTruthy();
+    // Nothing to choose any more: no letters, no tile to tap.
+    expect(screen.queryAllByTestId('choice-letter')).toEqual([]);
+    for (const tile of screen.getAllByRole('button'))
+      expect(tile.getAttribute('aria-disabled')).toBe('true');
+  });
+
   it('bleibt bei Texten, wenn nicht jede Option ein Bild hat', () => {
     renderInApp(
       <ChoiceList

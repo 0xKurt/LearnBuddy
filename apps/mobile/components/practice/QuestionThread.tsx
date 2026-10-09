@@ -104,8 +104,13 @@ export function QuestionThread({
         </Rise>
       ) : null}
       {/* The solution only where it says something new (issue #93): after an
-          answer she got right herself, the chip and Buddy's reply carry it. */}
-      {shown.status !== 'open' && shown.status !== 'correct' && shown.answer !== null ? (
+          answer she got right herself, the chip and Buddy's reply carry it — and for a
+          multiple choice its own tile does, marked "Lösung" under the options that
+          stay (issue #521). */}
+      {shown.status !== 'open' &&
+      shown.status !== 'correct' &&
+      shown.answer !== null &&
+      choices === null ? (
         <Rise delay={180}>
           <SolutionCard answer={shown.answer} numeric={item.kind === 'numeric'} />
         </Rise>

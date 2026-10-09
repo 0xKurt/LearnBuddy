@@ -30,11 +30,12 @@ export const DEMO_WORKSHEET = {
     },
     {
       kind: 'multiple_choice',
-      prompt: 'Welcher Bruch ist größer?',
-      answer: '2/3',
+      // The stem names what is compared, the fractions are set (issue #521, `CHOICE_RULES`).
+      prompt: 'Welcher Bruch ist größer: $\\frac{2}{3}$ oder $\\frac{3}{5}$?',
+      answer: '$\\frac{2}{3}$',
       accepted_answers: [],
       unit: null,
-      choices: ['2/3', '3/5'],
+      choices: ['$\\frac{2}{3}$', '$\\frac{3}{5}$'],
       correct_choice: 0,
       topic: 'Brüche vergleichen',
       difficulty: 2,
