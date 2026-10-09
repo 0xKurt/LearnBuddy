@@ -27,6 +27,7 @@ import { updateSettings } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { pushPermissionBlocked, registerDeviceForPush, registeredHere } from '../../lib/push.js';
+import { CARD_PAD, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatLastDay, formatWeekday } from '../../lib/time.js';
@@ -232,8 +233,8 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
 
   return (
     <Group title={t('contact.question')} fold="contact" summary={stateLine}>
-      <Card tone="lavender" padding={20}>
-        <View style={{ gap: 10 }}>
+      <Card tone="lavender" padding={CARD_PAD.roomy}>
+        <View style={{ gap: RHYTHM.parts }}>
           <Text style={[TYPE.body, { fontWeight: '600' }]}>{answer}</Text>
           {!settings.contact_enabled ? (
             <Text style={secondary}>{t('contact.explain_off')}</Text>
@@ -274,7 +275,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
               </Btn>
             </>
           ) : null}
-          <View style={{ marginTop: 4, gap: 8 }}>
+          <View style={{ marginTop: SPACE.xs, gap: SPACE.sm }}>
             {settings.contact_enabled ? (
               <>
                 <Btn pill variant="outline" onPress={() => void stop()} disabled={saving}>
@@ -294,8 +295,8 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
       </Card>
 
       {deviceMissing ? (
-        <Card tone="butter" padding={20}>
-          <View style={{ gap: 10 }}>
+        <Card tone="butter" padding={CARD_PAD.roomy}>
+          <View style={{ gap: RHYTHM.parts }}>
             <Text style={TYPE.body}>
               {t(
                 elsewhere
@@ -309,7 +310,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
               {t('contact.device_register')}
             </Btn>
             {blocked ? (
-              <View style={{ gap: 8 }}>
+              <View style={{ gap: SPACE.sm }}>
                 <Text accessibilityLiveRegion="polite" style={TYPE.small}>
                   {t('contact.device_not_possible')}
                 </Text>
@@ -323,8 +324,8 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
       ) : null}
 
       {settings.contact_enabled && showTimes ? (
-        <Card padding={20}>
-          <View style={{ gap: 18 }}>
+        <Card padding={CARD_PAD.roomy}>
+          <View style={{ gap: RHYTHM.sections }}>
             <Row
               question={t('contact.pause_question')}
               answer={
@@ -339,7 +340,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
                   {t('contact.pause_end')}
                 </Btn>
               ) : (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
                   <Btn
                     pill
                     variant="outline"

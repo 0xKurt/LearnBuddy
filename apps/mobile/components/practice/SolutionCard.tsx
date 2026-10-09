@@ -10,6 +10,7 @@ import { Text, View } from 'react-native';
 import { useAnnounce } from '../../lib/announce.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
@@ -25,17 +26,19 @@ export function SolutionCard({ answer, numeric }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   return (
-    <Card tone="sky" padding={20} radius={24}>
+    <Card tone="sky" padding={CARD_PAD.roomy} radius={24}>
       <Text style={[TYPE.body, { color: palette.ink2, fontWeight: '600' }]}>
         {t('solution.title')}
       </Text>
-      <View style={{ marginTop: 4 }}>
+      <View style={{ marginTop: SPACE.xs }}>
         <MathText
           text={numeric ? localDecimal(answer, currentLocale()) : answer}
           style={TYPE.title}
         />
       </View>
-      <Text style={[TYPE.body, { color: palette.ink2, marginTop: 8 }]}>{t('solution.calm')}</Text>
+      <Text style={[TYPE.body, { color: palette.ink2, marginTop: SPACE.sm }]}>
+        {t('solution.calm')}
+      </Text>
     </Card>
   );
 }
@@ -47,10 +50,10 @@ export function SelfSolvedCard() {
   // iOS has no live regions: the card says itself when it appears (lib/announce.ts).
   useAnnounce(t('self_solved.title'));
   return (
-    <Card tone="mint" padding={20} radius={24}>
+    <Card tone="mint" padding={CARD_PAD.roomy} radius={24}>
       <View accessibilityLiveRegion="polite">
         <Text style={TYPE.title}>{t('self_solved.title')}</Text>
-        <Text style={[TYPE.body, { color: palette.ink2, marginTop: 4 }]}>
+        <Text style={[TYPE.body, { color: palette.ink2, marginTop: SPACE.xs }]}>
           {t('self_solved.body')}
         </Text>
       </View>

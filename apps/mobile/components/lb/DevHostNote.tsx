@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HEADER_HEIGHT } from '../buddy/Header.js';
 import { ENV } from '../../lib/env.js';
 import { fadeIn, fadeOut } from '../../lib/theme/enter.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE } from '../../lib/theme/space.js';
 
 declare const __DEV__: boolean;
@@ -57,11 +58,13 @@ export function DevHostNote() {
         top: insets.top + HEADER_HEIGHT,
         left: SPACE.lg,
         backgroundColor: 'rgba(178,58,58,0.92)',
-        borderRadius: 999,
+        borderRadius: RADIUS.round,
+        // token-exempt: developer's note, tiny on purpose; never in a release build
         paddingHorizontal: 9,
-        paddingVertical: 2,
+        paddingVertical: 2, // token-exempt: the same tiny developer's note
       }}
     >
+      {/* token-exempt: tiny on purpose, the developer's note is no part of the design */}
       <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '700' }}>
         {`Dev-Build → ${host}`}
       </Text>

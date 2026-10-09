@@ -26,7 +26,7 @@ import { currentLocale } from '../lib/i18n/index.js';
 import { signOutHere } from '../lib/leave.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { GUTTER, SPACE, pinnedBar } from '../lib/theme/space.js';
+import { GUTTER, pinnedBar, RHYTHM, SPACE } from '../lib/theme/space.js';
 
 const POINTS = [
   'point_data',
@@ -140,12 +140,7 @@ export default function Consent() {
         ) : null}
       </ScrollView>
       {/* The agreement sits with its button: both always on screen. */}
-      <View
-        style={[
-          pinnedBar(insets.bottom),
-          { gap: 10 }, // token-exempt: the agreement and its buttons, 10 apart like a form's fields
-        ]}
-      >
+      <View style={[pinnedBar(insets.bottom), { gap: RHYTHM.parts }]}>
         {/* token-exempt: 14, a slim card around the one checkbox */}
         <Card tone="lavender" padding={14}>
           <Checkbox

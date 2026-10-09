@@ -7,6 +7,7 @@
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { circle } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TOUCH } from '../../lib/theme/space.js';
 import { Icon } from '../lb/Icon.js';
@@ -29,7 +30,7 @@ export function TalkButton({ onPress }: { onPress: () => void }) {
             // centres 4 pt apart, which is what the owner saw (issue #134).
             width: TOUCH,
             height: TOUCH,
-            borderRadius: TOUCH / 2,
+            borderRadius: circle(TOUCH),
             backgroundColor: palette.primary,
             alignItems: 'center',
             justifyContent: 'center',

@@ -28,6 +28,7 @@ import { useRevealInput } from '../components/settings/useRevealInput.js';
 import { VoiceSection } from '../components/settings/VoiceSection.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { useHome, useMe, useSettings } from '../lib/api/queries.js';
+import { bottomRoom, SPACE } from '../lib/theme/space.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 export default function SettingsScreen() {
@@ -96,14 +97,18 @@ export default function SettingsScreen() {
           // A list she browses on purpose (like her material): it may grow past the screen,
           // its groups stay closed until she opens one (tests/web/fit.ts, CLAUDE.md §16).
           testID="scroll-list"
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 48 }}
+          contentContainerStyle={{
+            padding: SPACE.lg,
+            // token-exempt: room of 48 past the inset, the last group clear of the edge
+            paddingBottom: bottomRoom(insets.bottom, 48),
+          }}
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />
           }
         >
           <FoldContext.Provider value={{ open, toggle: toggleFold }}>
-            <View ref={content} style={{ gap: 16 }}>
+            <View ref={content} style={{ gap: SPACE.lg }}>
               <ContactSection
                 settings={settings.data}
                 isMinor={learner.is_minor}

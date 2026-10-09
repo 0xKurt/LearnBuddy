@@ -14,7 +14,7 @@ import { useAnnounce } from '../../lib/announce.js';
 import { startDrill } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -56,9 +56,8 @@ export function DrillOfferCard({ actionId, offer }: { actionId: string; offer: O
 
   return (
     <Card tone="primaryLt" padding={SPACE.lg} radius={18}>
-      {/* 10 pt, like OfferCard: the two offer cards stand in one thread and must match. */}
-      {/* token-exempt: the same 10 pt as OfferCard's stack, so both offer cards match */}
-      <View style={{ gap: 10 }}>
+      {/* Like OfferCard: the two offer cards stand in one thread and must match. */}
+      <View style={{ gap: RHYTHM.parts }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             <Icon name="flame" size={20} color={palette.primaryDk} />

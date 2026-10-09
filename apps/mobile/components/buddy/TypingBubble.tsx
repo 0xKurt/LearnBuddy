@@ -18,9 +18,11 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useAnnounce } from '../../lib/announce.js';
+import { BUBBLE, TAIL } from '../../lib/theme/bubble.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { riseIn } from '../../lib/theme/enter.js';
 import { EASE } from '../../lib/theme/motion.js';
+import { circle } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
@@ -28,6 +30,7 @@ import { BuddyOrb } from '../lb/BuddyOrb.js';
 /** One dot's rise and fall; the three follow each other like a soft wave. */
 const DOT_MS = 420;
 const DOT_GAP_MS = 160;
+const DOT = 8;
 
 export function TypingBubble({ label }: { label: string }) {
   const { palette } = useTheme();
@@ -70,12 +73,12 @@ export function TypingBubble({ label }: { label: string }) {
           {
             flexDirection: 'row',
             alignItems: 'center',
-            // 6 and 18 are the dots' drawing, not layout: three 8-point dots spaced
-            // and inset to sit where a short word would.
+            // token-exempt: the dots' drawing, not layout: three 8-point dots 6 apart
             gap: 6,
             backgroundColor: palette.paper,
-            borderRadius: 22,
-            borderBottomLeftRadius: 6,
+            borderRadius: BUBBLE.borderRadius,
+            borderBottomLeftRadius: TAIL,
+            // token-exempt: inset 18 from the ends, so the dots sit where a short word would
             paddingHorizontal: 18,
             height: 44,
           },
@@ -98,7 +101,10 @@ function Dot({ v }: { v: SharedValue<number> }) {
   }));
   return (
     <Animated.View
-      style={[{ width: 8, height: 8, borderRadius: 4, backgroundColor: palette.primary }, style]}
+      style={[
+        { width: DOT, height: DOT, borderRadius: circle(DOT), backgroundColor: palette.primary },
+        style,
+      ]}
     />
   );
 }

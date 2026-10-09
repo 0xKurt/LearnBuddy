@@ -9,6 +9,7 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
+import { RHYTHM } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 
@@ -25,6 +26,7 @@ type Props = {
 export function Row({ question, answer, current, hint, locked = false, children }: Props) {
   const { palette } = useTheme();
   return (
+    // token-exempt: question, answer and hint 6 apart, read as one setting
     <View style={{ gap: 6 }}>
       <Text
         accessibilityRole="header"
@@ -42,8 +44,8 @@ export function Row({ question, answer, current, hint, locked = false, children 
           accessibilityElementsHidden={locked}
           importantForAccessibility={locked ? 'no-hide-descendants' : 'auto'}
           style={{
-            gap: 10,
-            marginTop: 6,
+            gap: RHYTHM.parts,
+            marginTop: 6, // token-exempt: the control set a little apart from the words above
             opacity: locked ? 0.6 : 1,
             pointerEvents: locked ? 'none' : 'auto',
           }}

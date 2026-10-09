@@ -44,7 +44,8 @@ import { messageFor } from '../../lib/errors.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
 import { formatClock, MAX_RECORDING_MS, type SpeakMime } from '../../lib/speech/voice.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { circle } from '../../lib/theme/radius.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
@@ -211,8 +212,7 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
   const [word, setWord] = useState<SpokenWord | null>(null);
 
   return (
-    // token-exempt: padding 20, the sentence card a little roomier than a card's 18
-    <Card tone="lavender" padding={20}>
+    <Card tone="lavender" padding={CARD_PAD.roomy}>
       <View style={{ gap: SPACE.md }}>
         {item.topic ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{item.topic}</Text> : null}
         <Text style={TYPE.label}>{t('speak.instruction')}</Text>
@@ -310,7 +310,7 @@ function RecordingDot() {
       style={{
         width: REC_DOT,
         height: REC_DOT,
-        borderRadius: REC_DOT / 2, // token-exempt: half its size, a circle
+        borderRadius: circle(REC_DOT),
         backgroundColor: palette.primary,
         opacity: still ? 1 : pulse,
       }}

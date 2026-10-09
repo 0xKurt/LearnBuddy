@@ -22,6 +22,7 @@ import { View } from 'react-native';
 import { moonForReply, type MoonState } from '../../lib/buddy/moon.js';
 import { useStackTops } from '../../lib/practice/useStackTops.js';
 import { versionsOf, wordCount } from '../../lib/practice/essay.js';
+import { BUBBLE, TAIL } from '../../lib/theme/bubble.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -173,6 +174,7 @@ export function ItemThread({
             // rises in.
             animate={fresh && !mine}
             delay={60}
+            // token-exempt: bubble and verdict 6 apart, snug as one turn
             style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 6 }}
             onLayout={onHeight(turn.id)}
           >
@@ -266,14 +268,12 @@ function Bubble({
       accessible
       accessibilityLabel={`${speaker}: ${spoken}`}
       style={[
+        BUBBLE,
         {
           flexShrink: 1,
           backgroundColor: mine ? palette.primary : palette.paper,
-          borderRadius: 22,
-          borderBottomRightRadius: mine ? 6 : 22,
-          borderBottomLeftRadius: mine ? 22 : 6,
-          paddingHorizontal: 16,
-          paddingVertical: 11,
+          borderBottomRightRadius: mine ? TAIL : BUBBLE.borderRadius,
+          borderBottomLeftRadius: mine ? BUBBLE.borderRadius : TAIL,
           opacity: faded ? 0.7 : 1,
         },
         mine ? null : SHADOW.soft,

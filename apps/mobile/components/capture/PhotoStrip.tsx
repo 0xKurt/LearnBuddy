@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ScrollView, Text, View, type TextStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { RADIUS } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -129,7 +130,7 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
                   // instead of clipping the number in a fixed box (audit M-84, issue #73).
                   minWidth: 24,
                   minHeight: 24,
-                  borderRadius: 999, // token-exempt: fully round ends, like Chip
+                  borderRadius: RADIUS.round,
                   paddingHorizontal: 6, // token-exempt: page numbers of two figures stay round
                   backgroundColor: palette.primary,
                   alignItems: 'center',

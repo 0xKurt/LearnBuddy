@@ -33,7 +33,7 @@ import { chooseDeviceLocale, currentLocale } from '../lib/i18n/index.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
-import { GUTTER, SPACE, pinnedBar } from '../lib/theme/space.js';
+import { GUTTER, pinnedBar, RHYTHM, SPACE } from '../lib/theme/space.js';
 import { formDensity } from '../lib/keyboard.js';
 import { useVisibleHeight } from '../lib/useVisibleHeight.js';
 
@@ -326,8 +326,7 @@ export default function Welcome() {
               clearFailure();
             }}
           />
-          {/* token-exempt: the fields 10 apart, as on the profile steps */}
-          <View style={{ gap: 10 }}>
+          <View style={{ gap: RHYTHM.parts }}>
             <LbTextInput
               value={email}
               onChangeText={(v) => {

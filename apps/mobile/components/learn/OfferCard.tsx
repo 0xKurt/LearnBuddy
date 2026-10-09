@@ -9,6 +9,7 @@ import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -86,9 +87,9 @@ export function OfferCard({
     // A bounded thing (issue #15): icon row, two lines of offer, the button. Nothing grows
     // between them — the first owner run had "Los geht's" pushed out of sight by a status
     // line that appeared above it. What is happening lives in the button itself.
-    <Card tone="primaryLt" padding={16} radius={18}>
-      <View style={{ gap: 10 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+    <Card tone="primaryLt" padding={SPACE.lg} radius={18}>
+      <View style={{ gap: RHYTHM.parts }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             <Icon
               name={offer.minutes !== null ? 'clock' : KIND_ICON[offer.kind]}

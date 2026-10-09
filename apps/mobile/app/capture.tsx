@@ -39,7 +39,7 @@ import { MAX_PHOTOS, type MaterialPurpose } from '../lib/capture/upload.js';
 import { useAttachments } from '../lib/capture/useAttachments.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { SPACE } from '../lib/theme/space.js';
+import { RHYTHM, SPACE } from '../lib/theme/space.js';
 
 /** The camera's and the drop hint's disc, and the glyph in it. */
 const HINT_DISC = 72;
@@ -142,7 +142,7 @@ export default function CaptureScreen() {
         contentContainerStyle={{
           padding: SPACE.lg,
           paddingBottom: SPACE.xl,
-          gap: 18, // token-exempt: the page's rhythm, between its sections
+          gap: RHYTHM.sections,
         }}
       >
         <View style={{ gap: SPACE.sm, paddingHorizontal: SPACE.xs }}>
@@ -208,7 +208,7 @@ export default function CaptureScreen() {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 10, // token-exempt: the spinner 10 from its line
+              gap: RHYTHM.parts,
             }}
           >
             <ActivityIndicator size="small" color={palette.primary} />
@@ -233,8 +233,7 @@ export default function CaptureScreen() {
 
         {leftover && photos.length === 0 ? (
           <Card tone="butter" padding={SPACE.lg}>
-            {/* token-exempt: the draft's lines and buttons 10 apart, as the camera card's */}
-            <View style={{ gap: 10 }}>
+            <View style={{ gap: RHYTHM.parts }}>
               <Text accessibilityRole="header" style={TYPE.title}>
                 {t('capture:draft.title')}
               </Text>
@@ -252,8 +251,7 @@ export default function CaptureScreen() {
         ) : review ? null : room > 0 ? (
           // First the camera is the one main action; once there are photos, sending is.
           <Card padding={SPACE.lg}>
-            {/* token-exempt: the camera, its button and the two quiet choices 10 apart */}
-            <View style={{ gap: 10 }}>
+            <View style={{ gap: RHYTHM.parts }}>
               {photos.length === 0 ? (
                 <IconDisc
                   name="camera"

@@ -24,7 +24,7 @@ import { speakMathText } from '../../lib/math/speak.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { RADIUS } from '../../lib/theme/radius.js';
+import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { Btn } from '../lb/Btn.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
@@ -61,6 +61,12 @@ export function placedFrom(kept: string, ids: ReadonlySet<string>): string[] {
 /** The round number in front of an element; an empty ring while it has no place. */
 const BADGE = 26;
 
+/**
+ * The words on an element, in the grid and in the list.
+ * token-exempt: 15/20, TYPE.small's size on a line one point tighter.
+ */
+const ELEMENT_TEXT = { fontSize: 15, lineHeight: 20 } as const;
+
 function PlaceBadge({ n }: { n: number | null }) {
   const { palette } = useTheme();
   return (
@@ -68,7 +74,7 @@ function PlaceBadge({ n }: { n: number | null }) {
       style={{
         width: BADGE,
         height: BADGE,
-        borderRadius: BADGE / 2,
+        borderRadius: circle(BADGE),
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: n === null ? palette.paper : palette.primary,
@@ -77,6 +83,7 @@ function PlaceBadge({ n }: { n: number | null }) {
       }}
     >
       {n === null ? null : (
+        // token-exempt: the place's digit, 14/18 inside the 26 pt badge
         <Text style={{ color: palette.paper, fontSize: 14, lineHeight: 18, fontWeight: '700' }}>
           {n}
         </Text>
@@ -145,8 +152,7 @@ export function OrderAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Or
                 flexShrink: 1,
                 textAlign: 'center',
                 color: n === null ? palette.ink : palette.primaryDk,
-                fontSize: 15,
-                lineHeight: 20,
+                ...ELEMENT_TEXT,
                 fontWeight: '600',
               }}
             />
@@ -262,8 +268,7 @@ export function OrderAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Or
                               style={{
                                 flexShrink: 1,
                                 color: n === null ? palette.ink : palette.primaryDk,
-                                fontSize: 15,
-                                lineHeight: 20,
+                                ...ELEMENT_TEXT,
                                 fontWeight: '600',
                               }}
                             />

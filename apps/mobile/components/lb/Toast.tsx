@@ -23,6 +23,8 @@ import { announce } from '../../lib/announce.js';
 import { keyboardOverlap } from '../../lib/keyboard.js';
 import { useKeyboardHeight } from '../../lib/useKeyboardHeight.js';
 import { MAX_FONT_SCALE } from './Btn.js';
+import { RADIUS } from '../../lib/theme/radius.js';
+import { RHYTHM } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import {
@@ -120,7 +122,7 @@ function Pill({
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 10, // token-exempt: the mark, the words and the offer 10 apart
+          gap: RHYTHM.parts,
           backgroundColor: palette.ink,
           // token-exempt: round at one line (13 + 21 + 13), a soft box at two
           borderRadius: 26,
@@ -139,7 +141,7 @@ function Pill({
               // instead of clipping the "!" in a fixed box (audit M-84, issue #73).
               minWidth: 22,
               minHeight: 22,
-              borderRadius: 999, // token-exempt: fully round, a circle that may grow
+              borderRadius: RADIUS.round,
               backgroundColor: palette.peachDeep,
               alignItems: 'center',
               justifyContent: 'center',

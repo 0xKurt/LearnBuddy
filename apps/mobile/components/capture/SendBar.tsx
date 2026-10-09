@@ -14,7 +14,7 @@ import { Btn } from '../lb/Btn.js';
 import { ErrorNote } from '../lb/ErrorNote.js';
 import { Progress } from '../lb/Progress.js';
 import { useToastBar } from '../lb/Toast.js';
-import { bottomRoom } from '../../lib/theme/space.js';
+import { bottomRoom, RHYTHM, SPACE } from '../../lib/theme/space.js';
 
 type Props = {
   progress: SendProgress | null;
@@ -64,15 +64,15 @@ export function SendBar({
     <View
       onLayout={onToastBar}
       style={{
-        paddingHorizontal: 16,
-        paddingTop: 8,
+        paddingHorizontal: SPACE.lg,
+        paddingTop: SPACE.sm,
         paddingBottom: bottomRoom(insets.bottom),
-        gap: 10,
+        gap: RHYTHM.parts,
       }}
     >
       {progress ? (
-        <View accessibilityLiveRegion="polite" style={{ gap: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View accessibilityLiveRegion="polite" style={{ gap: SPACE.sm }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: RHYTHM.parts }}>
             <ActivityIndicator size="small" color={palette.primary} />
             <Text style={[TYPE.body, { flex: 1 }]}>{progressText(progress)}</Text>
           </View>

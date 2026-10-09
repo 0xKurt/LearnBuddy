@@ -26,6 +26,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { modeSwitch } from '../../lib/theme/modeSwitch.js';
 import { FAMILIES, paletteOf, themeNameOf, type Family } from '../../lib/theme/palettes.js';
+import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -64,7 +65,7 @@ function ColourCard({
           <View
             style={{
               height: 72,
-              borderRadius: 18,
+              borderRadius: 18, // token-exempt: the colour swatch, softer than a tile
               // The accent, because that is what tells the four apart — in both modes.
               backgroundColor: p.primary,
               alignItems: 'center',
@@ -119,6 +120,10 @@ export function FamilyChoice() {
   );
 }
 
+/** The light/dark switch: its track and its knob. */
+const TRACK = { width: 52, height: 32 } as const;
+const KNOB = 24;
+
 /** Light or dark: one switch, showing what is actually on screen. */
 export function ModeChoice() {
   const { t } = useTranslation('settings');
@@ -144,7 +149,7 @@ export function ModeChoice() {
       aria-checked={dark}
       onPress={() => choose({ mode: dark ? 'light' : 'dark' })}
       onLongPress={pinned ? followPhone : undefined}
-      style={{ borderRadius: 999 }}
+      style={{ borderRadius: RADIUS.round }}
     >
       {({ pressed }) => (
         <View
@@ -163,10 +168,10 @@ export function ModeChoice() {
           {/* The track and its knob: 52 × 32, the knob on the side that is on. */}
           <View
             style={{
-              width: 52,
-              height: 32,
-              borderRadius: 16,
-              padding: 3,
+              width: TRACK.width,
+              height: TRACK.height,
+              borderRadius: circle(TRACK.height),
+              padding: 3, // token-exempt: the knob 3 inside its track, as a switch draws it
               backgroundColor: dark ? palette.primary : palette.canvas,
               borderWidth: 1,
               borderColor: dark ? palette.primary : palette.hairline,
@@ -176,9 +181,9 @@ export function ModeChoice() {
           >
             <View
               style={{
-                width: 24,
-                height: 24,
-                borderRadius: 12,
+                width: KNOB,
+                height: KNOB,
+                borderRadius: circle(KNOB),
                 backgroundColor: palette.paper,
                 alignItems: 'center',
                 justifyContent: 'center',

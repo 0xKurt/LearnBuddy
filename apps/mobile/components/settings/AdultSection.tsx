@@ -32,6 +32,7 @@ import { currentSession } from '../../lib/auth/session.js';
 import { deliverExport } from '../../lib/exportFile.js';
 import { signOutHere } from '../../lib/leave.js';
 import { hasUnsentWork } from '../../lib/localWork.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatDate, formatTime } from '../../lib/time.js';
@@ -217,8 +218,8 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
     <View
       style={{
         backgroundColor: palette.rose,
-        borderRadius: 28,
-        padding: 16,
+        borderRadius: 28, // token-exempt: the parents' area, rounder than the cards it holds
+        padding: SPACE.lg,
       }}
     >
       <Group
@@ -232,7 +233,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         </Btn>
         {open === 'pin_only' ? (
           <>
-            <Text style={[TYPE.body, { color: palette.ink2, paddingHorizontal: 4 }]}>
+            <Text style={[TYPE.body, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}>
               {t('settings:adult.forgot_intro')}
             </Text>
             <PinCard pinSet={account.pin_set} email={email} onInputFocus={onInputFocus} />
@@ -253,7 +254,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
               enabled={busy === null}
             />
 
-            <Card padding={18}>
+            <Card>
               <Row
                 question={t('settings:adult.export.title')}
                 hint={t('settings:adult.export.body')}
@@ -277,7 +278,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
               </Row>
             </Card>
 
-            <Card padding={18}>
+            <Card>
               <Row
                 question={t('settings:adult.delete.title')}
                 answer={
@@ -309,7 +310,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
               </Row>
             </Card>
 
-            <Card padding={18}>
+            <Card>
               <Row
                 question={t('settings:adult.signout.title')}
                 hint={

@@ -2,9 +2,10 @@ import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { KEEPS_FOCUS } from '../../lib/keepsFocus.js';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
-import { RADIUS } from '../../lib/theme/radius.js';
-import { CONTROL, SPACE, TOUCH } from '../../lib/theme/space.js';
+import { circle, RADIUS } from '../../lib/theme/radius.js';
+import { CONTROL, RHYTHM, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { TYPE } from '../../lib/theme/type.js';
 import { Icon, type IconName } from './Icon.js';
 
 type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger';
@@ -129,10 +130,18 @@ export const MAX_FONT_SCALE = 2;
 const BTN_PAD_MD = 22;
 export const BTN_PAD_COMPACT = SPACE.md;
 
-const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
-  sm: { height: CONTROL.sm, paddingHorizontal: 16, fontSize: 15 },
-  md: { height: CONTROL.md, paddingHorizontal: BTN_PAD_MD, fontSize: 16 },
-  lg: { height: CONTROL.lg, paddingHorizontal: 26, fontSize: 17 },
+/**
+ * Each size's height, side padding and the step of the type scale its label takes (15, 16, 17).
+ * The step, not its size: TYPE is read at render time (issue #84).
+ */
+const SIZE_STYLE: Record<
+  Size,
+  { height: number; paddingHorizontal: number; label: 'small' | 'body' | 'header' }
+> = {
+  sm: { height: CONTROL.sm, paddingHorizontal: SPACE.lg, label: 'small' },
+  md: { height: CONTROL.md, paddingHorizontal: BTN_PAD_MD, label: 'body' },
+  // token-exempt: the lg pill's own look, a step roomier than md's 22
+  lg: { height: CONTROL.lg, paddingHorizontal: 26, label: 'header' },
 };
 
 type VariantSkin = { bg: string; color: string; borderColor: string; borderWidth: number };
@@ -197,6 +206,7 @@ export function Btn(props: Props) {
     accessibilityHint,
   } = props;
   const s = SIZE_STYLE[size];
+  const fontSize = TYPE[s.label].fontSize;
   const off = disabled || busy;
   // Busy keeps the variant's colours — the spinner says why nothing happens. Only a
   // plainly disabled button wears the muted skin (issue #97).
@@ -204,7 +214,7 @@ export function Btn(props: Props) {
   const base = variantStyle(palette)[variant];
   const active = tone ? { ...base, bg: tones.bg[tone], color: palette.ink, borderWidth: 0 } : base;
   const v = muted ? mutedStyle(variant, palette) : active;
-  const radius = pill ? s.height / 2 : RADIUS.tile;
+  const radius = pill ? circle(s.height) : RADIUS.tile;
   // A tap on the waiting button answers ("what is missing?") instead of being swallowed.
   // The button itself STAYS truly disabled — un-disabling it made the web lose its
   // `disabled` attribute and read as ready (RN Web's Pressable overwrites any passed
@@ -258,9 +268,11 @@ export function Btn(props: Props) {
           style={{
             // minHeight, not height: large system text grows the button instead of clipping it
             // (audit M-84); the label's scaling is capped below so a row still fits.
-            ...(wrap ? { minHeight: s.height, paddingVertical: 12 } : { minHeight: s.height }),
+            ...(wrap
+              ? { minHeight: s.height, paddingVertical: SPACE.md }
+              : { minHeight: s.height }),
             ...(grow ? { flexGrow: 1 } : {}),
-            gap: icon || busy ? 10 : 0,
+            gap: icon || busy ? RHYTHM.parts : 0,
             paddingHorizontal: bare ? 0 : compact ? BTN_PAD_COMPACT : s.paddingHorizontal,
             backgroundColor: v.bg,
             borderRadius: radius,
@@ -283,7 +295,7 @@ export function Btn(props: Props) {
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <Icon
                 name={icon}
-                size={Math.round(s.fontSize * 1.4)}
+                size={Math.round(fontSize * 1.4)}
                 // A muted button's icon steps back with its label (issue #97).
                 color={!muted && (variant === 'outline' || tone) ? palette.primaryDk : v.color}
               />
@@ -310,8 +322,8 @@ export function Btn(props: Props) {
               style={{
                 flexShrink: 1,
                 color: v.color,
-                fontSize: s.fontSize,
-                lineHeight: Math.round(s.fontSize * 1.35),
+                fontSize,
+                lineHeight: Math.round(fontSize * 1.35), // token-exempt: 1.35 em of the label
                 fontWeight: '600',
                 letterSpacing: -0.1,
                 textAlign: wrap ? 'left' : 'center',
@@ -384,7 +396,7 @@ function IconOnlyBtn({
         width: TOUCH,
         height: TOUCH,
         margin: -ICON_BTN_REACH,
-        borderRadius: TOUCH / 2,
+        borderRadius: circle(TOUCH),
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -394,7 +406,7 @@ function IconOnlyBtn({
           style={{
             width: ICON_BTN_SIZE,
             height: ICON_BTN_SIZE,
-            borderRadius: ICON_BTN_SIZE / 2,
+            borderRadius: circle(ICON_BTN_SIZE),
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: pressed ? palette.primaryLt : 'transparent',

@@ -5,6 +5,7 @@ import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { CARD_PAD } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 type Tone = 'paper' | 'bg' | 'primary' | 'primaryLt' | SubjectTone;
@@ -36,7 +37,7 @@ export function Card({
   children,
   tone = 'paper',
   onPress,
-  padding = 18,
+  padding = CARD_PAD.base,
   radius = RADIUS.card,
   style,
   accessibilityLabel,

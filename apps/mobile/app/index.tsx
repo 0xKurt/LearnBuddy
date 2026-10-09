@@ -17,6 +17,7 @@ import { currentSession } from '../lib/auth/session.js';
 import { messageFor } from '../lib/errors.js';
 import { gateRoute } from '../lib/gate.js';
 import { signOutHere } from '../lib/leave.js';
+import { RHYTHM } from '../lib/theme/space.js';
 
 export default function Index() {
   const signedIn = currentSession() !== null;
@@ -39,7 +40,7 @@ function SignedInGate() {
           <EmptyState
             title={messageFor(me.error)}
             action={
-              <View style={{ gap: 10, alignItems: 'center' }}>
+              <View style={{ gap: RHYTHM.parts, alignItems: 'center' }}>
                 <Btn onPress={() => void me.refetch()}>{t('actions.retry')}</Btn>
                 <Btn
                   variant="ghost"

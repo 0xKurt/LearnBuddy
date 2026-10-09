@@ -14,6 +14,7 @@ import { updateLearner } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { birthDateOf, formatBirthDate, partsOf } from '../../lib/birthDate.js';
 import { messageFor } from '../../lib/errors.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BirthDateFields, type DateParts } from '../auth/BirthDateFields.js';
@@ -103,7 +104,7 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
 
   return (
     <>
-      <Card padding={18}>
+      <Card>
         <Row
           question={t('settings:adult.profile.title')}
           answer={t('settings:adult.profile.current', {
@@ -134,7 +135,7 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
           </Btn>
         }
       >
-        <View style={{ gap: 8 }}>
+        <View style={{ gap: SPACE.sm }}>
           <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('settings:adult.profile.name')}</Text>
           <LbTextInput
             value={name}
@@ -149,7 +150,7 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
             editable={!busy}
           />
         </View>
-        <View style={{ gap: 8 }}>
+        <View style={{ gap: SPACE.sm }}>
           <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('auth:profile.birth_date')}</Text>
           <BirthDateFields value={date} onChange={setDate} editable={!busy} />
           {dateComplete && !birthDate ? (

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { messageFor } from '../../lib/errors.js';
+import { RHYTHM } from '../../lib/theme/space.js';
 import { Btn } from './Btn.js';
 import { EmptyState } from './EmptyState.js';
 
@@ -34,8 +35,7 @@ export function LoadFailed({ error, onRetry, busy, children }: Props) {
         title={messageFor(error)}
         action={
           children ? (
-            // token-exempt: the two ways on keep the distance the sheet screen gave them
-            <View style={{ gap: 10, alignItems: 'center' }}>
+            <View style={{ gap: RHYTHM.parts, alignItems: 'center' }}>
               {retry}
               {children}
             </View>

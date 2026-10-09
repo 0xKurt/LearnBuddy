@@ -20,11 +20,12 @@ import { prefetchHome, useMe, useSettings } from '../lib/api/queries.js';
 import { gateRoute } from '../lib/gate.js';
 import { registerDeviceForPush } from '../lib/push.js';
 import { useAnnounce } from '../lib/announce.js';
+import { circle } from '../lib/theme/radius.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { formDensity } from '../lib/keyboard.js';
 import { useVisibleHeight } from '../lib/useVisibleHeight.js';
-import { GUTTER, SPACE, bottomRoom } from '../lib/theme/space.js';
+import { bottomRoom, GUTTER, RHYTHM, SPACE } from '../lib/theme/space.js';
 
 // The look comes last: it is the one answer she sees IMMEDIATELY — the next screen is
 // already in the colours she picked (issue #136). Three tips deep in the settings, nobody
@@ -125,7 +126,7 @@ export default function Onboarding() {
             importantForAccessibility="no-hide-descendants"
             style={{
               flexDirection: 'row',
-              gap: 18, // token-exempt: the three ways as far apart as the step's rhythm
+              gap: RHYTHM.sections,
               marginTop: SPACE.xs,
             }}
           >
@@ -160,7 +161,7 @@ export default function Onboarding() {
               style={{
                 width: DOT,
                 height: DOT,
-                borderRadius: DOT / 2, // token-exempt: half its size, a circle
+                borderRadius: circle(DOT),
                 backgroundColor: i === step ? palette.primary : palette.ink4,
               }}
             />

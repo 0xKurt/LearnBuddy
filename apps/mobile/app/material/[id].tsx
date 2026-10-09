@@ -27,6 +27,7 @@ import { deleteMaterialItem, renameMaterial } from '../../lib/api/endpoints.js';
 import { keys, queryClient, useMaterialItems } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { bottomRoom, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 
 const TITLE_MAX = 120;
@@ -197,16 +198,23 @@ export default function MaterialScreen() {
       <ScrollView
         testID="scroll-list"
         contentContainerStyle={{
-          padding: 16,
+          padding: SPACE.lg,
           // Edge-to-edge: the last card must clear the Android navigation bar.
-          paddingBottom: insets.bottom + 32,
-          gap: 14,
+          // token-exempt: room of 32 past the inset, the last card well clear of the edge
+          paddingBottom: bottomRoom(insets.bottom, 32),
+          gap: 14, // token-exempt: the questions' cards 14 apart, as they always stood
           flexGrow: 1,
         }}
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
       >
-        <View style={{ gap: 6, marginBottom: 8, paddingHorizontal: 4 }}>
-          <Text accessibilityRole="header" style={[TYPE.display, { fontSize: 28, lineHeight: 34 }]}>
+        {/* token-exempt: the headline's lines 6 apart, snug as one heading */}
+        <View style={{ gap: 6, marginBottom: SPACE.sm, paddingHorizontal: SPACE.xs }}>
+          {/* A detail screen's headline at displaySm's size; it keeps display's tracking, as it
+              always had — displaySm's own is a visible change of its own (#311 follow-up). */}
+          <Text
+            accessibilityRole="header"
+            style={[TYPE.displaySm, { letterSpacing: TYPE.display.letterSpacing }]}
+          >
             {title}
           </Text>
           <Text style={[TYPE.body, { color: palette.ink2 }]}>
@@ -226,7 +234,7 @@ export default function MaterialScreen() {
           ) : null}
           {material.status === 'ready' ? (
             // A page she forgot: its questions join this sheet once read.
-            <View style={{ flexDirection: 'row', marginTop: 4 }}>
+            <View style={{ flexDirection: 'row', marginTop: SPACE.xs }}>
               <Btn
                 size="sm"
                 variant="soft"
@@ -291,7 +299,7 @@ export default function MaterialScreen() {
         onClose={() => setDeleteOpen(false)}
       >
         {target ? (
-          <Card tone="lavender" padding={16} radius={18}>
+          <Card tone="lavender" padding={SPACE.lg} radius={18}>
             <MathText text={target.item.prompt} style={TYPE.body} />
           </Card>
         ) : null}

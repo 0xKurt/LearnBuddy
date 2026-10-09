@@ -27,9 +27,9 @@ import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { fadeIn } from '../../lib/theme/enter.js';
 import { EASE } from '../../lib/theme/motion.js';
-import { around } from '../../lib/theme/radius.js';
+import { around, circle } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
-import { SPACE, TOUCH } from '../../lib/theme/space.js';
+import { RHYTHM, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
@@ -139,7 +139,7 @@ function Bar({
           minHeight: 60,
           paddingLeft: leading ? 10 : SPACE.lg, // token-exempt: tighter beside a photo or mark
           paddingRight: titleInset + SPACE.xs,
-          gap: 10, // token-exempt: mark, text and action 10 apart in a 60 pt bar
+          gap: RHYTHM.parts,
         }}
       >
         {leading ?? null}
@@ -510,6 +510,9 @@ function SentPages({ uris }: { uris: readonly string[] }) {
   );
 }
 
+/** The round mark in front of a bar's text: a page or the camera. */
+const MARK = 36;
+
 function Mark({ icon }: { icon: 'file' | 'camera' }) {
   const { palette } = useTheme();
   return (
@@ -517,9 +520,9 @@ function Mark({ icon }: { icon: 'file' | 'camera' }) {
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       style={{
-        width: 36,
-        height: 36,
-        borderRadius: 18, // token-exempt: half its size, a circle
+        width: MARK,
+        height: MARK,
+        borderRadius: circle(MARK),
         backgroundColor: palette.paper,
         alignItems: 'center',
         justifyContent: 'center',

@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { type Family, type Mode } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Card } from '../lb/Card.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { FamilyChoice, ModeChoice } from '../lb/LookChoice.js';
 import { Group } from './Group.js';
 import { Row } from './Row.js';
@@ -26,7 +26,7 @@ export function LookSection() {
     >
       {/* The two rows need air between them: the colour labels and the next question
           collided on the phone (owner 01.10.). */}
-      <Card padding={20} style={{ gap: SPACE.lg }}>
+      <Card padding={CARD_PAD.roomy} style={{ gap: SPACE.lg }}>
         {/* Two axes since #140: the colour, and whether it is light or dark. The dot IS
             the preview — drawn from that family's own palette in the mode that is showing
             — and picking one applies it at once, which shows more than any mock sentence
