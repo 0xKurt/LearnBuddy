@@ -207,3 +207,6 @@ export function useScreenRoom() {
     },
   };
 }
+
+/** The practice screen's measurements and setters (`useScreenRoom`). */
+export type ScreenRoom = ReturnType<typeof useScreenRoom>;
