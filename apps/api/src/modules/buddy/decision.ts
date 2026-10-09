@@ -50,17 +50,17 @@ const alias = (prefix: string, what: string) =>
     .regex(new RegExp(`^${prefix}\\d{1,3}$`), `must be a ${what} alias like ${prefix}1`)
     .describe(`${what} alias from STATE, e.g. ${prefix}1`);
 
-export const GoalRef = alias('g', 'goal');
+const GoalRef = alias('g', 'goal');
 /** A goal from STATE, or the test planned with plan_exam earlier in the same answer. */
-export const GoalTarget = z
+const GoalTarget = z
   .string()
   .regex(/^(g\d{1,3}|new)$/, 'must be a goal alias like g1, or "new"')
   .describe(
     'goal alias from STATE (g1), or "new" for the test planned with plan_exam earlier in this same answer',
   );
-export const StepRef = alias('st', 'step');
+const StepRef = alias('st', 'step');
 /** A step from STATE, or the practice/step created earlier in the same answer. */
-export const StepTarget = z
+const StepTarget = z
   .string()
   .regex(/^(st\d{1,3}|new)$/, 'must be a step alias like st1, or "new"')
   .describe(
@@ -71,17 +71,17 @@ export const StepTarget = z
  * the step keeps its time and moves itself on after each reminder. Only these three — a child
  * asks for a rhythm, not a calendar rule, and anything finer would be a form to fill in.
  */
-export const RepeatSchema = z
+const RepeatSchema = z
   .enum(['daily', 'weekdays', 'weekly', 'never'])
   .describe(
     'a reminder she wants again and again: daily, weekdays (Mon-Fri), weekly (same weekday). "never" ends a repetition she already has',
   );
 
-export const MemoryRef = alias('m', 'memory');
-export const MaterialRef = alias('sh', 'sheet');
-export const SubjectRef = alias('f', 'subject');
+const MemoryRef = alias('m', 'memory');
+const MaterialRef = alias('sh', 'sheet');
+const SubjectRef = alias('f', 'subject');
 
-export const Quote = z
+const Quote = z
   .string()
   .min(1)
   .max(300)
@@ -195,7 +195,7 @@ const Title = z.string().trim().min(1).max(80);
  * family in turns where `concern` was false). The model interprets (rule 1), code enforces;
  * no word list decides it (rule 3).
  */
-export const MEMORY_ABOUT = [
+const MEMORY_ABOUT = [
   'learning',
   'availability',
   'everyday',

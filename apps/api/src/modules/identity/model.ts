@@ -122,7 +122,7 @@ export async function verifyPin(pin: string, stored: string): Promise<boolean> {
  * The admin token proves the adult entered the PIN for one step; the app drops
  * it after that step, and the server lets it lapse soon after (H-19).
  */
-export const ADMIN_SESSION_MINUTES = 5;
+const ADMIN_SESSION_MINUTES = 5;
 
 /** Short-lived proof that the account holder entered the PIN on this device. */
 export function issueAdminToken(

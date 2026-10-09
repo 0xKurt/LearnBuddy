@@ -22,7 +22,7 @@ export type BuddyEvent =
   /** A practice session ended with at least one answer. */
   | { type: 'session_finished'; sessionId: string };
 
-export type EventType = BuddyEvent['type'];
+type EventType = BuddyEvent['type'];
 
 type Subscriber = (
   db: Db,
@@ -60,7 +60,7 @@ const reviewAfterBreak: Subscriber = async (db, learnerId, _eventId, e, at) => {
 };
 
 /** Who reacts to what. An event without subscribers is only recorded. */
-export const SUBSCRIBERS: { [T in EventType]: readonly Subscriber[] } = {
+const SUBSCRIBERS: { [T in EventType]: readonly Subscriber[] } = {
   material_ready: [wakeBuddy, reviewNextDay],
   session_finished: [wakeBuddy, reviewAfterBreak],
   // Homework help starts right away in the app; no background look is needed.

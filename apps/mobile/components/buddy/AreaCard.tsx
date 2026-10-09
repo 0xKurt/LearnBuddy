@@ -13,7 +13,7 @@ import { Icon, type IconName } from '../lb/Icon.js';
 
 type Area = Extract<ActionSummary, { tool: 'open_area' }>['area'];
 
-export const AREA_ROUTE: Record<Area, Href> = {
+const AREA_ROUTE: Record<Area, Href> = {
   library: '/library',
   memory: '/memory',
   settings: '/settings',

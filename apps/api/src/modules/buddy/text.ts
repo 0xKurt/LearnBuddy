@@ -126,7 +126,7 @@ function calendarTerms(locale: string): CalendarTerms {
 }
 
 /** The specifics a text names: numbers, and days, times of day and months (by their calendar name). */
-export function specificsIn(text: string, locale: string): Set<string> {
+function specificsIn(text: string, locale: string): Set<string> {
   const { prefixes, exact } = calendarTerms(locale);
   const found = new Set<string>();
   for (const w of wordsOf(text)) {

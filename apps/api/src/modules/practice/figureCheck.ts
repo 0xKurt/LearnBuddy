@@ -51,9 +51,9 @@ type Molecule = Extract<ModelFigure, { type: 'molecule' }>;
 type XY = { x: number; y: number };
 
 /** How far a drawn angle may be from its stated size (issue #257: "±2° breit"). */
-export const ANGLE_TOLERANCE_DEG = 2;
+const ANGLE_TOLERANCE_DEG = 2;
 /** How far one stated length (or force) may stray from the figure's common scale. */
-export const SCALE_TOLERANCE = 0.03;
+const SCALE_TOLERANCE = 0.03;
 /** A stated molar mass against the computed one: school tables round (C 12, H 1, O 16). */
 const MOLAR_MASS_TOLERANCE = 0.005;
 

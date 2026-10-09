@@ -22,7 +22,7 @@ export type ModelDeps = {
   now: () => Date;
 };
 
-export async function reserveModelCall(
+async function reserveModelCall(
   db: Db,
   learnerId: string,
   day: string,
@@ -138,7 +138,7 @@ export async function callModel(
 }
 
 /** Recorded as the prompt version of embedding calls (there is no prompt to version). */
-export const EMBED_VERSION = 'embed.v1';
+const EMBED_VERSION = 'embed.v1';
 
 /**
  * Embed texts on behalf of a learner, under the same reserve → call → record

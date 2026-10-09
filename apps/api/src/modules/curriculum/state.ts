@@ -21,19 +21,11 @@ import {
   CURRICULUM,
   CurriculumPointId,
   STATE_NAMES,
-  type CurriculumPoint,
   type Ruling,
   type StateCode,
 } from './points.js';
 
-export {
-  CURRICULUM,
-  CurriculumPointId,
-  STATE_NAMES,
-  type CurriculumPoint,
-  type Ruling,
-  type StateCode,
-};
+export { CURRICULUM, CurriculumPointId, STATE_NAMES };
 
 /**
  * The one sentence every prompt that WRITES questions gets about the tag, next to the other
@@ -43,7 +35,7 @@ export {
 export const CURRICULUM_RULES = `curriculum_point: only when a CURRICULUM block is given and the question is about one of the places it lists — then that place's key (the word in brackets), so the app knows which state's rule to apply when the answer is judged. Never a key the block does not list, and null for every other question.`;
 
 /** How a state's ruling relates to this learner's year. */
-export type Applies =
+type Applies =
   /** Her state teaches it, at her year. */
   | 'yes'
   /** Her state teaches it, but not yet (or no longer) at her year. */

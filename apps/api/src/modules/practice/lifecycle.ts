@@ -14,11 +14,11 @@ import { bumpContext } from '../buddy/plan.js';
 import { finishIfComplete } from './finish.js';
 import { settleTestClock, TIME_UP_GRACE_MS } from './testClock.js';
 
-export const HELP_IDLE_MS = 14 * 86_400_000;
+const HELP_IDLE_MS = 14 * 86_400_000;
 export const PRACTICE_IDLE_MS = 3 * 86_400_000;
 
 /** How long a session may rest before it is closed (and until then offered to resume). */
-export function idleLimitMs(mode: 'practice' | 'test' | 'help'): number {
+function idleLimitMs(mode: 'practice' | 'test' | 'help'): number {
   return mode === 'help' ? HELP_IDLE_MS : PRACTICE_IDLE_MS;
 }
 

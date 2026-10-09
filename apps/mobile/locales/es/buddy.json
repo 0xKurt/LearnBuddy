@@ -25,7 +25,6 @@
     "plan_step_repeat_weekdays": "Acordado: {{title}} los días de clase a las {{time}}",
     "plan_step_repeat_weekly": "Acordado: {{title}} todos los {{weekday}} a las {{time}}",
     "plan_step_repeat_until": " – hasta el {{date}}",
-    "update_step_repeat_off": "Ya no viene con regularidad: {{title}}",
     "update_step_moved": "Reprogramado: {{title}} {{when}}",
     "update_step_skipped": "Saltado: {{title}}",
     "update_step_cancelled": "Cancelado: {{title}}",
@@ -131,10 +130,8 @@
   "focus": {
     "label": "Estás trabajando en: {{what}}"
   },
-  "greeting": "Hola, {{name}}",
   "greeting_ask": "¿Qué tienes pendiente?",
   "intro": {
-    "title": "Soy Buddy.",
     "body": "Te ayudo a prepararte para exámenes y controles, sin estrés. Cuéntame qué tienes pendiente o mándame una foto de tu ficha."
   },
   "menu": {
@@ -295,7 +292,6 @@
     "end": "Terminar",
     "speak": "Hablar",
     "interrupt": "Interrumpir y hablar",
-    "short": "Hablar",
     "photo": "Foto",
     "photo_label": "Enseñar una foto",
     "tap_orb": "Toca a Buddy y te escucha.",

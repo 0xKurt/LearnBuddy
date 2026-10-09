@@ -20,10 +20,7 @@ import { spokenText } from '../../lib/speech/spoken.js';
 export type MenuMessage = { text: string; role: 'learner' | 'buddy' };
 
 /** Copies a message; says so (or that it did not work). */
-export async function copyMessage(
-  text: string,
-  said: { copied: string; failed: string },
-): Promise<void> {
+async function copyMessage(text: string, said: { copied: string; failed: string }): Promise<void> {
   try {
     await Clipboard.setStringAsync(markdownPlain(text));
     haptic.tap();

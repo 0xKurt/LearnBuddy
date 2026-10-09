@@ -92,7 +92,7 @@ function lastDayOf(end: Date, tz: string): string {
  * "in 4 Tagen" for Thursday): within a week its weekday ("Donnerstag", "Morgen"), later the
  * weekday with the date.
  */
-export function spokenDay(date: string, today: string, locale: string): string {
+function spokenDay(date: string, today: string, locale: string): string {
   const d = daysBetween(today, date);
   if (d >= 0 && d < 7) return dayLabel(locale, weekdayOf(date), d);
   const [y, m, day] = date.split('-').map(Number);

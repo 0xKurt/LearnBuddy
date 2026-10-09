@@ -21,7 +21,7 @@ type TerminalEffect = (deps: Deps, job: JobRow) => Promise<string>;
 
 const operator: TerminalEffect = async () => 'reported';
 
-export const TERMINAL: { [K in JobKind]: TerminalEffect } = {
+const TERMINAL: { [K in JobKind]: TerminalEffect } = {
   buddy_check: async (deps, job) => {
     // A fallback that itself failed ends here (reported like the others).
     if (job.payload.fallback_only === true || !job.learner_id) return 'reported';

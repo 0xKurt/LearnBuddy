@@ -18,7 +18,7 @@
 import type { Db } from '../../lib/db.js';
 import { daysBetween, localParts } from '../../lib/time.js';
 
-export const LOOK_BACK = {
+const LOOK_BACK = {
   gapDays: 7,
   repeatTopicDays: 60,
   shakyMinDaysAgo: 5,
@@ -28,7 +28,7 @@ export const LOOK_BACK = {
 } as const;
 
 /** The alias the model uses for the one look-back it is offered. */
-export const LOOK_BACK_ALIAS = 'p1';
+const LOOK_BACK_ALIAS = 'p1';
 
 /** The triggers after which Buddy may look back. */
 export const LOOK_BACK_TRIGGERS: ReadonlySet<string> = new Set([

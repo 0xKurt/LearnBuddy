@@ -17,7 +17,7 @@ import type { MoonState } from './moon.js';
  * app's name, and in "listen" the moon parks upper right — straight onto the "L" of
  * LearnBuddy (owner, 01.10.: "der header ist voll im arsch man").
  */
-export const ORB_SPREAD = 1.85;
+const ORB_SPREAD = 1.85;
 
 /** The width a slot must have so the moon never leaves it sideways. */
 export function orbSlot(size: number): number {

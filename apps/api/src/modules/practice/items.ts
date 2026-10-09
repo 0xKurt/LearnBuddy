@@ -416,7 +416,7 @@ const NUMBER_PART = /^\s*\d+\s*$/;
  * letter nowhere else in the question (live finding 5: "Gib den Zähler des Bruches a/8 an").
  * Structure only, no words. Numeric items only: in algebra (formula) letters are the point.
  */
-export function placeholderQuestion(it: Pick<ItemDraft, 'kind' | 'prompt'>): boolean {
+function placeholderQuestion(it: Pick<ItemDraft, 'kind' | 'prompt'>): boolean {
   if (it.kind !== 'numeric') return false;
   if (RELATION.test(it.prompt)) return false;
   const found: { unknown: string; at: number; length: number }[] = [];

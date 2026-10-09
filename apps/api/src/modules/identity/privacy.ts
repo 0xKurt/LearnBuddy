@@ -22,7 +22,7 @@ import {
   type JobRow,
 } from '../scheduler/jobs.js';
 
-export const DELETION_HOLD_DAYS = 7;
+const DELETION_HOLD_DAYS = 7;
 
 const LEARNER_TABLES = [
   'buddy_settings',

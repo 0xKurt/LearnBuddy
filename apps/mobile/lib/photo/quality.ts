@@ -34,7 +34,7 @@ export type PhotoMetrics = {
 /** The analysis works on a picture this wide (the app scales the photo down first). */
 export const ANALYSIS_WIDTH = 640;
 
-export const LIMITS = {
+const LIMITS = {
   /** Mean brightness under this: too dark. */
   darkMean: 80,
   /** Ink hardly darker than the paper (with crisp edges): washed out, overexposed or glare. */
@@ -63,7 +63,7 @@ export const LIMITS = {
 } as const;
 
 /** Grey values (0–255) of an RGBA picture, box-scaled to at most `target` pixels wide. */
-export function toGray(
+function toGray(
   rgba: Uint8Array,
   width: number,
   height: number,
@@ -93,7 +93,7 @@ function percentile(values: Float32Array | number[], p: number): number {
   return sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))] ?? 0;
 }
 
-export function measure(gray: Float32Array, width: number, height: number): PhotoMetrics {
+function measure(gray: Float32Array, width: number, height: number): PhotoMetrics {
   let sum = 0;
   for (const v of gray) sum += v;
   const mean = gray.length ? sum / gray.length : 0;
