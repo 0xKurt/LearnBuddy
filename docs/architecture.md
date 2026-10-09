@@ -4592,7 +4592,8 @@ word list, so it stays a prompt rule.
   written run.
   _The check is code alone_ (`checkDictation`): exact — case, ß/ss, umlauts and punctuation count;
   only runs of spaces, the kind of apostrophe/quote/dash and Unicode composition are folded. A miss
-  names the PLACE (`wordSpot` via an optimal-string-alignment diff, word level first, then letters):
+  names the PLACE (`wordSpot` via an optimal-string-alignment diff, word level first, then letters;
+  the one OSA table in `osa.ts`, which the near-miss `editDistance` uses too, #311):
   a missing or extra double consonant ("Doppel-m fehlt"), ie/i, ß/ss, capital/small, a missing,
   extra, wrong or swapped letter (named by its position in HER word — the key is never spelled out
   before the third miss or "Lösung zeigen"), a missing or extra word, two words that are one and
