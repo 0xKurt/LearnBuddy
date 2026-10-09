@@ -41,6 +41,15 @@ export function naturalFigureHeight(fullHeight: number, measured: number): numbe
 }
 
 /**
+ * Whether the drawing's box, `drawn` wide, was laid out in a frame `frame` wide: the frame's
+ * padding and border (`chrome`) are all that lies between them. A box measured at another width
+ * says nothing about the natural height at this one (issue #501).
+ */
+export function drawnAtWidth(frame: number, drawn: number, chrome = FIGURE_CHROME): boolean {
+  return frame > 0 && Math.abs(frame - chrome - drawn) <= 1;
+}
+
+/**
  * How much the drawing is shrunk: 1 until the natural height is known, 1 while it
  * fits, and otherwise exactly the share of the room it has — derived, never stored —
  * but never below `least` (`leastFigureScale`).

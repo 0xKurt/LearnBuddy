@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { CHART_WIDTH } from '../../../../../packages/shared-math/src/charts.js';
 import {
   BARE_FIGURE_CHROME,
+  drawnAtWidth,
   figureBodyWidth,
   figureScale,
   FIGURE_CHROME,
@@ -28,6 +29,18 @@ describe('measuring the figure', () => {
     expect(newFigureWidth(320, 319.2)).toBeNull();
     // Nothing is drawn yet: no width, nothing to measure.
     expect(newFigureWidth(0, 0)).toBeNull();
+  });
+
+  it('takes a height only from the drawing laid out at the frame width it has now (#501)', () => {
+    // A framed drawing: 12 pt padding and a 1 pt border each side.
+    expect(drawnAtWidth(322, 296)).toBe(true);
+    expect(drawnAtWidth(322, 297)).toBe(true);
+    // The box at the frame's previous width, reported after the new width was taken.
+    expect(drawnAtWidth(292, 296)).toBe(false);
+    // An answer option's picture: the tile is its frame.
+    expect(drawnAtWidth(171, 171 - BARE_FIGURE_CHROME, BARE_FIGURE_CHROME)).toBe(true);
+    // No frame width yet: nothing to measure against.
+    expect(drawnAtWidth(0, 0)).toBe(false);
   });
 
   it('keeps only the first height after a width change: the later ones are its own doing', () => {
