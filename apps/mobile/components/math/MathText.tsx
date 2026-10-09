@@ -57,6 +57,10 @@ type Metrics = {
 /** An empty gap is as wide as a short word, and grows with the text size. */
 const EMPTY_GAP = '\u00A0'.repeat(7);
 const BOLD: TextStyle = { fontWeight: '700' };
+/** A line of math: 1.3 em of its glyph size. */
+const lineOf = (size: number) => Math.round(size * 1.3); // token-exempt: em, not the type scale
+/** How far a superscript rises, a subscript drops, past its line. */
+const SCRIPT_SHIFT = 0.12; // token-exempt: em of the base size, not a spacing step
 const ITALIC: TextStyle = { fontStyle: 'italic' };
 /** The emphasis of a run: bold, italic, both or none. */
 function emphasis(p: { bold: boolean; italic?: boolean }): TextStyle | null {
@@ -198,13 +202,13 @@ function Gap({
         maxWidth: '100%',
         minHeight: lineHeight,
         justifyContent: 'flex-end',
-        marginHorizontal: 3,
-        paddingHorizontal: 6,
+        marginHorizontal: 3, // token-exempt: optical, a blank's side bearing in running text
+        paddingHorizontal: 6, // token-exempt: optical, her answer's room inside the blank
         backgroundColor: palette.paper,
         borderBottomWidth: 2,
         borderBottomColor: palette.ink2,
-        borderTopLeftRadius: 6,
-        borderTopRightRadius: 6,
+        borderTopLeftRadius: 6, // token-exempt: the blank's soft top, sized to a line of text
+        borderTopRightRadius: 6, // token-exempt: the blank's soft top, sized to a line of text
       }}
     >
       <Text style={[style, filled ? { color: palette.primaryDk } : null]}>
@@ -219,7 +223,7 @@ function Gap({
 function textStyle(m: Metrics, size: number): TextStyle {
   return {
     fontSize: size,
-    lineHeight: Math.round(size * 1.3),
+    lineHeight: lineOf(size),
     color: m.color,
     fontWeight: m.weight,
     fontFamily: m.family,
@@ -249,15 +253,15 @@ function AtomView({ atom, m, size = m.size }: { atom: MathAtom; m: Metrics; size
     case 'sup':
     case 'sub': {
       const small = Math.max(10, Math.round(size * 0.68));
-      const line = Math.round(size * 1.3);
+      const line = lineOf(size);
       return (
         <View
           style={{
             height: line,
             justifyContent: atom.type === 'sup' ? 'flex-start' : 'flex-end',
-            marginTop: atom.type === 'sup' ? -Math.round(size * 0.12) : 0,
-            marginBottom: atom.type === 'sub' ? -Math.round(size * 0.12) : 0,
-            paddingLeft: 1,
+            marginTop: atom.type === 'sup' ? -Math.round(size * SCRIPT_SHIFT) : 0,
+            marginBottom: atom.type === 'sub' ? -Math.round(size * SCRIPT_SHIFT) : 0,
+            paddingLeft: 1, // token-exempt: optical, one point between base and script
           }}
         >
           <Row atoms={atom.body} m={m} size={small} />
@@ -277,6 +281,7 @@ function AtomView({ atom, m, size = m.size }: { atom: MathAtom; m: Metrics; size
       const small = Math.max(9, Math.round(size * 0.6));
       return (
         <View style={{ alignItems: 'center' }}>
+          {/* token-exempt: optical, the arrow sits 2 pt into the letters' ascent */}
           <Text style={[textStyle(m, small), { lineHeight: small, marginBottom: -2 }]}>→</Text>
           <Row atoms={atom.body} m={m} size={size} />
         </View>
@@ -371,7 +376,7 @@ function Limits({
 
 /** Round brackets as tall as what they hold (a binomial coefficient, a column vector). */
 function Fenced({ children, m, size }: { children: ReactNode; m: Metrics; size: number }) {
-  const [height, setHeight] = useState(Math.round(size * 1.3));
+  const [height, setHeight] = useState(lineOf(size));
   const stroke = Math.max(1.3, size / 15);
   const width = Math.max(5, Math.round(size * 0.32));
   const paren = (side: 'left' | 'right') => {
@@ -447,13 +452,13 @@ function MathGap({ m, size }: { m: Metrics; size: number }) {
     <View
       style={{
         justifyContent: 'flex-end',
-        marginHorizontal: 2,
-        paddingHorizontal: 4,
+        marginHorizontal: 2, // token-exempt: optical, a blank's side bearing inside math
+        paddingHorizontal: 4, // token-exempt: optical, the gap's room, a step tighter than in text
         backgroundColor: palette.paper,
         borderBottomWidth: 2,
         borderBottomColor: palette.ink2,
-        borderTopLeftRadius: 5,
-        borderTopRightRadius: 5,
+        borderTopLeftRadius: 5, // token-exempt: the blank's soft top, a step smaller than in text
+        borderTopRightRadius: 5, // token-exempt: the blank's soft top, a step smaller than in text
       }}
     >
       <Text style={[textStyle(m, size), filled ? { color: palette.primaryDk } : null]}>
@@ -504,8 +509,8 @@ function Fraction({
     <View
       style={{
         alignItems: 'center',
-        paddingHorizontal: 3,
-        marginVertical: flat ? 0 : 2,
+        paddingHorizontal: 3, // token-exempt: optical, the bar reaches past its digits
+        marginVertical: flat ? 0 : 2, // token-exempt: optical, a stacked fraction's air
         // Put the fraction bar near the height of a minus sign instead of the line's middle.
         // token-exempt: optical lift as a share of the font size, not a spacing step
         marginTop: Math.round(size * (flat ? 0.08 : 0.18)),
@@ -519,8 +524,8 @@ function Fraction({
           alignSelf: 'stretch',
           height: rule,
           backgroundColor: m.color,
-          borderRadius: rule / 2,
-          marginVertical: 1,
+          borderRadius: rule / 2, // token-exempt: half the rule, round ends
+          marginVertical: 1, // token-exempt: optical, one point between bar and digits
         }}
       />
       <View style={{ marginVertical: tighten }}>
@@ -541,7 +546,7 @@ function Root({
   m: Metrics;
   size: number;
 }) {
-  const [height, setHeight] = useState(Math.round(size * 1.3) + 4);
+  const [height, setHeight] = useState(lineOf(size) + 4);
   const stroke = Math.max(1.5, size / 14);
   const width = Math.round(size * 0.62);
   const h = height;
@@ -549,8 +554,10 @@ function Root({
   const d = `M ${stroke} ${h * 0.58} L ${width * 0.28} ${h * 0.48} L ${width * 0.55} ${h - stroke} L ${width - stroke / 2} ${stroke / 2}`;
   const small = Math.max(10, Math.round(size * 0.55));
   return (
+    // token-exempt: optical, one point before the root sign
     <View style={{ flexDirection: 'row', alignItems: 'stretch', paddingLeft: 1 }}>
       {index ? (
+        // token-exempt: the index tucks 0.45 of the sign's width into its hook
         <View style={{ justifyContent: 'flex-start', marginRight: -width * 0.45, paddingTop: 0 }}>
           <Row atoms={index} m={m} size={small} />
         </View>
@@ -573,9 +580,9 @@ function Root({
         style={{
           borderTopWidth: stroke,
           borderColor: m.color,
-          paddingTop: 2,
-          paddingLeft: 2,
-          paddingRight: 1,
+          paddingTop: 2, // token-exempt: optical, the radicand clears the sign's bar
+          paddingLeft: 2, // token-exempt: optical, the radicand clears the sign's hook
+          paddingRight: 1, // token-exempt: optical, the bar ends just past the radicand
           justifyContent: 'center',
         }}
       >

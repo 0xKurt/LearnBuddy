@@ -14,14 +14,14 @@
 // light or dark without a second rule (issue #140).
 
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Text, useWindowDimensions, View } from 'react-native';
 
 import { orbSlot } from '../../lib/buddy/orbRoom.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SPACE, TOUCH } from '../../lib/theme/space.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { MAX_FONT_SCALE } from '../lb/Btn.js';
 import { BuddyOrb, type MoonState } from '../lb/BuddyOrb.js';
-import { Icon } from '../lb/Icon.js';
+import { CircleBtn } from '../lb/CircleBtn.js';
 import { ReadAloudSwitch } from '../lb/ReadAloudSwitch.js';
 
 /** Below this width the name takes the smaller step (phones are not one size). */
@@ -84,23 +84,8 @@ export function Header({
       </Text>
       {/* Reading aloud (issues #181, #386): the same switch as in every practice head. */}
       <ReadAloudSwitch />
-      <Pressable
-        onPress={onMenu}
-        accessibilityRole="button"
-        accessibilityLabel={t('menu.title')}
-        hitSlop={SPACE.sm}
-        style={{
-          width: TOUCH,
-          height: TOUCH,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: TOUCH / 2,
-        }}
-      >
-        {({ pressed }) => (
-          <Icon name="more" size={24} color={pressed ? palette.ink : palette.ink2} />
-        )}
-      </Pressable>
+      {/* The way into everything else: an icon in no circle, as in the composer bar. */}
+      <CircleBtn plain icon="more" onPress={onMenu} accessibilityLabel={t('menu.title')} />
     </View>
   );
 }
