@@ -46,7 +46,7 @@ import * as generate from '../../src/modules/practice/generate.js';
 import * as setProfiles from '../../src/modules/practice/setProfiles.js';
 import * as hints from '../../src/modules/practice/hints.js';
 import * as reexplain from '../../src/modules/practice/reexplain.js';
-import * as practice from '../../src/modules/practice/answer.js';
+import * as practice from '../../src/modules/practice/answerTutor.js';
 import * as speak from '../../src/modules/practice/speak.js';
 import * as structured from '../../src/modules/practice/structured.js';
 import * as tutor from '../../src/modules/practice/tutor.js';
@@ -234,7 +234,7 @@ function variants(): Variant[] {
       promptVersion: practice.TUTOR_PROMPT_VERSION,
       system: tutor.TUTOR_SYSTEM,
       schema: practice.TUTOR_SCHEMA,
-      where: 'practice/answer.ts — asked.length ? RUBRIC_SCHEMA : TUTOR_SCHEMA',
+      where: 'practice/answerTutor.ts — asked.length ? RUBRIC_SCHEMA : TUTOR_SCHEMA',
     },
     {
       purpose: 'tutor',
@@ -243,7 +243,7 @@ function variants(): Variant[] {
       promptVersion: practice.TUTOR_PROMPT_VERSION,
       system: tutor.TUTOR_SYSTEM,
       schema: practice.RUBRIC_SCHEMA,
-      where: 'practice/answer.ts',
+      where: 'practice/answerTutor.ts',
     },
     {
       purpose: 'tutor',

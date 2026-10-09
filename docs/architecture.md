@@ -1807,7 +1807,7 @@ eine Frage betrifft — ein Schlüssel aus geschlossener zod-Enum, gespeichert i
 1. **Aufgaben schreiben.** `practice/generate.ts` (ein Thema) und `materials/reader.ts` (ein
    fotografiertes Blatt) bekommen den Block `CURRICULUM` mit den Stellen ihres Jahrgangs und der
    Regel ihres Landes, damit der Schlüssel in ihrer Terminologie steht.
-2. **Beurteilen.** `practice/answer.ts` → `tutorContext` stellt genau die eine Regel vor das
+2. **Beurteilen.** `practice/answerTutor.ts` → `tutorContext` stellt genau die eine Regel vor das
    Urteil (`curriculumLine`).
 3. **Übungstest.** Code lässt eine Frage weg, die ihr Land in ihrem Jahrgang nicht unterrichtet
    (`offCurriculum`) — **nur** im `test`-Modus und **nur** ohne eigene Blätter: in freier Übung
@@ -1829,8 +1829,11 @@ zwei Urteile; `null`, `other` und `he` erzeugen denselben Prompt Wort für Wort)
 ## Practice
 
 Where it lives (`modules/practice/`, one use case per file, #313): `service.ts` starts and
-finishes a run, `answer.ts` answers a question, `sessionView.ts` builds the session view and
-`modeRules.ts` says what a run's mode allows (FSRS, the hint ladder, „Tipp“, „Lösung zeigen“);
+finishes a run, `answer.ts` answers a question in steps of one file each (#311: `answerLoad.ts`
+loads and guards, `answerRules.ts` gives the rules' verdict, `answerSteps.ts` the follow-on and
+guided steps, `answerJudge.ts` the judgement code gives alone, `answerTutor.ts` the tutor call,
+`answerReply.ts` the reply's guards, `answerApply.ts` the transaction), `sessionView.ts` builds
+the session view and `modeRules.ts` says what a run's mode allows (FSRS, the hint ladder, „Tipp“, „Lösung zeigen“);
 beside them `hint.ts` („Tipp“), `setAside.ts` („Lösung
 zeigen“, „Später“), `contest.ts` („Frage passt nicht“, „Bewertung stimmt nicht“),
 `partsAnswer.ts` (a structured answer taken in), `passTurn.ts` (one turn of a card pass or a
@@ -3153,8 +3156,8 @@ nicht" — her own point or bar, so it is feedback, not a hint (`structuredNames
 order's place). A drawing is produced, not recognised: `answered_by` is `typed` (#163).
 
 App: `GridAnswer.tsx` in the answer shell; the paper is `GridSheet.tsx` on `PlotAxes.tsx`, the SAME
-coordinate system `FunctionPlot` draws for a graph she reads (lifted out of `FigureView.tsx`,
-laid out by `plotGeometry` in `lib/math/plotLayout.ts`) — one renderer for reading and drawing.
+coordinate system `FunctionPlotFigure.tsx` draws for a graph she reads (lifted out of
+`FigureView.tsx`, laid out by `plotGeometry` in `lib/math/plotLayout.ts`) — one renderer for reading and drawing.
 Operated like the note line (#275): the paper is ONE target (`components/lb/TapSurface.tsx`, which
 the note line now uses too); a tap takes the crossing nearest the finger, so the whole square around
 a crossing is its target; a tap on her own point takes it away and the next tap puts that point
@@ -3494,7 +3497,7 @@ b) makes b) right. The second step adds **open parts** — „Begründe", „Erk
   that does not, names a later part, itself, no part, a part that is no number, or nothing earlier at
   all, drops the task. The model never writes an id or a letter into a stored field (rule 2): parts
   are lettered here in the order they come, the app gets an alias (`TaskPartView.ref`, `p1`, …).
-- **Folgefehler when answering** (`answer.ts` → `followsOn`): a part is first judged against its key
+- **Folgefehler when answering** (`answerSteps.ts` → `followsOn`): a part is first judged against its key
   like any question. Only when that is not right, and only when an earlier part it builds on was
   answered **wrong in this run**, code recomputes `from` with HER latest answers (a written path is
   read at its last line, `9 + 3 = 12` at its last `=`) and compares again at the key's precision.
@@ -3600,8 +3603,10 @@ item's ordinary columns before it is stored.
   (young third ≥ 1.2 × middle third = pyramid, ≤ 0.8 = urn, 0.9–1.1 = bell). Answers are judged by
   the rules, no model call (`charts.int.test.ts`: "Üb mit mir Klimadiagramme" → 5 questions, all
   `evaluated_by = 'rule'`).
-- **Drawing** (`apps/mobile/components/math/ChartFigures.tsx`): react-native-svg with the same axes
-  the API used for the tolerance (`niceAxis`, `climateAxes`, imported by path). Colour is never the
+- **Drawing** (`apps/mobile/components/math/ChartFigures.tsx` dispatches to `LineCharts.tsx` and
+  `StatCharts.tsx`, both drawn from the pieces in `chartParts.tsx` and framed by
+  `lib/math/chartLayout.ts`, #311): react-native-svg with the same axes the API used for the
+  tolerance (`niceAxis`, `climateAxes`, imported by path). Colour is never the
   only signal: series have markers and dash patterns, columns are columns, pie slices are numbered
   and listed with their shares, the halves of a pyramid are named. Theme tokens `figure.warm`,
   `wet`, `wetDeep`, `slices` (light and dark). The screen-reader text (`describeChart`) says every
@@ -4119,7 +4124,7 @@ mechanism above). Decided in #224: drawn by us, nothing licensed.
 - **Rule 0, grading:** a tapped part exactly (`tapVerdict`); a typed name by the library
   (`namedRuleVerdict` in `tapCheck.ts`, shared with the map): "nucleus", "Nukleus" and
   "Zellkern" are one part. A tapped part stands in the thread in her language
-  (`tappedAnswerText`, answer.ts — the same path as the map's regions).
+  (`tappedAnswerText`, answerRules.ts — the same path as the map's regions).
 - **Screen:** `components/math/SchematicFigures.tsx` draws each part outline-under-fill (the tubes
   of a frame show no line inside the part), then the marks. The numbers stand as a schoolbook
   prints them: in a column left and right of the drawing, each joined to its part by a leader
@@ -4596,7 +4601,8 @@ word list, so it stays a prompt rule.
   written run.
   _The check is code alone_ (`checkDictation`): exact — case, ß/ss, umlauts and punctuation count;
   only runs of spaces, the kind of apostrophe/quote/dash and Unicode composition are folded. A miss
-  names the PLACE (`wordSpot` via an optimal-string-alignment diff, word level first, then letters):
+  names the PLACE (`wordSpot` via an optimal-string-alignment diff, word level first, then letters;
+  the one OSA table in `osa.ts`, which the near-miss `editDistance` uses too, #311):
   a missing or extra double consonant ("Doppel-m fehlt"), ie/i, ß/ss, capital/small, a missing,
   extra, wrong or swapped letter (named by its position in HER word — the key is never spelled out
   before the third miss or "Lösung zeigen"), a missing or extra word, two words that are one and
@@ -5636,7 +5642,7 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   The same bytes give the same version, any other byte another. Each module declares its version
   next to what it hashes (`BUDDY_PROMPT_VERSION` in `buddy/prompts.ts` with the turn and check
   schemas, `EXTRACT_PROMPT_VERSION` in `materials/sources.ts` with the extraction schemas,
-  `TUTOR_PROMPT_VERSION` in `practice/answer.ts`). Before, every prompt change bumped a counter
+  `TUTOR_PROMPT_VERSION` in `practice/answerTutor.ts`). Before, every prompt change bumped a counter
   in one line (`generate.v1.41`, `buddy.61`); two branches that both changed a prompt collided
   there every time, and after a merge one number named two prompts. Nothing orders versions —
   telemetry (`llm_calls`, `buddy_decisions`) and the evals only record and compare them, so the

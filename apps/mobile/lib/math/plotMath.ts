@@ -1,4 +1,4 @@
-// The pure arithmetic of a function plot (components/math/FigureView.tsx): the legend's
+// The pure arithmetic of a function plot (components/math/FunctionPlotFigure.tsx): the legend's
 // pretty formula, the curve's path, and the points a graph passes for a screen reader. No
 // drawing here, so it is tested and reused without rendering (split out for max-lines, #313;
 // docs/engineering-guards.md).

@@ -1,6 +1,6 @@
 // Margins, ticks and labels of a coordinate system: the function plot she reads
-// (components/math/FigureView.tsx) and the grid she draws on (issue #249) are one drawing,
-// `components/math/PlotAxes.tsx`, laid out here. Pure, so the placement can be tested without
+// (components/math/FunctionPlotFigure.tsx) and the grid she draws on (issue #249) are one
+// drawing, `components/math/PlotAxes.tsx`, laid out here. Pure, so the placement can be tested without
 // drawing. Y-axis labels sit left of the y-axis (anchored at their right end); when that axis runs
 // along the left edge (x_min ≥ 0: distance-time, growth, proportional functions) the left margin
 // must be as wide as the widest label, or every value is drawn outside the SVG and clipped (audit
@@ -132,9 +132,10 @@ export type PlotGeometry = PlotFrame & {
 /** What it takes to place a value: the plot area and the ranges it shows. */
 type PlotScale = Pick<PlotGeometry, 'left' | 'top' | 'pw' | 'ph' | 'x0' | 'x1' | 'y0' | 'y1'>;
 
-/** Where a value stands on the plot, across and down. */
-export const plotX = (g: PlotScale, v: number) => g.left + ((v - g.x0) / (g.x1 - g.x0 || 1)) * g.pw;
-export const plotY = (g: PlotScale, v: number) =>
+/** Where a value stands on the plot, across and down (a chart's axes too, `chartLayout.ts`). */
+export const plotX = (g: Pick<PlotScale, 'left' | 'pw' | 'x0' | 'x1'>, v: number) =>
+  g.left + ((v - g.x0) / (g.x1 - g.x0 || 1)) * g.pw;
+export const plotY = (g: Pick<PlotScale, 'top' | 'ph' | 'y0' | 'y1'>, v: number) =>
   g.top + (1 - (v - g.y0) / (g.y1 - g.y0 || 1)) * g.ph;
 
 /** How far under the x-axis its labels stand (baseline). */
@@ -242,11 +243,12 @@ export function plotValueAt(g: PlotScale, at: { x: number; y: number }): { x: nu
 }
 
 /**
- * The whole frame of a function plot at `width` (components/math/FigureView.tsx): its height — an
- * option's graph is small by design, four of them share a phone (issue #231) — and the coordinate
- * system `plotGeometry` lays out in it, with the screen position of a value. One function for the
- * drawer and for the tap layer that finds the grid point under a finger (issue #248,
- * `tapLayout.ts`), so the two cannot drift by a pixel. `format` writes a tick label as it is drawn.
+ * The whole frame of a function plot at `width` (components/math/FunctionPlotFigure.tsx): its
+ * height — an option's graph is small by design, four of them share a phone (issue #231) — and
+ * the coordinate system `plotGeometry` lays out in it, with the screen position of a value. One
+ * function for the drawer and for the tap layer that finds the grid point under a finger (issue
+ * #248, `tapLayout.ts`), so the two cannot drift by a pixel. `format` writes a tick label as it is
+ * drawn.
  */
 export function functionPlotGeometry(
   fig: { x_min: number; x_max: number; y_min: number; y_max: number },
