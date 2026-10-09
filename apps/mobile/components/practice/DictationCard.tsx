@@ -74,7 +74,7 @@ export function DictationCard({
         icon={playing === 'normal' ? 'stop' : 'speak'}
         busy={loading('normal')}
         disabled={disabled || (fetching && !loading('normal'))}
-        onPress={() => void play('normal')}
+        onPress={() => play('normal')}
         accessibilityLabel={mainLabel}
         {...(playing === 'normal' ? {} : { accessibilityHint: t('dictation.play_hint') })}
       >
@@ -87,7 +87,7 @@ export function DictationCard({
         {...(playing === 'slow' ? { icon: 'stop' as const } : {})}
         busy={loading('slow')}
         disabled={disabled || (fetching && !loading('slow'))}
-        onPress={() => void play('slow')}
+        onPress={() => play('slow')}
         accessibilityLabel={playing === 'slow' ? t('listen.stop') : t('speak.listen_slow')}
       >
         {playing === 'slow' ? t('listen.stop') : slowLabel}

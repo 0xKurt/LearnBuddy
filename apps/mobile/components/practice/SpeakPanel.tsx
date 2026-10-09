@@ -38,6 +38,7 @@ import { formatClock, MAX_RECORDING_MS, type SpeakMime } from '../../lib/speech/
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { useMounted } from '../../lib/useMounted.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { toast } from '../lb/Toast.js';
@@ -316,7 +317,7 @@ export function SpeakPanel({
   const [sending, setSending] = useState<'idle' | 'sending' | 'failed'>('idle');
   const [problem, setProblem] = useState<Exclude<RecordFailure, 'denied'> | null>(null);
   const pending = useRef<Pending | null>(null);
-  const mounted = useRef(true);
+  const mounted = useMounted();
   /** Cancels the wait for a connection (nothing has been sent yet while it waits). */
   const waiting = useRef<AbortController | null>(null);
   const online = useOnline();
@@ -325,13 +326,7 @@ export function SpeakPanel({
   const progressRef = useRef(onProgress);
   progressRef.current = onProgress;
 
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-      waiting.current?.abort();
-    };
-  }, []);
+  useEffect(() => () => waiting.current?.abort(), []);
 
   // A new question starts clean.
   useEffect(() => {

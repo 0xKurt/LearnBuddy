@@ -120,7 +120,7 @@ describe('messageFor says only what the app itself wrote', () => {
  * lib/__tests__/wiring.test.ts does: every message the app puts in the toast comes from the
  * locale files (`t(…)`, `i18n.t(…)`) or from messageFor(…) — never from a caught error.
  *
- * Two places hand on a text their caller already translated; they are named here with where it
+ * Three places hand on a text their caller already translated; they are named here with where it
  * comes from, so the list stays shorter than the temptation to add to it.
  */
 const TRANSLATED_BY_THE_CALLER: Record<string, readonly string[]> = {
@@ -128,6 +128,8 @@ const TRANSLATED_BY_THE_CALLER: Record<string, readonly string[]> = {
   'app/memory.tsx': ['done'],
   // copyMessage(text, said) — `said` is { copied: t(…), failed: t(…) } from the menu.
   'components/buddy/MessageMenu.tsx': ['said.copied', 'said.failed'],
+  // usePlayback(failed) — `failed.text` is t('practice:…') in useListenToggle and useHearText.
+  'lib/speech/usePlayback.ts': ['failedRef.current.text'],
 };
 
 function sources(dir: string): string[] {

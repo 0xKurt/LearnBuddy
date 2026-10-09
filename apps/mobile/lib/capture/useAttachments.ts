@@ -18,6 +18,7 @@ import { useAnnounce } from '../announce.js';
 import { deleteMaterial } from '../api/endpoints.js';
 import { keys, queryClient } from '../api/queries.js';
 import { messageFor } from '../errors.js';
+import { useMounted } from '../useMounted.js';
 import {
   classifySend,
   draftPages,
@@ -113,7 +114,7 @@ export function useAttachments({
   const upload = useRef<MaterialUpload | null>(null);
   const picking = useRef(false);
   const sending = useRef(false);
-  const mounted = useRef(true);
+  const mounted = useMounted();
   /** Changed here since opening: only then is the draft written (and an older one replaced). */
   const dirty = useRef(false);
   const sent = useRef(onSent);
@@ -154,12 +155,9 @@ export function useAttachments({
   }, [intake, photos.length, live]);
 
   useEffect(() => {
-    mounted.current = true;
     if (!intake && !resume && !pending) {
       setLoaded(true);
-      return () => {
-        mounted.current = false;
-      };
+      return;
     }
     void (resume ? drafts.load() : leftBehind()).then(async (d) => {
       if (!mounted.current) return;
@@ -174,9 +172,6 @@ export function useAttachments({
       if (!d) setLink(recovered.link);
       void addPhotos(recovered.uris);
     });
-    return () => {
-      mounted.current = false;
-    };
   }, [resume, pending, intake]);
 
   function continueLeftover() {
