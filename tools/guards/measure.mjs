@@ -123,7 +123,7 @@ export function pressableRestriction() {
       name,
       importNames,
       message:
-        'Aktionen sind <Btn>/<CircleBtn> aus components/lb (CLAUDE.md Regel 13, Issue #313). Fehlt dort ein Baustein, wird er in components/lb gebaut — nicht hier.',
+        'Aktionen sind <Btn>/<CircleBtn> aus components/lb, eine Fläche mit eigenem Aussehen <PressArea> (CLAUDE.md Regel 13, Issue #313). Fehlt dort ein Baustein, wird er in components/lb gebaut — nicht hier.',
     })),
   };
 }

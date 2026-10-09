@@ -186,8 +186,11 @@ den langsamsten Schritt verdoppelt. Beide Hooks nehmen jetzt dieselbe volle Suit
 - **Freie Stilzahl (`lb/no-raw-style-number`):** Den Token aus `lib/theme` nehmen (`SPACE`, `TYPE`,
   …). Fehlt er, den Token anlegen. Ist die Zahl wirklich begründet (optische Korrektur), steht
   daneben oder darüber `// token-exempt: <Grund>`. Nur `0` ist frei.
-- **Rohes `Pressable`:** `<Btn>` oder `<CircleBtn>` aus `components/lb` nehmen. Kann keiner der
-  beiden es, wird der Baustein in `components/lb` gebaut (Regel 2).
+- **Rohes `Pressable`:** `<Btn>` oder `<CircleBtn>` aus `components/lb` nehmen; was sein Aussehen
+  selbst zeichnet (eine Sprechblase, ein Teil des Bruchbalkens, das Mikrofon), bekommt seine
+  Reichweite von `<PressArea>` (#311). Kann keiner davon es, wird der Baustein in `components/lb`
+  gebaut (Regel 2). Seit #311 Schritt 5 importiert keine Datei außerhalb `components/lb` mehr ein
+  rohes `Pressable`.
 - **knip:** Ungenutztes löschen. Ist es doch benutzt, nur auf einem Weg, den knip nicht sieht
   (eine Plattformdatei, ein Skript), kommt der Einstieg mit Begründung in `knip.jsonc`, nicht in
   eine Freigabe.

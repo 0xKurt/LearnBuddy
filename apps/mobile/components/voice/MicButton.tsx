@@ -1,22 +1,13 @@
 // The round mic button (56 pt; 72 pt when it is the main control of a conversation,
 // `VoiceRow`; 48 pt in the input bar) and the one status line that goes with it. Built like
-// CircleBtn: Pressable outside, the background on the inner View. Tap to start,
-// tap to stop. While recording, a ring pulses (still for reduced motion), the
-// icon turns into a stop square and the timer runs; while the words are being
-// written down, a small spinner sits in the button.
+// CircleBtn: the press target outside (PressArea), the background on the inner View. Tap to
+// start, tap to stop. While recording, a ring pulses (still for reduced motion), the icon turns
+// into a stop square and the timer runs; while the words are being written down, a small
+// spinner sits in the button.
 
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Animated,
-  Easing,
-  Linking,
-  Platform,
-  Pressable,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Animated, Easing, Linking, Platform, Text, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { useAnnounce } from '../../lib/announce.js';
@@ -26,6 +17,7 @@ import { TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
+import { PressArea } from '../lb/PressArea.js';
 import type { VoiceInput } from './useVoiceInput.js';
 
 /** How far the ring grows past the button at its widest. */
@@ -121,7 +113,7 @@ export function MicButton({
   return (
     <View style={{ width: d, height: d, alignItems: 'center', justifyContent: 'center' }}>
       {recording ? <PulseRing size={d} /> : null}
-      <Pressable
+      <PressArea
         onPress={onPress ?? voice.toggle}
         disabled={off}
         accessibilityRole="button"
@@ -148,7 +140,7 @@ export function MicButton({
           opacity: off && !working ? 0.6 : 1,
         }}
       >
-        {({ pressed }) => (
+        {(pressed) => (
           <View
             style={{
               width: d,
@@ -173,7 +165,7 @@ export function MicButton({
             )}
           </View>
         )}
-      </Pressable>
+      </PressArea>
     </View>
   );
 }

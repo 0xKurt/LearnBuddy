@@ -12,13 +12,14 @@
 // With reduce motion nothing moves: the moon takes each state's still pose, cross-faded.
 // Tapping it (onPress) is how she interrupts him while he speaks.
 
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 import { moonForTalk, type TalkMode } from '../../lib/buddy/moon.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
+import { PressArea } from '../lb/PressArea.js';
 
 export type OrbMode = TalkMode;
 
@@ -47,9 +48,9 @@ export function TalkOrb({
   );
   if (!onPress) return orb;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={pressLabel} onPress={onPress}>
-      {({ pressed }) => <View style={{ transform: [{ scale: pressed ? 0.97 : 1 }] }}>{orb}</View>}
-    </Pressable>
+    <PressArea accessibilityRole="button" accessibilityLabel={pressLabel} onPress={onPress}>
+      {(pressed) => <View style={{ transform: [{ scale: pressed ? 0.97 : 1 }] }}>{orb}</View>}
+    </PressArea>
   );
 }
 

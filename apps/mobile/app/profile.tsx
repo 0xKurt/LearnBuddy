@@ -11,7 +11,7 @@
 import { CurriculumRegion, type AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, ScrollView, Text, View } from 'react-native';
+import { Platform, ScrollView, Text, View, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -47,11 +47,25 @@ import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 import { formDensity } from '../lib/keyboard.js';
 import { useVisibleHeight } from '../lib/useVisibleHeight.js';
-import { bottomRoom } from '../lib/theme/space.js';
+import { SPACE, bottomRoom } from '../lib/theme/space.js';
 import { useFormDraft } from '../lib/drafts.js';
 
 /** Android number pads emit "-", "," and spaces too; a date or PIN is digits only. */
 const onlyDigits = (value: string) => value.replace(/\D+/g, '');
+
+/** The steps' side margin. */
+const GUTTER = 20; // token-exempt: the sign-up pages' gutter (welcome, consent, pin), not SPACE.lg
+/** The PIN card's shield badge, a circle. */
+const BADGE = 32;
+
+/** The bar under a step that holds its CTA, past the system's bottom inset. */
+function pinnedBar(safeBottom: number): ViewStyle {
+  return {
+    paddingHorizontal: GUTTER,
+    paddingTop: SPACE.sm,
+    paddingBottom: bottomRoom(safeBottom),
+  };
+}
 
 export default function Profile() {
   const { palette } = useTheme();
@@ -272,8 +286,9 @@ export default function Profile() {
       <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{
-            paddingHorizontal: 20,
-            paddingVertical: compact ? 8 : 16,
+            paddingHorizontal: GUTTER,
+            paddingVertical: compact ? SPACE.sm : SPACE.lg,
+            // token-exempt: the form's rhythm, 10 tight (fits 360×740, rule 16), 18 roomy
             gap: compact ? 10 : 18,
           }}
           keyboardShouldPersistTaps="handled"
@@ -281,6 +296,7 @@ export default function Profile() {
           {parentStep ? (
             // One row for the way back and the headline: the stacked pair overflowed a
             // 360×740 phone by 28 px with the wider Linux fonts CI renders with (#98).
+            // token-exempt: way back 10 from the headline, the 360×740 fit of #98
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <CircleBtn
                 icon="back"
@@ -308,8 +324,8 @@ export default function Profile() {
           )}
           {relation && !parentStep ? (
             <>
-              <View style={{ gap: 8 }}>
-                <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>
+              <View style={{ gap: SPACE.sm }}>
+                <Text style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
                   {relation === 'self' ? t('profile.name_self') : t('profile.name_child')}
                 </Text>
                 <LbTextInput
@@ -335,8 +351,10 @@ export default function Profile() {
                   section below them was simply never seen (user feedback 2026-09-28 —
                   "Let's go" was tappable while fields still hid under the keyboard).
                   Same action, same component: the welcome screen's flags. */}
-              <View style={{ gap: 8 }}>
-                <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>{t('profile.language')}</Text>
+              <View style={{ gap: SPACE.sm }}>
+                <Text style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
+                  {t('profile.language')}
+                </Text>
                 <LanguageFlags value={locale} onChange={setLocale} compact />
               </View>
               {/* The Bundesland, required (owner 2026-10-02, issue #199). It sits above the
@@ -344,8 +362,10 @@ export default function Profile() {
                   and anything below them was never seen. One row, because the sixteen
                   choices live in the sheet it opens — a form of sixteen would not fit a
                   360×740 phone (rule 16), and the sheet is also where the reason is said. */}
-              <View style={{ gap: 8 }}>
-                <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>{t('region.label')}</Text>
+              <View style={{ gap: SPACE.sm }}>
+                <Text style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
+                  {t('region.label')}
+                </Text>
                 <PickerField
                   label={t('region.label')}
                   placeholder={t('region.choose')}
@@ -366,20 +386,20 @@ export default function Profile() {
                   label={t('profile.contact_optin')}
                 />
               ) : null}
-              <View style={{ gap: 8 }}>
-                <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>
+              <View style={{ gap: SPACE.sm }}>
+                <Text style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
                   {t('profile.birth_date')}
                 </Text>
                 <BirthDateFields value={date} onChange={setDate} />
                 {dateComplete && !birthDate ? (
                   <Text
                     accessibilityLiveRegion="polite"
-                    style={[TYPE.small, { color: palette.danger, paddingHorizontal: 4 }]}
+                    style={[TYPE.small, { color: palette.danger, paddingHorizontal: SPACE.xs }]}
                   >
                     {t('profile.birth_date_invalid')}
                   </Text>
                 ) : (
-                  <Text style={[TYPE.small, { paddingHorizontal: 4 }]}>
+                  <Text style={[TYPE.small, { paddingHorizontal: SPACE.xs }]}>
                     {relation === 'child'
                       ? t('profile.birth_date_hint_child')
                       : t('profile.birth_date_hint')}
@@ -387,7 +407,8 @@ export default function Profile() {
                 )}
                 {tooYoungSelf ? (
                   // Not a dead end: what applies, and the real next step (user feedback #5).
-                  <Card tone="lavender" padding={16}>
+                  <Card tone="lavender" padding={SPACE.lg}>
+                    {/* token-exempt: the sentence 10 above its button */}
                     <View style={{ gap: 10 }}>
                       <Text style={[TYPE.body, { color: palette.ink }]}>
                         {t('profile.too_young_self')}
@@ -403,15 +424,16 @@ export default function Profile() {
           ) : null}
           {parentStep && handedOver ? (
             // The account was made by the teenager: say whose e-mail it runs on.
-            <Text style={[TYPE.small, { color: palette.ink, paddingHorizontal: 4 }]}>
+            <Text style={[TYPE.small, { color: palette.ink, paddingHorizontal: SPACE.xs }]}>
               {t('profile.handover_email', { email: currentSession()?.email ?? '' })}
             </Text>
           ) : null}
           {parentStep ? (
             // The parents' card carries consent, contact and the PIN: on a small phone it
             // only fits when every step is the tighter one (tests/web/fit.ts).
-            <Card tone="lavender" padding={compact ? 12 : 20}>
-              <View style={{ gap: compact ? 8 : 12 }}>
+            // token-exempt: roomy padding 20, the parents' card at full size
+            <Card tone="lavender" padding={compact ? SPACE.md : 20}>
+              <View style={{ gap: compact ? SPACE.sm : SPACE.md }}>
                 <Checkbox
                   checked={consent}
                   onChange={setConsent}
@@ -422,14 +444,21 @@ export default function Profile() {
                   onChange={setContactOk}
                   label={t('profile.contact_optin')}
                 />
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10, // token-exempt: the badge 10 from its title
+                    marginTop: 6, // token-exempt: the PIN part set off from the checkboxes
+                  }}
+                >
                   <View
                     accessibilityElementsHidden
                     importantForAccessibility="no-hide-descendants"
                     style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
+                      width: BADGE,
+                      height: BADGE,
+                      borderRadius: BADGE / 2, // token-exempt: half its size, a circle
                       backgroundColor: palette.paper,
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -440,7 +469,8 @@ export default function Profile() {
                   <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>
                 </View>
                 <Text style={[TYPE.small, { color: palette.ink }]}>{t('profile.pin_body')}</Text>
-                {/* Visible labels: the second field is the repetition (user feedback #20). */}
+                {/* Visible labels: the second field is the repetition (user feedback #20).
+                    token-exempt: the two PIN fields 10 apart */}
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <View style={{ flex: 1 }}>
                     <LbTextInput
@@ -496,14 +526,7 @@ export default function Profile() {
             </Card>
           ) : null}
         </ScrollView>
-        <View
-          style={{
-            paddingHorizontal: 20,
-            paddingTop: 8,
-            paddingBottom: bottomRoom(insets.bottom),
-            gap: 4,
-          }}
-        >
+        <View style={[pinnedBar(insets.bottom), { gap: SPACE.xs }]}>
           {whyWait > 0 ? <WaitHint>{waitHint}</WaitHint> : null}
           {needsParents && !parentStep ? (
             <Btn
@@ -576,9 +599,9 @@ function Handover({
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: 'center',
-          paddingHorizontal: 20,
-          paddingVertical: 24,
-          gap: 18,
+          paddingHorizontal: GUTTER,
+          paddingVertical: SPACE.xl,
+          gap: 18, // token-exempt: the hand-over's rhythm, as the roomy form's
         }}
       >
         <View style={{ alignItems: 'center' }}>
@@ -592,13 +615,7 @@ function Handover({
           {t('profile.handover_body', { name })}
         </Text>
       </ScrollView>
-      <View
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 8,
-          paddingBottom: bottomRoom(insets.bottom),
-        }}
-      >
+      <View style={pinnedBar(insets.bottom)}>
         <Btn size="lg" pill full busy={busy} onPress={onDone}>
           {t('profile.handover_cta', { name })}
         </Btn>
@@ -625,9 +642,9 @@ function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: 'center',
-          paddingHorizontal: 20,
-          paddingVertical: compact ? 16 : 24,
-          gap: compact ? 14 : 18,
+          paddingHorizontal: GUTTER,
+          paddingVertical: compact ? SPACE.lg : SPACE.xl,
+          gap: compact ? 14 : 18, // token-exempt: the voice step's rhythm, 14 tight, 18 roomy
         }}
       >
         <View style={{ alignItems: 'center' }}>
@@ -647,19 +664,13 @@ function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
             {t('profile.voice_later')}
           </Text>
         ) : (
-          <SkeletonGroup label={t('profile.voice_loading')} style={{ gap: 8 }}>
+          <SkeletonGroup label={t('profile.voice_loading')} style={{ gap: SPACE.sm }}>
             <Bone height={44} radius={22} />
             <Bone height={44} radius={22} />
           </SkeletonGroup>
         )}
       </ScrollView>
-      <View
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 8,
-          paddingBottom: bottomRoom(insets.bottom),
-        }}
-      >
+      <View style={pinnedBar(insets.bottom)}>
         <Btn size="lg" pill full busy={busy} onPress={onDone}>
           {t('profile.voice_cta')}
         </Btn>

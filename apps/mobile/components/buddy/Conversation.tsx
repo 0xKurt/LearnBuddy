@@ -20,7 +20,7 @@ import { isValidElement, useEffect, useRef, useState, type ReactNode } from 'rea
 import { speakMathText } from '../../lib/math/speak.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
@@ -28,6 +28,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
+import { PressArea } from '../lb/PressArea.js';
 import { DrillOfferCard } from '../learn/DrillOfferCard.js';
 import { OfferCard } from '../learn/OfferCard.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
@@ -323,7 +324,7 @@ export function Conversation({
                   maxWidth: '92%',
                 }}
               >
-                <Pressable
+                <PressArea
                   accessibilityRole="text"
                   accessibilityLabel={spoken}
                   accessibilityHint={t('thread.message_hint')}
@@ -342,7 +343,7 @@ export function Conversation({
                   delayLongPress={350}
                   style={{ flexShrink: 1 }}
                 >
-                  {({ pressed }) => (
+                  {(pressed) => (
                     <View
                       style={[
                         BUBBLE,
@@ -372,7 +373,7 @@ export function Conversation({
                       )}
                     </View>
                   )}
-                </Pressable>
+                </PressArea>
               </Animated.View>
             )}
             {/* What really happened to a message Buddy also sent outside the app. "Nur hier
@@ -632,7 +633,7 @@ function Receipt({
       layout={glide}
       style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.sm }}
     >
-      <Pressable
+      <PressArea
         accessibilityRole={onOpenAll ? 'button' : 'text'}
         accessibilityLabel={text}
         accessibilityHint={onOpenAll ? openHint : undefined}
@@ -668,7 +669,7 @@ function Receipt({
         >
           {text}
         </Text>
-      </Pressable>
+      </PressArea>
       {/* -2: the 24 pt circle centred on the first 21 pt line, not hanging below it. */}
       {undo ? <View style={{ marginTop: -2, flexShrink: 0 }}>{undo}</View> : null}
     </Animated.View>

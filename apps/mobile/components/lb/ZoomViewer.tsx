@@ -300,3 +300,35 @@ export function ZoomablePhoto({
     </Zoomable>
   );
 }
+
+/**
+ * A photo that fills its thumbnail box and opens full screen on a tap: a page she is about to
+ * send (components/capture/PhotoStrip.tsx), a page Buddy is reading (components/buddy/SlimBar.tsx).
+ * `onError`: the phone cannot show it, and the caller says so in its place.
+ */
+export function PhotoThumb({
+  uri,
+  label,
+  onError,
+}: {
+  uri: string;
+  /** What the photo is ("Foto 1 von 2"). */
+  label: string;
+  onError: () => void;
+}) {
+  return (
+    <ZoomablePhoto uri={uri} label={label} fill>
+      <Image
+        source={{ uri }}
+        accessible
+        accessibilityLabel={label}
+        contentFit="cover"
+        transition={120}
+        recyclingKey={uri}
+        cachePolicy="memory-disk"
+        onError={onError}
+        style={{ flex: 1 }}
+      />
+    </ZoomablePhoto>
+  );
+}
