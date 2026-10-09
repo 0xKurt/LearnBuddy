@@ -198,7 +198,7 @@ function variants(): Variant[] {
       promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: extract.EXTRACT_SYSTEM,
       schema: sheetSources.EXTRACTION_SCHEMA,
-      where: 'materials/service.ts — homework ? HOMEWORK_* : EXTRACT_*',
+      where: 'materials/reader.ts — homework ? HOMEWORK_* : EXTRACT_*',
     },
     {
       purpose: 'extraction',
@@ -207,7 +207,7 @@ function variants(): Variant[] {
       promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: leanOf(extract.EXTRACT_SYSTEM),
       schema: sheetSources.EXTRACTION_SCHEMA,
-      where: 'materials/service.ts — lean',
+      where: 'materials/reader.ts — lean',
     },
     {
       purpose: 'extraction',
@@ -216,7 +216,7 @@ function variants(): Variant[] {
       promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: extract.HOMEWORK_SYSTEM,
       schema: sheetSources.HOMEWORK_SCHEMA,
-      where: 'materials/service.ts',
+      where: 'materials/reader.ts',
     },
     {
       purpose: 'extraction',
@@ -225,7 +225,7 @@ function variants(): Variant[] {
       promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: leanOf(extract.HOMEWORK_SYSTEM),
       schema: sheetSources.HOMEWORK_SCHEMA,
-      where: 'materials/service.ts — lean',
+      where: 'materials/reader.ts — lean',
     },
     {
       purpose: 'tutor',

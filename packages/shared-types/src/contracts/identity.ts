@@ -32,7 +32,7 @@ export const Pin = z.string().regex(/^\d{4,8}$/, '4–8 digits');
  * ruling per state, each with the curriculum it comes from
  * (`apps/api/src/modules/curriculum/points.ts`). Three places read this field through it:
  * question GENERATION from a topic (`practice/generate.ts`) and from a photographed sheet
- * (`materials/service.ts`) are told the rule of her state; JUDGING an answer
+ * (`materials/reader.ts`) are told the rule of her state; JUDGING an answer
  * (`practice/tutor.ts` via `service.ts`) is told it before it judges; and a practice TEST drops
  * a question her state does not teach at her year (`curriculum/state.ts` → `offCurriculum`).
  * Where no rule applies — `other`, `null`, or one of the ten states nobody has researched yet —

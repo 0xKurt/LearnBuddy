@@ -23,7 +23,9 @@ import {
 import { planSummaries, runSummary } from '../buddy/summarise.js';
 import { planConsolidations, runConsolidation } from '../buddy/consolidate.js';
 import { purgeSpeechCache } from '../voice/speech.js';
-import { abandonStaleUploads, markMaterialFailed, runExtraction } from '../materials/service.js';
+import { runExtraction } from '../materials/reading.js';
+import { markMaterialFailed } from '../materials/readingJob.js';
+import { abandonStaleUploads } from '../materials/submit.js';
 import { closeIdleSessions } from '../practice/lifecycle.js';
 import { handleParkedJobs } from './terminal.js';
 import { modelThrottle, throttleAlarm, type ModelThrottle } from './throttle.js';

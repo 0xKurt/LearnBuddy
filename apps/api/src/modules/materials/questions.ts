@@ -9,7 +9,7 @@ import type { Figure, ItemResult, MaterialItemsView } from '@learnbuddy/shared-t
 import type { Db } from '../../lib/db.js';
 import { storedFigure } from '../practice/items.js';
 import { subjectKindOf } from '../practice/viewParts.js';
-import { materialView } from './service.js';
+import { materialView } from './view.js';
 
 type MaterialItemRow = {
   id: string;

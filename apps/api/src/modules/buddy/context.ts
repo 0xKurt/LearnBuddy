@@ -105,7 +105,7 @@ export function spokenDay(date: string, today: string, locale: string): string {
 }
 
 /**
- * What a failed sheet means for her next step (modules/materials/service.ts): a second
+ * What a failed sheet means for her next step (modules/materials/submit.ts): a second
  * reading is possible after an unreadable photo, a failed run and an exhausted daily budget,
  * and `retryMaterial` refuses it for the other four — so Buddy must not offer it there
  * (issue #115). A counted line ("N sheet(s) could not be read") could say none of this.

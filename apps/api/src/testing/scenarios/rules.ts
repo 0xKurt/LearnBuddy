@@ -81,7 +81,7 @@ export const tutorRules = new RuleBook('tutor');
  * solution and the reasons of „Warum stimmt das?" (#388). A question no rule is about gets none.
  */
 export const hintRules = new RuleBook('hints', () => ({ items: [] }));
-/** Reading a photographed sheet or homework (materials/service.ts). */
+/** Reading a photographed sheet or homework (materials/reader.ts). */
 export const readingRules = new RuleBook('extraction');
 /** Judging a spoken sentence (practice/speak.ts). */
 export const pronounceRules = new RuleBook('pronounce');
