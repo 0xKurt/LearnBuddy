@@ -16,28 +16,22 @@
 // assumed: with the keyboard up Buddy's reply ran under the card at a hard edge (issue #365,
 // closing comment).
 //
+// The rule for both edges is `threadEdge` (lib/practice/threadRoom.ts).
+//
 // Where it follows its end, it rests at the end — except on a reply she reads through
 // (`readFrom`, Buddy's feedback on her long text, #258): that is read from its top, so the box rests
 // there and she scrolls down through it; resting at its end showed the last line of the feedback
-// first and its first point under the card.
+// first and its first point under the card. Where it does not follow (the help chips alone, before
+// her first answer), it rests at its top, where it was drawn (#504).
 
 import { Children, isValidElement, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import type { RoomPart } from '../../lib/practice/screenRoom.js';
 import { useStackTops } from '../../lib/practice/useStackTops.js';
+import { THREAD_PAD, threadEdge, threadRest } from '../../lib/practice/threadRoom.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMaskFrom } from '../lb/EdgeFade.js';
-
-/** The conversation's padding above its first part and below its last. */
-const PAD = SPACE.md;
-
-/** Where it rests: at its end, or at most at the top of a reply she reads through (`readFrom`). */
-function resting(content: number, view: number, readFrom: number | undefined) {
-  const end = Math.max(0, content - view);
-  const offset = readFrom === undefined ? end : Math.min(end, PAD + readFrom - SPACE.sm);
-  return { offset, content };
-}
 
 type Props = {
   /** At most (undefined: not decided yet) and at least (`threadRoom`). */
@@ -75,7 +69,7 @@ export function ThreadBox({
   const [box, setBox] = useState(0);
   /**
    * Where the conversation stands: how far it is scrolled, and how tall it is. Where it follows
-   * its end, that end is where it stands (`resting`): the throttled scroll events dropped the last
+   * its end, that end is where it stands (`threadRest`): the throttled scroll events dropped the last
    * one of a scroll to the end, and an old offset faded a whole turn as if she had scrolled up.
    */
   const [at, setAt] = useState({ offset: 0, content: 0 });
@@ -94,23 +88,14 @@ export function ThreadBox({
     slots.map((slot) => slot.key),
     (all) => onParts(all.map((p) => p.top)),
   );
-  /** She scrolled the conversation up from where it rests (#63). */
-  const scrolledUp = at.offset < resting(at.content, box, readFrom).offset - 4;
-  const cut = box > 0 && at.content > box + 1;
-  // At rest the edge lies in the gap above a whole part (or at the very top): only that gap fades.
-  const onTurn =
-    at.offset <= 1 ||
-    tops.some((y) => at.offset >= PAD + y - SPACE.sm - 1 && at.offset <= PAD + y + 1);
-  const fadeFull = cut && (scrolledUp || !onTurn);
-  // A reply read from its top goes on below the box: its bottom edge fades, so it reads as more.
-  const more = readFrom !== undefined && cut && at.content - (at.offset + box) > 4;
+  const { cut, fadeFull, more } = threadEdge({ box, ...at, tops, follows: followEnd, readFrom });
   const tail = more ? EDGE_FADE : 0;
-  /** Scrolls to where it rests (`resting`) and stands there. */
+  /** Scrolls to where it rests (`threadRest`) and stands there. */
   function rest(animated: boolean) {
-    const there = resting(content.current, view.current, readFrom);
+    const offset = threadRest(content.current, view.current, true, readFrom);
     if (readFrom === undefined) scroll.current?.scrollToEnd({ animated });
-    else scroll.current?.scrollTo({ y: there.offset, animated });
-    setAt(there);
+    else scroll.current?.scrollTo({ y: offset, animated });
+    setAt({ offset, content: content.current });
   }
   // The reply's top is measured after it arrived: the box moves to it once it is known.
   const restRef = useRef(rest);
@@ -152,7 +137,7 @@ export function ThreadBox({
           setAt({ offset: Math.round(contentOffset.y), content: content.current });
         }}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: SPACE.lg, paddingVertical: PAD }}
+        contentContainerStyle={{ paddingHorizontal: SPACE.lg, paddingVertical: THREAD_PAD }}
         onContentSizeChange={(_, h) => {
           content.current = Math.round(h);
           if (followEnd) rest(true);
@@ -166,7 +151,7 @@ export function ThreadBox({
       >
         {/* One measured column: what the conversation truly holds, so the question knows what
             is spare. */}
-        <View onLayout={(e) => onNeed(Math.round(e.nativeEvent.layout.height) + 2 * PAD)}>
+        <View onLayout={(e) => onNeed(Math.round(e.nativeEvent.layout.height) + 2 * THREAD_PAD)}>
           {slots.map(({ key, part }, i) => (
             <View key={key} style={{ marginTop: pieces[i]?.step ?? 0 }} onLayout={onHeight(key)}>
               {part}
