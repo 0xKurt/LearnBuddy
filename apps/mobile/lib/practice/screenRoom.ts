@@ -210,7 +210,7 @@ export function useScreenRoom() {
     layout,
     /** The card's box (`cardRef`) and where its drawings report their sizing (`figureSizing`). */
     cardRef,
-    reportSizing: figures.report,
+    figureSizing: figures.value,
     questionContentHeight,
     setQuestionContentHeight,
     /** The conversation's box and the free room above the answer (`RoomPart`). */

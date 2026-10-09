@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { FIGURE_CHROME } from '../../lib/math/figureScale.js';
+import { useDrawingNatural } from '../../lib/math/figureSizing.js';
 import { fillableAnswer } from '../../lib/math/prompt.js';
 import { formDensity } from '../../lib/keyboard.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
@@ -249,11 +250,20 @@ export function QuestionCard({
   // from the window (issue #96): the card's padding, the gap under the prompt and the
   // drawing's own frame (FigureView's padding and border) all come off first, so the card
   // never outgrows what the screen granted it. Never below the old fixed cap.
+  // And no taller than its drawing can use (#501): a drawing is never drawn larger than its
+  // natural size, so a card grown past it stood with an empty band above and below — the
+  // Hunderterfeld, about 27 pt each. That height comes with the drawing's sizing report.
+  const drawingNatural = useDrawingNatural();
+  const fullCard =
+    figure && drawingNatural > 0 && headHeight > 0
+      ? 2 * pad + headHeight + FIGURE_GAP + FIGURE_CHROME + drawingNatural
+      : Infinity;
+  const cardMin = grown ? Math.min(minHeight, fullCard) : 0;
   const figureRoom =
-    grown && headHeight > 0 ? minHeight - 2 * pad - headHeight - FIGURE_GAP - FIGURE_CHROME : 0;
+    grown && headHeight > 0 ? cardMin - 2 * pad - headHeight - FIGURE_GAP - FIGURE_CHROME : 0;
   const figureMax = figureRoom > (figureMaxHeight ?? 0) ? figureRoom : figureMaxHeight;
   return (
-    <Card tone="lavender" padding={pad} radius={24} style={grown ? { minHeight } : null}>
+    <Card tone="lavender" padding={pad} radius={24} style={grown ? { minHeight: cardMin } : null}>
       <View style={grown ? { flexGrow: 1 } : null}>
         {passage ? (
           <PassagePanel passage={passage} maxHeight={Math.round(viewHeight * passageShare)} />

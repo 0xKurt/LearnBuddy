@@ -292,7 +292,7 @@ export default function PracticeScreen() {
                   {/* The next question comes in softly from the side (keyed by the question). Its
                       drawing reports while it sizes itself: the card's own height waits for it. */}
                   <SlideIn key={item.id}>
-                    <FigureSizingReport.Provider value={measured.reportSizing}>
+                    <FigureSizingReport.Provider value={measured.figureSizing}>
                       <View
                         ref={measured.cardRef}
                         onLayout={(e) => room.onCard(Math.round(e.nativeEvent.layout.height))}

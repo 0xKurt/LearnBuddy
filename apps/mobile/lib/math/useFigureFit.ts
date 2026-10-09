@@ -27,7 +27,7 @@ export function useFigureFit(
   // The drawing's full height at this width, measured once.
   const [fullHeight, setFullHeight] = useState(0);
   const sizing = width === 0 || fullHeight === 0;
-  useReportSizing(sizing);
+  useReportSizing(sizing ? null : fullHeight);
   const drawn = useRef<View>(null);
   /** The frame's width, taken the moment it is laid out: a measurement at another is stale. */
   const frame = useRef(0);

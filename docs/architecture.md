@@ -5369,7 +5369,9 @@ largest board it gives way whole rather than half. A card with a drawing or phot
 into what the conversation leaves (#96, `cardGrowTo`, at most half the window, its own height
 measured per question and window size — and only once its drawing has its size: `FigureView`
 measures, then scales, and reports while it does (`lib/math/figureSizing.ts`, #501); the card's
-placeholder height made the growth depend on which measurement landed first), and a new reply or a taller bar below (the voice bar)
+placeholder height made the growth depend on which measurement landed first; and never taller than
+its drawing at full size, which the same report carries — a drawing is never drawn larger, so more
+was an empty band around it), and a new reply or a taller bar below (the voice bar)
 takes its room back from the card first — the overrun past the column or the window counts. Short options sit two by two.
 Level and grade are learned in the conversation (the profile has no grade field: Buddy asks when
 the level is unknown and it matters for the next step — `context.ts`, `set_level`).
