@@ -160,7 +160,8 @@ type QuestionProps = {
   /**
    * A smaller prompt (18 pt instead of 21): for a question whose answer surface needs the
    * height more than the words do — the staff she writes on (issue #275), where a six-line
-   * prompt left no room for the staff, its keys AND Buddy's reply on 360×740.
+   * prompt left no room for the staff, its keys AND Buddy's reply on 360×740. Every prompt takes it
+   * while she types (issue #484).
    */
   dense?: boolean;
   /**
@@ -222,6 +223,11 @@ export function QuestionCard({
   // its folded drawing and the bar with its math keys ran 7 pt past the window and the keys stood
   // cut (issue #419, `cutControls`).
   const pad = typing ? SPACE.md : CARD_PAD;
+  // And the prompt steps down to the smaller size (`dense`), as the drawing folds (issue #484): on
+  // 360×440 a four-line prompt from Buddy over the net of a cylinder, its folded drawing and the bar
+  // with its math keys ran 38 pt past the window — the question never scrolls, so the keys and the
+  // header stood cut. The words stay whole; they are the question.
+  const small = dense || typing;
   const passageShare = answerBoard || typing ? PASSAGE_SHARE_SHORT : PASSAGE_SHARE;
   // A reading question's topic is its text: the text's heading already names it.
   // A part of a task names its place in the task where the topic stands: the same for all parts.
@@ -295,7 +301,7 @@ export function QuestionCard({
               inlineFractions
               accessibilityRole="header"
               style={
-                dense
+                small
                   ? [TYPE.title, { fontSize: 18, lineHeight: 25, fontWeight: '500' }]
                   : TYPE.question
               }
