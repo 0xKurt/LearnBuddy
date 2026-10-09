@@ -426,8 +426,8 @@ export default function TalkScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          paddingHorizontal: 16,
-          paddingTop: 8,
+          paddingHorizontal: SPACE.lg,
+          paddingTop: SPACE.sm,
         }}
       >
         <CircleBtn icon="close" onPress={leave} accessibilityLabel={t('buddy:talk.end')} />
@@ -448,9 +448,9 @@ export default function TalkScreen() {
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: 'flex-end',
-          paddingHorizontal: 16,
-          paddingTop: 12,
-          paddingBottom: 8,
+          paddingHorizontal: SPACE.lg,
+          paddingTop: SPACE.md,
+          paddingBottom: SPACE.sm,
         }}
         onLayout={() => scroll.current?.scrollToEnd({ animated: false })}
         onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
@@ -467,7 +467,14 @@ export default function TalkScreen() {
       </ScrollView>
 
       {problem || voice.hint || voice.denied ? (
-        <View style={{ alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingBottom: 4 }}>
+        <View
+          style={{
+            alignItems: 'center',
+            gap: SPACE.sm,
+            paddingHorizontal: SPACE.xl,
+            paddingBottom: SPACE.xs,
+          }}
+        >
           <Text
             accessibilityRole="alert"
             style={[TYPE.small, { color: palette.ink2, textAlign: 'center' }]}
@@ -490,7 +497,10 @@ export default function TalkScreen() {
       {reading ? (
         <Animated.Text
           entering={fadeIn()}
-          style={[TYPE.small, { textAlign: 'center', paddingHorizontal: 24, paddingBottom: 4 }]}
+          style={[
+            TYPE.small,
+            { textAlign: 'center', paddingHorizontal: SPACE.xl, paddingBottom: SPACE.xs },
+          ]}
           accessibilityLiveRegion="polite"
         >
           {t('buddy:now.processing_title')}
@@ -510,7 +520,7 @@ export default function TalkScreen() {
               { onPress: interrupt, pressLabel: t('buddy:talk.interrupt') }
             : {})}
         />
-        <View style={{ minHeight: 40, alignItems: 'center', marginTop: -8 }}>
+        <View style={{ minHeight: 40, alignItems: 'center', marginTop: -SPACE.sm }}>
           <Text
             accessibilityRole="header"
             accessibilityLiveRegion="polite"
@@ -522,7 +532,10 @@ export default function TalkScreen() {
             <Animated.Text
               key={sub}
               entering={fadeIn()}
-              style={[TYPE.caption, { textAlign: 'center', marginTop: 1 }]}
+              style={[
+                TYPE.caption,
+                { textAlign: 'center', marginTop: 1 }, // token-exempt: the hint 1 under its state
+              ]}
             >
               {sub}
             </Animated.Text>

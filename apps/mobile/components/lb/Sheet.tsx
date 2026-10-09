@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { SPACE, bottomRoom } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
 import { dismissedBySwipe } from '../../lib/gestures.js';
@@ -46,6 +47,11 @@ type Props = {
    */
   scrollTestID?: string;
 };
+
+/** The sheet's top corners: rounder than a card, it rises from the screen's edge. */
+const CORNER = 32;
+/** Its side margin, a little wider than a card's padding (Card.tsx 18). */
+const SIDE = 22;
 
 export function Sheet({
   visible,
@@ -164,9 +170,9 @@ export function Sheet({
               style={[
                 {
                   backgroundColor: palette.paper,
-                  borderTopLeftRadius: 32,
-                  borderTopRightRadius: 32,
-                  paddingBottom: insets.bottom + 8,
+                  borderTopLeftRadius: CORNER,
+                  borderTopRightRadius: CORNER,
+                  paddingBottom: bottomRoom(insets.bottom, SPACE.sm),
                   maxHeight: '92%',
                   ...SHADOW.float,
                 },
@@ -175,7 +181,13 @@ export function Sheet({
             >
               {/* The top of the sheet (handle and title) can be pulled down to close it. */}
               <GestureDetector gesture={pan}>
-                <View style={{ paddingTop: 10, paddingHorizontal: 22, paddingBottom: 12 }}>
+                <View
+                  style={{
+                    paddingTop: 10, // token-exempt: the handle close under the sheet's edge
+                    paddingHorizontal: SIDE,
+                    paddingBottom: SPACE.md,
+                  }}
+                >
                   <View
                     accessibilityElementsHidden
                     importantForAccessibility="no-hide-descendants"
@@ -183,9 +195,9 @@ export function Sheet({
                       alignSelf: 'center',
                       width: 40,
                       height: 5,
-                      borderRadius: 3,
+                      borderRadius: 3, // token-exempt: round ends on the 5 pt handle
                       backgroundColor: palette.ink4,
-                      marginBottom: 14,
+                      marginBottom: 14, // token-exempt: the handle 14 above the title
                     }}
                   />
                   <Text accessibilityRole="header" style={TYPE.title}>
@@ -196,12 +208,17 @@ export function Sheet({
               <ScrollView
                 testID={scrollTestID}
                 style={{ flexGrow: 0, flexShrink: 1 }}
-                contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 14, gap: 14 }}
+                contentContainerStyle={{
+                  paddingHorizontal: SIDE,
+                  // token-exempt: the sheet's rhythm, 14 between its parts and under the last
+                  paddingBottom: 14,
+                  gap: 14, // token-exempt: the sheet's rhythm (above)
+                }}
                 keyboardShouldPersistTaps="handled"
               >
                 {children}
               </ScrollView>
-              <View style={{ paddingHorizontal: 22, gap: 8 }}>
+              <View style={{ paddingHorizontal: SIDE, gap: SPACE.sm }}>
                 {footer}
                 <Btn variant="ghost" pill full onPress={onClose}>
                   {closeLabel}

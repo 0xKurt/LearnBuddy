@@ -48,6 +48,7 @@ import { ReadAlongBubble } from './ReadAlongBubble.js';
 import { RichText } from './RichText.js';
 import { TypingBubble } from './TypingBubble.js';
 import { useReveal } from './useReveal.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE } from '../../lib/theme/space.js';
 
 /**
@@ -57,10 +58,22 @@ import { SPACE } from '../../lib/theme/space.js';
  * line a one-liner closes at 45, just over the 44 pt touch height (space.ts TOUCH).
  */
 export const BUBBLE = {
-  borderRadius: 22,
+  borderRadius: RADIUS.card,
   paddingHorizontal: SPACE.lg,
-  paddingVertical: 11,
+  paddingVertical: 11, // token-exempt: one-liners close at 45, just over TOUCH (see above)
 } as const;
+
+/** The bubble's corner towards whoever said it: tucked in, a speech bubble's tail. */
+const TAIL = 6;
+
+/**
+ * The fine print under a turn (where a message went, a receipt's note, the day): TYPE.small,
+ * smaller. token-exempt: 12, below TYPE.label, quieter than the turn it belongs to.
+ */
+const FINE = { fontSize: 12 } as const;
+
+/** The check or cross in front of a receipt line. */
+const RECEIPT_ICON = 14;
 
 /** The card one of Buddy's actions brings into the chat; null where a receipt says it. */
 function actionCard(a: MessageView['actions'][number], spoken: boolean): ReactNode {
@@ -349,8 +362,8 @@ export function Conversation({
                         BUBBLE,
                         {
                           backgroundColor: mine ? palette.primary : palette.paper,
-                          borderBottomRightRadius: mine ? 6 : BUBBLE.borderRadius,
-                          borderBottomLeftRadius: mine ? BUBBLE.borderRadius : 6,
+                          borderBottomRightRadius: mine ? TAIL : BUBBLE.borderRadius,
+                          borderBottomLeftRadius: mine ? BUBBLE.borderRadius : TAIL,
                           opacity: pressed ? 0.85 : 1,
                           transform: [{ scale: pressed ? 0.98 : 1 }],
                         },
@@ -358,6 +371,7 @@ export function Conversation({
                       ]}
                     >
                       {m.outreach ? (
+                        // token-exempt: the title snug over its message, 2 apart
                         <Text style={[TYPE.label, { marginBottom: 2 }]}>{m.outreach.title}</Text>
                       ) : null}
                       {!mine && spokenMode && m === lastBuddy ? (
@@ -380,7 +394,7 @@ export function Conversation({
                 in der App" is the one state that is the same for every one of them, so it is
                 said once — under the newest (issue #204); it used to stand under every card. */}
             {m.outreach && (m.id === inAppDelivery || !saysOnlyInApp(m)) ? (
-              <Text style={[TYPE.small, { fontSize: 12 }]}>{deliveryText(m.outreach)}</Text>
+              <Text style={[TYPE.small, FINE]}>{deliveryText(m.outreach)}</Text>
             ) : null}
             {m.actions.map((a) => {
               const card = actionCard(a, spokenMode);
@@ -453,7 +467,9 @@ export function Conversation({
                   <Text
                     style={[
                       TYPE.small,
-                      { fontSize: 12, color: palette.ink3, paddingLeft: 14 + SPACE.xs },
+                      FINE,
+                      // Under the receipt's words, past its icon.
+                      { color: palette.ink3, paddingLeft: RECEIPT_ICON + SPACE.xs },
                     ]}
                   >
                     {t('done.in_app_only')}
@@ -541,7 +557,7 @@ export function Conversation({
               {
                 maxWidth: '86%',
                 backgroundColor: palette.primary,
-                borderBottomRightRadius: 6,
+                borderBottomRightRadius: TAIL,
                 opacity: 0.8,
               },
             ]}
@@ -563,7 +579,7 @@ export function Conversation({
               {
                 flexShrink: 1,
                 backgroundColor: palette.paper,
-                borderBottomLeftRadius: 6,
+                borderBottomLeftRadius: TAIL,
               },
               SHADOW.soft,
             ]}
@@ -654,23 +670,26 @@ function Receipt({
         hitSlop={{ top: SPACE.md, bottom: SPACE.md, left: SPACE.xs, right: SPACE.xs }}
         style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.xs }}
       >
+        {/* token-exempt: the icon 2 down, on the line's letters, not its top */}
         <View style={{ paddingTop: 2 }}>
           <Icon
             name={undone ? 'close' : 'check'}
-            size={14}
+            size={RECEIPT_ICON}
             color={undone ? palette.ink3 : palette.successText}
           />
         </View>
         <Text
           style={[
             TYPE.small,
+            // token-exempt: 13, the receipt line between the fine print and TYPE.small
             { flexShrink: 1, fontSize: 13, color: undone ? palette.ink3 : palette.ink2 },
           ]}
         >
           {text}
         </Text>
       </PressArea>
-      {/* -2: the 24 pt circle centred on the first 21 pt line, not hanging below it. */}
+      {/* token-exempt: -2, the 24 pt circle centred on the first 21 pt line, not hanging
+          below it */}
       {undo ? <View style={{ marginTop: -2, flexShrink: 0 }}>{undo}</View> : null}
     </Animated.View>
   );
@@ -722,7 +741,7 @@ function SessionGreeting({
             {
               flexShrink: 1,
               backgroundColor: palette.paper,
-              borderBottomLeftRadius: 6,
+              borderBottomLeftRadius: TAIL,
             },
             SHADOW.soft,
           ]}
@@ -755,7 +774,8 @@ export function DayLine({ day }: { day: string }) {
       accessibilityRole="header"
       style={[
         TYPE.small,
-        { alignSelf: 'center', color: palette.ink2, fontSize: 12, marginVertical: SPACE.xs },
+        FINE,
+        { alignSelf: 'center', color: palette.ink2, marginVertical: SPACE.xs },
       ]}
     >
       {label}

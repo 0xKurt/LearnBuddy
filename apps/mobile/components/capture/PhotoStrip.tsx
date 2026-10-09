@@ -2,11 +2,12 @@
 // (ZoomViewer), retakeable and removable before anything is sent (issue #57).
 
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, type TextStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
@@ -14,6 +15,13 @@ import { PhotoThumb } from '../lb/ZoomViewer.js';
 
 const THUMB_WIDTH = 112;
 const THUMB_HEIGHT = 148;
+/** The photo's corner, between a tile's and a card's. */
+const THUMB_RADIUS = 18;
+/**
+ * The page number and the "hard to read" tag on a photo: small, bold, on a coloured patch.
+ * token-exempt: 12, below TYPE.label, so it fits on a 112 pt photo.
+ */
+const TAG: TextStyle = { fontSize: 12, fontWeight: '700' };
 
 type Props = {
   uris: readonly string[];
@@ -37,17 +45,29 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      // Room for the thumbnails' soft shadow.
-      contentContainerStyle={{ gap: 12, paddingHorizontal: 2, paddingVertical: 6 }}
+      contentContainerStyle={{
+        gap: SPACE.md,
+        // token-exempt: room for the thumbnails' soft shadow, 2 to the side, 6 above and below
+        paddingHorizontal: 2,
+        paddingVertical: 6, // token-exempt: room for the soft shadow (above)
+      }}
     >
       {uris.map((uri, i) => (
-        <View key={uri} style={{ width: THUMB_WIDTH, gap: 6 }}>
-          <View style={{ borderRadius: 18, backgroundColor: palette.paper, ...SHADOW.soft }}>
+        <View
+          key={uri}
+          style={{
+            width: THUMB_WIDTH,
+            gap: 6, // token-exempt: the photo close above its buttons
+          }}
+        >
+          <View
+            style={{ borderRadius: THUMB_RADIUS, backgroundColor: palette.paper, ...SHADOW.soft }}
+          >
             <View
               style={{
                 width: THUMB_WIDTH,
                 height: THUMB_HEIGHT,
-                borderRadius: 18,
+                borderRadius: THUMB_RADIUS,
                 overflow: 'hidden',
                 backgroundColor: palette.canvas,
               }}
@@ -65,8 +85,8 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
                     flex: 1,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 8,
-                    padding: 10,
+                    gap: SPACE.sm,
+                    padding: 10, // token-exempt: three lines of a file's name fit the 112 pt page
                     backgroundColor: palette.lavender,
                   }}
                 >
@@ -82,7 +102,7 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
                 <View
                   accessible
                   accessibilityLabel={t('preview_failed')}
-                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACE.sm }}
                 >
                   <Icon name="eye-off" size={28} color={palette.ink3} />
                   <Text style={[TYPE.small, { color: palette.ink2, textAlign: 'center' }]}>
@@ -109,8 +129,8 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
                   // instead of clipping the number in a fixed box (audit M-84, issue #73).
                   minWidth: 24,
                   minHeight: 24,
-                  borderRadius: 999,
-                  paddingHorizontal: 6,
+                  borderRadius: 999, // token-exempt: fully round ends, like Chip
+                  paddingHorizontal: 6, // token-exempt: page numbers of two figures stay round
                   backgroundColor: palette.primary,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -118,7 +138,7 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
               >
                 <Text
                   maxFontSizeMultiplier={MAX_FONT_SCALE}
-                  style={{ color: palette.paper, fontSize: 12, fontWeight: '700' }}
+                  style={[TAG, { color: palette.paper }]}
                 >
                   {i + 1}
                 </Text>
@@ -130,15 +150,13 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
                     left: 6,
                     right: 6,
                     bottom: 6,
-                    borderRadius: 10,
-                    paddingVertical: 3,
+                    borderRadius: 10, // token-exempt: tag corner inside the photo's 18
+                    paddingVertical: 3, // token-exempt: one line, snug on the photo
                     backgroundColor: palette.butter,
                     alignItems: 'center',
                   }}
                 >
-                  <Text style={{ color: palette.warningText, fontSize: 12, fontWeight: '700' }}>
-                    {t('quality.flag')}
-                  </Text>
+                  <Text style={[TAG, { color: palette.warningText }]}>{t('quality.flag')}</Text>
                 </View>
               ) : null}
             </View>
@@ -146,7 +164,7 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
           {/* One row, icons with spoken names: two stacked worded buttons pushed the
               screen 32 px past 360×740 (fit rule; the walkthrough caught it). Retake:
               schief, unscharf, halbe Seite — this page again, in its place (issue #57). */}
-          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: SPACE.md }}>
             {pdfs?.[uri] ? null : (
               <Btn
                 size="sm"

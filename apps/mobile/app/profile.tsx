@@ -11,7 +11,7 @@
 import { CurriculumRegion, type AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, ScrollView, Text, View, type ViewStyle } from 'react-native';
+import { Platform, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,7 +22,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Card } from '../components/lb/Card.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
-import { Icon } from '../components/lb/Icon.js';
+import { IconDisc } from '../components/lb/IconDisc.js';
 import { LanguageFlags } from '../components/lb/LanguageFlags.js';
 import { LbTextInput, type LbTextInputRef } from '../components/lb/LbTextInput.js';
 import { PickerField, picked } from '../components/lb/PickerField.js';
@@ -47,25 +47,11 @@ import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 import { formDensity } from '../lib/keyboard.js';
 import { useVisibleHeight } from '../lib/useVisibleHeight.js';
-import { SPACE, bottomRoom } from '../lib/theme/space.js';
+import { GUTTER, SPACE, pinnedBar } from '../lib/theme/space.js';
 import { useFormDraft } from '../lib/drafts.js';
 
 /** Android number pads emit "-", "," and spaces too; a date or PIN is digits only. */
 const onlyDigits = (value: string) => value.replace(/\D+/g, '');
-
-/** The steps' side margin. */
-const GUTTER = 20; // token-exempt: the sign-up pages' gutter (welcome, consent, pin), not SPACE.lg
-/** The PIN card's shield badge, a circle. */
-const BADGE = 32;
-
-/** The bar under a step that holds its CTA, past the system's bottom inset. */
-function pinnedBar(safeBottom: number): ViewStyle {
-  return {
-    paddingHorizontal: GUTTER,
-    paddingTop: SPACE.sm,
-    paddingBottom: bottomRoom(safeBottom),
-  };
-}
 
 export default function Profile() {
   const { palette } = useTheme();
@@ -452,20 +438,7 @@ export default function Profile() {
                     marginTop: 6, // token-exempt: the PIN part set off from the checkboxes
                   }}
                 >
-                  <View
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                    style={{
-                      width: BADGE,
-                      height: BADGE,
-                      borderRadius: BADGE / 2, // token-exempt: half its size, a circle
-                      backgroundColor: palette.paper,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Icon name="shield" size={18} color={palette.primaryDk} />
-                  </View>
+                  <IconDisc name="shield" size={32} iconSize={18} />
                   <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>
                 </View>
                 <Text style={[TYPE.small, { color: palette.ink }]}>{t('profile.pin_body')}</Text>
