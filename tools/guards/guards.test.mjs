@@ -16,6 +16,7 @@ import tseslint from 'typescript-eslint';
 import { activeGrants, baseSha, GROWTH_DIR, measureFiles, withGrants } from './base.mjs';
 import plugin from './eslint-plugin.mjs';
 import { MAX_AGE_HOURS, staleHours } from './fresh-base.mjs';
+import { allowed, problems } from './licences.mjs';
 import { growth, LISTS, TRAILER } from './no-growth.mjs';
 import { prBodyProblems } from './pr-body.mjs';
 import { scratchRepo } from './scratch-repo.mjs';
@@ -400,6 +401,30 @@ describe('fresh base: a PR does not lag main by more than a day (issue #328)', (
   it('is stale when the oldest missing main commit is older than the limit', () => {
     const hours = staleHours([now - 3600, now - 30 * 3600], now);
     assert.ok(hours !== null && hours > MAX_AGE_HOURS);
+  });
+});
+
+describe('licences: what the app ships is permissively licensed and has its text (#493)', () => {
+  it('lets permissive licences through, and an OR when one choice is permissive', () => {
+    for (const ok of [
+      'MIT',
+      'ISC',
+      'Apache-2.0',
+      'BSD-3-Clause',
+      '0BSD',
+      '(BSD-3-Clause OR GPL-2.0)',
+    ])
+      assert.ok(allowed(ok), ok);
+  });
+  it('stops copyleft, non-commercial, no-derivatives and anything unknown', () => {
+    const red = ['GPL-3.0-only', 'LGPL-2.1-or-later', 'AGPL-3.0-only', 'MPL-2.0', 'CC-BY-NC-4.0'];
+    for (const no of [...red, 'CC-BY-ND-4.0', '(MIT AND GPL-2.0)', 'Apache 2.0', 'UNKNOWN', ''])
+      assert.ok(!allowed(no), no);
+  });
+  it('names a package without a licence text', () => {
+    const entry = { name: 'x', version: '1.0.0', licence: 'MIT', text: 0 };
+    assert.deepEqual(problems({ packages: [entry], texts: ['MIT License'] }), []);
+    assert.deepEqual(problems({ packages: [entry], texts: [' '] }), ['x@1.0.0: kein Lizenztext']);
   });
 });
 

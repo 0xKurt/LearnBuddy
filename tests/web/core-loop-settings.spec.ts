@@ -3,7 +3,7 @@
 // Starts from a fresh learner who picked the voice "Hell" and whose parent allowed messages with
 // the PIN (coreLoop.ts; parts 1 and 2 check that way).
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { allowPush, freshEmail, openMenu as openMenuOf, planTest, signUpMia } from './coreLoop';
 import { shot } from './fit';
@@ -41,6 +41,7 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   await shot(page, '15c-settings-voice', { opened: true });
   await page.getByRole('button', { name: 'Buddys Stimme' }).click();
   await expect(page.getByText('Klar', { exact: true })).toBeVisible();
+  await openLicences(page, '15d-settings-about', '15e-settings-licences');
 
   // ── The look: every option previews in ITS OWN colours, and night stays readable ──
   // (issue #84: module-scope styles froze the start palette's ink, which was invisible on
@@ -58,6 +59,7 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   await darkSwitch.click();
   await expect(darkSwitch).toHaveAttribute('aria-checked', 'true');
   await shot(page, '15g-settings-night', { opened: true });
+  await openLicences(page, '15g1-settings-about-night', '15g2-settings-licences-night');
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   // The whole home in the night palette: fit and contrast, like every other stop.
@@ -80,3 +82,24 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
 
   test.info().annotations.push({ type: 'email', description: email });
 });
+
+/**
+ * „Über LearnBuddy“ → Lizenzen (issue #493): one closed entry; the sheet lists what the app ships,
+ * each package folded until she taps it, then its licence text under it.
+ */
+async function openLicences(page: Page, about: string, sheet: string): Promise<void> {
+  await page.getByRole('button', { name: 'Über LearnBuddy' }).click();
+  const entry = page.getByRole('button', { name: 'Lizenzen', exact: true });
+  await entry.scrollIntoViewIfNeeded();
+  await expect(entry).toBeVisible();
+  await shot(page, about, { opened: true });
+  await entry.click();
+  await expect(page.getByText(/mit freier Software gebaut/)).toBeVisible();
+  const first = page.getByRole('button', { name: /^@babel\/runtime [\d.]+, MIT$/ });
+  await expect(page.getByText(/Permission is hereby granted/)).toHaveCount(0);
+  await first.click();
+  await expect(page.getByText(/Permission is hereby granted/)).toBeVisible();
+  await shot(page, sheet, { opened: true });
+  await page.getByRole('button', { name: 'Schließen' }).click();
+  await expect(page.getByText(/mit freier Software gebaut/)).toHaveCount(0);
+}
