@@ -1125,8 +1125,26 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   `speakable` answers only; `expo/fetch` streams on the phone. Measured (live, 3.6 Flash,
   `evals/stream/run.ts`, medians): first words after 1.35–1.6 s instead of the whole answer after
   1.76–1.86 s — about 0.3–0.5 s, more for long explanations. Most of the wait is before the model
-  writes its first character; the order change kept 22/22 in `evals/buddy`. On a deployed API
-  the host must pass streamed responses through (needs live verification).
+  writes its first character; the order change kept 22/22 in `evals/buddy`. Vercel passes the
+  stream through: in the third of the five phone turns of 01.10. (#169) the model call alone
+  ended 2 620 ms after the message was stored, and the first word was on her screen 2 654 ms
+  after her tap — buffered, it could only have arrived after the call, the sign-in check before
+  it and the way back (issue #447, §Limits).
+- **The way to the first word is logged** (issue #447, `http/timing.ts`): every streamed call
+  writes one line, `[timing] POST /v1/buddy/messages auth=… start=… first=… done=…` —
+  milliseconds since the request reached the API until the sign-in service vouched for the
+  token, the work began, the first event and the result left. Route pattern and numbers only.
+  Next to the phone's `lb-perf` line of the same minute it splits the device's wait into the way
+  there and back, the sign-in check, the server and the model; `llm_calls` adds when the model
+  call started (`created_at − latency_ms`).
+- **Her sheets are looked up while her state loads** (issue #447, `turn.ts` `passagesAhead`):
+  the passages her message points at (issue #26) need an embedding call, 174–396 ms in
+  production (p50 270 ms), and it used to start only after the ~20 reads of her state. Now both
+  run side by side from the moment the turn begins; the result is used when this message is all
+  she wrote since Buddy's last answer, otherwise her words are looked up again together. Not
+  during a roleplay (her line is no question about her sheets), and no turn ends before the
+  look-ahead does. Expected: 50–75 ms less before the model starts (the reads it now overlaps,
+  ~2.6–3.9 ms each between fra1 and the database); the phone measurement is still open (#169).
 - **The pronunciation judgement streams** (`POST /practice/sessions/:id/speak` with
   `Accept: text/event-stream`; `SpeakStreamEvent`, issue #8): the model writes `heard` before
   the word list, so the words colour one by one instead of the card sitting still for seconds.
@@ -1248,6 +1266,40 @@ each and moving repeated descriptions into the prompt; `$ref`/`$defs` do not hel
 them before billing — measured 2026-09-26), 2.5 did not. Tokens scale with schema text; the
 largest tools are set_contact (~1 300), remember (~1 100), plan_step (~900). Next levers: explicit
 context caching of the fixed part, or offering only the tools a turn can use.
+
+**The wait for Buddy's first word: ≤ 2.5 s from her tap** (owner decision on issue #447; it
+replaces "first audio < 1 s", which per-sentence MP3 cannot reach). On the phone (#169, five
+turns over Wi-Fi, 01.10.) it was **2.45–2.73 s, median 2.65 s**. Where those 2.65 s go, read from
+the production rows of exactly those five turns (`buddy_messages.created_at` when her message was
+stored, `llm_calls` for the embedding and the model call; raw numbers in `docs/speed-audit.md`
+§Der Weg zum ersten Wort):
+
+| Part of the median turn                                                       | ms                | known how                                                                     |
+| ----------------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------- |
+| message stored → model call starts                                            | **311** (265–443) | measured                                                                      |
+| — the embedding for the passages of her sheets                                | 220 (174–350)     | measured                                                                      |
+| — ~35 database round trips, fra1 ↔ Supabase eu-central-1                      | 91 (91–137)       | measured (the difference); the round trips counted in the harness             |
+| model call starts → first words of the reply                                  | **~1 900**        | estimated: the whole call took 2 309 ms (1 888–2 309), the reply ~0.4 s of it |
+| phone → Vercel, sign-in check, 4 reads, first event → phone, drawing the text | **~450**          | the remainder; `[timing]` (§Speed) measures the server part of it from now on |
+
+So the "≈ 1.2 s of network" in #169 is mostly model: it compared the phone with an in-process
+run (local database, a 15 k-token learner, 1.47 s), while in production the model call alone
+takes 1.9–2.3 s for her (22 k input tokens, nothing from the prefix cache). The places are right
+already: the function runs in **fra1** (`apps/api/vercel.json`, the deployment, `x-vercel-id`),
+next to the database in Frankfurt (~40 round trips before the model starts) and a few hundred
+kilometres from Vertex `eu` / `europe-west4` (around 10 ms there and back — a typical figure, not
+measured from here); no Vercel region is nearer to Vertex without moving away from the database.
+The stream is not buffered on the way (§Speed). Built in #447: the timing line and the
+look-ahead for her sheets (expected −50–75 ms, i.e. ~2.59 s) — not enough alone for 2.5 s.
+Considered and not built: longer keep-alive to Supabase Auth, Postgres and Vertex (today every
+turn, 24–39 s after the last, opens fresh connections — Node's fetch keeps idle sockets 4 s, the
+pool 10 s — but each costs one handshake with a nearby endpoint, and on Fluid compute a socket kept
+across a suspended instance can fail a request instead of saving time); an earlier first byte of
+the stream (it would not bring the first word earlier). What is left for 2.5 s is the model's
+~1.9 s (explicit context caching and a smaller prompt, #166 E and #168) and the sign-in check
+(an HTTPS call per request — measure `auth=` first; verifying the token locally would change
+how a sign-out on another device takes effect, #131). **The after-measurement on the phone is
+open (#169).**
 
 ## Material
 

@@ -444,3 +444,53 @@ wuchsen von 3 auf 9 bzw. 8 Fragen, jede genau einmal.
 **Grenze der Zahl:** 17 geurteilte Fragen pro Lauf und ein Modell bei Temperatur 0,4 — im
 Baseline-Lauf waren es 14/17, im nächsten Lauf ohne jede Änderung am `explain`-Pfad 17/17.
 Die Stichprobe erkennt einen groben Einbruch, keine feine Verschlechterung.
+
+## Der Weg zum ersten Wort (08.10., Issue #447)
+
+Am Gerät (#169, 01.10., Xiaomi über WLAN gegen die Produktion): Tipp → Buddys erstes Wort
+**2 447–2 729 ms, median 2 654 ms**. Dieselben fünf Züge in der Produktionsdatenbank, nur
+Zeitstempel und Dauern (`buddy_messages.created_at` der Nachricht = gespeichert nach Anmeldung
+und Middleware; Modellstart = `llm_calls.created_at − latency_ms`), in zeitlicher Reihenfolge:
+
+| Zug (UTC) | Gerät | gespeichert → Modellstart | davon Embedding | davon DB | Modellaufruf ganz | Ausgabe-Tokens | Eingabe-Tokens (gecacht) |
+| --------- | ----- | ------------------------- | --------------- | -------- | ----------------- | -------------- | ------------------------ |
+| 16:49:23  | 2 729 | 443                       | 350             | 93       | 2 148             | 144            | 22 439 (0)               |
+| 16:50:02  | 2 691 | 436                       | 299             | 137      | 1 953             | 126            | 22 217 (0)               |
+| 16:50:27  | 2 654 | 311                       | 220             | 91       | 2 309             | 131            | 22 622 (0)               |
+| 16:50:52  | 2 557 | 315                       | 195             | 120      | 2 053             | 158            | 22 269 (0)               |
+| 16:51:16  | 2 447 | 265                       | 174             | 91       | 1 888             | 96             | 22 438 (4 050)           |
+
+Alle Werte in ms. Die Zuordnung Gerät ↔ Zeile nimmt an, dass die fünf Gerätezahlen in
+zeitlicher Reihenfolge stehen; jeder Zug hatte genau ein Embedding vor dem Modell und eine
+Modellrunde. Über alle Produktionsaufrufe seit 28.09.: `embedding` n = 15, p50 270 ms, p90 376,
+174–396; `buddy_turn` n = 27, p50 1 778, p90 2 392.
+
+**Datenbank-Rundreisen**, gezählt im Test-Harness (gescriptetes Modell, ein Blatt): 4 vor dem
+Speichern (Konto, Budget, Lernende, Einstellungen), ~35 vom Speichern bis zum Modellaufruf
+(5 Nachricht, 17 Zustand, 1 Rollenspiel, 1 Push, ~9 Blattsuche samt Embedding-Buchhaltung,
+1 Claim, 1 Reservierung). Mit den 91–137 ms DB-Anteil aus der Tabelle: **~2,6–3,9 ms je
+Rundreise** fra1 ↔ Supabase-Pooler.
+
+**Gestreamt, nicht gepuffert:** im Zug 16:50:27 endete der Modellaufruf allein 311 + 2 309 =
+2 620 ms nach dem Speichern; das erste Wort stand 2 654 ms nach dem Tipp. Für Hinweg,
+Anmeldung und Rückweg blieben 34 ms — gepuffert hätte das erste Wort erst nach dem Aufruf, der
+Antwortanwendung und dem Rückweg ankommen können.
+
+**Was von hier aus nicht messbar war:** `curl` zur Produktion endet im Egress-Proxy dieser
+Umgebung (`CONNECT tunnel failed, response 403`, sechs Läufe), TLS- und Verbindungszeiten des
+Handys lassen sich so nicht nachstellen; der Abruf über Vercel kam aus `iad1`
+(`x-vercel-id: iad1:iad1::fra1::…`) und sagt nur, dass die Funktion in **fra1** läuft. Die
+Laufzeit-Logs der letzten sieben Tage enthalten keine Dauern. Supabase steht in
+`eu-central-1` (Frankfurt), Vertex in `eu` (Buddy) und `europe-west4` (Embedding).
+
+**Lesart:** von 2,65 s sind ~0,31 s Server vor dem Modell (gemessen), ~1,9 s Modell bis zu den
+ersten Worten der Antwort (geschätzt: ganzer Aufruf minus ~100 Antwort-Tokens bei 250–300/s)
+und ~0,45 s der Rest — Hinweg, Anmeldung bei Supabase Auth, vier Lesezugriffe, Rückweg,
+Zeichnen. Die „≈ 1,2 s Netz" aus #169 waren ein Vergleich mit einem In-Process-Lauf (lokale
+DB, 15-k-Token-Lernende, 1,47 s); in Produktion braucht das Modell für sie allein 1,9–2,3 s.
+
+**Gebaut (#447):** die `[timing]`-Zeile je gestreamtem Aufruf (`auth`, `start`, `first`,
+`done` in ms seit Ankunft) und die Blattsuche parallel zum Laden des Zustands. Erwartet:
+−50–75 ms vor dem Modellstart (die ~19 Lesezugriffe, die sie jetzt überlappt), also ~2,59 s
+am Gerät. **Nachmessung am Gerät offen (#169):** fünf Züge, dazu die `[timing]`-Zeilen derselben
+Minute (`get_runtime_logs`, Suche `[timing]`).

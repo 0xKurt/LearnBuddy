@@ -5,7 +5,7 @@
 // requires live verification in Claude Code session (needs a running Postgres)
 
 import type { ReplyStreamEvent, SendMessageResponse } from '@learnbuddy/shared-types/contracts';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { LlmError } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
@@ -138,6 +138,39 @@ describe.skipIf(!dbReady)('streamed replies', () => {
       rest += decoder.decode(chunk.value, { stream: true });
     }
     expect(rest).toMatch(/^event: done$/m);
+  });
+
+  it('logs when the work started and the first words and the result left — numbers only (issue #447)', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    try {
+      env.llm.script('buddy_turn', answer('Ein Zähler steht über dem Bruchstrich.'));
+      const s = await stream(env, l, 'was ist ein zähler');
+      expect(s.done?.status).toBe('done');
+      const lines = info.mock.calls
+        .map((args) => String(args[0]))
+        .filter((line) => line.startsWith('[timing]'));
+      expect(lines).toHaveLength(1);
+      const line = lines[0]!;
+      const m =
+        /^\[timing\] POST \/v1\/buddy\/messages auth=(\d+) start=(\d+) first=(\d+) done=(\d+)$/.exec(
+          line,
+        );
+      expect(m, line).not.toBeNull();
+      const [auth, start, first, done] = m!.slice(1).map(Number) as [
+        number,
+        number,
+        number,
+        number,
+      ];
+      expect(auth).toBeLessThanOrEqual(start);
+      expect(start).toBeLessThanOrEqual(first);
+      expect(first).toBeLessThanOrEqual(done);
+      // Logs carry no personal details: not her words, not her id, not the message id.
+      expect(line).not.toContain('zähler');
+      expect(line).not.toContain(l.learnerId);
+    } finally {
+      info.mockRestore();
+    }
   });
 
   it('never marks a reply speakable whose answer changes something', async () => {
