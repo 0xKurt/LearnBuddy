@@ -1,0 +1,5 @@
+{
+  "issue": "#107",
+  "reason": "Die eine Naht: der App-Start (createApp) ruft registerLearning() der Lern-Domain auf; dafür fallen die Importe aus buddy/tools, lookups, offers (Schnitt 2), app.ts und buddy/routes (Schnitt 3), Scheduler und Proaktivität (Schnitt 4) weg. Plan-Kommentar in #107, Schnitte 2–4.",
+  "boundaries": ["apps/api/src/app.ts -> apps/api/src/modules/learning/register.ts"]
+}

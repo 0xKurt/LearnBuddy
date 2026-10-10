@@ -18,16 +18,15 @@
 // upload would mean breaking the local API mid-run. On a device it takes a hand (and on MIUI
 // a system dialog, .maestro/README.md). Here they are values.
 
-import type { ItemView } from '@learnbuddy/shared-types/contracts';
+import type { AudioMime, ItemView } from '@learnbuddy/shared-types/contracts';
 import { act, fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { SpeakMime } from '../../../lib/speech/voice.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { SpeakPanel } from '../SpeakPanel.js';
 
 /** What the panel handed the recorder, so a test can report a finished recording. */
-type Recorded = { uri: string; mime: SpeakMime; durationMs: number; base64: string };
+type Recorded = { uri: string; mime: AudioMime; durationMs: number; base64: string };
 
 /** Set per test: what the recorder reports about the microphone and what it is doing. */
 const recorder = vi.hoisted(() => ({

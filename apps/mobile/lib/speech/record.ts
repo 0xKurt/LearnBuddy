@@ -6,6 +6,7 @@
 // recorder restarting inside the silence so she never notices. Every file is
 // deleted from the device right after reading it; nothing is kept.
 
+import type { AudioMime } from '@learnbuddy/shared-types/contracts';
 import {
   AudioQuality,
   getRecordingPermissionsAsync,
@@ -27,7 +28,6 @@ import {
   MIN_RECORDING_MS,
   speakMime,
   speakMimeForFile,
-  type SpeakMime,
 } from './voice.js';
 import { useMounted } from '../useMounted.js';
 import { levelFromDb } from './level.js';
@@ -71,7 +71,7 @@ const LONG_RECORDING: RecordingOptions = {
  */
 export const recorderMeters = Platform.OS !== 'web';
 
-export type Recording = { uri: string; mime: SpeakMime; durationMs: number; base64: string };
+export type Recording = { uri: string; mime: AudioMime; durationMs: number; base64: string };
 
 /** Why no recording came out: no microphone access, only a tap, an unknown format, or it broke. */
 export type RecordFailure = 'denied' | 'too_short' | 'unsupported' | 'failed';
@@ -123,7 +123,7 @@ function blobToBase64(blob: Blob): Promise<string> {
 }
 
 /** Reads the finished recording and removes it from the device. */
-async function readRecording(uri: string): Promise<{ base64: string; mime: SpeakMime | null }> {
+async function readRecording(uri: string): Promise<{ base64: string; mime: AudioMime | null }> {
   if (Platform.OS === 'web') {
     try {
       const blob = await (await fetch(uri)).blob();

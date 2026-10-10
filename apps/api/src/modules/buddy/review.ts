@@ -31,6 +31,7 @@ import type { LearnerRow } from '../identity/model.js';
 import { questionCountFor, selectPracticeItems } from '../practice/selection.js';
 import { enqueueJob, finishJob, type JobRow } from '../scheduler/jobs.js';
 import { contactHistory, planOutreach } from './delivery.js';
+import type { Subscriber } from './events.js';
 import { deferredWhileInApp } from './inApp.js';
 import { bumpContext, testAhead } from './plan.js';
 import { MIN_RELEVANCE } from './policy.js';
@@ -80,7 +81,7 @@ async function scheduleReview(
 }
 
 /** The next day's wake-up for a sheet that was just read — once per sheet. */
-export async function scheduleNextDayReview(
+async function scheduleNextDayReview(
   db: Db,
   learnerId: string,
   materialId: string,
@@ -93,11 +94,28 @@ export async function scheduleNextDayReview(
 }
 
 /** The wake-up after a break, for a practice that just ended — one per day she practised. */
-export async function scheduleBreakReview(db: Db, learnerId: string, at: Date): Promise<void> {
+async function scheduleBreakReview(db: Db, learnerId: string, at: Date): Promise<void> {
   await scheduleReview(db, learnerId, at, BREAK_DAYS, (day) => `review_due:${learnerId}:${day}`, {
     reason: REVIEW_DUE,
   });
 }
+
+/**
+ * The day after a sheet was read, Buddy offers to go over it once more (#446). Subscribed to
+ * `material_ready` by modules/learning/register.ts.
+ */
+export const reviewNextDay: Subscriber = async (db, learnerId, _eventId, e, at) => {
+  if (e.type === 'material_ready')
+    await scheduleNextDayReview(db, learnerId, e.rootId ?? e.materialId, at);
+};
+
+/**
+ * Three days after a practice, Buddy looks whether a break has begun (#446). Subscribed to
+ * `session_finished` by modules/learning/register.ts.
+ */
+export const reviewAfterBreak: Subscriber = async (db, learnerId, _eventId, e, at) => {
+  if (e.type === 'session_finished') await scheduleBreakReview(db, learnerId, at);
+};
 
 /** Why a wake-up said nothing, or that it offered. */
 type Outcome =

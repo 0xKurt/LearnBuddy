@@ -47,7 +47,12 @@ Postgres in `apps/api/src/__tests__/` (see [Testing](#testing)).
 ## API
 
 Hono app composed in `src/app.ts`; the same routes are served under `/`, `/v1`, `/api`,
-`/api/v1` (the app calls `/v1/…`). On Vercel the single function `apps/api/api/index.ts` gets
+`/api/v1` (the app calls `/v1/…`). `createApp` mounts the core's routes (identity, devices,
+`/buddy` behind its guards via `mountBuddy`, `/voice`), then what the learning domain registered
+at start-up (`http/plugins.ts`: `/practice`, `/materials`, and its taps on `/buddy` — starting a
+step, confirming a deletion, ending a roleplay, a rehearsal — from `modules/learning/routes.ts`),
+in registration order (issue #107). Buddy's guards hold for every route under `/buddy`, whoever
+mounts it. On Vercel the single function `apps/api/api/index.ts` gets
 every `/v1/*` and `/api/*` request through two rewrites (nested paths included; the original
 path stays in the request URL); Node is pinned by `engines` in `apps/api/package.json`, and only
 `apps/api/public/` is served statically. The workspace packages (`shared-types`, `shared-math`)
@@ -360,14 +365,18 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
 
 The tools live in `modules/buddy/`, one file per area (#311): `memoryTools.ts`, `goalTools.ts`,
 `practiceTool.ts`, `stepTools.ts`, `materialTools.ts`, `settingsTools.ts`, `offers.ts`,
-`roleplay.ts`; `tools.ts` keeps the rules every tool keeps and maps each act tool to its handler
-(`ACT_HANDLERS`), and `undo.ts` reverses an applied action. What every tool is given and shares —
+`roleplay.ts`, `talkTools.ts`; the offers to learn are `modules/practice/offerTools.ts`. `tools.ts`
+keeps the rules every tool keeps and maps each act tool to its handler: the handlers every Buddy
+has stand there, the learning domain's register theirs at start-up (`registerActHandlers`,
+called once from `modules/learning/register.ts`, issue #107 — the core never names them).
+`createApp` refuses to start while a tool or lookup the model is offered has no code
+(`withoutCode()` in `registry.ts`). `undo.ts` reverses an applied action. What every tool is given and shares —
 `ToolContext`, `ToolOutcome`/`UndoSpec`, `ToolRejection`, the quote and day checks, the alias
 resolvers — is in `modules/buddy/toolKit.ts`.
 
 `modules/buddy/registry.ts` (ADR 0005 stage 2) registers every act tool once: its call schema
 (`decision.ts`), the surfaces allowed to call it (`turn`, `check`), what it touches, whether it
-needs the learner's quote and can be undone, and its handler (`tools.ts`). The model-facing
+needs the learner's quote and can be undone; its handler comes from `tools.ts`. The model-facing
 action schemas and the tool catalogue in the prompt are generated from it; `runAct` checks the
 surface again before running (a check can never run a turn-only tool — also unit-tested).
 
@@ -535,7 +544,8 @@ homework sheet only by title, never its text — help with homework happens in t
 `practice_history` (finished sessions: what sat, what was shaky) and `find_questions`
 (questions on a topic with the latest result — never the solutions). Registered once (name,
 schema, surfaces, connectors); the model-facing schema and prompt lines are generated from the
-registry. Enforced in code:
+registry. The code that reads each lookup's data is the learning domain's: it registers it at
+start-up (`registerLookupRunners`, `modules/learning/register.ts`, issue #107). Enforced in code:
 
 - at most 2 lookup rounds × 3 lookups, then the final schema offers no lookups;
 - results ≤ 6000 characters per round, marked as data; invalid calls report an error and are
@@ -755,7 +765,17 @@ erasure jobs (`purge_photos`, `purge_content`, `delete_account`, `PERSISTENT_KIN
 again with backoff (1, 2, 4 … minutes, at most 6 h) with `last_error` recorded, also after a lost
 lease. A cancelled job can be planned again with the same key (an exam moved away and back).
 
-**Erasure** (`modules/materials/purge.ts`, `identity/privacy.ts`, migration `0016_erasure.sql`;
+The tick never names the learning domain (issue #107): the domain registers its job kinds and
+its share of a run at start-up (`scheduler/registry.ts`, from `modules/learning/register.ts`) —
+`extract_material` in the lane a learner waits for, `purge_photos`/`purge_content` in the erasure
+lane with `delete_account`, the recovery of stuck readings, closing idle practice runs, the
+forgotten-photo sweep (`swept_photos` in the retention stats) — and the tick runs them in
+registration order at the place the old code stood. `createApp` refuses to start while a job
+kind has no handler (`missingJobKinds`). Every Buddy's own retention — the Storage queue after a
+deletion, closed memories, the model's decision content, the overdue backlog for `/health` — is
+`identity/retention.ts`.
+
+**Erasure** (`modules/materials/purge.ts`, `identity/privacy.ts`, `identity/retention.ts`, migration `0016_erasure.sql`;
 D-7, D-9). The account deletion is a resumable job whose stage lives in its payload: `start`
 (marks `accounts.deletion_started_at`; from here it cannot be cancelled — `DELETE
 /account/deletion` answers 409 `deletion_running` — and the account takes no more writes) →
@@ -823,6 +843,11 @@ break three days later (§Proactivity); both wake Buddy for a check (the job car
 and for reading the log; nothing re-reads it to re-drive an event: a wake-up job that dies is
 handled by its job's terminal state, `scheduler/terminal.ts`); `homework_ready` is only recorded
 (help starts in the app). Schedules — exam countdowns, agreed reminders, routine, `schedule_check` — stay jobs.
+Buddy's wake-up is the core's own subscriber; the review subscribers are the learning domain's
+and run after it (`subscribe`, registered in `modules/learning/register.ts`, issue #107). The
+same goes for the check's occasions decided by code alone (`buddy/occasions.ts`: the reviews,
+`REVIEW_REASONS`) and for the ten minutes of her questions a fallback or an agreed reminder
+fills a practice step with (`registerPracticeFiller`, `practice/selection.ts` `tenMinutesOf`).
 An event never bypasses the contact rules.
 
 ## Model calls

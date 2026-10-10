@@ -13,7 +13,7 @@
 import type { Deps } from '../../deps.js';
 import type { Db } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
-import { drainStorageDeletions } from '../materials/purge.js';
+import { drainStorageDeletions } from './retention.js';
 import {
   enqueueJob,
   finishJob,

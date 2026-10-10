@@ -15,18 +15,12 @@ import { executeAccountDeletion } from '../identity/privacy.js';
 import {
   drainStorageDeletions,
   purgeClosedMemories,
-  purgeContent,
   purgeDecisionContent,
-  purgePhotos,
-  sweepForgottenPhotos,
-} from '../materials/purge.js';
+} from '../identity/retention.js';
 import { planSummaries, runSummary } from '../buddy/summarise.js';
 import { planConsolidations, runConsolidation } from '../buddy/consolidate.js';
 import { purgeSpeechCache } from '../voice/speech.js';
-import { runExtraction } from '../materials/reading.js';
-import { markMaterialFailed } from '../materials/readingJob.js';
-import { abandonStaleUploads } from '../materials/submit.js';
-import { closeIdleSessions } from '../practice/lifecycle.js';
+import { jobKinds, tickWork, type JobHandler } from './registry.js';
 import { handleParkedJobs } from './terminal.js';
 import { modelThrottle, throttleAlarm, type ModelThrottle } from './throttle.js';
 import {
@@ -48,19 +42,23 @@ export type RetentionStats = {
   /** Storage paths removed from / still waiting on the durable deletion queue. */
   storage_removed: number;
   storage_waiting: number;
-  /** Materials whose forgotten photos got a purge job planned (safety net). */
-  swept_photos: number;
   /** Closed memories erased after their 7-day undo window. */
   closed_memories: number;
   /** Expired cached speech rows deleted. */
   speech_cache: number;
   /** Old decision contents blanked plus old call-log rows deleted (90/180 days). */
   decision_content: number;
+  /**
+   * What a domain's own sweeps touched, by the key it registered (scheduler/registry.ts) — in
+   * LearnBuddy `swept_photos`: materials whose forgotten photos got a purge job planned.
+   */
+  [sweep: string]: number;
 };
 
 export type TickStats = {
   recovered: number;
   stalledTurns: number;
+  /** Jobs a learner waits for (in LearnBuddy: reading her photos), run by this tick. */
   extractions: number;
   learners: number;
   maintenance: number;
@@ -122,26 +120,14 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
   await guard('recover', async () => {
     stats.recovered = await recoverExpiredLeases(deps.db, deps.now());
     stats.stalledTurns = await queueStalledTurns(deps);
-    // Material whose reading job gave up must not look "in progress" forever. It fails the
-    // same way as in the job — with its photo purge and a context bump (repro-14).
-    await deps.db.tx(async (tx) => {
-      const stuck = await tx.query<{ id: string }>(
-        `select m.id from materials m
-          where m.status in ('queued','processing') and m.archived_at is null
-            and not exists (select 1 from jobs j where j.kind = 'extract_material'
-                              and j.payload ->> 'material_id' = m.id::text
-                              and j.status in ('queued','running'))
-          for update of m skip locked`,
-      );
-      for (const m of stuck) await markMaterialFailed(tx, m.id, 'model_error', deps.now());
-    });
-    await abandonStaleUploads(deps);
+    // What the domain's own jobs left stuck when they gave up (registry.ts).
+    for (const w of tickWork()) if (w.recover) await w.recover(deps);
   });
 
-  // Sessions left alone past their limit are closed; their step goes back to Buddy
-  // (decision D-5, practice/lifecycle.ts).
+  // What was left alone past its limit is closed (in LearnBuddy: practice sessions, whose step
+  // goes back to Buddy — decision D-5).
   await guard('sessions', async () => {
-    stats.idleSessions = await closeIdleSessions(deps);
+    for (const w of tickWork()) if (w.closeIdle) stats.idleSessions += await w.closeIdle(deps);
   });
 
   // Every parked job gets its defined effect (terminal.ts): no job kind ends silently.
@@ -149,20 +135,21 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     await handleParkedJobs(deps);
   });
 
-  // Reading photos first: a learner is usually waiting for it.
+  // What a learner waits for first (in LearnBuddy: reading her photos).
   await guard('extract', async () => {
-    while (left() > 20_000) {
+    const waiting = jobKinds('waiting');
+    while (waiting.length > 0 && left() > 20_000) {
       const [job] = await claimJobs(deps.db, {
         now: deps.now(),
-        kinds: ['extract_material'],
+        kinds: waiting.map((k) => k.kind),
         limit: 1,
-        leaseSeconds: 180,
+        leaseSeconds: WAITING_LEASE_SECONDS,
         // Reading and Buddy wait for an account's consent to the current privacy text;
         // erasure never does (p2-ml-consent-version-not-enforced-server-side).
         consentVersion: deps.config.CONSENT_VERSION,
       });
       if (!job) break;
-      await runJobSafely(deps, job, () => runExtraction(deps, job));
+      await runJobSafely(deps, job, () => handlerOf(job)(deps, job));
       stats.extractions++;
     }
   });
@@ -239,33 +226,34 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     while (left() > 5_000) {
       const [job] = await claimJobs(deps.db, {
         now: deps.now(),
-        kinds: ['purge_photos', 'purge_content', 'delete_account'],
+        kinds: [...jobKinds('erasure').map((k) => k.kind), 'delete_account'],
         limit: 1,
         leaseSeconds: 120,
       });
       if (!job) break;
-      await runJobSafely(deps, job, () => runMaintenanceJob(deps, job));
+      await runJobSafely(deps, job, () => handlerOf(job)(deps, job));
       stats.maintenance++;
     }
   });
 
   // Retention that no job carries: photos Storage still owes after an account deletion,
-  // photos no purge is planned for, memories past their undo window, Buddy's spoken audio
-  // after a day, and what the model wrote while deciding (docs/privacy.md). The pass
-  // records what it removed on its own heartbeat — only when it ran to the end, so a
-  // half-run never poses as a clean one (issue #78; GET /health reports it).
+  // the domain's own sweeps (in LearnBuddy: photos no purge is planned for), memories past their
+  // undo window, Buddy's spoken audio after a day, and what the model wrote while deciding
+  // (docs/privacy.md). The pass records what it removed on its own heartbeat — only when it ran
+  // to the end, so a half-run never poses as a clean one (issue #78; GET /health reports it).
   await guard('retention', async () => {
     if (left() < 5_000) return;
     const startedAt = deps.now();
     const storage = await drainStorageDeletions(deps);
-    const sweptPhotos = await sweepForgottenPhotos(deps);
+    const swept: Record<string, number> = {};
+    for (const w of tickWork()) if (w.sweep) swept[w.sweep.key] = await w.sweep.run(deps);
     const closedMemories = await purgeClosedMemories(deps);
     const speechCache = await purgeSpeechCache(deps);
     const decisionContent = await purgeDecisionContent(deps);
     stats.retention = {
       storage_removed: storage.removed,
       storage_waiting: storage.waiting,
-      swept_photos: sweptPhotos,
+      ...swept,
       closed_memories: closedMemories,
       speech_cache: speechCache,
       decision_content: decisionContent,
@@ -286,36 +274,38 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
   return stats;
 }
 
-/** The handler of a claimed maintenance job (the kinds claimed above, and only those). */
-// Only work that must run during a deletion or with consent long gone — model work
-// (summarise_session, consolidate_memories) is claimed behind the consent gate above
-// and never lands here (issue #85).
-function runMaintenanceJob(deps: Deps, job: JobRow): Promise<void> {
-  switch (job.kind) {
-    case 'purge_photos':
-      return purgePhotos(deps, job);
-    case 'purge_content':
-      return purgeContent(deps, job);
-    default:
-      return executeAccountDeletion(deps, job);
-  }
+/** The lease of a job a learner waits for. */
+const WAITING_LEASE_SECONDS = 180;
+
+/**
+ * The handler of a claimed job of the waiting or the erasure lane (the kinds claimed above, and
+ * only those): the registered one, or the core's own account deletion. Only work that must run
+ * during a deletion or with consent long gone is in the erasure lane — model work
+ * (summarise_session, consolidate_memories) is claimed behind the consent gate above and never
+ * lands here (issue #85).
+ */
+function handlerOf(job: JobRow): JobHandler {
+  const spec = [...jobKinds('waiting'), ...jobKinds('erasure')].find((k) => k.kind === job.kind);
+  return spec?.run ?? executeAccountDeletion;
 }
 
 /**
- * Request-path accelerator after a learner submits photos: read them now
- * instead of on the next scheduler run. The job lease makes this safe to
+ * Request-path accelerator after a learner sent something she waits for (in LearnBuddy: her
+ * photos): run it now instead of on the next scheduler run. The job lease makes this safe to
  * race with the scheduler.
  */
-export async function runQueuedExtraction(deps: Deps, learnerId: string): Promise<void> {
+export async function runWaitingJobNow(deps: Deps, learnerId: string): Promise<void> {
+  const waiting = jobKinds('waiting');
+  if (waiting.length === 0) return;
   const [job] = await claimJobs(deps.db, {
     now: deps.now(),
-    kinds: ['extract_material'],
+    kinds: waiting.map((k) => k.kind),
     limit: 1,
-    leaseSeconds: 180,
+    leaseSeconds: WAITING_LEASE_SECONDS,
     learnerId,
   });
   if (!job) return;
-  await runJobSafely(deps, job, () => runExtraction(deps, job));
+  await runJobSafely(deps, job, () => handlerOf(job)(deps, job));
   // The learner is waiting: let Buddy act on the result right away.
   await runLearnerJobs(deps, learnerId);
 }

@@ -4,10 +4,10 @@
 import type { Deps } from '../../deps.js';
 import { t } from '../../i18n/index.js';
 import type { LearnerRow } from '../identity/model.js';
-import { minutesFor, questionCountFor, selectPracticeItems } from '../practice/selection.js';
 import { finishJob } from '../scheduler/jobs.js';
 import type { Trigger } from './checkTrigger.js';
 import { planOutreach } from './delivery.js';
+import { fillPractice } from './occasions.js';
 import { bumpContext, rollRepeatingStep } from './plan.js';
 import type { SettingsRow } from './state.js';
 
@@ -55,17 +55,17 @@ export async function sendAgreedReminder(
     // without either, the reminder only reminds (audit H-30), never "6 Aufgaben" from any subject.
     const subjectId = step.payload.subject_id ?? null;
     if (step.kind === 'practice' && count === 0 && (step.goal_id || subjectId)) {
-      const items = await selectPracticeItems(
+      const filled = await fillPractice(
         tx,
         learner.id,
         { goalId: step.goal_id, subjectId },
         step.payload.focus_topics ?? [],
-        questionCountFor(10),
         now,
       );
+      const items = filled.itemIds;
       if (items.length > 0) {
         count = items.length;
-        minutes = minutesFor(count);
+        minutes = filled.minutes;
         await tx.query(
           `update buddy_steps set state = 'prepared', prepared_at = $2, payload = payload || $3, version = version + 1
             where id = $1`,

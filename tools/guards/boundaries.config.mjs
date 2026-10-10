@@ -11,8 +11,9 @@
 
 /** The learning domain, as repository paths. */
 export const DOMAIN = [
-  // API: practice, worksheets, the curriculum, the code-task sandbox …
-  '^apps/api/src/modules/(practice|materials|curriculum)/',
+  // API: practice, worksheets, the curriculum, the domain's entry into the core (learning/:
+  // register.ts, its taps on Buddy's surface), the code-task sandbox …
+  '^apps/api/src/modules/(practice|materials|curriculum|learning)/',
   '^apps/api/src/sandbox/',
   // … and the school-specific tools, cards and connectors that still live in modules/buddy.
   '^apps/api/src/modules/buddy/(practiceTool|materialTools|grade|rehearse|roleplay|talkMeasure|talkTools|review)\\.ts$',

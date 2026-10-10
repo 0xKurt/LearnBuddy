@@ -1,7 +1,7 @@
 // The act-tool registry (ADR 0005 §Tools, stage 2): every tool that changes
 // something is registered once — its call schema (decision.ts), the surfaces
-// allowed to call it, the data it touches, whether it can be undone, and its
-// handler (tools.ts). The schemas the model answers with, and the tool
+// allowed to call it, the data it touches, whether it can be undone — and its
+// handler once in tools.ts (a domain's tools register theirs at start-up, issue #107). The schemas the model answers with, and the tool
 // catalogue in the prompt, are generated from this registry, so a new
 // capability is one entry plus its handler and tests.
 //
@@ -12,9 +12,9 @@
 import { z } from 'zod';
 
 import { ACT_SCHEMAS, Outreach, type ActionOf, type AnyAction, type ToolName } from './decision.js';
-import type { Surface } from './lookups.js';
+import { missingLookupRunners, type Surface } from './lookups.js';
 import { ToolRejection, type ToolContext, type ToolOutcome } from './toolKit.js';
-import { ACT_HANDLERS } from './tools.js';
+import { actHandler, missingActHandlers } from './tools.js';
 
 /** What an act tool changes (for the catalogue, the audit and privacy review). */
 type Touches =
@@ -31,7 +31,7 @@ type Touches =
   | 'roleplay'
   | 'nothing';
 
-type ActSpec<K extends ToolName> = {
+type ActSpec = {
   surfaces: readonly Surface[];
   touches: readonly Touches[];
   /** The learner's own words must justify it (quote checked in code). */
@@ -39,20 +39,18 @@ type ActSpec<K extends ToolName> = {
   undoable: boolean;
   /** One line for the catalogue: what it does. */
   does: string;
-  run: (action: ActionOf<K>, ctx: ToolContext) => Promise<ToolOutcome>;
 };
 
 const TURN: readonly Surface[] = ['turn'];
 const BOTH: readonly Surface[] = ['turn', 'check'];
 
-export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
+export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
   remember: {
     surfaces: TURN,
     touches: ['memory'],
     needsQuote: true,
     undoable: true,
     does: 'keep something lasting or temporary about the learner; "about" says what it is — health, trouble at home, being hurt and who they are are refused by the app',
-    run: ACT_HANDLERS.remember,
   },
   correct_memory: {
     surfaces: TURN,
@@ -60,7 +58,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'correct something you know (mN); "about" as in remember',
-    run: ACT_HANDLERS.correct_memory,
   },
   forget: {
     surfaces: TURN,
@@ -68,7 +65,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'forget something you know (mN)',
-    run: ACT_HANDLERS.forget,
   },
   set_level: {
     surfaces: TURN,
@@ -76,7 +72,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'set school grade / university / adult',
-    run: ACT_HANDLERS.set_level,
   },
   plan_exam: {
     surfaces: TURN,
@@ -84,7 +79,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'plan a test with its day',
-    run: ACT_HANDLERS.plan_exam,
   },
   update_goal: {
     surfaces: TURN,
@@ -92,7 +86,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: "change a test's day or title (gN)",
-    run: ACT_HANDLERS.update_goal,
   },
   close_goal: {
     surfaces: TURN,
@@ -100,7 +93,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'close a test as done (with outcome) or drop it (gN)',
-    run: ACT_HANDLERS.close_goal,
   },
   prepare_practice: {
     surfaces: BOTH,
@@ -108,7 +100,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: false,
     undoable: true,
     does: 'prepare practice from her questions, for a test or topic — only the ones that went wrong, easier or harder ones, or one direction of her vocabulary, when she asks for that',
-    run: ACT_HANDLERS.prepare_practice,
   },
   plan_step: {
     surfaces: TURN,
@@ -116,7 +107,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'plan a step, e.g. an agreed reminder at a time',
-    run: ACT_HANDLERS.plan_step,
   },
   update_step: {
     surfaces: TURN,
@@ -124,7 +114,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'move, skip or cancel a step (stN)',
-    run: ACT_HANDLERS.update_step,
   },
   mark_step_done: {
     surfaces: TURN,
@@ -132,7 +121,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'mark a step done (stN)',
-    run: ACT_HANDLERS.mark_step_done,
   },
   request_material: {
     surfaces: BOTH,
@@ -140,7 +128,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: false,
     undoable: true,
     does: 'ask for a photo of a worksheet',
-    run: ACT_HANDLERS.request_material,
   },
   delete_material: {
     // Only in the conversation: requireQuote does not apply to a check, and Buddy must never
@@ -151,7 +138,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     // archiveMaterial erases the photos and the transcript right away — nothing to put back.
     undoable: false,
     does: 'delete one of her sheets with its questions (she asked for it to go)',
-    run: ACT_HANDLERS.delete_material,
   },
   rename_material: {
     surfaces: TURN,
@@ -159,7 +145,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'give one of her sheets the name she asked for',
-    run: ACT_HANDLERS.rename_material,
   },
   delete_item: {
     // Same reasons as delete_material: only in the conversation, only on her words, and
@@ -169,7 +154,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: false,
     does: 'take one question off a sheet (she asked for it to go)',
-    run: ACT_HANDLERS.delete_item,
   },
   set_contact: {
     surfaces: TURN,
@@ -177,7 +161,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'reduce, pause or shift contact outside the app (never more)',
-    run: ACT_HANDLERS.set_contact,
   },
   set_voice: {
     surfaces: TURN,
@@ -185,7 +168,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'change how you sound when read aloud: slower, faster, normal, or another voice',
-    run: ACT_HANDLERS.set_voice,
   },
   schedule_check: {
     surfaces: BOTH,
@@ -193,7 +175,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: false,
     undoable: true,
     does: 'look again later (1 hour – 21 days)',
-    run: ACT_HANDLERS.schedule_check,
   },
   offer_learning: {
     surfaces: TURN,
@@ -201,7 +182,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: false,
     undoable: false,
     does: 'offer a button that starts learning now (practice, test, vocab, speak, listen, help) — easier or harder, one vocabulary direction, or a test with time, when she asks for that',
-    run: ACT_HANDLERS.offer_learning,
   },
   offer_drill: {
     surfaces: TURN,
@@ -209,7 +189,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: false,
     undoable: false,
     does: 'offer a button that starts a quick mental-arithmetic round (Einmaleins, plus/minus, simple fractions or percentages): code writes every task from the range you pick, she types on a digit pad',
-    run: ACT_HANDLERS.offer_drill,
   },
   open_area: {
     surfaces: TURN,
@@ -217,7 +196,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: false,
     undoable: false,
     does: 'show a button that opens a part of the app she asks for (her sheets, what you know, settings, earlier messages, the camera)',
-    run: ACT_HANDLERS.open_area,
   },
   start_roleplay: {
     surfaces: TURN,
@@ -225,7 +203,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: false,
     does: 'start a roleplay in the foreign language she wants to practise speaking (she asks for one, or sends a role card): you set the scene, your role and 3 to 5 tasks for her; the app then runs it turn by turn with you in the role and gives her feedback on each task afterwards. Your reply says in her language that it starts, then opens the scene in the roleplay language',
-    run: ACT_HANDLERS.start_roleplay,
   },
   plan_talk: {
     surfaces: TURN,
@@ -233,7 +210,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: true,
     undoable: true,
     does: 'plan a talk (Referat, GFS, presentation, recital) with its day and the steps before it',
-    run: ACT_HANDLERS.plan_talk,
   },
   offer_rehearsal: {
     surfaces: TURN,
@@ -241,7 +217,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     needsQuote: false,
     undoable: false,
     does: 'offer a card that records a rehearsal of her talk, or her reading a given text aloud, and measures it',
-    run: ACT_HANDLERS.offer_rehearsal,
   },
 };
 
@@ -455,6 +430,14 @@ export async function runAct(action: AnyAction, ctx: ToolContext): Promise<ToolO
   if (!spec.surfaces.includes(ctx.mode)) {
     throw new ToolRejection(`${action.tool} is not available in a ${ctx.mode}`);
   }
-  const run = spec.run as (a: AnyAction, c: ToolContext) => Promise<ToolOutcome>;
+  const run = actHandler(action.tool) as (a: AnyAction, c: ToolContext) => Promise<ToolOutcome>;
   return run(action, ctx);
+}
+
+/**
+ * What the model can call that has no code behind it: act tools and lookups the core declares
+ * but nobody registered (issue #107). Start-up refuses to serve with any (app.ts).
+ */
+export function withoutCode(): string[] {
+  return [...missingActHandlers(), ...missingLookupRunners()];
 }
