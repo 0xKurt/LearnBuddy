@@ -123,8 +123,6 @@
     "undo_label": "Annuler : {{what}}",
     "undone": "annulé",
     "undo_request_material": "Pas besoin de photo",
-    "undo_title": "Ce que tu peux annuler",
-    "undo_hint": "Montre ce que tu peux annuler",
     "in_app_only": "Ce qui est convenu apparaît ici dans l'appli – les notifications sont désactivées."
   },
   "focus": {
@@ -341,21 +339,26 @@
   "voice_pick": {
     "label": "La voix de Buddy",
     "sample": "Salut, je suis Buddy. Voilà comment je parle quand je te lis quelque chose.",
-    "phone_voice": "C'est la voix de ton téléphone qui lit en ce moment – c'est pour ça qu'elles se ressemblent toutes ici.",
-    "tap_hint": "Fait écouter un court extrait et choisit cette voix.",
     "name": {
       "warm": "Chaleureuse",
       "friendly": "Amicale",
-      "bright": "Lumineuse",
+      "bright": "Enjouée",
       "clear": "Nette",
       "soft": "Douce",
       "deep": "Grave"
     },
+    "about": {
+      "warm": "Plus aiguë, chaleureuse et calme",
+      "friendly": "Plus grave, amicale et détendue",
+      "bright": "Plus aiguë, enjouée et vive",
+      "clear": "Plus grave, nette et précise",
+      "soft": "Plus aiguë, douce et posée",
+      "deep": "Grave et calme"
+    },
     "loading": "Un instant – la voix arrive.",
-    "group": {
-      "higher": "Voix plus aiguës",
-      "lower": "Voix plus graves"
-    }
+    "choose_hint": "Choisit cette voix.",
+    "play_label": "Écouter : {{name}}",
+    "stop_label": "Arrêter l'extrait"
   },
   "when": {
     "today": "aujourd'hui",

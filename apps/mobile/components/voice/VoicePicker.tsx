@@ -1,15 +1,19 @@
-// Buddy's voice, picked with a tap (ADR 0008 §Amendment): the small curated set as four
-// choices. A tap plays a short sample in that voice (POST /voice/speech with the voice to try,
-// her settings untouched) and chooses it (PATCH /buddy/settings with the version it was based
-// on). The same component in the setup and in the settings (same action → same component).
+// Buddy's voice, chosen like a ringtone in the phone's own settings (issue #526): a list, one row
+// per voice — its name and how it sounds, a tick on the one she has — and beside every row its
+// own round button that only plays a sample (and stops it). Listening and choosing are two
+// things now: a tap on the row chooses the voice (PATCH /buddy/settings with the version it was
+// based on) and plays nothing; a tap on the sound button plays (POST /voice/speech with the voice
+// to try, her settings untouched) and chooses nothing. Before, one tap did both, so whoever only
+// wanted to hear one changed the setting every time (owner 09.10.).
 //
-// Honest about what she hears: when Buddy's own voice is not available on this phone (not
-// configured, offline, a language it lacks), the phone's voice reads the sample — then all
-// four sound alike, and a short line says so instead of pretending a difference.
+// Only shown where the voices can be told apart: the server says so up front
+// (`natural_voice`, issue #526). Without Buddy's own voices the phone's voice would read every
+// sample alike, and a choice that makes no difference is no choice — so the setup leaves the step
+// out and the settings leave the group out (owner 10.10.). The same component in the setup and in
+// the settings (same action → same component).
 
 import {
   VOICE_NAMES,
-  VOICE_PITCH,
   type BuddySettingsView,
   type VoiceName,
 } from '@learnbuddy/shared-types/contracts';
@@ -28,23 +32,12 @@ import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
+import { CircleBtn } from '../lb/CircleBtn.js';
+import { Icon } from '../lb/Icon.js';
 import { toast } from '../lb/Toast.js';
 
-/**
- * Two groups by pitch, each in rows of two: six names in one block are a guessing game
- * (owner 28.09., issue #67). Short enough for a 360 pt phone, big enough to tap.
- */
-const GROUPS: Array<{ pitch: 'higher' | 'lower'; rows: VoiceName[][] }> = (
-  ['higher', 'lower'] as const
-).map((pitch) => {
-  const names = VOICE_NAMES.filter((n) => VOICE_PITCH[n] === pitch);
-  return {
-    pitch,
-    rows: Array.from({ length: Math.ceil(names.length / 2) }, (_, r) =>
-      names.slice(r * 2, r * 2 + 2),
-    ),
-  };
-});
+/** The tick on the chosen voice. */
+const TICK = 20;
 
 export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
   const { palette } = useTheme();
@@ -53,11 +46,8 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
   const [chosen, setChosen] = useState<VoiceName>(settings.voice);
   const [saving, setSaving] = useState(false);
   const inFlight = useRef(false);
-  const [phoneVoice, setPhoneVoice] = useState(false);
-  /** The tile whose sample is on its way: the natural voice synthesises on the
-      server, and seconds of silence read as "nothing is coming" (user feedback
-      2026-09-28) — so the tapped tile shows it is working. */
-  const [previewing, setPreviewing] = useState<VoiceName | null>(null);
+  /** The voice whose sample is on its way or playing: its button is the way to stop it. */
+  const [playing, setPlaying] = useState<VoiceName | null>(null);
   const sample = t('voice_pick.sample');
   const voice = useBuddyVoice();
 
@@ -69,22 +59,23 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
     },
     [sample],
   );
-  useEffect(() => {
-    if (voice.text === sample && voice.source === 'device') setPhoneVoice(true);
-    if (voice.text === sample && voice.source === 'natural') setPhoneVoice(false);
-    // The sample started (or reading ended another way): the tile stops waiting.
-    if (voice.text === sample && voice.phase !== 'loading') setPreviewing(null);
-  }, [voice.text, voice.source, voice.phase, sample]);
-  // Sound may never come at all (muted, refused): the wait must not stick forever.
-  useEffect(() => {
-    if (!previewing) return;
-    const give = setTimeout(() => setPreviewing(null), 8000);
-    return () => clearTimeout(give);
-  }, [previewing]);
+  /**
+   * Plays one voice's sample, or stops it. The button follows the reading: back to "play" when
+   * it ends, fails, is stopped, or another sample (or anything else) takes the voice over.
+   */
+  function listen(name: VoiceName) {
+    if (playing === name) {
+      stop();
+      return;
+    }
+    setPlaying(name);
+    void speak(sample, i18n.language, {
+      voice: name,
+      onEnd: () => setPlaying((now) => (now === name ? null : now)),
+    });
+  }
 
   async function choose(name: VoiceName) {
-    setPreviewing(name);
-    void speak(sample, i18n.language, { voice: name });
     if (name === chosen || inFlight.current) return;
     inFlight.current = true;
     setSaving(true);
@@ -114,46 +105,58 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
         accessibilityLabel={t('voice_pick.label')}
         style={{ gap: SPACE.sm, opacity: saving ? 0.85 : 1 }}
       >
-        {GROUPS.map((group) => (
-          <View key={group.pitch} style={{ gap: SPACE.sm }}>
-            <Text style={[TYPE.label, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}>
-              {t(`voice_pick.group.${group.pitch}`)}
-            </Text>
-            {group.rows.map((row) => (
-              <View key={row.join()} style={{ flexDirection: 'row', gap: SPACE.sm }}>
-                {row.map((name) => (
-                  <View key={name} style={{ flex: 1 }}>
-                    <Btn
-                      full
-                      pill
-                      size="sm"
-                      icon="speak"
-                      variant={name === chosen ? 'primary' : 'outline'}
-                      selected={name === chosen}
-                      busy={previewing === name}
-                      disabled={saving && name !== chosen}
-                      accessibilityHint={t('voice_pick.tap_hint')}
-                      onPress={() => void choose(name)}
-                    >
-                      {t(`voice_pick.name.${name}`)}
-                    </Btn>
-                  </View>
-                ))}
+        {VOICE_NAMES.map((name) => {
+          const isChosen = name === chosen;
+          const title = t(`voice_pick.name.${name}`);
+          return (
+            <View key={name} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
+              <View style={{ flex: 1 }}>
+                <Btn
+                  full
+                  size="sm"
+                  variant={isChosen ? 'soft' : 'outline'}
+                  selected={isChosen}
+                  disabled={saving && !isChosen}
+                  accessibilityHint={t('voice_pick.choose_hint')}
+                  onPress={() => void choose(name)}
+                  label={
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[TYPE.label, { color: palette.ink }]}>{title}</Text>
+                        <Text style={[TYPE.small, { color: palette.ink2 }]}>
+                          {t(`voice_pick.about.${name}`)}
+                        </Text>
+                      </View>
+                      {isChosen ? (
+                        <Icon name="check" size={TICK} color={palette.primaryDk} />
+                      ) : null}
+                    </View>
+                  }
+                >
+                  {title}
+                </Btn>
               </View>
-            ))}
-          </View>
-        ))}
+              <CircleBtn
+                icon={playing === name ? 'stop' : 'speak'}
+                onPress={() => listen(name)}
+                accessibilityLabel={
+                  playing === name
+                    ? t('voice_pick.stop_label')
+                    : t('voice_pick.play_label', { name: title })
+                }
+              />
+            </View>
+          );
+        })}
       </View>
-      {previewing ? (
+      {playing !== null && voice.text === sample && voice.phase === 'loading' ? (
+        // The natural voice synthesises on the server, and seconds of silence read as "nothing
+        // is coming" (user feedback 2026-09-28).
         <Text
           accessibilityLiveRegion="polite"
           style={[TYPE.small, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}
         >
           {t('voice_pick.loading')}
-        </Text>
-      ) : phoneVoice ? (
-        <Text style={[TYPE.small, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}>
-          {t('voice_pick.phone_voice')}
         </Text>
       ) : null}
     </View>

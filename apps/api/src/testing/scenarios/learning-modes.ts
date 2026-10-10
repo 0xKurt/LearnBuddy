@@ -295,10 +295,22 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
           type: 'match',
           prompt: 'Welches Verfassungsorgan hat welche Aufgabe?',
           pairs: [
-            { left: 'Bundespräsident', right: 'unterschreibt die neuen Gesetze' },
-            { left: 'Bundesregierung', right: 'führt die Gesetze des Bundes aus' },
-            { left: 'Bundeskanzlerin', right: 'bestimmt die Richtlinien im Bund' },
-            { left: 'Landesregierung', right: 'führt die Gesetze des Landes aus' },
+            {
+              left: 'Bundespräsident',
+              right: 'unterschreibt die neuen Gesetze und vertritt Deutschland',
+            },
+            {
+              left: 'Bundesregierung',
+              right: 'führt die Gesetze des Bundes aus und leitet die Ministerien',
+            },
+            {
+              left: 'Bundeskanzlerin',
+              right: 'bestimmt die Richtlinien der Politik im ganzen Bund',
+            },
+            {
+              left: 'Landesregierung',
+              right: 'führt die Gesetze des Landes aus und leitet die Landesämter',
+            },
           ],
           groups: null,
           topic: 'Verfassungsorgane',

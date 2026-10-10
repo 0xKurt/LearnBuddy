@@ -1135,21 +1135,11 @@ export type TranscribeStreamEvent = z.infer<typeof TranscribeStreamEvent>;
  * settings (tap to hear it), or asks Buddy ("andere Stimme"). The server maps each to a
  * provider voice; the app shows only friendly names, never the provider's.
  */
+// How each sits is said in the picker's line under its name (`voice_pick.about`, issue #526):
+// higher = Chirp 3 HD Sulafat, Zephyr, Aoede (warm, bright, soft); lower = Achird, Iapetus,
+// Charon (friendly, clear, deep) — `apps/api/src/speech/google.ts`. Said as pitch, not as a
+// person: a synthetic voice has no gender to claim.
 export const VOICE_NAMES = ['warm', 'friendly', 'bright', 'clear', 'soft', 'deep'] as const;
-/**
- * How the voice sits, for the picker's two groups (issue #67): six names are a guessing
- * game in one row. Higher = Chirp 3 HD Sulafat, Zephyr, Aoede; lower = Achird, Iapetus,
- * Charon (`apps/api/src/speech/google.ts`). Said as pitch, not as a person: a synthetic
- * voice has no gender to claim.
- */
-export const VOICE_PITCH: Record<(typeof VOICE_NAMES)[number], 'higher' | 'lower'> = {
-  warm: 'higher',
-  bright: 'higher',
-  soft: 'higher',
-  friendly: 'lower',
-  clear: 'lower',
-  deep: 'lower',
-};
 export const VoiceName = z.enum(VOICE_NAMES);
 export type VoiceName = z.infer<typeof VoiceName>;
 

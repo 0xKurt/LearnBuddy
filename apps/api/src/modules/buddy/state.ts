@@ -23,6 +23,11 @@ export type SettingsRow = {
   timezone: string;
   contact_enabled: boolean;
   contact_changed_by: 'learner' | 'account_holder' | null;
+  /**
+   * When contact was last decided on purpose — in the setup (issue #518), in the settings or by
+   * the chat's own question. Null: never asked, the one case the chat may ask in.
+   */
+  contact_changed_at: Date | null;
   quiet_start: string;
   quiet_end: string;
   preferred_start: string;

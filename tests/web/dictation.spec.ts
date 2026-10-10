@@ -49,10 +49,17 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill('4826');
   await page.getByLabel('PIN wiederholen').fill('4826');
-  await page.getByRole('button', { name: "Los geht's" }).click();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  // Notifications are asked of the adults right after their PIN (issue #518).
+  await page.getByRole('button', { name: 'Nein, danke' }).click();
   await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
   await page.getByRole('button', { name: "Los geht's, Lena!" }).click();
+  // This stack has Buddy's own voices, so the setup offers them (issue #526): one row per voice,
+  // the chosen one ticked, each with its own sample button — listening is not choosing.
   await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Warm' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('button', { name: 'Hörprobe: Klar' })).toBeVisible();
+  await shot(page, '03c-voice');
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();

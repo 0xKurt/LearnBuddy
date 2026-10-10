@@ -121,7 +121,6 @@ describe('the way back works (UX-PRINCIPLES: undo over confirmation)', () => {
     fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
     expect(onUndo).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.queryByText('Was du zurücknehmen kannst')).toBeNull();
   });
 
   it('turns the arrow into a spinner while undoing, and back into an arrow if it failed', () => {
@@ -132,7 +131,7 @@ describe('the way back works (UX-PRINCIPLES: undo over confirmation)', () => {
         pending={null}
         busy={false}
         showActions
-        undoScope="last"
+        receipts="turn"
         undoBusy={undoBusy}
         onUndo={onUndo}
       />
@@ -163,7 +162,7 @@ describe('the way back works (UX-PRINCIPLES: undo over confirmation)', () => {
         pending={null}
         busy={false}
         showActions
-        undoScope="last"
+        receipts="turn"
         undoBusy={undoBusy}
         onUndo={() => undefined}
       />
@@ -328,7 +327,7 @@ function chat(props: Partial<Parameters<typeof Conversation>[0]> = {}) {
       pending={null}
       busy={false}
       showActions
-      undoScope="last"
+      receipts="turn"
       onUndo={() => undefined}
       {...props}
     />,
@@ -343,60 +342,58 @@ describe('one turn is one receipt, with one way back (issue #204)', () => {
     expect(screen.queryByText(SENTENCE)).toBeNull();
   });
 
-  it('shows "Rückgängig" on the newest step only; History keeps every one', () => {
+  it('gives every receipt its own ↺ in the chat; History keeps one per step (issue #520)', () => {
     const chatView = chat();
     const inChat = screen.getAllByRole('button', { name: /^Rückgängig: / });
-    expect(inChat).toHaveLength(1);
-    // …and it is the newest step's, not the first one's.
-    expect(inChat[0]?.getAttribute('aria-label')).toBe(`Rückgängig: ${PREPARED_SENTENCE}`);
+    // One per receipt: the older answer's (its newest step) and the newer answer's.
+    expect(inChat.map((b) => b.getAttribute('aria-label'))).toEqual([
+      `Rückgängig: ${PHOTO_SENTENCE}`,
+      `Rückgängig: ${PREPARED_SENTENCE}`,
+    ]);
     // History is the record of the single steps: there every one carries its own.
     chatView.unmount();
-    chat({ undoScope: 'all' });
+    chat({ receipts: 'step' });
     expect(screen.getAllByRole('button', { name: /^Rückgängig: / })).toHaveLength(3);
   });
 
-  it('keeps the older ones reachable: a tap on a receipt opens what can be taken back', () => {
+  it('takes back the turn’s steps one by one, newest first', () => {
     const onUndo = vi.fn();
-    chat({ onUndo });
-    // The older receipt is the way in: a line she can press, named by what it says.
-    fireEvent.click(screen.getByRole('button', { name: `${SENTENCE} · ${PHOTO_SENTENCE}` }));
-    // Everything that can still be taken back, newest first, each with its own way back.
-    expect(screen.getByText('Was du zurücknehmen kannst')).toBeTruthy();
-    // The newest step is in both places now — in the chat and in the sheet; the older one
-    // is in the sheet alone, which is the whole point of it.
-    expect(
-      screen.getAllByRole('button', { name: `Rückgängig: ${PREPARED_SENTENCE}` }),
-    ).toHaveLength(2);
-    fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
-    expect(onUndo).toHaveBeenCalledWith(PLAN_EXAM.id);
-  });
-
-  it('never opens an empty sheet: with one way back in view there is nothing more', () => {
-    renderInApp(
+    const view = chat({ onUndo });
+    fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${PHOTO_SENTENCE}` }));
+    expect(onUndo).toHaveBeenLastCalledWith(REQUEST_PHOTO.id);
+    // The photo request is back: the same receipt's ↺ now names the step before it.
+    view.rerender(
       <Conversation
-        messages={[buddySaid([PLAN_EXAM])]}
+        messages={[
+          buddySaid([PLAN_EXAM, { ...REQUEST_PHOTO, status: 'undone' }]),
+          laterMessage([PREPARED]),
+        ]}
         pending={null}
         busy={false}
         showActions
-        undoScope="last"
-        onUndo={() => undefined}
+        receipts="turn"
+        onUndo={onUndo}
       />,
     );
-    // The line is a line, not a button: there is nothing behind it.
-    expect(screen.queryByRole('button', { name: SENTENCE })).toBeNull();
-    expect(screen.getAllByRole('button', { name: /^Rückgängig: / })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
+    expect(onUndo).toHaveBeenLastCalledWith(PLAN_EXAM.id);
+  });
+
+  it('opens nothing from a receipt’s words: they are text, not a button (issue #520)', () => {
+    chat();
+    expect(screen.queryByRole('button', { name: `${SENTENCE} · ${PHOTO_SENTENCE}` })).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });
 
 describe('what the bar on top already says is not said twice (issue #204)', () => {
-  it('drops the prepared practice’s line while the bar carries it — and keeps the way back', () => {
+  it('drops the prepared practice’s line, and its ↺, while the bar carries it', () => {
     chat({ carriedOnTop: new Set([PREPARED.id]) });
     expect(screen.queryByText(PREPARED_SENTENCE)).toBeNull();
-    // The one button in view is now the older step's; the prepared one lives in the sheet.
     const inChat = screen.getAllByRole('button', { name: /^Rückgängig: / });
-    expect(inChat).toHaveLength(1);
-    fireEvent.click(screen.getByRole('button', { name: `${SENTENCE} · ${PHOTO_SENTENCE}` }));
-    expect(screen.getByRole('button', { name: `Rückgängig: ${PREPARED_SENTENCE}` })).toBeTruthy();
+    expect(inChat.map((b) => b.getAttribute('aria-label'))).toEqual([
+      `Rückgängig: ${PHOTO_SENTENCE}`,
+    ]);
   });
 });
 
@@ -488,7 +485,7 @@ describe('what was agreed says where it will appear — once (issue #204)', () =
         pending={null}
         busy={false}
         showActions
-        undoScope="last"
+        receipts="turn"
         contactOn={false}
       />,
     );
@@ -506,7 +503,7 @@ describe('what was agreed says where it will appear — once (issue #204)', () =
         pending={null}
         busy={false}
         showActions
-        undoScope="last"
+        receipts="turn"
         contactOn
       />,
     );

@@ -140,10 +140,10 @@ async function onboardChild(page: Page, email: string): Promise<void> {
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill('2468');
   await page.getByLabel('PIN wiederholen').fill('2468');
-  await page.getByRole('button', { name: "Los geht's" }).click();
-  await page.getByRole('button', { name: "Los geht's, Ida!" }).click();
-  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
+  // Notifications are asked of the adults right after their PIN (issue #518).
+  await page.getByRole('button', { name: 'Nein, danke' }).click();
+  await page.getByRole('button', { name: "Los geht's, Ida!" }).click();
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }

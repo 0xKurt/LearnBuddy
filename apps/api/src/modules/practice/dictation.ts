@@ -33,6 +33,7 @@ import {
 import { z } from 'zod';
 
 import { t, type MessageKey } from '../../i18n/index.js';
+import { readsIn, type SpeechGateway } from '../../speech/gateway.js';
 import { itemsOneByOne, type StoredItem } from './items.js';
 import { osaTable } from './osa.js';
 
@@ -119,12 +120,12 @@ export type DictationItem = StoredItem & { listen_task: ListenTask };
 export function dictationItems(
   draft: z.infer<typeof DictationDraftParsed> | null,
   source: { text: string; fromSheet: boolean },
-  speech: { available: boolean; localeFor: (locale: string) => string | null },
+  speech: Pick<SpeechGateway, 'available' | 'localeFor'>,
   /** The app language: the line on the card is written in it. */
   locale: string,
 ): DictationItem[] {
   if (!draft) return [];
-  if (!speech.available || speech.localeFor(draft.lang) === null) return [];
+  if (!readsIn(speech, draft.lang)) return [];
   const heldToList = source.fromSheet || draft.from === 'list';
   const seen = new Set<string>();
   const out: DictationItem[] = [];

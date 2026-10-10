@@ -1,8 +1,10 @@
 // The learner profile: who learns, name, birth date, language; for a child
-// also the adult's consent (DSGVO Art. 8) and the adult PIN, and then a short
-// hand-over: what is set, and "give the phone to your child" (user feedback #10). Last, once
-// the profile exists, one short step: how Buddy should sound (tap to hear, a voice is already
-// chosen, so she can simply go on; ADR 0008 §Amendment).
+// also the adult's consent (DSGVO Art. 8) and the adult PIN; then one question — may Buddy send
+// notifications? — whose answer saves the profile (issue #518; under 16 the adults answer, in the
+// same request as their PIN); for a child a short hand-over: what is set, and "give the phone to
+// your child" (user feedback #10). Last, once the profile exists and only where Buddy's own
+// voices are there to tell apart (issue #526): how Buddy should sound (a voice is already chosen,
+// so she can simply go on; ADR 0008 §Amendment).
 // Someone under 16 setting up alone is not stopped at a dead end: an adult who is
 // there does the parents' step on this phone (user feedback #5,
 // docs/DESIGN-BRIEF.md §Onboarding "Erwachsene Person ist hier"). No age checks
@@ -10,32 +12,32 @@
 
 import { CurriculumRegion, type AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Platform, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { BirthDateFields, type DateParts } from '../components/auth/BirthDateFields.js';
 import { CheckPoints } from '../components/auth/CheckPoints.js';
 import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Card } from '../components/lb/Card.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
+import { ContactStep, type ContactAnswer } from '../components/auth/ContactStep.js';
+import { SetupStep } from '../components/auth/SetupStep.js';
 import { IconDisc } from '../components/lb/IconDisc.js';
 import { LanguageFlags } from '../components/lb/LanguageFlags.js';
 import { LbTextInput, type LbTextInputRef } from '../components/lb/LbTextInput.js';
 import { PickerField, picked } from '../components/lb/PickerField.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Segmented } from '../components/lb/Segmented.js';
-import { Bone, SkeletonGroup } from '../components/lb/Skeleton.js';
 import { toast } from '../components/lb/Toast.js';
 import { WaitHint } from '../components/lb/WaitHint.js';
 import { VoicePicker } from '../components/voice/VoicePicker.js';
 import { useAnnounce } from '../lib/announce.js';
 import { handoverContactKey } from '../lib/contact/state.js';
 import { ApiError } from '../lib/api/client.js';
-import { createLearner, getMe } from '../lib/api/endpoints.js';
+import { createLearner, getMe, getSettings } from '../lib/api/endpoints.js';
 import { keys, prefetchHome, queryClient, useSettings } from '../lib/api/queries.js';
 import { ageOf, birthDateOf } from '../lib/birthDate.js';
 import { messageFor } from '../lib/errors.js';
@@ -74,9 +76,12 @@ export default function Profile() {
    */
   const [region, setRegion] = useState<CurriculumRegion | null>(null);
   const [consent, setConsent] = useState(false);
-  // Contact opt-in, decided at registration (owner 2026-09-28): for a child by
-  // the adult in the parents' step, from 16 by the learner. Off by default.
-  const [contactOk, setContactOk] = useState(false);
+  /**
+   * The answer to the notification question (issue #518): being saved, then what was saved.
+   * Asked of the adults for a child under 16, of her from 16 — never ticked in advance.
+   */
+  const [answering, setAnswering] = useState<ContactAnswer | null>(null);
+  const [answered, setAnswered] = useState<ContactAnswer | null>(null);
   const [pin, setPinValue] = useState('');
   const [pinRepeat, setPinRepeat] = useState('');
   /**
@@ -124,10 +129,13 @@ export default function Profile() {
   const pinRepeatRef = useRef<LbTextInputRef>(null);
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  // For a child two short steps, each fitting the screen: the child, then the parents —
-  // and once saved, the hand-over. Then (for everyone) Buddy's voice: it needs the profile,
-  // because the sample is read and the choice saved for her.
-  const [step, setStep] = useState<'learner' | 'parent' | 'handover' | 'voice'>('learner');
+  // For a child two short steps, each fitting the screen: the child, then the parents. Then the
+  // notification question, whose answer saves the profile — and for a child the hand-over. Then
+  // Buddy's voice where there are voices to choose: it needs the profile, because the sample is
+  // read and the choice saved for her.
+  const [step, setStep] = useState<'learner' | 'parent' | 'contact' | 'handover' | 'voice'>(
+    'learner',
+  );
   /** Came from "Ich selbst" under 16: an adult took over on this phone. */
   const [handedOver, setHandedOver] = useState(false);
   // She tapped the waiting CTA: from then on the line above it says what is still
@@ -177,11 +185,11 @@ export default function Profile() {
   useAnnounce(pinRepeat.length === 4 && pin !== pinRepeat ? t('profile.pin_mismatch') : null);
   useAnnounce(whyWait > 0 ? waitHint : null, { key: whyWait });
 
-  async function submit() {
+  async function submit(contact: ContactAnswer) {
     // The Bundesland is part of this: the server refuses a profile without one, and the
     // CTA is only live once it is chosen — nothing is sent half filled (issue #199).
-    if (!relation || !birthDate || !picked(region) || busy) return;
-    setBusy(true);
+    if (!relation || !birthDate || !picked(region) || answering) return;
+    setAnswering(contact);
     try {
       // One request: the child's profile, the parents' consent and their PIN
       // together, so nothing is left half done (H-20).
@@ -192,9 +200,10 @@ export default function Profile() {
         locale,
         curriculum_region: region,
         minor_consent: needsParents ? consent : false,
-        contact_enabled: contactOk,
+        contact,
         ...(needsParents ? { pin } : {}),
       });
+      setAnswered(contact);
       applyLocale(locale);
       // The learner exists now: her home loads while the hand-over, the voice and the cards are
       // on screen, so it is there with its words when she arrives (issue #392).
@@ -202,7 +211,8 @@ export default function Profile() {
       // Saved on the server: the draft has done its job (issue #133 position 9).
       form.clear();
       // The parents set it up: first what is set now, then the phone goes to the child.
-      setStep(needsParents ? 'handover' : 'voice');
+      if (needsParents) setStep('handover');
+      else await toVoice();
     } catch (err) {
       // The profile exists already (e.g. the answer to the first tap got lost): go on.
       if (err instanceof ApiError && err.reason === 'learner_exists') {
@@ -211,8 +221,21 @@ export default function Profile() {
       }
       toast.show(messageFor(err), 'error');
     } finally {
-      setBusy(false);
+      setAnswering(null);
     }
+  }
+
+  /**
+   * Buddy's voice is a step only where there are voices to tell apart — the server says so
+   * (`natural_voice`, issue #526). Without them, or when that cannot be known right now, the
+   * setup goes on; the voice is the default and the settings offer it once it can be heard.
+   */
+  async function toVoice() {
+    const settings = await queryClient
+      .fetchQuery({ queryKey: keys.settings, queryFn: getSettings })
+      .catch(() => null);
+    if (settings?.natural_voice) setStep('voice');
+    else await finish();
   }
 
   /** Loads the fresh state before routing, so the gate never decides on stale data. */
@@ -257,9 +280,20 @@ export default function Profile() {
     return (
       <Handover
         name={name.trim()}
-        contactEnabled={contactOk}
+        contactEnabled={answered === 'yes'}
         busy={busy}
-        onDone={() => setStep('voice')}
+        onDone={() => void toVoice()}
+      />
+    );
+  }
+  if (step === 'contact') {
+    return (
+      <ContactStep
+        name={name.trim()}
+        forChild={needsParents}
+        answering={answering}
+        onAnswer={(answer) => void submit(answer)}
+        onBack={() => setStep(needsParents ? 'parent' : 'learner')}
       />
     );
   }
@@ -309,10 +343,9 @@ export default function Profile() {
           )}
           {relation && !parentStep ? (
             <>
-              <View style={{ gap: SPACE.sm }}>
-                <Text style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
-                  {relation === 'self' ? t('profile.name_self') : t('profile.name_child')}
-                </Text>
+              <Labelled
+                label={relation === 'self' ? t('profile.name_self') : t('profile.name_child')}
+              >
                 <LbTextInput
                   clearable
                   value={name}
@@ -331,26 +364,20 @@ export default function Profile() {
                     relation === 'self' ? t('profile.name_self') : t('profile.name_child')
                   }
                 />
-              </View>
+              </Labelled>
               {/* Language before the date: the date fields open the keyboard, and a
                   section below them was simply never seen (user feedback 2026-09-28 —
                   "Let's go" was tappable while fields still hid under the keyboard).
                   Same action, same component: the welcome screen's flags. */}
-              <View style={{ gap: SPACE.sm }}>
-                <Text style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
-                  {t('profile.language')}
-                </Text>
+              <Labelled label={t('profile.language')}>
                 <LanguageFlags value={locale} onChange={setLocale} compact />
-              </View>
+              </Labelled>
               {/* The Bundesland, required (owner 2026-10-02, issue #199). It sits above the
                   date fields for the same reason the language does: those open the keyboard,
                   and anything below them was never seen. One row, because the sixteen
                   choices live in the sheet it opens — a form of sixteen would not fit a
                   360×740 phone (rule 16), and the sheet is also where the reason is said. */}
-              <View style={{ gap: SPACE.sm }}>
-                <Text style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
-                  {t('region.label')}
-                </Text>
+              <Labelled label={t('region.label')}>
                 <PickerField
                   label={t('region.label')}
                   placeholder={t('region.choose')}
@@ -363,18 +390,8 @@ export default function Profile() {
                   value={region}
                   onChange={setRegion}
                 />
-              </View>
-              {relation === 'self' && !minor ? (
-                <Checkbox
-                  checked={contactOk}
-                  onChange={setContactOk}
-                  label={t('profile.contact_optin')}
-                />
-              ) : null}
-              <View style={{ gap: SPACE.sm }}>
-                <Text style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
-                  {t('profile.birth_date')}
-                </Text>
+              </Labelled>
+              <Labelled label={t('profile.birth_date')}>
                 <BirthDateFields value={date} onChange={setDate} />
                 {dateComplete && !birthDate ? (
                   <Text
@@ -403,7 +420,7 @@ export default function Profile() {
                     </View>
                   </Card>
                 ) : null}
-              </View>
+              </Labelled>
             </>
           ) : null}
           {parentStep && handedOver ? (
@@ -413,19 +430,15 @@ export default function Profile() {
             </Text>
           ) : null}
           {parentStep ? (
-            // The parents' card carries consent, contact and the PIN: on a small phone it
-            // only fits when every step is the tighter one (tests/web/fit.ts).
+            // The parents' card carries the consent and the PIN (notifications are asked next,
+            // issue #518): on a small phone it only fits when every step is the tighter one
+            // (tests/web/fit.ts).
             <Card tone="lavender" padding={compact ? SPACE.md : CARD_PAD.roomy}>
               <View style={{ gap: compact ? SPACE.sm : SPACE.md }}>
                 <Checkbox
                   checked={consent}
                   onChange={setConsent}
                   label={t('profile.child_consent')}
-                />
-                <Checkbox
-                  checked={contactOk}
-                  onChange={setContactOk}
-                  label={t('profile.contact_optin')}
                 />
                 <View
                   style={{
@@ -497,30 +510,17 @@ export default function Profile() {
         </ScrollView>
         <View style={[pinnedBar(insets.bottom), { gap: SPACE.xs }]}>
           {whyWait > 0 ? <WaitHint>{waitHint}</WaitHint> : null}
-          {needsParents && !parentStep ? (
-            <Btn
-              size="lg"
-              pill
-              full
-              disabled={!learnerReady}
-              onDisabledPress={() => setWhyWait((n) => n + 1)}
-              onPress={() => setStep('parent')}
-            >
-              {t('profile.next')}
-            </Btn>
-          ) : (
-            <Btn
-              size="lg"
-              pill
-              full
-              busy={busy}
-              disabled={!ready}
-              onDisabledPress={() => setWhyWait((n) => n + 1)}
-              onPress={() => void submit()}
-            >
-              {t('profile.cta')}
-            </Btn>
-          )}
+          {/* On to the parents' card, or from there (and from 16) to the notification question. */}
+          <Btn
+            size="lg"
+            pill
+            full
+            disabled={!(parentStep || !needsParents ? ready : learnerReady)}
+            onDisabledPress={() => setWhyWait((n) => n + 1)}
+            onPress={() => setStep(needsParents && !parentStep ? 'parent' : 'contact')}
+          >
+            {t('profile.next')}
+          </Btn>
           <Btn
             variant="ghost"
             size="sm"
@@ -540,8 +540,9 @@ export default function Profile() {
 
 /**
  * The hand-over after the parents' setup: what is set now, and that the child is next
- * (user feedback #10). Everything listed is what was just saved — including the contact box,
- * which this screen used to report as "off" whatever the parents had ticked (issue #205).
+ * (user feedback #10). Everything listed is what was just saved — including the answer to the
+ * notification question, which this screen used to report as "off" whatever the parents had
+ * chosen (issue #205).
  * The line comes from `handoverContactKey`, the same reading the settings section uses.
  */
 function Handover({
@@ -556,94 +557,65 @@ function Handover({
   onDone: () => void;
 }) {
   const { t } = useTranslation('auth');
-  const insets = useSafeAreaInsets();
   const points = [
     t('profile.handover_consent'),
     t('profile.handover_pin'),
     t(handoverContactKey(contactEnabled), { name }),
   ];
   return (
-    <Screen>
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: 'center',
-          paddingHorizontal: GUTTER,
-          paddingVertical: SPACE.xl,
-          gap: RHYTHM.sections,
-        }}
-      >
-        <View style={{ alignItems: 'center' }}>
-          <BuddyOrb size={72} />
-        </View>
-        <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
-          {t('profile.handover_title')}
-        </Text>
-        <CheckPoints points={points} />
-        <Text style={[TYPE.title, { textAlign: 'center' }]}>
-          {t('profile.handover_body', { name })}
-        </Text>
-      </ScrollView>
-      <View style={pinnedBar(insets.bottom)}>
+    <SetupStep
+      title={t('profile.handover_title')}
+      footer={
         <Btn size="lg" pill full busy={busy} onPress={onDone}>
           {t('profile.handover_cta', { name })}
         </Btn>
-      </View>
-    </Screen>
+      }
+    >
+      <CheckPoints points={points} />
+      <Text style={[TYPE.title, { textAlign: 'center' }]}>
+        {t('profile.handover_body', { name })}
+      </Text>
+    </SetupStep>
   );
 }
 
 /**
  * How Buddy should sound: the picker with a voice already chosen (the server's default), so
  * "Weiter" is always possible. Later in the settings, or by asking Buddy ("andere Stimme").
+ * Only reached where Buddy's own voices are there, with the settings that said so already loaded
+ * (`toVoice`, issue #526).
  */
 function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
   const { palette } = useTheme();
   const { t } = useTranslation('auth');
-  const insets = useSafeAreaInsets();
   const settings = useSettings();
   const view = useVisibleHeight();
   // From what is visible: the keyboard keeps the window's height (issue #289).
   const compact = formDensity(view.window, view.overlap) !== 'roomy';
   return (
-    <Screen>
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: 'center',
-          paddingHorizontal: GUTTER,
-          paddingVertical: compact ? SPACE.lg : SPACE.xl,
-          gap: compact ? RHYTHM.stack : RHYTHM.sections, // the voice step's rhythm
-        }}
-      >
-        <View style={{ alignItems: 'center' }}>
-          <BuddyOrb size={compact ? 64 : 72} />
-        </View>
-        <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
-          {t('profile.voice_title')}
-        </Text>
-        <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center' }]}>
-          {t('profile.voice_body')}
-        </Text>
-        {settings.data ? (
-          <VoicePicker settings={settings.data} />
-        ) : settings.isError ? (
-          // Not a dead end: the voice stays the default and can be changed later.
-          <Text style={[TYPE.small, { color: palette.ink2, textAlign: 'center' }]}>
-            {t('profile.voice_later')}
-          </Text>
-        ) : (
-          <SkeletonGroup label={t('profile.voice_loading')} style={{ gap: SPACE.sm }}>
-            <Bone height={44} radius={22} />
-            <Bone height={44} radius={22} />
-          </SkeletonGroup>
-        )}
-      </ScrollView>
-      <View style={pinnedBar(insets.bottom)}>
+    <SetupStep
+      title={t('profile.voice_title')}
+      compact={compact}
+      footer={
         <Btn size="lg" pill full busy={busy} onPress={onDone}>
           {t('profile.voice_cta')}
         </Btn>
-      </View>
-    </Screen>
+      }
+    >
+      <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center' }]}>
+        {t('profile.voice_body')}
+      </Text>
+      {settings.data ? <VoicePicker settings={settings.data} /> : null}
+    </SetupStep>
+  );
+}
+
+/** A row of the profile step: its label, and the field under it. */
+function Labelled({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <View style={{ gap: SPACE.sm }}>
+      <Text style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>{label}</Text>
+      {children}
+    </View>
   );
 }

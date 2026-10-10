@@ -303,8 +303,10 @@ export type ClozeAnswer = z.infer<typeof ClozeAnswer>;
 // The maxima are not a guess at what a task needs but what a 360×740 phone holds without the
 // parts scrolling (CLAUDE.md rule 16) — measured in the walkthrough with every text at its cap
 // (tests/web/modes.spec.ts, "zuordnen at its largest"): the largest grouping before she has
-// sorted anything, and the largest pairing after a check, with Buddy's reply above it. A task
-// over them is rejected when it is written, never shrunk (`matchDraftProblem`).
+// sorted anything, and the largest pairing after a check, with Buddy's reply above it. Since
+// issue #524 a pair's side may be a sentence, and a pairing's board is a list that may scroll
+// (`PartsArea list`); a grouping's never does. A task over them is rejected when it is written,
+// never shrunk (`matchDraftProblem`).
 
 export const MATCH_PAIRS_MIN = 3;
 export const MATCH_PAIRS_MAX = 4;
@@ -312,8 +314,12 @@ export const MATCH_GROUPS_MIN = 2;
 export const MATCH_GROUPS_MAX = 3;
 export const MATCH_GROUPED_MIN = 4;
 export const MATCH_GROUPED_MAX = 8;
-/** A pair's side: a word or a short line (it wraps in its column, at word boundaries). */
-export const MATCH_ELEMENT_MAX = 32;
+/**
+ * A pair's side: a word or a sentence (issue #524: "bestimmt die Richtlinien der Politik im Bund"
+ * did not fit the old 32). Its tile grows with the text and wraps at word boundaries, open in
+ * its column and formed as one row across the board.
+ */
+export const MATCH_ELEMENT_MAX = 60;
 /** A thing to sort or a group's name: two of them must share a row of a 360-pt phone. */
 export const MATCH_GROUP_TEXT_MAX = 16;
 /** The longest single word anywhere in a match: a word cannot wrap, so it must fit a column. */

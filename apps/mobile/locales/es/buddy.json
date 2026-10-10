@@ -123,8 +123,6 @@
     "undo_label": "Deshacer: {{what}}",
     "undone": "deshecho",
     "undo_request_material": "No hace falta foto",
-    "undo_title": "Lo que puedes deshacer",
-    "undo_hint": "Muestra lo que puedes deshacer",
     "in_app_only": "Lo acordado aparece aquí en la app: las notificaciones están desactivadas."
   },
   "focus": {
@@ -341,21 +339,26 @@
   "voice_pick": {
     "label": "La voz de Buddy",
     "sample": "Hola, soy Buddy. Así sueno cuando te leo algo.",
-    "phone_voice": "Ahora lee la voz de tu móvil, por eso aquí todas suenan igual.",
-    "tap_hint": "Reproduce una muestra corta y elige esta voz.",
     "name": {
       "warm": "Cálida",
       "friendly": "Amable",
-      "bright": "Luminosa",
+      "bright": "Alegre",
       "clear": "Clara",
       "soft": "Suave",
       "deep": "Grave"
     },
+    "about": {
+      "warm": "Más aguda, cálida y tranquila",
+      "friendly": "Más grave, amable y relajada",
+      "bright": "Más aguda, alegre y animada",
+      "clear": "Más grave, clara y nítida",
+      "soft": "Más aguda, suave y serena",
+      "deep": "Grave y tranquila"
+    },
     "loading": "Un momento: la voz ya llega.",
-    "group": {
-      "higher": "Voces más agudas",
-      "lower": "Voces más graves"
-    }
+    "choose_hint": "Elige esta voz.",
+    "play_label": "Escuchar: {{name}}",
+    "stop_label": "Detener la muestra"
   },
   "when": {
     "today": "hoy",

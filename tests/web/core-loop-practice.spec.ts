@@ -6,7 +6,6 @@
 import { expect, test } from '@playwright/test';
 
 import {
-  allowPush,
   freshEmail,
   homePositions,
   planTest,
@@ -23,7 +22,6 @@ test('core loop · practice: short practice, feedback remembered, the greeting a
   const email = freshEmail('practice');
   await signUpMia(page, email);
   await planTest(page);
-  await allowPush(page);
   await sendWorksheet(page);
   // Where the mark and the ways in stand with a card on top: part 2 holds that they stand the
   // same with and without one; here they must not move through practice and feedback.
