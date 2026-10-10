@@ -1,4 +1,4 @@
-// Buddy's feedback on her long text (issue #258), in his reply bubble in the thread: each key point
+// Buddy's feedback on her long text (issue #258), a card under his reply in the thread: each key point
 // with a calm state in words, her own words marked as hers, three places to improve, and the next
 // step. No score, no grade, no "falsch". Her versions stand as one line each, not as the whole text.
 
@@ -35,7 +35,6 @@ const FEEDBACK: Feedback = {
 describe('feedback on a long text (#258)', () => {
   it('names each judged point with a sign and a word, never a colour alone', () => {
     renderInApp(<EssayFeedback feedback={FEEDBACK} />);
-    expect(screen.getByText('Erörterung – so steht dein Text')).toBeDefined();
     expect(screen.getAllByTestId('essay-point')).toHaveLength(2);
     expect(screen.getByText('Einleitung')).toBeDefined();
     expect(screen.getByText('geschafft')).toBeDefined();
@@ -92,13 +91,16 @@ describe('a long text in the thread (#258)', () => {
     essay: FEEDBACK,
   });
 
-  it('stands as one line per version, and the feedback in Buddy’s bubble', () => {
+  it('stands as one line per version, and the feedback as a card under Buddy’s bubble', () => {
     renderInApp(<ItemThread turns={[VERSION, REPLY]} pending={null} essay />);
     expect(screen.getByText('Fassung 1 · 10 Wörter')).toBeDefined();
     expect(screen.queryByText(TEXT)).toBeNull();
-    expect(screen.getByTestId('essay-feedback')).toBeDefined();
-    // A screen reader hears Buddy's whole sentence, as for every reply.
-    expect(screen.getByLabelText(`Buddy: ${REPLY.text}`)).toBeDefined();
+    // A screen reader hears Buddy's whole sentence, as for every reply; the bubble shows its start.
+    const bubble = screen.getByLabelText(`Buddy: ${REPLY.text}`);
+    expect(bubble.textContent).toBe('Erörterung – so steht dein Text');
+    // The feedback is not squeezed into the bubble (#525): it stands beside it, at full width.
+    const feedback = screen.getByTestId('essay-feedback');
+    expect(bubble.contains(feedback)).toBe(false);
   });
 
   it('while it is on its way, says her text and that Buddy is reading it', () => {

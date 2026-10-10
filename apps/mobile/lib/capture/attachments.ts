@@ -1,4 +1,4 @@
-// The pages on the capture screen and in the chat composer, as plain values:
+// The pages in the chat's input bar (issue #519: the one place), as plain values:
 // what one more page, a retake, a removal or "Passt schon" makes of the set,
 // what the draft keeps of it, what comes back out of a draft, and what a failed
 // send means. lib/capture/useAttachments.ts is the React part around this —

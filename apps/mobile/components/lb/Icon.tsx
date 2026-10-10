@@ -31,6 +31,10 @@ const ICONS = {
   check: [{ d: 'M5 12l5 5 9-10' }],
   mic: [{ x: 9, y: 3, width: 6, height: 11, rx: 3 }, { d: 'M5 11a7 7 0 0014 0M12 18v3M8.5 21h7' }],
   arrow: [{ d: 'M5 12h14M13 6l6 6-6 6' }],
+  // Up and away, on the input bar's round send button (issue #522) — bold: it sits on a fill.
+  send: [{ d: 'M12 19V5M6 11l6-6 6 6', bold: true }],
+  // Out to the corners: a page at full size (the essay's writing view, issue #525).
+  expand: [{ d: 'M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5' }],
   // Höher / tiefer auf der Notenzeile (issue #275); „Zurück“ nimmt das eine 'undo' unten.
   up: [{ d: 'M6 15l6-6 6 6', bold: true }],
   down: [{ d: 'M6 9l6 6 6-6', bold: true }],

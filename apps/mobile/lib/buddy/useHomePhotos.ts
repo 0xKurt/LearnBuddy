@@ -104,6 +104,12 @@ function useLeftBehind() {
       };
     }, []),
   );
+  // Once the chat holds pages, the draft is the bar's (`useAttachments`): taken with "Weiter", or
+  // replaced by new pages. Removed there, they are not left behind — no screen stands in between
+  // any more whose return would read the draft again (issue #519).
+  useEffect(() => {
+    if (attachedCount > 0) setDraft(null);
+  }, [attachedCount]);
   return {
     draft,
     /**

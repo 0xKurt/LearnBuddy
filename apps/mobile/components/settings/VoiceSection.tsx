@@ -1,6 +1,8 @@
 // Buddy's voice (ADR 0008 §Amendment): closed like every group here, with the voice she has
 // now as its one line; opened, the same picker as in the setup (components/voice/VoicePicker).
 // The speed stays something she asks Buddy for ("sprich langsamer") — no second control.
+// Not there at all where Buddy's own voices are not (`natural_voice`, issue #526): the phone's
+// voice would read every sample alike, and a choice without a difference is no choice.
 
 import type { BuddySettingsView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +16,7 @@ import { Row } from './Row.js';
 export function VoiceSection({ settings }: { settings: BuddySettingsView }) {
   const { t } = useTranslation(['settings', 'buddy']);
   const current = t(`buddy:voice_pick.name.${settings.voice}`);
+  if (!settings.natural_voice) return null;
   return (
     <Group title={t('settings:voice.title')} fold="voice" summary={current}>
       <Card padding={CARD_PAD.roomy}>

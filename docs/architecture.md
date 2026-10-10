@@ -523,9 +523,9 @@ summary plus undo data. Enforced here, not in the prompt:
   voice with a tap (setup, settings: `PATCH /buddy/settings {voice, version}`, which bumps the
   context like every setting there), so a tap while Buddy decides makes that decision stale.
 - Thread action cards offer "Rückgängig" only where `undoApplies` holds, like `done` (audit
-  M-56); history offers it too, for the same 7 days. In the chat only the newest such step has
-  its button on screen (issue #204); the rest open from a receipt (`UndoSheet`), so what the
-  server allows and what she can reach stay the same set.
+  M-56); history offers it too, for the same 7 days. In the chat every receipt carries its own
+  ↺ (issue #520), which takes back that turn's newest step still standing; History has one per
+  step. What the bar on top carries has no line in the chat until the bar closes.
 
 ### Lookups (ADR 0005, stage 1)
 
@@ -686,6 +686,16 @@ days (rule 6).
   planned on its own — nothing is sent in bulk afterwards; agreed reminders stay and wait in the
   app. Planned messages are listed on the home under what comes next. Stopping contact hides
   the opt-in card for 14 days.
+- **Asked in the setup** (issue #518): the profile step ends with one question — may Buddy send
+  notifications? — two answers, and the answer saves the profile (`CreateLearnerRequest.contact`,
+  `components/auth/ContactStep.tsx`). Under 16 the adults answer it right after their PIN, in
+  the same request; `POST /learner` refuses a "yes" for a minor without that PIN (or with a PIN
+  other than the account's), `admin_required` / `wrong_pin`. Either answer is stored as a decision
+  (`contact_changed_by`, `contact_changed_at` from the app clock). The chat's `contact_opt_in` card
+  (`home.ts` `decisionOf`) is only for a profile that was never asked (one made before #518):
+  once contact was decided — in the setup, in the settings or by that card — it never comes back
+  (owner 10.10.: a "no" in the setup is final). The OS permission is asked after the first-start
+  cards, only with a "yes" (`app/onboarding.tsx`).
 - Every status write of a claimed row is conditioned on the claim (status `sending` and the
   lease it set): a slow run can never send or overwrite a row another run settled.
 - A push carries the message's expiry (`expiration`): a phone that was off does not get a stale
@@ -1638,16 +1648,29 @@ im chat angefügt"). The **+** in the composer asks where a page comes from (cam
 files), the chosen picker opens at once, and what she picked stands as small squares above the
 field — a tap shows one full screen, the ✕ takes it out. "Senden" sends the pages first and her
 words after, so Buddy's answer already knows about the sheet; while they are on their way the
-composer shows the same progress the capture screen does, and a failure keeps both the pages and
+composer shows how far the sending is, and a failure keeps both the pages and
 the text for the same tap again. A page the check found hard to read gets its calm card right
 there ("Neu fotografieren" · "Trotzdem behalten"). Everything that happens to a page on the way —
 preparing, the quality check, the draft that survives the app being killed, the upload that
-resumes with the same `client_request_id` — is one hook (`useAttachments`), shared with the
-capture screen; neither owns it. Pages held in the composer are **live**, not "left behind":
-the home notice and a capture screen opened meanwhile skip them (`lib/capture/live.ts`), and only
-after the app is closed and opened again do they show up as what waits. `app/capture.tsx` stays
-for what has no place in the chat: a page added to an existing sheet (`completes`), a capture
-step Buddy asked for, files shared from other apps and a resumed draft.
+resumes with the same `client_request_id` — is one hook (`useAttachments`). Pages held in the
+composer are **live**, not "left behind": the home notice skips them (`lib/capture/live.ts`), and
+only after the app is closed and opened again do they show up as what waits.
+
+**One way to a photo** (issue #519, owner 09./10.10.: "Foto hochladen ist komplett bescheuert mit
+dem extra step"). There is no capture screen any more: every place that asks for a page hands its
+wish to the chat's input bar (`lib/capture/attachRequest.ts`: what the pages are for — step, goal,
+homework, the sheet whose pages they complete — and what opens first). The card "Foto machen", the
+⋯ menu's homework and vocabulary "Foto", "Nochmal fotografieren" for missing pages and "Neues
+Foto" for a sheet that could not be read open the **camera at once**; the library, a subject, a
+sheet's "Seite hinzufügen" and Buddy's "Fotos" area open the **+ menu** (`AttachMenu`: Kamera ·
+Fotos · Dateien, with one line of what the pages are for, or the photo tip, and the privacy line).
+"Fotos" is the phone's own multi-select (`expo-image-picker`, `allowsMultipleSelection`). After a
+photo from the camera the strip ends in "Noch ein Foto" (`AttachStrip`), so a sheet of several pages
+is taken one after another; then the send arrow. From the conversation screen the camera leads back
+into the chat with the camera open. A page added to a sheet is said in a toast ("Seite geschickt"),
+and the sheet's questions join it once read. No document scanner: ML Kit's terms are no open
+licence (owner decision 10.10.). **Not proven on a device:** the camera series and the gallery's
+multi-select on Android and iOS (#519).
 The squares must show the photo (issue #294: on the phone the tile stayed one flat dark colour
 while the same file showed in the card after sending). `AttachStrip` is now built like the two
 thumbnails that do show on the phone: the shadow on an outer view and the clipping on an inner one
@@ -1658,24 +1681,23 @@ AttachStrip.test.tsx` holds the build; `tests/web/visible.spec.ts` measures the 
 the owner did. **Not proven:** which of the differences was the phone's reason — the measurement
 on the device is owed in #294.
 
-**Files and sharing in the app** (`app/capture.tsx`, `lib/capture/files.ts`, `incoming.ts`,
-`drop.web.ts`, `components/capture/ShareIntake.tsx`). One more quiet choice next to the camera:
-"Aus Fotos" and "Aus Dateien" share one row under "Foto machen" (fits 360×740). "Aus Dateien" is
+**Files and sharing in the app** (`components/capture/AttachMenu.tsx`, `lib/capture/files.ts`,
+`incoming.ts`, `drop.web.ts`, `components/capture/ShareIntake.tsx`). "Aus Dateien" in the + menu is
 `expo-document-picker` for PDFs and images; images go through the same preparation and photo check
 as camera photos, a PDF gets its own copy (`fileCopy.ts`: two shares called "Arbeitsblatt.pdf" stay
 two files) and shows as a page tile with its name; PDFs together over 15 MB, and other file types,
 are said in a toast, not dropped silently. In the browser the same button is a file input, and
-files dragged onto the page show a drop hint and land in the capture. A refusal from submit
-(`too_many_pages`, …) keeps the files on the screen and the send button waits until they change
-(the same files cannot pass); the draft remembers which entry is a PDF, and a sent set with a PDF
+files dragged onto the chat show a drop hint above its bar and land there. A refusal from submit
+(`too_many_pages`, …) keeps the files above the bar with the reason; the draft remembers which
+entry is a PDF, and a sent set with a PDF
 has no page thumbnail (page numbers are not file positions there).
 
 _Teilen an LearnBuddy_ (`expo-share-intent` 5.1 for SDK 54, its config plugin in `app.json`):
 Android gets intent filters for `SEND` and `SEND_MULTIPLE` of `image/*` and `application/pdf`; iOS
 a share extension (target `LearnBuddyShare`, shown as "LearnBuddy" — `plugins/withShareDisplayName.js`;
 activation rule: images and PDFs; app group `group.com.learnbuddy.app`). `ShareIntake` (root
-layout) hands the shared files to the capture screen (`incoming.ts`: the open capture takes them at
-once, else it is opened with `shared=1`; files wait until a draft left from before is decided).
+layout) hands the shared files to the chat's input bar (`incoming.ts`: the bar takes them at once,
+or as soon as it is there) and opens the chat.
 Signed out: a toast, nothing kept. Text or links shared: a toast. The iOS extension opens
 `learnbuddy://dataUrl=learnbuddyShareKey`, which `app/+native-intent.tsx` keeps from the router.
 The plugin needs pnpm's patch of `xcode@3.0.1` (`patches/`, as the package documents) or iOS
@@ -1687,9 +1709,9 @@ target with display name "LearnBuddy"), but nothing native was compiled or run. 
 `group.com.learnbuddy.app` and the extension bundle id `com.learnbuddy.app.share-extension` must
 exist for the Apple team (EAS credentials; one extension target only — see the package's FAQ). (3)
 Android: share one photo, several photos, a PDF from WhatsApp, Files and Chrome — cold (app closed)
-and warm; the capture opens with the files; a `content://` URI from a messenger is copied and
-uploaded. (4) iOS: the same from Photos, Files, WhatsApp and Safari's PDF view; the share sheet
-shows "LearnBuddy"; after sharing the app opens on the capture, not on "not found". (5) Signed out,
+and warm; the chat opens with the files above its bar; a `content://` URI from a messenger is
+copied and uploaded. (4) iOS: the same from Photos, Files, WhatsApp and Safari's PDF view; the share
+sheet shows "LearnBuddy"; after sharing the app opens on the chat, not on "not found". (5) Signed out,
 and during a running send: files are not lost silently. (6) "Aus Dateien" on both platforms: a PDF
 from iCloud/Google Drive (download on pick), a HEIC photo. (7) A real scanned school PDF read by
 the Vertex model: pages and page report right.
@@ -1747,18 +1769,18 @@ Pages keep the order they were taken in; there is no reordering — the notice a
 shows that page's photo while it is on the phone (kept a day, below), so the number is never
 ambiguous.
 
-**Capture never loses photos by starting another one** (audit N-6): a fresh capture with photos
-left from before first offers "Weiter" / "Verwerfen" instead of silently replacing them; a draft
+**Capture never loses photos by starting another one** (audit N-6): photos left from before are
+offered on the home ("Weiter" puts them back above the chat's bar, "Verwerfen"); a draft
 being sent is never deleted, and a finished send only ends its own draft. A reservation for a photo
 set she then changed is deleted if it was never submitted (no "unvollständig" leftover). On
-Android the camera result survives the system killing the app: capture notes what the photo is
-for before the camera opens, and the next start recovers it (`getPendingResultAsync`,
+Android the camera result survives the system killing the app: the bar notes what the photo is
+for before the camera opens, and the next start puts it back above the chat's bar (`getPendingResultAsync`,
 `lib/capture/pendingCamera.ts`; needs a device run). The failed-reading card names the sheet and
 "Neues Foto" keeps its purpose (homework stays homework) and, for a page, the sheet it belongs to;
 a sheet being read now comes before an older failure on the home.
 
 **Photos survive the app being closed** (`apps/mobile/lib/capture/draft.ts`). Every photo is
-copied where the system does not clean up (documents; data URLs in a browser) and the capture screen
+copied where the system does not clean up (documents; data URLs in a browser) and the chat's bar
 keeps a draft (photos, what the check found, what they are for, and — once sending began — the
 request id). Closed, killed or updated before the photos were sent, Buddy says "Deine Fotos sind
 noch nicht gesendet" at the end of the conversation with "Weiter" (the same material: the API answers the request id with it, so
@@ -2002,8 +2024,8 @@ its own route, so nothing she asks is ever misread as an answer:
   bar — gets the field of the one `InputBar` as her question: „Frag zur Aufgabe …"
   (`useAskField` in `components/practice/CheckBar.tsx`, the screen provides it through
   `AskRoute`). Beside it stands the form's „Prüfen" (none under options: the tile is the
-  answer); once she has typed, „Senden" takes its place, as in the chat. The placeholder stays
-  beside „Prüfen" (`keepPlaceholder`): it is the one thing that says what the field is for. The
+  answer); once she has typed, the round send arrow takes its place, as in the chat (#522). The
+  placeholder stays beside „Prüfen": it is the one thing that says what the field is for. The
   question is kept as a draft (`session.<id>.ask`), sent with `askItem` (not through the outbox:
   help in the moment, not learning state), and stands in the thread like any of her words — her
   answers on a board are not echoed, words with `not_an_attempt` (a question, „Tipp, bitte")
@@ -2416,11 +2438,17 @@ eigenen Worte bestätigen und keine exakte Angabe überstimmen.
   zweites Feld. Für `essay` (`lib/practice/essay.ts`) nimmt die Leiste 12 000 Zeichen, steht
   `tall` — drei Zeilen, beim Schreiben wächst sie bis zehn (mit Tastatur auf dem kleinen Telefon
   bis vier, `formDensity`), in Ruhe bleibt sie bei drei, damit die Rückmeldung darüber Platz hat —,
-  und „Prüfen" bleibt unter der Leiste, solange Platz ist. Die Zeichenzahl erscheint erst in den
+  und „Prüfen" bleibt unter der Leiste, solange Platz ist. Zum Schreiben im Großen öffnet der Knopf
+  am Anfang ihrer Werkzeugleiste die Schreibansicht (`components/practice/WritingSheet.tsx`, issue
+  #525): dasselbe Feld auf demselben Text über fast den ganzen Bildschirm — mindestens zwölf Zeilen
+  auf 390 × 844, sechs mit Tastatur (`writingRows`) —, die Aufgabe als eine Zeile darüber (ein Tipp
+  zeigt sie ganz) und das „Prüfen" der Übung darunter über der Tastatur; beim Prüfen schließt sie. Die Zeichenzahl erscheint erst in den
   letzten 200 Zeichen. Ihr Text ist ein Entwurf je Lauf (`useDraft`), übersteht also das
   Verlassen und einen App-Neustart, und bleibt nach dem Abschicken im Feld: die nächste Fassung
   beginnt bei ihrer letzten. Im Gespräch steht eine Fassung als eine Zeile („Fassung 1 · 1 712
-  Wörter"), Buddys Antwort trägt die Rückmeldung in seiner Blase (`EssayFeedback`): je Kernpunkt
+  Wörter"), Buddys Antwort ist eine kurze Blase („Erörterung – so steht dein Text") und darunter
+  die Rückmeldung als Karte über die ganze Breite (`EssayFeedback`, issue #525: in der Blase brachen
+  ihre Zitate nach drei, vier Wörtern um): je Kernpunkt
   Zeichen und Wort („geschafft" / „noch offen", nie nur Farbe, nie „falsch"), bei „geschafft" ihre
   eigenen Worte — violett wie ihre Blasen, in Anführungszeichen, mit Strich, für den Screenreader
   „Deine Worte" —, bei „noch offen" der nächste Schritt; dann die Stellen zum Verbessern und der
@@ -2707,7 +2735,7 @@ and the key (one `{left, right}` link per left); the view the same without the k
 only the correct links (`pairs: [{left, right}]` or `groups: [{name, elements}]`, exactly one of
 them, `MATCH_RULES` without an example sentence). Code rejects — and stores nothing, repairs
 nothing — neither or both forms (`form`), counts out of range (`count`), a text, a word or a
-prompt over its cap (`too_long`: a pair's side 32 characters, a thing to sort or a group's name
+prompt over its cap (`too_long`: a pair's side 60 characters (issue #524), a thing to sort or a group's name
 16, any single word 16, the prompt 44), an empty group
 (`empty_group`), one element written to two places (`ambiguous`, seen on the draft by
 `matchDraftProblem`), and any two texts alike after normalising, across both sides
@@ -2720,28 +2748,32 @@ schon." / "5 von 7 sind schon richtig einsortiert."); which one is wrong it name
 second miss on, as the next rung of the hint ladder (`structuredNamesPart` → counts as a hint),
 and the third miss explains the solution.
 
-App: `MatchAnswer.tsx`. Pairs stand in two columns (four pairs are four rows; the columns share
-the width near-equally, 42–58 %, `leftShare`); a row's two tiles are equally tall, the text stands
-left. Tap one, then its partner (either way round): both tiles then wear the pair's pastel tint
-AND its symbol (● ▲ ■ ◆, `pairLook`), so a pair is seen at a glance and colour is never the only
-signal (#286; before, the pair was a number in the text and the board looked like a form).
+App: `MatchAnswer.tsx`. What is still open stands in two equal columns; a row's two tiles are
+equally tall and grow with their text. Tap one, then its partner (either way round): the two
+move together into ONE row across the board, "links → rechts", one line of running text in the
+one calm outline every pair shares (issue #524, owner 10.10.: no symbols ● ▲ ■ ◆, no tint per
+pair — the pairing is said in words, for the eye and the screen reader alike). Formed rows stand
+on top in the order of the left column; a tap on one dissolves it. A pairing's board is a list
+she goes through (`PartsArea list`, `scroll-list`): with four sentences on a small phone it may
+scroll; a grouping's may not.
 Groups follow the display idea of the removed `parts` board, because there the box IS the state:
 the elements she has not sorted yet stand above, every group is a row with its name, and an
 element she puts in a group moves INTO that row, next to the name. Tapping it there takes it back
 out. Tapping a group row puts the element she holds into it; a group only takes something while
 she holds an element. What she holds is kept in the draft with the links, so a theme change does
 not drop it. One line of instruction until the first tap, nothing else; a screen reader hears
-"…, Paar 2 mit …" / "…, in Nomen".
+"Hund – dog, Paar" / "…, in Nomen".
 
 **The maxima are a measurement** (`contracts/structured.ts` `MATCH_*`). The walkthrough's match
 tasks are the largest the contract allows, every text near its cap ("zuordnen at its largest",
 `tests/web/modes.spec.ts`; `learning-modes.ts`): four pairs of a 15-character term and a
-32-character phrase under a 44-character prompt, and eight 15–16-character things in three groups
+51–59-character sentence under a 44-character prompt (issue #524; the pairing may scroll as a
+list), and eight 15–16-character things in three groups
 with 16-character names. Shot at 390×844 and 360×740, light and dark, with `scroll-parts`
 disallowed: the pairing before and after a check (Buddy's reply and the whole board on screen
 together), and the grouping before she sorts anything (its tallest moment) and when everything is
-sorted. On 360×740 both tallest moments end within about 8 pt of "Prüfen", so one more pair row
-(about 52 pt) or one more group row (about 56 pt) would not fit; 20-character things (one per
+sorted. On 360×740 the grouping's tallest moment ends within about 8 pt of "Prüfen", so one more
+group row (about 56 pt) would not fit; 20-character things (one per
 row) did not fit by 87 pt, and a 56-character prompt broke onto three lines. A draft over a cap is
 rejected (`too_long` / `count`), never shortened.
 
@@ -4979,9 +5011,15 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   HD voices, EU endpoint; `SPEECH_BACKEND=google`, default off until verified live). Voice and
   speed come from her settings (`buddy_settings.voice`, `voice_speed`; tool `set_voice`, or the
   voice picked with a tap — `components/voice/VoicePicker.tsx` in the setup's last step and in the
-  settings, closed until opened; ADR 0008 §Amendment). The picker's "tap to hear" sends the voice
-  to try with the sample (`SpeechRequest.voice`, one of the curated names) and changes nothing;
-  when the phone's voice reads the sample instead, it says so rather than pretend a difference. Audio is
+  settings, closed until opened; ADR 0008 §Amendment). The picker is a list like a phone's
+  ringtones (issue #526): a row per voice with its name and how it sounds, a tick on hers, and its
+  own sound button. A tap on the row chooses (`PATCH /buddy/settings`) and plays nothing; the
+  sound button plays the sample (`SpeechRequest.voice`, one of the curated names) and changes
+  nothing, and stops it. **Only where the voices can be told apart:** `BuddySettingsView
+.natural_voice` says up front whether a provider is configured and reads her language
+  (`readsIn`, `speech/gateway.ts` — the same test a listening text and a Diktat use). Without it
+  the setup leaves the voice step out and the settings leave the group out; nothing is guessed
+  from a sample that happened to sound like the phone. Audio is
   cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). The app
   (`lib/speech/listen.ts`) fetches the next sentence while one plays (`expo-audio`) and reads a
   sentence with the phone's voice (`expo-speech`) when the server says no (off, budget, language,
@@ -5069,8 +5107,10 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   and open-area buttons are the chat's cards, and a tapped offer keeps the voice on (issue #40).
   Buddy himself sits small over the button row (`TalkOrb`, 96 pt with halo); his state is the
   moon's movement plus a one-line caption with a quiet hint under it. On the phone listening ends
-  by itself when she pauses
-  (on-device recogniser, `untilPause`); on the recording path (browser) she taps the mic when done.
+  by itself when she pauses: the on-device recogniser (`untilPause`), or on the recording path a
+  pause of 1.6 s after clear speech, measured from the recorder's level (`lib/speech/pauseEnd.ts`,
+  issue #523) — the hint then says so instead of asking for a tap. The browser's recorder measures
+  no level, so there she taps the mic when done (`voice.endsByItself`).
   Tapping the mic — or Buddy himself — while he speaks interrupts him and listens at once.
   **She can also just talk over him** (barge-in, issue #35), in the browser and on Android:
   while he speaks (and the mic may open by itself — no screen reader) an ear watches the mic's
@@ -5339,18 +5379,17 @@ is not pulled down until she is back at the end or sends something; `lib/homeLay
 scrolling up) — the bar on top never covers the conversation (only its opened details float
 over the conversation's top, and only while she reads them); a
 quiet line names the day where a new one starts (never how many days passed) — what Buddy did
-stands under its message as **one receipt for the turn**, not one line per action, and only the
-newest step she can still take back carries a way back (issue #204: two things done in one
-answer were two ticks, two sentences and two buttons — "vier Statuszeilen für zwei Dinge, die
-sie getan hat"). That way back is a small round arrow at the end of the receipt's own line, not
+stands under its message as **one receipt for the turn**, not one line per action, with one
+way back (issue #204: two things done in one answer were two ticks, two sentences and two
+buttons — "vier Statuszeilen für zwei Dinge, die sie getan hat"); a second tap takes back the
+step before. That way back is a small round arrow at the end of the receipt's own line, not
 a pill of its own under it (issue #295: "kein großer fetter button"): `<Btn iconOnly
 icon="undo">` (`components/lb/Btn.tsx`), a 24 pt circle in the secondary ink with a 44 pt
 target, named "Rückgängig: <what>", a tap takes the step back without asking, and while that
-runs the arrow is a spinner in the same place. Nothing is lost with the buttons that went: a tap or a long press on a receipt
-opens everything that can still be taken back, newest first, each with its own way back
-(`components/buddy/UndoSheet.tsx`) — undo over confirmation stays whole
-(`docs/UX-PRINCIPLES.md`). History is the record of the single steps and keeps a line and a
-button per step (`undoScope`). A note that is true under every card is said once, under the
+runs the arrow is a spinner in the same place. Every receipt carries its own ↺, and that is the
+only way back in the chat: the receipt's words open nothing (issue #520 — the sheet "Was du
+zurücknehmen kannst" that a tap on them opened surprised her and is gone). History is the record
+of the single steps and keeps a line and a button per step (`receipts`). A note that is true under every card is said once, under the
 newest it applies to: "nur hier in der App" (a message that only ever existed here) and that
 what was agreed can only reach her here while messages to the phone are off. No tiles, no
 lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says
@@ -5652,15 +5691,21 @@ place she types into is `components/lb/LbTextInput.tsx`, the only file that rend
 cloze's gap (cell) — one frame with the same paper, hairline, violet focus frame with its halo,
 type size and token corners (`RADIUS.frame`, `.bar`, `.cell`); controls stand inside the frame
 (`start`, `end`, the clear ×, the password eye), a visible name above it is `label`, a ref to it
-is `LbTextInputRef`. Free text goes into the one input bar (`components/lb/InputBar.tsx`): the
-chat's composer (`components/buddy/Composer.tsx`: + · text · mic or "Senden"/"Stopp" · talk) and a
-typed practice answer (`components/practice/TypedAnswer.tsx`: text · unit · mic, math keys under it,
-"Prüfen" under it) are the same pill in the same pinned `components/lb/BottomBar.tsx`, with the
-same mic rule (a soft circle at the end; an action takes its place once there is something to send),
-status line and character count. An empty field next to an action ("Senden" with a page attached,
-"Stopp" while Buddy writes) shows no placeholder: at 360 "Schreib Buddy …" broke onto a second line
-beside it (issue #394, guarded in `tests/web/layout.spec.ts`); the field keeps its name for a
-screen reader. A birth date is `components/auth/BirthDateFields.tsx` in the
+is `LbTextInputRef`. Free text goes into the one input bar (`components/lb/InputBar.tsx`), built
+like the Claude app's (issue #522, owner 09.10.): one rounded box, **her text on top over the full
+width**, growing with it, and under it **one row of tools** — on the left `start` (the chat's +,
+the camera of a path, the essay's writing view) and `chips` (the unit as "in cm²", how her typed
+math is read); on the right the soft mic and one filled circle: the waveform into a conversation,
+or the action once there is something to send (the round send arrow named "Senden", "Stopp" while
+Buddy writes, "Prüfen" as the round arrow while she types an answer). Empty, the box is one compact
+line with the controls beside the text, so a small phone keeps its room; the tools fold under the
+text with the first letter (`LbTextInput`, `stacked`). The chat's composer
+(`components/buddy/Composer.tsx`) and a typed practice answer (`components/practice/TypedAnswer.tsx`,
+math keys inside the box between her lines and the tools while she types, "Prüfen" across under it
+while she does not) are the same box in the same pinned `components/lb/BottomBar.tsx`, with the same
+status line and character count (`FieldCount`). The math preview shows only while the line looks
+different when set (`TypedMathPreview`): plain digits are never mirrored. Before #522 everything
+stood in one line beside the text and a "Senden" pill left her text a narrow column. A birth date is `components/auth/BirthDateFields.tsx` in the
 profile form and in the parents' correction. Guarded: `lb/one-text-field`
 (docs/engineering-guards.md) refuses `TextInput` anywhere else in the app, and
 `apps/mobile/lib/__tests__/oneInput.test.ts` holds that the chat and practice type into

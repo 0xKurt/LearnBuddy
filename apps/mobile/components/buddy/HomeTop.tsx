@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { seedSession } from '../../lib/api/queries.js';
+import { askAttach } from '../../lib/capture/attachRequest.js';
 import { skipStep, startStep, undoAction } from '../../lib/api/endpoints.js';
 import type { HomeAct } from '../../lib/buddy/useHomeAct.js';
 import type { HomeLayout } from '../../lib/homeLayout.js';
@@ -131,12 +132,12 @@ function slimBar({
     );
   }
   if (layout.bar === 'capture' && now.type === 'capture_needed') {
-    const params = {
-      ...(now.step_id ? { stepId: now.step_id } : {}),
-      ...(now.goal ? { goalId: now.goal.id } : {}),
+    const link = {
+      stepId: now.step_id ?? null,
+      goalId: now.goal?.id ?? null,
       // The forgotten back joins the sheet it was forgotten from instead of becoming a
-      // second one (issue #118) — the same route the library's own "Seite hinzufügen" takes.
-      ...(now.completes ? { completes: now.completes, add: '1' } : {}),
+      // second one (issue #118) — the same way the library's own "Seite hinzufügen" takes.
+      ...(now.completes ? { completes: now.completes, add: true } : {}),
     };
     return (
       <CaptureBar
@@ -144,7 +145,8 @@ function slimBar({
         card={now}
         busy={busy}
         titleInset={CLOSE_INSET}
-        onPress={() => router.push({ pathname: '/capture', params })}
+        // "Foto machen": the camera at once, the photo lands in the chat's bar (issue #519).
+        onPress={() => askAttach({ open: 'camera', link })}
         onNoPhoto={captureUndo ? () => void act(() => undoAction(captureUndo.id)) : null}
       />
     );

@@ -519,12 +519,21 @@ export class FakeSpeech implements SpeechGateway {
   readonly available = true;
   readonly calls: SpeechInput[] = [];
   private failures: SpeechError[] = [];
+  /** Languages this provider does not read (`lacks`), like a real one missing a voice. */
+  private readonly missing = new Set<string>();
 
   voiceId(voice: VoiceName, locale: string): string {
     return `fake-${locale}-${voice}`;
   }
 
+  /** From now on the provider has no voice for these languages ("it", …). */
+  lacks(...languages: string[]): this {
+    for (const l of languages) this.missing.add(l);
+    return this;
+  }
+
   localeFor(locale: string): string | null {
+    if (this.missing.has(locale.slice(0, 2))) return null;
     if (/^(de|en|fr|es|it)-[A-Z]{2}$/.test(locale)) return locale;
     // A bare language code, like the real gateway maps it ("en" → "en-GB", `chirp3Locale`):
     // that is what a listening text carries (issue #210), and a fake that answered null to it

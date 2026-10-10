@@ -1,6 +1,6 @@
 // Links the system hands to the app before the router sees them. The iOS share extension
 // opens "learnbuddy://dataUrl=learnbuddyShareKey": that is not a screen — the shared files
-// are taken by components/capture/ShareIntake.tsx, which opens the capture screen itself.
+// are taken by components/capture/ShareIntake.tsx, which hands them to the chat's input bar itself.
 // Warm: no navigation (''); cold: the start screen (the gate), then ShareIntake.
 import { getShareExtensionKey } from 'expo-share-intent';
 

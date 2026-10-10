@@ -14,7 +14,8 @@
     "label": "La tua risposta",
     "placeholder": "La tua risposta…",
     "unit_hint": "Risposta in {{unit}}",
-    "check_waits": "Solo quando c'è qualcosa nel campo."
+    "check_waits": "Solo quando c'è qualcosa nel campo.",
+    "unit_chip": "in {{unit}}"
   },
   "back_to_buddy": "Torna da Buddy",
   "bar": {
@@ -98,7 +99,7 @@
     "how_pairs": "Tocca un elemento a sinistra, poi il suo compagno a destra.",
     "how_groups": "Tocca un elemento in alto, poi il suo gruppo.",
     "held": "{{text}}, selezionato",
-    "paired": "{{text}}, coppia {{n}} con {{other}}",
+    "paired": "{{left}} – {{right}}, coppia",
     "no_partner": "{{text}}, ancora senza compagno",
     "in_group": "{{text}}, in {{group}}",
     "no_group": "{{text}}, ancora in nessun gruppo",
@@ -401,7 +402,9 @@
     "version_other": "Versione {{n}} · {{count}} parole",
     "text_one": "Il tuo testo · 1 parola",
     "text_other": "Il tuo testo · {{count}} parole",
-    "thinking": "Buddy sta leggendo il tuo testo …"
+    "thinking": "Buddy sta leggendo il tuo testo …",
+    "write_title": "Il tuo testo",
+    "write_open": "Scrivi a schermo intero"
   },
   "work": {
     "take": "Foto del tuo procedimento",

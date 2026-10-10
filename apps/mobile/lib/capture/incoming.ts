@@ -1,6 +1,6 @@
 // Files handed to LearnBuddy from outside (another app's share sheet) on their way into
-// the capture screen: the open capture screen takes them at once; otherwise they wait
-// here until one opens (components/capture/ShareIntake.tsx opens it).
+// the chat's input bar (issue #519): the bar takes them at once while it is there; otherwise
+// they wait here until it is (components/capture/ShareIntake.tsx opens the chat).
 import type { IncomingFile } from './files.js';
 
 type Taker = (files: IncomingFile[]) => void;
@@ -8,18 +8,14 @@ type Taker = (files: IncomingFile[]) => void;
 let waiting: IncomingFile[] = [];
 let taker: Taker | null = null;
 
-/** Hands files over; true when an open capture screen took them. */
-export function handIn(files: readonly IncomingFile[]): boolean {
-  if (files.length === 0) return true;
-  if (taker) {
-    taker([...files]);
-    return true;
-  }
-  waiting = [...waiting, ...files];
-  return false;
+/** Hands files over: to the chat's bar now, or as soon as it is there. */
+export function handIn(files: readonly IncomingFile[]): void {
+  if (files.length === 0) return;
+  if (taker) taker([...files]);
+  else waiting = [...waiting, ...files];
 }
 
-/** The capture screen takes what waits and what comes while it is open. */
+/** The chat's bar takes what waits and what comes while it is there. */
 export function takeIncoming(next: Taker): () => void {
   taker = next;
   if (waiting.length > 0) {
@@ -32,7 +28,7 @@ export function takeIncoming(next: Taker): () => void {
   };
 }
 
-/** Files wait for a capture screen (e.g. shared while signed out). */
+/** Files wait for the chat's bar (e.g. shared while signed out). */
 export function hasIncoming(): boolean {
   return waiting.length > 0;
 }

@@ -68,8 +68,6 @@ const ROUTES: Record<string, string> = {
     "contact opt-in, the parents' area behind the PIN, export and deletion are explicit controls the code enforces (rule 6), never a model's reading of a sentence",
 
   // ── the work itself ──
-  capture:
-    'camera, photo library and files need the full screen; pages go straight to storage and are checked by code, not passed through the chat',
   'practice/[id]':
     'the answer surfaces (typed, boards, staff, fraction bars, speaking) and the server-graded flow of one question at a time do not fit into chat bubbles',
 

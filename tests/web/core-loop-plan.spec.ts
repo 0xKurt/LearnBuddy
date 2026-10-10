@@ -1,20 +1,18 @@
-// Core loop, part 2 of 5 (issue #381): Mia names her test, the parent allows messages with the
-// PIN, she photographs her worksheet (a blurry one first) and Buddy prepares practice from it by
-// himself. Starts from a fresh learner set up without shots (coreLoop.ts; part 1 checks that
-// way). Scripted model: apps/api/src/testing/scenarios/core-loop.ts.
+// Core loop, part 2 of 5 (issue #381): Mia names her test (the parents allowed messages in the
+// setup, so the chat does not ask, issue #518), she photographs her worksheet (a blurry one first)
+// and Buddy prepares practice from it by himself. Starts from a fresh learner set up without
+// shots (coreLoop.ts; part 1 checks that way). Scripted model:
+// apps/api/src/testing/scenarios/core-loop.ts.
 
 import { join } from 'node:path';
 
 import { expect, test } from '@playwright/test';
 
-import { freshEmail, homePositions, PIN, signUpMia, worksheetJpeg } from './coreLoop';
+import { freshEmail, homePositions, signUpMia, worksheetJpeg } from './coreLoop';
 import { overflows, partHeight, settle, shot } from './fit';
 
-test('core loop · plan: a test, the parent PIN, a photo → practice prepared by Buddy', async ({
-  page,
-}) => {
+test('core loop · plan: a test, a photo → practice prepared by Buddy', async ({ page }) => {
   const email = freshEmail('plan');
-  const pin = PIN;
   await signUpMia(page, email);
 
   // ── Get to know: the test, and what Buddy needs for it ──
@@ -26,26 +24,21 @@ test('core loop · plan: a test, the parent PIN, a photo → practice prepared b
     page.getByText('Super, dann bereiten wir uns bis Freitag zusammen vor.', { exact: false }),
   ).toBeVisible();
   await expect(page.getByText(/Eingetragen: Mathearbeit Brüche am/)).toBeVisible();
-  // One card on top (the photo); the question about messages is asked in the conversation,
-  // with what would be allowed — also for a minor (user feedback #4, #6).
+  // One card on top (the photo). Messages were answered in the setup, so the conversation does
+  // not ask about them again (issue #518).
   await expect(page.getByText('Schick mir ein Foto')).toBeVisible();
-  await expect(
-    page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?'),
-  ).toBeVisible();
-  await expect(page.getByText(/Nie nach 20:00 Uhr\. Das erlauben deine Eltern/)).toBeVisible();
-  // The conversation stands at its newest message, like any chat: Buddy's question at the end
-  // is on screen, not below the fold (05-buddy-planned-360).
-  await expect(
-    page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?'),
-  ).toBeInViewport();
-  await expect(page.getByRole('button', { name: 'Eltern fragen' })).toBeInViewport();
+  await expect(page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?')).toHaveCount(
+    0,
+  );
+  // The conversation stands at its newest message, like any chat: what Buddy just did is on
+  // screen, not below the fold (05-buddy-planned-360).
+  const newest = page.getByText(/Eingetragen: Mathearbeit Brüche am/);
+  await expect(newest).toBeInViewport();
   // With the keyboard open (a small phone keeps ~420 pt of window) the newest message must
   // still be on screen — "wenn ich was schreibe, erkenne ich in der app gar nichts mehr"
   // (owner 28.09., issue #51).
   await page.setViewportSize({ width: 360, height: 420 });
-  await expect(
-    page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?'),
-  ).toBeInViewport();
+  await expect(newest).toBeInViewport();
   await page.setViewportSize({ width: 390, height: 844 });
   // The card lies over the greeting and the ways to start: they stand where they stand
   // without a card (owner: "Die Meldung sollte einfach über dem Menü liegen").
@@ -66,27 +59,8 @@ test('core loop · plan: a test, the parent PIN, a photo → practice prepared b
   await page.getByRole('button', { name: /Arbeitsblatt Brüche\. Schick mir ein Foto/ }).click();
   await expect(page.getByRole('button', { name: 'Kein Foto nötig' })).toBeHidden();
 
-  // ── Messages to the phone need a parent: the PIN, not the student — and the parent sees
-  // what they allow, and that it was allowed ──
-  await page.getByRole('button', { name: 'Eltern fragen' }).click();
-  await expect(page.getByText('PIN der Eltern')).toBeVisible();
-  await expect(
-    page.getByText(
-      /Ihr erlaubt, dass Buddy Mia Push-Benachrichtigungen aufs Handy schickt\. .*Nie nach 20:00 Uhr/,
-    ),
-  ).toBeVisible();
-  await shot(page, '06-parent-pin');
-  for (const digit of pin) await page.getByRole('button', { name: digit, exact: true }).click();
-  await expect(page.getByText('LearnBuddy')).toBeVisible();
-  // The web cannot set up this phone for notifications: no toast over the chat about it (live
-  // finding 8) — settings says it calmly.
-  await expect(page.getByText(/^Erlaubt[.:]/)).toHaveCount(0);
-  await expect(page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?')).toBeHidden();
-
   // ── The worksheet: photographed, sent, read in the background ──
-  await page.getByRole('button', { name: 'Foto machen' }).click();
-  await expect(page.getByText('Fotografier dein Blatt')).toBeVisible();
-  await shot(page, '07-capture-empty');
+  // "Foto machen" opens the camera at once; the photo lands in the chat's input bar (#519).
   const photo = await worksheetJpeg(page);
   // A blurry photo first: the phone itself says so at once, and "Neu fotografieren" replaces it.
   let chooser = page.waitForEvent('filechooser');
@@ -150,21 +124,16 @@ test('core loop · plan: a test, the parent PIN, a photo → practice prepared b
     page.getByText('Aus deinem Arbeitsblatt habe ich eine kurze Übung gemacht.'),
   ).toBeInViewport();
   await expect(page.getByRole('button', { name: 'Jetzt üben' })).toBeInViewport();
+  // Every receipt in view carries its own ↺ (issue #520) — here the one receipt left.
   const waysBack = await page.getByRole('button', { name: /^Rückgängig/ }).count();
-  expect(waysBack, 'at most one "Rückgängig" in view (issue #204)').toBeLessThanOrEqual(1);
+  expect(waysBack, 'one ↺ per receipt in view (issues #204, #520)').toBe(1);
   // …and none of it has to be scrolled to: the conversation fits this phone as it stands.
   const thread = (await overflows(page)).find((o) => o.label === 'scroll-thread');
   expect(thread?.overflow ?? 0, 'the thread must not need scrolling here').toBe(0);
-  // Nothing is lost with the buttons that went (UX-PRINCIPLES: undo over confirmation):
-  // the receipt opens everything that can still be taken back, the prepared practice too.
-  await page.getByRole('button', { name: /^Eingetragen: Mathearbeit Brüche/ }).click();
-  await expect(page.getByText('Was du zurücknehmen kannst')).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: /^Rückgängig: Vorbereitet: Mathearbeit Brüche/ }),
-  ).toBeVisible();
-  await shot(page, '09b-what-can-be-taken-back');
-  await page.getByRole('button', { name: 'Schließen' }).click();
-  await expect(page.getByText('Was du zurücknehmen kannst')).toHaveCount(0);
+  // The receipt's words are words (issue #520): no button, no sheet behind them.
+  await expect(page.getByRole('button', { name: /^Eingetragen: Mathearbeit Brüche/ })).toHaveCount(
+    0,
+  );
   await page.setViewportSize({ width: 390, height: 844 });
 
   test.info().annotations.push({ type: 'email', description: email });

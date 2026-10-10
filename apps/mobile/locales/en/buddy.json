@@ -123,8 +123,6 @@
     "undo_label": "Undo: {{what}}",
     "undone": "undone",
     "undo_request_material": "No photo needed",
-    "undo_title": "What you can take back",
-    "undo_hint": "Shows what you can take back",
     "in_app_only": "What you agreed shows up here in the app – notifications are off."
   },
   "focus": {
@@ -282,7 +280,7 @@
     "title": "Conversation",
     "listening": "I'm listening.",
     "getting_ready": "Getting the microphone ready …",
-    "listening_sub": "Just say what you need.",
+    "listening_sub": "Just talk – I'll notice when you're done.",
     "tap_when_done": "Tap the mic when you're done.",
     "thinking": "Thinking …",
     "speaking": "Buddy is speaking …",
@@ -317,7 +315,6 @@
     },
     "today": "Today",
     "yesterday": "Yesterday",
-    "stop": "Stop",
     "stop_label": "Stop the answer",
     "stopped": "Stopped.",
     "new_reply": "New reply",
@@ -342,21 +339,26 @@
   "voice_pick": {
     "label": "Buddy's voice",
     "sample": "Hi, I'm Buddy. This is how I sound when I read something to you.",
-    "phone_voice": "Your phone's own voice is reading right now – so they all sound the same here.",
-    "tap_hint": "Plays a short sample and picks this voice.",
     "name": {
       "warm": "Warm",
       "friendly": "Friendly",
-      "bright": "Bright",
+      "bright": "Cheerful",
       "clear": "Clear",
       "soft": "Soft",
       "deep": "Deep"
     },
+    "about": {
+      "warm": "Higher, warm and calm",
+      "friendly": "Lower, friendly and relaxed",
+      "bright": "Higher, cheerful and lively",
+      "clear": "Lower, clear and crisp",
+      "soft": "Higher, quiet and gentle",
+      "deep": "Deep and calm"
+    },
     "loading": "One moment – the voice is on its way.",
-    "group": {
-      "higher": "Higher voices",
-      "lower": "Lower voices"
-    }
+    "choose_hint": "Chooses this voice.",
+    "play_label": "Sample: {{name}}",
+    "stop_label": "Stop the sample"
   },
   "when": {
     "today": "today",

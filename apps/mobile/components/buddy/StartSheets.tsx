@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform } from 'react-native';
 
+import { askAttach } from '../../lib/capture/attachRequest.js';
 import { ChoiceSheet } from '../learn/ChoiceSheet.js';
 import { TopicSheet } from '../learn/TopicSheet.js';
 import type { TopicKind } from '../learn/useStartTopic.js';
@@ -69,7 +70,8 @@ export function StartSheets({ menuOpen, onCloseMenu, next, send, canStart }: Pro
                 {
                   label: t('learn:vocab.photo'),
                   icon: 'camera',
-                  onPress: () => fromChoice(() => router.push('/capture')),
+                  // The camera at once; the page lands in the chat's bar (issue #519).
+                  onPress: () => fromChoice(() => askAttach({ open: 'camera' })),
                 },
                 {
                   label: t('learn:vocab.type'),
@@ -82,9 +84,7 @@ export function StartSheets({ menuOpen, onCloseMenu, next, send, canStart }: Pro
                   label: t('learn:homework.photo'),
                   icon: 'camera',
                   onPress: () =>
-                    fromChoice(() =>
-                      router.push({ pathname: '/capture', params: { purpose: 'homework' } }),
-                    ),
+                    fromChoice(() => askAttach({ open: 'camera', link: { purpose: 'homework' } })),
                 },
                 {
                   label: t('learn:homework.type'),

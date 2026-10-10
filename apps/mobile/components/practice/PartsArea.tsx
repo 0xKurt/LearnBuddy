@@ -11,16 +11,20 @@
 // moment the parts would have to be scrolled. The scroll is the floor under a mistake, not a
 // feature (rule 16).
 //
+// One exception, by the owner's decision (issue #524, 10.10.: longer texts in a pairing): the
+// sides of a pairing may be sentences, and four of them are a list she goes through — that
+// list may scroll (`list`, named "scroll-list" like every list rule 16 allows).
+//
 // Where it stands, the room around it and "Prüfen" are the answer shell's (`AnswerShell`,
 // issue #310): this is only the floor.
 
 import type { ReactNode } from 'react';
 import { ScrollView } from 'react-native';
 
-export function PartsArea({ children }: { children: ReactNode }) {
+export function PartsArea({ children, list = false }: { children: ReactNode; list?: boolean }) {
   return (
     <ScrollView
-      testID="scroll-parts"
+      testID={list ? 'scroll-list' : 'scroll-parts'}
       style={{ flexGrow: 0, flexShrink: 1 }}
       keyboardShouldPersistTaps="handled"
     >

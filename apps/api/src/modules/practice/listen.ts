@@ -43,6 +43,7 @@ import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
 import { AppError } from '../../lib/errors.js';
+import { readsIn, type SpeechGateway } from '../../speech/gateway.js';
 import { synthesizeSpeech } from '../voice/speech.js';
 import { unusedItemFields } from './itemFields.js';
 import { ItemDraft, optionPictures, usableItems } from './items.js';
@@ -189,10 +190,10 @@ export function answerIsInText(answer: string, text: string): boolean {
  */
 export function listenItems(
   draft: ListenDraft | null,
-  speech: { available: boolean; localeFor: (locale: string) => string | null },
+  speech: Pick<SpeechGateway, 'available' | 'localeFor'>,
 ): ListenItem[] {
   if (!draft) return [];
-  if (!speech.available || speech.localeFor(draft.lang) === null) return [];
+  if (!readsIn(speech, draft.lang)) return [];
   const task = ListenTask.safeParse({ text: draft.text, lang: draft.lang });
   if (!task.success) return [];
   const heard: ItemDraft[] = [];

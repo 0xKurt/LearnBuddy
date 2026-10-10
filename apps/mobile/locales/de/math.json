@@ -560,7 +560,6 @@
     "filled": "Lücke, darin: {{answer}}"
   },
   "preview": {
-    "label": "Vorschau",
     "a11y": "Vorschau deiner Antwort: {{math}}"
   },
   "tap": {

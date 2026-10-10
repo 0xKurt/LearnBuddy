@@ -252,7 +252,8 @@ export async function onboard(
      * harness always sends one; a test that cares which state it is passes its own.
      */
     region?: CurriculumRegion;
-    contactEnabled?: boolean;
+    /** The answer to the setup's notification question (issue #518); absent = not asked. */
+    contact?: 'yes' | 'no';
     timezone?: string;
     /** Set up the adult PIN during onboarding, as the app does for a child profile. */
     pin?: string;
@@ -284,7 +285,7 @@ export async function onboard(
     locale: opts.locale ?? 'de',
     curriculum_region: opts.region ?? 'ni',
     minor_consent: relation === 'child',
-    ...(opts.contactEnabled !== undefined ? { contact_enabled: opts.contactEnabled } : {}),
+    ...(opts.contact !== undefined ? { contact: opts.contact } : {}),
     // The parents' first PIN goes with the profile, in one request (as the app sends it).
     ...(opts.pin ? { pin: opts.pin } : {}),
   });

@@ -413,6 +413,34 @@ describe.skipIf(!dbReady)('Buddy’s natural voice', () => {
     });
   });
 
+  it('says up front whether her natural voices are there: configured, language missing, not configured (issue #526)', async () => {
+    // Configured, and it reads her language: the app may offer the voices to choose from.
+    const here = await l.api.get<BuddySettingsView>('/buddy/settings');
+    expect(here.body.natural_voice).toBe(true);
+    // The answer to a change says it too: the picker keeps what the server sent back.
+    const changed = await l.api.patch<BuddySettingsView>('/buddy/settings', {
+      voice: 'clear',
+      version: here.body.version,
+    });
+    expect(changed.body).toMatchObject({ voice: 'clear', natural_voice: true });
+    // A language the provider has no voice for: nothing to choose — for her, not for others.
+    env.speech.lacks('it');
+    const italian = await onboard(env, { relation: 'self', locale: 'it' });
+    const theirs = await italian.api.get<BuddySettingsView>('/buddy/settings');
+    expect(theirs.body.natural_voice).toBe(false);
+    expect((await l.api.get<BuddySettingsView>('/buddy/settings')).body.natural_voice).toBe(true);
+    // Not configured at all: no natural voice for anyone, whatever the language.
+    const off = await createTestEnv({ speech: 'disabled' });
+    try {
+      const m = await onboard(off);
+      const settings = await m.api.get<BuddySettingsView>('/buddy/settings');
+      expect(settings.status).toBe(200);
+      expect(settings.body.natural_voice).toBe(false);
+    } finally {
+      await off.close();
+    }
+  });
+
   it('a tap on a voice while Buddy is deciding makes that decision stale (fence, rule 4)', async () => {
     env.llm.script(
       'buddy_turn',
