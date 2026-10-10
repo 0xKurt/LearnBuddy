@@ -21,6 +21,7 @@ function part(answer: string, from: string | null = null, kind: Part['kind'] = '
     choices: null,
     correct_choice: null,
     tolerance: null,
+    read: null,
     from,
     points: [],
   };
@@ -54,6 +55,7 @@ function task(...parts: Part[]): PartTaskDraft {
     topic: 'Umfang',
     difficulty: 2,
     prompt_lang: 'de',
+    figure: null,
     parts,
   };
 }

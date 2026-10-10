@@ -88,15 +88,22 @@ test('Erklär mal: she explains, gets a ✓ per point and one follow-up (issue #
     .getByRole('button', { name: 'Weiter' })
     .click({ timeout: 5000 })
     .catch(() => undefined);
-  // … the second at night, explained completely in one go.
-  await setScheme(page, 'dark');
+  // … the second at night, after Buddy showed one point and she explained the rest (#298).
   await expect(
     page.getByText('Erklär mir, warum Pflanzen ohne Licht nicht wachsen.'),
   ).toBeVisible();
-  await field.fill(
-    'Im Dunkeln hat sie keine Energie, dann macht sie keinen Zucker und der fehlt ihr zum Wachsen.',
-  );
+  // Stuck at the start: „Tipp" shows ONE point as a model sentence and asks for the next one.
+  await page.getByRole('button', { name: 'Einen Tipp bekommen' }).click();
+  await expect(page.getByText('ohne Licht keine Energie', { exact: false })).toBeVisible();
+  await expect(
+    page.getByText('Was kann sie dann nicht herstellen?', { exact: false }),
+  ).toBeVisible();
+  await bothSchemes(page, '74-erklaer-vormachen');
+  await setScheme(page, 'dark');
+  await field.fill('Dann macht sie keinen Zucker, und den braucht sie zum Wachsen.');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Alles drin', { exact: false })).toBeVisible();
+  // The point Buddy showed stands as shown, never as hers.
+  await expect(page.getByText('Energie vorgemacht', { exact: false })).toBeVisible();
   await shot(page, '73-erklaer-done-dark');
 });

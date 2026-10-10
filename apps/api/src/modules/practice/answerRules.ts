@@ -12,7 +12,9 @@ import { taskOf } from './bars.js';
 import { checkDictation, type DictationCheck } from './dictation.js';
 import { differentNumber, ruleCheck, type RuleVerdict } from './evaluate.js';
 import { listenTaskOf } from './listen.js';
+import { givesHints } from './modeRules.js';
 import { takeParts } from './partsAnswer.js';
+import { keyPointsOf, pointLadder } from './pointSteps.js';
 import { askedElements, isExplanation, rubricOf } from './rubric.js';
 import { checkStaffAnswer, staffTaskOf, type StaffAnswerCheck } from './staff.js';
 import { answerTextOf } from './structured.js';
@@ -77,10 +79,18 @@ export async function ruleVerdict(deps: Deps, a: Answering) {
   // An explanation goes on over the follow-ups („Erklär mal", #236): what she said before counts,
   // a point once confirmed stays confirmed, and the model is not asked about it again.
   const explaining = rubric !== null && isExplanation(rubric);
-  const sofar = explaining
-    ? await explanationSoFar(deps.db, sessionId, item.id)
-    : NOTHING_EXPLAINED;
-  const asked = rubric ? askedElements(rubric, sofar.settled) : [];
+  // Its key points are its hint ladder in practice (Vormachen, #298, `pointSteps.ts`) — also for
+  // „Tipp", which judges nothing.
+  const points = givesHints(session.mode) && !essay ? keyPointsOf(item.rubric) : null;
+  const sofar =
+    explaining || points ? await explanationSoFar(deps.db, sessionId, item.id) : NOTHING_EXPLAINED;
+  const pointsLadder = points
+    ? pointLadder(points, sofar.settled, item.prepared_hints_used, item.hints_used)
+    : null;
+  // A point Buddy showed is not asked about: it is his, never hers.
+  const asked = rubric
+    ? askedElements(rubric, [...sofar.settled, ...(pointsLadder?.shown ?? [])])
+    : [];
   // The spoken text this question was answered from, if any (issue #210). It decides two
   // things below: that only the content is judged (never the spelling of a word she HEARD),
   // and that the tutor is given that text as the material it may judge against.
@@ -137,6 +147,7 @@ export async function ruleVerdict(deps: Deps, a: Answering) {
     rubric,
     explaining,
     sofar,
+    pointsLadder,
     asked,
     listenTask,
     dictationCheck,

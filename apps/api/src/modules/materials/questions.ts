@@ -8,6 +8,7 @@ import type { Figure, ItemResult, MaterialItemsView } from '@learnbuddy/shared-t
 
 import type { Db } from '../../lib/db.js';
 import { storedFigure } from '../practice/items.js';
+import { taskPartViews } from '../practice/taskParts.js';
 import { subjectKindOf } from '../practice/viewParts.js';
 import { materialView } from './view.js';
 
@@ -25,6 +26,7 @@ type MaterialItemRow = {
   subject_kind: string | null;
   last_status: 'correct' | 'revealed' | 'skipped' | 'missed' | null;
   last_first_try: boolean | null;
+  task_part: unknown;
 };
 
 function resultOf(r: MaterialItemRow): ItemResult {
@@ -45,7 +47,7 @@ export async function materialItems(
   const material = await materialView(db, learnerId, materialId);
   const rows = await db.query<MaterialItemRow>(
     `select i.id, i.kind, i.prompt, i.choices, i.unit, i.topic, i.origin, i.lang, i.prompt_lang, i.figure,
-            sub.kind as subject_kind,
+            i.task_part, sub.kind as subject_kind,
             last.status as last_status, last.first_try_correct as last_first_try
        from items i
        left join subjects sub on sub.id = i.subject_id
@@ -57,6 +59,7 @@ export async function materialItems(
       order by i.seq`,
     [materialId, learnerId],
   );
+  const parts = taskPartViews(rows);
   return {
     material,
     items: rows.map((r) => ({
@@ -94,7 +97,9 @@ export async function materialItems(
       // A reading text belongs to working on its questions too (issue #233): the list names
       // what the sheet asks, and the text stands above each question in the session.
       passage: null,
-      task_part: null,
+      // A part of a task names its letter and its material (#297), as the sheet prints it: the
+      // list is where she sees what the sheet asks, and „b)" without its material asks nothing.
+      task_part: parts.get(r.id) ?? null,
       // The options' pictures (issue #231) too: the list names its questions by their text.
       choice_figures: null,
       // Reading a question aloud belongs to the session too (issue #238): the list says what

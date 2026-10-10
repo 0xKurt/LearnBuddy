@@ -10,7 +10,13 @@
 
 import { randomUUID } from 'node:crypto';
 
-import type { AnswerResponse, MaterialView, SessionView } from '@learnbuddy/shared-types/contracts';
+import {
+  TASK_STEM_MAX,
+  type AnswerResponse,
+  type MaterialItemsView,
+  type MaterialView,
+  type SessionView,
+} from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { LlmError } from '../llm/gateway.js';
@@ -154,6 +160,34 @@ describe.skipIf(!dbReady)('tasks in parts from a photo (#297, step 3)', () => {
     expect(read.system).toContain('Tasks in parts ("part_tasks")');
   });
 
+  it('a Probearbeit leaves the open c) out, and its letters name only the parts that come', async () => {
+    const id = await photograph();
+    const started = await l.api.post<SessionView>('/practice/sessions', {
+      material_id: id,
+      mode: 'test',
+    });
+    expect(started.status, JSON.stringify(started.body)).toBe(201);
+    const parts = started.body.items.filter((i) => i.item.task_part !== null);
+    // No long answer in a test: c) is not in the run, so the bar never names it.
+    expect(parts.map((i) => i.item.task_part!.part)).toEqual(['a', 'b']);
+    for (const si of parts) expect(si.item.task_part!.letters).toEqual(['a', 'b']);
+  });
+
+  it('„Dein Material" names each part with its letter and its material', async () => {
+    const id = await photograph();
+    const list = await l.api.get<MaterialItemsView>(`/materials/${id}/items`);
+    expect(list.status).toBe(200);
+    expect(list.body.items.map((i) => i.task_part?.part ?? null)).toEqual([null, 'a', 'b', 'c']);
+    for (const i of list.body.items.slice(1)) {
+      expect(i.task_part).toMatchObject({ letters: ['a', 'b', 'c'], stem: POOL_STEM });
+    }
+    // Only what the sheet asks: no formula, no key point.
+    expect(JSON.stringify(list.body)).not.toContain('a / 25');
+    // Another learner gets nothing of it.
+    const sam = await onboard(env, { name: 'Sam' });
+    expect((await sam.api.get(`/materials/${id}/items`)).status).toBe(404);
+  });
+
   it('mixed parts: b) follows her wrong a) by code, c) is judged on its points with ONE follow-up', async () => {
     const s = await practise(await photograph());
     const [, a, b, c] = s.items.map((i) => i.item.id) as [string, string, string, string];
@@ -193,10 +227,6 @@ describe.skipIf(!dbReady)('tasks in parts from a photo (#297, step 3)', () => {
     ['a formula that does not give its key', poolTask(['a', 'b', 'c'], 'a / 20')],
     ['letters with a gap (c was a drawing)', poolTask(['a', 'b', 'd'])],
     [
-      'a material too long to stand above a part',
-      { ...poolTask(), stem: Array(4).fill(POOL_STEM).join(' ') },
-    ],
-    [
       'a part of a form no part has',
       {
         ...poolTask(),
@@ -218,6 +248,17 @@ describe.skipIf(!dbReady)('tasks in parts from a photo (#297, step 3)', () => {
     expect(stored[1]!.hints).toHaveLength(2);
     const view = (await l.api.get<MaterialView>(`/materials/${id}`)).body;
     expect(view.status).toBe('ready');
+  });
+
+  it('a material longer than a reading text: the subtasks come back as questions, none lost', async () => {
+    const stem = Array(Math.ceil(TASK_STEM_MAX / POOL_STEM.length) + 1)
+      .fill(POOL_STEM)
+      .join(' ');
+    expect(stem.length).toBeGreaterThan(TASK_STEM_MAX);
+    const stored = await rows(await photograph(poolSheet({ ...poolTask(), stem })));
+    expect(stored.map((r) => r.task_part)).toEqual([null, null, null, null]);
+    // Too long to stand in front of a question (items.prompt holds 1000): each stands alone.
+    expect(stored.map((r) => r.prompt)).toEqual([LITRES.prompt, A, B, POOL_WHY]);
   });
 
   it('another learner can neither practise her sheet, see her task nor answer its parts', async () => {

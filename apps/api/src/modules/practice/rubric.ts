@@ -86,7 +86,7 @@ import { kindIn, RUBRIC_KINDS } from './itemFields.js';
 const OPENING_CHARS = 200;
 
 /** Das Kürzel eines Elements aus seiner Position; das Modell schreibt keine Ids (Regel 2). */
-function refOf(index: number): string {
+export function refOf(index: number): string {
   return `r${index + 1}`;
 }
 
@@ -229,6 +229,10 @@ type RubricStep = {
  *                 wäre eine Behauptung auf nichts (Regel 5). Ein solches Element wird nie der
  *                 nächste Schritt und steht in keiner Zeile, die sie liest.
  *
+ * Dazu ein vierter, nur bei einer Erklärfrage: `shown` — ein Kernpunkt, den Buddy vorgemacht hat
+ * (#298, `pointSteps.ts`). Er zählt zur vollständigen Erklärung, ist aber nicht ihrer: nie ein
+ * „✓", nie in `session_items.explained`, und das Modell wird zu ihm nicht gefragt.
+ *
  * `counted` trennt die zwei Arten von Wissen sichtbar: `true` heißt gezählt oder verglichen,
  * `false` heißt beurteilt — und Buddys Satz sagt es verschieden (bei einem gezählten Element,
  * dass es fehlt; bei einem beurteilten fragt er nach).
@@ -237,7 +241,7 @@ export type RubricElementState = {
   /** Das Kürzel, das der SERVER aus der Position vergeben hat ('r1'); das Modell schreibt keine Ids. */
   ref: string;
   name: string;
-  state: 'met' | 'open' | 'unknown';
+  state: 'met' | 'open' | 'unknown' | 'shown';
   counted: boolean;
 };
 
@@ -246,9 +250,9 @@ export type RubricOutcome = {
   /** Eine Erklärfrage (#236): die Rückmeldung nennt Kernpunkte und stellt eine Nachfrage. */
   explain: boolean;
   elements: RubricElementState[];
-  /** Jedes Element steht auf `met`. */
+  /** Jedes Element steht auf `met` — oder ist ein vorgemachter Kernpunkt (`shown`, #298). */
   all: boolean;
-  /** Mindestens ein Element steht auf `met`. */
+  /** Mindestens ein Element steht auf `met`: etwas davon ist ihres. */
   some: boolean;
   step: RubricStep | null;
 };
@@ -383,6 +387,8 @@ export function checkRubric(
   settled: readonly string[] = [],
   /** Ob ein Zitat Zeilen nennt, die es im Text gibt (#258, `essay.ts`); ohne Text nie. */
   cites: (quote: string) => boolean = () => false,
+  /** Kernpunkte, die Buddy vorgemacht hat (#298, `pointSteps.ts`): Buddys, nie ihre. */
+  shown: readonly string[] = [],
 ): RubricOutcome {
   const byRef = new Map<string, RubricClaim>();
   for (const c of claims) if (!byRef.has(c.element)) byRef.set(c.element, c);
@@ -390,10 +396,13 @@ export function checkRubric(
     const ref = refOf(i);
     // Gezählt heißt: Code hat es gemessen. Was ein Zitat aus ihrem Text braucht, ist beurteilt.
     const counted = !['judged', 'key_point', 'essay_point'].includes(element.check.by);
-    const was = element.check.by === 'key_point' && settled.includes(ref);
-    const now: Decided = was
-      ? { state: 'met', verb: null }
-      : decide(element, text, byRef.get(ref), cites);
+    const point = element.check.by === 'key_point';
+    const now: { state: RubricElementState['state']; verb: string | null } =
+      point && settled.includes(ref)
+        ? { state: 'met', verb: null }
+        : point && shown.includes(ref)
+          ? { state: 'shown', verb: null }
+          : decide(element, text, byRef.get(ref), cites);
     return { ref, element, counted, ...now };
   });
   const first = decided.find((d) => d.state === 'open');
@@ -406,7 +415,7 @@ export function checkRubric(
       state: d.state,
       counted: d.counted,
     })),
-    all: decided.every((d) => d.state === 'met'),
+    all: decided.every((d) => d.state === 'met' || d.state === 'shown'),
     some: decided.some((d) => d.state === 'met'),
     step: first
       ? {
@@ -508,15 +517,19 @@ function explainReply(locale: string, o: RubricOutcome, fallback: string, last: 
 
 /**
  * Die Kernpunkte in einer Zeile: „✓ Licht · Ort fehlt noch" (#236, #258). Ein Punkt ohne Urteil
- * (`unknown`) steht nicht darin: über ihn hat niemand etwas gemessen.
+ * (`unknown`) steht nicht darin: über ihn hat niemand etwas gemessen. Ein vorgemachter (`shown`,
+ * #298) steht als „Licht vorgemacht" darin — nie als „✓", denn er ist Buddys.
  */
 export function pointLine(locale: string, elements: readonly RubricElementState[]): string {
+  const keys: Record<Exclude<RubricElementState['state'], 'unknown'>, MessageKey> = {
+    met: 'practice.explain.point_met',
+    open: 'practice.explain.point_open',
+    shown: 'practice.explain.point_shown',
+  };
   return elements
-    .filter((e) => e.state !== 'unknown')
-    .map((e) =>
-      t(locale, e.state === 'met' ? 'practice.explain.point_met' : 'practice.explain.point_open', {
-        name: e.name,
-      })
+    .flatMap((e) => (e.state === 'unknown' ? [] : [{ name: e.name, key: keys[e.state] }]))
+    .map(({ name, key }) =>
+      t(locale, key, { name })
         // One point never breaks across two lines („Ort / fehlt noch" reads as two things).
         .replace(/ /g, NBSP),
     )

@@ -11,7 +11,8 @@ import { t } from '../../i18n/index.js';
 import { lockActiveSession } from './sessionRow.js';
 import { CARD_PASS } from './cards.js';
 import { DRILL_PASS } from './drill.js';
-import { offersHintButton } from './modeRules.js';
+import { givesHints, offersHintButton } from './modeRules.js';
+import { keyPointsOf, pointLadder, pointStepText } from './pointSteps.js';
 import { mentionsSolution } from './tutor.js';
 import { answerItem } from './answer.js';
 import {
@@ -61,13 +62,21 @@ export async function hintItem(
           hints_used: number;
           prepared_hints_used: number;
           hints: string[];
+          explained: string[];
         } & Pick<
           ItemRow,
-          'kind' | 'prompt' | 'answer' | 'accepted_answers' | 'choices' | 'correct_choice' | 'unit'
+          | 'kind'
+          | 'prompt'
+          | 'answer'
+          | 'accepted_answers'
+          | 'choices'
+          | 'correct_choice'
+          | 'unit'
+          | 'rubric'
         >
       >(
-        `select si.status, si.hints_used, si.prepared_hints_used, i.hints, i.kind, i.prompt, i.answer, i.accepted_answers,
-                i.choices, i.correct_choice, i.unit
+        `select si.status, si.hints_used, si.prepared_hints_used, si.explained, i.hints, i.kind, i.prompt,
+                i.answer, i.accepted_answers, i.choices, i.correct_choice, i.unit, i.rubric
            from session_items si join items i on i.id = si.item_id
           where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
           for update of si`,
@@ -75,7 +84,14 @@ export async function hintItem(
       );
       if (!si) throw new AppError('not_found', 'Question not in this session');
       if (si.status !== 'open') throw new AppError('conflict', 'This question is already closed');
-      const hint = si.hints[si.prepared_hints_used];
+      // An explanation's ladder is its key points (#298, `pointSteps.ts`): ONE shown as a model
+      // sentence, never the last open one — that end is the answer path's, like every ladder's.
+      const points = givesHints(session.mode) ? keyPointsOf(si.rubric) : null;
+      const step = points
+        ? pointLadder(points, si.explained, si.prepared_hints_used, si.hints_used).next
+        : null;
+      if (points && !step) throw new NoPreparedHint();
+      const hint = step ? pointStepText(learner.locale, step) : si.hints[si.prepared_hints_used];
       if (hint === undefined) throw new NoPreparedHint();
       if (
         session.mode === 'help' &&
@@ -101,11 +117,13 @@ export async function hintItem(
          values ($1, $2, $3, $4, 'tutor', $5, true, false)`,
         [sessionId, learner.id, input.item_id, seq + 1, hint],
       );
+      // The ladder stands just past what was shown: the next hint, or the point and the points of
+      // hers it skipped on the way.
       await tx.query(
         `update session_items set hints_used = hints_used + 1,
-                                  prepared_hints_used = prepared_hints_used + 1, deferred_at = null
+                                  prepared_hints_used = $3, deferred_at = null
           where session_id = $1 and item_id = $2`,
-        [sessionId, input.item_id],
+        [sessionId, input.item_id, step ? step.at + 1 : si.prepared_hints_used + 1],
       );
       await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
         sessionId,

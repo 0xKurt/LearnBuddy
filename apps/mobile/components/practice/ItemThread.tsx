@@ -10,6 +10,7 @@
 // Her question to the tutor (issue #402) stands here like any of her turns, on every form, and an
 // answer Buddy offers to keep for later carries the chip "Merk ich mir für nachher" under it — the
 // help chips' pattern (`HelpChips`); once tapped it says "Gemerkt".
+// An explanation may show a picture (issue #298): it stands under Buddy's bubble, drawn by the app.
 // A long text (issue #258) stands as one line per version ("Fassung 1 · 412 Wörter") — the text
 // itself is in the field — and Buddy's reply to it is a short bubble ("Erörterung – so steht dein
 // Text") with the feedback per key point (`EssayFeedback`) as a card under it over the thread's
@@ -36,6 +37,7 @@ import { Rise } from '../lb/Motion.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenMath } from '../math/useSpokenMath.js';
 import { EssayFeedback } from './EssayFeedback.js';
+import { QuestionFigure } from './QuestionFigure.js';
 import { PronunciationNote } from './SpeakPanel.js';
 import { Thinking } from './Thinking.js';
 import { Nudge, VerdictTag, type VerdictKey } from './Verdict.js';
@@ -202,6 +204,13 @@ export function ItemThread({
             ) : null}
             {pronunciation && !mine && turn.pronunciation ? (
               <PronunciationNote feedback={turn.pronunciation} />
+            ) : null}
+            {/* An explanation's picture (#298), under the reply's bubble like its chips: drawn
+                from data the server checked, and opened large on a tap like every figure. */}
+            {!mine && turn.figure ? (
+              <View style={{ marginLeft: ORB + SPACE.sm, alignSelf: 'stretch' }}>
+                <QuestionFigure figure={turn.figure} />
+              </View>
             ) : null}
             {/* Under the reply's bubble, not under Buddy's orb. */}
             {turn.later === 'kept' ? (

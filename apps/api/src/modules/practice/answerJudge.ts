@@ -12,7 +12,7 @@ import type { Stepped } from './answerSteps.js';
 import { columnStepOf } from './columnCalc.js';
 import { nearlyRight, dictationReply } from './dictation.js';
 import { NEAR_MISS, plainMath, typoShapeFor } from './evaluate.js';
-import { ladderDone, REVEAL_AFTER_MISSES, workedReply } from './ladder.js';
+import { REVEAL_AFTER_MISSES, workedReply } from './ladder.js';
 import { givesHints } from './modeRules.js';
 import {
   articleMissing,
@@ -22,6 +22,7 @@ import {
   pathReply,
   TYPO_REPLY,
 } from './nearMiss.js';
+import { ladderEndReply } from './pointSteps.js';
 import { staffAgain, staffAnswerReply, staffSurfaceOf } from './staff.js';
 import {
   structuredDecidedBy,
@@ -63,13 +64,14 @@ export type Judged = {
 export function judgeByRules(c: AnswerCase): Judged | null {
   const { learner, session, item, question, hintRequest, text } = c;
   const { partsCheck, staffTask, staffCheck, dictationCheck } = c;
-  const { followed, rule, guided, onlyOneLeft } = c;
-  if (hintRequest && !question && givesHints(session.mode) && ladderDone(item)) {
-    // Asked again at the end of the ladder: the solution explained, at once, no model.
+  const { followed, rule, guided, onlyOneLeft, atLadderEnd, pointsLadder } = c;
+  if (hintRequest && !question && givesHints(session.mode) && atLadderEnd) {
+    // Asked again at the end of the ladder: the solution explained (an explanation's last point,
+    // #298), at once, no model.
     return {
       verdict: 'not_an_attempt',
       evaluatedBy: 'rule',
-      reply: workedReply(learner.locale, item),
+      reply: ladderEndReply(learner.locale, item, pointsLadder),
       gaveHint: false,
       revealed: true,
     };

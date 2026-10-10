@@ -6,8 +6,9 @@
 import { t } from '../../i18n/index.js';
 import type { AnswerCase, Judged } from './answerJudge.js';
 import type { TutorJudgement } from './answerTutor.js';
-import { asTestTurn, ladderDone, REVEAL_AFTER_MISSES, workedReply } from './ladder.js';
+import { asTestTurn, REVEAL_AFTER_MISSES } from './ladder.js';
 import { givesHints } from './modeRules.js';
+import { ladderEndReply } from './pointSteps.js';
 import { checkRubric, newlyExplained, rubricReply, rubricVerdict } from './rubric.js';
 import { shownSolution } from './service.js';
 import { secretsOf } from './structured.js';
@@ -23,7 +24,8 @@ export function finishReply(
   columnStep: number | null;
 } {
   const { learner, session, item, question, hintRequest, essay, text } = c;
-  const { structured, partsCheck, rubric, explaining, sofar, nextHint } = c;
+  const { structured, partsCheck, rubric, explaining, sofar, nextHint, atLadderEnd, pointsLadder } =
+    c;
   let judged = decided;
   let explained: string[] = [];
   // ─────────────── Schreibaufgabe: Rückmeldung je Element statt eines Urteils (issue #211) ──
@@ -45,7 +47,14 @@ export function finishReply(
   // Nur für eine echte Antwort: eine Tipp-Bitte und alles, was keine Antwort war, bleiben
   // unberührt (dort hat sie nichts geschrieben, das gegen die Elemente zu halten wäre).
   if (rubric && judged.verdict !== null && judged.verdict !== 'not_an_attempt') {
-    const outcome = checkRubric(rubric, [...sofar.before, text].join('\n'), claims, sofar.settled);
+    const outcome = checkRubric(
+      rubric,
+      [...sofar.before, text].join('\n'),
+      claims,
+      sofar.settled,
+      undefined,
+      pointsLadder?.shown,
+    );
     explained = newlyExplained(outcome, sofar.settled);
     // Her last try at an explanation ends with a closing line instead of a follow-up (#236).
     const last = item.attempts + 1 >= REVEAL_AFTER_MISSES;
@@ -91,7 +100,7 @@ export function finishReply(
     // the hint ladder, the solution is explained and the question comes back soon (FSRS).
     const attempted = judged.verdict !== null && judged.verdict !== 'not_an_attempt';
     const misses = item.attempts + (attempted ? 1 : 0);
-    const askedAfterLastHint = !question && judged.verdict === 'not_an_attempt' && ladderDone(item);
+    const askedAfterLastHint = !question && judged.verdict === 'not_an_attempt' && atLadderEnd;
     if (
       !judged.revealed &&
       !essay &&
@@ -103,8 +112,12 @@ export function finishReply(
     ) {
       judged = {
         ...judged,
-        // An explanation shows no model answer (#236): its points and the closing line stand.
-        reply: explaining ? judged.reply : workedReply(learner.locale, item),
+        // An explanation shows no model answer (#236): its points and the closing line stand —
+        // asked again at the ladder's end, its last point (#298).
+        reply:
+          explaining && !askedAfterLastHint
+            ? judged.reply
+            : ladderEndReply(learner.locale, item, pointsLadder),
         gaveHint: false,
         usedPrepared: false,
         revealed: true,

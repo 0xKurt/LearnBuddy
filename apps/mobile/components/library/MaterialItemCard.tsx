@@ -1,7 +1,7 @@
-// One question of a material: its text with math set properly, its figure and
-// choices, how it went the last time (in words, never only a colour) and a
-// quiet way to delete it. The solution is never part of this view
-// (docs/architecture.md §Material).
+// One question of a material: its text with math set properly (a part of a task with its letter
+// and, above the first, its material), its figure and choices, how it went the last time (in
+// words, never only a colour) and a quiet way to delete it. The solution is never part of this
+// view (docs/architecture.md §Material).
 
 import type { ItemResult, MaterialItemView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
 import { MathText } from '../math/MathText.js';
+import { lettered } from '../practice/PartStem.js';
 import { QuestionFigure } from '../practice/QuestionFigure.js';
 
 const RESULT_TONE: Record<ItemResult, 'success' | 'primary' | 'gray'> = {
@@ -36,6 +37,7 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('library');
   const choices = item.kind === 'multiple_choice' && item.choices ? item.choices : null;
+  const part = item.task_part;
   return (
     <Card>
       <View style={{ gap: RHYTHM.stack }}>
@@ -46,7 +48,12 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
           {item.topic ? <Chip>{item.topic}</Chip> : null}
           <Chip tone={RESULT_TONE[item.result]}>{t(`items.result.${item.result}`)}</Chip>
         </View>
-        <MathText text={item.prompt} style={TYPE.body} />
+        {/* A task in parts (#297): its material once, above its first part, as the sheet prints
+            it — and every part with its letter. */}
+        {part && part.part === part.letters[0] ? (
+          <MathText text={part.stem} inlineFractions style={[TYPE.body, { color: palette.ink2 }]} />
+        ) : null}
+        <MathText text={lettered(item.prompt, part)} style={TYPE.body} />
         {item.figure ? <QuestionFigure figure={item.figure} /> : null}
         {choices ? (
           // token-exempt: the label snug over its choices, 6 apart

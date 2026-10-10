@@ -298,7 +298,9 @@ function feedbackOf(
       const quote = claims.find((c) => c.element === e.ref)?.quote ?? '';
       return {
         name: e.name,
-        state: e.state,
+        // An essay has no Vormachen (#298), so no point of it is ever `shown`; were one, nothing
+        // of hers would have been measured there.
+        state: e.state === 'shown' ? 'unknown' : e.state,
         quote: e.state === 'met' && quote !== '' ? quote : null,
         missing: e.state === 'open' ? (rubric.elements[i]?.missing ?? null) : null,
       };
