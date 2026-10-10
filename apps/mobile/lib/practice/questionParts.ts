@@ -6,9 +6,10 @@ import type { ItemView } from '@learnbuddy/shared-types/contracts';
 import type { TFunction } from 'i18next';
 
 import { currentLocale } from '../i18n/index.js';
-import type { SpokenWords } from '../math/speak.js';
+import { sayMath, type SpokenWords } from '../math/speak.js';
 import type { SpokenPart } from '../speech/listen.js';
-import { questionReadText, spokenText } from '../speech/spoken.js';
+import { spokenText } from '../speech/spoken.js';
+import { questionReadText } from './readText.js';
 
 /** What Buddy reads when a question appears (never the topic). */
 export function questionParts(item: ItemView, words: SpokenWords, t: TFunction): SpokenPart[] {
@@ -20,7 +21,7 @@ export function questionParts(item: ItemView, words: SpokenWords, t: TFunction):
         { text: item.prompt, lang: item.lang ?? item.prompt_lang ?? app },
       ];
     case 'vocab':
-      return [{ text: spokenText(item.prompt, words), lang: item.prompt_lang ?? app }];
+      return [{ text: spokenText(item.prompt, sayMath(words)), lang: item.prompt_lang ?? app }];
     default:
       return [
         {

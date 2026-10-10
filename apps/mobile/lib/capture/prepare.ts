@@ -1,35 +1,11 @@
-// Photos of study material, from the picker to the API (docs/architecture.md
-// §Material). Each photo is made small but readable on the device (longest
-// side 1600 px, JPEG). Sending reserves the material with signed upload URLs,
-// PUTs every photo straight to storage, then submit lets the API check that
-// the photos arrived and start reading them.
-//
-// What needs the device stays here (preparePhoto); the order of reserve →
-// upload → submit, with its retries and give-ups, lives in
-// lib/capture/materialUpload.ts, where Node tests can prove it. This file wires
-// the real API calls and the real PUT into it.
+// A picked photo, made ready on the device (docs/architecture.md §Material): small but readable
+// (longest side 1600 px, JPEG), and checked by the domain that takes the pages (lib/capture/
+// pages.ts `PageHandler`, issue #107) — the learning domain looks for blur, light and tilt.
+// Where the pages go from here is that domain's too (`start`).
 
 import { ImageManipulator, SaveFormat, type ImageRef } from 'expo-image-manipulator';
 
-import { newId } from '../api/client.js';
-import { checkPhoto } from '../photo/check.js';
-import { ANALYSIS_WIDTH, type PhotoProblem } from '../photo/quality.js';
-import { createMaterial, submitMaterial } from '../api/endpoints.js';
-import {
-  MaterialUpload,
-  type MaterialLink,
-  type UploadDeps,
-  type UploadFile,
-} from './materialUpload.js';
-import { putPhoto } from './put.js';
-
-export {
-  MAX_PHOTOS,
-  MaterialUpload,
-  type MaterialLink,
-  type SendProgress,
-  type UploadFile,
-} from './materialUpload.js';
+import { pageHandler, type PhotoProblem } from './pages.js';
 
 const MAX_SIDE = 1600;
 const JPEG_QUALITY = 0.7;
@@ -38,7 +14,7 @@ export type PreparedPhoto = {
   uri: string;
   width: number;
   height: number;
-  /** What the check on the device found (lib/photo/quality.ts); empty = looks fine. */
+  /** What the check on the device found (lib/capture/pages.ts); empty = looks fine. */
   problems: PhotoProblem[];
   /** The saved JPEG itself, when asked for: a photo of her working goes in the request (#444). */
   base64: string | null;
@@ -73,12 +49,19 @@ export async function preparePhoto(
     });
     // A small copy for the quality check, measured right here on the device.
     let problems: PhotoProblem[] = [];
+    const check = pageHandler.get()?.check;
     try {
-      if (image.width > ANALYSIS_WIDTH) context.resize({ width: ANALYSIS_WIDTH });
-      const small = await context.renderAsync();
-      rendered.push(small);
-      const copy = await small.saveAsync({ format: SaveFormat.JPEG, compress: 0.85, base64: true });
-      if (copy.base64) problems = checkPhoto(copy.base64, originalMinSide);
+      if (check) {
+        if (image.width > check.width) context.resize({ width: check.width });
+        const small = await context.renderAsync();
+        rendered.push(small);
+        const copy = await small.saveAsync({
+          format: SaveFormat.JPEG,
+          compress: 0.85,
+          base64: true,
+        });
+        if (copy.base64) problems = check.run(copy.base64, originalMinSide);
+      }
     } catch {
       // The check is advice: without it the photo is simply taken as it is.
     }
@@ -94,16 +77,4 @@ export async function preparePhoto(
     context.release();
     for (const r of rendered) r.release();
   }
-}
-
-/** The real outside world of a send: the two API calls, the native PUT, fresh request ids. */
-const DEPS: UploadDeps = { createMaterial, submitMaterial, putPhoto, newId };
-
-/** Starts one sheet's send with the real API and the real upload. */
-export function newMaterialUpload(
-  files: readonly UploadFile[],
-  link: MaterialLink,
-  requestId?: string,
-): MaterialUpload {
-  return new MaterialUpload(DEPS, files, link, requestId ?? newId());
 }

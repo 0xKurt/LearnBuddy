@@ -15,9 +15,8 @@
 // It only advises: she may keep a photo anyway (the model says later whether it
 // could read it).
 
+import type { PhotoProblem } from '../capture/pages.js';
 import { measureTilt } from './tilt.js';
-
-export type PhotoProblem = 'blurry' | 'dark' | 'washed_out' | 'small' | 'tilted';
 
 export type PhotoMetrics = {
   /** Mean brightness 0–255. */

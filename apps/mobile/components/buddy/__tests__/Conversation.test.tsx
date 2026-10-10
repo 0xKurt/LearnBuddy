@@ -16,9 +16,13 @@ import { fireEvent, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { registerLearning } from '../../../lib/learning/register.js';
 import { commonBox, renderInApp, styleOf } from '../../../testing/render.js';
 import { Btn } from '../../lb/Btn.js';
 import { Conversation } from '../Conversation.js';
+
+// The app as it runs: the learning domain's cards are given at start (app/_layout.tsx).
+registerLearning();
 
 /** The real sentence from the owner's phone, 01.10. */
 const SENTENCE = 'Eingetragen: Mathearbeit Brüche am Freitag, 2. Oktober';

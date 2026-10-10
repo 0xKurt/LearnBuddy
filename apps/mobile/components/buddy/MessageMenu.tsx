@@ -14,7 +14,7 @@ import { speak } from '../../lib/speech/listen.js';
 import { Btn } from '../lb/Btn.js';
 import { Sheet } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
-import { useSpokenWords } from '../math/useSpokenMath.js';
+import { useSay } from '../../lib/speech/say.js';
 import { spokenText } from '../../lib/speech/spoken.js';
 
 export type MenuMessage = { text: string; role: 'learner' | 'buddy' };
@@ -39,7 +39,7 @@ export function MessageMenu({
   onClose: () => void;
 }) {
   const { t } = useTranslation(['buddy', 'common']);
-  const words = useSpokenWords();
+  const say = useSay();
   return (
     <Sheet
       visible={message !== null}
@@ -72,7 +72,7 @@ export function MessageMenu({
           onPress={() => {
             const m = message;
             onClose();
-            void speak(spokenText(m.text, words), currentLocale());
+            void speak(spokenText(m.text, say), currentLocale());
           }}
         >
           {t('buddy:message.speak')}

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { mathSpans } from '../../math/parse.js';
 import { closedStream, markdownBlocks, markdownPlain } from '../markdown.js';
+import { notation } from '../notation.js';
+
+// $…$ math is the learning domain's notation, given as at app start (lib/learning/register.tsx).
+notation.fill(mathSpans);
 
 describe('markdownBlocks', () => {
   it('keeps a reply without Markdown as one paragraph, line breaks included', () => {

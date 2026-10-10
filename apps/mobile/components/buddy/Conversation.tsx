@@ -16,8 +16,6 @@
 // press on a message opens "Kopieren" / "Vorlesen" (MessageMenu).
 
 import { isValidElement, useEffect, useRef, useState, type ReactNode } from 'react';
-import { speakMathText } from '../../lib/math/speak.js';
-import { useSpokenWords } from '../math/useSpokenMath.js';
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { Text, View } from 'react-native';
 import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
@@ -28,28 +26,23 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 import { PressArea } from '../lb/PressArea.js';
-import { DrillOfferCard } from '../learn/DrillOfferCard.js';
-import { OfferCard } from '../learn/OfferCard.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { AreaCard } from './AreaCard.js';
 import { ConfirmCard } from './ConfirmCard.js';
-import { RoleplayCard } from './RoleplayCard.js';
-import { RehearsalResult } from './RehearsalResult.js';
-import { RehearseCard } from './RehearseCard.js';
-import { RoleplayResult } from './RoleplayResult.js';
 import { deliveryText, describeAction, onlyInApp } from './describe.js';
+import { actionCard, addActionCard, hasCard, messageCard, readAlong } from './extensions.js';
 import { i18n } from '../../lib/i18n/index.js';
 import { dayBreaks, formatDay, localDateOf } from '../../lib/time.js';
 import { closedStream, markdownPlain } from '../../lib/buddy/markdown.js';
 import { haptic } from '../../lib/haptics.js';
 import { glide, riseIn } from '../../lib/theme/enter.js';
 import { MessageMenu, type MenuMessage } from './MessageMenu.js';
-import { ReadAlongBubble } from './ReadAlongBubble.js';
 import { RichText } from './RichText.js';
 import { TypingBubble } from './TypingBubble.js';
 import { useReveal } from './useReveal.js';
 import { BUBBLE, TAIL } from '../../lib/theme/bubble.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { useSay } from '../../lib/speech/say.js';
 
 /**
  * The fine print under a turn (where a message went, a receipt's note, the day): TYPE.small,
@@ -60,40 +53,22 @@ const FINE = { fontSize: 12 } as const;
 /** The check or cross in front of a receipt line. */
 const RECEIPT_ICON = 14;
 
-/** The card one of Buddy's actions brings into the chat; null where a receipt says it. */
-function actionCard(a: MessageView['actions'][number], spoken: boolean): ReactNode {
-  const s = a.summary;
-  // Buddy's offers to start something: always shown, one tap starts it.
-  if (s.tool === 'offer_learning') return <OfferCard actionId={a.id} offer={s} spoken={spoken} />;
-  // A Kopfrechnen round (issue #243): the same card, code writes the tasks.
-  if (s.tool === 'offer_drill') return <DrillOfferCard actionId={a.id} offer={s} />;
-  if (s.tool === 'open_area') return <AreaCard area={s.area} />;
-  // Nothing is deleted until she answers this (issue #151).
-  if (s.tool === 'confirm_delete') return <ConfirmCard confirm={s} />;
-  // The role card: the scene, her tasks and the way out (issue #244).
-  if (s.tool === 'start_roleplay') return <RoleplayCard roleplay={s} />;
-  // A rehearsal talk or reading aloud, recorded on the card itself (issue #264).
-  if (s.tool === 'offer_rehearsal') return <RehearseCard actionId={a.id} offer={s} />;
-  return null;
-}
+// The core's own cards; a domain adds its offers, its roleplay and its rehearsal the same way
+// (components/buddy/extensions.ts, lib/learning/register.tsx).
+addActionCard('open_area', (s) => <AreaCard area={s.area} />);
+// Nothing is deleted until she answers this (issue #151).
+addActionCard('confirm_delete', (s) => <ConfirmCard confirm={s} />);
 
 /** One empty set for "nothing is carried on top": a fresh one each render is a new prop. */
 const EMPTY_IDS: ReadonlySet<string> = new Set();
 
 /**
  * What Buddy DID in this turn (the ✓ receipt). Offers are not done yet, and a proposed
- * deletion is a question waiting for her — both have a card of their own.
+ * deletion is a question waiting for her — both have a card of their own. What has neither a
+ * card nor words (a domain's tool without that domain) is not shown at all.
  */
 function receiptOf(m: MessageView): MessageView['actions'] {
-  return m.actions.filter(
-    (a) =>
-      a.summary.tool !== 'offer_learning' &&
-      a.summary.tool !== 'offer_drill' &&
-      a.summary.tool !== 'open_area' &&
-      a.summary.tool !== 'confirm_delete' &&
-      a.summary.tool !== 'start_roleplay' &&
-      a.summary.tool !== 'offer_rehearsal',
-  );
+  return m.actions.filter((a) => !hasCard(a.summary.tool) && describeAction(a.summary) !== '');
 }
 
 /** Still takeable back right now. */
@@ -164,8 +139,8 @@ type Props = {
   carriedOnTop?: ReadonlySet<string>;
   /**
    * The conversation is being spoken (app/talk.tsx, issue #18): Buddy's newest bubble
-   * follows his voice — the sentence being read stands out (ReadAlongBubble) — and a
-   * tapped offer keeps the voice on (OfferCard `spoken`, issue #40).
+   * follows his voice — the sentence being read stands out (`readAlong`, a domain's) — and a
+   * tapped offer keeps the voice on (its card's `spoken`, issue #40).
    */
   spoken?: boolean;
   /**
@@ -198,7 +173,8 @@ export function Conversation({
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   // Screen readers hear formulas in words, not raw LaTeX (p2-buddy-bubble-a11y-reads-raw-latex).
-  const words = useSpokenWords();
+  const say = useSay();
+  const ReadAlong = readAlong.get();
   const [menu, setMenu] = useState<MenuMessage | null>(null);
   /** The step whose arrow was tapped: its arrow turns into the spinner while that runs (#295). */
   const [undoingId, setUndoingId] = useState<string | null>(null);
@@ -284,9 +260,13 @@ export function Conversation({
         const done = receiptOf(m).filter((a) => !carriedOnTop.has(a.id));
         const applied = done.filter((a) => a.status !== 'undone');
         const takenBack = done.filter((a) => a.status === 'undone');
-        const spoken = `${mine ? t('thread.you') : t('thread.buddy')}: ${speakMathText(markdownPlain(m.text, { spoken: true }), words)}`;
+        const spoken = `${mine ? t('thread.you') : t('thread.buddy')}: ${say(markdownPlain(m.text, { spoken: true }))}`;
         const stopped = mine && m.status === 'failed' && m.failure_code === 'stopped';
         const opensHere = sessionStart?.afterMessageId === m.id;
+        // A message a domain draws itself: the feedback after a roleplay or what a rehearsal
+        // measured, as the "So lief's" list (issues #264, #384). The text stays for reading
+        // aloud and copying.
+        const own = messageCard(m);
         return (
           <Animated.View
             key={m.id}
@@ -294,17 +274,9 @@ export function Conversation({
             style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: SPACE.xs }}
           >
             {day ? <DayLine day={day} /> : null}
-            {m.roleplay_feedback ? (
-              // The feedback after a roleplay: the "So lief's" list the Probetest ends with,
-              // in place of its text (issue #384). The text stays for reading aloud.
+            {own ? (
               <Animated.View entering={enterOf(m, 0)} style={{ width: '86%' }}>
-                <RoleplayResult feedback={m.roleplay_feedback} />
-              </Animated.View>
-            ) : m.rehearsal ? (
-              // What a rehearsal measured, the same list (issue #264); the text stays for reading
-              // aloud and copying.
-              <Animated.View entering={enterOf(m, 0)} style={{ width: '86%' }}>
-                <RehearsalResult rehearsal={m.rehearsal} />
+                {own}
               </Animated.View>
             ) : (
               <Animated.View
@@ -353,11 +325,8 @@ export function Conversation({
                         // token-exempt: the title snug over its message, 2 apart
                         <Text style={[TYPE.label, { marginBottom: 2 }]}>{m.outreach.title}</Text>
                       ) : null}
-                      {!mine && spokenMode && m === lastBuddy ? (
-                        <ReadAlongBubble
-                          text={m.text}
-                          style={[TYPE.body, { color: palette.ink }]}
-                        />
+                      {!mine && spokenMode && m === lastBuddy && ReadAlong ? (
+                        <ReadAlong text={m.text} style={[TYPE.body, { color: palette.ink }]} />
                       ) : (
                         <RichText
                           text={m.text}

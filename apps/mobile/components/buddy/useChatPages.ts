@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { CHAT_LINK, useAttachRequest, type AttachOpen } from '../../lib/capture/attachRequest.js';
 import type { DraftLink } from '../../lib/capture/draft.js';
+import { pageHandler } from '../../lib/capture/pages.js';
 import { useAttachments } from '../../lib/capture/useAttachments.js';
 import { toast } from '../lb/Toast.js';
 
@@ -52,6 +53,8 @@ export function useChatPages({ focused, onSent }: { focused: boolean; onSent: ()
   useEffect(() => {
     if (!request) return;
     useAttachRequest.getState().take();
+    // Without a domain that takes pages nothing can be attached (lib/capture/pages.ts).
+    if (!pageHandler.get()) return;
     if (request.resume) {
       void pages.resumeDraft(request.pending);
       return;

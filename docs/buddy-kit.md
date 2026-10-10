@@ -172,6 +172,17 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
    eine Job-Art keinen Handler hat (`missingJobKinds`). Die Aufbewahrung jedes Buddys
    (Storage-Schuld, geschlossene Erinnerungen, Entscheidungsinhalte) steht in
    `identity/retention.ts`. Wächter: 55 → 45.
+5. **App (Schnitt 8): Karten, Start-Einträge, Anhänge, Mathe** melden sich an: `lib/learning/register.tsx`
+   (`registerLearning`) ist die eine Stelle, die die Lern-Domain beim App-Start
+   (`app/_layout.tsx`) in den Kern der App einträgt — Karten im Gespräch, Nachrichten-Karten,
+   Mitlesen, die Zeile über dem Gespräch, die Ergebnis-Notiz, die Lese-Stufen und das Start-Menü
+   (`components/buddy/extensions.ts`), wo $…$ steht, wie es gezeichnet und gesagt wird
+   (`lib/buddy/notation.ts`, `components/lb/InlineText.tsx`, `lib/speech/say.ts`), wohin
+   angehängte Seiten gehen und wie ein Foto geprüft wird (`lib/capture/pages.ts`), und was der
+   Bibliotheks-Cache der Startseite folgt (`homeFollowers`). Ohne Domain zeichnet der Kern jede
+   Stelle leer und ruhig (`withoutDomain.test.tsx`); keine Stelle leer, keine doppelt
+   (`components/learn/__tests__/register.test.tsx`). App: 32 → 1 (neu, freigegeben: die eine
+   Naht `app/_layout.tsx → lib/learning/register.tsx`). Wächter: 45 → 14.
 
 ## Die API-Datenbankrolle
 

@@ -10,7 +10,7 @@
 
 import type { WorkReading } from '@learnbuddy/shared-types/contracts';
 
-import type { PhotoProblem } from '../photo/quality.js';
+import type { PhotoProblem } from '../capture/pages.js';
 import { LINE_BREAK } from './pathEntry.js';
 
 /** The copy as it goes into her field: one line each, an unread line left empty for her. */

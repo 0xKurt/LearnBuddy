@@ -59,49 +59,54 @@ export function MenuSheet({ visible, start, canStart, onGo, onClose }: Props) {
           a list. Side by side they read as one thing — four suggestions of equal rank.
           Rule 16 forbids a tile grid on the home; this is a sheet she opened herself, and
           the owner asked for it. Still `<Btn>` (rule 13), still four, nothing added. */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
-        {start.map((item) => (
-          // flexBasis as a share, not 0: with a base size of 0 every item fits on one
-          // line and the row never wraps — yoga decides that before minWidth applies.
-          <View key={item.key} style={{ flexBasis: '47%', flexGrow: 1, minWidth: COLUMN }}>
-            <Btn
-              variant="outline"
-              full
-              disabled={!canStart}
-              onPress={item.onPress}
-              // Symbol above the word, not beside it: in half a sheet's width
-              // "Hausaufgabe" broke in the middle next to its icon. `children` stays the
-              // name a screen reader reads; this is only what the eye gets.
-              label={
-                <View
-                  style={{
-                    alignItems: 'center',
-                    gap: 6, // token-exempt: the symbol close over its word, read as one
-                    paddingVertical: SPACE.xs,
-                  }}
-                >
-                  <Icon name={item.icon} size={24} color={palette.primaryDk} />
-                  <Text
-                    numberOfLines={2}
-                    maxFontSizeMultiplier={MAX_FONT_SCALE}
-                    style={[
-                      TYPE.body,
-                      { fontWeight: '600', color: palette.ink, textAlign: 'center' },
-                    ]}
+      {/* No ways to start without a domain that gives them (issue #107): only the places. */}
+      {start.length > 0 ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
+          {start.map((item) => (
+            // flexBasis as a share, not 0: with a base size of 0 every item fits on one
+            // line and the row never wraps — yoga decides that before minWidth applies.
+            <View key={item.key} style={{ flexBasis: '47%', flexGrow: 1, minWidth: COLUMN }}>
+              <Btn
+                variant="outline"
+                full
+                disabled={!canStart}
+                onPress={item.onPress}
+                // Symbol above the word, not beside it: in half a sheet's width
+                // "Hausaufgabe" broke in the middle next to its icon. `children` stays the
+                // name a screen reader reads; this is only what the eye gets.
+                label={
+                  <View
+                    style={{
+                      alignItems: 'center',
+                      gap: 6, // token-exempt: the symbol close over its word, read as one
+                      paddingVertical: SPACE.xs,
+                    }}
                   >
-                    {item.label}
-                  </Text>
-                </View>
-              }
-            >
-              {item.label}
-            </Btn>
-          </View>
-        ))}
-      </View>
+                    <Icon name={item.icon} size={24} color={palette.primaryDk} />
+                    <Text
+                      numberOfLines={2}
+                      maxFontSizeMultiplier={MAX_FONT_SCALE}
+                      style={[
+                        TYPE.body,
+                        { fontWeight: '600', color: palette.ink, textAlign: 'center' },
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </View>
+                }
+              >
+                {item.label}
+              </Btn>
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       <View style={{ gap: 0 }}>
-        <View style={{ height: 1, backgroundColor: palette.hairline, marginBottom: SPACE.xs }} />
+        {start.length > 0 ? (
+          <View style={{ height: 1, backgroundColor: palette.hairline, marginBottom: SPACE.xs }} />
+        ) : null}
         {/* Reading aloud is NOT here: it moved back into the head as a speaker with a
             visible state (issue #181). One switch, one place. */}
         {(

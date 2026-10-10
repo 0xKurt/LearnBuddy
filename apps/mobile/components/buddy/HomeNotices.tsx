@@ -15,14 +15,13 @@ import { refreshHome, type HomeAct } from '../../lib/buddy/useHomeAct.js';
 import type { HomeThumbs, LeftBehind } from '../../lib/buddy/useHomePhotos.js';
 import type { CaptureDraft } from '../../lib/capture/draft.js';
 import type { HomeLayout } from '../../lib/homeLayout.js';
-import { summaryLines } from '../../lib/practice/summaryLine.js';
 import { Btn } from '../lb/Btn.js';
+import { resultNotice, type Quiet } from './extensions.js';
 import { NoticeBubble } from './NoticeBubble.js';
 import { WorkingNote } from './WorkingNote.js';
 
 type Notice = NonNullable<BuddyHome['notice']>;
 type Now = NonNullable<BuddyHome['now']>;
-type Quiet = 'soft' | 'primary';
 /** A tap that changes something on the server, then loads the home again. */
 type AndReload = (fn: () => Promise<unknown>) => void;
 
@@ -50,6 +49,8 @@ export function homeNotices({ h, layout, left, thumbs, busy, quiet, act, decisio
   const unclear = h.notice?.type === 'unclear_spot' ? h.notice : null;
   const failed = layout.failed && h.now?.type === 'material_failed' ? h.now : null;
   const result = layout.result && h.now?.type === 'practice_result' ? h.now : null;
+  // The finished practice is a domain's to tell (components/buddy/extensions.ts).
+  const Result = resultNotice.get();
   return [
     left.shown ? <DraftNotice key="draft" left={left} shown={left.shown} quiet={quiet} /> : null,
     unclear ? (
@@ -83,7 +84,7 @@ export function homeNotices({ h, layout, left, thumbs, busy, quiet, act, decisio
         andReload={andReload}
       />
     ) : null,
-    result ? <ResultNotice key="result" now={result} busy={busy} quiet={quiet} /> : null,
+    result && Result ? <Result key="result" now={result} busy={busy} quiet={quiet} /> : null,
     // The open question, and "Buddy is working" said once.
     layout.decisionInline ? decision : null,
     layout.working === 'thread' && h.working ? (
@@ -307,36 +308,6 @@ function FailedNotice({
       >
         {t('buddy:now.failed_new_photo')}
       </Btn>
-    </NoticeBubble>
-  );
-}
-
-/**
- * The finished practice: the same true, kind words as the summary — never a hit rate
- * (feedback #1). The full view stays one tap away; what is ready next is the bar's job.
- */
-function ResultNotice({
-  now,
-  busy,
-  quiet,
-}: {
-  now: Extract<Now, { type: 'practice_result' }>;
-  busy: boolean;
-  quiet: Quiet;
-}) {
-  const { t } = useTranslation(['buddy', 'practice']);
-  return (
-    <NoticeBubble
-      text={t('buddy:now.result_title')}
-      detail={summaryLines(now.result, now.mode)
-        .map((l) =>
-          l.count === undefined
-            ? t(`practice:${l.key}`)
-            : t(`practice:${l.key}`, { count: l.count }),
-        )
-        .join(' ')}
-    >
-      <ResultViewBtn sessionId={now.session_id} busy={busy} quiet={quiet} />
     </NoticeBubble>
   );
 }

@@ -17,18 +17,10 @@ import { currentSession } from '../auth/session.js';
 import { onlineFrom } from '../net.js';
 import { ApiError } from './client.js';
 import { writeHome } from './homeCache.js';
-import { followHome, followMaterial, libraryPollMs } from './libraryCache.js';
 import { keys } from './keys.js';
 import { followResumeCard } from './sessionCache.js';
-import {
-  getHome,
-  getLibrary,
-  getMaterialItems,
-  getMe,
-  getMemory,
-  getSession,
-  getSettings,
-} from './endpoints.js';
+import { getHome, getMe, getMemory, getSession, getSettings } from './endpoints.js';
+import { registry } from '../registry.js';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,10 +74,16 @@ export { keys };
 
 export const useMe = () => useQuery({ queryKey: keys.me, queryFn: getMe });
 
+/**
+ * What a domain keeps in step with each home the server sends (issue #107): the library list
+ * that still shows a sheet being read (lib/api/libraryQueries.ts). Given at app start.
+ */
+export const homeFollowers = registry<string, (home: BuddyHome) => void>('Startseite folgen');
+
 /** The home from the server, and what it carries into the other caches. */
 async function loadHome(): Promise<BuddyHome> {
   const home = await getHome();
-  followHome(queryClient, home);
+  for (const follow of homeFollowers.values()) follow(home);
   return home;
 }
 
@@ -123,30 +121,6 @@ export function setHome(home: BuddyHome): void {
 
 export const useSettings = () => useQuery({ queryKey: keys.settings, queryFn: getSettings });
 export const useMemory = () => useQuery({ queryKey: keys.memory, queryFn: getMemory });
-/** Follows a sheet being read (live finding 3): fetched often while one is, and on every visit. */
-export const useLibrary = () =>
-  useQuery({
-    queryKey: keys.library,
-    queryFn: getLibrary,
-    refetchInterval: (q) => libraryPollMs(q.state.data),
-    refetchOnMount: (q) => (libraryPollMs(q.state.data) === false ? true : 'always'),
-  });
-
-/** The questions of one material; follows it while its photos are being read. */
-export const useMaterialItems = (id: string) =>
-  useQuery({
-    queryKey: keys.materialItems(id),
-    queryFn: async () => {
-      const v = await getMaterialItems(id);
-      followMaterial(queryClient, v.material);
-      return v;
-    },
-    refetchInterval: (q) =>
-      q.state.data && ['queued', 'processing'].includes(q.state.data.material.status)
-        ? 3000
-        : false,
-  });
-
 /**
  * One practice run. It is normally not polled at all — every change comes back in the answer to
  * what she just did — with one exception: while the server says more questions are still being

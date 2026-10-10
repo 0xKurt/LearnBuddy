@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { speakMathText, type SpokenWords } from '../../lib/math/speak.js';
+import { sayMath, speakMathText, type SpokenWords } from '../../lib/math/speak.js';
 import { spokenWordsFrom } from '../../lib/math/words.js';
 
 export function useSpokenWords(): SpokenWords {
@@ -18,4 +18,10 @@ export function useSpokenWords(): SpokenWords {
 export function useSpokenMath(text: string): string {
   const words = useSpokenWords();
   return useMemo(() => speakMathText(text, words), [text, words]);
+}
+
+/** Texts with their math said in words, in the app language (lib/speech/say.ts `useSay`). */
+export function useSayMath(): (text: string) => string {
+  const words = useSpokenWords();
+  return useMemo(() => sayMath(words), [words]);
 }

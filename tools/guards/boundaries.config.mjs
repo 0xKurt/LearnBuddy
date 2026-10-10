@@ -25,9 +25,12 @@ export const DOMAIN = [
   '^apps/mobile/components/buddy/(RehearseCard|RehearsalResult|RoleplayCard|RoleplayResult|ReadAlongBubble)\\.tsx$',
   '^apps/mobile/components/capture/PhotoCheckCard\\.tsx$',
   '^apps/mobile/lib/(practice|math|music|photo)/',
+  // The one place the domain gives the app's core what it adds (lib/learning/register.tsx):
+  // app/_layout.tsx calls it once, the seam's only import of the domain.
+  '^apps/mobile/lib/learning/',
   '^apps/mobile/lib/capture/materialUpload\\.ts$',
   '^apps/mobile/lib/buddy/(rehearsal|readingStages)\\.ts$',
-  '^apps/mobile/lib/api/libraryCache\\.ts$',
+  '^apps/mobile/lib/api/library(Cache|Queries)\\.ts$',
   // Maths, figures and the school sciences.
   '^packages/shared-math/',
 ];

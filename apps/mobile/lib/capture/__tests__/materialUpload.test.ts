@@ -10,21 +10,14 @@ import type { z } from 'zod';
 import { describe, expect, it } from 'vitest';
 
 import { ApiError } from '../../api/apiError.js';
-import {
-  MaterialUpload,
-  PhotoUploadError,
-  uploadPhoto,
-  type MaterialLink,
-  type SendProgress,
-  type UploadDeps,
-  type UploadFile,
-} from '../materialUpload.js';
+import { MaterialUpload, uploadPhoto, type UploadDeps } from '../materialUpload.js';
+import { PhotoUploadError, type PageLink, type SendProgress, type UploadFile } from '../pages.js';
 import type { PutResult } from '../putTypes.js';
 
 type Body = z.input<typeof CreateMaterialRequest>;
 type Put = (position: number, url: string) => PutResult | Promise<PutResult>;
 
-const LINK: MaterialLink = { stepId: null, goalId: null, purpose: 'homework', completes: null };
+const LINK: PageLink = { stepId: null, goalId: null, purpose: 'homework', completes: null };
 const jpegs = (n: number): UploadFile[] =>
   Array.from({ length: n }, (_, i) => ({ uri: `file:///p${i}.jpg`, mime: 'image/jpeg' }));
 
