@@ -18,7 +18,7 @@ import {
   type AppEnv,
 } from '../../http/context.js';
 import { check, readBody } from '../../http/validate.js';
-import { runQueuedExtraction } from '../scheduler/tick.js';
+import { runWaitingJobNow } from '../scheduler/tick.js';
 import { archiveMaterial, archiveMaterialItem } from './archive.js';
 import { acceptMissingPages, createMaterial } from './create.js';
 import { libraryView, renameMaterial } from './library.js';
@@ -76,7 +76,7 @@ async function queueReading(c: AppContext, queue: typeof submitMaterial): Promis
   const learnerId = c.get('learner').id;
   const { jobId } = await queue(deps, learnerId, materialId);
   const view = await materialView(deps.db, learnerId, materialId);
-  if (jobId) deps.background(() => runQueuedExtraction(deps, learnerId));
+  if (jobId) deps.background(() => runWaitingJobNow(deps, learnerId));
   return c.json(view, 202);
 }
 
@@ -106,7 +106,7 @@ materialRoutes.post('/:id/unclear', async (c) => {
   const deps = depsOf(c);
   const learnerId = c.get('learner').id;
   const { view, jobId } = await clarifyUnclearSpot(deps, learnerId, materialId, input);
-  if (jobId) deps.background(() => runQueuedExtraction(deps, learnerId));
+  if (jobId) deps.background(() => runWaitingJobNow(deps, learnerId));
   return c.json(view, 202);
 });
 

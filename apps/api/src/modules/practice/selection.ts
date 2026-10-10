@@ -136,6 +136,28 @@ export function wholeTasksFirst<C extends Pick<Candidate, 'task' | 'part'>>(
   return out.slice(0, end);
 }
 
+/**
+ * About ten minutes of her own questions for a step no model planned — Buddy's fallback before a
+ * test and an agreed practice reminder (registered by modules/learning/register.ts, issue #107).
+ */
+export async function tenMinutesOf(
+  db: Db,
+  learnerId: string,
+  scope: PracticeScope,
+  focusTopics: string[],
+  now: Date,
+): Promise<{ itemIds: string[]; minutes: number }> {
+  const itemIds = await selectPracticeItems(
+    db,
+    learnerId,
+    scope,
+    focusTopics,
+    questionCountFor(10),
+    now,
+  );
+  return { itemIds, minutes: minutesFor(itemIds.length) };
+}
+
 export async function selectPracticeItems(
   db: Db,
   learnerId: string,

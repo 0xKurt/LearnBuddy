@@ -12,13 +12,14 @@ import type { Db } from '../../lib/db.js';
 import { bumpContext } from '../buddy/plan.js';
 import { backoffMs, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { enqueuePhotoPurge, PHOTO_RETENTION_DAYS } from './purge.js';
+import { abandonStaleUploads } from './submit.js';
 
 /**
  * The one way a material becomes failed — from the reading job and from the scheduler's
  * recovery alike: status, the photo purge after the retention period (at once when it is
  * not learning material) and Buddy's context, in the caller's transaction.
  */
-export async function markMaterialFailed(
+async function markMaterialFailed(
   tx: Db,
   materialId: string,
   reason: NonNullable<MaterialView['failure_reason']>,
@@ -53,6 +54,26 @@ export async function markMaterialFailed(
     runAt: new Date(now.getTime() + keepMs),
   });
   await bumpContext(tx, m.learner_id);
+}
+
+/**
+ * The scheduler's recovery for readings (registered by modules/learning/register.ts): material
+ * whose reading job gave up must not look "in progress" forever. It fails the same way as in the
+ * job — with its photo purge and a context bump (repro-14). Uploads nobody finished are given up.
+ */
+export async function recoverReadings(deps: Deps): Promise<void> {
+  await deps.db.tx(async (tx) => {
+    const stuck = await tx.query<{ id: string }>(
+      `select m.id from materials m
+        where m.status in ('queued','processing') and m.archived_at is null
+          and not exists (select 1 from jobs j where j.kind = 'extract_material'
+                            and j.payload ->> 'material_id' = m.id::text
+                            and j.status in ('queued','running'))
+        for update of m skip locked`,
+    );
+    for (const m of stuck) await markMaterialFailed(tx, m.id, 'model_error', deps.now());
+  });
+  await abandonStaleUploads(deps);
 }
 
 export async function fail(

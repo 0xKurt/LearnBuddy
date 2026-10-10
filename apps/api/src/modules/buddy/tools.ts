@@ -12,28 +12,28 @@
 // DaySpec/UntilSpec in the learner's zone and must lie in the allowed range;
 // agreed times may not fall into quiet hours; contact can only be reduced or
 // shifted, never turned on or increased.
+//
+// The handlers of every Buddy (memory, goals, steps, settings, opening a part of the app) stand
+// below. A domain's tools — practice, sheets, talks, roleplays — register their handlers at start-up
+// (issue #107, `modules/learning/register.ts`); this module never names them.
 
-import type { ActionOf, ToolName } from './decision.js';
+import { ACT_SCHEMAS, type ActionOf, type ToolName } from './decision.js';
 import { runCloseGoal, runPlanExam, runSetLevel, runUpdateGoal } from './goalTools.js';
-import {
-  runDeleteItem,
-  runDeleteMaterial,
-  runRenameMaterial,
-  runRequestMaterial,
-} from './materialTools.js';
 import { runCorrectMemory, runForget, runRemember } from './memoryTools.js';
-import { runOfferDrill, runOfferLearning, runOpenArea } from './offers.js';
-import { runPreparePractice } from './practiceTool.js';
-import { runStartRoleplay } from './roleplay.js';
-import { runOfferRehearsal, runPlanTalk } from './talkTools.js';
+import { runOpenArea } from './offers.js';
 import { runScheduleCheck, runSetContact, runSetVoice } from './settingsTools.js';
 import { runMarkStepDone, runPlanStep, runUpdateStep } from './stepTools.js';
 import type { ToolContext, ToolOutcome } from './toolKit.js';
 
-/** One handler per act tool (the registry in registry.ts attaches them to their schemas). */
-export const ACT_HANDLERS: {
-  [K in ToolName]: (action: ActionOf<K>, ctx: ToolContext) => Promise<ToolOutcome>;
-} = {
+type ActHandler<K extends ToolName> = (
+  action: ActionOf<K>,
+  ctx: ToolContext,
+) => Promise<ToolOutcome>;
+
+/** Handlers by tool name; the registry in registry.ts attaches them to their schemas. */
+export type ActHandlers = { [K in ToolName]?: ActHandler<K> };
+
+const handlers: ActHandlers = {
   remember: runRemember,
   correct_memory: runCorrectMemory,
   forget: runForget,
@@ -41,21 +41,31 @@ export const ACT_HANDLERS: {
   plan_exam: runPlanExam,
   update_goal: runUpdateGoal,
   close_goal: runCloseGoal,
-  prepare_practice: runPreparePractice,
   plan_step: runPlanStep,
   update_step: runUpdateStep,
   mark_step_done: runMarkStepDone,
-  request_material: runRequestMaterial,
-  delete_material: runDeleteMaterial,
-  rename_material: runRenameMaterial,
-  delete_item: runDeleteItem,
   set_contact: runSetContact,
   set_voice: runSetVoice,
-  offer_learning: runOfferLearning,
-  offer_drill: runOfferDrill,
   open_area: runOpenArea,
   schedule_check: runScheduleCheck,
-  start_roleplay: runStartRoleplay,
-  plan_talk: runPlanTalk,
-  offer_rehearsal: runOfferRehearsal,
 };
+
+/** A domain adds the handlers of its tools. A tool has exactly one handler: a second one throws. */
+export function registerActHandlers(more: ActHandlers): void {
+  const names = Object.keys(more) as ToolName[];
+  const twice = names.filter((n) => handlers[n] !== undefined);
+  if (twice.length > 0) throw new Error(`act tool registered twice: ${twice.join(', ')}`);
+  Object.assign(handlers, more);
+}
+
+/** Tools the model can call (decision.ts) that nobody registered a handler for. */
+export function missingActHandlers(): ToolName[] {
+  return (Object.keys(ACT_SCHEMAS) as ToolName[]).filter((n) => handlers[n] === undefined);
+}
+
+/** The handler of one tool; start-up checked that every tool has one (`missingActHandlers`). */
+export function actHandler<K extends ToolName>(name: K): ActHandler<K> {
+  const handler = handlers[name];
+  if (!handler) throw new Error(`act tool ${name} has no handler`);
+  return handler as ActHandler<K>;
+}

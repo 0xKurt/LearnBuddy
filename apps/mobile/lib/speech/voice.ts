@@ -2,9 +2,7 @@
 // run under the Node test runner): which voice locale a language gets, which
 // installed voice fits it best, and which upload type a recording has.
 
-import type { SpeakRequest } from '@learnbuddy/shared-types/contracts';
-
-export type SpeakMime = SpeakRequest['mime'];
+import type { AudioMime } from '@learnbuddy/shared-types/contracts';
 
 /** The regional voice each school language is read in. */
 const VOICE_LOCALE: Record<string, string> = {
@@ -68,7 +66,7 @@ export const SPEECH_RATE = { normal: 1, slow: 0.75 } as const;
  * The upload type for a recorded blob/file type ("audio/webm;codecs=opus" →
  * "audio/webm"); null when the server does not take it.
  */
-export function speakMime(type: string | null | undefined): SpeakMime | null {
+export function speakMime(type: string | null | undefined): AudioMime | null {
   const t = (type ?? '').split(';')[0]?.trim().toLowerCase() ?? '';
   switch (t) {
     case 'audio/mp4':
@@ -92,7 +90,7 @@ export function speakMime(type: string | null | undefined): SpeakMime | null {
 }
 
 /** The upload type from a native file's extension (the recorder writes .m4a). */
-export function speakMimeForFile(uri: string): SpeakMime | null {
+export function speakMimeForFile(uri: string): AudioMime | null {
   const ext = /\.([a-z0-9]+)(?:[?#].*)?$/i.exec(uri)?.[1]?.toLowerCase();
   switch (ext) {
     case 'm4a':
@@ -111,7 +109,7 @@ export function speakMimeForFile(uri: string): SpeakMime | null {
   }
 }
 
-/** Longest pronunciation recording (SpeakRequest allows far more; 30 s says any
+/** Longest pronunciation recording (a speak question's SpeakRequest allows far more; 30 s says any
  * school sentence with room to breathe — 15 felt cramped, owner 2026-09-28). */
 export const MAX_RECORDING_MS = 30_000;
 /** The on-device recogniser's session bound (the platforms end long sessions

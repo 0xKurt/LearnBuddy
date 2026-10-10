@@ -5,6 +5,8 @@
 // Implementations: VertexGateway (production), DisabledGateway (no model
 // configured — callers degrade honestly), ScriptedGateway (tests only).
 
+import type { AudioMime } from '@learnbuddy/shared-types/contracts';
+
 import type { Outcome } from '../lib/outcome.js';
 
 export type JsonSchema = { [key: string]: JsonValue };
@@ -18,15 +20,6 @@ export type LlmPart =
         data: string;
       };
     };
-
-/** Recordings the model listens to directly (speak questions). */
-export type AudioMime =
-  | 'audio/mp4'
-  | 'audio/aac'
-  | 'audio/m4a'
-  | 'audio/webm'
-  | 'audio/wav'
-  | 'audio/mpeg';
 
 /**
  * A recording from the app as a part of the model's message (speak, spoken word, dictation). m4a

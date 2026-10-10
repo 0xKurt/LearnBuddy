@@ -143,6 +143,36 @@ einen Tabellen-Provider → Karten-Union in `buddy.ts` erweiterbar → Karten-, 
 Anhang-Registry in der App → Fremdschlüssel (neue Migrationen) → `create-buddy` kopiert den Kern
 durch Konstruktion.
 
+Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Domain, Start 71):
+
+1. **Stimm-Verträge** in `contracts/voice.ts` (`AudioMime`, `TranscribeRequest/-Response/-StreamEvent`,
+   `VOICE_NAMES`, `VoiceName`, `VoiceSpeed`, `SpeechRequest/-Response`). Die Sprech-Fragen der
+   Übungen (`SpeakRequest`, `SpeakWordRequest`, `SpeakStreamEvent`) bleiben Domain und nehmen nur
+   `AudioMime`. Generische Dateien mit Domain-Vertragsnamen: 24 → 13; Wächter: 71 (Verträge zählt
+   er nicht).
+2. **Werkzeuge, Lookups, Angebote** melden sich an: `modules/learning/register.ts` ist die eine
+   Stelle, die die Domain beim App-Start (`createApp`) in den Kern einträgt — Handler der
+   Domain-Werkzeuge (`registerActHandlers`, `buddy/tools.ts`), die Leser der Lookups
+   (`registerLookupRunners`, `buddy/lookups.ts`); `offer_learning`/`offer_drill` stehen in
+   `practice/offerTools.ts`. Der Start bricht ab, solange ein Werkzeug oder Lookup, das das Modell
+   angeboten bekommt, keinen Code hat (`withoutCode()`). Was das Modell sieht (Schemas,
+   Beschreibungen), steht noch im Kern: es geht in den Prompt-Hash ein und wandert mit Schnitt 5/7.
+   Wächter: 71 → 63 (neu, freigegeben: die eine Naht `app.ts → learning/register.ts`).
+3. **Routen als Plugins:** `http/plugins.ts` (`registerRoutes`); `createApp` hängt sie nach den
+   Kern-Routen ein. `/practice`, `/materials` und die Domain-Taps unter `/buddy`
+   (`modules/learning/routes.ts`: Schritt starten, Löschung bestätigen, Rollenspiel beenden,
+   Probevortrag) kommen von der Domain; Buddys Wächter gelten für jeden Pfad unter `/buddy`
+   (`mountBuddy`). „Jetzt üben“ aus einer Nachricht startet den Schritt über
+   `buddy/stepStart.ts` (`registerStepStarter`). `erasureBacklog` steht in
+   `identity/retention.ts`. Wächter: 63 → 55.
+4. **Scheduler und Proaktivität:** `scheduler/registry.ts` (Job-Arten je Spur — wartend,
+   Löschung — und der Anteil der Domain an einem Lauf: Bergung, Leerlauf, Aufräum-Sweep),
+   `buddy/occasions.ts` (Anlässe, die Code allein entscheidet, und die zehn Minuten Fragen für
+   einen Übungsschritt ohne Modell), `subscribe` in `buddy/events.ts`. Der Start bricht ab, solange
+   eine Job-Art keinen Handler hat (`missingJobKinds`). Die Aufbewahrung jedes Buddys
+   (Storage-Schuld, geschlossene Erinnerungen, Entscheidungsinhalte) steht in
+   `identity/retention.ts`. Wächter: 55 → 45.
+
 ## Die API-Datenbankrolle
 
 `infra/supabase/templates/api-role.sql`, mit psql angewendet:

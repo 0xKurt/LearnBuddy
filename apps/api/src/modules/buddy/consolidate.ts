@@ -23,7 +23,7 @@
 //
 // Provenance survives: a merged original is 'superseded' and points at its successor
 // (`merged_into`, migration 0053), a contradicted one is 'superseded' without one. Both are
-// erased after the 7-day undo window like every closed memory (materials/purge.ts).
+// erased after the 7-day undo window like every closed memory (identity/retention.ts).
 
 import { z } from 'zod';
 

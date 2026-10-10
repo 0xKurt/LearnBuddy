@@ -4,16 +4,12 @@
 // goes through the model (POST /buddy/messages).
 
 import {
-  type EndRoleplayResponse,
-  AnswerConfirmationRequest,
   type BuddySettingsView,
   MemoryList,
   OutreachActionRequest,
   type OutreachActionResponse,
   OutreachOpenedRequest,
   RegisterPushTokenRequest,
-  RehearseRequest,
-  type RehearseResponse,
   SendMessageRequest,
   UpdateBuddySettingsRequest,
   UpdateMemoryRequest,
@@ -42,35 +38,40 @@ import type { Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { t } from '../../i18n/index.js';
 import { readsIn } from '../../speech/gateway.js';
-import { archiveMaterial, archiveMaterialItem } from '../materials/archive.js';
-import { startFromStep } from '../practice/service.js';
-import { sessionView } from '../practice/sessionView.js';
 import { registerPushToken } from '../devices/service.js';
 import { buildHome } from './home.js';
-import { rehearse } from './rehearse.js';
-import { endRoleplayByTap } from './roleplay.js';
 import { addDays, localParts, zonedToInstant } from '../../lib/time.js';
 import { bumpContext, cancelGoalWakeups, lockContext, scheduleStepReminder } from './plan.js';
 import { loosens } from './policy.js';
 import { loadSettings, type SettingsRow } from './state.js';
+import { startStep } from './stepStart.js';
 import type { UndoSpec } from './toolKit.js';
 import { runUndo, undoLoosensContact } from './undo.js';
 import { receiveLearnerMessage, stopTurn, type OnReply, type TurnOutcome } from './turn.js';
 
-export const buddyRoutes = new Hono<AppEnv>();
-buddyRoutes.use(
-  '*',
-  requireUser,
-  // Unregistering a phone only ever reduces contact: it works while a new privacy text
-  // waits for consent (a sign-out from the consent screen); everything else needs it.
-  (c, next) =>
-    c.req.method === 'DELETE' && c.req.path.endsWith('/push-tokens')
-      ? requireAccountAnyConsent(c, next)
-      : requireAccount(c, next),
-  requireLearner,
-);
+const buddyRoutes = new Hono<AppEnv>();
 
-const home = (c: AppContext) => {
+/**
+ * Buddy's surface at `base`: its guards for every route below it — also the ones a domain adds
+ * there (issue #107, `http/plugins.ts`), whatever order they are mounted in — then its routes.
+ */
+export function mountBuddy(api: Hono<AppEnv>, base: string): void {
+  api.use(
+    `${base}/*`,
+    requireUser,
+    // Unregistering a phone only ever reduces contact: it works while a new privacy text
+    // waits for consent (a sign-out from the consent screen); everything else needs it.
+    (c, next) =>
+      c.req.method === 'DELETE' && c.req.path.endsWith('/push-tokens')
+        ? requireAccountAnyConsent(c, next)
+        : requireAccount(c, next),
+    requireLearner,
+  );
+  api.route(base, buddyRoutes);
+}
+
+/** Her home as the app shows it — every tap answers with it. */
+export const home = (c: AppContext) => {
   const l = c.get('learner');
   return buildHome(depsOf(c), { id: l.id, display_name: l.display_name, isMinor: l.isMinor });
 };
@@ -79,7 +80,7 @@ const home = (c: AppContext) => {
  * A change under the learner's context lock (one lock order everywhere, CLAUDE.md rule 4): the
  * transaction, her id and the app clock's now, read once before it starts.
  */
-function underContext<T>(
+export function underContext<T>(
   c: AppContext,
   work: (tx: Db, learnerId: string, now: Date) => Promise<T>,
 ): Promise<T> {
@@ -155,38 +156,6 @@ buddyRoutes.post('/messages/:clientMessageId/stop', async (c) => {
 });
 
 // ─────────────── explicit taps ───────────────
-
-// She ends the roleplay with the card's button (issue #244): with turns played, the checked
-// feedback lands in the thread; another learner's id is 404, an ended one 409.
-buddyRoutes.post('/roleplays/:id/end', async (c) => {
-  const id = check(Uuid, c.req.param('id'));
-  const l = c.get('learner');
-  await endRoleplayByTap(depsOf(c), l, id);
-  const body: EndRoleplayResponse = { home: await home(c) };
-  return c.json(body);
-});
-
-// She recorded on Buddy's rehearsal card (issue #264): the recording is measured, never kept, and
-// the result lands in the thread as his message. Another learner's card is 404; the same recording
-// sent twice is one rehearsal.
-buddyRoutes.post('/rehearsals', async (c) => {
-  const input = await readBody(c, RehearseRequest);
-  const rehearsal = await rehearse(depsOf(c), c.get('learner'), input);
-  const body: RehearseResponse = { rehearsal, home: await home(c) };
-  return c.json(body);
-});
-
-buddyRoutes.post('/steps/:id/start', async (c) => {
-  const stepId = check(Uuid, c.req.param('id'));
-  const deps = depsOf(c);
-  const learnerId = c.get('learner').id;
-  const sessionId = await startFromStep(deps, learnerId, stepId);
-  // The session comes along: the app shows its first question at once (gaps.md #2).
-  return c.json({
-    session_id: sessionId,
-    session: await sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now()),
-  });
-});
 
 /**
  * "Heute nicht": the step steps aside until tomorrow — not skipped for good (audit M-57).
@@ -276,65 +245,6 @@ buddyRoutes.post('/actions/:id/undo', async (c) => {
       actionId,
       now,
     ]);
-    await bumpContext(tx, learnerId);
-  });
-  return c.json(await home(c));
-});
-
-/**
- * Her answer to a proposed deletion (issue #151). The tap is the consent — the model only
- * ever proposed, and nothing was deleted while this card waited.
- *
- * Bound to exactly this proposal: one answer, within its window, on an object that has not
- * changed underneath it. A second tap answers nothing (the row is no longer open), and a
- * card left over from last week has expired.
- */
-buddyRoutes.post('/confirmations/:id', async (c) => {
-  const pendingId = check(Uuid, c.req.param('id'));
-  const input = check(AnswerConfirmationRequest, await c.req.json());
-  await underContext(c, async (tx, learnerId, now) => {
-    const pending = await tx.maybeOne<{
-      id: string;
-      operation: 'delete_material' | 'delete_item';
-      material_id: string;
-      item_id: string | null;
-      status: string;
-      expires_at: Date;
-    }>(
-      `select id, operation, material_id, item_id, status, expires_at
-         from buddy_pending_actions where id = $1 and learner_id = $2 for update`,
-      [pendingId, learnerId],
-    );
-    if (!pending) throw new AppError('not_found', 'Nothing to answer');
-    if (pending.status !== 'open')
-      throw new AppError('conflict', 'This was answered already', { reason: 'already_answered' });
-    if (pending.expires_at.getTime() <= now.getTime()) {
-      await tx.query(
-        `update buddy_pending_actions set status = 'expired', decided_at = $2 where id = $1`,
-        [pendingId, now],
-      );
-      throw new AppError('conflict', 'This question is too old to answer now', {
-        reason: 'expired',
-      });
-    }
-    if (!input.confirm) {
-      await tx.query(
-        `update buddy_pending_actions set status = 'declined', decided_at = $2 where id = $1`,
-        [pendingId, now],
-      );
-      return;
-    }
-    // The same erasure the library button plans, not a second half-done path.
-    const inTx = { db: tx, now: () => now };
-    if (pending.operation === 'delete_material') {
-      await archiveMaterial(inTx, learnerId, pending.material_id);
-    } else if (pending.item_id) {
-      await archiveMaterialItem(inTx, learnerId, pending.material_id, pending.item_id);
-    }
-    await tx.query(
-      `update buddy_pending_actions set status = 'confirmed', decided_at = $2 where id = $1`,
-      [pendingId, now],
-    );
     await bumpContext(tx, learnerId);
   });
   return c.json(await home(c));
@@ -472,7 +382,7 @@ buddyRoutes.post('/outreach/:id/act', async (c) => {
   let sessionId: string | null = null;
   if (action === 'practice_now' && outreach.step_id) {
     try {
-      sessionId = await startFromStep(deps, learner.id, outreach.step_id);
+      sessionId = await startStep(deps, learner.id, outreach.step_id);
     } catch (err) {
       // Done or gone meanwhile: the app opens Buddy instead.
       if (!isAppError(err)) throw err;

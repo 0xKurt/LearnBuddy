@@ -574,7 +574,7 @@ export const CASES: Case[] = [
   // Issue #241: a clock only on her wish. Prüfungsangst is the reason it is never the default,
   // so the first case is the one that matters more — a plain request for a practice test gets
   // a test WITHOUT minutes. The code holds the floor (her own words must ask for it,
-  // tools.ts runOfferLearning); this measures whether the model reaches for it unasked.
+  // practice/offerTools.ts runOfferLearning); this measures whether the model reaches for it unasked.
   {
     id: 'de_test_without_time_has_no_clock',
     learner: { relation: 'child', birthDate: '2014-02-10' },

@@ -16,6 +16,7 @@
 
 import type {
   AnswerResponse,
+  AudioMime,
   ItemView,
   PracticeTurnView,
   PronunciationFeedback,
@@ -33,7 +34,7 @@ import { WaitAborted } from '../../lib/api/whenOnline.js';
 import { messageFor } from '../../lib/errors.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
-import { MAX_RECORDING_MS, type SpeakMime } from '../../lib/speech/voice.js';
+import { MAX_RECORDING_MS } from '../../lib/speech/voice.js';
 import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -264,7 +265,7 @@ export function PronunciationNote({ feedback }: { feedback: PronunciationFeedbac
 
 // ─────────────── the pinned controls ───────────────
 
-type Pending = { clientTurnId: string; itemId: string; mime: SpeakMime; base64: string };
+type Pending = { clientTurnId: string; itemId: string; mime: AudioMime; base64: string };
 
 type PanelProps = {
   item: ItemView;

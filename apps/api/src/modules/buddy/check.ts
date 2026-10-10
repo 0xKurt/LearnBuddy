@@ -27,8 +27,8 @@ import { acquireLease, LEASE_SECONDS, LeaseLost, releaseLease } from './checkLea
 import { sendAgreedReminder } from './checkReminder.js';
 import { triggerOf } from './checkTrigger.js';
 import { markHandled } from './events.js';
+import { occasions } from './occasions.js';
 import { testAhead } from './plan.js';
-import { REVIEW_REASONS, runReviews } from './review.js';
 import type { SettingsRow } from './state.js';
 import { resumeTurns } from './turnRecovery.js';
 
@@ -67,20 +67,24 @@ export async function runLearnerJobs(deps: Deps, learnerId: string): Promise<Che
     );
 
     const triggers = jobs.filter((j) => j.kind === 'buddy_check').map(triggerOf);
-    // Decided by code alone: agreed reminders, and Buddy's offers to review (#446).
-    const byCode = new Set(['step_due', ...REVIEW_REASONS]);
+    // Decided by code alone: agreed reminders, and the occasions a domain registered (in
+    // LearnBuddy: Buddy's offers to review, #446).
+    const byOccasion = occasions();
+    const byCode = new Set(['step_due', ...byOccasion.flatMap((o) => [...o.reasons])]);
     const agreed = triggers.filter((t) => t.reason === 'step_due');
-    const reviews = triggers.filter((t) => REVIEW_REASONS.has(t.reason));
     // A check whose worker failed all its attempts comes back once, model-free (terminal.ts).
     const parked = triggers.filter((t) => !byCode.has(t.reason) && t.job.payload.fallback_only);
     const others = triggers.filter((t) => !byCode.has(t.reason) && !t.job.payload.fallback_only);
 
     for (const trig of agreed) await sendAgreedReminder(deps, learner, trig);
-    await runReviews(
-      deps,
-      learner,
-      reviews.map((r) => r.job),
-    );
+    for (const occasion of byOccasion) {
+      const due = triggers.filter((t) => occasion.reasons.has(t.reason));
+      await occasion.run(
+        deps,
+        learner,
+        due.map((t) => t.job),
+      );
+    }
     if (parked.length > 0) {
       try {
         await fallback(deps, learner, parked, 'parked', { learnerId, token, jobs });
