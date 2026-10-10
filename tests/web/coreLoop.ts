@@ -132,8 +132,7 @@ export async function allowPush(page: Page): Promise<void> {
 /** The worksheet photographed and sent; Buddy prepares practice from it by himself. */
 export async function sendWorksheet(page: Page): Promise<void> {
   const photo = await worksheetJpeg(page);
-  await page.getByRole('button', { name: 'Foto machen' }).click();
-  await expect(page.getByText('Fotografier dein Blatt')).toBeVisible();
+  // The card's "Foto machen" opens the camera at once, the page lands in the chat (#519).
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Foto machen' }).click();
   await (await chooser).setFiles(photo);

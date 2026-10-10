@@ -560,7 +560,6 @@
     "filled": "Blank, filled with: {{answer}}"
   },
   "preview": {
-    "label": "Preview",
     "a11y": "Preview of your answer: {{math}}"
   },
   "tap": {

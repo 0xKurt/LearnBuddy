@@ -14,7 +14,8 @@
     "label": "Deine Antwort",
     "placeholder": "Deine Antwort …",
     "unit_hint": "Antwort in {{unit}}",
-    "check_waits": "Erst wenn etwas im Feld steht."
+    "check_waits": "Erst wenn etwas im Feld steht.",
+    "unit_chip": "in {{unit}}"
   },
   "back_to_buddy": "Zurück zu Buddy",
   "bar": {
@@ -400,7 +401,9 @@
     "version_other": "Fassung {{n}} · {{count}} Wörter",
     "text_one": "Dein Text · 1 Wort",
     "text_other": "Dein Text · {{count}} Wörter",
-    "thinking": "Buddy liest deinen Text …"
+    "thinking": "Buddy liest deinen Text …",
+    "write_title": "Dein Text",
+    "write_open": "Groß schreiben"
   },
   "work": {
     "take": "Foto von deinem Rechenweg",

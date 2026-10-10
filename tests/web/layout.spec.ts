@@ -151,46 +151,50 @@ test('the composer row stays one row when the field grows', async ({ page }) => 
   const plus = (await page
     .getByRole('button', { name: 'Was möchtest du anhängen?' })
     .boundingBox())!;
+  const mic = (await page.getByRole('button', { name: 'Nachricht sprechen' }).boundingBox())!;
   const send = (await page.getByRole('button', { name: 'Senden' }).boundingBox())!;
-  const talk = (await page.getByRole('button', { name: 'Mit Buddy sprechen' }).boundingBox())!;
+  const text = (await field.boundingBox())!;
 
-  // One line: every control ends where its neighbours end. 2 px for rounding.
+  // The tools are one row under her text (issue #522): every control ends where its neighbours
+  // end, and below the text, never beside it. 2 px for rounding.
   const bottom = (b: Box) => b.y + b.height;
   expect(
-    Math.abs(bottom(plus) - bottom(talk)),
-    '+ and the waveform end on the same line',
+    Math.abs(bottom(plus) - bottom(send)),
+    '+ and send end on the same line',
   ).toBeLessThanOrEqual(2);
   expect(
-    Math.abs(bottom(send) - bottom(talk)),
-    'send and the waveform end on the same line',
+    Math.abs(bottom(mic) - bottom(send)),
+    'mic and send end on the same line',
   ).toBeLessThanOrEqual(2);
+  expect(plus.y, 'the tools stand under the text').toBeGreaterThanOrEqual(bottom(text) - 2);
+  // Her text has the box's width: + on the left and send on the right both stand under it.
+  expect(text.width, 'the text spans the box').toBeGreaterThanOrEqual(
+    send.x + send.width - plus.x - 16,
+  );
 
   // Same size: three touch targets in a row, not three different ones.
   for (const [what, b] of [
     ['+', plus],
-    ['send', send],
+    ['mic', mic],
   ] as const) {
-    expect(
-      Math.abs(b.height - talk.height),
-      `${what} is as tall as the waveform`,
-    ).toBeLessThanOrEqual(2);
+    expect(Math.abs(b.height - send.height), `${what} is as tall as send`).toBeLessThanOrEqual(2);
   }
 
   // Air between the two round controls at the end (owner 01.10.: "der abstand zwischen
-  // senden und voice mode button sollte groesser sein"). The pill's own gap is 2, which
+  // senden und voice mode button sollte groesser sein"). The box's own gap is 2, which
   // is right next to the text field and too tight between two buttons.
-  const gap = talk.x - (send.x + send.width);
-  expect(gap, 'send and the waveform have real air between them').toBeGreaterThanOrEqual(6);
+  const gap = send.x - (mic.x + mic.width);
+  expect(gap, 'mic and send have real air between them').toBeGreaterThanOrEqual(6);
 
   await page.screenshot({ path: join(SHOTS, '31-composer-grown.png') });
 });
 
 /**
  * The placeholder stays on one line once "Senden" shows (issue #394). With a page attached and
- * nothing typed, "Senden" takes the mic's place and the field is narrower than the mic left it:
- * at 360 "Schreib Buddy …" broke onto a second line and the empty bar stood two lines high. One
- * line, at both phone sizes, light and dark: the empty field is as tall as it was before the page
- * came, and the placeholder is one line of its text.
+ * nothing typed, the round send arrow takes the waveform's place (issue #522); before, a "Senden"
+ * pill made the field narrower and at 360 "Schreib Buddy …" broke onto a second line, the empty
+ * bar two lines high. One line, at both phone sizes, light and dark: the empty field is as tall as
+ * it was before the page came, and the placeholder is one line of its text.
  */
 test('the placeholder stays on one line when "Senden" shows (#394)', async ({ page }) => {
   await onboard(page, 'Lena');

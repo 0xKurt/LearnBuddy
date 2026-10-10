@@ -193,7 +193,7 @@ function Pill({
 }
 
 /**
- * A screen's pinned bottom bar (Composer, BottomBar, SendBar) hands its measured
+ * A screen's pinned bottom bar (Composer, BottomBar) hands its measured
  * height to the toast so the pill stands above the bar, not on the content
  * (issue #91). Put the result on the bar's outermost view: onLayout={onBarLayout}.
  */

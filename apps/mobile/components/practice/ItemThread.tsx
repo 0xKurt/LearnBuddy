@@ -11,13 +11,14 @@
 // answer Buddy offers to keep for later carries the chip "Merk ich mir für nachher" under it — the
 // help chips' pattern (`HelpChips`); once tapped it says "Gemerkt".
 // A long text (issue #258) stands as one line per version ("Fassung 1 · 412 Wörter") — the text
-// itself is in the field — and Buddy's reply to it holds the feedback per key point
-// (`EssayFeedback`) inside the same bubble.
+// itself is in the field — and Buddy's reply to it is a short bubble ("Erörterung – so steht dein
+// Text") with the feedback per key point (`EssayFeedback`) as a card under it over the thread's
+// full width (issue #525): inside the bubble her quotes broke after three or four words.
 
 import type { PracticeTurnView } from '@learnbuddy/shared-types/contracts';
 import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { moonForReply, type MoonState } from '../../lib/buddy/moon.js';
 import { useStackTops } from '../../lib/practice/useStackTops.js';
@@ -29,6 +30,7 @@ import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Btn } from '../lb/Btn.js';
+import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
 import { Rise } from '../lb/Motion.js';
 import { MathText } from '../math/MathText.js';
@@ -103,6 +105,7 @@ export function ItemThread({
   essay = false,
 }: Props) {
   const { t } = useTranslation('practice');
+  const { palette } = useTheme();
   const versions = essay ? versionsOf(turns) : null;
   /**
    * What her bubble says: her words — or, for a version of a long text, which version it is
@@ -163,7 +166,11 @@ export function ItemThread({
             // Only the newest reply's orb moves, and none while Buddy is looking again.
             alive={turn.id === latestReplyId && pending === null}
           >
-            {!mine && turn.essay ? <EssayFeedback feedback={turn.essay} /> : null}
+            {!mine && turn.essay ? (
+              <Text style={[TYPE.body, { color: palette.ink }]}>
+                {t('essay.intro', { form: turn.essay.form })}
+              </Text>
+            ) : null}
           </Bubble>
         );
         return (
@@ -187,6 +194,11 @@ export function ItemThread({
             )}
             {verdict ? (
               <VerdictTag verdict={verdict} label={t(`verdict.${verdict}`)} fresh={fresh} />
+            ) : null}
+            {!mine && turn.essay ? (
+              <Card style={{ alignSelf: 'stretch' }}>
+                <EssayFeedback feedback={turn.essay} />
+              </Card>
             ) : null}
             {pronunciation && !mine && turn.pronunciation ? (
               <PronunciationNote feedback={turn.pronunciation} />
@@ -258,7 +270,7 @@ function Bubble({
   faded?: boolean;
   orb?: MoonState;
   alive?: boolean;
-  /** Shown in place of the text (a long text's feedback, issue #258). */
+  /** Shown in place of the text (the short line over a long text's feedback, issue #258). */
   children?: ReactNode;
 }) {
   const { palette } = useTheme();

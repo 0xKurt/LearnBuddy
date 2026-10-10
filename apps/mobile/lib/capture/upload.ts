@@ -27,7 +27,6 @@ export {
   MAX_PHOTOS,
   MaterialUpload,
   type MaterialLink,
-  type MaterialPurpose,
   type SendProgress,
   type UploadFile,
 } from './materialUpload.js';

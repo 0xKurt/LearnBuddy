@@ -11,7 +11,10 @@
     "pin_progress": "{{count}} of 4 digits entered",
     "camera": "Take a photo",
     "keyboard": "Keyboard",
-    "language": "Choose language"
+    "language": "Choose language",
+    "send": "Send",
+    "voice": "Conversation",
+    "expand": "Show full screen"
   },
   "actions": {
     "cancel": "Cancel",

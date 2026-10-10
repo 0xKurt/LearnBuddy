@@ -1,47 +1,34 @@
-// The live preview of what she typed, with its math set properly ("3/4" as a
-// stacked fraction, "x^2" raised, "sqrt(16)" with a root sign), so she sees how
-// her answer is read. It appears only once there is math worth drawing
-// (lib/math/typed.ts); after that it keeps its place and keeps mirroring the
-// field until the field is empty, so nothing jumps with every key.
-// `compact` is the one inside the answer pill (issue #16): a thin line without a
-// label of its own, so the pinned bar stays a bar.
+// The live preview of what she typed, with its math set properly ("3/4" as a stacked fraction,
+// "x^2" raised, "sqrt(16)" with a root sign), so she sees how her answer is read. One quiet line
+// inside the input bar, under her text (issue #16), so the pinned bar stays a bar.
+//
+// It shows only while the line she is on looks different when set (lib/math/typed.ts `worth`): a
+// fraction, a root, a power, a redrawn operator. Plain digits, "·" and "+" are never mirrored —
+// until #522 a preview, once shown, stayed and repeated "29" under a "29" ("was sollen die random
+// zahlen", owner 09.10.).
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View, useWindowDimensions } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 
 import { typedMath } from '../../lib/math/typed.js';
-import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { MathText } from './MathText.js';
 import { useSpokenMath } from './useSpokenMath.js';
 
-/** Room for a simple stacked fraction at the preview's size, so it never jumps when one appears. */
-const MIN_HEIGHT = 50;
-// Built from the palette in use: module-scope styles froze the start palette (issue #84).
-const mathStyle = (p: Palette) =>
-  // token-exempt: 18/26, a step above TYPE.body, so a stacked fraction's digits stay readable
-  ({ fontSize: 18, lineHeight: 26, color: p.ink }) as const;
-/** Inside the pill: one quiet line under the field – it may not make the pill grow much. */
-const COMPACT_MIN_HEIGHT = 26;
-const compactMathStyle = (p: Palette) =>
-  ({ fontSize: TYPE.small.fontSize, lineHeight: TYPE.small.lineHeight, color: p.ink2 }) as const;
+/** Room for a simple stacked fraction on the line, so it never jumps when one appears. */
+const MIN_HEIGHT = 26;
 
-export function TypedMathPreview({ value, compact = false }: { value: string; compact?: boolean }) {
+export function TypedMathPreview({ value }: { value: string }) {
   const { palette } = useTheme();
   const { t } = useTranslation('math');
   const { fontScale } = useWindowDimensions();
   const typed = useMemo(() => typedMath(value), [value]);
-  const empty = value.trim().length === 0;
-  // Once shown, the row stays until the field is cleared (derived state, updated while rendering).
-  const [held, setHeld] = useState(false);
-  if (typed.worth && !held) setHeld(true);
-  if (empty && held) setHeld(false);
   const spoken = useSpokenMath(typed.text);
 
-  if (empty || (!typed.worth && !held)) return null;
+  if (value.trim().length === 0 || !typed.worth) return null;
   return (
     <View
       accessible
@@ -50,17 +37,19 @@ export function TypedMathPreview({ value, compact = false }: { value: string; co
         flexDirection: 'row',
         flexWrap: 'wrap',
         alignItems: 'center',
-        columnGap: RHYTHM.parts,
-        minHeight: Math.ceil((compact ? COMPACT_MIN_HEIGHT : MIN_HEIGHT) * fontScale),
-        paddingHorizontal: SPACE.xs,
+        minHeight: Math.ceil(MIN_HEIGHT * fontScale),
+        paddingHorizontal: SPACE.sm,
       }}
     >
-      {compact ? null : <Text style={TYPE.label}>{t('preview.label')}</Text>}
       <View style={{ flexShrink: 1 }}>
         <MathText
           text={typed.text}
           accessible={false}
-          style={compact ? compactMathStyle(palette) : mathStyle(palette)}
+          style={{
+            fontSize: TYPE.small.fontSize,
+            lineHeight: TYPE.small.lineHeight,
+            color: palette.ink2,
+          }}
         />
       </View>
     </View>

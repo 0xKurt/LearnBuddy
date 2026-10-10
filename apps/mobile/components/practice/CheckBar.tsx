@@ -8,12 +8,13 @@
 // its action slot, as the chat has "Senden" there:
 //   · a typed answer brings its own input bar, with the field (issue #365): the same bar as the
 //     chat's, at the bottom, never floating under the question. While she types, "Prüfen" stands
-//     in it at the pill's end (`CheckInBar`); otherwise across the bar under the pill;
+//     in it as the round arrow where the chat sends (issue #522), named "Prüfen" for a screen
+//     reader; otherwise as the word across the bar under the box;
 //   · every other form — a board (order, match, table, cloze, mark, select-all), the note line,
 //     the fraction bar, options she taps — has no text to type, so the field is her question to
 //     the tutor (`useAskField`, issue #402, report #388 §1): "Frag zur Aufgabe …", with "Prüfen" at
-//     the pill's end. Once she has typed a question "Senden" takes its place, as in the chat, and
-//     "Prüfen" comes back when the question is sent. The pill is 54 pt where "Prüfen" across was
+//     the box's end. Once she has typed a question the round send arrow takes its place, as in
+//     the chat, and "Prüfen" comes back when the question is sent. The pill is 54 pt where "Prüfen" across was
 //     48 (+6 pt on a board); under options it is the whole bar (the tile is the answer).
 //
 // Gespräch (issue #386): where an answer can be said — a typed answer, options with letters — the
@@ -45,6 +46,7 @@ import { View } from 'react-native';
 
 import { Btn } from '../lb/Btn.js';
 import { BottomBar } from '../lb/BottomBar.js';
+import { CircleBtn } from '../lb/CircleBtn.js';
 import { InputBar } from '../lb/InputBar.js';
 import { MicStatus } from '../voice/MicButton.js';
 import { TalkButton } from '../voice/TalkButton.js';
@@ -65,9 +67,10 @@ type Check = {
   /**
    * The input bar a typed answer is written in (`InputBar`, issue #365), with the keys she types
    * with: right above "Prüfen", in the same pinned bar, like the chat's. Handed what stands at the
-   * bar's end while she types: "Prüfen" itself (null while there is nothing to check).
+   * bar's end while she types: "Prüfen" itself (null while there is nothing to check) — and
+   * "Prüfen" across, for the essay's writing view (`WritingSheet`, issue #525).
    */
-  input?: (checkInBar: ReactNode) => ReactNode;
+  input?: (checkInBar: ReactNode, checkAcross: ReactNode) => ReactNode;
   /**
    * She is typing in that bar: "Prüfen" stands in the bar itself (`CheckInBar`), as "Senden" does
    * in the chat, and the full-width one steps aside — with the keyboard up on a small phone it
@@ -208,13 +211,16 @@ function TalkRow({ prompt, lang, disabled, onText, onReadAgain }: Spoken) {
 
 function CheckButton(check: Check) {
   const { input, typing, ready } = check;
-  const field = useAskField(<CheckBtn {...check} />);
+  const field = useAskField(<CheckBtn {...check} place="pill" />);
   return (
     <BottomBar>
       {input ? (
         <>
-          {input(typing && ready ? <CheckBtn {...check} /> : null)}
-          {typing ? null : <CheckBtn {...check} across />}
+          {input(
+            typing && ready ? <CheckBtn {...check} place="round" /> : null,
+            <CheckBtn {...check} place="across" />,
+          )}
+          {typing ? null : <CheckBtn {...check} place="across" />}
         </>
       ) : (
         // A form without a typed answer: her question in the field, "Prüfen" its action (#402).
@@ -225,9 +231,9 @@ function CheckButton(check: Check) {
 }
 
 /**
- * The input bar's field as her question (issue #402): "Frag zur Aufgabe …", and at the pill's end
- * the form's "Prüfen" (none under options) — or "Senden", the chat's, once she has typed a
- * question. The placeholder stays beside "Prüfen": it is what says the field is there to ask.
+ * The input bar's field as her question (issue #402): "Frag zur Aufgabe …", and at the box's end
+ * the form's "Prüfen" (none under options) — or the chat's round send arrow, once she has typed a
+ * question.
  */
 function useAskField(check: ReactNode): ComponentProps<typeof InputBar> {
   const ask = useContext(AskRoute);
@@ -243,7 +249,6 @@ function useAskField(check: ReactNode): ComponentProps<typeof InputBar> {
     maxLength: ASK_TEXT_MAX,
     onChangeText: ask.onChange,
     placeholder: t('practice:ask.placeholder'),
-    keepPlaceholder: true,
     accessibilityLabel: t('practice:ask.label'),
     submitBehavior: 'submit',
     returnKeyType: 'send',
@@ -252,9 +257,14 @@ function useAskField(check: ReactNode): ComponentProps<typeof InputBar> {
     onBlur: () => ask.onFocused(false),
     disabled: ask.disabled,
     action: asking ? (
-      <Btn pill size="sm" onPress={send} disabled={ask.disabled}>
-        {t('buddy:composer.send')}
-      </Btn>
+      <CircleBtn
+        icon="send"
+        filled
+        keepsFocus
+        onPress={send}
+        disabled={ask.disabled}
+        accessibilityLabel={t('buddy:composer.send')}
+      />
     ) : (
       check
     ),
@@ -262,32 +272,50 @@ function useAskField(check: ReactNode): ComponentProps<typeof InputBar> {
 }
 
 /**
- * "Prüfen" itself, in one of two places. `across`: over the bar's full width (md, the boards'
- * size) — under a typed answer's field. Otherwise inside the input
- * bar (issues #365, #402), where the chat's "Senden" is: small, at the pill's end, and it keeps
- * the focus in the field, so a tap never closes the keyboard under her finger before it lands.
+ * "Prüfen" itself, in one of three places:
+ *   · `across` — the word over the bar's full width (md, the boards' size), under a typed answer's
+ *     field while she is not typing;
+ *   · `pill` — the word at the box's end beside her question's empty field (#402): it is not about
+ *     the field's text, so it says what it does;
+ *   · `round` — while she types her answer, the round arrow where the chat sends (issue #522); its
+ *     name says "Prüfen".
+ * In the box it keeps the focus in the field, so a tap never closes the keyboard under her finger
+ * before it lands.
  */
 function CheckBtn({
   ready,
   disabled,
   onPress,
   waitsHint,
-  across = false,
-}: Check & { across?: boolean }) {
+  place,
+}: Check & { place: 'across' | 'pill' | 'round' }) {
   const { t } = useTranslation('practice');
+  const hint = ready ? undefined : waitsHint;
   return (
     <View testID="answer-action">
-      <Btn
-        size={across ? 'md' : 'sm'}
-        pill
-        full={across}
-        keepsFocus={!across}
-        disabled={disabled || !ready}
-        onPress={onPress}
-        accessibilityHint={ready ? undefined : waitsHint}
-      >
-        {t('check')}
-      </Btn>
+      {place === 'round' ? (
+        <CircleBtn
+          icon="send"
+          filled
+          keepsFocus
+          disabled={disabled || !ready}
+          onPress={onPress}
+          accessibilityLabel={t('check')}
+          {...(hint ? { accessibilityHint: hint } : {})}
+        />
+      ) : (
+        <Btn
+          size={place === 'across' ? 'md' : 'sm'}
+          pill
+          full={place === 'across'}
+          keepsFocus={place === 'pill'}
+          disabled={disabled || !ready}
+          onPress={onPress}
+          accessibilityHint={hint}
+        >
+          {t('check')}
+        </Btn>
+      )}
     </View>
   );
 }

@@ -6,7 +6,7 @@
 // The one exception is explicit: show(…, { survivesNavigation: true }) for a word
 // that is meant for the screen being navigated to (saved-and-back, session over) —
 // and never for an error, which always dies with its own screen (issue #183).
-// Bottom bars (Composer, BottomBar, SendBar) register their measured height here,
+// Bottom bars (Composer, BottomBar) register their measured height here,
 // so the pill stands above the bar the screen really has instead of a guessed 90 pt.
 
 import { create } from 'zustand';

@@ -24,8 +24,14 @@ import { announce } from '../../lib/announce.js';
 import { transcribe } from '../../lib/api/endpoints.js';
 import { messageFor } from '../../lib/errors.js';
 import { prevTail, stitchTranscripts } from '../../lib/speech/dictation.js';
+import { PauseEnd } from '../../lib/speech/pauseEnd.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
-import { useRecording, type DictationChunk, type Recording } from '../../lib/speech/record.js';
+import {
+  recorderMeters,
+  useRecording,
+  type DictationChunk,
+  type Recording,
+} from '../../lib/speech/record.js';
 import { engineFor, useDeviceRecognition } from '../../lib/speech/recognize.js';
 import { TurnGuard } from '../../lib/speech/turnGuard.js';
 import { transcriptContext, transcriptLang } from '../../lib/speech/spoken.js';
@@ -54,16 +60,18 @@ type Options = {
   /** The understood text (never empty). */
   onText: (text: string) => void;
   /**
-   * Conversation: on the device, listening ends by itself when she pauses. (A
-   * recording for our EU path has no pause detection: she taps to finish.)
+   * Conversation: listening ends by itself when she pauses — on the device, and on the
+   * recording path wherever the recorder measures her level (`endsByItself`).
    */
   untilPause?: boolean;
 };
 
 export type VoiceInput = {
   state: VoiceInputState;
-  /** Listening on the device (ends by itself with untilPause) rather than recording. */
+  /** Listening on the device rather than recording. */
   onDevice: boolean;
+  /** With untilPause: her pause ends this listening, no tap needed (issue #523). */
+  endsByItself: boolean;
   /** Milliseconds recorded so far and the most there can be; null = no limit (issue #19). */
   elapsedMs: number;
   maxMs: number | null;
@@ -243,39 +251,18 @@ export function useVoiceInput({
           ? 'starting'
           : 'idle';
 
-  // Hands-free on the recording path too: the on-device recogniser ends by itself
-  // on a pause, but where it is unavailable the recorder ran until she tapped
-  // "stop" after every turn (user feedback 2026-09-28). Once she has clearly
-  // spoken, a sustained pause ends the recording; the tap keeps working, and a
-  // room too loud to ever fall quiet simply behaves as before.
-  const heardMs = useRef(0);
-  const quietSince = useRef<number | null>(null);
-  const lastPoll = useRef(0);
+  // Hands-free on the recording path too (issue #523): where the on-device recogniser is
+  // unavailable, a sustained pause after clear speech ends the recording
+  // (lib/speech/pauseEnd.ts); the tap keeps working.
+  const pause = useRef(new PauseEnd()).current;
+  const pauseEnds = untilPause && !onDevice && recorderMeters;
   useEffect(() => {
-    const active = untilPause && !onDevice && state === 'recording';
-    if (!active) {
-      heardMs.current = 0;
-      quietSince.current = null;
-      lastPoll.current = 0;
+    if (!pauseEnds || state !== 'recording') {
+      pause.reset();
       return;
     }
-    const now = Date.now();
-    const dt = lastPoll.current ? Math.min(400, now - lastPoll.current) : 0;
-    lastPoll.current = now;
-    // levelFromDb: ~0.28 is clear speech, ~0.12 is room tone (lib/speech/level.ts).
-    if (rec.level >= 0.28) {
-      heardMs.current += dt;
-      quietSince.current = null;
-      return;
-    }
-    if (rec.level > 0.12) {
-      quietSince.current = null;
-      return;
-    }
-    if (heardMs.current < 500) return;
-    quietSince.current ??= now;
-    if (now - quietSince.current >= 1600) void rec.stop();
-  }, [untilPause, onDevice, state, rec.level, rec.elapsedMs, rec]);
+    if (pause.observe(rec.level, Date.now())) void rec.stop();
+  }, [pauseEnds, state, rec.level, rec.elapsedMs, rec, pause]);
 
   async function begin(): Promise<void> {
     guard.begin();
@@ -321,6 +308,7 @@ export function useVoiceInput({
   return {
     state,
     onDevice,
+    endsByItself: untilPause && (onDevice || recorderMeters),
     elapsedMs: onDevice ? device.elapsedMs : rec.elapsedMs,
     // The device recogniser's session has a bound; the recording path has none (issue #19).
     maxMs: onDevice ? DEVICE_DICTATION_MS : rec.maxMs,

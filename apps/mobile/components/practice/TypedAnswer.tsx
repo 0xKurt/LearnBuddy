@@ -4,8 +4,8 @@
 // Before #365 the field stood under the question (#310 option B) and floated in the middle of the
 // screen once Buddy had answered. This file holds only what a practice answer adds to the bar:
 //
-//   · the math keys (lib/math/keys.ts, issue #239), right under the bar (on top of the keyboard)
-//     while she types — exactly
+//   · the math keys (lib/math/keys.ts, issue #239), inside the box between her lines and its tools
+//     (issue #522: one box, not a key row as a third block under it) while she types — exactly
 //     the keys this question needs, chosen by code from its kind, unit, subject and the notation
 //     in its text. A raise/lower key (xⁿ, x₂, x⁺⁻) changes the digits she types next;
 //   · a calculation written out line by line (issue #221): where the keys show, their first key is
@@ -17,9 +17,13 @@
 //     the conversation row (`CheckBar`, `Talk`): what she says is checked right away, and the mic
 //     listens by itself once Buddy has read, as on /talk. Not where a spoken answer cannot
 //     stand alone: a Diktat, a path she is writing line by line, a line that belongs to a board;
-//   · under the text a live preview of typed math ("3/4" as a fraction, TypedMathPreview);
+//   · among the box's tools a live preview of typed math ("3/4" as a fraction, TypedMathPreview),
+//     only while the line looks different when set, and the unit as a chip ("in cm²"), never a
+//     suffix inside her lines (#522);
 //   · a long text (issue #258) gets the tall bar and up to 12 000 characters
-//     (`lib/practice/essay.ts`); it is prose, so it is dictated in parts like a long answer;
+//     (`lib/practice/essay.ts`); it is prose, so it is dictated in parts like a long answer. At the
+//     start of the box's tools it opens the writing view (`WritingSheet`, issue #525): the same
+//     text over nearly the whole screen, "Prüfen" under it;
 //   · her working, photographed (issue #444): where a path is checked, a camera at the bar's start
 //     (like the chat's +). The copy goes into this field for her to compare with her book; a line
 //     that could not be read stays empty and "Prüfen" waits for it (`useWorkPhoto`,
@@ -57,6 +61,7 @@ import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { AnswerShell } from './AnswerShell.js';
 import { useWorkPhoto, type WorkTarget } from './useWorkPhoto.js';
 import { WorkPhotoNote } from './WorkPhotoNote.js';
+import { WritingSheet } from './WritingSheet.js';
 
 /** The web field's rows for a path: five lines fill the field's tallest. */
 const PATH_ROWS = 5;
@@ -122,6 +127,11 @@ export function TypedAnswer({
   const selection = useRef<Selection | null>(null);
   const [forced, setForced] = useState<Selection | undefined>(undefined);
   const [focused, setFocused] = useState(false);
+  /** The writing view of a long text is open (issue #525); it closes once her text is checked. */
+  const [writing, setWriting] = useState(false);
+  useEffect(() => {
+    if (disabled) setWriting(false);
+  }, [disabled]);
   const seen = useVisibleHeight();
   const dense = formDensity(seen.window, seen.overlap) === 'tight';
   // The cursor's place for the preview, which draws the line she is on (null: not reported yet).
@@ -245,16 +255,36 @@ export function TypedAnswer({
       onSubmitEditing={() => {
         if (sends && canCheck) check();
       }}
-      // While she types, "Prüfen" stands in the bar like the chat's "Senden" (`CheckBar`).
+      // While she types, "Prüfen" stands in the box as the chat's round arrow (`CheckBar`).
       action={checkInBar}
       voice={voice}
       micLabel={t('common:voice.answer')}
       mic={!micOff}
       disabled={disabled}
       unit={unit}
-      // How her math will be read, on a thin line in the bar itself. Long answers are texts;
-      // the preview would only repeat them. In a path it draws the line with the cursor.
-      under={long ? null : <TypedMathPreview value={previewLine(kind, value, caret)} compact />}
+      // How her math will be read, among the box's tools (it costs no line of its own). Long
+      // answers are texts; the preview would only repeat them. In a path it draws the line with
+      // the cursor.
+      chips={long ? null : <TypedMathPreview value={previewLine(kind, value, caret)} />}
+      // The keys she types it with, between her lines and the tools — a keyboard accessory
+      // (issue #16), only while she types.
+      under={
+        showKeys ? (
+          <View testID="answer-keys">
+            <MathKeys
+              keys={keys}
+              onInsert={insert}
+              mode={mode}
+              onMode={(next) => {
+                setMode(next);
+                inputRef.current?.focus();
+              }}
+              disabled={disabled}
+              chemistry={keys.includes('reacts')}
+            />
+          </View>
+        ) : null
+      }
       // Gespräch, at the pill's end like the chat's (issue #386).
       after={canTalk ? <TalkButton onPress={conversation.start} /> : null}
       // Her working, photographed (issue #444): the camera where the chat has its +.
@@ -269,6 +299,19 @@ export function TypedAnswer({
               />
             ),
             above: <WorkPhotoNote photo={photo} value={value} />,
+          }
+        : {})}
+      // A long text: its writing view, where the chat has its + (issue #525).
+      {...(long
+        ? {
+            start: (
+              <CircleBtn
+                icon="expand"
+                plain
+                {...(disabled ? {} : { onPress: () => setWriting(true) })}
+                accessibilityLabel={t('essay.write_open')}
+              />
+            ),
           }
         : {})}
     />
@@ -304,25 +347,19 @@ export function TypedAnswer({
         // took a column of the whole tall field, and her text ran down a narrow strip beside it
         // (#258). With the keyboard up on a small phone it rides in the bar like every answer.
         typing: focused && (kind !== 'essay' || dense),
-        input: (checkInBar) => (
+        input: (checkInBar, checkAcross) => (
           <>
             {bar(checkInBar)}
-            {/* Under the bar, on top of the keyboard — a keyboard accessory (issue #16): with the
-                keyboard up on a small phone the bar she types in stays in view, keys below it. */}
-            {showKeys ? (
-              <View testID="answer-keys">
-                <MathKeys
-                  keys={keys}
-                  onInsert={insert}
-                  mode={mode}
-                  onMode={(next) => {
-                    setMode(next);
-                    inputRef.current?.focus();
-                  }}
-                  disabled={disabled}
-                  chemistry={keys.includes('reacts')}
-                />
-              </View>
+            {long ? (
+              <WritingSheet
+                visible={writing}
+                task={prompt}
+                value={value}
+                maxLength={max}
+                onChange={onChange}
+                check={checkAcross}
+                onClose={() => setWriting(false)}
+              />
             ) : null}
           </>
         ),

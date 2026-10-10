@@ -14,7 +14,8 @@
     "label": "La tua risposta",
     "placeholder": "La tua risposta…",
     "unit_hint": "Risposta in {{unit}}",
-    "check_waits": "Solo quando c'è qualcosa nel campo."
+    "check_waits": "Solo quando c'è qualcosa nel campo.",
+    "unit_chip": "in {{unit}}"
   },
   "back_to_buddy": "Torna da Buddy",
   "bar": {
@@ -400,7 +401,9 @@
     "version_other": "Versione {{n}} · {{count}} parole",
     "text_one": "Il tuo testo · 1 parola",
     "text_other": "Il tuo testo · {{count}} parole",
-    "thinking": "Buddy sta leggendo il tuo testo …"
+    "thinking": "Buddy sta leggendo il tuo testo …",
+    "write_title": "Il tuo testo",
+    "write_open": "Scrivi a schermo intero"
   },
   "work": {
     "take": "Foto del tuo procedimento",

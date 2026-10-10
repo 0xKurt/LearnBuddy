@@ -65,6 +65,7 @@ import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { SPACE, bottomRoom } from '../lib/theme/space.js';
+import { attachInChat } from '../lib/capture/attachRequest.js';
 
 type Phase = TalkPhase;
 
@@ -386,8 +387,10 @@ export default function TalkScreen() {
   // Not "Ich höre zu" until the recorder really runs (issue #158): the decision is pure
   // and tested in lib/speech/talkState.ts, because it is a claim, not a label.
   const headline = t(talkHeadline(listening ? 'listening' : phase, voice.state));
+  // Only where her pause really ends the turn does it say so (issue #523); the browser's
+  // recorder measures no level, so there the tap finishes.
   const sub = listening
-    ? voice.onDevice
+    ? voice.endsByItself
       ? t('buddy:talk.listening_sub')
       : t('buddy:talk.tap_when_done')
     : phase === 'speaking'
@@ -572,8 +575,9 @@ export default function TalkScreen() {
             accessibilityLabel: t('buddy:talk.photo_label'),
             onPress: () => {
               haptic.tap();
-              // The photo goes into the same conversation; capture brings her back here.
-              router.push({ pathname: '/capture', params: { from: 'talk' } });
+              // The photo goes into the same conversation: the chat's bar takes it, with the
+              // camera open at once (issue #519) — no screen of its own in between.
+              attachInChat({ open: 'camera' });
             },
           }}
         />

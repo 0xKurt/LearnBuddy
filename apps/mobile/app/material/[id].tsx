@@ -29,6 +29,7 @@ import { messageFor } from '../../lib/errors.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { bottomRoom, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { attachInChat } from '../../lib/capture/attachRequest.js';
 
 const TITLE_MAX = 120;
 
@@ -241,10 +242,11 @@ export default function MaterialScreen() {
                 pill
                 icon="camera"
                 disabled={deleting || renaming}
+                // The chat's + menu, for this sheet (issue #519).
                 onPress={() =>
-                  router.push({
-                    pathname: '/capture',
-                    params: { completes: material.id, purpose: material.purpose, add: '1' },
+                  attachInChat({
+                    open: 'menu',
+                    link: { completes: material.id, purpose: material.purpose, add: true },
                   })
                 }
               >

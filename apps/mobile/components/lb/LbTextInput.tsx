@@ -6,8 +6,13 @@
 //
 // One look, three sizes (`variant`):
 //   · field — a form field: 52 pt high, the frame corner;
-//   · bar   — the input bar at the bottom of the chat and of a practice answer: a floating pill
-//             that holds its own controls (`start`, `end`) and grows with the text;
+//   · bar   — the input bar at the bottom of the chat and of a practice answer: a floating box
+//             that holds its own controls and grows with the text. Built like the Claude app's
+//             (owner 09.10., issue #522): her text on top over the full width, and under it one
+//             row of tools — `start` and `chips` on the left, `end` (mic, the round send arrow)
+//             on the right. Empty, it is one compact line with the controls beside the text, so a
+//             small phone keeps its room; the tools fold under the text with the first letter.
+//             The text is never squeezed into a column beside the controls again;
 //   · cell  — a gap in a line of text or a table's cell: one touch high, centred, as wide as the
 //             place it stands in, her words in the accent.
 // The same everywhere: paper, a hairline frame, and while it has focus the violet frame with a
@@ -42,21 +47,30 @@ import { Icon } from './Icon.js';
 /** What a ref to the field holds (focus, blur) — the one name for it outside this file. */
 export type LbTextInputRef = TextInput;
 
-/** One line of typed text: the body size, the field's own line height. */
-const LINE = 22;
+/** One line of typed text: the body size, the field's own line height (a page's rows count it). */
+export const LINE = 22;
 /** A form field's height (design brief): a touch target and a little air. */
 const FIELD_HEIGHT = 52;
 /** How many lines a growing field shows before it scrolls inside itself, unless told otherwise. */
 const MAX_ROWS = 5;
+/** The bar's chips: one row that gives way before the controls do. */
+const CHIPS = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: SPACE.sm,
+  flexShrink: 1,
+} as const;
 
 export type LbTextInputProps = Omit<TextInputProps, 'style'> & {
-  /** field (default), bar (the input bar's pill) or cell (a gap, a table's cell). */
+  /** field (default), bar (the input bar's box) or cell (a gap, a table's cell). */
   variant?: 'field' | 'bar' | 'cell';
-  /** Inside the frame, before the text (the chat's +). */
+  /** Inside the frame, the tools' start (the chat's +, the camera). */
   start?: ReactNode;
-  /** Inside the frame, after the text (the mic, "Senden", a unit). */
+  /** Bar only: beside `start`, what goes with the answer (its unit, how her math is read). */
+  chips?: ReactNode;
+  /** Inside the frame, the tools' end (the mic, the round send arrow, the waveform). */
   end?: ReactNode;
-  /** Inside the frame, under the text (how her typed math will be read). */
+  /** Inside the frame, under the text and above the bar's tools (the math keys she types with). */
   under?: ReactNode;
   /** A multiline field's lines before it grows (a list of words wants a few). */
   rows?: number;
@@ -105,6 +119,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
   {
     variant = 'field',
     start = null,
+    chips = null,
     end = null,
     under = null,
     rows = 1,
@@ -135,6 +150,9 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
   const lines = rest.multiline === true;
   // A multiline field with several rows starts its text at the top, like a page.
   const top = lines && rows > 1;
+  // The bar's text over the full width, its tools in a row under it: as soon as there is text,
+  // and always for a page of several rows (issue #522).
+  const stacked = bar && ((rest.value ?? '') !== '' || rows > 1);
   // What the frame keeps inside its hairline: a form field 52 pt, a cell and the bar's text
   // one touch target (the bar adds its padding around it).
   const inner = bar ? TOUCH : (cell ? TOUCH : FIELD_HEIGHT) - 2;
@@ -205,7 +223,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
             gap: bar ? 2 : 0, // token-exempt: see above
           }}
         >
-          {start}
+          {stacked ? null : start}
           <TextInput
             ref={ref}
             placeholderTextColor={palette.placeholder}
@@ -232,15 +250,21 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
               {
                 flex: 1,
                 minWidth: 0,
-                minHeight: top ? rows * LINE + 2 * SPACE.md : inner,
+                minHeight: top ? rows * LINE + 2 * SPACE.md : stacked ? LINE + 2 * SPACE.sm : inner,
                 maxHeight: lines ? Math.max(rows, maxRows) * LINE + 2 * SPACE.md : undefined,
-                paddingHorizontal: bar || cell ? SPACE.xs : SPACE.lg,
+                paddingHorizontal: stacked ? SPACE.sm : bar || cell ? SPACE.xs : SPACE.lg,
                 // A bar without a control before the text keeps the screen's gutter inside it.
-                paddingLeft: bar && start === null ? SPACE.md : undefined,
+                paddingLeft: bar && !stacked && start === null ? SPACE.md : undefined,
                 // A single line centres itself. A multiline one starting on one line is centred
                 // by its padding: (height − LINE) / 2 above and below.
-                // token-exempt: half the room the line leaves, so it sits centred (above)
-                paddingVertical: top ? SPACE.md : lines ? (inner - LINE) / 2 : 0,
+                paddingVertical: top
+                  ? SPACE.md
+                  : stacked
+                    ? SPACE.sm
+                    : lines
+                      ? // token-exempt: half the room the line leaves, so it sits centred (above)
+                        (inner - LINE) / 2
+                      : 0,
                 fontSize: TYPE.body.fontSize,
                 lineHeight: LINE,
                 // What she writes into a board stands apart from its print, as a pencil does:
@@ -255,10 +279,20 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
               lines ? growsWithText : null,
             ]}
           />
-          {end}
+          {stacked || chips === null ? null : (
+            <View style={[CHIPS, { alignSelf: 'center' }]}>{chips}</View>
+          )}
+          {stacked ? null : end}
           {canClear || (showToggle && onToggle) ? corner : null}
         </View>
         {under}
+        {stacked ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
+            {start}
+            <View style={[CHIPS, { flex: 1 }]}>{chips}</View>
+            {end}
+          </View>
+        ) : null}
       </View>
       {/* A note under the field, like the label above it and the hint it replaces (welcome's
           "Mindestens 8 Zeichen."): `small`, in from the frame's edge by the same xs. At `body`

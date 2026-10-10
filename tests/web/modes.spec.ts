@@ -207,8 +207,9 @@ test('learning modes: explain, homework help without the solution, practice with
   const pinned = page.getByTestId('bottom-bar');
   await expect(pinned.getByLabel('Deine Antwort')).toBeVisible();
   await expect(pinned.getByText('Tipp')).toHaveCount(0);
-  // While she types "Prüfen" is in the bar itself (#365): its padding (8 + 12), the key row (48),
-  // the bar with a drawn fraction under the text (97) and the step between them (8): 173 pt.
+  // While she types "Prüfen" is in the box itself (#365), one box since #522: the bar's padding
+  // (8 + 12), the box's padding and frame (10), her line (38), the key row (48) and the tools with
+  // the drawn fraction among them (44): 160 pt.
   expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(176);
   await expect(page.getByText('Welche zwei Längen kennst du vom Rechteck?')).toBeVisible();
 

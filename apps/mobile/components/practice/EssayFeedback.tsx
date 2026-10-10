@@ -1,6 +1,7 @@
-// Buddy's feedback on a version of her long text (issue #258), inside his reply bubble in the
-// thread under the question — the same place and the same bubble as every other reply, never a
-// card of its own. docs/architecture.md §Practice („Lange Texte").
+// Buddy's feedback on a version of her long text (issue #258): a card over the thread's full
+// width under his short reply bubble ("Erörterung – so steht dein Text", `ItemThread`). Inside the
+// bubble it had three quarters of the width and her quotes broke after three or four words (issue
+// #525). docs/architecture.md §Practice („Lange Texte").
 //
 // What it shows is what the server checked (`EssayFeedback`, contracts/essay.ts), nothing more:
 //   · each key point of the text type with a calm state — "geschafft" with her own words that
@@ -30,9 +31,6 @@ export function EssayFeedback({ feedback }: { feedback: Feedback }) {
   const points = feedback.points.filter((p) => p.state !== 'unknown');
   return (
     <View testID="essay-feedback" style={{ gap: SPACE.md }}>
-      <Text style={[TYPE.label, { color: palette.ink2 }]}>
-        {t('essay.intro', { form: feedback.form })}
-      </Text>
       <View style={{ gap: SPACE.md }}>
         {points.map((p) => {
           const met = p.state === 'met';

@@ -560,7 +560,6 @@
     "filled": "Spazio vuoto, con: {{answer}}"
   },
   "preview": {
-    "label": "Anteprima",
     "a11y": "Anteprima della tua risposta: {{math}}"
   },
   "tap": {
