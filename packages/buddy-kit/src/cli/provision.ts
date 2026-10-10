@@ -1,11 +1,13 @@
-// pnpm provision [--plan] [--env production] [--set key=value …] [--rotate NAME]
+// pnpm provision [--dry-run] [--env production] [--set key=value …] [--rotate NAME]
 //                [--check-health] [--deprovision-plan]
+// --dry-run (alias --plan): what would be created and changed; nothing is written or called.
 // Run in the root of a project created by create-buddy (issue #107 §3).
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { KitError, parseConfig } from '../config.js';
+import { inventory, renderInventory } from '../inventory.js';
 import { checkHealth, NOT_DELETABLE, provision, renderResult } from '../provision.js';
 import { parseAssignment, readState, type SecretName } from '../state.js';
 import { parseArgs } from './args.js';
@@ -42,6 +44,7 @@ async function main(): Promise<void> {
     rotate: (args.values.get('rotate') ?? []) as SecretName[],
     now: () => new Date(),
   });
+  if (!write) console.log(`${renderInventory(inventory(root, config, result.ids))}\n`);
   console.log(renderResult(result, { write }));
 
   if (args.flags.has('check-health')) {

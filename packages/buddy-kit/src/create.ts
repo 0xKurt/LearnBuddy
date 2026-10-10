@@ -1,29 +1,42 @@
 // create-buddy: a new, independent project from this repository (issue #107 §2, "Weg b").
 //
 // What it does, and only this:
-// - copies the tracked files (never .git, never LearnBuddy's own secrets or store identity,
-//   never history like docs/legacy or reports);
-// - gives the copy its own identity: app name, slug, scheme, bundle id/package, share
-//   extension names — and removes LearnBuddy's Expo project, update URL and the preview
-//   build's API/Supabase URLs, so the new app can never talk to LearnBuddy's backend;
+// - copies the tracked files (never .git, never the source's secrets or store identity, never
+//   its history like docs/legacy or reports, never the generator itself);
+// - gives the copy its own identity (rewrite.ts) and cuts every tie to the source's
+//   infrastructure: Expo project, update URL, the builds' API/Supabase addresses, the health
+//   probe, the local Supabase stack, the repository CLAUDE.md files issues in;
+// - checks that no such tie is left (source.ts `findForeign`): the identifiers are read from
+//   the source's own files, so a new tie of the source is caught, not missed;
 // - writes buddy.config.json, docs/legal/processors.md and BUDDY-SETUP.md (the checklist).
 //
-// What it deliberately does NOT do: take the learning domain out. That is the extraction in
-// #107 §6 (8–12 PRs by the issue's own estimate) and the owner parked it (29.09.: "LearnBuddy
-// kopieren, die Lern-Teile entfernen … von Hand"). The report counts every remaining
-// "LearnBuddy" so that work is visible instead of hidden behind a renamed home screen.
+// What it does NOT do yet: leave the learning domain out. The generic core still imports it
+// (tools/guards/boundaries.mjs measures how much); once the cuts of #107 are through, the copy
+// takes the generic core by construction. Until then the report counts what of the domain is in
+// the copy, so that work stays visible instead of hidden behind a renamed home screen.
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
-import { type BuddyConfig, KitError } from './config.js';
 import { checklistMarkdown } from './checklist.js';
+import { type BuddyConfig, KitError } from './config.js';
 import { processorsMarkdown } from './processors.js';
+import { REWRITES, rewriteEverywhere } from './rewrite.js';
+import { findForeign, readSource } from './source.js';
 
-/** Never copied: history, research, and LearnBuddy's own credentials and store identity. */
+/** Never copied: history, research, the local state of provision. */
 const EXCLUDED_PREFIXES = [
   '.git/',
   'docs/legacy/',
+  'docs/decisions/',
   'reports/',
   'research_notes/',
   'design-examples/',
@@ -31,14 +44,31 @@ const EXCLUDED_PREFIXES = [
   '.buddy/',
 ];
 const EXCLUDED_FILES = new Set([
-  // LearnBuddy's Firebase Android app: the new Buddy registers its own (issue #107 §3).
+  // The source's Firebase app: the new Buddy registers its own (issue #107 §3).
   'apps/mobile/google-services.json',
   'apps/mobile/GoogleService-Info.plist',
+  // Audits and measurements of the source's own production.
+  'docs/issue-audit-2026-10-01.md',
+  'docs/speed-audit.md',
 ]);
+/**
+ * The generator itself: a new app provisions itself (provision stays), but does not make further
+ * apps from its own tree. create.test.ts holds the list against the package.
+ */
+export const KIT_ONLY = [
+  'packages/buddy-kit/reference.config.json',
+  'packages/buddy-kit/src/checklist.ts',
+  'packages/buddy-kit/src/create.ts',
+  'packages/buddy-kit/src/rewrite.ts',
+  'packages/buddy-kit/src/source.ts',
+  'packages/buddy-kit/src/cli/create-buddy.ts',
+  'packages/buddy-kit/src/__tests__/create.test.ts',
+  'packages/buddy-kit/src/__tests__/create-cli.test.ts',
+];
 const EXCLUDED_PATTERN = /\.(jks|keystore|p8|p12|key|mobileprovision)$|(^|\/)\.env(\.|$)/;
 
 export function isCopied(path: string): boolean {
-  if (EXCLUDED_FILES.has(path)) return false;
+  if (EXCLUDED_FILES.has(path) || KIT_ONLY.includes(path)) return false;
   if (EXCLUDED_PREFIXES.some((p) => path.startsWith(p))) return false;
   if (EXCLUDED_PATTERN.test(path) && !path.endsWith('.env.example')) return false;
   return true;
@@ -48,103 +78,17 @@ export type CreateReport = {
   copied: number;
   skipped: string[];
   rewritten: string[];
-  /** Files that still say "LearnBuddy" (the domain extraction that is left), most first. */
+  /** Ties to the source's infrastructure still in the copy — must be empty (the CLI fails). */
+  links: Array<{ file: string; line: number; what: string }>;
+  /** Copied files of the learning domain, per pattern of boundaries.config.mjs. */
+  domain: Array<{ pattern: string; files: number }>;
+  /** Files that still say "LearnBuddy", most first (the extraction that is left). */
   leftovers: Array<{ file: string; count: number }>;
 };
 
-type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
-type JsonObject = { [key: string]: Json };
-
-function isObject(v: Json | undefined): v is JsonObject {
-  return typeof v === 'object' && v !== null && !Array.isArray(v);
-}
-
-function pascal(id: string): string {
-  return id
-    .split('-')
-    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-    .join('');
-}
-
-/** apps/mobile/app.json with the new identity and none of LearnBuddy's project links. */
-function rewriteAppJson(text: string, config: BuddyConfig): string {
-  const root = JSON.parse(text) as JsonObject;
-  const expo = root.expo;
-  if (!isObject(expo)) throw new KitError('apps/mobile/app.json has no "expo" object');
-  const { id, name, bundleId, scheme } = config.identity;
-  expo.name = name;
-  expo.slug = id;
-  expo.scheme = scheme;
-  // Owner, update URL and EAS project belong to LearnBuddy's Expo account; `provision`
-  // writes the new ones once the project exists (pnpm provision --set expoProjectId=…).
-  delete expo.owner;
-  delete expo.updates;
-  if (isObject(expo.extra)) {
-    delete expo.extra.eas;
-    if (Object.keys(expo.extra).length === 0) delete expo.extra;
-  }
-  if (isObject(expo.ios)) expo.ios.bundleIdentifier = bundleId;
-  if (isObject(expo.android)) {
-    expo.android.package = bundleId;
-    // google-services.json is LearnBuddy's Firebase app and is not copied.
-    delete expo.android.googleServicesFile;
-  }
-  // Share extension names inside plugin options ("LearnBuddy Share", "LearnBuddyShare").
-  const rename = (v: Json): Json => {
-    if (typeof v === 'string') {
-      if (v === 'LearnBuddy') return name;
-      if (v === 'LearnBuddy Share') return `${name} Share`;
-      if (v === 'LearnBuddyShare') return `${pascal(id)}Share`;
-      return v;
-    }
-    if (Array.isArray(v)) return v.map(rename);
-    if (isObject(v)) return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, rename(x)]));
-    return v;
-  };
-  if (Array.isArray(expo.plugins)) expo.plugins = expo.plugins.map(rename);
-  return `${JSON.stringify(root, null, 2)}\n`;
-}
-
-/** apps/mobile/app.config.ts: the dev variant's name and id. */
-function rewriteAppConfig(text: string, config: BuddyConfig): string {
-  return text
-    .replaceAll("'LearnBuddy Dev'", `'${config.identity.name.replaceAll("'", "\\'")} Dev'`)
-    .replaceAll('com.learnbuddy.app.dev', `${config.identity.bundleId}.dev`);
-}
-
-/**
- * apps/mobile/eas.json without LearnBuddy's API and Supabase URLs: a preview build of the new
- * app must never reach LearnBuddy's backend. `provision` fills them from the new projects.
- */
-function rewriteEasJson(text: string): string {
-  const root = JSON.parse(text) as JsonObject;
-  const build = root.build;
-  if (isObject(build)) {
-    for (const profile of Object.values(build)) {
-      if (!isObject(profile) || !isObject(profile.env)) continue;
-      for (const key of Object.keys(profile.env)) {
-        if (key.startsWith('EXPO_PUBLIC_')) delete profile.env[key];
-      }
-    }
-  }
-  return `${JSON.stringify(root, null, 2)}\n`;
-}
-
-function ensureGitignored(text: string): string {
-  if (/^\.buddy\/$/m.test(text)) return text;
-  const sep = text.endsWith('\n') || text === '' ? '' : '\n';
-  return `${text}${sep}\n# create-buddy / provision: local ids and secrets of this app (never committed)\n.buddy/\n`;
-}
-
-const REWRITES: Record<string, (text: string, config: BuddyConfig) => string> = {
-  'apps/mobile/app.json': rewriteAppJson,
-  'apps/mobile/app.config.ts': rewriteAppConfig,
-  'apps/mobile/eas.json': (text) => rewriteEasJson(text),
-  '.gitignore': (text) => ensureGitignored(text),
-};
-
-/** Text files are scanned for leftovers; binaries are not. */
-const TEXT = /\.(ts|tsx|js|mjs|cjs|json|md|sql|ya?ml|sh|txt|html|css)$/;
+/** Text files are rewritten and scanned; binaries are copied as they are. */
+const TEXT =
+  /\.(ts|tsx|js|mjs|cjs|json|md|sql|ya?ml|sh|txt|html|css|toml)$|(^|\/)\.(gitignore|[a-z]+rc)$/;
 
 export function createBuddy(opts: {
   sourceRoot: string;
@@ -152,6 +96,8 @@ export function createBuddy(opts: {
   /** The files to consider, relative to sourceRoot (the CLI passes `git ls-files`). */
   files: string[];
   config: BuddyConfig;
+  /** The domain patterns (tools/guards/boundaries.config.mjs `DOMAIN`), for the report. */
+  domain?: readonly string[];
 }): CreateReport {
   const source = resolve(opts.sourceRoot);
   const target = resolve(opts.targetRoot);
@@ -160,8 +106,17 @@ export function createBuddy(opts: {
     throw new KitError(`the target ${target} lies inside the source ${source}`);
   if (existsSync(target) && readdirSync(target).length > 0)
     throw new KitError(`the target ${target} exists and is not empty — nothing was written`);
+  const identity = readSource(source);
 
-  const report: CreateReport = { copied: 0, skipped: [], rewritten: [], leftovers: [] };
+  const report: CreateReport = {
+    copied: 0,
+    skipped: [],
+    rewritten: [],
+    links: [],
+    domain: [],
+    leftovers: [],
+  };
+  const copied: string[] = [];
   for (const file of opts.files) {
     if (!isCopied(file)) {
       report.skipped.push(file);
@@ -171,27 +126,37 @@ export function createBuddy(opts: {
     if (!existsSync(from)) continue; // deleted in the working tree but still tracked
     const to = join(target, file);
     mkdirSync(dirname(to), { recursive: true });
-    const rewrite = REWRITES[file];
-    if (rewrite) {
-      writeFileSync(to, rewrite(readFileSync(from, 'utf8'), opts.config));
-      report.rewritten.push(file);
+    if (TEXT.test(file)) {
+      const before = readFileSync(from, 'utf8');
+      const whole = REWRITES[file];
+      const after = rewriteEverywhere(
+        whole ? whole(before, opts.config, identity) : before,
+        file,
+        opts.config,
+        identity,
+      );
+      writeFileSync(to, after);
+      if (after !== before) report.rewritten.push(file);
     } else {
       writeFileSync(to, readFileSync(from));
     }
+    chmodSync(to, statSync(from).mode); // hooks and scripts stay executable
+    copied.push(file);
     report.copied++;
   }
-  if (!report.rewritten.includes('.gitignore')) {
-    writeFileSync(join(target, '.gitignore'), ensureGitignored(''));
-    report.rewritten.push('.gitignore');
-  }
-
   writeFileSync(join(target, 'buddy.config.json'), `${JSON.stringify(opts.config, null, 2)}\n`);
   mkdirSync(join(target, 'docs/legal'), { recursive: true });
   writeFileSync(join(target, 'docs/legal/processors.md'), processorsMarkdown(opts.config));
 
-  for (const file of opts.files) {
-    if (!isCopied(file) || !TEXT.test(file) || !existsSync(join(target, file))) continue;
-    const count = (readFileSync(join(target, file), 'utf8').match(/learn ?buddy/gi) ?? []).length;
+  const texts = copied.filter((f) => TEXT.test(f));
+  report.links = findForeign(target, texts, identity.foreign);
+  report.domain = (opts.domain ?? []).map((pattern) => ({
+    pattern,
+    files: copied.filter((f) => new RegExp(pattern).test(f)).length,
+  }));
+  const word = new RegExp(identity.name.replace(/(?<=[a-z])(?=[A-Z])/g, ' ?'), 'gi');
+  for (const file of texts) {
+    const count = (readFileSync(join(target, file), 'utf8').match(word) ?? []).length;
     if (count > 0) report.leftovers.push({ file, count });
   }
   report.leftovers.sort((a, b) => b.count - a.count || a.file.localeCompare(b.file));

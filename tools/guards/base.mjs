@@ -66,7 +66,7 @@ const TS = /\.tsx?$/;
  *   styleNumbers: Record<string, number>,
  *   pressable: string[],
  * }} FileLists
- * @typedef {FileLists & { clones: Record<string, number>, knip: string[] }} Lists
+ * @typedef {FileLists & { clones: Record<string, number>, knip: string[], boundaries: string[] }} Lists
  * @typedef {{ issue: string, reason: string } & Partial<Lists>} Grant
  */
 
@@ -114,13 +114,27 @@ function isAncestor(a, b, cwd) {
 }
 
 /**
+ * The branch the lists are measured on: origin/main — or, in a repository without an `origin`
+ * (a new app from create-buddy that was never pushed, issue #107), its own main.
+ * @param {string} cwd @returns {string}
+ */
+export function baseBranch(cwd) {
+  try {
+    git(['remote', 'get-url', 'origin'], cwd);
+    return BASE_BRANCH;
+  } catch {
+    return 'main';
+  }
+}
+
+/**
  * The commit of main the lists are measured on: where HEAD left main — or, while a merge is in
  * progress, where MERGE_HEAD left it when that is newer: what main grew with its own reasons is
  * not the merging branch's growth.
  * @param {string} [cwd] the repository (the tests pass a throwaway one)
  * @param {string} [branch]
  */
-export function baseSha(cwd = REPO_ROOT, branch = BASE_BRANCH) {
+export function baseSha(cwd = REPO_ROOT, branch = baseBranch(cwd)) {
   const main = commitOf(branch, cwd);
   if (main === null) {
     throw new Error(
@@ -293,6 +307,7 @@ const GRANTABLE = /** @type {const} */ ({
   clones: 'numbers',
   pressable: 'entries',
   knip: 'entries',
+  boundaries: 'entries',
 });
 
 /** @param {string} name @param {string} text @returns {Grant} */
@@ -396,7 +411,7 @@ export function fileAllowance() {
  * What a whole-repository guard allows today: what `measure` finds on main's tree, plus this
  * branch's grants for `list`.
  * @template {Record<string, number> | string[]} T
- * @param {'clones' | 'knip'} list @param {(root: string) => T} measure @returns {T}
+ * @param {'clones' | 'knip' | 'boundaries'} list @param {(root: string) => T} measure @returns {T}
  */
 export function treeAllowance(list, measure) {
   const sha = baseSha();

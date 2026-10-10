@@ -43,8 +43,10 @@
     },
   },
   "ignoreDependencies": [
-    // The guard wrapper starts jscpd's binary (tools/guards/clones.mjs).
+    // The guard wrappers start jscpd's and dependency-cruiser's binaries (tools/guards/clones.mjs,
+    // tools/guards/boundaries.mjs).
     "jscpd",
+    "dependency-cruiser",
     // NativeWind 4 resolves it at build time; its install guide lists it as a direct dependency.
     "react-native-css-interop",
     // scripts/deploy-check.sh installs Vercel's detector into a temp dir (LB_FS_DETECTORS_DIR).

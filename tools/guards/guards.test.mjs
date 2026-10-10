@@ -6,14 +6,29 @@
 // better, because main's measurement IS the list (issue #452). Both are tested here.
 
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 import { ESLint, RuleTester } from 'eslint';
 import tseslint from 'typescript-eslint';
 
-import { activeGrants, baseSha, GROWTH_DIR, measureFiles, withGrants } from './base.mjs';
+import {
+  activeGrants,
+  baseBranch,
+  baseSha,
+  GROWTH_DIR,
+  measureFiles,
+  withGrants,
+} from './base.mjs';
+import { findBoundaryEdges } from './boundaries.mjs';
 import plugin from './eslint-plugin.mjs';
 import { MAX_AGE_HOURS, staleHours } from './fresh-base.mjs';
 import { keysOf, unusedKeys } from './i18n-keys.mjs';
@@ -249,6 +264,22 @@ describe('Ausnahmelisten are measured on main, not kept in files (issue #452)', 
     assert.deepEqual(base.maxLines, { a: 900 }, 'the measure itself stays untouched');
   });
 
+  it('a repository that was never pushed measures on its own main (a new app, issue #107)', () => {
+    const { repo, git, write, done } = playground();
+    try {
+      write(BIG, lines(810));
+      git('add', '-A');
+      git('commit', '-qm', 'the first commit of a new app');
+      assert.equal(baseBranch(repo), 'main');
+      assert.equal(baseSha(repo), git('rev-parse', 'main').trim());
+      git('remote', 'add', 'origin', 'https://example.test/app.git');
+      assert.equal(baseBranch(repo), 'origin/main');
+      assert.throws(() => baseSha(repo), /origin\/main ist hier unbekannt/);
+    } finally {
+      done();
+    }
+  });
+
   it('no list is kept in a file a parallel shrink would have to edit', () => {
     // What is left in baselines/ is kept by hand and compared by no-growth.mjs.
     assert.deepEqual(readdirSync(join(REPO_ROOT, 'tools', 'guards', 'baselines')), [
@@ -256,6 +287,48 @@ describe('Ausnahmelisten are measured on main, not kept in files (issue #452)', 
     ]);
     for (const file of readdirSync(join(REPO_ROOT, 'tools', 'guards', 'baselines'))) {
       assert.ok(`tools/guards/baselines/${file}` in LISTS, `${file}: no-growth.mjs vergleicht sie`);
+    }
+  });
+});
+
+describe('module boundaries: generic Buddy code never imports the learning domain (#107)', () => {
+  it('finds an import from generic into domain code, and none the other way or in a test', () => {
+    const { repo, write, done } = playground();
+    try {
+      write('apps/api/src/modules/practice/drill.ts', 'export const drill = 1;\n');
+      write(
+        'apps/api/src/modules/buddy/turn.ts',
+        "import { drill } from '../practice/drill.js';\nexport const turn = drill;\n",
+      );
+      write(
+        'apps/api/src/modules/practice/uses.ts',
+        "import { turn } from '../buddy/turn.js';\nexport const uses = turn;\n",
+      );
+      write(
+        'apps/api/src/modules/buddy/__tests__/turn.test.ts',
+        "import { drill } from '../../practice/drill.js';\nexport const t = drill;\n",
+      );
+      write(
+        'apps/mobile/components/buddy/Card.tsx',
+        "import { solve } from '@learnbuddy/shared-math';\nexport const Card = solve;\n",
+      );
+      write(
+        'packages/shared-math/package.json',
+        '{"name":"@learnbuddy/shared-math","main":"src/index.ts"}',
+      );
+      write('packages/shared-math/src/index.ts', 'export const solve = 1;\n');
+      // pnpm links a workspace package into the app's node_modules.
+      mkdirSync(join(repo, 'apps/mobile/node_modules/@learnbuddy'), { recursive: true });
+      symlinkSync(
+        join(repo, 'packages/shared-math'),
+        join(repo, 'apps/mobile/node_modules/@learnbuddy/shared-math'),
+      );
+      assert.deepEqual(findBoundaryEdges(repo), [
+        'apps/api/src/modules/buddy/turn.ts -> apps/api/src/modules/practice/drill.ts',
+        'apps/mobile/components/buddy/Card.tsx -> packages/shared-math/src/index.ts',
+      ]);
+    } finally {
+      done();
     }
   });
 });
