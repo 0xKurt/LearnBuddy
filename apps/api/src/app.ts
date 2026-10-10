@@ -26,6 +26,7 @@ import { erasureBacklog } from './modules/identity/retention.js';
 import { voiceRoutes } from './modules/voice/routes.js';
 import { registerLearning } from './modules/learning/register.js';
 import { withoutCode } from './modules/buddy/registry.js';
+import { missingJobKinds } from './modules/scheduler/registry.js';
 import { missingMigrations } from './lib/migrations.js';
 import { schedulerHealth, type SchedulerHealth } from './modules/scheduler/health.js';
 import { runTick } from './modules/scheduler/tick.js';
@@ -50,7 +51,7 @@ export function createApp(deps: Deps): Hono<AppEnv> {
   // The learning domain announces itself (issue #107) — the one place the core names it. Nothing
   // the model is offered may be left without its code: refused here, not at the first call.
   registerLearning();
-  const missing = withoutCode();
+  const missing = [...withoutCode(), ...missingJobKinds()];
   if (missing.length > 0) throw new Error(`No code registered for: ${missing.join(', ')}`);
 
   const app = new Hono<AppEnv>();

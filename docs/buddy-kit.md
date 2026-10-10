@@ -165,6 +165,13 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
    (`mountBuddy`). „Jetzt üben“ aus einer Nachricht startet den Schritt über
    `buddy/stepStart.ts` (`registerStepStarter`). `erasureBacklog` steht in
    `identity/retention.ts`. Wächter: 63 → 55.
+4. **Scheduler und Proaktivität:** `scheduler/registry.ts` (Job-Arten je Spur — wartend,
+   Löschung — und der Anteil der Domain an einem Lauf: Bergung, Leerlauf, Aufräum-Sweep),
+   `buddy/occasions.ts` (Anlässe, die Code allein entscheidet, und die zehn Minuten Fragen für
+   einen Übungsschritt ohne Modell), `subscribe` in `buddy/events.ts`. Der Start bricht ab, solange
+   eine Job-Art keinen Handler hat (`missingJobKinds`). Die Aufbewahrung jedes Buddys
+   (Storage-Schuld, geschlossene Erinnerungen, Entscheidungsinhalte) steht in
+   `identity/retention.ts`. Wächter: 55 → 45.
 
 ## Die API-Datenbankrolle
 

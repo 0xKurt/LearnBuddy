@@ -5,8 +5,9 @@
 // once and then checks that nothing the core declares is left without its code.
 
 import { registerRoutes } from '../../http/plugins.js';
-import { findQuestions, recentResults } from '../buddy/connectors/practice.js';
 import { searchMaterials } from '../buddy/connectors/material.js';
+import { findQuestions, recentResults } from '../buddy/connectors/practice.js';
+import { subscribe } from '../buddy/events.js';
 import { registerLookupRunners } from '../buddy/lookups.js';
 import {
   runDeleteItem,
@@ -14,15 +15,23 @@ import {
   runRenameMaterial,
   runRequestMaterial,
 } from '../buddy/materialTools.js';
+import { registerOccasions, registerPracticeFiller } from '../buddy/occasions.js';
 import { runPreparePractice } from '../buddy/practiceTool.js';
+import { REVIEW_REASONS, reviewAfterBreak, reviewNextDay, runReviews } from '../buddy/review.js';
 import { runStartRoleplay } from '../buddy/roleplay.js';
-import { runOfferRehearsal, runPlanTalk } from '../buddy/talkTools.js';
 import { registerStepStarter } from '../buddy/stepStart.js';
+import { runOfferRehearsal, runPlanTalk } from '../buddy/talkTools.js';
 import { registerActHandlers } from '../buddy/tools.js';
+import { purgeContent, purgePhotos, sweepForgottenPhotos } from '../materials/purge.js';
+import { runExtraction } from '../materials/reading.js';
+import { recoverReadings } from '../materials/readingJob.js';
 import { materialRoutes } from '../materials/routes.js';
+import { closeIdleSessions } from '../practice/lifecycle.js';
 import { runOfferDrill, runOfferLearning } from '../practice/offerTools.js';
 import { practiceRoutes } from '../practice/routes.js';
+import { tenMinutesOf } from '../practice/selection.js';
 import { startFromStep } from '../practice/service.js';
+import { registerJobKinds, registerTickWork } from '../scheduler/registry.js';
 import { learningBuddyRoutes } from './routes.js';
 
 let registered = false;
@@ -63,4 +72,24 @@ export function registerLearning(): void {
 
   // A prepared step started from a phone message is a practice run.
   registerStepStarter(startFromStep);
+
+  // Its background work: reading photos (a learner waits for it), erasing a sheet's photos and
+  // content, the recovery of stuck readings, idle practice runs, forgotten photos.
+  registerJobKinds(
+    { kind: 'extract_material', lane: 'waiting', run: runExtraction },
+    { kind: 'purge_photos', lane: 'erasure', run: purgePhotos },
+    { kind: 'purge_content', lane: 'erasure', run: purgeContent },
+  );
+  registerTickWork(
+    { recover: recoverReadings },
+    { closeIdle: closeIdleSessions },
+    { sweep: { key: 'swept_photos', run: sweepForgottenPhotos } },
+  );
+
+  // Its proactivity: the offers to review and what wakes them, ten minutes of her questions
+  // for a practice step no model planned.
+  registerOccasions({ reasons: REVIEW_REASONS, run: runReviews });
+  subscribe('material_ready', reviewNextDay);
+  subscribe('session_finished', reviewAfterBreak);
+  registerPracticeFiller(tenMinutesOf);
 }

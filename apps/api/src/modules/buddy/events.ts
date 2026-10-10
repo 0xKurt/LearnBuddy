@@ -8,7 +8,6 @@
 
 import type { Db } from '../../lib/db.js';
 import { enqueueJob } from '../scheduler/jobs.js';
-import { scheduleBreakReview, scheduleNextDayReview } from './review.js';
 
 export type BuddyEvent =
   /**
@@ -22,9 +21,9 @@ export type BuddyEvent =
   /** A practice session ended with at least one answer. */
   | { type: 'session_finished'; sessionId: string };
 
-type EventType = BuddyEvent['type'];
+export type EventType = BuddyEvent['type'];
 
-type Subscriber = (
+export type Subscriber = (
   db: Db,
   learnerId: string,
   eventId: string,
@@ -48,24 +47,27 @@ const wakeBuddy: Subscriber = async (db, learnerId, eventId, e, at) => {
   });
 };
 
-/** The day after a sheet was read, Buddy offers to go over it once more (review.ts, #446). */
-const reviewNextDay: Subscriber = async (db, learnerId, _eventId, e, at) => {
-  if (e.type === 'material_ready')
-    await scheduleNextDayReview(db, learnerId, e.rootId ?? e.materialId, at);
-};
-
-/** Three days after a practice, Buddy looks whether a break has begun (review.ts, #446). */
-const reviewAfterBreak: Subscriber = async (db, learnerId, _eventId, e, at) => {
-  if (e.type === 'session_finished') await scheduleBreakReview(db, learnerId, at);
-};
-
-/** Who reacts to what. An event without subscribers is only recorded. */
-const SUBSCRIBERS: { [T in EventType]: readonly Subscriber[] } = {
-  material_ready: [wakeBuddy, reviewNextDay],
-  session_finished: [wakeBuddy, reviewAfterBreak],
+/**
+ * Who reacts to what: Buddy wakes first, then what a domain subscribed, in registration order
+ * (in LearnBuddy: the offers to review, review.ts — issue #107). An event without subscribers
+ * is only recorded.
+ */
+const SUBSCRIBERS: { [T in EventType]: Subscriber[] } = {
+  material_ready: [wakeBuddy],
+  session_finished: [wakeBuddy],
   // Homework help starts right away in the app; no background look is needed.
   homework_ready: [],
 };
+
+/** A domain reacts to an event too (modules/learning/register.ts). */
+export function subscribe(type: EventType, subscriber: Subscriber): void {
+  SUBSCRIBERS[type].push(subscriber);
+}
+
+/** The subscribers of an event, in the order they run. */
+export function subscribersOf(type: EventType): readonly Subscriber[] {
+  return SUBSCRIBERS[type];
+}
 
 function refOf(e: BuddyEvent): string {
   return e.type === 'session_finished' ? e.sessionId : e.materialId;

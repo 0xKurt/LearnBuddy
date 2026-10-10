@@ -1,6 +1,6 @@
-// The learning domain registers itself into the core (issue #107). The core declares what the
-// model can call; these tests fail when a domain tool or lookup lost its registration or when one
-// lands twice.
+// The learning domain registers itself into the core (issue #107). These tests fail when a domain
+// tool, lookup, route, job kind or occasion lost its registration, when one lands twice, or when
+// the order things are mounted and run in changes.
 
 import { describe, expect, it } from 'vitest';
 
@@ -8,6 +8,10 @@ import { routePlugins } from '../../../http/plugins.js';
 import { missingLookupRunners, registerLookupRunners } from '../../buddy/lookups.js';
 import { withoutCode } from '../../buddy/registry.js';
 import { startsSteps } from '../../buddy/stepStart.js';
+import { subscribersOf } from '../../buddy/events.js';
+import { fillsPractice, occasions } from '../../buddy/occasions.js';
+import { REVIEW_REASONS, reviewAfterBreak, reviewNextDay, runReviews } from '../../buddy/review.js';
+import { missingJobKinds, jobKinds, tickWork } from '../../scheduler/registry.js';
 import { actHandler, missingActHandlers, registerActHandlers } from '../../buddy/tools.js';
 import { registerLearning } from '../register.js';
 
@@ -67,5 +71,27 @@ describe('the learning domain in the core', () => {
       ]),
     );
     expect(startsSteps()).toBe(true);
+  });
+
+  it('gives every job kind a handler and adds its background work in one order', () => {
+    registerLearning();
+    expect(missingJobKinds()).toEqual([]);
+    expect(jobKinds('waiting').map((k) => k.kind)).toEqual(['extract_material']);
+    expect(jobKinds('erasure').map((k) => k.kind)).toEqual(['purge_photos', 'purge_content']);
+    // recovery, idle runs, the photo sweep — the order the tick runs them in.
+    expect(tickWork().map((w) => Object.keys(w)[0])).toEqual(['recover', 'closeIdle', 'sweep']);
+    expect(tickWork()[2]?.sweep?.key).toBe('swept_photos');
+  });
+
+  it('adds its occasions after Buddy: the reviews, and what wakes them', () => {
+    registerLearning();
+    expect(occasions()).toEqual([{ reasons: REVIEW_REASONS, run: runReviews }]);
+    // Buddy wakes first, then the review is planned (events.ts).
+    expect(subscribersOf('material_ready')).toHaveLength(2);
+    expect(subscribersOf('material_ready')[1]).toBe(reviewNextDay);
+    expect(subscribersOf('session_finished')).toHaveLength(2);
+    expect(subscribersOf('session_finished')[1]).toBe(reviewAfterBreak);
+    expect(subscribersOf('homework_ready')).toEqual([]);
+    expect(fillsPractice()).toBe(true);
   });
 });

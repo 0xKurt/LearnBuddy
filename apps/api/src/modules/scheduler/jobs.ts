@@ -8,15 +8,17 @@
 
 import type { Db } from '../../lib/db.js';
 
-export type JobKind =
-  | 'extract_material'
-  | 'buddy_check'
-  | 'buddy_turn'
-  | 'purge_photos'
-  | 'purge_content'
-  | 'delete_account'
-  | 'summarise_session'
-  | 'consolidate_memories';
+export const JOB_KINDS = [
+  'extract_material',
+  'buddy_check',
+  'buddy_turn',
+  'purge_photos',
+  'purge_content',
+  'delete_account',
+  'summarise_session',
+  'consolidate_memories',
+] as const;
+export type JobKind = (typeof JOB_KINDS)[number];
 
 /**
  * Erasure jobs are never parked: a privacy promise does not expire after three tries.

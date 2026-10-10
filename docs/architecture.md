@@ -765,7 +765,17 @@ erasure jobs (`purge_photos`, `purge_content`, `delete_account`, `PERSISTENT_KIN
 again with backoff (1, 2, 4 … minutes, at most 6 h) with `last_error` recorded, also after a lost
 lease. A cancelled job can be planned again with the same key (an exam moved away and back).
 
-**Erasure** (`modules/materials/purge.ts`, `identity/privacy.ts`, migration `0016_erasure.sql`;
+The tick never names the learning domain (issue #107): the domain registers its job kinds and
+its share of a run at start-up (`scheduler/registry.ts`, from `modules/learning/register.ts`) —
+`extract_material` in the lane a learner waits for, `purge_photos`/`purge_content` in the erasure
+lane with `delete_account`, the recovery of stuck readings, closing idle practice runs, the
+forgotten-photo sweep (`swept_photos` in the retention stats) — and the tick runs them in
+registration order at the place the old code stood. `createApp` refuses to start while a job
+kind has no handler (`missingJobKinds`). Every Buddy's own retention — the Storage queue after a
+deletion, closed memories, the model's decision content, the overdue backlog for `/health` — is
+`identity/retention.ts`.
+
+**Erasure** (`modules/materials/purge.ts`, `identity/privacy.ts`, `identity/retention.ts`, migration `0016_erasure.sql`;
 D-7, D-9). The account deletion is a resumable job whose stage lives in its payload: `start`
 (marks `accounts.deletion_started_at`; from here it cannot be cancelled — `DELETE
 /account/deletion` answers 409 `deletion_running` — and the account takes no more writes) →
@@ -833,6 +843,11 @@ break three days later (§Proactivity); both wake Buddy for a check (the job car
 and for reading the log; nothing re-reads it to re-drive an event: a wake-up job that dies is
 handled by its job's terminal state, `scheduler/terminal.ts`); `homework_ready` is only recorded
 (help starts in the app). Schedules — exam countdowns, agreed reminders, routine, `schedule_check` — stay jobs.
+Buddy's wake-up is the core's own subscriber; the review subscribers are the learning domain's
+and run after it (`subscribe`, registered in `modules/learning/register.ts`, issue #107). The
+same goes for the check's occasions decided by code alone (`buddy/occasions.ts`: the reviews,
+`REVIEW_REASONS`) and for the ten minutes of her questions a fallback or an agreed reminder
+fills a practice step with (`registerPracticeFiller`, `practice/selection.ts` `tenMinutesOf`).
 An event never bypasses the contact rules.
 
 ## Model calls
