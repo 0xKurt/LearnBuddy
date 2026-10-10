@@ -40,8 +40,8 @@ export function greetingOnScreen(
  *
  * The practice on top is told once (issue #204, `preparedIn`): the bar names it with its question
  * count and its minutes, which is word for word what the "Vorbereitet: …" receipt says — so while
- * that bar stands the receipt's line leaves the conversation (`carriedOnTop`). It stays in what
- * can be taken back, and closing the bar brings it back.
+ * that bar stands the receipt's line leaves the conversation (`carriedOnTop`). Closing the bar
+ * brings the line and its ↺ back; History keeps both all along.
  */
 export function threadOnScreen(
   h: BuddyHome,

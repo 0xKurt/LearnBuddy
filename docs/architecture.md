@@ -523,9 +523,9 @@ summary plus undo data. Enforced here, not in the prompt:
   voice with a tap (setup, settings: `PATCH /buddy/settings {voice, version}`, which bumps the
   context like every setting there), so a tap while Buddy decides makes that decision stale.
 - Thread action cards offer "Rückgängig" only where `undoApplies` holds, like `done` (audit
-  M-56); history offers it too, for the same 7 days. In the chat only the newest such step has
-  its button on screen (issue #204); the rest open from a receipt (`UndoSheet`), so what the
-  server allows and what she can reach stay the same set.
+  M-56); history offers it too, for the same 7 days. In the chat every receipt carries its own
+  ↺ (issue #520), which takes back that turn's newest step still standing; History has one per
+  step. What the bar on top carries has no line in the chat until the bar closes.
 
 ### Lookups (ADR 0005, stage 1)
 
@@ -686,6 +686,16 @@ days (rule 6).
   planned on its own — nothing is sent in bulk afterwards; agreed reminders stay and wait in the
   app. Planned messages are listed on the home under what comes next. Stopping contact hides
   the opt-in card for 14 days.
+- **Asked in the setup** (issue #518): the profile step ends with one question — may Buddy send
+  notifications? — two answers, and the answer saves the profile (`CreateLearnerRequest.contact`,
+  `components/auth/ContactStep.tsx`). Under 16 the adults answer it right after their PIN, in
+  the same request; `POST /learner` refuses a "yes" for a minor without that PIN (or with a PIN
+  other than the account's), `admin_required` / `wrong_pin`. Either answer is stored as a decision
+  (`contact_changed_by`, `contact_changed_at` from the app clock). The chat's `contact_opt_in` card
+  (`home.ts` `decisionOf`) is only for a profile that was never asked (one made before #518):
+  once contact was decided — in the setup, in the settings or by that card — it never comes back
+  (owner 10.10.: a "no" in the setup is final). The OS permission is asked after the first-start
+  cards, only with a "yes" (`app/onboarding.tsx`).
 - Every status write of a claimed row is conditioned on the claim (status `sending` and the
   lease it set): a slow run can never send or overwrite a row another run settled.
 - A push carries the message's expiry (`expiration`): a phone that was off does not get a stale
@@ -2676,7 +2686,7 @@ and the key (one `{left, right}` link per left); the view the same without the k
 only the correct links (`pairs: [{left, right}]` or `groups: [{name, elements}]`, exactly one of
 them, `MATCH_RULES` without an example sentence). Code rejects — and stores nothing, repairs
 nothing — neither or both forms (`form`), counts out of range (`count`), a text, a word or a
-prompt over its cap (`too_long`: a pair's side 32 characters, a thing to sort or a group's name
+prompt over its cap (`too_long`: a pair's side 60 characters (issue #524), a thing to sort or a group's name
 16, any single word 16, the prompt 44), an empty group
 (`empty_group`), one element written to two places (`ambiguous`, seen on the draft by
 `matchDraftProblem`), and any two texts alike after normalising, across both sides
@@ -2689,28 +2699,32 @@ schon." / "5 von 7 sind schon richtig einsortiert."); which one is wrong it name
 second miss on, as the next rung of the hint ladder (`structuredNamesPart` → counts as a hint),
 and the third miss explains the solution.
 
-App: `MatchAnswer.tsx`. Pairs stand in two columns (four pairs are four rows; the columns share
-the width near-equally, 42–58 %, `leftShare`); a row's two tiles are equally tall, the text stands
-left. Tap one, then its partner (either way round): both tiles then wear the pair's pastel tint
-AND its symbol (● ▲ ■ ◆, `pairLook`), so a pair is seen at a glance and colour is never the only
-signal (#286; before, the pair was a number in the text and the board looked like a form).
+App: `MatchAnswer.tsx`. What is still open stands in two equal columns; a row's two tiles are
+equally tall and grow with their text. Tap one, then its partner (either way round): the two
+move together into ONE row across the board, "links → rechts", one line of running text in the
+one calm outline every pair shares (issue #524, owner 10.10.: no symbols ● ▲ ■ ◆, no tint per
+pair — the pairing is said in words, for the eye and the screen reader alike). Formed rows stand
+on top in the order of the left column; a tap on one dissolves it. A pairing's board is a list
+she goes through (`PartsArea list`, `scroll-list`): with four sentences on a small phone it may
+scroll; a grouping's may not.
 Groups follow the display idea of the removed `parts` board, because there the box IS the state:
 the elements she has not sorted yet stand above, every group is a row with its name, and an
 element she puts in a group moves INTO that row, next to the name. Tapping it there takes it back
 out. Tapping a group row puts the element she holds into it; a group only takes something while
 she holds an element. What she holds is kept in the draft with the links, so a theme change does
 not drop it. One line of instruction until the first tap, nothing else; a screen reader hears
-"…, Paar 2 mit …" / "…, in Nomen".
+"Hund – dog, Paar" / "…, in Nomen".
 
 **The maxima are a measurement** (`contracts/structured.ts` `MATCH_*`). The walkthrough's match
 tasks are the largest the contract allows, every text near its cap ("zuordnen at its largest",
 `tests/web/modes.spec.ts`; `learning-modes.ts`): four pairs of a 15-character term and a
-32-character phrase under a 44-character prompt, and eight 15–16-character things in three groups
+51–59-character sentence under a 44-character prompt (issue #524; the pairing may scroll as a
+list), and eight 15–16-character things in three groups
 with 16-character names. Shot at 390×844 and 360×740, light and dark, with `scroll-parts`
 disallowed: the pairing before and after a check (Buddy's reply and the whole board on screen
 together), and the grouping before she sorts anything (its tallest moment) and when everything is
-sorted. On 360×740 both tallest moments end within about 8 pt of "Prüfen", so one more pair row
-(about 52 pt) or one more group row (about 56 pt) would not fit; 20-character things (one per
+sorted. On 360×740 the grouping's tallest moment ends within about 8 pt of "Prüfen", so one more
+group row (about 56 pt) would not fit; 20-character things (one per
 row) did not fit by 87 pt, and a 56-character prompt broke onto three lines. A draft over a cap is
 rejected (`too_long` / `count`), never shortened.
 
@@ -4897,9 +4911,15 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   HD voices, EU endpoint; `SPEECH_BACKEND=google`, default off until verified live). Voice and
   speed come from her settings (`buddy_settings.voice`, `voice_speed`; tool `set_voice`, or the
   voice picked with a tap — `components/voice/VoicePicker.tsx` in the setup's last step and in the
-  settings, closed until opened; ADR 0008 §Amendment). The picker's "tap to hear" sends the voice
-  to try with the sample (`SpeechRequest.voice`, one of the curated names) and changes nothing;
-  when the phone's voice reads the sample instead, it says so rather than pretend a difference. Audio is
+  settings, closed until opened; ADR 0008 §Amendment). The picker is a list like a phone's
+  ringtones (issue #526): a row per voice with its name and how it sounds, a tick on hers, and its
+  own sound button. A tap on the row chooses (`PATCH /buddy/settings`) and plays nothing; the
+  sound button plays the sample (`SpeechRequest.voice`, one of the curated names) and changes
+  nothing, and stops it. **Only where the voices can be told apart:** `BuddySettingsView
+.natural_voice` says up front whether a provider is configured and reads her language
+  (`readsIn`, `speech/gateway.ts` — the same test a listening text and a Diktat use). Without it
+  the setup leaves the voice step out and the settings leave the group out; nothing is guessed
+  from a sample that happened to sound like the phone. Audio is
   cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). The app
   (`lib/speech/listen.ts`) fetches the next sentence while one plays (`expo-audio`) and reads a
   sentence with the phone's voice (`expo-speech`) when the server says no (off, budget, language,
@@ -5257,18 +5277,17 @@ is not pulled down until she is back at the end or sends something; `lib/homeLay
 scrolling up) — the bar on top never covers the conversation (only its opened details float
 over the conversation's top, and only while she reads them); a
 quiet line names the day where a new one starts (never how many days passed) — what Buddy did
-stands under its message as **one receipt for the turn**, not one line per action, and only the
-newest step she can still take back carries a way back (issue #204: two things done in one
-answer were two ticks, two sentences and two buttons — "vier Statuszeilen für zwei Dinge, die
-sie getan hat"). That way back is a small round arrow at the end of the receipt's own line, not
+stands under its message as **one receipt for the turn**, not one line per action, with one
+way back (issue #204: two things done in one answer were two ticks, two sentences and two
+buttons — "vier Statuszeilen für zwei Dinge, die sie getan hat"); a second tap takes back the
+step before. That way back is a small round arrow at the end of the receipt's own line, not
 a pill of its own under it (issue #295: "kein großer fetter button"): `<Btn iconOnly
 icon="undo">` (`components/lb/Btn.tsx`), a 24 pt circle in the secondary ink with a 44 pt
 target, named "Rückgängig: <what>", a tap takes the step back without asking, and while that
-runs the arrow is a spinner in the same place. Nothing is lost with the buttons that went: a tap or a long press on a receipt
-opens everything that can still be taken back, newest first, each with its own way back
-(`components/buddy/UndoSheet.tsx`) — undo over confirmation stays whole
-(`docs/UX-PRINCIPLES.md`). History is the record of the single steps and keeps a line and a
-button per step (`undoScope`). A note that is true under every card is said once, under the
+runs the arrow is a spinner in the same place. Every receipt carries its own ↺, and that is the
+only way back in the chat: the receipt's words open nothing (issue #520 — the sheet "Was du
+zurücknehmen kannst" that a tap on them opened surprised her and is gone). History is the record
+of the single steps and keeps a line and a button per step (`receipts`). A note that is true under every card is said once, under the
 newest it applies to: "nur hier in der App" (a message that only ever existed here) and that
 what was agreed can only reach her here while messages to the phone are off. No tiles, no
 lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says

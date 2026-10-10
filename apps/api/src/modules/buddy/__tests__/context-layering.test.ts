@@ -13,6 +13,7 @@ const settings: SettingsRow = {
   timezone: 'Europe/Berlin',
   contact_enabled: true,
   contact_changed_by: 'account_holder',
+  contact_changed_at: null,
   quiet_start: '21:00',
   quiet_end: '07:30',
   preferred_start: '15:00',

@@ -37,12 +37,13 @@ async function onboardChild(page: Page, email: string): Promise<void> {
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill('2468');
   await page.getByLabel('PIN wiederholen').fill('2468');
-  await page.getByRole('button', { name: "Los geht's" }).click();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  // Notifications are asked of the adults right after their PIN (issue #518); a no is final —
+  // the settings below are where it changes.
+  await page.getByRole('button', { name: 'Nein, danke' }).click();
   // The hand-over: what is set, then the phone goes to the child (user feedback #10).
   await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
   await page.getByRole('button', { name: "Los geht's, Pia!" }).click();
-  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
-  await page.getByRole('button', { name: 'Weiter' }).click();
   // The three first-start cards (app/onboarding.tsx) come before the home.
   // "Überspringen" showed 4–6 frames of an empty screen on the way out (issue #208, point 4).
   // Sampled per frame, because that is what the complaint was about: how long the screen holds

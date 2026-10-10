@@ -323,8 +323,12 @@ Familienkreis hinaus.
 
 ## Contact outside the app
 
-Off by default (opt-in: the setting and the phone's permission). Under 16 only the account
-holder can enable or increase it (PIN); from 16 she decides herself. Quiet hours, preferred
+Off by default (opt-in: the setting and the phone's permission). The setup asks once, as a
+question of its own with two answers (issue #518): under 16 the account holder answers, in the
+same request as their consent and their PIN — a "yes" without the PIN is refused; from 16 she
+answers herself. The answer is recorded as a decision (`buddy_settings.contact_changed_by`,
+`contact_changed_at`); a "no" is final — Buddy never asks again in the chat, only the settings
+change it. Under 16 only the account holder can enable or increase it (PIN). Quiet hours, preferred
 window, days without messages and pause are hers and are enforced by code at planning and again
 at send time. Messages in the app are not counted or limited, and nothing to the phone is capped
 by a number either (ADR 0006); the same topic is not raised twice within 72 hours. Details: [architecture.md §Delivery](architecture.md#delivery).

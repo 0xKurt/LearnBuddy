@@ -97,7 +97,7 @@
     "how_pairs": "Tap one on the left, then its partner on the right.",
     "how_groups": "Tap one at the top, then its group.",
     "held": "{{text}}, selected",
-    "paired": "{{text}}, pair {{n}} with {{other}}",
+    "paired": "{{left}} – {{right}}, pair",
     "no_partner": "{{text}}, no partner yet",
     "in_group": "{{text}}, in {{group}}",
     "no_group": "{{text}}, in no group yet",

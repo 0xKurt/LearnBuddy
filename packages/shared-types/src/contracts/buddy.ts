@@ -614,6 +614,13 @@ export const BuddySettingsView = z.object({
   timezone: z.string(),
   /** Buddy's voice when read aloud (ADR 0008): chosen in the setup, the settings or by asking. */
   voice: VoiceName,
+  /**
+   * Whether Buddy's own (natural) voices can read her language here: a provider is configured
+   * AND it reads this language (issue #526). Without them the phone's voice reads every sample
+   * alike, so the app offers no voice to choose — no picker, no setup step. Said by the server
+   * up front; the app never guesses it from a sample that happened to sound like the phone.
+   */
+  natural_voice: z.boolean(),
   version: z.number().int(),
   /** Whether this device may loosen the rules without the adult's PIN. */
   can_loosen: z.boolean(),

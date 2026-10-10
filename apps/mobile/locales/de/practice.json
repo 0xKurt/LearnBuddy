@@ -97,7 +97,7 @@
     "how_pairs": "Tippe links eins an, dann sein Gegenstück rechts.",
     "how_groups": "Tippe oben eins an, dann seine Gruppe.",
     "held": "{{text}}, ausgewählt",
-    "paired": "{{text}}, Paar {{n}} mit {{other}}",
+    "paired": "{{left}} – {{right}}, Paar",
     "no_partner": "{{text}}, noch ohne Partner",
     "in_group": "{{text}}, in {{group}}",
     "no_group": "{{text}}, noch in keiner Gruppe",

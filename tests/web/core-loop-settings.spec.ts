@@ -1,23 +1,21 @@
 // Core loop, part 5 of 5 (issue #381): the settings — messages the parent allowed, Buddy's voice
 // she picked in the setup, the look in every colour and at night (home and conversation).
-// Starts from a fresh learner who picked the voice "Hell" and whose parent allowed messages with
-// the PIN (coreLoop.ts; parts 1 and 2 check that way).
+// Starts from a fresh learner whose parent allowed messages in the setup, with the PIN (coreLoop.ts;
+// part 1 checks that way). This stack has no natural voices, so there is no voice to choose
+// (issue #526).
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { allowPush, freshEmail, openMenu as openMenuOf, planTest, signUpMia } from './coreLoop';
+import { freshEmail, openMenu as openMenuOf, planTest, signUpMia } from './coreLoop';
 import { shot } from './fit';
 
 test('core loop · settings: messages, voice, the look by day and by night', async ({ page }) => {
   const email = freshEmail('settings');
   await signUpMia(page, email);
   await planTest(page);
-  await allowPush(page);
   const openMenu = (item: string) => openMenuOf(page, item);
 
-  // Straight from the chat's opt-in, no reload: the settings loaded in the voice step are
-  // fetched again with the opt-in's answer, so they say "Ja" at once — never the cached "Nein"
-  // for the 15 s the view would count as fresh (issue #398, rule 5).
+  // Allowed in the setup (issue #518): the settings say "Ja" at once (rule 5).
   await openMenu('Einstellungen');
   await expect(page.getByText('Benachrichtigungen', { exact: true })).toBeVisible();
   await expect(page.getByText('Nein – nur hier in der App.')).toHaveCount(0);
@@ -30,17 +28,9 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   // Where the note about phone messages lives, calmly (instead of a toast on the home).
   await expect(page.getByText(/Alles kommt hier in der App\./)).toBeVisible();
   await shot(page, '15b-settings-contact', { opened: true });
-  // Buddy's voice: closed with the one she picked in the setup; opened, the same picker.
-  await expect(page.getByText('Hell', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Buddys Stimme' }).click();
-  const repicked = page.waitForResponse(
-    (r) => r.url().endsWith('/buddy/settings') && r.request().method() === 'PATCH' && r.ok(),
-  );
-  await page.getByRole('radio', { name: 'Klar' }).click();
-  await repicked;
-  await shot(page, '15c-settings-voice', { opened: true });
-  await page.getByRole('button', { name: 'Buddys Stimme' }).click();
-  await expect(page.getByText('Klar', { exact: true })).toBeVisible();
+  // Buddy's voice: no group at all without his own voices — the phone's voice would read
+  // every sample alike (issue #526).
+  await expect(page.getByRole('button', { name: 'Buddys Stimme' })).toHaveCount(0);
   await openLicences(page, '15d-settings-about', '15e-settings-licences');
 
   // ── The look: every option previews in ITS OWN colours, and night stays readable ──

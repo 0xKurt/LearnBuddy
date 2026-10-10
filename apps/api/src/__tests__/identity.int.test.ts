@@ -646,11 +646,12 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
   });
 
   it('contact decided at registration lands in settings (owner 2026-09-28)', async () => {
-    // The adult creating a child profile allows contact in the same request.
+    // The adult creating a child profile allows contact in the same request, with their PIN.
     const withContact = await onboard(env, {
       relation: 'child',
       birthDate: '2014-03-01',
-      contactEnabled: true,
+      pin: '4826',
+      contact: 'yes',
     });
     const on = await env.db.one<{ contact_enabled: boolean }>(
       `select contact_enabled from buddy_settings where learner_id = $1`,

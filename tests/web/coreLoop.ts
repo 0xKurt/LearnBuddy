@@ -68,9 +68,10 @@ export function worksheetJpeg(page: Page): Promise<string> {
 }
 
 /**
- * A parent sets up the account for Mia (7th grade, Niedersachsen), she picks the voice "Hell"
- * and skips the first-start cards. core-loop-onboarding.spec.ts walks the same way with every
- * check and shot.
+ * A parent sets up the account for Mia (7th grade, Niedersachsen) and allows notifications right
+ * after the PIN (issue #518); she skips the first-start cards. No voice step: this stack has no
+ * natural voices (issue #526). core-loop-setup.spec.ts walks the same way with every check and
+ * shot.
  */
 export async function signUpMia(page: Page, email: string): Promise<void> {
   await page.goto('/');
@@ -91,15 +92,9 @@ export async function signUpMia(page: Page, email: string): Promise<void> {
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill(PIN);
   await page.getByLabel('PIN wiederholen').fill(PIN);
-  await page.getByRole('button', { name: "Los geht's" }).click();
-  await page.getByRole('button', { name: "Los geht's, Mia!" }).click();
-  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
-  const picked = page.waitForResponse(
-    (r) => r.url().endsWith('/buddy/settings') && r.request().method() === 'PATCH' && r.ok(),
-  );
-  await page.getByRole('radio', { name: 'Hell' }).click();
-  await picked;
   await page.getByRole('button', { name: 'Weiter' }).click();
+  await page.getByRole('button', { name: 'Ja, erlauben' }).click();
+  await page.getByRole('button', { name: "Los geht's, Mia!" }).click();
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
@@ -111,22 +106,6 @@ export async function planTest(page: Page): Promise<void> {
     .fill('Ich schreibe am Freitag eine Mathearbeit über Brüche.');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText(/Eingetragen: Mathearbeit Brüche am/)).toBeVisible();
-}
-
-/** The parent allows messages to the phone with the PIN. */
-export async function allowPush(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Eltern fragen' }).click();
-  await expect(page.getByText('PIN der Eltern')).toBeVisible();
-  await expect(page.getByText(/Ihr erlaubt, dass Buddy Mia Push-Benachrichtigungen/)).toBeVisible();
-  // Waited for by its answer: the question leaves the thread before the server has said yes,
-  // and settings opened in that moment would read the old "Nein".
-  const allowed = page.waitForResponse(
-    (r) => r.url().endsWith('/buddy/contact/opt-in') && r.request().method() === 'POST' && r.ok(),
-  );
-  for (const digit of PIN) await page.getByRole('button', { name: digit, exact: true }).click();
-  await allowed;
-  await expect(page.getByText('LearnBuddy')).toBeVisible();
-  await expect(page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?')).toBeHidden();
 }
 
 /** The worksheet photographed and sent; Buddy prepares practice from it by himself. */

@@ -97,7 +97,7 @@
     "how_pairs": "Tocca un elemento a sinistra, poi il suo compagno a destra.",
     "how_groups": "Tocca un elemento in alto, poi il suo gruppo.",
     "held": "{{text}}, selezionato",
-    "paired": "{{text}}, coppia {{n}} con {{other}}",
+    "paired": "{{left}} – {{right}}, coppia",
     "no_partner": "{{text}}, ancora senza compagno",
     "in_group": "{{text}}, in {{group}}",
     "no_group": "{{text}}, ancora in nessun gruppo",

@@ -27,9 +27,9 @@ test('answers given offline arrive once: app open, and after it was closed', asy
   await page.getByLabel('Tag', { exact: true }).fill('10');
   await page.getByLabel('Monat', { exact: true }).fill('02');
   await page.getByLabel('Jahr', { exact: true }).fill('2000');
-  await page.getByRole('button', { name: "Los geht's" }).click();
-  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
+  // From 16 she answers the notification question herself (issue #518).
+  await page.getByRole('button', { name: 'Nein, danke' }).click();
   // The three first-start cards (app/onboarding.tsx) come before the home.
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();

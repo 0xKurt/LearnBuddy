@@ -94,12 +94,12 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill('4826');
   await page.getByLabel('PIN wiederholen').fill('4826');
-  await page.getByRole('button', { name: "Los geht's" }).click();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  // Notifications are asked of the adults right after their PIN (issue #518).
+  await page.getByRole('button', { name: 'Nein, danke' }).click();
   // The hand-over: what is set, then the phone goes to the child (user feedback #10).
   await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
   await page.getByRole('button', { name: "Los geht's, Lena!" }).click();
-  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
-  await page.getByRole('button', { name: 'Weiter' }).click();
   // The first-start cards (app/onboarding.tsx) come before the home; the last one is the
   // colour choice (issue #136). Skipping them keeps the default palette.
   await page.getByRole('button', { name: 'Überspringen' }).click();
@@ -888,13 +888,15 @@ test('a table to fill in: Enter walks the gaps, each cell checked on its own (is
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
 
-test('zuordnen at its largest: pairs in two columns, things into groups (issue #229)', async ({
+test('zuordnen at its largest: pairs as rows, things into groups (issues #229, #524)', async ({
   page,
 }) => {
   // Its own test: the learning-modes walk is long enough already (the 180 s budget). The scripted
   // tasks are the LARGEST the contract allows, every text near its cap (learning-modes.ts), and
-  // every `shot` below fails if the parts would have to be scrolled (`scroll-parts` is not a
-  // scroll area fit.ts allows). That is the measurement behind MATCH_* in contracts/structured.ts.
+  // every `shot` below fails if the grouping's parts would have to be scrolled (`scroll-parts` is
+  // not a scroll area fit.ts allows). That is the measurement behind MATCH_* in
+  // contracts/structured.ts. A pairing of sentences is a list she goes through (issue #524): its
+  // board is `scroll-list` and may scroll.
   await onboardChild(page);
   await page.setViewportSize(PHONES[0]);
   await page.getByLabel('Schreib Buddy …').fill('Lass uns Verfassungsorgane zuordnen');
@@ -912,20 +914,24 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   const check = page.getByRole('button', { name: 'Prüfen' });
   await expect(check).toBeDisabled();
   await bothSchemes(page, '39b-match-pairs-start');
-  await pair('Bundespräsident', 'unterschreibt die neuen Gesetze');
-  // The one line of instruction has gone; the pair says itself in words.
+  // Every side near its cap (issue #524: a pair's side may be a sentence now).
+  const PRAES = 'unterschreibt die neuen Gesetze und vertritt Deutschland';
+  const BREG = 'führt die Gesetze des Bundes aus und leitet die Ministerien';
+  const KANZ = 'bestimmt die Richtlinien der Politik im ganzen Bund';
+  const LREG = 'führt die Gesetze des Landes aus und leitet die Landesämter';
+  /** A formed pair: one row, left then right (issue #524), no symbol, no number. */
+  const formed = (left: string, right: string) =>
+    page.getByRole('button', { name: `${left} – ${right}, Paar`, exact: true });
+  await pair('Bundespräsident', PRAES);
+  // The one line of instruction has gone; the pair is one row that says itself in words.
   await expect(page.getByText('Tippe links eins an, dann sein Gegenstück rechts.')).toHaveCount(0);
-  await expect(
-    page.getByRole('button', {
-      name: 'Bundespräsident, Paar 1 mit unterschreibt die neuen Gesetze',
-    }),
-  ).toBeVisible();
+  await expect(formed('Bundespräsident', PRAES)).toBeVisible();
   // Below first, then above: works the other way round too.
-  await free('bestimmt die Richtlinien im Bund').click();
+  await free(KANZ).click();
   await free('Bundeskanzlerin').click();
   // Two swapped on purpose: Bund and Land.
-  await pair('Bundesregierung', 'führt die Gesetze des Landes aus');
-  await pair('Landesregierung', 'führt die Gesetze des Bundes aus');
+  await pair('Bundesregierung', LREG);
+  await pair('Landesregierung', BREG);
   await bothSchemes(page, '39c-match-pairs');
   await check.click();
   // Code counted: two of four. Which ones, it says only on a second miss. The reply and the
@@ -934,14 +940,10 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   await expect(page.getByText('2 von 4 Paaren stimmen schon.')).toBeInViewport();
   await bothSchemes(page, '39e-match-feedback');
   // One tap on a pair dissolves it; she pairs the two again, right this time.
-  await page
-    .getByRole('button', { name: 'Bundesregierung, Paar 3 mit führt die Gesetze des Landes aus' })
-    .click();
-  await page
-    .getByRole('button', { name: 'Landesregierung, Paar 4 mit führt die Gesetze des Bundes aus' })
-    .click();
-  await pair('Bundesregierung', 'führt die Gesetze des Bundes aus');
-  await pair('Landesregierung', 'führt die Gesetze des Landes aus');
+  await formed('Bundesregierung', LREG).click();
+  await formed('Landesregierung', BREG).click();
+  await pair('Bundesregierung', BREG);
+  await pair('Landesregierung', LREG);
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
