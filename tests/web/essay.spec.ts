@@ -1,10 +1,12 @@
 // Browser walkthrough of a long text (issue #258), same dev stack as the other walkthroughs;
 // scripted answers in apps/api/src/testing/scenarios/essay.ts. She asks Buddy to practise a
-// discussion on a school phone ban, taps the offer, writes about 1700 words into the one input bar
-// (tall), the draft survives a restart, and Buddy's feedback names each key point — her own words
-// marked as hers — and three places to improve. Her text stays in the field: the next version
-// starts from it, up to the third, which closes the task. No new screen: the offer card in the
-// chat and the practice card she already knows. Screenshots go to test-results/web/shots.
+// discussion on a school phone ban, taps the offer, writes her Erörterung — an introduction, three
+// arguments, a conclusion — into the one input bar (tall) and in the writing view (#525), the
+// field takes about 1700 words at most, the draft survives a restart, and Buddy's feedback names
+// each key point — her own words marked as hers — and three places to improve. Her text stays in
+// the field: the next version starts from it, up to the third, which closes the task. No new
+// screen: the offer card in the chat and the practice card she already knows. Screenshots go to
+// test-results/web/shots; the one at the field's limit is named as the edge case it is (#527).
 
 import { join } from 'node:path';
 
@@ -56,10 +58,10 @@ async function onboardChild(page: Page): Promise<void> {
 
 /**
  * `shot` for a state whose field holds her long text: the same fit, keyboard and accessibility
- * checks, except that the field itself scrolls — 1700 words in a field that shows ten lines of
- * them have to (`fit.ts` names only the conversation, a list and a reading text as scrolling, so
- * the one exception is made here, for this spec, and nowhere else). With the keyboard up on the
- * small phone the question and the field both stay in view.
+ * checks, except that the field itself scrolls — an essay in a field that shows ten lines of it
+ * has to (`fit.ts` names only the conversation, a list and a reading text as scrolling, so the one
+ * exception is made here, for this spec, and nowhere else). With the keyboard up on the small
+ * phone the question and the field both stay in view.
  */
 async function look(page: Page, name: string): Promise<void> {
   for (const scheme of ['light', 'dark'] as const) {
@@ -106,8 +108,14 @@ const BODY = [
 ];
 const CONCLUSION = 'Insgesamt finde ich, dass ein Handyverbot den Schülern mehr nützt als schadet.';
 
-/** Her essay: an introduction, the body paragraphs again and again, a conclusion — ~1700 words. */
-function essay(): string {
+/** Her Erörterung as a seventh-grader writes it: an introduction, three arguments, a conclusion. */
+const ESSAY = [INTRO, ...BODY, CONCLUSION].join('\n\n');
+
+/**
+ * The field at its limit, for the count only (an edge case, not her essay): the body paragraphs
+ * again and again until about 1700 words.
+ */
+function fullField(): string {
   const paragraphs = [INTRO];
   const length = (more: string) => [...paragraphs, more, CONCLUSION].join('\n').length;
   for (let i = 0; length(BODY[i % 3]!) <= 11_850; i++) paragraphs.push(BODY[i % 3]!);
@@ -117,6 +125,41 @@ function essay(): string {
 }
 
 const PAD = 'Das merke ich jeden Tag.';
+
+/**
+ * The writing view (#525) at both phone sizes, light and dark: her text over the sheet's width,
+ * at least twelve lines of it on the 390 × 844 phone. The view is the screen's own state and the
+ * scheme switch rebuilds the tree (`setScheme`), so each scheme opens it anew.
+ */
+async function writingView(page: Page, name: string): Promise<void> {
+  for (const scheme of ['light', 'dark'] as const) {
+    await setScheme(page, scheme);
+    await page.getByRole('button', { name: 'Groß schreiben' }).click();
+    const sheet = page.locator('[aria-modal="true"]');
+    const field = sheet.getByLabel('Deine Antwort');
+    await expect(field).toHaveValue(ESSAY);
+    for (const phone of PHONES) {
+      await page.setViewportSize(phone);
+      await settle(page);
+      if (phone.width === 390) {
+        const rows = await field.evaluate((el) => {
+          const s = getComputedStyle(el);
+          const inner = el.clientHeight - parseFloat(s.paddingTop) - parseFloat(s.paddingBottom);
+          return Math.round(inner / parseFloat(s.lineHeight));
+        });
+        expect(rows, `${name} @390: lines of her text`).toBeGreaterThanOrEqual(12);
+      }
+      const tag = scheme === 'dark' ? `${name}-dark` : name;
+      await page.screenshot({
+        path: join(SHOTS, phone.width === 390 ? `${tag}.png` : `${tag}-${phone.width}.png`),
+      });
+    }
+    await sheet.getByRole('button', { name: 'Schließen' }).click();
+    await expect(sheet).toHaveCount(0);
+  }
+  await setScheme(page, 'light');
+  await page.setViewportSize(PHONES[0]);
+}
 
 const COUNTER =
   'Andererseits kann ein Handy im Unterricht auch helfen, etwa beim Nachschlagen von Wörtern. Dieses Argument wiegt aber weniger schwer als die Ablenkung.';
@@ -138,15 +181,24 @@ test('Lange Texte: she writes an essay, the draft survives, Buddy answers per ke
   await expect(page.getByText('Gegenargument', { exact: false })).toHaveCount(0);
   await bothSchemes(page, '81-essay-question');
 
-  // About 1700 words: more than any other answer may be, less than the 12 000 an essay takes.
-  const text = essay();
-  expect(text.length).toBeGreaterThan(11_000);
-  expect(text.length).toBeLessThan(12_000);
+  // The field takes about 1700 words: more than any other answer may be, less than the 12 000 an
+  // essay takes. Near the end of the field, and only there, the count shows — an edge case, so its
+  // shot says so in its name (#527); the owner's shots show her essay.
+  const full = fullField();
+  expect(full.length).toBeGreaterThan(11_000);
+  expect(full.length).toBeLessThan(12_000);
+  await field.fill(full);
+  await expect(field).toHaveValue(full);
+  await expect(page.getByText(/^Noch \d+ Zeichen$/)).toBeVisible();
+  await page.screenshot({ path: join(SHOTS, '82-edge-essay-field-full.png') });
+
+  // Her essay: the count is gone again, far from the end of the field.
+  const text = ESSAY;
   await field.fill(text);
   await expect(field).toHaveValue(text);
-  // Near the end of the field, and only there, the count shows.
-  await expect(page.getByText(/^Noch \d+ Zeichen$/)).toBeVisible();
+  await expect(page.getByText(/^Noch \d+ Zeichen$/)).toHaveCount(0);
   await look(page, '82-essay-writing');
+  await writingView(page, '82b-essay-writing-view');
 
   // An app restart: the draft is still there (lib/drafts.ts).
   await page.waitForTimeout(800);

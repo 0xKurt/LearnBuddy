@@ -38,6 +38,12 @@ export async function onboardChild(page: Page, tag: string, year = '2014'): Prom
   await page.getByRole('button', { name: 'Nein, danke' }).click();
   await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
   await page.getByRole('button', { name: "Los geht's, Lena!" }).click();
+  // Buddy's own voices are offered only where the stack has them (`LB_DEV_SPEECH=fake`, issue
+  // #526); the listening walk runs with them.
+  if (process.env.LB_DEV_SPEECH === 'fake') {
+    await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
+    await page.getByRole('button', { name: 'Weiter' }).click();
+  }
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }

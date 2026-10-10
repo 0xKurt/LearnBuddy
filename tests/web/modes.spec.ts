@@ -213,11 +213,32 @@ test('learning modes: explain, homework help without the solution, practice with
   expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(176);
   await expect(page.getByText('Welche zwei Längen kennst du vom Rechteck?')).toBeVisible();
 
+  // ── Ein Rechenweg mit einem Rechenfehler: Code nennt die Zeile (issues #209, #274) ──
+  // A slip she could really make — 7 · 3 = 21, then 3 more instead of 7 — not numbers made up for
+  // the check (issue #527: the owner reads the shots as product). Code names the first line that
+  // no longer follows — 7·4 holds, 21+3 does not follow from it — and it says so without asking a
+  // model at all (`steps.ts`, `pathReply`). In HOMEWORK HELP, which is where this stands: the
+  // first run of this step got the hint ladder's general question instead, because every fixed
+  // near-miss reply was shut out of that mode. A reply that names a line is a hint, not a
+  // solution, so it holds here too (issue #274).
+  const answer = page.getByLabel('Deine Antwort');
+  await answer.fill('7·4\n21+3\n24');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Bis Zeile 1 stimmt alles', { exact: false })).toBeVisible();
+  // A near miss, not a wrong answer: her way is mostly right, so the question stays OPEN — the
+  // answer field is still there and so is the hint. The field was emptied when the answer went
+  // out; while she is still in it, the mic has the bar's end, like the chat's (#365) — out of it,
+  // „Prüfen" stands under the bar and waits (#310: one bar for every form).
+  await expect(answer).toBeVisible();
+  await answer.blur();
+  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Einen Tipp bekommen' })).toBeVisible();
+
   // ── Der Rechenweg wird in der App getippt, nicht nur von den Tests geschickt (issue #221) ──
   // #209 checks a path line by line, but the field allowed line breaks only for a long answer —
   // so on the phone the return key sent the FIRST line as the whole answer. The ↵ key in the math
-  // row is what starts the next line; on this 360×740 screen, with the keyboard row open.
-  const answer = page.getByLabel('Deine Antwort');
+  // row is what starts the next line; on this 360×740 screen, with the keyboard row open. She
+  // writes her way again, right this time: 7 · 4, then 28.
   await answer.click();
   await answer.fill('7');
   // The first time any key of the row is tapped in a browser, and that is its own finding
@@ -231,11 +252,9 @@ test('learning modes: explain, homework help without the solution, practice with
   const newline = page.getByRole('button', { name: 'neue Zeile' });
   await expect(newline).toBeVisible();
   await newline.click();
-  await page.keyboard.type('28+1');
-  await newline.click();
-  await page.keyboard.type('29');
-  await expect(answer).toHaveValue('7·4\n28+1\n29');
-  // The row stood through all four taps — it is what she types with.
+  await page.keyboard.type('28');
+  await expect(answer).toHaveValue('7·4\n28');
+  // The row stood through the taps — it is what she types with.
   await expect(times).toBeVisible();
   // What the return key does on the PHONE is not provable here: react-native-web (0.21.2) knows no
   // `submitBehavior` and never routes Enter to `onSubmitEditing` on a multiline field. In the
@@ -244,24 +263,9 @@ test('learning modes: explain, homework help without the solution, practice with
   // `apps/mobile/lib/practice/pathEntry.ts`'s unit tests, and that it reaches the phone's keyboard
   // is unverified until a device run (issue #221).
   await shot(page, '23b-worked-path');
-  await page.getByRole('button', { name: 'Prüfen' }).click();
-  // Code names the first line that no longer follows — 7·4 holds, 28+1 does not follow from it —
-  // and it says so without asking a model at all (`steps.ts`, `pathReply`). In HOMEWORK HELP, which
-  // is where this stands: the first run of this step got the hint ladder's general question
-  // instead, because every fixed near-miss reply was shut out of that mode. A reply that names a
-  // line is a hint, not a solution, so it holds here too (issue #274).
-  await expect(page.getByText('Bis Zeile 1 stimmt alles', { exact: false })).toBeVisible();
-  // A near miss, not a wrong answer: her way is mostly right, so the question stays OPEN — the
-  // answer field is still there and so is the hint. The field was emptied when the answer went
-  // out; while she is still in it, the mic has the bar's end, like the chat's (#365) — out of it,
-  // „Prüfen" stands under the bar and waits (#310: one bar for every form).
-  await expect(page.getByLabel('Deine Antwort')).toBeVisible();
-  await page.getByLabel('Deine Antwort').blur();
-  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Einen Tipp bekommen' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toHaveCount(0);
-  await page.getByLabel('Deine Antwort').fill('28');
+  // A sound path is judged on the value it arrives at (`evaluate.ts`): 28.
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Selbst gelöst!', { exact: true })).toBeVisible();
   await expect(page.getByText('Stark – das hast du selbst gelöst!')).toBeVisible();
@@ -591,6 +595,16 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   // The same conversation: what was said by voice is in the chat.
   await expect(page.getByText('Was steht diese Woche an?')).toBeVisible();
+
+  // The listening screen at night too. A running recording does not survive the scheme switch's
+  // rebuild, so the switch comes first and the conversation opens in it.
+  await setScheme(page, 'dark');
+  await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
+  await expect(page.getByText('Ich höre zu.')).toBeVisible();
+  await shot(page, '32-talk-listening-dark');
+  await page.getByRole('button', { name: 'Beenden' }).last().click();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
+  await setScheme(page, 'light');
 });
 
 /**
@@ -649,14 +663,16 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   await field.click();
   const newLine = page.getByRole('button', { name: 'Neue Zeile' });
   await expect(newLine).toBeVisible();
+  // The shot shows her way as she would write it, right (issue #527); the slip comes after it.
   await field.pressSequentially('2x + 3 = 7');
   await newLine.click();
   await expect(field).toBeFocused();
-  await field.pressSequentially('2x = 10');
+  await field.pressSequentially('2x = 4');
   // Inside a path the return key starts the next line instead of sending the first one.
   await field.press('Enter');
-  await field.pressSequentially('x = 5');
-  await expect(field).toHaveValue('2x + 3 = 7\n2x = 10\nx = 5');
+  await field.pressSequentially('x = 2');
+  const corrected = '2x + 3 = 7\n2x = 4\nx = 2';
+  await expect(field).toHaveValue(corrected);
   // The web field shows all three lines, not one row that scrolls.
   const rows = await field.evaluate((el) => {
     const s = getComputedStyle(el);
@@ -666,10 +682,13 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   expect(rows, 'the field grows to the three lines').toBeGreaterThanOrEqual(3);
   await pathShots(page, '37-path-typed');
 
+  // A sign slip she could make: + 3 carried over as + 3 instead of − 3.
+  const slipped = '2x + 3 = 7\n2x = 10\nx = 5';
+  await field.fill(slipped);
   // "Prüfen" sends every line, separated exactly as steps.ts splits them.
   const sent = page.waitForRequest((r) => r.url().endsWith('/answer') && r.method() === 'POST');
   await page.getByRole('button', { name: 'Prüfen' }).click();
-  expect((await sent).postDataJSON()).toMatchObject({ text: '2x + 3 = 7\n2x = 10\nx = 5' });
+  expect((await sent).postDataJSON()).toMatchObject({ text: slipped });
   // Code found the step: 2x + 3 = 7 → 2x = 10 is the first one that does not follow.
   await expect(
     page
@@ -681,7 +700,6 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   await pathShots(page, '38-path-broke');
 
   // She writes it again; a sound path is judged on the value it arrives at.
-  const corrected = '2x + 3 = 7\n2x = 4\nx = 2';
   await field.fill(corrected);
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();

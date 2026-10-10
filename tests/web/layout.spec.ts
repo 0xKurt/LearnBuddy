@@ -14,7 +14,7 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { settle } from './fit';
+import { setScheme, settle } from './fit';
 
 const SHOTS = join(__dirname, '../../test-results/web/shots');
 
@@ -187,6 +187,24 @@ test('the composer row stays one row when the field grows', async ({ page }) => 
   expect(gap, 'mic and send have real air between them').toBeGreaterThanOrEqual(6);
 
   await page.screenshot({ path: join(SHOTS, '31-composer-grown.png') });
+
+  // The composer as the owner sees it (#522): empty, and with her sentence, light and dark.
+  const sentence = await field.inputValue();
+  for (const scheme of ['light', 'dark'] as const) {
+    await setScheme(page, scheme);
+    const suffix = scheme === 'dark' ? '-dark' : '';
+    await field.fill('');
+    // Empty as she finds it: not yet tapped into.
+    await field.blur();
+    await settle(page);
+    await page.screenshot({ path: join(SHOTS, `31a-composer-empty${suffix}.png`) });
+    if (scheme === 'dark') {
+      await field.fill(sentence);
+      await settle(page);
+      await page.screenshot({ path: join(SHOTS, '31-composer-grown-dark.png') });
+    }
+  }
+  await setScheme(page, 'light');
 });
 
 /**

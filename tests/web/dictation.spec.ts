@@ -10,6 +10,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { openMenu } from './coreLoop';
 import { bothSchemes, setScheme, shot } from './fit';
 
 test.skip(
@@ -30,7 +31,14 @@ function offerStart(page: Page, says: string) {
     .getByRole('button', { name: START });
 }
 
-async function onboardChild(page: Page): Promise<void> {
+/**
+ * A parent sets up the account for Lena; this stack has Buddy's own voices, so the setup offers
+ * them. `night`: the whole setup in the dark scheme, from the first screen on — its steps are the
+ * screen's own state, which a scheme switch's rebuild would lose.
+ */
+async function onboardChild(page: Page, night = false): Promise<void> {
+  const dark = (name: string) => (night ? `${name}-dark` : name);
+  if (night) await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
   await page.getByLabel('E-Mail').fill(`diktat-${Date.now()}@example.test`);
   await page.getByLabel('Passwort', { exact: true }).fill('geheim-1234');
@@ -50,7 +58,10 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByLabel('PIN der Eltern').fill('4826');
   await page.getByLabel('PIN wiederholen').fill('4826');
   await page.getByRole('button', { name: 'Weiter' }).click();
-  // Notifications are asked of the adults right after their PIN (issue #518).
+  // Notifications are asked of the adults right after their PIN (issue #518). The light shot of
+  // this step is core-loop-setup's.
+  await expect(page.getByText('Darf Buddy Lena Benachrichtigungen schicken?')).toBeVisible();
+  if (night) await shot(page, dark('03a2-contact-question'));
   await page.getByRole('button', { name: 'Nein, danke' }).click();
   await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
   await page.getByRole('button', { name: "Los geht's, Lena!" }).click();
@@ -59,7 +70,7 @@ async function onboardChild(page: Page): Promise<void> {
   await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
   await expect(page.getByRole('radio', { name: 'Warm' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('button', { name: 'Hörprobe: Klar' })).toBeVisible();
-  await shot(page, '03c-voice');
+  await shot(page, dark('03c-voice'));
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
@@ -156,4 +167,22 @@ test('Diktat: she hears the word, types it, the mic is off (issue #242)', async 
       .catch(() => undefined);
     if (!night) await expect(page.getByText('Frage 3 von 4')).toBeVisible();
   }
+});
+
+test("the setup at night, and Buddy's voice in the settings (issues #518, #526)", async ({
+  page,
+}) => {
+  // The notification question and the voice list in the dark scheme (their light shots are
+  // core-loop-setup's and the Diktat's above).
+  await onboardChild(page, true);
+  await setScheme(page, 'light');
+  // The same list in the settings: closed with the voice she has, opened the picker.
+  await openMenu(page, 'Einstellungen');
+  await expect(page.getByText('Warm', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Buddys Stimme' }).click();
+  await expect(page.getByRole('radio', { name: 'Warm' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('button', { name: 'Hörprobe: Klar' })).toBeVisible();
+  // The open group is the settings' own store (`useFolds`), so it stands through the rebuild.
+  await bothSchemes(page, '15c-settings-voice');
+  await expect(page.getByRole('radio', { name: 'Warm' })).toBeVisible();
 });
