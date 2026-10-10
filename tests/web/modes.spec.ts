@@ -476,9 +476,9 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   // one switch per screen, in the same place as in the chat. .last(): the home under this screen
   // keeps its own head mounted (expo-router).
   await expect(page.getByRole('button', { name: 'Frage vorlesen' })).toHaveCount(0);
-  const readOff = page.getByRole('switch', { name: 'Vorlesen', exact: true }).last();
-  const readOn = page.getByRole('switch', { name: 'Vorlesen ist an' }).last();
-  await expect(readOff).toHaveAttribute('aria-checked', 'false');
+  // One name whichever way it is (#517): the switch says what it does, its state says on/off.
+  const readAloud = page.getByRole('switch', { name: 'Vorlesen', exact: true }).last();
+  await expect(readAloud).toHaveAttribute('aria-checked', 'false');
   // Buddy's voice as a short silence, so a reading really ends (the Gespräch below listens
   // then). Set before the first reading: the dev stack has no voice, and a "no" from the server
   // sends the app to the browser's own voice for a while (lib/speech/readAloud.ts), whose end
@@ -487,11 +487,11 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   const spokenRequest = page.waitForRequest(
     (r) => r.url().includes('/voice/speech') && r.method() === 'POST',
   );
-  await readOff.click();
+  await readAloud.click();
   const sent = (await spokenRequest).postDataJSON() as { text: string; locale: string };
   expect(sent.locale).toBe('de-DE');
   expect(sent.text, 'read in words, never as LaTeX').not.toMatch(/[$\\{}]/);
-  await expect(readOn).toHaveAttribute('aria-checked', 'true');
+  await expect(readAloud).toHaveAttribute('aria-checked', 'true');
   // Reading aloud is not listening: the bar stays the input bar, no mic of its own.
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
   // A tap on the question itself reads it again — no button of its own (#434).
@@ -501,8 +501,8 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   await page.getByRole('button', { name: 'Nochmal vorlesen' }).click();
   expect((await again).postDataJSON()).toMatchObject({ text: sent.text });
   await bothSchemes(page, '25b-practice-reading');
-  await readOn.click();
-  await expect(readOff).toHaveAttribute('aria-checked', 'false');
+  await readAloud.click();
+  await expect(readAloud).toHaveAttribute('aria-checked', 'false');
 
   // ── Her question under the options (issue #402, report #388 §1) ──
   // The tile is the answer; the bar's field is the way to ask the tutor about the task. Asking
@@ -526,7 +526,7 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   await expect(page.getByRole('button', { name: 'Tastatur' }).last()).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toHaveCount(0);
   // A conversation reads aloud too: the speaker says so.
-  await expect(readOn).toHaveAttribute('aria-checked', 'true');
+  await expect(readAloud).toHaveAttribute('aria-checked', 'true');
   // Gespräch means the same as on /talk: once the question has been read, the mic listens by
   // itself — no first tap (#386).
   const listening = page.getByRole('button', { name: 'Aufnahme stoppen' });
@@ -541,14 +541,13 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   await page.getByRole('button', { name: 'Tastatur' }).last().click();
   await page.unroute('**/v1/voice/speech');
   await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toBeVisible();
-  await expect(readOff).toHaveAttribute('aria-checked', 'false');
+  await expect(readAloud).toHaveAttribute('aria-checked', 'false');
   // Vorlesen on in practice, still on at Buddy: one setting, one switch, two heads.
-  await readOff.click();
+  await readAloud.click();
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
-  const readAloudOn = page.getByRole('switch', { name: 'Vorlesen ist an' });
-  const readAloudOff = page.getByRole('switch', { name: 'Vorlesen', exact: true });
-  await expect(readAloudOn).toHaveAttribute('aria-checked', 'true');
+  const readAloudHome = page.getByRole('switch', { name: 'Vorlesen', exact: true });
+  await expect(readAloudHome).toHaveAttribute('aria-checked', 'true');
   // The chat keeps its one input bar: no voice-first bar beside it (#386).
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Tastatur' })).toHaveCount(0);
@@ -556,15 +555,15 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   await bothSchemes(page, '26-buddy-voice-mode');
   // And it is no longer a second place to look.
   await page.getByRole('button', { name: 'Mehr' }).click();
-  await expect(page.getByRole('button', { name: 'Vorlesen ist an' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Vorlesen', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Schließen' }).click();
   // Off and on again from the head itself, one tap each way.
-  await readAloudOn.click();
-  await expect(readAloudOff).toHaveAttribute('aria-checked', 'false');
-  await readAloudOff.click();
-  await expect(readAloudOn).toHaveAttribute('aria-checked', 'true');
-  await readAloudOn.click();
-  await expect(readAloudOff).toHaveAttribute('aria-checked', 'false');
+  await readAloudHome.click();
+  await expect(readAloudHome).toHaveAttribute('aria-checked', 'false');
+  await readAloudHome.click();
+  await expect(readAloudHome).toHaveAttribute('aria-checked', 'true');
+  await readAloudHome.click();
+  await expect(readAloudHome).toHaveAttribute('aria-checked', 'false');
 
   // ── Conversation mode: she speaks, Buddy answers aloud, in the same conversation ──
   // (A fake microphone; in the browser there is no pause detection, so she taps when done.)
@@ -1531,7 +1530,7 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   await taskCard.getByRole('button', { name: 'Nochmal vorlesen' }).click();
   expect(((await reread).postDataJSON() as { text: string }).text).toBe(said);
   await bothSchemes(page, '40c-drill-read-aloud');
-  await page.getByRole('switch', { name: 'Vorlesen ist an' }).last().click();
+  await page.getByRole('switch', { name: 'Vorlesen', exact: true }).last().click();
   await page.unroute('**/v1/voice/speech');
 
   const check = page.getByRole('button', { name: 'Prüfen' });

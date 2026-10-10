@@ -113,8 +113,8 @@ export default function Onboarding() {
         </Text>
         {key === 's4' ? (
           <View style={{ alignSelf: 'stretch', gap: compact ? SPACE.sm : SPACE.md }}>
-            {/* The same two controls as in the settings (issue #172): dots for the
-                colours, a segmented control for light/dark. One question, one component,
+            {/* The same two controls as in the settings (issue #172): cards for the
+                colours, the "Dunkelmodus" switch (#517). One question, one component,
                 and nothing to learn twice. */}
             <FamilyChoice />
             <ModeChoice />

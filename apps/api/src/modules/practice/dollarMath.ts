@@ -58,3 +58,20 @@ export function dollarMathRuns(text: string): string {
   }
   return out;
 }
+
+/** A whole option that is a fraction of whole numbers: "2/3", "-3/4", "1 1/2" (a mixed number). */
+const FRACTION_CHOICE = /^\s*(-?)(?:(\d+)\s+)?(\d+)\s*\/\s*(\d+)\s*$/;
+
+/**
+ * A fraction written as text in an option, set as a fraction (issue #521): "2/3" →
+ * "$\frac{2}{3}$", so her tile and her answer bubble show it stacked, not with a slash. Only a
+ * whole option of that shape — words with a slash ("weil/da"), a calculation ("1/2 + 1/3"), an
+ * amount with a unit and math already set stay exactly as written. Options are judged by their
+ * index, and a spoken "2/3" still names $\frac{2}{3}$ (`choiceNamed`), so nothing else changes.
+ */
+export function fractionChoice(text: string): string {
+  const m = FRACTION_CHOICE.exec(text);
+  if (!m) return text;
+  const [, sign, whole, num, den] = m;
+  return `$${sign}${whole ?? ''}\\frac{${num}}{${den}}$`;
+}

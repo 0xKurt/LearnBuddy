@@ -191,6 +191,7 @@
     "speed_hint": "Tipp an und hör rein. Langsamer oder schneller? Sag es Buddy einfach."
   },
   "look": {
+    "dark_mode": "Dunkelmodus",
     "family": {
       "pastell": "Pastell",
       "forest": "Wald",
@@ -205,7 +206,6 @@
     },
     "mode_hint": "Folgt dem Handy, bis du es hier einmal einstellst.",
     "mode_hint_pinned": "Lange drücken, um wieder dem Handy zu folgen.",
-    "mode_question": "Hell oder dunkel?",
     "question": "Welche Farben magst du?",
     "title": "Aussehen"
   }

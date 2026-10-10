@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ANSWER_FORM_RULES, ItemDraft, usableItems } from '../items.js';
+import { ANSWER_FORM_RULES, CHOICE_RULES, ItemDraft, usableItems } from '../items.js';
 import { MATCH_RULES } from '../match.js';
 import { ORDER_RULES } from '../structured.js';
 import { TABLE_RULES } from '../table.js';
@@ -254,5 +254,44 @@ describe('usableItems: notation the app cannot draw (issue #239)', () => {
     ]);
     expect(item?.hints).toEqual(['Was steht im Zellkern?']);
     expect(item?.worked_solution).toBeNull();
+  });
+});
+
+// "Welcher Bruch ist größer?" with the fractions only in the options, as "2/3" (issue #521).
+describe('a multiple choice about fractions (#521)', () => {
+  const compare = draft({
+    kind: 'multiple_choice',
+    prompt: 'Welcher Bruch ist größer: 2/3 oder 3/5?',
+    answer: '2/3',
+    choices: ['2/3', '3/5'],
+    correct_choice: 0,
+    topic: 'Brüche vergleichen',
+  });
+
+  it('sets fractions in the options as math, and keeps the question', () => {
+    const [item] = usableItems([compare]);
+    expect(item?.choices).toEqual(['$\\frac{2}{3}$', '$\\frac{3}{5}$']);
+    expect(item?.correct_choice).toBe(0);
+  });
+
+  it('leaves word options with a slash as they are', () => {
+    const [item] = usableItems([
+      draft({
+        kind: 'multiple_choice',
+        prompt: 'Welche Konjunktion verbindet zwei Hauptsätze?',
+        answer: 'und',
+        choices: ['und', 'weil/da'],
+        correct_choice: 0,
+      }),
+    ]);
+    expect(item?.choices).toEqual(['und', 'weil/da']);
+  });
+
+  it('asks every question writer to name the options in the question, without a sample sentence', async () => {
+    const { GENERATE_SYSTEM } = await import('../generate.js');
+    const { EXTRACT_SYSTEM } = await import('../../materials/extract.js');
+    expect(GENERATE_SYSTEM).toContain(CHOICE_RULES);
+    expect(EXTRACT_SYSTEM).toContain(CHOICE_RULES);
+    expect(CHOICE_RULES).not.toMatch(/[äöüßÄÖÜ]|„|“/);
   });
 });

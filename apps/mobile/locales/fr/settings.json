@@ -191,6 +191,7 @@
     "speed_hint": "Touche pour écouter. Plus lent ou plus rapide ? Dis-le simplement à Buddy."
   },
   "look": {
+    "dark_mode": "Mode sombre",
     "family": {
       "pastell": "Pastel",
       "forest": "Forêt",
@@ -205,7 +206,6 @@
     },
     "mode_hint": "Suit ton téléphone jusqu’à ce que tu choisisses ici.",
     "mode_hint_pinned": "Appuie longuement pour suivre à nouveau le téléphone.",
-    "mode_question": "Clair ou sombre ?",
     "question": "Quelles couleurs préfères-tu ?",
     "title": "Apparence"
   }

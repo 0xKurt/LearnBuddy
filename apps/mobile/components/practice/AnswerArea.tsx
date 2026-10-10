@@ -3,16 +3,24 @@
 // board, the note line, the rhythm field, a typed answer, the fraction bar, a figure she taps a
 // place in, the pronunciation recorder. Whatever she gives goes out as her answer
 // (`usePracticeActions.answer`). Moved out of `app/practice/[id].tsx` (issue #311).
+// Once the question is closed: "Weiter" in the bar, and above it the options of a multiple choice,
+// read only, hers and the right one marked (issue #521) — a question that does not name its
+// options itself ("Welcher Bruch ist größer?") would otherwise read as a question without them.
 
 import type { ItemView, SpeakStreamEvent } from '@learnbuddy/shared-types/contracts';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import type { AnswerForm } from '../../lib/practice/answerForm.js';
+import { choiceMarks } from '../../lib/practice/choiceMarks.js';
 import type { QuestionView } from '../../lib/practice/questionView.js';
 import type { ScreenRoom } from '../../lib/practice/screenRoom.js';
 import type { PracticeActions } from '../../lib/practice/usePracticeActions.js';
 import type { PracticeDrafts } from '../../lib/practice/usePracticeDrafts.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
+import { BottomBar } from '../lb/BottomBar.js';
+import { Btn } from '../lb/Btn.js';
+import { Appear } from '../lb/Motion.js';
 import { AnswerShell } from './AnswerShell.js';
 import { ChoiceList } from './ChoiceList.js';
 import { FigureTapAnswer } from './FigureTapAnswer.js';
@@ -40,6 +48,11 @@ type Props = {
   /** The pronunciation judgement while the model is still listening (issue #8). */
   onSpeakProgress: (live: SpeakStreamEvent | null) => void;
   disabled: boolean;
+  /**
+   * Once the question is closed: the solution the server sent (null in homework help and during a
+   * test), whether verdicts are shown (not during a test), and "Weiter".
+   */
+  closed: { solution: string | null; judged: boolean; onNext: () => void };
 };
 
 export function AnswerArea({
@@ -55,7 +68,9 @@ export function AnswerArea({
   readAgain,
   onSpeakProgress,
   disabled,
+  closed,
 }: Props) {
+  const { t } = useTranslation('practice');
   const conversation = useVoiceMode((s) => s.conversation);
   const { choices, tapChoices, speaking, staff, taps, barSurface, tapFigure, typed } = form;
   const { text, setText } = drafts;
@@ -204,6 +219,34 @@ export function AnswerArea({
           }}
         />
       ) : null}
+      {/* Closed: "Weiter", and the options of a multiple choice stay above it, read only. */}
+      {open ? null : (
+        <AnswerShell
+          keeps="whole"
+          answer={
+            choices ? (
+              <ChoiceList
+                choices={choices}
+                figures={item.choice_figures}
+                tried={view.tried}
+                settled={choiceMarks(choices, view.turns, closed.solution, closed.judged)}
+                disabled
+              />
+            ) : undefined
+          }
+          action={{
+            bar: (
+              <BottomBar>
+                <Appear delay={120}>
+                  <Btn size="lg" pill full onPress={closed.onNext}>
+                    {t('next')}
+                  </Btn>
+                </Appear>
+              </BottomBar>
+            ),
+          }}
+        />
+      )}
     </>
   );
 }

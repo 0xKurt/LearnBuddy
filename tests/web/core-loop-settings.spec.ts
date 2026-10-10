@@ -39,15 +39,17 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   await page.getByRole('button', { name: 'Aussehen' }).click();
   // Four colour cards and one switch since issue #172 — "einmal farb cards, dazu einen
   // hell/dunkel switch, thats it" (owner, on seeing seven preview cards on the phone).
-  const darkSwitch = page.getByRole('switch', { name: 'Hell oder dunkel?' });
-  await expect(darkSwitch).toBeVisible();
+  // Named for what it does since #517: "Dunkelmodus", on = dark, the name the same either way.
+  const darkSwitch = page.getByRole('switch', { name: 'Dunkelmodus' });
+  await expect(darkSwitch).not.toBeChecked();
+  await expect(page.getByText('Hell oder dunkel?')).toHaveCount(0);
   await shot(page, '15f-settings-look', { opened: true });
   // Two axes since issue #140: the colours are one choice, dark is another. Dark with the
   // colours kept is the combination the owner asked for — "blau eingestellt, blaue highlights".
   await page.getByRole('radio', { name: 'Meer' }).click();
   await expect(page.getByRole('radio', { name: 'Meer' })).toHaveAttribute('aria-checked', 'true');
   await darkSwitch.click();
-  await expect(darkSwitch).toHaveAttribute('aria-checked', 'true');
+  await expect(darkSwitch).toBeChecked();
   await shot(page, '15g-settings-night', { opened: true });
   await openLicences(page, '15g1-settings-about-night', '15g2-settings-licences-night');
   await page.getByRole('button', { name: 'Zurück' }).click();
@@ -66,7 +68,7 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   await openMenu('Einstellungen');
   await page.getByRole('button', { name: 'Aussehen' }).click();
   await page.getByRole('radio', { name: 'Pastell' }).click();
-  await page.getByRole('switch', { name: 'Hell oder dunkel?' }).click();
+  await page.getByRole('switch', { name: 'Dunkelmodus' }).click();
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 

@@ -49,6 +49,12 @@ const SHAPES: Array<[keyof Palette, keyof Palette]> = [
   // The ready button against the waiting skin (issue #97): two states no one can mix up
   // on a screenshot, in every palette including night.
   ['primary', 'canvas'],
+  // The "Dunkelmodus" switch (issue #517): its off track on the card and on the onboarding's
+  // page, and the light knob on that track. On, the track is primary (above); the knob's
+  // place says the state, the track's colour only repeats it.
+  ['ink3', 'paper'],
+  ['ink3', 'bg'],
+  ['knob', 'ink3'],
 ];
 
 for (const [name, palette] of Object.entries(PALETTES)) {

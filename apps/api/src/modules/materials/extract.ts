@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 import { CURRICULUM_RULES } from '../curriculum/state.js';
 import {
+  CHOICE_RULES,
   FIGURE_RULES,
   ItemDraft,
   itemsOneByOne,
@@ -374,6 +375,7 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}
+   - ${CHOICE_RULES}
    - ${FIGURE_RULES}
    - accepted_answers: other correct formulations (synonyms, spelling variants).
    - ${CURRICULUM_RULES}
@@ -409,6 +411,7 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}
+   - ${CHOICE_RULES}
    - ${CURRICULUM_RULES}
    - ${FIGURE_RULES}
    - topic: 2–4 words.

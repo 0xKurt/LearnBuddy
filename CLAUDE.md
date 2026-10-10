@@ -123,8 +123,8 @@ Numbers are stable: code and docs cite them ("CLAUDE.md rule 16"). New rules are
 17. **Look at your own screenshots like a designer** (#287). Shoot every changed screen at
     360×740 and 390×844, light and dark; critique empty voids, two-line titles, clipped or doubled
     elements, a new card style or accent where an existing one would do, grey noise, hard edges.
-    Revise and shoot again. The PR carries a before/after image and the screen next to related
-    ones — no UI change reaches the owner without one. Header titles stay on one line.
+    Revise and shoot again. The before/after images go to the owner in the chat, not into the PR
+    (owner 10.10., #528). Header titles stay on one line.
 
 **Added later**
 
