@@ -490,8 +490,11 @@ function decisionOf(
   if (past) return { type: 'how_did_it_go', goal: goalBrief(past, today) };
   const s = state.settings;
   const hidden = s.opt_in_prompt_hidden_until && s.opt_in_prompt_hidden_until > now;
+  // Decided already — a no in the setup is final (owner 10.10., issue #518), and so is a change
+  // in the settings: only a profile that was never asked hears the question here.
+  const decided = s.contact_changed_at !== null;
   const somethingToFollow = state.totals.activeGoals > 0;
-  if (!s.contact_enabled && !hidden && somethingToFollow) {
+  if (!s.contact_enabled && !decided && !hidden && somethingToFollow) {
     return {
       type: 'contact_opt_in',
       can_enable_here: !learner.isMinor,

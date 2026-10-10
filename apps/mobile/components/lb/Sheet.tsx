@@ -48,6 +48,8 @@ type Props = {
   scrollTestID?: string;
 };
 
+/** The most of the screen a sheet takes: the veil above it stays a tap target. */
+export const SHEET_MAX = 0.92;
 /** The sheet's top corners: rounder than a card, it rises from the screen's edge. */
 const CORNER = 32;
 /** Its side margin, a little wider than a card's padding (Card.tsx 18). */
@@ -173,7 +175,7 @@ export function Sheet({
                   borderTopLeftRadius: CORNER,
                   borderTopRightRadius: CORNER,
                   paddingBottom: bottomRoom(insets.bottom, SPACE.sm),
-                  maxHeight: '92%',
+                  maxHeight: `${SHEET_MAX * 100}%`,
                   ...SHADOW.float,
                 },
                 sheet,

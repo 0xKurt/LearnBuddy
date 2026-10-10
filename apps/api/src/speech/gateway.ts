@@ -56,6 +56,18 @@ export interface SpeechGateway {
   synthesize(input: SpeechInput): Promise<SpeechAudio>;
 }
 
+/**
+ * Whether Buddy's own voice reads `locale` here: a provider is configured AND the language is
+ * one it reads. The one test for "is there a natural voice" — the voice picker (issue #526), a
+ * listening text and a dictation (issue #210) ask the same question.
+ */
+export function readsIn(
+  speech: Pick<SpeechGateway, 'available' | 'localeFor'>,
+  locale: string,
+): boolean {
+  return speech.available && speech.localeFor(locale) !== null;
+}
+
 export class DisabledSpeech implements SpeechGateway {
   readonly available = false;
   voiceId(): string {

@@ -4,12 +4,15 @@
 // a field of its own that stood under the question and floated in the middle of the screen once
 // Buddy had answered ("Wieso fliegt dieses Antwort Feld da oben rum", owner 04.10.).
 //
-// One pill (`LbTextInput`, variant bar): what goes before the text (the chat's +), the text, a
-// unit, and at the end the mic — or, once there is something to send, the action that takes its
-// place (the chat's "Senden", "Stopp" while Buddy writes). The mic is a soft circle: the filled
-// control is the screen's main one (the chat's conversation mode, "Senden", "Prüfen"), and two
-// filled circles side by side read as two main actions. The line above the pill says what the
-// mic is doing, and the count shows only when the end of the field is near (#133 position 17).
+// One box (`LbTextInput`, variant bar), built like the Claude app's (owner 09.10., issue #522): her
+// text on top over the full width, and under it one row of tools — on the left what goes before
+// (the chat's +, the camera) and the answer's unit as a chip; on the right the mic and one filled
+// circle: the waveform into a conversation, or, once there is something to send, the action in its
+// place (the chat's round send arrow, "Stopp" while Buddy writes, "Prüfen"). The mic is a soft
+// circle: two filled circles side by side read as two main actions. The line above the box says
+// what the mic is doing, and the count shows only when the end of the field is near (#133
+// position 17). Before #522 all of it stood in one line beside the text, and a "Senden" pill left
+// her text a narrow column.
 //
 // What the bar sends and how is its screen's: the chat sends, practice checks with "Prüfen"
 // (`CheckBar`). A conversation's big mic is not in the bar: it replaces it (`VoiceRow`).
@@ -22,23 +25,22 @@
 // A long text (issue #258) is typed into the same bar, `tall`: a small page of three lines. While
 // she writes it grows further before it scrolls in itself — less far while the keyboard is up
 // (`formDensity` tight), so the question above it stays on screen; at rest it keeps its three
-// lines, so Buddy's feedback above it has the room.
+// lines, so Buddy's feedback above it has the room. For a page at full height the essay opens its
+// writing view (`WritingSheet`, issue #525).
 
 import { forwardRef, type ReactNode } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { formDensity } from '../../lib/keyboard.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
-import { TYPE } from '../../lib/theme/type.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import type { VoiceInput } from '../voice/useVoiceInput.js';
+import { Chip } from './Chip.js';
+import { FieldCount } from './FieldCount.js';
 import { LbTextInput, type LbTextInputProps, type LbTextInputRef } from './LbTextInput.js';
 
-/** The count appears this close to the end, not before: a permanent 0/2000 is noise. */
-const COUNT_WITHIN = 200;
 /** A long text's bar: the lines it starts with, and how far it grows with and without keyboard. */
 const TALL = { rows: 3, roomy: 10, tight: 4 } as const;
 
@@ -56,9 +58,9 @@ type Controls = {
   micLabel?: string;
   /** False: no mic in the pill (a Diktat: the recogniser would spell for her). */
   mic?: boolean;
-  /** Takes the mic's place while the mic is idle ("Senden", "Stopp", "Prüfen"); null: the mic stays. */
+  /** The main control while the mic is idle ("Senden", "Stopp", "Prüfen"): it takes `after`'s place. */
   action?: ReactNode;
-  /** After the mic or action, at the pill's end (the chat's conversation mode). */
+  /** The main control while there is no action: the waveform into a conversation. */
   after?: ReactNode;
   /** Above the pill: what goes with the text (the pages she attached). */
   above?: ReactNode;
@@ -68,16 +70,13 @@ type Controls = {
 };
 
 type Props = Controls &
-  Omit<LbTextInputProps, 'variant' | 'multiline' | 'rows' | 'end'> & {
+  Omit<LbTextInputProps, 'variant' | 'multiline' | 'rows' | 'chips' | 'end'> & {
     value: string;
     maxLength: number;
-    /** A unit, beside the text ("cm"). */
+    /** The answer's unit ("cm²"): a chip among the tools, never a suffix inside her lines. */
     unit?: string | null;
-    /**
-     * The placeholder stays beside the action (issue #402): a board's "Prüfen" is not about the
-     * field's text, and "Frag zur Aufgabe …" is the one thing that says what the field is for.
-     */
-    keepPlaceholder?: boolean;
+    /** More among the tools, after the unit (how her typed math will be read). */
+    chips?: ReactNode;
   };
 
 export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(props, ref) {
@@ -91,22 +90,15 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
     disabled = false,
     tall = null,
   } = props;
-  const { palette } = useTheme();
   const seen = useVisibleHeight();
   const typing = formDensity(seen.window, seen.overlap) === 'tight';
-  const { t } = useTranslation('common');
+  const { t } = useTranslation('practice');
   const idle = voice === undefined || voice.state === 'idle';
-  const control =
-    action !== null && idle ? (
-      action
-    ) : mic && voice ? (
-      <MicButton voice={voice} size="sm" label={micLabel} disabled={disabled} />
-    ) : null;
   const {
     value,
     maxLength,
     unit = null,
-    keepPlaceholder = false,
+    chips = null,
     voice: _voice,
     micLabel: _micLabel,
     mic: _mic,
@@ -121,70 +113,40 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
     <>
       {voice ? <MicStatus voice={voice} /> : null}
       {above}
-      {value.length >= maxLength - COUNT_WITHIN ? (
-        <Text
-          accessibilityLiveRegion="polite"
-          style={[
-            TYPE.label,
-            {
-              color: value.length >= maxLength ? palette.danger : palette.ink2,
-              alignSelf: 'flex-end',
-              marginRight: SPACE.sm,
-            },
-          ]}
-        >
-          {value.length >= maxLength
-            ? t('field.full')
-            : t('field.remaining', { count: maxLength - value.length })}
-        </Text>
-      ) : null}
+      <FieldCount length={value.length} max={maxLength} />
       <LbTextInput
         ref={ref}
         {...field}
-        // An empty field next to an action says nothing (issue #394): "Senden" or "Stopp" takes
-        // more of the pill than the mic, and at 360 "Schreib Buddy …" broke onto a second line
-        // beside it — the empty bar two lines high. The action says what comes next; the field
-        // keeps its name for a screen reader (`accessibilityLabel`). With the mic at the end the
-        // placeholder has its room back.
-        placeholder={
-          !keepPlaceholder && control !== null && control === action && value === ''
-            ? undefined
-            : field.placeholder
-        }
         variant="bar"
         value={value}
         maxLength={maxLength}
         multiline
         {...(tall ? { rows: TALL.rows, maxRows: tallRows(tall, typing) } : {})}
+        chips={
+          unit || chips ? (
+            <>
+              {unit ? <Chip>{t('answer.unit_chip', { unit })}</Chip> : null}
+              {chips}
+            </>
+          ) : null
+        }
         end={
-          <>
-            {unit ? (
-              <Text
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-                style={[
-                  TYPE.body,
-                  { color: palette.ink2, alignSelf: 'center', paddingHorizontal: SPACE.xs },
-                ]}
-              >
-                {unit}
-              </Text>
+          // Their own row with their own gap: the box's is 2 (the text carries its padding), too
+          // tight between two round controls (owner 01.10., issue #187). Empty, the row still
+          // keeps the text off the box's edge.
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-end',
+              gap: SPACE.sm,
+              minWidth: SPACE.sm,
+            }}
+          >
+            {mic && voice ? (
+              <MicButton voice={voice} size="sm" label={micLabel} disabled={disabled} />
             ) : null}
-            {/* Their own row with their own gap: the pill's is 2 (the text carries its padding),
-                too tight between two round controls (owner 01.10., issue #187). Empty, the row
-                still keeps the text off the pill's edge. */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'flex-end',
-                gap: SPACE.sm,
-                minWidth: SPACE.sm,
-              }}
-            >
-              {control}
-              {after}
-            </View>
-          </>
+            {action !== null && idle ? action : after}
+          </View>
         }
       />
     </>

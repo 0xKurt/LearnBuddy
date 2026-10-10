@@ -1,5 +1,6 @@
-// A task in parts, as in a class test from grade 8 on (issue #297): one material — a short text
-// with the situation, and the drawing the question already has — and subtasks a), b), c) on it.
+// A task in parts, as in a class test from grade 8 on (issue #297): one material — a situation, a
+// source or a text, and a table, chart or graph beside it (stored as each part's own `figure`) —
+// and subtasks a), b), c) on it.
 // A later part may build on an earlier part's RESULT ("b) Berechne damit …"), and then a mistake in
 // a) is not marked again in b): b) is recomputed with HER result from a) (Folgefehler, as German
 // schools mark it).
@@ -25,6 +26,7 @@
 
 import { z } from 'zod';
 
+import { PASSAGE_CHARS_MAX } from './reading.js';
 import { RUBRIC_MIN } from './rubric.js';
 
 /** The letters of a task's parts, in order; a class test task rarely has more than four. */
@@ -35,9 +37,13 @@ export type TaskPartLetter = z.infer<typeof TaskPartLetter>;
 /** One subtask is a question; a task in parts has at least two. */
 export const TASK_PARTS_MIN = 2;
 export const TASK_PARTS_MAX = TASK_PART_LETTERS.length;
-/** The situation in a few sentences: what a printed task states before a). */
+/**
+ * The material: what a printed task states before a) — a situation in a few sentences, or a
+ * source, a poem, a text to analyse (Schnitt 4). As long as a reading text may be (#233): it
+ * scrolls in itself above the part like one, so the question under it always stands.
+ */
 export const TASK_STEM_MIN = 20;
-export const TASK_STEM_MAX = 300;
+export const TASK_STEM_MAX = PASSAGE_CHARS_MAX;
 /** A formula over earlier parts: one line of arithmetic. */
 export const TASK_FORMULA_MAX = 120;
 /**
@@ -71,7 +77,11 @@ export const TaskPartView = z.object({
   /** The same for every part of one task in this run ('p1', 'p2' …), never the stored id. */
   ref: z.string().regex(/^p\d+$/),
   part: TaskPartLetter,
-  letters: z.array(TaskPartLetter).min(TASK_PARTS_MIN).max(TASK_PARTS_MAX),
+  /**
+   * The letters of the task's parts in THIS run, its own among them: a Probearbeit leaves an open
+   * part out, and a review brings one part back alone — never a letter of a part that does not come.
+   */
+  letters: z.array(TaskPartLetter).min(1).max(TASK_PARTS_MAX),
   stem: z.string(),
 });
 export type TaskPartView = z.infer<typeof TaskPartView>;

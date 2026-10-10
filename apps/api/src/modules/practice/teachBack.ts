@@ -12,8 +12,9 @@
 // The follow-up question of each point is written here, at generation time, and checked like a
 // hint: it may ask for the point, never give it away. So the ONE follow-up she gets after a gap is
 // prepared text chosen by code (the first point still missing), never something the model says in
-// the moment — and it costs no second model call. The same questions are the question's prepared
-// hints ("Tipp"), in the order of the points.
+// the moment — and it costs no second model call. In practice „Tipp" shows a point itself, one at a
+// time as a model sentence, and asks for the next with its follow-up (Vormachen, #298,
+// `pointSteps.ts`).
 //
 // The open part of a task in parts („Begründe …", issue #297, `taskParts.ts`) is the same question
 // on a situation: its key points are held to the same rules here (`keyPointsProblem`) and stored
@@ -50,7 +51,7 @@ export const KeyPointDraft = z.object({
     .min(3)
     .max(200)
     .describe(
-      'What a complete explanation says here, as one short statement. Only for checking her answer; she never sees it.',
+      'What a complete explanation says here, as one short, correct statement in her language. Her answer is checked against it, and when she is stuck Buddy shows it to her as a model sentence, one point at a time.',
     ),
   ask: z
     .string()
@@ -86,7 +87,7 @@ export const TeachBackDraft = z.object({
 });
 export type TeachBackDraft = z.infer<typeof TeachBackDraft>;
 
-export const TEACH_BACK_RULES = `ERKLÄR MAL ("teach_back"): the learner wants to EXPLAIN in her own words, by voice or in writing, like an oral check at school — either to be quizzed with open questions on a topic or one of her sheets, or to explain one thing she names. Fill "teach_back" and nothing else: one question when she wants to explain one thing, otherwise 2–${MAX_TEACH_BACK} open questions, easy to harder. Each question gets ${KEY_POINTS_MIN}–${KEY_POINTS_MAX} key points: what a complete explanation at her grade has to contain, each a different idea, in the order a teacher would expect them. A point is never just the question again, and its follow-up question never gives it away. Only well-established knowledge at her level; when SHEET TEXT is given, ask only about what it covers and take every exact term from it. No grade, no model answer: the points are for checking only.`;
+export const TEACH_BACK_RULES = `ERKLÄR MAL ("teach_back"): the learner wants to EXPLAIN in her own words, by voice or in writing, like an oral check at school — either to be quizzed with open questions on a topic or one of her sheets, or to explain one thing she names. Fill "teach_back" and nothing else: one question when she wants to explain one thing, otherwise 2–${MAX_TEACH_BACK} open questions, easy to harder. Each question gets ${KEY_POINTS_MIN}–${KEY_POINTS_MAX} key points: what a complete explanation at her grade has to contain, each a different idea, in the order a teacher would expect them. A point is never just the question again, and its follow-up question never gives it away. Only well-established knowledge at her level; when SHEET TEXT is given, ask only about what it covers and take every exact term from it. No grade, no model answer: the points are for checking, and when she is stuck Buddy shows one of them at a time as a model sentence.`;
 
 /**
  * Why drafted key points cannot be asked for, or null when they hold (Regel 0: the whole question
@@ -153,7 +154,8 @@ export function keyPointFields(drafted: readonly KeyPointDraft[]) {
     unit: null,
     // She explains, often by voice: how a word is spelled is not what is asked.
     spelling: 'gentle' as const,
-    // "Tipp" asks the follow-up questions in order, at once and without a model.
+    // The follow-up questions in order, at once and without a model: „Tipp" where no ladder runs
+    // (homework help). In practice an explanation's ladder is its points (#298, `pointSteps.ts`).
     hints: drafted.slice(0, 3).map((p) => p.ask),
     // No worked solution: an explanation shows no model answer (#236).
     worked_solution: null,

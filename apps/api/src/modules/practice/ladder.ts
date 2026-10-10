@@ -21,7 +21,7 @@ export const REVEAL_AFTER_MISSES = 3;
  * Asked for help again, the solution is explained only once she has seen this many hints and
  * every prepared one (live finding 1: the first "Tipp" after a miss showed the solution).
  */
-const HINTS_BEFORE_SOLUTION = 2;
+export const HINTS_BEFORE_SOLUTION = 2;
 
 /**
  * After this many misses "Tipp" stands out, once (report #388 §5.5): help avoidance hurts weaker

@@ -11,7 +11,10 @@
     "pin_progress": "{{count}} von 4 Ziffern eingegeben",
     "camera": "Foto machen",
     "keyboard": "Tastatur",
-    "language": "Sprache wählen"
+    "language": "Sprache wählen",
+    "send": "Senden",
+    "voice": "Gespräch",
+    "expand": "Groß anzeigen"
   },
   "actions": {
     "cancel": "Abbrechen",

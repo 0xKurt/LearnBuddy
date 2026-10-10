@@ -1,7 +1,8 @@
 // Core loop, part 1 of 5 (issue #381; the old core-loop.spec.ts was split so each part runs well
-// under the limit and brings its own learner, Engineering-Regel 7): a parent sets up the account,
-// the phone goes to Mia, she picks Buddy's voice and her colours, and sees Buddy's home for the
-// first time. Real app (web build) against the dev stack; scripted model
+// under the limit and brings its own learner, Engineering-Regel 7): a parent sets up the account
+// and allows notifications with the PIN (issue #518), the phone goes to Mia, she picks her colours
+// (no voice step without Buddy's own voices, issue #526), and sees Buddy's home for the first
+// time. Real app (web build) against the dev stack; scripted model
 // (apps/api/src/testing/scenarios/core-loop.ts). Shots go to test-results/web/shots.
 
 import { expect, test } from '@playwright/test';
@@ -9,7 +10,7 @@ import { expect, test } from '@playwright/test';
 import { freshEmail, PIN } from './coreLoop';
 import { partHeight, shot } from './fit';
 
-test('core loop · setup: a parent sets up, Mia picks voice and colours, first look at Buddy', async ({
+test('core loop · setup: a parent sets up, Mia picks her colours, first look at Buddy', async ({
   page,
 }) => {
   const email = freshEmail('setup');
@@ -44,36 +45,35 @@ test('core loop · setup: a parent sets up, Mia picks voice and colours, first l
   await shot(page, '03a-profile-child');
   // For a child two short steps (each fits the screen): the child, then the parents.
   await page.getByRole('button', { name: 'Weiter' }).click();
-  const start = page.getByRole('button', { name: "Los geht's" });
-  await expect(start).toBeDisabled(); // consent and PIN still missing
+  const next = page.getByRole('button', { name: 'Weiter' });
+  await expect(next).toBeDisabled(); // consent and PIN still missing
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill(pin);
   await page.getByLabel('PIN wiederholen').fill(pin);
   await shot(page, '03-profile-child');
-  await start.click();
+  await next.click();
+
+  // ── Notifications: one question of their own, asked of the parents right after their PIN and
+  // saved in the same request (issue #518) — no box in the small print any more ──
+  await expect(page.getByText('Darf Buddy Mia Benachrichtigungen schicken?')).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Push-Benachrichtigungen/ })).toHaveCount(0);
+  await shot(page, '03a2-contact-question');
+  await page.getByRole('button', { name: 'Ja, erlauben' }).click();
 
   // ── The hand-over: what is set now, and the phone goes to Mia (user feedback #10) ──
   await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
   await expect(page.getByText('PIN der Eltern: gesetzt – nur ihr kennt sie')).toBeVisible();
-  await expect(page.getByText(/Push-Benachrichtigungen: aus/)).toBeVisible();
+  await expect(page.getByText(/Push-Benachrichtigungen: erlaubt/)).toBeVisible();
   await shot(page, '03b-handover');
   await page.getByRole('button', { name: "Los geht's, Mia!" }).click();
 
-  // ── Mia picks how Buddy sounds: a voice is already chosen, a tap plays and picks one ──
-  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
-  const picked = page.waitForResponse(
-    (r) => r.url().endsWith('/buddy/settings') && r.request().method() === 'PATCH' && r.ok(),
-  );
-  // "Hell" here is one of Buddy's VOICES (warm · freundlich · hell · klar), not the theme.
-  await page.getByRole('radio', { name: 'Hell' }).click();
-  await picked;
-  // The walkthrough runs without Buddy's own voice: the phone reads the sample, and says so.
-  await expect(page.getByText(/Gerade liest die Stimme deines Handys vor/)).toBeVisible();
-  await shot(page, '03c-voice');
-  await page.getByRole('button', { name: 'Weiter' }).click();
+  // ── No voice step: this stack has no natural voices, and six names that all sound like the
+  // phone are no choice (issue #526) — the setup goes straight on. The Diktat's walk, which has
+  // a voice, shows the list (dictation.spec.ts, 03c-voice). ──
 
   // ── The first-start cards, then the home ──
   await expect(page.getByText('Sag es Buddy einfach')).toBeVisible();
+  await expect(page.getByText('Wie soll Buddy klingen?')).toHaveCount(0);
   await shot(page, '03d-onboarding');
   // Walk to the last card: the colours are chosen here now, not three taps deep in the
   // settings (issue #136), and every card has to fit without scrolling (rule 16).

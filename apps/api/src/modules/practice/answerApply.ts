@@ -126,8 +126,11 @@ export function applyAnswer(
         const attempts = si.attempts + (attempted ? 1 : 0);
         const hints = si.hints_used + (judged.gaveHint ? 1 : 0);
         const moved = si.prepared_hints_used + (judged.usedPrepared ? 1 : 0);
-        // Past a step of the way she wrote herself (#298): the ladder never goes back.
-        const prepared = Math.max(moved, judged.ownStep ?? 0);
+        // Past a step of the way she wrote herself (#298): the ladder never goes back. An
+        // explanation's step moves it just past the point it showed (`pointSteps.ts`).
+        const next = c.pointsLadder?.next;
+        const pastPoint = judged.usedPrepared && next ? next.at + 1 : 0;
+        const prepared = Math.max(moved, judged.ownStep ?? 0, pastPoint);
         let status: SessionItemRow['status'] = 'open';
         let firstTry: boolean | null = si.first_try_correct;
         if (judged.verdict === 'correct') {

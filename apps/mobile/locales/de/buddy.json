@@ -125,8 +125,6 @@
     "undo_label": "Rückgängig: {{what}}",
     "undone": "rückgängig gemacht",
     "undo_request_material": "Kein Foto nötig",
-    "undo_title": "Was du zurücknehmen kannst",
-    "undo_hint": "Zeigt, was du zurücknehmen kannst",
     "in_app_only": "Verabredetes erscheint hier in der App – Benachrichtigungen sind aus."
   },
   "focus": {
@@ -284,7 +282,7 @@
     "title": "Gespräch",
     "listening": "Ich höre zu.",
     "getting_ready": "Mikrofon wird bereit …",
-    "listening_sub": "Sag einfach, was du brauchst.",
+    "listening_sub": "Sprich einfach – ich merke, wenn du fertig bist.",
     "tap_when_done": "Tipp aufs Mikro, wenn du fertig bist.",
     "thinking": "Ich denke nach …",
     "speaking": "Buddy spricht …",
@@ -319,7 +317,6 @@
     },
     "today": "Heute",
     "yesterday": "Gestern",
-    "stop": "Stopp",
     "stop_label": "Antwort stoppen",
     "stopped": "Gestoppt.",
     "new_reply": "Neue Antwort",
@@ -344,21 +341,26 @@
   "voice_pick": {
     "label": "Buddys Stimme",
     "sample": "Hallo, ich bin Buddy. So klinge ich, wenn ich dir etwas vorlese.",
-    "phone_voice": "Gerade liest die Stimme deines Handys vor – darum klingen hier alle gleich.",
-    "tap_hint": "Spielt eine kurze Hörprobe und wählt diese Stimme.",
     "name": {
       "warm": "Warm",
       "friendly": "Freundlich",
-      "bright": "Hell",
+      "bright": "Fröhlich",
       "clear": "Klar",
       "soft": "Sanft",
       "deep": "Tief"
     },
+    "about": {
+      "warm": "Höher, warm und ruhig",
+      "friendly": "Tiefer, freundlich und locker",
+      "bright": "Höher, fröhlich und munter",
+      "clear": "Tiefer, klar und deutlich",
+      "soft": "Höher, leise und sanft",
+      "deep": "Tief und ruhig"
+    },
     "loading": "Einen Moment – die Stimme kommt gleich.",
-    "group": {
-      "higher": "Höhere Stimmen",
-      "lower": "Tiefere Stimmen"
-    }
+    "choose_hint": "Wählt diese Stimme.",
+    "play_label": "Hörprobe: {{name}}",
+    "stop_label": "Hörprobe anhalten"
   },
   "when": {
     "today": "heute",

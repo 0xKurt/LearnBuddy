@@ -309,7 +309,7 @@ export function ZoomablePhoto({
 
 /**
  * A photo that fills its thumbnail box and opens full screen on a tap: a page she is about to
- * send (components/capture/PhotoStrip.tsx), a page Buddy is reading (components/buddy/SlimBar.tsx).
+ * send (components/buddy/AttachStrip.tsx), a page Buddy is reading (components/buddy/SlimBar.tsx).
  * `onError`: the phone cannot show it, and the caller says so in its place.
  */
 export function PhotoThumb({

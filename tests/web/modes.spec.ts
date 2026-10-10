@@ -94,12 +94,12 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill('4826');
   await page.getByLabel('PIN wiederholen').fill('4826');
-  await page.getByRole('button', { name: "Los geht's" }).click();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  // Notifications are asked of the adults right after their PIN (issue #518).
+  await page.getByRole('button', { name: 'Nein, danke' }).click();
   // The hand-over: what is set, then the phone goes to the child (user feedback #10).
   await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
   await page.getByRole('button', { name: "Los geht's, Lena!" }).click();
-  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
-  await page.getByRole('button', { name: 'Weiter' }).click();
   // The first-start cards (app/onboarding.tsx) come before the home; the last one is the
   // colour choice (issue #136). Skipping them keeps the default palette.
   await page.getByRole('button', { name: 'Überspringen' }).click();
@@ -207,16 +207,38 @@ test('learning modes: explain, homework help without the solution, practice with
   const pinned = page.getByTestId('bottom-bar');
   await expect(pinned.getByLabel('Deine Antwort')).toBeVisible();
   await expect(pinned.getByText('Tipp')).toHaveCount(0);
-  // While she types "Prüfen" is in the bar itself (#365): its padding (8 + 12), the key row (48),
-  // the bar with a drawn fraction under the text (97) and the step between them (8): 173 pt.
+  // While she types "Prüfen" is in the box itself (#365), one box since #522: the bar's padding
+  // (8 + 12), the box's padding and frame (10), her line (38), the key row (48) and the tools with
+  // the drawn fraction among them (44): 160 pt.
   expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(176);
   await expect(page.getByText('Welche zwei Längen kennst du vom Rechteck?')).toBeVisible();
+
+  // ── Ein Rechenweg mit einem Rechenfehler: Code nennt die Zeile (issues #209, #274) ──
+  // A slip she could really make — 7 · 3 = 21, then 3 more instead of 7 — not numbers made up for
+  // the check (issue #527: the owner reads the shots as product). Code names the first line that
+  // no longer follows — 7·4 holds, 21+3 does not follow from it — and it says so without asking a
+  // model at all (`steps.ts`, `pathReply`). In HOMEWORK HELP, which is where this stands: the
+  // first run of this step got the hint ladder's general question instead, because every fixed
+  // near-miss reply was shut out of that mode. A reply that names a line is a hint, not a
+  // solution, so it holds here too (issue #274).
+  const answer = page.getByLabel('Deine Antwort');
+  await answer.fill('7·4\n21+3\n24');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Bis Zeile 1 stimmt alles', { exact: false })).toBeVisible();
+  // A near miss, not a wrong answer: her way is mostly right, so the question stays OPEN — the
+  // answer field is still there and so is the hint. The field was emptied when the answer went
+  // out; while she is still in it, the mic has the bar's end, like the chat's (#365) — out of it,
+  // „Prüfen" stands under the bar and waits (#310: one bar for every form).
+  await expect(answer).toBeVisible();
+  await answer.blur();
+  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Einen Tipp bekommen' })).toBeVisible();
 
   // ── Der Rechenweg wird in der App getippt, nicht nur von den Tests geschickt (issue #221) ──
   // #209 checks a path line by line, but the field allowed line breaks only for a long answer —
   // so on the phone the return key sent the FIRST line as the whole answer. The ↵ key in the math
-  // row is what starts the next line; on this 360×740 screen, with the keyboard row open.
-  const answer = page.getByLabel('Deine Antwort');
+  // row is what starts the next line; on this 360×740 screen, with the keyboard row open. She
+  // writes her way again, right this time: 7 · 4, then 28.
   await answer.click();
   await answer.fill('7');
   // The first time any key of the row is tapped in a browser, and that is its own finding
@@ -230,11 +252,9 @@ test('learning modes: explain, homework help without the solution, practice with
   const newline = page.getByRole('button', { name: 'neue Zeile' });
   await expect(newline).toBeVisible();
   await newline.click();
-  await page.keyboard.type('28+1');
-  await newline.click();
-  await page.keyboard.type('29');
-  await expect(answer).toHaveValue('7·4\n28+1\n29');
-  // The row stood through all four taps — it is what she types with.
+  await page.keyboard.type('28');
+  await expect(answer).toHaveValue('7·4\n28');
+  // The row stood through the taps — it is what she types with.
   await expect(times).toBeVisible();
   // What the return key does on the PHONE is not provable here: react-native-web (0.21.2) knows no
   // `submitBehavior` and never routes Enter to `onSubmitEditing` on a multiline field. In the
@@ -243,24 +263,9 @@ test('learning modes: explain, homework help without the solution, practice with
   // `apps/mobile/lib/practice/pathEntry.ts`'s unit tests, and that it reaches the phone's keyboard
   // is unverified until a device run (issue #221).
   await shot(page, '23b-worked-path');
-  await page.getByRole('button', { name: 'Prüfen' }).click();
-  // Code names the first line that no longer follows — 7·4 holds, 28+1 does not follow from it —
-  // and it says so without asking a model at all (`steps.ts`, `pathReply`). In HOMEWORK HELP, which
-  // is where this stands: the first run of this step got the hint ladder's general question
-  // instead, because every fixed near-miss reply was shut out of that mode. A reply that names a
-  // line is a hint, not a solution, so it holds here too (issue #274).
-  await expect(page.getByText('Bis Zeile 1 stimmt alles', { exact: false })).toBeVisible();
-  // A near miss, not a wrong answer: her way is mostly right, so the question stays OPEN — the
-  // answer field is still there and so is the hint. The field was emptied when the answer went
-  // out; while she is still in it, the mic has the bar's end, like the chat's (#365) — out of it,
-  // „Prüfen" stands under the bar and waits (#310: one bar for every form).
-  await expect(page.getByLabel('Deine Antwort')).toBeVisible();
-  await page.getByLabel('Deine Antwort').blur();
-  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Einen Tipp bekommen' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toHaveCount(0);
-  await page.getByLabel('Deine Antwort').fill('28');
+  // A sound path is judged on the value it arrives at (`evaluate.ts`): 28.
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Selbst gelöst!', { exact: true })).toBeVisible();
   await expect(page.getByText('Stark – das hast du selbst gelöst!')).toBeVisible();
@@ -590,6 +595,16 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   // The same conversation: what was said by voice is in the chat.
   await expect(page.getByText('Was steht diese Woche an?')).toBeVisible();
+
+  // The listening screen at night too. A running recording does not survive the scheme switch's
+  // rebuild, so the switch comes first and the conversation opens in it.
+  await setScheme(page, 'dark');
+  await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
+  await expect(page.getByText('Ich höre zu.')).toBeVisible();
+  await shot(page, '32-talk-listening-dark');
+  await page.getByRole('button', { name: 'Beenden' }).last().click();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
+  await setScheme(page, 'light');
 });
 
 /**
@@ -648,14 +663,16 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   await field.click();
   const newLine = page.getByRole('button', { name: 'Neue Zeile' });
   await expect(newLine).toBeVisible();
+  // The shot shows her way as she would write it, right (issue #527); the slip comes after it.
   await field.pressSequentially('2x + 3 = 7');
   await newLine.click();
   await expect(field).toBeFocused();
-  await field.pressSequentially('2x = 10');
+  await field.pressSequentially('2x = 4');
   // Inside a path the return key starts the next line instead of sending the first one.
   await field.press('Enter');
-  await field.pressSequentially('x = 5');
-  await expect(field).toHaveValue('2x + 3 = 7\n2x = 10\nx = 5');
+  await field.pressSequentially('x = 2');
+  const corrected = '2x + 3 = 7\n2x = 4\nx = 2';
+  await expect(field).toHaveValue(corrected);
   // The web field shows all three lines, not one row that scrolls.
   const rows = await field.evaluate((el) => {
     const s = getComputedStyle(el);
@@ -665,10 +682,13 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   expect(rows, 'the field grows to the three lines').toBeGreaterThanOrEqual(3);
   await pathShots(page, '37-path-typed');
 
+  // A sign slip she could make: + 3 carried over as + 3 instead of − 3.
+  const slipped = '2x + 3 = 7\n2x = 10\nx = 5';
+  await field.fill(slipped);
   // "Prüfen" sends every line, separated exactly as steps.ts splits them.
   const sent = page.waitForRequest((r) => r.url().endsWith('/answer') && r.method() === 'POST');
   await page.getByRole('button', { name: 'Prüfen' }).click();
-  expect((await sent).postDataJSON()).toMatchObject({ text: '2x + 3 = 7\n2x = 10\nx = 5' });
+  expect((await sent).postDataJSON()).toMatchObject({ text: slipped });
   // Code found the step: 2x + 3 = 7 → 2x = 10 is the first one that does not follow.
   await expect(
     page
@@ -680,7 +700,6 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   await pathShots(page, '38-path-broke');
 
   // She writes it again; a sound path is judged on the value it arrives at.
-  const corrected = '2x + 3 = 7\n2x = 4\nx = 2';
   await field.fill(corrected);
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
@@ -887,13 +906,15 @@ test('a table to fill in: Enter walks the gaps, each cell checked on its own (is
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
 
-test('zuordnen at its largest: pairs in two columns, things into groups (issue #229)', async ({
+test('zuordnen at its largest: pairs as rows, things into groups (issues #229, #524)', async ({
   page,
 }) => {
   // Its own test: the learning-modes walk is long enough already (the 180 s budget). The scripted
   // tasks are the LARGEST the contract allows, every text near its cap (learning-modes.ts), and
-  // every `shot` below fails if the parts would have to be scrolled (`scroll-parts` is not a
-  // scroll area fit.ts allows). That is the measurement behind MATCH_* in contracts/structured.ts.
+  // every `shot` below fails if the grouping's parts would have to be scrolled (`scroll-parts` is
+  // not a scroll area fit.ts allows). That is the measurement behind MATCH_* in
+  // contracts/structured.ts. A pairing of sentences is a list she goes through (issue #524): its
+  // board is `scroll-list` and may scroll.
   await onboardChild(page);
   await page.setViewportSize(PHONES[0]);
   await page.getByLabel('Schreib Buddy …').fill('Lass uns Verfassungsorgane zuordnen');
@@ -911,20 +932,24 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   const check = page.getByRole('button', { name: 'Prüfen' });
   await expect(check).toBeDisabled();
   await bothSchemes(page, '39b-match-pairs-start');
-  await pair('Bundespräsident', 'unterschreibt die neuen Gesetze');
-  // The one line of instruction has gone; the pair says itself in words.
+  // Every side near its cap (issue #524: a pair's side may be a sentence now).
+  const PRAES = 'unterschreibt die neuen Gesetze und vertritt Deutschland';
+  const BREG = 'führt die Gesetze des Bundes aus und leitet die Ministerien';
+  const KANZ = 'bestimmt die Richtlinien der Politik im ganzen Bund';
+  const LREG = 'führt die Gesetze des Landes aus und leitet die Landesämter';
+  /** A formed pair: one row, left then right (issue #524), no symbol, no number. */
+  const formed = (left: string, right: string) =>
+    page.getByRole('button', { name: `${left} – ${right}, Paar`, exact: true });
+  await pair('Bundespräsident', PRAES);
+  // The one line of instruction has gone; the pair is one row that says itself in words.
   await expect(page.getByText('Tippe links eins an, dann sein Gegenstück rechts.')).toHaveCount(0);
-  await expect(
-    page.getByRole('button', {
-      name: 'Bundespräsident, Paar 1 mit unterschreibt die neuen Gesetze',
-    }),
-  ).toBeVisible();
+  await expect(formed('Bundespräsident', PRAES)).toBeVisible();
   // Below first, then above: works the other way round too.
-  await free('bestimmt die Richtlinien im Bund').click();
+  await free(KANZ).click();
   await free('Bundeskanzlerin').click();
   // Two swapped on purpose: Bund and Land.
-  await pair('Bundesregierung', 'führt die Gesetze des Landes aus');
-  await pair('Landesregierung', 'führt die Gesetze des Bundes aus');
+  await pair('Bundesregierung', LREG);
+  await pair('Landesregierung', BREG);
   await bothSchemes(page, '39c-match-pairs');
   await check.click();
   // Code counted: two of four. Which ones, it says only on a second miss. The reply and the
@@ -933,14 +958,10 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   await expect(page.getByText('2 von 4 Paaren stimmen schon.')).toBeInViewport();
   await bothSchemes(page, '39e-match-feedback');
   // One tap on a pair dissolves it; she pairs the two again, right this time.
-  await page
-    .getByRole('button', { name: 'Bundesregierung, Paar 3 mit führt die Gesetze des Landes aus' })
-    .click();
-  await page
-    .getByRole('button', { name: 'Landesregierung, Paar 4 mit führt die Gesetze des Bundes aus' })
-    .click();
-  await pair('Bundesregierung', 'führt die Gesetze des Bundes aus');
-  await pair('Landesregierung', 'führt die Gesetze des Landes aus');
+  await formed('Bundesregierung', LREG).click();
+  await formed('Landesregierung', BREG).click();
+  await pair('Bundesregierung', BREG);
+  await pair('Landesregierung', LREG);
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();

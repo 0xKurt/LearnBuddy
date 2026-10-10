@@ -401,6 +401,9 @@
     "explain": {
       "point_met": "✓ {{name}}",
       "point_open": "{{name}} still missing",
+      "point_shown": "{{name}} shown",
+      "show": "Let me show you one point – {{name}}: “{{point}}”\n\nNow you: {{ask}}",
+      "show_last": "Here's how the last point goes – {{name}}: “{{point}}”",
       "start": "Start with one point: {{ask}}",
       "all": "It's all there – that's exactly how to explain it.",
       "closing": "We'll look at the rest together next time."

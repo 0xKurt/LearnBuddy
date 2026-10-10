@@ -2,9 +2,9 @@
 // Zugeordnetes löst es wieder. Was hier festgehalten wird:
 //
 //   · jedes Element ist ein echter Button, und sein Name sagt die Zuordnung in Worten
-//     („…, Paar 1 mit …", „…, in Nomen") — die Farbe ist nie das einzige Signal;
-//   · ein Paar bekommt eine gemeinsame Pastellfarbe und ein gemeinsames Zeichen (#286), die nach
-//     dem Lösen wieder frei sind; Farbe ist nie das einzige Signal;
+//     („Hund – dog, Paar", „…, in Nomen");
+//   · ein gebildetes Paar ist EINE Zeile „links → rechts" (#524), ohne Zeichen und ohne
+//     Farbcode; ein Tipp darauf löst es, und beide Kacheln stehen wieder in ihren Spalten;
 //   · Gruppen nehmen nur etwas an, wenn oben etwas gewählt ist, und ein einsortiertes Element
 //     wandert IN die Zeile seiner Gruppe (der Kasten ist der Zustand, keine Nummer); ein Tipp
 //     dort nimmt es wieder heraus;
@@ -16,14 +16,7 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
-import {
-  leftShare,
-  linksText,
-  MatchAnswer,
-  pairLook,
-  stateFrom,
-  tapMatch,
-} from '../MatchAnswer.js';
+import { linksText, MatchAnswer, stateFrom, tapMatch } from '../MatchAnswer.js';
 
 const PAIRS = {
   type: 'match' as const,
@@ -61,18 +54,18 @@ describe('one tap at a time', () => {
     let s = tapMatch(PAIRS, { links: [], held: null }, 'a');
     expect(s).toEqual({ links: [], held: 'a' });
     s = tapMatch(PAIRS, s, 'r2');
-    expect(s).toEqual({ links: [{ left: 'a', right: 'r2', n: 1 }], held: null });
+    expect(s).toEqual({ links: [{ left: 'a', right: 'r2' }], held: null });
     // Below first, then above.
     s = tapMatch(PAIRS, tapMatch(PAIRS, s, 'r3'), 'b');
     expect(s.links).toEqual([
-      { left: 'a', right: 'r2', n: 1 },
-      { left: 'b', right: 'r3', n: 2 },
+      { left: 'a', right: 'r2' },
+      { left: 'b', right: 'r3' },
     ]);
-    // Tapping the partner below dissolves pair 1; its number is free again.
+    // Tapping the partner dissolves the pair.
     s = tapMatch(PAIRS, s, 'r2');
-    expect(s.links).toEqual([{ left: 'b', right: 'r3', n: 2 }]);
+    expect(s.links).toEqual([{ left: 'b', right: 'r3' }]);
     s = tapMatch(PAIRS, tapMatch(PAIRS, s, 'c'), 'r1');
-    expect(s.links).toContainEqual({ left: 'c', right: 'r1', n: 1 });
+    expect(s.links).toContainEqual({ left: 'c', right: 'r1' });
     // Tapping what she holds lets go; tapping another on the same side takes that instead.
     expect(tapMatch(PAIRS, { links: [], held: 'a' }, 'a').held).toBeNull();
     expect(tapMatch(PAIRS, { links: [], held: 'a' }, 'b').held).toBe('b');
@@ -83,17 +76,17 @@ describe('one tap at a time', () => {
     let s = tapMatch(GROUPS, tapMatch(GROUPS, { links: [], held: null }, 'b'), 'r1');
     s = tapMatch(GROUPS, tapMatch(GROUPS, s, 'd'), 'r1');
     expect(s.links).toEqual([
-      { left: 'b', right: 'r1', n: 1 },
-      { left: 'd', right: 'r1', n: 1 },
+      { left: 'b', right: 'r1' },
+      { left: 'd', right: 'r1' },
     ]);
     s = tapMatch(GROUPS, s, 'b');
-    expect(s.links).toEqual([{ left: 'd', right: 'r1', n: 1 }]);
+    expect(s.links).toEqual([{ left: 'd', right: 'r1' }]);
   });
 
   it('reads kept links and what she holds back, and nothing that is not one', () => {
     const none = { links: [], held: null };
-    expect(stateFrom('{"links":[{"left":"a","right":"r2","n":1}],"held":"b"}', PAIRS)).toEqual({
-      links: [{ left: 'a', right: 'r2', n: 1 }],
+    expect(stateFrom('{"links":[{"left":"a","right":"r2"}],"held":"b"}', PAIRS)).toEqual({
+      links: [{ left: 'a', right: 'r2' }],
       held: 'b',
     });
     expect(stateFrom('', PAIRS)).toEqual(none);
@@ -101,10 +94,10 @@ describe('one tap at a time', () => {
     expect(stateFrom('[1,2]', PAIRS)).toEqual(none);
     expect(
       stateFrom(
-        '{"links":[{"left":"a","right":"r2","n":1},{"left":"b","right":"r2","n":2},{"left":"x","right":"r1","n":3},{"left":"a","right":"r3","n":4}],"held":"r2"}',
+        '{"links":[{"left":"a","right":"r2"},{"left":"b","right":"r2"},{"left":"x","right":"r1"},{"left":"a","right":"r3"}],"held":"r2"}',
         PAIRS,
       ),
-    ).toEqual({ links: [{ left: 'a', right: 'r2', n: 1 }], held: null });
+    ).toEqual({ links: [{ left: 'a', right: 'r2' }], held: null });
     // A group is never held.
     expect(stateFrom('{"links":[],"held":"r1"}', GROUPS)).toEqual(none);
   });
@@ -122,34 +115,35 @@ describe('one tap at a time', () => {
     );
     expect(await screen.findByRole('button', { name: 'Hund, ausgewählt' })).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'dog, noch ohne Partner' }));
-    expect(screen.getByRole('button', { name: 'Hund, Paar 1 mit dog' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Hund – dog, Paar' })).toBeDefined();
   });
 
-  it('gives the column with the longer words more of the width, within bounds', () => {
-    expect(leftShare(['Hund'], ['dog'])).toBeCloseTo(4 / 7);
-    expect(leftShare(['Bundesverfassungsgericht'], ['prüft die Gesetze'])).toBe(0.66);
-    expect(leftShare(['A'], ['beschließt die Gesetze'])).toBe(0.34);
+  it('reads a draft an older app kept with pair numbers', () => {
+    expect(stateFrom('{"links":[{"left":"a","right":"r2","n":3}],"held":null}', PAIRS)).toEqual({
+      links: [{ left: 'a', right: 'r2' }],
+      held: null,
+    });
   });
 
   it('writes the links in words the way the server does', () => {
     expect(
       linksText(PAIRS, [
-        { left: 'b', right: 'r3', n: 1 },
-        { left: 'a', right: 'r2', n: 2 },
+        { left: 'b', right: 'r3' },
+        { left: 'a', right: 'r2' },
       ]),
     ).toBe('Hund – dog; Katze – cat');
     expect(
       linksText(GROUPS, [
-        { left: 'd', right: 'r1', n: 1 },
-        { left: 'a', right: 'r2', n: 2 },
-        { left: 'b', right: 'r1', n: 1 },
+        { left: 'd', right: 'r1' },
+        { left: 'a', right: 'r2' },
+        { left: 'b', right: 'r1' },
       ]),
     ).toBe('Nomen: Haus, Baum; Verb: laufen');
   });
 });
 
 describe('pairs she taps', () => {
-  it('says every pairing in words, shows the number, and waits with "Prüfen"', () => {
+  it('makes a formed pair one row, says it in words, and waits with "Prüfen" (issue #524)', () => {
     const onSubmit = vi.fn();
     renderInApp(<MatchAnswer view={PAIRS} draftKey="m1" disabled={false} onSubmit={onSubmit} />);
     const check = () => screen.getByRole('button', { name: 'Prüfen' });
@@ -160,19 +154,17 @@ describe('pairs she taps', () => {
     expect(screen.queryByText('Tippe links eins an, dann sein Gegenstück rechts.')).toBeNull();
     expect(screen.getByRole('button', { name: 'Hund, ausgewählt' })).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'dog, noch ohne Partner' }));
-    expect(screen.getByRole('button', { name: 'Hund, Paar 1 mit dog' })).toBeDefined();
-    expect(screen.getByRole('button', { name: 'dog, Paar 1 mit Hund' })).toBeDefined();
-    // A pair shares a tint AND a symbol (#286), so colour is never the only signal; no number
-    // stands in the text. Both tiles carry the same symbol, and the tile reads as its word.
-    const hund = screen.getByRole('button', { name: 'Hund, Paar 1 mit dog' });
-    const dog = screen.getByRole('button', { name: 'dog, Paar 1 mit Hund' });
-    expect(within(hund).getByText(pairLook(1).symbol)).toBeDefined();
-    expect(within(dog).getByText(pairLook(1).symbol)).toBeDefined();
-    expect(hund.textContent).toBe(`Hund${pairLook(1).symbol}`);
-    expect(screen.queryByText('1')).toBeNull();
+    // One row, left then right: the two tiles are gone from their columns.
+    const row = screen.getByRole('button', { name: 'Hund – dog, Paar' });
+    expect(screen.queryByRole('button', { name: /^Hund,/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^dog,/ })).toBeNull();
+    // No symbol, no number: the row is its words, left then right.
+    expect(row.textContent).toBe('Hund → dog');
+    for (const mark of ['●', '▲', '■', '◆', '1']) expect(screen.queryByText(mark)).toBeNull();
     // Changed her mind: one tap on the pair dissolves it.
-    fireEvent.click(screen.getByRole('button', { name: 'dog, Paar 1 mit Hund' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Hund – dog, Paar' }));
     expect(screen.getByRole('button', { name: 'Hund, noch ohne Partner' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'dog, noch ohne Partner' })).toBeDefined();
     for (const [l, r] of [
       ['Hund', 'dog'],
       ['cat', 'Katze'],
@@ -181,6 +173,10 @@ describe('pairs she taps', () => {
       fireEvent.click(screen.getByRole('button', { name: `${l}, noch ohne Partner` }));
       fireEvent.click(screen.getByRole('button', { name: `${r}, noch ohne Partner` }));
     }
+    // Every pair is a row, in the order of the left column.
+    expect(
+      screen.getAllByRole('button', { name: /, Paar$/ }).map((b) => b.getAttribute('aria-label')),
+    ).toEqual(['Hund – dog, Paar', 'Katze – cat, Paar', 'Maus – mouse, Paar']);
     expect(check().getAttribute('aria-disabled')).not.toBe('true');
     fireEvent.click(check());
     expect(onSubmit).toHaveBeenCalledWith(
@@ -238,13 +234,5 @@ describe('groups she sorts into', () => {
       },
       'Nomen: Haus, Baum; Verb: laufen; Adjektiv: schnell',
     );
-  });
-});
-
-describe('how a pair looks', () => {
-  it('gives every pair of a pairing its own tint and symbol', () => {
-    const looks = [1, 2, 3, 4].map(pairLook);
-    expect(new Set(looks.map((x) => x.tone)).size).toBe(4);
-    expect(new Set(looks.map((x) => x.symbol)).size).toBe(4);
   });
 });

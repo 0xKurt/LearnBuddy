@@ -1,4 +1,4 @@
-// In the browser a worksheet can be dragged onto the capture screen (photos or a PDF from
+// In the browser a worksheet can be dragged onto the chat (photos or a PDF from
 // the desktop, the downloads, the school platform's tab). Returns whether files are being
 // dragged over the page right now, for the drop hint.
 import { useEffect, useRef, useState } from 'react';

@@ -2,10 +2,9 @@
 // sent outside the app show what really happened to them — and the one state that is the
 // same under every one of them ("nur hier in der App") is said once, under the newest.
 // What Buddy did with a message stands right under it as ONE receipt for the turn, not one
-// line per action (issue #204): in the chat (`undoScope="last"`) the newest step carries
-// "Rückgängig" and everything older is a tap on a receipt away (UndoSheet), so three buttons
-// stop stacking up while nothing becomes unreachable; History keeps a line and a way back per
-// step, which is what she opens it for. Where a new day starts
+// line per action (issue #204): in the chat (`receipts="turn"`) every receipt carries its own
+// small ↺ and nothing else — a tap on its words opens nothing (issue #520); History keeps a
+// line and a way back per step, which is what she opens it for. Where a new day starts
 // a quiet line names it (never how many days passed). Where a new session starts
 // Buddy greets her in a bubble of his own (issue #104) and, with the room the screen
 // gives it, that greeting is what the view opens on. Where the greeting tells about something
@@ -39,7 +38,6 @@ import { RehearsalResult } from './RehearsalResult.js';
 import { RehearseCard } from './RehearseCard.js';
 import { RoleplayResult } from './RoleplayResult.js';
 import { deliveryText, describeAction, onlyInApp } from './describe.js';
-import { UndoSheet } from './UndoSheet.js';
 import { i18n } from '../../lib/i18n/index.js';
 import { dayBreaks, formatDay, localDateOf } from '../../lib/time.js';
 import { closedStream, markdownPlain } from '../../lib/buddy/markdown.js';
@@ -152,16 +150,16 @@ type Props = {
   /** Undo is locked while this is true (default: busy); history locks only while undoing. */
   undoBusy?: boolean;
   /**
-   * Where "Rückgängig" stands (issue #204). 'last': on the newest step she can still take
-   * back, and only there — three buttons under three receipts were the wall the owner saw.
-   * Everything else is a tap on a receipt away (UndoSheet), so nothing becomes unreachable.
-   * 'all' (the default): every step carries its own, which is what History is for.
+   * How what Buddy did reads (issue #204). 'turn': one receipt per answer, and its ↺ takes
+   * back that answer's newest step still standing — a second tap the one before (issue #520:
+   * the ↺ on each receipt is the only way back in the chat, no sheet behind the words).
+   * 'step' (the default): a line and a way back per step, which is what History is for.
    */
-  undoScope?: 'last' | 'all';
+  receipts?: 'turn' | 'step';
   /**
    * Action ids whose receipt the bar on top already says word for word (issue #204, the
-   * prepared practice): their line leaves the conversation while that bar stands — they stay
-   * in what can be taken back, and closing the bar brings the line back.
+   * prepared practice): their line leaves the conversation while that bar stands — closing
+   * the bar brings the line and its ↺ back, and History keeps both all along.
    */
   carriedOnTop?: ReadonlySet<string>;
   /**
@@ -191,7 +189,7 @@ export function Conversation({
   onResend,
   onUndo,
   undoBusy,
-  undoScope = 'all',
+  receipts = 'step',
   carriedOnTop = EMPTY_IDS,
   // The screen labels of each message use `spoken` inside the map: bind the prop apart.
   spoken: spokenMode = false,
@@ -202,8 +200,6 @@ export function Conversation({
   // Screen readers hear formulas in words, not raw LaTeX (p2-buddy-bubble-a11y-reads-raw-latex).
   const words = useSpokenWords();
   const [menu, setMenu] = useState<MenuMessage | null>(null);
-  /** The sheet with everything that can still be taken back (issue #204). */
-  const [undoOpen, setUndoOpen] = useState(false);
   /** The step whose arrow was tapped: its arrow turns into the spinner while that runs (#295). */
   const [undoingId, setUndoingId] = useState<string | null>(null);
   const undoLocked = undoBusy ?? busy;
@@ -235,19 +231,6 @@ export function Conversation({
   const enterOf = (m: MessageView, index: number) =>
     arrivedInPlace(m) ? undefined : riseIn(index);
 
-  // ── What can still be taken back, and where that is offered (issue #204) ──────────────
-  // Newest first, inside a turn too: that is the order she reads them back in.
-  const takeable = showActions
-    ? [...messages].reverse().flatMap((m) => receiptOf(m).filter(takeableBack).reverse())
-    : [];
-  // What the bar on top already says has no line here, so its button cannot stand here either.
-  const takeableHere = takeable.filter((a) => !carriedOnTop.has(a.id));
-  /** The one step whose "Rückgängig" is in view ('last'); null = every step carries its own. */
-  const liveUndoId = undoScope === 'last' ? (takeableHere[0]?.id ?? null) : null;
-  const buttonsInView = undoScope === 'last' ? (liveUndoId === null ? 0 : 1) : takeableHere.length;
-  /** More can be taken back than stands in view: the receipts open the rest (UndoSheet). */
-  const moreToUndo = onUndo !== undefined && takeable.length > buttonsInView;
-  const openUndo = () => setUndoOpen(true);
   /** What a step that was taken back reads like now. */
   const undoneText = (a: MessageView['actions'][number]): string =>
     a.summary.tool === 'request_material'
@@ -428,22 +411,16 @@ export function Conversation({
                     die sie getan hat". In the chat the turn now says what it did in one
                     line with one way back; History keeps a line per step, because looking
                     back at the single steps is what she opens it for. */}
-                {undoScope === 'last' ? (
+                {receipts === 'turn' ? (
                   <>
                     {applied.length > 0 ? (
                       <Receipt
                         text={applied.map((a) => describeAction(a.summary)).join(' · ')}
-                        onOpenAll={moreToUndo ? openUndo : null}
-                        openHint={t('done.undo_hint')}
-                        undo={undoButton(applied.find((a) => a.id === liveUndoId) ?? null)}
+                        undo={undoButton([...applied].reverse().find(takeableBack) ?? null)}
                       />
                     ) : null}
                     {takenBack.length > 0 ? (
-                      <Receipt
-                        undone
-                        text={takenBack.map(undoneText).join(' · ')}
-                        openHint={t('done.undo_hint')}
-                      />
+                      <Receipt undone text={takenBack.map(undoneText).join(' · ')} />
                     ) : null}
                   </>
                 ) : (
@@ -452,7 +429,6 @@ export function Conversation({
                       key={a.id}
                       undone={a.status === 'undone'}
                       text={a.status === 'undone' ? undoneText(a) : describeAction(a.summary)}
-                      openHint={t('done.undo_hint')}
                       undo={a.status === 'undone' ? null : undoButton(a)}
                     />
                   ))
@@ -588,16 +564,6 @@ export function Conversation({
         <TypingBubble key="typing" label={t('thread.typing')} />
       ) : null}
       <MessageMenu message={menu} onClose={() => setMenu(null)} />
-      {/* Everything that can still be taken back, where more can than stands in view. */}
-      {onUndo ? (
-        <UndoSheet
-          actions={takeable}
-          visible={undoOpen}
-          busy={undoLocked}
-          onUndo={undo}
-          onClose={() => setUndoOpen(false)}
-        />
-      ) : null}
     </View>
   );
   // Remember what stands on screen now, for the stored message that replaces it.
@@ -617,23 +583,18 @@ export function Conversation({
  * was die gruenen felder da sein sollen und es sieht auch haesslich aus", issue #191). It is
  * a line in the conversation's own tones since.
  *
- * `onOpenAll`: a tap (or a long press) opens everything that can still be taken back — the
- * older steps whose buttons left the chat so three of them stop shouting at once. Taking
- * something back is a principle here (docs/UX-PRINCIPLES.md: undo over confirmation), so the
- * capability stays whole; only the buttons go.
+ * Its words are only words: a tap on them used to open a sheet of everything that could be
+ * taken back, which nobody expected from a line of text (owner 09.10., issue #520: "man checkt
+ * gar nicht sofort was da los ist"). The ↺ is the one way back.
  */
 function Receipt({
   text,
   undone = false,
   undo = null,
-  onOpenAll = null,
-  openHint,
 }: {
   text: string;
   undone?: boolean;
   undo?: ReactNode;
-  onOpenAll?: (() => void) | null;
-  openHint: string;
 }) {
   const { palette } = useTheme();
   return (
@@ -645,25 +606,10 @@ function Receipt({
       layout={glide}
       style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.sm }}
     >
-      <PressArea
-        accessibilityRole={onOpenAll ? 'button' : 'text'}
+      <View
+        accessible
+        accessibilityRole="text"
         accessibilityLabel={text}
-        accessibilityHint={onOpenAll ? openHint : undefined}
-        disabled={onOpenAll === null}
-        onPress={onOpenAll ?? undefined}
-        onLongPress={
-          onOpenAll
-            ? () => {
-                haptic.tap();
-                onOpenAll();
-              }
-            : undefined
-        }
-        delayLongPress={350}
-        // A one-line receipt is about 22 pt tall, and the way in must still be hittable
-        // (CLAUDE.md §Design system, 44 pt): the reach grows, the line does not — padding
-        // here would put empty air between every turn and its receipt.
-        hitSlop={{ top: SPACE.md, bottom: SPACE.md, left: SPACE.xs, right: SPACE.xs }}
         style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.xs }}
       >
         {/* token-exempt: the icon 2 down, on the line's letters, not its top */}
@@ -683,7 +629,7 @@ function Receipt({
         >
           {text}
         </Text>
-      </PressArea>
+      </View>
       {/* token-exempt: -2, the 24 pt circle centred on the first 21 pt line, not hanging
           below it */}
       {undo ? <View style={{ marginTop: -2, flexShrink: 0 }}>{undo}</View> : null}

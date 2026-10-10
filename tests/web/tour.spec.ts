@@ -7,7 +7,7 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { shot } from './fit';
+import { bothSchemes, setScheme, shot } from './fit';
 
 /** The button inside the sheet that is open (the thread behind it may show the same words). */
 function inSheet(page: Page) {
@@ -37,12 +37,13 @@ async function onboardChild(page: Page, email: string): Promise<void> {
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill('2468');
   await page.getByLabel('PIN wiederholen').fill('2468');
-  await page.getByRole('button', { name: "Los geht's" }).click();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  // Notifications are asked of the adults right after their PIN (issue #518); a no is final —
+  // the settings below are where it changes.
+  await page.getByRole('button', { name: 'Nein, danke' }).click();
   // The hand-over: what is set, then the phone goes to the child (user feedback #10).
   await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
   await page.getByRole('button', { name: "Los geht's, Pia!" }).click();
-  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
-  await page.getByRole('button', { name: 'Weiter' }).click();
   // The three first-start cards (app/onboarding.tsx) come before the home.
   // "Überspringen" showed 4–6 frames of an empty screen on the way out (issue #208, point 4).
   // Sampled per frame, because that is what the complaint was about: how long the screen holds
@@ -134,7 +135,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
     Math.abs(mid(target) - mid(line)),
     'the arrow stands on the receipt’s own line (issue #295)',
   ).toBeLessThanOrEqual(12);
-  await shot(page, '39b-undo-arrow');
+  await bothSchemes(page, '39b-undo-arrow');
   // Keyboard on the web (issue #295): it takes focus and Enter takes the step back.
   await undo.focus();
   await expect(undo).toBeFocused();
@@ -258,6 +259,21 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Der Export ist als Datei gespeichert.')).toBeVisible();
   await page.getByRole('button', { name: 'Zurück' }).click();
 
+  // ── The + menu (#519): Kamera · Fotos · Dateien, in both schemes. An open menu is the
+  // screen's own state and the scheme switch rebuilds the tree, so each scheme opens it anew. ──
+  for (const scheme of ['light', 'dark'] as const) {
+    await setScheme(page, scheme);
+    await page.getByRole('button', { name: 'Was möchtest du anhängen?' }).click();
+    await expect(inSheet(page).getByRole('button', { name: 'Foto aufnehmen' })).toBeVisible();
+    await expect(inSheet(page).getByRole('button', { name: 'Aus Dateien' })).toBeVisible();
+    await shot(page, scheme === 'dark' ? '48c-attach-menu-dark' : '48c-attach-menu', {
+      opened: true,
+    });
+    await inSheet(page).getByRole('button', { name: 'Schließen' }).click();
+    await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
+  }
+  await setScheme(page, 'light');
+
   // ── A sheet Buddy could not read: read again ──
   // Attached in the chat itself, like every messenger (issue #82): the + asks where it
   // comes from, the page stands above the field, "Senden" sends it with the message.
@@ -288,20 +304,34 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Nomen und Verben').last()).toBeVisible();
   // A page she forgot can be added to the sheet.
   await page.getByRole('button', { name: /^Fragen .*Nomen und Verben/ }).click();
+  // A page for this sheet: back in the chat, its + menu says what the page is for (#519).
   await page.getByRole('button', { name: 'Seite hinzufügen' }).click();
   await expect(page.getByText('Die Fragen dazu kommen zu diesem Blatt.')).toBeVisible();
-  await page.getByRole('button', { name: 'Zurück' }).click();
-  await page.getByRole('button', { name: 'Zurück' }).click();
-  await page.getByRole('button', { name: 'Zurück' }).click();
-  await page.getByRole('button', { name: 'Zurück' }).click();
+  await inSheet(page).getByRole('button', { name: 'Schließen' }).click();
+  await expect(page.getByTestId('composer')).toBeVisible();
+
+  // ── A camera series (#519): after each camera photo a tile "Noch ein Foto" in the bar. Shot
+  // dark first, then the page goes again: pages in the bar are the screen's own state, and the
+  // scheme switch rebuilds the tree — the light shot comes from the run below. ──
+  await setScheme(page, 'dark');
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+  await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
+  chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Aufgabe fotografieren' }).click();
+  await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
+  await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Noch ein Foto' })).toBeVisible();
+  await shot(page, '51a-camera-series-dark');
+  await page.getByRole('button', { name: 'Foto 1 entfernen' }).click();
+  await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toHaveCount(0);
+  await setScheme(page, 'light');
 
   // ── Homework of two pages, the second cut off: Lena is told, and takes just that page again ──
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
   await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
-  await page.getByRole('button', { name: 'Aufgabe fotografieren' }).click();
-  await expect(page.getByText('Fotografier deine Hausaufgabe')).toBeVisible();
+  // The camera at once; the page lands in the chat's input bar (#519).
   chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Foto machen' }).click();
+  await page.getByRole('button', { name: 'Aufgabe fotografieren' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
   // The sample sheet (800 × 1080) reads well: no "sehr klein" warning (user feedback #16).
   await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
@@ -317,6 +347,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   ).toBe(true);
   await inSheet(page).getByRole('button', { name: 'Schließen' }).click();
   await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
+  await shot(page, '51a-camera-series');
   chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Noch ein Foto' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
@@ -329,12 +360,12 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Seite 2: ein Stück ist abgeschnitten')).toBeVisible();
   await expect(page.getByText('Alles andere von „Hausaufgabe Quadrat“ ist fertig.')).toBeVisible();
   await shot(page, '52-page-missing');
-  await page.getByRole('button', { name: 'Nochmal fotografieren' }).click();
-  await expect(page.getByText('Seite 2 nochmal')).toBeVisible();
-  await shot(page, '53-page-again');
+  // The camera at once, for that page (#519).
   chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Foto machen' }).click();
+  await page.getByRole('button', { name: 'Nochmal fotografieren' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
+  await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
+  await shot(page, '53-page-again');
   await page.getByRole('button', { name: 'Senden' }).click();
   // The notice is answered; once page 2 is read, its task joins the same help session.
   await expect(page.getByText('Eine Seite konnte ich nicht ganz lesen')).toHaveCount(0);
@@ -383,8 +414,9 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
   await expect(page.getByText('Schwer lesbar')).toBeVisible();
   await expect(page.getByText('Foto 1 ist zu dunkel.')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Entfernen' }).click();
-  await page.getByRole('button', { name: 'Zurück' }).click();
+  // Removed in the chat's bar, where "Weiter" put it (#519): nothing is left behind any more.
+  await page.getByRole('button', { name: 'Foto 1 entfernen' }).click();
+  await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toHaveCount(0);
   await expect(page.getByText('Deine Fotos sind noch nicht gesendet')).toHaveCount(0);
 
   // ── An explanation in the chat, then practice on it ──

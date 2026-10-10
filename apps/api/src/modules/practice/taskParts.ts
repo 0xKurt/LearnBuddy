@@ -45,6 +45,13 @@ import {
   TASK_PARTS_MIN,
   TASK_STEM_MAX,
   TASK_STEM_MIN,
+  BarChartFigure,
+  ClimateChartFigure,
+  FunctionPlotFigure,
+  LineChartFigure,
+  PieChartFigure,
+  ScatterPlotFigure,
+  TableFigure,
   TaskPart,
   type TaskPartLetter,
   type TaskPartView,
@@ -75,6 +82,9 @@ export const PartDraft = ItemDraft.pick({
   choices: true,
   correct_choice: true,
   tolerance: true,
+  // A number read off the material's chart says what it reads, as for any question about a chart:
+  // code computes the key from the chart's data (`chartRead.ts`).
+  read: true,
 }).extend({
   kind: z.enum(PART_KINDS),
   from: z
@@ -97,9 +107,25 @@ export const PartDraft = ItemDraft.pick({
 });
 
 /**
- * A task in parts as the model writes it: the situation and the parts. No drawing yet: a second
- * figure union in the explain schema would grow it by a third (20 kB of 65 kB, measured 05.10.) —
- * the material as a figure comes once the schema budget is measured with Vertex (#281, #297 plan).
+ * The drawings a task's material may be (#297, Schnitt 4): the data a class test prints beside its
+ * situation — a table of values, a chart, a function graph. Not every figure: the whole union a
+ * second time would grow the explain schema by a third (22 kB, measured 10.10.); these seven are
+ * 3.2 kB. Each is checked and drawn by the same code as any question's figure (`usableItems`).
+ */
+const MaterialFigure = z.discriminatedUnion('type', [
+  TableFigure,
+  FunctionPlotFigure,
+  BarChartFigure,
+  LineChartFigure,
+  ClimateChartFigure,
+  PieChartFigure,
+  ScatterPlotFigure,
+]);
+
+/**
+ * A task in parts as the model writes it: the situation, the drawing it shows if any, and the
+ * parts. A drawing that does not parse costs the task (no `.catch`): a situation that names its
+ * table is no task without it (Regel 0, reject, never repair).
  */
 export const PartTaskDraft = z.object({
   stem: z
@@ -107,7 +133,12 @@ export const PartTaskDraft = z.object({
     .trim()
     .min(TASK_STEM_MIN)
     .max(TASK_STEM_MAX)
-    .describe('The situation, stated once before a): every number the parts need'),
+    .describe('The material, stated once before a): every number and fact the parts need'),
+  figure: MaterialFigure.nullable()
+    .default(null)
+    .describe(
+      'The table, chart or function graph the material shows, as data (see Figures) — the app draws it above every part; null for a material in words',
+    ),
   topic: ItemDraft.shape.topic,
   difficulty: ItemDraft.shape.difficulty,
   prompt_lang: ItemDraft.shape.prompt_lang,
@@ -128,7 +159,7 @@ export const OPEN_PART_RULE = `An open part (kind long: begründe, erkläre, bes
  * What the generator is told about tasks in parts. Principles, never an example task (models copy
  * examples — standing owner rule); the formula's form is a syntax, not a task.
  */
-export const PART_TASK_RULES = `Tasks in parts ("part_tasks", grade 7 and up, any subject where a situation carries several steps): one situation (stem: a few sentences with every number and fact the parts need — no drawing, chart or table: such a task is not written as one in parts) and ${TASK_PARTS_MIN}–${TASK_PARTS_MAX} parts in the order a class test asks them, from finding a value to using it and judging it. Each part is a question of kind numeric, short, multiple_choice or — where the schema offers it — long, with its own key, written WITHOUT its letter (the app letters them a), b), c)). ${PART_FROM_RULE} — the app recomputes it, and a task whose formula does not give the key is dropped whole. ${OPEN_PART_RULE} Never a part that only repeats another, never more parts than the situation carries.`;
+export const PART_TASK_RULES = `Tasks in parts ("part_tasks", grade 7 and up, any subject where one material carries several steps — a situation in maths or science, a reaction in chemistry, a source or a short text in history, German or English): one material (stem: every number and fact the parts need — a situation in a few sentences, or the text to work on, written for her level; never a quote invented for a real person; figure: the table of values, chart or function graph it shows, as data, else null; with a chart, every numeric part is a value read off it and says what it reads in "read", as a question about a chart does) and ${TASK_PARTS_MIN}–${TASK_PARTS_MAX} parts in the order a class test asks them, from finding a value to using it and judging it. Each part is a question of kind numeric, short, multiple_choice or — where the schema offers it — long, with its own key, written WITHOUT its letter (the app letters them a), b), c)). ${PART_FROM_RULE} — the app recomputes it, and a task whose formula does not give the key is dropped whole. ${OPEN_PART_RULE} Never a part that only repeats another, never more parts than the situation carries.`;
 
 /** The letters of a task of `n` parts. */
 function lettersOf(n: number): TaskPartLetter[] {
@@ -231,6 +262,11 @@ export function openPartProblem(draft: PartTaskDraft, index: number): string | n
  */
 export type PartHelp = Pick<ItemDraft, 'hints' | 'worked_solution'>;
 
+/** The material a part carries besides its words: the drawing beside it, or none. */
+type PartMaterial = Pick<PartTaskDraft, 'topic' | 'difficulty' | 'prompt_lang'> & {
+  figure?: PartTaskDraft['figure'];
+};
+
 /** What one part says of itself: its form, its question, its key and its help. */
 type PartFields = PartHelp &
   Pick<
@@ -243,17 +279,14 @@ type PartFields = PartHelp &
     | 'choices'
     | 'correct_choice'
     | 'tolerance'
-  >;
+  > & { read?: ItemDraft['read'] };
 
 /**
- * A part as an ordinary question: the task's topic, difficulty and language, nothing drawn, and
- * nothing else the model wrote beside it. The one shape both a part of a task and a part read
- * back as a question of its own take (`materials/partTasks.ts`).
+ * A part as an ordinary question: the task's topic, difficulty and language, the material's
+ * drawing (Schnitt 4) and nothing else the model wrote beside it. The one shape both a part of a
+ * task and a part read back as a question of its own take (`materials/partTasks.ts`).
  */
-export function partQuestion(
-  task: Pick<PartTaskDraft, 'topic' | 'difficulty' | 'prompt_lang'>,
-  part: PartFields,
-): ItemDraft {
+export function partQuestion(task: PartMaterial, part: PartFields): ItemDraft {
   return {
     kind: part.kind,
     prompt: part.prompt,
@@ -267,9 +300,9 @@ export function partQuestion(
     difficulty: task.difficulty,
     prompt_lang: task.prompt_lang,
     lang: null,
-    figure: null,
+    figure: task.figure ?? null,
     choice_figures: null,
-    read: null,
+    read: part.read ?? null,
     computes: null,
     spelling: null,
     source_excerpt: null,
@@ -306,6 +339,9 @@ export function partTaskItems(
   });
   const usable = usableItems(drafts, { locale: opts.locale });
   if (usable.length !== n) return [];
+  // The material's drawing stands above every part, or the task is none: a part that lost it would
+  // ask about a table she cannot see.
+  if (draft.figure !== null && usable.some((it) => it.figure === null)) return [];
   for (let i = 0; i < n; i++) {
     const from = draft.parts[i]?.from ?? null;
     if (from === null) continue;
@@ -336,18 +372,27 @@ export function taskPartOf(raw: unknown): TaskPart | null {
 /**
  * Each part as the app gets it (`ItemView.task_part`): the parts of one task share the alias
  * ('p1', 'p2' …, by the order they stand in, like a reading text's 't1').
+ *
+ * Its letters are the parts of the task that are in THIS run, in letter order — never a letter of
+ * a part that does not come: a Probearbeit leaves an open c) out (no long answer in a test), and a
+ * review brings one part back alone. The bar says where she is in what she will see (rule 5).
  */
 export function taskPartViews<R extends { id: string; task_part?: unknown }>(
   rows: readonly R[],
 ): Map<string, TaskPartView> {
+  const parts = rows.flatMap((row) => {
+    const p = taskPartOf(row.task_part);
+    return p ? [{ id: row.id, ...p }] : [];
+  });
+  const inRun = new Map<string, Set<TaskPartLetter>>();
+  for (const p of parts) inRun.set(p.group, (inRun.get(p.group) ?? new Set()).add(p.part));
   const views = new Map<string, TaskPartView>();
   const refs = new Map<string, string>();
-  for (const row of rows) {
-    const p = taskPartOf(row.task_part);
-    if (!p) continue;
+  for (const p of parts) {
     const ref = refs.get(p.group) ?? `p${refs.size + 1}`;
     refs.set(p.group, ref);
-    views.set(row.id, { ref, part: p.part, letters: lettersOf(p.of), stem: p.stem });
+    const letters = lettersOf(p.of).filter((l) => inRun.get(p.group)?.has(l));
+    views.set(p.id, { ref, part: p.part, letters, stem: p.stem });
   }
   return views;
 }

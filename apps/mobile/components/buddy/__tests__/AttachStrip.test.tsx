@@ -92,3 +92,17 @@ describe('the attached photo above the field (#294)', () => {
     expect(screen.queryByText('Vorschau nicht möglich')).toBeNull();
   });
 });
+
+describe('one more page from the camera, right in the strip (#519)', () => {
+  it('ends the strip in "Noch ein Foto" after a photo from the camera', () => {
+    let asked = 0;
+    strip({ onMore: () => (asked += 1) });
+    fireEvent.click(screen.getByRole('button', { name: 'Noch ein Foto' }));
+    expect(asked).toBe(1);
+  });
+
+  it('offers none otherwise', () => {
+    strip();
+    expect(screen.queryByRole('button', { name: 'Noch ein Foto' })).toBeNull();
+  });
+});

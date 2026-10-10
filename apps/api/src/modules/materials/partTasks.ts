@@ -52,10 +52,13 @@ const STORED_PROMPT_MAX = 1000;
 const MATERIAL_READ_MAX = 4000;
 
 /** What the photo reading is told. Principles and bans, never an example task (owner rule). */
-export const SHEET_PART_RULES = `Tasks in parts ("part_tasks"): a task on the sheet that gives ONE material — a situation, a short text, values written out — and then lettered subtasks on it (a), b), c), at most d)) becomes one entry in "part_tasks", never separate questions in items. stem: the material exactly as printed before a), every number and fact the subtasks need, without the task's number and without the subtasks (${TASK_STEM_MIN}–${TASK_STEM_MAX} characters; a longer material, or one that is a drawing, a chart or a table: its subtasks go into items as usual, each with the material it needs). parts: every subtask in the order printed — letter: its letter as printed, without the bracket, also when one before it got no question (named in not_practicable or unclear); prompt: its question as printed, WITHOUT its letter; kind numeric, short, multiple_choice or long, with its own key; hints as for any question. ${PART_FROM_RULE} — the app recomputes it from the keys; null for a subtask that stands on its own. ${OPEN_PART_RULE}`;
+export const SHEET_PART_RULES = `Tasks in parts ("part_tasks"): a task on the sheet that gives ONE material — a situation, a short text, values written out — and then lettered subtasks on it (a), b), c), at most d)) becomes one entry in "part_tasks", never separate questions in items. stem: the material exactly as printed before a), every number and fact the subtasks need, without the task's number and without the subtasks (${TASK_STEM_MIN}–${TASK_STEM_MAX} characters: a situation, a source or a text keeps its line breaks; a table of values is written out row by row; a drawing or chart beside it is named with its title and every value the subtasks need — the app shows the photo of it above every part; a longer material: its subtasks go into items as usual, each with the material it needs). parts: every subtask in the order printed — letter: its letter as printed, without the bracket, also when one before it got no question (named in not_practicable or unclear); prompt: its question as printed, WITHOUT its letter; kind numeric, short, multiple_choice or long, with its own key; hints as for any question. ${PART_FROM_RULE} — the app recomputes it from the keys; null for a subtask that stands on its own. ${OPEN_PART_RULE}`;
 
-/** One subtask as the reading writes it: a part of a task, its printed letter and its help. */
-const SheetPart = PartDraft.extend({
+/**
+ * One subtask as the reading writes it: a part of a task, its printed letter and its help. No
+ * reading off a drawn chart: the sheet's picture is its real crop (`images.ts`), never a redraw.
+ */
+const SheetPart = PartDraft.omit({ read: true }).extend({
   letter: z
     .string()
     .trim()
@@ -66,9 +69,12 @@ const SheetPart = PartDraft.extend({
   worked_solution: ItemDraft.shape.worked_solution,
 });
 
-/** A task in parts as the reading writes it, the material in place of a written situation. */
+/**
+ * A task in parts as the reading writes it, the material in place of a written situation. Its
+ * drawing is the crop of the page (`images.ts`), never data the reading writes.
+ */
 function sheetTask<P extends z.ZodTypeAny>(part: P) {
-  return PartTaskDraft.extend({
+  return PartTaskDraft.omit({ figure: true }).extend({
     stem: z
       .string()
       .trim()

@@ -64,6 +64,13 @@ const LONG_RECORDING: RecordingOptions = {
   web: { mimeType: 'audio/webm', bitsPerSecond: 24_000 },
 };
 
+/**
+ * Whether the recorder reports her level. expo-audio meters on phones; its web recorder
+ * reports none (expo-audio 1.1 `AudioModule.web`), so there the level stays 0 and no
+ * pause can end a recording (issue #523).
+ */
+export const recorderMeters = Platform.OS !== 'web';
+
 export type Recording = { uri: string; mime: SpeakMime; durationMs: number; base64: string };
 
 /** Why no recording came out: no microphone access, only a tap, an unknown format, or it broke. */

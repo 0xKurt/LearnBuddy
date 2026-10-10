@@ -41,6 +41,7 @@ import { check, readBody } from '../../http/validate.js';
 import type { Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { t } from '../../i18n/index.js';
+import { readsIn } from '../../speech/gateway.js';
 import { archiveMaterial, archiveMaterialItem } from '../materials/archive.js';
 import { startFromStep } from '../practice/service.js';
 import { sessionView } from '../practice/sessionView.js';
@@ -574,7 +575,8 @@ buddyRoutes.patch('/memory/:id', async (c) => {
 
 // ─────────────── settings: contact and Buddy's voice ───────────────
 
-function settingsView(s: SettingsRow, canLoosen: boolean): BuddySettingsView {
+/** Her settings as the app sees them, and what this device and this server can do with them. */
+function settingsView(c: AppContext, s: SettingsRow): BuddySettingsView {
   return {
     contact_enabled: s.contact_enabled,
     quiet_start: s.quiet_start,
@@ -586,14 +588,15 @@ function settingsView(s: SettingsRow, canLoosen: boolean): BuddySettingsView {
     only_important: s.phone_only_important,
     timezone: s.timezone,
     voice: s.voice,
+    natural_voice: readsIn(depsOf(c).speech, c.get('learner').locale),
     version: s.version,
-    can_loosen: canLoosen,
+    can_loosen: hasAccountHolderRights(c),
   };
 }
 
 buddyRoutes.get('/settings', async (c) => {
   const s = await loadSettings(depsOf(c).db, c.get('learner').id);
-  return c.json(settingsView(s, hasAccountHolderRights(c)));
+  return c.json(settingsView(c, s));
 });
 
 buddyRoutes.patch('/settings', async (c) => {
@@ -677,7 +680,7 @@ buddyRoutes.patch('/settings', async (c) => {
     }
     return row;
   });
-  return c.json(settingsView(result, hasAccountHolderRights(c)));
+  return c.json(settingsView(c, result));
 });
 
 // ─────────────── push devices ───────────────

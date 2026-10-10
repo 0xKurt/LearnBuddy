@@ -30,6 +30,7 @@ import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { bottomRoom, SPACE } from '../lib/theme/space.js';
 import type { LibrarySubject } from '@learnbuddy/shared-types/contracts';
+import { attachInChat } from '../lib/capture/attachRequest.js';
 
 /** One card in the list: a subject of hers, or the sheets whose subject is not known yet. */
 type Row = { key: string; name: string; subject: LibrarySubject | null };
@@ -55,7 +56,8 @@ export default function LibraryScreen() {
   }
   const entering = useListEntrance(view !== undefined);
 
-  const openCapture = () => router.push('/capture');
+  // A new sheet: the chat's + menu (issue #519).
+  const openCapture = () => attachInChat({ open: 'menu' });
 
   async function pull() {
     setPulling(true);

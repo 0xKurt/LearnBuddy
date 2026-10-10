@@ -3,15 +3,18 @@
 // erklären" (`reexplain.ts`) and by „Warum stimmt das?" (`why.ts`, #388). One implementation of
 // the lock, the two turns and the replay, so the two can never store an exchange differently.
 
-import type { AnswerResponse, ReexplainWay } from '@learnbuddy/shared-types/contracts';
+import type { AnswerResponse, Figure, ReexplainWay } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
 import { isUniqueViolation, type Db } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
 import { nextSeq, replayTurn } from './service.js';
 
-/** What the two turns say: her words (or the chip she tapped) and Buddy's answer. */
-export type Exchange = { asked: string; reply: string };
+/**
+ * What the two turns say: her words (or the chip she tapped) and Buddy's answer — with the picture
+ * an explanation shows, checked before it gets here (#298, `explainFigure.ts`).
+ */
+export type Exchange = { asked: string; reply: string; figure?: Figure | null };
 
 /**
  * Stores her turn and Buddy's for one question, behind the session row's lock, whatever the
@@ -36,7 +39,7 @@ export async function storeExchange(
       );
       if (!locked) throw new AppError('not_found', 'Session not found');
       if (locked.status === 'abandoned') throw new AppError('conflict', 'Session has ended');
-      const { asked, reply } = await decide(tx);
+      const { asked, reply, figure = null } = await decide(tx);
       const seq = await nextSeq(tx, sessionId);
       await tx.query(
         `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, verdict, evaluated_by, client_turn_id, reexplain, created_at)
@@ -44,9 +47,18 @@ export async function storeExchange(
         [sessionId, learnerId, turn.itemId, seq, asked, turn.clientTurnId, now, turn.way],
       );
       await tx.query(
-        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, reexplain, created_at)
-         values ($1, $2, $3, $4, 'tutor', $5, $6, $7)`,
-        [sessionId, learnerId, turn.itemId, seq + 1, reply, turn.way, now],
+        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, reexplain, created_at, figure)
+         values ($1, $2, $3, $4, 'tutor', $5, $6, $7, $8)`,
+        [
+          sessionId,
+          learnerId,
+          turn.itemId,
+          seq + 1,
+          reply,
+          turn.way,
+          now,
+          figure ? JSON.stringify(figure) : null,
+        ],
       );
       if (locked.status === 'active') {
         await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [

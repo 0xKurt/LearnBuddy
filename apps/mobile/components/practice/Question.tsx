@@ -29,7 +29,7 @@ import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
 import { ReadAgain } from '../lb/ReadAgain.js';
 import { MathText } from '../math/MathText.js';
-import { PartStem } from './PartStem.js';
+import { lettered, PartStem } from './PartStem.js';
 import { PassagePanel } from './PassagePanel.js';
 import { QuestionFigure } from './QuestionFigure.js';
 import { StimulusImage } from './StimulusImage.js';
@@ -319,10 +319,16 @@ export function QuestionCard({
             </View>
           ) : null}
           {/* The situation of a task in parts, the same above each of its parts (issue #297). */}
-          {part ? <PartStem stem={part.stem} typing={typing} /> : null}
+          {part ? (
+            <PartStem
+              stem={part.stem}
+              typing={typing}
+              maxHeight={Math.round(viewHeight * passageShare)}
+            />
+          ) : null}
           <ReadAgain {...(onReadAgain ? { onRead: onReadAgain } : {})}>
             <MathText
-              text={part ? `${part.part}) ${prompt}` : prompt}
+              text={lettered(prompt, part)}
               blanks={{ filled }}
               // A fraction in the question sits in its sentence (issue #288).
               inlineFractions

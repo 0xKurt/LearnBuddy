@@ -401,6 +401,9 @@
     "explain": {
       "point_met": "✓ {{name}}",
       "point_open": "{{name}} : il manque encore",
+      "point_shown": "{{name}} : montré",
+      "show": "Je te montre un point – {{name}} : « {{point}} »\n\nÀ toi : {{ask}}",
+      "show_last": "Voici le dernier point – {{name}} : « {{point}} »",
       "start": "Commence par un point : {{ask}}",
       "all": "Tout y est – c'est exactement comme ça qu'on l'explique.",
       "closing": "On regardera le reste ensemble la prochaine fois."

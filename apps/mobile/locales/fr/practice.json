@@ -14,7 +14,8 @@
     "label": "Ta réponse",
     "placeholder": "Ta réponse…",
     "unit_hint": "Réponse en {{unit}}",
-    "check_waits": "Seulement quand le champ contient quelque chose."
+    "check_waits": "Seulement quand le champ contient quelque chose.",
+    "unit_chip": "en {{unit}}"
   },
   "back_to_buddy": "Retour à Buddy",
   "bar": {
@@ -98,7 +99,7 @@
     "how_pairs": "Touche un élément à gauche, puis son partenaire à droite.",
     "how_groups": "Touche un élément en haut, puis son groupe.",
     "held": "{{text}}, sélectionné",
-    "paired": "{{text}}, paire {{n}} avec {{other}}",
+    "paired": "{{left}} – {{right}}, paire",
     "no_partner": "{{text}}, pas encore de partenaire",
     "in_group": "{{text}}, dans {{group}}",
     "no_group": "{{text}}, dans aucun groupe pour l'instant",
@@ -401,7 +402,9 @@
     "version_other": "Version {{n}} · {{count}} mots",
     "text_one": "Ton texte · 1 mot",
     "text_other": "Ton texte · {{count}} mots",
-    "thinking": "Buddy lit ton texte …"
+    "thinking": "Buddy lit ton texte …",
+    "write_title": "Ton texte",
+    "write_open": "Écrire en plein écran"
   },
   "work": {
     "take": "Photo de ton calcul",

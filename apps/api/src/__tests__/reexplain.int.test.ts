@@ -285,3 +285,98 @@ describe.skipIf(!dbReady)('explain again ("Anders erklären")', () => {
     expect(odd.status).toBe(422);
   });
 });
+
+// Erklärung mit Bild (issue #298): the explanation may show ONE figure of the library. The model
+// writes data; the server keeps it only when it stands exactly as written, drops it otherwise —
+// the words stay — and never shows one in homework.
+describe.skipIf(!dbReady)('an explanation with a picture (#298)', () => {
+  let env: TestEnv;
+  let l: Learner;
+  beforeEach(async () => {
+    env = await createTestEnv({ start: '2026-10-10T14:00:00Z' });
+    l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2010-02-10' });
+  });
+  afterEach(() => env.closeChecked());
+
+  const PARABOLAS = {
+    type: 'function_plot',
+    functions: [
+      { expr: 'x^2', label: 'a = 1' },
+      { expr: '2*x^2', label: 'a = 2' },
+      { expr: '0.5*x^2', label: 'a = 0,5' },
+    ],
+    x_min: -3,
+    x_max: 3,
+    y_min: -1,
+    y_max: 9,
+    points: [],
+  };
+  const WORDS = 'Je größer a, desto schmaler wird die Parabel.';
+
+  async function solved(kind: 'practice' | 'help' = 'practice') {
+    const prompt = 'Wie verändert a die Parabel f(x) = a·x²?';
+    const s = await start(
+      env,
+      l,
+      [item({ prompt, answer: 'Sie wird schmaler' })],
+      kind,
+      kind === 'help' ? prompt : 'Parabeln',
+    );
+    const id = s.items[0]!.item.id;
+    await answer(l, s, id, 'Sie wird schmaler');
+    return { s, id };
+  }
+
+  it('shows the figure the server checked under the words, and again after a reload', async () => {
+    const { s, id } = await solved();
+    env.llm.script('reexplain', (req) => {
+      // The schema offers the figure library's pictures for an explanation.
+      expect(JSON.stringify(req.schema)).toContain('function_plot');
+      return { explanation: WORDS, figure: PARABOLAS };
+    });
+    const tap = randomUUID();
+    const r = await reexplain(l, s, id, 'example', tap);
+    expect(r.status).toBe(200);
+    expect(r.body.reply).toMatchObject({ text: WORDS, figure: PARABOLAS });
+    const view = await l.api.get<SessionView>(`/practice/sessions/${s.id}`);
+    expect(view.body.turns.at(-1)).toMatchObject({ role: 'tutor', figure: PARABOLAS });
+    // Her request carries none, and the same tap again is the same turn, without a model call.
+    expect(view.body.turns.at(-2)?.figure ?? null).toBeNull();
+    expect((await reexplain(l, s, id, 'example', tap)).body.reply.id).toBe(r.body.reply.id);
+    expect(env.llm.callsFor('reexplain')).toHaveLength(1);
+  });
+
+  it.each([
+    [
+      'a function the app cannot read',
+      { ...PARABOLAS, functions: [{ expr: 'x^^2', label: null }] },
+    ],
+    ['an empty window', { ...PARABOLAS, x_min: 3, x_max: -3 }],
+    ['a table with a ragged row', { type: 'table', header: ['x', 'y'], rows: [['1', '2', '3']] }],
+    ['a figure outside what an explanation shows', { type: 'map', l: 'regions', hl: [] }],
+    ['no figure at all, just words', 'eine Parabel'],
+  ])('drops %s and keeps the words', async (_, figure) => {
+    const { s, id } = await solved();
+    env.llm.script('reexplain', { json: { explanation: WORDS, figure } });
+    const r = await reexplain(l, s, id, 'example');
+    expect(r.status).toBe(200);
+    expect(r.body.reply.text).toBe(WORDS);
+    expect(r.body.reply.figure ?? null).toBeNull();
+    const stored = await env.db.one<{ figure: unknown }>(
+      `select figure from practice_turns where id = $1`,
+      [r.body.reply.id],
+    );
+    expect(stored.figure).toBeNull();
+  });
+
+  it('homework: never a picture, however good — it could show an open task’s answer', async () => {
+    const { s, id } = await solved('help');
+    env.llm.script('reexplain', (req) => {
+      expect(req.system).toContain('No picture in homework mode');
+      return { explanation: WORDS, figure: PARABOLAS };
+    });
+    const r = await reexplain(l, s, id, 'example');
+    expect(r.status).toBe(200);
+    expect(r.body.reply.figure ?? null).toBeNull();
+  });
+});

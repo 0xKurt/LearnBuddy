@@ -314,7 +314,8 @@ async function tutorMessages(
               ...(structured ? { prompt: secretsOf(structured, item.prompt).visible } : {}),
             },
             hintsGiven: item.hints_used,
-            preparedHints: givesHints(session.mode) ? item.hints : [],
+            // An explanation's ladder is its points, not these follow-ups (#298).
+            preparedHints: givesHints(session.mode) && !c.pointsLadder ? item.hints : [],
             preparedShown: item.prepared_hints_used,
             attempts: item.attempts,
             ruleVerdict: rule,

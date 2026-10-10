@@ -679,6 +679,12 @@ export const PracticeTurnView = z.object({
   /** Part of an "Anders erklären" exchange (her request and the new explanation), else null. */
   reexplain: ReexplainWay.nullable(),
   /**
+   * The picture an explanation shows (issue #298): data of the figure library, checked by the
+   * server and drawn by the app under Buddy's words. Only on a tutor turn of „Anders erklären";
+   * absent or null everywhere else, and a shape this build cannot read is null (`.catch`).
+   */
+  figure: Figure.nullable().optional().catch(null),
+  /**
    * „Merk ich mir für nachher" (issue #391). Only on the tutor turn after a question that had
    * nothing to do with the task (`POST …/ask`, the tutor's intent `off_topic`): `offered` — the
    * reply carries the chip; `kept` — she tapped it (`POST …/later`), and Buddy brings the
@@ -1141,21 +1147,11 @@ export type TranscribeStreamEvent = z.infer<typeof TranscribeStreamEvent>;
  * settings (tap to hear it), or asks Buddy ("andere Stimme"). The server maps each to a
  * provider voice; the app shows only friendly names, never the provider's.
  */
+// How each sits is said in the picker's line under its name (`voice_pick.about`, issue #526):
+// higher = Chirp 3 HD Sulafat, Zephyr, Aoede (warm, bright, soft); lower = Achird, Iapetus,
+// Charon (friendly, clear, deep) — `apps/api/src/speech/google.ts`. Said as pitch, not as a
+// person: a synthetic voice has no gender to claim.
 export const VOICE_NAMES = ['warm', 'friendly', 'bright', 'clear', 'soft', 'deep'] as const;
-/**
- * How the voice sits, for the picker's two groups (issue #67): six names are a guessing
- * game in one row. Higher = Chirp 3 HD Sulafat, Zephyr, Aoede; lower = Achird, Iapetus,
- * Charon (`apps/api/src/speech/google.ts`). Said as pitch, not as a person: a synthetic
- * voice has no gender to claim.
- */
-export const VOICE_PITCH: Record<(typeof VOICE_NAMES)[number], 'higher' | 'lower'> = {
-  warm: 'higher',
-  bright: 'higher',
-  soft: 'higher',
-  friendly: 'lower',
-  clear: 'lower',
-  deep: 'lower',
-};
 export const VoiceName = z.enum(VOICE_NAMES);
 export type VoiceName = z.infer<typeof VoiceName>;
 

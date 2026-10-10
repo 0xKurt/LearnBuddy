@@ -163,8 +163,9 @@ export type Rubric = z.infer<typeof Rubric>;
 // entsteht aus einem eigenen Entwurf (`apps/api/src/modules/practice/teachBack.ts`), den Code erst
 // prüft. Eine Rubrik ist entweder ganz aus Kernpunkten oder hat keinen.
 //
-//   · `point` — was die Erklärung hier sagt, als Aussage. Nur für das Urteil, nie für sie sichtbar:
-//               sie sieht den Namen („Ort") und, wenn er fehlt, die Nachfrage (`missing`).
+//   · `point` — was die Erklärung hier sagt, als Aussage. Für das Urteil; sie sieht den Namen
+//               („Ort"), wenn er fehlt die Nachfrage (`missing`), und den Punkt selbst nur, wenn
+//               Buddy ihn auf „Tipp" als Mustersatz vormacht (#298, `practice/pointSteps.ts`).
 //   · `exact` — eine Zahl, Formel oder ein Fachwort, ohne das der Punkt nicht gesagt ist. Das prüft
 //               Code in ihrer Erklärung, gefaltet verglichen; das Modell kann es nicht überstimmen.
 

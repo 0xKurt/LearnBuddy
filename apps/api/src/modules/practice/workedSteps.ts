@@ -23,6 +23,7 @@ import { z } from 'zod';
 
 import { t } from '../../i18n/index.js';
 import { ruleCheck, type ItemForCheck } from './evaluate.js';
+import { keyPointsOf } from './pointSteps.js';
 import { checkPath, parseLine, pathLines, sameStep, solvedValue } from './steps.js';
 import type { TutorDecision } from './tutor.js';
 
@@ -166,9 +167,12 @@ export function guidedTurn(
  * nicht" — on a question with a kept way, the reply is the way's next step, the very line „Tipp"
  * shows, and the ladder moves on as for „Tipp". Never the model's paraphrase of it: Mitmachen checks
  * her next line against what she saw. Null when there is no kept way or no step left.
+ *
+ * The same for an explanation (`pointSteps.ts`): its key points are its steps, and `nextHint` is
+ * then the point „Tipp" would show.
  */
 export function stepOnRequest(
-  item: { worked_steps?: unknown },
+  item: { worked_steps?: unknown; rubric?: unknown },
   intent: TutorDecision['intent'],
   nextHint: string | null,
 ): {
@@ -180,7 +184,8 @@ export function stepOnRequest(
   revealed: false;
 } | null {
   const asks = intent === 'help_request' || intent === 'no_answer';
-  if (!asks || nextHint === null || stepsOf(item.worked_steps) === null) return null;
+  const guided = stepsOf(item.worked_steps) !== null || keyPointsOf(item.rubric) !== null;
+  if (!asks || nextHint === null || !guided) return null;
   return {
     verdict: 'not_an_attempt',
     evaluatedBy: 'model',

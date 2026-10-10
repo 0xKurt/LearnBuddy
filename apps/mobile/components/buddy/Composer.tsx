@@ -1,21 +1,21 @@
-// Free text to Buddy, typed or spoken, plus the pages she attaches. One floating
-// bar: +, the field, the mic — "Senden" once there is text — and the waveform at its end,
-// the way into a conversation (`app/talk.tsx`). The mic writes what she said into the field
-// so she can check it. While Buddy writes his answer, the send button is "Stopp".
+// Free text to Buddy, typed or spoken, plus the pages she attaches. The one input bar
+// (`InputBar`, issue #522): her text on top, under it the + on the left, the mic and one filled
+// circle on the right — the waveform, the way into a conversation (`app/talk.tsx`), or the round
+// send arrow once there is something to send. The mic writes what she said into the field so she
+// can check it. While Buddy writes his answer, the filled circle is "Stopp".
 // There is no second, voice-first bar any more (issue #386, owner 04.10.): the speaker in the
 // head only switches reading aloud, and talking hands-free is the waveform's.
 //
-// Pages are attached here, not on a screen of their own (issue #82): the + asks where
-// they come from, they stand as small squares above the field, and "Senden" sends them
-// with the message — the sheet first, so Buddy's answer already knows about it. What
-// happens to a page on the way (preparing, the draft that survives a crash, the upload
-// that resumes) is lib/capture/useAttachments.ts, the same as the capture screen uses.
+// Pages are attached here and only here (issues #82, #519): the + opens the small menu (Kamera ·
+// Fotos · Dateien, `AttachMenu`), every other place that asks for a photo opens it or the camera
+// through this bar (lib/capture/attachRequest.ts), the pages stand as small squares above the
+// field (`ComposerPages`), and the send arrow sends them with the message — the sheet first, so
+// Buddy's answer already knows about it. What happens to a page on the way (preparing, the
+// draft that survives a crash, the upload that resumes) is lib/capture/useAttachments.ts.
 
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-
 import Animated from 'react-native-reanimated';
 
 import { composerAfterSend } from '../../lib/buddy/unsent.js';
@@ -24,22 +24,14 @@ import { haptic } from '../../lib/haptics.js';
 import { fadeIn } from '../../lib/theme/enter.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TYPE } from '../../lib/theme/type.js';
-import { PhotoCheckCard } from '../capture/PhotoCheckCard.js';
+import { AttachMenu } from '../capture/AttachMenu.js';
 import { BottomBar } from '../lb/BottomBar.js';
-import { Btn } from '../lb/Btn.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
-import { ErrorNote } from '../lb/ErrorNote.js';
 import { InputBar } from '../lb/InputBar.js';
-import { Progress } from '../lb/Progress.js';
-import { AttachStrip } from './AttachStrip.js';
 import { TalkButton } from '../voice/TalkButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
-import { SPACE } from '../../lib/theme/space.js';
-import { Sheet } from '../lb/Sheet.js';
-import { useAttachments } from '../../lib/capture/useAttachments.js';
-import type { SendProgress } from '../../lib/capture/upload.js';
+import { ComposerPages } from './ComposerPages.js';
+import { useChatPages } from './useChatPages.js';
 
 /** SendMessageRequest.text allows at most 2000 characters. */
 const MAX_MESSAGE_LENGTH = 2000;
@@ -61,12 +53,9 @@ export function Composer({
   /** Conversation mode (talk screen): bottom right, next to the mic. */
   onTalk: () => void;
 }) {
-  const { palette } = useTheme();
   const { t } = useTranslation(['buddy', 'common']);
   // Kept on the device: a half-typed question survives Android killing the app.
   const { text, setText, clear } = useDraft('chat');
-  /** The little "where from" menu behind the + (issue #82). */
-  const [attach, setAttach] = useState(false);
   const latest = useRef(text);
   latest.current = text;
   const trimmed = text.trim();
@@ -79,19 +68,12 @@ export function Composer({
     );
   };
 
+  // The chat is the screen she sees (not a practice or the library standing over it).
+  const [focused, setFocused] = useState(true);
   /** The text that goes out once the attached pages are through. */
   const withPages = useRef('');
-  // The pages she attached to this message. The chat never takes over a draft left from
-  // an earlier capture (`intake` stays off): the home says when one is waiting.
-  const pages = useAttachments({
-    initialLink: {
-      stepId: null,
-      goalId: null,
-      purpose: 'study',
-      completes: null,
-      pages: null,
-      add: false,
-    },
+  const { pages, menu, more } = useChatPages({
+    focused,
     onSent: () => {
       // The sheet is with the API; her words follow, so Buddy answers about it.
       const waiting = withPages.current;
@@ -123,119 +105,40 @@ export function Composer({
     },
   });
 
-  // Leaving the home (practice, capture, settings …) ends a dictation still listening: it
-  // would otherwise go on and send its text later (p2-lc-chat-mic-survives-leaving-home).
+  // Leaving the home (practice, settings …) ends a dictation still listening: it would
+  // otherwise go on and send its text later (p2-lc-chat-mic-survives-leaving-home).
   const cancelVoice = useRef(voice.cancel);
   cancelVoice.current = voice.cancel;
   useFocusEffect(
-    useCallback(
-      () => () => {
+    useCallback(() => {
+      setFocused(true);
+      return () => {
+        setFocused(false);
         cancelVoice.current();
-      },
-      [],
-    ),
+      };
+    }, []),
   );
 
   const stopBtn = (
     <Animated.View key="stop" entering={fadeIn(DURATION.quick)}>
-      <Btn
-        pill
-        size="sm"
-        variant="soft"
+      <CircleBtn
         icon="stop"
-        onPress={onStop}
+        filled
+        {...(onStop ? { onPress: onStop } : {})}
         accessibilityLabel={t('buddy:thread.stop_label')}
-      >
-        {t('buddy:thread.stop')}
-      </Btn>
+      />
     </Animated.View>
   );
   const stoppable = writing && onStop !== undefined && voice.state === 'idle';
 
-  const progressText = (p: SendProgress): string =>
-    p.step === 'reserving'
-      ? t('capture:progress.reserving')
-      : p.step === 'uploading'
-        ? t('capture:progress.uploading', { current: p.current, count: p.total })
-        : t('capture:progress.submitting');
-  /** Above the field: the attached pages, a page that is hard to read, how the sending goes. */
-  const attachments = (
-    <>
-      {pages.preparing ? (
-        <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
-          {t('capture:preparing', {
-            current: pages.preparing.current,
-            count: pages.preparing.total,
-          })}
-        </Text>
-      ) : null}
-      <AttachStrip
-        uris={pages.photos}
-        pdfs={pages.pdfs}
-        flagged={new Set(pages.photos.filter((uri) => (pages.problems[uri]?.length ?? 0) > 0))}
-        disabled={pages.busy}
-        onRemove={pages.remove}
-      />
-      {pages.review ? (
-        <PhotoCheckCard
-          index={pages.photos.indexOf(pages.review) + 1}
-          problems={pages.problems[pages.review] ?? []}
-          disabled={pages.busy}
-          onRetake={() => pages.retake(pages.review!)}
-          onKeep={() => pages.keep(pages.review!)}
-        />
-      ) : null}
-      {pages.progress ? (
-        <View accessibilityLiveRegion="polite" style={{ gap: SPACE.xs }}>
-          <Text style={[TYPE.small, { color: palette.ink2 }]}>{progressText(pages.progress)}</Text>
-          <View style={{ flexDirection: 'row' }}>
-            <Progress
-              value={
-                pages.progress.step === 'reserving'
-                  ? 0
-                  : pages.progress.step === 'uploading'
-                    ? (pages.progress.current - 1) / pages.progress.total
-                    : 1
-              }
-            />
-          </View>
-        </View>
-      ) : pages.failure ? (
-        <ErrorNote text={pages.failure} />
-      ) : null}
-    </>
-  );
-  const attachSheet = (
-    <Sheet
-      visible={attach}
-      title={t('buddy:composer.attach.title')}
-      closeLabel={t('common:actions.close')}
-      onClose={() => setAttach(false)}
-    >
-      {(['camera', 'library', 'files'] as const).map((source) => (
-        <Btn
-          key={source}
-          full
-          pill
-          size="lg"
-          variant="soft"
-          icon={source === 'camera' ? 'camera' : source === 'library' ? 'book' : 'file'}
-          onPress={() => {
-            setAttach(false);
-            // Straight into the camera or the picker; the page lands above the field.
-            if (source === 'files') void pages.pickFiles();
-            else void pages.pick(source);
-          }}
-        >
-          {t(`buddy:composer.attach.${source}`)}
-        </Btn>
-      ))}
-    </Sheet>
-  );
-
   return (
     <BottomBar testID="composer">
-      {attachSheet}
+      <AttachMenu
+        visible={menu.visible}
+        link={menu.link}
+        onChoose={menu.choose}
+        onClose={menu.close}
+      />
       <InputBar
         value={text}
         onChangeText={setText}
@@ -246,28 +149,34 @@ export function Composer({
         voice={voice}
         micLabel={t('common:voice.message')}
         disabled={disabled}
-        above={attachments}
+        above={<ComposerPages pages={pages} onMore={more} />}
         // Like the assistants she knows: one + that asks where it comes from, instead of a
         // page of its own (owner 29.09., issue #82).
         start={
           <CircleBtn
             icon="plus"
             plain
-            onPress={() => setAttach(true)}
+            onPress={menu.open}
             accessibilityLabel={t('buddy:composer.attach.title')}
           />
         }
-        // Like a messenger: the mic while there is nothing to send, "Senden" once there is.
+        // Like a messenger: the waveform while there is nothing to send, the round arrow once
+        // there is — its name says "Senden" (issue #522).
         action={
           stoppable ? (
             stopBtn
           ) : trimmed.length > 0 || attached ? (
-            <Btn onPress={send} disabled={disabled || pages.busy} pill size="sm">
-              {t('buddy:composer.send')}
-            </Btn>
+            <CircleBtn
+              icon="send"
+              filled
+              keepsFocus
+              onPress={send}
+              disabled={disabled || pages.busy}
+              accessibilityLabel={t('buddy:composer.send')}
+            />
           ) : null
         }
-        // Conversation mode: the waveform circle at the pill's end, same scale as its
+        // Conversation mode: the waveform circle at the box's end, same scale as its
         // neighbours (owner feedback 2026-09-28).
         after={<TalkButton onPress={onTalk} />}
       />

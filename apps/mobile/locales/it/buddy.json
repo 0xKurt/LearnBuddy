@@ -125,8 +125,6 @@
     "undo_label": "Annulla: {{what}}",
     "undone": "annullato",
     "undo_request_material": "Nessuna foto necessaria",
-    "undo_title": "Cosa puoi annullare",
-    "undo_hint": "Mostra cosa puoi annullare",
     "in_app_only": "Quello che avete concordato compare qui nell'app: le notifiche sono disattivate."
   },
   "focus": {
@@ -284,7 +282,7 @@
     "title": "Conversazione",
     "listening": "Ti ascolto.",
     "getting_ready": "Preparo il microfono …",
-    "listening_sub": "Di’ semplicemente cosa ti serve.",
+    "listening_sub": "Parla e basta – mi accorgo quando hai finito.",
     "tap_when_done": "Tocca il microfono quando hai finito.",
     "thinking": "Ci penso …",
     "speaking": "Buddy sta parlando …",
@@ -319,7 +317,6 @@
     },
     "today": "Oggi",
     "yesterday": "Ieri",
-    "stop": "Stop",
     "stop_label": "Ferma la risposta",
     "stopped": "Fermato.",
     "new_reply": "Nuova risposta",
@@ -344,21 +341,26 @@
   "voice_pick": {
     "label": "La voce di Buddy",
     "sample": "Ciao, sono Buddy. Ecco come suono quando ti leggo qualcosa.",
-    "phone_voice": "Adesso legge la voce del tuo telefono, per questo qui suonano tutte uguali.",
-    "tap_hint": "Fa sentire un breve esempio e sceglie questa voce.",
     "name": {
       "warm": "Calda",
       "friendly": "Gentile",
-      "bright": "Luminosa",
+      "bright": "Allegra",
       "clear": "Chiara",
       "soft": "Morbida",
       "deep": "Profonda"
     },
+    "about": {
+      "warm": "Più acuta, calda e tranquilla",
+      "friendly": "Più grave, gentile e rilassata",
+      "bright": "Più acuta, allegra e vivace",
+      "clear": "Più grave, chiara e precisa",
+      "soft": "Più acuta, morbida e pacata",
+      "deep": "Grave e tranquilla"
+    },
     "loading": "Un attimo – la voce sta arrivando.",
-    "group": {
-      "higher": "Voci più acute",
-      "lower": "Voci più gravi"
-    }
+    "choose_hint": "Sceglie questa voce.",
+    "play_label": "Ascolta: {{name}}",
+    "stop_label": "Ferma l'esempio"
   },
   "when": {
     "today": "oggi",

@@ -30,7 +30,7 @@
 import { useContext, useEffect, type ReactNode } from 'react';
 import { View } from 'react-native';
 
-import { answerFolds } from '../../lib/keyboard.js';
+import { answerFolds, formDensity } from '../../lib/keyboard.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { AskRoute, CheckBar, type CheckAction } from './CheckBar.js';
@@ -65,6 +65,10 @@ type Props = {
 // while she types in that bar: she has picked her line, the bar holds it, and with the keyboard up
 // on a small phone the lines would push the bar under the keyboard. Reported through the same
 // route, so the screen's room (`screenRoom`, `boardGives`) knows the board holds nothing then.
+// On a phone that is not roomy (360×740) the lines fold while she types there even without the
+// keyboard (a hidden keyboard on Android keeps the focus, and so does the browser): since #522 the
+// bar holds her text, the math keys and its tools as three rows, and the most a card holds no
+// longer fits above them — the lines stood cut in their slot.
 export function AnswerShell({ answer = null, keys = null, action, keeps = 0 }: Props) {
   const seen = useVisibleHeight();
   const ask = useContext(AskRoute);
@@ -76,7 +80,9 @@ export function AnswerShell({ answer = null, keys = null, action, keeps = 0 }: P
     onFocused(typing);
     return () => onFocused(false);
   }, [typedUnderBoard, typing, onFocused]);
-  const folded = answerFolds(ask.focused, seen.window, seen.overlap);
+  const folded =
+    answerFolds(ask.focused, seen.window, seen.overlap) ||
+    (typing && formDensity(seen.window, seen.overlap) !== 'roomy');
   return (
     <>
       <FreeSpace />
