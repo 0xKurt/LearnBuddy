@@ -13,6 +13,7 @@ import { View } from 'react-native';
 
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { ZoomableFigure } from '../math/ZoomableFigure.js';
+import { CodeBlock } from './CodeBlock.js';
 import { ListenButton } from './ListenButton.js';
 
 type Props = {
@@ -24,6 +25,15 @@ type Props = {
 };
 
 export function QuestionFigure({ figure, maxHeight, folded = false }: Props) {
+  // A program is text in its own block (issue #262): never scaled like a drawing, never zoomed —
+  // a wide line scrolls inside the block instead.
+  if (figure.type === 'code') {
+    return (
+      <View testID="question-figure">
+        <CodeBlock figure={figure} maxHeight={maxHeight} />
+      </View>
+    );
+  }
   const drawing = (
     // The tight box around the drawing itself: the walkthrough records its height.
     <View testID="question-figure" style={figure.type === 'staff' ? { flex: 1 } : null}>

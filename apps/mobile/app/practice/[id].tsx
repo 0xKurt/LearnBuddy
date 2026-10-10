@@ -208,8 +208,8 @@ export default function PracticeScreen() {
   const readAgain = item.read_aloud ? { onReadAgain: () => voice.readQuestion(item) } : {};
   // How the conversation and the card share the room (issues #96, #286, #232): `threadRoom`.
   const room = measured.layout({
-    // A figure she taps stands in the answer, not in the card (`FigureTapAnswer`).
-    item: form.tapFigure ? { ...item, figure: null } : item,
+    // A figure she taps stands in the answer, not in the card (`FigureTapAnswer`, `CodeLineAnswer`).
+    item: form.figureInAnswer ? { ...item, figure: null } : item,
     open,
     speaking: form.speaking,
     threadTurns: view.threadTurns,

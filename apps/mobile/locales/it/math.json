@@ -515,7 +515,11 @@
     "map_mountains": "Le catene montuose sono superfici.",
     "map_grid": "Con il reticolato geografico, una linea ogni {{step}}°.",
     "schematic": "Immagine: {{name}}.",
-    "schematic_numbered": "Immagine: {{name}}, {{count}} parti numerate."
+    "schematic_numbered": "Immagine: {{name}}, {{count}} parti numerate.",
+    "code_one": "Programma di una riga",
+    "code_line": "Riga {{n}}: {{text}}",
+    "code_empty": "vuota",
+    "code_other": "Programma di {{count}} righe"
   },
   "keys": {
     "row": "Simboli matematici",

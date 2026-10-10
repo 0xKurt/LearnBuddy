@@ -17,7 +17,10 @@ import {
   DrillCarry,
   DrillRange,
   DrillRow,
+  READ_ALOUD_WORDS,
   RoleplayLanguage,
+  TalkFormat,
+  TalkStage,
   VocabDirection as VocabDirectionSchema,
   VOICE_NAMES,
 } from '@learnbuddy/shared-types/contracts';
@@ -797,6 +800,69 @@ const startRoleplay = z.object({
   }),
 });
 
+/**
+ * A talk with a day — a Referat, a GFS, a presentation, a poem to recite (issue #264). Like a test
+ * it has a day; unlike a test it has steps she does herself. The model names the stages and their
+ * days as she agreed them (DaySpec, rule 2); code resolves every day, refuses a step after the talk
+ * or out of order, and writes the steps' titles itself (`talkTools.ts`).
+ */
+const planTalk = z.object({
+  tool: z.literal('plan_talk'),
+  args: z.object({
+    title: Title.describe("The talk's topic or title, in the learner's language"),
+    format: TalkFormat.describe(
+      'referat · gfs (a graded presentation that counts like a class test) · presentation · recital (a poem or text recited)',
+    ),
+    subject: z.string().trim().min(1).max(40).describe("Subject name in the learner's language"),
+    subject_kind: z.enum(SUBJECT_KINDS),
+    day: DaySpecSchema.describe('the day of the talk'),
+    minutes: z
+      .number()
+      .int()
+      .min(1)
+      .max(45)
+      .nullable()
+      .describe('how long the talk must be, in minutes, only if she said so; else null'),
+    steps: z
+      .array(
+        z.object({
+          stage: TalkStage,
+          day: DaySpecSchema.describe('the day this step should be done by'),
+        }),
+      )
+      .min(1)
+      .max(5)
+      .describe(
+        'the steps still ahead, in order (topic → outline → sources → slides → rehearsal), each on a day before the talk; leave out what she has already done',
+      ),
+    quote: Quote,
+  }),
+});
+
+/**
+ * A card in the conversation that records her (issue #264): a rehearsal of her talk, or reading a
+ * longer text aloud. Nothing is recorded until she starts it there.
+ */
+const offerRehearsal = z.object({
+  tool: z.literal('offer_rehearsal'),
+  args: z.object({
+    kind: z
+      .enum(['talk', 'read_aloud'])
+      .describe(
+        'talk: she rehearses her talk (up to 10 min) · read_aloud: she reads a given text aloud (up to 2 min)',
+      ),
+    goal: GoalRef.nullable().describe('talk: the planned talk (g1) from STATE; null otherwise'),
+    text: z
+      .string()
+      .trim()
+      .max(2000)
+      .nullable()
+      .describe(
+        `read_aloud: the text she reads, exactly as she should read it — from her sheet, or one you write at her level (${READ_ALOUD_WORDS.min}–${READ_ALOUD_WORDS.max} words, no headings or lists). null for a talk`,
+      ),
+  }),
+});
+
 /** Every act tool's call schema, by name (surfaces and handlers: registry.ts). */
 export const ACT_SCHEMAS = {
   remember,
@@ -821,6 +887,8 @@ export const ACT_SCHEMAS = {
   offer_drill: offerDrill,
   open_area: openArea,
   start_roleplay: startRoleplay,
+  plan_talk: planTalk,
+  offer_rehearsal: offerRehearsal,
 } as const;
 
 export type ToolName = keyof typeof ACT_SCHEMAS;

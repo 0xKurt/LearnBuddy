@@ -32,13 +32,16 @@ describe('a long text on the practice screen (#258)', () => {
   });
 
   it('has no solution to show, like a long answer, and keeps her text for the next version', () => {
-    expect(freeText('essay')).toBe(true);
-    expect(freeText('long')).toBe(true);
-    expect(freeText('short')).toBe(false);
-    expect(leftAfterSend('Mein Text.', 'Mein Text.', 'essay')).toBe('Mein Text.');
-    expect(leftAfterSend('Mein Text.', 'Mein Text.', 'long')).toBe('');
+    expect(freeText({ kind: 'essay' })).toBe(true);
+    expect(freeText({ kind: 'long' })).toBe(true);
+    expect(freeText({ kind: 'short' })).toBe(false);
+    // A program she writes has a proven solution (#262).
+    expect(freeText({ kind: 'long', code: true })).toBe(false);
+    expect(leftAfterSend('Mein Text.', 'Mein Text.', { kind: 'essay' })).toBe('Mein Text.');
+    expect(leftAfterSend('Mein Text.', 'Mein Text.', { kind: 'long' })).toBe('');
+    expect(leftAfterSend('def f(x):', 'def f(x):', { kind: 'long', code: true })).toBe('def f(x):');
     // Typed on while it was sent: what she typed stays.
-    expect(leftAfterSend('Mein Text. Und', 'Mein Text.', 'short')).toBe('Mein Text. Und');
+    expect(leftAfterSend('Mein Text. Und', 'Mein Text.', { kind: 'short' })).toBe('Mein Text. Und');
   });
 
   it('is prose: the return key always takes the line', () => {

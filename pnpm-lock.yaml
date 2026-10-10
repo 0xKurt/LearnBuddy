@@ -74,12 +74,18 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.15
         version: 1.19.17(hono@4.13.12)
+      '@jitl/quickjs-wasmfile-release-sync':
+        specifier: 0.32.0
+        version: 0.32.0
       '@learnbuddy/shared-math':
         specifier: workspace:*
         version: link:../../packages/shared-math
       '@learnbuddy/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
+      '@sqlite.org/sqlite-wasm':
+        specifier: 3.53.4-build1
+        version: 3.53.4-build1
       '@supabase/supabase-js':
         specifier: ^2.47.10
         version: 2.105.4
@@ -98,9 +104,15 @@ importers:
       pg:
         specifier: ^8.13.1
         version: 8.23.0
+      quickjs-emscripten-core:
+        specifier: 0.32.0
+        version: 0.32.0
       sharp:
         specifier: ^0.35.5
         version: 0.35.5(@types/node@22.19.19)
+      skulpt:
+        specifier: 1.2.0
+        version: 1.2.0
       ts-fsrs:
         specifier: ^4.7.1
         version: 4.7.1
@@ -1703,6 +1715,12 @@ packages:
     resolution: {integrity: sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
+  '@jitl/quickjs-ffi-types@0.32.0':
+    resolution: {integrity: sha512-v9T+GQpmk43VDJ7d72sf0Nexhk+ArvtUihW27dy7lqAl0zBObFKtSBBIm5RBjwIhE8VwsPPm9PNuvPvNqLWUEg==}
+
+  '@jitl/quickjs-wasmfile-release-sync@0.32.0':
+    resolution: {integrity: sha512-BKNDI/TPBfGlLNGYpLrhcDGXmIk4xHm4MRAisOBnOzpXVn9HZWsfmMAc9WMBrAHjvvds6HOikKeaOBKdPdpVrg==}
+
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
 
@@ -2633,6 +2651,10 @@ packages:
 
   '@sinonjs/fake-timers@10.3.0':
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
+
+  '@sqlite.org/sqlite-wasm@3.53.4-build1':
+    resolution: {integrity: sha512-U8pvL0patYHMgieD8JxxYJTlh9m1LUX8+BDYb7MiKQzBI89f2qbdmdcG/PvnPaLm9wsBbv4VlVG453ixnxBOnA==}
+    engines: {node: '>=22'}
 
   '@supabase/auth-js@2.105.4':
     resolution: {integrity: sha512-Ejfa37M5xoIwoxVebxRahnwubPo8g22qkXQ4p50+N9MIvU9UZoN+A8dwVPtczzGf8oV/YXN80ZPxK4aWXuSN/A==}
@@ -4644,6 +4666,9 @@ packages:
     resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
     hasBin: true
 
+  jsbi@3.2.5:
+    resolution: {integrity: sha512-aBE4n43IPvjaddScbvWRA2YlTzKEynHzu7MqOyTipdHucf/VxS63ViCjxYRg86M8Rxwbt/GfzHl1kKERkt45fQ==}
+
   jsc-safe-url@0.2.4:
     resolution: {integrity: sha512-0wM3YBWtYePOjfyXQH5MWQ8H7sdk5EXSwZvmSLKk2RboVQ2Bu239jycHDz5J/8Blf3K0Qnoy2b6xD+z10MFB+Q==}
 
@@ -5698,6 +5723,9 @@ packages:
   queue@6.0.2:
     resolution: {integrity: sha512-iHZWu+q3IdFZFX36ro/lKBkSvfkztY5Y7HMiPlOUjhupPcG2JMfst2KKEpu5XndviX/3UhFbRngUPNKtgvtZiA==}
 
+  quickjs-emscripten-core@0.32.0:
+    resolution: {integrity: sha512-QFnPfjFey8EqknSrSxe1hZrf1/8z7/6s1QzGOmKo6++02r7QRRX7ZoyNaZh7JuVjWsVW87KnQrbZqnHkOAzUyg==}
+
   range-parser@1.2.1:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
     engines: {node: '>= 0.6'}
@@ -6135,6 +6163,10 @@ packages:
 
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
+
+  skulpt@1.2.0:
+    resolution: {integrity: sha512-T0cv0sdSOXLlIJTuyXSeYJ3TFdWYSZfX2PcBLpRKrKZ3dTbVQXRMiYudSuko2xzcyMif47DS2ShatCwjCbsSsA==}
+    engines: {node: '>=10.4'}
 
   slash@3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
@@ -8406,6 +8438,12 @@ snapshots:
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
+  '@jitl/quickjs-ffi-types@0.32.0': {}
+
+  '@jitl/quickjs-wasmfile-release-sync@0.32.0':
+    dependencies:
+      '@jitl/quickjs-ffi-types': 0.32.0
+
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -9285,6 +9323,8 @@ snapshots:
   '@sinonjs/fake-timers@10.3.0':
     dependencies:
       '@sinonjs/commons': 3.0.1
+
+  '@sqlite.org/sqlite-wasm@3.53.4-build1': {}
 
   '@supabase/auth-js@2.105.4':
     dependencies:
@@ -11563,6 +11603,8 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
+  jsbi@3.2.5: {}
+
   jsc-safe-url@0.2.4: {}
 
   jscpd-sarif-reporter@4.2.5:
@@ -12870,6 +12912,10 @@ snapshots:
     dependencies:
       inherits: 2.0.4
 
+  quickjs-emscripten-core@0.32.0:
+    dependencies:
+      '@jitl/quickjs-ffi-types': 0.32.0
+
   range-parser@1.2.1: {}
 
   rc@1.2.8:
@@ -13395,6 +13441,10 @@ snapshots:
       is-arrayish: 0.3.4
 
   sisteransi@1.0.5: {}
+
+  skulpt@1.2.0:
+    dependencies:
+      jsbi: 3.2.5
 
   slash@3.0.0: {}
 

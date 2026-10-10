@@ -46,7 +46,9 @@
     "set_voice": "Mi voz: {{voice}}, {{speed}}",
     "forget_all": "He olvidado todo lo que sabía de ti ({{count}})",
     "offer_drill": "Propuesto: cálculo mental – «{{text}}»",
-    "start_roleplay": "Juego de rol: {{scene}}"
+    "start_roleplay": "Juego de rol: {{scene}}",
+    "plan_talk": "Exposición «{{title}}» prevista el {{day}}: {{steps}}",
+    "offer_rehearsal": "Ensayo ofrecido: {{title}}"
   },
   "area": {
     "library": "Tu material",
@@ -387,6 +389,48 @@
       "open": "Todavía no",
       "better": "Así suena aún mejor",
       "quote": "«{{quote}}»"
+    }
+  },
+  "rehearse": {
+    "talk": "Ensayo",
+    "read_aloud": "Lectura en voz alta",
+    "start": "Empezar a grabar",
+    "hint_talk": "Presenta tu exposición como si la clase escuchara. 10 minutos como máximo.",
+    "hint_talk_minutes": "Están previstos {{minutes}} minutos. Preséntala como si la clase escuchara.",
+    "hint_read": "Lee el texto en voz alta. 2 minutos como máximo.",
+    "too_short": "Ha sido muy corto. Empieza a grabar y habla hasta terminar.",
+    "result": {
+      "length": "Duración",
+      "length_of": "{{duration}} de {{target}}",
+      "verdict": {
+        "fits": "Se ajusta a lo previsto",
+        "short": "Un poco corto: aún queda tiempo",
+        "long": "Un poco largo: ¿dónde puedes acortar?"
+      },
+      "pace": "Ritmo",
+      "pace_text": "{{wpm}} palabras por minuto",
+      "fillers": "Sonidos de duda",
+      "fillers_text_one": "Una vez «eh»",
+      "fillers_text_other": "{{count}} veces «eh»",
+      "part": {
+        "opening": "Introducción",
+        "main": "Desarrollo",
+        "closing": "Conclusión"
+      },
+      "status": {
+        "heard": "Oído",
+        "not_heard": "Aún no oído",
+        "unknown": "No reconocido con seguridad"
+      },
+      "words": "Palabras para practicar",
+      "words_none": "Todo leído tal como está escrito"
+    },
+    "stage": {
+      "topic": "Tema",
+      "outline": "Esquema",
+      "sources": "Fuentes",
+      "slides": "Diapositivas",
+      "rehearsal": "Ensayo"
     }
   }
 }

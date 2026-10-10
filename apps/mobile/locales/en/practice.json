@@ -415,5 +415,11 @@
     "down": "I can't read your photo right now. Type your working or try again in a moment.",
     "camera_blocked": "LearnBuddy isn't allowed to use the camera yet. You can allow it in Settings – or type your working.",
     "camera_failed": "The camera didn't open. Try again or type your working."
+  },
+  "code": {
+    "line": "Line {{n}}",
+    "placeholder_output": "What appears on the screen?",
+    "placeholder_program": "Your program …",
+    "placeholder_query": "SELECT …"
   }
 }

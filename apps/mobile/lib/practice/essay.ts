@@ -16,6 +16,7 @@ import {
   ANSWER_TEXT_MAX,
   ESSAY_TEXT_MAX,
   type ItemKind,
+  type ItemView,
   type PracticeTurnView,
 } from '@learnbuddy/shared-types/contracts';
 
@@ -24,17 +25,25 @@ export function answerMax(kind: ItemKind): number {
   return kind === 'essay' ? ESSAY_TEXT_MAX : ANSWER_TEXT_MAX;
 }
 
-/** A free text: no solution to show, and the way past it says so ("Überspringen", #197). */
-export function freeText(kind: ItemKind): boolean {
-  return kind === 'long' || kind === 'essay';
+/**
+ * A free text: no solution to show, and the way past it says so ("Überspringen", #197). A program
+ * or a query she writes is no free text (#262): its solution was run against her tests and is shown.
+ */
+export function freeText(item: Pick<ItemView, 'kind' | 'code'>): boolean {
+  return !item.code && (item.kind === 'long' || item.kind === 'essay');
 }
 
 /**
  * What stays in the field once her answer was sent: a long text stays — her next version starts
- * from it; any other answer clears, unless she has typed on meanwhile.
+ * from it — and so does code (#262): she fixes her program, she does not type it again. Any other
+ * answer clears, unless she has typed on meanwhile.
  */
-export function leftAfterSend(current: string, sent: string, kind: ItemKind | undefined): string {
-  if (kind === 'essay') return current;
+export function leftAfterSend(
+  current: string,
+  sent: string,
+  item: Pick<ItemView, 'kind' | 'code'> | undefined,
+): string {
+  if (item?.kind === 'essay' || item?.code) return current;
   return current.trim() === sent ? '' : current;
 }
 

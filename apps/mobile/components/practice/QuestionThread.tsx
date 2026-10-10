@@ -97,6 +97,7 @@ export function QuestionThread({
         echoAnswers={!((structured || ((choices || tapChoices) && !conversation)) && open)}
         onTurnTops={measured.setTurnTops}
         essay={item.kind === 'essay'}
+        code={item.code === true}
       />
       {session.mode === 'help' && shown.status === 'correct' ? (
         <Rise delay={180}>
@@ -112,7 +113,11 @@ export function QuestionThread({
       shown.answer !== null &&
       choices === null ? (
         <Rise delay={180}>
-          <SolutionCard answer={shown.answer} numeric={item.kind === 'numeric'} />
+          <SolutionCard
+            answer={shown.answer}
+            numeric={item.kind === 'numeric'}
+            code={item.code === true}
+          />
         </Rise>
       ) : null}
       {hearAnswer && shown.answer !== null && item.lang !== null ? (

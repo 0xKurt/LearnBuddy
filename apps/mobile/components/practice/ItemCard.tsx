@@ -72,8 +72,8 @@ export function ItemCard({
       prompt={item.prompt}
       // Not twice: a topic the header's title already names stays out of the card.
       topic={item.topic && title.includes(item.topic) ? null : item.topic}
-      // A figure she taps stands in the answer, not in the card (`FigureTapAnswer`).
-      figure={form.tapFigure ? null : item.figure}
+      // A figure she taps stands in the answer, not in the card (`FigureTapAnswer`, `CodeLineAnswer`).
+      figure={form.figureInAnswer ? null : item.figure}
       figureMaxHeight={caps.figure}
       image={item.image}
       imageKey={item.id}

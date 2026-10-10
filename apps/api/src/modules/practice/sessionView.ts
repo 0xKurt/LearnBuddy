@@ -7,6 +7,7 @@ import { PracticeTurnView, type SessionView } from '@learnbuddy/shared-types/con
 import type { Db } from '../../lib/db.js';
 import type { StorageGateway } from '../../storage/gateway.js';
 import { CARD_PASS, offersCardPass } from './cards.js';
+import { codeTaskOf } from './code.js';
 import { DRILL_PASS } from './drill.js';
 import { drillViewOf } from './drillView.js';
 import { noSingleSolution } from './evaluate.js';
@@ -73,7 +74,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.task, i.listen_task, i.staff_task, i.spelling, i.archived_at,
+            i.bar_task, i.task, i.listen_task, i.staff_task, i.code_task, i.spelling, i.archived_at,
             i.choice_figures, i.read_passage, i.source_excerpt, i.tap, i.why, i.task_part,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label, sub.kind as subject_kind
@@ -139,8 +140,12 @@ export async function sessionView(
    * words of the text it was heard from (issue #210). One condition for both, so a text can
    * never arrive a moment before the answer it belongs to.
    */
-  const solutionShown = (i: { status: string; kind: string }): boolean =>
-    cardPass || !((i.status === 'open' && !testOver) || !revealAllowed || noSingleSolution(i));
+  // A program or query she writes (issue #262) has no single solution either, but the one it
+  // carries was RUN against the very tests hers is measured by: a proven way, never a sketch.
+  const freeText = (i: { kind: string; code_task?: unknown }) =>
+    noSingleSolution(i) && codeTaskOf(i.code_task) === null;
+  const solutionShown = (i: { status: string; kind: string; code_task?: unknown }): boolean =>
+    cardPass || !((i.status === 'open' && !testOver) || !revealAllowed || freeText(i));
   // The text of each reading question (issue #233); where its answer stands, once that is shown.
   const reading = passageViews(items, solutionShown);
   // The situation and letter of each part of a task in parts (issue #297).
@@ -199,7 +204,9 @@ export async function sessionView(
         // The fraction bar she works with, derived from the task the question was computed
         // from (issue #162). Only while the question is open: once it is closed the bars
         // would be a control without a purpose, and the solution stands in the thread.
-        surface: i.status === 'open' && active ? surfaceFor(i.bar_task, i.staff_task) : null,
+        // The same for a program's lines to tap or its code field (issue #262).
+        surface:
+          i.status === 'open' && active ? surfaceFor(i.bar_task, i.staff_task, i.code_task) : null,
         // A figure she taps a place in (issue #248), for the same span as the bar: read back
         // through the check it was written under, or typed like any other question.
         tap: i.status === 'open' && active && !cardPass && tapsFigure(i),
@@ -213,6 +220,8 @@ export async function sessionView(
         // its key. They stay while it is closed, like a listening text: hearing it again next to
         // the solution is how it is reviewed.
         tones: tonesFor(i.staff_task),
+        // Her answers and the solution are code: monospace, every space kept (issue #262).
+        ...(codeTaskOf(i.code_task) ? { code: true } : {}),
         // The text she reads it from, above the question while she answers (issue #233) — except
         // where she answers IN the text, a Belegstelle (#368): its board is the text, once.
         passage: textIsBoard(boardOf(i)) ? null : (reading.get(i.id) ?? null),

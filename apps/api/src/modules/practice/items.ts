@@ -17,6 +17,7 @@ import {
   type StoredRubric,
   DrawnFigure,
   type BarTask,
+  type CodeTask,
   type Figure,
   type ItemKind,
   type ListenTask,
@@ -644,6 +645,11 @@ export type StoredItem = Omit<ItemDraft, 'figure' | 'kind' | 'rubric'> & {
   bar_task?: BarTask | null;
   staff_task?: StaffTask | null;
   /**
+   * The program or query task (issue #262): set only by `practice/code.ts`, which RAN it and took
+   * the key from that run. At most one of bar_task, staff_task and code_task (migration 0104).
+   */
+  code_task?: CodeTask | null;
+  /**
    * The spoken text this question is answered from (issue #210): set only by `practice/listen.ts`,
    * which checked that the answer stands in that very text.
    */
@@ -683,8 +689,8 @@ export async function insertItems(
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
                           hints, worked_solution, tolerance, spelling, bar_task, task,
                           curriculum_point, rubric, listen_task, staff_task, choice_figures, read_passage, tap,
-                          task_part)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31) returning id`,
+                          task_part, code_task)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -717,6 +723,7 @@ export async function insertItems(
         it.read_passage ? JSON.stringify(it.read_passage) : null,
         it.tap === true,
         it.task_part ? JSON.stringify(it.task_part) : null,
+        it.code_task ? JSON.stringify(it.code_task) : null,
       ],
     );
     if (asked) ids.push(row.id);

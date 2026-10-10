@@ -6,6 +6,7 @@ import { isStructuredKind, SubjectKind, type ItemView } from '@learnbuddy/shared
 
 import type { StorageGateway } from '../../storage/gateway.js';
 import { surfaceOf, taskOf } from './bars.js';
+import { codeSurfaceOf, codeTaskOf } from './code.js';
 import { storedFigure } from './items.js';
 import { staffSurfaceOf, staffTaskOf, tonesOf } from './staff.js';
 import { structuredTaskOf, viewOf } from './structured.js';
@@ -46,13 +47,16 @@ export async function signImageUrls(
  * A column that no longer parses as a task yields no surface: the question is still
  * answerable by typing, and nothing is guessed at.
  */
-export function surfaceFor(bar: unknown, staff: unknown): ItemView['surface'] {
+export function surfaceFor(bar: unknown, staff: unknown, code: unknown): ItemView['surface'] {
   const barTask = taskOf(bar);
   if (barTask) return surfaceOf(barTask);
-  // The empty staff she writes a note line on (issue #226). The two can never both be there
-  // (migration 0078 `items_one_computed_source`), so the order here settles nothing.
+  // The empty staff she writes a note line on (issue #226). The computed sources can never be
+  // there together (migration 0104 `items_one_computed_source`), so the order settles nothing.
   const staffTask = staffTaskOf(staff);
-  return staffTask ? staffSurfaceOf(staffTask) : null;
+  if (staffTask) return staffSurfaceOf(staffTask);
+  // A program's lines to tap, or the field she types code, a query or an output into (#262).
+  const codeTask = codeTaskOf(code);
+  return codeTask ? codeSurfaceOf(codeTask) : null;
 }
 
 /** The tones she hears (issue #445), or null; an unreadable column plays nothing. */
@@ -90,13 +94,23 @@ export function tapsFigure(row: Pick<ItemRow, 'kind' | 'answer' | 'figure' | 'ta
 export function answersOnScreen(
   row: Pick<
     ItemRow,
-    'kind' | 'answer' | 'choices' | 'task' | 'bar_task' | 'staff_task' | 'figure' | 'tap'
+    | 'kind'
+    | 'answer'
+    | 'choices'
+    | 'task'
+    | 'bar_task'
+    | 'staff_task'
+    | 'code_task'
+    | 'figure'
+    | 'tap'
   >,
 ): boolean {
+  const surface = surfaceFor(row.bar_task, row.staff_task, row.code_task);
   return (
     (row.kind === 'multiple_choice' && row.choices !== null) ||
     taskViewFor(row) !== null ||
-    surfaceFor(row.bar_task, row.staff_task) !== null ||
+    // A code field is written into like the bar; only the program's lines are tapped (#262).
+    (surface !== null && surface.mode !== 'code_type') ||
     tapsFigure(row)
   );
 }

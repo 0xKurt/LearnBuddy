@@ -23,6 +23,7 @@ import { Btn } from '../lb/Btn.js';
 import { Appear } from '../lb/Motion.js';
 import { AnswerShell } from './AnswerShell.js';
 import { ChoiceList } from './ChoiceList.js';
+import { CodeLineAnswer } from './CodeLineAnswer.js';
 import { FigureTapAnswer } from './FigureTapAnswer.js';
 import { FractionBarBoard } from './FractionBarAnswer.js';
 import { RhythmTaps } from './RhythmTaps.js';
@@ -72,7 +73,8 @@ export function AnswerArea({
 }: Props) {
   const { t } = useTranslation('practice');
   const conversation = useVoiceMode((s) => s.conversation);
-  const { choices, tapChoices, speaking, staff, taps, barSurface, tapFigure, typed } = form;
+  const { choices, tapChoices, speaking, staff, taps, barSurface, tapFigure, codeLines, typed } =
+    form;
   const { text, setText } = drafts;
   const { answer } = actions;
   // A shaded bar is a tap, even though "Prüfen" sends it (issue #163).
@@ -172,7 +174,17 @@ export function AnswerArea({
           onChange={setText}
           onCheck={check}
           work={{ sessionId, itemId: item.id }}
+          code={form.code}
           {...readAgain}
+        />
+      ) : null}
+      {/* The lines of a program she taps the failing one of (issue #262): a tap answers. */}
+      {codeLines ? (
+        <CodeLineAnswer
+          key={item.id}
+          figure={codeLines}
+          disabled={disabled}
+          onAnswer={(line, shown) => void answer(item.id, { text: line }, shown)}
         />
       ) : null}
       {/* The fraction bar she works with (issue #162), a board like the others (report #388

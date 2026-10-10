@@ -21,11 +21,12 @@
       "entry": ["scripts/*.mjs"],
     },
     "apps/mobile": {
-      // Platform twins (`*.web.ts`) are picked by Metro's resolver, not by an import path;
+      // Platform twins (`*.web.ts`, `*.ios.ts`) are picked by Metro's resolver, not by an import path;
       // the component-test project is listed in vitest.workspace.ts. Expo config plugins
       // are named in app.json, global.css by NativeWind in metro.config.js.
       "entry": [
         "**/*.web.{ts,tsx}",
+        "**/*.ios.{ts,tsx}",
         "vitest.components.config.ts",
         "testing/*.{ts,tsx}",
         "scripts/*.mjs",

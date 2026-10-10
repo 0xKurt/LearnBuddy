@@ -71,7 +71,8 @@ export function createApp(deps: Deps): Hono<AppEnv> {
   // (≤ 15 s), spoken messages (≤ ~3 min, TranscribeRequest caps the base64 at 2 000 000
   // chars — this leaves room for the JSON around it) and the one photo she takes of her
   // working (issue #444, `WORK_PHOTO_BASE64_MAX`). Like a recording, that photo is read in
-  // this call and never stored, so it does not go through Storage.
+  // this call and never stored, so it does not go through Storage. A rehearsal talk (issue #264,
+  // ≤ 10 min at the long-recording rate, `REHEARSAL_MAX_BASE64`) fits the same limit.
   const media = bodyLimit({
     maxSize: 3 * 1024 * 1024,
     onError: () => {
@@ -79,7 +80,9 @@ export function createApp(deps: Deps): Hono<AppEnv> {
     },
   });
   app.use('*', (c, next) =>
-    /\/practice\/sessions\/[^/]+\/(speak|work-photo)$|\/voice\/transcribe$/.test(c.req.path)
+    /\/practice\/sessions\/[^/]+\/(speak|work-photo)$|\/voice\/transcribe$|\/buddy\/rehearsals$/.test(
+      c.req.path,
+    )
       ? media(c, next)
       : smallBodies(c, next),
   );

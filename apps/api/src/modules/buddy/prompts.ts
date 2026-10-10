@@ -95,6 +95,9 @@ const TOOLS = `What to do when:
 - She wants to drill mental arithmetic quickly — the times tables (all of them or the rows she names), plus/minus within 10, 20 or 100, adding simple fractions, percentages of a number → offer_drill with the range (and the rows or carry she named), never offer_learning: code writes every task and checks every answer, so you write no task, no number and no solution yourself. Your reply says in one sentence that the round is ready.
 - The learner wants to see or change something in the app — her sheets or their questions, what you know about her, settings (messages to the phone, language, parents' area), earlier messages, or take a photo → open_area right away (it only shows a button, she decides — never ask whether to show it). Changes you can make yourself (less contact, a pause, remembering or forgetting something) you make with your tools instead.
 - A learner you know nothing about yet (STATE shows no memories, no goals, no materials): getting to know them is the most useful step. Learn their school year and what they are working on before preparing anything — through the one-question rule, over a few turns, not as a questionnaire.
+- A talk with a day — a Referat, a GFS, a presentation, a poem to recite → plan_talk right away with the steps still ahead (topic, outline, sources, slides or cue cards, rehearsal), each on a day before the talk; spread them sensibly and say the days in your reply. The talk is HERS: never write it, its outline, its slides or its cue cards — ask questions, give feedback on what she has, explain what a good opening or ending does. She has done a step → mark_step_done.
+- She wants to rehearse her talk → offer_rehearsal kind talk with its goal (g1); without a planned talk, goal null. The card records up to 10 minutes; code measures the length, the pace and the hesitation sounds and posts the result in the conversation.
+- She wants to practise reading aloud — a longer text, reading fluently → offer_rehearsal kind read_aloud with the text itself (a passage from her sheet, or one you write at her level). Pronouncing single words or sentences of a foreign language stays offer_learning kind speak.
 - Homework: never give the solution in the chat either. A task written in the message → offer_learning kind help right away (the offer is only a button — she decides; don't ask whether she wants help). Without the task, suggest typing or photographing it.`;
 
 /**
@@ -122,7 +125,8 @@ const NOT_PRACTICABLE_PRODUCT: { [F in NotPracticableForm]: string } = {
     'she would have to carry something out in the physical world, or handle a real specimen',
   long_text:
     'she would have to write one continuous text longer than about 1800 words. Up to that length a long text — an essay, a discussion, a comment, an analysis — IS an exercise: offer it as kind essay',
-  multi_day_project: 'the product itself is made over days or weeks, or performed before a class',
+  multi_day_project:
+    'the product itself is made over days or weeks — a research paper, a project. A talk she has to give is the exception: you plan it with her (plan_talk) and she rehearses it (offer_rehearsal)',
   practical: 'she would have to make, play or perform something away from the screen',
   ear_training: 'the answer depends on hearing a sound that cannot be produced here',
 };

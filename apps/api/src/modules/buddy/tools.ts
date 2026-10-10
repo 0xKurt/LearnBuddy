@@ -25,6 +25,7 @@ import { runCorrectMemory, runForget, runRemember } from './memoryTools.js';
 import { runOfferDrill, runOfferLearning, runOpenArea } from './offers.js';
 import { runPreparePractice } from './practiceTool.js';
 import { runStartRoleplay } from './roleplay.js';
+import { runOfferRehearsal, runPlanTalk } from './talkTools.js';
 import { runScheduleCheck, runSetContact, runSetVoice } from './settingsTools.js';
 import { runMarkStepDone, runPlanStep, runUpdateStep } from './stepTools.js';
 import type { ToolContext, ToolOutcome } from './toolKit.js';
@@ -55,4 +56,6 @@ export const ACT_HANDLERS: {
   open_area: runOpenArea,
   schedule_check: runScheduleCheck,
   start_roleplay: runStartRoleplay,
+  plan_talk: runPlanTalk,
+  offer_rehearsal: runOfferRehearsal,
 };

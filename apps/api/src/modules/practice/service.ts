@@ -105,6 +105,12 @@ export type ItemRow = {
    */
   staff_task: unknown;
   /**
+   * The program or query task this question's text, figure and key were computed from — the key
+   * by RUNNING it (issue #262) — or null for everything else. At most one computed source per
+   * question (migration 0104). Read through `codeTaskOf`.
+   */
+  code_task: unknown;
+  /**
    * The text this question is about (Leseverständnis, issue #233), or null. Read through
    * `passageOf` (`practice/reading.ts`), never trusted as it stands. Optional: only the session
    * view and the answer path load it.

@@ -6,6 +6,7 @@
 import { z } from 'zod';
 
 import { PeriodicTableFigure } from './periodic.js';
+import { CodeFigure } from './code.js';
 import { StaffFigure } from './staff.js';
 import { AutomatonFigure, PedigreeFigure, TreeFigure } from './tree.js';
 import { Axes3dFigure, CubeNetFigure, CubesFigure, SolidFigure } from './solid.js';
@@ -475,8 +476,17 @@ export type ModelFigure = z.infer<typeof ModelFigure>;
 export const DrawnFigure = z.discriminatedUnion('type', [...DRAWN_FIGURES, ShownMapFigure]);
 export type DrawnFigure = z.infer<typeof DrawnFigure>;
 
-/** Every figure a question can SHOW (`ItemView.figure`) — the model's figures and the note line. */
-export const Figure = z.discriminatedUnion('type', [...DRAWN_FIGURES, ShownMapFigure, StaffFigure]);
+/**
+ * Every figure a question can SHOW (`ItemView.figure`) — the model's figures, the note line and a
+ * program (issue #262): code writes the last two from what it computed or ran, so neither is in
+ * `ModelFigure`.
+ */
+export const Figure = z.discriminatedUnion('type', [
+  ...DRAWN_FIGURES,
+  ShownMapFigure,
+  StaffFigure,
+  CodeFigure,
+]);
 export type ChartFigure = Extract<Figure, { type: (typeof CHART_TYPES)[number] }>;
 export type PrimaryFigure = Extract<Figure, { type: (typeof PRIMARY_TYPES)[number] }>;
 export type Figure = z.infer<typeof Figure>;

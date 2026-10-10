@@ -78,6 +78,7 @@ const ITEMS: Record<string, Record<string, unknown>> = {
 
 const BAR = { task: 'shade', parts: 6, units: 3 };
 const STAFF = { task: 'name_note', clef: 'treble', pitch: { name: 'E', octave: 4 } };
+const CODE = { task: 'predict_output', program: 'print(2 * 3)', output: '6' };
 const STRUCTURED: Record<string, Record<string, unknown>> = {
   order: {
     type: 'order',
@@ -319,6 +320,7 @@ function validAnswer(kind: Kind, chunk = 0): Record<string, unknown> {
     ...(p.bars ? { bars: [BAR] } : {}),
     ...(p.listen ? { listen: LISTEN } : {}),
     ...(p.staffs ? { staffs: [STAFF] } : {}),
+    ...(p.codes ? { codes: [CODE] } : {}),
     ...(structured.length > 0 ? { structured: structured.map((t) => STRUCTURED[t]) } : {}),
     ...(p.dictation ? { dictation: DICTATION } : {}),
     ...(p.teachBack ? { teach_back: [TEACH_BACK] } : {}),
@@ -349,6 +351,7 @@ function outsiders(kind: Kind): { what: string; add: (a: Record<string, unknown>
   }
   if (!p.bars) out.push({ what: 'bars', add: (a) => list(a, 'bars', BAR) });
   if (!p.staffs) out.push({ what: 'staffs', add: (a) => list(a, 'staffs', STAFF) });
+  if (!p.codes) out.push({ what: 'codes', add: (a) => list(a, 'codes', CODE) });
   if (!p.listen) out.push({ what: 'listen', add: (a) => void (a.listen = LISTEN) });
   if (!p.dictation) out.push({ what: 'dictation', add: (a) => void (a.dictation = DICTATION) });
   if (!p.teachBack) out.push({ what: 'teach_back', add: (a) => list(a, 'teach_back', TEACH_BACK) });
@@ -369,6 +372,7 @@ function kept(kind: Kind, answer: unknown) {
     rubrics: set.items.filter((i) => i.rubric !== null).length,
     bars: set.bars.length,
     staffs: set.staffs.length,
+    codes: set.codes.length,
     structured: set.structured.map((s) => s.type),
     listen: set.listen === null ? 0 : 1,
     dictation: set.dictation?.entries.length ?? 0,
@@ -404,6 +408,7 @@ describe('the fallback', () => {
       expect(FALLBACK_PROFILE.structured).toEqual(expect.arrayContaining([...p.structured]));
       if (p.bars) expect(FALLBACK_PROFILE.bars).toBe(true);
       if (p.staffs) expect(FALLBACK_PROFILE.staffs).toBe(true);
+      if (p.codes) expect(FALLBACK_PROFILE.codes).toBe(true);
     }
   });
 });
@@ -426,6 +431,7 @@ describe.each(KINDS)('the profile of a %s run', (kind) => {
         rubrics: p.items.includes('long') ? 1 : 0,
         bars: p.bars ? 1 : 0,
         staffs: p.staffs ? 1 : 0,
+        codes: p.codes ? 1 : 0,
         structured: [...structuredChunk(kind, chunk)],
         listen: p.listen ? 1 : 0,
         dictation: p.dictation ? DICTATION.entries.length : 0,

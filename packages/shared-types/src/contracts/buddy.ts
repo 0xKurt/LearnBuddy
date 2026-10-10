@@ -13,6 +13,7 @@ import {
   VoiceName,
   VoiceSpeed,
 } from './learning.js';
+import { RehearsalKind, RehearsalView, TalkFormat, TalkStage } from './talk.js';
 
 // ─────────────── a roleplay in a foreign language (issue #244) ───────────────
 
@@ -239,6 +240,35 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     points: z.array(z.string()),
     status: z.enum(['active', 'ended']).default('active'),
   }),
+  /**
+   * A talk planned as a goal with its steps (issue #264): the day of the talk and one step per
+   * stage, each on a day the server resolved. The card lists them; undo drops the whole plan.
+   */
+  z.object({
+    tool: z.literal('plan_talk'),
+    goal_id: Uuid,
+    title: z.string(),
+    format: TalkFormat,
+    due_date: LocalDate,
+    /** The length she was asked for, in minutes; null when she did not say. */
+    minutes: z.number().int().nullable(),
+    steps: z.array(z.object({ stage: TalkStage, date: LocalDate })).max(5),
+  }),
+  /**
+   * Buddy offers a rehearsal talk or reading a text aloud (issue #264): a card in the conversation
+   * that records her (`POST /buddy/rehearsals`). Nothing is recorded until she starts it.
+   */
+  z.object({
+    tool: z.literal('offer_rehearsal'),
+    kind: RehearsalKind,
+    /** The talk's title, or the first words of the passage to read. */
+    title: z.string(),
+    /** Reading aloud: the passage itself, exactly as her reading is compared with it. */
+    text: z.string().nullable(),
+    /** A talk: the length she was asked for, in minutes, when known. */
+    minutes: z.number().int().nullable(),
+    goal_id: Uuid.nullable(),
+  }),
   /** Buddy points to a part of the app (said, not searched for); the app shows a button to open it. */
   z.object({
     tool: z.literal('open_area'),
@@ -315,6 +345,11 @@ export const MessageView = z.object({
    * Null on every other message, and from an older server.
    */
   roleplay_feedback: RoleplayFeedback.nullable().catch(null),
+  /**
+   * Buddy's message after a rehearsal talk or a read-aloud (issue #264): what code measured,
+   * shown as the result card. Absent on every other message, and from an older server.
+   */
+  rehearsal: RehearsalView.nullable().optional().catch(null),
   created_at: IsoDateTime,
 });
 export type MessageView = z.infer<typeof MessageView>;
@@ -323,7 +358,8 @@ export type MessageView = z.infer<typeof MessageView>;
 
 export const GoalBrief = z.object({
   id: Uuid,
-  kind: z.enum(['exam', 'topic']),
+  /** talk: a Referat, GFS, presentation or recital with its own steps (issue #264). */
+  kind: z.enum(['exam', 'topic', 'talk']),
   title: z.string(),
   due_date: LocalDate.nullable(),
   days_left: z.number().int().nullable(),
@@ -463,8 +499,11 @@ export const Decision = z.discriminatedUnion('type', [
 export type Decision = z.infer<typeof Decision>;
 
 export const UpcomingItem = z.object({
-  /** 'message': a message Buddy has planned to send (its title), not yet sent. */
-  kind: z.enum(['exam', 'step', 'message']),
+  /**
+   * 'message': a message Buddy has planned to send (its title), not yet sent. 'talk': the day of a
+   * talk she gives (issue #264) — a date like a test, but nothing to take a test on.
+   */
+  kind: z.enum(['exam', 'step', 'message', 'talk']),
   id: Uuid,
   title: z.string(),
   date: LocalDate.nullable(),
@@ -533,6 +572,10 @@ export type BuddyHome = z.infer<typeof BuddyHome>;
 /** POST /buddy/roleplays/:id/end — her tap on "end"; the feedback stands in the thread of `home`. */
 export const EndRoleplayResponse = z.object({ home: BuddyHome });
 export type EndRoleplayResponse = z.infer<typeof EndRoleplayResponse>;
+
+/** A rehearsal measured (issue #264): the result, and the thread with Buddy's message about it. */
+export const RehearseResponse = z.object({ rehearsal: RehearsalView, home: BuddyHome });
+export type RehearseResponse = z.infer<typeof RehearseResponse>;
 
 export const SendMessageRequest = z.object({
   client_message_id: Uuid,

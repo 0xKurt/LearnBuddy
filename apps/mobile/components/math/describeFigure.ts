@@ -158,6 +158,14 @@ export function describeFigure(
     }
     case 'molecule':
       return describeMolecule(figure, t);
+    // A program (issue #262): read out line by line, with the numbers she is asked about.
+    case 'code':
+      return [
+        t('figure.code', { count: figure.lines.length }),
+        ...figure.lines.map((line, i) =>
+          t('figure.code_line', { n: i + 1, text: line.trim() || t('figure.code_empty') }),
+        ),
+      ].join('. ');
     // In Worten, wie issue #226 es verlangt („Violinschlüssel, Viervierteltakt: C, E, G,
     // Viertelnoten"). Das ist keine Beschreibung des Bildes, sondern derselbe Inhalt in Sprache:
     // mit dem Screenreader ist die Aufgabe damit lösbar, nicht nur vorhanden.

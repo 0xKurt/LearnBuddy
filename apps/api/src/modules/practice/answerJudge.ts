@@ -9,6 +9,7 @@ import { t } from '../../i18n/index.js';
 import type { Answering } from './answerLoad.js';
 import type { Ruled } from './answerRules.js';
 import type { Stepped } from './answerSteps.js';
+import { codePassed, codeReply } from './codeCheck.js';
 import { columnStepOf } from './columnCalc.js';
 import { nearlyRight, dictationReply } from './dictation.js';
 import { NEAR_MISS, plainMath, typoShapeFor } from './evaluate.js';
@@ -62,7 +63,7 @@ export type Judged = {
  */
 export function judgeByRules(c: AnswerCase): Judged | null {
   const { learner, session, item, question, hintRequest, text } = c;
-  const { partsCheck, staffTask, staffCheck, dictationCheck } = c;
+  const { partsCheck, staffTask, staffCheck, codeTask, codeCheck, dictationCheck } = c;
   const { followed, rule, guided, onlyOneLeft } = c;
   if (hintRequest && !question && givesHints(session.mode) && ladderDone(item)) {
     // Asked again at the end of the ladder: the solution explained, at once, no model.
@@ -75,13 +76,21 @@ export function judgeByRules(c: AnswerCase): Judged | null {
     };
   } else if (rule === 'correct' || guided?.kind === 'solved') {
     // Right — or, in a guided example (#298), the way's last line with the key's value.
+    const praise = t(
+      learner.locale,
+      session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
+    );
+    // Her own function passed every test: the count says what "right" consisted of (#262).
+    const passed = codeCheck && codeTask ? codePassed(learner.locale, codeCheck, codeTask) : null;
     return {
       verdict: 'correct',
       // A cloze gap the model judged (issue #232) makes it the model's verdict, honestly.
       evaluatedBy: partsCheck ? structuredDecidedBy(partsCheck) : 'rule',
       reply: followed
         ? t(learner.locale, 'practice.parts.follow_on', { part: `${followed})` })
-        : t(learner.locale, session.mode === 'help' ? 'practice.help_solved' : 'practice.correct'),
+        : passed
+          ? `${passed} ${praise}`
+          : praise,
       gaveHint: false,
       revealed: false,
     };
@@ -98,6 +107,17 @@ export function judgeByRules(c: AnswerCase): Judged | null {
       verdict: 'partially_correct',
       evaluatedBy: 'rule',
       reply: staffAnswerReply(learner.locale, staffCheck, item.attempts),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (rule === 'parts_left' && codeCheck !== null) {
+    // A program of which a part holds (issue #262): the first lines of her output, or some tests
+    // of her function. The question stays open, and the reply comes from the real run ("2 von 4
+    // Tests bestanden. summe(2, 3) soll 5 ergeben …").
+    return {
+      verdict: 'partially_correct',
+      evaluatedBy: 'rule',
+      reply: codeReply(learner.locale, codeCheck, item.attempts),
       gaveHint: false,
       revealed: false,
     };
@@ -163,6 +183,19 @@ export function judgeByRules(c: AnswerCase): Judged | null {
       reply: workedReply(learner.locale, item),
       gaveHint: false,
       revealed: true,
+    };
+  } else if (givesHints(session.mode) && rule === 'incorrect' && codeCheck !== null) {
+    // A wrong answer to a program gets its line from code, at every try (issue #262). Not to save
+    // a call but because of rule 5: the tutor cannot run the program, and a model writing about
+    // the output of a program it did not run sounds sure and can be wrong. Code has the run and
+    // names what it gave — the first test that fails, the line where the output departs, SQLite's
+    // own message. The third miss explains the solution, as everywhere (the branch above).
+    return {
+      verdict: 'incorrect',
+      evaluatedBy: 'rule',
+      reply: codeReply(learner.locale, codeCheck, item.attempts),
+      gaveHint: false,
+      revealed: false,
     };
   } else if (
     givesHints(session.mode) &&

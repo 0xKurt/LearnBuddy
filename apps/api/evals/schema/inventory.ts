@@ -35,6 +35,7 @@ import * as decision from '../../src/modules/buddy/decision.js';
 import * as lookups from '../../src/modules/buddy/lookups.js';
 import * as prompts from '../../src/modules/buddy/prompts.js';
 import * as registry from '../../src/modules/buddy/registry.js';
+import * as rehearse from '../../src/modules/buddy/rehearse.js';
 import * as roleplay from '../../src/modules/buddy/roleplay.js';
 import * as summarise from '../../src/modules/buddy/summarise.js';
 import * as extract from '../../src/modules/materials/extract.js';
@@ -307,6 +308,24 @@ function variants(): Variant[] {
       system: voice.SYSTEM,
       schema: voice.SCHEMA,
       where: 'voice/service.ts',
+    },
+    {
+      purpose: 'transcribe',
+      profile: 'a rehearsal talk (#264)',
+      tier: 'smart',
+      promptVersion: rehearse.REHEARSE_PROMPT_VERSION,
+      system: rehearse.TALK_SYSTEM,
+      schema: rehearse.HEARD_SCHEMA,
+      where: 'buddy/rehearse.ts',
+    },
+    {
+      purpose: 'transcribe',
+      profile: 'reading aloud (#264)',
+      tier: 'smart',
+      promptVersion: rehearse.REHEARSE_PROMPT_VERSION,
+      system: rehearse.READ_SYSTEM,
+      schema: rehearse.HEARD_SCHEMA,
+      where: 'buddy/rehearse.ts',
     },
     {
       purpose: 'transcribe',

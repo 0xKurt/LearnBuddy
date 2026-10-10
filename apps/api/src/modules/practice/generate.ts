@@ -27,6 +27,7 @@ import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { ageOn } from '../identity/model.js';
 import { CURRICULUM_RULES, curriculumBlock, offCurriculum, pointOf } from '../curriculum/state.js';
 import { BAR_RULES, barItems } from './bars.js';
+import { CODE_RULES, codeItems } from './code.js';
 import { DICTATION_RULES, dictationItems, type DictationItem } from './dictation.js';
 import { ESSAY_RULES, essayItems } from './essayTask.js';
 import { prepareHints } from './hints.js';
@@ -219,6 +220,7 @@ Rules:
 - ${FIGURE_RULES}
 - ${BAR_RULES}
 - ${STAFF_RULES}
+- ${CODE_RULES}
 ${STRUCTURED_RULES}
 - ${PART_TASK_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
@@ -481,6 +483,8 @@ type Prepared = {
   listening: ItemDraft[];
   /** Note lines, as questions code wrote from the tasks the model chose (issue #226). */
   staffs: StoredItem[];
+  /** Programs and SQL queries, as questions whose keys code took from RUNNING them (#262). */
+  codes: StoredItem[];
   /** Orders, tables and links to make, after Regel 0 (issues #228–#230). */
   structured: StructuredItem[];
   /** A Diktat's words, each held to her list and recorded as its own key (issue #242). */
@@ -524,7 +528,7 @@ function preparedFrom(
   speech: { available: boolean; localeFor: (locale: string) => string | null },
   /** A Diktat's list (issue #242): every entry claimed as hers must stand in it. */
   dictationSource: DictationSource | null = null,
-): Prepared {
+): Omit<Prepared, 'codes'> {
   const profile = SET_PROFILES[input.kind];
   let items = atLevel(
     usableItems(
@@ -625,6 +629,22 @@ function preparedFrom(
   };
 }
 
+/**
+ * The programs and queries of a set (issue #262), added to what `preparedFrom` kept: their keys
+ * come from RUNNING them in the sandbox, which is asynchronous, so they are built here, by the two
+ * paths that store a whole answer. In practice and in tests (`SetProfile.codes`); one that does not
+ * run costs only itself.
+ */
+async function withPrograms(
+  prepared: Omit<Prepared, 'codes'>,
+  set: GeneratedSet,
+  input: StartTopicRequest,
+  locale: string,
+): Promise<Prepared> {
+  const codes = SET_PROFILES[input.kind].codes ? await codeItems(set.codes, locale) : [];
+  return { ...prepared, codes };
+}
+
 async function prepareTopic(
   deps: Deps,
   learner: PracticeLearner,
@@ -722,7 +742,12 @@ async function prepareTopic(
       learner,
       input,
       set,
-      preparedFrom(set, learner, input, !!sheets, sheets?.topics ?? null, deps.speech, dictation),
+      await withPrograms(
+        preparedFrom(set, learner, input, !!sheets, sheets?.topics ?? null, deps.speech, dictation),
+        set,
+        input,
+        learner.locale,
+      ),
       {
         now,
         goalId: sheets?.goalId ?? null,
@@ -746,6 +771,7 @@ async function prepareTopic(
       bars: [],
       listening: [],
       staffs: [],
+      codes: [],
       structured: [],
       dictation: [],
       teachBack: [],
@@ -805,6 +831,7 @@ async function store(
       prepared.bars.length +
       prepared.listening.length +
       prepared.staffs.length +
+      prepared.codes.length +
       prepared.structured.length +
       prepared.dictation.length +
       prepared.teachBack.length +
@@ -836,6 +863,7 @@ async function store(
           ...prepared.bars,
           ...prepared.listening,
           ...prepared.staffs,
+          ...prepared.codes,
           ...prepared.dictation,
           ...prepared.teachBack,
           ...prepared.reading,
@@ -908,7 +936,12 @@ async function addTheRest(
     await givenUpOnPreparing(deps.db, learner.id, sessionId);
     return;
   }
-  const prepared = preparedFrom(set, learner, input, ownSheets, sheetTopics, deps.speech);
+  const prepared = await withPrograms(
+    preparedFrom(set, learner, input, ownSheets, sheetTopics, deps.speech),
+    set,
+    input,
+    learner.locale,
+  );
   const known = new Set(head.slice(0, FIRST_BATCH).map((i) => samePrompt(i.prompt)));
   const rest: StoredItem[] = [];
   // The first questions are always ordinary `items`, so only those can repeat one of them.
@@ -930,6 +963,7 @@ async function addTheRest(
     ...prepared.bars,
     ...prepared.listening,
     ...prepared.staffs,
+    ...prepared.codes,
   );
   if (rest.length === 0) {
     await givenUpOnPreparing(deps.db, learner.id, sessionId);

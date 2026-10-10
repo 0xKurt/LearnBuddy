@@ -415,5 +415,11 @@
     "down": "Adesso non riesco a leggere la tua foto. Scrivi il tuo procedimento o riprova tra un momento.",
     "camera_blocked": "LearnBuddy non può ancora usare la fotocamera. Puoi permetterlo nelle Impostazioni – oppure scrivere il tuo procedimento.",
     "camera_failed": "La fotocamera non si è aperta. Riprova o scrivi il tuo procedimento."
+  },
+  "code": {
+    "line": "Riga {{n}}",
+    "placeholder_output": "Che cosa compare sullo schermo?",
+    "placeholder_program": "Il tuo programma …",
+    "placeholder_query": "SELECT …"
   }
 }

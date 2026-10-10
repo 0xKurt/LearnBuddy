@@ -5,17 +5,15 @@
 
 import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
-import { Card } from '../lb/Card.js';
-import { Icon } from '../lb/Icon.js';
 import { KIND_ICON, KIND_LABEL } from './kinds.js';
+import { OfferShell } from './OfferShell.js';
 import { useStartTopic } from './useStartTopic.js';
 import { reacted, tapped } from '../../lib/perf.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
@@ -87,46 +85,34 @@ export function OfferCard({
     // A bounded thing (issue #15): icon row, two lines of offer, the button. Nothing grows
     // between them — the first owner run had "Los geht's" pushed out of sight by a status
     // line that appeared above it. What is happening lives in the button itself.
-    <Card tone="primaryLt" padding={SPACE.lg} radius={18}>
-      <View style={{ gap: RHYTHM.parts }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Icon
-              name={offer.minutes !== null ? 'clock' : KIND_ICON[offer.kind]}
-              size={20}
-              color={palette.primaryDk}
-            />
-          </View>
-          <Text style={[TYPE.label, { color: palette.primaryDk }]}>{label.toUpperCase()}</Text>
-        </View>
-        <Text style={TYPE.body} numberOfLines={2}>
-          {offer.text}
+    <OfferShell icon={offer.minutes !== null ? 'clock' : KIND_ICON[offer.kind]} label={label}>
+      <Text style={TYPE.body} numberOfLines={2}>
+        {offer.text}
+      </Text>
+      {dead ? (
+        // Nothing to learn from this text: one quiet line where the button was.
+        <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
+          {t('learn:topic.not_usable')}
         </Text>
-        {dead ? (
-          // Nothing to learn from this text: one quiet line where the button was.
-          <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
-            {t('learn:topic.not_usable')}
-          </Text>
-        ) : (
-          <Btn
-            busy={preparing}
-            onPress={() => void go()}
-            accessibilityHint={`${label}: ${offer.text}`}
-          >
-            {preparing
-              ? t('learn:topic.preparing')
-              : state.status === 'failed'
-                ? t('common:actions.retry')
-                : t('learn:topic.submit')}
-          </Btn>
-        )}
-        {/* A failure says why — under the button, where nothing can push it away. */}
-        {state.status === 'failed' ? (
-          <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
-            {state.message}
-          </Text>
-        ) : null}
-      </View>
-    </Card>
+      ) : (
+        <Btn
+          busy={preparing}
+          onPress={() => void go()}
+          accessibilityHint={`${label}: ${offer.text}`}
+        >
+          {preparing
+            ? t('learn:topic.preparing')
+            : state.status === 'failed'
+              ? t('common:actions.retry')
+              : t('learn:topic.submit')}
+        </Btn>
+      )}
+      {/* A failure says why — under the button, where nothing can push it away. */}
+      {state.status === 'failed' ? (
+        <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
+          {state.message}
+        </Text>
+      ) : null}
+    </OfferShell>
   );
 }

@@ -20,6 +20,7 @@ import { REEXPLAIN_PROMPT_VERSION } from '../../modules/practice/reexplain.js';
 import { PRONOUNCE_PROMPT_VERSION } from '../../modules/practice/speak.js';
 import { WORK_PROMPT_VERSION } from '../../modules/practice/workPhoto.js';
 import { TRANSCRIBE_PROMPT_VERSION } from '../../modules/voice/service.js';
+import { REHEARSE_PROMPT_VERSION } from '../../modules/buddy/rehearse.js';
 import { promptVersion } from '../promptVersion.js';
 
 const SYSTEM = 'You write three practice questions.';
@@ -80,6 +81,7 @@ describe('promptVersion (#425)', () => {
       reexplain: REEXPLAIN_PROMPT_VERSION,
       pronounce: PRONOUNCE_PROMPT_VERSION,
       transcribe: TRANSCRIBE_PROMPT_VERSION,
+      rehearse: REHEARSE_PROMPT_VERSION,
       work: WORK_PROMPT_VERSION,
     };
     for (const [name, version] of Object.entries(versions)) {

@@ -45,7 +45,10 @@ export type SettingsRow = {
 
 export type GoalRow = {
   id: string;
-  kind: 'exam' | 'topic';
+  /** talk: a Referat, GFS, presentation or recital with its own steps (issue #264). */
+  kind: 'exam' | 'topic' | 'talk';
+  /** talk: how long it must be, in minutes, when she said so. */
+  talk_minutes?: number | null;
   title: string;
   subject_id: string | null;
   subject_name: string | null;
@@ -65,12 +68,15 @@ type StepPayload = {
   subject_id?: string | null;
   /** capture: the sheet this page joins, when it completes one she already sent (issue #118). */
   completes?: string;
+  /** task: which step of a talk it is (issue #264). */
+  stage?: 'topic' | 'outline' | 'sources' | 'slides' | 'rehearsal';
 };
 
 export type StepRow = {
   id: string;
   goal_id: string | null;
-  kind: 'practice' | 'capture';
+  /** task: a step of a talk she does herself (issue #264). */
+  kind: 'practice' | 'capture' | 'task';
   title: string;
   state: 'planned' | 'prepared' | 'in_progress' | 'done' | 'skipped' | 'cancelled';
   planned_date: string | null;
@@ -466,7 +472,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
 
   const goals = await db.query<GoalRow>(
     `select g.id, g.kind, g.title, g.subject_id, s.name as subject_name, g.due_date, g.topics,
-            g.status, g.outcome, g.version, g.created_at, g.closed_at
+            g.status, g.outcome, g.version, g.created_at, g.closed_at, g.talk_minutes
        from buddy_goals g left join subjects s on s.id = g.subject_id
       where g.learner_id = $1
         and (g.status = 'active' or g.closed_at > $2::timestamptz - interval '14 days')
