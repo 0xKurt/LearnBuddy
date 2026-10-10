@@ -1,6 +1,6 @@
 // An icon in a round disc (issue #311): the shield beside the under-16 note and on the PIN card,
-// the camera and the drop hint on the capture screen, the ways to learn on the first onboarding
-// step, the round mark of a subject, an exercise or a sheet in "Dein Material". Each wrote the
+// the ways to learn on the first onboarding step, the round mark of a subject, an exercise or a
+// sheet in "Dein Material". Each wrote the
 // same circle by hand. It only shows: what it stands for is the text beside it, so screen readers
 // skip it. Something to tap is a `<CircleBtn>`.
 

@@ -1,46 +1,13 @@
-// Conversation mode's entry: a filled round waveform button inside the
-// composer pill, right end — the size and mark she knows from the assistants
-// she uses (owner feedback 2026-09-28: waveform, not headphones; inside, not
-// bigger than the rest). Background on the inner View, never on the
-// press target (RN drops it silently there).
+// Conversation mode's entry: the filled round waveform at the input bar's end — the size and
+// mark she knows from the assistants she uses (owner feedback 2026-09-28: waveform, not
+// headphones; inside, not bigger than the rest). It holds the place the round send arrow takes
+// once there is something to send (issue #522): one filled circle per bar.
 
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
 
-import { circle } from '../../lib/theme/radius.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TOUCH } from '../../lib/theme/space.js';
-import { Icon } from '../lb/Icon.js';
-import { PressArea } from '../lb/PressArea.js';
+import { CircleBtn } from '../lb/CircleBtn.js';
 
 export function TalkButton({ onPress }: { onPress: () => void }) {
-  const { palette } = useTheme();
   const { t } = useTranslation('buddy');
-  return (
-    <PressArea
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={t('talk.open')}
-      hitSlop={6}
-    >
-      {(pressed) => (
-        <View
-          style={{
-            // TOUCH, like its neighbours in the pill: three sizes in one row put their
-            // centres 4 pt apart, which is what the owner saw (issue #134).
-            width: TOUCH,
-            height: TOUCH,
-            borderRadius: circle(TOUCH),
-            backgroundColor: palette.primary,
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: pressed ? 0.85 : 1,
-            transform: [{ scale: pressed ? 0.96 : 1 }],
-          }}
-        >
-          <Icon name="voice" size={24} color={palette.paper} />
-        </View>
-      )}
-    </PressArea>
-  );
+  return <CircleBtn icon="voice" filled onPress={onPress} accessibilityLabel={t('talk.open')} />;
 }

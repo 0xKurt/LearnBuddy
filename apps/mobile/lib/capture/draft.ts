@@ -1,5 +1,5 @@
 // Photos that are not sent yet survive the app being closed (docs/architecture.md
-// §Material; the old app lost them). While Lena takes photos, the capture screen
+// §Material; the old app lost them). While Lena takes photos, the chat's input bar
 // keeps a draft: the photos (copied where the system does not clean up), what
 // the check found, and what they are for. If the app is closed, killed or
 // updated before the photos are sent, Buddy's home offers to go on with them.

@@ -288,20 +288,18 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Nomen und Verben').last()).toBeVisible();
   // A page she forgot can be added to the sheet.
   await page.getByRole('button', { name: /^Fragen .*Nomen und Verben/ }).click();
+  // A page for this sheet: back in the chat, its + menu says what the page is for (#519).
   await page.getByRole('button', { name: 'Seite hinzufügen' }).click();
   await expect(page.getByText('Die Fragen dazu kommen zu diesem Blatt.')).toBeVisible();
-  await page.getByRole('button', { name: 'Zurück' }).click();
-  await page.getByRole('button', { name: 'Zurück' }).click();
-  await page.getByRole('button', { name: 'Zurück' }).click();
-  await page.getByRole('button', { name: 'Zurück' }).click();
+  await inSheet(page).getByRole('button', { name: 'Schließen' }).click();
+  await expect(page.getByTestId('composer')).toBeVisible();
 
   // ── Homework of two pages, the second cut off: Lena is told, and takes just that page again ──
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
   await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
-  await page.getByRole('button', { name: 'Aufgabe fotografieren' }).click();
-  await expect(page.getByText('Fotografier deine Hausaufgabe')).toBeVisible();
+  // The camera at once; the page lands in the chat's input bar (#519).
   chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Foto machen' }).click();
+  await page.getByRole('button', { name: 'Aufgabe fotografieren' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
   // The sample sheet (800 × 1080) reads well: no "sehr klein" warning (user feedback #16).
   await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
@@ -329,12 +327,12 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Seite 2: ein Stück ist abgeschnitten')).toBeVisible();
   await expect(page.getByText('Alles andere von „Hausaufgabe Quadrat“ ist fertig.')).toBeVisible();
   await shot(page, '52-page-missing');
-  await page.getByRole('button', { name: 'Nochmal fotografieren' }).click();
-  await expect(page.getByText('Seite 2 nochmal')).toBeVisible();
-  await shot(page, '53-page-again');
+  // The camera at once, for that page (#519).
   chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Foto machen' }).click();
+  await page.getByRole('button', { name: 'Nochmal fotografieren' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
+  await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
+  await shot(page, '53-page-again');
   await page.getByRole('button', { name: 'Senden' }).click();
   // The notice is answered; once page 2 is read, its task joins the same help session.
   await expect(page.getByText('Eine Seite konnte ich nicht ganz lesen')).toHaveCount(0);

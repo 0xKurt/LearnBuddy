@@ -84,9 +84,7 @@ test('core loop · plan: a test, the parent PIN, a photo → practice prepared b
   await expect(page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?')).toBeHidden();
 
   // ── The worksheet: photographed, sent, read in the background ──
-  await page.getByRole('button', { name: 'Foto machen' }).click();
-  await expect(page.getByText('Fotografier dein Blatt')).toBeVisible();
-  await shot(page, '07-capture-empty');
+  // "Foto machen" opens the camera at once; the photo lands in the chat's input bar (#519).
   const photo = await worksheetJpeg(page);
   // A blurry photo first: the phone itself says so at once, and "Neu fotografieren" replaces it.
   let chooser = page.waitForEvent('filechooser');

@@ -14,7 +14,8 @@
     "label": "Your answer",
     "placeholder": "Your answer …",
     "unit_hint": "Answer in {{unit}}",
-    "check_waits": "Only once there is something in the field."
+    "check_waits": "Only once there is something in the field.",
+    "unit_chip": "in {{unit}}"
   },
   "back_to_buddy": "Back to Buddy",
   "bar": {
@@ -401,7 +402,9 @@
     "version_other": "Version {{n}} · {{count}} words",
     "text_one": "Your text · 1 word",
     "text_other": "Your text · {{count}} words",
-    "thinking": "Buddy is reading your text …"
+    "thinking": "Buddy is reading your text …",
+    "write_title": "Your text",
+    "write_open": "Write full screen"
   },
   "work": {
     "take": "Photo of your working",

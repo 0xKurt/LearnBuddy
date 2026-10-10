@@ -1,10 +1,12 @@
 // Buddy pointed to a part of the app ("Zeig mir meine Blätter", "Ich will
 // die Sprache ändern"): one button that opens it. Nothing happens on its own.
+// A photo is no screen of its own (issue #519): its button opens the chat's + menu.
 import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 import { router, usePathname, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import { askAttach, attachInChat } from '../../lib/capture/attachRequest.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -15,13 +17,15 @@ import { Icon, type IconName } from '../lb/Icon.js';
 
 type Area = Extract<ActionSummary, { tool: 'open_area' }>['area'];
 
-const AREA_ROUTE: Record<Area, Href> = {
+const AREA_ROUTE: Record<Exclude<Area, 'capture'>, Href> = {
   library: '/library',
   memory: '/memory',
   settings: '/settings',
   history: '/history',
-  capture: '/capture',
 };
+
+/** The chat: where a photo is taken (lib/capture/attachRequest.ts). */
+const CHAT = '/buddy';
 
 const AREA_ICON: Record<Area, IconName> = {
   library: 'folder',
@@ -41,7 +45,12 @@ export function AreaCard({ area }: { area: Area }) {
   const label = t(`area.${area}`);
   // Already there (the history shows Buddy's "Verlauf" card too): no second copy of the
   // same screen on the stack (p2-history-areacard-stacks-history).
-  if (here === AREA_ROUTE[area]) return null;
+  if (area !== 'capture' && here === AREA_ROUTE[area]) return null;
+  const open = () => {
+    if (area !== 'capture') router.push(AREA_ROUTE[area]);
+    else if (here === CHAT) askAttach({ open: 'menu' });
+    else attachInChat({ open: 'menu' });
+  };
   return (
     <View
       style={[
@@ -69,12 +78,7 @@ export function AreaCard({ area }: { area: Area }) {
         <Icon name={AREA_ICON[area]} size={20} color={palette.primary} />
       </View>
       <Text style={[TYPE.body, { flex: 1, fontWeight: '600' }]}>{label}</Text>
-      <Btn
-        size="sm"
-        pill
-        onPress={() => router.push(AREA_ROUTE[area])}
-        accessibilityLabel={t('area.open_label', { what: label })}
-      >
+      <Btn size="sm" pill onPress={open} accessibilityLabel={t('area.open_label', { what: label })}>
         {t('area.open')}
       </Btn>
     </View>

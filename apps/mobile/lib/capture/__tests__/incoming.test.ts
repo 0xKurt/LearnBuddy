@@ -11,15 +11,16 @@ const f = (uri: string, mimeType: string | null, size: number | null = 1000): In
 });
 
 describe('files handed in', () => {
-  it('wait for the capture screen, then go straight to it while it is open', () => {
-    expect(handIn([f('a.pdf', 'application/pdf')])).toBe(false);
+  it("wait for the chat's bar, then go straight to it while it is there", () => {
+    handIn([f('a.pdf', 'application/pdf')]);
     const got: string[] = [];
     const stop = takeIncoming((files) => got.push(...files.map((x) => x.uri)));
     expect(got).toEqual(['a.pdf']);
-    expect(handIn([f('b.jpg', 'image/jpeg')])).toBe(true);
+    handIn([f('b.jpg', 'image/jpeg')]);
     expect(got).toEqual(['a.pdf', 'b.jpg']);
     stop();
-    expect(handIn([f('c.jpg', 'image/jpeg')])).toBe(false);
+    handIn([f('c.jpg', 'image/jpeg')]);
+    expect(got).toEqual(['a.pdf', 'b.jpg']);
     clearIncoming();
     const later: string[] = [];
     takeIncoming((files) => later.push(...files.map((x) => x.uri)))();
