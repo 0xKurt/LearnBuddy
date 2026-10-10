@@ -47,7 +47,12 @@ Postgres in `apps/api/src/__tests__/` (see [Testing](#testing)).
 ## API
 
 Hono app composed in `src/app.ts`; the same routes are served under `/`, `/v1`, `/api`,
-`/api/v1` (the app calls `/v1/…`). On Vercel the single function `apps/api/api/index.ts` gets
+`/api/v1` (the app calls `/v1/…`). `createApp` mounts the core's routes (identity, devices,
+`/buddy` behind its guards via `mountBuddy`, `/voice`), then what the learning domain registered
+at start-up (`http/plugins.ts`: `/practice`, `/materials`, and its taps on `/buddy` — starting a
+step, confirming a deletion, ending a roleplay, a rehearsal — from `modules/learning/routes.ts`),
+in registration order (issue #107). Buddy's guards hold for every route under `/buddy`, whoever
+mounts it. On Vercel the single function `apps/api/api/index.ts` gets
 every `/v1/*` and `/api/*` request through two rewrites (nested paths included; the original
 path stays in the request URL); Node is pinned by `engines` in `apps/api/package.json`, and only
 `apps/api/public/` is served statically. The workspace packages (`shared-types`, `shared-math`)

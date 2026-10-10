@@ -4,8 +4,10 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { routePlugins } from '../../../http/plugins.js';
 import { missingLookupRunners, registerLookupRunners } from '../../buddy/lookups.js';
 import { withoutCode } from '../../buddy/registry.js';
+import { startsSteps } from '../../buddy/stepStart.js';
 import { actHandler, missingActHandlers, registerActHandlers } from '../../buddy/tools.js';
 import { registerLearning } from '../register.js';
 
@@ -45,5 +47,25 @@ describe('the learning domain in the core', () => {
     expect(() => registerLookupRunners({ find_questions: () => Promise.resolve([]) })).toThrow(
       /twice/,
     );
+  });
+
+  it('mounts its routes after the core, in one order: practice, sheets, its taps on /buddy', () => {
+    registerLearning();
+    const mounted = routePlugins().flatMap((p) =>
+      p.routes.routes.map((r) => `${r.method} ${p.base}${r.path === '/' ? '' : r.path}`),
+    );
+    expect(routePlugins().map((p) => p.base)).toEqual(['/practice', '/materials', '/buddy']);
+    // The taps that left buddy/routes.ts, and a route of each module, are there.
+    expect(mounted).toEqual(
+      expect.arrayContaining([
+        'POST /practice/sessions',
+        'GET /materials',
+        'POST /buddy/roleplays/:id/end',
+        'POST /buddy/rehearsals',
+        'POST /buddy/steps/:id/start',
+        'POST /buddy/confirmations/:id',
+      ]),
+    );
+    expect(startsSteps()).toBe(true);
   });
 });

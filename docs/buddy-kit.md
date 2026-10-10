@@ -158,6 +158,13 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
    angeboten bekommt, keinen Code hat (`withoutCode()`). Was das Modell sieht (Schemas,
    Beschreibungen), steht noch im Kern: es geht in den Prompt-Hash ein und wandert mit Schnitt 5/7.
    Wächter: 71 → 63 (neu, freigegeben: die eine Naht `app.ts → learning/register.ts`).
+3. **Routen als Plugins:** `http/plugins.ts` (`registerRoutes`); `createApp` hängt sie nach den
+   Kern-Routen ein. `/practice`, `/materials` und die Domain-Taps unter `/buddy`
+   (`modules/learning/routes.ts`: Schritt starten, Löschung bestätigen, Rollenspiel beenden,
+   Probevortrag) kommen von der Domain; Buddys Wächter gelten für jeden Pfad unter `/buddy`
+   (`mountBuddy`). „Jetzt üben“ aus einer Nachricht startet den Schritt über
+   `buddy/stepStart.ts` (`registerStepStarter`). `erasureBacklog` steht in
+   `identity/retention.ts`. Wächter: 63 → 55.
 
 ## Die API-Datenbankrolle
 

@@ -18,13 +18,12 @@ import { Timeline } from './http/timing.js';
 import { isCheckViolation } from './lib/db.js';
 import { AppError, isAppError, type ErrorCode } from './lib/errors.js';
 import { olderThan } from './lib/version.js';
+import { routePlugins } from './http/plugins.js';
 import { pushDeviceRoutes } from './modules/devices/routes.js';
-import { buddyRoutes } from './modules/buddy/routes.js';
+import { mountBuddy } from './modules/buddy/routes.js';
 import { identityRoutes } from './modules/identity/routes.js';
-import { materialRoutes } from './modules/materials/routes.js';
-import { erasureBacklog } from './modules/materials/purge.js';
+import { erasureBacklog } from './modules/identity/retention.js';
 import { voiceRoutes } from './modules/voice/routes.js';
-import { practiceRoutes } from './modules/practice/routes.js';
 import { registerLearning } from './modules/learning/register.js';
 import { withoutCode } from './modules/buddy/registry.js';
 import { missingMigrations } from './lib/migrations.js';
@@ -216,10 +215,10 @@ export function createApp(deps: Deps): Hono<AppEnv> {
 
   api.route('/', identityRoutes);
   api.route('/', pushDeviceRoutes);
-  api.route('/buddy', buddyRoutes);
-  api.route('/practice', practiceRoutes);
-  api.route('/materials', materialRoutes);
+  mountBuddy(api, '/buddy');
   api.route('/voice', voiceRoutes);
+  // What the domain added (practice, worksheets, its taps on Buddy's surface), in its order.
+  for (const plugin of routePlugins()) api.route(plugin.base, plugin.routes);
 
   // The app calls /v1/…; Vercel rewrites /v1/* to the /api function, and the
   // Node server serves the same routes without a prefix.

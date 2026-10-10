@@ -4,6 +4,7 @@
 // in this one place and in this order — app start-up (`createApp`) calls `registerLearning()`
 // once and then checks that nothing the core declares is left without its code.
 
+import { registerRoutes } from '../../http/plugins.js';
 import { findQuestions, recentResults } from '../buddy/connectors/practice.js';
 import { searchMaterials } from '../buddy/connectors/material.js';
 import { registerLookupRunners } from '../buddy/lookups.js';
@@ -16,8 +17,13 @@ import {
 import { runPreparePractice } from '../buddy/practiceTool.js';
 import { runStartRoleplay } from '../buddy/roleplay.js';
 import { runOfferRehearsal, runPlanTalk } from '../buddy/talkTools.js';
+import { registerStepStarter } from '../buddy/stepStart.js';
 import { registerActHandlers } from '../buddy/tools.js';
+import { materialRoutes } from '../materials/routes.js';
 import { runOfferDrill, runOfferLearning } from '../practice/offerTools.js';
+import { practiceRoutes } from '../practice/routes.js';
+import { startFromStep } from '../practice/service.js';
+import { learningBuddyRoutes } from './routes.js';
 
 let registered = false;
 
@@ -47,4 +53,14 @@ export function registerLearning(): void {
     practice_history: (c, a) => recentResults(c.deps.db, c.learnerId, c.timezone, a.topic, 6),
     find_questions: (c, a) => findQuestions(c.deps.db, c.learnerId, a.query, 8),
   });
+
+  // Its HTTP surface: practice runs, her sheets, and its taps on Buddy's surface.
+  registerRoutes(
+    { base: '/practice', routes: practiceRoutes },
+    { base: '/materials', routes: materialRoutes },
+    { base: '/buddy', routes: learningBuddyRoutes },
+  );
+
+  // A prepared step started from a phone message is a practice run.
+  registerStepStarter(startFromStep);
 }

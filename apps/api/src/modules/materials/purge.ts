@@ -24,8 +24,6 @@ const MEMORY_UNDO_DAYS = 7;
  * that arrive later are removed by a second purge once no URL can deliver any more.
  */
 export const UPLOAD_URL_TTL_MS = 2 * 3_600_000;
-/** Storage deletions waiting longer than this are reported by /health. */
-const ERASURE_OVERDUE_MS = 86_400_000;
 
 const DAY = 86_400_000;
 
@@ -317,20 +315,6 @@ export async function purgeClosedMemories(deps: Deps): Promise<number> {
     }
     return gone.length;
   });
-}
-
-/** Counts for /health: erasure that is later than promised. */
-export async function erasureBacklog(
-  db: Db,
-  now: Date,
-): Promise<{ overdue_deletions: number; overdue_photo_deletions: number }> {
-  const before = new Date(now.getTime() - ERASURE_OVERDUE_MS);
-  const row = await db.one<{ accounts: number; photos: number }>(
-    `select (select count(*) from accounts where deletion_due_at < $1)::int as accounts,
-            (select count(*) from storage_deletions where created_at < $1)::int as photos`,
-    [before],
-  );
-  return { overdue_deletions: row.accounts, overdue_photo_deletions: row.photos };
 }
 
 /**
