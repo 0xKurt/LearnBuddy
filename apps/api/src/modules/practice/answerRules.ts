@@ -6,11 +6,12 @@
 
 import type { Deps } from '../../deps.js';
 import { AppError } from '../../lib/errors.js';
+import { consume, limitError } from '../../lib/limits.js';
 import { pointOf } from '../curriculum/state.js';
 import type { Answering } from './answerLoad.js';
 import { taskOf } from './bars.js';
 import { codeTaskOf } from './code.js';
-import { checkCode, pickedLine, writtenCode, type CodeCheck } from './codeCheck.js';
+import { checkCode, pickedLine, runsCode, writtenCode, type CodeCheck } from './codeCheck.js';
 import { checkDictation, type DictationCheck } from './dictation.js';
 import { differentNumber, ruleCheck, type RuleVerdict } from './evaluate.js';
 import { listenTaskOf } from './listen.js';
@@ -22,6 +23,19 @@ import { checkStaffAnswer, staffTaskOf, type StaffAnswerCheck } from './staff.js
 import { answerTextOf } from './structured.js';
 import { tappedAnswerText } from './tapCheck.js';
 import { explanationSoFar, NOTHING_EXPLAINED } from './teachBack.js';
+
+/**
+ * A run of her function or query in the sandbox takes one from her account's hourly budget
+ * (`code_runs`, docs/architecture.md §Limits): each run holds the API's thread for up to 2.5 s.
+ */
+async function spendCodeRun(deps: Deps, learnerId: string): Promise<void> {
+  const { account_id } = await deps.db.one<{ account_id: string }>(
+    `select account_id from learners where id = $1`,
+    [learnerId],
+  );
+  const budget = await consume(deps.db, 'code_runs', account_id, deps.now());
+  if (!budget.allowed) throw limitError(budget);
+}
 
 /** What the rules made of her answer: the verdict by key and what it was read from. */
 export type Ruled = Awaited<ReturnType<typeof ruleVerdict>>;
@@ -61,6 +75,7 @@ export async function ruleVerdict(deps: Deps, a: Answering) {
   // the sandbox (`codeCheck.ts`), never by a model. "Which line?" takes only a line number of the
   // program shown; anything else is a form the question never offered.
   const codeTask = codeTaskOf(item.code_task);
+  if (codeTask !== null && !hintRequest && runsCode(codeTask)) await spendCodeRun(deps, learner.id);
   const codeCheck: CodeCheck | null =
     hintRequest || codeTask === null ? null : await checkCode(codeTask, input.text ?? '');
   if (codeTask?.task === 'find_error' && !hintRequest && codeCheck === null) {

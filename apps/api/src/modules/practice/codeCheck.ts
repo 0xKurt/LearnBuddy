@@ -105,6 +105,11 @@ async function checkFunction(
   return { held: passed, total, verdict, fault: first };
 }
 
+/** Whether checking her answer RUNS it in the sandbox: her function and her query do. */
+export function runsCode(task: CodeTask): boolean {
+  return task.task === 'write_function' || task.task === 'sql_query';
+}
+
 /**
  * Her answer against the task. No model, in no branch. Null only means: for "which line?" no line
  * number of the program arrived — a form the question never offered; the caller refuses it.

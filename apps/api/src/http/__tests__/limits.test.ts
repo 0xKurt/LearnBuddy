@@ -19,6 +19,8 @@ describe('the hourly budget covers every expensive request', () => {
   it('messages to Buddy and dictation', () => {
     expect(scopeFor('POST', '/buddy/messages')).toBe('messages');
     expect(scopeFor('POST', '/voice/transcribe')).toBe('voice');
+    // A rehearsal (issue #264) parses up to 3 MB of recording like a dictation (PR #536 review).
+    expect(scopeFor('POST', '/buddy/rehearsals')).toBe('voice');
   });
 
   it('account and learner writes carry the signup budget (issue #72)', () => {

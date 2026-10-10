@@ -80,8 +80,57 @@ function skulptSources(): Sources {
  * output into a bounded buffer, imports only from the allowed files, `input()` refused, and an
  * error turned into {type, line, message}. Skulpt lists the frames innermost first; the line is
  * the innermost one in the program, where Python itself would point.
+ *
+ * Skulpt's two bridges into JavaScript (`jseval`, `jsmillis`) are removed before any program
+ * runs: the wall around the server is QuickJS, but the JavaScript of the JOB — which checks her
+ * function and writes the result — lives inside it too, and a program that could rewrite it
+ * could report any test as passed (PR #536 review). Without them Python reaches no JavaScript.
+ *
+ * `__plain` reads a value as the check compares it, in JavaScript her program cannot touch: only
+ * Python's plain types, each by its EXACT type (a subclass or an object with its own `__eq__` is
+ * no plain value), at most 2 000 parts and 20 levels deep (a list that holds itself is not one).
  */
 const PRELUDE = `
+delete Sk.builtins.jseval;
+delete Sk.builtins.jsmillis;
+var __none = Sk.builtin.none.none$;
+function __plain(value) {
+  var nodes = 0;
+  function walk(v, depth) {
+    if (v === undefined || v === null || ++nodes > 2000 || depth > 20) return null;
+    if (v === __none) return { none: true };
+    var t = v.ob$type;
+    if (t === Sk.builtin.bool) return { bool: v === Sk.builtin.bool.true$ };
+    if (t === Sk.builtin.int_) return { int: String(Sk.misceval.objectRepr(v)) };
+    if (t === Sk.builtin.float_) return { float: String(v.v) };
+    if (t === Sk.builtin.str) return { str: v.v };
+    if (t === Sk.builtin.list || t === Sk.builtin.tuple) {
+      var items = [];
+      for (var i = 0; i < v.v.length; i++) {
+        var item = walk(v.v[i], depth + 1);
+        if (item === null) return null;
+        items.push(item);
+      }
+      return t === Sk.builtin.list ? { list: items } : { tuple: items };
+    }
+    if (t === Sk.builtin.dict) {
+      var pairs = v.$items();
+      var entries = [];
+      for (var j = 0; j < pairs.length; j++) {
+        var key = walk(pairs[j][0], depth + 1);
+        var val = walk(pairs[j][1], depth + 1);
+        if (key === null || val === null) return null;
+        entries.push([key, val]);
+      }
+      return { dict: entries };
+    }
+    return null;
+  }
+  return walk(value, 0);
+}
+function __repr(v) {
+  try { return String(Sk.misceval.objectRepr(v)).slice(0, 200); } catch (e) { return '?'; }
+}
 var __out = '';
 var __over = false;
 var __files = JSON.parse(FILES);
@@ -127,29 +176,16 @@ const PROGRAM_JOB = `
 `;
 
 /**
- * Equality as a test checks it, in Python itself: ==, but True is not 1, a list is not a tuple,
- * and floats are equal within a relative tolerance (0.1 + 0.2 is 0.3 computed another way).
+ * The tests are read BEFORE her program is loaded, their expected values as plain values: nothing
+ * her program does later changes them. Per call the job hands back the value as a plain value
+ * (`__plain`) and its repr for the reply; the comparison itself is `samePlain`, outside the engine.
  */
-const SAME_PY = `
-def __same__(a, b):
-    if isinstance(a, bool) or isinstance(b, bool):
-        return type(a) == type(b) and a == b
-    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
-        if isinstance(a, float) or isinstance(b, float):
-            return abs(a - b) <= max(1e-9 * max(abs(a), abs(b)), 1e-12)
-        return a == b
-    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
-        if type(a) != type(b) or len(a) != len(b):
-            return False
-        for i in range(len(a)):
-            if not __same__(a[i], b[i]):
-                return False
-        return True
-    return type(a) == type(b) and a == b
-`;
-
 const FUNCTION_JOB = `
 (function () {
+  var harness = Sk.importMainWithBody('pruefung', false, HARNESS, false);
+  var cases = harness.$d.__cases__.v.map(function (c) {
+    return { args: c.v[0].v, expected: __plain(c.v[1]) };
+  });
   var mod;
   try {
     mod = Sk.importMainWithBody('loesung', false, SOURCE, false);
@@ -161,34 +197,71 @@ const FUNCTION_JOB = `
   if (!(fn instanceof Sk.builtin.func)) return JSON.stringify({ kind: 'missing' });
   var code = fn.func_code;
   var params = code && code.co_varnames ? code.co_varnames.length : -1;
-  var harness = Sk.importMainWithBody('pruefung', false, HARNESS, false);
-  var cases = harness.$d.__cases__.v;
-  var same = harness.$d.__same__;
   var results = [];
   for (var i = 0; i < cases.length; i++) {
-    var args = cases[i].v[0].v;
-    var expected = cases[i].v[1];
     var before = __out.length;
     var value;
     try {
-      value = Sk.misceval.callsimArray(fn, args);
+      value = Sk.misceval.callsimArray(fn, cases[i].args);
     } catch (e) {
       if (__over) return JSON.stringify({ kind: 'limit', limit: 'output' });
       results.push({ kind: 'error', error: __failure(e) });
       continue;
     }
     var printed = __out.length > before;
-    if (value === Sk.builtin.none.none$) { results.push({ kind: 'none', printed: printed }); continue; }
-    results.push({
-      kind: 'value',
-      repr: Sk.misceval.objectRepr(value),
-      same: Sk.misceval.isTrue(Sk.misceval.callsimArray(same, [expected, value])),
-      printed: printed
-    });
+    if (value === __none) { results.push({ kind: 'none', printed: printed }); continue; }
+    var repr = __repr(value);
+    if (__over) return JSON.stringify({ kind: 'limit', limit: 'output' });
+    results.push({ kind: 'value', repr: repr, value: __plain(value), printed: printed });
   }
-  return JSON.stringify({ kind: 'ran', params: params, results: results });
+  var expected = cases.map(function (c) { return c.expected; });
+  return JSON.stringify({ kind: 'ran', params: params, expected: expected, results: results });
 })()
 `;
+
+/** A value as the check compares it (`__plain`): Python's plain types, each by its exact type. */
+type Plain =
+  | { none: true }
+  | { bool: boolean }
+  | { int: string }
+  | { float: string }
+  | { str: string }
+  | { list: Plain[] }
+  | { tuple: Plain[] }
+  | { dict: Array<[Plain, Plain]> };
+
+function numberOf(p: Plain): number | null {
+  if ('int' in p) return Number(p.int);
+  return 'float' in p ? Number(p.float) : null;
+}
+
+const sameItems = (a: readonly Plain[], b: readonly Plain[]): boolean =>
+  a.length === b.length && a.every((x, i) => samePlain(x, b[i]!));
+
+/**
+ * Equality as a test checks it: Python's ==, but True is not 1, a list is not a tuple, and floats
+ * are equal within a relative tolerance (0.1 + 0.2 is 0.3 computed another way) — at every depth.
+ */
+function samePlain(a: Plain, b: Plain): boolean {
+  if ('int' in a && 'int' in b) return a.int === b.int;
+  const x = numberOf(a);
+  const y = numberOf(b);
+  if (x !== null || y !== null) {
+    if (x === null || y === null) return false;
+    return Math.abs(x - y) <= Math.max(1e-9 * Math.max(Math.abs(x), Math.abs(y)), 1e-12);
+  }
+  if ('none' in a) return 'none' in b;
+  if ('bool' in a) return 'bool' in b && a.bool === b.bool;
+  if ('str' in a) return 'str' in b && a.str === b.str;
+  if ('list' in a) return 'list' in b && sameItems(a.list, b.list);
+  if ('tuple' in a) return 'tuple' in b && sameItems(a.tuple, b.tuple);
+  return (
+    'dict' in a &&
+    'dict' in b &&
+    a.dict.length === b.dict.length &&
+    a.dict.every(([k, v]) => b.dict.some(([k2, v2]) => samePlain(k, k2) && samePlain(v, v2)))
+  );
+}
 
 async function run(job: string, globals: Record<string, string>, limits: SandboxLimits) {
   const { skulpt, files } = skulptSources();
@@ -239,21 +312,36 @@ export async function runFunction(
   limits: SandboxLimits = FUNCTION_LIMITS,
 ): Promise<FunctionRun> {
   const list = cases.map((c) => `((${c.args},), ${c.expected})`).join(', ');
-  const harness = `${SAME_PY}\n__cases__ = [${list}]\n`;
+  const harness = `__cases__ = [${list}]\n`;
   const result = (await run(
     FUNCTION_JOB,
     { SOURCE: source, NAME: name, HARNESS: harness },
     limits,
-  )) as FunctionRun;
+  )) as JobRun;
   if (result.kind === 'module_error' && exhausted(result.error)) return MEMORY;
-  if (
-    result.kind === 'ran' &&
-    result.results.some((r) => r.kind === 'error' && exhausted(r.error))
-  ) {
-    return MEMORY;
-  }
-  return result;
+  if (result.kind !== 'ran') return result;
+  if (result.results.some((r) => r.kind === 'error' && exhausted(r.error))) return MEMORY;
+  const results = result.results.map((r, i): CallResult => {
+    if (r.kind !== 'value') return r;
+    const expected = result.expected[i] ?? null;
+    const same = expected !== null && r.value !== null && samePlain(expected, r.value);
+    return { kind: 'value', repr: r.repr, same, printed: r.printed };
+  });
+  return { kind: 'ran', params: result.params, results };
 }
+
+/** What `FUNCTION_JOB` hands back: values as plain values (null: none), compared here. */
+type JobRun =
+  | Exclude<FunctionRun, { kind: 'ran' }>
+  | {
+      kind: 'ran';
+      params: number;
+      expected: Array<Plain | null>;
+      results: Array<
+        | Exclude<CallResult, { kind: 'value' }>
+        | { kind: 'value'; repr: string; value: Plain | null; printed: boolean }
+      >;
+    };
 
 // ─────────────── literals ───────────────
 
@@ -265,6 +353,10 @@ const LITERAL_TOKEN =
  * Is this a Python literal and nothing else — numbers, strings, True/False/None, lists, tuples
  * and dicts of them, brackets balanced? A test's arguments and expected value are built into the
  * harness as source, so anything else (a call, a name) is refused before it could run.
+ *
+ * Two values never stand side by side: `"a" "b"` is one string to Python, `(1)(2)` a call — and
+ * `''' ' '''` is ONE triple-quoted string to Python where the tokens here see three, so code
+ * between two such runs would run (PR #536 review).
  */
 export function isLiteral(source: string): boolean {
   const pairs: Record<string, string> = { ')': '(', ']': '[', '}': '{' };
@@ -272,13 +364,18 @@ export function isLiteral(source: string): boolean {
   LITERAL_TOKEN.lastIndex = 0;
   let at = 0;
   let tokens = 0;
+  let afterValue = false;
   while (at < source.length) {
     if (source.slice(at).trim() === '') break;
     LITERAL_TOKEN.lastIndex = at;
     const m = LITERAL_TOKEN.exec(source);
     if (!m) return false;
     const token = m[0].trim();
-    if (token === '(' || token === '[' || token === '{') open.push(token);
+    const separator = token === ',' || token === ':';
+    const opening = token === '(' || token === '[' || token === '{';
+    if (afterValue && !separator && !(token in pairs)) return false;
+    afterValue = !separator && !opening;
+    if (opening) open.push(token);
     else if (token in pairs && open.pop() !== pairs[token]) return false;
     at = LITERAL_TOKEN.lastIndex;
     tokens++;

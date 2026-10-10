@@ -96,7 +96,12 @@ export async function runQuery(table: SqlTable, query: string): Promise<SqlRun> 
     }
 
     // ── from here on, her statement: read only, limited ──
-    capi.sqlite3_limit(db, capi.SQLITE_LIMIT_LENGTH, 100_000);
+    // Short on purpose (PR #536 review): one function call is ONE step for the progress handler,
+    // and `instr` over two 100 000-character strings took a second — per row. At 2 000 characters
+    // (a school table's cells hold 30) a call takes well under a millisecond. A LIKE/GLOB pattern
+    // recurses per wildcard: thousands of them overflowed the HOST stack inside the WebAssembly.
+    capi.sqlite3_limit(db, capi.SQLITE_LIMIT_LENGTH, 2_000);
+    capi.sqlite3_limit(db, capi.SQLITE_LIMIT_LIKE_PATTERN_LENGTH, 100);
     capi.sqlite3_limit(db, capi.SQLITE_LIMIT_SQL_LENGTH, 4_000);
     capi.sqlite3_limit(db, capi.SQLITE_LIMIT_EXPR_DEPTH, 100);
     capi.sqlite3_limit(db, capi.SQLITE_LIMIT_COMPOUND_SELECT, 20);
@@ -114,7 +119,7 @@ export async function runQuery(table: SqlTable, query: string): Promise<SqlRun> 
       0,
     );
     const deadline = Date.now() + SQL_DEADLINE_MS;
-    capi.sqlite3_progress_handler(db, 1_000, () => (Date.now() > deadline ? 1 : 0), 0);
+    capi.sqlite3_progress_handler(db, 100, () => (Date.now() > deadline ? 1 : 0), 0);
 
     const statements: string[] = [];
     const names: string[] = [];

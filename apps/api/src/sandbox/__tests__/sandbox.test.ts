@@ -5,7 +5,13 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { runFunction, runProgram, isLiteral, type ProgramRun } from '../python.js';
+import {
+  runFunction,
+  runProgram,
+  isLiteral,
+  type FunctionRun,
+  type ProgramRun,
+} from '../python.js';
 import { runIsolated } from '../quickjs.js';
 import { runQuery, type SqlTable } from '../sql.js';
 
@@ -71,13 +77,10 @@ describe('python: what a program prints and where it stops', () => {
   it('reaches nothing of the server: no module but math, no input, no host objects', async () => {
     expect(ran(await runProgram('import os')).error?.type).toBe('ImportError');
     expect(ran(await runProgram('x = input()')).error?.message).toMatch(/input/);
-    // Skulpt's own escape hatch leads into the empty engine, never into Node.
-    const host = ran(
-      await runProgram(
-        'print(jseval("typeof process + typeof require + typeof fetch + typeof setTimeout"))',
-      ),
-    );
-    expect(host.output).toBe('undefinedundefinedundefinedundefined\n');
+    // Skulpt's own bridges into JavaScript are gone: from inside, the JavaScript that checks her
+    // function (and builds the JSON of the result) could be rewritten (PR #536 review).
+    expect(ran(await runProgram('jseval("1")')).error?.type).toBe('NameError');
+    expect(ran(await runProgram('jsmillis()')).error?.type).toBe('NameError');
   });
 
   it('runs a function on test cases: values, Python equality, print instead of return, errors', async () => {
@@ -122,6 +125,87 @@ describe('python: what a program prints and where it stops', () => {
     for (const bad of ['print(1)', '__import__("os")', '(1', '1)', 'x', '']) {
       expect(isLiteral(bad)).toBe(false);
     }
+    // Two strings side by side are one to Python — and `''' ' '''` is ONE triple-quoted string
+    // whose end lies elsewhere than the tokens suggest: code between two such runs would run.
+    for (const bad of [
+      `''' ' ''' + str(len("abc")) + ''' ' '''`,
+      `""" " """ + str(1) + """ " """`,
+      '"a" "b"',
+      '(1)(2)',
+      '[1][0]',
+      'True(1)',
+    ]) {
+      expect(isLiteral(bad), bad).toBe(false);
+    }
+    expect(isLiteral('((1, 2,),)')).toBe(true);
+  });
+});
+
+describe('python: her function cannot talk the check into a pass (PR #536 review)', () => {
+  const TESTS = [
+    { args: '2, 3', expected: '5' },
+    { args: '1, 1', expected: '2' },
+    { args: '0, 0', expected: '0' },
+  ];
+  const passes = (r: FunctionRun) =>
+    r.kind === 'ran' && r.results.every((x) => x.kind === 'value' && x.same);
+
+  it('not by rewriting the JavaScript that compares or reports', async () => {
+    for (const patch of [
+      'Sk.misceval.isTrue = function () { return true; }',
+      "var s = JSON.stringify; JSON.stringify = function (o) { if (o && o.results) o.results.forEach(function (r) { r.kind = 'value'; r.same = true; }); return s(o); }",
+    ]) {
+      const program = `jseval(${JSON.stringify(patch)})\ndef summe(a, b):\n    return 0\n`;
+      expect(passes(await runFunction(program, 'summe', TESTS))).toBe(false);
+    }
+  });
+
+  it('not by an object that claims to equal everything, also inside a dict or a list', async () => {
+    const liar =
+      'class E:\n    def __eq__(self, o):\n        return True\n    def __hash__(self):\n        return 1\n';
+    for (const [body, tests] of [
+      ['return E()', TESTS],
+      ['return [E()]', TESTS.map((t) => ({ ...t, expected: `[${t.expected}]` }))],
+      ['return {"a": E()}', TESTS.map((t) => ({ ...t, expected: `{"a": ${t.expected}}` }))],
+      ['return {E(): 1}', TESTS.map((t) => ({ ...t, expected: `{${t.expected}: 1}` }))],
+    ] as const) {
+      const program = `${liar}def summe(a, b):\n    ${body}\n`;
+      expect(passes(await runFunction(program, 'summe', tests)), body).toBe(false);
+    }
+  });
+
+  it('a repr that raises or a list that holds itself is a wrong value, not a failed sandbox', async () => {
+    const raising =
+      'class E:\n    def __repr__(self):\n        raise ValueError("x")\ndef summe(a, b):\n    return E()\n';
+    const r = await runFunction(raising, 'summe', TESTS);
+    expect(r.kind).toBe('ran');
+    expect(passes(r)).toBe(false);
+    const selfish = 'def summe(a, b):\n    l = []\n    l.append(l)\n    return l\n';
+    const s = await runFunction(selfish, 'summe', TESTS);
+    expect(s.kind).toBe('ran');
+    expect(passes(s)).toBe(false);
+  });
+
+  it("keeps Python's equality for plain values: dicts in any order, floats within a tolerance", async () => {
+    const r = await runFunction(
+      'def f(a):\n    if a == 1:\n        return {"b": [1, 0.1 + 0.2], "a": None}\n    if a == 2:\n        return (1, 2)\n    if a == 3:\n        return 1\n    return 10 ** 30\n',
+      'f',
+      [
+        { args: '1', expected: '{"a": None, "b": [1, 0.3]}' },
+        { args: '2', expected: '[1, 2]' },
+        { args: '3', expected: 'True' },
+        { args: '4', expected: '1000000000000000000000000000000' },
+        { args: '4', expected: '1e30' },
+      ],
+    );
+    if (r.kind !== 'ran') throw new Error(JSON.stringify(r));
+    expect(r.results.map((x) => x.kind === 'value' && x.same)).toEqual([
+      true,
+      false,
+      false,
+      true,
+      true,
+    ]);
   });
 });
 
@@ -129,14 +213,19 @@ describe('the engine itself', () => {
   it('hands nothing back but the JSON its script evaluates to', async () => {
     expect(
       await runIsolated(
-        [{ name: 'a.js', code: 'JSON.stringify(typeof require)' }],
+        [
+          {
+            name: 'a.js',
+            code: 'JSON.stringify([typeof require, typeof process, typeof fetch, typeof setTimeout].join())',
+          },
+        ],
         {},
         {
           ms: 500,
           memory: 8 << 20,
         },
       ),
-    ).toEqual({ json: '"undefined"' });
+    ).toEqual({ json: '"undefined,undefined,undefined,undefined"' });
   });
 });
 
@@ -200,6 +289,30 @@ describe('sql: one read-only query on a fresh table', () => {
     expect(await runQuery(TABLE, 'select length(randomblob(1000000000))')).toEqual({
       kind: 'limit',
       limit: 'size',
+    });
+  });
+
+  it('no single function call outruns the deadline (PR #536 review)', async () => {
+    // One `instr` over long strings is ONE step of SQLite's machine: the progress handler sees it
+    // only after it returned. Repeated per row, it held the event loop for seconds per row.
+    const slow = (rows: number, hay: number, needle: number) =>
+      `with recursive c(x) as (select 1 union all select x + 1 from c limit ${rows})
+       select max(instr(printf('%.*c', ${hay} - x % 2, 'a'), printf('%.*c', ${needle}, 'a') || 'b')) from c`;
+    for (const q of [slow(5, 99_000, 49_000), slow(1_000_000, 2_000, 1_000)]) {
+      const t0 = Date.now();
+      expect((await runQuery(TABLE, q)).kind).toBe('limit');
+      expect(Date.now() - t0).toBeLessThan(1_200);
+    }
+    // A LIKE pattern of thousands of wildcards recursed until the HOST stack overflowed.
+    const like = await runQuery(
+      TABLE,
+      "select printf('%.*c', 1900, 'a') like (replace(printf('%.*c', 900, 'x'), 'x', '%a') || 'b')",
+    );
+    expect(like).toEqual({ kind: 'error', message: 'LIKE or GLOB pattern too complex' });
+    expect(await runQuery(TABLE, "select name from schueler where name like '%a%'")).toEqual({
+      kind: 'rows',
+      columns: ['name'],
+      rows: [['Ada'], ['Dora']],
     });
   });
 

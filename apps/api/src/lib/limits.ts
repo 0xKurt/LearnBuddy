@@ -46,6 +46,12 @@ export const POLICIES = {
   /** Dictation (speech to text): like answers — a script, not a learner (issue #86). */
   voice: { limit: 600, windowMs: HOUR },
   /**
+   * Her function or query RUN in the sandbox (issue #262): each run holds the API's thread for up
+   * to 2.5 s (PR #536 review). Two a minute for an hour — a practice set has at most six programs
+   * of three tries each; what goes beyond it is a script pinning the server's CPU.
+   */
+  code_runs: { limit: 120, windowMs: HOUR },
+  /**
    * Re-agreeing and profile writes (issue #72). Creating an account is 1:1 with a
    * Supabase-gated sign-up, so its volume is bounded upstream — what this bounds is a
    * script hammering the idempotent POSTs with one stolen token: each call writes rows.

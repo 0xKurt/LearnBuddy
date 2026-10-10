@@ -1,7 +1,8 @@
 // Per-account request budgets for the endpoints a script could hammer
 // (docs/architecture.md §Limits, ADR 0006): practice answers (typed and spoken)
 // 600 an hour, messages to Buddy 120 an hour — abuse protection far above what
-// a learner does, never a limit on normal use. One middleware in app.ts, in
+// a learner does, never a limit on normal use (a sandbox run of her code has a
+// budget of its own, taken where it runs: `practice/answerRules.ts`). One middleware in app.ts, in
 // front of the module routes, using the shared primitive in lib/limits.ts.
 // Refused requests get 429 with Retry-After and change nothing.
 
@@ -23,6 +24,8 @@ const BUDGETED: Array<{ scope: LimitScope; method: string; path: RegExp }> = [
   // Dictation parses up to 2 MB per request before the daily model cap answers 429 —
   // without an hourly budget those rounds were unbounded per account (issue #86).
   { scope: 'voice', method: 'POST', path: /\/voice\/transcribe$/ },
+  // A rehearsal (issue #264) parses up to 3 MB of recording the same way (PR #536 review).
+  { scope: 'voice', method: 'POST', path: /\/buddy\/rehearsals$/ },
   // Account and learner writes (issue #72): idempotent, but each call costs rows. The
   // first POST /account of a fresh user has no account yet and passes uncounted — its
   // volume is bounded by the Supabase sign-up it needs; everything after is counted.

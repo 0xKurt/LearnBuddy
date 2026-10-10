@@ -190,6 +190,30 @@ describe.skipIf(!dbReady)('Informatik: Programme und Abfragen', () => {
     expect(ok.body.verdict).toBe('correct');
   });
 
+  it('runs her code only within the hourly budget per account; reading answers stay free', async () => {
+    const session = await prepare([PREDICT, WRITE, QUERY]);
+    const [predict, write, query] = session.items.map((si) => si.item.id);
+    // The budget spent: a script, not a learner (PR #536 review — each run holds the API's thread).
+    await env.db.query(
+      `insert into attempt_counters (scope, account_id, window_start, count, updated_at)
+       values ('code_runs', $1, $2, 120, $2)`,
+      [l.accountId, env.clock.now()],
+    );
+    const fn = await answer(session.id, write!, 'def verdoppeln(zahl):\n    return zahl * 2');
+    expect(fn.status).toBe(429);
+    expect(fn.body).toMatchObject({ error: { code: 'rate_limited' } });
+    expect((await answer(session.id, query!, 'select name from schueler')).status).toBe(429);
+    // Nothing was counted as a try.
+    const view = await l.api.get<SessionView>(`/practice/sessions/${session.id}`);
+    expect(view.body.items.map((si) => si.attempts)).toEqual([0, 0, 0]);
+    // An output is compared, not run: it never needs the budget.
+    expect((await answer(session.id, predict!, '1\n3\n6')).body.verdict).toBe('correct');
+    // The hour over, her function runs again.
+    env.clock.hours(1);
+    const again = await answer(session.id, write!, 'def verdoppeln(zahl):\n    return zahl * 2');
+    expect(again.body.verdict).toBe('correct');
+  });
+
   it('shows the proven solution once the question is closed, and never in between', async () => {
     const session = await prepare([WRITE]);
     const id = session.items[0]!.item.id;
