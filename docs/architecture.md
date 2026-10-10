@@ -4651,7 +4651,9 @@ word list, so it stays a prompt rule.
   set apart by spaces. A `$` right
   before a digit never closes math and one followed by a space never opens it, so prices
   ("$5 and $3") stay text. LaTeX the model forgot to wrap is wrapped server-side — in a sentence
-  only the math runs (`practice/dollarMath.ts`), a math field as a whole — and rule checks
+  only the math runs (`practice/dollarMath.ts`), a math field as a whole, and an option that is
+  a plain fraction or mixed number ("2/3", "1 1/2") is set as one (`fractionChoice`, issue #521:
+  her tile and her answer bubble showed a slash) — and rule checks
   compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
   when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
   may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table,
@@ -4664,6 +4666,15 @@ word list, so it stays a prompt rule.
   A figure is drawn to be READ. What she can work with is a `surface` — today the Bruchbalken
   (§Practice above, issue #162), whose question, picture and key are computed from one reviewed
   task instead of written by the model.
+- **The options stay after the answer** (issue #521) — "Welcher Bruch ist größer?" with the
+  fractions only in the options read as a question without fractions once it was answered: the
+  options were drawn only while it was open. Now a closed multiple choice keeps them above
+  "Weiter", read only (`AnswerArea` → `ChoiceList settled`, `lib/practice/choiceMarks.ts`): hers
+  tinted with "Deine Wahl" and a check or a cross where verdicts are shown (plainly hers in a
+  running test), the right one with "Lösung" only when the server sent the solution
+  (never in homework help, never during a test) — which makes the solution card redundant there,
+  so a multiple choice has none. And every question writer is told to name what is compared in
+  the stem itself (`CHOICE_RULES`, generation and extraction).
 - **Pictures as options** (issue #231, migration `0080_choice_figures.sql`) — a multiple choice
   may carry `choice_figures`: one `Figure` per option, any type, parallel to `choices` (all or
   none, 2–4, so they fit a 2×2 grid). A parallel list rather than a new shape for `choices`:

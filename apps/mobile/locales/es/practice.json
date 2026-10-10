@@ -45,6 +45,7 @@
   "check": "Comprobar",
   "choice_tried": "Ya la has probado",
   "choice_zoom_hint": "Mantén pulsado para ver la imagen en grande.",
+  "choice_mine": "Tu elección",
   "dispute": {
     "button": "Reclamar",
     "label": "Reclamar la corrección",

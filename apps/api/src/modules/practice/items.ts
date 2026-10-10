@@ -33,7 +33,7 @@ import { z } from 'zod';
 
 import type { Db } from '../../lib/db.js';
 import { CurriculumPointId } from '../curriculum/state.js';
-import { dollarMathField, dollarMathRuns } from './dollarMath.js';
+import { dollarMathField, dollarMathRuns, fractionChoice } from './dollarMath.js';
 import { figureHolds } from './figureCheck.js';
 import {
   CHOICE_FIGURE_KINDS,
@@ -93,6 +93,15 @@ Circuits, logic gates and Itten's colour wheel are data only; the app draws them
  * can recognise structurally (placeholderQuestion).
  */
 export const LANGUAGE_RULES = `Language: everything you write yourself (questions, choices, hints, explanations) is correct, natural language — right spelling, grammar and punctuation, real words only, one clear wording (never "A/B" alternatives like "echtere/größer"). Before you answer, reread every question and fix each mistake. A question never names what it asks for with a placeholder letter or word (not "Gib den Zähler des Bruches $\\frac{a}{8}$ an" — ask "Welcher Bruch ist gefärbt?").`;
+
+/**
+ * A multiple choice reads as a question on its own (issue #521): "Welcher Bruch ist größer?" with
+ * the fractions only in the options was no question in the material list, read aloud, or on the
+ * answered screen. And its numbers are math, so the app sets them. For the writers that invent
+ * questions and for extraction, which copies a printed stem whole. No sample sentence in a
+ * language: those get copied verbatim (issues #200/#201).
+ */
+export const CHOICE_RULES = `multiple_choice: when the options are what the question compares or picks among (which number, fraction, word or object is larger, right, the odd one out), the question names them itself, so it reads as a question without its options; a printed stem is copied whole. A number, fraction or term as an option is math between dollar signs ($\\frac{2}{3}$, never 2/3).`;
 
 /** The most other accepted answers per item — the number the prompts name (audit H-14). */
 export const MAX_ACCEPTED = 8;
@@ -520,7 +529,8 @@ export function usableItems(
       prompt: dollarMathRuns(raw.prompt),
       answer: dollarMathField(raw.answer),
       accepted_answers: raw.accepted_answers.map(dollarMathField),
-      choices: raw.choices ? raw.choices.map(dollarMathField) : null,
+      // A fraction as an option is set as one (#521): "2/3" stood in her tile as a slash.
+      choices: raw.choices ? raw.choices.map((c) => fractionChoice(dollarMathField(c))) : null,
       figure: usableFigure(figure),
       choice_figures: optionFigures(raw),
       tolerance: usableTolerance(raw),

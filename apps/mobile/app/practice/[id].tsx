@@ -41,15 +41,12 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BottomBar } from '../../components/lb/BottomBar.js';
-import { Btn } from '../../components/lb/Btn.js';
 import { EndButton } from '../../components/lb/EndButton.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
-import { Appear, SlideIn } from '../../components/lb/Motion.js';
+import { SlideIn } from '../../components/lb/Motion.js';
 import { Screen } from '../../components/lb/Screen.js';
 import { PracticeSkeleton } from '../../components/lb/Skeletons.js';
 import { AnswerArea } from '../../components/practice/AnswerArea.js';
-import { AnswerShell } from '../../components/practice/AnswerShell.js';
 import { CardPass } from '../../components/practice/CardPass.js';
 import { AskRoute } from '../../components/practice/CheckBar.js';
 import { DrillRound } from '../../components/practice/DrillRound.js';
@@ -354,22 +351,8 @@ export default function PracticeScreen() {
                 readAgain={readAgain}
                 onSpeakProgress={setSpeakLive}
                 disabled={locked}
+                closed={{ solution: shown.answer, judged: !offers.testing, onNext: next }}
               />
-              {open ? null : (
-                <AnswerShell
-                  action={{
-                    bar: (
-                      <BottomBar>
-                        <Appear delay={120}>
-                          <Btn size="lg" pill full onPress={next}>
-                            {t('practice:next')}
-                          </Btn>
-                        </Appear>
-                      </BottomBar>
-                    ),
-                  }}
-                />
-              )}
               <View style={{ height: 0 }} ref={measured.endRef} />
             </View>
           </AskRoute.Provider>

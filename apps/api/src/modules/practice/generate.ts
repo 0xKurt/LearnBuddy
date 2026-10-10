@@ -34,6 +34,7 @@ import { buddyReadingItems, READ_TEXT_RULES } from './readText.js';
 import { LISTEN_RULES, listenItems, noVoiceToReadIt } from './listen.js';
 import { homeLandLine } from './mapCheck.js';
 import {
+  CHOICE_RULES,
   FIGURE_RULES,
   ANSWER_FORM_RULES,
   LANGUAGE_RULES,
@@ -214,6 +215,7 @@ Rules:
 - ${ANSWER_FORM_RULES}
 - ${SPELLING_RULES}
 - ${MATH_RULES}
+- ${CHOICE_RULES}
 - ${FIGURE_RULES}
 - ${BAR_RULES}
 - ${STAFF_RULES}

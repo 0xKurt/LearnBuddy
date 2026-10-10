@@ -45,7 +45,10 @@ const OWN_BAR: Record<string, { count: number; why: string }> = {
     count: 1,
     why: 'Gespräch: the conversation row (`VoiceRow`, #386) takes the bar’s place, as on /talk',
   },
-  '[id].tsx': { count: 1, why: '"Weiter" once a question is closed — #388 step 6' },
+  'AnswerArea.tsx': {
+    count: 1,
+    why: '"Weiter" once a question is closed — #388 step 6; moved here from [id].tsx (#521)',
+  },
   'SpeakPanel.tsx': { count: 1, why: 'pronunciation: the recorder — #388 step 6' },
   'CardPass.tsx': { count: 1, why: 'the end of a pass: "Zurück zu Buddy", not an answer (#384)' },
   'DrillRound.tsx': { count: 2, why: 'Kopfrechnen: its own digit pad and "Prüfen" — #388 step 6' },
