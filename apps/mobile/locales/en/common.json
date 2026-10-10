@@ -45,8 +45,7 @@
       "part_lost": "A bit of your recording got lost – the rest is already there."
     },
     "read_again": "Read it again",
-    "read_aloud_on": "Reading aloud is on",
-    "read_aloud_off": "Read aloud",
+    "read_aloud": "Read aloud",
     "recording": "I'm listening … {{time}} / {{max}}",
     "recording_open": "I'm listening … {{time}}",
     "recording_open_value": "Recording, {{time}}",

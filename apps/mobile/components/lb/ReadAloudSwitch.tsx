@@ -35,7 +35,10 @@ export function ReadAloudSwitch() {
       accessibilityState={{ checked: on }}
       // aria-checked as well: the web build says it only from this.
       aria-checked={on}
-      accessibilityLabel={t(on ? 'voice.read_aloud_on' : 'voice.read_aloud_off')}
+      // The name says what it does and stays put; on or off is the switch's own state, which a
+      // screen reader says after it. A label that said "ist an" was read "Vorlesen ist an,
+      // Schalter, an" (issue #517).
+      accessibilityLabel={t('voice.read_aloud')}
       hitSlop={SPACE.sm}
       style={{
         width: TOUCH,
