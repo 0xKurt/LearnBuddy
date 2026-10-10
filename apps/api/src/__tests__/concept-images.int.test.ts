@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { LlmError } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
+import { pageJpeg } from '../testing/pagePhoto.js';
 import {
   createTestEnv,
   onboard,
@@ -66,24 +67,6 @@ const figures = (itemIndices: number[]) => ({
 });
 
 const WAIT = { json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null } };
-
-/** A real photographed-page stand-in: white paper with a dark block, as a JPEG. */
-async function pageJpeg(): Promise<Uint8Array> {
-  return sharp({
-    create: { width: 400, height: 300, channels: 3, background: { r: 250, g: 250, b: 248 } },
-  })
-    .composite([
-      {
-        input: {
-          create: { width: 120, height: 90, channels: 3, background: { r: 20, g: 20, b: 24 } },
-        },
-        left: 40,
-        top: 30,
-      },
-    ])
-    .jpeg()
-    .toBuffer();
-}
 
 async function tick(env: TestEnv): Promise<void> {
   const res = await env.app.request('/v1/internal/tick', {

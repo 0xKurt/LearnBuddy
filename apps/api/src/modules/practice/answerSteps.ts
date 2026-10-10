@@ -1,14 +1,17 @@
 // Answering one question, step 3 of `answerItem` (answer.ts, #311): what follows from her earlier
 // answers and the steps already shown — a part that goes on correctly from her wrong earlier
-// result (Folgefehler), her line in a guided example, the next prepared hint, and whether a wrong
-// choice left only one option untried. Code alone. docs/architecture.md §Practice.
+// result (Folgefehler), her line in a guided example, the next prepared hint and where the ladder
+// ends, and whether a wrong choice left only one option untried. Code alone.
+// docs/architecture.md §Practice.
 
 import type { Deps } from '../../deps.js';
 import type { Answering } from './answerLoad.js';
 import type { Ruled } from './answerRules.js';
 import { pickAnswers, untriedPicks } from './bars.js';
 import type { RuleVerdict } from './evaluate.js';
+import { ladderDone } from './ladder.js';
 import { givesHints } from './modeRules.js';
+import { pointStepText } from './pointSteps.js';
 import { earlierAnswers, followsOn, taskPartOf } from './taskParts.js';
 import { guidedStep } from './workedSteps.js';
 
@@ -16,7 +19,7 @@ import { guidedStep } from './workedSteps.js';
 export type Stepped = Awaited<ReturnType<typeof followOnAndSteps>>;
 
 export async function followOnAndSteps(deps: Deps, a: Answering & Ruled) {
-  const { sessionId, session, item, hintRequest, text, barTask, byKey } = a;
+  const { learner, sessionId, session, item, hintRequest, text, barTask, byKey, pointsLadder } = a;
   // A part of a task in parts that goes on correctly from her WRONG earlier result is right
   // (Folgefehler, issue #297): code recomputes it with her numbers (`taskParts.ts`).
   const taskPart = taskPartOf(item.task_part);
@@ -25,7 +28,14 @@ export async function followOnAndSteps(deps: Deps, a: Answering & Ruled) {
     ? followsOn(part, item, text, await earlierAnswers(deps.db, sessionId, part))
     : null;
   const rule: RuleVerdict = followed ? 'correct' : byKey;
-  const nextHint = givesHints(session.mode) ? (item.hints[item.prepared_hints_used] ?? null) : null;
+  // An explanation's ladder is its key points (#298, `pointSteps.ts`), any other's its hints.
+  const nextHint = pointsLadder
+    ? pointsLadder.next && pointStepText(learner.locale, pointsLadder.next)
+    : givesHints(session.mode)
+      ? (item.hints[item.prepared_hints_used] ?? null)
+      : null;
+  /** The end of the hint ladder: for an explanation, when no point is left to show. */
+  const atLadderEnd = pointsLadder ? pointsLadder.done : ladderDone(item);
   // Mitmachen (#298, `workedSteps.ts`): her line once a step of a proven way was shown.
   const guided =
     hintRequest || !givesHints(session.mode)
@@ -57,5 +67,5 @@ export async function followOnAndSteps(deps: Deps, a: Answering & Ruled) {
       onlyOneLeft = item.choices.filter((c) => !tried.has(c)).length <= 1;
     }
   }
-  return { taskPart, followed, rule, nextHint, guided, onlyOneLeft };
+  return { taskPart, followed, rule, nextHint, atLadderEnd, guided, onlyOneLeft };
 }

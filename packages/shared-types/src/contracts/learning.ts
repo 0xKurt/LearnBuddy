@@ -673,6 +673,12 @@ export const PracticeTurnView = z.object({
   /** Part of an "Anders erklären" exchange (her request and the new explanation), else null. */
   reexplain: ReexplainWay.nullable(),
   /**
+   * The picture an explanation shows (issue #298): data of the figure library, checked by the
+   * server and drawn by the app under Buddy's words. Only on a tutor turn of „Anders erklären";
+   * absent or null everywhere else, and a shape this build cannot read is null (`.catch`).
+   */
+  figure: Figure.nullable().optional().catch(null),
+  /**
    * „Merk ich mir für nachher" (issue #391). Only on the tutor turn after a question that had
    * nothing to do with the task (`POST …/ask`, the tutor's intent `off_topic`): `offered` — the
    * reply carries the chip; `kept` — she tapped it (`POST …/later`), and Buddy brings the

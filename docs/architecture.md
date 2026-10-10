@@ -1920,8 +1920,36 @@ each of these from what is recorded; the model only writes words that code check
   - **Selbermachen** is the similar task after the shown solution (above).
   - Measured in `practice-steps.int.test.ts` (real Postgres) and `workedSteps.test.ts`; the live
     hints call is the eval case `way_for_an_equation`, not yet run (no Vertex access).
-  - Not built yet (#298): the same pattern for text subjects with key points (#258), the live
-    probe on grade-10 material, and an explanation with a figure.
+  - **Text subjects: the key points are the steps** (`pointSteps.ts`, no migration). An
+    explanation question („Erklär mal", #236, and the open part of a task in parts, #297) has
+    3–6 key points instead of a way:
+    - **Vormachen:** „Tipp" (and „Zeig mir wie" in her words, through the same `stepOnRequest`)
+      shows ONE point as a model sentence — the first one still open — and asks for the open
+      point after it with its prepared follow-up (`practice.explain.show`). Prepared text, no
+      model. The last open point is never a step: she always explains at least one herself.
+    - **Mitmachen:** she writes her own; the one answer path judges it (a point only with a
+      quote the server finds in her words). A shown point is Buddy's: the model is not asked
+      about it, it never gets a ✓ (it stands as „vorgemacht", `point_shown`) and never enters
+      `explained`, and it counts towards the explanation being complete — right with help,
+      never at the first try.
+    - **Buddy leads on:** the reply asks for the next missing point, and the next „Tipp" shows the
+      next point still open, past every point she explained herself.
+    - **The ladder's end:** with no step left and at least two hints seen, „Tipp" shows the last
+      point (`practice.explain.show_last`) and the question closes as shown, never as right.
+    - Where the ladder stands is `session_items.prepared_hints_used` read over the points: every
+      point before it is passed, so one before it that she has not explained is one Buddy showed.
+      `explained` only grows and a shown point is never asked about, so that holds.
+    - Measured in `teach-back-steps.int.test.ts` (real Postgres) and the walkthrough
+      `teach-back.spec.ts`.
+  - **The grade-10 probe** (#298 „Erst messen", `evals/grade10/run.ts`, live, not run yet — no
+    Vertex in the session): eleven explanations from the issue's list (quadratic functions,
+    trigonometry, exponential growth, energy, circuits, redox, stoichiometry, Erörterung, English
+    reading and writing, Quellenarbeit) asked in the chat by a learner in grade 10, and five
+    Klasse-10 tasks in parts (photographed and typed in). A judge reads each twice, the criteria in
+    swapped order (`judge.ts`); a criterion the readings disagree on counts for neither side and
+    goes to a human with every third case. Its report is the eval report in
+    `docs/measurements/grade10-probe.md` (`GRADE10_OUT`).
+  - An explanation with a figure is „Anders erklären" with a picture (§„Anders erklären").
 - **The test's fixed line fits the form**: `practice.test_no_hints` says „schreib einfach, was du
   denkst" only where she writes her answer. On options, a board, the fraction bar, the staff or a
   tap in the figure it is `practice.test_no_hints_on_screen` („antworte einfach so, wie du
@@ -2328,6 +2356,9 @@ die sie kennt, mit Mikro (Sprachmodus, freihändige Schleife) oder Tastatur.
   Liste aus „fehlt noch"). Alles da → „Alles drin", die Frage schließt und zählt für FSRS wie jede
   richtige. Nach dem dritten Versuch eine Schlusszeile statt Nachfrage — keine Lösung, keine Note,
   keine FSRS-Bewertung.
+- **Vormachen** (#298, §Practice „A guided worked example"): „Tipp" zeigt EINEN Punkt als
+  Mustersatz und fragt nach dem nächsten; ein vorgemachter Punkt steht als „vorgemacht", nie als
+  „✓".
 
 **Offen**: wie bei #211 fehlt der Eval-Satz (≥ 20 echte Erklärungen je Fach mit Lehrkraft-Abgleich);
 das Modellurteil „sagt dieses Zitat den Punkt?" ist ungemessen. Es kann keinen Punkt ohne ihre
@@ -3413,6 +3444,20 @@ that states an open task's answer (`mentionsSolution`, any notation) gets one re
 is stored (503 `reexplain_unavailable`). A model outage stores nothing (503 `model_unavailable`).
 Also after the last question closed and the session finished.
 
+**Erklärung mit Bild** (issue #298, migration `0103_turn_figure.sql`, `practice/explainFigure.ts`).
+The new explanation may show ONE figure of the library: a parabola that changes with _a_ (several
+functions in one `function_plot`), a number line, a fraction, a triangle with its sides, a small
+table or chart (`ExplainFigure`: seven branches, 5.8 kB of schema instead of the whole union's
+22 kB). The model writes data only; code keeps it when it stands exactly as written
+(`wholeDrawing`: nothing dropped or redrawn, the rule an option's picture has, #326) and holds what
+it states (`figureHolds`), and drops it otherwise — the words stay, and the prompt asks for words
+that read whole without the picture. Never in homework: a drawn graph could show an open task's
+answer where no check sees it. Stored on the tutor turn (`practice_turns.figure`, only on a tutor
+turn), read back like a question's figure (`storedFigure`) and drawn under Buddy's bubble
+(`ItemThread`, the `QuestionFigure` every question uses, opened large on a tap). Measured in
+`reexplain.int.test.ts` (real Postgres): kept and shown again after a reload, five kinds of broken
+data dropped with the words kept, none in homework.
+
 ### Lesetexte (issue #233, migration `0086_reading_passages.sql`)
 
 Several questions about ONE text she reads, the text visible while she answers. From a
@@ -3530,10 +3575,10 @@ b) makes b) right. The second step adds **open parts** — „Begründe", „Erk
   numbers. An open part answers in the tall bar every free text has (`TypedAnswer`), pinned under
   the question inside `KeyboardSafe`. No new route.
 - **In the generator**: `part_tasks` in practice and test runs (`SET_PROFILES.partTasks`), at most
-  two per run, after the structured forms, each part a stored question in order. The material is text
-  only in this step: a second figure union in the explain schema would grow it by a third (20 kB of
-  65 kB, measured 05.10.); figures, tables and data as material come after the schema budget is
-  measured with Vertex (#281).
+  two per run, after the structured forms, each part a stored question in order. The material may
+  carry one of seven data figures (Schnitt 4, below): the practice explain schema grows by 3.9 kB
+  with it and `read` on a part (72.8 → 76.8 kB, measured 10.10.) — whether Vertex serves it is the live
+  measurement #281 left open.
 - **From the photo** (step 3, no migration, `materials/partTasks.ts`): a worksheet task with one
   material and lettered subtasks no longer falls apart into separate questions. Both readings (study
   and homework) get `part_tasks` (`SHEET_PART_RULES`): the material as printed (`stem`), and per
@@ -3554,9 +3599,35 @@ b) makes b) right. The second step adds **open parts** — „Begründe", „Erk
   reading (#150) is told the parts' prompts and adds only tasks none of whose parts it has. A
   corrected test and a notebook entry keep no task in parts (`applySource`). The extraction schema
   grows by 3.8 kB (study 74.2 kB, homework 67.6 kB, measured 08.10.).
-- **Next** (#297 plan): figures, tables and data as material once the schema budget is measured
-  with Vertex (#281); a longer material than `TASK_STEM_MAX` on the photo; the sheet's question list
-  („Dein Material") names a part with its letter and material.
+- **Schnitt 4** (no migration):
+  - **Material up to a reading text's length** (`TASK_STEM_MAX` = `PASSAGE_CHARS_MAX`, 2500): a
+    source in history, a text in German or English stands above every part. On screen it gets the
+    share a reading text has and scrolls in itself (`PartStem` `maxHeight`, the one text that may);
+    while she types it keeps two lines, as before. Longer than that, a photographed task falls back
+    to separate questions as before.
+  - **A table, a chart or a function graph as material** (`PartTaskDraft.figure`): one of seven
+    data figures (`table`, `function_plot`, `bar_chart`, `line_chart`, `climate_chart`,
+    `pie_chart`, `scatter_plot`; 3.2 kB of schema, not the whole union's 22 kB), stored as every
+    part's own `figure` — checked by `usableItems` like any question's, drawn above every part, and
+    brought back with a part a review brings alone. A drawing that does not parse or that a part
+    loses costs the whole task. A numeric part on a chart says what it reads (`read`, as any
+    question about a chart): code computes its key from the chart's data and a key the chart does
+    not give drops the task. From the photo the drawing is the page's real crop (`images.ts`): a
+    crop named for one part hangs on every part of its task.
+  - **More subjects** in the generator's rules (chemistry, history, German, English): the material
+    may be the text to work on, written for her level, never a quote invented for a real person.
+    Integration tests (`task-parts-subjects.int.test.ts`): chemistry with Folgefehler over two
+    steps, a German text and a history source over 300 characters, a table and a chart as material,
+    the photo's crop on every part.
+  - **Probearbeit**: the letters of a part are the parts of its task in THIS run
+    (`taskPartViews`): a test leaves an open c) out, a review brings one part alone — the bar never
+    names a part that does not come (`TaskPartView.letters`, now at least one).
+  - **„Dein Material"** names every part with its letter, and its material above the first
+    (`materials/questions.ts`, `MaterialItemCard`).
+  - **Live** (not run, no Vertex in the session): the grade-10 probe `evals/grade10/run.ts` —
+    Klasse-10 tasks photographed and typed in, counted (tasks kept whole, parts, fallbacks,
+    drawings) and judged twice with swapped criteria order; whether Vertex serves the grown explain
+    schema; the walkthrough examples for chemistry, history and German.
 
 ### Charts (issues #245, #246)
 

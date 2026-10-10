@@ -96,9 +96,12 @@ export async function sessionView(
     later: PracticeTurnView['later'];
     /** A long text's feedback as stored (#258): read through the contract, never trusted. */
     essay: unknown;
+    /** An explanation's picture as stored (#298): read like a question's figure. */
+    figure: unknown;
     created_at: Date;
   }>(
-    `select id, item_id, role, text, verdict, pronunciation, reexplain, later, essay_feedback as essay, created_at
+    `select id, item_id, role, text, verdict, pronunciation, reexplain, later, essay_feedback as essay,
+            figure, created_at
        from practice_turns
       where session_id = $1 order by seq`,
     [sessionId],
@@ -262,9 +265,10 @@ export async function sessionView(
           ? (whyOf(i.why)?.reasons ?? null)
           : null,
     })),
-    turns: turns.map(({ created_at, essay, ...tr }) => ({
+    turns: turns.map(({ created_at, essay, figure, ...tr }) => ({
       ...tr,
       essay: PracticeTurnView.shape.essay.parse(essay),
+      figure: storedFigure(figure),
       created_at: created_at.toISOString(),
     })),
     current_item_id: active ? (current?.id ?? null) : null,

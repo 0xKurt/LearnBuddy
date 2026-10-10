@@ -101,3 +101,37 @@ describe('a question she asked about the task', () => {
     expect(screen.queryByRole('button', { name: 'Merk ich mir für nachher' })).toBeNull();
   });
 });
+
+// An explanation with a picture (issue #298): the figure the server checked stands under Buddy's
+// words; a reply without one shows none.
+describe('an explanation with a picture', () => {
+  const PARABOLA = turn({
+    id: '00000000-0000-4000-8000-000000000004',
+    role: 'tutor',
+    text: 'Je größer a, desto schmaler die Parabel.',
+    reexplain: 'example',
+    figure: {
+      type: 'function_plot',
+      functions: [
+        { expr: 'x^2', label: 'a = 1' },
+        { expr: '2*x^2', label: 'a = 2' },
+      ],
+      x_min: -3,
+      x_max: 3,
+      y_min: -1,
+      y_max: 9,
+      points: [],
+    },
+  });
+
+  it('draws the figure under the reply', () => {
+    renderInApp(<ItemThread turns={[PARABOLA]} pending={null} />);
+    expect(screen.getByText(PARABOLA.text)).toBeDefined();
+    expect(screen.getAllByTestId('question-figure')).toHaveLength(1);
+  });
+
+  it('shows no figure where the reply has none', () => {
+    renderInApp(<ItemThread turns={[REPLY]} pending={null} />);
+    expect(screen.queryByTestId('question-figure')).toBeNull();
+  });
+});

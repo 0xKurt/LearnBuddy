@@ -277,10 +277,17 @@ async function storeAndAttach(
       ],
     );
     if (!row) return false;
-    // The first figure a question got stays (a chart and a diagram may both name it).
+    // The first figure a question got stays (a chart and a diagram may both name it). A figure of
+    // a part of a task in parts is its material (#297, Schnitt 4): it stands above every part of
+    // that task, as its situation does — b) is answered from the same table as a).
     await tx.query(
       `update items set image_id = $1
-        where id = any($2::uuid[]) and learner_id = $3 and image_id is null and archived_at is null`,
+        where learner_id = $3 and image_id is null and archived_at is null
+          and (id = any($2::uuid[])
+               or task_part->>'group' in (
+                 select named.task_part->>'group' from items named
+                  where named.id = any($2::uuid[]) and named.learner_id = $3
+                    and named.task_part is not null))`,
       [row.id, itemIds, input.learnerId],
     );
     return true;

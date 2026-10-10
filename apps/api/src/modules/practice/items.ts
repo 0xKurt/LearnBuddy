@@ -357,6 +357,15 @@ function usableFigure<F extends DrawnFigure>(f: F | null): F | null {
 }
 
 /**
+ * A figure exactly as written, when the app draws it so — nothing dropped, nothing redrawn — else
+ * null. For a picture that stands on its own (an option's, #326; an explanation's, #298), where a
+ * repaired drawing would be another picture than the one that was meant.
+ */
+export function wholeDrawing<F extends DrawnFigure>(f: F): F | null {
+  return isDeepStrictEqual(usableFigure(f), f) ? f : null;
+}
+
+/**
  * The options' pictures as the app will draw them — all of them or the question goes (an
  * empty list stands for "one could not be drawn": `choiceProblem` then rejects the count).
  * Unlike the question's own figure nothing is dropped from a picture either: a graph whose
@@ -392,7 +401,7 @@ export function storedChoiceFigures(
   if (row.kind !== 'multiple_choice' || row.choice_figures == null) return null;
   const read = z.array(DrawnFigure).min(2).max(MAX_FIGURE_CHOICES).safeParse(row.choice_figures);
   if (!read.success) return null;
-  if (!read.data.every((f) => isDeepStrictEqual(usableFigure(f), f))) return null;
+  if (!read.data.every((f) => wholeDrawing(f) !== null)) return null;
   // The question's own figure read back too: the views of a Würfelgebäude are held to it (#368).
   const figure = storedFigure(row.figure ?? null);
   return choiceProblem({ ...row, figure, choice_figures: read.data }) === null ? read.data : null;

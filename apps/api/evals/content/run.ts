@@ -22,7 +22,6 @@
 import { writeFileSync } from 'node:fs';
 
 import type { SessionView } from '@learnbuddy/shared-types/contracts';
-import { chromium } from '@playwright/test';
 import { z } from 'zod';
 
 import { loadConfig } from '../../src/config.js';
@@ -30,6 +29,7 @@ import type { LlmGateway } from '../../src/llm/gateway.js';
 import { toJsonSchema } from '../../src/llm/json-schema.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
+import { closeSheetBrowser, photographSheet } from '../sheetPhoto.js';
 
 const dotenv = await import('dotenv');
 dotenv.config({ path: '.env.local' });
@@ -164,20 +164,6 @@ async function judge(
 
 // ─────────────── one sheet, end to end ───────────────
 
-let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
-async function render(html: string): Promise<Uint8Array> {
-  browser ??= await chromium.launch(
-    process.env.LB_CHROMIUM ? { executablePath: process.env.LB_CHROMIUM } : {},
-  );
-  const page = await browser.newPage({ viewport: { width: 820, height: 1100 } });
-  await page.setContent(
-    `<body style="font-family: 'DejaVu Sans', sans-serif; padding: 40px; background: #fdfdf8; font-size: 22px; line-height: 1.5">${html}</body>`,
-  );
-  const shot = await page.screenshot({ type: 'jpeg', quality: 85 });
-  await page.close();
-  return new Uint8Array(shot);
-}
-
 type Finding = {
   /** Which half this question came from: the sheet itself, or what the model wrote from it. */
   stage: 'vom Blatt' | 'mehr davon';
@@ -253,7 +239,7 @@ async function runCase(c: Case): Promise<{ findings: Finding[]; log: string[] }>
       sending: true,
     });
     if (created.status !== 201) throw new Error(`create ${created.status}`);
-    env.storage.put(created.body.uploads[0]!.path, await render(c.html));
+    env.storage.put(created.body.uploads[0]!.path, await photographSheet(c.html));
     await l.api.post(`/materials/${created.body.material.id}/submit`);
     const readStarted = performance.now();
     await env.flushBackground();
@@ -431,7 +417,7 @@ for (const c of chosen) {
   }
 }
 
-await (browser as { close: () => Promise<void> } | null)?.close();
+await closeSheetBrowser();
 out.push('', `**${ok}/${total} Fragen ohne Befund**`);
 
 // ─────────────── the measurement (#219, #220) ───────────────
