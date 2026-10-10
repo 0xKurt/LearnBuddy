@@ -10,10 +10,9 @@ import {
   TestMinutes,
   UnclearSpot,
   VocabDirection,
-  VoiceName,
-  VoiceSpeed,
 } from './learning.js';
 import { RehearsalKind, RehearsalView, TalkFormat, TalkStage } from './talk.js';
+import { VoiceName, VoiceSpeed } from './voice.js';
 
 // ─────────────── a roleplay in a foreign language (issue #244) ───────────────
 

@@ -12,6 +12,7 @@
 import { z } from 'zod';
 
 import { IsoDateTime, Uuid } from './common.js';
+import { AudioMime } from './voice.js';
 
 /** The steps of a talk, in the order they are done. */
 export const TalkStage = z.enum(['topic', 'outline', 'sources', 'slides', 'rehearsal']);
@@ -44,7 +45,7 @@ export const RehearseRequest = z.object({
   client_request_id: Uuid,
   /** The card she recorded on: Buddy's `offer_rehearsal` in the conversation. */
   action_id: Uuid,
-  mime: z.enum(['audio/mp4', 'audio/aac', 'audio/m4a', 'audio/webm', 'audio/wav', 'audio/mpeg']),
+  mime: AudioMime,
   audio_base64: z.string().min(100).max(REHEARSAL_MAX_BASE64),
   /** How long the recording ran, by the recorder's own clock. */
   duration_ms: z.number().int().min(REHEARSAL_MIN_MS).max(REHEARSAL_MAX_MS.talk),

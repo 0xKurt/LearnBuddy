@@ -143,6 +143,14 @@ einen Tabellen-Provider → Karten-Union in `buddy.ts` erweiterbar → Karten-, 
 Anhang-Registry in der App → Fremdschlüssel (neue Migrationen) → `create-buddy` kopiert den Kern
 durch Konstruktion.
 
+Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Domain, Start 71):
+
+1. **Stimm-Verträge** in `contracts/voice.ts` (`AudioMime`, `TranscribeRequest/-Response/-StreamEvent`,
+   `VOICE_NAMES`, `VoiceName`, `VoiceSpeed`, `SpeechRequest/-Response`). Die Sprech-Fragen der
+   Übungen (`SpeakRequest`, `SpeakWordRequest`, `SpeakStreamEvent`) bleiben Domain und nehmen nur
+   `AudioMime`. Generische Dateien mit Domain-Vertragsnamen: 24 → 13; Wächter: 71 (Verträge zählt
+   er nicht).
+
 ## Die API-Datenbankrolle
 
 `infra/supabase/templates/api-role.sql`, mit psql angewendet:
