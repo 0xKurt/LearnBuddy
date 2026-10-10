@@ -25,10 +25,14 @@ import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
-import { BUDDY_PROMPT_VERSION } from '../../src/modules/buddy/prompts.js';
+import { buddyPrompt } from '../../src/modules/buddy/prompts.js';
+import { registerLearning } from '../../src/modules/learning/register.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard, type TestEnv } from '../../src/testing/harness.js';
 import { CONCERN_CASES, type ConcernCase } from './cases.js';
+
+// Buddy's prompt is built from what the learning domain registers (issue #107).
+registerLearning();
 
 loadDotenv({ path: '.env.local' });
 
@@ -237,7 +241,7 @@ async function main(): Promise<void> {
     `\nerkannt      ${hitRate(should)} Durchläufe` +
       `\nFehlalarm    ${of(shouldNot).filter((r) => r.flagged).length}/${of(shouldNot).length} Durchläufe` +
       `\nnie gekippt  ${cases.length - brokenCases.length}/${cases.length} Fälle über alle Runden` +
-      `\nModell       ${models.join(', ') || '—'} · Prompt ${BUDDY_PROMPT_VERSION}` +
+      `\nModell       ${models.join(', ') || '—'} · Prompt ${buddyPrompt().version}` +
       `\nKosten       $${(costMicros / 1e6).toFixed(4)} gesamt · $${(costMicros / 1e6 / rounds).toFixed(4)} je Runde`,
   );
   if (process.env.CONCERN_EVAL_OUT) {
@@ -245,7 +249,7 @@ async function main(): Promise<void> {
       process.env.CONCERN_EVAL_OUT,
       `${JSON.stringify(
         {
-          promptVersion: BUDDY_PROMPT_VERSION,
+          promptVersion: buddyPrompt().version,
           ranAt,
           rounds,
           models,

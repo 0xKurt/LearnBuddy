@@ -12,7 +12,7 @@
 import { z } from 'zod';
 
 import { ACT_SCHEMAS, Outreach, type ActionOf, type AnyAction, type ToolName } from './decision.js';
-import { missingLookupRunners, type Surface } from './lookups.js';
+import type { Surface } from './lookups.js';
 import { ToolRejection, type ToolContext, type ToolOutcome } from './toolKit.js';
 import { actHandler, missingActHandlers } from './tools.js';
 
@@ -435,9 +435,10 @@ export async function runAct(action: AnyAction, ctx: ToolContext): Promise<ToolO
 }
 
 /**
- * What the model can call that has no code behind it: act tools and lookups the core declares
- * but nobody registered (issue #107). Start-up refuses to serve with any (app.ts).
+ * What the model can call that has no code behind it: act tools the core declares but nobody
+ * registered a handler for (issue #107; a lookup brings its code when it registers). Start-up
+ * refuses to serve with any (app.ts).
  */
 export function withoutCode(): string[] {
-  return [...missingActHandlers(), ...missingLookupRunners()];
+  return missingActHandlers();
 }

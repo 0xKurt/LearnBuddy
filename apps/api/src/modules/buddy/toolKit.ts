@@ -17,7 +17,13 @@ import {
 } from '../../lib/time.js';
 import type { Aliases } from './context.js';
 import { type MemoryAbout } from './decision.js';
-import { type GoalRow, type MemoryRow, type SettingsRow, type StepRow } from './state.js';
+import {
+  type GoalRow,
+  type MemoryRow,
+  type SettingsRow,
+  type StepRow,
+  withSubjectNames,
+} from './state.js';
 import { quoteOccursIn, unsupportedSpecifics } from './text.js';
 
 export class ToolRejection extends Error {
@@ -57,11 +63,22 @@ export type ToolContext = {
   };
 };
 
+/**
+ * Undo kinds a domain adds (LearnBuddy: a sheet renamed back): it declares each by augmenting this
+ * interface, keyed by its `type`, and applies them through its context provider (provider.ts).
+ * Exported for that augmentation (`declare module`), which knip does not count as a use.
+ *
+ * @public
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- filled by the domain's augmentation
+export interface DomainUndos {}
+export type DomainUndo = DomainUndos[keyof DomainUndos];
+
 export type UndoSpec =
+  | DomainUndo
   | { type: 'retract_memory'; memory_id: string }
   | { type: 'restore_memory'; old_id: string; new_id: string }
   | { type: 'unretract_memory'; memory_id: string }
-  | { type: 'rename_material_back'; material_id: string; title: string | null }
   /** Undo of "forget everything" (issue #114): exactly the notes that call retracted. */
   | { type: 'unretract_memories'; memory_ids: string[] }
   | {
@@ -271,16 +288,16 @@ export function memoryOf(ctx: ToolContext, alias: string): MemoryRow {
 }
 
 async function lockGoal(ctx: ToolContext, id: string, ref: string): Promise<GoalRow> {
-  const row = await ctx.db.maybeOne<GoalRow>(
-    `select g.*, s.name as subject_name from buddy_goals g left join subjects s on s.id = g.subject_id
-      where g.id = $1 and g.learner_id = $2 for update of g`,
+  const row = await ctx.db.maybeOne<Omit<GoalRow, 'subject_name'>>(
+    `select g.* from buddy_goals g where g.id = $1 and g.learner_id = $2 for update of g`,
     [id, ctx.learnerId],
   );
   if (!row)
     throw new ToolRejection(
       `goal ${ref} is gone since STATE was written — leave this action out and answer her without it`,
     );
-  return row;
+  const [named] = await withSubjectNames(ctx.db, ctx.learnerId, [row]);
+  return named!;
 }
 
 async function currentGoal(ctx: ToolContext, alias: string): Promise<GoalRow> {

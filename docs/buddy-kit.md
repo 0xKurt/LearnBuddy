@@ -133,7 +133,7 @@ Gemessen am 10.10. auf `f314c0f` mit dependency-cruiser 18.4.0 (MIT). Was Domain
 | Importe API (Wächter)                           | 39 in 17 Dateien (`buddy/routes` 5, `scheduler/tick` 5, `buddy/tools` 4, `buddy/turn` 4, `app.ts` 3, …)                                                                                    |
 | Importe App (Wächter)                           | 32 in 18 Dateien (`components/buddy/Conversation` 9, `StartSheets` 3, `lib/capture/upload` 3, …)                                                                                           |
 | Verträge (`@learnbuddy/shared-types/contracts`) | `buddy.ts` importiert `learning.ts`, `drill.ts`, `talk.ts`; 24 generische Dateien nehmen Domain-Namen (≈ 10 davon nur falsch abgelegte Stimm-Schemas)                                      |
-| SQL auf Domain-Tabellen                         | 11 generische Dateien, ≈ 75 Abfragen (`buddy/state` 24, `identity/privacy` 21, `buddy/home` 9, …)                                                                                          |
+| SQL auf Domain-Tabellen                         | 11 generische Dateien, ≈ 75 Abfragen (`buddy/state` 24, `identity/privacy` 21, `buddy/home` 9, …); gemessen seit Schnitt 5 (`domain-sql.mjs`): 76 in 9                                     |
 | Fremdschlüssel Kern → Domain                    | 8 (`buddy_goals`/`buddy_lookbacks` → `subjects`, `buddy_pending_actions` → `materials`/`items`, `buddy_focus` → `materials`/`subjects`, `buddy_messages` → `buddy_roleplays`/`rehearsals`) |
 
 Reihenfolge der Schnitte (je ein eigener, kleiner Branch, ohne Verhaltensänderung): Stimm-Verträge
@@ -153,7 +153,7 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
 2. **Werkzeuge, Lookups, Angebote** melden sich an: `modules/learning/register.ts` ist die eine
    Stelle, die die Domain beim App-Start (`createApp`) in den Kern einträgt — Handler der
    Domain-Werkzeuge (`registerActHandlers`, `buddy/tools.ts`), die Leser der Lookups
-   (`registerLookupRunners`, `buddy/lookups.ts`); `offer_learning`/`offer_drill` stehen in
+   (seit Schnitt 5 die ganzen Lookups, `registerLookups`, `buddy/lookups.ts`); `offer_learning`/`offer_drill` stehen in
    `practice/offerTools.ts`. Der Start bricht ab, solange ein Werkzeug oder Lookup, das das Modell
    angeboten bekommt, keinen Code hat (`withoutCode()`). Was das Modell sieht (Schemas,
    Beschreibungen), steht noch im Kern: es geht in den Prompt-Hash ein und wandert mit Schnitt 5/7.
@@ -172,6 +172,22 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
    eine Job-Art keinen Handler hat (`missingJobKinds`). Die Aufbewahrung jedes Buddys
    (Storage-Schuld, geschlossene Erinnerungen, Entscheidungsinhalte) steht in
    `identity/retention.ts`. Wächter: 55 → 45.
+5. **Kontext-Provider** (`buddy/provider.ts`): die Domain meldet einen Provider an, der Kern
+   liest nur noch seine eigenen Tabellen. Er liefert den Domain-Teil des Zustands
+   (`learning/state.ts`; die Felder deklariert sie per Augmentation von `DomainState`,
+   `DomainTotals`, `DomainAliases`, `DomainUndos`), ihre STATE-Abschnitte und was Ziele und
+   Schritte tragen (`learning/context.ts`), ihre Regeln im Prompt (`learning/prompt.ts`), ihre
+   Teile der Startseite und der Gesprächskarten (`learning/home.ts`), die Turn-Hooks — Rollenspiel
+   als Modus, Passagen vorab, Hausaufgaben-Wächter, Angebot vorbereiten, Szene bei Sorge beenden
+   (`learning/turn.ts`) —, den Rückblick (`learning/lookback.ts`), Fachnamen der Ziele, das Blatt
+   für die feste Antwort ohne Modell und ihre Undo-Art. Der Prompt wird erst bei Bedarf gebaut
+   (`buddyPrompt()`), darum melden sich auch die Lookups samt Beschreibung und Schema an
+   (`learning/lookups.ts`, `registerLookups`); Prompt, Schemas, Prompt-Hash und ein voller STATE
+   bleiben byte-gleich (`buddy/__tests__/prompt-pin.test.ts`). Neuer Wächter: `domain-sql.mjs`
+   zählt Domain-Tabellen in SQL des generischen API-Codes (#107 §6) — 76 Abfragen in 9 Dateien
+   → 24 in 1 (`identity/privacy.ts`, Schnitt 6). Importe: 45 → 33 (API: nur noch die Naht).
+   Noch im Kern deklariert: die Schemas und Beschreibungen der Domain-Werkzeuge (`decision.ts`,
+   `registry.ts`) — ihre Typen hängen an der Karten-Union (Schnitt 7).
 
 ## Die API-Datenbankrolle
 

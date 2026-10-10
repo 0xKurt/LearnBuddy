@@ -11,6 +11,7 @@ import type { Trigger } from './checkTrigger.js';
 import { type BodyTemplate, planOutreach } from './delivery.js';
 import { fillPractice } from './occasions.js';
 import { bumpContext } from './plan.js';
+import { contextProvider } from './provider.js';
 import type { SettingsRow } from './state.js';
 
 export async function fallback(
@@ -151,23 +152,12 @@ export async function fallback(
           stepId: null,
         };
       } else if (trig.reason === 'material_ready' && trig.materialId) {
-        const m = await tx.maybeOne<{
-          id: string;
-          title: string | null;
-          goal_id: string | null;
-          subject_id: string | null;
-          n: number;
-        }>(
-          `select m.id, m.title, m.goal_id, m.subject_id,
-                  (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as n
-             from materials m where m.id = $1 and m.learner_id = $2 and m.status = 'ready'
-              and m.archived_at is null`,
-          [trig.materialId, learner.id],
-        );
-        if (m && m.n > 0) {
+        // The sheet as the domain knows it (provider.ts).
+        const m = await contextProvider().readySheet(tx, learner.id, trig.materialId);
+        if (m && m.questions > 0) {
           const p = await prepared(
-            m.goal_id,
-            m.subject_id,
+            m.goalId,
+            m.subjectId,
             m.title ?? t(learner.locale, 'practice.untitled'),
           );
           proposal = {
@@ -175,12 +165,12 @@ export async function fallback(
             // Her photos: the result always reaches her, like any answer (audit M-61).
             origin: 'learner',
             template: null,
-            topic: `material:${m.id}`,
+            topic: `material:${trig.materialId}`,
             body: m.title
-              ? t(learner.locale, 'material.ready', { title: m.title, count: m.n })
-              : t(learner.locale, 'material.ready_untitled', { count: m.n }),
+              ? t(learner.locale, 'material.ready', { title: m.title, count: m.questions })
+              : t(learner.locale, 'material.ready_untitled', { count: m.questions }),
             relevance: 0.7,
-            goalId: m.goal_id,
+            goalId: m.goalId,
             stepId: p?.stepId ?? null,
           };
         }

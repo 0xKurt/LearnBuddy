@@ -9,7 +9,7 @@ import type { BuddyHome, SendMessageResponse } from '@learnbuddy/shared-types/co
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { LlmRequest } from '../llm/gateway.js';
-import { findOrCreateSubject } from '../modules/buddy/plan.js';
+import { findOrCreateSubject } from '../modules/learning/state.js';
 import { buildContext } from '../modules/buddy/context.js';
 import { loadBuddyState } from '../modules/buddy/state.js';
 import { testDatabaseAvailable } from '../testing/database.js';

@@ -5,11 +5,12 @@
 // once and then checks that nothing the core declares is left without its code.
 
 import { registerRoutes } from '../../http/plugins.js';
-import { searchMaterials } from '../buddy/connectors/material.js';
-import { findQuestions, recentResults } from '../buddy/connectors/practice.js';
+import { preInjectedPassages } from '../buddy/connectors/material.js';
 import { subscribe } from '../buddy/events.js';
-import { registerLookupRunners } from '../buddy/lookups.js';
+import { registerLookups } from '../buddy/lookups.js';
 import {
+  renameBack,
+  renameBackApplies,
   runDeleteItem,
   runDeleteMaterial,
   runRenameMaterial,
@@ -18,7 +19,8 @@ import {
 import { registerOccasions, registerPracticeFiller } from '../buddy/occasions.js';
 import { runPreparePractice } from '../buddy/practiceTool.js';
 import { REVIEW_REASONS, reviewAfterBreak, reviewNextDay, runReviews } from '../buddy/review.js';
-import { runStartRoleplay } from '../buddy/roleplay.js';
+import { registerContextProvider, type ContextProvider } from '../buddy/provider.js';
+import { endForConcern, runStartRoleplay } from '../buddy/roleplay.js';
 import { registerStepStarter } from '../buddy/stepStart.js';
 import { runOfferRehearsal, runPlanTalk } from '../buddy/talkTools.js';
 import { registerActHandlers } from '../buddy/tools.js';
@@ -28,11 +30,48 @@ import { recoverReadings } from '../materials/readingJob.js';
 import { materialRoutes } from '../materials/routes.js';
 import { closeIdleSessions } from '../practice/lifecycle.js';
 import { runOfferDrill, runOfferLearning } from '../practice/offerTools.js';
+import { prepareOffered } from '../practice/prepare.js';
 import { practiceRoutes } from '../practice/routes.js';
 import { tenMinutesOf } from '../practice/selection.js';
 import { startFromStep } from '../practice/service.js';
 import { registerJobKinds, registerTickWork } from '../scheduler/registry.js';
+import { LEARNING_SECTIONS, levelOf, renderLearning } from './context.js';
+import { dressThread, lastActed, learningHome } from './home.js';
+import { LEARNING_LOOKUPS } from './lookups.js';
+import { findLearningLookBack } from './lookback.js';
+import { LEARNING_TURN_RULES } from './prompt.js';
 import { learningBuddyRoutes } from './routes.js';
+import { findOrCreateSubject, loadLearningState, readySheet, subjectNames } from './state.js';
+import { homeworkLeak, roleplayMode } from './turn.js';
+
+/**
+ * Its part of what Buddy knows, says and shows (buddy/provider.ts): her subjects, sheets and
+ * practice in his state and STATE, its rules in the prompt, its cards on the home screen, the
+ * roleplay as a mode of the turn, the passages of her sheets, the homework guard, the look-backs.
+ */
+const LEARNING: ContextProvider = {
+  state: {
+    load: loadLearningState,
+    level: levelOf,
+    noAliases: () => ({ subjects: new Map(), materials: new Map() }),
+    topicKeyAliases: { f: 'subjects' },
+    sections: LEARNING_SECTIONS,
+    render: renderLearning,
+    turnRules: LEARNING_TURN_RULES,
+  },
+  subjects: { names: subjectNames, findOrCreate: findOrCreateSubject },
+  home: { screen: learningHome, lastActed, thread: dressThread },
+  turn: {
+    mode: roleplayMode,
+    lookAhead: preInjectedPassages,
+    checkReply: homeworkLeak,
+    applied: prepareOffered,
+    concern: endForConcern,
+  },
+  lookBack: findLearningLookBack,
+  readySheet,
+  undo: { applies: renameBackApplies, run: renameBack },
+};
 
 let registered = false;
 
@@ -40,6 +79,10 @@ let registered = false;
 export function registerLearning(): void {
   if (registered) return;
   registered = true;
+
+  // What Buddy knows of it, says about it and shows of it — registered first: the prompt and
+  // every state are built from it.
+  registerContextProvider(LEARNING);
 
   // What Buddy can do in the conversation: practice, sheets, talks, roleplays.
   registerActHandlers({
@@ -56,12 +99,7 @@ export function registerLearning(): void {
   });
 
   // What Buddy can read before he answers: her sheets, her practice, her questions.
-  registerLookupRunners({
-    search_material: (c, a) =>
-      searchMaterials(c.deps, c.learnerId, c.timezone, a.query, 3, c.aliases),
-    practice_history: (c, a) => recentResults(c.deps.db, c.learnerId, c.timezone, a.topic, 6),
-    find_questions: (c, a) => findQuestions(c.deps.db, c.learnerId, a.query, 8),
-  });
+  registerLookups(...LEARNING_LOOKUPS);
 
   // Its HTTP surface: practice runs, her sheets, and its taps on Buddy's surface.
   registerRoutes(

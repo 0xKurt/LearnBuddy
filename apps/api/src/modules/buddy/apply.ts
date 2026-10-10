@@ -19,7 +19,6 @@ import { planOutreach, type OutreachPlan } from './delivery.js';
 import { bumpContext } from './plan.js';
 import { LIMITS, loadSettings, TURN_STALL_MS, type SettingsRow } from './state.js';
 import { runAct } from './registry.js';
-import { applyRoleplayStep, RoleplayMoved, type RoleplayStep } from './roleplay.js';
 import { ToolRejection, type ToolOutcome } from './toolKit.js';
 
 export type DecisionMeta = {
@@ -56,10 +55,10 @@ export type ApplyInput = {
   /** A look-back Buddy says in the app (lookback.ts): the model's sentence and the fact. */
   lookBack?: { text: string; fact: LookBackFact } | null;
   /**
-   * An in-role turn of a running roleplay (issue #244): counted, ended and its feedback stored
-   * in this same transaction, and its closing message posted after the reply.
+   * An in-mode turn (a roleplay, issue #244): what the mode records commits in this same
+   * transaction, and its closing message is posted after the reply.
    */
-  roleplay?: RoleplayStep;
+  scene?: DecisionScene;
   /** 'learner' when the outreach answers something she just did (policy.ts). */
   outreachOrigin?: 'buddy' | 'learner';
   meta: DecisionMeta;
@@ -77,7 +76,22 @@ export type ApplyResult =
   | { status: 'superseded' }
   | { status: 'rejected'; errors: string[] };
 
-class StaleDecision extends Error {}
+/**
+ * The decision was made on an older state: nothing is applied, the turn asks again. A mode's
+ * scene throws its own subclass when what it counts on moved on meanwhile.
+ */
+export class StaleDecision extends Error {}
+
+/** Work of a turn mode (a roleplay, issue #244) that commits with its decision. */
+export type DecisionScene = {
+  /** Right after the fence, before any action; throws StaleDecision when the scene moved on. */
+  apply(tx: Db, now: Date): Promise<void>;
+  /** After the reply: what the scene posts (its closing line). */
+  close(
+    tx: Db,
+    at: { decisionId: string; triggerMessageId: string | null; now: Date },
+  ): Promise<void>;
+};
 class SupersededClaim extends Error {}
 
 /**
@@ -110,7 +124,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
         throw new SupersededClaim();
       }
       if (settings.context_version !== input.contextVersion) throw new StaleDecision();
-      if (input.roleplay) await applyRoleplayStep(tx, input.learnerId, input.roleplay, input.now);
+      if (input.scene) await input.scene.apply(tx, input.now);
 
       const outcomes: Array<{ action: AnyAction; outcome: ToolOutcome }> = [];
       const created = {
@@ -208,23 +222,13 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
         );
         replyMessageId = msg.id;
       }
-      if (input.roleplay?.closing) {
-        // After the reply: the role's last line first, then what the app says about the scene.
-        // With feedback, the message points at its roleplay: the app shows it as the result
-        // card (issue #384).
-        await tx.query(
-          `insert into buddy_messages
-             (learner_id, role, text, reply_to_id, decision_id, roleplay_id, created_at)
-           values ($1, 'buddy', $2, $3, $4, $5, $6)`,
-          [
-            input.learnerId,
-            input.roleplay.closing,
-            input.triggerMessageId,
-            decision.id,
-            input.roleplay.feedback ? input.roleplay.id : null,
-            input.now,
-          ],
-        );
+      // After the reply: the role's last line first, then what the app says about the scene.
+      if (input.scene) {
+        await input.scene.close(tx, {
+          decisionId: decision.id,
+          triggerMessageId: input.triggerMessageId,
+          now: input.now,
+        });
       }
       if (input.lookBack) {
         // Said once, in the app only (never pushed): the row keeps it rare (lookback.ts).
@@ -321,7 +325,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
       if (
         outcomes.length > 0 ||
         input.reply ||
-        input.roleplay ||
+        input.scene ||
         input.lookBack ||
         (outreach && outreach.status !== 'suppressed')
       ) {
@@ -337,7 +341,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
     });
   } catch (err) {
     if (err instanceof SupersededClaim) return { status: 'superseded' };
-    if (err instanceof StaleDecision || err instanceof RoleplayMoved || lostLockRace(err)) {
+    if (err instanceof StaleDecision || lostLockRace(err)) {
       await recordUnapplied(db, input, 'stale', null);
       return { status: 'stale' };
     }

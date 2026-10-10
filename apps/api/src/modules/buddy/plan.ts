@@ -1,5 +1,5 @@
 // Planning primitives shared by tools, routes and background jobs: context
-// versioning, subjects, exam wake-ups, agreed-step reminders.
+// versioning, exam wake-ups, agreed-step reminders.
 
 import type { Db } from '../../lib/db.js';
 import { addDays, daysBetween, localParts, weekdayOf, zonedToInstant } from '../../lib/time.js';
@@ -28,36 +28,6 @@ export async function bumpContext(db: Db, learnerId: string): Promise<number> {
     [learnerId],
   );
   return row.context_version;
-}
-
-/** Find the learner's subject by name (case-insensitive) or unique kind; else create it. */
-export async function findOrCreateSubject(
-  db: Db,
-  learnerId: string,
-  name: string,
-  kind: string,
-): Promise<{ id: string; name: string; created: boolean }> {
-  const byName = await db.maybeOne<{ id: string; name: string }>(
-    `select id, name from subjects
-      where learner_id = $1 and archived_at is null and lower(name) = lower($2)`,
-    [learnerId, name],
-  );
-  if (byName) return { ...byName, created: false };
-  if (kind !== 'other') {
-    const byKind = await db.query<{ id: string; name: string }>(
-      `select id, name from subjects where learner_id = $1 and archived_at is null and kind = $2`,
-      [learnerId, kind],
-    );
-    if (byKind.length === 1) return { ...byKind[0]!, created: false };
-  }
-  const created = await db.one<{ id: string; name: string }>(
-    `insert into subjects (learner_id, name, kind) values ($1, $2, $3)
-     on conflict (learner_id, lower(name)) where archived_at is null
-       do update set name = subjects.name
-     returning id, name`,
-    [learnerId, name.slice(0, 60), kind],
-  );
-  return { ...created, created: true };
 }
 
 const COUNTDOWN_DAYS = [5, 3, 1] as const;

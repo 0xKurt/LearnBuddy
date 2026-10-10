@@ -2,8 +2,13 @@ import { z } from 'zod';
 
 import { toJsonSchema } from '../src/llm/json-schema.js';
 import { lookupsField } from '../src/modules/buddy/lookups.js';
-import { TURN_SYSTEM } from '../src/modules/buddy/prompts.js';
+import { buddyPrompt } from '../src/modules/buddy/prompts.js';
 import { CheckDecision, TurnDecisionForModel } from '../src/modules/buddy/registry.js';
+import { registerLearning } from '../src/modules/learning/register.js';
+
+// Buddy's prompt is built from what the learning domain registers (issue #107).
+registerLearning();
+const TURN_SYSTEM = buddyPrompt().turnSystem;
 
 function walk(node: unknown, out: { desc: number; count: number; longest: string }): void {
   if (Array.isArray(node)) {
@@ -24,7 +29,7 @@ function walk(node: unknown, out: { desc: number; count: number; longest: string
 const schemas: [string, unknown][] = [
   [
     'turn, lookup round',
-    toJsonSchema(z.object({ lookups: lookupsField }).extend(TurnDecisionForModel.shape)),
+    toJsonSchema(z.object({ lookups: lookupsField() }).extend(TurnDecisionForModel.shape)),
   ],
   ['turn, final round', toJsonSchema(TurnDecisionForModel)],
   ['background check', toJsonSchema(CheckDecision)],

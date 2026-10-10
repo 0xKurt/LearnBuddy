@@ -25,45 +25,55 @@
 //   * anything about blocks whose content is not quotable (the clock, the voice, the contact
 //     rules): they are listed with `quotable: false` and their reference count stays null.
 
+import { contextProvider } from './provider.js';
 import type { BuddyState } from './state.js';
 
-/** The sections of STATE, in the order `buildContext` emits them (its cache order). */
-export const BLOCK_NAMES = [
-  'learner',
-  'knows',
-  'temporary',
-  'voice',
-  'contact',
-  'earlier',
-  'material',
-  'goals',
-  'practice',
-  'waiting',
-  'now',
-  'note',
-] as const;
+/** The core's sections of STATE in its cache order; the domain's stand before or after goals. */
+const CORE_BLOCKS = ['learner', 'knows', 'temporary', 'voice', 'contact', 'earlier'] as const;
+const LAST_BLOCKS = ['now', 'note'] as const;
 
-export type BlockName = (typeof BLOCK_NAMES)[number];
+/** A section of STATE: one of the core's, or one a domain declares (provider.ts). */
+export type BlockName = string;
+
+/** The sections of STATE, in the order `buildContext` emits them (its cache order). */
+export function blockNames(): BlockName[] {
+  const domain = contextProvider().state.sections;
+  const placed = (place: 'before_goals' | 'after_goals') =>
+    domain.filter((s) => s.place === place).map((s) => s.name);
+  return [
+    ...CORE_BLOCKS,
+    ...placed('before_goals'),
+    'goals',
+    ...placed('after_goals'),
+    ...LAST_BLOCKS,
+  ];
+}
 
 /**
  * Blocks whose content a model answer can quote. The others carry rules and the clock:
  * their effect on an answer is real but invisible to this signal, so they are never
  * reported as "referenced 0 times" — they are reported as not measurable this way.
  */
-export const QUOTABLE: Record<BlockName, boolean> = {
+const CORE_QUOTABLE: Record<string, boolean> = {
   learner: true,
   knows: true,
   temporary: true,
   voice: false,
   contact: false,
   earlier: true,
-  material: true,
   goals: true,
-  practice: true,
-  waiting: true,
   now: false,
   note: false,
 };
+
+/** Whether a model answer can quote this block (a domain's sections say so themselves). */
+export function quotable(name: BlockName): boolean {
+  return (
+    CORE_QUOTABLE[name] ??
+    contextProvider().state.sections.find((s) => s.name === name)?.quotable ??
+    false
+  );
+}
 
 export type BlockSample = {
   name: BlockName;
@@ -129,7 +139,8 @@ export function occursIn(haystack: string, needle: string): boolean {
   return false;
 }
 
-const keep = (xs: Array<string | null | undefined>): string[] =>
+/** The strings of a block worth looking for in an answer: at least three characters, once each. */
+export const blockStrings = (xs: Array<string | null | undefined>): string[] =>
   [...new Set(xs.filter((x): x is string => typeof x === 'string' && x.trim().length >= 3))].map(
     (x) => x.trim(),
   );
@@ -146,40 +157,20 @@ export function blockData(
 ): Record<BlockName, string[]> {
   const permanent = state.memories.filter((m) => m.kind !== 'constraint');
   const temporary = state.memories.filter((m) => m.kind === 'constraint');
-  const prepared = state.steps.filter(
-    (s) => s.kind === 'practice' && s.state === 'prepared' && (s.payload.item_ids?.length ?? 0) > 0,
-  );
   return {
-    learner: keep([learner.display_name]),
-    knows: keep(permanent.map((m) => m.statement)),
-    temporary: keep(temporary.map((m) => m.statement)),
+    learner: blockStrings([learner.display_name]),
+    knows: blockStrings(permanent.map((m) => m.statement)),
+    temporary: blockStrings(temporary.map((m) => m.statement)),
     voice: [],
     contact: [],
-    earlier: keep(state.summaries.flatMap((s) => [s.summary, ...s.topics])),
-    material: keep([
-      ...state.subjects.map((s) => s.name),
-      ...state.topics.map((t) => t.topic),
-      ...state.materials.map((m) => m.title),
-    ]),
-    goals: keep([
+    earlier: blockStrings(state.summaries.flatMap((s) => [s.summary, ...s.topics])),
+    goals: blockStrings([
       ...state.goals.map((g) => g.title),
       ...state.goals.flatMap((g) => g.topics),
       ...state.steps.map((s) => s.title),
     ]),
-    practice: keep([
-      state.focus?.material_title,
-      state.focus?.subject_name,
-      state.focus?.goal_title,
-      state.focus?.said,
-      // Three sessions, and only their shaky topics: that is what context.ts prints of a
-      // session — the secure ones travel in the material block, not here.
-      ...state.sessions.slice(0, 3).flatMap((s) => s.shaky_topics),
-      // Her questions kept for after practice (issue #391), as context.ts prints them.
-      ...state.later
-        .filter((n) => n.recall_block === null)
-        .flatMap((n) => [n.text, n.session_title]),
-    ]),
-    waiting: keep([...state.standing.map((o) => o.text), ...prepared.map((s) => s.title)]),
+    // The domain's sections say what they render (provider.ts).
+    ...Object.fromEntries(contextProvider().state.sections.map((s) => [s.name, s.data(state)])),
     now: [],
     note: [],
   };
@@ -196,7 +187,7 @@ export function blockData(
 export function referencedBlocks(
   blocks: readonly BlockSample[],
   output: string,
-): { byBlock: Partial<Record<BlockName, string[]>>; shared: string[] } {
+): { byBlock: Record<BlockName, string[]>; shared: string[] } {
   const owners = new Map<string, BlockName[]>();
   for (const b of blocks) {
     for (const d of b.data) {
@@ -205,7 +196,7 @@ export function referencedBlocks(
       else owners.set(d, [b.name]);
     }
   }
-  const byBlock: Partial<Record<BlockName, string[]>> = {};
+  const byBlock: Record<BlockName, string[]> = {};
   const shared: string[] = [];
   for (const [datum, where] of owners) {
     if (!occursIn(output, datum)) continue;

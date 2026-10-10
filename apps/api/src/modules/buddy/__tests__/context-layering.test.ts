@@ -5,8 +5,12 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { registerLearning } from '../../learning/register.js';
 import { buildContext } from '../context.js';
 import type { BuddyState, SettingsRow } from '../state.js';
+
+// STATE is rendered with what the learning domain registers (issue #107).
+registerLearning();
 
 const settings: SettingsRow = {
   learner_id: 'l1',

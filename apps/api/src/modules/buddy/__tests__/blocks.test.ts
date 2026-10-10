@@ -9,8 +9,9 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { registerLearning } from '../../learning/register.js';
 import {
-  BLOCK_NAMES,
+  blockNames,
   blockData,
   referencedBlocks,
   setStateAudit,
@@ -19,6 +20,9 @@ import {
 } from '../blocks.js';
 import { buildContext } from '../context.js';
 import type { BuddyState, SettingsRow } from '../state.js';
+
+// STATE is rendered with what the learning domain registers (issue #107).
+registerLearning();
 
 const settings: SettingsRow = {
   learner_id: 'l1',
@@ -219,7 +223,7 @@ describe('the STATE measurement does not change STATE', () => {
     expect(blocks.map((b) => b.text).join('\n\n')).toBe(built);
     for (const b of blocks) expect(b.chars).toBe(b.text.length);
     // This state fills every section but the day note.
-    expect(blocks.map((b) => b.name)).toEqual(BLOCK_NAMES.filter((n) => n !== 'note'));
+    expect(blocks.map((b) => b.name)).toEqual(blockNames().filter((n) => n !== 'note'));
   });
 
   it('records the day note as its own section when there is one', () => {

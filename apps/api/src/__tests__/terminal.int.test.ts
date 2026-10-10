@@ -8,7 +8,7 @@ import type { BuddyHome, SendMessageResponse } from '@learnbuddy/shared-types/co
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DAILY_LIMITS } from '../config.js';
-import { findOrCreateSubject } from '../modules/buddy/plan.js';
+import { findOrCreateSubject } from '../modules/learning/state.js';
 import { runTick } from '../modules/scheduler/tick.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type TestEnv } from '../testing/harness.js';

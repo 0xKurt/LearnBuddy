@@ -6,7 +6,7 @@
 import { DrillSpec, TEST_MINUTES, TestMinutes } from '@learnbuddy/shared-types/contracts';
 
 import { type ActionOf } from '../buddy/decision.js';
-import { loadStandingOffers } from '../buddy/state.js';
+import { loadStandingOffers } from '../learning/state.js';
 import { holdsWordPairs, normalizeForMatch } from '../buddy/text.js';
 import {
   goalOf,

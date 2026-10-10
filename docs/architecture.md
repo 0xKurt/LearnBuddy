@@ -178,6 +178,29 @@ The model never writes ids, dates or instants (`modules/buddy/decision.ts`):
 with a claim token. The turn builds the context (STATE + dialogue), asks the model for a
 `TurnDecision` (JSON schema) — after up to two rounds of lookups (below) — validates and applies it.
 
+**What the domain adds** (issue #107, cut 5). The core never names the learning domain's modules
+or tables (`pnpm guards`: `boundaries.mjs` for imports, `domain-sql.mjs` for SQL); the domain
+registers one context provider at start-up (`modules/buddy/provider.ts`, from
+`modules/learning/register.ts`) and `createApp` refuses to start without one:
+
+- **state** — its rows in Buddy's state (`learning/state.ts`: subjects, topics, sheets, focus,
+  practices, standing offers, kept questions, two totals), read with the core's connection so the
+  home's snapshot covers them; its fields are declared by augmenting `DomainState`, `DomainTotals`
+  and `DomainAliases`, so the core carries them without naming them;
+- **STATE and prompt** — her level as a school year, what a goal and a step carry, its own
+  sections (material, practice, waiting) at their place in the cache order (`learning/context.ts`),
+  and its rules in the turn prompt (`learning/prompt.ts`). The prompt is built on first use
+  (`buddyPrompt()`), so registered parts are in it; text, schemas and the hashed version are
+  byte-identical to before the cut (`__tests__/prompt-pin.test.ts` pins them and a full STATE);
+- **home** — the card on top, the notice, what is working, practised today, the focus line, a
+  running roleplay, and what its cards in the conversation say now (`learning/home.ts`);
+- **turn** — a mode that answers her message instead of a turn (the roleplay round,
+  `learning/turn.ts`; its scene commits with the decision through `DecisionScene` in
+  `apply.ts`), the passages looked up the moment she writes, the homework-solution guard, the
+  preparation of an offer, the end of a scene on a held-back message;
+- **look back, subjects, undo** — the topic that now sits (`learning/lookback.ts`; the core keeps
+  the one-a-week rule), the names of goal subjects, a sheet renamed back.
+
 - Duplicate request → replay (done) or "processing" (202); never a second run.
 - A newer message during a turn supersedes it: the newer turn answers both. The older one is
   released, not "done": it becomes done with the newer answer, or failed with the newer
@@ -369,8 +392,10 @@ The tools live in `modules/buddy/`, one file per area (#311): `memoryTools.ts`, 
 keeps the rules every tool keeps and maps each act tool to its handler: the handlers every Buddy
 has stand there, the learning domain's register theirs at start-up (`registerActHandlers`,
 called once from `modules/learning/register.ts`, issue #107 — the core never names them).
-`createApp` refuses to start while a tool or lookup the model is offered has no code
-(`withoutCode()` in `registry.ts`). `undo.ts` reverses an applied action. What every tool is given and shares —
+`createApp` refuses to start while a tool the model is offered has no code
+(`withoutCode()` in `registry.ts`) or no context provider is registered. `undo.ts` reverses an
+applied action; an undo kind of the domain's own (a sheet renamed back) is declared by augmenting
+`DomainUndos` and applied through its context provider. What every tool is given and shares —
 `ToolContext`, `ToolOutcome`/`UndoSpec`, `ToolRejection`, the quote and day checks, the alias
 resolvers — is in `modules/buddy/toolKit.ts`.
 
@@ -432,7 +457,7 @@ summary plus undo data. Enforced here, not in the prompt:
   the pool as the SUBJECT, with both French sheets in it, and after a pause there was nothing
   left at all;
 - **what already stands in front of her is state too** (`loadStandingOffers` in
-  `modules/buddy/state.ts`, `BuddyState.standing`, issue #184). An `offer_learning` changes
+  `modules/learning/state.ts`, `BuddyState.standing`, issue #184). An `offer_learning` changes
   nothing in the database, so Buddy could not see his own offer still standing: measured
   01.10., the same four turns offered the same practice three times while the first button sat
   right there — no single answer wrong, the conversation treading water (the measured core of
@@ -542,10 +567,11 @@ summary plus undo data. Enforced here, not in the prompt:
 `search_material` (passages of her read worksheets, hybrid search below; a
 homework sheet only by title, never its text — help with homework happens in the help session),
 `practice_history` (finished sessions: what sat, what was shaky) and `find_questions`
-(questions on a topic with the latest result — never the solutions). Registered once (name,
-schema, surfaces, connectors); the model-facing schema and prompt lines are generated from the
-registry. The code that reads each lookup's data is the learning domain's: it registers it at
-start-up (`registerLookupRunners`, `modules/learning/register.ts`, issue #107). Enforced in code:
+(questions on a topic with the latest result — never the solutions). Each is registered once with
+its name, schema, surfaces and the code that reads its data; the model-facing schema and prompt
+lines are generated from the registry, on first use. All three are the learning domain's: it
+declares them in `modules/learning/lookups.ts` and registers them at start-up (`registerLookups`,
+`modules/learning/register.ts`, issue #107) — `lookups.ts` names none. Enforced in code:
 
 - at most 2 lookup rounds × 3 lookups, then the final schema offers no lookups;
 - results ≤ 6000 characters per round, marked as data; invalid calls report an error and are
@@ -661,7 +687,7 @@ carries its decision, so what Buddy did in the background appears in the thread 
 and undo. "Heute nicht" on a prepared practice moves it (and an agreed reminder) to tomorrow; it
 is not skipped for good.
 
-**Looking back** (`modules/buddy/lookback.ts`, migration `0038_buddy_lookbacks.sql`; gaps #7):
+**Looking back** (`modules/buddy/lookback.ts` decides when, `modules/learning/lookback.ts` what; migration `0038_buddy_lookbacks.sql`; gaps #7):
 visible progress without pressure. After a finished practice or before a test
 (`session_finished`, `exam_countdown`) code may offer the check one fact — a topic that was
 shaky in a practice at least 5 days ago (and not since) and where now every question she
@@ -1172,7 +1198,7 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   Next to the phone's `lb-perf` line of the same minute it splits the device's wait into the way
   there and back, the sign-in check, the server and the model; `llm_calls` adds when the model
   call started (`created_at − latency_ms`).
-- **Her sheets are looked up while her state loads** (issue #447, `turn.ts` `passagesAhead`):
+- **Her sheets are looked up while her state loads** (issue #447, `turn.ts` `passagesAhead`, through the context provider's `lookAhead`):
   the passages her message points at (issue #26) need an embedding call, 174–396 ms in
   production (p50 270 ms), and it used to start only after the ~20 reads of her state. Now both
   run side by side from the moment the turn begins; the result is used when this message is all
@@ -2038,7 +2064,7 @@ its own route, so nothing she asks is ever misread as an answer:
   (`POST …/later`, `{ turn_id }`; 404 for any turn not hers in this session, 409 `not_offered`)
   sets `kept` and bumps the context. Once that practice is over — finished or closed for
   idleness, within a day — Buddy's STATE lists her question („Questions she kept for after
-  practice", `state.ts` `loadLaterNotes`, through `recall.ts`) with the instruction to bring it up
+  practice", `learning/state.ts` `loadLaterNotes`, through `recall.ts`) with the instruction to bring it up
   once: the check woken by `session_finished` and every chat turn of that day read it (measured on
   the check's request in `practice-ask.int.test.ts`; whether the live model then says it is an
   eval question still open). Her words only, never the tutor's reply.
@@ -3332,8 +3358,8 @@ session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
   the key it was compared against stay readable (`items`, `practice_turns.verdict` and
   `evaluated_by` — rule or model). Every claimed weakness derived from it disappears at once,
   because the dispute also sets `flagged_at`: the summary, Buddy's home card and his STATE
-  (`summary.ts`, `buddy/state.ts`, `connectors/practice.ts`), the look-back
-  (`buddy/lookback.ts`) and the material list all skip a flagged row, and the archived item is
+  (`summary.ts`, `learning/state.ts`, `connectors/practice.ts`), the look-back
+  (`learning/lookback.ts`) and the material list all skip a flagged row, and the archived item is
   out of `selectPracticeItems`. One transaction, `deps.now()`, the session row locked first,
   and `bumpContext` behind it (rules 4 and 7). _Where the state to go back to comes from:_
   `reviewItem` (`practice/fsrs.ts`) writes it from the same read it overwrites, because it is
@@ -5317,7 +5343,7 @@ the role; code holds the frame (CLAUDE.md rule 1).
   screen reader), so the scene's name keeps its line at 360 (issue #334.3).
   No count of turns, no progress bar (rule 6).
 - **While it runs, her message is a line in the scene, not a Buddy turn.** `decideTurn` sees the
-  running roleplay and answers through `roleplayRound` (`turn.ts`) — same claim, fence, takeover,
+  running roleplay and answers through `roleplayRound` (`learning/turn.ts`, the context provider's turn mode) — same claim, fence, takeover,
   failure codes and audit (`buddy_decisions`, prompt version `roleplay.<hash>`) as every turn, but a
   different request: `ROLEPLAY_SYSTEM`, the frame **rendered from the row** (`roleplayFrame`: the
   language, scene, role, `k1…k5`, her level, the turns left) and the scene's own messages since
@@ -5915,8 +5941,8 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   (`llm/promptVersion.ts`): the system text, the response schemas in their field order, and the
   fixed text around what the learner wrote where that is a named constant (`TASK`, `LEVEL`).
   The same bytes give the same version, any other byte another. Each module declares its version
-  next to what it hashes (`BUDDY_PROMPT_VERSION` in `buddy/prompts.ts` with the turn and check
-  schemas, `EXTRACT_PROMPT_VERSION` in `materials/sources.ts` with the extraction schemas,
+  next to what it hashes (`buddyPrompt().version` in `buddy/prompts.ts` with the turn and check
+  schemas, built on first use from what the domain registered, `EXTRACT_PROMPT_VERSION` in `materials/sources.ts` with the extraction schemas,
   `TUTOR_PROMPT_VERSION` in `practice/answerTutor.ts`). Before, every prompt change bumped a counter
   in one line (`generate.v1.41`, `buddy.61`); two branches that both changed a prompt collided
   there every time, and after a merge one number named two prompts. Nothing orders versions —

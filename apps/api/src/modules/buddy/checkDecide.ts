@@ -22,13 +22,7 @@ import {
   type LookBackFact,
 } from './lookback.js';
 import { withLookups } from './lookups.js';
-import {
-  BUDDY_PROMPT_VERSION,
-  CHECK_SCHEMA,
-  CHECK_STEP_SCHEMA,
-  CHECK_SYSTEM,
-  repairMessage,
-} from './prompts.js';
+import { buddyPrompt, repairMessage, schemaErrors } from './prompts.js';
 import { CheckDecision } from './registry.js';
 import { type BuddyState, loadBuddyState } from './state.js';
 import { pushAvailable } from './turn.js';
@@ -136,7 +130,7 @@ export async function decide(
           mode: 'check',
           attempt: 1,
           model: null,
-          promptVersion: BUDDY_PROMPT_VERSION,
+          promptVersion: buddyPrompt().version,
           output: null,
           triggers: triggers.map((t) => t.reason),
           reason: 'nothing to work with',
@@ -187,7 +181,7 @@ export async function decide(
       mode: 'check' as const,
       attempt,
       model: null as string | null,
-      promptVersion: BUDDY_PROMPT_VERSION,
+      promptVersion: buddyPrompt().version,
       output: undefined as unknown,
       triggers: triggers.map((t) => ({
         reason: t.reason,
@@ -214,10 +208,10 @@ export async function decide(
           const res = await callModel(deps, learner.id, today, {
             purpose: 'buddy_check',
             tier: 'smart',
-            promptVersion: BUDDY_PROMPT_VERSION,
-            system: CHECK_SYSTEM,
+            promptVersion: buddyPrompt().version,
+            system: buddyPrompt().checkSystem,
             contents: messages,
-            schema: final ? CHECK_SCHEMA : CHECK_STEP_SCHEMA,
+            schema: final ? buddyPrompt().checkSchema : buddyPrompt().checkStepSchema,
             maxOutputTokens: 2048,
             temperature: 0.3,
             timeoutMs: 40_000,
@@ -275,9 +269,7 @@ export async function decide(
         ]
       : [];
     if (!parsed.success || semantic.length > 0) {
-      const errors = parsed.success
-        ? semantic
-        : parsed.error.issues.slice(0, 6).map((i) => `${i.path.join('.')}: ${i.message}`);
+      const errors = parsed.success ? semantic : schemaErrors(parsed.error);
       await recordUnapplied(
         deps.db,
         {

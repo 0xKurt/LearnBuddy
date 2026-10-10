@@ -36,6 +36,7 @@ import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { quoted } from '../practice/rubric.js';
+import { StaleDecision, type DecisionScene } from './apply.js';
 import { mergeRoles } from './context.js';
 import { bumpContext, lockContext } from './plan.js';
 import { recallText } from './recall.js';
@@ -455,13 +456,42 @@ export type RoleplayStep = {
   closing: string | null;
 };
 
-export class RoleplayMoved extends Error {}
+/** A turn landed in the roleplay meanwhile, or it ended: the decision is stale (apply.ts). */
+class RoleplayMoved extends StaleDecision {}
 
 /**
- * Applied inside `applyDecision`, after the fence: the roleplay must still be running with the
- * turn count the model saw. Returns the closing message to post after the reply, if any.
+ * An in-role turn as part of its decision (issue #244): counted, ended and its feedback stored in
+ * the decision's transaction, and its closing message posted after the reply.
  */
-export async function applyRoleplayStep(
+export function roleplayScene(learnerId: string, step: RoleplayStep): DecisionScene {
+  return {
+    apply: (tx, now) => applyRoleplayStep(tx, learnerId, step, now),
+    close: async (tx, at) => {
+      if (!step.closing) return;
+      // With feedback, the message points at its roleplay: the app shows it as the result card
+      // (issue #384).
+      await tx.query(
+        `insert into buddy_messages
+           (learner_id, role, text, reply_to_id, decision_id, roleplay_id, created_at)
+         values ($1, 'buddy', $2, $3, $4, $5, $6)`,
+        [
+          learnerId,
+          step.closing,
+          at.triggerMessageId,
+          at.decisionId,
+          step.feedback ? step.id : null,
+          at.now,
+        ],
+      );
+    },
+  };
+}
+
+/**
+ * Inside the decision's transaction, after the fence: the roleplay must still be running with the
+ * turn count the model saw.
+ */
+async function applyRoleplayStep(
   tx: Db,
   learnerId: string,
   step: RoleplayStep,

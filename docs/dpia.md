@@ -11,7 +11,7 @@ Folgenabschätzung ist nicht diskutabel. Zusätzlich verlangt EDPB Statement 1/2
 Abwägung der eingesetzten Alterssicherung (→ §6).
 
 **Stand:** 02.10.2026 · **Prompt-Version der Modelle:** buddy.53 (`modules/buddy/prompts.ts`,
-`BUDDY_PROMPT_VERSION`) · **Fassung:** 4 (Entwurf, Owner-Review offen) ·
+`buddyPrompt().version`) · **Fassung:** 4 (Entwurf, Owner-Review offen) ·
 **Verantwortlicher:** der Betreiber der App (Privatperson; Familienbetrieb) — **offen**, ob das
 so bleibt (§7 Punkt 13)
 

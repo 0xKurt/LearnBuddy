@@ -22,7 +22,8 @@ import { GoogleGenAI } from '@google/genai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-import { TURN_STEP_SCHEMA } from '../../modules/buddy/prompts.js';
+import { buddyPrompt } from '../../modules/buddy/prompts.js';
+import { registerLearning } from '../../modules/learning/register.js';
 import { ExtractionResult } from '../../modules/materials/extract.js';
 import type { JsonSchema, LlmRequest } from '../gateway.js';
 import { toJsonSchema } from '../json-schema.js';
@@ -45,6 +46,10 @@ async function wireBody(params: Parameters<GoogleGenAI['models']['generateConten
   expect(sent).toHaveLength(1);
   return sent[0]!;
 }
+
+// The turn prompt is built from what the learning domain registers (issue #107).
+registerLearning();
+const TURN_STEP_SCHEMA = buddyPrompt().turnStepSchema;
 
 const request = (schema: JsonSchema): LlmRequest => ({
   purpose: 'buddy_turn',

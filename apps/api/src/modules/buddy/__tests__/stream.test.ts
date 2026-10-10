@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { replyProgress } from '../stream.js';
-import { TURN_STEP_SCHEMA } from '../prompts.js';
+import { registerLearning } from '../../learning/register.js';
+import { buddyPrompt } from '../prompts.js';
+
+// The prompt is built from what the learning domain registers (issue #107).
+registerLearning();
+const TURN_STEP_SCHEMA = buddyPrompt().turnStepSchema;
 
 /**
  * The order the model really writes its fields in, taken from the schema itself.

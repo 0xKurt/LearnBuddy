@@ -2,7 +2,8 @@
 // Split from tools.ts (#311); the rules every tool keeps are written there.
 
 import { type ActionOf, schoolYearsOf } from './decision.js';
-import { cancelGoalWakeups, findOrCreateSubject, scheduleExamWakeups } from './plan.js';
+import { cancelGoalWakeups, scheduleExamWakeups } from './plan.js';
+import { contextProvider } from './provider.js';
 import {
   quotedGoal,
   requireQuote,
@@ -51,7 +52,12 @@ export async function runPlanExam(
   const a = action.args;
   requireQuote(ctx, a.quote);
   const due = resolveFutureDay(ctx, a.day, 'the test');
-  const subject = await findOrCreateSubject(ctx.db, ctx.learnerId, a.subject, a.subject_kind);
+  const subject = await contextProvider().subjects.findOrCreate(
+    ctx.db,
+    ctx.learnerId,
+    a.subject,
+    a.subject_kind,
+  );
   const duplicate = await ctx.db.maybeOne<{ id: string; title: string }>(
     `select id, title from buddy_goals
       where learner_id = $1 and kind = 'exam' and status = 'active' and subject_id = $2 and due_date = $3`,
