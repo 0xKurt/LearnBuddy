@@ -13,6 +13,7 @@
     "placeholder_dictation": "Schreib, was du hörst – ohne Mikro",
     "label": "Deine Antwort",
     "placeholder": "Deine Antwort …",
+    "placeholder_unit": "Antwort …",
     "unit_hint": "Antwort in {{unit}}",
     "check_waits": "Erst wenn etwas im Feld steht.",
     "unit_chip": "in {{unit}}"

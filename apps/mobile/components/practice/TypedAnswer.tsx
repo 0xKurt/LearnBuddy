@@ -250,12 +250,20 @@ export function TypedAnswer({
         setMode(null);
       }}
       // A Diktat says in the field itself that the mic is off (issue #242): one line where
-      // she looks anyway, gone as soon as she types — not a second line of grey text.
+      // she looks anyway, gone as soon as she types — not a second line of grey text. Beside a
+      // unit chip the field is narrow (the camera, the chip, the mic, the waveform): "Antwort …
+      // in cm²" reads as one line, where "Deine Antwort …" broke onto a second one (#387).
       placeholder={
         board?.placeholder ??
         (code
           ? t(`code.placeholder_${code.purpose}`)
-          : t(micOff ? 'answer.placeholder_dictation' : 'answer.placeholder'))
+          : t(
+              micOff
+                ? 'answer.placeholder_dictation'
+                : unit
+                  ? 'answer.placeholder_unit'
+                  : 'answer.placeholder',
+            ))
       }
       accessibilityLabel={t('answer.label')}
       accessibilityHint={

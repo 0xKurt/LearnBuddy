@@ -6,6 +6,8 @@ import { boardCap, visualCaps, visualGrows, visualReach } from '../practice/visu
 describe('the figure table (issue #310, step 5)', () => {
   it('lets every drawing grow but a note line, which only gives (#275)', () => {
     expect(visualGrows({ type: 'staff' } as Figure)).toBe(false);
+    // A program is text: the card grew around it and left an empty band (#262, #387).
+    expect(visualGrows({ type: 'code' } as Figure)).toBe(false);
     expect(visualGrows({ type: 'geometry' } as Figure)).toBe(true);
     expect(visualGrows(null)).toBe(true);
   });

@@ -84,7 +84,7 @@ export function ItemCard({
       answer={filling}
       // What she answers from: a reading text (#233), a task's situation (#297).
       stimulus={item}
-      answerBoard={view.open && form.structured}
+      answerBoard={form.board}
       {...readAgain}
     />
   );

@@ -6,9 +6,8 @@
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import type { LlmRequest } from '../../llm/gateway.js';
-import { ScriptedGateway } from '../fakes.js';
 import { scriptGenerations } from './generations.js';
-import { hintRules, tutorRules } from './rules.js';
+import { hintRules, reexplainRules, tutorRules } from './rules.js';
 import { says, scriptTurns } from './turns.js';
 
 /** The fields of a generated question that most scripted questions leave at their default. */
@@ -141,7 +140,7 @@ function lastText(req: LlmRequest): string {
   return parts.join('\n');
 }
 
-export function scriptLearningModes(llm: ScriptedGateway): void {
+export function scriptLearningModes(): void {
   // Formulas (issue #239): a reaction equation typed with the chemistry keys and counted by
   // code (chemistry.ts), the new notation drawn in questions and in Buddy's own words, and a
   // times table whose whole-number gaps get no math keys (#286 finding 5). Registered first,
@@ -490,8 +489,8 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
     }),
   });
   // "Anders erklären" under a shown solution (the chips after a wrong try or a hint).
-  llm.byDefault('reexplain', (req) =>
-    ScriptedGateway.textOf(req).includes('WAY: example')
+  reexplainRules.otherwise((_req, text) =>
+    text.includes('WAY: example')
       ? {
           explanation:
             'Stell dir vor, du schenkst deiner Oma Blumen. Wem schenkst du sie? Der Oma – „der Oma“ ist der Dativ.',

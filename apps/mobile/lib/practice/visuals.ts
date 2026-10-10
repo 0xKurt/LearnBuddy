@@ -29,8 +29,12 @@ const IMAGE_MAX = 180;
  */
 const BOARD_SHARE = 0.45;
 
-/** The figure types that never grow; every other one may. */
-const KEEPS_ITS_SIZE: ReadonlySet<Figure['type']> = new Set(['staff']);
+/**
+ * The figure types that never grow; every other one may. A note line only gives (#275); a program
+ * (#262) is text at its reading size — the card grew around it and left an empty band above the
+ * code (#387).
+ */
+const KEEPS_ITS_SIZE: ReadonlySet<Figure['type']> = new Set(['staff', 'code']);
 
 export function visualGrows(figure: Figure | null | undefined): boolean {
   return !figure || !KEEPS_ITS_SIZE.has(figure.type);

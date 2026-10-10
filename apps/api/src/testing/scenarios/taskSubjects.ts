@@ -2,8 +2,14 @@
 // from grade 9/10 asks them, and a material that is a table or a chart. Scripted model answers for
 // the integration tests (`__tests__/task-parts-subjects.int.test.ts`); every formula gives its
 // part's key from the earlier keys, and every reading off a chart is what the chart says, as the
-// server checks (`modules/practice/taskParts.ts`). Test tooling only.
+// server checks (`modules/practice/taskParts.ts`). The walkthrough's gallery (tests/web/gallery.spec.ts,
+// issue #387) shows a table and a chart as the material, and a long source, keyed by her own
+// sentences („Aufgaben mit Material", „Quellenaufgabe"), which no other spec types (#350).
+// Test tooling only.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
+
+import { scriptGenerations } from './generations.js';
+import { says, scriptTurns } from './turns.js';
 
 type KeyPoint = { name: string; point: string; ask: string; exact: string[] };
 
@@ -227,4 +233,36 @@ export function cityTask(readKey = '3.7') {
       }),
     ],
   };
+}
+
+/** A practice run of these tasks, as the generator writes it. */
+export function partTaskRun(partTasks: unknown[]) {
+  return {
+    usable: true,
+    title: 'Klassenarbeit',
+    subject: { name: 'Naturwissenschaften', kind: 'other' },
+    items: [],
+    part_tasks: partTasks,
+  };
+}
+
+export function scriptTaskSubjects(): void {
+  scriptTurns(
+    {
+      when: /aufgaben mit material/i,
+      answer: says('Gern – zwei Aufgaben, einmal mit Tabelle, einmal mit Diagramm.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Aufgaben mit Material' } },
+      ]),
+    },
+    {
+      when: /quellenaufgabe/i,
+      answer: says('Gern – eine Quelle aus der Weimarer Republik, mit zwei Teilaufgaben.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Quellenaufgabe' } },
+      ]),
+    },
+  );
+  scriptGenerations(
+    { when: /Aufgaben mit Material/i, answer: () => partTaskRun([cartTask(), cityTask()]) },
+    { when: /Quellenaufgabe/i, answer: () => partTaskRun([sourceTask()]) },
+  );
 }
