@@ -93,10 +93,16 @@ type Props = {
   /** "Nochmal vorlesen" in the conversation row; none where the question must not be heard. */
   onReadAgain?: () => void;
   /**
-   * A board above the bar this line belongs to (#260): what she taps first, and — until she has —
-   * why "Prüfen" waits and what the empty field says.
+   * A board above the bar this line belongs to (#260): what she taps first, what of it stays while
+   * she types and it folds (`AnswerShell` `whileTyping`), and — until she has tapped — why
+   * "Prüfen" waits and what the empty field says.
    */
-  board?: { node: ReactNode; waits: string | null; placeholder: string } | null;
+  board?: {
+    node: ReactNode;
+    whileTyping?: ReactNode;
+    waits: string | null;
+    placeholder: string;
+  } | null;
   /** The question a photo of her working is read for (issue #444); none: no camera here. */
   work?: WorkTarget | null;
   /** She writes code (issue #262): monospace, no keys, no mic, the field starting with `starter`. */
@@ -368,6 +374,7 @@ export function TypedAnswer({
   return (
     <AnswerShell
       answer={board?.node ?? null}
+      whileTyping={board?.whileTyping ?? null}
       action={{
         ready: value.trim().length > 0 && !board?.waits && unread === null,
         disabled,

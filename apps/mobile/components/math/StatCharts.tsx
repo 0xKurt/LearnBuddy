@@ -230,14 +230,19 @@ export function BoxPlotView({ fig, width }: { fig: BoxFig; width: number }) {
 export function HistogramView({ fig, width }: { fig: HistogramFig; width: number }) {
   const { figure: ink } = useTheme();
   const axis = histogramAxis(fig);
-  const frame = chartFrame(width, { size: [0.68, 180, 290], rightAxis: false, xTitle: !!fig.xt });
+  const n = fig.v.length;
+  // Whole-number class centres (a distribution over k = 0, 1, 2 …) are labelled at the centre;
+  // anything else at the class boundaries — the last of them on the plot's end (`edgeRoom`, #387).
+  const centred = Number.isInteger(fig.x0 + fig.w / 2) && Number.isInteger(fig.w);
+  const frame = chartFrame(width, {
+    size: [0.68, 180, 290],
+    rightAxis: false,
+    xTitle: !!fig.xt,
+    ends: centred ? [] : [formatNumber(fig.x0 + fig.w * n)],
+  });
   const { left: L, height: h, pw, ph } = frame;
   const Y = frame.Y(axis);
-  const n = fig.v.length;
   const slot = pw / n;
-  // Whole-number class centres (a distribution over k = 0, 1, 2 …) are labelled at the centre;
-  // anything else at the class boundaries.
-  const centred = Number.isInteger(fig.x0 + fig.w / 2) && Number.isInteger(fig.w);
   const marks = (
     centred
       ? fig.v.map((_, k) => ({ x: L + slot * (k + 0.5), v: fig.x0 + fig.w * (k + 0.5) }))
@@ -282,7 +287,13 @@ export function ScatterPlotView({ fig, width }: { fig: ScatterFig; width: number
   const { t } = useTranslation('math');
   const clipId = `scatter-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const { x: xa, y: ya } = scatterAxes(fig);
-  const frame = chartFrame(width, { size: [0.72, 190, 300], rightAxis: false, xTitle: !!fig.xt });
+  const frame = chartFrame(width, {
+    size: [0.72, 190, 300],
+    rightAxis: false,
+    xTitle: !!fig.xt,
+    // Its x-axis is measured: the last tick stands on the plot's end (`edgeRoom`, #387).
+    ends: xa.ticks.map(formatNumber),
+  });
   const { left: L, height: h, pw, ph } = frame;
   const X = frame.X(xa);
   const Y = frame.Y(ya);

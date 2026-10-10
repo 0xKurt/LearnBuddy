@@ -1,6 +1,14 @@
+import type { EssayFeedback, Figure } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { boardKeeps, threadEdge, threadRoom, type RoomInput } from '../practice/threadRoom.js';
+import {
+  boardKeeps,
+  newestReply,
+  readsThrough,
+  threadEdge,
+  threadRoom,
+  type RoomInput,
+} from '../practice/threadRoom.js';
 
 // One reply of 120 pt under one earlier turn: the conversation needs 260, the newest turn 120.
 const base: RoomInput = {
@@ -111,6 +119,43 @@ describe('threadRoom (issues #286, #232, #403)', () => {
     expect(r.threadHolds).toBe(true);
     // Where it fits whole, nothing changes.
     expect(threadRoom({ ...base, room: 200, reads: true }).threadCap).toBe(newest);
+  });
+
+  it('reads an explanation with its picture through, like the feedback on a long text (#387)', () => {
+    // „Mit Beispiel" (#298): the explanation with its graph was taller than the room above the
+    // options and „Weiter" — hidden for its height, it stood nowhere at rest.
+    const figure: Figure = { type: 'table', header: ['a', 'y'], rows: [['1', '1']] };
+    expect(readsThrough({ essay: null, figure })).toBe(true);
+    const essay: EssayFeedback = { form: 'Erörterung', points: [], places: [], last: false };
+    expect(readsThrough({ essay, figure: null })).toBe(true);
+    // A plain reply is glanced at: it shows whole or waits for room.
+    expect(readsThrough({ essay: null, figure: null })).toBe(false);
+    expect(readsThrough({})).toBe(false);
+    expect(readsThrough(undefined)).toBe(false);
+  });
+
+  it('reads the „Anders erklären" exchange from its part, not from the turn before it (#387)', () => {
+    // After „Mit Beispiel" the newest turn of the conversation was still „Stimmt – gut gemacht!":
+    // the explanation with its graph stands in the exchange, the conversation's last part.
+    const figure: Figure = { type: 'table', header: ['a', 'y'], rows: [['1', '1']] };
+    const right = { essay: null, figure: null };
+    const asked = { essay: null, figure: null };
+    const explained = { essay: null, figure };
+    const reply = newestReply({
+      turns: [asked, right],
+      again: [asked, explained],
+      turnTops: [0, 60],
+      partTops: [0, 112],
+    });
+    expect(reply).toEqual({ turn: explained, top: 112 });
+    expect(readsThrough(reply.turn)).toBe(true);
+    // Without an exchange it is the newest turn, where it starts.
+    expect(
+      newestReply({ turns: [asked, right], again: [], turnTops: [0, 60], partTops: [0] }),
+    ).toEqual({
+      turn: right,
+      top: 60,
+    });
   });
 
   it('keeps two lines of parts and the bar', () => {

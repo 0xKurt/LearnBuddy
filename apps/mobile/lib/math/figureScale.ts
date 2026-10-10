@@ -71,14 +71,17 @@ export function figureScale(
  * climate chart, answered, stood at 0.4, its month initials on top of each other ("JMMJASOND",
  * issue #501) — and narrower did not even make it shorter: its height has a floor of its own. A
  * pie is read from its legend, not off an axis: it shrinks like any drawing. The half pixel lets
- * `figureBodyWidth`'s rounding down land on the width, not one below it. Any other drawing:
- * `MIN_FIGURE_SCALE`.
+ * `figureBodyWidth`'s rounding down land on the width, not one below it. A table is never
+ * narrowed: its height is its rows', not its width's, so narrower only broke its words — the SQL
+ * table under the tall code bar, at 0.4, stood as tall as before and read "klass/e" (#387). Any
+ * other drawing: `MIN_FIGURE_SCALE`.
  */
 export function leastFigureScale(
   figure: { type: string },
   width: number,
   chrome = FIGURE_CHROME,
 ): number {
+  if (figure.type === 'table') return 1;
   const room = width - chrome;
   if (!isChart(figure) || figure.type === 'pie_chart' || room <= 0) return MIN_FIGURE_SCALE;
   return Math.min(1, Math.max(MIN_FIGURE_SCALE, (CHART_WIDTH + 0.5) / room));

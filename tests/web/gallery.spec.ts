@@ -169,9 +169,11 @@ test('„Anders erklären" with a picture: the closed question, then the graph (
   await expect(page.getByText('Richtig', { exact: true }).last()).toBeVisible();
   await shot(page, '298e-closed-choice');
   await page.getByRole('button', { name: 'Mit Beispiel' }).click();
-  await expect(page.getByText('desto schmaler wird die Parabel', { exact: false })).toBeAttached();
-  // Attached, not visible: the explanation with its graph is taller than the room above the
-  // options and „Weiter", and the conversation draws only whole parts — at rest it does not stand
-  // in the picture at all (an open finding of #387, follow-up in the report).
+  // The explanation with its graph is taller than the room above the options and „Weiter": it is
+  // read through from its top, like the feedback on a long text (`readsThrough`, #387) — drawn
+  // only whole, it did not stand in the picture at all.
+  await expect(
+    page.getByText('desto schmaler wird die Parabel', { exact: false }).last(),
+  ).toBeInViewport();
   await shot(page, '298f-reexplain-figure');
 });

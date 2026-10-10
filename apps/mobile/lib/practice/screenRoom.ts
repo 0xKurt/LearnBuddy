@@ -13,7 +13,7 @@ import type { View } from 'react-native';
 import { answerFolds, formDensity } from '../keyboard.js';
 import { useFigureSizing } from '../math/figureSizing.js';
 import { useVisibleHeight } from '../useVisibleHeight.js';
-import { boardKeeps, threadRoom, type Room } from './threadRoom.js';
+import { boardKeeps, newestReply, readsThrough, threadRoom, type Room } from './threadRoom.js';
 import { visualCaps, visualGrows, visualReach } from './visuals.js';
 
 /** The question on screen, and the window it is laid out in. */
@@ -22,8 +22,9 @@ type Question = {
   open: boolean;
   /** A spoken question: its card shows the sentence, never a drawing to grow. */
   speaking: boolean;
-  /** The conversation as shown (`ItemThread`'s turns). */
+  /** The conversation as shown (`ItemThread`'s turns), and the „Anders erklären" exchanges. */
   threadTurns: readonly PracticeTurnView[];
+  turnsAgain: readonly PracticeTurnView[];
   /** No turn yet. */
   quiet: boolean;
   /** The Diktat card is one row (`DictationCard` `compact`). */
@@ -110,7 +111,7 @@ export function useScreenRoom() {
     caps: { figure: number; image: number };
     cardNatural: number;
     tops: number[];
-    /** Where the conversation rests: the top of a reply she reads through (`ThreadBox`, #258). */
+    /** Where the conversation rests: the top of a reply she reads through (`ThreadBox`, #258, #298). */
     readFrom: number | undefined;
     /** The card laid out at height `h`. */
     onCard: (h: number) => void;
@@ -152,9 +153,15 @@ export function useScreenRoom() {
     const tops = q.threadTurns
       .map((turn) => turnTops[turn.id])
       .filter((y): y is number => y !== undefined);
-    // Buddy's feedback on her long text is read through, from its top (#258, `threadRoom`).
-    const newest = q.threadTurns[q.threadTurns.length - 1];
-    const reads = item.kind === 'essay' && Boolean(newest?.essay);
+    // Buddy's feedback on her long text and an explanation with its picture are read through,
+    // from their top (#258, #298, `readsThrough`).
+    const newest = newestReply({
+      turns: q.threadTurns,
+      again: q.turnsAgain,
+      turnTops: tops,
+      partTops,
+    });
+    const reads = readsThrough(newest.turn);
     const shared = threadRoom({
       room,
       short: Math.max(0, -left),
@@ -201,7 +208,7 @@ export function useScreenRoom() {
       cardNatural,
       // ThreadBox rests its edge on any of them.
       tops: [...tops, ...partTops],
-      readFrom: reads || shared.restsOnNewest ? tops[tops.length - 1] : undefined,
+      readFrom: reads ? newest.top : shared.restsOnNewest ? tops[tops.length - 1] : undefined,
       onCard,
     };
   }

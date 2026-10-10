@@ -35,6 +35,7 @@ function Screen({ seen }: { seen: Seen[] }) {
     open: true,
     speaking: false,
     threadTurns: [],
+    turnsAgain: [],
     quiet: false,
     dictationCompact: false,
     viewHeight: 440,

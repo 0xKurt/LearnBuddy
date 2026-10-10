@@ -2,7 +2,8 @@
 // the line where it goes wrong — the same tiles as every option she picks (`ChoiceList`), one under
 // the other, numbered — and writes it right in the app's one input bar below, where every typed
 // answer is written (`TypedAnswer`, issue #365), with the math keys. Tapping a line copies it into
-// the bar, so she corrects it rather than retyping it. "Prüfen" waits until a line is picked.
+// the bar, so she corrects it rather than retyping it. "Prüfen" waits until a line is picked. Where
+// the lines fold while she types (`AnswerShell`), the one she picked stays above the bar (#387).
 //
 // The server judges both, without a model (apps/api/src/modules/practice/findError.ts): the line
 // against the key, her correction against the line before by equivalence. The task stands on top,
@@ -41,6 +42,10 @@ export function FindErrorAnswer({
   const [task, ...lines] = view.lines;
   const picked = lines.findIndex((l) => l.id === kept);
   const line = picked >= 0 ? lines[picked]! : null;
+  const marks = lines.map((_, i) => ({
+    mark: lineMark(i + 1),
+    label: t('find_error.line', { n: i + 2 }),
+  }));
 
   const pick = (index: number) => {
     const next = lines[index];
@@ -75,10 +80,7 @@ export function FindErrorAnswer({
               choices={lines.map((l) => asMath(l.text))}
               tried={NONE_TRIED}
               picked={picked >= 0 ? picked : null}
-              marks={lines.map((_, i) => ({
-                mark: lineMark(i + 1),
-                label: t('find_error.line', { n: i + 2 }),
-              }))}
+              marks={marks}
               lead={
                 task
                   ? { mark: lineMark(0), text: asMath(task.text), label: t('find_error.task') }
@@ -89,6 +91,18 @@ export function FindErrorAnswer({
             />
           </PartsArea>
         ),
+        // While she types her correction on a phone that is not roomy the lines fold; the one she
+        // corrects stays, the same tile, so she writes it right with it in sight (#387).
+        whileTyping: line ? (
+          <ChoiceList
+            choices={[asMath(line.text)]}
+            tried={NONE_TRIED}
+            picked={0}
+            marks={[marks[picked]!]}
+            disabled={disabled}
+            onChoose={() => pick(picked)}
+          />
+        ) : null,
         waits: line ? null : t('find_error.waits'),
         placeholder: line ? t('find_error.fix') : t('find_error.waits'),
       }}

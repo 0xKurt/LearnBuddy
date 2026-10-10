@@ -142,6 +142,13 @@ test('Fehlerdetektiv: tap the wrong line, write it right, judged by code (issue 
   await check.click();
   await expect(page.getByText('Die Zeile hast du gefunden!', { exact: false })).toBeInViewport();
   await bothSchemes(page, '86c-find-error-long-feedback');
+  // On 360×740 the lines fold while she types her correction; the one she corrects stays (#387).
+  await page.setViewportSize(PHONES[1]);
+  await page.getByTestId('answer-field').focus();
+  await settle(page);
+  await expect(page.getByRole('radio', { name: /^Zeile 2:/ })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('radio', { name: /^Zeile 3:/ })).toBeHidden();
+  await page.setViewportSize(PHONES[0]);
   await page.getByTestId('answer-field').fill('2x + 6 - 4 = 3x - 5');
   await checkRight(page);
 });

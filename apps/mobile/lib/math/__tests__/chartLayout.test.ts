@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CHART_WIDTH } from '../../../../../packages/shared-math/src/charts.js';
-import { chartFrame, every, TOP } from '../chartLayout.js';
+import { chartFrame, edgeRoom, every, TOP } from '../chartLayout.js';
 
 const axis = { lo: -10, hi: 30, step: 10, ticks: [-10, 0, 10, 20, 30] };
 
@@ -17,6 +17,25 @@ describe('chartFrame', () => {
     expect(
       chartFrame(CHART_WIDTH, { size: [0.8, 200, 320], rightAxis: false, xTitle: false }).pw,
     ).toBe(CHART_WIDTH - 34 - 10);
+  });
+
+  it('keeps half the longest label that stands on its end right of the plot (#387)', () => {
+    // "2020" at 11 pt: 4 × 6.6 / 2 = 13.2 → 14 pt; a short one keeps the 10 of a category.
+    expect(edgeRoom(['2000', '2010', '2020'])).toBe(14);
+    expect(edgeRoom(['0', '5'])).toBe(10);
+    expect(edgeRoom([])).toBe(10);
+    const ends = ['2000', '2020'];
+    const f = chartFrame(CHART_WIDTH, {
+      size: [0.8, 200, 320],
+      rightAxis: false,
+      xTitle: true,
+      ends,
+    });
+    expect(f.pw).toBe(CHART_WIDTH - 34 - 14);
+    // With a second axis its labels' room holds it already.
+    expect(
+      chartFrame(CHART_WIDTH, { size: [0.8, 200, 320], rightAxis: true, xTitle: true, ends }).pw,
+    ).toBe(CHART_WIDTH - 34 - 34);
   });
 
   it('keeps the height between its least and its most', () => {

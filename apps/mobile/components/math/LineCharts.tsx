@@ -45,8 +45,12 @@ type ClimateFig = Extract<ChartFigure, { type: 'climate_chart' }>;
 
 // ─────────────── line chart (issue #245) ───────────────
 
-function measuredAxis(lo: number, hi: number, room: number): Axis {
-  const sample = niceAxis(lo, hi, 5).ticks.map(formatNumber);
+/** The labels a measured x-axis is spaced for: those of its round ticks (`measuredAxis`). */
+function measuredLabels(lo: number, hi: number): string[] {
+  return niceAxis(lo, hi, 5).ticks.map(formatNumber);
+}
+
+function measuredAxis(lo: number, hi: number, room: number, sample: readonly string[]): Axis {
   const longest = Math.max(1, ...sample.map((l) => l.length));
   const target = Math.max(2, Math.floor(room / (longest * TICK_CHAR + 12)));
   const ticks = niceAxis(lo, hi, target).ticks.filter((v) => v >= lo - 1e-9 && v <= hi + 1e-9);
@@ -62,15 +66,23 @@ export function LineChartView({ fig, width }: { fig: LineFig; width: number }) {
   const { figure: ink } = useTheme();
   const { t } = useTranslation('math');
   const { left: la, right: ra } = lineAxes(fig);
-  const frame = chartFrame(width, { size: [0.8, 200, 320], rightAxis: !!ra, xTitle: !!fig.xt });
-  const { left: L, height: h, pw, ph } = frame;
-  const Yl = frame.Y(la);
-  const Yr = ra ? frame.Y(ra) : Yl;
   const n = fig.x.length;
   const xs = lineX(fig);
   // A measured x runs exactly from the first value to the last (no empty stretch after the
-  // data), with round ticks inside it, as many as their labels leave room for.
-  const xAxis = xs ? measuredAxis(xs[0] as number, xs[n - 1] as number, pw) : null;
+  // data), with round ticks inside it, as many as their labels leave room for — the last of them
+  // on the plot's end, so the frame keeps half a label's room there (`edgeRoom`, #387).
+  const range = xs ? ([xs[0] as number, xs[n - 1] as number] as const) : null;
+  const sample = range ? measuredLabels(...range) : [];
+  const frame = chartFrame(width, {
+    size: [0.8, 200, 320],
+    rightAxis: !!ra,
+    xTitle: !!fig.xt,
+    ends: sample,
+  });
+  const { left: L, height: h, pw, ph } = frame;
+  const Yl = frame.Y(la);
+  const Yr = ra ? frame.Y(ra) : Yl;
+  const xAxis = range ? measuredAxis(...range, pw, sample) : null;
   const Xm = xAxis ? frame.X(xAxis) : null;
   const slot = pw / n;
   const X = (k: number) => (xs && Xm ? Xm(xs[k] as number) : L + slot * (k + 0.5));

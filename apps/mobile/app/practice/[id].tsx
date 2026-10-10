@@ -213,6 +213,7 @@ export default function PracticeScreen() {
     open,
     speaking: form.speaking,
     threadTurns: view.threadTurns,
+    turnsAgain: view.turnsAgain,
     quiet: view.turns.length === 0,
     dictationCompact: view.dictationCompact,
     viewHeight,

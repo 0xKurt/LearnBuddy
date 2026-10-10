@@ -363,7 +363,15 @@ export async function cutControls(page: Page): Promise<string[]> {
       screen.querySelectorAll<HTMLElement>(
         '[role="button"], [role="checkbox"], [role="radio"], [role="switch"], input, textarea',
       ),
-    ).filter((el) => !el.closest('[data-testid="answer-slot"]'));
+    )
+      .filter((el) => !el.closest('[data-testid="answer-slot"]'))
+      // A reply taller than the conversation's box is read through and scrolls (`readsThrough`,
+      // #258, #387): the picture of an explanation in it can stand whole nowhere at rest.
+      .filter((el) => {
+        const turn = el.closest('[data-testid="thread-turn"]');
+        const box = el.closest('[data-testid="scroll-thread"]');
+        return !turn || !box || turn.getBoundingClientRect().height <= box.clientHeight;
+      });
     return controls.flatMap((el) => {
       const r = el.getBoundingClientRect();
       if (r.width < 1 || r.height < 1) return [];

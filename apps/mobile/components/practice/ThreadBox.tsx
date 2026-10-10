@@ -19,9 +19,10 @@
 // The rule for both edges is `threadEdge` (lib/practice/threadRoom.ts).
 //
 // Where it follows its end, it rests at the end — except on a reply she reads through
-// (`readFrom`, Buddy's feedback on her long text, #258): that is read from its top, so the box rests
-// there and she scrolls down through it; resting at its end showed the last line of the feedback
-// first and its first point under the card. Where it does not follow (the help chips alone, before
+// (`readFrom`, `readsThrough`: Buddy's feedback on her long text, #258, an explanation with its
+// picture, #298): that is read from its top, so the box rests there and she scrolls down through
+// it; resting at its end showed the last line of the feedback first and its first point under the
+// card. Where it does not follow (the help chips alone, before
 // her first answer), it rests at its top, where it was drawn (#504).
 
 import { Children, isValidElement, useEffect, useRef, useState, type ReactNode } from 'react';
@@ -94,7 +95,10 @@ export function ThreadBox({
   function rest(animated: boolean) {
     const offset = threadRest(content.current, view.current, true, readFrom);
     if (readFrom === undefined) scroll.current?.scrollToEnd({ animated });
-    else scroll.current?.scrollTo({ y: offset, animated });
+    // A reply read from its top is jumped to: a smooth scroll there, while the box still grew
+    // and the picture in the reply sized itself, ended 2–19 pt past its top, and the first line
+    // of the explanation stood in the fade (#387).
+    else scroll.current?.scrollTo({ y: offset, animated: false });
     setAt({ offset, content: content.current });
   }
   // The reply's top is measured after it arrived: the box moves to it once it is known.

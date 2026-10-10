@@ -18,11 +18,46 @@
 // fits, the box rests on it and the chips are a scroll away (`restsOnNewest`, #387).
 // Where the newest turn still does not fit whole it is not drawn (`newestHidden`)
 // until there is room again — the keyboard closes, the card is done — and only the parts after it
-// that fit whole stand there. Except a reply she reads through (`reads`, Buddy's feedback on her
-// long text, #258): taller than the room even at rest, it would never stand — so it takes all the
-// room, from its top (`ThreadBox` `readFrom`), and scrolls inside the conversation.
+// that fit whole stand there. Except a reply she reads through (`reads`, `readsThrough`: Buddy's
+// feedback on her long text, #258, and an explanation with its picture, #298): taller than the
+// room even at rest, it would never stand — so it takes all the room, from its top (`ThreadBox`
+// `readFrom`), and scrolls inside the conversation.
+
+import type { PracticeTurnView } from '@learnbuddy/shared-types/contracts';
 
 import { bottomRoom, CONTROL, SPACE, TOUCH } from '../theme/space.js';
+
+type ReadTurn = Partial<Pick<PracticeTurnView, 'essay' | 'figure'>>;
+
+/**
+ * Whether Buddy's newest turn is read through rather than glanced at (`reads`): his feedback on
+ * her long text (#258), or an explanation with its picture („Anders erklären", #298). Both may be
+ * taller than the room at rest; hidden for their height they stood nowhere — after „Mit Beispiel"
+ * the explanation with its graph was not on screen at all (#387).
+ */
+export function readsThrough(newest: ReadTurn | undefined): boolean {
+  return Boolean(newest?.essay || newest?.figure);
+}
+
+/**
+ * The newest thing Buddy said and where it starts in the conversation: his newest turn, or —
+ * once she asked „Anders erklären" — that exchange, the conversation's last part (it is offered
+ * only once the question is closed, when no help chips follow). Its turns are not the
+ * conversation's: an explanation with its picture was never the newest turn, so it was never
+ * read through (#387).
+ */
+export function newestReply<T extends ReadTurn>(m: {
+  turns: readonly T[];
+  again: readonly T[];
+  /** Each turn's top, oldest first, and each part's (`ThreadBox` `onParts`). */
+  turnTops: readonly number[];
+  partTops: readonly number[];
+}): { turn: T | undefined; top: number | undefined } {
+  const last = <V>(list: readonly V[]) => list[list.length - 1];
+  return m.again.length > 0
+    ? { turn: last(m.again), top: last(m.partTops) }
+    : { turn: last(m.turns), top: last(m.turnTops) };
+}
 
 /**
  * How far a drawing or photo may shrink below its own cap so Buddy's newest turn shows whole
@@ -88,7 +123,7 @@ export type RoomInput = {
   reach: number;
   /** The card takes ALL the room the conversation leaves (a Diktat before her answer, #242). */
   fills?: boolean;
-  /** The newest turn is read through, not glanced at: never hidden for its height (#258). */
+  /** The newest turn is read through, not glanced at: never hidden for its height (`readsThrough`). */
   reads?: boolean;
   viewHeight: number;
 };
