@@ -3,13 +3,9 @@
 
 import type { Db } from '../../lib/db.js';
 import { daysBetween, localParts, zonedToInstant } from '../../lib/time.js';
-import {
-  bumpContext,
-  cancelGoalWakeups,
-  scheduleExamWakeups,
-  scheduleStepReminder,
-} from './plan.js';
+import { cancelGoalWakeups, scheduleExamWakeups, scheduleStepReminder } from './plan.js';
 import { loosens } from './policy.js';
+import { contextProvider } from './provider.js';
 import type { SettingsRow } from './state.js';
 import { normalizeForMatch } from './text.js';
 import { MAX_ACTIVE_MEMORIES, type UndoSpec } from './toolKit.js';
@@ -35,11 +31,6 @@ export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Pr
       );
     case 'unretract_memory':
       return (await unretractPlan(db, learnerId, undo.memory_id)) !== 'no';
-    case 'rename_material_back':
-      return exists(
-        `select 1 from materials where id = $1 and learner_id = $2 and archived_at is null`,
-        [undo.material_id, learnerId],
-      );
     case 'unretract_memories': {
       // Offered while at least one of them can still come back; the ones whose undo window
       // has passed are gone for good and are not counted against it.
@@ -89,6 +80,9 @@ export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Pr
         undo.job_id,
         learnerId,
       ]);
+    default:
+      // The domain's own kinds (provider.ts).
+      return contextProvider().undo.applies(db, learnerId, undo);
   }
 }
 
@@ -197,15 +191,6 @@ export async function runUndo(
       }
       // Nothing came back only when every one of them is past its undo window.
       return back > 0;
-    }
-    case 'rename_material_back': {
-      const r = await db.query(
-        `update materials set title = $3
-          where id = $1 and learner_id = $2 and archived_at is null returning id`,
-        [undo.material_id, learnerId, undo.title],
-      );
-      await bumpContext(db, learnerId);
-      return r.length === 1;
     }
     case 'restore_level': {
       const r = await db.query(
@@ -375,5 +360,8 @@ export async function runUndo(
       );
       return r.length === 1;
     }
+    default:
+      // The domain's own kinds (provider.ts).
+      return contextProvider().undo.run(db, learnerId, undo);
   }
 }

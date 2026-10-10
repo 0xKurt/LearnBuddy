@@ -66,7 +66,7 @@ const TS = /\.tsx?$/;
  *   styleNumbers: Record<string, number>,
  *   pressable: string[],
  * }} FileLists
- * @typedef {FileLists & { clones: Record<string, number>, knip: string[], boundaries: string[] }} Lists
+ * @typedef {FileLists & { clones: Record<string, number>, knip: string[], boundaries: string[], domainSql: Record<string, number> }} Lists
  * @typedef {{ issue: string, reason: string } & Partial<Lists>} Grant
  */
 
@@ -308,6 +308,7 @@ const GRANTABLE = /** @type {const} */ ({
   pressable: 'entries',
   knip: 'entries',
   boundaries: 'entries',
+  domainSql: 'numbers',
 });
 
 /** @param {string} name @param {string} text @returns {Grant} */
@@ -417,6 +418,19 @@ export function treeAllowance(list, measure) {
   const sha = baseSha();
   const onMain = cached(`${sha}-${list}`, () => inTree(sha, measure));
   return /** @type {T} */ (withGrants({ [list]: onMain }, activeGrants(sha))[list]);
+}
+
+/**
+ * What a guard that reads only file texts allows today: `measure` over main's source files under
+ * `dirs` — read from the object store, nothing unpacked — plus this branch's grants for `list`.
+ * @param {'domainSql'} list @param {string[]} dirs
+ * @param {(files: Map<string, string>) => Record<string, number>} measure
+ * @returns {Record<string, number>}
+ */
+export function textAllowance(list, dirs, measure) {
+  const sha = baseSha();
+  const onMain = cached(`${sha}-${list}`, () => measure(filesAt(sha, dirs, REPO_ROOT)));
+  return withGrants({ [list]: onMain }, activeGrants(sha))[list] ?? {};
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

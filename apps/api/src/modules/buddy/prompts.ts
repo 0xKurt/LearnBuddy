@@ -3,15 +3,14 @@
 // dates, quotes, contact rules) is stated as how the system works, not as a
 // wish. Versioned so decisions can be traced to the prompt that produced them.
 
-import { MATH_NOTATION_SHORT, NotPracticableForm } from '@learnbuddy/shared-types/contracts';
+import { MATH_NOTATION_SHORT } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
-import { MAX_PAGES, MAX_PDF_BYTES } from '../materials/pdf.js';
-import { PHOTO_RETENTION_DAYS } from '../materials/purge.js';
-
+import type { JsonSchema } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { promptVersion } from '../../llm/promptVersion.js';
 import { lookupsField, lookupsPrompt } from './lookups.js';
+import { contextProvider } from './provider.js';
 import { actToolsPrompt, CheckDecision, TurnDecisionForModel } from './registry.js';
 
 // No example in here is a phrase in one language that the model is meant to WRITE. An English
@@ -100,89 +99,70 @@ const TOOLS = `What to do when:
 - She wants to practise reading aloud — a longer text, reading fluently → offer_rehearsal kind read_aloud with the text itself (a passage from her sheet, or one you write at her level). Pronouncing single words or sentences of a foreign language stays offer_learning kind speak.
 - Homework: never give the solution in the chat either. A task written in the message → offer_learning kind help right away (the offer is only a button — she decides; don't ask whether she wants help). Without the task, suggest typing or photographing it.`;
 
+/** Why an answer did not fit its schema, as the repair round tells the model (at most six). */
+export function schemaErrors(error: z.ZodError): string[] {
+  return error.issues.slice(0, 6).map((i) => `${i.path.join('.')}: ${i.message}`);
+}
+
+export function repairMessage(errors: string[]): string {
+  return `Your previous answer was rejected and nothing was applied:\n${errors
+    .map((e) => `- ${e}`)
+    .join(
+      '\n',
+    )}\nAnswer again with a corrected JSON object. If you cannot do what was asked, say so in the reply and leave actions empty.`;
+}
+
+// ─────────────── the prompt as it goes out ───────────────
+
 /**
- * Exercise forms Buddy has none for, by what the LEARNER would have to produce — one line per
- * form of the contract's `NotPracticableForm`, keyed by it, so a form added there is a type
- * error here until it is described (issue #215). Rendered from the enum, never copied: the
- * contract decides a state the app shows and a reading the API refuses to retry, and a second
- * list beside it would drift.
- *
- * Why it belongs in the static block at all: since #198 a sheet whose task is one of these
- * reports it, and STATE says so FOR THAT SHEET. Without a sheet there is no STATE entry — she
- * can simply ask — so Buddy had no reason to think he could not, and offered a practice he
- * then could not run. One level earlier than #198, the same hole.
- *
- * No example sentence in any language (#200, #201, #213): each form is said by what she would
- * have to produce, which is the same sentence for all five languages. Guarded by
- * __tests__/prompts.test.ts, which also checks that every form of the enum arrives here.
+ * Buddy's prompts, the schemas that go out with them and the version hashed from both. Built
+ * on first use, not at import (issue #107): the domain's rules (its context provider's
+ * `turnRules`) are registered at start-up and stand between the core's tool rules and the
+ * lookups. Built once; every call after the first hands out the same object.
  */
-const NOT_PRACTICABLE_PRODUCT: { [F in NotPracticableForm]: string } = {
-  drawing:
-    'she would have to produce something drawn — a construction with compasses, a graph, a diagram, a circuit, arrows on a sketch, a structural formula, notation',
-  spoken_dialogue:
-    'she would have to speak freely with a partner who answers back. Reading out a text that is given, and pronouncing words, stay practicable',
-  experiment:
-    'she would have to carry something out in the physical world, or handle a real specimen',
-  long_text:
-    'she would have to write one continuous text longer than about 1800 words. Up to that length a long text — an essay, a discussion, a comment, an analysis — IS an exercise: offer it as kind essay',
-  multi_day_project:
-    'the product itself is made over days or weeks — a research paper, a project. A talk she has to give is the exception: you plan it with her (plan_talk) and she rehearses it (offer_rehearsal)',
-  practical: 'she would have to make, play or perform something away from the screen',
-  ear_training: 'the answer depends on hearing a sound that cannot be produced here',
+export type BuddyPrompt = {
+  turnSystem: string;
+  checkSystem: string;
+  /** Sent by `turn.ts`, hashed into the version, read by the schema inventory (`evals/schema`, #281). */
+  turnSchema: JsonSchema;
+  /**
+   * A step that may still ask for lookups first (ADR 0005 §The agent loop). `stream.ts` decides
+   * whether a half-written reply may be shown by reading the fields that come BEFORE `reply`, so
+   * the order here is a contract, not a detail. `__tests__/stream.test.ts` reads it from this
+   * schema instead of assuming it — a reorder tried on 01.10. (to make the prefix cache hit)
+   * silently switched that guard off while every test stayed green.
+   */
+  turnStepSchema: JsonSchema;
+  /** Sent by `checkDecide.ts`, hashed into the version, read by the schema inventory. */
+  checkSchema: JsonSchema;
+  /**
+   * Lookups first, as in a turn: the model chooses what to read before it writes a decision
+   * (p2-check-step-schema-lookups-last). The prompt test scans these exact bytes (issue #213):
+   * `CheckDecision` and `lookupsField` are each scanned on their own, but the COMPOSITION is
+   * what goes out, and a description can only hide in what no test holds.
+   */
+  checkStepSchema: JsonSchema;
+  /** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
+  version: string;
 };
 
-// Measured over six runs on buddy.50: `de_reading_aloud_is_not_refused` failed THREE times —
-// Buddy declined reading a text aloud, which he has a whole exercise for, about half the time.
-// The exception was buried inside the `spoken_dialogue` bullet, where it read as a footnote to
-// a prohibition. Over-refusal is worse than the gap this block closes (#215), so what he CAN do
-// is stated first, in its own sentence, before anything is ruled out (issue #208 follow-up).
-const NOT_PRACTICABLE = `Speaking splits in two, and the line runs between them: READING ALOUD a text that is given — on her sheet, or one you name — and practising how single words are pronounced are exercises you offer like any other. SPEAKING FREELY with a partner who answers back is not, and that is what a speaking exam, a role play, a debate or a discussion is. Asked about a speaking exam, say that; asked to read something aloud, offer it.
+let built: BuddyPrompt | null = null;
 
-What you have no exercise for — these forms and no others, whether or not a sheet is involved (she may simply ask):
-${NotPracticableForm.options.map((f) => `- ${f}: ${NOT_PRACTICABLE_PRODUCT[f]}.`).join('\n')}
-- Asked for one of these, say in one sentence that this is one you have no exercise for — before you offer anything, without a lecture and without a long apology — and then offer what you do have: explain it in the chat, go through the approach or the steps with her, or practise the part of it that is a question with an answer. Never prepare or offer a practice for one of these forms, and never let one pass for practised.
-- Everything else is practicable, and something that only sounds like one of these is not one: a question with an answer, vocabulary, reading out a given text, a task she typed, anything to be read off a drawing, a text or an experiment already printed on the sheet. What counts is what SHE would have to produce. When you cannot tell, ask what she has to produce — never decline on a guess, and never decline something you can do.`;
-
-// What the app really does with a photographed sheet (issue #115). These are code facts, and
-// the numbers come from the code that enforces them, never from a number typed twice:
-// materials/pdf.ts (MAX_PAGES, MAX_PDF_BYTES), purge.ts (PHOTO_RETENTION_DAYS),
-// service.ts (MAX_EXTRACTION_ATTEMPTS = 3, abandonStaleUploads after a day), the contract's
-// photo_mimes and the app's pickers. They stand here, static and the same for every learner,
-// because the questions children ask most often are exactly these ("kannst du auch word
-// dateien", "wie viele seiten gehen") — and an invented answer breaks rule 5 where it hurts
-// most (17 of the 100 cases in evals/asks/material.ts).
-const MATERIAL = `What the app takes in (real limits — say them as they are, never invent others):
-- Photos and PDFs, nothing else: from the camera, from her gallery, from the files app, or shared into LearnBuddy from another app (a messenger such as WhatsApp, or her school's own portal). Word and other office files, links and websites are not taken — she photographs the page instead.
-- One sheet holds up to ${MAX_PAGES} pages, photos and PDF pages together, and goes in one send; all PDFs of a sheet together at most ${MAX_PDF_BYTES / 1024 / 1024} MB. Pages can be taken out or reordered while she is still attaching them, not after the send.
-- Reading a sheet usually takes about a minute. A sheet can be read at most three times; an outage on our side does not use up one of those.
-- You never see the photos themselves, only what was read from them: you cannot judge whether one is sharp, crooked or complete. The app checks that on the phone, and pages it could not read completely are in STATE.
-- A photo that is not learning material (a selfie, a letter, a recipe) is not read, its photos are deleted at once and reading it again is not possible — a new photo is the only way.
-- A send that never finishes (connection gone, app closed) is given up after a day: the sheet then says its photos did not arrive and she can photograph it again. Nothing disappears silently.
-- The photos are deleted ${PHOTO_RETENTION_DAYS} days after the reading; her questions and what was read stay.
-- A corrected class test can be photographed too (issue #259): the reading makes NEW tasks of the kind the teacher marked as wrong — never the original tasks, nothing for what was right. No grade or points are read into anything or kept, and its photos are deleted right after the reading. Never ask her for the grade or points.
-- Her notebook entry of a lesson is what an unannounced short test about the last lesson asks: photographed, it gives a few short questions for the next morning. When she only tells you what the lesson was about, practise from her words (offer_learning practice) or ask whether she wants to photograph the entry.
-- Her sheets are hers: renaming one is hers to ask for (rename_material), and she should not have to find a screen for it.
-- One question on a sheet she does not want → delete_item with that sheet and the question word for word (look it up with find_questions first; her paraphrase is not the question). If more than one question fits her words, name them and ask which instead.
-- delete_material and delete_item PROPOSE; they never delete. The app shows her a card naming what would go, with a button to delete and one to keep, and her tap decides. So your reply asks and never says it is gone.
-- Use them ONLY when she asked for something to be removed. Being finished with a sheet, being done with a topic, being annoyed by something, or not needing it today are none of that: answer what she actually said and propose nothing. If you think she might want it gone but she did not say so, ask her in words — without the tool, so no card appears. When more than one sheet could fit what she did ask to remove, name them and ask which, again without the tool.
-
-${NOT_PRACTICABLE}`;
-
-export const TURN_SYSTEM = `${CORE}
-
-${STYLE}
-
-${actToolsPrompt('turn')}
-
-${TOOLS}
-
-${MATERIAL}
-
-${lookupsPrompt('turn')}
-
-Answer with the JSON object described by the schema, in its order: lookups (usually empty), concern, also_asked, actions, reply, options, asks_permission.`;
-
-export const CHECK_SYSTEM = `${CORE}
+export function buddyPrompt(): BuddyPrompt {
+  if (built) return built;
+  const domainRules = contextProvider().state.turnRules;
+  const turnSystem = [
+    CORE,
+    STYLE,
+    actToolsPrompt('turn'),
+    TOOLS,
+    domainRules,
+    lookupsPrompt('turn'),
+    'Answer with the JSON object described by the schema, in its order: lookups (usually empty), concern, also_asked, actions, reply, options, asks_permission.',
+  ]
+    .filter((part) => part.length > 0)
+    .join('\n\n');
+  const checkSystem = `${CORE}
 
 Mode: background check. The learner did not write. You were woken by the TRIGGERS below. Decide whether something is worth doing right now.
 - You cannot change memory, goals, agreed reminders or settings in this mode; only the act tools below are available.
@@ -199,52 +179,30 @@ ${actToolsPrompt('check')}
 ${lookupsPrompt('check')}
 
 Answer with the JSON object described by the schema: lookups (usually empty), disposition, reason, actions, outreach, look_back.`;
-
-export function repairMessage(errors: string[]): string {
-  return `Your previous answer was rejected and nothing was applied:\n${errors
-    .map((e) => `- ${e}`)
-    .join(
-      '\n',
-    )}\nAnswer again with a corrected JSON object. If you cannot do what was asked, say so in the reply and leave actions empty.`;
+  const turnSchema = toJsonSchema(TurnDecisionForModel);
+  const turnStepSchema = toJsonSchema(
+    z.object({ lookups: lookupsField() }).extend(TurnDecisionForModel.shape),
+  );
+  const checkSchema = toJsonSchema(CheckDecision);
+  const checkStepSchema = toJsonSchema(
+    z.object({ lookups: lookupsField() }).extend(CheckDecision.shape),
+  );
+  built = {
+    turnSystem,
+    checkSystem,
+    turnSchema,
+    turnStepSchema,
+    checkSchema,
+    checkStepSchema,
+    version: promptVersion(
+      'buddy',
+      turnSystem,
+      checkSystem,
+      turnSchema,
+      turnStepSchema,
+      checkSchema,
+      checkStepSchema,
+    ),
+  };
+  return built;
 }
-
-// ─────────────── the schemas that go out with these prompts ───────────────
-
-// Sent by `turn.ts`, hashed into the version below, and read by the schema inventory
-// (`evals/schema`, issue #281).
-export const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
-/**
- * A step that may still ask for lookups first (ADR 0005 §The agent loop).
- *
- * Exported for one reason: `stream.ts` decides whether a half-written reply may be shown
- * by reading the fields that come BEFORE `reply`, so the order here is a contract, not a
- * detail. `__tests__/stream.test.ts` reads it from this schema instead of assuming it —
- * a reorder tried on 01.10. (to make the prefix cache hit) silently switched that guard
- * off while every test stayed green.
- */
-export const TURN_STEP_SCHEMA = toJsonSchema(
-  z.object({ lookups: lookupsField }).extend(TurnDecisionForModel.shape),
-);
-
-// Sent by `checkDecide.ts`, hashed into the version below, and read by the schema inventory.
-export const CHECK_SCHEMA = toJsonSchema(CheckDecision);
-/** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
-// Lookups first, as in a turn: the model chooses what to read before it writes a decision
-// (p2-check-step-schema-lookups-last).
-// Exported only so the prompt test can scan the exact bytes this module sends (issue #213):
-// `CheckDecision` and `lookupsField` are each scanned on their own, but the COMPOSITION is what
-// goes out, and a description can only hide in what no test holds.
-export const CHECK_STEP_SCHEMA = toJsonSchema(
-  z.object({ lookups: lookupsField }).extend(CheckDecision.shape),
-);
-
-/** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
-export const BUDDY_PROMPT_VERSION = promptVersion(
-  'buddy',
-  TURN_SYSTEM,
-  CHECK_SYSTEM,
-  TURN_SCHEMA,
-  TURN_STEP_SCHEMA,
-  CHECK_SCHEMA,
-  CHECK_STEP_SCHEMA,
-);

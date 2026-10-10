@@ -1,18 +1,25 @@
 // The learning domain registers itself into the core (issue #107). These tests fail when a domain
-// tool, lookup, route, job kind or occasion lost its registration, when one lands twice, or when
-// the order things are mounted and run in changes.
+// tool, lookup, route, job kind, occasion or its context provider lost its registration, when one
+// lands twice, or when the order things are mounted and run in changes.
 
 import { describe, expect, it } from 'vitest';
 
 import { routePlugins } from '../../../http/plugins.js';
-import { missingLookupRunners, registerLookupRunners } from '../../buddy/lookups.js';
+import { lookupNames, registerLookups } from '../../buddy/lookups.js';
+import {
+  contextProvider,
+  hasContextProvider,
+  registerContextProvider,
+} from '../../buddy/provider.js';
 import { withoutCode } from '../../buddy/registry.js';
 import { startsSteps } from '../../buddy/stepStart.js';
 import { subscribersOf } from '../../buddy/events.js';
 import { fillsPractice, occasions } from '../../buddy/occasions.js';
 import { REVIEW_REASONS, reviewAfterBreak, reviewNextDay, runReviews } from '../../buddy/review.js';
+import { privacyTables } from '../../identity/privacyTables.js';
 import { missingJobKinds, jobKinds, tickWork } from '../../scheduler/registry.js';
 import { actHandler, missingActHandlers, registerActHandlers } from '../../buddy/tools.js';
+import { LEARNING_LOOKUPS } from '../lookups.js';
 import { registerLearning } from '../register.js';
 
 /** The tools and lookups that are the learning domain's, not every Buddy's. */
@@ -31,11 +38,13 @@ const DOMAIN_TOOLS = [
 const DOMAIN_LOOKUPS = ['search_material', 'practice_history', 'find_questions'];
 
 describe('the learning domain in the core', () => {
-  it('leaves exactly its own tools and lookups without code until it registers', () => {
+  it('leaves exactly its own tools without code, and offers no lookup, until it registers', () => {
     // Module state is per test file: nothing has registered yet.
     expect([...missingActHandlers()].sort()).toEqual([...DOMAIN_TOOLS].sort());
-    expect(missingLookupRunners()).toEqual(DOMAIN_LOOKUPS);
+    expect(lookupNames()).toEqual([]);
     expect(() => actHandler('prepare_practice')).toThrow(/no handler/);
+    expect(hasContextProvider()).toBe(false);
+    expect(() => contextProvider()).toThrow(/No context provider/);
   });
 
   it('gives every tool and lookup the model can call its code, once, however often start-up runs', () => {
@@ -43,14 +52,16 @@ describe('the learning domain in the core', () => {
     registerLearning();
     expect(withoutCode()).toEqual([]);
     for (const tool of DOMAIN_TOOLS) expect(typeof actHandler(tool)).toBe('function');
+    // Its lookups, in the order the prompt lists them, each with its code.
+    expect(lookupNames()).toEqual(DOMAIN_LOOKUPS);
+    expect(hasContextProvider()).toBe(true);
   });
 
-  it('refuses a second handler for a tool or lookup', () => {
+  it('refuses a second handler for a tool or lookup, and a second context provider', () => {
     registerLearning();
     expect(() => registerActHandlers({ remember: actHandler('remember') })).toThrow(/twice/);
-    expect(() => registerLookupRunners({ find_questions: () => Promise.resolve([]) })).toThrow(
-      /twice/,
-    );
+    expect(() => registerLookups(LEARNING_LOOKUPS[2]!)).toThrow(/twice/);
+    expect(() => registerContextProvider(contextProvider())).toThrow(/twice/);
   });
 
   it('mounts its routes after the core, in one order: practice, sheets, its taps on /buddy', () => {
@@ -93,5 +104,28 @@ describe('the learning domain in the core', () => {
     expect(subscribersOf('session_finished')[1]).toBe(reviewAfterBreak);
     expect(subscribersOf('homework_ready')).toEqual([]);
     expect(fillsPractice()).toBe(true);
+  });
+
+  it('registers exactly the tables the SQL guard calls its own, for export and deletion', async () => {
+    registerLearning();
+    // The guard's list (tools/guards/boundaries.config.mjs, read at run time: it is not part of
+    // the API's program) and the domain's registration name the same tables, so a table the
+    // core may not name in SQL is never missing from her export or her deletion.
+    const config = '../../../../../../tools/guards/boundaries.config.mjs';
+    const { DOMAIN_TABLES } = (await import(config)) as { DOMAIN_TABLES: string[] };
+    expect(
+      privacyTables()
+        .map((t) => t.table)
+        .sort(),
+    ).toEqual([...DOMAIN_TABLES].sort());
+    // Children before their parents: a session's items and turns before the session, a
+    // sheet's photos, crops and passages before the sheet, subjects last.
+    const order = privacyTables().map((t) => t.table);
+    const before = (a: string, b: string) => order.indexOf(a) < order.indexOf(b);
+    expect(before('session_items', 'practice_sessions')).toBe(true);
+    expect(before('practice_turns', 'practice_sessions')).toBe(true);
+    expect(before('item_states', 'items')).toBe(true);
+    expect(before('material_photos', 'materials')).toBe(true);
+    expect(before('items', 'materials')).toBe(true);
   });
 });

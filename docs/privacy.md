@@ -229,13 +229,18 @@ sweep records when it ran and how many rows it removed — counts only, never co
   new table without an export entry fails the test. On 02.10.2026 it found three tables the
   export had missed (`material_unclear_spots`, `speech_cache`, `attempt_counters`); all three are
   exported now. For a minor the export sits behind the parents' PIN and contains the whole
-  conversation; Buddy tells her so when she asks (`docs/dpia.md` R7).
+  conversation; Buddy tells her so when she asks (`docs/dpia.md` R7). The core names only its own
+  tables (`modules/identity/privacy.ts`); the learning domain registers its tables — what each
+  exports, how its rows are found for the deletion, which Storage files they point at — at
+  start-up (`modules/identity/privacyTables.ts`, `modules/learning/privacy.ts`, issue #107), and
+  the catalogue test above holds both together.
 - `POST /account/deletion` schedules deletion after a **7-day hold** (cancellable with
   `DELETE /account/deletion`). During the hold the app works as before; nothing else changes.
   When the hold is over the scheduler carries it out as a resumable job (docs/architecture.md
   §Background work): from its start it cannot be cancelled (409 `deletion_running`) and the
   account takes no more changes (the app then shows only "Dein Konto wird gerade gelöscht" with
-  a sign-out, `app/deleting.tsx`); it deletes the learner's rows table by table, then the auth user
+  a sign-out, `app/deleting.tsx`); it deletes the learner's rows table by table (the domain's
+  first, children first, then the core's; the job keeps the table it is at by name), then the auth user
   and the account. It is never given up: failures are retried with backoff, and `GET /health`
   reports a deletion more than a day overdue. The photos go to a Storage deletion queue first:
   the account deletion does **not** wait for Storage (D-9); the queue removes them in chunks of

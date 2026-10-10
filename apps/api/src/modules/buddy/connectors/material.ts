@@ -21,7 +21,8 @@ import { callEmbedding } from '../../../llm/call.js';
 import { vectorLiteral } from '../../../llm/embeddings.js';
 import { catchUpPassages, materialEmbeddingsReady } from '../../materials/passages.js';
 import { prefixQuery, trigramWords } from './search.js';
-import type { Aliases, MaterialTarget } from '../context.js';
+import type { MaterialTarget } from '../../learning/state.js';
+import type { Aliases } from '../context.js';
 
 export type MaterialHit = {
   /**

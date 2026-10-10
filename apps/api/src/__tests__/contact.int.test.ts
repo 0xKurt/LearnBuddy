@@ -7,11 +7,8 @@
 import type { BuddyHome, SendMessageResponse } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  findOrCreateSubject,
-  scheduleExamWakeups,
-  scheduleStepReminder,
-} from '../modules/buddy/plan.js';
+import { scheduleExamWakeups, scheduleStepReminder } from '../modules/buddy/plan.js';
+import { findOrCreateSubject } from '../modules/learning/state.js';
 import { minutesOf } from '../lib/time.js';
 import { loadSettings } from '../modules/buddy/state.js';
 import { enqueueJob } from '../modules/scheduler/jobs.js';

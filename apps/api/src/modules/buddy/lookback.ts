@@ -7,25 +7,18 @@
 // leave it out). Rules:
 //   * only after a finished practice or before a test (the check triggers
 //     session_finished / exam_countdown), never in an ordinary chat turn;
-//   * rare: at most one look-back per LOOK_BACK.gapDays, and a topic is not named again
-//     within LOOK_BACK.repeatTopicDays;
-//   * honest: the topic was shaky in a practice at least shakyMinDaysAgo days ago (and
-//     not since), and now every question of it she has practised was right at once,
-//     at least minSeen of them, the latest within freshDays;
+//   * rare: at most one look-back per GAP_DAYS;
+//   * honest: what sits now and was shaky some days ago is the domain's to find, from its own
+//     rows (its context provider's `lookBack`, issue #107; LearnBuddy: learning/lookback.ts);
 //   * only what was reached: never what is still open, never numbers, never missed days
 //     (CLAUDE.md rule 6). It stays in the app — never on the lock screen.
 
 import type { Db } from '../../lib/db.js';
 import { daysBetween, localParts } from '../../lib/time.js';
+import { contextProvider } from './provider.js';
 
-const LOOK_BACK = {
-  gapDays: 7,
-  repeatTopicDays: 60,
-  shakyMinDaysAgo: 5,
-  shakyWithinDays: 60,
-  freshDays: 7,
-  minSeen: 2,
-} as const;
+/** At most one look-back in this many days. */
+const GAP_DAYS = 7;
 
 /** The alias the model uses for the one look-back it is offered. */
 const LOOK_BACK_ALIAS = 'p1';
@@ -47,6 +40,16 @@ export type LookBackFact = {
   shakyDaysAgo: number;
 };
 
+/** A topic that sits now, as the domain found it. */
+export type LookBackCandidate = {
+  subject_id: string | null;
+  subject_name: string | null;
+  topic: string;
+  topic_key: string;
+  /** The last time the topic was shaky. */
+  shaky_at: Date;
+};
+
 export type LookBackFocus = {
   /** The session that was just finished: its topics come first. */
   sessionId: string | null;
@@ -57,8 +60,8 @@ export type LookBackFocus = {
 const DAY_MS = 86_400_000;
 
 /**
- * The one topic Buddy may look back on now, or null. Deterministic: topics of the
- * session just finished first, then the one shaky longest ago, then by name.
+ * The one topic Buddy may look back on now, or null: none within GAP_DAYS of the last one,
+ * else the one the domain finds (deterministically, from its own rows).
  */
 export async function findLookBack(
   db: Db,
@@ -69,74 +72,11 @@ export async function findLookBack(
 ): Promise<LookBackFact | null> {
   const recent = await db.maybeOne(
     `select 1 from buddy_lookbacks where learner_id = $1 and said_at > $2`,
-    [learnerId, new Date(now.getTime() - LOOK_BACK.gapDays * DAY_MS)],
+    [learnerId, new Date(now.getTime() - GAP_DAYS * DAY_MS)],
   );
   if (recent) return null;
 
-  const row = await db.maybeOne<{
-    subject_id: string | null;
-    subject_name: string | null;
-    topic: string;
-    topic_key: string;
-    shaky_at: Date;
-  }>(
-    `with topic_items as (
-       select i.id, i.subject_id, btrim(i.topic) as topic, lower(btrim(i.topic)) as topic_key
-         from items i
-        where i.learner_id = $1 and i.archived_at is null and i.origin <> 'homework'
-          and nullif(btrim(i.topic), '') is not null
-     ),
-     sits as (
-       select ti.subject_id, ti.topic_key, min(ti.topic) as topic,
-              count(*) as seen,
-              bool_and(st.last_outcome = 'first_try') as all_first_try,
-              max(st.last_review) as last_review
-         from topic_items ti join item_states st on st.item_id = ti.id
-        where st.last_outcome is not null
-        group by ti.subject_id, ti.topic_key
-     ),
-     shaky as (
-       select ti.subject_id, ti.topic_key, max(si.closed_at) as shaky_at
-         from topic_items ti
-         join session_items si on si.item_id = ti.id
-         join practice_sessions ps on ps.id = si.session_id and ps.learner_id = $1
-        where si.status <> 'open' and si.flagged_at is null and si.closed_at is not null
-          and not (si.status = 'correct' and coalesce(si.first_try_correct, false))
-          and si.closed_at > $2
-        group by ti.subject_id, ti.topic_key
-     ),
-     in_session as (
-       select distinct i.subject_id, lower(btrim(i.topic)) as topic_key
-         from session_items si join items i on i.id = si.item_id
-        where si.session_id = $6 and si.status <> 'open' and si.flagged_at is null
-     )
-     select s.subject_id, sub.name as subject_name, s.topic, s.topic_key, h.shaky_at
-       from sits s
-       join shaky h on h.topic_key = s.topic_key and h.subject_id is not distinct from s.subject_id
-       left join subjects sub on sub.id = s.subject_id
-      where s.all_first_try and s.seen >= $3 and s.last_review > $4
-        and h.shaky_at <= $5
-        and ($7::uuid is null or s.subject_id = $7)
-        and not exists (
-              select 1 from buddy_lookbacks b
-               where b.learner_id = $1 and b.topic_key = s.topic_key
-                 and b.subject_id is not distinct from s.subject_id and b.said_at > $8)
-      order by exists (select 1 from in_session x
-                        where x.topic_key = s.topic_key
-                          and x.subject_id is not distinct from s.subject_id) desc,
-               h.shaky_at, s.topic_key
-      limit 1`,
-    [
-      learnerId,
-      new Date(now.getTime() - LOOK_BACK.shakyWithinDays * DAY_MS),
-      LOOK_BACK.minSeen,
-      new Date(now.getTime() - LOOK_BACK.freshDays * DAY_MS),
-      new Date(now.getTime() - LOOK_BACK.shakyMinDaysAgo * DAY_MS),
-      focus.sessionId,
-      focus.subjectId,
-      new Date(now.getTime() - LOOK_BACK.repeatTopicDays * DAY_MS),
-    ],
-  );
+  const row = await contextProvider().lookBack(db, learnerId, now, focus);
   if (!row) return null;
   return {
     subjectId: row.subject_id,

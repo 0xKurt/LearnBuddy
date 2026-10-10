@@ -222,6 +222,33 @@ describe.skipIf(!dbReady)('account erasure', () => {
     expect(env.auth.deleted).toContain(l.userId);
   });
 
+  it('resumes the content stage at the table it saved by name (#107: the domain registers its tables)', async () => {
+    const l = await onboard(env);
+    expect((await l.api.post('/account/deletion')).status).toBe(202);
+    env.clock.advance(7 * DAY + 60_000);
+    await env.db.query(`update accounts set deletion_started_at = $2 where id = $1`, [
+      l.accountId,
+      env.clock.now(),
+    ]);
+    await env.db.query(
+      `update jobs set payload = $2
+        where kind = 'delete_account' and payload ->> 'account_id' = $1`,
+      [
+        l.accountId,
+        {
+          account_id: l.accountId,
+          stage: 'content',
+          table: 'buddy_messages',
+          learner_id: l.learnerId,
+          auth_user_id: l.userId,
+        },
+      ],
+    );
+    await tick(env);
+    expect(await gone(env, l)).toBe(true);
+    expect(env.auth.deleted).toContain(l.userId);
+  });
+
   it('cancelling while the job runs is refused, not silently ignored', async () => {
     const l = await onboard(env);
     expect((await l.api.post('/account/deletion')).status).toBe(202);

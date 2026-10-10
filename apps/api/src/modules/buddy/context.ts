@@ -22,38 +22,31 @@
 // Every section is named here (the `blocks` array at the end), so what each one costs per
 // turn and whether an answer referred to it can be measured without changing a byte of what
 // is sent: `blocks.ts`, issue #168.
+//
+// What the domain knows about her — in LearnBuddy her level as a school year, her subjects and
+// sheets, her practice and what waits for her — its context provider renders (provider.ts, issue
+// #107): its own sections in their place in the cache order, and what it adds to a goal or a step.
 
 import { dayLabel } from '../../i18n/index.js';
 import { addDays, daysBetween, localParts, weekdayName, weekdayOf } from '../../lib/time.js';
 import type { LlmMessage } from '../../llm/gateway.js';
 import type { LearnerContext } from '../../http/context.js';
-import { likelyGrade } from './grade.js';
-import { recallText } from './recall.js';
-import { aliasesIn, blockData, occursIn, reportState, type BlockName } from './blocks.js';
-import type {
-  BuddyState,
-  GoalRow,
-  MaterialBrief,
-  MemoryRow,
-  StepRow,
-  SubjectRow,
-} from './state.js';
+import { aliasesIn, blockData, occursIn, reportState } from './blocks.js';
+import { contextProvider } from './provider.js';
+import type { BuddyState, GoalRow, MemoryRow, StepRow } from './state.js';
 
-/** What the act tools need of a sheet they are pointed at (issue #153). */
-export type MaterialTarget = Pick<MaterialBrief, 'id' | 'title' | 'status'>;
+/**
+ * The aliases a domain adds (LearnBuddy: subjects f1…, sheets sh1…): it declares its maps by
+ * augmenting this interface, and fills them as it renders its part of STATE (provider.ts).
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- filled by the domain's augmentation
+export interface DomainAliases {}
 
 export type Aliases = {
   goals: Map<string, GoalRow>;
   steps: Map<string, StepRow>;
   memories: Map<string, MemoryRow>;
-  subjects: Map<string, SubjectRow>;
-  /**
-   * Her sheets, so Buddy can name one to practise from, rename or delete (issues #111,
-   * #153). STATE fills it with the ten newest; `search_material` adds what it finds
-   * beyond them, for this turn only.
-   */
-  materials: Map<string, MaterialTarget>;
-};
+} & DomainAliases;
 
 export type BuiltContext = {
   state: string;
@@ -61,10 +54,20 @@ export type BuiltContext = {
   contextVersion: number;
 };
 
-type LearnerFacts = Pick<
+export type LearnerFacts = Pick<
   LearnerContext,
   'display_name' | 'birth_date' | 'level' | 'grade' | 'locale' | 'isMinor'
 >;
+
+/** No aliases at all: a turn that resolves none (a scene without tools). */
+export function noAliases(): Aliases {
+  return {
+    goals: new Map(),
+    steps: new Map(),
+    memories: new Map(),
+    ...contextProvider().state.noAliases(),
+  };
+}
 
 const LANGUAGE_NAMES: Record<string, string> = {
   de: 'German (informal "du")',
@@ -104,52 +107,6 @@ function spokenDay(date: string, today: string, locale: string): string {
   }).format(new Date(Date.UTC(y!, m! - 1, day!)));
 }
 
-/**
- * What a failed sheet means for her next step (modules/materials/submit.ts): a second
- * reading is possible after an unreadable photo, a failed run and an exhausted daily budget,
- * and `retryMaterial` refuses it for the other four — so Buddy must not offer it there
- * (issue #115). A counted line ("N sheet(s) could not be read") could say none of this.
- */
-function failureNote(reason: string | null): string {
-  switch (reason) {
-    case 'photos_missing':
-      return 'never arrived completely (the send was given up): there was nothing to read, and a new photo is the only way — reading it again is not possible';
-    case 'not_learning_material':
-      return 'was not learning material, so it was not read; its photos are deleted and reading it again is not possible';
-    case 'blocked':
-      return 'was refused by the safety filter; reading it again is not possible';
-    case 'form_not_practicable':
-      return 'was read without any trouble, and every task on it is an exercise form Buddy has no exercise for (something drawn, free speaking, a long text, a real experiment, a piece of work over weeks, a practical or a heard task), so there is nothing on it to practise: say that plainly, offer to explain it or go through the steps with her instead, and do not offer a second reading — it would find the same tasks';
-    case 'nothing_marked':
-      return 'is a corrected test on which nothing is marked wrong, so there is nothing to practise from it; its photos are deleted and reading it again is not possible. Never ask for or mention a grade or points';
-    case 'budget_exhausted':
-      return 'could not be read: no more sheets could be read today (tomorrow it works again)';
-    case 'unreadable':
-      return 'could not be read: the photos were hard to read (she can have it read again, or photograph it better)';
-    default:
-      return 'could not be read: something went wrong while reading (she can have it read again)';
-  }
-}
-
-/**
- * A step of a talk in STATE (issue #264): which stage it is and, once rehearsed, what the
- * rehearsal measured — read from the step's evidence, which code wrote from the recording.
- */
-function taskExtra(st: StepRow): string {
-  const stage = st.payload.stage ? ` [${st.payload.stage}]` : '';
-  const ev = st.evidence as {
-    duration_s?: number;
-    target_s?: number | null;
-    words_per_minute?: number;
-    fillers?: number | null;
-  } | null;
-  if (!ev || typeof ev.duration_s !== 'number') return stage;
-  const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
-  const of = ev.target_s ? ` of ${mmss(ev.target_s)}` : '';
-  const fillers = typeof ev.fillers === 'number' ? `, ${ev.fillers} filler sounds` : '';
-  return `${stage} (rehearsed: ${mmss(ev.duration_s)}${of}, ${ev.words_per_minute ?? '?'} words/min${fillers})`;
-}
-
 function fmtDay(date: string, today: string, locale: string): string {
   const d = daysBetween(today, date);
   const rel =
@@ -171,27 +128,20 @@ export function buildContext(
   now: Date,
   opts: { pushAvailable: boolean; modelNote?: string } = { pushAvailable: false },
 ): BuiltContext {
+  const domain = contextProvider().state;
   const tz = state.settings.timezone;
   const nowLocal = localParts(now, tz);
   const today = nowLocal.date;
-  const aliases: Aliases = {
-    goals: new Map(),
-    steps: new Map(),
-    memories: new Map(),
-    materials: new Map(),
-    subjects: new Map(),
-  };
-  // Sections are filled in the order the aliases are numbered (memories m1…, subjects f1…,
-  // goals g1…, steps st1…) and emitted in the cache order at the end of this function.
+  const aliases = noAliases();
+  // Sections are filled in the order the aliases are numbered (memories m1…, then the
+  // domain's that goals name, goals g1…, steps st1…) and emitted in the cache order at the end
+  // of this function.
   const nowBlock: string[] = [];
   const learnerBlock: string[] = [];
   const knowledgeBlock: string[] = [];
   const temporaryBlock: string[] = [];
   const goalsBlock: string[] = [];
-  const materialBlock: string[] = [];
   const summariesBlock: string[] = [];
-  const practiceBlock: string[] = [];
-  const standingBlock: string[] = [];
   const voiceBlock: string[] = [];
   const contactBlock: string[] = [];
   const noteBlock: string[] = [];
@@ -206,25 +156,8 @@ export function buildContext(
   nowBlock.push(`Next days (in_days offset, weekday, date): ${days}`);
 
   learnerBlock.push('## Learner');
-  // A school learner whose year is unknown: her age gives a likely one, so the question can be
-  // a single tap on a suggestion instead of an open question left standing in the thread
-  // (issue #208). The number is never stored from here — only her answer writes it.
-  const likely =
-    learner.level === 'school' && learner.grade === null
-      ? likelyGrade(learner.birth_date, today)
-      : null;
-  const level =
-    learner.level === 'school'
-      ? learner.grade !== null
-        ? `school, grade ${learner.grade}`
-        : likely !== null
-          ? `school, grade unknown — from her age probably ${likely}: ask that as one short yes/no, never as an open question and never in the same turn as an offer`
-          : 'school, grade unknown (ask when it matters for the next step)'
-      : learner.level === 'unknown'
-        ? 'unknown (ask when it matters for the next step)'
-        : learner.level;
   learnerBlock.push(
-    `Name: ${learner.display_name} · age: ${ageGroup(learner.birth_date, today)}${learner.isMinor ? ' (minor)' : ''} · level: ${level}`,
+    `Name: ${learner.display_name} · age: ${ageGroup(learner.birth_date, today)}${learner.isMinor ? ' (minor)' : ''} · level: ${domain.level(learner, today)}`,
   );
   learnerBlock.push(`Language: ${LANGUAGE_NAMES[learner.locale] ?? learner.locale}`);
   // "Sehen meine Eltern das?" — read off what the code actually allows, so the answer is the
@@ -268,14 +201,8 @@ export function buildContext(
     temporaryBlock.push(`(showing ${state.memories.length} of ${state.totals.memories})`);
   }
 
-  // Subjects with material.
-  let fi = 0;
-  const subjectAlias = new Map<string, string>();
-  for (const s of state.subjects) {
-    const alias = `f${++fi}`;
-    aliases.subjects.set(alias, s);
-    subjectAlias.set(s.id, alias);
-  }
+  // The domain's part: it numbers what goals name before the goals are written.
+  const part = domain.render(state, aliases, { timezone: tz, locale: learner.locale });
 
   // Goals with plan and progress.
   let gi = 0;
@@ -287,19 +214,13 @@ export function buildContext(
       ? ` ${fmtDay(st.planned_date, today, learner.locale)}${st.planned_time ? ` ${st.planned_time}` : ''}`
       : '';
     const agreed = st.agreed ? ' [agreed with learner]' : '';
-    const extra =
-      st.kind === 'practice' && st.payload.item_ids
-        ? ` (${st.payload.item_ids.length} questions, ~${st.payload.est_minutes ?? '?'} min)`
-        : st.kind === 'task'
-          ? taskExtra(st)
-          : '';
     const done = st.done_source === 'learner_reported' ? ' (learner said so)' : '';
     // A standing arrangement, so a second "erinner mich jeden Tag" is recognised as the one
     // she already has instead of becoming a second one (issue #112).
     const again = st.repeat
       ? ` [repeats ${st.repeat}${st.repeat_until ? ` until ${fmtDay(st.repeat_until, today, learner.locale)}` : ''}]`
       : '';
-    return `  - ${alias} ${st.kind} "${st.title}": ${st.state}${done}${when}${agreed}${again}${extra}`;
+    return `  - ${alias} ${st.kind} "${st.title}": ${st.state}${done}${when}${agreed}${again}${part.stepExtra(st)}`;
   };
 
   goalsBlock.push('## Goals and plan');
@@ -309,29 +230,13 @@ export function buildContext(
     const alias = `g${++gi}`;
     aliases.goals.set(alias, g);
     const date = g.due_date ? ` on ${fmtDay(g.due_date, today, learner.locale)}` : '';
-    const subj = g.subject_id
-      ? ` · subject ${subjectAlias.get(g.subject_id) ?? '?'} ${g.subject_name ?? ''}`
-      : '';
     const status =
       g.status === 'active' ? '' : ` [${g.status}${g.outcome ? `, went ${g.outcome}` : ''}]`;
-    goalsBlock.push(`- ${alias} ${g.kind} "${g.title}"${date}${subj}${status}`);
-    // A talk (issue #264): its length is what the rehearsal measures against. She writes and
-    // gives it herself — Buddy plans, listens and says what was measured, never writes it.
-    if (g.kind === 'talk') {
-      goalsBlock.push(
-        `  a talk she gives herself${g.talk_minutes ? `, ${g.talk_minutes} min long` : ''}: never write it, its outline, its slides or its cue cards for her — give feedback on what she has, and offer a rehearsal (offer_rehearsal) when she wants to try it`,
-      );
-    }
+    goalsBlock.push(`- ${alias} ${g.kind} "${g.title}"${date}${part.goalSuffix(g)}${status}`);
+    const lines = part.goalLines(g);
+    goalsBlock.push(...lines.before);
     if (g.topics.length > 0) goalsBlock.push(`  topics: ${g.topics.join(', ')}`);
-    const mats = state.materials.filter((m) => m.goal_id === g.id);
-    if (g.status === 'active' && g.kind !== 'talk') {
-      const ready = mats.filter((m) => m.status === 'ready');
-      const pending = mats.filter((m) => m.status !== 'ready' && m.status !== 'failed');
-      const questions = ready.reduce((n, m) => n + m.item_count, 0);
-      goalsBlock.push(
-        `  material: ${ready.length} ready (${questions} questions)${pending.length ? `, ${pending.length} still on the way or being read` : ''}`,
-      );
-    }
+    goalsBlock.push(...lines.after);
     for (const st of state.steps.filter((s) => s.goal_id === g.id)) goalsBlock.push(stepLine(st));
   }
   const looseSteps = state.steps.filter((s) => !s.goal_id);
@@ -348,125 +253,6 @@ export function buildContext(
     );
   }
 
-  // Subjects and progress (topic-level, from spaced-repetition state).
-  materialBlock.push('## Material and progress');
-  if (state.subjects.length === 0) materialBlock.push('- no material yet');
-  for (const s of state.subjects) {
-    const alias = subjectAlias.get(s.id)!;
-    materialBlock.push(
-      `- ${alias} ${s.name} (${s.kind}): ${s.material_count} sheets, ${s.item_count} questions`,
-    );
-    const ts = state.topics.filter((t) => t.subject_id === s.id && t.topic);
-    const shaky = ts.filter((t) => t.shaky > 0).map((t) => t.topic);
-    const secure = ts
-      .filter((t) => t.shaky === 0 && t.seen > 0 && t.secure * 2 >= t.seen)
-      .map((t) => t.topic);
-    const refresh = ts
-      .filter((t) => t.shaky === 0 && t.due > 0 && t.secure * 2 < t.seen)
-      .map((t) => t.topic);
-    const fresh = ts.filter((t) => t.seen === 0).map((t) => t.topic);
-    if (secure.length) materialBlock.push(`  secure: ${secure.slice(0, 6).join(', ')}`);
-    if (shaky.length) materialBlock.push(`  shaky: ${shaky.slice(0, 6).join(', ')}`);
-    if (refresh.length)
-      materialBlock.push(`  time for a refresh: ${refresh.slice(0, 6).join(', ')}`);
-    if (fresh.length) materialBlock.push(`  not practised yet: ${fresh.slice(0, 6).join(', ')}`);
-  }
-  // She has more sheets than fit here: say so, or Buddy answers "that's all you have"
-  // from a list that is only the newest ten (owner 28.09., issues #49 and #68).
-  // Every sheet by name, so she can say "delete that one" and Buddy has something to point
-  // at (issue #111): until now sheets appeared only as counts and titles, and everything she
-  // said about one ended in a button.
-  let sh = 0;
-  for (const m of state.materials) {
-    const alias = `sh${++sh}`;
-    aliases.materials.set(alias, m);
-    const what =
-      m.status === 'ready'
-        ? `${m.item_count} questions`
-        : m.status === 'failed'
-          ? 'could not be read'
-          : 'being read';
-    materialBlock.push(`- ${alias} "${m.title ?? 'untitled sheet'}" (${what})`);
-  }
-  if (state.totals.materials > state.materials.length)
-    materialBlock.push(
-      `- ${state.materials.length} of ${state.totals.materials} sheets are listed here (the newest); search_material finds the others`,
-    );
-  const reading = state.materials.filter((m) => m.status === 'queued' || m.status === 'processing');
-  if (reading.length)
-    materialBlock.push(`- ${reading.length} sheet(s) are being read right now (no questions yet)`);
-  // Photos still on their way (issue #115): without this the state said nothing at all about
-  // a send that hangs, and Buddy asked for the photo she had already sent.
-  for (const m of state.materials.filter((x) => x.status === 'awaiting_upload')) {
-    const at = localParts(m.created_at, tz);
-    materialBlock.push(
-      `- a sheet of ${m.photo_count} page(s) is still being sent (since ${at.date} ${at.time}): not all photos have arrived, nothing was read from it yet`,
-    );
-  }
-  // Why a sheet did not work decides what she can do next, so it is named, not counted.
-  for (const m of state.materials.filter((x) => x.status === 'failed'))
-    materialBlock.push(`- "${m.title ?? 'a sheet'}" ${failureNote(m.failure_reason)}`);
-  // Read fine, but not all of it turned into questions (issue #150): he must be able to
-  // say so, or a half-read word list passes for a whole one — which is how "frag mich alle
-  // Vokabeln ab" handed back half a sheet.
-  for (const m of state.materials.filter((x) => x.status === 'ready' && x.items_incomplete))
-    materialBlock.push(
-      `- "${m.title ?? 'sheet'}": ${m.item_count} questions read, and the sheet has MORE. Say that plainly if she asks for all of it; never let it pass for the whole sheet`,
-    );
-  // Read fine, and (part of) it is an exercise form he has no exercise for (issue #198). The
-  // tasks are named as printed, so he can say WHICH one in her words — a task nobody names is
-  // exactly what makes a sheet look done when its exercise never happened.
-  for (const m of state.materials.filter((x) => x.not_practicable.length > 0)) {
-    const named = m.not_practicable
-      .slice(0, 6)
-      .map((n) => `"${n.task}" (${n.form})`)
-      .join('; ');
-    const more = m.not_practicable.length > 6 ? ` and ${m.not_practicable.length - 6} more` : '';
-    materialBlock.push(
-      `- "${m.title ?? 'sheet'}": no exercises were made for ${named}${more} — that exercise form is not one Buddy can practise. Name it if it comes up, offer to explain it or go through the steps instead, and never let it pass for practised`,
-    );
-  }
-  // A spot the reading could not settle, where the smallest clarification is to ask her
-  // (issue #164 point 1). He names the task as printed and both readings, so she recognises
-  // which one is meant and can simply say which it is; he never picks one himself, because the
-  // question for that task is written from HER reading and from nothing else.
-  for (const m of state.materials.filter((x) => x.unclear.length > 0)) {
-    const sheet = `"${m.title ?? 'sheet'}"`;
-    for (const u of m.unclear) {
-      const readings = u.readings.map((r) => `"${r}"`).join(' or ');
-      if (u.status === 'open') {
-        materialBlock.push(
-          `- ${sheet}, page ${u.page}: in the task "${u.task}" the ${u.about} could not be read — it is ${readings}. Ask her which it is if it comes up (she also sees it with both to tap); NEVER pick one yourself, and say that there is no question for that task until she does. Everything else on the sheet is ready`,
-        );
-      } else if (u.status === 'answered') {
-        materialBlock.push(
-          `- ${sheet}: she said the ${u.about} in "${u.task}" is "${u.answer}" — the question for that task is being written from her reading right now, so it is not there yet`,
-        );
-      } else {
-        materialBlock.push(
-          `- ${sheet}: she said the ${u.about} in "${u.task}" is "${u.answer}", and the question for that task still could not be written. Say that plainly if it comes up, thank her for the answer and offer a new photo of page ${u.page}; never let it look as if the task were practised`,
-        );
-      }
-    }
-  }
-  // What kind of page a ready sheet is (issue #259): the reading said it, code kept only what
-  // follows from it — he must know, or he quizzes a test's tasks as if they were a worksheet.
-  for (const m of state.materials.filter((x) => x.status === 'ready' && x.source !== 'sheet')) {
-    const sheet = `"${m.title ?? 'sheet'}"`;
-    if (m.source === 'corrected_test')
-      materialBlock.push(
-        `- ${sheet} is her corrected class test: its questions are NEW tasks of the kind the teacher marked as wrong, never the original tasks and nothing that was right. Nothing about the grade or points was kept and its photos are deleted: never ask for or mention a grade or points`,
-      );
-    else
-      materialBlock.push(
-        `- ${sheet} is her notebook entry of the lesson on ${m.ready_at ? localParts(m.ready_at, tz).date : 'an earlier day'}: what an unannounced short test about the last lesson asks (some schools write one without notice). Its few questions are meant for a short run the next morning before school — prepare that and say so; any message to her phone stays within her contact settings`,
-      );
-  }
-  for (const m of state.materials.filter((x) => x.status === 'ready' && x.page_problems.length))
-    materialBlock.push(
-      `- "${m.title ?? 'sheet'}": page(s) ${m.page_problems.map((p) => p.page).join(', ')} of ${m.photo_count} not read completely; no questions from what was missing (the learner sees a card to photograph them again)`,
-    );
-
   // What the days before were about (issue #22): the message list holds one conversation,
   // these hold the weeks. They are what was said, not what he concluded — for connecting
   // ("letzte Woche war das Referat"), never for claiming.
@@ -478,102 +264,8 @@ export function buildContext(
     }
   }
 
-  // What she is working on right now (issue #160). It stands before the sessions because
-  // it is the thing a turn is usually about, and it survives a pause and a restart — which
-  // the chat window does not.
-  if (state.focus) {
-    const f = state.focus;
-    const parts = [
-      f.subject_name,
-      f.goal_title ? `for "${f.goal_title}"` : null,
-      f.material_title ? `sheet "${f.material_title}"` : f.material_id ? 'one sheet' : null,
-      f.vocabulary_only ? 'vocabulary only' : null,
-      f.direction === 'produce'
-        ? 'she writes the foreign word'
-        : f.direction === 'recognise'
-          ? 'she says what it means'
-          : null,
-    ].filter((x): x is string => Boolean(x));
-    if (parts.length > 0) {
-      practiceBlock.push('## What she is working on');
-      practiceBlock.push(`- ${parts.join(' · ')}`);
-      if (f.said) practiceBlock.push(`  her words: "${f.said}"`);
-      practiceBlock.push(
-        '  This still holds unless she says otherwise. Do not ask again for what is here, and do not quietly widen it.',
-      );
-    }
-  }
-  practiceBlock.push('## Recent practice');
-  if (state.sessions.length === 0) practiceBlock.push('- none yet');
-  for (const s of state.sessions.slice(0, 3)) {
-    const when = localParts(s.started_at, tz);
-    const shaky = s.shaky_topics.length ? `; shaky: ${s.shaky_topics.slice(0, 4).join(', ')}` : '';
-    practiceBlock.push(
-      `- ${when.date} ${when.time} ${s.status}: ${s.answered}/${s.total} answered, ${s.first_try} right first try${shaky}`,
-    );
-  }
-  // What she kept for after practice (issue #391): her own words, through the recall rule, only
-  // once that practice is over (state.ts) — never the tutor's reply, which may hold a hint.
-  const kept = state.later.flatMap((n) => {
-    const text = recallText(n, learner.locale, false);
-    return text === null ? [] : [{ ...n, text }];
-  });
-  if (kept.length > 0) {
-    practiceBlock.push('## Questions she kept for after practice (that practice is over now)');
-    for (const n of kept) {
-      const ended = localParts(n.ended_at, tz);
-      const during = n.session_title ? ` (during "${n.session_title}")` : '';
-      practiceBlock.push(`- "${n.text}"${during}, practice ended ${ended.date} ${ended.time}`);
-    }
-    practiceBlock.push(
-      '  She tapped "Merk ich mir für nachher" for these. Bring each up once, in your own words' +
-        ' ("Du wolltest vorhin wissen, …"), and answer it — unless the conversation below shows' +
-        ' you already have.',
-    );
-  }
-
-  // What already stands in front of her (issue #184). Buddy's own offer and a practice he
-  // prepared are both "something she can tap"; neither was in the state he reads each turn, so
-  // he offered the same practice again, and again, while the first button sat right there
-  // (measured 01.10. — the core of "gefühlt funktioniert alles schlechter als vorher", #127).
-  // What stands is read off her rows, not off the conversation: an offer whose session she has
-  // not worked in (state.ts loadStandingOffers), and a prepared practice step.
-  const stepAliasById = new Map<string, string>();
-  for (const [alias, row] of aliases.steps) stepAliasById.set(row.id, alias);
-  const preparedSteps = state.steps.filter(
-    (s) => s.kind === 'practice' && s.state === 'prepared' && (s.payload.item_ids?.length ?? 0) > 0,
-  );
-  if (state.standing.length > 0 || preparedSteps.length > 0) {
-    standingBlock.push('## Already waiting for her (one tap starts it, nothing more needed)');
-    for (const o of state.standing) {
-      const at = localParts(o.created_at, tz);
-      const wish = [
-        o.difficulty,
-        o.direction === 'produce'
-          ? 'she writes the foreign word'
-          : o.direction === 'recognise'
-            ? 'she says what it means'
-            : null,
-        o.minutes !== null ? `with ${o.minutes} minutes, as she asked` : null,
-      ].filter((x): x is string => Boolean(x));
-      standingBlock.push(
-        `- your ${o.kind} offer "${o.text}"${wish.length ? ` (${wish.join(' · ')})` : ''}` +
-          ` from ${at.date} ${at.time}: its button is in the conversation, she has not started it`,
-      );
-    }
-    for (const s of preparedSteps) {
-      const alias = stepAliasById.get(s.id);
-      standingBlock.push(
-        `- practice you prepared${alias ? ` ${alias}` : ''} "${s.title}"` +
-          ` (${s.payload.item_ids?.length ?? 0} questions): ready to start, she has not started it`,
-      );
-    }
-    standingBlock.push(
-      '  She needs nothing from you to start any of this. Making a second one of the same thing' +
-        ' adds nothing she can see: say where the next step is instead. Something she asks for' +
-        ' that is genuinely different gets its own.',
-    );
-  }
+  // The domain's sections, now that every goal and step has its alias.
+  const sections = part.sections();
 
   const st = state.settings;
   // How her replies sound when read aloud (set_voice changes it, ADR 0008).
@@ -626,28 +318,29 @@ export function buildContext(
   //   voice        — only set_voice.
   //   contact      — only set_contact (and a message actually sent, at its end).
   //   earlier      — one line is added per finished conversation, at most once a day.
-  //   material     — new sheets and practice results; the topic buckets turn over when
-  //                  spaced repetition makes something due, not every turn.
+  //   (the domain's sections that change less often than goals — LearnBuddy: material)
   //   goals        — goal and step tools; its day labels ("in 4 days") turn over at local
   //                  midnight, so it is stable within a day but not across one.
-  //   practice     — a finished practice rewrites it; volatile in an active session.
-  //   waiting      — an offer or a prepared practice appears the moment Buddy makes one and
-  //                  disappears the moment she starts it: as volatile as a turn can be.
+  //   (the domain's sections that change more often — LearnBuddy: practice, waiting; the
+  //   reason per section is written where the domain declares it, learning/context.ts)
   //   Now          — the local time to the minute: different in almost every turn, so it
   //                  ends the block. Everything after it (the dialogue) is uncacheable
   //                  anyway — the 24-message window slides with every turn.
   //   note         — only when her message is older than today (a resend, a recovery).
-  const blocks: Array<{ name: BlockName; lines: string[] }> = [
+  const placed = (place: 'before_goals' | 'after_goals') =>
+    domain.sections
+      .filter((s) => s.place === place)
+      .map((s) => ({ name: s.name, lines: sections[s.name] ?? [] }));
+  const blocks: Array<{ name: string; lines: string[] }> = [
     { name: 'learner', lines: learnerBlock },
     { name: 'knows', lines: knowledgeBlock },
     { name: 'temporary', lines: temporaryBlock },
     { name: 'voice', lines: voiceBlock },
     { name: 'contact', lines: contactBlock },
     { name: 'earlier', lines: summariesBlock },
-    { name: 'material', lines: materialBlock },
+    ...placed('before_goals'),
     { name: 'goals', lines: goalsBlock },
-    { name: 'practice', lines: practiceBlock },
-    { name: 'waiting', lines: standingBlock },
+    ...placed('after_goals'),
     { name: 'now', lines: nowBlock },
     { name: 'note', lines: noteBlock },
   ];
@@ -669,7 +362,9 @@ export function buildContext(
           // Only what this block really printed: a topic cut off at the sixth of its bucket
           // above, or a session beyond the third, was never in front of the model and must
           // not be credited to it.
-          data: [...new Set([...data[name], ...aliasesIn(body)])].filter((d) => occursIn(body, d)),
+          data: [...new Set([...(data[name] ?? []), ...aliasesIn(body)])].filter((d) =>
+            occursIn(body, d),
+          ),
         };
       }),
     };
@@ -678,28 +373,25 @@ export function buildContext(
   return { state: text, aliases, contextVersion: st.context_version };
 }
 
-const ALIAS_SEGMENT = /^(g|st|m|f)\d{1,3}$/;
-
 /**
  * Topic keys may mention aliases ("exam:g1:prep"). Aliases are renumbered
  * with every context, so keys are stored with the real ids — otherwise the
  * "no repeat within 72 h" rule would compare different things.
  */
 export function canonicalTopicKey(topicKey: string, aliases: Aliases): string {
+  const domain = contextProvider().state.topicKeyAliases;
+  const maps: Record<string, Map<string, { id: string }>> = {
+    g: aliases.goals,
+    st: aliases.steps,
+    m: aliases.memories,
+    ...Object.fromEntries(Object.entries(domain).map(([prefix, key]) => [prefix, aliases[key]])),
+  };
+  const segment = new RegExp(`^(${Object.keys(maps).join('|')})\\d{1,3}$`);
   return topicKey
     .split(':')
-    .map((segment) => {
-      const kind = ALIAS_SEGMENT.exec(segment)?.[1];
-      if (!kind) return segment;
-      const map =
-        kind === 'g'
-          ? aliases.goals
-          : kind === 'st'
-            ? aliases.steps
-            : kind === 'm'
-              ? aliases.memories
-              : aliases.subjects;
-      return map.get(segment)?.id ?? segment;
+    .map((s) => {
+      const kind = segment.exec(s)?.[1];
+      return (kind && maps[kind]?.get(s)?.id) ?? s;
     })
     .join(':')
     .slice(0, 120);

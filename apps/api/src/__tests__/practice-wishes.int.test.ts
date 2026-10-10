@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { LlmRequest } from '../llm/gateway.js';
 import { buildContext } from '../modules/buddy/context.js';
-import { findOrCreateSubject } from '../modules/buddy/plan.js';
+import { findOrCreateSubject } from '../modules/learning/state.js';
 import { loadBuddyState } from '../modules/buddy/state.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';

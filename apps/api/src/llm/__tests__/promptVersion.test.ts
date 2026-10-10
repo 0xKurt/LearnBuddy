@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { BUDDY_PROMPT_VERSION } from '../../modules/buddy/prompts.js';
+import { buddyPrompt } from '../../modules/buddy/prompts.js';
 import { CONSOLIDATE_PROMPT_VERSION } from '../../modules/buddy/consolidate.js';
 import { ROLEPLAY_PROMPT_VERSION } from '../../modules/buddy/roleplay.js';
 import { SUMMARY_PROMPT_VERSION } from '../../modules/buddy/summarise.js';
@@ -21,6 +21,7 @@ import { PRONOUNCE_PROMPT_VERSION } from '../../modules/practice/speak.js';
 import { WORK_PROMPT_VERSION } from '../../modules/practice/workPhoto.js';
 import { TRANSCRIBE_PROMPT_VERSION } from '../../modules/voice/service.js';
 import { REHEARSE_PROMPT_VERSION } from '../../modules/buddy/rehearse.js';
+import { registerLearning } from '../../modules/learning/register.js';
 import { promptVersion } from '../promptVersion.js';
 
 const SYSTEM = 'You write three practice questions.';
@@ -28,6 +29,9 @@ const SCHEMA = {
   type: 'object',
   properties: { items: { type: 'array' }, usable: { type: 'boolean' } },
 };
+
+// Buddy's prompt is built from what the learning domain registers (issue #107).
+registerLearning();
 
 describe('promptVersion (#425)', () => {
   it('gives the same version for the same bytes, every time', () => {
@@ -66,7 +70,7 @@ describe('promptVersion (#425)', () => {
 
   it('names every prompt the app sends by its name and a hash, each a different one', () => {
     const versions = {
-      buddy: BUDDY_PROMPT_VERSION,
+      buddy: buddyPrompt().version,
       consolidate: CONSOLIDATE_PROMPT_VERSION,
       roleplay: ROLEPLAY_PROMPT_VERSION,
       summary: SUMMARY_PROMPT_VERSION,

@@ -1,6 +1,6 @@
 // Lookup tools: what Buddy can read before it answers (ADR 0005 §Tools).
 // Each lookup is registered once — name, description, argument schema, the
-// surfaces allowed to call it, the connectors it reads — and the model-facing
+// surfaces allowed to call it, the code that reads it — and the model-facing
 // schema and prompt lines are generated from this registry. Lookups never
 // change anything; their results go back to the model within the same turn
 // or check. The code bounds everything: steps, calls per step, result size,
@@ -13,7 +13,6 @@ import type { LlmMessage } from '../../llm/gateway.js';
 import type { Aliases } from './context.js';
 
 export type Surface = 'turn' | 'check';
-type ConnectorName = 'material' | 'practice' | 'items';
 
 export type LookupContext = {
   deps: Deps;
@@ -29,78 +28,41 @@ export type LookupContext = {
   aliases?: Aliases;
 };
 
-type LookupSpec<N extends string, A extends z.ZodTypeAny> = {
-  name: N;
+/**
+ * A lookup: what the model is told, the arguments it may write, where it may call it, and the
+ * code that reads the data — the data is a domain's, so the domain declares and registers its
+ * lookups at start-up (issue #107, modules/learning/register.ts); this module never names them.
+ */
+export type LookupSpec<A extends z.ZodTypeAny = z.ZodTypeAny> = {
+  name: string;
   description: string;
   args: A;
   surfaces: readonly Surface[];
-  connectors: readonly ConnectorName[];
+  run(ctx: LookupContext, args: z.infer<A>): Promise<unknown>;
 };
 
-const defineLookup = <N extends string, A extends z.ZodTypeAny>(spec: LookupSpec<N, A>) => spec;
+/** A lookup with its arguments typed for its code. */
+export const defineLookup = <A extends z.ZodTypeAny>(spec: LookupSpec<A>): LookupSpec => spec;
 
-const Query = z.string().trim().min(2).max(120);
+const registry: LookupSpec[] = [];
 
-const searchMaterial = defineLookup({
-  name: 'search_material',
-  description:
-    'Read the learner\'s own worksheets: passages matching the query — a couple of topic words, in the language her sheets are written in, never a whole question — with title, subject and the day it was read. Empty query = the newest sheets. Every hit carries a "sheet" alias you can use in the SAME answer to practise from it, rename it or propose deleting it — also for sheets too old to stand in STATE. Homework comes without its text (homework: true): help with it happens in the help session, never here.',
-  args: z.object({ query: z.string().trim().max(120) }),
-  surfaces: ['turn', 'check'],
-  connectors: ['material'],
-});
-
-const practiceHistory = defineLookup({
-  name: 'practice_history',
-  description:
-    'How practice went: finished sessions (newest first) with the day, title, mode, how many answered / right on the first try, and which topics sat or were shaky. Optional topic narrows it to sessions with questions on it.',
-  args: z.object({ topic: Query.nullable() }),
-  surfaces: ['turn', 'check'],
-  connectors: ['practice'],
-});
-
-const findQuestionsLookup = defineLookup({
-  name: 'find_questions',
-  description:
-    'Questions the learner already has on a topic (from sheets or earlier practice) and how the latest try went (first_try, with_help, not_known, never_asked). Empty query = her newest questions, whatever the topic — use it when she asks what she has or had. Solutions are not included.',
-  args: z.object({ query: z.string().trim().max(120) }),
-  surfaces: ['turn', 'check'],
-  connectors: ['items'],
-});
-
-const REGISTRY = [searchMaterial, practiceHistory, findQuestionsLookup] as const;
-type Lookup = (typeof REGISTRY)[number];
-
-/**
- * What reads each lookup's data. The lookups above read a domain's data, so the domain registers
- * them at start-up (issue #107, modules/learning/register.ts); this module never names it.
- */
-export type LookupRunners = {
-  [L in Lookup as L['name']]?: (ctx: LookupContext, args: z.infer<L['args']>) => Promise<unknown>;
-};
-
-const runners: LookupRunners = {};
-
-/** A lookup has exactly one runner: a second one throws. */
-export function registerLookupRunners(more: LookupRunners): void {
-  const names = Object.keys(more) as Lookup['name'][];
-  const twice = names.filter((n) => runners[n] !== undefined);
+/** Lookups in the order the prompt lists them; a name registered twice throws. */
+export function registerLookups(...more: LookupSpec[]): void {
+  const twice = more.filter((l) => registry.some((r) => r.name === l.name)).map((l) => l.name);
   if (twice.length > 0) throw new Error(`lookup registered twice: ${twice.join(', ')}`);
-  Object.assign(runners, more);
+  registry.push(...more);
 }
 
-/** Lookups the model is offered that nobody registered a runner for. */
-export function missingLookupRunners(): string[] {
-  return REGISTRY.map((l) => l.name).filter((n) => runners[n] === undefined);
+/** The lookups the model is offered, in order. */
+export function lookupNames(): string[] {
+  return registry.map((l) => l.name);
 }
 
-/** One lookup call as the model writes it. */
-const LookupCall = z.discriminatedUnion('tool', [
-  z.object({ tool: z.literal(searchMaterial.name), args: searchMaterial.args }),
-  z.object({ tool: z.literal(practiceHistory.name), args: practiceHistory.args }),
-  z.object({ tool: z.literal(findQuestionsLookup.name), args: findQuestionsLookup.args }),
-]);
-type LookupCall = z.infer<typeof LookupCall>;
+/** One lookup call as the model writes it, built from what is registered. */
+function lookupCall(): z.ZodType<{ tool: string; args?: unknown }> {
+  const [first, ...rest] = registry.map((l) => z.object({ tool: z.literal(l.name), args: l.args }));
+  return first ? z.discriminatedUnion('tool', [first, ...rest]) : z.never();
+}
 
 /** Most lookup steps before the final answer, and calls per step. */
 const MAX_LOOKUP_STEPS = 2;
@@ -108,19 +70,21 @@ const MAX_LOOKUPS_PER_STEP = 3;
 /** Results handed back per step (characters of JSON). */
 const MAX_RESULT_CHARS = 6000;
 
-/** The `lookups` field of a step answer; empty = answer now. */
-export const lookupsField = z
-  .array(LookupCall)
-  .max(MAX_LOOKUPS_PER_STEP)
-  .describe(
-    'Read before answering (see LOOKUPS). Non-empty: the lookups run and you answer again with their results; reply and actions of this answer are ignored. Empty: this is your answer.',
-  );
+/** The `lookups` field of a step answer; empty = answer now. Built from what is registered. */
+export function lookupsField() {
+  return z
+    .array(lookupCall())
+    .max(MAX_LOOKUPS_PER_STEP)
+    .describe(
+      'Read before answering (see LOOKUPS). Non-empty: the lookups run and you answer again with their results; reply and actions of this answer are ignored. Empty: this is your answer.',
+    );
+}
 
 /** The LOOKUPS section of the system prompt, generated from the registry. */
 export function lookupsPrompt(surface: Surface): string {
-  const lines = REGISTRY.filter((l) => l.surfaces.includes(surface)).map(
-    (l) => `- ${l.name}: ${l.description}`,
-  );
+  const lines = registry
+    .filter((l) => l.surfaces.includes(surface))
+    .map((l) => `- ${l.name}: ${l.description}`);
   return `LOOKUPS (read-only; they change nothing):
 ${lines.join('\n')}
 - STATE is a summary. When the answer depends on what a worksheet says, on how earlier practice went, or on which questions exist, look it up first instead of guessing — at most ${MAX_LOOKUP_STEPS} rounds, ${MAX_LOOKUPS_PER_STEP} lookups each. Don't look up what STATE already says.
@@ -138,23 +102,21 @@ async function runLookups(
   calls: unknown[],
 ): Promise<LookupRecord[]> {
   const out: LookupRecord[] = [];
+  const call = lookupCall();
   for (const raw of calls.slice(0, MAX_LOOKUPS_PER_STEP)) {
-    const parsed = LookupCall.safeParse(raw);
+    const parsed = call.safeParse(raw);
     if (!parsed.success) {
       out.push({ tool: toolName(raw), ok: false, result: 'invalid arguments' });
       continue;
     }
-    const spec = REGISTRY.find((l) => l.name === parsed.data.tool);
     // The union and the registry share the same arg schemas.
-    const run = spec
-      ? (runners[spec.name] as ((c: LookupContext, a: unknown) => Promise<unknown>) | undefined)
-      : undefined;
-    if (!spec || !run || !spec.surfaces.includes(surface)) {
+    const spec = registry.find((l) => l.name === parsed.data.tool);
+    if (!spec || !spec.surfaces.includes(surface)) {
       out.push({ tool: parsed.data.tool, ok: false, result: 'not available here' });
       continue;
     }
     try {
-      const result = await run(ctx, parsed.data.args);
+      const result = await spec.run(ctx, parsed.data.args);
       out.push({ tool: spec.name, ok: true, result });
     } catch {
       out.push({ tool: spec.name, ok: false, result: 'failed, try without it' });

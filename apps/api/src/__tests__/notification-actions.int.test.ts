@@ -15,7 +15,8 @@ import {
 } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { bumpContext, findOrCreateSubject, scheduleExamWakeups } from '../modules/buddy/plan.js';
+import { bumpContext, scheduleExamWakeups } from '../modules/buddy/plan.js';
+import { findOrCreateSubject } from '../modules/learning/state.js';
 import { loadSettings } from '../modules/buddy/state.js';
 import { enqueueJob } from '../modules/scheduler/jobs.js';
 import { testDatabaseAvailable } from '../testing/database.js';

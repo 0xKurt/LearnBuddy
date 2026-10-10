@@ -6,7 +6,7 @@ import { READ_ALOUD_WORDS, TalkStage } from '@learnbuddy/shared-types/contracts'
 import { t } from '../../i18n/index.js';
 import { daysBetween } from '../../lib/time.js';
 import type { ActionOf } from './decision.js';
-import { findOrCreateSubject } from './plan.js';
+import { findOrCreateSubject } from '../learning/state.js';
 import { wordsOf } from './talkMeasure.js';
 import {
   goalOf,

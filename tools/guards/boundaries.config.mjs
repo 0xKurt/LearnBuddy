@@ -35,6 +35,30 @@ export const DOMAIN = [
   '^packages/shared-math/',
 ];
 
+/**
+ * The learning domain's tables (issue #107 §6: "Engine darf keine Domain-Tabelle per SQL nennen —
+ * ein Test, nicht nur Lint"). Generic API code reads and writes them only through what the domain
+ * registers (its context provider, its privacy tables); domain-sql.mjs counts every SQL text in
+ * generic code that names one. The domain registers exactly these for export and deletion
+ * (modules/learning/privacy.ts) — modules/learning/__tests__/register.test.ts holds the two lists
+ * together.
+ */
+export const DOMAIN_TABLES = [
+  'subjects',
+  'materials',
+  'material_photos',
+  'material_images',
+  'material_passages',
+  'material_unclear_spots',
+  'items',
+  'item_states',
+  'practice_sessions',
+  'practice_turns',
+  'session_items',
+  'buddy_roleplays',
+  'rehearsals',
+];
+
 /** Where the guard looks: the two apps' production code. */
 export const ROOTS = [
   'apps/api/src',
@@ -44,7 +68,14 @@ export const ROOTS = [
 ];
 
 /** Not generic code: tests, the test harness, the API's evals and scripts. */
-const NOT_GENERIC = ['(/__tests__/|\\.test\\.tsx?$|/testing/)', '^apps/api/(evals|scripts)/'];
+export const NOT_GENERIC = [
+  '(/__tests__/|\\.test\\.tsx?$|/testing/)',
+  '^apps/api/(evals|scripts)/',
+];
+
+/** @param {string} file repository path @returns {boolean} generic Buddy code, not domain nor test */
+export const isGeneric = (file) =>
+  ![...DOMAIN, ...NOT_GENERIC].some((pattern) => new RegExp(pattern).test(file));
 
 /** dependency-cruiser's configuration (https://github.com/sverweij/dependency-cruiser). */
 export default {

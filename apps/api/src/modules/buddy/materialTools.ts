@@ -1,11 +1,13 @@
 // Material tools: a photo asked for, a sheet or a question deleted (with her confirmation) or renamed.
 // Split from tools.ts (#311); the rules every tool keeps are written there.
 
+import type { Db } from '../../lib/db.js';
 import type { ActionOf } from './decision.js';
 import { bumpContext } from './plan.js';
 import { normalizeForMatch } from './text.js';
 import {
   activeGoalOf,
+  type DomainUndo,
   materialOf,
   requireQuote,
   today,
@@ -201,6 +203,41 @@ export async function runRenameMaterial(
     summary: { tool: 'rename_material', material_id: m.id, title: a.title },
     undo: { type: 'rename_material_back', material_id: m.id, title: m.title },
   };
+}
+
+declare module './toolKit.js' {
+  interface DomainUndos {
+    /** A sheet she renamed gets its old title back. */
+    rename_material_back: {
+      type: 'rename_material_back';
+      material_id: string;
+      title: string | null;
+    };
+  }
+}
+
+/** Whether the rename can still be taken back: the sheet is still hers (the provider's `undo`). */
+export async function renameBackApplies(
+  db: Db,
+  learnerId: string,
+  undo: DomainUndo,
+): Promise<boolean> {
+  const row = await db.maybeOne(
+    `select 1 from materials where id = $1 and learner_id = $2 and archived_at is null`,
+    [undo.material_id, learnerId],
+  );
+  return row !== null;
+}
+
+/** Its old title back. False when the sheet is gone. */
+export async function renameBack(db: Db, learnerId: string, undo: DomainUndo): Promise<boolean> {
+  const r = await db.query(
+    `update materials set title = $3
+      where id = $1 and learner_id = $2 and archived_at is null returning id`,
+    [undo.material_id, learnerId, undo.title],
+  );
+  await bumpContext(db, learnerId);
+  return r.length === 1;
 }
 
 /**

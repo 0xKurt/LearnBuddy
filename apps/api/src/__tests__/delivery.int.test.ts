@@ -13,12 +13,8 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  bumpContext,
-  findOrCreateSubject,
-  scheduleExamWakeups,
-  scheduleStepReminder,
-} from '../modules/buddy/plan.js';
+import { bumpContext, scheduleExamWakeups, scheduleStepReminder } from '../modules/buddy/plan.js';
+import { findOrCreateSubject } from '../modules/learning/state.js';
 import { planOutreach } from '../modules/buddy/delivery.js';
 import { loadSettings } from '../modules/buddy/state.js';
 import { runTick } from '../modules/scheduler/tick.js';

@@ -14,54 +14,27 @@
 
 import { randomUUID } from 'node:crypto';
 
-import type { RoleplayFeedback } from '@learnbuddy/shared-types/contracts';
-
 import type { Deps } from '../../deps.js';
 import type { LearnerContext } from '../../http/context.js';
 import { isUniqueViolation } from '../../lib/db.js';
 import { isAppError } from '../../lib/errors.js';
 import { localParts, weekdayName } from '../../lib/time.js';
-import { t } from '../../i18n/index.js';
 import {
   safeguardingText as sharedSafeguardingText,
   type SafeguardingKind,
 } from '../../i18n/safeguarding.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
-import { homeworkSolved, mentionsSolution } from '../practice/tutor.js';
 import { applyDecision, recordUnapplied, type DecisionMeta } from './apply.js';
-import { preInjectedPassages } from './connectors/material.js';
 import { buildContents, buildContext } from './context.js';
-import { prepareOffered } from '../practice/prepare.js';
+import { contextProvider } from './provider.js';
 import { askedButActed, emptyReply, TurnDecision } from './registry.js';
 import { recallText } from './recall.js';
 import { bumpContext } from './plan.js';
 import { replyProgress, type ReplyProgress } from './stream.js';
-import {
-  BUDDY_PROMPT_VERSION,
-  TURN_SCHEMA,
-  TURN_STEP_SCHEMA,
-  TURN_SYSTEM,
-  repairMessage,
-} from './prompts.js';
+import { buddyPrompt, repairMessage, schemaErrors } from './prompts.js';
 import { withLookups } from './lookups.js';
 import { loadBuddyState, loadSettings, type MessageRow, TURN_STALL_MS } from './state.js';
-import {
-  activeRoleplay,
-  endForConcern,
-  feedbackText,
-  languageName,
-  ROLEPLAY_PROMPT_VERSION,
-  ROLEPLAY_SYSTEM,
-  ROLEPLAY_TURN_SCHEMA,
-  roleplayContents,
-  roleplayFrame,
-  roleplayMessages,
-  RoleplayTurnForModel,
-  writeFeedback,
-  type RoleplayRow,
-  type RoleplayStep,
-} from './roleplay.js';
 
 const MAX_ROUNDS = 4;
 export { TURN_STALL_MS };
@@ -204,11 +177,12 @@ export async function processTurn(
 }
 
 /**
- * The passages her message points at, looked up the moment the turn begins (issue #447): her
- * words are known before her state is, and the embedding behind the lookup is the longest wait
- * before the model starts (0.17–0.40 s in production). It used to start only after the ~20 reads
- * of her state; now they run side by side. Not during a roleplay — her line is not a question
- * about her sheets. Undefined when not looked up; it never fails the turn.
+ * What her message points at, looked up the moment the turn begins (issue #447; in LearnBuddy the
+ * passages of her sheets, provider.ts `lookAhead`): her words are known before her state is,
+ * and the embedding behind the lookup is the longest wait before the model starts (0.17–0.40 s in
+ * production). It used to start only after the ~20 reads of her state; now they run side by side.
+ * Not while a mode runs (a roleplay) — her line is not a question about her sheets. Undefined
+ * when not looked up; it never fails the turn.
  */
 function passagesAhead(
   deps: Deps,
@@ -216,9 +190,10 @@ function passagesAhead(
   text: string,
 ): Promise<string | null | undefined> {
   const now = deps.now();
-  return Promise.all([loadSettings(deps.db, learnerId), activeRoleplay(deps.db, learnerId, now)])
-    .then(([settings, play]) =>
-      play ? undefined : preInjectedPassages(deps, learnerId, settings.timezone, text),
+  const hooks = contextProvider().turn;
+  return Promise.all([loadSettings(deps.db, learnerId), hooks.mode(deps.db, learnerId, now)])
+    .then(([settings, mode]) =>
+      mode ? undefined : hooks.lookAhead(deps, learnerId, settings.timezone, text),
     )
     .catch(() => undefined);
 }
@@ -230,8 +205,10 @@ async function decideTurn(
   ahead: Promise<string | null | undefined>,
   onReply?: OnReply,
 ): Promise<TurnOutcome> {
+  const hooks = contextProvider().turn;
+  const prompt = buddyPrompt();
   let repairErrors: string[] | null = null;
-  /** Whether the last attempt was an in-role turn: a repair note never crosses into the other kind. */
+  /** Whether the last attempt was an in-mode turn: a repair note never crosses into the other kind. */
   let lastInRole: boolean | null = null;
   let round = 0;
   // Computed once per turn (one embedding call), reused across repair/stale rounds.
@@ -267,13 +244,13 @@ async function decideTurn(
       return { status: outcome, errorCode: null };
     }
 
-    // A roleplay is running (issue #244): this message is her line in the scene, answered in
-    // the role against the stored frame — not a Buddy turn with STATE and tools.
-    const play = await activeRoleplay(deps.db, learner.id, now);
-    if (lastInRole !== null && lastInRole !== (play !== null)) repairErrors = null;
-    lastInRole = play !== null;
-    if (play) {
-      const step = await roleplayRound(deps, learner, message, play, {
+    // A mode is running (a roleplay, issue #244): this message is her line in the scene,
+    // answered in the role against the stored frame — not a Buddy turn with STATE and tools.
+    const mode = await hooks.mode(deps.db, learner.id, now);
+    if (lastInRole !== null && lastInRole !== (mode !== null)) repairErrors = null;
+    lastInRole = mode !== null;
+    if (mode) {
+      const step = await mode(deps, learner, message, {
         contextVersion: state.settings.context_version,
         attempt,
         repairErrors,
@@ -314,7 +291,7 @@ async function decideTurn(
         early !== undefined
           ? early
           : learnerWords.length > 0
-            ? await preInjectedPassages(deps, learner.id, tz, words)
+            ? await hooks.lookAhead(deps, learner.id, tz, words)
             : null;
     }
     const contents: LlmMessage[] = buildContents(
@@ -325,7 +302,7 @@ async function decideTurn(
     const { meta, record } = turnRecord(deps, learner.id, message.id, {
       contextVersion: ctx.contextVersion,
       attempt: attempt,
-      promptVersion: BUDDY_PROMPT_VERSION,
+      promptVersion: prompt.version,
       triggers: [{ message_id: message.id }],
     });
 
@@ -337,23 +314,16 @@ async function decideTurn(
         contents,
         call: async (messages, final) => {
           const thisRound = ++round;
-          // Still working: a turn of several model calls must not look stalled and be taken
-          // over while it runs (turn-cost-and-stall-window).
-          const mine = await deps.db.query(
-            `update buddy_messages set claimed_at = $3
-              where id = $1 and claim_token = $2 and status = 'processing' returning id`,
-            [message.id, message.claim_token, deps.now()],
-          );
           // Stopped by her, or taken over: no further model call for a turn that is not ours.
-          if (mine.length === 0) throw new ClaimLost();
+          if (!(await holdClaim(deps, message))) throw new ClaimLost();
           let last = '';
           const result = await callModel(deps, learner.id, today, {
             purpose: 'buddy_turn',
             tier: 'smart',
-            promptVersion: BUDDY_PROMPT_VERSION,
-            system: TURN_SYSTEM,
+            promptVersion: prompt.version,
+            system: prompt.turnSystem,
             contents: messages,
-            schema: final ? TURN_SCHEMA : TURN_STEP_SCHEMA,
+            schema: final ? prompt.turnSchema : prompt.turnStepSchema,
             maxOutputTokens: 2048,
             temperature: 0.4,
             timeoutMs: 30_000,
@@ -379,29 +349,12 @@ async function decideTurn(
       meta.output = looked.output;
     } catch (err) {
       if (err instanceof ClaimLost) return currentOutcome(deps, message.id);
-      if (err instanceof LlmError && err.kind === 'blocked') {
-        // The provider's safety filter held back her words or Buddy's answer. That is not
-        // a glitch to resend: code answers with a fixed, caring reply (D-10), and her
-        // message is never sent to the model again (audit H-31, H-32).
-        await record('failed', [err.finishReason ? `blocked:${err.finishReason}` : 'blocked']);
-        return answerWithSafeguarding(deps, learner, message, 'blocked');
-      }
-      const code = isAppError(err)
-        ? err.code
-        : err instanceof LlmError
-          ? err.kind === 'invalid_output'
-            ? 'model_invalid'
-            : 'model_unavailable'
-          : 'internal';
-      await record('failed', [code]);
-      return failTurn(deps, message, code);
+      return callFailed(deps, learner, message, record, err);
     }
 
     const parsed = TurnDecision.safeParse(raw);
     if (!parsed.success) {
-      const errors = parsed.error.issues
-        .slice(0, 6)
-        .map((i) => `${i.path.join('.')}: ${i.message}`);
+      const errors = schemaErrors(parsed.error);
       await record('rejected', errors);
       if (repairErrors) return failTurn(deps, message, 'model_invalid');
       repairErrors = errors;
@@ -414,11 +367,11 @@ async function decideTurn(
       repairErrors = contradictions;
       continue;
     }
-    // "Never the homework solution" is enforced in code in the chat too, not only prompted
-    // (audit S-6 p2-sec-homework-solution-chat-unenforced).
+    // What the domain enforces in code about a reply, not only prompts (LearnBuddy: never the
+    // homework solution in the chat, audit S-6 p2-sec-homework-solution-chat-unenforced).
     const leak = parsed.data.concern
       ? []
-      : await homeworkLeak(deps, learner.id, parsed.data.reply, learnerWords);
+      : await hooks.checkReply(deps, learner.id, parsed.data.reply, learnerWords);
     if (leak.length > 0) {
       await record('rejected', leak);
       if (repairErrors) return failTurn(deps, message, 'model_invalid');
@@ -449,7 +402,7 @@ async function decideTurn(
     });
     if (result.status === 'applied') {
       // What Buddy just offered is prepared while she reads his reply (issue #48).
-      prepareOffered(deps, learner.id, result.actions);
+      hooks.applied(deps, learner.id, result.actions);
       return { status: 'done', errorCode: null };
     }
     // Another runner took this message over (e.g. recovery after a timeout): report where it stands.
@@ -464,191 +417,29 @@ async function decideTurn(
   return failTurn(deps, message, 'stale');
 }
 
-type RoleplayRound =
-  | { kind: 'outcome'; outcome: TurnOutcome }
-  | { kind: 'repair'; errors: string[] }
-  | { kind: 'stale' };
-
 /**
- * One in-role turn of a running roleplay (issue #244). Same ownership, fence, failure codes and
- * audit as any turn — what differs is what the model sees (the stored frame and the scene's own
- * lines, `roleplay.ts`), what it may answer (a line, no tools) and what code decides from it:
- *
- *   concern            → the fixed caring reply, the roleplay ends without feedback;
- *   leave              → it ends; with turns played, the checked feedback follows;
- *   another language   → the app's own hint, the turn is not counted;
- *   otherwise          → the role's line; the turn counts, and the last allowed one ends it
- *                        with the feedback in the same transaction.
- *
- * Not streamed: whether the model's words are shown at all is decided by code after the whole
- * answer (the language hint replaces them), so nothing is shown that could be withdrawn.
+ * A turn's model call failed. The provider's safety filter held back her words or Buddy's
+ * answer: that is not a glitch to resend — code answers with a fixed, caring reply (D-10), and
+ * her message is never sent to the model again (audit H-31, H-32). Anything else fails the turn
+ * with its stable code. Either way the decision record keeps why.
  */
-async function roleplayRound(
+export async function callFailed(
   deps: Deps,
   learner: TurnLearner,
   message: ClaimedMessage,
-  play: RoleplayRow,
-  at: {
-    contextVersion: number;
-    attempt: number;
-    repairErrors: string[] | null;
-    now: Date;
-    timezone: string;
-  },
-): Promise<RoleplayRound> {
-  const today = localParts(at.now, at.timezone).date;
-  const rows = await roleplayMessages(deps.db, play);
-  const { dialogue, learnerWords } = turnDialogue(rows, message.id, learner.locale);
-  const { meta, record } = turnRecord(deps, learner.id, message.id, {
-    contextVersion: at.contextVersion,
-    attempt: at.attempt,
-    promptVersion: ROLEPLAY_PROMPT_VERSION,
-    triggers: [{ message_id: message.id, roleplay_id: play.id }],
-  });
-
-  let raw: unknown;
-  try {
-    const mine = await deps.db.query(
-      `update buddy_messages set claimed_at = $3
-        where id = $1 and claim_token = $2 and status = 'processing' returning id`,
-      [message.id, message.claim_token, deps.now()],
-    );
-    if (mine.length === 0) throw new ClaimLost();
-    const result = await callModel(deps, learner.id, today, {
-      purpose: 'buddy_turn',
-      tier: 'smart',
-      promptVersion: ROLEPLAY_PROMPT_VERSION,
-      system: ROLEPLAY_SYSTEM,
-      contents: roleplayContents(
-        roleplayFrame(play, learner),
-        dialogue,
-        at.repairErrors ? repairMessage(at.repairErrors) : undefined,
-      ),
-      schema: ROLEPLAY_TURN_SCHEMA,
-      maxOutputTokens: 1024,
-      temperature: 0.6,
-      timeoutMs: 30_000,
-      thinkingBudget: 256,
-    });
-    meta.model = result.usage.model;
-    raw = result.json;
-  } catch (err) {
-    if (err instanceof ClaimLost)
-      return { kind: 'outcome', outcome: await currentOutcome(deps, message.id) };
-    if (err instanceof LlmError && err.kind === 'blocked') {
-      await record('failed', [err.finishReason ? `blocked:${err.finishReason}` : 'blocked']);
-      return {
-        kind: 'outcome',
-        outcome: await answerWithSafeguarding(deps, learner, message, 'blocked'),
-      };
-    }
-    const code = turnErrorCode(err);
-    await record('failed', [code]);
-    return { kind: 'outcome', outcome: await failTurn(deps, message, code) };
+  record: ReturnType<typeof turnRecord>['record'],
+  err: unknown,
+): Promise<TurnOutcome> {
+  if (err instanceof LlmError && err.kind === 'blocked') {
+    await record('failed', [err.finishReason ? `blocked:${err.finishReason}` : 'blocked']);
+    return answerWithSafeguarding(deps, learner, message, 'blocked');
   }
-  meta.output = raw;
-
-  const parsed = RoleplayTurnForModel.safeParse(raw);
-  if (!parsed.success) {
-    const errors = parsed.error.issues.slice(0, 6).map((i) => `${i.path.join('.')}: ${i.message}`);
-    await record('rejected', errors);
-    return { kind: 'repair', errors };
-  }
-  const d = parsed.data;
-  const inLanguage = d.her_language === play.language || d.her_language === 'other';
-  if (!d.concern && !d.leave && inLanguage && d.reply.trim().length === 0) {
-    const errors = ['reply: write your next line in the role (empty only for concern or leave)'];
-    await record('rejected', errors);
-    return { kind: 'repair', errors };
-  }
-
-  // What code makes of it. The model's own words are shown only for a counted line in the role.
-  let reply: { text: string; options: null } | null;
-  let step: RoleplayStep;
-  const base = { id: play.id, expectTurns: play.turns, feedback: null, closing: null };
-  if (d.concern) {
-    reply = { text: concernText(learner, d.also_asked), options: null };
-    step = { ...base, count: false, end: 'concern' };
-  } else if (d.leave) {
-    reply = null;
-    step = { ...base, count: false, end: 'her' };
-  } else if (!inLanguage) {
-    reply = {
-      text: t(learner.locale, 'roleplay.try_in', {
-        language: languageName(play.language, learner.locale),
-      }),
-      options: null,
-    };
-    step = { ...base, count: false, end: null };
-  } else {
-    reply = { text: d.reply, options: null };
-    step = { ...base, count: true, end: play.turns + 1 >= play.max_turns ? 'turns' : null };
-  }
-
-  if (step.end === 'her' || step.end === 'turns') {
-    const played = play.turns + (step.count ? 1 : 0);
-    let feedback: RoleplayFeedback | null = null;
-    if (played > 0) {
-      try {
-        // Her words of this turn are hers to be quoted, when they were a line in the scene.
-        feedback = await writeFeedback(
-          deps,
-          learner.id,
-          today,
-          play,
-          learner,
-          rows.filter((r) => step.count || r.id !== message.id),
-          learner.locale,
-          step.count ? learnerWords : [],
-        );
-      } catch (err) {
-        const code = turnErrorCode(err);
-        await record('failed', [`feedback:${code}`]);
-        return { kind: 'outcome', outcome: await failTurn(deps, message, code) };
-      }
-    }
-    step = {
-      ...step,
-      feedback,
-      closing: feedback
-        ? feedbackText(learner.locale, feedback)
-        : t(learner.locale, 'roleplay.ended'),
-    };
-  }
-
-  const result = await applyDecision(deps.db, {
-    learnerId: learner.id,
-    locale: learner.locale,
-    contextVersion: at.contextVersion,
-    // A scene has no tools, so it resolves no aliases.
-    aliases: {
-      goals: new Map(),
-      steps: new Map(),
-      memories: new Map(),
-      subjects: new Map(),
-      materials: new Map(),
-    },
-    now: at.now,
-    reference: at.now,
-    learnerWords,
-    concern: d.concern,
-    triggerMessageId: message.id,
-    messageClaim: { id: message.id, token: message.claim_token },
-    actions: [],
-    reply,
-    outreach: null,
-    roleplay: step,
-    meta,
-  });
-  if (result.status === 'applied')
-    return { kind: 'outcome', outcome: { status: 'done', errorCode: null } };
-  if (result.status === 'superseded')
-    return { kind: 'outcome', outcome: await currentOutcome(deps, message.id) };
-  if (result.status === 'rejected') return { kind: 'repair', errors: result.errors };
-  return { kind: 'stale' };
+  const code = turnErrorCode(err);
+  await record('failed', [code]);
+  return failTurn(deps, message, code);
 }
 
-function turnErrorCode(err: unknown): string {
+export function turnErrorCode(err: unknown): string {
   return isAppError(err)
     ? err.code
     : err instanceof LlmError
@@ -698,44 +489,6 @@ export function turnDialogue(
   };
 }
 
-/**
- * While she has homework open in a help session, a chat reply that states the solution of
- * an open task is refused — unless she wrote that solution herself (then Buddy may confirm).
- */
-async function homeworkLeak(
-  deps: Deps,
-  learnerId: string,
-  reply: string,
-  learnerWords: readonly string[],
-): Promise<string[]> {
-  const open = await deps.db.query<{
-    prompt: string;
-    answer: string;
-    accepted_answers: string[];
-    unit: string | null;
-    tolerance: number | null;
-  }>(
-    `select i.prompt, i.answer, i.accepted_answers, i.unit, i.tolerance
-       from practice_sessions ps
-       join session_items si on si.session_id = ps.id and si.status = 'open'
-       join items i on i.id = si.item_id
-      where ps.learner_id = $1 and ps.mode = 'help' and ps.status = 'active'`,
-    [learnerId],
-  );
-  const hers = learnerWords.join('\n');
-  // Every key of the task, not only the first (#227 B7): an accepted answer given away is the
-  // solution given away.
-  return open.some(
-    (i) =>
-      !homeworkSolved(i, hers) &&
-      [i.answer, ...i.accepted_answers].some((k) => mentionsSolution(reply, k, i.prompt)),
-  )
-    ? [
-        'reply: it gives away the solution of her open homework task. Help her find it herself (a question, a first step) — never the result.',
-      ]
-    : [];
-}
-
 function safeguardingText(learner: TurnLearner, kind: SafeguardingKind): string {
   return sharedSafeguardingText(learner.locale, learner.isMinor, kind);
 }
@@ -753,7 +506,7 @@ function safeguardingText(learner: TurnLearner, kind: SafeguardingKind): string 
  * tools are refused in this turn, `refuseDuringConcern` in tools.ts). The helpline text
  * itself is untouched; it is the reason this path holds.
  */
-function concernText(learner: TurnLearner, alsoAsked: boolean): string {
+export function concernText(learner: TurnLearner, alsoAsked: boolean): string {
   const fixed = safeguardingText(learner, 'concern');
   return alsoAsked ? `${fixed} ${safeguardingText(learner, 'also_asked')}` : fixed;
 }
@@ -785,14 +538,18 @@ async function answerWithSafeguarding(
       [learner.id, safeguardingText(learner, kind), message.id, now],
     );
     // A scene does not go on over a held-back message (issue #244): it ends, without feedback.
-    await endForConcern(tx, learner.id, now);
+    await contextProvider().turn.concern(tx, learner.id, now);
     await bumpContext(tx, learner.id);
     return true;
   });
   return answered ? { status: 'done', errorCode: null } : currentOutcome(deps, message.id);
 }
 
-async function failTurn(deps: Deps, message: ClaimedMessage, code: string): Promise<TurnOutcome> {
+export async function failTurn(
+  deps: Deps,
+  message: ClaimedMessage,
+  code: string,
+): Promise<TurnOutcome> {
   // Only the current owner may mark it failed — together with the earlier messages it
   // superseded (released, waiting for this answer).
   const rows = await deps.db.tx(async (tx) => {
@@ -818,6 +575,20 @@ async function failTurn(deps: Deps, message: ClaimedMessage, code: string): Prom
 
 /** The turn is no longer this runner's (stopped, or taken over): it ends without a word. */
 class ClaimLost extends Error {}
+
+/**
+ * Still working: a turn of several model calls must not look stalled and be taken over while it
+ * runs (turn-cost-and-stall-window). False: stopped by her, or taken over — no further model call
+ * for a turn that is not ours.
+ */
+export async function holdClaim(deps: Deps, message: ClaimedMessage): Promise<boolean> {
+  const mine = await deps.db.query(
+    `update buddy_messages set claimed_at = $3
+      where id = $1 and claim_token = $2 and status = 'processing' returning id`,
+    [message.id, message.claim_token, deps.now()],
+  );
+  return mine.length > 0;
+}
 
 /**
  * She stopped Buddy's reply (POST /buddy/messages/:id/stop). Her message and the unanswered
@@ -858,7 +629,7 @@ export async function stopTurn(
   });
 }
 
-async function currentOutcome(deps: Deps, messageId: string): Promise<TurnOutcome> {
+export async function currentOutcome(deps: Deps, messageId: string): Promise<TurnOutcome> {
   const row = await deps.db.one<{ status: TurnOutcome['status'] }>(
     `select status from buddy_messages where id = $1`,
     [messageId],
@@ -879,7 +650,7 @@ export async function pushAvailable(deps: Deps, learnerId: string): Promise<bool
  * A turn decision's record, filled in while the call runs, and how it is kept when it is not
  * applied (failed or rejected) — the same for an ordinary turn and an in-role one (#244).
  */
-function turnRecord(
+export function turnRecord(
   deps: Deps,
   learnerId: string,
   messageId: string,

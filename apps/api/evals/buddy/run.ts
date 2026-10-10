@@ -18,7 +18,8 @@ import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
 import { setStateAudit } from '../../src/modules/buddy/blocks.js';
-import { BUDDY_PROMPT_VERSION } from '../../src/modules/buddy/prompts.js';
+import { buddyPrompt } from '../../src/modules/buddy/prompts.js';
+import { registerLearning } from '../../src/modules/learning/register.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import { BlockAudit } from './blockaudit.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
@@ -26,6 +27,9 @@ import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import { CASES, type Outcome } from './cases.js';
 import { judgeRuns, runsFor } from './repeat.js';
 import { bumpContext } from '../../src/modules/buddy/plan.js';
+
+// Buddy's prompt is built from what the learning domain registers (issue #107).
+registerLearning();
 
 loadDotenv({ path: '.env.local' });
 
@@ -327,7 +331,7 @@ async function main(): Promise<void> {
       process.env.BUDDY_EVAL_OUT,
       `${JSON.stringify(
         {
-          promptVersion: BUDDY_PROMPT_VERSION,
+          promptVersion: buddyPrompt().version,
           ranAt,
           models: [...models].sort(),
           costMicros,

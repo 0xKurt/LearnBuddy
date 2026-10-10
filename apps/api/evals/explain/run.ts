@@ -21,11 +21,15 @@ import { config as loadDotenv } from 'dotenv';
 import { z } from 'zod';
 
 import { loadConfig } from '../../src/config.js';
-import { BUDDY_PROMPT_VERSION } from '../../src/modules/buddy/prompts.js';
+import { buddyPrompt } from '../../src/modules/buddy/prompts.js';
+import { registerLearning } from '../../src/modules/learning/register.js';
 import { toJsonSchema } from '../../src/llm/json-schema.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
+
+// Buddy's prompt is built from what the learning domain registers (issue #107).
+registerLearning();
 
 loadDotenv({ path: '.env.local' });
 
@@ -82,7 +86,7 @@ async function main(): Promise<void> {
   const vertex = new VertexGateway(config);
 
   const out: string[] = [
-    `# Erklär-Eval (live, ${BUDDY_PROMPT_VERSION}, ${new Date().toISOString().slice(0, 16)})`,
+    `# Erklär-Eval (live, ${buddyPrompt().version}, ${new Date().toISOString().slice(0, 16)})`,
     '',
   ];
   let good = 0;

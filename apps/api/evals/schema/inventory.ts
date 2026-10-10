@@ -53,6 +53,7 @@ import * as structured from '../../src/modules/practice/structured.js';
 import * as tutor from '../../src/modules/practice/tutor.js';
 import * as workPhoto from '../../src/modules/practice/workPhoto.js';
 import * as voice from '../../src/modules/voice/service.js';
+import { registerLearning } from '../../src/modules/learning/register.js';
 import {
   serialize,
   sha256,
@@ -63,6 +64,9 @@ import {
   type Shape,
   type Union,
 } from './measure.js';
+
+// Buddy's prompt is built from what the learning domain registers (issue #107).
+registerLearning();
 
 const API = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const REPO = resolve(API, '../..');
@@ -114,24 +118,26 @@ type Variant = {
 function variants(): Variant[] {
   const leanOf = (system: string | undefined) =>
     system === undefined ? undefined : `${system}\n\n${extract.LEAN_RULES}`;
-  const buddy = prompts.BUDDY_PROMPT_VERSION;
+  const p = prompts.buddyPrompt();
+  const buddy = p.version;
   return [
     {
       purpose: 'buddy_turn',
       profile: 'step (lookups allowed; every first call of a turn)',
       tier: 'smart',
       promptVersion: buddy,
-      system: prompts.TURN_SYSTEM,
-      schema: prompts.TURN_STEP_SCHEMA,
-      where: 'buddy/prompts.ts, sent by turn.ts — final ? TURN_SCHEMA : TURN_STEP_SCHEMA',
+      system: p.turnSystem,
+      schema: p.turnStepSchema,
+      where:
+        'buddy/prompts.ts (buddyPrompt), sent by turn.ts — final ? turnSchema : turnStepSchema',
     },
     {
       purpose: 'buddy_turn',
       profile: 'final (after MAX_LOOKUP_STEPS)',
       tier: 'smart',
       promptVersion: buddy,
-      system: prompts.TURN_SYSTEM,
-      schema: prompts.TURN_SCHEMA,
+      system: p.turnSystem,
+      schema: p.turnSchema,
       where: 'buddy/turn.ts',
     },
     {
@@ -141,7 +147,7 @@ function variants(): Variant[] {
       promptVersion: roleplay.ROLEPLAY_PROMPT_VERSION,
       system: roleplay.ROLEPLAY_SYSTEM,
       schema: roleplay.ROLEPLAY_TURN_SCHEMA,
-      where: 'buddy/turn.ts — roleplayRound',
+      where: 'learning/turn.ts — roleplayRound',
     },
     {
       purpose: 'buddy_turn',
@@ -157,8 +163,8 @@ function variants(): Variant[] {
       profile: 'step',
       tier: 'smart',
       promptVersion: buddy,
-      system: prompts.CHECK_SYSTEM,
-      schema: prompts.CHECK_STEP_SCHEMA,
+      system: p.checkSystem,
+      schema: p.checkStepSchema,
       where: 'buddy/check.ts — final ? CHECK_SCHEMA : CHECK_STEP_SCHEMA',
     },
     {
@@ -166,8 +172,8 @@ function variants(): Variant[] {
       profile: 'final',
       tier: 'smart',
       promptVersion: buddy,
-      system: prompts.CHECK_SYSTEM,
-      schema: prompts.CHECK_SCHEMA,
+      system: p.checkSystem,
+      schema: p.checkSchema,
       where: 'buddy/check.ts',
     },
     {

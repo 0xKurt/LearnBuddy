@@ -29,6 +29,7 @@ import {
   withGrants,
 } from './base.mjs';
 import { findBoundaryEdges } from './boundaries.mjs';
+import { checkDomainSql, findDomainSql } from './domain-sql.mjs';
 import plugin from './eslint-plugin.mjs';
 import { MAX_AGE_HOURS, staleHours } from './fresh-base.mjs';
 import { keysOf, unusedKeys } from './i18n-keys.mjs';
@@ -330,6 +331,41 @@ describe('module boundaries: generic Buddy code never imports the learning domai
     } finally {
       done();
     }
+  });
+});
+
+describe('domain tables in generic SQL (#107 §6: ein Test, nicht nur Lint)', () => {
+  const files = new Map([
+    [
+      'apps/api/src/modules/buddy/state.ts',
+      [
+        '// Reads from items in a comment: not SQL, not counted.',
+        'const q = `select s.id from subjects s left join materials m on m.subject_id = s.id`;',
+        "const prose = 'what she took from items she practised';",
+        "const core = 'select * from buddy_goals where learner_id = $1';",
+        'const t = `delete from ${table} where ctid = any($1)`;',
+      ].join('\n'),
+    ],
+    ['apps/api/src/modules/practice/summary.ts', "const q = 'select * from items';"],
+    ['apps/api/src/modules/buddy/__tests__/state.test.ts', "const q = 'select * from items';"],
+    ['apps/api/src/modules/identity/privacy.ts', "const q = 'select ctid from rehearsals';"],
+  ]);
+
+  it('counts what generic code names in SQL, and nothing in prose, comments, the domain or tests', () => {
+    assert.deepEqual(findDomainSql(files), {
+      'apps/api/src/modules/buddy/state.ts': 2,
+      'apps/api/src/modules/identity/privacy.ts': 1,
+    });
+  });
+
+  it('allows what main has per file, and nothing more or new', () => {
+    const allowed = { 'apps/api/src/modules/buddy/state.ts': 2 };
+    const { problems, summary } = checkDomainSql(allowed, files);
+    assert.equal(summary, '3 Abfragen in 2 Dateien');
+    assert.equal(problems.length, 1);
+    assert.match(problems[0] ?? '', /identity\/privacy\.ts — 1 statt 0 \(rehearsals\)/);
+    const fewer = { 'apps/api/src/modules/buddy/state.ts': 1 };
+    assert.equal(checkDomainSql(fewer, files).problems.length, 2);
   });
 });
 

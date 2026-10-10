@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Db } from '../lib/db.js';
 import { runLearnerJobs } from '../modules/buddy/check.js';
 import { emitEvent } from '../modules/buddy/events.js';
-import { findOrCreateSubject } from '../modules/buddy/plan.js';
+import { findOrCreateSubject } from '../modules/learning/state.js';
 import { enqueueJob } from '../modules/scheduler/jobs.js';
 import { runTick } from '../modules/scheduler/tick.js';
 import { testDatabaseAvailable } from '../testing/database.js';

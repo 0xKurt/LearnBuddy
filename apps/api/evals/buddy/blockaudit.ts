@@ -15,8 +15,8 @@
 // requires live verification in Claude Code session (its input is a live eval run)
 
 import {
-  BLOCK_NAMES,
-  QUOTABLE,
+  blockNames,
+  quotable,
   referencedBlocks,
   type BlockName,
 } from '../../src/modules/buddy/blocks.js';
@@ -127,21 +127,23 @@ export class BlockAudit {
       cases: this.cases,
       contexts: this.contexts,
       calls: this.calls,
-      blocks: BLOCK_NAMES.filter((n) => this.totals.has(n)).map((n) => {
-        const t = this.totalsOf(n);
-        return {
-          block: n,
-          quotable: QUOTABLE[n],
-          contexts: t.contexts,
-          chars: t.chars,
-          charsPerContext: Math.round(t.chars / Math.max(t.contexts, 1)),
-          cases: t.cases,
-          casesWithData: t.withData,
-          referencedCases: QUOTABLE[n] ? t.referenced : null,
-          toolSignalCases: TOOL_SIGNAL.some((s) => s.block === n) ? t.toolSignal : null,
-          evidence: t.evidence.slice(0, 12),
-        };
-      }),
+      blocks: blockNames()
+        .filter((n) => this.totals.has(n))
+        .map((n) => {
+          const t = this.totalsOf(n);
+          return {
+            block: n,
+            quotable: quotable(n),
+            contexts: t.contexts,
+            chars: t.chars,
+            charsPerContext: Math.round(t.chars / Math.max(t.contexts, 1)),
+            cases: t.cases,
+            casesWithData: t.withData,
+            referencedCases: quotable(n) ? t.referenced : null,
+            toolSignalCases: TOOL_SIGNAL.some((s) => s.block === n) ? t.toolSignal : null,
+            evidence: t.evidence.slice(0, 12),
+          };
+        }),
       sharedData: [...this.shared],
     };
   }
@@ -152,18 +154,20 @@ export class BlockAudit {
     const head =
       'section      contexts   chars  per ctx   % STATE  cases  with data  referenced  tool\n' +
       '-------------------------------------------------------------------------------------';
-    const rows = BLOCK_NAMES.filter((n) => this.totals.has(n)).map((n) => {
-      const t = this.totalsOf(n);
-      const per = Math.round(t.chars / Math.max(t.contexts, 1));
-      const ref = QUOTABLE[n] ? `${t.referenced}/${t.withData}` : '—';
-      const tool = TOOL_SIGNAL.some((s) => s.block === n) ? `${t.toolSignal}/${t.cases}` : '—';
-      return (
-        `${n.padEnd(12)} ${String(t.contexts).padStart(8)} ${String(t.chars).padStart(7)}` +
-        ` ${String(per).padStart(8)} ${((100 * t.chars) / Math.max(chars, 1)).toFixed(1).padStart(9)}` +
-        ` ${String(t.cases).padStart(6)} ${String(t.withData).padStart(10)}` +
-        ` ${ref.padStart(11)} ${tool.padStart(6)}`
-      );
-    });
+    const rows = blockNames()
+      .filter((n) => this.totals.has(n))
+      .map((n) => {
+        const t = this.totalsOf(n);
+        const per = Math.round(t.chars / Math.max(t.contexts, 1));
+        const ref = quotable(n) ? `${t.referenced}/${t.withData}` : '—';
+        const tool = TOOL_SIGNAL.some((s) => s.block === n) ? `${t.toolSignal}/${t.cases}` : '—';
+        return (
+          `${n.padEnd(12)} ${String(t.contexts).padStart(8)} ${String(t.chars).padStart(7)}` +
+          ` ${String(per).padStart(8)} ${((100 * t.chars) / Math.max(chars, 1)).toFixed(1).padStart(9)}` +
+          ` ${String(t.cases).padStart(6)} ${String(t.withData).padStart(10)}` +
+          ` ${ref.padStart(11)} ${tool.padStart(6)}`
+        );
+      });
     return [
       `${this.cases} cases, ${this.contexts} model contexts in ${this.calls} model calls` +
         ` (a lookup round sends the same STATE again), ${chars} characters of STATE in total`,
