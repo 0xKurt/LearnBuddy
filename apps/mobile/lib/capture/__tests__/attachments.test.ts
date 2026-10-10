@@ -24,7 +24,7 @@ import {
 } from '../attachments.js';
 import type { CaptureDraft, DraftLink } from '../draft.js';
 import type { IncomingFile } from '../files.js';
-import { MAX_PHOTOS, PhotoUploadError } from '../materialUpload.js';
+import { MAX_PHOTOS, PhotoUploadError } from '../pages.js';
 
 const LINK: DraftLink = {
   stepId: null,

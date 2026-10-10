@@ -5,22 +5,13 @@ import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
-import type { PhotoProblem } from '../../lib/photo/quality.js';
+import type { PhotoReviewProps } from '../../lib/capture/pages.js';
 import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 
-type Props = {
-  /** 1-based number of the photo. */
-  index: number;
-  problems: readonly PhotoProblem[];
-  disabled: boolean;
-  onRetake: () => void;
-  onKeep: () => void;
-};
-
-export function PhotoCheckCard({ index, problems, disabled, onRetake, onKeep }: Props) {
+export function PhotoCheckCard({ index, problems, disabled, onRetake, onKeep }: PhotoReviewProps) {
   const { t } = useTranslation('capture');
   const main = problems[0] ?? 'blurry';
   useAnnounce(t(`quality.${main}`, { index }));

@@ -172,7 +172,18 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
    eine Job-Art keinen Handler hat (`missingJobKinds`). Die Aufbewahrung jedes Buddys
    (Storage-Schuld, geschlossene Erinnerungen, Entscheidungsinhalte) steht in
    `identity/retention.ts`. Wächter: 55 → 45.
-5. **Kontext-Provider** (`buddy/provider.ts`): die Domain meldet einen Provider an, der Kern
+5. **App (Schnitt 8): Karten, Start-Einträge, Anhänge, Mathe** melden sich an: `lib/learning/register.tsx`
+   (`registerLearning`) ist die eine Stelle, die die Lern-Domain beim App-Start
+   (`app/_layout.tsx`) in den Kern der App einträgt — Karten im Gespräch, Nachrichten-Karten,
+   Mitlesen, die Zeile über dem Gespräch, die Ergebnis-Notiz, die Lese-Stufen und das Start-Menü
+   (`components/buddy/extensions.ts`), wo $…$ steht, wie es gezeichnet und gesagt wird
+   (`lib/buddy/notation.ts`, `components/lb/InlineText.tsx`, `lib/speech/say.ts`), wohin
+   angehängte Seiten gehen und wie ein Foto geprüft wird (`lib/capture/pages.ts`), und was der
+   Bibliotheks-Cache der Startseite folgt (`homeFollowers`). Ohne Domain zeichnet der Kern jede
+   Stelle leer und ruhig (`withoutDomain.test.tsx`); keine Stelle leer, keine doppelt
+   (`components/learn/__tests__/register.test.tsx`). App: 32 → 1 (neu, freigegeben: die eine
+   Naht `app/_layout.tsx → lib/learning/register.tsx`). Wächter: 45 → 14.
+6. **Kontext-Provider (Schnitt 5)** (`buddy/provider.ts`): die Domain meldet einen Provider an, der Kern
    liest nur noch seine eigenen Tabellen. Er liefert den Domain-Teil des Zustands
    (`learning/state.ts`; die Felder deklariert sie per Augmentation von `DomainState`,
    `DomainTotals`, `DomainAliases`, `DomainUndos`), ihre STATE-Abschnitte und was Ziele und
@@ -185,10 +196,11 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
    (`learning/lookups.ts`, `registerLookups`); Prompt, Schemas, Prompt-Hash und ein voller STATE
    bleiben byte-gleich (`buddy/__tests__/prompt-pin.test.ts`). Neuer Wächter: `domain-sql.mjs`
    zählt Domain-Tabellen in SQL des generischen API-Codes (#107 §6) — 76 Abfragen in 9 Dateien
-   → 24 in 1 (`identity/privacy.ts`, Schnitt 6). Importe: 45 → 33 (API: nur noch die Naht).
+   → 24 in 1 (`identity/privacy.ts`, Schnitt 6). Importe API: 13 → 1 (nur noch die Naht
+   `app.ts → learning/register.ts`); Wächter mit Schnitt 8: 14 → 2.
    Noch im Kern deklariert: die Schemas und Beschreibungen der Domain-Werkzeuge (`decision.ts`,
    `registry.ts`) — ihre Typen hängen an der Karten-Union (Schnitt 7).
-6. **Datenschutz über eine Tabellen-Registry** (`identity/privacyTables.ts`): `identity/privacy.ts`
+7. **Datenschutz über eine Tabellen-Registry (Schnitt 6)** (`identity/privacyTables.ts`): `identity/privacy.ts`
    nennt nur noch die Tabellen des Kerns; die Domain meldet ihre an (`learning/privacy.ts`) — was
    jede exportiert, wie ihre Zeilen für die Löschung gefunden werden, welche Storage-Dateien sie
    meinen. Export: erst der Kern, dann die Domain; Löschung: erst die Domain (Kinder zuerst), dann
@@ -196,8 +208,8 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
    vorher beginnt die Stufe von vorn — jedes Löschen findet nur, was noch da ist). Die
    Vollständigkeit prüft weiter der Katalog (`export-completeness.int.test.ts`); `register.test.ts`
    hält die angemeldeten Tabellen und `DOMAIN_TABLES` des SQL-Wächters gleich. SQL im Kern auf
-   Domain-Tabellen: 24 → 0. Importe: 33 (die Kante `privacy.ts → materials/purge.ts` war schon mit
-   Schnitt 4 weg).
+   Domain-Tabellen: 24 → 0. Importe: unverändert 2 (die Kante `privacy.ts → materials/purge.ts`
+   war schon mit Schnitt 4 weg).
 
 ## Die API-Datenbankrolle
 

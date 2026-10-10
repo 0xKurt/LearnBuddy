@@ -11,7 +11,7 @@ import { Text, View } from 'react-native';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { MathText } from '../math/MathText.js';
+import { InlineText } from './InlineText.js';
 import { Card } from './Card.js';
 import { Icon } from './Icon.js';
 import { Rise } from './Motion.js';
@@ -76,11 +76,13 @@ function ResultCard({ row }: { row: ResultRow }) {
         </View>
         <Text style={[TYPE.label, { color: tint }]}>{row.label}</Text>
       </View>
-      <MathText text={row.text} style={TYPE.body} />
+      <InlineText text={row.text} style={TYPE.body} />
       {row.detail !== null ? (
-        <MathText text={row.detail} style={[TYPE.body, { fontWeight: '600' }]} />
+        <InlineText text={row.detail} style={[TYPE.body, { fontWeight: '600' }]} />
       ) : null}
-      {row.note ? <MathText text={row.note} style={[TYPE.body, { color: palette.ink2 }]} /> : null}
+      {row.note ? (
+        <InlineText text={row.note} style={[TYPE.body, { color: palette.ink2 }]} />
+      ) : null}
     </Card>
   );
 }

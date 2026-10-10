@@ -10,7 +10,6 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useSpokenWords } from '../../components/math/useSpokenMath.js';
 import { toast } from '../../components/lb/Toast.js';
 import { announce } from '../announce.js';
 import { ApiError, newId } from '../api/client.js';
@@ -21,6 +20,7 @@ import { haptic } from '../haptics.js';
 import { currentLocale } from '../i18n/index.js';
 import { dropped, reacted, tapped } from '../perf.js';
 import { speakInOrder, stop as stopListening } from '../speech/listen.js';
+import { useSay } from '../speech/say.js';
 import { replyAfter, spokenText } from '../speech/spoken.js';
 import { createStreamSpeaker, type StreamSpeaker } from '../speech/streamSpeaker.js';
 import { readsAloud, useVoiceMode } from '../speech/voiceMode.js';
@@ -43,7 +43,7 @@ export function useHomeSend({ thread, onSend }: Options) {
   const sending = useRef<{ id: string; controller: AbortController } | null>(null);
   // Vorlesen (the speaker in the head, issue #386): Buddy's replies are read aloud.
   const voiceOn = useVoiceMode(readsAloud);
-  const words = useSpokenWords();
+  const say = useSay();
   /** The message she sent last whose reply hasn't been read aloud yet (Vorlesen). */
   const awaitingReply = useRef<string | null>(null);
   /** The home is the screen she sees (a reply is never read over practice or talk, M-79). */
@@ -58,10 +58,10 @@ export function useHomeSend({ thread, onSend }: Options) {
     const reply = replyAfter(thread, sent);
     if (!reply) return;
     awaitingReply.current = null;
-    const text = spokenText(reply.text, words);
+    const text = spokenText(reply.text, say);
     if (voiceOn) speakInOrder([{ text, lang: currentLocale() }]);
     else announce(t('buddy:a11y.reply', { text }));
-  }, [thread, voiceOn, words, t]);
+  }, [thread, voiceOn, say, t]);
 
   // Going to another screen ends whatever is being read, and a reply that comes later is not
   // read there.
@@ -123,7 +123,7 @@ export function useHomeSend({ thread, onSend }: Options) {
           if (!along.speaker) {
             along.speaker = createStreamSpeaker(
               currentLocale(),
-              (sentence) => spokenText(sentence, words),
+              (sentence) => spokenText(sentence, say),
               () => undefined,
             );
             // What is read along is not read again from the thread.

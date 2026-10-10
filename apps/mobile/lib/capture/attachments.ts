@@ -6,16 +6,15 @@
 // Node tests prove it (lib/capture/__tests__/attachments.test.ts).
 
 import { ApiError } from '../api/apiError.js';
-import type { PhotoProblem } from '../photo/quality.js';
 import type { CaptureDraft } from './draft.js';
 import { displayName, type IncomingFile } from './files.js';
-import { MAX_PHOTOS, PhotoUploadError, type UploadFile } from './materialUpload.js';
+import { MAX_PHOTOS, PhotoUploadError, type PhotoProblem, type UploadFile } from './pages.js';
 
 /** The pages of one sheet, in page order, with what is known about each of them. */
 export type PageSet = {
   /** Local URIs of the prepared pages, in page order. */
   uris: string[];
-  /** What the check on the device found per page (lib/photo/quality.ts). */
+  /** What the check on the device found per page (lib/capture/pages.ts `PageHandler`). */
   problems: Readonly<Record<string, PhotoProblem[]>>;
   /** Pages she chose to keep despite a problem. */
   kept: ReadonlySet<string>;

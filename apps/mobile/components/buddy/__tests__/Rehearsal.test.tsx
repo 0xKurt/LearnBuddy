@@ -11,8 +11,12 @@ import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { lengthVerdict, sentDuration, wordsToPractise } from '../../../lib/buddy/rehearsal.js';
+import { registerLearning } from '../../../lib/learning/register.js';
 import { renderInApp } from '../../../testing/render.js';
 import { Conversation } from '../Conversation.js';
+
+// The app as it runs: the learning domain's cards are given at start (app/_layout.tsx).
+registerLearning();
 
 const PASSAGE =
   'Der kleine Fuchs lief am Morgen durch den Wald. Er suchte etwas zu essen für seine Familie.';

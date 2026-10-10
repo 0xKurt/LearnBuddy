@@ -6,17 +6,10 @@
 
 import type { NowCard, ReadingStage } from '@learnbuddy/shared-types/contracts';
 
+import type { ReadingView, StepState } from '../../components/buddy/extensions.js';
+
 type Processing = Extract<NowCard, { type: 'material_processing' }>;
-
-type StepKey = 'sent' | 'read' | 'build';
-export type StepState = 'done' | 'active' | 'todo';
-
-export type ReadingView = {
-  stage: ReadingStage;
-  title: { key: string; count?: number };
-  body: { key: string; count?: number };
-  steps: { key: StepKey; state: StepState }[];
-};
+type StepKey = ReadingView['steps'][number]['key'];
 
 /** The stage; an older server only sends the status. */
 export function stageOf(card: Processing): ReadingStage {

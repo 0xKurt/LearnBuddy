@@ -2,7 +2,7 @@
 // the copy into her answer field. What a reading means for the field is `lib/practice/workPhoto.ts`;
 // this is the part that needs the device and the API. The pieces are the sheet's own: the same
 // camera (`lib/capture/camera.ts`), the same prepared JPEG and quality check
-// (`lib/capture/upload.ts` `preparePhoto`), the same card when the phone finds it hard to read
+// (`lib/capture/prepare.ts` `preparePhoto`), the same card when the phone finds it hard to read
 // (`PhotoCheckCard`). Only where it goes differs: read in the request and dropped, never uploaded.
 
 import { WORK_PHOTO_BASE64_MAX } from '@learnbuddy/shared-types/contracts';
@@ -13,7 +13,7 @@ import { ApiError, isOutdated } from '../../lib/api/apiError.js';
 import { readWorkPhoto } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { openCamera } from '../../lib/capture/camera.js';
-import { preparePhoto } from '../../lib/capture/upload.js';
+import { preparePhoto } from '../../lib/capture/prepare.js';
 import { messageFor } from '../../lib/errors.js';
 import { fieldFrom, type WorkPhotoState } from '../../lib/practice/workPhoto.js';
 

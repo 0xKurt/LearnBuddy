@@ -1,11 +1,13 @@
 // The little Markdown Buddy's replies use, as blocks to draw: paragraphs (with
 // their line breaks), bulleted and numbered lists. Inline emphasis (**bold**,
-// *italic*) and $…$ math stay in the text: MathText draws them (lib/math/prompt.ts).
-// Nothing else is interpreted — no links, no images, no HTML: "<b>" stays
-// the four characters it is. Pure logic without React Native imports (unit tests).
+// *italic*) and the notation a domain draws ($…$ math) stay in the text: the inline renderer
+// draws them (components/lb/InlineText.tsx). Where that notation stands comes from the domain
+// (lib/buddy/notation.ts); without one, every character is plain text. Nothing else is
+// interpreted — no links, no images, no HTML: "<b>" stays the four characters it is. Pure
+// logic without React Native imports (unit tests).
 
-import { mathSpans } from '../math/parse.js';
-import { withoutEmphasis } from '../math/emphasis.js';
+import { withoutEmphasis } from './emphasis.js';
+import { notationSpans } from './notation.js';
 
 export type MdBlock =
   | { type: 'para'; text: string }
@@ -66,11 +68,11 @@ export function markdownBlocks(text: string): MdBlock[] {
 }
 
 /**
- * The lines of the text; a line break inside $…$ math does not end a line (the formula
- * stays one piece).
+ * The lines of the text; a line break inside a piece of notation ($…$ math) does not end a
+ * line (the formula stays one piece).
  */
 function logicalLines(text: string): string[] {
-  const spans = mathSpans(text);
+  const spans = notationSpans(text);
   const lines: string[] = [];
   let cur = '';
   for (let i = 0; i < text.length; i++) {
@@ -107,9 +109,10 @@ export function markdownPlain(text: string, opts: { spoken?: boolean } = {}): st
 const ITALIC_MARK =
   /(?<![*\w])\*(?![\s*])([^*\n]+?)(?<![\s*])\*(?![*\w])|(?<![\w_])_(?![\s_])([^_\n]+?)(?<![\s_])_(?![\w_])/g;
 
-function withoutMarkers(text: string): string {
-  // Math keeps its own characters: only the text outside $…$ loses its markers.
-  const spans = mathSpans(text);
+/** One run of text without its emphasis markers — what is drawn where no domain draws it. */
+export function withoutMarkers(text: string): string {
+  // Notation keeps its own characters: only the text outside $…$ loses its markers.
+  const spans = notationSpans(text);
   let out = '';
   let last = 0;
   for (const s of spans) {

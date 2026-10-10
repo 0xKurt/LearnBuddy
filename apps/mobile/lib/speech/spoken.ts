@@ -1,73 +1,20 @@
 // What Buddy reads aloud (Vorlesen, Gespräch) and how a transcript lands in a field. Pure
-// logic (no React Native), unit-tested: the words for math come from the
-// locale (useSpokenWords), **bold** markers are never read, and a question
-// with choices is read as "…? A: …, B: …".
+// logic (no React Native), unit-tested: **bold** markers are never read, and the notation a
+// domain writes (math) is said in words (`say`, lib/speech/say.ts). A question with its choices
+// and the verdict after an answer are the learning domain's (lib/practice/readText.ts).
 
 import { markdownPlain } from '../buddy/markdown.js';
-import { speakMathText, type SpokenWords } from '../math/speak.js';
+import type { Say } from './say.js';
 import { baseLanguage } from './voice.js';
 
 /**
- * A model-written text as it is read aloud: no Markdown (bold, italic, list markers), math
+ * A model-written text as it is read aloud: no Markdown (bold, italic, list markers), notation
  * in words; each line of a list is its own sentence (the voice pauses between them).
  */
-export function spokenText(text: string, words: SpokenWords): string {
-  return speakMathText(markdownPlain(text, { spoken: true }), words)
+export function spokenText(text: string, say: Say): string {
+  return say(markdownPlain(text, { spoken: true }))
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-/** Gaps of three or more underscores outside $…$ as the blank word (math reads its own). */
-function withSpokenBlanks(text: string, words: SpokenWords): string {
-  return text
-    .split(/(\$[^$]*\$)/)
-    .map((part) => (part.startsWith('$') ? part : part.replace(/_{3,}/g, ` ${words.blank} `)))
-    .join('');
-}
-
-/** "A", "B", … for the n-th choice (0-based); past Z it counts on ("27"). */
-export function choiceLetter(index: number): string {
-  return index >= 0 && index < 26 ? String.fromCharCode(65 + index) : String(index + 1);
-}
-
-/** Ends a sentence so the voice pauses before what follows ("Wie viel ist 3 + 4" → "… 4."). */
-export function endSentence(text: string): string {
-  const t = text.trim();
-  if (t.length === 0) return t;
-  return /[.?!:;…]$/.test(t) ? t : `${t}.`;
-}
-
-/** The question read aloud: the prompt, then each choice as "A: …, B: …". The topic is not read. */
-export function questionReadText(
-  prompt: string,
-  choices: readonly string[] | null,
-  words: SpokenWords,
-): string {
-  // A fill-in gap outside math ("Ich helfe ___ Mutter.") is read as the gap word, as the
-  // screen reader says it, never as underscores (p2-voice-reads-blank-as-underscores).
-  const question = endSentence(spokenText(withSpokenBlanks(prompt, words), words));
-  const options = (choices ?? [])
-    .map((c, i) => ({ letter: choiceLetter(i), text: spokenText(c, words) }))
-    .filter((c) => c.text.length > 0)
-    .map((c) => `${c.letter}: ${c.text}`);
-  if (options.length === 0) return question;
-  return `${question} ${endSentence(options.join(', '))}`.trim();
-}
-
-/**
- * Buddy's reaction after an answer: the verdict word ("Richtig") and the reply.
- * The word is left out when the reply already starts with it.
- */
-export function feedbackReadText(
-  verdictWord: string | null,
-  reply: string,
-  words: SpokenWords,
-): string {
-  const said = spokenText(reply, words);
-  const word = verdictWord?.trim() ?? '';
-  if (!word) return said;
-  if (said.toLocaleLowerCase().startsWith(word.toLocaleLowerCase())) return said;
-  return said ? `${endSentence(word)} ${said}` : endSentence(word);
 }
 
 /** TranscribeRequest.lang: a two-letter language ("fr-FR" → "fr"), otherwise null (= app language). */

@@ -38,17 +38,13 @@
     "delete_material_untitled": "J’ai rangé la feuille",
     "rename_material": "La feuille s’appelle maintenant « {{title}} »",
     "delete_item": "La question est retirée : « {{question}} »",
-    "offer_learning": "Proposé : {{what}} – « {{text}} »",
     "open_area": "Affiché : {{what}}",
     "set_contact_quiet": "Notifications seulement entre {{from}} et {{to}}, jamais après {{quiet}}",
     "set_contact_days": "jamais ces jours-là : {{days}}",
     "request_material_undone": "Pas besoin de photo : {{title}}",
     "set_voice": "Ma voix : {{voice}}, {{speed}}",
     "forget_all": "Tout ce que je savais sur toi est oublié ({{count}})",
-    "offer_drill": "Proposé : calcul mental – « {{text}} »",
-    "start_roleplay": "Jeu de rôle : {{scene}}",
-    "plan_talk": "Exposé « {{title}} » prévu le {{day}} : {{steps}}",
-    "offer_rehearsal": "Répétition proposée : {{title}}"
+    "plan_talk": "Exposé « {{title}} » prévu le {{day}} : {{steps}}"
   },
   "area": {
     "library": "Tes documents",

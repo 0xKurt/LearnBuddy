@@ -25,7 +25,7 @@ import { LoadFailed } from '../components/lb/LoadFailed.js';
 import { Rise, useListEntrance } from '../components/lb/Motion.js';
 import { Screen } from '../components/lb/Screen.js';
 import { LibrarySkeleton } from '../components/lb/Skeletons.js';
-import { useLibrary } from '../lib/api/queries.js';
+import { useLibrary } from '../lib/api/libraryQueries.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { bottomRoom, SPACE } from '../lib/theme/space.js';

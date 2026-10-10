@@ -1,6 +1,8 @@
-// The ⋯ menu on Buddy's home and the two sheets its ways to start can open (issue #174): homework
-// or vocabulary — by photo or typed — and the topic sheet. Each way closes the sheet it came from
-// first: two modals in one frame do not come up on iOS.
+// The ⋯ menu on Buddy's home and the sheets its ways to start can open (issue #174). The ways to
+// start and their sheets are a domain's (components/buddy/extensions.ts `startMenu`, issue #107):
+// the learning domain's homework, vocabulary, speaking and test. Without one the menu holds only
+// the places. Each way closes the sheet it came from first: two modals in one frame do not come
+// up on iOS.
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
@@ -8,15 +10,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform } from 'react-native';
 
-import { askAttach } from '../../lib/capture/attachRequest.js';
-import { ChoiceSheet } from '../learn/ChoiceSheet.js';
-import { TopicSheet } from '../learn/TopicSheet.js';
-import type { TopicKind } from '../learn/useStartTopic.js';
+import { startMenu } from './extensions.js';
 import { MenuSheet } from './MenuSheet.js';
-import { startItems } from './startItems.js';
 
 /** iOS can't present a sheet while another one is still sliding away. */
-const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
+export const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
 
 type Props = {
   menuOpen: boolean;
@@ -29,17 +27,12 @@ type Props = {
 };
 
 export function StartSheets({ menuOpen, onCloseMenu, next, send, canStart }: Props) {
-  const { t } = useTranslation(['buddy', 'learn']);
-  const [topic, setTopic] = useState<TopicKind | null>(null);
-  const [choice, setChoice] = useState<'homework' | 'vocab' | null>(null);
+  const { t } = useTranslation('buddy');
+  /** The domain's sheet that is up, by its own name; null: none. */
+  const [sheet, setSheet] = useState<string | null>(null);
+  const menu = startMenu.get();
 
-  /** From a choice sheet on: first let it close, then go on. */
-  function fromChoice(go: () => void): void {
-    setChoice(null);
-    setTimeout(go, SHEET_SWAP_MS);
-  }
-
-  /** Same from the ⋯ menu: two of the ways to start open a sheet of their own (#174). */
+  /** Same from the ⋯ menu: some of the ways to start open a sheet of their own (#174). */
   function fromMenu(go: () => void): void {
     onCloseMenu();
     setTimeout(go, SHEET_SWAP_MS);
@@ -49,9 +42,9 @@ export function StartSheets({ menuOpen, onCloseMenu, next, send, canStart }: Pro
     <>
       <MenuSheet
         visible={menuOpen}
-        // Each way to start closes the sheet first: two of them open a sheet of their
+        // Each way to start closes the sheet first: some of them open a sheet of their
         // own, and two modals in one frame do not come up on iOS.
-        start={startItems(next, t, { send, setChoice, setTopic }).map((i) => ({
+        start={(menu?.items(next, t, { send, open: setSheet }) ?? []).map((i) => ({
           ...i,
           onPress: () => fromMenu(i.onPress),
         }))}
@@ -59,42 +52,7 @@ export function StartSheets({ menuOpen, onCloseMenu, next, send, canStart }: Pro
         onGo={(path) => fromMenu(() => router.push(path))}
         onClose={onCloseMenu}
       />
-      <ChoiceSheet
-        visible={choice !== null}
-        title={t(choice === 'vocab' ? 'learn:vocab.title' : 'learn:homework.title')}
-        body={t(choice === 'vocab' ? 'learn:vocab.body' : 'learn:homework.body')}
-        onClose={() => setChoice(null)}
-        choices={
-          choice === 'vocab'
-            ? [
-                {
-                  label: t('learn:vocab.photo'),
-                  icon: 'camera',
-                  // The camera at once; the page lands in the chat's bar (issue #519).
-                  onPress: () => fromChoice(() => askAttach({ open: 'camera' })),
-                },
-                {
-                  label: t('learn:vocab.type'),
-                  icon: 'keyboard',
-                  onPress: () => fromChoice(() => setTopic('vocab')),
-                },
-              ]
-            : [
-                {
-                  label: t('learn:homework.photo'),
-                  icon: 'camera',
-                  onPress: () =>
-                    fromChoice(() => askAttach({ open: 'camera', link: { purpose: 'homework' } })),
-                },
-                {
-                  label: t('learn:homework.type'),
-                  icon: 'keyboard',
-                  onPress: () => fromChoice(() => setTopic('help')),
-                },
-              ]
-        }
-      />
-      <TopicSheet kind={topic} onClose={() => setTopic(null)} />
+      {menu ? <menu.Sheets open={sheet} onOpen={setSheet} /> : null}
     </>
   );
 }

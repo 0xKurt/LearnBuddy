@@ -47,16 +47,30 @@ import { takeIncoming } from './incoming.js';
 import { clearCameraOpen, markCameraOpen, takePendingPhotos } from './pendingCamera.js';
 import {
   MAX_PHOTOS,
-  newMaterialUpload,
-  preparePhoto,
-  type MaterialLink,
-  type MaterialUpload,
+  pageHandler,
+  type PageLink,
+  type PageUpload,
   type SendProgress,
   type UploadFile,
-} from './upload.js';
+} from './pages.js';
+import { preparePhoto } from './prepare.js';
 
-function uploadLink(l: DraftLink): MaterialLink {
+function uploadLink(l: DraftLink): PageLink {
   return { stepId: l.stepId, goalId: l.goalId, purpose: l.purpose, completes: l.completes };
+}
+
+/**
+ * Starts one set's send with the domain that takes the pages (lib/capture/pages.ts). The chat
+ * offers no way to attach without one (components/buddy/Composer.tsx), so none starts here.
+ */
+function startUpload(
+  files: readonly UploadFile[],
+  link: DraftLink,
+  requestId?: string,
+): PageUpload {
+  const handler = pageHandler.get();
+  if (!handler) throw new Error('Anhänge: keine Domain nimmt Seiten an (#107)');
+  return handler.start(files, uploadLink(link), requestId);
 }
 
 type Options = {
@@ -103,7 +117,7 @@ export function useAttachments({ droppable, onSent }: Options) {
   );
   useAnnounce(cameraBlocked ? t('capture:permission.camera') : null);
   // One upload per photo set: a retry reuses it (same client_request_id); a changed set drops it.
-  const upload = useRef<MaterialUpload | null>(null);
+  const upload = useRef<PageUpload | null>(null);
   const picking = useRef(false);
   const sending = useRef(false);
   const mounted = useMounted();
@@ -121,11 +135,7 @@ export function useAttachments({ droppable, onSent }: Options) {
     setPages(restored);
     // Already on its way before: the same material, nothing sent twice.
     if (d.requestId)
-      upload.current = newMaterialUpload(
-        uploadFiles(restored.uris, restored.pdfs),
-        uploadLink(d.link),
-        d.requestId,
-      );
+      upload.current = startUpload(uploadFiles(restored.uris, restored.pdfs), d.link, d.requestId);
   }
 
   /** What the draft keeps of the photos on the screen. */
@@ -214,7 +224,7 @@ export function useAttachments({ droppable, onSent }: Options) {
     setRefused(false);
     try {
       if (upload.current) upload.current.grow(file);
-      else upload.current = newMaterialUpload([file], uploadLink(linkNow.current));
+      else upload.current = startUpload([file], linkNow.current);
     } catch {
       // Already sent: this page belongs to a new sheet, which the next send reserves.
       upload.current = null;
@@ -424,8 +434,7 @@ export function useAttachments({ droppable, onSent }: Options) {
     // page taken out, a draft from before), that reservation is given up and these pages
     // start as a new one — nothing half-known is sent.
     if (upload.current && upload.current.pageCount !== photos.length) photosChanged();
-    if (!upload.current)
-      upload.current = newMaterialUpload(uploadFiles(photos, pdfs), uploadLink(linkNow.current));
+    if (!upload.current) upload.current = startUpload(uploadFiles(photos, pdfs), linkNow.current);
     const current = upload.current;
     setFailure(null);
     setProgress({ step: 'reserving' });

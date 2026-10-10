@@ -439,3 +439,8 @@ export function speakMathText(text: string, words: SpokenWords): string {
       .join(''),
   ).replace(/\s+([.,!?;:])(?=\s|$)/g, '$1');
 }
+
+/** Says a text with its math in words: the learning domain's notation, for lib/speech/say.ts. */
+export function sayMath(words: SpokenWords): (text: string) => string {
+  return (text) => speakMathText(text, words);
+}

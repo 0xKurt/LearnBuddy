@@ -33,7 +33,6 @@ import { Conversation } from '../components/buddy/Conversation.js';
 import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Glow } from '../components/lb/Glow.js';
-import { useSpokenWords } from '../components/math/useSpokenMath.js';
 import { MIC_RING_ROOM } from '../components/voice/MicButton.js';
 import { TalkOrb, type OrbMode } from '../components/voice/TalkOrb.js';
 import { VoiceRow } from '../components/voice/VoiceRow.js';
@@ -61,11 +60,13 @@ import { voiceStore } from '../lib/speech/voiceState.js';
 import { talkHeadline, type TalkPhase } from '../lib/speech/talkState.js';
 import { afterReply } from '../lib/speech/talkTurn.js';
 import { voiceLocale } from '../lib/speech/voice.js';
+import { useSay } from '../lib/speech/say.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { SPACE, bottomRoom } from '../lib/theme/space.js';
 import { attachInChat } from '../lib/capture/attachRequest.js';
+import { pageHandler } from '../lib/capture/pages.js';
 
 type Phase = TalkPhase;
 
@@ -76,7 +77,7 @@ export default function TalkScreen() {
   const { palette } = useTheme();
   const { t } = useTranslation(['buddy', 'common']);
   const insets = useSafeAreaInsets();
-  const words = useSpokenWords();
+  const say = useSay();
   const scroll = useRef<ScrollView>(null);
   const [phase, setPhase] = useState<Phase>('paused');
   /** Her turn on its way: her bubble until the server's thread carries the message. */
@@ -149,7 +150,7 @@ export default function TalkScreen() {
       setPhase('speaking');
       along.speaker = createStreamSpeaker(
         currentLocale(),
-        (sentence) => spokenText(sentence, words),
+        (sentence) => spokenText(sentence, say),
         (why) => {
           spokenEnd = why;
           goOn();
@@ -224,7 +225,7 @@ export default function TalkScreen() {
         // A line in a roleplay is read in the roleplay's language; once it has ended, the
         // feedback (the newest message then) is read in hers again (issue #244).
         void speak(r.text, res.home.roleplay?.language ?? currentLocale(), {
-          transform: (sentence) => spokenText(sentence, words),
+          transform: (sentence) => spokenText(sentence, say),
           onEnd: (why) => {
             spokenEnd = why;
             goOn();
@@ -569,17 +570,22 @@ export default function TalkScreen() {
             disabled: phase === 'thinking',
             onPress: onMic,
           }}
-          right={{
-            icon: 'camera',
-            label: t('buddy:talk.photo'),
-            accessibilityLabel: t('buddy:talk.photo_label'),
-            onPress: () => {
-              haptic.tap();
-              // The photo goes into the same conversation: the chat's bar takes it, with the
-              // camera open at once (issue #519) — no screen of its own in between.
-              attachInChat({ open: 'camera' });
-            },
-          }}
+          // Only where a domain takes pages (lib/capture/pages.ts, issue #107).
+          right={
+            pageHandler.get()
+              ? {
+                  icon: 'camera',
+                  label: t('buddy:talk.photo'),
+                  accessibilityLabel: t('buddy:talk.photo_label'),
+                  onPress: () => {
+                    haptic.tap();
+                    // The photo goes into the same conversation: the chat's bar takes it, with
+                    // the camera open at once (issue #519) — no screen of its own in between.
+                    attachInChat({ open: 'camera' });
+                  },
+                }
+              : null
+          }
         />
       </View>
     </SafeAreaView>

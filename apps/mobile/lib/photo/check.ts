@@ -3,7 +3,8 @@
 // and measured. A failure of the check itself never stops the photo.
 import { decode } from 'jpeg-js';
 
-import { assessPixels, type PhotoProblem } from './quality.js';
+import type { PhotoProblem } from '../capture/pages.js';
+import { assessPixels } from './quality.js';
 
 function bytesOf(base64: string): Uint8Array {
   const bin = atob(base64);

@@ -38,17 +38,13 @@
     "delete_material_untitled": "I put the sheet away",
     "rename_material": "The sheet is called “{{title}}” now",
     "delete_item": "The question is gone: “{{question}}”",
-    "offer_learning": "Offered: {{what}} – “{{text}}”",
     "open_area": "Shown: {{what}}",
     "set_contact_quiet": "Notifications only between {{from}} and {{to}}, never after {{quiet}}",
     "set_contact_days": "never on these days: {{days}}",
     "request_material_undone": "No photo needed: {{title}}",
     "set_voice": "My voice: {{voice}}, {{speed}}",
     "forget_all": "Forgot everything I knew about you ({{count}})",
-    "offer_drill": "Offered: mental maths – “{{text}}”",
-    "start_roleplay": "Roleplay: {{scene}}",
-    "plan_talk": "Talk “{{title}}” planned for {{day}}: {{steps}}",
-    "offer_rehearsal": "Rehearsal offered: {{title}}"
+    "plan_talk": "Talk “{{title}}” planned for {{day}}: {{steps}}"
   },
   "area": {
     "library": "Your material",
