@@ -39,6 +39,14 @@ export const BuddyConfig = z
         ),
       /** Deep-link scheme, e.g. "fitbuddy" (Supabase redirect `<scheme>://**`). */
       scheme: z.string().regex(/^[a-z][a-z0-9+.-]{1,30}$/, 'lower case, starts with a letter'),
+      /**
+       * The app's own GitHub repository ("owner/name"): CLAUDE.md files issues there. Unset, the
+       * copy names a placeholder — never the repository it was made from.
+       */
+      repo: z
+        .string()
+        .regex(/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/, 'owner/name')
+        .optional(),
     }),
     policy: z.object({
       /** minors-with-guardian keeps the adult PIN and the parents' consent; adults-only does not. */

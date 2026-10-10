@@ -85,6 +85,15 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Starter kit (create-buddy → typecheck)
+        # Every change here can break a new Buddy app (issue #107: the kit rotted once while
+        # LearnBuddy moved on). The reference buddy is made from scratch, installed from the
+        # store this job already filled, typechecked, and `provision --dry-run` runs in it. The
+        # kit's own tests (pnpm test) already checked that the copy has no tie to this app's
+        # infrastructure. A new app has no create-buddy of its own: there the step is skipped.
+        if: hashFiles('packages/buddy-kit/src/cli/create-buddy.ts') != ''
+        run: pnpm create-buddy "$RUNNER_TEMP/reference-buddy" --config packages/buddy-kit/reference.config.json --verify=typecheck
+
   deploy-check:
     name: deploy config (Vercel detector)
     runs-on: ubuntu-latest

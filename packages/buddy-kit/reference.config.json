@@ -1,0 +1,22 @@
+{
+  "identity": {
+    "id": "reference",
+    "name": "Reference Buddy",
+    "bundleId": "com.example.reference",
+    "scheme": "referencebuddy"
+  },
+  "policy": {
+    "audience": "adults-only",
+    "supabaseRegion": "eu-central-1",
+    "vercelRegion": "fra1",
+    "vertexLocation": "europe-west4"
+  },
+  "content": {
+    "locales": ["de", "en"],
+    "defaultLocale": "de"
+  },
+  "wiring": {
+    "capabilities": []
+  },
+  "legal": {}
+}

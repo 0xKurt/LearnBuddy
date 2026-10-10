@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { KitError, missingForProduction, parseConfig } from '../config.js';
 import { processorsFor } from '../processors.js';
-import { config } from './helpers.js';
+import { config, LEGAL } from './helpers.js';
 
 const base = () => JSON.parse(JSON.stringify(config())) as Record<string, Record<string, unknown>>;
 
@@ -48,16 +48,7 @@ describe('buddy.config.json', () => {
       'legal.imprintUrl',
       'legal.supportEmail',
     ]);
-    const done = config({
-      legal: {
-        controller: 'Zero X Ventures',
-        controllerAddress: 'Musterstraße 1, 10115 Berlin',
-        privacyUrl: 'https://example.com/privacy',
-        imprintUrl: 'https://example.com/imprint',
-        supportEmail: 'support@example.com',
-      },
-    });
-    expect(missingForProduction(done)).toEqual([]);
+    expect(missingForProduction(config({ legal: LEGAL }))).toEqual([]);
   });
 
   it('derives the processors from the capabilities', () => {

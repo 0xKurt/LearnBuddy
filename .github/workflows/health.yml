@@ -58,6 +58,13 @@ jobs:
         run: |
           set -uo pipefail
 
+          # A new app from create-buddy has no API yet (issue #107): `pnpm provision` writes its
+          # URL above once it is recorded. Until then there is nothing to watch.
+          if [ -z "$HEALTH_URL" ]; then
+            echo '::notice title=/v1/health::HEALTH_URL is not set yet (pnpm provision --set apiUrl=…)'
+            exit 0
+          fi
+
           body="$RUNNER_TEMP/health.json"
 
           # The seven rules, in one place. Each emits a line when it is violated, nothing when
