@@ -38,9 +38,16 @@ const norm = (method: string, path: string) =>
 
 // ─────────────── server routes ───────────────
 
+// Where each router is mounted: in app.ts (`api.route`, Buddy's surface through `mountBuddy`) and
+// by a domain's route plugins (`{ base, routes }` in modules/*/register.ts, issue #107).
 const PREFIX: Record<string, string> = {};
-for (const m of read(join(API, 'app.ts')).matchAll(/api\.route\('([^']*)',\s*(\w+)\)/g))
-  PREFIX[m[2]!] = m[1] === '/' ? '' : m[1]!;
+const APP = read(join(API, 'app.ts'));
+const mount = (base: string, router: string) => (PREFIX[router] = base === '/' ? '' : base);
+for (const m of APP.matchAll(/api\.route\('([^']*)',\s*(\w+)\)/g)) mount(m[1]!, m[2]!);
+for (const m of APP.matchAll(/mountBuddy\(api,\s*'([^']*)'\)/g)) mount(m[1]!, 'buddyRoutes');
+for (const f of files(join(API, 'modules'), /register\.ts$/))
+  for (const m of read(f).matchAll(/\{\s*base:\s*'([^']*)',\s*routes:\s*(\w+)\s*\}/g))
+    mount(m[1]!, m[2]!);
 
 const serverRoutes = new Set<string>();
 for (const f of files(join(API, 'modules'), /routes\.ts$/)) {
