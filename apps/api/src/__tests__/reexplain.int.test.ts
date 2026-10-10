@@ -14,6 +14,7 @@ import { LlmError } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import { PARABOLA_WORDS, PARABOLAS } from '../testing/scenarios/explainFigure.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -298,21 +299,6 @@ describe.skipIf(!dbReady)('an explanation with a picture (#298)', () => {
   });
   afterEach(() => env.closeChecked());
 
-  const PARABOLAS = {
-    type: 'function_plot',
-    functions: [
-      { expr: 'x^2', label: 'a = 1' },
-      { expr: '2*x^2', label: 'a = 2' },
-      { expr: '0.5*x^2', label: 'a = 0,5' },
-    ],
-    x_min: -3,
-    x_max: 3,
-    y_min: -1,
-    y_max: 9,
-    points: [],
-  };
-  const WORDS = 'Je größer a, desto schmaler wird die Parabel.';
-
   async function solved(kind: 'practice' | 'help' = 'practice') {
     const prompt = 'Wie verändert a die Parabel f(x) = a·x²?';
     const s = await start(
@@ -332,12 +318,12 @@ describe.skipIf(!dbReady)('an explanation with a picture (#298)', () => {
     env.llm.script('reexplain', (req) => {
       // The schema offers the figure library's pictures for an explanation.
       expect(JSON.stringify(req.schema)).toContain('function_plot');
-      return { explanation: WORDS, figure: PARABOLAS };
+      return { explanation: PARABOLA_WORDS, figure: PARABOLAS };
     });
     const tap = randomUUID();
     const r = await reexplain(l, s, id, 'example', tap);
     expect(r.status).toBe(200);
-    expect(r.body.reply).toMatchObject({ text: WORDS, figure: PARABOLAS });
+    expect(r.body.reply).toMatchObject({ text: PARABOLA_WORDS, figure: PARABOLAS });
     const view = await l.api.get<SessionView>(`/practice/sessions/${s.id}`);
     expect(view.body.turns.at(-1)).toMatchObject({ role: 'tutor', figure: PARABOLAS });
     // Her request carries none, and the same tap again is the same turn, without a model call.
@@ -357,10 +343,10 @@ describe.skipIf(!dbReady)('an explanation with a picture (#298)', () => {
     ['no figure at all, just words', 'eine Parabel'],
   ])('drops %s and keeps the words', async (_, figure) => {
     const { s, id } = await solved();
-    env.llm.script('reexplain', { json: { explanation: WORDS, figure } });
+    env.llm.script('reexplain', { json: { explanation: PARABOLA_WORDS, figure } });
     const r = await reexplain(l, s, id, 'example');
     expect(r.status).toBe(200);
-    expect(r.body.reply.text).toBe(WORDS);
+    expect(r.body.reply.text).toBe(PARABOLA_WORDS);
     expect(r.body.reply.figure ?? null).toBeNull();
     const stored = await env.db.one<{ figure: unknown }>(
       `select figure from practice_turns where id = $1`,
@@ -373,7 +359,7 @@ describe.skipIf(!dbReady)('an explanation with a picture (#298)', () => {
     const { s, id } = await solved('help');
     env.llm.script('reexplain', (req) => {
       expect(req.system).toContain('No picture in homework mode');
-      return { explanation: WORDS, figure: PARABOLAS };
+      return { explanation: PARABOLA_WORDS, figure: PARABOLAS };
     });
     const r = await reexplain(l, s, id, 'example');
     expect(r.status).toBe(200);

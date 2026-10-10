@@ -9,6 +9,7 @@ import type { ScriptedGateway } from '../fakes.js';
 import { scriptAsk } from './ask.js';
 import { scriptCards } from './cards.js';
 import { scriptCircuits } from './circuits.js';
+import { scriptCode } from './code.js';
 import { installChecks } from './checks.js';
 import { scriptCloze } from './cloze.js';
 import { scriptCoreLoop } from './core-loop.js';
@@ -16,6 +17,7 @@ import { scriptDiagrams } from './diagrams.js';
 import { scriptDictation } from './dictation.js';
 import { scriptDrill } from './drill.js';
 import { scriptEssay } from './essay.js';
+import { scriptExplainFigure } from './explainFigure.js';
 import { scriptFigures } from './figures.js';
 import { installGenerations } from './generations.js';
 import { scriptGrid } from './grid.js';
@@ -34,10 +36,19 @@ import { scriptSources } from './sources.js';
 import { scriptMap } from './map.js';
 import { scriptSchematic } from './schematic.js';
 import { scriptTap } from './tap.js';
-import { hintRules, pronounceRules, readingRules, transcribeRules, tutorRules } from './rules.js';
+import {
+  hintRules,
+  pronounceRules,
+  readingRules,
+  reexplainRules,
+  transcribeRules,
+  tutorRules,
+} from './rules.js';
 import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
 import { scriptTaskParts } from './taskParts.js';
+import { scriptTaskSubjects } from './taskSubjects.js';
+import { scriptTalks } from './talks.js';
 import { scriptTour } from './tour.js';
 import { scriptTeachBack } from './teachBack.js';
 import { scriptTrees } from './trees.js';
@@ -57,6 +68,13 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptMap();
   // Early: "Klassenarbeit", "Handy" and "Rad" are words an older, broader rule may know (#297).
   scriptTaskParts();
+  // The gallery's own stops (#387), each keyed by a sentence nobody else types: code tasks (#262),
+  // a talk and its rehearsal (#264), tasks with a table, a chart or a long source (#297) and an
+  // explanation with a picture (#298).
+  scriptCode();
+  scriptTalks();
+  scriptTaskSubjects();
+  scriptExplainFigure();
   scriptSchematic();
   // First: its generation rule is keyed on her list, and a broader rule registered earlier
   // ("Bruch" anywhere in the request) would otherwise answer it (issue #242).
@@ -94,7 +112,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptReading();
   // Keyed by the ages 14 and 15, nobody else's; before the tour, which reads the same photo (#259).
   scriptSources();
-  scriptLearningModes(scripted);
+  scriptLearningModes();
   scriptTour();
   scriptFigures();
   scriptTrees();
@@ -115,6 +133,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   readingRules.install(scripted);
   pronounceRules.install(scripted);
   transcribeRules.install(scripted);
+  reexplainRules.install(scripted);
   // A conversation that came to rest is summarised by the scheduler (issue #22); in the
   // walkthrough nobody asks for those sentences, so one answer for all of them is enough.
   scripted.byDefault('summary', {

@@ -81,6 +81,11 @@ export const tutorRules = new RuleBook('tutor');
  * solution and the reasons of „Warum stimmt das?" (#388). A question no rule is about gets none.
  */
 export const hintRules = new RuleBook('hints', () => ({ items: [] }));
+/**
+ * „Anders erklären" under a closed question (practice/reexplain.ts): a question with a picture to
+ * explain it by has its rule (#298); every other one gets the learning modes' words.
+ */
+export const reexplainRules = new RuleBook('reexplain');
 /** Reading a photographed sheet or homework (materials/reader.ts). */
 export const readingRules = new RuleBook('extraction');
 /** Judging a spoken sentence (practice/speak.ts). */

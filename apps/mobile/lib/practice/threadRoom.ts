@@ -14,7 +14,9 @@
 // way to answer gives way (a structured board scrolls inside itself before the reply is hidden) —
 // but a board keeps two lines of its parts and its "Prüfen" (`boardSpare`): with the keyboard up on
 // 360×740 the reply took a cloze's whole surface, and the gap she was fixing vanished under it
-// (issue #232). Where the newest turn still does not fit whole it is not drawn (`newestHidden`)
+// (issue #232). It gives for Buddy's words, not for the chips under them: where only the turn
+// fits, the box rests on it and the chips are a scroll away (`restsOnNewest`, #387).
+// Where the newest turn still does not fit whole it is not drawn (`newestHidden`)
 // until there is room again — the keyboard closes, the card is done — and only the parts after it
 // that fit whole stand there. Except a reply she reads through (`reads`, Buddy's feedback on her
 // long text, #258): taller than the room even at rest, it would never stand — so it takes all the
@@ -98,6 +100,11 @@ export type Room = {
   threadFloor: number;
   /** The box holds more than it shows: its top edge fades (#63). */
   threadHolds: boolean;
+  /**
+   * The box rests at the top of Buddy's newest turn, and the parts under it (the help chips) are a
+   * scroll away: where a board gives way, it gives for his words, never for the chips (#387).
+   */
+  restsOnNewest: boolean;
   /** How far the card grows (> 0) or gives room (< 0). */
   cardGrowTo: number;
 };
@@ -114,15 +121,39 @@ export function threadRoom(m: RoomInput): Room {
       ? threadNeed
       : Math.max(0, ...fromPart.filter((h) => h <= most + ROUNDING));
   const newestNeed = fromTurn.length > 0 ? Math.min(...fromTurn) : quiet ? 0 : threadNeed;
+  // Buddy's newest turn alone: from the gap above it to the first part under it (the help chips,
+  // a card) — what a board gives way for (#387).
+  const newestTop = m.tops.length > 0 ? Math.max(...m.tops) : undefined;
+  const under = (m.parts ?? []).filter((y) => newestTop !== undefined && y > newestTop);
+  const turnOnly =
+    newestTop !== undefined && under.length > 0 ? Math.min(...under) - newestTop : newestNeed;
   // The most the newest turn may take where a board gives way under it.
   const replyMost = room + m.boardSpare;
+  // Where a board gives way, it gives for the newest turn — but not for the chips under it: a board
+  // that scrolls inside itself is the floor under a mistake (`PartsArea`), while the conversation
+  // is the one place that may scroll (rule 16). Where the turn fits only without the chips, the box
+  // rests on the turn and the chips are a scroll away (the Fehlerdetektiv's four lines under
+  // Buddy's longest reply on 360×740, #387).
+  const restsOnNewest =
+    boardGives &&
+    !quiet &&
+    turnOnly < newestNeed &&
+    newestNeed > room + ROUNDING &&
+    turnOnly <= replyMost + ROUNDING;
+  const asked = restsOnNewest ? turnOnly : newestNeed;
   // Where a board gives way, the newest turn may take its room, as far as it can spare.
-  const most = boardGives ? Math.max(room, Math.min(newestNeed, replyMost)) : room;
+  const most = boardGives ? Math.max(room, Math.min(asked, replyMost)) : room;
   // A quiet thread decides even at room 0 — else the row would come back half and flicker.
   let threadCap = (room > 0 || quiet) && threadNeed > 0 ? whole(most) : undefined;
+  if (restsOnNewest) threadCap = turnOnly;
   if (m.reads && threadCap !== undefined && threadCap < newestNeed) threadCap = most;
-  const newestHidden = threadCap !== undefined && !quiet && threadCap < newestNeed;
-  const threadFloor = boardGives ? whole(Math.min(newestNeed, replyMost)) : 0;
+  const newestHidden =
+    threadCap !== undefined && !quiet && !restsOnNewest && threadCap < newestNeed;
+  const threadFloor = restsOnNewest
+    ? turnOnly
+    : boardGives
+      ? whole(Math.min(newestNeed, replyMost))
+      : 0;
 
   // The card with a drawing or photo and the conversation share the room (issue #96, #286).
   // What the conversation leaves, the card grows into (`cardGrowTo` > 0: its figure sizes itself
@@ -150,7 +181,7 @@ export function threadRoom(m: RoomInput): Room {
     threadCap = whole(Math.min(threadWants, Math.max(room, room - m.cardDelta)));
   }
   const threadHolds = threadCap !== undefined && threadCap < threadNeed;
-  return { threadCap, threadFloor, threadHolds, cardGrowTo };
+  return { threadCap, threadFloor, threadHolds, cardGrowTo, restsOnNewest };
 }
 
 /** How far the box may stand off where it rests before that counts as scrolled (`threadEdge`). */

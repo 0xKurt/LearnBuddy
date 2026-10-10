@@ -52,6 +52,25 @@ describe('threadRoom (issues #286, #232, #403)', () => {
     expect(r.threadFloor).toBe(newest);
   });
 
+  it('gives the room of a board for the newest turn, never for the chips under it (#387)', () => {
+    // Buddy's reply from 128, the help chips from 196: the reply alone is 68 pt.
+    const chips = { ...base, parts: [0, 196], boardGives: true, boardSpare: 400 };
+    // 100 pt: the reply fits, with the chips it would not — the box rests on the reply and the
+    // board keeps its lines; the chips are a scroll away.
+    const r = threadRoom({ ...chips, room: 100 });
+    expect(r).toMatchObject({ threadCap: 68, threadFloor: 68, restsOnNewest: true });
+    // Room for both: everything of the newest turn, resting at the end as always.
+    expect(threadRoom({ ...chips, room: newest })).toMatchObject({
+      threadCap: newest,
+      restsOnNewest: false,
+    });
+    // Without a board that gives way, nothing changes: whole parts from the end.
+    expect(threadRoom({ ...chips, boardGives: false, room: 100 })).toMatchObject({
+      threadCap: 60,
+      restsOnNewest: false,
+    });
+  });
+
   it('never takes more of a board than it can spare above its parts and its bar (#232)', () => {
     // The cloze with the keyboard up: the board can give only 20 pt more — not enough for the
     // reply, so it is not drawn, and the board keeps its room (#403).

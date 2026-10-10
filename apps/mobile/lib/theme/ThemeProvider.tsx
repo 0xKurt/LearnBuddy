@@ -22,7 +22,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { useColorScheme } from 'react-native';
+import { Appearance, useColorScheme } from 'react-native';
 
 import { readItem, writeItem } from '../api/outboxStorage.js';
 import { activeTheme, applyPalette, onPaletteApplied } from './colors.js';
@@ -133,10 +133,12 @@ function modeOf(stored: string | null): Mode {
 
 export async function restoreTheme(): Promise<void> {
   const { family, mode } = await keptChoice();
-  // `system` cannot be resolved here — there is no component to read the scheme from, and
-  // the provider applies it on its first render anyway. Light is the safer guess for the
-  // instant before that.
-  applyPalette(themeNameOf(family, mode === 'dark'));
+  // `system` is resolved from the phone's scheme right now. This lands AFTER the provider applied
+  // its first palette, and the provider applies again only when the family or the scheme
+  // changes: guessing light here left a dark phone with a light app from the first screen on —
+  // the setup at night stood light, and its "-dark" shots with it (#387).
+  const dark = mode === 'system' ? Appearance.getColorScheme() === 'dark' : mode === 'dark';
+  applyPalette(themeNameOf(family, dark));
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

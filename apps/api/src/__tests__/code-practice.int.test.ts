@@ -20,64 +20,20 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LlmError } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import { codeRun, FIND, PREDICT, QUERY, WRITE } from '../testing/scenarios/code.js';
 
 const dbReady = await testDatabaseAvailable();
 
 const WAIT = { json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null } };
 
-const PREDICT: CodeTask = {
-  task: 'predict_output',
-  program: 'summe = 0\nfor i in range(1, 4):\n    summe = summe + i\n    print(summe)',
-  output: '1\n3\n6',
-};
 const MISREAD: CodeTask = { task: 'predict_output', program: 'print(2 ** 3)', output: '6' };
-const FIND: CodeTask = {
-  task: 'find_error',
-  program: 'werte = [4, 0, 2]\nfor w in werte:\n    print(8 / w)',
-  line: 3,
-};
-const WRITE: CodeTask = {
-  task: 'write_function',
-  name: 'verdoppeln',
-  params: ['zahl'],
-  statement: 'Die Funktion gibt das Doppelte der Zahl zurück.',
-  tests: [
-    { args: '2', expected: '4' },
-    { args: '0', expected: '0' },
-    { args: '-3', expected: '-6' },
-    { args: '1.5', expected: '3.0' },
-  ],
-  solution: 'def verdoppeln(zahl):\n    return zahl * 2',
-};
-const QUERY: CodeTask = {
-  task: 'sql_query',
-  table: 'schueler',
-  columns: [
-    { name: 'name', type: 'TEXT' },
-    { name: 'klasse', type: 'TEXT' },
-  ],
-  rows: [
-    ['Ada', '7a'],
-    ['Ben', '7b'],
-    ['Cem', '7a'],
-  ],
-  statement: 'Finde die Namen aller Schüler der Klasse 7a.',
-  query: "SELECT name FROM schueler WHERE klasse = '7a'",
-  result: [['Ada'], ['Cem']],
-};
 
 describe.skipIf(!dbReady)('Informatik: Programme und Abfragen', () => {
   let env: TestEnv;
   let l: Learner;
 
   async function prepare(codes: CodeTask[], kind: 'practice' | 'test' = 'practice') {
-    env.llm.script('explain', () => ({
-      usable: true,
-      title: 'Python',
-      subject: { name: 'Informatik', kind: 'computer_science' },
-      items: [],
-      codes,
-    }));
+    env.llm.script('explain', () => codeRun(codes));
     const res = await l.api.post<SessionView>('/practice/topic', {
       client_request_id: randomUUID(),
       kind,
