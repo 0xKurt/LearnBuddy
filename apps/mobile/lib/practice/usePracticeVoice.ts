@@ -17,13 +17,15 @@ import { useSpokenWords } from '../../components/math/useSpokenMath.js';
 import { useQuestionVoice } from '../../components/practice/useQuestionVoice.js';
 import { announce } from '../announce.js';
 import { haptic } from '../haptics.js';
+import { sayMath } from '../math/speak.js';
 import { currentLocale } from '../i18n/index.js';
 import { afterFeedback, useHandsFree } from '../speech/handsFree.js';
 import { type ListenEnd, speakInOrder } from '../speech/listen.js';
-import { feedbackReadText, spokenText } from '../speech/spoken.js';
+import { spokenText } from '../speech/spoken.js';
 import { readsAloud, useVoiceMode } from '../speech/voiceMode.js';
 import { questionOnScreen } from './offers.js';
 import { verdictWordKey } from './onScreen.js';
+import { feedbackReadText } from './readText.js';
 
 /** A running test says no verdict and gives no feel of one (the result comes at the end). */
 const testing = (res: AnswerResponse) =>
@@ -80,11 +82,11 @@ export function usePracticeVoice(
     },
     /** Buddy's reply to "Anders erklären", heard like every reply of his. */
     readReply(text: string): void {
-      say(spokenText(text, words));
+      say(spokenText(text, sayMath(words)));
     },
     /** "Lösung zeigen": the solution is said too, math in words (audit M-82). */
     sayRevealed(answer: string): void {
-      announce(`${t('practice:solution.title')}: ${spokenText(answer, words)}`);
+      announce(`${t('practice:solution.title')}: ${spokenText(answer, sayMath(words))}`);
     },
   };
 }

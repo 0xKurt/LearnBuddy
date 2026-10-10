@@ -5874,6 +5874,31 @@ traces need the Sentry build plugin, which `app.config.ts` adds only when `SENTR
 does not need rebuilding when the DSN arrives. Metro stamps the debug ids
 (`getSentryExpoConfig` in `metro.config.js`) whether or not anything is uploaded.
 
+### What the learning domain adds to the app (issue #107, cut 8)
+
+The app's generic core — the chat, the home, the input bar, the design system — never imports
+the learning domain (`tools/guards/boundaries.config.mjs`). It names the places where a domain
+adds something, and draws each of them sensibly while it is empty
+(`components/buddy/__tests__/withoutDomain.test.tsx`):
+
+- **Chat and home** (`components/buddy/extensions.ts`): a card per tool in the conversation
+  (offers, the Kopfrechnen round, the roleplay, the rehearsal — the core's own `open_area` and
+  `confirm_delete` go the same way), a message drawn in place of its bubble (roleplay feedback,
+  rehearsal result), the line that follows Buddy's voice in /talk, the line on top of the thread
+  (a running roleplay), the finished practice among the notices, the stages of a sheet being
+  read, and the ways to start in the ⋯ menu with the sheets they open.
+- **Text** (`lib/buddy/notation.ts`, `components/lb/InlineText.tsx`, `lib/speech/say.ts`): where
+  $…$ math stands (Markdown keeps it whole), how it is drawn (`MathText`) and how it is said.
+  Without a domain a reply is plain text without its markers.
+- **Pages she attaches** (`lib/capture/pages.ts`): where they go (`MaterialUpload`) and how a
+  photo is checked on the device (`lib/photo/`, `PhotoCheckCard`). Without one there is no +.
+- **Caches** (`homeFollowers` in `lib/api/queries.ts`): the library list follows each home.
+
+The domain fills them from one place, `lib/learning/register.tsx` (`registerLearning`), called
+once at app start in `app/_layout.tsx` — the one import of the domain the guard allows. A place
+filled twice throws (in development Fast Refresh replaces it instead);
+`components/learn/__tests__/register.test.tsx` fails when a place is left empty or filled twice.
+
 ## Testing
 
 - **Engineering guards** (issue #313): copies (jscpd), file size, tokens only, raw `Pressable`,

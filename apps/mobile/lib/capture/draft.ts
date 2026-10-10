@@ -15,7 +15,7 @@
 
 import { z } from 'zod';
 
-const PROBLEMS = ['blurry', 'dark', 'washed_out', 'small', 'tilted'] as const;
+import { PHOTO_PROBLEMS } from './pages.js';
 
 const Link = z.object({
   stepId: z.string().nullable(),
@@ -37,7 +37,7 @@ const Draft = z.object({
     .array(
       z.object({
         uri: z.string().min(1),
-        problems: z.array(z.enum(PROBLEMS)),
+        problems: z.array(z.enum(PHOTO_PROBLEMS)),
         kept: z.boolean(),
         /** A PDF (its file name); null for a photo. */
         pdf: z.string().nullable().default(null),

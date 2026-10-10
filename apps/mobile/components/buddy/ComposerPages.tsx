@@ -8,12 +8,11 @@
 import { Linking, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import type { SendProgress } from '../../lib/capture/upload.js';
+import { pageHandler, type SendProgress } from '../../lib/capture/pages.js';
 import type { useAttachments } from '../../lib/capture/useAttachments.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { PhotoCheckCard } from '../capture/PhotoCheckCard.js';
 import { Btn } from '../lb/Btn.js';
 import { ErrorNote } from '../lb/ErrorNote.js';
 import { Progress } from '../lb/Progress.js';
@@ -37,6 +36,8 @@ export function ComposerPages({
   const { palette } = useTheme();
   const { t } = useTranslation('capture');
   const { review, progress } = pages;
+  // The card for a photo the check found hard to read is the checking domain's (issue #107).
+  const Review = pageHandler.get()?.check.Review;
   const note = (text: string) => (
     <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
       {text}
@@ -56,8 +57,8 @@ export function ComposerPages({
         onRemove={pages.remove}
         onMore={pages.room > 0 ? onMore : null}
       />
-      {review ? (
-        <PhotoCheckCard
+      {review && Review ? (
+        <Review
           index={pages.photos.indexOf(review) + 1}
           problems={pages.problems[review] ?? []}
           disabled={pages.busy}

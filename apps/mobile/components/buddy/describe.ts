@@ -4,7 +4,6 @@
 import type { ActionSummary, OutreachView } from '@learnbuddy/shared-types/contracts';
 
 import { i18n } from '../../lib/i18n/index.js';
-import { KIND_LABEL } from '../learn/kinds.js';
 import {
   daysUntil,
   formatDay,
@@ -141,13 +140,6 @@ export function describeAction(a: ActionSummary): string {
         ? `${rules}, ${t('action.set_contact_days', { days: formatIsoWeekdays(a.avoid_weekdays, locale) })}`
         : rules;
     }
-    case 'offer_learning':
-      return t('action.offer_learning', {
-        what: i18n.t(`learn:${KIND_LABEL[a.kind]}`),
-        text: a.text,
-      });
-    case 'offer_drill':
-      return t('action.offer_drill', { text: a.title });
     case 'open_area':
       return t('action.open_area', { what: t(`area.${a.area}`) });
     case 'set_voice':
@@ -160,9 +152,6 @@ export function describeAction(a: ActionSummary): string {
       return a.title
         ? t('action.delete_material', { title: a.title })
         : t('action.delete_material_untitled');
-    case 'start_roleplay':
-      // History: what she played. In the chat the roleplay has a card of its own (issue #244).
-      return t('action.start_roleplay', { scene: a.scene });
     case 'plan_talk':
       // The talk and its steps, each with its day; the steps' names are the app's (issue #264).
       return t('action.plan_talk', {
@@ -172,9 +161,6 @@ export function describeAction(a: ActionSummary): string {
           .map((s) => `${t(`rehearse.stage.${s.stage}`)} ${formatDayShort(s.date, locale)}`)
           .join(' · '),
       });
-    case 'offer_rehearsal':
-      // History: what she was offered. In the chat it is a card of its own (`RehearseCard`).
-      return t('action.offer_rehearsal', { title: a.title });
     case 'confirm_delete':
       // The card says it; the chip list would only repeat the question she is looking at.
       return '';
@@ -186,6 +172,11 @@ export function describeAction(a: ActionSummary): string {
       return t('action.schedule_check', {
         when: whenText(isoDate(a.at), formatTime(a.at, locale)),
       });
+    default:
+      // A domain's offer, roleplay or rehearsal (issue #107): its card in the chat says it, in
+      // the conversation and in History alike (components/buddy/extensions.ts), so there is
+      // no receipt line to word. A buddy without that domain never gets these tools.
+      return '';
   }
 }
 

@@ -38,17 +38,13 @@
     "delete_material_untitled": "Ho messo via il foglio",
     "rename_material": "Il foglio ora si chiama «{{title}}»",
     "delete_item": "La domanda non c’è più: «{{question}}»",
-    "offer_learning": "Proposto: {{what}} – «{{text}}»",
     "open_area": "Mostrato: {{what}}",
     "set_contact_quiet": "Notifiche solo dalle {{from}} alle {{to}}, mai dopo le {{quiet}}",
     "set_contact_days": "mai in questi giorni: {{days}}",
     "request_material_undone": "Nessuna foto necessaria: {{title}}",
     "set_voice": "La mia voce: {{voice}}, {{speed}}",
     "forget_all": "Ho dimenticato tutto quello che sapevo di te ({{count}})",
-    "offer_drill": "Proposto: calcolo mentale – «{{text}}»",
-    "start_roleplay": "Gioco di ruolo: {{scene}}",
-    "plan_talk": "Presentazione «{{title}}» prevista il {{day}}: {{steps}}",
-    "offer_rehearsal": "Prova proposta: {{title}}"
+    "plan_talk": "Presentazione «{{title}}» prevista il {{day}}: {{steps}}"
   },
   "area": {
     "library": "Il tuo materiale",

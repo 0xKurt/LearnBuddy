@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import Animated from 'react-native-reanimated';
 
 import { composerAfterSend } from '../../lib/buddy/unsent.js';
+import { pageHandler } from '../../lib/capture/pages.js';
 import { useDraft } from '../../lib/drafts.js';
 import { haptic } from '../../lib/haptics.js';
 import { fadeIn } from '../../lib/theme/enter.js';
@@ -151,14 +152,16 @@ export function Composer({
         disabled={disabled}
         above={<ComposerPages pages={pages} onMore={more} />}
         // Like the assistants she knows: one + that asks where it comes from, instead of a
-        // page of its own (owner 29.09., issue #82).
+        // page of its own (owner 29.09., issue #82). Only where a domain takes pages (#107).
         start={
-          <CircleBtn
-            icon="plus"
-            plain
-            onPress={menu.open}
-            accessibilityLabel={t('buddy:composer.attach.title')}
-          />
+          pageHandler.get() ? (
+            <CircleBtn
+              icon="plus"
+              plain
+              onPress={menu.open}
+              accessibilityLabel={t('buddy:composer.attach.title')}
+            />
+          ) : null
         }
         // Like a messenger: the waveform while there is nothing to send, the round arrow once
         // there is — its name says "Senden" (issue #522).

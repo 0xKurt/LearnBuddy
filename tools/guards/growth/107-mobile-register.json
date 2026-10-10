@@ -1,0 +1,5 @@
+{
+  "issue": "#107",
+  "reason": "Die eine Naht der App: app/_layout.tsx ruft beim Start registerLearning() der Lern-Domain auf (lib/learning/register.tsx); dafür fallen alle 32 Importe aus Conversation, HomeThread, StartSheets, startItems, describe, HomeNotices, SlimBar, ComposerPages, RichText, ResultList, markdown, spoken, talk, MessageMenu, useHomeSend, queries, attachments und upload weg (Schnitt 8). Plan-Kommentar in #107.",
+  "boundaries": ["apps/mobile/app/_layout.tsx -> apps/mobile/lib/learning/register.tsx"]
+}

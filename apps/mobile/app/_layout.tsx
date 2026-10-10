@@ -40,6 +40,7 @@ import { ShareIntake } from '../components/capture/ShareIntake.js';
 import { attachInChat } from '../lib/capture/attachRequest.js';
 import { clearIncoming, hasIncoming } from '../lib/capture/incoming.js';
 import { recoverCameraResult } from '../lib/capture/pendingCamera.js';
+import { registerLearning } from '../lib/learning/register.js';
 import { adoptLocalWork } from '../lib/localWork.js';
 import {
   clearLegacyLocalNotifications,
@@ -55,6 +56,10 @@ import { practiceRoute } from '../lib/pushActions.js';
 // Before the first render, so a crash while the app is still starting is reported too.
 // Does nothing unless an EU DSN is configured (lib/observability/sentry.ts, issue #36).
 startCrashReports();
+
+// The learning domain gives the core its cards, ways to start, pages and math (issue #107) —
+// once, before anything is drawn.
+registerLearning();
 
 /** Answers kept on the device (closed app, lost connection): send them now. */
 async function sendKeptAnswers(): Promise<void> {

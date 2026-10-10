@@ -1,8 +1,9 @@
 // Getting the pages of one sheet to the API: reserve, PUT every page to storage,
 // submit (docs/architecture.md §Material). Pure — the API calls and the actual PUT
 // arrive as `deps`, so the retry, the partial failure and the give-up are proven
-// under Node (lib/capture/__tests__/materialUpload.test.ts). lib/capture/upload.ts
-// wires the real ones and adds the part that needs the device (preparePhoto).
+// under Node (lib/capture/__tests__/materialUpload.test.ts). It is the learning domain's
+// way to send the chat's pages (lib/capture/pages.ts `PageUpload`, issue #107);
+// lib/learning/register.tsx wires the real calls into it.
 
 import type {
   CreateMaterialRequest,
@@ -11,25 +12,15 @@ import type {
 import type { z } from 'zod';
 
 import { ApiError } from '../api/apiError.js';
+import {
+  PhotoUploadError,
+  type PageLink,
+  type PageUpload,
+  type SendProgress,
+  type UploadFile,
+  type UploadMime,
+} from './pages.js';
 import type { PutResult } from './putTypes.js';
-
-/** The API takes 1–20 photos per material. */
-export const MAX_PHOTOS = 20;
-
-/** Why a photo did not reach storage: no connection, refused by storage, or the local file is gone. */
-export type UploadFailure = 'network' | 'rejected' | 'file';
-
-export class PhotoUploadError extends Error {
-  constructor(
-    readonly kind: UploadFailure,
-    /** 0-based position of the photo in the material. */
-    readonly position: number,
-    readonly status: number = 0,
-  ) {
-    super(`Photo ${position + 1} was not uploaded (${kind}${status ? ` ${status}` : ''})`);
-    this.name = 'PhotoUploadError';
-  }
-}
 
 /**
  * A photo sent twice (an earlier try stored it, but its answer never reached
@@ -40,29 +31,6 @@ export class PhotoUploadError extends Error {
 function alreadyStored(status: number, body: string): boolean {
   return status === 409 || (status === 400 && /duplicate|already exists/i.test(body));
 }
-
-export type SendProgress =
-  | { step: 'reserving' }
-  | { step: 'uploading'; current: number; total: number }
-  | { step: 'submitting' };
-
-type MaterialPurpose = 'study' | 'homework';
-
-/** What is uploaded: prepared photos are JPEGs; a PDF goes as it is. */
-export type UploadMime = 'image/jpeg' | 'application/pdf';
-export type UploadFile = { uri: string; mime: UploadMime };
-
-/**
- * What the photos are for: the capture step and goal they belong to, and
- * whether it is study material or homework (hints only, a help session).
- */
-export type MaterialLink = {
-  stepId: string | null;
-  goalId: string | null;
-  purpose?: MaterialPurpose;
-  /** The earlier material whose missing pages these photos are (keeps its goal and purpose). */
-  completes?: string | null;
-};
 
 /** The outside world this needs: the two API calls, the PUT, and fresh idempotency keys. */
 export type UploadDeps = {
@@ -102,7 +70,7 @@ const PARALLEL_UPLOADS = 3;
  * A page removed or retaken changes the order: that reservation is given up and a new
  * instance starts (lib/capture/useAttachments.ts).
  */
-export class MaterialUpload {
+export class MaterialUpload implements PageUpload {
   private readonly deps: UploadDeps;
   private currentRequestId: string;
   private materialId: string | null = null;
@@ -112,7 +80,7 @@ export class MaterialUpload {
   /** Submit was asked for at least once: the material may be on its way to being read. */
   private submitTried = false;
   private files: UploadFile[];
-  private readonly link: MaterialLink;
+  private readonly link: PageLink;
   /** The API has been told she asked to send (so the home may say "unterwegs"). */
   private requested = false;
   /** Pages go up one push at a time (they arrive while she keeps taking photos). */
@@ -121,7 +89,7 @@ export class MaterialUpload {
   constructor(
     deps: UploadDeps,
     files: readonly UploadFile[],
-    link: MaterialLink,
+    link: PageLink,
     requestId: string = deps.newId(),
   ) {
     this.deps = deps;

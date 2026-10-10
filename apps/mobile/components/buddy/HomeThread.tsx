@@ -18,7 +18,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { TopEdgeFade, topEdgeMaskFrom } from '../lb/EdgeFade.js';
 import { TextLink } from '../lb/TextLink.js';
-import { RoleplayStrip } from './RoleplayCard.js';
+import { workingOn } from './extensions.js';
 
 type Props = {
   h: BuddyHome;
@@ -106,11 +106,15 @@ export function HomeThread({
   );
 }
 
-/** A running roleplay takes the line: its way out stays in reach (#244). Else her focus. */
+/**
+ * A domain's line takes it first — a running roleplay, whose way out stays in reach (#244;
+ * components/buddy/extensions.ts). Else her focus.
+ */
 function WorkingOn({ h }: { h: BuddyHome }) {
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
-  if (h.roleplay) return <RoleplayStrip roleplay={h.roleplay} />;
+  const own = workingOn.get()?.(h);
+  if (own) return own;
   if (!h.focus) return null;
   const materialId = h.focus.material_id;
   return (
