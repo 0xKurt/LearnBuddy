@@ -9,10 +9,15 @@
 //   content → the learner's rows, table by table in batches (cost follows her own data)
 //   auth    → the auth user, which cascades the account and the learner profile
 // The job is never parked: it retries with backoff and /health reports it once overdue.
+//
+// The tables named here are the core's. A domain's tables (LearnBuddy: sheets, questions,
+// practices) come from the registry it fills at start-up (privacyTables.ts, issue #107): exported
+// after the core's, their files queued in the photos stage, their rows deleted before the core's.
 
 import type { Deps } from '../../deps.js';
 import type { Db } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
+import { privacyTables } from './privacyTables.js';
 import { drainStorageDeletions } from './retention.js';
 import {
   enqueueJob,
@@ -40,18 +45,8 @@ const LEARNER_TABLES = [
   // What Buddy proposed to delete and what she answered (issue #151): hers, and part of
   // the record of what was done with her data.
   'buddy_pending_actions',
-  // Her roleplays in a foreign language and the checked feedback on them (issue #244).
-  'buddy_roleplays',
-  // What her rehearsal talks and read-alouds measured (issue #264): numbers only, never a recording.
-  'rehearsals',
   // What was talked about on earlier days (issue #22): hers, so it is in her export.
   'buddy_session_summaries',
-  'subjects',
-  'materials',
-  'items',
-  'item_states',
-  'practice_sessions',
-  'practice_turns',
   'usage_daily',
   'llm_calls',
 ] as const;
@@ -92,36 +87,12 @@ export async function exportAccount(db: Db, accountId: string): Promise<Record<s
     // Table names come from the constant list above, never from input.
     out[table] = await db.query(`select * from ${table} where learner_id = $1`, [learner.id]);
   }
-  out.session_items = await db.query(
-    `select si.* from session_items si join practice_sessions ps on ps.id = si.session_id where ps.learner_id = $1`,
-    [learner.id],
-  );
-  out.material_photos = await db.query(
-    `select mp.material_id, mp.position, mp.mime, mp.created_at from material_photos mp
-       join materials m on m.id = mp.material_id where m.learner_id = $1`,
-    [learner.id],
-  );
-  // Concept-image crops of her sheets (issue #50): what exists, not the pixels.
-  out.material_images = await db.query(
-    `select material_id, label, width, height, created_at from material_images
-      where learner_id = $1`,
-    [learner.id],
-  );
-  // Search passages (issue #23): what exists per sheet. The text itself is a verbatim
-  // cut of materials.extracted_text, which the export already carries in full.
-  out.material_passages = await db.query(
-    `select material_id, position, length(text) as chars, created_at
-       from material_passages where learner_id = $1`,
-    [learner.id],
-  );
-  // Spots of a page the reading could not decide, and the reading she picked (issue #164):
-  // what she was asked about her own sheet and what she answered — hers.
-  out.material_unclear_spots = await db.query(
-    `select material_id, sheet_id, ref, page, task, about, readings, status, answer, items_added,
-            asked_at, expires_at, answered_at, read_at
-       from material_unclear_spots where learner_id = $1 order by seq`,
-    [learner.id],
-  );
+  // What the domain keeps about her, each table as it registered its export.
+  for (const t of privacyTables()) {
+    out[t.table] = await db.query(t.exported ?? `select * from ${t.table} where learner_id = $1`, [
+      learner.id,
+    ]);
+  }
   // Buddy's spoken audio, kept 24 hours (ADR 0008): what exists, not the audio — the sentence
   // itself is not stored, only a hash of it (docs/privacy.md §What is stored).
   out.speech_cache = await db.query(
@@ -201,50 +172,39 @@ export async function cancelDeletion(deps: Deps, accountId: string): Promise<voi
   });
 }
 
-/** Learner-scoped tables, children first, so no delete waits on a cascade. */
-const CONTENT_TABLES: ReadonlyArray<{ table: string; rows: string }> = [
-  { table: 'practice_turns', rows: `select ctid from practice_turns where learner_id = $1` },
-  {
-    table: 'session_items',
-    rows: `select si.ctid from session_items si join practice_sessions ps on ps.id = si.session_id
-            where ps.learner_id = $1`,
-  },
-  { table: 'practice_sessions', rows: `select ctid from practice_sessions where learner_id = $1` },
-  { table: 'item_states', rows: `select ctid from item_states where learner_id = $1` },
-  { table: 'items', rows: `select ctid from items where learner_id = $1` },
-  { table: 'material_images', rows: `select ctid from material_images where learner_id = $1` },
-  {
-    table: 'material_passages',
-    rows: `select ctid from material_passages where learner_id = $1`,
-  },
-  {
-    table: 'material_photos',
-    rows: `select mp.ctid from material_photos mp join materials m on m.id = mp.material_id
-            where m.learner_id = $1`,
-  },
-  { table: 'materials', rows: `select ctid from materials where learner_id = $1` },
-  { table: 'buddy_focus', rows: `select ctid from buddy_focus where learner_id = $1` },
-  {
-    table: 'buddy_pending_actions',
-    rows: `select ctid from buddy_pending_actions where learner_id = $1`,
-  },
-  { table: 'buddy_roleplays', rows: `select ctid from buddy_roleplays where learner_id = $1` },
-  { table: 'rehearsals', rows: `select ctid from rehearsals where learner_id = $1` },
-  { table: 'buddy_outreach', rows: `select ctid from buddy_outreach where learner_id = $1` },
-  { table: 'buddy_actions', rows: `select ctid from buddy_actions where learner_id = $1` },
-  { table: 'buddy_memories', rows: `select ctid from buddy_memories where learner_id = $1` },
-  { table: 'buddy_lookbacks', rows: `select ctid from buddy_lookbacks where learner_id = $1` },
-  { table: 'buddy_messages', rows: `select ctid from buddy_messages where learner_id = $1` },
-  { table: 'buddy_decisions', rows: `select ctid from buddy_decisions where learner_id = $1` },
-  { table: 'buddy_events', rows: `select ctid from buddy_events where learner_id = $1` },
-  { table: 'buddy_steps', rows: `select ctid from buddy_steps where learner_id = $1` },
-  { table: 'buddy_goals', rows: `select ctid from buddy_goals where learner_id = $1` },
-  { table: 'subjects', rows: `select ctid from subjects where learner_id = $1` },
-  { table: 'usage_daily', rows: `select ctid from usage_daily where learner_id = $1` },
-  { table: 'llm_calls', rows: `select ctid from llm_calls where learner_id = $1` },
-  { table: 'push_tokens', rows: `select ctid from push_tokens where learner_id = $1` },
-  { table: 'jobs', rows: `select ctid from jobs where learner_id = $1` },
-];
+/** The core's learner-scoped tables, children first, so no delete waits on a cascade. */
+const CORE_CONTENT = [
+  'buddy_focus',
+  'buddy_pending_actions',
+  'buddy_outreach',
+  'buddy_actions',
+  'buddy_memories',
+  'buddy_lookbacks',
+  'buddy_messages',
+  'buddy_decisions',
+  'buddy_events',
+  'buddy_steps',
+  'buddy_goals',
+  'usage_daily',
+  'llm_calls',
+  'push_tokens',
+  'jobs',
+] as const;
+
+/**
+ * Every table the content stage empties, with the query for her rows' ctids: the domain's first,
+ * in the order it registered them (children first), then the core's. A domain table its parent's
+ * cascade empties (`rows: null`) is not one of them.
+ */
+function contentTables(): Array<{ table: string; rows: string }> {
+  const rowsOf = (table: string) => `select ctid from ${table} where learner_id = $1`;
+  return [
+    ...privacyTables().flatMap((t) =>
+      t.rows === null ? [] : [{ table: t.table, rows: t.rows ?? rowsOf(t.table) }],
+    ),
+    ...CORE_CONTENT.map((table) => ({ table, rows: rowsOf(table) })),
+  ];
+}
 const CONTENT_BATCH = 2000;
 /** Wall-clock budget of one run of the content stage; the rest continues on the next run. */
 const CONTENT_BUDGET_MS = 20_000;
@@ -254,8 +214,11 @@ type DeletionState = {
   stage?: 'photos' | 'content' | 'auth';
   auth_user_id?: string;
   learner_id?: string | null;
-  /** content stage: index into CONTENT_TABLES. */
-  table?: number;
+  /**
+   * content stage: the table to go on with, by name, so a table a domain registers cannot shift
+   * it. A number is an index written before #107 cut 6; none: the first table.
+   */
+  table?: string | number;
 };
 
 class LeaseLost extends Error {}
@@ -311,42 +274,36 @@ export async function executeAccountDeletion(deps: Deps, job: JobRow): Promise<v
 
     if (state.stage === 'photos') {
       await deps.db.tx(async (tx) => {
-        await tx.query(
-          `with q as (
-             insert into storage_deletions (path, reason, next_attempt_at, created_at)
-             select mp.storage_path, 'account_deleted', $2, $2
-               from material_photos mp join materials m on m.id = mp.material_id
-              where m.learner_id = $1 and m.photos_deleted_at is null
-             on conflict (path) do nothing
-             returning 1)
-           select count(*)::int as n from q`,
-          [state.learner_id ?? null, deps.now()],
-        );
-        // Concept-image crops (issue #50) live in the same bucket and go the same way.
-        await tx.query(
-          `with q as (
-             insert into storage_deletions (path, reason, next_attempt_at, created_at)
-             select mi.storage_path, 'account_deleted', $2, $2
-               from material_images mi where mi.learner_id = $1
-             on conflict (path) do nothing
-             returning 1)
-           select count(*)::int as n from q`,
-          [state.learner_id ?? null, deps.now()],
-        );
-        if (!(await saveJobPayload(tx, job, { ...state, stage: 'content', table: 0 })))
-          throw new LeaseLost('lease lost');
+        // Every file the domain's rows point at (what it registered as `files`).
+        for (const t of privacyTables()) {
+          if (!t.files) continue;
+          await tx.query(
+            `insert into storage_deletions (path, reason, next_attempt_at, created_at)
+             select f.path, 'account_deleted', $2, $2 from (${t.files}) as f(path)
+             on conflict (path) do nothing`,
+            [state.learner_id ?? null, deps.now()],
+          );
+        }
+        // The content stage starts at its first table (no `table` yet).
+        const next = { ...state, stage: 'content' as const, table: undefined };
+        if (!(await saveJobPayload(tx, job, next))) throw new LeaseLost('lease lost');
       });
-      Object.assign(state, { stage: 'content', table: 0 });
+      Object.assign(state, { stage: 'content', table: undefined });
       // Try them right away; whatever Storage refuses now is retried by the queue (D-9).
       await drainStorageDeletions(deps, { prefix: `${accountId}/` });
     }
 
     if (state.stage === 'content') {
       const started = Date.now();
-      let table = state.table ?? 0;
-      while (state.learner_id && table < CONTENT_TABLES.length) {
-        const t = CONTENT_TABLES[table]!;
-        // Table names and row queries come from the constant list above, never from input.
+      const tables = contentTables();
+      // By name; a number is an index from before #107 cut 6: start again from the first table
+      // (each delete only finds what is left).
+      const from = tables.findIndex((t) => t.table === state.table);
+      let table = from >= 0 ? from : 0;
+      while (state.learner_id && table < tables.length) {
+        const t = tables[table]!;
+        // Table names and row queries come from code (the core's list, the domain's
+        // registration), never from input.
         const [r] = await deps.db.query<{ n: number }>(
           `with d as (delete from ${t.table}
                        where ctid = any(array(${t.rows} limit ${CONTENT_BATCH}))
@@ -356,7 +313,7 @@ export async function executeAccountDeletion(deps: Deps, job: JobRow): Promise<v
         );
         if ((r?.n ?? 0) < CONTENT_BATCH) {
           table++;
-          await save({ ...state, table });
+          await save({ ...state, table: tables[table]?.table });
         }
         if (Date.now() - started > CONTENT_BUDGET_MS) {
           // Resumes from the saved table on the next run (soon, not after a backoff).

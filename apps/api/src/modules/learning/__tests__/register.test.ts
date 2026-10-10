@@ -16,6 +16,7 @@ import { startsSteps } from '../../buddy/stepStart.js';
 import { subscribersOf } from '../../buddy/events.js';
 import { fillsPractice, occasions } from '../../buddy/occasions.js';
 import { REVIEW_REASONS, reviewAfterBreak, reviewNextDay, runReviews } from '../../buddy/review.js';
+import { privacyTables } from '../../identity/privacyTables.js';
 import { missingJobKinds, jobKinds, tickWork } from '../../scheduler/registry.js';
 import { actHandler, missingActHandlers, registerActHandlers } from '../../buddy/tools.js';
 import { LEARNING_LOOKUPS } from '../lookups.js';
@@ -103,5 +104,28 @@ describe('the learning domain in the core', () => {
     expect(subscribersOf('session_finished')[1]).toBe(reviewAfterBreak);
     expect(subscribersOf('homework_ready')).toEqual([]);
     expect(fillsPractice()).toBe(true);
+  });
+
+  it('registers exactly the tables the SQL guard calls its own, for export and deletion', async () => {
+    registerLearning();
+    // The guard's list (tools/guards/boundaries.config.mjs, read at run time: it is not part of
+    // the API's program) and the domain's registration name the same tables, so a table the
+    // core may not name in SQL is never missing from her export or her deletion.
+    const config = '../../../../../../tools/guards/boundaries.config.mjs';
+    const { DOMAIN_TABLES } = (await import(config)) as { DOMAIN_TABLES: string[] };
+    expect(
+      privacyTables()
+        .map((t) => t.table)
+        .sort(),
+    ).toEqual([...DOMAIN_TABLES].sort());
+    // Children before their parents: a session's items and turns before the session, a
+    // sheet's photos, crops and passages before the sheet, subjects last.
+    const order = privacyTables().map((t) => t.table);
+    const before = (a: string, b: string) => order.indexOf(a) < order.indexOf(b);
+    expect(before('session_items', 'practice_sessions')).toBe(true);
+    expect(before('practice_turns', 'practice_sessions')).toBe(true);
+    expect(before('item_states', 'items')).toBe(true);
+    expect(before('material_photos', 'materials')).toBe(true);
+    expect(before('items', 'materials')).toBe(true);
   });
 });

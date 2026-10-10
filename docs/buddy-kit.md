@@ -188,6 +188,16 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
    → 24 in 1 (`identity/privacy.ts`, Schnitt 6). Importe: 45 → 33 (API: nur noch die Naht).
    Noch im Kern deklariert: die Schemas und Beschreibungen der Domain-Werkzeuge (`decision.ts`,
    `registry.ts`) — ihre Typen hängen an der Karten-Union (Schnitt 7).
+6. **Datenschutz über eine Tabellen-Registry** (`identity/privacyTables.ts`): `identity/privacy.ts`
+   nennt nur noch die Tabellen des Kerns; die Domain meldet ihre an (`learning/privacy.ts`) — was
+   jede exportiert, wie ihre Zeilen für die Löschung gefunden werden, welche Storage-Dateien sie
+   meinen. Export: erst der Kern, dann die Domain; Löschung: erst die Domain (Kinder zuerst), dann
+   der Kern. Die Löschung merkt sich die Tabelle beim Namen statt als Listen-Index (ein Index von
+   vorher beginnt die Stufe von vorn — jedes Löschen findet nur, was noch da ist). Die
+   Vollständigkeit prüft weiter der Katalog (`export-completeness.int.test.ts`); `register.test.ts`
+   hält die angemeldeten Tabellen und `DOMAIN_TABLES` des SQL-Wächters gleich. SQL im Kern auf
+   Domain-Tabellen: 24 → 0. Importe: 33 (die Kante `privacy.ts → materials/purge.ts` war schon mit
+   Schnitt 4 weg).
 
 ## Die API-Datenbankrolle
 

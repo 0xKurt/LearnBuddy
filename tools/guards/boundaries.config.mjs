@@ -35,8 +35,10 @@ export const DOMAIN = [
 /**
  * The learning domain's tables (issue #107 §6: "Engine darf keine Domain-Tabelle per SQL nennen —
  * ein Test, nicht nur Lint"). Generic API code reads and writes them only through what the domain
- * registers (its context provider); domain-sql.mjs counts every SQL text in generic code that
- * names one.
+ * registers (its context provider, its privacy tables); domain-sql.mjs counts every SQL text in
+ * generic code that names one. The domain registers exactly these for export and deletion
+ * (modules/learning/privacy.ts) — modules/learning/__tests__/register.test.ts holds the two lists
+ * together.
  */
 export const DOMAIN_TABLES = [
   'subjects',

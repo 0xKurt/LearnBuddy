@@ -34,11 +34,13 @@ import { prepareOffered } from '../practice/prepare.js';
 import { practiceRoutes } from '../practice/routes.js';
 import { tenMinutesOf } from '../practice/selection.js';
 import { startFromStep } from '../practice/service.js';
+import { registerPrivacyTables } from '../identity/privacyTables.js';
 import { registerJobKinds, registerTickWork } from '../scheduler/registry.js';
 import { LEARNING_SECTIONS, levelOf, renderLearning } from './context.js';
 import { dressThread, lastActed, learningHome } from './home.js';
 import { LEARNING_LOOKUPS } from './lookups.js';
 import { findLearningLookBack } from './lookback.js';
+import { LEARNING_PRIVACY_TABLES } from './privacy.js';
 import { LEARNING_TURN_RULES } from './prompt.js';
 import { learningBuddyRoutes } from './routes.js';
 import { findOrCreateSubject, loadLearningState, readySheet, subjectNames } from './state.js';
@@ -130,4 +132,7 @@ export function registerLearning(): void {
   subscribe('material_ready', reviewNextDay);
   subscribe('session_finished', reviewAfterBreak);
   registerPracticeFiller(tenMinutesOf);
+
+  // What it keeps about her: in her export, and gone with her account — children first.
+  registerPrivacyTables(...LEARNING_PRIVACY_TABLES);
 }
