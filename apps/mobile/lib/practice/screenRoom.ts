@@ -201,7 +201,7 @@ export function useScreenRoom() {
       cardNatural,
       // ThreadBox rests its edge on any of them.
       tops: [...tops, ...partTops],
-      readFrom: reads ? tops[tops.length - 1] : undefined,
+      readFrom: reads || shared.restsOnNewest ? tops[tops.length - 1] : undefined,
       onCard,
     };
   }

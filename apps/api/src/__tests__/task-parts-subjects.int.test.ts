@@ -24,6 +24,7 @@ import {
   CART_TABLE,
   cartTask,
   cityTask,
+  partTaskRun,
   SOURCE_STEM,
   SOURCE_WHO,
   sourceTask,
@@ -41,13 +42,7 @@ describe.skipIf(!dbReady)('tasks in parts across subjects (#297, Schnitt 4)', ()
 
   /** A practice run the generator writes with these tasks in parts. */
   async function prepare(partTasks: unknown[], who: Learner = l): Promise<SessionView> {
-    env.llm.script('explain', () => ({
-      usable: true,
-      title: 'Klassenarbeit',
-      subject: { name: 'Naturwissenschaften', kind: 'other' },
-      items: [],
-      part_tasks: partTasks,
-    }));
+    env.llm.script('explain', () => partTaskRun(partTasks));
     env.llm.script('hints', () => ({
       items: Array.from({ length: 8 }, (_, i) => ({
         n: i + 1,

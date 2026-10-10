@@ -294,7 +294,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
                 // The ring is the frame's; the browser's own box around the text stays off.
                 outlineWidth: 0,
               },
-              lines ? growsWithText : null,
+              lines ? growsWithText(rest.value ?? '') : null,
             ]}
           />
           {stacked || chips === null ? null : (

@@ -54,6 +54,11 @@ export function answerForm(item: ItemView, open: boolean) {
     !speaking;
   /** The question's figure IS her board and stands in the answer, not in the card. */
   const figureInAnswer = tapFigure !== null || codeLines !== null;
+  // A board stands under the card and needs the height, so a reading text above keeps its smaller
+  // box: a structured item's while it is open — and the options of a closed multiple choice, which
+  // stay read only above "Weiter" (#521). With the text's full box they ran 9–14 pt past a
+  // 360×740 phone (#387).
+  const board = open ? structured : choices !== null;
   return {
     choices,
     tapChoices,
@@ -67,6 +72,7 @@ export function answerForm(item: ItemView, open: boolean) {
     code,
     typed,
     figureInAnswer,
+    board,
   };
 }
 

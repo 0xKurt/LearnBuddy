@@ -12,6 +12,10 @@ import { bothSchemes } from './fit';
 test('figures to scale and structural formulas: read, answered, graded by code', async ({
   page,
 }) => {
+  // Eight stops, each shot six times with axe at every one (two phones and the keyboard, light and
+  // dark): about three minutes of work, so the default 180 s ran out at the last switch back to
+  // light whenever the machine was busy (#387, 2 workers: 3.1 min).
+  test.setTimeout(360_000);
   await onboardChild(page, 'figures');
   await page.getByLabel('Schreib Buddy …').fill('Lass uns Figuren üben');
   await page.getByRole('button', { name: 'Senden' }).click();

@@ -254,4 +254,26 @@ describe('one box, nothing mirrored (issue #522)', () => {
     expect(box().contains(chip)).toBe(true);
     expect(field().parentElement!.contains(chip)).toBe(false);
   });
+
+  it('says only "Antwort …" beside a unit chip, so the narrow field keeps one line (#387)', () => {
+    const empty = (unit: string | null) =>
+      renderInApp(
+        <TypedAnswer
+          kind="numeric"
+          prompt="Wie groß ist die Fläche?"
+          unit={unit}
+          subjectKind="math"
+          lang={null}
+          value=""
+          disabled={false}
+          onChange={() => undefined}
+          onCheck={() => undefined}
+        />,
+      );
+    const withUnit = empty('cm²');
+    expect(field().getAttribute('placeholder')).toBe('Antwort …');
+    withUnit.unmount();
+    empty(null);
+    expect(field().getAttribute('placeholder')).toBe('Deine Antwort …');
+  });
 });

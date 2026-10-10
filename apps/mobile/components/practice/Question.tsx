@@ -250,7 +250,11 @@ export function QuestionCard({
   // A reading question's topic is its text: the text's heading already names it.
   // A part of a task names its place in the task where the topic stands: the same for all parts.
   const shownTopic = passage || part ? null : topic;
-  const meta = fromBuddy || Boolean(shownTopic) || part !== null;
+  // Where it comes from and what it is about — and, while she types, nothing she answers from: the
+  // row steps aside like the drawing does (#419, #484). On 360×440 a part's situation over its
+  // folded chart, the question and the bar with its keys ran 10 pt past the window and the header
+  // stood cut (#387); the part's letter still stands before the question ("a) …").
+  const meta = !typing && (fromBuddy || Boolean(shownTopic) || part !== null);
   const { t } = useTranslation('practice');
   // What the header row and the prompt keep for themselves; the rest is the figure's.
   const [headHeight, setHeadHeight] = useState(0);

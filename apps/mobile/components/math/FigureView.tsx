@@ -90,20 +90,23 @@ export function FigureView({
     >
       {fit.width > 0 ? (
         <View
-          ref={fit.drawn}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           style={{ alignItems: 'center' }}
-          onLayout={fit.onDrawn}
         >
-          {layer ? (
-            <View style={{ width: bodyWidth, alignItems: 'center' }}>
-              <FigureBody figure={figure} width={bodyWidth} scale={scale} bare={bare} />
-              <View style={StyleSheet.absoluteFill}>{layer(bodyWidth)}</View>
-            </View>
-          ) : (
+          {/* The drawing's own box, exactly as wide as it was drawn: its layout says at which
+              width — and so at which scale — the height it reports was drawn (`drawnAtWidth`).
+              The stretched box around it always had the frame's width, so a height drawn at the
+              previous scale passed as the natural one: after a resize the map stood at its
+              natural size past its cap, taller on 360×740 than on 390×844 (#387). */}
+          <View
+            ref={fit.drawn}
+            onLayout={fit.onDrawn}
+            style={{ width: bodyWidth, alignItems: 'center' }}
+          >
             <FigureBody figure={figure} width={bodyWidth} scale={scale} bare={bare} />
-          )}
+            {layer ? <View style={StyleSheet.absoluteFill}>{layer(bodyWidth)}</View> : null}
+          </View>
         </View>
       ) : null}
     </View>

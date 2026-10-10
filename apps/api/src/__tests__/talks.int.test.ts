@@ -27,6 +27,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { LlmError } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import { READ_PASSAGE, TALK_PLAN } from '../testing/scenarios/talks.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -42,28 +43,6 @@ const turn = (over: Record<string, unknown>) => ({
 });
 
 const day = (days: number) => ({ kind: 'in_days', days });
-
-const PLAN = {
-  tool: 'plan_talk',
-  args: {
-    title: 'Vulkane',
-    format: 'referat',
-    subject: 'Erdkunde',
-    subject_kind: 'geography',
-    day: day(14),
-    minutes: 5,
-    steps: [
-      { stage: 'outline', day: day(3) },
-      { stage: 'sources', day: day(6) },
-      { stage: 'slides', day: day(10) },
-      { stage: 'rehearsal', day: day(12) },
-    ],
-    quote: 'in zwei Wochen ein Referat über Vulkane',
-  },
-};
-
-const PASSAGE =
-  'Der kleine Fuchs lief am Morgen durch den Wald. Er suchte etwas zu essen für seine Familie.';
 
 /** A recording as the app sends it: what is in it is the scripted model's to say. */
 const AUDIO = Buffer.from('a'.repeat(4000)).toString('base64');
@@ -113,7 +92,7 @@ describe.skipIf(!dbReady)('talks, rehearsals and reading aloud', () => {
   it('plans a talk with its steps on days the server resolved, and undo takes it back', async () => {
     const l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2012-03-01' });
     env.llm.script('buddy_turn', {
-      json: turn({ actions: [PLAN], reply: 'Ich habe dir den Plan bis zum Referat gemacht.' }),
+      json: turn({ actions: [TALK_PLAN], reply: 'Ich habe dir den Plan bis zum Referat gemacht.' }),
     });
     const home = await say(l, 'Ich halte in zwei Wochen ein Referat über Vulkane, 5 Minuten.');
     const plan = card(home, 'plan_talk');
@@ -170,13 +149,13 @@ describe.skipIf(!dbReady)('talks, rehearsals and reading aloud', () => {
   it('refuses a plan that cannot be kept — the model gets one repair round', async () => {
     const l = await onboard(env, { relation: 'child', name: 'Mia', birthDate: '2012-03-01' });
     const late = {
-      ...PLAN,
-      args: { ...PLAN.args, steps: [{ stage: 'rehearsal', day: day(14) }] },
+      ...TALK_PLAN,
+      args: { ...TALK_PLAN.args, steps: [{ stage: 'rehearsal', day: day(14) }] },
     };
     const backwards = {
-      ...PLAN,
+      ...TALK_PLAN,
       args: {
-        ...PLAN.args,
+        ...TALK_PLAN.args,
         steps: [
           { stage: 'slides', day: day(3) },
           { stage: 'outline', day: day(5) },
@@ -200,7 +179,7 @@ describe.skipIf(!dbReady)('talks, rehearsals and reading aloud', () => {
 
   it('measures a rehearsal by code, marks the step done and keeps neither recording nor transcript', async () => {
     const l = await onboard(env, { relation: 'child', name: 'Ben', birthDate: '2012-03-01' });
-    env.llm.script('buddy_turn', { json: turn({ actions: [PLAN] }) });
+    env.llm.script('buddy_turn', { json: turn({ actions: [TALK_PLAN] }) });
     const planned = card(
       await say(l, 'Ich halte in zwei Wochen ein Referat über Vulkane, 5 Minuten.'),
       'plan_talk',
@@ -278,10 +257,10 @@ describe.skipIf(!dbReady)('talks, rehearsals and reading aloud', () => {
     const l = await onboard(env, { relation: 'child', name: 'Cem', birthDate: '2016-03-01' });
     const reading = await offer(
       l,
-      { kind: 'read_aloud', goal: null, text: PASSAGE },
+      { kind: 'read_aloud', goal: null, text: READ_PASSAGE },
       'Ich möchte vorlesen üben.',
     );
-    expect(reading.summary).toMatchObject({ kind: 'read_aloud', text: PASSAGE });
+    expect(reading.summary).toMatchObject({ kind: 'read_aloud', text: READ_PASSAGE });
     env.llm.script('transcribe', {
       json: {
         heard_speech: true,
@@ -311,7 +290,7 @@ describe.skipIf(!dbReady)('talks, rehearsals and reading aloud', () => {
     const l = await onboard(env, { relation: 'child', name: 'Dora', birthDate: '2016-03-01' });
     const reading = await offer(
       l,
-      { kind: 'read_aloud', goal: null, text: PASSAGE },
+      { kind: 'read_aloud', goal: null, text: READ_PASSAGE },
       'Ich möchte vorlesen üben.',
     );
     const count = async () =>
@@ -335,7 +314,7 @@ describe.skipIf(!dbReady)('talks, rehearsals and reading aloud', () => {
 
     // Sent twice (the connection dropped on the way back): one rehearsal, one message.
     env.llm.script('transcribe', {
-      json: { heard_speech: true, transcript: PASSAGE, parts: [] },
+      json: { heard_speech: true, transcript: READ_PASSAGE, parts: [] },
     });
     const id = randomUUID();
     const first = await record(l, reading.id, 30_000, id);
