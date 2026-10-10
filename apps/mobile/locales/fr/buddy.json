@@ -46,7 +46,9 @@
     "set_voice": "Ma voix : {{voice}}, {{speed}}",
     "forget_all": "Tout ce que je savais sur toi est oublié ({{count}})",
     "offer_drill": "Proposé : calcul mental – « {{text}} »",
-    "start_roleplay": "Jeu de rôle : {{scene}}"
+    "start_roleplay": "Jeu de rôle : {{scene}}",
+    "plan_talk": "Exposé « {{title}} » prévu le {{day}} : {{steps}}",
+    "offer_rehearsal": "Répétition proposée : {{title}}"
   },
   "area": {
     "library": "Tes documents",
@@ -389,6 +391,48 @@
       "open": "Pas encore",
       "better": "Ça sonne encore mieux comme ça",
       "quote": "« {{quote}} »"
+    }
+  },
+  "rehearse": {
+    "talk": "Répétition",
+    "read_aloud": "Lecture à voix haute",
+    "start": "Lancer l’enregistrement",
+    "hint_talk": "Présente ton exposé comme si la classe écoutait. 10 minutes au plus.",
+    "hint_talk_minutes": "{{minutes}} minutes sont prévues. Présente-le comme si la classe écoutait.",
+    "hint_read": "Lis le texte à voix haute. 2 minutes au plus.",
+    "too_short": "C’était très court. Lance l’enregistrement et parle jusqu’à la fin.",
+    "result": {
+      "length": "Durée",
+      "length_of": "{{duration}} sur {{target}}",
+      "verdict": {
+        "fits": "Correspond à la durée prévue",
+        "short": "Un peu court – il reste du temps",
+        "long": "Un peu long – où peux-tu raccourcir ?"
+      },
+      "pace": "Rythme",
+      "pace_text": "{{wpm}} mots par minute",
+      "fillers": "Sons d’hésitation",
+      "fillers_text_one": "Une fois « euh »",
+      "fillers_text_other": "{{count}} fois « euh »",
+      "part": {
+        "opening": "Introduction",
+        "main": "Développement",
+        "closing": "Conclusion"
+      },
+      "status": {
+        "heard": "Entendu",
+        "not_heard": "Pas encore entendu",
+        "unknown": "Pas reconnu avec certitude"
+      },
+      "words": "Mots à travailler",
+      "words_none": "Tout lu comme c’est écrit"
+    },
+    "stage": {
+      "topic": "Sujet",
+      "outline": "Plan",
+      "sources": "Sources",
+      "slides": "Diapositives",
+      "rehearsal": "Répétition"
     }
   }
 }

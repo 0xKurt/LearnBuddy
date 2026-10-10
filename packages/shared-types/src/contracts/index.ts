@@ -2,8 +2,10 @@
 // shared by the API (validation) and the app (response parsing).
 export * from './common.js';
 export * from './identity.js';
+export * from './talk.js';
 export * from './buddy.js';
 export * from './staff.js';
+export * from './code.js';
 export * from './tree.js';
 export * from './periodic.js';
 export * from './solid.js';

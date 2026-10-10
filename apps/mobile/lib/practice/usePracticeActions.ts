@@ -121,9 +121,8 @@ export function usePracticeActions({ id, pin, drafts, voice }: Deps) {
           // Tap on "Prüfen" → the verdict on screen (issue #66).
           reacted('check');
           const after = res.session.items.find((i) => i.item.id === itemId);
-          // A long text stays in the field: her next version starts from it (#258).
-          if (answerText !== null)
-            drafts.setText((c) => leftAfterSend(c, answerText, after?.item.kind));
+          // A long text and code stay in the field: her next version starts from it (#258, #262).
+          if (answerText !== null) drafts.setText((c) => leftAfterSend(c, answerText, after?.item));
           if (after?.status !== 'open') Keyboard.dismiss();
           replied(res, itemId);
         } finally {

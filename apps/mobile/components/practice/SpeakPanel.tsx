@@ -23,17 +23,7 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Animated,
-  Easing,
-  Linking,
-  Platform,
-  Text,
-  View,
-  type TextStyle,
-} from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+import { ActivityIndicator, Linking, Platform, Text, View, type TextStyle } from 'react-native';
 
 import { isOutdated, isRetryable } from '../../lib/api/apiError.js';
 import { newId } from '../../lib/api/client.js';
@@ -43,12 +33,12 @@ import { WaitAborted } from '../../lib/api/whenOnline.js';
 import { messageFor } from '../../lib/errors.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
-import { formatClock, MAX_RECORDING_MS, type SpeakMime } from '../../lib/speech/voice.js';
-import { circle } from '../../lib/theme/radius.js';
+import { MAX_RECORDING_MS, type SpeakMime } from '../../lib/speech/voice.js';
 import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
+import { RecordingStatus } from '../voice/RecordingStatus.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { toast } from '../lb/Toast.js';
@@ -274,50 +264,6 @@ export function PronunciationNote({ feedback }: { feedback: PronunciationFeedbac
 
 // ─────────────── the pinned controls ───────────────
 
-/** The pulsing dot while she speaks. */
-const REC_DOT = 12;
-
-function RecordingDot() {
-  const { palette } = useTheme();
-  const pulse = useRef(new Animated.Value(1)).current;
-  // Reactive: toggling "reduce motion" while the app runs stops the dot too.
-  const still = useReducedMotion();
-
-  useEffect(() => {
-    if (still) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 0.35,
-          duration: 700,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 700,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulse, still]);
-
-  return (
-    <Animated.View
-      style={{
-        width: REC_DOT,
-        height: REC_DOT,
-        borderRadius: circle(REC_DOT),
-        backgroundColor: palette.primary,
-        opacity: still ? 1 : pulse,
-      }}
-    />
-  );
-}
-
 type Pending = { clientTurnId: string; itemId: string; mime: SpeakMime; base64: string };
 
 type PanelProps = {
@@ -523,22 +469,7 @@ export function SpeakPanel({
       {Platform.OS === 'web' ? t('speak.denied_web') : t('speak.denied')}
     </Text>
   ) : recording ? (
-    <View
-      accessible
-      accessibilityLabel={t('speak.recording_label', {
-        time: formatClock(rec.elapsedMs),
-        max: formatClock(MAX_RECORDING_MS),
-      })}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm, minHeight: 24 }}
-    >
-      <RecordingDot />
-      <Text style={[TYPE.body, { fontWeight: '600' }]}>
-        {t('speak.recording', {
-          time: formatClock(rec.elapsedMs),
-          max: formatClock(MAX_RECORDING_MS),
-        })}
-      </Text>
-    </View>
+    <RecordingStatus elapsedMs={rec.elapsedMs} maxMs={MAX_RECORDING_MS} />
   ) : waitingOffline ? (
     <View style={{ gap: SPACE.sm }}>
       <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>

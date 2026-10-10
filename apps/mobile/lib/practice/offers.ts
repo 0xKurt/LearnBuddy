@@ -56,11 +56,7 @@ export function questionOffers(session: SessionView, shown: SessionItemView): Of
     // A free text has no solution to show, so the way past it is named for what it does
     // (issue #197) — "Lösung zeigen" would promise something the server does not send.
     skipLabel:
-      testing || freeText(item.kind)
-        ? 'skip'
-        : canPostpone && !shown.reveal_available
-          ? 'later'
-          : null,
+      testing || freeText(item) ? 'skip' : canPostpone && !shown.reveal_available ? 'later' : null,
     skipHint: canPostpone && !testing ? 'later_hint' : null,
     explainAgain:
       !open &&

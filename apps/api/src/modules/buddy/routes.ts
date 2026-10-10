@@ -12,6 +12,8 @@ import {
   type OutreachActionResponse,
   OutreachOpenedRequest,
   RegisterPushTokenRequest,
+  RehearseRequest,
+  type RehearseResponse,
   SendMessageRequest,
   UpdateBuddySettingsRequest,
   UpdateMemoryRequest,
@@ -45,6 +47,7 @@ import { startFromStep } from '../practice/service.js';
 import { sessionView } from '../practice/sessionView.js';
 import { registerPushToken } from '../devices/service.js';
 import { buildHome } from './home.js';
+import { rehearse } from './rehearse.js';
 import { endRoleplayByTap } from './roleplay.js';
 import { addDays, localParts, zonedToInstant } from '../../lib/time.js';
 import { bumpContext, cancelGoalWakeups, lockContext, scheduleStepReminder } from './plan.js';
@@ -160,6 +163,16 @@ buddyRoutes.post('/roleplays/:id/end', async (c) => {
   const l = c.get('learner');
   await endRoleplayByTap(depsOf(c), l, id);
   const body: EndRoleplayResponse = { home: await home(c) };
+  return c.json(body);
+});
+
+// She recorded on Buddy's rehearsal card (issue #264): the recording is measured, never kept, and
+// the result lands in the thread as his message. Another learner's card is 404; the same recording
+// sent twice is one rehearsal.
+buddyRoutes.post('/rehearsals', async (c) => {
+  const input = await readBody(c, RehearseRequest);
+  const rehearsal = await rehearse(depsOf(c), c.get('learner'), input);
+  const body: RehearseResponse = { rehearsal, home: await home(c) };
   return c.json(body);
 });
 

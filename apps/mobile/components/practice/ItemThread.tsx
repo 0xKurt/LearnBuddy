@@ -35,6 +35,7 @@ import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
 import { Rise } from '../lb/Motion.js';
 import { MathText } from '../math/MathText.js';
+import { keepSpaces } from './CodeBlock.js';
 import { useSpokenMath } from '../math/useSpokenMath.js';
 import { EssayFeedback } from './EssayFeedback.js';
 import { QuestionFigure } from './QuestionFigure.js';
@@ -92,6 +93,11 @@ type Props = {
   onTurnTops?: (tops: Readonly<Record<string, number>>) => void;
   /** A long text (issue #258): her versions as one line each, not as the whole text. */
   essay?: boolean;
+  /**
+   * Her answers are code or a program's output (issue #262): they stand in monospace with every
+   * space kept, as she typed them — the indentation of her function IS her answer.
+   */
+  code?: boolean;
 };
 
 export function ItemThread({
@@ -105,6 +111,7 @@ export function ItemThread({
   echoAnswers = true,
   onTurnTops,
   essay = false,
+  code = false,
 }: Props) {
   const { t } = useTranslation('practice');
   const { palette } = useTheme();
@@ -164,6 +171,8 @@ export function ItemThread({
             mine={mine}
             text={mine ? said(turn) : turn.text}
             speaker={mine ? t('thread.you') : t('thread.buddy')}
+            // Her code as she typed it; her question about it stays her words.
+            code={code && mine && turn.verdict !== 'not_an_attempt'}
             orb={moonForReply({ fresh, afterCorrect })}
             // Only the newest reply's orb moves, and none while Buddy is looking again.
             alive={turn.id === latestReplyId && pending === null}
@@ -246,6 +255,7 @@ export function ItemThread({
                   faded
                   text={asking ? pending : said({ id: '', text: pending, verdict: null })}
                   speaker={t('thread.you')}
+                  code={code && !asking}
                 />
               </View>
             </Rise>
@@ -270,9 +280,11 @@ function Bubble({
   faded = false,
   orb = 'idle',
   alive = false,
+  code = false,
   children = null,
 }: {
   mine: boolean;
+  code?: boolean;
   /** What it says — and, with `children`, what a screen reader hears for them. */
   text: string;
   speaker: string;
@@ -300,13 +312,21 @@ function Bubble({
         mine ? null : SHADOW.soft,
       ]}
     >
-      {children ?? (
-        <MathText
-          text={text}
-          accessible={false}
-          style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
-        />
-      )}
+      {children ??
+        (code ? (
+          <Text
+            accessible={false}
+            style={[TYPE.code, { color: mine ? palette.paper : palette.ink }]}
+          >
+            {keepSpaces(text)}
+          </Text>
+        ) : (
+          <MathText
+            text={text}
+            accessible={false}
+            style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
+          />
+        ))}
     </View>
   );
   if (mine) return bubble;

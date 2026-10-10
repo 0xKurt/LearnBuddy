@@ -1234,21 +1234,22 @@ reasons (#159 keeps that promise separate from the internal pilot).
 
 ## Limits
 
-| What                            | Limit                                                                                                                                                                                                                                                                                                                           |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12, pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                                                                                                                           |
-| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                                                                                                                                                                                              |
-| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                                                                                                                                                                                                       |
-| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                                                                                                                                                                                                      |
-| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 4 readings per run (issue #150), ≤ 20 photos                                                                                                                                                                                                       |
-| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s                                                                                                                                                                                                                                         |
-| Turn stall                      | taken over after 3 minutes                                                                                                                                                                                                                                                                                                      |
-| Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h                                                                                                                                                                                                                                       |
-| Memory                          | 60 active items; temporary ≤ 60 days; consolidation from 45 (1 run/day, ≤ 3 calls)                                                                                                                                                                                                                                              |
-| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)                                                                                                                                                                                                                                 |
-| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                                                                                                                                                                                                                                                       |
-| Requests per account            | abuse protection only: practice answers (typed, spoken, one word) 600/h, dictation 600/h (each piece of a long dictation counts one), messages to Buddy 120/h (429 + `Retry-After`); account/learner writes 30/h (the first `POST /account` of a fresh user passes uncounted — its volume is the Supabase sign-up's, issue #72) |
-| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always                                                                                                                                                                                                                                |
+| What                            | Limit                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12, pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                                                                                                                                                             |
+| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                                                                                                                                                                                                                                |
+| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                                                                                                                                                                                                                                         |
+| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                                                                                                                                                                                                                                        |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 4 readings per run (issue #150), ≤ 20 photos                                                                                                                                                                                                                                         |
+| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s                                                                                                                                                                                                                                                                           |
+| Turn stall                      | taken over after 3 minutes                                                                                                                                                                                                                                                                                                                                        |
+| Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h                                                                                                                                                                                                                                                                         |
+| Memory                          | 60 active items; temporary ≤ 60 days; consolidation from 45 (1 run/day, ≤ 3 calls)                                                                                                                                                                                                                                                                                |
+| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)                                                                                                                                                                                                                                                                   |
+| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                                                                                                                                                                                                                                                                                         |
+| Requests per account            | abuse protection only: practice answers (typed, spoken, one word) 600/h, dictation and rehearsal recordings 600/h together (each piece of a long dictation counts one), messages to Buddy 120/h (429 + `Retry-After`); account/learner writes 30/h (the first `POST /account` of a fresh user passes uncounted — its volume is the Supabase sign-up's, issue #72) |
+| Sandbox runs (issue #262)       | her function or query run in the sandbox: 120 per account and hour (`code_runs`, taken in `practice/answerRules.ts` before the run; 429 + `Retry-After`, not a try). Each run holds the API's thread for up to 2.5 s (PR #536 review); outputs and tapped lines are compared, not run, and need none                                                              |
+| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always                                                                                                                                                                                                                                                                  |
 
 A photo of her working (`POST /practice/sessions/:id/work-photo`, issue #444) counts as a practice
 answer (600/h) and as one daily `transcribe` call.
@@ -4349,6 +4350,80 @@ figure out and draws it.** No migration: the figure is an item's `figure` (jsonb
   of 10 kΩ and more. Case alone in a typed colour ("grün") goes to the tutor, like every short
   answer whose spelling is not the point (D-2).
 
+### Informatik (issue #262, migration `0104_code_tasks_and_talks.sql`)
+
+Programs to read, a failing line to find, a function to write, an SQL query to write. **The model
+chooses, code runs.** A `CodeTask` (`contracts/code.ts`) is all the model may say — a program or a
+small table, the task, test inputs — in the set's own list `codes` (practice and tests,
+`SetProfile.codes`). Every key comes from RUNNING it in the sandbox; what the model claims besides
+is a probe, and a task whose probe disagrees with the run gives no question (Regel 0, rejected,
+never repaired). No model call per answer, and no tutor on a wrong one: code has the run and
+names what it gave.
+
+- **What runs where** (`apps/api/src/sandbox/`). Everything runs on the server, never on her
+  phone (Hermes has no WebAssembly, and a verdict the phone reports would be the phone's claim):
+  - `quickjs.ts` — the one wall: QuickJS compiled to WebAssembly (quickjs-emscripten-core +
+    `@jitl/quickjs-wasmfile-release-sync`, MIT). Each run gets a fresh runtime with a memory
+    limit, a 256 kB stack limit (at ~1 MB the HOST stack overflowed first and the runtime could
+    not be freed — measured) and an interrupt deadline; nothing of Node is in its global object.
+    An abort while freeing drops the WebAssembly instance and the next run compiles a fresh one.
+  - `python.ts` — Skulpt 1.2.0 (MIT), a Python 3 interpreter in JavaScript, evaluated INSIDE that
+    runtime. Imports: `math` (and `sys` for `print`) only; `input()` refused. Output past 4 000
+    characters, 1.5 s (a program) or 2.5 s (her function on all tests) or 48/64 MB end the run as a
+    limit. Skulpt's bridges into JavaScript (`jseval`, `jsmillis`) are deleted before anything
+    runs: the JavaScript that checks her function lives in the same runtime, and a program that
+    could rewrite it could report every test as passed (PR #536 review). The tests are read first,
+    then her function is loaded as a module and called on them; each value comes back as a PLAIN
+    value (none, bool, int, float, str, list, tuple, dict — by exact type, at most 2 000 parts, 20
+    deep; anything else, e.g. an object with its own `__eq__`, is no match) and is compared
+    outside the engine (`samePlain`): Python's `==`, floats within 1e-9 relative at every depth,
+    `True` is not `1`, a list is not a tuple. Test arguments and expected values are Python
+    literals, checked by `isLiteral` (no two values side by side — `''' ' '''` is one string to
+    Python) before they are built into the harness. Measured: 120–200 ms per run (most of it
+    loading Skulpt). The run is synchronous on the API's thread, bounded by its deadline; her runs
+    have an hourly budget (§Limits).
+  - `sql.ts` — SQLite's own WebAssembly build (`@sqlite.org/sqlite-wasm`, Apache-2.0), one
+    in-memory database per query: code creates and fills the table from the checked task, then an
+    authorizer allows SELECT/READ/FUNCTION/RECURSIVE only, a progress handler (every 100 steps)
+    interrupts after 500 ms, length/depth limits and a process-wide `hard_heap_limit` of 32 MB
+    hold, exactly one statement, at most 200 rows. Strings and blobs stop at 2 000 characters and a
+    LIKE/GLOB pattern at 100: one function call is ONE step for the progress handler, and `instr`
+    over 100 000 characters took a second per row; thousands of wildcards overflowed the host stack
+    (PR #536 review).
+- **The four tasks** (`practice/code.ts`, `codeSql.ts`, shared parts in `codeParts.ts`):
+  `predict_output` (the run's output is the key, edge spaces and `$` never in a key), `find_error`
+  (the run must stop with a runtime error Python reports in one line — ZeroDivision, Name, Type,
+  Value, Index, Key, Attribute — at the claimed line; a syntax error has no clear line and is no
+  task), `write_function` (the solution runs on 3–6 distinct literal tests; their reprs are stored
+  as the expected values; the name may not hide a built-in), `sql_query` (one table of 2–5
+  columns and 3–8 rows, cells typed by their column, "" is NULL; the key query's 1–8 rows are
+  stored; order counts only where the key sorts its whole result, `sortsResult`).
+- **Stored** as `items.code_task` (after the run: output, expected values and result rows are the
+  run's), a third computed source beside `bar_task` and `staff_task`
+  (`items_one_computed_source`: at most one). Kinds stay `short` (output, line) and `long`
+  (function, query) — no new `ItemKind`.
+- **What she sees**: the program as `CodeFigure` (monospace, indentation kept with NBSP, line
+  numbers, wide lines scroll inside the block only; `components/practice/CodeBlock.tsx`), the table
+  as the ordinary `TableFigure`. The surface says how she answers: `code_line` — the program's lines
+  ARE the board (`CodeLineAnswer`, numbered `ChoiceList` tiles in monospace; the program then stands
+  there and not in the card, `answerForm.figureInAnswer`), a tap answers with the line number;
+  `code_type` — the one input bar (`TypedAnswer` with `code`): monospace (`TYPE.code`,
+  `LbTextInput.mono`), no math keys, no mic, the return key takes the line, a function starts with
+  its `def` line, and her code stays in the field after "Prüfen" (`leftAfterSend`).
+  `ItemView.code` marks her answers and the solution as code (monospace bubbles, `SolutionCard`).
+- **Her answer** (`practice/codeCheck.ts`, from `answerRules.ts`/`answerJudge.ts`): an output line by
+  line (the first lines that hold are partial; case and quotes named), a line number against the
+  run's line (anything but a line of the program is 422 `use_line`), her function RUN against the
+  stored tests ("3 von 4 Tests bestanden. verdoppeln(-3) soll -6 ergeben, deine Funktion gibt 6
+  zurück."), her query RUN on the table (columns, row count, order, values, SQLite's own message).
+  In a test a partial program is wrong, without feedback. The proven solution is shown once the
+  question is closed, though a function has no single solution (`freeText` excludes code).
+- **Not built** (open in #262): Java and block-based programs; a trace table (#230) checked against a
+  run; "which line is wrong" for a wrong RESULT rather than a crash; reading programs from a
+  photographed sheet; Python on the phone without the network. Live gaps: the Vercel bundle with
+  the WebAssembly files and Skulpt's two source files (nft tracing of `require.resolve`), and the
+  real model's code tasks (an eval is needed for how often its probe disagrees).
+
 ### Explain profiles (issue #281, D2)
 
 Every explain call is sent only the forms its run can use — the schema is derived from the kind
@@ -5288,6 +5363,47 @@ the role; code holds the frame (CLAUDE.md rule 1).
   `buddy/__tests__/roleplay.test.ts`, `components/buddy/__tests__/Conversation.test.tsx` (the
   card in place of the text), walkthrough `tests/web/roleplay.spec.ts` (scripted in
   `src/testing/scenarios/roleplay.ts`).
+
+## Talks and reading aloud
+
+A Referat, a GFS, a presentation or a poem to recite, and reading a longer text aloud (issue #264,
+migration `0104_code_tasks_and_talks.sql`). Buddy carries all of it in the chat — no screen of its
+own (CLAUDE.md rule 16).
+
+- **The talk as a goal** (`buddy/talkTools.ts`, tool `plan_talk`): a goal of kind `talk` with its
+  day and, when she said it, its length (`talk_minutes`), and one step of kind `task` per stage still
+  ahead — topic → outline → sources → slides or cue cards → rehearsal (`payload.stage`). The model
+  names stages and days as DaySpec; code resolves every day in her zone and refuses a plan that
+  cannot be kept (a stage twice or out of order, a step on or after the day of the talk, a later
+  stage before an earlier one) — one repair round, like every tool. The steps' titles are the
+  app's words. Reminders stay opt-in: a step has a day, no time (rule 6). Undo drops the goal and
+  cancels its steps. STATE shows the talk with the line "never write it for her", each step's stage,
+  and once rehearsed what was measured; the home's list shows the day as `UpcomingItem.kind 'talk'`.
+- **The card that records** (tool `offer_rehearsal`, `components/buddy/RehearseCard.tsx`): kind
+  `talk` (up to 10 min, for a planned talk or none) or `read_aloud` (up to 2 min, the passage itself
+  in the offer, 15–220 words, checked by code). The card shows the talk's title or the whole
+  passage, the length she was given, one button that starts and ends the recording (the shared
+  `RecordingStatus` line while it runs), 24 kbit/s mono (`useRecording({ long })`).
+- **Measured by code** (`POST /buddy/rehearsals`, `buddy/rehearse.ts`, `talkMeasure.ts`): one
+  model call (`transcribe` budget) writes down what was said — hesitation sounds in curly braces, a
+  transcription mark, so code COUNTS them and never decides from a word list (rule 3) — and for a
+  talk names per part (opening, main, closing) whether it is there, with a quote. Code computes the
+  duration from the recorder's clock against the given length, words per minute (reading: words of
+  the text read right per minute), the hesitation sounds, a part `heard` only when its quote stands
+  in the transcript (`unknown` otherwise, `not_heard` only when the model said so — the rubric rule
+  of #211), and for reading aloud the words of the text she skipped or read as another word (an
+  edit distance over words; a number may be said in words; a repetition is no error). The talk's
+  open rehearsal step is done by evidence. Buddy's message carries the result
+  (`buddy_messages.rehearsal_id`, `MessageView.rehearsal`), its words written by code from the
+  numbers; the app shows it as the one "So lief's" list (`RehearsalResult`). No score, no grade.
+- **Privacy**: the recording lives in the request's memory only, the transcript is never stored;
+  `rehearsals` keeps the numbers and the given text's words (docs/privacy.md, docs/dpia.md R14). The
+  same recording sent twice is one rehearsal; another learner's card is 404; no speech is 422 and
+  leaves nothing.
+- **Not built / live gaps**: the real model's transcription of 10 minutes (latency, whether it marks
+  every hesitation sound) and of a child reading slowly; recording 10 minutes on a real phone
+  (memory, file size under 2.8 MB, a call interrupting it); feedback on the content of a talk beyond
+  its parts.
 
 ## Home
 

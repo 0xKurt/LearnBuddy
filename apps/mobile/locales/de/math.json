@@ -515,7 +515,11 @@
     "map_mountains": "Die Gebirge sind Flächen.",
     "map_grid": "Mit Gradnetz, die Linien alle {{step}}°.",
     "schematic": "Abbildung: {{name}}.",
-    "schematic_numbered": "Abbildung: {{name}}, {{count}} Teile nummeriert."
+    "schematic_numbered": "Abbildung: {{name}}, {{count}} Teile nummeriert.",
+    "code_one": "Programm mit einer Zeile",
+    "code_line": "Zeile {{n}}: {{text}}",
+    "code_empty": "leer",
+    "code_other": "Programm mit {{count}} Zeilen"
   },
   "keys": {
     "row": "Mathe-Zeichen",

@@ -21,6 +21,7 @@ import {
   MeResponse,
   type OutreachAction,
   OutreachActionResponse,
+  RehearseResponse,
   ReplyStreamEvent,
   SendMessageResponse,
   SessionView,
@@ -39,6 +40,7 @@ import {
   type ListenAudioRequest,
   type ReadWorkRequest,
   type ReexplainWay,
+  type RehearseRequest,
   type SpeakWordRequest,
   SpeakStreamEvent,
   type SpeakRequest,
@@ -174,6 +176,13 @@ export const endRoleplay = (roleplayId: string) =>
     body: {},
     schema: EndRoleplayResponse,
   });
+
+/**
+ * Her recording on Buddy's rehearsal card (issue #264): measured on the server and never kept; the
+ * result lands in the thread as his message.
+ */
+export const sendRehearsal = (body: RehearseRequest) =>
+  request('POST', '/buddy/rehearsals', { body, schema: RehearseResponse });
 
 export const reportOutcome = (goalId: string, outcome: 'good' | 'ok' | 'hard') =>
   request('POST', `/buddy/goals/${goalId}/outcome`, { body: { outcome }, schema: BuddyHome });

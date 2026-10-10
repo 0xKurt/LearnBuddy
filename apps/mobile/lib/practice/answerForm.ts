@@ -34,6 +34,13 @@ export function answerForm(item: ItemView, open: boolean) {
   // A figure she taps a place in (issue #248): a board like the bar — the place is the answer, and
   // the figure stands there, at the bottom, instead of in the question card.
   const tapFigure = open && item.tap && item.figure && isTappable(item.figure) ? item.figure : null;
+  // A program whose failing line she taps (issue #262): its lines are the board, so the program
+  // stands there, at the bottom, instead of in the question card — once, not twice.
+  const codeLines =
+    open && item.surface?.mode === 'code_line' && item.figure?.type === 'code' ? item.figure : null;
+  // A program, a query or an output she writes (issue #262): typed like any answer, in the one
+  // input bar — in monospace, without math keys and without a mic.
+  const code = open && item.surface?.mode === 'code_type' ? item.surface : null;
   const typed =
     open &&
     choices === null &&
@@ -43,8 +50,24 @@ export function answerForm(item: ItemView, open: boolean) {
     !taps &&
     barSurface === null &&
     tapFigure === null &&
+    codeLines === null &&
     !speaking;
-  return { choices, tapChoices, speaking, structured, staff, taps, barSurface, tapFigure, typed };
+  /** The question's figure IS her board and stands in the answer, not in the card. */
+  const figureInAnswer = tapFigure !== null || codeLines !== null;
+  return {
+    choices,
+    tapChoices,
+    speaking,
+    structured,
+    staff,
+    taps,
+    barSurface,
+    tapFigure,
+    codeLines,
+    code,
+    typed,
+    figureInAnswer,
+  };
 }
 
 /** Which way she answers this question (`answerForm`). */

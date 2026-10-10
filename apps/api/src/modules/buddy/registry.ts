@@ -227,6 +227,22 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     does: 'start a roleplay in the foreign language she wants to practise speaking (she asks for one, or sends a role card): you set the scene, your role and 3 to 5 tasks for her; the app then runs it turn by turn with you in the role and gives her feedback on each task afterwards. Your reply says in her language that it starts, then opens the scene in the roleplay language',
     run: ACT_HANDLERS.start_roleplay,
   },
+  plan_talk: {
+    surfaces: TURN,
+    touches: ['goals', 'steps'],
+    needsQuote: true,
+    undoable: true,
+    does: 'plan a talk (Referat, GFS, presentation, recital) with its day and the steps before it',
+    run: ACT_HANDLERS.plan_talk,
+  },
+  offer_rehearsal: {
+    surfaces: TURN,
+    touches: ['nothing'],
+    needsQuote: false,
+    undoable: false,
+    does: 'offer a card that records a rehearsal of her talk, or her reading a given text aloud, and measures it',
+    run: ACT_HANDLERS.offer_rehearsal,
+  },
 };
 
 const NAMES = Object.keys(ACT_SCHEMAS) as ToolName[];

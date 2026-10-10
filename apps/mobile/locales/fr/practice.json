@@ -418,5 +418,11 @@
     "down": "Je ne peux pas lire ta photo pour l'instant. Tape ton calcul ou réessaie dans un instant.",
     "camera_blocked": "LearnBuddy n'a pas encore le droit d'utiliser l'appareil photo. Tu peux l'autoriser dans les réglages – ou taper ton calcul.",
     "camera_failed": "L'appareil photo ne s'est pas ouvert. Réessaie ou tape ton calcul."
+  },
+  "code": {
+    "line": "Ligne {{n}}",
+    "placeholder_output": "Qu’est-ce qui s’affiche ?",
+    "placeholder_program": "Ton programme …",
+    "placeholder_query": "SELECT …"
   }
 }

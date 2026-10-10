@@ -77,6 +77,11 @@ export type LbTextInputProps = Omit<TextInputProps, 'style'> & {
   /** The most lines it grows to before it scrolls inside itself (a long text wants more). */
   maxRows?: number;
   /**
+   * Code (issue #262): the monospace face of `TYPE.code`, so a program's indentation and an
+   * output's columns stand as they run.
+   */
+  mono?: boolean;
+  /**
    * A visible name above the field ("Tag", "PIN"). The field says it to a screen reader itself
    * (its `accessibilityLabel`, unless one is given), so the line above is hidden from it.
    */
@@ -124,6 +129,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
     under = null,
     rows = 1,
     maxRows = MAX_ROWS,
+    mono = false,
     label,
     clearable,
     showToggle,
@@ -277,6 +283,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
                   ? { paddingTop: SPACE.sm, paddingBottom: under === null ? 0 : SPACE.sm }
                   : {}),
                 fontSize: TYPE.body.fontSize,
+                fontFamily: mono ? TYPE.code.fontFamily : undefined,
                 lineHeight: LINE,
                 // What she writes into a board stands apart from its print, as a pencil does:
                 // the accent, a step bolder (the cloze's tapped words look the same, `Slot`).

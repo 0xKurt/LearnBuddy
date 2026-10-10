@@ -9,6 +9,7 @@
 // render time is always the active palette.
 import type { TextStyle } from 'react-native';
 
+import { MONOSPACE } from './monospace.js';
 import { DEFAULT_THEME, paletteOf, type Palette } from './palettes.js';
 
 /**
@@ -99,6 +100,17 @@ function typeOf(p: Palette) {
       fontWeight: weightOf('600'),
       color: p.ink2,
       letterSpacing: 0.2,
+    },
+    /**
+     * Code (Informatik, issue #262): a program, a query, an output. Monospace, so that columns and
+     * indentation stand as they run — 14 pt fits 40 characters on a 360-pt phone.
+     */
+    code: {
+      fontFamily: MONOSPACE,
+      fontSize: 14,
+      lineHeight: 20,
+      fontWeight: weightOf(undefined),
+      color: p.ink,
     },
   } satisfies Record<string, TextStyle>;
 }

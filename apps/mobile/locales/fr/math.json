@@ -515,7 +515,11 @@
     "map_mountains": "Les chaînes de montagnes sont des surfaces.",
     "map_grid": "Avec le réseau des méridiens et des parallèles, une ligne tous les {{step}}°.",
     "schematic": "Image : {{name}}.",
-    "schematic_numbered": "Image : {{name}}, {{count}} parties numérotées."
+    "schematic_numbered": "Image : {{name}}, {{count}} parties numérotées.",
+    "code_one": "Programme d’une ligne",
+    "code_line": "Ligne {{n}} : {{text}}",
+    "code_empty": "vide",
+    "code_other": "Programme de {{count}} lignes"
   },
   "keys": {
     "row": "Symboles mathématiques",

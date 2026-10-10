@@ -515,7 +515,11 @@
     "map_mountains": "Las cordilleras son superficies.",
     "map_grid": "Con la red de meridianos y paralelos, una línea cada {{step}}°.",
     "schematic": "Imagen: {{name}}.",
-    "schematic_numbered": "Imagen: {{name}}, {{count}} partes numeradas."
+    "schematic_numbered": "Imagen: {{name}}, {{count}} partes numeradas.",
+    "code_one": "Programa de una línea",
+    "code_line": "Línea {{n}}: {{text}}",
+    "code_empty": "vacía",
+    "code_other": "Programa de {{count}} líneas"
   },
   "keys": {
     "row": "Símbolos matemáticos",

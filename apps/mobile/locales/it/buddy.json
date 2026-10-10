@@ -46,7 +46,9 @@
     "set_voice": "La mia voce: {{voice}}, {{speed}}",
     "forget_all": "Ho dimenticato tutto quello che sapevo di te ({{count}})",
     "offer_drill": "Proposto: calcolo mentale – «{{text}}»",
-    "start_roleplay": "Gioco di ruolo: {{scene}}"
+    "start_roleplay": "Gioco di ruolo: {{scene}}",
+    "plan_talk": "Presentazione «{{title}}» prevista il {{day}}: {{steps}}",
+    "offer_rehearsal": "Prova proposta: {{title}}"
   },
   "area": {
     "library": "Il tuo materiale",
@@ -389,6 +391,48 @@
       "open": "Non ancora",
       "better": "Così suona ancora meglio",
       "quote": "«{{quote}}»"
+    }
+  },
+  "rehearse": {
+    "talk": "Prova",
+    "read_aloud": "Lettura ad alta voce",
+    "start": "Avvia la registrazione",
+    "hint_talk": "Presenta come se la classe ascoltasse. Al massimo 10 minuti.",
+    "hint_talk_minutes": "Sono previsti {{minutes}} minuti. Presenta come se la classe ascoltasse.",
+    "hint_read": "Leggi il testo ad alta voce. Al massimo 2 minuti.",
+    "too_short": "È stato molto breve. Avvia la registrazione e parla fino alla fine.",
+    "result": {
+      "length": "Durata",
+      "length_of": "{{duration}} su {{target}}",
+      "verdict": {
+        "fits": "Rispetta la durata prevista",
+        "short": "Un po’ breve: c’è ancora tempo",
+        "long": "Un po’ lungo: dove puoi accorciare?"
+      },
+      "pace": "Ritmo",
+      "pace_text": "{{wpm}} parole al minuto",
+      "fillers": "Suoni di esitazione",
+      "fillers_text_one": "Una volta «ehm»",
+      "fillers_text_other": "{{count}} volte «ehm»",
+      "part": {
+        "opening": "Introduzione",
+        "main": "Parte centrale",
+        "closing": "Conclusione"
+      },
+      "status": {
+        "heard": "Sentito",
+        "not_heard": "Non ancora sentito",
+        "unknown": "Non riconosciuto con certezza"
+      },
+      "words": "Parole da esercitare",
+      "words_none": "Tutto letto come è scritto"
+    },
+    "stage": {
+      "topic": "Argomento",
+      "outline": "Scaletta",
+      "sources": "Fonti",
+      "slides": "Slide",
+      "rehearsal": "Prova"
     }
   }
 }

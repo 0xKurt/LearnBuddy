@@ -6,9 +6,12 @@
 
 import type { Deps } from '../../deps.js';
 import { AppError } from '../../lib/errors.js';
+import { consume, limitError } from '../../lib/limits.js';
 import { pointOf } from '../curriculum/state.js';
 import type { Answering } from './answerLoad.js';
 import { taskOf } from './bars.js';
+import { codeTaskOf } from './code.js';
+import { checkCode, pickedLine, runsCode, writtenCode, type CodeCheck } from './codeCheck.js';
 import { checkDictation, type DictationCheck } from './dictation.js';
 import { differentNumber, ruleCheck, type RuleVerdict } from './evaluate.js';
 import { listenTaskOf } from './listen.js';
@@ -20,6 +23,19 @@ import { checkStaffAnswer, staffTaskOf, type StaffAnswerCheck } from './staff.js
 import { answerTextOf } from './structured.js';
 import { tappedAnswerText } from './tapCheck.js';
 import { explanationSoFar, NOTHING_EXPLAINED } from './teachBack.js';
+
+/**
+ * A run of her function or query in the sandbox takes one from her account's hourly budget
+ * (`code_runs`, docs/architecture.md §Limits): each run holds the API's thread for up to 2.5 s.
+ */
+async function spendCodeRun(deps: Deps, learnerId: string): Promise<void> {
+  const { account_id } = await deps.db.one<{ account_id: string }>(
+    `select account_id from learners where id = $1`,
+    [learnerId],
+  );
+  const budget = await consume(deps.db, 'code_runs', account_id, deps.now());
+  if (!budget.allowed) throw limitError(budget);
+}
 
 /** What the rules made of her answer: the verdict by key and what it was read from. */
 export type Ruled = Awaited<ReturnType<typeof ruleVerdict>>;
@@ -53,6 +69,24 @@ export async function ruleVerdict(deps: Deps, a: Answering) {
       : checkStaffAnswer(learner.locale, staffTask, input.text ?? '');
   /** Ihre Zeile in Worten bzw. wie oft sie geklopft hat, damit der Gesprächsfaden lesbar bleibt. */
   const staffWritten = staffCheck?.written ?? null;
+  // ── a PROGRAM or a QUERY (issue #262) ──
+  //
+  // Her output, the line she tapped, her function or her query — checked by code RUNNING it in
+  // the sandbox (`codeCheck.ts`), never by a model. "Which line?" takes only a line number of the
+  // program shown; anything else is a form the question never offered.
+  const codeTask = codeTaskOf(item.code_task);
+  if (codeTask !== null && !hintRequest && runsCode(codeTask)) await spendCodeRun(deps, learner.id);
+  const codeCheck: CodeCheck | null =
+    hintRequest || codeTask === null ? null : await checkCode(codeTask, input.text ?? '');
+  if (codeTask?.task === 'find_error' && !hintRequest && codeCheck === null) {
+    throw new AppError('invalid_input', 'This question is answered by tapping a line', {
+      reason: 'use_line',
+    });
+  }
+  const codeWritten =
+    codeTask !== null && !hintRequest && pickedLine(input.text ?? '') !== null
+      ? writtenCode(learner.locale, codeTask, input.text ?? '')
+      : null;
   // A region of a map or a part of a picture she tapped (issues #251, #252): the app sends the
   // German name; in the thread it stands in her language, like every answer written here.
   const regionWritten =
@@ -63,6 +97,7 @@ export async function ruleVerdict(deps: Deps, a: Answering) {
         // all see what she actually did.
         answerTextOf(structured, input.parts, learner.locale)
       : (staffWritten ??
+        codeWritten ??
         regionWritten ??
         input.text ??
         (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null));
@@ -121,12 +156,19 @@ export async function ruleVerdict(deps: Deps, a: Answering) {
           : staffCheck.verdict === 'partly'
             ? 'parts_left'
             : 'incorrect'
-        : ruleCheck(
-            // A question code computed asks for an amount, so any form of it is right (#162);
-            // a question she HEARD is judged on what she understood, not how she wrote it (#210).
-            { ...item, form_free: barTask !== null, listening },
-            { text: input.text ?? null, choice: input.choice ?? null, locale: learner.locale },
-          );
+        : codeCheck !== null
+          ? codeCheck.verdict === 'correct'
+            ? 'correct'
+            : // In a test a program is right or not: no partial feedback until the end.
+              codeCheck.verdict === 'partly' && session.mode !== 'test'
+              ? 'parts_left'
+              : 'incorrect'
+          : ruleCheck(
+              // A question code computed asks for an amount, so any form of it is right (#162);
+              // a question she HEARD is judged on what she understood, not how she wrote it (#210).
+              { ...item, form_free: barTask !== null, listening },
+              { text: input.text ?? null, choice: input.choice ?? null, locale: learner.locale },
+            );
   // A Diktat is decided by its own exact check (issue #242), never by the key comparison above.
   const byRules: RuleVerdict =
     dictationCheck !== null ? (dictationCheck.correct ? 'correct' : 'incorrect') : byOtherRules;
@@ -141,6 +183,8 @@ export async function ruleVerdict(deps: Deps, a: Answering) {
     partsCheck,
     staffTask,
     staffCheck,
+    codeTask,
+    codeCheck,
     text,
     barTask,
     curriculumPoint,

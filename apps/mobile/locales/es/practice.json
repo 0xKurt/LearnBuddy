@@ -418,5 +418,11 @@
     "down": "Ahora mismo no puedo leer tu foto. Escribe tu procedimiento o inténtalo otra vez en un momento.",
     "camera_blocked": "LearnBuddy todavía no puede usar la cámara. Puedes permitirlo en Ajustes – o escribir tu procedimiento.",
     "camera_failed": "La cámara no se ha abierto. Inténtalo otra vez o escribe tu procedimiento."
+  },
+  "code": {
+    "line": "Línea {{n}}",
+    "placeholder_output": "¿Qué aparece en la pantalla?",
+    "placeholder_program": "Tu programa …",
+    "placeholder_query": "SELECT …"
   }
 }

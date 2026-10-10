@@ -8,6 +8,7 @@
 
 import {
   BarTask,
+  CodeTask,
   type ItemKind,
   MAX_LISTEN_QUESTIONS,
   StaffTask,
@@ -21,6 +22,7 @@ import { z } from 'zod';
 import type { JsonSchema } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { MAX_BAR_ITEMS } from './bars.js';
+import { MAX_CODE_ITEMS } from './code.js';
 import { CLOZE_RULES } from './cloze.js';
 import { DictationDraft, DictationDraftParsed } from './dictation.js';
 import { GRID_RULES } from './grid.js';
@@ -99,6 +101,12 @@ export const GeneratedSet = z.object({
    */
   staffs: z.array(StaffTask).max(MAX_STAFF_ITEMS).default([]),
   /**
+   * Programs and SQL queries (issue #262). A separate list for the reason the note lines are one,
+   * one step stronger: the key is not computed from parameters but taken from RUNNING the program
+   * or the query (`practice/code.ts`). What the model expects travels along only as a probe.
+   */
+  codes: z.array(CodeTask).max(MAX_CODE_ITEMS).default([]),
+  /**
    * Structured items (issues #228–#230): an order to find, a table to fill in, links to make.
    * Their own list, because their key is a shape code builds and checks
    * (`practice/structured.ts`, Regel 0 of #224), not a text in `answer`.
@@ -164,6 +172,8 @@ export type SetProfile = {
   structured: readonly StructuredKind[];
   bars: boolean;
   staffs: boolean;
+  /** Programs and SQL queries (#262): in practice and tests, like the note lines. */
+  codes: boolean;
   listen: boolean;
   /** A Diktat's entries (#242): only in a Diktat run, where they are all there is. */
   dictation: boolean;
@@ -217,6 +227,7 @@ function onlyItems(items: readonly ModelItemKind[]): SetProfile {
     structured: [],
     bars: false,
     staffs: false,
+    codes: false,
     listen: false,
     dictation: false,
     teachBack: false,
@@ -232,6 +243,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     structured: STRUCTURED_FORMS,
     bars: true,
     staffs: true,
+    codes: true,
     listen: false,
     dictation: false,
     teachBack: false,
@@ -245,6 +257,7 @@ export const SET_PROFILES: Record<StartTopicRequest['kind'], SetProfile> = {
     structured: STRUCTURED_FORMS,
     bars: false,
     staffs: true,
+    codes: true,
     listen: false,
     dictation: false,
     teachBack: false,
@@ -282,6 +295,7 @@ export const FALLBACK_PROFILE: SetProfile = {
   structured: STRUCTURED_FORMS,
   bars: true,
   staffs: true,
+  codes: true,
   listen: false,
   dictation: false,
   teachBack: false,
@@ -406,6 +420,7 @@ export function setSchemaForModel(
     ...(item ? {} : { items: true }),
     ...(profile.bars ? {} : { bars: true }),
     ...(profile.staffs ? {} : { staffs: true }),
+    ...(profile.codes ? {} : { codes: true }),
     ...(structured ? {} : { structured: true }),
     ...(profile.listen ? {} : { listen: true }),
     ...(profile.dictation ? {} : { dictation: true }),
@@ -431,6 +446,7 @@ export function parseSetFor(
     items: itemsOneByOne(item ?? NOTHING, 25),
     bars: itemsOneByOne(profile.bars ? BarTask : NOTHING, MAX_BAR_ITEMS),
     staffs: itemsOneByOne(profile.staffs ? StaffTask : NOTHING, MAX_STAFF_ITEMS),
+    codes: itemsOneByOne(profile.codes ? CodeTask : NOTHING, MAX_CODE_ITEMS),
     structured: itemsOneByOne(structured ?? NOTHING, MAX_STRUCTURED_ITEMS),
     // A listening task that does not fit its schema is no listening task, and the run then has
     // nothing — which the caller says plainly (`not_usable`, issue #210). Its questions are read

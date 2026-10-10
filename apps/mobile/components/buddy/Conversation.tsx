@@ -34,6 +34,8 @@ import { SHADOW } from '../../lib/theme/shadow.js';
 import { AreaCard } from './AreaCard.js';
 import { ConfirmCard } from './ConfirmCard.js';
 import { RoleplayCard } from './RoleplayCard.js';
+import { RehearsalResult } from './RehearsalResult.js';
+import { RehearseCard } from './RehearseCard.js';
 import { RoleplayResult } from './RoleplayResult.js';
 import { deliveryText, describeAction, onlyInApp } from './describe.js';
 import { i18n } from '../../lib/i18n/index.js';
@@ -70,6 +72,8 @@ function actionCard(a: MessageView['actions'][number], spoken: boolean): ReactNo
   if (s.tool === 'confirm_delete') return <ConfirmCard confirm={s} />;
   // The role card: the scene, her tasks and the way out (issue #244).
   if (s.tool === 'start_roleplay') return <RoleplayCard roleplay={s} />;
+  // A rehearsal talk or reading aloud, recorded on the card itself (issue #264).
+  if (s.tool === 'offer_rehearsal') return <RehearseCard actionId={a.id} offer={s} />;
   return null;
 }
 
@@ -87,7 +91,8 @@ function receiptOf(m: MessageView): MessageView['actions'] {
       a.summary.tool !== 'offer_drill' &&
       a.summary.tool !== 'open_area' &&
       a.summary.tool !== 'confirm_delete' &&
-      a.summary.tool !== 'start_roleplay',
+      a.summary.tool !== 'start_roleplay' &&
+      a.summary.tool !== 'offer_rehearsal',
   );
 }
 
@@ -294,6 +299,12 @@ export function Conversation({
               // in place of its text (issue #384). The text stays for reading aloud.
               <Animated.View entering={enterOf(m, 0)} style={{ width: '86%' }}>
                 <RoleplayResult feedback={m.roleplay_feedback} />
+              </Animated.View>
+            ) : m.rehearsal ? (
+              // What a rehearsal measured, the same list (issue #264); the text stays for reading
+              // aloud and copying.
+              <Animated.View entering={enterOf(m, 0)} style={{ width: '86%' }}>
+                <RehearsalResult rehearsal={m.rehearsal} />
               </Animated.View>
             ) : (
               <Animated.View

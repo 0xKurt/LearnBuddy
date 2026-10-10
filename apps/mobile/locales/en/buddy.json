@@ -46,7 +46,9 @@
     "set_voice": "My voice: {{voice}}, {{speed}}",
     "forget_all": "Forgot everything I knew about you ({{count}})",
     "offer_drill": "Offered: mental maths – “{{text}}”",
-    "start_roleplay": "Roleplay: {{scene}}"
+    "start_roleplay": "Roleplay: {{scene}}",
+    "plan_talk": "Talk “{{title}}” planned for {{day}}: {{steps}}",
+    "offer_rehearsal": "Rehearsal offered: {{title}}"
   },
   "area": {
     "library": "Your material",
@@ -389,6 +391,48 @@
       "open": "Not yet",
       "better": "This sounds even better",
       "quote": "“{{quote}}”"
+    }
+  },
+  "rehearse": {
+    "talk": "Rehearsal",
+    "read_aloud": "Reading aloud",
+    "start": "Start recording",
+    "hint_talk": "Give your talk as if the class were listening. 10 minutes at most.",
+    "hint_talk_minutes": "{{minutes}} minutes are planned. Give it as if the class were listening.",
+    "hint_read": "Read the text aloud. 2 minutes at most.",
+    "too_short": "That was very short. Start the recording and talk until you are done.",
+    "result": {
+      "length": "Length",
+      "length_of": "{{duration}} of {{target}}",
+      "verdict": {
+        "fits": "Fits the length you were given",
+        "short": "A bit short – there is time left",
+        "long": "A bit long – where can you shorten it?"
+      },
+      "pace": "Pace",
+      "pace_text": "{{wpm}} words per minute",
+      "fillers": "Hesitation sounds",
+      "fillers_text_one": "“Um” or “uh” once",
+      "fillers_text_other": "“Um” or “uh” {{count}} times",
+      "part": {
+        "opening": "Opening",
+        "main": "Main part",
+        "closing": "Closing"
+      },
+      "status": {
+        "heard": "Heard",
+        "not_heard": "Not heard yet",
+        "unknown": "Not clearly recognised"
+      },
+      "words": "Words to practise",
+      "words_none": "Everything read just as it is written"
+    },
+    "stage": {
+      "topic": "Topic",
+      "outline": "Outline",
+      "sources": "Sources",
+      "slides": "Slides",
+      "rehearsal": "Rehearsal"
     }
   }
 }

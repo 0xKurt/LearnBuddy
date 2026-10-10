@@ -131,6 +131,25 @@ function failureNote(reason: string | null): string {
   }
 }
 
+/**
+ * A step of a talk in STATE (issue #264): which stage it is and, once rehearsed, what the
+ * rehearsal measured — read from the step's evidence, which code wrote from the recording.
+ */
+function taskExtra(st: StepRow): string {
+  const stage = st.payload.stage ? ` [${st.payload.stage}]` : '';
+  const ev = st.evidence as {
+    duration_s?: number;
+    target_s?: number | null;
+    words_per_minute?: number;
+    fillers?: number | null;
+  } | null;
+  if (!ev || typeof ev.duration_s !== 'number') return stage;
+  const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  const of = ev.target_s ? ` of ${mmss(ev.target_s)}` : '';
+  const fillers = typeof ev.fillers === 'number' ? `, ${ev.fillers} filler sounds` : '';
+  return `${stage} (rehearsed: ${mmss(ev.duration_s)}${of}, ${ev.words_per_minute ?? '?'} words/min${fillers})`;
+}
+
 function fmtDay(date: string, today: string, locale: string): string {
   const d = daysBetween(today, date);
   const rel =
@@ -271,7 +290,9 @@ export function buildContext(
     const extra =
       st.kind === 'practice' && st.payload.item_ids
         ? ` (${st.payload.item_ids.length} questions, ~${st.payload.est_minutes ?? '?'} min)`
-        : '';
+        : st.kind === 'task'
+          ? taskExtra(st)
+          : '';
     const done = st.done_source === 'learner_reported' ? ' (learner said so)' : '';
     // A standing arrangement, so a second "erinner mich jeden Tag" is recognised as the one
     // she already has instead of becoming a second one (issue #112).
@@ -294,9 +315,16 @@ export function buildContext(
     const status =
       g.status === 'active' ? '' : ` [${g.status}${g.outcome ? `, went ${g.outcome}` : ''}]`;
     goalsBlock.push(`- ${alias} ${g.kind} "${g.title}"${date}${subj}${status}`);
+    // A talk (issue #264): its length is what the rehearsal measures against. She writes and
+    // gives it herself — Buddy plans, listens and says what was measured, never writes it.
+    if (g.kind === 'talk') {
+      goalsBlock.push(
+        `  a talk she gives herself${g.talk_minutes ? `, ${g.talk_minutes} min long` : ''}: never write it, its outline, its slides or its cue cards for her — give feedback on what she has, and offer a rehearsal (offer_rehearsal) when she wants to try it`,
+      );
+    }
     if (g.topics.length > 0) goalsBlock.push(`  topics: ${g.topics.join(', ')}`);
     const mats = state.materials.filter((m) => m.goal_id === g.id);
-    if (g.status === 'active') {
+    if (g.status === 'active' && g.kind !== 'talk') {
       const ready = mats.filter((m) => m.status === 'ready');
       const pending = mats.filter((m) => m.status !== 'ready' && m.status !== 'failed');
       const questions = ready.reduce((n, m) => n + m.item_count, 0);

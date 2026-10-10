@@ -163,6 +163,18 @@ export function describeAction(a: ActionSummary): string {
     case 'start_roleplay':
       // History: what she played. In the chat the roleplay has a card of its own (issue #244).
       return t('action.start_roleplay', { scene: a.scene });
+    case 'plan_talk':
+      // The talk and its steps, each with its day; the steps' names are the app's (issue #264).
+      return t('action.plan_talk', {
+        title: a.title,
+        day: formatDay(a.due_date, locale),
+        steps: a.steps
+          .map((s) => `${t(`rehearse.stage.${s.stage}`)} ${formatDayShort(s.date, locale)}`)
+          .join(' · '),
+      });
+    case 'offer_rehearsal':
+      // History: what she was offered. In the chat it is a card of its own (`RehearseCard`).
+      return t('action.offer_rehearsal', { title: a.title });
     case 'confirm_delete':
       // The card says it; the chip list would only repeat the question she is looking at.
       return '';

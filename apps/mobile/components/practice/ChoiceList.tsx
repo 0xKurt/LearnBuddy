@@ -15,6 +15,9 @@
 // letter's column; the one she picks stays picked (a radio, the tile tinted) while she writes it
 // right below. The task itself stands above them, numbered the same, but no tile: it is not one to
 // pick.
+// The lines of a program whose failing line she taps (Informatik, issue #262, `CodeLineAnswer`):
+// the same tiles one under the other, numbered, each line in monospace with its indentation kept
+// and never read as math — a tap answers.
 // In a conversation (issue #386) the bar is the conversation row (`CheckBar`, `Talk`): what she
 // says is sent as a text answer (the server matches it to a choice by its text).
 // Once the question is closed (issue #521) the options stay where they were, read only, so a
@@ -40,6 +43,7 @@ import { AnswerTile } from '../lb/AnswerTile.js';
 import { Btn, BTN_PAD_COMPACT } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 import { ZoomViewer } from '../lb/ZoomViewer.js';
+import { keepSpaces } from './CodeBlock.js';
 import { describeFigure } from '../math/describeFigure.js';
 import { FigureView } from '../math/FigureView.js';
 import { MathText } from '../math/MathText.js';
@@ -71,6 +75,8 @@ type Props = {
   marks?: ReadonlyArray<{ mark: string; label: string }>;
   /** A line above the options, numbered like them but not one to tap (the task, #260). */
   lead?: { mark: string; text: string; label: string } | null;
+  /** The options are lines of code (#262): monospace, spaces kept, one under the other. */
+  code?: boolean;
   /**
    * The question is closed (issue #521): what each option says now, parallel to `choices`
    * (`choiceMarks`). Set, nothing is tappable; unset, the options are open.
@@ -123,6 +129,7 @@ function TextChoices({
   picked,
   marks,
   lead = null,
+  code = false,
   settled = null,
   disabled,
   onChoose,
@@ -135,7 +142,7 @@ function TextChoices({
   // What fits is arithmetic, not a feeling (see "what fits half a line" below). Options to tick
   // may be six: three rows of short ones (contracts/structured.ts, SELECT_MAX).
   // Lines to pick from are read top to bottom: never two by two, never set large and centred.
-  const lines = picked !== undefined;
+  const lines = picked !== undefined || code;
   const grid = !lines && twoColumnChoices(choices, ticked ? SELECT_MAX : CHOICE_GRID_MAX);
   return (
     <View
@@ -183,7 +190,7 @@ function TextChoices({
               disabled={disabled || state !== undefined}
               onPress={() => onChoose?.(index, choice)}
               {...(ticked ? { checked: on } : {})}
-              {...(lines ? { selected: on } : {})}
+              {...(picked !== undefined ? { selected: on } : {})}
               accessibilityHint={note?.hint}
               // Math in a choice is set properly; a screen reader hears it in words.
               label={
@@ -203,26 +210,36 @@ function TextChoices({
                   )}
                   {/* token-exempt: the choice and its line 2 apart; line heights carry the air */}
                   <View style={{ flex: 1, gap: 2, alignItems: big ? 'center' : 'flex-start' }}>
-                    <MathText
-                      text={choice}
-                      accessible={false}
-                      style={[
-                        {
-                          color: back ? palette.ink2 : on || mine ? palette.primaryDk : palette.ink,
-                          fontSize: big ? MATH_CHOICE_FONT : CHOICE_FONT,
-                          lineHeight: big ? MATH_CHOICE_LINE : CHOICE_LINE,
-                          fontWeight: CHOICE_WEIGHT,
-                        },
-                        wholeWordsFit(choice, grid) ? WHOLE_WORDS : null,
-                      ]}
-                    />
+                    {code ? (
+                      <Text accessible={false} style={TYPE.code}>
+                        {keepSpaces(choice)}
+                      </Text>
+                    ) : (
+                      <MathText
+                        text={choice}
+                        accessible={false}
+                        style={[
+                          {
+                            color: back
+                              ? palette.ink2
+                              : on || mine
+                                ? palette.primaryDk
+                                : palette.ink,
+                            fontSize: big ? MATH_CHOICE_FONT : CHOICE_FONT,
+                            lineHeight: big ? MATH_CHOICE_LINE : CHOICE_LINE,
+                            fontWeight: CHOICE_WEIGHT,
+                          },
+                          wholeWordsFit(choice, grid) ? WHOLE_WORDS : null,
+                        ]}
+                      />
+                    )}
                     {note ? <MarkWords state={state} text={note.text} /> : null}
                   </View>
                 </View>
               }
             >
               {mark
-                ? `${mark.label}: ${speakMathText(choice, words)}`
+                ? `${mark.label}: ${code ? choice.trim() : speakMathText(choice, words)}`
                 : speakMathText(choice, words)}
             </Btn>
           </AnswerTile>

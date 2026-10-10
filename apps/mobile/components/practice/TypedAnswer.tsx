@@ -30,12 +30,21 @@
 //     `lib/practice/workPhoto.ts`).
 // The fraction bar wrote into this field until #402; it is a board of its own now (report #388
 // §9), whose bar holds her question.
+// Code (Informatik, issue #262) — a program, an SQL query or a program's output — is typed into the
+// same bar in monospace: no math keys, no mic (a recogniser cannot dictate indentation), the return
+// key always takes the line, and a function starts with its first line (`starter`). A program or a
+// query gets the tall bar like a long text.
 // A board may stand above the bar when the typed line belongs to it (issue #260, Fehlerdetektiv:
 // she taps the wrong line of a worked solution, then writes it right here) — the board in the
 // shell's answer slot, the line in this bar, one "Prüfen" for both.
 // Autocorrect is off so the phone never "fixes" what the learner actually wrote.
 
-import { pathPossible, type ItemKind, type SubjectKind } from '@learnbuddy/shared-types/contracts';
+import {
+  pathPossible,
+  type CodeTypeSurface,
+  type ItemKind,
+  type SubjectKind,
+} from '@learnbuddy/shared-types/contracts';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, View, type KeyboardTypeOptions } from 'react-native';
@@ -90,6 +99,8 @@ type Props = {
   board?: { node: ReactNode; waits: string | null; placeholder: string } | null;
   /** The question a photo of her working is read for (issue #444); none: no camera here. */
   work?: WorkTarget | null;
+  /** She writes code (issue #262): monospace, no keys, no mic, the field starting with `starter`. */
+  code?: CodeTypeSurface | null;
 };
 
 /** No question to read a photo for: the hook still runs, its controls are not shown. */
@@ -108,6 +119,7 @@ export function TypedAnswer({
   onReadAgain,
   board = null,
   work = null,
+  code = null,
 }: Props) {
   const { t } = useTranslation(['practice', 'common']);
   const conversation = useConversation();
@@ -118,10 +130,12 @@ export function TypedAnswer({
   const exact = kind === 'numeric' || kind === 'formula' || kind === 'find_error';
   // A Diktat is spelling practice: no mic (it would write the word the way the recogniser spells
   // it), and the keyboard does not capitalise for her — the capital letter is what she practises.
-  const micOff = kind === 'spelling_dictation';
+  const micOff = kind === 'spelling_dictation' || code !== null;
   // A written path, and what the return key therefore does (issue #221).
   const path = hasPath(kind, value);
-  const sends = returnKey(kind, value) === 'send';
+  const sends = code === null && returnKey(kind, value) === 'send';
+  // A program or a query is a small page of code, like a long text (#262); an output is lines.
+  const page = kind === 'essay' || (code !== null && code.purpose !== 'output');
   const inputRef = useRef<LbTextInputRef>(null);
   // Where the cursor is (reported by the field); set `forced` once after an insert to move it.
   const selection = useRef<Selection | null>(null);
@@ -138,7 +152,7 @@ export function TypedAnswer({
   const [caret, setCaret] = useState<number | null>(null);
   // Keyboard accessory, not furniture (issue #16): the math row stands under the bar while she
   // types, and takes no room before.
-  const keys = keysFor({ kind, unit, subjectKind, prompt, path: pathPossible(kind) });
+  const keys = code ? [] : keysFor({ kind, unit, subjectKind, prompt, path: pathPossible(kind) });
   const showKeys = keys.length > 0 && focused;
   // A raise/lower key that is on: the next digits she types become x⁴, H₂, SO₄²⁻.
   const [mode, setMode] = useState<ScriptMode | null>(null);
@@ -201,7 +215,8 @@ export function TypedAnswer({
       testID="answer-field"
       value={value}
       maxLength={max}
-      tall={kind === 'essay' ? (focused ? 'writing' : 'resting') : null}
+      tall={page ? (focused ? 'writing' : 'resting') : null}
+      mono={code !== null}
       onChangeText={(typed) => {
         // Typing ends the hands-free loop: she answers with the keyboard now.
         useHandsFree.getState().disarm();
@@ -224,7 +239,11 @@ export function TypedAnswer({
         setCaret(e.nativeEvent.selection.end);
         if (forced) setForced(undefined);
       }}
-      onFocus={() => setFocused(true)}
+      onFocus={() => {
+        setFocused(true);
+        // A function starts with its first line and the indentation under it (#262).
+        if (code?.starter && value === '') onChange(code.starter);
+      }}
       onBlur={() => {
         setFocused(false);
         // The row goes with the focus, and a mode nobody can see must not stay on.
@@ -233,7 +252,10 @@ export function TypedAnswer({
       // A Diktat says in the field itself that the mic is off (issue #242): one line where
       // she looks anyway, gone as soon as she types — not a second line of grey text.
       placeholder={
-        board?.placeholder ?? t(micOff ? 'answer.placeholder_dictation' : 'answer.placeholder')
+        board?.placeholder ??
+        (code
+          ? t(`code.placeholder_${code.purpose}`)
+          : t(micOff ? 'answer.placeholder_dictation' : 'answer.placeholder'))
       }
       accessibilityLabel={t('answer.label')}
       accessibilityHint={
@@ -265,7 +287,7 @@ export function TypedAnswer({
       // How her math will be read, among the box's tools (it costs no line of its own). Long
       // answers are texts; the preview would only repeat them. In a path it draws the line with
       // the cursor.
-      chips={long ? null : <TypedMathPreview value={previewLine(kind, value, caret)} />}
+      chips={long || code ? null : <TypedMathPreview value={previewLine(kind, value, caret)} />}
       // The keys she types it with, between her lines and the tools — a keyboard accessory
       // (issue #16), only while she types.
       under={
@@ -346,7 +368,7 @@ export function TypedAnswer({
         // A long text keeps "Prüfen" under the bar while there is room: inside it, the button
         // took a column of the whole tall field, and her text ran down a narrow strip beside it
         // (#258). With the keyboard up on a small phone it rides in the bar like every answer.
-        typing: focused && (kind !== 'essay' || dense),
+        typing: focused && (!page || dense),
         input: (checkInBar, checkAcross) => (
           <>
             {bar(checkInBar)}

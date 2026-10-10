@@ -46,7 +46,9 @@
     "set_voice": "Meine Stimme: {{voice}}, {{speed}}",
     "forget_all": "Alles vergessen, was ich über dich wusste ({{count}})",
     "offer_drill": "Angeboten: Kopfrechnen – „{{text}}“",
-    "start_roleplay": "Rollenspiel: {{scene}}"
+    "start_roleplay": "Rollenspiel: {{scene}}",
+    "plan_talk": "Vortrag „{{title}}“ am {{day}} geplant: {{steps}}",
+    "offer_rehearsal": "Probe angeboten: {{title}}"
   },
   "area": {
     "library": "Dein Material",
@@ -389,6 +391,48 @@
       "open": "Noch nicht dabei",
       "better": "So klingt es noch besser",
       "quote": "„{{quote}}“"
+    }
+  },
+  "rehearse": {
+    "talk": "Probevortrag",
+    "read_aloud": "Lautlesen",
+    "start": "Aufnahme starten",
+    "hint_talk": "Halte deinen Vortrag, als ob die Klasse zuhört. Höchstens 10 Minuten.",
+    "hint_talk_minutes": "Vorgesehen sind {{minutes}} Minuten. Halte ihn, als ob die Klasse zuhört.",
+    "hint_read": "Lies den Text laut vor. Höchstens 2 Minuten.",
+    "too_short": "Das war sehr kurz. Starte die Aufnahme und sprich, bis du fertig bist.",
+    "result": {
+      "length": "Länge",
+      "length_of": "{{duration}} von {{target}}",
+      "verdict": {
+        "fits": "Passt zur Vorgabe",
+        "short": "Etwas kurz – da ist noch Zeit",
+        "long": "Etwas lang – wo kannst du kürzen?"
+      },
+      "pace": "Tempo",
+      "pace_text": "{{wpm}} Wörter pro Minute",
+      "fillers": "Pausenlaute",
+      "fillers_text_one": "Einmal „äh“ oder „ähm“",
+      "fillers_text_other": "{{count}}-mal „äh“ oder „ähm“",
+      "part": {
+        "opening": "Einleitung",
+        "main": "Hauptteil",
+        "closing": "Schluss"
+      },
+      "status": {
+        "heard": "Gehört",
+        "not_heard": "Noch nicht gehört",
+        "unknown": "Nicht sicher erkannt"
+      },
+      "words": "Wörter zum Üben",
+      "words_none": "Alles so gelesen, wie es dasteht"
+    },
+    "stage": {
+      "topic": "Thema",
+      "outline": "Gliederung",
+      "sources": "Quellen",
+      "slides": "Folien",
+      "rehearsal": "Probevortrag"
     }
   }
 }

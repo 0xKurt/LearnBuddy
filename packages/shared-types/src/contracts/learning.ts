@@ -512,6 +512,12 @@ export const ItemView = z.object({
    */
   tones: HeardTones.nullable().default(null).catch(null),
   /**
+   * Her answer and the solution are CODE (Informatik, issue #262): a program, a query or a
+   * program's output. The app shows them in monospace with every space kept and never reads them
+   * as math — the indentation of her function IS her answer. Absent: an ordinary question.
+   */
+  code: z.boolean().optional(),
+  /**
    * The text this question is about (Leseverständnis, issue #233, `contracts/reading.ts`): its
    * lines as printed, shown above the question while she answers — unlike a listening text it is
    * what she answers FROM, not the answer. Questions about one text share the `ref`. A text this

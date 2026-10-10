@@ -23,8 +23,8 @@ type Props = {
 export function HomeIntro({ h, refreshing, onRefresh }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
-  // The next test in one line; everything else Buddy says in the conversation.
-  const nextExam = h.next.find((i) => i.kind === 'exam') ?? null;
+  // The next test or talk (#264) in one line; everything else Buddy says in the conversation.
+  const nextExam = h.next.find((i) => i.kind === 'exam' || i.kind === 'talk') ?? null;
   return (
     <ScrollView
       testID="scroll-home"

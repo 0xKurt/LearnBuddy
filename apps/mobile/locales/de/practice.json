@@ -418,5 +418,11 @@
     "down": "Ich kann dein Foto gerade nicht lesen. Tipp deinen Weg ein oder versuch es gleich nochmal.",
     "camera_blocked": "LearnBuddy darf die Kamera noch nicht benutzen. Du kannst das in den Einstellungen erlauben – oder deinen Weg eintippen.",
     "camera_failed": "Die Kamera ging gerade nicht auf. Versuch es nochmal oder tipp deinen Weg ein."
+  },
+  "code": {
+    "line": "Zeile {{n}}",
+    "placeholder_output": "Was steht auf dem Bildschirm?",
+    "placeholder_program": "Dein Programm …",
+    "placeholder_query": "SELECT …"
   }
 }

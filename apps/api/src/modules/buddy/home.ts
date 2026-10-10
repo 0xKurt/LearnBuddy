@@ -24,6 +24,7 @@ import { daysBetween, localParts, startOfLocalDay } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
 import type { UndoSpec } from './toolKit.js';
 import { undoApplies, undoLoosensContact } from './undo.js';
+import { rehearsalsOf } from './rehearse.js';
 import { activeRoleplay, roleplayFeedbacks, roleplayStatuses } from './roleplay.js';
 import { loadBuddyState, loadSettings } from './state.js';
 import { resumable } from '../practice/lifecycle.js';
@@ -603,7 +604,8 @@ async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<Acti
     created_at: Date;
   }>(
     `select id, status, result, undo, created_at from buddy_actions
-      where learner_id = $1 and created_at > $2 and tool not in ('offer_learning', 'offer_drill', 'open_area', 'start_roleplay')
+      where learner_id = $1 and created_at > $2
+        and tool not in ('offer_learning', 'offer_drill', 'open_area', 'start_roleplay', 'offer_rehearsal')
       order by seq desc limit 12`,
     [learnerId, new Date(now.getTime() - DONE_WINDOW_MS)],
   );
@@ -632,7 +634,8 @@ function nextOf(state: BuddyState, today: string, now: Date): UpcomingItem[] {
   for (const g of state.goals) {
     if (g.status !== 'active' || !g.due_date || daysBetween(today, g.due_date) < 0) continue;
     items.push({
-      kind: 'exam',
+      // The day of a talk is a date like a test's, but nothing to take a test on (#264).
+      kind: g.kind === 'talk' ? 'talk' : 'exam',
       id: g.id,
       title: g.title,
       date: g.due_date,
@@ -706,10 +709,11 @@ async function threadOf(
     outreach_id: string | null;
     decision_id: string | null;
     roleplay_id: string | null;
+    rehearsal_id: string | null;
     created_at: Date;
   }>(
     `select id, role, text, status, failure_code, client_message_id, ask, reply_to_id, outreach_id,
-            decision_id, roleplay_id, created_at
+            decision_id, roleplay_id, rehearsal_id, created_at
        from buddy_messages
       where learner_id = $1
         and ($2::uuid is null or seq < (select seq from buddy_messages where id = $2 and learner_id = $1))
@@ -797,6 +801,12 @@ async function threadOf(
     learnerId,
     page.flatMap((m) => (m.roleplay_id ? [m.roleplay_id] : [])),
   );
+  // What a rehearsal measured, for the result card under Buddy's message (issue #264).
+  const rehearsals = await rehearsalsOf(
+    deps.db,
+    learnerId,
+    page.flatMap((m) => (m.rehearsal_id ? [m.rehearsal_id] : [])),
+  );
   const messages: MessageView[] = page.map((m) => {
     const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
     return {
@@ -834,6 +844,7 @@ async function threadOf(
           created_at: a.created_at.toISOString(),
         })),
       roleplay_feedback: m.roleplay_id ? (feedbacks.get(m.roleplay_id) ?? null) : null,
+      ...(m.rehearsal_id ? { rehearsal: rehearsals.get(m.rehearsal_id) ?? null } : {}),
       created_at: m.created_at.toISOString(),
     };
   });
