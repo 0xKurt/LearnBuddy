@@ -10,14 +10,12 @@ import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
 import type { LlmMessage } from '../../llm/gateway.js';
-import { searchMaterials } from './connectors/material.js';
-import { findQuestions, recentResults } from './connectors/practice.js';
 import type { Aliases } from './context.js';
 
 export type Surface = 'turn' | 'check';
 type ConnectorName = 'material' | 'practice' | 'items';
 
-type LookupContext = {
+export type LookupContext = {
   deps: Deps;
   learnerId: string;
   timezone: string;
@@ -31,16 +29,15 @@ type LookupContext = {
   aliases?: Aliases;
 };
 
-type LookupSpec<A extends z.ZodTypeAny> = {
-  name: string;
+type LookupSpec<N extends string, A extends z.ZodTypeAny> = {
+  name: N;
   description: string;
   args: A;
   surfaces: readonly Surface[];
   connectors: readonly ConnectorName[];
-  run: (ctx: LookupContext, args: z.infer<A>) => Promise<unknown>;
 };
 
-const defineLookup = <A extends z.ZodTypeAny>(spec: LookupSpec<A>) => spec;
+const defineLookup = <N extends string, A extends z.ZodTypeAny>(spec: LookupSpec<N, A>) => spec;
 
 const Query = z.string().trim().min(2).max(120);
 
@@ -51,7 +48,6 @@ const searchMaterial = defineLookup({
   args: z.object({ query: z.string().trim().max(120) }),
   surfaces: ['turn', 'check'],
   connectors: ['material'],
-  run: (c, a) => searchMaterials(c.deps, c.learnerId, c.timezone, a.query, 3, c.aliases),
 });
 
 const practiceHistory = defineLookup({
@@ -61,7 +57,6 @@ const practiceHistory = defineLookup({
   args: z.object({ topic: Query.nullable() }),
   surfaces: ['turn', 'check'],
   connectors: ['practice'],
-  run: (c, a) => recentResults(c.deps.db, c.learnerId, c.timezone, a.topic, 6),
 });
 
 const findQuestionsLookup = defineLookup({
@@ -71,10 +66,33 @@ const findQuestionsLookup = defineLookup({
   args: z.object({ query: z.string().trim().max(120) }),
   surfaces: ['turn', 'check'],
   connectors: ['items'],
-  run: (c, a) => findQuestions(c.deps.db, c.learnerId, a.query, 8),
 });
 
 const REGISTRY = [searchMaterial, practiceHistory, findQuestionsLookup] as const;
+type Lookup = (typeof REGISTRY)[number];
+
+/**
+ * What reads each lookup's data. The lookups above read a domain's data, so the domain registers
+ * them at start-up (issue #107, modules/learning/register.ts); this module never names it.
+ */
+export type LookupRunners = {
+  [L in Lookup as L['name']]?: (ctx: LookupContext, args: z.infer<L['args']>) => Promise<unknown>;
+};
+
+const runners: LookupRunners = {};
+
+/** A lookup has exactly one runner: a second one throws. */
+export function registerLookupRunners(more: LookupRunners): void {
+  const names = Object.keys(more) as Lookup['name'][];
+  const twice = names.filter((n) => runners[n] !== undefined);
+  if (twice.length > 0) throw new Error(`lookup registered twice: ${twice.join(', ')}`);
+  Object.assign(runners, more);
+}
+
+/** Lookups the model is offered that nobody registered a runner for. */
+export function missingLookupRunners(): string[] {
+  return REGISTRY.map((l) => l.name).filter((n) => runners[n] === undefined);
+}
 
 /** One lookup call as the model writes it. */
 const LookupCall = z.discriminatedUnion('tool', [
@@ -127,16 +145,16 @@ async function runLookups(
       continue;
     }
     const spec = REGISTRY.find((l) => l.name === parsed.data.tool);
-    if (!spec || !spec.surfaces.includes(surface)) {
+    // The union and the registry share the same arg schemas.
+    const run = spec
+      ? (runners[spec.name] as ((c: LookupContext, a: unknown) => Promise<unknown>) | undefined)
+      : undefined;
+    if (!spec || !run || !spec.surfaces.includes(surface)) {
       out.push({ tool: parsed.data.tool, ok: false, result: 'not available here' });
       continue;
     }
     try {
-      // The union and the registry share the same arg schemas.
-      const result = await (spec.run as (c: LookupContext, a: unknown) => Promise<unknown>)(
-        ctx,
-        parsed.data.args,
-      );
+      const result = await run(ctx, parsed.data.args);
       out.push({ tool: spec.name, ok: true, result });
     } catch {
       out.push({ tool: spec.name, ok: false, result: 'failed, try without it' });

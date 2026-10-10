@@ -5,7 +5,7 @@
 //
 // It reads only what is already recorded, `session_items` of her practice runs. Nothing new is
 // tracked. Her own choice is a different door: a test she asks for in her own words
-// (`offers.ts`), or "Probetest" tapped in the app, is never held back by this.
+// (`offerTools.ts`), or "Probetest" tapped in the app, is never held back by this.
 
 import type { Db } from '../../lib/db.js';
 

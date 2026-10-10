@@ -25,6 +25,8 @@ import { materialRoutes } from './modules/materials/routes.js';
 import { erasureBacklog } from './modules/materials/purge.js';
 import { voiceRoutes } from './modules/voice/routes.js';
 import { practiceRoutes } from './modules/practice/routes.js';
+import { registerLearning } from './modules/learning/register.js';
+import { withoutCode } from './modules/buddy/registry.js';
 import { missingMigrations } from './lib/migrations.js';
 import { schedulerHealth, type SchedulerHealth } from './modules/scheduler/health.js';
 import { runTick } from './modules/scheduler/tick.js';
@@ -46,6 +48,12 @@ function codeForStatus(status: number): ErrorCode {
 }
 
 export function createApp(deps: Deps): Hono<AppEnv> {
+  // The learning domain announces itself (issue #107) — the one place the core names it. Nothing
+  // the model is offered may be left without its code: refused here, not at the first call.
+  registerLearning();
+  const missing = withoutCode();
+  if (missing.length > 0) throw new Error(`No code registered for: ${missing.join(', ')}`);
+
   const app = new Hono<AppEnv>();
   // First of all: the request's stopwatch starts the moment it reaches the API (issue #447).
   app.use('*', async (c, next) => {

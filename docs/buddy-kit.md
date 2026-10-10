@@ -150,6 +150,14 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
    Übungen (`SpeakRequest`, `SpeakWordRequest`, `SpeakStreamEvent`) bleiben Domain und nehmen nur
    `AudioMime`. Generische Dateien mit Domain-Vertragsnamen: 24 → 13; Wächter: 71 (Verträge zählt
    er nicht).
+2. **Werkzeuge, Lookups, Angebote** melden sich an: `modules/learning/register.ts` ist die eine
+   Stelle, die die Domain beim App-Start (`createApp`) in den Kern einträgt — Handler der
+   Domain-Werkzeuge (`registerActHandlers`, `buddy/tools.ts`), die Leser der Lookups
+   (`registerLookupRunners`, `buddy/lookups.ts`); `offer_learning`/`offer_drill` stehen in
+   `practice/offerTools.ts`. Der Start bricht ab, solange ein Werkzeug oder Lookup, das das Modell
+   angeboten bekommt, keinen Code hat (`withoutCode()`). Was das Modell sieht (Schemas,
+   Beschreibungen), steht noch im Kern: es geht in den Prompt-Hash ein und wandert mit Schnitt 5/7.
+   Wächter: 71 → 63 (neu, freigegeben: die eine Naht `app.ts → learning/register.ts`).
 
 ## Die API-Datenbankrolle
 

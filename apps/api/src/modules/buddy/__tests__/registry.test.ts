@@ -11,9 +11,8 @@ import {
 } from '../registry.js';
 
 describe('act tool registry', () => {
-  it('registers every act tool exactly once, with a handler', () => {
+  it('registers every act tool exactly once', () => {
     expect(Object.keys(ACT_TOOLS).sort()).toEqual(Object.keys(ACT_SCHEMAS).sort());
-    for (const spec of Object.values(ACT_TOOLS)) expect(typeof spec.run).toBe('function');
   });
 
   it('lets a background check only prepare and look again — never change what the learner said', () => {
