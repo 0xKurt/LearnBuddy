@@ -46,7 +46,7 @@ export type SendProgress =
   | { step: 'uploading'; current: number; total: number }
   | { step: 'submitting' };
 
-export type MaterialPurpose = 'study' | 'homework';
+type MaterialPurpose = 'study' | 'homework';
 
 /** What is uploaded: prepared photos are JPEGs; a PDF goes as it is. */
 export type UploadMime = 'image/jpeg' | 'application/pdf';

@@ -239,12 +239,25 @@ identityRoutes.post('/learner', requireUser, requireAccount, async (c) => {
   const now = deps.now();
   checkBirthDate(input.relation, input.birth_date, now);
   const child = input.relation === 'child';
-  if (child && isMinor(input, now) && !input.minor_consent) {
+  const minor = isMinor(input, now);
+  if (child && minor && !input.minor_consent) {
     throw new AppError('invalid_input', 'Consent of the account holder is required', {
       reason: 'minor_consent_required',
     });
   }
   const account = c.get('account');
+  // Under 16 a "yes" to notifications loosens contact, and that is the adults' with their PIN
+  // (rule 6): the first PIN set in this same request, the account's PIN checked under the
+  // lockout, or an adult session. Without one it is refused — never quietly turned into a no.
+  if (input.contact === 'yes' && minor && !hasValidAdminToken(c)) {
+    if (!input.pin) {
+      throw new AppError('admin_required', 'An adult has to allow notifications with the PIN');
+    }
+    if (account.pin_hash) await checkPin(deps, account, input.pin);
+  }
+  // Answered in the setup — yes or no — is a decision, recorded as one (issue #518): who gave
+  // it and when. The chat's own question is only for a profile that was never asked.
+  const decidedBy = input.contact === undefined ? null : child ? 'account_holder' : 'learner';
   const tzHeader = c.req.header('x-timezone');
   const timezone = tzHeader && isValidTimeZone(tzHeader) ? tzHeader : DEFAULT_TIMEZONE;
   const pinHash = input.pin ? await hashPin(input.pin) : null;
@@ -266,12 +279,13 @@ identityRoutes.post('/learner', requireUser, requireAccount, async (c) => {
           child ? now : null,
         ],
       );
-      // Contact starts as decided at registration: the person whose consent this
+      // Contact starts as answered at registration: the person whose consent this
       // request carries (the adult for a minor) is the one allowed to enable it.
       await tx.query(
-        `insert into buddy_settings (learner_id, timezone, contact_enabled)
-         values ($1, $2, $3) on conflict (learner_id) do nothing`,
-        [l.id, timezone, input.contact_enabled === true],
+        `insert into buddy_settings (learner_id, timezone, contact_enabled, contact_changed_by,
+                                     contact_changed_at)
+         values ($1, $2, $3, $4, $5) on conflict (learner_id) do nothing`,
+        [l.id, timezone, input.contact === 'yes', decidedBy, decidedBy ? now : null],
       );
       // Only a first PIN: an existing one is changed with the current PIN (PUT /account/pin).
       if (pinHash) {

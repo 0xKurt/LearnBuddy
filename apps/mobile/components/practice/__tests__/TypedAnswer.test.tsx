@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
 import { TypedAnswer } from '../TypedAnswer.js';
+import { writingRows } from '../WritingSheet.js';
 import type { WorkTarget } from '../useWorkPhoto.js';
 
 function show(
@@ -43,6 +44,8 @@ function show(
 }
 
 const field = () => screen.getByLabelText('Deine Antwort');
+/** The input bar's box: her lines and, under them, its row of tools (issue #522). */
+const box = () => field().parentElement!.parentElement!;
 const tap = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
 /** One character typed on the phone's keyboard: the field reports its whole new text. */
 function type(seen: { value: string }, chars: string) {
@@ -64,22 +67,30 @@ describe('a typed answer is written in the one input bar (issue #365)', () => {
     expect(screen.getByRole('button', { name: 'Antwort sagen' })).toBeDefined();
   });
 
-  it('while she types, "Prüfen" stands in the bar itself, like the chat\'s "Senden"', () => {
+  it('while she types, "Prüfen" stands in the box itself, like the chat\'s send arrow', () => {
     const seen = show('long', 'Erklär mir, warum der Mond Phasen hat.', null);
     fireEvent.focus(field());
-    // Nothing to check yet: no "Prüfen" at all, the mic keeps its place.
+    // Nothing to check yet: no "Prüfen" at all.
     expect(screen.queryByRole('button', { name: 'Prüfen' })).toBeNull();
     type(seen, 'Weil');
     const checks = screen.getAllByRole('button', { name: 'Prüfen' });
     expect(checks).toHaveLength(1);
-    // In the same row as the field, where the chat has "Senden"; the mic steps aside.
-    expect(field().parentElement!.contains(checks[0]!)).toBe(true);
-    expect(screen.queryByRole('button', { name: 'Antwort sagen' })).toBeNull();
+    // In the box's row of tools, under her text and where the chat sends (#522): her line has the
+    // full width, and the mic stays beside it.
+    expect(box().contains(checks[0]!)).toBe(true);
+    expect(field().parentElement!.contains(checks[0]!)).toBe(false);
+    expect(box().contains(screen.getByRole('button', { name: 'Antwort sagen' }))).toBe(true);
     fireEvent.blur(field());
     expect(screen.getAllByRole('button', { name: 'Prüfen' })).toHaveLength(1);
-    expect(field().parentElement!.contains(screen.getByRole('button', { name: 'Prüfen' }))).toBe(
-      false,
-    );
+    expect(box().contains(screen.getByRole('button', { name: 'Prüfen' }))).toBe(false);
+  });
+
+  it('keeps the box one line while it is empty, the tools beside the text (#522)', () => {
+    show('numeric', 'Wie groß ist die Fläche?', 'math');
+    // Empty: the mic stands in the same row as the field.
+    expect(
+      field().parentElement!.contains(screen.getByRole('button', { name: 'Antwort sagen' })),
+    ).toBe(true);
   });
 });
 
@@ -161,5 +172,86 @@ describe('her working, photographed (issue #444)', () => {
   it('offers none without the question it is read for', () => {
     show('numeric', 'Löse die Gleichung 2x + 3 = 7.', 'math');
     expect(camera()).toBeNull();
+  });
+});
+
+describe('the essay has room to be written (issue #525)', () => {
+  it('shows at least twelve lines on a 390 × 844 phone, six with the keyboard up', () => {
+    expect(writingRows(844)).toBeGreaterThanOrEqual(12);
+    // 390 × 844 with the keyboard: about 508 pt are left (lib/keyboard.ts, issue #289).
+    expect(writingRows(508)).toBeGreaterThanOrEqual(6);
+    // 360 × 740 with the keyboard: about 440.
+    expect(writingRows(440)).toBeGreaterThanOrEqual(4);
+  });
+
+  it('opens the writing view on the same text, and checks from there', () => {
+    let checked: string | null = null;
+    function Harness() {
+      const [value, setValue] = useState('Viele Schulen verbieten Handys.');
+      return (
+        <TypedAnswer
+          kind="essay"
+          prompt="Erörtere: Sollte es an Schulen ein Handyverbot geben?"
+          unit={null}
+          subjectKind="german"
+          lang={null}
+          value={value}
+          disabled={false}
+          onChange={setValue}
+          onCheck={(v) => (checked = v)}
+        />
+      );
+    }
+    renderInApp(<Harness />);
+    tap('Groß schreiben');
+    const fields = screen.getAllByLabelText('Deine Antwort');
+    expect(fields).toHaveLength(2);
+    const page = fields[1]!;
+    // A page, not the bar's three lines (how many: `writingRows`, from the height there is).
+    expect(Number(page.getAttribute('rows'))).toBeGreaterThan(
+      Number(fields[0]!.getAttribute('rows')),
+    );
+    expect((page as HTMLTextAreaElement).value).toBe('Viele Schulen verbieten Handys.');
+    fireEvent.change(page, { target: { value: 'Viele Schulen verbieten Handys. Zu Recht.' } });
+    // The bar holds the same text: nothing is lost when the view closes.
+    expect((fields[0] as HTMLTextAreaElement).value).toBe(
+      'Viele Schulen verbieten Handys. Zu Recht.',
+    );
+    const checks = screen.getAllByRole('button', { name: 'Prüfen' });
+    fireEvent.click(checks[checks.length - 1]!);
+    expect(checked).toBe('Viele Schulen verbieten Handys. Zu Recht.');
+  });
+});
+
+describe('one box, nothing mirrored (issue #522)', () => {
+  const preview = () => screen.queryByLabelText(/^Vorschau deiner Antwort/);
+
+  it('shows the preview only while the line looks different when set', () => {
+    const seen = show('numeric', 'Wie viel ist drei Viertel von 1?', 'math');
+    fireEvent.focus(field());
+    type(seen, '3/4');
+    expect(preview()).not.toBeNull();
+    // Back to plain digits: nothing to draw, nothing repeated under her "29".
+    fireEvent.change(field(), { target: { value: '29' } });
+    expect(preview()).toBeNull();
+  });
+
+  it('shows the unit as a chip among the tools, not inside her line', () => {
+    renderInApp(
+      <TypedAnswer
+        kind="numeric"
+        prompt="Wie groß ist die Fläche?"
+        unit="cm²"
+        subjectKind="math"
+        lang={null}
+        value="28"
+        disabled={false}
+        onChange={() => undefined}
+        onCheck={() => undefined}
+      />,
+    );
+    const chip = screen.getByText('in cm²');
+    expect(box().contains(chip)).toBe(true);
+    expect(field().parentElement!.contains(chip)).toBe(false);
   });
 });

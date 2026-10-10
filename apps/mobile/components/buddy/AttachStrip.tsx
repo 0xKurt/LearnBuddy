@@ -5,11 +5,14 @@
 // The square must show the photo (issue #294: on the phone it stayed an empty dark box,
 // while the same file showed at once in the card after sending). The tile is now built
 // like the two thumbnails that DO show on the phone: the shadow on an outer view and the
-// clipping on an inner one (components/capture/PhotoStrip.tsx — Android draws an elevated
+// clipping on an inner one (Android draws an elevated
 // view that also clips its children unreliably), the image at a fixed size and without a
 // cross-fade (the sent card, components/buddy/SlimBar.tsx). Under the image lies a camera
 // mark, so a photo that never paints is never an empty box; one that cannot be read says so
 // in words under the strip.
+//
+// After a photo from the camera the strip ends in a square "Noch ein Foto" (issue #519): the
+// camera again, so a sheet of several pages is taken one after another, right here.
 
 import { Image } from 'expo-image';
 import { useState } from 'react';
@@ -37,9 +40,11 @@ type Props = {
   flagged: ReadonlySet<string>;
   disabled: boolean;
   onRemove: (uri: string) => void;
+  /** The camera again, as the strip's last square; null: not offered. */
+  onMore?: (() => void) | null;
 };
 
-export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) {
+export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = null }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('capture');
   // A photo the phone cannot show says so instead of leaving an empty box (issues #57, #294).
@@ -65,7 +70,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
           return (
             <View key={uri} style={{ width: THUMB, height: THUMB }}>
               {/* The shadow out here, the clipping inside: one view doing both is what
-                  Android does not draw reliably (PhotoStrip has always split them). */}
+                  Android does not draw reliably. */}
               <View
                 style={{
                   width: THUMB,
@@ -208,6 +213,42 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
             </View>
           );
         })}
+        {onMore ? (
+          <PressArea
+            onPress={onMore}
+            disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={t('camera_more')}
+            style={{ width: THUMB, height: THUMB }}
+          >
+            {(pressed) => (
+              <View
+                style={{
+                  width: THUMB,
+                  height: THUMB,
+                  borderRadius: RADIUS.tile,
+                  borderWidth: 1,
+                  borderStyle: 'dashed',
+                  borderColor: palette.primary,
+                  backgroundColor: palette.lavender,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 2, // token-exempt: the camera mark close over its words, in 72 pt
+                  padding: SPACE.xs,
+                  opacity: disabled ? 0.4 : pressed ? 0.78 : 1,
+                }}
+              >
+                <Icon name="camera" size={22} color={palette.primaryDk} />
+                <Text
+                  numberOfLines={2}
+                  style={[TYPE.small, { color: palette.primaryDk, textAlign: 'center' }]}
+                >
+                  {t('camera_more')}
+                </Text>
+              </View>
+            )}
+          </PressArea>
+        ) : null}
       </ScrollView>
       {/* In words, not only as a crossed-out eye: a box she cannot check is not a fault of hers,
           and she should know before she sends it (issue #294). */}

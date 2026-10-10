@@ -9,6 +9,7 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { acceptMissingPages, clarifyUnclear, retryMaterial } from '../../lib/api/endpoints.js';
+import { askAttach } from '../../lib/capture/attachRequest.js';
 import { failedTitleKey } from '../../lib/buddy/failedTitle.js';
 import { refreshHome, type HomeAct } from '../../lib/buddy/useHomeAct.js';
 import type { HomeThumbs, LeftBehind } from '../../lib/buddy/useHomePhotos.js';
@@ -118,7 +119,8 @@ function DraftNotice({
           <Btn
             size="sm"
             variant={quiet}
-            onPress={() => router.push({ pathname: '/capture', params: { resume: '1' } })}
+            // The pages from before stand above her text again (issue #519).
+            onPress={() => askAttach({ open: null, resume: true })}
           >
             {t('capture:draft.resume')}
           </Btn>
@@ -242,11 +244,11 @@ function PagesNotice({
           variant={quiet}
           disabled={busy}
           onPress={() =>
-            router.push({
-              pathname: '/capture',
-              params: {
+            askAttach({
+              open: 'camera',
+              link: {
                 completes: notice.material_id,
-                ...(several ? { pages: notice.pages.map((p) => p.page).join(',') } : {}),
+                ...(several ? { pages: notice.pages.map((p) => p.page).join(', ') } : {}),
               },
             })
           }
@@ -297,12 +299,9 @@ function FailedNotice({
         disabled={busy}
         // The same purpose (homework stays homework) and, for a page, the same sheet (M-18).
         onPress={() =>
-          router.push({
-            pathname: '/capture',
-            params: {
-              ...(now.purpose === 'homework' ? { purpose: now.purpose } : {}),
-              ...(now.completes ? { completes: now.completes } : {}),
-            },
+          askAttach({
+            open: 'camera',
+            link: { purpose: now.purpose ?? 'study', completes: now.completes ?? null },
           })
         }
       >

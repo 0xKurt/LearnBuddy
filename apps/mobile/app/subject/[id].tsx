@@ -35,6 +35,7 @@ import { messageFor } from '../../lib/errors.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { attachInChat } from '../../lib/capture/attachRequest.js';
 
 /** What this screen shows, whichever of the two kinds of id brought her here. */
 type Shown = {
@@ -222,7 +223,7 @@ export default function SubjectScreen() {
           title={t('library:subject.empty_title')}
           body={t('library:subject.empty_body')}
           action={
-            <Btn size="lg" pill center onPress={() => router.push('/capture')}>
+            <Btn size="lg" pill center onPress={() => attachInChat({ open: 'menu' })}>
               {t('library:capture')}
             </Btn>
           }

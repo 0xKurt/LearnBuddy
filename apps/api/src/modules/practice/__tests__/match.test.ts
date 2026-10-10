@@ -175,6 +175,10 @@ describe('match: what the model wrote (Regel 0)', () => {
     expect(matchTaskFrom(groups(tooManyThings))).toBeNull();
   });
 
+  /** A text of exactly `length` characters in words of the longest length a column holds. */
+  const words = (c: string, length: number) =>
+    Array.from({ length }, (_, i) => ((i + 1) % (MATCH_WORD_MAX + 1) === 0 ? ' ' : c)).join('');
+
   // The maxima are what a 360×740 phone holds without the parts scrolling, measured in the
   // walkthrough with every text at its cap ("zuordnen at its largest", rule 16): 4 pairs, or 8
   // things in 3 groups. Exactly the maximum is a task; one more is not.
@@ -182,8 +186,7 @@ describe('match: what the model wrote (Regel 0)', () => {
     expect(MATCH_PAIRS_MAX).toBe(4);
     expect(MATCH_GROUPS_MAX).toBe(3);
     expect(MATCH_GROUPED_MAX).toBe(8);
-    const side = (c: string) =>
-      `${c.repeat(MATCH_WORD_MAX)} ${c.repeat(MATCH_ELEMENT_MAX - MATCH_WORD_MAX - 1)}`;
+    const side = (c: string) => words(c, MATCH_ELEMENT_MAX);
     const largestPairs = Array.from({ length: MATCH_PAIRS_MAX }, (_, i) => ({
       left: side(String.fromCharCode(97 + i)),
       right: side(String.fromCharCode(107 + i)),
@@ -205,10 +208,7 @@ describe('match: what the model wrote (Regel 0)', () => {
   it('rejects a text, a word or a prompt that would not fit the phone', () => {
     const base = ORGANE.slice(0, 3);
     // A pair's side one character over.
-    const longSide = [
-      ...base,
-      { left: 'Landtag', right: 'a'.repeat(9) + ' ' + 'b'.repeat(MATCH_ELEMENT_MAX - 9) },
-    ];
+    const longSide = [...base, { left: 'Landtag', right: words('b', MATCH_ELEMENT_MAX + 1) }];
     expect(longSide[3]!.right.length).toBe(MATCH_ELEMENT_MAX + 1);
     expect(matchDraftProblem(pairs(longSide))).toBe('too_long');
     // A word longer than a column holds, even in a short text.

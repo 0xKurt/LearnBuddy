@@ -137,12 +137,14 @@ export const CreateLearnerRequest = z.object({
    */
   minor_consent: z.boolean(),
   /**
-   * Contact opt-in decided during registration (owner 2026-09-28): for a child
-   * the adult giving Art.-8 consent decides it in this same request; from 16
-   * the learner does. Off unless explicitly true; later changes follow the
-   * contact rules (loosening needs the adult PIN for minors).
+   * The answer to the setup's question "may Buddy send notifications?" (issue #518): for a
+   * child under 16 the adult gives it with their consent and their PIN, in this one request;
+   * from 16 she does. 'yes' turns contact on — under 16 only with the parents' PIN in this
+   * request (rule 6). 'no' keeps it off, and for good: Buddy never asks in the chat again,
+   * only the settings change it. Absent: the question was not asked (an app before #518) —
+   * off, and the chat may ask once there is something to follow.
    */
-  contact_enabled: z.boolean().optional(),
+  contact: z.enum(['yes', 'no']).optional(),
   /**
    * The parents' PIN for a child profile, set in the same transaction as the
    * profile, so onboarding has no second call that could fail on its own.

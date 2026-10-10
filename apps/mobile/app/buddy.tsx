@@ -265,7 +265,7 @@ export default function BuddyScreen() {
                 sessionRoom={sessionRoom}
                 showActions
                 // One "Rückgängig" in view, the rest a tap on a receipt away (issue #204).
-                undoScope="last"
+                receipts="turn"
                 carriedOnTop={carriedOnTop}
                 onUndo={(id) => void act(() => undoAction(id))}
                 onOption={(messageId, option) => void send(option, newId(), messageId)}

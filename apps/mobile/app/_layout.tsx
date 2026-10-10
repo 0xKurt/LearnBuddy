@@ -37,6 +37,7 @@ import {
 } from '../lib/theme/ThemeProvider.js';
 import { learnerLocaleOf } from '../lib/i18n/follow.js';
 import { ShareIntake } from '../components/capture/ShareIntake.js';
+import { attachInChat } from '../lib/capture/attachRequest.js';
 import { clearIncoming, hasIncoming } from '../lib/capture/incoming.js';
 import { recoverCameraResult } from '../lib/capture/pendingCamera.js';
 import { adoptLocalWork } from '../lib/localWork.js';
@@ -166,8 +167,8 @@ export default function RootLayout() {
           pendingRoute.current = null;
           router.push(route);
         } else if (hasIncoming() && readyRef.current) {
-          // Files shared while signed out go on to capture now.
-          router.push({ pathname: '/capture', params: { shared: '1' } });
+          // Files shared while signed out go on to the chat's bar now (issue #519).
+          attachInChat({ open: null });
         }
         return;
       }
@@ -274,11 +275,11 @@ export default function RootLayout() {
   // on while the app is open, and Android counts "Animationen aus" as asking for it.
   useEffect(() => watchReducedMotion(), []);
 
-  // Android cut the app off while the camera was open: the photo goes on to capture (M-22).
+  // Android cut the app off while the camera was open: the photo joins the chat's bar (M-22).
   useEffect(() => {
     if (!ready || !currentSession()) return;
     void recoverCameraResult().then((found) => {
-      if (found) router.push({ pathname: '/capture', params: { resume: '1', pending: '1' } });
+      if (found) attachInChat({ open: null, resume: true, pending: true });
     });
   }, [ready]);
 
