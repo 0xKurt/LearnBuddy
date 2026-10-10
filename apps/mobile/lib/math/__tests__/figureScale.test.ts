@@ -109,6 +109,13 @@ describe('the least a chart is shrunk to (issue #501)', () => {
     expect(figureScale(400, 200, leastFigureScale(climate, 600))).toBe(0.5);
   });
 
+  it('never narrows a table: its rows keep their height, its words would break (#387)', () => {
+    // The SQL table on 390×844 under the tall code bar: shrunk to 0.4 it got 117 of 294 pt, as
+    // tall as before, and its header "klasse" broke into "klass/e".
+    expect(leastFigureScale({ type: 'table' }, 320)).toBe(1);
+    expect(figureScale(400, 120, leastFigureScale({ type: 'table' }, 320))).toBe(1);
+  });
+
   it('leaves every other drawing to the readable least — a pie too, read from its legend', () => {
     expect(leastFigureScale({ type: 'pie_chart' }, 322)).toBe(MIN_FIGURE_SCALE);
     expect(leastFigureScale({ type: 'function_plot' }, 322)).toBe(MIN_FIGURE_SCALE);

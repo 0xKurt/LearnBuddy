@@ -125,9 +125,12 @@ export const TICK_CHAR = 6.6;
 /** Breathing room between two neighbouring category labels. */
 const LABEL_GAP = 3;
 
-/** The width the plot itself gets on the narrowest phone. */
-export function plotWidth(width: number, rightAxis: boolean): number {
-  return width - AXIS_ROOM - (rightAxis ? AXIS_ROOM : EDGE_ROOM);
+/**
+ * The width the plot itself gets on the narrowest phone. `edge`: the room right of it without a
+ * second axis — more than `EDGE_ROOM` where a longer label stands on its end (a measured axis).
+ */
+export function plotWidth(width: number, rightAxis: boolean, edge = EDGE_ROOM): number {
+  return width - AXIS_ROOM - (rightAxis ? AXIS_ROOM : edge);
 }
 
 /** Whether every category label stands under its own column without touching the next one. */

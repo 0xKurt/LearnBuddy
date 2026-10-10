@@ -18,11 +18,23 @@
 
 import type { ColumnCalcTaskView, FindErrorTaskView } from '@learnbuddy/shared-types/contracts';
 import { fireEvent, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
 import { ColumnAnswer, digitOf, type StepOpen } from '../ColumnAnswer.js';
 import { FindErrorAnswer } from '../FindErrorAnswer.js';
+
+/** The window the screen is laid out in: a roomy phone unless a test says otherwise. */
+const seen = vi.hoisted(() => ({ window: 844, overlap: 0, visible: 844 }));
+vi.mock('../../../lib/useVisibleHeight.js', () => ({ useVisibleHeight: () => seen }));
+afterEach(() => Object.assign(seen, { window: 844, overlap: 0, visible: 844 }));
+
+/** Drawn: neither it nor anything around it is folded away (`display: none`). */
+function drawn(el: Element | null): boolean {
+  for (let at = el; at; at = at.parentElement)
+    if (getComputedStyle(at).display === 'none') return false;
+  return el !== null;
+}
 
 const PATH: FindErrorTaskView = {
   type: 'find_error',
@@ -144,6 +156,21 @@ describe('Fehlerdetektiv', () => {
       { type: 'find_error', line: 'l2', fix: '3x + 6 = 21' },
       '② 3x + 6 = 21',
     );
+  });
+
+  it('keeps the line she corrects in sight while she types on a phone that is not roomy (#387)', () => {
+    // 360×740: the lines fold while she types in the bar under them (`AnswerShell`) — all of them
+    // went, and she wrote her correction without the line she was correcting.
+    Object.assign(seen, { window: 740, visible: 740 });
+    show();
+    fireEvent.click(screen.getByRole('radio', { name: /^Zeile 2:/ }));
+    fireEvent.focus(screen.getByTestId('answer-field'));
+    expect(drawn(screen.queryByRole('radio', { name: /^Zeile 2:/ }))).toBe(true);
+    // The others and the task wait until the keyboard goes.
+    expect(drawn(screen.queryByRole('radio', { name: /^Zeile 3:/ }))).toBe(false);
+    expect(drawn(screen.queryByTestId('choice-lead'))).toBe(false);
+    fireEvent.blur(screen.getByTestId('answer-field'));
+    expect(drawn(screen.queryByRole('radio', { name: /^Zeile 3:/ }))).toBe(true);
   });
 
   it('keeps what she wrote herself when she picks another line', () => {

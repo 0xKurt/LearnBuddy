@@ -39,6 +39,11 @@ import { FreeSpace } from './FreeSpace.js';
 type Props = {
   /** The form: what she taps, places or types in (none: a closed question, a spoken one). */
   answer?: ReactNode;
+  /**
+   * What of the answer stays while she types in the bar under it and the answer folds (null:
+   * nothing, it folds whole) — the Fehlerdetektiv's line she corrects (#387).
+   */
+  whileTyping?: ReactNode;
   /** Keys for what she is typing, while she types (null: none). */
   keys?: ReactNode;
   /** "Prüfen": when the answer may go and how. */
@@ -68,8 +73,16 @@ type Props = {
 // On a phone that is not roomy (360×740) the lines fold while she types there even without the
 // keyboard (a hidden keyboard on Android keeps the focus, and so does the browser): since #522 the
 // bar holds her text, the math keys and its tools as three rows, and the most a card holds no
-// longer fits above them — the lines stood cut in their slot.
-export function AnswerShell({ answer = null, keys = null, action, keeps = 0 }: Props) {
+// longer fits above them — the lines stood cut in their slot. What she types about stays
+// (`whileTyping`): with every line folded she wrote her correction without the line she was
+// correcting (#387). It stands in the slot instead of the board, which comes back when she stops.
+export function AnswerShell({
+  answer = null,
+  whileTyping = null,
+  keys = null,
+  action,
+  keeps = 0,
+}: Props) {
   const seen = useVisibleHeight();
   const ask = useContext(AskRoute);
   const typedUnderBoard = answer !== null && 'input' in action && action.input !== undefined;
@@ -83,6 +96,8 @@ export function AnswerShell({ answer = null, keys = null, action, keeps = 0 }: P
   const folded =
     answerFolds(ask.focused, seen.window, seen.overlap) ||
     (typing && formDensity(seen.window, seen.overlap) !== 'roomy');
+  // She types under the board (her own focus, reported as the route's): what of it stays.
+  const kept = folded && typing ? whileTyping : null;
   return (
     <>
       <FreeSpace />
@@ -92,14 +107,14 @@ export function AnswerShell({ answer = null, keys = null, action, keeps = 0 }: P
           style={{
             // It gives way when the room runs out (the conversation's reply, the keyboard); the
             // form inside scrolls then, "Prüfen" stays.
-            display: folded ? 'none' : 'flex',
+            display: folded && kept === null ? 'none' : 'flex',
             flexGrow: 0,
             flexShrink: keeps === 'whole' ? 0 : 1,
             minHeight: keeps === 'whole' ? undefined : keeps,
             paddingHorizontal: SPACE.lg,
           }}
         >
-          {answer}
+          {kept ?? answer}
         </View>
       )}
       {keys ? (

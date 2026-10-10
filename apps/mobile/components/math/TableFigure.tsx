@@ -1,5 +1,7 @@
 // A table (FigureView, `table`): a header row on lavender and the rows under it, every cell set
-// with `MathText`, all columns as wide as each other.
+// with `MathText`, all columns as wide as each other. It stands as wide as the drawing it is
+// given: the drawing's box centres what it holds, and a table sized to its content stood 120 pt
+// wide in a 294 pt frame, its header "klasse" broken into "klass/e" (#387).
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { View } from 'react-native';
@@ -11,7 +13,7 @@ import { MathText } from './MathText.js';
 
 type TableFig = Extract<Figure, { type: 'table' }>;
 
-export function TableFigure({ fig }: { fig: TableFig }) {
+export function TableFigure({ fig, width }: { fig: TableFig; width: number }) {
   const { palette, figure: ink } = useTheme();
   const cols = Math.max(fig.header.length, ...fig.rows.map((r) => r.length));
   const cell = (text: string, key: number, header: boolean, last: boolean) => (
@@ -50,7 +52,9 @@ export function TableFigure({ fig }: { fig: TableFig }) {
   );
   return (
     <View
+      testID="figure-table"
       style={{
+        width,
         borderWidth: 1,
         borderColor: ink.gridStrong,
         borderRadius: 10, // token-exempt: the table's corner from before RADIUS (#310), kept as is

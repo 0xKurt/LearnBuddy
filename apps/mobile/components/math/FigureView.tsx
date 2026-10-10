@@ -132,7 +132,7 @@ function FigureBody({ figure, width, scale, bare }: BodyProps) {
     case 'geometry':
       return <GeometryFigure fig={figure} width={width} />;
     case 'table':
-      return <TableFigure fig={figure} />;
+      return <TableFigure fig={figure} width={width} />;
     case 'molecule':
       return <MoleculeView fig={figure} width={width} />;
     // Die Notenzeile (issue #226). Gezeichnet wird sie in `StaffLine.tsx`, weil dieselbe

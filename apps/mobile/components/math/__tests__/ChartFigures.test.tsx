@@ -8,6 +8,7 @@
 import type { ChartFigure } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
+import { TICK_CHAR } from '../../../../../packages/shared-math/src/charts.js';
 import { renderInApp } from '../../../testing/render.js';
 import { ChartBody, describeChart } from '../ChartFigures.js';
 
@@ -50,6 +51,54 @@ describe('ChartBody', () => {
   it.each(CHARTS.map((c) => [c.type, c] as const))('draws a %s', (_, chart) => {
     const { container } = renderInApp(<ChartBody figure={chart} width={266} />);
     expect(container.querySelector('svg')).not.toBeNull();
+  });
+});
+
+/** Where each tick label with this text stands across the drawing, by its `x`. */
+function labelX(container: HTMLElement, text: string): number[] {
+  return Array.from(container.querySelectorAll('text'))
+    .filter((el) => el.textContent === text)
+    .map((el) => Number(el.getAttribute('x')));
+}
+
+describe('the labels at the ends of a measured axis (#387)', () => {
+  // The census of the material walkthrough: the last year stood on the plot's end, its half past
+  // the drawing — "2020" read "202" on 390×844.
+  const census: ChartFigure = {
+    type: 'line_chart',
+    x: ['2000', '2010', '2020'],
+    xt: 'Jahr',
+    s: [{ n: 'Einwohner', u: 'Mio.', v: [3.4, 3.5, 3.7], bar: false, r: false }],
+  };
+  const scatter: ChartFigure = {
+    type: 'scatter_plot',
+    x: [1000, 1500, 2000],
+    y: [1, 2, 3],
+    fit: false,
+    xt: '',
+    yt: '',
+  };
+
+  // Classes half a unit wide are labelled at their boundaries: the last one on the plot's end.
+  const histogram: ChartFigure = {
+    type: 'histogram',
+    x0: 1000,
+    w: 0.5,
+    v: [1, 2, 1],
+    xt: '',
+    yt: '',
+  };
+
+  it.each([
+    ['a line chart', census, '2020'],
+    ['a scatter plot', scatter, '2000'],
+    ['a histogram', histogram, '1001,5'],
+  ])('keeps the last one of %s whole inside the drawing', (_, chart, last) => {
+    const width = 266;
+    const { container } = renderInApp(<ChartBody figure={chart} width={width} />);
+    const at = labelX(container, last);
+    expect(at.length).toBeGreaterThan(0);
+    for (const x of at) expect(x + (last.length * TICK_CHAR) / 2).toBeLessThanOrEqual(width);
   });
 });
 
