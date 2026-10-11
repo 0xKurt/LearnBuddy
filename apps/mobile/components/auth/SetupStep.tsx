@@ -108,7 +108,11 @@ export function SetupStep({
   );
   return (
     <Screen>
-      {top}
+      {onboarding && top ? (
+        <View style={{ flexDirection: 'row', paddingHorizontal: GUTTER }}>{top}</View>
+      ) : (
+        top
+      )}
       {keyboardSafe ? <KeyboardSafe>{content}</KeyboardSafe> : content}
     </Screen>
   );

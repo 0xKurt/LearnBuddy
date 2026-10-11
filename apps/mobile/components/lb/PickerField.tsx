@@ -61,10 +61,9 @@ export function PickerField<T extends string>({
     <>
       <Btn
         variant="outline"
-        // sm, so the one added row costs 44 pt — the touch minimum, never less (TOUCH in
-        // space.ts) — and a long name shrinks on one line instead of growing the button
-        // onto a second (Btn: sm = numberOfLines 1 + adjustsFontSizeToFit).
-        size="sm"
+        // A full-width form value stays readable and can wrap. Native automatic fitting
+        // shrank the selected region severely during keyboard review; md avoids that path.
+        size="md"
         full
         icon="book"
         disabled={disabled}

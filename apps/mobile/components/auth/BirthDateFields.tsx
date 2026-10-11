@@ -8,7 +8,9 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { SPACE } from '../../lib/theme/space.js';
-import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
+import { Field } from '../lb/Field.js';
+import type { LbTextInputRef } from '../lb/LbTextInput.js';
+import { PROFILE } from '../../lib/theme/profile.js';
 
 export type DateParts = { day: string; month: string; year: string };
 
@@ -32,7 +34,7 @@ export function BirthDateFields({
     next: RefObject<LbTextInputRef | null> | null,
     ref: RefObject<LbTextInputRef | null> | null,
   ) => (
-    <LbTextInput
+    <Field
       ref={ref}
       label={t(`profile.${part}_label`)}
       value={value[part]}
@@ -52,7 +54,7 @@ export function BirthDateFields({
       <View style={{ flex: 1 }}>{field('day', 2, monthRef, null)}</View>
       <View style={{ flex: 1 }}>{field('month', 2, yearRef, monthRef)}</View>
       {/* Four digits want a little more room than two. */}
-      <View style={{ flex: 1.6 }}>{field('year', 4, null, yearRef)}</View>
+      <View style={{ flex: PROFILE.yearShare }}>{field('year', 4, null, yearRef)}</View>
     </View>
   );
 }
