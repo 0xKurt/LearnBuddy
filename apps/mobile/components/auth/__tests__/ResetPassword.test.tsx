@@ -205,3 +205,35 @@ it('saves the exact password, prevents leaving mid-save and clears prior-account
     { survivesNavigation: true },
   );
 });
+
+it('accepts a retry as soon as a failed request commits an enabled action', async () => {
+  let reject!: (error: Error) => void;
+  adapter.request.mockReturnValueOnce(
+    new Promise<void>((_resolve, fail) => {
+      reject = fail;
+    }),
+  );
+  const email = await invalid();
+  enterEmail(email);
+  const button = screen.getByRole('button', { name: 'Neuen Link schicken' });
+  fireEvent.click(button);
+  // Observe the committed real DOM before passive effects: a visible enabled action must
+  // already accept its next interaction, even while the failed request's effects settle.
+  const observer = new MutationObserver(() => {
+    if (button.isConnected && button.getAttribute('aria-disabled') !== 'true') {
+      observer.disconnect();
+      fireEvent.click(button);
+    }
+  });
+  observer.observe(button, { attributes: true, attributeFilter: ['aria-disabled'] });
+  void Promise.resolve().then(() => reject(new AuthFailure('network')));
+  try {
+    expect(await screen.findByText(CONFIRMATION)).toBeDefined();
+    expect(adapter.request.mock.calls).toEqual([
+      ['lena@example.invalid'],
+      ['lena@example.invalid'],
+    ]);
+  } finally {
+    observer.disconnect();
+  }
+});

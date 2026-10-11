@@ -1,0 +1,63 @@
+diff --git a/dist/cjs/modules/usePressEvents/index.js b/dist/cjs/modules/usePressEvents/index.js
+index 2e6ad44ac56e9d00f1bfe99bf10ce35cd9b968ac..f43100d7368d059c5a85bc86f9172acc9bfcf5b3 100644
+--- a/dist/cjs/modules/usePressEvents/index.js
++++ b/dist/cjs/modules/usePressEvents/index.js
+@@ -15,6 +15,7 @@ exports.__esModule = true;
+ exports.default = usePressEvents;
+ var _PressResponder = _interopRequireDefault(require("./PressResponder"));
+ var _react = require("react");
++var _useLayoutEffect = _interopRequireDefault(require("../useLayoutEffect"));
+ function usePressEvents(hostRef, config) {
+   var pressResponderRef = (0, _react.useRef)(null);
+   if (pressResponderRef.current == null) {
+@@ -23,7 +24,7 @@ function usePressEvents(hostRef, config) {
+   var pressResponder = pressResponderRef.current;
+ 
+   // Re-configure to use the current node and configuration.
+-  (0, _react.useEffect)(() => {
++  (0, _useLayoutEffect.default)(() => {
+     pressResponder.configure(config);
+   }, [config, pressResponder]);
+ 
+diff --git a/dist/modules/usePressEvents/index.js b/dist/modules/usePressEvents/index.js
+index e6be4c34f648f00b1d0b3b2b3509ce293782ac54..1f0ac9daa885a8bbc16b35162bfa00526bd1cf34 100644
+--- a/dist/modules/usePressEvents/index.js
++++ b/dist/modules/usePressEvents/index.js
+@@ -11,6 +11,7 @@
+ 'use strict';
+ 
+ import PressResponder from './PressResponder';
++import useLayoutEffect from '../useLayoutEffect';
+ import { useDebugValue, useEffect, useRef } from 'react';
+ export default function usePressEvents(hostRef, config) {
+   var pressResponderRef = useRef(null);
+@@ -20,7 +21,7 @@ export default function usePressEvents(hostRef, config) {
+   var pressResponder = pressResponderRef.current;
+ 
+   // Re-configure to use the current node and configuration.
+-  useEffect(() => {
++  useLayoutEffect(() => {
+     pressResponder.configure(config);
+   }, [config, pressResponder]);
+ 
+diff --git a/src/modules/usePressEvents/index.js b/src/modules/usePressEvents/index.js
+index 159101b580af6ebfe1edd371ae59e51ae5d5605e..01bab75bcd486bc27aa93d28221d032f0a696b9c 100644
+--- a/src/modules/usePressEvents/index.js
++++ b/src/modules/usePressEvents/index.js
+@@ -13,6 +13,7 @@
+ import type { EventHandlers, PressResponderConfig } from './PressResponder';
+ 
+ import PressResponder from './PressResponder';
++import useLayoutEffect from '../useLayoutEffect';
+ import { useDebugValue, useEffect, useRef } from 'react';
+ 
+ export default function usePressEvents(
+@@ -26,7 +27,7 @@ export default function usePressEvents(
+   const pressResponder = pressResponderRef.current;
+ 
+   // Re-configure to use the current node and configuration.
+-  useEffect(() => {
++  useLayoutEffect(() => {
+     pressResponder.configure(config);
+   }, [config, pressResponder]);
+ 
