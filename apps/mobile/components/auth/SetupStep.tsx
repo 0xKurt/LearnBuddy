@@ -14,6 +14,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb, type MoonState } from '../lb/BuddyOrb.js';
 import { Screen } from '../lb/Screen.js';
 import { KeyboardSafe } from '../lb/KeyboardSafe.js';
+import { FormFrameContext, useFormViewport } from '../lb/FormFrameClearance.js';
 
 export function SetupStep({
   title,
@@ -46,11 +47,18 @@ export function SetupStep({
   compact?: boolean;
 }) {
   const insets = useSafeAreaInsets();
+  const form = useFormViewport();
   const { palette } = useTheme();
   const onboarding = variant === 'onboarding';
   const content = (
     <>
       <ScrollView
+        ref={form.scroll}
+        onLayout={form.controller.refresh}
+        onContentSizeChange={form.controller.refresh}
+        onScroll={(event) => {
+          form.offset.current = event.nativeEvent.contentOffset.y;
+        }}
         testID={scrollTestID}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
@@ -113,7 +121,9 @@ export function SetupStep({
       ) : (
         top
       )}
-      {keyboardSafe ? <KeyboardSafe>{content}</KeyboardSafe> : content}
+      <FormFrameContext.Provider value={form.controller}>
+        {keyboardSafe ? <KeyboardSafe>{content}</KeyboardSafe> : content}
+      </FormFrameContext.Provider>
     </Screen>
   );
 }

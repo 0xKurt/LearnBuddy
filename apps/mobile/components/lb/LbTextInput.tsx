@@ -20,7 +20,7 @@
 // below. The frame is the View around the text, so the ring and the controls inside it are one
 // thing, and the browser never draws its own black box around the bare text.
 
-import { forwardRef, type ReactNode, useState } from 'react';
+import { forwardRef, type ReactNode, useState, useRef, useEffect } from 'react';
 import {
   type NativeSyntheticEvent,
   Platform,
@@ -44,6 +44,7 @@ import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Icon } from './Icon.js';
+import { useFormFrameClearance } from './FormFrameClearance.js';
 
 /** What a ref to the field holds (focus, blur) — the one name for it outside this file. */
 export type LbTextInputRef = TextInput;
@@ -154,6 +155,14 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
   const { palette } = useTheme();
   const { t } = useTranslation('common');
   const [focused, setFocused] = useState(false);
+  const frame = useRef<View>(null);
+  const clearance = useFormFrameClearance();
+  useEffect(() => {
+    const current = frame.current;
+    return () => {
+      if (current) clearance?.blur(current);
+    };
+  }, [clearance]);
   const canClear = clearable === true && !showToggle && (rest.value ?? '').length > 0;
   // iOS has no live regions — the field says its error itself (lib/announcePlan.ts).
   useAnnounce(errorMessage);
@@ -210,13 +219,19 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
         </Text>
       ) : null}
       <View
+        ref={frame}
+        collapsable={false}
+        onLayout={() => {
+          if (variant === 'field' && focused) clearance?.refresh();
+        }}
         style={[
           {
             backgroundColor: palette.paper,
             borderWidth: UI.border,
             borderColor: error ? palette.danger : focused ? palette.primary : palette.field,
             borderRadius: bar ? RADIUS.bar : cell ? RADIUS.sm : RADIUS.md,
-            padding: bar ? SPACE.xs : 0,
+            padding: stacked ? SPACE.sm : bar ? SPACE.xs : 0,
+            gap: stacked ? SPACE.xs : undefined,
             // The halo: the same ring on every field (iOS/Android new architecture, the web).
             outlineStyle: 'solid',
             outlineWidth: focused ? SPACE.xs : 0,
@@ -253,27 +268,31 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
             onKeyPress={webSubmit ?? onKeyPress}
             onFocus={(e) => {
               setFocused(true);
+              if (variant === 'field' && frame.current) clearance?.focus(frame.current);
               onFocus?.(e);
             }}
             onBlur={(e) => {
               setFocused(false);
+              if (frame.current) clearance?.blur(frame.current);
               onBlur?.(e);
             }}
             style={[
               {
                 flex: 1,
                 minWidth: 0,
-                // Stacked, the tools' row stands right under her last line: its round controls
-                // keep their own air inside their touch height, so the text needs none below it
-                // (the keys' row does: their faces fill it). Every pt counts on a small phone,
-                // where a board stands above the bar (the Fehlerdetektiv's lines on 360×740, #522).
+                // Stacked text retains the supplied padding and a complete editable touch
+                // target above the keys/tools. Multirow growth keeps its existing row bounds.
                 minHeight: top
                   ? rows * LINE + 2 * SPACE.md
                   : stacked
-                    ? LINE + SPACE.sm + (under === null ? 0 : SPACE.sm)
+                    ? Math.max(TOUCH, LINE + SPACE.sm + (under === null ? 0 : SPACE.sm))
                     : inner,
                 maxHeight: lines ? Math.max(rows, maxRows) * LINE + 2 * SPACE.md : undefined,
-                paddingHorizontal: stacked ? SPACE.sm : bar || cell ? SPACE.xs : SPACE.lg,
+                paddingHorizontal: stacked
+                  ? UI.field.composerHorizontal
+                  : bar || cell
+                    ? SPACE.xs
+                    : SPACE.lg,
                 // A bar without a control before the text keeps the screen's gutter inside it.
                 paddingLeft: bar && !stacked && start === null ? SPACE.md : undefined,
                 // A single line centres itself. A multiline one starting on one line is centred
@@ -286,8 +305,8 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
                       ? // Half the room the line leaves keeps it centered.
                         UI.field.centeredPadding(inner)
                       : 0,
-                ...(stacked && !top
-                  ? { paddingTop: SPACE.sm, paddingBottom: under === null ? 0 : SPACE.sm }
+                ...(stacked
+                  ? { paddingTop: SPACE.sm, paddingBottom: UI.field.composerBottom }
                   : {}),
                 ...face,
                 lineHeight: LINE,
