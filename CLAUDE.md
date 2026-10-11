@@ -113,8 +113,10 @@ Numbers are stable: code and docs cite them ("CLAUDE.md rule 16"). New rules are
       a new screen, menu or setting needs a reason it cannot. Parents' and rare settings stay
       closed until opened (`docs/UX-PRINCIPLES.md` §31–32).
     - **No scrolling to find what matters:** every screen fits 390×844 and 360×740; only a
-      conversation or a browsed list scrolls (`tests/web/fit.ts`). Nothing is shown half — an
-      element is whole or not drawn.
+      conversation, browsed list, or required auth form scrolls (`tests/web/fit.ts`). Auth forms
+      preserve readable copy and required fields in `scroll-form`, with a pinned CTA inside
+      `KeyboardSafe`; tests verify each field is reachable whole above that CTA. Other screens
+      show elements whole or not drawn.
     - **Every route is on an allowlist** with a one-line reason the chat cannot carry it (`ROUTES`
       in `apps/mobile/lib/__tests__/minimalism.test.ts`).
     - **Practice forms never get a picker:** no screen lists two or more side by side, no request

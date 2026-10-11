@@ -40,23 +40,23 @@ Each row is a separate PR unless it explicitly describes a group of screen PRs.
 Branch from current main, pass the local gates and CI, review the rendered result,
 then merge before beginning the next dependent change.
 
-| Step                   | Files and replacements                                                                                                                                                                               | Status                        |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| 1 Theme                | `lib/theme/*`, `app/_layout.tsx`, mobile manifest/lockfile, licences and tests; minimal input-font wiring, live motion subscription and LookChoice touch fix. No component replacement.              | Merged #549                   |
-| 2 Base                 | `components/lb/`: Btn, IconBtn replacing CircleBtn, Chip, Card, Field adapting LbTextInput, ListGroup/Row, Sheet, Segmented, Progress. Existing callers remain compatible.                           | Merged #550                   |
-| 3 Header and composer  | BuddyHeader replaces Screen/buddy header composition; Composer replaces InputBar/CheckBar presentation with one voice/send/check/next primary slot. Preserve voice, drafts, attachments and retries. | Merged #551                   |
-| 4 Practice             | Option replaces AnswerTile; QuestionCard; all current answer forms use shared states and tokens. Keep answer payloads and evaluation behavior.                                                       | Browser reviewed; commit gate |
-| 5a Account             | Welcome, account errors, reset.                                                                                                                                                                      | Pending                       |
-| 5b Onboarding          | Consent, parent setup, voice, look, handover; individual screen PRs.                                                                                                                                 | Pending                       |
-| 5c Home and chat       | First visit, conversation, offers, undo and chat cards; individual screen PRs.                                                                                                                       | Pending                       |
-| 5d Talk                | Conversation mode and practice in voice.                                                                                                                                                             | Pending                       |
-| 5e Practice            | Practice route, zoom, completion, test results/time-up, homework, drill and speaking; individual screen/state PRs.                                                                                   | Pending                       |
-| 5f Material            | Capture, sheet questions, library, subject and empty/missing states; individual screen PRs.                                                                                                          | Pending                       |
-| 5g Personal            | Memory, history and profile; individual screen PRs.                                                                                                                                                  | Pending                       |
-| 5h Settings            | Settings, voice, about, learning times, PIN; individual screen/sheet PRs.                                                                                                                            | Pending                       |
-| 5i Other surfaces      | Start sheet, roleplay, rehearsal, system states and overflow menu; individual surface PRs.                                                                                                           | Pending                       |
-| 6 Figures and licences | Image assets, data anchors in schematics, SVG number/leader/hit overlays, existing licence sheet plus every figure and part attribution.                                                             | Pending                       |
-| 7 Alias removal        | Remove compatibility keys/components only after no migrated caller depends on them.                                                                                                                  | Pending                       |
+| Step                   | Files and replacements                                                                                                                                                                               | Status      |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| 1 Theme                | `lib/theme/*`, `app/_layout.tsx`, mobile manifest/lockfile, licences and tests; minimal input-font wiring, live motion subscription and LookChoice touch fix. No component replacement.              | Merged #549 |
+| 2 Base                 | `components/lb/`: Btn, IconBtn replacing CircleBtn, Chip, Card, Field adapting LbTextInput, ListGroup/Row, Sheet, Segmented, Progress. Existing callers remain compatible.                           | Merged #550 |
+| 3 Header and composer  | BuddyHeader replaces Screen/buddy header composition; Composer replaces InputBar/CheckBar presentation with one voice/send/check/next primary slot. Preserve voice, drafts, attachments and retries. | Merged #551 |
+| 4 Practice             | Option replaces AnswerTile; QuestionCard; all current answer forms use shared states and tokens. Keep answer payloads and evaluation behavior.                                                       | Merged #552 |
+| 5a Account             | Welcome, account errors, reset.                                                                                                                                                                      | Pending     |
+| 5b Onboarding          | Consent, parent setup, voice, look, handover; individual screen PRs.                                                                                                                                 | Pending     |
+| 5c Home and chat       | First visit, conversation, offers, undo and chat cards; individual screen PRs.                                                                                                                       | Pending     |
+| 5d Talk                | Conversation mode and practice in voice.                                                                                                                                                             | Pending     |
+| 5e Practice            | Practice route, zoom, completion, test results/time-up, homework, drill and speaking; individual screen/state PRs.                                                                                   | Pending     |
+| 5f Material            | Capture, sheet questions, library, subject and empty/missing states; individual screen PRs.                                                                                                          | Pending     |
+| 5g Personal            | Memory, history and profile; individual screen PRs.                                                                                                                                                  | Pending     |
+| 5h Settings            | Settings, voice, about, learning times, PIN; individual screen/sheet PRs.                                                                                                                            | Pending     |
+| 5i Other surfaces      | Start sheet, roleplay, rehearsal, system states and overflow menu; individual surface PRs.                                                                                                           | Pending     |
+| 6 Figures and licences | Image assets, data anchors in schematics, SVG number/leader/hit overlays, existing licence sheet plus every figure and part attribution.                                                             | Pending     |
+| 7 Alias removal        | Remove compatibility keys/components only after no migrated caller depends on them.                                                                                                                  | Pending     |
 
 ## Validation
 
@@ -97,7 +97,7 @@ repository commit gate records typecheck, lint, guards, the full test suite and
 iOS/Android bundle exports. Native OS setting changes and physical microphone/
 camera behavior still need device evidence.
 
-Still open: base components, header/composer, practice components, each screen,
+Still open: each screen,
 figures and their attributions, and the final dedicated alias removal PR.
 
 Header/Composer browser evidence: the real core-loop practice passes the strict fit and accessibility guards after decorative progress is hidden consistently on native and web. The Composer matrix passes in Pastell and Meer, light and dark, at both phone sizes. Its locator scopes to the visible route because Expo retains a hidden Home route. Provider-dependent dictation walkthrough skips without its provider; mocked Chromium voice-loop coverage passes. Native device behavior is not yet verified.
@@ -112,5 +112,8 @@ card → answer → feedback → free room → help/tools → Composer. Selectio
 including Reexplain reasons through the existing Composer override. Spoken selection Check
 retains one central primary and rejects late voice results. The actual Pastell/Meer light/dark phone matrix passes all four cases (72 screenshots,
 84 fit reports and 28 clean accessibility stops). See mobile-redesign-practice.md for evidence
-and remaining screen work; representative help, core practice, code/picture and diagrams walks pass; normal commit hooks
-are the final gate.
+and remaining screen work; representative help, core practice, code/picture and diagrams walks pass; normal commit hooks and CI passed before merge in #552.
+
+Merged foundations evidence: steps 1–4 are merged through #552 (`c61e4139`). Practice gates passed 5,061 tests with one conditional pgvector skip, iOS/Android bundle exports and all CI checks. Its four-look/two-phone matrix, material keyboard-fit recheck, help, core-loop practice, code/talk, picture explanation and diagrams representatives pass. Step 3 merged in #551 with full local and CI gates plus native bundle exports. A signed iPhone 14 / iOS 26 development client now renders the merged baseline Welcome and real keyboard with its fields and CTA reachable; final redesigned screen and physical-device verification remain separate.
+
+Welcome integration: #552 merged; the isolated screen 5a draft is rebased onto current main. Final Welcome matrix 5/5 and lifecycle/all-locale walks 5/5 pass; owner visual review and signed iOS 26 keyboard/initial-field proof are complete. Native scroll gestures remain unverified because Device Hub cannot perform them. Normal commit hooks are the next gate. Auth-form scrolling remains scoped to preserving readable copy and all functional fields with a pinned CTA.

@@ -1095,10 +1095,12 @@
     LearnBuddy: a screen fits the phone without scrolling (390×844 and a small
     360×740). What matters stays pinned — the question on top, the way to
     answer directly below its paper question card, the Composer and next
-    step's action pinned at the bottom. Only two things may grow and
+    step's action pinned at the bottom. These areas may grow and
     scroll: a conversation (newest at the bottom, always shown at its end) and
     a list she browses on purpose (her material, her memories, a test's
-    review). Rare settings are closed groups with what is set now; one tap
+    review), and required auth forms with readable copy and a pinned CTA. Auth
+    forms use `scroll-form`; walkthroughs verify each field is reachable whole
+    above the action, including validation states. Rare settings are closed groups with what is set now; one tap
     opens one. A long form is split into short steps. The walkthroughs check
     this on every screen (tests/web/fit.ts).
 
