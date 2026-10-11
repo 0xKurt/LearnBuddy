@@ -5,16 +5,14 @@
 
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SetupStep } from '../components/auth/SetupStep.js';
 import { CheckPoints } from '../components/auth/CheckPoints.js';
 import { Btn } from '../components/lb/Btn.js';
-import { Card } from '../components/lb/Card.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
-import { Screen } from '../components/lb/Screen.js';
 import { toast } from '../components/lb/Toast.js';
 import { asAdultIfNeeded, toastAdultFailure } from '../components/settings/adultGate.js';
 import { ApiError } from '../lib/api/client.js';
@@ -26,7 +24,8 @@ import { currentLocale } from '../lib/i18n/index.js';
 import { signOutHere } from '../lib/leave.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { CARD_PAD, GUTTER, pinnedBar, RHYTHM, SPACE } from '../lib/theme/space.js';
+import { ONBOARDING } from '../lib/theme/onboarding.js';
+import { SPACE } from '../lib/theme/space.js';
 
 const POINTS = [
   'point_data',
@@ -41,7 +40,6 @@ export default function Consent() {
   const { palette } = useTheme();
   const { t } = useTranslation('auth');
   const me = useMe();
-  const insets = useSafeAreaInsets();
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -95,66 +93,51 @@ export default function Consent() {
   }
 
   return (
-    <Screen>
-      {/* The points are read, the decision is pinned below: in German all six fit a
-          360×740 phone, in French and Spanish the longer sentences scroll a little
-          (issue #76 — measured, not guessed). What matters never moves out of sight. */}
-      <ScrollView
-        testID="scroll-list"
-        contentContainerStyle={{
-          paddingHorizontal: GUTTER,
-          paddingVertical: SPACE.md,
-          gap: SPACE.md,
-        }}
-      >
-        <View style={{ gap: SPACE.sm }}>
-          <Text accessibilityRole="header" style={TYPE.display}>
-            {t(forHerself ? 'consent.own_title' : 'consent.title')}
-          </Text>
-          <Text style={[TYPE.body, { color: palette.ink2 }]}>
-            {t(forHerself ? 'consent.own_intro' : 'consent.intro')}
-          </Text>
-        </View>
-        {/* Six points; in German they fit a small phone (360×740) without scrolling. */}
-        <CheckPoints compact points={POINTS.map((p) => t(`consent.${p}`))} />
-        {ENV.PRIVACY_URL ? (
-          <Btn variant="ghost" pill onPress={() => void Linking.openURL(ENV.PRIVACY_URL)}>
-            {t('consent.full_policy')}
+    <SetupStep
+      variant="onboarding"
+      title={t(forHerself ? 'consent.own_title' : 'consent.title')}
+      lead={t(forHerself ? 'consent.own_intro' : 'consent.intro')}
+      scrollTestID="scroll-list"
+      footer={
+        <>
+          <Checkbox
+            checked={accepted}
+            onChange={setAccepted}
+            disabled={busy}
+            label={t(forHerself ? 'consent.own_accept' : 'consent.accept')}
+          />
+          <Btn size="lg" full busy={busy} disabled={!accepted} onPress={() => void accept()}>
+            {t('consent.cta')}
           </Btn>
+          <Btn variant="ghost" size="sm" full disabled={busy} onPress={() => void decline()}>
+            {t('consent.decline')}
+          </Btn>
+        </>
+      }
+    >
+      <View style={{ gap: ONBOARDING.facts.gap }}>
+        <CheckPoints plain points={POINTS.map((point) => t(`consent.${point}`))} />
+        {ENV.PRIVACY_URL ? (
+          <View style={{ marginLeft: ONBOARDING.policyIndent, alignSelf: 'flex-start' }}>
+            <Btn
+              variant="ghost"
+              size="sm"
+              pill
+              onPress={() => void Linking.openURL(ENV.PRIVACY_URL)}
+            >
+              {t('consent.full_policy')}
+            </Btn>
+          </View>
         ) : null}
-        {/* An internal test build may start without the legal pages (issue #130, `lib/env.ts`),
-            but it may not look complete while doing so — a missing link is INVISIBLE, and that
-            invisibility was the bug the rule was written against. So the gap says itself, on
-            the very screen where the link would have been. Never in a store build: `legalGap`
-            is false there, because such a build does not start at all without the URLs. */}
         {legalGap ? (
           <Text
             accessibilityRole="alert"
-            style={[
-              TYPE.small,
-              { color: palette.ink2, textAlign: 'center', paddingHorizontal: SPACE.xl },
-            ]}
+            style={[TYPE.meta, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}
           >
             {t('consent.internal_build')}
           </Text>
         ) : null}
-      </ScrollView>
-      {/* The agreement sits with its button: both always on screen. */}
-      <View style={[pinnedBar(insets.bottom), { gap: RHYTHM.parts }]}>
-        <Card tone="lavender" padding={CARD_PAD.snug}>
-          <Checkbox
-            checked={accepted}
-            onChange={setAccepted}
-            label={t(forHerself ? 'consent.own_accept' : 'consent.accept')}
-          />
-        </Card>
-        <Btn size="lg" pill full busy={busy} disabled={!accepted} onPress={() => void accept()}>
-          {t('consent.cta')}
-        </Btn>
-        <Btn variant="ghost" size="sm" pill center disabled={busy} onPress={() => void decline()}>
-          {t('consent.decline')}
-        </Btn>
       </View>
-    </Screen>
+    </SetupStep>
   );
 }
