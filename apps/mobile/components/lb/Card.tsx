@@ -3,12 +3,13 @@
 
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
+import { UI } from '../../lib/theme/components.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { CARD_PAD } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
-type Tone = 'paper' | 'bg' | 'primary' | 'primaryLt' | SubjectTone;
+type Tone = 'paper' | 'bg' | 'primary' | 'primaryLt' | 'selected' | 'sunken' | SubjectTone;
 
 type Props = {
   children: React.ReactNode;
@@ -29,7 +30,8 @@ function backgroundFor(
   if (tone === 'paper') return { bg: p.paper };
   if (tone === 'bg') return { bg: p.bg };
   if (tone === 'primary') return { bg: p.primary, color: p.paper };
-  if (tone === 'primaryLt') return { bg: p.primaryLt };
+  if (tone === 'sunken') return { bg: p.canvas };
+  if (tone === 'selected' || tone === 'primaryLt') return { bg: p.primaryLt };
   return { bg: toneBg[tone] };
 }
 
@@ -38,7 +40,7 @@ export function Card({
   tone = 'paper',
   onPress,
   padding = CARD_PAD.base,
-  radius = RADIUS.card,
+  radius = RADIUS.lg,
   style,
   accessibilityLabel,
   accessibilityHint,
@@ -61,7 +63,9 @@ export function Card({
         accessibilityHint={accessibilityHint}
       >
         {({ pressed }) => (
-          <View style={[baseStyle, style, pressed ? { opacity: 0.85 } : null]}>{children}</View>
+          <View style={[baseStyle, style, pressed ? { opacity: UI.pressedOpacity } : null]}>
+            {children}
+          </View>
         )}
       </Pressable>
     );

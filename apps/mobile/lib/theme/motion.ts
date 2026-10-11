@@ -26,6 +26,9 @@ export const EASE = {
 
 export const SPRING = { damping: 18, stiffness: 180, mass: 1 } as const;
 
+/** Use only after the live preference has allowed animation; bypass the cached OS setting. */
+export const ACTIVE_MOTION = { reduceMotion: ReduceMotion.Never } as const;
+
 /** All Reanimated transitions respect the system preference. */
 export const REDUCE = ReduceMotion.System;
 

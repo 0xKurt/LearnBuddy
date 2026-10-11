@@ -22,6 +22,7 @@ import type { AudioMime, ItemView } from '@learnbuddy/shared-types/contracts';
 import { act, fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { RADIUS } from '../../../lib/theme/radius.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { SpeakPanel } from '../SpeakPanel.js';
 
@@ -229,7 +230,7 @@ describe('one action leads, the rest is quiet and of one shape (issue #186)', ()
     expect(skin(leading()[0]!).backgroundColor).not.toBe(TRANSPARENT);
     // And it is the same shape as every other leading action in the app ("Weiter", "Dieses
     // Wort sagen"): a large pill. The old bar drew it with a 14 pt corner, unlike them.
-    expect(skin(leading()[0]!).borderTopLeftRadius).toBe('27px');
+    expect(skin(leading()[0]!).borderTopLeftRadius).toBe(`${RADIUS.round}px`);
   });
 
   it('gives everything else one shape, whatever it does', () => {
@@ -242,7 +243,7 @@ describe('one action leads, the rest is quiet and of one shape (issue #186)', ()
       // listening was an outlined 12 pt box and skipping a 48 pt ghost button — three
       // shapes for three things that are all "quietly available".
       expect(box.minHeight, named(button)).toBe('44px');
-      expect(box.borderTopLeftRadius, named(button)).toBe('22px');
+      expect(box.borderTopLeftRadius, named(button)).toBe(`${RADIUS.round}px`);
       expect(box.borderTopWidth, named(button)).toBe('0px');
     }
   });
@@ -299,7 +300,7 @@ describe('one action leads, the rest is quiet and of one shape (issue #186)', ()
     recorder.phase = 'recording';
     renderPanel({ skip: true });
     expect(leading().map(named)).toEqual(['Aufnahme beenden und an Buddy schicken']);
-    expect(skin(leading()[0]!).borderTopLeftRadius).toBe('27px');
+    expect(skin(leading()[0]!).borderTopLeftRadius).toBe(`${RADIUS.round}px`);
     // Hearing it is still there but waits (her own voice is being recorded), and the way
     // past the sentence is gone until she stops: nothing competes with "Fertig".
     for (const name of ['Anhören', 'Langsam anhören']) {

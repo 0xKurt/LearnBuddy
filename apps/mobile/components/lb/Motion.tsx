@@ -11,13 +11,21 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import type { StyleProp, ViewProps, ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
-  useReducedMotion,
+  cancelAnimation,
   useSharedValue,
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
 
-import { DURATION, EASE, RISE, STAGGER } from '../../lib/theme/motion.js';
+import { UI } from '../../lib/theme/components.js';
+import {
+  ACTIVE_MOTION,
+  DURATION,
+  EASE,
+  RISE,
+  STAGGER,
+  useMotionReduced,
+} from '../../lib/theme/motion.js';
 
 type Props = Omit<ViewProps, 'style'> & {
   children: ReactNode;
@@ -33,14 +41,26 @@ type Props = Omit<ViewProps, 'style'> & {
 };
 
 function useEntrance(animate: boolean, delay: number, duration: number) {
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
   const run = animate && !reduced;
   const p = useSharedValue(run ? 0 : 1);
+  const started = useRef(false);
   useEffect(() => {
-    if (!run) return;
-    p.value = withDelay(delay, withTiming(1, { duration, easing: EASE.standard }));
+    if (reduced) {
+      started.current = true;
+      cancelAnimation(p);
+      p.value = 1;
+      return;
+    }
+    if (!run || started.current) return;
+    started.current = true;
+    p.value = withDelay(
+      delay,
+      withTiming(1, { duration, easing: EASE.standard, ...ACTIVE_MOTION }),
+      ACTIVE_MOTION.reduceMotion,
+    );
     // Once, on mount (a later change of the props does not replay it).
-  }, []);
+  }, [reduced, run, p, delay, duration]);
   return p;
 }
 
@@ -54,7 +74,7 @@ export function Rise({
   ...rest
 }: Props) {
   const p = useEntrance(animate, delay + index * STAGGER, slow ? DURATION.gentle : DURATION.base);
-  const distance = slow ? RISE * 2 : RISE;
+  const distance = slow ? RISE * UI.entrance.slowMultiplier : RISE;
   const a = useAnimatedStyle(() => ({
     opacity: p.value,
     transform: [{ translateY: (1 - p.value) * distance }],
@@ -70,7 +90,7 @@ export function SlideIn({ children, delay = 0, animate = true, style, ...rest }:
   const p = useEntrance(animate, delay, DURATION.gentle);
   const a = useAnimatedStyle(() => ({
     opacity: p.value,
-    transform: [{ translateX: (1 - p.value) * 28 }],
+    transform: [{ translateX: (1 - p.value) * UI.entrance.slide }],
   }));
   return (
     <Animated.View {...rest} style={[style, a]}>
@@ -94,7 +114,11 @@ export function Appear({ children, delay = 0, animate = true, style, ...rest }: 
  * rows that come later (scrolling, a refresh, a recycled row) just stand. Returns whether the
  * row at `index` should animate. `ready`: the list's data has arrived.
  */
-export function useListEntrance(ready: boolean, max = 8, windowMs = 900) {
+export function useListEntrance(
+  ready: boolean,
+  max = UI.entrance.maxRows,
+  windowMs = UI.entrance.windowMs,
+) {
   const since = useRef<number | null>(null);
   if (ready && since.current === null) since.current = Date.now();
   return (index: number) =>

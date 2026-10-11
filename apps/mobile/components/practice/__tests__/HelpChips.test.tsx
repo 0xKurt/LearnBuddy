@@ -2,18 +2,22 @@
 // the chip she already has — the soft skin instead of the ghost one. Nothing else appears, and the
 // chip keeps its name, so a screen reader hears the same button.
 
-import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { paletteOf } from '../../../lib/theme/palettes.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { HelpChips } from '../HelpChips.js';
 
-/** The fill sits on the Btn's inner View, never on the Pressable (CLAUDE.md rule 13). */
+/** Find the painted face inside the press target; wrappers remain transparent. */
 const fillOf = (): string => {
-  const inner = screen.getByRole('button', { name: 'Einen Tipp bekommen' }).firstElementChild;
-  expect(inner).not.toBeNull();
-  return styleOf(inner as Element).backgroundColor;
+  const button = screen.getByRole('button', { name: 'Einen Tipp bekommen' });
+  const transparent = ['', 'transparent', 'rgba(0, 0, 0, 0)'];
+  return (
+    Array.from(button.querySelectorAll('*'))
+      .map((element) => styleOf(element).backgroundColor)
+      .find((color) => !transparent.includes(color)) ?? 'transparent'
+  );
 };
 
 const asRgb = (hex: string): string => {
@@ -22,6 +26,15 @@ const asRgb = (hex: string): string => {
 };
 
 describe('HelpChips', () => {
+  it('keeps offered help disabled while an answer is in flight', () => {
+    const hint = vi.fn();
+    renderInApp(<HelpChips onHint={hint} hintOffered disabled />);
+    const button = screen.getByRole('button', { name: 'Einen Tipp bekommen' });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(button);
+    expect(hint).not.toHaveBeenCalled();
+  });
+
   it('keeps "Tipp" quiet until it is offered', () => {
     renderInApp(<HelpChips onHint={() => undefined} onReveal={() => undefined} />);
     expect(['', 'transparent', 'rgba(0, 0, 0, 0)']).toContain(fillOf());

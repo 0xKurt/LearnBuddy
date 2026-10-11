@@ -55,6 +55,9 @@ function typeOf(p: Palette) {
     label,
     /** The composer's text: one step under body so five lines still fit. */
     input: { ...fontFace('400'), fontSize: 16, lineHeight: 23, color: p.ink },
+    action: { ...fontFace('700'), fontSize: 16, lineHeight: 23, letterSpacing: -0.1, color: p.ink },
+    cell: { ...fontFace('600'), fontSize: 16, lineHeight: 23, color: p.ink },
+    metaStrong: { ...fontFace('700'), fontSize: 14, lineHeight: 20, color: p.ink2 },
     code: {
       fontFamily: MONOSPACE,
       fontWeight: bold ? '600' : '400',
