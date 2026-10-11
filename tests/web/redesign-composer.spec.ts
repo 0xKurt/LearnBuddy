@@ -12,9 +12,9 @@ for (const family of ['Pastell', 'Meer'] as const) {
       await openMenu(page, 'Einstellungen');
       await page.getByRole('button', { name: 'Aussehen', exact: true }).click();
       await page.getByRole('radio', { name: family, exact: true }).click();
-      const mode = page.getByRole('switch', { name: 'Dunkelmodus' });
-      if ((await mode.isChecked()) !== dark) await mode.click();
-      await expect(mode).toBeChecked({ checked: dark });
+      const mode = page.getByRole('radio', { name: dark ? 'Dunkel' : 'Hell', exact: true });
+      await mode.click();
+      await expect(mode).toBeChecked();
       await page.getByRole('button', { name: 'Zurück', exact: true }).click();
       await planTest(page);
       await sendWorksheet(page);

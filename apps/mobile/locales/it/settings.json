@@ -191,7 +191,6 @@
     "speed_hint": "Tocca per ascoltarla. Più lento o più veloce? Dillo a Buddy."
   },
   "look": {
-    "dark_mode": "Modalità scura",
     "family": {
       "pastell": "Pastello",
       "forest": "Bosco",
@@ -204,9 +203,8 @@
       "light": "Chiaro",
       "dark": "Scuro"
     },
-    "mode_hint": "Segue il telefono finché non scegli tu qui.",
-    "mode_hint_pinned": "Tieni premuto per seguire di nuovo il telefono.",
     "question": "Quali colori ti piacciono?",
-    "title": "Aspetto"
+    "title": "Aspetto",
+    "mode_label": "Chiaro o scuro"
   }
 }

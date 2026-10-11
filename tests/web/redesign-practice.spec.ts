@@ -17,9 +17,9 @@ for (const family of ['pastell', 'ocean'] as const) {
       await page
         .getByRole('radio', { name: family === 'pastell' ? 'Pastell' : 'Meer', exact: true })
         .click();
-      const mode = page.getByRole('switch', { name: 'Dunkelmodus' });
-      if ((await mode.isChecked()) !== dark) await mode.click();
-      await expect(mode).toBeChecked({ checked: dark });
+      const mode = page.getByRole('radio', { name: dark ? 'Dunkel' : 'Hell', exact: true });
+      await mode.click();
+      await expect(mode).toBeChecked();
       await page.getByRole('button', { name: 'Zurück', exact: true }).click();
       await startOffer(page, 'Lass uns acht Codezeilen üben', 'acht Codezeilen');
       const rows = page.getByRole('radio', { name: /^Zeile \d/ });

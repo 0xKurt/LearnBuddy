@@ -45,7 +45,7 @@ async function setDark(page: Page, dark: boolean): Promise<void> {
   await page.getByRole('button', { name: 'Mehr' }).click();
   await page.getByRole('button', { name: 'Einstellungen' }).click();
   await page.getByRole('button', { name: 'Aussehen' }).click();
-  await page.getByRole('switch', { name: 'Dunkelmodus' }).setChecked(dark);
+  await page.getByRole('radio', { name: dark ? 'Dunkel' : 'Hell', exact: true }).click();
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
