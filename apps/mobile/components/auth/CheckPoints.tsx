@@ -1,6 +1,7 @@
 // What a page promises, point by point, each with a check in front: the consent's six points
 // and the hand-over's three (app/consent.tsx, app/profile.tsx).
 
+import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import { CARD_PAD, RHYTHM, SPACE } from '../../lib/theme/space.js';
@@ -36,7 +37,7 @@ const density = () =>
 
 type Props = {
   /** The points, already in her language. */
-  points: readonly string[];
+  points: readonly (string | { key: string; content: ReactNode })[];
   compact?: boolean;
   plain?: boolean;
 };
@@ -44,50 +45,44 @@ type Props = {
 export function CheckPoints({ points, compact = false, plain = false }: Props) {
   const { palette } = useTheme();
   const look = density()[compact ? 'compact' : 'roomy'];
-  if (plain)
-    return (
-      <View style={{ gap: ONBOARDING.facts.gap }}>
-        {points.map((point) => (
-          <View
-            key={point}
-            style={{ flexDirection: 'row', gap: SPACE.md, alignItems: 'flex-start' }}
-          >
-            <View
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              style={{ paddingTop: ONBOARDING.facts.opticalTop }}
-            >
-              <Icon name="check" size={ONBOARDING.facts.glyph} color={palette.primaryDk} />
-            </View>
-            <Text style={[TYPE.paragraph, { flex: 1 }]}>{point}</Text>
-          </View>
-        ))}
-      </View>
-    );
-  return (
-    <Card padding={look.padding}>
-      <View style={{ gap: look.gap }}>
-        {points.map((p) => (
-          <View key={p} style={{ flexDirection: 'row', gap: SPACE.md, alignItems: 'flex-start' }}>
-            <View
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              style={{
-                width: BADGE,
-                height: BADGE,
-                borderRadius: BADGE_RADIUS,
-                ...look.badge,
-                backgroundColor: palette.lavender,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon name="check" size={ONBOARDING.legacyFacts.glyph} color={palette.primaryDk} />
-            </View>
-            <Text style={[TYPE.body, { flex: 1, ...look.text }]}>{p}</Text>
-          </View>
-        ))}
-      </View>
-    </Card>
+  const facts = points.map((point) =>
+    typeof point === 'string' ? { key: point, content: point } : point,
   );
+  const rows = (
+    <View style={{ gap: plain ? ONBOARDING.facts.gap : look.gap }}>
+      {facts.map(({ key, content }) => (
+        <View key={key} style={{ flexDirection: 'row', gap: SPACE.md, alignItems: 'flex-start' }}>
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={
+              plain
+                ? { paddingTop: ONBOARDING.facts.opticalTop }
+                : {
+                    width: BADGE,
+                    height: BADGE,
+                    borderRadius: BADGE_RADIUS,
+                    ...look.badge,
+                    backgroundColor: palette.lavender,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }
+            }
+          >
+            <Icon
+              name="check"
+              size={plain ? ONBOARDING.facts.glyph : ONBOARDING.legacyFacts.glyph}
+              color={palette.primaryDk}
+            />
+          </View>
+          <Text
+            style={plain ? [TYPE.paragraph, { flex: 1 }] : [TYPE.body, { flex: 1, ...look.text }]}
+          >
+            {content}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+  return plain ? rows : <Card padding={look.padding}>{rows}</Card>;
 }

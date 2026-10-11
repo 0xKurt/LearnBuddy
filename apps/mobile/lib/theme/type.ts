@@ -84,6 +84,7 @@ function typeOf(p: Palette) {
     /** The composer's text: one step under body so five lines still fit. */
     input,
     paragraph: input,
+    paragraphStrong: { ...input, ...fontFace('700') },
     action: { ...fontFace('700'), fontSize: 16, lineHeight: 23, letterSpacing: -0.1, color: p.ink },
     cell: { ...fontFace('600'), fontSize: 16, lineHeight: 23, color: p.ink },
     brand: { ...fontFace('800'), fontSize: 20, lineHeight: 26, letterSpacing: -0.4, color: p.ink },
