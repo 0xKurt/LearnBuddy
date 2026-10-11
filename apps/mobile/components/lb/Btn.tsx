@@ -1,5 +1,6 @@
+import { BusyIndicator } from './BusyIndicator.js';
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { KEEPS_FOCUS } from '../../lib/keepsFocus.js';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
 import { useMotionReduced } from '../../lib/theme/motion.js';
@@ -251,6 +252,7 @@ export function Btn(props: Props) {
         ...(checked === undefined ? {} : { checked }),
         ...(expanded === undefined ? {} : { expanded }),
       }}
+      aria-busy={busy || undefined}
       // A radio must say whether it is chosen; on the web `accessibilityState.checked`
       // alone does not become `aria-checked` (axe: aria-required-attr, issue #73).
       {...(selected === undefined ? {} : { 'aria-checked': selected })}
@@ -298,7 +300,7 @@ export function Btn(props: Props) {
         >
           {busy ? (
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-              <ActivityIndicator
+              <BusyIndicator
                 size="small"
                 color={variant === 'outline' || tone ? palette.primaryDk : v.color}
               />
@@ -430,7 +432,7 @@ function IconOnlyBtn({
         >
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             {busy ? (
-              <ActivityIndicator size="small" color={palette.primaryDk} />
+              <BusyIndicator size="small" color={palette.primaryDk} />
             ) : (
               // 18 inside the 24 circle: the arrow reads at a glance and stays a side note.
               <Icon

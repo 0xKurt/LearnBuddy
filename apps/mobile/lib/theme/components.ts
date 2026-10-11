@@ -8,6 +8,8 @@ export const UI = {
   selectedBorder: 2,
   disabledOpacity: 0.45,
   busyOpacity: 0.8,
+  // React Native Android ProgressBar small/large intrinsic dimensions.
+  busyIndicator: { small: 20, large: 36 },
   pressScale: 0.97,
   pressedOpacity: 0.78,
   fontScale: 2,
