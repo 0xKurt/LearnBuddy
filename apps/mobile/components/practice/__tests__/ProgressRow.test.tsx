@@ -7,15 +7,36 @@
 // sagt und dass der Balken, der einen Anteil von dieser Zahl zeigen würde, so lange wegbleibt.
 
 import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
 import { ProgressRow } from '../Question.js';
+
+// The base component owns segment drawing; this adapter must pass honest domain counts.
+vi.mock('../../lb/Progress.js', () => ({
+  Progress: ({ total, current, part }: { total: number; current: number; part?: number }) => (
+    <div
+      role="progressbar"
+      data-testid="segments"
+      data-total={total}
+      data-current={current}
+      data-part={part ?? 'default'}
+    />
+  ),
+}));
 
 describe('die Fortschrittszeile einer wachsenden Übung (#220)', () => {
   it('nennt die Gesamtzahl, sobald sie stimmt', () => {
     renderInApp(<ProgressRow position={2} total={9} closed={1} />);
     expect(screen.getByText('Frage 2 von 9')).toBeTruthy();
+  });
+
+  it('does not duplicate the count already present in the header subtitle', () => {
+    const { container } = renderInApp(<ProgressRow position={2} total={9} closed={1} hideLabel />);
+    expect(screen.queryByText('Frage 2 von 9')).toBeNull();
+    expect(container.querySelector('[data-testid="segments"]')?.getAttribute('data-total')).toBe(
+      '9',
+    );
   });
 
   it('nennt keine Gesamtzahl, solange noch Fragen geschrieben werden', () => {
@@ -30,12 +51,27 @@ describe('die Fortschrittszeile einer wachsenden Übung (#220)', () => {
       <ProgressRow position={2} total={3} closed={1} preparing />,
     );
     const { container: done } = renderInApp(<ProgressRow position={2} total={9} closed={1} />);
-    // Der Balken ist ein Kasten mit genau 8 px Höhe; während des Wachsens gibt es ihn nicht.
-    const bars = (root: HTMLElement) =>
-      Array.from(root.querySelectorAll<HTMLElement>('div')).filter(
-        (el) => el.style.height === '8px',
-      );
-    expect(bars(growing)).toHaveLength(0);
-    expect(bars(done)).toHaveLength(1);
+    expect(growing.querySelector('[data-testid="progress-bar"]')).toBeNull();
+    const segments = done.querySelector('[data-testid="segments"]');
+    expect(segments?.getAttribute('data-total')).toBe('9');
+    expect(segments?.getAttribute('data-current')).toBe('1');
   });
+});
+
+it('hides decorative progress from web accessibility even when the count is in the header', () => {
+  renderInApp(<ProgressRow position={2} total={9} closed={1} hideLabel />);
+  expect(screen.queryByRole('progressbar')).toBeNull();
+  expect(screen.getByTestId('progress-bar').getAttribute('aria-hidden')).toBe('true');
+});
+
+it('fills only completed segments after Check and activates the next segment only after Next', () => {
+  const view = renderInApp(<ProgressRow position={1} total={4} closed={0} active />);
+  expect(screen.getByTestId('segments').getAttribute('data-part')).toBe('default');
+  view.rerender(<ProgressRow position={1} total={4} closed={1} active={false} />);
+  expect(screen.getByTestId('segments').getAttribute('data-current')).toBe('1');
+  expect(screen.getByTestId('segments').getAttribute('data-part')).toBe('0');
+  expect(screen.getByText('Frage 1 von 4')).toBeTruthy();
+  view.rerender(<ProgressRow position={2} total={4} closed={1} active />);
+  expect(screen.getByTestId('segments').getAttribute('data-part')).toBe('default');
+  expect(screen.getByText('Frage 2 von 4')).toBeTruthy();
 });

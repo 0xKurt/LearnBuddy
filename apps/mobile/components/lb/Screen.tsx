@@ -3,66 +3,62 @@
 
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TYPE } from '../../lib/theme/type.js';
-import { SPACE } from '../../lib/theme/space.js';
-import { CircleBtn } from './CircleBtn.js';
+import { HEADER } from '../../lib/theme/header.js';
+import { BuddyHeader, type BuddyHeaderProps } from './BuddyHeader.js';
 import { Glow } from './Glow.js';
 
 type Props = {
   title?: string;
   back?: boolean;
+  subtitle?: string;
+  state?: BuddyHeaderProps['state'];
+  progress?: BuddyHeaderProps['progress'];
   right?: ReactNode;
+  leading?: BuddyHeaderProps['leading'];
+  footer?: ReactNode;
+  sound?: ReactNode;
   children: ReactNode;
 };
 
-export function Screen({ title, back = false, right, children }: Props) {
+export function Screen({
+  title,
+  subtitle,
+  state,
+  progress,
+  back = false,
+  right,
+  leading,
+  footer,
+  sound,
+  children,
+}: Props) {
   const { palette } = useTheme();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: palette.bg }}>
       {/* The same soft light as on Buddy's home, a little lower so content stays calm. */}
-      <Glow height={260} />
-      {(title || back || right) && (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: SPACE.md,
-            paddingHorizontal: SPACE.lg,
-            paddingVertical: SPACE.sm,
-            minHeight: 52,
-          }}
-        >
-          {back && (
-            <CircleBtn
-              icon="back"
-              onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-            />
-          )}
-          {title ? (
-            // One line, always (issue #287): a title that broke onto a second line pushed
-            // everything under it down and read as a layout fault. With buttons on the right
-            // the room is narrower, so the title steps down to the header size; what still
-            // does not fit ends in "…" — the full name stays with a screen reader, and on the
-            // practice screen the question card names the topic again. `minWidth: 0` lets one long
-            // word ("Reaktionsgleichungen") end in "…" instead of pushing the buttons off (#239).
-            <Text
-              accessibilityRole="header"
-              accessibilityLabel={title}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={[right ? TYPE.header : TYPE.title, { flex: 1, minWidth: 0 }]}
-            >
-              {title}
-            </Text>
-          ) : (
-            <View style={{ flex: 1 }} />
-          )}
-          {right}
-        </View>
+      <Glow height={HEADER.glow} />
+      {(title || back || right || leading || footer) && (
+        <BuddyHeader
+          title={title ?? ''}
+          subtitle={subtitle}
+          state={state}
+          progress={progress}
+          trailing={right}
+          footer={footer}
+          sound={sound}
+          leading={
+            leading ??
+            (back
+              ? {
+                  icon: 'back',
+                  onPress: () => (router.canGoBack() ? router.back() : router.replace('/')),
+                }
+              : undefined)
+          }
+        />
       )}
       {children}
     </SafeAreaView>

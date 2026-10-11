@@ -5,9 +5,18 @@
 
 import { useTranslation } from 'react-i18next';
 
+import { COMPOSER } from '../../lib/theme/composer.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
 
 export function TalkButton({ onPress }: { onPress: () => void }) {
   const { t } = useTranslation('buddy');
-  return <CircleBtn icon="voice" filled onPress={onPress} accessibilityLabel={t('talk.open')} />;
+  return (
+    <CircleBtn
+      icon="voice"
+      filled
+      size={COMPOSER.slot}
+      onPress={onPress}
+      accessibilityLabel={t('talk.open')}
+    />
+  );
 }

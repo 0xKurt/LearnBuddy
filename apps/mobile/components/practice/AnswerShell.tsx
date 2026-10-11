@@ -117,21 +117,7 @@ export function AnswerShell({
           {kept ?? answer}
         </View>
       )}
-      {keys ? (
-        // The board's keys fold with it (issue #419): two rows of note keys stayed while the staff
-        // was folded away, and on 360×440 they pushed her question's field half out of the window.
-        <View
-          testID="answer-keys"
-          style={{
-            display: folded ? 'none' : 'flex',
-            paddingHorizontal: SPACE.lg,
-            paddingTop: SPACE.sm,
-          }}
-        >
-          {keys}
-        </View>
-      ) : null}
-      <CheckBar {...action} />
+      <CheckBar {...action} keys={folded ? null : keys} />
     </>
   );
 }

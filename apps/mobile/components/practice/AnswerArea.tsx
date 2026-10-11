@@ -8,7 +8,6 @@
 // options itself ("Welcher Bruch ist größer?") would otherwise read as a question without them.
 
 import type { ItemView, SpeakStreamEvent } from '@learnbuddy/shared-types/contracts';
-import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import type { AnswerForm } from '../../lib/practice/answerForm.js';
@@ -18,9 +17,6 @@ import type { ScreenRoom } from '../../lib/practice/screenRoom.js';
 import type { PracticeActions } from '../../lib/practice/usePracticeActions.js';
 import type { PracticeDrafts } from '../../lib/practice/usePracticeDrafts.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
-import { BottomBar } from '../lb/BottomBar.js';
-import { Btn } from '../lb/Btn.js';
-import { Appear } from '../lb/Motion.js';
 import { AnswerShell } from './AnswerShell.js';
 import { ChoiceList } from './ChoiceList.js';
 import { CodeLineAnswer } from './CodeLineAnswer.js';
@@ -71,7 +67,6 @@ export function AnswerArea({
   disabled,
   closed,
 }: Props) {
-  const { t } = useTranslation('practice');
   const conversation = useVoiceMode((s) => s.conversation);
   const { choices, tapChoices, speaking, staff, taps, barSurface, tapFigure, codeLines, typed } =
     form;
@@ -247,15 +242,7 @@ export function AnswerArea({
             ) : undefined
           }
           action={{
-            bar: (
-              <BottomBar>
-                <Appear delay={120}>
-                  <Btn size="lg" pill full onPress={closed.onNext}>
-                    {t('next')}
-                  </Btn>
-                </Appear>
-              </BottomBar>
-            ),
+            next: { onPress: closed.onNext },
           }}
         />
       )}

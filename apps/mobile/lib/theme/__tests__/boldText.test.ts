@@ -96,3 +96,29 @@ it('keeps semantic control roles live through Bold Text and palette updates', ()
   expect(TYPE.action.fontWeight).toBe('700');
   expect(TYPE.cell.fontWeight).toBe('600');
 });
+
+it('keeps header and recording roles live through Bold Text and palette changes', () => {
+  const held = { brand: TYPE.brand, headerMeta: TYPE.headerMeta, voiceStatus: TYPE.voiceStatus };
+  expect(held.brand).toMatchObject({
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  });
+  expect(held.headerMeta).toMatchObject({ fontSize: 13, lineHeight: 18, fontWeight: '600' });
+  expect(held.voiceStatus).toMatchObject({
+    fontSize: TYPE.body.fontSize,
+    lineHeight: TYPE.body.lineHeight,
+    fontWeight: '600',
+  });
+  applyBoldText(true, paletteOf('pastellDark'));
+  expect(TYPE.brand).toBe(held.brand);
+  expect(TYPE.headerMeta).toBe(held.headerMeta);
+  expect(TYPE.voiceStatus).toBe(held.voiceStatus);
+  expect(held.headerMeta.fontFamily).toBe('Figtree_800ExtraBold');
+  expect(held.voiceStatus.fontFamily).toBe('Figtree_800ExtraBold');
+  expect(held.voiceStatus.color).toBe(paletteOf('pastellDark').ink);
+  applyType(paletteOf('oceanDark'));
+  expect(held.headerMeta.color).toBe(paletteOf('oceanDark').ink2);
+  expect(held.voiceStatus.fontFamily).toBe('Figtree_800ExtraBold');
+});

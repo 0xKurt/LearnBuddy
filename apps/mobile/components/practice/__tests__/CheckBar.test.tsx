@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { useVoiceMode } from '../../../lib/speech/voiceMode.js';
+import { InputBar } from '../../lb/InputBar.js';
 import { renderInApp } from '../../../testing/render.js';
 import { AskRoute, CheckBar, type CheckAction } from '../CheckBar.js';
 
@@ -126,4 +127,34 @@ describe('Gespräch in the bar', () => {
     expect(screen.queryByRole('button', { name: 'Nochmal vorlesen' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Tastatur' })).toBeTruthy();
   });
+});
+
+it('keeps a typed answer check in the single primary slot even before focus', () => {
+  const checked = vi.fn();
+  renderInApp(
+    <Asking
+      action={{
+        ...BOARD,
+        onPress: checked,
+        input: (primary) => (
+          <InputBar value="12" maxLength={100} accessibilityLabel="Antwort" action={primary} />
+        ),
+        typing: false,
+      }}
+    />,
+  );
+  const check = screen.getByRole('button', { name: 'Prüfen' });
+  expect(screen.getByTestId('composer-primary').contains(check)).toBe(true);
+  expect(screen.getAllByRole('button', { name: 'Prüfen' })).toHaveLength(1);
+  fireEvent.click(check);
+  expect(checked).toHaveBeenCalledOnce();
+});
+
+it('advances a closed question from the same primary slot', () => {
+  const next = vi.fn();
+  renderInApp(<Asking action={{ next: { onPress: next } }} />);
+  const button = screen.getByRole('button', { name: 'Weiter' });
+  expect(screen.getByTestId('composer-primary').contains(button)).toBe(true);
+  fireEvent.click(button);
+  expect(next).toHaveBeenCalledOnce();
 });

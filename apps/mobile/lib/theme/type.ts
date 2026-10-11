@@ -57,6 +57,9 @@ function typeOf(p: Palette) {
     input: { ...fontFace('400'), fontSize: 16, lineHeight: 23, color: p.ink },
     action: { ...fontFace('700'), fontSize: 16, lineHeight: 23, letterSpacing: -0.1, color: p.ink },
     cell: { ...fontFace('600'), fontSize: 16, lineHeight: 23, color: p.ink },
+    brand: { ...fontFace('800'), fontSize: 20, lineHeight: 26, letterSpacing: -0.4, color: p.ink },
+    headerMeta: { ...fontFace('600'), fontSize: 13, lineHeight: 18, color: p.ink2 },
+    voiceStatus: { ...body, ...fontFace('600') },
     metaStrong: { ...fontFace('700'), fontSize: 14, lineHeight: 20, color: p.ink2 },
     code: {
       fontFamily: MONOSPACE,

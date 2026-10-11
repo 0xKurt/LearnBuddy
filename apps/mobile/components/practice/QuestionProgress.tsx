@@ -1,10 +1,8 @@
-// The head of the question column: where she is in the run (the progress row) with the question's
-// one quiet action at its end (`QuestionCorner`), and in homework help or a test the one line that
-// says so. A test she asked to sit with time (issue #241) shows the time left in a small chip at
-// the end of the same row, and the one line under it — the header does not grow. Moved out of
-// `app/practice/[id].tsx` (issue #311).
+// Practice header adapters: honest progress and the timed-test clock beneath the title,
+// with the existing flag/dispute confirmation flow behind its menu.
 
 import type { ItemView, SessionView } from '@learnbuddy/shared-types/contracts';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 
@@ -15,9 +13,13 @@ import { TYPE } from '../../lib/theme/type.js';
 import { canDisputeVerdict } from './DisputeVerdict.js';
 import { ProgressRow } from './Question.js';
 import { QuestionCorner } from './QuestionCorner.js';
+import { CircleBtn } from '../lb/CircleBtn.js';
+import { Sheet } from '../lb/Sheet.js';
 import { TestClockHeader } from './TestClock.js';
 
 type Props = {
+  /** Count is already visible below the shared header title. */
+  inHeader?: boolean;
   session: SessionView;
   item: ItemView;
   open: boolean;
@@ -36,53 +38,78 @@ type Props = {
 
 export function QuestionProgress({
   session,
-  item,
+  inHeader = false,
   open,
   testing,
-  flaggable,
   progress,
-  disabled,
-  onCorner,
   receivedAt,
   onTimeUp,
 }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
-  const corner = (
-    <QuestionCorner
-      flaggable={flaggable}
-      // A judgement she has been given and may disagree with (issue #164). The
-      // rule lives in components/practice/DisputeVerdict.tsx.
-      canDispute={canDisputeVerdict({
-        open,
-        sessionStatus: session.status,
-        testing,
-        mode: session.mode,
-        origin: item.origin,
-        kind: item.kind,
-      })}
-      disabled={disabled}
-      onFlag={() => onCorner('flag')}
-      onDispute={() => onCorner('dispute')}
-    />
-  );
   if (testing && session.timer)
     return (
       <TestClockHeader
         timer={session.timer}
         receivedAt={receivedAt}
         onTimeUp={onTimeUp}
-        progress={{ ...progress, right: corner }}
+        progress={{ ...progress, hideLabel: inHeader, active: open }}
       />
     );
   return (
     <>
-      <ProgressRow {...progress} right={corner} />
+      <ProgressRow {...progress} hideLabel={inHeader} active={open} />
       {session.mode === 'help' || testing ? (
-        <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
+        <Text style={[TYPE.meta, { color: palette.primaryDk }]}>
           {t(testing ? 'test_note' : 'help_note')}
         </Text>
       ) : null}
+    </>
+  );
+}
+
+/** The question menu delegates to the same confirm flow as the former corner button. */
+export function QuestionMenu({
+  session,
+  item,
+  open,
+  testing,
+  flaggable,
+  disabled,
+  onCorner,
+}: Pick<Props, 'session' | 'item' | 'open' | 'testing' | 'flaggable' | 'disabled' | 'onCorner'>) {
+  const [visible, setVisible] = useState(false);
+  const { t } = useTranslation(['buddy', 'common']);
+  const canDispute = canDisputeVerdict({
+    open,
+    sessionStatus: session.status,
+    testing,
+    mode: session.mode,
+    origin: item.origin,
+    kind: item.kind,
+  });
+  if (!flaggable && !canDispute) return null;
+  const choose = (action: CornerAction) => {
+    setVisible(false);
+    onCorner(action);
+  };
+  return (
+    <>
+      <CircleBtn plain icon="more" disabled={disabled} onPress={() => setVisible(true)} />
+      <Sheet
+        visible={visible}
+        title={t('buddy:menu.title')}
+        closeLabel={t('common:actions.close')}
+        onClose={() => setVisible(false)}
+      >
+        <QuestionCorner
+          flaggable={flaggable}
+          canDispute={canDispute}
+          disabled={disabled}
+          onFlag={() => choose('flag')}
+          onDispute={() => choose('dispute')}
+        />
+      </Sheet>
     </>
   );
 }

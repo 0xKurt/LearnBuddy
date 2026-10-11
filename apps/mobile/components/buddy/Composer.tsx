@@ -23,6 +23,7 @@ import { pageHandler } from '../../lib/capture/pages.js';
 import { useDraft } from '../../lib/drafts.js';
 import { haptic } from '../../lib/haptics.js';
 import { fadeIn } from '../../lib/theme/enter.js';
+import { COMPOSER } from '../../lib/theme/composer.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { AttachMenu } from '../capture/AttachMenu.js';
@@ -125,6 +126,7 @@ export function Composer({
       <CircleBtn
         icon="stop"
         filled
+        size={COMPOSER.slot}
         {...(onStop ? { onPress: onStop } : {})}
         accessibilityLabel={t('buddy:thread.stop_label')}
       />
@@ -158,6 +160,7 @@ export function Composer({
             <CircleBtn
               icon="plus"
               plain
+              size={COMPOSER.slot}
               onPress={menu.open}
               accessibilityLabel={t('buddy:composer.attach.title')}
             />
@@ -172,6 +175,7 @@ export function Composer({
             <CircleBtn
               icon="send"
               filled
+              size={COMPOSER.slot}
               keepsFocus
               onPress={send}
               disabled={disabled || pages.busy}

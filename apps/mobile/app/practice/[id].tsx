@@ -41,7 +41,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { EndButton } from '../../components/lb/EndButton.js';
+import { ReadAloudSwitch } from '../../components/lb/ReadAloudSwitch.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
 import { SlideIn } from '../../components/lb/Motion.js';
 import { Screen } from '../../components/lb/Screen.js';
@@ -51,12 +51,11 @@ import { CardPass } from '../../components/practice/CardPass.js';
 import { AskRoute } from '../../components/practice/CheckBar.js';
 import { DrillRound } from '../../components/practice/DrillRound.js';
 import { FreeSpaceReport } from '../../components/practice/FreeSpace.js';
-import { HeadActions } from '../../components/practice/HeadActions.js';
 import { ItemCard } from '../../components/practice/ItemCard.js';
 import { NoQuestion } from '../../components/practice/NoQuestion.js';
 import { PracticeStuck } from '../../components/practice/PracticeStuck.js';
 import { CornerSheet } from '../../components/practice/QuestionCorner.js';
-import { QuestionProgress } from '../../components/practice/QuestionProgress.js';
+import { QuestionMenu, QuestionProgress } from '../../components/practice/QuestionProgress.js';
 import { QuestionThread } from '../../components/practice/QuestionThread.js';
 import { QuestionTools } from '../../components/practice/QuestionTools.js';
 import { isRetryable } from '../../lib/api/apiError.js';
@@ -220,24 +219,53 @@ export default function PracticeScreen() {
     windowWidth,
     safeBottom: insets.bottom,
   });
-  const endButton = (
-    // Stays while a question is on screen, also once the session was finished in the
-    // background (finishing again is a no-op) – the header must not jump under the reader.
-    <HeadActions>
-      <EndButton
-        onPress={() => void end.close()}
-        disabled={end.closing}
-        label={t('practice:end_label')}
-        hint={t(offers.testing ? 'practice:end_hint_test' : 'practice:end_hint')}
-      />
-    </HeadActions>
-  );
 
   // No scrolling to find what matters (CLAUDE.md rule 16): the question stays on top,
   // the way to answer stays at the bottom, and only the conversation between them
   // grows — like a chat, newest at the bottom.
   return (
-    <Screen title={title} right={endButton}>
+    <Screen
+      title={title}
+      subtitle={
+        view.progress.preparing
+          ? t('practice:progress_more_coming', { current: view.progress.position })
+          : t('practice:progress', { current: view.progress.position, total: view.progress.total })
+      }
+      leading={{
+        icon: 'close',
+        onPress: () => void end.close(),
+        disabled: end.closing,
+        label: t('practice:end_label'),
+        hint: t(offers.testing ? 'practice:end_hint_test' : 'practice:end_hint'),
+      }}
+      sound={<ReadAloudSwitch />}
+      right={
+        <QuestionMenu
+          session={session}
+          item={item}
+          open={open}
+          testing={offers.testing}
+          flaggable={offers.flaggable}
+          disabled={locked}
+          onCorner={(action) => corner.ask(action, item.id)}
+        />
+      }
+      footer={
+        <QuestionProgress
+          inHeader
+          session={session}
+          item={item}
+          open={open}
+          testing={offers.testing}
+          flaggable={offers.flaggable}
+          progress={view.progress}
+          disabled={locked}
+          onCorner={(action) => corner.ask(action, item.id)}
+          receivedAt={query.dataUpdatedAt}
+          onTimeUp={end.onTimeUp}
+        />
+      }
+    >
       <KeyboardSafe style={{ flex: 1 }}>
         <FreeSpaceReport.Provider value={measured.free}>
           {/* Her question (issue #402): the field of the bar on every form without a typed answer. */}
@@ -275,18 +303,6 @@ export default function PracticeScreen() {
                   }}
                   onContentSizeChange={(_, h) => measured.setQuestionContentHeight(Math.round(h))}
                 >
-                  <QuestionProgress
-                    session={session}
-                    item={item}
-                    open={open}
-                    testing={offers.testing}
-                    flaggable={offers.flaggable}
-                    progress={view.progress}
-                    disabled={locked}
-                    onCorner={(action) => corner.ask(action, item.id)}
-                    receivedAt={query.dataUpdatedAt}
-                    onTimeUp={end.onTimeUp}
-                  />
                   {/* The next question comes in softly from the side (keyed by the question). Its
                       drawing reports while it sizes itself: the card's own height waits for it. */}
                   <SlideIn key={item.id}>

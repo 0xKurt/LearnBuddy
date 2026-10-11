@@ -43,7 +43,7 @@ describe('one input bar for the chat and every typed answer (#365)', () => {
 
   it('draws the pill itself: no other file asks the field for it', () => {
     expect(app.filter((s) => /variant="bar"/.test(s.text)).map((s) => s.file)).toEqual([
-      'components/lb/InputBar.tsx',
+      'components/lb/Composer.tsx',
     ]);
   });
 });

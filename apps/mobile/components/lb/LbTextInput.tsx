@@ -65,6 +65,8 @@ const CHIPS = {
 export type LbTextInputProps = Omit<TextInputProps, 'style'> & {
   /** field (default), bar (the input bar's box) or cell (a gap, a table's cell). */
   variant?: 'field' | 'bar' | 'cell';
+  /** Composer tools keep their own row, including when its field is empty. */
+  stackTools?: boolean;
   /** Inside the frame, the tools' start (the chat's +, the camera). */
   start?: ReactNode;
   /** Bar only: beside `start`, what goes with the answer (its unit, how her math is read). */
@@ -125,6 +127,7 @@ function submitsOnEnter(
 export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function LbTextInput(
   {
     variant = 'field',
+    stackTools = false,
     start = null,
     chips = null,
     end = null,
@@ -162,7 +165,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
   const top = lines && rows > 1;
   // The bar's text over the full width, its tools in a row under it: as soon as there is text,
   // and always for a page of several rows (issue #522).
-  const stacked = bar && ((rest.value ?? '') !== '' || rows > 1);
+  const stacked = bar && (stackTools || (rest.value ?? '') !== '' || rows > 1);
   // What the frame keeps inside its hairline: a form field 52 pt, a cell and the bar's text
   // one touch target (the bar adds its padding around it).
   const inner = bar ? TOUCH : (cell ? TOUCH : FIELD_HEIGHT) - UI.border * 2;
@@ -295,6 +298,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
                 backgroundColor: 'transparent',
                 // The ring is the frame's; the browser's own box around the text stays off.
                 outlineWidth: 0,
+                ...(Platform.OS === 'web' ? { outlineStyle: 'solid' as const } : {}),
               },
               lines ? growsWithText(rest.value ?? '') : null,
             ]}

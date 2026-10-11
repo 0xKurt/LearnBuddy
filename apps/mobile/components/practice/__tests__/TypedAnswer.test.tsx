@@ -70,8 +70,10 @@ describe('a typed answer is written in the one input bar (issue #365)', () => {
   it('while she types, "Prüfen" stands in the box itself, like the chat\'s send arrow', () => {
     const seen = show('long', 'Erklär mir, warum der Mond Phasen hat.', null);
     fireEvent.focus(field());
-    // Nothing to check yet: no "Prüfen" at all.
-    expect(screen.queryByRole('button', { name: 'Prüfen' })).toBeNull();
+    // Pending Check keeps the one primary slot and cannot submit an empty answer.
+    const pending = screen.getByRole('button', { name: 'Prüfen' }) as HTMLButtonElement;
+    expect(pending.disabled).toBe(true);
+    expect(screen.getByTestId('composer-primary').contains(pending)).toBe(true);
     type(seen, 'Weil');
     const checks = screen.getAllByRole('button', { name: 'Prüfen' });
     expect(checks).toHaveLength(1);
@@ -82,14 +84,20 @@ describe('a typed answer is written in the one input bar (issue #365)', () => {
     expect(box().contains(screen.getByRole('button', { name: 'Antwort sagen' }))).toBe(true);
     fireEvent.blur(field());
     expect(screen.getAllByRole('button', { name: 'Prüfen' })).toHaveLength(1);
-    expect(box().contains(screen.getByRole('button', { name: 'Prüfen' }))).toBe(false);
+    expect(box().contains(screen.getByRole('button', { name: 'Prüfen' }))).toBe(true);
   });
 
-  it('keeps the box one line while it is empty, the tools beside the text (#522)', () => {
+  it('keeps tools below empty text and pending Check in the one primary slot', () => {
     show('numeric', 'Wie groß ist die Fläche?', 'math');
-    // Empty: the mic stands in the same row as the field.
+    // The field keeps full width even before the first character.
     expect(
       field().parentElement!.contains(screen.getByRole('button', { name: 'Antwort sagen' })),
+    ).toBe(false);
+    expect(box().contains(screen.getByRole('button', { name: 'Antwort sagen' }))).toBe(true);
+    expect(
+      screen
+        .getByTestId('composer-primary')
+        .contains(screen.getByRole('button', { name: 'Prüfen' })),
     ).toBe(true);
   });
 });

@@ -13,6 +13,8 @@ export const DURATION = {
   quick: 140,
   base: 220,
   gentle: 420,
+  voicePulse: 1200,
+  recordingPulse: 700,
 } as const;
 
 export const EASE = {

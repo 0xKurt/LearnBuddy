@@ -45,18 +45,33 @@ describe('Vorlesen: one switch, the same in the chat and in practice (#386)', ()
 
   it('stands in the chat’s head and in the practice head', () => {
     expect(holders(/<ReadAloudSwitch\b/)).toEqual([
+      // The shared header receives the switch through its sound slot.
+      'app/practice/[id].tsx',
       'components/buddy/Header.tsx',
-      // The right end of every practice header (#434).
+      // Card passes and drill rounds retain their existing header adapter (#434).
       'components/practice/HeadActions.tsx',
     ]);
   });
 
   it('is in the head of every practice: a question, a Kopfrechnen round, a card pass (#434)', () => {
     expect(holders(/<HeadActions\b/)).toEqual([
-      'app/practice/[id].tsx',
       'components/practice/CardPass.tsx',
       'components/practice/DrillRound.tsx',
     ]);
+  });
+
+  it('passes exactly one speaker through the shared header sound slot', () => {
+    expect(holders(/sound=\{<ReadAloudSwitch\s*\/>\}/)).toEqual([
+      'app/practice/[id].tsx',
+      'components/buddy/Header.tsx',
+    ]);
+    const source = (file: string) => app.find((s) => s.file === file)!.text;
+    expect(source('components/buddy/Header.tsx')).toMatch(/<BuddyHeader\b/);
+    expect(source('app/practice/[id].tsx')).toMatch(/<Screen\b/);
+    expect(source('components/lb/Screen.tsx')).toMatch(/<BuddyHeader\b/);
+    expect(source('components/lb/Screen.tsx')).toMatch(/sound=\{sound\}/);
+    // A shared header must neither drop nor duplicate the caller's speaker control.
+    expect(source('components/lb/BuddyHeader.tsx').match(/\{sound\}/g)).toHaveLength(1);
   });
 
   it('reads again with a tap on the question itself, wherever one is read (#434)', () => {
