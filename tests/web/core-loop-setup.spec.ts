@@ -80,23 +80,19 @@ test('core loop · setup: a parent sets up, Mia picks her colours, first look at
   for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Such dir deine Farben aus')).toBeVisible();
   await expect(page.getByRole('radio', { name: 'Meer' })).toBeVisible();
-  // The same two controls as in the settings (issue #172): colour cards and one switch, named
-  // for what it does — "Dunkelmodus", on = dark, the name the same either way (#517).
-  const dark = page.getByRole('switch', { name: 'Dunkelmodus' });
-  await expect(dark).not.toBeChecked();
-  await expect(page.getByText('Folgt dem Handy, bis du es hier einmal einstellst.')).toBeVisible();
+  // Explicit persisted system/light/dark selection follows the supplied design (#548).
+  const dark = page.getByRole('radio', { name: 'Dunkel', exact: true });
+  await expect(page.getByRole('radio', { name: 'Wie das Handy', exact: true })).toBeChecked();
   await shot(page, '03e-onboarding-look');
   await page.getByRole('radio', { name: 'Abend' }).click();
   await expect(page.getByRole('radio', { name: 'Abend' })).toHaveAttribute('aria-checked', 'true');
   await shot(page, '03f-onboarding-look-sunset');
   await dark.click();
   await expect(dark).toBeChecked();
-  await expect(page.getByText('Lange drücken, um wieder dem Handy zu folgen.')).toBeVisible();
   await shot(page, '03g-onboarding-look-dark');
-  // The way back to the phone (#222): a long press on the row, as its hint says.
-  await page.getByText('Dunkelmodus', { exact: true }).click({ delay: 900 });
+  await page.getByRole('radio', { name: 'Wie das Handy', exact: true }).click();
+  await expect(page.getByRole('radio', { name: 'Wie das Handy', exact: true })).toBeChecked();
   await expect(dark).not.toBeChecked();
-  await expect(page.getByText('Folgt dem Handy, bis du es hier einmal einstellst.')).toBeVisible();
   await page.getByRole('button', { name: "Los geht's" }).click();
 
   // ── The student's first look: who Buddy is and how to start ──

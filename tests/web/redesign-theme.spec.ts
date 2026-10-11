@@ -133,10 +133,10 @@ test('theme foundation: Pastell/Meer light/dark phone matrix', async ({ page }) 
       await openMenu(page, 'Einstellungen');
       await page.getByRole('button', { name: 'Aussehen', exact: true }).click();
       await page.getByRole('radio', { name: family, exact: true }).click();
-      const toggle = page.getByRole('switch', { name: 'Dunkelmodus' });
-      if ((await toggle.isChecked()) !== dark) await toggle.click();
+      const toggle = page.getByRole('radio', { name: dark ? 'Dunkel' : 'Hell', exact: true });
+      await toggle.click();
       await expect(page.getByRole('radio', { name: family, exact: true })).toBeChecked();
-      await expect(toggle).toBeChecked({ checked: dark });
+      await expect(toggle).toBeChecked();
       const name = `theme-${family.toLowerCase()}-${dark ? 'dark' : 'light'}`;
       await shot(page, `${name}-settings`, { opened: true });
       for (const phone of PHONES) {

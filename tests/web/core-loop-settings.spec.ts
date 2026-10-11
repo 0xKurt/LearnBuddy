@@ -8,6 +8,11 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { freshEmail, openMenu as openMenuOf, planTest, signUpMia } from './coreLoop';
 import { shot } from './fit';
+import { PALETTES } from '../../apps/mobile/lib/theme/palettes';
+const inkCss = (hex: string) => {
+  const value = Number.parseInt(hex.slice(1), 16);
+  return `rgb(${value >> 16}, ${(value >> 8) & 255}, ${value & 255})`;
+};
 
 test('core loop · settings: messages, voice, the look by day and by night', async ({ page }) => {
   const email = freshEmail('settings');
@@ -37,12 +42,9 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   // (issue #84: module-scope styles froze the start palette's ink, which was invisible on
   // the night background — the axe pass at every shot is what catches that class now.)
   await page.getByRole('button', { name: 'Aussehen' }).click();
-  // Four colour cards and one switch since issue #172 — "einmal farb cards, dazu einen
-  // hell/dunkel switch, thats it" (owner, on seeing seven preview cards on the phone).
-  // Named for what it does since #517: "Dunkelmodus", on = dark, the name the same either way.
-  const darkSwitch = page.getByRole('switch', { name: 'Dunkelmodus' });
+  const darkSwitch = page.getByRole('radio', { name: 'Dunkel', exact: true });
   await expect(darkSwitch).not.toBeChecked();
-  await expect(page.getByText('Hell oder dunkel?')).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'Wie das Handy', exact: true })).toBeChecked();
   await shot(page, '15f-settings-look', { opened: true });
   // Two axes since issue #140: the colours are one choice, dark is another. Dark with the
   // colours kept is the combination the owner asked for — "blau eingestellt, blaue highlights".
@@ -68,7 +70,25 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   await openMenu('Einstellungen');
   await page.getByRole('button', { name: 'Aussehen' }).click();
   await page.getByRole('radio', { name: 'Pastell' }).click();
-  await page.getByRole('switch', { name: 'Dunkelmodus' }).click();
+  await page.getByRole('radio', { name: 'Hell', exact: true }).click();
+  const system = page.getByRole('radio', { name: 'Wie das Handy', exact: true });
+  await system.click();
+  await expect(system).toBeChecked();
+  await page.reload();
+  await page.getByRole('button', { name: 'Aussehen', exact: true }).click();
+  await expect(system).toBeChecked();
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(page.getByRole('heading', { name: 'Einstellungen', exact: true })).toHaveCSS(
+    'color',
+    inkCss(PALETTES.pastellDark.ink),
+  );
+  await expect(page.getByRole('radio', { name: 'Dunkel', exact: true })).not.toBeChecked();
+  await expect(system).toBeChecked();
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expect(page.getByRole('heading', { name: 'Einstellungen', exact: true })).toHaveCSS(
+    'color',
+    inkCss(PALETTES.pastell.ink),
+  );
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 

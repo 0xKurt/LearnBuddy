@@ -191,7 +191,6 @@
     "speed_hint": "Toca para escucharla. ¿Más lento o más rápido? Díselo a Buddy."
   },
   "look": {
-    "dark_mode": "Modo oscuro",
     "family": {
       "pastell": "Pastel",
       "forest": "Bosque",
@@ -204,9 +203,8 @@
       "light": "Claro",
       "dark": "Oscuro"
     },
-    "mode_hint": "Sigue a tu móvil hasta que lo elijas aquí.",
-    "mode_hint_pinned": "Mantén pulsado para volver a seguir al teléfono.",
     "question": "¿Qué colores te gustan?",
-    "title": "Aspecto"
+    "title": "Aspecto",
+    "mode_label": "Claro u oscuro"
   }
 }

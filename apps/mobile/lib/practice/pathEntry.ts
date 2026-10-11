@@ -24,7 +24,7 @@
 //
 // This lives here rather than inline in the component because the component layer renders
 // through react-native-web, where a TextInput's `submitBehavior` is not in the DOM and cannot be
-// asserted — the same reason `lib/theme/modeSwitch.ts` sits where it does.
+// asserted.
 
 import { pathPossible, type ItemKind } from '@learnbuddy/shared-types/contracts';
 
