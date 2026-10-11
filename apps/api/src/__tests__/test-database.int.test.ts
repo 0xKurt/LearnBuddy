@@ -3,6 +3,7 @@
 // harness-close-does-not-drain-background, #323).
 // requires live verification in Claude Code session (needs a running Postgres)
 
+import { randomBytes } from 'node:crypto';
 import pg from 'pg';
 import { describe, expect, it } from 'vitest';
 
@@ -34,22 +35,39 @@ const exists = (name: string) =>
       (await c.query('select 1 from pg_database where datname = $1', [name])).rowCount === 1,
   );
 
+function cleanupFixtureNames() {
+  const suffix = randomBytes(6).toString('hex');
+  return {
+    old: `lb_test_${(Date.now() - 2 * 86_400_000).toString(36)}_${suffix}`,
+    recent: `lb_test_${(Date.now() - 60_000).toString(36)}_${suffix}`,
+    build: `lb_tplbuild_${suffix}_${suffix}`,
+    otherSet: `lb_tpl_${suffix}`,
+  };
+}
+
+async function seedCleanupFixtures(
+  names: ReturnType<typeof cleanupFixtureNames>,
+  beforeMark?: (fixture: pg.Client) => Promise<void>,
+) {
+  await admin(async (c) => {
+    // Cleanup uses this same lock. Do not expose an unmarked fixture template to it.
+    await c.query('select pg_advisory_lock($1)', [LOCK_KEY]);
+    try {
+      for (const name of Object.values(names)) await c.query(`create database "${name}"`);
+      await beforeMark?.(c);
+      await c.query(
+        `comment on database "${names.otherSet}" is 'lb built ${new Date().toISOString()}'`,
+      );
+    } finally {
+      await c.query('select pg_advisory_unlock($1)', [LOCK_KEY]);
+    }
+  });
+}
+
 describe.skipIf(!dbReady)('test databases', () => {
   it('drops what interrupted runs left behind, never what a concurrent run may use', async () => {
-    const old = `lb_test_${(Date.now() - 2 * 86_400_000).toString(36)}_deadbeef`;
-    const recent = `lb_test_${(Date.now() - 60_000).toString(36)}_cafebabe`;
-    const build = 'lb_tplbuild_000000000000_deadbeef';
-    const otherSet = 'lb_tpl_ffffffffffff';
-    await admin(async (c) => {
-      for (const n of [old, recent, build, otherSet]) {
-        // Two of the four names are fixed, so a run killed inside this test leaves them
-        // behind and every later run would fail at "database already exists" instead of
-        // testing anything. Clearing first is what the test claims to be about.
-        await c.query(`drop database if exists "${n}" with (force)`);
-        await c.query(`create database "${n}"`);
-      }
-      await c.query(`comment on database "${otherSet}" is 'lb built ${new Date().toISOString()}'`);
-    });
+    const { old, recent, build, otherSet } = cleanupFixtureNames();
+    await seedCleanupFixtures({ old, recent, build, otherSet });
     try {
       const db = await createTestDatabase();
       await db.drop();
@@ -61,6 +79,38 @@ describe.skipIf(!dbReady)('test databases', () => {
       await admin(async (c) => {
         for (const n of [old, recent, build, otherSet])
           await c.query(`drop database if exists "${n}" with (force)`);
+      });
+    }
+  });
+
+  it('marks fixture templates under the cleanup lock while another copy starts', async () => {
+    const names = cleanupFixtureNames();
+    let concurrent: ReturnType<typeof createTestDatabase> | undefined;
+    try {
+      await seedCleanupFixtures(names, async (fixture) => {
+        const own = await fixture.query<{ pid: number }>('select pg_backend_pid() as pid');
+        // Start actual cleanup in the CREATE-before-COMMENT interval, then inspect the
+        // fixture session's own lock: another helper holding it is not enough.
+        concurrent = createTestDatabase();
+        await admin(async (c) => {
+          const locks = await c.query<{ held: boolean }>(
+            `select exists (select 1 from pg_locks where locktype = 'advisory'
+              and pid = $1 and classid = 0 and objid = $2 and objsubid = 1
+              and granted) as held`,
+            [own.rows[0]?.pid, LOCK_KEY],
+          );
+          expect(locks.rows[0]?.held).toBe(true);
+        });
+      });
+      expect(concurrent).toBeDefined();
+      await concurrent;
+      expect(await exists(names.otherSet)).toBe(true);
+    } finally {
+      const db = await concurrent;
+      await db?.drop();
+      await admin(async (c) => {
+        for (const name of Object.values(names))
+          await c.query(`drop database if exists "${name}" with (force)`);
       });
     }
   });
