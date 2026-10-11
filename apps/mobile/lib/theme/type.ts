@@ -48,6 +48,7 @@ function typeOf(p: Palette) {
   const label = { ...fontFace('700'), fontSize: 13, lineHeight: 18, color: p.ink2 };
   return {
     display,
+    pageHeadline: { ...display, fontSize: 30, lineHeight: 36, letterSpacing: -0.8 },
     question,
     title,
     body,

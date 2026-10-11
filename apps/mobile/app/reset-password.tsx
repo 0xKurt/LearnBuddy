@@ -3,7 +3,7 @@
 // Supabase client only; the app's session is saved once the new password is
 // set, then the start screen routes on. An expired, used or foreign link gets a
 // calm explanation and the way back. CLAUDE.md rule 15: the CTA is pinned
-// outside the ScrollView, inside a KeyboardAvoidingView (like app/welcome.tsx).
+// outside the ScrollView, inside the shared KeyboardSafe wrapper.
 
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
@@ -15,13 +15,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NewPasswordFields } from '../components/auth/NewPasswordFields.js';
 import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
-import { Card } from '../components/lb/Card.js';
+import { Field } from '../components/lb/Field.js';
 import { Glow } from '../components/lb/Glow.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { toast } from '../components/lb/Toast.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { queryClient } from '../lib/api/queries.js';
 import {
+  looksLikeEmail,
   parseRecoveryUrl,
   passwordProblem,
   withoutSecrets,
@@ -32,12 +33,14 @@ import {
   abandonRecovery,
   AuthFailure,
   finishRecovery,
+  requestPasswordReset,
   startRecovery,
 } from '../lib/auth/supabase.js';
 import { messageFor } from '../lib/errors.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { CARD_PAD, GUTTER, pinnedBar, RHYTHM, SPACE } from '../lib/theme/space.js';
+import { GUTTER, pinnedBar, RHYTHM } from '../lib/theme/space.js';
+import { RESET } from '../lib/theme/reset.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 // On the web the page address is the link; kept from load time in case the
@@ -64,6 +67,12 @@ export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [repeat, setRepeat] = useState('');
   const [busy, setBusy] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetTouched, setResetTouched] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetFailure, setResetFailure] = useState<string | null>(null);
+  const requesting = useRef(false);
   const handled = useRef<string | null>(null);
   const current = useRef<RecoveryLink>({ kind: 'invalid' });
 
@@ -115,6 +124,24 @@ export default function ResetPassword() {
     }
   }
 
+  async function requestLink() {
+    if (requesting.current || !looksLikeEmail(resetEmail.trim()) || resetSent) return;
+    requesting.current = true;
+    setResetBusy(true);
+    setResetFailure(null);
+    try {
+      await requestPasswordReset(resetEmail.trim());
+      setResetSent(true);
+    } catch (err) {
+      if (err instanceof AuthFailure && (err.reason === 'network' || err.reason === 'rate_limited'))
+        setResetFailure(messageFor(err));
+      else setResetSent(true); // Same answer for every account outcome, as on Welcome.
+    } finally {
+      requesting.current = false;
+      setResetBusy(false);
+    }
+  }
+
   function leave() {
     void abandonRecovery();
     router.replace(currentSession() ? '/' : '/welcome');
@@ -125,54 +152,94 @@ export default function ResetPassword() {
   if (phase === 'checking') {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
-        <Glow height={320} />
+        <Glow height={RESET.glow} />
         <LoadingState label={t('reset.checking')} />
       </SafeAreaView>
     );
   }
 
   if (phase === 'invalid' || phase === 'offline') {
+    const offline = phase === 'offline';
+    const emailError =
+      resetTouched && resetEmail.trim().length > 0 && !looksLikeEmail(resetEmail.trim());
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
-        <Glow height={420} />
-        <ResetPage title={t('reset.title')}>
-          <Card tone={phase === 'offline' ? 'sky' : 'butter'} padding={CARD_PAD.roomy}>
-            <Text style={TYPE.title}>
-              {phase === 'offline' ? t('reset.offline_title') : t('reset.invalid_title')}
+        <Glow height={RESET.glow} />
+        <KeyboardSafe style={{ flex: 1 }}>
+          <ResetPage
+            title={t(offline ? 'reset.offline_title' : 'reset.invalid_title')}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={[TYPE.body, { color: palette.ink2 }]}>
+              {t(offline ? 'reset.offline_body' : 'reset.invalid_body')}
             </Text>
-            <Text style={[TYPE.body, { marginTop: SPACE.xs }]}>
-              {phase === 'offline' ? t('reset.offline_body') : t('reset.invalid_body')}
-            </Text>
-          </Card>
-          <View style={{ gap: RHYTHM.parts }}>
-            {phase === 'offline' ? (
-              <Btn pill full onPress={() => void open(current.current)}>
-                {t('reset.retry')}
-              </Btn>
+            {offline ? null : (
+              <Field
+                label={t('welcome.email')}
+                accessibilityLabel={t('welcome.email')}
+                value={resetEmail}
+                onChangeText={(value) => {
+                  setResetEmail(value);
+                  setResetSent(false);
+                  setResetFailure(null);
+                }}
+                onBlur={() => setResetTouched(true)}
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+                autoComplete="email"
+                keyboardType="email-address"
+                textContentType="emailAddress"
+                returnKeyType="send"
+                editable={!resetBusy}
+                onSubmitEditing={() => void requestLink()}
+                error={emailError}
+                errorMessage={emailError ? t('error.invalid_email') : undefined}
+              />
+            )}
+            {resetSent ? (
+              <Text accessibilityRole="alert" style={TYPE.meta}>
+                {t('welcome.reset_sent')}
+              </Text>
             ) : null}
-            <Btn variant={phase === 'offline' ? 'ghost' : 'primary'} pill full onPress={leave}>
+            {resetFailure ? (
+              <Text accessibilityRole="alert" style={[TYPE.meta, { color: palette.danger }]}>
+                {resetFailure}
+              </Text>
+            ) : null}
+          </ResetPage>
+          <View style={[pinnedBar(0), { gap: RHYTHM.parts }]}>
+            <Btn
+              full
+              size="lg"
+              busy={resetBusy}
+              disabled={!offline && (resetSent || !looksLikeEmail(resetEmail.trim()))}
+              onPress={() => (offline ? void open(current.current) : void requestLink())}
+            >
+              {t(offline ? 'reset.retry' : 'reset.request')}
+            </Btn>
+            <Btn variant="ghost" full disabled={resetBusy} onPress={leave}>
               {backLabel}
             </Btn>
           </View>
-        </ResetPage>
+        </KeyboardSafe>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
-      <Glow height={420} />
+      <Glow height={RESET.glow} />
       <KeyboardSafe style={{ flex: 1 }}>
         <ResetPage title={t('reset.title')} keyboardShouldPersistTaps="handled">
-          <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center' }]}>
-            {t('reset.body')}
-          </Text>
+          <Text style={[TYPE.body, { color: palette.ink2 }]}>{t('reset.body')}</Text>
           <NewPasswordFields
             password={password}
             repeat={repeat}
             onChangePassword={setPassword}
             onChangeRepeat={setRepeat}
             onSubmit={() => void save()}
+            editable={!busy}
           />
           {/* Not while saving: leaving then would change the password without a word
               (p2-leave-during-save-race). */}
@@ -182,7 +249,14 @@ export default function ResetPassword() {
         </ResetPage>
         {/* The SafeAreaView keeps the bottom edge: no inset left to clear. */}
         <View style={pinnedBar(0)}>
-          <Btn size="lg" pill full disabled={!valid || busy} onPress={() => void save()}>
+          <Btn
+            size="lg"
+            pill
+            full
+            busy={busy}
+            disabled={!valid || busy}
+            onPress={() => void save()}
+          >
             {busy ? t('reset.saving') : t('reset.cta')}
           </Btn>
         </View>
@@ -193,7 +267,7 @@ export default function ResetPassword() {
 
 /**
  * The page every phase after the check shares: Buddy and the title on top, what the phase
- * says below. The form keeps taps while the keyboard is up; the other phases have no field.
+ * says below. Both password and resend forms keep taps while the keyboard is up.
  */
 function ResetPage({
   title,
@@ -208,20 +282,20 @@ function ResetPage({
     <ScrollView
       contentContainerStyle={{
         paddingHorizontal: GUTTER,
-        paddingTop: 28, // token-exempt: Buddy a little lower than the page's top, as it always sat
-        paddingBottom: SPACE.xl,
+        paddingTop: RESET.top,
+        paddingBottom: RESET.bottom,
         gap: RHYTHM.sections,
       }}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
     >
       <View
         style={{
-          alignItems: 'center',
+          alignItems: 'flex-start',
           gap: RHYTHM.stack, // the title under Buddy's orb
         }}
       >
-        <BuddyOrb size={72} />
-        <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
+        <BuddyOrb size={RESET.orb} />
+        <Text accessibilityRole="header" style={TYPE.pageHeadline}>
           {title}
         </Text>
       </View>
