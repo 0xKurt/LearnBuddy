@@ -293,7 +293,7 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Cl
                 return (
                   <Btn
                     key={word}
-                    variant="outline"
+                    variant="tile"
                     size="sm"
                     pill
                     disabled={disabled || taken}

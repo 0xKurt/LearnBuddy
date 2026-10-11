@@ -45,6 +45,8 @@ const TEXT: Array<[keyof Palette, keyof Palette]> = [
   ['ink2', 'canvas'],
 ];
 const SHAPES: Array<[keyof Palette, keyof Palette]> = [
+  ['onSuccess', 'success'],
+  ['onDanger', 'danger'],
   ['primary', 'paper'],
   ['primary', 'bg'],
   // The ready button against the waiting skin (issue #97): two states no one can mix up

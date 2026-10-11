@@ -8,9 +8,18 @@ import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { CONTROL, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { boardSkin, type BoardState } from '../../lib/theme/practice.js';
 import { Icon, type IconName } from './Icon.js';
 
-type Variant = 'primary' | 'secondary' | 'quiet' | 'soft' | 'outline' | 'ghost' | 'danger';
+type Variant =
+  | 'primary'
+  | 'secondary'
+  | 'quiet'
+  | 'soft'
+  | 'outline'
+  | 'ghost'
+  | 'danger'
+  | BoardState;
 type Size = 'sm' | 'md' | 'lg';
 
 type Common = {
@@ -131,7 +140,7 @@ export const MAX_FONT_SCALE = UI.fontScale;
  * the curve of the 24 pt radius has only come in to x ≈ 3.8, so 12 leaves 8 pt of air.
  */
 const BTN_PAD_MD = UI.button.pad;
-export const BTN_PAD_COMPACT = SPACE.md;
+const BTN_PAD_COMPACT = SPACE.md;
 
 /**
  * Each size's height, side padding and the step of the type scale its label takes (15, 16, 17).
@@ -143,13 +152,25 @@ const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; labe
   lg: { height: CONTROL.lg, paddingHorizontal: BTN_PAD_MD, label: 'input' },
 };
 
-type VariantSkin = { bg: string; color: string; borderColor: string; borderWidth: number };
+type VariantSkin = {
+  bg: string;
+  color: string;
+  borderColor: string;
+  borderWidth: number;
+  borderStyle?: 'solid' | 'dashed';
+};
 
 // Built from the palette the button is rendering with: as a module constant this froze the
 // start palette into every button — the ghost "Rückgängig" kept pastel ink on the night
 // cards (issue #84, the one capture the first scanner missed because the type annotation
 // spans lines).
 const variantStyle = (p: Palette): Record<Variant, VariantSkin> => ({
+  tile: boardSkin(p, 'tile'),
+  picked: boardSkin(p, 'picked'),
+  placed: boardSkin(p, 'placed'),
+  slot: boardSkin(p, 'slot'),
+  correct: boardSkin(p, 'correct'),
+  wrong: boardSkin(p, 'wrong'),
   primary: { bg: p.primary, color: p.onPrimary, borderColor: 'transparent', borderWidth: 0 },
   quiet: { bg: p.canvas, color: p.ink, borderColor: 'transparent', borderWidth: 0 },
   secondary: { bg: p.paper, color: p.ink, borderColor: p.hairlineStrong, borderWidth: UI.border },
@@ -203,7 +224,8 @@ export function Btn(props: Props) {
   const base = variantStyle(palette)[variant];
   const active = tone ? { ...base, bg: tones.bg[tone], color: palette.ink, borderWidth: 0 } : base;
   const v = active;
-  const radius = pill || !wrap ? RADIUS.round : RADIUS.md;
+  const board = ['tile', 'picked', 'placed', 'slot', 'correct', 'wrong'].includes(variant);
+  const radius = board ? RADIUS.md : pill || !wrap ? RADIUS.round : RADIUS.md;
   // A tap on the waiting button answers ("what is missing?") instead of being swallowed.
   // The button itself STAYS truly disabled — un-disabling it made the web lose its
   // `disabled` attribute and read as ready (RN Web's Pressable overwrites any passed
@@ -266,6 +288,7 @@ export function Btn(props: Props) {
             borderRadius: radius,
             borderWidth: v.borderWidth,
             borderColor: v.borderColor,
+            borderStyle: v.borderStyle,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: wrap ? 'flex-start' : 'center',

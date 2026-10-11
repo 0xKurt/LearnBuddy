@@ -17,13 +17,14 @@ import type { EssayFeedback as Feedback } from '@learnbuddy/shared-types/contrac
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Icon } from '../lb/Icon.js';
 
 /** The round sign before a point: about one line of body text high. */
-const SIGN = 22;
+const SIGN = PRACTICE.essaySign;
 
 export function EssayFeedback({ feedback }: { feedback: Feedback }) {
   const { palette } = useTheme();
@@ -50,20 +51,18 @@ export function EssayFeedback({ feedback }: { feedback: Feedback }) {
                 >
                   <Icon
                     name={met ? 'check' : 'arrow'}
-                    size={14}
+                    size={PRACTICE.essaySignIcon}
                     color={met ? palette.successText : palette.ink2}
                   />
                 </View>
-                <Text style={[TYPE.body, { flex: 1, fontWeight: '600', color: palette.ink }]}>
-                  {p.name}
-                </Text>
-                <Text style={[TYPE.caption, { color: met ? palette.successText : palette.ink2 }]}>
+                <Text style={[TYPE.bodyStrong, { flex: 1, color: palette.ink }]}>{p.name}</Text>
+                <Text style={[TYPE.meta, { color: met ? palette.successText : palette.ink2 }]}>
                   {t(met ? 'essay.met' : 'essay.open')}
                 </Text>
               </View>
               {met && p.quote ? <HerWords text={p.quote} /> : null}
               {!met && p.missing ? (
-                <Text style={[TYPE.small, { color: palette.ink2, marginLeft: SIGN + SPACE.sm }]}>
+                <Text style={[TYPE.meta, { color: palette.ink2, marginLeft: SIGN + SPACE.sm }]}>
                   {p.missing}
                 </Text>
               ) : null}
@@ -77,12 +76,12 @@ export function EssayFeedback({ feedback }: { feedback: Feedback }) {
           {feedback.places.map((place) => (
             <View key={place.quote} testID="essay-place" style={{ gap: SPACE.xs }}>
               <HerWords text={place.quote} flush />
-              <Text style={[TYPE.small, { color: palette.ink }]}>{place.better}</Text>
+              <Text style={[TYPE.meta, { color: palette.ink }]}>{place.better}</Text>
             </View>
           ))}
         </View>
       ) : null}
-      <Text style={[TYPE.small, { color: palette.ink2 }]}>
+      <Text style={[TYPE.meta, { color: palette.ink2 }]}>
         {t(feedback.last ? 'essay.last' : 'essay.revise')}
       </Text>
     </View>
@@ -101,11 +100,11 @@ function HerWords({ text, flush = false }: { text: string; flush?: boolean }) {
       style={{
         marginLeft: flush ? 0 : SIGN + SPACE.sm,
         paddingLeft: SPACE.sm,
-        borderLeftWidth: 3,
+        borderLeftWidth: PRACTICE.quoteRule,
         borderLeftColor: palette.primary,
       }}
     >
-      <Text style={[TYPE.small, { color: palette.primaryDk, fontStyle: 'italic' }]}>{quoted}</Text>
+      <Text style={TYPE.quote}>{quoted}</Text>
     </View>
   );
 }

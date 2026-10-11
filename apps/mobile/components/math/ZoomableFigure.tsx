@@ -17,11 +17,13 @@ import { speakMathText } from '../../lib/math/speak.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
+import { UI } from '../../lib/theme/components.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FoldLabel } from '../lb/FoldLabel.js';
 import { Zoomable } from '../lb/ZoomViewer.js';
 import { describeFigure } from './describeFigure.js';
 import { FigureView } from './FigureView.js';
+import { CodeBlock } from '../practice/CodeBlock.js';
 import { useSpokenWords } from './useSpokenMath.js';
 
 type Props = {
@@ -47,12 +49,22 @@ export function ZoomableFigure({ figure, maxHeight, folded = false }: Props) {
         // The viewer is not the card: its drawing sizing itself is nothing the card waits for.
         <FigureSizingReport.Provider value={null}>
           <View style={{ alignSelf: 'stretch' }}>
-            <FigureView figure={figure} />
+            {figure.type === 'code' ? (
+              <CodeBlock figure={figure} />
+            ) : (
+              <FigureView figure={figure} />
+            )}
           </View>
         </FigureSizingReport.Provider>
       }
     >
-      {folded ? <FoldedFigure /> : <FigureView figure={figure} maxHeight={maxHeight} />}
+      {folded ? (
+        <FoldedFigure />
+      ) : figure.type === 'code' ? (
+        <CodeBlock figure={figure} maxHeight={maxHeight} />
+      ) : (
+        <FigureView figure={figure} maxHeight={maxHeight} />
+      )}
     </Zoomable>
   );
 }
@@ -69,8 +81,8 @@ function FoldedFigure() {
         justifyContent: 'center',
         paddingHorizontal: SPACE.md,
         backgroundColor: ink.paper,
-        borderRadius: RADIUS.frame,
-        borderWidth: 1,
+        borderRadius: RADIUS.md,
+        borderWidth: UI.border,
         borderColor: palette.hairline,
       }}
     >

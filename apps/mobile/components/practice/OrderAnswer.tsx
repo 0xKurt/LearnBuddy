@@ -14,6 +14,7 @@
 // „…, Platz 2" bzw. „…, noch ohne Platz". Regel 16: acht Zahlen und acht Schritte passen auf
 // 360×740 (der Walkthrough misst es).
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import type { OrderTaskView } from '@learnbuddy/shared-types/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -59,13 +60,12 @@ export function placedFrom(kept: string, ids: ReadonlySet<string>): string[] {
 }
 
 /** The round number in front of an element; an empty ring while it has no place. */
-const BADGE = 26;
+const BADGE = PRACTICE.orderBadgeSize;
 
 /**
  * The words on an element, in the grid and in the list.
- * token-exempt: 15/20, TYPE.small's size on a line one point tighter.
+ * token-exempt: 15/20, TYPE.meta's size on a line one point tighter.
  */
-const ELEMENT_TEXT = { fontSize: 15, lineHeight: 20 } as const;
 
 function PlaceBadge({ n }: { n: number | null }) {
   const { palette } = useTheme();
@@ -78,24 +78,22 @@ function PlaceBadge({ n }: { n: number | null }) {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: n === null ? palette.paper : palette.primary,
-        borderWidth: n === null ? 1.5 : 0,
+        borderWidth: n === null ? PRACTICE.checkboxBorder : 0,
         borderColor: palette.field,
       }}
     >
       {n === null ? null : (
         // token-exempt: the place's digit, 14/18 inside the 26 pt badge
-        <Text style={{ color: palette.paper, fontSize: 14, lineHeight: 18, fontWeight: '700' }}>
-          {n}
-        </Text>
+        <Text style={[TYPE.metaStrong, { color: palette.onPrimary }]}>{n}</Text>
       )}
     </View>
   );
 }
 
 /** Short things (numbers, single short words) stand four to a row. */
-const GRID_COLS = 4;
+const GRID_COLS = PRACTICE.orderColumns;
 /** Plain characters a thing may have to stand in the grid (a fraction counts as its digits). */
-const GRID_TEXT_MAX = 6;
+const GRID_TEXT_MAX = PRACTICE.orderGridTextMax;
 
 /** Whether every element is short enough for the grid: numbers and the like. */
 export function isShortList(texts: readonly string[]): boolean {
@@ -128,7 +126,7 @@ export function OrderAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Or
     return (
       <Btn
         key={id}
-        variant={n === null ? 'outline' : 'soft'}
+        variant={n === null ? 'tile' : 'placed'}
         size="sm"
         full
         compact
@@ -151,9 +149,8 @@ export function OrderAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Or
               style={{
                 flexShrink: 1,
                 textAlign: 'center',
+                ...TYPE.boardCompact,
                 color: n === null ? palette.ink : palette.primaryDk,
-                ...ELEMENT_TEXT,
-                fontWeight: '600',
               }}
             />
           </View>
@@ -172,8 +169,8 @@ export function OrderAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Or
       style={{
         minHeight: TOUCH,
         // A tile's corners, like the small `Btn` that drops into it.
-        borderRadius: RADIUS.tile,
-        borderWidth: 1.5,
+        borderRadius: RADIUS.md,
+        borderWidth: PRACTICE.checkboxBorder,
         borderStyle: 'dashed',
         borderColor: palette.field,
       }}
@@ -185,7 +182,7 @@ export function OrderAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Or
     <Text
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={[TYPE.caption, { fontWeight: '700', color: palette.ink2 }, { textAlign: 'center' }]}
+      style={[TYPE.metaStrong, { color: palette.ink2 }, { textAlign: 'center' }]}
     >
       {`${n}.`}
     </Text>
@@ -204,7 +201,7 @@ export function OrderAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Or
           >
             {/* The one line of instruction, only until she has started. */}
             {placed.length === 0 ? (
-              <Text style={[TYPE.small, { color: palette.ink2 }]}>{t('order.how')}</Text>
+              <Text style={[TYPE.meta, { color: palette.ink2 }]}>{t('order.how')}</Text>
             ) : null}
             {grid ? (
               <>
@@ -239,7 +236,7 @@ export function OrderAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Or
                     // and wrap, a short number sits next to its neighbours.
                     <View key={e.id} style={{ maxWidth: '100%' }}>
                       <Btn
-                        variant={n === null ? 'outline' : 'soft'}
+                        variant={n === null ? 'tile' : 'placed'}
                         size="sm"
                         wrap
                         compact
@@ -267,9 +264,8 @@ export function OrderAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Or
                               accessible={false}
                               style={{
                                 flexShrink: 1,
+                                ...TYPE.boardCompact,
                                 color: n === null ? palette.ink : palette.primaryDk,
-                                ...ELEMENT_TEXT,
-                                fontWeight: '600',
                               }}
                             />
                           </View>

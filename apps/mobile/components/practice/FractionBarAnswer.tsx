@@ -7,7 +7,7 @@
 //     Tafel. Seit #402 (Bericht #388 §9) ist das Feld der Leiste ihre Frage an den Tutor, nicht
 //     mehr ein zweiter Weg, den Bruch zu tippen (#162, Abnahme 2, ist damit abgelöst).
 //   · pick — zwei Balken gleicher Länge, jeder in seine eigenen Teile geteilt. Ein Tipp auf
-//     einen Balken IST die Antwort (wie eine Auswahl) und geht gleich raus.
+//     einen Balken speichert die Auswahl im Bruch-Entwurf; „Prüfen" schickt sie ab.
 //
 // Warum Views und kein SVG: ein `<rect>` kann keine Rolle und keinen Namen tragen. Die
 // Fläche muss mit dem Screenreader bedienbar sein, also ist jedes Teil ein echter Button.
@@ -18,6 +18,7 @@
 // Die Farbe ist nie das einzige Signal: unter dem Balken steht in Worten, wie viel gefärbt
 // ist, und diese Zeile ist auch, was ein Screenreader beim Tippen hört.
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import type { BarSurface } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -26,17 +27,17 @@ import { speakMathText } from '../../lib/math/speak.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
+import { Option } from '../lb/Option.js';
 import { PressArea } from '../lb/PressArea.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { AnswerShell } from './AnswerShell.js';
 
 /** The bar is a row of touch targets, so it is at least as tall as one (`TOUCH`). */
-const BAR_HEIGHT = TOUCH + 12;
+const BAR_HEIGHT = TOUCH + PRACTICE.fractionBarExtraHeight;
 /** A bar she taps as a whole is one target: its own height is all it needs. */
 const PICK_HEIGHT = TOUCH;
-const RADIUS = 12;
+const RADIUS = PRACTICE.fractionBarRadius;
 
 const FRACTION = /^(\d+)\s*\/\s*(\d+)$/;
 const WHOLE = /^\d+$/;
@@ -100,7 +101,7 @@ function Segments({
         backgroundColor: i < filled ? ink.fill : pressed ? palette.lavender : 'transparent',
         borderRightWidth: i < parts - 1 ? 1.5 : 0,
         borderRightColor: ink.stroke,
-        opacity: disabled ? 0.55 : 1,
+        opacity: disabled ? PRACTICE.disabledOpacity : 1,
       }}
     />
   );
@@ -110,7 +111,7 @@ function Segments({
         flexDirection: 'row',
         height,
         borderRadius: RADIUS,
-        borderWidth: 1.5,
+        borderWidth: PRACTICE.checkboxBorder,
         borderColor: ink.stroke,
         backgroundColor: ink.empty,
         overflow: 'hidden',
@@ -154,7 +155,7 @@ type Props = {
   disabled: boolean;
   /** Shading writes the fraction as her answer; she checks it with "Prüfen". */
   onChange: (text: string) => void;
-  /** Picking one of two bars IS the answer, like a choice: it goes out at once. */
+  /** Picking one of two bars changes the draft; the board checks it separately. */
   onPick: (text: string) => void;
 };
 
@@ -166,38 +167,29 @@ export function FractionBarAnswer({ surface, value, disabled, onChange, onPick }
   if (surface.mode === 'pick') {
     return (
       <View style={{ gap: SPACE.md }}>
-        <Text style={[TYPE.small, { color: palette.ink2 }]}>{t('bar.pick_how')}</Text>
+        <Text style={[TYPE.meta, { color: palette.ink2 }]}>{t('bar.pick_how')}</Text>
         {surface.bars.map((bar, i) => {
           const answer = shadedText(bar.filled, bar.parts);
           const math = `$\\frac{${bar.filled}}{${bar.parts}}$`;
           return (
-            // Picking a bar IS the answer, so this one is a real CTA and goes through `Btn`
-            // (rule 13): the bar and its name are its label, and `full` makes both options
-            // exactly as wide — two bars of different length would answer the question.
-            <Btn
+            <Option
               key={`${i}:${answer}`}
-              variant="ghost"
-              size="sm"
-              full
-              // No `wrap`: its 12 pt of padding twice per bar pushed the conversation into
-              // scrolling on a 360×740 screen, and the label here is a bar, not a sentence
-              // that could need a second line.
+              state={value === answer ? 'selected' : 'idle'}
+              checked={value === answer}
               disabled={disabled}
+              accessibilityLabel={t('bar.pick_option', { fraction: speakMathText(math, words) })}
               onPress={() => onPick(answer)}
-              label={
-                <View style={{ gap: SPACE.xs }}>
-                  <MathText
-                    text={math}
-                    accessible={false}
-                    // token-exempt: 17/23, the fraction read at a glance in a small bar
-                    style={{ color: palette.ink, fontSize: 17, lineHeight: 23, fontWeight: '700' }}
-                  />
-                  <Segments parts={bar.parts} filled={bar.filled} height={PICK_HEIGHT} />
-                </View>
-              }
             >
-              {t('bar.pick_option', { fraction: speakMathText(math, words) })}
-            </Btn>
+              <View style={{ gap: SPACE.xs }}>
+                <MathText
+                  text={math}
+                  accessible={false}
+                  // token-exempt: 17/23, the fraction read at a glance in a small bar
+                  style={[TYPE.title, { color: palette.ink }]}
+                />
+                <Segments parts={bar.parts} filled={bar.filled} height={PICK_HEIGHT} />
+              </View>
+            </Option>
           );
         })}
       </View>
@@ -208,7 +200,7 @@ export function FractionBarAnswer({ surface, value, disabled, onChange, onPick }
   const shaded = shadedFromText(value, parts) ?? 0;
   return (
     <View style={{ gap: SPACE.sm }}>
-      <Text style={[TYPE.small, { color: palette.ink2 }]}>{t('bar.shade_how')}</Text>
+      <Text style={[TYPE.meta, { color: palette.ink2 }]}>{t('bar.shade_how')}</Text>
       <Segments
         parts={parts}
         filled={shaded}
@@ -220,7 +212,7 @@ export function FractionBarAnswer({ surface, value, disabled, onChange, onPick }
         onPressPart={(i) => onChange(shadedText(shaded === i + 1 ? i : i + 1, parts))}
       />
       {/* The amount in words: the non-colour signal, and what a screen reader hears. */}
-      <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
+      <Text accessibilityLiveRegion="polite" style={[TYPE.meta, { color: palette.ink2 }]}>
         {t('bar.shaded', { filled: shaded, total: parts })}
       </Text>
     </View>
@@ -240,17 +232,15 @@ export function FractionBarBoard({
   return (
     <AnswerShell
       keeps="whole"
-      answer={<FractionBarAnswer {...bar} onPick={onCheck} />}
-      action={
-        bar.surface.mode === 'pick'
-          ? { tap: true }
-          : {
-              ready: ready !== '',
-              disabled: bar.disabled,
-              onPress: () => onCheck(ready),
-              waitsHint: t('bar.check_waits'),
-            }
-      }
+      answer={<FractionBarAnswer {...bar} onPick={bar.onChange} />}
+      action={{
+        ready: ready !== '',
+        disabled: bar.disabled,
+        onPress: () => {
+          if (!bar.disabled && ready !== '') onCheck(ready);
+        },
+        waitsHint: t('bar.check_waits'),
+      }}
     />
   );
 }

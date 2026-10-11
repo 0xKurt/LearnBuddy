@@ -59,7 +59,7 @@ function show({
   const answer = vi.fn();
   renderInApp(
     <AnswerArea
-      sessionId="s1"
+      sessionId={`s${++seq}`}
       item={ITEM}
       open={open}
       form={answerForm(ITEM, open)}
@@ -88,8 +88,8 @@ function show({
 
 /** The two option tiles, by what a screen reader hears of the fraction. */
 const tiles = () => [
-  screen.getByRole('button', { name: /2 Drittel/ }),
-  screen.getByRole('button', { name: /3 Fünftel/ }),
+  screen.getByRole('radio', { name: /2 Drittel/ }),
+  screen.getByRole('radio', { name: /3 Fünftel/ }),
 ];
 
 describe('die Optionen einer beantworteten Auswahlfrage', () => {
@@ -129,11 +129,18 @@ describe('die Optionen einer beantworteten Auswahlfrage', () => {
     expect(screen.queryByText(/Richtig|Noch nicht/)).toBeNull();
   });
 
-  it('sind offen tippbar, ohne „Weiter“', () => {
+  it('merken die offene Wahl und senden sie erst mit „Prüfen“, ohne „Weiter“', () => {
     const { answer } = show({ open: true, turns: [] });
     const [two] = tiles();
     expect(two!.getAttribute('aria-disabled')).not.toBe('true');
+    const check = screen.getByRole('button', { name: 'Prüfen' });
+    expect(check.getAttribute('aria-disabled')).toBe('true');
     fireEvent.click(two!);
+    expect(two!.getAttribute('aria-checked')).toBe('true');
+    expect(answer).not.toHaveBeenCalled();
+    expect(check.getAttribute('aria-disabled')).not.toBe('true');
+    fireEvent.click(check);
+    expect(answer).toHaveBeenCalledOnce();
     expect(answer).toHaveBeenCalledWith(ITEM.id, { choice: 0 }, TWO);
     expect(screen.queryByRole('button', { name: 'Weiter' })).toBeNull();
     expect(screen.queryByText('Deine Wahl')).toBeNull();

@@ -8,7 +8,7 @@ import { View } from 'react-native';
 
 import { SPACE } from '../../lib/theme/space.js';
 import { Chip } from '../lb/Chip.js';
-import { Btn } from '../lb/Btn.js';
+import { DURATION } from '../../lib/theme/motion.js';
 import { Rise } from '../lb/Motion.js';
 
 type Props = {
@@ -27,7 +27,7 @@ type Props = {
   disabled?: boolean;
 };
 
-/** The help chips under the conversation; nothing at all when there is no help to offer. */
+/** The help chips above the Composer; nothing at all when there is no help to offer. */
 export function HelpChips({
   onHint,
   hintOffered = false,
@@ -40,7 +40,7 @@ export function HelpChips({
   if (!onHint && !onReveal) return null;
 
   return (
-    <Rise delay={120}>
+    <Rise delay={DURATION.quick}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.xs }}>
         {onHint && hintOffered ? (
           <Chip
@@ -52,28 +52,18 @@ export function HelpChips({
             {t('hint')}
           </Chip>
         ) : onHint ? (
-          <Btn
-            variant="ghost"
-            size="sm"
-            pill
-            onPress={onHint}
-            disabled={disabled ?? false}
-            accessibilityLabel={t('hint_label')}
-          >
+          <Chip onPress={onHint} disabled={disabled ?? false} accessibilityLabel={t('hint_label')}>
             {t('hint')}
-          </Btn>
+          </Chip>
         ) : null}
         {onReveal ? (
-          <Btn
-            variant="ghost"
-            size="sm"
-            pill
+          <Chip
             onPress={onReveal}
             disabled={disabled ?? false}
             {...(revealHint ? { accessibilityHint: revealHint } : {})}
           >
             {revealLabel ?? t('show_solution')}
-          </Btn>
+          </Chip>
         ) : null}
       </View>
     </Rise>

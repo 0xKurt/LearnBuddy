@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
 import { RADIUS } from '../../lib/theme/radius.js';
+import { PRACTICE } from '../../lib/theme/practice.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -65,7 +66,7 @@ export function LineText({
           style={{
             width: BAR,
             borderRadius: BAR,
-            marginVertical: SPACE.xs / 2, // token-exempt: half the smallest step, as the line's air
+            marginVertical: PRACTICE.passageLineAir,
             backgroundColor: lit ? palette.primary : 'transparent',
           }}
         />
@@ -75,7 +76,7 @@ export function LineText({
             {
               flex: 1,
               textAlign: 'right',
-              lineHeight: TYPE.small.lineHeight,
+              lineHeight: TYPE.meta.lineHeight,
               fontVariant: ['tabular-nums'],
               color: lit ? palette.primaryDk : palette.ink2,
             },
@@ -84,7 +85,7 @@ export function LineText({
           {numbered(n) || numberShown ? n : ''}
         </Text>
       </View>
-      <Text style={[TYPE.small, { flex: 1, paddingRight: SPACE.md, color: palette.ink }]}>
+      <Text style={[TYPE.meta, { flex: 1, paddingRight: SPACE.md, color: palette.ink }]}>
         {line}
       </Text>
     </View>
@@ -94,7 +95,7 @@ export function LineText({
 /** The gutter of a printed line: room for a two-digit number and the bar of a marked line. */
 const GUTTER = SPACE.xl + SPACE.sm;
 /** The bar beside a line of the answer or a marked line: a stroke, like a marked word's underline. */
-const BAR = 3; // token-exempt: a stroke, not a gap — the same as MarkAnswer's UNDERLINE
+const BAR = PRACTICE.markUnderline;
 
 /** How she left a text: folded or open, and how far down she had read. */
 type Kept = { open: boolean; y: number };
@@ -151,7 +152,7 @@ export function PassagePanel({ passage, maxHeight }: Props) {
       testID="passage"
       style={{
         backgroundColor: palette.paper,
-        borderRadius: RADIUS.frame,
+        borderRadius: RADIUS.md,
         overflow: 'hidden',
         marginBottom: SPACE.md,
       }}
@@ -232,7 +233,7 @@ export function PassagePanel({ passage, maxHeight }: Props) {
                   style={{
                     // A printed line that wraps on the phone stays one block: the air is between
                     // printed lines, so a numbered line and its continuation read as one.
-                    paddingVertical: SPACE.xs / 2, // token-exempt: half the smallest step, per side
+                    paddingVertical: PRACTICE.passageLineAir,
                     backgroundColor: lit ? palette.primaryLt : 'transparent',
                   }}
                 >

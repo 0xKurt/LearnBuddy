@@ -23,7 +23,7 @@ test('ear training: two notes heard, the interval named, graded by code (#445)',
   const stop = page.getByRole('button', { name: 'Anhalten', exact: true });
   // The same four options as the interval read off a staff, in the order of the steps.
   for (const option of ['große Sekunde', 'kleine Terz', 'große Terz', 'reine Quarte'])
-    await expect(page.getByRole('button', { name: option, exact: true })).toBeVisible();
+    await expect(page.getByRole('radio', { name: option, exact: true })).toBeVisible();
 
   // One tap plays the two notes (two halves at 80 = 3 s) and the pill says so; when they have
   // sounded it is "Anhören" again — the player ended them, it did not fail ("kein Ton").
@@ -44,7 +44,8 @@ test('ear training: two notes heard, the interval named, graded by code (#445)',
   await page.emulateMedia({ colorScheme: 'light' });
 
   // ── A wrong tap: code's own line, which says what to do and not what is right ──
-  await page.getByRole('button', { name: 'große Terz', exact: true }).click();
+  await page.getByRole('radio', { name: 'große Terz', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   const again = page.getByText('Noch nicht ganz. Hör nochmal hin', { exact: false });
   await expect(again).toBeVisible();
   await shot(page, '78-ear-again');
@@ -58,7 +59,8 @@ test('ear training: two notes heard, the interval named, graded by code (#445)',
   // ── The second one, from the bass: a perfect fifth ──
   await expect(page.getByText('Welches Intervall hörst du?', { exact: false })).toBeVisible();
   await expect(listen).toBeVisible();
-  await page.getByRole('button', { name: 'reine Quinte', exact: true }).click();
+  await page.getByRole('radio', { name: 'reine Quinte', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   // Closed, the tones stay to hear it again next to the verdict.
   await expect(listen).toBeVisible();

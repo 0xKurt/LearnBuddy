@@ -11,10 +11,16 @@
 // Browser (tests/web/fit.ts) — hier steht die Regel, von der diese Messung abhängt.
 
 import { fireEvent, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp, styleOf } from '../../../testing/render.js';
-import { FractionBarAnswer, shadedFromText, shadedText } from '../FractionBarAnswer.js';
+import {
+  FractionBarAnswer,
+  FractionBarBoard,
+  shadedFromText,
+  shadedText,
+} from '../FractionBarAnswer.js';
 
 const noop = () => undefined;
 
@@ -149,7 +155,7 @@ describe('two bars she compares', () => {
         onPick={noop}
       />,
     );
-    const bars = screen.getAllByRole('button');
+    const bars = screen.getAllByRole('radio');
     expect(bars).toHaveLength(2);
     // Each amount is NAMED, in words a screen reader can read — not "Button 2".
     expect(bars.map((b) => b.getAttribute('aria-label'))).toEqual([
@@ -161,7 +167,32 @@ describe('two bars she compares', () => {
     expect(screen.getByText('5')).toBeDefined();
   });
 
-  it('answers with the amount of the bar she tapped', () => {
+  it('keeps the selected amount as a draft until Check', () => {
+    const check = vi.fn();
+    function Board() {
+      const [value, onChange] = useState('');
+      return (
+        <FractionBarBoard
+          surface={surface}
+          value={value}
+          onChange={onChange}
+          disabled={false}
+          onCheck={check}
+        />
+      );
+    }
+    renderInApp(<Board />);
+    fireEvent.click(screen.getByRole('radio', { name: '3 Fünftel wählen' }));
+    expect(check).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('radio', { name: '3 Fünftel wählen' }).getAttribute('aria-checked'),
+    ).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Prüfen' }));
+    expect(check).toHaveBeenCalledOnce();
+    expect(check).toHaveBeenCalledWith('3/5');
+  });
+
+  it('selects the amount of the bar she tapped', () => {
     const onPick = vi.fn();
     renderInApp(
       <FractionBarAnswer
@@ -172,9 +203,9 @@ describe('two bars she compares', () => {
         onPick={onPick}
       />,
     );
-    fireEvent.click(screen.getAllByRole('button')[1]!);
+    fireEvent.click(screen.getAllByRole('radio')[1]!);
     expect(onPick).toHaveBeenCalledWith('3/5');
-    fireEvent.click(screen.getAllByRole('button')[0]!);
+    fireEvent.click(screen.getAllByRole('radio')[0]!);
     expect(onPick).toHaveBeenLastCalledWith('1/2');
   });
 });

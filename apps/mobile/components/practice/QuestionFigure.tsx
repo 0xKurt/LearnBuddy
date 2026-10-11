@@ -13,7 +13,6 @@ import { View } from 'react-native';
 
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { ZoomableFigure } from '../math/ZoomableFigure.js';
-import { CodeBlock } from './CodeBlock.js';
 import { ListenButton } from './ListenButton.js';
 
 type Props = {
@@ -25,12 +24,12 @@ type Props = {
 };
 
 export function QuestionFigure({ figure, maxHeight, folded = false }: Props) {
-  // A program is text in its own block (issue #262): never scaled like a drawing, never zoomed —
-  // a wide line scrolls inside the block instead.
+  // A program retains its text renderer and horizontal scrolling (issue #262). During
+  // keyboard density it uses the same collapsed affordance and viewer as other figures.
   if (figure.type === 'code') {
     return (
       <View testID="question-figure">
-        <CodeBlock figure={figure} maxHeight={maxHeight} />
+        <ZoomableFigure figure={figure} maxHeight={maxHeight} folded={folded} />
       </View>
     );
   }

@@ -1,3 +1,4 @@
+import { DURATION } from '../../lib/theme/motion';
 // The conversation about the question on screen, in its box under the card (`ThreadBox`, issues
 // #96, #286): her tries and Buddy's replies (`ItemThread`), then what follows a closed question —
 // "selbst gefunden" in homework help, the solution where it says something new, the word to hear
@@ -6,6 +7,7 @@
 // (issue #311).
 
 import type { SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { isForeign } from '../../lib/i18n/index.js';
@@ -54,18 +56,37 @@ export function QuestionThread({
   actions,
   disabled,
 }: Props) {
-  const { t } = useTranslation('practice');
   const conversation = useVoiceMode((s) => s.conversation);
   const { item } = shown;
   const { open } = view;
-  const { structured, choices, tapChoices, speaking } = form;
+  const { structured, choices, tapChoices } = form;
   // A foreign vocabulary word, once the question is closed: its answer to hear.
   const hearAnswer = item.kind === 'vocab' && !open && isForeign(item.lang);
-  // The ways past the question (`questionOffers`), and "Tipp" while the server has one.
-  const skipTo =
-    offers.skip === 'reveal' ? actions.reveal : offers.skip === 'later' ? actions.later : null;
-  const skip = skipTo ? () => void skipTo(item.id) : undefined;
-  const hint = shown.hint_available ? () => void actions.askHint(item.id) : undefined;
+  const selfSolved = session.mode === 'help' && shown.status === 'correct';
+  const solution =
+    shown.status !== 'open' &&
+    shown.status !== 'correct' &&
+    shown.answer !== null &&
+    choices === null;
+  const empty =
+    view.threadTurns.length === 0 &&
+    view.pendingText === null &&
+    !selfSolved &&
+    !solution &&
+    !(hearAnswer && shown.answer !== null && item.lang !== null) &&
+    shown.listen_transcript === null &&
+    !offers.explainAgain;
+  const latestMeasured = useRef(measured);
+  latestMeasured.current = measured;
+  useEffect(() => {
+    if (!empty) return;
+    const current = latestMeasured.current;
+    current.thread.onHeight(0);
+    current.setThreadNeed(0);
+    current.setPartTops([]);
+    current.setTurnTops({});
+  }, [empty, item.id]);
+  if (empty) return null;
   return (
     <ThreadBox
       cap={room.threadCap}
@@ -100,7 +121,7 @@ export function QuestionThread({
         code={item.code === true}
       />
       {session.mode === 'help' && shown.status === 'correct' ? (
-        <Rise delay={180}>
+        <Rise delay={DURATION.quick}>
           <SelfSolvedCard />
         </Rise>
       ) : null}
@@ -112,7 +133,7 @@ export function QuestionThread({
       shown.status !== 'correct' &&
       shown.answer !== null &&
       choices === null ? (
-        <Rise delay={180}>
+        <Rise delay={DURATION.quick}>
           <SolutionCard
             answer={shown.answer}
             numeric={item.kind === 'numeric'}
@@ -126,20 +147,45 @@ export function QuestionThread({
       {/* What the Hörtext said, once the question is closed (issue #210). The server
           sends it under exactly the condition it sends the solution under. */}
       {shown.listen_transcript !== null ? (
-        <Rise delay={180}>
+        <Rise delay={DURATION.quick}>
           <HeardTextCard text={shown.listen_transcript} />
         </Rise>
       ) : null}
       {offers.explainAgain ? (
         <Reexplain
+          draftKey={`${session.id}.${item.id}.why`}
           turns={view.turnsAgain}
           pending={actions.again?.itemId === item.id ? actions.again.way : null}
           disabled={disabled}
-          delay={1000}
-          onAsk={(way, choice) => void actions.explainAgain(item.id, way, choice)}
+          delay={DURATION.gentle}
+          onAsk={(way, choice) => actions.explainAgain(item.id, way, choice)}
           why={shown.why}
         />
       ) : null}
+    </ThreadBox>
+  );
+}
+
+/** Existing prepared-help callbacks in the Composer chip slot, separate from tutor feedback. */
+export function QuestionHelp({
+  session,
+  shown,
+  view,
+  form,
+  offers,
+  actions,
+  disabled,
+}: Pick<Props, 'session' | 'shown' | 'view' | 'form' | 'offers' | 'actions' | 'disabled'>) {
+  const { t } = useTranslation('practice');
+  const { item } = shown;
+  const { open } = view;
+  const { speaking } = form;
+  const skipTo =
+    offers.skip === 'reveal' ? actions.reveal : offers.skip === 'later' ? actions.later : null;
+  const skip = skipTo ? () => void skipTo(item.id) : undefined;
+  const hint = shown.hint_available ? () => void actions.askHint(item.id) : undefined;
+  return (
+    <>
       {open ? (
         <HelpChips
           onHint={hint}
@@ -156,6 +202,6 @@ export function QuestionThread({
           disabled={disabled}
         />
       ) : null}
-    </ThreadBox>
+    </>
   );
 }

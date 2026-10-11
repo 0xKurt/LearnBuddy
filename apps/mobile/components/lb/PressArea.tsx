@@ -22,6 +22,7 @@ type Props = Pick<
   | 'accessibilityLabel'
   | 'accessibilityHint'
   | 'accessibilityState'
+  | 'aria-checked'
   | 'accessibilityValue'
   | 'accessibilityActions'
   | 'onAccessibilityAction'

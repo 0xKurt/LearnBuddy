@@ -11,6 +11,7 @@
 // Beide Reihen spannen die ganze Breite (`fill`): sie stehen unter einer Zeile derselben Breite,
 // und sechs gleich breite Tasten sind auf jedem Handy ≥ 44 pt (lib/keyRow.ts).
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import {
   dottedRestOk,
   NOTE_VALUES,
@@ -42,7 +43,7 @@ type Props = {
 };
 
 /** A drawn sign is this tall on a key: the note values read at a glance (issue #275). */
-const GLYPH = 32;
+const GLYPH = PRACTICE.staffGlyphSize;
 
 export function StaffKeys({ surface, answer, disabled, onChange }: Props) {
   const { t } = useTranslation('practice');
@@ -96,7 +97,7 @@ export function StaffKeys({ surface, answer, disabled, onChange }: Props) {
   /** A switch: lit while it is on, and its name says so — colour is never the only signal. */
   const toggle = (label: string, on: boolean) => (on ? t('staff.toggle_on', { label }) : label);
   const icon = (name: 'up' | 'down' | 'undo' | 'speak' | 'stop') => (color: string) => (
-    <Icon name={name} size={24} color={color} />
+    <Icon name={name} size={PRACTICE.actionIcon} color={color} />
   );
 
   const tools: Key[] = [
@@ -116,7 +117,7 @@ export function StaffKeys({ surface, answer, disabled, onChange }: Props) {
     },
     {
       id: 'sharp',
-      face: (color) => <Text style={[TYPE.prompt, { color, fontWeight: '700' }]}>♯</Text>,
+      face: (color) => <Text style={[TYPE.musicSymbol, { color }]}>♯</Text>,
       label: toggle(t('staff.sharp'), answer.sharp),
       on: answer.sharp,
       onPress: () => onChange({ ...answer, sharp: !answer.sharp }),

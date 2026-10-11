@@ -17,10 +17,8 @@ export function HeardTextCard({ text }: { text: string }) {
   const { t } = useTranslation('practice');
   return (
     <Card tone="sky" padding={CARD_PAD.roomy} radius={24}>
-      <Text style={[TYPE.body, { color: palette.ink2, fontWeight: '600' }]}>
-        {t('listen.transcript_title')}
-      </Text>
-      <Text style={[TYPE.body, { marginTop: SPACE.xs }]}>{text}</Text>
+      <Text style={[TYPE.bodyStrong, { color: palette.ink2 }]}>{t('listen.transcript_title')}</Text>
+      <Text style={[TYPE.bodyStrong, { marginTop: SPACE.xs }]}>{text}</Text>
     </Card>
   );
 }

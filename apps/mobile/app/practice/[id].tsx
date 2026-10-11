@@ -1,3 +1,4 @@
+import { CheckOverrideProvider } from '../../components/practice/CheckOverride.js';
 // One practice session (docs/architecture.md §Practice): one question at a
 // time, a short conversation with Buddy about it, the solution once it is
 // closed, and a calm summary at the end. The server decides everything that
@@ -56,7 +57,8 @@ import { NoQuestion } from '../../components/practice/NoQuestion.js';
 import { PracticeStuck } from '../../components/practice/PracticeStuck.js';
 import { CornerSheet } from '../../components/practice/QuestionCorner.js';
 import { QuestionMenu, QuestionProgress } from '../../components/practice/QuestionProgress.js';
-import { QuestionThread } from '../../components/practice/QuestionThread.js';
+import { QuestionHelp, QuestionThread } from '../../components/practice/QuestionThread.js';
+import { AnswerFlow } from '../../components/practice/AnswerShell.js';
 import { QuestionTools } from '../../components/practice/QuestionTools.js';
 import { isRetryable } from '../../lib/api/apiError.js';
 import { usePracticeSession } from '../../lib/api/queries.js';
@@ -284,7 +286,7 @@ export default function PracticeScreen() {
                   // turns (`threadCap`).
                   flexGrow: 0,
                   flexShrink: 1,
-                  minHeight: measured.questionContentHeight + room.threadFloor,
+                  minHeight: measured.questionContentHeight,
                 }}
               >
                 <ScrollView
@@ -298,8 +300,7 @@ export default function PracticeScreen() {
                   contentContainerStyle={{
                     paddingHorizontal: SPACE.lg,
                     paddingTop: SPACE.xs,
-                    // token-exempt: the question column's gap, off the scale since #286; moving it to SPACE.md is a visible change (#311 10b)
-                    gap: 10,
+                    gap: SPACE.md,
                   }}
                   onContentSizeChange={(_, h) => measured.setQuestionContentHeight(Math.round(h))}
                 >
@@ -312,6 +313,18 @@ export default function PracticeScreen() {
                         onLayout={(e) => room.onCard(Math.round(e.nativeEvent.layout.height))}
                       >
                         <ItemCard
+                          extra={
+                            <QuestionTools
+                              item={item}
+                              sessionId={session.id}
+                              // A foreign vocabulary word has its own "Anhören" (its pronunciation is the
+                              // point); that IS its read-aloud button, so it never gets a second one.
+                              hearWord={item.kind === 'vocab' && isForeign(item.prompt_lang)}
+                              heard={heard}
+                              markHeard={markHeard}
+                              disabled={locked}
+                            />
+                          }
                           sessionId={session.id}
                           shown={shown}
                           title={title}
@@ -331,45 +344,55 @@ export default function PracticeScreen() {
                       </View>
                     </FigureSizingReport.Provider>
                   </SlideIn>
-                  <QuestionTools
-                    item={item}
-                    sessionId={session.id}
-                    // A foreign vocabulary word has its own "Anhören" (its pronunciation is the
-                    // point); that IS its read-aloud button, so it never gets a second one.
-                    hearWord={item.kind === 'vocab' && isForeign(item.prompt_lang)}
-                    heard={heard}
-                    markHeard={markHeard}
-                    disabled={locked}
-                  />
                 </ScrollView>
-                <QuestionThread
-                  session={session}
-                  shown={shown}
-                  view={view}
-                  form={form}
-                  offers={offers}
-                  room={room}
-                  measured={measured}
-                  asking={pending?.asked}
-                  actions={actions}
-                  disabled={locked}
-                />
               </View>
-              <AnswerArea
-                sessionId={id}
-                item={item}
-                open={open}
-                form={form}
-                view={view}
-                canReveal={session.reveal_allowed}
-                drafts={drafts}
-                actions={actions}
-                measured={measured}
-                readAgain={readAgain}
-                onSpeakProgress={setSpeakLive}
-                disabled={locked}
-                closed={{ solution: shown.answer, judged: !offers.testing, onNext: next }}
-              />
+              <CheckOverrideProvider key={item.id}>
+                <AnswerFlow.Provider
+                  value={{
+                    thread: (
+                      <QuestionThread
+                        session={session}
+                        shown={shown}
+                        view={view}
+                        form={form}
+                        offers={offers}
+                        room={room}
+                        measured={measured}
+                        asking={pending?.asked}
+                        actions={actions}
+                        disabled={locked}
+                      />
+                    ),
+                    tools: (
+                      <QuestionHelp
+                        session={session}
+                        shown={shown}
+                        view={view}
+                        form={form}
+                        offers={offers}
+                        actions={actions}
+                        disabled={locked}
+                      />
+                    ),
+                  }}
+                >
+                  <AnswerArea
+                    sessionId={id}
+                    item={item}
+                    open={open}
+                    form={form}
+                    view={view}
+                    canReveal={session.reveal_allowed}
+                    drafts={drafts}
+                    actions={actions}
+                    measured={measured}
+                    readAgain={readAgain}
+                    onSpeakProgress={setSpeakLive}
+                    disabled={locked}
+                    closed={{ solution: shown.answer, judged: !offers.testing, onNext: next }}
+                  />
+                </AnswerFlow.Provider>
+              </CheckOverrideProvider>
               <View style={{ height: 0 }} ref={measured.endRef} />
             </View>
           </AskRoute.Provider>

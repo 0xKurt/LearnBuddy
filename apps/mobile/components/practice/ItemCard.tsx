@@ -6,6 +6,10 @@
 
 import type { SessionItemView, SpeakStreamEvent } from '@learnbuddy/shared-types/contracts';
 
+import type { ReactNode } from 'react';
+import { SPACE } from '../../lib/theme/space.js';
+import { TYPE } from '../../lib/theme/type.js';
+
 import type { AnswerForm } from '../../lib/practice/answerForm.js';
 import type { QuestionView } from '../../lib/practice/questionView.js';
 import { DictationCard } from './DictationCard.js';
@@ -13,6 +17,7 @@ import { QuestionCard } from './Question.js';
 import { SpeakCard } from './SpeakPanel.js';
 
 type Props = {
+  extra?: ReactNode;
   sessionId: string;
   shown: SessionItemView;
   /** The run's title: a topic it already names stays out of the card. */
@@ -36,6 +41,7 @@ type Props = {
 };
 
 export function ItemCard({
+  extra,
   sessionId,
   shown,
   title,
@@ -52,39 +58,52 @@ export function ItemCard({
 }: Props) {
   const { item } = shown;
   if (form.speaking)
-    return <SpeakCard item={item} turns={view.turns} live={speakLive} sessionId={sessionId} />;
+    return (
+      <>
+        <SpeakCard item={item} turns={view.turns} live={speakLive} sessionId={sessionId} />
+        {extra}
+      </>
+    );
   if (item.kind === 'spelling_dictation')
     return (
-      <DictationCard
-        sessionId={sessionId}
-        itemId={item.id}
-        prompt={item.prompt}
-        // Having answered, she has heard it — also after the screen was rebuilt.
-        heard={shown.attempts > 0 || heard(item.listen?.ref)}
-        onHeard={() => markHeard(item.listen?.ref)}
-        disabled={disabled}
-        minHeight={minHeight}
-        compact={view.dictationCompact}
-      />
+      <>
+        <DictationCard
+          sessionId={sessionId}
+          itemId={item.id}
+          prompt={item.prompt}
+          // Having answered, she has heard it — also after the screen was rebuilt.
+          heard={shown.attempts > 0 || heard(item.listen?.ref)}
+          onHeard={() => markHeard(item.listen?.ref)}
+          disabled={disabled}
+          minHeight={minHeight}
+          compact={view.dictationCompact}
+        />
+        {extra}
+      </>
     );
   return (
     <QuestionCard
+      extra={extra}
       prompt={item.prompt}
       // Not twice: a topic the header's title already names stays out of the card.
       topic={item.topic && title.includes(item.topic) ? null : item.topic}
       // A figure she taps stands in the answer, not in the card (`FigureTapAnswer`, `CodeLineAnswer`).
       figure={form.figureInAnswer ? null : item.figure}
-      figureMaxHeight={caps.figure}
+      figureMaxHeight={
+        item.figure?.type === 'code'
+          ? Math.max(caps.figure, item.figure.lines.length * TYPE.code.lineHeight + 2 * SPACE.md)
+          : caps.figure
+      }
       image={item.image}
       imageKey={item.id}
       imageMaxHeight={caps.image}
       fromBuddy={item.origin === 'buddy'}
       minHeight={minHeight}
-      dense={form.staff !== null}
+      dense={form.staff !== null || item.figure?.type === 'code'}
       answer={filling}
       // What she answers from: a reading text (#233), a task's situation (#297).
       stimulus={item}
-      answerBoard={form.board}
+      answerBoard={form.board || form.choices !== null || form.tapChoices !== null}
       {...readAgain}
     />
   );

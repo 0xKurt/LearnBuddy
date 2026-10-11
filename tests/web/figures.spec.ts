@@ -70,7 +70,8 @@ test('figures to scale and structural formulas: read, answered, graded by code',
 
   await expect(page.getByText('Welche Ladung hat dieses Teilchen?')).toBeVisible();
   await bothSchemes(page, '67-ammonium-charge', 'question-figure');
-  await page.getByRole('button', { name: '+1', exact: true }).click();
+  await page.getByRole('radio', { name: '+1', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();

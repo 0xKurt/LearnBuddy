@@ -71,7 +71,8 @@ test('solids, cube nets and points in space: read, answered, graded by code', as
 /** A view question: its options are pictures, shot light and dark, then the right one picked. */
 async function viewPicked(page: Page, name: string, option: RegExp): Promise<void> {
   await bothSchemes(page, name);
-  await page.getByRole('button', { name: option }).click();
+  await page.getByRole('radio', { name: option }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 }

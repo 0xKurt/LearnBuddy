@@ -12,22 +12,23 @@
 //   its smaller share and the drawing folds to one line that opens it large (`QuestionCard`,
 //   `ZoomableFigure`, issues #233, #379): no cap fits a box diagram, which does not shrink.
 
+import { PRACTICE } from '../theme/practice.js';
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 
 import { schematicBounds } from '../../../../packages/shared-math/src/schematics.js';
 
 /** A drawing's cap: a share of what she sees. */
-const FIGURE_SHARE = 0.14;
+const FIGURE_SHARE = PRACTICE.figureShare;
 /** A photo's cap: a share of what she sees, never taller than 180 pt (the 360×740 fit rule). */
-const IMAGE_SHARE = 0.2;
-const IMAGE_MAX = 180;
+const IMAGE_SHARE = PRACTICE.imageShare;
+const IMAGE_MAX = PRACTICE.imageHeight;
 /**
  * A figure she answers IN (`FigureTapAnswer`, issues #248, #251): a share of what she sees, so a tall
  * one — the map of Germany — is drawn narrower rather than push "Prüfen" off a 360×740 phone. There
  * it is 330 pt, the room in which the server decides what a finger can tap
  * (`REGION_TAP_BOX` in packages/shared-math/src/regions.ts).
  */
-const BOARD_SHARE = 0.45;
+const BOARD_SHARE = PRACTICE.boardShare;
 
 /**
  * The figure types that never grow; every other one may. A note line only gives (#275); a program
@@ -41,7 +42,7 @@ export function visualGrows(figure: Figure | null | undefined): boolean {
 }
 
 /** How far a card with a drawing or photo grows into the free room: a share of the window. */
-const CARD_REACH = 0.5;
+const CARD_REACH = PRACTICE.cardReach;
 
 /**
  * The share of what she sees a card with this figure may grow to (`threadRoom`): half. A labelled

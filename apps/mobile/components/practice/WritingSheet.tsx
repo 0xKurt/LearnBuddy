@@ -6,6 +6,7 @@
 // It is the same field as the bar's (`LbTextInput`, issue #365) on the same text: closing it loses
 // nothing, the draft is the answer's own (`useDraft` on the practice screen).
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
@@ -24,9 +25,9 @@ import { Sheet, SHEET_MAX } from '../lb/Sheet.js';
  * room at the bottom (8), the content's rhythm (2 × 14), the task's line (23) and the field's own
  * padding and frame (26).
  */
-const CHROME = 270;
+const CHROME = PRACTICE.writingChrome;
 /** Never fewer lines than this (a tiny window), never more than this (a tablet). */
-const ROWS = { min: 4, max: 24 } as const;
+const ROWS = PRACTICE.writingRows;
 
 /** How many lines of her text the view shows in the height there is. */
 export function writingRows(visible: number): number {

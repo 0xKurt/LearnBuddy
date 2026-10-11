@@ -1,4 +1,4 @@
-// The way she answers the open question — exactly one (`answerForm`) — at the bottom of the
+// The way she answers the open question — exactly one (`answerForm`) — directly below the
 // column, each in the answer shell (`AnswerShell`, issue #310): options she taps, a structured
 // board, the note line, the rhythm field, a typed answer, the fraction bar, a figure she taps a
 // place in, the pronunciation recorder. Whatever she gives goes out as her answer
@@ -19,6 +19,7 @@ import type { PracticeDrafts } from '../../lib/practice/usePracticeDrafts.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { AnswerShell } from './AnswerShell.js';
 import { ChoiceList } from './ChoiceList.js';
+import { ChoiceAnswer } from './ChoiceAnswer.js';
 import { CodeLineAnswer } from './CodeLineAnswer.js';
 import { FigureTapAnswer } from './FigureTapAnswer.js';
 import { FractionBarBoard } from './FractionBarAnswer.js';
@@ -77,40 +78,34 @@ export function AnswerArea({
     value ? void answer(item.id, { text: value, via }, value) : undefined;
   return (
     <>
-      {/* Options she taps (issue #288), in the answer shell like every form (issue #310): at the
-          bottom, the free room above (#386), and in a conversation the conversation row where
-          "Prüfen" stands for the others. Tapped words go as if she had typed them: same
+      {/* Options she taps (issue #288), in the answer shell like every form (issue #310): directly below the question, followed by feedback and free room. Selection stays a draft;
+          Check and the optional spoken route share the Composer. Tapped words go as if she had typed them: same
           grading, same key (issue #147). */}
       {open && (choices || tapChoices) ? (
-        <AnswerShell
-          keeps="whole"
-          answer={
-            <ChoiceList
-              choices={choices ?? tapChoices ?? []}
-              figures={choices ? item.choice_figures : null}
-              tried={view.tried}
-              disabled={disabled}
-              onChoose={(index, choice) =>
-                void answer(
-                  item.id,
-                  choices ? { choice: index } : { text: choice, via: 'tapped' },
-                  choice,
-                )
-              }
-            />
+        <ChoiceAnswer
+          draftKey={`session.${sessionId}.${item.id}`}
+          choices={choices ?? tapChoices ?? []}
+          canTalk={Boolean(choices)}
+          figures={choices ? item.choice_figures : null}
+          tried={view.tried}
+          disabled={disabled}
+          onCheck={(index, choice) =>
+            void answer(
+              item.id,
+              choices ? { choice: index } : { text: choice, via: 'tapped' },
+              choice,
+            )
           }
-          action={
+          spoken={
             choices && conversation
               ? {
-                  talk: {
-                    prompt: item.prompt,
-                    lang: null,
-                    disabled,
-                    onText: (said) => void answer(item.id, { text: said, via: 'spoken' }, said),
-                    ...readAgain,
-                  },
+                  prompt: item.prompt,
+                  lang: null,
+                  disabled,
+                  onText: (said) => void answer(item.id, { text: said, via: 'spoken' }, said),
+                  ...readAgain,
                 }
-              : { tap: true, canTalk: choices !== null }
+              : undefined
           }
         />
       ) : null}
@@ -173,10 +168,11 @@ export function AnswerArea({
           {...readAgain}
         />
       ) : null}
-      {/* The lines of a program she taps the failing one of (issue #262): a tap answers. */}
+      {/* The lines of a program she taps the failing one of (issue #262): selection is checked separately. */}
       {codeLines ? (
         <CodeLineAnswer
           key={item.id}
+          draftKey={`session.${sessionId}.${item.id}`}
           figure={codeLines}
           disabled={disabled}
           onAnswer={(line, shown) => void answer(item.id, { text: line }, shown)}

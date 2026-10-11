@@ -31,6 +31,7 @@ import { ScrollView, View } from 'react-native';
 import type { RoomPart } from '../../lib/practice/screenRoom.js';
 import { useStackTops } from '../../lib/practice/useStackTops.js';
 import { THREAD_PAD, threadEdge, threadRest } from '../../lib/practice/threadRoom.js';
+import { useMotionReduced } from '../../lib/theme/motion.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMaskFrom } from '../lb/EdgeFade.js';
 
@@ -67,6 +68,7 @@ export function ThreadBox({
   children,
 }: Props) {
   const scroll = useRef<ScrollView>(null);
+  const reduced = useMotionReduced();
   const [box, setBox] = useState(0);
   /**
    * Where the conversation stands: how far it is scrolled, and how tall it is. Where it follows
@@ -94,7 +96,7 @@ export function ThreadBox({
   /** Scrolls to where it rests (`threadRest`) and stands there. */
   function rest(animated: boolean) {
     const offset = threadRest(content.current, view.current, true, readFrom);
-    if (readFrom === undefined) scroll.current?.scrollToEnd({ animated });
+    if (readFrom === undefined) scroll.current?.scrollToEnd({ animated: animated && !reduced });
     // A reply read from its top is jumped to: a smooth scroll there, while the box still grew
     // and the picture in the reply sized itself, ended 2–19 pt past its top, and the first line
     // of the explanation stood in the fade (#387).
@@ -104,6 +106,9 @@ export function ThreadBox({
   // The reply's top is measured after it arrived: the box moves to it once it is known.
   const restRef = useRef(rest);
   restRef.current = rest;
+  useEffect(() => {
+    if (reduced && followEnd) restRef.current(false);
+  }, [reduced, followEnd]);
   useEffect(() => {
     if (followEnd && readFrom !== undefined) restRef.current(true);
   }, [followEnd, readFrom]);

@@ -41,6 +41,14 @@ type Common = {
   accessibilityHint?: string;
   disabled?: boolean;
   testID?: string;
+  accessibilityValue?: ViewProps['accessibilityValue'];
+  accessibilityActions?: ViewProps['accessibilityActions'];
+  onAccessibilityAction?: ViewProps['onAccessibilityAction'];
+  'aria-valuemin'?: number;
+  'aria-valuemax'?: number;
+  'aria-valuenow'?: number;
+  'aria-valuetext'?: string;
+  onKeyDown?: (event: { nativeEvent: { key?: string }; preventDefault: () => void }) => void;
   /** Layout only (size, flex) — never a colour. Without it the surface fills the box it sits in. */
   style?: ViewStyle;
   /** The drawing, under the target. */
@@ -70,6 +78,13 @@ export function TapSurface(props: Tapped | Dragged) {
     accessibilityLabel: props.accessibilityLabel,
     accessibilityHint: props.accessibilityHint,
     accessibilityState: { disabled },
+    accessibilityValue: props.accessibilityValue,
+    accessibilityActions: props.accessibilityActions,
+    onAccessibilityAction: props.onAccessibilityAction,
+    'aria-valuemin': props['aria-valuemin'],
+    'aria-valuemax': props['aria-valuemax'],
+    'aria-valuenow': props['aria-valuenow'],
+    'aria-valuetext': props['aria-valuetext'],
   };
   return (
     <View testID={testID} style={style}>
@@ -90,7 +105,11 @@ type A11yProps = Pick<
   | 'accessibilityLabel'
   | 'accessibilityHint'
   | 'accessibilityState'
->;
+  | 'accessibilityValue'
+  | 'accessibilityActions'
+  | 'onAccessibilityAction'
+> &
+  Pick<Common, 'aria-valuemin' | 'aria-valuemax' | 'aria-valuenow' | 'aria-valuetext'>;
 type A11y = { a11y: A11yProps; disabled: boolean };
 
 function DragTarget({ onPoint, onRelease, disabled, a11y }: Dragged & A11y) {
@@ -108,15 +127,19 @@ function DragTarget({ onPoint, onRelease, disabled, a11y }: Dragged & A11y) {
   );
 }
 
-function TapTarget({ onTap, disabled, a11y }: Tapped & A11y) {
+function TapTarget({ onTap, onKeyDown, disabled, a11y }: Tapped & A11y) {
   const at = useRef<{ x: number; y: number } | null>(null);
   const pressIn = (e: GestureResponderEvent) => {
     const { locationX: x, locationY: y } = e.nativeEvent;
     at.current = Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
   };
-  const press = () => {
+  const press = (event: GestureResponderEvent) => {
     const where = at.current;
     at.current = null;
+    // A supplied keyboard handler owns activation; RN web also synthesizes Enter on keyup.
+    const keyboard = event as GestureResponderEvent & { key?: string };
+    if (onKeyDown && ((keyboard.nativeEvent as { key?: string } | undefined)?.key ?? keyboard.key))
+      return;
     onTap(where);
   };
   return (
@@ -125,6 +148,7 @@ function TapTarget({ onTap, disabled, a11y }: Tapped & A11y) {
       disabled={disabled}
       onPressIn={pressIn}
       onPress={press}
+      {...(onKeyDown ? { onKeyDown } : {})}
       style={StyleSheet.absoluteFill}
     />
   );

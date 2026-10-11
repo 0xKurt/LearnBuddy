@@ -24,7 +24,9 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Linking, Platform, Text, View, type TextStyle } from 'react-native';
+
+import { PRACTICE } from '../../lib/theme/practice.js';
+import { ActivityIndicator, Linking, Platform, Text, View } from 'react-native';
 
 import { isOutdated, isRetryable } from '../../lib/api/apiError.js';
 import { newId } from '../../lib/api/client.js';
@@ -35,13 +37,13 @@ import { messageFor } from '../../lib/errors.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
 import { MAX_RECORDING_MS } from '../../lib/speech/voice.js';
-import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
 import { RecordingStatus } from '../voice/RecordingStatus.js';
 import { Btn } from '../lb/Btn.js';
-import { Card } from '../lb/Card.js';
+import { QuestionCard } from '../lb/QuestionCard.js';
 import { toast } from '../lb/Toast.js';
 import { dropped, reacted, tapped } from '../../lib/perf.js';
 import { BottomBar } from '../lb/BottomBar.js';
@@ -61,11 +63,10 @@ export function latestPronunciation(turns: PracticeTurnView[]): PronunciationFee
 
 /**
  * The sentence to say: larger than a title and lighter, so it reads as words, not a heading.
- * token-exempt: 24/32, between TYPE.prompt and TYPE.display — the card's one big line.
+ * token-exempt: 24/32, between TYPE.question and TYPE.display — the card's one big line.
  */
-const SENTENCE: TextStyle = { fontSize: 24, lineHeight: 32, fontWeight: '500' };
+
 /** Marked: token-exempt: line 36, so the underline under a word to practise has room. */
-const MARKED: TextStyle = { ...SENTENCE, lineHeight: 36 };
 
 function MarkedWords({
   feedback,
@@ -89,9 +90,9 @@ function MarkedWords({
     <View
       accessible={!onWord}
       accessibilityLabel={onWord ? undefined : summary}
-      style={{ gap: 6 }} // token-exempt: the legend close under its words
+      style={{ gap: PRACTICE.speechNoteGap }}
     >
-      <Text style={[TYPE.title, MARKED]}>
+      <Text style={[TYPE.title, TYPE.speechMarked]}>
         {feedback.words.map((w, i) => (
           // The space before a word stays outside it: the underline marks only the word.
           <Text key={`${i}-${w.text}`}>
@@ -108,8 +109,8 @@ function MarkedWords({
                 w.ok
                   ? { color: palette.successText }
                   : {
+                      ...TYPE.speechWord,
                       color: palette.warningText,
-                      fontWeight: '700',
                       textDecorationLine: 'underline',
                       textDecorationColor: palette.warning,
                     }
@@ -120,17 +121,7 @@ function MarkedWords({
           </Text>
         ))}
       </Text>
-      {practise.length > 0 ? (
-        <Text
-          style={[
-            TYPE.small,
-            // token-exempt: 14, TYPE.small's line at caption size, quiet under the words
-            { fontSize: 14 },
-          ]}
-        >
-          {t('speak.legend')}
-        </Text>
-      ) : null}
+      {practise.length > 0 ? <Text style={[TYPE.meta]}>{t('speak.legend')}</Text> : null}
     </View>
   );
 }
@@ -145,7 +136,7 @@ function LiveWords({ prompt, words }: { prompt: string; words: SpeakStreamEvent[
   const parts = prompt.split(/(\s+)/);
   let at = 0;
   return (
-    <Text accessibilityRole="header" style={[TYPE.title, SENTENCE]}>
+    <Text accessibilityRole="header" style={[TYPE.title, TYPE.speech]}>
       {parts.map((part, i) => {
         if (/^\s+$/.test(part)) return <Text key={i}>{part}</Text>;
         const judged = words[at];
@@ -158,8 +149,8 @@ function LiveWords({ prompt, words }: { prompt: string; words: SpeakStreamEvent[
               judged.ok
                 ? { color: palette.successText }
                 : {
+                    ...TYPE.speechWord,
                     color: palette.warningText,
-                    fontWeight: '700',
                     textDecorationLine: 'underline',
                     textDecorationColor: palette.warning,
                   }
@@ -203,7 +194,7 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
   const [word, setWord] = useState<SpokenWord | null>(null);
 
   return (
-    <Card tone="lavender" padding={CARD_PAD.roomy}>
+    <QuestionCard>
       <View style={{ gap: SPACE.md }}>
         {item.topic ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{item.topic}</Text> : null}
         <Text style={TYPE.label}>{t('speak.instruction')}</Text>
@@ -224,12 +215,12 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
         ) : live && live.words.length > 0 ? (
           <LiveWords prompt={item.prompt} words={live.words} />
         ) : (
-          <Text accessibilityRole="header" style={[TYPE.title, SENTENCE]}>
+          <Text accessibilityRole="header" style={[TYPE.title, TYPE.speech]}>
             {item.prompt}
           </Text>
         )}
       </View>
-    </Card>
+    </QuestionCard>
   );
 }
 
@@ -246,7 +237,7 @@ export function PronunciationNote({ feedback }: { feedback: PronunciationFeedbac
   return (
     <View
       style={{
-        gap: 6, // token-exempt: the tips close together, one note
+        gap: PRACTICE.speechNoteGap,
         paddingLeft: SPACE.xs,
         maxWidth: '86%',
       }}
@@ -257,7 +248,7 @@ export function PronunciationNote({ feedback }: { feedback: PronunciationFeedbac
         </Text>
       ))}
       {feedback.heard.trim() ? (
-        <Text style={TYPE.small}>{t('speak.heard', { text: feedback.heard.trim() })}</Text>
+        <Text style={TYPE.meta}>{t('speak.heard', { text: feedback.heard.trim() })}</Text>
       ) : null}
     </View>
   );

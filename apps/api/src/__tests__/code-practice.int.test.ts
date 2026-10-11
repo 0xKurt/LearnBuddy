@@ -20,7 +20,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LlmError } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
-import { codeRun, FIND, PREDICT, QUERY, WRITE } from '../testing/scenarios/code.js';
+import { codeRun, FIND, FIND_EIGHT, PREDICT, QUERY, WRITE } from '../testing/scenarios/code.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -144,6 +144,16 @@ describe.skipIf(!dbReady)('Informatik: Programme und Abfragen', () => {
     expect(many.body.reply.text).toMatch(/3 Zeilen, gesucht sind 2/);
     const ok = await answer(session.id, query!, "select name from schueler where klasse='7a'");
     expect(ok.body.verdict).toBe('correct');
+  });
+
+  it('keeps all eight code lines and grades the final runtime failure', async () => {
+    const session = await prepare([FIND_EIGHT]);
+    expect(session.items).toHaveLength(1);
+    const item = session.items[0]!.item;
+    expect(item.surface).toEqual({ mode: 'code_line', lines: 8 });
+    expect(item.figure).toMatchObject({ type: 'code', lines: FIND_EIGHT.program.split('\n') });
+    expect((await answer(session.id, item.id, '7')).body.verdict).toBe('incorrect');
+    expect((await answer(session.id, item.id, '8')).body.verdict).toBe('correct');
   });
 
   it('runs her code only within the hourly budget per account; reading answers stay free', async () => {

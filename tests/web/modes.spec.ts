@@ -128,7 +128,8 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText('Wem gebe ich den Knochen?', { exact: false })).toBeVisible();
   await shot(page, '21-explain-in-chat');
   await page.getByRole('button', { name: "Los geht's" }).click();
-  await page.getByRole('button', { name: 'Wem?', exact: true }).click();
+  await page.getByRole('radio', { name: 'Wem?', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   // Nothing stands between the solution and "Weiter" after a clean first try: the three ways
   // to re-explain cost half a screen there and nobody needs them (owner 28.09., issue #61).
@@ -420,7 +421,8 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText('Im Test gibt es keine Tipps', { exact: false })).toBeVisible();
   await expect(page.getByText('Ja, der August')).toHaveCount(0);
   await shot(page, '27b-test-asked');
-  await page.getByRole('button', { name: 'Augustus', exact: true }).click();
+  await page.getByRole('radio', { name: 'Augustus', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText("Notiert – weiter geht's.")).toBeVisible();
   await expect(page.getByText('Richtig', { exact: true })).toHaveCount(0);
   await shot(page, '28-test-noted');
@@ -1083,13 +1085,15 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   // Ihr Name IST die Antwort: kein Name an der Note (#312, Code erzwingt es).
   await expect(figureNames).toHaveCount(0);
   await bothSchemes(page, '70-staff-name-note');
-  await page.getByRole('button', { name: 'C', exact: true }).click();
+  await page.getByRole('radio', { name: 'C', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 
   await expect(page.getByText('Welcher Notenwert ist das?')).toBeVisible();
   await bothSchemes(page, '71-staff-name-value');
-  await page.getByRole('button', { name: 'punktierte Achtelnote', exact: true }).click();
+  await page.getByRole('radio', { name: 'punktierte Achtelnote', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 
@@ -1097,13 +1101,15 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   // Beim Intervall sind die Noten gegeben und tragen ihre Namen; gefragt ist der Abstand (#312).
   await expect(figureNames).toHaveText(['E', 'G']);
   await bothSchemes(page, '72-staff-interval');
-  await page.getByRole('button', { name: 'kleine Terz', exact: true }).click();
+  await page.getByRole('radio', { name: 'kleine Terz', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 
   await expect(page.getByText('In welcher Taktart', { exact: false })).toBeVisible();
   await bothSchemes(page, '73-staff-time');
-  await page.getByRole('button', { name: '3/4', exact: true }).click();
+  await page.getByRole('radio', { name: '3/4', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 
@@ -1677,7 +1683,8 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
   await setScheme(page, 'dark');
   await shot(page, '40-test-clock-dark');
   await setScheme(page, 'light');
-  await page.getByRole('button', { name: 'Kohlenstoffdioxid', exact: true }).click();
+  await page.getByRole('radio', { name: 'Kohlenstoffdioxid', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText("Notiert – weiter geht's.")).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 
@@ -1687,7 +1694,8 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
   await expect(page.getByText('noch 5 Min.', { exact: true })).toBeVisible();
   await expect(page.getByText('Schau in Ruhe, was du noch schaffst.')).toBeVisible();
   await bothSchemes(page, '41-test-clock-five');
-  await page.getByRole('button', { name: 'In den Chloroplasten', exact: true }).click();
+  await page.getByRole('radio', { name: 'In den Chloroplasten', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText("Notiert – weiter geht's.")).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 

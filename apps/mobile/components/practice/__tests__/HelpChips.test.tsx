@@ -1,5 +1,5 @@
 // "Tipp" after two misses (issue #388, report „Hilfe und Fragen beim Üben" §5.5): one quiet offer on
-// the chip she already has — the soft skin instead of the ghost one. Nothing else appears, and the
+// the chip she already has — the selected skin instead of the quiet one. Nothing else appears, and the
 // chip keeps its name, so a screen reader hears the same button.
 
 import { fireEvent, screen } from '@testing-library/react';
@@ -37,7 +37,10 @@ describe('HelpChips', () => {
 
   it('keeps "Tipp" quiet until it is offered', () => {
     renderInApp(<HelpChips onHint={() => undefined} onReveal={() => undefined} />);
-    expect(['', 'transparent', 'rgba(0, 0, 0, 0)']).toContain(fillOf());
+    expect(fillOf()).toBe(asRgb(paletteOf('pastell').canvas));
+    expect(
+      screen.getByRole('button', { name: 'Einen Tipp bekommen' }).getAttribute('aria-pressed'),
+    ).not.toBe('true');
   });
 
   it('lets "Tipp" stand out once offered — the same chip, nothing added', () => {

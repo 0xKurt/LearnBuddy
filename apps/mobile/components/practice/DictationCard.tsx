@@ -16,7 +16,7 @@ import { Text, View } from 'react-native';
 
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Card } from '../lb/Card.js';
+import { QuestionCard } from '../lb/QuestionCard.js';
 import { ListenButton } from './ListenButton.js';
 
 type Props = {
@@ -69,7 +69,7 @@ export function DictationCard({
 
   if (compact) {
     return (
-      <Card tone="lavender" padding={SPACE.md} radius={24}>
+      <QuestionCard compact>
         <View
           style={{
             flexDirection: 'row',
@@ -80,12 +80,12 @@ export function DictationCard({
         >
           {pair('md', 'outline')}
         </View>
-      </Card>
+      </QuestionCard>
     );
   }
 
   return (
-    <Card tone="lavender" radius={24} style={grown ? { minHeight } : null}>
+    <QuestionCard style={grown ? { minHeight } : null}>
       {/* One centred group — the line and the way to hear it — in the middle of the room the
           card was given, so the space reads as the place to listen, not as a gap. No topic line:
           the run's title above already says it, and a second grey label is noise (#286). */}
@@ -110,6 +110,6 @@ export function DictationCard({
           {pair('lg', heard ? 'outline' : 'primary')}
         </View>
       </View>
-    </Card>
+    </QuestionCard>
   );
 }

@@ -23,6 +23,7 @@
 // reader hears "Schritt 2 bearbeiten" (issue #420). After "Prüfen" the step Buddy's reply names
 // opens by itself, her finger in its first cell — the reply has already said which step it is.
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import {
   columnResultText,
   columnRowStep,
@@ -54,7 +55,7 @@ const ROW = TOUCH + SPACE.xs;
 /** A line of a finished division step: two of them take one row (`columnRowsShown`). */
 const HALF_ROW = ROW / 2;
 /** The line under the numbers: drawn, not a hairline — it is what the sum stands under. */
-const RULE = 2; // token-exempt: a stroke's width, not spacing
+const RULE = PRACTICE.columnRule;
 
 function isGap(cell: ColumnCalcTaskView['rows'][number]['cells'][number]): cell is ColumnGap {
   return 'id' in cell;
@@ -248,8 +249,7 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit, opens = null 
                 alignItems: 'center',
                 justifyContent: 'center',
                 // The air between two cells she types in: their frames never touch.
-                // token-exempt: hairline of air between frames, not a step of the scale
-                paddingHorizontal: isGap(c) && !done ? 1 : 0,
+                paddingHorizontal: isGap(c) && !done ? PRACTICE.columnCellAir : 0,
               }}
             >
               {isGap(c) && !done ? (
@@ -260,7 +260,7 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit, opens = null 
                   testID={isGap(c) ? `column-${c.id}` : undefined}
                   accessible={!printed}
                   style={[
-                    done ? TYPE.small : TYPE.body,
+                    done ? TYPE.meta : TYPE.body,
                     { color: signs[col] ? palette.ink2 : palette.ink },
                   ]}
                 >
@@ -308,9 +308,9 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit, opens = null 
             }
             style={{
               backgroundColor: ink.paper,
-              borderWidth: 1,
+              borderWidth: PRACTICE.border,
               borderColor: ink.gridStrong,
-              borderRadius: around(RADIUS.cell, SPACE.sm),
+              borderRadius: around(RADIUS.sm, SPACE.sm),
               padding: SPACE.sm,
             }}
           >

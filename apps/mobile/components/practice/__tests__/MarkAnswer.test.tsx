@@ -170,12 +170,41 @@ describe('commas and syllables', () => {
   it('cuts a word after the tapped letter, and spells it with its hyphen', () => {
     show(SYLLABLES);
     // Three cuts in "Hase", none after its last letter.
-    expect(screen.getAllByRole('checkbox')).toHaveLength(3);
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Silbe endet nach „Ha“ in Hase' }));
+    const word = screen.getByRole('slider', { name: 'Silbe endet nach „H“ in Hase' });
+    fireEvent.keyDown(word, { key: 'ArrowRight' });
+    fireEvent.keyDown(word, { key: 'Enter' });
+    fireEvent.keyUp(word, { key: 'Enter' });
     expect(screen.getByTestId('mark-summary').textContent).toBe('Getrennt: Ha-se');
     // The cut is a bar between the letters; the word stays one row of plain letters.
     expect(screen.getAllByTestId('syllable-cut')).toHaveLength(1);
     expect(screen.getByTestId('mark-how').textContent).toBe('Tippe an, wo eine Silbe endet.');
+  });
+
+  it('maps a word-board touch to the unchanged cut id and checks separately', () => {
+    const submit = vi.fn();
+    show(SYLLABLES, submit);
+    const board = screen.getByRole('slider');
+    fireEvent.mouseDown(board, { clientX: 45, clientY: 20 });
+    fireEvent.mouseUp(board, { clientX: 45, clientY: 20 });
+    fireEvent.click(board);
+    expect(submit).not.toHaveBeenCalled();
+    expect(screen.getByTestId('mark-summary').textContent).toBe('Getrennt: Ha-se');
+    expect(board.getAttribute('aria-valuetext')).toContain('Grenze gesetzt');
+    fireEvent.click(screen.getByRole('button', { name: 'Prüfen' }));
+    expect(submit).toHaveBeenCalledWith(
+      { type: 'mark', marks: [{ at: 'w1_2', category: null }] },
+      'Ha-se',
+    );
+  });
+
+  it('blocks boundary navigation and marking while disabled', () => {
+    show(SYLLABLES, undefined, true);
+    const board = screen.getByRole('slider');
+    fireEvent.keyDown(board, { key: 'ArrowRight' });
+    fireEvent.keyDown(board, { key: ' ' });
+    fireEvent.click(board);
+    expect(board.getAttribute('aria-valuenow')).toBe('1');
+    expect(screen.queryAllByTestId('syllable-cut')).toHaveLength(0);
   });
 
   it('keeps its one line of how-to until the first "Prüfen", for every kind', () => {

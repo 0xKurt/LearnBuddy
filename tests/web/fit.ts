@@ -55,9 +55,9 @@ export async function a11y(page: Page, name: string): Promise<string[]> {
 }
 
 /**
- * The most that may stand empty between the answer and what is below it (issue #386): the pinned
- * bar's own padding above "Prüfen", or the room the screen's edge needs under options she taps.
- * More is a hole — the answer floating above the bottom instead of standing on it.
+ * The largest intentional gap between the question and its answer board. Answers stand directly
+ * below the card; free room belongs after all answer and tutor content, above the pinned tools
+ * and Composer (CLAUDE.md rule 19).
  */
 const ANSWER_GAP = 24;
 
@@ -125,32 +125,15 @@ export async function overflows(page: Page): Promise<Overflow[]> {
  * between it and the action (or the bottom edge), and where the free room is.
  */
 export type AnswerPlace = {
-  /**
-   * The empty band under the answer (and its keys): from its lowest edge to the first thing drawn
-   * below it — "Prüfen", the conversation row, the input bar — or to the window's bottom edge where the
-   * answer itself is the action (options she taps). 0: no slot.
-   */
+  /** Space between the whole question and the answer's first surface. */
   gap: number;
-  /** Every free room lies above the answer, between the conversation and it. */
-  spacerAbove: boolean;
-  /** "Prüfen" is the lowest of answer, keys, free room and action. */
+  /** Free room follows both answer and tutor feedback. */
+  spacerBelow: boolean;
   actionLowest: boolean;
-  /**
-   * The field is in the pinned bar: a typed answer's, right above "Prüfen" (or with it inside while
-   * she types), at the bottom like the chat's (issue #365) — or her question's, beside "Prüfen" or
-   * under options (issue #402).
-   */
   fieldInBar: boolean;
 };
 
-/**
- * The one rule of the answer shell, measured (issues #310 §3.4, #386): every answer stands at the
- * bottom — directly above its action ("Prüfen", the conversation row, the input bar it writes into), or
- * at the window's bottom edge where the tap on it is the action. The free room collects above it,
- * between the conversation and the answer, never under it; "Prüfen" is lowest. A typed answer is
- * written in the input bar right above "Prüfen" (issue #365). Null where neither an answer slot
- * nor a typed answer is on screen (an answered question, any other screen).
- */
+/** The requested flow: question → answer → feedback → free room → tools → pinned Composer. */
 export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
   return page.evaluate(() => {
     const visible = (el: HTMLElement | null): el is HTMLElement => {
@@ -166,7 +149,7 @@ export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
     const bars = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="bottom-bar"]'));
     const fieldInBar = !visible(field) || bars.some((bar) => bar.contains(field));
     // A typed answer without a board: the field is the answer, and it is in the bar.
-    if (!slot) return { gap: 0, spacerAbove: true, actionLowest: true, fieldInBar };
+    if (!slot) return { gap: 0, spacerBelow: true, actionLowest: true, fieldInBar };
     const at = slot.getBoundingClientRect();
     const boxOf = (id: string) =>
       Array.from(document.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`))
@@ -179,42 +162,17 @@ export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
     const keys = keyEls.map((el) => el.getBoundingClientRect()).filter((b) => b.height > 0);
     const answerTop = Math.min(at.top, ...keys.map((b) => b.top));
     const answerEnd = Math.max(at.bottom, ...keys.map((b) => b.bottom));
-    // The first thing drawn below the answer: text, a picture, a control — as far as its scroll
-    // box shows it. Nothing: the window's bottom edge.
-    let below = innerHeight;
-    for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
-      if (slot.contains(el) || el.contains(slot)) continue;
-      if (keyEls.some((k) => k.contains(el) || el.contains(k))) continue;
-      const drawn =
-        Array.from(el.childNodes).some(
-          (n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').trim() !== '',
-        ) ||
-        ['IMG', 'CANVAS', 'svg', 'INPUT', 'TEXTAREA'].includes(el.tagName) ||
-        el.getAttribute('role') === 'button';
-      if (!drawn) continue;
-      const style = getComputedStyle(el);
-      if (style.visibility === 'hidden' || style.opacity === '0') continue;
-      const box = el.getBoundingClientRect();
-      if (box.height === 0 || box.width === 0) continue;
-      if (box.right <= at.left || box.left >= at.right) continue;
-      let top = box.top;
-      let bottom = box.bottom;
-      for (let p = el.parentElement; p; p = p.parentElement) {
-        if (!['auto', 'scroll', 'hidden'].includes(getComputedStyle(p).overflowY)) continue;
-        const clip = p.getBoundingClientRect();
-        top = Math.max(top, clip.top);
-        bottom = Math.min(bottom, clip.bottom);
-      }
-      if (bottom <= top || top < answerEnd - 1) continue;
-      below = Math.min(below, top);
-    }
+    const question = document.querySelector<HTMLElement>('[data-testid="scroll-question"]');
+    const questionEnd = question?.getBoundingClientRect().bottom ?? answerTop;
+    const feedback = boxOf('scroll-thread');
+    const contentEnd = Math.max(answerEnd, ...feedback.map((b) => b.bottom));
     const spacers = boxOf('free-space');
     const actions = boxOf('answer-action');
     const lowestBefore = Math.max(answerEnd, ...spacers.map((b) => b.bottom));
     return {
-      gap: Math.round(below - answerEnd),
-      // A spacer squeezed to nothing has no side; one with room must be above the answer.
-      spacerAbove: spacers.every((b) => b.height < 1 || b.bottom <= answerTop + 1),
+      gap: Math.round(answerTop - questionEnd),
+      // Empty spacers have no side; visible room must follow all feedback.
+      spacerBelow: spacers.every((b) => b.height < 1 || b.top >= contentEnd - 1),
       actionLowest: actions.every((b) => b.top >= lowestBefore - 1),
       fieldInBar,
     };
@@ -364,7 +322,6 @@ export async function cutControls(page: Page): Promise<string[]> {
         '[role="button"], [role="checkbox"], [role="radio"], [role="switch"], input, textarea',
       ),
     )
-      .filter((el) => !el.closest('[data-testid="answer-slot"]'))
       // A reply taller than the conversation's box is read through and scrolls (`readsThrough`,
       // #258, #387): the picture of an explanation in it can stand whole nowhere at rest.
       .filter((el) => {
@@ -600,12 +557,19 @@ export async function shot(
       .soft(await progressHead(page), `${name} @${phone.width}: the practice head (#459)`)
       .toEqual([]);
     if (place) {
-      // One rule for every form in the answer shell (issue #386): the answer at the bottom.
+      // Every board follows its question directly; feedback stays beside the answer.
       expect(
         place.gap,
-        `${name} @${phone.width}: empty band under the answer (it belongs at the bottom)`,
+        `${name} @${phone.width}: empty band between question and answer`,
       ).toBeLessThanOrEqual(ANSWER_GAP);
-      expect(place.spacerAbove, `${name} @${phone.width}: free room above the answer`).toBe(true);
+      expect(
+        place.gap,
+        `${name} @${phone.width}: answer does not overlap the question`,
+      ).toBeGreaterThanOrEqual(-1);
+      expect(
+        place.spacerBelow,
+        `${name} @${phone.width}: free room after answer and feedback`,
+      ).toBe(true);
       expect(place.actionLowest, `${name} @${phone.width}: "Prüfen" lowest`).toBe(true);
       expect(place.fieldInBar, `${name} @${phone.width}: the field in the bar above "Prüfen"`).toBe(
         true,
