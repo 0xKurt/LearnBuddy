@@ -13,23 +13,24 @@
 import { CurriculumRegion, type AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Platform, ScrollView, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BirthDateFields, type DateParts } from '../components/auth/BirthDateFields.js';
 import { CheckPoints } from '../components/auth/CheckPoints.js';
 import { Btn } from '../components/lb/Btn.js';
-import { CircleBtn } from '../components/lb/CircleBtn.js';
+import { IconBtn } from '../components/lb/IconBtn.js';
 import { Card } from '../components/lb/Card.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
 import { ContactStep, type ContactAnswer } from '../components/auth/ContactStep.js';
 import { SetupStep } from '../components/auth/SetupStep.js';
-import { IconDisc } from '../components/lb/IconDisc.js';
-import { LanguageFlags } from '../components/lb/LanguageFlags.js';
-import { LbTextInput, type LbTextInputRef } from '../components/lb/LbTextInput.js';
+import { Icon } from '../components/lb/Icon.js';
+import { LanguageChoice } from '../components/lb/LanguageChoice.js';
+import { LANGUAGES } from '../lib/i18n/languages.js';
+import { Field } from '../components/lb/Field.js';
+import type { LbTextInputRef } from '../components/lb/LbTextInput.js';
+import { PROFILE } from '../lib/theme/profile.js';
 import { PickerField, picked } from '../components/lb/PickerField.js';
-import { Screen } from '../components/lb/Screen.js';
 import { Segmented } from '../components/lb/Segmented.js';
 import { toast } from '../components/lb/Toast.js';
 import { WaitHint } from '../components/lb/WaitHint.js';
@@ -46,10 +47,9 @@ import { currentSession } from '../lib/auth/session.js';
 import { signOutHere } from '../lib/leave.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 import { formDensity } from '../lib/keyboard.js';
 import { useVisibleHeight } from '../lib/useVisibleHeight.js';
-import { CARD_PAD, GUTTER, pinnedBar, RHYTHM, SPACE } from '../lib/theme/space.js';
+import { RHYTHM, SPACE } from '../lib/theme/space.js';
 import { useFormDraft } from '../lib/drafts.js';
 
 /** Android number pads emit "-", "," and spaces too; a date or PIN is digits only. */
@@ -58,8 +58,7 @@ const onlyDigits = (value: string) => value.replace(/\D+/g, '');
 export default function Profile() {
   const { palette } = useTheme();
   const { t } = useTranslation('auth');
-  const insets = useSafeAreaInsets();
-  // A small phone (360×740) gets tighter spacing so each step fits (CLAUDE.md rule 16).
+  // Smaller visible form space uses compact spacing; required fields remain reachable by scroll.
   const view = useVisibleHeight();
   // From what is visible: the keyboard keeps the window's height (issue #289).
   const compact = formDensity(view.window, view.overlap) !== 'roomy';
@@ -129,7 +128,7 @@ export default function Profile() {
   const pinRepeatRef = useRef<LbTextInputRef>(null);
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  // For a child two short steps, each fitting the screen: the child, then the parents. Then the
+  // A child has separate learner and parent forms with reachable scroll content. Then the
   // notification question, whose answer saves the profile — and for a child the hand-over. Then
   // Buddy's voice where there are voices to choose: it needs the profile, because the sample is
   // read and the choice saved for her.
@@ -302,215 +301,25 @@ export default function Profile() {
   }
 
   return (
-    <Screen>
-      <KeyboardSafe style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: GUTTER,
-            paddingVertical: compact ? SPACE.sm : SPACE.lg,
-            // token-exempt: the form's rhythm, 10 tight (fits 360×740, rule 16), 18 roomy
-            gap: compact ? 10 : 18,
-          }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {parentStep ? (
-            // One row for the way back and the headline: the stacked pair overflowed a
-            // 360×740 phone by 28 px with the wider Linux fonts CI renders with (#98).
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: RHYTHM.parts }}>
-              <CircleBtn
-                icon="back"
-                onPress={() => setStep('learner')}
-                accessibilityLabel={t('profile.back')}
-              />
-              <Text accessibilityRole="header" style={[TYPE.displaySm, { flexShrink: 1 }]}>
-                {t('profile.parent_title')}
-              </Text>
-            </View>
-          ) : (
-            <Text accessibilityRole="header" style={TYPE.display}>
-              {t('profile.title')}
-            </Text>
-          )}
-          {parentStep ? null : (
-            <Segmented
-              options={[
-                { value: 'self', label: t('profile.self') },
-                { value: 'child', label: t('profile.child') },
-              ]}
-              value={relation}
-              onChange={setRelation}
-            />
-          )}
-          {relation && !parentStep ? (
-            <>
-              <Labelled
-                label={relation === 'self' ? t('profile.name_self') : t('profile.name_child')}
-              >
-                <LbTextInput
-                  clearable
-                  value={name}
-                  onChangeText={setName}
-                  maxLength={40}
-                  // Autocorrect must never rewrite the name Buddy will call her by.
-                  autoCorrect={false}
-                  spellCheck={false}
-                  autoCapitalize="words"
-                  // The phones want RN's token, the browser the HTML one — "name-given" is
-                  // not a valid autocomplete value in HTML (axe: autocomplete-valid, #73).
-                  autoComplete={Platform.OS === 'web' ? 'given-name' : 'name-given'}
-                  textContentType="givenName"
-                  returnKeyType="done"
-                  accessibilityLabel={
-                    relation === 'self' ? t('profile.name_self') : t('profile.name_child')
-                  }
-                />
-              </Labelled>
-              {/* Language before the date: the date fields open the keyboard, and a
-                  section below them was simply never seen (user feedback 2026-09-28 —
-                  "Let's go" was tappable while fields still hid under the keyboard).
-                  Same action, same component: the welcome screen's flags. */}
-              <Labelled label={t('profile.language')}>
-                <LanguageFlags value={locale} onChange={setLocale} compact />
-              </Labelled>
-              {/* The Bundesland, required (owner 2026-10-02, issue #199). It sits above the
-                  date fields for the same reason the language does: those open the keyboard,
-                  and anything below them was never seen. One row, because the sixteen
-                  choices live in the sheet it opens — a form of sixteen would not fit a
-                  360×740 phone (rule 16), and the sheet is also where the reason is said. */}
-              <Labelled label={t('region.label')}>
-                <PickerField
-                  label={t('region.label')}
-                  placeholder={t('region.choose')}
-                  title={relation === 'self' ? t('region.title') : t('region.title_child')}
-                  body={relation === 'self' ? t('region.why') : t('region.why_child')}
-                  options={CurriculumRegion.options.map((value) => ({
-                    value,
-                    label: t(`region.names.${value}`),
-                  }))}
-                  value={region}
-                  onChange={setRegion}
-                />
-              </Labelled>
-              <Labelled label={t('profile.birth_date')}>
-                <BirthDateFields value={date} onChange={setDate} />
-                {dateComplete && !birthDate ? (
-                  <Text
-                    accessibilityLiveRegion="polite"
-                    style={[TYPE.small, { color: palette.danger, paddingHorizontal: SPACE.xs }]}
-                  >
-                    {t('profile.birth_date_invalid')}
-                  </Text>
-                ) : (
-                  <Text style={[TYPE.small, { paddingHorizontal: SPACE.xs }]}>
-                    {relation === 'child'
-                      ? t('profile.birth_date_hint_child')
-                      : t('profile.birth_date_hint')}
-                  </Text>
-                )}
-                {tooYoungSelf ? (
-                  // Not a dead end: what applies, and the real next step (user feedback #5).
-                  <Card tone="lavender" padding={SPACE.lg}>
-                    <View style={{ gap: RHYTHM.parts }}>
-                      <Text style={[TYPE.body, { color: palette.ink }]}>
-                        {t('profile.too_young_self')}
-                      </Text>
-                      <Btn pill variant="outline" icon="shield" onPress={adultIsHere}>
-                        {t('profile.adult_here')}
-                      </Btn>
-                    </View>
-                  </Card>
-                ) : null}
-              </Labelled>
-            </>
-          ) : null}
-          {parentStep && handedOver ? (
-            // The account was made by the teenager: say whose e-mail it runs on.
-            <Text style={[TYPE.small, { color: palette.ink, paddingHorizontal: SPACE.xs }]}>
-              {t('profile.handover_email', { email: currentSession()?.email ?? '' })}
-            </Text>
-          ) : null}
-          {parentStep ? (
-            // The parents' card carries the consent and the PIN (notifications are asked next,
-            // issue #518): on a small phone it only fits when every step is the tighter one
-            // (tests/web/fit.ts).
-            <Card tone="lavender" padding={compact ? SPACE.md : CARD_PAD.roomy}>
-              <View style={{ gap: compact ? SPACE.sm : SPACE.md }}>
-                <Checkbox
-                  checked={consent}
-                  onChange={setConsent}
-                  label={t('profile.child_consent')}
-                />
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: RHYTHM.parts,
-                    marginTop: 6, // token-exempt: the PIN part set off from the checkboxes
-                  }}
-                >
-                  <IconDisc name="shield" size={32} iconSize={18} />
-                  <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>
-                </View>
-                <Text style={[TYPE.small, { color: palette.ink }]}>{t('profile.pin_body')}</Text>
-                {/* Visible labels: the second field is the repetition (user feedback #20). */}
-                <View style={{ flexDirection: 'row', gap: RHYTHM.parts }}>
-                  <View style={{ flex: 1 }}>
-                    <LbTextInput
-                      label={t('profile.pin_label')}
-                      value={pin}
-                      onChangeText={(v) => {
-                        const p = onlyDigits(v);
-                        setPinValue(p);
-                        if (p.length === 4) pinRepeatRef.current?.focus();
-                      }}
-                      placeholder="••••"
-                      accessibilityLabel={t('profile.pin_title')}
-                      keyboardType="number-pad"
-                      maxLength={4}
-                      secureTextEntry={!pinShown}
-                      showToggle
-                      shown={pinShown}
-                      onToggle={() => setPinShown((v) => !v)}
-                      toggleAccessibilityLabel={t(
-                        pinShown ? 'profile.pin_hide' : 'profile.pin_show',
-                      )}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <LbTextInput
-                      label={t('profile.pin_repeat')}
-                      ref={pinRepeatRef}
-                      value={pinRepeat}
-                      onChangeText={(v) => setPinRepeat(onlyDigits(v))}
-                      placeholder="••••"
-                      keyboardType="number-pad"
-                      maxLength={4}
-                      // One switch for both fields: they are one decision, and a second
-                      // eye in the row beside it would only be another thing to hit.
-                      secureTextEntry={!pinShown}
-                    />
-                  </View>
-                </View>
-                {/* While the two PINs differ, that is what matters; the reset hint returns after. */}
-                {pinRepeat.length === 4 && pin !== pinRepeat ? (
-                  <Text
-                    accessibilityLiveRegion="polite"
-                    style={[TYPE.small, { color: palette.danger }]}
-                  >
-                    {t('profile.pin_mismatch')}
-                  </Text>
-                ) : (
-                  <Text style={[TYPE.small, { color: palette.ink2 }]}>
-                    {t('profile.pin_forgot')}
-                  </Text>
-                )}
-              </View>
-            </Card>
-          ) : null}
-        </ScrollView>
-        <View style={[pinnedBar(insets.bottom), { gap: SPACE.xs }]}>
+    <SetupStep
+      variant="onboarding"
+      keyboardSafe
+      scrollTestID="scroll-form"
+      compact={compact}
+      title={parentStep ? t('profile.parent_title') : t('profile.title')}
+      top={
+        parentStep ? (
+          <IconBtn
+            icon="back"
+            onPress={() => setStep('learner')}
+            accessibilityLabel={t('profile.back')}
+          />
+        ) : null
+      }
+      footer={
+        <>
           {whyWait > 0 ? <WaitHint>{waitHint}</WaitHint> : null}
-          {/* On to the parents' card, or from there (and from 16) to the notification question. */}
+          {/* Continue to the parent form, or from there (and from 16) to the notification question. */}
           <Btn
             size="lg"
             pill
@@ -532,9 +341,181 @@ export default function Profile() {
           >
             {t('profile.sign_out')}
           </Btn>
+        </>
+      }
+    >
+      {parentStep ? null : (
+        <Segmented
+          options={[
+            { value: 'self', label: t('profile.self') },
+            { value: 'child', label: t('profile.child') },
+          ]}
+          value={relation}
+          onChange={setRelation}
+        />
+      )}
+      {relation && !parentStep ? (
+        <>
+          <Labelled label={relation === 'self' ? t('profile.name_self') : t('profile.name_child')}>
+            <Field
+              clearable
+              value={name}
+              onChangeText={setName}
+              maxLength={40}
+              // Autocorrect must never rewrite the name Buddy will call her by.
+              autoCorrect={false}
+              spellCheck={false}
+              autoCapitalize="words"
+              // The phones want RN's token, the browser the HTML one — "name-given" is
+              // not a valid autocomplete value in HTML (axe: autocomplete-valid, #73).
+              autoComplete={Platform.OS === 'web' ? 'given-name' : 'name-given'}
+              textContentType="givenName"
+              returnKeyType="done"
+              accessibilityLabel={
+                relation === 'self' ? t('profile.name_self') : t('profile.name_child')
+              }
+            />
+          </Labelled>
+          {/* Language before the date: the date fields open the keyboard, and a
+                  section below them was simply never seen (user feedback 2026-09-28 —
+                  "Let's go" was tappable while fields still hid under the keyboard).
+                  Same language choice as the welcome screen. */}
+          <Labelled label={t('profile.language')}>
+            <LanguageChoice
+              value={locale}
+              options={LANGUAGES}
+              onChange={setLocale}
+              label={t('profile.language')}
+              closeLabel={t('common:actions.close')}
+            />
+          </Labelled>
+          {/* The Bundesland, required (owner 2026-10-02, issue #199). It sits above the
+                  date fields for the same reason the language does: those open the keyboard,
+                  and anything below them was never seen. One row, because the sixteen
+                  choices live in the sheet it opens — a form of sixteen would not fit a
+                  360×740 phone (rule 16), and the sheet is also where the reason is said. */}
+          <Labelled label={t('region.label')}>
+            <PickerField
+              label={t('region.label')}
+              placeholder={t('region.choose')}
+              title={relation === 'self' ? t('region.title') : t('region.title_child')}
+              body={relation === 'self' ? t('region.why') : t('region.why_child')}
+              options={CurriculumRegion.options.map((value) => ({
+                value,
+                label: t(`region.names.${value}`),
+              }))}
+              value={region}
+              onChange={setRegion}
+            />
+          </Labelled>
+          <Labelled label={t('profile.birth_date')}>
+            <BirthDateFields value={date} onChange={setDate} />
+            {dateComplete && !birthDate ? (
+              <Text
+                accessibilityLiveRegion="polite"
+                style={[TYPE.small, { color: palette.danger, paddingHorizontal: SPACE.xs }]}
+              >
+                {t('profile.birth_date_invalid')}
+              </Text>
+            ) : (
+              <Text style={[TYPE.small, { paddingHorizontal: SPACE.xs }]}>
+                {relation === 'child'
+                  ? t('profile.birth_date_hint_child')
+                  : t('profile.birth_date_hint')}
+              </Text>
+            )}
+            {tooYoungSelf ? (
+              // Not a dead end: what applies, and the real next step (user feedback #5).
+              <Card tone="lavender" padding={SPACE.lg}>
+                <View style={{ gap: RHYTHM.parts }}>
+                  <Text style={[TYPE.body, { color: palette.ink }]}>
+                    {t('profile.too_young_self')}
+                  </Text>
+                  <Btn pill variant="outline" icon="shield" onPress={adultIsHere}>
+                    {t('profile.adult_here')}
+                  </Btn>
+                </View>
+              </Card>
+            ) : null}
+          </Labelled>
+        </>
+      ) : null}
+      {parentStep && handedOver ? (
+        // The account was made by the teenager: say whose e-mail it runs on.
+        <Text style={[TYPE.small, { color: palette.ink, paddingHorizontal: SPACE.xs }]}>
+          {t('profile.handover_email', { email: currentSession()?.email ?? '' })}
+        </Text>
+      ) : null}
+      {parentStep ? (
+        // The plain parent form carries consent and PIN; notifications are asked next.
+        // Required fields and explanation remain reachable above the pinned action.
+        <View>
+          <View style={{ gap: compact ? SPACE.sm : SPACE.md }}>
+            <Checkbox checked={consent} onChange={setConsent} label={t('profile.child_consent')} />
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: RHYTHM.parts,
+                marginTop: PROFILE.pinGap,
+              }}
+            >
+              <Icon name="shield" size={PROFILE.shield} color={palette.primary} />
+              <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>
+            </View>
+            <Text style={TYPE.paragraph}>{t('profile.pin_body')}</Text>
+            {/* Visible labels: the second field is the repetition (user feedback #20). */}
+            <View style={{ flexDirection: 'row', gap: RHYTHM.parts }}>
+              <View style={{ flex: 1 }}>
+                <Field
+                  label={t('profile.pin_label')}
+                  value={pin}
+                  onChangeText={(v) => {
+                    const p = onlyDigits(v);
+                    setPinValue(p);
+                    if (p.length === 4) pinRepeatRef.current?.focus();
+                  }}
+                  placeholder={t('profile.pin_placeholder')}
+                  accessibilityLabel={t('profile.pin_title')}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  secureTextEntry={!pinShown}
+                  showToggle
+                  shown={pinShown}
+                  onToggle={() => setPinShown((v) => !v)}
+                  toggleAccessibilityLabel={t(pinShown ? 'profile.pin_hide' : 'profile.pin_show')}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Field
+                  label={t('profile.pin_repeat')}
+                  ref={pinRepeatRef}
+                  value={pinRepeat}
+                  onChangeText={(v) => setPinRepeat(onlyDigits(v))}
+                  placeholder={t('profile.pin_placeholder')}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  // One switch for both fields: they are one decision, and a second
+                  // eye in the row beside it would only be another thing to hit.
+                  secureTextEntry={!pinShown}
+                />
+              </View>
+            </View>
+            {/* While the two PINs differ, that is what matters; the reset hint returns after. */}
+            {pinRepeat.length === 4 && pin !== pinRepeat ? (
+              <Text
+                accessibilityLiveRegion="polite"
+                style={[TYPE.small, { color: palette.danger }]}
+              >
+                {t('profile.pin_mismatch')}
+              </Text>
+            ) : (
+              <Text style={[TYPE.small, { color: palette.ink2 }]}>{t('profile.pin_forgot')}</Text>
+            )}
+          </View>
         </View>
-      </KeyboardSafe>
-    </Screen>
+      ) : null}
+    </SetupStep>
   );
 }
 
