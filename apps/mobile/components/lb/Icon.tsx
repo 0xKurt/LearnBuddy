@@ -1,6 +1,7 @@
 // Native icon set ported from components.jsx (consistent stroke 1.6). An icon is a list of shapes
 // on a 24-unit grid; one <Svg> draws every icon with the same stroke (issue #311: the 32 cases
 // used to spell the same <Svg> frame out each).
+import type { ColorValue } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 type Shape =
@@ -98,7 +99,7 @@ export type IconName = keyof typeof ICONS;
 type IconProps = {
   name: IconName;
   size?: number;
-  color?: string;
+  color?: ColorValue;
 };
 
 export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
@@ -112,7 +113,7 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
   );
 }
 
-function IconShape({ shape, color }: { shape: Shape; color: string }) {
+function IconShape({ shape, color }: { shape: Shape; color: ColorValue }) {
   const common = {
     fill: 'none',
     stroke: color,
