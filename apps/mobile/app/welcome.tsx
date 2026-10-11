@@ -14,10 +14,12 @@ import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { Glow } from '../components/lb/Glow.js';
-import { IconDisc } from '../components/lb/IconDisc.js';
-import { LbTextInput, type LbTextInputRef } from '../components/lb/LbTextInput.js';
+import type { LbTextInputRef } from '../components/lb/LbTextInput.js';
+import { Field } from '../components/lb/Field.js';
 import { Segmented } from '../components/lb/Segmented.js';
-import { LanguageFlags } from '../components/lb/LanguageFlags.js';
+import { LanguageChoice } from '../components/lb/LanguageChoice.js';
+import { LANGUAGES } from '../lib/i18n/languages.js';
+import { AUTH } from '../lib/theme/auth.js';
 import { WaitHint } from '../components/lb/WaitHint.js';
 import { useAnnounce } from '../lib/announce.js';
 import { MIN_PASSWORD_LENGTH, looksLikeEmail } from '../lib/auth/recovery.js';
@@ -218,57 +220,51 @@ export default function Welcome() {
     }
   }
 
-  // Signing up carries two rows more than signing in (the repeated password and the note
-  // for under-16s): it gets the tighter layout on every phone, so nothing waits below the
-  // edge unseen (issue #55, caught by tests/web/fit.ts).
-  const dense = compact || mode === 'signup';
-  const gap = dense ? 8 : 14;
-  // A small phone signing up has no room for the orb: the headline carries the brand,
-  // and every field must be visible without scrolling (issue #55, tests/web/fit.ts).
-  const showOrb = !(compact && mode === 'signup');
+  const gap = compact ? AUTH.compactGap : AUTH.gap;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
-      <Glow height={420} />
+      <Glow height={AUTH.glow} />
       <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
+          testID="scroll-form"
           contentContainerStyle={{
             paddingHorizontal: GUTTER,
             // Tight: the form is the first thing, so it gets SPACE.md from the edge, not 4.
-            paddingTop: tight ? SPACE.md : dense ? SPACE.xs : SPACE.lg,
-            paddingBottom: SPACE.xl,
+            paddingTop: AUTH.top,
+            paddingBottom: AUTH.bottom,
             gap,
           }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* While she types (`tight`), only the form fits: the flags, Buddy, the words
-              above it and the under-16 note wait until the keyboard goes — the form starts at the choice of
-              signing up or in, and every field with its error stays above the pinned CTA
-              (issue #289, tests/web/visible.spec.ts). */}
+          {/* While the keyboard is up, the form stays above the pinned action. */}
           {tight ? null : (
             <>
-              {/* The very first thing: pick your language with one tap on a flag
-                  (owner decision 2026-09-28). */}
-              <LanguageFlags value={lang} onChange={chooseDeviceLocale} compact={dense} />
-              <View style={{ alignItems: 'center', gap, marginBottom: SPACE.xs }}>
-                {showOrb ? <BuddyOrb size={dense ? 52 : 88} /> : null}
-                <Text
-                  accessibilityRole="header"
-                  style={[dense ? TYPE.displaySm : TYPE.display, { textAlign: 'center' }]}
+              <View
+                style={{ alignItems: 'flex-start', gap: AUTH.heroGap, paddingTop: AUTH.heroTop }}
+              >
+                <View
+                  style={{
+                    width: '100%',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: AUTH.heroGap,
+                  }}
                 >
+                  <BuddyOrb size={AUTH.orb} />
+                  <LanguageChoice
+                    value={lang}
+                    options={LANGUAGES}
+                    onChange={chooseDeviceLocale}
+                    label={t('common:a11y.language')}
+                    closeLabel={t('common:actions.close')}
+                  />
+                </View>
+                <Text accessibilityRole="header" style={TYPE.display}>
                   {t('welcome.title')}
                 </Text>
-                {/* Never clamped: the two-line cap from issue #55 outlived the tall layout it
-                    was for and cut the sentence mid-word on 360×740 while ~70 pt sat free
-                    below (issue #95). The page still fits both phones — tests/web/fit.ts. */}
-                <Text
-                  style={[
-                    dense ? TYPE.small : TYPE.body,
-                    { color: palette.ink2, textAlign: 'center', maxWidth: 420 },
-                  ]}
-                >
-                  {t('welcome.body')}
-                </Text>
+                <Text style={[TYPE.body, { color: palette.ink2 }]}>{t('welcome.body')}</Text>
               </View>
             </>
           )}
@@ -327,7 +323,7 @@ export default function Welcome() {
             }}
           />
           <View style={{ gap: RHYTHM.parts }}>
-            <LbTextInput
+            <Field
               value={email}
               onChangeText={(v) => {
                 setEmail(v);
@@ -336,7 +332,7 @@ export default function Welcome() {
                 setResetSent(false);
               }}
               onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
-              placeholder={t('welcome.email')}
+              label={t('welcome.email')}
               accessibilityLabel={t('welcome.email')}
               autoCapitalize="none"
               autoCorrect={false}
@@ -354,7 +350,7 @@ export default function Welcome() {
               error={emailError}
               errorMessage={emailError ? t('error.invalid_email') : undefined}
             />
-            <LbTextInput
+            <Field
               ref={passwordRef}
               value={password}
               onChangeText={(v) => {
@@ -362,7 +358,8 @@ export default function Welcome() {
                 clearFailure();
               }}
               onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
-              placeholder={t('welcome.password')}
+              label={t('welcome.password')}
+              hint={mode === 'signup' && !passwordError ? t('welcome.password_hint') : undefined}
               accessibilityLabel={t('welcome.password')}
               secureTextEntry={!shown}
               // Also while shown: capitalisation and autocorrect would rewrite the
@@ -388,14 +385,14 @@ export default function Welcome() {
               errorMessage={passwordError ? t('welcome.password_hint') : undefined}
             />
             {mode === 'signup' ? (
-              <LbTextInput
+              <Field
                 ref={repeatRef}
                 value={repeat}
                 onChangeText={(v) => {
                   setRepeat(v);
                   clearFailure();
                 }}
-                placeholder={t('welcome.password_repeat')}
+                label={t('welcome.password_repeat')}
                 accessibilityLabel={t('welcome.password_repeat')}
                 secureTextEntry={!shownRepeat}
                 autoCapitalize="none"
@@ -416,11 +413,6 @@ export default function Welcome() {
                 errorMessage={repeatError ? t('new_password.mismatch') : undefined}
               />
             ) : null}
-            {mode === 'signup' && !passwordError && !repeatError ? (
-              <Text style={[TYPE.small, { paddingHorizontal: SPACE.xs }]}>
-                {t('welcome.password_hint')}
-              </Text>
-            ) : null}
           </View>
           {mode === 'signin' ? (
             resetSent ? (
@@ -428,25 +420,18 @@ export default function Welcome() {
                 <Text style={TYPE.body}>{t('welcome.reset_sent')}</Text>
               </Card>
             ) : (
-              <Btn variant="ghost" pill busy={resetBusy} onPress={() => void forgot()}>
+              <Btn variant="ghost" size="sm" pill busy={resetBusy} onPress={() => void forgot()}>
                 {t('welcome.forgot')}
               </Btn>
             )
           ) : tight ? null : (
-            // Read with the keyboard closed; while she types it would only stand half under
-            // the scroll edge (issue #289).
-            <Card tone="lavender" padding={dense ? SPACE.md : SPACE.lg}>
-              <View style={{ flexDirection: 'row', gap: SPACE.md, alignItems: 'flex-start' }}>
-                <IconDisc name="shield" size={32} iconSize={18} />
-                <Text style={[TYPE.small, { flex: 1, color: palette.ink }]}>
-                  {t('welcome.minor_hint')}
-                </Text>
-              </View>
-            </Card>
+            <Text style={[TYPE.meta, { paddingHorizontal: AUTH.copyInset }]}>
+              {t('welcome.minor_hint')}
+            </Text>
           )}
         </ScrollView>
         {/* The SafeAreaView keeps the bottom edge: no inset left to clear. */}
-        <View style={[pinnedBar(0), { gap: SPACE.sm }]}>
+        <View testID="auth-primary" style={[pinnedBar(0), { gap: SPACE.sm }]}>
           {failure ? (
             <>
               <Text

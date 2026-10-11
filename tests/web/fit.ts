@@ -112,6 +112,8 @@ export async function overflows(page: Page): Promise<Overflow[]> {
           id === 'scroll-thread' ||
           id === 'scroll-talk' ||
           id === 'scroll-list' ||
+          // Auth forms preserve required fields and readable copy; their CTA stays pinned.
+          id === 'scroll-form' ||
           // A reading text above its question (issue #233): "nur ein Text scrollt".
           id === 'scroll-text',
       });

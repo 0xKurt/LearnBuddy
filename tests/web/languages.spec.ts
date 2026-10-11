@@ -85,8 +85,8 @@ const LANGS: Lang[] = [
 for (const l of LANGS) {
   test(`registration fits in ${l.code}`, async ({ page }) => {
     await page.goto('/');
-    // The flags are the first thing on the welcome screen: the app speaks her language
-    // before she types anything.
+    // The current-language pill opens the five language names before she types.
+    await page.getByRole('button', { name: /Deutsch/ }).click();
     await page.getByRole('radio', { name: l.flag }).click();
     await expect(page.getByText(l.title)).toBeVisible();
     await shot(page, `60-welcome-${l.code}`);
