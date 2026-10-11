@@ -7,7 +7,7 @@
 // Looks: a rounded white top sheet on a soft shadow, with a small grab handle
 // over a light violet-grey veil. Motion: the veil fades, the sheet rises on the
 // shared calm spring and slides away when it closes (the whole close stays under
-// the 450 ms that callers wait for, adultGate.tsx). Reduce motion: it just fades.
+// the 450 ms that callers wait for, adultGate.tsx). Reduce motion: it appears and closes immediately.
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
@@ -15,7 +15,7 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 import Animated, {
   runOnJS,
   useAnimatedStyle,
-  useReducedMotion,
+  cancelAnimation,
   useSharedValue,
   withSpring,
   withTiming,
@@ -23,7 +23,8 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
+import { UI } from '../../lib/theme/components.js';
+import { ACTIVE_MOTION, DURATION, EASE, SPRING, useMotionReduced } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { bottomRoom, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -49,11 +50,11 @@ type Props = {
 };
 
 /** The most of the screen a sheet takes: the veil above it stays a tap target. */
-export const SHEET_MAX = 0.92;
+export const SHEET_MAX = UI.sheet.maxFraction;
 /** The sheet's top corners: rounder than a card, it rises from the screen's edge. */
-const CORNER = 32;
+const CORNER = UI.sheet.radius;
 /** Its side margin, a little wider than a card's padding (Card.tsx 18). */
-const SIDE = 22;
+const SIDE = SPACE.lg;
 
 export function Sheet({
   visible,
@@ -71,7 +72,7 @@ export function Sheet({
   // screen (the lint rule of issue #289 is about laying out, not about this).
   // eslint-disable-next-line lb/no-window-height
   const { height: screen } = useWindowDimensions();
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
   // Stays mounted while it slides out.
   const [mounted, setMounted] = useState(visible);
   /** 0 = closed (off screen, veil clear), 1 = open. */
@@ -80,15 +81,27 @@ export function Sheet({
   const drag = useSharedValue(0);
 
   useEffect(() => {
+    if (reduced) {
+      cancelAnimation(shown);
+      cancelAnimation(drag);
+      shown.value = visible ? 1 : 0;
+      drag.value = 0;
+      setMounted(visible);
+      return;
+    }
     if (visible) {
       setMounted(true);
       drag.value = 0;
-      shown.value = reduced ? withTiming(1, { duration: DURATION.quick }) : withSpring(1, SPRING);
+      shown.value = withTiming(1, {
+        duration: DURATION.base,
+        easing: EASE.standard,
+        ...ACTIVE_MOTION,
+      });
       return;
     }
     shown.value = withTiming(
       0,
-      { duration: reduced ? DURATION.quick : DURATION.base, easing: EASE.standard },
+      { duration: DURATION.base, easing: EASE.standard, ...ACTIVE_MOTION },
       (finished) => {
         if (finished) runOnJS(setMounted)(false);
       },
@@ -96,17 +109,17 @@ export function Sheet({
   }, [visible, reduced, shown, drag]);
 
   const pan = Gesture.Pan()
-    .activeOffsetY(8)
-    .failOffsetX([-24, 24])
+    .activeOffsetY(UI.sheet.gestureStart)
+    .failOffsetX([-UI.sheet.gestureFail, UI.sheet.gestureFail])
     .onUpdate((e) => {
       // Down follows the finger; up gives only a little (it is already fully open).
-      drag.value = e.translationY > 0 ? e.translationY : e.translationY * 0.15;
+      drag.value = e.translationY > 0 ? e.translationY : e.translationY * UI.sheet.dragResistance;
     })
     .onEnd((e) => {
       if (dismissedBySwipe(e.translationY, e.velocityY)) {
         runOnJS(onClose)();
       } else {
-        drag.value = withSpring(0, SPRING);
+        drag.value = reduced ? 0 : withSpring(0, { ...SPRING, ...ACTIVE_MOTION });
       }
     });
 
@@ -114,7 +127,7 @@ export function Sheet({
   const sheet = useAnimatedStyle(() => {
     if (reduced) return { opacity: shown.value };
     // Off screen while closed; the spring's small overshoot is clamped to open.
-    const offset = (1 - Math.min(1, shown.value)) * screen * 0.9;
+    const offset = (1 - Math.min(1, shown.value)) * screen * UI.sheet.travel;
     return { transform: [{ translateY: offset + Math.max(0, drag.value) }] };
   });
 
@@ -162,7 +175,8 @@ export function Sheet({
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: reduceTransparency ? palette.ink : 'rgba(31,27,46,0.28)',
+                    backgroundColor: palette.scrim,
+                    opacity: reduceTransparency ? 1 : UI.sheet.veilOpacity,
                   }}
                 />
               </Pressable>
@@ -171,7 +185,7 @@ export function Sheet({
               accessibilityViewIsModal
               style={[
                 {
-                  backgroundColor: palette.paper,
+                  backgroundColor: palette.bg,
                   borderTopLeftRadius: CORNER,
                   borderTopRightRadius: CORNER,
                   paddingBottom: bottomRoom(insets.bottom, SPACE.sm),
@@ -185,7 +199,7 @@ export function Sheet({
               <GestureDetector gesture={pan}>
                 <View
                   style={{
-                    paddingTop: 10, // token-exempt: the handle close under the sheet's edge
+                    paddingTop: UI.sheet.topPad,
                     paddingHorizontal: SIDE,
                     paddingBottom: SPACE.md,
                   }}
@@ -195,9 +209,9 @@ export function Sheet({
                     importantForAccessibility="no-hide-descendants"
                     style={{
                       alignSelf: 'center',
-                      width: 40,
-                      height: 5,
-                      borderRadius: 3, // token-exempt: round ends on the 5 pt handle
+                      width: UI.sheet.handleWidth,
+                      height: UI.sheet.handleHeight,
+                      borderRadius: UI.sheet.handleRadius,
                       backgroundColor: palette.ink4,
                       marginBottom: RHYTHM.stack,
                     }}

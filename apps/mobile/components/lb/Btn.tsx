@@ -2,13 +2,15 @@ import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { KEEPS_FOCUS } from '../../lib/keepsFocus.js';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
+import { useMotionReduced } from '../../lib/theme/motion.js';
+import { UI } from '../../lib/theme/components.js';
 import { circle, RADIUS } from '../../lib/theme/radius.js';
-import { CONTROL, RHYTHM, SPACE, TOUCH } from '../../lib/theme/space.js';
+import { CONTROL, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Icon, type IconName } from './Icon.js';
 
-type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'quiet' | 'soft' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
 type Common = {
@@ -27,6 +29,7 @@ type Common = {
   onLongPress?: () => void;
   variant?: Variant;
   size?: Size;
+  iconRight?: IconName;
   full?: boolean;
   /** Fill the container's height too (tiles in a grid row stay equally tall). */
   grow?: boolean;
@@ -108,14 +111,14 @@ type Props = Common &
  * lays it out as ICON_BTN_SIZE and the target still reaches 44 — on the web too, where
  * `hitSlop` does not exist (issue #295).
  */
-const ICON_BTN_SIZE = SPACE.xl;
+const ICON_BTN_SIZE = UI.button.compactIcon;
 const ICON_BTN_REACH = (TOUCH - ICON_BTN_SIZE) / 2;
 
 /**
  * How far a button label follows the system text size (iOS AX sizes go past 3×): the WCAG
  * 200% target — the button grows via minHeight, and md/lg labels may wrap onto a second line.
  */
-export const MAX_FONT_SCALE = 2;
+export const MAX_FONT_SCALE = UI.fontScale;
 
 /**
  * The md button's horizontal padding, and the tighter one `compact` uses. Both are exported
@@ -127,21 +130,17 @@ export const MAX_FONT_SCALE = 2;
  * clears the rounded end: at the height where a 26 pt badge begins (11 pt down a 48 pt pill)
  * the curve of the 24 pt radius has only come in to x ≈ 3.8, so 12 leaves 8 pt of air.
  */
-const BTN_PAD_MD = 22;
+const BTN_PAD_MD = UI.button.pad;
 export const BTN_PAD_COMPACT = SPACE.md;
 
 /**
  * Each size's height, side padding and the step of the type scale its label takes (15, 16, 17).
  * The step, not its size: TYPE is read at render time (issue #84).
  */
-const SIZE_STYLE: Record<
-  Size,
-  { height: number; paddingHorizontal: number; label: 'small' | 'body' | 'header' }
-> = {
-  sm: { height: CONTROL.sm, paddingHorizontal: SPACE.lg, label: 'small' },
-  md: { height: CONTROL.md, paddingHorizontal: BTN_PAD_MD, label: 'body' },
-  // token-exempt: the lg pill's own look, a step roomier than md's 22
-  lg: { height: CONTROL.lg, paddingHorizontal: 26, label: 'header' },
+const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; label: 'input' }> = {
+  sm: { height: CONTROL.sm, paddingHorizontal: SPACE.lg, label: 'input' },
+  md: { height: CONTROL.md, paddingHorizontal: BTN_PAD_MD, label: 'input' },
+  lg: { height: CONTROL.lg, paddingHorizontal: BTN_PAD_MD, label: 'input' },
 };
 
 type VariantSkin = { bg: string; color: string; borderColor: string; borderWidth: number };
@@ -151,33 +150,23 @@ type VariantSkin = { bg: string; color: string; borderColor: string; borderWidth
 // cards (issue #84, the one capture the first scanner missed because the type annotation
 // spans lines).
 const variantStyle = (p: Palette): Record<Variant, VariantSkin> => ({
-  primary: { bg: p.primary, color: p.paper, borderColor: 'transparent', borderWidth: 0 },
-  soft: { bg: p.primaryLt, color: p.primaryDk, borderColor: 'transparent', borderWidth: 0 },
-  outline: { bg: p.paper, color: p.ink, borderColor: p.hairline, borderWidth: 1 },
-  ghost: { bg: 'transparent', color: p.ink2, borderColor: 'transparent', borderWidth: 0 },
+  primary: { bg: p.primary, color: p.onPrimary, borderColor: 'transparent', borderWidth: 0 },
+  quiet: { bg: p.canvas, color: p.ink, borderColor: 'transparent', borderWidth: 0 },
+  secondary: { bg: p.paper, color: p.ink, borderColor: p.hairlineStrong, borderWidth: UI.border },
+  soft: { bg: p.canvas, color: p.ink, borderColor: 'transparent', borderWidth: 0 },
+  outline: { bg: p.paper, color: p.ink, borderColor: p.hairlineStrong, borderWidth: UI.border },
+  ghost: { bg: 'transparent', color: p.primaryDk, borderColor: 'transparent', borderWidth: 0 },
   danger: {
     bg: 'transparent',
     color: p.danger,
-    borderColor: 'rgba(177,73,60,0.25)',
-    borderWidth: 1,
+    borderColor: p.danger,
+    borderWidth: UI.border,
   },
 });
 
-// The waiting skin (issue #97): a disabled button in its own muted surface and muted
-// label from the tokens — 20 % opacity on the primary violet was invisible on a light
-// screenshot. The label stays readable (ink2 on canvas ≥ 4.5:1 in every palette, and the
-// ready primary stands out ≥ 3:1 against canvas — lib/theme/__tests__/contrast.test.ts).
-// Ghost and danger have no fill to mute: their text steps back to the placeholder tone
-// (also ≥ 4.5:1 on paper and bg). Takes the palette, like variantStyle (issue #84).
-const mutedStyle = (variant: Variant, p: Palette): VariantSkin =>
-  variant === 'ghost'
-    ? { bg: 'transparent', color: p.placeholder, borderColor: 'transparent', borderWidth: 0 }
-    : variant === 'danger'
-      ? { bg: 'transparent', color: p.placeholder, borderColor: p.hairline, borderWidth: 1 }
-      : { bg: p.canvas, color: p.ink2, borderColor: p.hairline, borderWidth: 1 };
-
 export function Btn(props: Props) {
   const { palette, tones } = useTheme();
+  const reduced = useMotionReduced();
   if (props.iconOnly) return <IconOnlyBtn {...props} />;
   const {
     children,
@@ -192,6 +181,7 @@ export function Btn(props: Props) {
     compact = false,
     bare = false,
     icon,
+    iconRight,
     grow = false,
     disabled = false,
     onDisabledPress,
@@ -208,13 +198,12 @@ export function Btn(props: Props) {
   const s = SIZE_STYLE[size];
   const fontSize = TYPE[s.label].fontSize;
   const off = disabled || busy;
-  // Busy keeps the variant's colours — the spinner says why nothing happens. Only a
-  // plainly disabled button wears the muted skin (issue #97).
+  // Busy and disabled keep the variant colours; opacity communicates unavailable actions.
   const muted = disabled && !busy;
   const base = variantStyle(palette)[variant];
   const active = tone ? { ...base, bg: tones.bg[tone], color: palette.ink, borderWidth: 0 } : base;
-  const v = muted ? mutedStyle(variant, palette) : active;
-  const radius = pill ? circle(s.height) : RADIUS.tile;
+  const v = active;
+  const radius = pill || !wrap ? RADIUS.round : RADIUS.md;
   // A tap on the waiting button answers ("what is missing?") instead of being swallowed.
   // The button itself STAYS truly disabled — un-disabling it made the web lose its
   // `disabled` attribute and read as ready (RN Web's Pressable overwrites any passed
@@ -244,7 +233,7 @@ export function Btn(props: Props) {
       // alone does not become `aria-checked` (axe: aria-required-attr, issue #73).
       {...(selected === undefined ? {} : { 'aria-checked': selected })}
       {...(checked === undefined ? {} : { 'aria-checked': checked })}
-      android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
+      android_ripple={{ color: palette.ring, borderless: false }}
       style={{
         ...(reveal
           ? { alignSelf: 'stretch' as const }
@@ -256,9 +245,8 @@ export function Btn(props: Props) {
                   : ('flex-start' as const),
               ...(grow ? { flexGrow: 1 } : {}),
             }),
-        // Only busy dims: the muted skin carries full opacity so its label keeps ≥ 4.5:1
-        // (at 0.8 it fell to ~3.7 on the light palettes, issue #97).
-        opacity: busy ? 0.8 : 1,
+        // Disabled and busy treatment follows the design; semantic disabled state remains intact.
+        opacity: busy ? UI.busyOpacity : disabled ? UI.disabledOpacity : 1,
         borderRadius: radius,
         overflow: 'hidden',
       }}
@@ -272,7 +260,7 @@ export function Btn(props: Props) {
               ? { minHeight: s.height, paddingVertical: SPACE.md }
               : { minHeight: s.height }),
             ...(grow ? { flexGrow: 1 } : {}),
-            gap: icon || busy ? RHYTHM.parts : 0,
+            gap: icon || iconRight || busy ? SPACE.sm : 0,
             paddingHorizontal: bare ? 0 : compact ? BTN_PAD_COMPACT : s.paddingHorizontal,
             backgroundColor: v.bg,
             borderRadius: radius,
@@ -281,7 +269,8 @@ export function Btn(props: Props) {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: wrap ? 'flex-start' : 'center',
-            opacity: pressed ? 0.78 : 1,
+            opacity: pressed ? UI.pressedOpacity : 1,
+            transform: [{ scale: pressed && !reduced ? UI.pressScale : 1 }],
           }}
         >
           {busy ? (
@@ -295,7 +284,7 @@ export function Btn(props: Props) {
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <Icon
                 name={icon}
-                size={Math.round(fontSize * 1.4)}
+                size={UI.button.icon}
                 // A muted button's icon steps back with its label (issue #97).
                 color={!muted && (variant === 'outline' || tone) ? palette.primaryDk : v.color}
               />
@@ -317,21 +306,24 @@ export function Btn(props: Props) {
               {...(wrap
                 ? {}
                 : size === 'sm'
-                  ? { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.82 }
+                  ? {
+                      numberOfLines: 1,
+                      adjustsFontSizeToFit: true,
+                      minimumFontScale: UI.minimumFontScale,
+                    }
                   : { numberOfLines: 2 })}
               style={{
+                ...TYPE.action,
                 flexShrink: 1,
                 color: v.color,
                 fontSize,
-                lineHeight: Math.round(fontSize * 1.35), // token-exempt: 1.35 em of the label
-                fontWeight: '600',
-                letterSpacing: -0.1,
                 textAlign: wrap ? 'left' : 'center',
               }}
             >
               {children}
             </Text>
           )}
+          {iconRight ? <Icon name={iconRight} size={UI.button.icon} color={v.color} /> : null}
         </View>
       )}
     </Pressable>
@@ -393,6 +385,7 @@ function IconOnlyBtn({
       // so a screen reader there hears the spinner as well.
       aria-busy={busy}
       style={{
+        opacity: off ? UI.disabledOpacity : 1,
         width: TOUCH,
         height: TOUCH,
         margin: -ICON_BTN_REACH,
@@ -417,7 +410,11 @@ function IconOnlyBtn({
               <ActivityIndicator size="small" color={palette.primaryDk} />
             ) : (
               // 18 inside the 24 circle: the arrow reads at a glance and stays a side note.
-              <Icon name={icon} size={18} color={muted ? palette.placeholder : palette.ink2} />
+              <Icon
+                name={icon}
+                size={UI.button.compactGlyph}
+                color={muted ? palette.placeholder : palette.ink2}
+              />
             )}
           </View>
         </View>

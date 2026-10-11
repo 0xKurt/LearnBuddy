@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { SPACE } from '../../lib/theme/space.js';
+import { Chip } from '../lb/Chip.js';
 import { Btn } from '../lb/Btn.js';
 import { Rise } from '../lb/Motion.js';
 
@@ -41,9 +42,18 @@ export function HelpChips({
   return (
     <Rise delay={120}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.xs }}>
-        {onHint ? (
+        {onHint && hintOffered ? (
+          <Chip
+            selected
+            onPress={onHint}
+            disabled={disabled ?? false}
+            accessibilityLabel={t('hint_label')}
+          >
+            {t('hint')}
+          </Chip>
+        ) : onHint ? (
           <Btn
-            variant={hintOffered ? 'soft' : 'ghost'}
+            variant="ghost"
             size="sm"
             pill
             onPress={onHint}

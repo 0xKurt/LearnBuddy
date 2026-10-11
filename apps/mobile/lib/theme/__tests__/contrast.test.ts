@@ -82,3 +82,7 @@ for (const [name, palette] of Object.entries(PALETTES)) {
     }
   });
 }
+
+it('keeps the modal scrim dark in all eight palettes', () => {
+  for (const palette of Object.values(PALETTES)) expect(palette.scrim).toBe('#1f1b2e');
+});

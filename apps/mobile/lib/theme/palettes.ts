@@ -9,7 +9,11 @@
 /** One of the three soft blobs behind a screen (components/lb/Glow.tsx). */
 type GlowStop = { color: string; opacity: number };
 
+const SCRIM = '#1f1b2e';
+
 export type Palette = {
+  /** Modal backdrop stays dark in every look. */
+  scrim: string;
   ink: string;
   ink2: string;
   ink3: string;
@@ -122,6 +126,7 @@ const pastellSoft: Palette = {
   bg: '#faf7fd',
   canvas: '#f1edf8',
   hairline: 'rgba(60,40,120,0.09)',
+  scrim: SCRIM,
   hairlineStrong: 'rgba(60,40,120,0.16)',
   onPrimary: '#ffffff',
   primary: '#6a48d7',
@@ -215,6 +220,7 @@ const night: Palette = {
   bg: '#191627',
   canvas: '#2b2742',
   hairline: 'rgba(220,210,255,0.14)',
+  scrim: SCRIM,
   hairlineStrong: 'rgba(220,210,255,0.20)',
   onPrimary: '#191627',
   primary: '#9d82f5',

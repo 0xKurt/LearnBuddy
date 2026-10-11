@@ -37,22 +37,23 @@ import { useTranslation } from 'react-i18next';
 import { useAnnounce } from '../../lib/announce.js';
 import { growsWithText } from '../../lib/growsWithText.js';
 import { isDarkBackground } from '../../lib/theme/luminance.js';
+import { UI } from '../../lib/theme/components.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { fontFace, TYPE } from '../../lib/theme/type.js';
+import { TYPE } from '../../lib/theme/type.js';
 import { Icon } from './Icon.js';
 
 /** What a ref to the field holds (focus, blur) — the one name for it outside this file. */
 export type LbTextInputRef = TextInput;
 
 /** One line of typed text: the body size, the field's own line height (a page's rows count it). */
-export const LINE = 22;
+export const LINE = UI.field.line;
 /** A form field's height (design brief): a touch target and a little air. */
-const FIELD_HEIGHT = 52;
+const FIELD_HEIGHT = UI.field.height;
 /** How many lines a growing field shows before it scrolls inside itself, unless told otherwise. */
-const MAX_ROWS = 5;
+const MAX_ROWS = UI.field.maxRows;
 /** The bar's chips: one row that gives way before the controls do. */
 const CHIPS = {
   flexDirection: 'row',
@@ -99,6 +100,7 @@ export type LbTextInputProps = Omit<TextInputProps, 'style'> & {
   onToggle?: () => void;
   error?: boolean;
   errorMessage?: string;
+  hint?: string;
   toggleAccessibilityLabel?: string;
 };
 
@@ -137,6 +139,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
     onToggle,
     error,
     errorMessage,
+    hint,
     toggleAccessibilityLabel,
     onFocus,
     onBlur,
@@ -153,7 +156,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
   useAnnounce(errorMessage);
   const bar = variant === 'bar';
   const cell = variant === 'cell';
-  const face = mono ? TYPE.code : cell ? fontFace('600') : TYPE.input;
+  const face = mono ? TYPE.code : cell ? TYPE.cell : TYPE.input;
   const lines = rest.multiline === true;
   // A multiline field with several rows starts its text at the top, like a page.
   const top = lines && rows > 1;
@@ -162,7 +165,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
   const stacked = bar && ((rest.value ?? '') !== '' || rows > 1);
   // What the frame keeps inside its hairline: a form field 52 pt, a cell and the bar's text
   // one touch target (the bar adds its padding around it).
-  const inner = bar ? TOUCH : (cell ? TOUCH : FIELD_HEIGHT) - 2;
+  const inner = bar ? TOUCH : (cell ? TOUCH : FIELD_HEIGHT) - UI.border * 2;
   const webSubmit =
     Platform.OS === 'web' && lines && rest.submitBehavior === 'submit'
       ? (e: NativeSyntheticEvent<TextInputKeyPressEventData>) =>
@@ -186,19 +189,19 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
       {({ pressed }) => (
         <Icon
           name={showToggle ? (shown ? 'eye-off' : 'eye') : 'close'}
-          size={showToggle ? 20 : 18}
+          size={showToggle ? UI.field.toggleIcon : UI.field.clearIcon}
           color={pressed ? palette.ink : showToggle ? palette.ink2 : palette.ink3}
         />
       )}
     </Pressable>
   );
   return (
-    <View style={cell ? { width: '100%' } : { gap: SPACE.xs }}>
+    <View style={cell ? { width: '100%' } : { gap: UI.field.labelGap }}>
       {label ? (
         <Text
           accessibilityElementsHidden
           importantForAccessibility="no"
-          style={[TYPE.small, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}
+          style={[TYPE.label, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}
         >
           {label}
         </Text>
@@ -207,9 +210,9 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
         style={[
           {
             backgroundColor: palette.paper,
-            borderWidth: 1,
+            borderWidth: UI.border,
             borderColor: error ? palette.danger : focused ? palette.primary : palette.field,
-            borderRadius: bar ? RADIUS.bar : cell ? RADIUS.cell : RADIUS.frame,
+            borderRadius: bar ? RADIUS.bar : cell ? RADIUS.sm : RADIUS.md,
             padding: bar ? SPACE.xs : 0,
             // The halo: the same ring on every field (iOS/Android new architecture, the web).
             outlineStyle: 'solid',
@@ -227,7 +230,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
             alignItems: bar ? 'flex-end' : top ? 'flex-start' : 'center',
             // 2, off the scale: the text carries its own xs padding on each side — a full step
             // here would double the air inside the pill.
-            gap: bar ? 2 : 0, // token-exempt: see above
+            gap: bar ? UI.field.toolGap : 0,
           }}
         >
           {stacked ? null : start}
@@ -277,19 +280,17 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
                   : stacked
                     ? undefined
                     : lines
-                      ? // token-exempt: half the room the line leaves, so it sits centred (above)
-                        (inner - LINE) / 2
+                      ? // Half the room the line leaves keeps it centered.
+                        UI.field.centeredPadding(inner)
                       : 0,
                 ...(stacked && !top
                   ? { paddingTop: SPACE.sm, paddingBottom: under === null ? 0 : SPACE.sm }
                   : {}),
-                fontSize: TYPE.input.fontSize,
-                fontFamily: face.fontFamily,
+                ...face,
                 lineHeight: LINE,
                 // What she writes into a board stands apart from its print, as a pencil does:
                 // the accent, a step bolder (the cloze's tapped words look the same, `Slot`).
                 color: cell ? palette.primaryDk : palette.ink,
-                fontWeight: face.fontWeight,
                 textAlign: cell ? 'center' : undefined,
                 backgroundColor: 'transparent',
                 // The ring is the frame's; the browser's own box around the text stays off.
@@ -317,12 +318,15 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
           "Mindestens 8 Zeichen."): `small`, in from the frame's edge by the same xs. At `body`
           size (issue #365) "Die beiden Passwörter sind noch nicht gleich." took a second line on
           a 360 phone and pushed the sign-up form under its pinned CTA (issue #392). */}
-      {errorMessage && (
+      {(errorMessage || hint) && (
         <Text
           accessibilityLiveRegion="polite"
-          style={[TYPE.small, { color: palette.danger, paddingHorizontal: SPACE.xs }]}
+          style={[
+            TYPE.meta,
+            { color: errorMessage ? palette.danger : palette.ink2, paddingHorizontal: SPACE.xs },
+          ]}
         >
-          {errorMessage}
+          {errorMessage || hint}
         </Text>
       )}
     </View>
