@@ -80,6 +80,7 @@ function typeOf(p: Palette) {
       letterSpacing: 1,
       color: p.ink,
     },
+    voiceChoice: { ...fontFace('600'), fontSize: 15, lineHeight: 20, color: p.ink },
     /** The composer's text: one step under body so five lines still fit. */
     input,
     paragraph: input,

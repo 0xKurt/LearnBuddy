@@ -30,8 +30,10 @@ vi.mock('../../../lib/api/endpoints.js', () => ({
   },
 }));
 
-import { renderInApp } from '../../../testing/render.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
 import { VoicePicker } from '../VoicePicker.js';
+import { voiceStore } from '../../../lib/speech/voiceState.js';
+import buddyDe from '../../../locales/de/buddy.json';
 
 const SETTINGS: BuddySettingsView = {
   contact_enabled: false,
@@ -50,6 +52,7 @@ const SETTINGS: BuddySettingsView = {
 };
 
 beforeEach(() => {
+  voiceStore.reset();
   spoken.length = 0;
   saved.length = 0;
   stops = 0;
@@ -86,6 +89,36 @@ describe('listening and choosing are two things (issue #526)', () => {
     expect(screen.queryByRole('button', { name: 'Hörprobe: Sanft' })).toBeNull();
     act(() => spoken[0]!.onEnd?.('done'));
     expect(screen.getByRole('button', { name: 'Hörprobe: Sanft' })).toBeDefined();
+  });
+
+  it('keeps separate selection and preview targets in the wrapping three-column presentation', () => {
+    renderInApp(<VoicePicker settings={SETTINGS} />);
+    const group = screen.getByRole('radiogroup');
+    expect(styleOf(group).flexDirection).toBe('row');
+    expect(styleOf(group).flexWrap).toBe('wrap');
+    expect(screen.getAllByRole('radio')).toHaveLength(6);
+    for (const radio of screen.getAllByRole('radio')) {
+      expect(styleOf(radio).minWidth).toBe('44px');
+      expect(styleOf(radio).minHeight).toBe('44px');
+      expect(radio.querySelector('button')).toBeNull();
+    }
+    for (const preview of screen.getAllByRole('button', { name: /^Hörprobe:/ })) {
+      expect(styleOf(preview).minWidth).toBe('44px');
+      expect(styleOf(preview).minHeight).toBe('44px');
+    }
+    expect(saved).toEqual([]);
+    expect(spoken).toEqual([]);
+  });
+
+  it('cancels its own active sample when the grid unmounts', () => {
+    const { unmount } = renderInApp(<VoicePicker settings={SETTINGS} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Hörprobe: Tief' }));
+    expect(spoken.map((sample) => sample.voice)).toEqual(['deep']);
+    // The speech seam normally writes the real shared voice state; this mock does not.
+    act(() => voiceStore.set({ phase: 'speaking', text: buddyDe.voice_pick.sample }));
+    unmount();
+    expect(stops).toBe(1);
+    expect(saved).toEqual([]);
   });
 
   it('says how each voice sounds, so the names are no guessing game', () => {

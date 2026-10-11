@@ -58,13 +58,18 @@ export async function onboardingReducedPress(page: Page, name: string) {
     await page.mouse.up();
   }
 }
-export async function onboardingAppearance(page: Page, look: (typeof ONBOARDING_LOOKS)[number]) {
+export async function onboardingAppearance(
+  page: Page,
+  look: (typeof ONBOARDING_LOOKS)[number],
+  primaryActionLabel?: string,
+) {
   const heading = page.getByRole('heading').first();
   const primary = paletteOf(themeNameOf(look.family, look.dark)).primary;
   const valuePrimary = Number.parseInt(primary.slice(1), 16);
   const expectedPrimary = `rgb(${valuePrimary >> 16}, ${(valuePrimary >> 8) & 255}, ${valuePrimary & 255})`;
   const actions = page.getByRole('button', {
-    name: /^(Weiter|Ja, erlauben|Los geht's.*|C'est parti.*|Suivant)$/,
+    name: primaryActionLabel ?? /^(Weiter|Ja, erlauben|Los geht's.*|C'est parti.*|Suivant)$/,
+    exact: primaryActionLabel !== undefined,
   });
   let painted = false;
   for (const action of await actions.all()) {
@@ -103,8 +108,9 @@ export async function onboardingShots(
   name: string,
   look: (typeof ONBOARDING_LOOKS)[number],
   opened = false,
+  primaryActionLabel?: string,
 ) {
-  await onboardingAppearance(page, look);
+  await onboardingAppearance(page, look, primaryActionLabel);
   for (const phone of PHONES) {
     await page.setViewportSize(phone);
     const small = await page
