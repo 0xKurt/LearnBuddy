@@ -1,9 +1,10 @@
+import { BusyIndicator } from './BusyIndicator.js';
 // An icon in a circle, one touch target big: a way back, a close, the input bar's + and camera,
 // and — filled in the accent — the input bar's one main control at its end (issue #522): the
 // round send arrow, Buddy's "Stopp", the waveform into a conversation. One filled circle per bar.
 
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { KEEPS_FOCUS } from '../../lib/keepsFocus.js';
 import { circle } from '../../lib/theme/radius.js';
@@ -106,7 +107,7 @@ export function IconBtn({
       }}
     >
       {busy ? (
-        <ActivityIndicator size="small" color={primary ? palette.onPrimary : palette.ink} />
+        <BusyIndicator size="small" color={primary ? palette.onPrimary : palette.ink} />
       ) : (
         <Icon
           name={icon}

@@ -1,3 +1,4 @@
+import { BusyIndicator } from '../lb/BusyIndicator.js';
 // The round mic button (56 pt; 72 pt when it is the main control of a conversation,
 // `VoiceRow`; 40 pt in the input bar) and the one status line that goes with it. Built like
 // CircleBtn: the press target outside (PressArea), the background on the inner View. Tap to
@@ -7,7 +8,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Animated, Easing, Linking, Platform, Text, View } from 'react-native';
+import { Animated, Easing, Linking, Platform, Text, View } from 'react-native';
 import { DURATION, useMotionReduced } from '../../lib/theme/motion.js';
 import { VOICE } from '../../lib/theme/voice.js';
 export { MIC_RING_ROOM } from '../../lib/theme/voice.js';
@@ -152,7 +153,7 @@ export function MicButton({
             }}
           >
             {working ? (
-              <ActivityIndicator color={fg} />
+              <BusyIndicator color={fg} />
             ) : (
               <Icon
                 name={recording ? 'stop' : 'mic'}

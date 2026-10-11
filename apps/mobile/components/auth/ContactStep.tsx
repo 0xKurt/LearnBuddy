@@ -7,14 +7,10 @@
 // consent and PIN (rule 6), from 16 hers. A "no" is final (owner 10.10.): the chat never asks
 // again, only the settings change it.
 
-import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { GUTTER, SPACE } from '../../lib/theme/space.js';
-import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
-import { CircleBtn } from '../lb/CircleBtn.js';
+import { IconBtn } from '../lb/IconBtn.js';
 import { SetupStep } from './SetupStep.js';
 
 export type ContactAnswer = 'yes' | 'no';
@@ -35,14 +31,13 @@ export function ContactStep({
   onAnswer: (answer: ContactAnswer) => void;
   onBack: () => void;
 }) {
-  const { palette } = useTheme();
   const { t } = useTranslation('auth');
   const answer = (value: ContactAnswer, label: string) => (
     <Btn
       size="lg"
       pill
       full
-      variant={value === 'yes' ? 'primary' : 'outline'}
+      variant={value === 'yes' ? 'primary' : 'quiet'}
       busy={answering === value}
       disabled={answering !== null}
       onPress={() => onAnswer(value)}
@@ -52,14 +47,12 @@ export function ContactStep({
   );
   return (
     <SetupStep
+      variant="onboarding"
+      lead={forChild ? t('profile.contact_body_child') : t('profile.contact_body_self')}
       title={
         forChild ? t('profile.contact_title_child', { name }) : t('profile.contact_title_self')
       }
-      top={
-        <View style={{ paddingHorizontal: GUTTER, paddingTop: SPACE.sm }}>
-          <CircleBtn icon="back" onPress={onBack} accessibilityLabel={t('profile.back')} />
-        </View>
-      }
+      top={<IconBtn icon="back" onPress={onBack} accessibilityLabel={t('profile.back')} />}
       footer={
         <>
           {answer('yes', t('profile.contact_yes'))}
@@ -67,9 +60,7 @@ export function ContactStep({
         </>
       }
     >
-      <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center' }]}>
-        {forChild ? t('profile.contact_body_child') : t('profile.contact_body_self')}
-      </Text>
+      {null}
     </SetupStep>
   );
 }
