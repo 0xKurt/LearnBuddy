@@ -3,30 +3,36 @@
 import { Pressable, Text, View } from 'react-native';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { useMotionReduced } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { UI } from '../../lib/theme/components.js';
+import { ONBOARDING } from '../../lib/theme/onboarding.js';
+import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { Icon } from './Icon.js';
 
 export function Checkbox({
   checked,
   onChange,
   label,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label: string;
+  disabled?: boolean;
 }) {
   const { palette } = useTheme();
+  const reduced = useMotionReduced();
   return (
     <Pressable
       accessibilityRole="checkbox"
-      accessibilityState={{ checked }}
+      accessibilityState={{ checked, disabled }}
       // An unticked box must say so, not stay silent: on the web `accessibilityState`
       // alone leaves out `aria-checked` (axe: aria-required-attr, issue #73).
       aria-checked={checked}
       accessibilityLabel={label}
+      disabled={disabled}
       onPress={() => onChange(!checked)}
-      hitSlop={6}
     >
       {/* The row answers the finger (audit 30.09., #133 position 6): a consent row that
           looks the same whether it was hit or missed leaves her tapping again. The box
@@ -37,27 +43,30 @@ export function Checkbox({
             flexDirection: 'row',
             gap: SPACE.md,
             alignItems: 'flex-start',
-            paddingVertical: 6, // token-exempt: the row's own air, under a 44 pt reach with hitSlop
-            opacity: pressed ? 0.7 : 1,
+            paddingVertical: ONBOARDING.check.pad,
+            minHeight: TOUCH,
+            opacity: disabled ? UI.disabledOpacity : pressed ? UI.pressedOpacity : 1,
           }}
         >
           <View
             style={{
-              width: 26,
-              height: 26,
-              borderRadius: 9, // token-exempt: the box's soft corner, 9 on 26 pt
-              borderWidth: 1.5,
-              borderColor: checked ? palette.primary : palette.ink3,
+              width: ONBOARDING.check.box,
+              height: ONBOARDING.check.box,
+              borderRadius: ONBOARDING.check.radius,
+              borderWidth: checked ? 0 : ONBOARDING.check.border,
+              borderColor: palette.hairlineStrong,
               backgroundColor: checked ? palette.primary : palette.paper,
               alignItems: 'center',
               justifyContent: 'center',
-              marginTop: 1, // token-exempt: optical, the box level with the first line
-              transform: [{ scale: pressed ? 0.94 : 1 }],
+              marginTop: ONBOARDING.check.opticalTop,
+              transform: [{ scale: pressed && !reduced ? UI.pressScale : 1 }],
             }}
           >
-            {checked ? <Icon name="check" size={16} color={palette.paper} /> : null}
+            {checked ? (
+              <Icon name="check" size={ONBOARDING.check.glyph} color={palette.onPrimary} />
+            ) : null}
           </View>
-          <Text style={[TYPE.body, { flex: 1, fontSize: TYPE.small.fontSize }]}>{label}</Text>
+          <Text style={[TYPE.paragraph, { flex: 1 }]}>{label}</Text>
         </View>
       )}
     </Pressable>

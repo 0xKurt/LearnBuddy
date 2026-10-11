@@ -46,6 +46,7 @@ function typeOf(p: Palette) {
   const body = { ...fontFace('400'), fontSize: 17, lineHeight: 25, color: p.ink };
   const meta = { ...fontFace('400'), fontSize: 14, lineHeight: 20, color: p.ink2 };
   const label = { ...fontFace('700'), fontSize: 13, lineHeight: 18, color: p.ink2 };
+  const input = { ...fontFace('400'), fontSize: 16, lineHeight: 23, color: p.ink };
   return {
     display,
     pageHeadline: { ...display, fontSize: 30, lineHeight: 36, letterSpacing: -0.8 },
@@ -80,13 +81,15 @@ function typeOf(p: Palette) {
       color: p.ink,
     },
     /** The composer's text: one step under body so five lines still fit. */
-    input: { ...fontFace('400'), fontSize: 16, lineHeight: 23, color: p.ink },
+    input,
+    paragraph: input,
     action: { ...fontFace('700'), fontSize: 16, lineHeight: 23, letterSpacing: -0.1, color: p.ink },
     cell: { ...fontFace('600'), fontSize: 16, lineHeight: 23, color: p.ink },
     brand: { ...fontFace('800'), fontSize: 20, lineHeight: 26, letterSpacing: -0.4, color: p.ink },
     headerMeta: { ...fontFace('600'), fontSize: 13, lineHeight: 18, color: p.ink2 },
     voiceStatus: { ...body, ...fontFace('600') },
     metaStrong: { ...fontFace('700'), fontSize: 14, lineHeight: 20, color: p.ink2 },
+
     code: {
       fontFamily: MONOSPACE,
       fontWeight: bold ? '600' : '400',
