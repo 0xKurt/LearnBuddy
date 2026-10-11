@@ -20,6 +20,10 @@ export type Palette = {
   bg: string;
   canvas: string;
   hairline: string;
+  /** Stronger boundary for composer and chips. */
+  hairlineStrong: string;
+  /** Text and icons on the primary action (≥ 4.5:1). */
+  onPrimary: string;
   primary: string;
   primaryDk: string;
   primaryLt: string;
@@ -118,6 +122,8 @@ const pastellSoft: Palette = {
   bg: '#faf7fd',
   canvas: '#f1edf8',
   hairline: 'rgba(60,40,120,0.09)',
+  hairlineStrong: 'rgba(60,40,120,0.16)',
+  onPrimary: '#ffffff',
   primary: '#6a48d7',
   primaryDk: '#5335b5',
   primaryLt: '#ebe5fc',
@@ -209,6 +215,8 @@ const night: Palette = {
   bg: '#191627',
   canvas: '#2b2742',
   hairline: 'rgba(220,210,255,0.14)',
+  hairlineStrong: 'rgba(220,210,255,0.20)',
+  onPrimary: '#191627',
   primary: '#9d82f5',
   primaryDk: '#b9a4ff',
   primaryLt: '#332c55',
@@ -313,6 +321,7 @@ function accent(base: Palette, over: Accent): Palette {
     primaryLt: over.primaryLt,
     ring: over.ring,
     bg: over.bg,
+    ...(base === night ? { onPrimary: over.bg } : {}),
     canvas: over.canvas,
     ...(over.glow ? { glow: over.glow } : {}),
     figure: { ...base.figure, fill: over.figureFill, fillSoft: over.figureFillSoft },

@@ -41,7 +41,7 @@ import { RADIUS } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TYPE } from '../../lib/theme/type.js';
+import { fontFace, TYPE } from '../../lib/theme/type.js';
 import { Icon } from './Icon.js';
 
 /** What a ref to the field holds (focus, blur) — the one name for it outside this file. */
@@ -153,6 +153,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
   useAnnounce(errorMessage);
   const bar = variant === 'bar';
   const cell = variant === 'cell';
+  const face = mono ? TYPE.code : cell ? fontFace('600') : TYPE.input;
   const lines = rest.multiline === true;
   // A multiline field with several rows starts its text at the top, like a page.
   const top = lines && rows > 1;
@@ -282,13 +283,13 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
                 ...(stacked && !top
                   ? { paddingTop: SPACE.sm, paddingBottom: under === null ? 0 : SPACE.sm }
                   : {}),
-                fontSize: TYPE.body.fontSize,
-                fontFamily: mono ? TYPE.code.fontFamily : undefined,
+                fontSize: TYPE.input.fontSize,
+                fontFamily: face.fontFamily,
                 lineHeight: LINE,
                 // What she writes into a board stands apart from its print, as a pencil does:
                 // the accent, a step bolder (the cloze's tapped words look the same, `Slot`).
                 color: cell ? palette.primaryDk : palette.ink,
-                fontWeight: cell ? '600' : undefined,
+                fontWeight: face.fontWeight,
                 textAlign: cell ? 'center' : undefined,
                 backgroundColor: 'transparent',
                 // The ring is the frame's; the browser's own box around the text stays off.

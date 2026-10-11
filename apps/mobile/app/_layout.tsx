@@ -2,6 +2,9 @@
 
 import '../lib/i18n/index.js';
 
+import { useFonts } from 'expo-font';
+
+import { FONT_ASSETS } from '../lib/theme/fonts.js';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { router, Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -28,7 +31,7 @@ import { currentSession, loadSession, onSessionChange } from '../lib/auth/sessio
 import { applyLocale, fallbackLocale, restoreChosenLocale, i18n } from '../lib/i18n/index.js';
 import { startCrashReports } from '../lib/observability/sentry.js';
 import { barStyleFor } from '../lib/theme/luminance.js';
-import { watchReducedMotion } from '../lib/theme/motion.js';
+import { useMotionReduced, watchReducedMotion } from '../lib/theme/motion.js';
 import {
   restoreTheme,
   ThemeProvider,
@@ -123,7 +126,10 @@ export default function RootLayout() {
   // Subscribed, not read once: this frame sits above the provider, and the palette she
   // picks in the settings has to reach it too (audit 30.09., #133 position 16).
   const palette = useAppliedPalette();
-  const [ready, setReady] = useState(false);
+  useMotionReduced();
+  const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
+  const [sessionReady, setReady] = useState(false);
+  const ready = sessionReady && (fontsLoaded || fontError !== null);
   const readyRef = useRef(false);
   // Where a notification button or a signed-out deep link asked to go.
   const pendingRoute = useRef<string | null>(null);
@@ -146,7 +152,6 @@ export default function RootLayout() {
         else void retryPendingRelease().catch(() => undefined);
       })
       .finally(() => {
-        readyRef.current = true;
         setReady(true);
       });
     // Back online: send what was answered meanwhile.
@@ -258,6 +263,10 @@ export default function RootLayout() {
     };
   }, []);
 
+  useEffect(() => {
+    readyRef.current = ready;
+  }, [ready]);
+
   // "Jetzt üben" pressed while the app was starting: its practice opens once it is ready.
   useEffect(() => {
     if (!ready || !pendingRoute.current || !currentSession()) return;
@@ -276,7 +285,7 @@ export default function RootLayout() {
   }, [ready, pathname]);
 
   // Whether the system asks for less motion, so the entering animations can drop the rise
-  // and keep the cross-fade (issue #126). Read once and kept current: someone can turn it
+  // and all transitions stop when reduced motion is requested. Read once and kept current: someone can turn it
   // on while the app is open, and Android counts "Animationen aus" as asking for it.
   useEffect(() => watchReducedMotion(), []);
 

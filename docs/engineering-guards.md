@@ -215,7 +215,11 @@ den langsamsten Schritt verdoppelt. Beide Hooks nehmen jetzt dieselbe volle Suit
   `pnpm -F @learnbuddy/mobile bundle:check`, dann
   `node tools/guards/licences.mjs apps/mobile/.expo/bundle-check --write`. Steht eine Lizenz als
   nicht freigegeben da, kommt das Paket nicht in die App: eine andere Bibliothek suchen (Regel 1).
-  Die Liste wird nie von Hand bearbeitet.
+  Ausnahme seit #548 (ausdrückliche Vorgabe des Owners vom 11.10.2026):
+  `@expo-google-fonts/figtree` darf mit `MIT AND OFL-1.1` ausgeliefert werden; die
+  Schrift bleibt unverändert und ihr vollständiger Lizenztext wird mitgeliefert.
+  Die Ausnahme gilt nur für dieses Paket und diesen Ausdruck, nicht allgemein für OFL
+  oder weitere Pakete. Die Liste wird nie von Hand bearbeitet.
 - **Neue Zeichenkomponente:** Erst den Bibliotheks-Check im Issue machen, dann den Eintrag unter
   `geprueft` anlegen: `{ "issue": "#…", "libraryCheck": "Ergebnis und Begründung" }`.
 - **Etwas wurde besser:** Bei den gemessenen Listen ist nichts zu tun — nach dem Merge ist es

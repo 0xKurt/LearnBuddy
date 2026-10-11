@@ -27,7 +27,7 @@
 // (lib/theme/__tests__/contrast.test.ts).
 
 import { useTranslation } from 'react-i18next';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Platform, Pressable, Switch, Text, View } from 'react-native';
 
 import { modeSwitch } from '../../lib/theme/modeSwitch.js';
 import { FAMILIES, paletteOf, themeNameOf, type Family } from '../../lib/theme/palettes.js';
@@ -138,6 +138,32 @@ export function ModeChoice() {
   const followPhone = () => choose({ mode: 'system' });
   const setDark = (on: boolean) => choose({ mode: on ? 'dark' : 'light' });
   const label = t('look.dark_mode');
+  const web = Platform.OS === 'web';
+  const control = (
+    <Switch
+      disabled={web}
+      hitSlop={web ? undefined : SPACE.md}
+      accessible={!web}
+      aria-hidden={web ? true : undefined}
+      focusable={!web}
+      tabIndex={web ? -1 : undefined}
+      value={dark}
+      onValueChange={setDark}
+      accessibilityLabel={label}
+      accessibilityHint={t(hint)}
+      accessibilityActions={backAction ? [{ name: backAction, label: t('look.mode.system') }] : []}
+      onAccessibilityAction={(e) => {
+        if (e.nativeEvent.actionName === backAction) followPhone();
+      }}
+      // Off: a grey that still stands out on the card and the page (≥ 3:1, contrast test);
+      // on: the accent. The knob is light either way, as the phones draw it.
+      trackColor={{ false: palette.ink3, true: palette.primary }}
+      ios_backgroundColor={palette.ink3}
+      thumbColor={palette.knob}
+      // react-native-web paints an ON knob from this prop alone (teal without it).
+      activeThumbColor={palette.knob}
+    />
+  );
   return (
     <View style={{ gap: SPACE.xs }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}>
@@ -153,25 +179,35 @@ export function ModeChoice() {
         >
           <Text style={[TYPE.body, { color: palette.ink }]}>{label}</Text>
         </Pressable>
-        <Switch
-          value={dark}
-          onValueChange={setDark}
-          accessibilityLabel={label}
-          accessibilityHint={t(hint)}
-          accessibilityActions={
-            backAction ? [{ name: backAction, label: t('look.mode.system') }] : []
-          }
-          onAccessibilityAction={(e) => {
-            if (e.nativeEvent.actionName === backAction) followPhone();
-          }}
-          // Off: a grey that still stands out on the card and the page (≥ 3:1, contrast test);
-          // on: the accent. The knob is light either way, as the phones draw it.
-          trackColor={{ false: palette.ink3, true: palette.primary }}
-          ios_backgroundColor={palette.ink3}
-          thumbColor={palette.knob}
-          // react-native-web paints an ON knob from this prop alone (teal without it).
-          activeThumbColor={palette.knob}
-        />
+        {web ? (
+          <Pressable
+            accessibilityRole="switch"
+            accessibilityLabel={label}
+            accessibilityHint={t(hint)}
+            accessibilityState={{ checked: dark }}
+            accessibilityActions={
+              backAction ? [{ name: backAction, label: t('look.mode.system') }] : []
+            }
+            onAccessibilityAction={(e) => {
+              if (e.nativeEvent.actionName === backAction) followPhone();
+            }}
+            aria-checked={dark}
+            onPress={() => setDark(!dark)}
+            onLongPress={pinned ? followPhone : undefined}
+            style={{
+              minWidth: TOUCH,
+              minHeight: TOUCH,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <View pointerEvents="none" aria-hidden>
+              {control}
+            </View>
+          </Pressable>
+        ) : (
+          control
+        )}
       </View>
       {/* What the switch does besides, in words: it follows the phone until touched, and a long
           press goes back (#222). */}

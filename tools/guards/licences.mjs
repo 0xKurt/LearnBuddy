@@ -71,7 +71,10 @@ export function problems(list) {
   const out = [];
   for (const p of list.packages) {
     const id = `${p.name}@${p.version}`;
-    if (!allowed(p.licence)) out.push(`${id}: Lizenz „${p.licence}“ ist nicht freigegeben`);
+    // Owner explicitly requires Figtree in the redesign (#548). No general OFL allowance.
+    const figtree = p.name === '@expo-google-fonts/figtree' && p.licence === 'MIT AND OFL-1.1';
+    if (!allowed(p.licence) && !figtree)
+      out.push(`${id}: Lizenz „${p.licence}“ ist nicht freigegeben`);
     if (!list.texts[p.text]?.trim()) out.push(`${id}: kein Lizenztext`);
   }
   return out;

@@ -531,6 +531,31 @@ describe('licences: what the app ships is permissively licensed and has its text
     for (const no of [...red, 'CC-BY-ND-4.0', '(MIT AND GPL-2.0)', 'Apache 2.0', 'UNKNOWN', ''])
       assert.ok(!allowed(no), no);
   });
+  it('allows only the owner-requested Figtree font exception, still requiring its notice (#548)', () => {
+    const font = {
+      name: '@expo-google-fonts/figtree',
+      version: '0.4.1',
+      licence: 'MIT AND OFL-1.1',
+      text: 0,
+    };
+    assert.ok(!allowed('OFL-1.1'));
+    assert.ok(!allowed(font.licence));
+    assert.deepEqual(
+      problems({ packages: [font], texts: ['SIL OPEN FONT LICENSE Version 1.1'] }),
+      [],
+    );
+    assert.deepEqual(problems({ packages: [font], texts: [' '] }), [
+      '@expo-google-fonts/figtree@0.4.1: kein Lizenztext',
+    ]);
+    assert.equal(
+      problems({ packages: [{ ...font, name: 'another-font' }], texts: ['OFL'] }).length,
+      1,
+    );
+    assert.equal(
+      problems({ packages: [{ ...font, licence: 'MIT AND GPL-3.0-only' }], texts: ['GPL'] }).length,
+      1,
+    );
+  });
   it('names a package without a licence text', () => {
     const entry = { name: 'x', version: '1.0.0', licence: 'MIT', text: 0 };
     assert.deepEqual(problems({ packages: [entry], texts: ['MIT License'] }), []);

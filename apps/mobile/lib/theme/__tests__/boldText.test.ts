@@ -6,7 +6,7 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { applyBoldText, TYPE } from '../type.js';
+import { applyBoldText, applyType, fontFace, TYPE } from '../type.js';
 import { DEFAULT_THEME, paletteOf } from '../palettes.js';
 
 const palette = paletteOf(DEFAULT_THEME);
@@ -16,14 +16,15 @@ afterEach(() => applyBoldText(false, palette));
 describe('bold text', () => {
   it('lifts every style by one step, keeping the hierarchy', () => {
     const before = {
-      display: TYPE.display.fontWeight,
       title: TYPE.title.fontWeight,
       body: TYPE.body.fontWeight,
     };
     applyBoldText(true, palette);
-    expect(TYPE.display.fontWeight).not.toBe(before.display);
+    expect(TYPE.display.fontWeight).toBe('800');
+    expect(TYPE.body.fontWeight).not.toBe(before.body);
+    expect(TYPE.body.fontFamily).toBe('Figtree_600SemiBold');
     expect(TYPE.title.fontWeight).not.toBe(before.title);
-    // Body has no weight of its own; bold gives it one.
+    // Body grows heavier while the display stays at the heaviest loaded face.
     expect(TYPE.body.fontWeight).toBeTruthy();
     // The headline stays heavier than the title, and the title heavier than the body.
     const n = (w: unknown) => Number(w ?? 400);
@@ -46,4 +47,28 @@ describe('bold text', () => {
     applyBoldText(false, palette);
     expect(TYPE.title.fontWeight).toBe(plain);
   });
+});
+
+it('uses the supplied Figtree scale and keeps aliases live across palettes', () => {
+  expect(TYPE.body.fontFamily).toBe('Figtree_400Regular');
+  expect(TYPE.display.fontSize).toBe(32);
+  expect(TYPE.question.fontSize).toBe(22);
+  expect(TYPE.header).toEqual(TYPE.title);
+  expect(TYPE.prompt).toEqual(TYPE.question);
+  expect(TYPE.small).toEqual(TYPE.meta);
+  expect(TYPE.caption).toEqual(TYPE.meta);
+  const held = TYPE.body;
+  applyBoldText(true, paletteOf('pastellDark'));
+  expect(held.color).toBe(paletteOf('pastellDark').ink);
+  expect(held.fontFamily).toBe('Figtree_600SemiBold');
+});
+
+it('keeps a live Bold Text face through palette changes, including monospace code', () => {
+  applyBoldText(true, palette);
+  applyType(paletteOf('oceanDark'));
+  expect(TYPE.body.fontFamily).toBe('Figtree_600SemiBold');
+  expect(TYPE.code.fontWeight).toBe('600');
+  expect(TYPE.code.fontFamily).not.toContain('Figtree');
+  expect(fontFace('500').fontFamily).toBe('Figtree_700Bold');
+  expect(TYPE.body.color).toBe(paletteOf('oceanDark').ink);
 });
