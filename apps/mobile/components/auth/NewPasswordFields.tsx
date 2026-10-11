@@ -3,13 +3,13 @@
 // complains once something has been typed into it.
 
 import { useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { passwordProblem } from '../../lib/auth/recovery.js';
-import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
-import { RHYTHM, SPACE } from '../../lib/theme/space.js';
-import { TYPE } from '../../lib/theme/type.js';
+import type { LbTextInputRef } from '../lb/LbTextInput.js';
+import { Field } from '../lb/Field.js';
+import { RHYTHM } from '../../lib/theme/space.js';
 
 type Props = {
   password: string;
@@ -17,6 +17,7 @@ type Props = {
   onChangePassword: (value: string) => void;
   onChangeRepeat: (value: string) => void;
   onSubmit?: () => void;
+  editable?: boolean;
 };
 
 export function NewPasswordFields({
@@ -25,6 +26,7 @@ export function NewPasswordFields({
   onChangePassword,
   onChangeRepeat,
   onSubmit,
+  editable = true,
 }: Props) {
   const { t } = useTranslation('auth');
   const [shown, setShown] = useState(false);
@@ -34,10 +36,12 @@ export function NewPasswordFields({
 
   return (
     <View style={{ gap: RHYTHM.parts }}>
-      <LbTextInput
+      <Field
         value={password}
         onChangeText={onChangePassword}
-        placeholder={t('new_password.password')}
+        label={t('new_password.password')}
+        hint={t('welcome.password_hint')}
+        editable={editable}
         accessibilityLabel={t('new_password.password')}
         secureTextEntry={!shown}
         autoCapitalize="none"
@@ -53,11 +57,12 @@ export function NewPasswordFields({
         onToggle={() => setShown((s) => !s)}
         toggleAccessibilityLabel={toggleLabel}
       />
-      <LbTextInput
+      <Field
         ref={repeatRef}
         value={repeat}
         onChangeText={onChangeRepeat}
-        placeholder={t('new_password.repeat')}
+        label={t('new_password.repeat')}
+        editable={editable}
         accessibilityLabel={t('new_password.repeat')}
         secureTextEntry={!shown}
         autoCapitalize="none"
@@ -70,11 +75,6 @@ export function NewPasswordFields({
         error={mismatch}
         errorMessage={mismatch ? t('new_password.mismatch') : undefined}
       />
-      {mismatch ? null : (
-        <Text style={[TYPE.small, { paddingHorizontal: SPACE.xs }]}>
-          {t('welcome.password_hint')}
-        </Text>
-      )}
     </View>
   );
 }
