@@ -15,6 +15,7 @@ import { Pressable } from 'react-native';
 
 import { stop as stopSpeaking } from '../../lib/speech/listen.js';
 import { readsAloud, useVoiceMode } from '../../lib/speech/voiceMode.js';
+import { UI } from '../../lib/theme/components.js';
 import { circle } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
@@ -51,7 +52,7 @@ export function ReadAloudSwitch() {
       {({ pressed }) => (
         <Icon
           name={on ? 'speak' : 'speak-off'}
-          size={22}
+          size={UI.iconButton.actionGlyph}
           color={on ? palette.primaryDk : pressed ? palette.ink : palette.ink3}
         />
       )}

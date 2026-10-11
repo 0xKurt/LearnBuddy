@@ -5,15 +5,9 @@
 // answer it stands in the gap, so she sees the whole sentence.
 
 import type { Figure, ItemImage, ItemView, TaskPartView } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View, type TextStyle } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
 
 import { FIGURE_CHROME } from '../../lib/math/figureScale.js';
 import { useDrawingNatural } from '../../lib/math/figureSizing.js';
@@ -23,10 +17,10 @@ import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
+import { Progress } from '../lb/Progress.js';
 import { ReadAgain } from '../lb/ReadAgain.js';
 import { MathText } from '../math/MathText.js';
 import { lettered, PartStem } from './PartStem.js';
@@ -35,11 +29,15 @@ import { QuestionFigure } from './QuestionFigure.js';
 import { StimulusImage } from './StimulusImage.js';
 
 type ProgressProps = {
+  /** A shared header already speaks the count in its subtitle. */
+  hideLabel?: boolean;
   /** 1-based position of the question on screen. */
   position: number;
   total: number;
   /** Questions already closed (answered right, or solution shown). */
   closed: number;
+  /** The displayed question is still open; false until Next after checking it. */
+  active?: boolean;
   /** A quiet action at the end of the row: one short word ("Passt nicht", `QuestionCorner`). */
   right?: ReactNode;
   /**
@@ -61,10 +59,6 @@ type ProgressProps = {
   preparing?: boolean;
 };
 
-/** The progress bar: a thin track with round ends. */
-const BAR_HEIGHT = 8;
-const BAR_RADIUS = BAR_HEIGHT / 2;
-
 export function ProgressRow({
   position,
   total,
@@ -73,19 +67,11 @@ export function ProgressRow({
   clock,
   label,
   preparing,
+  hideLabel = false,
+  active = true,
 }: ProgressProps) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
-  const share = total > 0 ? Math.max(0, Math.min(1, closed / total)) : 0;
-  // The bar grows softly to where she is now (at once with reduce motion).
-  const reduced = useReducedMotion();
-  const width = useSharedValue(share);
-  useEffect(() => {
-    width.value = reduced
-      ? share
-      : withTiming(share, { duration: DURATION.gentle * 2, easing: EASE.standard });
-  }, [share, reduced, width]);
-  const fill = useAnimatedStyle(() => ({ width: `${width.value * 100}%` }));
   return (
     <View
       testID="progress-row"
@@ -95,20 +81,18 @@ export function ProgressRow({
           "Bewertung stimmt nicht" the label broke onto two lines at 360 and the bar shrank to a
           stub. The action at the end is one short word now and the bar keeps its least width;
           what still does not fit — "ich schreibe noch mehr" beside an action — ends in "…". */}
-      <Text
-        testID="progress-label"
-        numberOfLines={1}
-        style={[
-          TYPE.label,
-          // token-exempt: 14, the label a step larger beside the bar, still one line (#459)
-          { color: palette.ink2, fontSize: 14, flexShrink: 1, minWidth: 0 },
-        ]}
-      >
-        {label ??
-          (preparing
-            ? t('progress_more_coming', { current: position })
-            : t('progress', { current: position, total }))}
-      </Text>
+      {hideLabel ? null : (
+        <Text
+          testID="progress-label"
+          numberOfLines={1}
+          style={[TYPE.label, { color: palette.ink2, flexShrink: 1, minWidth: 0 }]}
+        >
+          {label ??
+            (preparing
+              ? t('progress_more_coming', { current: position })
+              : t('progress', { current: position, total }))}
+        </Text>
+      )}
       {/* The text above already says where we are; the bar is decoration. While the set is still
           growing there is nothing honest to fill it to, so only its place is kept. */}
       {preparing ? (
@@ -116,23 +100,12 @@ export function ProgressRow({
       ) : (
         <View
           testID="progress-bar"
+          aria-hidden
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={{
-            flex: 1,
-            minWidth: PROGRESS_BAR_MIN,
-            height: BAR_HEIGHT,
-            borderRadius: BAR_RADIUS,
-            backgroundColor: palette.lavender,
-            overflow: 'hidden',
-          }}
+          style={{ flex: 1, minWidth: PROGRESS_BAR_MIN }}
         >
-          <Animated.View
-            style={[
-              { height: '100%', borderRadius: BAR_RADIUS, backgroundColor: palette.primary },
-              fill,
-            ]}
-          />
+          <Progress total={total} current={closed} part={active ? undefined : 0} />
         </View>
       )}
       {clock ? <View style={{ flexShrink: 0 }}>{clock}</View> : null}

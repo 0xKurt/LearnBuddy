@@ -11,8 +11,8 @@ implementation theme/component TypeScript and `assets/figures/**` may be copied.
 
 Owner decisions, 11 October 2026:
 
-- Use the supplied `implementation/lib/theme/space.ts` values: gutter16 throughout,
-  card padding12/16/24, rhythm8/12/24. These supersede the contradictory gutter20
+- Use the supplied `implementation/lib/theme/space.ts` values: 16 pt gutters throughout,
+  card padding 12/16/24 pt, rhythm 8/12/24 pt. These supersede the contradictory gutter20
   and card20 statements elsewhere in the package.
 - Reduced motion disables all transitions, including cross-fades. This supersedes
   the earlier cross-fade policy in issue126. The existing Orb/moon choreography
@@ -28,7 +28,7 @@ belong in `lib/theme`. Compatibility names remain aliases until the last screen 
 migrated, then are removed in a separate PR. Composite components receive state
 and variants as props; screen behavior stays at callers. Copy comes from locale
 namespaces, German first. Keep `BuddyOrb` and moon choreography; adjust header size
-and footprint only. Touch targets remain at least44 pt.
+and footprint only. Touch targets remain at least 44 pt.
 
 Reference-only sample content is not app data. Existing schematic contracts allow
 at most six labels; the reference's discussion of eight or nine labels does not
@@ -40,23 +40,23 @@ Each row is a separate PR unless it explicitly describes a group of screen PRs.
 Branch from current main, pass the local gates and CI, review the rendered result,
 then merge before beginning the next dependent change.
 
-| Step                   | Files and replacements                                                                                                                                                                               | Status      |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| 1 Theme                | `lib/theme/*`, `app/_layout.tsx`, mobile manifest/lockfile, licences and tests; minimal input-font wiring, live motion subscription and LookChoice touch fix. No component replacement.              | Merged #549 |
-| 2 Base                 | `components/lb/`: Btn, IconBtn replacing CircleBtn, Chip, Card, Field adapting LbTextInput, ListGroup/Row, Sheet, Segmented, Progress. Existing callers remain compatible.                           | In review   |
-| 3 Header and composer  | BuddyHeader replaces Screen/buddy header composition; Composer replaces InputBar/CheckBar presentation with one voice/send/check/next primary slot. Preserve voice, drafts, attachments and retries. | Pending     |
-| 4 Practice             | Option replaces AnswerTile; QuestionCard; all current answer forms use shared states and tokens. Keep answer payloads and evaluation behavior.                                                       | Pending     |
-| 5a Account             | Welcome, account errors, reset.                                                                                                                                                                      | Pending     |
-| 5b Onboarding          | Consent, parent setup, voice, look, handover; individual screen PRs.                                                                                                                                 | Pending     |
-| 5c Home and chat       | First visit, conversation, offers, undo and chat cards; individual screen PRs.                                                                                                                       | Pending     |
-| 5d Talk                | Conversation mode and practice in voice.                                                                                                                                                             | Pending     |
-| 5e Practice            | Practice route, zoom, completion, test results/time-up, homework, drill and speaking; individual screen/state PRs.                                                                                   | Pending     |
-| 5f Material            | Capture, sheet questions, library, subject and empty/missing states; individual screen PRs.                                                                                                          | Pending     |
-| 5g Personal            | Memory, history and profile; individual screen PRs.                                                                                                                                                  | Pending     |
-| 5h Settings            | Settings, voice, about, learning times, PIN; individual screen/sheet PRs.                                                                                                                            | Pending     |
-| 5i Other surfaces      | Start sheet, roleplay, rehearsal, system states and overflow menu; individual surface PRs.                                                                                                           | Pending     |
-| 6 Figures and licences | Image assets, data anchors in schematics, SVG number/leader/hit overlays, existing licence sheet plus every figure and part attribution.                                                             | Pending     |
-| 7 Alias removal        | Remove compatibility keys/components only after no migrated caller depends on them.                                                                                                                  | Pending     |
+| Step                   | Files and replacements                                                                                                                                                                               | Status           |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1 Theme                | `lib/theme/*`, `app/_layout.tsx`, mobile manifest/lockfile, licences and tests; minimal input-font wiring, live motion subscription and LookChoice touch fix. No component replacement.              | Merged #549      |
+| 2 Base                 | `components/lb/`: Btn, IconBtn replacing CircleBtn, Chip, Card, Field adapting LbTextInput, ListGroup/Row, Sheet, Segmented, Progress. Existing callers remain compatible.                           | Merged #550      |
+| 3 Header and composer  | BuddyHeader replaces Screen/buddy header composition; Composer replaces InputBar/CheckBar presentation with one voice/send/check/next primary slot. Preserve voice, drafts, attachments and retries. | Ready for review |
+| 4 Practice             | Option replaces AnswerTile; QuestionCard; all current answer forms use shared states and tokens. Keep answer payloads and evaluation behavior.                                                       | Pending          |
+| 5a Account             | Welcome, account errors, reset.                                                                                                                                                                      | Pending          |
+| 5b Onboarding          | Consent, parent setup, voice, look, handover; individual screen PRs.                                                                                                                                 | Pending          |
+| 5c Home and chat       | First visit, conversation, offers, undo and chat cards; individual screen PRs.                                                                                                                       | Pending          |
+| 5d Talk                | Conversation mode and practice in voice.                                                                                                                                                             | Pending          |
+| 5e Practice            | Practice route, zoom, completion, test results/time-up, homework, drill and speaking; individual screen/state PRs.                                                                                   | Pending          |
+| 5f Material            | Capture, sheet questions, library, subject and empty/missing states; individual screen PRs.                                                                                                          | Pending          |
+| 5g Personal            | Memory, history and profile; individual screen PRs.                                                                                                                                                  | Pending          |
+| 5h Settings            | Settings, voice, about, learning times, PIN; individual screen/sheet PRs.                                                                                                                            | Pending          |
+| 5i Other surfaces      | Start sheet, roleplay, rehearsal, system states and overflow menu; individual surface PRs.                                                                                                           | Pending          |
+| 6 Figures and licences | Image assets, data anchors in schematics, SVG number/leader/hit overlays, existing licence sheet plus every figure and part attribution.                                                             | Pending          |
+| 7 Alias removal        | Remove compatibility keys/components only after no migrated caller depends on them.                                                                                                                  | Pending          |
 
 ## Validation
 
@@ -99,3 +99,9 @@ camera behavior still need device evidence.
 
 Still open: base components, header/composer, practice components, each screen,
 figures and their attributions, and the final dedicated alias removal PR.
+
+Header/Composer browser evidence: the real core-loop practice passes the strict fit and accessibility guards after decorative progress is hidden consistently on native and web. The Composer matrix passes in Pastell and Meer, light and dark, at both phone sizes. Its locator scopes to the visible route because Expo retains a hidden Home route. Provider-dependent dictation walkthrough skips without its provider; mocked Chromium voice-loop coverage passes. Native device behavior is not yet verified.
+
+Final progress review: the displayed question now explicitly supplies its open state through QuestionProgress and the test-clock adapter. Checking a question fills its completed segment without prematurely half-filling the next segment; Next activates the new current segment. Flashcard callers retain their default active-card behavior. Focused open → closed → next regression passes; the browser matrix now asserts progress values 0.5 → 1 → 1.5. The final Pastell light visual recheck passes in 17.8 seconds; all four palette/mode cases already passed the focus, fit and accessibility checks.
+
+Step 3 final visual approval: all four Pastell/Meer light/dark matrix cases pass with both phone sizes, visible theme focus halo and no browser inner outline. Final Pastell light progress recheck passes with 0.5 → 1 → 1.5 assertions and only the completed first segment before Next. Core-loop practice and independent callback/locking/timer/navigation review pass. Evidence: /tmp/learnbuddy-composer-focus-green.log and /tmp/learnbuddy-composer-progress-final.log. Native device interaction remains unverified; normal commit hooks will verify iOS/Android bundle exports.

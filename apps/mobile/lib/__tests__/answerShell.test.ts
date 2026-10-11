@@ -103,13 +103,13 @@ describe('the answer shell is the only place for an answer and its action (#310)
     const body = text.slice(text.indexOf('export function AnswerShell'));
     const room = body.indexOf('<FreeSpace />');
     const slot = body.indexOf('testID="answer-slot"');
-    const keysAt = body.indexOf('testID="answer-keys"');
+    const keysAt = body.indexOf('keys={folded ? null : keys}');
     const action = body.indexOf('<CheckBar');
     expect(room, 'the shell places the free room').toBeGreaterThan(-1);
     expect(body.indexOf('<FreeSpace />', room + 1), 'one free room').toBe(-1);
     expect(room, 'free room above the answer').toBeLessThan(slot);
     expect(slot, 'the answer above its keys').toBeLessThan(keysAt);
-    expect(keysAt, 'the keys directly above the action').toBeLessThan(action);
+    expect(keysAt, 'the keys live inside the action composer').toBeGreaterThan(action);
   });
 
   it('writes "Prüfen" only through its listed owners', () => {

@@ -29,20 +29,20 @@
 // writing view (`WritingSheet`, issue #525).
 
 import { forwardRef, type ReactNode } from 'react';
-import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { formDensity } from '../../lib/keyboard.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { COMPOSER } from '../../lib/theme/composer.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import type { VoiceInput } from '../voice/useVoiceInput.js';
 import { Chip } from './Chip.js';
+import { Composer } from './Composer.js';
 import { FieldCount } from './FieldCount.js';
-import { LbTextInput, type LbTextInputProps, type LbTextInputRef } from './LbTextInput.js';
+import { type LbTextInputProps, type LbTextInputRef } from './LbTextInput.js';
 
 /** A long text's bar: the lines it starts with, and how far it grows with and without keyboard. */
-const TALL = { rows: 3, roomy: 10, tight: 4 } as const;
+const TALL = { rows: COMPOSER.rows.tall, roomy: COMPOSER.rows.roomy, tight: COMPOSER.rows.tight };
 
 /** Grows only while she writes; dense: the keyboard is up. */
 function tallRows(tall: 'writing' | 'resting', dense: boolean): number {
@@ -70,13 +70,14 @@ type Controls = {
 };
 
 type Props = Controls &
-  Omit<LbTextInputProps, 'variant' | 'multiline' | 'rows' | 'chips' | 'end'> & {
+  Omit<LbTextInputProps, 'variant' | 'multiline' | 'rows' | 'chips' | 'end' | 'under'> & {
     value: string;
     maxLength: number;
     /** The answer's unit ("cm²"): a chip among the tools, never a suffix inside her lines. */
     unit?: string | null;
     /** More among the tools, after the unit (how her typed math will be read). */
     chips?: ReactNode;
+    under?: ReactNode;
   };
 
 export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(props, ref) {
@@ -99,6 +100,7 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
     maxLength,
     unit = null,
     chips = null,
+    under = null,
     voice: _voice,
     micLabel: _micLabel,
     mic: _mic,
@@ -114,14 +116,14 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
       {voice ? <MicStatus voice={voice} /> : null}
       {above}
       <FieldCount length={value.length} max={maxLength} />
-      <LbTextInput
+      <Composer
         ref={ref}
         {...field}
-        variant="bar"
+        editable={!disabled && field.editable !== false}
         value={value}
         maxLength={maxLength}
-        multiline
         {...(tall ? { rows: TALL.rows, maxRows: tallRows(tall, typing) } : {})}
+        keys={under}
         chips={
           unit || chips ? (
             <>
@@ -130,24 +132,12 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
             </>
           ) : null
         }
-        end={
-          // Their own row with their own gap: the box's is 2 (the text carries its padding), too
-          // tight between two round controls (owner 01.10., issue #187). Empty, the row still
-          // keeps the text off the box's edge.
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-end',
-              gap: SPACE.sm,
-              minWidth: SPACE.sm,
-            }}
-          >
-            {mic && voice ? (
-              <MicButton voice={voice} size="sm" label={micLabel} disabled={disabled} />
-            ) : null}
-            {action !== null && idle ? action : after}
-          </View>
+        microphone={
+          mic && voice ? (
+            <MicButton voice={voice} size="sm" label={micLabel} disabled={disabled} />
+          ) : null
         }
+        primary={action !== null && idle ? action : after}
       />
     </>
   );

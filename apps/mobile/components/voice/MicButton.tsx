@@ -1,5 +1,5 @@
 // The round mic button (56 pt; 72 pt when it is the main control of a conversation,
-// `VoiceRow`; 48 pt in the input bar) and the one status line that goes with it. Built like
+// `VoiceRow`; 40 pt in the input bar) and the one status line that goes with it. Built like
 // CircleBtn: the press target outside (PressArea), the background on the inner View. Tap to
 // start, tap to stop. While recording, a ring pulses (still for reduced motion), the icon turns
 // into a stop square and the timer runs; while the words are being written down, a small
@@ -8,7 +8,9 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, Easing, Linking, Platform, Text, View } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+import { DURATION, useMotionReduced } from '../../lib/theme/motion.js';
+import { VOICE } from '../../lib/theme/voice.js';
+export { MIC_RING_ROOM } from '../../lib/theme/voice.js';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { formatClock } from '../../lib/speech/voice.js';
@@ -21,33 +23,18 @@ import { Icon } from '../lb/Icon.js';
 import { PressArea } from '../lb/PressArea.js';
 import type { VoiceInput } from './useVoiceInput.js';
 
-/** How far the ring grows past the button at its widest. */
-const PULSE_SCALE = 1.45;
-/** The dot of a running recording, beside its timer. */
-const REC_DOT = 10;
-
-/**
- * The room the pulsing ring needs around the big mic, in points.
- *
- * It is drawn absolute and scaled, so it reaches past its button without the layout
- * knowing — and on the conversation screen that was four pixels past the bottom of the
- * phone, which the fit check caught as a scrolling page (issue #133, measured 01.10.).
- * Derived from the ring's own geometry, not guessed: (72 · 1.45 − 72) / 2, rounded up.
- */
-export const MIC_RING_ROOM = Math.ceil((72 * (PULSE_SCALE - 1)) / 2);
-
 function PulseRing({ size }: { size: number }) {
   const { palette } = useTheme();
   const progress = useRef(new Animated.Value(0)).current;
   // Reactive: toggling "reduce motion" while the app runs stops the pulse too.
-  const still = useReducedMotion();
+  const still = useMotionReduced();
 
   useEffect(() => {
     if (still) return;
     const loop = Animated.loop(
       Animated.timing(progress, {
         toValue: 1,
-        duration: 1200,
+        duration: DURATION.voicePulse,
         easing: Easing.out(Easing.ease),
         useNativeDriver: Platform.OS !== 'web',
       }),
@@ -57,9 +44,11 @@ function PulseRing({ size }: { size: number }) {
   }, [progress, still]);
 
   const scale = still
-    ? 1.18
-    : progress.interpolate({ inputRange: [0, 1], outputRange: [1, PULSE_SCALE] });
-  const opacity = still ? 0.6 : progress.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] });
+    ? VOICE.ring.stillScale
+    : progress.interpolate({ inputRange: [0, 1], outputRange: [1, VOICE.ring.scale] });
+  const opacity = still
+    ? VOICE.ring.stillOpacity
+    : progress.interpolate({ inputRange: [0, 1], outputRange: [VOICE.ring.opacity, 0] });
 
   return (
     <Animated.View
@@ -69,7 +58,7 @@ function PulseRing({ size }: { size: number }) {
         width: size,
         height: size,
         borderRadius: circle(size),
-        borderWidth: 3,
+        borderWidth: VOICE.ring.border,
         borderColor: palette.primary,
         opacity,
         transform: [{ scale }],
@@ -107,14 +96,15 @@ export function MicButton({
   const off = recording ? false : disabled || working;
   // 'sm' is the composer pill, where it stands beside the + and the talk button: one size
   // for the three, or their centres drift apart on the pill's baseline (issue #134).
-  const d = size === 'lg' ? 72 : size === 'sm' ? TOUCH : 56;
+  const d = VOICE.face[size];
+  const target = Math.max(TOUCH, d);
   const filled = size === 'lg' || recording || filledIdle;
   const bg = recording ? palette.primaryDk : filled ? palette.primary : palette.paper;
-  const fg = filled ? palette.paper : palette.primaryDk;
+  const fg = filled ? palette.onPrimary : palette.primaryDk;
   const time = formatClock(voice.elapsedMs);
 
   return (
-    <View style={{ width: d, height: d, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: target, height: target, alignItems: 'center', justifyContent: 'center' }}>
       {recording ? <PulseRing size={d} /> : null}
       <PressArea
         onPress={onPress ?? voice.toggle}
@@ -136,11 +126,15 @@ export function MicButton({
               ? { text: t('voice.transcribing') }
               : undefined
         }
-        android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
+        android_ripple={{ color: palette.hairline, borderless: false }}
         style={{
+          width: target,
+          height: target,
+          alignItems: 'center',
+          justifyContent: 'center',
           borderRadius: circle(d),
           overflow: 'hidden',
-          opacity: off && !working ? 0.6 : 1,
+          opacity: off && !working ? VOICE.disabledOpacity : 1,
         }}
       >
         {(pressed) => (
@@ -150,11 +144,11 @@ export function MicButton({
               height: d,
               borderRadius: circle(d),
               backgroundColor: bg,
-              borderWidth: filled ? 0 : 1,
+              borderWidth: filled ? 0 : VOICE.border,
               borderColor: palette.hairline,
               alignItems: 'center',
               justifyContent: 'center',
-              opacity: pressed ? 0.8 : 1,
+              opacity: pressed ? VOICE.pressedOpacity : 1,
             }}
           >
             {working ? (
@@ -162,7 +156,7 @@ export function MicButton({
             ) : (
               <Icon
                 name={recording ? 'stop' : 'mic'}
-                size={Math.round(d * (recording ? 0.36 : 0.44))}
+                size={Math.round(d * (recording ? VOICE.iconRatio.stop : VOICE.iconRatio.mic))}
                 color={fg}
               />
             )}
@@ -203,8 +197,7 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
     const open = voice.maxMs === null;
     const max = open ? '' : formatClock(voice.maxMs ?? 0);
     return (
-      // token-exempt: the timer and her words 6 apart, read as one line of state
-      <View style={{ gap: 6 }}>
+      <View style={{ gap: VOICE.statusGap }}>
         <View
           accessible
           accessibilityLabel={
@@ -212,18 +205,23 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
               ? t('voice.recording_open_value', { time })
               : t('voice.recording_value', { time, max })
           }
-          style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm, minHeight: 22 }}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: SPACE.sm,
+            minHeight: VOICE.statusHeight,
+          }}
         >
           <View
             style={{
-              width: REC_DOT,
-              height: REC_DOT,
-              borderRadius: circle(REC_DOT),
+              width: VOICE.statusDot,
+              height: VOICE.statusDot,
+              borderRadius: circle(VOICE.statusDot),
               backgroundColor: palette.primary,
             }}
             importantForAccessibility="no"
           />
-          <Text style={[TYPE.body, { fontWeight: '600' }]}>
+          <Text style={TYPE.voiceStatus}>
             {open ? t('voice.recording_open', { time }) : t('voice.recording', { time, max })}
           </Text>
         </View>
@@ -232,7 +230,7 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
           <Text
             accessibilityLabel={t('voice.live', { text: voice.live })}
             style={[TYPE.body, { color: palette.ink2, fontStyle: 'italic' }]}
-            numberOfLines={4}
+            numberOfLines={VOICE.liveLines}
           >
             „{voice.live}“
           </Text>
@@ -248,15 +246,18 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
       <Text
         accessibilityLiveRegion="polite"
         accessibilityLabel={t('voice.live', { text: voice.live })}
-        style={[TYPE.body, { color: palette.ink2, fontStyle: 'italic', minHeight: 22 }]}
-        numberOfLines={4}
+        style={[
+          TYPE.body,
+          { color: palette.ink2, fontStyle: 'italic', minHeight: VOICE.statusHeight },
+        ]}
+        numberOfLines={VOICE.liveLines}
       >
         „{voice.live}“
       </Text>
     ) : (
       <Text
         accessibilityLiveRegion="polite"
-        style={[TYPE.body, { color: palette.ink2, minHeight: 22 }]}
+        style={[TYPE.body, { color: palette.ink2, minHeight: VOICE.statusHeight }]}
       >
         {t('voice.transcribing')}
       </Text>

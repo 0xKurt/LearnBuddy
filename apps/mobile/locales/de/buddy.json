@@ -1,4 +1,5 @@
 {
+  "brand": "LearnBuddy",
   "a11y": {
     "reply": "Buddy: {{text}}"
   },
