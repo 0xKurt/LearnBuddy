@@ -14,7 +14,7 @@ import { CurriculumRegion, type AppLocale } from '@learnbuddy/shared-types/contr
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Platform, Text, View } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { BirthDateFields, type DateParts } from '../components/auth/BirthDateFields.js';
 import { CheckPoints } from '../components/auth/CheckPoints.js';
@@ -539,23 +539,38 @@ function Handover({
 }) {
   const { t } = useTranslation('auth');
   const points = [
-    t('profile.handover_consent'),
-    t('profile.handover_pin'),
-    t(handoverContactKey(contactEnabled), { name }),
-  ];
+    'profile.handover_consent',
+    'profile.handover_pin',
+    handoverContactKey(contactEnabled),
+  ].map((key) => ({
+    key,
+    content: (
+      <Trans
+        t={t}
+        ns="auth"
+        i18nKey={key}
+        values={{ name }}
+        components={{ strong: <Text style={TYPE.paragraphStrong} /> }}
+      />
+    ),
+  }));
   return (
     <SetupStep
+      variant="onboarding"
+      orbState="happy"
       title={t('profile.handover_title')}
       footer={
-        <Btn size="lg" pill full busy={busy} onPress={onDone}>
-          {t('profile.handover_cta', { name })}
-        </Btn>
+        <View style={{ gap: SPACE.md }}>
+          <Text style={[TYPE.bodyStrong, { textAlign: 'center' }]}>
+            {t('profile.handover_body', { name })}
+          </Text>
+          <Btn size="lg" pill full busy={busy} onPress={onDone}>
+            {t('profile.handover_cta', { name })}
+          </Btn>
+        </View>
       }
     >
-      <CheckPoints points={points} />
-      <Text style={[TYPE.title, { textAlign: 'center' }]}>
-        {t('profile.handover_body', { name })}
-      </Text>
+      <CheckPoints points={points} plain />
     </SetupStep>
   );
 }
