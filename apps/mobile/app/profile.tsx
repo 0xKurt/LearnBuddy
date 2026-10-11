@@ -567,25 +567,19 @@ function Handover({
  * (`toVoice`, issue #526).
  */
 function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
-  const { palette } = useTheme();
   const { t } = useTranslation('auth');
   const settings = useSettings();
-  const view = useVisibleHeight();
-  // From what is visible: the keyboard keeps the window's height (issue #289).
-  const compact = formDensity(view.window, view.overlap) !== 'roomy';
   return (
     <SetupStep
+      variant="onboarding"
       title={t('profile.voice_title')}
-      compact={compact}
+      lead={t('profile.voice_body')}
       footer={
         <Btn size="lg" pill full busy={busy} onPress={onDone}>
           {t('profile.voice_cta')}
         </Btn>
       }
     >
-      <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center' }]}>
-        {t('profile.voice_body')}
-      </Text>
       {settings.data ? <VoicePicker settings={settings.data} /> : null}
     </SetupStep>
   );

@@ -1,10 +1,6 @@
-// Buddy's voice, chosen like a ringtone in the phone's own settings (issue #526): a list, one row
-// per voice — its name and how it sounds, a tick on the one she has — and beside every row its
-// own round button that only plays a sample (and stops it). Listening and choosing are two
-// things now: a tap on the row chooses the voice (PATCH /buddy/settings with the version it was
-// based on) and plays nothing; a tap on the sound button plays (POST /voice/speech with the voice
-// to try, her settings untouched) and chooses nothing. Before, one tap did both, so whoever only
-// wanted to hear one changed the setting every time (owner 09.10.).
+// Buddy's six real voices use a wrapping three-column tile grid. The named radio chooses
+// through the existing versioned settings PATCH; its separate sound button previews or stops
+// the existing speech sample without selecting. Descriptions stay visible below the tiles.
 //
 // Only shown where the voices can be told apart: the server says so up front
 // (`natural_voice`, issue #526). Without Buddy's own voices the phone's voice would read every
@@ -28,16 +24,13 @@ import { messageFor } from '../../lib/errors.js';
 import { speak, stop } from '../../lib/speech/listen.js';
 import { useBuddyVoice } from '../../lib/speech/useBuddyVoice.js';
 import { voiceStore } from '../../lib/speech/voiceState.js';
+import { UI } from '../../lib/theme/components.js';
 import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
-import { CircleBtn } from '../lb/CircleBtn.js';
-import { Icon } from '../lb/Icon.js';
+import { VoiceOption } from '../lb/VoiceOption.js';
+import { VOICE_PICKER } from '../../lib/theme/voicePicker.js';
 import { toast } from '../lb/Toast.js';
-
-/** The tick on the chosen voice. */
-const TICK = 20;
 
 export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
   const { palette } = useTheme();
@@ -103,47 +96,32 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel={t('voice_pick.label')}
-        style={{ gap: SPACE.sm, opacity: saving ? 0.85 : 1 }}
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: VOICE_PICKER.gap,
+          opacity: saving ? UI.busyOpacity : 1,
+        }}
       >
         {VOICE_NAMES.map((name) => {
           const isChosen = name === chosen;
           const title = t(`voice_pick.name.${name}`);
           return (
-            <View key={name} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-              <View style={{ flex: 1 }}>
-                <Btn
-                  full
-                  size="sm"
-                  variant={isChosen ? 'soft' : 'outline'}
-                  selected={isChosen}
-                  disabled={saving && !isChosen}
-                  accessibilityHint={t('voice_pick.choose_hint')}
-                  onPress={() => void choose(name)}
-                  label={
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[TYPE.label, { color: palette.ink }]}>{title}</Text>
-                        <Text style={[TYPE.small, { color: palette.ink2 }]}>
-                          {t(`voice_pick.about.${name}`)}
-                        </Text>
-                      </View>
-                      {isChosen ? (
-                        <Icon name="check" size={TICK} color={palette.primaryDk} />
-                      ) : null}
-                    </View>
-                  }
-                >
-                  {title}
-                </Btn>
-              </View>
-              <CircleBtn
-                icon={playing === name ? 'stop' : 'speak'}
-                onPress={() => listen(name)}
-                accessibilityLabel={
+            <View key={name} style={{ flexBasis: VOICE_PICKER.basis, flexGrow: 1 }}>
+              <VoiceOption
+                title={title}
+                description={t(`voice_pick.about.${name}`)}
+                selected={isChosen}
+                disabled={saving && !isChosen}
+                hint={t('voice_pick.choose_hint')}
+                onPress={() => void choose(name)}
+                previewing={playing === name}
+                previewLabel={
                   playing === name
                     ? t('voice_pick.stop_label')
                     : t('voice_pick.play_label', { name: title })
                 }
+                onPreview={() => listen(name)}
               />
             </View>
           );
@@ -154,7 +132,7 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
         // is coming" (user feedback 2026-09-28).
         <Text
           accessibilityLiveRegion="polite"
-          style={[TYPE.small, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}
+          style={[TYPE.meta, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}
         >
           {t('voice_pick.loading')}
         </Text>
