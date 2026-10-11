@@ -1,66 +1,54 @@
-// Layout animations built from the motion tokens (lib/theme/motion.ts): how a message, a
-// card or a chip comes in, and how a list makes room.
-//
-// Calm — a fade with a small rise — and with reduce motion on, ONLY the fade. That is what
-// this file always claimed; until issue #126 it did the opposite. It handed
-// `ReduceMotion.System` to a `FadeIn`, and in Reanimated that does not shorten an animation,
-// it skips it: a reduced animation starts with `current = toValue` and `onFrame = () => true`
-// (4.1.7, src/animation/util.ts:495). So on a phone with animations disabled system-wide
-// nothing faded at all: messages appeared in one frame, cards jumped, lists re-ordered with
-// no transition. The owner read exactly that as "hakelig" — it does not stutter, it *jumps*.
-//
-// So the policy is decided in lib/theme/reduceMotion.ts, not handed to Reanimated: what
-// MOVES is dropped when the system asks for less motion, and the cross-fade stays. A fade is
-// not motion. This file only translates that answer into a builder — the fade becomes a
-// `FadeIn` (opacity only, no transform at all), the rise a `FadeInDown` (opacity plus
-// `translateY`), both with the policy the plan asked for.
-
+// Shared layout transitions; reduced motion disables movement and fades.
 import { Platform } from 'react-native';
-import { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
+import {
+  FadeIn,
+  FadeInDown,
+  FadeOut,
+  LinearTransition,
+  ReduceMotion,
+  type LayoutAnimationFunction,
+} from 'react-native-reanimated';
 
-import { DURATION, EASE, motionIsReduced, REDUCE, REDUCE_NEVER, RISE, STAGGER } from './motion.js';
-import { enterPlan, fadePolicy, type FadePolicy } from './reduceMotion.js';
+import {
+  DURATION,
+  EASE,
+  motionIsReduced,
+  reducedMotionValue,
+  onReducedMotionChange,
+  RISE,
+  STAGGER,
+} from './motion.js';
+import { enterPlan } from './reduceMotion.js';
 
-/** The plan's fade policy as Reanimated's enum. `always` is what keeps a fade a fade. */
-function reduceMotionFor(fade: FadePolicy) {
-  return fade === 'always' ? REDUCE_NEVER : REDUCE;
-}
-
-/**
- * Fade in with a small rise; `index` staggers things that come together (subtly).
- *
- * With reduce motion on the rise is gone and the fade remains — same `DURATION.base` either
- * way, because the fade *replaces* the rise rather than standing in for nothing: the app
- * keeps one rhythm whether or not the setting is on, long enough to read as a cross-fade and
- * far short of a dissolve. The stagger stays too — a delay is timing, not movement.
- */
+/** A calm rise, with no transition or stagger under reduced motion. */
 export function riseIn(index = 0, rise: number = RISE) {
-  const delay = Math.min(index, 4) * STAGGER;
-  const plan = enterPlan(motionIsReduced(), Platform.OS);
+  const reduced = motionIsReduced();
+  const delay = reduced ? 0 : Math.min(index, 4) * STAGGER;
+  const plan = enterPlan(reduced, Platform.OS);
   if (!plan.moves)
-    return FadeIn.duration(DURATION.base)
+    return FadeIn.duration(reduced ? 0 : DURATION.base)
       .easing(EASE.standard)
       .delay(delay)
-      .reduceMotion(reduceMotionFor(plan.fade));
+      .reduceMotion(reduced ? ReduceMotion.Always : ReduceMotion.Never);
   return FadeInDown.duration(DURATION.base)
     .easing(EASE.standard)
     .delay(delay)
     .withInitialValues({ opacity: 0, transform: [{ translateY: rise }] })
-    .reduceMotion(reduceMotionFor(plan.fade));
+    .reduceMotion(reduced ? ReduceMotion.Always : ReduceMotion.Never);
 }
 
 /** A quiet fade in (no movement): what replaces something in place. */
 export function fadeIn(duration: number = DURATION.base) {
-  return FadeIn.duration(duration)
+  return FadeIn.duration(motionIsReduced() ? 0 : duration)
     .easing(EASE.standard)
-    .reduceMotion(reduceMotionFor(fadePolicy(Platform.OS)));
+    .reduceMotion(motionIsReduced() ? ReduceMotion.Always : ReduceMotion.Never);
 }
 
 /** A quiet fade out. */
 export function fadeOut(duration: number = DURATION.quick) {
-  return FadeOut.duration(duration)
+  return FadeOut.duration(motionIsReduced() ? 0 : duration)
     .easing(EASE.standard)
-    .reduceMotion(reduceMotionFor(fadePolicy(Platform.OS)));
+    .reduceMotion(motionIsReduced() ? ReduceMotion.Always : ReduceMotion.Never);
 }
 
 /**
@@ -68,6 +56,32 @@ export function fadeOut(duration: number = DURATION.quick) {
  * with no still equivalent — there is nothing to cross-fade to — so the system setting
  * decides and the row simply stands in its new place.
  */
-export const glide = LinearTransition.duration(DURATION.base)
+const glideBuilder = LinearTransition.duration(DURATION.base)
   .easing(EASE.standard)
-  .reduceMotion(REDUCE);
+  .reduceMotion(ReduceMotion.Never);
+const animatedGlide = glideBuilder.build();
+
+/** Read on the UI thread for every layout change, including after a live OS toggle. */
+const liveGlide: LayoutAnimationFunction = (values) => {
+  'worklet';
+  if (!reducedMotionValue.value) return animatedGlide(values);
+  return {
+    initialValues: {
+      originX: values.targetOriginX,
+      originY: values.targetOriginY,
+      width: values.targetWidth,
+      height: values.targetHeight,
+    },
+    animations: {},
+  };
+};
+
+// Web accepts predefined builders only and caches its System preference. Keep the
+// same builder identity while updating its explicit policy for the next layout change.
+if (Platform.OS === 'web') {
+  const syncGlide = () =>
+    glideBuilder.reduceMotion(motionIsReduced() ? ReduceMotion.Always : ReduceMotion.Never);
+  syncGlide();
+  onReducedMotionChange(syncGlide);
+}
+export const glide = Platform.OS === 'web' ? glideBuilder : liveGlide;

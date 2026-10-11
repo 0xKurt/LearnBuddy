@@ -83,13 +83,17 @@ export const Easing = {
 
 export type SharedValue<T> = { value: T; get: () => T; set: (next: T) => void };
 
-export function useSharedValue<T>(initial: T): SharedValue<T> {
+export function makeMutable<T>(initial: T): SharedValue<T> {
   const box = { value: initial } as SharedValue<T>;
   box.get = () => box.value;
   box.set = (next: T) => {
     box.value = next;
   };
   return box;
+}
+
+export function useSharedValue<T>(initial: T): SharedValue<T> {
+  return makeMutable(initial);
 }
 
 export function useAnimatedStyle<T>(build: () => T): T {

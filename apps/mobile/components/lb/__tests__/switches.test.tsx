@@ -7,7 +7,7 @@ import { act, fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useVoiceMode } from '../../../lib/speech/voiceMode.js';
-import { renderInApp } from '../../../testing/render.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
 import { ModeChoice } from '../LookChoice.js';
 import { ReadAloudSwitch } from '../ReadAloudSwitch.js';
 
@@ -22,6 +22,8 @@ describe('Dunkelmodus (issue #517)', () => {
     renderInApp(<ModeChoice />);
     const sw = screen.getByRole('switch', { name: 'Dunkelmodus' });
     expect(isOn(sw)).toBe(false);
+    expect(styleOf(sw).minHeight).toBe('44px');
+    expect(styleOf(sw).minWidth).toBe('44px');
     // No state word beside it: the old row said "Hell", then "Dunkel".
     expect(screen.queryByText('Hell')).toBeNull();
     act(() => {

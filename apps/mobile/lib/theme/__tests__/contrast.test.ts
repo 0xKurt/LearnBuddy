@@ -39,6 +39,7 @@ const TEXT: Array<[keyof Palette, keyof Palette]> = [
   ['ink', 'lavender'],
   ['ink', 'primaryLt'],
   ['paper', 'primary'],
+  ['onPrimary', 'primary'],
   // A waiting <Btn>'s muted skin (issue #97): the label must stay readable on the muted
   // fill. (The stepped-back ghost/danger label is `placeholder` on paper/bg — above.)
   ['ink2', 'canvas'],

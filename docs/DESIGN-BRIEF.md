@@ -13,6 +13,13 @@ A document for the designer. Engineering details live elsewhere; you don't need 
 
 ---
 
+## October 2026 mobile visual migration
+
+The accepted redesign and explicit owner decisions are recorded in
+[the migration ledger](mobile-redesign.md). During the staged rollout they govern
+Figtree typography, theme tokens, component presentation and reduced-motion
+behavior. Existing domain contracts and application flows remain authoritative.
+
 ## What we're building
 
 A mobile learning companion. Anyone — a school child, a teenager, a university student, an adult learning a new subject — photographs their learning material (a worksheet, a textbook page, a notebook entry) and the app turns it into a personal practice session. The learner is asked questions, answers by voice or by typing, gets gentle feedback and hints, and the app remembers what they got wrong so it can ask again at the right time.

@@ -1,0 +1,8 @@
+{
+  "issue": "#548",
+  "reason": "Keep the existing REDUCE and REDUCE_NEVER theme exports as compatibility aliases through the sequential redesign PRs; remove both unused aliases and this grant in the final dedicated alias-cleanup PR.",
+  "knip": [
+    "exports: apps/mobile/lib/theme/motion.ts: REDUCE",
+    "exports: apps/mobile/lib/theme/motion.ts: REDUCE_NEVER"
+  ]
+}
