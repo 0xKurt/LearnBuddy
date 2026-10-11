@@ -17,7 +17,7 @@ import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
-import { GRID_CHARS_MAX, twoColumnChoices } from '../ChoiceList.js';
+import { gridCharsMax, twoColumnChoices } from '../ChoiceList.js';
 import { SelectAllAnswer, toggle } from '../SelectAllAnswer.js';
 
 const VIEW = {
@@ -50,12 +50,12 @@ describe('ticking and unticking', () => {
 });
 
 describe('what counts as short', () => {
-  it('is the same in the app and in the contract the server checks against', () => {
-    expect(GRID_CHARS_MAX).toBe(SELECT_SHORT_CHARS);
+  it('uses a narrower visual budget without changing the server contract limit', () => {
+    expect(gridCharsMax()).toBeLessThanOrEqual(SELECT_SHORT_CHARS);
   });
 
   it('puts up to six short options two by two, but never four to choose one beyond four', () => {
-    const six = ['Genitiv', 'Dativ', 'Nominativ', 'Vokativ', 'Akkusativ', 'Ablativ'];
+    const six = ['eins', 'zwei', 'drei', 'vier', 'fünf', 'sechs'];
     expect(twoColumnChoices(six, 6)).toBe(true);
     expect(twoColumnChoices(six)).toBe(false);
     expect(twoColumnChoices([...six.slice(0, 3), 'Zwei unabhängige Bremsen'], 6)).toBe(false);

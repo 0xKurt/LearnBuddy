@@ -13,6 +13,7 @@
 // dann — lässt sie sich in sich selbst waagerecht schieben. Eine Zahlenmauer steht als
 // Mauer da: Reihe für Reihe mittig, Stein auf Stein.
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import {
   TABLE_ANSWER_MAX,
   TABLE_JOIN,
@@ -69,9 +70,9 @@ export function cellsFrom(kept: string, ids: ReadonlySet<string>): Record<string
 /** A column is never narrower than a touch target plus its padding … */
 const MIN_COL = TOUCH + SPACE.sm;
 /** … and a column with a word to type in has room for a word. */
-const MIN_WORD_COL = 76;
+const MIN_WORD_COL = PRACTICE.tableWordColumn;
 /** A brick of a number wall: wide enough for a three-digit number, never wider. */
-const BRICK = 64;
+const BRICK = PRACTICE.tableBrickWidth;
 
 /** "Prüfen": every gap filled; `shown` is her cells in reading order, for the thread. */
 export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<TableFillTaskView>) {
@@ -183,14 +184,7 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
   // What she reads: as large as what she types, and read out like any math text — a screen
   // reader walks the table cell by cell, the gaps named by their row and column.
   const shownText = (text: string, header: boolean) => (
-    <MathText
-      text={text}
-      style={[
-        TYPE.body,
-        // token-exempt: TYPE.body's size on a line one point tighter, so the rows stay compact
-        { lineHeight: 22, textAlign: 'center', fontWeight: header ? '700' : '400' },
-      ]}
-    />
+    <MathText text={text} style={[header ? TYPE.board : TYPE.tableCell, { textAlign: 'center' }]} />
   );
 
   const cols = Math.max(view.header?.length ?? 0, ...view.rows.map((r) => r.length));
@@ -205,10 +199,10 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
   const grid = (
     <View
       style={{
-        borderWidth: 1,
+        borderWidth: PRACTICE.border,
         borderColor: ink.gridStrong,
         // Concentric with the cells it holds (their corners plus the padding around them).
-        borderRadius: around(RADIUS.cell, SPACE.xs),
+        borderRadius: around(RADIUS.sm, SPACE.xs),
         overflow: 'hidden',
         // Wider than the screen only when the columns need it; then the table scrolls.
         width: tooWide ? needed.reduce((a, b) => a + b, 0) : '100%',
@@ -225,7 +219,7 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
                 minWidth: 0,
                 padding: SPACE.xs,
                 justifyContent: 'center',
-                borderRightWidth: c === cols - 1 ? 0 : 1,
+                borderRightWidth: c === cols - 1 ? 0 : PRACTICE.border,
                 borderColor: ink.gridStrong,
               }}
             >
@@ -254,7 +248,7 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
                 minHeight: TOUCH + SPACE.sm,
                 padding: SPACE.xs,
                 justifyContent: 'center',
-                borderRightWidth: c === cols - 1 ? 0 : 1,
+                borderRightWidth: c === cols - 1 ? 0 : PRACTICE.border,
                 borderColor: ink.gridStrong,
               }}
             >
@@ -278,8 +272,8 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
                 width: brickWidth,
                 minHeight: TOUCH,
                 justifyContent: 'center',
-                borderRadius: RADIUS.cell,
-                borderWidth: isGap(cell) ? 0 : 1,
+                borderRadius: RADIUS.sm,
+                borderWidth: isGap(cell) ? 0 : PRACTICE.border,
                 borderColor: ink.gridStrong,
                 backgroundColor: isGap(cell) ? 'transparent' : palette.lavender,
               }}

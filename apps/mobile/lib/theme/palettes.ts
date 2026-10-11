@@ -28,6 +28,8 @@ export type Palette = {
   hairlineStrong: string;
   /** Text and icons on the primary action (≥ 4.5:1). */
   onPrimary: string;
+  onSuccess: string;
+  onDanger: string;
   primary: string;
   primaryDk: string;
   primaryLt: string;
@@ -129,6 +131,8 @@ const pastellSoft: Palette = {
   scrim: SCRIM,
   hairlineStrong: 'rgba(60,40,120,0.16)',
   onPrimary: '#ffffff',
+  onSuccess: '#ffffff',
+  onDanger: '#ffffff',
   primary: '#6a48d7',
   primaryDk: '#5335b5',
   primaryLt: '#ebe5fc',
@@ -223,6 +227,8 @@ const night: Palette = {
   scrim: SCRIM,
   hairlineStrong: 'rgba(220,210,255,0.20)',
   onPrimary: '#191627',
+  onSuccess: '#191627',
+  onDanger: '#191627',
   primary: '#9d82f5',
   primaryDk: '#b9a4ff',
   primaryLt: '#332c55',

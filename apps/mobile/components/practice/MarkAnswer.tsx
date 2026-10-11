@@ -8,8 +8,8 @@
 // Farbe ist nie das einzige Signal: ein markiertes Wort ist unterstrichen und trägt mit
 // Kategorien deren Ziffer (①②③, dieselbe wie auf ihrer Schaltfläche); darunter steht in Worten,
 // was markiert ist („Subjekt: die alte Oma"). Ein gesetztes Komma ist ein Komma hinter dem Wort,
-// eine Silbengrenze ein Bindestrich hinter dem Buchstaben. Jede Stelle ist ein `<Btn>` mit
-// `checked` — ein Screenreader hört „Hund, markiert" bzw. „Komma nach „ankamen"", angekreuzt.
+// eine Silbengrenze ein Bindestrich hinter dem Buchstaben. Wörter und Kommas sind `<Btn>` mit
+// `checked`; Silben verwenden eine einstellbare Wortfläche mit angesagter Grenze und Zustand.
 //
 // Platz (Regel 16, 360×740): jedes Ziel ist ein Btn der kleinen Größe, also 44 pt hoch, und nie
 // schmaler als 44 pt. Wörter stehen wie Text auf einer ruhigen Fläche — dieselbe wie ein Wort zum
@@ -27,6 +27,7 @@
 // wie über einer Lesefrage (`LineText` aus PassagePanel), jede Zeile ein Btn. Über der Frage
 // steht er dann nicht noch einmal (der Server schickt ihn dort erst, wenn die Frage zu ist).
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import {
   cutId,
   gapId,
@@ -39,9 +40,11 @@ import {
   type MarkTaskView,
   type MarkWord,
 } from '@learnbuddy/shared-types/contracts';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { Platform, ScrollView, Text, View } from 'react-native';
 
+import { TapSurface } from '../lb/TapSurface.js';
 import { useDraft } from '../../lib/drafts.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
@@ -60,15 +63,15 @@ import type { FormProps } from './formProps.js';
  */
 const WORD_PAD = SPACE.xs;
 /** The calm surface the words of a text, or the letters of a word, stand on. */
-const SURFACE = { paddingHorizontal: SPACE.sm, borderRadius: RADIUS.frame } as const;
+const SURFACE = { paddingHorizontal: SPACE.sm, borderRadius: RADIUS.md } as const;
 /**
  * One letter of a word to split: the longest word (MARK_SYLLABLE_LETTERS_MAX) fills a 360-pt
  * phone in one row with these cells — narrower than 44 pt, but the cells touch, so every point of
  * the row is a target (issue #234: a word is never wrapped, it must read as one word).
  */
-const LETTER_CELL = 30; // token-exempt: a letter's width, measured against MARK_SYLLABLE_LETTERS_MAX
+const LETTER_CELL = PRACTICE.markLetterCell;
 /** The underline under a marked word: a bar, so it reads the same on every platform. */
-const UNDERLINE = 3; // token-exempt: a stroke, not a gap — thick enough to see at arm's length
+const UNDERLINE = PRACTICE.markUnderline;
 /**
  * A Belegstelle's text never shrinks below four lines' targets: it scrolls in its box, and the
  * conversation above gives way first (the answer shell's `keeps`).
@@ -148,7 +151,7 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Mar
               first "Prüfen": then Buddy's reply says how it went, and on 360×740 it needs the
               room (the same as the one line of a select-all task, #240). */}
           {checkedOnce ? null : (
-            <Text testID="mark-how" style={[TYPE.small, { color: palette.ink2 }]}>
+            <Text testID="mark-how" style={[TYPE.meta, { color: palette.ink2 }]}>
               {t(categories.length > 0 ? 'mark.how_sorted' : `mark.how_${view.mode}`)}
             </Text>
           )}
@@ -175,7 +178,7 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Mar
             <Text
               testID="mark-summary"
               numberOfLines={3}
-              style={[TYPE.small, { color: palette.ink2 }]}
+              style={[TYPE.meta, { color: palette.ink2 }]}
             >
               {categories.length > 0
                 ? said
@@ -231,7 +234,7 @@ function Words({ view, marks, categories, disabled, tap }: Own & { view: MarkTas
             key={w.id}
             size="sm"
             bare
-            variant={mark ? 'soft' : 'ghost'}
+            variant={mark ? 'picked' : 'tile'}
             checked={mark !== undefined}
             disabled={disabled}
             onPress={() => tap(at)}
@@ -293,16 +296,12 @@ function WordLabel({
             }}
           />
         </View>
-        {comma ? (
-          <Text style={[TYPE.body, { color: palette.primaryDk, fontWeight: '800' }]}>,</Text>
-        ) : null}
+        {comma ? <Text style={[TYPE.markPunctuation, { color: palette.primaryDk }]}>,</Text> : null}
         {word.tail ? <Text style={[TYPE.body, { color: palette.ink }]}>{word.tail}</Text> : null}
       </View>
       {digit === null ? null : (
         // A no-break space keeps the row on an unmarked tile: an empty text has no height.
-        <Text style={[TYPE.label, { color: palette.ink, fontWeight: '700' }]}>
-          {digit || '\u00A0'}
-        </Text>
+        <Text style={[TYPE.label, { color: palette.ink }]}>{digit || '\u00A0'}</Text>
       )}
     </View>
   );
@@ -337,7 +336,7 @@ function Lines({ lines, marks, disabled, tap }: Own & { lines: readonly string[]
       style={{
         flexGrow: 0,
         flexShrink: 1,
-        borderRadius: RADIUS.frame,
+        borderRadius: RADIUS.md,
         backgroundColor: palette.paper,
       }}
       contentContainerStyle={{ paddingVertical: SPACE.xs }}
@@ -353,7 +352,7 @@ function Lines({ lines, marks, disabled, tap }: Own & { lines: readonly string[]
             size="sm"
             bare
             full
-            variant={marked ? 'soft' : 'ghost'}
+            variant={marked ? 'picked' : 'tile'}
             checked={marked}
             disabled={disabled}
             onPress={() => tap(at)}
@@ -373,49 +372,100 @@ function Lines({ lines, marks, disabled, tap }: Own & { lines: readonly string[]
  * word. Each letter but the last is a target the full 44 pt high and one letter cell wide; the
  * cells touch, so there is no dead space between them. A cut stands as a bar between the letters.
  */
-function Syllables({ words, marks, disabled, tap }: Own & { words: readonly MarkWord[] }) {
-  const { palette } = useTheme();
-  const { t } = useTranslation('practice');
+function Syllables({ words, ...own }: Own & { words: readonly MarkWord[] }) {
   return (
     <View testID="mark-text" style={{ gap: SPACE.xs }}>
-      {words.map((w, wi) => {
-        const letters = [...w.text];
-        return (
-          <View
-            key={w.id}
-            style={[
-              SURFACE,
-              { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: palette.canvas },
-            ]}
-          >
-            {letters.map((ch, li) => {
-              const at = cutId(wi, li + 1);
-              const cut = marks.some((m) => m.at === at);
-              const cell = <LetterCell letter={ch} cut={cut} />;
-              if (li === letters.length - 1) return <View key={at}>{cell}</View>;
-              return (
-                <Btn
-                  key={at}
-                  size="sm"
-                  bare
-                  variant="ghost"
-                  checked={cut}
-                  disabled={disabled}
-                  onPress={() => tap(at)}
-                  accessibilityLabel={t('mark.cut', {
-                    before: letters.slice(0, li + 1).join(''),
-                    word: w.text,
-                  })}
-                  label={cell}
-                >
-                  {ch}
-                </Btn>
-              );
-            })}
-          </View>
-        );
-      })}
+      {words.map((word, wi) => (
+        <SyllableWord key={word.id} word={word} wi={wi} {...own} />
+      ))}
     </View>
+  );
+}
+
+/** A readable word is one touch board; arrows/custom actions choose a boundary. */
+function SyllableWord({ word, wi, marks, disabled, tap }: Own & { word: MarkWord; wi: number }) {
+  const { palette } = useTheme();
+  const { t } = useTranslation('practice');
+  const letters = [...word.text];
+  const max = letters.length - 1;
+  const [boundary, setBoundary] = useState(1);
+  const move = (by: number) => {
+    if (!disabled) setBoundary((now) => Math.max(1, Math.min(max, now + by)));
+  };
+  const toggle = () => {
+    if (!disabled) tap(cutId(wi, boundary));
+  };
+  const selected = marks.some((mark) => mark.at === cutId(wi, boundary));
+  const label = t('mark.cut', { before: letters.slice(0, boundary).join(''), word: word.text });
+  const status = t(selected ? 'mark.cut_set' : 'mark.cut_unset');
+  const drawing = (
+    <View
+      aria-hidden
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[SURFACE, { flexDirection: 'row', backgroundColor: palette.canvas }]}
+    >
+      {letters.map((letter, li) => (
+        <LetterCell
+          key={li}
+          letter={letter}
+          cut={marks.some((mark) => mark.at === cutId(wi, li + 1))}
+        />
+      ))}
+    </View>
+  );
+  if (max < 1)
+    return (
+      <View accessible accessibilityLabel={word.text}>
+        {drawing}
+      </View>
+    );
+  return (
+    <TapSurface
+      style={{ alignSelf: 'flex-start', minWidth: TOUCH, minHeight: TOUCH }}
+      accessibilityRole="adjustable"
+      accessibilityLabel={label}
+      accessibilityHint={t(
+        Platform.OS === 'web' ? 'mark.boundary_hint' : 'mark.boundary_hint_native',
+      )}
+      accessibilityValue={{ min: 1, max, now: boundary, text: status }}
+      aria-valuemin={1}
+      aria-valuemax={max}
+      aria-valuenow={boundary}
+      aria-valuetext={`${label}. ${status}`}
+      accessibilityActions={[
+        { name: 'increment', label: t('mark.boundary_next') },
+        { name: 'decrement', label: t('mark.boundary_previous') },
+        { name: 'activate', label: t('mark.boundary_toggle') },
+      ]}
+      onAccessibilityAction={(event) => {
+        const action = event.nativeEvent.actionName;
+        if (action === 'increment') move(1);
+        else if (action === 'decrement') move(-1);
+        else if (action === 'activate') toggle();
+      }}
+      onKeyDown={(event) => {
+        const key = event.nativeEvent.key;
+        if (['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown', ' ', 'Enter'].includes(key ?? '')) {
+          event.preventDefault();
+          if (key === 'ArrowRight' || key === 'ArrowUp') move(1);
+          else if (key === 'ArrowLeft' || key === 'ArrowDown') move(-1);
+          else toggle();
+        }
+      }}
+      disabled={disabled}
+      onTap={(point) => {
+        if (disabled) return;
+        if (point === null) toggle();
+        else {
+          const at = Math.max(1, Math.min(max, Math.floor((point.x - SPACE.sm) / LETTER_CELL) + 1));
+          setBoundary(at);
+          tap(cutId(wi, at));
+        }
+      }}
+    >
+      {drawing}
+    </TapSurface>
   );
 }
 
@@ -424,11 +474,7 @@ function LetterCell({ letter, cut }: { letter: string; cut: boolean }) {
   const { palette } = useTheme();
   return (
     <View style={{ width: LETTER_CELL, minHeight: TOUCH, justifyContent: 'center' }}>
-      <Text
-        style={[TYPE.displaySm, { textAlign: 'center', color: palette.ink, fontWeight: '500' }]}
-      >
-        {letter}
-      </Text>
+      <Text style={[TYPE.markLetter, { textAlign: 'center', color: palette.ink }]}>{letter}</Text>
       {cut ? (
         <View
           testID="syllable-cut"

@@ -131,8 +131,10 @@ Numbers are stable: code and docs cite them ("CLAUDE.md rule 16"). New rules are
 18. **Safeguarding is a code path wherever she writes free text** (chat, practice tutor, roleplay):
     distress gets the fixed help answer by age (`i18n/safeguarding.ts`), never model words (#389).
 19. **Same function → same component, same place, everywhere** (owner 04.10.). One text input in
-    the whole app (`InputBar`, #365). In practice the answer sits at the bottom, directly above the
-    bar, and "Prüfen" is the bar's action (#386, #395; `answerShell`/`oneBar`/`oneInput` tests).
+    the whole app (`InputBar`, #365). In practice the answer board sits directly below the paper
+    QuestionCard; free room follows the board. Composer stays pinned at the bottom, and "Prüfen"
+    is its action. Selection saves a draft until Check submits it (mobile redesign, owner 11.10.;
+    `answerShell`/`oneBar`/`oneInput` tests and real phone geometry in `tests/web/fit.ts`).
     One control per function, in the same place in chat and practice. No new icon, toggle or
     pattern where one exists.
 

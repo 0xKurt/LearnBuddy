@@ -133,9 +133,8 @@ export function linksText(view: MatchTaskView, links: readonly Link[]): string {
 
 /**
  * The words on an element: a caption's size on a tighter line, so a tile of a few words stays
- * one touch target tall. token-exempt: 14/18, between TYPE.small and TYPE.body.
+ * one touch target tall. token-exempt: 14/18, between TYPE.meta and TYPE.body.
  */
-const ELEMENT_TEXT = { fontSize: 14, lineHeight: 18 } as const;
 
 /** "Prüfen": everything linked; `shown` is her links in words, for the thread. */
 export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<MatchTaskView>) {
@@ -174,7 +173,7 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
     return (
       <View key={id} style={{ maxWidth: '100%' }}>
         <Btn
-          variant={isHeld ? 'primary' : group ? 'soft' : 'outline'}
+          variant={isHeld ? 'picked' : group ? 'placed' : 'tile'}
           size="sm"
           compact
           disabled={disabled}
@@ -194,9 +193,8 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
               style={{
                 paddingVertical: SPACE.xs,
                 textAlign: 'center',
-                color: isHeld ? palette.paper : group ? palette.primaryDk : palette.ink,
-                ...ELEMENT_TEXT,
-                fontWeight: '600',
+                ...TYPE.boardCompact,
+                color: isHeld ? palette.primaryDk : group ? palette.primaryDk : palette.ink,
               }}
             />
           }
@@ -212,7 +210,7 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
     <MathText
       text={words}
       accessible={false}
-      style={{ flex: 1, paddingVertical: SPACE.xs, color, ...ELEMENT_TEXT, fontWeight: '600' }}
+      style={{ flex: 1, paddingVertical: SPACE.xs, ...TYPE.boardCompact, color }}
     />
   );
 
@@ -223,7 +221,7 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
     return (
       <Btn
         key={id}
-        variant={isHeld ? 'primary' : 'soft'}
+        variant={isHeld ? 'picked' : 'tile'}
         size="sm"
         full
         grow
@@ -234,7 +232,7 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
           isHeld ? t('match.held', { text: me }) : t('match.no_partner', { text: me })
         }
         accessibilityHint={freeHint(id, side)}
-        label={tileText(text.get(id) ?? '', isHeld ? palette.paper : palette.primaryDk)}
+        label={tileText(text.get(id) ?? '', isHeld ? palette.primaryDk : palette.primaryDk)}
       >
         {me}
       </Btn>
@@ -254,7 +252,7 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
     return (
       <Btn
         key={link.left}
-        variant="outline"
+        variant="placed"
         size="sm"
         full
         compact
@@ -291,12 +289,12 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
           alignItems: 'center',
           gap: SPACE.sm,
           padding: SPACE.xs,
-          borderRadius: RADIUS.frame,
+          borderRadius: RADIUS.md,
           backgroundColor: palette.canvas,
         }}
       >
         <Btn
-          variant="soft"
+          variant="slot"
           size="sm"
           compact
           // A group only receives: without something held there is nothing to put in it.
@@ -312,9 +310,8 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
               accessible={false}
               style={{
                 paddingVertical: SPACE.xs,
+                ...TYPE.boardCompact,
                 color: heldIsLeft && !disabled ? palette.primaryDk : palette.ink2,
-                ...ELEMENT_TEXT,
-                fontWeight: '700',
               }}
             />
           }
@@ -337,7 +334,7 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
           <View style={{ gap: SPACE.sm }}>
             {/* The one line of instruction, only until she has started (like an order's). */}
             {started ? null : (
-              <Text style={[TYPE.small, { color: palette.ink2 }]}>
+              <Text style={[TYPE.meta, { color: palette.ink2 }]}>
                 {t(groups ? 'match.how_groups' : 'match.how_pairs')}
               </Text>
             )}

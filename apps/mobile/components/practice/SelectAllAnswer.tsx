@@ -1,5 +1,5 @@
 // Mehrere richtige Antworten (issue #240): „Kreuze alle richtigen an“. Dieselben Kacheln wie bei
-// der Auswahl mit einer Antwort (`ChoiceList`, `AnswerTile`), nur ist jede ein Kontrollkästchen:
+// der Auswahl mit einer Antwort (`ChoiceList`, `Option`), nur ist jede ein Kontrollkästchen:
 // ein Tipp kreuzt an, ein zweiter nimmt das Kreuz wieder weg (rückgängig statt bestätigen,
 // docs/UX-PRINCIPLES.md). Abgeschickt wird mit „Prüfen“ in der Antworthülle (`AnswerShell`,
 // issue #310) — beurteilt auf dem Server, als Menge und ohne Modell
@@ -61,7 +61,7 @@ export function SelectAllAnswer({
       answer={
         <View style={{ gap: SPACE.sm }}>
           {checkedOnce ? null : (
-            <Text style={[TYPE.small, { color: palette.ink2 }]}>{t('select.several')}</Text>
+            <Text style={[TYPE.meta, { color: palette.ink2 }]}>{t('select.several')}</Text>
           )}
           <ChoiceList
             choices={view.options.map((o) => o.text)}

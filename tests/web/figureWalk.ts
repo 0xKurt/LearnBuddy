@@ -91,7 +91,8 @@ export async function typed(page: Page, text: string): Promise<void> {
 
 /** A tapped option that code grades right, then on to the next question. */
 export async function chosen(page: Page, option: string): Promise<void> {
-  await page.getByRole('button', { name: option, exact: true }).click();
+  await page.getByRole('radio', { name: option, exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 }

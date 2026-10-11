@@ -81,7 +81,7 @@ export function WordSheet({ word, sessionId, itemId, lang, onClose }: Props) {
   return (
     <Sheet visible title={word.text} closeLabel={t('common:actions.close')} onClose={close}>
       <View style={{ gap: SPACE.md }}>
-        <Text style={TYPE.small}>{t('practice:speak.word_hint')}</Text>
+        <Text style={TYPE.meta}>{t('practice:speak.word_hint')}</Text>
         <View style={{ flexDirection: 'row', gap: SPACE.sm, flexWrap: 'wrap' }}>
           <ListenButton source={{ text: word.text, lang }} slow disabled={recording} />
         </View>
@@ -111,13 +111,13 @@ export function WordSheet({ word, sessionId, itemId, lang, onClose }: Props) {
             <Text
               style={[
                 TYPE.body,
-                { fontWeight: '700', color: tried.ok ? palette.successText : palette.warningText },
+                { ...TYPE.title, color: tried.ok ? palette.successText : palette.warningText },
               ]}
             >
               {t(tried.ok ? 'practice:speak.word_good' : 'practice:speak.word_again')}
             </Text>
             {tried.heard ? (
-              <Text style={TYPE.small}>{t('practice:speak.heard', { text: tried.heard })}</Text>
+              <Text style={TYPE.meta}>{t('practice:speak.heard', { text: tried.heard })}</Text>
             ) : null}
           </View>
         ) : null}

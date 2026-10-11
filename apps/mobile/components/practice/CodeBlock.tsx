@@ -44,7 +44,7 @@ export function CodeBlock({ figure, maxHeight }: Props) {
       accessibilityLabel={label}
       style={{
         backgroundColor: palette.canvas,
-        borderRadius: RADIUS.frame,
+        borderRadius: RADIUS.md,
         maxHeight,
         overflow: 'hidden',
       }}
@@ -60,7 +60,13 @@ export function CodeBlock({ figure, maxHeight }: Props) {
               ))}
             </View>
           ) : null}
-          <ScrollView horizontal bounces={false} showsHorizontalScrollIndicator>
+          <ScrollView
+            horizontal
+            focusable
+            accessibilityLabel={label}
+            bounces={false}
+            showsHorizontalScrollIndicator
+          >
             <View>
               {figure.lines.map((line, i) => (
                 <Text key={i} style={TYPE.code}>

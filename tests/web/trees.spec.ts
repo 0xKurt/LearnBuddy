@@ -34,7 +34,8 @@ test('trees, pedigrees and automata: read, answered, graded by code', async ({ p
   await expect(page.getByText('Welchen Genotyp hat Person 4?')).toBeVisible();
   await bothSchemes(page, '93-pedigree-genotype', 'question-figure');
   // The genotype option is read with its case as words (#352).
-  await page.getByRole('button', { name: 'groß A, klein a', exact: true }).click();
+  await page.getByRole('radio', { name: 'groß A, klein a', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 

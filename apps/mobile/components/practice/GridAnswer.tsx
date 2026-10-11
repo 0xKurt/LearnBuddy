@@ -14,6 +14,7 @@
 // nie abgeschnitten — nie unter dem kleinsten Kästchen (`gridMinHeight`, `keeps`). Ihr Stand liegt im Entwurf
 // (`lib/drafts.ts`): er übersteht hell/dunkel und einen Neustart.
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import { gridDrawnText, type GridDrawTaskView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -56,7 +57,7 @@ const UNBOUNDED = 10_000;
  * The line under the paper: one line of meta text, the gap above it and a little air under it — at
  * exactly a line's height the web cut its descenders off (tests/web/grid.spec.ts, 249c at 360).
  */
-const wordsRoom = () => SPACE.sm + TYPE.small.lineHeight + SPACE.xs;
+const wordsRoom = () => SPACE.sm + TYPE.meta.lineHeight + SPACE.xs;
 
 /**
  * A bar chart has no line under it: its values stand in the question and on its scale, and the line
@@ -99,7 +100,9 @@ export function GridAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Gri
     announce(drawnWords(after.now, view).join(', '));
   };
 
-  const icon = (name: IconName) => (color: string) => <Icon name={name} size={24} color={color} />;
+  const icon = (name: IconName) => (color: string) => (
+    <Icon name={name} size={PRACTICE.actionIcon} color={color} />
+  );
   const chosen = now.selected !== null;
   const arrow = (id: string, face: IconName, dx: number, dy: number): Key => ({
     id,
@@ -161,7 +164,7 @@ export function GridAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Gri
             <Text
               testID="grid-words"
               numberOfLines={1}
-              style={[TYPE.small, { color: palette.ink2, textAlign: 'center', flexShrink: 0 }]}
+              style={[TYPE.meta, { color: palette.ink2, textAlign: 'center', flexShrink: 0 }]}
             >
               {line}
             </Text>

@@ -16,12 +16,23 @@ const ROWS = 'Welche Rechnung passt zu 3 Reihen mit je 4 Punkten?';
 const SIMILAR = 'Welche Rechnung passt zu 5 Reihen mit je 2 Punkten?';
 const RIGHT_REASON = 'Weil gleich große Reihen ein Vielfaches derselben Anzahl sind.';
 
-const option = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
+const option = (page: Page, name: string) => page.getByRole('radio', { name, exact: true });
 const tip = (page: Page) => page.getByRole('button', { name: 'Einen Tipp bekommen' });
 
 /** The fill of the Btn's inner View (the Pressable carries none, CLAUDE.md rule 13). */
 const fillOf = (page: Page) =>
-  tip(page).evaluate((el) => getComputedStyle(el.firstElementChild as Element).backgroundColor);
+  tip(page).evaluate((el) => {
+    const frame = [...el.querySelectorAll('*')].find((node) => {
+      const style = getComputedStyle(node);
+      return (
+        parseFloat(style.borderRadius) > 0 &&
+        style.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+        style.backgroundColor !== 'transparent'
+      );
+    });
+    if (!frame) throw new Error('Hint button has no painted frame');
+    return getComputedStyle(frame).backgroundColor;
+  });
 
 /**
  * Practice on "Malnehmen": two misses, the third, „Warum stimmt das?", the similar task next. A
@@ -41,8 +52,10 @@ async function practise(page: Page, scheme: 'light' | 'dark'): Promise<void> {
   await page.waitForTimeout(500);
   const quiet = await fillOf(page);
   await option(page, '3 + 4').click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Noch nicht ganz – probier', { exact: false })).toBeVisible();
   await option(page, '4 − 3').click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Schau dir die Punkte genau an.')).toBeVisible();
   // ── two misses: „Tipp" stands out, the same chip ──
   await expect.poll(() => fillOf(page)).not.toBe(quiet);
@@ -50,12 +63,14 @@ async function practise(page: Page, scheme: 'light' | 'dark'): Promise<void> {
 
   // ── the third miss: the worked solution, then „Warum stimmt das?" ──
   await option(page, '4 + 4').click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Drei Reihen mit je vier Punkten', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Warum stimmt das?' }).click();
-  await expect(page.getByRole('button', { name: RIGHT_REASON })).toBeVisible();
+  await expect(page.getByRole('radio', { name: RIGHT_REASON })).toBeVisible();
   await expect(page.getByText('Welcher Grund stimmt?')).toBeVisible();
   await shot(page, `388b-why-reasons${night}`);
-  await page.getByRole('button', { name: RIGHT_REASON }).click();
+  await page.getByRole('radio', { name: RIGHT_REASON }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText(`Genau – ${RIGHT_REASON}`)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Warum stimmt das?' })).toHaveCount(0);
   await shot(page, `388c-why-answered${night}`);
@@ -89,10 +104,13 @@ test('help at a question: Tipp offered, similar task, „Warum stimmt das?", the
   await expect(page.getByText('schreib einfach', { exact: false })).toHaveCount(0);
   await bothSchemes(page, '388e-test-line');
   await option(page, '3 + 4').click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await option(page, '12').click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await option(page, '5 · 2').click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Probetest geschafft!')).toBeVisible();
   await expect(page.getByText('Drei Reihen mit je vier Punkten', { exact: false })).toBeVisible();

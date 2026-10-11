@@ -7,19 +7,18 @@
 import type { Figure, ItemImage, ItemView, TaskPartView } from '@learnbuddy/shared-types/contracts';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View, type TextStyle } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { FIGURE_CHROME } from '../../lib/math/figureScale.js';
 import { useDrawingNatural } from '../../lib/math/figureSizing.js';
 import { fillableAnswer } from '../../lib/math/prompt.js';
 import { formDensity } from '../../lib/keyboard.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
-import { RADIUS } from '../../lib/theme/radius.js';
-import { PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
+import { CARD_PAD as CARD_PADDING, PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { BuddyOrb } from '../lb/BuddyOrb.js';
-import { Card } from '../lb/Card.js';
+import { QuestionCard as PresentationCard } from '../lb/QuestionCard.js';
+import { PRACTICE } from '../../lib/theme/practice.js';
 import { Progress } from '../lb/Progress.js';
 import { ReadAgain } from '../lb/ReadAgain.js';
 import { MathText } from '../math/MathText.js';
@@ -115,6 +114,7 @@ export function ProgressRow({
 }
 
 type QuestionProps = {
+  extra?: ReactNode;
   /** May contain inline math between dollar signs ($\frac{3}{4}$). */
   prompt: string;
   topic: string | null;
@@ -171,23 +171,17 @@ type QuestionProps = {
  * How tall a reading text may stand before it scrolls in itself: a good quarter of what she sees —
  * eight lines on 360×740, with the question, the answer and "Prüfen" still on screen (rule 16).
  */
-const PASSAGE_SHARE = 0.26;
+const PASSAGE_SHARE = PRACTICE.passageShare;
 /**
  * The same above an answer board, and in a short window — while she types, the keyboard takes up to half of what she sees
  * (on Android the window itself shrinks, adjustResize), and the field must stay above it: two
  * or three lines of the text, which scrolls on, and folds away with one tap.
  */
-const PASSAGE_SHARE_SHORT = 0.15;
+const PASSAGE_SHARE_SHORT = PRACTICE.passageShareShort;
 /** The card's padding, and the gap between the prompt and the drawing. */
-const CARD_PAD = 18;
 const FIGURE_GAP = SPACE.md;
-/**
- * The smaller prompt (`dense`, while she types): a step below TYPE.question, so the board keeps
- * its room. token-exempt: 18/25, between TYPE.title and TYPE.prompt.
- */
-const SMALL_QUESTION: TextStyle = { fontSize: 18, lineHeight: 25, fontWeight: '500' };
-
 export function QuestionCard({
+  extra,
   prompt,
   topic,
   figure = null,
@@ -196,7 +190,7 @@ export function QuestionCard({
   fromBuddy = false,
   answer,
   figureMaxHeight,
-  imageMaxHeight = 180,
+  imageMaxHeight = PRACTICE.imageHeight,
   minHeight,
   dense = false,
   stimulus,
@@ -213,7 +207,7 @@ export function QuestionCard({
   // While she types the card's padding steps down to the field's: on 360×440 a three-line prompt,
   // its folded drawing and the bar with its math keys ran 7 pt past the window and the keys stood
   // cut (issue #419, `cutControls`).
-  const pad = typing ? SPACE.md : CARD_PAD;
+  const pad = dense || typing ? CARD_PADDING.snug : CARD_PADDING.base;
   // And the prompt steps down to the smaller size (`dense`), as the drawing folds (issue #484): on
   // 360×440 a four-line prompt from Buddy over the net of a cylinder, its folded drawing and the bar
   // with its math keys ran 38 pt past the window — the question never scrolls, so the keys and the
@@ -257,7 +251,12 @@ export function QuestionCard({
     grown && headHeight > 0 ? cardMin - 2 * pad - headHeight - FIGURE_GAP - FIGURE_CHROME : 0;
   const figureMax = figureRoom > (figureMaxHeight ?? 0) ? figureRoom : figureMaxHeight;
   return (
-    <Card tone="lavender" padding={pad} radius={24} style={grown ? { minHeight: cardMin } : null}>
+    <PresentationCard
+      testID="question-card"
+      extra={extra}
+      compact={small}
+      style={grown ? { minHeight: cardMin } : null}
+    >
       <View style={grown ? { flexGrow: 1 } : null}>
         {passage ? (
           <PassagePanel passage={passage} maxHeight={Math.round(viewHeight * passageShare)} />
@@ -274,7 +273,7 @@ export function QuestionCard({
                 marginBottom: SPACE.sm,
               }}
             >
-              {fromBuddy ? <FromBuddyTag label={t('origin_buddy')} /> : null}
+              {fromBuddy ? <Text style={TYPE.meta}>{t('origin_buddy')}</Text> : null}
               {/* One line, never a second (it would cost the card a line, issue #310): a long
                   topic ends in "…" — the header's title names the run, a screen reader the rest. */}
               {part ? (
@@ -285,10 +284,7 @@ export function QuestionCard({
               ) : shownTopic ? (
                 <Text
                   numberOfLines={1}
-                  style={[
-                    TYPE.small,
-                    { color: palette.ink2, fontWeight: '600', flex: 1, minWidth: 0 },
-                  ]}
+                  style={[TYPE.metaStrong, { color: palette.ink2, flex: 1, minWidth: 0 }]}
                 >
                   {shownTopic}
                 </Text>
@@ -310,7 +306,7 @@ export function QuestionCard({
               // A fraction in the question sits in its sentence (issue #288).
               inlineFractions
               accessibilityRole="header"
-              style={small ? [TYPE.title, SMALL_QUESTION] : TYPE.question}
+              style={small ? TYPE.questionCompact : TYPE.question}
             />
           </ReadAgain>
         </View>
@@ -332,7 +328,7 @@ export function QuestionCard({
           </View>
         ) : null}
       </View>
-    </Card>
+    </PresentationCard>
   );
 }
 
@@ -347,7 +343,7 @@ function PartSteps({ part, label }: { part: TaskPartView; label: string }) {
       testID="task-part-steps"
       accessibilityLabel={label}
       numberOfLines={1}
-      style={[TYPE.small, { flex: 1, minWidth: 0, color: palette.ink3, fontWeight: '600' }]}
+      style={[TYPE.metaStrong, { flex: 1, minWidth: 0, color: palette.ink3 }]}
     >
       {part.letters.map((letter, i) => (
         <Text key={letter} style={letter === part.part ? { color: palette.primaryDk } : null}>
@@ -356,40 +352,5 @@ function PartSteps({ part, label }: { part: TaskPartView; label: string }) {
         </Text>
       ))}
     </Text>
-  );
-}
-
-/** "Frage von Buddy": a small white pill with Buddy's orb, so it reads as his at a glance. */
-function FromBuddyTag({ label }: { label: string }) {
-  const { palette } = useTheme();
-  return (
-    <View
-      accessibilityRole="text"
-      accessibilityLabel={label}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        alignSelf: 'flex-start',
-        gap: 6, // token-exempt: the name close beside the orb
-        backgroundColor: palette.paper,
-        borderRadius: RADIUS.round,
-        paddingLeft: SPACE.xs,
-        paddingRight: SPACE.md,
-        paddingVertical: SPACE.xs,
-      }}
-    >
-      <BuddyOrb size={18} />
-      <Text
-        style={{
-          color: palette.ink,
-          // token-exempt: TYPE.label's size on a tighter line, the pill no taller than the orb's 18
-          fontSize: 13,
-          lineHeight: 17, // token-exempt: the tight line (above)
-          fontWeight: '600',
-        }}
-      >
-        {label}
-      </Text>
-    </View>
   );
 }

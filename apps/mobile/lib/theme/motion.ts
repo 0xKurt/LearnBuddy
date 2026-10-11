@@ -11,6 +11,8 @@ import { Easing, makeMutable, ReduceMotion } from 'react-native-reanimated';
 
 export const DURATION = {
   quick: 140,
+  reexplainArrival: 350,
+  reexplainReply: 200,
   base: 220,
   gentle: 420,
   voicePulse: 1200,

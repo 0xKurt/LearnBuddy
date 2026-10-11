@@ -158,3 +158,16 @@ it('advances a closed question from the same primary slot', () => {
   fireEvent.click(button);
   expect(next).toHaveBeenCalledOnce();
 });
+
+it('retains the optional conversation start beside a drafted selection Check', () => {
+  useVoiceMode.setState({ readAloud: false, conversation: false });
+  renderInApp(<Asking action={{ ...BOARD, canTalk: true }} />);
+  const check = screen.getByRole('button', { name: 'Prüfen' });
+  const wave = screen.getByRole('button', { name: 'Mit Buddy sprechen' });
+  const primary = screen.getByTestId('composer-primary');
+  expect(primary.contains(check)).toBe(true);
+  expect(primary.contains(wave)).toBe(false);
+  fireEvent.click(wave);
+  expect(useVoiceMode.getState().conversation).toBe(true);
+  useVoiceMode.setState({ readAloud: false, conversation: false });
+});

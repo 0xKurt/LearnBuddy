@@ -2,7 +2,7 @@
 //
 //   · the program as shown: its lines with their indentation, numbered where they are asked
 //     about, one element a screen reader hears line by line;
-//   · "In welcher Zeile?": the program's lines are the board, numbered tiles — a tap answers with
+//   · "In welcher Zeile?": the program's lines are the board, numbered tiles — a tap selects before checking with
 //     the line's number, and the thread says "Zeile 3";
 //   · code is typed in the one input bar: no math keys, no mic, the return key takes the line, and
 //     a function starts with its first line once she starts writing;
@@ -42,11 +42,48 @@ describe('the program as shown', () => {
 });
 
 describe('in which line does it stop?', () => {
-  it('answers with the number of the line she taps', () => {
+  it('checks the number of the selected line without submitting on selection', () => {
     const onAnswer = vi.fn();
-    renderInApp(<CodeLineAnswer figure={PROGRAM} disabled={false} onAnswer={onAnswer} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Zeile 3: print(8 / w)' }));
+    renderInApp(
+      <CodeLineAnswer draftKey="code.test" figure={PROGRAM} disabled={false} onAnswer={onAnswer} />,
+    );
+    fireEvent.click(screen.getByRole('radio', { name: 'Zeile 3: print(8 / w)' }));
+    expect(onAnswer).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Prüfen' }));
     expect(onAnswer).toHaveBeenCalledWith('3', 'Zeile 3');
+  });
+  it('keeps a drafted line across remounts and blocks checking while busy', () => {
+    const onAnswer = vi.fn();
+    const first = renderInApp(
+      <CodeLineAnswer
+        draftKey="code.restore"
+        figure={PROGRAM}
+        disabled={false}
+        onAnswer={onAnswer}
+      />,
+    );
+    fireEvent.click(screen.getByRole('radio', { name: 'Zeile 2: for w in werte:' }));
+    first.unmount();
+    const restored = renderInApp(
+      <CodeLineAnswer draftKey="code.restore" figure={PROGRAM} disabled onAnswer={onAnswer} />,
+    );
+    expect(
+      screen.getByRole('radio', { name: 'Zeile 2: for w in werte:' }).getAttribute('aria-checked'),
+    ).toBe('true');
+    fireEvent.click(screen.getByRole('radio', { name: 'Zeile 3: print(8 / w)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Prüfen' }));
+    expect(onAnswer).not.toHaveBeenCalled();
+    restored.rerender(
+      <CodeLineAnswer
+        draftKey="code.restore"
+        figure={PROGRAM}
+        disabled={false}
+        onAnswer={onAnswer}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Prüfen' }));
+    expect(onAnswer).toHaveBeenCalledOnce();
+    expect(onAnswer).toHaveBeenCalledWith('2', 'Zeile 2');
   });
 });
 

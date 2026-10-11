@@ -14,6 +14,7 @@
 // row was 8 pt taller than the 56 pt mic, and on 360×740 that, too, hid Buddy's reply (#386);
 // beside it the row is the mic's height, and "Nochmal vorlesen" takes two short lines.
 
+import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -37,6 +38,7 @@ type Mic = {
   /** What tapping it does ("Sprechen", "Antwort sagen", "Unterbrechen"). */
   label: string;
   disabled: boolean;
+  filled?: boolean;
   /** Instead of start/stop recording (the conversation screen runs its own loop). */
   onPress?: () => void;
 };
@@ -46,6 +48,8 @@ export function VoiceRow({
   mic,
   right,
   size,
+  action = null,
+  centerAction = null,
 }: {
   left: Side;
   mic: Mic;
@@ -53,24 +57,48 @@ export function VoiceRow({
   right: Side | null;
   /** lg: the whole screen is the conversation (/talk); md: it shares the screen (practice). */
   size: 'md' | 'lg';
+  /** A selection's Check, kept reachable alongside the existing voice controls. */
+  action?: ReactNode;
+  centerAction?: ReactNode;
 }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <SideAction side={left} />
-      <MicButton
-        voice={mic.voice}
-        size={size}
-        filled
-        label={mic.label}
-        disabled={mic.disabled}
-        {...(mic.onPress ? { onPress: mic.onPress } : {})}
-      />
-      {right ? <SideAction side={right} /> : <View style={{ flex: 1 }} />}
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+        <SideAction side={left} compact={action !== null || centerAction !== null} />
+        {centerAction ? (
+          <MicButton
+            voice={mic.voice}
+            size={size}
+            filled={false}
+            label={mic.label}
+            disabled={mic.disabled}
+            {...(mic.onPress ? { onPress: mic.onPress } : {})}
+          />
+        ) : null}
+      </View>
+      {centerAction ?? (
+        <MicButton
+          voice={mic.voice}
+          size={size}
+          filled={mic.filled ?? true}
+          label={mic.label}
+          disabled={mic.disabled}
+          {...(mic.onPress ? { onPress: mic.onPress } : {})}
+        />
+      )}
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+        {right ? (
+          <SideAction side={right} compact={action !== null || centerAction !== null} />
+        ) : (
+          <View style={{ flex: 1 }} />
+        )}
+        {action}
+      </View>
     </View>
   );
 }
 
-function SideAction({ side }: { side: Side }) {
+function SideAction({ side, compact = false }: { side: Side; compact?: boolean }) {
   const { palette } = useTheme();
   return (
     <View
@@ -88,13 +116,15 @@ function SideAction({ side }: { side: Side }) {
         accessibilityLabel={side.accessibilityLabel ?? side.label}
       />
       {/* The button carries the name; the word is for the eyes. */}
-      <Text
-        aria-hidden
-        numberOfLines={2}
-        style={[TYPE.label, { flexShrink: 1, color: palette.ink2 }]}
-      >
-        {side.label}
-      </Text>
+      {compact ? null : (
+        <Text
+          aria-hidden
+          numberOfLines={2}
+          style={[TYPE.label, { flexShrink: 1, color: palette.ink2 }]}
+        >
+          {side.label}
+        </Text>
+      )}
     </View>
   );
 }

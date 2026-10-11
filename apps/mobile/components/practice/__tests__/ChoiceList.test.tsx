@@ -18,7 +18,7 @@ import { describe, expect, it } from 'vitest';
 
 import { TOUCH } from '../../../lib/theme/space.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
-import { ChoiceList, GRID_CHARS_MAX, mathOnly, twoColumnChoices } from '../ChoiceList.js';
+import { ChoiceList, gridCharsMax, mathOnly, twoColumnChoices } from '../ChoiceList.js';
 
 const NOTHING_TRIED: ReadonlySet<string> = new Set();
 
@@ -30,7 +30,7 @@ function show(choices: string[]): void {
 
 /** Die Pille einer Antwort (der `Btn`) und ihr innerer Kasten, der das Padding trägt. */
 function pill(name: string): { button: HTMLElement; inner: Element } {
-  const button = screen.getByRole('button', { name });
+  const button = screen.getByRole('radio', { name });
   const inner = button.firstElementChild;
   if (!inner) throw new Error(`der Knopf „${name}“ hat keinen inneren Kasten`);
   return { button, inner };
@@ -38,7 +38,7 @@ function pill(name: string): { button: HTMLElement; inner: Element } {
 
 /** Die Buchstabenmarke vor einer Antwort (eine Spalte, kein Kreis). */
 function letter(name: string): HTMLElement {
-  const marks = screen.getAllByTestId('choice-letter');
+  const marks = screen.getAllByText(name);
   const mark = marks.find((m) => m.textContent === name);
   if (!mark) throw new Error(`keine Buchstabenmarke „${name}“`);
   return mark;
@@ -47,13 +47,13 @@ function letter(name: string): HTMLElement {
 describe('welcher Satz Antworten zwei Spalten bekommt', () => {
   // Gemessen, nicht geraten: die Rechnung steht in ChoiceList.tsx. Wenn jemand Padding,
   // Buchstabenspalte oder Abstand ändert, wandert dieses Budget mit — und dieser Test sagt es.
-  it('rechnet neun Zeichen als längste Antwort aus, die EINE Zeile einer halben Breite hält', () => {
-    expect(GRID_CHARS_MAX).toBe(9);
+  it('rechnet acht Zeichen als längste Antwort aus, die EINE Zeile einer halben Breite hält', () => {
+    expect(gridCharsMax()).toBe(8);
   });
 
   it('nimmt kurze Antworten, die jede in eine Zeile passen', () => {
-    expect(twoColumnChoices(['Paris', 'Lyon', 'Marseille', 'Nizza'])).toBe(true);
-    expect(twoColumnChoices(['le cahier', 'la récré', 'le stylo', 'la gomme'])).toBe(true);
+    expect(twoColumnChoices(['Paris', 'Lyon', 'Bern', 'Nizza'])).toBe(true);
+    expect(twoColumnChoices(['le cahier', 'la récré', 'le stylo', 'la gomme'])).toBe(false);
   });
 
   it('nimmt „the homework“ nicht mehr: zwei Zeilen neben einer — die unruhige Reihe aus #288', () => {
@@ -114,7 +114,7 @@ describe('wie das Raster gesetzt ist', () => {
     expect(styleOf(card).flexBasis).not.toBe('45%');
   });
 
-  it('setzt den Buchstaben als Marke in eine feste Spalte, nicht als Kreis', () => {
+  it('setzt den Buchstaben in ein festes rundes Badge', () => {
     for (const set of [
       ['Paris', 'Lyon'],
       ['Paris an der Seine', 'Lyon'],
@@ -123,10 +123,8 @@ describe('wie das Raster gesetzt ist', () => {
         <ChoiceList choices={set} tried={NOTHING_TRIED} disabled={false} onChoose={() => {}} />,
       );
       const mark = letter('A');
-      expect(styleOf(mark).width).toBe('16px');
-      // Kein Kreis: keine Fläche, kein Rund.
-      expect(['', 'transparent', 'rgba(0, 0, 0, 0)']).toContain(styleOf(mark).backgroundColor);
-      expect(['', '0px']).toContain(styleOf(mark).borderRadius);
+      expect(styleOf(mark.parentElement!).width).toBe('32px');
+      expect(styleOf(mark.parentElement!).borderTopLeftRadius).toBe('16px');
       // Dasselbe Padding im Raster und in der Liste: die Texte beginnen auf einer Linie.
       expect(styleOf(pill(set[0]!).inner).paddingLeft).toBe('12px');
       view.unmount();
@@ -149,7 +147,7 @@ describe('wie das Raster gesetzt ist', () => {
   it('setzt einen Bruch allein groß und mittig', () => {
     show(['$\\frac{2}{3}$', '$\\frac{3}{5}$']);
     const mark = letter('A');
-    const content = mark.nextElementSibling!;
+    const content = mark.parentElement!.nextElementSibling!.firstElementChild!.lastElementChild!;
     expect(styleOf(content).alignItems).toBe('center');
   });
 });
@@ -179,8 +177,8 @@ describe('nie mitten im Wort', () => {
 describe('Genotypen klingen verschieden (Issue #352)', () => {
   it('gibt AA, Aa und aa drei unterscheidbare Namen für den Screenreader', () => {
     show(['$AA$', '$Aa$', '$aa$']);
-    expect(screen.getByRole('button', { name: /groß A, groß A/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /groß A, klein a/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /klein a, klein a/ })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /groß A, groß A/ })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /groß A, klein a/ })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /klein a, klein a/ })).toBeTruthy();
   });
 });

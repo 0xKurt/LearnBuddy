@@ -17,7 +17,7 @@
 // (tests/web/written.spec.ts), nicht diese Schicht.
 
 import type { ColumnCalcTaskView, FindErrorTaskView } from '@learnbuddy/shared-types/contracts';
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
@@ -131,12 +131,11 @@ describe('Fehlerdetektiv', () => {
     expect(radios).toHaveLength(3);
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
     for (const r of radios) expect(r.getAttribute('aria-checked')).toBe('false');
-    expect(screen.getAllByTestId('choice-letter').map((m) => m.textContent)).toEqual([
-      '①',
-      '②',
-      '③',
-      '④',
-    ]);
+    expect(within(screen.getByTestId('choice-lead')).getByText('①')).toBeDefined();
+    for (const [index, radio] of radios.entries()) {
+      expect(within(radio).getByText(['②', '③', '④'][index]!)).toBeDefined();
+      expect(radio.getAttribute('aria-label')).toMatch(new RegExp(`^Zeile ${index + 2}:`));
+    }
   });
 
   it('waits with "Prüfen" until a line is picked, copies it into the bar and sends line and fix', () => {

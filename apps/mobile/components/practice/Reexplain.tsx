@@ -12,10 +12,13 @@
 // without reasons it stays "Warum ist das so?", Buddy's explanation.
 
 import type { PracticeTurnView, ReexplainWay } from '@learnbuddy/shared-types/contracts';
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import { DURATION } from '../../lib/theme/motion.js';
+import { useDraft } from '../../lib/drafts.js';
+import { useRegisterCheckOverride } from './CheckOverride.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -30,26 +33,75 @@ const WAYS: readonly ReexplainWay[] = ['simpler', 'example', 'why'];
 const NONE_TRIED: ReadonlySet<string> = new Set();
 
 type Props = {
+  draftKey: string;
   /** The exchanges so far about this explanation or solution (turns with `reexplain`). */
   turns: PracticeTurnView[];
   /** The way she just tapped, while Buddy writes. */
   pending: ReexplainWay | null;
   disabled: boolean;
   /** A way she tapped — with `choice`, the reason she picked for „Warum stimmt das?". */
-  onAsk: (way: ReexplainWay, choice?: number) => void;
+  onAsk: (way: ReexplainWay, choice?: number) => void | Promise<unknown>;
   /** Wait before the chips appear (ms): after a right answer, let its moment play first. */
   delay?: number;
   /** „Warum stimmt das?": the three reasons to tap, until she tapped one (`SessionItemView.why`). */
   why?: readonly string[] | null;
 };
 
-export function Reexplain({ turns, pending, disabled, onAsk, delay = 350, why = null }: Props) {
+export function Reexplain({
+  draftKey,
+  turns,
+  pending,
+  disabled,
+  onAsk,
+  delay = DURATION.reexplainArrival,
+  why = null,
+}: Props) {
   const { t } = useTranslation('practice');
   const { palette } = useTheme();
   const asksHer = why !== null;
   /** The reasons are open: she tapped „Warum stimmt das?". */
   const [choosing, setChoosing] = useState(false);
-  const [picked, setPicked] = useState<number | null>(null);
+  const draft = useDraft(draftKey);
+  const index = /^\d+$/.test(draft.text) ? Number(draft.text) : -1;
+  const picked = why && index >= 0 && index < why.length ? index : null;
+  const latest = useRef({ onAsk, disabled, pending, picked });
+  latest.current = { onAsk, disabled, pending, picked };
+  const submitting = useRef(false);
+  const wasPending = useRef(false);
+  if (wasPending.current && pending === null) submitting.current = false;
+  wasPending.current = pending !== null;
+  useEffect(() => {
+    setChoosing(false);
+    submitting.current = false;
+  }, [draftKey]);
+  const submit = useCallback(() => {
+    const current = latest.current;
+    if (submitting.current || current.disabled || current.pending || current.picked === null)
+      return;
+    submitting.current = true;
+    try {
+      void Promise.resolve(current.onAsk('why', current.picked))
+        .catch(() => undefined)
+        .finally(() => {
+          submitting.current = false;
+        });
+    } catch {
+      submitting.current = false;
+    }
+  }, []);
+  const override = useMemo(
+    () =>
+      choosing && asksHer
+        ? {
+            ready: picked !== null,
+            disabled: disabled || pending !== null,
+            waitsHint: t('select.check_waits'),
+            onPress: submit,
+          }
+        : null,
+    [choosing, asksHer, picked, disabled, pending, t, submit],
+  );
+  useRegisterCheckOverride(draftKey, override);
   const pendingText =
     pending === 'why' && asksHer && picked !== null
       ? (why[picked] ?? null)
@@ -69,16 +121,15 @@ export function Reexplain({ turns, pending, disabled, onAsk, delay = 350, why = 
               choices={[...why]}
               tried={NONE_TRIED}
               disabled={disabled}
+              selected={picked}
               onChoose={(n) => {
-                setPicked(n);
-                setChoosing(false);
-                onAsk('why', n);
+                if (!disabled) draft.setText(String(n));
               }}
             />
           </View>
         </Appear>
       ) : (
-        <Appear delay={turns.length > 0 ? 200 : delay}>
+        <Appear delay={turns.length > 0 ? DURATION.reexplainReply : delay}>
           {/* Wrapping, not a horizontal scroll: the half-visible chip read as a
               rendering bug, not as an affordance (user feedback 2026-09-28). */}
           <View

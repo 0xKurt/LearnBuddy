@@ -90,10 +90,11 @@ test('primary-school figures: read, answered, graded by code', async ({ page }) 
 
   await expect(page.getByText('Welche Uhr zeigt halb drei?')).toBeVisible();
   const option = (letter: string) =>
-    page.getByRole('button', { name: new RegExp(`^${letter}: Uhr`) });
+    page.getByRole('radio', { name: new RegExp(`^${letter}: Uhr`) });
   for (const letter of ['A', 'B', 'C', 'D']) await expect(option(letter)).toBeVisible();
   await bothSchemes(page, '95-clock-choices');
   await option('A').click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();

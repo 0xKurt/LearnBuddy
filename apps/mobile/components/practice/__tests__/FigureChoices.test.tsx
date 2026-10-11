@@ -44,17 +44,15 @@ describe('Bilder als Antwortoptionen', () => {
     show();
     // x² − 1 zwischen −3 und 3, im Fenster y von −3 bis 5: fünf ganzzahlige Punkte, verteilt.
     expect(
-      screen.getByRole('button', {
+      screen.getByRole('radio', {
         name: 'C: Graph durch (−2 | 3), (−1 | 0), (0 | −1), (1 | 0), (2 | 3)',
       }),
     ).toBeTruthy();
     // Vier Optionen, vier Knöpfe: kein eigener Knopf zum Vergrößern (Gedrückthalten öffnet
     // das Bild groß, ein Tipp antwortet — #224 „Minimalismus“).
-    expect(screen.getAllByRole('button')).toHaveLength(4);
+    expect(screen.getAllByRole('radio')).toHaveLength(4);
     for (const name of ['A', 'B', 'C', 'D']) {
-      expect(
-        screen.getByRole('button', { name: new RegExp(`^${name}: Graph durch`) }),
-      ).toBeTruthy();
+      expect(screen.getByRole('radio', { name: new RegExp(`^${name}: Graph durch`) })).toBeTruthy();
     }
   });
 
@@ -62,14 +60,14 @@ describe('Bilder als Antwortoptionen', () => {
     const { body } = document;
     show();
     expect(body.textContent).not.toMatch(/y\s*=|x²|x\^/);
-    for (const b of screen.getAllByRole('button')) {
+    for (const b of screen.getAllByRole('radio')) {
       expect(b.getAttribute('aria-label') ?? '').not.toMatch(/y\s*=|x²|x\^|hoch/);
     }
   });
 
   it('wählt mit einem Tipp wie bei Wörtern: Index und Text der Option', () => {
     const onChoose = show();
-    fireEvent.click(screen.getByRole('button', { name: /^C:/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /^C:/ }));
     expect(onChoose).toHaveBeenCalledWith(2, TEXTS[2]);
   });
 
@@ -78,13 +76,13 @@ describe('Bilder als Antwortoptionen', () => {
     const grid = screen.getByTestId('figure-choices');
     expect(styleOf(grid).flexDirection).toBe('row');
     expect(styleOf(grid).flexWrap).toBe('wrap');
-    const card = screen.getByRole('button', { name: /^A:/ }).parentElement!;
+    const card = screen.getByRole('radio', { name: /^A:/ }).parentElement!;
     expect(styleOf(card).flexBasis).toBe('45%');
   });
 
   it('lässt eine schon probierte Option sichtbar, aber nicht mehr wählbar, mit Wort statt nur Farbe', () => {
     const onChoose = show(new Set([TEXTS[0]!]));
-    const a = screen.getByRole('button', { name: /^A:/ });
+    const a = screen.getByRole('radio', { name: /^A:/ });
     expect(a.getAttribute('aria-disabled')).toBe('true');
     expect(screen.getByText('Schon ausprobiert')).toBeTruthy();
     // The words stand where the letter stood; the other options keep their letters.
@@ -112,7 +110,7 @@ describe('Bilder als Antwortoptionen', () => {
     expect(screen.getByText('Lösung')).toBeTruthy();
     // Nothing to choose any more: no letters, no tile to tap.
     expect(screen.queryAllByTestId('choice-letter')).toEqual([]);
-    for (const tile of screen.getAllByRole('button'))
+    for (const tile of screen.getAllByRole('radio'))
       expect(tile.getAttribute('aria-disabled')).toBe('true');
   });
 
@@ -127,6 +125,6 @@ describe('Bilder als Antwortoptionen', () => {
       />,
     );
     expect(screen.queryByTestId('figure-choices')).toBeNull();
-    expect(screen.getByRole('button', { name: '2/3' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: '2/3' })).toBeTruthy();
   });
 });

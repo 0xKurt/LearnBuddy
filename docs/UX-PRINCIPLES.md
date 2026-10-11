@@ -1094,7 +1094,8 @@
 
     LearnBuddy: a screen fits the phone without scrolling (390×844 and a small
     360×740). What matters stays pinned — the question on top, the way to
-    answer at the bottom, the next step's button. Only two things may grow and
+    answer directly below its paper question card, the Composer and next
+    step's action pinned at the bottom. Only two things may grow and
     scroll: a conversation (newest at the bottom, always shown at its end) and
     a list she browses on purpose (her material, her memories, a test's
     review). Rare settings are closed groups with what is set now; one tap
@@ -1104,13 +1105,14 @@
     Free text is typed at the bottom, everywhere (issue #365): the chat and
     every typed answer in practice ("Erklär mal", a short or long answer, a
     Diktat) use the same input bar, pinned at the bottom — in practice right
-    above "Prüfen". The question, Buddy's reply and the follow-up stand above
+    with "Prüfen" as its action. The question, Buddy's reply and the follow-up stand above
     it like a conversation; a field never floats under the question with an
-    empty band below it. Every other answer sits at the bottom too (issue
-    #386): options she taps, boards (table, order, match, cloze …), the
-    fraction bar and the note line stand directly above "Prüfen" or at the
-    bottom edge, and the free room collects above them, between the
-    conversation and the answer. There is one text field in the
+    empty band below it. The mobile redesign (owner 11.10.) places answer
+    boards directly below the paper QuestionCard: options, table, order,
+    match, cloze, fraction bar and note line. Free room follows the board;
+    the Composer remains pinned. Selecting an option changes the draft,
+    and its Check action submits the selection. Source ownership and the
+    real phone walkthrough enforce this placement. There is one text field in the
     whole app: a form field, the bar, a table's cell and a cloze's gap look
     and behave the same (components/lb/LbTextInput.tsx).
 

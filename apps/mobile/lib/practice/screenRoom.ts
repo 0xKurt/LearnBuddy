@@ -1,5 +1,5 @@
 // What the practice screen measures to share its room (issues #96, #286, #232), and what it then
-// decides with `threadRoom`: the conversation's box, the free room above the answer, each turn's
+// decides with `threadRoom`: the conversation's box, the free room after the answer and tutor feedback, each turn's
 // top, the question's own height, the card before it grew, the board, and how far the column runs
 // past its end. The screen hands the setters to the parts that lay out; `layout` turns the
 // measurements into the conversation's box, the card's growth and the drawing's caps for the
@@ -44,7 +44,7 @@ export function useScreenRoom() {
   /** Her question's field has the focus (`AskRoute`): with the keyboard up the answer folds. */
   const [asking, setAsking] = useState(false);
   const seen = useVisibleHeight();
-  /** The conversation's box and the free room above the answer (issue #286, `threadCap`). */
+  /** The conversation's box and the free room after the answer and tutor feedback (issue #286, `threadCap`). */
   const [threadBox, setThreadBox] = useState(0);
   const [freeSpace, setFreeSpace] = useState(0);
   const threadRef = useRef<View>(null);
@@ -220,7 +220,7 @@ export function useScreenRoom() {
     figureSizing: figures.value,
     questionContentHeight,
     setQuestionContentHeight,
-    /** The conversation's box and the free room above the answer (`RoomPart`). */
+    /** The conversation's box and the free room after the answer and tutor feedback (`RoomPart`). */
     thread,
     free,
     setThreadNeed,

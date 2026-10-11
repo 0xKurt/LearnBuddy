@@ -141,7 +141,8 @@ test('charts: every chart type drawn, read and judged by code', async ({ page })
       await page.getByLabel('Deine Antwort').fill(q.answer.type);
       await page.getByRole('button', { name: 'Prüfen' }).click();
     } else {
-      await page.getByRole('button', { name: q.answer.tap, exact: true }).click();
+      await page.getByRole('radio', { name: q.answer.tap, exact: true }).click();
+      await page.getByRole('button', { name: 'Prüfen' }).click();
     }
     await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
     // Answered, the card gives room back to the conversation; the chart still keeps the width its

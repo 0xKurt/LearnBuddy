@@ -13,6 +13,7 @@
 // what every practice head has (`HeadActions`): the Vorlesen switch — on, the task is read
 // aloud, a tap on it reads it again (#434) — and the round ✕.
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import type { SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -31,7 +32,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { PadKey } from '../lb/PadKey.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
-import { Card } from '../lb/Card.js';
+import { QuestionCard } from '../lb/QuestionCard.js';
 import { EndButton } from '../lb/EndButton.js';
 import { Icon } from '../lb/Icon.js';
 import { Screen } from '../lb/Screen.js';
@@ -259,7 +260,11 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
   // How big the task stands: as big as fits one line of a 360 pt phone (rule 16).
   const taskSize = (text: string) => {
     const len = text.replace(/\$|\\frac\{(\d+)\}\{(\d+)\}/g, '$1$2').length;
-    return len <= 7 ? 56 : len <= 11 ? 44 : 34;
+    return len <= PRACTICE.drill.shortPromptMax
+      ? TYPE.questionBig
+      : len <= PRACTICE.drill.mediumPromptMax
+        ? TYPE.questionMedium
+        : TYPE.questionLong;
   };
   const prompt = current ? current.item.prompt : '…';
   const size = taskSize(prompt);
@@ -290,23 +295,14 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
         />
         {/* The one thing in front of her, and it takes the room there is: no dead gap between
             the task and the pad (issue #286 point 1). */}
-        <Card
-          tone="lavender"
-          // The question card's shape (`QuestionCard`): the task IS the question here.
-          radius={24}
-          style={{ flex: 1, paddingHorizontal: SPACE.xl, paddingVertical: SPACE.lg }}
-        >
+        <QuestionCard style={{ flex: 1, paddingHorizontal: SPACE.xl, paddingVertical: SPACE.lg }}>
           <View style={{ flex: 1 }} />
           <View style={{ alignItems: 'center', gap: SPACE.lg }} testID="drill-task">
             <ReadAgain {...(spoken ? { onRead: () => readTask(spoken) } : {})}>
               <MathText
                 text={prompt}
                 accessibilityRole="header"
-                style={[
-                  TYPE.display,
-                  // token-exempt: the line follows the task's own size (`taskSize`), 1.2 of it
-                  { fontSize: size, lineHeight: Math.round(size * 1.2), textAlign: 'center' },
-                ]}
+                style={[size, { textAlign: 'center' }]}
               />
             </ReadAgain>
             <View
@@ -314,24 +310,21 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
               accessibilityLabel={t('practice:drill.typed', { value: typed || '–' })}
               accessibilityLiveRegion="polite"
               style={{
-                minWidth: 144,
-                height: 72,
+                minWidth: PRACTICE.drill.answerWidth,
+                height: PRACTICE.drill.answerHeight,
                 paddingHorizontal: SPACE.xl,
                 borderRadius: SPACE.lg,
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: palette.paper,
-                borderWidth: 2,
+                borderWidth: PRACTICE.selectedBorder,
                 borderColor: typed ? palette.primary : palette.lavenderDeep,
               }}
             >
               <Text
                 maxFontSizeMultiplier={MAX_FONT_SCALE}
                 style={{
-                  // token-exempt: her answer read at a glance mid-round, as large as a short task
-                  fontSize: 40,
-                  fontWeight: '700',
-                  letterSpacing: 1,
+                  ...TYPE.drillAnswer,
                   color: typed ? palette.ink : palette.lavenderDeep,
                 }}
               >
@@ -345,7 +338,7 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
             <View
               testID="drill-last"
               style={{
-                minHeight: 36,
+                minHeight: PRACTICE.drill.receiptHeight,
                 justifyContent: 'center',
               }}
             >
@@ -357,9 +350,9 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
                     gap: SPACE.sm,
                     paddingHorizontal: SPACE.md,
                     // token-exempt: optical, a pill of 36 pt around 15 pt text, fully rounded
-                    paddingVertical: SPACE.xs + 2,
+                    paddingVertical: SPACE.xs + PRACTICE.drill.receiptPadExtra,
                     // token-exempt: half the pill's 36 pt height
-                    borderRadius: 18,
+                    borderRadius: PRACTICE.drill.receiptRadius,
                     backgroundColor: shownLast.verdict === true ? palette.mint : palette.paper,
                   }}
                 >
@@ -368,17 +361,16 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
                       accessibilityElementsHidden
                       importantForAccessibility="no-hide-descendants"
                     >
-                      <Icon name="check" size={16} color={palette.successText} />
+                      <Icon name="check" size={PRACTICE.badgeIcon} color={palette.successText} />
                     </View>
                   ) : null}
                   {shownLast.verdict !== null ? (
                     <Text
                       style={[
-                        TYPE.small,
+                        TYPE.metaStrong,
                         {
                           color:
                             shownLast.verdict === true ? palette.successText : palette.primaryDk,
-                          fontWeight: '600',
                         },
                       ]}
                     >
@@ -390,7 +382,7 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
                   <MathText
                     text={shownLast.text}
                     style={[
-                      TYPE.small,
+                      TYPE.metaStrong,
                       {
                         color:
                           shownLast.verdict === true
@@ -398,7 +390,6 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
                             : shownLast.verdict === null
                               ? palette.ink2
                               : palette.ink,
-                        fontWeight: '600',
                       },
                     ]}
                   />
@@ -406,7 +397,7 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
               ) : null}
             </View>
           </View>
-        </Card>
+        </QuestionCard>
         <View style={{ gap: SPACE.sm }} testID="drill-pad">
           {ROWS.map((row, r) => (
             <View key={r} style={{ flexDirection: 'row', gap: SPACE.sm }}>

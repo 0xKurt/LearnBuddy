@@ -55,7 +55,7 @@ const IN_SHELL = [
 
 /** Who places the free room. */
 const SPACER: Record<string, string> = {
-  'AnswerShell.tsx': 'above the answer, between the conversation and the answer (#386)',
+  'AnswerShell.tsx': 'after answer and tutor feedback, before tools and Composer',
 };
 
 /** Who writes "Prüfen" (the key `check`) on a button. */
@@ -64,7 +64,7 @@ const CHECK: Record<string, string> = {
   'DrillRound.tsx': 'Kopfrechnen’s pad (#243)',
 };
 
-/** Who draws with the shadow: never an answer form (its tiles are `AnswerTile`). */
+/** Who draws with the shadow: never an answer form (its tiles are `Option`). */
 const SHADOWED: Record<string, string> = {
   'ItemThread.tsx': 'a speech bubble of the conversation, not an answer',
   'SessionSummary.tsx': 'a card on the summary, not an answer',
@@ -98,7 +98,7 @@ describe('the answer shell is the only place for an answer and its action (#310)
     );
   });
 
-  it('puts every answer at the bottom: the free room above the answer slot, never under it (#386)', () => {
+  it('orders answer, feedback, free room, tools and Composer', () => {
     const { text } = sources.find((s) => s.name === 'AnswerShell.tsx')!;
     const body = text.slice(text.indexOf('export function AnswerShell'));
     const room = body.indexOf('<FreeSpace />');
@@ -107,7 +107,12 @@ describe('the answer shell is the only place for an answer and its action (#310)
     const action = body.indexOf('<CheckBar');
     expect(room, 'the shell places the free room').toBeGreaterThan(-1);
     expect(body.indexOf('<FreeSpace />', room + 1), 'one free room').toBe(-1);
-    expect(room, 'free room above the answer').toBeLessThan(slot);
+    const thread = body.indexOf('{flow.thread}');
+    const tools = body.indexOf('testID="answer-help"');
+    expect(slot).toBeLessThan(thread);
+    expect(thread).toBeLessThan(room);
+    expect(room).toBeLessThan(tools);
+    expect(tools).toBeLessThan(action);
     expect(slot, 'the answer above its keys').toBeLessThan(keysAt);
     expect(keysAt, 'the keys live inside the action composer').toBeGreaterThan(action);
   });

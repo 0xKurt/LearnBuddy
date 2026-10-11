@@ -1,6 +1,8 @@
 // Presentation adapter for the one Composer: typed/board checks, tutor questions, Next,
 // flashcard decisions and the existing hands-free voice row. Domain callbacks stay with callers.
 
+import { useCheckOverride } from './CheckOverride.js';
+
 import { ASK_TEXT_MAX } from '@learnbuddy/shared-types/contracts';
 import {
   createContext,
@@ -28,6 +30,9 @@ import { VoiceRow } from '../voice/VoiceRow.js';
 
 /** "Prüfen": what a form hands to the bar — when its answer may go, how it goes, and why it waits. */
 type Check = {
+  /** Optional voice route alongside a durable selection and its Check action. */
+  spoken?: Spoken;
+  canTalk?: boolean;
   /** Her answer is complete. */
   ready: boolean;
   /** The question is locked (sending, or answered). */
@@ -108,7 +113,10 @@ export const AskRoute = createContext<AskState>({
   onFocused: () => undefined,
 });
 
-export function CheckBar(action: CheckAction & { keys?: ReactNode }) {
+export function CheckBar(provided: CheckAction & { keys?: ReactNode }) {
+  const override = useCheckOverride();
+  const action = override ?? provided;
+  if ('spoken' in action && action.spoken) return <TalkRow {...action.spoken} check={action} />;
   if ('next' in action) return <NextBar {...action.next} />;
   if ('bar' in action) return <>{action.bar}</>;
   if ('own' in action) return <OwnAction {...action.own} />;
@@ -159,17 +167,48 @@ function OwnAction({ inBar, across }: Own['own']) {
  * been read (the hands-free loop, `useHandsFreeMic`; the screen arms it); listening ends by itself
  * when she pauses (on the phone).
  */
-function TalkRow({ prompt, lang, disabled, onText, onReadAgain }: Spoken) {
+function TalkRow({
+  prompt,
+  lang,
+  disabled,
+  onText,
+  onReadAgain,
+  check,
+}: Spoken & { check?: Check }) {
   const { t } = useTranslation(['common', 'buddy']);
   const conversation = useConversation();
+  const submitted = useRef(false);
+  const locked = useRef(disabled);
+  if (locked.current && !disabled) submitted.current = false;
+  locked.current = disabled;
+  useEffect(() => {
+    submitted.current = false;
+  }, [prompt]);
   const voice = useVoiceInput({
     purpose: 'answer',
     lang,
     context: prompt,
-    onText,
+    onText: (said) => {
+      if (submitted.current || locked.current) return;
+      submitted.current = true;
+      onText(said);
+    },
     untilPause: true,
   });
   useHandsFreeMic(voice, disabled, prompt);
+  const selectedCheck = check ? (
+    <CheckBtn
+      {...check}
+      onPress={() => {
+        if (submitted.current || disabled || !check.ready) return;
+        submitted.current = true;
+        voice.cancel();
+        check.onPress();
+      }}
+      quiet={voice.state !== 'idle'}
+      place="pill"
+    />
+  ) : null;
   return (
     <BottomBar>
       {/* Only what went wrong (no mic, nothing understood). Listening and writing it down are the
@@ -181,25 +220,35 @@ function TalkRow({ prompt, lang, disabled, onText, onReadAgain }: Spoken) {
           icon: 'keyboard',
           label: t('buddy:composer.keyboard'),
           onPress: () => {
+            submitted.current = true;
             voice.cancel();
             conversation.stop();
           },
         }}
         // The 56 pt mic: the row shares the screen with the question and its conversation (#386).
         size="md"
-        mic={{ voice, label: t('common:voice.answer'), disabled }}
+        mic={{
+          voice,
+          label: t('common:voice.answer'),
+          disabled,
+          filled: voice.state !== 'idle' || !check?.ready,
+        }}
         right={
           onReadAgain
             ? { icon: 'speak', label: t('common:voice.read_again'), onPress: onReadAgain }
             : null
         }
+        centerAction={check?.ready && voice.state === 'idle' ? selectedCheck : null}
+        action={voice.state !== 'idle' ? selectedCheck : null}
       />
     </BottomBar>
   );
 }
 
 function CheckButton(check: Check & { keys?: ReactNode }) {
+  const { t } = useTranslation('buddy');
   const { input, keys } = check;
+  const conversation = useConversation();
   const field = useAskField(<CheckBtn {...check} place="pill" />);
   return (
     <BottomBar>
@@ -207,7 +256,20 @@ function CheckButton(check: Check & { keys?: ReactNode }) {
         <>{input(<CheckBtn {...check} place="pill" />, <CheckBtn {...check} place="across" />)}</>
       ) : (
         // A form without a typed answer: her question in the field, "Prüfen" its action (#402).
-        <InputBar {...field} under={keys} />
+        <InputBar
+          {...field}
+          under={keys}
+          chips={
+            check.canTalk ? (
+              <CircleBtn
+                icon="voice"
+                size={COMPOSER.slot}
+                onPress={conversation.start}
+                accessibilityLabel={t('talk.open')}
+              />
+            ) : null
+          }
+        />
       )}
     </BottomBar>
   );
@@ -281,13 +343,14 @@ function CheckBtn({
   onPress,
   waitsHint,
   place,
-}: Check & { place: 'across' | 'pill' }) {
+  quiet = false,
+}: Check & { quiet?: boolean; place: 'across' | 'pill' }) {
   const { t } = useTranslation('practice');
   const hint = ready ? undefined : waitsHint;
   return (
     <View testID="answer-action">
       <Btn
-        variant={ready ? 'primary' : 'quiet'}
+        variant={ready && !quiet ? 'primary' : 'quiet'}
         size={place === 'across' ? 'md' : 'sm'}
         pill
         full={place === 'across'}

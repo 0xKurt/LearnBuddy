@@ -47,7 +47,8 @@ test('code tasks: output, the failing line, a function and a query, run by the s
   // The line that fails: she taps it.
   await expect(page.getByText('print(8 / w)', { exact: false })).toBeVisible();
   await shot(page, '262c-code-find-line');
-  await page.getByRole('button', { name: /^Zeile 3/ }).click();
+  await page.getByRole('radio', { name: /^Zeile 3/ }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await next(page);
 
   // A function against test cases: a wrong one first — code names the case that fails.
@@ -163,9 +164,11 @@ test('„Anders erklären" with a picture: the closed question, then the graph (
   await onboardChild(page, 'explain-figure');
   await startOffer(page, 'Ich will den Streckfaktor üben', 'mit Bild');
   // A wrong try first: after a clean first try there is nothing to explain again (#61).
-  await page.getByRole('button', { name: 'Er wird breiter.' }).click();
+  await page.getByRole('radio', { name: 'Er wird breiter.', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen', exact: true }).click();
   await expect(page.getByText('Noch nicht', { exact: false }).last()).toBeVisible();
-  await page.getByRole('button', { name: 'Er wird schmaler.' }).click();
+  await page.getByRole('radio', { name: 'Er wird schmaler.', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true }).last()).toBeVisible();
   await shot(page, '298e-closed-choice');
   await page.getByRole('button', { name: 'Mit Beispiel' }).click();

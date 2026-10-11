@@ -46,6 +46,7 @@
 // Wert-Taste auch. Sichtbare Notennamen gibt es hier nie (`StaffFigure.labels` gilt nur für
 // gelesene Zeilen): sie schreibt, was die Frage in Worten nennt.
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import {
   BARS_MAX,
   ELEMENTS_PER_BAR_MAX,
@@ -84,8 +85,8 @@ import {
  * weniger als 12 pt — darunter wird das Ablesen mühsam; so eng wird es nur unter einer langen Frage auf dem kleinsten Handy, nachdem Buddy geantwortet hat — und nie mehr als 26, weil die
  * Takte in der Breite mitwachsen und zwei Takte sonst nicht mehr nebeneinander passen.
  */
-const GAP_MIN = 12;
-const GAP_MAX = 26;
+const GAP_MIN = PRACTICE.staffGapMin;
+const GAP_MAX = PRACTICE.staffGapMax;
 /**
  * Wie viele Linienabstände eine Zeile in der Breite braucht: Schlüssel und Taktart
  * (`headUnits`), je Takt sieben (Platz für drei bis vier Köpfe mit Vorzeichen; VexFlows
@@ -332,7 +333,13 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
           das Ablesen ab (siehe oben). */}
       <Text
         accessibilityLiveRegion="polite"
-        style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0 }}
+        style={{
+          position: 'absolute',
+          width: PRACTICE.hiddenSize,
+          height: PRACTICE.hiddenSize,
+          overflow: 'hidden',
+          opacity: 0,
+        }}
       >
         {barsWords(tm, answer.bars)}
       </Text>

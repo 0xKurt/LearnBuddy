@@ -320,7 +320,14 @@
     "cut": "La sílaba termina después de «{{before}}» en {{word}}",
     "how_sorted": "Elige arriba el tipo y luego toca las palabras.",
     "how_lines": "Toca las líneas donde lo dice el texto.",
-    "lines": "l. {{list}}"
+    "lines": "l. {{list}}",
+    "cut_set": "Límite marcado",
+    "cut_unset": "Límite sin marcar",
+    "boundary_hint": "Elige un límite con izquierda/derecha; márcalo o quítalo con Espacio o Intro.",
+    "boundary_next": "Siguiente límite",
+    "boundary_previous": "Límite anterior",
+    "boundary_toggle": "Marcar o quitar el límite",
+    "boundary_hint_native": "Usa las acciones para elegir el límite siguiente o anterior y marcarlo o quitarlo."
   },
   "select": {
     "several": "Hay varias correctas: tócalas todas.",

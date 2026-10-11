@@ -24,6 +24,22 @@ export const FIND: CodeTask = {
   line: 3,
 };
 
+/** The unchanged eight-line selection limit, with a real runtime failure on its last line. */
+export const FIND_EIGHT = {
+  task: 'find_error',
+  program: [
+    'werte = [4, 2, 0] # Vorrat für die Rechnung',
+    'summe = 0 # Summe vor der ersten Rechenrunde',
+    'faktor = 8 # Zähler für alle Divisionen',
+    'for w in werte: # Nimm jeden Wert der Reihe',
+    '    summe = summe + w # Addiere den Wert',
+    '    print(summe) # Gib die Summe aus',
+    '    wert = w # Nutze diesen Wert als Nenner',
+    '    print(faktor / wert) # Division durch Wert',
+  ].join('\n'),
+  line: 8,
+} satisfies CodeTask;
+
 export const WRITE: CodeTask = {
   task: 'write_function',
   name: 'verdoppeln',
@@ -67,6 +83,13 @@ export function codeRun(codes: CodeTask[]) {
 }
 
 export function scriptCode(): void {
+  scriptTurns({
+    when: /acht codezeilen/i,
+    answer: says('Gern – acht Codezeilen, die vorher wirklich laufen.', [
+      { tool: 'offer_learning', args: { kind: 'practice', text: 'Acht Codezeilen' } },
+    ]),
+  });
+  scriptGenerations({ when: /Acht Codezeilen/i, answer: () => codeRun([FIND_EIGHT]) });
   scriptTurns({
     when: /programme und abfragen/i,
     answer: says('Gern – vier Aufgaben am Code, jede läuft vorher wirklich.', [

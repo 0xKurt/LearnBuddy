@@ -430,7 +430,8 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await shot(page, '47-explanation-in-chat');
   await page.getByRole('button', { name: "Los geht's" }).click();
   await expect(page.getByText('Welches Wort ist ein Nomen?')).toBeVisible();
-  await page.getByRole('button', { name: 'Hund', exact: true }).click();
+  await page.getByRole('radio', { name: 'Hund', exact: true }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!')).toBeVisible();
   await page.getByRole('button', { name: 'Übung beenden' }).click();
 

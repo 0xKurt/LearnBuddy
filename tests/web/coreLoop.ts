@@ -149,7 +149,8 @@ export async function practise(
       if (await page.getByText(a.prompt, { exact: true }).first().isVisible()) current = a;
     if (!current) throw new Error(`no known question on screen (question ${n})`);
     if (current.choice) {
-      await page.getByRole('button', { name: current.answer, exact: true }).click();
+      await page.getByRole('radio', { name: current.answer, exact: true }).click();
+      await page.getByRole('button', { name: 'Prüfen' }).click();
     } else {
       await page.getByLabel('Deine Antwort').fill(current.answer);
       await page.getByRole('button', { name: 'Prüfen' }).click();

@@ -30,9 +30,7 @@ export function SolutionCard({ answer, numeric, code = false }: Props) {
   const { t } = useTranslation('practice');
   return (
     <Card tone="sky" padding={CARD_PAD.roomy} radius={24}>
-      <Text style={[TYPE.body, { color: palette.ink2, fontWeight: '600' }]}>
-        {t('solution.title')}
-      </Text>
+      <Text style={[TYPE.bodyStrong, { color: palette.ink2 }]}>{t('solution.title')}</Text>
       <View style={{ marginTop: SPACE.xs }}>
         {code ? (
           <Text style={TYPE.code}>{keepSpaces(answer)}</Text>
@@ -43,7 +41,7 @@ export function SolutionCard({ answer, numeric, code = false }: Props) {
           />
         )}
       </View>
-      <Text style={[TYPE.body, { color: palette.ink2, marginTop: SPACE.sm }]}>
+      <Text style={[TYPE.bodyStrong, { color: palette.ink2, marginTop: SPACE.sm }]}>
         {t('solution.calm')}
       </Text>
     </Card>
@@ -60,7 +58,7 @@ export function SelfSolvedCard() {
     <Card tone="mint" padding={CARD_PAD.roomy} radius={24}>
       <View accessibilityLiveRegion="polite">
         <Text style={TYPE.title}>{t('self_solved.title')}</Text>
-        <Text style={[TYPE.body, { color: palette.ink2, marginTop: SPACE.xs }]}>
+        <Text style={[TYPE.bodyStrong, { color: palette.ink2, marginTop: SPACE.xs }]}>
           {t('self_solved.body')}
         </Text>
       </View>

@@ -1,4 +1,4 @@
-// Multiple choice: every option is a tappable white tile with its letter in a quiet column of
+// Multiple choice: every option is a paper Option with its letter in a circular badge of
 // its own (A, B, C – the letters voice mode reads out). Options that each fit one line of half
 // a screen stand two by two, all others one under the other, full width – which of the two it
 // is, is arithmetic, see "what fits half a line" below. A fraction or term on its own is set
@@ -17,7 +17,7 @@
 // pick.
 // The lines of a program whose failing line she taps (Informatik, issue #262, `CodeLineAnswer`):
 // the same tiles one under the other, numbered, each line in monospace with its indentation kept
-// and never read as math — a tap answers.
+// and never read as math — a tap selects, and the separate Check submits the saved line.
 // In a conversation (issue #386) the bar is the conversation row (`CheckBar`, `Talk`): what she
 // says is sent as a text answer (the server matches it to a choice by its text).
 // Once the question is closed (issue #521) the options stay where they were, read only, so a
@@ -37,10 +37,12 @@ import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import type { ChoiceMark } from '../../lib/practice/choiceMarks.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { circle } from '../../lib/theme/radius.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
-import { AnswerTile } from '../lb/AnswerTile.js';
-import { Btn, BTN_PAD_COMPACT } from '../lb/Btn.js';
+import { Btn } from '../lb/Btn.js';
+import { Option, type OptionState } from '../lb/Option.js';
+import { PRACTICE } from '../../lib/theme/practice.js';
 import { Icon } from '../lb/Icon.js';
 import { ZoomViewer } from '../lb/ZoomViewer.js';
 import { keepSpaces } from './CodeBlock.js';
@@ -60,14 +62,16 @@ type Props = {
   tried: ReadonlySet<string>;
   /**
    * Several may be right (select-all, issue #240): the options she has ticked, by index. Set,
-   * every option is a checkbox and a tap ticks or unticks it; unset, a tap answers.
+   * every option is a checkbox and a tap ticks or unticks it; unset, a tap selects a draft for Composer Check.
    */
   ticked?: ReadonlySet<number>;
   /**
    * One option picked and kept picked (a line to correct, issue #260): every option is a radio,
-   * the picked one tinted, and they stand one under the other. Unset, a tap answers.
+   * the picked one tinted, and they stand one under the other. Unset, a tap selects a draft for Composer Check.
    */
   picked?: number | null;
+  /** A single drafted answer, independent of the conversation field. */
+  selected?: number | null;
   /**
    * What stands in the letter's column instead of A, B, C (a line's number, #260), and how a
    * screen reader names it ("Zeile 2").
@@ -104,6 +108,7 @@ export function ChoiceList({
         figures={figures}
         tried={tried}
         settled={settled}
+        selected={line.selected}
         disabled={disabled}
         onChoose={onChoose}
       />
@@ -127,6 +132,7 @@ function TextChoices({
   tried,
   ticked,
   picked,
+  selected,
   marks,
   lead = null,
   code = false,
@@ -146,91 +152,83 @@ function TextChoices({
   const grid = !lines && twoColumnChoices(choices, ticked ? SELECT_MAX : CHOICE_GRID_MAX);
   return (
     <View
-      style={grid ? { flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP } : { gap: CARD_GAP }}
+      style={
+        grid
+          ? { flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP }
+          : { gap: lines ? PRACTICE.boardLineGap : CARD_GAP }
+      }
     >
       {lead ? (
         <View
           testID="choice-lead"
           accessible
           accessibilityLabel={`${lead.label}: ${speakMathText(lead.text, words)}`}
-          style={{ flexDirection: 'row', gap: LETTER_GAP, paddingHorizontal: BTN_PAD_COMPACT }}
+          style={{
+            flexDirection: 'row',
+            gap: LETTER_GAP,
+            paddingHorizontal: PRACTICE.optionPadding,
+          }}
         >
           <LetterMark letter={lead.mark} tried={false} />
           <MathText
             text={lead.text}
             accessible={false}
-            style={{ color: palette.ink, fontSize: CHOICE_FONT, lineHeight: CHOICE_LINE }}
+            style={[TYPE.option, { color: palette.ink }]}
           />
         </View>
       ) : null}
       {choices.map((choice, index) => {
         const state = markOf(choice, index, tried, settled);
         const { back, mine } = standing(state);
-        const on = (ticked?.has(index) ?? false) || picked === index;
+        const on = (ticked?.has(index) ?? false) || picked === index || selected === index;
         const note = said(state);
         // A fraction or a term on its own is the thing to look at: set large and centred, at
         // least as large as the question's own line (issue #288, finding 4).
         const big = !lines && mathOnly(choice);
         const mark = marks?.[index];
-        return (
-          <AnswerTile
-            key={`${index}:${choice}`}
-            tried={back}
-            ticked={on || mine}
-            style={grid ? { flexBasis: '45%', flexGrow: 1 } : null}
-          >
+        if (lines) {
+          return (
             <Btn
-              variant="ghost"
+              key={`${index}:${choice}`}
+              variant={on || mine ? 'picked' : 'tile'}
+              size="sm"
               full
-              wrap
               compact
-              // The button fills its card: the tiles of a row are equally tall, and the whole
-              // white area is tappable, not just its top.
               grow
-              disabled={disabled || state !== undefined}
+              selected={on || mine}
+              disabled={disabled || settled !== null || state === 'tried'}
               onPress={() => onChoose?.(index, choice)}
-              {...(ticked ? { checked: on } : {})}
-              {...(picked !== undefined ? { selected: on } : {})}
+              accessibilityLabel={
+                mark
+                  ? `${mark.label}: ${code ? choice.trim() : speakMathText(choice, words)}`
+                  : speakMathText(choice, words)
+              }
               accessibilityHint={note?.hint}
-              // Math in a choice is set properly; a screen reader hears it in words.
               label={
                 <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: big ? 'center' : 'flex-start',
-                    gap: LETTER_GAP,
-                  }}
+                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}
                 >
-                  {/* A closed question's options have no letter: it names an option to choose,
-                      and nothing is chosen any more — the words under it get the room (#521). */}
-                  {ticked ? (
-                    <TickBox on={on} />
-                  ) : settled ? null : (
-                    <LetterMark letter={mark?.mark ?? letterFor(index)} tried={state === 'tried'} />
-                  )}
-                  {/* token-exempt: the choice and its line 2 apart; line heights carry the air */}
-                  <View style={{ flex: 1, gap: 2, alignItems: big ? 'center' : 'flex-start' }}>
+                  <Text
+                    aria-hidden
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                    style={[
+                      TYPE.label,
+                      { width: PRACTICE.lineMarkWidth, textAlign: 'center', color: palette.ink2 },
+                    ]}
+                  >
+                    {mark?.mark ?? letterFor(index)}
+                  </Text>
+                  <View style={{ flex: 1, minWidth: 0, gap: SPACE.xs }}>
                     {code ? (
                       <Text accessible={false} style={TYPE.code}>
-                        {keepSpaces(choice)}
+                        {keepCodeIndent(choice)}
                       </Text>
                     ) : (
                       <MathText
                         text={choice}
                         accessible={false}
-                        style={[
-                          {
-                            color: back
-                              ? palette.ink2
-                              : on || mine
-                                ? palette.primaryDk
-                                : palette.ink,
-                            fontSize: big ? MATH_CHOICE_FONT : CHOICE_FONT,
-                            lineHeight: big ? MATH_CHOICE_LINE : CHOICE_LINE,
-                            fontWeight: CHOICE_WEIGHT,
-                          },
-                          wholeWordsFit(choice, grid) ? WHOLE_WORDS : null,
-                        ]}
+                        style={[TYPE.body, { color: palette.ink }]}
                       />
                     )}
                     {note ? <MarkWords state={state} text={note.text} /> : null}
@@ -238,11 +236,65 @@ function TextChoices({
                 </View>
               }
             >
-              {mark
-                ? `${mark.label}: ${code ? choice.trim() : speakMathText(choice, words)}`
-                : speakMathText(choice, words)}
+              {choice}
             </Btn>
-          </AnswerTile>
+          );
+        }
+        return (
+          <Option
+            key={`${index}:${choice}`}
+            state={optionState(state, on)}
+            checked={on || mine}
+            radio={!ticked}
+            readOnly={settled !== null || state === 'tried'}
+            disabled={disabled}
+            style={grid ? { flexBasis: PRACTICE.gridBasis, flexGrow: 1 } : null}
+            onPress={() => onChoose?.(index, choice)}
+            accessibilityHint={note?.hint}
+            accessibilityLabel={
+              mark
+                ? `${mark.label}: ${code ? choice.trim() : speakMathText(choice, words)}`
+                : speakMathText(choice, words)
+            }
+            letter={ticked || settled ? undefined : (mark?.mark ?? letterFor(index))}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: big ? 'center' : 'flex-start',
+                gap: LETTER_GAP,
+              }}
+            >
+              {ticked ? <TickBox on={on} /> : null}
+              <View
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  gap: SPACE.xs,
+                  alignItems: big ? 'center' : 'flex-start',
+                }}
+              >
+                {code ? (
+                  <Text accessible={false} style={TYPE.code}>
+                    {keepCodeIndent(choice)}
+                  </Text>
+                ) : (
+                  <MathText
+                    text={choice}
+                    accessible={false}
+                    style={[
+                      {
+                        ...(big ? TYPE.question : TYPE.option),
+                        color: back ? palette.ink2 : palette.ink,
+                      },
+                      wholeWordsFit(choice, grid) ? WHOLE_WORDS : null,
+                    ]}
+                  />
+                )}
+                {note ? <MarkWords state={state} text={note.text} /> : null}
+              </View>
+            </View>
+          </Option>
         );
       })}
     </View>
@@ -254,7 +306,7 @@ function TextChoices({
 // "Welcher Graph passt zu f(x) = x² − 1?": the options are four drawings, two by two, each in
 // the same white tile as a text option. The letter stands in the tile's own top row, in the same
 // quiet mark as on a text option — never on the drawing, where it covered an axis like a sticker
-// (issue #288). A tap answers, exactly as with words — one obvious way to use the form (#224,
+// (issue #288). A tap selects a draft for Composer Check, exactly as with words — one obvious way to use the form (#224,
 // "Minimalismus"). Holding a tile opens its picture large in the viewer every figure already has
 // (`ZoomViewer`): no extra button, no legend, nothing new to learn. The option's TEXT is not
 // shown: it may be the very formula the question asks about. A screen reader hears the letter and
@@ -271,15 +323,16 @@ function TextChoices({
 // 89 pt at 740 (the two rows give back ≈ 40 pt), 101 pt at 844.
 
 /** No option picture taller than this — an odd figure (a long table) is scaled down to it. */
-const FIGURE_CHOICE_MAX_HEIGHT = 120;
+const FIGURE_CHOICE_MAX_HEIGHT = PRACTICE.figureChoiceHeight;
 /** Share of the window's height one option picture may take (see above). */
-const FIGURE_CHOICE_SCREEN_SHARE = 0.12;
+const FIGURE_CHOICE_SCREEN_SHARE = PRACTICE.figureChoiceShare;
 
 function FigureChoices({
   choices,
   figures,
   tried,
   settled = null,
+  selected,
   disabled,
   onChoose,
 }: Props & { figures: readonly Figure[] }) {
@@ -315,52 +368,43 @@ function FigureChoices({
         return (
           // A tried picture keeps its white ground and steps back by its hairline (AnswerTile)
           // and by fading the drawing.
-          <AnswerTile
+          <Option
             key={`${index}:${choice}`}
-            tried={back}
-            ticked={mine}
-            picture
-            style={{ flexBasis: '45%', flexGrow: 1 }}
+            state={optionState(state, selected === index)}
+            checked={selected === index || mine}
+            readOnly={settled !== null || state === 'tried'}
+            disabled={disabled}
+            style={{ flexBasis: PRACTICE.gridBasis, flexGrow: 1 }}
+            onPress={() => onChoose?.(index, choice)}
+            onLongPress={() => setZoomed(index)}
+            accessibilityHint={note?.hint ?? t('choice_zoom_hint')}
+            accessibilityLabel={spoken[index]!}
           >
-            <Btn
-              variant="ghost"
-              full
-              wrap
-              compact
-              grow
-              disabled={disabled || state !== undefined}
-              onPress={() => onChoose?.(index, choice)}
-              onLongPress={() => setZoomed(index)}
-              accessibilityHint={note?.hint ?? t('choice_zoom_hint')}
-              label={
-                <View style={{ gap: SPACE.xs }}>
-                  {/* The letter's own row. A tried or decided option says so in words there
-                      instead — at 360 pt "– Schon ausprobiert" did not fit next to a mark, and the
-                      words are what carry it (never colour alone); a check or a cross goes
-                      before them. */}
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: SPACE.xs,
-                      minHeight: CHOICE_LINE,
-                    }}
-                  >
-                    {note ? (
-                      <MarkWords state={state} text={note.text} />
-                    ) : settled ? null : (
-                      <LetterMark letter={letterFor(index)} tried={false} />
-                    )}
-                  </View>
-                  <View style={{ opacity: back ? 0.45 : 1 }}>
-                    <FigureView figure={figure} bare maxHeight={pictureMax} />
-                  </View>
-                </View>
-              }
-            >
-              {spoken[index]!}
-            </Btn>
-          </AnswerTile>
+            <View style={{ gap: SPACE.xs }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: SPACE.xs,
+                  minHeight: TYPE.option.lineHeight,
+                }}
+              >
+                {note ? (
+                  <MarkWords state={state} text={note.text} />
+                ) : settled ? null : (
+                  <LetterMark
+                    letter={letterFor(index)}
+                    tried={false}
+                    selected={selected === index}
+                    size={PRACTICE.figureBadgeSize}
+                  />
+                )}
+              </View>
+              <View style={{ opacity: back ? PRACTICE.disabledOpacity : 1 }}>
+                <FigureView figure={figure} bare maxHeight={pictureMax} />
+              </View>
+            </View>
+          </Option>
         );
       })}
       <ZoomViewer
@@ -394,7 +438,7 @@ function FigureChoices({
 //   −       8 pt             the gap between the two tiles of a row
 //   ───────────── / 2
 //   =     160 pt             one tile
-//   −   2 × 12 pt            the tile's padding (BTN_PAD_COMPACT)
+//   −   2 × 12 pt            the tile's padding (PRACTICE.optionPadding)
 //   −      16 pt             the letter's column (LETTER_COL)
 //   −      12 pt             letter to text (LETTER_GAP)
 //   ─────────────
@@ -402,31 +446,27 @@ function FigureChoices({
 //
 // At 0.64 em per character (EM_PER_CHAR) and 17 pt type that is 108 / 10.88 = 9.9 → an option of
 // at most nine characters is certain to fit one line. A math-only option is set larger
-// (MATH_CHOICE_FONT) and measured at that size.
+// (TYPE.question.fontSize) and measured at that size.
 
 /** The option's own type: 17 pt semibold (`CHOICE_WEIGHT` is what EM_PER_CHAR was measured at). */
-const CHOICE_FONT = 17;
-const CHOICE_LINE = 23;
-const CHOICE_WEIGHT = '600';
+
 /**
  * A math-only option ($\frac{2}{3}$, $x^{2}$): larger than the question's own 21 pt line, so a
  * stacked fraction's digits are not smaller than the sentence that asks about them.
  */
-const MATH_CHOICE_FONT = 22;
-const MATH_CHOICE_LINE = 29;
+
 /** The gap between the tiles, across and down. */
 const CARD_GAP = SPACE.sm;
 /** The padding `app/practice/[id].tsx` puts around the options, left and right. */
 const SCREEN_PAD = SPACE.lg;
 /** The small Android of rule 16; 390 is wider, so whatever fits here fits there too. */
-const NARROW_PHONE = 360;
+const NARROW_PHONE = PRACTICE.narrowPhone;
 /**
  * The letter's column: as wide as its widest letter at LETTER_FONT (a "W" ≈ 15 pt), so the texts
  * of all options start on one vertical line whatever letter stands before them. 16 is a width,
  * not spacing.
  */
-const LETTER_COL = 16;
-const LETTER_FONT = 15;
+const LETTER_COL = PRACTICE.badgeSize;
 const LETTER_GAP = SPACE.md;
 
 /**
@@ -439,21 +479,25 @@ const LETTER_GAP = SPACE.md;
  * one ("Angekommen") 110.3 pt. (A short pair like "mm" is wider per character — 0.89 — but far too
  * short to overflow anything, which is why the bound is taken at the length it decides about.)
  */
-const EM_PER_CHAR = 0.64;
+const EM_PER_CHAR = PRACTICE.optionCharacterEm;
 
 /** The room an option's text has in one line, by variant, on the narrow phone. */
 const GRID_TEXT_ROOM =
-  (NARROW_PHONE - 2 * SCREEN_PAD - CARD_GAP) / 2 - 2 * BTN_PAD_COMPACT - LETTER_COL - LETTER_GAP;
+  (NARROW_PHONE - 2 * SCREEN_PAD - CARD_GAP) / 2 -
+  2 * PRACTICE.optionPadding -
+  LETTER_COL -
+  LETTER_GAP;
 const LIST_TEXT_ROOM =
-  NARROW_PHONE - 2 * SCREEN_PAD - 2 * BTN_PAD_COMPACT - LETTER_COL - LETTER_GAP;
+  NARROW_PHONE - 2 * SCREEN_PAD - 2 * PRACTICE.optionPadding - LETTER_COL - LETTER_GAP;
 
 /** How many single-choice options may stand two by two (two rows). */
-const CHOICE_GRID_MAX = 4;
+const CHOICE_GRID_MAX = PRACTICE.gridChoiceMax;
 
 /** The longest option that still fits ONE line of a grid tile: 9 characters. */
-export const GRID_CHARS_MAX = Math.floor(GRID_TEXT_ROOM / (CHOICE_FONT * EM_PER_CHAR));
+export function gridCharsMax(): number {
+  return Math.floor(GRID_TEXT_ROOM / (TYPE.option.fontSize * EM_PER_CHAR));
+}
 /** The longest word that fits one line of a full-width tile: 22 characters. */
-const LIST_WORD_MAX = Math.floor(LIST_TEXT_ROOM / (CHOICE_FONT * EM_PER_CHAR));
 
 /**
  * Do these options go two by two? Only up to `max` of them (four to choose one, six to tick), and
@@ -469,7 +513,7 @@ export function twoColumnChoices(
 
 /** One option in one line of a grid tile, at the size it is set in. */
 function fitsHalfLine(choice: string): boolean {
-  const font = mathOnly(choice) ? MATH_CHOICE_FONT : CHOICE_FONT;
+  const font = mathOnly(choice) ? TYPE.question.fontSize : TYPE.option.fontSize;
   return plainWidth(choice) * font * EM_PER_CHAR <= GRID_TEXT_ROOM;
 }
 
@@ -481,7 +525,11 @@ function fitsHalfLine(choice: string): boolean {
  * the tile.
  */
 function wholeWordsFit(choice: string, grid: boolean): boolean {
-  return grid || longestWord(plainChoice(choice)) <= LIST_WORD_MAX;
+  return (
+    grid ||
+    longestWord(plainChoice(choice)) <=
+      Math.floor(LIST_TEXT_ROOM / (TYPE.option.fontSize * EM_PER_CHAR))
+  );
 }
 
 /** An option that is nothing but one piece of math ("$\frac{2}{3}$", "$x^{2}$"). */
@@ -538,28 +586,28 @@ const WHOLE_WORDS: TextStyle | null =
 function TickBox({ on }: { on: boolean }) {
   const { palette } = useTheme();
   return (
-    <View style={{ height: CHOICE_LINE, justifyContent: 'center' }}>
+    <View style={{ height: TYPE.option.lineHeight, justifyContent: 'center' }}>
       <View
         testID="choice-box"
         style={{
           width: TICK_BOX,
           height: TICK_BOX,
-          borderRadius: 6, // token-exempt: the lb Checkbox's corner (9 on 26 pt), scaled to 20 pt
-          borderWidth: 1.5,
+          borderRadius: PRACTICE.checkboxRadius,
+          borderWidth: PRACTICE.checkboxBorder,
           borderColor: on ? palette.primary : palette.field,
           backgroundColor: on ? palette.primary : palette.paper,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        {on ? <Icon name="check" size={14} color={palette.paper} /> : null}
+        {on ? <Icon name="check" size={PRACTICE.checkboxIcon} color={palette.onPrimary} /> : null}
       </View>
     </View>
   );
 }
 
 /** The box's side: a mark, not a target — the whole tile is what she taps. */
-const TICK_BOX = 20;
+const TICK_BOX = PRACTICE.checkboxSize;
 
 /** A, B, C … (after Z it simply goes on counting: 27, 28 …). */
 function letterFor(index: number): string {
@@ -571,22 +619,42 @@ function letterFor(index: number): string {
  * own, not a badge on the content (issue #288): the accent's dark tone, no circle. A tried
  * option shows a dash instead (and says "Schon ausprobiert" in words — never colour alone).
  */
-function LetterMark({ letter, tried }: { letter: string; tried: boolean }) {
+function LetterMark({
+  letter,
+  tried,
+  selected = false,
+  size = PRACTICE.badgeSize,
+}: {
+  letter: string;
+  tried: boolean;
+  selected?: boolean;
+  size?: number;
+}) {
   const { palette } = useTheme();
   return (
-    <Text
-      testID="choice-letter"
+    <View
+      aria-hidden
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
       style={{
-        width: LETTER_COL,
-        color: tried ? palette.ink3 : palette.primaryDk,
-        fontSize: LETTER_FONT,
-        // The first text line's height, so the letter sits on that line, not above it.
-        lineHeight: CHOICE_LINE,
-        fontWeight: '700',
+        width: size,
+        height: size,
+        borderRadius: circle(size),
+        backgroundColor: selected ? palette.primary : palette.canvas,
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
-      {tried ? '–' : letter}
-    </Text>
+      <Text
+        testID="choice-letter"
+        style={[
+          TYPE.label,
+          { color: tried ? palette.ink3 : selected ? palette.onPrimary : palette.primaryDk },
+        ]}
+      >
+        {tried ? '–' : letter}
+      </Text>
+    </View>
   );
 }
 
@@ -644,13 +712,25 @@ function MarkWords({ state, text }: { state: ChoiceMark | undefined; text: strin
   const icon =
     state === 'right' || state === 'mine_right' ? 'check' : state === 'mine_wrong' ? 'close' : null;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.xs, flexShrink: 1 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'stretch',
+        minWidth: 0,
+        gap: SPACE.xs,
+      }}
+    >
       {icon ? <Icon name={icon} size={MARK_ICON} color={color} /> : null}
       <Text
-        numberOfLines={1}
         style={[
           TYPE.label,
-          { flexShrink: 1, color, fontWeight: state === 'tried' ? '500' : '600' },
+          {
+            ...(state === 'tried' ? TYPE.metaMedium : TYPE.bodyStrong),
+            flex: 1,
+            minWidth: 0,
+            color,
+          },
         ]}
       >
         {text}
@@ -660,4 +740,18 @@ function MarkWords({ state, text }: { state: ChoiceMark | undefined; text: strin
 }
 
 /** The check or cross: a little larger than the words' line, so its shape reads at a glance. */
-const MARK_ICON = 18; // token-exempt: an icon size, the label's own line height
+const MARK_ICON = PRACTICE.verdictIcon;
+
+/** Server verdicts are distinct from a locally selected draft. */
+function optionState(mark: ChoiceMark | undefined, selected: boolean): OptionState {
+  if (mark === 'right' || mark === 'mine_right') return 'correct';
+  if (mark === 'mine_wrong') return 'wrong';
+  if (mark === 'tried' || mark === null) return 'dim';
+  return selected || mark === 'mine' ? 'selected' : 'idle';
+}
+
+/** Preserve indentation while allowing ordinary code whitespace to wrap between words. */
+function keepCodeIndent(line: string): string {
+  const indent = line.match(/^\s*/)?.[0] ?? '';
+  return keepSpaces(indent) + line.slice(indent.length);
+}

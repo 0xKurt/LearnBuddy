@@ -320,7 +320,14 @@
     "cut": "La sillaba finisce dopo «{{before}}» in {{word}}",
     "how_sorted": "Scegli prima il tipo in alto, poi tocca le parole.",
     "how_lines": "Tocca le righe in cui il testo lo dice.",
-    "lines": "r. {{list}}"
+    "lines": "r. {{list}}",
+    "cut_set": "Confine segnato",
+    "cut_unset": "Confine non segnato",
+    "boundary_hint": "Scegli un confine con sinistra/destra; aggiungilo o rimuovilo con Spazio o Invio.",
+    "boundary_next": "Confine successivo",
+    "boundary_previous": "Confine precedente",
+    "boundary_toggle": "Aggiungi o rimuovi il confine",
+    "boundary_hint_native": "Usa le azioni per scegliere il confine successivo o precedente e aggiungerlo o rimuoverlo."
   },
   "select": {
     "several": "Più di una è giusta: toccale tutte.",
