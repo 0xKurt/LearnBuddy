@@ -11,6 +11,8 @@
 // resize, and padding them again would bring back exactly the empty band of #46. So we
 // measure both and pad only by what the window did not already take away.
 
+import { FORM_DENSITY } from './theme/layout.js';
+
 /**
  * @param keyboard   what the OS reports as the keyboard's height (0 while it is closed)
  * @param baseHeight the view's height with no keyboard on screen
@@ -39,7 +41,7 @@ export function visibleHeight(windowHeight: number, overlap: number): number {
  * 360×740 phone, or any phone with the keyboard up (issues #55, #289). The one place the
  * number stands.
  */
-export const COMPACT_BELOW = 780;
+export const COMPACT_BELOW = FORM_DENSITY.compactBelow;
 
 /**
  * Below this, only the form itself still fits: what no phone is upright with the keyboard
@@ -47,7 +49,7 @@ export const COMPACT_BELOW = 780;
  * issue #289). A screen then keeps its headline and its fields and lets the rest wait until
  * the keyboard goes.
  */
-export const TIGHT_BELOW = 600;
+export const TIGHT_BELOW = FORM_DENSITY.tightBelow;
 
 export type FormDensity = 'roomy' | 'compact' | 'tight';
 

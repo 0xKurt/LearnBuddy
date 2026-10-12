@@ -228,6 +228,17 @@ function ThemeScope({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+/** A local presentation palette; global tokens, stored choice and system chrome stay untouched. */
+export function PaletteScope({ name, children }: { name: ThemeName; children: ReactNode }) {
+  const parent = useTheme();
+  const value = useMemo(() => {
+    const dark = name.endsWith('Dark');
+    const family = (dark ? name.slice(0, -4) : name) as Family;
+    return contextOf(name, family, dark ? 'dark' : 'light', parent.choose);
+  }, [name, parent.choose]);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
 /**
  * The frame ABOVE the provider (app/_layout.tsx) — the window the whole app is drawn on,
  * and the background every pushed screen starts from.

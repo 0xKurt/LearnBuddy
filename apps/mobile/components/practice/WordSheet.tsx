@@ -6,8 +6,9 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
+import { BusyIndicator } from '../lb/BusyIndicator.js';
 import { speakWord } from '../../lib/api/endpoints.js';
 import { messageFor } from '../../lib/errors.js';
 import { useRecording, type Recording } from '../../lib/speech/record.js';
@@ -95,7 +96,7 @@ export function WordSheet({ word, sessionId, itemId, lang, onClose }: Props) {
             accessibilityLabel={t('practice:speak.listening')}
             style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}
           >
-            <ActivityIndicator color={palette.primary} />
+            <BusyIndicator color={palette.primary} />
             <Text style={[TYPE.body, { color: palette.ink2 }]}>
               {t('practice:speak.listening')}
             </Text>

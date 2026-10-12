@@ -66,7 +66,6 @@ const CHECK: Record<string, string> = {
 
 /** Who draws with the shadow: never an answer form (its tiles are `Option`). */
 const SHADOWED: Record<string, string> = {
-  'ItemThread.tsx': 'a speech bubble of the conversation, not an answer',
   'SessionSummary.tsx': 'a card on the summary, not an answer',
 };
 

@@ -41,6 +41,7 @@ import { useOneCall } from '../../lib/practice/useOneCall.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { UI } from '../../lib/theme/components.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { EndButton } from '../lb/EndButton.js';
@@ -195,7 +196,7 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
           })}
         />
         {/* What this run is, said once — the same quiet line homework and a test get. */}
-        <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
+        <Text style={[TYPE.metaMedium, { color: palette.primaryDk }]}>
           {t('practice:cards.note')}
         </Text>
         {/* The card in the middle while it is alone; at the top once a conversation follows it. */}
@@ -232,7 +233,7 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
                     importantForAccessibility="no-hide-descendants"
                     style={{
                       alignSelf: 'stretch',
-                      height: 1,
+                      height: UI.border,
                       backgroundColor: palette.lavenderDeep,
                     }}
                   />

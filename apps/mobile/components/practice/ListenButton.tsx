@@ -15,6 +15,7 @@
 //
 // It renders a fragment: the caller's row or column decides where the pair stands.
 
+import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -92,7 +93,7 @@ export function ListenButton({
                 <View style={{ alignItems: 'center' }}>
                   <Icon
                     name={mainIcon}
-                    size={24}
+                    size={PRACTICE_SCREEN.speakerGlyph}
                     color={off('normal') ? palette.ink2 : palette.primaryDk}
                   />
                 </View>

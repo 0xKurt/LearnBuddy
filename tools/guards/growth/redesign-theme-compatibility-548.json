@@ -1,10 +1,11 @@
 {
   "issue": "#548",
-  "reason": "Keep existing REDUCE/REDUCE_NEVER and MIC_RING_ROOM compatibility exports through the sequential redesign PRs as required by #548; remove the unused aliases, both MIC_RING_ROOM exports and their signatures, and this grant in the final dedicated alias-cleanup PR.",
+  "reason": "Keep existing REDUCE/REDUCE_NEVER, MIC_RING_ROOM and BUBBLE/TAIL compatibility roles through the sequential redesign PRs as required by #548; remove unused aliases, both MIC_RING_ROOM exports, the unused bubble.ts file and their signatures, and this grant in the final dedicated alias-cleanup PR.",
   "knip": [
     "exports: apps/mobile/lib/theme/motion.ts: REDUCE",
     "exports: apps/mobile/lib/theme/motion.ts: REDUCE_NEVER",
     "exports: apps/mobile/components/voice/MicButton.tsx: MIC_RING_ROOM",
-    "exports: apps/mobile/lib/theme/voice.ts: MIC_RING_ROOM"
+    "exports: apps/mobile/lib/theme/voice.ts: MIC_RING_ROOM",
+    "files: apps/mobile/lib/theme/bubble.ts"
   ]
 }

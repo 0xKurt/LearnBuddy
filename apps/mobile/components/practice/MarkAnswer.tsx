@@ -27,6 +27,7 @@
 // wie über einer Lesefrage (`LineText` aus PassagePanel), jede Zeile ein Btn. Über der Frage
 // steht er dann nicht noch einmal (der Server schickt ihn dort erst, wenn die Frage zu ist).
 
+import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 import {
   cutId,
@@ -76,7 +77,7 @@ const UNDERLINE = PRACTICE.markUnderline;
  * A Belegstelle's text never shrinks below four lines' targets: it scrolls in its box, and the
  * conversation above gives way first (the answer shell's `keeps`).
  */
-const LINES_KEEP = TOUCH * 4;
+const LINES_KEEP = PRACTICE_SCREEN.markedPassageMin;
 /** The digit a category carries, on its button and on every word marked with it. */
 const DIGITS = ['①', '②', '③'];
 

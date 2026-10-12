@@ -14,6 +14,7 @@
 // ohne zu fragen (rückgängig statt bestätigen, docs/UX-PRINCIPLES.md); nach „Prüfen" beginnt sie
 // ohnehin von vorn.
 
+import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { TAPS_MAX, renderTaps } from '@learnbuddy/shared-types/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,11 +28,11 @@ import { PadKey } from '../lb/PadKey.js';
 import { AnswerShell } from './AnswerShell.js';
 
 /** Wie hoch das Klopffeld sein will: drei Tippziele — groß genug, um blind zu treffen. */
-const PAD = 3 * TOUCH;
+const PAD = PRACTICE_SCREEN.rhythmPadPreferred;
 /** Wie weit es nachgibt, wenn Buddys Antwort darüber Platz braucht: zwei Tippziele. */
-const PAD_MIN = 2 * TOUCH;
+const PAD_MIN = PRACTICE_SCREEN.rhythmPadMin;
 /** Was der Antwortplatz behält: die Zeile mit „Neu klopfen", der Abstand, das kleinste Feld. */
-const TAPS_ANSWER_MIN = TOUCH + SPACE.sm + PAD_MIN;
+const TAPS_ANSWER_MIN = PRACTICE_SCREEN.rhythmAnswerMin;
 
 type Props = {
   disabled: boolean;

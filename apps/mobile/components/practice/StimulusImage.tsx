@@ -13,6 +13,8 @@ import { View } from 'react-native';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { DURATION, useMotionReduced } from '../../lib/theme/motion.js';
+import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { Zoomable } from '../lb/ZoomViewer.js';
 
 type Props = {
@@ -26,8 +28,9 @@ type Props = {
   maxHeight?: number;
 };
 
-export function StimulusImage({ image, cacheKey, maxHeight = 180 }: Props) {
+export function StimulusImage({ image, cacheKey, maxHeight = PRACTICE_SCREEN.imageHeight }: Props) {
   const { palette } = useTheme();
+  const reduced = useMotionReduced();
   const { t } = useTranslation('practice');
   const label = image.label.trim() || t('image_fallback');
   const ratio = image.width / image.height;
@@ -50,12 +53,13 @@ export function StimulusImage({ image, cacheKey, maxHeight = 180 }: Props) {
           source={{ uri: image.url, cacheKey }}
           accessible={false}
           contentFit="contain"
-          transition={90}
+          key={`${cacheKey}.${reduced}`}
+          transition={reduced ? 0 : DURATION.stimulusImageArrival}
           style={{
             width: '100%',
-            aspectRatio: Number.isFinite(ratio) && ratio > 0 ? ratio : 4 / 3,
+            aspectRatio: Number.isFinite(ratio) && ratio > 0 ? ratio : PRACTICE_SCREEN.imageRatio,
             maxHeight,
-            borderRadius: RADIUS.tile,
+            borderRadius: RADIUS.md,
             backgroundColor: palette.paper,
           }}
         />

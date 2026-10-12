@@ -81,10 +81,7 @@ export function TestClockHeader({
           </Chip>
         }
       />
-      <Text
-        testID="test-clock"
-        style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}
-      >
+      <Text testID="test-clock" style={[TYPE.metaMedium, { color: palette.primaryDk }]}>
         {soon ? t('timer.soon') : t('timer.note')}
       </Text>
     </>

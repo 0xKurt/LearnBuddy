@@ -122,3 +122,12 @@ it('keeps header and recording roles live through Bold Text and palette changes'
   expect(held.headerMeta.color).toBe(paletteOf('oceanDark').ink2);
   expect(held.voiceStatus.fontFamily).toBe('Figtree_800ExtraBold');
 });
+
+it('keeps semibold metadata face live under Bold Text', () => {
+  applyBoldText(false, palette);
+  const held = TYPE.metaSemibold;
+  expect(held.fontFamily).toBe('Figtree_600SemiBold');
+  applyBoldText(true, palette);
+  expect(TYPE.metaSemibold).toBe(held);
+  expect(held.fontFamily).toBe('Figtree_800ExtraBold');
+});

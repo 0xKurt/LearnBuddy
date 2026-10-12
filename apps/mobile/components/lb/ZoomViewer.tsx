@@ -2,19 +2,19 @@
 // drag to move around once zoomed, double tap to zoom in on a spot (and back out).
 // Closable with an obvious in-sheet "Schließen" button (CLAUDE.md rule 14) and, while
 // not zoomed, by pulling it down. A dark, calm veil lets the picture stand out.
-// Motion: the veil fades in and the picture grows in softly; reduce motion: only fades.
+// Motion: the veil fades in and the picture grows in softly; reduced motion disables every transition.
 //
 // <Zoomable> wraps a small picture: a tap on it opens the viewer with a larger version.
 
 import { Image } from 'expo-image';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
-  useReducedMotion,
+  cancelAnimation,
   useSharedValue,
   withSpring,
   withTiming,
@@ -31,8 +31,17 @@ import {
   offsetAroundFocal,
   rubberBand,
 } from '../../lib/gestures.js';
-import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
-import { bottomRoom, SPACE } from '../../lib/theme/space.js';
+import {
+  ACTIVE_MOTION,
+  DURATION,
+  EASE,
+  SPRING,
+  reducedMotionValue,
+  useMotionReduced,
+} from '../../lib/theme/motion.js';
+import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
+import { PaletteScope } from '../../lib/theme/ThemeProvider.js';
+import { bottomRoom, GUTTER, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
 
@@ -45,13 +54,23 @@ type ViewerProps = {
   children: ReactNode;
 };
 
-const VEIL = 'rgba(24,20,38,0.97)';
-
 export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
   const { t } = useTranslation('common');
   const insets = useSafeAreaInsets();
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
   const [mounted, setMounted] = useState(visible);
+  const visibility = useRef(visible);
+  visibility.current = visible;
+  const epoch = useRef(0);
+  const requested = useRef(false);
+  const requestClose = useCallback(() => {
+    if (requested.current) return;
+    requested.current = true;
+    onClose();
+  }, [onClose]);
+  const finishClose = useCallback((version: number) => {
+    if (epoch.current === version && !visibility.current) setMounted(false);
+  }, []);
 
   const shown = useSharedValue(0);
   const scale = useSharedValue(1);
@@ -63,27 +82,63 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
   const box = useSharedValue({ width: 1, height: 1 });
 
   useEffect(() => {
+    const version = ++epoch.current;
     if (visible) {
+      requested.current = false;
       setMounted(true);
       scale.value = 1;
       x.value = 0;
       y.value = 0;
       pull.value = 0;
-      shown.value = withTiming(1, { duration: DURATION.gentle, easing: EASE.standard });
+      cancelAnimation(shown);
+      shown.value = reducedMotionValue.value
+        ? 1
+        : withTiming(1, { duration: DURATION.gentle, easing: EASE.standard, ...ACTIVE_MOTION });
       return;
     }
-    shown.value = withTiming(0, { duration: DURATION.base, easing: EASE.standard }, (done) => {
-      if (done) runOnJS(setMounted)(false);
-    });
-  }, [visible, shown, scale, x, y, pull]);
+    cancelAnimation(shown);
+    if (reducedMotionValue.value) {
+      shown.value = 0;
+      setMounted(false);
+      return;
+    }
+    shown.value = withTiming(
+      0,
+      { duration: DURATION.base, easing: EASE.standard, ...ACTIVE_MOTION },
+      (done) => {
+        if (done) runOnJS(finishClose)(version);
+      },
+    );
+    return () => cancelAnimation(shown);
+  }, [visible, shown, scale, x, y, pull, finishClose]);
+
+  useEffect(() => {
+    if (!reduced) return;
+    // Cancel at the current transform: changing the OS preference never resets a zoom.
+    for (const value of [shown, scale, x, y, pull]) cancelAnimation(value);
+    shown.value = visible ? 1 : 0;
+    if (!visible) setMounted(false);
+  }, [reduced, visible, shown, scale, x, y, pull]);
+
+  useEffect(
+    () => () => {
+      for (const value of [shown, scale, x, y, pull]) cancelAnimation(value);
+    },
+    [shown, scale, x, y, pull],
+  );
+
+  const spring = (target: number) => {
+    'worklet';
+    return reducedMotionValue.value ? target : withSpring(target, { ...SPRING, ...ACTIVE_MOTION });
+  };
 
   /** Back inside the edges (and inside the zoom range), softly. */
   const settle = () => {
     'worklet';
     const s = clamp(scale.value, MIN_SCALE, MAX_SCALE);
-    scale.value = withSpring(s, SPRING);
-    x.value = withSpring(clampOffset(x.value, s, box.value.width), SPRING);
-    y.value = withSpring(clampOffset(y.value, s, box.value.height), SPRING);
+    scale.value = spring(s);
+    x.value = spring(clampOffset(x.value, s, box.value.width));
+    y.value = spring(clampOffset(y.value, s, box.value.height));
   };
 
   const pinch = Gesture.Pinch()
@@ -128,8 +183,8 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
     })
     .onEnd((e) => {
       if (scale.value <= 1.01) {
-        if (dismissedBySwipe(e.translationY, e.velocityY)) runOnJS(onClose)();
-        else pull.value = withSpring(0, SPRING);
+        if (dismissedBySwipe(e.translationY, e.velocityY)) runOnJS(requestClose)();
+        else pull.value = spring(0);
         return;
       }
       settle();
@@ -139,64 +194,74 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
     .numberOfTaps(2)
     .onEnd((e) => {
       if (scale.value > 1.01) {
-        scale.value = withSpring(1, SPRING);
-        x.value = withSpring(0, SPRING);
-        y.value = withSpring(0, SPRING);
+        scale.value = spring(1);
+        x.value = spring(0);
+        y.value = spring(0);
         return;
       }
       const s = DOUBLE_TAP_SCALE;
       const fx = e.x - box.value.width / 2;
       const fy = e.y - box.value.height / 2;
-      scale.value = withSpring(s, SPRING);
-      x.value = withSpring(clampOffset(offsetAroundFocal(fx, 0, 1, s), s, box.value.width), SPRING);
-      y.value = withSpring(
-        clampOffset(offsetAroundFocal(fy, 0, 1, s), s, box.value.height),
-        SPRING,
-      );
+      scale.value = spring(s);
+      x.value = spring(clampOffset(offsetAroundFocal(fx, 0, 1, s), s, box.value.width));
+      y.value = spring(clampOffset(offsetAroundFocal(fy, 0, 1, s), s, box.value.height));
     });
 
   const gesture = Gesture.Simultaneous(pinch, pan, doubleTap);
 
   const veil = useAnimatedStyle(() => ({
-    opacity: shown.value * (1 - Math.min(0.6, pull.value / 400)),
+    opacity:
+      shown.value *
+      (1 - Math.min(PRACTICE_SCREEN.pullVeilFade, pull.value / PRACTICE_SCREEN.pullVeilDistance)),
   }));
   const chrome = useAnimatedStyle(() => ({
-    opacity: shown.value * (1 - Math.min(1, pull.value / 160)),
+    opacity: shown.value * (1 - Math.min(1, pull.value / PRACTICE_SCREEN.pullChromeDistance)),
   }));
   const picture = useAnimatedStyle(() => {
-    const grow = reduced ? 1 : 0.92 + shown.value * 0.08;
+    const grow = reduced
+      ? 1
+      : PRACTICE_SCREEN.viewerStartScale + shown.value * (1 - PRACTICE_SCREEN.viewerStartScale);
     return {
       opacity: shown.value,
       transform: [
         { translateX: x.value },
         { translateY: y.value + pull.value },
-        { scale: scale.value * grow * (1 - Math.min(0.15, pull.value / 1600)) },
+        {
+          scale:
+            scale.value *
+            grow *
+            (1 -
+              Math.min(
+                PRACTICE_SCREEN.pullScaleShrink,
+                pull.value / PRACTICE_SCREEN.pullScaleDistance,
+              )),
+        },
       ],
     };
   });
 
   if (!mounted) return null;
   return (
-    <Modal visible transparent animationType="none" onRequestClose={onClose}>
+    <Modal visible transparent animationType="none" onRequestClose={requestClose}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Animated.View
           style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, veil]}
         >
-          <View style={{ flex: 1, backgroundColor: VEIL }} />
+          <View style={{ flex: 1, backgroundColor: PRACTICE_SCREEN.viewerVeil }} />
         </Animated.View>
         <View
           accessibilityViewIsModal
           style={{
             flex: 1,
-            paddingTop: insets.top + SPACE.md,
-            paddingBottom: bottomRoom(insets.bottom),
+            paddingTop: Math.max(insets.top + SPACE.md, PRACTICE_SCREEN.viewerHintTop),
+            paddingBottom: bottomRoom(insets.bottom, PRACTICE_SCREEN.viewerBottomRoom),
           }}
         >
           <Animated.Text
             style={[
-              TYPE.caption,
+              TYPE.metaSemibold,
               {
-                color: 'rgba(255,255,255,0.72)',
+                color: PRACTICE_SCREEN.viewerHint,
                 textAlign: 'center',
                 paddingHorizontal: SPACE.xl,
               },
@@ -228,11 +293,13 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
               </Animated.View>
             </View>
           </GestureDetector>
-          {/* token-exempt: the close pill 22 in, a little narrower than the hint above it */}
-          <Animated.View style={[{ paddingHorizontal: 22 }, chrome]}>
-            <Btn variant="soft" size="lg" pill full onPress={onClose}>
-              {t('actions.close')}
-            </Btn>
+
+          <Animated.View style={[{ paddingHorizontal: GUTTER }, chrome]}>
+            <PaletteScope name="pastellDark">
+              <Btn variant="secondary" full onPress={requestClose}>
+                {t('actions.close')}
+              </Btn>
+            </PaletteScope>
           </Animated.View>
         </View>
       </GestureHandlerRootView>
@@ -263,8 +330,13 @@ export function Zoomable({ label, children, large, fill = false }: ZoomableProps
         accessibilityHint={t('zoom.open_hint')}
         onPress={() => setOpen(true)}
         // Thumbnails in the chat are ~30×40; the slop lifts them to the 44 pt target.
-        hitSlop={10}
-        style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1, flex: fill ? 1 : undefined })}
+        hitSlop={PRACTICE_SCREEN.thumbnailSlop}
+        style={({ pressed }) => ({
+          opacity: pressed ? PRACTICE_SCREEN.thumbnailPressed : 1,
+          minWidth: TOUCH,
+          minHeight: TOUCH,
+          flex: fill ? 1 : undefined,
+        })}
       >
         {children}
       </Pressable>
@@ -296,6 +368,7 @@ export function ZoomablePhoto({
       large={
         <Image
           source={{ uri }}
+          accessibilityLabel={label ?? t('zoom.photo')}
           accessible={false}
           contentFit="contain"
           style={{ width: '100%', height: '100%' }}
@@ -322,6 +395,7 @@ export function PhotoThumb({
   label: string;
   onError: () => void;
 }) {
+  const reduced = useMotionReduced();
   return (
     <ZoomablePhoto uri={uri} label={label} fill>
       <Image
@@ -329,7 +403,8 @@ export function PhotoThumb({
         accessible
         accessibilityLabel={label}
         contentFit="cover"
-        transition={120}
+        key={`${uri}.${reduced}`}
+        transition={reduced ? 0 : DURATION.zoomPhotoArrival}
         recyclingKey={uri}
         cachePolicy="memory-disk"
         onError={onError}

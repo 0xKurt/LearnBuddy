@@ -44,6 +44,15 @@ describe('the attached photo above the field (#294)', () => {
     expect(photoImg(container).getAttribute('src')).toBe(PHOTO);
   });
 
+  it('opens the original source photo with the same factual accessible label', () => {
+    strip();
+    fireEvent.click(screen.getByRole('button', { name: 'Foto 1 von 1' }));
+    const image = document.querySelector('[aria-modal="true"] img');
+    expect(image).not.toBeNull();
+    expect(image!.getAttribute('src')).toBe(PHOTO);
+    expect(image!.getAttribute('alt')).toBe('Foto 1 von 1');
+  });
+
   it('gives the photo the tile’s full size, not a size it has to inherit', () => {
     const { container } = strip();
     // The thumbnails that show on the phone are sized; the empty one was `flex: 1` inside a
