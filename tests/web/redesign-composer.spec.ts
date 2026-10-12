@@ -10,7 +10,6 @@ for (const family of ['Pastell', 'Meer'] as const) {
       await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
       await signUpMia(page, freshEmail('composer'));
       await openMenu(page, 'Einstellungen');
-      await page.getByRole('button', { name: 'Aussehen', exact: true }).click();
       await page.getByRole('radio', { name: family, exact: true }).click();
       const mode = page.getByRole('radio', { name: dark ? 'Dunkel' : 'Hell', exact: true });
       await mode.click();

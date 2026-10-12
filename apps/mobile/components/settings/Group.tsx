@@ -1,23 +1,11 @@
-// A group of settings under a plain heading: a short name ("Benachrichtigungen",
-// "Buddys Stimme", "Für Eltern") that fits one line — the contact group used to ask a whole
-// question and broke onto three lines at 360 pt (issue #287); its answer line under the
-// heading ("Ja – nie nach 20:00 Uhr.") still says what is set.
-//
-// On the settings screen every group is closed (CLAUDE.md rule 16: rare
-// settings stay closed until opened): the heading and one line with what is
-// set now; a tap opens it and closes the one that was open. So the screen
-// fits without scrolling, and the details are one tap away.
-
 import { createContext, useContext, type ComponentProps, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { RADIUS } from '../../lib/theme/radius.js';
-import { Btn } from '../lb/Btn.js';
-import { Icon } from '../lb/Icon.js';
-import { IconDisc } from '../lb/IconDisc.js';
+import { ListGroup, Row as ListRow } from '../lb/ListGroup.js';
+import type { Icon } from '../lb/Icon.js';
 
 type Folds = { open: string | null; toggle: (key: string) => void };
 
@@ -42,55 +30,27 @@ export function Group({ title, intro, icon, fold, summary, children }: Props) {
   const open = !foldable || folds.open === fold;
 
   const heading = (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: RHYTHM.parts }}>
-      {icon ? <IconDisc name={icon} size={36} iconSize={19} /> : null}
-      {/* token-exempt: title and summary 2 apart, the line heights carry the air */}
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text accessibilityRole="header" style={TYPE.title}>
-          {title}
-        </Text>
-        {foldable && !open && summary ? (
-          <Text numberOfLines={1} style={[TYPE.small, { color: palette.ink2 }]}>
-            {summary}
-          </Text>
-        ) : null}
-      </View>
-      {foldable ? (
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={{ transform: [{ rotate: open ? '-90deg' : '90deg' }] }}
-        >
-          <Icon name="chevron" size={20} color={palette.ink2} />
-        </View>
-      ) : null}
-    </View>
+    <Text accessibilityRole="header" style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
+      {title}
+    </Text>
   );
 
   return (
     <View style={{ gap: SPACE.md }}>
       {foldable ? (
-        <View
-          style={{
-            borderRadius: RADIUS.item,
-            backgroundColor: open ? 'transparent' : palette.paper,
-          }}
-        >
-          <Btn
-            variant="ghost"
-            full
-            wrap
-            onPress={() => folds.toggle(fold)}
-            // Screen readers hear whether the group is open (p2-ux-settings-fold-no-expanded-state).
+        <ListGroup>
+          <ListRow
+            title={title}
             expanded={open}
+            accessibilityLabel={title}
+            sub={summary}
+            icon={icon}
+            onPress={() => folds.toggle(fold)}
             accessibilityHint={summary}
-            label={heading}
-          >
-            {title}
-          </Btn>
-        </View>
+          />
+        </ListGroup>
       ) : (
-        <View style={{ paddingHorizontal: SPACE.xs }}>{heading}</View>
+        heading
       )}
       {open ? (
         <>

@@ -51,6 +51,7 @@ export type RowProps = {
   trailing?: ReactNode;
   onPress?: () => void;
   disabled?: boolean;
+  expanded?: boolean;
   accessibilityLabel?: string;
   accessibilityHint?: string;
 };
@@ -68,6 +69,7 @@ export function Row({
   trailing,
   onPress,
   disabled = false,
+  expanded,
   accessibilityLabel,
   accessibilityHint,
 }: RowProps) {
@@ -133,7 +135,8 @@ export function Row({
           accessibilityRole="button"
           accessibilityLabel={accessibilityLabel ?? [title, sub, value].filter(Boolean).join(', ')}
           accessibilityHint={accessibilityHint}
-          accessibilityState={{ disabled }}
+          accessibilityState={{ disabled, ...(expanded === undefined ? {} : { expanded }) }}
+          aria-expanded={expanded}
           style={{ flex: 1 }}
         >
           {({ pressed }) => (

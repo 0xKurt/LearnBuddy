@@ -16,6 +16,7 @@ import { setPin } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { signIn } from '../../lib/auth/supabase.js';
 import { messageFor } from '../../lib/errors.js';
+import { UI } from '../../lib/theme/components.js';
 import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -33,13 +34,8 @@ const onlyDigits = (text: string, max: number) => text.replace(/\D/g, '').slice(
 function Labeled({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   const { palette } = useTheme();
   return (
-    // token-exempt: label and field 6 apart, snug as one thing
-    <View style={{ gap: 6 }}>
-      <Text
-        accessibilityElementsHidden
-        importantForAccessibility="no"
-        style={[TYPE.body, { fontWeight: '600' }]}
-      >
+    <View style={{ gap: UI.field.labelGap }}>
+      <Text accessibilityElementsHidden importantForAccessibility="no" style={TYPE.bodyStrong}>
         {label}
       </Text>
       {hint ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{hint}</Text> : null}
@@ -52,12 +48,11 @@ type Props = {
   pinSet: boolean;
   /** The account's e-mail from the stored session ('' when unknown). */
   email: string;
-  onInputFocus: (input: LbTextInputRef | null) => void;
 };
 
-export function PinCard({ pinSet, email, onInputFocus }: Props) {
+export function PinCard({ pinSet, email }: Props) {
   const { palette } = useTheme();
-  const { t } = useTranslation(['settings', 'common']);
+  const { t } = useTranslation(['settings', 'common', 'auth']);
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState('');
   const [pin, setPinText] = useState('');
@@ -151,12 +146,11 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
                   ref={currentRef}
                   value={current}
                   onChangeText={(v) => setCurrent(onlyDigits(v, 8))}
-                  onFocus={() => onInputFocus(currentRef.current)}
                   keyboardType="number-pad"
                   maxLength={8}
                   secureTextEntry
                   autoComplete="off"
-                  placeholder="••••"
+                  placeholder={t('auth:profile.pin_placeholder')}
                   accessibilityLabel={t('settings:adult.pin.current')}
                   editable={!busy}
                 />
@@ -172,12 +166,11 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
                   // The number pad has no return key: a filled PIN hands focus on.
                   if (next.length === 4) repeatRef.current?.focus();
                 }}
-                onFocus={() => onInputFocus(pinRef.current)}
                 keyboardType="number-pad"
                 maxLength={4}
                 secureTextEntry
                 autoComplete="off"
-                placeholder="••••"
+                placeholder={t('auth:profile.pin_placeholder')}
                 accessibilityLabel={t('settings:adult.pin.new')}
                 editable={!busy}
               />
@@ -187,12 +180,11 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
                 ref={repeatRef}
                 value={repeat}
                 onChangeText={(v) => setRepeat(onlyDigits(v, 4))}
-                onFocus={() => onInputFocus(repeatRef.current)}
                 keyboardType="number-pad"
                 maxLength={4}
                 secureTextEntry
                 autoComplete="off"
-                placeholder="••••"
+                placeholder={t('auth:profile.pin_placeholder')}
                 accessibilityLabel={t('settings:adult.pin.repeat')}
                 editable={!busy}
                 error={repeat.length === 4 && pin !== repeat}
@@ -218,7 +210,6 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
                       ref={passwordRef}
                       value={password}
                       onChangeText={setPassword}
-                      onFocus={() => onInputFocus(passwordRef.current)}
                       secureTextEntry={!showPassword}
                       showToggle
                       shown={showPassword}

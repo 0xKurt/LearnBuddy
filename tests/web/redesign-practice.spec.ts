@@ -13,7 +13,6 @@ for (const family of ['pastell', 'ocean'] as const) {
       await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
       await onboardChild(page, 'eight-code');
       await openMenu(page, 'Einstellungen');
-      await page.getByRole('button', { name: 'Aussehen', exact: true }).click();
       await page
         .getByRole('radio', { name: family === 'pastell' ? 'Pastell' : 'Meer', exact: true })
         .click();

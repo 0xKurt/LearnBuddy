@@ -10,7 +10,6 @@ export const SCREEN_LOOKS = [
 ] as const;
 export async function screenLook(page: Page, look: (typeof SCREEN_LOOKS)[number]): Promise<string> {
   await page.goto('/settings');
-  await page.getByRole('button', { name: 'Aussehen', exact: true }).click();
   await page.getByRole('radio', { name: look.label, exact: true }).click();
   await expect(page.getByRole('radio', { name: look.label, exact: true })).toBeChecked();
   const mode = page.getByRole('radio', { name: look.dark ? 'Dunkel' : 'Hell', exact: true });

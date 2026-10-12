@@ -131,7 +131,6 @@ test('theme foundation: Pastell/Meer light/dark phone matrix', async ({ page }) 
   for (const family of ['Pastell', 'Meer'] as const) {
     for (const dark of [false, true]) {
       await openMenu(page, 'Einstellungen');
-      await page.getByRole('button', { name: 'Aussehen', exact: true }).click();
       await page.getByRole('radio', { name: family, exact: true }).click();
       const toggle = page.getByRole('radio', { name: dark ? 'Dunkel' : 'Hell', exact: true });
       await toggle.click();

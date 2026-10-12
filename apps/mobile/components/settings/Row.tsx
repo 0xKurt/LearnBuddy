@@ -9,6 +9,8 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
+import { SETTINGS } from '../../lib/theme/settings.js';
+import { UI } from '../../lib/theme/components.js';
 import { RHYTHM } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -26,12 +28,11 @@ type Props = {
 export function Row({ question, answer, current, hint, locked = false, children }: Props) {
   const { palette } = useTheme();
   return (
-    // token-exempt: question, answer and hint 6 apart, read as one setting
-    <View style={{ gap: 6 }}>
+    <View style={{ gap: SETTINGS.detailGap }}>
       <Text
         accessibilityRole="header"
         accessibilityLabel={current ? `${question} ${current}` : undefined}
-        style={[TYPE.body, { fontWeight: '600' }]}
+        style={TYPE.cell}
       >
         {question}
       </Text>
@@ -42,11 +43,12 @@ export function Row({ question, answer, current, hint, locked = false, children 
           // While locked the control is also hidden from screen readers: it would
           // otherwise announce as enabled and swallow double-taps silently.
           accessibilityElementsHidden={locked}
+          aria-hidden={locked || undefined}
           importantForAccessibility={locked ? 'no-hide-descendants' : 'auto'}
           style={{
             gap: RHYTHM.parts,
-            marginTop: 6, // token-exempt: the control set a little apart from the words above
-            opacity: locked ? 0.6 : 1,
+            marginTop: SETTINGS.detailGap,
+            opacity: locked ? UI.disabledOpacity : 1,
             pointerEvents: locked ? 'none' : 'auto',
           }}
         >
@@ -59,5 +61,5 @@ export function Row({ question, answer, current, hint, locked = false, children 
 
 export function Divider() {
   const { palette } = useTheme();
-  return <View style={{ height: 1, backgroundColor: palette.hairline }} />;
+  return <View style={{ height: UI.border, backgroundColor: palette.hairline }} />;
 }
