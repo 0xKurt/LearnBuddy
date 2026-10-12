@@ -129,7 +129,10 @@
   },
   "greeting_ask": "Cosa c'è in arrivo?",
   "intro": {
-    "body": "Ti aiuto a prepararti per verifiche ed esami – senza stress. Dimmi cosa ti aspetta o mandami una foto della tua scheda."
+    "body": "Raccontami della tua prossima verifica o mostrami una scheda. Ne farò degli esercizi.",
+    "hello": "Ciao {{name}}.",
+    "photo": "Foto di una scheda",
+    "practice": "Fare un po’ di pratica"
   },
   "menu": {
     "open": "Apri il menu",
