@@ -9,6 +9,8 @@ import { Text, View } from 'react-native';
 import { askAttach, attachInChat } from '../../lib/capture/attachRequest.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { CHAT as CHAT_STYLE } from '../../lib/theme/chat.js';
+import { UI } from '../../lib/theme/components.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
@@ -36,7 +38,7 @@ const AREA_ICON: Record<Area, IconName> = {
 };
 
 /** The round mark with the area's icon. */
-const DISC = 40;
+const DISC = UI.iconButton.composer;
 
 export function AreaCard({ area }: { area: Area }) {
   const { palette } = useTheme();
@@ -56,7 +58,7 @@ export function AreaCard({ area }: { area: Area }) {
       style={[
         {
           backgroundColor: palette.paper,
-          borderRadius: RADIUS.item,
+          borderRadius: RADIUS.lg,
           padding: CARD_PAD.snug,
           flexDirection: 'row',
           alignItems: 'center',
@@ -75,9 +77,9 @@ export function AreaCard({ area }: { area: Area }) {
           justifyContent: 'center',
         }}
       >
-        <Icon name={AREA_ICON[area]} size={20} color={palette.primary} />
+        <Icon name={AREA_ICON[area]} size={CHAT_STYLE.overlay.glyph} color={palette.primary} />
       </View>
-      <Text style={[TYPE.body, { flex: 1, fontWeight: '600' }]}>{label}</Text>
+      <Text style={[TYPE.cell, { flex: 1 }]}>{label}</Text>
       <Btn size="sm" pill onPress={open} accessibilityLabel={t('area.open_label', { what: label })}>
         {t('area.open')}
       </Btn>

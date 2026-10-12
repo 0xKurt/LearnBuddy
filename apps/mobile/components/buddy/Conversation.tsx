@@ -2,9 +2,8 @@
 // sent outside the app show what really happened to them — and the one state that is the
 // same under every one of them ("nur hier in der App") is said once, under the newest.
 // What Buddy did with a message stands right under it as ONE receipt for the turn, not one
-// line per action (issue #204): in the chat (`receipts="turn"`) every receipt carries its own
-// small ↺ and nothing else — a tap on its words opens nothing (issue #520); History keeps a
-// line and a way back per step, which is what she opens it for. Where a new day starts
+// line per action (issue #204). Chat and History expose a separate action chooser per turn;
+// receipt words remain factual text. Where a new day starts
 // a quiet line names it (never how many days passed). Where a new session starts
 // Buddy greets her in a bubble of his own (issue #104) and, with the room the screen
 // gives it, that greeting is what the view opens on. Where the greeting tells about something
@@ -12,13 +11,14 @@
 // (`sessionStart.action`, issue #195), not in a second card repeating it.
 // Motion: what arrives fades in with a small rise (the bubble first, then its
 // cards and chips, subtly staggered); what was already there when the screen
-// opened stands still, and the list glides when something is added. A long
+// opened stands still, and neighboring content reflows immediately. A long
 // press on a message opens "Kopieren" / "Vorlesen" (MessageMenu).
 
 import { isValidElement, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
-import { Text, View } from 'react-native';
-import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
+import { Platform, Text, View } from 'react-native';
+import { Appear, Rise } from '../lb/Motion.js';
+import { UI } from '../../lib/theme/components.js';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -26,7 +26,8 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 import { PressArea } from '../lb/PressArea.js';
-import { SHADOW } from '../../lib/theme/shadow.js';
+import { useMotionReduced } from '../../lib/theme/motion.js';
+import { CHAT } from '../../lib/theme/chat.js';
 import { AreaCard } from './AreaCard.js';
 import { ConfirmCard } from './ConfirmCard.js';
 import { deliveryText, describeAction, onlyInApp } from './describe.js';
@@ -35,23 +36,15 @@ import { i18n } from '../../lib/i18n/index.js';
 import { dayBreaks, formatDay, localDateOf } from '../../lib/time.js';
 import { closedStream, markdownPlain } from '../../lib/buddy/markdown.js';
 import { haptic } from '../../lib/haptics.js';
-import { glide, riseIn } from '../../lib/theme/enter.js';
+
 import { MessageMenu, type MenuMessage } from './MessageMenu.js';
 import { RichText } from './RichText.js';
+import { UndoSheet } from './UndoSheet.js';
 import { TypingBubble } from './TypingBubble.js';
 import { useReveal } from './useReveal.js';
-import { BUBBLE, TAIL } from '../../lib/theme/bubble.js';
+
 import { SPACE } from '../../lib/theme/space.js';
 import { useSay } from '../../lib/speech/say.js';
-
-/**
- * The fine print under a turn (where a message went, a receipt's note, the day): TYPE.small,
- * smaller. token-exempt: 12, below TYPE.label, quieter than the turn it belongs to.
- */
-const FINE = { fontSize: 12 } as const;
-
-/** The check or cross in front of a receipt line. */
-const RECEIPT_ICON = 14;
 
 // The core's own cards; a domain adds its offers, its roleplay and its rehearsal the same way
 // (components/buddy/extensions.ts, lib/learning/register.tsx).
@@ -122,19 +115,15 @@ type Props = {
   sessionRoom?: number;
   /** Undo one of Buddy's actions (only offered where the API says it still applies). */
   onUndo?: (actionId: string) => void;
+  undoError?: { actionId: string; text: string } | null;
   /** Undo is locked while this is true (default: busy); history locks only while undoing. */
   undoBusy?: boolean;
-  /**
-   * How what Buddy did reads (issue #204). 'turn': one receipt per answer, and its ↺ takes
-   * back that answer's newest step still standing — a second tap the one before (issue #520:
-   * the ↺ on each receipt is the only way back in the chat, no sheet behind the words).
-   * 'step' (the default): a line and a way back per step, which is what History is for.
-   */
+  /** 'turn': combined receipt; 'step': individual receipts. Both use one action chooser. */
   receipts?: 'turn' | 'step';
   /**
    * Action ids whose receipt the bar on top already says word for word (issue #204, the
    * prepared practice): their line leaves the conversation while that bar stands — closing
-   * the bar brings the line and its ↺ back, and History keeps both all along.
+   * the bar brings the factual line back; the action remains in the turn chooser.
    */
   carriedOnTop?: ReadonlySet<string>;
   /**
@@ -150,6 +139,8 @@ type Props = {
   showTyping?: boolean;
 };
 
+const Entrance = Platform.OS === 'web' ? Appear : Rise;
+
 export function Conversation({
   messages,
   contactOn,
@@ -164,6 +155,7 @@ export function Conversation({
   onResend,
   onUndo,
   undoBusy,
+  undoError = null,
   receipts = 'step',
   carriedOnTop = EMPTY_IDS,
   // The screen labels of each message use `spoken` inside the map: bind the prop apart.
@@ -171,22 +163,54 @@ export function Conversation({
   showTyping = true,
 }: Props) {
   const { palette } = useTheme();
+  const reduced = useMotionReduced();
+  // Match initial-subtree skipping: later mounted descendants may still enter.
+  const committed = useRef(false);
+  useEffect(() => {
+    committed.current = true;
+  }, []);
   const { t } = useTranslation('buddy');
   // Screen readers hear formulas in words, not raw LaTeX (p2-buddy-bubble-a11y-reads-raw-latex).
   const say = useSay();
   const ReadAlong = readAlong.get();
   const [menu, setMenu] = useState<MenuMessage | null>(null);
-  /** The step whose arrow was tapped: its arrow turns into the spinner while that runs (#295). */
+  /** Only the chosen sheet action shows request progress. */
   const [undoingId, setUndoingId] = useState<string | null>(null);
   const undoLocked = undoBusy ?? busy;
-  // Once nothing is in flight any more the arrow is an arrow again — after a failed undo too,
-  // so a later send (busy as well) does not set an old arrow spinning.
+  const [undoTurnId, setUndoTurnId] = useState<string | null>(null);
+  const undoStarted = useRef<string | null>(null);
+  const undoTurn = messages.find((m) => m.id === undoTurnId);
+  // A failed request remains retryable once its controller unlocks.
+  // so a later send does not show progress on a completed undo request.
   useEffect(() => {
-    if (!undoLocked) setUndoingId(null);
+    if (!undoLocked) {
+      setUndoingId(null);
+      undoStarted.current = null;
+    }
   }, [undoLocked]);
+  useEffect(() => {
+    if (undoTurnId !== null && !undoTurn) {
+      setUndoTurnId(null);
+      undoStarted.current = null;
+    }
+    if (
+      undoStarted.current &&
+      undoTurn?.actions.find((a) => a.id === undoStarted.current)?.status === 'undone'
+    )
+      undoStarted.current = null;
+  }, [undoTurnId, undoTurn]);
   const undo = (id: string) => {
+    const action = undoTurn?.actions.find((a) => a.id === id);
+    if (!onUndo || undoLocked || undoStarted.current || !action || !takeableBack(action)) return;
+    undoStarted.current = id;
     setUndoingId(id);
-    onUndo?.(id);
+    try {
+      onUndo(id);
+    } catch (error) {
+      undoStarted.current = null;
+      setUndoingId(null);
+      throw error;
+    }
   };
   const last = messages[messages.length - 1];
   const lastBuddy = [...messages].reverse().find((m) => m.role === 'buddy');
@@ -204,42 +228,14 @@ export function Conversation({
     const was = m.role === 'learner' ? onScreen.current.pending : onScreen.current.live;
     return was !== null && m.text.trim().startsWith(was.trim().slice(0, 40));
   };
-  const enterOf = (m: MessageView, index: number) =>
-    arrivedInPlace(m) ? undefined : riseIn(index);
+  const enters = committed.current;
+  const enterOf = (m: MessageView) => enters && !arrivedInPlace(m);
 
   /** What a step that was taken back reads like now. */
   const undoneText = (a: MessageView['actions'][number]): string =>
     a.summary.tool === 'request_material'
       ? t('action.request_material_undone', { title: a.summary.title })
       : `${describeAction(a.summary)} – ${t('done.undone')}`;
-  /**
-   * The way back for one step, or nothing where there is none: a small round arrow at the end
-   * of the receipt's line (issue #295), not a pill of its own under it. The owner, 02.10.:
-   * "muss kleiner und dezenter werden … ein rundes Pfeil icon neben der entsprechenden
-   * Nachricht und kein großer fetter button". What it takes back is in its label; a tap takes
-   * it back at once (UX-PRINCIPLES: undo over confirmation), and while that runs the arrow is
-   * a spinner in the same place.
-   */
-  const undoButton = (a: MessageView['actions'][number] | null): ReactNode => {
-    if (!onUndo || a === null || !takeableBack(a)) return null;
-    const what = describeAction(a.summary);
-    const running = undoLocked && undoingId === a.id;
-    return (
-      <Btn
-        iconOnly
-        icon="undo"
-        onPress={() => {
-          haptic.tap();
-          undo(a.id);
-        }}
-        busy={running}
-        disabled={undoLocked}
-        accessibilityLabel={t('done.undo_label', { what })}
-      >
-        {t('done.undo')}
-      </Btn>
-    );
-  };
   // "nur hier in der App" is explained once, not under every card (issue #204): under the
   // newest receipt it applies to, and under the newest of Buddy's messages that only ever
   // existed here. Everything older carries the same truth without repeating the sentence.
@@ -249,10 +245,10 @@ export function Conversation({
   const inAppDelivery = messages.filter(saysOnlyInApp).at(-1)?.id ?? null;
 
   const view = (
-    // The thread's air rides one scale (issue #51): sm from turn to turn, and the same
-    // sm from a bubble to its card or chips (the block's xs gap + an xs margin there);
+    // Turns use the page's lg rhythm; within a turn, sm separates a bubble
+    // from its card or chips (the block's xs gap + an xs margin there);
     // only a bubble's own status line sits closer, at the bare xs.
-    <View style={{ gap: SPACE.sm }}>
+    <View style={{ gap: SPACE.lg }}>
       {messages.map((m, index) => {
         const mine = m.role === 'learner';
         const day = breaks[index] ?? null;
@@ -268,24 +264,20 @@ export function Conversation({
         // aloud and copying.
         const own = messageCard(m);
         return (
-          <Animated.View
-            key={m.id}
-            layout={glide}
-            style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: SPACE.xs }}
-          >
+          <View key={m.id} style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: SPACE.xs }}>
             {day ? <DayLine day={day} /> : null}
             {own ? (
-              <Animated.View entering={enterOf(m, 0)} style={{ width: '86%' }}>
+              <Entrance animate={enterOf(m)} style={{ width: CHAT.cardWidth }}>
                 {own}
-              </Animated.View>
+              </Entrance>
             ) : (
-              <Animated.View
-                entering={enterOf(m, 0)}
+              <Entrance
+                animate={enterOf(m)}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'flex-end',
                   gap: SPACE.sm,
-                  maxWidth: '92%',
+                  maxWidth: mine ? CHAT.mineWidth : CHAT.buddyWidth,
                 }}
               >
                 <PressArea
@@ -304,63 +296,79 @@ export function Conversation({
                     haptic.tap();
                     setMenu({ text: m.text, role: m.role });
                   }}
-                  delayLongPress={350}
+                  delayLongPress={CHAT.longPress}
                   style={{ flexShrink: 1 }}
                 >
                   {(pressed) => (
                     <View
                       style={[
-                        BUBBLE,
+                        mine ? CHAT.mine : null,
                         {
-                          backgroundColor: mine ? palette.primary : palette.paper,
-                          borderBottomRightRadius: mine ? TAIL : BUBBLE.borderRadius,
-                          borderBottomLeftRadius: mine ? BUBBLE.borderRadius : TAIL,
-                          opacity: pressed ? 0.85 : 1,
-                          transform: [{ scale: pressed ? 0.98 : 1 }],
+                          backgroundColor: mine
+                            ? m.status === 'failed'
+                              ? palette.canvas
+                              : palette.primary
+                            : undefined,
+                          borderWidth: mine && m.status === 'failed' ? CHAT.failedBorder : 0,
+                          borderColor: palette.danger,
+                          borderStyle: 'dashed',
+                          borderBottomRightRadius: mine ? CHAT.tail : undefined,
+                          borderBottomLeftRadius: mine ? CHAT.mine.borderRadius : undefined,
+                          opacity: pressed ? CHAT.pressedOpacity : 1,
+                          transform: [{ scale: pressed && !reduced ? CHAT.pressedScale : 1 }],
                         },
-                        mine ? null : SHADOW.soft,
                       ]}
                     >
                       {m.outreach ? (
-                        // token-exempt: the title snug over its message, 2 apart
-                        <Text style={[TYPE.label, { marginBottom: 2 }]}>{m.outreach.title}</Text>
+                        // The outreach title remains attached to its message.
+                        <Text style={[TYPE.label, { marginBottom: CHAT.titleGap }]}>
+                          {m.outreach.title}
+                        </Text>
                       ) : null}
                       {!mine && spokenMode && m === lastBuddy && ReadAlong ? (
                         <ReadAlong text={m.text} style={[TYPE.body, { color: palette.ink }]} />
                       ) : (
                         <RichText
                           text={m.text}
-                          style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
+                          style={[
+                            TYPE.body,
+                            {
+                              color:
+                                mine && m.status !== 'failed' ? palette.onPrimary : palette.ink,
+                            },
+                          ]}
                         />
                       )}
                     </View>
                   )}
                 </PressArea>
-              </Animated.View>
+              </Entrance>
             )}
             {/* What really happened to a message Buddy also sent outside the app. "Nur hier
                 in der App" is the one state that is the same for every one of them, so it is
                 said once — under the newest (issue #204); it used to stand under every card. */}
             {m.outreach && (m.id === inAppDelivery || !saysOnlyInApp(m)) ? (
-              <Text style={[TYPE.small, FINE]}>{deliveryText(m.outreach)}</Text>
+              <Text style={[TYPE.small, TYPE.meta]}>{deliveryText(m.outreach)}</Text>
             ) : null}
             {m.actions.map((a) => {
               const card = actionCard(a, spokenMode);
               return card ? (
-                <Animated.View
+                <Entrance
                   key={a.id}
-                  entering={riseIn(1)}
+                  animate={enters}
+                  index={1}
                   // Block gap xs + this xs = sm, the same air as between two bubbles —
                   // a card glued to its sentence was the complaint (owner 28.09., issue #51).
-                  style={{ width: '86%', marginTop: SPACE.xs }}
+                  style={{ width: CHAT.cardWidth, marginTop: SPACE.xs }}
                 >
                   {card}
-                </Animated.View>
+                </Entrance>
               ) : null;
             })}
             {showActions && done.length > 0 ? (
-              <Animated.View
-                entering={riseIn(1)}
+              <Entrance
+                animate={enters}
+                index={1}
                 // Block gap xs + xs = sm: same breathing room as between bubbles — the
                 // chips sat glued to their bubble (owner feedback 2026-09-28).
                 style={{
@@ -370,7 +378,7 @@ export function Conversation({
                   // wide as its "Rückgängig" button and the sentence broke after three
                   // words (issue #191). The cap keeps it inside the bubble column.
                   alignSelf: 'stretch',
-                  maxWidth: '88%',
+                  maxWidth: CHAT.receiptWidth,
                   marginTop: SPACE.xs,
                 }}
               >
@@ -383,10 +391,7 @@ export function Conversation({
                 {receipts === 'turn' ? (
                   <>
                     {applied.length > 0 ? (
-                      <Receipt
-                        text={applied.map((a) => describeAction(a.summary)).join(' · ')}
-                        undo={undoButton([...applied].reverse().find(takeableBack) ?? null)}
-                      />
+                      <Receipt text={applied.map((a) => describeAction(a.summary)).join(' · ')} />
                     ) : null}
                     {takenBack.length > 0 ? (
                       <Receipt undone text={takenBack.map(undoneText).join(' · ')} />
@@ -398,7 +403,6 @@ export function Conversation({
                       key={a.id}
                       undone={a.status === 'undone'}
                       text={a.status === 'undone' ? undoneText(a) : describeAction(a.summary)}
-                      undo={a.status === 'undone' ? null : undoButton(a)}
                     />
                   ))
                 )}
@@ -408,19 +412,31 @@ export function Conversation({
                   <Text
                     style={[
                       TYPE.small,
-                      FINE,
+                      TYPE.meta,
                       // Under the receipt's words, past its icon.
-                      { color: palette.ink3, paddingLeft: RECEIPT_ICON + SPACE.xs },
+                      { color: palette.ink2, paddingLeft: CHAT.receiptIcon + SPACE.xs },
                     ]}
                   >
                     {t('done.in_app_only')}
                   </Text>
                 ) : null}
-              </Animated.View>
+              </Entrance>
+            ) : null}
+            {showActions && onUndo && m.actions.some(takeableBack) ? (
+              <Btn
+                variant="ghost"
+                size="sm"
+                icon="undo"
+                disabled={undoLocked}
+                onPress={() => setUndoTurnId(m.id)}
+              >
+                {t('done.take_back')}
+              </Btn>
             ) : null}
             {mine && m.status === 'failed' ? (
-              <Animated.View
-                entering={riseIn(0)}
+              <Entrance
+                animate={enters}
+                index={0}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}
               >
                 {/* It arrived: say why it was not answered (CLAUDE.md rule 5). Stopped by
@@ -442,7 +458,7 @@ export function Conversation({
                     {t('thread.resend')}
                   </Btn>
                 )}
-              </Animated.View>
+              </Entrance>
             ) : null}
             {onOption && m === last && m.role === 'buddy' && m.options && m.options.length > 0 ? (
               <View
@@ -455,7 +471,11 @@ export function Conversation({
                 }}
               >
                 {m.options.map((o, i) => (
-                  <Animated.View key={o} entering={riseIn(2 + i)}>
+                  <Entrance
+                    key={o}
+                    animate={enters}
+                    index={Math.min(2 + i, UI.entrance.staggerCap)}
+                  >
                     <Btn
                       size="sm"
                       variant="soft"
@@ -467,7 +487,7 @@ export function Conversation({
                     >
                       {o}
                     </Btn>
-                  </Animated.View>
+                  </Entrance>
                 ))}
               </View>
             ) : null}
@@ -478,60 +498,74 @@ export function Conversation({
                 action={sessionStart!.action}
               />
             ) : null}
-          </Animated.View>
+          </View>
         );
       })}
       {notices.map((n, i) => (
-        <Animated.View
+        <Entrance
           key={isValidElement(n) && n.key !== null ? n.key : `notice-${i}`}
-          entering={riseIn(1)}
-          layout={glide}
+          animate={enters}
+          index={1}
         >
           {n}
-        </Animated.View>
+        </Entrance>
       ))}
       {pending ? (
-        <Animated.View key="pending" entering={riseIn(0)} style={{ alignItems: 'flex-end' }}>
+        <Entrance key="pending" animate={enters} index={0} style={{ alignItems: 'flex-end' }}>
           <View
             style={[
-              BUBBLE,
+              CHAT.mine,
               {
-                maxWidth: '86%',
+                maxWidth: CHAT.mineWidth,
                 backgroundColor: palette.primary,
-                borderBottomRightRadius: TAIL,
-                opacity: 0.8,
+                borderBottomRightRadius: CHAT.tail,
+                opacity: CHAT.pendingOpacity,
               },
             ]}
           >
-            <Text style={[TYPE.body, { color: palette.paper }]}>{pending.text}</Text>
+            <Text style={[TYPE.body, { color: palette.onPrimary }]}>{pending.text}</Text>
           </View>
-        </Animated.View>
+        </Entrance>
       ) : null}
       {thinking && shownLive ? (
-        <Animated.View
+        <Entrance
           key="live"
-          entering={riseIn(0)}
-          style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm, maxWidth: '92%' }}
+          animate={enters}
+          index={0}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-end',
+            gap: SPACE.sm,
+            maxWidth: CHAT.buddyWidth,
+          }}
         >
-          <View
-            accessibilityLiveRegion="polite"
-            style={[
-              BUBBLE,
-              {
-                flexShrink: 1,
-                backgroundColor: palette.paper,
-                borderBottomLeftRadius: TAIL,
-              },
-              SHADOW.soft,
-            ]}
-          >
+          <View accessibilityLiveRegion="polite" style={[{ flexShrink: 1 }]}>
             <RichText text={shownLive} style={[TYPE.body, { color: palette.ink }]} />
           </View>
-        </Animated.View>
+        </Entrance>
       ) : thinking && showTyping ? (
         // Buddy is thinking: his bubble with soft dots (the text is for screen readers).
         <TypingBubble key="typing" label={t('thread.typing')} />
       ) : null}
+      <UndoSheet
+        error={
+          undoError && undoTurn?.actions.some((a) => a.id === undoError.actionId)
+            ? undoError.text
+            : null
+        }
+        visible={undoTurn !== undefined}
+        rows={(undoTurn?.actions ?? [])
+          .filter((a) => takeableBack(a) || a.status === 'undone')
+          .map((a) => ({
+            id: a.id,
+            title: describeAction(a.summary),
+            undone: a.status === 'undone',
+            busy: undoLocked && undoingId === a.id,
+            disabled: undoLocked,
+          }))}
+        onClose={() => setUndoTurnId(null)}
+        onUndo={undo}
+      />
       <MessageMenu message={menu} onClose={() => setMenu(null)} />
     </View>
   );
@@ -539,70 +573,41 @@ export function Conversation({
   if (pending) onScreen.current.pending = pending.text;
   if (thinking && live) onScreen.current.live = live;
   // What was there when the conversation opened stands still; only what arrives moves.
-  return <LayoutAnimationConfig skipEntering>{view}</LayoutAnimationConfig>;
+  return view;
 }
 
-/**
- * One turn's receipt: a tick, what Buddy did in one quiet line, and at its end the way back
- * where that is offered here (issue #204) — a small round arrow since issue #295.
- *
- * It used to be a green pill with the text squeezed into whatever the "Rückgängig" button
- * left over — on a phone that came out as "✓" on one line and "Ein" on the next, and two of
- * them stacked read as green blobs nobody could place (owner 01.10.: "ich weiss auch nicht
- * was die gruenen felder da sein sollen und es sieht auch haesslich aus", issue #191). It is
- * a line in the conversation's own tones since.
- *
- * Its words are only words: a tap on them used to open a sheet of everything that could be
- * taken back, which nobody expected from a line of text (owner 09.10., issue #520: "man checkt
- * gar nicht sofort was da los ist"). The ↺ is the one way back.
- */
-function Receipt({
-  text,
-  undone = false,
-  undo = null,
-}: {
-  text: string;
-  undone?: boolean;
-  undo?: ReactNode;
-}) {
+/** Factual turn receipt; choosing an action lives in the separate undo sheet. */
+function Receipt({ text, undone = false }: { text: string; undone?: boolean }) {
   const { palette } = useTheme();
   return (
-    // The way back stands right after the sentence, on its line (issue #295: "neben der
-    // entsprechenden Nachricht" — at the far edge it belonged to nothing). The sentence may
-    // shrink and wrap, the arrow is a fixed 24 pt that never grows, so the sentence never
-    // shrinks to its first word the way it did beside the old pill (issue #191).
-    <Animated.View
-      layout={glide}
-      style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.sm }}
-    >
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.sm }}>
       <View
         accessible
         accessibilityRole="text"
         accessibilityLabel={text}
         style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.xs }}
       >
-        {/* token-exempt: the icon 2 down, on the line's letters, not its top */}
-        <View style={{ paddingTop: 2 }}>
+        <View style={{ paddingTop: CHAT.receiptOffset }}>
           <Icon
             name={undone ? 'close' : 'check'}
-            size={RECEIPT_ICON}
+            size={CHAT.receiptIcon}
             color={undone ? palette.ink3 : palette.successText}
           />
         </View>
         <Text
           style={[
             TYPE.small,
-            // token-exempt: 13, the receipt line between the fine print and TYPE.small
-            { flexShrink: 1, fontSize: 13, color: undone ? palette.ink3 : palette.ink2 },
+            // Receipt text remains quieter than the message.
+            {
+              flexShrink: 1,
+              color: palette.ink2,
+            },
           ]}
         >
           {text}
         </Text>
       </View>
-      {/* token-exempt: -2, the 24 pt circle centred on the first 21 pt line, not hanging
-          below it */}
-      {undo ? <View style={{ marginTop: -2, flexShrink: 0 }}>{undo}</View> : null}
-    </Animated.View>
+    </View>
   );
 }
 
@@ -641,21 +646,13 @@ function SessionGreeting({
           alignItems: 'flex-end',
           alignSelf: 'flex-start',
           gap: SPACE.sm,
-          maxWidth: '92%',
+          maxWidth: CHAT.buddyWidth,
         }}
       >
         <View
           accessibilityRole="text"
           accessibilityLabel={`${t('thread.buddy')}: ${text}`}
-          style={[
-            BUBBLE,
-            {
-              flexShrink: 1,
-              backgroundColor: palette.paper,
-              borderBottomLeftRadius: TAIL,
-            },
-            SHADOW.soft,
-          ]}
+          style={[{ flexShrink: 1 }]}
         >
           <Text style={[TYPE.body, { color: palette.ink }]}>{text}</Text>
         </View>
@@ -685,7 +682,7 @@ export function DayLine({ day }: { day: string }) {
       accessibilityRole="header"
       style={[
         TYPE.small,
-        FINE,
+        TYPE.meta,
         { alignSelf: 'center', color: palette.ink2, marginVertical: SPACE.xs },
       ]}
     >

@@ -7,7 +7,7 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { bothSchemes, setScheme, shot } from './fit';
+import { setScheme, shot } from './fit';
 
 /** The button inside the sheet that is open (the thread behind it may show the same words). */
 function inSheet(page: Page) {
@@ -122,25 +122,38 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // ── Undo what Buddy did ──
   await say(page, 'Ich spiele Handball');
   await expect(page.getByText('Cool – Handball merke ich mir.')).toBeVisible();
+  const trigger = page.getByRole('button', { name: 'Zurücknehmen', exact: true });
+  await expect(trigger).toBeVisible();
+  const target = await trigger.boundingBox();
+  expect(target?.width ?? 0).toBeGreaterThanOrEqual(44);
+  expect(target?.height ?? 0).toBeGreaterThanOrEqual(44);
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await expect(
+    page.getByRole('heading', { name: 'Was du zurücknehmen kannst', exact: true }),
+  ).toBeVisible();
   const undo = page.getByRole('button', { name: /^Rückgängig: / });
   await expect(undo).toBeVisible();
-  // A small round arrow at the end of the receipt's line, not a pill under it (issue #295):
-  // its circle is small, the target is still 44 × 44, and it stands on the receipt's line.
-  const target = await undo.boundingBox();
-  expect(target?.width ?? 0, 'the arrow is 44 wide to the finger').toBeGreaterThanOrEqual(44);
-  expect(target?.height ?? 0, 'the arrow is 44 tall to the finger').toBeGreaterThanOrEqual(44);
-  const line = await page.getByText('Gemerkt: Spielt Handball', { exact: true }).boundingBox();
-  const mid = (b: { y: number; height: number } | null) => (b ? b.y + b.height / 2 : -1);
-  expect(
-    Math.abs(mid(target) - mid(line)),
-    'the arrow stands on the receipt’s own line (issue #295)',
-  ).toBeLessThanOrEqual(12);
-  await bothSchemes(page, '39b-undo-arrow');
-  // Keyboard on the web (issue #295): it takes focus and Enter takes the step back.
+  await shot(page, '39b-undo-sheet');
+  await setScheme(page, 'dark');
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await expect(
+    page.getByRole('heading', { name: 'Was du zurücknehmen kannst', exact: true }),
+  ).toBeVisible();
+  await shot(page, '39b-undo-sheet-dark');
+  await setScheme(page, 'light');
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await expect(
+    page.getByRole('heading', { name: 'Was du zurücknehmen kannst', exact: true }),
+  ).toBeVisible();
   await undo.focus();
   await expect(undo).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(undo).toHaveCount(0);
+  await expect(page.getByText('Zurückgenommen', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Schließen', exact: true }).click();
   // Said in words, not only by colour.
   await expect(page.getByText('Gemerkt: Spielt Handball – rückgängig gemacht')).toBeVisible();
   await shot(page, '40-undone');

@@ -122,7 +122,10 @@
     "undo_label": "Rückgängig: {{what}}",
     "undone": "rückgängig gemacht",
     "undo_request_material": "Kein Foto nötig",
-    "in_app_only": "Verabredetes erscheint hier in der App – Benachrichtigungen sind aus."
+    "in_app_only": "Verabredetes erscheint hier in der App – Benachrichtigungen sind aus.",
+    "take_back": "Zurücknehmen",
+    "undo_sheet_title": "Was du zurücknehmen kannst",
+    "taken_back": "Zurückgenommen"
   },
   "focus": {
     "label": "Du arbeitest gerade an: {{what}}"

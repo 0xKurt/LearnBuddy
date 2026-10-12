@@ -122,7 +122,10 @@
     "undo_label": "Annuler : {{what}}",
     "undone": "annulé",
     "undo_request_material": "Pas besoin de photo",
-    "in_app_only": "Ce qui est convenu apparaît ici dans l'appli – les notifications sont désactivées."
+    "in_app_only": "Ce qui est convenu apparaît ici dans l'appli – les notifications sont désactivées.",
+    "take_back": "Annuler",
+    "undo_sheet_title": "Ce que tu peux annuler",
+    "taken_back": "Annulé"
   },
   "focus": {
     "label": "Tu travailles sur : {{what}}"

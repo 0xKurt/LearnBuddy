@@ -4,16 +4,17 @@
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, type KeyboardEvent, type WheelEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RefreshControl, ScrollView, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { Platform, RefreshControl, ScrollView, View } from 'react-native';
 
 import type { ThreadFollow } from '../../lib/buddy/useThreadFollow.js';
-import { fadeOut, riseIn } from '../../lib/theme/enter.js';
+import { Appear, Rise } from '../lb/Motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
-import { CONTROL, SPACE } from '../../lib/theme/space.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { RADIUS } from '../../lib/theme/radius.js';
+import { CHAT } from '../../lib/theme/chat.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { TopEdgeFade, topEdgeMaskFrom } from '../lb/EdgeFade.js';
@@ -70,16 +71,44 @@ export function HomeThread({
           flexGrow: 1,
           justifyContent: 'flex-end',
           paddingHorizontal: SPACE.lg,
-          paddingTop: SPACE.md,
-          // sm here + the composer's xs on top: md from the last bubble to the pill, on the
-          // scale like the sm between turns (issue #51). The same numbers as the thread's tail
-          // in talk.tsx.
-          paddingBottom: SPACE.sm,
-          gap: SPACE.sm,
+          paddingTop: SPACE.lg,
+          // The thread tail and the space between turns use the shared lg rhythm.
+          paddingBottom: SPACE.lg,
+          gap: SPACE.lg,
         }}
         keyboardShouldPersistTaps="handled"
         onScroll={follow.onScroll}
-        scrollEventThrottle={64}
+        onScrollBeginDrag={follow.interrupt}
+        onTouchMove={follow.interrupt}
+        {...(Platform.OS === 'web'
+          ? {
+              onWheel: (event: WheelEvent<HTMLElement>) => {
+                if (!event.ctrlKey && event.deltaY !== 0) follow.interrupt();
+              },
+              onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
+                if (event.defaultPrevented) return;
+                const target = event.target;
+                if (
+                  target instanceof HTMLElement &&
+                  target.closest('input, textarea, [contenteditable="true"]')
+                )
+                  return;
+                if (
+                  event.key === ' ' &&
+                  target instanceof HTMLElement &&
+                  target.closest('button, [role="button"], [role="checkbox"], [role="radio"], a')
+                )
+                  return;
+                if (
+                  ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(
+                    event.key,
+                  )
+                )
+                  follow.interrupt();
+              },
+            }
+          : {})}
+        scrollEventThrottle={CHAT.scrollThrottle}
         onLayout={follow.onLayout}
         onContentSizeChange={follow.follow}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -128,16 +157,16 @@ function WorkingOn({ h }: { h: BuddyHome }) {
   );
 }
 
-/** The round ends of a small pill button (it is CONTROL.sm tall, components/lb/Btn.tsx). */
-const PILL_ROUND = CONTROL.sm / 2;
+/** The pill uses the canonical round radius; its touch height belongs to Btn. */
+const PILL_ROUND = RADIUS.round;
 
 /** "↓ Neue Antwort": floats over the conversation's end and brings her back to it. */
+const PillEntrance = Platform.OS === 'web' ? Appear : Rise;
+
 function NewReplyPill({ onPress }: { onPress: () => void }) {
   const { t } = useTranslation('buddy');
   return (
-    <Animated.View
-      entering={riseIn(0)}
-      exiting={fadeOut()}
+    <PillEntrance
       pointerEvents="box-none"
       style={{ position: 'absolute', left: 0, right: 0, bottom: SPACE.md, alignItems: 'center' }}
     >
@@ -153,6 +182,6 @@ function NewReplyPill({ onPress }: { onPress: () => void }) {
           {`↓ ${t('buddy:thread.new_reply')}`}
         </Btn>
       </View>
-    </Animated.View>
+    </PillEntrance>
   );
 }

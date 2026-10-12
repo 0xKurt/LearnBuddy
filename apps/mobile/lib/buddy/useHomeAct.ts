@@ -17,18 +17,25 @@ export function refreshHome(): Promise<void> {
 }
 
 /** Runs a tap; a returned home replaces the cached one. */
-export type HomeAct = (fn: () => Promise<BuddyHome | void>) => Promise<void>;
+export type HomeAct = (
+  fn: () => Promise<BuddyHome | void>,
+  onError?: (text: string) => void,
+) => Promise<void>;
 
 export function useHomeAct(): { busy: boolean; act: HomeAct } {
   const [busy, setBusy] = useState(false);
-  async function act(fn: () => Promise<BuddyHome | void>): Promise<void> {
+  async function act(
+    fn: () => Promise<BuddyHome | void>,
+    onError?: (text: string) => void,
+  ): Promise<void> {
     setBusy(true);
     try {
       const next = await fn();
       if (next) setHome(next);
     } catch (err) {
       haptic.soft();
-      toast.show(messageFor(err), 'error');
+      if (onError) onError(messageFor(err));
+      else toast.show(messageFor(err), 'error');
       if (
         err instanceof ApiError &&
         (err.code === 'conflict' || err.code === 'stale' || err.code === 'not_found')

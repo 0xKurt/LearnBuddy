@@ -4,12 +4,12 @@
 // shows what arrived.
 
 import { useEffect, useRef, useState } from 'react';
-import { useReducedMotion } from 'react-native-reanimated';
+import { useMotionReduced } from '../../lib/theme/motion.js';
 
 import { revealNext, revealStart } from '../../lib/buddy/reveal.js';
 
 export function useReveal(text: string | null): string | null {
-  const reduce = useReducedMotion();
+  const reduce = useMotionReduced();
   const [shown, setShown] = useState(0);
   const state = useRef({ text: '', shown: 0 });
   useEffect(() => {
@@ -26,9 +26,12 @@ export function useReveal(text: string | null): string | null {
       return;
     }
     setShown(from);
+    if (from >= text.length) return;
+    let active = true;
     let frame: number | null = null;
     let last = Date.now();
     const step = () => {
+      if (!active) return;
       const now = Date.now();
       const next = revealNext(state.current.shown, text, now - last);
       last = now;
@@ -38,9 +41,10 @@ export function useReveal(text: string | null): string | null {
     };
     frame = requestAnimationFrame(step);
     return () => {
+      active = false;
       if (frame !== null) cancelAnimationFrame(frame);
     };
   }, [text, reduce]);
   if (text === null) return null;
-  return text.slice(0, Math.min(shown, text.length));
+  return reduce ? text : text.slice(0, Math.min(shown, text.length));
 }

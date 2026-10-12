@@ -122,7 +122,10 @@
     "undo_label": "Annulla: {{what}}",
     "undone": "annullato",
     "undo_request_material": "Nessuna foto necessaria",
-    "in_app_only": "Quello che avete concordato compare qui nell'app: le notifiche sono disattivate."
+    "in_app_only": "Quello che avete concordato compare qui nell'app: le notifiche sono disattivate.",
+    "take_back": "Annulla",
+    "undo_sheet_title": "Cosa puoi annullare",
+    "taken_back": "Annullato"
   },
   "focus": {
     "label": "Stai lavorando su: {{what}}"

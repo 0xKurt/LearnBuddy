@@ -1,3 +1,6 @@
+import { useHomeAct } from '../../../lib/buddy/useHomeAct.js';
+import { ApiError } from '../../../lib/api/apiError.js';
+import { messageFor } from '../../../lib/errors.js';
 // The receipts under one of Buddy's messages — what he did, with the way back (issue #191).
 //
 // On the phone the owner saw a green pill with "✓" on one line and "Ein" on the next. The
@@ -12,8 +15,8 @@
 // is not — jsdom lays nothing out; that is tests/web.
 
 import type { ActionView, MessageView } from '@learnbuddy/shared-types/contracts';
-import { fireEvent, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { act, fireEvent, screen } from '@testing-library/react';
+import { useLayoutEffect, useState, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { registerLearning } from '../../../lib/learning/register.js';
@@ -77,145 +80,155 @@ describe('a receipt gets the whole line (issue #191)', () => {
     expect(screen.getByText(SENTENCE)).toBeTruthy();
   });
 
-  it('keeps the whole line for the sentence; the way back is a small arrow at its end (#295)', () => {
-    renderThread(() => undefined);
-    const sentence = screen.getByText(SENTENCE);
-    const undo = screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` });
-    // Since #295 the arrow stands right after the sentence, on its line — which is only
-    // safe because the sentence is the one that gives way (it wraps) and the arrow cannot
-    // grow: the old pill took the width it wanted and left three letters ("Ein", #191).
-    const row = commonBox(sentence, undo);
-    expect(styleOf(row).flexDirection).toBe('row');
-    const childOf = (el: Element) => [...ancestors(el)].find((up) => up.parentElement === row);
-    expect(styleOf(childOf(sentence) ?? sentence).flexShrink, 'the sentence gives way').toBe('1');
-    expect(styleOf(childOf(undo) ?? undo).flexShrink, 'the arrow never shrinks').toBe('0');
-    expect(styleOf(sentence).flexShrink, 'and the text inside wraps').toBe('1');
-    // No word on it: the round arrow carries the meaning, the label says what it takes back.
-    expect(undo.textContent).toBe('');
-    // 44 × 44 to the finger, laid out as 24 (the negative margin gives the rest back).
-    expect(styleOf(undo).width).toBe('44px');
-    expect(styleOf(undo).height).toBe('44px');
-  });
-
-  it('stretches across the message block instead of shrinking to its button', () => {
-    renderThread(() => undefined);
-    const undo = screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` });
-    const column = commonBox(screen.getByText(SENTENCE), undo);
-    // Buddy's messages sit in a block with `alignItems: 'flex-start'`. Anything inside it
-    // that must be wider than its content has to say so.
-    const stretching = [...ancestors(column)].some((el) => styleOf(el).alignSelf === 'stretch');
-    expect(
-      stretching,
-      'without alignSelf stretch each receipt is only as wide as its own button',
-    ).toBe(true);
+  it('puts the quiet trigger after the factual receipt instead of inside its text', () => {
+    renderThread(vi.fn());
+    expect(screen.getByText(SENTENCE)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Zurücknehmen' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Rückgängig:/ })).toBeNull();
   });
 });
 
-describe('the way back works (UX-PRINCIPLES: undo over confirmation)', () => {
-  it('hands the action id to onUndo when she taps Rückgängig', () => {
+function openUndo(index = 0) {
+  fireEvent.click(screen.getAllByRole('button', { name: 'Zurücknehmen' })[index]!);
+}
+
+describe('the action chooser takes back real actions without a second confirmation', () => {
+  it('opens without submitting and hands the chosen exact ID to onUndo once', () => {
     const onUndo = vi.fn();
     renderThread(onUndo);
-    fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
+    openUndo();
+    expect(onUndo).not.toHaveBeenCalled();
+    expect(screen.getByText('Was du zurücknehmen kannst')).toBeTruthy();
+    const action = screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` });
+    fireEvent.click(action);
+    fireEvent.click(action);
+    expect(onUndo).toHaveBeenCalledTimes(1);
     expect(onUndo).toHaveBeenCalledWith(PLAN_EXAM.id);
   });
 
-  it('takes it back at once, without asking first', () => {
-    const onUndo = vi.fn();
-    renderThread(onUndo);
-    fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
-    expect(onUndo).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('turns the arrow into a spinner while undoing, and back into an arrow if it failed', () => {
+  it('keeps the chosen action busy, locks all rows and permits retry after failure', () => {
     const onUndo = vi.fn();
     const thread = (undoBusy: boolean) => (
       <Conversation
-        messages={[buddySaid([PLAN_EXAM])]}
+        messages={[buddySaid([PLAN_EXAM, REQUEST_PHOTO])]}
         pending={null}
         busy={false}
         showActions
-        receipts="turn"
         undoBusy={undoBusy}
         onUndo={onUndo}
       />
     );
     const view = renderInApp(thread(false));
+    openUndo();
     const name = `Rückgängig: ${SENTENCE}`;
-    expect(screen.getByRole('button', { name }).getAttribute('aria-busy')).not.toBe('true');
     fireEvent.click(screen.getByRole('button', { name }));
-    // In flight: the same button, in the same place, now busy (the spinner) and locked.
     view.rerender(thread(true));
     const running = screen.getByRole('button', { name });
     expect(running.getAttribute('aria-busy')).toBe('true');
     expect(running.getAttribute('aria-disabled')).toBe('true');
-    expect(running.querySelector('[role="progressbar"]')).not.toBeNull();
-    // The server said no (the step stays applied): the arrow is back and can be tapped again.
+    for (const row of screen.getAllByRole('button', { name: /^Rückgängig:/ }))
+      expect(row.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(running);
+    expect(onUndo).toHaveBeenCalledTimes(1);
     view.rerender(thread(false));
-    const again = screen.getByRole('button', { name });
-    expect(again.getAttribute('aria-busy')).not.toBe('true');
-    expect(again.querySelector('[role="progressbar"]')).toBeNull();
-    fireEvent.click(again);
+    expect(screen.getByRole('button', { name }).getAttribute('aria-busy')).not.toBe('true');
+    fireEvent.click(screen.getByRole('button', { name }));
     expect(onUndo).toHaveBeenCalledTimes(2);
   });
 
-  it('does not set an old arrow spinning when something else is busy later', () => {
-    const thread = (undoBusy: boolean) => (
-      <Conversation
-        messages={[buddySaid([PLAN_EXAM])]}
-        pending={null}
-        busy={false}
-        showActions
-        receipts="turn"
-        undoBusy={undoBusy}
-        onUndo={() => undefined}
-      />
-    );
-    const view = renderInApp(thread(false));
-    // She tapped, it ran and failed…
+  it('keeps a returned undone row visible and non-actionable', () => {
+    const onUndo = vi.fn();
+    const view = renderThread(onUndo);
+    openUndo();
     fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
-    view.rerender(thread(true));
-    view.rerender(thread(false));
-    // …and now something else is in flight: the arrow is locked, but it is not its spinner.
-    view.rerender(thread(true));
-    const locked = screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` });
-    expect(locked.getAttribute('aria-busy')).not.toBe('true');
-    expect(locked.getAttribute('aria-disabled')).toBe('true');
-  });
-
-  it('offers no way back once the action was taken back', () => {
-    renderInApp(
+    view.rerender(
       <Conversation
         messages={[buddySaid([{ ...PLAN_EXAM, status: 'undone' }])]}
         pending={null}
         busy={false}
         showActions
-        onUndo={() => undefined}
+        onUndo={onUndo}
       />,
     );
-    expect(screen.queryByRole('button', { name: /^Rückgängig: / })).toBeNull();
-    // It still says what happened, now as something that was taken back.
-    expect(screen.getByText(/zurückgenommen|rückgängig/i)).toBeTruthy();
+    expect(screen.getByText('Zurückgenommen')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Rückgängig:/ })).toBeNull();
+    expect(screen.getByText(`${SENTENCE} – rückgängig gemacht`)).toBeTruthy();
+  });
+
+  it('keeps an immediate HomeAct failure retryable through its committed busy lifecycle', async () => {
+    const failure = new ApiError('network', 'transport failed', 0);
+    const request = vi.fn().mockRejectedValue(failure);
+    const committedBusy: boolean[] = [];
+    function Parent() {
+      const { busy, act: run } = useHomeAct();
+      useLayoutEffect(() => {
+        committedBusy.push(busy);
+      }, [busy]);
+      const [error, setError] = useState<{ actionId: string; text: string } | null>(null);
+      return (
+        <Conversation
+          messages={[buddySaid([PLAN_EXAM])]}
+          pending={null}
+          busy={false}
+          showActions
+          undoBusy={busy}
+          undoError={error}
+          onUndo={(id) => {
+            setError(null);
+            void run(request, (text) => setError({ actionId: id, text }));
+          }}
+        />
+      );
+    }
+    renderInApp(<Parent />);
+    openUndo();
+    const action = () => screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` });
+    await act(async () => {
+      action().dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(screen.getByText(messageFor(failure))).toBeTruthy();
+    expect(action().getAttribute('aria-disabled')).not.toBe('true');
+    await act(async () => {
+      action().dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(committedBusy).toContain(true);
+    expect(committedBusy.at(-1)).toBe(false);
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows only the selected action error and clears it from a different turn', () => {
+    const text = "Keine Verbindung. Check dein Internet und versuch's nochmal.";
+    const view = chat({ undoError: { actionId: PLAN_EXAM.id, text } });
+    openUndo();
+    expect(screen.getByText(text)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Schließen' }));
+    openUndo(1);
+    expect(screen.queryByText(text)).toBeNull();
+    view.unmount();
+  });
+
+  it('does not expose action controls when the caller hides actions', () => {
+    chat({ showActions: false });
+    expect(screen.queryByRole('button', { name: 'Zurücknehmen' })).toBeNull();
+  });
+
+  it('removes stale actions if the chosen turn disappears and after unmount', () => {
+    const onUndo = vi.fn();
+    const view = renderThread(onUndo);
+    openUndo();
+    const old = screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` });
+    view.rerender(<Conversation messages={[]} pending={null} busy={false} onUndo={onUndo} />);
+    expect(screen.queryByRole('button', { name: /^Rückgängig:/ })).toBeNull();
+    fireEvent.click(old);
+    expect(onUndo).not.toHaveBeenCalled();
+    view.unmount();
+    fireEvent.click(old);
+    expect(onUndo).not.toHaveBeenCalled();
   });
 });
 
-/** The element and every box above it, up to the document. */
-function* ancestors(el: Element): Generator<Element> {
-  for (let up: Element | null = el; up; up = up.parentElement) yield up;
-}
-
-// ── The greeting a visit opens on (issues #104, #195) ───────────────────────────────────
-//
-// The owner, on his own app in the promo footage: „Das ist auch doof — Hi Lienne! / Done. —
-// Was für ne tolle conversation". She had just worked through six questions; Buddy said hello
-// as if nothing had happened and a card under it stated the fact flatly.
-//
-// What the greeting SAYS is decided in lib/buddy/sessionAnchor.ts and lib/homeLayout.ts (both
-// pure, both tested there). What is visible here: the sentence stands in Buddy's own bubble,
-// and where it tells about something she can look at, the way in rides WITH that bubble
-// instead of in a second card under it.
-
-/** The sentence the anchor composes after a round she got all right at once, in German. */
 const AFTER_PRACTICE = 'Hey Mia – 6 Fragen, alles gleich beim ersten Mal.';
 
 function renderGreeting(action?: ReactNode) {
@@ -346,26 +359,27 @@ describe('one turn is one receipt, with one way back (issue #204)', () => {
     expect(screen.queryByText(SENTENCE)).toBeNull();
   });
 
-  it('gives every receipt its own ↺ in the chat; History keeps one per step (issue #520)', () => {
-    const chatView = chat();
-    const inChat = screen.getAllByRole('button', { name: /^Rückgängig: / });
-    // One per receipt: the older answer's (its newest step) and the newer answer's.
-    expect(inChat.map((b) => b.getAttribute('aria-label'))).toEqual([
-      `Rückgängig: ${PHOTO_SENTENCE}`,
-      `Rückgängig: ${PREPARED_SENTENCE}`,
-    ]);
-    // History is the record of the single steps: there every one carries its own.
-    chatView.unmount();
+  it('offers one chooser per turn in both Chat and History, with every actual action', () => {
+    const view = chat();
+    expect(screen.getAllByRole('button', { name: 'Zurücknehmen' })).toHaveLength(2);
+    openUndo();
+    expect(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` })).toBeTruthy();
+    expect(screen.getByRole('button', { name: `Rückgängig: ${PHOTO_SENTENCE}` })).toBeTruthy();
+    view.unmount();
     chat({ receipts: 'step' });
-    expect(screen.getAllByRole('button', { name: /^Rückgängig: / })).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: 'Zurücknehmen' })).toHaveLength(2);
+    openUndo();
+    expect(screen.getAllByRole('button', { name: /^Rückgängig:/ })).toHaveLength(2);
   });
 
-  it('takes back the turn’s steps one by one, newest first', () => {
+  it('chooses either actual action, keeps returned state and leaves the other reachable', () => {
     const onUndo = vi.fn();
     const view = chat({ onUndo });
+    openUndo();
     fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${PHOTO_SENTENCE}` }));
     expect(onUndo).toHaveBeenLastCalledWith(REQUEST_PHOTO.id);
-    // The photo request is back: the same receipt's ↺ now names the step before it.
+    fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
+    expect(onUndo).toHaveBeenCalledTimes(1);
     view.rerender(
       <Conversation
         messages={[
@@ -379,6 +393,7 @@ describe('one turn is one receipt, with one way back (issue #204)', () => {
         onUndo={onUndo}
       />,
     );
+    expect(screen.getByText('Zurückgenommen')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${SENTENCE}` }));
     expect(onUndo).toHaveBeenLastCalledWith(PLAN_EXAM.id);
   });
@@ -391,13 +406,14 @@ describe('one turn is one receipt, with one way back (issue #204)', () => {
 });
 
 describe('what the bar on top already says is not said twice (issue #204)', () => {
-  it('drops the prepared practice’s line, and its ↺, while the bar carries it', () => {
-    chat({ carriedOnTop: new Set([PREPARED.id]) });
+  it('keeps the top-carried action available without repeating its receipt', () => {
+    const onUndo = vi.fn();
+    chat({ carriedOnTop: new Set([PREPARED.id]), onUndo });
     expect(screen.queryByText(PREPARED_SENTENCE)).toBeNull();
-    const inChat = screen.getAllByRole('button', { name: /^Rückgängig: / });
-    expect(inChat.map((b) => b.getAttribute('aria-label'))).toEqual([
-      `Rückgängig: ${PHOTO_SENTENCE}`,
-    ]);
+    expect(screen.getAllByRole('button', { name: 'Zurücknehmen' })).toHaveLength(2);
+    openUndo(1);
+    fireEvent.click(screen.getByRole('button', { name: `Rückgängig: ${PREPARED_SENTENCE}` }));
+    expect(onUndo).toHaveBeenCalledWith(PREPARED.id);
   });
 });
 
@@ -500,6 +516,19 @@ describe('what was agreed says where it will appear — once (issue #204)', () =
     ).toHaveLength(1);
   });
 
+  it('does not guess that phone contact is disabled while its state is unknown', () => {
+    renderInApp(
+      <Conversation
+        messages={[buddySaid([agreed('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Vokabeln üben')])]}
+        pending={null}
+        busy={false}
+        showActions
+        receipts="turn"
+      />,
+    );
+    expect(screen.queryByText(/erscheint hier in der App/)).toBeNull();
+  });
+
   it('says nothing about it when Buddy may message her phone', () => {
     renderInApp(
       <Conversation
@@ -547,5 +576,37 @@ describe("the feedback after a roleplay is the Probetest's result list (issue #3
   it('keeps an ordinary message a bubble', () => {
     renderInApp(<Conversation messages={[buddySaid([])]} pending={null} busy={false} />);
     expect(screen.queryByRole('heading', { name: "So lief's" })).toBeNull();
+  });
+});
+
+describe('redesigned conversation roles', () => {
+  it('keeps Buddy text plain while learner text uses the onPrimary role', () => {
+    const buddy = buddySaid([]);
+    const mine = {
+      ...buddy,
+      id: '77777777-7777-4777-8777-777777777777',
+      role: 'learner' as const,
+      text: 'Meine Frage',
+    };
+    renderInApp(<Conversation messages={[mine, buddy]} pending={null} busy={false} />);
+    const answer = screen.getByText(buddy.text);
+    expect(styleOf(answer.parentElement!).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    expect(styleOf(answer.parentElement!).boxShadow).toBe('');
+    const question = screen.getByText(mine.text);
+    expect(styleOf(question).color).toBe('rgb(255, 255, 255)');
+    expect(styleOf(question.parentElement!).paddingTop).toBe('10px');
+  });
+  it('keeps a failed learner turn visually distinct and its retry action usable', () => {
+    const failed = {
+      ...buddySaid([]),
+      role: 'learner' as const,
+      text: 'Noch nicht gesendet',
+      status: 'failed' as const,
+    };
+    const resend = vi.fn();
+    renderInApp(<Conversation messages={[failed]} pending={null} busy={false} onResend={resend} />);
+    expect(styleOf(screen.getByText(failed.text).parentElement!).borderTopStyle).toBe('dashed');
+    fireEvent.click(screen.getByRole('button', { name: /Nochmal senden/ }));
+    expect(resend).toHaveBeenCalledWith(failed);
   });
 });

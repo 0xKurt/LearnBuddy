@@ -7,8 +7,9 @@ import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import { RADIUS } from '../../lib/theme/radius.js';
-import { RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { CARD_PAD, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { CHAT } from '../../lib/theme/chat.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
 import { Icon, type IconName } from '../lb/Icon.js';
@@ -24,13 +25,13 @@ export function OfferShell({
 }) {
   const { palette } = useTheme();
   return (
-    <Card tone="primaryLt" padding={SPACE.lg} radius={RADIUS.note}>
+    <Card padding={CARD_PAD.base} radius={RADIUS.lg}>
       <View style={{ gap: RHYTHM.parts }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Icon name={icon} size={20} color={palette.primaryDk} />
+            <Icon name={icon} size={CHAT.overlay.glyph} color={palette.primaryDk} />
           </View>
-          <Text style={[TYPE.label, { color: palette.primaryDk }]}>{label.toUpperCase()}</Text>
+          <Text style={[TYPE.meta, { color: palette.ink2 }]}>{label}</Text>
         </View>
         {children}
       </View>

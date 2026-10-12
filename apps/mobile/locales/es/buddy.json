@@ -122,7 +122,10 @@
     "undo_label": "Deshacer: {{what}}",
     "undone": "deshecho",
     "undo_request_material": "No hace falta foto",
-    "in_app_only": "Lo acordado aparece aquí en la app: las notificaciones están desactivadas."
+    "in_app_only": "Lo acordado aparece aquí en la app: las notificaciones están desactivadas.",
+    "take_back": "Deshacer",
+    "undo_sheet_title": "Lo que puedes deshacer",
+    "taken_back": "Deshecho"
   },
   "focus": {
     "label": "Estás trabajando en: {{what}}"

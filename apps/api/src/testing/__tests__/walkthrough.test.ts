@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { ACT_SCHEMAS } from '../../modules/buddy/decision.js';
 // Guard (issue #350, the open point of #313): every walkthrough spec brings its own scripted
 // answers. A queued answer (`ScriptedGateway.script`) goes to whichever spec asks first, so a spec
 // run alone — or after a different one — got another spec's answer: modes.spec.ts "learning
@@ -147,5 +149,31 @@ describe('the walkthrough model (spec-order independence, #350)', () => {
 
   it('leaves a photo nobody scripted unanswered instead of giving it another spec’s sheet', async () => {
     expect(await answer(llm, sheet(EXTRACT_SYSTEM, 640, 480))).toMatch(/unscripted model call/);
+  });
+  it('scopes the explicit worksheet request to its real current alias instead of assuming sh1', async () => {
+    const req = request('buddy_turn', 'buddy', {
+      text: 'Ich will mit dem Arbeitsblatt Brüche üben',
+    });
+    req.contents.unshift({
+      role: 'user',
+      parts: [
+        { text: 'STATE (data from the app):\n- sh7 "Brüche kürzen und vergleichen" (4 questions)' },
+      ],
+    });
+    expect(await answer(llm, req)).toMatchObject({
+      actions: [{ tool: 'prepare_practice', args: { sheet: 'sh7' } }],
+    });
+  });
+  it('validates the agreed reminder fixture with the production action contract and exact learner quote', async () => {
+    const text = 'Erinnere mich morgen um 16 Uhr an Brüche.';
+    const result = z
+      .object({ actions: z.array(ACT_SCHEMAS.plan_step) })
+      .parse(await answer(llm, request('buddy_turn', 'buddy', { text })));
+    expect(result.actions[0]?.args).toMatchObject({
+      agreed: true,
+      quote: text,
+      day: { kind: 'in_days', days: 1 },
+      time: '16:00',
+    });
   });
 });

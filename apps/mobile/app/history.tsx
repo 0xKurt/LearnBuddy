@@ -34,6 +34,7 @@ export default function History() {
   const [hasMore, setHasMore] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [undoing, setUndoing] = useState(false);
+  const [undoError, setUndoError] = useState<{ actionId: string; text: string } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const live = home.data?.thread;
   useEffect(() => {
@@ -87,6 +88,7 @@ export default function History() {
   async function undo(actionId: string) {
     if (undoing) return;
     setUndoing(true);
+    setUndoError(null);
     try {
       const next = await undoAction(actionId);
       // The same rule as every fresh home: an undone settings change reaches the settings (#398).
@@ -100,7 +102,7 @@ export default function History() {
         })),
       );
     } catch (err) {
-      toast.show(messageFor(err), 'error');
+      setUndoError({ actionId, text: messageFor(err) });
       if (err instanceof ApiError && err.code === 'conflict') {
         setSeen((s) =>
           s.map((m) => ({
@@ -157,6 +159,8 @@ export default function History() {
               showActions
               onUndo={(id) => void undo(id)}
               undoBusy={undoing}
+              contactOn={home.data?.system.contact_enabled}
+              undoError={undoError}
               // No quick answers or "Nochmal senden" here: that is the chat's job; History
               // shows no buttons that cannot be pressed (history-dead-controls).
             />

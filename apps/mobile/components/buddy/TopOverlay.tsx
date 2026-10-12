@@ -10,7 +10,9 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, PanResponder, View } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+import { DURATION, useMotionReduced } from '../../lib/theme/motion.js';
+import { CHAT } from '../../lib/theme/chat.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
@@ -19,16 +21,14 @@ import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 
 /** Room a bar's title leaves on its right for the close button (the bar's own padding aside). */
-export const CLOSE_INSET = 40;
+export const CLOSE_INSET = CHAT.overlay.closeInset;
 
 /** How far up she swipes (or how fast) before the layer goes. */
-const SWIPE_DISTANCE = 48;
-const SWIPE_SPEED = 0.5;
+const SWIPE_DISTANCE = CHAT.overlay.swipeDistance;
+const SWIPE_SPEED = CHAT.overlay.swipeSpeed;
 
-/** The layer's rounded corners (the bars inside use 20). */
-const RADIUS = 22;
 /** Where the close button sits from the top: vertically centred on a slim bar. */
-const CLOSE_TOP = 8;
+const CLOSE_TOP = CHAT.overlay.closeTop;
 
 type Props = {
   /** Which content this is (lib/homeLayout.ts topKey): new content comes in where the last was. */
@@ -53,12 +53,33 @@ export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0, 
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   // In a ref: the pan responder is memoised on [lift] and must see the live value.
-  const reduceRef = useRef(false);
-  reduceRef.current = useReducedMotion();
+  const reduced = useMotionReduced();
+  const reduceRef = useRef(reduced);
+  reduceRef.current = reduced;
+  const currentId = useRef(id);
+  currentId.current = id;
+  const dismissal = useRef<{ id: string } | null>(null);
+  useEffect(() => {
+    // Clear ownership before cancellation can invoke a completion callback.
+    dismissal.current = null;
+    lift.stopAnimation();
+    lift.setValue(0);
+    return () => {
+      dismissal.current = null;
+      lift.stopAnimation();
+    };
+  }, [id, lift]);
 
   useEffect(() => {
-    lift.setValue(0);
-  }, [id, lift]);
+    if (!reduced) return;
+    const request = dismissal.current;
+    dismissal.current = null;
+    lift.stopAnimation();
+    if (request?.id === currentId.current) {
+      lift.setValue(-CHAT.overlay.travel);
+      closeRef.current();
+    } else lift.setValue(0);
+  }, [reduced, lift]);
   // Gone means gone: without this the last measured height would keep pushing the
   // greeting down after the card was closed (issue #190).
   useEffect(() => () => onHeight?.(0), [onHeight]);
@@ -67,28 +88,47 @@ export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0, 
     () =>
       PanResponder.create({
         // Asked before the bar's buttons: a clear swipe up is for closing.
-        onMoveShouldSetPanResponderCapture: (_e, g) => g.dy < -8 && Math.abs(g.dy) > Math.abs(g.dx),
-        onPanResponderMove: (_e, g) => lift.setValue(Math.min(0, g.dy)),
+        onMoveShouldSetPanResponderCapture: (_e, g) =>
+          g.dy < -CHAT.overlay.captureDistance && Math.abs(g.dy) > Math.abs(g.dx),
+        onPanResponderMove: (_e, g) => {
+          if (!reduceRef.current) lift.setValue(Math.min(0, g.dy));
+        },
         // Once it is a swipe, a text selection does not take it over.
         onPanResponderTerminationRequest: () => false,
         onPanResponderRelease: (_e, g) => {
           if (g.dy < -SWIPE_DISTANCE || g.vy < -SWIPE_SPEED) {
             // Reduce motion: the layer leaves without the slide (audit: the only
             // animated component that ignored the setting).
+            const request = { id: currentId.current };
+            dismissal.current = request;
             Animated.timing(lift, {
-              toValue: -400,
-              duration: reduceRef.current ? 0 : 160,
+              toValue: -CHAT.overlay.travel,
+              duration: reduceRef.current ? 0 : DURATION.quick,
               useNativeDriver: false,
-            }).start(() => closeRef.current());
+            }).start(({ finished }) => {
+              if (finished && dismissal.current === request && request.id === currentId.current) {
+                dismissal.current = null;
+                closeRef.current();
+              }
+            });
           } else if (reduceRef.current) {
             lift.setValue(0);
           } else {
-            Animated.spring(lift, { toValue: 0, useNativeDriver: false }).start();
+            Animated.timing(lift, {
+              toValue: 0,
+              duration: DURATION.quick,
+              useNativeDriver: false,
+            }).start();
           }
         },
         onPanResponderTerminate: () => {
           if (reduceRef.current) lift.setValue(0);
-          else Animated.spring(lift, { toValue: 0, useNativeDriver: false }).start();
+          else
+            Animated.timing(lift, {
+              toValue: 0,
+              duration: DURATION.quick,
+              useNativeDriver: false,
+            }).start();
         },
       }),
     [lift],
@@ -110,11 +150,11 @@ export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0, 
         right: rightInset,
         paddingHorizontal: SPACE.lg,
         paddingTop: SPACE.sm,
-        zIndex: 10,
-        elevation: 12,
+        zIndex: CHAT.overlay.zIndex,
+        elevation: CHAT.overlay.elevation,
         transform: [{ translateY: lift }],
         opacity: lift.interpolate({
-          inputRange: [-160, 0],
+          inputRange: [-CHAT.overlay.fadeDistance, 0],
           outputRange: [0, 1],
           extrapolate: 'clamp',
         }),
@@ -125,18 +165,18 @@ export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0, 
         // The Pastell-Soft float: one soft shadow, the bar's own tint.
         style={{
           ...SHADOW.float,
-          borderRadius: RADIUS,
+          borderRadius: RADIUS.lg,
           backgroundColor: palette.bg,
           gap: SPACE.sm,
         }}
       >
         {children}
-        <View style={{ position: 'absolute', top: CLOSE_TOP, right: 2 }}>
+        <View style={{ position: 'absolute', top: CLOSE_TOP, right: CHAT.overlay.closeRight }}>
           <Btn
             variant="ghost"
             size="sm"
             pill
-            label={<Icon name="close" size={20} color={palette.ink2} />}
+            label={<Icon name="close" size={CHAT.overlay.glyph} color={palette.ink2} />}
             accessibilityLabel={closeLabel}
             onPress={onClose}
           >

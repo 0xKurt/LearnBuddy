@@ -69,6 +69,56 @@ export const DEMO_WORKSHEET = {
 };
 
 export function scriptCoreLoop(): void {
+  scriptTurns({
+    when: /^Erinnere mich morgen um 16 Uhr an Brüche\.$/i,
+    answer: (req) => ({
+      reply: 'Alles klar, ich erinnere dich morgen um 16 Uhr an Brüche.',
+      options: null,
+      actions: [
+        {
+          tool: 'plan_step',
+          args: {
+            goal: null,
+            kind: 'practice',
+            title: 'Brüche üben',
+            day: { kind: 'in_days', days: 1 },
+            time: '16:00',
+            in_minutes: null,
+            agreed: true,
+            repeat: null,
+            repeat_until: null,
+            quote: quoteFrom(req, 'Erinnere mich morgen um 16 Uhr an Brüche.'),
+            subject: null,
+            focus_topics: ['Brüche'],
+          },
+        },
+      ],
+    }),
+  });
+  // A learner explicitly scopes practice to the actual sheet alias in this turn's STATE.
+  scriptTurns({
+    when: /^Ich will mit dem Arbeitsblatt Brüche üben$/i,
+    answer: (req) => {
+      const state = req.contents
+        .flatMap((m) => m.parts.flatMap((p) => ('text' in p ? [p.text] : [])))
+        .find((text) => text.startsWith('STATE'));
+      const sheet = state?.match(
+        /^- (sh\d+) "Brüche kürzen und vergleichen" \(\d+ questions\)/m,
+      )?.[1];
+      if (!sheet)
+        throw new Error('worksheet practice requires its real ready-sheet alias in STATE');
+      return {
+        reply: 'Wir üben mit deinem Arbeitsblatt.',
+        options: null,
+        actions: [
+          {
+            tool: 'prepare_practice',
+            args: { goal: 'g1', subject: null, sheet, minutes: 10, focus_topics: [] },
+          },
+        ],
+      };
+    },
+  });
   // 1 · "Ich schreibe am Freitag eine Mathearbeit über Brüche."
   scriptTurns({
     when: /mathearbeit über brüche/i,

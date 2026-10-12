@@ -11,12 +11,15 @@ import type {
   ScrollView,
 } from 'react-native';
 
+import { useMotionReduced } from '../theme/motion.js';
 import { haptic } from '../haptics.js';
 import { followsEnd } from '../homeLayout.js';
 import { seenAfter, type ReplySeen } from './newReply.js';
 
 export function useThreadFollow(newestReply: string | null) {
   const scroll = useRef<ScrollView>(null);
+  const reduced = useMotionReduced();
+  const animatedFollow = useRef(false);
   /** Where the conversation stands, and whether it follows its end. */
   const box = useRef({ y: 0, following: true, view: 0, content: 0 });
   // After sending, follow the conversation to its end once the new content has rendered.
@@ -26,6 +29,25 @@ export function useThreadFollow(newestReply: string | null) {
   const [seen, setSeen] = useState<ReplySeen>({ seen: null });
   /** How tall the conversation's view is: the room the greeting needs to stand on top. */
   const [view, setView] = useState(0);
+
+  useEffect(() => {
+    if (reduced && animatedFollow.current) {
+      animatedFollow.current = false;
+      // This movement intentionally follows the end; settle there, never midway.
+      scroll.current?.scrollToEnd({ animated: false });
+    }
+  }, [reduced]);
+  useEffect(
+    () => () => {
+      animatedFollow.current = false;
+    },
+    [],
+  );
+
+  /** Actual user input interrupts an in-flight programmatic follow without moving her. */
+  const interrupt = () => {
+    animatedFollow.current = false;
+  };
 
   // At the end of the conversation she sees Buddy's newest reply (no "↓ Neue Antwort" for it).
   useEffect(() => {
@@ -43,7 +65,10 @@ export function useThreadFollow(newestReply: string | null) {
       b.following = true;
       setAtEnd(true);
     }
-    if (b.following) scroll.current?.scrollToEnd({ animated: followEnd.current });
+    if (b.following && scroll.current) {
+      animatedFollow.current = followEnd.current && !reduced;
+      scroll.current.scrollToEnd({ animated: animatedFollow.current });
+    }
     followEnd.current = false;
   }
 
@@ -53,6 +78,7 @@ export function useThreadFollow(newestReply: string | null) {
     seen,
     view,
     follow,
+    interrupt,
     /** She sent something: the next content brings her to the end. */
     followNext: () => {
       followEnd.current = true;
@@ -71,6 +97,8 @@ export function useThreadFollow(newestReply: string | null) {
         undefined,
         b.view !== layoutMeasurement.height || b.content !== contentSize.height,
       );
+      if (!b.following || contentSize.height - layoutMeasurement.height - contentOffset.y <= 0)
+        animatedFollow.current = false;
       b.y = contentOffset.y;
       b.view = layoutMeasurement.height;
       b.content = contentSize.height;
@@ -87,7 +115,10 @@ export function useThreadFollow(newestReply: string | null) {
       haptic.tap();
       box.current.following = true;
       setAtEnd(true);
-      scroll.current?.scrollToEnd({ animated: true });
+      if (scroll.current) {
+        animatedFollow.current = !reduced;
+        scroll.current.scrollToEnd({ animated: animatedFollow.current });
+      }
     },
   };
 }

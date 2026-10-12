@@ -38,6 +38,8 @@ export function ListGroup({ label, children }: { label?: string; children: React
 }
 export type RowProps = {
   title: string;
+  /** A factual completed row remains readable, with its title struck and muted. */
+  completed?: boolean;
   chevron?: boolean;
   sub?: string;
   value?: string;
@@ -53,6 +55,7 @@ export type RowProps = {
 };
 export function Row({
   title,
+  completed = false,
   chevron = true,
   sub,
   value,
@@ -90,7 +93,14 @@ export function Row({
         />
       ) : null}
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={TYPE.cell}>{title}</Text>
+        <Text
+          style={[
+            TYPE.cell,
+            completed ? { color: palette.ink2, textDecorationLine: 'line-through' } : undefined,
+          ]}
+        >
+          {title}
+        </Text>
         {sub ? <Text style={TYPE.meta}>{sub}</Text> : null}
       </View>
       {value ? <Text style={TYPE.meta}>{value}</Text> : null}

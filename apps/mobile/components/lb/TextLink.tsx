@@ -1,3 +1,5 @@
+import { UI } from '../../lib/theme/components.js';
+import { TOUCH } from '../../lib/theme/space.js';
 // One quiet line of text that may open something (issue #311): no button look, the words are the
 // target — the line under Buddy's head that says what she is working on (issue #160). Without
 // `onPress` it is plain text for a screen reader, not a disabled button. A raw Pressable belongs
@@ -15,7 +17,7 @@ type Props = {
 };
 
 /** How far a pressed line dims. */
-const PRESSED = 0.6;
+const PRESSED = UI.textLink.pressedOpacity;
 
 export function TextLink({ children, onPress, accessibilityLabel, style }: Props) {
   return (
@@ -24,6 +26,7 @@ export function TextLink({ children, onPress, accessibilityLabel, style }: Props
       accessibilityRole={onPress ? 'button' : 'text'}
       accessibilityLabel={accessibilityLabel ?? children}
       onPress={onPress}
+      style={onPress ? { minHeight: TOUCH, minWidth: TOUCH, justifyContent: 'center' } : undefined}
     >
       {({ pressed }) => (
         <Text numberOfLines={1} style={[style, { opacity: pressed ? PRESSED : 1 }]}>

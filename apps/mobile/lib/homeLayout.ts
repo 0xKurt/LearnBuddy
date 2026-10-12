@@ -1,3 +1,4 @@
+import { CHAT } from './theme/chat.js';
 // What goes where on Buddy's home (docs/architecture.md §Home, user feedback #6,
 // CLAUDE.md rule 16, docs/UX-PRINCIPLES.md §31–32, issue #17). Pure, so the rules are tested:
 // - on top at most one slim bar (SlimBar.tsx, hard size contract: ≤ ~64 pt collapsed) —
@@ -150,7 +151,7 @@ export function followsEnd(
   y: number,
   viewHeight: number,
   contentHeight: number,
-  slack = 24,
+  slack: number = CHAT.followSlack,
   reshaped = false,
 ): boolean {
   if (contentHeight - viewHeight - y <= slack) return true;

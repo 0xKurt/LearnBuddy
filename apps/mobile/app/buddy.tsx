@@ -105,6 +105,7 @@ export default function BuddyScreen() {
   useAnnounce(openCard ? t('buddy:card.shown') : null, { key: openCard ?? undefined });
   /** How tall the card lying over the conversation is (0 = none); the greeting clears it. */
   const [cardHeight, setCardHeight] = useState(0);
+  const [undoError, setUndoError] = useState<{ actionId: string; text: string } | null>(null);
 
   if (home.isPending)
     return (
@@ -265,10 +266,17 @@ export default function BuddyScreen() {
                 }
                 sessionRoom={sessionRoom}
                 showActions
-                // One "Rückgängig" in view, the rest a tap on a receipt away (issue #204).
+                // One action chooser per turn; factual receipt words remain plain text.
                 receipts="turn"
                 carriedOnTop={carriedOnTop}
-                onUndo={(id) => void act(() => undoAction(id))}
+                undoError={undoError}
+                onUndo={(id) => {
+                  setUndoError(null);
+                  void act(
+                    () => undoAction(id),
+                    (text) => setUndoError({ actionId: id, text }),
+                  );
+                }}
                 onOption={(messageId, option) => void send(option, newId(), messageId)}
                 onResend={(m: MessageView) =>
                   void send(m.text, m.client_message_id ?? newId(), m.reply_to_id)

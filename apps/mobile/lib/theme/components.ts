@@ -4,6 +4,7 @@ import { TYPE } from './type.js';
 const inputLine = () => TYPE.input.lineHeight;
 
 export const UI = {
+  textLink: { pressedOpacity: 0.6 },
   border: 1,
   selectedBorder: 2,
   disabledOpacity: 0.45,
@@ -47,5 +48,5 @@ export const UI = {
     gestureStart: 8,
     gestureFail: 24,
   },
-  entrance: { slide: 28, slowMultiplier: 2, maxRows: 8, windowMs: 900 },
+  entrance: { staggerCap: 4, slide: 28, slowMultiplier: 2, maxRows: 8, windowMs: 900 },
 } as const;
