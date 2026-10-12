@@ -67,7 +67,14 @@
     "language_fr": "Français",
     "language_es": "Español",
     "language_it": "Italiano",
-    "language_title": "Idioma"
+    "language_title": "Idioma",
+    "about_you": "Sobre ti",
+    "name": "Nombre",
+    "level_label": "Ámbito de aprendizaje",
+    "grade_label": "Curso",
+    "subjects": "Asignaturas",
+    "subjects_empty": "Todavía no hay asignaturas con material.",
+    "level_unknown": "Aún sin indicar"
   },
   "adult": {
     "title_minor": "Para los padres",

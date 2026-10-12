@@ -67,7 +67,14 @@
     "language_fr": "Français",
     "language_es": "Español",
     "language_it": "Italiano",
-    "language_title": "Langue"
+    "language_title": "Langue",
+    "about_you": "À propos de toi",
+    "name": "Nom",
+    "level_label": "Cadre d’apprentissage",
+    "grade_label": "Classe",
+    "subjects": "Matières",
+    "subjects_empty": "Pas encore de matières avec des documents.",
+    "level_unknown": "Pas encore indiqué"
   },
   "adult": {
     "title_minor": "Pour les parents",

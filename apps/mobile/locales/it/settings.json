@@ -67,7 +67,14 @@
     "language_fr": "Français",
     "language_es": "Español",
     "language_it": "Italiano",
-    "language_title": "Lingua"
+    "language_title": "Lingua",
+    "about_you": "Su di te",
+    "name": "Nome",
+    "level_label": "Ambito di apprendimento",
+    "grade_label": "Classe",
+    "subjects": "Materie",
+    "subjects_empty": "Non ci sono ancora materie con materiale.",
+    "level_unknown": "Non ancora indicato"
   },
   "adult": {
     "title_minor": "Per i genitori",

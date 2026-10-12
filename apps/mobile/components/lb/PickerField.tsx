@@ -11,13 +11,13 @@
 // without a reason learns to answer questions without a reason.
 
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { TYPE } from '../../lib/theme/type.js';
-import { SPACE } from '../../lib/theme/space.js';
 import { Btn } from './Btn.js';
 import { Sheet } from './Sheet.js';
+import { ChoiceOptions } from './ChoiceOptions.js';
 
 /**
  * A required picker has an answer. The screen's CTA waits on this (app/profile.tsx): nothing
@@ -84,25 +84,19 @@ export function PickerField<T extends string>({
         scrollTestID="scroll-list"
       >
         {body ? <Text style={TYPE.small}>{body}</Text> : null}
-        <View accessibilityRole="radiogroup" style={{ gap: SPACE.sm }}>
-          {options.map((o) => (
-            <Btn
-              key={o.value}
-              variant={o.value === value ? 'primary' : 'outline'}
-              size="md"
-              full
-              // Reads as a radio button and says whether it is the chosen one — never the
-              // violet fill alone (CLAUDE.md §Design system).
-              selected={o.value === value}
-              onPress={() => {
-                onChange(o.value);
-                setOpen(false);
-              }}
-            >
-              {o.label}
-            </Btn>
-          ))}
-        </View>
+        <ChoiceOptions
+          selectedVariant="primary"
+          unselectedVariant="outline"
+          showCheck={false}
+          options={options}
+          value={value}
+          label={label}
+          disabled={disabled}
+          onChange={(next) => {
+            onChange(next);
+            setOpen(false);
+          }}
+        />
       </Sheet>
     </>
   );

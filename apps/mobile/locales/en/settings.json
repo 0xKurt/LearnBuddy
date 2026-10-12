@@ -67,7 +67,14 @@
     "language_fr": "Français",
     "language_es": "Español",
     "language_it": "Italiano",
-    "language_title": "Language"
+    "language_title": "Language",
+    "about_you": "About you",
+    "name": "Name",
+    "level_label": "Learning setting",
+    "grade_label": "Grade",
+    "subjects": "Subjects",
+    "subjects_empty": "No subjects with material yet.",
+    "level_unknown": "Not specified yet"
   },
   "adult": {
     "title_minor": "For parents",

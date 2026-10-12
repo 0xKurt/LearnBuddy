@@ -67,7 +67,14 @@
     "language_fr": "Français",
     "language_es": "Español",
     "language_it": "Italiano",
-    "language_title": "Sprache"
+    "language_title": "Sprache",
+    "about_you": "Über dich",
+    "name": "Name",
+    "level_label": "Lernbereich",
+    "grade_label": "Klasse",
+    "subjects": "Fächer",
+    "subjects_empty": "Noch keine Fächer mit Material.",
+    "level_unknown": "Noch nicht angegeben"
   },
   "adult": {
     "title_minor": "Für Eltern",

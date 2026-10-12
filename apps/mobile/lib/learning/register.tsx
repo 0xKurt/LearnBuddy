@@ -3,6 +3,7 @@
 // without it; it never imports the domain. Every place filled here is checked by
 // components/learn/__tests__/register.test.tsx: none missing, none filled twice.
 
+import { ProfileLibrarySubjects } from '../../components/library/ProfileLibrarySubjects.js';
 import { DrillOfferCard } from '../../components/learn/DrillOfferCard.js';
 import { OfferCard } from '../../components/learn/OfferCard.js';
 import { ResultNotice } from '../../components/learn/ResultNotice.js';
@@ -17,6 +18,7 @@ import {
   addActionCard,
   messageCards,
   readAlong,
+  profileSubjects,
   readingSteps,
   resultNotice,
   startMenu,
@@ -67,6 +69,7 @@ export function registerLearning(): void {
     m.rehearsal ? <RehearsalResult rehearsal={m.rehearsal} /> : null,
   );
   readAlong.fill(ReadAlongBubble);
+  profileSubjects.fill(ProfileLibrarySubjects);
   // A running roleplay takes the line on top of the thread: its way out stays in reach (#244).
   workingOn.fill((h) => (h.roleplay ? <RoleplayStrip roleplay={h.roleplay} /> : null));
 
