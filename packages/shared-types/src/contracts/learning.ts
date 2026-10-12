@@ -1058,7 +1058,8 @@ export type SpeakRequest = z.infer<typeof SpeakRequest>;
 /**
  * One word of the sentence, said on its own (issue #83): she taps a word she got wrong and
  * practises just that. Nothing is stored and nothing counts — it is practice, not an attempt;
- * the question keeps its state until she says the whole sentence again.
+ * the question keeps its state. Rehearsal remains available after the session finishes;
+ * it never reopens the session or grades the whole sentence (#570).
  */
 export const SpeakWordRequest = z.object({
   item_id: Uuid,

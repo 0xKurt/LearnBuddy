@@ -100,22 +100,24 @@ type SpeakItem = {
 };
 
 /**
- * The spoken question of her active session, and how that session runs. Refused the same way for
- * the sentence and for one word of it: no such session of hers, an ended one, a question not in
- * it, or one that is not spoken.
+ * Her spoken question and session mode. Grading requires an active session; stateless word
+ * rehearsal also permits a finished one (#570). Both reject abandoned sessions, missing learner
+ * ownership, a question outside the session, or a question that is not spoken.
  */
 async function spokenItem(
   deps: Deps,
   learnerId: string,
   sessionId: string,
   itemId: string,
+  wordRehearsal = false,
 ): Promise<{ mode: string; item: SpeakItem & { lang: string } }> {
   const session = await deps.db.maybeOne<{ status: string; mode: string }>(
     `select status, mode from practice_sessions where id = $1 and learner_id = $2`,
     [sessionId, learnerId],
   );
   if (!session) throw new AppError('not_found', 'Session not found');
-  if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
+  if (session.status !== 'active' && !(wordRehearsal && session.status === 'finished'))
+    throw new AppError('conflict', 'Session has ended');
   const item = await deps.db.maybeOne<SpeakItem>(
     `select i.id, i.kind, i.prompt, i.lang, si.status, si.attempts, si.hints_used, si.first_try_correct
        from session_items si join items i on i.id = si.item_id
@@ -387,7 +389,7 @@ export async function speakWord(
   input: SpeakWordRequest,
 ): Promise<SpeakWordResponse> {
   const now = deps.now();
-  const { item } = await spokenItem(deps, learner.id, sessionId, input.item_id);
+  const { item } = await spokenItem(deps, learner.id, sessionId, input.item_id, true);
   // Only a word of this sentence: nothing else is practised here.
   const inSentence = item.prompt
     .split(/[^\p{L}\p{M}'’-]+/u)
