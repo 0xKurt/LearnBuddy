@@ -36,7 +36,7 @@ import {
   type PageSet,
 } from './attachments.js';
 import { CHAT_LINK } from './attachRequest.js';
-import type { CaptureDraft, DraftLink } from './draft.js';
+import type { CaptureCaption, CaptureDraft, DraftLink } from './draft.js';
 import { drafts } from './draftStorage.js';
 import { useFileDrop } from './drop.js';
 import { ownCopy, sizeOf } from './fileCopy.js';
@@ -118,6 +118,7 @@ export function useAttachments({ droppable, onSent }: Options) {
   useAnnounce(cameraBlocked ? t('capture:permission.camera') : null);
   // One upload per photo set: a retry reuses it (same client_request_id); a changed set drops it.
   const upload = useRef<PageUpload | null>(null);
+  const submittedCaption = useRef<CaptureCaption | undefined>(undefined);
   const picking = useRef(false);
   const sending = useRef(false);
   const mounted = useMounted();
@@ -130,6 +131,7 @@ export function useAttachments({ droppable, onSent }: Options) {
   const deferred = useRef<IncomingFile[]>([]);
 
   function applyDraft(d: CaptureDraft) {
+    submittedCaption.current = d.caption;
     const restored = pagesFromDraft(d);
     setLink(d.link);
     setPages(restored);
@@ -156,18 +158,19 @@ export function useAttachments({ droppable, onSent }: Options) {
    * pages above her text, with what they were for. `withPending`: the photo taken when Android
    * cut the app off joins them (audit M-22).
    */
-  async function resumeDraft(withPending: boolean) {
+  async function resumeDraft(withPending: boolean): Promise<CaptureDraft | null> {
     const d = await drafts.load();
-    if (!mounted.current) return;
+    if (!mounted.current) return null;
     if (d) {
       applyDraft(d);
       dirty.current = true;
     }
-    if (!withPending) return;
+    if (!withPending) return d;
     const recovered = await takePendingPhotos();
-    if (!recovered || !mounted.current) return;
+    if (!recovered || !mounted.current) return d;
     if (!d) setLink(recovered.link);
     await addPhotos(recovered.uris);
+    return d;
   }
 
   // The draft follows every change, so closing the app loses nothing.
@@ -177,6 +180,7 @@ export function useAttachments({ droppable, onSent }: Options) {
       requestId: upload.current?.requestId ?? null,
       photos: draftPhotos(),
       link,
+      ...(submittedCaption.current ? { caption: submittedCaption.current } : {}),
     });
   }, [pages, link]);
 
@@ -196,7 +200,10 @@ export function useAttachments({ droppable, onSent }: Options) {
   // Files shared from another app, now or while the chat is open (ShareIntake).
   const addFilesNow = useRef(addFiles);
   addFilesNow.current = addFiles;
-  useEffect(() => takeIncoming((files) => void addFilesNow.current(files)), []);
+  useEffect(
+    () => (droppable ? takeIncoming((files) => void addFilesNow.current(files)) : undefined),
+    [droppable],
+  );
   useEffect(() => {
     if (busy || deferred.current.length === 0) return;
     void addFiles(deferred.current.splice(0));
@@ -427,7 +434,10 @@ export function useAttachments({ droppable, onSent }: Options) {
     return true;
   }
 
-  async function send() {
+  async function send(
+    onUploaded?: (materialId: string | null, link: DraftLink, requestId: string) => void,
+    caption?: { submission?: CaptureCaption; onAccepted: () => void; onFailed: () => void },
+  ) {
     if (sending.current || busy || photos.length === 0) return;
     sending.current = true;
     // The pages that went up along the way are this sheet; if anything drifted apart (a
@@ -436,24 +446,44 @@ export function useAttachments({ droppable, onSent }: Options) {
     if (upload.current && upload.current.pageCount !== photos.length) photosChanged();
     if (!upload.current) upload.current = startUpload(uploadFiles(photos, pdfs), linkNow.current);
     const current = upload.current;
+    const ownsWork = drafts.lifetime();
+    submittedCaption.current = caption?.submission;
+    const captionSnapshot = submittedCaption.current;
     setFailure(null);
     setProgress({ step: 'reserving' });
-    drafts.startSending(current.requestId);
+    drafts.startSending(current.requestId, captionSnapshot);
     let delivered = false;
     let failedAway = false;
     dirty.current = true;
     // The request id goes into the draft first: after a crash the same material goes on.
     const sentFor = linkNow.current;
-    await drafts.save({ requestId: current.requestId, photos: draftPhotos(), link: sentFor });
     try {
+      await drafts.save({
+        requestId: current.requestId,
+        photos: draftPhotos(),
+        link: sentFor,
+        ...(captionSnapshot ? { caption: captionSnapshot } : {}),
+      });
+      if (!ownsWork()) return;
+      caption?.onAccepted();
       // Keeps going if the learner leaves meanwhile: they asked for it to be sent.
       await current.send(setProgress);
       delivered = true;
+      if (!ownsWork()) return;
       // With a PDF among them, page numbers are not photo positions (no page thumbnail).
       if (current.material)
-        await drafts.sent(current.material, photos, current.requestId, !hasPdf(pages));
+        await drafts.sent(
+          current.material,
+          photos,
+          current.requestId,
+          !hasPdf(pages),
+          captionSnapshot,
+        );
+      if (!ownsWork()) return;
       void queryClient.invalidateQueries({ queryKey: keys.home });
       void queryClient.invalidateQueries({ queryKey: keys.library });
+      // Submission-owned completion survives leaving the editor. UI completion stays local.
+      onUploaded?.(current.material, sentFor, current.requestId);
       if (mounted.current) {
         setPages(NO_PAGES);
         // The next pages are the chat's own until a place asks for others.
@@ -462,6 +492,8 @@ export function useAttachments({ droppable, onSent }: Options) {
         sent.current?.(current.material, sentFor);
       }
     } catch (err) {
+      if (!ownsWork()) return;
+      caption?.onFailed();
       // The files were refused (too many pages, not a PDF, too large): that material is
       // gone; with other files she starts a new one.
       const refusedFiles = classifySend(err).refused;
@@ -475,7 +507,7 @@ export function useAttachments({ droppable, onSent }: Options) {
       // when the draft slot is free (home: "Deine Fotos sind noch nicht gesendet"). The
       // toast says what is true: waiting on the home, or really gone
       // (left-mid-send-copy-contradiction).
-      if (!mounted.current && !delivered) {
+      if (ownsWork() && !mounted.current && !delivered) {
         void keepIfFree(current.requestId)
           .catch(() => false)
           .then((stillThere) => {
@@ -491,6 +523,7 @@ export function useAttachments({ droppable, onSent }: Options) {
   return {
     link,
     setLink,
+    caption: submittedCaption.current,
     photos,
     problems,
     kept,
