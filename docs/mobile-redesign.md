@@ -50,7 +50,7 @@ then merge before beginning the next dependent change.
 | 5b Onboarding          | Consent, parent setup, voice, look, handover; individual screen PRs.                                                                                                                                 | Consent #555, Profile #556, Contact #557, Voice #560, Look #561 and Handover #562 merged |
 | 5c Home and chat       | First visit, conversation, offers, undo and chat cards; individual screen PRs.                                                                                                                       | Home merged #566; Chat merged #567                                                       |
 | 5d Talk                | Conversation mode and practice in voice.                                                                                                                                                             | Merged #568                                                                              |
-| 5e Practice            | Practice route, zoom, completion, test results/time-up, homework, drill and speaking; individual screen/state PRs.                                                                                   | Practice #569 merged; Done ready for review                                              |
+| 5e Practice            | Practice route, zoom, completion, test results/time-up, homework, drill and speaking; individual screen/state PRs.                                                                                   | Practice #569 and Done #571 merged; TestReview ready                                     |
 | 5f Material            | Capture, sheet questions, library, subject and empty/missing states; individual screen PRs.                                                                                                          | Pending                                                                                  |
 | 5g Personal            | Memory, history and profile; individual screen PRs.                                                                                                                                                  | Pending                                                                                  |
 | 5h Settings            | Settings, voice, about, learning times, PIN; individual screen/sheet PRs.                                                                                                                            | Pending                                                                                  |
@@ -142,4 +142,6 @@ Talk #568 merged (`e8c31de5`) after all required checks passed. Its four-appeara
 
 Practice screen completion #569 merged (`f71f59b9`); see [its ledger](mobile-redesign-practice-screen.md) for accepted source and browser evidence.
 
-Done is ready for review on published Practice; see [mobile-redesign-done.md](mobile-redesign-done.md) for factual result rows, reuse and verified evidence.
+Done #571 merged (`d87cf55c`); see [mobile-redesign-done.md](mobile-redesign-done.md) for factual result rows, reuse and verified evidence.
+
+TestReview is ready for review on published #572; see [mobile-redesign-test-review.md](mobile-redesign-test-review.md).

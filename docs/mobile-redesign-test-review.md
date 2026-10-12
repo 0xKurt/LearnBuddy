@@ -1,0 +1,11 @@
+# TestReview — #548
+
+Integrated on published #572, actual main 706a6188, retaining Done #571. Four paths: RunResult predicate, real browser spec, this ledger and central migration status. The predicate adds completed tests that did not run out of time; every published Done row, subtitle, action, duration and shared API remains intact. No copied old RunResult body, routes, contracts or sample data.
+
+The browser spec uses the actual Malnehmen fixture through real learner/offer callbacks, checks two answer POST payloads plus the skip reveal POST, then parses the actual finished SessionView GET with original item IDs and missed/correct/skipped statuses. Footer return/paint is scoped; screen/result headings are named. Both phones exercise whole-list keyboard reachability when it overflows, strict fit/44 pt/axe and four actual family/mode choices through published Home helpers. Real four-appearance/two-phone proof passes: one corrected positive case (13.0 s) plus the remaining three (26.6 s). A final Pastell-only strengthening checks actual prompt/solution text and complete last solution/explanation inside the list viewport after keyboard End (12.7 s). No result state is mocked.
+
+No new token or library. TimeUp is the remaining RunResult presentation mode; shared SessionSummary legacy compatibility remains untouched. Root accepted Pastell 390 and Meer dark 360 result geometry against the reference. API fix #572 is merged; final source review and normal publication gates remain. Native result/focus/Bold Text remain separate device evidence.
+
+Frozen Node 22 installation, mobile typecheck, scoped lint/format/diff and seven focused result/frozen tests pass. Original route-observation and choice-payload test errors are preserved under test-results/redesign-test-review-preparation; corrections use the actual route lifecycle and canonical choice index contract. Positive-final, remaining-final and end-final retain honest successive proof. No production change beyond the published Done predicate. Native limits remain open.
+
+The final #572 rebase preserves all four accepted files byte-for-byte before this ledger/status update; browser evidence remains correctly labeled as published Done d87 source. No broad rerun of unchanged geometry is claimed.
