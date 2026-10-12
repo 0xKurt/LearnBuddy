@@ -1,5 +1,7 @@
 // Pure duration specification shared by runtime and pure presentation algorithms.
 export const DURATION = {
+  /** Native compatibility wait between legacy modal callers; new callers use actual close completion. */
+  sheetHandoff: 450,
   quick: 140,
   practicePendingArrival: 120,
   practiceTurnArrival: 60,

@@ -48,14 +48,14 @@ describe('Vorlesen: one switch, the same in the chat and in practice (#386)', ()
       // The shared header receives the switch through its sound slot.
       'app/practice/[id].tsx',
       'components/buddy/Header.tsx',
+      // Ordinary headed pages default to the same single preference control.
+      'components/lb/Screen.tsx',
       'components/practice/DrillRound.tsx',
-      // Card passes retain their existing header adapter (#434).
-      'components/practice/HeadActions.tsx',
     ]);
   });
 
   it('is in the head of every practice: a question, a Kopfrechnen round, a card pass (#434)', () => {
-    expect(holders(/<HeadActions\b/)).toEqual(['components/practice/CardPass.tsx']);
+    expect(holders(/<HeadActions\b/)).toEqual([]);
   });
 
   it('passes exactly one speaker through the shared header sound slot', () => {
@@ -68,7 +68,9 @@ describe('Vorlesen: one switch, the same in the chat and in practice (#386)', ()
     expect(source('components/buddy/Header.tsx')).toMatch(/<BuddyHeader\b/);
     expect(source('app/practice/[id].tsx')).toMatch(/<Screen\b/);
     expect(source('components/lb/Screen.tsx')).toMatch(/<BuddyHeader\b/);
-    expect(source('components/lb/Screen.tsx')).toMatch(/sound=\{sound\}/);
+    expect(source('components/lb/Screen.tsx')).toMatch(
+      /sound=\{sound\s*\?\?\s*<ReadAloudSwitch\s*\/>\}/,
+    );
     // A shared header must neither drop nor duplicate the caller's speaker control.
     expect(source('components/lb/BuddyHeader.tsx').match(/\{sound\}/g)).toHaveLength(1);
   });

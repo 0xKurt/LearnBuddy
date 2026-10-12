@@ -142,7 +142,10 @@
     "memory": "Ce que Buddy sait de toi",
     "library": "Tes documents",
     "settings": "Réglages",
-    "short": "Plus"
+    "short": "Plus",
+    "capture": "Photographier une feuille",
+    "history": "Historique",
+    "profile": "Profil"
   },
   "message": {
     "title_buddy": "Message de Buddy",
@@ -438,5 +441,18 @@
       "slides": "Diapositives",
       "rehearsal": "Répétition"
     }
+  },
+  "start_choice": {
+    "title": "Que veux-tu travailler ?",
+    "material": "À partir de mes documents",
+    "topic": "Nommer un sujet",
+    "roleplay": "Jeu de rôle",
+    "rehearse": "Répéter un exposé",
+    "drill": "Calcul mental",
+    "topic_meta": "Tu dis de quoi il s’agit",
+    "roleplay_meta": "Travailler l’oral",
+    "rehearse_meta": "Je t’écoute",
+    "topic_title": "Quel sujet ?",
+    "topic_lead": "Dis ou écris un sujet."
   }
 }

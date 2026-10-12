@@ -32,6 +32,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearDrafts } from '../../../lib/drafts.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { CardPass } from '../CardPass.js';
+import { MoreProvider } from '../../navigation/MoreProvider.js';
 
 const card = (over: Partial<SessionItemView['item']> = {}): SessionItemView => ({
   item: {
@@ -116,13 +117,15 @@ function show(session: SessionView = pass(), pending: string | null = null) {
   const onClose = vi.fn();
   const onKeep = vi.fn(async () => undefined);
   renderInApp(
-    <CardPass
-      session={session}
-      title="Unité 3"
-      onChange={onChange}
-      onClose={onClose}
-      asked={{ pending, onKeep }}
-    />,
+    <MoreProvider>
+      <CardPass
+        session={session}
+        title="Unité 3"
+        onChange={onChange}
+        onClose={onClose}
+        asked={{ pending, onKeep }}
+      />
+    </MoreProvider>,
   );
   return { onChange, onClose };
 }
@@ -189,6 +192,8 @@ describe('die Karte', () => {
     const { onClose } = show();
     const end = screen.getByRole('button', { name: 'Lernkarten beenden' });
     expect(screen.queryByText('Beenden')).toBeNull();
+    expect(screen.getAllByRole('switch')).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Mehr' })).toHaveLength(1);
     end.click();
     expect(onClose).toHaveBeenCalled();
   });

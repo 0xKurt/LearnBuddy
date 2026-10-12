@@ -1,58 +1,88 @@
-// The ⋯ menu on Buddy's home and the sheets its ways to start can open (issue #174). The ways to
-// start and their sheets are a domain's (components/buddy/extensions.ts `startMenu`, issue #107):
-// the learning domain's homework, vocabulary, speaking and test. Without one the menu holds only
-// the places. Each way closes the sheet it came from first: two modals in one frame do not come
-// up on iOS.
-
+// Practice selection is separate from the app destination menu. Domain callbacks remain registered.
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform } from 'react-native';
-
+import { useSheetHandoff } from '../navigation/useSheetHandoff.js';
 import { startMenu } from './extensions.js';
-import { MenuSheet } from './MenuSheet.js';
-
-/** iOS can't present a sheet while another one is still sliding away. */
-export const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
+import { Sheet } from '../lb/Sheet.js';
+import { StartChoice } from '../lb/StartChoice.js';
+import { View } from 'react-native';
+import { START } from '../../lib/theme/start.js';
+// Retained compatibility for unchanged domain callers until their close-boundary migration.
+import { Platform } from 'react-native';
+import { DURATION } from '../../lib/theme/motionDurations.js';
+export const SHEET_SWAP_MS = Platform.OS === 'ios' ? DURATION.sheetHandoff : 0;
 
 type Props = {
   menuOpen: boolean;
   onCloseMenu: () => void;
+  onOpenMenu: () => void;
   next: BuddyHome['next'];
-  /** Says it to Buddy, as if she had written it. */
   send: (text: string) => void;
-  /** Nothing new starts while Buddy is answering. */
   canStart: boolean;
+  active?: boolean;
 };
-
-export function StartSheets({ menuOpen, onCloseMenu, next, send, canStart }: Props) {
-  const { t } = useTranslation('buddy');
-  /** The domain's sheet that is up, by its own name; null: none. */
+export function StartSheets({
+  menuOpen,
+  onCloseMenu,
+  onOpenMenu,
+  next,
+  send,
+  canStart,
+  active = true,
+}: Props) {
+  const { t } = useTranslation(['buddy', 'common']);
   const [sheet, setSheet] = useState<string | null>(null);
+  const handoff = useSheetHandoff({
+    enabled: canStart && active,
+    visible: menuOpen,
+    onClose: onCloseMenu,
+    onInvalidated: () => {
+      onCloseMenu();
+      setSheet(null);
+    },
+  });
   const menu = startMenu.get();
-
-  /** Same from the ⋯ menu: some of the ways to start open a sheet of their own (#174). */
-  function fromMenu(go: () => void): void {
-    onCloseMenu();
-    setTimeout(go, SHEET_SWAP_MS);
-  }
-
+  const open = (name: string) => (name === 'material' ? router.push('/library') : setSheet(name));
   return (
     <>
-      <MenuSheet
+      <Sheet
         visible={menuOpen}
-        // Each way to start closes the sheet first: some of them open a sheet of their
-        // own, and two modals in one frame do not come up on iOS.
-        start={(menu?.items(next, t, { send, open: setSheet }) ?? []).map((i) => ({
-          ...i,
-          onPress: () => fromMenu(i.onPress),
-        }))}
-        canStart={canStart}
-        onGo={(path) => fromMenu(() => router.push(path))}
-        onClose={onCloseMenu}
-      />
-      {menu ? <menu.Sheets open={sheet} onOpen={setSheet} /> : null}
+        title={t('buddy:start_choice.title')}
+        closeLabel={t('common:actions.close')}
+        onClose={() => {
+          handoff.cancel();
+          onCloseMenu();
+        }}
+        onClosed={handoff.closed}
+        scrollTestID="scroll-list"
+      >
+        <View style={{ gap: START.listGap }}>
+          {(menu?.items(next, t, { send, open }) ?? []).map((item) => (
+            <StartChoice
+              key={item.key}
+              title={item.label}
+              icon={item.icon}
+              tone={item.tone ?? 'sky'}
+              meta={item.meta}
+              disabled={!canStart}
+              onPress={() => handoff.begin(item.onPress)}
+            />
+          ))}
+        </View>
+      </Sheet>
+      {menu ? (
+        <menu.Sheets
+          open={sheet}
+          onOpen={setSheet}
+          active={canStart && active}
+          onBack={() => {
+            setSheet(null);
+            onOpenMenu();
+          }}
+        />
+      ) : null}
     </>
   );
 }

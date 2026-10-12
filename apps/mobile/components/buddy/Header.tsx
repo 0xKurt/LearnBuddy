@@ -4,12 +4,14 @@ import { HEADER } from '../../lib/theme/header.js';
 import { BuddyHeader } from '../lb/BuddyHeader.js';
 import type { MoonState } from '../lb/BuddyOrb.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
+import { useMore } from '../navigation/MoreProvider.js';
 import { ReadAloudSwitch } from '../lb/ReadAloudSwitch.js';
 
 export const HEADER_HEIGHT = HEADER.height;
 
-export function Header({ state = 'idle', onMenu }: { state?: MoonState; onMenu: () => void }) {
+export function Header({ state = 'idle', onMenu }: { state?: MoonState; onMenu?: () => void }) {
   const { t } = useTranslation('buddy');
+  const menu = useMore();
   return (
     <BuddyHeader
       brand
@@ -18,7 +20,12 @@ export function Header({ state = 'idle', onMenu }: { state?: MoonState; onMenu: 
       testID="home-header"
       sound={<ReadAloudSwitch />}
       trailing={
-        <CircleBtn plain icon="more" onPress={onMenu} accessibilityLabel={t('menu.title')} />
+        <CircleBtn
+          plain
+          icon="more"
+          onPress={onMenu ?? (() => menu?.open())}
+          accessibilityLabel={t('menu.title')}
+        />
       }
     />
   );

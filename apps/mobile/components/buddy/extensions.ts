@@ -1,7 +1,7 @@
 // What a domain adds to Buddy's chat and home (issue #107): the cards its actions bring into the
 // conversation, the message that stands in place of a bubble, the line that follows Buddy's
 // voice, the line on top of the thread, the finished practice among the notices, the stages of
-// a sheet being read, and the ways to start in the ⋯ menu. The core draws all of these places
+// a sheet being read, and the ways to start in the practice chooser. The core draws all of these places
 // and works with each of them empty; the learning domain fills them once at app start
 // (lib/learning/register.tsx). The core never imports the domain.
 
@@ -17,7 +17,17 @@ import type { ComponentType, ReactNode } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 
 import { registry, slot } from '../../lib/registry.js';
-import type { StartItem } from './MenuSheet.js';
+import type { IconName } from '../lb/Icon.js';
+import type { SubjectTone } from '../../lib/theme/palettes.js';
+
+type StartItem = {
+  key: string;
+  label: string;
+  meta?: string;
+  icon: IconName;
+  tone?: SubjectTone;
+  onPress: () => void;
+};
 
 // ─────────────── the conversation ───────────────
 
@@ -110,7 +120,7 @@ export const readingSteps =
   >('Lese-Stufen');
 
 /**
- * The ways to start in the ⋯ menu and the sheets they open. `open` names one of the domain's
+ * The ways to start in the practice chooser and the sheets they open. `open` names one of the domain's
  * own sheets; the menu closes first (two modals in one frame do not come up on iOS).
  */
 export type StartMenu = {
@@ -119,7 +129,12 @@ export type StartMenu = {
     t: TFunction,
     act: { send: (text: string) => void; open: (sheet: string) => void },
   ): StartItem[];
-  Sheets: ComponentType<{ open: string | null; onOpen: (sheet: string | null) => void }>;
+  Sheets: ComponentType<{
+    open: string | null;
+    onOpen: (sheet: string | null) => void;
+    active?: boolean;
+    onBack?: () => void;
+  }>;
 };
 
 export const startMenu = slot<StartMenu>('Start-Menü');

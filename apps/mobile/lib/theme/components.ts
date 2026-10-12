@@ -1,3 +1,4 @@
+import { SPACE, TOUCH } from './space.js';
 import type { Palette } from './palettes.js';
 import { TYPE } from './type.js';
 
@@ -45,6 +46,18 @@ export const UI = {
     handleHeight: 5,
     handleRadius: 3,
     topPad: 10,
+    contentGap: SPACE.lg,
+    titleInset: SPACE.xs,
+    bottomPad: 30,
+    dismissTarget: {
+      position: 'absolute' as const,
+      top: 0,
+      left: '50%' as const,
+      marginLeft: -TOUCH / 2,
+      width: TOUCH,
+      height: TOUCH,
+      zIndex: 1,
+    },
     travel: 0.9,
     dragResistance: 0.15,
     gestureStart: 8,

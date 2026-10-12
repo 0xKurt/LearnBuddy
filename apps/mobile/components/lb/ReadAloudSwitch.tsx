@@ -49,12 +49,8 @@ export function ReadAloudSwitch() {
         borderRadius: circle(TOUCH),
       }}
     >
-      {({ pressed }) => (
-        <Icon
-          name={on ? 'speak' : 'speak-off'}
-          size={UI.iconButton.actionGlyph}
-          color={on ? palette.primaryDk : pressed ? palette.ink : palette.ink3}
-        />
+      {() => (
+        <Icon name={on ? 'speak' : 'speak-off'} size={UI.iconButton.glyph} color={palette.ink2} />
       )}
     </Pressable>
   );

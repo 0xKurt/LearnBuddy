@@ -23,9 +23,18 @@ type Props = {
   onRefresh: () => void;
   onSend: (text: string) => void;
   onPhoto: () => void;
+  onPractice: () => void;
 };
 
-export function HomeIntro({ h, refreshing, onRefresh, onSend, onPhoto, compact = false }: Props) {
+export function HomeIntro({
+  h,
+  refreshing,
+  onRefresh,
+  onSend,
+  onPhoto,
+  onPractice,
+  compact = false,
+}: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   // The next test or talk (#264) in one line; everything else Buddy says in the conversation.
@@ -84,7 +93,7 @@ export function HomeIntro({ h, refreshing, onRefresh, onSend, onPhoto, compact =
           iconSize={UI.iconButton.glyph}
           title={t('buddy:intro.practice')}
           chevron={false}
-          onPress={() => onSend(t('buddy:intro.practice'))}
+          onPress={onPractice}
         />
       </ListGroup>
     </ScrollView>

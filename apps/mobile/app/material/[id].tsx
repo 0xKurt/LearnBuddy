@@ -5,14 +5,15 @@
 
 import type { MaterialItemView, MaterialItemsView } from '@learnbuddy/shared-types/contracts';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useRef, useState, type ReactNode } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialItemCard } from '../../components/library/MaterialItemCard.js';
 import { Btn } from '../../components/lb/Btn.js';
-import { IconBtn } from '../../components/lb/IconBtn.js';
+import { ListGroup, Row } from '../../components/lb/ListGroup.js';
+import { useMore } from '../../components/navigation/MoreProvider.js';
 import { Card } from '../../components/lb/Card.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
 import { ErrorNote } from '../../components/lb/ErrorNote.js';
@@ -68,6 +69,14 @@ export default function MaterialScreen() {
 
   const data = query.data;
   const material = data?.material;
+  const more = useMore();
+  const instance = useId();
+  const menuOwner = `material:${instance}:${id}`;
+  const renameNow = useRef<() => void>(() => undefined);
+  useLayoutEffect(
+    () => () => more?.cancel(menuOwner),
+    [more?.cancel, menuOwner, deleting, renaming],
+  );
   const title = material?.title ?? t('library:untitled');
 
   async function pull() {
@@ -126,6 +135,7 @@ export default function MaterialScreen() {
     setRenameOpen(true);
   }
 
+  renameNow.current = openRename;
   const trimmed = draft.trim();
   const draftOk = trimmed.length > 0 && trimmed.length <= TITLE_MAX;
 
@@ -280,16 +290,23 @@ export default function MaterialScreen() {
         label: t('library:items.back'),
         onPress: () => (router.canGoBack() ? router.back() : router.replace('/library')),
       }}
-      right={
-        material ? (
-          <IconBtn
-            icon="pencil"
-            tone="plain"
-            disabled={deleting || renaming}
-            onPress={openRename}
-            accessibilityLabel={t('library:rename_label', { title })}
-          />
-        ) : undefined
+      menuDisabled={deleting || renaming}
+      contextual={
+        material
+          ? {
+              owner: menuOwner,
+              content: (choose) => (
+                <ListGroup>
+                  <Row
+                    icon="pencil"
+                    title={t('library:rename_label', { title })}
+                    disabled={deleting || renaming}
+                    onPress={() => choose(() => renameNow.current())}
+                  />
+                </ListGroup>
+              ),
+            }
+          : undefined
       }
     >
       {content}

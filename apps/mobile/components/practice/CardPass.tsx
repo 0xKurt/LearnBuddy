@@ -2,8 +2,7 @@
 // whether she knew it.
 //
 // The screen is built like every practice screen, in the same places (issue #384, report #388
-// §9 "the bar per form"): the header with the Vorlesen switch and the round ✕ (`HeadActions`,
-// #434), where she is (the progress row), the one thing in front of her (the card), the
+// §9 "the bar per form"): the header with the Vorlesen switch and the leading close action, where she is (the progress row), the one thing in front of her (the card), the
 // conversation under it once she asks, and the one input bar at the bottom (`CheckBar` `own`).
 // Its field is her question to the tutor ("Frag zur Aufgabe …", `POST …/ask`: never graded,
 // never a rating); its action is the card's: "Umdrehen" where "Prüfen" stands on a board, then
@@ -44,14 +43,12 @@ import { TYPE } from '../../lib/theme/type.js';
 import { UI } from '../../lib/theme/components.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
-import { EndButton } from '../lb/EndButton.js';
 import { ReadAgain } from '../lb/ReadAgain.js';
 import { Rise } from '../lb/Motion.js';
 import { Screen } from '../lb/Screen.js';
 import { BottomBar } from '../lb/BottomBar.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { CheckBar } from './CheckBar.js';
-import { HeadActions } from './HeadActions.js';
 import { ItemThread } from './ItemThread.js';
 import { PassEnd } from './PassEnd.js';
 import { ListenButton } from './ListenButton.js';
@@ -180,15 +177,12 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
     // The practice screens' header (issue #334.1, #384): the run's name on one line and the round ✕.
     <Screen
       title={title}
-      right={
-        <HeadActions>
-          <EndButton
-            onPress={onClose}
-            label={t('practice:cards.end_label')}
-            hint={t('practice:cards.end_hint')}
-          />
-        </HeadActions>
-      }
+      leading={{
+        icon: 'close',
+        onPress: onClose,
+        label: t('practice:cards.end_label'),
+        hint: t('practice:cards.end_hint'),
+      }}
     >
       <View style={{ flex: 1, paddingHorizontal: SPACE.lg, gap: SPACE.md }}>
         <ProgressRow

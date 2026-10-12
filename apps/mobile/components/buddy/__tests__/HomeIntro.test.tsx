@@ -24,6 +24,7 @@ describe('first-visit Home', () => {
   it('greets the real learner and preserves three distinct start actions and the practiced fact', () => {
     const send = vi.fn();
     const photo = vi.fn();
+    const practice = vi.fn();
     renderInApp(
       <HomeIntro
         h={home}
@@ -31,6 +32,7 @@ describe('first-visit Home', () => {
         onRefresh={() => undefined}
         onSend={send}
         onPhoto={photo}
+        onPractice={practice}
       />,
     );
     expect(screen.getByRole('heading').textContent).toContain('Hallo Lena.');
@@ -41,6 +43,7 @@ describe('first-visit Home', () => {
     expect(photo).toHaveBeenCalledTimes(1);
     expect(send).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole('button', { name: 'Einfach mal üben' }));
-    expect(send).toHaveBeenLastCalledWith('Einfach mal üben');
+    expect(practice).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledTimes(1);
   });
 });

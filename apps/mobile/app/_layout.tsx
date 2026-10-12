@@ -1,3 +1,4 @@
+import { MoreProvider, MoreHost } from '../components/navigation/MoreProvider.js';
 // Root: providers, session hydration, notification taps, the offline line, one Stack.
 
 import '../lib/i18n/index.js';
@@ -304,39 +305,42 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.bg }}>
-      <ThemeProvider>
-        <SafeAreaProvider>
-          <QueryClientProvider client={queryClient}>
-            <ErrorBoundary>
-              <ThemedStatusBar />
-              <OfflineFrame>
-                {ready ? (
-                  <>
-                    <Stack
-                      screenOptions={{
-                        headerShown: false,
-                        animation: reduced ? 'none' : undefined,
-                        contentStyle: { backgroundColor: palette.bg },
-                      }}
-                    >
-                      <Stack.Screen name="pin" options={{ presentation: 'modal' }} />
-                      <Stack.Screen name="talk" options={{ presentation: 'fullScreenModal' }} />
-                    </Stack>
-                    {/* Images and PDFs shared from other apps go to capture. */}
-                    <ShareIntake />
-                  </>
-                ) : (
-                  <LoadingState />
-                )}
-              </OfflineFrame>
-              <ToastHost />
-              {/* Dev build against a real backend: name the host on screen (issue #79). */}
-              <DevHostNote />
-              <SplashHandoff ready={ready} />
-            </ErrorBoundary>
-          </QueryClientProvider>
-        </SafeAreaProvider>
-      </ThemeProvider>
+      <MoreProvider>
+        <ThemeProvider>
+          <SafeAreaProvider>
+            <QueryClientProvider client={queryClient}>
+              <ErrorBoundary>
+                <ThemedStatusBar />
+                <OfflineFrame>
+                  {ready ? (
+                    <>
+                      <Stack
+                        screenOptions={{
+                          headerShown: false,
+                          animation: reduced ? 'none' : undefined,
+                          contentStyle: { backgroundColor: palette.bg },
+                        }}
+                      >
+                        <Stack.Screen name="pin" options={{ presentation: 'modal' }} />
+                        <Stack.Screen name="talk" options={{ presentation: 'fullScreenModal' }} />
+                      </Stack>
+                      {/* Images and PDFs shared from other apps go to capture. */}
+                      <ShareIntake />
+                      <MoreHost />
+                    </>
+                  ) : (
+                    <LoadingState />
+                  )}
+                </OfflineFrame>
+                <ToastHost />
+                {/* Dev build against a real backend: name the host on screen (issue #79). */}
+                <DevHostNote />
+                <SplashHandoff ready={ready} />
+              </ErrorBoundary>
+            </QueryClientProvider>
+          </SafeAreaProvider>
+        </ThemeProvider>
+      </MoreProvider>
     </GestureHandlerRootView>
   );
 }

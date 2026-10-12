@@ -142,7 +142,10 @@
     "memory": "Was Buddy über dich weiß",
     "library": "Dein Material",
     "settings": "Einstellungen",
-    "short": "Mehr"
+    "short": "Mehr",
+    "capture": "Blatt fotografieren",
+    "history": "Verlauf",
+    "profile": "Profil"
   },
   "message": {
     "title_buddy": "Buddys Nachricht",
@@ -438,5 +441,18 @@
       "slides": "Folien",
       "rehearsal": "Probevortrag"
     }
+  },
+  "start_choice": {
+    "title": "Was willst du üben?",
+    "material": "Aus meinem Material",
+    "topic": "Thema nennen",
+    "roleplay": "Rollenspiel",
+    "rehearse": "Vortrag proben",
+    "drill": "Kopfrechnen",
+    "topic_meta": "Du sagst, worum es geht",
+    "roleplay_meta": "Sprechen üben",
+    "rehearse_meta": "Ich höre zu",
+    "topic_title": "Welches Thema?",
+    "topic_lead": "Sag oder schreib ein Thema."
   }
 }
