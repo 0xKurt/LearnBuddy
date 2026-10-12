@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { UI } from '../../../lib/theme/components.js';
@@ -69,6 +69,51 @@ describe('base control compatibility (#548)', () => {
     expect(choose).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Mathe' }));
     expect(choose).toHaveBeenCalledTimes(1);
+  });
+  // requires live verification in Claude Code session
+  it('updates a mounted help chip when transparency is reduced without losing its action', async () => {
+    const listeners = new Set<() => void>();
+    let reduced = false;
+    const media = vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      get matches() {
+        return query.includes('reduced-transparency') && reduced;
+      },
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
+        if (query.includes('reduced-transparency')) listeners.add(listener as () => void);
+      },
+      removeEventListener: (_type: string, listener: EventListenerOrEventListenerObject) =>
+        listeners.delete(listener as () => void),
+      dispatchEvent: () => true,
+    }));
+    try {
+      const choose = vi.fn();
+      renderInApp(
+        <Chip tone="default" onPress={choose}>
+          Tipp
+        </Chip>,
+      );
+      const chip = screen.getByRole('button', { name: 'Tipp' });
+      const fill = () => styleOf(screen.getByText('Tipp').parentElement!).backgroundColor;
+      const initial = fill();
+      await act(async () => {
+        reduced = true;
+        for (const notify of listeners) notify();
+      });
+      await waitFor(() => expect(fill()).not.toBe(initial));
+      fireEvent.click(chip);
+      expect(choose).toHaveBeenCalledOnce();
+      await act(async () => {
+        reduced = false;
+        for (const notify of listeners) notify();
+      });
+      await waitFor(() => expect(fill()).toBe(initial));
+    } finally {
+      media.mockRestore();
+    }
   });
   it('shows the error instead of its hint and retains the native field callback', () => {
     const change = vi.fn();

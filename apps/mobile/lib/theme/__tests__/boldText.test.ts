@@ -74,7 +74,12 @@ it('keeps a live Bold Text face through palette changes, including monospace cod
 });
 
 it('keeps semantic control roles live through Bold Text and palette updates', () => {
-  const held = { action: TYPE.action, cell: TYPE.cell, metaStrong: TYPE.metaStrong };
+  const held = {
+    action: TYPE.action,
+    cell: TYPE.cell,
+    metaStrong: TYPE.metaStrong,
+    chip: TYPE.chip,
+  };
   expect(TYPE.action).toMatchObject({
     fontSize: 16,
     lineHeight: 23,
@@ -85,7 +90,7 @@ it('keeps semantic control roles live through Bold Text and palette updates', ()
   expect(TYPE.metaStrong).toMatchObject({ fontSize: 14, lineHeight: 20, fontWeight: '700' });
   applyBoldText(true, palette);
   applyType(paletteOf('oceanDark'));
-  for (const key of ['action', 'cell', 'metaStrong'] as const) {
+  for (const key of ['action', 'cell', 'metaStrong', 'chip'] as const) {
     expect(TYPE[key]).toBe(held[key]);
     expect(TYPE[key].fontWeight).toBe('800');
     expect(TYPE[key].fontFamily).toBe('Figtree_800ExtraBold');

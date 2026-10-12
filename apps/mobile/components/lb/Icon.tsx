@@ -1,11 +1,12 @@
-// Native icon set ported from components.jsx (consistent stroke 1.6). An icon is a list of shapes
+import { UI } from '../../lib/theme/components.js';
+// Native icon set ported from components.jsx (consistent stroke 1.7). An icon is a list of shapes
 // on a 24-unit grid; one <Svg> draws every icon with the same stroke (issue #311: the 32 cases
 // used to spell the same <Svg> frame out each).
 import type { ColorValue } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 type Shape =
-  /** A stroked line; `bold` draws it 2.2 thick instead of 1.6. */
+  /** A stroked line; `bold` draws it 2.2 thick instead of 1.7. */
   | { d: string; bold?: true }
   /** A stroked circle, or with `dot` a filled one without a stroke. */
   | { cx: number; cy: number; r: number; dot?: true }
@@ -104,7 +105,7 @@ type IconProps = {
   color?: ColorValue;
 };
 
-export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
+export function Icon({ name, size = UI.icon.defaultSize, color = 'currentColor' }: IconProps) {
   const shapes: readonly Shape[] = ICONS[name];
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -119,12 +120,18 @@ function IconShape({ shape, color }: { shape: Shape; color: ColorValue }) {
   const common = {
     fill: 'none',
     stroke: color,
-    strokeWidth: 1.6,
+    strokeWidth: UI.icon.stroke,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
   };
   if ('d' in shape) {
-    return <Path d={shape.d} {...common} strokeWidth={shape.bold ? 2.2 : common.strokeWidth} />;
+    return (
+      <Path
+        d={shape.d}
+        {...common}
+        strokeWidth={shape.bold ? UI.icon.boldStroke : common.strokeWidth}
+      />
+    );
   }
   if ('cx' in shape) {
     const { cx, cy, r } = shape;
