@@ -74,7 +74,10 @@ const SAMPLES = {
   tourPageAgain: sheet(HOMEWORK_SYSTEM, 800, 1080),
   // tour.spec.ts: one sentence to say.
   tourPronounce: request('pronounce', 'pronounce', {
-    text: 'SENTENCE: The weather is nice today.',
+    text: 'TARGET (en): The weather is nice today.',
+  }),
+  tourWord: request('pronounce', 'pronounce', {
+    text: 'WORD (en): weather\nSENTENCE: The weather is nice today.',
   }),
   // work-photo.spec.ts: her working for the equation, photographed (#444) — `transcribe` too.
   workPhoto: request(
@@ -131,6 +134,14 @@ describe('the walkthrough model (spec-order independence, #350)', () => {
       title: 'Hausaufgabe Rechteck',
     });
     expect(await answer(llm, SAMPLES.tourPronounce)).toMatchObject({ overall: 'almost' });
+    expect(await answer(llm, SAMPLES.tourWord)).toEqual({
+      audible: true,
+      expected_ipa: 'ˈwɛðər',
+      heard_ipa: 'ˈwɛðər',
+      heard: 'weather',
+      ok: true,
+      tip: null,
+    });
     expect(await answer(llm, SAMPLES.workPhoto)).toMatchObject({ found: 'working' });
     expect(await answer(llm, SAMPLES.heard)).toEqual({
       heard_speech: true,

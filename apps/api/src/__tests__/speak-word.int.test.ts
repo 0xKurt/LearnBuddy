@@ -3,9 +3,13 @@
 // the question keeps its attempts and its state; and only a word of *this* sentence.
 // requires live verification in Claude Code session (needs a running Postgres; scripted model)
 
-import type { SessionView, SpeakWordResponse } from '@learnbuddy/shared-types/contracts';
+import type {
+  AnswerResponse,
+  SessionView,
+  SpeakWordResponse,
+} from '@learnbuddy/shared-types/contracts';
 import { randomUUID as uuid } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
@@ -13,7 +17,7 @@ import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/h
 const dbReady = await testDatabaseAvailable();
 const audio = Buffer.alloc(2000, 7).toString('base64');
 
-function scriptSentence(env: TestEnv, sentence: string): void {
+function scriptSentence(env: TestEnv, sentence: string, kind: 'speak' | 'short' = 'speak'): void {
   env.llm.script('explain', {
     json: {
       usable: true,
@@ -21,7 +25,7 @@ function scriptSentence(env: TestEnv, sentence: string): void {
       subject: { name: 'Englisch', kind: 'english' },
       items: [
         {
-          kind: 'speak',
+          kind,
           prompt: sentence,
           answer: sentence,
           accepted_answers: [],
@@ -30,8 +34,8 @@ function scriptSentence(env: TestEnv, sentence: string): void {
           correct_choice: null,
           topic: 'Sprechen',
           difficulty: 1,
-          prompt_lang: 'en',
-          lang: 'en',
+          prompt_lang: kind === 'speak' ? 'en' : null,
+          lang: kind === 'speak' ? 'en' : null,
           figure: null,
           source_excerpt: null,
         },
@@ -46,7 +50,7 @@ describe.skipIf(!dbReady)('practising one word', () => {
   let sessionId: string;
   let itemId: string;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     env = await createTestEnv({ start: '2026-09-29T08:00:00Z' });
     l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
     scriptSentence(env, 'The weather is nice today.');
@@ -58,7 +62,7 @@ describe.skipIf(!dbReady)('practising one word', () => {
     sessionId = s.body.id;
     itemId = s.body.items[0]!.item.id;
   });
-  afterAll(async () => {
+  afterEach(async () => {
     await env?.close();
   });
 
@@ -117,14 +121,123 @@ describe.skipIf(!dbReady)('practising one word', () => {
   it('refuses a word that is not in this sentence', async () => {
     const res = await say('banana');
     expect(res.status).toBe(422);
-    expect(env.llm.callsFor('pronounce')).toHaveLength(2); // no model call for this one
+    expect(env.llm.callsFor('pronounce')).toHaveLength(0); // no model call for this one
   });
 
-  it('refuses once the session has ended', async () => {
-    await env.db.query(`update practice_sessions set status = 'finished' where id = $1`, [
-      sessionId,
-    ]);
-    const res = await say('weather');
-    expect(res.status).toBe(409);
+  it('rehearses repeatedly after the final almost sentence is genuinely finished without changing practice state', async () => {
+    env.llm.script('pronounce', {
+      json: {
+        audible: true,
+        expected_ipa: 'weather',
+        heard_ipa: 'wether',
+        heard: 'The wether is nice today.',
+        overall: 'almost',
+        words: [
+          { text: 'The', ok: true, tip: null },
+          { text: 'weather', ok: false, tip: 'Try th.' },
+          { text: 'is', ok: true, tip: null },
+          { text: 'nice', ok: true, tip: null },
+          { text: 'today', ok: true, tip: null },
+        ],
+        reply: 'Almost.',
+      },
+    });
+    const graded = await l.api.post<AnswerResponse>(`/practice/sessions/${sessionId}/speak`, {
+      client_turn_id: uuid(),
+      item_id: itemId,
+      mime: 'audio/m4a',
+      audio_base64: audio,
+    });
+    expect(graded.status).toBe(200);
+    expect(graded.body.session.status).toBe('finished');
+    const finished = await l.api.post<SessionView>(`/practice/sessions/${sessionId}/finish`, {});
+    expect(finished.status).toBe(200);
+    expect(finished.body.status).toBe('finished');
+    expect(finished.body.summary).not.toBeNull();
+    const snapshot = () =>
+      env.db.query(
+        `select row_to_json(s) as session,
+         (select jsonb_agg(to_jsonb(si) order by si.item_id) from session_items si where si.session_id = s.id) as items,
+         (select jsonb_agg(to_jsonb(t) order by t.id) from practice_turns t where t.session_id = s.id) as turns,
+         (select jsonb_agg(to_jsonb(st) order by st.item_id) from item_states st where st.learner_id = s.learner_id) as reviews
+       from practice_sessions s where s.id = $1 and s.learner_id = $2`,
+        [sessionId, l.learnerId],
+      );
+    const before = await snapshot();
+    for (let i = 0; i < 2; i++) {
+      env.llm.script('pronounce', {
+        json: {
+          audible: true,
+          expected_ipa: 'weather',
+          heard_ipa: 'weather',
+          heard: 'weather',
+          ok: true,
+          tip: null,
+        },
+      });
+      expect((await say('weather')).status).toBe(200);
+    }
+    expect(await snapshot()).toEqual(before);
+    const sentence = await l.api.post(`/practice/sessions/${sessionId}/speak`, {
+      client_turn_id: uuid(),
+      item_id: itemId,
+      mime: 'audio/m4a',
+      audio_base64: audio,
+    });
+    expect(sentence.status).toBe(409);
+    expect(env.llm.callsFor('pronounce')).toHaveLength(3);
+  });
+
+  it('still refuses abandoned sessions before asking the model', async () => {
+    await env.db.query(
+      `update practice_sessions set status = 'abandoned' where id = $1 and learner_id = $2`,
+      [sessionId, l.learnerId],
+    );
+    expect((await say('weather')).status).toBe(409);
+    expect(env.llm.callsFor('pronounce')).toHaveLength(0);
+  });
+
+  it('refuses a non-spoken item before asking the model', async () => {
+    scriptSentence(env, 'Name the weather.', 'short');
+    const session = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: uuid(),
+      kind: 'practice',
+      text: 'Name the weather.',
+    });
+    expect(session.status).toBe(201);
+    expect(
+      (
+        await l.api.post(`/practice/sessions/${session.body.id}/speak-word`, {
+          item_id: session.body.items[0]!.item.id,
+          word: 'weather',
+          mime: 'audio/m4a',
+          audio_base64: audio,
+        })
+      ).status,
+    ).toBe(409);
+    expect(env.llm.callsFor('pronounce')).toHaveLength(0);
+  });
+
+  it('keeps learner ownership and session membership before asking the model', async () => {
+    const other = await onboard(env, { relation: 'child', name: 'Mia', birthDate: '2014-02-10' });
+    const body = { item_id: itemId, word: 'weather', mime: 'audio/m4a', audio_base64: audio };
+    expect((await other.api.post(`/practice/sessions/${sessionId}/speak-word`, body)).status).toBe(
+      404,
+    );
+    scriptSentence(env, 'A different sentence.');
+    const another = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: uuid(),
+      kind: 'speak',
+      text: 'A different sentence.',
+    });
+    expect(
+      (
+        await l.api.post(`/practice/sessions/${sessionId}/speak-word`, {
+          ...body,
+          item_id: another.body.items[0]!.item.id,
+        })
+      ).status,
+    ).toBe(404);
+    expect(env.llm.callsFor('pronounce')).toHaveLength(0);
   });
 });

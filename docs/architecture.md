@@ -1026,7 +1026,11 @@ pronunciation card every word of the judged sentence is tappable. The sheet read
 word — judged against the word, with the sentence as context. **Nothing is stored and nothing
 counts**: no turn, no attempt, the question keeps its state; this is practice, and the sentence
 is what is answered. Only a word of _that_ sentence is accepted (`word_not_in_sentence`), and
-the model call is counted like any other.
+the model call is counted like any other. Stateless word rehearsal also accepts the learner’s
+finished session (#570): the final sentence’s feedback remains visible after automatic completion.
+It does not reopen the session or change its summary, attempts, turns or review schedule. Abandoned
+sessions remain rejected; whole-sentence grading still requires an active session. Learner ownership,
+session-item membership, spoken kind/language and word-in-sentence checks remain mandatory.
 
 **Her 16th birthday** (issue #31, EDPB §147–149): `GET /me` marks a child profile whose
 learner has turned 16 and never agreed for herself (`learner.own_consent_due`); the gate

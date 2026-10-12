@@ -3,10 +3,16 @@
 // Runs after the other walkthroughs (its scripted model answers come last,
 // apps/api/src/testing/scenarios/tour.ts).
 
+import {
+  AnswerResponse,
+  SpeakWordRequest,
+  SpeakWordResponse,
+} from '@learnbuddy/shared-types/contracts';
 import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { freshEmail, signUpMia } from './coreLoop';
 import { setScheme, shot } from './fit';
 
 /** The button inside the sheet that is open (the thread behind it may show the same words). */
@@ -448,6 +454,32 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Stimmt – gut gemacht!')).toBeVisible();
   await page.getByRole('button', { name: 'Übung beenden' }).click();
 
+  await pronunciation(page);
+
+  // ── Signing out, and the password link that no longer works ──
+  await openMenu(page, 'Einstellungen');
+  await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
+  // The parents' area opens with their (new) PIN.
+  for (const digit of '1357') await page.getByRole('button', { name: digit, exact: true }).click();
+  await page.getByRole('button', { name: 'Abmelden' }).last().click();
+  await page.getByRole('button', { name: 'Ja, abmelden' }).click();
+  await expect(page.getByRole('button', { name: 'Konto erstellen' })).toBeVisible();
+  // Signed out for good: a reload does not bring the session back.
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Konto erstellen' })).toBeVisible();
+  await page.goto('/reset-password');
+  await expect(page.getByText('Dieser Link gilt nicht mehr')).toBeVisible();
+  await shot(page, '48-reset-link-invalid');
+  await page.getByRole('button', { name: 'Zurück zur Anmeldung' }).click();
+  await expect(page.getByRole('button', { name: 'Konto erstellen' })).toBeVisible();
+  // "Passwort vergessen?": the same answer whether the address has an account or not.
+  await page.getByRole('radio', { name: 'Anmelden' }).click();
+  await page.getByLabel('E-Mail').fill(email);
+  await page.getByRole('button', { name: 'Passwort vergessen?' }).click();
+  await expect(page.getByText(/Wenn es ein Konto mit dieser Adresse gibt/)).toBeVisible();
+});
+
+async function pronunciation(page: Page): Promise<void> {
   // ── Pronunciation: record (a fake microphone), sent, feedback per word ──
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
   await page.getByRole('button', { name: 'Aussprache', exact: true }).click();
@@ -473,11 +505,33 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByRole('button', { name: 'Langsam anhören' })).toBeVisible();
   // The bar before she has said anything, measured at both phone sizes (fit.ts).
   await shot(page, '48a-speak-ready');
+  const sentenceResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' && new URL(response.url()).pathname.endsWith('/speak'),
+  );
   await page.getByRole('button', { name: 'Aufnahme starten' }).click();
   await page.waitForTimeout(1200);
   await page.getByRole('button', { name: 'Aufnahme beenden und an Buddy schicken' }).click();
   // The card keeps the marked sentence; what the judgement says stands once, in the
   // thread under Buddy's reply (issue #14) — not a third time in the card.
+  const response = await sentenceResponse;
+  expect(response.ok()).toBe(true);
+  const text = await response.text();
+  // The real sentence handler finishes the last item in its transaction (touchRun).
+  // Streaming carries that same final AnswerResponse in the done event.
+  const done = response.headers()['content-type']?.includes('text/event-stream')
+    ? text
+        .split('\n\n')
+        .find((block) => /^event: done$/m.test(block))
+        ?.match(/^data: (.+)$/m)?.[1]
+    : text;
+  expect(done).toBeDefined();
+  const finished = AnswerResponse.parse(JSON.parse(done!)).session;
+  expect(finished.mode).toBe('practice');
+  expect(finished.status).toBe('finished');
+  expect(finished.summary).not.toBeNull();
+  const spoken = finished.items.find((item) => item.item.kind === 'speak');
+  expect(spoken).toBeDefined();
   await expect(page.getByText('Fast', { exact: true })).toBeVisible();
   await expect(page.getByText(/Zunge zwischen den Zähnen/)).toHaveCount(1);
   await shot(page, '49-speak-feedback');
@@ -489,28 +543,43 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(inSheet(page).getByRole('button', { name: 'Langsam anhören' })).toBeVisible();
   await expect(inSheet(page).getByRole('button', { name: 'Dieses Wort sagen' })).toBeVisible();
   await shot(page, '49b-speak-word', { opened: true });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await inSheet(page).getByRole('button', { name: 'Dieses Wort sagen', exact: true }).click();
+    await page.waitForTimeout(1200); // Existing tour's audible fake-device recording length.
+    const request = page.waitForRequest(
+      (request) =>
+        request.method() === 'POST' && new URL(request.url()).pathname.endsWith('/speak-word'),
+    );
+    const response = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        new URL(response.url()).pathname.endsWith('/speak-word'),
+    );
+    await inSheet(page).getByRole('button', { name: 'Fertig', exact: true }).click();
+    const sent = await request;
+    expect(new URL(sent.url()).pathname).toBe(`/v1/practice/sessions/${finished.id}/speak-word`);
+    const body = SpeakWordRequest.parse(sent.postDataJSON());
+    expect(body.item_id).toBe(spoken!.item.id);
+    expect(body.word).toBe('weather');
+    expect(Buffer.from(body.audio_base64, 'base64').length).toBeGreaterThan(0);
+    const result = await response;
+    expect(result.status()).toBe(200);
+    expect(SpeakWordResponse.parse(await result.json()).audible).toBe(true);
+    await expect(
+      inSheet(page).getByRole('button', { name: 'Dieses Wort sagen', exact: true }),
+    ).toBeEnabled();
+    await expect(
+      inSheet(page).getByRole('heading', { name: 'weather', exact: true }),
+    ).toBeVisible();
+  }
   await inSheet(page).getByRole('button', { name: 'Schließen' }).click();
   await page.getByRole('button', { name: 'Übung beenden' }).click();
+}
 
-  // ── Signing out, and the password link that no longer works ──
-  await openMenu(page, 'Einstellungen');
-  await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
-  // The parents' area opens with their (new) PIN.
-  for (const digit of '1357') await page.getByRole('button', { name: digit, exact: true }).click();
-  await page.getByRole('button', { name: 'Abmelden' }).last().click();
-  await page.getByRole('button', { name: 'Ja, abmelden' }).click();
-  await expect(page.getByRole('button', { name: 'Konto erstellen' })).toBeVisible();
-  // Signed out for good: a reload does not bring the session back.
-  await page.reload();
-  await expect(page.getByRole('button', { name: 'Konto erstellen' })).toBeVisible();
-  await page.goto('/reset-password');
-  await expect(page.getByText('Dieser Link gilt nicht mehr')).toBeVisible();
-  await shot(page, '48-reset-link-invalid');
-  await page.getByRole('button', { name: 'Zurück zur Anmeldung' }).click();
-  await expect(page.getByRole('button', { name: 'Konto erstellen' })).toBeVisible();
-  // "Passwort vergessen?": the same answer whether the address has an account or not.
-  await page.getByRole('radio', { name: 'Anmelden' }).click();
-  await page.getByLabel('E-Mail').fill(email);
-  await page.getByRole('button', { name: 'Passwort vergessen?' }).click();
-  await expect(page.getByText(/Wenn es ein Konto mit dieser Adresse gibt/)).toBeVisible();
+test('finished pronunciation: optional word rehearsal after automatic completion (#570)', async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  await signUpMia(page, freshEmail('finished-word'));
+  await pronunciation(page);
 });

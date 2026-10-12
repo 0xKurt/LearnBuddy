@@ -173,7 +173,7 @@ export function scriptTour(): void {
   });
   // By the sentence she says, not as the next judgement anyone asks for (#350).
   pronounceRules.add({
-    when: /The weather is nice today/,
+    when: /TARGET \(en\): The weather is nice today\./,
     answer: () => ({
       audible: true,
       expected_ipa: 'ðə ˈwɛðər ɪz naɪs təˈdeɪ',
@@ -188,6 +188,18 @@ export function scriptTour(): void {
         { text: 'today', ok: true, tip: null },
       ],
       reply: 'Schon gut verständlich! Übe noch das ‹th› in „weather“.',
+    }),
+  });
+  // Stateless rehearsal has its own contract; SENTENCE is context, not a sentence answer.
+  pronounceRules.add({
+    when: /WORD \(en\): weather\nSENTENCE: The weather is nice today\./,
+    answer: () => ({
+      audible: true,
+      expected_ipa: 'ˈwɛðər',
+      heard_ipa: 'ˈwɛðər',
+      heard: 'weather',
+      ok: true,
+      tip: null,
     }),
   });
   // A sheet that could not be read, read again with success; then homework of two
