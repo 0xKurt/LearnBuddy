@@ -1,3 +1,4 @@
+import { UI } from './components.js';
 import { COMPOSER } from './composer.js';
 import { SPACE } from './space.js';
 
@@ -17,9 +18,9 @@ export const VOICE = {
   statusHeight: 22,
   statusGap: 6,
   liveLines: 4,
-  disabledOpacity: 0.6,
-  pressedOpacity: 0.8,
-  border: 1,
+  disabledOpacity: UI.disabledOpacity,
+  pressedOpacity: UI.pressed.voice,
+  border: UI.border,
   iconRatio: { stop: 0.36, mic: 0.44 },
 } as const;
 

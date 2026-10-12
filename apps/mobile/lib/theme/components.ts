@@ -4,17 +4,27 @@ import { TYPE } from './type.js';
 // Shared component geometry and interaction treatment (redesign, #548).
 const inputLine = () => TYPE.input.lineHeight;
 
+/**
+ * The one place a pressed thing's opacity is written; chat, practice and voice name theirs from
+ * here. The design's press state is scale .97 alone (readme.md "States"): whether these stay is
+ * decided with the components that read them (#599).
+ */
+const PRESSED = { link: 0.6, control: 0.78, voice: 0.8, surface: 0.85 } as const;
+
 export const UI = {
   icon: { defaultSize: 22, stroke: 1.7, boldStroke: 2.2 },
-  textLink: { pressedOpacity: 0.6 },
+  pressed: PRESSED,
+  textLink: { pressedOpacity: PRESSED.link },
+  /** A resting boundary, a selected one (readme.md "States": 2 px primary). */
   border: 1,
   selectedBorder: 2,
+  /** Disabled is 45 % everywhere (readme.md "States"). */
   disabledOpacity: 0.45,
   busyOpacity: 0.8,
   // React Native Android ProgressBar small/large intrinsic dimensions.
   busyIndicator: { small: 20, large: 36 },
   pressScale: 0.97,
-  pressedOpacity: 0.78,
+  pressedOpacity: PRESSED.control,
   fontScale: 2,
   minimumFontScale: 0.82,
   button: { pad: 22, icon: 18, compactIcon: 24, compactGlyph: 18 },

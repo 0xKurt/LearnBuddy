@@ -12,6 +12,9 @@ type GlowStop = { color: string; opacity: number };
 const SCRIM = '#1f1b2e';
 const PHOTO_OVERLAY = 'rgba(20,16,40,0.55)';
 const ON_PHOTO_OVERLAY = '#ffffff';
+/** The image viewer's ground and its hint, the same in every look (design ui_kits/app/Gaps.jsx FigureZoom). */
+const VIEWER_VEIL = '#15121f';
+const ON_VIEWER_VEIL = '#bdb7d3';
 
 export type Palette = {
   /** Modal backdrop stays dark in every look. */
@@ -19,6 +22,10 @@ export type Palette = {
   /** Remove controls remain dark over real photos in every appearance. */
   photoOverlay: string;
   onPhotoOverlay: string;
+  /** The dark ground a picture stands on in the full-screen viewer, in every look. */
+  viewerVeil: string;
+  /** The quiet hint on that ground (≥ 4.5:1). */
+  onViewerVeil: string;
   ink: string;
   ink2: string;
   ink3: string;
@@ -134,6 +141,8 @@ const pastellSoft: Palette = {
   scrim: SCRIM,
   photoOverlay: PHOTO_OVERLAY,
   onPhotoOverlay: ON_PHOTO_OVERLAY,
+  viewerVeil: VIEWER_VEIL,
+  onViewerVeil: ON_VIEWER_VEIL,
   hairlineStrong: 'rgba(60,40,120,0.16)',
   onPrimary: '#ffffff',
   primary: '#6a48d7',
@@ -230,6 +239,8 @@ const night: Palette = {
   scrim: SCRIM,
   photoOverlay: PHOTO_OVERLAY,
   onPhotoOverlay: ON_PHOTO_OVERLAY,
+  viewerVeil: VIEWER_VEIL,
+  onViewerVeil: ON_VIEWER_VEIL,
   hairlineStrong: 'rgba(220,210,255,0.20)',
   onPrimary: '#191627',
   primary: '#9d82f5',
