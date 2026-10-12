@@ -14,6 +14,7 @@ export function Chip({
   tone = 'default',
   icon,
   accessibilityLabel,
+  accessibilityHint,
   selected = false,
   disabled = false,
   onPress,
@@ -29,6 +30,7 @@ export function Chip({
   icon?: IconName;
   /** What a screen reader says when the short label is not enough on its own. */
   accessibilityLabel?: string;
+  accessibilityHint?: string;
 }) {
   const { palette } = useTheme();
   const { reduceTransparency } = useA11ySettings();
@@ -66,6 +68,7 @@ export function Chip({
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
+      accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel ?? children}
       accessibilityState={{ selected, disabled }}
       style={{

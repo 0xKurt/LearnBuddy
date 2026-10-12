@@ -1,3 +1,4 @@
+import type { PracticeTurnView } from '@learnbuddy/shared-types/contracts';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderInApp } from '../../../testing/render.js';
@@ -120,4 +121,92 @@ describe('Reexplain — reason draft and primary override', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Warum ist das so?' }));
     expect(onAsk).toHaveBeenCalledWith('why');
   });
+});
+
+it('splits only shortcuts from the body while retaining one real reason/check owner', () => {
+  const onAsk = vi.fn();
+  renderInApp(
+    <CheckOverrideProvider>
+      <Primary />
+      <Reexplain
+        draftKey="reason.split"
+        turns={[]}
+        pending={null}
+        disabled={false}
+        delay={0}
+        onAsk={onAsk}
+        why={REASONS}
+        render={({ body, actions }) => (
+          <>
+            <div data-testid="reply-body">{body}</div>
+            <div data-testid="pinned-shortcuts">{actions}</div>
+          </>
+        )}
+      />
+    </CheckOverrideProvider>,
+  );
+  const shortcuts = screen.getByTestId('pinned-shortcuts');
+  expect(shortcuts.contains(screen.getByRole('button', { name: 'Warum stimmt das?' }))).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Warum stimmt das?' }));
+  expect(shortcuts.querySelector('[role="radio"]')).toBeNull();
+  const choice = screen.getByRole('radio', { name: REASONS[1]! });
+  expect(screen.getByTestId('reply-body').contains(choice)).toBe(true);
+  fireEvent.click(choice);
+  expect(onAsk).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Check reason' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Check reason' }));
+  expect(onAsk).toHaveBeenCalledOnce();
+  expect(onAsk).toHaveBeenCalledWith('why', 1);
+});
+
+it('reports the explanation tutor start from its own turns, not the main feedback offset', async () => {
+  const learner: PracticeTurnView = {
+    id: '00000000-0000-4000-8000-000000000011',
+    item_id: '00000000-0000-4000-8000-000000000001',
+    role: 'learner',
+    text: 'Mit Beispiel, bitte',
+    verdict: null,
+    pronunciation: null,
+    reexplain: 'example',
+    created_at: '2026-10-12T10:00:00Z',
+  };
+  const tutor: PracticeTurnView = {
+    ...learner,
+    id: '00000000-0000-4000-8000-000000000012',
+    role: 'tutor',
+    text: 'The actual explanation begins here.',
+  };
+  let start: { key?: string; top?: number } = {};
+  const ui = (turns: PracticeTurnView[], pending: 'example' | null) => (
+    <Reexplain
+      draftKey="explanation.start"
+      turns={turns}
+      pending={pending}
+      disabled={pending !== null}
+      delay={0}
+      onAsk={() => undefined}
+      render={({ body, actions, revealKey, revealTop }) => {
+        start = { key: revealKey, top: revealTop };
+        return (
+          <>
+            {body}
+            {actions}
+          </>
+        );
+      }}
+    />
+  );
+  const { rerender } = renderInApp(ui([learner], 'example'));
+  expect(start.key).toBeUndefined();
+  rerender(ui([learner, tutor], null));
+  await waitFor(() => expect(start.key).toBe(tutor.id));
+  expect(start.top).toBeGreaterThan(0); // Start after the actual learner turn, not the main thread.
+  const nextTutor = {
+    ...tutor,
+    id: '00000000-0000-4000-8000-000000000013',
+    text: 'Another explanation.',
+  };
+  rerender(ui([learner, tutor, nextTutor], null));
+  await waitFor(() => expect(start.key).toBe(nextTutor.id));
+  expect(start.top).toBeGreaterThan(0);
 });

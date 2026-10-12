@@ -113,16 +113,24 @@ export const AskRoute = createContext<AskState>({
   onFocused: () => undefined,
 });
 
-export function CheckBar(provided: CheckAction & { keys?: ReactNode }) {
+export function CheckBar(provided: CheckAction & { keys?: ReactNode; before?: ReactNode }) {
   const override = useCheckOverride();
   const action = override ?? provided;
-  if ('spoken' in action && action.spoken) return <TalkRow {...action.spoken} check={action} />;
-  if ('next' in action) return <NextBar {...action.next} />;
+  // A custom recorder owns its own footer; ordinary input actions share this one bar.
   if ('bar' in action) return <>{action.bar}</>;
-  if ('own' in action) return <OwnAction {...action.own} />;
-  if ('talk' in action) return <TalkRow {...action.talk} />;
-  if ('tap' in action) return <TapBar canTalk={action.canTalk === true} />;
-  return <CheckButton {...action} />;
+  let content: ReactNode;
+  if ('spoken' in action && action.spoken) content = <TalkRow {...action.spoken} check={action} />;
+  else if ('next' in action) content = <NextBar {...action.next} />;
+  else if ('own' in action) content = <OwnAction {...action.own} />;
+  else if ('talk' in action) content = <TalkRow {...action.talk} />;
+  else if ('tap' in action) content = <TapBar canTalk={action.canTalk === true} />;
+  else content = <CheckButton {...action} />;
+  return (
+    <BottomBar>
+      {provided.before}
+      {content}
+    </BottomBar>
+  );
 }
 
 function NextBar({ onPress, disabled }: Next['next']) {
@@ -133,9 +141,9 @@ function NextBar({ onPress, disabled }: Next['next']) {
     </Btn>,
   );
   return (
-    <BottomBar>
+    <>
       <InputBar {...field} />
-    </BottomBar>
+    </>
   );
 }
 
@@ -144,9 +152,9 @@ function TapBar({ canTalk }: { canTalk: boolean }) {
   const field = useAskField(null);
   const conversation = useConversation();
   return (
-    <BottomBar>
+    <>
       <InputBar {...field} after={canTalk ? <TalkButton onPress={conversation.start} /> : null} />
-    </BottomBar>
+    </>
   );
 }
 
@@ -154,10 +162,10 @@ function TapBar({ canTalk }: { canTalk: boolean }) {
 function OwnAction({ inBar, across }: Own['own']) {
   const field = useAskField(inBar);
   return (
-    <BottomBar>
+    <>
       <InputBar {...field} />
       {across}
-    </BottomBar>
+    </>
   );
 }
 
@@ -210,7 +218,7 @@ function TalkRow({
     />
   ) : null;
   return (
-    <BottomBar>
+    <>
       {/* Only what went wrong (no mic, nothing understood). Listening and writing it down are the
           mic's own (the ring, the stop square, the spinner; its screen-reader value): a status
           line while she speaks grew the bar by a line and hid Buddy's reply on 360×740 (#386). */}
@@ -241,7 +249,7 @@ function TalkRow({
         centerAction={check?.ready && voice.state === 'idle' ? selectedCheck : null}
         action={voice.state !== 'idle' ? selectedCheck : null}
       />
-    </BottomBar>
+    </>
   );
 }
 
@@ -251,7 +259,7 @@ function CheckButton(check: Check & { keys?: ReactNode }) {
   const conversation = useConversation();
   const field = useAskField(<CheckBtn {...check} place="pill" />);
   return (
-    <BottomBar>
+    <>
       {input ? (
         <>{input(<CheckBtn {...check} place="pill" />, <CheckBtn {...check} place="across" />)}</>
       ) : (
@@ -271,7 +279,7 @@ function CheckButton(check: Check & { keys?: ReactNode }) {
           }
         />
       )}
-    </BottomBar>
+    </>
   );
 }
 

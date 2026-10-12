@@ -37,7 +37,7 @@ import { CheckOverrideProvider } from '../../components/practice/CheckOverride.j
 
 import type { SpeakStreamEvent } from '@learnbuddy/shared-types/contracts';
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -50,6 +50,8 @@ import { PracticeSkeleton } from '../../components/lb/Skeletons.js';
 import { AnswerArea } from '../../components/practice/AnswerArea.js';
 import { CardPass } from '../../components/practice/CardPass.js';
 import { AskRoute } from '../../components/practice/CheckBar.js';
+import { Reexplain } from '../../components/practice/Reexplain.js';
+import { DURATION } from '../../lib/theme/motion.js';
 import { DrillRound } from '../../components/practice/DrillRound.js';
 import { FreeSpaceReport } from '../../components/practice/FreeSpace.js';
 import { ItemCard } from '../../components/practice/ItemCard.js';
@@ -222,6 +224,132 @@ export default function PracticeScreen() {
     safeBottom: insets.bottom,
   });
 
+  const originalForm = answerForm(item, true);
+  const ordinaryBody =
+    (originalForm.typed && item.kind !== 'spelling_dictation' && originalForm.code === null) ||
+    (originalForm.choices !== null && !item.choice_figures?.length);
+  const questionCard = (
+    <SlideIn key={item.id}>
+      <FigureSizingReport.Provider value={measured.figureSizing}>
+        <View
+          ref={measured.cardRef}
+          onLayout={(e) => room.onCard(Math.round(e.nativeEvent.layout.height))}
+        >
+          <ItemCard
+            extra={
+              <QuestionTools
+                item={item}
+                sessionId={session.id}
+                // A foreign vocabulary word has its own "Anhören" (its pronunciation is the
+                // point); that IS its read-aloud button, so it never gets a second one.
+                hearWord={item.kind === 'vocab' && isForeign(item.prompt_lang)}
+                heard={heard}
+                markHeard={markHeard}
+                disabled={locked}
+              />
+            }
+            sessionId={session.id}
+            shown={shown}
+            title={title}
+            view={view}
+            form={form}
+            speakLive={speakLive}
+            heard={heard}
+            markHeard={markHeard}
+            disabled={locked}
+            minHeight={
+              !ordinaryBody && room.cardGrowTo > 0 ? room.cardNatural + room.cardGrowTo : undefined
+            }
+            caps={room.caps}
+            filling={filling}
+            readAgain={readAgain}
+          />
+        </View>
+      </FigureSizingReport.Provider>
+    </SlideIn>
+  );
+  const renderFlow = (
+    reexplanation?: ReactNode,
+    shortcuts?: ReactNode,
+    revealTop?: number,
+    revealKey?: string,
+  ) => (
+    <AnswerFlow.Provider
+      value={{
+        question: ordinaryBody ? questionCard : null,
+        newestReply:
+          view.turnsAgain.at(-1)?.id ??
+          view.threadTurns.filter((turn) => turn.role === 'tutor').at(-1)?.id ??
+          null,
+        readKey:
+          revealTop !== undefined
+            ? (revealKey ?? `${id}.${item.id}.reasons`)
+            : view.pendingText === null && actions.again === null
+              ? (view.turnsAgain.at(-1)?.id ??
+                view.threadTurns.filter((turn) => turn.role === 'tutor').at(-1)?.id ??
+                null)
+              : null,
+        readFrom:
+          revealTop !== undefined
+            ? (room.tops.at(-1) ?? 0) + revealTop
+            : view.pendingText === null && actions.again === null
+              ? room.readFrom
+              : undefined,
+        sentKey:
+          (actions.again?.itemId === item.id ? actions.again.way : null) ??
+          view.pendingText ??
+          view.threadTurns.filter((turn) => turn.role === 'learner').at(-1)?.id ??
+          null,
+        thread: (
+          <QuestionThread
+            unbounded={ordinaryBody}
+            reexplanation={reexplanation}
+            session={session}
+            shown={shown}
+            view={view}
+            form={form}
+            offers={offers}
+            room={room}
+            measured={measured}
+            asking={pending?.asked}
+            actions={actions}
+            disabled={locked}
+          />
+        ),
+        tools: (
+          <>
+            <QuestionHelp
+              session={session}
+              shown={shown}
+              view={view}
+              form={form}
+              offers={offers}
+              actions={actions}
+              disabled={locked}
+            />
+            {shortcuts}
+          </>
+        ),
+      }}
+    >
+      <AnswerArea
+        sessionId={id}
+        item={item}
+        open={open}
+        form={form}
+        view={view}
+        canReveal={session.reveal_allowed}
+        drafts={drafts}
+        actions={actions}
+        measured={measured}
+        readAgain={readAgain}
+        onSpeakProgress={setSpeakLive}
+        disabled={locked}
+        closed={{ solution: shown.answer, judged: !offers.testing, onNext: next }}
+      />
+    </AnswerFlow.Provider>
+  );
+
   // No scrolling to find what matters (CLAUDE.md rule 16): the question stays on top,
   // the way to answer stays at the bottom, and only the conversation between them
   // grows — like a chat, newest at the bottom.
@@ -278,120 +406,56 @@ export default function PracticeScreen() {
               ref={measured.columnRef}
               onLayout={(e) => measured.onColumn(Math.round(e.nativeEvent.layout.height))}
             >
-              <View
-                style={{
-                  // The question and the conversation take what they need, no more: the free room
-                  // collects under them and the way to answer stands at the bottom (`AnswerShell`,
-                  // issues #286, #386). The question never shrinks; the conversation does, by whole
-                  // turns (`threadCap`).
-                  flexGrow: 0,
-                  flexShrink: 1,
-                  minHeight: measured.questionContentHeight,
-                }}
-              >
-                <ScrollView
-                  testID="scroll-question"
-                  // No clamp and no shrinking: the question must NEVER scroll (rule 16), so
-                  // nothing may cut it below its content — an irreducible question (three-line
-                  // fraction prompt + the figure's legible minimum) beat every cap by a few px
-                  // on 360×740. When space runs out the conversation yields: whole turns (threadCap).
-                  style={{ flexGrow: 0, flexShrink: 0 }}
-                  keyboardShouldPersistTaps="handled"
-                  contentContainerStyle={{
-                    paddingHorizontal: SPACE.lg,
-                    paddingTop: SPACE.xs,
-                    gap: SPACE.md,
+              {ordinaryBody ? null : (
+                <View
+                  style={{
+                    // The question and the conversation take what they need, no more: the free room
+                    // collects under them and the way to answer stands at the bottom (`AnswerShell`,
+                    // issues #286, #386). The question never shrinks; the conversation does, by whole
+                    // turns (`threadCap`).
+                    flexGrow: 0,
+                    flexShrink: 1,
+                    minHeight: measured.questionContentHeight,
                   }}
-                  onContentSizeChange={(_, h) => measured.setQuestionContentHeight(Math.round(h))}
                 >
-                  {/* The next question comes in softly from the side (keyed by the question). Its
+                  <ScrollView
+                    testID="scroll-question"
+                    // No clamp and no shrinking: the question must NEVER scroll (rule 16), so
+                    // nothing may cut it below its content — an irreducible question (three-line
+                    // fraction prompt + the figure's legible minimum) beat every cap by a few px
+                    // on 360×740. When space runs out the conversation yields: whole turns (threadCap).
+                    style={{ flexGrow: 0, flexShrink: 0 }}
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={{
+                      paddingHorizontal: SPACE.lg,
+                      paddingTop: SPACE.xs,
+                      gap: SPACE.md,
+                    }}
+                    onContentSizeChange={(_, h) => measured.setQuestionContentHeight(Math.round(h))}
+                  >
+                    {/* The next question comes in softly from the side (keyed by the question). Its
                       drawing reports while it sizes itself: the card's own height waits for it. */}
-                  <SlideIn key={item.id}>
-                    <FigureSizingReport.Provider value={measured.figureSizing}>
-                      <View
-                        ref={measured.cardRef}
-                        onLayout={(e) => room.onCard(Math.round(e.nativeEvent.layout.height))}
-                      >
-                        <ItemCard
-                          extra={
-                            <QuestionTools
-                              item={item}
-                              sessionId={session.id}
-                              // A foreign vocabulary word has its own "Anhören" (its pronunciation is the
-                              // point); that IS its read-aloud button, so it never gets a second one.
-                              hearWord={item.kind === 'vocab' && isForeign(item.prompt_lang)}
-                              heard={heard}
-                              markHeard={markHeard}
-                              disabled={locked}
-                            />
-                          }
-                          sessionId={session.id}
-                          shown={shown}
-                          title={title}
-                          view={view}
-                          form={form}
-                          speakLive={speakLive}
-                          heard={heard}
-                          markHeard={markHeard}
-                          disabled={locked}
-                          minHeight={
-                            room.cardGrowTo > 0 ? room.cardNatural + room.cardGrowTo : undefined
-                          }
-                          caps={room.caps}
-                          filling={filling}
-                          readAgain={readAgain}
-                        />
-                      </View>
-                    </FigureSizingReport.Provider>
-                  </SlideIn>
-                </ScrollView>
-              </View>
+                    {questionCard}
+                  </ScrollView>
+                </View>
+              )}
               <CheckOverrideProvider key={item.id}>
-                <AnswerFlow.Provider
-                  value={{
-                    thread: (
-                      <QuestionThread
-                        session={session}
-                        shown={shown}
-                        view={view}
-                        form={form}
-                        offers={offers}
-                        room={room}
-                        measured={measured}
-                        asking={pending?.asked}
-                        actions={actions}
-                        disabled={locked}
-                      />
-                    ),
-                    tools: (
-                      <QuestionHelp
-                        session={session}
-                        shown={shown}
-                        view={view}
-                        form={form}
-                        offers={offers}
-                        actions={actions}
-                        disabled={locked}
-                      />
-                    ),
-                  }}
-                >
-                  <AnswerArea
-                    sessionId={id}
-                    item={item}
-                    open={open}
-                    form={form}
-                    view={view}
-                    canReveal={session.reveal_allowed}
-                    drafts={drafts}
-                    actions={actions}
-                    measured={measured}
-                    readAgain={readAgain}
-                    onSpeakProgress={setSpeakLive}
+                {ordinaryBody && offers.explainAgain ? (
+                  <Reexplain
+                    draftKey={`${session.id}.${item.id}.why`}
+                    turns={view.turnsAgain}
+                    pending={actions.again?.itemId === item.id ? actions.again.way : null}
                     disabled={locked}
-                    closed={{ solution: shown.answer, judged: !offers.testing, onNext: next }}
+                    delay={DURATION.gentle}
+                    onAsk={(way, choice) => actions.explainAgain(item.id, way, choice)}
+                    why={shown.why}
+                    render={({ body, actions: shortcuts, revealTop, revealKey }) =>
+                      renderFlow(body, shortcuts, revealTop, revealKey)
+                    }
                   />
-                </AnswerFlow.Provider>
+                ) : (
+                  renderFlow()
+                )}
               </CheckOverrideProvider>
               <View style={{ height: 0 }} ref={measured.endRef} />
             </View>

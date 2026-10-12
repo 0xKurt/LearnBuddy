@@ -1,5 +1,10 @@
 import { act, renderHook } from '@testing-library/react';
-import type { ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import type {
+  ScrollView,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  LayoutChangeEvent,
+} from 'react-native';
 import { describe, expect, it, vi } from 'vitest';
 import { useThreadFollow } from '../../../lib/buddy/useThreadFollow.js';
 
@@ -101,4 +106,89 @@ it('keeps an interrupted user position when reduction changes before another scr
   motion.reduced = true;
   rerender();
   expect(scrollToEnd.mock.calls).toEqual([[{ animated: true }]]);
+});
+
+it('keeps a long initial question at the top until an actual send requests following', () => {
+  motion.reduced = false;
+  const { result } = renderHook(() => useThreadFollow(null, { initiallyFollowing: false }));
+  const scrollToEnd = vi.fn();
+  result.current.scroll.current = { scrollToEnd } as unknown as ScrollView;
+  act(() => {
+    result.current.onLayout({
+      nativeEvent: { layout: { width: 360, height: 300, x: 0, y: 0 } },
+    } as LayoutChangeEvent);
+    result.current.follow();
+  });
+  expect(scrollToEnd).not.toHaveBeenCalled();
+  act(() => {
+    result.current.followNext();
+    result.current.follow();
+  });
+  expect(scrollToEnd).toHaveBeenCalledOnce();
+  expect(scrollToEnd).toHaveBeenLastCalledWith({ animated: true });
+});
+
+it('replaces active end movement with a read start and never settles that read to the bottom', () => {
+  motion.reduced = false;
+  const { result, rerender } = renderHook(() =>
+    useThreadFollow(null, { initiallyFollowing: false }),
+  );
+  const scrollToEnd = vi.fn();
+  const scrollTo = vi.fn();
+  result.current.scroll.current = { scrollToEnd, scrollTo } as unknown as ScrollView;
+  act(() => {
+    result.current.onLayout({
+      nativeEvent: { layout: { width: 360, height: 300, x: 0, y: 0 } },
+    } as LayoutChangeEvent);
+    result.current.onContentSizeChange(360, 900);
+    result.current.followNext();
+    result.current.follow();
+    result.current.readFrom('reply', 250);
+  });
+  expect(scrollToEnd).toHaveBeenCalledOnce();
+  expect(scrollTo).toHaveBeenLastCalledWith({ y: 250, animated: false });
+  motion.reduced = true;
+  rerender();
+  expect(scrollToEnd).toHaveBeenCalledOnce();
+  act(() => {
+    result.current.interrupt();
+    result.current.readFrom('reply', 320);
+  });
+  expect(scrollTo).toHaveBeenCalledOnce();
+});
+
+it('cancels an unmeasured keyed read when the user starts scrolling', () => {
+  const { result } = renderHook(() => useThreadFollow(null, { initiallyFollowing: false }));
+  const scrollTo = vi.fn();
+  result.current.scroll.current = { scrollTo, scrollToEnd: vi.fn() } as unknown as ScrollView;
+  act(() => {
+    result.current.followNext();
+    result.current.readFrom('reasons');
+    result.current.inputProps.onTouchMove();
+    result.current.onLayout({
+      nativeEvent: { layout: { width: 360, height: 300, x: 0, y: 0 } },
+    } as LayoutChangeEvent);
+    result.current.onContentSizeChange(360, 900);
+    result.current.readFrom('reasons', 250);
+  });
+  expect(scrollTo).not.toHaveBeenCalled();
+});
+
+it('a read intent supersedes a queued end follow before content grows', () => {
+  motion.reduced = false;
+  const { result } = renderHook(() => useThreadFollow(null, { initiallyFollowing: false }));
+  const scrollTo = vi.fn();
+  const scrollToEnd = vi.fn();
+  result.current.scroll.current = { scrollTo, scrollToEnd } as unknown as ScrollView;
+  act(() => {
+    result.current.onLayout({
+      nativeEvent: { layout: { width: 360, height: 300, x: 0, y: 0 } },
+    } as LayoutChangeEvent);
+    result.current.onContentSizeChange(360, 900);
+    result.current.followNext();
+    result.current.readFrom('reply', 250);
+    result.current.onContentSizeChange(360, 960);
+  });
+  expect(scrollTo).toHaveBeenLastCalledWith({ y: 250, animated: false });
+  expect(scrollToEnd).not.toHaveBeenCalled();
 });

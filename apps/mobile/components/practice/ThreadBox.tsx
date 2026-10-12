@@ -32,10 +32,13 @@ import type { RoomPart } from '../../lib/practice/screenRoom.js';
 import { useStackTops } from '../../lib/practice/useStackTops.js';
 import { THREAD_PAD, threadEdge, threadRest } from '../../lib/practice/threadRoom.js';
 import { useMotionReduced } from '../../lib/theme/motion.js';
+import { PRACTICE } from '../../lib/theme/practice.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMaskFrom } from '../lb/EdgeFade.js';
 
 type Props = {
+  /** The outer ordinary body owns scrolling; this content stays unclamped. */
+  unbounded?: boolean;
   /** At most (undefined: not decided yet) and at least (`threadRoom`). */
   cap: number | undefined;
   floor: number;
@@ -56,6 +59,7 @@ type Props = {
 };
 
 export function ThreadBox({
+  unbounded = false,
   cap,
   floor,
   holds,
@@ -87,7 +91,7 @@ export function ThreadBox({
     part,
   }));
   const { pieces, onHeight } = useStackTops(
-    SPACE.md,
+    unbounded ? PRACTICE.ordinaryBody.feedbackGap : SPACE.md,
     slots.map((slot) => slot.key),
     (all) => onParts(all.map((p) => p.top)),
   );
@@ -112,6 +116,24 @@ export function ThreadBox({
   useEffect(() => {
     if (followEnd && readFrom !== undefined) restRef.current(true);
   }, [followEnd, readFrom]);
+  if (unbounded) {
+    return (
+      <View
+        testID="ordinary-thread"
+        ref={measured.ref}
+        style={{ paddingTop: PRACTICE.ordinaryBody.feedbackTop }}
+        onLayout={(e) => measured.onHeight(Math.round(e.nativeEvent.layout.height))}
+      >
+        <View onLayout={(e) => onNeed(Math.round(e.nativeEvent.layout.height))}>
+          {slots.map(({ key, part }, i) => (
+            <View key={key} style={{ marginTop: pieces[i]?.step ?? 0 }} onLayout={onHeight(key)}>
+              {part}
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  }
   return (
     // minHeight 0: on the web a flex child's min-height is its content, and the conversation then
     // SQUEEZES the question below its own content instead of scrolling itself (issue #96). The

@@ -97,7 +97,7 @@ describe('the answer shell is the only place for an answer and its action (#310)
     );
   });
 
-  it('orders answer, feedback, free room, tools and Composer', () => {
+  it('keeps measured boards ordered: answer, feedback, free room, tools and Composer', () => {
     const { text } = sources.find((s) => s.name === 'AnswerShell.tsx')!;
     const body = text.slice(text.indexOf('export function AnswerShell'));
     const room = body.indexOf('<FreeSpace />');
