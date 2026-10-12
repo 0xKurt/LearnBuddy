@@ -7,7 +7,7 @@ import { DURATION } from '../../lib/theme/motion';
 // (issue #311).
 
 import type { SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { isForeign } from '../../lib/i18n/index.js';
@@ -16,6 +16,7 @@ import type { Offers } from '../../lib/practice/offers.js';
 import type { QuestionView } from '../../lib/practice/questionView.js';
 import type { ScreenRoom } from '../../lib/practice/screenRoom.js';
 import type { PracticeActions } from '../../lib/practice/usePracticeActions.js';
+import { PRACTICE } from '../../lib/theme/practice.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { Rise } from '../lb/Motion.js';
 import { HeardTextCard } from './HeardTextCard.js';
@@ -27,6 +28,8 @@ import { SelfSolvedCard, SolutionCard } from './SolutionCard.js';
 import { ThreadBox } from './ThreadBox.js';
 
 type Props = {
+  unbounded?: boolean;
+  reexplanation?: ReactNode;
   session: SessionView;
   shown: SessionItemView;
   view: QuestionView;
@@ -45,6 +48,8 @@ type Props = {
 };
 
 export function QuestionThread({
+  unbounded = false,
+  reexplanation,
   session,
   shown,
   view,
@@ -89,6 +94,7 @@ export function QuestionThread({
   if (empty) return null;
   return (
     <ThreadBox
+      unbounded={unbounded}
       cap={room.threadCap}
       floor={room.threadFloor}
       holds={room.threadHolds}
@@ -100,6 +106,7 @@ export function QuestionThread({
       onParts={measured.setPartTops}
     >
       <ItemThread
+        gap={unbounded ? PRACTICE.ordinaryBody.feedbackGap : undefined}
         turns={view.threadTurns}
         pending={view.pendingText}
         asking={asking}
@@ -151,7 +158,9 @@ export function QuestionThread({
           <HeardTextCard text={shown.listen_transcript} />
         </Rise>
       ) : null}
-      {offers.explainAgain ? (
+      {reexplanation !== undefined ? (
+        reexplanation
+      ) : offers.explainAgain ? (
         <Reexplain
           draftKey={`${session.id}.${item.id}.why`}
           turns={view.turnsAgain}

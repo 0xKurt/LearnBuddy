@@ -95,6 +95,8 @@ type Props = {
    * space kept, as she typed them — the indentation of her function IS her answer.
    */
   code?: boolean;
+  /** Presentation spacing; measurement uses the same value. */
+  gap?: number;
 };
 
 export function ItemThread({
@@ -109,6 +111,7 @@ export function ItemThread({
   onTurnTops,
   essay = false,
   code = false,
+  gap = GAP,
 }: Props) {
   const { t } = useTranslation('practice');
   const { palette } = useTheme();
@@ -155,7 +158,7 @@ export function ItemThread({
   );
   // Each turn's top, from the turns' heights (`useStackTops`, issue #403).
   const { onHeight } = useStackTops(
-    GAP,
+    gap,
     shown.map((turn) => turn.id),
     onTurnTops && ((pieces) => onTurnTops(Object.fromEntries(pieces.map((p) => [p.key, p.top])))),
   );
@@ -167,7 +170,7 @@ export function ItemThread({
   }
 
   return (
-    <View style={{ gap: GAP }}>
+    <View style={{ gap }}>
       {shown.map((turn) => {
         const mine = turn.role === 'learner';
         const fresh = !known.has(turn.id);
@@ -292,6 +295,8 @@ function Bubble({
 }: {
   mine: boolean;
   code?: boolean;
+  /** Presentation spacing; measurement uses the same value. */
+  gap?: number;
   /** What it says — and, with `children`, what a screen reader hears for them. */
   text: string;
   speaker: string;

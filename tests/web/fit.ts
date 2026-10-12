@@ -181,6 +181,7 @@ export async function overflows(page: Page): Promise<Overflow[]> {
           editable ||
           editingWhole ||
           id === 'scroll-thread' ||
+          id === 'scroll-practice-body' ||
           id === 'scroll-talk' ||
           id === 'scroll-list' ||
           // Auth forms preserve required fields and readable copy; their CTA stays pinned.
@@ -223,6 +224,26 @@ export async function answerPlace(page: Page): Promise<AnswerPlace | null> {
     const fieldInBar = !visible(field) || bars.some((bar) => bar.contains(field));
     // A typed answer without a board: the field is the answer, and it is in the bar.
     if (!slot) return { gap: 0, spacerBelow: true, actionLowest: true, fieldInBar };
+    const ordinary = document.querySelector<HTMLElement>('[data-testid="scroll-practice-body"]');
+    if (visible(ordinary)) {
+      const question = ordinary.querySelector<HTMLElement>('[data-testid="question-card"]');
+      const actions = Array.from(
+        document.querySelectorAll<HTMLElement>('[data-testid="bottom-bar"]'),
+      )
+        .filter(visible)
+        .map((el) => el.getBoundingClientRect());
+      return {
+        gap: question
+          ? Math.round(slot.getBoundingClientRect().top - question.getBoundingClientRect().bottom)
+          : 0,
+        // This body has no artificial spacer; its viewport consumes the free room.
+        spacerBelow: !ordinary.querySelector('[data-testid="free-space"]'),
+        actionLowest: actions.every(
+          (bar) => bar.top >= ordinary.getBoundingClientRect().bottom - 1,
+        ),
+        fieldInBar,
+      };
+    }
     const at = slot.getBoundingClientRect();
     const boxOf = (id: string) =>
       Array.from(document.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`))
@@ -363,6 +384,13 @@ async function cutTiles(page: Page): Promise<string[]> {
     const slots = Array.from(document.querySelectorAll('[data-testid="answer-slot"]'));
     return slots.flatMap((slot) =>
       Array.from(slot.querySelectorAll('[role="button"], [role="checkbox"], [role="radio"]'))
+        // Ordinary answers are intentionally reachable by the single body scroll.
+        // Focused tiles and all measured-board tiles remain strict below.
+        .filter(
+          (tile) =>
+            !tile.closest('[data-testid="scroll-practice-body"]') ||
+            tile.contains(document.activeElement),
+        )
         .map((tile) => ({ tile, box: tile.getBoundingClientRect() }))
         .filter(({ box }) => box.width > 0 && box.height > 0)
         .filter(({ box }) => box.top < -0.5 || box.bottom > floor + 0.5)
@@ -383,7 +411,11 @@ export async function cutControls(page: Page): Promise<string[]> {
   return page.evaluate(() => {
     if (!location.pathname.startsWith('/practice')) return [];
     // The practice screen, up to (not into) the stack that also holds the home under it.
-    let screen = Array.from(document.querySelectorAll('[data-testid="scroll-question"]')).pop();
+    let screen = Array.from(
+      document.querySelectorAll(
+        '[data-testid="scroll-question"], [data-testid="scroll-practice-body"]',
+      ),
+    ).pop();
     if (!screen) return [];
     while (
       screen.parentElement &&
@@ -400,6 +432,11 @@ export async function cutControls(page: Page): Promise<string[]> {
       .filter((el) => {
         // A keyboard answer form retains every row for focus navigation; only its active
         // frame must be whole. overflows independently validates that explicit viewport.
+        const body = el.closest<HTMLElement>('[data-testid="scroll-practice-body"]');
+        // Ordinary conversation content scrolls as one body. Focused controls remain strict;
+        // its dedicated spec scrolls every option/reply into the whole actual viewport.
+        if (body && body.scrollHeight > body.clientHeight + 1 && el !== document.activeElement)
+          return false;
         if (el.closest('[data-testid="scroll-answer-form"]') && el !== document.activeElement)
           return false;
         const turn = el.closest('[data-testid="thread-turn"]');

@@ -1,10 +1,19 @@
-// One practice flow: QuestionCard is the screen's; this shell places its answer directly
-// beneath it, then existing tutor feedback, free room, help chips and pinned Composer.
-// Forms own drafts/payloads, not the spacer or bar. Folding keeps the board mounted and
-// preserves its draft; keys fold with it into Composer. Source ownership and real phone
-// geometry both enforce the order (owner mobile redesign 11.10.).
-import { createContext, useContext, useEffect, type ReactNode } from 'react';
-import { View } from 'react-native';
+// One existing practice flow: ordinary question, answer and feedback share a scrolling
+// body with shortcut Chips in the pinned Composer. Structured forms retain their measured
+// board, spacer and folding behavior. Forms keep all real drafts and answer payloads.
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { ScrollView, View } from 'react-native';
+import { useThreadFollow } from '../../lib/buddy/useThreadFollow.js';
+import { useStackTops } from '../../lib/practice/useStackTops.js';
+import { PRACTICE } from '../../lib/theme/practice.js';
 
 import { answerFolds, formDensity } from '../../lib/keyboard.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -36,7 +45,16 @@ type Props = {
 };
 
 /** Pure layout slots supplied by the existing practice screen adapters. */
-export const AnswerFlow = createContext<{ thread: ReactNode; tools: ReactNode }>({
+type FlowSlots = {
+  thread: ReactNode;
+  tools: ReactNode;
+  question?: ReactNode;
+  newestReply?: string | null;
+  sentKey?: string | null;
+  readKey?: string | null;
+  readFrom?: number;
+};
+export const AnswerFlow = createContext<FlowSlots>({
   thread: null,
   tools: null,
 });
@@ -71,6 +89,9 @@ export function AnswerShell({
     (typing && formDensity(seen.window, seen.overlap) !== 'roomy');
   // She types under the board (her own focus, reported as the route's): what of it stays.
   const kept = folded && typing ? whileTyping : null;
+  if (flow.question !== undefined && flow.question !== null) {
+    return <OrdinaryBody flow={flow} answer={answer} action={action} keys={keys} />;
+  }
   return (
     <>
       {answer === null ? null : (
@@ -105,6 +126,80 @@ export function AnswerShell({
         </View>
       ) : null}
       <CheckBar {...action} keys={folded ? null : keys} />
+    </>
+  );
+}
+
+/** One scrolling conversation, with all submission and draft ownership left in the adapters. */
+function OrdinaryBody({
+  flow,
+  answer,
+  action,
+  keys,
+}: {
+  flow: FlowSlots;
+  answer: ReactNode;
+  action: CheckAction;
+  keys?: ReactNode;
+}) {
+  const follow = useThreadFollow(flow.newestReply ?? null, { initiallyFollowing: false });
+  const [contentHeight, setContentHeight] = useState(0);
+  const { pieces, onHeight } = useStackTops(
+    PRACTICE.ordinaryBody.gap,
+    ['question', 'answer', 'thread'],
+    undefined,
+  );
+  const currentFollow = useRef(follow);
+  currentFollow.current = follow;
+  useEffect(() => {
+    if (flow.sentKey == null) return;
+    currentFollow.current.followNext();
+    currentFollow.current.follow();
+  }, [flow.sentKey]);
+  useLayoutEffect(() => {
+    if (flow.readKey != null) currentFollow.current.readFrom(flow.readKey);
+  }, [flow.readKey]);
+  const target =
+    flow.readFrom === undefined
+      ? undefined
+      : PRACTICE.ordinaryBody.paddingTop +
+        (pieces[2]?.top ?? 0) +
+        PRACTICE.ordinaryBody.feedbackTop +
+        flow.readFrom;
+  useEffect(() => {
+    if (flow.readKey != null && target !== undefined && contentHeight > 0)
+      currentFollow.current.readFrom(flow.readKey, target);
+  }, [flow.readKey, target, contentHeight]);
+  return (
+    <>
+      <ScrollView
+        ref={follow.scroll}
+        testID="scroll-practice-body"
+        tabIndex={0}
+        keyboardShouldPersistTaps="handled"
+        style={{ flex: 1, minHeight: 0 }}
+        contentContainerStyle={{
+          paddingHorizontal: SPACE.lg,
+          paddingTop: PRACTICE.ordinaryBody.paddingTop,
+          paddingBottom: PRACTICE.ordinaryBody.paddingBottom,
+        }}
+        {...follow.inputProps}
+        onScroll={follow.onScroll}
+        onLayout={follow.onLayout}
+        onContentSizeChange={(width, height) => {
+          setContentHeight(height);
+          follow.onContentSizeChange(width, height);
+        }}
+      >
+        <View onLayout={onHeight('question')}>{flow.question}</View>
+        <View onLayout={onHeight('answer')} style={{ marginTop: pieces[1]?.step ?? 0 }}>
+          {answer === null ? null : <View testID="answer-slot">{answer}</View>}
+        </View>
+        <View onLayout={onHeight('thread')} style={{ marginTop: pieces[2]?.step ?? 0 }}>
+          {flow.thread}
+        </View>
+      </ScrollView>
+      <CheckBar {...action} keys={keys} before={flow.tools} />
     </>
   );
 }

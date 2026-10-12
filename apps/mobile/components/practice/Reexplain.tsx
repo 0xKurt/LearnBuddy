@@ -1,7 +1,8 @@
 // "Anders erklären" (gaps.md #3): under an explanation and under a shown solution, three
 // small chips — "Einfacher bitte", "Mit Beispiel", "Warum ist das so?". A tap asks Buddy for a
 // new explanation that way (POST …/reexplain); her request and his new explanation then stand
-// here like a short chat. The chips are shortcuts for what she could also type; examples,
+// here like a short chat. Ordinary presentation places the same shortcuts in Composer;
+// the default structured presentation remains below the reply. The chips are shortcuts for what she could also type; examples,
 // not a feature catalogue (docs/UX-PRINCIPLES.md). They sit in one row (a small side
 // scroll on narrow phones) so the solution above keeps its room, arrive only after the
 // moment of the answer has played, and step aside while Buddy writes.
@@ -12,11 +13,13 @@
 // without reasons it stays "Warum ist das so?", Buddy's explanation.
 
 import type { PracticeTurnView, ReexplainWay } from '@learnbuddy/shared-types/contracts';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import { PRACTICE } from '../../lib/theme/practice.js';
 import { DURATION } from '../../lib/theme/motion.js';
+import { useStackTops } from '../../lib/practice/useStackTops.js';
 import { useDraft } from '../../lib/drafts.js';
 import { useRegisterCheckOverride } from './CheckOverride.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -24,6 +27,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 
 import { Btn } from '../lb/Btn.js';
+import { Chip } from '../lb/Chip.js';
 import { Appear } from '../lb/Motion.js';
 import { ChoiceList } from './ChoiceList.js';
 import { ItemThread } from './ItemThread.js';
@@ -45,6 +49,13 @@ type Props = {
   delay?: number;
   /** „Warum stimmt das?": the three reasons to tap, until she tapped one (`SessionItemView.why`). */
   why?: readonly string[] | null;
+  /** Pure presentation slots; one owner retains the real draft and check override. */
+  render?: (slots: {
+    body: ReactNode;
+    actions: ReactNode;
+    revealTop?: number;
+    revealKey?: string;
+  }) => ReactNode;
 };
 
 export function Reexplain({
@@ -55,6 +66,7 @@ export function Reexplain({
   onAsk,
   delay = DURATION.reexplainArrival,
   why = null,
+  render,
 }: Props) {
   const { t } = useTranslation('practice');
   const { palette } = useTheme();
@@ -108,52 +120,87 @@ export function Reexplain({
       : pending
         ? t(`reexplain.${pending}`)
         : null;
-  return (
-    <View style={{ gap: SPACE.sm }}>
-      <ItemThread turns={turns} pending={pendingText} thinkingLabel={t('reexplain.thinking')} />
-      {pending ? null : asksHer && choosing ? (
-        <Appear delay={0}>
-          <View accessibilityLabel={t('why.label')} style={{ gap: SPACE.sm }}>
-            {/* Says what the three are for: she picks the one that is the reason. */}
-            <Text style={[TYPE.label, { color: palette.ink2 }]}>{t('why.label')}</Text>
-            {/* Picking one of several is the answer tiles' job (CLAUDE.md rule 19). */}
-            <ChoiceList
-              choices={[...why]}
-              tried={NONE_TRIED}
-              disabled={disabled}
-              selected={picked}
-              onChoose={(n) => {
-                if (!disabled) draft.setText(String(n));
-              }}
-            />
-          </View>
-        </Appear>
-      ) : (
-        <Appear delay={turns.length > 0 ? DURATION.reexplainReply : delay}>
-          {/* Wrapping, not a horizontal scroll: the half-visible chip read as a
-              rendering bug, not as an affordance (user feedback 2026-09-28). */}
-          <View
-            accessibilityLabel={t('reexplain.label')}
-            style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}
-          >
-            {WAYS.map((way) => (
-              // Ghost, not filled: a shortcut for something she could also type, not three
-              // more buttons competing with "Weiter" (issue #61).
-              <Btn
-                key={way}
-                size="sm"
-                variant="ghost"
-                pill
+  const newestTutor = turns.filter((turn) => turn.role === 'tutor').at(-1)?.id;
+  const [tutorTop, setTutorTop] = useState<{ key: string; top: number } | null>(null);
+  const reportTops = useCallback(
+    (tops: Readonly<Record<string, number>>) => {
+      if (newestTutor === undefined || tops[newestTutor] === undefined) return;
+      const top = tops[newestTutor]!;
+      setTutorTop((current) =>
+        current?.key === newestTutor && current.top === top ? current : { key: newestTutor, top },
+      );
+    },
+    [newestTutor],
+  );
+  const { pieces, onHeight } = useStackTops(SPACE.sm, ['reply', 'reasons'], undefined);
+  const hasBody = turns.length > 0 || pendingText !== null || (asksHer && choosing);
+  const body = hasBody ? (
+    <View>
+      <View onLayout={onHeight('reply')}>
+        <ItemThread
+          gap={render ? PRACTICE.ordinaryBody.feedbackGap : undefined}
+          turns={turns}
+          onTurnTops={render ? reportTops : undefined}
+          pending={pendingText}
+          thinkingLabel={t('reexplain.thinking')}
+        />
+      </View>
+      <View onLayout={onHeight('reasons')} style={{ marginTop: pieces[1]?.step ?? 0 }}>
+        {!pending && asksHer && choosing ? (
+          <Appear delay={0}>
+            <View accessibilityLabel={t('why.label')} style={{ gap: SPACE.sm }}>
+              <Text style={[TYPE.label, { color: palette.ink2 }]}>{t('why.label')}</Text>
+              <ChoiceList
+                choices={[...why]}
+                tried={NONE_TRIED}
                 disabled={disabled}
-                accessibilityHint={way === 'why' && asksHer ? t('why.hint') : t('reexplain.hint')}
-                onPress={() => (way === 'why' && asksHer ? setChoosing(true) : onAsk(way))}
-              >
-                {way === 'why' && asksHer ? t('why.ask') : t(`reexplain.${way}`)}
-              </Btn>
-            ))}
-          </View>
-        </Appear>
-      )}
+                selected={picked}
+                onChoose={(n) => {
+                  if (!disabled) draft.setText(String(n));
+                }}
+              />
+            </View>
+          </Appear>
+        ) : null}
+      </View>
+    </View>
+  ) : null;
+  const Shortcut = render ? Chip : Btn;
+  const actions =
+    pending || (asksHer && choosing) ? null : (
+      <Appear delay={turns.length > 0 ? DURATION.reexplainReply : delay}>
+        <View
+          accessibilityLabel={t('reexplain.label')}
+          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}
+        >
+          {WAYS.map((way) => (
+            <Shortcut
+              key={way}
+              {...(render ? {} : { size: 'sm' as const, variant: 'ghost' as const, pill: true })}
+              disabled={disabled}
+              accessibilityHint={way === 'why' && asksHer ? t('why.hint') : t('reexplain.hint')}
+              onPress={() => (way === 'why' && asksHer ? setChoosing(true) : onAsk(way))}
+            >
+              {way === 'why' && asksHer ? t('why.ask') : t(`reexplain.${way}`)}
+            </Shortcut>
+          ))}
+        </View>
+      </Appear>
+    );
+  return render ? (
+    render({
+      body,
+      actions,
+      ...(asksHer && choosing
+        ? { revealTop: pieces[1]?.top ?? 0, revealKey: `${draftKey}.reasons` }
+        : pending === null && tutorTop !== null && tutorTop.key === newestTutor
+          ? { revealTop: tutorTop.top, revealKey: tutorTop.key }
+          : {}),
+    })
+  ) : (
+    <View style={{ gap: SPACE.sm }}>
+      {body}
+      {actions}
     </View>
   );
 }

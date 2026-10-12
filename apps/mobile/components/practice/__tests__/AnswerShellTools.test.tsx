@@ -11,11 +11,17 @@ const seen = vi.hoisted(() => ({ window: 440, visible: 440, overlap: 0 }));
 vi.mock('../../../lib/useVisibleHeight.js', () => ({ useVisibleHeight: () => seen }));
 beforeEach(() => Object.assign(seen, { window: 440, visible: 440, overlap: 0 }));
 
-function Typed({ hint }: { hint: () => void }) {
+function Typed({ hint, body = false }: { hint: () => void; body?: boolean }) {
   const [focused, setFocused] = useState(false);
   const [value, setValue] = useState('6');
   return (
-    <AnswerFlow.Provider value={{ thread: null, tools: <Btn onPress={hint}>Tipp</Btn> }}>
+    <AnswerFlow.Provider
+      value={{
+        thread: null,
+        tools: <Btn onPress={hint}>Tipp</Btn>,
+        ...(body ? { question: <div>Whole typed question</div> } : {}),
+      }}
+    >
       <AnswerShell
         action={{
           ready: true,
@@ -43,6 +49,7 @@ function Typed({ hint }: { hint: () => void }) {
 it('folds optional tools only for a focused typed answer in tight room and restores callbacks/draft', () => {
   const hint = vi.fn();
   const app = renderInApp(<Typed hint={hint} />);
+  expect(screen.getAllByTestId('bottom-bar')).toHaveLength(1);
   const field = screen.getByRole('textbox', { name: 'Deine Antwort' });
   expect(screen.getByRole('button', { name: 'Tipp' })).toBeTruthy();
   fireEvent.change(field, { target: { value: '12' } });
@@ -90,4 +97,19 @@ it('folds optional help during tight board editing without hiding the board or d
   expect(screen.getByRole('button', { name: 'Prüfen' })).toBeTruthy();
   app.rerender(content(false));
   expect(screen.getByRole('button', { name: 'Tipp' })).toBeTruthy();
+});
+
+it('ordinary typed input keeps its real hint in the pinned bar without losing focus or draft', () => {
+  const hint = vi.fn();
+  renderInApp(<Typed hint={hint} body />);
+  expect(screen.getAllByTestId('bottom-bar')).toHaveLength(1);
+  const field = screen.getByRole('textbox', { name: 'Deine Antwort' });
+  fireEvent.focus(field);
+  fireEvent.change(field, { target: { value: '7' } });
+  const button = screen.getByRole('button', { name: 'Tipp' });
+  expect(screen.getByTestId('bottom-bar').contains(button)).toBe(true);
+  expect(screen.getByTestId('scroll-practice-body').contains(button)).toBe(false);
+  fireEvent.click(button);
+  expect(hint).toHaveBeenCalledOnce();
+  expect((field as HTMLTextAreaElement).value).toBe('7');
 });

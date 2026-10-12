@@ -11,6 +11,13 @@ export type BoardState = 'tile' | 'picked' | 'placed' | 'slot' | 'correct' | 'wr
 const COLUMN_CELL_AIR = 1;
 
 export const PRACTICE = {
+  ordinaryBody: {
+    gap: 10,
+    paddingTop: 18,
+    paddingBottom: SPACE.lg,
+    feedbackGap: 14,
+    feedbackTop: 6,
+  },
   optionHeight: 56,
   boardLineGap: SPACE.xs / 2,
   lineMarkWidth: 16,
