@@ -22,6 +22,7 @@ import { pageHandler } from '../../lib/capture/pages.js';
 import { useDraft } from '../../lib/drafts.js';
 import { haptic } from '../../lib/haptics.js';
 import { Appear } from '../lb/Motion.js';
+import { CAPTURE } from '../../lib/theme/capture.js';
 import { COMPOSER } from '../../lib/theme/composer.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
@@ -152,6 +153,7 @@ export function Composer({
         micLabel={t('common:voice.message')}
         disabled={disabled}
         above={<ComposerPages pages={pages} onMore={more} />}
+        accessoriesMaxHeight={attached ? CAPTURE.list.maxHeight : undefined}
         // Like the assistants she knows: one + that asks where it comes from, instead of a
         // page of its own (owner 29.09., issue #82). Only where a domain takes pages (#107).
         start={

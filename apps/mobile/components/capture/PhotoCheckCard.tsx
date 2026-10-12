@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
 import type { PhotoReviewProps } from '../../lib/capture/pages.js';
-import { RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { CARD_PAD, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
@@ -17,14 +17,21 @@ export function PhotoCheckCard({ index, problems, disabled, onRetake, onKeep }: 
   useAnnounce(t(`quality.${main}`, { index }));
   return (
     <View accessibilityLiveRegion="polite">
-      <Card tone="butter" padding={SPACE.lg}>
+      <Card tone="sunken" padding={CARD_PAD.base}>
         <View style={{ gap: RHYTHM.parts }}>
-          <Text accessibilityRole="header" style={[TYPE.body, { fontWeight: '700' }]}>
+          <Text accessibilityRole="header" style={TYPE.cell}>
             {t(`quality.${main}`, { index })}
           </Text>
           <Text style={TYPE.small}>{t(`quality.${main}_tip`)}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
-            <Btn size="sm" pill icon="camera" disabled={disabled} onPress={onRetake}>
+            <Btn
+              size="sm"
+              pill
+              variant="secondary"
+              icon="camera"
+              disabled={disabled}
+              onPress={onRetake}
+            >
               {t('quality.retake')}
             </Btn>
             <Btn size="sm" pill variant="ghost" disabled={disabled} onPress={onKeep}>

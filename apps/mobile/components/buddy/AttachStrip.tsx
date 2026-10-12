@@ -1,8 +1,8 @@
-// The pages attached to the message she is writing (issue #82): small squares above
+// The pages attached to the message she is writing (issue #82): portrait page previews above
 // the field, like every messenger — a tap shows one full screen, the ✕ takes it out
 // again. The ✕ looks small and is a full 44 pt to hit.
 //
-// The square must show the photo (issue #294: on the phone it stayed an empty dark box,
+// The preview must show the photo (issue #294: on the phone it stayed an empty dark box,
 // while the same file showed at once in the card after sending). The tile is now built
 // like the two thumbnails that DO show on the phone: the shadow on an outer view and the
 // clipping on an inner one (Android draws an elevated
@@ -11,26 +11,28 @@
 // mark, so a photo that never paints is never an empty box; one that cannot be read says so
 // in words under the strip.
 //
-// After a photo from the camera the strip ends in a square "Noch ein Foto" (issue #519): the
+// After a photo from the camera the strip ends in a page "Noch ein Foto" (issue #519): the
 // camera again, so a sheet of several pages is taken one after another, right here.
 
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
+import { UI } from '../../lib/theme/components.js';
+import { CAPTURE } from '../../lib/theme/capture.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { Icon } from '../lb/Icon.js';
 import { PressArea } from '../lb/PressArea.js';
 import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 
-const THUMB = 72;
+const THUMB = CAPTURE.thumbnail;
 /** The ✕'s dark circle; the 44 pt around it is what takes the tap. */
-const CLOSE = 24;
+const CLOSE = CAPTURE.closeFace;
 
 type Props = {
   uris: readonly string[];
@@ -54,13 +56,14 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
 
   return (
     <View style={{ gap: SPACE.xs }}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
           gap: SPACE.sm,
-          paddingHorizontal: 2, // token-exempt: room for the tiles' soft shadow at the sides
-          paddingVertical: SPACE.xs,
+          paddingHorizontal: CAPTURE.list.inset,
+          paddingTop: CAPTURE.list.inset,
+          paddingBottom: CAPTURE.list.bottomInset,
         }}
       >
         {uris.map((uri, i) => {
@@ -68,14 +71,14 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
             ? t('files.pdf_label', { index: i + 1, total: uris.length, name: pdfs[uri] })
             : t('photo_label', { index: i + 1, total: uris.length });
           return (
-            <View key={uri} style={{ width: THUMB, height: THUMB }}>
+            <View key={uri} style={{ width: THUMB.width, height: THUMB.height }}>
               {/* The shadow out here, the clipping inside: one view doing both is what
                   Android does not draw reliably. */}
               <View
                 style={{
-                  width: THUMB,
-                  height: THUMB,
-                  borderRadius: RADIUS.tile,
+                  width: THUMB.width,
+                  height: THUMB.height,
+                  borderRadius: RADIUS.md,
                   backgroundColor: palette.canvas,
                   ...SHADOW.soft,
                 }}
@@ -83,9 +86,9 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                 <View
                   testID="attach-tile"
                   style={{
-                    width: THUMB,
-                    height: THUMB,
-                    borderRadius: RADIUS.tile,
+                    width: THUMB.width,
+                    height: THUMB.height,
+                    borderRadius: RADIUS.md,
                     overflow: 'hidden',
                     backgroundColor: palette.canvas,
                   }}
@@ -99,12 +102,12 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                         flex: 1,
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 2, // token-exempt: the file mark close over its name, in 72 pt
+                        gap: CAPTURE.shadowInset,
                         padding: SPACE.xs,
                         backgroundColor: palette.lavender,
                       }}
                     >
-                      <Icon name="file" size={22} color={palette.primaryDk} />
+                      <Icon name="file" size={CAPTURE.addGlyph} color={palette.primaryDk} />
                       <Text
                         numberOfLines={2}
                         style={[TYPE.small, { color: palette.primaryDk, textAlign: 'center' }]}
@@ -119,7 +122,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                       accessibilityLabel={`${label}: ${t('preview_failed')}`}
                       style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
                     >
-                      <Icon name="eye-off" size={22} color={palette.ink3} />
+                      <Icon name="eye-off" size={CAPTURE.addGlyph} color={palette.ink3} />
                     </View>
                   ) : (
                     <>
@@ -138,7 +141,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                           justifyContent: 'center',
                         }}
                       >
-                        <Icon name="camera" size={22} color={palette.ink3} />
+                        <Icon name="camera" size={CAPTURE.addGlyph} color={palette.ink3} />
                       </View>
                       <ZoomablePhoto uri={uri} label={label} fill>
                         <Image
@@ -147,11 +150,32 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                           accessibilityLabel={label}
                           contentFit="cover"
                           onError={() => setBroken((was) => new Set(was).add(uri))}
-                          style={{ width: THUMB, height: THUMB }}
+                          style={{ width: THUMB.width, height: THUMB.height }}
                         />
                       </ZoomablePhoto>
                     </>
                   )}
+                  <View
+                    pointerEvents="none"
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                    aria-hidden
+                    style={{
+                      position: 'absolute',
+                      top: CAPTURE.pageNumber.inset,
+                      left: CAPTURE.pageNumber.inset,
+                      width: CAPTURE.pageNumber.size,
+                      height: CAPTURE.pageNumber.size,
+                      borderRadius: RADIUS.round,
+                      backgroundColor: palette.primary,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text style={[CAPTURE.pageNumberType, { color: palette.onPrimary }]}>
+                      {i + 1}
+                    </Text>
+                  </View>
                   {flagged.has(uri) ? (
                     // Never colour alone: the word stands under the strip, this only points at it.
                     <View
@@ -162,16 +186,15 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        paddingVertical: 1, // token-exempt: one point of air, the flag stays slim
+                        paddingVertical: CAPTURE.flagInset,
                         backgroundColor: palette.butter,
                         alignItems: 'center',
                       }}
                     >
                       <Text
                         style={{
+                          ...TYPE.label,
                           color: palette.warningText,
-                          fontSize: 11, // token-exempt: below the scale, a flag on a 72 pt photo
-                          fontWeight: '700',
                         }}
                       >
                         {t('quality.flag')}
@@ -188,8 +211,8 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                 accessibilityLabel={t('remove_label', { index: i + 1 })}
                 style={{
                   position: 'absolute',
-                  top: -14,
-                  right: -14,
+                  top: -(TOUCH - CLOSE) / 2,
+                  right: -(TOUCH - CLOSE) / 2,
                   width: TOUCH,
                   height: TOUCH,
                   alignItems: 'center',
@@ -202,12 +225,12 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                     height: CLOSE,
                     borderRadius: circle(CLOSE),
                     backgroundColor: palette.ink,
-                    opacity: disabled ? 0.4 : 0.85,
+                    opacity: disabled ? UI.disabledOpacity : CAPTURE.closeOpacity,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name="close" size={14} color={palette.paper} />
+                  <Icon name="close" size={CAPTURE.closeGlyph} color={palette.paper} />
                 </View>
               </PressArea>
             </View>
@@ -219,26 +242,25 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
             disabled={disabled}
             accessibilityRole="button"
             accessibilityLabel={t('camera_more')}
-            style={{ width: THUMB, height: THUMB }}
+            style={{ width: THUMB.width, height: THUMB.height }}
           >
             {(pressed) => (
               <View
                 style={{
-                  width: THUMB,
-                  height: THUMB,
-                  borderRadius: RADIUS.tile,
-                  borderWidth: 1,
+                  width: THUMB.width,
+                  height: THUMB.height,
+                  borderRadius: RADIUS.md,
+                  borderWidth: CAPTURE.border,
                   borderStyle: 'dashed',
-                  borderColor: palette.primary,
-                  backgroundColor: palette.lavender,
+                  borderColor: palette.hairlineStrong,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 2, // token-exempt: the camera mark close over its words, in 72 pt
+                  gap: CAPTURE.shadowInset,
                   padding: SPACE.xs,
-                  opacity: disabled ? 0.4 : pressed ? 0.78 : 1,
+                  opacity: disabled ? UI.disabledOpacity : pressed ? UI.pressedOpacity : 1,
                 }}
               >
-                <Icon name="camera" size={22} color={palette.primaryDk} />
+                <Icon name="camera" size={CAPTURE.addGlyph} color={palette.primaryDk} />
                 <Text
                   numberOfLines={2}
                   style={[TYPE.small, { color: palette.primaryDk, textAlign: 'center' }]}
@@ -249,7 +271,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
             )}
           </PressArea>
         ) : null}
-      </ScrollView>
+      </View>
       {/* In words, not only as a crossed-out eye: a box she cannot check is not a fault of hers,
           and she should know before she sends it (issue #294). */}
       {unreadable ? (

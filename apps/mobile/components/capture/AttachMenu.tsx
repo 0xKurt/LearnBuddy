@@ -59,7 +59,7 @@ export function AttachMenu({
       closeLabel={t('common:actions.close')}
       onClose={onClose}
     >
-      <Text style={[TYPE.small, { color: palette.ink2 }]}>
+      <Text style={[TYPE.meta, { color: palette.ink2 }]}>
         {`${t(line)} ${t('capture:privacy')}`}
       </Text>
       {SOURCES.map(({ source, icon }) => (
@@ -68,7 +68,7 @@ export function AttachMenu({
           full
           pill
           size="lg"
-          variant="soft"
+          variant="quiet"
           icon={icon}
           onPress={() => onChoose(source)}
         >
