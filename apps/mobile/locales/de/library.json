@@ -104,5 +104,7 @@
     "confirm": "Löschen"
   },
   "item_deleted": "Frage gelöscht.",
-  "add_page": "Seite hinzufügen"
+  "add_page": "Seite hinzufügen",
+  "subjects": "Fächer",
+  "recent": "Zuletzt"
 }

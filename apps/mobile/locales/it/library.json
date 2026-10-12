@@ -104,5 +104,7 @@
     "confirm": "Cancella"
   },
   "item_deleted": "Domanda cancellata.",
-  "add_page": "Aggiungi una pagina"
+  "add_page": "Aggiungi una pagina",
+  "subjects": "Materie",
+  "recent": "Recenti"
 }

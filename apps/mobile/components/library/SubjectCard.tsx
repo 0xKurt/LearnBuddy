@@ -7,14 +7,11 @@
 // learner is never shown a tally of what is due or left over (CLAUDE.md rule 6).
 
 import type { LibrarySubject } from '@learnbuddy/shared-types/contracts';
-import { Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TYPE } from '../../lib/theme/type.js';
-import { EntryCard } from './EntryCard.js';
+import { Row } from '../lb/ListGroup.js';
 import { glimpseOf } from './subjects.js';
-import { KIND_TONE, useMarkTint, type CardTone } from './tone.js';
+import { KIND_TONE } from './tone.js';
 
 type Props = {
   /** A real subject, or the sheets whose subject is not known yet ("Ohne Fach"). */
@@ -25,10 +22,7 @@ type Props = {
 };
 
 export function SubjectCard({ subject, name, onPress }: Props) {
-  const { palette } = useTheme();
   const { t } = useTranslation('library');
-  const tone: CardTone = subject ? KIND_TONE[subject.kind] : 'paper';
-  const tile = useMarkTint(tone);
   const glimpse = subject
     ? glimpseOf(subject, { untitled: t('untitled'), exercise: t('subject.exercise_untitled') })
     : { names: [], more: false };
@@ -36,17 +30,14 @@ export function SubjectCard({ subject, name, onPress }: Props) {
   const line = [...glimpse.names, ...(glimpse.more ? [t('subject.more')] : [])].join(' · ');
   const said = line || t('subject.nothing_yet');
   return (
-    <EntryCard
-      icon="folder"
-      tile={tile}
+    <Row
+      icon={subject ? undefined : 'folder'}
+      tile={subject ? { letter: name.slice(0, 1), tone: KIND_TONE[subject.kind] } : undefined}
       title={name}
+      sub={said}
       onPress={onPress}
       accessibilityLabel={`${name}: ${said}`}
       accessibilityHint={t('subject.open_hint')}
-    >
-      <Text numberOfLines={2} style={[TYPE.small, { color: palette.ink2 }]}>
-        {said}
-      </Text>
-    </EntryCard>
+    />
   );
 }

@@ -104,5 +104,7 @@
     "confirm": "Delete"
   },
   "item_deleted": "Question deleted.",
-  "add_page": "Add a page"
+  "add_page": "Add a page",
+  "subjects": "Subjects",
+  "recent": "Recent"
 }

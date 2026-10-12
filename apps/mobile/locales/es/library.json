@@ -104,5 +104,7 @@
     "confirm": "Borrar"
   },
   "item_deleted": "Pregunta borrada.",
-  "add_page": "Añadir una página"
+  "add_page": "Añadir una página",
+  "subjects": "Asignaturas",
+  "recent": "Reciente"
 }
