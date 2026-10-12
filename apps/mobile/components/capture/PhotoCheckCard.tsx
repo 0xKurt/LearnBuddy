@@ -6,8 +6,9 @@ import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
 import type { PhotoReviewProps } from '../../lib/capture/pages.js';
-import { CARD_PAD, RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { CAPTURE } from '../../lib/theme/capture.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 
@@ -18,11 +19,11 @@ export function PhotoCheckCard({ index, problems, disabled, onRetake, onKeep }: 
   return (
     <View accessibilityLiveRegion="polite">
       <Card tone="sunken" padding={CARD_PAD.base}>
-        <View style={{ gap: RHYTHM.parts }}>
-          <Text accessibilityRole="header" style={TYPE.cell}>
+        <View style={{ gap: CAPTURE.reviewGap }}>
+          <Text accessibilityRole="header" style={TYPE.reviewTitle}>
             {t(`quality.${main}`, { index })}
           </Text>
-          <Text style={TYPE.small}>{t(`quality.${main}_tip`)}</Text>
+          <Text style={TYPE.reviewDetail}>{t(`quality.${main}_tip`)}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
             <Btn
               size="sm"

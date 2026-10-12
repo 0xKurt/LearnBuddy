@@ -34,6 +34,7 @@ export const CAPTURE = {
   get pageNumberType() {
     return pageNumberType();
   },
+  reviewGap: SPACE.sm + SPACE.xs / 2,
   closeFace,
   closeInset: SPACE.xs,
   previewGap: SPACE.sm + SPACE.xs / 2,
