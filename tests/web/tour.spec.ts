@@ -322,7 +322,12 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: /^Deutsch: / }).click();
   await expect(page.getByText('Nomen und Verben').last()).toBeVisible();
   // A page she forgot can be added to the sheet.
-  await page.getByRole('button', { name: /^Fragen .*Nomen und Verben/ }).click();
+  await page.getByRole('button', { name: 'Nomen und Verben', exact: true }).click();
+  await page
+    .locator('[aria-modal="true"]:visible')
+    .getByRole('button', { name: 'Fragen ansehen', exact: true })
+    .click();
+  await expect(page.locator('[aria-modal="true"]:visible')).toHaveCount(0);
   // A page for this sheet: back in the chat, its + menu says what the page is for (#519).
   await page.getByRole('button', { name: 'Seite hinzufügen' }).click();
   await expect(page.getByText('Die Fragen dazu kommen zu diesem Blatt.')).toBeVisible();

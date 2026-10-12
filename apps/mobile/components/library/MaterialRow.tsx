@@ -12,12 +12,14 @@ export function MaterialRow({
   disabled,
   onOpen,
   onStart,
+  accessibilityLabel,
 }: {
   material: MaterialView;
   busy: boolean;
   disabled: boolean;
   onOpen: () => void;
   onStart: (mode: 'practice' | 'speak') => void;
+  accessibilityLabel?: string;
 }) {
   const { t, i18n } = useTranslation('library');
   const title = material.title ?? t('untitled');
@@ -36,7 +38,7 @@ export function MaterialRow({
       sub={[formatDate(material.created_at, i18n.language), detail].filter(Boolean).join(' · ')}
       onPress={onOpen}
       disabled={disabled}
-      accessibilityLabel={t('open_label', { title })}
+      accessibilityLabel={accessibilityLabel ?? t('open_label', { title })}
       trailing={
         material.status === 'ready' ? (
           <Btn

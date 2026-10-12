@@ -4,8 +4,6 @@
 import type { SubjectKind } from '@learnbuddy/shared-types/contracts';
 
 import type { SubjectTone } from '../../lib/theme/palettes.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import type { DiscTint } from '../lb/IconDisc.js';
 
 export const KIND_TONE: Record<SubjectKind, SubjectTone> = {
   math: 'sky',
@@ -27,14 +25,3 @@ export const KIND_TONE: Record<SubjectKind, SubjectTone> = {
   religion_ethics: 'rose',
   other: 'rose',
 };
-
-/** The sheets with no subject yet ("Ohne Fach") stand on paper, not in a subject's pastel. */
-export type CardTone = SubjectTone | 'paper';
-
-/** A card tone as its mark's tint: the subject's pastel with a deeper edge, or paper. */
-export function useMarkTint(tone: CardTone): DiscTint {
-  const { palette, tones } = useTheme();
-  return tone === 'paper'
-    ? { fill: palette.canvas, edge: palette.hairline }
-    : { fill: tones.bg[tone], edge: tones.deep[tone] };
-}

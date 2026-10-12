@@ -7,14 +7,10 @@
 // the place to be told anything about scores (CLAUDE.md rule 6).
 
 import type { SubjectExercise } from '@learnbuddy/shared-types/contracts';
-import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TYPE } from '../../lib/theme/type.js';
 import { formatDate } from '../../lib/time.js';
-import { Chip } from '../lb/Chip.js';
-import { EntryCard } from './EntryCard.js';
+import { Row } from '../lb/ListGroup.js';
 
 export function ExerciseCard({
   exercise,
@@ -23,26 +19,22 @@ export function ExerciseCard({
   exercise: SubjectExercise;
   onPress: () => void;
 }) {
-  const { palette } = useTheme();
   const { t, i18n } = useTranslation('library');
   const title = exercise.title?.trim() || t('subject.exercise_untitled');
   const open = exercise.status === 'active';
   return (
-    <EntryCard
+    <Row
       icon="practice"
-      tile={{ fill: palette.primaryLt }}
       title={title}
+      sub={[
+        formatDate(exercise.started_at, i18n.language),
+        open ? t('subject.exercise_still_open') : '',
+      ]
+        .filter(Boolean)
+        .join(' · ')}
       onPress={onPress}
       accessibilityLabel={title}
       accessibilityHint={t(open ? 'subject.exercise_open_hint' : 'subject.exercise_look_hint')}
-    >
-      <Text style={TYPE.small}>{formatDate(exercise.started_at, i18n.language)}</Text>
-      {open ? (
-        // token-exempt: the chip two points below the date, snug, as on the sheet's card
-        <View style={{ marginTop: 2 }}>
-          <Chip tone="primary">{t('subject.exercise_still_open')}</Chip>
-        </View>
-      ) : null}
-    </EntryCard>
+    />
   );
 }
