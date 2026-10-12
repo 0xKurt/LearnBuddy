@@ -105,16 +105,16 @@ describe('the attached photo above the field (#294)', () => {
 });
 
 describe('one more page from the camera, right in the strip (#519)', () => {
-  it('ends the strip in "Noch ein Foto" after a photo from the camera', () => {
+  it('ends the strip in "Weitere Seite" after a photo from the camera', () => {
     let asked = 0;
     strip({ onMore: () => (asked += 1) });
-    fireEvent.click(screen.getByRole('button', { name: 'Noch ein Foto' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Weitere Seite' }));
     expect(asked).toBe(1);
   });
 
   it('offers none otherwise', () => {
     strip();
-    expect(screen.queryByRole('button', { name: 'Noch ein Foto' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Weitere Seite' })).toBeNull();
   });
 });
 
@@ -123,7 +123,7 @@ it('shares disabled treatment and blocks both remove and camera actions', () => 
   let added = 0;
   strip({ disabled: true, onRemove: () => removed++, onMore: () => added++ });
   const remove = screen.getByRole('button', { name: 'Foto 1 entfernen' });
-  const more = screen.getByRole('button', { name: 'Noch ein Foto' });
+  const more = screen.getByRole('button', { name: 'Weitere Seite' });
   expect(styleOf(more.firstElementChild!).opacity).toBe(String(UI.disabledOpacity));
   expect(
     Array.from(remove.querySelectorAll('*')).some(

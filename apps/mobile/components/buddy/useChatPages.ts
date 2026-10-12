@@ -1,28 +1,35 @@
-// The pages that go with her message (issues #82, #519): the + menu, the camera or picker a
-// place asked for (lib/capture/attachRequest.ts), "Noch ein Foto" after a photo from the camera,
-// and the pages left from before when she goes on with them. The pages themselves —
-// preparing, the draft, the upload — are lib/capture/useAttachments.ts.
+// The single Capture page controller: consume each source/resume wish once and reuse
+// the existing attachment preparation, draft and upload lifecycle.
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { keys, queryClient } from '../../lib/api/queries.js';
 import { CHAT_LINK, useAttachRequest, type AttachOpen } from '../../lib/capture/attachRequest.js';
-import type { DraftLink } from '../../lib/capture/draft.js';
+import type { CaptureDraft, DraftLink } from '../../lib/capture/draft.js';
 import { pageHandler } from '../../lib/capture/pages.js';
 import { useAttachments } from '../../lib/capture/useAttachments.js';
 import { toast } from '../lb/Toast.js';
 
 type Source = Exclude<AttachOpen, 'menu'>;
 
-export function useChatPages({ focused, onSent }: { focused: boolean; onSent: () => void }) {
+export function useChatPages({
+  focused,
+  onSent,
+  onResume,
+  canComplete,
+}: {
+  focused: boolean;
+  onSent: () => void;
+  onResume?: (draft: CaptureDraft) => void;
+  canComplete?: () => boolean;
+}) {
   const { t } = useTranslation('capture');
   const pages = useAttachments({
     droppable: focused,
     onSent: (_material, link) => {
+      if (!focused || canComplete?.() === false) return;
       if (link.add && link.completes) {
         // A page added to a sheet: its questions join that sheet once read (p2-J-06).
-        void queryClient.invalidateQueries({ queryKey: keys.material(link.completes) });
         toast.show(t('again.added'), 'info');
       }
       onSent();
@@ -51,19 +58,23 @@ export function useChatPages({ focused, onSent }: { focused: boolean; onSent: ()
   // A place asked for a page (lib/capture/attachRequest.ts): answered once.
   const request = useAttachRequest((s) => s.request);
   useEffect(() => {
-    if (!request) return;
+    if (!focused || !request) return;
     useAttachRequest.getState().take();
     // Without a domain that takes pages nothing can be attached (lib/capture/pages.ts).
     if (!pageHandler.get()) return;
     if (request.resume) {
-      void pages.resumeDraft(request.pending);
+      void pages.resumeDraft(request.pending).then((draft) => {
+        if (draft) onResume?.(draft);
+      });
       return;
     }
     if (request.open === 'menu') {
+      if (pages.photos.length === 0) pages.setLink(request.link);
       setAsked(request.link);
       setMenu(true);
     } else if (request.open) void choose(request.open, request.link);
-  }, [request]);
+    else if (pages.photos.length === 0) pages.setLink(request.link);
+  }, [request, focused]);
 
   return {
     pages,

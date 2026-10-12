@@ -1,7 +1,6 @@
 {
   "tip": "Tip: whole page, good light, from above.",
   "privacy": "Photos are deleted at the latest 7 days after reading.",
-  "camera_more": "Another photo",
   "photo_label": "Photo {{index}} of {{total}}",
   "remove_label": "Remove photo {{index}}",
   "limit": "One sheet can have at most {{max}} photos.",
@@ -79,5 +78,18 @@
     "nothing": "Send me a photo or PDF of your sheet – I can't read text or links here.",
     "signed_out": "Please sign in first – then share the sheet with LearnBuddy again."
   },
-  "preview_failed": "No preview"
+  "preview_failed": "No preview",
+  "page": {
+    "intro": "Worksheet, book page or notebook – as a photo or PDF. Buddy makes exercises from it.",
+    "send": "Send to Buddy",
+    "count_one": "{{count}} photo",
+    "count_other": "{{count}} photos",
+    "camera_title": "Whole page, good light, from above",
+    "privacy": "Photos are deleted no later than 7 days after reading.",
+    "page": "Page",
+    "more": "Another page",
+    "files_one": "{{count}} PDF",
+    "files_other": "{{count}} PDFs",
+    "combined_count": "{{photos}} · {{files}}"
+  }
 }

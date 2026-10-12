@@ -10,10 +10,15 @@
 type GlowStop = { color: string; opacity: number };
 
 const SCRIM = '#1f1b2e';
+const PHOTO_OVERLAY = 'rgba(20,16,40,0.55)';
+const ON_PHOTO_OVERLAY = '#ffffff';
 
 export type Palette = {
   /** Modal backdrop stays dark in every look. */
   scrim: string;
+  /** Remove controls remain dark over real photos in every appearance. */
+  photoOverlay: string;
+  onPhotoOverlay: string;
   ink: string;
   ink2: string;
   ink3: string;
@@ -129,6 +134,8 @@ const pastellSoft: Palette = {
   canvas: '#f1edf8',
   hairline: 'rgba(60,40,120,0.09)',
   scrim: SCRIM,
+  photoOverlay: PHOTO_OVERLAY,
+  onPhotoOverlay: ON_PHOTO_OVERLAY,
   hairlineStrong: 'rgba(60,40,120,0.16)',
   onPrimary: '#ffffff',
   onSuccess: '#ffffff',
@@ -225,6 +232,8 @@ const night: Palette = {
   canvas: '#2b2742',
   hairline: 'rgba(220,210,255,0.14)',
   scrim: SCRIM,
+  photoOverlay: PHOTO_OVERLAY,
+  onPhotoOverlay: ON_PHOTO_OVERLAY,
   hairlineStrong: 'rgba(220,210,255,0.20)',
   onPrimary: '#191627',
   onSuccess: '#191627',

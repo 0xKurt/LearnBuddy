@@ -1,9 +1,5 @@
-// What stands above the chat's input bar while pages go with her message (issues #82, #519): the
-// pages as small squares — after a photo from the camera with "Noch ein Foto" at their end, so a
-// sheet of several pages is taken one after another without a screen of its own — a page that is
-// hard to read, how the sending goes, and what stands in the way (no camera allowed, a failed
-// send). In the browser a sheet can be dropped onto the chat; while it hovers, a line says so.
-// The logic is lib/capture/useAttachments.ts; this only draws it.
+// Pure attachment content for Capture's scrolling body: previews, quality review,
+// preparation, permissions and real upload progress/errors. The route owns its controller.
 
 import { Linking, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
