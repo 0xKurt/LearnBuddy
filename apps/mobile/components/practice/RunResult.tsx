@@ -44,7 +44,7 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
                 .filter((t): t is string => t !== undefined && t.length > 0),
             ),
           ];
-  const screen = session.mode !== 'test';
+  const screen = session.mode !== 'test' || session.timer?.ran_out !== true;
   return (
     <Screen
       title={title}
