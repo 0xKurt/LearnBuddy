@@ -53,9 +53,12 @@ test('core loop · material: what Buddy knows, the sheets, a subject empty or go
   await shot(page, '14b-subject');
 
   // The questions made from the sheet, renaming it, taking out one question.
+  await page.getByRole('button', { name: 'Brüche kürzen und vergleichen', exact: true }).click();
   await page
-    .getByRole('button', { name: 'Fragen aus „Brüche kürzen und vergleichen“ ansehen' })
+    .locator('[aria-modal="true"]:visible')
+    .getByRole('button', { name: 'Fragen ansehen', exact: true })
     .click();
+  await expect(page.locator('[aria-modal="true"]:visible')).toHaveCount(0);
   await expect(page.getByText(/^Welcher Bruch ist größer:/).first()).toBeVisible();
   await expect(page.getByText('Auf Anhieb gewusst').first()).toBeVisible();
   await page.getByRole('button', { name: '„Brüche kürzen und vergleichen“ umbenennen' }).click();

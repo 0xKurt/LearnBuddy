@@ -16,7 +16,6 @@ import { useTranslation } from 'react-i18next';
 
 import { ExerciseCard } from '../../components/library/ExerciseCard.js';
 import { MaterialCard } from '../../components/library/MaterialCard.js';
-import { KIND_TONE, type CardTone } from '../../components/library/tone.js';
 import { Btn } from '../../components/lb/Btn.js';
 import { Chip } from '../../components/lb/Chip.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
@@ -24,6 +23,7 @@ import { ErrorNote } from '../../components/lb/ErrorNote.js';
 import { LoadFailed } from '../../components/lb/LoadFailed.js';
 import { Rise, useListEntrance } from '../../components/lb/Motion.js';
 import { Screen } from '../../components/lb/Screen.js';
+import { ListGroup } from '../../components/lb/ListGroup.js';
 import { Section } from '../../components/lb/Section.js';
 import { Sheet } from '../../components/lb/Sheet.js';
 import { LibrarySkeleton } from '../../components/lb/Skeletons.js';
@@ -42,7 +42,6 @@ import { attachInChat } from '../../lib/capture/attachRequest.js';
 /** What this screen shows, whichever of the two kinds of id brought her here. */
 type Shown = {
   name: string;
-  tone: CardTone;
   sheets: MaterialView[];
   subject: LibrarySubject | null;
 };
@@ -64,7 +63,7 @@ function refreshAll(): void {
 }
 
 export default function SubjectScreen() {
-  const { palette, tones } = useTheme();
+  const { palette } = useTheme();
   const { t } = useTranslation(['library', 'common']);
   const { id } = useLocalSearchParams<{ id: string }>();
   const library = useLibrary();
@@ -84,11 +83,10 @@ export default function SubjectScreen() {
   // A const, so what is narrowed below stays narrowed inside the rows' callbacks.
   const shown: Shown | null =
     view && unsorted
-      ? { name: t('library:unsorted'), tone: 'paper', sheets: view.unsorted, subject: null }
+      ? { name: t('library:unsorted'), sheets: view.unsorted, subject: null }
       : subject
         ? {
             name: subject.name,
-            tone: KIND_TONE[subject.kind],
             sheets: subject.materials,
             subject,
           }
@@ -204,7 +202,6 @@ export default function SubjectScreen() {
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
       >
         <EmptyState
-          orb
           title={t('library:subject.empty_title')}
           body={t('library:subject.empty_body')}
           action={
@@ -224,42 +221,34 @@ export default function SubjectScreen() {
       >
         {shown.sheets.length > 0 ? (
           <Rise animate={entering(0)} index={0}>
-            <Section
-              title={t('library:subject.sheets')}
-              dot={shown.tone === 'paper' ? palette.ink4 : tones.deep[shown.tone]}
-            >
-              <View style={{ gap: SPACE.md }}>
-                {shown.sheets.map((m) => (
-                  <MaterialCard
-                    key={m.id}
-                    material={m}
-                    tone={shown.tone}
-                    busy={busyId === m.id}
-                    disabled={busyId !== null}
-                    onPractice={() => start(m, 'practice')}
-                    onSpeak={() => start(m, 'speak')}
-                    onOpen={() => router.push(`/material/${m.id}`)}
-                    onRetry={() => readAgain(m)}
-                    onDelete={() => askDelete(m)}
-                  />
-                ))}
-              </View>
-            </Section>
+            <ListGroup label={t('library:subject.sheets')}>
+              {shown.sheets.map((m) => (
+                <MaterialCard
+                  key={m.id}
+                  material={m}
+                  busy={busyId === m.id}
+                  disabled={busyId !== null}
+                  onPractice={() => start(m, 'practice')}
+                  onSpeak={() => start(m, 'speak')}
+                  onOpen={() => router.push(`/material/${m.id}`)}
+                  onRetry={() => readAgain(m)}
+                  onDelete={() => askDelete(m)}
+                />
+              ))}
+            </ListGroup>
           </Rise>
         ) : null}
         {exercises.length > 0 ? (
           <Rise animate={entering(1)} index={1}>
-            <Section title={t('library:subject.exercises')}>
-              <View style={{ gap: SPACE.md }}>
-                {exercises.map((e) => (
-                  <ExerciseCard
-                    key={e.id}
-                    exercise={e}
-                    onPress={() => router.push(`/practice/${e.id}`)}
-                  />
-                ))}
-              </View>
-            </Section>
+            <ListGroup label={t('library:subject.exercises')}>
+              {exercises.map((e) => (
+                <ExerciseCard
+                  key={e.id}
+                  exercise={e}
+                  onPress={() => router.push(`/practice/${e.id}`)}
+                />
+              ))}
+            </ListGroup>
           </Rise>
         ) : null}
         {topics.length > 0 ? (
@@ -278,6 +267,9 @@ export default function SubjectScreen() {
             </Section>
           </Rise>
         ) : null}
+        <Btn variant="secondary" icon="camera" full onPress={() => attachInChat({ open: 'menu' })}>
+          {t('library:capture')}
+        </Btn>
       </ScrollView>
     );
   }

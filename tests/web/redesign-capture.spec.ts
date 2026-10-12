@@ -61,10 +61,15 @@ for (const look of SCREEN_LOOKS) {
     await page.getByRole('button', { name: /^Mathe: / }).click();
     await page
       .getByRole('button', {
-        name: 'Fragen aus „Brüche kürzen und vergleichen“ ansehen',
+        name: 'Brüche kürzen und vergleichen',
         exact: true,
       })
       .click();
+    await page
+      .locator('[aria-modal="true"]:visible')
+      .getByRole('button', { name: 'Fragen ansehen', exact: true })
+      .click();
+    await expect(page.locator('[aria-modal="true"]:visible')).toHaveCount(0);
     await expect(page.getByText(/^Welcher Bruch ist größer:/).first()).toBeVisible();
     await screenShots(page, `capture-${key}-questions`);
   });

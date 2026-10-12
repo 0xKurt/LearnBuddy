@@ -44,8 +44,13 @@ async function onboardChild(page: Page, name: string, year: string): Promise<voi
 async function openSheet(page: Page, subject: string, title: string): Promise<void> {
   await openMenu(page, 'Dein Material');
   await page.getByRole('button', { name: new RegExp(`^${subject}: `) }).click();
-  await page.getByRole('button', { name: `Fragen aus „${title}“ ansehen` }).click();
-  await expect(page.getByRole('heading', { name: title })).toBeVisible();
+  await page.getByRole('button', { name: title, exact: true }).click();
+  await page
+    .locator('[aria-modal="true"]:visible')
+    .getByRole('button', { name: 'Fragen ansehen', exact: true })
+    .click();
+  await expect(page.locator('[aria-modal="true"]:visible')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
 }
 
 test('a corrected test: new tasks for what was marked, nothing else, no grade', async ({

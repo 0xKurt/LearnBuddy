@@ -12,8 +12,8 @@
 // dem Telefon funktioniert (docs/testing-layers.md).
 
 import type { MaterialView } from '@learnbuddy/shared-types/contracts';
-import { fireEvent, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
 import { MaterialCard } from '../MaterialCard.js';
@@ -47,7 +47,6 @@ function show(material: MaterialView) {
   renderInApp(
     <MaterialCard
       material={material}
-      tone="lavender"
       busy={false}
       disabled={false}
       onPractice={onPractice}
@@ -73,9 +72,11 @@ describe('eine Blattkarte und die Sätze zum Vorlesen (Issue #223 Punkt 2)', () 
     expect(onPractice).toHaveBeenCalledTimes(1);
     expect(onSpeak).not.toHaveBeenCalled();
     // Die Beschriftung sagt, was passiert; die Vorlesezeile nennt das Blatt dazu.
-    fireEvent.click(screen.getByText('Sätze laut lesen'));
-    expect(onSpeak).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Unité 3' }));
     expect(screen.getByLabelText('Die Sätze aus „Unité 3“ laut lesen')).toBeTruthy();
+    fireEvent.click(screen.getByText('Sätze laut lesen'));
+    act(() => vi.runOnlyPendingTimers());
+    expect(onSpeak).toHaveBeenCalledTimes(1);
   });
 
   it('macht das Vorlesen zur Hauptaktion, wenn das Blatt nur daraus besteht', () => {
@@ -108,9 +109,13 @@ describe('eine korrigierte Arbeit ohne Angestrichenes (Issue #259)', () => {
         photos_deleted: true,
       }),
     );
-    expect(screen.getByText('ohne Übungen')).toBeTruthy();
+    expect(screen.getByText(/ohne Übungen/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Unité 3' }));
     expect(screen.getByText(/nichts gefunden, was als falsch angestrichen ist/)).toBeTruthy();
     expect(screen.queryByText('Nochmal lesen')).toBeNull();
     expect(screen.queryByText(/nicht mehr gespeichert/)).toBeNull();
   });
 });
+
+beforeEach(() => vi.useFakeTimers());
+afterEach(() => vi.useRealTimers());
