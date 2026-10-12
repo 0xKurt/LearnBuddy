@@ -74,7 +74,9 @@
     "grade_label": "Classe",
     "subjects": "Matières",
     "subjects_empty": "Pas encore de matières avec des documents.",
-    "level_unknown": "Pas encore indiqué"
+    "level_unknown": "Pas encore indiqué",
+    "curriculum_explanation": "J’utilise ta classe et ta région pour adapter les exercices à ton programme.",
+    "page_title": "Profil"
   },
   "adult": {
     "title_minor": "Pour les parents",

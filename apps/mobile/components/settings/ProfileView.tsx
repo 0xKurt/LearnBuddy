@@ -10,12 +10,32 @@ import { TYPE } from '../../lib/theme/type.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { ListGroup, Row } from '../lb/ListGroup.js';
 
-export function ProfileView({ learner, children }: { learner: LearnerView; children: ReactNode }) {
+export function ProfileView({
+  learner,
+  email,
+  children,
+  subjects,
+  footer,
+}: {
+  learner: LearnerView;
+  email?: string;
+  children: ReactNode;
+  subjects?: ReactNode;
+  footer?: ReactNode;
+}) {
   const { t } = useTranslation('settings');
   const { palette, tones } = useTheme();
   return (
     <View style={{ gap: SPACE.lg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: PROFILE.identityGap }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: PROFILE.identityGap,
+          paddingVertical: SPACE.sm,
+          paddingHorizontal: SPACE.xs,
+        }}
+      >
         <View
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
@@ -34,20 +54,26 @@ export function ProfileView({ learner, children }: { learner: LearnerView; child
         </View>
         <View style={{ flex: 1, minWidth: 0, gap: PROFILE.identityLineGap }}>
           <Text style={TYPE.identity}>{learner.display_name}</Text>
-          <Text style={TYPE.meta}>{t(`profile.level_${learner.level}`)}</Text>
+          {!learner.is_minor && email ? <Text style={TYPE.meta}>{email}</Text> : null}
         </View>
       </View>
       <ListGroup label={t('profile.about_you')}>
-        <Row title={t('profile.name')} value={learner.display_name} />
-        <Row title={t('profile.level_label')} value={t(`profile.level_${learner.level}`)} />
+        <Row title={t('profile.name')} icon="pencil" value={learner.display_name} />
+        <Row
+          title={t('profile.level_label')}
+          icon="sparkle"
+          value={t(`profile.level_${learner.level}`)}
+        />
         {learner.grade !== null ? (
-          <Row
-            title={t('profile.grade_label')}
-            value={t('profile.grade_value', { grade: learner.grade })}
-          />
+          <Row title={t('profile.grade_label')} icon="file" value={String(learner.grade)} />
         ) : null}
+        {children}
       </ListGroup>
-      {children}
+      {subjects}
+      <Text style={[TYPE.profileExplanation, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}>
+        {t('profile.curriculum_explanation')}
+      </Text>
+      {footer}
     </View>
   );
 }

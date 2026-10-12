@@ -74,7 +74,9 @@
     "grade_label": "Curso",
     "subjects": "Asignaturas",
     "subjects_empty": "Todavía no hay asignaturas con material.",
-    "level_unknown": "Aún sin indicar"
+    "level_unknown": "Aún sin indicar",
+    "curriculum_explanation": "Uso tu curso y región para adaptar las tareas a tu plan de estudios.",
+    "page_title": "Perfil"
   },
   "adult": {
     "title_minor": "Para los padres",

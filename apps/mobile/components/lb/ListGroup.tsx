@@ -40,6 +40,7 @@ export type RowProps = {
   title: string;
   /** A factual completed row remains readable, with its title struck and muted. */
   completed?: boolean;
+  destructive?: boolean;
   chevron?: boolean;
   indicator?: 'chevron' | 'more';
   sub?: string;
@@ -58,6 +59,7 @@ export type RowProps = {
 export function Row({
   title,
   completed = false,
+  destructive = false,
   chevron = true,
   indicator = 'chevron',
   sub,
@@ -100,6 +102,7 @@ export function Row({
         <Text
           style={[
             TYPE.cell,
+            destructive ? { color: palette.danger } : undefined,
             completed ? { color: palette.ink2, textDecorationLine: 'line-through' } : undefined,
           ]}
         >

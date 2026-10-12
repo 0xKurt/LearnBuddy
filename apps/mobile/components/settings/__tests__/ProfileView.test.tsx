@@ -25,7 +25,7 @@ describe('factual Profile view', () => {
         <span>Existing editors</span>
       </ProfileView>,
     );
-    expect(screen.getByText('Klasse 6')).toBeTruthy();
+    expect(screen.getByText('6')).toBeTruthy();
     expect(screen.getByText('Existing editors')).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Gymnasium|mail\.de/);
     expect(screen.queryByRole('button')).toBeNull();
@@ -34,15 +34,32 @@ describe('factual Profile view', () => {
     renderInApp(
       <ProfileView learner={{ ...learner, grade: null, level: 'unknown' }}>{null}</ProfileView>,
     );
-    expect(screen.getAllByText('Noch nicht angegeben')).toHaveLength(2);
+    expect(screen.getAllByText('Noch nicht angegeben')).toHaveLength(1);
     expect(screen.queryByText('Schule')).toBeNull();
     expect(document.body.textContent).not.toContain('profile.level_unknown');
+  });
+  it('does not expose a minor parent account email even when supplied, and shows a factual adult email', () => {
+    const view = renderInApp(
+      <ProfileView learner={learner} email="parent@example.invalid">
+        {null}
+      </ProfileView>,
+    );
+    expect(screen.queryByText('parent@example.invalid')).toBeNull();
+    view.rerender(
+      <ProfileView
+        learner={{ ...learner, is_minor: false, relation: 'self' }}
+        email="learner@example.invalid"
+      >
+        {null}
+      </ProfileView>,
+    );
+    expect(screen.getByText('learner@example.invalid')).toBeTruthy();
   });
   it('omits a missing grade and uses the actual non-school learning level', () => {
     renderInApp(
       <ProfileView learner={{ ...learner, grade: null, level: 'university' }}>{null}</ProfileView>,
     );
     expect(screen.queryByText('Klasse')).toBeNull();
-    expect(screen.getAllByText('Studium')).toHaveLength(2);
+    expect(screen.getAllByText('Studium')).toHaveLength(1);
   });
 });

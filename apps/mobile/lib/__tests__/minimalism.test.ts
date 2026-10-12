@@ -64,6 +64,8 @@ const ROUTES: Record<string, string> = {
   pin: "the adult's PIN is a secret the model must never see; entered in a modal and checked by the server",
   memory:
     'her right to see and correct everything Buddy keeps (DSGVO Art. 15/16, docs/privacy.md) needs the complete list with sources and versions, not a summary written by the model',
+  'settings/profile':
+    'owner-required full-page factual profile and confirmed settings edits (#589), independent of model output; onboarding remains /profile',
   settings:
     "contact opt-in, the parents' area behind the PIN, export and deletion are explicit controls the code enforces (rule 6), never a model's reading of a sentence",
 

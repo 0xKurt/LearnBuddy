@@ -20,16 +20,18 @@ for (const look of SCREEN_LOOKS)
     expect(me.learner).not.toBeNull();
     const levelLabel = settingsDe.profile[`level_${me.learner!.level}`];
     await page.goto('/settings');
-    await page.getByRole('button', { name: /Dein Profil/ }).click();
-    const sheet = page.locator('[aria-modal="true"]');
-    await expect(sheet.getByText('Mia', { exact: true }).first()).toBeVisible();
-    await expect(sheet.getByText(levelLabel, { exact: true }).first()).toBeVisible();
+    await page.getByRole('button', { name: /^Mia, Profil · /, exact: true }).click();
+    await expect(page).toHaveURL(/\/settings\/profile$/);
+    await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
+    const sheet = page; // A genuine destination page, not a modal subtree.
+    await expect(sheet.getByText('Mia', { exact: true }).filter({ visible: true })).toHaveCount(2);
+    await expect(sheet.getByText(levelLabel, { exact: true })).toBeVisible();
     await expect(
       sheet.getByRole('button', { name: 'Sprache, Deutsch', exact: true }),
     ).toBeVisible();
     await screenShots(page, `profile-${key}`, true);
     await sheet.getByRole('button', { name: 'Sprache, Deutsch', exact: true }).click();
-    await expect(page.locator('[aria-modal="true"]')).toHaveCount(1);
+    await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
     await screenShots(page, `profile-${key}-languages`, true);
     const wrappedNames = await sheet.getByRole('radio').evaluateAll((radios) =>
       radios.flatMap((radio) => {
@@ -68,9 +70,13 @@ for (const look of SCREEN_LOOKS)
     });
     await expect(sheet.getByRole('radio', { name: 'English', exact: true })).toBeChecked();
     await page.reload();
-    await page.getByRole('button', { name: /Your profile/ }).click();
-    await sheet.getByRole('button', { name: 'Language, English', exact: true }).click();
     await expect(sheet.getByRole('radio', { name: 'English', exact: true })).toBeChecked();
+    await page.goBack();
+    await expect(page.getByRole('heading', { name: 'Profile', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Language, English', exact: true }),
+    ).toBeVisible();
+    await sheet.getByRole('button', { name: 'Language, English', exact: true }).click();
     const germanSave = page.waitForResponse(
       (res) => res.url().endsWith('/learner') && res.request().method() === 'PATCH',
     );
@@ -78,7 +84,7 @@ for (const look of SCREEN_LOOKS)
     expect((await germanSave).ok()).toBe(true);
     await sheet.getByRole('button', { name: 'Zurück', exact: true }).click();
     await sheet.getByRole('button', { name: /Bundesland/ }).click();
-    await expect(page.locator('[aria-modal="true"]')).toHaveCount(1);
+    await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
     await screenShots(page, `profile-${key}-regions`, true);
     const regionSave = page.waitForResponse(
       (res) => res.url().endsWith('/learner') && res.request().method() === 'PATCH',
@@ -94,10 +100,24 @@ for (const look of SCREEN_LOOKS)
     await sheet.getByRole('button', { name: 'Zurück', exact: true }).click();
     await expect(sheet.getByRole('button', { name: /Bayern/ })).toBeVisible();
     await page.reload();
-    await page.getByRole('button', { name: /Dein Profil/ }).click();
+    await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
     await expect(sheet.getByRole('button', { name: /Bayern/ })).toBeVisible();
-    await expect(sheet.getByText('Mia', { exact: true }).first()).toBeVisible();
-    await expect(sheet.getByText(levelLabel, { exact: true }).first()).toBeVisible();
+    await expect(sheet.getByText('Mia', { exact: true }).filter({ visible: true })).toHaveCount(2);
+    await expect(sheet.getByText(levelLabel, { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Konto löschen', exact: true }).scrollIntoViewIfNeeded();
+    await screenShots(page, `profile-${key}-footer`, true);
     await sheet.getByRole('button', { name: /^Mathe: / }).click();
     await expect(page.getByRole('heading', { name: 'Mathe', exact: true })).toBeVisible();
+    await page.goBack();
+    await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Einstellungen', exact: true })).toBeVisible();
+    // Original App.jsx:103 fixes factual Profile header Back to Settings; editor and
+    // browser Back retain their separate factual-profile/native-history behavior.
+    await page.goto('/settings/profile?editor=region');
+    await expect(page.getByRole('radio', { name: 'Bayern', exact: true })).toBeChecked();
+    await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Einstellungen', exact: true })).toBeVisible();
   });
