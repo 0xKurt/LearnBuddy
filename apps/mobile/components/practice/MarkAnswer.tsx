@@ -8,8 +8,8 @@
 // Farbe ist nie das einzige Signal: ein markiertes Wort ist unterstrichen und trägt mit
 // Kategorien deren Ziffer (①②③, dieselbe wie auf ihrer Schaltfläche); darunter steht in Worten,
 // was markiert ist („Subjekt: die alte Oma"). Ein gesetztes Komma ist ein Komma hinter dem Wort,
-// eine Silbengrenze ein Bindestrich hinter dem Buchstaben. Wörter und Kommas sind `<Btn>` mit
-// `checked`; Silben verwenden eine einstellbare Wortfläche mit angesagter Grenze und Zustand.
+// eine Silbengrenze ein Bindestrich hinter dem Buchstaben. Jede Stelle ist ein `<Btn>` mit
+// `checked` — ein Screenreader hört „Hund, markiert" bzw. „Komma nach „ankamen"", angekreuzt.
 //
 // Platz (Regel 16, 360×740): jedes Ziel ist ein Btn der kleinen Größe, also 44 pt hoch, und nie
 // schmaler als 44 pt. Wörter stehen wie Text auf einer ruhigen Fläche — dieselbe wie ein Wort zum
@@ -41,11 +41,9 @@ import {
   type MarkTaskView,
   type MarkWord,
 } from '@learnbuddy/shared-types/contracts';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
-import { TapSurface } from '../lb/TapSurface.js';
 import { useDraft } from '../../lib/drafts.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
@@ -373,100 +371,49 @@ function Lines({ lines, marks, disabled, tap }: Own & { lines: readonly string[]
  * word. Each letter but the last is a target the full 44 pt high and one letter cell wide; the
  * cells touch, so there is no dead space between them. A cut stands as a bar between the letters.
  */
-function Syllables({ words, ...own }: Own & { words: readonly MarkWord[] }) {
-  return (
-    <View testID="mark-text" style={{ gap: SPACE.xs }}>
-      {words.map((word, wi) => (
-        <SyllableWord key={word.id} word={word} wi={wi} {...own} />
-      ))}
-    </View>
-  );
-}
-
-/** A readable word is one touch board; arrows/custom actions choose a boundary. */
-function SyllableWord({ word, wi, marks, disabled, tap }: Own & { word: MarkWord; wi: number }) {
+function Syllables({ words, marks, disabled, tap }: Own & { words: readonly MarkWord[] }) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
-  const letters = [...word.text];
-  const max = letters.length - 1;
-  const [boundary, setBoundary] = useState(1);
-  const move = (by: number) => {
-    if (!disabled) setBoundary((now) => Math.max(1, Math.min(max, now + by)));
-  };
-  const toggle = () => {
-    if (!disabled) tap(cutId(wi, boundary));
-  };
-  const selected = marks.some((mark) => mark.at === cutId(wi, boundary));
-  const label = t('mark.cut', { before: letters.slice(0, boundary).join(''), word: word.text });
-  const status = t(selected ? 'mark.cut_set' : 'mark.cut_unset');
-  const drawing = (
-    <View
-      aria-hidden
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={[SURFACE, { flexDirection: 'row', backgroundColor: palette.canvas }]}
-    >
-      {letters.map((letter, li) => (
-        <LetterCell
-          key={li}
-          letter={letter}
-          cut={marks.some((mark) => mark.at === cutId(wi, li + 1))}
-        />
-      ))}
-    </View>
-  );
-  if (max < 1)
-    return (
-      <View accessible accessibilityLabel={word.text}>
-        {drawing}
-      </View>
-    );
   return (
-    <TapSurface
-      style={{ alignSelf: 'flex-start', minWidth: TOUCH, minHeight: TOUCH }}
-      accessibilityRole="adjustable"
-      accessibilityLabel={label}
-      accessibilityHint={t(
-        Platform.OS === 'web' ? 'mark.boundary_hint' : 'mark.boundary_hint_native',
-      )}
-      accessibilityValue={{ min: 1, max, now: boundary, text: status }}
-      aria-valuemin={1}
-      aria-valuemax={max}
-      aria-valuenow={boundary}
-      aria-valuetext={`${label}. ${status}`}
-      accessibilityActions={[
-        { name: 'increment', label: t('mark.boundary_next') },
-        { name: 'decrement', label: t('mark.boundary_previous') },
-        { name: 'activate', label: t('mark.boundary_toggle') },
-      ]}
-      onAccessibilityAction={(event) => {
-        const action = event.nativeEvent.actionName;
-        if (action === 'increment') move(1);
-        else if (action === 'decrement') move(-1);
-        else if (action === 'activate') toggle();
-      }}
-      onKeyDown={(event) => {
-        const key = event.nativeEvent.key;
-        if (['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown', ' ', 'Enter'].includes(key ?? '')) {
-          event.preventDefault();
-          if (key === 'ArrowRight' || key === 'ArrowUp') move(1);
-          else if (key === 'ArrowLeft' || key === 'ArrowDown') move(-1);
-          else toggle();
-        }
-      }}
-      disabled={disabled}
-      onTap={(point) => {
-        if (disabled) return;
-        if (point === null) toggle();
-        else {
-          const at = Math.max(1, Math.min(max, Math.floor((point.x - SPACE.sm) / LETTER_CELL) + 1));
-          setBoundary(at);
-          tap(cutId(wi, at));
-        }
-      }}
-    >
-      {drawing}
-    </TapSurface>
+    <View testID="mark-text" style={{ gap: SPACE.xs }}>
+      {words.map((w, wi) => {
+        const letters = [...w.text];
+        return (
+          <View
+            key={w.id}
+            style={[
+              SURFACE,
+              { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: palette.canvas },
+            ]}
+          >
+            {letters.map((ch, li) => {
+              const at = cutId(wi, li + 1);
+              const cut = marks.some((m) => m.at === at);
+              const cell = <LetterCell letter={ch} cut={cut} />;
+              if (li === letters.length - 1) return <View key={at}>{cell}</View>;
+              return (
+                <Btn
+                  key={at}
+                  size="sm"
+                  bare
+                  variant="ghost"
+                  checked={cut}
+                  disabled={disabled}
+                  onPress={() => tap(at)}
+                  accessibilityLabel={t('mark.cut', {
+                    before: letters.slice(0, li + 1).join(''),
+                    word: w.text,
+                  })}
+                  label={cell}
+                >
+                  {ch}
+                </Btn>
+              );
+            })}
+          </View>
+        );
+      })}
+    </View>
   );
 }
 

@@ -317,14 +317,7 @@
     "cut": "Syllable ends after “{{before}}” in {{word}}",
     "how_sorted": "Choose the kind above, then tap the words.",
     "how_lines": "Tap the lines where the text says so.",
-    "lines": "l. {{list}}",
-    "cut_set": "Boundary marked",
-    "cut_unset": "Boundary not marked",
-    "boundary_hint": "Choose a boundary with left/right; toggle with Space or Enter.",
-    "boundary_next": "Next boundary",
-    "boundary_previous": "Previous boundary",
-    "boundary_toggle": "Toggle boundary",
-    "boundary_hint_native": "Use the actions to choose the next or previous boundary and mark or unmark it."
+    "lines": "l. {{list}}"
   },
   "select": {
     "several": "More than one is right – tap all of them.",

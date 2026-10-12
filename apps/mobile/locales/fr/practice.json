@@ -317,14 +317,7 @@
     "cut": "La syllabe finit après « {{before}} » dans {{word}}",
     "how_sorted": "Choisis d’abord le type en haut, puis touche les mots.",
     "how_lines": "Touche les lignes où le texte le dit.",
-    "lines": "l. {{list}}",
-    "cut_set": "Limite marquée",
-    "cut_unset": "Limite non marquée",
-    "boundary_hint": "Choisis une limite avec gauche/droite ; ajoute-la ou retire-la avec Espace ou Entrée.",
-    "boundary_next": "Limite suivante",
-    "boundary_previous": "Limite précédente",
-    "boundary_toggle": "Ajouter ou retirer la limite",
-    "boundary_hint_native": "Utilise les actions pour choisir la limite suivante ou précédente et la marquer ou la retirer."
+    "lines": "l. {{list}}"
   },
   "select": {
     "several": "Plusieurs sont justes – touche-les toutes.",

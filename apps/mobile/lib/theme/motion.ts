@@ -9,7 +9,9 @@ import { useSyncExternalStore } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import { Easing, makeMutable, ReduceMotion } from 'react-native-reanimated';
 
-export { DURATION } from './motionDurations.js';
+import { ORB_EASE_STANDARD } from './motionDurations.js';
+
+export { DURATION, ORB_DURATION } from './motionDurations.js';
 
 export const EASE = {
   /** The default curve for enter, exit and state changes. */
@@ -21,6 +23,11 @@ export const EASE = {
 } as const;
 
 export const SPRING = { damping: 18, stiffness: 180, mass: 1 } as const;
+
+/** The orb's own curve, unchanged by the redesign (#599 R2); see `ORB_DURATION`. */
+export const ORB_EASE = {
+  standard: Easing.bezier(...ORB_EASE_STANDARD),
+} as const;
 
 /** Use only after the live preference has allowed animation; bypass the cached OS setting. */
 export const ACTIVE_MOTION = { reduceMotion: ReduceMotion.Never } as const;

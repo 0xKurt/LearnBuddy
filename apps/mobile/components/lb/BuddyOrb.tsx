@@ -23,6 +23,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withSequence,
   withSpring,
@@ -61,7 +62,7 @@ import { orbMoves } from '../../lib/buddy/orbRoom.js';
 import { useBurst, useMoon } from '../../lib/buddy/useMoon.js';
 import { circle } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { DURATION, EASE, SPRING, useMotionReduced } from '../../lib/theme/motion.js';
+import { ORB_DURATION as DURATION, ORB_EASE as EASE, SPRING } from '../../lib/theme/motion.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 
 export type { MoonState } from '../../lib/buddy/moon.js';
@@ -102,7 +103,7 @@ export function BuddyOrb({
   /** The soft white halo that follows the state (default: large orbs, as the prototype). */
   halo?: boolean;
 }) {
-  const reduce = useMotionReduced();
+  const reduce = useReducedMotion();
   const detail = moonDetail(size);
   // Decoration stops with reduce motion; "Buddy is working" does not (issue #182).
   const live = orbMoves(breathe, reduce, state);

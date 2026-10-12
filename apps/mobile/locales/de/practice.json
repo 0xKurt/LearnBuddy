@@ -317,14 +317,7 @@
     "cut": "Silbe endet nach „{{before}}“ in {{word}}",
     "how_sorted": "Erst oben die Art wählen, dann die Wörter antippen.",
     "how_lines": "Tippe die Zeilen an, in denen das steht.",
-    "lines": "Z. {{list}}",
-    "cut_set": "Grenze gesetzt",
-    "cut_unset": "Grenze nicht gesetzt",
-    "boundary_hint": "Mit links/rechts die Grenze wählen; mit Leertaste oder Eingabe setzen oder entfernen.",
-    "boundary_next": "Nächste Grenze",
-    "boundary_previous": "Vorherige Grenze",
-    "boundary_toggle": "Grenze setzen oder entfernen",
-    "boundary_hint_native": "Nutze die Aktionen, um die nächste oder vorherige Grenze zu wählen und sie zu setzen oder zu entfernen."
+    "lines": "Z. {{list}}"
   },
   "select": {
     "several": "Mehrere sind richtig – tippe alle an.",
