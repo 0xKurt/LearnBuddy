@@ -49,6 +49,7 @@ function Typed({ hint, body = false }: { hint: () => void; body?: boolean }) {
 it('folds optional tools only for a focused typed answer in tight room and restores callbacks/draft', () => {
   const hint = vi.fn();
   const app = renderInApp(<Typed hint={hint} />);
+  expect(screen.getAllByTestId('bottom-bar')).toHaveLength(1);
   const field = screen.getByRole('textbox', { name: 'Deine Antwort' });
   expect(screen.getByRole('button', { name: 'Tipp' })).toBeTruthy();
   fireEvent.change(field, { target: { value: '12' } });
@@ -101,6 +102,7 @@ it('folds optional help during tight board editing without hiding the board or d
 it('ordinary typed input keeps its real hint in the pinned bar without losing focus or draft', () => {
   const hint = vi.fn();
   renderInApp(<Typed hint={hint} body />);
+  expect(screen.getAllByTestId('bottom-bar')).toHaveLength(1);
   const field = screen.getByRole('textbox', { name: 'Deine Antwort' });
   fireEvent.focus(field);
   fireEvent.change(field, { target: { value: '7' } });

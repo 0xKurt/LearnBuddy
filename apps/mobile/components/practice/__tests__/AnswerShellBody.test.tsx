@@ -21,6 +21,7 @@ it('keeps the question, options and reply in one body while the real controls re
       />
     </AnswerFlow.Provider>,
   );
+  expect(screen.getAllByTestId('bottom-bar')).toHaveLength(1);
   const body = screen.getByTestId('scroll-practice-body');
   expect(body.contains(screen.getByText('Whole factual question'))).toBe(true);
   expect(body.contains(screen.getByText('Real option'))).toBe(true);

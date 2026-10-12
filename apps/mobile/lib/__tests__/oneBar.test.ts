@@ -76,8 +76,14 @@ describe('one bar per practice screen, and it is the input bar (#395)', () => {
     // The bar of a form with a check action: the input bar with her question's field (#402), and
     // "Prüfen" in its action slot.
     expect(text).toMatch(/useAskField\(\s*<CheckBtn\b/);
-    // The shell renders its action once.
+    // Each mutually exclusive layout renders its action once; declaration count is not render count.
     const shell = sources.find((s) => s.name === 'AnswerShell.tsx')!.text;
-    expect(shell.match(/<CheckBar\b/g)?.length ?? 0).toBe(1);
+    const [measured, ordinary] = shell.split('function OrdinaryBody(');
+    expect(ordinary).toBeDefined();
+    expect(measured).toMatch(
+      /if \(flow\.question !== undefined && flow\.question !== null\) \{\s*return <OrdinaryBody/,
+    );
+    expect(measured!.match(/<CheckBar\b/g)?.length ?? 0).toBe(1);
+    expect(ordinary!.match(/<CheckBar\b/g)?.length ?? 0).toBe(1);
   });
 });

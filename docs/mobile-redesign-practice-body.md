@@ -18,6 +18,8 @@ Current focused checks: 47 tests across seven suites, mobile TypeScript, strict 
 
 The first real Pastell run reached Why after three actual wrong attempts. Its focus-scroll diagnostic recorded the second reason border at 548–610, body viewport at 60–610, a 3 px ring, scrollTop 441 and maximum scrollTop 529. The remaining 88 px scroll room shows this was browser border alignment, not missing production geometry. A genuine wheel gesture makes the entire frame reachable. The separate old fixed-board tile assertion was adapted only for this explicit scrolling body; all originals are preserved externally. A causal long-reply failure also showed that the main-thread offset cannot describe turnsAgain. Reexplain now supplies its own measured tutor start and ID through the existing presentation slot; the mounted regression verifies pending and newest-tutor identity.
 
+The full pre-push gate also found an obsolete file-wide single-CheckBar declaration count. Its replacement still requires exactly one CheckBar in each mutually exclusive layout and verifies early delegation; mounted ordinary and measured tests each require one actual BottomBar. Single-input, no-nesting and explicit own-bar guards remain unchanged. This is a test-only correction; rendered source and browser evidence are unchanged.
+
 ## Design matrix and remaining criteria
 
 Bounded rows: `screen:practice:choice-empty`, `screen:practice:choice-picked`, `screen:practice:retry`, `screen:practice:solution`, `screen:practice:help`, `screen:practice:typed-empty`, `screen:practice:typed-ready`, `screen:practice:correct`, `screen:practice:next`, `component:Composer:chips` and `component:Composer:check`. No default Practice row is promoted by this component/composition unit.
