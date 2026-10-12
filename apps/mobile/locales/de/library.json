@@ -73,7 +73,6 @@
   },
   "open": "Fragen ansehen",
   "open_label": "Fragen aus „{{title}}“ ansehen",
-  "rename": "Umbenennen",
   "rename_label": "„{{title}}“ umbenennen",
   "rename_sheet": {
     "title": "Blatt umbenennen",

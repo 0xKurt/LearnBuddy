@@ -73,7 +73,6 @@
   },
   "open": "Voir les questions",
   "open_label": "Voir les questions de « {{title}} »",
-  "rename": "Renommer",
   "rename_label": "Renommer « {{title}} »",
   "rename_sheet": {
     "title": "Renommer la feuille",

@@ -7,12 +7,12 @@ import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { UI } from '../../lib/theme/components.js';
+import { CARD_PAD, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
 import { Icon, type IconName } from '../lb/Icon.js';
 import { IconDisc, type DiscTint } from '../lb/IconDisc.js';
-import { MARK } from './tone.js';
 
 type Props = {
   icon: IconName;
@@ -39,18 +39,18 @@ export function EntryCard({
   return (
     <Card
       onPress={onPress}
-      padding={SPACE.lg}
+      padding={CARD_PAD.base}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}>
-        <IconDisc name={icon} size={MARK.size} iconSize={MARK.iconSize} tone={tile} />
+        <IconDisc name={icon} size={TOUCH} iconSize={UI.iconButton.glyph} tone={tile} />
         <View style={{ flex: 1, gap: SPACE.xs }}>
-          <Text style={[TYPE.body, { fontWeight: '600' }]}>{title}</Text>
+          <Text style={TYPE.cell}>{title}</Text>
           {children}
         </View>
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Icon name="chevron" size={20} color={palette.ink3} />
+          <Icon name="chevron" size={UI.list.chevron} color={palette.ink3} />
         </View>
       </View>
     </Card>

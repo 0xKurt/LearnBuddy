@@ -3,8 +3,8 @@
 // a later part does not repeat it. A question of no task stands as before.
 
 import { MaterialItemView } from '@learnbuddy/shared-types/contracts';
-import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
 import { MaterialItemCard } from '../MaterialItemCard.js';
@@ -48,5 +48,23 @@ describe('a question in „Dein Material"', () => {
   it('shows a question of no task as it is', () => {
     renderInApp(card(question('Wie viele Liter sind 1 m³?', null)));
     expect(screen.getByText('Wie viele Liter sind 1 m³?')).toBeDefined();
+  });
+  it('retains all actual choices, supplied figure and delete callback', () => {
+    const item = MaterialItemView.parse({
+      ...question('Welche Darstellung passt?', null),
+      kind: 'multiple_choice',
+      choices: ['Sechs Punkte', 'Acht Punkte'],
+      figure: { type: 'dot_field', field: 'twenty', n: [8], ask: 'count' },
+      topic: 'Anzahlen',
+      result: 'first_try',
+    });
+    const onDelete = vi.fn();
+    renderInApp(<MaterialItemCard item={item} number={3} disabled={false} onDelete={onDelete} />);
+    expect(screen.getByText('Welche Darstellung passt?')).toBeTruthy();
+    expect(screen.getByText('Sechs Punkte')).toBeTruthy();
+    expect(screen.getByText('Acht Punkte')).toBeTruthy();
+    expect(screen.getByRole('img', { name: /Zwanzigerfeld.*8 Punkte/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Frage 3 löschen' }));
+    expect(onDelete).toHaveBeenCalledTimes(1);
   });
 });

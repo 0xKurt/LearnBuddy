@@ -73,7 +73,6 @@
   },
   "open": "See questions",
   "open_label": "See the questions from “{{title}}”",
-  "rename": "Rename",
   "rename_label": "Rename “{{title}}”",
   "rename_sheet": {
     "title": "Rename sheet",
