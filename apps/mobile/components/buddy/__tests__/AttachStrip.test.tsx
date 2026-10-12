@@ -12,6 +12,8 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { UI } from '../../../lib/theme/components.js';
+import { CAPTURE } from '../../../lib/theme/capture.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { AttachStrip } from '../AttachStrip.js';
 
@@ -58,9 +60,9 @@ describe('the attached photo above the field (#294)', () => {
     // The thumbnails that show on the phone are sized; the empty one was `flex: 1` inside a
     // pressable inside the clipping view.
     let box: HTMLElement | null = photoImg(container);
-    while (box && styleOf(box).width !== '72px') box = box.parentElement;
-    expect(box, 'a 72 px box around the photo below the tile').not.toBeNull();
-    expect(styleOf(box!).height).toBe('72px');
+    while (box && styleOf(box).width !== `${CAPTURE.thumbnail.width}px`) box = box.parentElement;
+    expect(box, 'the portrait preview box around the source photo').not.toBeNull();
+    expect(styleOf(box!).height).toBe(`${CAPTURE.thumbnail.height}px`);
     expect(screen.getByTestId('attach-tile').contains(box)).toBe(true);
     expect(box).not.toBe(screen.getByTestId('attach-tile'));
   });
@@ -114,4 +116,22 @@ describe('one more page from the camera, right in the strip (#519)', () => {
     strip();
     expect(screen.queryByRole('button', { name: 'Noch ein Foto' })).toBeNull();
   });
+});
+
+it('shares disabled treatment and blocks both remove and camera actions', () => {
+  let removed = 0;
+  let added = 0;
+  strip({ disabled: true, onRemove: () => removed++, onMore: () => added++ });
+  const remove = screen.getByRole('button', { name: 'Foto 1 entfernen' });
+  const more = screen.getByRole('button', { name: 'Noch ein Foto' });
+  expect(styleOf(more.firstElementChild!).opacity).toBe(String(UI.disabledOpacity));
+  expect(
+    Array.from(remove.querySelectorAll('*')).some(
+      (node) => styleOf(node).opacity === String(UI.disabledOpacity),
+    ),
+  ).toBe(true);
+  fireEvent.click(remove);
+  fireEvent.click(more);
+  expect(removed).toBe(0);
+  expect(added).toBe(0);
 });

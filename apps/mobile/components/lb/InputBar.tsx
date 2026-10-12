@@ -29,6 +29,8 @@
 // writing view (`WritingSheet`, issue #525).
 
 import { forwardRef, type ReactNode } from 'react';
+import { Platform, ScrollView } from 'react-native';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTranslation } from 'react-i18next';
 
 import { formDensity } from '../../lib/keyboard.js';
@@ -64,6 +66,8 @@ type Controls = {
   after?: ReactNode;
   /** Above the pill: what goes with the text (the pages she attached). */
   above?: ReactNode;
+  /** Bounds all accessory content together; the editable caption and tools stay pinned. */
+  accessoriesMaxHeight?: number;
   disabled?: boolean;
   /** A long text (issue #258): a taller pill that, while she writes, grows further. */
   tall?: 'writing' | 'resting' | null;
@@ -88,6 +92,7 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
     action = null,
     after = null,
     above = null,
+    accessoriesMaxHeight,
     disabled = false,
     tall = null,
   } = props;
@@ -107,15 +112,33 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
     action: _action,
     after: _after,
     above: _above,
+    accessoriesMaxHeight: _accessoriesMaxHeight,
     disabled: _disabled,
     tall: _tall,
     ...field
   } = props;
-  return (
+  const accessories = (
     <>
       {voice ? <MicStatus voice={voice} /> : null}
       {above}
       <FieldCount length={value.length} max={maxLength} />
+    </>
+  );
+  return (
+    <>
+      {accessoriesMaxHeight !== undefined ? (
+        <ScrollView
+          testID="scroll-list"
+          tabIndex={Platform.OS === 'web' ? 0 : undefined}
+          keyboardShouldPersistTaps="handled"
+          style={{ maxHeight: accessoriesMaxHeight, flexGrow: 0, flexShrink: 1 }}
+          contentContainerStyle={{ gap: SPACE.sm }}
+        >
+          {accessories}
+        </ScrollView>
+      ) : (
+        accessories
+      )}
       <Composer
         ref={ref}
         {...field}

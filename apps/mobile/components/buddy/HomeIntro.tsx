@@ -16,6 +16,8 @@ import { Icon } from '../lb/Icon.js';
 import { whenText } from './describe.js';
 
 type Props = {
+  /** Photos share the compact room; the greeting and all starts remain whole. */
+  compact?: boolean;
   h: BuddyHome;
   refreshing: boolean;
   onRefresh: () => void;
@@ -23,7 +25,7 @@ type Props = {
   onPhoto: () => void;
 };
 
-export function HomeIntro({ h, refreshing, onRefresh, onSend, onPhoto }: Props) {
+export function HomeIntro({ h, refreshing, onRefresh, onSend, onPhoto, compact = false }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   // The next test or talk (#264) in one line; everything else Buddy says in the conversation.
@@ -36,7 +38,7 @@ export function HomeIntro({ h, refreshing, onRefresh, onSend, onPhoto }: Props) 
         flexGrow: 1,
         justifyContent: 'flex-end',
         padding: SPACE.lg,
-        gap: HOME.sections,
+        gap: compact ? SPACE.lg : HOME.sections,
       }}
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
