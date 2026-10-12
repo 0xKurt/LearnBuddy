@@ -9,7 +9,8 @@
 // shared calm spring and slides away when it closes (the whole close stays under
 // the 450 ms that callers wait for, adultGate.tsx). Reduce motion: it appears and closes immediately.
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { FormFrameContext, useFormViewport } from './FormFrameClearance.js';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
@@ -65,6 +66,15 @@ export function Sheet({
   footer,
   scrollTestID,
 }: Props) {
+  const form = useFormViewport();
+  const attachScroll = useCallback(
+    (node: ScrollView | null) => {
+      // A newly mounted native scroll host starts at zero; a reused host keeps its offset.
+      if (node !== form.scroll.current) form.offset.current = 0;
+      form.scroll.current = node;
+    },
+    [form.scroll, form.offset],
+  );
   const { palette } = useTheme();
   const { reduceTransparency } = useA11ySettings();
   const insets = useSafeAreaInsets();
@@ -222,6 +232,12 @@ export function Sheet({
                 </View>
               </GestureDetector>
               <ScrollView
+                ref={attachScroll}
+                onLayout={form.controller.refresh}
+                onContentSizeChange={form.controller.refresh}
+                onScroll={(event) => {
+                  form.offset.current = event.nativeEvent.contentOffset.y;
+                }}
                 testID={scrollTestID}
                 style={{ flexGrow: 0, flexShrink: 1 }}
                 contentContainerStyle={{
@@ -232,7 +248,9 @@ export function Sheet({
                 }}
                 keyboardShouldPersistTaps="handled"
               >
-                {children}
+                <FormFrameContext.Provider value={form.controller}>
+                  {children}
+                </FormFrameContext.Provider>
               </ScrollView>
               <View style={{ paddingHorizontal: SIDE, gap: SPACE.sm }}>
                 {footer}

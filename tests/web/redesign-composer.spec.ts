@@ -16,6 +16,21 @@ for (const family of ['Pastell', 'Meer'] as const) {
       await mode.click();
       await expect(mode).toBeChecked();
       await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+      const message = page.getByLabel('Schreib Buddy …');
+      for (const phone of PHONES) {
+        await page.setViewportSize(phone);
+        for (const text of ['', 'Meine Frage']) {
+          await message.fill(text);
+          const box = await message.boundingBox();
+          expect(box, 'mounted Composer edit target').not.toBeNull();
+          expect(
+            box!.height,
+            'empty and typed Composer edit target remains44pt',
+          ).toBeGreaterThanOrEqual(44);
+          expect(box!.width).toBeGreaterThanOrEqual(44);
+        }
+      }
+      await message.fill('');
       await planTest(page);
       await sendWorksheet(page);
       await page.getByRole('button', { name: 'Jetzt üben' }).click();

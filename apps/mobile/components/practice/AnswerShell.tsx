@@ -47,6 +47,7 @@ export function AnswerShell({
   keeps = 0,
 }: Props) {
   const seen = useVisibleHeight();
+  const compact = formDensity(seen.window, seen.overlap) !== 'roomy';
   const ask = useContext(AskRoute);
   const flow = useContext(AnswerFlow);
   const typedUnderBoard = answer !== null && 'input' in action && action.input !== undefined;
@@ -82,7 +83,7 @@ export function AnswerShell({
             flexShrink: keeps === 'whole' ? 0 : 1,
             minHeight: keeps === 'whole' ? undefined : keeps,
             paddingHorizontal: SPACE.lg,
-            paddingTop: SPACE.md,
+            paddingTop: compact ? SPACE.xs : SPACE.md,
           }}
         >
           {kept ?? answer}
@@ -96,7 +97,7 @@ export function AnswerShell({
           style={{
             display: toolsFolded ? 'none' : 'flex',
             paddingHorizontal: SPACE.lg,
-            paddingTop: SPACE.sm,
+            paddingTop: compact ? SPACE.xs : SPACE.sm,
           }}
         >
           {flow.tools}

@@ -24,6 +24,8 @@ export const UI = {
     labelGap: 6,
     maxRows: 5,
     toolGap: 2,
+    composerHorizontal: 10,
+    composerBottom: 6,
     toggleIcon: 20,
     clearIcon: 18,
   },
